@@ -9,4 +9,4 @@ A local-first, **agent-native** workspace that unifies your documents, notes, kn
 - **Owns:** the Markdown-as-SSOT vault contract, one SQLite sidecar index, the SPA, and the runtime composition layer
 - **Composes at runtime:** [`symseek`](https://github.com/danieljustus/symaira-seek) (search), [`symmemory`](https://github.com/danieljustus/symaira-memory) (RAG/graph), [`symfetch`](https://github.com/danieljustus/symaira-fetch) (web→md), [`symvault`](https://github.com/danieljustus/symaira-vault) (secrets), [`symaira-ingest`](https://github.com/danieljustus/symaira-ingest) (OCR)
 - **Delegates (does not rebuild):** spreadsheets → LibreOffice; code editing → editor plugins + agent orchestration; iCloud sync → the OS
-- **Language:** Go (CGO-free) + TypeScript/React. **Status:** planning. **License:** MIT
+- **Language:** Go (CGO-free) + TypeScript/React. **Status:** planning. **License:** Apache-2.0

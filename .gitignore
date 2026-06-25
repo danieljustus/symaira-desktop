@@ -1,0 +1,29 @@
+# Binaries
+/symdesk
+*.exe
+*.test
+*.out
+coverage.*
+
+# Build artifacts
+/dist/
+/build/
+
+# Go
+vendor/
+
+# Frontend (React/Vite SPA under web/)
+node_modules/
+web/node_modules/
+web/dist/
+
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Local working docs — NOT published (design notes, research, diagrams)
+docs/

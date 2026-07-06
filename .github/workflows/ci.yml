@@ -50,4 +50,19 @@ jobs:
       - name: Check formatting
         run: test -z "$(gofmt -l .)"
 
-
+  app:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install xcodegen
+        run: brew install xcodegen
+        
+      - name: Generate Xcode Project
+        run: xcodegen generate
+        
+      - name: Build App
+        run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+        
+      - name: Run Tests
+        run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDeskCoreTests -destination 'platform=macOS' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

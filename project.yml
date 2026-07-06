@@ -1,0 +1,64 @@
+name: SymDesk
+options:
+  bundleIdPrefix: com.symaira
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: false
+
+packages:
+  symaira-appkit:
+    path: ../symaira-appkit
+
+targets:
+  SymDeskCore:
+    type: library.static
+    platform: macOS
+    sources:
+      - Sources/SymDeskCore
+    dependencies:
+      - package: symaira-appkit
+        product: SymairaTheme
+      - package: symaira-appkit
+        product: SymairaCLIRunner
+      - package: symaira-appkit
+        product: SymairaToolKit
+    settings:
+      base:
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        SWIFT_VERSION: "6.0"
+
+  SymDesk:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/SymDeskApp
+    dependencies:
+      - target: SymDeskCore
+      - package: symaira-appkit
+        product: SymairaTheme
+      - package: symaira-appkit
+        product: SymairaCLIRunner
+      - package: symaira-appkit
+        product: SymairaToolKit
+    settings:
+      base:
+        INFOPLIST_FILE: Sources/SymDeskApp/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.symaira.desktop
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        SWIFT_VERSION: "6.0"
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited)"
+
+  SymDeskCoreTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests/SymDeskCoreTests
+    dependencies:
+      - target: SymDeskCore
+    settings:
+      base:
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        SWIFT_VERSION: "6.0"

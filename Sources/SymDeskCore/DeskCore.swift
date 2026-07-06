@@ -32,6 +32,14 @@ public struct DeskStatus: Codable {
     }
 }
 
+public struct SearchResult: Codable, Equatable, Identifiable {
+    public var id: String { path }
+    public let path: String
+    public let title: String
+    public let snippet: String
+    public let score: Double?
+}
+
 @MainActor
 public final class DeskCore: ObservableObject {
     public static let shared = DeskCore()
@@ -82,5 +90,41 @@ public final class DeskCore: ObservableObject {
         let runner = CLIRunner()
         let out = try await runner.runChecked(tool.location.url, arguments: ["doctor"])
         return String(decoding: out, as: UTF8.self)
+    }
+    
+    public func search(query: String) async throws -> [SearchResult] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            [SearchResult].self,
+            executable: tool.location.url,
+            arguments: ["search", query, "--json"]
+        )
+    }
+    
+    public func backlinks(for path: String) async throws -> [String] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            [String].self,
+            executable: tool.location.url,
+            arguments: ["backlinks", path, "--json"]
+        )
+    }
+    
+    public func noteNew(title: String) async throws -> String {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        // symdesk note new --title <title> --json
+        // Returns e.g. {"path": "..."}
+        struct NoteNewResult: Codable {
+            let path: String
+        }
+        let res = try await runner.runDecoding(
+            NoteNewResult.self,
+            executable: tool.location.url,
+            arguments: ["note", "new", "--title", title, "--json"]
+        )
+        return res.path
     }
 }

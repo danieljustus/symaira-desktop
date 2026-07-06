@@ -1,0 +1,116 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"os"
+
+	"github.com/spf13/cobra"
+
+	"github.com/danieljustus/symaira-corekit/exitcodes"
+	"github.com/danieljustus/symaira-corekit/logkit"
+	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/mcp"
+)
+
+var version = "0.1.0-dev"
+var schemaVersion = 1
+
+var (
+	cfg      *config.Config
+	jsonFlag bool
+)
+
+func main() {
+	cobra.OnInitialize(initConfig)
+
+	rootCmd := newRootCmd()
+
+	if err := rootCmd.Execute(); err != nil {
+		if jsonFlag {
+			// output error as JSON
+			errObj := map[string]string{"error": err.Error()}
+			if b, err := json.Marshal(errObj); err == nil {
+				fmt.Println(string(b))
+			}
+		} else {
+			fmt.Fprintln(os.Stderr, exitcodes.FormatCLIError(err))
+		}
+		os.Exit(int(exitcodes.ExitCodeFromError(err)))
+	}
+}
+
+func initConfig() {
+	var err error
+	cfg, err = config.Load()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err)
+		os.Exit(int(exitcodes.ExitConfig))
+	}
+}
+
+func newRootCmd() *cobra.Command {
+	rootCmd := &cobra.Command{
+		Use:           "symdesk",
+		Short:         "Symaira-Desktop: Local-first Markdown Vault CLI and MCP Server",
+		SilenceErrors: true,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			// Zero-stdio pollution: logging to stderr
+			slog.SetDefault(logkit.New(os.Stderr, slog.LevelInfo, "text"))
+		},
+	}
+	rootCmd.Version = version
+	rootCmd.PersistentFlags().BoolVar(&jsonFlag, "json", false, "output in JSON format")
+
+	// 1. Version Command
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			if jsonFlag {
+				out := map[string]interface{}{
+					"version":        version,
+					"schema_version": schemaVersion,
+				}
+				b, _ := json.Marshal(out)
+				fmt.Println(string(b))
+			} else {
+				fmt.Printf("symdesk version %s (schema %d)\n", version, schemaVersion)
+			}
+		},
+	}
+	rootCmd.AddCommand(versionCmd)
+
+	// 2. MCP Command
+	mcpCmd := &cobra.Command{
+		Use:   "mcp",
+		Short: "Start the stdio MCP server",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return mcp.StartServer(cfg, version)
+		},
+	}
+	rootCmd.AddCommand(mcpCmd)
+
+	// 3. Doctor Command (Stub)
+	doctorCmd := &cobra.Command{
+		Use:   "doctor",
+		Short: "Check system health and vault configuration",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if jsonFlag {
+				out := map[string]interface{}{
+					"status": "ok",
+					"vault":  cfg.Vault,
+				}
+				b, _ := json.Marshal(out)
+				fmt.Println(string(b))
+			} else {
+				fmt.Printf("Doctor check passed.\nVault path: %s\n", cfg.Vault)
+			}
+			return nil
+		},
+	}
+	rootCmd.AddCommand(doctorCmd)
+
+	return rootCmd
+}

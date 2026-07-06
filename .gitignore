@@ -27,3 +27,4 @@ web/dist/
 
 # Local working docs — NOT published (design notes, research, diagrams)
 docs/
+internal/service/testdata/

@@ -1,7 +1,14 @@
-.PHONY: build test lint fmt-check clean
+.PHONY: build build-cli build-sidecar test lint fmt-check clean
 
-build:
-	CGO_ENABLED=0 go build ./...
+build: build-cli build-sidecar
+
+build-cli:
+	@mkdir -p bin
+	go build -o bin/symdesk ./cmd/symdesk
+
+build-sidecar:
+	@chmod +x build-sidecar.sh
+	./build-sidecar.sh
 
 test:
 	CGO_ENABLED=0 go test -race ./...

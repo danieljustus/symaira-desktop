@@ -34,9 +34,7 @@ CREATE TABLE view_presets (
 -- FTS5 table for Leitplanke 3
 CREATE VIRTUAL TABLE fts_search USING fts5(
     title,
-    body,
-    content='files',
-    content_rowid='id'
+    body
 );
 
 

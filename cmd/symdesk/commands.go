@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -173,4 +174,173 @@ func registerCommands(rootCmd *cobra.Command) {
 		},
 	}
 	rootCmd.AddCommand(indexCmd)
+
+	lsCmd := &cobra.Command{
+		Use:   "ls",
+		Short: "List files in the vault",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dirPrefix, _ := cmd.Flags().GetString("dir")
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			results, err := svc.Ls(dirPrefix)
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	lsCmd.Flags().String("dir", "", "directory prefix")
+	rootCmd.AddCommand(lsCmd)
+
+	searchCmd := &cobra.Command{
+		Use:   "search [query]",
+		Short: "Search files in the vault",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			results, err := svc.Search(args[0])
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	rootCmd.AddCommand(searchCmd)
+
+	propsCmd := &cobra.Command{
+		Use:   "props [file]",
+		Short: "Get properties for a file",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			results, err := svc.Props(args[0])
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	rootCmd.AddCommand(propsCmd)
+
+	backlinksCmd := &cobra.Command{
+		Use:   "backlinks [file]",
+		Short: "Get backlinks for a file",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			results, err := svc.Backlinks(args[0])
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	rootCmd.AddCommand(backlinksCmd)
+
+	noteCmd := &cobra.Command{
+		Use:   "note",
+		Short: "Manage notes",
+	}
+	rootCmd.AddCommand(noteCmd)
+
+	noteNewCmd := &cobra.Command{
+		Use:   "new",
+		Short: "Create a new note",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			title, _ := cmd.Flags().GetString("title")
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			// Simple content logic
+			content := ""
+			if len(args) > 0 {
+				content = args[0]
+			}
+
+			path, err := svc.NoteNew(title, content)
+			if err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"status": "created", "path": path})
+		},
+	}
+	noteNewCmd.Flags().String("title", "", "title of the new note")
+	noteNewCmd.MarkFlagRequired("title")
+	noteCmd.AddCommand(noteNewCmd)
+
+	noteMoveCmd := &cobra.Command{
+		Use:   "move [oldPath] [newPath]",
+		Short: "Move/Rename a note",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			err = svc.NoteMove(args[0], args[1])
+			if err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"status": "moved", "from": args[0], "to": args[1]})
+		},
+	}
+	noteCmd.AddCommand(noteMoveCmd)
+
+	rootCmd.AddCommand(newEventsCmd())
+}
+
+func initServiceDeps() (string, *sidecar.DB, error) {
+	vRoot, err := vault.ResolveVaultRoot("", cfg)
+	if err != nil {
+		return "", nil, err
+	}
+	db, err := sidecar.Open("")
+	if err != nil {
+		return "", nil, err
+	}
+	return vRoot, db, nil
+}
+
+func outputResult(data interface{}) error {
+	if jsonFlag {
+		b, err := json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(b))
+	} else {
+		// Just a simple print for non-JSON
+		fmt.Printf("%+v\n", data)
+	}
+	return nil
 }

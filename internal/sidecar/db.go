@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/danieljustus/symaira-corekit/sqlitekit"
@@ -163,7 +164,7 @@ func (db *DB) CheckIntegrity() error {
 // Search performs a basic FTS search.
 func (db *DB) Search(query string) ([]*vault.Document, error) {
 	rows, err := db.conn.Query(`
-		SELECT f.path, f.title, snippet(fts_search, -1, '<b>', '</b>', '...', 64) as snippet
+		SELECT f.path, f.title, snippet(fts_search, 1, '<b>', '</b>', '...', 64) as snippet
 		FROM fts_search s
 		JOIN files f ON f.id = s.rowid
 		WHERE fts_search MATCH ?
@@ -186,4 +187,80 @@ func (db *DB) Search(query string) ([]*vault.Document, error) {
 		docs = append(docs, &d)
 	}
 	return docs, nil
+}
+
+// ListFiles returns all files, optionally filtered by a directory prefix.
+func (db *DB) ListFiles(dirPrefix string) ([]*vault.Document, error) {
+	query := `SELECT path, title, modified_at FROM files`
+	var args []interface{}
+	if dirPrefix != "" {
+		query += ` WHERE path LIKE ?`
+		args = append(args, dirPrefix+"%")
+	}
+	query += ` ORDER BY path ASC`
+
+	rows, err := db.conn.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var docs []*vault.Document
+	for rows.Next() {
+		var d vault.Document
+		if err := rows.Scan(&d.Path, &d.Title, &d.Created); err != nil {
+			return nil, err
+		}
+		docs = append(docs, &d)
+	}
+	return docs, nil
+}
+
+// GetProperties returns the properties for a given file.
+func (db *DB) GetProperties(path string) (map[string]interface{}, error) {
+	rows, err := db.conn.Query(`
+		SELECT p.key, p.value
+		FROM file_properties p
+		JOIN files f ON f.id = p.file_id
+		WHERE f.path = ?
+	`, path)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	props := make(map[string]interface{})
+	for rows.Next() {
+		var k, v string
+		if err := rows.Scan(&k, &v); err != nil {
+			return nil, err
+		}
+		props[k] = v
+	}
+	return props, nil
+}
+
+// GetBacklinks returns the paths of files that link to the given path or title.
+func (db *DB) GetBacklinks(path string) ([]string, error) {
+	baseName := filepath.Base(path)
+	title := strings.TrimSuffix(baseName, filepath.Ext(baseName))
+
+	rows, err := db.conn.Query(`
+		SELECT from_path FROM links
+		WHERE to_path = ? OR to_path = ?
+	`, path, title)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var links []string
+	for rows.Next() {
+		var p string
+		if err := rows.Scan(&p); err != nil {
+			return nil, err
+		}
+		links = append(links, p)
+	}
+	return links, nil
 }

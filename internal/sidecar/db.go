@@ -1,0 +1,189 @@
+package sidecar
+
+import (
+	"database/sql"
+	"embed"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/danieljustus/symaira-corekit/sqlitekit"
+	_ "modernc.org/sqlite"
+
+	"github.com/danieljustus/symaira-desktop/internal/vault"
+)
+
+//go:embed migrations/*.sql
+var migrationsFS embed.FS
+
+// DB represents a connection to the sidecar database.
+type DB struct {
+	conn *sql.DB
+}
+
+// Open opens the sidecar database at the specified path and runs migrations.
+// The default path is ~/.local/share/symdesk/sidecar.db
+func Open(path string) (*DB, error) {
+	if path == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return nil, fmt.Errorf("user home dir: %w", err)
+		}
+		path = filepath.Join(home, ".local", "share", "symdesk", "sidecar.db")
+	}
+
+	conn, err := sqlitekit.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("open sqlite: %w", err)
+	}
+
+	if err := sqlitekit.Migrate(conn, migrationsFS); err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("migrate: %w", err)
+	}
+
+	return &DB{conn: conn}, nil
+}
+
+// Close closes the database connection.
+func (db *DB) Close() error {
+	return db.conn.Close()
+}
+
+// IsIndexed checks if a file is already indexed with the same SHA256.
+func (db *DB) IsIndexed(path, sha256 string) (bool, error) {
+	var hash string
+	err := db.conn.QueryRow("SELECT sha256 FROM files WHERE path = ?", path).Scan(&hash)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+	return hash == sha256, nil
+}
+
+// IndexDocument indexes a single document into the sidecar.
+func (db *DB) IndexDocument(doc *vault.Document) error {
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// 1. Check if exists to potentially delete from FTS first
+	var fileID int64
+	var oldTitle string
+	err = tx.QueryRow("SELECT id, title FROM files WHERE path = ?", doc.Path).Scan(&fileID, &oldTitle)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	if err == nil {
+		// Found existing, remove from FTS first
+		_, err = tx.Exec("INSERT INTO fts_search(fts_search, rowid, title, body) VALUES ('delete', ?, ?, '')", fileID, oldTitle)
+		if err != nil {
+			return err
+		}
+
+		// Update files
+		_, err = tx.Exec(`UPDATE files SET sha256 = ?, title = ?, modified_at = ?, indexed_at = ? WHERE id = ?`,
+			doc.SHA256, doc.Title, doc.Created, time.Now(), fileID)
+		if err != nil {
+			return err
+		}
+
+		// Delete old properties and links
+		_, err = tx.Exec("DELETE FROM file_properties WHERE file_id = ?", fileID)
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec("DELETE FROM links WHERE from_path = ?", doc.Path)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		// New file
+		res, err := tx.Exec(`INSERT INTO files(path, sha256, title, modified_at, indexed_at) VALUES (?, ?, ?, ?, ?)`,
+			doc.Path, doc.SHA256, doc.Title, doc.Created, time.Now())
+		if err != nil {
+			return err
+		}
+		fileID, err = res.LastInsertId()
+		if err != nil {
+			return err
+		}
+	}
+
+	// 2. Insert into FTS
+	_, err = tx.Exec("INSERT INTO fts_search(rowid, title, body) VALUES (?, ?, ?)", fileID, doc.Title, doc.Body)
+	if err != nil {
+		return err
+	}
+
+	// 3. Insert file properties
+	for k, v := range doc.Frontmatter {
+		valStr := fmt.Sprintf("%v", v)
+		valType := "string" // Basic type inference could go here
+		_, err = tx.Exec(`INSERT INTO file_properties(file_id, key, value, value_type) VALUES (?, ?, ?, ?)`,
+			fileID, k, valStr, valType)
+		if err != nil {
+			return err
+		}
+	}
+
+	// 4. Insert links
+	for _, target := range doc.Links {
+		// To path would typically be resolved, here we just save the name
+		_, err = tx.Exec(`INSERT INTO links(from_path, to_path, kind) VALUES (?, ?, 'wikilink')`,
+			doc.Path, target)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+// CheckIntegrity performs a basic check on the database.
+func (db *DB) CheckIntegrity() error {
+	var result string
+	err := db.conn.QueryRow("PRAGMA integrity_check;").Scan(&result)
+	if err != nil {
+		return err
+	}
+	if result != "ok" {
+		return fmt.Errorf("integrity check failed: %s", result)
+	}
+	return nil
+}
+
+// Search performs a basic FTS search.
+func (db *DB) Search(query string) ([]*vault.Document, error) {
+	rows, err := db.conn.Query(`
+		SELECT f.path, f.title, snippet(fts_search, -1, '<b>', '</b>', '...', 64) as snippet
+		FROM fts_search s
+		JOIN files f ON f.id = s.rowid
+		WHERE fts_search MATCH ?
+		ORDER BY rank LIMIT 20
+	`, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var docs []*vault.Document
+	for rows.Next() {
+		var d vault.Document
+		var snippet string
+		if err := rows.Scan(&d.Path, &d.Title, &snippet); err != nil {
+			return nil, err
+		}
+		// Storing snippet in Body for now
+		d.Body = snippet
+		docs = append(docs, &d)
+	}
+	return docs, nil
+}

@@ -93,24 +93,7 @@ func newRootCmd() *cobra.Command {
 	rootCmd.AddCommand(mcpCmd)
 
 	// 3. Doctor Command (Stub)
-	doctorCmd := &cobra.Command{
-		Use:   "doctor",
-		Short: "Check system health and vault configuration",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if jsonFlag {
-				out := map[string]interface{}{
-					"status": "ok",
-					"vault":  cfg.Vault,
-				}
-				b, _ := json.Marshal(out)
-				fmt.Println(string(b))
-			} else {
-				fmt.Printf("Doctor check passed.\nVault path: %s\n", cfg.Vault)
-			}
-			return nil
-		},
-	}
-	rootCmd.AddCommand(doctorCmd)
+	registerCommands(rootCmd)
 
 	return rootCmd
 }

@@ -79,6 +79,11 @@ public struct GraphEdge: Codable, Equatable, Identifiable {
 public struct GraphData: Codable, Equatable {
     public let nodes: [GraphNode]
     public let edges: [GraphEdge]
+    
+    public init(nodes: [GraphNode], edges: [GraphEdge]) {
+        self.nodes = nodes
+        self.edges = edges
+    }
 }
 
 @MainActor
@@ -167,6 +172,15 @@ public final class DeskCore: ObservableObject {
             arguments: ["note", "new", "--title", title, "--json"]
         )
         return res.path
+    }
+    
+    public func noteEditProperty(path: String, key: String, value: String) async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        _ = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["props", "edit", path, key, value]
+        )
     }
     
     public func getGraph() async throws -> GraphData {

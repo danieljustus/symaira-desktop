@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -147,4 +149,38 @@ func (s *Service) NoteMove(oldPath, newPath string) error {
 
 	// NOTE: In a complete implementation, we should also delete the old entry from the DB.
 	return nil
+}
+
+// PropsEdit updates a frontmatter property in the file and re-indexes.
+func (s *Service) PropsEdit(relPath, key, value string) error {
+	absPath := filepath.Join(s.VaultRoot, relPath)
+	doc, err := vault.ParseFile(absPath)
+	if err != nil {
+		return err
+	}
+	
+	// Update frontmatter
+	if doc.Frontmatter == nil {
+		doc.Frontmatter = make(map[string]interface{})
+	}
+	doc.Frontmatter[key] = value
+	
+	// Write back to file.
+	// For MVP, we reconstruct the frontmatter simply.
+	fmBytes, err := yaml.Marshal(doc.Frontmatter)
+	if err != nil {
+		return err
+	}
+	
+	newContent := fmt.Sprintf("---\n%s---\n%s", string(fmBytes), doc.Body)
+	if err := os.WriteFile(absPath, []byte(newContent), 0644); err != nil {
+		return err
+	}
+	
+	// Re-parse and index
+	newDoc, err := vault.ParseFile(absPath)
+	if err != nil {
+		return err
+	}
+	return s.DB.IndexDocument(newDoc)
 }

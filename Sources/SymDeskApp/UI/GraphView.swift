@@ -5,13 +5,32 @@ struct GraphView: View {
     @EnvironmentObject var core: DeskCore
     @State private var graphData: GraphData?
     @State private var nodePositions: [String: CGPoint] = [:]
+    @State private var filterText: String = ""
     
     var onSelectNode: ((String) -> Void)?
     
+    var filteredData: GraphData? {
+        guard let data = graphData else { return nil }
+        if filterText.isEmpty { return data }
+        
+        let lower = filterText.lowercased()
+        let filteredNodes = data.nodes.filter { $0.id.lowercased().contains(lower) || $0.label.lowercased().contains(lower) }
+        let validIDs = Set(filteredNodes.map { $0.id })
+        
+        let filteredEdges = data.edges.filter { validIDs.contains($0.source) && validIDs.contains($0.target) }
+        
+        return GraphData(nodes: filteredNodes, edges: filteredEdges)
+    }
+    
     var body: some View {
-        GeometryReader { geo in
-            if let data = graphData {
-                Canvas { context, size in
+        VStack {
+            TextField("Filter by name or path...", text: $filterText)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+            
+            GeometryReader { geo in
+                if let data = filteredData {
+                    Canvas { context, size in
                     // Draw edges
                     for edge in data.edges {
                         if let p1 = nodePositions[edge.source], let p2 = nodePositions[edge.target] {
@@ -49,6 +68,7 @@ struct GraphView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        }
         .task {
             do {
                 self.graphData = try await core.getGraph()
@@ -57,6 +77,8 @@ struct GraphView: View {
             }
         }
     }
+
+
     
     private func findNode(at point: CGPoint) -> GraphNode? {
         guard let data = graphData else { return nil }

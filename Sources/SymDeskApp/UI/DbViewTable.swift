@@ -17,9 +17,12 @@ struct DbViewTable: View {
         let data: [String: Any]
     }
     
+    @State private var editingRow: String?
+    @State private var editingCol: String?
+    @State private var editValue: String = ""
+    
     var sortedRows: [TableRow] {
         rows.map { TableRow(id: $0["_path"] as? String ?? UUID().uuidString, data: $0) }
-            // Sort logic would go here based on sortOrder if we used typed models
     }
     
     var body: some View {
@@ -29,8 +32,6 @@ struct DbViewTable: View {
             } else if columns.isEmpty {
                 Text("View is empty or not found.")
             } else {
-                // In macOS 13/14, Table requires statically defined columns or a ForEach on columns if possible.
-                // Dynamic columns in SwiftUI Table can be tricky. We can use a Grid or List with HStack.
                 ScrollView([.horizontal, .vertical]) {
                     Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 8) {
                         GridRow {
@@ -45,9 +46,33 @@ struct DbViewTable: View {
                         ForEach(sortedRows) { row in
                             GridRow {
                                 ForEach(columns, id: \.self) { col in
-                                    Text("\(row.data[col] ?? "")")
-                                        .lineLimit(1)
-                                        .truncationMode(.tail)
+                                    if col == "_path" || col == "_title" {
+                                        Text("\(row.data[col] ?? "")")
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
+                                    } else {
+                                        if editingRow == row.id && editingCol == col {
+                                            TextField("Value", text: $editValue)
+                                                .onSubmit {
+                                                    Task {
+                                                        await saveEdit(path: row.id, key: col, value: editValue)
+                                                    }
+                                                }
+                                                .onExitCommand {
+                                                    clearEdit()
+                                                }
+                                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        } else {
+                                            Text("\(row.data[col] ?? "")")
+                                                .lineLimit(1)
+                                                .truncationMode(.tail)
+                                                .onTapGesture(count: 2) {
+                                                    editingRow = row.id
+                                                    editingCol = col
+                                                    editValue = "\(row.data[col] ?? "")"
+                                                }
+                                        }
+                                    }
                                 }
                             }
                             Divider()
@@ -59,6 +84,22 @@ struct DbViewTable: View {
         }
         .task(id: viewID) {
             await loadData()
+        }
+    }
+    
+    private func clearEdit() {
+        editingRow = nil
+        editingCol = nil
+        editValue = ""
+    }
+    
+    private func saveEdit(path: String, key: String, value: String) async {
+        do {
+            try await core.noteEditProperty(path: path, key: key, value: value)
+            clearEdit()
+            await loadData()
+        } catch {
+            print("Failed to save property: \(error)")
         }
     }
     

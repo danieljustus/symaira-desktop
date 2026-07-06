@@ -264,3 +264,28 @@ func (db *DB) GetBacklinks(path string) ([]string, error) {
 	}
 	return links, nil
 }
+
+// Edge represents a link between two files.
+type Edge struct {
+	Source string
+	Target string
+}
+
+// GetAllLinks returns all links in the database.
+func (db *DB) GetAllLinks() ([]Edge, error) {
+	rows, err := db.conn.Query("SELECT from_path, to_path FROM links")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var edges []Edge
+	for rows.Next() {
+		var s, t string
+		if err := rows.Scan(&s, &t); err != nil {
+			return nil, err
+		}
+		edges = append(edges, Edge{Source: s, Target: t})
+	}
+	return edges, nil
+}

@@ -40,6 +40,47 @@ public struct SearchResult: Codable, Equatable, Identifiable {
     public let score: Double?
 }
 
+public struct DbFilter: Codable, Equatable {
+    public let key: String
+    public let operatorString: String
+    public let value: String
+    
+    enum CodingKeys: String, CodingKey {
+        case key
+        case operatorString = "operator"
+        case value
+    }
+}
+
+public struct DbSort: Codable, Equatable {
+    public let key: String
+    public let ascending: Bool
+}
+
+public struct DbView: Codable, Equatable, Identifiable {
+    public let id: String
+    public let name: String
+    public let filters: [DbFilter]
+    public let sorts: [DbSort]
+    public let columns: [String]
+}
+
+public struct GraphNode: Codable, Equatable, Identifiable {
+    public let id: String
+    public let label: String
+}
+
+public struct GraphEdge: Codable, Equatable, Identifiable {
+    public var id: String { "\(source)->\(target)" }
+    public let source: String
+    public let target: String
+}
+
+public struct GraphData: Codable, Equatable {
+    public let nodes: [GraphNode]
+    public let edges: [GraphEdge]
+}
+
 @MainActor
 public final class DeskCore: ObservableObject {
     public static let shared = DeskCore()
@@ -126,5 +167,49 @@ public final class DeskCore: ObservableObject {
             arguments: ["note", "new", "--title", title, "--json"]
         )
         return res.path
+    }
+    
+    public func getGraph() async throws -> GraphData {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            GraphData.self,
+            executable: tool.location.url,
+            arguments: ["graph", "--json"]
+        )
+    }
+    
+    public func viewsList() async throws -> [DbView] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            [DbView].self,
+            executable: tool.location.url,
+            arguments: ["views", "list", "--json"]
+        )
+    }
+    
+    public func viewsGet(id: String) async throws -> DbView {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            DbView.self,
+            executable: tool.location.url,
+            arguments: ["views", "get", id, "--json"]
+        )
+    }
+    
+    // We expect an array of JSON objects. In Swift we can use [String: AnyCodable] or just a loose representation.
+    // For simplicity, let's use [String: String] since sqlite snippet / properties are strings, or a generic dictionary.
+    // However, Swift's Codable doesn't do [String: Any] easily without a custom wrapper.
+    // Let's use `Data` and let the UI decode it or use a simple struct.
+    public func viewsExec(id: String) async throws -> Data {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        // We runChecked and just return the raw JSON data so the UI can parse it dynamically
+        return try await runner.runChecked(
+            tool.location.url,
+            arguments: ["views", "exec", id, "--json"]
+        )
     }
 }

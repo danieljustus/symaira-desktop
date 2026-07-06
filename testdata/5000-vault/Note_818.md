@@ -1,0 +1,13 @@
+---
+status: bezahlt
+type: rechnung
+amount: 467.62
+tags:
+  - test
+  - generiert
+---
+# Note 818
+
+Dies ist eine automatisch generierte Notiz für das Performance-Gate.
+
+[[Note_147]]

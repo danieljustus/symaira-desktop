@@ -266,6 +266,26 @@ func registerCommands(rootCmd *cobra.Command) {
 	}
 	rootCmd.AddCommand(noteCmd)
 
+	graphCmd := &cobra.Command{
+		Use:   "graph",
+		Short: "Get graph data",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			results, err := svc.Graph()
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	rootCmd.AddCommand(graphCmd)
+
 	noteNewCmd := &cobra.Command{
 		Use:   "new",
 		Short: "Create a new note",
@@ -315,6 +335,75 @@ func registerCommands(rootCmd *cobra.Command) {
 		},
 	}
 	noteCmd.AddCommand(noteMoveCmd)
+
+	viewsCmd := &cobra.Command{
+		Use:   "views",
+		Short: "Manage saved views",
+	}
+	rootCmd.AddCommand(viewsCmd)
+
+	viewsListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List saved views",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil { return err }
+			defer db.Close()
+			svc := service.New(vRoot, db)
+			res, err := svc.ViewsList()
+			if err != nil { return err }
+			return outputResult(res)
+		},
+	}
+	viewsCmd.AddCommand(viewsListCmd)
+
+	viewsGetCmd := &cobra.Command{
+		Use:   "get [id]",
+		Short: "Get a specific view",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil { return err }
+			defer db.Close()
+			svc := service.New(vRoot, db)
+			res, err := svc.ViewsGet(args[0])
+			if err != nil { return err }
+			return outputResult(res)
+		},
+	}
+	viewsCmd.AddCommand(viewsGetCmd)
+
+	viewsSaveCmd := &cobra.Command{
+		Use:   "save [json]",
+		Short: "Save a view",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil { return err }
+			defer db.Close()
+			svc := service.New(vRoot, db)
+			err = svc.ViewsSave([]byte(args[0]))
+			if err != nil { return err }
+			return outputResult(map[string]string{"status": "saved"})
+		},
+	}
+	viewsCmd.AddCommand(viewsSaveCmd)
+
+	viewsExecCmd := &cobra.Command{
+		Use:   "exec [id]",
+		Short: "Execute a view and get results",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil { return err }
+			defer db.Close()
+			svc := service.New(vRoot, db)
+			res, err := svc.ViewsExec(args[0])
+			if err != nil { return err }
+			return outputResult(res)
+		},
+	}
+	viewsCmd.AddCommand(viewsExecCmd)
 
 	rootCmd.AddCommand(newEventsCmd())
 }

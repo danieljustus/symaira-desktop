@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -17,6 +18,7 @@ import (
 type Service struct {
 	VaultRoot string
 	DB        *sidecar.DB
+	ViewsMgr  *dbviews.Manager
 }
 
 // New creates a new Service instance.
@@ -24,6 +26,7 @@ func New(vaultRoot string, db *sidecar.DB) *Service {
 	return &Service{
 		VaultRoot: vaultRoot,
 		DB:        db,
+		ViewsMgr:  dbviews.NewManager(vaultRoot),
 	}
 }
 

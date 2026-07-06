@@ -1,0 +1,13 @@
+---
+status: bezahlt
+type: rechnung
+amount: 711.27
+tags:
+  - test
+  - generiert
+---
+# Note 362
+
+Dies ist eine automatisch generierte Notiz für das Performance-Gate.
+
+[[Note_97]]

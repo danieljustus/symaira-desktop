@@ -1,0 +1,13 @@
+---
+status: offen
+type: rechnung
+amount: 74.77
+tags:
+  - test
+  - generiert
+---
+# Note 492
+
+Dies ist eine automatisch generierte Notiz für das Performance-Gate.
+
+[[Note_463]]

@@ -19,6 +19,16 @@ struct ContentView: View {
     // Auto-save debounce
     @State private var saveTask: Task<Void, Never>? = nil
     
+    enum DisplayMode {
+        case vault
+        case graph
+        case dbView
+    }
+    
+    @State private var displayMode: DisplayMode = .vault
+    @State private var selectedViewID: String?
+    @State private var dbViews: [DbView] = []
+    
     var body: some View {
         Group {
             if !core.isReady {
@@ -35,62 +45,98 @@ struct ContentView: View {
                 }
             } else {
                 NavigationSplitView {
-                    List(notes, selection: $selectedNote) { note in
-                        Text(note.title)
-                            .tag(note)
-                    }
-                    .navigationTitle("Vault")
-                } detail: {
-                    if let note = selectedNote {
-                        VStack(spacing: 0) {
-                            if isConflicted(note) {
-                                Text("⚠️ iCloud Conflict detected")
-                                    .font(.caption)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(4)
-                                    .background(Color.yellow.opacity(0.3))
-                                    .foregroundColor(.yellow)
+                    List {
+                        Section("Views") {
+                            Button("Vault") { displayMode = .vault }
+                            Button("Graph") { displayMode = .graph }
+                        }
+                        
+                        if !dbViews.isEmpty {
+                            Section("Saved Views") {
+                                ForEach(dbViews) { view in
+                                    Button(view.name) {
+                                        selectedViewID = view.id
+                                        displayMode = .dbView
+                                    }
+                                }
                             }
-                            
-                            HStack(spacing: 0) {
-                                MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
-                                    navigateToNote(title: targetTitle)
-                                })
-                                .onChange(of: noteContent) { newValue in
-                                    debouncedSave(note: note, content: newValue)
+                        }
+                        
+                        Section("Notes") {
+                            ForEach(notes) { note in
+                                Button(note.title) {
+                                    self.selectedNote = note
+                                    self.displayMode = .vault
+                                }
+                            }
+                        }
+                    }
+                    .navigationTitle("SymDesk")
+                } detail: {
+                    switch displayMode {
+                    case .graph:
+                        GraphView { selectedNodeID in
+                            navigateToNote(title: selectedNodeID)
+                            displayMode = .vault
+                        }
+                    case .dbView:
+                        if let vid = selectedViewID {
+                            DbViewTable(viewID: vid)
+                        } else {
+                            Text("Select a view")
+                        }
+                    case .vault:
+                        if let note = selectedNote {
+                            VStack(spacing: 0) {
+                                if isConflicted(note) {
+                                    Text("⚠️ iCloud Conflict detected")
+                                        .font(.caption)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(4)
+                                        .background(Color.yellow.opacity(0.3))
+                                        .foregroundColor(.yellow)
                                 }
                                 
-                                if isShowingPreview {
-                                    Divider()
-                                    ScrollView {
-                                        Text(LocalizedStringKey(noteContent))
-                                            .padding()
-                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                HStack(spacing: 0) {
+                                    MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
+                                        navigateToNote(title: targetTitle)
+                                    })
+                                    .onChange(of: noteContent) { newValue in
+                                        debouncedSave(note: note, content: newValue)
                                     }
-                                    .frame(maxWidth: .infinity)
+                                    
+                                    if isShowingPreview {
+                                        Divider()
+                                        ScrollView {
+                                            Text(LocalizedStringKey(noteContent))
+                                                .padding()
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                    }
                                 }
                             }
-                        }
-                        .navigationTitle(note.title)
-                        .toolbar {
-                            ToolbarItem {
-                                Button(action: { isShowingPreview.toggle() }) {
-                                    Label("Toggle Preview", systemImage: "sidebar.right")
+                            .navigationTitle(note.title)
+                            .toolbar {
+                                ToolbarItem {
+                                    Button(action: { isShowingPreview.toggle() }) {
+                                        Label("Toggle Preview", systemImage: "sidebar.right")
+                                    }
+                                }
+                                ToolbarItem {
+                                    Button(action: { isShowingInspector.toggle() }) {
+                                        Label("Toggle Inspector", systemImage: "info.circle")
+                                    }
                                 }
                             }
-                            ToolbarItem {
-                                Button(action: { isShowingInspector.toggle() }) {
-                                    Label("Toggle Inspector", systemImage: "info.circle")
-                                }
+                            .task(id: note.id) {
+                                await loadContent(for: note)
+                                await loadBacklinks(for: note)
                             }
+                        } else {
+                            Text("Select a note or press Cmd-K")
+                                .foregroundColor(.secondary)
                         }
-                        .task(id: note.id) {
-                            await loadContent(for: note)
-                            await loadBacklinks(for: note)
-                        }
-                    } else {
-                        Text("Select a note or press Cmd-K")
-                            .foregroundColor(.secondary)
                     }
                 }
                 .inspector(isPresented: $isShowingInspector) {
@@ -146,6 +192,7 @@ struct ContentView: View {
                 }
                 .task {
                     await fetchNotes()
+                    await fetchViews()
                     await fetchDoctor()
                 }
                 .onChange(of: watcher.latestEvent) { ev in
@@ -167,6 +214,14 @@ struct ContentView: View {
             self.notes = try await core.listFiles()
         } catch {
             print("Failed to list files: \(error)")
+        }
+    }
+    
+    private func fetchViews() async {
+        do {
+            self.dbViews = try await core.viewsList()
+        } catch {
+            print("Failed to list views: \(error)")
         }
     }
     

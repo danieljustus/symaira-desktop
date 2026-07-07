@@ -19,7 +19,7 @@ func TestManager(t *testing.T) {
 
 	// Save new
 	v1 := View{
-		Name: "Test View",
+		Name:    "Test View",
 		Columns: []string{"title", "status"},
 	}
 	err = mgr.Save(v1)

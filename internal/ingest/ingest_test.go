@@ -62,7 +62,7 @@ func TestIngestFileMissingSource(t *testing.T) {
 
 func TestIngestDelegation(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	mockSymingest := filepath.Join(tempDir, "symingest")
 	script := "#!/bin/sh\n" +
 		"if [ \"$1\" = \"version\" ]; then\n" +

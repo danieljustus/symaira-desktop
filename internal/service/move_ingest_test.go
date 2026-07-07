@@ -57,6 +57,7 @@ func TestNoteMoveDeniesTraversal(t *testing.T) {
 }
 
 func TestIngestIndexesInboxNote(t *testing.T) {
+	t.Setenv("PATH", "/usr/bin:/bin")
 	svc := newTestService(t)
 
 	src := filepath.Join(t.TempDir(), "doc.txt")

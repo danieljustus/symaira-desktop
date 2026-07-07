@@ -8,6 +8,8 @@ import (
 )
 
 func TestIngestFile(t *testing.T) {
+	// Ensure we test the fallback path by removing symingest from PATH
+	t.Setenv("PATH", "/usr/bin:/bin")
 	vaultRoot := t.TempDir()
 	srcDir := t.TempDir()
 
@@ -55,5 +57,48 @@ func TestIngestFile(t *testing.T) {
 func TestIngestFileMissingSource(t *testing.T) {
 	if _, err := IngestFile(t.TempDir(), "/nonexistent/file.pdf"); err == nil {
 		t.Error("expected error for missing source")
+	}
+}
+
+func TestIngestDelegation(t *testing.T) {
+	tempDir := t.TempDir()
+
+	mockSymingest := filepath.Join(tempDir, "symingest")
+	script := "#!/bin/sh\n" +
+		"if [ \"$1\" = \"version\" ]; then\n" +
+		"	echo '{\"schema_version\": 1, \"version\": \"0.7.0\"}'\n" +
+		"	exit 0\n" +
+		"fi\n" +
+		"if [ \"$1\" = \"ingest\" ]; then\n" +
+		"	if [ \"$4\" = \"--json\" ]; then\n" +
+		"		echo '{\"path\": \"mock_output.md\"}'\n" +
+		"		exit 0\n" +
+		"	fi\n" +
+		"	exit 1\n" +
+		"fi\n" +
+		"exit 1\n"
+
+	if err := os.WriteFile(mockSymingest, []byte(script), 0755); err != nil {
+		t.Fatalf("failed to write mock script: %v", err)
+	}
+
+	t.Setenv("PATH", tempDir+":"+os.Getenv("PATH"))
+
+	ok, _ := HasSymingest()
+	if !ok {
+		t.Fatalf("expected HasSymingest to be true with mock")
+	}
+
+	vaultRoot := t.TempDir()
+	srcFile := filepath.Join(t.TempDir(), "test.txt")
+	os.WriteFile(srcFile, []byte("test"), 0644)
+
+	relPath, err := IngestFile(vaultRoot, srcFile)
+	if err != nil {
+		t.Fatalf("IngestFile failed: %v", err)
+	}
+
+	if relPath != "mock_output.md" {
+		t.Errorf("expected mock_output.md, got %s", relPath)
 	}
 }

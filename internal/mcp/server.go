@@ -37,9 +37,39 @@ func StartServer(cfg *config.Config, version string) error {
 		return service.New(vRoot, db), db, nil
 	}
 
-	registerDeskStatus(server, cfg)
+	server.RegisterTool(newStatusTool(cfg))
+	server.RegisterTool(newLsTool(getService))
+	server.RegisterTool(newSearchTool(getService))
+	server.RegisterTool(newPropsTool(getService))
+	server.RegisterTool(newBacklinksTool(getService))
+	server.RegisterTool(newNoteNewTool(getService))
+	server.RegisterTool(newAskTool(getService))
+	server.RegisterTool(newIngestTool(getService))
 
-	server.RegisterTool(&mcpserver.Tool{
+	return server.ServeStdio(context.Background())
+}
+
+// serviceFactory opens a fresh service + sidecar per request; the caller
+// closes the returned DB.
+type serviceFactory func() (*service.Service, *sidecar.DB, error)
+
+func newStatusTool(cfg *config.Config) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_status",
+		Description: "Returns the current version and vault path configuration for symdesk.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{}}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			status := map[string]string{
+				"version": ServerVersion,
+				"vault":   cfg.Vault,
+			}
+			return status, nil
+		},
+	}
+}
+
+func newLsTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
 		Name:        "desk_ls",
 		Description: "Lists files in the vault.",
 		InputSchema: json.RawMessage(`{"type":"object","properties":{"dir":{"type":"string"}}}`),
@@ -47,7 +77,9 @@ func StartServer(cfg *config.Config, version string) error {
 			var args struct {
 				Dir string `json:"dir"`
 			}
-			json.Unmarshal(input, &args)
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
 			svc, db, err := getService()
 			if err != nil {
 				return nil, err
@@ -55,9 +87,11 @@ func StartServer(cfg *config.Config, version string) error {
 			defer db.Close()
 			return svc.Ls(args.Dir)
 		},
-	})
+	}
+}
 
-	server.RegisterTool(&mcpserver.Tool{
+func newSearchTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
 		Name:        "desk_search",
 		Description: "Searches for notes in the vault.",
 		InputSchema: json.RawMessage(`{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`),
@@ -65,7 +99,12 @@ func StartServer(cfg *config.Config, version string) error {
 			var args struct {
 				Query string `json:"query"`
 			}
-			json.Unmarshal(input, &args)
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.Query == "" {
+				return nil, fmt.Errorf("query is required")
+			}
 			svc, db, err := getService()
 			if err != nil {
 				return nil, err
@@ -73,9 +112,11 @@ func StartServer(cfg *config.Config, version string) error {
 			defer db.Close()
 			return svc.Search(args.Query)
 		},
-	})
+	}
+}
 
-	server.RegisterTool(&mcpserver.Tool{
+func newPropsTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
 		Name:        "desk_props",
 		Description: "Gets properties (frontmatter) for a note.",
 		InputSchema: json.RawMessage(`{"type":"object","properties":{"file":{"type":"string"}},"required":["file"]}`),
@@ -83,7 +124,12 @@ func StartServer(cfg *config.Config, version string) error {
 			var args struct {
 				File string `json:"file"`
 			}
-			json.Unmarshal(input, &args)
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.File == "" {
+				return nil, fmt.Errorf("file is required")
+			}
 			svc, db, err := getService()
 			if err != nil {
 				return nil, err
@@ -91,9 +137,11 @@ func StartServer(cfg *config.Config, version string) error {
 			defer db.Close()
 			return svc.Props(args.File)
 		},
-	})
+	}
+}
 
-	server.RegisterTool(&mcpserver.Tool{
+func newBacklinksTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
 		Name:        "desk_backlinks",
 		Description: "Gets backlinks for a note.",
 		InputSchema: json.RawMessage(`{"type":"object","properties":{"file":{"type":"string"}},"required":["file"]}`),
@@ -101,7 +149,12 @@ func StartServer(cfg *config.Config, version string) error {
 			var args struct {
 				File string `json:"file"`
 			}
-			json.Unmarshal(input, &args)
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.File == "" {
+				return nil, fmt.Errorf("file is required")
+			}
 			svc, db, err := getService()
 			if err != nil {
 				return nil, err
@@ -109,9 +162,11 @@ func StartServer(cfg *config.Config, version string) error {
 			defer db.Close()
 			return svc.Backlinks(args.File)
 		},
-	})
+	}
+}
 
-	server.RegisterTool(&mcpserver.Tool{
+func newNoteNewTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
 		Name:        "desk_note_new",
 		Description: "Creates a new note.",
 		InputSchema: json.RawMessage(`{"type":"object","properties":{"title":{"type":"string"},"content":{"type":"string"}},"required":["title"]}`),
@@ -120,7 +175,12 @@ func StartServer(cfg *config.Config, version string) error {
 				Title   string `json:"title"`
 				Content string `json:"content"`
 			}
-			json.Unmarshal(input, &args)
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.Title == "" {
+				return nil, fmt.Errorf("title is required")
+			}
 			svc, db, err := getService()
 			if err != nil {
 				return nil, err
@@ -132,17 +192,8 @@ func StartServer(cfg *config.Config, version string) error {
 			}
 			return map[string]string{"path": path}, nil
 		},
-	})
-
-	server.RegisterTool(newAskTool(getService))
-	server.RegisterTool(newIngestTool(getService))
-
-	return server.ServeStdio(context.Background())
+	}
 }
-
-// serviceFactory opens a fresh service + sidecar per request; the caller
-// closes the returned DB.
-type serviceFactory func() (*service.Service, *sidecar.DB, error)
 
 // newAskTool answers a question grounded in vault search results. MCP has
 // no streaming result, so the chunks are aggregated into one answer.

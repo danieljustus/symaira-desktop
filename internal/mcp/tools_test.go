@@ -46,6 +46,7 @@ func TestAskToolRequiresQuery(t *testing.T) {
 }
 
 func TestIngestToolCreatesInboxNote(t *testing.T) {
+	t.Setenv("PATH", "/usr/bin:/bin")
 	factory := testFactory(t)
 	tool := newIngestTool(factory)
 

@@ -7,7 +7,7 @@ public enum DeskCoreError: Error {
     case schemaMismatch(expected: Int, got: Int)
 }
 
-public struct Note: Codable, Equatable, Identifiable, Hashable {
+public struct Note: Codable, Equatable, Identifiable, Hashable, Sendable {
     public var id: String { path }
     public let path: String
     public let title: String
@@ -22,7 +22,7 @@ public struct Note: Codable, Equatable, Identifiable, Hashable {
     }
 }
 
-public struct DeskStatus: Codable {
+public struct DeskStatus: Codable, Sendable {
     public let version: String
     public let schemaVersion: Int
 
@@ -32,7 +32,7 @@ public struct DeskStatus: Codable {
     }
 }
 
-public struct SearchResult: Codable, Equatable, Identifiable {
+public struct SearchResult: Codable, Equatable, Identifiable, Sendable {
     public var id: String { path }
     public let path: String
     public let title: String
@@ -40,7 +40,7 @@ public struct SearchResult: Codable, Equatable, Identifiable {
     public let score: Double?
 }
 
-public struct DbFilter: Codable, Equatable {
+public struct DbFilter: Codable, Equatable, Sendable {
     public let key: String
     public let operatorString: String
     public let value: String
@@ -52,12 +52,12 @@ public struct DbFilter: Codable, Equatable {
     }
 }
 
-public struct DbSort: Codable, Equatable {
+public struct DbSort: Codable, Equatable, Sendable {
     public let key: String
     public let ascending: Bool
 }
 
-public struct DbView: Codable, Equatable, Identifiable {
+public struct DbView: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let name: String
     public let filters: [DbFilter]
@@ -65,18 +65,18 @@ public struct DbView: Codable, Equatable, Identifiable {
     public let columns: [String]
 }
 
-public struct GraphNode: Codable, Equatable, Identifiable {
+public struct GraphNode: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let label: String
 }
 
-public struct GraphEdge: Codable, Equatable, Identifiable {
+public struct GraphEdge: Codable, Equatable, Identifiable, Sendable {
     public var id: String { "\(source)->\(target)" }
     public let source: String
     public let target: String
 }
 
-public struct GraphData: Codable, Equatable {
+public struct GraphData: Codable, Equatable, Sendable {
     public let nodes: [GraphNode]
     public let edges: [GraphEdge]
 
@@ -163,7 +163,7 @@ public final class DeskCore: ObservableObject {
         let runner = CLIRunner()
         // symdesk note new --title <title> --json
         // Returns e.g. {"path": "..."}
-        struct NoteNewResult: Codable {
+        struct NoteNewResult: Codable, Sendable {
             let path: String
         }
         let res = try await runner.runDecoding(
@@ -229,7 +229,7 @@ public final class DeskCore: ObservableObject {
     public func ingest(fileURL: URL) async throws -> String {
         guard let tool else { throw DeskCoreError.coreNotFound }
         let runner = CLIRunner()
-        struct IngestRes: Codable {
+        struct IngestRes: Codable, Sendable {
             let path: String
         }
         let res = try await runner.runDecoding(
@@ -255,7 +255,7 @@ public final class DeskCore: ObservableObject {
                     try process.run()
 
                     for try await line in pipe.fileHandleForReading.bytes.lines {
-                        struct Chunk: Codable {
+                        struct Chunk: Codable, Sendable {
                             let chunk: String
                         }
                         if let data = line.data(using: .utf8),

@@ -41,11 +41,11 @@ func (s *Service) ViewsExec(id string) ([]map[string]interface{}, error) {
 		if err != nil {
 			props = make(map[string]interface{})
 		}
-		
+
 		// Add built-ins
 		props["_path"] = d.Path
 		props["_title"] = d.Title
-		
+
 		// Very naive filtering (just exact match for now)
 		match := true
 		for _, f := range view.Filters {

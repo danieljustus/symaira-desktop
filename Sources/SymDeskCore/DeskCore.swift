@@ -25,7 +25,7 @@ public struct Note: Codable, Equatable, Identifiable, Hashable {
 public struct DeskStatus: Codable {
     public let version: String
     public let schemaVersion: Int
-    
+
     enum CodingKeys: String, CodingKey {
         case version
         case schemaVersion = "schema_version"
@@ -44,7 +44,7 @@ public struct DbFilter: Codable, Equatable {
     public let key: String
     public let operatorString: String
     public let value: String
-    
+
     enum CodingKeys: String, CodingKey {
         case key
         case operatorString = "operator"
@@ -79,7 +79,7 @@ public struct GraphEdge: Codable, Equatable, Identifiable {
 public struct GraphData: Codable, Equatable {
     public let nodes: [GraphNode]
     public let edges: [GraphEdge]
-    
+
     public init(nodes: [GraphNode], edges: [GraphEdge]) {
         self.nodes = nodes
         self.edges = edges
@@ -89,27 +89,27 @@ public struct GraphData: Codable, Equatable {
 @MainActor
 public final class DeskCore: ObservableObject {
     public static let shared = DeskCore()
-    
+
     private let locator = BinaryLocator(bundle: Bundle.main)
     private var detector: ToolDetector { ToolDetector(locator: locator) }
-    
+
     @Published public private(set) var tool: DetectedTool?
     @Published public private(set) var isReady = false
     @Published public private(set) var errorMessage: String?
-    
+
     private init() {}
-    
+
     public func initialize() async {
         guard let deskTool = SymairaToolRegistry.tool(id: "symdesk") else {
             self.errorMessage = "symdesk not found in registry"
             return
         }
-        
+
         guard let detected = await detector.detect(deskTool) else {
             self.errorMessage = "symdesk binary not found. Please install via Homebrew."
             return
         }
-        
+
         do {
             try detector.requireSchemaVersion(1, of: detected)
             self.tool = detected
@@ -118,10 +118,10 @@ public final class DeskCore: ObservableObject {
             self.errorMessage = "symdesk schema mismatch: \(error)"
         }
     }
-    
+
     public func listFiles() async throws -> [Note] {
         guard let tool else { throw DeskCoreError.coreNotFound }
-        
+
         let runner = CLIRunner()
         return try await runner.runDecoding(
             [Note].self,
@@ -129,15 +129,15 @@ public final class DeskCore: ObservableObject {
             arguments: ["ls", "--json"]
         )
     }
-    
+
     public func getDoctor() async throws -> String {
         guard let tool else { throw DeskCoreError.coreNotFound }
-        
+
         let runner = CLIRunner()
         let out = try await runner.runChecked(tool.location.url, arguments: ["doctor"])
         return String(decoding: out, as: UTF8.self)
     }
-    
+
     public func search(query: String) async throws -> [SearchResult] {
         guard let tool else { throw DeskCoreError.coreNotFound }
         let runner = CLIRunner()
@@ -147,7 +147,7 @@ public final class DeskCore: ObservableObject {
             arguments: ["search", query, "--json"]
         )
     }
-    
+
     public func backlinks(for path: String) async throws -> [String] {
         guard let tool else { throw DeskCoreError.coreNotFound }
         let runner = CLIRunner()
@@ -157,7 +157,7 @@ public final class DeskCore: ObservableObject {
             arguments: ["backlinks", path, "--json"]
         )
     }
-    
+
     public func noteNew(title: String) async throws -> String {
         guard let tool else { throw DeskCoreError.coreNotFound }
         let runner = CLIRunner()
@@ -173,7 +173,7 @@ public final class DeskCore: ObservableObject {
         )
         return res.path
     }
-    
+
     public func noteEditProperty(path: String, key: String, value: String) async throws {
         guard let tool else { throw DeskCoreError.coreNotFound }
         let runner = CLIRunner()
@@ -182,7 +182,7 @@ public final class DeskCore: ObservableObject {
             arguments: ["props", "edit", path, key, value]
         )
     }
-    
+
     public func getGraph() async throws -> GraphData {
         guard let tool else { throw DeskCoreError.coreNotFound }
         let runner = CLIRunner()
@@ -192,7 +192,7 @@ public final class DeskCore: ObservableObject {
             arguments: ["graph", "--json"]
         )
     }
-    
+
     public func viewsList() async throws -> [DbView] {
         guard let tool else { throw DeskCoreError.coreNotFound }
         let runner = CLIRunner()
@@ -202,7 +202,7 @@ public final class DeskCore: ObservableObject {
             arguments: ["views", "list", "--json"]
         )
     }
-    
+
     public func viewsGet(id: String) async throws -> DbView {
         guard let tool else { throw DeskCoreError.coreNotFound }
         let runner = CLIRunner()
@@ -212,7 +212,7 @@ public final class DeskCore: ObservableObject {
             arguments: ["views", "get", id, "--json"]
         )
     }
-    
+
     // We expect an array of JSON objects. In Swift we can use [String: AnyCodable] or just a loose representation.
     // For simplicity, let's use [String: String] since sqlite snippet / properties are strings, or a generic dictionary.
     // However, Swift's Codable doesn't do [String: Any] easily without a custom wrapper.
@@ -225,5 +225,51 @@ public final class DeskCore: ObservableObject {
             tool.location.url,
             arguments: ["views", "exec", id, "--json"]
         )
+    }
+    public func ingest(fileURL: URL) async throws -> String {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        struct IngestRes: Codable {
+            let path: String
+        }
+        let res = try await runner.runDecoding(
+            IngestRes.self,
+            executable: tool.location.url,
+            arguments: ["ingest", fileURL.path, "--json"]
+        )
+        return res.path
+    }
+
+    public func ask(query: String) -> AsyncThrowingStream<String, Error> {
+        return AsyncThrowingStream { continuation in
+            Task {
+                do {
+                    guard let tool else { throw DeskCoreError.coreNotFound }
+                    let process = Process()
+                    process.executableURL = tool.location.url
+                    process.arguments = ["ask", query, "--json"]
+
+                    let pipe = Pipe()
+                    process.standardOutput = pipe
+
+                    try process.run()
+
+                    for try await line in pipe.fileHandleForReading.bytes.lines {
+                        struct Chunk: Codable {
+                            let chunk: String
+                        }
+                        if let data = line.data(using: .utf8),
+                           let dec = try? JSONDecoder().decode(Chunk.self, from: data) {
+                            continuation.yield(dec.chunk)
+                        }
+                    }
+
+                    process.waitUntilExit()
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
     }
 }

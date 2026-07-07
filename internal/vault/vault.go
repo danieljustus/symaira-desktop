@@ -183,6 +183,25 @@ func ParseFile(path string) (*Document, error) {
 	return doc, nil
 }
 
+// SecurePath resolves a relative path against the vault root and ensures it does not traverse outside.
+func SecurePath(vaultRoot, relPath string) (string, error) {
+	absVault, err := filepath.Abs(vaultRoot)
+	if err != nil {
+		return "", err
+	}
+	targetPath := filepath.Join(absVault, relPath)
+	absTarget, err := filepath.Abs(targetPath)
+	if err != nil {
+		return "", err
+	}
+
+	if !strings.HasPrefix(absTarget, absVault+string(filepath.Separator)) && absTarget != absVault {
+		return "", fmt.Errorf("path traversal denied: %s is outside vault", relPath)
+	}
+
+	return absTarget, nil
+}
+
 // extractWikilinks extracts links from markdown body
 func extractWikilinks(body string) []string {
 	matches := wikilinkRegex.FindAllStringSubmatch(body, -1)

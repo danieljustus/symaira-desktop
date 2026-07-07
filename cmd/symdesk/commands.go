@@ -230,11 +230,15 @@ func registerCommands(rootCmd *cobra.Command) {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vRoot, db, err := initServiceDeps()
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			defer db.Close()
 			svc := service.New(vRoot, db)
 			res, err := svc.Props(args[0])
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			return outputResult(res)
 		},
 	}
@@ -246,11 +250,15 @@ func registerCommands(rootCmd *cobra.Command) {
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vRoot, db, err := initServiceDeps()
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			defer db.Close()
 			svc := service.New(vRoot, db)
 			err = svc.PropsEdit(args[0], args[1], args[2])
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			return outputResult(map[string]string{"status": "updated"})
 		},
 	}
@@ -276,6 +284,47 @@ func registerCommands(rootCmd *cobra.Command) {
 		},
 	}
 	rootCmd.AddCommand(backlinksCmd)
+
+	askCmd := &cobra.Command{
+		Use:   "ask [query]",
+		Short: "Ask the AI a question about the vault",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			out := make(chan interface{})
+			go svc.Ask(args[0], out)
+
+			return outputStream(out)
+		},
+	}
+	rootCmd.AddCommand(askCmd)
+
+	ingestCmd := &cobra.Command{
+		Use:   "ingest [file]",
+		Short: "Ingest a file into the vault",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			res, err := svc.Ingest(args[0])
+			if err != nil {
+				return err
+			}
+			return outputResult(res)
+		},
+	}
+	rootCmd.AddCommand(ingestCmd)
 
 	noteCmd := &cobra.Command{
 		Use:   "note",
@@ -364,11 +413,15 @@ func registerCommands(rootCmd *cobra.Command) {
 		Short: "List saved views",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vRoot, db, err := initServiceDeps()
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			defer db.Close()
 			svc := service.New(vRoot, db)
 			res, err := svc.ViewsList()
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			return outputResult(res)
 		},
 	}
@@ -380,11 +433,15 @@ func registerCommands(rootCmd *cobra.Command) {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vRoot, db, err := initServiceDeps()
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			defer db.Close()
 			svc := service.New(vRoot, db)
 			res, err := svc.ViewsGet(args[0])
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			return outputResult(res)
 		},
 	}
@@ -396,11 +453,15 @@ func registerCommands(rootCmd *cobra.Command) {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vRoot, db, err := initServiceDeps()
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			defer db.Close()
 			svc := service.New(vRoot, db)
 			err = svc.ViewsSave([]byte(args[0]))
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			return outputResult(map[string]string{"status": "saved"})
 		},
 	}
@@ -412,11 +473,15 @@ func registerCommands(rootCmd *cobra.Command) {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vRoot, db, err := initServiceDeps()
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			defer db.Close()
 			svc := service.New(vRoot, db)
 			res, err := svc.ViewsExec(args[0])
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 			return outputResult(res)
 		},
 	}
@@ -447,6 +512,21 @@ func outputResult(data interface{}) error {
 	} else {
 		// Just a simple print for non-JSON
 		fmt.Printf("%+v\n", data)
+	}
+	return nil
+}
+
+func outputStream(out <-chan interface{}) error {
+	encoder := json.NewEncoder(os.Stdout)
+	for chunk := range out {
+		if jsonFlag {
+			if err := encoder.Encode(chunk); err != nil {
+				return err
+			}
+		} else {
+			// Basic print if not json
+			fmt.Printf("%v\n", chunk)
+		}
 	}
 	return nil
 }

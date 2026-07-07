@@ -11,7 +11,9 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
+	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -76,13 +78,19 @@ func (s *Service) Search(query string) ([]map[string]interface{}, error) {
 
 // Props returns the properties for a given file.
 func (s *Service) Props(file string) (map[string]interface{}, error) {
-	absPath := filepath.Join(s.VaultRoot, file)
+	absPath, err := vault.SecurePath(s.VaultRoot, file)
+	if err != nil {
+		return nil, err
+	}
 	return s.DB.GetProperties(absPath)
 }
 
 // Backlinks returns the files linking to the given file.
 func (s *Service) Backlinks(file string) ([]string, error) {
-	absPath := filepath.Join(s.VaultRoot, file)
+	absPath, err := vault.SecurePath(s.VaultRoot, file)
+	if err != nil {
+		return nil, err
+	}
 	links, err := s.DB.GetBacklinks(absPath)
 	if err != nil {
 		return nil, err
@@ -103,7 +111,10 @@ func (s *Service) NoteNew(title, content string) (string, error) {
 	}
 
 	fileName := strings.ReplaceAll(title, " ", "_") + ".md"
-	absPath := filepath.Join(s.VaultRoot, fileName)
+	absPath, err := vault.SecurePath(s.VaultRoot, fileName)
+	if err != nil {
+		return "", err
+	}
 
 	// Create content with frontmatter
 	now := time.Now().UTC().Format(time.RFC3339)
@@ -116,14 +127,14 @@ func (s *Service) NoteNew(title, content string) (string, error) {
 	// Index immediately
 	doc, err := vault.ParseFile(absPath)
 	if err != nil {
-		return absPath, err
+		return fileName, err
 	}
 
 	hash := sha256.Sum256([]byte(fullContent))
 	doc.SHA256 = hex.EncodeToString(hash[:])
-	
+
 	if err := s.DB.IndexDocument(doc); err != nil {
-		return absPath, fmt.Errorf("failed to index new file: %w", err)
+		return fileName, fmt.Errorf("failed to index new file: %w", err)
 	}
 
 	return fileName, nil
@@ -131,56 +142,105 @@ func (s *Service) NoteNew(title, content string) (string, error) {
 
 // NoteMove renames a note and updates the index.
 func (s *Service) NoteMove(oldPath, newPath string) error {
-	absOld := filepath.Join(s.VaultRoot, oldPath)
-	absNew := filepath.Join(s.VaultRoot, newPath)
+	absOld, err := vault.SecurePath(s.VaultRoot, oldPath)
+	if err != nil {
+		return err
+	}
+	absNew, err := vault.SecurePath(s.VaultRoot, newPath)
+	if err != nil {
+		return err
+	}
 
 	if err := os.Rename(absOld, absNew); err != nil {
 		return fmt.Errorf("failed to move file: %w", err)
 	}
 
-	// Re-index new file
+	if err := s.DB.DeleteDocument(absOld); err != nil {
+		return err
+	}
+
 	doc, err := vault.ParseFile(absNew)
 	if err != nil {
 		return err
 	}
-	if err := s.DB.IndexDocument(doc); err != nil {
-		return err
-	}
-
-	// NOTE: In a complete implementation, we should also delete the old entry from the DB.
-	return nil
+	return s.DB.IndexDocument(doc)
 }
 
 // PropsEdit updates a frontmatter property in the file and re-indexes.
 func (s *Service) PropsEdit(relPath, key, value string) error {
-	absPath := filepath.Join(s.VaultRoot, relPath)
+	absPath, err := vault.SecurePath(s.VaultRoot, relPath)
+	if err != nil {
+		return err
+	}
 	doc, err := vault.ParseFile(absPath)
 	if err != nil {
 		return err
 	}
-	
+
 	// Update frontmatter
 	if doc.Frontmatter == nil {
 		doc.Frontmatter = make(map[string]interface{})
 	}
 	doc.Frontmatter[key] = value
-	
+
 	// Write back to file.
 	// For MVP, we reconstruct the frontmatter simply.
 	fmBytes, err := yaml.Marshal(doc.Frontmatter)
 	if err != nil {
 		return err
 	}
-	
+
 	newContent := fmt.Sprintf("---\n%s---\n%s", string(fmBytes), doc.Body)
 	if err := os.WriteFile(absPath, []byte(newContent), 0644); err != nil {
 		return err
 	}
-	
+
 	// Re-parse and index
 	newDoc, err := vault.ParseFile(absPath)
 	if err != nil {
 		return err
 	}
 	return s.DB.IndexDocument(newDoc)
+}
+
+// Ask performs a semantic/RAG search and streams the answer using the AI package.
+func (s *Service) Ask(query string, out chan<- interface{}) {
+	// 1. Search the vault
+	results, err := s.Search(query)
+	if err != nil {
+		out <- map[string]string{"error": err.Error()}
+		close(out)
+		return
+	}
+
+	// 2. Stream AI chunks
+	chunkChan := make(chan ai.AskChunk)
+	go func() {
+		ai.Ask(query, results, chunkChan)
+	}()
+
+	for chunk := range chunkChan {
+		out <- chunk
+	}
+	close(out)
+}
+
+// Ingest copies a file into the inbox and indexes the new note.
+func (s *Service) Ingest(sourcePath string) (map[string]string, error) {
+	relPath, err := ingest.IngestFile(s.VaultRoot, sourcePath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Index the new note
+	absPath, err := vault.SecurePath(s.VaultRoot, relPath)
+	if err != nil {
+		return nil, err
+	}
+	doc, err := vault.ParseFile(absPath)
+	if err == nil {
+		_ = s.DB.IndexDocument(doc)
+	}
+
+	return map[string]string{"path": relPath}, nil
 }

@@ -21,9 +21,9 @@ func StartServer(cfg *config.Config, version string) error {
 
 	server := mcpserver.New("symdesk", ServerVersion)
 
-	// Init service lazily per request, or we can init once. We init per request here for simplicity 
+	// Init service lazily per request, or we can init once. We init per request here for simplicity
 	// because MCP server might be long-running and config might change, though opening DB repeatedly is fast enough.
-	
+
 	getService := func() (*service.Service, *sidecar.DB, error) {
 		vRoot, err := vault.ResolveVaultRoot("", cfg)
 		if err != nil {
@@ -37,7 +37,7 @@ func StartServer(cfg *config.Config, version string) error {
 	}
 
 	registerDeskStatus(server, cfg)
-	
+
 	server.RegisterTool(&mcpserver.Tool{
 		Name:        "desk_ls",
 		Description: "Lists files in the vault.",
@@ -150,4 +150,3 @@ func registerDeskStatus(server *mcpserver.Server, cfg *config.Config) {
 		},
 	})
 }
-

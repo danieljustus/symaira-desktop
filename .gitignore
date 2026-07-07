@@ -28,3 +28,7 @@ web/dist/
 # Local working docs — NOT published (design notes, research, diagrams)
 docs/
 internal/service/testdata/
+
+# Local build output and scratch
+/bin/
+/scratch/

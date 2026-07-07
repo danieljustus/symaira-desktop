@@ -79,7 +79,7 @@ func newEventsCmd() *cobra.Command {
 						if now.Sub(ev.Ts) >= 500*time.Millisecond {
 							// Process event
 							delete(debounceMap, path)
-							
+
 							opName := ""
 							if ev.Op&fsnotify.Create == fsnotify.Create {
 								opName = "file_added"

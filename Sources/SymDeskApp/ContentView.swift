@@ -5,30 +5,32 @@ import SymDeskCore
 struct ContentView: View {
     @EnvironmentObject var core: DeskCore
     @EnvironmentObject var watcher: EventWatcher
-    
+
     @State private var notes: [Note] = []
-    @State private var selectedNote: Note?
+    @State private var selectedNote: Note? = nil
     @State private var noteContent: String = ""
-    @State private var doctorStatus: String = "Loading..."
-    
+    @State private var doctorStatus: String = "Checking..."
+
+    // UI State
     @State private var isShowingPalette = false
-    @State private var isShowingPreview = false
     @State private var isShowingInspector = false
+    @State private var isShowingPreview = false
+    @State private var isShowingAIDock = false
     @State private var backlinks: [String] = []
-    
+
     // Auto-save debounce
     @State private var saveTask: Task<Void, Never>? = nil
-    
+
     enum DisplayMode {
         case vault
         case graph
         case dbView
     }
-    
+
     @State private var displayMode: DisplayMode = .vault
     @State private var selectedViewID: String?
     @State private var dbViews: [DbView] = []
-    
+
     var body: some View {
         Group {
             if !core.isReady {
@@ -50,7 +52,7 @@ struct ContentView: View {
                             Button("Vault") { displayMode = .vault }
                             Button("Graph") { displayMode = .graph }
                         }
-                        
+
                         if !dbViews.isEmpty {
                             Section("Saved Views") {
                                 ForEach(dbViews) { view in
@@ -61,7 +63,7 @@ struct ContentView: View {
                                 }
                             }
                         }
-                        
+
                         Section("Notes") {
                             ForEach(notes) { note in
                                 Button(note.title) {
@@ -96,7 +98,7 @@ struct ContentView: View {
                                         .background(Color.yellow.opacity(0.3))
                                         .foregroundColor(.yellow)
                                 }
-                                
+
                                 HStack(spacing: 0) {
                                     MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
                                         navigateToNote(title: targetTitle)
@@ -104,7 +106,7 @@ struct ContentView: View {
                                     .onChange(of: noteContent) { newValue in
                                         debouncedSave(note: note, content: newValue)
                                     }
-                                    
+
                                     if isShowingPreview {
                                         Divider()
                                         ScrollView {
@@ -124,7 +126,18 @@ struct ContentView: View {
                                     }
                                 }
                                 ToolbarItem {
-                                    Button(action: { isShowingInspector.toggle() }) {
+                                    Button(action: {
+                                        isShowingAIDock = true
+                                        isShowingInspector = true
+                                    }) {
+                                        Label("AI Dock", systemImage: "sparkles")
+                                    }
+                                }
+                                ToolbarItem {
+                                    Button(action: {
+                                        isShowingAIDock = false
+                                        isShowingInspector.toggle()
+                                    }) {
                                         Label("Toggle Inspector", systemImage: "info.circle")
                                     }
                                 }
@@ -140,18 +153,45 @@ struct ContentView: View {
                     }
                 }
                 .inspector(isPresented: $isShowingInspector) {
-                    VStack(alignment: .leading) {
-                        Text("Backlinks").font(.headline).padding()
-                        List(backlinks, id: \.self) { link in
-                            Button(link) {
-                                navigateToNote(title: link)
+                    if isShowingAIDock {
+                        AIDockView()
+                    } else {
+                        VStack(alignment: .leading) {
+                            Text("Backlinks").font(.headline).padding()
+                            List(backlinks, id: \.self) { link in
+                                Button(link) {
+                                    navigateToNote(title: link)
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .buttonStyle(PlainButtonStyle())
+                        }
+                        .frame(minWidth: 200)
+                    }
+                }
+                .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+                    for provider in providers {
+                        provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, error in
+                            if let data = item as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
+                                Task {
+                                    do {
+                                        let _ = try await core.ingest(fileURL: url)
+                                        // fetchNotes() is called by the watcher automatically, so we don't need to manually refresh
+                                    } catch {
+                                        print("Ingest failed: \(error)")
+                                    }
+                                }
+                            }
                         }
                     }
-                    .frame(minWidth: 200)
+                    return true
                 }
                 .toolbar {
+                    ToolbarItem(placement: .navigation) {
+                        Button(action: { isShowingPalette.toggle() }) {
+                            Label("Command Palette", systemImage: "magnifyingglass")
+                        }
+                        .keyboardShortcut("k", modifiers: .command)
+                    }
                     ToolbarItem(placement: .status) {
                         HStack {
                             Text(doctorStatus)
@@ -208,7 +248,7 @@ struct ContentView: View {
             }
         }
     }
-    
+
     private func fetchNotes() async {
         do {
             self.notes = try await core.listFiles()
@@ -216,7 +256,7 @@ struct ContentView: View {
             print("Failed to list files: \(error)")
         }
     }
-    
+
     private func fetchViews() async {
         do {
             self.dbViews = try await core.viewsList()
@@ -224,7 +264,7 @@ struct ContentView: View {
             print("Failed to list views: \(error)")
         }
     }
-    
+
     private func fetchDoctor() async {
         do {
             self.doctorStatus = try await core.getDoctor()
@@ -232,7 +272,7 @@ struct ContentView: View {
             self.doctorStatus = "Doctor Error"
         }
     }
-    
+
     private func loadContent(for note: Note) async {
         if let data = FileManager.default.contents(atPath: note.path),
            let string = String(data: data, encoding: .utf8) {
@@ -241,7 +281,7 @@ struct ContentView: View {
             self.noteContent = "Error reading file."
         }
     }
-    
+
     private func loadBacklinks(for note: Note) async {
         do {
             self.backlinks = try await core.backlinks(for: note.path)
@@ -249,13 +289,13 @@ struct ContentView: View {
             self.backlinks = []
         }
     }
-    
+
     private func debouncedSave(note: Note, content: String) {
         saveTask?.cancel()
         saveTask = Task {
             try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
             guard !Task.isCancelled else { return }
-            
+
             // Atomic write
             if let data = content.data(using: .utf8) {
                 let url = URL(fileURLWithPath: note.path)
@@ -268,13 +308,13 @@ struct ContentView: View {
             }
         }
     }
-    
+
     private func navigateToNote(title: String) {
         if let found = notes.first(where: { $0.title == title }) {
             self.selectedNote = found
         }
     }
-    
+
     private func isConflicted(_ note: Note) -> Bool {
         return note.path.contains(" 2.md") || note.path.contains("conflicted copy")
     }

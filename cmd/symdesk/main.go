@@ -10,6 +10,7 @@ import (
 
 	"github.com/danieljustus/symaira-corekit/exitcodes"
 	"github.com/danieljustus/symaira-corekit/logkit"
+	"github.com/danieljustus/symaira-corekit/versionkit"
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/mcp"
 )
@@ -67,17 +68,13 @@ func newRootCmd() *cobra.Command {
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			info := versionkit.New("symdesk", version, schemaVersion)
 			if jsonFlag {
-				out := map[string]interface{}{
-					"version":        version,
-					"schema_version": schemaVersion,
-				}
-				b, _ := json.Marshal(out)
-				fmt.Println(string(b))
-			} else {
-				fmt.Printf("symdesk version %s (schema %d)\n", version, schemaVersion)
+				return info.Write(os.Stdout)
 			}
+			fmt.Println(info.String())
+			return nil
 		},
 	}
 	rootCmd.AddCommand(versionCmd)

@@ -8,7 +8,8 @@ options:
 
 packages:
   symaira-appkit:
-    path: ../symaira-appkit
+    url: https://github.com/danieljustus/symaira-appkit
+    exactVersion: 0.2.0
 
 targets:
   SymDeskCore:
@@ -58,6 +59,12 @@ targets:
       - Tests/SymDeskCoreTests
     dependencies:
       - target: SymDeskCore
+      - package: symaira-appkit
+        product: SymairaTheme
+      - package: symaira-appkit
+        product: SymairaCLIRunner
+      - package: symaira-appkit
+        product: SymairaToolKit
     settings:
       base:
         MACOSX_DEPLOYMENT_TARGET: "14.0"

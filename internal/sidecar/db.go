@@ -75,15 +75,14 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 
 	// 1. Check if exists to potentially delete from FTS first
 	var fileID int64
-	var oldTitle string
-	err = tx.QueryRow("SELECT id, title FROM files WHERE path = ?", doc.Path).Scan(&fileID, &oldTitle)
+	err = tx.QueryRow("SELECT id FROM files WHERE path = ?", doc.Path).Scan(&fileID)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
 	if err == nil {
 		// Found existing, remove from FTS first
-		_, err = tx.Exec("INSERT INTO fts_search(fts_search, rowid, title, body) VALUES ('delete', ?, ?, '')", fileID, oldTitle)
+		_, err = tx.Exec("DELETE FROM fts_search WHERE rowid = ?", fileID)
 		if err != nil {
 			return err
 		}
@@ -148,6 +147,40 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 	return tx.Commit()
 }
 
+// DeleteDocument removes a document and all derived rows (FTS, properties,
+// outgoing links) from the sidecar. Deleting an unindexed path is a no-op.
+func (db *DB) DeleteDocument(path string) error {
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var fileID int64
+	err = tx.QueryRow("SELECT id FROM files WHERE path = ?", path).Scan(&fileID)
+	if err == sql.ErrNoRows {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec("DELETE FROM fts_search WHERE rowid = ?", fileID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM file_properties WHERE file_id = ?", fileID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM links WHERE from_path = ?", path); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM files WHERE id = ?", fileID); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
 // CheckIntegrity performs a basic check on the database.
 func (db *DB) CheckIntegrity() error {
 	var result string
@@ -161,8 +194,24 @@ func (db *DB) CheckIntegrity() error {
 	return nil
 }
 
-// Search performs a basic FTS search.
+// ftsQuote turns free-form user input into a safe FTS5 query: each
+// whitespace-separated token becomes a quoted prefix term, so operators
+// and punctuation ("e-mail", "foo:bar") cannot break the MATCH syntax.
+func ftsQuote(query string) string {
+	fields := strings.Fields(query)
+	terms := make([]string, 0, len(fields))
+	for _, f := range fields {
+		terms = append(terms, `"`+strings.ReplaceAll(f, `"`, `""`)+`"*`)
+	}
+	return strings.Join(terms, " ")
+}
+
+// Search performs a basic FTS search over free-form user input.
 func (db *DB) Search(query string) ([]*vault.Document, error) {
+	query = ftsQuote(query)
+	if query == "" {
+		return nil, nil
+	}
 	rows, err := db.conn.Query(`
 		SELECT f.path, f.title, snippet(fts_search, 1, '<b>', '</b>', '...', 64) as snippet
 		FROM fts_search s

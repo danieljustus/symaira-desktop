@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/danieljustus/symaira-corekit/mcpserver"
 
@@ -24,7 +25,7 @@ func StartServer(cfg *config.Config, version string) error {
 	// Init service lazily per request, or we can init once. We init per request here for simplicity
 	// because MCP server might be long-running and config might change, though opening DB repeatedly is fast enough.
 
-	getService := func() (*service.Service, *sidecar.DB, error) {
+	var getService serviceFactory = func() (*service.Service, *sidecar.DB, error) {
 		vRoot, err := vault.ResolveVaultRoot("", cfg)
 		if err != nil {
 			return nil, nil, err
@@ -133,7 +134,72 @@ func StartServer(cfg *config.Config, version string) error {
 		},
 	})
 
+	server.RegisterTool(newAskTool(getService))
+	server.RegisterTool(newIngestTool(getService))
+
 	return server.ServeStdio(context.Background())
+}
+
+// serviceFactory opens a fresh service + sidecar per request; the caller
+// closes the returned DB.
+type serviceFactory func() (*service.Service, *sidecar.DB, error)
+
+// newAskTool answers a question grounded in vault search results. MCP has
+// no streaming result, so the chunks are aggregated into one answer.
+func newAskTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_ask",
+		Description: "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming).",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				Query string `json:"query"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.Query == "" {
+				return nil, fmt.Errorf("query is required")
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			answer, err := svc.AskText(args.Query)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{"answer": answer}, nil
+		},
+	}
+}
+
+// newIngestTool copies a document into the vault inbox and creates a stub
+// note per the vault contract.
+func newIngestTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_ingest",
+		Description: "Ingests a file into the vault: copies it into inbox/ and creates a corresponding markdown note. Takes an absolute source path, returns the relative path of the new note.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"source_path":{"type":"string"}},"required":["source_path"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				SourcePath string `json:"source_path"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.SourcePath == "" {
+				return nil, fmt.Errorf("source_path is required")
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			return svc.Ingest(args.SourcePath)
+		},
+	}
 }
 
 func registerDeskStatus(server *mcpserver.Server, cfg *config.Config) {

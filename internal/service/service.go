@@ -225,6 +225,23 @@ func (s *Service) Ask(query string, out chan<- interface{}) {
 	close(out)
 }
 
+// AskText is the buffered variant of Ask for non-streaming consumers
+// (MCP): it aggregates all chunks into one answer string.
+func (s *Service) AskText(query string) (string, error) {
+	results, err := s.Search(query)
+	if err != nil {
+		return "", err
+	}
+	chunkChan := make(chan ai.AskChunk)
+	go ai.Ask(query, results, chunkChan)
+
+	var b strings.Builder
+	for chunk := range chunkChan {
+		b.WriteString(chunk.Chunk)
+	}
+	return b.String(), nil
+}
+
 // Ingest copies a file into the inbox and indexes the new note.
 func (s *Service) Ingest(sourcePath string) (map[string]string, error) {
 	relPath, err := ingest.IngestFile(s.VaultRoot, sourcePath)

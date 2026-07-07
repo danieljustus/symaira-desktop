@@ -17,6 +17,8 @@ struct ContentView: View {
     @State private var isShowingPreview = false
     @State private var isShowingAIDock = false
     @State private var backlinks: [String] = []
+    
+    @AppStorage("isBlockMode") private var isBlockMode = false
 
     // Auto-save debounce
     @State private var saveTask: Task<Void, Never>? = nil
@@ -100,12 +102,20 @@ struct ContentView: View {
                                 }
 
                                 HStack(spacing: 0) {
-                                    MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
-                                        navigateToNote(title: targetTitle)
-                                    })
-                                    .onChange(of: noteContent) { newValue in
-                                        debouncedSave(note: note, content: newValue)
+                                    if isBlockMode {
+                                        BlockEditorView(text: $noteContent)
+                                            .padding(.top, 4)
+                                    } else {
+                                        MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
+                                            navigateToNote(title: targetTitle)
+                                        })
                                     }
+                                    
+                                    // Dummy view to attach onChange (since we use if/else for the editor)
+                                    Color.clear.frame(width: 0, height: 0)
+                                        .onChange(of: noteContent) { newValue in
+                                            debouncedSave(note: note, content: newValue)
+                                        }
 
                                     if isShowingPreview {
                                         Divider()
@@ -191,6 +201,11 @@ struct ContentView: View {
                             Label("Command Palette", systemImage: "magnifyingglass")
                         }
                         .keyboardShortcut("k", modifiers: .command)
+                        
+                        Toggle(isOn: $isBlockMode) {
+                            Label("Block Mode", systemImage: "square.text.square")
+                        }
+                        .toggleStyle(.button)
                     }
                     ToolbarItem(placement: .status) {
                         HStack {

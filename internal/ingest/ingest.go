@@ -1,17 +1,85 @@
 package ingest
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 )
 
+// HasSymingest checks if symingest is available on PATH and supports schema_version 1.
+// Returns a boolean indicating compatibility, and an error string if there's a mismatch.
+func HasSymingest() (bool, string) {
+	path, err := exec.LookPath("symingest")
+	if err != nil {
+		return false, "symingest not found on PATH"
+	}
+
+	cmd := exec.Command(path, "version", "--json")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return false, fmt.Sprintf("symingest version failed: %v", err)
+	}
+
+	var ver struct {
+		SchemaVersion int    `json:"schema_version"`
+		Version       string `json:"version"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &ver); err != nil {
+		return false, "failed to parse symingest version output"
+	}
+
+	if ver.SchemaVersion != 1 {
+		return false, fmt.Sprintf("unsupported symingest schema version %d (expected 1)", ver.SchemaVersion)
+	}
+
+	return true, ""
+}
+
 // IngestFile copies a file into vaultRoot/inbox and creates a corresponding markdown note.
+// If symingest is available, it delegates to symingest to perform OCR and metadata extraction.
 // Returns the relative path of the new markdown note.
 func IngestFile(vaultRoot, sourcePath string) (string, error) {
+	ok, _ := HasSymingest()
+	if ok {
+		// Attempt to use symingest ingest with --json (expected contract)
+		cmd := exec.Command("symingest", "ingest", "--vault", vaultRoot, "--json", sourcePath)
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		err := cmd.Run()
+		if err == nil {
+			var result struct {
+				Path string `json:"path"`
+			}
+			if err := json.Unmarshal(out.Bytes(), &result); err == nil && result.Path != "" {
+				// symingest might return absolute path or relative, let's ensure we return relative
+				if filepath.IsAbs(result.Path) {
+					if rel, err := filepath.Rel(vaultRoot, result.Path); err == nil {
+						return rel, nil
+					}
+				}
+				return result.Path, nil
+			}
+		}
+
+		// If --json fails (e.g. flag not defined in older v0.7.0 binaries), fallback to standard execution
+		cmd = exec.Command("symingest", "ingest", "--vault", vaultRoot, sourcePath)
+		if err := cmd.Run(); err != nil {
+			return "", fmt.Errorf("symingest failed: %w", err)
+		}
+
+		// symingest by default creates <basename>.md in the vault root
+		baseName := filepath.Base(sourcePath)
+		return baseName + ".md", nil
+	}
+
+	// Fallback to built-in copy behavior
 	inboxDir := filepath.Join(vaultRoot, "inbox")
 	if err := os.MkdirAll(inboxDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create inbox dir: %w", err)
@@ -56,11 +124,11 @@ date: "%s"
 
 	var body string
 	if ext == ".pdf" {
-		body = fmt.Sprintf("\n![[%s]]\n\n*OCR Text pending...*\n", relAssetPath)
+		body = fmt.Sprintf("\n![[%s]]\n\n*OCR Text pending (symingest not installed)...*\n", relAssetPath)
 	} else if ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
-		body = fmt.Sprintf("\n![[%s]]\n\n*Image description pending...*\n", relAssetPath)
+		body = fmt.Sprintf("\n![[%s]]\n\n*Image description pending (symingest not installed)...*\n", relAssetPath)
 	} else {
-		body = fmt.Sprintf("\n[[%s]]\n\n*Content pending...*\n", relAssetPath)
+		body = fmt.Sprintf("\n[[%s]]\n\n*Content pending (symingest not installed)...*\n", relAssetPath)
 	}
 
 	if err := os.WriteFile(notePath, []byte(frontmatter+body), 0644); err != nil {

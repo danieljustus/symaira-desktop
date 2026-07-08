@@ -30,6 +30,25 @@ type Document struct {
 	Frontmatter map[string]interface{}
 	Body        string
 	Links       []string
+
+	// Contract v2: first-class document metadata (all optional)
+	DocumentDate string // ISO-8601 date the document refers to
+	Person       string // household member
+	Status       string // enum: open|paid|submitted|done|needs_review|waiting_for_reply
+	DueDate      string // ISO-8601 date deadline
+	Confidence   int    // 0-100 classification confidence
+	OcrJSONPath  string // path to plain-text OCR JSON
+	Simhash      string // 64-bit SimHash hex
+}
+
+// ValidStatuses enumerates the allowed values for Document.Status.
+var ValidStatuses = map[string]bool{
+	"open":              true,
+	"paid":              true,
+	"submitted":         true,
+	"done":              true,
+	"needs_review":      true,
+	"waiting_for_reply": true,
 }
 
 // ResolveVaultRoot determines the actual vault root directory.
@@ -177,6 +196,15 @@ func ParseFile(path string) (*Document, error) {
 		}
 	}
 
+	// Contract v2: extract document metadata from frontmatter (all optional, backwards-compatible)
+	doc.DocumentDate = getStringFrontmatter(doc.Frontmatter, "document_date")
+	doc.Person = getStringFrontmatter(doc.Frontmatter, "person")
+	doc.Status = getStringFrontmatter(doc.Frontmatter, "status")
+	doc.DueDate = getStringFrontmatter(doc.Frontmatter, "due_date")
+	doc.Confidence = getIntFrontmatter(doc.Frontmatter, "confidence")
+	doc.OcrJSONPath = getStringFrontmatter(doc.Frontmatter, "ocr_json_path")
+	doc.Simhash = getStringFrontmatter(doc.Frontmatter, "simhash")
+
 	doc.Body = string(bodyBytes)
 	doc.Links = extractWikilinks(doc.Body)
 
@@ -215,4 +243,106 @@ func extractWikilinks(body string) []string {
 		}
 	}
 	return links
+}
+
+func getStringFrontmatter(fm map[string]interface{}, key string) string {
+	if v, ok := fm[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
+func getIntFrontmatter(fm map[string]interface{}, key string) int {
+	if v, ok := fm[key]; ok {
+		switch n := v.(type) {
+		case int:
+			return n
+		case int64:
+			return int(n)
+		case float64:
+			return int(n)
+		}
+	}
+	return 0
+}
+
+// SetFrontmatterKey writes a single YAML key=value line inside the frontmatter
+// block of a markdown file, preserving every other byte exactly.  Only bare
+// scalar values (strings, numbers) are supported.
+func SetFrontmatterKey(filePath, key, value string) error {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("read file: %w", err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+
+	fmStart := -1
+	fmEnd := -1
+	for i, line := range lines {
+		trimmed := strings.TrimRight(line, "\r")
+		if trimmed == "---" {
+			if fmStart == -1 {
+				fmStart = i
+			} else {
+				fmEnd = i
+				break
+			}
+		}
+	}
+	if fmStart == -1 || fmEnd == -1 {
+		newLines := make([]string, 0, len(lines)+3)
+		newLines = append(newLines, "---")
+		newLines = append(newLines, key+": "+quoteYAML(value))
+		newLines = append(newLines, "---")
+		newLines = append(newLines, lines...)
+		return os.WriteFile(filePath, []byte(strings.Join(newLines, "\n")), 0644)
+	}
+
+	keyPrefix := key + ": "
+	replaced := false
+	for i := fmStart + 1; i < fmEnd; i++ {
+		trimmed := strings.TrimRight(lines[i], "\r")
+		if strings.HasPrefix(trimmed, keyPrefix) || trimmed == key {
+			lines[i] = keyPrefix + quoteYAML(value)
+			replaced = true
+			break
+		}
+	}
+
+	if !replaced {
+		newLine := keyPrefix + quoteYAML(value)
+		lines = append(lines[:fmEnd], append([]string{newLine}, lines[fmEnd:]...)...)
+	}
+
+	return os.WriteFile(filePath, []byte(strings.Join(lines, "\n")), 0644)
+}
+
+// quoteYAML returns a YAML-safe quoted string; numeric-looking values are
+// left unquoted.
+func quoteYAML(v string) string {
+	if v == "" {
+		return `""`
+	}
+	isNumber := true
+	for i, c := range v {
+		if c >= '0' && c <= '9' {
+			continue
+		}
+		if c == '.' {
+			continue
+		}
+		if c == '-' && i == 0 {
+			continue
+		}
+		isNumber = false
+		break
+	}
+	if isNumber && len(v) > 0 {
+		return v
+	}
+	escaped := strings.ReplaceAll(v, `"`, `\"`)
+	return `"` + escaped + `"`
 }

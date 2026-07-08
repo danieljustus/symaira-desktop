@@ -45,6 +45,11 @@ func StartServer(cfg *config.Config, version string) error {
 	server.RegisterTool(newNoteNewTool(getService))
 	server.RegisterTool(newAskTool(getService))
 	server.RegisterTool(newIngestTool(getService))
+	server.RegisterTool(newDocsTool(getService))
+	server.RegisterTool(newDocSetStatusTool(getService))
+	server.RegisterTool(newDocsReviewTool(getService, cfg))
+
+	server.RegisterTool(newDocsSimilarTool(getService))
 
 	return server.ServeStdio(context.Background())
 }
@@ -249,6 +254,130 @@ func newIngestTool(getService serviceFactory) *mcpserver.Tool {
 			}
 			defer db.Close()
 			return svc.Ingest(args.SourcePath)
+		},
+	}
+}
+
+func newDocsTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_docs",
+		Description: "Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Returns structured document metadata.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"type":{"type":"string"},"status":{"type":"string"},"person":{"type":"string"},"correspondent":{"type":"string"},"year":{"type":"string"},"due_before":{"type":"string"},"min_confidence":{"type":"integer"},"max_confidence":{"type":"integer"}}}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				Type          string `json:"type"`
+				Status        string `json:"status"`
+				Person        string `json:"person"`
+				Correspondent string `json:"correspondent"`
+				Year          string `json:"year"`
+				DueBefore     string `json:"due_before"`
+				MinConfidence *int   `json:"min_confidence"`
+				MaxConfidence *int   `json:"max_confidence"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+
+			f := sidecar.DocsFilter{
+				Type:          args.Type,
+				Status:        args.Status,
+				Person:        args.Person,
+				Correspondent: args.Correspondent,
+				Year:          args.Year,
+				DueBefore:     args.DueBefore,
+				MinConfidence: args.MinConfidence,
+				MaxConfidence: args.MaxConfidence,
+			}
+			return svc.DocsList(f)
+		},
+	}
+}
+
+func newDocSetStatusTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "doc_set_status",
+		Description: "Sets the status of a document (open|paid|submitted|done|needs_review|waiting_for_reply). Updates frontmatter and re-indexes.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"file":{"type":"string"},"status":{"type":"string"}},"required":["file","status"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				File   string `json:"file"`
+				Status string `json:"status"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.File == "" || args.Status == "" {
+				return nil, fmt.Errorf("file and status are required")
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			if err := svc.DocStatus(args.File, args.Status); err != nil {
+				return nil, err
+			}
+			return map[string]string{"status": "updated", "file": args.File, "new_status": args.Status}, nil
+		},
+	}
+}
+
+func newDocsReviewTool(getService serviceFactory, cfg *config.Config) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "docs_review",
+		Description: "Returns documents needing review: confidence below threshold or missing document_type/document_date.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"threshold":{"type":"integer"}}}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				Threshold int `json:"threshold"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			threshold := cfg.ReviewThreshold
+			if args.Threshold > 0 {
+				threshold = args.Threshold
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			return svc.DocsReview(threshold)
+		},
+	}
+}
+
+func newDocsSimilarTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "docs_similar",
+		Description: "Finds near-duplicate documents using SimHash similarity. Returns documents with similarity >= threshold.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"file":{"type":"string"},"threshold":{"type":"integer"}},"required":["file"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				File      string `json:"file"`
+				Threshold int    `json:"threshold"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.File == "" {
+				return nil, fmt.Errorf("file is required")
+			}
+			if args.Threshold <= 0 {
+				args.Threshold = 50
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			return svc.SimilarDocs(args.File, args.Threshold)
 		},
 	}
 }

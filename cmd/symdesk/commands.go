@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/danieljustus/symaira-desktop/internal/demo"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -488,6 +489,190 @@ func registerCommands(rootCmd *cobra.Command) {
 	viewsCmd.AddCommand(viewsExecCmd)
 
 	rootCmd.AddCommand(newEventsCmd())
+
+	docsCmd := &cobra.Command{
+		Use:   "docs",
+		Short: "Manage document metadata (contract v2)",
+	}
+	rootCmd.AddCommand(docsCmd)
+
+	docsListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List indexed documents with filters",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			f := sidecar.DocsFilter{}
+			f.Type, _ = cmd.Flags().GetString("type")
+			f.Status, _ = cmd.Flags().GetString("status")
+			f.Person, _ = cmd.Flags().GetString("person")
+			f.Correspondent, _ = cmd.Flags().GetString("correspondent")
+			f.Year, _ = cmd.Flags().GetString("year")
+			f.DueBefore, _ = cmd.Flags().GetString("due-before")
+			if minC, _ := cmd.Flags().GetInt("min-confidence"); minC > 0 {
+				f.MinConfidence = &minC
+			}
+			if maxC, _ := cmd.Flags().GetInt("max-confidence"); maxC > 0 {
+				f.MaxConfidence = &maxC
+			}
+
+			results, err := svc.DocsList(f)
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	docsListCmd.Flags().String("type", "", "filter by document_type")
+	docsListCmd.Flags().String("status", "", "filter by status (open|paid|submitted|done|needs_review|waiting_for_reply)")
+	docsListCmd.Flags().String("person", "", "filter by person (household member)")
+	docsListCmd.Flags().String("correspondent", "", "filter by correspondent")
+	docsListCmd.Flags().String("year", "", "filter by document year (e.g. 2026)")
+	docsListCmd.Flags().String("due-before", "", "filter by due_date <= date (ISO-8601)")
+	docsListCmd.Flags().Int("min-confidence", 0, "minimum confidence (0-100)")
+	docsListCmd.Flags().Int("max-confidence", 0, "maximum confidence (0-100)")
+	docsCmd.AddCommand(docsListCmd)
+
+	docsReviewCmd := &cobra.Command{
+		Use:   "review",
+		Short: "List documents needing review (low confidence or missing metadata)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			threshold, _ := cmd.Flags().GetInt("threshold")
+			if threshold <= 0 {
+				threshold = cfg.ReviewThreshold
+			}
+
+			results, err := svc.DocsReview(threshold)
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	docsReviewCmd.Flags().Int("threshold", 0, "confidence threshold (default from config)")
+	docsCmd.AddCommand(docsReviewCmd)
+
+	docCmd := &cobra.Command{
+		Use:   "doc",
+		Short: "Mutate document metadata (status, due date)",
+	}
+	rootCmd.AddCommand(docCmd)
+
+	docStatusCmd := &cobra.Command{
+		Use:   "status [file] [status]",
+		Short: "Set document status (open|paid|submitted|done|needs_review|waiting_for_reply)",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+			if err := svc.DocStatus(args[0], args[1]); err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"status": "updated", "file": args[0], "new_status": args[1]})
+		},
+	}
+	docCmd.AddCommand(docStatusCmd)
+
+	docDueCmd := &cobra.Command{
+		Use:   "due [file] [date]",
+		Short: "Set document due date (ISO-8601)",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+			if err := svc.DocDue(args[0], args[1]); err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"status": "updated", "file": args[0], "due_date": args[1]})
+		},
+	}
+	docCmd.AddCommand(docDueCmd)
+
+	similarCmd := &cobra.Command{
+		Use:   "similar [file]",
+		Short: "Find near-duplicate documents by SimHash similarity",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			threshold, _ := cmd.Flags().GetInt("threshold")
+			if threshold <= 0 {
+				threshold = 50
+			}
+
+			results, err := svc.SimilarDocs(args[0], threshold)
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	similarCmd.Flags().Int("threshold", 50, "minimum similarity percentage (0-100)")
+	rootCmd.AddCommand(similarCmd)
+
+	demoCmd := &cobra.Command{
+		Use:   "demo",
+		Short: "Demo vault management",
+	}
+	rootCmd.AddCommand(demoCmd)
+
+	demoInitCmd := &cobra.Command{
+		Use:   "init [dir]",
+		Short: "Materialise the built-in demo vault into a directory",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dir := "symdesk-demo"
+			if len(args) > 0 {
+				dir = args[0]
+			}
+
+			if err := demo.Init(dir); err != nil {
+				return err
+			}
+
+			absDir, _ := filepath.Abs(dir)
+			if jsonFlag {
+				out := map[string]string{
+					"status": "ok",
+					"path":   absDir,
+				}
+				b, _ := json.Marshal(out)
+				fmt.Println(string(b))
+			} else {
+				fmt.Printf("Demo vault created at %s\n", absDir)
+				fmt.Println("Next steps:")
+				fmt.Printf("  SYMDESK_VAULT=%s symdesk index\n", absDir)
+				fmt.Printf("  SYMDESK_VAULT=%s symdesk docs list\n", absDir)
+			}
+			return nil
+		},
+	}
+	demoCmd.AddCommand(demoInitCmd)
 }
 
 func initServiceDeps() (string, *sidecar.DB, error) {

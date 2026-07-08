@@ -85,6 +85,13 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertEqual(DocumentStatus.allCases.count, 6)
     }
 
+    func testDocumentStatusLabelsAndImages() {
+        for status in DocumentStatus.allCases {
+            XCTAssertFalse(status.label.isEmpty, "\(status.rawValue) should have a label")
+            XCTAssertFalse(status.systemImage.isEmpty, "\(status.rawValue) should have a systemImage")
+        }
+    }
+
     func testDocFilterPresetDefaults() {
         let presets = DocFilterPreset.defaults
         XCTAssertGreaterThanOrEqual(presets.count, 7)

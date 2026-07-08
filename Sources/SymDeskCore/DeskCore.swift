@@ -414,6 +414,40 @@ public final class DeskCore: ObservableObject {
             arguments: ["docs", "review", "--threshold", "\(threshold)", "--json"]
         )
     }
+
+    // MARK: - Document Inspector
+
+    public func docProps(path: String) async throws -> [String: String] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        let data = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["props", path, "--json"]
+        )
+        if let dict = try? JSONDecoder().decode([String: String].self, from: data) {
+            return dict
+        }
+        return [:]
+    }
+
+    public func docNoteContent(path: String) async throws -> String {
+        guard let data = FileManager.default.contents(atPath: path) else {
+            return ""
+        }
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    public func docSetType(path: String, type: String) async throws {
+        try await noteEditProperty(path: path, key: "document_type", value: type)
+    }
+
+    public func docSetNoteVisible(path: String, visible: Bool) async throws {
+        try await noteEditProperty(path: path, key: "note_visible", value: visible ? "true" : "false")
+    }
+
+    public func docSetTags(path: String, tags: String) async throws {
+        try await noteEditProperty(path: path, key: "tags", value: tags)
+    }
 }
 
 public struct SimilarDoc: Codable, Equatable, Identifiable, Sendable {

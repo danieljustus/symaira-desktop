@@ -16,6 +16,7 @@ struct DocumentGridView: View {
     @State private var agentQuery = ""
     @State private var agentResult = ""
     @State private var isAgentRunning = false
+    @State private var openDoc: DocumentItem?
 
     var filteredDocs: [DocumentItem] {
         var result = documents
@@ -53,6 +54,9 @@ struct DocumentGridView: View {
         }
         .sheet(isPresented: $showAgentSheet) {
             agentSheet
+        }
+        .sheet(item: $openDoc) { doc in
+            DocumentViewerView(document: doc)
         }
     }
 
@@ -118,6 +122,7 @@ struct DocumentGridView: View {
                 ForEach(filteredDocs) { doc in
                     DocumentCard(doc: doc, isSelected: selectedDoc?.id == doc.id)
                         .onTapGesture { selectedDoc = doc }
+                        .onTapGesture(count: 2) { openDoc = doc }
                         .contextMenu { documentContextMenu(doc: doc) }
                 }
             }
@@ -129,6 +134,11 @@ struct DocumentGridView: View {
 
     @ViewBuilder
     private func documentContextMenu(doc: DocumentItem) -> some View {
+        Button(action: { openDoc = doc }) {
+            Label("Open", systemImage: "doc.text")
+        }
+        .keyboardShortcut("o", modifiers: .command)
+        Divider()
         statusSubmenu(doc: doc)
         Divider()
         tagsSubmenu(doc: doc)

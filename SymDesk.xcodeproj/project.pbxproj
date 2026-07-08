@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		087490E1CC2A424C7AEF4AC1 /* DocumentGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF74B31CB37D574E3AC69032 /* DocumentGridView.swift */; };
+		0C92622CE6B3BB5D9C7AEC4C /* DocumentViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */; };
 		14F891ABD3302502994CB064 /* SymairaTheme in Frameworks */ = {isa = PBXBuildFile; productRef = 6BFDEE30809F14AC06D066FB /* SymairaTheme */; };
 		1D14D610EF1CD193F0A97065 /* SymairaTheme in Frameworks */ = {isa = PBXBuildFile; productRef = AAA444735FB3AB708D3BD4C4 /* SymairaTheme */; };
 		1F1FA22E3100184255CC3362 /* DbViewTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EEEC588B327739FBAF693D4 /* DbViewTable.swift */; };
@@ -60,6 +61,7 @@
 		AF3DE41EB61C376999197AEF /* libSymDeskCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSymDeskCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF74B31CB37D574E3AC69032 /* DocumentGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentGridView.swift; sourceTree = "<group>"; };
 		B58CE1AAB047E5C20B8DBC43 /* BlockEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockEditorView.swift; sourceTree = "<group>"; };
+		BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentViewerView.swift; sourceTree = "<group>"; };
 		BBD325D2A25FDF9FA519A6FA /* SymDeskApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymDeskApp.swift; sourceTree = "<group>"; };
 		CAD6A1DD667A2F7EA1706073 /* SymDeskCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SymDeskCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F136EF877D776AFD6D2CE697 /* CommandPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandPalette.swift; sourceTree = "<group>"; };
@@ -142,6 +144,7 @@
 				F136EF877D776AFD6D2CE697 /* CommandPalette.swift */,
 				1EEEC588B327739FBAF693D4 /* DbViewTable.swift */,
 				AF74B31CB37D574E3AC69032 /* DocumentGridView.swift */,
+				BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */,
 				FF662679454A1D5730ECD171 /* GraphView.swift */,
 				1F547CF59C20684A5051D6B5 /* MarkdownEditorView.swift */,
 			);
@@ -324,6 +327,7 @@
 				571C6E466AA0EACEBA689E1F /* ContentView.swift in Sources */,
 				1F1FA22E3100184255CC3362 /* DbViewTable.swift in Sources */,
 				087490E1CC2A424C7AEF4AC1 /* DocumentGridView.swift in Sources */,
+				0C92622CE6B3BB5D9C7AEC4C /* DocumentViewerView.swift in Sources */,
 				C56310271DF0FBD1ED258CCA /* GraphView.swift in Sources */,
 				223A0903E7A1B2FF00EE3F7E /* MarkdownEditorView.swift in Sources */,
 				CBD99C1AAF0BA2BE2A136FA6 /* SymDeskApp.swift in Sources */,

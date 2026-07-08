@@ -366,20 +366,20 @@ func TestSimilarDocs(t *testing.T) {
 	docs := []*vault.Document{
 		{
 			Path: "/tmp/a.md", Title: "A", Created: "2026-01-01T00:00:00Z", SHA256: "sa",
-			Body: "Monthly utility bill for Alice from Power Co. Amount due: $142.50.",
-			Simhash: "a1b2c3d4e5f6a7b8",
+			Body:        "Monthly utility bill for Alice from Power Co. Amount due: $142.50.",
+			Simhash:     "a1b2c3d4e5f6a7b8",
 			Frontmatter: map[string]interface{}{},
 		},
 		{
 			Path: "/tmp/b.md", Title: "B", Created: "2026-01-01T00:00:00Z", SHA256: "sb",
-			Body: "Monthly utility bill for Alice from Power Co. Amount due: $155.00.",
-			Simhash: "a1b2c3d4e5f6a7b0",
+			Body:        "Monthly utility bill for Alice from Power Co. Amount due: $155.00.",
+			Simhash:     "a1b2c3d4e5f6a7b0",
 			Frontmatter: map[string]interface{}{},
 		},
 		{
 			Path: "/tmp/c.md", Title: "C", Created: "2026-01-01T00:00:00Z", SHA256: "sc",
-			Body: "Completely different text about car insurance.",
-			Simhash: "ffffffffffffffff",
+			Body:        "Completely different text about car insurance.",
+			Simhash:     "ffffffffffffffff",
 			Frontmatter: map[string]interface{}{},
 		},
 	}

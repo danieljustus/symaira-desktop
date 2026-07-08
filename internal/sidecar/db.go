@@ -371,27 +371,27 @@ func (db *DB) GetAllLinks() ([]Edge, error) {
 
 // DocsFilter holds optional filters for DocsList.
 type DocsFilter struct {
-	Type         string // document_type frontmatter value
-	Status       string // enum status
-	Person       string // household member
+	Type          string // document_type frontmatter value
+	Status        string // enum status
+	Person        string // household member
 	Correspondent string // correspondent name
-	Year         string // 4-digit year, filters document_date
-	DueBefore    string // ISO-8601 date, due_date <= this
-	MinConfidence *int  // confidence >= this
-	MaxConfidence *int  // confidence <= this
+	Year          string // 4-digit year, filters document_date
+	DueBefore     string // ISO-8601 date, due_date <= this
+	MinConfidence *int   // confidence >= this
+	MaxConfidence *int   // confidence <= this
 }
 
 // DocsResult is a single row returned by DocsList.
 type DocsResult struct {
-	Path         string `json:"path"`
-	Title        string `json:"title"`
-	DocumentDate string `json:"document_date,omitempty"`
-	Person       string `json:"person,omitempty"`
-	Status       string `json:"status,omitempty"`
-	DueDate      string `json:"due_date,omitempty"`
-	Confidence   int    `json:"confidence,omitempty"`
+	Path          string `json:"path"`
+	Title         string `json:"title"`
+	DocumentDate  string `json:"document_date,omitempty"`
+	Person        string `json:"person,omitempty"`
+	Status        string `json:"status,omitempty"`
+	DueDate       string `json:"due_date,omitempty"`
+	Confidence    int    `json:"confidence,omitempty"`
 	Correspondent string `json:"correspondent,omitempty"`
-	DocumentType string `json:"document_type,omitempty"`
+	DocumentType  string `json:"document_type,omitempty"`
 }
 
 // DocsList queries indexed documents with optional filters and returns
@@ -498,12 +498,12 @@ func (db *DB) DocsCounts(f DocsFilter) (*DocsCounts, error) {
 }
 
 type ReviewResult struct {
-	Path         string `json:"path"`
-	Title        string `json:"title"`
-	Status       string `json:"status,omitempty"`
-	DocumentType string `json:"document_type,omitempty"`
-	DocumentDate string `json:"document_date,omitempty"`
-	Confidence   int    `json:"confidence"`
+	Path         string   `json:"path"`
+	Title        string   `json:"title"`
+	Status       string   `json:"status,omitempty"`
+	DocumentType string   `json:"document_type,omitempty"`
+	DocumentDate string   `json:"document_date,omitempty"`
+	Confidence   int      `json:"confidence"`
 	Reasons      []string `json:"reasons"`
 }
 

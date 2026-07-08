@@ -22,8 +22,8 @@ func TestDocsListReturnsRelativePaths(t *testing.T) {
 		Status:       "open",
 		DocumentDate: "2026-07-01",
 		Frontmatter: map[string]interface{}{
-			"person":  "Alice",
-			"status":  "open",
+			"person":        "Alice",
+			"status":        "open",
 			"document_date": "2026-07-01",
 		},
 	}

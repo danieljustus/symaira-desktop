@@ -19,12 +19,21 @@ type Sort struct {
 	Ascending bool   `json:"ascending"`
 }
 
+type ComputedColumn struct {
+	Formula string `json:"formula,omitempty"`
+	Rollup  string `json:"rollup,omitempty"`
+}
+
 type View struct {
-	ID      string   `json:"id"`
-	Name    string   `json:"name"`
-	Filters []Filter `json:"filters"`
-	Sorts   []Sort   `json:"sorts"`
-	Columns []string `json:"columns"`
+	ID           string                    `json:"id"`
+	Name         string                    `json:"name"`
+	Type         string                    `json:"type"`
+	GroupBy      string                    `json:"group_by,omitempty"`
+	DateProperty string                    `json:"date_property,omitempty"`
+	Computed     map[string]ComputedColumn `json:"computed,omitempty"`
+	Filters      []Filter                  `json:"filters"`
+	Sorts        []Sort                    `json:"sorts"`
+	Columns      []string                  `json:"columns"`
 }
 
 type Manager struct {

@@ -57,12 +57,27 @@ public struct DbSort: Codable, Equatable, Sendable {
     public let ascending: Bool
 }
 
+public struct ComputedColumn: Codable, Equatable, Sendable {
+    public let formula: String?
+    public let rollup: String?
+}
+
 public struct DbView: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let name: String
+    public let type: String?
+    public let groupBy: String?
+    public let dateProperty: String?
+    public let computed: [String: ComputedColumn]?
     public let filters: [DbFilter]
     public let sorts: [DbSort]
     public let columns: [String]
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, type, filters, sorts, columns, computed
+        case groupBy = "group_by"
+        case dateProperty = "date_property"
+    }
 }
 
 public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {

@@ -935,4 +935,3 @@ func deriveOriginalPath(conflictPath string) string {
 
 	return filepath.Join(dir, name+ext)
 }
-

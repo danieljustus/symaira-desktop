@@ -167,4 +167,3 @@ func IngestRetry(jobID string) error {
 	cmd := exec.CommandContext(ctx, "symingest", "retry", jobID)
 	return cmd.Run()
 }
-

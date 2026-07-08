@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/danieljustus/symaira-desktop/internal/service"
+	"github.com/fsnotify/fsnotify"
 )
 
 type InboxWatcher struct {

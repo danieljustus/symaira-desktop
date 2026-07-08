@@ -474,4 +474,3 @@ func newIngestRetryTool(getService serviceFactory) *mcpserver.Tool {
 		},
 	}
 }
-

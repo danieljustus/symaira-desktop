@@ -507,4 +507,3 @@ func (s *Service) IngestJobs() (string, error) {
 func (s *Service) IngestRetry(jobID string) error {
 	return ingest.IngestRetry(jobID)
 }
-

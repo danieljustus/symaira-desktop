@@ -186,6 +186,76 @@ func TestDocsReviewReturnsUnderThreshold(t *testing.T) {
 	}
 }
 
+func TestDocStatusTraversalDenied(t *testing.T) {
+	svc := newTestService(t)
+	if err := svc.DocStatus("../escape.md", "done"); err == nil {
+		t.Error("expected error for path traversal")
+	}
+}
+
+func TestDocStatusNonexistentFile(t *testing.T) {
+	svc := newTestService(t)
+	if err := svc.DocStatus("does_not_exist.md", "done"); err == nil {
+		t.Error("expected error for nonexistent file")
+	}
+}
+
+func TestDocDueTraversalDenied(t *testing.T) {
+	svc := newTestService(t)
+	if err := svc.DocDue("../escape.md", "2026-12-31"); err == nil {
+		t.Error("expected error for path traversal")
+	}
+}
+
+func TestDocDueNonexistentFile(t *testing.T) {
+	svc := newTestService(t)
+	if err := svc.DocDue("does_not_exist.md", "2026-12-31"); err == nil {
+		t.Error("expected error for nonexistent file")
+	}
+}
+
+func TestSimilarDocsTraversalDenied(t *testing.T) {
+	svc := newTestService(t)
+	_, err := svc.SimilarDocs("../escape.md", 80)
+	if err == nil {
+		t.Error("expected error for path traversal")
+	}
+}
+
+func TestSimilarDocsNonexistentFile(t *testing.T) {
+	svc := newTestService(t)
+	_, err := svc.SimilarDocs("nonexistent.md", 80)
+	if err == nil {
+		t.Error("expected error for nonexistent file")
+	}
+}
+
+func TestSimilarDocsComputesSimhashWhenEmpty(t *testing.T) {
+	svc := newTestService(t)
+
+	path := filepath.Join(svc.VaultRoot, "nohash.md")
+	content := "---\ntitle: \"No Hash\"\n---\n\nSome body text for simhash computation.\n"
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.DB.IndexDocument(&vault.Document{
+		Path: path, Title: "No Hash", Created: "2026-01-01T00:00:00Z",
+		SHA256: "nh1", Body: "Some body text for simhash computation.",
+		Frontmatter: map[string]interface{}{},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	results, err := svc.SimilarDocs("nohash.md", 80)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 0 {
+		t.Errorf("expected 0 similar results for self, got %d", len(results))
+	}
+}
+
 func TestSimilarDocsFindsNearDuplicates(t *testing.T) {
 	svc := newTestService(t)
 

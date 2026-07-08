@@ -413,3 +413,277 @@ func TestSimilarDocs(t *testing.T) {
 		}
 	}
 }
+
+func TestDocsListFilterByType(t *testing.T) {
+	db := setupTestDB(t)
+
+	docs := []*vault.Document{
+		{
+			Path: "/tmp/invoice.md", Title: "Invoice", Created: "2026-01-01T00:00:00Z", SHA256: "i1",
+			Body: "invoice", Frontmatter: map[string]interface{}{"document_type": "invoice"},
+		},
+		{
+			Path: "/tmp/notice.md", Title: "Notice", Created: "2026-01-01T00:00:00Z", SHA256: "n1",
+			Body: "notice", Frontmatter: map[string]interface{}{"document_type": "notice"},
+		},
+	}
+	for _, d := range docs {
+		if err := db.IndexDocument(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	results, err := db.DocsList(DocsFilter{Type: "invoice"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0].DocumentType != "invoice" {
+		t.Errorf("expected 1 invoice, got %v", results)
+	}
+}
+
+func TestDocsListFilterByCorrespondent(t *testing.T) {
+	db := setupTestDB(t)
+
+	docs := []*vault.Document{
+		{
+			Path: "/tmp/a.md", Title: "A", Created: "2026-01-01T00:00:00Z", SHA256: "a",
+			Body: "a", Frontmatter: map[string]interface{}{"correspondent": "Power Co"},
+		},
+		{
+			Path: "/tmp/b.md", Title: "B", Created: "2026-01-01T00:00:00Z", SHA256: "b",
+			Body: "b", Frontmatter: map[string]interface{}{"correspondent": "Insurance Inc"},
+		},
+	}
+	for _, d := range docs {
+		if err := db.IndexDocument(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	results, err := db.DocsList(DocsFilter{Correspondent: "Power Co"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0].Title != "A" {
+		t.Errorf("expected 1 result for correspondent, got %v", results)
+	}
+}
+
+func TestDocsListFilterByYear(t *testing.T) {
+	db := setupTestDB(t)
+
+	docs := []*vault.Document{
+		{
+			Path: "/tmp/old.md", Title: "Old", Created: "2026-01-01T00:00:00Z", SHA256: "o",
+			Body: "old", DocumentDate: "2025-03-15",
+			Frontmatter: map[string]interface{}{"document_date": "2025-03-15"},
+		},
+		{
+			Path: "/tmp/new.md", Title: "New", Created: "2026-01-01T00:00:00Z", SHA256: "nw",
+			Body: "new", DocumentDate: "2026-07-01",
+			Frontmatter: map[string]interface{}{"document_date": "2026-07-01"},
+		},
+	}
+	for _, d := range docs {
+		if err := db.IndexDocument(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	results, err := db.DocsList(DocsFilter{Year: "2026"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0].Title != "New" {
+		t.Errorf("expected 1 result for year 2026, got %v", results)
+	}
+}
+
+func TestDocsListFilterByDueBefore(t *testing.T) {
+	db := setupTestDB(t)
+
+	docs := []*vault.Document{
+		{
+			Path: "/tmp/soon.md", Title: "Soon", Created: "2026-01-01T00:00:00Z", SHA256: "s",
+			Body: "soon", DueDate: "2026-06-01",
+			Frontmatter: map[string]interface{}{"due_date": "2026-06-01"},
+		},
+		{
+			Path: "/tmp/later.md", Title: "Later", Created: "2026-01-01T00:00:00Z", SHA256: "l",
+			Body: "later", DueDate: "2026-12-31",
+			Frontmatter: map[string]interface{}{"due_date": "2026-12-31"},
+		},
+	}
+	for _, d := range docs {
+		if err := db.IndexDocument(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	results, err := db.DocsList(DocsFilter{DueBefore: "2026-07-01"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0].Title != "Soon" {
+		t.Errorf("expected 1 result due before July, got %v", results)
+	}
+}
+
+func TestDocsListFilterByConfidence(t *testing.T) {
+	db := setupTestDB(t)
+
+	docs := []*vault.Document{
+		{
+			Path: "/tmp/low.md", Title: "Low", Created: "2026-01-01T00:00:00Z", SHA256: "lo",
+			Body: "low", Confidence: 30,
+			Frontmatter: map[string]interface{}{"confidence": 30},
+		},
+		{
+			Path: "/tmp/mid.md", Title: "Mid", Created: "2026-01-01T00:00:00Z", SHA256: "mi",
+			Body: "mid", Confidence: 60,
+			Frontmatter: map[string]interface{}{"confidence": 60},
+		},
+		{
+			Path: "/tmp/high.md", Title: "High", Created: "2026-01-01T00:00:00Z", SHA256: "hi",
+			Body: "high", Confidence: 95,
+			Frontmatter: map[string]interface{}{"confidence": 95},
+		},
+	}
+	for _, d := range docs {
+		if err := db.IndexDocument(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	minConf := 50
+	maxConf := 80
+	results, err := db.DocsList(DocsFilter{MinConfidence: &minConf, MaxConfidence: &maxConf})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0].Title != "Mid" {
+		t.Errorf("expected 1 result in confidence range, got %v", results)
+	}
+}
+
+func TestSimilarDocsEmptySimhash(t *testing.T) {
+	db := setupTestDB(t)
+
+	results, err := db.SimilarDocs("", 80)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if results != nil {
+		t.Errorf("expected nil for empty simhash, got %v", results)
+	}
+}
+
+func TestSimilarDocsInvalidSimhash(t *testing.T) {
+	db := setupTestDB(t)
+
+	_, err := db.SimilarDocs("not-a-hex-string", 80)
+	if err == nil {
+		t.Error("expected error for invalid simhash")
+	}
+}
+
+func TestDocsCountsUnsetFields(t *testing.T) {
+	db := setupTestDB(t)
+
+	docs := []*vault.Document{
+		{
+			Path: "/tmp/a.md", Title: "A", Created: "2026-01-01T00:00:00Z", SHA256: "a1",
+			Body: "a",
+			Frontmatter: map[string]interface{}{},
+		},
+	}
+	for _, d := range docs {
+		if err := db.IndexDocument(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	counts, err := db.DocsCounts(DocsFilter{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if counts.Total != 1 {
+		t.Errorf("expected total 1, got %d", counts.Total)
+	}
+	if counts.Status["unset"] != 1 {
+		t.Errorf("expected 1 unset status, got %v", counts.Status)
+	}
+	if counts.Person["unset"] != 1 {
+		t.Errorf("expected 1 unset person, got %v", counts.Person)
+	}
+}
+
+func TestCheckIntegrity(t *testing.T) {
+	db := setupTestDB(t)
+	if err := db.CheckIntegrity(); err != nil {
+		t.Errorf("CheckIntegrity failed: %v", err)
+	}
+}
+
+func TestListFiles(t *testing.T) {
+	db := setupTestDB(t)
+
+	docs := []*vault.Document{
+		{Path: "/tmp/a.md", Title: "A", Created: "2026-01-01T00:00:00Z", SHA256: "a", Body: "a"},
+		{Path: "/tmp/b/b.md", Title: "B", Created: "2026-01-02T00:00:00Z", SHA256: "b", Body: "b"},
+	}
+	for _, d := range docs {
+		if err := db.IndexDocument(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	files, err := db.ListFiles("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 2 {
+		t.Errorf("expected 2 files, got %d", len(files))
+	}
+
+	files, err = db.ListFiles("/tmp/b")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 1 || files[0].Title != "B" {
+		t.Errorf("expected 1 file under /tmp/b, got %v", files)
+	}
+}
+
+func TestGetAllLinks(t *testing.T) {
+	db := setupTestDB(t)
+
+	doc := &vault.Document{
+		Path: "/tmp/a.md", Title: "A", Created: "2026-01-01T00:00:00Z", SHA256: "a",
+		Body:  "a",
+		Links: []string{"b.md", "c.md"},
+	}
+	if err := db.IndexDocument(doc); err != nil {
+		t.Fatal(err)
+	}
+
+	edges, err := db.GetAllLinks()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(edges) != 2 {
+		t.Errorf("expected 2 edges, got %d", len(edges))
+	}
+}
+
+func TestSearchEmptyQuery(t *testing.T) {
+	db := setupTestDB(t)
+	results, err := db.Search("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if results != nil {
+		t.Errorf("expected nil for empty query, got %v", results)
+	}
+}

@@ -32,3 +32,4 @@ internal/service/testdata/
 # Local build output and scratch
 /bin/
 /scratch/
+.omo/

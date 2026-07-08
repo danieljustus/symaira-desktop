@@ -27,11 +27,15 @@ struct ContentView: View {
         case vault
         case graph
         case dbView
+        case docs
     }
 
     @State private var displayMode: DisplayMode = .vault
     @State private var selectedViewID: String?
     @State private var dbViews: [DbView] = []
+    @State private var docFilterID: String = "all"
+    @State private var docCounts: [String: Int] = [:]
+    @State private var docTotalCount: Int = 0
 
     var body: some View {
         Group {
@@ -50,6 +54,29 @@ struct ContentView: View {
             } else {
                 NavigationSplitView {
                     List {
+                        Section("Library") {
+                            ForEach(DocFilterPreset.defaults) { preset in
+                                Button(action: {
+                                    docFilterID = preset.id
+                                    displayMode = .docs
+                                }) {
+                                    HStack {
+                                        Text(preset.label)
+                                        Spacer()
+                                        if let count = preset.status == nil ? docTotalCount : docCounts[preset.status!.rawValue] {
+                                            Text("\(count)")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(Color.gray.opacity(0.12))
+                                                .cornerRadius(4)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         Section("Views") {
                             Button("Vault") { displayMode = .vault }
                             Button("Graph") { displayMode = .graph }
@@ -83,6 +110,9 @@ struct ContentView: View {
                             navigateToNote(title: selectedNodeID)
                             displayMode = .vault
                         }
+                    case .docs:
+                        let statusVal = DocFilterPreset.defaults.first(where: { $0.id == docFilterID })?.status
+                        DocumentGridView(statusFilter: statusVal?.rawValue)
                     case .dbView:
                         if let vid = selectedViewID {
                             DbViewTable(viewID: vid)
@@ -249,11 +279,13 @@ struct ContentView: View {
                     await fetchNotes()
                     await fetchViews()
                     await fetchDoctor()
+                    await fetchDocCounts()
                 }
                 .onChange(of: watcher.latestEvent) { ev in
                     Task {
                         // Refresh notes if a file changed
                         await fetchNotes()
+                        await fetchDocCounts()
                         // If the current note was changed externally, reload it
                         if let selected = selectedNote, ev?.path == selected.path {
                             await loadContent(for: selected)
@@ -327,6 +359,21 @@ struct ContentView: View {
     private func navigateToNote(title: String) {
         if let found = notes.first(where: { $0.title == title }) {
             self.selectedNote = found
+        }
+    }
+
+    private func fetchDocCounts() async {
+        do {
+            let all = try await core.docsList()
+            docTotalCount = all.count
+            var counts: [String: Int] = [:]
+            for doc in all {
+                let key = doc.status.isEmpty ? "unset" : doc.status
+                counts[key, default: 0] += 1
+            }
+            docCounts = counts
+        } catch {
+            print("fetchDocCounts failed: \(error)")
         }
     }
 

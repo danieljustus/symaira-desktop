@@ -65,6 +65,94 @@ public struct DbView: Codable, Equatable, Identifiable, Sendable {
     public let columns: [String]
 }
 
+public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { path }
+    public let path: String
+    public let title: String
+    public let documentDate: String
+    public let person: String
+    public let status: String
+    public let dueDate: String
+    public let confidence: Int
+    public let correspondent: String
+    public let documentType: String
+
+    enum CodingKeys: String, CodingKey {
+        case path, title, person, status, confidence, correspondent
+        case documentDate = "document_date"
+        case dueDate = "due_date"
+        case documentType = "document_type"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        path = try c.decode(String.self, forKey: .path)
+        title = try c.decode(String.self, forKey: .title)
+        documentDate = (try? c.decode(String.self, forKey: .documentDate)) ?? ""
+        person = (try? c.decode(String.self, forKey: .person)) ?? ""
+        status = (try? c.decode(String.self, forKey: .status)) ?? ""
+        dueDate = (try? c.decode(String.self, forKey: .dueDate)) ?? ""
+        confidence = (try? c.decode(Int.self, forKey: .confidence)) ?? 0
+        correspondent = (try? c.decode(String.self, forKey: .correspondent)) ?? ""
+        documentType = (try? c.decode(String.self, forKey: .documentType)) ?? ""
+    }
+}
+
+public enum DocumentStatus: String, CaseIterable, Identifiable, Sendable {
+    case open
+    case paid
+    case submitted
+    case done
+    case needsReview = "needs_review"
+    case waitingForReply = "waiting_for_reply"
+
+    public var id: String { rawValue }
+
+    public var label: String {
+        switch self {
+        case .open: return "Open"
+        case .paid: return "Paid"
+        case .submitted: return "Submitted"
+        case .done: return "Done"
+        case .needsReview: return "Needs Review"
+        case .waitingForReply: return "Waiting for Reply"
+        }
+    }
+
+    public var systemImage: String {
+        switch self {
+        case .open: return "circle"
+        case .paid: return "checkmark.circle"
+        case .submitted: return "paperplane"
+        case .done: return "checkmark.circle.fill"
+        case .needsReview: return "exclamationmark.triangle"
+        case .waitingForReply: return "clock"
+        }
+    }
+}
+
+public struct DocFilterPreset: Identifiable, Sendable {
+    public let id: String
+    public let label: String
+    public let status: DocumentStatus?
+
+    public init(id: String, label: String, status: DocumentStatus?) {
+        self.id = id
+        self.label = label
+        self.status = status
+    }
+
+    public static let defaults: [DocFilterPreset] = [
+        .init(id: "all", label: "All Documents", status: nil),
+        .init(id: "open", label: "Open", status: .open),
+        .init(id: "needs_review", label: "Needs Review", status: .needsReview),
+        .init(id: "waiting_for_reply", label: "Waiting for Reply", status: .waitingForReply),
+        .init(id: "submitted", label: "Submitted", status: .submitted),
+        .init(id: "done", label: "Done", status: .done),
+        .init(id: "paid", label: "Paid", status: .paid),
+    ]
+}
+
 public struct GraphNode: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let label: String
@@ -272,4 +360,73 @@ public final class DeskCore: ObservableObject {
             }
         }
     }
+
+    // MARK: - Document Library
+
+    public func docsList(status: String? = nil, type: String? = nil, person: String? = nil) async throws -> [DocumentItem] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        var args = ["docs", "list", "--json"]
+        if let s = status, !s.isEmpty { args += ["--status", s] }
+        if let t = type, !t.isEmpty { args += ["--type", t] }
+        if let p = person, !p.isEmpty { args += ["--person", p] }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            [DocumentItem].self,
+            executable: tool.location.url,
+            arguments: args
+        )
+    }
+
+    public func docSetStatus(path: String, status: String) async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        _ = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["doc", "status", path, status]
+        )
+    }
+
+    public func docSetDue(path: String, date: String) async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        _ = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["doc", "due", path, date]
+        )
+    }
+
+    public func docsSimilar(path: String, threshold: Int = 50) async throws -> [SimilarDoc] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            [SimilarDoc].self,
+            executable: tool.location.url,
+            arguments: ["similar", path, "--threshold", "\(threshold)", "--json"]
+        )
+    }
+
+    public func docsReview(threshold: Int = 70) async throws -> [ReviewDoc] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            [ReviewDoc].self,
+            executable: tool.location.url,
+            arguments: ["docs", "review", "--threshold", "\(threshold)", "--json"]
+        )
+    }
+}
+
+public struct SimilarDoc: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { path }
+    public let path: String
+    public let title: String
+    public let similarity: Int
+}
+
+public struct ReviewDoc: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { path }
+    public let path: String
+    public let title: String
+    public let confidence: Int
+    public let reasons: [String]
 }

@@ -34,4 +34,91 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertEqual(ev.path, "/tmp/note.md")
         XCTAssertEqual(ev.ts, 123456789)
     }
+
+    func testDocumentItemDecoding() throws {
+        let json = """
+        {
+            "path": "inbox/receipt-2026.md",
+            "title": "Receipt 2026",
+            "document_date": "2026-07-01",
+            "person": "Daniel",
+            "status": "open",
+            "due_date": "2026-08-01",
+            "confidence": 85,
+            "correspondent": "Acme Corp",
+            "document_type": "invoice"
+        }
+        """.data(using: .utf8)!
+
+        let doc = try JSONDecoder().decode(DocumentItem.self, from: json)
+        XCTAssertEqual(doc.path, "inbox/receipt-2026.md")
+        XCTAssertEqual(doc.title, "Receipt 2026")
+        XCTAssertEqual(doc.documentDate, "2026-07-01")
+        XCTAssertEqual(doc.person, "Daniel")
+        XCTAssertEqual(doc.status, "open")
+        XCTAssertEqual(doc.dueDate, "2026-08-01")
+        XCTAssertEqual(doc.confidence, 85)
+        XCTAssertEqual(doc.correspondent, "Acme Corp")
+        XCTAssertEqual(doc.documentType, "invoice")
+        XCTAssertEqual(doc.id, doc.path)
+    }
+
+    func testDocumentItemDecodingWithEmptyFields() throws {
+        let json = """
+        {
+            "path": "notes/plain.md",
+            "title": "Plain Note"
+        }
+        """.data(using: .utf8)!
+
+        let doc = try JSONDecoder().decode(DocumentItem.self, from: json)
+        XCTAssertEqual(doc.path, "notes/plain.md")
+        XCTAssertEqual(doc.title, "Plain Note")
+        XCTAssertEqual(doc.documentDate, "")
+        XCTAssertEqual(doc.status, "")
+        XCTAssertEqual(doc.confidence, 0)
+    }
+
+    func testDocumentStatusEnum() {
+        XCTAssertEqual(DocumentStatus.open.rawValue, "open")
+        XCTAssertEqual(DocumentStatus.needsReview.rawValue, "needs_review")
+        XCTAssertEqual(DocumentStatus.allCases.count, 6)
+    }
+
+    func testDocFilterPresetDefaults() {
+        let presets = DocFilterPreset.defaults
+        XCTAssertGreaterThanOrEqual(presets.count, 7)
+        XCTAssertEqual(presets[0].status, nil)
+        XCTAssertEqual(presets[1].status, .open)
+    }
+
+    func testSimilarDocDecoding() throws {
+        let json = """
+        {
+            "path": "other/receipt.md",
+            "title": "Other Receipt",
+            "similarity": 92
+        }
+        """.data(using: .utf8)!
+
+        let doc = try JSONDecoder().decode(SimilarDoc.self, from: json)
+        XCTAssertEqual(doc.similarity, 92)
+        XCTAssertEqual(doc.id, doc.path)
+    }
+
+    func testReviewDocDecoding() throws {
+        let json = """
+        {
+            "path": "inbox/scan.md",
+            "title": "Scan",
+            "confidence": 30,
+            "reasons": ["confidence 30 < 70", "missing document_type"]
+        }
+        """.data(using: .utf8)!
+
+        let doc = try JSONDecoder().decode(ReviewDoc.self, from: json)
+        XCTAssertEqual(doc.confidence, 30)
+        XCTAssertEqual(doc.reasons.count, 2)
+        XCTAssertEqual(doc.reasons[0], "confidence 30 < 70")
+    }
 }

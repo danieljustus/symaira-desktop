@@ -88,8 +88,13 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 		}
 
 		// Update files
-		_, err = tx.Exec(`UPDATE files SET sha256 = ?, title = ?, modified_at = ?, indexed_at = ? WHERE id = ?`,
-			doc.SHA256, doc.Title, doc.Created, time.Now(), fileID)
+		_, err = tx.Exec(`UPDATE files SET sha256 = ?, title = ?, modified_at = ?, indexed_at = ?,
+			document_date = ?, person = ?, status = ?, due_date = ?, confidence = ?, ocr_json_path = ?, simhash = ?
+			WHERE id = ?`,
+			doc.SHA256, doc.Title, doc.Created, time.Now(),
+			nullStr(doc.DocumentDate), nullStr(doc.Person), nullStr(doc.Status),
+			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash),
+			fileID)
 		if err != nil {
 			return err
 		}
@@ -106,8 +111,12 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 
 	} else {
 		// New file
-		res, err := tx.Exec(`INSERT INTO files(path, sha256, title, modified_at, indexed_at) VALUES (?, ?, ?, ?, ?)`,
-			doc.Path, doc.SHA256, doc.Title, doc.Created, time.Now())
+		res, err := tx.Exec(`INSERT INTO files(path, sha256, title, modified_at, indexed_at,
+			document_date, person, status, due_date, confidence, ocr_json_path, simhash)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			doc.Path, doc.SHA256, doc.Title, doc.Created, time.Now(),
+			nullStr(doc.DocumentDate), nullStr(doc.Person), nullStr(doc.Status),
+			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash))
 		if err != nil {
 			return err
 		}
@@ -141,6 +150,22 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 			doc.Path, target)
 		if err != nil {
 			return err
+		}
+	}
+
+	// 5. Correspondent backlink: if correspondent matches an existing note title, record a link edge
+	if doc.Frontmatter != nil {
+		if correspondent, ok := doc.Frontmatter["correspondent"].(string); ok && correspondent != "" {
+			var matchPath string
+			err = tx.QueryRow(`SELECT path FROM files WHERE title = ? AND path != ? LIMIT 1`,
+				correspondent, doc.Path).Scan(&matchPath)
+			if err == nil && matchPath != "" {
+				_, err = tx.Exec(`INSERT OR IGNORE INTO links(from_path, to_path, kind) VALUES (?, ?, 'correspondent')`,
+					doc.Path, matchPath)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 
@@ -337,4 +362,146 @@ func (db *DB) GetAllLinks() ([]Edge, error) {
 		edges = append(edges, Edge{Source: s, Target: t})
 	}
 	return edges, nil
+}
+
+// DocsFilter holds optional filters for DocsList.
+type DocsFilter struct {
+	Type         string // document_type frontmatter value
+	Status       string // enum status
+	Person       string // household member
+	Correspondent string // correspondent name
+	Year         string // 4-digit year, filters document_date
+	DueBefore    string // ISO-8601 date, due_date <= this
+	MinConfidence *int  // confidence >= this
+	MaxConfidence *int  // confidence <= this
+}
+
+// DocsResult is a single row returned by DocsList.
+type DocsResult struct {
+	Path         string `json:"path"`
+	Title        string `json:"title"`
+	DocumentDate string `json:"document_date,omitempty"`
+	Person       string `json:"person,omitempty"`
+	Status       string `json:"status,omitempty"`
+	DueDate      string `json:"due_date,omitempty"`
+	Confidence   int    `json:"confidence,omitempty"`
+	Correspondent string `json:"correspondent,omitempty"`
+	DocumentType string `json:"document_type,omitempty"`
+}
+
+// DocsList queries indexed documents with optional filters and returns
+// structured metadata rows. Existing ListFiles is left untouched.
+func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
+	query := `
+		SELECT f.path, f.title, COALESCE(f.document_date,''), COALESCE(f.person,''),
+			COALESCE(f.status,''), COALESCE(f.due_date,''), f.confidence,
+			COALESCE(fp_corr.value,''), COALESCE(fp_type.value,'')
+		FROM files f
+		LEFT JOIN file_properties fp_corr ON fp_corr.file_id = f.id AND fp_corr.key = 'correspondent'
+		LEFT JOIN file_properties fp_type ON fp_type.file_id = f.id AND fp_type.key = 'document_type'
+		WHERE 1=1`
+	var args []interface{}
+
+	if f.Status != "" {
+		query += ` AND f.status = ?`
+		args = append(args, f.Status)
+	}
+	if f.Person != "" {
+		query += ` AND f.person = ?`
+		args = append(args, f.Person)
+	}
+	if f.Correspondent != "" {
+		query += ` AND fp_corr.value = ?`
+		args = append(args, f.Correspondent)
+	}
+	if f.Type != "" {
+		query += ` AND fp_type.value = ?`
+		args = append(args, f.Type)
+	}
+	if f.Year != "" {
+		query += ` AND f.document_date LIKE ?`
+		args = append(args, f.Year+"%")
+	}
+	if f.DueBefore != "" {
+		query += ` AND f.due_date != '' AND f.due_date <= ?`
+		args = append(args, f.DueBefore)
+	}
+	if f.MinConfidence != nil {
+		query += ` AND f.confidence >= ?`
+		args = append(args, *f.MinConfidence)
+	}
+	if f.MaxConfidence != nil {
+		query += ` AND f.confidence <= ?`
+		args = append(args, *f.MaxConfidence)
+	}
+
+	query += ` ORDER BY f.path ASC`
+
+	rows, err := db.conn.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []DocsResult
+	for rows.Next() {
+		var r DocsResult
+		var conf sql.NullInt64
+		if err := rows.Scan(&r.Path, &r.Title, &r.DocumentDate, &r.Person,
+			&r.Status, &r.DueDate, &conf, &r.Correspondent, &r.DocumentType); err != nil {
+			return nil, err
+		}
+		if conf.Valid {
+			r.Confidence = int(conf.Int64)
+		}
+		results = append(results, r)
+	}
+	return results, nil
+}
+
+// DocsCounts returns aggregate counts for the given filter set.
+type DocsCounts struct {
+	Total  int            `json:"total"`
+	Status map[string]int `json:"status,omitempty"`
+	Person map[string]int `json:"person,omitempty"`
+}
+
+// DocsCounts returns counts grouped by status and person for the filtered set.
+func (db *DB) DocsCounts(f DocsFilter) (*DocsCounts, error) {
+	docs, err := db.DocsList(f)
+	if err != nil {
+		return nil, err
+	}
+	counts := &DocsCounts{
+		Total:  len(docs),
+		Status: make(map[string]int),
+		Person: make(map[string]int),
+	}
+	for _, d := range docs {
+		s := d.Status
+		if s == "" {
+			s = "unset"
+		}
+		counts.Status[s]++
+		p := d.Person
+		if p == "" {
+			p = "unset"
+		}
+		counts.Person[p]++
+	}
+	return counts, nil
+}
+
+func nullStr(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
+func nullInt(n int) interface{} {
+	if n == 0 {
+		return nil
+	}
+	return n
 }

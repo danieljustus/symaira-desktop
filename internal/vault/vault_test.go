@@ -50,7 +50,58 @@ func TestWalk(t *testing.T) {
 		t.Fatalf("walk failed: %v", err)
 	}
 
-	if count != 1 {
-		t.Errorf("expected to find 1 file, found %d", count)
+	if count != 2 {
+		t.Errorf("expected to find 2 files, found %d", count)
+	}
+}
+
+func TestParseFileV2Metadata(t *testing.T) {
+	path, _ := filepath.Abs("../../testdata/vault/v2-sample.md")
+	doc, err := ParseFile(path)
+	if err != nil {
+		t.Fatalf("failed to parse v2 file: %v", err)
+	}
+
+	if doc.DocumentDate != "2026-08-01" {
+		t.Errorf("expected document_date '2026-08-01', got '%s'", doc.DocumentDate)
+	}
+	if doc.Person != "Alice" {
+		t.Errorf("expected person 'Alice', got '%s'", doc.Person)
+	}
+	if doc.Status != "open" {
+		t.Errorf("expected status 'open', got '%s'", doc.Status)
+	}
+	if doc.DueDate != "2026-09-01" {
+		t.Errorf("expected due_date '2026-09-01', got '%s'", doc.DueDate)
+	}
+	if doc.Confidence != 95 {
+		t.Errorf("expected confidence 95, got %d", doc.Confidence)
+	}
+	if doc.OcrJSONPath != "/archive/utility-aug.ocr.json" {
+		t.Errorf("expected ocr_json_path '/archive/utility-aug.ocr.json', got '%s'", doc.OcrJSONPath)
+	}
+	if doc.Simhash != "a1b2c3d4e5f6a7b8" {
+		t.Errorf("expected simhash 'a1b2c3d4e5f6a7b8', got '%s'", doc.Simhash)
+	}
+}
+
+func TestParseFileV1BackwardsCompatible(t *testing.T) {
+	path, _ := filepath.Abs("../../testdata/vault/symingest-sample.md")
+	doc, err := ParseFile(path)
+	if err != nil {
+		t.Fatalf("failed to parse v1 file: %v", err)
+	}
+
+	if doc.DocumentDate != "" {
+		t.Errorf("expected empty document_date for v1 file, got '%s'", doc.DocumentDate)
+	}
+	if doc.Person != "" {
+		t.Errorf("expected empty person for v1 file, got '%s'", doc.Person)
+	}
+	if doc.Status != "" {
+		t.Errorf("expected empty status for v1 file, got '%s'", doc.Status)
+	}
+	if doc.Confidence != 0 {
+		t.Errorf("expected confidence 0 for v1 file, got %d", doc.Confidence)
 	}
 }

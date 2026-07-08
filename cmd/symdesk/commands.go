@@ -488,6 +488,54 @@ func registerCommands(rootCmd *cobra.Command) {
 	viewsCmd.AddCommand(viewsExecCmd)
 
 	rootCmd.AddCommand(newEventsCmd())
+
+	docsCmd := &cobra.Command{
+		Use:   "docs",
+		Short: "Manage document metadata (contract v2)",
+	}
+	rootCmd.AddCommand(docsCmd)
+
+	docsListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List indexed documents with filters",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			f := sidecar.DocsFilter{}
+			f.Type, _ = cmd.Flags().GetString("type")
+			f.Status, _ = cmd.Flags().GetString("status")
+			f.Person, _ = cmd.Flags().GetString("person")
+			f.Correspondent, _ = cmd.Flags().GetString("correspondent")
+			f.Year, _ = cmd.Flags().GetString("year")
+			f.DueBefore, _ = cmd.Flags().GetString("due-before")
+			if minC, _ := cmd.Flags().GetInt("min-confidence"); minC > 0 {
+				f.MinConfidence = &minC
+			}
+			if maxC, _ := cmd.Flags().GetInt("max-confidence"); maxC > 0 {
+				f.MaxConfidence = &maxC
+			}
+
+			results, err := svc.DocsList(f)
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	docsListCmd.Flags().String("type", "", "filter by document_type")
+	docsListCmd.Flags().String("status", "", "filter by status (open|paid|submitted|done|needs_review|waiting_for_reply)")
+	docsListCmd.Flags().String("person", "", "filter by person (household member)")
+	docsListCmd.Flags().String("correspondent", "", "filter by correspondent")
+	docsListCmd.Flags().String("year", "", "filter by document year (e.g. 2026)")
+	docsListCmd.Flags().String("due-before", "", "filter by due_date <= date (ISO-8601)")
+	docsListCmd.Flags().Int("min-confidence", 0, "minimum confidence (0-100)")
+	docsListCmd.Flags().Int("max-confidence", 0, "maximum confidence (0-100)")
+	docsCmd.AddCommand(docsListCmd)
 }
 
 func initServiceDeps() (string, *sidecar.DB, error) {

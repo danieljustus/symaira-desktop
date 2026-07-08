@@ -92,3 +92,21 @@ func TestIngestToolRequiresSourcePath(t *testing.T) {
 		t.Error("expected error for missing source_path")
 	}
 }
+
+func TestDocsToolReturnsResults(t *testing.T) {
+	factory := testFactory(t)
+	tool := newDocsTool(factory)
+
+	in, _ := json.Marshal(map[string]string{})
+	out, err := tool.Handler(context.Background(), in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	results, ok := out.([]service.DocsListResult)
+	if !ok {
+		t.Fatalf("expected []service.DocsListResult, got %T", out)
+	}
+	if len(results) != 0 {
+		t.Errorf("expected 0 docs in empty vault, got %d", len(results))
+	}
+}

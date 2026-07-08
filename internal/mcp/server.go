@@ -45,6 +45,7 @@ func StartServer(cfg *config.Config, version string) error {
 	server.RegisterTool(newNoteNewTool(getService))
 	server.RegisterTool(newAskTool(getService))
 	server.RegisterTool(newIngestTool(getService))
+	server.RegisterTool(newDocsTool(getService))
 
 	return server.ServeStdio(context.Background())
 }
@@ -249,6 +250,46 @@ func newIngestTool(getService serviceFactory) *mcpserver.Tool {
 			}
 			defer db.Close()
 			return svc.Ingest(args.SourcePath)
+		},
+	}
+}
+
+func newDocsTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_docs",
+		Description: "Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Returns structured document metadata.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"type":{"type":"string"},"status":{"type":"string"},"person":{"type":"string"},"correspondent":{"type":"string"},"year":{"type":"string"},"due_before":{"type":"string"},"min_confidence":{"type":"integer"},"max_confidence":{"type":"integer"}}}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				Type          string `json:"type"`
+				Status        string `json:"status"`
+				Person        string `json:"person"`
+				Correspondent string `json:"correspondent"`
+				Year          string `json:"year"`
+				DueBefore     string `json:"due_before"`
+				MinConfidence *int   `json:"min_confidence"`
+				MaxConfidence *int   `json:"max_confidence"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+
+			f := sidecar.DocsFilter{
+				Type:          args.Type,
+				Status:        args.Status,
+				Person:        args.Person,
+				Correspondent: args.Correspondent,
+				Year:          args.Year,
+				DueBefore:     args.DueBefore,
+				MinConfidence: args.MinConfidence,
+				MaxConfidence: args.MaxConfidence,
+			}
+			return svc.DocsList(f)
 		},
 	}
 }

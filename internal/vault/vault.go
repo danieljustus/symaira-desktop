@@ -30,6 +30,25 @@ type Document struct {
 	Frontmatter map[string]interface{}
 	Body        string
 	Links       []string
+
+	// Contract v2: first-class document metadata (all optional)
+	DocumentDate string // ISO-8601 date the document refers to
+	Person       string // household member
+	Status       string // enum: open|paid|submitted|done|needs_review|waiting_for_reply
+	DueDate      string // ISO-8601 date deadline
+	Confidence   int    // 0-100 classification confidence
+	OcrJSONPath  string // path to plain-text OCR JSON
+	Simhash      string // 64-bit SimHash hex
+}
+
+// ValidStatuses enumerates the allowed values for Document.Status.
+var ValidStatuses = map[string]bool{
+	"open":              true,
+	"paid":              true,
+	"submitted":         true,
+	"done":              true,
+	"needs_review":      true,
+	"waiting_for_reply": true,
 }
 
 // ResolveVaultRoot determines the actual vault root directory.
@@ -177,6 +196,15 @@ func ParseFile(path string) (*Document, error) {
 		}
 	}
 
+	// Contract v2: extract document metadata from frontmatter (all optional, backwards-compatible)
+	doc.DocumentDate = getStringFrontmatter(doc.Frontmatter, "document_date")
+	doc.Person = getStringFrontmatter(doc.Frontmatter, "person")
+	doc.Status = getStringFrontmatter(doc.Frontmatter, "status")
+	doc.DueDate = getStringFrontmatter(doc.Frontmatter, "due_date")
+	doc.Confidence = getIntFrontmatter(doc.Frontmatter, "confidence")
+	doc.OcrJSONPath = getStringFrontmatter(doc.Frontmatter, "ocr_json_path")
+	doc.Simhash = getStringFrontmatter(doc.Frontmatter, "simhash")
+
 	doc.Body = string(bodyBytes)
 	doc.Links = extractWikilinks(doc.Body)
 
@@ -215,4 +243,27 @@ func extractWikilinks(body string) []string {
 		}
 	}
 	return links
+}
+
+func getStringFrontmatter(fm map[string]interface{}, key string) string {
+	if v, ok := fm[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
+func getIntFrontmatter(fm map[string]interface{}, key string) int {
+	if v, ok := fm[key]; ok {
+		switch n := v.(type) {
+		case int:
+			return n
+		case int64:
+			return int(n)
+		case float64:
+			return int(n)
+		}
+	}
+	return 0
 }

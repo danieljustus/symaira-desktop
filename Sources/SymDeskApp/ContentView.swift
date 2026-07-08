@@ -204,7 +204,7 @@ struct ContentView: View {
                                     } else {
                                         MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
                                             navigateToNote(title: targetTitle)
-                                        })
+                                        }, core: core)
                                     }
                                     
                                     // Dummy view to attach onChange (since we use if/else for the editor)

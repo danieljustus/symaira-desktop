@@ -436,6 +436,49 @@ public final class DeskCore: ObservableObject {
         }
     }
 
+    /// Streams an AI transformation (summarize | rewrite | continue) of the
+    /// given text. The selection is passed on stdin so multi-line content needs
+    /// no escaping; transform never touches the vault, so no vault args are sent.
+    public func transform(text: String, intent: String) -> AsyncThrowingStream<String, Error> {
+        return AsyncThrowingStream { continuation in
+            Task {
+                do {
+                    guard let tool else { throw DeskCoreError.coreNotFound }
+                    let process = Process()
+                    process.executableURL = tool.location.url
+                    process.arguments = ["transform", intent, "--json"]
+
+                    let inPipe = Pipe()
+                    let outPipe = Pipe()
+                    process.standardInput = inPipe
+                    process.standardOutput = outPipe
+
+                    try process.run()
+
+                    if let data = text.data(using: .utf8) {
+                        inPipe.fileHandleForWriting.write(data)
+                    }
+                    try? inPipe.fileHandleForWriting.close()
+
+                    for try await line in outPipe.fileHandleForReading.bytes.lines {
+                        struct Chunk: Codable, Sendable {
+                            let chunk: String
+                        }
+                        if let data = line.data(using: .utf8),
+                           let dec = try? JSONDecoder().decode(Chunk.self, from: data) {
+                            continuation.yield(dec.chunk)
+                        }
+                    }
+
+                    process.waitUntilExit()
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
+    }
+
     // MARK: - Document Library
 
     public func docsList(status: String? = nil, type: String? = nil, person: String? = nil) async throws -> [DocumentItem] {

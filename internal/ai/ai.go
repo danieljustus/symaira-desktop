@@ -50,6 +50,69 @@ func Ask(query string, contextDocs []map[string]interface{}, out chan<- AskChunk
 	}
 }
 
+// Intent values accepted by Transform. Unknown intents fall back to rewrite.
+const (
+	IntentSummarize = "summarize"
+	IntentRewrite   = "rewrite"
+	IntentContinue  = "continue"
+)
+
+// Transform streams an AI transformation of text according to intent
+// (summarize | rewrite | continue) to out and always closes out. Like Ask it
+// degrades honestly: without SYMDESK_OLLAMA_URL configured it explains what is
+// missing instead of failing. Unlike Ask it operates purely on the provided
+// text and never touches the vault.
+func Transform(text, intent string, out chan<- AskChunk) {
+	defer close(out)
+
+	text = strings.TrimSpace(text)
+	if text == "" {
+		out <- AskChunk{Chunk: "⚠️ Kein Text übergeben – bitte zuerst Text auswählen.\n"}
+		return
+	}
+
+	ollamaURL := strings.TrimRight(os.Getenv("SYMDESK_OLLAMA_URL"), "/")
+	if ollamaURL == "" {
+		out <- AskChunk{Chunk: "⚠️ **AI-Feature nicht konfiguriert.**\n\n" +
+			"`SYMDESK_OLLAMA_URL` ist nicht gesetzt (z. B. `http://localhost:11434`).\n"}
+		return
+	}
+
+	model := os.Getenv("SYMDESK_OLLAMA_MODEL")
+	if model == "" {
+		model = defaultModel
+	}
+
+	if err := streamOllama(ollamaURL, model, buildTransformPrompt(text, intent), out); err != nil {
+		out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Ollama-Anfrage fehlgeschlagen: %v\n", err)}
+	}
+}
+
+// buildTransformPrompt renders an intent-specific instruction around the text.
+func buildTransformPrompt(text, intent string) string {
+	var instruction string
+	switch intent {
+	case IntentSummarize:
+		instruction = "Fasse den folgenden Text prägnant zusammen. " +
+			"Gib nur die Zusammenfassung zurück, ohne Vorrede."
+	case IntentContinue:
+		instruction = "Schreibe den folgenden Text im gleichen Stil und Ton sinnvoll weiter. " +
+			"Gib nur die Fortsetzung zurück, nicht den ursprünglichen Text."
+	case IntentRewrite:
+		fallthrough
+	default:
+		instruction = "Formuliere den folgenden Text klarer und flüssiger um, " +
+			"ohne die Bedeutung zu verändern. Gib nur den überarbeiteten Text zurück."
+	}
+
+	var b strings.Builder
+	b.WriteString(instruction)
+	b.WriteString(" Antworte auf Deutsch als reiner Markdown-Text.\n\n---\n")
+	b.WriteString(text)
+	b.WriteString("\n---\n")
+	return b.String()
+}
+
 // buildPrompt grounds the model in the vault search results.
 func buildPrompt(query string, contextDocs []map[string]interface{}) string {
 	var b strings.Builder

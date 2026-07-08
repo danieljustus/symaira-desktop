@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -137,3 +138,33 @@ date: "%s"
 
 	return filepath.Join("inbox", noteName), nil
 }
+
+// IngestJobs lists the jobs from symingest.
+func IngestJobs() (string, error) {
+	ok, _ := HasSymingest()
+	if !ok {
+		return "[]", fmt.Errorf("symingest not installed")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "symingest", "jobs", "--json")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return "[]", err
+	}
+	return out.String(), nil
+}
+
+// IngestRetry retries a failed job by ID in symingest.
+func IngestRetry(jobID string) error {
+	ok, _ := HasSymingest()
+	if !ok {
+		return fmt.Errorf("symingest not installed")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "symingest", "retry", jobID)
+	return cmd.Run()
+}
+

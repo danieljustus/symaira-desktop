@@ -113,6 +113,28 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
+public struct IngestJob: Codable, Identifiable, Sendable {
+    public let id: Int64
+    public let documentId: Int64
+    public let kind: String
+    public let status: String
+    public let attempts: Int
+    public let lastError: String?
+    public let createdAt: String
+    public let updatedAt: String
+    public let sourcePath: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case documentId = "document_id"
+        case kind, status, attempts
+        case lastError = "last_error"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+        case sourcePath = "source_path"
+    }
+}
+
 public enum DocumentStatus: String, CaseIterable, Identifiable, Sendable {
     case open
     case paid
@@ -353,6 +375,34 @@ public final class DeskCore: ObservableObject {
         return res.path
     }
 
+    public func resolveConflict(path: String, action: String) async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        _ = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["conflict", "resolve", path, "--action", action] + vaultArgs
+        )
+    }
+
+    public func ingestJobs() async throws -> [IngestJob] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            [IngestJob].self,
+            executable: tool.location.url,
+            arguments: ["ingest", "jobs", "--json"] + vaultArgs
+        )
+    }
+
+    public func ingestRetry(jobID: Int64) async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        _ = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["ingest", "retry", "\(jobID)"] + vaultArgs
+        )
+    }
+
     public func ask(query: String) -> AsyncThrowingStream<String, Error> {
         return AsyncThrowingStream { continuation in
             Task {
@@ -526,8 +576,26 @@ public struct ReviewDoc: Codable, Equatable, Identifiable, Sendable {
     public var id: String { path }
     public let path: String
     public let title: String
+    public let status: String
+    public let documentType: String
+
+    enum CodingKeys: String, CodingKey {
+        case path, title, status, confidence, reasons
+        case documentType = "document_type"
+    }
+
     public let confidence: Int
     public let reasons: [String]
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        path = try c.decode(String.self, forKey: .path)
+        title = try c.decode(String.self, forKey: .title)
+        status = (try? c.decode(String.self, forKey: .status)) ?? ""
+        documentType = (try? c.decode(String.self, forKey: .documentType)) ?? ""
+        confidence = (try? c.decode(Int.self, forKey: .confidence)) ?? 0
+        reasons = (try? c.decode([String].self, forKey: .reasons)) ?? []
+    }
 }
 
 // MARK: - Doctor Report

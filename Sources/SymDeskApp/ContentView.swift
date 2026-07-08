@@ -29,6 +29,8 @@ struct ContentView: View {
         case dbView
         case docs
         case discover
+        case ingestQueue
+        case reviewLane
     }
 
     @State private var displayMode: DisplayMode = .vault
@@ -87,6 +89,21 @@ struct ContentView: View {
                             }
                         }
 
+                        Section("Inbox & Processing") {
+                            Button(action: { displayMode = .ingestQueue }) {
+                                HStack {
+                                    Image(systemName: "tray.and.arrow.down")
+                                    Text("Ingest Queue")
+                                }
+                            }
+                            Button(action: { displayMode = .reviewLane }) {
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle")
+                                    Text("Review Lane")
+                                }
+                            }
+                        }
+
                         Section("Views") {
                             Button("Vault") { displayMode = .vault }
                             Button("Graph") { displayMode = .graph }
@@ -115,6 +132,10 @@ struct ContentView: View {
                     .navigationTitle("SymDesk")
                 } detail: {
                     switch displayMode {
+                    case .ingestQueue:
+                        IngestQueueView()
+                    case .reviewLane:
+                        ReviewLaneView()
                     case .discover:
                         DiscoverView()
                     case .graph:
@@ -145,12 +166,35 @@ struct ContentView: View {
                         if let note = selectedNote {
                             VStack(spacing: 0) {
                                 if isConflicted(note) {
-                                    Text("⚠️ iCloud Conflict detected")
-                                        .font(.caption)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(4)
-                                        .background(Color.yellow.opacity(0.3))
-                                        .foregroundColor(.yellow)
+                                    HStack {
+                                        Text("⚠️ iCloud Sync Conflict detected")
+                                            .font(.caption)
+                                            .foregroundColor(.yellow)
+                                        Spacer()
+                                        Button("Keep Mine") {
+                                            Task {
+                                                try? await core.resolveConflict(path: note.path, action: "keep-mine")
+                                                self.selectedNote = nil
+                                                await fetchNotes()
+                                            }
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .controlSize(.small)
+                                        Button("Keep Theirs") {
+                                            Task {
+                                                try? await core.resolveConflict(path: note.path, action: "keep-theirs")
+                                                self.selectedNote = nil
+                                                await fetchNotes()
+                                            }
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .controlSize(.small)
+                                    }
+                                    .padding(8)
+                                    .background(Color.yellow.opacity(0.15))
+                                    .cornerRadius(6)
+                                    .padding(.horizontal)
+                                    .padding(.top, 8)
                                 }
 
                                 HStack(spacing: 0) {

@@ -12,10 +12,14 @@ import (
 	"syscall"
 	"time"
 
+	"context"
+
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 
+	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	deskwatcher "github.com/danieljustus/symaira-desktop/internal/watcher"
 )
 
 func newEventsCmd() *cobra.Command {
@@ -29,11 +33,32 @@ func newEventsCmd() *cobra.Command {
 			}
 			defer db.Close()
 
+			svc := service.New(vRoot, db)
+
 			watcher, err := fsnotify.NewWatcher()
 			if err != nil {
 				return err
 			}
 			defer watcher.Close()
+
+			// Start Inbox Watcher in the background
+			inboxDir := cfg.Inbox
+			if inboxDir == "" {
+				inboxDir = filepath.Join(vRoot, "inbox_watch")
+			}
+			inboxWatcher, err := deskwatcher.NewInboxWatcher(inboxDir, svc)
+			if err == nil {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				go func() {
+					if err := inboxWatcher.Start(ctx); err != nil {
+						fmt.Fprintf(os.Stderr, "inbox watcher error: %v\n", err)
+					}
+				}()
+				defer inboxWatcher.Close()
+			} else {
+				fmt.Fprintf(os.Stderr, "failed to start inbox watcher: %v\n", err)
+			}
 
 			// Watch all subdirectories
 			err = filepath.Walk(vRoot, func(path string, info os.FileInfo, err error) error {
@@ -90,7 +115,7 @@ func newEventsCmd() *cobra.Command {
 								opName = "file_changed"
 							} else if ev.Op&fsnotify.Remove == fsnotify.Remove || ev.Op&fsnotify.Rename == fsnotify.Rename {
 								opName = "file_removed"
-								// TODO: remove from sidecar DB if file removed
+								_ = svc.DeleteDocument(path)
 							}
 
 							if opName != "" && filepath.Ext(path) == ".md" {
@@ -98,7 +123,7 @@ func newEventsCmd() *cobra.Command {
 								if opName != "file_removed" {
 									doc, err := vault.ParseFile(path)
 									if err == nil {
-										_ = db.IndexDocument(doc)
+										_ = svc.IndexDocument(doc)
 										opName = "index_updated" // As requested by plan: index_updated upon re-indexing
 									}
 								}

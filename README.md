@@ -13,7 +13,7 @@ A local-first, **agent-native** workspace that unifies your documents, notes, kn
 
 ## Status
 
-Working MVP: Go core (`symdesk`) with CLI + stdio MCP server, SQLite sidecar index (FTS5), vault contract v1 ([VAULT.md](VAULT.md)), and the native SwiftUI app with editor, command palette, backlinks, graph, saved views, drag-&-drop ingest and AI dock.
+Working MVP: Go core (`symdesk`) with CLI + stdio MCP server, SQLite sidecar index (FTS5), vault contract v2 ([VAULT.md](VAULT.md)), and the native SwiftUI app with editor, command palette, backlinks, graph, saved views, drag-&-drop ingest and AI dock.
 
 ## Build
 
@@ -45,6 +45,14 @@ symdesk events --json          # NDJSON change stream (used by the app)
 symdesk mcp                    # stdio MCP server for agents
 symdesk doctor                 # health check
 symdesk version --json         # {"tool":"symdesk","version":...,"schema_version":1}
+
+# Document workflow (vault contract v2)
+symdesk docs list --type invoice          # list indexed documents, with filters
+symdesk docs review                       # list documents needing review (low-confidence / missing metadata)
+symdesk doc status <file> paid            # set document status (open|paid|submitted|done|...)
+symdesk doc due <file> 2026-12-31        # set document due date (ISO-8601)
+symdesk similar <file>                    # find near-duplicate documents by SimHash
+symdesk demo init [dir]                   # materialise the built-in demo vault
 ```
 
 All commands support `--json` for machine-readable output.

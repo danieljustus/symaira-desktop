@@ -594,7 +594,7 @@ func TestDocsCountsUnsetFields(t *testing.T) {
 	docs := []*vault.Document{
 		{
 			Path: "/tmp/a.md", Title: "A", Created: "2026-01-01T00:00:00Z", SHA256: "a1",
-			Body: "a",
+			Body:        "a",
 			Frontmatter: map[string]interface{}{},
 		},
 	}

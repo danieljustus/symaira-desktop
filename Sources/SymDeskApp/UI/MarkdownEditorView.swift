@@ -1,9 +1,13 @@
 import SwiftUI
 import AppKit
+import SymDeskCore
 
 struct MarkdownEditorView: NSViewRepresentable {
     @Binding var text: String
     var onLinkClick: ((String) -> Void)?
+    /// When set, the editor offers inline AI actions (summarize/rewrite/continue)
+    /// on the current selection via the right-click menu.
+    var core: DeskCore?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -12,7 +16,8 @@ struct MarkdownEditorView: NSViewRepresentable {
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSTextView.scrollableTextView()
         let textView = scrollView.documentView as! NSTextView
-        
+        context.coordinator.textView = textView
+
         textView.delegate = context.coordinator
         textView.allowsUndo = true
         textView.isRichText = false
@@ -42,7 +47,9 @@ struct MarkdownEditorView: NSViewRepresentable {
     @MainActor
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: MarkdownEditorView
+        weak var textView: NSTextView?
         private var isFormatting = false
+        private var isTransforming = false
 
         init(_ parent: MarkdownEditorView) {
             self.parent = parent
@@ -51,6 +58,64 @@ struct MarkdownEditorView: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView, !isFormatting else { return }
             self.parent.text = textView.string
+            highlight(textView: textView)
+        }
+
+        // MARK: - Inline AI actions
+
+        func textView(_ view: NSTextView, menu: NSMenu, for event: NSEvent, at charIndex: Int) -> NSMenu? {
+            guard parent.core != nil, view.selectedRange().length > 0, !isTransforming else {
+                return menu
+            }
+            let aiItem = NSMenuItem(title: "AI", action: nil, keyEquivalent: "")
+            let submenu = NSMenu()
+            submenu.addItem(withTitle: "Summarize selection", action: #selector(aiSummarize), keyEquivalent: "")
+            submenu.addItem(withTitle: "Rewrite selection", action: #selector(aiRewrite), keyEquivalent: "")
+            submenu.addItem(withTitle: "Continue from selection", action: #selector(aiContinue), keyEquivalent: "")
+            for item in submenu.items { item.target = self }
+            aiItem.submenu = submenu
+            menu.insertItem(aiItem, at: 0)
+            menu.insertItem(.separator(), at: 1)
+            return menu
+        }
+
+        @objc private func aiSummarize() { runTransform(intent: "summarize", replace: true) }
+        @objc private func aiRewrite() { runTransform(intent: "rewrite", replace: true) }
+        @objc private func aiContinue() { runTransform(intent: "continue", replace: false) }
+
+        /// Runs the transform on the current selection. When `replace` is true the
+        /// selection is overwritten with the result; otherwise the result is
+        /// inserted right after the selection (used for "continue").
+        private func runTransform(intent: String, replace: Bool) {
+            guard let core = parent.core, let textView, !isTransforming else { return }
+            let selected = textView.selectedRange()
+            guard selected.length > 0 else { return }
+            let source = (textView.string as NSString).substring(with: selected)
+
+            isTransforming = true
+            let target = replace ? selected : NSRange(location: selected.location + selected.length, length: 0)
+
+            Task { @MainActor in
+                defer { self.isTransforming = false }
+                var result = ""
+                do {
+                    for try await chunk in core.transform(text: source, intent: intent) {
+                        result += chunk
+                    }
+                } catch {
+                    result = "\n⚠️ AI-Aktion fehlgeschlagen: \(error.localizedDescription)\n"
+                }
+                guard !result.isEmpty else { return }
+                let insertion = replace ? result : "\n" + result
+                self.applyEdit(to: textView, range: target, replacement: insertion)
+            }
+        }
+
+        private func applyEdit(to textView: NSTextView, range: NSRange, replacement: String) {
+            guard textView.shouldChangeText(in: range, replacementString: replacement) else { return }
+            textView.textStorage?.replaceCharacters(in: range, with: replacement)
+            textView.didChangeText()
+            parent.text = textView.string
             highlight(textView: textView)
         }
         

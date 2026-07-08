@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/danieljustus/symaira-corekit/mcpserver"
 
+	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
@@ -44,6 +46,7 @@ func StartServer(cfg *config.Config, version string) error {
 	server.RegisterTool(newBacklinksTool(getService))
 	server.RegisterTool(newNoteNewTool(getService))
 	server.RegisterTool(newAskTool(getService))
+	server.RegisterTool(newTransformTool())
 	server.RegisterTool(newIngestTool(getService))
 	server.RegisterTool(newDocsTool(getService))
 	server.RegisterTool(newDocSetStatusTool(getService))
@@ -236,6 +239,38 @@ func newAskTool(getService serviceFactory) *mcpserver.Tool {
 
 // newIngestTool copies a document into the vault inbox and creates a stub
 // note per the vault contract.
+//
+// newTransformTool applies a local AI action (summarize, rewrite, continue) to
+// a piece of text. It operates purely on the given text and never touches the
+// vault. MCP has no streaming result, so the chunks are aggregated.
+func newTransformTool() *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_transform",
+		Description: "Transforms the given text with a local AI action. intent is one of summarize, rewrite or continue. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The result is returned as one aggregated text (no streaming).",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"text":{"type":"string"},"intent":{"type":"string","enum":["summarize","rewrite","continue"]}},"required":["text","intent"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				Text   string `json:"text"`
+				Intent string `json:"intent"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.Text == "" {
+				return nil, fmt.Errorf("text is required")
+			}
+
+			chunks := make(chan ai.AskChunk)
+			go ai.Transform(args.Text, args.Intent, chunks)
+			var b strings.Builder
+			for c := range chunks {
+				b.WriteString(c.Chunk)
+			}
+			return map[string]string{"result": b.String()}, nil
+		},
+	}
+}
+
 func newIngestTool(getService serviceFactory) *mcpserver.Tool {
 	return &mcpserver.Tool{
 		Name:        "desk_ingest",

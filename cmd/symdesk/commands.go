@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -70,6 +71,17 @@ func registerCommands(rootCmd *cobra.Command) {
 			if !allOk {
 				results["overall"] = "error"
 			}
+
+			// 4. Sibling-tool composition status.
+			tools := map[string]string{}
+			for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault"} {
+				if _, err := exec.LookPath(name); err == nil {
+					tools[name] = "ok"
+				} else {
+					tools[name] = "not_found"
+				}
+			}
+			results["tools"] = tools
 
 			if jsonFlag {
 				b, _ := json.Marshal(results)

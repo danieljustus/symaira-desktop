@@ -19,13 +19,17 @@ public final class EventWatcher: ObservableObject {
     
     private init() {}
     
-    public func start(tool: DetectedTool) {
+    public func start(tool: DetectedTool, vaultPath: String? = nil) {
         guard !isWatching else { return }
         isWatching = true
         
         let p = Process()
         p.executableURL = tool.location.url
-        p.arguments = ["events", "--json"]
+        var args = ["events", "--json"]
+        if let vaultPath, !vaultPath.isEmpty {
+            args += ["--vault", vaultPath]
+        }
+        p.arguments = args
         
         let pipe = Pipe()
         p.standardOutput = pipe

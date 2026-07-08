@@ -65,6 +65,94 @@ public struct DbView: Codable, Equatable, Identifiable, Sendable {
     public let columns: [String]
 }
 
+public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { path }
+    public let path: String
+    public let title: String
+    public let documentDate: String
+    public let person: String
+    public let status: String
+    public let dueDate: String
+    public let confidence: Int
+    public let correspondent: String
+    public let documentType: String
+
+    enum CodingKeys: String, CodingKey {
+        case path, title, person, status, confidence, correspondent
+        case documentDate = "document_date"
+        case dueDate = "due_date"
+        case documentType = "document_type"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        path = try c.decode(String.self, forKey: .path)
+        title = try c.decode(String.self, forKey: .title)
+        documentDate = (try? c.decode(String.self, forKey: .documentDate)) ?? ""
+        person = (try? c.decode(String.self, forKey: .person)) ?? ""
+        status = (try? c.decode(String.self, forKey: .status)) ?? ""
+        dueDate = (try? c.decode(String.self, forKey: .dueDate)) ?? ""
+        confidence = (try? c.decode(Int.self, forKey: .confidence)) ?? 0
+        correspondent = (try? c.decode(String.self, forKey: .correspondent)) ?? ""
+        documentType = (try? c.decode(String.self, forKey: .documentType)) ?? ""
+    }
+}
+
+public enum DocumentStatus: String, CaseIterable, Identifiable, Sendable {
+    case open
+    case paid
+    case submitted
+    case done
+    case needsReview = "needs_review"
+    case waitingForReply = "waiting_for_reply"
+
+    public var id: String { rawValue }
+
+    public var label: String {
+        switch self {
+        case .open: return "Open"
+        case .paid: return "Paid"
+        case .submitted: return "Submitted"
+        case .done: return "Done"
+        case .needsReview: return "Needs Review"
+        case .waitingForReply: return "Waiting for Reply"
+        }
+    }
+
+    public var systemImage: String {
+        switch self {
+        case .open: return "circle"
+        case .paid: return "checkmark.circle"
+        case .submitted: return "paperplane"
+        case .done: return "checkmark.circle.fill"
+        case .needsReview: return "exclamationmark.triangle"
+        case .waitingForReply: return "clock"
+        }
+    }
+}
+
+public struct DocFilterPreset: Identifiable, Sendable {
+    public let id: String
+    public let label: String
+    public let status: DocumentStatus?
+
+    public init(id: String, label: String, status: DocumentStatus?) {
+        self.id = id
+        self.label = label
+        self.status = status
+    }
+
+    public static let defaults: [DocFilterPreset] = [
+        .init(id: "all", label: "All Documents", status: nil),
+        .init(id: "open", label: "Open", status: .open),
+        .init(id: "needs_review", label: "Needs Review", status: .needsReview),
+        .init(id: "waiting_for_reply", label: "Waiting for Reply", status: .waitingForReply),
+        .init(id: "submitted", label: "Submitted", status: .submitted),
+        .init(id: "done", label: "Done", status: .done),
+        .init(id: "paid", label: "Paid", status: .paid),
+    ]
+}
+
 public struct GraphNode: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let label: String
@@ -97,7 +185,17 @@ public final class DeskCore: ObservableObject {
     @Published public private(set) var isReady = false
     @Published public private(set) var errorMessage: String?
 
+    @Published public var vaultPath: String?
+
+    public var isDemoMode: Bool { VaultConfig.isDemoMode }
+
     private init() {}
+
+    /// Appends `--vault <path>` when a vault is configured, empty otherwise.
+    private var vaultArgs: [String] {
+        guard let path = vaultPath, !path.isEmpty else { return [] }
+        return ["--vault", path]
+    }
 
     public func initialize() async {
         guard let deskTool = SymairaToolRegistry.tool(id: "symdesk") else {
@@ -126,7 +224,7 @@ public final class DeskCore: ObservableObject {
         return try await runner.runDecoding(
             [Note].self,
             executable: tool.location.url,
-            arguments: ["ls", "--json"]
+            arguments: ["ls", "--json"] + vaultArgs
         )
     }
 
@@ -134,7 +232,7 @@ public final class DeskCore: ObservableObject {
         guard let tool else { throw DeskCoreError.coreNotFound }
 
         let runner = CLIRunner()
-        let out = try await runner.runChecked(tool.location.url, arguments: ["doctor"])
+        let out = try await runner.runChecked(tool.location.url,             arguments: ["doctor"] + vaultArgs)
         return String(decoding: out, as: UTF8.self)
     }
 
@@ -144,7 +242,7 @@ public final class DeskCore: ObservableObject {
         return try await runner.runDecoding(
             [SearchResult].self,
             executable: tool.location.url,
-            arguments: ["search", query, "--json"]
+            arguments: ["search", query, "--json"] + vaultArgs
         )
     }
 
@@ -154,7 +252,7 @@ public final class DeskCore: ObservableObject {
         return try await runner.runDecoding(
             [String].self,
             executable: tool.location.url,
-            arguments: ["backlinks", path, "--json"]
+            arguments: ["backlinks", path, "--json"] + vaultArgs
         )
     }
 
@@ -169,7 +267,7 @@ public final class DeskCore: ObservableObject {
         let res = try await runner.runDecoding(
             NoteNewResult.self,
             executable: tool.location.url,
-            arguments: ["note", "new", "--title", title, "--json"]
+            arguments: ["note", "new", "--title", title, "--json"] + vaultArgs
         )
         return res.path
     }
@@ -179,7 +277,7 @@ public final class DeskCore: ObservableObject {
         let runner = CLIRunner()
         _ = try await runner.runChecked(
             tool.location.url,
-            arguments: ["props", "edit", path, key, value]
+            arguments: ["props", "edit", path, key, value] + vaultArgs
         )
     }
 
@@ -189,7 +287,7 @@ public final class DeskCore: ObservableObject {
         return try await runner.runDecoding(
             GraphData.self,
             executable: tool.location.url,
-            arguments: ["graph", "--json"]
+            arguments: ["graph", "--json"] + vaultArgs
         )
     }
 
@@ -199,7 +297,7 @@ public final class DeskCore: ObservableObject {
         return try await runner.runDecoding(
             [DbView].self,
             executable: tool.location.url,
-            arguments: ["views", "list", "--json"]
+            arguments: ["views", "list", "--json"] + vaultArgs
         )
     }
 
@@ -209,7 +307,7 @@ public final class DeskCore: ObservableObject {
         return try await runner.runDecoding(
             DbView.self,
             executable: tool.location.url,
-            arguments: ["views", "get", id, "--json"]
+            arguments: ["views", "get", id, "--json"] + vaultArgs
         )
     }
 
@@ -223,7 +321,7 @@ public final class DeskCore: ObservableObject {
         // We runChecked and just return the raw JSON data so the UI can parse it dynamically
         return try await runner.runChecked(
             tool.location.url,
-            arguments: ["views", "exec", id, "--json"]
+            arguments: ["views", "exec", id, "--json"] + vaultArgs
         )
     }
     public func ingest(fileURL: URL) async throws -> String {
@@ -235,7 +333,7 @@ public final class DeskCore: ObservableObject {
         let res = try await runner.runDecoding(
             IngestRes.self,
             executable: tool.location.url,
-            arguments: ["ingest", fileURL.path, "--json"]
+            arguments: ["ingest", fileURL.path, "--json"] + vaultArgs
         )
         return res.path
     }
@@ -247,7 +345,7 @@ public final class DeskCore: ObservableObject {
                     guard let tool else { throw DeskCoreError.coreNotFound }
                     let process = Process()
                     process.executableURL = tool.location.url
-                    process.arguments = ["ask", query, "--json"]
+                    process.arguments = ["ask", query, "--json"] + (self.vaultArgs)
 
                     let pipe = Pipe()
                     process.standardOutput = pipe
@@ -271,5 +369,204 @@ public final class DeskCore: ObservableObject {
                 }
             }
         }
+    }
+
+    // MARK: - Document Library
+
+    public func docsList(status: String? = nil, type: String? = nil, person: String? = nil) async throws -> [DocumentItem] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        var args = ["docs", "list", "--json"] + vaultArgs
+        if let s = status, !s.isEmpty { args += ["--status", s] }
+        if let t = type, !t.isEmpty { args += ["--type", t] }
+        if let p = person, !p.isEmpty { args += ["--person", p] }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            [DocumentItem].self,
+            executable: tool.location.url,
+            arguments: args
+        )
+    }
+
+    public func docSetStatus(path: String, status: String) async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        _ = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["doc", "status", path, status] + vaultArgs
+        )
+    }
+
+    public func docSetDue(path: String, date: String) async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        _ = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["doc", "due", path, date] + vaultArgs
+        )
+    }
+
+    public func docsSimilar(path: String, threshold: Int = 50) async throws -> [SimilarDoc] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            [SimilarDoc].self,
+            executable: tool.location.url,
+            arguments: ["similar", path, "--threshold", "\(threshold)", "--json"] + vaultArgs
+        )
+    }
+
+    public func docsReview(threshold: Int = 70) async throws -> [ReviewDoc] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        return try await runner.runDecoding(
+            [ReviewDoc].self,
+            executable: tool.location.url,
+            arguments: ["docs", "review", "--threshold", "\(threshold)", "--json"] + vaultArgs
+        )
+    }
+
+    // MARK: - Document Inspector
+
+    public func docProps(path: String) async throws -> [String: String] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        let data = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["props", path, "--json"] + vaultArgs
+        )
+        if let dict = try? JSONDecoder().decode([String: String].self, from: data) {
+            return dict
+        }
+        return [:]
+    }
+
+    public func docNoteContent(path: String) async throws -> String {
+        guard let data = FileManager.default.contents(atPath: path) else {
+            return ""
+        }
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    public func docSetType(path: String, type: String) async throws {
+        try await noteEditProperty(path: path, key: "document_type", value: type)
+    }
+
+    public func docSetNoteVisible(path: String, visible: Bool) async throws {
+        try await noteEditProperty(path: path, key: "note_visible", value: visible ? "true" : "false")
+    }
+
+    public func docSetTags(path: String, tags: String) async throws {
+        try await noteEditProperty(path: path, key: "tags", value: tags)
+    }
+
+    // MARK: - Vault Setup
+
+    /// Load vault path from VaultConfig on app launch.
+    public func loadVaultFromConfig() {
+        if let path = VaultConfig.vaultPath() {
+            self.vaultPath = path
+        }
+    }
+
+    public func indexVault(path: String) async throws -> String {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        let data = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["index", "--json", "--vault", path]
+        )
+        struct IndexResult: Codable, Sendable {
+            let status: String
+            let indexed: Int
+            let skipped: Int
+        }
+        let result = try JSONDecoder().decode(IndexResult.self, from: data)
+        return "Index complete. \(result.indexed) new/updated files, \(result.skipped) skipped."
+    }
+
+    public func initDemo(into demoDir: String) async throws -> String {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        let data = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["demo", "init", "--json", demoDir]
+        )
+        struct DemoInitResult: Codable, Sendable {
+            let status: String
+            let path: String
+        }
+        let result = try JSONDecoder().decode(DemoInitResult.self, from: data)
+        return result.path
+    }
+}
+
+public struct SimilarDoc: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { path }
+    public let path: String
+    public let title: String
+    public let similarity: Int
+}
+
+public struct ReviewDoc: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { path }
+    public let path: String
+    public let title: String
+    public let confidence: Int
+    public let reasons: [String]
+}
+
+// MARK: - Doctor Report
+
+public struct DoctorReport: Codable, Sendable {
+    public let overall: String
+    public let vault: ToolAvailability
+    public let sidecar: ToolAvailability
+    public let tools: ToolAvailability
+
+    public struct ToolAvailability: Codable, Sendable {
+        public let symseek: String?
+        public let symmemory: String?
+        public let symingest: String?
+        public let symfetch: String?
+        public let symvault: String?
+
+        public init(symseek: String? = nil, symmemory: String? = nil, symingest: String? = nil, symfetch: String? = nil, symvault: String? = nil) {
+            self.symseek = symseek
+            self.symmemory = symmemory
+            self.symingest = symingest
+            self.symfetch = symfetch
+            self.symvault = symvault
+        }
+
+        /// Whether a tool name resolves to "ok" or "available".
+        public func isAvailable(_ name: String) -> Bool {
+            let val: String?
+            switch name {
+            case "symseek": val = symseek
+            case "symmemory": val = symmemory
+            case "symingest": val = symingest
+            case "symfetch": val = symfetch
+            case "symvault": val = symvault
+            default: val = nil
+            }
+            guard let v = val else { return false }
+            let lower = v.lowercased()
+            return lower == "ok" || lower == "available" || lower == "found"
+        }
+    }
+
+    public init(overall: String, vault: ToolAvailability, sidecar: ToolAvailability, tools: ToolAvailability) {
+        self.overall = overall
+        self.vault = vault
+        self.sidecar = sidecar
+        self.tools = tools
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        overall = (try? c.decode(String.self, forKey: .overall)) ?? "unknown"
+        vault = (try? c.decode(ToolAvailability.self, forKey: .vault)) ?? ToolAvailability()
+        sidecar = (try? c.decode(ToolAvailability.self, forKey: .sidecar)) ?? ToolAvailability()
+        tools = (try? c.decode(ToolAvailability.self, forKey: .tools)) ?? ToolAvailability()
     }
 }

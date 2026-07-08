@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 
+	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/demo"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
@@ -74,22 +74,36 @@ func registerCommands(rootCmd *cobra.Command) {
 
 			// 4. Sibling-tool composition status.
 			tools := map[string]string{}
+			versions := map[string]string{}
 			for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault"} {
-				if _, err := exec.LookPath(name); err == nil {
+				if ok, version := compose.HasTool(name); ok {
 					tools[name] = "ok"
+					versions[name] = version
 				} else {
 					tools[name] = "not_found"
+					versions[name] = ""
 				}
 			}
 			results["tools"] = tools
+			results["versions"] = versions
 
 			if jsonFlag {
 				b, _ := json.Marshal(results)
 				fmt.Println(string(b))
 			} else {
 				for k, v := range results {
-					if k != "overall" {
+					if k != "overall" && k != "tools" && k != "versions" {
 						fmt.Printf("%s: %v\n", k, v)
+					}
+				}
+				fmt.Println("tools:")
+				for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault"} {
+					status := tools[name]
+					version := versions[name]
+					if status == "ok" {
+						fmt.Printf("  %s: ok (version %s)\n", name, version)
+					} else {
+						fmt.Printf("  %s: not found\n", name)
 					}
 				}
 				fmt.Printf("Overall status: %s\n", results["overall"])
@@ -364,6 +378,27 @@ func registerCommands(rootCmd *cobra.Command) {
 		},
 	}
 	rootCmd.AddCommand(graphCmd)
+
+	relatedCmd := &cobra.Command{
+		Use:   "related [file]",
+		Short: "Get related entities and notes for a file",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			results, err := svc.Related(args[0])
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	rootCmd.AddCommand(relatedCmd)
 
 	noteNewCmd := &cobra.Command{
 		Use:   "new",

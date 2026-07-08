@@ -268,6 +268,16 @@ func (db *DB) Search(query string) ([]*vault.Document, error) {
 	return docs, nil
 }
 
+// GetTitle returns the title of the document at the given path.
+func (db *DB) GetTitle(path string) (string, error) {
+	var title string
+	err := db.conn.QueryRow("SELECT title FROM files WHERE path = ?", path).Scan(&title)
+	if err != nil {
+		return "", err
+	}
+	return title, nil
+}
+
 // ListFiles returns all files, optionally filtered by a directory prefix.
 func (db *DB) ListFiles(dirPrefix string) ([]*vault.Document, error) {
 	query := `SELECT path, title, modified_at FROM files`

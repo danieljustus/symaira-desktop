@@ -50,6 +50,7 @@ func StartServer(cfg *config.Config, version string) error {
 	server.RegisterTool(newDocsReviewTool(getService, cfg))
 
 	server.RegisterTool(newDocsSimilarTool(getService))
+	server.RegisterTool(newRelatedTool(getService))
 
 	return server.ServeStdio(context.Background())
 }
@@ -395,4 +396,29 @@ func registerDeskStatus(server *mcpserver.Server, cfg *config.Config) {
 			return status, nil
 		},
 	})
+}
+
+func newRelatedTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_related",
+		Description: "Gets related entities and notes for a given file path based on composition with symmemory.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"file":{"type":"string"}},"required":["file"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				File string `json:"file"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.File == "" {
+				return nil, fmt.Errorf("file is required")
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			return svc.Related(args.File)
+		},
+	}
 }

@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/danieljustus/symaira-desktop/internal/ai"
+	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
@@ -32,6 +33,30 @@ func New(vaultRoot string, db *sidecar.DB) *Service {
 		DB:        db,
 		ViewsMgr:  dbviews.NewManager(vaultRoot),
 	}
+}
+
+func (s *Service) indexDocument(doc *vault.Document) error {
+	if err := s.DB.IndexDocument(doc); err != nil {
+		return err
+	}
+	if ok, _ := compose.HasSymseek(); ok {
+		if err := compose.IndexDocument(doc.Path, doc.Body); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) deleteDocument(path string) error {
+	if err := s.DB.DeleteDocument(path); err != nil {
+		return err
+	}
+	if ok, _ := compose.HasSymseek(); ok {
+		if err := compose.DeleteDocument(path); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Ls returns a list of files in the vault.
@@ -58,6 +83,37 @@ func (s *Service) Ls(dirPrefix string) ([]map[string]interface{}, error) {
 
 // Search performs a full-text search.
 func (s *Service) Search(query string) ([]map[string]interface{}, error) {
+	if ok, _ := compose.HasSymseek(); ok {
+		seekResults, err := compose.Search(query)
+		if err == nil {
+			var results []map[string]interface{}
+			for _, r := range seekResults {
+				relPath := r.Path
+				if filepath.IsAbs(r.Path) {
+					if rel, err := filepath.Rel(s.VaultRoot, r.Path); err == nil {
+						relPath = rel
+					}
+				}
+
+				title := ""
+				if docTitle, err := s.DB.GetTitle(r.Path); err == nil {
+					title = docTitle
+				} else {
+					base := filepath.Base(r.Path)
+					title = strings.TrimSuffix(base, filepath.Ext(base))
+				}
+
+				results = append(results, map[string]interface{}{
+					"path":    relPath,
+					"title":   title,
+					"snippet": r.Snippet,
+					"score":   r.Score,
+				})
+			}
+			return results, nil
+		}
+	}
+
 	docs, err := s.DB.Search(query)
 	if err != nil {
 		return nil, err
@@ -133,7 +189,7 @@ func (s *Service) NoteNew(title, content string) (string, error) {
 	hash := sha256.Sum256([]byte(fullContent))
 	doc.SHA256 = hex.EncodeToString(hash[:])
 
-	if err := s.DB.IndexDocument(doc); err != nil {
+	if err := s.indexDocument(doc); err != nil {
 		return fileName, fmt.Errorf("failed to index new file: %w", err)
 	}
 
@@ -155,7 +211,7 @@ func (s *Service) NoteMove(oldPath, newPath string) error {
 		return fmt.Errorf("failed to move file: %w", err)
 	}
 
-	if err := s.DB.DeleteDocument(absOld); err != nil {
+	if err := s.deleteDocument(absOld); err != nil {
 		return err
 	}
 
@@ -163,7 +219,7 @@ func (s *Service) NoteMove(oldPath, newPath string) error {
 	if err != nil {
 		return err
 	}
-	return s.DB.IndexDocument(doc)
+	return s.indexDocument(doc)
 }
 
 // PropsEdit updates a frontmatter property in the file and re-indexes.
@@ -200,7 +256,7 @@ func (s *Service) PropsEdit(relPath, key, value string) error {
 	if err != nil {
 		return err
 	}
-	return s.DB.IndexDocument(newDoc)
+	return s.indexDocument(newDoc)
 }
 
 // Ask performs a semantic/RAG search and streams the answer using the AI package.
@@ -256,8 +312,188 @@ func (s *Service) Ingest(sourcePath string) (map[string]string, error) {
 	}
 	doc, err := vault.ParseFile(absPath)
 	if err == nil {
-		_ = s.DB.IndexDocument(doc)
+		_ = s.indexDocument(doc)
 	}
 
 	return map[string]string{"path": relPath}, nil
+}
+
+type RelatedEntity struct {
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Relation string `json:"relation,omitempty"`
+}
+
+type RelatedData struct {
+	Entities []RelatedEntity `json:"entities"`
+	Notes    []string        `json:"notes"`
+}
+
+// Related returns entities and notes related to the given file based on symmemory.
+func (s *Service) Related(file string) (*RelatedData, error) {
+	absPath, err := vault.SecurePath(s.VaultRoot, file)
+	if err != nil {
+		return nil, err
+	}
+	doc, err := vault.ParseFile(absPath)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &RelatedData{
+		Entities: []RelatedEntity{},
+		Notes:    []string{},
+	}
+
+	if ok, _ := compose.HasSymmemory(); !ok {
+		return result, nil
+	}
+
+	// 1. Fetch all entities from symmemory
+	entities, err := compose.ListEntities()
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Find matching entities for this document
+	matchedEntities := make(map[string]compose.MemoryEntity)
+	for _, e := range entities {
+		matches := false
+		if strings.EqualFold(doc.Title, e.Name) {
+			matches = true
+		} else {
+			baseName := filepath.Base(doc.Path)
+			nameWithoutExt := strings.TrimSuffix(baseName, filepath.Ext(baseName))
+			if strings.EqualFold(nameWithoutExt, e.Name) {
+				matches = true
+			}
+		}
+		for _, alias := range e.Aliases {
+			if strings.EqualFold(doc.Title, alias) {
+				matches = true
+			}
+		}
+		// Substring check in content body (case-insensitive)
+		if !matches && doc.Body != "" {
+			bodyLower := strings.ToLower(doc.Body)
+			if strings.Contains(bodyLower, strings.ToLower(e.Name)) {
+				matches = true
+			} else {
+				for _, alias := range e.Aliases {
+					if strings.Contains(bodyLower, strings.ToLower(alias)) {
+						matches = true
+					}
+				}
+			}
+		}
+
+		if matches {
+			matchedEntities[e.ID] = e
+			result.Entities = append(result.Entities, RelatedEntity{
+				Name: e.Name,
+				Type: e.Type,
+			})
+		}
+	}
+
+	// 3. For each matched entity, get neighbors to find 1-hop related entities
+	neighborEntities := make(map[string]compose.MemoryEntity)
+	for _, me := range matchedEntities {
+		neighbors, err := compose.GetNeighbors(me.Name)
+		if err == nil && neighbors != nil {
+			for _, node := range neighbors.Nodes {
+				if _, ok := matchedEntities[node.ID]; !ok {
+					// Find the edge type connecting me to node
+					relType := ""
+					for _, edge := range neighbors.Edges {
+						if (edge.FromEntityID == me.ID && edge.ToEntityID == node.ID) ||
+							(edge.FromEntityID == node.ID && edge.ToEntityID == me.ID) {
+							relType = edge.RelationType
+							break
+						}
+					}
+					if _, ok := neighborEntities[node.ID]; !ok {
+						neighborEntities[node.ID] = node
+						result.Entities = append(result.Entities, RelatedEntity{
+							Name:     node.Name,
+							Type:     node.Type,
+							Relation: relType,
+						})
+					}
+				}
+			}
+		}
+	}
+
+	// 4. Find other files in the vault that also match these entities (direct or neighbor)
+	allDocs, err := s.DB.ListFiles("")
+	if err != nil {
+		return result, nil
+	}
+
+	noteMap := make(map[string]bool)
+	for _, d := range allDocs {
+		rel, _ := filepath.Rel(s.VaultRoot, d.Path)
+		if rel == file {
+			continue // skip self
+		}
+
+		// Parse the document to match against the entities
+		otherDoc, err := vault.ParseFile(d.Path)
+		if err != nil {
+			continue
+		}
+
+		matches := false
+		// Check against matchedEntities and neighborEntities
+		for _, e := range matchedEntities {
+			if matchesOther(otherDoc, e) {
+				matches = true
+				break
+			}
+		}
+		if !matches {
+			for _, e := range neighborEntities {
+				if matchesOther(otherDoc, e) {
+					matches = true
+					break
+				}
+			}
+		}
+
+		if matches && !noteMap[rel] {
+			noteMap[rel] = true
+			result.Notes = append(result.Notes, rel)
+		}
+	}
+
+	return result, nil
+}
+
+func matchesOther(doc *vault.Document, e compose.MemoryEntity) bool {
+	if strings.EqualFold(doc.Title, e.Name) {
+		return true
+	}
+	baseName := filepath.Base(doc.Path)
+	nameWithoutExt := strings.TrimSuffix(baseName, filepath.Ext(baseName))
+	if strings.EqualFold(nameWithoutExt, e.Name) {
+		return true
+	}
+	for _, alias := range e.Aliases {
+		if strings.EqualFold(doc.Title, alias) {
+			return true
+		}
+	}
+	if doc.Body != "" {
+		bodyLower := strings.ToLower(doc.Body)
+		if strings.Contains(bodyLower, strings.ToLower(e.Name)) {
+			return true
+		}
+		for _, alias := range e.Aliases {
+			if strings.Contains(bodyLower, strings.ToLower(alias)) {
+				return true
+			}
+		}
+	}
+	return false
 }

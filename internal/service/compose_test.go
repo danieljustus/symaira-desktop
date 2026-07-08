@@ -1,0 +1,209 @@
+package service
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/sidecar"
+	"github.com/danieljustus/symaira-desktop/internal/vault"
+)
+
+func TestComposeSearchAndRelated(t *testing.T) {
+	// 1. Setup temp paths
+	tempDir, err := os.MkdirTemp("", "symdesk-compose-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	vaultPath := filepath.Join(tempDir, "vault")
+	_ = os.MkdirAll(vaultPath, 0755)
+
+	notePath := filepath.Join(vaultPath, "compose-test-note.md")
+
+	// 2. Setup mocks
+	mockSeek := filepath.Join(tempDir, "symseek")
+	mockSeekContent := fmt.Sprintf(`#!/bin/bash
+if [ "$1" = "version" ] && [ "$2" = "--json" ]; then
+  echo '{"tool":"symseek","version":"0.1.0-mock","schema_version":1}'
+  exit 0
+elif [ "$1" = "search" ]; then
+  echo '[{"path":"%s","chunk_id":"mock-chunk-uuid","score":0.99,"snippet":"mock content snippet containing Mock Project keyword"}]'
+  exit 0
+else
+  exit 0
+fi
+`, notePath)
+	if err := os.WriteFile(mockSeek, []byte(mockSeekContent), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	mockMemory := filepath.Join(tempDir, "symmemory")
+	mockMemoryContent := `#!/bin/bash
+if [ "$1" = "version" ] && [ "$2" = "--json" ]; then
+  echo '{"tool":"symmemory","version":"0.1.0-mock","schema_version":1}'
+  exit 0
+elif [ "$1" = "entity" ] && [ "$2" = "list" ]; then
+  echo '[{"id":"entity-1-uuid","name":"Mock Project","type":"project","aliases":["MockProj","AliasProj"],"description":"A project for testing"}]'
+  exit 0
+elif [ "$1" = "entity" ] && [ "$2" = "neighbors" ]; then
+  echo '{"nodes":[{"id":"entity-1-uuid","name":"Mock Project","type":"project","aliases":["MockProj","AliasProj"]},{"id":"entity-2-uuid","name":"Alice","type":"person","aliases":[]}],"edges":[{"from_entity_id":"entity-2-uuid","to_entity_id":"entity-1-uuid","relation_type":"tester"}]}'
+  exit 0
+else
+  exit 0
+fi
+`
+	if err := os.WriteFile(mockMemory, []byte(mockMemoryContent), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Override PATH
+	oldPath := os.Getenv("PATH")
+	os.Setenv("PATH", tempDir+string(os.PathListSeparator)+oldPath)
+	defer os.Setenv("PATH", oldPath)
+
+	compose.ResetCache()
+
+	// 3. Setup DB
+	dbPath := filepath.Join(vaultPath, "sidecar.db")
+	db, err := sidecar.Open(dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	svc := New(vaultPath, db)
+
+	// Write mock file in vault matching search path
+	noteContent := "---\ntitle: \"Compose Test Note\"\n---\nSome text mentioning Mock Project"
+	if err := os.WriteFile(notePath, []byte(noteContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	doc, err := vault.ParseFile(notePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.IndexDocument(doc); err != nil {
+		t.Fatal(err)
+	}
+
+	// 4. Verify tool probing
+	hasSeek, seekVer := compose.HasSymseek()
+	if !hasSeek || seekVer != "0.1.0-mock" {
+		t.Fatalf("expected HasSymseek to be true, got version %s", seekVer)
+	}
+
+	hasMem, memVer := compose.HasSymmemory()
+	if !hasMem || memVer != "0.1.0-mock" {
+		t.Fatalf("expected HasSymmemory to be true, got version %s", memVer)
+	}
+
+	// 5. Test Search Composition
+	searchResults, err := svc.Search("Mock Project")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(searchResults) == 0 {
+		t.Fatalf("expected search results from composed symseek")
+	}
+	if searchResults[0]["title"] != "Compose Test Note" {
+		t.Errorf("expected title to be resolved as 'Compose Test Note', got '%v'", searchResults[0]["title"])
+	}
+
+	// 6. Test Related Composition
+	relatedResults, err := svc.Related("compose-test-note.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(relatedResults.Entities) == 0 {
+		t.Fatalf("expected related entities, got none")
+	}
+	foundAlice := false
+	for _, e := range relatedResults.Entities {
+		if e.Name == "Alice" && e.Relation == "tester" {
+			foundAlice = true
+		}
+	}
+	if !foundAlice {
+		t.Errorf("expected neighbor 'Alice' with relation 'tester' to be resolved, got %v", relatedResults.Entities)
+	}
+
+	// 7. Test Graph Composition
+	graphData, err := svc.Graph()
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundEntityNode := false
+	for _, node := range graphData.Nodes {
+		if node.ID == "entity:Mock Project" {
+			foundEntityNode = true
+		}
+	}
+	if !foundEntityNode {
+		t.Errorf("expected entity node 'entity:Mock Project' in enriched graph")
+	}
+}
+
+func TestComposeFallback(t *testing.T) {
+	// Ensure tools are NOT on PATH
+	tempDir, err := os.MkdirTemp("", "symdesk-compose-fallback-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	oldPath := os.Getenv("PATH")
+	os.Setenv("PATH", tempDir) // empty path
+	defer os.Setenv("PATH", oldPath)
+
+	compose.ResetCache()
+
+	vaultPath := filepath.Join(tempDir, "vault")
+	_ = os.MkdirAll(vaultPath, 0755)
+
+	dbPath := filepath.Join(vaultPath, "sidecar.db")
+	db, err := sidecar.Open(dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	svc := New(vaultPath, db)
+
+	// Write mock file in vault
+	notePath := filepath.Join(vaultPath, "compose-test-note.md")
+	noteContent := "---\ntitle: \"Compose Test Note\"\n---\nSome text mentioning Mock Project"
+	if err := os.WriteFile(notePath, []byte(noteContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	doc, err := vault.ParseFile(notePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.IndexDocument(doc); err != nil {
+		t.Fatal(err)
+	}
+
+	// Test Search Fallback to FTS5
+	searchResults, err := svc.Search("mock")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(searchResults) != 1 || searchResults[0]["title"] != "Compose Test Note" {
+		t.Errorf("expected fallback FTS search to find the note, got %v", searchResults)
+	}
+
+	// Test Related Fallback (should return empty result cleanly)
+	relatedResults, err := svc.Related("compose-test-note.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(relatedResults.Entities) != 0 || len(relatedResults.Notes) != 0 {
+		t.Errorf("expected empty related data on fallback, got %+v", relatedResults)
+	}
+}

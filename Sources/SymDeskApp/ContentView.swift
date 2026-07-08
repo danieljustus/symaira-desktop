@@ -127,7 +127,17 @@ struct ContentView: View {
                         DocumentGridView(statusFilter: statusVal?.rawValue)
                     case .dbView:
                         if let vid = selectedViewID {
-                            DbViewTable(viewID: vid)
+                            if let view = dbViews.first(where: { $0.id == vid }) {
+                                if view.type == "board" {
+                                    DbViewBoard(viewID: vid)
+                                } else if view.type == "calendar" {
+                                    DbViewCalendar(viewID: vid)
+                                } else {
+                                    DbViewTable(viewID: vid)
+                                }
+                            } else {
+                                DbViewTable(viewID: vid)
+                            }
                         } else {
                             Text("Select a view")
                         }

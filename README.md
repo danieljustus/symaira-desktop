@@ -7,13 +7,13 @@ A local-first, **agent-native** workspace that unifies your documents, notes, kn
 `symdesk` is a Go core that is simultaneously a **CLI** and an **MCP server**, paired with a **native SwiftUI macOS app** (`SymDesk.app`) built on [`symaira-appkit`](https://github.com/danieljustus/symaira-appkit). The same service layer is used by you, by the app, and by AI agents — operating on one Markdown vault through identical contracts.
 
 - **Owns:** the Markdown-as-SSOT vault contract, one SQLite sidecar index, the native app, and the runtime composition layer
-- **Composes at runtime:** [`symseek`](https://github.com/danieljustus/symaira-seek) (search), [`symmemory`](https://github.com/danieljustus/symaira-memory) (RAG/graph), [`symfetch`](https://github.com/danieljustus/symaira-fetch) (web→md), [`symvault`](https://github.com/danieljustus/symaira-vault) (secrets), [`symaira-ingest`](https://github.com/danieljustus/symaira-ingest) (OCR)
+- **Composes at runtime today:** [`symaira-ingest`](https://github.com/danieljustus/symaira-ingest) (OCR/ingest), detected via `PATH` probe. **Planned composition upgrades** (the tool never depends on their presence — see guardrail 3 below): [`symseek`](https://github.com/danieljustus/symaira-seek) (search), [`symmemory`](https://github.com/danieljustus/symaira-memory) (RAG/graph), [`symfetch`](https://github.com/danieljustus/symaira-fetch) (web→md), [`symvault`](https://github.com/danieljustus/symaira-vault) (secrets)
 - **Delegates (does not rebuild):** spreadsheets → LibreOffice; code editing → editor plugins + agent orchestration; iCloud sync → the OS
 - **Language:** Go (CGO-free, core) + Swift/SwiftUI (app). **License:** Apache-2.0
 
 ## Status
 
-Working MVP: Go core (`symdesk`) with CLI + stdio MCP server, SQLite sidecar index (FTS5), vault contract v2 ([VAULT.md](VAULT.md)), and the native SwiftUI app with editor, command palette, backlinks, graph, saved views, drag-&-drop ingest and AI dock.
+Working MVP: Go core (`symdesk`) with CLI + stdio MCP server, SQLite sidecar index (FTS5), vault contract v2 ([VAULT.md](VAULT.md)), and the native SwiftUI app with editor, command palette, backlinks, graph, saved views, drag-&-drop ingest and AI dock — plus a document workspace: document grid with quick filters, PDF/text viewer with a details inspector, first-run onboarding, and a Discover tab.
 
 ## Build
 

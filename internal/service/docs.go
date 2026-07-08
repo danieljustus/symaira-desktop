@@ -64,7 +64,7 @@ func (s *Service) DocStatus(relPath, status string) error {
 	if err != nil {
 		return err
 	}
-	return s.DB.IndexDocument(doc)
+	return s.indexDocument(doc)
 }
 
 // DocDue sets the due_date frontmatter key of a document and re-indexes.
@@ -80,7 +80,7 @@ func (s *Service) DocDue(relPath, date string) error {
 	if err != nil {
 		return err
 	}
-	return s.DB.IndexDocument(doc)
+	return s.indexDocument(doc)
 }
 
 // DocsReview returns documents that need human review based on the threshold.

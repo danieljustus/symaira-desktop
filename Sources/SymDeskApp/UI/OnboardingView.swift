@@ -176,11 +176,20 @@ struct OnboardingView: View {
 
             Spacer()
 
-            Button("Get Started") {
-                dismissOnboarding()
+            HStack(spacing: 12) {
+                Button("Explore Capabilities") {
+                    NotificationCenter.default.post(name: .openDiscover, object: nil)
+                    dismissOnboarding()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+
+                Button("Get Started") {
+                    dismissOnboarding()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
             .padding(.bottom, 32)
         }
     }
@@ -284,4 +293,5 @@ struct OnboardingView: View {
 
 extension Notification.Name {
     static let onboardingComplete = Notification.Name("symdesk.onboardingComplete")
+    static let openDiscover = Notification.Name("symdesk.openDiscover")
 }

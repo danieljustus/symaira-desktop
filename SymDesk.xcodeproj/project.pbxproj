@@ -19,6 +19,7 @@
 		571C6E466AA0EACEBA689E1F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61EE8B62E86F8FE234837F0A /* ContentView.swift */; };
 		71F20F1D5036D27530C70F14 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3BEF32958D7F1CBB107FC724 /* SymairaToolKit */; };
 		8297EAB48FFFA51F537F9351 /* BlockNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A66FCAE94BEB5D93BE972B /* BlockNode.swift */; };
+		894BF25DD7A7DE8807A137E1 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */; };
 		8D1D15CD36A1EDC8F6A23185 /* AIDockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0EF47CC7E6B528447433E8 /* AIDockView.swift */; };
 		9CB84C5DEC5DFAA645786C79 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = CCF15BEFF6E2B7C5BDE99A2A /* SymairaToolKit */; };
 		A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59762A8D6DF418D30855BEDA /* OnboardingView.swift */; };
@@ -52,6 +53,7 @@
 
 /* Begin PBXFileReference section */
 		1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreTests.swift; sourceTree = "<group>"; };
+		15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
 		1EEEC588B327739FBAF693D4 /* DbViewTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewTable.swift; sourceTree = "<group>"; };
 		1F547CF59C20684A5051D6B5 /* MarkdownEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorView.swift; sourceTree = "<group>"; };
 		24A66FCAE94BEB5D93BE972B /* BlockNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockNode.swift; sourceTree = "<group>"; };
@@ -148,6 +150,7 @@
 				B58CE1AAB047E5C20B8DBC43 /* BlockEditorView.swift */,
 				F136EF877D776AFD6D2CE697 /* CommandPalette.swift */,
 				1EEEC588B327739FBAF693D4 /* DbViewTable.swift */,
+				15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */,
 				AF74B31CB37D574E3AC69032 /* DocumentGridView.swift */,
 				BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */,
 				FF662679454A1D5730ECD171 /* GraphView.swift */,
@@ -333,6 +336,7 @@
 				D912C5E6E61A8D859E86A1F6 /* CommandPalette.swift in Sources */,
 				571C6E466AA0EACEBA689E1F /* ContentView.swift in Sources */,
 				1F1FA22E3100184255CC3362 /* DbViewTable.swift in Sources */,
+				894BF25DD7A7DE8807A137E1 /* DiscoverView.swift in Sources */,
 				087490E1CC2A424C7AEF4AC1 /* DocumentGridView.swift in Sources */,
 				0C92622CE6B3BB5D9C7AEC4C /* DocumentViewerView.swift in Sources */,
 				C56310271DF0FBD1ED258CCA /* GraphView.swift in Sources */,

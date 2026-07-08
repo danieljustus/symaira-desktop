@@ -154,4 +154,54 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertFalse(VaultConfig.isDemoMode)
         XCTAssertEqual(VaultConfig.vaultPath(), "/tmp/real-vault")
     }
+
+    // MARK: - DoctorReport Tests
+
+    func testDoctorReportDecoding() throws {
+        let json = """
+        {
+            "overall": "ok",
+            "vault": {"symseek": "ok", "symmemory": "ok"},
+            "sidecar": {"symingest": "available"},
+            "tools": {"symseek": "ok", "symmemory": "not found", "symingest": "ok"}
+        }
+        """.data(using: .utf8)!
+
+        let report = try JSONDecoder().decode(DoctorReport.self, from: json)
+        XCTAssertEqual(report.overall, "ok")
+        XCTAssertTrue(report.tools.isAvailable("symseek"))
+        XCTAssertFalse(report.tools.isAvailable("symmemory"))
+        XCTAssertTrue(report.tools.isAvailable("symingest"))
+    }
+
+    func testDoctorReportDecodingWithMissingFields() throws {
+        let json = """
+        {
+            "overall": "degraded"
+        }
+        """.data(using: .utf8)!
+
+        let report = try JSONDecoder().decode(DoctorReport.self, from: json)
+        XCTAssertEqual(report.overall, "degraded")
+        XCTAssertFalse(report.tools.isAvailable("symseek"))
+        XCTAssertFalse(report.vault.isAvailable("symmemory"))
+    }
+
+    func testDoctorReportToolAvailabilityVariants() {
+        let available = DoctorReport.ToolAvailability(symseek: "ok", symmemory: nil, symingest: nil, symfetch: nil, symvault: nil)
+        XCTAssertTrue(available.isAvailable("symseek"))
+
+        let found = DoctorReport.ToolAvailability(symseek: "found", symmemory: nil, symingest: nil, symfetch: nil, symvault: nil)
+        XCTAssertTrue(found.isAvailable("symseek"))
+
+        let status = DoctorReport.ToolAvailability(symseek: "Available", symmemory: nil, symingest: nil, symfetch: nil, symvault: nil)
+        XCTAssertTrue(status.isAvailable("symseek"))
+
+        let missing = DoctorReport.ToolAvailability(symseek: "not found", symmemory: nil, symingest: nil, symfetch: nil, symvault: nil)
+        XCTAssertFalse(missing.isAvailable("symseek"))
+
+        let unknown = DoctorReport.ToolAvailability(symseek: nil, symmemory: nil, symingest: nil, symfetch: nil, symvault: nil)
+        XCTAssertFalse(unknown.isAvailable("symseek"))
+        XCTAssertFalse(unknown.isAvailable("unknown-tool"))
+    }
 }

@@ -28,6 +28,7 @@ struct ContentView: View {
         case graph
         case dbView
         case docs
+        case discover
     }
 
     @State private var displayMode: DisplayMode = .vault
@@ -77,6 +78,15 @@ struct ContentView: View {
                             }
                         }
 
+                        Section("Discover") {
+                            Button(action: { displayMode = .discover }) {
+                                HStack {
+                                    Image(systemName: "sparkles")
+                                    Text("Discover")
+                                }
+                            }
+                        }
+
                         Section("Views") {
                             Button("Vault") { displayMode = .vault }
                             Button("Graph") { displayMode = .graph }
@@ -105,6 +115,8 @@ struct ContentView: View {
                     .navigationTitle("SymDesk")
                 } detail: {
                     switch displayMode {
+                    case .discover:
+                        DiscoverView()
                     case .graph:
                         GraphView { selectedNodeID in
                             navigateToNote(title: selectedNodeID)
@@ -274,6 +286,9 @@ struct ContentView: View {
                         }
                         return event
                     }
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .openDiscover)) { _ in
+                    displayMode = .discover
                 }
                 .task {
                     await fetchNotes()

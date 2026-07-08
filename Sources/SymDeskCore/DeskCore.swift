@@ -514,3 +514,59 @@ public struct ReviewDoc: Codable, Equatable, Identifiable, Sendable {
     public let confidence: Int
     public let reasons: [String]
 }
+
+// MARK: - Doctor Report
+
+public struct DoctorReport: Codable, Sendable {
+    public let overall: String
+    public let vault: ToolAvailability
+    public let sidecar: ToolAvailability
+    public let tools: ToolAvailability
+
+    public struct ToolAvailability: Codable, Sendable {
+        public let symseek: String?
+        public let symmemory: String?
+        public let symingest: String?
+        public let symfetch: String?
+        public let symvault: String?
+
+        public init(symseek: String? = nil, symmemory: String? = nil, symingest: String? = nil, symfetch: String? = nil, symvault: String? = nil) {
+            self.symseek = symseek
+            self.symmemory = symmemory
+            self.symingest = symingest
+            self.symfetch = symfetch
+            self.symvault = symvault
+        }
+
+        /// Whether a tool name resolves to "ok" or "available".
+        public func isAvailable(_ name: String) -> Bool {
+            let val: String?
+            switch name {
+            case "symseek": val = symseek
+            case "symmemory": val = symmemory
+            case "symingest": val = symingest
+            case "symfetch": val = symfetch
+            case "symvault": val = symvault
+            default: val = nil
+            }
+            guard let v = val else { return false }
+            let lower = v.lowercased()
+            return lower == "ok" || lower == "available" || lower == "found"
+        }
+    }
+
+    public init(overall: String, vault: ToolAvailability, sidecar: ToolAvailability, tools: ToolAvailability) {
+        self.overall = overall
+        self.vault = vault
+        self.sidecar = sidecar
+        self.tools = tools
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        overall = (try? c.decode(String.self, forKey: .overall)) ?? "unknown"
+        vault = (try? c.decode(ToolAvailability.self, forKey: .vault)) ?? ToolAvailability()
+        sidecar = (try? c.decode(ToolAvailability.self, forKey: .sidecar)) ?? ToolAvailability()
+        tools = (try? c.decode(ToolAvailability.self, forKey: .tools)) ?? ToolAvailability()
+    }
+}

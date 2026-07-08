@@ -105,11 +105,11 @@ func (s *Service) evaluateRollup(rollup string, path string, links map[string][]
 	if len(targets) == 0 {
 		return ""
 	}
-	
+
 	if strings.HasPrefix(rollup, "count") {
 		return fmt.Sprintf("%d", len(targets))
 	}
-	
+
 	if strings.HasPrefix(rollup, "sum(links.") {
 		prop := strings.TrimSuffix(strings.TrimPrefix(rollup, "sum(links."), ")")
 		sum := 0.0
@@ -137,6 +137,6 @@ func (s *Service) evaluateRollup(rollup string, path string, links map[string][]
 		}
 		return strings.Join(vals, ", ")
 	}
-	
+
 	return ""
 }

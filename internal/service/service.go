@@ -35,7 +35,7 @@ func New(vaultRoot string, db *sidecar.DB) *Service {
 	}
 }
 
-func (s *Service) indexDocument(doc *vault.Document) error {
+func (s *Service) IndexDocument(doc *vault.Document) error {
 	if err := s.DB.IndexDocument(doc); err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (s *Service) indexDocument(doc *vault.Document) error {
 	return nil
 }
 
-func (s *Service) deleteDocument(path string) error {
+func (s *Service) DeleteDocument(path string) error {
 	if err := s.DB.DeleteDocument(path); err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func (s *Service) NoteNew(title, content string) (string, error) {
 	hash := sha256.Sum256([]byte(fullContent))
 	doc.SHA256 = hex.EncodeToString(hash[:])
 
-	if err := s.indexDocument(doc); err != nil {
+	if err := s.IndexDocument(doc); err != nil {
 		return fileName, fmt.Errorf("failed to index new file: %w", err)
 	}
 
@@ -211,7 +211,7 @@ func (s *Service) NoteMove(oldPath, newPath string) error {
 		return fmt.Errorf("failed to move file: %w", err)
 	}
 
-	if err := s.deleteDocument(absOld); err != nil {
+	if err := s.DeleteDocument(absOld); err != nil {
 		return err
 	}
 
@@ -219,7 +219,7 @@ func (s *Service) NoteMove(oldPath, newPath string) error {
 	if err != nil {
 		return err
 	}
-	return s.indexDocument(doc)
+	return s.IndexDocument(doc)
 }
 
 // PropsEdit updates a frontmatter property in the file and re-indexes.
@@ -256,7 +256,7 @@ func (s *Service) PropsEdit(relPath, key, value string) error {
 	if err != nil {
 		return err
 	}
-	return s.indexDocument(newDoc)
+	return s.IndexDocument(newDoc)
 }
 
 // Ask performs a semantic/RAG search and streams the answer using the AI package.
@@ -312,7 +312,7 @@ func (s *Service) Ingest(sourcePath string) (map[string]string, error) {
 	}
 	doc, err := vault.ParseFile(absPath)
 	if err == nil {
-		_ = s.indexDocument(doc)
+		_ = s.IndexDocument(doc)
 	}
 
 	return map[string]string{"path": relPath}, nil
@@ -496,4 +496,14 @@ func matchesOther(doc *vault.Document, e compose.MemoryEntity) bool {
 		}
 	}
 	return false
+}
+
+// IngestJobs lists the jobs from symingest.
+func (s *Service) IngestJobs() (string, error) {
+	return ingest.IngestJobs()
+}
+
+// IngestRetry retries a failed job by ID in symingest.
+func (s *Service) IngestRetry(jobID string) error {
+	return ingest.IngestRetry(jobID)
 }

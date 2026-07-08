@@ -14,12 +14,14 @@ const defaultReviewThreshold = 85
 
 type Config struct {
 	Vault           string `toml:"vault" env:"SYMDESK_VAULT"`
+	Inbox           string `toml:"inbox" env:"SYMDESK_INBOX"`
 	ReviewThreshold int    `toml:"review_threshold" env:"SYMDESK_REVIEW_THRESHOLD"`
 }
 
 func DefaultConfig() *Config {
 	return &Config{
 		Vault:           "",
+		Inbox:           "",
 		ReviewThreshold: defaultReviewThreshold,
 	}
 }
@@ -33,6 +35,9 @@ func LoadFromPath(path string) (*Config, error) {
 
 	if envVault := os.Getenv("SYMDESK_VAULT"); envVault != "" {
 		cfg.Vault = envVault
+	}
+	if envInbox := os.Getenv("SYMDESK_INBOX"); envInbox != "" {
+		cfg.Inbox = envInbox
 	}
 	if envThresh := os.Getenv("SYMDESK_REVIEW_THRESHOLD"); envThresh != "" {
 		if v, err := strconv.Atoi(envThresh); err == nil && v >= 0 && v <= 100 {
@@ -54,6 +59,9 @@ func LoadFromPath(path string) (*Config, error) {
 
 	if envVault := os.Getenv("SYMDESK_VAULT"); envVault != "" {
 		cfg.Vault = envVault
+	}
+	if envInbox := os.Getenv("SYMDESK_INBOX"); envInbox != "" {
+		cfg.Inbox = envInbox
 	}
 	if envThresh := os.Getenv("SYMDESK_REVIEW_THRESHOLD"); envThresh != "" {
 		if v, err := strconv.Atoi(envThresh); err == nil && v >= 0 && v <= 100 {

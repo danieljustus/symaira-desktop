@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -87,14 +88,36 @@ func registerCommands(rootCmd *cobra.Command) {
 			results["tools"] = tools
 			results["versions"] = versions
 
+			// 5. iCloud Sync Conflicts
+			conflicts := []string{}
+			if vRoot != "" {
+				_ = vault.Walk(vRoot, func(p string) error {
+					base := filepath.Base(p)
+					if strings.Contains(base, " 2.md") || strings.Contains(base, "conflicted copy") {
+						rel, _ := filepath.Rel(vRoot, p)
+						conflicts = append(conflicts, rel)
+					}
+					return nil
+				})
+			}
+			results["conflicts"] = conflicts
+
 			if jsonFlag {
 				b, _ := json.Marshal(results)
 				fmt.Println(string(b))
 			} else {
 				for k, v := range results {
-					if k != "overall" && k != "tools" && k != "versions" {
+					if k != "overall" && k != "tools" && k != "versions" && k != "conflicts" {
 						fmt.Printf("%s: %v\n", k, v)
 					}
+				}
+				if len(conflicts) > 0 {
+					fmt.Printf("conflicts: %d found\n", len(conflicts))
+					for _, c := range conflicts {
+						fmt.Printf("  - %s\n", c)
+					}
+				} else {
+					fmt.Println("conflicts: none")
 				}
 				fmt.Println("tools:")
 				for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault"} {
@@ -333,10 +356,12 @@ func registerCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(askCmd)
 
 	ingestCmd := &cobra.Command{
-		Use:   "ingest [file]",
-		Short: "Ingest a file into the vault",
-		Args:  cobra.ExactArgs(1),
+		Use:   "ingest",
+		Short: "Ingest a file or manage ingestion jobs",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return cmd.Help()
+			}
 			vRoot, db, err := initServiceDeps()
 			if err != nil {
 				return err
@@ -351,6 +376,64 @@ func registerCommands(rootCmd *cobra.Command) {
 			return outputResult(res)
 		},
 	}
+
+	ingestJobsCmd := &cobra.Command{
+		Use:   "jobs",
+		Short: "List ingestion jobs in the queue",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			res, err := svc.IngestJobs()
+			if err != nil {
+				return err
+			}
+			if jsonFlag {
+				fmt.Println(res)
+				return nil
+			}
+			var rawJobs []map[string]interface{}
+			if err := json.Unmarshal([]byte(res), &rawJobs); err == nil {
+				for _, rj := range rawJobs {
+					fmt.Printf("Job ID: %v | Status: %v | Source: %v\n", rj["id"], rj["status"], rj["source_path"])
+				}
+			} else {
+				fmt.Println(res)
+			}
+			return nil
+		},
+	}
+
+	ingestRetryCmd := &cobra.Command{
+		Use:   "retry [job-id]",
+		Short: "Retry a failed ingestion job",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			err = svc.IngestRetry(args[0])
+			if err != nil {
+				return err
+			}
+
+			res := map[string]interface{}{
+				"status": "retried",
+				"job_id": args[0],
+			}
+			return outputResult(res)
+		},
+	}
+	ingestCmd.AddCommand(ingestJobsCmd)
+	ingestCmd.AddCommand(ingestRetryCmd)
 	rootCmd.AddCommand(ingestCmd)
 
 	noteCmd := &cobra.Command{
@@ -720,6 +803,81 @@ func registerCommands(rootCmd *cobra.Command) {
 		},
 	}
 	demoCmd.AddCommand(demoInitCmd)
+
+	conflictCmd := &cobra.Command{
+		Use:   "conflict",
+		Short: "Manage iCloud/Obsidian sync conflicts",
+	}
+
+	conflictResolveCmd := &cobra.Command{
+		Use:   "resolve [path]",
+		Short: "Resolve a sync conflict file",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			conflictPath := args[0]
+			action, _ := cmd.Flags().GetString("action")
+			if action != "keep-mine" && action != "keep-theirs" {
+				return fmt.Errorf("invalid action: must be keep-mine or keep-theirs")
+			}
+
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+
+			var absConflict string
+			if filepath.IsAbs(conflictPath) {
+				absConflict = conflictPath
+			} else {
+				absConflict = filepath.Join(vRoot, conflictPath)
+			}
+
+			if _, err := os.Stat(absConflict); err != nil {
+				return fmt.Errorf("conflict file not found: %w", err)
+			}
+
+			originalPath := deriveOriginalPath(absConflict)
+
+			if action == "keep-mine" {
+				if err := os.Remove(absConflict); err != nil {
+					return fmt.Errorf("failed to remove conflict file: %w", err)
+				}
+			} else if action == "keep-theirs" {
+				content, err := os.ReadFile(absConflict)
+				if err != nil {
+					return fmt.Errorf("failed to read conflict file: %w", err)
+				}
+				if err := os.WriteFile(originalPath, content, 0644); err != nil {
+					return fmt.Errorf("failed to write original file: %w", err)
+				}
+				if err := os.Remove(absConflict); err != nil {
+					return fmt.Errorf("failed to remove conflict file: %w", err)
+				}
+			}
+
+			svc := service.New(vRoot, db)
+			_ = svc.DeleteDocument(absConflict)
+
+			if action == "keep-theirs" {
+				if doc, err := vault.ParseFile(originalPath); err == nil {
+					_ = svc.IndexDocument(doc)
+				}
+			}
+
+			res := map[string]interface{}{
+				"status":        "resolved",
+				"action":        action,
+				"original_path": originalPath,
+				"conflict_path": absConflict,
+			}
+			return outputResult(res)
+		},
+	}
+	conflictResolveCmd.Flags().String("action", "", "resolution action (keep-mine|keep-theirs)")
+	_ = conflictResolveCmd.MarkFlagRequired("action")
+	conflictCmd.AddCommand(conflictResolveCmd)
+	rootCmd.AddCommand(conflictCmd)
 }
 
 func initServiceDeps() (string, *sidecar.DB, error) {
@@ -761,4 +919,19 @@ func outputStream(out <-chan interface{}) error {
 		}
 	}
 	return nil
+}
+
+func deriveOriginalPath(conflictPath string) string {
+	dir := filepath.Dir(conflictPath)
+	base := filepath.Base(conflictPath)
+	ext := filepath.Ext(base)
+	name := strings.TrimSuffix(base, ext)
+
+	if strings.HasSuffix(name, " conflicted copy") {
+		name = strings.TrimSuffix(name, " conflicted copy")
+	} else if strings.HasSuffix(name, " 2") {
+		name = strings.TrimSuffix(name, " 2")
+	}
+
+	return filepath.Join(dir, name+ext)
 }

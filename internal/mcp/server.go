@@ -51,6 +51,8 @@ func StartServer(cfg *config.Config, version string) error {
 
 	server.RegisterTool(newDocsSimilarTool(getService))
 	server.RegisterTool(newRelatedTool(getService))
+	server.RegisterTool(newIngestJobsTool(getService))
+	server.RegisterTool(newIngestRetryTool(getService))
 
 	return server.ServeStdio(context.Background())
 }
@@ -419,6 +421,56 @@ func newRelatedTool(getService serviceFactory) *mcpserver.Tool {
 			}
 			defer db.Close()
 			return svc.Related(args.File)
+		},
+	}
+}
+
+func newIngestJobsTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_ingest_jobs",
+		Description: "Lists ingestion jobs in the queue from symingest.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{}}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			jobsStr, err := svc.IngestJobs()
+			if err != nil {
+				return nil, err
+			}
+			var jobs []any
+			if err := json.Unmarshal([]byte(jobsStr), &jobs); err != nil {
+				return nil, err
+			}
+			return jobs, nil
+		},
+	}
+}
+
+func newIngestRetryTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_ingest_retry",
+		Description: "Retries a failed ingestion job by ID.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				ID string `json:"id"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			err = svc.IngestRetry(args.ID)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{"status": "ok"}, nil
 		},
 	}
 }

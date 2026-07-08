@@ -128,4 +128,30 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertEqual(doc.reasons.count, 2)
         XCTAssertEqual(doc.reasons[0], "confidence 30 < 70")
     }
+
+    // MARK: - VaultConfig Tests
+
+    func testVaultConfigResetClearsState() {
+        VaultConfig.setVault(url: URL(fileURLWithPath: "/tmp/test-vault"))
+        XCTAssertTrue(VaultConfig.hasConfiguredVault)
+        XCTAssertFalse(VaultConfig.isDemoMode)
+
+        VaultConfig.reset()
+        XCTAssertFalse(VaultConfig.hasConfiguredVault)
+        XCTAssertNil(VaultConfig.vaultPath())
+    }
+
+    func testVaultConfigSetDemoMode() {
+        VaultConfig.setDemoVault(url: URL(fileURLWithPath: "/tmp/demo-vault"))
+        XCTAssertTrue(VaultConfig.hasConfiguredVault)
+        XCTAssertTrue(VaultConfig.isDemoMode)
+        XCTAssertEqual(VaultConfig.vaultPath(), "/tmp/demo-vault")
+    }
+
+    func testVaultConfigSetRealVault() {
+        VaultConfig.setVault(url: URL(fileURLWithPath: "/tmp/real-vault"))
+        XCTAssertTrue(VaultConfig.hasConfiguredVault)
+        XCTAssertFalse(VaultConfig.isDemoMode)
+        XCTAssertEqual(VaultConfig.vaultPath(), "/tmp/real-vault")
+    }
 }

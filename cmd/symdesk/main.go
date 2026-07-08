@@ -19,8 +19,9 @@ var version = "0.1.0-dev"
 var schemaVersion = 1
 
 var (
-	cfg      *config.Config
-	jsonFlag bool
+	cfg       *config.Config
+	jsonFlag  bool
+	vaultFlag string
 )
 
 func main() {
@@ -59,10 +60,15 @@ func newRootCmd() *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Zero-stdio pollution: logging to stderr
 			slog.SetDefault(logkit.New(os.Stderr, slog.LevelInfo, "text"))
+			// Allow the app to pass a vault path explicitly on every command.
+			if vaultFlag != "" {
+				cfg.Vault = vaultFlag
+			}
 		},
 	}
 	rootCmd.Version = version
 	rootCmd.PersistentFlags().BoolVar(&jsonFlag, "json", false, "output in JSON format")
+	rootCmd.PersistentFlags().StringVar(&vaultFlag, "vault", "", "override vault path")
 
 	// 1. Version Command
 	versionCmd := &cobra.Command{

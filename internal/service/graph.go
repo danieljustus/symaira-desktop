@@ -2,6 +2,9 @@ package service
 
 import (
 	"path/filepath"
+
+	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
 type GraphNode struct {
@@ -49,8 +52,6 @@ func (s *Service) Graph() (*GraphData, error) {
 	var edges []GraphEdge
 	for _, e := range edgesRaw {
 		relSource, _ := filepath.Rel(s.VaultRoot, e.Source)
-		// e.Target is either a title or a relative path
-		// If it's a title, we might need to resolve it, but for now we just use it as is if it matches a node, or append ".md"
 		targetID := e.Target
 		if !nodeMap[targetID] {
 			if nodeMap[targetID+".md"] {
@@ -62,6 +63,83 @@ func (s *Service) Graph() (*GraphData, error) {
 			Source: relSource,
 			Target: targetID,
 		})
+	}
+
+	// Enrich with symmemory if available
+	if ok, _ := compose.HasSymmemory(); ok {
+		entities, err := compose.ListEntities()
+		if err == nil {
+			for _, e := range entities {
+				hasMatch := false
+				for _, d := range docs {
+					otherDoc, err := vault.ParseFile(d.Path)
+					if err == nil && matchesOther(otherDoc, e) {
+						hasMatch = true
+						relPath, _ := filepath.Rel(s.VaultRoot, d.Path)
+						edges = append(edges, GraphEdge{
+							Source: relPath,
+							Target: "entity:" + e.Name,
+						})
+					}
+				}
+
+				if hasMatch {
+					nodes = append(nodes, GraphNode{
+						ID:    "entity:" + e.Name,
+						Label: e.Name + " (" + e.Type + ")",
+					})
+
+					// Fetch neighbors of the matched entity to get relations
+					neighbors, err := compose.GetNeighbors(e.Name)
+					if err == nil && neighbors != nil {
+						for _, node := range neighbors.Nodes {
+							nodeID := "entity:" + node.Name
+							nodeAdded := false
+							for _, gn := range nodes {
+								if gn.ID == nodeID {
+									nodeAdded = true
+									break
+								}
+							}
+							if !nodeAdded {
+								nodes = append(nodes, GraphNode{
+									ID:    nodeID,
+									Label: node.Name + " (" + node.Type + ")",
+								})
+							}
+
+							for _, rel := range neighbors.Edges {
+								if (rel.FromEntityID == e.ID && rel.ToEntityID == node.ID) ||
+									(rel.FromEntityID == node.ID && rel.ToEntityID == e.ID) {
+									fromName := e.Name
+									toName := node.Name
+									if rel.FromEntityID == node.ID {
+										fromName = node.Name
+										toName = e.Name
+									}
+									// Avoid duplicate edges by searching existing ones
+									edgeExists := false
+									edgeSrc := "entity:" + fromName
+									edgeTgt := "entity:" + toName
+									for _, eg := range edges {
+										if eg.Source == edgeSrc && eg.Target == edgeTgt {
+											edgeExists = true
+											break
+										}
+									}
+									if !edgeExists {
+										edges = append(edges, GraphEdge{
+											Source: edgeSrc,
+											Target: edgeTgt,
+										})
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	return &GraphData{

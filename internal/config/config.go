@@ -4,18 +4,23 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/BurntSushi/toml"
 	"github.com/danieljustus/symaira-corekit/configkit"
 )
 
+const defaultReviewThreshold = 85
+
 type Config struct {
-	Vault string `toml:"vault" env:"SYMDESK_VAULT"`
+	Vault           string `toml:"vault" env:"SYMDESK_VAULT"`
+	ReviewThreshold int    `toml:"review_threshold" env:"SYMDESK_REVIEW_THRESHOLD"`
 }
 
 func DefaultConfig() *Config {
 	return &Config{
-		Vault: "",
+		Vault:           "",
+		ReviewThreshold: defaultReviewThreshold,
 	}
 }
 
@@ -26,9 +31,13 @@ func Load() (*Config, error) {
 func LoadFromPath(path string) (*Config, error) {
 	cfg := DefaultConfig()
 
-	// Read from environment variable first
 	if envVault := os.Getenv("SYMDESK_VAULT"); envVault != "" {
 		cfg.Vault = envVault
+	}
+	if envThresh := os.Getenv("SYMDESK_REVIEW_THRESHOLD"); envThresh != "" {
+		if v, err := strconv.Atoi(envThresh); err == nil && v >= 0 && v <= 100 {
+			cfg.ReviewThreshold = v
+		}
 	}
 
 	data, err := os.ReadFile(path)
@@ -43,9 +52,13 @@ func LoadFromPath(path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to decode config file: %w", err)
 	}
 
-	// Environment variable overrides file config if set
 	if envVault := os.Getenv("SYMDESK_VAULT"); envVault != "" {
 		cfg.Vault = envVault
+	}
+	if envThresh := os.Getenv("SYMDESK_REVIEW_THRESHOLD"); envThresh != "" {
+		if v, err := strconv.Atoi(envThresh); err == nil && v >= 0 && v <= 100 {
+			cfg.ReviewThreshold = v
+		}
 	}
 
 	return cfg, nil

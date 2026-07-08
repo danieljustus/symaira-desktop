@@ -12,6 +12,7 @@ import (
 	"github.com/danieljustus/symaira-corekit/sqlitekit"
 	_ "modernc.org/sqlite"
 
+	"github.com/danieljustus/symaira-desktop/internal/simhash"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
@@ -67,6 +68,10 @@ func (db *DB) IsIndexed(path, sha256 string) (bool, error) {
 
 // IndexDocument indexes a single document into the sidecar.
 func (db *DB) IndexDocument(doc *vault.Document) error {
+	if doc.Simhash == "" && doc.Body != "" {
+		doc.Simhash = simhash.ComputeHex(doc.Body)
+	}
+
 	tx, err := db.conn.Begin()
 	if err != nil {
 		return err
@@ -490,6 +495,116 @@ func (db *DB) DocsCounts(f DocsFilter) (*DocsCounts, error) {
 		counts.Person[p]++
 	}
 	return counts, nil
+}
+
+type ReviewResult struct {
+	Path         string `json:"path"`
+	Title        string `json:"title"`
+	Status       string `json:"status,omitempty"`
+	DocumentType string `json:"document_type,omitempty"`
+	DocumentDate string `json:"document_date,omitempty"`
+	Confidence   int    `json:"confidence"`
+	Reasons      []string `json:"reasons"`
+}
+
+// ReviewQueue returns documents that need human review: confidence below the
+// given threshold, or missing document_type / document_date.
+func (db *DB) ReviewQueue(threshold int) ([]ReviewResult, error) {
+	query := `
+		SELECT f.path, f.title, COALESCE(f.status,''),
+			COALESCE(fp_type.value,''), COALESCE(f.document_date,''), f.confidence
+		FROM files f
+		LEFT JOIN file_properties fp_type ON fp_type.file_id = f.id AND fp_type.key = 'document_type'
+		WHERE f.confidence < ?
+		   OR fp_type.value IS NULL OR fp_type.value = ''
+		   OR f.document_date IS NULL OR f.document_date = ''
+		ORDER BY f.path ASC`
+	rows, err := db.conn.Query(query, threshold)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []ReviewResult
+	for rows.Next() {
+		var r ReviewResult
+		var conf sql.NullInt64
+		if err := rows.Scan(&r.Path, &r.Title, &r.Status,
+			&r.DocumentType, &r.DocumentDate, &conf); err != nil {
+			return nil, err
+		}
+		if conf.Valid {
+			r.Confidence = int(conf.Int64)
+		}
+		r.Reasons = reviewReasons(r.Confidence, threshold, r.DocumentType, r.DocumentDate)
+		results = append(results, r)
+	}
+	return results, nil
+}
+
+func reviewReasons(conf, threshold int, docType, docDate string) []string {
+	var reasons []string
+	if conf < threshold {
+		reasons = append(reasons, fmt.Sprintf("confidence %d < %d", conf, threshold))
+	}
+	if docType == "" {
+		reasons = append(reasons, "missing document_type")
+	}
+	if docDate == "" {
+		reasons = append(reasons, "missing document_date")
+	}
+	return reasons
+}
+
+type SimilarResult struct {
+	Path       string `json:"path"`
+	Title      string `json:"title"`
+	Similarity int    `json:"similarity"`
+	Simhash    string `json:"simhash"`
+}
+
+// SimilarDocs returns indexed documents whose simhash is within the given
+// hamming-distance threshold of the reference document's simhash.
+// similarityThreshold is 0-100 user-facing percentage.
+func (db *DB) SimilarDocs(refSimhash string, similarityThreshold int) ([]SimilarResult, error) {
+	if refSimhash == "" {
+		return nil, nil
+	}
+	refHash, err := simhash.ParseHex(refSimhash)
+	if err != nil {
+		return nil, fmt.Errorf("invalid reference simhash: %w", err)
+	}
+
+	rows, err := db.conn.Query(`
+		SELECT path, title, COALESCE(simhash,'')
+		FROM files
+		WHERE simhash IS NOT NULL AND simhash != ''
+		ORDER BY path ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []SimilarResult
+	for rows.Next() {
+		var r SimilarResult
+		if err := rows.Scan(&r.Path, &r.Title, &r.Simhash); err != nil {
+			return nil, err
+		}
+		if r.Simhash == refSimhash {
+			continue
+		}
+		otherHash, err := simhash.ParseHex(r.Simhash)
+		if err != nil {
+			continue
+		}
+		sim := simhash.Similarity(refHash, otherHash)
+		if sim >= similarityThreshold {
+			r.Similarity = sim
+			results = append(results, r)
+		}
+	}
+	return results, nil
 }
 
 func nullStr(s string) interface{} {

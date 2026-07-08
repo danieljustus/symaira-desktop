@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
@@ -108,5 +109,74 @@ func TestDocsToolReturnsResults(t *testing.T) {
 	}
 	if len(results) != 0 {
 		t.Errorf("expected 0 docs in empty vault, got %d", len(results))
+	}
+}
+
+func TestDocSetStatusToolRequiresArgs(t *testing.T) {
+	tool := newDocSetStatusTool(testFactory(t))
+	if _, err := tool.Handler(context.Background(), json.RawMessage(`{}`)); err == nil {
+		t.Error("expected error for missing args")
+	}
+}
+
+func TestDocSetStatusToolUpdatesFile(t *testing.T) {
+	factory := testFactory(t)
+	svc, db, err := factory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	content := "---\ntitle: \"Test\"\nstatus: \"open\"\n---\n\nBody.\n"
+	absPath := filepath.Join(svc.VaultRoot, "test.md")
+	if err := os.WriteFile(absPath, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	tool := newDocSetStatusTool(factory)
+	in, _ := json.Marshal(map[string]string{"file": "test.md", "status": "done"})
+	out, err := tool.Handler(context.Background(), in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := out.(map[string]string)
+	if result["new_status"] != "done" {
+		t.Errorf("expected new_status 'done', got '%s'", result["new_status"])
+	}
+}
+
+func TestDocsReviewToolReturnsResults(t *testing.T) {
+	factory := testFactory(t)
+	tool := newDocsReviewTool(factory, &config.Config{ReviewThreshold: 85})
+
+	in, _ := json.Marshal(map[string]int{"threshold": 85})
+	out, err := tool.Handler(context.Background(), in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	results, ok := out.([]sidecar.ReviewResult)
+	if !ok {
+		t.Fatalf("expected []sidecar.ReviewResult, got %T", out)
+	}
+	if len(results) != 0 {
+		t.Errorf("expected 0 review items in empty vault, got %d", len(results))
+	}
+}
+
+func TestDocsSimilarToolRequiresFile(t *testing.T) {
+	tool := newDocsSimilarTool(testFactory(t))
+	if _, err := tool.Handler(context.Background(), json.RawMessage(`{}`)); err == nil {
+		t.Error("expected error for missing file")
+	}
+}
+
+func TestDocsSimilarToolReturnsResults(t *testing.T) {
+	factory := testFactory(t)
+	tool := newDocsSimilarTool(factory)
+
+	in, _ := json.Marshal(map[string]interface{}{"file": "nonexistent.md", "threshold": 50})
+	_, err := tool.Handler(context.Background(), in)
+	if err == nil {
+		t.Error("expected error for nonexistent file")
 	}
 }

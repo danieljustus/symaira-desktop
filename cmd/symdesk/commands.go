@@ -536,6 +536,103 @@ func registerCommands(rootCmd *cobra.Command) {
 	docsListCmd.Flags().Int("min-confidence", 0, "minimum confidence (0-100)")
 	docsListCmd.Flags().Int("max-confidence", 0, "maximum confidence (0-100)")
 	docsCmd.AddCommand(docsListCmd)
+
+	docsReviewCmd := &cobra.Command{
+		Use:   "review",
+		Short: "List documents needing review (low confidence or missing metadata)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			threshold, _ := cmd.Flags().GetInt("threshold")
+			if threshold <= 0 {
+				threshold = cfg.ReviewThreshold
+			}
+
+			results, err := svc.DocsReview(threshold)
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	docsReviewCmd.Flags().Int("threshold", 0, "confidence threshold (default from config)")
+	docsCmd.AddCommand(docsReviewCmd)
+
+	docCmd := &cobra.Command{
+		Use:   "doc",
+		Short: "Mutate document metadata (status, due date)",
+	}
+	rootCmd.AddCommand(docCmd)
+
+	docStatusCmd := &cobra.Command{
+		Use:   "status [file] [status]",
+		Short: "Set document status (open|paid|submitted|done|needs_review|waiting_for_reply)",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+			if err := svc.DocStatus(args[0], args[1]); err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"status": "updated", "file": args[0], "new_status": args[1]})
+		},
+	}
+	docCmd.AddCommand(docStatusCmd)
+
+	docDueCmd := &cobra.Command{
+		Use:   "due [file] [date]",
+		Short: "Set document due date (ISO-8601)",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+			if err := svc.DocDue(args[0], args[1]); err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"status": "updated", "file": args[0], "due_date": args[1]})
+		},
+	}
+	docCmd.AddCommand(docDueCmd)
+
+	similarCmd := &cobra.Command{
+		Use:   "similar [file]",
+		Short: "Find near-duplicate documents by SimHash similarity",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			threshold, _ := cmd.Flags().GetInt("threshold")
+			if threshold <= 0 {
+				threshold = 50
+			}
+
+			results, err := svc.SimilarDocs(args[0], threshold)
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	similarCmd.Flags().Int("threshold", 50, "minimum similarity percentage (0-100)")
+	rootCmd.AddCommand(similarCmd)
 }
 
 func initServiceDeps() (string, *sidecar.DB, error) {

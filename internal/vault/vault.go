@@ -267,3 +267,82 @@ func getIntFrontmatter(fm map[string]interface{}, key string) int {
 	}
 	return 0
 }
+
+// SetFrontmatterKey writes a single YAML key=value line inside the frontmatter
+// block of a markdown file, preserving every other byte exactly.  Only bare
+// scalar values (strings, numbers) are supported.
+func SetFrontmatterKey(filePath, key, value string) error {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("read file: %w", err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+
+	fmStart := -1
+	fmEnd := -1
+	for i, line := range lines {
+		trimmed := strings.TrimRight(line, "\r")
+		if trimmed == "---" {
+			if fmStart == -1 {
+				fmStart = i
+			} else {
+				fmEnd = i
+				break
+			}
+		}
+	}
+	if fmStart == -1 || fmEnd == -1 {
+		newLines := make([]string, 0, len(lines)+3)
+		newLines = append(newLines, "---")
+		newLines = append(newLines, key+": "+quoteYAML(value))
+		newLines = append(newLines, "---")
+		newLines = append(newLines, lines...)
+		return os.WriteFile(filePath, []byte(strings.Join(newLines, "\n")), 0644)
+	}
+
+	keyPrefix := key + ": "
+	replaced := false
+	for i := fmStart + 1; i < fmEnd; i++ {
+		trimmed := strings.TrimRight(lines[i], "\r")
+		if strings.HasPrefix(trimmed, keyPrefix) || trimmed == key {
+			lines[i] = keyPrefix + quoteYAML(value)
+			replaced = true
+			break
+		}
+	}
+
+	if !replaced {
+		newLine := keyPrefix + quoteYAML(value)
+		lines = append(lines[:fmEnd], append([]string{newLine}, lines[fmEnd:]...)...)
+	}
+
+	return os.WriteFile(filePath, []byte(strings.Join(lines, "\n")), 0644)
+}
+
+// quoteYAML returns a YAML-safe quoted string; numeric-looking values are
+// left unquoted.
+func quoteYAML(v string) string {
+	if v == "" {
+		return `""`
+	}
+	isNumber := true
+	for i, c := range v {
+		if c >= '0' && c <= '9' {
+			continue
+		}
+		if c == '.' {
+			continue
+		}
+		if c == '-' && i == 0 {
+			continue
+		}
+		isNumber = false
+		break
+	}
+	if isNumber && len(v) > 0 {
+		return v
+	}
+	escaped := strings.ReplaceAll(v, `"`, `\"`)
+	return `"` + escaped + `"`
+}

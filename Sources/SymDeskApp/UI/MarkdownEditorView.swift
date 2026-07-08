@@ -39,6 +39,7 @@ struct MarkdownEditorView: NSViewRepresentable {
         }
     }
 
+    @MainActor
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: MarkdownEditorView
         private var isFormatting = false

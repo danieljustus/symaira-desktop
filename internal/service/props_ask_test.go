@@ -12,7 +12,7 @@ import (
 func TestPropsEditUpdatesFrontmatterAndReindexes(t *testing.T) {
 	svc := newTestService(t)
 
-	if _, err := svc.NoteNew("Props Note", "some body content"); err != nil {
+	if _, err := svc.NoteNew("Props Note", "some body content", ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -55,7 +55,7 @@ func TestAskStreamsFallbackAnswerWithoutOllama(t *testing.T) {
 	t.Setenv("SYMDESK_OLLAMA_URL", "")
 	svc := newTestService(t)
 
-	if _, err := svc.NoteNew("Ask Note", "unique-ask-content about testing"); err != nil {
+	if _, err := svc.NoteNew("Ask Note", "unique-ask-content about testing", ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -75,7 +75,7 @@ func TestAskTextMatchesAskAggregate(t *testing.T) {
 	t.Setenv("SYMDESK_OLLAMA_URL", "")
 	svc := newTestService(t)
 
-	if _, err := svc.NoteNew("Ask Note", "unique-asktext-content"); err != nil {
+	if _, err := svc.NoteNew("Ask Note", "unique-asktext-content", ""); err != nil {
 		t.Fatal(err)
 	}
 

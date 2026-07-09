@@ -161,7 +161,7 @@ func (s *Service) Backlinks(file string) ([]string, error) {
 }
 
 // NoteNew creates a new note in the vault and indexes it.
-func (s *Service) NoteNew(title, content string) (string, error) {
+func (s *Service) NoteNew(title, content, templateName string) (string, error) {
 	if title == "" {
 		return "", fmt.Errorf("title is required")
 	}
@@ -173,11 +173,51 @@ func (s *Service) NoteNew(title, content string) (string, error) {
 	}
 
 	// Create content with frontmatter
-	now := time.Now().UTC().Format(time.RFC3339)
-	fullContent := fmt.Sprintf("---\ntitle: \"%s\"\ncreated: \"%s\"\ntags: []\n---\n\n%s", title, now, content)
+	now := time.Now().UTC()
+	nowStr := now.Format(time.RFC3339)
+	
+	// Load template if specified
+	templateContent := ""
+	if templateName != "" {
+		tplPath, err := vault.SecurePath(s.VaultRoot, filepath.Join("templates", templateName+".md"))
+		if err == nil {
+			if b, err := os.ReadFile(tplPath); err == nil {
+				templateContent = string(b)
+			}
+		}
+	}
+	
+	fullContent := ""
+	if templateContent != "" {
+		// Substitute placeholders
+		templateContent = strings.ReplaceAll(templateContent, "{{title}}", title)
+		templateContent = strings.ReplaceAll(templateContent, "{{date}}", now.Format("2006-01-02"))
+		templateContent = strings.ReplaceAll(templateContent, "{{time}}", now.Format("15:04"))
+		
+		// If template has frontmatter, we just use the template directly and append content
+		if strings.HasPrefix(templateContent, "---\n") {
+			fullContent = templateContent
+			if content != "" {
+				fullContent += "\n" + content
+			}
+		} else {
+			fullContent = fmt.Sprintf("---\ntitle: \"%s\"\ncreated: \"%s\"\ntags: []\n---\n\n%s", title, nowStr, templateContent)
+			if content != "" {
+				fullContent += "\n" + content
+			}
+		}
+	} else {
+		fullContent = fmt.Sprintf("---\ntitle: \"%s\"\ncreated: \"%s\"\ntags: []\n---\n\n%s", title, nowStr, content)
+	}
 
 	if err := os.WriteFile(absPath, []byte(fullContent), 0644); err != nil {
 		return "", fmt.Errorf("failed to write file: %w", err)
+	}
+
+	// For templates with frontmatter that might lack created/title, ensure they are set
+	if templateContent != "" && strings.HasPrefix(templateContent, "---\n") {
+		_ = vault.SetFrontmatterKey(absPath, "title", title)
+		_ = vault.SetFrontmatterKey(absPath, "created", nowStr)
 	}
 
 	// Index immediately
@@ -194,6 +234,34 @@ func (s *Service) NoteNew(title, content string) (string, error) {
 	}
 
 	return fileName, nil
+}
+
+// NoteDaily creates or opens today's note.
+func (s *Service) NoteDaily(dateStr string) (string, error) {
+	t := time.Now().UTC()
+	if dateStr != "" {
+		parsed, err := time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			return "", fmt.Errorf("invalid date format, use YYYY-MM-DD: %w", err)
+		}
+		t = parsed
+	}
+	
+	// Default daily note naming: YYYY-MM-DD
+	title := t.Format("2006-01-02")
+	fileName := title + ".md"
+	absPath, err := vault.SecurePath(s.VaultRoot, fileName)
+	if err != nil {
+		return "", err
+	}
+	
+	if _, err := os.Stat(absPath); err == nil {
+		// Already exists
+		return fileName, nil
+	}
+	
+	// Create it, trying "daily" template
+	return s.NoteNew(title, "", "daily")
 }
 
 // NoteMove renames a note and updates the index.

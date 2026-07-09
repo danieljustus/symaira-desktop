@@ -51,8 +51,8 @@ func TestWalk(t *testing.T) {
 		t.Fatalf("walk failed: %v", err)
 	}
 
-	if count != 6 {
-		t.Errorf("expected to find 6 files, found %d", count)
+	if count != 8 {
+		t.Fatalf("expected to find 8 files, found %d", count)
 	}
 }
 

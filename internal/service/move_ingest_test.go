@@ -22,7 +22,7 @@ func newTestService(t *testing.T) *Service {
 func TestNoteMoveRemovesStaleIndexEntry(t *testing.T) {
 	svc := newTestService(t)
 
-	if _, err := svc.NoteNew("Move Me", "unique-move-content"); err != nil {
+	if _, err := svc.NoteNew("Move Me", "unique-move-content", ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -48,7 +48,7 @@ func TestNoteMoveRemovesStaleIndexEntry(t *testing.T) {
 
 func TestNoteMoveDeniesTraversal(t *testing.T) {
 	svc := newTestService(t)
-	if _, err := svc.NoteNew("Stay", "content"); err != nil {
+	if _, err := svc.NoteNew("Stay", "content", ""); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.NoteMove("Stay.md", "../escape.md"); err == nil {

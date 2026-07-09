@@ -64,3 +64,13 @@ The following optional fields provide first-class document query metadata. They 
 ## 5. Attachments
 - Attachments (images, PDFs) should be referenced using standard Markdown links `[Title](path/to/file.pdf)` or embedded via `![Title](path/to/image.png)`.
 - Attachments can be stored anywhere in the vault, though an `assets/` or `attachments/` subfolder is recommended.
+
+## 6. Templates (contract_version 2)
+- Reusable note templates SHOULD be stored in the `templates/` folder at the root of the vault.
+- Templates are valid Markdown files (`.md`) containing optional placeholders that are substituted on note creation.
+- Standard placeholders:
+  - `{{title}}` — Substituted with the title of the note.
+  - `{{date}}` — Substituted with the current date (YYYY-MM-DD).
+  - `{{time}}` — Substituted with the current time (HH:MM).
+- When a template is applied, its content (including any frontmatter defined in the template) is merged into the contract-conform base frontmatter.
+

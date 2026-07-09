@@ -293,7 +293,7 @@ public final class DeskCore: ObservableObject {
         )
     }
 
-    public func noteNew(title: String) async throws -> String {
+    public func noteNew(title: String, template: String = "") async throws -> String {
         guard let tool else { throw DeskCoreError.coreNotFound }
         let runner = CLIRunner()
         // symdesk note new --title <title> --json
@@ -301,10 +301,16 @@ public final class DeskCore: ObservableObject {
         struct NoteNewResult: Codable, Sendable {
             let path: String
         }
+        var args = ["note", "new", "--title", title, "--json"]
+        if !template.isEmpty {
+            args.append(contentsOf: ["--template", template])
+        }
+        args.append(contentsOf: vaultArgs)
+        
         let res = try await runner.runDecoding(
             NoteNewResult.self,
             executable: tool.location.url,
-            arguments: ["note", "new", "--title", title, "--json"] + vaultArgs
+            arguments: args
         )
         return res.path
     }

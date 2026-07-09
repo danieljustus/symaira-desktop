@@ -179,12 +179,13 @@ func newBacklinksTool(getService serviceFactory) *mcpserver.Tool {
 func newNoteNewTool(getService serviceFactory) *mcpserver.Tool {
 	return &mcpserver.Tool{
 		Name:        "desk_note_new",
-		Description: "Creates a new note.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"title":{"type":"string"},"content":{"type":"string"}},"required":["title"]}`),
+		Description: "Create a new note in the Symaira vault.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"title":{"type":"string","description":"The title of the new note"},"content":{"type":"string","description":"The Markdown body content of the note"},"template":{"type":"string","description":"Optional template name to use"}},"required":["title","content"]}`),
 		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
 			var args struct {
-				Title   string `json:"title"`
-				Content string `json:"content"`
+				Title    string `json:"title"`
+				Content  string `json:"content"`
+				Template string `json:"template"`
 			}
 			if err := json.Unmarshal(input, &args); err != nil {
 				return nil, err
@@ -197,7 +198,7 @@ func newNoteNewTool(getService serviceFactory) *mcpserver.Tool {
 				return nil, err
 			}
 			defer db.Close()
-			path, err := svc.NoteNew(args.Title, args.Content)
+			path, err := svc.NoteNew(args.Title, args.Content, args.Template)
 			if err != nil {
 				return nil, err
 			}

@@ -544,6 +544,7 @@ func registerCommands(rootCmd *cobra.Command) {
 		Short: "Create a new note",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			title, _ := cmd.Flags().GetString("title")
+			templateName, _ := cmd.Flags().GetString("template")
 			vRoot, db, err := initServiceDeps()
 			if err != nil {
 				return err
@@ -557,7 +558,7 @@ func registerCommands(rootCmd *cobra.Command) {
 				content = args[0]
 			}
 
-			path, err := svc.NoteNew(title, content)
+			path, err := svc.NoteNew(title, content, templateName)
 			if err != nil {
 				return err
 			}
@@ -565,8 +566,31 @@ func registerCommands(rootCmd *cobra.Command) {
 		},
 	}
 	noteNewCmd.Flags().String("title", "", "title of the new note")
+	noteNewCmd.Flags().String("template", "", "template name to use (optional)")
 	noteNewCmd.MarkFlagRequired("title")
 	noteCmd.AddCommand(noteNewCmd)
+
+	noteDailyCmd := &cobra.Command{
+		Use:   "daily",
+		Short: "Create or open today's daily note",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dateStr, _ := cmd.Flags().GetString("date")
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			path, err := svc.NoteDaily(dateStr)
+			if err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"status": "ok", "path": path})
+		},
+	}
+	noteDailyCmd.Flags().String("date", "", "optional date (YYYY-MM-DD)")
+	noteCmd.AddCommand(noteDailyCmd)
 
 	noteMoveCmd := &cobra.Command{
 		Use:   "move [oldPath] [newPath]",

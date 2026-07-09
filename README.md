@@ -7,7 +7,7 @@ A local-first, **agent-native** workspace that unifies your documents, notes, kn
 `symdesk` is a Go core that is simultaneously a **CLI** and an **MCP server**, paired with a **native SwiftUI macOS app** (`SymDesk.app`) built on [`symaira-appkit`](https://github.com/danieljustus/symaira-appkit). The same service layer is used by you, by the app, and by AI agents — operating on one Markdown vault through identical contracts.
 
 - **Owns:** the Markdown-as-SSOT vault contract, one SQLite sidecar index, the native app, and the runtime composition layer
-- **Composes at runtime today:** [`symaira-ingest`](https://github.com/danieljustus/symaira-ingest) (OCR/ingest), detected via `PATH` probe. **Planned composition upgrades** (the tool never depends on their presence — see guardrail 3 below): [`symseek`](https://github.com/danieljustus/symaira-seek) (search), [`symmemory`](https://github.com/danieljustus/symaira-memory) (RAG/graph), [`symfetch`](https://github.com/danieljustus/symaira-fetch) (web→md), [`symvault`](https://github.com/danieljustus/symaira-vault) (secrets)
+- **Composes at runtime today:** [`symaira-ingest`](https://github.com/danieljustus/symaira-ingest) (OCR/ingest), [`symseek`](https://github.com/danieljustus/symaira-seek) (search), [`symmemory`](https://github.com/danieljustus/symaira-memory) (RAG/graph), [`symfetch`](https://github.com/danieljustus/symaira-fetch) (web clipping), and [`symvault`](https://github.com/danieljustus/symaira-vault) (secrets resolution), all detected dynamically via `PATH` probe (the core never depends on their presence and degrades gracefully).
 - **Delegates (does not rebuild):** spreadsheets → LibreOffice; code editing → editor plugins + agent orchestration; iCloud sync → the OS
 - **Language:** Go (CGO-free, core) + Swift/SwiftUI (app). **License:** Apache-2.0
 
@@ -57,11 +57,37 @@ symdesk demo init [dir]                   # materialise the built-in demo vault
 
 All commands support `--json` for machine-readable output.
 
-### AI (optional, local-first)
+### AI (optional, local-first or cloud)
 
-`symdesk ask` uses a local [Ollama](https://ollama.com) instance when configured — otherwise it degrades honestly and returns the top search results:
+`symdesk ask` and `symdesk transform` support both local models via Ollama and cloud providers (Anthropic Claude). If no provider is configured, the system degrades honestly by explaining the missing configuration and returning search results.
+
+#### Local AI (Ollama)
+
+To use a local model, configure the Ollama endpoint and model name:
 
 ```sh
+export SYMDESK_LLM_PROVIDER=ollama      # default
 export SYMDESK_OLLAMA_URL=http://localhost:11434
-export SYMDESK_OLLAMA_MODEL=llama3.2   # optional, default llama3.2
+export SYMDESK_OLLAMA_MODEL=llama3.2     # optional, default llama3.2
 ```
+
+#### Cloud AI (Anthropic Claude)
+
+To use Anthropic's Claude models, set the provider, model, and API key:
+
+```sh
+export SYMDESK_LLM_PROVIDER=anthropic
+export SYMDESK_LLM_MODEL=claude-3-5-sonnet-20240620  # optional, default claude-3-5-sonnet-20240620
+```
+
+The API key (`SYMDESK_LLM_API_KEY`) is resolved dynamically in priority order:
+
+1. **Environment Variable**: Directly set `SYMDESK_LLM_API_KEY`.
+2. **Symvault (1Password)**: If `symvault` is installed on your `PATH`, you can set the key to a `symvault` secret reference:
+   ```sh
+   export SYMDESK_LLM_API_KEY="op://vault/item/llm-api-key"
+   ```
+3. **macOS Keychain Fallback**: If no key is set in the environment, `symdesk` checks the macOS Keychain for a password under service `symaira-desktop` and account `llm-api-key`. You can store it using:
+   ```sh
+   security add-generic-password -s symaira-desktop -a llm-api-key -w "your-api-key-here"
+   ```

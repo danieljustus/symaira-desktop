@@ -30,7 +30,7 @@ func TestRoundtrip(t *testing.T) {
 	svc := New(vaultPath, db)
 
 	// 1. Note New
-	path, err := svc.NoteNew("Roundtrip Test", "Testing content [[Target Note]]")
+	path, err := svc.NoteNew("Roundtrip Test", "Testing content [[Target Note]]", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func TestEventsStress(t *testing.T) {
 
 	for i := 0; i < 100; i++ { // Reduced to 100 for fast CI tests, but concept stands
 		// We use NoteNew to write files rapidly
-		_, err := svc.NoteNew(fmt.Sprintf("Stress Note %d", i), "Content")
+		_, err := svc.NoteNew(fmt.Sprintf("Stress Note %d", i), "Content", "")
 		if err != nil {
 			t.Fatal(err)
 		}

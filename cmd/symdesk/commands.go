@@ -13,6 +13,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/demo"
+	"github.com/danieljustus/symaira-desktop/internal/secrets"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -104,6 +105,17 @@ func registerCommands(rootCmd *cobra.Command) {
 			}
 			results["conflicts"] = conflicts
 
+			// 6. AI Provider
+			provider := cfg.LLMProvider
+			if provider == "" {
+				provider = "ollama"
+			}
+			aiMap := map[string]string{"provider": provider}
+			if provider == "anthropic" {
+				aiMap["secret_source"] = secrets.Source(cfg.LLMAPIKey)
+			}
+			results["ai"] = aiMap
+
 			if jsonFlag {
 				b, _ := json.Marshal(results)
 				fmt.Println(string(b))
@@ -131,6 +143,14 @@ func registerCommands(rootCmd *cobra.Command) {
 						fmt.Printf("  %s: not found\n", name)
 					}
 				}
+
+				fmt.Printf("ai: provider=%s", aiMap["provider"])
+				if src, ok := aiMap["secret_source"]; ok {
+					fmt.Printf(", secret_source=%s\n", src)
+				} else {
+					fmt.Println()
+				}
+
 				fmt.Printf("Overall status: %s\n", results["overall"])
 			}
 
@@ -524,6 +544,7 @@ func registerCommands(rootCmd *cobra.Command) {
 		Short: "Create a new note",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			title, _ := cmd.Flags().GetString("title")
+			templateName, _ := cmd.Flags().GetString("template")
 			vRoot, db, err := initServiceDeps()
 			if err != nil {
 				return err
@@ -537,7 +558,7 @@ func registerCommands(rootCmd *cobra.Command) {
 				content = args[0]
 			}
 
-			path, err := svc.NoteNew(title, content)
+			path, err := svc.NoteNew(title, content, templateName)
 			if err != nil {
 				return err
 			}
@@ -545,8 +566,31 @@ func registerCommands(rootCmd *cobra.Command) {
 		},
 	}
 	noteNewCmd.Flags().String("title", "", "title of the new note")
+	noteNewCmd.Flags().String("template", "", "template name to use (optional)")
 	noteNewCmd.MarkFlagRequired("title")
 	noteCmd.AddCommand(noteNewCmd)
+
+	noteDailyCmd := &cobra.Command{
+		Use:   "daily",
+		Short: "Create or open today's daily note",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dateStr, _ := cmd.Flags().GetString("date")
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			path, err := svc.NoteDaily(dateStr)
+			if err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"status": "ok", "path": path})
+		},
+	}
+	noteDailyCmd.Flags().String("date", "", "optional date (YYYY-MM-DD)")
+	noteCmd.AddCommand(noteDailyCmd)
 
 	noteMoveCmd := &cobra.Command{
 		Use:   "move [oldPath] [newPath]",
@@ -914,6 +958,28 @@ func registerCommands(rootCmd *cobra.Command) {
 	_ = conflictResolveCmd.MarkFlagRequired("action")
 	conflictCmd.AddCommand(conflictResolveCmd)
 	rootCmd.AddCommand(conflictCmd)
+
+	clipCmd := &cobra.Command{
+		Use:   "clip <url>",
+		Short: "Fetch a URL via symfetch and save it as a note",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			urlStr := args[0]
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			path, err := svc.NoteClip(urlStr)
+			if err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"status": "ok", "path": path})
+		},
+	}
+	rootCmd.AddCommand(clipCmd)
 }
 
 func initServiceDeps() (string, *sidecar.DB, error) {

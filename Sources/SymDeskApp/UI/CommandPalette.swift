@@ -1,5 +1,6 @@
 import SwiftUI
 import SymDeskCore
+import SymairaCLIRunner
 
 struct CommandPalette: View {
     @EnvironmentObject var core: DeskCore
@@ -45,6 +46,11 @@ struct CommandPalette: View {
                     Section("Actions") {
                         Button("Create Note: '\(searchText)'") {
                             createNote()
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Button("Create Daily Note") {
+                            createDailyNote()
                         }
                         .buttonStyle(PlainButtonStyle())
                         
@@ -129,6 +135,37 @@ struct CommandPalette: View {
             } catch {
                 await MainActor.run {
                     self.errorMessage = "Create failed: \(error.localizedDescription)"
+                    self.isSearching = false
+                }
+            }
+        }
+    }
+    private func createDailyNote() {
+        isSearching = true
+        Task {
+            do {
+                guard let tool = core.tool else { throw DeskCoreError.coreNotFound }
+                let runner = CLIRunner()
+                // Use runDecoding to execute symdesk note daily --json
+                struct DailyResult: Codable { let path: String }
+                var args = ["note", "daily", "--json"]
+                if let vp = core.vaultPath, !vp.isEmpty {
+                    args.append(contentsOf: ["--vault", vp])
+                }
+                
+                _ = try await runner.runDecoding(
+                    DailyResult.self,
+                    executable: tool.location.url,
+                    arguments: args
+                )
+                
+                await MainActor.run {
+                    self.isPresented = false
+                    self.isSearching = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = "Daily note failed: \(error.localizedDescription)"
                     self.isSearching = false
                 }
             }

@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-corekit/ollamakit"
+	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/secrets"
 )
 
 type AskChunk struct {
@@ -25,6 +27,27 @@ const defaultModel = "llama3.2"
 func Ask(query string, contextDocs []map[string]interface{}, out chan<- AskChunk) {
 	defer close(out)
 
+	cfg, _ := config.Load()
+	provider := cfg.LLMProvider
+	if provider == "" {
+		provider = "ollama"
+	}
+
+	if provider == "anthropic" {
+		apiKey := secrets.ResolveKey(cfg.LLMAPIKey)
+		if apiKey == "" {
+			out <- AskChunk{Chunk: "⚠️ **AI-Feature nicht konfiguriert.**\n\n" +
+				"Anthropic API-Key konnte nicht aufgelöst werden (Fehlendes Secret via symvault oder Umgebungsvariable).\n"}
+			return
+		}
+		model := os.Getenv("SYMDESK_LLM_MODEL")
+		if err := streamAnthropic(apiKey, model, buildPrompt(query, contextDocs), out); err != nil {
+			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Anthropic-Anfrage fehlgeschlagen: %v\n", err)}
+		}
+		return
+	}
+
+	// fallback to ollama
 	ollamaURL := strings.TrimRight(os.Getenv("SYMDESK_OLLAMA_URL"), "/")
 	if ollamaURL == "" {
 		out <- AskChunk{Chunk: "⚠️ **AI-Feature nicht konfiguriert.**\n\n" +
@@ -71,6 +94,27 @@ func Transform(text, intent string, out chan<- AskChunk) {
 		return
 	}
 
+	cfg, _ := config.Load()
+	provider := cfg.LLMProvider
+	if provider == "" {
+		provider = "ollama"
+	}
+
+	if provider == "anthropic" {
+		apiKey := secrets.ResolveKey(cfg.LLMAPIKey)
+		if apiKey == "" {
+			out <- AskChunk{Chunk: "⚠️ **AI-Feature nicht konfiguriert.**\n\n" +
+				"Anthropic API-Key konnte nicht aufgelöst werden (Fehlendes Secret via symvault oder Umgebungsvariable).\n"}
+			return
+		}
+		model := os.Getenv("SYMDESK_LLM_MODEL")
+		if err := streamAnthropic(apiKey, model, buildTransformPrompt(text, intent), out); err != nil {
+			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Anthropic-Anfrage fehlgeschlagen: %v\n", err)}
+		}
+		return
+	}
+
+	// fallback to ollama
 	ollamaURL := strings.TrimRight(os.Getenv("SYMDESK_OLLAMA_URL"), "/")
 	if ollamaURL == "" {
 		out <- AskChunk{Chunk: "⚠️ **AI-Feature nicht konfiguriert.**\n\n" +

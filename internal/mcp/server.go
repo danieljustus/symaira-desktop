@@ -56,6 +56,7 @@ func StartServer(cfg *config.Config, version string) error {
 	server.RegisterTool(newRelatedTool(getService))
 	server.RegisterTool(newIngestJobsTool(getService))
 	server.RegisterTool(newIngestRetryTool(getService))
+	server.RegisterTool(newClipTool(getService))
 
 	return server.ServeStdio(context.Background())
 }
@@ -179,12 +180,13 @@ func newBacklinksTool(getService serviceFactory) *mcpserver.Tool {
 func newNoteNewTool(getService serviceFactory) *mcpserver.Tool {
 	return &mcpserver.Tool{
 		Name:        "desk_note_new",
-		Description: "Creates a new note.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"title":{"type":"string"},"content":{"type":"string"}},"required":["title"]}`),
+		Description: "Create a new note in the Symaira vault.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"title":{"type":"string","description":"The title of the new note"},"content":{"type":"string","description":"The Markdown body content of the note"},"template":{"type":"string","description":"Optional template name to use"}},"required":["title","content"]}`),
 		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
 			var args struct {
-				Title   string `json:"title"`
-				Content string `json:"content"`
+				Title    string `json:"title"`
+				Content  string `json:"content"`
+				Template string `json:"template"`
 			}
 			if err := json.Unmarshal(input, &args); err != nil {
 				return nil, err
@@ -197,7 +199,7 @@ func newNoteNewTool(getService serviceFactory) *mcpserver.Tool {
 				return nil, err
 			}
 			defer db.Close()
-			path, err := svc.NoteNew(args.Title, args.Content)
+			path, err := svc.NoteNew(args.Title, args.Content, args.Template)
 			if err != nil {
 				return nil, err
 			}
@@ -506,6 +508,35 @@ func newIngestRetryTool(getService serviceFactory) *mcpserver.Tool {
 				return nil, err
 			}
 			return map[string]string{"status": "ok"}, nil
+		},
+	}
+}
+
+func newClipTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_clip",
+		Description: "Fetches a URL via symfetch and saves it as a note in the vault.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"url":{"type":"string"}},"required":["url"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				URL string `json:"url"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.URL == "" {
+				return nil, fmt.Errorf("url is required")
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			path, err := svc.NoteClip(args.URL)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{"path": path}, nil
 		},
 	}
 }

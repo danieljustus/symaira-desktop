@@ -41,7 +41,7 @@ func Ask(query string, contextDocs []map[string]interface{}, out chan<- AskChunk
 			return
 		}
 		model := os.Getenv("SYMDESK_LLM_MODEL")
-		if err := streamAnthropic(apiKey, model, buildPrompt(query, contextDocs), out); err != nil {
+		if err := streamAnthropic(context.Background(), apiKey, model, buildPrompt(query, contextDocs), out); err != nil {
 			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Anthropic-Anfrage fehlgeschlagen: %v\n", err)}
 		}
 		return
@@ -108,7 +108,7 @@ func Transform(text, intent string, out chan<- AskChunk) {
 			return
 		}
 		model := os.Getenv("SYMDESK_LLM_MODEL")
-		if err := streamAnthropic(apiKey, model, buildTransformPrompt(text, intent), out); err != nil {
+		if err := streamAnthropic(context.Background(), apiKey, model, buildTransformPrompt(text, intent), out); err != nil {
 			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Anthropic-Anfrage fehlgeschlagen: %v\n", err)}
 		}
 		return

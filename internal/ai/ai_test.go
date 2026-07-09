@@ -1,12 +1,15 @@
 package ai
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func collect(query string, docs []map[string]interface{}) string {
@@ -145,5 +148,140 @@ func TestBuildTransformPromptVariesByIntent(t *testing.T) {
 		if !strings.Contains(p, text) {
 			t.Errorf("prompt missing source text: %s", p)
 		}
+	}
+}
+
+func TestStreamAnthropicSuccess(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		if r.Header.Get("x-api-key") != "test-key" {
+			t.Errorf("expected API key 'test-key', got %q", r.Header.Get("x-api-key"))
+		}
+		if r.Header.Get("anthropic-version") != "2023-06-01" {
+			t.Errorf("expected version header '2023-06-01', got %q", r.Header.Get("anthropic-version"))
+		}
+		fmt.Fprintln(w, `data: {"type": "message_start"}`)
+		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "Hello"}}`)
+		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"invalid_delta_field": true}}`)
+		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "!"}}`)
+		fmt.Fprintln(w, `not data line`)
+		fmt.Fprintln(w, `data: [DONE]`)
+	}))
+	defer srv.Close()
+
+	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
+
+	out := make(chan AskChunk, 10)
+	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	close(out)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	var chunks []string
+	for c := range out {
+		chunks = append(chunks, c.Chunk)
+	}
+
+	got := strings.Join(chunks, "")
+	if got != "Hello!" {
+		t.Errorf("expected 'Hello!', got %q", got)
+	}
+}
+
+func TestStreamAnthropicHTTPError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": {"type": "invalid_request_error", "message": "bad api key"}}`))
+	}))
+	defer srv.Close()
+
+	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
+
+	out := make(chan AskChunk, 10)
+	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	close(out)
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "HTTP 400") || !strings.Contains(err.Error(), "bad api key") {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestStreamAnthropicMalformedEvent(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, `data: {invalid json`)
+		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "recovered"}}`)
+		fmt.Fprintln(w, `data: [DONE]`)
+	}))
+	defer srv.Close()
+
+	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
+
+	out := make(chan AskChunk, 10)
+	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	close(out)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	var chunks []string
+	for c := range out {
+		chunks = append(chunks, c.Chunk)
+	}
+
+	got := strings.Join(chunks, "")
+	if got != "recovered" {
+		t.Errorf("expected 'recovered', got %q", got)
+	}
+}
+
+func TestStreamAnthropicCancellation(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "first"}}`)
+		w.(http.Flusher).Flush()
+
+		select {
+		case <-r.Context().Done():
+		case <-time.After(2 * time.Second):
+		}
+	}))
+	defer srv.Close()
+
+	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	out := make(chan AskChunk, 10)
+
+	go func() {
+		<-out
+		cancel()
+	}()
+
+	err := streamAnthropic(ctx, "test-key", "model", "prompt", out)
+	close(out)
+
+	if err == nil {
+		t.Fatal("expected cancellation error, got nil")
+	}
+	if !errors.Is(err, context.Canceled) && !strings.Contains(err.Error(), "context canceled") {
+		t.Errorf("expected context canceled error, got: %v", err)
+	}
+}
+
+func TestStreamAnthropicNetworkError(t *testing.T) {
+	t.Setenv("SYMDESK_ANTHROPIC_URL", "http://127.0.0.1:0")
+
+	out := make(chan AskChunk, 10)
+	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	close(out)
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
 	}
 }

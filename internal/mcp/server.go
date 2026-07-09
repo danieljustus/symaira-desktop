@@ -56,6 +56,7 @@ func StartServer(cfg *config.Config, version string) error {
 	server.RegisterTool(newRelatedTool(getService))
 	server.RegisterTool(newIngestJobsTool(getService))
 	server.RegisterTool(newIngestRetryTool(getService))
+	server.RegisterTool(newClipTool(getService))
 
 	return server.ServeStdio(context.Background())
 }
@@ -507,6 +508,35 @@ func newIngestRetryTool(getService serviceFactory) *mcpserver.Tool {
 				return nil, err
 			}
 			return map[string]string{"status": "ok"}, nil
+		},
+	}
+}
+
+func newClipTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_clip",
+		Description: "Fetches a URL via symfetch and saves it as a note in the vault.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"url":{"type":"string"}},"required":["url"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				URL string `json:"url"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.URL == "" {
+				return nil, fmt.Errorf("url is required")
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			path, err := svc.NoteClip(args.URL)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{"path": path}, nil
 		},
 	}
 }

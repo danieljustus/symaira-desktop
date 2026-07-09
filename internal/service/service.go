@@ -2,9 +2,12 @@ package service
 
 import (
 	"crypto/sha256"
+	"bytes"
+	"context"
 	"encoding/hex"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -262,6 +265,79 @@ func (s *Service) NoteDaily(dateStr string) (string, error) {
 	
 	// Create it, trying "daily" template
 	return s.NoteNew(title, "", "daily")
+}
+
+// NoteClip fetches a URL via symfetch and saves it as a note.
+func (s *Service) NoteClip(url string) (string, error) {
+	// 1. Ensure symfetch is available
+	ok, _ := compose.HasTool("symfetch")
+	if !ok {
+		return "", fmt.Errorf("symfetch binary not found on PATH")
+	}
+
+	// 2. Fetch as JSON to easily extract the title, and then as Markdown? No, wait...
+	// Can we just run `symfetch url` and parse the header block?
+	// The header block looks like:
+	// > **Example Domain** · 200 · ~42 tokens
+	// > https://example.com
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "symfetch", url)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("symfetch failed: %w", err)
+	}
+
+	bodyStr := out.String()
+	lines := strings.Split(bodyStr, "\n")
+	title := ""
+	
+	// Try to extract title from the header `> **Title**`
+	if len(lines) > 0 && strings.HasPrefix(lines[0], "> **") {
+		parts := strings.SplitN(lines[0][4:], "**", 2)
+		if len(parts) > 1 && strings.TrimSpace(parts[0]) != "" {
+			title = strings.TrimSpace(parts[0])
+		}
+	}
+
+	// Fallback to first # Heading
+	if title == "" {
+		for _, line := range lines {
+			if strings.HasPrefix(line, "# ") {
+				title = strings.TrimSpace(line[2:])
+				break
+			}
+		}
+	}
+
+	if title == "" {
+		// Fallback to URL hostname
+		title = url
+	}
+
+	// 3. Prepare the note content
+	nowStr := time.Now().UTC().Format(time.RFC3339)
+	noteTitle := "Clipped: " + title
+	
+	fileName := strings.ReplaceAll(noteTitle, " ", "_") + ".md"
+	absPath, err := vault.SecurePath(s.VaultRoot, fileName)
+	if err != nil {
+		return "", err
+	}
+
+	fullContent := fmt.Sprintf("---\ntitle: %q\ncreated: %q\nsource_uri: %q\ningested_at: %q\ntags: []\n---\n\n%s", 
+		noteTitle, nowStr, url, nowStr, bodyStr)
+
+	if err := os.WriteFile(absPath, []byte(fullContent), 0644); err != nil {
+		return "", fmt.Errorf("failed to write clipped file: %w", err)
+	}
+
+	if _, err := vault.ParseFile(absPath); err != nil {
+		return "", err
+	}
+	return fileName, nil
 }
 
 // NoteMove renames a note and updates the index.

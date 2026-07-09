@@ -24,7 +24,6 @@ private final class InMemorySkippedVersionStore: SkippedVersionStore, @unchecked
     func setSkippedTag(_ tag: String?) { self.tag = tag }
 }
 
-@MainActor
 final class AppUpdateCheckerTests: XCTestCase {
     private var cacheDir: URL!
 
@@ -37,6 +36,7 @@ final class AppUpdateCheckerTests: XCTestCase {
         try? FileManager.default.removeItem(at: cacheDir)
     }
 
+    @MainActor
     private func makeChecker(
         latestTag: String,
         status: Int = 200,
@@ -53,6 +53,7 @@ final class AppUpdateCheckerTests: XCTestCase {
         return AppUpdateChecker(checker: updateChecker, store: store, currentVersion: { currentVersion })
     }
 
+    @MainActor
     func testReportsAvailableUpdate() async {
         let checker = makeChecker(latestTag: "v1.1.0")
         await checker.checkForUpdate()
@@ -62,12 +63,14 @@ final class AppUpdateCheckerTests: XCTestCase {
         XCTAssertEqual(release.tagName, "v1.1.0")
     }
 
+    @MainActor
     func testUpToDateReportsUpToDate() async {
         let checker = makeChecker(latestTag: "v1.0.0")
         await checker.checkForUpdate()
         XCTAssertEqual(checker.status, .upToDate)
     }
 
+    @MainActor
     func testHTTPErrorReportsError() async {
         let checker = makeChecker(latestTag: "v1.1.0", status: 500)
         await checker.checkForUpdate()
@@ -76,6 +79,7 @@ final class AppUpdateCheckerTests: XCTestCase {
         }
     }
 
+    @MainActor
     func testSkippedVersionIsNotReprompted() async {
         let store = InMemorySkippedVersionStore()
         let checker = makeChecker(latestTag: "v1.1.0", store: store)
@@ -94,6 +98,7 @@ final class AppUpdateCheckerTests: XCTestCase {
         XCTAssertEqual(skippedRelease.tagName, "v1.1.0")
     }
 
+    @MainActor
     func testForceCheckBypassesSkipGate() async {
         let store = InMemorySkippedVersionStore()
         store.setSkippedTag("v1.1.0")
@@ -106,6 +111,7 @@ final class AppUpdateCheckerTests: XCTestCase {
         XCTAssertEqual(release.tagName, "v1.1.0")
     }
 
+    @MainActor
     func testNewSkippedTagSupersedesOldOne() async {
         let store = InMemorySkippedVersionStore()
         store.setSkippedTag("v1.0.5")

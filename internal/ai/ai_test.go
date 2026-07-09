@@ -355,3 +355,34 @@ func TestStreamAnthropicNetworkError(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
+
+func TestStreamAnthropicMarshalError(t *testing.T) {
+	original := jsonMarshal
+	jsonMarshal = func(v interface{}) ([]byte, error) {
+		return nil, errors.New("marshal failed")
+	}
+	defer func() { jsonMarshal = original }()
+
+	out := make(chan AskChunk, 10)
+	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	close(out)
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "marshal failed") {
+		t.Errorf("expected marshal error, got: %v", err)
+	}
+}
+
+func TestStreamAnthropicRequestConstructionError(t *testing.T) {
+	t.Setenv("SYMDESK_ANTHROPIC_URL", "http://bad url")
+
+	out := make(chan AskChunk, 10)
+	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	close(out)
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}

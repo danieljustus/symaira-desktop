@@ -16,6 +16,8 @@ type Config struct {
 	Vault           string `toml:"vault" env:"SYMDESK_VAULT"`
 	Inbox           string `toml:"inbox" env:"SYMDESK_INBOX"`
 	ReviewThreshold int    `toml:"review_threshold" env:"SYMDESK_REVIEW_THRESHOLD"`
+	LLMProvider     string `toml:"llm_provider" env:"SYMDESK_LLM_PROVIDER"`
+	LLMAPIKey       string `toml:"llm_api_key" env:"SYMDESK_LLM_API_KEY"`
 }
 
 func DefaultConfig() *Config {
@@ -23,6 +25,8 @@ func DefaultConfig() *Config {
 		Vault:           "",
 		Inbox:           "",
 		ReviewThreshold: defaultReviewThreshold,
+		LLMProvider:     "ollama",
+		LLMAPIKey:       "",
 	}
 }
 
@@ -43,6 +47,12 @@ func LoadFromPath(path string) (*Config, error) {
 		if v, err := strconv.Atoi(envThresh); err == nil && v >= 0 && v <= 100 {
 			cfg.ReviewThreshold = v
 		}
+	}
+	if envProv := os.Getenv("SYMDESK_LLM_PROVIDER"); envProv != "" {
+		cfg.LLMProvider = envProv
+	}
+	if envKey := os.Getenv("SYMDESK_LLM_API_KEY"); envKey != "" {
+		cfg.LLMAPIKey = envKey
 	}
 
 	data, err := os.ReadFile(path)
@@ -67,6 +77,12 @@ func LoadFromPath(path string) (*Config, error) {
 		if v, err := strconv.Atoi(envThresh); err == nil && v >= 0 && v <= 100 {
 			cfg.ReviewThreshold = v
 		}
+	}
+	if envProv := os.Getenv("SYMDESK_LLM_PROVIDER"); envProv != "" {
+		cfg.LLMProvider = envProv
+	}
+	if envKey := os.Getenv("SYMDESK_LLM_API_KEY"); envKey != "" {
+		cfg.LLMAPIKey = envKey
 	}
 
 	return cfg, nil

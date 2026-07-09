@@ -13,6 +13,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/demo"
+	"github.com/danieljustus/symaira-desktop/internal/secrets"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -104,6 +105,17 @@ func registerCommands(rootCmd *cobra.Command) {
 			}
 			results["conflicts"] = conflicts
 
+			// 6. AI Provider
+			provider := cfg.LLMProvider
+			if provider == "" {
+				provider = "ollama"
+			}
+			aiMap := map[string]string{"provider": provider}
+			if provider == "anthropic" {
+				aiMap["secret_source"] = secrets.Source(cfg.LLMAPIKey)
+			}
+			results["ai"] = aiMap
+
 			if jsonFlag {
 				b, _ := json.Marshal(results)
 				fmt.Println(string(b))
@@ -131,6 +143,14 @@ func registerCommands(rootCmd *cobra.Command) {
 						fmt.Printf("  %s: not found\n", name)
 					}
 				}
+				
+				fmt.Printf("ai: provider=%s", aiMap["provider"])
+				if src, ok := aiMap["secret_source"]; ok {
+					fmt.Printf(", secret_source=%s\n", src)
+				} else {
+					fmt.Println()
+				}
+				
 				fmt.Printf("Overall status: %s\n", results["overall"])
 			}
 

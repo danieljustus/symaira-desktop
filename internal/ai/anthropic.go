@@ -87,4 +87,3 @@ func streamAnthropic(ctx context.Context, apiKey, model, prompt string, out chan
 
 	return scanner.Err()
 }
-

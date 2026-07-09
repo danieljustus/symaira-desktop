@@ -285,5 +285,3 @@ func TestStreamAnthropicNetworkError(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
-
-

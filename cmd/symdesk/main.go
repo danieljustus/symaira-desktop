@@ -15,7 +15,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/mcp"
 )
 
-var version = "0.4.0"
+var version = "0.5.0"
 var schemaVersion = 1
 
 var (

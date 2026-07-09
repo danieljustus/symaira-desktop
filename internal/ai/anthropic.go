@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var jsonMarshal = json.Marshal
+
 func streamAnthropic(ctx context.Context, apiKey, model, prompt string, out chan<- AskChunk) error {
 	if model == "" {
 		model = "claude-3-5-sonnet-20240620"
@@ -29,7 +31,7 @@ func streamAnthropic(ctx context.Context, apiKey, model, prompt string, out chan
 		},
 	}
 
-	body, err := json.Marshal(payload)
+	body, err := jsonMarshal(payload)
 	if err != nil {
 		return err
 	}

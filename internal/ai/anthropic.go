@@ -7,11 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
 
-func streamAnthropic(apiKey, model, prompt string, out chan<- AskChunk) error {
+func streamAnthropic(ctx context.Context, apiKey, model, prompt string, out chan<- AskChunk) error {
 	if model == "" {
 		model = "claude-3-5-sonnet-20240620"
 	}
@@ -33,7 +34,12 @@ func streamAnthropic(apiKey, model, prompt string, out chan<- AskChunk) error {
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(context.Background(), "POST", "https://api.anthropic.com/v1/messages", bytes.NewReader(body))
+	apiURL := os.Getenv("SYMDESK_ANTHROPIC_URL")
+	if apiURL == "" {
+		apiURL = "https://api.anthropic.com/v1/messages"
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", apiURL, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -81,3 +87,4 @@ func streamAnthropic(apiKey, model, prompt string, out chan<- AskChunk) error {
 
 	return scanner.Err()
 }
+

@@ -382,6 +382,40 @@ func TestDocsSimilarToolInvalidJSON(t *testing.T) {
 	}
 }
 
+func TestClipToolWithoutSymfetch(t *testing.T) {
+	t.Setenv("PATH", "/usr/bin:/bin")
+	tool := newClipTool(testFactory(t))
+
+	in, _ := json.Marshal(map[string]string{"url": "https://example.com"})
+	_, err := tool.Handler(context.Background(), in)
+	if err == nil {
+		t.Error("expected an error when symfetch is not installed")
+	}
+}
+
+func TestClipToolRequiresURL(t *testing.T) {
+	tool := newClipTool(testFactory(t))
+	if _, err := tool.Handler(context.Background(), json.RawMessage(`{}`)); err == nil {
+		t.Error("expected error for missing url")
+	}
+}
+
+func TestClipToolServiceError(t *testing.T) {
+	tool := newClipTool(errorFactory(t))
+	_, err := tool.Handler(context.Background(), json.RawMessage(`{"url":"https://example.com"}`))
+	if err == nil || !strings.Contains(err.Error(), "service unavailable") {
+		t.Errorf("expected service unavailable error, got %v", err)
+	}
+}
+
+func TestClipToolInvalidJSON(t *testing.T) {
+	tool := newClipTool(testFactory(t))
+	_, err := tool.Handler(context.Background(), json.RawMessage(`{invalid`))
+	if err == nil {
+		t.Error("expected json unmarshal error")
+	}
+}
+
 func TestNoteNewToolCreatesNote(t *testing.T) {
 	factory := testFactory(t)
 	tool := newNoteNewTool(factory)

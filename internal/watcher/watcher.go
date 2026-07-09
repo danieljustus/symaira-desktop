@@ -13,10 +13,31 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+// EventSource abstracts the filesystem event source used by InboxWatcher so
+// that unit tests can inject synthetic events instead of relying on real
+// filesystem timing.
+type EventSource interface {
+	Events() <-chan fsnotify.Event
+	Errors() <-chan error
+	Close() error
+}
+
+// fsnotifySource is the production implementation of EventSource backed by
+// fsnotify.
+type fsnotifySource struct {
+	watcher *fsnotify.Watcher
+}
+
+func (s *fsnotifySource) Events() <-chan fsnotify.Event { return s.watcher.Events }
+func (s *fsnotifySource) Errors() <-chan error          { return s.watcher.Errors }
+func (s *fsnotifySource) Close() error                  { return s.watcher.Close() }
+
 type InboxWatcher struct {
-	inboxDir string
-	svc      *service.Service
-	watcher  *fsnotify.Watcher
+	inboxDir         string
+	svc              *service.Service
+	source           EventSource
+	tickerInterval   time.Duration
+	stabilityTimeout time.Duration
 }
 
 func NewInboxWatcher(inboxDir string, svc *service.Service) (*InboxWatcher, error) {
@@ -31,10 +52,39 @@ func NewInboxWatcher(inboxDir string, svc *service.Service) (*InboxWatcher, erro
 		fw.Close()
 		return nil, err
 	}
+	return NewInboxWatcherWithSource(inboxDir, svc, &fsnotifySource{watcher: fw})
+}
+
+// NewInboxWatcherWithSource creates an InboxWatcher with an injected event
+// source and timing parameters. It is used in tests to make the watcher fast
+// and deterministic.
+func NewInboxWatcherWithSource(
+	inboxDir string,
+	svc *service.Service,
+	source EventSource,
+) (*InboxWatcher, error) {
+	return NewInboxWatcherWithTiming(inboxDir, svc, source, 1*time.Second, 2*time.Second)
+}
+
+// NewInboxWatcherWithTiming creates an InboxWatcher with explicit ticker and
+// stability timing. Used by tests and advanced callers; prefer
+// NewInboxWatcher for production use.
+func NewInboxWatcherWithTiming(
+	inboxDir string,
+	svc *service.Service,
+	source EventSource,
+	tickerInterval time.Duration,
+	stabilityTimeout time.Duration,
+) (*InboxWatcher, error) {
+	if err := os.MkdirAll(inboxDir, 0755); err != nil {
+		return nil, err
+	}
 	return &InboxWatcher{
-		inboxDir: inboxDir,
-		svc:      svc,
-		watcher:  fw,
+		inboxDir:         inboxDir,
+		svc:              svc,
+		source:           source,
+		tickerInterval:   tickerInterval,
+		stabilityTimeout: stabilityTimeout,
 	}, nil
 }
 
@@ -48,7 +98,7 @@ func (w *InboxWatcher) Start(ctx context.Context) error {
 
 	// Debounce and stability checker
 	go func() {
-		ticker := time.NewTicker(1 * time.Second)
+		ticker := time.NewTicker(w.tickerInterval)
 		defer ticker.Stop()
 		for {
 			select {
@@ -61,8 +111,8 @@ func (w *InboxWatcher) Start(ctx context.Context) error {
 					if state.done {
 						continue
 					}
-					// If the file hasn't been modified for 2 seconds, process it
-					if now.Sub(state.lastMod) >= 2*time.Second {
+					// If the file hasn't been modified for the stability timeout, process it
+					if now.Sub(state.lastMod) >= w.stabilityTimeout {
 						state.done = true
 						go func(p string) {
 							log.Printf("InboxWatcher: stable file detected, ingesting: %s", p)
@@ -96,7 +146,7 @@ func (w *InboxWatcher) Start(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return nil
-		case event, ok := <-w.watcher.Events:
+		case event, ok := <-w.source.Events():
 			if !ok {
 				return nil
 			}
@@ -124,7 +174,7 @@ func (w *InboxWatcher) Start(ctx context.Context) error {
 				}
 				mu.Unlock()
 			}
-		case err, ok := <-w.watcher.Errors:
+		case err, ok := <-w.source.Errors():
 			if !ok {
 				return nil
 			}
@@ -134,5 +184,5 @@ func (w *InboxWatcher) Start(ctx context.Context) error {
 }
 
 func (w *InboxWatcher) Close() error {
-	return w.watcher.Close()
+	return w.source.Close()
 }

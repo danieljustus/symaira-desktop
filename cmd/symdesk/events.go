@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -21,6 +22,63 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 	deskwatcher "github.com/danieljustus/symaira-desktop/internal/watcher"
 )
+
+// DebouncedEvent tracks a pending filesystem event for debouncing.
+type DebouncedEvent struct {
+	Op fsnotify.Op
+	Ts time.Time
+}
+
+// processEvent handles a single debounced filesystem event. It determines the
+// operation name, performs side effects (indexing, deletion for .md files), and
+// writes the NDJSON event line to out when the file is markdown.
+func processEvent(path string, ev *DebouncedEvent, w *fsnotify.Watcher, svc *service.Service, out io.Writer) {
+	opName := ""
+	if ev.Op&fsnotify.Create == fsnotify.Create {
+		opName = "file_added"
+		if info, err := os.Stat(path); err == nil && info.IsDir() {
+			w.Add(path)
+		}
+	} else if ev.Op&fsnotify.Write == fsnotify.Write {
+		opName = "file_changed"
+	} else if ev.Op&fsnotify.Remove == fsnotify.Remove || ev.Op&fsnotify.Rename == fsnotify.Rename {
+		opName = "file_removed"
+		_ = svc.DeleteDocument(path)
+	}
+
+	if opName != "" && filepath.Ext(path) == ".md" {
+		// Index it
+		if opName != "file_removed" {
+			doc, err := vault.ParseFile(path)
+			if err == nil {
+				_ = svc.IndexDocument(doc)
+				opName = "index_updated" // As requested by plan: index_updated upon re-indexing
+			}
+		}
+
+		evt := map[string]interface{}{
+			"event": opName,
+			"path":  path,
+			"ts":    ev.Ts.UTC().Format(time.RFC3339),
+		}
+		b, _ := json.Marshal(evt)
+		fmt.Fprintln(out, string(b))
+	}
+}
+
+// flushDebounce processes all matured events in the debounce map (those older
+// than 500ms) and removes them. Caller must hold or provide mu for synchronisation.
+func flushDebounce(debounceMap map[string]*DebouncedEvent, mu *sync.Mutex, w *fsnotify.Watcher, svc *service.Service, out io.Writer) {
+	mu.Lock()
+	defer mu.Unlock()
+	now := time.Now()
+	for path, ev := range debounceMap {
+		if now.Sub(ev.Ts) >= 500*time.Millisecond {
+			delete(debounceMap, path)
+			processEvent(path, ev, w, svc, out)
+		}
+	}
+}
 
 func newEventsCmd() *cobra.Command {
 	return &cobra.Command{
@@ -88,57 +146,13 @@ func newEventsCmd() *cobra.Command {
 				close(stdinClosed)
 			}()
 
-			type debounceEvent struct {
-				Op fsnotify.Op
-				Ts time.Time
-			}
-			debounceMap := make(map[string]*debounceEvent)
+			debounceMap := make(map[string]*DebouncedEvent)
 			var mu sync.Mutex
 
 			go func() {
 				for {
 					time.Sleep(500 * time.Millisecond)
-					mu.Lock()
-					now := time.Now()
-					for path, ev := range debounceMap {
-						if now.Sub(ev.Ts) >= 500*time.Millisecond {
-							// Process event
-							delete(debounceMap, path)
-
-							opName := ""
-							if ev.Op&fsnotify.Create == fsnotify.Create {
-								opName = "file_added"
-								if info, err := os.Stat(path); err == nil && info.IsDir() {
-									watcher.Add(path)
-								}
-							} else if ev.Op&fsnotify.Write == fsnotify.Write {
-								opName = "file_changed"
-							} else if ev.Op&fsnotify.Remove == fsnotify.Remove || ev.Op&fsnotify.Rename == fsnotify.Rename {
-								opName = "file_removed"
-								_ = svc.DeleteDocument(path)
-							}
-
-							if opName != "" && filepath.Ext(path) == ".md" {
-								// Index it
-								if opName != "file_removed" {
-									doc, err := vault.ParseFile(path)
-									if err == nil {
-										_ = svc.IndexDocument(doc)
-										opName = "index_updated" // As requested by plan: index_updated upon re-indexing
-									}
-								}
-
-								evt := map[string]interface{}{
-									"event": opName,
-									"path":  path,
-									"ts":    now.UTC().Format(time.RFC3339),
-								}
-								b, _ := json.Marshal(evt)
-								fmt.Println(string(b))
-							}
-						}
-					}
-					mu.Unlock()
+					flushDebounce(debounceMap, &mu, watcher, svc, os.Stdout)
 				}
 			}()
 
@@ -153,7 +167,7 @@ func newEventsCmd() *cobra.Command {
 						return nil
 					}
 					mu.Lock()
-					debounceMap[event.Name] = &debounceEvent{
+					debounceMap[event.Name] = &DebouncedEvent{
 						Op: event.Op,
 						Ts: time.Now(),
 					}

@@ -2,8 +2,28 @@ package secrets
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/danieljustus/symaira-desktop/internal/compose"
 )
+
+func writeMockTool(t *testing.T, dir, name, script string) {
+	t.Helper()
+	path := filepath.Join(dir, name)
+	if err := os.WriteFile(path, []byte(script), 0755); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func withMockPath(t *testing.T, dir string) {
+	t.Helper()
+	old := os.Getenv("PATH")
+	os.Setenv("PATH", dir+string(os.PathListSeparator)+old)
+	t.Cleanup(func() { os.Setenv("PATH", old) })
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
+}
 
 func TestResolveKey(t *testing.T) {
 	// Set an env var
@@ -35,5 +55,119 @@ func TestSource(t *testing.T) {
 	src = Source("op://vault/item/key")
 	if src != "symvault" {
 		t.Errorf("Expected symvault, got %s", src)
+	}
+}
+
+func TestResolveKeyKeychainSuccess(t *testing.T) {
+	dir := t.TempDir()
+	writeMockTool(t, dir, "security", `#!/bin/bash
+if [ "$1" = "find-generic-password" ] && [ "$2" = "-s" ] && [ "$3" = "symaira-desktop" ]; then
+	echo "keychain-secret"
+	exit 0
+fi
+exit 1
+`)
+	withMockPath(t, dir)
+
+	// Ensure no env var gets in the way
+	oldEnv := os.Getenv("SYMDESK_LLM_API_KEY")
+	os.Unsetenv("SYMDESK_LLM_API_KEY")
+	defer func() {
+		if oldEnv != "" {
+			os.Setenv("SYMDESK_LLM_API_KEY", oldEnv)
+		}
+	}()
+
+	key := ResolveKey("")
+	if key != "keychain-secret" {
+		t.Errorf("Expected keychain-secret, got %q", key)
+	}
+
+	src := Source("")
+	if src != "keychain" {
+		t.Errorf("Expected keychain, got %q", src)
+	}
+}
+
+func TestResolveKeyKeychainFailure(t *testing.T) {
+	dir := t.TempDir()
+	writeMockTool(t, dir, "security", `#!/bin/bash
+exit 1
+`)
+	withMockPath(t, dir)
+
+	oldEnv := os.Getenv("SYMDESK_LLM_API_KEY")
+	os.Unsetenv("SYMDESK_LLM_API_KEY")
+	defer func() {
+		if oldEnv != "" {
+			os.Setenv("SYMDESK_LLM_API_KEY", oldEnv)
+		}
+	}()
+
+	key := ResolveKey("")
+	if key != "" {
+		t.Errorf("Expected empty string, got %q", key)
+	}
+
+	src := Source("")
+	if src != "none" {
+		t.Errorf("Expected none, got %q", src)
+	}
+}
+
+func TestResolveKeySymvaultSuccess(t *testing.T) {
+	dir := t.TempDir()
+	writeMockTool(t, dir, "symvault", `#!/bin/bash
+if [ "$1" = "version" ]; then
+	echo '{"tool":"symvault","version":"1.0.0","schema_version":1}'
+	exit 0
+fi
+if [ "$1" = "get" ] && [ "$2" = "op://vault/item/key" ]; then
+	echo "symvault-secret"
+	exit 0
+fi
+exit 1
+`)
+	withMockPath(t, dir)
+
+	key := ResolveKey("op://vault/item/key")
+	if key != "symvault-secret" {
+		t.Errorf("Expected symvault-secret, got %q", key)
+	}
+
+	src := Source("op://vault/item/key")
+	if src != "symvault" {
+		t.Errorf("Expected symvault, got %q", src)
+	}
+}
+
+func TestResolveKeySymvaultFailure(t *testing.T) {
+	dir := t.TempDir()
+	writeMockTool(t, dir, "symvault", `#!/bin/bash
+if [ "$1" = "version" ]; then
+	echo '{"tool":"symvault","version":"1.0.0","schema_version":1}'
+	exit 0
+fi
+exit 1
+`)
+	withMockPath(t, dir)
+
+	key := ResolveKey("op://vault/item/key")
+	if key != "" {
+		t.Errorf("Expected empty string on symvault failure, got %q", key)
+	}
+}
+
+func TestResolveKeySymvaultAbsent(t *testing.T) {
+	dir := t.TempDir()
+	old := os.Getenv("PATH")
+	os.Setenv("PATH", dir)
+	t.Cleanup(func() { os.Setenv("PATH", old) })
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
+
+	key := ResolveKey("op://vault/item/key")
+	if key != "op://vault/item/key" {
+		t.Errorf("Expected raw ref when symvault absent, got %q", key)
 	}
 }

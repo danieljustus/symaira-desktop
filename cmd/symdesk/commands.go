@@ -143,14 +143,14 @@ func registerCommands(rootCmd *cobra.Command) {
 						fmt.Printf("  %s: not found\n", name)
 					}
 				}
-				
+
 				fmt.Printf("ai: provider=%s", aiMap["provider"])
 				if src, ok := aiMap["secret_source"]; ok {
 					fmt.Printf(", secret_source=%s\n", src)
 				} else {
 					fmt.Println()
 				}
-				
+
 				fmt.Printf("Overall status: %s\n", results["overall"])
 			}
 

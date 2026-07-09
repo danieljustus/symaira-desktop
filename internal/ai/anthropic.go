@@ -15,7 +15,7 @@ func streamAnthropic(apiKey, model, prompt string, out chan<- AskChunk) error {
 	if model == "" {
 		model = "claude-3-5-sonnet-20240620"
 	}
-	
+
 	payload := map[string]interface{}{
 		"model":      model,
 		"max_tokens": 4096,
@@ -64,12 +64,12 @@ func streamAnthropic(apiKey, model, prompt string, out chan<- AskChunk) error {
 		if dataStr == "[DONE]" {
 			break
 		}
-		
+
 		var event map[string]interface{}
 		if err := json.Unmarshal([]byte(dataStr), &event); err != nil {
 			continue
 		}
-		
+
 		eventType, _ := event["type"].(string)
 		if eventType == "content_block_delta" {
 			delta, _ := event["delta"].(map[string]interface{})
@@ -78,6 +78,6 @@ func streamAnthropic(apiKey, model, prompt string, out chan<- AskChunk) error {
 			}
 		}
 	}
-	
+
 	return scanner.Err()
 }

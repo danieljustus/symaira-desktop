@@ -1,9 +1,9 @@
 package service
 
 import (
-	"crypto/sha256"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -178,7 +178,7 @@ func (s *Service) NoteNew(title, content, templateName string) (string, error) {
 	// Create content with frontmatter
 	now := time.Now().UTC()
 	nowStr := now.Format(time.RFC3339)
-	
+
 	// Load template if specified
 	templateContent := ""
 	if templateName != "" {
@@ -189,14 +189,14 @@ func (s *Service) NoteNew(title, content, templateName string) (string, error) {
 			}
 		}
 	}
-	
+
 	fullContent := ""
 	if templateContent != "" {
 		// Substitute placeholders
 		templateContent = strings.ReplaceAll(templateContent, "{{title}}", title)
 		templateContent = strings.ReplaceAll(templateContent, "{{date}}", now.Format("2006-01-02"))
 		templateContent = strings.ReplaceAll(templateContent, "{{time}}", now.Format("15:04"))
-		
+
 		// If template has frontmatter, we just use the template directly and append content
 		if strings.HasPrefix(templateContent, "---\n") {
 			fullContent = templateContent
@@ -249,7 +249,7 @@ func (s *Service) NoteDaily(dateStr string) (string, error) {
 		}
 		t = parsed
 	}
-	
+
 	// Default daily note naming: YYYY-MM-DD
 	title := t.Format("2006-01-02")
 	fileName := title + ".md"
@@ -257,12 +257,12 @@ func (s *Service) NoteDaily(dateStr string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	if _, err := os.Stat(absPath); err == nil {
 		// Already exists
 		return fileName, nil
 	}
-	
+
 	// Create it, trying "daily" template
 	return s.NoteNew(title, "", "daily")
 }
@@ -293,7 +293,7 @@ func (s *Service) NoteClip(url string) (string, error) {
 	bodyStr := out.String()
 	lines := strings.Split(bodyStr, "\n")
 	title := ""
-	
+
 	// Try to extract title from the header `> **Title**`
 	if len(lines) > 0 && strings.HasPrefix(lines[0], "> **") {
 		parts := strings.SplitN(lines[0][4:], "**", 2)
@@ -320,14 +320,14 @@ func (s *Service) NoteClip(url string) (string, error) {
 	// 3. Prepare the note content
 	nowStr := time.Now().UTC().Format(time.RFC3339)
 	noteTitle := "Clipped: " + title
-	
+
 	fileName := strings.ReplaceAll(noteTitle, " ", "_") + ".md"
 	absPath, err := vault.SecurePath(s.VaultRoot, fileName)
 	if err != nil {
 		return "", err
 	}
 
-	fullContent := fmt.Sprintf("---\ntitle: %q\ncreated: %q\nsource_uri: %q\ningested_at: %q\ntags: []\n---\n\n%s", 
+	fullContent := fmt.Sprintf("---\ntitle: %q\ncreated: %q\nsource_uri: %q\ningested_at: %q\ntags: []\n---\n\n%s",
 		noteTitle, nowStr, url, nowStr, bodyStr)
 
 	if err := os.WriteFile(absPath, []byte(fullContent), 0644); err != nil {

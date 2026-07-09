@@ -31,7 +31,7 @@ func TestSource(t *testing.T) {
 	if src != "config/env" {
 		t.Errorf("Expected config/env, got %s", src)
 	}
-	
+
 	src = Source("op://vault/item/key")
 	if src != "symvault" {
 		t.Errorf("Expected symvault, got %s", src)

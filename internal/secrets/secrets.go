@@ -43,7 +43,7 @@ func ResolveKey(ref string) string {
 		// If symvault is on PATH but fails, we should not leak the reference, but we can't return the resolved key either.
 		return ""
 	}
-	
+
 	// If it's a raw key (not op://), we just return it.
 	return ref
 }

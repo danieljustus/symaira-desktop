@@ -94,6 +94,47 @@ review_threshold = 50
 	}
 }
 
+func TestLoadFromPathEnvOverrideLLMSettings(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.toml")
+	content := `llm_provider = "ollama"
+llm_api_key = "file-key"
+`
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("SYMDESK_LLM_PROVIDER", "anthropic")
+	t.Setenv("SYMDESK_LLM_API_KEY", "env-key")
+
+	cfg, err := LoadFromPath(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.LLMProvider != "anthropic" {
+		t.Errorf("expected env provider 'anthropic' to override the file value, got %q", cfg.LLMProvider)
+	}
+	if cfg.LLMAPIKey != "env-key" {
+		t.Errorf("expected env API key 'env-key' to override the file value, got %q", cfg.LLMAPIKey)
+	}
+}
+
+func TestLoadFromPathEnvOverrideLLMSettingsWithoutFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "does-not-exist.toml")
+
+	t.Setenv("SYMDESK_LLM_PROVIDER", "anthropic")
+	t.Setenv("SYMDESK_LLM_API_KEY", "env-key")
+
+	cfg, err := LoadFromPath(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.LLMProvider != "anthropic" || cfg.LLMAPIKey != "env-key" {
+		t.Errorf("expected env LLM settings to apply even without a config file, got provider=%q key=%q", cfg.LLMProvider, cfg.LLMAPIKey)
+	}
+}
+
 func TestLoadFromPathEnvOverrideInvalidThreshold(t *testing.T) {
 	t.Setenv("SYMDESK_REVIEW_THRESHOLD", "not-a-number")
 

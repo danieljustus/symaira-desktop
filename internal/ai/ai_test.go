@@ -151,6 +151,76 @@ func TestBuildTransformPromptVariesByIntent(t *testing.T) {
 	}
 }
 
+func TestAskStreamsFromAnthropicProvider(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "Antwort"}}`)
+		fmt.Fprintln(w, `data: [DONE]`)
+	}))
+	defer srv.Close()
+
+	t.Setenv("SYMDESK_LLM_PROVIDER", "anthropic")
+	t.Setenv("SYMDESK_LLM_API_KEY", "test-key")
+	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
+
+	got := collect("frage?", nil)
+	if got != "Antwort" {
+		t.Errorf("expected the anthropic provider to be used, got: %q", got)
+	}
+}
+
+func TestAskAnthropicProviderWithoutKeyDegradesHonestly(t *testing.T) {
+	t.Setenv("SYMDESK_LLM_PROVIDER", "anthropic")
+	t.Setenv("SYMDESK_LLM_API_KEY", "")
+
+	got := collect("frage?", nil)
+	if !strings.Contains(got, "nicht konfiguriert") {
+		t.Errorf("expected honest degradation without an API key, got: %q", got)
+	}
+	if !strings.Contains(got, "Anthropic") {
+		t.Errorf("expected the message to name the anthropic provider, got: %q", got)
+	}
+}
+
+func TestAskAnthropicProviderSurfacesRequestError(t *testing.T) {
+	t.Setenv("SYMDESK_LLM_PROVIDER", "anthropic")
+	t.Setenv("SYMDESK_LLM_API_KEY", "test-key")
+	t.Setenv("SYMDESK_ANTHROPIC_URL", "http://127.0.0.1:0")
+
+	got := collect("frage?", nil)
+	if !strings.Contains(got, "fehlgeschlagen") {
+		t.Errorf("expected a surfaced anthropic request error, got: %q", got)
+	}
+}
+
+func TestTransformStreamsFromAnthropicProvider(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "Kurz"}}`)
+		fmt.Fprintln(w, `data: [DONE]`)
+	}))
+	defer srv.Close()
+
+	t.Setenv("SYMDESK_LLM_PROVIDER", "anthropic")
+	t.Setenv("SYMDESK_LLM_API_KEY", "test-key")
+	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
+
+	got := collectTransform("ein langer Absatz", IntentSummarize)
+	if got != "Kurz" {
+		t.Errorf("expected the anthropic provider to be used, got: %q", got)
+	}
+}
+
+func TestTransformAnthropicProviderWithoutKeyDegradesHonestly(t *testing.T) {
+	t.Setenv("SYMDESK_LLM_PROVIDER", "anthropic")
+	t.Setenv("SYMDESK_LLM_API_KEY", "")
+
+	got := collectTransform("etwas Text", IntentRewrite)
+	if !strings.Contains(got, "nicht konfiguriert") {
+		t.Errorf("expected honest degradation without an API key, got: %q", got)
+	}
+}
+
 func TestStreamAnthropicSuccess(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")

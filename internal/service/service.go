@@ -321,7 +321,11 @@ func (s *Service) NoteClip(url string) (string, error) {
 	nowStr := time.Now().UTC().Format(time.RFC3339)
 	noteTitle := "Clipped: " + title
 
-	fileName := strings.ReplaceAll(noteTitle, " ", "_") + ".md"
+	// Sanitize path separators out of the file name: the title can fall back
+	// to the raw URL above, which always contains "/" and would otherwise be
+	// rejected by vault.SecurePath's path-traversal protection.
+	safeTitle := strings.NewReplacer("/", "-", "\\", "-").Replace(noteTitle)
+	fileName := strings.ReplaceAll(safeTitle, " ", "_") + ".md"
 	absPath, err := vault.SecurePath(s.VaultRoot, fileName)
 	if err != nil {
 		return "", err
@@ -334,9 +338,18 @@ func (s *Service) NoteClip(url string) (string, error) {
 		return "", fmt.Errorf("failed to write clipped file: %w", err)
 	}
 
-	if _, err := vault.ParseFile(absPath); err != nil {
-		return "", err
+	doc, err := vault.ParseFile(absPath)
+	if err != nil {
+		return fileName, err
 	}
+
+	hash := sha256.Sum256([]byte(fullContent))
+	doc.SHA256 = hex.EncodeToString(hash[:])
+
+	if err := s.IndexDocument(doc); err != nil {
+		return fileName, fmt.Errorf("failed to index clipped file: %w", err)
+	}
+
 	return fileName, nil
 }
 

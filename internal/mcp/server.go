@@ -15,7 +15,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
-var ServerVersion = "0.2.0"
+var ServerVersion = "0.4.0"
 
 func StartServer(cfg *config.Config, version string) error {
 	if version != "" {

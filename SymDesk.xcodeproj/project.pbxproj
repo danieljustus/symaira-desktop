@@ -18,16 +18,20 @@
 		38E3530E7E3A4E1D85CBC384 /* libSymDeskCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF3DE41EB61C376999197AEF /* libSymDeskCore.a */; };
 		501D1A781F9C96208374CF89 /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = 440538EBC91381E953CC1697 /* SymairaCLIRunner */; };
 		52B0B883869C07C6C51D48C4 /* BlockEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B58CE1AAB047E5C20B8DBC43 /* BlockEditorView.swift */; };
+		5559B886DFF79DF05589717E /* SymairaUpdateCheck in Frameworks */ = {isa = PBXBuildFile; productRef = CFBC6F0BE1C9C08829AF5DC6 /* SymairaUpdateCheck */; };
 		571C6E466AA0EACEBA689E1F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61EE8B62E86F8FE234837F0A /* ContentView.swift */; };
 		64C0919422B9FBF88A826757 /* IngestQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B652D24B94E01B080A5139C0 /* IngestQueueView.swift */; };
 		71F20F1D5036D27530C70F14 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3BEF32958D7F1CBB107FC724 /* SymairaToolKit */; };
 		8297EAB48FFFA51F537F9351 /* BlockNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A66FCAE94BEB5D93BE972B /* BlockNode.swift */; };
+		8598224B3A3003EC9273BD03 /* AppUpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C133D510BC5F4211286EC5 /* AppUpdateChecker.swift */; };
 		888252B8F6964BA6158F9CC6 /* ReviewLaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C51F0367577777D2D842F81 /* ReviewLaneView.swift */; };
 		894BF25DD7A7DE8807A137E1 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */; };
 		8D1D15CD36A1EDC8F6A23185 /* AIDockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0EF47CC7E6B528447433E8 /* AIDockView.swift */; };
 		9CB84C5DEC5DFAA645786C79 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = CCF15BEFF6E2B7C5BDE99A2A /* SymairaToolKit */; };
+		A0E1A3C240D1E507A7E2EC9F /* AppUpdateCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E77F6F7A42131B3055841A /* AppUpdateCheckerTests.swift */; };
 		A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59762A8D6DF418D30855BEDA /* OnboardingView.swift */; };
 		B4BBDCDD200A14353CFF2B9F /* DeskCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F756739286BF26EA17456C99 /* DeskCore.swift */; };
+		C336F49BE61DBF2A7C03CE8E /* SymairaUpdateCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 596C4C9EB9845BC180C460A4 /* SymairaUpdateCheck */; };
 		C56310271DF0FBD1ED258CCA /* GraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF662679454A1D5730ECD171 /* GraphView.swift */; };
 		CBD99C1AAF0BA2BE2A136FA6 /* SymDeskApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD325D2A25FDF9FA519A6FA /* SymDeskApp.swift */; };
 		CCD6C165B5907E502AD44496 /* libSymDeskCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF3DE41EB61C376999197AEF /* libSymDeskCore.a */; };
@@ -71,6 +75,7 @@
 		9C51F0367577777D2D842F81 /* ReviewLaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewLaneView.swift; sourceTree = "<group>"; };
 		9E0EF47CC7E6B528447433E8 /* AIDockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDockView.swift; sourceTree = "<group>"; };
 		A175D91D3D83560906E78387 /* VaultConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultConfig.swift; sourceTree = "<group>"; };
+		A7C133D510BC5F4211286EC5 /* AppUpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateChecker.swift; sourceTree = "<group>"; };
 		AF3DE41EB61C376999197AEF /* libSymDeskCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSymDeskCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF74B31CB37D574E3AC69032 /* DocumentGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentGridView.swift; sourceTree = "<group>"; };
 		B58CE1AAB047E5C20B8DBC43 /* BlockEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockEditorView.swift; sourceTree = "<group>"; };
@@ -78,6 +83,7 @@
 		BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentViewerView.swift; sourceTree = "<group>"; };
 		BBD325D2A25FDF9FA519A6FA /* SymDeskApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymDeskApp.swift; sourceTree = "<group>"; };
 		CAD6A1DD667A2F7EA1706073 /* SymDeskCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SymDeskCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E5E77F6F7A42131B3055841A /* AppUpdateCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateCheckerTests.swift; sourceTree = "<group>"; };
 		F136EF877D776AFD6D2CE697 /* CommandPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandPalette.swift; sourceTree = "<group>"; };
 		F756739286BF26EA17456C99 /* DeskCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCore.swift; sourceTree = "<group>"; };
 		FF662679454A1D5730ECD171 /* GraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphView.swift; sourceTree = "<group>"; };
@@ -92,6 +98,7 @@
 				14F891ABD3302502994CB064 /* SymairaTheme in Frameworks */,
 				501D1A781F9C96208374CF89 /* SymairaCLIRunner in Frameworks */,
 				9CB84C5DEC5DFAA645786C79 /* SymairaToolKit in Frameworks */,
+				5559B886DFF79DF05589717E /* SymairaUpdateCheck in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,6 +110,7 @@
 				1D14D610EF1CD193F0A97065 /* SymairaTheme in Frameworks */,
 				EDBAB66DD3722499129B80AE /* SymairaCLIRunner in Frameworks */,
 				71F20F1D5036D27530C70F14 /* SymairaToolKit in Frameworks */,
+				C336F49BE61DBF2A7C03CE8E /* SymairaUpdateCheck in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +120,7 @@
 		17D7D58227078ADF1C6B20D6 /* SymDeskCore */ = {
 			isa = PBXGroup;
 			children = (
+				A7C133D510BC5F4211286EC5 /* AppUpdateChecker.swift */,
 				F756739286BF26EA17456C99 /* DeskCore.swift */,
 				95355A68097983C9F84AE919 /* EventWatcher.swift */,
 				A175D91D3D83560906E78387 /* VaultConfig.swift */,
@@ -185,6 +194,7 @@
 		DA2742E89980CD002E2764B6 /* SymDeskCoreTests */ = {
 			isa = PBXGroup;
 			children = (
+				E5E77F6F7A42131B3055841A /* AppUpdateCheckerTests.swift */,
 				1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */,
 			);
 			name = SymDeskCoreTests;
@@ -211,6 +221,7 @@
 				AAA444735FB3AB708D3BD4C4 /* SymairaTheme */,
 				E20080EE08C0202FC164E192 /* SymairaCLIRunner */,
 				3BEF32958D7F1CBB107FC724 /* SymairaToolKit */,
+				596C4C9EB9845BC180C460A4 /* SymairaUpdateCheck */,
 			);
 			productName = SymDeskCoreTests;
 			productReference = CAD6A1DD667A2F7EA1706073 /* SymDeskCoreTests.xctest */;
@@ -229,12 +240,14 @@
 				54C33B77025B7D6DB5984DF0 /* PBXTargetDependency */,
 				6B033B548A8AEBAB42DA8461 /* PBXTargetDependency */,
 				97180F7C8898D161854F5194 /* PBXTargetDependency */,
+				138AC3138B2CE91B37CF9606 /* PBXTargetDependency */,
 			);
 			name = SymDeskCore;
 			packageProductDependencies = (
 				94B6A8A96E752CD29968F8C5 /* SymairaTheme */,
 				7DACE6F490151A81E30DFF20 /* SymairaCLIRunner */,
 				5DFC096D268296578B37AFE2 /* SymairaToolKit */,
+				CA73FF20C975D4F48F801926 /* SymairaUpdateCheck */,
 			);
 			productName = SymDeskCore;
 			productReference = AF3DE41EB61C376999197AEF /* libSymDeskCore.a */;
@@ -257,6 +270,7 @@
 				6BFDEE30809F14AC06D066FB /* SymairaTheme */,
 				440538EBC91381E953CC1697 /* SymairaCLIRunner */,
 				CCF15BEFF6E2B7C5BDE99A2A /* SymairaToolKit */,
+				CFBC6F0BE1C9C08829AF5DC6 /* SymairaUpdateCheck */,
 			);
 			productName = SymDesk;
 			productReference = 2FBA5128D6B234381F73178F /* SymDesk.app */;
@@ -324,6 +338,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8598224B3A3003EC9273BD03 /* AppUpdateChecker.swift in Sources */,
 				B4BBDCDD200A14353CFF2B9F /* DeskCore.swift in Sources */,
 				D32E9B586B362E4914175291 /* EventWatcher.swift in Sources */,
 				D0EC53A22588E1A56A3E2F2B /* VaultConfig.swift in Sources */,
@@ -334,6 +349,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A0E1A3C240D1E507A7E2EC9F /* AppUpdateCheckerTests.swift in Sources */,
 				FC481AC96D97F01753A861B0 /* DeskCoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -365,6 +381,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		138AC3138B2CE91B37CF9606 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = CA73FF20C975D4F48F801926 /* SymairaUpdateCheck */;
+		};
 		3C18987F3E7A3E87D38B4E58 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BC6FC56C1B486EFD0DE648A9 /* SymDeskCore */;
@@ -441,12 +461,14 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Sources/SymDeskApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.4.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -600,12 +622,14 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Sources/SymDeskApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.4.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -696,6 +720,11 @@
 			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
 			productName = SymairaCLIRunner;
 		};
+		596C4C9EB9845BC180C460A4 /* SymairaUpdateCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
+			productName = SymairaUpdateCheck;
+		};
 		5DFC096D268296578B37AFE2 /* SymairaToolKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
@@ -721,10 +750,20 @@
 			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
 			productName = SymairaTheme;
 		};
+		CA73FF20C975D4F48F801926 /* SymairaUpdateCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
+			productName = SymairaUpdateCheck;
+		};
 		CCF15BEFF6E2B7C5BDE99A2A /* SymairaToolKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
 			productName = SymairaToolKit;
+		};
+		CFBC6F0BE1C9C08829AF5DC6 /* SymairaUpdateCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
+			productName = SymairaUpdateCheck;
 		};
 		E20080EE08C0202FC164E192 /* SymairaCLIRunner */ = {
 			isa = XCSwiftPackageProductDependency;

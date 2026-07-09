@@ -24,6 +24,8 @@ targets:
         product: SymairaCLIRunner
       - package: symaira-appkit
         product: SymairaToolKit
+      - package: symaira-appkit
+        product: SymairaUpdateCheck
     settings:
       base:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
@@ -42,6 +44,8 @@ targets:
         product: SymairaCLIRunner
       - package: symaira-appkit
         product: SymairaToolKit
+      - package: symaira-appkit
+        product: SymairaUpdateCheck
     settings:
       base:
         INFOPLIST_FILE: Sources/SymDeskApp/Info.plist
@@ -51,6 +55,8 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         SWIFT_VERSION: "6.0"
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited)"
+        MARKETING_VERSION: "0.4.0"
+        CURRENT_PROJECT_VERSION: "1"
 
   SymDeskCoreTests:
     type: bundle.unit-test
@@ -65,6 +71,8 @@ targets:
         product: SymairaCLIRunner
       - package: symaira-appkit
         product: SymairaToolKit
+      - package: symaira-appkit
+        product: SymairaUpdateCheck
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "YES"

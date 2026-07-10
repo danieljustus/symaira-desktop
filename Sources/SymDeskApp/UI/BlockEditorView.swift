@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 
 struct BlockEditorView: View {
     @Binding var text: String
@@ -48,18 +49,18 @@ struct BlockRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Frontmatter")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(SymairaTheme.textMuted)
                     TextField("Frontmatter", text: $block.content, axis: .vertical)
                         .font(.system(.body, design: .monospaced))
                         .padding(8)
-                        .background(Color.gray.opacity(0.1))
+                        .background(Color.white.opacity(0.04))
                         .cornerRadius(4)
                         .onChange(of: block.content) { _ in onUpdate() }
                 }
             case .heading(let level):
                 HStack {
                     Text(String(repeating: "#", count: level))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(SymairaTheme.goldPrimary)
                         .font(headingFont(for: level))
                     TextField("Heading", text: $block.content, axis: .vertical)
                         .font(headingFont(for: level))
@@ -79,7 +80,7 @@ struct BlockRow: View {
             case .quote:
                 HStack(alignment: .top) {
                     Rectangle()
-                        .fill(Color.secondary)
+                        .fill(SymairaTheme.goldShadow)
                         .frame(width: 4)
                     TextField("Quote", text: $block.content, axis: .vertical)
                         .font(.body)
@@ -92,11 +93,11 @@ struct BlockRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(lang.isEmpty ? "Code" : "Code (\(lang))")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(SymairaTheme.textMuted)
                     TextField("Code", text: $block.content, axis: .vertical)
                         .font(.system(.body, design: .monospaced))
                         .padding(8)
-                        .background(Color.black.opacity(0.05))
+                        .background(Color.white.opacity(0.04))
                         .cornerRadius(4)
                         .onChange(of: block.content) { _ in onUpdate() }
                 }

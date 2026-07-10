@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import SymDeskCore
 
 struct GraphView: View {
@@ -37,18 +38,20 @@ struct GraphView: View {
                             var path = Path()
                             path.move(to: p1)
                             path.addLine(to: p2)
-                            context.stroke(path, with: .color(.gray.opacity(0.3)), lineWidth: 1)
+                            context.stroke(path, with: .color(SymairaTheme.goldPrimary.opacity(0.25)), lineWidth: 1)
                         }
                     }
-                    
+
                     // Draw nodes
                     for node in data.nodes {
                         if let p = nodePositions[node.id] {
+                            let glowRect = CGRect(x: p.x - 8, y: p.y - 8, width: 16, height: 16)
+                            context.fill(Path(ellipseIn: glowRect), with: .color(SymairaTheme.goldPrimary.opacity(0.18)))
                             let rect = CGRect(x: p.x - 5, y: p.y - 5, width: 10, height: 10)
-                            context.fill(Path(ellipseIn: rect), with: .color(.accentColor))
-                            
+                            context.fill(Path(ellipseIn: rect), with: .color(SymairaTheme.goldPrimary))
+
                             // Draw label
-                            let text = Text(node.label).font(.caption).foregroundColor(.secondary)
+                            let text = Text(node.label).font(.caption).foregroundColor(SymairaTheme.textSecondary)
                             context.draw(text, at: CGPoint(x: p.x, y: p.y + 10))
                         }
                     }
@@ -65,6 +68,7 @@ struct GraphView: View {
                 }
             } else {
                 ProgressView()
+                    .tint(SymairaTheme.goldPrimary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }

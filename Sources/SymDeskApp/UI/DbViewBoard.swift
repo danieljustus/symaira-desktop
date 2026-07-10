@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import SymDeskCore
 import UniformTypeIdentifiers
 
@@ -55,8 +56,10 @@ struct DbViewBoard: View {
         VStack {
             if isLoading {
                 ProgressView()
+                    .tint(SymairaTheme.goldPrimary)
             } else if items.isEmpty {
                 Text("No items found.")
+                    .foregroundColor(SymairaTheme.textMuted)
             } else {
                 ScrollView(.horizontal) {
                     HStack(alignment: .top, spacing: 20) {
@@ -64,19 +67,19 @@ struct DbViewBoard: View {
                             VStack(alignment: .leading) {
                                 Text(group.key.uppercased())
                                     .font(.headline)
+                                    .foregroundColor(SymairaTheme.goldPrimary)
                                     .padding(.bottom, 8)
-                                
+
                                 ForEach(group.value) { item in
                                     let title = (item.data["_title"] as? String) ?? "Untitled"
                                     VStack(alignment: .leading) {
                                         Text(title).bold()
-                                        Text(item.id).font(.caption).foregroundColor(.secondary)
+                                            .foregroundColor(SymairaTheme.textPrimary)
+                                        Text(item.id).font(.caption).foregroundColor(SymairaTheme.textMuted)
                                     }
                                     .padding()
                                     .frame(width: 250, alignment: .leading)
-                                    .background(Color(NSColor.controlBackgroundColor))
-                                    .cornerRadius(8)
-                                    .shadow(radius: 2)
+                                    .glassCard()
                                     .onDrag {
                                         NSItemProvider(object: item.id as NSString)
                                     }
@@ -84,8 +87,7 @@ struct DbViewBoard: View {
                             }
                             .padding()
                             .frame(width: 280, alignment: .top)
-                            .background(Color(NSColor.windowBackgroundColor))
-                            .cornerRadius(12)
+                            .glassmorphicPanel(addCorners: false)
                             .onDrop(of: [.plainText], isTargeted: nil) { providers in
                                 handleDrop(providers: providers, toGroup: group.key)
                             }

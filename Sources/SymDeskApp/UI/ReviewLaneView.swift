@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import SymDeskCore
 
 struct ReviewLaneView: View {
@@ -22,6 +23,8 @@ struct ReviewLaneView: View {
 
                 if isLoading && reviewDocs.isEmpty {
                     ProgressView("Finding documents for review…")
+                        .tint(SymairaTheme.goldPrimary)
+                        .foregroundColor(SymairaTheme.textSecondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if reviewDocs.isEmpty {
                     emptyState
@@ -51,9 +54,10 @@ struct ReviewLaneView: View {
                 Text("Review Lane")
                     .font(.title2)
                     .fontWeight(.bold)
+                    .foregroundColor(SymairaTheme.textPrimary)
                 Text("Approve low-confidence or metadata-missing files")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(SymairaTheme.textSecondary)
             }
             Spacer()
             Button(action: {
@@ -61,24 +65,25 @@ struct ReviewLaneView: View {
             }) {
                 Image(systemName: "arrow.clockwise")
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(SymairaSecondaryButtonStyle())
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "checkmark.shield.fill")
                 .font(.system(size: 48))
-                .foregroundColor(.green)
+                .foregroundColor(SymairaTheme.goldPrimary)
+                .shadow(color: SymairaTheme.glowIntense, radius: 14)
             Text("All caught up!")
                 .font(.title3)
                 .fontWeight(.medium)
+                .foregroundColor(SymairaTheme.textPrimary)
             Text("No documents require manual metadata review.")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -92,6 +97,7 @@ struct ReviewLaneView: View {
                     HStack {
                         Text(doc.title)
                             .font(.headline)
+                            .foregroundColor(SymairaTheme.textPrimary)
                             .lineLimit(1)
                         Spacer()
                         confidenceBadge(doc.confidence)
@@ -99,41 +105,42 @@ struct ReviewLaneView: View {
 
                     Text(doc.path)
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(SymairaTheme.textMuted)
                         .lineLimit(1)
 
                     ForEach(doc.reasons, id: \.self) { reason in
                         HStack(spacing: 4) {
                             Image(systemName: "exclamationmark.circle")
                                 .font(.caption2)
-                                .foregroundColor(.orange)
+                                .foregroundColor(SymairaTheme.goldSecondary)
                             Text(reason)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(SymairaTheme.textSecondary)
                         }
                     }
                 }
                 .padding(.vertical, 8)
             }
             .buttonStyle(.plain)
-            .background(selectedDoc?.id == doc.id ? Color.accentColor.opacity(0.15) : Color.clear)
+            .background(selectedDoc?.id == doc.id ? SymairaTheme.goldPrimary.opacity(0.12) : Color.clear)
             .cornerRadius(8)
             Divider()
+                .overlay(SymairaTheme.borderGlass)
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
 
     private var noSelectionState: some View {
         VStack(spacing: 12) {
             Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 48))
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textMuted)
             Text("Select a document to review")
                 .font(.title3)
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     private func editInspector(for doc: ReviewDoc) -> some View {
@@ -142,20 +149,24 @@ struct ReviewLaneView: View {
                 Text("Document Metadata Review")
                     .font(.title3)
                     .fontWeight(.bold)
+                    .foregroundColor(SymairaTheme.goldPrimary)
 
                 Text(doc.title)
                     .font(.headline)
-                
+                    .foregroundColor(SymairaTheme.textPrimary)
+
                 Text(doc.path)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(SymairaTheme.textMuted)
 
                 Divider()
+                    .overlay(SymairaTheme.borderGlass)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Document Type")
                         .font(.subheadline)
                         .fontWeight(.semibold)
+                        .foregroundColor(SymairaTheme.textSecondary)
                     TextField("Invoice, Contract, Tax, Insurance, etc.", text: $documentType)
                         .textFieldStyle(.roundedBorder)
                 }
@@ -164,6 +175,7 @@ struct ReviewLaneView: View {
                     Text("Status")
                         .font(.subheadline)
                         .fontWeight(.semibold)
+                        .foregroundColor(SymairaTheme.textSecondary)
                     Picker("Status", selection: $docStatus) {
                         ForEach(DocumentStatus.allCases) { status in
                             Text(status.label).tag(status.rawValue)
@@ -177,32 +189,34 @@ struct ReviewLaneView: View {
                     Text("Due Date")
                         .font(.subheadline)
                         .fontWeight(.semibold)
+                        .foregroundColor(SymairaTheme.textSecondary)
                     TextField("YYYY-MM-DD", text: $dueDateString)
                         .textFieldStyle(.roundedBorder)
                 }
 
                 Divider()
+                    .overlay(SymairaTheme.borderGlass)
 
                 HStack {
                     if isSaving {
                         ProgressView()
                             .controlSize(.small)
+                            .tint(SymairaTheme.goldPrimary)
                     }
                     Spacer()
                     Button("Approve & Resolve") {
                         Task { await saveChanges(for: doc) }
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(SymairaPrimaryButtonStyle())
                     .disabled(isSaving)
                 }
             }
             .padding(24)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     private func confidenceBadge(_ confidence: Int) -> some View {
-        let color: Color = confidence >= 80 ? .green : (confidence >= 50 ? .orange : .red)
+        let color: Color = confidence >= 80 ? SymairaTheme.goldPrimary : (confidence >= 50 ? .orange : .red)
         return Text("\(confidence)%")
             .font(.system(.caption, design: .monospaced))
             .fontWeight(.bold)

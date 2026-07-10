@@ -25,6 +25,9 @@ struct SymDeskApp: App {
             }
             .environmentObject(core)
             .environmentObject(watcher)
+            .preferredColorScheme(.dark)
+            .tint(SymairaTheme.goldPrimary)
+            .background(SymairaTheme.bgDark)
             .task {
                 await core.initialize()
                 if VaultConfig.hasConfiguredVault {
@@ -52,10 +55,10 @@ private struct DemoBanner: View {
     var body: some View {
         HStack {
             Image(systemName: "wand.and.stars")
-                .foregroundColor(.white)
+                .foregroundColor(.black)
             Text("Demo Mode")
                 .font(.caption.bold())
-                .foregroundColor(.white)
+                .foregroundColor(.black)
             Spacer()
             Button("Leave Demo Mode") {
                 VaultConfig.reset()
@@ -63,11 +66,18 @@ private struct DemoBanner: View {
                 NotificationCenter.default.post(name: .onboardingComplete, object: nil)
                 NSApplication.shared.terminate(nil)
             }
-            .font(.caption)
-            .foregroundColor(.white.opacity(0.9))
+            .buttonStyle(.plain)
+            .font(.caption.weight(.semibold))
+            .foregroundColor(.black.opacity(0.75))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(Color.orange)
+        .background(
+            LinearGradient(
+                colors: [SymairaTheme.goldPrimary, SymairaTheme.goldSecondary],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        )
     }
 }

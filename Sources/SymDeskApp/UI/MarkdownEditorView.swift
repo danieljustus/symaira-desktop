@@ -22,8 +22,9 @@ struct MarkdownEditorView: NSViewRepresentable {
         textView.allowsUndo = true
         textView.isRichText = false
         textView.font = NSFont.monospacedSystemFont(ofSize: 14, weight: .regular)
-        textView.backgroundColor = .textBackgroundColor
-        textView.textColor = .textColor
+        textView.backgroundColor = SymairaNSColors.bgDark
+        textView.textColor = SymairaNSColors.textPrimary
+        textView.insertionPointColor = SymairaNSColors.gold
         
         textView.textContainerInset = NSSize(width: 16, height: 16)
         
@@ -144,7 +145,7 @@ struct MarkdownEditorView: NSViewRepresentable {
             let baseFont = NSFont.monospacedSystemFont(ofSize: 14, weight: .regular)
             textStorage.setAttributes([
                 .font: baseFont,
-                .foregroundColor: NSColor.textColor
+                .foregroundColor: SymairaNSColors.textPrimary
             ], range: fullRange)
             
             let string = textStorage.string
@@ -154,7 +155,7 @@ struct MarkdownEditorView: NSViewRepresentable {
                 let matches = headerRegex.matches(in: string, range: fullRange)
                 for match in matches {
                     textStorage.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 18, weight: .bold), range: match.range)
-                    textStorage.addAttribute(.foregroundColor, value: NSColor.controlAccentColor, range: match.range)
+                    textStorage.addAttribute(.foregroundColor, value: SymairaNSColors.gold, range: match.range)
                 }
             }
             
@@ -165,7 +166,7 @@ struct MarkdownEditorView: NSViewRepresentable {
                     let innerRange = match.range(at: 1)
                     if let innerString = (string as NSString).substring(with: innerRange).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) {
                         textStorage.addAttribute(.link, value: "symdesk://note/\(innerString)", range: match.range)
-                        textStorage.addAttribute(.foregroundColor, value: NSColor.linkColor, range: match.range)
+                        textStorage.addAttribute(.foregroundColor, value: SymairaNSColors.goldSecondary, range: match.range)
                         textStorage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: match.range)
                     }
                 }

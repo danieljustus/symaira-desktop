@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import SymDeskCore
 
 // MARK: - Discover Card Model
@@ -58,6 +59,8 @@ struct DiscoverView: View {
 
                 if isLoadingDoctor {
                     ProgressView("Checking installed tools…")
+                        .tint(SymairaTheme.goldPrimary)
+                        .foregroundColor(SymairaTheme.textSecondary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 40)
                 } else {
@@ -90,17 +93,20 @@ struct DiscoverView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("SymDesk Capabilities")
                 .font(.title2.bold())
+                .foregroundColor(SymairaTheme.textPrimary)
 
             Text("Explore what your vault can do. Mark each capability as explored to track your progress.")
                 .font(.callout)
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textSecondary)
 
             if !isLoadingDoctor {
                 ProgressView(value: Double(exploredCount), total: Double(max(totalCards, 1))) {
                     Text("\(exploredCount) of \(totalCards) explored")
                         .font(.caption.bold())
+                        .foregroundColor(SymairaTheme.textSecondary)
                 }
                 .progressViewStyle(.linear)
+                .tint(SymairaTheme.goldPrimary)
                 .frame(maxWidth: 320)
                 .padding(.top, 4)
             }
@@ -113,7 +119,7 @@ struct DiscoverView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(group.rawValue)
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.goldPrimary)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 260, maximum: 400), spacing: 14)], spacing: 14) {
                 ForEach(cards) { card in
@@ -208,15 +214,16 @@ private struct DiscoverCardView: View {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: card.icon)
                     .font(.title2)
-                    .foregroundColor(isExplored ? .green : .accentColor)
+                    .foregroundColor(isExplored ? SymairaTheme.iceSecondary : SymairaTheme.goldPrimary)
                     .frame(width: 28, height: 28)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(card.title)
                         .font(.body.weight(.semibold))
+                        .foregroundColor(SymairaTheme.textPrimary)
                     Text(card.description)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(SymairaTheme.textSecondary)
                         .lineLimit(3)
                 }
 
@@ -224,12 +231,13 @@ private struct DiscoverCardView: View {
 
                 if isExplored {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(SymairaTheme.goldPrimary)
                         .font(.title3)
                 }
             }
 
             Divider()
+                .overlay(SymairaTheme.borderGlass)
 
             HStack {
                 Spacer()
@@ -243,14 +251,9 @@ private struct DiscoverCardView: View {
             }
         }
         .padding(14)
-        .background(Color.primary.opacity(isHovering ? 0.06 : 0.03))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(isExplored ? Color.green.opacity(0.3) : Color.primary.opacity(0.08), lineWidth: 1)
-        )
+        .glassCard(isHovered: isHovering)
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(SymairaTheme.transitionFast) {
                 isHovering = hovering
             }
         }

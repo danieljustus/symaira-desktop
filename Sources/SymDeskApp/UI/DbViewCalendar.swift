@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import SymDeskCore
 
 struct DbViewCalendar: View {
@@ -33,8 +34,10 @@ struct DbViewCalendar: View {
         VStack {
             if isLoading {
                 ProgressView()
+                    .tint(SymairaTheme.goldPrimary)
             } else if items.isEmpty {
                 Text("No items found.")
+                    .foregroundColor(SymairaTheme.textMuted)
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
@@ -43,27 +46,26 @@ struct DbViewCalendar: View {
                                 Text(group.key)
                                     .font(.title2)
                                     .bold()
+                                    .foregroundColor(SymairaTheme.goldPrimary)
                                     .padding(.vertical, 8)
-                                
+
                                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 150))], spacing: 12) {
                                     ForEach(group.value) { item in
                                         let title = (item.data["_title"] as? String) ?? "Untitled"
                                         let fullDate = (item.data[dateProperty] as? String) ?? ""
                                         VStack(alignment: .leading) {
                                             Text(title).bold().lineLimit(2)
-                                            Text(fullDate).font(.caption).foregroundColor(.secondary)
+                                                .foregroundColor(SymairaTheme.textPrimary)
+                                            Text(fullDate).font(.caption).foregroundColor(SymairaTheme.textSecondary)
                                         }
                                         .padding()
                                         .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)
-                                        .background(Color(NSColor.controlBackgroundColor))
-                                        .cornerRadius(8)
-                                        .shadow(radius: 1)
+                                        .glassCard()
                                     }
                                 }
                             }
                             .padding()
-                            .background(Color(NSColor.windowBackgroundColor))
-                            .cornerRadius(12)
+                            .glassmorphicPanel(addCorners: false)
                         }
                     }
                     .padding()

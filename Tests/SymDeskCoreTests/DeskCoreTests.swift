@@ -229,7 +229,7 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertEqual(event.path, "notes/test.md")
         XCTAssertEqual(event.title, "Test Note")
         XCTAssertEqual(event.snippet, "Some snippet")
-        XCTAssertEqual(event.score, 0.85, accuracy: 0.001)
+        XCTAssertEqual(event.score!, 0.85, accuracy: 0.001)
         XCTAssertNil(event.text)
     }
 

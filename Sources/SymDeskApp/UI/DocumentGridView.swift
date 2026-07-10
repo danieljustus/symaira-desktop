@@ -314,7 +314,9 @@ struct DocumentGridView: View {
                 let stream = core.ask(query: q)
                 isAgentRunning = false
                 for try await chunk in stream {
-                    agentResult += chunk
+                    if chunk.type == .answer, let text = chunk.text {
+                        agentResult += text
+                    }
                 }
             } catch {
                 isAgentRunning = false

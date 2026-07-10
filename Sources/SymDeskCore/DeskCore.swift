@@ -40,6 +40,30 @@ public struct SearchResult: Codable, Equatable, Identifiable, Sendable {
     public let score: Double?
 }
 
+public enum AIEventType: String, Codable, Sendable {
+    case answer
+    case citation
+    case tool
+    case done
+}
+
+public struct AIEvent: Codable, Equatable, Identifiable, Sendable {
+    public var id: UUID { UUID() }
+    public let type: AIEventType
+    public let text: String?
+    public let path: String?
+    public let title: String?
+    public let snippet: String?
+    public let score: Double?
+    public let toolName: String?
+    public let status: String?
+
+    enum CodingKeys: String, CodingKey {
+        case type, text, path, title, snippet, score, status
+        case toolName = "tool_name"
+    }
+}
+
 public struct DbFilter: Codable, Equatable, Sendable {
     public let key: String
     public let operatorString: String
@@ -409,7 +433,7 @@ public final class DeskCore: ObservableObject {
         )
     }
 
-    public func ask(query: String) -> AsyncThrowingStream<String, Error> {
+    public func ask(query: String) -> AsyncThrowingStream<AIEvent, Error> {
         return AsyncThrowingStream { continuation in
             Task {
                 do {
@@ -424,12 +448,9 @@ public final class DeskCore: ObservableObject {
                     try process.run()
 
                     for try await line in pipe.fileHandleForReading.bytes.lines {
-                        struct Chunk: Codable, Sendable {
-                            let chunk: String
-                        }
                         if let data = line.data(using: .utf8),
-                           let dec = try? JSONDecoder().decode(Chunk.self, from: data) {
-                            continuation.yield(dec.chunk)
+                           let event = try? JSONDecoder().decode(AIEvent.self, from: data) {
+                            continuation.yield(event)
                         }
                     }
 

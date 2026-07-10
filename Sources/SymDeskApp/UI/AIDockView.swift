@@ -1,11 +1,25 @@
 import SwiftUI
 import SymDeskCore
 
+enum ChatEntry: Identifiable {
+    case user(id: UUID, text: String)
+    case answer(id: UUID, text: String)
+    case citation(id: UUID, path: String, title: String, snippet: String, score: Double?)
+    case tool(id: UUID, toolName: String, status: String)
+
+    var id: UUID {
+        switch self {
+        case .user(let id, _), .answer(let id, _), .citation(let id, _, _, _, _), .tool(let id, _, _):
+            return id
+        }
+    }
+}
+
 struct AIDockView: View {
     @EnvironmentObject var core: DeskCore
 
     @State private var query: String = ""
-    @State private var chatHistory: [(id: UUID, role: String, text: String)] = []
+    @State private var chatHistory: [ChatEntry] = []
     @State private var isThinking = false
 
     var body: some View {
@@ -19,24 +33,8 @@ struct AIDockView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        ForEach(chatHistory, id: \.id) { msg in
-                            HStack {
-                                if msg.role == "user" {
-                                    Spacer()
-                                    Text(msg.text)
-                                        .padding()
-                                        .background(Color.accentColor.opacity(0.2))
-                                        .cornerRadius(12)
-                                        .frame(maxWidth: 250, alignment: .trailing)
-                                } else {
-                                    Text(LocalizedStringKey(msg.text))
-                                        .padding()
-                                        .background(Color.gray.opacity(0.1))
-                                        .cornerRadius(12)
-                                        .frame(maxWidth: 250, alignment: .leading)
-                                    Spacer()
-                                }
-                            }
+                        ForEach(chatHistory) { entry in
+                            chatRow(entry)
                         }
 
                         if isThinking {
@@ -50,18 +48,7 @@ struct AIDockView: View {
                     .padding()
                 }
                 .onChange(of: chatHistory.count) { _ in
-                    if let last = chatHistory.last {
-                        withAnimation {
-                            proxy.scrollTo(last.id, anchor: .bottom)
-                        }
-                    }
-                }
-                .onChange(of: chatHistory.last?.text) { _ in
-                    if let last = chatHistory.last {
-                        withAnimation {
-                            proxy.scrollTo(last.id, anchor: .bottom)
-                        }
-                    }
+                    scrollToBottom(proxy: proxy)
                 }
             }
 
@@ -84,16 +71,112 @@ struct AIDockView: View {
         .frame(minWidth: 300, idealWidth: 300, maxWidth: .infinity)
     }
 
+    @ViewBuilder
+    private func chatRow(_ entry: ChatEntry) -> some View {
+        switch entry {
+        case .user(_, let text):
+            HStack {
+                Spacer()
+                Text(text)
+                    .padding()
+                    .background(Color.accentColor.opacity(0.2))
+                    .cornerRadius(12)
+                    .frame(maxWidth: 250, alignment: .trailing)
+            }
+
+        case .answer(let id, let text):
+            HStack(alignment: .top) {
+                Text(LocalizedStringKey(text))
+                    .padding()
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(12)
+                    .frame(maxWidth: 250, alignment: .leading)
+                Spacer()
+                Button {
+                    copyToClipboard(text)
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                        .font(.caption)
+                }
+                .buttonStyle(.borderless)
+                .help("Copy answer")
+            }
+            .id(id)
+
+        case .citation(_, let path, let title, let snippet, let score):
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Image(systemName: "doc.text")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(title.isEmpty ? path : title)
+                        .font(.caption.bold())
+                    Spacer()
+                    Button {
+                        openFile(path)
+                    } label: {
+                        Image(systemName: "arrow.up.right.square")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Open note")
+                }
+                Text(snippet)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(3)
+                if let score {
+                    Text(String(format: "Score: %.2f", score))
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.6))
+                }
+            }
+            .padding(8)
+            .background(Color.blue.opacity(0.06))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.blue.opacity(0.15), lineWidth: 1)
+            )
+            .frame(maxWidth: 280, alignment: .leading)
+
+        case .tool(_, let toolName, let status):
+            HStack(spacing: 6) {
+                if status == "running" {
+                    ProgressView()
+                        .controlSize(.small)
+                } else if status == "done" {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                } else if status == "error" {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+                Text("\(toolName): \(status)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(6)
+            .background(Color.gray.opacity(0.05))
+            .cornerRadius(6)
+        }
+    }
+
+    private func scrollToBottom(proxy: ScrollViewProxy) {
+        guard let last = chatHistory.last else { return }
+        withAnimation {
+            proxy.scrollTo(last.id, anchor: .bottom)
+        }
+    }
+
     private func submitQuery() {
         let q = query.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return }
 
         query = ""
-        let userMsgID = UUID()
-        chatHistory.append((id: userMsgID, role: "user", text: q))
-
-        let aiMsgID = UUID()
-        chatHistory.append((id: aiMsgID, role: "ai", text: ""))
+        chatHistory.append(.user(id: UUID(), text: q))
         isThinking = true
 
         Task {
@@ -101,17 +184,56 @@ struct AIDockView: View {
                 let stream = core.ask(query: q)
                 isThinking = false
 
-                for try await chunk in stream {
-                    if let idx = chatHistory.firstIndex(where: { $0.id == aiMsgID }) {
-                        chatHistory[idx].text += chunk
+                for try await event in stream {
+                    switch event.type {
+                    case .answer:
+                        let text = event.text ?? ""
+                        if let idx = chatHistory.lastIndex(where: {
+                            if case .answer = $0 { return true }
+                            return false
+                        }),
+                           case .answer(let existingId, var existingText) = chatHistory[idx] {
+                            existingText += text
+                            chatHistory[idx] = .answer(id: existingId, text: existingText)
+                        } else {
+                            chatHistory.append(.answer(id: UUID(), text: text))
+                        }
+
+                    case .citation:
+                        chatHistory.append(.citation(
+                            id: UUID(),
+                            path: event.path ?? "",
+                            title: event.title ?? "",
+                            snippet: event.snippet ?? "",
+                            score: event.score
+                        ))
+
+                    case .tool:
+                        chatHistory.append(.tool(
+                            id: UUID(),
+                            toolName: event.toolName ?? "unknown",
+                            status: event.status ?? "unknown"
+                        ))
+
+                    case .done:
+                        break
                     }
                 }
             } catch {
                 isThinking = false
-                if let idx = chatHistory.firstIndex(where: { $0.id == aiMsgID }) {
-                    chatHistory[idx].text += "\n\n**Error:** \(error.localizedDescription)"
-                }
+                chatHistory.append(.answer(id: UUID(), text: "\n\n**Error:** \(error.localizedDescription)"))
             }
         }
+    }
+
+    private func copyToClipboard(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    private func openFile(_ path: String) {
+        guard let vaultRoot = core.vaultPath else { return }
+        let absPath = (vaultRoot as NSString).appendingPathComponent(path)
+        NSWorkspace.shared.open(URL(fileURLWithPath: absPath))
     }
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
 
@@ -62,12 +63,39 @@ func TestAskStreamsFallbackAnswerWithoutOllama(t *testing.T) {
 	out := make(chan interface{})
 	go svc.Ask("unique-ask-content", out)
 
-	var chunks []interface{}
+	var events []interface{}
 	for c := range out {
-		chunks = append(chunks, c)
+		events = append(events, c)
 	}
-	if len(chunks) == 0 {
-		t.Fatal("expected at least one streamed chunk")
+	if len(events) == 0 {
+		t.Fatal("expected at least one streamed event")
+	}
+
+	hasAnswer := false
+	hasDone := false
+	hasTool := false
+	for _, e := range events {
+		evt, ok := e.(ai.AIEvent)
+		if !ok {
+			t.Fatalf("expected AIEvent, got %T", e)
+		}
+		switch evt.Type {
+		case ai.AIEventAnswer:
+			hasAnswer = true
+		case ai.AIEventDone:
+			hasDone = true
+		case ai.AIEventTool:
+			hasTool = true
+		}
+	}
+	if !hasAnswer {
+		t.Error("expected at least one answer event")
+	}
+	if !hasDone {
+		t.Error("expected a done event")
+	}
+	if !hasTool {
+		t.Error("expected at least one tool event")
 	}
 }
 

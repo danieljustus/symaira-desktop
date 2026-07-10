@@ -16,8 +16,55 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/secrets"
 )
 
+// AskChunk is the legacy streaming chunk (kept for Transform compatibility).
 type AskChunk struct {
 	Chunk string `json:"chunk"`
+}
+
+// AIEventType enumerates the kinds of events emitted during an ask session.
+type AIEventType string
+
+const (
+	AIEventAnswer   AIEventType = "answer"
+	AIEventCitation AIEventType = "citation"
+	AIEventTool     AIEventType = "tool"
+	AIEventDone     AIEventType = "done"
+)
+
+// AIEvent is the typed envelope for the ask streaming contract.
+// Each NDJSON line emitted by "symdesk ask --json" is one AIEvent.
+type AIEvent struct {
+	Type AIEventType `json:"type"`
+	// answer
+	Text string `json:"text,omitempty"`
+	// citation
+	Path    string  `json:"path,omitempty"`
+	Title   string  `json:"title,omitempty"`
+	Snippet string  `json:"snippet,omitempty"`
+	Score   float64 `json:"score,omitempty"`
+	// tool
+	ToolName string `json:"tool_name,omitempty"`
+	Status   string `json:"status,omitempty"`
+}
+
+// AnswerEvent creates an answer-chunk event.
+func AnswerEvent(text string) AIEvent {
+	return AIEvent{Type: AIEventAnswer, Text: text}
+}
+
+// CitationEvent creates a citation event for a search result.
+func CitationEvent(path, title, snippet string, score float64) AIEvent {
+	return AIEvent{Type: AIEventCitation, Path: path, Title: title, Snippet: snippet, Score: score}
+}
+
+// ToolEvent creates a tool-status event.
+func ToolEvent(toolName, status string) AIEvent {
+	return AIEvent{Type: AIEventTool, ToolName: toolName, Status: status}
+}
+
+// DoneEvent signals the end of the stream.
+func DoneEvent() AIEvent {
+	return AIEvent{Type: AIEventDone}
 }
 
 const defaultModel = "llama3.2"

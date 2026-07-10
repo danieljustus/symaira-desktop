@@ -204,4 +204,62 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertFalse(unknown.isAvailable("symseek"))
         XCTAssertFalse(unknown.isAvailable("unknown-tool"))
     }
+
+    // MARK: - AIEvent Tests
+
+    func testAnswerEventDecoding() throws {
+        let json = """
+        {"type":"answer","text":"Hello world"}
+        """.data(using: .utf8)!
+
+        let event = try JSONDecoder().decode(AIEvent.self, from: json)
+        XCTAssertEqual(event.type, .answer)
+        XCTAssertEqual(event.text, "Hello world")
+        XCTAssertNil(event.path)
+        XCTAssertNil(event.toolName)
+    }
+
+    func testCitationEventDecoding() throws {
+        let json = """
+        {"type":"citation","path":"notes/test.md","title":"Test Note","snippet":"Some snippet","score":0.85}
+        """.data(using: .utf8)!
+
+        let event = try JSONDecoder().decode(AIEvent.self, from: json)
+        XCTAssertEqual(event.type, .citation)
+        XCTAssertEqual(event.path, "notes/test.md")
+        XCTAssertEqual(event.title, "Test Note")
+        XCTAssertEqual(event.snippet, "Some snippet")
+        XCTAssertEqual(event.score, 0.85, accuracy: 0.001)
+        XCTAssertNil(event.text)
+    }
+
+    func testToolEventDecoding() throws {
+        let json = """
+        {"type":"tool","tool_name":"search","status":"done"}
+        """.data(using: .utf8)!
+
+        let event = try JSONDecoder().decode(AIEvent.self, from: json)
+        XCTAssertEqual(event.type, .tool)
+        XCTAssertEqual(event.toolName, "search")
+        XCTAssertEqual(event.status, "done")
+        XCTAssertNil(event.text)
+    }
+
+    func testDoneEventDecoding() throws {
+        let json = """
+        {"type":"done"}
+        """.data(using: .utf8)!
+
+        let event = try JSONDecoder().decode(AIEvent.self, from: json)
+        XCTAssertEqual(event.type, .done)
+        XCTAssertNil(event.text)
+        XCTAssertNil(event.path)
+    }
+
+    func testAIEventTypeRawValues() {
+        XCTAssertEqual(AIEventType.answer.rawValue, "answer")
+        XCTAssertEqual(AIEventType.citation.rawValue, "citation")
+        XCTAssertEqual(AIEventType.tool.rawValue, "tool")
+        XCTAssertEqual(AIEventType.done.rawValue, "done")
+    }
 }

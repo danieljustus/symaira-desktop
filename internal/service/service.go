@@ -400,25 +400,37 @@ func (s *Service) PropsEdit(relPath, key, value string) error {
 	return s.IndexDocument(newDoc)
 }
 
-// Ask performs a semantic/RAG search and streams the answer using the AI package.
 func (s *Service) Ask(query string, out chan<- interface{}) {
-	// 1. Search the vault
+	out <- ai.ToolEvent("search", "running")
 	results, err := s.Search(query)
 	if err != nil {
-		out <- map[string]string{"error": err.Error()}
+		out <- ai.ToolEvent("search", "error")
+		out <- ai.AnswerEvent("Search failed: " + err.Error())
+		out <- ai.DoneEvent()
 		close(out)
 		return
 	}
+	out <- ai.ToolEvent("search", "done")
 
-	// 2. Stream AI chunks
+	for _, r := range results {
+		path, _ := r["path"].(string)
+		title, _ := r["title"].(string)
+		snippet, _ := r["snippet"].(string)
+		score, _ := r["score"].(float64)
+		out <- ai.CitationEvent(path, title, snippet, score)
+	}
+
+	out <- ai.ToolEvent("llm", "running")
 	chunkChan := make(chan ai.AskChunk)
 	go func() {
 		ai.Ask(query, results, chunkChan)
 	}()
 
 	for chunk := range chunkChan {
-		out <- chunk
+		out <- ai.AnswerEvent(chunk.Chunk)
 	}
+	out <- ai.ToolEvent("llm", "done")
+	out <- ai.DoneEvent()
 	close(out)
 }
 

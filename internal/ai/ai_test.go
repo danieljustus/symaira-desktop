@@ -386,3 +386,115 @@ func TestStreamAnthropicRequestConstructionError(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
+
+func TestAnswerEventJSON(t *testing.T) {
+	evt := AnswerEvent("hello")
+	b, err := json.Marshal(evt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]interface{}
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["type"] != "answer" {
+		t.Errorf("expected type=answer, got %v", got["type"])
+	}
+	if got["text"] != "hello" {
+		t.Errorf("expected text=hello, got %v", got["text"])
+	}
+	if _, ok := got["path"]; ok {
+		t.Error("expected no path field in answer event")
+	}
+}
+
+func TestCitationEventJSON(t *testing.T) {
+	evt := CitationEvent("notes/x.md", "X", "snippet text", 0.85)
+	b, err := json.Marshal(evt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]interface{}
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["type"] != "citation" {
+		t.Errorf("expected type=citation, got %v", got["type"])
+	}
+	if got["path"] != "notes/x.md" {
+		t.Errorf("expected path, got %v", got["path"])
+	}
+	if got["title"] != "X" {
+		t.Errorf("expected title, got %v", got["title"])
+	}
+	if got["text"] != nil {
+		t.Error("expected no text field in citation event")
+	}
+}
+
+func TestToolEventJSON(t *testing.T) {
+	evt := ToolEvent("search", "done")
+	b, err := json.Marshal(evt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]interface{}
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["type"] != "tool" {
+		t.Errorf("expected type=tool, got %v", got["type"])
+	}
+	if got["tool_name"] != "search" {
+		t.Errorf("expected tool_name=search, got %v", got["tool_name"])
+	}
+	if got["status"] != "done" {
+		t.Errorf("expected status=done, got %v", got["status"])
+	}
+}
+
+func TestDoneEventJSON(t *testing.T) {
+	evt := DoneEvent()
+	b, err := json.Marshal(evt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]interface{}
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["type"] != "done" {
+		t.Errorf("expected type=done, got %v", got["type"])
+	}
+	if len(got) != 1 {
+		t.Errorf("expected only type field in done event, got %d fields", len(got))
+	}
+}
+
+func TestAnswerEventOmitemptyFields(t *testing.T) {
+	evt := AnswerEvent("test")
+	b, err := json.Marshal(evt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw := string(b)
+	for _, absent := range []string{"path", "title", "snippet", "tool_name", "status"} {
+		if strings.Contains(raw, absent) {
+			t.Errorf("answer event should not contain %q, got: %s", absent, raw)
+		}
+	}
+}
+
+func TestCitationEventOmitemptyFields(t *testing.T) {
+	evt := CitationEvent("a.md", "A", "s", 1.0)
+	b, err := json.Marshal(evt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw := string(b)
+	for _, absent := range []string{"text", "tool_name", "status"} {
+		if strings.Contains(raw, absent) {
+			t.Errorf("citation event should not contain %q, got: %s", absent, raw)
+		}
+	}
+}

@@ -135,6 +135,28 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         correspondent = (try? c.decode(String.self, forKey: .correspondent)) ?? ""
         documentType = (try? c.decode(String.self, forKey: .documentType)) ?? ""
     }
+
+    public init(
+        path: String,
+        title: String,
+        documentDate: String,
+        person: String,
+        status: String,
+        dueDate: String,
+        confidence: Int,
+        correspondent: String,
+        documentType: String
+    ) {
+        self.path = path
+        self.title = title
+        self.documentDate = documentDate
+        self.person = person
+        self.status = status
+        self.dueDate = dueDate
+        self.confidence = confidence
+        self.correspondent = correspondent
+        self.documentType = documentType
+    }
 }
 
 public struct IngestJob: Codable, Identifiable, Sendable {

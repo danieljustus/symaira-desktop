@@ -6,6 +6,7 @@ struct DocumentGridView: View {
     @EnvironmentObject var watcher: EventWatcher
 
     let statusFilter: String?
+    let deepLinkPath: String?
 
     @State private var documents: [DocumentItem] = []
     @State private var searchText = ""
@@ -49,6 +50,12 @@ struct DocumentGridView: View {
             }
         }
         .task { await fetchDocs() }
+        .task(id: deepLinkPath) {
+            guard let path = deepLinkPath, !path.isEmpty else { return }
+            if let doc = documents.first(where: { $0.path == path }) {
+                openDoc = doc
+            }
+        }
         .onChange(of: watcher.latestEvent) {
             Task { await fetchDocs() }
         }
@@ -198,6 +205,10 @@ struct DocumentGridView: View {
         defer { isLoading = false }
         do {
             self.documents = try await core.docsList()
+            if let path = deepLinkPath, !path.isEmpty,
+               let doc = documents.first(where: { $0.path == path }) {
+                openDoc = doc
+            }
         } catch {
             print("docsList failed: \(error)")
         }

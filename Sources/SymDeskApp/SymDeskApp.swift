@@ -5,6 +5,7 @@ import SymDeskCore
 struct SymDeskApp: App {
     @StateObject private var core = DeskCore.shared
     @StateObject private var watcher = EventWatcher.shared
+    @StateObject private var notificationManager = NotificationManager.shared
 
     @State private var vaultConfigured = VaultConfig.hasConfiguredVault
     @State private var showDemoBanner = VaultConfig.isDemoMode
@@ -25,6 +26,7 @@ struct SymDeskApp: App {
             }
             .environmentObject(core)
             .environmentObject(watcher)
+            .environmentObject(notificationManager)
             .task {
                 await core.initialize()
                 if VaultConfig.hasConfiguredVault {
@@ -33,6 +35,8 @@ struct SymDeskApp: App {
                 if let tool = core.tool, vaultConfigured {
                     watcher.start(tool: tool, vaultPath: core.vaultPath)
                 }
+                notificationManager.requestPermission()
+                await notificationManager.refreshNotifications(with: core)
             }
             .onReceive(NotificationCenter.default.publisher(for: .onboardingComplete)) { _ in
                 vaultConfigured = true
@@ -40,6 +44,9 @@ struct SymDeskApp: App {
                 core.loadVaultFromConfig()
                 if let tool = core.tool {
                     watcher.start(tool: tool, vaultPath: core.vaultPath)
+                }
+                Task {
+                    await notificationManager.refreshNotifications(with: core)
                 }
             }
         }

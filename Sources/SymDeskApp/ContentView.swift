@@ -1,10 +1,12 @@
 import SwiftUI
+import AppKit
 import SymairaTheme
 import SymDeskCore
 
 struct ContentView: View {
     @EnvironmentObject var core: DeskCore
     @EnvironmentObject var watcher: EventWatcher
+    @EnvironmentObject var notificationManager: NotificationManager
 
     @State private var notes: [Note] = []
     @State private var selectedNote: Note? = nil
@@ -39,6 +41,7 @@ struct ContentView: View {
     @State private var docFilterID: String = "all"
     @State private var docCounts: [String: Int] = [:]
     @State private var docTotalCount: Int = 0
+    @State private var deepLinkDocPath: String?
 
     var body: some View {
         Group {
@@ -145,7 +148,7 @@ struct ContentView: View {
                         }
                     case .docs:
                         let statusVal = DocFilterPreset.defaults.first(where: { $0.id == docFilterID })?.status
-                        DocumentGridView(statusFilter: statusVal?.rawValue)
+                        DocumentGridView(statusFilter: statusVal?.rawValue, deepLinkPath: deepLinkDocPath)
                     case .dbView:
                         if let vid = selectedViewID {
                             if let view = dbViews.first(where: { $0.id == vid }) {
@@ -344,6 +347,17 @@ struct ContentView: View {
                 .onReceive(NotificationCenter.default.publisher(for: .openDiscover)) { _ in
                     displayMode = .discover
                 }
+                .overlay(alignment: .top) {
+                    if notificationManager.isDenied {
+                        NotificationDeniedBanner()
+                    }
+                }
+                .onChange(of: notificationManager.deepLinkedDocumentPath) { path in
+                    guard let path else { return }
+                    deepLinkDocPath = path
+                    displayMode = .docs
+                    notificationManager.deepLinkedDocumentPath = nil
+                }
                 .task {
                     await fetchNotes()
                     await fetchViews()
@@ -359,6 +373,8 @@ struct ContentView: View {
                         if let selected = selectedNote, ev?.path == selected.path {
                             await loadContent(for: selected)
                         }
+                        // Refresh notifications when documents change
+                        await notificationManager.refreshNotifications(with: core)
                     }
                 }
             }
@@ -448,5 +464,30 @@ struct ContentView: View {
 
     private func isConflicted(_ note: Note) -> Bool {
         return note.path.contains(" 2.md") || note.path.contains("conflicted copy")
+    }
+}
+
+// MARK: - Notification Permission Denied Banner
+
+private struct NotificationDeniedBanner: View {
+    var body: some View {
+        HStack {
+            Image(systemName: "bell.slash")
+                .foregroundColor(.white)
+            Text("Notifications are disabled. Enable in System Settings > Notifications > SymDesk.")
+                .font(.caption.bold())
+                .foregroundColor(.white)
+            Spacer()
+            Button("Open Settings") {
+                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications?PrivacyNotificationCenter") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+            .font(.caption)
+            .foregroundColor(.white.opacity(0.9))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Color.orange)
     }
 }

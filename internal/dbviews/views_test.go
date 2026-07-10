@@ -65,3 +65,16 @@ func TestManager(t *testing.T) {
 		t.Errorf("expected 'Updated View', got '%s'", v2.Name)
 	}
 }
+
+func TestManagerDelete(t *testing.T) {
+	mgr := NewManager(t.TempDir())
+	if err := mgr.Save(View{ID: "delete-me", Name: "Delete me"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := mgr.Delete("delete-me"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := mgr.Get("delete-me"); err == nil {
+		t.Fatal("deleted view was still available")
+	}
+}

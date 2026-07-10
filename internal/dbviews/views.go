@@ -14,6 +14,22 @@ type Filter struct {
 	Value    string `json:"value"`
 }
 
+// FilterGroup allows views to express nested all/any conditions. Filters is
+// deliberately kept on View for compatibility with views written before
+// groups were introduced.
+type FilterGroup struct {
+	Operator string        `json:"operator"`
+	Filters  []Filter      `json:"filters,omitempty"`
+	Groups   []FilterGroup `json:"groups,omitempty"`
+}
+
+// Template describes the note template and frontmatter values used when a
+// user creates an entry from a saved view.
+type Template struct {
+	Ref      string            `json:"ref,omitempty"`
+	Defaults map[string]string `json:"defaults,omitempty"`
+}
+
 type Sort struct {
 	Key       string `json:"key"`
 	Ascending bool   `json:"ascending"`
@@ -32,8 +48,45 @@ type View struct {
 	DateProperty string                    `json:"date_property,omitempty"`
 	Computed     map[string]ComputedColumn `json:"computed,omitempty"`
 	Filters      []Filter                  `json:"filters"`
+	FilterGroup  *FilterGroup              `json:"filter_group,omitempty"`
 	Sorts        []Sort                    `json:"sorts"`
 	Columns      []string                  `json:"columns"`
+	Source       string                    `json:"source,omitempty"`
+	Template     *Template                 `json:"template,omitempty"`
+}
+
+func (m *Manager) Delete(id string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	data, err := os.ReadFile(m.viewsFile())
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("view not found")
+		}
+		return err
+	}
+	var views []View
+	if err := json.Unmarshal(data, &views); err != nil {
+		return err
+	}
+	filtered := make([]View, 0, len(views))
+	found := false
+	for _, view := range views {
+		if view.ID == id {
+			found = true
+			continue
+		}
+		filtered = append(filtered, view)
+	}
+	if !found {
+		return fmt.Errorf("view not found")
+	}
+	out, err := json.MarshalIndent(filtered, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(m.viewsFile(), out, 0644)
 }
 
 type Manager struct {

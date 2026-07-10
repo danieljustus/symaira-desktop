@@ -25,6 +25,10 @@ func (s *Service) ViewsSave(data []byte) error {
 	return s.ViewsMgr.Save(v)
 }
 
+func (s *Service) ViewsDelete(id string) error {
+	return s.ViewsMgr.Delete(id)
+}
+
 func (s *Service) ViewsExec(id string) ([]map[string]interface{}, error) {
 	view, err := s.ViewsGet(id)
 	if err != nil {
@@ -73,15 +77,13 @@ func (s *Service) ViewsExec(id string) ([]map[string]interface{}, error) {
 
 		match := true
 		for _, f := range view.Filters {
-			val, exists := props[f.Key]
-			if !exists {
+			if !matchesFilter(props, f) {
 				match = false
 				break
 			}
-			if fmt.Sprintf("%v", val) != f.Value {
-				match = false
-				break
-			}
+		}
+		if match && view.FilterGroup != nil {
+			match = matchesGroup(props, *view.FilterGroup)
 		}
 
 		if match {
@@ -90,6 +92,53 @@ func (s *Service) ViewsExec(id string) ([]map[string]interface{}, error) {
 	}
 
 	return results, nil
+}
+
+func matchesGroup(props map[string]interface{}, group dbviews.FilterGroup) bool {
+	all := strings.ToLower(group.Operator) != "any"
+	matched := 0
+	total := len(group.Filters) + len(group.Groups)
+	for _, filter := range group.Filters {
+		if matchesFilter(props, filter) {
+			matched++
+		} else if all {
+			return false
+		}
+	}
+	for _, child := range group.Groups {
+		if matchesGroup(props, child) {
+			matched++
+		} else if all {
+			return false
+		}
+	}
+	if total == 0 {
+		return true
+	}
+	return matched > 0
+}
+
+func matchesFilter(props map[string]interface{}, filter dbviews.Filter) bool {
+	value, exists := props[filter.Key]
+	actual := fmt.Sprintf("%v", value)
+	switch strings.ToLower(filter.Operator) {
+	case "is_empty", "empty":
+		return !exists || actual == ""
+	case "is_not_empty", "not_empty":
+		return exists && actual != ""
+	case "not_equals", "is_not":
+		return !exists || actual != filter.Value
+	case "contains":
+		return exists && strings.Contains(strings.ToLower(actual), strings.ToLower(filter.Value))
+	case "not_contains":
+		return !exists || !strings.Contains(strings.ToLower(actual), strings.ToLower(filter.Value))
+	case "greater_than", "after":
+		return exists && actual > filter.Value
+	case "less_than", "before":
+		return exists && actual < filter.Value
+	default: // empty operator retains the original equality behavior.
+		return exists && actual == filter.Value
+	}
 }
 
 func (s *Service) evaluateFormula(formula string, props map[string]interface{}) string {

@@ -21,8 +21,8 @@ var ServerVersion = "0.5.0"
 type ToolCapability string
 
 const (
-	ReadOnly  ToolCapability = "read_only"
-	Mutating  ToolCapability = "mutating"
+	ReadOnly ToolCapability = "read_only"
+	Mutating ToolCapability = "mutating"
 )
 
 // ToolCapabilities maps tool names to their mutation capability.

@@ -10,7 +10,7 @@ A local-first, **agent-native** workspace that unifies your documents, notes, kn
 
 - **Owns:** the Markdown-as-SSOT vault contract, one SQLite sidecar index, the native app, and the runtime composition layer
 - **Composes at runtime today:** [`symaira-ingest`](https://github.com/danieljustus/symaira-ingest) (OCR/ingest), [`symseek`](https://github.com/danieljustus/symaira-seek) (search), [`symmemory`](https://github.com/danieljustus/symaira-memory) (RAG/graph), [`symfetch`](https://github.com/danieljustus/symaira-fetch) (web clipping), and [`symvault`](https://github.com/danieljustus/symaira-vault) (secrets resolution), all detected dynamically via `PATH` probe (the core never depends on their presence and degrades gracefully).
-- **Delegates (does not rebuild):** spreadsheets → LibreOffice; code editing → editor plugins + agent orchestration; iCloud sync → the OS
+- **Delegates (does not rebuild):** spreadsheets → LibreOffice; code editing → editor plugins + agent orchestration; Obsidian Canvas/whiteboards → Obsidian; iCloud sync → the OS
 - **Language:** Go (CGO-free, core) + Swift/SwiftUI (app). **License:** Apache-2.0
 
 ![SymDesk architecture](assets/symdesk-architecture.svg)

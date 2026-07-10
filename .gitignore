@@ -27,6 +27,8 @@ web/dist/
 
 # Local working docs — NOT published (design notes, research, diagrams)
 docs/
+!docs/
+!docs/ARCHITECTURE.md
 internal/service/testdata/
 
 # Local build output and scratch

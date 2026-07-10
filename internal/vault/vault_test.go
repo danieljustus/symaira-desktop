@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/danieljustus/symaira-desktop/internal/config"
 )
 
 func TestParseFile(t *testing.T) {
@@ -204,5 +206,132 @@ func TestSetFrontmatterKeyNumericValue(t *testing.T) {
 	result := string(data)
 	if !strings.Contains(result, "confidence: 95") {
 		t.Errorf("expected confidence 95, got:\n%s", result)
+	}
+}
+
+// --- ResolveVaultRoot tests (coverage target: vault.go:56-81) ---
+
+func TestResolveVaultRoot_MissingEnvAndConfig(t *testing.T) {
+	_, err := ResolveVaultRoot("", nil)
+	if err == nil {
+		t.Fatal("expected error for empty flag and nil config")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	cfg := &config.Config{Vault: ""}
+	_, err = ResolveVaultRoot("", cfg)
+	if err == nil {
+		t.Fatal("expected error for empty flag and empty config vault")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestResolveVaultRoot_MissingDirectory(t *testing.T) {
+	_, err := ResolveVaultRoot("/nonexistent/path/to/vault", nil)
+	if err == nil {
+		t.Fatal("expected error for non-existent directory")
+	}
+	if !strings.Contains(err.Error(), "vault path does not exist") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestResolveVaultRoot_NonDirectoryPath(t *testing.T) {
+	tmpDir := t.TempDir()
+	filePath := filepath.Join(tmpDir, "not-a-dir.md")
+	if err := os.WriteFile(filePath, []byte("content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := ResolveVaultRoot(filePath, nil)
+	if err == nil {
+		t.Fatal("expected error for non-directory path")
+	}
+	if !strings.Contains(err.Error(), "vault path is not a directory") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestResolveVaultRoot_ExplicitFlagPrecedence(t *testing.T) {
+	flagDir := t.TempDir()
+	cfgDir := t.TempDir()
+
+	cfg := &config.Config{Vault: cfgDir}
+	got, err := ResolveVaultRoot(flagDir, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	absFlag, _ := filepath.Abs(flagDir)
+	if got != absFlag {
+		t.Errorf("expected flag path %s, got %s", absFlag, got)
+	}
+}
+
+func TestResolveVaultRoot_RelativePathResolvesToAbsolute(t *testing.T) {
+	tmpDir := t.TempDir()
+	marker := filepath.Join(tmpDir, "marker.txt")
+	if err := os.WriteFile(marker, []byte("x"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	origDir, _ := os.Getwd()
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(origDir)
+
+	got, err := ResolveVaultRoot(".", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !filepath.IsAbs(got) {
+		t.Errorf("expected absolute path, got %s", got)
+	}
+}
+
+// --- SecurePath tests for absolute paths outside vault (coverage target: vault.go:215-231) ---
+
+func TestSecurePath_AbsolutePathOutsideVault(t *testing.T) {
+	root := t.TempDir()
+
+	// filepath.Join treats the second arg as relative even if absolute,
+	// so "/etc/passwd" becomes <root>/etc/passwd — inside the vault.
+	// The real traversal test uses ".." (already in TestSecurePath).
+	// Verify that an absolute relPath does not escape.
+	abs, err := SecurePath(root, "/etc/passwd")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if strings.HasPrefix(abs, root) {
+		return
+	}
+	t.Errorf("expected path inside vault, got %s", abs)
+}
+
+func TestSecurePath_DeepTraversalDenied(t *testing.T) {
+	root := t.TempDir()
+
+	if _, err := SecurePath(root, "a/../../etc/passwd"); err == nil {
+		t.Error("expected deep traversal to be denied")
+	}
+	if _, err := SecurePath(root, "notes/../../etc/shadow"); err == nil {
+		t.Error("expected nested traversal to be denied")
+	}
+}
+
+func TestSecurePath_WithinVault(t *testing.T) {
+	root := t.TempDir()
+
+	abs, err := SecurePath(root, "notes/subdir/file.md")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	expected := filepath.Join(root, "notes", "subdir", "file.md")
+	if abs != expected {
+		t.Errorf("expected %s, got %s", expected, abs)
 	}
 }

@@ -41,6 +41,7 @@
 		D32E9B586B362E4914175291 /* EventWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95355A68097983C9F84AE919 /* EventWatcher.swift */; };
 		D912C5E6E61A8D859E86A1F6 /* CommandPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = F136EF877D776AFD6D2CE697 /* CommandPalette.swift */; };
 		EDBAB66DD3722499129B80AE /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = E20080EE08C0202FC164E192 /* SymairaCLIRunner */; };
+		F9D9027836F3132FDD8F6297 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827CE03FB82C7640D64E4D97 /* main.swift */; };
 		FC481AC96D97F01753A861B0 /* DeskCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -75,6 +76,7 @@
 		61EE8B62E86F8FE234837F0A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		641C263A0947A7D1CCBE84E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		78F76334FF1AA665F17F9B0C /* DbViewBoard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewBoard.swift; sourceTree = "<group>"; };
+		827CE03FB82C7640D64E4D97 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		95355A68097983C9F84AE919 /* EventWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventWatcher.swift; sourceTree = "<group>"; };
 		9C51F0367577777D2D842F81 /* ReviewLaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewLaneView.swift; sourceTree = "<group>"; };
 		9E0EF47CC7E6B528447433E8 /* AIDockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDockView.swift; sourceTree = "<group>"; };
@@ -157,6 +159,7 @@
 			children = (
 				61EE8B62E86F8FE234837F0A /* ContentView.swift */,
 				641C263A0947A7D1CCBE84E3 /* Info.plist */,
+				827CE03FB82C7640D64E4D97 /* main.swift */,
 				BBD325D2A25FDF9FA519A6FA /* SymDeskApp.swift */,
 				362E9BEEFFBA097C15F5579C /* Models */,
 				4EC33A4FB80D80BF52DF3EBF /* UI */,
@@ -383,6 +386,7 @@
 				A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */,
 				888252B8F6964BA6158F9CC6 /* ReviewLaneView.swift in Sources */,
 				CBD99C1AAF0BA2BE2A136FA6 /* SymDeskApp.swift in Sources */,
+				F9D9027836F3132FDD8F6297 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

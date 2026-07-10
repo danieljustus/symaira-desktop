@@ -209,8 +209,8 @@ func TestSavedViews(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(views) != 3 {
-		t.Fatalf("expected 3 views, got %d", len(views))
+	if len(views) != 6 {
+		t.Fatalf("expected 6 views, got %d", len(views))
 	}
 
 	viewIDs := make(map[string]bool)
@@ -219,12 +219,12 @@ func TestSavedViews(t *testing.T) {
 		if v.Name == "" {
 			t.Errorf("view %s has empty name", v.ID)
 		}
-		if len(v.Filters) == 0 {
+		if len(v.Filters) == 0 && v.Type != "timeline" && v.Type != "list" {
 			t.Errorf("view %s has no filters", v.ID)
 		}
 	}
 
-	expected := []string{"demo_open_invoices", "demo_tax_2026", "demo_needs_review"}
+	expected := []string{"demo_open_invoices", "demo_tax_2026", "demo_needs_review", "demo_invoice_gallery", "demo_document_timeline", "demo_document_list"}
 	for _, id := range expected {
 		if !viewIDs[id] {
 			t.Errorf("missing expected view: %s", id)

@@ -232,7 +232,7 @@ struct AIDockView: View {
     }
 
     private func openFile(_ path: String) {
-        let vaultRoot = core.vaultPath
+        guard let vaultRoot = core.vaultPath else { return }
         let absPath = (vaultRoot as NSString).appendingPathComponent(path)
         NSWorkspace.shared.open(URL(fileURLWithPath: absPath))
     }

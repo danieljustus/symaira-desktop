@@ -1,6 +1,6 @@
 import Foundation
 import AppKit
-import UserNotifications
+@preconcurrency import UserNotifications
 import SymDeskCore
 
 /// Manages macOS user notifications for due-date reminders and the review queue.
@@ -119,12 +119,12 @@ final class NotificationManager: NSObject, ObservableObject {
 
 // MARK: - UNUserNotificationCenterDelegate
 
-extension NotificationManager: @preconcurrency UNUserNotificationCenterDelegate {
+extension NotificationManager: UNUserNotificationCenterDelegate {
     /// Called when the user taps a notification while the app is in the foreground.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
-        withCompletionHandler completionHandler: @escaping @Sendable (UNNotificationPresentationOptions) -> Void
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         completionHandler([.banner, .sound])
     }
@@ -133,7 +133,7 @@ extension NotificationManager: @preconcurrency UNUserNotificationCenterDelegate 
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
-        withCompletionHandler completionHandler: @escaping @Sendable () -> Void
+        withCompletionHandler completionHandler: @escaping () -> Void
     ) {
         let userInfo = response.notification.request.content.userInfo
         if let docPath = userInfo["documentPath"] as? String {

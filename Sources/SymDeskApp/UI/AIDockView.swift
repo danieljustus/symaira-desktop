@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import SymDeskCore
 
 enum ChatEntry: Identifiable {
@@ -26,6 +27,7 @@ struct AIDockView: View {
         VStack {
             Text("AI Dock")
                 .font(.headline)
+                .foregroundColor(SymairaTheme.goldPrimary)
                 .padding(.top)
 
             Divider()
@@ -40,6 +42,7 @@ struct AIDockView: View {
                         if isThinking {
                             HStack {
                                 ProgressView()
+                                    .tint(SymairaTheme.goldPrimary)
                                     .padding()
                                 Spacer()
                             }
@@ -63,12 +66,14 @@ struct AIDockView: View {
 
                 Button(action: submitQuery) {
                     Image(systemName: "paperplane.fill")
+                        .foregroundColor(SymairaTheme.goldPrimary)
                 }
                 .disabled(query.trimmingCharacters(in: .whitespaces).isEmpty || isThinking)
             }
             .padding()
         }
         .frame(minWidth: 300, idealWidth: 300, maxWidth: .infinity)
+        .background(SymairaTheme.bgDarker)
     }
 
     @ViewBuilder
@@ -78,18 +83,28 @@ struct AIDockView: View {
             HStack {
                 Spacer()
                 Text(text)
+                    .foregroundColor(SymairaTheme.textPrimary)
                     .padding()
-                    .background(Color.accentColor.opacity(0.2))
+                    .background(SymairaTheme.goldPrimary.opacity(0.16))
                     .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
+                    )
                     .frame(maxWidth: 250, alignment: .trailing)
             }
 
         case .answer(let id, let text):
             HStack(alignment: .top) {
                 Text(LocalizedStringKey(text))
+                    .foregroundColor(SymairaTheme.textPrimary)
                     .padding()
-                    .background(Color.gray.opacity(0.1))
+                    .background(SymairaTheme.bgCard)
                     .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(SymairaTheme.borderGlass, lineWidth: 1)
+                    )
                     .frame(maxWidth: 250, alignment: .leading)
                 Spacer()
                 Button {
@@ -97,6 +112,7 @@ struct AIDockView: View {
                 } label: {
                     Image(systemName: "doc.on.doc")
                         .font(.caption)
+                        .foregroundColor(SymairaTheme.textMuted)
                 }
                 .buttonStyle(.borderless)
                 .help("Copy answer")
@@ -108,35 +124,37 @@ struct AIDockView: View {
                 HStack {
                     Image(systemName: "doc.text")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(SymairaTheme.goldPrimary)
                     Text(title.isEmpty ? path : title)
                         .font(.caption.bold())
+                        .foregroundColor(SymairaTheme.textPrimary)
                     Spacer()
                     Button {
                         openFile(path)
                     } label: {
                         Image(systemName: "arrow.up.right.square")
                             .font(.caption)
+                            .foregroundColor(SymairaTheme.goldSecondary)
                     }
                     .buttonStyle(.borderless)
                     .help("Open note")
                 }
                 Text(snippet)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(SymairaTheme.textSecondary)
                     .lineLimit(3)
                 if let score {
                     Text(String(format: "Score: %.2f", score))
                         .font(.caption2)
-                        .foregroundColor(.secondary.opacity(0.6))
+                        .foregroundColor(SymairaTheme.textMuted)
                 }
             }
             .padding(8)
-            .background(Color.blue.opacity(0.06))
+            .background(SymairaTheme.goldPrimary.opacity(0.06))
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.blue.opacity(0.15), lineWidth: 1)
+                    .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
             )
             .frame(maxWidth: 280, alignment: .leading)
 
@@ -145,10 +163,11 @@ struct AIDockView: View {
                 if status == "running" {
                     ProgressView()
                         .controlSize(.small)
+                        .tint(SymairaTheme.goldPrimary)
                 } else if status == "done" {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.caption)
-                        .foregroundColor(.green)
+                        .foregroundColor(SymairaTheme.goldPrimary)
                 } else if status == "error" {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.caption)
@@ -156,10 +175,10 @@ struct AIDockView: View {
                 }
                 Text("\(toolName): \(status)")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(SymairaTheme.textSecondary)
             }
             .padding(6)
-            .background(Color.gray.opacity(0.05))
+            .background(SymairaTheme.bgCard)
             .cornerRadius(6)
         }
     }
@@ -232,7 +251,7 @@ struct AIDockView: View {
     }
 
     private func openFile(_ path: String) {
-        guard let vaultRoot = core.vaultPath else { return }
+        let vaultRoot = core.vaultPath ?? ""
         let absPath = (vaultRoot as NSString).appendingPathComponent(path)
         NSWorkspace.shared.open(URL(fileURLWithPath: absPath))
     }

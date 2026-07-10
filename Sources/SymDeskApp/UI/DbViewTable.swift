@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import SymDeskCore
 
 struct DbViewTable: View {
@@ -29,8 +30,10 @@ struct DbViewTable: View {
         VStack {
             if isLoading {
                 ProgressView()
+                    .tint(SymairaTheme.goldPrimary)
             } else if columns.isEmpty {
                 Text("View is empty or not found.")
+                    .foregroundColor(SymairaTheme.textMuted)
             } else {
                 ScrollView([.horizontal, .vertical]) {
                     Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 8) {
@@ -39,9 +42,11 @@ struct DbViewTable: View {
                                 Text(col.uppercased())
                                     .font(.headline)
                                     .bold()
+                                    .foregroundColor(SymairaTheme.goldPrimary)
                             }
                         }
                         Divider()
+                            .overlay(SymairaTheme.borderGlass)
                         
                         ForEach(sortedRows) { row in
                             GridRow {

@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import SymDeskCore
 
 struct IngestQueueView: View {
@@ -15,6 +16,8 @@ struct IngestQueueView: View {
 
             if isLoading && jobs.isEmpty {
                 ProgressView("Loading ingestion jobs…")
+                    .tint(SymairaTheme.goldPrimary)
+                    .foregroundColor(SymairaTheme.textSecondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let err = errorMessage {
                 errorState(err)
@@ -39,9 +42,10 @@ struct IngestQueueView: View {
                 Text("Ingest Queue")
                     .font(.title2)
                     .fontWeight(.bold)
+                    .foregroundColor(SymairaTheme.textPrimary)
                 Text("Monitor active and historical document ingestion tasks")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(SymairaTheme.textSecondary)
             }
             Spacer()
             Button(action: {
@@ -49,11 +53,10 @@ struct IngestQueueView: View {
             }) {
                 Label("Refresh", systemImage: "arrow.clockwise")
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(SymairaSecondaryButtonStyle())
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     private func errorState(_ msg: String) -> some View {
@@ -64,15 +67,16 @@ struct IngestQueueView: View {
             Text("Connection Failed")
                 .font(.title3)
                 .fontWeight(.semibold)
+                .foregroundColor(SymairaTheme.textPrimary)
             Text(msg)
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
             Button("Retry Connection") {
                 Task { await fetchJobs() }
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(SymairaPrimaryButtonStyle())
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -81,32 +85,34 @@ struct IngestQueueView: View {
         VStack(spacing: 12) {
             Image(systemName: "tray")
                 .font(.system(size: 48))
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textMuted)
             Text("Queue is empty")
                 .font(.title3)
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textSecondary)
             Text("Drop PDF or image files to start ingestion.")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textMuted)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var jobsList: some View {
-        List {
-            ForEach(jobs) { job in
-                JobRow(job: job) {
-                    Task {
-                        try? await core.ingestRetry(jobID: job.id)
-                        await fetchJobs()
+        ScrollView {
+            VStack(spacing: 10) {
+                ForEach(jobs) { job in
+                    JobRow(job: job) {
+                        Task {
+                            try? await core.ingestRetry(jobID: job.id)
+                            await fetchJobs()
+                        }
                     }
+                    .padding(14)
+                    .glassCard()
                 }
-                .padding(.vertical, 8)
-                Divider()
             }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
         }
-        .listStyle(.plain)
-        .padding(.horizontal, 16)
     }
 
     private func fetchJobs() async {
@@ -144,11 +150,12 @@ struct JobRow: View {
                 HStack {
                     Text(job.sourcePath)
                         .font(.headline)
+                        .foregroundColor(SymairaTheme.textPrimary)
                         .lineLimit(1)
                     Spacer()
                     Text("Job #\(job.id)")
                         .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(SymairaTheme.textMuted)
                 }
 
                 HStack(spacing: 12) {
@@ -157,7 +164,7 @@ struct JobRow: View {
                     Text("Created: \(formattedDate(job.createdAt))")
                 }
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textSecondary)
 
                 if let err = job.lastError {
                     Text(err)
@@ -176,9 +183,7 @@ struct JobRow: View {
                 Button(action: onRetry) {
                     Text("Retry")
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .tint(.blue)
+                .buttonStyle(SymairaPrimaryButtonStyle())
             }
         }
     }
@@ -193,10 +198,10 @@ struct JobRow: View {
                 .foregroundColor(.red)
         case "running":
             return Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
-                .foregroundColor(.blue)
+                .foregroundColor(SymairaTheme.goldPrimary)
         default:
             return Image(systemName: "clock.fill")
-                .foregroundColor(.orange)
+                .foregroundColor(SymairaTheme.goldSecondary)
         }
     }
 

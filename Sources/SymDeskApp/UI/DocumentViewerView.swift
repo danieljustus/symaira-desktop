@@ -1,5 +1,6 @@
 import SwiftUI
 import PDFKit
+import SymairaTheme
 import SymDeskCore
 
 // MARK: - PDFKit View Wrapper
@@ -15,7 +16,7 @@ struct PDFKitView: NSViewRepresentable {
         pdfView.autoScales = true
         pdfView.displayMode = .singlePageContinuous
         pdfView.displayDirection = .vertical
-        pdfView.backgroundColor = NSColor.textBackgroundColor
+        pdfView.backgroundColor = SymairaNSColors.bgDark
 
         if let document = PDFDocument(url: url) {
             pdfView.document = document
@@ -58,8 +59,8 @@ struct TextContentView: NSViewRepresentable {
         textView.isEditable = false
         textView.isSelectable = true
         textView.font = NSFont.monospacedSystemFont(ofSize: 14, weight: .regular)
-        textView.backgroundColor = .textBackgroundColor
-        textView.textColor = .textColor
+        textView.backgroundColor = SymairaNSColors.bgDark
+        textView.textColor = SymairaNSColors.textPrimary
         textView.textContainerInset = NSSize(width: 16, height: 16)
         textView.string = text
 
@@ -83,7 +84,7 @@ struct TextContentView: NSViewRepresentable {
         let baseFont = NSFont.monospacedSystemFont(ofSize: 14, weight: .regular)
         textStorage.setAttributes([
             .font: baseFont,
-            .foregroundColor: NSColor.textColor
+            .foregroundColor: SymairaNSColors.textPrimary
         ], range: fullRange)
 
         let string = textStorage.string
@@ -92,7 +93,7 @@ struct TextContentView: NSViewRepresentable {
             let matches = headerRegex.matches(in: string, range: fullRange)
             for match in matches {
                 textStorage.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 18, weight: .bold), range: match.range)
-                textStorage.addAttribute(.foregroundColor, value: NSColor.controlAccentColor, range: match.range)
+                textStorage.addAttribute(.foregroundColor, value: SymairaNSColors.gold, range: match.range)
             }
         }
 
@@ -102,7 +103,7 @@ struct TextContentView: NSViewRepresentable {
                 let innerRange = match.range(at: 1)
                 if let innerString = (string as NSString).substring(with: innerRange).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) {
                     textStorage.addAttribute(.link, value: "symdesk://note/\(innerString)", range: match.range)
-                    textStorage.addAttribute(.foregroundColor, value: NSColor.linkColor, range: match.range)
+                    textStorage.addAttribute(.foregroundColor, value: SymairaNSColors.goldSecondary, range: match.range)
                     textStorage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: match.range)
                 }
             }
@@ -147,8 +148,10 @@ struct DocumentViewerView: View {
             if showInspector {
                 inspectorPanel
                     .frame(minWidth: 280, idealWidth: 320, maxWidth: 400)
+                    .background(SymairaTheme.bgDarker)
             }
         }
+        .background(SymairaTheme.bgDark)
         .navigationTitle(document.title)
         .toolbar {
             ToolbarItemGroup {
@@ -252,20 +255,23 @@ struct DocumentViewerView: View {
         VStack(spacing: 16) {
             Image(systemName: docTypeIcon)
                 .font(.system(size: 64))
-                .foregroundColor(.accentColor)
+                .foregroundColor(SymairaTheme.goldPrimary)
+                .shadow(color: SymairaTheme.glowIntense, radius: 16)
             Text(document.title)
                 .font(.title2)
                 .fontWeight(.semibold)
+                .foregroundColor(SymairaTheme.textPrimary)
             Text(url.pathExtension.uppercased())
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textSecondary)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(Color.gray.opacity(0.15))
+                .background(Color.white.opacity(0.06))
                 .cornerRadius(4)
             Button("Open in Default App") {
                 NSWorkspace.shared.open(url)
             }
+            .buttonStyle(SymairaSecondaryButtonStyle())
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -274,10 +280,10 @@ struct DocumentViewerView: View {
         VStack(spacing: 12) {
             Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 48))
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textMuted)
             Text("No preview available")
                 .font(.title3)
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -338,7 +344,7 @@ struct DocumentViewerView: View {
                 if !document.correspondent.isEmpty {
                     Text("[[\(document.correspondent)]]")
                         .font(.body)
-                        .foregroundColor(Color(nsColor: .linkColor))
+                        .foregroundColor(SymairaTheme.goldSecondary)
                 } else {
                     Text("—")
                         .font(.body)
@@ -411,8 +417,8 @@ struct DocumentViewerView: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(editStatus == status.rawValue ? statusColor(for: status).opacity(0.2) : Color.gray.opacity(0.1))
-            .foregroundColor(editStatus == status.rawValue ? statusColor(for: status) : .primary)
+            .background(editStatus == status.rawValue ? statusColor(for: status).opacity(0.2) : Color.white.opacity(0.05))
+            .foregroundColor(editStatus == status.rawValue ? statusColor(for: status) : SymairaTheme.textSecondary)
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
@@ -423,13 +429,7 @@ struct DocumentViewerView: View {
     }
 
     private func statusColor(for status: DocumentStatus) -> Color {
-        switch status {
-        case .open: return .blue
-        case .paid, .done: return .green
-        case .submitted: return .purple
-        case .needsReview: return .orange
-        case .waitingForReply: return .yellow
-        }
+        symairaStatusColor(status)
     }
 
     private var systemTab: some View {
@@ -479,7 +479,7 @@ struct DocumentViewerView: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.gray.opacity(0.15))
+                    .fill(Color.white.opacity(0.08))
                     .frame(height: 6)
                 RoundedRectangle(cornerRadius: 2)
                     .fill(confidenceColor)
@@ -490,7 +490,7 @@ struct DocumentViewerView: View {
     }
 
     private var confidenceColor: Color {
-        if document.confidence >= 80 { return .green }
+        if document.confidence >= 80 { return SymairaTheme.goldPrimary }
         if document.confidence >= 50 { return .orange }
         return .red
     }

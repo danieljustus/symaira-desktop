@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import SymDeskCore
 
 struct OnboardingView: View {
@@ -47,12 +48,14 @@ struct OnboardingView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            switch step {
-            case .chooseLocation:
-                chooseLocationStep
-            case .ready:
-                readyStep
+        SymairaScreen {
+            VStack(spacing: 0) {
+                switch step {
+                case .chooseLocation:
+                    chooseLocationStep
+                case .ready:
+                    readyStep
+                }
             }
         }
         .frame(width: 580, height: 520)
@@ -65,12 +68,14 @@ struct OnboardingView: View {
             VStack(spacing: 8) {
                 Image(systemName: "folder.badge.plus")
                     .font(.system(size: 40))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(SymairaTheme.goldPrimary)
+                    .shadow(color: SymairaTheme.glowIntense, radius: 12)
                 Text("Welcome to SymDesk")
                     .font(.largeTitle.bold())
+                    .foregroundColor(SymairaTheme.textPrimary)
                 Text("Where should your documents and notes live?")
                     .font(.title3)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(SymairaTheme.textSecondary)
             }
             .padding(.top, 32)
 
@@ -78,8 +83,9 @@ struct OnboardingView: View {
                 VStack(spacing: 12) {
                     ProgressView()
                         .controlSize(.large)
+                        .tint(SymairaTheme.goldPrimary)
                     Text(progressMessage)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(SymairaTheme.textSecondary)
                     if let err = errorMessage {
                         Text(err)
                             .foregroundColor(.red)
@@ -109,35 +115,51 @@ struct OnboardingView: View {
     }
 
     private func sourceButton(_ source: VaultSource) -> some View {
-        Button {
+        SourceButtonRow(source: source, isLoading: isLoading) {
             selectedSource = source
             handleSourceChoice(source)
-        } label: {
-            HStack(spacing: 14) {
-                Image(systemName: source.icon)
-                    .font(.title3)
-                    .frame(width: 28)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(source.rawValue).font(.body.weight(.medium))
-                    Text(source.description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding(12)
-            .background(Color.primary.opacity(0.04))
-            .cornerRadius(10)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-            )
         }
-        .buttonStyle(.plain)
-        .disabled(isLoading)
+    }
+
+    private struct SourceButtonRow: View {
+        let source: VaultSource
+        let isLoading: Bool
+        let action: () -> Void
+
+        @State private var isHovering = false
+
+        var body: some View {
+            Button(action: action) {
+                HStack(spacing: 14) {
+                    Image(systemName: source.icon)
+                        .font(.title3)
+                        .foregroundColor(SymairaTheme.goldPrimary)
+                        .frame(width: 28)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(source.rawValue)
+                            .font(.body.weight(.medium))
+                            .foregroundColor(SymairaTheme.textPrimary)
+                        Text(source.description)
+                            .font(.caption)
+                            .foregroundColor(SymairaTheme.textSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(SymairaTheme.textMuted)
+                }
+                .padding(12)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .glassCard(isHovered: isHovering)
+            .onHover { hovering in
+                withAnimation(SymairaTheme.transitionFast) {
+                    isHovering = hovering
+                }
+            }
+            .disabled(isLoading)
+        }
     }
 
     // MARK: - Step 2: Ready
@@ -148,14 +170,16 @@ struct OnboardingView: View {
 
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 56))
-                .foregroundColor(.green)
+                .foregroundColor(SymairaTheme.goldPrimary)
+                .shadow(color: SymairaTheme.glowIntense, radius: 16)
 
             Text("You're all set!")
                 .font(.largeTitle.bold())
+                .foregroundColor(SymairaTheme.textPrimary)
 
             Text("SymDesk is ready to explore your vault.")
                 .font(.title3)
-                .foregroundColor(.secondary)
+                .foregroundColor(SymairaTheme.textSecondary)
 
             VStack(alignment: .leading, spacing: 12) {
                 capabilityRow(icon: "folder", title: "Watch Folder", desc: "Auto-detects changes in your vault")
@@ -164,14 +188,13 @@ struct OnboardingView: View {
                 capabilityRow(icon: "magnifyingglass", title: "Search", desc: "Full-text search across all documents")
             }
             .padding(20)
-            .background(Color.primary.opacity(0.04))
-            .cornerRadius(12)
+            .glassmorphicPanel()
             .frame(maxWidth: 420)
 
             if core.isDemoMode {
                 Text("Demo mode — sample data loaded.")
                     .font(.callout)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(SymairaTheme.textSecondary)
             }
 
             Spacer()
@@ -181,14 +204,12 @@ struct OnboardingView: View {
                     NotificationCenter.default.post(name: .openDiscover, object: nil)
                     dismissOnboarding()
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+                .buttonStyle(SymairaSecondaryButtonStyle())
 
                 Button("Get Started") {
                     dismissOnboarding()
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .buttonStyle(SymairaPrimaryButtonStyle())
             }
             .padding(.bottom, 32)
         }
@@ -198,10 +219,14 @@ struct OnboardingView: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .frame(width: 20)
-                .foregroundColor(.accentColor)
+                .foregroundColor(SymairaTheme.goldPrimary)
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.body.weight(.medium))
-                Text(desc).font(.caption).foregroundColor(.secondary)
+                Text(title)
+                    .font(.body.weight(.medium))
+                    .foregroundColor(SymairaTheme.textPrimary)
+                Text(desc)
+                    .font(.caption)
+                    .foregroundColor(SymairaTheme.textSecondary)
             }
         }
     }

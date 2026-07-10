@@ -47,15 +47,30 @@ struct ContentView: View {
         Group {
             if !core.isReady {
                 if let err = core.errorMessage {
-                    VStack {
-                        Text("Error").font(.title).foregroundColor(.red)
-                        Text(err)
-                        Text("Run `brew install danieljustus/tap/symdesk` to install the core CLI.")
-                            .padding(.top)
+                    SymairaScreen {
+                        VStack(spacing: 12) {
+                            Image(systemName: "exclamationmark.triangle")
+                                .font(.system(size: 40))
+                                .foregroundColor(SymairaTheme.goldPrimary)
+                            Text("Error")
+                                .font(.title.bold())
+                                .foregroundColor(SymairaTheme.textPrimary)
+                            Text(err)
+                                .foregroundColor(SymairaTheme.textSecondary)
+                            Text("Run `brew install danieljustus/tap/symdesk` to install the core CLI.")
+                                .foregroundColor(SymairaTheme.textMuted)
+                                .padding(.top)
+                        }
+                        .padding(28)
+                        .glassmorphicPanel()
+                        .padding(40)
                     }
-                    .padding()
                 } else {
-                    ProgressView("Connecting to SymDesk Core...")
+                    SymairaScreen {
+                        ProgressView("Connecting to SymDesk Core...")
+                            .tint(SymairaTheme.goldPrimary)
+                            .foregroundColor(SymairaTheme.textSecondary)
+                    }
                 }
             } else {
                 NavigationSplitView {
@@ -72,10 +87,10 @@ struct ContentView: View {
                                         if let count = preset.status == nil ? docTotalCount : docCounts[preset.status!.rawValue] {
                                             Text("\(count)")
                                                 .font(.caption)
-                                                .foregroundColor(.secondary)
+                                                .foregroundColor(SymairaTheme.textSecondary)
                                                 .padding(.horizontal, 6)
                                                 .padding(.vertical, 2)
-                                                .background(Color.gray.opacity(0.12))
+                                                .background(Color.white.opacity(0.06))
                                                 .cornerRadius(4)
                                         }
                                     }
@@ -132,8 +147,11 @@ struct ContentView: View {
                             }
                         }
                     }
+                    .scrollContentBackground(.hidden)
+                    .background(SymairaTheme.bgDarker)
                     .navigationTitle("SymDesk")
                 } detail: {
+                    SymairaScreen {
                     switch displayMode {
                     case .ingestQueue:
                         IngestQueueView()
@@ -164,6 +182,7 @@ struct ContentView: View {
                             }
                         } else {
                             Text("Select a view")
+                                .foregroundColor(SymairaTheme.textMuted)
                         }
                     case .vault:
                         if let note = selectedNote {
@@ -172,7 +191,7 @@ struct ContentView: View {
                                     HStack {
                                         Text("⚠️ iCloud Sync Conflict detected")
                                             .font(.caption)
-                                            .foregroundColor(.yellow)
+                                            .foregroundColor(SymairaTheme.goldSecondary)
                                         Spacer()
                                         Button("Keep Mine") {
                                             Task {
@@ -194,8 +213,12 @@ struct ContentView: View {
                                         .controlSize(.small)
                                     }
                                     .padding(8)
-                                    .background(Color.yellow.opacity(0.15))
+                                    .background(SymairaTheme.goldPrimary.opacity(0.12))
                                     .cornerRadius(6)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
+                                    )
                                     .padding(.horizontal)
                                     .padding(.top, 8)
                                 }
@@ -257,8 +280,9 @@ struct ContentView: View {
                             }
                         } else {
                             Text("Select a note or press Cmd-K")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(SymairaTheme.textMuted)
                         }
+                    }
                     }
                 }
                 .inspector(isPresented: $isShowingInspector) {
@@ -266,15 +290,21 @@ struct ContentView: View {
                         AIDockView()
                     } else {
                         VStack(alignment: .leading) {
-                            Text("Backlinks").font(.headline).padding()
+                            Text("Backlinks")
+                                .font(.headline)
+                                .foregroundColor(SymairaTheme.goldPrimary)
+                                .padding()
                             List(backlinks, id: \.self) { link in
                                 Button(link) {
                                     navigateToNote(title: link)
                                 }
                                 .buttonStyle(PlainButtonStyle())
+                                .foregroundColor(SymairaTheme.textSecondary)
                             }
+                            .scrollContentBackground(.hidden)
                         }
                         .frame(minWidth: 200)
+                        .background(SymairaTheme.bgDarker)
                     }
                 }
                 .onDrop(of: [.fileURL], isTargeted: nil) { providers in
@@ -310,11 +340,11 @@ struct ContentView: View {
                         HStack {
                             Text(doctorStatus)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(SymairaTheme.textMuted)
                             if let lastEv = watcher.latestEvent {
                                 Text("Last event: \(lastEv.event) on \(lastEv.path)")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(SymairaTheme.textMuted)
                             }
                         }
                     }

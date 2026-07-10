@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaTheme
 import SymDeskCore
 import SymairaCLIRunner
 
@@ -24,16 +25,30 @@ struct CommandPalette: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            TextField("Search notes or type to create...", text: $searchText)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .font(.system(size: 24))
-                .padding()
-                .onSubmit {
-                    performSearch()
-                }
-            
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 18))
+                    .foregroundColor(SymairaTheme.goldPrimary)
+                TextField("Search notes or type to create...", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 24))
+                    .foregroundColor(SymairaTheme.textPrimary)
+                    .onSubmit {
+                        performSearch()
+                    }
+            }
+            .padding(12)
+            .background(SymairaTheme.bgCard)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
+            )
+            .cornerRadius(10)
+            .padding()
+
             if isSearching {
                 ProgressView()
+                    .tint(SymairaTheme.goldPrimary)
                     .padding()
             }
             
@@ -69,8 +84,12 @@ struct CommandPalette: View {
                                 onSelectSearchResult(res)
                             }) {
                                 VStack(alignment: .leading) {
-                                    Text(res.title).font(.headline)
-                                    Text(res.snippet).font(.caption).foregroundColor(.secondary)
+                                    Text(res.title)
+                                        .font(.headline)
+                                        .foregroundColor(SymairaTheme.textPrimary)
+                                    Text(res.snippet)
+                                        .font(.caption)
+                                        .foregroundColor(SymairaTheme.textSecondary)
                                 }
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -91,6 +110,8 @@ struct CommandPalette: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(SymairaTheme.bgDark)
         .frame(width: 600, height: 400)
         .onDisappear {
             searchText = ""

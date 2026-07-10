@@ -2,7 +2,6 @@ import SwiftUI
 import SymairaTheme
 import SymDeskCore
 
-@main
 struct SymDeskApp: App {
     @StateObject private var core = DeskCore.shared
     @StateObject private var watcher = EventWatcher.shared

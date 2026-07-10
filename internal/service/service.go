@@ -31,10 +31,14 @@ type Service struct {
 
 // New creates a new Service instance.
 func New(vaultRoot string, db *sidecar.DB) *Service {
+	canonical, err := filepath.EvalSymlinks(vaultRoot)
+	if err != nil {
+		canonical = vaultRoot
+	}
 	return &Service{
-		VaultRoot: vaultRoot,
+		VaultRoot: canonical,
 		DB:        db,
-		ViewsMgr:  dbviews.NewManager(vaultRoot),
+		ViewsMgr:  dbviews.NewManager(canonical),
 	}
 }
 

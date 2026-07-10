@@ -86,7 +86,7 @@ func TestRegisterCommandsStructures(t *testing.T) {
 	rootCmd := &cobra.Command{Use: "test"}
 	registerCommands(rootCmd)
 
-	expectedCommands := []string{"docs", "doc", "similar", "demo"}
+	expectedCommands := []string{"docs", "doc", "similar", "demo", "recipe"}
 	for _, name := range expectedCommands {
 		found := false
 		for _, cmd := range rootCmd.Commands() {

@@ -20,6 +20,7 @@ import (
 )
 
 func registerCommands(rootCmd *cobra.Command) {
+	rootCmd.AddCommand(newRecipeCmd())
 	doctorCmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "Check system health, vault, and sidecar configuration",

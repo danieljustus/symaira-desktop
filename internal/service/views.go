@@ -29,6 +29,61 @@ func (s *Service) ViewsDelete(id string) error {
 	return s.ViewsMgr.Delete(id)
 }
 
+// ViewsSiblings returns views that point at the same source. An empty source
+// intentionally has no siblings: legacy views are independent by default.
+func (s *Service) ViewsSiblings(id string) ([]dbviews.View, error) {
+	view, err := s.ViewsGet(id)
+	if err != nil {
+		return nil, err
+	}
+	if view.Source == "" {
+		return []dbviews.View{*view}, nil
+	}
+	views, err := s.ViewsList()
+	if err != nil {
+		return nil, err
+	}
+	result := make([]dbviews.View, 0)
+	for _, candidate := range views {
+		if candidate.Source == view.Source {
+			result = append(result, candidate)
+		}
+	}
+	return result, nil
+}
+
+// ViewsNewEntry creates a note from a view's optional template and fills in
+// explicit defaults plus equality filters so the new note belongs in the view.
+func (s *Service) ViewsNewEntry(id, title string) (string, error) {
+	view, err := s.ViewsGet(id)
+	if err != nil {
+		return "", err
+	}
+	templateRef := ""
+	defaults := map[string]string{}
+	if view.Template != nil {
+		templateRef = view.Template.Ref
+		for key, value := range view.Template.Defaults {
+			defaults[key] = value
+		}
+	}
+	for _, filter := range view.Filters {
+		if filter.Operator == "" || strings.EqualFold(filter.Operator, "equals") {
+			defaults[filter.Key] = filter.Value
+		}
+	}
+	path, err := s.NoteNew(title, "", templateRef)
+	if err != nil {
+		return "", err
+	}
+	for key, value := range defaults {
+		if err := s.PropsEdit(path, key, value); err != nil {
+			return path, err
+		}
+	}
+	return path, nil
+}
+
 func (s *Service) ViewsExec(id string) ([]map[string]interface{}, error) {
 	view, err := s.ViewsGet(id)
 	if err != nil {

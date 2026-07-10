@@ -289,6 +289,41 @@ func TestViewsSaveUpdatesExisting(t *testing.T) {
 	}
 }
 
+func TestViewsNewEntryAppliesTemplateDefaultsAndFilters(t *testing.T) {
+	svc := newTestService(t)
+	view := dbviews.View{ID: "inbox", Name: "Inbox", Filters: []dbviews.Filter{{Key: "status", Operator: "equals", Value: "open"}}, Template: &dbviews.Template{Defaults: map[string]string{"priority": "high"}}}
+	if err := svc.ViewsMgr.Save(view); err != nil {
+		t.Fatal(err)
+	}
+	path, err := svc.ViewsNewEntry("inbox", "Created from view")
+	if err != nil {
+		t.Fatal(err)
+	}
+	props, err := svc.DB.GetProperties(filepath.Join(svc.VaultRoot, path))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if props["status"] != "open" || props["priority"] != "high" {
+		t.Fatalf("unexpected properties: %#v", props)
+	}
+}
+
+func TestViewsSiblingsUseSourceOnly(t *testing.T) {
+	svc := newTestService(t)
+	for _, view := range []dbviews.View{{ID: "a", Source: "tasks"}, {ID: "b", Source: "tasks"}, {ID: "c", Source: "notes"}} {
+		if err := svc.ViewsMgr.Save(view); err != nil {
+			t.Fatal(err)
+		}
+	}
+	siblings, err := svc.ViewsSiblings("a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(siblings) != 2 {
+		t.Fatalf("expected two task views, got %d", len(siblings))
+	}
+}
+
 func TestViewsExecNoComputedColumns(t *testing.T) {
 	svc := newTestService(t)
 

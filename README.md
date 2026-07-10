@@ -82,6 +82,10 @@ symdesk views ...              # saved database views
 symdesk ingest <file>          # copy a document into inbox/ + create a stub note
 symdesk ask "question?"        # AI answer grounded in vault search results
 symdesk events --json          # NDJSON change stream (used by the app)
+symdesk recipe validate .symdesk/recipes/daily.yml  # validate automation without running it
+symdesk recipe run .symdesk/recipes/daily.yml       # stage runner proposals for review
+symdesk recipe diff <run-id>                         # inspect proposed files
+symdesk recipe accept <run-id>                       # apply an approved proposal
 symdesk mcp                    # stdio MCP server for agents
 symdesk doctor                 # health check
 symdesk version --json         # {"tool":"symdesk","version":...,"schema_version":1}
@@ -96,6 +100,16 @@ symdesk demo init [dir]                   # materialise the built-in demo vault
 ```
 
 All commands support `--json` for machine-readable output.
+
+### Reviewed recipes (optional)
+
+Recipes live in `.symdesk/recipes/*.yml`. They declare an allowed trigger, an
+explicit tool allow-list, and a hard `write_cap`. `symdesk` delegates execution
+to an optional `symvibe` runtime through a versioned JSON request/response
+contract; the runtime can only propose file contents. Each run is retained in
+`.symdesk/runs/<id>/` as JSON plus a readable Markdown trace. No proposal
+changes the vault until `symdesk recipe accept <id>` is invoked; rejected runs
+remain available for inspection.
 
 ### AI (optional, local-first or cloud)
 

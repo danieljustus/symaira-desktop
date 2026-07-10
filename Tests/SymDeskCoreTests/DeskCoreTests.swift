@@ -262,4 +262,129 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertEqual(AIEventType.tool.rawValue, "tool")
         XCTAssertEqual(AIEventType.done.rawValue, "done")
     }
+
+    // MARK: - NotificationScheduler Tests
+
+    func testUpcomingDueNotificationsFiltersByLeadTime() throws {
+        let calendar = Calendar.current
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
+
+        // Due in 3 days → with 1-day lead time, fire date is in 2 days (future)
+        let dueSoon = formatter.string(from: calendar.date(byAdding: .day, value: 3, to: Date())!)
+        // Due tomorrow → with 1-day lead time, fire date is today (included)
+        let dueTomorrow = formatter.string(from: calendar.date(byAdding: .day, value: 1, to: Date())!)
+        // Due yesterday → fire date was 2 days ago (past, should be skipped)
+        let duePast = formatter.string(from: calendar.date(byAdding: .day, value: -1, to: Date())!)
+        // Empty due date → should be skipped
+        let noDue = ""
+
+        let docs = [
+            DocumentItem(
+                path: "a.md", title: "Doc A", documentDate: "", person: "",
+                status: "open", dueDate: dueSoon, confidence: 80,
+                correspondent: "", documentType: "invoice"
+            ),
+            DocumentItem(
+                path: "b.md", title: "Doc B", documentDate: "", person: "",
+                status: "open", dueDate: dueTomorrow, confidence: 80,
+                correspondent: "", documentType: "invoice"
+            ),
+            DocumentItem(
+                path: "c.md", title: "Doc C", documentDate: "", person: "",
+                status: "open", dueDate: noDue, confidence: 80,
+                correspondent: "", documentType: "invoice"
+            ),
+        ]
+
+        let scheduler = NotificationScheduler(leadTimeDays: 1)
+        let notifications = scheduler.upcomingDueNotifications(from: docs)
+
+        // Should include Doc A (due in 3 days → fire in 2 days) and Doc B (due tomorrow → fire today)
+        // Doc C (empty due date) should be skipped
+        XCTAssertFalse(notifications.isEmpty, "Should have at least one notification")
+        let paths = notifications.map(\.documentPath)
+        XCTAssertTrue(paths.contains("a.md"), "Doc A should be included")
+        XCTAssertTrue(paths.contains("b.md"), "Doc B (due tomorrow) should be included")
+        XCTAssertFalse(paths.contains("c.md"), "Doc C (empty due date) should be skipped")
+    }
+
+    func testUpcomingDueNotificationsSkipsPastFireDates() throws {
+        let calendar = Calendar.current
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
+
+        // Due yesterday → with 1-day lead time, fire date was 2 days ago (past)
+        let dueYesterday = formatter.string(from: calendar.date(byAdding: .day, value: -1, to: Date())!)
+
+        let docs = [
+            DocumentItem(
+                path: "past.md", title: "Past Due", documentDate: "", person: "",
+                status: "open", dueDate: dueYesterday, confidence: 80,
+                correspondent: "", documentType: "invoice"
+            ),
+        ]
+
+        let scheduler = NotificationScheduler(leadTimeDays: 1)
+        let notifications = scheduler.upcomingDueNotifications(from: docs)
+
+        XCTAssertTrue(notifications.isEmpty, "Past fire dates should be skipped")
+    }
+
+    func testUpcomingDueNotificationsSortedByFireDate() throws {
+        let calendar = Calendar.current
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
+
+        let dueIn3 = formatter.string(from: calendar.date(byAdding: .day, value: 3, to: Date())!)
+        let dueIn10 = formatter.string(from: calendar.date(byAdding: .day, value: 10, to: Date())!)
+
+        let docs = [
+            DocumentItem(
+                path: "far.md", title: "Far", documentDate: "", person: "",
+                status: "open", dueDate: dueIn10, confidence: 80,
+                correspondent: "", documentType: "invoice"
+            ),
+            DocumentItem(
+                path: "near.md", title: "Near", documentDate: "", person: "",
+                status: "open", dueDate: dueIn3, confidence: 80,
+                correspondent: "", documentType: "invoice"
+            ),
+        ]
+
+        let scheduler = NotificationScheduler(leadTimeDays: 1)
+        let notifications = scheduler.upcomingDueNotifications(from: docs)
+
+        XCTAssertEqual(notifications.count, 2)
+        XCTAssertEqual(notifications[0].documentPath, "near.md", "Near should fire first")
+        XCTAssertEqual(notifications[1].documentPath, "far.md", "Far should fire second")
+    }
+
+    func testReviewQueueNotificationReturnsNilForZero() {
+        let scheduler = NotificationScheduler()
+        XCTAssertNil(scheduler.reviewQueueNotification(count: 0))
+    }
+
+    func testReviewQueueNotificationReturnsContentForNonZero() {
+        let scheduler = NotificationScheduler()
+
+        let one = scheduler.reviewQueueNotification(count: 1)
+        XCTAssertNotNil(one)
+        XCTAssertEqual(one?.title, "1 document needs review")
+
+        let three = scheduler.reviewQueueNotification(count: 3)
+        XCTAssertNotNil(three)
+        XCTAssertEqual(three?.title, "3 documents need review")
+        XCTAssertTrue(three?.body.contains("3 documents") ?? false)
+    }
+
+    func testNotificationSchedulerDefaultLeadTime() {
+        let scheduler = NotificationScheduler()
+        XCTAssertEqual(scheduler.leadTimeDays, 1)
+    }
+
+    func testNotificationSchedulerCustomLeadTime() {
+        let scheduler = NotificationScheduler(leadTimeDays: 3)
+        XCTAssertEqual(scheduler.leadTimeDays, 3)
+    }
 }

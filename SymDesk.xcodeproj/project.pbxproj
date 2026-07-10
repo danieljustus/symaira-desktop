@@ -16,6 +16,8 @@
 		274F640915B4D63279459C99 /* DbViewCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48223DCBE4FF19264208BCB3 /* DbViewCalendar.swift */; };
 		2A9DFE1A981C4FBDB9D49061 /* DbViewBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F76334FF1AA665F17F9B0C /* DbViewBoard.swift */; };
 		38E3530E7E3A4E1D85CBC384 /* libSymDeskCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF3DE41EB61C376999197AEF /* libSymDeskCore.a */; };
+		3D00605BDE73976880F49353 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233223A3C27BEA490CADB82C /* NotificationScheduler.swift */; };
+		40406909A4AAF62DD881D295 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EBE73852F5829E6BB25B82 /* NotificationManager.swift */; };
 		45C5391AC1D3FBABE28B94AF /* SymDeskDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB445023E5B108D54E2CADF5 /* SymDeskDesign.swift */; };
 		501D1A781F9C96208374CF89 /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = 440538EBC91381E953CC1697 /* SymairaCLIRunner */; };
 		52B0B883869C07C6C51D48C4 /* BlockEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B58CE1AAB047E5C20B8DBC43 /* BlockEditorView.swift */; };
@@ -69,6 +71,8 @@
 		15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
 		1EEEC588B327739FBAF693D4 /* DbViewTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewTable.swift; sourceTree = "<group>"; };
 		1F547CF59C20684A5051D6B5 /* MarkdownEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorView.swift; sourceTree = "<group>"; };
+		233223A3C27BEA490CADB82C /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
+		23EBE73852F5829E6BB25B82 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		24A66FCAE94BEB5D93BE972B /* BlockNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockNode.swift; sourceTree = "<group>"; };
 		2FBA5128D6B234381F73178F /* SymDesk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SymDesk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		37BB0170D51D31EB825E5869 /* UpdateInstallerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateInstallerTests.swift; sourceTree = "<group>"; };
@@ -131,6 +135,7 @@
 				A7C133D510BC5F4211286EC5 /* AppUpdateChecker.swift */,
 				F756739286BF26EA17456C99 /* DeskCore.swift */,
 				95355A68097983C9F84AE919 /* EventWatcher.swift */,
+				233223A3C27BEA490CADB82C /* NotificationScheduler.swift */,
 				0D31AEB4D808A7B5F64134E1 /* UpdateInstaller.swift */,
 				A175D91D3D83560906E78387 /* VaultConfig.swift */,
 			);
@@ -162,6 +167,7 @@
 				61EE8B62E86F8FE234837F0A /* ContentView.swift */,
 				641C263A0947A7D1CCBE84E3 /* Info.plist */,
 				827CE03FB82C7640D64E4D97 /* main.swift */,
+				23EBE73852F5829E6BB25B82 /* NotificationManager.swift */,
 				BBD325D2A25FDF9FA519A6FA /* SymDeskApp.swift */,
 				362E9BEEFFBA097C15F5579C /* Models */,
 				4EC33A4FB80D80BF52DF3EBF /* UI */,
@@ -353,6 +359,7 @@
 				8598224B3A3003EC9273BD03 /* AppUpdateChecker.swift in Sources */,
 				B4BBDCDD200A14353CFF2B9F /* DeskCore.swift in Sources */,
 				D32E9B586B362E4914175291 /* EventWatcher.swift in Sources */,
+				3D00605BDE73976880F49353 /* NotificationScheduler.swift in Sources */,
 				C85A4C45BB4E561D0049F805 /* UpdateInstaller.swift in Sources */,
 				D0EC53A22588E1A56A3E2F2B /* VaultConfig.swift in Sources */,
 			);
@@ -386,6 +393,7 @@
 				C56310271DF0FBD1ED258CCA /* GraphView.swift in Sources */,
 				64C0919422B9FBF88A826757 /* IngestQueueView.swift in Sources */,
 				223A0903E7A1B2FF00EE3F7E /* MarkdownEditorView.swift in Sources */,
+				40406909A4AAF62DD881D295 /* NotificationManager.swift in Sources */,
 				A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */,
 				888252B8F6964BA6158F9CC6 /* ReviewLaneView.swift in Sources */,
 				CBD99C1AAF0BA2BE2A136FA6 /* SymDeskApp.swift in Sources */,

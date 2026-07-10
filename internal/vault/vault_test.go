@@ -209,6 +209,246 @@ func TestSetFrontmatterKeyNumericValue(t *testing.T) {
 	}
 }
 
+func TestSetFrontmatterValueReplaceStringPreservesOrder(t *testing.T) {
+	tmpDir := t.TempDir()
+	content := "---\ntitle: \"Test\"\nstatus: \"open\"\n# a comment\ntags:\n  - a\n---\n\nBody here.\n"
+	path := filepath.Join(tmpDir, "test.md")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := SetFrontmatterValue(path, "status", "done"); err != nil {
+		t.Fatal(err)
+	}
+
+	data, _ := os.ReadFile(path)
+	result := string(data)
+	if !strings.Contains(result, "status: \"done\"") {
+		t.Errorf("expected status changed to done, got:\n%s", result)
+	}
+	if !strings.Contains(result, "title: \"Test\"") {
+		t.Errorf("title should be preserved, got:\n%s", result)
+	}
+	if !strings.Contains(result, "# a comment") {
+		t.Errorf("comment should be preserved, got:\n%s", result)
+	}
+	if !strings.Contains(result, "tags:") {
+		t.Errorf("tags block should be preserved, got:\n%s", result)
+	}
+	if !strings.Contains(result, "Body here.") {
+		t.Errorf("body should be preserved, got:\n%s", result)
+	}
+
+	doc, err := ParseFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.Status != "done" {
+		t.Errorf("expected parsed status 'done', got '%s'", doc.Status)
+	}
+	if len(doc.Tags) != 1 || doc.Tags[0] != "a" {
+		t.Errorf("expected tags preserved, got %v", doc.Tags)
+	}
+}
+
+func TestSetFrontmatterValueAddNewPreservesOrder(t *testing.T) {
+	tmpDir := t.TempDir()
+	content := "---\ntitle: \"Test\"\ncreated: \"2026-01-01T00:00:00Z\"\n---\n\nBody.\n"
+	path := filepath.Join(tmpDir, "test.md")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := SetFrontmatterValue(path, "due_date", "2026-12-31"); err != nil {
+		t.Fatal(err)
+	}
+
+	data, _ := os.ReadFile(path)
+	result := string(data)
+	if !strings.Contains(result, "due_date: \"2026-12-31\"") {
+		t.Errorf("expected due_date added, got:\n%s", result)
+	}
+	if !strings.Contains(result, "title: \"Test\"") {
+		t.Errorf("expected title preserved, got:\n%s", result)
+	}
+
+	titleIdx := strings.Index(result, "title:")
+	createdIdx := strings.Index(result, "created:")
+	dueIdx := strings.Index(result, "due_date:")
+	if !(titleIdx < createdIdx && createdIdx < dueIdx) {
+		t.Errorf("expected key order title < created < due_date, got:\n%s", result)
+	}
+
+	doc, err := ParseFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.DueDate != "2026-12-31" {
+		t.Errorf("expected due_date '2026-12-31', got '%s'", doc.DueDate)
+	}
+	if doc.Title != "Test" {
+		t.Errorf("expected title preserved, got '%s'", doc.Title)
+	}
+}
+
+func TestSetFrontmatterValueTypedValues(t *testing.T) {
+	tmpDir := t.TempDir()
+	content := "---\ntitle: \"Test\"\ncount: 1\nflag: false\ntags: []\n---\n\nBody.\n"
+	path := filepath.Join(tmpDir, "test.md")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := SetFrontmatterValue(path, "count", 42); err != nil {
+		t.Fatal(err)
+	}
+	if err := SetFrontmatterValue(path, "flag", true); err != nil {
+		t.Fatal(err)
+	}
+	if err := SetFrontmatterValue(path, "tags", []string{"a", "b"}); err != nil {
+		t.Fatal(err)
+	}
+
+	data, _ := os.ReadFile(path)
+	result := string(data)
+	if !strings.Contains(result, "count: 42") {
+		t.Errorf("expected count 42, got:\n%s", result)
+	}
+	if !strings.Contains(result, "flag: true") {
+		t.Errorf("expected flag true, got:\n%s", result)
+	}
+	if !strings.Contains(result, "tags: [\"a\", \"b\"]") {
+		t.Errorf("expected inline tags array, got:\n%s", result)
+	}
+
+	doc, err := ParseFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.Frontmatter["count"] != 42 {
+		t.Errorf("expected parsed count 42, got %v", doc.Frontmatter["count"])
+	}
+	if doc.Frontmatter["flag"] != true {
+		t.Errorf("expected parsed flag true, got %v", doc.Frontmatter["flag"])
+	}
+	if len(doc.Tags) != 2 || doc.Tags[0] != "a" || doc.Tags[1] != "b" {
+		t.Errorf("expected parsed tags [a b], got %v", doc.Tags)
+	}
+}
+
+func TestSetFrontmatterValuePreservesCRLF(t *testing.T) {
+	tmpDir := t.TempDir()
+	content := "---\r\ntitle: \"Test\"\r\nstatus: \"open\"\r\n---\r\n\r\nBody.\r\n"
+	path := filepath.Join(tmpDir, "test.md")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := SetFrontmatterValue(path, "status", "done"); err != nil {
+		t.Fatal(err)
+	}
+
+	data, _ := os.ReadFile(path)
+	if !strings.Contains(string(data), "\r\n") {
+		t.Errorf("expected CRLF to be preserved")
+	}
+	lfCount := strings.Count(string(data), "\n")
+	crlfCount := strings.Count(string(data), "\r\n")
+	if lfCount != crlfCount {
+		t.Errorf("expected every LF to be part of CRLF, got %d LF vs %d CRLF", lfCount, crlfCount)
+	}
+
+	doc, err := ParseFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.Status != "done" {
+		t.Errorf("expected status 'done', got '%s'", doc.Status)
+	}
+}
+
+func TestSetFrontmatterValueNoFrontmatter(t *testing.T) {
+	tmpDir := t.TempDir()
+	content := "# Just a heading\n\nNo frontmatter here.\n"
+	path := filepath.Join(tmpDir, "test.md")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := SetFrontmatterValue(path, "status", "open"); err != nil {
+		t.Fatal(err)
+	}
+
+	doc, err := ParseFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.Status != "open" {
+		t.Errorf("expected status 'open', got '%s'", doc.Status)
+	}
+	if !strings.Contains(doc.Body, "# Just a heading") {
+		t.Errorf("body should be preserved, got '%s'", doc.Body)
+	}
+}
+
+func TestDeleteFrontmatterValue(t *testing.T) {
+	tmpDir := t.TempDir()
+	content := "---\ntitle: \"Test\"\nstatus: \"open\"\ntags:\n  - a\n---\n\nBody.\n"
+	path := filepath.Join(tmpDir, "test.md")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := DeleteFrontmatterValue(path, "status"); err != nil {
+		t.Fatal(err)
+	}
+
+	data, _ := os.ReadFile(path)
+	result := string(data)
+	if strings.Contains(result, "status:") {
+		t.Errorf("expected status removed, got:\n%s", result)
+	}
+	if !strings.Contains(result, "title: \"Test\"") {
+		t.Errorf("expected title preserved, got:\n%s", result)
+	}
+	if !strings.Contains(result, "tags:") {
+		t.Errorf("expected tags preserved, got:\n%s", result)
+	}
+	if !strings.Contains(result, "Body.") {
+		t.Errorf("expected body preserved, got:\n%s", result)
+	}
+
+	doc, err := ParseFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.Status != "" {
+		t.Errorf("expected empty status, got '%s'", doc.Status)
+	}
+	if doc.Title != "Test" {
+		t.Errorf("expected title preserved, got '%s'", doc.Title)
+	}
+}
+
+func TestDeleteFrontmatterValueMissingKey(t *testing.T) {
+	tmpDir := t.TempDir()
+	content := "---\ntitle: \"Test\"\n---\n\nBody.\n"
+	path := filepath.Join(tmpDir, "test.md")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := DeleteFrontmatterValue(path, "status"); err != nil {
+		t.Fatal(err)
+	}
+
+	data, _ := os.ReadFile(path)
+	result := string(data)
+	if !strings.Contains(result, "title: \"Test\"") {
+		t.Errorf("expected file unchanged, got:\n%s", result)
+	}
+}
+
 // --- ResolveVaultRoot tests (coverage target: vault.go:56-81) ---
 
 func TestResolveVaultRoot_MissingEnvAndConfig(t *testing.T) {

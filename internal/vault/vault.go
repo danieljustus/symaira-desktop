@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -393,4 +394,192 @@ func quoteYAML(v string) string {
 	}
 	escaped := strings.ReplaceAll(v, `"`, `\"`)
 	return `"` + escaped + `"`
+}
+
+// SetFrontmatterValue writes a typed frontmatter value to a markdown file,
+// preserving the surrounding frontmatter, comments, key ordering and body bytes
+// as far as possible. The write is performed atomically (temp file + fsync +
+// rename) so a failed write cannot leave a partially written note.
+func SetFrontmatterValue(filePath, key string, value interface{}) error {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("read file: %w", err)
+	}
+
+	lineEnding := detectLineEnding(data)
+	content := string(data)
+	var lines []string
+	if lineEnding == "\r\n" {
+		lines = strings.Split(content, "\r\n")
+	} else {
+		lines = strings.Split(content, "\n")
+	}
+
+	valueStr, err := yamlValueString(value)
+	if err != nil {
+		return fmt.Errorf("marshal value: %w", err)
+	}
+
+	fmStart, fmEnd := findFrontmatterBounds(lines)
+	if fmStart == -1 || fmEnd == -1 {
+		// No frontmatter block: create one at the top of the file.
+		newLines := make([]string, 0, len(lines)+4)
+		newLines = append(newLines, "---")
+		newLines = append(newLines, key+": "+valueStr)
+		newLines = append(newLines, "---")
+		newLines = append(newLines, lines...)
+		return writeFileAtomic(filePath, []byte(strings.Join(newLines, lineEnding)))
+	}
+
+	keyPrefix := key + ": "
+	replaced := false
+	for i := fmStart + 1; i < fmEnd; i++ {
+		trimmed := strings.TrimRight(lines[i], "\r")
+		if strings.HasPrefix(trimmed, keyPrefix) || trimmed == key {
+			lines[i] = keyPrefix + valueStr
+			replaced = true
+			break
+		}
+	}
+
+	if !replaced {
+		// Preserve existing key order by inserting before the closing ---.
+		insert := append([]string{keyPrefix + valueStr}, lines[fmEnd:]...)
+		lines = append(lines[:fmEnd], insert...)
+	}
+
+	return writeFileAtomic(filePath, []byte(strings.Join(lines, lineEnding)))
+}
+
+// DeleteFrontmatterValue removes a frontmatter key while preserving the rest of
+// the frontmatter block and body. If the key does not exist the file is unchanged.
+func DeleteFrontmatterValue(filePath, key string) error {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("read file: %w", err)
+	}
+
+	lineEnding := detectLineEnding(data)
+	content := string(data)
+	var lines []string
+	if lineEnding == "\r\n" {
+		lines = strings.Split(content, "\r\n")
+	} else {
+		lines = strings.Split(content, "\n")
+	}
+
+	fmStart, fmEnd := findFrontmatterBounds(lines)
+	if fmStart == -1 || fmEnd == -1 {
+		return nil
+	}
+
+	keyPrefix := key + ": "
+	for i := fmStart + 1; i < fmEnd; i++ {
+		trimmed := strings.TrimRight(lines[i], "\r")
+		if strings.HasPrefix(trimmed, keyPrefix) || trimmed == key {
+			lines = append(lines[:i], lines[i+1:]...)
+			break
+		}
+	}
+
+	return writeFileAtomic(filePath, []byte(strings.Join(lines, lineEnding)))
+}
+
+// yamlValueString renders a typed value as a single-line YAML scalar or inline
+// array suitable for a frontmatter key line. Multi-line values fall back to the
+// YAML encoder and are trimmed to a single line where possible.
+func yamlValueString(v interface{}) (string, error) {
+	switch val := v.(type) {
+	case string:
+		return quoteYAML(val), nil
+	case int:
+		return strconv.Itoa(val), nil
+	case int64:
+		return strconv.FormatInt(val, 10), nil
+	case float64:
+		return strconv.FormatFloat(val, 'f', -1, 64), nil
+	case bool:
+		return strconv.FormatBool(val), nil
+	case []string:
+		parts := make([]string, 0, len(val))
+		for _, s := range val {
+			parts = append(parts, quoteYAML(s))
+		}
+		return "[" + strings.Join(parts, ", ") + "]", nil
+	case []interface{}:
+		parts := make([]string, 0, len(val))
+		for _, item := range val {
+			s, err := yamlValueString(item)
+			if err != nil {
+				return "", err
+			}
+			parts = append(parts, s)
+		}
+		return "[" + strings.Join(parts, ", ") + "]", nil
+	default:
+		b, err := yaml.Marshal(v)
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimSpace(string(b)), nil
+	}
+}
+
+// findFrontmatterBounds returns the line indices of the opening and closing
+// frontmatter markers (---) in a line-slice split on "\n".
+func findFrontmatterBounds(lines []string) (start, end int) {
+	start = -1
+	end = -1
+	for i, line := range lines {
+		trimmed := strings.TrimRight(line, "\r")
+		if trimmed == "---" {
+			if start == -1 {
+				start = i
+			} else {
+				end = i
+				break
+			}
+		}
+	}
+	return start, end
+}
+
+// detectLineEnding preserves CRLF files by returning "\r\n" when the file
+// already contains it, otherwise "\n".
+func detectLineEnding(data []byte) string {
+	if strings.Contains(string(data), "\r\n") {
+		return "\r\n"
+	}
+	return "\n"
+}
+
+// writeFileAtomic writes data to a temporary file in the same directory, fsyncs
+// it, and renames it over path so the update is atomic and durable.
+func writeFileAtomic(path string, data []byte) error {
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, ".symdesk-frontmatter-*.tmp")
+	if err != nil {
+		return fmt.Errorf("create temp file: %w", err)
+	}
+	tmpName := tmp.Name()
+
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		os.Remove(tmpName)
+		return fmt.Errorf("write temp file: %w", err)
+	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		os.Remove(tmpName)
+		return fmt.Errorf("sync temp file: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpName)
+		return fmt.Errorf("close temp file: %w", err)
+	}
+	if err := os.Rename(tmpName, path); err != nil {
+		os.Remove(tmpName)
+		return fmt.Errorf("rename temp file: %w", err)
+	}
+	return nil
 }

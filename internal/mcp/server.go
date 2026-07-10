@@ -17,15 +17,41 @@ import (
 
 var ServerVersion = "0.5.0"
 
-func StartServer(cfg *config.Config, version string) error {
+// ToolCapability classifies an MCP tool as read-only or mutating.
+type ToolCapability string
+
+const (
+	ReadOnly  ToolCapability = "read_only"
+	Mutating  ToolCapability = "mutating"
+)
+
+// ToolCapabilities maps tool names to their mutation capability.
+var ToolCapabilities = map[string]ToolCapability{
+	"desk_status":       ReadOnly,
+	"desk_ls":           ReadOnly,
+	"desk_search":       ReadOnly,
+	"desk_props":        ReadOnly,
+	"desk_backlinks":    ReadOnly,
+	"desk_ask":          ReadOnly,
+	"desk_transform":    ReadOnly,
+	"desk_docs":         ReadOnly,
+	"docs_review":       ReadOnly,
+	"docs_similar":      ReadOnly,
+	"desk_related":      ReadOnly,
+	"desk_ingest_jobs":  ReadOnly,
+	"desk_note_new":     Mutating,
+	"desk_ingest":       Mutating,
+	"doc_set_status":    Mutating,
+	"desk_ingest_retry": Mutating,
+	"desk_clip":         Mutating,
+}
+
+func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 	if version != "" {
 		ServerVersion = version
 	}
 
 	server := mcpserver.New("symdesk", ServerVersion)
-
-	// Init service lazily per request, or we can init once. We init per request here for simplicity
-	// because MCP server might be long-running and config might change, though opening DB repeatedly is fast enough.
 
 	var getService serviceFactory = func() (*service.Service, *sidecar.DB, error) {
 		vRoot, err := vault.ResolveVaultRoot("", cfg)
@@ -39,24 +65,26 @@ func StartServer(cfg *config.Config, version string) error {
 		return service.New(vRoot, db), db, nil
 	}
 
-	server.RegisterTool(newStatusTool(cfg))
+	server.RegisterTool(newStatusTool(cfg, allowWrite))
 	server.RegisterTool(newLsTool(getService))
 	server.RegisterTool(newSearchTool(getService))
 	server.RegisterTool(newPropsTool(getService))
 	server.RegisterTool(newBacklinksTool(getService))
-	server.RegisterTool(newNoteNewTool(getService))
 	server.RegisterTool(newAskTool(getService))
 	server.RegisterTool(newTransformTool())
-	server.RegisterTool(newIngestTool(getService))
 	server.RegisterTool(newDocsTool(getService))
-	server.RegisterTool(newDocSetStatusTool(getService))
 	server.RegisterTool(newDocsReviewTool(getService, cfg))
-
 	server.RegisterTool(newDocsSimilarTool(getService))
 	server.RegisterTool(newRelatedTool(getService))
 	server.RegisterTool(newIngestJobsTool(getService))
-	server.RegisterTool(newIngestRetryTool(getService))
-	server.RegisterTool(newClipTool(getService))
+
+	if allowWrite {
+		server.RegisterTool(newNoteNewTool(getService))
+		server.RegisterTool(newIngestTool(getService))
+		server.RegisterTool(newDocSetStatusTool(getService))
+		server.RegisterTool(newIngestRetryTool(getService))
+		server.RegisterTool(newClipTool(getService))
+	}
 
 	return server.ServeStdio(context.Background())
 }
@@ -65,7 +93,7 @@ func StartServer(cfg *config.Config, version string) error {
 // closes the returned DB.
 type serviceFactory func() (*service.Service, *sidecar.DB, error)
 
-func newStatusTool(cfg *config.Config) *mcpserver.Tool {
+func newStatusTool(cfg *config.Config, allowWrite bool) *mcpserver.Tool {
 	return &mcpserver.Tool{
 		Name:        "desk_status",
 		Description: "Returns the current version and vault path configuration for symdesk.",
@@ -74,6 +102,11 @@ func newStatusTool(cfg *config.Config) *mcpserver.Tool {
 			status := map[string]string{
 				"version": ServerVersion,
 				"vault":   cfg.Vault,
+			}
+			if allowWrite {
+				status["capabilities"] = "read_write"
+			} else {
+				status["capabilities"] = "read_only"
 			}
 			return status, nil
 		},
@@ -429,8 +462,9 @@ func registerDeskStatus(server *mcpserver.Server, cfg *config.Config) {
 		InputSchema: json.RawMessage(`{"type":"object","properties":{}}`),
 		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
 			status := map[string]string{
-				"version": ServerVersion,
-				"vault":   cfg.Vault,
+				"version":      ServerVersion,
+				"vault":        cfg.Vault,
+				"capabilities": "read_write",
 			}
 			return status, nil
 		},

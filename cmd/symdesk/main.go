@@ -86,13 +86,15 @@ func newRootCmd() *cobra.Command {
 	rootCmd.AddCommand(versionCmd)
 
 	// 2. MCP Command
+	var allowWrite bool
 	mcpCmd := &cobra.Command{
 		Use:   "mcp",
 		Short: "Start the stdio MCP server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return mcp.StartServer(cfg, version)
+			return mcp.StartServer(cfg, version, allowWrite)
 		},
 	}
+	mcpCmd.Flags().BoolVar(&allowWrite, "allow-write", false, "enable mutating MCP tools (note creation, ingest, status changes)")
 	rootCmd.AddCommand(mcpCmd)
 
 	// 3. Doctor Command (Stub)

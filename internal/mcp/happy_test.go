@@ -48,7 +48,7 @@ func seedNote(t *testing.T, factory serviceFactory, title, content string) strin
 
 func TestStatusToolHappyPath(t *testing.T) {
 	cfg := &config.Config{Vault: "/test/vault"}
-	tool := newStatusTool(cfg)
+	tool := newStatusTool(cfg, false)
 
 	out, err := tool.Handler(context.Background(), json.RawMessage(`{}`))
 	if err != nil {
@@ -63,6 +63,9 @@ func TestStatusToolHappyPath(t *testing.T) {
 	}
 	if status["vault"] != "/test/vault" {
 		t.Errorf("expected vault '/test/vault', got %q", status["vault"])
+	}
+	if status["capabilities"] != "read_only" {
+		t.Errorf("expected capabilities 'read_only', got %q", status["capabilities"])
 	}
 }
 
@@ -156,6 +159,147 @@ func TestDocsToolHappyPath(t *testing.T) {
 	}
 }
 
+func TestStatusToolReadOnlyCapabilities(t *testing.T) {
+	cfg := &config.Config{Vault: "/test"}
+	tool := newStatusTool(cfg, false)
+	out, err := tool.Handler(context.Background(), json.RawMessage(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	status := out.(map[string]string)
+	if status["capabilities"] != "read_only" {
+		t.Errorf("expected 'read_only', got %q", status["capabilities"])
+	}
+}
+
+func TestStatusToolReadWriteCapabilities(t *testing.T) {
+	cfg := &config.Config{Vault: "/test"}
+	tool := newStatusTool(cfg, true)
+	out, err := tool.Handler(context.Background(), json.RawMessage(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	status := out.(map[string]string)
+	if status["capabilities"] != "read_write" {
+		t.Errorf("expected 'read_write', got %q", status["capabilities"])
+	}
+}
+
+func TestStartServerReadOnlyOmitsMutatingTools(t *testing.T) {
+	vaultRoot := t.TempDir()
+	cfg := &config.Config{Vault: vaultRoot}
+
+	origStdin, origStdout := os.Stdin, os.Stdout
+	stdinR, stdinW, _ := os.Pipe()
+	stdoutR, stdoutW, _ := os.Pipe()
+	os.Stdin = stdinR
+	os.Stdout = stdoutW
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- StartServer(cfg, "test", false)
+		stdoutW.Close()
+	}()
+
+	sendRequest := func(request map[string]any) map[string]any {
+		t.Helper()
+		reqBytes, _ := json.Marshal(request)
+		reqBytes = append(reqBytes, '\n')
+		stdinW.Write(reqBytes)
+		decoder := json.NewDecoder(stdoutR)
+		var resp map[string]any
+		decoder.Decode(&resp)
+		return resp
+	}
+
+	resp := sendRequest(map[string]any{
+		"jsonrpc": "2.0", "id": 1, "method": "tools/list",
+	})
+	result := resp["result"].(map[string]any)
+	tools := result["tools"].([]any)
+
+	toolNames := make(map[string]bool)
+	for _, tl := range tools {
+		tool := tl.(map[string]any)
+		toolNames[tool["name"].(string)] = true
+	}
+
+	for _, name := range []string{"desk_note_new", "desk_ingest", "doc_set_status", "desk_ingest_retry", "desk_clip"} {
+		if toolNames[name] {
+			t.Errorf("mutating tool %q should NOT be registered in read-only mode", name)
+		}
+	}
+	for _, name := range []string{"desk_status", "desk_ls", "desk_search", "desk_docs"} {
+		if !toolNames[name] {
+			t.Errorf("read-only tool %q should be registered", name)
+		}
+	}
+
+	stdinW.Close()
+	select {
+	case <-errCh:
+	case <-time.After(5 * time.Second):
+	}
+	os.Stdin, os.Stdout = origStdin, origStdout
+	stdinR.Close()
+	stdoutR.Close()
+}
+
+func TestStartServerReadWriteIncludesMutatingTools(t *testing.T) {
+	vaultRoot := t.TempDir()
+	cfg := &config.Config{Vault: vaultRoot}
+
+	origStdin, origStdout := os.Stdin, os.Stdout
+	stdinR, stdinW, _ := os.Pipe()
+	stdoutR, stdoutW, _ := os.Pipe()
+	os.Stdin = stdinR
+	os.Stdout = stdoutW
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- StartServer(cfg, "test", true)
+		stdoutW.Close()
+	}()
+
+	sendRequest := func(request map[string]any) map[string]any {
+		t.Helper()
+		reqBytes, _ := json.Marshal(request)
+		reqBytes = append(reqBytes, '\n')
+		stdinW.Write(reqBytes)
+		decoder := json.NewDecoder(stdoutR)
+		var resp map[string]any
+		decoder.Decode(&resp)
+		return resp
+	}
+
+	resp := sendRequest(map[string]any{
+		"jsonrpc": "2.0", "id": 1, "method": "tools/list",
+	})
+	result := resp["result"].(map[string]any)
+	tools := result["tools"].([]any)
+
+	toolNames := make(map[string]bool)
+	for _, tl := range tools {
+		tool := tl.(map[string]any)
+		toolNames[tool["name"].(string)] = true
+	}
+
+	for _, name := range []string{"desk_note_new", "desk_ingest", "doc_set_status", "desk_ingest_retry", "desk_clip"} {
+		if !toolNames[name] {
+			t.Errorf("mutating tool %q should be registered in write mode", name)
+		}
+	}
+
+	stdinW.Close()
+	select {
+	case <-errCh:
+	case <-time.After(5 * time.Second):
+	}
+	os.Stdin, os.Stdout = origStdin, origStdout
+	stdinR.Close()
+	stdoutR.Close()
+}
+
 // --- StartServer integration test ---
 // Exercises the full StartServer code path (service factory, tool
 // registration, ServeStdio) by temporarily replacing os.Stdin/os.Stdout
@@ -174,7 +318,7 @@ func TestStartServerIntegration(t *testing.T) {
 
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- StartServer(cfg, "test-version")
+		errCh <- StartServer(cfg, "test-version", false)
 		stdoutW.Close()
 	}()
 
@@ -278,7 +422,7 @@ func TestStartServerZeroStdioPollution(t *testing.T) {
 
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- StartServer(cfg, "")
+		errCh <- StartServer(cfg, "", false)
 		stdoutW.Close()
 	}()
 

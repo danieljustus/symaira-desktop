@@ -1,5 +1,7 @@
 # symaira-desktop (`symdesk`)
 
+[![CI](https://github.com/danieljustus/symaira-desktop/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/danieljustus/symaira-desktop/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/danieljustus/symaira-desktop)](https://github.com/danieljustus/symaira-desktop/releases) [![License](https://img.shields.io/github/license/danieljustus/symaira-desktop)](LICENSE)
+
 The composition **shell** of the [Symaira](https://github.com/danieljustus?tab=repositories&q=symaira) ecosystem.
 
 A local-first, **agent-native** workspace that unifies your documents, notes, knowledge and AI over a single plain-Markdown vault — by **composing the existing Symaira tools** rather than reimplementing them. It is the realization of the "Paperless + Obsidian + Notion AI" dream as *one surface*, deliberately **not** a monolith.
@@ -11,19 +13,57 @@ A local-first, **agent-native** workspace that unifies your documents, notes, kn
 - **Delegates (does not rebuild):** spreadsheets → LibreOffice; code editing → editor plugins + agent orchestration; iCloud sync → the OS
 - **Language:** Go (CGO-free, core) + Swift/SwiftUI (app). **License:** Apache-2.0
 
+![SymDesk architecture](assets/symdesk-architecture.svg)
+
+## Why SymDesk
+
+- One plain-Markdown vault remains the source of truth instead of locking data into a proprietary database.
+- The CLI, MCP server, and native macOS app share the same service layer and contracts.
+- Symaira tools are composed at runtime, so optional capabilities degrade gracefully when a companion tool is unavailable.
+- Local-first operation keeps documents, indexes, and configuration under the user’s control.
+
 ## Status
 
 Working MVP: Go core (`symdesk`) with CLI + stdio MCP server, SQLite sidecar index (FTS5), vault contract v2 ([VAULT.md](VAULT.md)), and the native SwiftUI app with editor, command palette, backlinks, graph, saved views, drag-&-drop ingest and AI dock — plus a document workspace: document grid with quick filters, PDF/text viewer with a details inspector, first-run onboarding, and a Discover tab.
 
-## Build
+## Installation
+
+### CLI from GitHub Releases
+
+Download the archive for your platform from the [latest GitHub Release](https://github.com/danieljustus/symaira-desktop/releases/latest), extract it, and place `symdesk` on your `PATH`.
+
+### CLI from source
+
+```sh
+go install github.com/danieljustus/symaira-desktop/cmd/symdesk@latest
+```
+
+### Native macOS app from source
+
+The SwiftUI app currently builds from source on macOS 14 or newer:
+
+```sh
+brew install xcodegen
+xcodegen generate
+xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS'
+```
+
+## Development
 
 ```sh
 make build          # → bin/symdesk
 make test           # go test -race ./...
 
-# macOS app (requires xcodegen)
+### macOS app (requires xcodegen)
 xcodegen generate
 xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS'
+```
+
+## CLI sample
+
+```text
+$ symdesk version --json
+{"tool":"symdesk","version":"0.5.0","schema_version":1}
 ```
 
 ## Usage
@@ -46,7 +86,7 @@ symdesk mcp                    # stdio MCP server for agents
 symdesk doctor                 # health check
 symdesk version --json         # {"tool":"symdesk","version":...,"schema_version":1}
 
-# Document workflow (vault contract v2)
+## Document workflow (vault contract v2)
 symdesk docs list --type invoice          # list indexed documents, with filters
 symdesk docs review                       # list documents needing review (low-confidence / missing metadata)
 symdesk doc status <file> paid            # set document status (open|paid|submitted|done|...)

@@ -1,0 +1,27 @@
+name: Feature request
+description: Propose a focused improvement to SymDesk
+title: "feature: "
+labels:
+  - feature
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What user problem or workflow gap should this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the smallest useful solution and any alternatives considered.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and compatibility
+      description: Note affected contracts, CLI commands, MCP tools, or macOS versions.
+    validations:
+      required: true

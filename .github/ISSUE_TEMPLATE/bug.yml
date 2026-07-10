@@ -1,0 +1,48 @@
+name: Bug report
+description: Report a reproducible problem in SymDesk
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please remove sensitive vault data from examples.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Which release or commit are you using?
+      placeholder: v0.5.0
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest reliable reproduction.
+      placeholder: |
+        1. Run ...
+        2. Configure ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, architecture, and whether the CLI or app is affected.
+    validations:
+      required: true

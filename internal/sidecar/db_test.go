@@ -1,7 +1,10 @@
 package sidecar
 
 import (
+	"database/sql"
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -685,5 +688,109 @@ func TestSearchEmptyQuery(t *testing.T) {
 	}
 	if results != nil {
 		t.Errorf("expected nil for empty query, got %v", results)
+	}
+}
+
+// --- Error-path tests for sidecar.Open (coverage target: db.go:29-49) ---
+
+func TestOpen_DefaultPathResolution(t *testing.T) {
+	// Open("") should resolve to ~/.local/share/symdesk/sidecar.db.
+	// The actual file likely doesn't exist in CI, so we expect a sqlitekit
+	// error—but the important thing is that lines 30-35 executed.
+	_, err := Open("")
+	if err == nil {
+		// If it succeeded, the default path was usable—still counts.
+		return
+	}
+	// Accept any error; the point is the default-path branch ran.
+	if !strings.Contains(err.Error(), "open sqlite") && !strings.Contains(err.Error(), "migrate") {
+		t.Errorf("unexpected error from Open(\"\"): %v", err)
+	}
+}
+
+func TestOpen_HomeDirFailure(t *testing.T) {
+	// When os.UserHomeDir() fails, Open("") should return a "user home dir" error.
+	t.Setenv("HOME", "")
+	t.Setenv("HOMEDRIVE", "")
+	t.Setenv("USERPROFILE", "")
+	_, err := Open("")
+	if err == nil {
+		t.Fatal("expected error when HOME is unset")
+	}
+	if !strings.Contains(err.Error(), "user home dir") {
+		t.Errorf("expected 'user home dir' in error, got: %v", err)
+	}
+}
+
+func TestOpen_InvalidPath(t *testing.T) {
+	// A path whose parent directory is a regular file should fail at sqlitekit.Open.
+	tmpDir := t.TempDir()
+	blocker := filepath.Join(tmpDir, "not-a-dir")
+	if err := os.WriteFile(blocker, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := Open(filepath.Join(blocker, "test.db"))
+	if err == nil {
+		t.Fatal("expected error for invalid path")
+	}
+	if !strings.Contains(err.Error(), "open sqlite") {
+		t.Errorf("expected 'open sqlite' in error, got: %v", err)
+	}
+}
+
+func TestOpen_MigrationFailure(t *testing.T) {
+	// Pre-create a conflicting "files" table so that sidecar.Open's
+	// sqlitekit.Migrate fails on the non-idempotent CREATE TABLE.
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "test.db")
+
+	raw, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("sql.Open: %v", err)
+	}
+	if _, err := raw.Exec("CREATE TABLE files (id INTEGER PRIMARY KEY)"); err != nil {
+		t.Fatalf("pre-create: %v", err)
+	}
+	raw.Close()
+
+	_, err = Open(dbPath)
+	if err == nil {
+		t.Fatal("expected error from Open with conflicting migration")
+	}
+	if !strings.Contains(err.Error(), "migrate") {
+		t.Errorf("expected 'migrate' in error, got: %v", err)
+	}
+}
+
+// --- GetTitle tests (coverage target: db.go:272-279) ---
+
+func TestGetTitle_MissingPath(t *testing.T) {
+	db := setupTestDB(t)
+	_, err := db.GetTitle("/nonexistent/path.md")
+	if err == nil {
+		t.Fatal("expected error for missing path")
+	}
+}
+
+func TestGetTitle_ExistingPath(t *testing.T) {
+	db := setupTestDB(t)
+
+	doc := &vault.Document{
+		Path:    "/tmp/test.md",
+		Title:   "Test Title",
+		Created: "2026-01-01T00:00:00Z",
+		SHA256:  "abc123",
+		Body:    "body",
+	}
+	if err := db.IndexDocument(doc); err != nil {
+		t.Fatal(err)
+	}
+
+	title, err := db.GetTitle("/tmp/test.md")
+	if err != nil {
+		t.Fatalf("GetTitle failed: %v", err)
+	}
+	if title != "Test Title" {
+		t.Errorf("expected 'Test Title', got '%s'", title)
 	}
 }

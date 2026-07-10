@@ -1,0 +1,8 @@
+# Default ownership for the public repository.
+* @danieljustus
+
+# Security-sensitive paths.
+/.github/ @danieljustus
+/internal/secrets/ @danieljustus
+/internal/vault/ @danieljustus
+/Sources/SymDeskCore/ @danieljustus

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
+  <title id="title">SymDesk architecture</title>
+  <desc id="desc">The native app and AI agents use the shared SymDesk service layer, which owns a Markdown vault and SQLite sidecar while composing optional Symaira tools.</desc>
+  <style>
+    .box { fill: #f6f8fa; stroke: #24292f; stroke-width: 2; rx: 14; }
+    .accent { fill: #ddf4ff; stroke: #0969da; stroke-width: 2; rx: 14; }
+    .optional { fill: #fff8c5; stroke: #9a6700; stroke-width: 2; rx: 14; }
+    .label { fill: #24292f; font: 600 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; text-anchor: middle; }
+    .small { fill: #57606a; font: 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; text-anchor: middle; }
+    .arrow { stroke: #57606a; stroke-width: 3; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#57606a"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="560" fill="#ffffff"/>
+  <rect class="box" x="55" y="85" width="250" height="125"/>
+  <text class="label" x="180" y="135">Native macOS app</text>
+  <text class="small" x="180" y="168">SwiftUI</text>
+  <rect class="box" x="55" y="350" width="250" height="125"/>
+  <text class="label" x="180" y="400">AI agents</text>
+  <text class="small" x="180" y="433">MCP / CLI clients</text>
+  <rect class="accent" x="420" y="185" width="360" height="190"/>
+  <text class="label" x="600" y="245">SymDesk service layer</text>
+  <text class="small" x="600" y="282">CLI + MCP + composition</text>
+  <text class="small" x="600" y="312">shared vault contracts</text>
+  <rect class="box" x="895" y="70" width="250" height="125"/>
+  <text class="label" x="1020" y="120">Markdown vault</text>
+  <text class="small" x="1020" y="153">source of truth</text>
+  <rect class="box" x="895" y="240" width="250" height="125"/>
+  <text class="label" x="1020" y="290">SQLite sidecar</text>
+  <text class="small" x="1020" y="323">FTS5 index + views</text>
+  <rect class="optional" x="895" y="410" width="250" height="95"/>
+  <text class="label" x="1020" y="451">Optional tools</text>
+  <text class="small" x="1020" y="478">ingest · seek · memory · fetch · vault</text>
+  <line class="arrow" x1="305" y1="148" x2="420" y2="238"/>
+  <line class="arrow" x1="305" y1="412" x2="420" y2="322"/>
+  <line class="arrow" x1="780" y1="238" x2="895" y2="132"/>
+  <line class="arrow" x1="780" y1="280" x2="895" y2="302"/>
+  <line class="arrow" x1="780" y1="330" x2="895" y2="455"/>
+</svg>

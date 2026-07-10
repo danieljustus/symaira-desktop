@@ -33,3 +33,6 @@ internal/service/testdata/
 /bin/
 /scratch/
 .omo/
+
+# Local audit reports
+.github/audit/

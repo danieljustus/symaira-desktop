@@ -12,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
@@ -389,26 +387,8 @@ func (s *Service) PropsEdit(relPath, key, value string) error {
 	if err != nil {
 		return err
 	}
-	doc, err := vault.ParseFile(absPath)
-	if err != nil {
-		return err
-	}
 
-	// Update frontmatter
-	if doc.Frontmatter == nil {
-		doc.Frontmatter = make(map[string]interface{})
-	}
-	doc.Frontmatter[key] = value
-
-	// Write back to file.
-	// For MVP, we reconstruct the frontmatter simply.
-	fmBytes, err := yaml.Marshal(doc.Frontmatter)
-	if err != nil {
-		return err
-	}
-
-	newContent := fmt.Sprintf("---\n%s---\n%s", string(fmBytes), doc.Body)
-	if err := os.WriteFile(absPath, []byte(newContent), 0644); err != nil {
+	if err := vault.SetFrontmatterValue(absPath, key, value); err != nil {
 		return err
 	}
 

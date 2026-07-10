@@ -148,6 +148,319 @@ fi
 	}
 }
 
+func TestRelatedEntityMatchingBranches(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "symdesk-related-branches")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	vaultPath := filepath.Join(tempDir, "vault")
+	_ = os.MkdirAll(vaultPath, 0755)
+	vaultPath, err = filepath.EvalSymlinks(vaultPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mockMemory := filepath.Join(tempDir, "symmemory")
+	mockMemoryContent := `#!/bin/bash
+if [ "$1" = "version" ] && [ "$2" = "--json" ]; then
+  echo '{"tool":"symmemory","version":"0.1.0-mock","schema_version":1}'
+  exit 0
+elif [ "$1" = "entity" ] && [ "$2" = "list" ]; then
+  echo '[{"id":"entity-1-uuid","name":"Project Alpha","type":"project","aliases":["MockProj"],"description":"A project"}]'
+  exit 0
+elif [ "$1" = "entity" ] && [ "$2" = "neighbors" ]; then
+  echo '{"nodes":[{"id":"entity-2-uuid","name":"Alice","type":"person","aliases":[]}],"edges":[{"from_entity_id":"entity-2-uuid","to_entity_id":"entity-1-uuid","relation_type":"tester"}]}'
+  exit 0
+else
+  exit 0
+fi
+`
+	if err := os.WriteFile(mockMemory, []byte(mockMemoryContent), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	oldPath := os.Getenv("PATH")
+	os.Setenv("PATH", tempDir+string(os.PathListSeparator)+oldPath)
+	defer os.Setenv("PATH", oldPath)
+	compose.ResetCache()
+
+	dbPath := filepath.Join(vaultPath, "sidecar.db")
+	db, err := sidecar.Open(dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	svc := New(vaultPath, db)
+
+	notes := map[string]string{
+		"main-note.md":      "---\ntitle: \"Project Alpha\"\n---\nMain note about Project Alpha",
+		"Project Alpha.md":  "---\ntitle: \"FilenameMatch\"\n---\nFilename matches Project Alpha",
+		"alias-note.md":     "---\ntitle: \"AliasNote\"\n---\nThis note mentions MockProj in the body",
+		"body-note.md":      "---\ntitle: \"BodyNote\"\n---\nThis note mentions Project Alpha in the body",
+		"neighbor-note.md":  "---\ntitle: \"NeighborNote\"\n---\nThis note mentions Alice in the body",
+		"unrelated-note.md": "---\ntitle: \"UnrelatedNote\"\n---\nNothing relevant here",
+	}
+
+	for name, content := range notes {
+		path := filepath.Join(vaultPath, name)
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+		doc, err := vault.ParseFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	related, err := svc.Related("main-note.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entityNames := map[string]bool{}
+	for _, e := range related.Entities {
+		entityNames[e.Name] = true
+	}
+	if !entityNames["Project Alpha"] {
+		t.Errorf("expected Project Alpha entity, got %v", related.Entities)
+	}
+	if !entityNames["Alice"] {
+		t.Errorf("expected Alice neighbor entity, got %v", related.Entities)
+	}
+
+	foundRelation := false
+	for _, e := range related.Entities {
+		if e.Name == "Alice" && e.Relation == "tester" {
+			foundRelation = true
+		}
+	}
+	if !foundRelation {
+		t.Errorf("expected Alice entity with relation 'tester', got %v", related.Entities)
+	}
+
+	noteNames := map[string]bool{}
+	for _, n := range related.Notes {
+		noteNames[filepath.Base(n)] = true
+	}
+	if !noteNames["Project Alpha.md"] {
+		t.Errorf("expected filename-match note, got %v", related.Notes)
+	}
+	if !noteNames["alias-note.md"] {
+		t.Errorf("expected alias-note, got %v", related.Notes)
+	}
+	if !noteNames["body-note.md"] {
+		t.Errorf("expected body-note, got %v", related.Notes)
+	}
+	if !noteNames["neighbor-note.md"] {
+		t.Errorf("expected neighbor-note, got %v", related.Notes)
+	}
+	if noteNames["main-note.md"] {
+		t.Errorf("did not expect main-note (self-skip), got %v", related.Notes)
+	}
+	if noteNames["unrelated-note.md"] {
+		t.Errorf("did not expect unrelated-note, got %v", related.Notes)
+	}
+}
+
+func TestRelatedMainDocMatchBranches(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "symdesk-related-main-match")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	vaultPath := filepath.Join(tempDir, "vault")
+	_ = os.MkdirAll(vaultPath, 0755)
+	vaultPath, err = filepath.EvalSymlinks(vaultPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mockMemory := filepath.Join(tempDir, "symmemory")
+	mockMemoryContent := `#!/bin/bash
+if [ "$1" = "version" ] && [ "$2" = "--json" ]; then
+  echo '{"tool":"symmemory","version":"0.1.0-mock","schema_version":1}'
+  exit 0
+elif [ "$1" = "entity" ] && [ "$2" = "list" ]; then
+  echo '[{"id":"entity-1-uuid","name":"Project Alpha","type":"project","aliases":["MockProj"],"description":"A project"}]'
+  exit 0
+elif [ "$1" = "entity" ] && [ "$2" = "neighbors" ]; then
+  echo '{"nodes":[],"edges":[]}'
+  exit 0
+else
+  exit 0
+fi
+`
+	if err := os.WriteFile(mockMemory, []byte(mockMemoryContent), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	oldPath := os.Getenv("PATH")
+	os.Setenv("PATH", tempDir+string(os.PathListSeparator)+oldPath)
+	defer os.Setenv("PATH", oldPath)
+	compose.ResetCache()
+
+	dbPath := filepath.Join(vaultPath, "sidecar.db")
+	db, err := sidecar.Open(dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	svc := New(vaultPath, db)
+
+	writeNote := func(name, content string) {
+		t.Helper()
+		path := filepath.Join(vaultPath, name)
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+		doc, err := vault.ParseFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	cases := []struct {
+		name     string
+		file     string
+		content  string
+		expected []string
+	}{
+		{
+			name:     "alias title match",
+			file:     "alias-title.md",
+			content:  "---\ntitle: \"MockProj\"\n---\nBody",
+			expected: []string{"Project Alpha"},
+		},
+		{
+			name:     "filename match",
+			file:     "Project Alpha.md",
+			content:  "---\ntitle: \"FilenameMatch\"\n---\nBody",
+			expected: []string{"Project Alpha"},
+		},
+		{
+			name:     "body name match",
+			file:     "body-name.md",
+			content:  "---\ntitle: \"BodyName\"\n---\nText about Project Alpha",
+			expected: []string{"Project Alpha"},
+		},
+		{
+			name:     "body alias match",
+			file:     "body-alias.md",
+			content:  "---\ntitle: \"BodyAlias\"\n---\nText about MockProj",
+			expected: []string{"Project Alpha"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			writeNote(tc.file, tc.content)
+			related, err := svc.Related(tc.file)
+			if err != nil {
+				t.Fatal(err)
+			}
+			entityNames := map[string]bool{}
+			for _, e := range related.Entities {
+				entityNames[e.Name] = true
+			}
+			for _, exp := range tc.expected {
+				if !entityNames[exp] {
+					t.Errorf("expected entity %q, got %v", exp, related.Entities)
+				}
+			}
+		})
+	}
+}
+
+func TestMatchesOtherBranches(t *testing.T) {
+	entity := compose.MemoryEntity{
+		ID:      "entity-1-uuid",
+		Name:    "Project Alpha",
+		Type:    "project",
+		Aliases: []string{"MockProj"},
+	}
+
+	cases := []struct {
+		name    string
+		doc     *vault.Document
+		matches bool
+	}{
+		{
+			name: "title matches name",
+			doc: &vault.Document{
+				Title: "Project Alpha",
+				Path:  filepath.Join("vault", "note.md"),
+				Body:  "",
+			},
+			matches: true,
+		},
+		{
+			name: "filename matches name",
+			doc: &vault.Document{
+				Title: "Other",
+				Path:  filepath.Join("vault", "Project Alpha.md"),
+				Body:  "",
+			},
+			matches: true,
+		},
+		{
+			name: "title matches alias",
+			doc: &vault.Document{
+				Title: "MockProj",
+				Path:  filepath.Join("vault", "note.md"),
+				Body:  "",
+			},
+			matches: true,
+		},
+		{
+			name: "body contains name",
+			doc: &vault.Document{
+				Title: "Other",
+				Path:  filepath.Join("vault", "note.md"),
+				Body:  "Text about Project Alpha",
+			},
+			matches: true,
+		},
+		{
+			name: "body contains alias",
+			doc: &vault.Document{
+				Title: "Other",
+				Path:  filepath.Join("vault", "note.md"),
+				Body:  "Text about MockProj",
+			},
+			matches: true,
+		},
+		{
+			name: "no match",
+			doc: &vault.Document{
+				Title: "Other",
+				Path:  filepath.Join("vault", "note.md"),
+				Body:  "Nothing relevant",
+			},
+			matches: false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := matchesOther(tc.doc, entity)
+			if got != tc.matches {
+				t.Errorf("matchesOther() = %v, want %v", got, tc.matches)
+			}
+		})
+	}
+}
+
 func TestComposeFallback(t *testing.T) {
 	// Ensure tools are NOT on PATH
 	tempDir, err := os.MkdirTemp("", "symdesk-compose-fallback-test")

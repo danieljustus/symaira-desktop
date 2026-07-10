@@ -25,7 +25,7 @@ func TestPropsEditUpdatesFrontmatterAndReindexes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(raw), "status: reviewed") {
+	if !strings.Contains(string(raw), "status: \"reviewed\"") {
 		t.Errorf("expected frontmatter to contain the new property, got:\n%s", raw)
 	}
 

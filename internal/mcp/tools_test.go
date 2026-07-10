@@ -184,7 +184,7 @@ func TestDocsSimilarToolReturnsResults(t *testing.T) {
 
 func TestStatusToolReturnsVersionAndVault(t *testing.T) {
 	cfg := &config.Config{Vault: "/test/vault"}
-	tool := newStatusTool(cfg)
+	tool := newStatusTool(cfg, false)
 
 	out, err := tool.Handler(context.Background(), json.RawMessage(`{}`))
 	if err != nil {
@@ -196,6 +196,9 @@ func TestStatusToolReturnsVersionAndVault(t *testing.T) {
 	}
 	if status["vault"] != "/test/vault" {
 		t.Errorf("expected vault '/test/vault', got %q", status["vault"])
+	}
+	if status["capabilities"] != "read_only" {
+		t.Errorf("expected capabilities 'read_only', got %q", status["capabilities"])
 	}
 }
 

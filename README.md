@@ -63,7 +63,7 @@ xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platfo
 
 ```text
 $ symdesk version --json
-{"tool":"symdesk","version":"0.5.0","schema_version":1}
+{"tool":"symdesk","version":"0.5.1","schema_version":1}
 ```
 
 ## Usage

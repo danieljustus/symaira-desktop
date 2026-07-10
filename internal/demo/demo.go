@@ -539,7 +539,7 @@ Wichtig: Homeoffice-Pauschale und Werbungskosten dokumentieren.
 	},
 }
 
-// demoViews returns the 3 saved views for the demo vault.
+// demoViews returns representative saved views for every supported layout.
 func demoViews() []dbviews.View {
 	return []dbviews.View{
 		{
@@ -569,6 +569,30 @@ func demoViews() []dbviews.View {
 			},
 			Sorts:   []dbviews.Sort{{Key: "confidence", Ascending: true}},
 			Columns: []string{"_title", "document_type", "document_date", "confidence"},
+		},
+		{
+			ID:      "demo_invoice_gallery",
+			Name:    "Invoice gallery",
+			Type:    "gallery",
+			GroupBy: "status",
+			Source:  "documents",
+			Filters: []dbviews.Filter{{Key: "document_type", Operator: "equals", Value: "invoice"}},
+			Columns: []string{"_title", "correspondent", "status", "due_date"},
+		},
+		{
+			ID:           "demo_document_timeline",
+			Name:         "Document timeline",
+			Type:         "timeline",
+			DateProperty: "document_date",
+			Source:       "documents",
+			Columns:      []string{"_title", "document_date", "status"},
+		},
+		{
+			ID:      "demo_document_list",
+			Name:    "All documents",
+			Type:    "list",
+			Source:  "documents",
+			Columns: []string{"_title", "document_type", "status"},
 		},
 	}
 }

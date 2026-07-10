@@ -25,6 +25,65 @@ func (s *Service) ViewsSave(data []byte) error {
 	return s.ViewsMgr.Save(v)
 }
 
+func (s *Service) ViewsDelete(id string) error {
+	return s.ViewsMgr.Delete(id)
+}
+
+// ViewsSiblings returns views that point at the same source. An empty source
+// intentionally has no siblings: legacy views are independent by default.
+func (s *Service) ViewsSiblings(id string) ([]dbviews.View, error) {
+	view, err := s.ViewsGet(id)
+	if err != nil {
+		return nil, err
+	}
+	if view.Source == "" {
+		return []dbviews.View{*view}, nil
+	}
+	views, err := s.ViewsList()
+	if err != nil {
+		return nil, err
+	}
+	result := make([]dbviews.View, 0)
+	for _, candidate := range views {
+		if candidate.Source == view.Source {
+			result = append(result, candidate)
+		}
+	}
+	return result, nil
+}
+
+// ViewsNewEntry creates a note from a view's optional template and fills in
+// explicit defaults plus equality filters so the new note belongs in the view.
+func (s *Service) ViewsNewEntry(id, title string) (string, error) {
+	view, err := s.ViewsGet(id)
+	if err != nil {
+		return "", err
+	}
+	templateRef := ""
+	defaults := map[string]string{}
+	if view.Template != nil {
+		templateRef = view.Template.Ref
+		for key, value := range view.Template.Defaults {
+			defaults[key] = value
+		}
+	}
+	for _, filter := range view.Filters {
+		if filter.Operator == "" || strings.EqualFold(filter.Operator, "equals") {
+			defaults[filter.Key] = filter.Value
+		}
+	}
+	path, err := s.NoteNew(title, "", templateRef)
+	if err != nil {
+		return "", err
+	}
+	for key, value := range defaults {
+		if err := s.PropsEdit(path, key, value); err != nil {
+			return path, err
+		}
+	}
+	return path, nil
+}
+
 func (s *Service) ViewsExec(id string) ([]map[string]interface{}, error) {
 	view, err := s.ViewsGet(id)
 	if err != nil {
@@ -73,15 +132,13 @@ func (s *Service) ViewsExec(id string) ([]map[string]interface{}, error) {
 
 		match := true
 		for _, f := range view.Filters {
-			val, exists := props[f.Key]
-			if !exists {
+			if !matchesFilter(props, f) {
 				match = false
 				break
 			}
-			if fmt.Sprintf("%v", val) != f.Value {
-				match = false
-				break
-			}
+		}
+		if match && view.FilterGroup != nil {
+			match = matchesGroup(props, *view.FilterGroup)
 		}
 
 		if match {
@@ -90,6 +147,53 @@ func (s *Service) ViewsExec(id string) ([]map[string]interface{}, error) {
 	}
 
 	return results, nil
+}
+
+func matchesGroup(props map[string]interface{}, group dbviews.FilterGroup) bool {
+	all := strings.ToLower(group.Operator) != "any"
+	matched := 0
+	total := len(group.Filters) + len(group.Groups)
+	for _, filter := range group.Filters {
+		if matchesFilter(props, filter) {
+			matched++
+		} else if all {
+			return false
+		}
+	}
+	for _, child := range group.Groups {
+		if matchesGroup(props, child) {
+			matched++
+		} else if all {
+			return false
+		}
+	}
+	if total == 0 {
+		return true
+	}
+	return matched > 0
+}
+
+func matchesFilter(props map[string]interface{}, filter dbviews.Filter) bool {
+	value, exists := props[filter.Key]
+	actual := fmt.Sprintf("%v", value)
+	switch strings.ToLower(filter.Operator) {
+	case "is_empty", "empty":
+		return !exists || actual == ""
+	case "is_not_empty", "not_empty":
+		return exists && actual != ""
+	case "not_equals", "is_not":
+		return !exists || actual != filter.Value
+	case "contains":
+		return exists && strings.Contains(strings.ToLower(actual), strings.ToLower(filter.Value))
+	case "not_contains":
+		return !exists || !strings.Contains(strings.ToLower(actual), strings.ToLower(filter.Value))
+	case "greater_than", "after":
+		return exists && actual > filter.Value
+	case "less_than", "before":
+		return exists && actual < filter.Value
+	default: // empty operator retains the original equality behavior.
+		return exists && actual == filter.Value
+	}
 }
 
 func (s *Service) evaluateFormula(formula string, props map[string]interface{}) string {

@@ -86,6 +86,11 @@ public struct ComputedColumn: Codable, Equatable, Sendable {
     public let rollup: String?
 }
 
+public struct DbViewTemplate: Codable, Equatable, Sendable {
+    public let ref: String?
+    public let defaults: [String: String]?
+}
+
 public struct DbView: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let name: String
@@ -96,9 +101,11 @@ public struct DbView: Codable, Equatable, Identifiable, Sendable {
     public let filters: [DbFilter]
     public let sorts: [DbSort]
     public let columns: [String]
+    public let source: String?
+    public let template: DbViewTemplate?
     
     enum CodingKeys: String, CodingKey {
-        case id, name, type, filters, sorts, columns, computed
+        case id, name, type, filters, sorts, columns, computed, source, template
         case groupBy = "group_by"
         case dateProperty = "date_property"
     }
@@ -397,6 +404,25 @@ public final class DeskCore: ObservableObject {
             DbView.self,
             executable: tool.location.url,
             arguments: ["views", "get", id, "--json"] + vaultArgs
+        )
+    }
+
+    public func viewsNewEntry(id: String, title: String) async throws -> String {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        struct Result: Codable, Sendable { let path: String }
+        return try await CLIRunner().runDecoding(
+            Result.self,
+            executable: tool.location.url,
+            arguments: ["views", "new-entry", id, title, "--json"] + vaultArgs
+        ).path
+    }
+
+    public func viewsSiblings(id: String) async throws -> [DbView] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        return try await CLIRunner().runDecoding(
+            [DbView].self,
+            executable: tool.location.url,
+            arguments: ["views", "siblings", id, "--json"] + vaultArgs
         )
     }
 

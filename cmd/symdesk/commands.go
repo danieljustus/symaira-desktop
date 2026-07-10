@@ -679,6 +679,63 @@ func registerCommands(rootCmd *cobra.Command) {
 	}
 	viewsCmd.AddCommand(viewsSaveCmd)
 
+	viewsDeleteCmd := &cobra.Command{
+		Use:   "delete [id]",
+		Short: "Delete a saved view",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+			if err := svc.ViewsDelete(args[0]); err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"status": "deleted"})
+		},
+	}
+	viewsCmd.AddCommand(viewsDeleteCmd)
+
+	viewsNewEntryCmd := &cobra.Command{
+		Use:   "new-entry [id] [title]",
+		Short: "Create a pre-filled note from a saved view",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			path, err := service.New(vRoot, db).ViewsNewEntry(args[0], args[1])
+			if err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"path": path})
+		},
+	}
+	viewsCmd.AddCommand(viewsNewEntryCmd)
+
+	viewsSiblingsCmd := &cobra.Command{
+		Use:   "siblings [id]",
+		Short: "List saved views that share a source",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			result, err := service.New(vRoot, db).ViewsSiblings(args[0])
+			if err != nil {
+				return err
+			}
+			return outputResult(result)
+		},
+	}
+	viewsCmd.AddCommand(viewsSiblingsCmd)
+
 	viewsExecCmd := &cobra.Command{
 		Use:   "exec [id]",
 		Short: "Execute a view and get results",

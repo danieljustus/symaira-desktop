@@ -174,6 +174,12 @@ struct ContentView: View {
                                     DbViewBoard(viewID: vid)
                                 } else if view.type == "calendar" {
                                     DbViewCalendar(viewID: vid)
+                                } else if view.type == "gallery" {
+                                    DbViewGallery(viewID: vid)
+                                } else if view.type == "timeline" {
+                                    DbViewTimeline(viewID: vid)
+                                } else if view.type == "list" {
+                                    DbViewList(viewID: vid)
                                 } else {
                                     DbViewTable(viewID: vid)
                                 }

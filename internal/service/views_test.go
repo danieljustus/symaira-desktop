@@ -123,6 +123,29 @@ func TestViewsExecFiltersAndFormula(t *testing.T) {
 	}
 }
 
+func TestViewsExecNestedFilterGroups(t *testing.T) {
+	svc := newTestService(t)
+	for _, doc := range []*vault.Document{
+		{Path: filepath.Join(svc.VaultRoot, "open.md"), Title: "Open", Body: "", SHA256: "open", Created: "2026-01-01T00:00:00Z", Frontmatter: map[string]interface{}{"status": "open", "priority": "high"}},
+		{Path: filepath.Join(svc.VaultRoot, "paid.md"), Title: "Paid", Body: "", SHA256: "paid", Created: "2026-01-01T00:00:00Z", Frontmatter: map[string]interface{}{"status": "paid", "priority": "low"}},
+	} {
+		if err := svc.DB.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+	view := dbviews.View{ID: "nested", Name: "Nested", FilterGroup: &dbviews.FilterGroup{Operator: "all", Groups: []dbviews.FilterGroup{{Operator: "any", Filters: []dbviews.Filter{{Key: "status", Value: "open"}, {Key: "priority", Value: "urgent"}}}}, Filters: []dbviews.Filter{{Key: "priority", Operator: "not_equals", Value: "low"}}}}
+	if err := svc.ViewsMgr.Save(view); err != nil {
+		t.Fatal(err)
+	}
+	results, err := svc.ViewsExec("nested")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0]["_title"] != "Open" {
+		t.Fatalf("expected only open document, got %#v", results)
+	}
+}
+
 func TestViewsExecRollups(t *testing.T) {
 	svc := newTestService(t)
 
@@ -263,6 +286,41 @@ func TestViewsSaveUpdatesExisting(t *testing.T) {
 	}
 	if got.Name != "Updated" {
 		t.Errorf("expected name 'Updated', got '%s'", got.Name)
+	}
+}
+
+func TestViewsNewEntryAppliesTemplateDefaultsAndFilters(t *testing.T) {
+	svc := newTestService(t)
+	view := dbviews.View{ID: "inbox", Name: "Inbox", Filters: []dbviews.Filter{{Key: "status", Operator: "equals", Value: "open"}}, Template: &dbviews.Template{Defaults: map[string]string{"priority": "high"}}}
+	if err := svc.ViewsMgr.Save(view); err != nil {
+		t.Fatal(err)
+	}
+	path, err := svc.ViewsNewEntry("inbox", "Created from view")
+	if err != nil {
+		t.Fatal(err)
+	}
+	props, err := svc.DB.GetProperties(filepath.Join(svc.VaultRoot, path))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if props["status"] != "open" || props["priority"] != "high" {
+		t.Fatalf("unexpected properties: %#v", props)
+	}
+}
+
+func TestViewsSiblingsUseSourceOnly(t *testing.T) {
+	svc := newTestService(t)
+	for _, view := range []dbviews.View{{ID: "a", Source: "tasks"}, {ID: "b", Source: "tasks"}, {ID: "c", Source: "notes"}} {
+		if err := svc.ViewsMgr.Save(view); err != nil {
+			t.Fatal(err)
+		}
+	}
+	siblings, err := svc.ViewsSiblings("a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(siblings) != 2 {
+		t.Fatalf("expected two task views, got %d", len(siblings))
 	}
 }
 

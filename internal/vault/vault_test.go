@@ -306,10 +306,10 @@ func TestSecurePath_AbsolutePathOutsideVault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if strings.HasPrefix(abs, root) {
-		return
+	canonicalRoot, _ := filepath.EvalSymlinks(root)
+	if !strings.HasPrefix(abs, canonicalRoot) {
+		t.Errorf("expected path inside vault, got %s", abs)
 	}
-	t.Errorf("expected path inside vault, got %s", abs)
 }
 
 func TestSecurePath_DeepTraversalDenied(t *testing.T) {
@@ -330,7 +330,8 @@ func TestSecurePath_WithinVault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	expected := filepath.Join(root, "notes", "subdir", "file.md")
+	canonicalRoot, _ := filepath.EvalSymlinks(root)
+	expected := filepath.Join(canonicalRoot, "notes", "subdir", "file.md")
 	if abs != expected {
 		t.Errorf("expected %s, got %s", expected, abs)
 	}

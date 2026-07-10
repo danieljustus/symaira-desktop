@@ -212,6 +212,7 @@ func ParseFile(path string) (*Document, error) {
 }
 
 // SecurePath resolves a relative path against the vault root and ensures it does not traverse outside.
+// It canonicalizes symlinks to prevent escapes via symlinked directories.
 func SecurePath(vaultRoot, relPath string) (string, error) {
 	absVault, err := filepath.Abs(vaultRoot)
 	if err != nil {
@@ -223,11 +224,58 @@ func SecurePath(vaultRoot, relPath string) (string, error) {
 		return "", err
 	}
 
-	if !strings.HasPrefix(absTarget, absVault+string(filepath.Separator)) && absTarget != absVault {
+	if !isUnder(absTarget, absVault) {
 		return "", fmt.Errorf("path traversal denied: %s is outside vault", relPath)
 	}
 
-	return absTarget, nil
+	canonicalVault, err := filepath.EvalSymlinks(absVault)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve vault root: %w", err)
+	}
+
+	canonicalTarget, err := canonicalize(absTarget)
+	if err != nil {
+		return "", err
+	}
+
+	if !isUnder(canonicalTarget, canonicalVault) {
+		return "", fmt.Errorf("symlink escape denied: %s resolves outside vault", relPath)
+	}
+
+	return canonicalTarget, nil
+}
+
+func isUnder(path, root string) bool {
+	return strings.HasPrefix(path, root+string(filepath.Separator)) || path == root
+}
+
+func canonicalize(path string) (string, error) {
+	if _, err := os.Stat(path); err == nil {
+		resolved, err := filepath.EvalSymlinks(path)
+		if err != nil {
+			return "", fmt.Errorf("cannot resolve path: %w", err)
+		}
+		return resolved, nil
+	}
+
+	parent := path
+	for {
+		if _, err := os.Stat(parent); err == nil {
+			break
+		}
+		parent = filepath.Dir(parent)
+		if parent == filepath.Dir(parent) {
+			break
+		}
+	}
+
+	resolvedParent, err := filepath.EvalSymlinks(parent)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve parent directory: %w", err)
+	}
+
+	remaining := strings.TrimPrefix(path, parent)
+	return filepath.Join(resolvedParent, remaining), nil
 }
 
 // extractWikilinks extracts links from markdown body

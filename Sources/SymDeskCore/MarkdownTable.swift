@@ -289,13 +289,14 @@ public struct MarkdownTableEditor {
         guard let loc = locate(text, cursor: cursor) else { return nil }
         var table = loc.table
         let at = loc.column + 1
+        let columnCount = table.columnCount
         func insert(_ row: inout [String]) {
-            while row.count < table.columnCount { row.append("") }
+            while row.count < columnCount { row.append("") }
             row.insert("", at: min(at, row.count))
         }
         insert(&table.header)
         if !table.alignments.isEmpty {
-            while table.alignments.count < table.columnCount { table.alignments.append("---") }
+            while table.alignments.count < columnCount { table.alignments.append("---") }
             table.alignments.insert("---", at: min(at, table.alignments.count))
         }
         for i in table.rows.indices { insert(&table.rows[i]) }

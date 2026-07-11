@@ -13,6 +13,7 @@ struct CommandPalette: View {
     
     @State private var searchText = ""
     @State private var searchResults: [SearchResult] = []
+    @State private var searchHint: String?
     @State private var isSearching = false
     @State private var errorMessage: String?
     
@@ -46,6 +47,13 @@ struct CommandPalette: View {
             .cornerRadius(10)
             .padding()
 
+            Text("Operators: path:, tag:, type:, status:, \"exact phrase\", -exclude, /regex/")
+                .font(.caption)
+                .foregroundColor(SymairaTheme.textMuted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+
             if isSearching {
                 ProgressView()
                     .tint(SymairaTheme.goldPrimary)
@@ -54,6 +62,15 @@ struct CommandPalette: View {
             
             if let err = errorMessage {
                 Text(err).foregroundColor(.red).padding()
+            }
+
+            if let hint = searchHint {
+                Label(hint, systemImage: "info.circle")
+                    .font(.caption)
+                    .foregroundColor(SymairaTheme.goldSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
             }
             
             List {
@@ -69,7 +86,7 @@ struct CommandPalette: View {
                         }
                         .buttonStyle(PlainButtonStyle())
                         
-                        Button("Full-Text Search: '\(searchText)'") {
+                        Button("Search: '\(searchText)'") {
                             performSearch()
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -116,6 +133,7 @@ struct CommandPalette: View {
         .onDisappear {
             searchText = ""
             searchResults = []
+            searchHint = nil
             errorMessage = nil
         }
     }
@@ -124,12 +142,14 @@ struct CommandPalette: View {
         guard !searchText.isEmpty else { return }
         isSearching = true
         errorMessage = nil
+        searchHint = nil
         
         Task {
             do {
-                let results = try await core.search(query: searchText)
+                let response = try await core.search(query: searchText)
                 await MainActor.run {
-                    self.searchResults = results
+                    self.searchResults = response.results
+                    self.searchHint = response.hint
                     self.isSearching = false
                 }
             } catch {

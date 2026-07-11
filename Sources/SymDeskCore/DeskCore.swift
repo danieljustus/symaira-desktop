@@ -40,6 +40,11 @@ public struct SearchResult: Codable, Equatable, Identifiable, Sendable {
     public let score: Double?
 }
 
+public struct SearchResponse: Codable, Equatable, Sendable {
+    public let results: [SearchResult]
+    public let hint: String?
+}
+
 public enum AIEventType: String, Codable, Sendable {
     case answer
     case citation
@@ -330,11 +335,11 @@ public final class DeskCore: ObservableObject {
         return String(decoding: out, as: UTF8.self)
     }
 
-    public func search(query: String) async throws -> [SearchResult] {
+    public func search(query: String) async throws -> SearchResponse {
         guard let tool else { throw DeskCoreError.coreNotFound }
         let runner = CLIRunner()
         return try await runner.runDecoding(
-            [SearchResult].self,
+            SearchResponse.self,
             executable: tool.location.url,
             arguments: ["search", query, "--json"] + vaultArgs
         )

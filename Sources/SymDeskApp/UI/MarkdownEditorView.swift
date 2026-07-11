@@ -2,21 +2,86 @@ import SwiftUI
 import AppKit
 import SymDeskCore
 
+/// NSTextView that intercepts image pastes/drops and stores them as vault assets.
+final class MarkdownTextView: NSTextView {
+    /// Returns the Markdown snippet to insert for the image, or nil to fall
+    /// through to default behavior.
+    var onImageData: ((Data, String) -> String?)?
+
+    private static let imageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "webp", "heic", "bmp"]
+
+    override func paste(_ sender: Any?) {
+        if insertImages(from: NSPasteboard.general) { return }
+        super.paste(sender)
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        if insertImages(from: sender.draggingPasteboard) { return true }
+        return super.performDragOperation(sender)
+    }
+
+    /// Reads image content (raw image data or image file URLs) from the
+    /// pasteboard, hands it to `onImageData` and inserts the returned link.
+    private func insertImages(from pasteboard: NSPasteboard) -> Bool {
+        guard let handler = onImageData else { return false }
+
+        // Image files (Finder drag or copied files)
+        if let urls = pasteboard.readObjects(forClasses: [NSURL.self]) as? [URL], !urls.isEmpty {
+            var snippets: [String] = []
+            for url in urls {
+                let ext = url.pathExtension.lowercased()
+                guard Self.imageExtensions.contains(ext),
+                      let data = try? Data(contentsOf: url),
+                      let snippet = handler(data, ext) else { continue }
+                snippets.append(snippet)
+            }
+            if !snippets.isEmpty {
+                insertText(snippets.joined(separator: "\n"), replacementRange: selectedRange())
+                return true
+            }
+            if pasteboard.canReadObject(forClasses: [NSURL.self], options: nil) {
+                return false // non-image files: default behavior
+            }
+        }
+
+        // Raw image data (e.g. screenshot in clipboard)
+        for (type, ext) in [(NSPasteboard.PasteboardType.png, "png"), (.tiff, "png")] {
+            guard let data = pasteboard.data(forType: type) else { continue }
+            // Convert TIFF clipboard data to PNG for a portable vault asset
+            var payload = data
+            if type == .tiff {
+                guard let rep = NSBitmapImageRep(data: data),
+                      let png = rep.representation(using: .png, properties: [:]) else { continue }
+                payload = png
+            }
+            guard let snippet = handler(payload, ext) else { continue }
+            insertText(snippet, replacementRange: selectedRange())
+            return true
+        }
+        return false
+    }
+}
+
 struct MarkdownEditorView: NSViewRepresentable {
     @Binding var text: String
     var onLinkClick: ((String) -> Void)?
     /// When set, the editor offers inline AI actions (summarize/rewrite/continue)
     /// on the current selection via the right-click menu.
     var core: DeskCore?
+    /// Vault root used to store pasted/dropped images under the assets folder.
+    var vaultRoot: String?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSTextView.scrollableTextView()
-        let textView = scrollView.documentView as! NSTextView
+        let scrollView = MarkdownTextView.scrollableTextView()
+        let textView = scrollView.documentView as! MarkdownTextView
         context.coordinator.textView = textView
+        textView.onImageData = { [weak coordinator = context.coordinator] data, ext in
+            coordinator?.storeImageAsset(data: data, ext: ext)
+        }
 
         textView.delegate = context.coordinator
         textView.allowsUndo = true
@@ -118,6 +183,24 @@ struct MarkdownEditorView: NSViewRepresentable {
             textView.didChangeText()
             parent.text = textView.string
             highlight(textView: textView)
+        }
+
+        // MARK: - Image paste/drop handling
+
+        /// Stores pasted/dropped image data as a vault asset and returns the
+        /// Markdown snippet to insert, or nil if the vault root is unavailable.
+        func storeImageAsset(data: Data, ext: String) -> String? {
+            guard let vaultRoot = parent.vaultRoot else { return nil }
+            do {
+                let relativePath = try VaultAssets.store(
+                    imageData: data,
+                    fileExtension: ext,
+                    vaultRoot: vaultRoot
+                )
+                return VaultAssets.markdownLink(for: relativePath)
+            } catch {
+                return nil
+            }
         }
         
         func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {

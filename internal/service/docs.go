@@ -152,6 +152,120 @@ func (s *Service) DocASN(relPath, value string) (int, error) {
 	return assigned, nil
 }
 
+// DocType sets the document_type frontmatter key of a document and re-indexes.
+func (s *Service) DocType(relPath, docType string) error {
+	if strings.TrimSpace(docType) == "" {
+		return fmt.Errorf("document type must not be empty")
+	}
+	return s.setKeyAndReindex(relPath, "document_type", docType)
+}
+
+// DocCorrespondent sets the correspondent frontmatter key of a document and re-indexes.
+func (s *Service) DocCorrespondent(relPath, name string) error {
+	if strings.TrimSpace(name) == "" {
+		return fmt.Errorf("correspondent must not be empty")
+	}
+	return s.setKeyAndReindex(relPath, "correspondent", name)
+}
+
+// DocTagAdd appends a tag to the document's tags list (no-op when already
+// present) and re-indexes.
+func (s *Service) DocTagAdd(relPath, tag string) error {
+	tag = strings.TrimSpace(tag)
+	if tag == "" {
+		return fmt.Errorf("tag must not be empty")
+	}
+	return s.mutateTags(relPath, func(tags []string) []string {
+		for _, t := range tags {
+			if t == tag {
+				return tags
+			}
+		}
+		return append(tags, tag)
+	})
+}
+
+// DocTagRemove removes a tag from the document's tags list (no-op when absent)
+// and re-indexes.
+func (s *Service) DocTagRemove(relPath, tag string) error {
+	tag = strings.TrimSpace(tag)
+	if tag == "" {
+		return fmt.Errorf("tag must not be empty")
+	}
+	return s.mutateTags(relPath, func(tags []string) []string {
+		out := tags[:0]
+		for _, t := range tags {
+			if t != tag {
+				out = append(out, t)
+			}
+		}
+		return out
+	})
+}
+
+func (s *Service) mutateTags(relPath string, mutate func([]string) []string) error {
+	absPath, err := vault.SecurePath(s.VaultRoot, relPath)
+	if err != nil {
+		return err
+	}
+	doc, err := vault.ParseFile(absPath)
+	if err != nil {
+		return err
+	}
+	tags := mutate(append([]string(nil), doc.Tags...))
+	if tags == nil {
+		tags = []string{}
+	}
+	if err := vault.SetFrontmatterValue(absPath, "tags", tags); err != nil {
+		return err
+	}
+	doc, err = vault.ParseFile(absPath)
+	if err != nil {
+		return err
+	}
+	return s.IndexDocument(doc)
+}
+
+func (s *Service) setKeyAndReindex(relPath, key, value string) error {
+	absPath, err := vault.SecurePath(s.VaultRoot, relPath)
+	if err != nil {
+		return err
+	}
+	if err := vault.SetFrontmatterKey(absPath, key, value); err != nil {
+		return err
+	}
+	doc, err := vault.ParseFile(absPath)
+	if err != nil {
+		return err
+	}
+	return s.IndexDocument(doc)
+}
+
+// BatchResult reports the per-file outcome of a batch document mutation.
+type BatchResult struct {
+	File   string `json:"file"`
+	Status string `json:"status"` // "updated" or "error"
+	Error  string `json:"error,omitempty"`
+}
+
+// DocBatch applies fn to every file and collects per-file results instead of
+// aborting on the first failure. It returns the results plus updated/failed
+// counters.
+func (s *Service) DocBatch(files []string, fn func(relPath string) error) ([]BatchResult, int, int) {
+	results := make([]BatchResult, 0, len(files))
+	updated, failed := 0, 0
+	for _, f := range files {
+		if err := fn(f); err != nil {
+			results = append(results, BatchResult{File: f, Status: "error", Error: err.Error()})
+			failed++
+		} else {
+			results = append(results, BatchResult{File: f, Status: "updated"})
+			updated++
+		}
+	}
+	return results, updated, failed
+}
+
 // DocsReview returns documents that need human review based on the threshold.
 func (s *Service) DocsReview(threshold int) ([]sidecar.ReviewResult, error) {
 	return s.DB.ReviewQueue(threshold)

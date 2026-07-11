@@ -20,6 +20,13 @@ struct DocumentGridView: View {
     @State private var isAgentRunning = false
     @State private var openDoc: DocumentItem?
     @State private var sortByASN = false
+    @State private var selectedPaths: Set<String> = []
+    @State private var selectionAnchor: String?
+    @State private var batchSummary: String?
+
+    private var selectedDocs: [DocumentItem] {
+        filteredDocs.filter { selectedPaths.contains($0.path) }
+    }
 
     var filteredDocs: [DocumentItem] {
         var result = documents
@@ -80,6 +87,14 @@ struct DocumentGridView: View {
         .sheet(item: $openDoc) { doc in
             DocumentViewerView(document: doc)
         }
+        .alert("Batch Action", isPresented: Binding(
+            get: { batchSummary != nil },
+            set: { if !$0 { batchSummary = nil } }
+        )) {
+            Button("OK", role: .cancel) { batchSummary = nil }
+        } message: {
+            Text(batchSummary ?? "")
+        }
     }
 
     // MARK: - Search Field
@@ -104,6 +119,19 @@ struct DocumentGridView: View {
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 .buttonStyle(.plain)
+            }
+            if selectedPaths.count > 1 {
+                HStack(spacing: 4) {
+                    Text("\(selectedPaths.count) selected")
+                        .font(.caption)
+                        .foregroundColor(SymairaTheme.goldPrimary)
+                    Button(action: { clearSelection() }) {
+                        Image(systemName: "xmark.circle")
+                            .foregroundColor(SymairaTheme.textMuted)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Clear selection")
+                }
             }
             Button(action: { sortByASN.toggle() }) {
                 Label(sortByASN ? "Default order" : "Sort by ASN", systemImage: "number")
@@ -154,14 +182,156 @@ struct DocumentGridView: View {
                 spacing: 16
             ) {
                 ForEach(filteredDocs) { doc in
-                    DocumentCard(doc: doc, isSelected: selectedDoc?.id == doc.id)
-                        .onTapGesture { selectedDoc = doc }
+                    DocumentCard(doc: doc, isSelected: selectedDoc?.id == doc.id || selectedPaths.contains(doc.path))
                         .onTapGesture(count: 2) { openDoc = doc }
-                        .contextMenu { documentContextMenu(doc: doc) }
+                        .onTapGesture { handleTap(doc: doc) }
+                        .contextMenu {
+                            if selectedPaths.contains(doc.path), selectedPaths.count > 1 {
+                                batchContextMenu(docs: selectedDocs)
+                            } else {
+                                documentContextMenu(doc: doc)
+                            }
+                        }
                 }
             }
             .padding(16)
         }
+        .background {
+            // Invisible buttons providing selection keyboard shortcuts.
+            Group {
+                Button("") { selectAllInFilter() }
+                    .keyboardShortcut("a", modifiers: .command)
+                Button("") { clearSelection() }
+                    .keyboardShortcut(.escape, modifiers: [])
+            }
+            .opacity(0)
+            .frame(width: 0, height: 0)
+        }
+    }
+
+    // MARK: - Selection
+
+    private func handleTap(doc: DocumentItem) {
+        let modifiers = NSApp.currentEvent?.modifierFlags ?? []
+        if modifiers.contains(.command) {
+            if selectedPaths.contains(doc.path) {
+                selectedPaths.remove(doc.path)
+            } else {
+                selectedPaths.insert(doc.path)
+                selectionAnchor = doc.path
+            }
+        } else if modifiers.contains(.shift), let anchor = selectionAnchor,
+                  let anchorIdx = filteredDocs.firstIndex(where: { $0.path == anchor }),
+                  let docIdx = filteredDocs.firstIndex(where: { $0.path == doc.path }) {
+            let range = min(anchorIdx, docIdx)...max(anchorIdx, docIdx)
+            selectedPaths.formUnion(filteredDocs[range].map(\.path))
+        } else {
+            selectedPaths = [doc.path]
+            selectionAnchor = doc.path
+        }
+        selectedDoc = doc
+    }
+
+    private func selectAllInFilter() {
+        selectedPaths = Set(filteredDocs.map(\.path))
+        selectionAnchor = filteredDocs.first?.path
+    }
+
+    private func clearSelection() {
+        selectedPaths = []
+        selectionAnchor = nil
+    }
+
+    // MARK: - Batch Context Menu
+
+    private static let commonDocumentTypes = ["invoice", "receipt", "contract", "letter", "tax", "insurance"]
+
+    @ViewBuilder
+    private func batchContextMenu(docs: [DocumentItem]) -> some View {
+        Text("\(docs.count) documents selected")
+        Divider()
+        Menu("Set Status") {
+            ForEach(DocumentStatus.allCases) { status in
+                Button(action: {
+                    runBatch { try await core.docSetStatus(paths: docs.map(\.path), status: status.rawValue) }
+                }) {
+                    Label(status.label, systemImage: status.systemImage)
+                }
+            }
+        }
+        Menu("Set Type") {
+            ForEach(Self.commonDocumentTypes, id: \.self) { type in
+                Button(type.capitalized) {
+                    runBatch { try await core.docSetType(paths: docs.map(\.path), type: type) }
+                }
+            }
+            Divider()
+            Button("Custom…") {
+                if let type = promptForText(title: "Set Document Type", message: "Type for \(docs.count) documents:") {
+                    runBatch { try await core.docSetType(paths: docs.map(\.path), type: type) }
+                }
+            }
+        }
+        Button("Set Correspondent…") {
+            if let name = promptForText(title: "Set Correspondent", message: "Correspondent for \(docs.count) documents:") {
+                runBatch { try await core.docSetCorrespondent(paths: docs.map(\.path), name: name) }
+            }
+        }
+        Button("Set Due Date…") {
+            if let date = promptForText(title: "Set Due Date", message: "Due date (YYYY-MM-DD) for \(docs.count) documents:") {
+                runBatch { try await core.docSetDue(paths: docs.map(\.path), date: date) }
+            }
+        }
+        Menu("Tags") {
+            Button("Add Tag…") {
+                if let tag = promptForText(title: "Add Tag", message: "Tag to add to \(docs.count) documents:") {
+                    runBatch { try await core.docAddTag(paths: docs.map(\.path), tag: tag) }
+                }
+            }
+            Button("Remove Tag…") {
+                if let tag = promptForText(title: "Remove Tag", message: "Tag to remove from \(docs.count) documents:") {
+                    runBatch { try await core.docRemoveTag(paths: docs.map(\.path), tag: tag) }
+                }
+            }
+        }
+        Divider()
+        Button("Deselect All") { clearSelection() }
+    }
+
+    /// Runs a batch mutation, refreshes the grid and surfaces per-file failures.
+    private func runBatch(_ operation: @escaping () async throws -> DeskCore.DocBatchOutcome) {
+        Task {
+            do {
+                let outcome = try await operation()
+                await fetchDocs()
+                if outcome.failed > 0 {
+                    let failures = outcome.results
+                        .filter { $0.status == "error" }
+                        .map { "\($0.file): \($0.error ?? "unknown error")" }
+                        .joined(separator: "\n")
+                    batchSummary = "\(outcome.updated) updated, \(outcome.failed) failed:\n\(failures)"
+                } else {
+                    batchSummary = nil
+                }
+            } catch {
+                batchSummary = "Batch action failed: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    /// Modal single-line text prompt (NSAlert with an accessory text field).
+    private func promptForText(title: String, message: String) -> String? {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        let value = field.stringValue.trimmingCharacters(in: .whitespaces)
+        return value.isEmpty ? nil : value
     }
 
     // MARK: - Context Menu

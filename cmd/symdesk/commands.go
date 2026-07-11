@@ -863,42 +863,88 @@ func registerCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(docCmd)
 
 	docStatusCmd := &cobra.Command{
-		Use:   "status [file] [status]",
-		Short: "Set document status (open|paid|submitted|done|needs_review|waiting_for_reply)",
-		Args:  cobra.ExactArgs(2),
+		Use:   "status [file...] [status]",
+		Short: "Set document status on one or more files (open|paid|submitted|done|needs_review|waiting_for_reply)",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			vRoot, db, err := initServiceDeps()
-			if err != nil {
-				return err
-			}
-			defer db.Close()
-			svc := service.New(vRoot, db)
-			if err := svc.DocStatus(args[0], args[1]); err != nil {
-				return err
-			}
-			return outputResult(map[string]string{"status": "updated", "file": args[0], "new_status": args[1]})
+			return runDocBatch(cmd, args, func(svc *service.Service, file, value string) error {
+				return svc.DocStatus(file, value)
+			})
 		},
 	}
+	addBatchStdinFlag(docStatusCmd)
 	docCmd.AddCommand(docStatusCmd)
 
 	docDueCmd := &cobra.Command{
-		Use:   "due [file] [date]",
-		Short: "Set document due date (ISO-8601)",
-		Args:  cobra.ExactArgs(2),
+		Use:   "due [file...] [date]",
+		Short: "Set document due date (ISO-8601) on one or more files",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			vRoot, db, err := initServiceDeps()
-			if err != nil {
-				return err
-			}
-			defer db.Close()
-			svc := service.New(vRoot, db)
-			if err := svc.DocDue(args[0], args[1]); err != nil {
-				return err
-			}
-			return outputResult(map[string]string{"status": "updated", "file": args[0], "due_date": args[1]})
+			return runDocBatch(cmd, args, func(svc *service.Service, file, value string) error {
+				return svc.DocDue(file, value)
+			})
 		},
 	}
+	addBatchStdinFlag(docDueCmd)
 	docCmd.AddCommand(docDueCmd)
+
+	docTypeCmd := &cobra.Command{
+		Use:   "type [file...] [type]",
+		Short: "Set document_type on one or more files",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runDocBatch(cmd, args, func(svc *service.Service, file, value string) error {
+				return svc.DocType(file, value)
+			})
+		},
+	}
+	addBatchStdinFlag(docTypeCmd)
+	docCmd.AddCommand(docTypeCmd)
+
+	docCorrespondentCmd := &cobra.Command{
+		Use:   "correspondent [file...] [name]",
+		Short: "Set correspondent on one or more files",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runDocBatch(cmd, args, func(svc *service.Service, file, value string) error {
+				return svc.DocCorrespondent(file, value)
+			})
+		},
+	}
+	addBatchStdinFlag(docCorrespondentCmd)
+	docCmd.AddCommand(docCorrespondentCmd)
+
+	docTagCmd := &cobra.Command{
+		Use:   "tag",
+		Short: "Add or remove tags on one or more files",
+	}
+	docCmd.AddCommand(docTagCmd)
+
+	docTagAddCmd := &cobra.Command{
+		Use:   "add [tag] [file...]",
+		Short: "Add a tag to one or more files",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runDocTagBatch(cmd, args, func(svc *service.Service, file, tag string) error {
+				return svc.DocTagAdd(file, tag)
+			})
+		},
+	}
+	addBatchStdinFlag(docTagAddCmd)
+	docTagCmd.AddCommand(docTagAddCmd)
+
+	docTagRemoveCmd := &cobra.Command{
+		Use:   "remove [tag] [file...]",
+		Short: "Remove a tag from one or more files",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runDocTagBatch(cmd, args, func(svc *service.Service, file, tag string) error {
+				return svc.DocTagRemove(file, tag)
+			})
+		},
+	}
+	addBatchStdinFlag(docTagRemoveCmd)
+	docTagCmd.AddCommand(docTagRemoveCmd)
 
 	docASNCmd := &cobra.Command{
 		Use:   "asn [file] [next|N]",

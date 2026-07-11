@@ -14,6 +14,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
+	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
 // newTestFactory creates a real serviceFactory backed by a temp vault + sidecar.
@@ -109,12 +110,65 @@ func TestSearchToolHappyPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	results, ok := out.([]map[string]interface{})
+	response, ok := out.(service.SearchResponse)
 	if !ok {
-		t.Fatalf("expected []map[string]interface{}, got %T", out)
+		t.Fatalf("expected service.SearchResponse, got %T", out)
 	}
-	if len(results) == 0 {
+	if len(response.Results) == 0 {
 		t.Fatal("expected at least one search result")
+	}
+}
+
+func TestSearchToolReturnsSyntaxFallbackHint(t *testing.T) {
+	factory := newTestFactory(t)
+	tool := newSearchTool(factory)
+
+	out, err := tool.Handler(context.Background(), json.RawMessage(`{"query":"tag:"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	response, ok := out.(service.SearchResponse)
+	if !ok {
+		t.Fatalf("expected service.SearchResponse, got %T", out)
+	}
+	if response.Hint == "" {
+		t.Fatal("expected syntax fallback hint")
+	}
+}
+
+func TestSearchToolSupportsScopedOperators(t *testing.T) {
+	factory := newTestFactory(t)
+	svc, db, err := factory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if err := svc.DB.IndexDocument(&vault.Document{
+		Path:    filepath.Join(svc.VaultRoot, "finance", "invoice.md"),
+		Title:   "Invoice",
+		SHA256:  "invoice",
+		Created: "2026-01-01T00:00:00Z",
+		Status:  "open",
+		Body:    "steuer",
+		Frontmatter: map[string]interface{}{
+			"tags":          []interface{}{"invoice"},
+			"document_type": "invoice",
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	tool := newSearchTool(factory)
+	out, err := tool.Handler(context.Background(), json.RawMessage(`{"query":"tag:invoice path:finance type:invoice -status:paid steuer"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	response, ok := out.(service.SearchResponse)
+	if !ok {
+		t.Fatalf("expected service.SearchResponse, got %T", out)
+	}
+	if len(response.Results) != 1 || response.Results[0]["title"] != "Invoice" {
+		t.Fatalf("unexpected results: %#v", response.Results)
 	}
 }
 

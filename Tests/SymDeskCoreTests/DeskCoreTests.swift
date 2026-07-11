@@ -20,6 +20,25 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertEqual(note.modifiedAt, "2026-07-06T12:00:00Z")
     }
 
+    func testSearchResponseDecodingIncludesSyntaxHint() throws {
+        let json = """
+        {
+            "results": [{
+                "path": "finance/invoice.md",
+                "title": "Invoice",
+                "snippet": "Tax invoice",
+                "score": 0
+            }],
+            "hint": "Search syntax was invalid, so this was searched as plain full text."
+        }
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(SearchResponse.self, from: json)
+        XCTAssertEqual(response.results.count, 1)
+        XCTAssertEqual(response.results[0].title, "Invoice")
+        XCTAssertNotNil(response.hint)
+    }
+
     func testEventDecoding() throws {
         let json = """
         {

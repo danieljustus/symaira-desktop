@@ -282,7 +282,7 @@ func registerCommands(rootCmd *cobra.Command) {
 			defer db.Close()
 			svc := service.New(vRoot, db)
 
-			results, err := svc.Search(args[0])
+			results, err := svc.SearchWithMeta(args[0])
 			if err != nil {
 				return err
 			}

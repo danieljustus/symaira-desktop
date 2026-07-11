@@ -138,7 +138,7 @@ func newLsTool(getService serviceFactory) *mcpserver.Tool {
 func newSearchTool(getService serviceFactory) *mcpserver.Tool {
 	return &mcpserver.Tool{
 		Name:        "desk_search",
-		Description: "Searches for notes in the vault.",
+		Description: "Searches notes with full-text terms plus path:, tag:, type:, status:, quoted phrases, -negation and /regex/. Invalid syntax falls back to plain full-text and returns a hint.",
 		InputSchema: json.RawMessage(`{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`),
 		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
 			var args struct {
@@ -155,7 +155,7 @@ func newSearchTool(getService serviceFactory) *mcpserver.Tool {
 				return nil, err
 			}
 			defer db.Close()
-			return svc.Search(args.Query)
+			return svc.SearchWithMeta(args.Query)
 		},
 	}
 }

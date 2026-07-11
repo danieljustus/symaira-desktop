@@ -8,10 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/danieljustus/symaira-corekit/sqlitekit"
 	_ "modernc.org/sqlite"
 
+	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -266,6 +268,188 @@ func (db *DB) Search(query string) ([]*vault.Document, error) {
 		docs = append(docs, &d)
 	}
 	return docs, nil
+}
+
+// SearchMatch is a sidecar search result with the raw indexed body retained for
+// the query language's regex post-filter. Body is never exposed directly by the
+// service; callers receive the existing snippet-only public shape.
+type SearchMatch struct {
+	Path    string
+	Title   string
+	Snippet string
+	Body    string
+	Tags    string
+}
+
+// SearchPlan applies a parsed search plan. Metadata and FTS filters run in
+// SQLite; regex and the legacy, unnormalised tags value are applied after the
+// database has narrowed the candidate set. The latter avoids a schema migration
+// while preserving exact tag matching for existing sidecars.
+func (db *DB) SearchPlan(plan searchquery.Plan) ([]SearchMatch, error) {
+	positiveTerms := make([]searchquery.Term, 0, len(plan.Terms))
+	negativeTerms := make([]searchquery.Term, 0, len(plan.Terms))
+	for _, term := range plan.Terms {
+		if term.Negated {
+			negativeTerms = append(negativeTerms, term)
+		} else {
+			positiveTerms = append(positiveTerms, term)
+		}
+	}
+
+	hasFullText := len(positiveTerms) > 0
+	var query strings.Builder
+	query.WriteString(`SELECT f.path, f.title, `)
+	if hasFullText {
+		query.WriteString(`snippet(fts_search, 1, '<b>', '</b>', '...', 64), `)
+	} else {
+		query.WriteString(`substr(COALESCE(fts_search.body, ''), 1, 256), `)
+	}
+	query.WriteString(`COALESCE(fts_search.body, ''),
+		COALESCE((SELECT value FROM file_properties tag_prop
+			WHERE tag_prop.file_id = f.id AND tag_prop.key = 'tags'), '')
+		FROM files f `)
+	if hasFullText {
+		query.WriteString(`JOIN fts_search ON fts_search.rowid = f.id WHERE fts_search MATCH ?`)
+	} else {
+		query.WriteString(`LEFT JOIN fts_search ON fts_search.rowid = f.id WHERE 1 = 1`)
+	}
+
+	args := make([]interface{}, 0, len(plan.Filters)+len(plan.Terms)+1)
+	if hasFullText {
+		args = append(args, ftsExpression(positiveTerms))
+	}
+
+	for _, filter := range plan.Filters {
+		switch filter.Field {
+		case searchquery.FieldPath:
+			operator := "LIKE"
+			if filter.Negated {
+				operator = "NOT LIKE"
+			}
+			query.WriteString(` AND LOWER(f.path) ` + operator + ` LOWER(?) ESCAPE '\'`)
+			args = append(args, "%"+escapeLike(filter.Value)+"%")
+		case searchquery.FieldStatus:
+			operator := "="
+			if filter.Negated {
+				operator = "!="
+			}
+			query.WriteString(` AND COALESCE(f.status, '') ` + operator + ` ? COLLATE NOCASE`)
+			args = append(args, filter.Value)
+		case searchquery.FieldType:
+			operator := "EXISTS"
+			if filter.Negated {
+				operator = "NOT EXISTS"
+			}
+			query.WriteString(` AND ` + operator + ` (
+				SELECT 1 FROM file_properties type_prop
+				WHERE type_prop.file_id = f.id
+					AND type_prop.key = 'document_type'
+					AND type_prop.value = ? COLLATE NOCASE
+			)`)
+			args = append(args, filter.Value)
+		case searchquery.FieldTag:
+			// Tags are exact-matched after scanning. Existing indexes store the
+			// original YAML list as one property, rather than a separate tag table.
+		}
+	}
+
+	for _, term := range negativeTerms {
+		query.WriteString(` AND NOT EXISTS (
+			SELECT 1 FROM fts_search
+			WHERE fts_search.rowid = f.id AND fts_search MATCH ?
+		)`)
+		args = append(args, ftsExpression([]searchquery.Term{term}))
+	}
+
+	if hasFullText {
+		query.WriteString(` ORDER BY rank`)
+	} else {
+		query.WriteString(` ORDER BY f.path COLLATE NOCASE`)
+	}
+
+	rows, err := db.conn.Query(query.String(), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results := make([]SearchMatch, 0)
+	for rows.Next() {
+		var match SearchMatch
+		if err := rows.Scan(&match.Path, &match.Title, &match.Snippet, &match.Body, &match.Tags); err != nil {
+			return nil, err
+		}
+		if !matchesPlanPostFilters(match, plan) {
+			continue
+		}
+		results = append(results, match)
+		if len(results) == 20 {
+			break
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func ftsExpression(terms []searchquery.Term) string {
+	parts := make([]string, 0, len(terms))
+	for _, term := range terms {
+		quoted := `"` + strings.ReplaceAll(term.Value, `"`, `""`) + `"`
+		if !term.Phrase {
+			quoted += "*"
+		}
+		parts = append(parts, quoted)
+	}
+	return strings.Join(parts, " ")
+}
+
+func escapeLike(value string) string {
+	value = strings.ReplaceAll(value, `\`, `\\`)
+	value = strings.ReplaceAll(value, "%", `\%`)
+	return strings.ReplaceAll(value, "_", `\_`)
+}
+
+func matchesPlanPostFilters(match SearchMatch, plan searchquery.Plan) bool {
+	for _, filter := range plan.Filters {
+		if filter.Field != searchquery.FieldTag {
+			continue
+		}
+		matched := hasTag(match.Tags, filter.Value)
+		if filter.Negated == matched {
+			return false
+		}
+	}
+
+	content := match.Title + "\n" + match.Body
+	for _, regex := range plan.Regexes {
+		matched := regex.Matches(content)
+		if regex.Negated == matched {
+			return false
+		}
+	}
+	return true
+}
+
+func hasTag(raw, want string) bool {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return false
+	}
+	if strings.EqualFold(raw, want) {
+		return true
+	}
+
+	trimmed := strings.TrimPrefix(strings.TrimSuffix(raw, "]"), "[")
+	for _, tag := range strings.FieldsFunc(trimmed, func(r rune) bool {
+		return r == ',' || unicode.IsSpace(r)
+	}) {
+		if strings.EqualFold(strings.Trim(tag, `"'`), want) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetTitle returns the title of the document at the given path.

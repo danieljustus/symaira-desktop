@@ -383,6 +383,9 @@ func (s *Service) NoteMove(oldPath, newPath string) error {
 
 // PropsEdit updates a frontmatter property in the file and re-indexes.
 func (s *Service) PropsEdit(relPath, key, value string) error {
+	if key == "asn" {
+		return fmt.Errorf("use \"symdesk doc asn <file> <next|N>\" to assign an ASN safely")
+	}
 	absPath, err := vault.SecurePath(s.VaultRoot, relPath)
 	if err != nil {
 		return err

@@ -122,9 +122,10 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
     public let confidence: Int
     public let correspondent: String
     public let documentType: String
+    public let asn: Int
 
     enum CodingKeys: String, CodingKey {
-        case path, title, person, status, confidence, correspondent
+        case path, title, person, status, confidence, correspondent, asn
         case documentDate = "document_date"
         case dueDate = "due_date"
         case documentType = "document_type"
@@ -141,6 +142,7 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         confidence = (try? c.decode(Int.self, forKey: .confidence)) ?? 0
         correspondent = (try? c.decode(String.self, forKey: .correspondent)) ?? ""
         documentType = (try? c.decode(String.self, forKey: .documentType)) ?? ""
+        asn = (try? c.decode(Int.self, forKey: .asn)) ?? 0
     }
 
     public init(
@@ -152,7 +154,8 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         dueDate: String,
         confidence: Int,
         correspondent: String,
-        documentType: String
+        documentType: String,
+        asn: Int = 0
     ) {
         self.path = path
         self.title = title
@@ -163,6 +166,7 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         self.confidence = confidence
         self.correspondent = correspondent
         self.documentType = documentType
+        self.asn = asn
     }
 }
 
@@ -556,12 +560,13 @@ public final class DeskCore: ObservableObject {
 
     // MARK: - Document Library
 
-    public func docsList(status: String? = nil, type: String? = nil, person: String? = nil) async throws -> [DocumentItem] {
+    public func docsList(status: String? = nil, type: String? = nil, person: String? = nil, asn: Int? = nil) async throws -> [DocumentItem] {
         guard let tool else { throw DeskCoreError.coreNotFound }
         var args = ["docs", "list", "--json"] + vaultArgs
         if let s = status, !s.isEmpty { args += ["--status", s] }
         if let t = type, !t.isEmpty { args += ["--type", t] }
         if let p = person, !p.isEmpty { args += ["--person", p] }
+        if let asn, asn > 0 { args += ["--asn", "\(asn)"] }
         let runner = CLIRunner()
         return try await runner.runDecoding(
             [DocumentItem].self,
@@ -585,6 +590,15 @@ public final class DeskCore: ObservableObject {
         _ = try await runner.runChecked(
             tool.location.url,
             arguments: ["doc", "due", path, date] + vaultArgs
+        )
+    }
+
+    public func docSetASN(path: String, value: String = "next") async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        _ = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["doc", "asn", path, value] + vaultArgs
         )
     }
 

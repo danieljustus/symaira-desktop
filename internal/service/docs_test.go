@@ -3,11 +3,63 @@ package service
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
+
+func TestDocASNAllocatesLowestFreeRejectsCollisionsAndIndexes(t *testing.T) {
+	svc := newTestService(t)
+	for _, name := range []string{"first.md", "second.md", "third.md"} {
+		content := "---\ntitle: " + strings.TrimSuffix(name, ".md") + "\n---\n\nBody\n"
+		if err := os.WriteFile(filepath.Join(svc.VaultRoot, name), []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	first, err := svc.DocASN("first.md", "next")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first != 1 {
+		t.Fatalf("expected first ASN 1, got %d", first)
+	}
+	second, err := svc.DocASN("second.md", "next")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second != 2 {
+		t.Fatalf("expected second ASN 2, got %d", second)
+	}
+
+	if _, err := svc.DocASN("third.md", "1"); err == nil || !strings.Contains(err.Error(), "already assigned") {
+		t.Fatalf("expected duplicate ASN rejection, got %v", err)
+	}
+	if _, err := svc.DocASN("third.md", "0"); err == nil || !strings.Contains(err.Error(), "positive integer") {
+		t.Fatalf("expected non-positive ASN rejection, got %v", err)
+	}
+
+	results, err := svc.DocsList(sidecar.DocsFilter{ASN: &second})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0].Path != "second.md" || results[0].ASN != 2 {
+		t.Fatalf("expected indexed second document by ASN, got %#v", results)
+	}
+
+	searchResults, err := svc.DB.Search("2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(searchResults) != 1 || searchResults[0].Path != filepath.Join(svc.VaultRoot, "second.md") {
+		t.Fatalf("expected search to find ASN 2 document, got %#v", searchResults)
+	}
+	if err := svc.PropsEdit("third.md", "asn", "3"); err == nil || !strings.Contains(err.Error(), "doc asn") {
+		t.Fatalf("expected generic property ASN edit to be rejected, got %v", err)
+	}
+}
 
 func TestDocsListReturnsRelativePaths(t *testing.T) {
 	svc := newTestService(t)

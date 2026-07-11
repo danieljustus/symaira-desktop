@@ -40,6 +40,7 @@ type Document struct {
 	Confidence   int    // 0-100 classification confidence
 	OcrJSONPath  string // path to plain-text OCR JSON
 	Simhash      string // 64-bit SimHash hex
+	ASN          *int   // optional, vault-wide unique positive archive serial number
 }
 
 // ValidStatuses enumerates the allowed values for Document.Status.
@@ -205,6 +206,10 @@ func ParseFile(path string) (*Document, error) {
 	doc.Confidence = getIntFrontmatter(doc.Frontmatter, "confidence")
 	doc.OcrJSONPath = getStringFrontmatter(doc.Frontmatter, "ocr_json_path")
 	doc.Simhash = getStringFrontmatter(doc.Frontmatter, "simhash")
+	doc.ASN, err = asnFromFrontmatter(path, doc.Frontmatter)
+	if err != nil {
+		return nil, err
+	}
 
 	doc.Body = string(bodyBytes)
 	doc.Links = extractWikilinks(doc.Body)

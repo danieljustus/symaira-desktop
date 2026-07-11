@@ -37,23 +37,27 @@ func registerCommands(rootCmd *cobra.Command) {
 				results["vault"] = map[string]string{"status": "ok", "path": vRoot}
 			}
 
-			// 2. Contract (Check VAULT.md if exists, or frontmatter parseable)
-			// A basic check: can we initialize the walker and parse one file?
+			// 2. Contract and ASN integrity. Scan every file so malformed and
+			// duplicate archive serial numbers are actionable in one doctor run.
+			var asnReport vault.ASNReport
+			hasASNReport := false
 			if vRoot != "" {
-				var fileCount int
-				err = vault.Walk(vRoot, func(p string) error {
-					fileCount++
-					if fileCount == 1 {
-						_, err := vault.ParseFile(p)
-						return err // return error if first file fails to parse frontmatter
-					}
-					return nil
-				})
+				asnReport, err = vault.ScanASNs(vRoot)
+				hasASNReport = true
 				if err != nil {
 					results["contract"] = map[string]string{"status": "error", "message": err.Error()}
 					allOk = false
 				} else {
-					results["contract"] = map[string]interface{}{"status": "ok", "files_found": fileCount}
+					contractStatus := "ok"
+					if len(asnReport.ParseErrors) > 0 {
+						contractStatus = "error"
+						allOk = false
+					}
+					results["contract"] = map[string]interface{}{"status": contractStatus, "files_found": asnReport.FilesScanned}
+					results["asn"] = asnReport
+					if !asnReport.Healthy() {
+						allOk = false
+					}
 				}
 			}
 
@@ -122,8 +126,20 @@ func registerCommands(rootCmd *cobra.Command) {
 				fmt.Println(string(b))
 			} else {
 				for k, v := range results {
-					if k != "overall" && k != "tools" && k != "versions" && k != "conflicts" {
+					if k != "overall" && k != "tools" && k != "versions" && k != "conflicts" && k != "asn" {
 						fmt.Printf("%s: %v\n", k, v)
+					}
+				}
+				if hasASNReport {
+					fmt.Printf("asn: %d assigned, %d malformed, %d duplicate values\n", asnReport.Assigned, len(asnReport.Malformed), len(asnReport.Duplicates))
+					for _, malformed := range asnReport.Malformed {
+						fmt.Printf("  malformed: %s (%s)\n", malformed.Path, malformed.Message)
+					}
+					for _, duplicate := range asnReport.Duplicates {
+						fmt.Printf("  duplicate ASN %d: %s\n", duplicate.ASN, strings.Join(duplicate.Paths, ", "))
+					}
+					for _, parseError := range asnReport.ParseErrors {
+						fmt.Printf("  parse error: %s (%s)\n", parseError.Path, parseError.Message)
 					}
 				}
 				if len(conflicts) > 0 {
@@ -282,7 +298,7 @@ func registerCommands(rootCmd *cobra.Command) {
 			defer db.Close()
 			svc := service.New(vRoot, db)
 
-			results, err := svc.Search(args[0])
+			results, err := svc.SearchWithMeta(args[0])
 			if err != nil {
 				return err
 			}
@@ -788,6 +804,13 @@ func registerCommands(rootCmd *cobra.Command) {
 			if maxC, _ := cmd.Flags().GetInt("max-confidence"); maxC > 0 {
 				f.MaxConfidence = &maxC
 			}
+			if cmd.Flags().Changed("asn") {
+				asn, _ := cmd.Flags().GetInt("asn")
+				if err := vault.ValidateASN(asn); err != nil {
+					return fmt.Errorf("invalid --asn: %w", err)
+				}
+				f.ASN = &asn
+			}
 
 			results, err := svc.DocsList(f)
 			if err != nil {
@@ -804,6 +827,7 @@ func registerCommands(rootCmd *cobra.Command) {
 	docsListCmd.Flags().String("due-before", "", "filter by due_date <= date (ISO-8601)")
 	docsListCmd.Flags().Int("min-confidence", 0, "minimum confidence (0-100)")
 	docsListCmd.Flags().Int("max-confidence", 0, "maximum confidence (0-100)")
+	docsListCmd.Flags().Int("asn", 0, "filter by archive serial number")
 	docsCmd.AddCommand(docsListCmd)
 
 	docsReviewCmd := &cobra.Command{
@@ -834,7 +858,7 @@ func registerCommands(rootCmd *cobra.Command) {
 
 	docCmd := &cobra.Command{
 		Use:   "doc",
-		Short: "Mutate document metadata (status, due date)",
+		Short: "Mutate document metadata (status, due date, archive serial number)",
 	}
 	rootCmd.AddCommand(docCmd)
 
@@ -875,6 +899,25 @@ func registerCommands(rootCmd *cobra.Command) {
 		},
 	}
 	docCmd.AddCommand(docDueCmd)
+
+	docASNCmd := &cobra.Command{
+		Use:   "asn [file] [next|N]",
+		Short: "Assign a unique archive serial number",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			asn, err := service.New(vRoot, db).DocASN(args[0], args[1])
+			if err != nil {
+				return err
+			}
+			return outputResult(map[string]interface{}{"status": "updated", "file": args[0], "asn": asn})
+		},
+	}
+	docCmd.AddCommand(docASNCmd)
 
 	similarCmd := &cobra.Command{
 		Use:   "similar [file]",

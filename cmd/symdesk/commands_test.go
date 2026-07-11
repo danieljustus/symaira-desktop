@@ -126,6 +126,23 @@ func TestDocsListCommandFlagParsing(t *testing.T) {
 	if typeFlag != "" {
 		t.Errorf("expected empty type flag, got %q", typeFlag)
 	}
+	if asn, _ := flags.GetInt("asn"); asn != 0 {
+		t.Errorf("expected ASN filter default 0, got %d", asn)
+	}
+
+	var docCmd *cobra.Command
+	for _, cmd := range rootCmd.Commands() {
+		if cmd.Name() == "doc" {
+			docCmd = cmd
+			break
+		}
+	}
+	if docCmd == nil {
+		t.Fatal("doc command not found")
+	}
+	if _, _, err := docCmd.Find([]string{"asn"}); err != nil {
+		t.Fatalf("expected doc asn command: %v", err)
+	}
 }
 
 func TestSimilarCommandFlagDefaults(t *testing.T) {

@@ -16,6 +16,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
+	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -86,12 +87,80 @@ func (s *Service) Ls(dirPrefix string) ([]map[string]interface{}, error) {
 	return results, nil
 }
 
-// Search performs a full-text search.
+// SearchResponse is the shared result contract for CLI, MCP and the native app.
+// Hint is set only when malformed search syntax was safely retried as plain
+// full-text input.
+type SearchResponse struct {
+	Results []map[string]interface{} `json:"results"`
+	Hint    string                   `json:"hint,omitempty"`
+}
+
+// Search preserves the existing service API for internal callers such as Ask.
+// Interactive callers use SearchWithMeta so they can surface syntax hints.
 func (s *Service) Search(query string) ([]map[string]interface{}, error) {
+	response, err := s.SearchWithMeta(query)
+	if err != nil {
+		return nil, err
+	}
+	return response.Results, nil
+}
+
+// SearchWithMeta parses the scoped query language and dispatches it to the
+// sidecar when its semantics are not supported by sibling search tools. Invalid
+// syntax never becomes an error to end users: the original query is searched as
+// safe plain text and the caller receives a concise hint.
+func (s *Service) SearchWithMeta(query string) (SearchResponse, error) {
+	if strings.TrimSpace(query) == "" {
+		return SearchResponse{Results: []map[string]interface{}{}}, nil
+	}
+
+	plan, err := searchquery.Parse(query)
+	if err != nil {
+		results, plainErr := s.searchSidecarPlain(query)
+		if plainErr != nil {
+			return SearchResponse{}, plainErr
+		}
+		return SearchResponse{
+			Results: results,
+			Hint:    "Search syntax was invalid, so this was searched as plain full text.",
+		}, nil
+	}
+
+	if plan.RequiresSidecar() {
+		matches, err := s.DB.SearchPlan(plan)
+		if err != nil {
+			return SearchResponse{}, err
+		}
+		results := make([]map[string]interface{}, 0, len(matches))
+		for _, match := range matches {
+			relPath, err := filepath.Rel(s.VaultRoot, match.Path)
+			if err != nil {
+				relPath = match.Path
+			}
+			results = append(results, map[string]interface{}{
+				"path":    relPath,
+				"title":   match.Title,
+				"snippet": match.Snippet,
+				"score":   0.0,
+			})
+		}
+		return SearchResponse{Results: results}, nil
+	}
+
+	results, err := s.searchPlain(query)
+	if err != nil {
+		return SearchResponse{}, err
+	}
+	return SearchResponse{Results: results}, nil
+}
+
+// searchPlain keeps the pre-query-language search behaviour, including the
+// optional symseek upgrade for ordinary unscoped full-text terms.
+func (s *Service) searchPlain(query string) ([]map[string]interface{}, error) {
 	if ok, _ := compose.HasSymseek(); ok {
 		seekResults, err := compose.Search(query)
 		if err == nil {
-			var results []map[string]interface{}
+			results := make([]map[string]interface{}, 0, len(seekResults))
 			for _, r := range seekResults {
 				relPath := r.Path
 				if filepath.IsAbs(r.Path) {
@@ -119,12 +188,19 @@ func (s *Service) Search(query string) ([]map[string]interface{}, error) {
 		}
 	}
 
+	return s.searchSidecarPlain(query)
+}
+
+// searchSidecarPlain is the safe FTS5-only fallback used when query syntax is
+// malformed. It intentionally does not delegate to a sibling search tool that
+// might interpret the invalid characters as its own query language.
+func (s *Service) searchSidecarPlain(query string) ([]map[string]interface{}, error) {
 	docs, err := s.DB.Search(query)
 	if err != nil {
 		return nil, err
 	}
 
-	var results []map[string]interface{}
+	results := make([]map[string]interface{}, 0, len(docs))
 	for _, d := range docs {
 		relPath, _ := filepath.Rel(s.VaultRoot, d.Path)
 		results = append(results, map[string]interface{}{
@@ -383,6 +459,9 @@ func (s *Service) NoteMove(oldPath, newPath string) error {
 
 // PropsEdit updates a frontmatter property in the file and re-indexes.
 func (s *Service) PropsEdit(relPath, key, value string) error {
+	if key == "asn" {
+		return fmt.Errorf("use \"symdesk doc asn <file> <next|N>\" to assign an ASN safely")
+	}
 	absPath, err := vault.SecurePath(s.VaultRoot, relPath)
 	if err != nil {
 		return err

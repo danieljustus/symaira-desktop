@@ -55,6 +55,7 @@ The following optional fields provide first-class document query metadata. They 
 - `confidence` (integer, 0–100): Classification confidence from the ingest pipeline. 100 means certain, 0 means unknown.
 - `ocr_json_path` (string): Filesystem path to a plain-text OCR JSON file stored next to the original document.
 - `simhash` (string, 16-char hex): 64-bit text SimHash for near-duplicate / template detection.
+- `asn` (positive integer): A vault-wide unique archive serial number for the physical paper archive. It is optional, but when present it MUST be a YAML integer greater than zero and MUST not be assigned to any other note in the vault. `symdesk doc asn <file> next` allocates the lowest available number; `symdesk doctor` reports malformed or duplicate assignments.
 
 ## 4. Wikilink Semantics
 - **Syntax:** `[[Filename]]` or `[[Filename|Display Text]]`.
@@ -73,4 +74,3 @@ The following optional fields provide first-class document query metadata. They 
   - `{{date}}` — Substituted with the current date (YYYY-MM-DD).
   - `{{time}}` — Substituted with the current time (HH:MM).
 - When a template is applied, its content (including any frontmatter defined in the template) is merged into the contract-conform base frontmatter.
-

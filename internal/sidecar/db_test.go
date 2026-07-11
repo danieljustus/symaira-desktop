@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
@@ -170,6 +171,35 @@ func TestDocsListV2Metadata(t *testing.T) {
 	}
 	if r.Confidence != 85 {
 		t.Errorf("expected confidence 85, got %d", r.Confidence)
+	}
+}
+
+func TestDocsListFiltersByASNAndIndexesASNForSearch(t *testing.T) {
+	db := setupTestDB(t)
+	asn := 42
+	for _, doc := range []*vault.Document{
+		{Path: "/tmp/asn.md", Title: "Archived", Created: time.Now().Format(time.RFC3339), SHA256: "asn", Body: "archive", ASN: &asn, Frontmatter: map[string]interface{}{"asn": asn}},
+		{Path: "/tmp/no-asn.md", Title: "Unnumbered", Created: time.Now().Format(time.RFC3339), SHA256: "none", Body: "archive", Frontmatter: map[string]interface{}{}},
+	} {
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	results, err := db.DocsList(DocsFilter{ASN: &asn})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0].Path != "/tmp/asn.md" || results[0].ASN != asn {
+		t.Fatalf("expected exact ASN lookup, got %#v", results)
+	}
+
+	search, err := db.Search("42")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(search) != 1 || search[0].Path != "/tmp/asn.md" {
+		t.Fatalf("expected ASN full-text lookup, got %#v", search)
 	}
 }
 
@@ -688,6 +718,71 @@ func TestSearchEmptyQuery(t *testing.T) {
 	}
 	if results != nil {
 		t.Errorf("expected nil for empty query, got %v", results)
+	}
+}
+
+func TestSearchPlanAppliesOperatorsNegationAndRegex(t *testing.T) {
+	db := setupTestDB(t)
+	docs := []*vault.Document{
+		{
+			Path: "/vault/finance/tax-open.md", Title: "Open tax invoice", SHA256: "1", Created: "2026-01-01T00:00:00Z",
+			Status: "open", Body: "steuer annual report invoice-2026 ready",
+			Frontmatter: map[string]interface{}{"tags": []interface{}{"invoice", "tax"}, "document_type": "invoice"},
+		},
+		{
+			Path: "/vault/finance/tax-paid.md", Title: "Paid tax invoice", SHA256: "2", Created: "2026-01-01T00:00:00Z",
+			Status: "paid", Body: "steuer annual report invoice-2025 paid",
+			Frontmatter: map[string]interface{}{"tags": []interface{}{"invoice", "tax"}, "document_type": "invoice"},
+		},
+		{
+			Path: "/vault/finance/draft.md", Title: "Draft", SHA256: "3", Created: "2026-01-01T00:00:00Z",
+			Status: "open", Body: "steuer annual report invoice-2026 draft",
+			Frontmatter: map[string]interface{}{"tags": []interface{}{"invoice"}, "document_type": "invoice"},
+		},
+	}
+	for _, doc := range docs {
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	plan, err := searchquery.Parse(`tag:invoice path:finance type:invoice -status:paid "annual report" steuer /invoice-2026/ -draft`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	results, err := db.SearchPlan(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected one result, got %#v", results)
+	}
+	if results[0].Path != "/vault/finance/tax-open.md" {
+		t.Errorf("path = %q, want open finance invoice", results[0].Path)
+	}
+}
+
+func TestSearchPlanExactTagMatching(t *testing.T) {
+	db := setupTestDB(t)
+	for _, doc := range []*vault.Document{
+		{Path: "/vault/invoice.md", Title: "Invoice", SHA256: "invoice", Created: "2026-01-01T00:00:00Z", Body: "tax", Frontmatter: map[string]interface{}{"tags": []interface{}{"invoice"}}},
+		{Path: "/vault/invoices.md", Title: "Invoices", SHA256: "invoices", Created: "2026-01-01T00:00:00Z", Body: "tax", Frontmatter: map[string]interface{}{"tags": []interface{}{"invoices"}}},
+	} {
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	plan, err := searchquery.Parse("tag:invoice")
+	if err != nil {
+		t.Fatal(err)
+	}
+	results, err := db.SearchPlan(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0].Title != "Invoice" {
+		t.Fatalf("exact tag filter returned %#v", results)
 	}
 }
 

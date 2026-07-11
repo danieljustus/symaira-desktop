@@ -336,6 +336,7 @@ struct DocumentViewerView: View {
             inspectorRow(label: "Type", value: document.documentType)
             inspectorRow(label: "Document Date", value: document.documentDate)
             inspectorRow(label: "Person", value: document.person)
+            inspectorRow(label: "Archive Serial Number", value: document.asn > 0 ? "\(document.asn)" : "", isMonospaced: true)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Correspondent")

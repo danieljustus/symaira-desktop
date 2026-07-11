@@ -284,16 +284,29 @@ func canonicalize(path string) (string, error) {
 	return filepath.Join(resolvedParent, remaining), nil
 }
 
-// extractWikilinks extracts links from markdown body
+// extractWikilinks extracts links from markdown body. Both plain wikilinks
+// ([[Note]]) and transclusion embeds (![[Note]], ![[Note#Heading]]) are
+// indexed as links so backlinks and the graph see embedded notes too.
 func extractWikilinks(body string) []string {
 	matches := wikilinkRegex.FindAllStringSubmatch(body, -1)
 	var links []string
+	seen := make(map[string]bool)
 	for _, m := range matches {
 		if len(m) > 1 {
 			target := m[1]
 			// Handle display text: [[Target|Display]]
 			parts := strings.SplitN(target, "|", 2)
-			links = append(links, strings.TrimSpace(parts[0]))
+			link := strings.TrimSpace(parts[0])
+			// Strip heading (#Heading) and block (#^block) fragments so
+			// [[Note#Section]] and ![[Note#Section]] resolve to the file.
+			if idx := strings.Index(link, "#"); idx >= 0 {
+				link = strings.TrimSpace(link[:idx])
+			}
+			if link == "" || seen[link] {
+				continue
+			}
+			seen[link] = true
+			links = append(links, link)
 		}
 	}
 	return links

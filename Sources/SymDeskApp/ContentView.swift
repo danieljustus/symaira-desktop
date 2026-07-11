@@ -247,11 +247,14 @@ struct ContentView: View {
 
                                     if isShowingPreview {
                                         Divider()
-                                        ScrollView {
-                                            Text(LocalizedStringKey(noteContent))
-                                                .padding()
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                        }
+                                        MarkdownPreviewView(
+                                            text: noteContent,
+                                            resolveNote: { target in resolveNoteContent(target) },
+                                            visited: [note.title],
+                                            onLinkClick: { targetTitle in
+                                                navigateToNote(title: targetTitle)
+                                            }
+                                        )
                                         .frame(maxWidth: .infinity)
                                     }
                                 }
@@ -475,6 +478,21 @@ struct ContentView: View {
                 }
             }
         }
+    }
+
+    /// Resolves a transclusion target ("Note Title" or relative path without
+    /// extension) to the note's raw Markdown for the preview embeds.
+    private func resolveNoteContent(_ target: String) -> String? {
+        let lowered = target.lowercased()
+        let found = notes.first { note in
+            if note.title.lowercased() == lowered { return true }
+            let base = (note.path as NSString).lastPathComponent
+            let stem = (base as NSString).deletingPathExtension
+            return stem.lowercased() == lowered || base.lowercased() == lowered
+        }
+        guard let found,
+              let data = FileManager.default.contents(atPath: found.path) else { return nil }
+        return String(data: data, encoding: .utf8)
     }
 
     private func navigateToNote(title: String) {

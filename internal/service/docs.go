@@ -61,6 +61,7 @@ func (s *Service) DocStatus(relPath, status string) error {
 	if err != nil {
 		return err
 	}
+	s.snapshotBefore(absPath)
 	if err := vault.SetFrontmatterKey(absPath, "status", status); err != nil {
 		return err
 	}
@@ -77,6 +78,7 @@ func (s *Service) DocDue(relPath, date string) error {
 	if err != nil {
 		return err
 	}
+	s.snapshotBefore(absPath)
 	if err := vault.SetFrontmatterKey(absPath, "due_date", date); err != nil {
 		return err
 	}
@@ -134,6 +136,7 @@ func (s *Service) DocASN(relPath, value string) (int, error) {
 			}
 		}
 
+		s.snapshotBefore(absPath)
 		if err := vault.SetFrontmatterValue(absPath, "asn", assigned); err != nil {
 			return fmt.Errorf("set ASN: %w", err)
 		}

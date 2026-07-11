@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,6 +16,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
+	"github.com/danieljustus/symaira-desktop/internal/history"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
@@ -26,6 +28,7 @@ type Service struct {
 	VaultRoot string
 	DB        *sidecar.DB
 	ViewsMgr  *dbviews.Manager
+	History   *history.Store
 }
 
 // New creates a new Service instance.
@@ -38,6 +41,21 @@ func New(vaultRoot string, db *sidecar.DB) *Service {
 		VaultRoot: canonical,
 		DB:        db,
 		ViewsMgr:  dbviews.NewManager(canonical),
+		History:   history.NewStore(canonical),
+	}
+}
+
+// snapshotBefore records a history snapshot of the file at absPath before a
+// mutation. Snapshot failures never block the write itself; they are logged
+// so the user's edit is not lost to a safety-net error.
+func (s *Service) snapshotBefore(absPath string) {
+	rel, err := filepath.Rel(s.VaultRoot, absPath)
+	if err != nil {
+		slog.Warn("history snapshot skipped", "path", absPath, "error", err)
+		return
+	}
+	if _, err := s.History.Snapshot(rel); err != nil {
+		slog.Warn("history snapshot failed", "path", rel, "error", err)
 	}
 }
 
@@ -291,6 +309,7 @@ func (s *Service) NoteNew(title, content, templateName string) (string, error) {
 		fullContent = fmt.Sprintf("---\ntitle: \"%s\"\ncreated: \"%s\"\ntags: []\n---\n\n%s", title, nowStr, content)
 	}
 
+	s.snapshotBefore(absPath)
 	if err := os.WriteFile(absPath, []byte(fullContent), 0644); err != nil {
 		return "", fmt.Errorf("failed to write file: %w", err)
 	}
@@ -412,6 +431,7 @@ func (s *Service) NoteClip(url string) (string, error) {
 	fullContent := fmt.Sprintf("---\ntitle: %q\ncreated: %q\nsource_uri: %q\ningested_at: %q\ntags: []\n---\n\n%s",
 		noteTitle, nowStr, url, nowStr, bodyStr)
 
+	s.snapshotBefore(absPath)
 	if err := os.WriteFile(absPath, []byte(fullContent), 0644); err != nil {
 		return "", fmt.Errorf("failed to write clipped file: %w", err)
 	}
@@ -467,6 +487,7 @@ func (s *Service) PropsEdit(relPath, key, value string) error {
 		return err
 	}
 
+	s.snapshotBefore(absPath)
 	if err := vault.SetFrontmatterValue(absPath, key, value); err != nil {
 		return err
 	}

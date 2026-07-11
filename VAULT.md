@@ -74,3 +74,20 @@ The following optional fields provide first-class document query metadata. They 
   - `{{date}}` — Substituted with the current date (YYYY-MM-DD).
   - `{{time}}` — Substituted with the current time (HH:MM).
 - When a template is applied, its content (including any frontmatter defined in the template) is merged into the contract-conform base frontmatter.
+
+## 7. Version History & Trash (contract_version 2)
+- symdesk keeps a local safety net inside the hidden `.symdesk/` folder at the vault root; it is never indexed and never synced by symdesk itself.
+  - `.symdesk/history/objects/` — content-addressed snapshot blobs (SHA-256).
+  - `.symdesk/history/manifest/` — per-file JSON manifests of snapshot metadata.
+  - `.symdesk/trash/` — soft-deleted files plus `*.trashinfo.json` metadata (original path, deletion time).
+- **Snapshots:** every mutating symdesk operation (note creation/overwrite, property edits, `doc status|due|asn`, clipping — including all MCP/AI writes) records the file's prior content first. Identical content is deduplicated.
+- **CLI:**
+  - `symdesk history <file>` — list snapshots; `symdesk history prune` — apply retention.
+  - `symdesk restore <file> [--at <id>]` — restore a snapshot (latest by default). The pre-restore state is snapshotted, so restores are undoable. The sidecar is re-indexed automatically.
+  - `symdesk note delete <file>` — move a note to the trash (removed from the index).
+  - `symdesk trash list | restore <name> | purge [--older-than-days N | --all]`.
+- **Retention (configurable via config file or environment):**
+  - `history_max_per_file` / `SYMDESK_HISTORY_MAX_PER_FILE` — max snapshots kept per file on prune (default 20, 0 = unlimited).
+  - `history_max_age_days` / `SYMDESK_HISTORY_MAX_AGE_DAYS` — snapshots older than this are pruned; the newest snapshot per file is always kept (default 90, 0 = unlimited).
+  - `trash_retention_days` / `SYMDESK_TRASH_RETENTION_DAYS` — default age threshold for `trash purge` (default 30).
+- Trashing a file snapshots its final content first, so even a purged trash item stays recoverable until history retention drops it.

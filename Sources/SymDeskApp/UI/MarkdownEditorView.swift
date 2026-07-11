@@ -184,6 +184,24 @@ struct MarkdownEditorView: NSViewRepresentable {
             parent.text = textView.string
             highlight(textView: textView)
         }
+
+        // MARK: - Image paste/drop handling
+
+        /// Stores pasted/dropped image data as a vault asset and returns the
+        /// Markdown snippet to insert, or nil if the vault root is unavailable.
+        func storeImageAsset(data: Data, ext: String) -> String? {
+            guard let vaultRoot = parent.vaultRoot else { return nil }
+            do {
+                let relativePath = try VaultAssets.store(
+                    imageData: data,
+                    fileExtension: ext,
+                    vaultRoot: vaultRoot
+                )
+                return VaultAssets.markdownLink(for: relativePath)
+            } catch {
+                return nil
+            }
+        }
         
         func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
             if let urlString = (link as? URL)?.absoluteString, urlString.hasPrefix("symdesk://note/") {

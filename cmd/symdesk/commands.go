@@ -21,6 +21,9 @@ import (
 
 func registerCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(newRecipeCmd())
+	rootCmd.AddCommand(newHistoryCmd())
+	rootCmd.AddCommand(newRestoreCmd())
+	rootCmd.AddCommand(newTrashCmd())
 	doctorCmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "Check system health, vault, and sidecar configuration",
@@ -656,6 +659,7 @@ func registerCommands(rootCmd *cobra.Command) {
 		},
 	}
 	noteCmd.AddCommand(noteMoveCmd)
+	noteCmd.AddCommand(newNoteDeleteCmd())
 
 	viewsCmd := &cobra.Command{
 		Use:   "views",

@@ -41,6 +41,37 @@ func TestParseFile(t *testing.T) {
 	}
 }
 
+func TestExtractWikilinks(t *testing.T) {
+	cases := []struct {
+		name string
+		body string
+		want []string
+	}{
+		{"plain", "See [[Note A]] and [[Note B]].", []string{"Note A", "Note B"}},
+		{"display text", "See [[Target|shown text]].", []string{"Target"}},
+		{"embed", "Inline embed: ![[Embedded Note]]", []string{"Embedded Note"}},
+		{"embed with heading", "![[Note#Some Heading]]", []string{"Note"}},
+		{"link with heading", "[[Note#Section]]", []string{"Note"}},
+		{"block ref", "![[Note#^block-id]]", []string{"Note"}},
+		{"deduplicated", "[[Note]] and ![[Note#Heading]]", []string{"Note"}},
+		{"empty after strip", "[[#Heading only]]", nil},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := extractWikilinks(tc.body)
+			if len(got) != len(tc.want) {
+				t.Fatalf("got %v, want %v", got, tc.want)
+			}
+			for i := range got {
+				if got[i] != tc.want[i] {
+					t.Errorf("link %d: got %q, want %q", i, got[i], tc.want[i])
+				}
+			}
+		})
+	}
+}
+
 func TestWalk(t *testing.T) {
 	path, _ := filepath.Abs("../../testdata/vault")
 	count := 0

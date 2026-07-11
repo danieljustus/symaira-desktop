@@ -1,13 +1,16 @@
 name: Release
+
 on:
   push:
     tags:
       - 'v*'
+
 permissions:
   contents: write
 
 jobs:
-  release:
+  release-cli:
+    name: Signed CLI release
     runs-on: macos-15
     environment: release
     steps:
@@ -16,19 +19,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Import signing certificate
-        id: signing
+      - name: Import Developer ID certificate
         env:
           CERTIFICATE_P12: ${{ secrets.CERTIFICATE_P12 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          if [ -z "${CERTIFICATE_P12:-}" ]; then
-            echo "::warning::CERTIFICATE_P12 secret is not set. Building unsigned."
-            echo "signed=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "signed=true" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          for secret in CERTIFICATE_P12 CERTIFICATE_PASSWORD KEYCHAIN_PASSWORD; do
+            if [ -z "${!secret:-}" ]; then
+              echo "::error::$secret must be configured in the release environment."
+              exit 1
+            fi
+          done
+
           KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
@@ -39,6 +43,10 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security list-keychain -d user -s "$KEYCHAIN_PATH"
           IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          if [ -z "$IDENTITY" ]; then
+            echo "::error::No Developer ID Application identity found in the configured certificate."
+            exit 1
+          fi
           echo "CODESIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
 
@@ -55,6 +63,178 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clean up signing material
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_PATH:-}" ] && [ -f "$KEYCHAIN_PATH" ]; then
+            security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+          fi
+
+  release-macos-app:
+    name: Signed and notarized SymDesk app
+    runs-on: macos-15
+    environment: release
+    needs: release-cli
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Import Developer ID certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for secret in CERTIFICATE_P12 CERTIFICATE_PASSWORD KEYCHAIN_PASSWORD; do
+            if [ -z "${!secret:-}" ]; then
+              echo "::error::$secret must be configured in the release environment."
+              exit 1
+            fi
+          done
+
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          CERTIFICATE_PATH="$RUNNER_TEMP/certificate.p12"
+          echo -n "$CERTIFICATE_P12" | base64 --decode -o "$CERTIFICATE_PATH"
+          security import "$CERTIFICATE_PATH" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          if [ -z "$IDENTITY" ]; then
+            echo "::error::No Developer ID Application identity found in the configured certificate."
+            exit 1
+          fi
+          echo "CODESIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      - name: Install app packaging tools
+        run: |
+          set -euo pipefail
+          brew install xcodegen create-dmg
+
+      - name: Generate Xcode project
+        run: |
+          set -euo pipefail
+          xcodegen generate --spec project.yml
+
+      - name: Resolve Swift package dependencies
+        run: |
+          set -euo pipefail
+          xcodebuild -project SymDesk.xcodeproj \
+            -scheme SymDesk \
+            -resolvePackageDependencies
+
+      - name: Archive SymDesk.app
+        run: |
+          set -euo pipefail
+          xcodebuild archive \
+            -project SymDesk.xcodeproj \
+            -scheme SymDesk \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -archivePath "$RUNNER_TEMP/SymDesk.xcarchive" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="$CODESIGN_IDENTITY"
+
+      - name: Sign and verify app bundle
+        run: |
+          set -euo pipefail
+          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
+          test -d "$APP_PATH"
+          while IFS= read -r -d '' item; do
+            if file "$item" | grep -q "Mach-O"; then
+              codesign --force --sign "$CODESIGN_IDENTITY" --timestamp --options runtime "$item"
+            fi
+          done < <(find "$APP_PATH/Contents" -type f -print0)
+          codesign --force --sign "$CODESIGN_IDENTITY" --timestamp --options runtime "$APP_PATH"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+      - name: Notarize and staple app
+        env:
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for secret in NOTARY_APPLE_ID NOTARY_TEAM_ID NOTARY_PASSWORD; do
+            if [ -z "${!secret:-}" ]; then
+              echo "::error::$secret must be configured in the release environment."
+              exit 1
+            fi
+          done
+
+          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
+          SUBMISSION_ARCHIVE="$RUNNER_TEMP/SymDesk-notarization.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$SUBMISSION_ARCHIVE"
+          xcrun notarytool submit "$SUBMISSION_ARCHIVE" \
+            --apple-id "$NOTARY_APPLE_ID" \
+            --team-id "$NOTARY_TEAM_ID" \
+            --password "$NOTARY_PASSWORD" \
+            --wait
+          xcrun stapler staple "$APP_PATH"
+          xcrun stapler validate "$APP_PATH"
+          spctl --assess --type execute --verbose=4 "$APP_PATH"
+
+      - name: Package release assets
+        run: |
+          set -euo pipefail
+          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist/dmg-staging
+          cp -R "$APP_PATH" dist/dmg-staging/
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "dist/SymDesk-${VERSION}.zip"
+          create-dmg \
+            --volname "SymDesk" \
+            --window-pos 200 120 \
+            --window-size 600 300 \
+            --icon-size 100 \
+            --icon "SymDesk.app" 175 120 \
+            --hide-extension "SymDesk.app" \
+            --app-drop-link 425 120 \
+            "dist/SymDesk-${VERSION}.dmg" \
+            dist/dmg-staging/
+
+      - name: Notarize and staple DMG
+        env:
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          DMG_PATH="dist/SymDesk-${VERSION}.dmg"
+          xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$NOTARY_APPLE_ID" \
+            --team-id "$NOTARY_TEAM_ID" \
+            --password "$NOTARY_PASSWORD" \
+            --wait
+          xcrun stapler staple "$DMG_PATH"
+          xcrun stapler validate "$DMG_PATH"
+          spctl --assess --type open --context context:primary-signature --verbose=4 "$DMG_PATH"
+
+      - name: Upload app artifacts to GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            dist/SymDesk-*.zip
+            dist/SymDesk-*.dmg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload app artifacts to workflow
+        uses: actions/upload-artifact@v7
+        with:
+          name: SymDesk-macos
+          path: |
+            dist/SymDesk-*.zip
+            dist/SymDesk-*.dmg
+          if-no-files-found: error
 
       - name: Clean up signing material
         if: always()

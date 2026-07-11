@@ -12,12 +12,29 @@ import (
 
 const defaultReviewThreshold = 85
 
+// Default retention for the version-history and trash safety net.
+const (
+	defaultHistoryMaxPerFile  = 20
+	defaultHistoryMaxAgeDays  = 90
+	defaultTrashRetentionDays = 30
+)
+
 type Config struct {
 	Vault           string `toml:"vault" env:"SYMDESK_VAULT"`
 	Inbox           string `toml:"inbox" env:"SYMDESK_INBOX"`
 	ReviewThreshold int    `toml:"review_threshold" env:"SYMDESK_REVIEW_THRESHOLD"`
 	LLMProvider     string `toml:"llm_provider" env:"SYMDESK_LLM_PROVIDER"`
 	LLMAPIKey       string `toml:"llm_api_key" env:"SYMDESK_LLM_API_KEY"`
+
+	// HistoryMaxPerFile is the maximum number of snapshots kept per file
+	// when pruning (0 = unlimited).
+	HistoryMaxPerFile int `toml:"history_max_per_file" env:"SYMDESK_HISTORY_MAX_PER_FILE"`
+	// HistoryMaxAgeDays drops snapshots older than this many days when
+	// pruning; the newest snapshot per file is always kept (0 = unlimited).
+	HistoryMaxAgeDays int `toml:"history_max_age_days" env:"SYMDESK_HISTORY_MAX_AGE_DAYS"`
+	// TrashRetentionDays is the default age after which "trash purge"
+	// permanently removes soft-deleted files.
+	TrashRetentionDays int `toml:"trash_retention_days" env:"SYMDESK_TRASH_RETENTION_DAYS"`
 }
 
 func DefaultConfig() *Config {
@@ -27,6 +44,10 @@ func DefaultConfig() *Config {
 		ReviewThreshold: defaultReviewThreshold,
 		LLMProvider:     "ollama",
 		LLMAPIKey:       "",
+
+		HistoryMaxPerFile:  defaultHistoryMaxPerFile,
+		HistoryMaxAgeDays:  defaultHistoryMaxAgeDays,
+		TrashRetentionDays: defaultTrashRetentionDays,
 	}
 }
 
@@ -53,6 +74,20 @@ func LoadFromPath(path string) (*Config, error) {
 	}
 	if envKey := os.Getenv("SYMDESK_LLM_API_KEY"); envKey != "" {
 		cfg.LLMAPIKey = envKey
+	}
+	for _, ev := range []struct {
+		name   string
+		target *int
+	}{
+		{"SYMDESK_HISTORY_MAX_PER_FILE", &cfg.HistoryMaxPerFile},
+		{"SYMDESK_HISTORY_MAX_AGE_DAYS", &cfg.HistoryMaxAgeDays},
+		{"SYMDESK_TRASH_RETENTION_DAYS", &cfg.TrashRetentionDays},
+	} {
+		if raw := os.Getenv(ev.name); raw != "" {
+			if v, err := strconv.Atoi(raw); err == nil && v >= 0 {
+				*ev.target = v
+			}
+		}
 	}
 
 	data, err := os.ReadFile(path)
@@ -83,6 +118,20 @@ func LoadFromPath(path string) (*Config, error) {
 	}
 	if envKey := os.Getenv("SYMDESK_LLM_API_KEY"); envKey != "" {
 		cfg.LLMAPIKey = envKey
+	}
+	for _, ev := range []struct {
+		name   string
+		target *int
+	}{
+		{"SYMDESK_HISTORY_MAX_PER_FILE", &cfg.HistoryMaxPerFile},
+		{"SYMDESK_HISTORY_MAX_AGE_DAYS", &cfg.HistoryMaxAgeDays},
+		{"SYMDESK_TRASH_RETENTION_DAYS", &cfg.TrashRetentionDays},
+	} {
+		if raw := os.Getenv(ev.name); raw != "" {
+			if v, err := strconv.Atoi(raw); err == nil && v >= 0 {
+				*ev.target = v
+			}
+		}
 	}
 
 	return cfg, nil

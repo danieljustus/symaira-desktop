@@ -74,6 +74,12 @@ public struct DbFilter: Codable, Equatable, Sendable {
     public let operatorString: String
     public let value: String
 
+    public init(key: String, operatorString: String = "", value: String = "") {
+        self.key = key
+        self.operatorString = operatorString
+        self.value = value
+    }
+
     enum CodingKeys: String, CodingKey {
         case key
         case operatorString = "operator"
@@ -81,9 +87,32 @@ public struct DbFilter: Codable, Equatable, Sendable {
     }
 }
 
+/// A recursive all/any condition group mirroring the core view contract.
+public struct DbFilterGroup: Codable, Equatable, Sendable {
+    public let operatorString: String
+    public let filters: [DbFilter]?
+    public let groups: [DbFilterGroup]?
+
+    public init(operatorString: String = "all", filters: [DbFilter]? = nil, groups: [DbFilterGroup]? = nil) {
+        self.operatorString = operatorString
+        self.filters = filters
+        self.groups = groups
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case operatorString = "operator"
+        case filters, groups
+    }
+}
+
 public struct DbSort: Codable, Equatable, Sendable {
     public let key: String
     public let ascending: Bool
+
+    public init(key: String, ascending: Bool = true) {
+        self.key = key
+        self.ascending = ascending
+    }
 }
 
 public struct ComputedColumn: Codable, Equatable, Sendable {
@@ -96,6 +125,14 @@ public struct DbViewTemplate: Codable, Equatable, Sendable {
     public let defaults: [String: String]?
 }
 
+/// A note that references another note via a frontmatter property or wikilink.
+public struct InverseRelation: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { source + "#" + property }
+    public let source: String
+    public let title: String
+    public let property: String
+}
+
 public struct DbView: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let name: String
@@ -104,15 +141,45 @@ public struct DbView: Codable, Equatable, Identifiable, Sendable {
     public let dateProperty: String?
     public let computed: [String: ComputedColumn]?
     public let filters: [DbFilter]
+    public let filterGroup: DbFilterGroup?
     public let sorts: [DbSort]
     public let columns: [String]
     public let source: String?
     public let template: DbViewTemplate?
-    
+
+    public init(
+        id: String,
+        name: String,
+        type: String? = nil,
+        groupBy: String? = nil,
+        dateProperty: String? = nil,
+        computed: [String: ComputedColumn]? = nil,
+        filters: [DbFilter] = [],
+        filterGroup: DbFilterGroup? = nil,
+        sorts: [DbSort] = [],
+        columns: [String] = [],
+        source: String? = nil,
+        template: DbViewTemplate? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.type = type
+        self.groupBy = groupBy
+        self.dateProperty = dateProperty
+        self.computed = computed
+        self.filters = filters
+        self.filterGroup = filterGroup
+        self.sorts = sorts
+        self.columns = columns
+        self.source = source
+        self.template = template
+    }
+
     enum CodingKeys: String, CodingKey {
         case id, name, type, filters, sorts, columns, computed, source, template
         case groupBy = "group_by"
         case dateProperty = "date_property"
+        case filterGroup = "filter_group"
     }
 }
 
@@ -403,6 +470,34 @@ public final class DeskCore: ObservableObject {
             [DbView].self,
             executable: tool.location.url,
             arguments: ["views", "list", "--json"] + vaultArgs
+        )
+    }
+
+    public func viewsSave(_ view: DbView) async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(view)
+        let json = String(decoding: data, as: UTF8.self)
+        _ = try await CLIRunner().runChecked(
+            tool.location.url,
+            arguments: ["views", "save", json, "--json"] + vaultArgs
+        )
+    }
+
+    public func viewsDelete(id: String) async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        _ = try await CLIRunner().runChecked(
+            tool.location.url,
+            arguments: ["views", "delete", id, "--json"] + vaultArgs
+        )
+    }
+
+    public func relationsInverse(path: String) async throws -> [InverseRelation] {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        return try await CLIRunner().runDecoding(
+            [InverseRelation].self,
+            executable: tool.location.url,
+            arguments: ["relations", "inverse", path, "--json"] + vaultArgs
         )
     }
 

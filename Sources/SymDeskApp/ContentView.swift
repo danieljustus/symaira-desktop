@@ -38,6 +38,8 @@ struct ContentView: View {
     @State private var displayMode: DisplayMode = .vault
     @State private var selectedViewID: String?
     @State private var dbViews: [DbView] = []
+    @State private var isShowingViewEditor = false
+    @State private var editingDbView: DbView?
     @State private var docFilterID: String = "all"
     @State private var docCounts: [String: Int] = [:]
     @State private var docTotalCount: Int = 0
@@ -127,13 +129,33 @@ struct ContentView: View {
                             Button("Graph") { displayMode = .graph }
                         }
 
-                        if !dbViews.isEmpty {
-                            Section("Saved Views") {
-                                ForEach(dbViews) { view in
-                                    Button(view.name) {
-                                        selectedViewID = view.id
-                                        displayMode = .dbView
+                        Section("Saved Views") {
+                            ForEach(dbViews) { view in
+                                Button(view.name) {
+                                    selectedViewID = view.id
+                                    displayMode = .dbView
+                                }
+                                .contextMenu {
+                                    Button("Edit View") {
+                                        editingDbView = view
+                                        isShowingViewEditor = true
                                     }
+                                    Button("Delete View", role: .destructive) {
+                                        Task {
+                                            try? await core.viewsDelete(id: view.id)
+                                            if selectedViewID == view.id { selectedViewID = nil }
+                                            await fetchViews()
+                                        }
+                                    }
+                                }
+                            }
+                            Button(action: {
+                                editingDbView = nil
+                                isShowingViewEditor = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "plus")
+                                    Text("New View")
                                 }
                             }
                         }
@@ -247,11 +269,14 @@ struct ContentView: View {
 
                                     if isShowingPreview {
                                         Divider()
-                                        ScrollView {
-                                            Text(LocalizedStringKey(noteContent))
-                                                .padding()
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                        }
+                                        MarkdownPreviewView(
+                                            text: noteContent,
+                                            resolveNote: { target in resolveNoteContent(target) },
+                                            visited: [note.title],
+                                            onLinkClick: { targetTitle in
+                                                navigateToNote(title: targetTitle)
+                                            }
+                                        )
                                         .frame(maxWidth: .infinity)
                                     }
                                 }
@@ -295,7 +320,10 @@ struct ContentView: View {
                     if isShowingAIDock {
                         AIDockView()
                     } else {
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 0) {
+                            if let note = selectedNote {
+                                PropertiesInspector(notePath: vaultRelativePath(note.path))
+                            }
                             Text("Backlinks")
                                 .font(.headline)
                                 .foregroundColor(SymairaTheme.goldPrimary)
@@ -353,6 +381,11 @@ struct ContentView: View {
                                     .foregroundColor(SymairaTheme.textMuted)
                             }
                         }
+                    }
+                }
+                .sheet(isPresented: $isShowingViewEditor) {
+                    DbViewEditor(existing: editingDbView) {
+                        Task { await fetchViews() }
                     }
                 }
                 .sheet(isPresented: $isShowingPalette) {
@@ -417,6 +450,17 @@ struct ContentView: View {
         }
     }
 
+    /// Converts an absolute note path into a vault-relative path expected by
+    /// the core's property mutation commands.
+    private func vaultRelativePath(_ path: String) -> String {
+        guard let vault = core.vaultPath, !vault.isEmpty else { return path }
+        let prefix = vault.hasSuffix("/") ? vault : vault + "/"
+        if path.hasPrefix(prefix) {
+            return String(path.dropFirst(prefix.count))
+        }
+        return path
+    }
+
     private func fetchNotes() async {
         do {
             self.notes = try await core.listFiles()
@@ -475,6 +519,21 @@ struct ContentView: View {
                 }
             }
         }
+    }
+
+    /// Resolves a transclusion target ("Note Title" or relative path without
+    /// extension) to the note's raw Markdown for the preview embeds.
+    private func resolveNoteContent(_ target: String) -> String? {
+        let lowered = target.lowercased()
+        let found = notes.first { note in
+            if note.title.lowercased() == lowered { return true }
+            let base = (note.path as NSString).lastPathComponent
+            let stem = (base as NSString).deletingPathExtension
+            return stem.lowercased() == lowered || base.lowercased() == lowered
+        }
+        guard let found,
+              let data = FileManager.default.contents(atPath: found.path) else { return nil }
+        return String(data: data, encoding: .utf8)
     }
 
     private func navigateToNote(title: String) {

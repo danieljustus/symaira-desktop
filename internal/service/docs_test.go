@@ -362,3 +362,124 @@ func TestSimilarDocsFindsNearDuplicates(t *testing.T) {
 		t.Error("expected clone.md in similar results")
 	}
 }
+
+func writeTestDoc(t *testing.T, svc *Service, name, content string) string {
+	t.Helper()
+	absPath := filepath.Join(svc.VaultRoot, name)
+	if err := os.WriteFile(absPath, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	return absPath
+}
+
+func TestDocTypeSetsFrontmatter(t *testing.T) {
+	svc := newTestService(t)
+	absPath := writeTestDoc(t, svc, "type_test.md", "---\ntitle: \"T\"\n---\n\nBody.\n")
+
+	if err := svc.DocType("type_test.md", "invoice"); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := vault.ParseFile(absPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := doc.Frontmatter["document_type"].(string); got != "invoice" {
+		t.Errorf("expected document_type 'invoice', got '%s'", got)
+	}
+
+	if err := svc.DocType("type_test.md", "  "); err == nil {
+		t.Error("expected error for empty document type")
+	}
+}
+
+func TestDocCorrespondentSetsFrontmatter(t *testing.T) {
+	svc := newTestService(t)
+	absPath := writeTestDoc(t, svc, "corr_test.md", "---\ntitle: \"C\"\n---\n\nBody.\n")
+
+	if err := svc.DocCorrespondent("corr_test.md", "Power Co"); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := vault.ParseFile(absPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := doc.Frontmatter["correspondent"].(string); got != "Power Co" {
+		t.Errorf("expected correspondent 'Power Co', got '%s'", got)
+	}
+
+	if err := svc.DocCorrespondent("corr_test.md", ""); err == nil {
+		t.Error("expected error for empty correspondent")
+	}
+}
+
+func TestDocTagAddAndRemove(t *testing.T) {
+	svc := newTestService(t)
+	absPath := writeTestDoc(t, svc, "tag_test.md", "---\ntitle: \"Tags\"\ntags: [\"existing\"]\n---\n\nBody.\n")
+
+	if err := svc.DocTagAdd("tag_test.md", "urgent"); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := vault.ParseFile(absPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(doc.Tags) != 2 || doc.Tags[0] != "existing" || doc.Tags[1] != "urgent" {
+		t.Fatalf("expected tags [existing urgent], got %v", doc.Tags)
+	}
+
+	// Adding the same tag again is a no-op.
+	if err := svc.DocTagAdd("tag_test.md", "urgent"); err != nil {
+		t.Fatal(err)
+	}
+	doc, _ = vault.ParseFile(absPath)
+	if len(doc.Tags) != 2 {
+		t.Fatalf("expected duplicate add to be a no-op, got %v", doc.Tags)
+	}
+
+	if err := svc.DocTagRemove("tag_test.md", "existing"); err != nil {
+		t.Fatal(err)
+	}
+	doc, _ = vault.ParseFile(absPath)
+	if len(doc.Tags) != 1 || doc.Tags[0] != "urgent" {
+		t.Fatalf("expected tags [urgent] after removal, got %v", doc.Tags)
+	}
+
+	if err := svc.DocTagAdd("tag_test.md", " "); err == nil {
+		t.Error("expected error for blank tag")
+	}
+}
+
+func TestDocBatchReportsPerFileResults(t *testing.T) {
+	svc := newTestService(t)
+	writeTestDoc(t, svc, "ok1.md", "---\ntitle: \"One\"\n---\n\nBody.\n")
+	writeTestDoc(t, svc, "ok2.md", "---\ntitle: \"Two\"\n---\n\nBody.\n")
+
+	files := []string{"ok1.md", "missing.md", "ok2.md"}
+	results, updated, failed := svc.DocBatch(files, func(f string) error {
+		return svc.DocStatus(f, "done")
+	})
+
+	if updated != 2 || failed != 1 {
+		t.Fatalf("expected 2 updated / 1 failed, got %d / %d", updated, failed)
+	}
+	if len(results) != 3 {
+		t.Fatalf("expected 3 results, got %d", len(results))
+	}
+	if results[0].Status != "updated" || results[2].Status != "updated" {
+		t.Errorf("expected ok1/ok2 updated, got %+v", results)
+	}
+	if results[1].File != "missing.md" || results[1].Status != "error" || results[1].Error == "" {
+		t.Errorf("expected per-file error for missing.md, got %+v", results[1])
+	}
+
+	// Both successful files were actually mutated.
+	for _, name := range []string{"ok1.md", "ok2.md"} {
+		doc, err := vault.ParseFile(filepath.Join(svc.VaultRoot, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if doc.Status != "done" {
+			t.Errorf("%s: expected status done, got %s", name, doc.Status)
+		}
+	}
+}

@@ -90,6 +90,31 @@ func TestInitIdempotentOnEmptyDir(t *testing.T) {
 	}
 }
 
+func TestInitLargeCreatesDeterministicDocumentSet(t *testing.T) {
+	vaultDir := filepath.Join(t.TempDir(), "large-vault")
+	if err := InitLarge(vaultDir); err != nil {
+		t.Fatal(err)
+	}
+
+	entries, err := os.ReadDir(filepath.Join(vaultDir, "documents"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := len(entries), len(documents)+LargeVaultDocuments; got != want {
+		t.Fatalf("expected %d documents, got %d", want, got)
+	}
+	if _, err := os.Stat(filepath.Join(vaultDir, "documents", "benchmark-10000.md")); err != nil {
+		t.Fatalf("missing deterministic final benchmark document: %v", err)
+	}
+}
+
+func TestInitSizeRejectsUnknownValue(t *testing.T) {
+	err := InitSize(filepath.Join(t.TempDir(), "vault"), "huge")
+	if err == nil || !strings.Contains(err.Error(), "small or large") {
+		t.Fatalf("expected helpful size error, got %v", err)
+	}
+}
+
 func TestDocumentFrontmatterV2(t *testing.T) {
 	dir := t.TempDir()
 	vaultDir := filepath.Join(dir, "vault")

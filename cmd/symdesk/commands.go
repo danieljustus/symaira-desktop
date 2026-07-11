@@ -919,7 +919,8 @@ func registerCommands(rootCmd *cobra.Command) {
 				dir = args[0]
 			}
 
-			if err := demo.Init(dir); err != nil {
+			size, _ := cmd.Flags().GetString("size")
+			if err := demo.InitSize(dir, size); err != nil {
 				return err
 			}
 
@@ -940,6 +941,7 @@ func registerCommands(rootCmd *cobra.Command) {
 			return nil
 		},
 	}
+	demoInitCmd.Flags().String("size", "small", "demo size: small or large")
 	demoCmd.AddCommand(demoInitCmd)
 
 	conflictCmd := &cobra.Command{

@@ -11,9 +11,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 )
+
+// LargeVaultDocuments is the deterministic document count used by InitLarge.
+// It is intentionally exported so benchmarks and callers use the same scale.
+const LargeVaultDocuments = 10_000
 
 // documents is the set of 10 demo documents with contract-v2 frontmatter.
 // Documents 1 and 8 are a near-duplicate pair (consecutive monthly invoices
@@ -601,6 +606,17 @@ func demoViews() []dbviews.View {
 // It refuses to overwrite a non-empty directory.
 // It is idempotent: an empty directory is filled; a non-empty one is rejected.
 func Init(dir string) error {
+	return materialize(dir, 0)
+}
+
+// InitLarge materialises a deterministic vault suitable for repeatable
+// indexing and search benchmarks. It contains LargeVaultDocuments Markdown
+// documents and does not generate PDFs, which are outside the indexer's scope.
+func InitLarge(dir string) error {
+	return materialize(dir, LargeVaultDocuments)
+}
+
+func materialize(dir string, generatedDocuments int) error {
 	// Resolve to absolute path.
 	absDir, err := filepath.Abs(dir)
 	if err != nil {
@@ -645,6 +661,25 @@ func Init(dir string) error {
 		}
 	}
 
+	for i := 0; i < generatedDocuments; i++ {
+		name := fmt.Sprintf("benchmark-%05d", i+1)
+		body := fmt.Sprintf(`---
+title: "Benchmark document %05d"
+created: "2026-01-01T00:00:00Z"
+tags: [benchmark, generated]
+document_type: "benchmark"
+status: "open"
+---
+
+# Benchmark document %05d
+
+Deterministic benchmark content for indexing and full-text search. Group %d.
+`, i+1, i+1, i%100)
+		if err := os.WriteFile(filepath.Join(absDir, "documents", name+".md"), []byte(body), 0644); err != nil {
+			return fmt.Errorf("write generated document %s: %w", name, err)
+		}
+	}
+
 	// Write knowledge notes.
 	for _, note := range notes {
 		notePath := filepath.Join(absDir, "notes", note.name+".md")
@@ -665,6 +700,18 @@ func Init(dir string) error {
 	}
 
 	return nil
+}
+
+// InitSize selects the supported generated vault sizes for the CLI.
+func InitSize(dir, size string) error {
+	switch strings.ToLower(size) {
+	case "", "small":
+		return Init(dir)
+	case "large":
+		return InitLarge(dir)
+	default:
+		return fmt.Errorf("unknown demo size %q: use small or large", size)
+	}
 }
 
 // extractPDFLines pulls the body text from a markdown document for the PDF.

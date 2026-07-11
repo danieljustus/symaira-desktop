@@ -374,6 +374,33 @@ func registerCommands(rootCmd *cobra.Command) {
 	}
 	rootCmd.AddCommand(backlinksCmd)
 
+	relationsCmd := &cobra.Command{
+		Use:   "relations",
+		Short: "Inspect typed relations between notes",
+	}
+	rootCmd.AddCommand(relationsCmd)
+
+	relationsInverseCmd := &cobra.Command{
+		Use:   "inverse [file]",
+		Short: "List notes that reference a file via frontmatter properties or wikilinks",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			results, err := svc.RelationsInverse(args[0])
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	relationsCmd.AddCommand(relationsInverseCmd)
+
 	askCmd := &cobra.Command{
 		Use:   "ask [query]",
 		Short: "Ask the AI a question about the vault",

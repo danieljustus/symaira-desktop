@@ -146,6 +146,40 @@ func TestViewsExecNestedFilterGroups(t *testing.T) {
 	}
 }
 
+func TestViewsExecAnyFilterGroup(t *testing.T) {
+	svc := newTestService(t)
+	for _, doc := range []*vault.Document{
+		{Path: filepath.Join(svc.VaultRoot, "open.md"), Title: "Open", Body: "", SHA256: "open", Created: "2026-01-01T00:00:00Z", Frontmatter: map[string]interface{}{"status": "open"}},
+		{Path: filepath.Join(svc.VaultRoot, "urgent.md"), Title: "Urgent", Body: "", SHA256: "urgent", Created: "2026-01-01T00:00:00Z", Frontmatter: map[string]interface{}{"priority": "urgent"}},
+		{Path: filepath.Join(svc.VaultRoot, "done.md"), Title: "Done", Body: "", SHA256: "done", Created: "2026-01-01T00:00:00Z", Frontmatter: map[string]interface{}{"status": "done"}},
+	} {
+		if err := svc.DB.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+	view := dbviews.View{ID: "any", Name: "Any", FilterGroup: &dbviews.FilterGroup{
+		Operator: "any",
+		Filters: []dbviews.Filter{
+			{Key: "status", Value: "open"},
+			{Key: "priority", Value: "urgent"},
+		},
+	}}
+	if err := svc.ViewsMgr.Save(view); err != nil {
+		t.Fatal(err)
+	}
+	results, err := svc.ViewsExec("any")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results, got %d: %#v", len(results), results)
+	}
+	titles := map[interface{}]bool{results[0]["_title"]: true, results[1]["_title"]: true}
+	if !titles["Open"] || !titles["Urgent"] {
+		t.Fatalf("expected Open and Urgent, got %v", titles)
+	}
+}
+
 func TestViewsExecRollups(t *testing.T) {
 	svc := newTestService(t)
 

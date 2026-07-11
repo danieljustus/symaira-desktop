@@ -242,3 +242,74 @@ jobs:
           if [ -n "${KEYCHAIN_PATH:-}" ] && [ -f "$KEYCHAIN_PATH" ]; then
             security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
           fi
+
+  bump-homebrew-cask:
+    name: Bump Homebrew cask
+    runs-on: macos-15
+    environment: release
+    needs: release-macos-app
+    steps:
+      - name: Checkout Homebrew tap
+        uses: actions/checkout@v7
+        with:
+          repository: danieljustus/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Download release DMG and compute checksum
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          DMG_URL="https://github.com/danieljustus/symaira-desktop/releases/download/${GITHUB_REF_NAME}/SymDesk-${VERSION}.dmg"
+          curl -fsSL -o "SymDesk-${VERSION}.dmg" "$DMG_URL"
+          SHA256=$(shasum -a 256 "SymDesk-${VERSION}.dmg" | awk '{print $1}')
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "SHA256=$SHA256" >> "$GITHUB_ENV"
+
+      - name: Write cask
+        run: |
+          set -euo pipefail
+          mkdir -p homebrew-tap/Casks
+          cat > homebrew-tap/Casks/symdesk-app.rb <<EOF
+          cask "symdesk-app" do
+            version "${VERSION}"
+            sha256 "${SHA256}"
+
+            url "https://github.com/danieljustus/symaira-desktop/releases/download/v#{version}/SymDesk-#{version}.dmg"
+            name "SymDesk"
+            desc "Local-first markdown vault workspace"
+            homepage "https://github.com/danieljustus/symaira-desktop"
+
+            livecheck do
+              url "https://github.com/danieljustus/symaira-desktop/releases/latest"
+              strategy :header_match
+              regex(/SymDesk-(\d+(?:\.\d+)*)\.dmg/i)
+            end
+
+            depends_on macos: :sonoma
+
+            app "SymDesk.app"
+
+            zap trash: [
+              "~/Library/Application Support/SymDesk",
+              "~/Library/Preferences/com.symaira.desktop.plist",
+              "~/Library/Caches/com.symaira.desktop",
+            ]
+          end
+          EOF
+
+      - name: Commit and push cask
+        run: |
+          set -euo pipefail
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/symdesk-app.rb
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Bump symdesk-app to v${VERSION}"
+          git push

@@ -173,6 +173,35 @@ func TestDocsListV2Metadata(t *testing.T) {
 	}
 }
 
+func TestDocsListFiltersByASNAndIndexesASNForSearch(t *testing.T) {
+	db := setupTestDB(t)
+	asn := 42
+	for _, doc := range []*vault.Document{
+		{Path: "/tmp/asn.md", Title: "Archived", Created: time.Now().Format(time.RFC3339), SHA256: "asn", Body: "archive", ASN: &asn, Frontmatter: map[string]interface{}{"asn": asn}},
+		{Path: "/tmp/no-asn.md", Title: "Unnumbered", Created: time.Now().Format(time.RFC3339), SHA256: "none", Body: "archive", Frontmatter: map[string]interface{}{}},
+	} {
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	results, err := db.DocsList(DocsFilter{ASN: &asn})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0].Path != "/tmp/asn.md" || results[0].ASN != asn {
+		t.Fatalf("expected exact ASN lookup, got %#v", results)
+	}
+
+	search, err := db.Search("42")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(search) != 1 || search[0].Path != "/tmp/asn.md" {
+		t.Fatalf("expected ASN full-text lookup, got %#v", search)
+	}
+}
+
 func TestDocsListFilters(t *testing.T) {
 	db := setupTestDB(t)
 

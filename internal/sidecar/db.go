@@ -70,6 +70,11 @@ func (db *DB) IsIndexed(path, sha256 string) (bool, error) {
 
 // IndexDocument indexes a single document into the sidecar.
 func (db *DB) IndexDocument(doc *vault.Document) error {
+	if doc.ASN != nil {
+		if err := vault.ValidateASN(*doc.ASN); err != nil {
+			return fmt.Errorf("invalid document ASN: %w", err)
+		}
+	}
 	if doc.Simhash == "" && doc.Body != "" {
 		doc.Simhash = simhash.ComputeHex(doc.Body)
 	}
@@ -96,11 +101,11 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 
 		// Update files
 		_, err = tx.Exec(`UPDATE files SET sha256 = ?, title = ?, modified_at = ?, indexed_at = ?,
-			document_date = ?, person = ?, status = ?, due_date = ?, confidence = ?, ocr_json_path = ?, simhash = ?
+			document_date = ?, person = ?, status = ?, due_date = ?, confidence = ?, ocr_json_path = ?, simhash = ?, asn = ?
 			WHERE id = ?`,
 			doc.SHA256, doc.Title, doc.Created, time.Now(),
 			nullStr(doc.DocumentDate), nullStr(doc.Person), nullStr(doc.Status),
-			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash),
+			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash), nullASN(doc.ASN),
 			fileID)
 		if err != nil {
 			return err
@@ -119,11 +124,11 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 	} else {
 		// New file
 		res, err := tx.Exec(`INSERT INTO files(path, sha256, title, modified_at, indexed_at,
-			document_date, person, status, due_date, confidence, ocr_json_path, simhash)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			document_date, person, status, due_date, confidence, ocr_json_path, simhash, asn)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			doc.Path, doc.SHA256, doc.Title, doc.Created, time.Now(),
 			nullStr(doc.DocumentDate), nullStr(doc.Person), nullStr(doc.Status),
-			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash))
+			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash), nullASN(doc.ASN))
 		if err != nil {
 			return err
 		}
@@ -134,7 +139,11 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 	}
 
 	// 2. Insert into FTS
-	_, err = tx.Exec("INSERT INTO fts_search(rowid, title, body) VALUES (?, ?, ?)", fileID, doc.Title, doc.Body)
+	ftsTitle := doc.Title
+	if doc.ASN != nil {
+		ftsTitle = fmt.Sprintf("%s ASN %d", ftsTitle, *doc.ASN)
+	}
+	_, err = tx.Exec("INSERT INTO fts_search(rowid, title, body) VALUES (?, ?, ?)", fileID, ftsTitle, doc.Body)
 	if err != nil {
 		return err
 	}
@@ -573,6 +582,7 @@ type DocsFilter struct {
 	DueBefore     string // ISO-8601 date, due_date <= this
 	MinConfidence *int   // confidence >= this
 	MaxConfidence *int   // confidence <= this
+	ASN           *int   // exact archive serial number
 }
 
 // DocsResult is a single row returned by DocsList.
@@ -586,6 +596,7 @@ type DocsResult struct {
 	Confidence    int    `json:"confidence,omitempty"`
 	Correspondent string `json:"correspondent,omitempty"`
 	DocumentType  string `json:"document_type,omitempty"`
+	ASN           int    `json:"asn,omitempty"`
 }
 
 // DocsList queries indexed documents with optional filters and returns
@@ -594,7 +605,7 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 	query := `
 		SELECT f.path, f.title, COALESCE(f.document_date,''), COALESCE(f.person,''),
 			COALESCE(f.status,''), COALESCE(f.due_date,''), f.confidence,
-			COALESCE(fp_corr.value,''), COALESCE(fp_type.value,'')
+			COALESCE(fp_corr.value,''), COALESCE(fp_type.value,''), COALESCE(f.asn, 0)
 		FROM files f
 		LEFT JOIN file_properties fp_corr ON fp_corr.file_id = f.id AND fp_corr.key = 'correspondent'
 		LEFT JOIN file_properties fp_type ON fp_type.file_id = f.id AND fp_type.key = 'document_type'
@@ -633,6 +644,10 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 		query += ` AND f.confidence <= ?`
 		args = append(args, *f.MaxConfidence)
 	}
+	if f.ASN != nil {
+		query += ` AND f.asn = ?`
+		args = append(args, *f.ASN)
+	}
 
 	query += ` ORDER BY f.path ASC`
 
@@ -647,7 +662,7 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 		var r DocsResult
 		var conf sql.NullInt64
 		if err := rows.Scan(&r.Path, &r.Title, &r.DocumentDate, &r.Person,
-			&r.Status, &r.DueDate, &conf, &r.Correspondent, &r.DocumentType); err != nil {
+			&r.Status, &r.DueDate, &conf, &r.Correspondent, &r.DocumentType, &r.ASN); err != nil {
 			return nil, err
 		}
 		if conf.Valid {
@@ -813,4 +828,11 @@ func nullInt(n int) interface{} {
 		return nil
 	}
 	return n
+}
+
+func nullASN(asn *int) interface{} {
+	if asn == nil {
+		return nil
+	}
+	return *asn
 }

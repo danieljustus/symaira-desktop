@@ -19,6 +19,7 @@ struct DocumentGridView: View {
     @State private var agentResult = ""
     @State private var isAgentRunning = false
     @State private var openDoc: DocumentItem?
+    @State private var sortByASN = false
 
     var filteredDocs: [DocumentItem] {
         var result = documents
@@ -32,6 +33,17 @@ struct DocumentGridView: View {
                 || $0.correspondent.lowercased().contains(q)
                 || $0.person.lowercased().contains(q)
                 || $0.documentType.lowercased().contains(q)
+                || ($0.asn > 0 && String($0.asn).contains(q))
+            }
+        }
+        if sortByASN {
+            result.sort {
+                switch ($0.asn > 0, $1.asn > 0) {
+                case (true, true): return $0.asn == $1.asn ? $0.title < $1.title : $0.asn < $1.asn
+                case (true, false): return true
+                case (false, true): return false
+                case (false, false): return $0.title < $1.title
+                }
             }
         }
         return result
@@ -93,6 +105,13 @@ struct DocumentGridView: View {
                 }
                 .buttonStyle(.plain)
             }
+            Button(action: { sortByASN.toggle() }) {
+                Label(sortByASN ? "Default order" : "Sort by ASN", systemImage: "number")
+                    .labelStyle(.iconOnly)
+                    .foregroundColor(sortByASN ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
+            }
+            .buttonStyle(.plain)
+            .help(sortByASN ? "Use default order" : "Sort by archive serial number")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -385,6 +404,16 @@ struct DocumentCard: View {
                         .font(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
                 }
+            }
+
+            if doc.asn > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "number")
+                        .font(.caption2)
+                    Text("ASN \(doc.asn)")
+                        .font(.caption.monospacedDigit())
+                }
+                .foregroundColor(SymairaTheme.goldSecondary)
             }
 
             HStack(spacing: 8) {

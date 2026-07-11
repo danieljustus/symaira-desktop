@@ -65,7 +65,8 @@ final class DeskCoreTests: XCTestCase {
             "due_date": "2026-08-01",
             "confidence": 85,
             "correspondent": "Acme Corp",
-            "document_type": "invoice"
+            "document_type": "invoice",
+            "asn": 42
         }
         """.data(using: .utf8)!
 
@@ -79,6 +80,7 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertEqual(doc.confidence, 85)
         XCTAssertEqual(doc.correspondent, "Acme Corp")
         XCTAssertEqual(doc.documentType, "invoice")
+        XCTAssertEqual(doc.asn, 42)
         XCTAssertEqual(doc.id, doc.path)
     }
 
@@ -96,6 +98,7 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertEqual(doc.documentDate, "")
         XCTAssertEqual(doc.status, "")
         XCTAssertEqual(doc.confidence, 0)
+        XCTAssertEqual(doc.asn, 0)
     }
 
     func testDocumentStatusEnum() {

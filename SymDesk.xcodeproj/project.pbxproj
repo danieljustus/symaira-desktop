@@ -39,6 +39,7 @@
 		9CB84C5DEC5DFAA645786C79 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = CCF15BEFF6E2B7C5BDE99A2A /* SymairaToolKit */; };
 		A0E1A3C240D1E507A7E2EC9F /* AppUpdateCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E77F6F7A42131B3055841A /* AppUpdateCheckerTests.swift */; };
 		A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59762A8D6DF418D30855BEDA /* OnboardingView.swift */; };
+		AF33E56F24D6F0B026A98F5B /* PropertiesInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56278C647AEC161C2B94531F /* PropertiesInspector.swift */; };
 		B4BBDCDD200A14353CFF2B9F /* DeskCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F756739286BF26EA17456C99 /* DeskCore.swift */; };
 		B88D845C3B8D9C6FEC6D7006 /* DbViewList.swift in Sources */ = {isa = PBXBuildFile; fileRef = D23C8BFA56B2714D100315DB /* DbViewList.swift */; };
 		C336F49BE61DBF2A7C03CE8E /* SymairaUpdateCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 596C4C9EB9845BC180C460A4 /* SymairaUpdateCheck */; };
@@ -46,6 +47,7 @@
 		C85A4C45BB4E561D0049F805 /* UpdateInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D31AEB4D808A7B5F64134E1 /* UpdateInstaller.swift */; };
 		CBD99C1AAF0BA2BE2A136FA6 /* SymDeskApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD325D2A25FDF9FA519A6FA /* SymDeskApp.swift */; };
 		CCD6C165B5907E502AD44496 /* libSymDeskCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF3DE41EB61C376999197AEF /* libSymDeskCore.a */; };
+		CCDBBC249BD9A074D897717E /* DbViewEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20BC6F58C62B4760E83EF56B /* DbViewEditor.swift */; };
 		D0EC53A22588E1A56A3E2F2B /* VaultConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A175D91D3D83560906E78387 /* VaultConfig.swift */; };
 		D32E9B586B362E4914175291 /* EventWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95355A68097983C9F84AE919 /* EventWatcher.swift */; };
 		D912C5E6E61A8D859E86A1F6 /* CommandPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = F136EF877D776AFD6D2CE697 /* CommandPalette.swift */; };
@@ -77,6 +79,7 @@
 		15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
 		1EEEC588B327739FBAF693D4 /* DbViewTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewTable.swift; sourceTree = "<group>"; };
 		1F547CF59C20684A5051D6B5 /* MarkdownEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorView.swift; sourceTree = "<group>"; };
+		20BC6F58C62B4760E83EF56B /* DbViewEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewEditor.swift; sourceTree = "<group>"; };
 		233223A3C27BEA490CADB82C /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
 		23EBE73852F5829E6BB25B82 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		24A66FCAE94BEB5D93BE972B /* BlockNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockNode.swift; sourceTree = "<group>"; };
@@ -85,6 +88,7 @@
 		39D62AD2CAE794AD863C9E92 /* DbViewTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewTimeline.swift; sourceTree = "<group>"; };
 		4361A3B66293519600E22473 /* MarkdownPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownPreview.swift; sourceTree = "<group>"; };
 		48223DCBE4FF19264208BCB3 /* DbViewCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewCalendar.swift; sourceTree = "<group>"; };
+		56278C647AEC161C2B94531F /* PropertiesInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesInspector.swift; sourceTree = "<group>"; };
 		59762A8D6DF418D30855BEDA /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		61EE8B62E86F8FE234837F0A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		63AF82D799029EFC1957DB2F /* DbViewGallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewGallery.swift; sourceTree = "<group>"; };
@@ -197,6 +201,7 @@
 				F136EF877D776AFD6D2CE697 /* CommandPalette.swift */,
 				78F76334FF1AA665F17F9B0C /* DbViewBoard.swift */,
 				48223DCBE4FF19264208BCB3 /* DbViewCalendar.swift */,
+				20BC6F58C62B4760E83EF56B /* DbViewEditor.swift */,
 				63AF82D799029EFC1957DB2F /* DbViewGallery.swift */,
 				D23C8BFA56B2714D100315DB /* DbViewList.swift */,
 				1EEEC588B327739FBAF693D4 /* DbViewTable.swift */,
@@ -209,6 +214,7 @@
 				1F547CF59C20684A5051D6B5 /* MarkdownEditorView.swift */,
 				9E65A058CCDDBCCFB506217C /* MarkdownPreviewView.swift */,
 				59762A8D6DF418D30855BEDA /* OnboardingView.swift */,
+				56278C647AEC161C2B94531F /* PropertiesInspector.swift */,
 				9C51F0367577777D2D842F81 /* ReviewLaneView.swift */,
 				CB445023E5B108D54E2CADF5 /* SymDeskDesign.swift */,
 			);
@@ -406,6 +412,7 @@
 				571C6E466AA0EACEBA689E1F /* ContentView.swift in Sources */,
 				2A9DFE1A981C4FBDB9D49061 /* DbViewBoard.swift in Sources */,
 				274F640915B4D63279459C99 /* DbViewCalendar.swift in Sources */,
+				CCDBBC249BD9A074D897717E /* DbViewEditor.swift in Sources */,
 				00C7801D81436878B1F6C766 /* DbViewGallery.swift in Sources */,
 				B88D845C3B8D9C6FEC6D7006 /* DbViewList.swift in Sources */,
 				1F1FA22E3100184255CC3362 /* DbViewTable.swift in Sources */,
@@ -419,6 +426,7 @@
 				190EF5D4BA2FFAFB08B28434 /* MarkdownPreviewView.swift in Sources */,
 				40406909A4AAF62DD881D295 /* NotificationManager.swift in Sources */,
 				A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */,
+				AF33E56F24D6F0B026A98F5B /* PropertiesInspector.swift in Sources */,
 				888252B8F6964BA6158F9CC6 /* ReviewLaneView.swift in Sources */,
 				CBD99C1AAF0BA2BE2A136FA6 /* SymDeskApp.swift in Sources */,
 				45C5391AC1D3FBABE28B94AF /* SymDeskDesign.swift in Sources */,

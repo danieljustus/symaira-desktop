@@ -26,6 +26,8 @@ A local-first, **agent-native** workspace that unifies your documents, notes, kn
 
 Working MVP: Go core (`symdesk`) with CLI + stdio MCP server, SQLite sidecar index (FTS5), vault contract v2 ([VAULT.md](VAULT.md)), and the native SwiftUI app with editor, command palette, backlinks, graph, saved views, drag-&-drop ingest and AI dock — plus a document workspace: document grid with quick filters, PDF/text viewer with a details inspector, first-run onboarding, and a Discover tab.
 
+For recovery guidance, see [BACKUP.md](BACKUP.md).
+
 ## Installation
 
 ### CLI from GitHub Releases
@@ -53,6 +55,7 @@ xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platfo
 ```sh
 make build          # → bin/symdesk
 make test           # go test -race ./...
+make benchmark-large # generate and index a deterministic 10k-document vault
 
 ### macOS app (requires xcodegen)
 xcodegen generate
@@ -97,9 +100,23 @@ symdesk doc status <file> paid            # set document status (open|paid|submi
 symdesk doc due <file> 2026-12-31        # set document due date (ISO-8601)
 symdesk similar <file>                    # find near-duplicate documents by SimHash
 symdesk demo init [dir]                   # materialise the built-in demo vault
+symdesk demo init --size large [dir]      # materialise a deterministic 10k-document benchmark vault
 ```
 
 All commands support `--json` for machine-readable output.
+
+### Large-vault performance baseline
+
+Run `make benchmark-large` on a quiet machine to measure one complete index and
+search pass over the deterministic 10,000-document fixture. Record the result
+with the machine model and Go version before comparing changes; the target is
+intended for explicit performance checks, not routine CI. The core budget is a
+typical search below 100 ms after indexing. App measurements (grid scrolling,
+graph render, and viewer-open time) remain manual because they depend on the
+host GPU and the native app runtime.
+
+Baseline (2026-07-11): Apple M4 Pro, Go benchmark harness, one index-and-search
+pass: **3.44 s** (`BenchmarkLargeVaultIndexAndSearch`, `-benchtime=1x`).
 
 ### Reviewed recipes (optional)
 

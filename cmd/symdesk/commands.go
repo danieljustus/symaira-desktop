@@ -1160,6 +1160,80 @@ func registerCommands(rootCmd *cobra.Command) {
 		},
 	}
 	rootCmd.AddCommand(clipCmd)
+	rootCmd.AddCommand(newExportCmd())
+	rootCmd.AddCommand(newAICmd())
+}
+
+func newExportCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "export",
+		Short: "Export a note or view to PDF or HTML",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			relPath, _ := cmd.Flags().GetString("note")
+			viewID, _ := cmd.Flags().GetString("view")
+			outputPath, _ := cmd.Flags().GetString("output")
+			format, _ := cmd.Flags().GetString("format")
+			profile, _ := cmd.Flags().GetString("profile")
+
+			res, err := svc.Export(relPath, viewID, outputPath, format, profile)
+			if err != nil {
+				return err
+			}
+			return outputResult(res)
+		},
+	}
+	cmd.Flags().String("note", "", "vault-relative note path")
+	cmd.Flags().String("view", "", "view id")
+	cmd.Flags().String("output", "", "output file path")
+	cmd.Flags().String("format", "pdf", "pdf or html")
+	cmd.Flags().String("profile", "", "symprint profile for PDF")
+	cmd.MarkFlagsMutuallyExclusive("note", "view")
+	return cmd
+}
+
+func newAICmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "ai",
+		Short: "AI-assisted vault operations",
+	}
+	autofillCmd := &cobra.Command{
+		Use:   "autofill",
+		Short: "Autofill a property on notes matching a view",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+
+			viewID, _ := cmd.Flags().GetString("view")
+			property, _ := cmd.Flags().GetString("property")
+			prompt, _ := cmd.Flags().GetString("prompt")
+			dryRun, _ := cmd.Flags().GetBool("dry-run")
+
+			res, err := svc.Autofill(viewID, property, prompt, dryRun)
+			if err != nil {
+				return err
+			}
+			return outputResult(res)
+		},
+	}
+	autofillCmd.Flags().String("view", "", "view id of notes to process")
+	autofillCmd.Flags().String("property", "", "frontmatter property to fill")
+	autofillCmd.Flags().String("prompt", "", "extra prompt/instruction for the AI")
+	autofillCmd.Flags().Bool("dry-run", false, "show what would be changed without writing")
+	autofillCmd.MarkFlagRequired("view")
+	autofillCmd.MarkFlagRequired("property")
+	cmd.AddCommand(autofillCmd)
+	return cmd
 }
 
 func initServiceDeps() (string, *sidecar.DB, error) {

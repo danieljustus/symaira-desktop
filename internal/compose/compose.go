@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -82,6 +84,70 @@ func HasSymseek() (bool, string) {
 // HasSymmemory is a shorthand helper for symmemory.
 func HasSymmemory() (bool, string) {
 	return HasTool("symmemory")
+}
+
+// HasSymprint is a shorthand helper for symprint.
+func HasSymprint() (bool, string) {
+	return HasTool("symprint")
+}
+
+// RenderPDF writes a Markdown document to a PDF using symprint.
+// It returns the absolute output path and any structured error from symprint.
+func RenderPDF(markdown []byte, outputPath, profile string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	bin, err := exec.LookPath("symprint")
+	if err != nil {
+		return "", fmt.Errorf("symprint not found on PATH")
+	}
+
+	dir := filepath.Dir(outputPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create output directory: %w", err)
+	}
+
+	args := []string{"render", "-", "-o", outputPath}
+	if profile != "" {
+		args = append(args, "-p", profile)
+	}
+	cmd := exec.CommandContext(ctx, bin, args...)
+	cmd.Stdin = bytes.NewReader(markdown)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("symprint render failed: %w (stderr: %s)", err, stderr.String())
+	}
+	return outputPath, nil
+}
+
+// ListSymprintProfiles returns the profile names symprint knows.
+func ListSymprintProfiles() ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "symprint", "profiles", "--json")
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("symprint profiles failed: %w (stderr: %s)", err, stderr.String())
+	}
+
+	var profiles []struct {
+		Name string `json:"name"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &profiles); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal symprint profiles: %w", err)
+	}
+	var names []string
+	for _, p := range profiles {
+		if p.Name != "" {
+			names = append(names, p.Name)
+		}
+	}
+	return names, nil
 }
 
 func probeTool(name string) (bool, string) {

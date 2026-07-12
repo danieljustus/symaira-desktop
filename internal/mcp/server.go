@@ -44,6 +44,8 @@ var ToolCapabilities = map[string]ToolCapability{
 	"doc_set_status":    Mutating,
 	"desk_ingest_retry": Mutating,
 	"desk_clip":         Mutating,
+	"desk_export":       Mutating,
+	"desk_autofill":     Mutating,
 }
 
 func StartServer(cfg *config.Config, version string, allowWrite bool) error {
@@ -84,6 +86,8 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 		server.RegisterTool(newDocSetStatusTool(getService))
 		server.RegisterTool(newIngestRetryTool(getService))
 		server.RegisterTool(newClipTool(getService))
+		server.RegisterTool(newExportTool(getService))
+		server.RegisterTool(newAutofillTool(getService))
 	}
 
 	return server.ServeStdio(context.Background())
@@ -451,6 +455,66 @@ func newDocsSimilarTool(getService serviceFactory) *mcpserver.Tool {
 			}
 			defer db.Close()
 			return svc.SimilarDocs(args.File, args.Threshold)
+		},
+	}
+}
+
+func newExportTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_export",
+		Description: "Exports a note or view to PDF or HTML. Provide either note or view, not both.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"note":{"type":"string","description":"vault-relative note path"},"view":{"type":"string","description":"view id"},"output":{"type":"string","description":"output file path"},"format":{"type":"string","enum":["pdf","html"]},"profile":{"type":"string","description":"symprint profile for PDF"}},"oneOf":[{"required":["note"]},{"required":["view"]}]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				Note    string `json:"note"`
+				View    string `json:"view"`
+				Output  string `json:"output"`
+				Format  string `json:"format"`
+				Profile string `json:"profile"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.Note == "" && args.View == "" {
+				return nil, fmt.Errorf("note or view is required")
+			}
+			if args.Format == "" {
+				args.Format = "pdf"
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			return svc.Export(args.Note, args.View, args.Output, args.Format, args.Profile)
+		},
+	}
+}
+
+func newAutofillTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "desk_autofill",
+		Description: "Autofills a frontmatter property on all notes matching a view using the configured AI provider.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"view":{"type":"string","description":"view id"},"property":{"type":"string","description":"frontmatter property to fill"},"prompt":{"type":"string","description":"extra instruction for the AI"},"dry_run":{"type":"boolean","description":"show changes without writing"}},"required":["view","property"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				View     string `json:"view"`
+				Property string `json:"property"`
+				Prompt   string `json:"prompt"`
+				DryRun   bool   `json:"dry_run"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.View == "" || args.Property == "" {
+				return nil, fmt.Errorf("view and property are required")
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close()
+			return svc.Autofill(args.View, args.Property, args.Prompt, args.DryRun)
 		},
 	}
 }

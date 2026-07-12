@@ -227,6 +227,72 @@ func buildPrompt(query string, contextDocs []map[string]interface{}) string {
 	return b.String()
 }
 
+// PromptOne sends a single prompt to the configured AI provider and returns the
+// complete response as a string. It is intended for short, one-shot extractions
+// such as autofill where streaming is not helpful.
+var PromptOne = promptOne
+
+// PromptOneReal is the production implementation, preserved for tests that
+// temporarily override PromptOne to avoid real LLM calls.
+var PromptOneReal = promptOne
+
+func promptOne(prompt string) (string, error) {
+	cfg, _ := config.Load()
+	provider := cfg.LLMProvider
+	if provider == "" {
+		provider = "ollama"
+	}
+	if provider == "anthropic" {
+		apiKey := secrets.ResolveKey(cfg.LLMAPIKey)
+		if apiKey == "" {
+			return "", errors.New("anthropic API key not resolved")
+		}
+		model := os.Getenv("SYMDESK_LLM_MODEL")
+		out := make(chan AskChunk, 1)
+		var result strings.Builder
+		done := make(chan struct{})
+		go func() {
+			for chunk := range out {
+				result.WriteString(chunk.Chunk)
+			}
+			close(done)
+		}()
+		if err := streamAnthropic(context.Background(), apiKey, model, prompt, out); err != nil {
+			close(out)
+			<-done
+			return "", err
+		}
+		close(out)
+		<-done
+		return strings.TrimSpace(result.String()), nil
+	}
+	ollamaURL := strings.TrimRight(os.Getenv("SYMDESK_OLLAMA_URL"), "/")
+	if ollamaURL == "" {
+		return "", errors.New("SYMDESK_OLLAMA_URL not set")
+	}
+	model := os.Getenv("SYMDESK_OLLAMA_MODEL")
+	if model == "" {
+		model = defaultModel
+	}
+	out := make(chan AskChunk, 1)
+	var result strings.Builder
+	done := make(chan struct{})
+	go func() {
+		for chunk := range out {
+			result.WriteString(chunk.Chunk)
+		}
+		close(done)
+	}()
+	if err := streamOllama(ollamaURL, model, prompt, out); err != nil {
+		close(out)
+		<-done
+		return "", err
+	}
+	close(out)
+	<-done
+	return strings.TrimSpace(result.String()), nil
+}
+
 func streamOllama(baseURL, model, prompt string, out chan<- AskChunk) error {
 	client := ollamakit.New(ollamakit.Config{
 		BaseURL: baseURL,

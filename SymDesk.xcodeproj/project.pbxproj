@@ -59,6 +59,7 @@
 		D32E9B586B362E4914175291 /* EventWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95355A68097983C9F84AE919 /* EventWatcher.swift */; };
 		D912C5E6E61A8D859E86A1F6 /* CommandPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = F136EF877D776AFD6D2CE697 /* CommandPalette.swift */; };
 		EDBAB66DD3722499129B80AE /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = E20080EE08C0202FC164E192 /* SymairaCLIRunner */; };
+		F157E0C3058BA227E6106A58 /* SymairaIngestContract in Frameworks */ = {isa = PBXBuildFile; productRef = 6730086BD27F282EAE58D774 /* SymairaIngestContract */; };
 		F9D9027836F3132FDD8F6297 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827CE03FB82C7640D64E4D97 /* main.swift */; };
 		FC481AC96D97F01753A861B0 /* DeskCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */; };
 /* End PBXBuildFile section */
@@ -153,6 +154,7 @@
 				EDBAB66DD3722499129B80AE /* SymairaCLIRunner in Frameworks */,
 				71F20F1D5036D27530C70F14 /* SymairaToolKit in Frameworks */,
 				C336F49BE61DBF2A7C03CE8E /* SymairaUpdateCheck in Frameworks */,
+				F157E0C3058BA227E6106A58 /* SymairaIngestContract in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,6 +286,7 @@
 				E20080EE08C0202FC164E192 /* SymairaCLIRunner */,
 				3BEF32958D7F1CBB107FC724 /* SymairaToolKit */,
 				596C4C9EB9845BC180C460A4 /* SymairaUpdateCheck */,
+				6730086BD27F282EAE58D774 /* SymairaIngestContract */,
 			);
 			productName = SymDeskCoreTests;
 			productReference = CAD6A1DD667A2F7EA1706073 /* SymDeskCoreTests.xctest */;
@@ -818,6 +821,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
 			productName = SymairaToolKit;
+		};
+		6730086BD27F282EAE58D774 /* SymairaIngestContract */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
+			productName = SymairaIngestContract;
 		};
 		6BFDEE30809F14AC06D066FB /* SymairaTheme */ = {
 			isa = XCSwiftPackageProductDependency;

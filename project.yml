@@ -77,6 +77,8 @@ targets:
         product: SymairaToolKit
       - package: symaira-appkit
         product: SymairaUpdateCheck
+      - package: symaira-appkit
+        product: SymairaIngestContract
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "YES"

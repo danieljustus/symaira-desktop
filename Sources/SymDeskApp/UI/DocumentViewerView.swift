@@ -2,6 +2,8 @@ import SwiftUI
 import PDFKit
 import SymairaTheme
 import SymDeskCore
+import SymairaIngestContract
+import SymairaToolKit
 
 // MARK: - PDFKit View Wrapper
 
@@ -135,6 +137,9 @@ struct DocumentViewerView: View {
     @State private var editTags: String = ""
     @State private var editNoteVisible: Bool = true
     @State private var isSaving = false
+    @State private var isReOCRAvailable = false
+    @State private var isReOCRRunning = false
+    @State private var reOCRStatus: String? = nil
 
     enum InspectorTab: String, CaseIterable {
         case info = "Info"
@@ -205,6 +210,19 @@ struct DocumentViewerView: View {
                 }
                 .help("Toggle inspector (Cmd+I)")
 
+                if isReOCRAvailable {
+                    Button(action: { runReOCR() }) {
+                        if isReOCRRunning {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Label("Re-run OCR", systemImage: "doc.badge.gearshape")
+                        }
+                    }
+                    .disabled(isReOCRRunning)
+                    .help("Re-run OCR on the archived original")
+                }
+
                 Button(action: { dismiss() }) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.secondary)
@@ -214,6 +232,7 @@ struct DocumentViewerView: View {
         }
         .onAppear {
             loadDocument()
+            checkReOCRAvailability()
         }
         .background(
             KeyboardHandler(
@@ -454,6 +473,18 @@ struct DocumentViewerView: View {
                     inspectorRow(label: key, value: value, isMonospaced: true)
                 }
             }
+
+            if let status = reOCRStatus {
+                Divider()
+                HStack(alignment: .top, spacing: 4) {
+                    Image(systemName: "doc.badge.gearshape")
+                        .foregroundColor(SymairaTheme.goldSecondary)
+                    Text(status)
+                        .font(.caption)
+                        .foregroundColor(SymairaTheme.textSecondary)
+                        .lineLimit(nil)
+                }
+            }
         }
     }
 
@@ -595,6 +626,37 @@ struct DocumentViewerView: View {
             } catch {
                 isSaving = false
                 print("saveChanges failed: \(error)")
+            }
+        }
+    }
+
+    private func checkReOCRAvailability() {
+        Task {
+            let locator = BinaryLocator(bundle: Bundle.main)
+            isReOCRAvailable = locator.locate(SymairaToolRegistry.ingestTool.binaryName) != nil
+        }
+    }
+
+    private func runReOCR() {
+        guard let sourcePath = fileURL?.path ?? (document.path.isEmpty ? nil : document.path) else { return }
+        Task {
+            isReOCRRunning = true
+            reOCRStatus = nil
+            defer { isReOCRRunning = false }
+            do {
+                let client = SymingestReOCRClient(vaultPath: core.vaultPath)
+                let response = try await client.reprocess(archivePath: sourcePath)
+                if response.status == "completed" {
+                    reOCRStatus = "Re-OCR completed (job \(response.jobID))"
+                } else if response.status == "already_running" {
+                    reOCRStatus = "Re-OCR already running"
+                } else if let error = response.error {
+                    reOCRStatus = "Re-OCR failed: \(error.message)"
+                } else {
+                    reOCRStatus = "Re-OCR status: \(response.status)"
+                }
+            } catch {
+                reOCRStatus = "Re-OCR error: \(error.localizedDescription)"
             }
         }
     }

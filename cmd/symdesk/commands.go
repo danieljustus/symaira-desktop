@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -61,6 +62,19 @@ func registerCommands(rootCmd *cobra.Command) {
 					if !asnReport.Healthy() {
 						allOk = false
 					}
+				}
+			}
+
+			// 2b. Archive path coverage: warn when the symingest archive is not
+			// inside the vault directory, because backup strategies must cover both.
+			if vRoot != "" {
+				if archivePath, archiveOk, archiveErr := checkArchiveInVault(vRoot); archiveErr != nil {
+					results["archive_backup"] = map[string]string{"status": "error", "message": archiveErr.Error()}
+					allOk = false
+				} else if archiveOk {
+					results["archive_backup"] = map[string]string{"status": "ok", "path": archivePath}
+				} else {
+					results["archive_backup"] = map[string]string{"status": "warn", "path": archivePath, "message": "archive is outside the vault; include it separately in backups"}
 				}
 			}
 
@@ -1290,4 +1304,70 @@ func deriveOriginalPath(conflictPath string) string {
 	}
 
 	return filepath.Join(dir, name+ext)
+}
+
+// checkArchiveInVault tries to discover the symingest archive path and reports
+// whether it is contained inside the vault directory. It prefers the
+// symingest JSON doctor output, falls back to the SYMINGEST_ARCHIVE_PATH env
+// variable, and finally uses the XDG default.
+func checkArchiveInVault(vaultPath string) (string, bool, error) {
+	archivePath := ""
+
+	// 1. Try symingest doctor JSON.
+	if ok, _ := compose.HasTool("symingest"); ok {
+		out, err := exec.Command("symingest", "doctor", "--json").Output()
+		if err == nil {
+			var report struct {
+				Checks []struct {
+					Name    string `json:"name"`
+					Status  string `json:"status"`
+					Message string `json:"message"`
+				} `json:"checks"`
+			}
+			if json.Unmarshal(out, &report) == nil {
+				for _, check := range report.Checks {
+					if check.Name == "path.archive" && check.Message != "" {
+						archivePath = check.Message
+						break
+					}
+				}
+			}
+		}
+	}
+
+	// 2. Env override.
+	if archivePath == "" {
+		if envPath := os.Getenv("SYMINGEST_ARCHIVE_PATH"); envPath != "" {
+			archivePath = envPath
+		}
+	}
+
+	// 3. Default.
+	if archivePath == "" {
+		dataDir := os.Getenv("XDG_DATA_HOME")
+		if dataDir == "" {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return "", false, err
+			}
+			dataDir = filepath.Join(home, ".local", "share")
+		}
+		archivePath = filepath.Join(dataDir, "symingest", "archive")
+	}
+
+	absArchive, err := filepath.Abs(archivePath)
+	if err != nil {
+		return archivePath, false, err
+	}
+	absVault, err := filepath.Abs(vaultPath)
+	if err != nil {
+		return archivePath, false, err
+	}
+
+	rel, err := filepath.Rel(absVault, absArchive)
+	if err != nil {
+		return archivePath, false, err
+	}
+	inVault := !strings.HasPrefix(rel, "..") && rel != ".."
+	return archivePath, inVault, nil
 }

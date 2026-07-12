@@ -9,7 +9,7 @@ options:
 packages:
   symaira-appkit:
     url: https://github.com/danieljustus/symaira-appkit
-    exactVersion: 0.3.0
+    exactVersion: 0.4.0
 
 targets:
   SymDeskCore:

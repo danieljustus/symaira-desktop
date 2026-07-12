@@ -33,6 +33,7 @@ struct ContentView: View {
         case discover
         case ingestQueue
         case reviewLane
+        case rules
     }
 
     @State private var displayMode: DisplayMode = .vault
@@ -124,6 +125,15 @@ struct ContentView: View {
                             }
                         }
 
+                        Section("Settings") {
+                            Button(action: { displayMode = .rules }) {
+                                HStack {
+                                    Image(systemName: "gearshape")
+                                    Text("Rules & Settings")
+                                }
+                            }
+                        }
+
                         Section("Views") {
                             Button("Vault") { displayMode = .vault }
                             Button("Graph") { displayMode = .graph }
@@ -179,6 +189,8 @@ struct ContentView: View {
                         IngestQueueView()
                     case .reviewLane:
                         ReviewLaneView()
+                    case .rules:
+                        RulesSettingsView(vaultPath: core.vaultPath)
                     case .discover:
                         DiscoverView()
                     case .graph:

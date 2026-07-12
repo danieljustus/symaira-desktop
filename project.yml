@@ -9,7 +9,7 @@ options:
 packages:
   symaira-appkit:
     url: https://github.com/danieljustus/symaira-appkit
-    exactVersion: 0.2.1
+    exactVersion: 0.3.0
 
 targets:
   SymDeskCore:
@@ -26,6 +26,8 @@ targets:
         product: SymairaToolKit
       - package: symaira-appkit
         product: SymairaUpdateCheck
+      - package: symaira-appkit
+        product: SymairaIngestContract
     settings:
       base:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
@@ -46,6 +48,8 @@ targets:
         product: SymairaToolKit
       - package: symaira-appkit
         product: SymairaUpdateCheck
+      - package: symaira-appkit
+        product: SymairaIngestContract
     settings:
       base:
         INFOPLIST_FILE: Sources/SymDeskApp/Info.plist
@@ -73,6 +77,8 @@ targets:
         product: SymairaToolKit
       - package: symaira-appkit
         product: SymairaUpdateCheck
+      - package: symaira-appkit
+        product: SymairaIngestContract
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "YES"

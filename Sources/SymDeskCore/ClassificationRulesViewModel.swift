@@ -1,0 +1,203 @@
+import Foundation
+import SymairaIngestContract
+
+@MainActor
+public final class ClassificationRulesViewModel: ObservableObject {
+    @Published public var rules: [ClassificationRule] = []
+    @Published public var isLoading = false
+    @Published public var isPerformingOperation = false
+    @Published public var lastError: String?
+    @Published public var lastActionMessage: String?
+
+    @Published public var testText: String = ""
+    @Published public var matches: [ClassificationRuleMatch] = []
+
+    @Published public var dryRunPattern: String = ""
+    @Published public var dryRunKind: String = ""
+    @Published public var dryRunValue: String = ""
+    @Published public var dryRunResult: RulesDryRunResponse?
+
+    @Published public var mailAccounts: [MailAccount] = []
+    @Published public var mailError: String?
+
+    private let client: any ClassificationRulesClient
+    private let configPath: String?
+
+    public convenience init(vaultPath: String? = nil, configPath: String? = nil) {
+        self.init(
+            client: SymingestRulesClient(vaultPath: vaultPath, configPath: configPath ?? defaultConfigPath()),
+            configPath: configPath ?? defaultConfigPath()
+        )
+    }
+
+    public init(client: any ClassificationRulesClient, configPath: String? = nil) {
+        self.client = client
+        self.configPath = configPath
+    }
+
+    @discardableResult
+    public func load() async -> Bool {
+        isLoading = true
+        lastError = nil
+        do {
+            rules = try await client.listRules()
+            isLoading = false
+            return true
+        } catch {
+            lastError = error.localizedDescription
+            isLoading = false
+            return false
+        }
+    }
+
+    @discardableResult
+    public func loadMail() async -> Bool {
+        mailError = nil
+        do {
+            mailAccounts = try await client.listMailRules()
+            return true
+        } catch {
+            mailError = error.localizedDescription
+            return false
+        }
+    }
+
+    private func normalizedValues(pattern: String, kind: String, value: String) -> (pattern: String, kind: String, value: String)? {
+        let p = pattern.trimmingCharacters(in: .whitespacesAndNewlines)
+        let k = kind.trimmingCharacters(in: .whitespacesAndNewlines)
+        let v = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !p.isEmpty, !k.isEmpty, !v.isEmpty else { return nil }
+        return (p, k, v)
+    }
+
+    @discardableResult
+    public func saveRule(id: Int64?, pattern: String, kind: String, value: String) async -> Bool {
+        guard let values = normalizedValues(pattern: pattern, kind: kind, value: value) else {
+            lastError = "Pattern, kind, and value are required."
+            return false
+        }
+        isPerformingOperation = true
+        lastError = nil
+        lastActionMessage = nil
+        do {
+            if let id {
+                _ = try await client.updateRule(id: id, pattern: values.pattern, kind: values.kind, value: values.value)
+                lastActionMessage = "Rule updated."
+            } else {
+                _ = try await client.addRule(pattern: values.pattern, kind: values.kind, value: values.value)
+                lastActionMessage = "Rule added."
+            }
+            _ = await load()
+            isPerformingOperation = false
+            return true
+        } catch {
+            lastError = error.localizedDescription
+            isPerformingOperation = false
+            return false
+        }
+    }
+
+    @discardableResult
+    public func deleteRule(id: Int64) async -> Bool {
+        isPerformingOperation = true
+        lastError = nil
+        do {
+            try await client.deleteRule(id: id)
+            _ = await load()
+            isPerformingOperation = false
+            return true
+        } catch {
+            lastError = error.localizedDescription
+            isPerformingOperation = false
+            return false
+        }
+    }
+
+    @discardableResult
+    public func test() async -> Bool {
+        let text = testText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else {
+            lastError = "Enter sample text to test classification rules."
+            return false
+        }
+        isPerformingOperation = true
+        lastError = nil
+        do {
+            matches = try await client.testRules(text: text)
+            isPerformingOperation = false
+            return true
+        } catch {
+            lastError = error.localizedDescription
+            isPerformingOperation = false
+            return false
+        }
+    }
+
+    @discardableResult
+    public func runDryRun() async -> Bool {
+        guard let values = normalizedValues(pattern: dryRunPattern, kind: dryRunKind, value: dryRunValue) else {
+            lastError = "Pattern, kind, and value are required for the existing-document dry-run."
+            return false
+        }
+        isPerformingOperation = true
+        lastError = nil
+        dryRunResult = nil
+        do {
+            dryRunResult = try await client.dryRunRule(pattern: values.pattern, kind: values.kind, value: values.value)
+            isPerformingOperation = false
+            return true
+        } catch {
+            lastError = error.localizedDescription
+            isPerformingOperation = false
+            return false
+        }
+    }
+
+    @discardableResult
+    public func saveMail(id: String?, account: MailAccount) async -> Bool {
+        isPerformingOperation = true
+        lastError = nil
+        mailError = nil
+        lastActionMessage = nil
+        do {
+            if let id, !id.isEmpty {
+                _ = try await client.updateMailRule(id: id, account: account)
+                lastActionMessage = "Mail account updated. Restart the watcher to apply changes."
+            } else {
+                _ = try await client.createMailRule(account)
+                lastActionMessage = "Mail account created. Restart the watcher to apply changes."
+            }
+            _ = await loadMail()
+            isPerformingOperation = false
+            return true
+        } catch {
+            lastError = error.localizedDescription
+            isPerformingOperation = false
+            return false
+        }
+    }
+
+    @discardableResult
+    public func deleteMail(id: String) async -> Bool {
+        guard !id.isEmpty else {
+            lastError = "Cannot delete account with empty identifier."
+            return false
+        }
+        isPerformingOperation = true
+        lastError = nil
+        do {
+            try await client.deleteMailRule(id: id)
+            _ = await loadMail()
+            isPerformingOperation = false
+            return true
+        } catch {
+            lastError = error.localizedDescription
+            isPerformingOperation = false
+            return false
+        }
+    }
+}
+
+private func defaultConfigPath() -> String {
+    FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/symingest/config.toml").path
+}

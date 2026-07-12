@@ -26,6 +26,8 @@ targets:
         product: SymairaToolKit
       - package: symaira-appkit
         product: SymairaUpdateCheck
+      - package: symaira-appkit
+        product: SymairaIngestContract
     settings:
       base:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
@@ -46,6 +48,8 @@ targets:
         product: SymairaToolKit
       - package: symaira-appkit
         product: SymairaUpdateCheck
+      - package: symaira-appkit
+        product: SymairaIngestContract
     settings:
       base:
         INFOPLIST_FILE: Sources/SymDeskApp/Info.plist

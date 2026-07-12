@@ -157,25 +157,28 @@ jobs:
 
       - name: Notarize and staple app
         env:
-          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
-          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
-          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+          NOTARY_API_KEY: ${{ secrets.NOTARY_API_KEY }}
+          NOTARY_API_KEY_ID: ${{ secrets.NOTARY_API_KEY_ID }}
+          NOTARY_API_ISSUER_ID: ${{ secrets.NOTARY_API_ISSUER_ID }}
         run: |
           set -euo pipefail
-          for secret in NOTARY_APPLE_ID NOTARY_TEAM_ID NOTARY_PASSWORD; do
+          for secret in NOTARY_API_KEY NOTARY_API_KEY_ID NOTARY_API_ISSUER_ID; do
             if [ -z "${!secret:-}" ]; then
               echo "::error::$secret must be configured in the release environment."
               exit 1
             fi
           done
 
+          API_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          echo -n "$NOTARY_API_KEY" > "$API_KEY_PATH"
+
           APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
           SUBMISSION_ARCHIVE="$RUNNER_TEMP/SymDesk-notarization.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$SUBMISSION_ARCHIVE"
           xcrun notarytool submit "$SUBMISSION_ARCHIVE" \
-            --apple-id "$NOTARY_APPLE_ID" \
-            --team-id "$NOTARY_TEAM_ID" \
-            --password "$NOTARY_PASSWORD" \
+            --key-id "$NOTARY_API_KEY_ID" \
+            --issuer-id "$NOTARY_API_ISSUER_ID" \
+            --key-path "$API_KEY_PATH" \
             --wait
           xcrun stapler staple "$APP_PATH"
           xcrun stapler validate "$APP_PATH"
@@ -202,17 +205,19 @@ jobs:
 
       - name: Notarize and staple DMG
         env:
-          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
-          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
-          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+          NOTARY_API_KEY: ${{ secrets.NOTARY_API_KEY }}
+          NOTARY_API_KEY_ID: ${{ secrets.NOTARY_API_KEY_ID }}
+          NOTARY_API_ISSUER_ID: ${{ secrets.NOTARY_API_ISSUER_ID }}
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
           DMG_PATH="dist/SymDesk-${VERSION}.dmg"
+          API_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          echo -n "$NOTARY_API_KEY" > "$API_KEY_PATH"
           xcrun notarytool submit "$DMG_PATH" \
-            --apple-id "$NOTARY_APPLE_ID" \
-            --team-id "$NOTARY_TEAM_ID" \
-            --password "$NOTARY_PASSWORD" \
+            --key-id "$NOTARY_API_KEY_ID" \
+            --issuer-id "$NOTARY_API_ISSUER_ID" \
+            --key-path "$API_KEY_PATH" \
             --wait
           xcrun stapler staple "$DMG_PATH"
           xcrun stapler validate "$DMG_PATH"

@@ -170,7 +170,7 @@ jobs:
           done
 
           API_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
-          echo -n "$NOTARY_API_KEY" > "$API_KEY_PATH"
+          echo -n "$NOTARY_API_KEY" | base64 --decode -o "$API_KEY_PATH"
 
           APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
           SUBMISSION_ARCHIVE="$RUNNER_TEMP/SymDesk-notarization.zip"
@@ -213,7 +213,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           DMG_PATH="dist/SymDesk-${VERSION}.dmg"
           API_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
-          echo -n "$NOTARY_API_KEY" > "$API_KEY_PATH"
+          echo -n "$NOTARY_API_KEY" | base64 --decode -o "$API_KEY_PATH"
           xcrun notarytool submit "$DMG_PATH" \
             -d "$NOTARY_API_KEY_ID" \
             -i "$NOTARY_API_ISSUER_ID" \

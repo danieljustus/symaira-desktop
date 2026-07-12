@@ -176,9 +176,9 @@ jobs:
           SUBMISSION_ARCHIVE="$RUNNER_TEMP/SymDesk-notarization.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$SUBMISSION_ARCHIVE"
           xcrun notarytool submit "$SUBMISSION_ARCHIVE" \
-            --key-id "$NOTARY_API_KEY_ID" \
-            --issuer-id "$NOTARY_API_ISSUER_ID" \
-            --key-path "$API_KEY_PATH" \
+            -d "$NOTARY_API_KEY_ID" \
+            -i "$NOTARY_API_ISSUER_ID" \
+            -k "$API_KEY_PATH" \
             --wait
           xcrun stapler staple "$APP_PATH"
           xcrun stapler validate "$APP_PATH"
@@ -215,9 +215,9 @@ jobs:
           API_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
           echo -n "$NOTARY_API_KEY" > "$API_KEY_PATH"
           xcrun notarytool submit "$DMG_PATH" \
-            --key-id "$NOTARY_API_KEY_ID" \
-            --issuer-id "$NOTARY_API_ISSUER_ID" \
-            --key-path "$API_KEY_PATH" \
+            -d "$NOTARY_API_KEY_ID" \
+            -i "$NOTARY_API_ISSUER_ID" \
+            -k "$API_KEY_PATH" \
             --wait
           xcrun stapler staple "$DMG_PATH"
           xcrun stapler validate "$DMG_PATH"

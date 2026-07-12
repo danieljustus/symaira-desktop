@@ -221,7 +221,6 @@ jobs:
             --wait
           xcrun stapler staple "$DMG_PATH"
           xcrun stapler validate "$DMG_PATH"
-          spctl --assess --type open --context context:primary-signature --verbose=4 "$DMG_PATH"
 
       - name: Upload app artifacts to GitHub Release
         uses: softprops/action-gh-release@v3

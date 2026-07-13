@@ -35,21 +35,16 @@ final class NotificationManager: NSObject, ObservableObject {
     // MARK: - Permission
 
     func requestPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { [weak self] _, _ in
-            Task { @MainActor [weak self] in
-                self?.checkPermissionStatus()
-            }
+        Task { [weak self] in
+            _ = try? await UNUserNotificationCenter.current()
+                .requestAuthorization(options: [.alert, .badge, .sound])
+            await self?.checkPermissionStatus()
         }
-        checkPermissionStatus()
     }
 
-    func checkPermissionStatus() {
-        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
-            let status = settings.authorizationStatus
-            Task { @MainActor [weak self] in
-                self?.permissionStatus = status
-            }
-        }
+    func checkPermissionStatus() async {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        permissionStatus = settings.authorizationStatus
     }
 
     // MARK: - Scheduling
@@ -151,7 +146,9 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         openSettingsFor notification: UNNotification?
     ) {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications?PrivacyNotificationCenter") {
-            NSWorkspace.shared.open(url)
+            Task { @MainActor in
+                NSWorkspace.shared.open(url)
+            }
         }
     }
 }

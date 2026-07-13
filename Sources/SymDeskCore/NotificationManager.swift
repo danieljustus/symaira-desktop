@@ -3,8 +3,8 @@ import AppKit
 @preconcurrency import UserNotifications
 
 @MainActor
-final class NotificationManager: NSObject, ObservableObject {
-    static let shared = NotificationManager()
+public final class NotificationManager: NSObject, ObservableObject {
+    public static let shared = NotificationManager()
 
     @Published var permissionStatus: UNAuthorizationStatus = .notDetermined
     @Published var deepLinkedDocumentPath: String?

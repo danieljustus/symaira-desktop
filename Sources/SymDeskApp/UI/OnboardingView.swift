@@ -58,13 +58,13 @@ struct OnboardingView: View {
                 }
             }
         }
-        .frame(width: 580, height: 520)
+        .frame(minWidth: 560, maxWidth: .infinity, minHeight: 540, maxHeight: .infinity)
     }
 
     // MARK: - Step 1: Choose Location
 
     private var chooseLocationStep: some View {
-        VStack(spacing: 28) {
+        VStack(spacing: 24) {
             VStack(spacing: 8) {
                 Image(systemName: "folder.badge.plus")
                     .font(.system(size: 40))
@@ -76,8 +76,10 @@ struct OnboardingView: View {
                 Text("Where should your documents and notes live?")
                     .font(.title3)
                     .foregroundColor(SymairaTheme.textSecondary)
+                    .multilineTextAlignment(.center)
             }
             .padding(.top, 32)
+            .padding(.horizontal, 40)
 
             if isLoading {
                 VStack(spacing: 12) {
@@ -86,13 +88,8 @@ struct OnboardingView: View {
                         .tint(SymairaTheme.goldPrimary)
                     Text(progressMessage)
                         .foregroundColor(SymairaTheme.textSecondary)
-                    if let err = errorMessage {
-                        Text(err)
-                            .foregroundColor(.red)
-                            .font(.callout)
-                    }
                 }
-                .frame(maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
                     VStack(spacing: 10) {
@@ -101,17 +98,45 @@ struct OnboardingView: View {
                         }
                     }
                     .padding(.horizontal, 40)
+                    .padding(.bottom, 8)
+                    .frame(maxWidth: 720)
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
-            if let err = errorMessage, !isLoading {
-                Text(err)
-                    .foregroundColor(.red)
-                    .font(.callout)
+            if let err = errorMessage {
+                errorBox(err)
                     .padding(.horizontal, 40)
+                    .padding(.bottom, 24)
+                    .frame(maxWidth: 720)
             }
         }
+    }
+
+    private func errorBox(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.red)
+                .padding(.top, 2)
+            ScrollView {
+                Text(message)
+                    .foregroundColor(.red)
+                    .font(.callout)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 96)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.red.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.red.opacity(0.35), lineWidth: 1)
+                )
+        )
     }
 
     private func sourceButton(_ source: VaultSource) -> some View {
@@ -296,8 +321,16 @@ struct OnboardingView: View {
 
         Task {
             do {
-                _ = try FileManager.default.createDirectory(at: demoDir, withIntermediateDirectories: true)
-                let vaultPath = try await core.initDemo(into: demoDir.path)
+                let vaultPath: String
+                let markerURL = demoDir.appendingPathComponent(".symdesk")
+                if FileManager.default.fileExists(atPath: markerURL.path) {
+                    // Demo vault was already materialised in a previous run —
+                    // `symdesk demo init` refuses non-empty directories, so reuse it.
+                    vaultPath = demoDir.path
+                } else {
+                    _ = try FileManager.default.createDirectory(at: demoDir, withIntermediateDirectories: true)
+                    vaultPath = try await core.initDemo(into: demoDir.path)
+                }
 
                 let vaultURL = URL(fileURLWithPath: vaultPath)
                 VaultConfig.setDemoVault(url: vaultURL)

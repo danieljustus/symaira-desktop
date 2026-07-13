@@ -15,7 +15,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
-var ServerVersion = "0.5.0"
+var ServerVersion = "0.6.9"
 
 // ToolCapability classifies an MCP tool as read-only or mutating.
 type ToolCapability string

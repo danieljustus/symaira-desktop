@@ -64,6 +64,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Verify CLI reports the release version
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          BINARY=$(find dist -type f -name symdesk -path "*darwin_arm64*" | head -1)
+          test -n "$BINARY"
+          OUTPUT=$("$BINARY" version)
+          echo "$OUTPUT"
+          if [ "$OUTPUT" != "symdesk ${VERSION}" ]; then
+            echo "::error::CLI version mismatch: expected 'symdesk ${VERSION}', got '$OUTPUT'."
+            exit 1
+          fi
+
       - name: Clean up signing material
         if: always()
         run: |
@@ -133,14 +146,34 @@ jobs:
       - name: Archive SymDesk.app
         run: |
           set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
           xcodebuild archive \
             -project SymDesk.xcodeproj \
             -scheme SymDesk \
             -configuration Release \
             -destination 'generic/platform=macOS' \
             -archivePath "$RUNNER_TEMP/SymDesk.xcarchive" \
+            MARKETING_VERSION="$VERSION" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="$CODESIGN_IDENTITY"
+
+      - name: Verify app reports the release version
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
+          PLIST_VERSION=$(plutil -extract CFBundleShortVersionString raw -o - "$APP_PATH/Contents/Info.plist")
+          echo "CFBundleShortVersionString: $PLIST_VERSION"
+          if [ "$PLIST_VERSION" != "$VERSION" ]; then
+            echo "::error::App bundle version mismatch: expected '$VERSION', got '$PLIST_VERSION'."
+            exit 1
+          fi
+          OUTPUT=$("$APP_PATH/Contents/MacOS/SymDesk" --version)
+          echo "$OUTPUT"
+          if [ "$OUTPUT" != "symdesk version ${VERSION}" ]; then
+            echo "::error::App executable version mismatch: expected 'symdesk version ${VERSION}', got '$OUTPUT'."
+            exit 1
+          fi
 
       - name: Sign and verify app bundle
         run: |

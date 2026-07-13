@@ -63,3 +63,18 @@ release:
   draft: false
   prerelease: auto
   name_template: "v{{.Version}}"
+
+# Homebrew CLI Formula. The macOS app Cask is updated by the dedicated
+# bump-homebrew-cask job in .github/workflows/release.yml.
+brews:
+  - name: symdesk
+    repository:
+      owner: danieljustus
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/danieljustus/symaira-desktop
+    description: "Local-first markdown vault workspace: CLI and MCP server"
+    license: Apache-2.0
+    test: |
+      system "#{bin}/symdesk", "version"

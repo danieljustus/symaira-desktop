@@ -53,7 +53,7 @@ func TestHistoryPruneCommandJSON(t *testing.T) {
 	vaultDir := setupHistoryTestVault(t)
 	origCfg := cfg
 	cfg = &config.Config{
-		Vault:            vaultDir,
+		Vault:             vaultDir,
 		HistoryMaxPerFile: 5,
 		HistoryMaxAgeDays: 30,
 	}
@@ -87,7 +87,7 @@ func TestHistoryPruneCommandUsesConfigDefaults(t *testing.T) {
 	vaultDir := setupHistoryTestVault(t)
 	origCfg := cfg
 	cfg = &config.Config{
-		Vault:            vaultDir,
+		Vault:             vaultDir,
 		HistoryMaxPerFile: 10,
 		HistoryMaxAgeDays: 7,
 	}
@@ -211,7 +211,7 @@ func TestTrashPurgeCommandJSON(t *testing.T) {
 	vaultDir := setupHistoryTestVault(t)
 	origCfg := cfg
 	cfg = &config.Config{
-		Vault:             vaultDir,
+		Vault:              vaultDir,
 		TrashRetentionDays: 30,
 	}
 	t.Cleanup(func() { cfg = origCfg })
@@ -244,7 +244,7 @@ func TestTrashPurgeCommandAll(t *testing.T) {
 	vaultDir := setupHistoryTestVault(t)
 	origCfg := cfg
 	cfg = &config.Config{
-		Vault:             vaultDir,
+		Vault:              vaultDir,
 		TrashRetentionDays: 30,
 	}
 	t.Cleanup(func() { cfg = origCfg })

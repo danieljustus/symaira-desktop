@@ -57,6 +57,7 @@ func newRootCmd() *cobra.Command {
 		Use:           "symdesk",
 		Short:         "Symaira-Desktop: Local-first Markdown Vault CLI and MCP Server",
 		SilenceErrors: true,
+		SilenceUsage:  true,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Zero-stdio pollution: logging to stderr
 			slog.SetDefault(logkit.New(os.Stderr, slog.LevelInfo, "text"))

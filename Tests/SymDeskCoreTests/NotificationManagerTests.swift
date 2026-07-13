@@ -3,6 +3,7 @@ import XCTest
 @testable import SymDeskCore
 @preconcurrency import UserNotifications
 
+@MainActor
 final class FakeNotificationCenter: NotificationCenterProviding {
     var requestedOptions: UNAuthorizationOptions?
     var requestResult: Bool = true

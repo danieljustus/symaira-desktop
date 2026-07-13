@@ -1,7 +1,8 @@
 import Foundation
 @preconcurrency import UserNotifications
 
-protocol NotificationCenterProviding: Sendable {
+@MainActor
+protocol NotificationCenterProviding {
     func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
     func notificationSettings() async -> UNNotificationSettings
     func removeAllPendingNotificationRequests()

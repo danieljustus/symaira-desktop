@@ -26,8 +26,10 @@ final class NotificationManager: NSObject, ObservableObject {
     }
 
     private let scheduler = NotificationScheduler(leadTimeDays: 1)
+    let center: NotificationCenterProviding
 
-    private override init() {
+    init(center: NotificationCenterProviding = UserNotificationCenterAdapter()) {
+        self.center = center
         super.init()
         UNUserNotificationCenter.current().delegate = self
     }
@@ -36,14 +38,13 @@ final class NotificationManager: NSObject, ObservableObject {
 
     func requestPermission() {
         Task { [weak self] in
-            _ = try? await UNUserNotificationCenter.current()
-                .requestAuthorization(options: [.alert, .badge, .sound])
+            _ = try? await self?.center.requestAuthorization(options: [.alert, .badge, .sound])
             await self?.checkPermissionStatus()
         }
     }
 
     func checkPermissionStatus() async {
-        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        let settings = await center.notificationSettings()
         permissionStatus = settings.authorizationStatus
     }
 
@@ -66,12 +67,8 @@ final class NotificationManager: NSObject, ObservableObject {
 
     /// Schedules notifications for the given documents and updates the dock badge.
     func scheduleNotifications(documents: [DocumentItem], reviewCount: Int) {
-        let center = UNUserNotificationCenter.current()
-
-        // Cancel all previously scheduled notifications so we start clean
         center.removeAllPendingNotificationRequests()
 
-        // Due-date notifications
         let dueNotifications = scheduler.upcomingDueNotifications(from: documents)
         for note in dueNotifications {
             let content = UNMutableNotificationContent()
@@ -95,16 +92,13 @@ final class NotificationManager: NSObject, ObservableObject {
             center.add(request)
         }
 
-        // Dock badge for review queue
         let badgeCount = reviewCount
         Task {
             try? await center.setBadgeCount(badgeCount)
         }
     }
 
-    /// Cancels all pending notifications and clears the badge.
     func cancelAll() {
-        let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
         Task {
             try? await center.setBadgeCount(0)

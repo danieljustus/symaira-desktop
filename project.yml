@@ -84,3 +84,27 @@ targets:
         GENERATE_INFOPLIST_FILE: "YES"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         SWIFT_VERSION: "6.0"
+
+  SymDeskAppTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests/SymDeskAppTests
+    dependencies:
+      - target: SymDesk
+      - target: SymDeskCore
+      - package: symaira-appkit
+        product: SymairaTheme
+      - package: symaira-appkit
+        product: SymairaCLIRunner
+      - package: symaira-appkit
+        product: SymairaToolKit
+      - package: symaira-appkit
+        product: SymairaUpdateCheck
+      - package: symaira-appkit
+        product: SymairaIngestContract
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        SWIFT_VERSION: "6.0"

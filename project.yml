@@ -59,7 +59,7 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         SWIFT_VERSION: "6.0"
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited)"
-        MARKETING_VERSION: "0.6.10"
+        MARKETING_VERSION: "0.6.11"
         CURRENT_PROJECT_VERSION: "1"
 
   SymDeskCoreTests:

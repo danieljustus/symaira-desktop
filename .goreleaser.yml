@@ -62,6 +62,7 @@ release:
     name: symaira-desktop
   draft: false
   prerelease: auto
+  replace_existing_artifacts: true
   name_template: "v{{.Version}}"
 
 # Homebrew CLI Formula. The macOS app Cask is updated by the dedicated

@@ -4,7 +4,7 @@ import XCTest
 @preconcurrency import UserNotifications
 
 @MainActor
-final class FakeNotificationCenter: NotificationCenterProviding {
+private final class FakeNotificationCenter: NotificationCenterProviding {
     var requestedOptions: UNAuthorizationOptions?
     var requestResult: Bool = true
     var authStatus: UNAuthorizationStatus = .notDetermined

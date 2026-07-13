@@ -9,8 +9,8 @@ public final class NotificationManager: NSObject, ObservableObject {
     @Published var permissionStatus: UNAuthorizationStatus = .notDetermined
     @Published var deepLinkedDocumentPath: String?
 
-    var isDenied: Bool { permissionStatus == .denied }
-    var isAuthorized: Bool {
+    public var isDenied: Bool { permissionStatus == .denied }
+    public var isAuthorized: Bool {
         permissionStatus == .authorized || permissionStatus == .provisional
     }
 
@@ -27,7 +27,7 @@ public final class NotificationManager: NSObject, ObservableObject {
 
     // MARK: - Permission
 
-    func requestPermission() {
+    public func requestPermission() {
         Task { [weak self] in
             _ = try? await self?.center.requestAuthorization(options: [.alert, .badge, .sound])
             await self?.checkPermissionStatus()
@@ -41,7 +41,7 @@ public final class NotificationManager: NSObject, ObservableObject {
 
     // MARK: - Scheduling
 
-    func refreshNotifications(with core: DeskCore) async {
+    public func refreshNotifications(with core: DeskCore) async {
         guard isAuthorized else { return }
 
         do {

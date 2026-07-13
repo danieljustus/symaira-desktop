@@ -1,6 +1,5 @@
 import Foundation
 @preconcurrency import UserNotifications
-import SymDeskCore
 
 @MainActor
 final class NotificationManager: NSObject, ObservableObject {
@@ -17,10 +16,12 @@ final class NotificationManager: NSObject, ObservableObject {
     private let scheduler = NotificationScheduler(leadTimeDays: 1)
     let center: NotificationCenterProviding
 
-    init(center: NotificationCenterProviding = UNUserNotificationCenter.current()) {
+    init(center: NotificationCenterProviding = UserNotificationCenterAdapter()) {
         self.center = center
         super.init()
-        (center as? UNUserNotificationCenter)?.delegate = self
+        if let adapter = center as? UserNotificationCenterAdapter {
+            UNUserNotificationCenter.current().delegate = self
+        }
     }
 
     // MARK: - Permission

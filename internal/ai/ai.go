@@ -71,7 +71,7 @@ const defaultModel = "llama3.2"
 
 // Ask streams an answer for query to out and always closes out.
 // contextDocs are FTS results from the sidecar ({path,title,snippet}).
-func Ask(query string, contextDocs []map[string]interface{}, out chan<- AskChunk) {
+func Ask(ctx context.Context, query string, contextDocs []map[string]interface{}, out chan<- AskChunk) {
 	defer close(out)
 
 	cfg, _ := config.Load()
@@ -87,8 +87,7 @@ func Ask(query string, contextDocs []map[string]interface{}, out chan<- AskChunk
 				"Anthropic API-Key konnte nicht aufgelöst werden (Fehlendes Secret via symvault oder Umgebungsvariable).\n"}
 			return
 		}
-		model := os.Getenv("SYMDESK_LLM_MODEL")
-		if err := streamAnthropic(context.Background(), apiKey, model, buildPrompt(query, contextDocs), out); err != nil {
+		if err := streamAnthropic(ctx, apiKey, cfg.LLMModel, buildPrompt(query, contextDocs), out); err != nil {
 			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Anthropic-Anfrage fehlgeschlagen: %v\n", err)}
 		}
 		return
@@ -115,7 +114,7 @@ func Ask(query string, contextDocs []map[string]interface{}, out chan<- AskChunk
 		model = defaultModel
 	}
 
-	if err := streamOllama(ollamaURL, model, buildPrompt(query, contextDocs), out); err != nil {
+	if err := streamOllama(ctx, ollamaURL, model, buildPrompt(query, contextDocs), out); err != nil {
 		out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Ollama-Anfrage fehlgeschlagen: %v\n", err)}
 	}
 }
@@ -132,7 +131,7 @@ const (
 // degrades honestly: without SYMDESK_OLLAMA_URL configured it explains what is
 // missing instead of failing. Unlike Ask it operates purely on the provided
 // text and never touches the vault.
-func Transform(text, intent string, out chan<- AskChunk) {
+func Transform(ctx context.Context, text, intent string, out chan<- AskChunk) {
 	defer close(out)
 
 	text = strings.TrimSpace(text)
@@ -154,8 +153,7 @@ func Transform(text, intent string, out chan<- AskChunk) {
 				"Anthropic API-Key konnte nicht aufgelöst werden (Fehlendes Secret via symvault oder Umgebungsvariable).\n"}
 			return
 		}
-		model := os.Getenv("SYMDESK_LLM_MODEL")
-		if err := streamAnthropic(context.Background(), apiKey, model, buildTransformPrompt(text, intent), out); err != nil {
+		if err := streamAnthropic(ctx, apiKey, cfg.LLMModel, buildTransformPrompt(text, intent), out); err != nil {
 			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Anthropic-Anfrage fehlgeschlagen: %v\n", err)}
 		}
 		return
@@ -174,7 +172,7 @@ func Transform(text, intent string, out chan<- AskChunk) {
 		model = defaultModel
 	}
 
-	if err := streamOllama(ollamaURL, model, buildTransformPrompt(text, intent), out); err != nil {
+	if err := streamOllama(ctx, ollamaURL, model, buildTransformPrompt(text, intent), out); err != nil {
 		out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Ollama-Anfrage fehlgeschlagen: %v\n", err)}
 	}
 }
@@ -247,7 +245,6 @@ func promptOne(prompt string) (string, error) {
 		if apiKey == "" {
 			return "", errors.New("anthropic API key not resolved")
 		}
-		model := os.Getenv("SYMDESK_LLM_MODEL")
 		out := make(chan AskChunk, 1)
 		var result strings.Builder
 		done := make(chan struct{})
@@ -257,7 +254,7 @@ func promptOne(prompt string) (string, error) {
 			}
 			close(done)
 		}()
-		if err := streamAnthropic(context.Background(), apiKey, model, prompt, out); err != nil {
+		if err := streamAnthropic(context.Background(), apiKey, cfg.LLMModel, prompt, out); err != nil {
 			close(out)
 			<-done
 			return "", err
@@ -283,7 +280,7 @@ func promptOne(prompt string) (string, error) {
 		}
 		close(done)
 	}()
-	if err := streamOllama(ollamaURL, model, prompt, out); err != nil {
+	if err := streamOllama(context.Background(), ollamaURL, model, prompt, out); err != nil {
 		close(out)
 		<-done
 		return "", err
@@ -293,13 +290,13 @@ func promptOne(prompt string) (string, error) {
 	return strings.TrimSpace(result.String()), nil
 }
 
-func streamOllama(baseURL, model, prompt string, out chan<- AskChunk) error {
+func streamOllama(ctx context.Context, baseURL, model, prompt string, out chan<- AskChunk) error {
 	client := ollamakit.New(ollamakit.Config{
 		BaseURL: baseURL,
 		Model:   model,
 		Timeout: 5 * time.Minute,
 	})
-	err := client.Generate(context.Background(), model, prompt, nil, func(chunk ollamakit.GenerateResponse) error {
+	err := client.Generate(ctx, model, prompt, nil, func(chunk ollamakit.GenerateResponse) error {
 		if chunk.Response != "" {
 			out <- AskChunk{Chunk: chunk.Response}
 		}

@@ -22,10 +22,12 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	"github.com/fsnotify/fsnotify"
 	"gopkg.in/yaml.v3"
 )
 
@@ -64,6 +66,13 @@ type Server struct {
 	snapshotETag string
 	snapshotJSON []byte
 	snapshotGZIP []byte
+	// snapshotDirty tracks whether the vault may have changed since the last
+	// snapshotPayload computation. When a vault watcher is running, a clean
+	// (false) state lets snapshotPayload skip its full stat-every-file walk
+	// entirely and serve the cached payload straight away.
+	snapshotDirty atomic.Bool
+	vaultWatcher  *fsnotify.Watcher
+	watcherDone   chan struct{}
 }
 
 func NewServer(cfg ServerConfig) (*Server, error) {
@@ -107,6 +116,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		return nil, fmt.Errorf("open vault root: %w", err)
 	}
 	s := &Server{cfg: cfg, db: db, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux()}
+	s.snapshotDirty.Store(true)
 	if err := s.refreshIndex(); err != nil {
 		vaultRoot.Close()
 		db.Close()
@@ -119,10 +129,84 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		WriteTimeout: 5 * time.Minute, IdleTimeout: 90 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
+	if watcher, err := newVaultWatcher(cfg.VaultRoot); err != nil {
+		// A watcher is an optimization, not a correctness requirement:
+		// snapshotPayload always falls back to a full walk when
+		// vaultWatcher is nil, which matches prior behavior exactly.
+		slog.Warn("vault change watcher unavailable; every snapshot request will rescan the vault", "error", err)
+	} else {
+		s.vaultWatcher = watcher
+		s.watcherDone = make(chan struct{})
+		go s.watchVault()
+	}
 	return s, nil
 }
 
-func (s *Server) Close() error { return errors.Join(s.vaultRoot.Close(), s.db.Close()) }
+// newVaultWatcher adds a recursive fsnotify watch over every directory in
+// root, excluding the server's own .symdesk state so internal index/queue
+// writes never falsely mark a snapshot dirty.
+func newVaultWatcher(root string) (*fsnotify.Watcher, error) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, err
+	}
+	walkErr := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			return nil
+		}
+		rel, relErr := filepath.Rel(root, path)
+		if relErr == nil && (rel == ".symdesk" || strings.HasPrefix(rel, ".symdesk"+string(filepath.Separator))) {
+			return filepath.SkipDir
+		}
+		return watcher.Add(path)
+	})
+	if walkErr != nil {
+		_ = watcher.Close()
+		return nil, walkErr
+	}
+	return watcher, nil
+}
+
+// watchVault marks the snapshot dirty on any vault change and extends the
+// watch to newly created directories so nested content stays covered.
+func (s *Server) watchVault() {
+	defer close(s.watcherDone)
+	for {
+		select {
+		case event, ok := <-s.vaultWatcher.Events:
+			if !ok {
+				return
+			}
+			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Remove|fsnotify.Rename) != 0 {
+				s.snapshotDirty.Store(true)
+			}
+			if event.Op&fsnotify.Create != 0 {
+				if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
+					_ = s.vaultWatcher.Add(event.Name)
+				}
+			}
+		case _, ok := <-s.vaultWatcher.Errors:
+			if !ok {
+				return
+			}
+			// A watcher error does not invalidate what we already know; the
+			// next real change event (or lack thereof) still drives
+			// snapshotDirty correctly. Errors are otherwise unrecoverable
+			// per-event, so there is nothing more to do here.
+		}
+	}
+}
+
+func (s *Server) Close() error {
+	if s.vaultWatcher != nil {
+		_ = s.vaultWatcher.Close()
+		<-s.watcherDone
+	}
+	return errors.Join(s.vaultRoot.Close(), s.db.Close())
+}
 
 func (s *Server) ListenAndServe() error {
 	slog.Info("SymDesk server listening", "address", s.cfg.ListenAddress, "vault", s.cfg.VaultRoot)
@@ -246,7 +330,25 @@ type snapshotFile struct {
 // snapshotPayload avoids re-reading and re-compressing every note on each app
 // refresh. The inexpensive metadata pass still detects files changed outside
 // of the API, so the cache remains safe for a user-managed Markdown vault.
+// When a vault watcher is running (see newVaultWatcher) and no filesystem
+// event has arrived since the last call, it skips even that metadata pass
+// entirely and serves the cached payload straight away.
 func (s *Server) snapshotPayload() ([]byte, []byte, string, error) {
+	if s.vaultWatcher != nil && !s.snapshotDirty.Load() {
+		s.snapshotMu.Lock()
+		plain, compressed, etag, ready := s.snapshotJSON, s.snapshotGZIP, s.snapshotETag, s.snapshotJSON != nil
+		s.snapshotMu.Unlock()
+		if ready {
+			return plain, compressed, etag, nil
+		}
+	}
+	if s.vaultWatcher != nil {
+		// Clear dirty before walking, not after: an edit that lands mid-walk
+		// then re-dirties the flag, so the next call redoes the walk instead
+		// of silently trusting a snapshot that may already be stale.
+		s.snapshotDirty.Store(false)
+	}
+
 	files := make([]snapshotFile, 0)
 	hash := sha256.New()
 	err := vault.Walk(s.cfg.VaultRoot, func(path string) error {

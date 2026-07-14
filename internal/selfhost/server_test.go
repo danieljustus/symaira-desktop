@@ -85,6 +85,66 @@ func TestServerAuthSnapshotAndSecureFiles(t *testing.T) {
 	response.Body.Close()
 }
 
+func TestSnapshotSkipsRescanWhenVaultUnchanged(t *testing.T) {
+	vaultRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	if server.vaultWatcher == nil {
+		t.Skip("vault change watcher unavailable in this environment")
+	}
+	httpServer := httptest.NewServer(server.Handler())
+	t.Cleanup(httpServer.Close)
+
+	response := authorized(t, http.MethodGet, httpServer.URL+"/api/v1/snapshot", nil, "")
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("first snapshot returned %d", response.StatusCode)
+	}
+	firstETag := response.Header.Get("ETag")
+	response.Body.Close()
+
+	if server.snapshotDirty.Load() {
+		t.Fatal("expected the snapshot to be marked clean right after a successful computation")
+	}
+
+	response = authorized(t, http.MethodGet, httpServer.URL+"/api/v1/snapshot", nil, "")
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("second snapshot returned %d", response.StatusCode)
+	}
+	if response.Header.Get("ETag") != firstETag {
+		t.Fatalf("etag changed with no vault modification: %q -> %q", firstETag, response.Header.Get("ETag"))
+	}
+	response.Body.Close()
+	if server.snapshotDirty.Load() {
+		t.Fatal("an unchanged-vault request must not mark the snapshot dirty")
+	}
+
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nChanged body"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for !server.snapshotDirty.Load() && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !server.snapshotDirty.Load() {
+		t.Fatal("expected the vault watcher to mark the snapshot dirty after an external edit")
+	}
+
+	response = authorized(t, http.MethodGet, httpServer.URL+"/api/v1/snapshot", nil, "")
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("post-edit snapshot returned %d", response.StatusCode)
+	}
+	if response.Header.Get("ETag") == firstETag {
+		t.Fatal("expected a fresh etag after the vault changed")
+	}
+	response.Body.Close()
+}
+
 func TestServerRootedFilesystemRejectsEscapes(t *testing.T) {
 	vaultRoot := t.TempDir()
 	outside := t.TempDir()

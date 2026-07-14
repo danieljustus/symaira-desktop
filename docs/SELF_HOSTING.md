@@ -171,11 +171,17 @@ The versioned `/api/v1` contract includes authenticated status, compressed snaps
 
 The server keeps generated snapshot JSON and gzip data in memory, while a
 metadata pass detects Markdown changed outside the API. It also returns an
-ETag so clients can use conditional refreshes. On an Apple M4 Pro, the bundled
-10,015-note demo vault produced a 172 KB compressed snapshot in 194 ms on the
-first request and 27 ms from the warm cache; unchanged conditional requests
-returned `304` in 28 ms. These numbers are an implementation baseline rather
-than a hardware guarantee.
+ETag so clients can use conditional refreshes. A filesystem watcher over the
+vault tracks whether anything has changed since the last snapshot request;
+when nothing has, that metadata pass is skipped entirely and the cached
+payload is served straight away, so an unchanged vault costs neither a full
+directory walk nor a re-parse on repeat polls. The SymDesk for iPhone/iPad
+app sends the ETag it last saw as `If-None-Match` and only re-parses notes
+when the server responds with a fresh snapshot instead of `304`. On an Apple
+M4 Pro, the bundled 10,015-note demo vault produced a 172 KB compressed
+snapshot in 194 ms on the first request and 27 ms from the warm cache;
+unchanged conditional requests returned `304` in 28 ms. These numbers are an
+implementation baseline rather than a hardware guarantee.
 
 ## Paperless-ngx migration boundary
 

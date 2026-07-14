@@ -1,6 +1,7 @@
 package selfhost
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"context"
@@ -21,10 +22,12 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	"github.com/fsnotify/fsnotify"
 	"gopkg.in/yaml.v3"
 )
 
@@ -38,11 +41,18 @@ const (
 type ServerConfig struct {
 	ListenAddress string
 	VaultRoot     string
-	Token         string
-	Version       string
-	Executable    string
-	TLSCert       string
-	TLSKey        string
+	// Token is the admin/client credential. It authenticates every route,
+	// including the worker-scoped ones, for back-compat with single-token
+	// deployments that predate WorkerToken.
+	Token string
+	// WorkerToken, when set, is a separate credential that only authenticates
+	// the worker/lease/complete/fail routes. Deployments that have not
+	// migrated yet leave this empty and keep sharing Token with their workers.
+	WorkerToken string
+	Version     string
+	Executable  string
+	TLSCert     string
+	TLSKey      string
 }
 
 type Server struct {
@@ -56,11 +66,26 @@ type Server struct {
 	snapshotETag string
 	snapshotJSON []byte
 	snapshotGZIP []byte
+	// snapshotDirty tracks whether the vault may have changed since the last
+	// snapshotPayload computation. When a vault watcher is running, a clean
+	// (false) state lets snapshotPayload skip its full stat-every-file walk
+	// entirely and serve the cached payload straight away.
+	snapshotDirty atomic.Bool
+	vaultWatcher  *fsnotify.Watcher
+	watcherDone   chan struct{}
 }
 
 func NewServer(cfg ServerConfig) (*Server, error) {
 	if len(cfg.Token) < 32 {
 		return nil, fmt.Errorf("server token must contain at least 32 characters")
+	}
+	if cfg.WorkerToken != "" {
+		if len(cfg.WorkerToken) < 32 {
+			return nil, fmt.Errorf("worker token must contain at least 32 characters")
+		}
+		if constantTimeEqual(cfg.WorkerToken, cfg.Token) {
+			return nil, fmt.Errorf("worker token must differ from the server token")
+		}
 	}
 	if cfg.ListenAddress == "" {
 		cfg.ListenAddress = "127.0.0.1:8787"
@@ -91,6 +116,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		return nil, fmt.Errorf("open vault root: %w", err)
 	}
 	s := &Server{cfg: cfg, db: db, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux()}
+	s.snapshotDirty.Store(true)
 	if err := s.refreshIndex(); err != nil {
 		vaultRoot.Close()
 		db.Close()
@@ -103,10 +129,84 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		WriteTimeout: 5 * time.Minute, IdleTimeout: 90 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
+	if watcher, err := newVaultWatcher(cfg.VaultRoot); err != nil {
+		// A watcher is an optimization, not a correctness requirement:
+		// snapshotPayload always falls back to a full walk when
+		// vaultWatcher is nil, which matches prior behavior exactly.
+		slog.Warn("vault change watcher unavailable; every snapshot request will rescan the vault", "error", err)
+	} else {
+		s.vaultWatcher = watcher
+		s.watcherDone = make(chan struct{})
+		go s.watchVault()
+	}
 	return s, nil
 }
 
-func (s *Server) Close() error { return errors.Join(s.vaultRoot.Close(), s.db.Close()) }
+// newVaultWatcher adds a recursive fsnotify watch over every directory in
+// root, excluding the server's own .symdesk state so internal index/queue
+// writes never falsely mark a snapshot dirty.
+func newVaultWatcher(root string) (*fsnotify.Watcher, error) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, err
+	}
+	walkErr := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			return nil
+		}
+		rel, relErr := filepath.Rel(root, path)
+		if relErr == nil && (rel == ".symdesk" || strings.HasPrefix(rel, ".symdesk"+string(filepath.Separator))) {
+			return filepath.SkipDir
+		}
+		return watcher.Add(path)
+	})
+	if walkErr != nil {
+		_ = watcher.Close()
+		return nil, walkErr
+	}
+	return watcher, nil
+}
+
+// watchVault marks the snapshot dirty on any vault change and extends the
+// watch to newly created directories so nested content stays covered.
+func (s *Server) watchVault() {
+	defer close(s.watcherDone)
+	for {
+		select {
+		case event, ok := <-s.vaultWatcher.Events:
+			if !ok {
+				return
+			}
+			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Remove|fsnotify.Rename) != 0 {
+				s.snapshotDirty.Store(true)
+			}
+			if event.Op&fsnotify.Create != 0 {
+				if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
+					_ = s.vaultWatcher.Add(event.Name)
+				}
+			}
+		case _, ok := <-s.vaultWatcher.Errors:
+			if !ok {
+				return
+			}
+			// A watcher error does not invalidate what we already know; the
+			// next real change event (or lack thereof) still drives
+			// snapshotDirty correctly. Errors are otherwise unrecoverable
+			// per-event, so there is nothing more to do here.
+		}
+	}
+}
+
+func (s *Server) Close() error {
+	if s.vaultWatcher != nil {
+		_ = s.vaultWatcher.Close()
+		<-s.watcherDone
+	}
+	return errors.Join(s.vaultRoot.Close(), s.db.Close())
+}
 
 func (s *Server) ListenAndServe() error {
 	slog.Info("SymDesk server listening", "address", s.cfg.ListenAddress, "vault", s.cfg.VaultRoot)
@@ -127,30 +227,55 @@ func (s *Server) routes() {
 		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, `{"status":"ok"}`)
 	})
-	s.mux.Handle("GET /api/v1/status", s.auth(http.HandlerFunc(s.handleStatus)))
-	s.mux.Handle("GET /api/v1/snapshot", s.auth(http.HandlerFunc(s.handleSnapshot)))
-	s.mux.Handle("GET /api/v1/files", s.auth(http.HandlerFunc(s.handleGetFile)))
-	s.mux.Handle("PUT /api/v1/files", s.auth(http.HandlerFunc(s.handlePutFile)))
-	s.mux.Handle("POST /api/v1/ingest", s.auth(http.HandlerFunc(s.handleIngest)))
-	s.mux.Handle("GET /api/v1/jobs", s.auth(http.HandlerFunc(s.handleJobs)))
-	s.mux.Handle("POST /api/v1/jobs/retry", s.auth(http.HandlerFunc(s.handleRetryJob)))
-	s.mux.Handle("POST /api/v1/command", s.auth(http.HandlerFunc(s.handleCommand)))
-	s.mux.Handle("POST /api/v1/worker/lease", s.auth(http.HandlerFunc(s.handleLease)))
-	s.mux.Handle("GET /api/v1/worker/input", s.auth(http.HandlerFunc(s.handleWorkerInput)))
-	s.mux.Handle("POST /api/v1/worker/complete", s.auth(http.HandlerFunc(s.handleComplete)))
-	s.mux.Handle("POST /api/v1/worker/fail", s.auth(http.HandlerFunc(s.handleFail)))
+	s.mux.Handle("GET /api/v1/status", s.auth(scopeAdmin, http.HandlerFunc(s.handleStatus)))
+	s.mux.Handle("GET /api/v1/snapshot", s.auth(scopeAdmin, http.HandlerFunc(s.handleSnapshot)))
+	s.mux.Handle("GET /api/v1/files", s.auth(scopeAdmin, http.HandlerFunc(s.handleGetFile)))
+	s.mux.Handle("PUT /api/v1/files", s.auth(scopeAdmin, http.HandlerFunc(s.handlePutFile)))
+	s.mux.Handle("POST /api/v1/ingest", s.auth(scopeAdmin, http.HandlerFunc(s.handleIngest)))
+	s.mux.Handle("GET /api/v1/jobs", s.auth(scopeAdmin, http.HandlerFunc(s.handleJobs)))
+	s.mux.Handle("POST /api/v1/jobs/retry", s.auth(scopeAdmin, http.HandlerFunc(s.handleRetryJob)))
+	s.mux.Handle("POST /api/v1/command", s.auth(scopeAdmin, http.HandlerFunc(s.handleCommand)))
+	s.mux.Handle("POST /api/v1/worker/lease", s.auth(scopeWorker, http.HandlerFunc(s.handleLease)))
+	s.mux.Handle("GET /api/v1/worker/input", s.auth(scopeWorker, http.HandlerFunc(s.handleWorkerInput)))
+	s.mux.Handle("POST /api/v1/worker/complete", s.auth(scopeWorker, http.HandlerFunc(s.handleComplete)))
+	s.mux.Handle("POST /api/v1/worker/fail", s.auth(scopeWorker, http.HandlerFunc(s.handleFail)))
 }
 
-func (s *Server) auth(next http.Handler) http.Handler {
+// tokenScope classifies which credential a route accepts. The admin/client
+// token (ServerConfig.Token) is always accepted, since it is the superset
+// credential and the back-compat single-token deployments rely on it also
+// working against worker routes.
+type tokenScope int
+
+const (
+	scopeAdmin tokenScope = iota
+	scopeWorker
+)
+
+func (s *Server) auth(scope tokenScope, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		provided := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
-		if len(provided) != len(s.cfg.Token) || subtle.ConstantTimeCompare([]byte(provided), []byte(s.cfg.Token)) != 1 {
+		if !s.tokenAllowed(scope, provided) {
 			w.Header().Set("WWW-Authenticate", "Bearer")
 			writeError(w, http.StatusUnauthorized, "authentication required")
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (s *Server) tokenAllowed(scope tokenScope, provided string) bool {
+	if constantTimeEqual(provided, s.cfg.Token) {
+		return true
+	}
+	if scope == scopeWorker && s.cfg.WorkerToken != "" && constantTimeEqual(provided, s.cfg.WorkerToken) {
+		return true
+	}
+	return false
+}
+
+func constantTimeEqual(a, b string) bool {
+	return len(a) == len(b) && subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
 }
 
 func (s *Server) securityHeaders(next http.Handler) http.Handler {
@@ -205,7 +330,25 @@ type snapshotFile struct {
 // snapshotPayload avoids re-reading and re-compressing every note on each app
 // refresh. The inexpensive metadata pass still detects files changed outside
 // of the API, so the cache remains safe for a user-managed Markdown vault.
+// When a vault watcher is running (see newVaultWatcher) and no filesystem
+// event has arrived since the last call, it skips even that metadata pass
+// entirely and serves the cached payload straight away.
 func (s *Server) snapshotPayload() ([]byte, []byte, string, error) {
+	if s.vaultWatcher != nil && !s.snapshotDirty.Load() {
+		s.snapshotMu.Lock()
+		plain, compressed, etag, ready := s.snapshotJSON, s.snapshotGZIP, s.snapshotETag, s.snapshotJSON != nil
+		s.snapshotMu.Unlock()
+		if ready {
+			return plain, compressed, etag, nil
+		}
+	}
+	if s.vaultWatcher != nil {
+		// Clear dirty before walking, not after: an edit that lands mid-walk
+		// then re-dirties the flag, so the next call redoes the walk instead
+		// of silently trusting a snapshot that may already be stale.
+		s.snapshotDirty.Store(false)
+	}
+
 	files := make([]snapshotFile, 0)
 	hash := sha256.New()
 	err := vault.Walk(s.cfg.VaultRoot, func(path string) error {
@@ -382,6 +525,12 @@ type commandRequest struct {
 	Stdin     string   `json:"stdin,omitempty"`
 }
 
+// streamingCommands emit newline-delimited JSON incrementally as an LLM
+// streams tokens (see cmd/symdesk's outputStream), rather than one JSON
+// document at completion. Their HTTP response is streamed line-by-line
+// instead of buffered, so a client sees partial output as it is produced.
+var streamingCommands = map[string]bool{"ask": true, "transform": true}
+
 func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
 	var request commandRequest
 	if err := decodeJSON(r, &request, 2<<20); err != nil {
@@ -402,6 +551,12 @@ func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
 	cmd := exec.CommandContext(ctx, s.cfg.Executable, args...)
 	cmd.Env = append(os.Environ(), "SYMDESK_SIDECAR="+filepath.Join(s.cfg.VaultRoot, ".symdesk", "server", "sidecar.db"))
 	cmd.Stdin = strings.NewReader(request.Stdin)
+
+	if streamingCommands[args[0]] {
+		s.streamCommand(w, cmd)
+		return
+	}
+
 	out := &limitedBuffer{limit: maxCommandBytes}
 	errOut := &limitedBuffer{limit: 1 << 20}
 	cmd.Stdout = out
@@ -422,6 +577,82 @@ func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(out.Bytes())
+}
+
+// streamCommand runs cmd and relays its stdout to w one NDJSON line at a
+// time, flushing after every line so the client observes output as the
+// subprocess produces it. Once the 200 status and first bytes are written,
+// errors can no longer change the HTTP status; a failure is instead reported
+// as a trailing NDJSON error line so the client can distinguish it from a
+// normal event. Cancellation (client disconnect or the 5-minute timeout)
+// flows through cmd's context and kills the subprocess.
+func (s *Server) streamCommand(w http.ResponseWriter, cmd *exec.Cmd) {
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	errOut := &limitedBuffer{limit: 1 << 20}
+	cmd.Stderr = errOut
+	if err := cmd.Start(); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/x-ndjson")
+	w.WriteHeader(http.StatusOK)
+	flusher, canFlush := w.(http.Flusher)
+
+	reader := bufio.NewReader(stdout)
+	var written int64
+	truncated := false
+	for {
+		line, readErr := reader.ReadBytes('\n')
+		if len(line) > 0 {
+			if !truncated {
+				if written+int64(len(line)) > maxCommandBytes {
+					truncated = true
+					_ = cmd.Process.Kill()
+				} else {
+					written += int64(len(line))
+					if _, writeErr := w.Write(line); writeErr != nil {
+						_ = cmd.Process.Kill()
+						_ = cmd.Wait()
+						return
+					}
+					if canFlush {
+						flusher.Flush()
+					}
+				}
+			}
+		}
+		if readErr != nil {
+			break
+		}
+	}
+
+	runErr := cmd.Wait()
+	var event map[string]string
+	switch {
+	case truncated:
+		event = map[string]string{"type": "error", "message": "command output exceeded 32 MiB"}
+	case runErr != nil:
+		message := strings.TrimSpace(errOut.String())
+		if message == "" {
+			message = runErr.Error()
+		}
+		event = map[string]string{"type": "error", "message": message}
+	default:
+		return
+	}
+	line, err := json.Marshal(event)
+	if err != nil {
+		return
+	}
+	_, _ = w.Write(append(line, '\n'))
+	if canFlush {
+		flusher.Flush()
+	}
 }
 
 type leaseRequest struct {

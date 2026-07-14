@@ -1,0 +1,8 @@
+version: "2"
+
+linters:
+  # errcheck and staticcheck are already part of golangci-lint's default
+  # set; gosec is added on top as the starter security linter called for
+  # in issue #176.
+  enable:
+    - gosec

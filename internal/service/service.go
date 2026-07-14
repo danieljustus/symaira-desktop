@@ -91,14 +91,11 @@ func (s *Service) Ls(dirPrefix string) ([]map[string]interface{}, error) {
 	}
 	// A per-vault sidecar may be new after an upgrade. Populate it lazily on
 	// the first list so existing app users do not have to re-run onboarding.
+	// DB.RefreshIndex's stat-based fast path also means a later call here
+	// (e.g. after the sidecar was cleared) skips re-reading and re-hashing
+	// any file whose cached size/mtime still match what's on disk.
 	if len(docs) == 0 {
-		if err := vault.Walk(s.VaultRoot, func(path string) error {
-			doc, err := vault.ParseFile(path)
-			if err != nil {
-				return err
-			}
-			return s.DB.IndexDocument(doc)
-		}); err != nil {
+		if err := s.DB.RefreshIndex(s.VaultRoot); err != nil {
 			return nil, err
 		}
 		docs, err = s.DB.ListFiles(dirPrefix)

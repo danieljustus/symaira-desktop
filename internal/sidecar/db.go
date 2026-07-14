@@ -94,6 +94,83 @@ func (db *DB) IsIndexed(path, sha256 string) (bool, error) {
 	return hash == sha256, nil
 }
 
+// FileStat is the cached on-disk size/mtime for an indexed file, as recorded
+// at the time it was last indexed.
+type FileStat struct {
+	Size    int64
+	ModTime int64 // UnixNano
+}
+
+// StatCache returns the cached size/mtime for path. ok is false when the
+// file is not indexed, or when it was indexed without a reliable mtime (see
+// vault.Document.ModTime) — in both cases the caller cannot trust a stat
+// comparison and must fall back to a full parse + hash check.
+func (db *DB) StatCache(path string) (stat FileStat, ok bool, err error) {
+	var size, mtime sql.NullInt64
+	err = db.conn.QueryRow("SELECT size, mtime_ns FROM files WHERE path = ?", path).Scan(&size, &mtime)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return FileStat{}, false, nil
+		}
+		return FileStat{}, false, err
+	}
+	if !size.Valid || !mtime.Valid {
+		return FileStat{}, false, nil
+	}
+	return FileStat{Size: size.Int64, ModTime: mtime.Int64}, true, nil
+}
+
+// SetFileStat refreshes the cached size/mtime for an already-indexed path
+// without touching its content hash, title, or any derived index rows (FTS,
+// properties, links). It is used when a file's SHA-256 still matches the
+// index but its stat cache was missing or stale (e.g. its first refresh
+// after the size/mtime columns were introduced), so later refreshes can use
+// the fast path without re-running a full IndexDocument.
+func (db *DB) SetFileStat(path string, size int64, modTimeUnixNano int64) error {
+	_, err := db.conn.Exec("UPDATE files SET size = ?, mtime_ns = ? WHERE path = ?", size, modTimeUnixNano, path)
+	return err
+}
+
+// RefreshIndex walks vaultRoot and brings the index up to date with every
+// Markdown file found. For each file it first tries a cheap os.Stat-based
+// fast path: if the cached size and mtime from the last index still match
+// the file on disk, the file is skipped entirely without reading or hashing
+// it. This is what lets a warm start over an unchanged vault avoid a full
+// read of every file. Whenever the cached stat is missing or does not match
+// — including a same-size edit, where the content changed but the mtime
+// still differs — it falls back to the pre-existing correctness path: parse
+// the file, hash it, and compare against the stored SHA-256 via IsIndexed
+// before deciding whether a re-index is actually needed.
+func (db *DB) RefreshIndex(vaultRoot string) error {
+	return vault.Walk(vaultRoot, func(path string) error {
+		info, err := os.Stat(path)
+		if err != nil {
+			return err
+		}
+		if cached, ok, err := db.StatCache(path); err != nil {
+			return err
+		} else if ok && cached.Size == info.Size() && cached.ModTime == info.ModTime().UnixNano() {
+			return nil
+		}
+
+		doc, err := vault.ParseFile(path)
+		if err != nil {
+			return err
+		}
+		indexed, err := db.IsIndexed(doc.Path, doc.SHA256)
+		if err != nil {
+			return err
+		}
+		if indexed {
+			// Content is unchanged (e.g. only the mtime moved without a real
+			// edit, or this is the first refresh after the stat cache was
+			// added); just record the stat so future refreshes can skip it.
+			return db.SetFileStat(doc.Path, doc.Size, doc.ModTime.UnixNano())
+		}
+		return db.IndexDocument(doc)
+	})
+}
+
 // IndexDocument indexes a single document into the sidecar.
 func (db *DB) IndexDocument(doc *vault.Document) error {
 	if doc.ASN != nil {
@@ -127,11 +204,13 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 
 		// Update files
 		_, err = tx.Exec(`UPDATE files SET sha256 = ?, title = ?, modified_at = ?, indexed_at = ?,
-			document_date = ?, person = ?, status = ?, due_date = ?, confidence = ?, ocr_json_path = ?, simhash = ?, asn = ?
+			document_date = ?, person = ?, status = ?, due_date = ?, confidence = ?, ocr_json_path = ?, simhash = ?, asn = ?,
+			size = ?, mtime_ns = ?
 			WHERE id = ?`,
 			doc.SHA256, doc.Title, doc.Created, time.Now(),
 			nullStr(doc.DocumentDate), nullStr(doc.Person), nullStr(doc.Status),
 			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash), nullASN(doc.ASN),
+			doc.Size, nullModTime(doc.ModTime),
 			fileID)
 		if err != nil {
 			return err
@@ -150,11 +229,12 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 	} else {
 		// New file
 		res, err := tx.Exec(`INSERT INTO files(path, sha256, title, modified_at, indexed_at,
-			document_date, person, status, due_date, confidence, ocr_json_path, simhash, asn)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			document_date, person, status, due_date, confidence, ocr_json_path, simhash, asn, size, mtime_ns)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			doc.Path, doc.SHA256, doc.Title, doc.Created, time.Now(),
 			nullStr(doc.DocumentDate), nullStr(doc.Person), nullStr(doc.Status),
-			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash), nullASN(doc.ASN))
+			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash), nullASN(doc.ASN),
+			doc.Size, nullModTime(doc.ModTime))
 		if err != nil {
 			return err
 		}
@@ -861,4 +941,16 @@ func nullASN(asn *int) interface{} {
 		return nil
 	}
 	return *asn
+}
+
+// nullModTime stores a file's modification time as nanoseconds since the
+// Unix epoch, or NULL when it is unknown (zero value) — e.g. a Document
+// built from already-read bytes (vault.ParseBytes) rather than a stat'd
+// path. NULL tells RefreshIndex's stat-based fast path that this row cannot
+// be trusted for a skip decision.
+func nullModTime(t time.Time) interface{} {
+	if t.IsZero() {
+		return nil
+	}
+	return t.UnixNano()
 }

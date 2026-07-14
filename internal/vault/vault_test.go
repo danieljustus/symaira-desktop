@@ -41,6 +41,46 @@ func TestParseFile(t *testing.T) {
 	}
 }
 
+// TestParseFileCapturesStatForIndexFastPath guards the fields RefreshIndex's
+// stat-based skip check depends on (issue #180): ParseFile must report the
+// real on-disk size and mtime, and ParseBytes (used when a caller already
+// has the bytes and no path to stat) must at least report the correct size
+// while leaving ModTime zero rather than guessing.
+func TestParseFileCapturesStatForIndexFastPath(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "note.md")
+	content := []byte("---\ntitle: Note\n---\nBody")
+	if err := os.WriteFile(path, content, 0644); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doc, err := ParseFile(path)
+	if err != nil {
+		t.Fatalf("ParseFile failed: %v", err)
+	}
+	if doc.Size != int64(len(content)) {
+		t.Errorf("expected Size %d, got %d", len(content), doc.Size)
+	}
+	if !doc.ModTime.Equal(info.ModTime()) {
+		t.Errorf("expected ModTime %v, got %v", info.ModTime(), doc.ModTime)
+	}
+
+	bytesDoc, err := ParseBytes(path, content)
+	if err != nil {
+		t.Fatalf("ParseBytes failed: %v", err)
+	}
+	if bytesDoc.Size != int64(len(content)) {
+		t.Errorf("expected ParseBytes Size %d, got %d", len(content), bytesDoc.Size)
+	}
+	if !bytesDoc.ModTime.IsZero() {
+		t.Errorf("expected ParseBytes to leave ModTime zero (unknown), got %v", bytesDoc.ModTime)
+	}
+}
+
 func TestExtractWikilinks(t *testing.T) {
 	cases := []struct {
 		name string

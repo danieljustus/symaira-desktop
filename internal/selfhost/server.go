@@ -840,21 +840,11 @@ func resolveRequestPath(rel string) (string, error) {
 	return localized, nil
 }
 
+// refreshIndex brings the sidecar index up to date with the vault on disk.
+// See sidecar.DB.RefreshIndex for the stat-based fast path that lets a warm
+// start skip re-reading and re-hashing files unchanged since the last index.
 func (s *Server) refreshIndex() error {
-	return vault.Walk(s.cfg.VaultRoot, func(path string) error {
-		doc, err := vault.ParseFile(path)
-		if err != nil {
-			return err
-		}
-		indexed, err := s.db.IsIndexed(doc.Path, doc.SHA256)
-		if err != nil {
-			return err
-		}
-		if indexed {
-			return nil
-		}
-		return s.db.IndexDocument(doc)
-	})
+	return s.db.RefreshIndex(s.cfg.VaultRoot)
 }
 
 var allowedRemoteCommands = map[string]map[string]bool{

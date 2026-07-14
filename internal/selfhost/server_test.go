@@ -85,6 +85,51 @@ func TestServerAuthSnapshotAndSecureFiles(t *testing.T) {
 	response.Body.Close()
 }
 
+// TestServerRestartReindexesCorrectlyFromAWarmSidecar exercises server.go's
+// refreshIndex (now delegating to sidecar.DB.RefreshIndex, see issue #180)
+// across a full server restart against the same vault: the second NewServer
+// call reopens the same sidecar.db under VaultRoot/.symdesk and must still
+// find the previously indexed note, whether the stat-based fast path skips
+// it or falls back to a full parse. Detailed coverage of the fast path
+// itself (skip on unchanged, re-index on change, same-size edits) lives in
+// internal/sidecar's RefreshIndex tests.
+func TestServerRestartReindexesCorrectlyFromAWarmSidecar(t *testing.T) {
+	vaultRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := server.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	restarted, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatalf("restart failed: %v", err)
+	}
+	t.Cleanup(func() { _ = restarted.Close() })
+
+	httpServer := httptest.NewServer(restarted.Handler())
+	t.Cleanup(httpServer.Close)
+	response := authorized(t, http.MethodGet, httpServer.URL+"/api/v1/snapshot", nil, "")
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("snapshot after restart returned %d", response.StatusCode)
+	}
+	var snapshot struct {
+		Notes []snapshotNote `json:"notes"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&snapshot); err != nil {
+		t.Fatal(err)
+	}
+	response.Body.Close()
+	if len(snapshot.Notes) != 1 || snapshot.Notes[0].Path != "Hello.md" {
+		t.Fatalf("unexpected snapshot after restart: %+v", snapshot)
+	}
+}
+
 func TestSnapshotSkipsRescanWhenVaultUnchanged(t *testing.T) {
 	vaultRoot := t.TempDir()
 	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {

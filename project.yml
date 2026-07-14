@@ -59,7 +59,7 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         SWIFT_VERSION: "6.0"
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited)"
-        MARKETING_VERSION: "0.6.12"
+        MARKETING_VERSION: "0.7.0"
         CURRENT_PROJECT_VERSION: "1"
 
   SymDeskCoreTests:
@@ -108,3 +108,72 @@ targets:
         GENERATE_INFOPLIST_FILE: "YES"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         SWIFT_VERSION: "6.0"
+
+  SymDeskMobile:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/SymDeskMobile
+    settings:
+      base:
+        INFOPLIST_FILE: Sources/SymDeskMobile/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.symaira.desktop.ios
+        PRODUCT_NAME: SymDesk
+        PRODUCT_MODULE_NAME: SymDeskMobile
+        CODE_SIGN_STYLE: Automatic
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        MARKETING_VERSION: "0.7.0"
+        CURRENT_PROJECT_VERSION: "1"
+
+  SymDeskMobileTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests/SymDeskMobileTests
+    dependencies:
+      - target: SymDeskMobile
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/SymDesk.app/SymDesk"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+schemes:
+  SymDesk:
+    build:
+      targets:
+        SymDesk: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - SymDeskCoreTests
+        - SymDeskAppTests
+
+  SymDeskCore:
+    build:
+      targets:
+        SymDeskCore: all
+    test:
+      config: Debug
+      targets:
+        - SymDeskCoreTests
+
+  SymDeskMobile:
+    build:
+      targets:
+        SymDeskMobile: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - SymDeskMobileTests

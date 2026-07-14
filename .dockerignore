@@ -1,0 +1,11 @@
+.git
+.github
+.build
+build
+DerivedData
+*.xcodeproj
+Sources
+Tests/SymDeskAppTests
+Tests/SymDeskCoreTests
+Tests/SymDeskMobileTests
+docs

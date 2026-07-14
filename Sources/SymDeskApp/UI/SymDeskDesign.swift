@@ -3,16 +3,25 @@ import AppKit
 import SymairaTheme
 import SymDeskCore
 
-/// Full-bleed Symaira brand backdrop (dark base, blueprint grid, ambient
-/// gold glows) used behind every detail screen, sheet, and window root.
+/// Full-bleed, low-noise backdrop used behind each main workspace. The grid
+/// remains a brand cue, but is deliberately quiet so it never competes with
+/// documents or text.
 struct SymairaScreen<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
         ZStack {
-            SymairaTheme.bgDark.ignoresSafeArea()
-            BlueprintGrid().ignoresSafeArea()
+            LinearGradient(
+                colors: [SymairaTheme.bgDarker, SymairaTheme.bgDark],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            BlueprintGrid()
+                .opacity(0.35)
+                .ignoresSafeArea()
             AmbientGlows()
+                .opacity(0.5)
             content
         }
     }

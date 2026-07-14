@@ -12,17 +12,44 @@ struct MarkdownPreviewView: View {
     /// Chain of embed targets above this view (cycle guard).
     var visited: [String] = []
     var onLinkClick: ((String) -> Void)? = nil
+    @State private var blocks: [PreviewBlock]
+
+    init(
+        text: String,
+        resolveNote: @escaping (String) -> String?,
+        visited: [String] = [],
+        onLinkClick: ((String) -> Void)? = nil
+    ) {
+        self.text = text
+        self.resolveNote = resolveNote
+        self.visited = visited
+        self.onLinkClick = onLinkClick
+        _blocks = State(initialValue: MarkdownPreviewParser.parse(text))
+    }
 
     var body: some View {
         ScrollView {
             MarkdownBlocksView(
-                blocks: MarkdownPreviewParser.parse(text),
+                blocks: blocks,
                 resolveNote: resolveNote,
                 visited: visited,
                 onLinkClick: onLinkClick
             )
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .task(id: text) {
+            do {
+                try await Task.sleep(nanoseconds: 120_000_000)
+            } catch {
+                return
+            }
+            let source = text
+            let parsed = await Task.detached(priority: .userInitiated) {
+                MarkdownPreviewParser.parse(source)
+            }.value
+            guard !Task.isCancelled else { return }
+            blocks = parsed
         }
     }
 }

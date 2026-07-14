@@ -4,12 +4,13 @@
 
 The composition **shell** of the [Symaira](https://github.com/danieljustus?tab=repositories&q=symaira) ecosystem.
 
-A local-first, **agent-native** workspace that unifies your documents, notes, knowledge and AI over a single plain-Markdown vault — by **composing the existing Symaira tools** rather than reimplementing them. It is the realization of the "Paperless + Obsidian + Notion AI" dream as *one surface*, deliberately **not** a monolith.
+A local-first and self-hostable, **agent-native** workspace that unifies documents, notes, knowledge and AI over a single plain-Markdown vault. It is the realization of the "Paperless + Obsidian + Notion AI" dream as *one surface*, deliberately **not** a monolith and without making a proprietary database the source of truth.
 
-`symdesk` is a Go core that is simultaneously a **CLI** and an **MCP server**, paired with a **native SwiftUI macOS app** (`SymDesk.app`) built on [`symaira-appkit`](https://github.com/danieljustus/symaira-appkit). The same service layer is used by you, by the app, and by AI agents — operating on one Markdown vault through identical contracts.
+`symdesk` is a Go core that can run as a **CLI**, **MCP server**, authenticated **self-hosted document server**, or distributed **OCR worker**. Native SwiftUI apps for macOS and iPhone/iPad can either open a local/iCloud vault directly or connect to the self-hosted server as frontends.
 
 - **Owns:** the Markdown-as-SSOT vault contract, one SQLite sidecar index, the native app, and the runtime composition layer
 - **Composes at runtime today:** [`symaira-ingest`](https://github.com/danieljustus/symaira-ingest) (OCR/ingest), [`symseek`](https://github.com/danieljustus/symaira-seek) (search), [`symmemory`](https://github.com/danieljustus/symaira-memory) (RAG/graph), [`symfetch`](https://github.com/danieljustus/symaira-fetch) (web clipping), and [`symvault`](https://github.com/danieljustus/symaira-vault) (secrets resolution), all detected dynamically via `PATH` probe (the core never depends on their presence and degrades gracefully).
+- **Runs on:** macOS, Linux amd64/arm64, Docker/Compose, Raspberry Pi, Mac mini, NAS-class hosts, and Home Assistant OS as an app/add-on
 - **Delegates (does not rebuild):** spreadsheets → LibreOffice; code editing → editor plugins + agent orchestration; Obsidian Canvas/whiteboards → Obsidian; iCloud sync → the OS
 - **Language:** Go (CGO-free, core) + Swift/SwiftUI (app). **License:** Apache-2.0
 
@@ -20,11 +21,14 @@ A local-first, **agent-native** workspace that unifies your documents, notes, kn
 - One plain-Markdown vault remains the source of truth instead of locking data into a proprietary database.
 - The CLI, MCP server, and native macOS app share the same service layer and contracts.
 - Symaira tools are composed at runtime, so optional capabilities degrade gracefully when a companion tool is unavailable.
-- Local-first operation keeps documents, indexes, and configuration under the user’s control.
+- Local-first and self-hosted modes both keep documents, indexes, and configuration under the user’s control.
+- OCR jobs can run beside the server or be leased to a stronger Mac/Linux worker, including a MacBook using a local Ollama vision model.
 
 ## Status
 
-Working MVP: Go core (`symdesk`) with CLI + stdio MCP server, SQLite sidecar index (FTS5), vault contract v2 ([VAULT.md](VAULT.md)), and the native SwiftUI app with editor, command palette, backlinks, graph, saved views, drag-&-drop ingest and AI dock — plus a document workspace: document grid with quick filters, PDF/text viewer with a details inspector, first-run onboarding, and a Discover tab.
+Working MVP: Go core (`symdesk`) with CLI, stdio MCP, SQLite/FTS5 sidecar, vault contract v2 ([VAULT.md](VAULT.md)), authenticated HTTP API, durable document queue, Docker deployment, and distributed Tesseract/Ollama OCR workers. The native macOS app provides editing, search, graph, saved views, document workflow, ingest and previews in local and server-connected modes. The iOS companion provides cached on-device search, document filters, Markdown reading, and native Quick Look previews from either Files/iCloud or a connected server.
+
+This is not yet complete Paperless-ngx parity. The self-hosted path already covers central originals, Markdown, index, upload queue, remote OCR and native clients; advanced mail ingestion, multi-user permissions, automatic retention policies and a browser admin UI remain future work.
 
 For recovery guidance, see [BACKUP.md](BACKUP.md).
 
@@ -50,14 +54,84 @@ xcodegen generate
 xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS'
 ```
 
+### Native iPhone/iPad app from source
+
+The mobile companion supports iOS 18 or newer. Generate the project, open it in
+Xcode, choose your development team for the `SymDeskMobile` target, and run it
+on an iPhone or iPad:
+
+```sh
+xcodegen generate
+open SymDesk.xcodeproj
+```
+
+On first launch, choose a vault in Files/iCloud or enter a SymDesk Server URL
+and token. Server snapshots are searched on-device and originals are downloaded
+only when a preview is opened.
+
+## What can be built and connected?
+
+| Artifact | Build/run target | Storage and processing | Connects to |
+| --- | --- | --- | --- |
+| `symdesk` CLI/MCP | macOS, Linux, Windows; amd64/arm64 | Local vault and optional Symaira tools | Shell, agents, native Mac app |
+| SymDesk Server container | Docker/Compose on Mac mini, Raspberry Pi 4/5 (64-bit), Linux server or NAS | Owns vault, originals, FTS index and durable OCR queue | Mac app, iOS app, workers |
+| Home Assistant app/add-on | Home Assistant OS on aarch64/amd64 | Persistent `/data/vault`; optional in-container Tesseract | Mac app, iOS app, remote workers |
+| Remote OCR worker | macOS or Linux | Downloads one leased original, runs Tesseract or local Ollama, returns text | One SymDesk Server |
+| `SymDesk.app` | macOS 14+ | Direct local vault **or** native server frontend; edits and uploads | Local CLI or SymDesk Server |
+| SymDesk for iPhone/iPad | iOS/iPadOS 18+ | Direct Files/iCloud reader **or** cached server frontend | Files provider or SymDesk Server |
+
+The server and clients use the same versioned `/api/v1` contract. Access tokens
+are stored in Apple Keychain. A plain HTTP server should only be used on a
+trusted LAN; use HTTPS or a VPN for access outside it.
+
+## Self-hosting quick start
+
+Create a random token and start the server:
+
+```sh
+export SYMDESK_SERVER_TOKEN="$(openssl rand -hex 32)"
+docker compose up -d symdesk-server
+```
+
+The persistent vault and server state are stored in `./data`. Connect the Mac
+or iOS app to `http://SERVER-IP:8787` with the same token. Do not forward that
+plain HTTP port directly to the internet.
+
+To process OCR on the server with Tesseract:
+
+```sh
+docker compose --profile local-processing up -d
+```
+
+To keep a Raspberry Pi or Mac mini focused on storage and run OCR through
+Ollama on a MacBook instead:
+
+```sh
+ollama pull gemma3
+symdesk worker \
+  --server http://SERVER-IP:8787 \
+  --token "$SYMDESK_SERVER_TOKEN" \
+  --engine ollama \
+  --ollama-model gemma3
+```
+
+The worker may come and go. Pending jobs remain on the server, expired leases
+are recovered, and no network share needs to be mounted on the MacBook. For a
+full Docker command, Home Assistant installation, storage layout, HTTPS advice,
+backup notes and worker options, see [Self-hosting SymDesk](docs/SELF_HOSTING.md).
+
 ## Development
 
 ```sh
 make build          # → bin/symdesk
 make test           # go test -race ./...
 make benchmark-large # generate and index a deterministic 10k-document vault
+docker compose build # multi-architecture-compatible Linux server/worker image
+```
 
 ### macOS app (requires xcodegen)
+
+```sh
 xcodegen generate
 xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS'
 ```
@@ -66,7 +140,7 @@ xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platfo
 
 ```text
 $ symdesk version --json
-{"tool":"symdesk","version":"0.5.1","schema_version":1}
+{"tool":"symdesk","version":"0.7.0","schema_version":1}
 ```
 
 ## Usage
@@ -90,6 +164,8 @@ symdesk recipe run .symdesk/recipes/daily.yml       # stage runner proposals for
 symdesk recipe diff <run-id>                         # inspect proposed files
 symdesk recipe accept <run-id>                       # apply an approved proposal
 symdesk mcp                    # stdio MCP server for agents
+symdesk serve                  # authenticated self-hosted API + durable queue
+symdesk worker --server ...    # remote Tesseract/Ollama OCR worker
 symdesk doctor                 # health check
 symdesk version --json         # {"tool":"symdesk","version":...,"schema_version":1}
 

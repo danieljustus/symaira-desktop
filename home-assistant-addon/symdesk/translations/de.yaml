@@ -1,0 +1,18 @@
+configuration:
+  server_token:
+    name: Server-Token
+    description: Zufälliges Geheimnis mit mindestens 32 Zeichen für Clients und Worker.
+  local_processing:
+    name: OCR auf diesem Server ausführen
+    description: Auf einem schwachen Raspberry Pi deaktivieren und stattdessen einen Mac-Worker verbinden.
+  worker_engine:
+    name: OCR-Engine
+    description: Tesseract läuft lokal; Ollama benötigt ein erreichbares Vision-Modell.
+  ollama_url:
+    name: Ollama-URL
+    description: Basis-URL des Ollama-Dienstes aus Sicht dieses Containers.
+  ollama_model:
+    name: Ollama-Vision-Modell
+    description: Zum Beispiel gemma3; bei Ollama erforderlich.
+network:
+  8787/tcp: SymDesk-API-Port

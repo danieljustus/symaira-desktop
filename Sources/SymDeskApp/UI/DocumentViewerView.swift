@@ -1,5 +1,6 @@
 import SwiftUI
 import PDFKit
+import QuickLookUI
 import SymairaTheme
 import SymDeskCore
 import SymairaIngestContract
@@ -113,6 +114,29 @@ struct TextContentView: NSViewRepresentable {
     }
 }
 
+// MARK: - Quick Look View Wrapper
+
+/// Native preview for archived images, Office documents, and other formats
+/// supported by macOS. PDFs keep using PDFKit for page and zoom controls.
+struct QuickLookPreviewView: NSViewRepresentable {
+    let url: URL
+
+    func makeNSView(context: Context) -> QLPreviewView {
+        let previewView: QLPreviewView = QLPreviewView(frame: .zero, style: .normal)
+        previewView.autostarts = true
+        previewView.previewItem = url as NSURL
+        return previewView
+    }
+
+    func updateNSView(_ previewView: QLPreviewView, context: Context) {
+        let currentURL = previewView.previewItem as? URL
+        if currentURL != url {
+            previewView.previewItem = url as NSURL
+            previewView.refreshPreviewItem()
+        }
+    }
+}
+
 // MARK: - Document Viewer
 
 struct DocumentViewerView: View {
@@ -128,7 +152,10 @@ struct DocumentViewerView: View {
     @State private var zoomScale: CGFloat = 1.0
     @State private var noteContent = ""
     @State private var props: [String: String] = [:]
+    @State private var noteURL: URL?
     @State private var fileURL: URL?
+    @State private var isLoadingDocument = true
+    @State private var loadMessage: String?
     @State private var inspectorTab: InspectorTab = .info
 
     @State private var editStatus: String = ""
@@ -153,87 +180,16 @@ struct DocumentViewerView: View {
             if showInspector {
                 inspectorPanel
                     .frame(minWidth: 280, idealWidth: 320, maxWidth: 400)
-                    .background(SymairaTheme.bgDarker)
+                    .symDeskLiquidGlass(cornerRadius: 0)
             }
         }
         .background(SymairaTheme.bgDark)
         .navigationTitle(document.title)
-        .toolbar {
-            ToolbarItemGroup {
-                Button(action: { isPDFMode.toggle() }) {
-                    Label(isPDFMode ? "Show Text" : "Show PDF",
-                          systemImage: isPDFMode ? "doc.text" : "doc.plaintext")
-                }
-                .help("Toggle PDF/Text view (Space)")
-
-                Divider()
-
-                if isPDFMode && pageCount > 0 {
-                    Button(action: { goToPreviousPage() }) {
-                        Image(systemName: "chevron.left")
-                    }
-                    .disabled(currentPageIndex <= 0)
-                    .help("Previous page")
-
-                    Text("\(currentPageIndex + 1) of \(pageCount)")
-                        .font(.caption)
-                        .monospacedDigit()
-
-                    Button(action: { goToNextPage() }) {
-                        Image(systemName: "chevron.right")
-                    }
-                    .disabled(currentPageIndex >= pageCount - 1)
-                    .help("Next page")
-
-                    Divider()
-                }
-
-                Button(action: { zoomOut() }) {
-                    Image(systemName: "minus.magnifyingglass")
-                }
-                .help("Zoom out")
-
-                Button(action: { zoomFit() }) {
-                    Image(systemName: "1.magnifyingglass")
-                }
-                .help("Zoom to fit")
-
-                Button(action: { zoomIn() }) {
-                    Image(systemName: "plus.magnifyingglass")
-                }
-                .help("Zoom in")
-
-                Divider()
-
-                Button(action: { showInspector.toggle() }) {
-                    Label("Inspector", systemImage: "sidebar.right")
-                }
-                .help("Toggle inspector (Cmd+I)")
-
-                if isReOCRAvailable {
-                    Button(action: { runReOCR() }) {
-                        if isReOCRRunning {
-                            ProgressView()
-                                .controlSize(.small)
-                        } else {
-                            Label("Re-run OCR", systemImage: "doc.badge.gearshape")
-                        }
-                    }
-                    .disabled(isReOCRRunning)
-                    .help("Re-run OCR on the archived original")
-                }
-
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
-                }
-                .buttonStyle(.plain)
-            }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            viewerHeader
         }
-        .onAppear {
-            loadDocument()
-            checkReOCRAvailability()
-        }
+        .task(id: document.id) { await loadDocument() }
+        .task { checkReOCRAvailability() }
         .background(
             KeyboardHandler(
                 onSpace: { isPDFMode.toggle() },
@@ -244,10 +200,99 @@ struct DocumentViewerView: View {
 
     // MARK: - Main Content
 
+    private var viewerHeader: some View {
+        HStack(spacing: 10) {
+            Image(systemName: docTypeIcon)
+                .foregroundStyle(SymairaTheme.goldPrimary)
+                .font(.title3)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(document.title)
+                    .font(.headline)
+                    .foregroundStyle(SymairaTheme.textPrimary)
+                    .lineLimit(1)
+                Text(viewerSubtitle)
+                    .font(.caption)
+                    .foregroundStyle(SymairaTheme.textSecondary)
+            }
+            Spacer(minLength: 16)
+
+            Button(action: { isPDFMode.toggle() }) {
+                Label(isPDFMode ? "Text" : "Preview", systemImage: isPDFMode ? "doc.text" : "doc.richtext")
+            }
+            .help("Toggle PDF/Text view (Space)")
+
+            if isPDFMode, fileURL?.pathExtension.lowercased() == "pdf", pageCount > 0 {
+                viewerDivider
+                Button(action: { goToPreviousPage() }) {
+                    Image(systemName: "chevron.left")
+                }
+                .disabled(currentPageIndex <= 0)
+                .help("Previous page")
+                Text("\(currentPageIndex + 1) / \(pageCount)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(SymairaTheme.textSecondary)
+                Button(action: { goToNextPage() }) {
+                    Image(systemName: "chevron.right")
+                }
+                .disabled(currentPageIndex >= pageCount - 1)
+                .help("Next page")
+            }
+
+            if isPDFMode, fileURL?.pathExtension.lowercased() == "pdf" {
+                viewerDivider
+                Button(action: { zoomOut() }) { Image(systemName: "minus.magnifyingglass") }
+                    .help("Zoom out")
+                Button(action: { zoomFit() }) { Image(systemName: "arrow.up.left.and.arrow.down.right") }
+                    .help("Zoom to fit")
+                Button(action: { zoomIn() }) { Image(systemName: "plus.magnifyingglass") }
+                    .help("Zoom in")
+            }
+
+            viewerDivider
+            Button(action: { showInspector.toggle() }) {
+                Label("Inspector", systemImage: "sidebar.right")
+            }
+            .help("Toggle inspector (Cmd+I)")
+
+            if isReOCRAvailable {
+                Button(action: { runReOCR() }) {
+                    if isReOCRRunning {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Label("Re-run OCR", systemImage: "doc.badge.gearshape")
+                    }
+                }
+                .disabled(isReOCRRunning)
+                .help("Re-run OCR on the archived original")
+            }
+
+            Button(action: { dismiss() }) {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(.bordered)
+            .help("Close document")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .symDeskLiquidGlass(cornerRadius: 0, prominence: .elevated)
+        .accessibilityElement(children: .contain)
+    }
+
+    private var viewerDivider: some View {
+        Rectangle()
+            .fill(SymairaTheme.borderGlassHover)
+            .frame(width: 1, height: 20)
+    }
+
     @ViewBuilder
     private var mainContent: some View {
         VStack(spacing: 0) {
-            if isPDFMode {
+            if isLoadingDocument {
+                ProgressView("Loading preview…")
+                    .tint(SymairaTheme.goldPrimary)
+                    .foregroundStyle(SymairaTheme.textSecondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if isPDFMode {
                 if let url = fileURL, url.pathExtension.lowercased() == "pdf" {
                     PDFKitView(
                         url: url,
@@ -256,7 +301,27 @@ struct DocumentViewerView: View {
                         zoomScale: zoomScale
                     )
                 } else if let url = fileURL {
-                    fallbackFileView(url: url)
+                    QuickLookPreviewView(url: url)
+                } else if !noteContent.isEmpty {
+                    VStack(spacing: 0) {
+                        if let loadMessage {
+                            Label(loadMessage, systemImage: "exclamationmark.triangle.fill")
+                                .font(.caption)
+                                .foregroundStyle(SymairaTheme.goldSecondary)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(SymairaTheme.goldPrimary.opacity(0.08))
+                        }
+                        MarkdownPreviewView(
+                            text: noteContent,
+                            resolveNote: { _ in nil },
+                            visited: [document.title]
+                        )
+                        .padding(.horizontal, 20)
+                        .frame(maxWidth: 840)
+                        .frame(maxWidth: .infinity)
+                    }
                 } else {
                     noContentView
                 }
@@ -270,31 +335,6 @@ struct DocumentViewerView: View {
         }
     }
 
-    private func fallbackFileView(url: URL) -> some View {
-        VStack(spacing: 16) {
-            Image(systemName: docTypeIcon)
-                .font(.system(size: 64))
-                .foregroundColor(SymairaTheme.goldPrimary)
-                .shadow(color: SymairaTheme.glowIntense, radius: 16)
-            Text(document.title)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(SymairaTheme.textPrimary)
-            Text(url.pathExtension.uppercased())
-                .font(.caption)
-                .foregroundColor(SymairaTheme.textSecondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.white.opacity(0.06))
-                .cornerRadius(4)
-            Button("Open in Default App") {
-                NSWorkspace.shared.open(url)
-            }
-            .buttonStyle(SymairaSecondaryButtonStyle())
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
     private var noContentView: some View {
         VStack(spacing: 12) {
             Image(systemName: "doc.text.magnifyingglass")
@@ -303,6 +343,11 @@ struct DocumentViewerView: View {
             Text("No preview available")
                 .font(.title3)
                 .foregroundColor(SymairaTheme.textSecondary)
+            Text(loadMessage ?? "The original file and its Markdown note could not be read.")
+                .font(.subheadline)
+                .foregroundStyle(SymairaTheme.textMuted)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 420)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -317,6 +362,7 @@ struct DocumentViewerView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .labelsHidden()
             .padding(8)
 
             Divider()
@@ -342,6 +388,7 @@ struct DocumentViewerView: View {
                         .controlSize(.small)
                 }
                 Button("Save Changes") { saveChanges() }
+                    .buttonStyle(SymairaPrimaryButtonStyle())
                     .disabled(isSaving || !hasChanges)
                     .keyboardShortcut("s", modifiers: .command)
             }
@@ -454,9 +501,10 @@ struct DocumentViewerView: View {
 
     private var systemTab: some View {
         VStack(alignment: .leading, spacing: 12) {
-            inspectorRow(label: "Path", value: document.path, isMonospaced: true)
+            inspectorRow(label: "Note Path", value: noteURL?.path ?? document.path, isMonospaced: true)
 
             if let url = fileURL {
+                inspectorRow(label: "Original", value: url.path, isMonospaced: true)
                 if let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
                    let size = attrs[.size] as? Int64 {
                     inspectorRow(label: "Size", value: ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
@@ -547,33 +595,85 @@ struct DocumentViewerView: View {
             || editNoteVisible != (props["note_visible"] != "false")
     }
 
+    private var viewerSubtitle: String {
+        if isLoadingDocument { return "Loading preview…" }
+        if !isPDFMode { return "Extracted text" }
+        if let fileURL { return fileURL.lastPathComponent }
+        return "Rendered note"
+    }
+
     // MARK: - Actions
 
-    private func loadDocument() {
-        let url = URL(fileURLWithPath: document.path)
-        fileURL = url
-
+    private func loadDocument() async {
+        isLoadingDocument = true
+        loadMessage = nil
+        fileURL = nil
+        noteURL = DocumentPreviewResolver.noteURL(
+            documentPath: document.path,
+            vaultPath: core.vaultPath
+        )
         editStatus = document.status
         editDueDate = document.dueDate
         editType = document.documentType
-        editNoteVisible = props["note_visible"] != "false"
 
-        Task {
-            do {
-                noteContent = try await core.docNoteContent(path: document.path)
-            } catch {
-                noteContent = "Error loading content: \(error.localizedDescription)"
-            }
+        async let loadedProps: [String: String] = loadProperties()
+        async let loadedContent: String = loadNoteContent()
+        let (newProps, newContent) = await (loadedProps, loadedContent)
+
+        guard !Task.isCancelled else { return }
+        props = newProps
+        noteContent = newContent
+        editTags = newProps["tags"] ?? ""
+        editNoteVisible = newProps["note_visible"] != "false"
+        fileURL = DocumentPreviewResolver.sourceURL(
+            documentPath: document.path,
+            properties: newProps,
+            vaultPath: core.vaultPath
+        )
+		if core.isRemote {
+			for key in DocumentPreviewResolver.sourcePropertyKeys {
+				guard let path = newProps[key], !path.isEmpty else { continue }
+				do {
+					fileURL = try await core.remoteCachedFile(path: path)
+					break
+				} catch {
+					loadMessage = "The archived original could not be downloaded: \(error.localizedDescription)"
+				}
+			}
+		}
+        if fileURL == nil, !DocumentPreviewResolver.sourcePropertyKeys.allSatisfy({ newProps[$0] == nil }) {
+            loadMessage = "The archived original referenced by this note was not found."
         }
+        isLoadingDocument = false
+    }
 
-        Task {
-            do {
-                props = try await core.docProps(path: document.path)
-                editTags = props["tags"] ?? ""
-                editNoteVisible = props["note_visible"] != "false"
-            } catch {
-                print("docProps failed: \(error)")
-            }
+    private func loadProperties() async -> [String: String] {
+        do {
+            return try await core.docProps(path: document.path)
+        } catch {
+            print("docProps failed: \(error)")
+            return [:]
+        }
+    }
+
+    private func loadNoteContent() async -> String {
+		if core.isRemote {
+			do {
+				return try await core.docNoteContent(path: document.path)
+			} catch {
+				loadMessage = "The Markdown note could not be downloaded: \(error.localizedDescription)"
+				return ""
+			}
+		}
+        guard let noteURL else {
+            loadMessage = "No vault is configured for the relative document path."
+            return ""
+        }
+        do {
+            return try await core.docNoteContent(path: noteURL.path)
+        } catch {
+            loadMessage = "The Markdown note could not be read: \(error.localizedDescription)"
+            return ""
         }
     }
 

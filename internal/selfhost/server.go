@@ -1,0 +1,770 @@
+package selfhost
+
+import (
+	"bytes"
+	"compress/gzip"
+	"context"
+	cryptorand "crypto/rand"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"log/slog"
+	"mime/multipart"
+	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/sidecar"
+	"github.com/danieljustus/symaira-desktop/internal/vault"
+	"gopkg.in/yaml.v3"
+)
+
+const (
+	maxUploadBytes  = 100 << 20
+	maxNoteBytes    = 8 << 20
+	maxCommandBytes = 32 << 20
+	maxOCRBytes     = 24 << 20
+)
+
+type ServerConfig struct {
+	ListenAddress string
+	VaultRoot     string
+	Token         string
+	Version       string
+	Executable    string
+	TLSCert       string
+	TLSKey        string
+}
+
+type Server struct {
+	cfg          ServerConfig
+	db           *sidecar.DB
+	jobs         *JobStore
+	vaultRoot    *os.Root
+	http         *http.Server
+	mux          *http.ServeMux
+	snapshotMu   sync.Mutex
+	snapshotETag string
+	snapshotJSON []byte
+	snapshotGZIP []byte
+}
+
+func NewServer(cfg ServerConfig) (*Server, error) {
+	if len(cfg.Token) < 32 {
+		return nil, fmt.Errorf("server token must contain at least 32 characters")
+	}
+	if cfg.ListenAddress == "" {
+		cfg.ListenAddress = "127.0.0.1:8787"
+	}
+	if cfg.Executable == "" {
+		var err error
+		cfg.Executable, err = os.Executable()
+		if err != nil {
+			return nil, fmt.Errorf("locate symdesk executable: %w", err)
+		}
+	}
+	dbPath := filepath.Join(cfg.VaultRoot, ".symdesk", "server", "sidecar.db")
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0700); err != nil {
+		return nil, err
+	}
+	db, err := sidecar.Open(dbPath)
+	if err != nil {
+		return nil, err
+	}
+	jobs, err := NewJobStore(cfg.VaultRoot)
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+	vaultRoot, err := os.OpenRoot(cfg.VaultRoot)
+	if err != nil {
+		db.Close()
+		return nil, fmt.Errorf("open vault root: %w", err)
+	}
+	s := &Server{cfg: cfg, db: db, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux()}
+	if err := s.refreshIndex(); err != nil {
+		vaultRoot.Close()
+		db.Close()
+		return nil, fmt.Errorf("index vault: %w", err)
+	}
+	s.routes()
+	s.http = &http.Server{
+		Addr: cfg.ListenAddress, Handler: s.securityHeaders(s.mux),
+		ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 2 * time.Minute,
+		WriteTimeout: 5 * time.Minute, IdleTimeout: 90 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+	return s, nil
+}
+
+func (s *Server) Close() error { return errors.Join(s.vaultRoot.Close(), s.db.Close()) }
+
+func (s *Server) ListenAndServe() error {
+	slog.Info("SymDesk server listening", "address", s.cfg.ListenAddress, "vault", s.cfg.VaultRoot)
+	if (s.cfg.TLSCert == "") != (s.cfg.TLSKey == "") {
+		return fmt.Errorf("both TLS certificate and key are required")
+	}
+	if s.cfg.TLSCert != "" {
+		return s.http.ListenAndServeTLS(s.cfg.TLSCert, s.cfg.TLSKey)
+	}
+	return s.http.ListenAndServe()
+}
+
+func (s *Server) Shutdown(ctx context.Context) error { return s.http.Shutdown(ctx) }
+func (s *Server) Handler() http.Handler              { return s.http.Handler }
+
+func (s *Server) routes() {
+	s.mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, `{"status":"ok"}`)
+	})
+	s.mux.Handle("GET /api/v1/status", s.auth(http.HandlerFunc(s.handleStatus)))
+	s.mux.Handle("GET /api/v1/snapshot", s.auth(http.HandlerFunc(s.handleSnapshot)))
+	s.mux.Handle("GET /api/v1/files", s.auth(http.HandlerFunc(s.handleGetFile)))
+	s.mux.Handle("PUT /api/v1/files", s.auth(http.HandlerFunc(s.handlePutFile)))
+	s.mux.Handle("POST /api/v1/ingest", s.auth(http.HandlerFunc(s.handleIngest)))
+	s.mux.Handle("GET /api/v1/jobs", s.auth(http.HandlerFunc(s.handleJobs)))
+	s.mux.Handle("POST /api/v1/jobs/retry", s.auth(http.HandlerFunc(s.handleRetryJob)))
+	s.mux.Handle("POST /api/v1/command", s.auth(http.HandlerFunc(s.handleCommand)))
+	s.mux.Handle("POST /api/v1/worker/lease", s.auth(http.HandlerFunc(s.handleLease)))
+	s.mux.Handle("GET /api/v1/worker/input", s.auth(http.HandlerFunc(s.handleWorkerInput)))
+	s.mux.Handle("POST /api/v1/worker/complete", s.auth(http.HandlerFunc(s.handleComplete)))
+	s.mux.Handle("POST /api/v1/worker/fail", s.auth(http.HandlerFunc(s.handleFail)))
+}
+
+func (s *Server) auth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		provided := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+		if len(provided) != len(s.cfg.Token) || subtle.ConstantTimeCompare([]byte(provided), []byte(s.cfg.Token)) != 1 {
+			w.Header().Set("WWW-Authenticate", "Bearer")
+			writeError(w, http.StatusUnauthorized, "authentication required")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) handleStatus(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status": "ok", "version": s.cfg.Version, "schema_version": 1,
+		"mode": "self_hosted", "capabilities": []string{"snapshot", "files", "ingest", "remote_worker", "command"},
+	})
+}
+
+type snapshotNote struct {
+	Path       string    `json:"path"`
+	Content    string    `json:"content"`
+	ModifiedAt time.Time `json:"modified_at"`
+}
+
+func (s *Server) handleSnapshot(w http.ResponseWriter, r *http.Request) {
+	plain, compressed, etag, err := s.snapshotPayload()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	w.Header().Set("ETag", `"`+etag+`"`)
+	if r.Header.Get("If-None-Match") == `"`+etag+`"` {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		w.Header().Set("Content-Encoding", "gzip")
+		_, _ = w.Write(compressed)
+		return
+	}
+	_, _ = w.Write(plain)
+}
+
+type snapshotFile struct {
+	path       string
+	relative   string
+	modifiedAt time.Time
+}
+
+// snapshotPayload avoids re-reading and re-compressing every note on each app
+// refresh. The inexpensive metadata pass still detects files changed outside
+// of the API, so the cache remains safe for a user-managed Markdown vault.
+func (s *Server) snapshotPayload() ([]byte, []byte, string, error) {
+	files := make([]snapshotFile, 0)
+	hash := sha256.New()
+	err := vault.Walk(s.cfg.VaultRoot, func(path string) error {
+		info, err := os.Stat(path)
+		if err != nil {
+			return err
+		}
+		if info.Size() > maxNoteBytes {
+			return nil
+		}
+		rel, err := filepath.Rel(s.cfg.VaultRoot, path)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		files = append(files, snapshotFile{path: path, relative: rel, modifiedAt: info.ModTime().UTC()})
+		_, _ = fmt.Fprintf(hash, "%s\x00%d\x00%d\n", rel, info.Size(), info.ModTime().UnixNano())
+		return nil
+	})
+	if err != nil {
+		return nil, nil, "", err
+	}
+	etag := hex.EncodeToString(hash.Sum(nil))
+
+	s.snapshotMu.Lock()
+	defer s.snapshotMu.Unlock()
+	if etag == s.snapshotETag && s.snapshotJSON != nil {
+		return s.snapshotJSON, s.snapshotGZIP, etag, nil
+	}
+
+	notes := make([]snapshotNote, 0, len(files))
+	for _, file := range files {
+		content, err := os.ReadFile(file.path)
+		if err != nil {
+			return nil, nil, "", err
+		}
+		notes = append(notes, snapshotNote{Path: file.relative, Content: string(content), ModifiedAt: file.modifiedAt})
+	}
+	plain, err := json.Marshal(map[string]any{"notes": notes, "generated_at": time.Now().UTC()})
+	if err != nil {
+		return nil, nil, "", err
+	}
+	plain = append(plain, '\n')
+	var compressed bytes.Buffer
+	gz := gzip.NewWriter(&compressed)
+	if _, err := gz.Write(plain); err != nil {
+		return nil, nil, "", err
+	}
+	if err := gz.Close(); err != nil {
+		return nil, nil, "", err
+	}
+	s.snapshotETag = etag
+	s.snapshotJSON = plain
+	s.snapshotGZIP = compressed.Bytes()
+	return s.snapshotJSON, s.snapshotGZIP, etag, nil
+}
+
+func (s *Server) handleGetFile(w http.ResponseWriter, r *http.Request) {
+	rel, err := resolveRequestPath(r.URL.Query().Get("path"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	s.serveVaultFile(w, r, rel, "inline", filepath.Base(rel))
+}
+
+func (s *Server) serveVaultFile(w http.ResponseWriter, r *http.Request, rel, disposition, filename string) {
+	file, err := s.vaultRoot.Open(rel)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "file not found")
+		return
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil || !info.Mode().IsRegular() {
+		writeError(w, http.StatusNotFound, "file not found")
+		return
+	}
+	w.Header().Set("Content-Disposition", fmt.Sprintf("%s; filename=%q", disposition, safeFilename(filename)))
+	http.ServeContent(w, r, filepath.Base(rel), info.ModTime(), file)
+}
+
+func (s *Server) handlePutFile(w http.ResponseWriter, r *http.Request) {
+	rel, err := resolveRequestPath(r.URL.Query().Get("path"))
+	if err != nil || strings.ToLower(filepath.Ext(rel)) != ".md" {
+		writeError(w, http.StatusBadRequest, "only vault-relative Markdown files can be updated")
+		return
+	}
+	data, err := readLimited(r.Body, maxNoteBytes)
+	if err != nil {
+		writeError(w, http.StatusRequestEntityTooLarge, err.Error())
+		return
+	}
+	if err := s.vaultRoot.MkdirAll(filepath.Dir(rel), 0750); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := atomicWrite(s.vaultRoot, rel, data, 0644); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	doc, err := vault.ParseBytes(filepath.Join(s.cfg.VaultRoot, rel), data)
+	if err == nil {
+		err = s.db.IndexDocument(doc)
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+}
+
+func (s *Server) handleIngest(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadBytes+(1<<20))
+	if err := r.ParseMultipartForm(maxUploadBytes); err != nil {
+		writeError(w, http.StatusRequestEntityTooLarge, "upload exceeds 100 MiB or is invalid")
+		return
+	}
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "multipart field 'file' is required")
+		return
+	}
+	defer file.Close()
+
+	id, err := NewJobID()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	name := safeFilename(header.Filename)
+	rel, err := resolveRequestPath(filepath.ToSlash(filepath.Join("archive", time.Now().UTC().Format("2006/01"), id+"-"+name)))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := s.vaultRoot.MkdirAll(filepath.Dir(rel), 0750); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := writeUpload(s.vaultRoot, rel, file); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	job, err := s.jobs.Create(rel, name, header.Header.Get("Content-Type"))
+	if err != nil {
+		s.vaultRoot.Remove(rel)
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusAccepted, job)
+}
+
+func (s *Server) handleJobs(w http.ResponseWriter, _ *http.Request) {
+	jobs, err := s.jobs.List()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, jobs)
+}
+
+func (s *Server) handleRetryJob(w http.ResponseWriter, r *http.Request) {
+	job, err := s.jobs.Retry(r.URL.Query().Get("id"))
+	if err != nil {
+		writeError(w, http.StatusConflict, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, job)
+}
+
+type commandRequest struct {
+	Arguments []string `json:"arguments"`
+	Stdin     string   `json:"stdin,omitempty"`
+}
+
+func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
+	var request commandRequest
+	if err := decodeJSON(r, &request, 2<<20); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := validateRemoteCommand(request.Arguments); err != nil {
+		writeError(w, http.StatusForbidden, err.Error())
+		return
+	}
+	args := append([]string{}, request.Arguments...)
+	if !containsArg(args, "--json") {
+		args = append(args, "--json")
+	}
+	args = append(args, "--vault", s.cfg.VaultRoot)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, s.cfg.Executable, args...)
+	cmd.Env = append(os.Environ(), "SYMDESK_SIDECAR="+filepath.Join(s.cfg.VaultRoot, ".symdesk", "server", "sidecar.db"))
+	cmd.Stdin = strings.NewReader(request.Stdin)
+	out := &limitedBuffer{limit: maxCommandBytes}
+	errOut := &limitedBuffer{limit: 1 << 20}
+	cmd.Stdout = out
+	cmd.Stderr = errOut
+	err := cmd.Run()
+	if errors.Is(out.err, errLimitExceeded) {
+		writeError(w, http.StatusRequestEntityTooLarge, "command output exceeded 32 MiB")
+		return
+	}
+	if err != nil {
+		message := strings.TrimSpace(errOut.String())
+		if message == "" {
+			message = err.Error()
+		}
+		writeError(w, http.StatusUnprocessableEntity, message)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(out.Bytes())
+}
+
+type leaseRequest struct {
+	WorkerID     string   `json:"worker_id"`
+	Capabilities []string `json:"capabilities"`
+}
+
+func (s *Server) handleLease(w http.ResponseWriter, r *http.Request) {
+	var request leaseRequest
+	if err := decodeJSON(r, &request, 64<<10); err != nil || strings.TrimSpace(request.WorkerID) == "" {
+		writeError(w, http.StatusBadRequest, "worker_id and capabilities are required")
+		return
+	}
+	job, err := s.jobs.Lease(request.WorkerID, request.Capabilities, 15*time.Minute)
+	if errors.Is(err, ErrNoPendingJob) {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, job)
+}
+
+func (s *Server) handleWorkerInput(w http.ResponseWriter, r *http.Request) {
+	job, err := s.jobs.Get(r.URL.Query().Get("id"))
+	if err != nil {
+		writeError(w, http.StatusNotFound, "job not found")
+		return
+	}
+	rel, err := resolveRequestPath(job.SourcePath)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	s.serveVaultFile(w, r, rel, "attachment", job.OriginalName)
+}
+
+type completionRequest struct {
+	JobID    string `json:"job_id"`
+	WorkerID string `json:"worker_id"`
+	Text     string `json:"text"`
+	Engine   string `json:"engine"`
+	Model    string `json:"model,omitempty"`
+}
+
+func (s *Server) handleComplete(w http.ResponseWriter, r *http.Request) {
+	var request completionRequest
+	if err := decodeJSON(r, &request, maxOCRBytes); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	job, err := s.jobs.Get(request.JobID)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "job not found")
+		return
+	}
+	if job.Status != "processing" || job.WorkerID != request.WorkerID {
+		writeError(w, http.StatusConflict, "job is not leased by this worker")
+		return
+	}
+	notePath, err := s.writeCompletedNote(job, request)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	job, err = s.jobs.Complete(job.ID, request.WorkerID, request.Engine, request.Model, notePath)
+	if err != nil {
+		writeError(w, http.StatusConflict, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, job)
+}
+
+type failRequest struct {
+	JobID    string `json:"job_id"`
+	WorkerID string `json:"worker_id"`
+	Error    string `json:"error"`
+	Retry    bool   `json:"retry"`
+}
+
+func (s *Server) handleFail(w http.ResponseWriter, r *http.Request) {
+	var request failRequest
+	if err := decodeJSON(r, &request, 256<<10); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	job, err := s.jobs.Fail(request.JobID, request.WorkerID, request.Error, request.Retry)
+	if err != nil {
+		writeError(w, http.StatusConflict, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, job)
+}
+
+func (s *Server) writeCompletedNote(job *Job, result completionRequest) (string, error) {
+	base := strings.TrimSuffix(job.OriginalName, filepath.Ext(job.OriginalName))
+	base = strings.Trim(strings.Map(func(r rune) rune {
+		if r == '/' || r == '\\' || r < 32 {
+			return '-'
+		}
+		return r
+	}, base), " .")
+	if base == "" {
+		base = "Document"
+	}
+	rel, err := resolveRequestPath(filepath.ToSlash(filepath.Join("inbox", base+"-"+job.ID[:8]+".md")))
+	if err != nil {
+		return "", err
+	}
+	if err := s.vaultRoot.MkdirAll(filepath.Dir(rel), 0750); err != nil {
+		return "", err
+	}
+	fm := map[string]any{
+		"title": base, "created": time.Now().UTC().Format(time.RFC3339),
+		"status": "needs_review", "confidence": 0, "archive_path": job.SourcePath,
+		"ocr_engine": result.Engine, "ocr_model": result.Model,
+	}
+	frontmatter, err := yaml.Marshal(fm)
+	if err != nil {
+		return "", err
+	}
+	body := fmt.Sprintf("---\n%s---\n\n![[%s]]\n\n## OCR text\n\n%s\n", frontmatter, filepath.ToSlash(job.SourcePath), strings.TrimSpace(result.Text))
+	content := []byte(body)
+	if err := atomicWrite(s.vaultRoot, rel, content, 0644); err != nil {
+		return "", err
+	}
+	doc, err := vault.ParseBytes(filepath.Join(s.cfg.VaultRoot, rel), content)
+	if err != nil {
+		return "", err
+	}
+	if err := s.db.IndexDocument(doc); err != nil {
+		return "", err
+	}
+	return rel, nil
+}
+
+func resolveRequestPath(rel string) (string, error) {
+	if rel == "" || strings.ContainsAny(rel, "\\\x00") || !fs.ValidPath(rel) {
+		return "", fmt.Errorf("a vault-relative path is required")
+	}
+	localized, err := filepath.Localize(rel)
+	if err != nil || !filepath.IsLocal(localized) {
+		return "", fmt.Errorf("a vault-relative path is required")
+	}
+	internal := ".symdesk"
+	if localized == internal || strings.HasPrefix(localized, internal+string(filepath.Separator)) {
+		return "", fmt.Errorf("internal server files are not available through the document API")
+	}
+	return localized, nil
+}
+
+func (s *Server) refreshIndex() error {
+	return vault.Walk(s.cfg.VaultRoot, func(path string) error {
+		doc, err := vault.ParseFile(path)
+		if err != nil {
+			return err
+		}
+		indexed, err := s.db.IsIndexed(doc.Path, doc.SHA256)
+		if err != nil {
+			return err
+		}
+		if indexed {
+			return nil
+		}
+		return s.db.IndexDocument(doc)
+	})
+}
+
+var allowedRemoteCommands = map[string]map[string]bool{
+	"doctor": {"": true}, "ls": {"": true}, "search": {"": true}, "backlinks": {"": true},
+	"graph": {"": true}, "similar": {"": true}, "transform": {"": true}, "ask": {"": true},
+	"note":  {"new": true, "move": true, "delete": true, "daily": true},
+	"props": {"get": true, "edit": true}, "relations": {"inverse": true},
+	"views":    {"list": true, "get": true, "save": true, "delete": true, "new-entry": true, "siblings": true, "exec": true},
+	"docs":     {"list": true, "review": true},
+	"doc":      {"status": true, "due": true, "type": true, "correspondent": true, "tag": true, "asn": true},
+	"conflict": {"resolve": true}, "history": {"": true, "prune": true}, "restore": {"": true},
+	"trash": {"list": true, "restore": true, "delete": true},
+}
+
+func validateRemoteCommand(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("command is required")
+	}
+	for _, arg := range args {
+		lower := strings.ToLower(arg)
+		if lower == "--vault" || strings.HasPrefix(lower, "--vault=") || lower == "--output" || strings.HasPrefix(lower, "--output=") {
+			return fmt.Errorf("server-controlled path flags are not allowed")
+		}
+	}
+	subcommands, ok := allowedRemoteCommands[args[0]]
+	if !ok {
+		return fmt.Errorf("command %q is not available remotely", args[0])
+	}
+	if subcommands[""] {
+		return nil
+	}
+	sub := ""
+	if len(args) > 1 && !strings.HasPrefix(args[1], "-") {
+		sub = args[1]
+	}
+	if !subcommands[sub] {
+		return fmt.Errorf("subcommand %q is not available remotely", sub)
+	}
+	return nil
+}
+
+func writeJSON(w http.ResponseWriter, status int, value any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(value)
+}
+
+func writeError(w http.ResponseWriter, status int, message string) {
+	writeJSON(w, status, map[string]string{"error": message})
+}
+
+func decodeJSON(r *http.Request, destination any, limit int64) error {
+	decoder := json.NewDecoder(io.LimitReader(r.Body, limit+1))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(destination); err != nil {
+		return fmt.Errorf("invalid JSON: %w", err)
+	}
+	return nil
+}
+
+func safeFilename(name string) string {
+	name = filepath.Base(strings.ReplaceAll(name, "\\", "/"))
+	name = strings.TrimSpace(name)
+	if name == "." || name == "" {
+		return "document.bin"
+	}
+	return name
+}
+
+func writeUpload(root *os.Root, path string, src multipart.File) error {
+	tmp, tmpName, err := createRootTemp(root, filepath.Dir(path), ".upload-")
+	if err != nil {
+		return err
+	}
+	defer root.Remove(tmpName)
+	if err := tmp.Chmod(0640); err != nil {
+		tmp.Close()
+		return err
+	}
+	if _, err := io.Copy(tmp, io.LimitReader(src, maxUploadBytes+1)); err != nil {
+		tmp.Close()
+		return err
+	}
+	if info, err := tmp.Stat(); err != nil || info.Size() > maxUploadBytes {
+		tmp.Close()
+		return fmt.Errorf("upload exceeds 100 MiB")
+	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return root.Rename(tmpName, path)
+}
+
+func atomicWrite(root *os.Root, path string, data []byte, mode os.FileMode) error {
+	tmp, tmpName, err := createRootTemp(root, filepath.Dir(path), ".write-")
+	if err != nil {
+		return err
+	}
+	defer root.Remove(tmpName)
+	if err := tmp.Chmod(mode); err != nil {
+		tmp.Close()
+		return err
+	}
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return root.Rename(tmpName, path)
+}
+
+func createRootTemp(root *os.Root, dir, prefix string) (*os.File, string, error) {
+	for range 100 {
+		random := make([]byte, 12)
+		if _, err := cryptorand.Read(random); err != nil {
+			return nil, "", err
+		}
+		name := filepath.Join(dir, prefix+hex.EncodeToString(random)+".tmp")
+		file, err := root.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+		if errors.Is(err, fs.ErrExist) {
+			continue
+		}
+		return file, name, err
+	}
+	return nil, "", fmt.Errorf("create temporary file: too many collisions")
+}
+
+func readLimited(reader io.Reader, limit int64) ([]byte, error) {
+	data, err := io.ReadAll(io.LimitReader(reader, limit+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > limit {
+		return nil, fmt.Errorf("request body exceeds limit")
+	}
+	return data, nil
+}
+
+func containsArg(args []string, wanted string) bool {
+	for _, arg := range args {
+		if arg == wanted {
+			return true
+		}
+	}
+	return false
+}
+
+var errLimitExceeded = errors.New("buffer limit exceeded")
+
+type limitedBuffer struct {
+	bytes.Buffer
+	limit int
+	err   error
+}
+
+func (b *limitedBuffer) Write(p []byte) (int, error) {
+	remaining := b.limit - b.Len()
+	if remaining <= 0 {
+		b.err = errLimitExceeded
+		return len(p), nil
+	}
+	if len(p) > remaining {
+		_, _ = b.Buffer.Write(p[:remaining])
+		b.err = errLimitExceeded
+		return len(p), nil
+	}
+	return b.Buffer.Write(p)
+}

@@ -1,0 +1,40 @@
+services:
+  symdesk-server:
+    build: .
+    image: ghcr.io/danieljustus/symaira-desktop:latest
+    restart: unless-stopped
+    environment:
+      SYMDESK_SERVER_TOKEN: ${SYMDESK_SERVER_TOKEN:?set a random token with at least 32 characters}
+    ports:
+      - "8787:8787"
+    volumes:
+      - ./data:/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  symdesk-local-worker:
+    build: .
+    image: ghcr.io/danieljustus/symaira-desktop:latest
+    profiles: ["local-processing"]
+    restart: unless-stopped
+    depends_on:
+      symdesk-server:
+        condition: service_healthy
+    command:
+      - worker
+      - --server
+      - http://symdesk-server:8787
+      - --engine
+      - tesseract
+    environment:
+      SYMDESK_SERVER_TOKEN: ${SYMDESK_SERVER_TOKEN:?set a random token with at least 32 characters}
+      SYMDESK_OCR_LANGUAGE: ${SYMDESK_OCR_LANGUAGE:-deu+eng}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m,mode=1777

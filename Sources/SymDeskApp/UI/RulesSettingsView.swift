@@ -4,6 +4,7 @@ import SymDeskCore
 import SymairaIngestContract
 
 struct RulesSettingsView: View {
+	@EnvironmentObject private var core: DeskCore
     @StateObject private var viewModel: ClassificationRulesViewModel
     @State private var editingRule: ClassificationRule?
     @State private var editingMail: MailAccount?
@@ -24,6 +25,15 @@ struct RulesSettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
+				connectionCard
+				if core.isRemote {
+					messageCard(
+						title: "Processing is managed by SymDesk Server",
+						message: "Upload and queue status work from this Mac. Classification and mail-ingest settings remain server-side for now.",
+						systemImage: "server.rack"
+					) { EmptyView() }
+				}
+				if !core.isRemote {
                 if let error = viewModel.lastError {
                     messageCard(title: "symingest unavailable or incompatible", message: error, systemImage: "exclamationmark.triangle") {
                         Button("Retry") { Task { await viewModel.load(); await viewModel.loadMail() } }
@@ -39,6 +49,7 @@ struct RulesSettingsView: View {
                 classificationRulesCard
                 dryRunCard
                 mailRulesCard
+				}
             }
             .frame(maxWidth: 960, alignment: .leading)
             .padding(32)
@@ -46,6 +57,7 @@ struct RulesSettingsView: View {
         .background(SymairaTheme.bgDark)
         .navigationTitle("Rules & Settings")
         .task {
+			guard !core.isRemote else { return }
             await viewModel.load()
             await viewModel.loadMail()
         }
@@ -113,6 +125,30 @@ struct RulesSettingsView: View {
             .tint(SymairaTheme.goldPrimary)
         }
     }
+
+	private var connectionCard: some View {
+		settingsCard(title: core.isRemote ? "Self-hosted server" : "Local vault", systemImage: core.isRemote ? "server.rack" : "internaldrive") {
+			HStack(spacing: 14) {
+				VStack(alignment: .leading, spacing: 5) {
+					Text(core.isRemote ? (core.serverURL?.absoluteString ?? "Connected") : (core.vaultPath ?? "Not configured"))
+						.font(.headline)
+						.foregroundStyle(SymairaTheme.textPrimary)
+					Text(core.isRemote ? "Vault, originals, index and OCR queue live on this server." : "The app and CLI read this vault directly on your Mac.")
+						.font(.callout)
+						.foregroundStyle(SymairaTheme.textSecondary)
+				}
+				Spacer()
+				if core.isRemote {
+					Button("Disconnect", role: .destructive) {
+						VaultConfig.reset()
+						core.disconnectServer()
+						NSApplication.shared.terminate(nil)
+					}
+					.buttonStyle(.bordered)
+				}
+			}
+		}
+	}
 
     private var classificationRulesCard: some View {
         settingsCard(title: "Classification rules", systemImage: "line.3.horizontal.decrease.circle") {

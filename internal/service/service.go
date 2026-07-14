@@ -89,6 +89,23 @@ func (s *Service) Ls(dirPrefix string) ([]map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	// A per-vault sidecar may be new after an upgrade. Populate it lazily on
+	// the first list so existing app users do not have to re-run onboarding.
+	if len(docs) == 0 {
+		if err := vault.Walk(s.VaultRoot, func(path string) error {
+			doc, err := vault.ParseFile(path)
+			if err != nil {
+				return err
+			}
+			return s.DB.IndexDocument(doc)
+		}); err != nil {
+			return nil, err
+		}
+		docs, err = s.DB.ListFiles(dirPrefix)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	var results []map[string]interface{}
 	for _, d := range docs {
@@ -182,13 +199,28 @@ func (s *Service) searchPlain(query string) ([]map[string]interface{}, error) {
 			for _, r := range seekResults {
 				relPath := r.Path
 				if filepath.IsAbs(r.Path) {
-					if rel, err := filepath.Rel(s.VaultRoot, r.Path); err == nil {
-						relPath = rel
+					candidate := r.Path
+					if canonical, canonicalErr := filepath.EvalSymlinks(candidate); canonicalErr == nil {
+						candidate = canonical
 					}
+					rel, relErr := filepath.Rel(s.VaultRoot, candidate)
+					if relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+						continue
+					}
+					relPath = rel
+				}
+				resolved, secureErr := vault.SecurePath(s.VaultRoot, relPath)
+				if secureErr != nil {
+					continue
+				}
+				if info, statErr := os.Stat(resolved); statErr != nil || !info.Mode().IsRegular() {
+					continue
 				}
 
 				title := ""
 				if docTitle, err := s.DB.GetTitle(r.Path); err == nil {
+					title = docTitle
+				} else if docTitle, err := s.DB.GetTitle(resolved); err == nil {
 					title = docTitle
 				} else {
 					base := filepath.Base(r.Path)
@@ -202,7 +234,9 @@ func (s *Service) searchPlain(query string) ([]map[string]interface{}, error) {
 					"score":   r.Score,
 				})
 			}
-			return results, nil
+			if len(results) > 0 {
+				return results, nil
+			}
 		}
 	}
 

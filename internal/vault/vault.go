@@ -115,6 +115,14 @@ func ParseFile(path string) (*Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read file: %w", err)
 	}
+	return ParseBytes(path, fileBytes)
+}
+
+// ParseBytes parses Markdown already read by a caller while retaining path as
+// the document identity. It is useful for rooted filesystems where reopening an
+// absolute path would discard the caller's confinement guarantees.
+func ParseBytes(path string, fileBytes []byte) (*Document, error) {
+	var err error
 
 	// Calculate SHA256
 	hash := sha256.Sum256(fileBytes)

@@ -11,6 +11,7 @@ struct OnboardingView: View {
     @State private var isLoading = false
     @State private var progressMessage = ""
     @State private var errorMessage: String?
+	@State private var isShowingServerConnection = false
 
     enum Step {
         case chooseLocation
@@ -22,6 +23,7 @@ struct OnboardingView: View {
         case localFolder = "Local folder on this Mac"
         case customFolder = "Custom folder"
         case existingVault = "Existing vault"
+		case selfHostedServer = "Self-hosted SymDesk Server"
         case demoData = "Try demo data"
 
         var id: String { rawValue }
@@ -32,6 +34,7 @@ struct OnboardingView: View {
             case .localFolder: return "internaldrive"
             case .customFolder: return "folder"
             case .existingVault: return "text.book.closed"
+			case .selfHostedServer: return "server.rack"
             case .demoData: return "wand.and.stars"
             }
         }
@@ -42,6 +45,7 @@ struct OnboardingView: View {
             case .localFolder: return "A folder anywhere on this Mac."
             case .customFolder: return "Dropbox, Synology, NAS, or any mounted drive."
             case .existingVault: return "Point to an existing Obsidian or Markdown vault and index it."
+			case .selfHostedServer: return "Connect to a Raspberry Pi, Mac mini, NAS, or Home Assistant container."
             case .demoData: return "Explore with sample documents and notes."
             }
         }
@@ -59,6 +63,24 @@ struct OnboardingView: View {
             }
         }
         .frame(minWidth: 560, maxWidth: .infinity, minHeight: 540, maxHeight: .infinity)
+		.sheet(isPresented: $isShowingServerConnection) {
+			ServerConnectionSheet { url, token in
+				isLoading = true
+				progressMessage = "Connecting securely to SymDesk Server…"
+				errorMessage = nil
+				Task {
+					do {
+						try await core.connectToServer(url: url, token: token)
+						isShowingServerConnection = false
+						dismissOnboarding()
+					} catch {
+						errorMessage = error.localizedDescription
+						isLoading = false
+						isShowingServerConnection = false
+					}
+				}
+			}
+		}
     }
 
     // MARK: - Step 1: Choose Location
@@ -264,6 +286,8 @@ struct OnboardingView: View {
             pickFolder(preferICloud: source == .icloudDrive)
         case .existingVault:
             pickFolder(preferICloud: false, isExistingVault: true)
+		case .selfHostedServer:
+			isShowingServerConnection = true
         case .demoData:
             initDemo()
         }
@@ -347,6 +371,60 @@ struct OnboardingView: View {
     private func dismissOnboarding() {
         NotificationCenter.default.post(name: .onboardingComplete, object: nil)
     }
+}
+
+private struct ServerConnectionSheet: View {
+	@Environment(\.dismiss) private var dismiss
+	@State private var serverURL = ""
+	@State private var token = ""
+	let connect: (String, String) -> Void
+
+	var body: some View {
+		VStack(alignment: .leading, spacing: 22) {
+			HStack(alignment: .top, spacing: 14) {
+				Image(systemName: "server.rack")
+					.font(.system(size: 28))
+					.foregroundStyle(SymairaTheme.goldPrimary)
+				VStack(alignment: .leading, spacing: 4) {
+					Text("Connect to SymDesk Server").font(.title2.bold())
+					Text("Documents stay on your server. This Mac becomes a fast native frontend.")
+						.foregroundStyle(SymairaTheme.textSecondary)
+				}
+			}
+
+			VStack(alignment: .leading, spacing: 14) {
+				LabeledContent("Server URL") {
+					TextField("https://symdesk.example.net", text: $serverURL)
+						.textFieldStyle(.roundedBorder)
+						.frame(width: 330)
+				}
+				LabeledContent("Access token") {
+					SecureField("At least 32 characters", text: $token)
+						.textFieldStyle(.roundedBorder)
+						.frame(width: 330)
+				}
+			}
+			.padding(18)
+			.glassmorphicPanel()
+
+			Label("Use HTTPS or a trusted VPN outside your home network. The token is stored in Keychain.", systemImage: "lock.shield")
+				.font(.callout)
+				.foregroundStyle(SymairaTheme.textSecondary)
+
+			HStack {
+				Spacer()
+				Button("Cancel") { dismiss() }
+					.buttonStyle(.bordered)
+				Button("Connect") { connect(serverURL, token) }
+					.buttonStyle(.borderedProminent)
+					.tint(SymairaTheme.goldPrimary)
+					.disabled(ServerConnectionConfig.normalizedURL(serverURL) == nil || token.count < 32)
+			}
+		}
+		.padding(28)
+		.frame(width: 590)
+		.background(SymairaTheme.bgDark)
+	}
 }
 
 extension Notification.Name {

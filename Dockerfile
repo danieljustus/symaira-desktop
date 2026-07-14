@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1.7
+ARG GO_VERSION=1.26.4
+FROM golang:${GO_VERSION}-bookworm AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+COPY . .
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/symdesk ./cmd/symdesk
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates curl gosu poppler-utils tesseract-ocr tesseract-ocr-deu tesseract-ocr-eng \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --uid 10001 --create-home --home-dir /home/symdesk symdesk \
+    && mkdir -p /data/vault /data/state \
+    && chown -R symdesk:symdesk /data
+COPY --from=build /out/symdesk /usr/local/bin/symdesk
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+ENV SYMDESK_VAULT=/data/vault \
+    SYMDESK_SERVER_LISTEN=0.0.0.0:8787 \
+    XDG_DATA_HOME=/data/state \
+    XDG_CONFIG_HOME=/data/state/config
+VOLUME ["/data"]
+EXPOSE 8787
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl --fail --silent http://127.0.0.1:8787/healthz >/dev/null || exit 1
+ENTRYPOINT ["docker-entrypoint"]
+CMD ["serve"]

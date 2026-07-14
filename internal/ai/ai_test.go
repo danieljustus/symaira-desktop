@@ -16,7 +16,7 @@ import (
 
 func collect(query string, docs []map[string]interface{}) string {
 	out := make(chan AskChunk)
-	go Ask(query, docs, out)
+	go Ask(context.Background(), query, docs, out)
 	var b strings.Builder
 	for c := range out {
 		b.WriteString(c.Chunk)
@@ -82,7 +82,7 @@ func TestBuildPromptGroundsInDocs(t *testing.T) {
 
 func collectTransform(text, intent string) string {
 	out := make(chan AskChunk)
-	go Transform(text, intent, out)
+	go Transform(context.Background(), text, intent, out)
 	var b strings.Builder
 	for c := range out {
 		b.WriteString(c.Chunk)
@@ -306,6 +306,44 @@ func TestStreamAnthropicDefaultModel(t *testing.T) {
 	}
 	if gotModel != config.DefaultAnthropicModel {
 		t.Errorf("expected empty model to resolve to %q, got %q", config.DefaultAnthropicModel, gotModel)
+	}
+}
+
+func TestStreamAnthropicLargeSSELine(t *testing.T) {
+	// A single content_block_delta line larger than the default bufio.Scanner
+	// 64 KiB token limit must not abort the stream.
+	largeText := strings.Repeat("x", 100*1024)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		event, err := json.Marshal(map[string]interface{}{
+			"type":  "content_block_delta",
+			"delta": map[string]string{"text": largeText},
+		})
+		if err != nil {
+			t.Fatalf("failed to marshal large event: %v", err)
+		}
+		fmt.Fprintf(w, "data: %s\n", event)
+		fmt.Fprintln(w, `data: [DONE]`)
+	}))
+	defer srv.Close()
+
+	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
+
+	out := make(chan AskChunk, 10)
+	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	close(out)
+
+	if err != nil {
+		t.Fatalf("expected no error for a large SSE line, got %v", err)
+	}
+
+	var chunks []string
+	for c := range out {
+		chunks = append(chunks, c.Chunk)
+	}
+	got := strings.Join(chunks, "")
+	if got != largeText {
+		t.Errorf("expected the full large chunk to be delivered, got %d bytes want %d bytes", len(got), len(largeText))
 	}
 }
 

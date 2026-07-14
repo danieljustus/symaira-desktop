@@ -534,7 +534,7 @@ func (s *Service) PropsEdit(relPath, key, value string) error {
 	return s.IndexDocument(newDoc)
 }
 
-func (s *Service) Ask(query string, out chan<- interface{}) {
+func (s *Service) Ask(ctx context.Context, query string, out chan<- interface{}) {
 	out <- ai.ToolEvent("search", "running")
 	results, err := s.Search(query)
 	if err != nil {
@@ -557,7 +557,7 @@ func (s *Service) Ask(query string, out chan<- interface{}) {
 	out <- ai.ToolEvent("llm", "running")
 	chunkChan := make(chan ai.AskChunk)
 	go func() {
-		ai.Ask(query, results, chunkChan)
+		ai.Ask(ctx, query, results, chunkChan)
 	}()
 
 	for chunk := range chunkChan {
@@ -570,13 +570,13 @@ func (s *Service) Ask(query string, out chan<- interface{}) {
 
 // AskText is the buffered variant of Ask for non-streaming consumers
 // (MCP): it aggregates all chunks into one answer string.
-func (s *Service) AskText(query string) (string, error) {
+func (s *Service) AskText(ctx context.Context, query string) (string, error) {
 	results, err := s.Search(query)
 	if err != nil {
 		return "", err
 	}
 	chunkChan := make(chan ai.AskChunk)
-	go ai.Ask(query, results, chunkChan)
+	go ai.Ask(ctx, query, results, chunkChan)
 
 	var b strings.Builder
 	for chunk := range chunkChan {

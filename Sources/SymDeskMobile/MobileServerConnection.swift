@@ -112,16 +112,40 @@ final class MobileRemoteClient: @unchecked Sendable {
         _ = try await request(path: "/api/v1/status")
     }
 
-    func snapshot() async throws -> MobileVaultSnapshot {
-        let data = try await request(path: "/api/v1/snapshot")
+    /// Fetches the remote snapshot, sending `previousETag` as `If-None-Match`
+    /// so an unchanged vault costs a small `304` instead of a full
+    /// download-and-reparse. `previousETag` should be `nil` on the first
+    /// call or after switching servers.
+    func snapshot(ifNoneMatch previousETag: String?) async throws -> MobileSnapshotResult {
+        guard var components = URLComponents(url: connection.url.appendingPathComponent("/api/v1/snapshot"), resolvingAgainstBaseURL: false) else {
+            throw MobileServerError.invalidURL
+        }
+        components.queryItems = nil
+        guard let url = components.url else { throw MobileServerError.invalidURL }
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(connection.token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let previousETag {
+            request.setValue(previousETag, forHTTPHeaderField: "If-None-Match")
+        }
+        request.timeoutInterval = 120
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw MobileServerError.invalidResponse }
+        if http.statusCode == 304 {
+            return .unchanged
+        }
+        guard (200..<300).contains(http.statusCode) else {
+            let error = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw MobileServerError.server(http.statusCode, error?.error ?? "Unknown error")
+        }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        let response = try decoder.decode(SnapshotResponse.self, from: data)
+        let decoded = try decoder.decode(SnapshotResponse.self, from: data)
         let root = URL(fileURLWithPath: "/remote-vault", isDirectory: true)
         var notes: [MobileNote] = []
         var skipped = 0
-        notes.reserveCapacity(response.notes.count)
-        for record in response.notes {
+        notes.reserveCapacity(decoded.notes.count)
+        for record in decoded.notes {
             do {
                 let fileURL = root.appendingPathComponent(record.path)
                 notes.append(try MobileVaultParser.parse(data: Data(record.content.utf8), fileURL: fileURL, root: root, modifiedAt: record.modifiedAt))
@@ -130,7 +154,8 @@ final class MobileRemoteClient: @unchecked Sendable {
             }
         }
         notes.sort { $0.modifiedAt != $1.modifiedAt ? $0.modifiedAt > $1.modifiedAt : $0.title < $1.title }
-        return MobileVaultSnapshot(notes: notes, skippedFiles: skipped)
+        let etag = http.value(forHTTPHeaderField: "ETag")
+        return .updated(MobileVaultSnapshot(notes: notes, skippedFiles: skipped), etag: etag)
     }
 
     func cachedAttachment(for note: MobileNote) async throws -> URL? {
@@ -196,4 +221,12 @@ final class MobileRemoteClient: @unchecked Sendable {
     }
 
     private struct ErrorResponse: Decodable { let error: String }
+}
+
+/// Result of a conditional `GET /api/v1/snapshot`: either the vault has not
+/// changed since the ETag the caller sent (`.unchanged`), or a fresh
+/// snapshot arrived along with its new ETag for the next conditional call.
+enum MobileSnapshotResult: Sendable {
+    case unchanged
+    case updated(MobileVaultSnapshot, etag: String?)
 }

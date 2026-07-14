@@ -104,16 +104,26 @@ docker compose --profile local-processing up -d
 ```
 
 To keep a Raspberry Pi or Mac mini focused on storage and run OCR through
-Ollama on a MacBook instead:
+Ollama on a MacBook instead, give the worker its own credential instead of
+reusing the client/admin token — a worker token can only lease, download and
+complete OCR jobs, not read or write arbitrary vault files:
 
 ```sh
+export SYMDESK_WORKER_TOKEN="$(openssl rand -hex 32)"
+docker compose up -d symdesk-server  # picks up SYMDESK_WORKER_TOKEN automatically
+
 ollama pull gemma3
 symdesk worker \
   --server http://SERVER-IP:8787 \
-  --token "$SYMDESK_SERVER_TOKEN" \
+  --token "$SYMDESK_WORKER_TOKEN" \
   --engine ollama \
   --ollama-model gemma3
 ```
+
+Existing single-token deployments keep working unchanged: leave
+`SYMDESK_WORKER_TOKEN` unset and workers can keep authenticating with
+`SYMDESK_SERVER_TOKEN` during the migration. See
+[Self-hosting SymDesk](docs/SELF_HOSTING.md) for the full migration path.
 
 The worker may come and go. Pending jobs remain on the server, expired leases
 are recovered, and no network share needs to be mounted on the MacBook. For a

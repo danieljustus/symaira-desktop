@@ -76,6 +76,26 @@ func TestDoctorReportsAnthropicProviderAndSecretSource(t *testing.T) {
 	if aiInfo["secret_source"] != "config/env" {
 		t.Errorf("expected secret_source 'config/env' for a plain configured key, got %v", aiInfo["secret_source"])
 	}
+	if aiInfo["model"] != config.DefaultAnthropicModel {
+		t.Errorf("expected the default effective model %q when none is configured, got %v", config.DefaultAnthropicModel, aiInfo["model"])
+	}
+}
+
+func TestDoctorReportsConfiguredAnthropicModel(t *testing.T) {
+	origCfg := cfg
+	cfg = &config.Config{Vault: t.TempDir(), LLMProvider: "anthropic", LLMAPIKey: "test-key", LLMModel: "claude-opus-4-8"}
+	t.Cleanup(func() { cfg = origCfg })
+	t.Setenv("PATH", "/usr/bin:/bin")
+
+	results := runDoctorCaptured(t)
+
+	aiInfo, ok := results["ai"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected an 'ai' object in doctor output, got: %#v", results["ai"])
+	}
+	if aiInfo["model"] != "claude-opus-4-8" {
+		t.Errorf("expected the configured model 'claude-opus-4-8', got %v", aiInfo["model"])
+	}
 }
 
 func TestDoctorReportsOllamaProviderWithoutSecretSource(t *testing.T) {
@@ -95,6 +115,9 @@ func TestDoctorReportsOllamaProviderWithoutSecretSource(t *testing.T) {
 	}
 	if _, hasSecretSource := aiInfo["secret_source"]; hasSecretSource {
 		t.Errorf("did not expect secret_source to be reported for the ollama provider, got %v", aiInfo["secret_source"])
+	}
+	if _, hasModel := aiInfo["model"]; hasModel {
+		t.Errorf("did not expect model to be reported for the ollama provider, got %v", aiInfo["model"])
 	}
 }
 
@@ -135,8 +158,9 @@ func TestDoctorTextOutputReportsAnthropicProviderAndSecretSource(t *testing.T) {
 
 	out := runDoctorTextCaptured(t)
 
-	if !strings.Contains(out, "ai: provider=anthropic, secret_source=config/env") {
-		t.Errorf("expected AI provider/secret_source line in text output, got:\n%s", out)
+	wantLine := "ai: provider=anthropic, secret_source=config/env, model=" + config.DefaultAnthropicModel
+	if !strings.Contains(out, wantLine) {
+		t.Errorf("expected AI provider/secret_source/model line %q in text output, got:\n%s", wantLine, out)
 	}
 	if !strings.Contains(out, "conflicts: none") {
 		t.Errorf("expected a conflicts summary line, got:\n%s", out)

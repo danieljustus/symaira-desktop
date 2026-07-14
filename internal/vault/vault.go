@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 
@@ -31,6 +32,14 @@ type Document struct {
 	Frontmatter map[string]interface{}
 	Body        string
 	Links       []string
+
+	// Size and ModTime are the on-disk file size and modification time as of
+	// parsing. ParseFile populates both via os.Stat; ParseBytes only sets
+	// Size (from the byte slice it was handed) since it has no path to stat.
+	// A zero ModTime means "unknown" to callers that cache these values for
+	// a stat-based skip check.
+	Size    int64
+	ModTime time.Time
 
 	// Contract v2: first-class document metadata (all optional)
 	DocumentDate string // ISO-8601 date the document refers to
@@ -110,12 +119,24 @@ func Walk(vaultRoot string, fn func(path string) error) error {
 }
 
 // ParseFile parses a markdown file, extracting frontmatter, body, and wikilinks.
+// It also stats the file so the returned Document carries the on-disk size
+// and modification time, letting callers cache them for a stat-based skip
+// check on a later refresh.
 func ParseFile(path string) (*Document, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("stat file: %w", err)
+	}
 	fileBytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("read file: %w", err)
 	}
-	return ParseBytes(path, fileBytes)
+	doc, err := ParseBytes(path, fileBytes)
+	if err != nil {
+		return nil, err
+	}
+	doc.ModTime = info.ModTime()
+	return doc, nil
 }
 
 // ParseBytes parses Markdown already read by a caller while retaining path as
@@ -132,6 +153,7 @@ func ParseBytes(path string, fileBytes []byte) (*Document, error) {
 		Path:        path,
 		SHA256:      shaHex,
 		Frontmatter: make(map[string]interface{}),
+		Size:        int64(len(fileBytes)),
 	}
 
 	// Split Frontmatter and Body

@@ -33,7 +33,7 @@ jobs:
         run: go build ./...
 
       - name: Test
-        run: go test -count=1 ./...
+        run: go test -race -count=1 ./...
 
   lint:
     runs-on: ubuntu-latest
@@ -49,6 +49,28 @@ jobs:
 
       - name: Check formatting
         run: test -z "$(gofmt -l .)"
+
+  golangci-lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: "1.26.4"
+
+      # only-new-issues scopes the gate to lines touched by the current
+      # push/PR diff. The repository has a pre-existing errcheck/gosec
+      # backlog (hundreds of findings); gating on the full backlog would
+      # require an unrelated mass cleanup, so this starter job instead
+      # blocks new regressions while the backlog is worked down separately.
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.12.2
+          only-new-issues: true
 
   app:
     runs-on: macos-latest

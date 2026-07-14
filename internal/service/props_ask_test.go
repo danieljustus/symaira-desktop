@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,7 +62,7 @@ func TestAskStreamsFallbackAnswerWithoutOllama(t *testing.T) {
 	}
 
 	out := make(chan interface{})
-	go svc.Ask("unique-ask-content", out)
+	go svc.Ask(context.Background(), "unique-ask-content", out)
 
 	var events []interface{}
 	for c := range out {
@@ -107,7 +108,7 @@ func TestAskTextMatchesAskAggregate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	text, err := svc.AskText("unique-asktext-content")
+	text, err := svc.AskText(context.Background(), "unique-asktext-content")
 	if err != nil {
 		t.Fatal(err)
 	}

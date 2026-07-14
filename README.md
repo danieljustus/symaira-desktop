@@ -234,7 +234,7 @@ To use Anthropic's Claude models, set the provider, model, and API key:
 
 ```sh
 export SYMDESK_LLM_PROVIDER=anthropic
-export SYMDESK_LLM_MODEL=claude-3-5-sonnet-20240620  # optional, default claude-3-5-sonnet-20240620
+export SYMDESK_LLM_MODEL=claude-sonnet-5  # optional, default claude-sonnet-5
 ```
 
 The API key (`SYMDESK_LLM_API_KEY`) is resolved dynamically in priority order:

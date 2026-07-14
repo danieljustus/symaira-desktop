@@ -91,14 +91,11 @@ func (s *Service) Ls(dirPrefix string) ([]map[string]interface{}, error) {
 	}
 	// A per-vault sidecar may be new after an upgrade. Populate it lazily on
 	// the first list so existing app users do not have to re-run onboarding.
+	// DB.RefreshIndex's stat-based fast path also means a later call here
+	// (e.g. after the sidecar was cleared) skips re-reading and re-hashing
+	// any file whose cached size/mtime still match what's on disk.
 	if len(docs) == 0 {
-		if err := vault.Walk(s.VaultRoot, func(path string) error {
-			doc, err := vault.ParseFile(path)
-			if err != nil {
-				return err
-			}
-			return s.DB.IndexDocument(doc)
-		}); err != nil {
+		if err := s.DB.RefreshIndex(s.VaultRoot); err != nil {
 			return nil, err
 		}
 		docs, err = s.DB.ListFiles(dirPrefix)
@@ -534,7 +531,7 @@ func (s *Service) PropsEdit(relPath, key, value string) error {
 	return s.IndexDocument(newDoc)
 }
 
-func (s *Service) Ask(query string, out chan<- interface{}) {
+func (s *Service) Ask(ctx context.Context, query string, out chan<- interface{}) {
 	out <- ai.ToolEvent("search", "running")
 	results, err := s.Search(query)
 	if err != nil {
@@ -557,7 +554,7 @@ func (s *Service) Ask(query string, out chan<- interface{}) {
 	out <- ai.ToolEvent("llm", "running")
 	chunkChan := make(chan ai.AskChunk)
 	go func() {
-		ai.Ask(query, results, chunkChan)
+		ai.Ask(ctx, query, results, chunkChan)
 	}()
 
 	for chunk := range chunkChan {
@@ -570,13 +567,13 @@ func (s *Service) Ask(query string, out chan<- interface{}) {
 
 // AskText is the buffered variant of Ask for non-streaming consumers
 // (MCP): it aggregates all chunks into one answer string.
-func (s *Service) AskText(query string) (string, error) {
+func (s *Service) AskText(ctx context.Context, query string) (string, error) {
 	results, err := s.Search(query)
 	if err != nil {
 		return "", err
 	}
 	chunkChan := make(chan ai.AskChunk)
-	go ai.Ask(query, results, chunkChan)
+	go ai.Ask(ctx, query, results, chunkChan)
 
 	var b strings.Builder
 	for chunk := range chunkChan {

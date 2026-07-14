@@ -531,6 +531,40 @@ type commandRequest struct {
 // instead of buffered, so a client sees partial output as it is produced.
 var streamingCommands = map[string]bool{"ask": true, "transform": true}
 
+// subprocessEnvExclude lists environment variables that authenticate the
+// server process itself and must never reach a remotely spawned symdesk
+// subprocess. The remote command allowlist (validateRemoteCommand) limits
+// which commands can run, but does not stop a future command from echoing
+// environment state back to an authenticated client, so these are stripped
+// unconditionally regardless of which command is invoked.
+var subprocessEnvExclude = map[string]bool{
+	"SYMDESK_SERVER_TOKEN": true,
+	"SYMDESK_WORKER_TOKEN": true,
+}
+
+// subprocessEnv builds the environment for a remotely spawned symdesk
+// subprocess: a filtered copy of the server's own environment with the
+// server/worker auth tokens removed, plus SYMDESK_SIDECAR pointing at this
+// server's index database. Filtering (rather than allow-listing from
+// scratch) keeps every other variable the allowed commands need — PATH,
+// HOME, and the SYMDESK_LLM_*/SYMDESK_OLLAMA_*/SYMDESK_ANTHROPIC_URL
+// variables that `ask`/`transform` read via internal/ai and internal/config
+// — working exactly as before, while ensuring the credentials that
+// authenticate this server can never leak into a subprocess whose arguments
+// an already-authenticated remote client controls.
+func (s *Server) subprocessEnv() []string {
+	parent := os.Environ()
+	env := make([]string, 0, len(parent)+1)
+	for _, kv := range parent {
+		name, _, found := strings.Cut(kv, "=")
+		if found && subprocessEnvExclude[name] {
+			continue
+		}
+		env = append(env, kv)
+	}
+	return append(env, "SYMDESK_SIDECAR="+filepath.Join(s.cfg.VaultRoot, ".symdesk", "server", "sidecar.db"))
+}
+
 func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
 	var request commandRequest
 	if err := decodeJSON(r, &request, 2<<20); err != nil {
@@ -549,7 +583,7 @@ func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, s.cfg.Executable, args...)
-	cmd.Env = append(os.Environ(), "SYMDESK_SIDECAR="+filepath.Join(s.cfg.VaultRoot, ".symdesk", "server", "sidecar.db"))
+	cmd.Env = s.subprocessEnv()
 	cmd.Stdin = strings.NewReader(request.Stdin)
 
 	if streamingCommands[args[0]] {

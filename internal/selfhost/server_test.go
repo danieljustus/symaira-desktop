@@ -389,6 +389,81 @@ func TestHandleCommandStreamTruncatesOversizedOutput(t *testing.T) {
 	}
 }
 
+// TestHandleCommandScrubsServerTokensFromSubprocessEnv guards against
+// SYMDESK_SERVER_TOKEN/SYMDESK_WORKER_TOKEN leaking into the environment of
+// a remotely spawned symdesk subprocess (issue #175): a future command that
+// echoes its environment (e.g. a diagnostics extension of `doctor`) must not
+// be able to hand server credentials back to an authenticated remote client.
+func TestHandleCommandScrubsServerTokensFromSubprocessEnv(t *testing.T) {
+	if _, err := os.Stat("/bin/sh"); err != nil {
+		t.Skip("/bin/sh unavailable")
+	}
+	t.Setenv("SYMDESK_SERVER_TOKEN", "leaked-server-token-0123456789")
+	t.Setenv("SYMDESK_WORKER_TOKEN", "leaked-worker-token-0123456789")
+	script := fakeSymdeskScript(t, "env\n")
+	vaultRoot := t.TempDir()
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: script})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	httpServer := httptest.NewServer(server.Handler())
+	t.Cleanup(httpServer.Close)
+
+	body, err := json.Marshal(commandRequest{Arguments: []string{"ls"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := authorized(t, http.MethodPost, httpServer.URL+"/api/v1/command", bytes.NewReader(body), "application/json")
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("command returned %d: %s", response.StatusCode, readBody(response))
+	}
+	output := readBody(response)
+	if strings.Contains(output, "leaked-server-token-0123456789") {
+		t.Fatalf("SYMDESK_SERVER_TOKEN leaked into subprocess environment: %s", output)
+	}
+	if strings.Contains(output, "leaked-worker-token-0123456789") {
+		t.Fatalf("SYMDESK_WORKER_TOKEN leaked into subprocess environment: %s", output)
+	}
+	if !strings.Contains(output, "SYMDESK_SIDECAR=") {
+		t.Fatalf("expected SYMDESK_SIDECAR to be set in subprocess environment: %s", output)
+	}
+	if !strings.Contains(output, "PATH=") {
+		t.Fatalf("expected the subprocess to still inherit PATH: %s", output)
+	}
+}
+
+func TestSubprocessEnvExcludesTokensAndKeepsSidecar(t *testing.T) {
+	t.Setenv("SYMDESK_SERVER_TOKEN", "leaked-server-token-0123456789")
+	t.Setenv("SYMDESK_WORKER_TOKEN", "leaked-worker-token-0123456789")
+	t.Setenv("SYMDESK_LLM_PROVIDER", "anthropic")
+
+	server := &Server{cfg: ServerConfig{VaultRoot: t.TempDir()}}
+	env := server.subprocessEnv()
+
+	for _, kv := range env {
+		name, _, _ := strings.Cut(kv, "=")
+		if name == "SYMDESK_SERVER_TOKEN" || name == "SYMDESK_WORKER_TOKEN" {
+			t.Fatalf("expected %s to be excluded from subprocess environment, got %v", name, env)
+		}
+	}
+	var sawSidecar, sawProvider bool
+	for _, kv := range env {
+		if strings.HasPrefix(kv, "SYMDESK_SIDECAR=") {
+			sawSidecar = true
+		}
+		if kv == "SYMDESK_LLM_PROVIDER=anthropic" {
+			sawProvider = true
+		}
+	}
+	if !sawSidecar {
+		t.Fatalf("expected SYMDESK_SIDECAR to be present: %v", env)
+	}
+	if !sawProvider {
+		t.Fatalf("expected unrelated env vars such as SYMDESK_LLM_PROVIDER to pass through: %v", env)
+	}
+}
+
 func TestRemoteCommandAllowlist(t *testing.T) {
 	for _, args := range [][]string{{"serve"}, {"ingest", "/etc/passwd"}, {"export", "--output", "/tmp/x"}, {"ls", "--vault", "/tmp"}} {
 		if err := validateRemoteCommand(args); err == nil {

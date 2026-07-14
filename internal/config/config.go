@@ -55,9 +55,9 @@ func Load() (*Config, error) {
 	return LoadFromPath(GlobalPath())
 }
 
-func LoadFromPath(path string) (*Config, error) {
-	cfg := DefaultConfig()
-
+// applyEnvOverrides applies the SYMDESK_* environment variable overrides to
+// cfg. Env vars always take precedence over TOML values and defaults.
+func applyEnvOverrides(cfg *Config) {
 	if envVault := os.Getenv("SYMDESK_VAULT"); envVault != "" {
 		cfg.Vault = envVault
 	}
@@ -89,10 +89,15 @@ func LoadFromPath(path string) (*Config, error) {
 			}
 		}
 	}
+}
+
+func LoadFromPath(path string) (*Config, error) {
+	cfg := DefaultConfig()
 
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
+			applyEnvOverrides(cfg)
 			return cfg, nil
 		}
 		return nil, fmt.Errorf("failed to read config file: %w", err)
@@ -102,37 +107,7 @@ func LoadFromPath(path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to decode config file: %w", err)
 	}
 
-	if envVault := os.Getenv("SYMDESK_VAULT"); envVault != "" {
-		cfg.Vault = envVault
-	}
-	if envInbox := os.Getenv("SYMDESK_INBOX"); envInbox != "" {
-		cfg.Inbox = envInbox
-	}
-	if envThresh := os.Getenv("SYMDESK_REVIEW_THRESHOLD"); envThresh != "" {
-		if v, err := strconv.Atoi(envThresh); err == nil && v >= 0 && v <= 100 {
-			cfg.ReviewThreshold = v
-		}
-	}
-	if envProv := os.Getenv("SYMDESK_LLM_PROVIDER"); envProv != "" {
-		cfg.LLMProvider = envProv
-	}
-	if envKey := os.Getenv("SYMDESK_LLM_API_KEY"); envKey != "" {
-		cfg.LLMAPIKey = envKey
-	}
-	for _, ev := range []struct {
-		name   string
-		target *int
-	}{
-		{"SYMDESK_HISTORY_MAX_PER_FILE", &cfg.HistoryMaxPerFile},
-		{"SYMDESK_HISTORY_MAX_AGE_DAYS", &cfg.HistoryMaxAgeDays},
-		{"SYMDESK_TRASH_RETENTION_DAYS", &cfg.TrashRetentionDays},
-	} {
-		if raw := os.Getenv(ev.name); raw != "" {
-			if v, err := strconv.Atoi(raw); err == nil && v >= 0 {
-				*ev.target = v
-			}
-		}
-	}
+	applyEnvOverrides(cfg)
 
 	return cfg, nil
 }

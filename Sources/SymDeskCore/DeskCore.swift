@@ -537,6 +537,11 @@ public final class DeskCore: ObservableObject {
 	public var isRemote: Bool { remoteClient != nil }
 	private var remoteClient: RemoteDeskClient?
 
+	/// The active local-CLI or remote-HTTP transport, set alongside `tool`/
+	/// `remoteClient` in `initialize()`. Feature methods route through this
+	/// instead of branching on `remoteClient` individually.
+	private var transport: DeskTransport?
+
     private init() {}
 
     /// Appends `--vault <path>` when a vault is configured, empty otherwise.
@@ -554,6 +559,7 @@ public final class DeskCore: ObservableObject {
 					throw DeskCoreError.schemaMismatch(expected: 1, got: status.schemaVersion)
 				}
 				remoteClient = client
+				transport = RemoteDeskTransport(client: client)
 				serverURL = connection.url
 				vaultPath = nil
 				tool = nil
@@ -579,6 +585,7 @@ public final class DeskCore: ObservableObject {
         do {
             try detector.requireSchemaVersion(1, of: detected)
             self.tool = detected
+            self.transport = LocalDeskTransport(tool: detected)
             self.isReady = true
         } catch {
             self.errorMessage = "symdesk schema mismatch: \(error)"
@@ -588,6 +595,7 @@ public final class DeskCore: ObservableObject {
 	public func connectToServer(url: String, token: String) async throws {
 		try ServerConnectionConfig.save(url: url, token: token)
 		remoteClient = nil
+		transport = nil
 		serverURL = nil
 		tool = nil
 		isReady = false
@@ -596,6 +604,7 @@ public final class DeskCore: ObservableObject {
 		if !isReady {
 			ServerConnectionConfig.reset()
 			remoteClient = nil
+			transport = nil
 			serverURL = nil
 			throw ServerConnectionError.server(status: 0, message: errorMessage ?? "Connection failed")
 		}
@@ -604,16 +613,14 @@ public final class DeskCore: ObservableObject {
 	public func disconnectServer() {
 		ServerConnectionConfig.reset()
 		remoteClient = nil
+		transport = nil
 		serverURL = nil
 		isReady = false
 	}
 
 	private func runChecked(arguments: [String], stdin: String = "") async throws -> Data {
-		if let remoteClient {
-			return try await remoteClient.command(arguments: arguments, stdin: stdin)
-		}
-		guard let tool else { throw DeskCoreError.coreNotFound }
-		return try await CLIRunner().runChecked(tool.location.url, arguments: arguments)
+		guard let transport else { throw DeskCoreError.coreNotFound }
+		return try await transport.command(arguments: arguments, stdin: stdin)
 	}
 
 	private func runDecoding<T: Decodable & Sendable>(_ type: T.Type, arguments: [String], stdin: String = "") async throws -> T {
@@ -703,20 +710,8 @@ public final class DeskCore: ObservableObject {
 		return try await runChecked(arguments: ["views", "exec", id, "--json"] + vaultArgs)
     }
     public func ingest(fileURL: URL) async throws -> String {
-		if let remoteClient {
-			return try await remoteClient.ingest(fileURL: fileURL)
-		}
-		guard let tool else { throw DeskCoreError.coreNotFound }
-        let runner = CLIRunner()
-        struct IngestRes: Codable, Sendable {
-            let path: String
-        }
-        let res = try await runner.runDecoding(
-            IngestRes.self,
-            executable: tool.location.url,
-            arguments: ["ingest", fileURL.path, "--json"] + vaultArgs
-        )
-        return res.path
+		guard let transport else { throw DeskCoreError.coreNotFound }
+		return try await transport.ingestFile(fileURL, vaultArgs: vaultArgs)
     }
 
     public func resolveConflict(path: String, action: String) async throws {
@@ -724,66 +719,31 @@ public final class DeskCore: ObservableObject {
     }
 
 	public func ingestJobs() async throws -> [IngestJob] {
-		if let remoteClient {
-			let data = try await remoteClient.jobs()
-			return try JSONDecoder().decode([IngestJob].self, from: data)
-		}
-		guard let tool else { throw DeskCoreError.coreNotFound }
-        let runner = CLIRunner()
-        return try await runner.runDecoding(
-            [IngestJob].self,
-            executable: tool.location.url,
-            arguments: ["ingest", "jobs", "--json"] + vaultArgs
-        )
+		guard let transport else { throw DeskCoreError.coreNotFound }
+		return try await transport.ingestJobs(vaultArgs: vaultArgs)
     }
 
 	public func ingestRetry(jobID: String) async throws {
-		if let remoteClient {
-			try await remoteClient.retryJob(id: jobID)
-			return
-		}
-		guard let tool else { throw DeskCoreError.coreNotFound }
-        let runner = CLIRunner()
-        _ = try await runner.runChecked(
-            tool.location.url,
-            arguments: ["ingest", "retry", "\(jobID)"] + vaultArgs
-        )
+		guard let transport else { throw DeskCoreError.coreNotFound }
+		try await transport.ingestRetry(jobID: jobID, vaultArgs: vaultArgs)
     }
 
     public func ask(query: String) -> AsyncThrowingStream<AIEvent, Error> {
         return AsyncThrowingStream { continuation in
             Task {
+                guard let transport = self.transport else {
+                    continuation.finish(throwing: DeskCoreError.coreNotFound)
+                    return
+                }
                 do {
-					if let remoteClient = self.remoteClient {
-						for try await line in remoteClient.commandStream(arguments: ["ask", query, "--json"]) {
-							if let streamError = try? JSONDecoder().decode(RemoteStreamError.self, from: Data(line.utf8)), streamError.type == "error" {
-								throw ServerConnectionError.server(status: 0, message: streamError.message)
-							}
-							if let event = try? JSONDecoder().decode(AIEvent.self, from: Data(line.utf8)) {
-								continuation.yield(event)
-							}
-						}
-						continuation.finish()
-						return
-					}
-                    guard let tool else { throw DeskCoreError.coreNotFound }
-                    let process = Process()
-                    process.executableURL = tool.location.url
-                    process.arguments = ["ask", query, "--json"] + (self.vaultArgs)
-
-                    let pipe = Pipe()
-                    process.standardOutput = pipe
-
-                    try process.run()
-
-                    for try await line in pipe.fileHandleForReading.bytes.lines {
-                        if let data = line.data(using: .utf8),
-                           let event = try? JSONDecoder().decode(AIEvent.self, from: data) {
+                    for try await line in transport.commandStream(arguments: ["ask", query, "--json"] + self.vaultArgs, stdin: "") {
+                        if let streamError = try? JSONDecoder().decode(RemoteStreamError.self, from: Data(line.utf8)), streamError.type == "error" {
+                            throw ServerConnectionError.server(status: 0, message: streamError.message)
+                        }
+                        if let event = try? JSONDecoder().decode(AIEvent.self, from: Data(line.utf8)) {
                             continuation.yield(event)
                         }
                     }
-
-                    process.waitUntilExit()
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -798,48 +758,20 @@ public final class DeskCore: ObservableObject {
     public func transform(text: String, intent: String) -> AsyncThrowingStream<String, Error> {
         return AsyncThrowingStream { continuation in
             Task {
+                guard let transport = self.transport else {
+                    continuation.finish(throwing: DeskCoreError.coreNotFound)
+                    return
+                }
                 do {
-					if let remoteClient = self.remoteClient {
-						struct RemoteChunk: Codable, Sendable { let chunk: String }
-						for try await line in remoteClient.commandStream(arguments: ["transform", intent, "--json"], stdin: text) {
-							if let streamError = try? JSONDecoder().decode(RemoteStreamError.self, from: Data(line.utf8)), streamError.type == "error" {
-								throw ServerConnectionError.server(status: 0, message: streamError.message)
-							}
-							if let chunk = try? JSONDecoder().decode(RemoteChunk.self, from: Data(line.utf8)) {
-								continuation.yield(chunk.chunk)
-							}
-						}
-						continuation.finish()
-						return
-					}
-                    guard let tool else { throw DeskCoreError.coreNotFound }
-                    let process = Process()
-                    process.executableURL = tool.location.url
-                    process.arguments = ["transform", intent, "--json"]
-
-                    let inPipe = Pipe()
-                    let outPipe = Pipe()
-                    process.standardInput = inPipe
-                    process.standardOutput = outPipe
-
-                    try process.run()
-
-                    if let data = text.data(using: .utf8) {
-                        inPipe.fileHandleForWriting.write(data)
-                    }
-                    try? inPipe.fileHandleForWriting.close()
-
-                    for try await line in outPipe.fileHandleForReading.bytes.lines {
-                        struct Chunk: Codable, Sendable {
-                            let chunk: String
+                    struct Chunk: Codable, Sendable { let chunk: String }
+                    for try await line in transport.commandStream(arguments: ["transform", intent, "--json"], stdin: text) {
+                        if let streamError = try? JSONDecoder().decode(RemoteStreamError.self, from: Data(line.utf8)), streamError.type == "error" {
+                            throw ServerConnectionError.server(status: 0, message: streamError.message)
                         }
-                        if let data = line.data(using: .utf8),
-                           let dec = try? JSONDecoder().decode(Chunk.self, from: data) {
+                        if let dec = try? JSONDecoder().decode(Chunk.self, from: Data(line.utf8)) {
                             continuation.yield(dec.chunk)
                         }
                     }
-
-                    process.waitUntilExit()
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -943,22 +875,13 @@ public final class DeskCore: ObservableObject {
     }
 
     public func docNoteContent(path: String) async throws -> String {
-		if let remoteClient {
-			return try await remoteClient.noteContent(path: path)
-		}
-        guard let data = FileManager.default.contents(atPath: path) else {
-            return ""
-        }
-        return String(decoding: data, as: UTF8.self)
+		guard let transport else { throw DeskCoreError.coreNotFound }
+		return try await transport.fileContent(path: path)
     }
 
 	public func saveNoteContent(path: String, content: String) async throws {
-		if let remoteClient {
-			try await remoteClient.saveNote(path: path, content: content)
-			return
-		}
-		guard let data = content.data(using: .utf8) else { return }
-		try data.write(to: URL(fileURLWithPath: path), options: .atomic)
+		guard let transport else { throw DeskCoreError.coreNotFound }
+		try await transport.saveFile(path: path, content: content)
 	}
 
 	public func remoteCachedFile(path: String) async throws -> URL {

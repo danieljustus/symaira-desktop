@@ -24,6 +24,9 @@ struct ContentView: View {
     @AppStorage("isBlockMode") private var isBlockMode = false
     @AppStorage("dismissedNotificationPermissionBanner") private var dismissedNotificationPermissionBanner = false
 
+    @StateObject private var mutationTracker = AsyncActionTracker<String>()
+    @State private var ingestFailure: IngestFailure? = nil
+
     // Auto-save debounce
     @State private var saveTask: Task<Void, Never>? = nil
     @State private var eventRefreshTask: Task<Void, Never>? = nil
@@ -155,12 +158,12 @@ struct ContentView: View {
                                         isShowingViewEditor = true
                                     }
                                     Button("Delete View", role: .destructive) {
-                                        Task {
-                                            try? await core.viewsDelete(id: view.id)
-                                            if selectedViewID == view.id { selectedViewID = nil }
-                                            await fetchViews()
-                                        }
+                                        Task { await deleteView(view) }
                                     }
+                                    .disabled(mutationTracker.isInFlight(viewDeleteActionID(view)))
+                                }
+                                .asyncActionAlert(mutationTracker, id: viewDeleteActionID(view), title: "Couldn't Delete View") {
+                                    Task { await deleteView(view) }
                                 }
                             }
                             Button(action: {
@@ -243,23 +246,17 @@ struct ContentView: View {
                                             .foregroundColor(SymairaTheme.goldSecondary)
                                         Spacer()
                                         Button("Keep Mine") {
-                                            Task {
-                                                try? await core.resolveConflict(path: note.path, action: "keep-mine")
-                                                self.selectedNote = nil
-                                                await fetchNotes()
-                                            }
+                                            Task { await resolveConflict(note: note, action: "keep-mine") }
                                         }
                                         .buttonStyle(.bordered)
                                         .controlSize(.small)
+                                        .disabled(mutationTracker.isInFlight(conflictActionID(note: note, action: "keep-mine")))
                                         Button("Keep Theirs") {
-                                            Task {
-                                                try? await core.resolveConflict(path: note.path, action: "keep-theirs")
-                                                self.selectedNote = nil
-                                                await fetchNotes()
-                                            }
+                                            Task { await resolveConflict(note: note, action: "keep-theirs") }
                                         }
                                         .buttonStyle(.bordered)
                                         .controlSize(.small)
+                                        .disabled(mutationTracker.isInFlight(conflictActionID(note: note, action: "keep-theirs")))
                                     }
                                     .padding(8)
                                     .background(SymairaTheme.goldPrimary.opacity(0.12))
@@ -268,6 +265,38 @@ struct ContentView: View {
                                         RoundedRectangle(cornerRadius: 6)
                                             .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
                                     )
+                                    .padding(.horizontal)
+                                    .padding(.top, 8)
+                                    .asyncActionAlert(mutationTracker, id: conflictActionID(note: note, action: "keep-mine"), title: "Couldn't Resolve Conflict") {
+                                        Task { await resolveConflict(note: note, action: "keep-mine") }
+                                    }
+                                    .asyncActionAlert(mutationTracker, id: conflictActionID(note: note, action: "keep-theirs"), title: "Couldn't Resolve Conflict") {
+                                        Task { await resolveConflict(note: note, action: "keep-theirs") }
+                                    }
+                                }
+
+                                if let saveError = mutationTracker.failureMessage(for: saveActionID(note)) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundStyle(.red)
+                                        Text("Save failed: \(saveError)")
+                                            .font(.caption)
+                                            .foregroundColor(SymairaTheme.textSecondary)
+                                        Spacer()
+                                        Button("Retry") {
+                                            Task { await performSave(note: note, content: noteContent) }
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .controlSize(.small)
+                                        Button(action: { mutationTracker.clearFailure(for: saveActionID(note)) }) {
+                                            Image(systemName: "xmark")
+                                        }
+                                        .buttonStyle(.plain)
+                                        .foregroundStyle(SymairaTheme.textSecondary)
+                                    }
+                                    .padding(8)
+                                    .background(Color.red.opacity(0.12))
+                                    .cornerRadius(6)
                                     .padding(.horizontal)
                                     .padding(.top, 8)
                                 }
@@ -377,18 +406,24 @@ struct ContentView: View {
                     for provider in providers {
                         provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, error in
                             if let data = item as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                                Task {
-                                    do {
-                                        let _ = try await core.ingest(fileURL: url)
-                                        // fetchNotes() is called by the watcher automatically, so we don't need to manually refresh
-                                    } catch {
-                                        print("Ingest failed: \(error)")
-                                    }
-                                }
+                                Task { await ingestFile(url) }
                             }
                         }
                     }
                     return true
+                }
+                .alert("Couldn't Import File", isPresented: Binding(
+                    get: { ingestFailure != nil },
+                    set: { isPresented in if !isPresented { ingestFailure = nil } }
+                )) {
+                    Button("Retry") {
+                        if let url = ingestFailure?.url {
+                            Task { await ingestFile(url) }
+                        }
+                    }
+                    Button("Dismiss", role: .cancel) { ingestFailure = nil }
+                } message: {
+                    Text(ingestFailure?.message ?? "")
                 }
                 .toolbar {
                     ToolbarItem(placement: .navigation) {
@@ -562,16 +597,67 @@ struct ContentView: View {
         saveTask = Task {
             try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
             guard !Task.isCancelled else { return }
+            await performSave(note: note, content: content)
+        }
+    }
 
-			do {
-				if core.isRemote {
-					try await core.saveNoteContent(path: note.path, content: content)
-				} else if let path = absoluteNotePath(note.path) {
-					try await core.saveNoteContent(path: path, content: content)
-				}
-			} catch {
-				print("Failed to save: \(error)")
-			}
+    private func saveActionID(_ note: Note) -> String {
+        "save:\(note.path)"
+    }
+
+    private func performSave(note: Note, content: String) async {
+        await mutationTracker.run(saveActionID(note)) {
+            if core.isRemote {
+                try await core.saveNoteContent(path: note.path, content: content)
+            } else if let path = absoluteNotePath(note.path) {
+                try await core.saveNoteContent(path: path, content: content)
+            }
+        }
+    }
+
+    private func viewDeleteActionID(_ view: DbView) -> String {
+        "view-delete:\(view.id)"
+    }
+
+    private func deleteView(_ view: DbView) async {
+        let succeeded = await mutationTracker.run(viewDeleteActionID(view)) {
+            try await core.viewsDelete(id: view.id)
+        }
+        guard succeeded else { return }
+        if selectedViewID == view.id { selectedViewID = nil }
+        await fetchViews()
+    }
+
+    private func conflictActionID(note: Note, action: String) -> String {
+        "conflict:\(note.path):\(action)"
+    }
+
+    private func resolveConflict(note: Note, action: String) async {
+        let succeeded = await mutationTracker.run(conflictActionID(note: note, action: action)) {
+            try await core.resolveConflict(path: note.path, action: action)
+        }
+        guard succeeded else { return }
+        if selectedNote?.path == note.path {
+            self.selectedNote = nil
+        }
+        await fetchNotes()
+    }
+
+    private func ingestActionID(_ url: URL) -> String {
+        "ingest:\(url.path)"
+    }
+
+    private func ingestFile(_ url: URL) async {
+        let actionID = ingestActionID(url)
+        await mutationTracker.run(actionID) {
+            _ = try await core.ingest(fileURL: url)
+            // fetchNotes() is called by the watcher automatically, so we don't need to manually refresh
+        }
+        if let message = mutationTracker.failureMessage(for: actionID) {
+            ingestFailure = IngestFailure(url: url, message: message)
+            mutationTracker.clearFailure(for: actionID)
+        } else if ingestFailure?.url == url {
+            ingestFailure = nil
         }
     }
 
@@ -629,6 +715,13 @@ struct ContentView: View {
     private func isConflicted(_ note: Note) -> Bool {
         return note.path.contains(" 2.md") || note.path.contains("conflicted copy")
     }
+}
+
+// MARK: - Ingest Failure
+
+private struct IngestFailure: Equatable {
+    let url: URL
+    let message: String
 }
 
 // MARK: - Notification Permission Denied Banner

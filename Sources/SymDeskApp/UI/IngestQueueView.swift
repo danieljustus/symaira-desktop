@@ -8,6 +8,7 @@ struct IngestQueueView: View {
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
     @State private var timer: Timer? = nil
+    @StateObject private var retryTracker = AsyncActionTracker<String>()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -100,19 +101,29 @@ struct IngestQueueView: View {
         ScrollView {
             VStack(spacing: 10) {
                 ForEach(jobs) { job in
-                    JobRow(job: job) {
-                        Task {
-                            try? await core.ingestRetry(jobID: job.id)
-                            await fetchJobs()
-                        }
-                    }
+                    JobRow(
+                        job: job,
+                        isRetrying: retryTracker.isInFlight(job.id),
+                        onRetry: { Task { await retryJob(job) } }
+                    )
                     .padding(14)
                     .glassCard()
+                    .asyncActionAlert(retryTracker, id: job.id, title: "Retry Failed") {
+                        Task { await retryJob(job) }
+                    }
                 }
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 16)
         }
+    }
+
+    private func retryJob(_ job: IngestJob) async {
+        let succeeded = await retryTracker.run(job.id) {
+            try await core.ingestRetry(jobID: job.id)
+        }
+        guard succeeded else { return }
+        await fetchJobs()
     }
 
     private func fetchJobs() async {
@@ -138,6 +149,7 @@ struct IngestQueueView: View {
 
 struct JobRow: View {
     let job: IngestJob
+    let isRetrying: Bool
     let onRetry: () -> Void
 
     var body: some View {
@@ -181,9 +193,15 @@ struct JobRow: View {
 
             if job.status == "failed" {
                 Button(action: onRetry) {
-                    Text("Retry")
+                    if isRetrying {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Text("Retry")
+                    }
                 }
                 .buttonStyle(SymairaPrimaryButtonStyle())
+                .disabled(isRetrying)
             }
         }
     }

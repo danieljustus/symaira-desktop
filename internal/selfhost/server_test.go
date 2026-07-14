@@ -84,6 +84,60 @@ func TestServerAuthSnapshotAndSecureFiles(t *testing.T) {
 	response.Body.Close()
 }
 
+func TestServerRootedFilesystemRejectsEscapes(t *testing.T) {
+	vaultRoot := t.TempDir()
+	outside := t.TempDir()
+	if err := os.WriteFile(filepath.Join(outside, "secret.md"), []byte("outside"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(vaultRoot, "escape")); err != nil {
+		t.Skipf("symlinks are unavailable: %v", err)
+	}
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	httpServer := httptest.NewServer(server.Handler())
+	t.Cleanup(httpServer.Close)
+
+	for _, path := range []string{"../outside.md", "/etc/passwd", `escape\\secret.md`, ".symdesk/server/sidecar.db"} {
+		response := authorized(t, http.MethodGet, httpServer.URL+"/api/v1/files?path="+path, nil, "")
+		if response.StatusCode != http.StatusBadRequest {
+			response.Body.Close()
+			t.Fatalf("expected %q to be rejected with 400, got %d", path, response.StatusCode)
+		}
+		response.Body.Close()
+	}
+
+	response := authorized(t, http.MethodGet, httpServer.URL+"/api/v1/files?path=escape/secret.md", nil, "")
+	if response.StatusCode != http.StatusNotFound {
+		response.Body.Close()
+		t.Fatalf("expected symlink escape to be unavailable, got %d", response.StatusCode)
+	}
+	response.Body.Close()
+
+	response = authorized(t, http.MethodPut, httpServer.URL+"/api/v1/files?path=escape/new.md", strings.NewReader("outside write"), "text/markdown")
+	if response.StatusCode == http.StatusOK {
+		response.Body.Close()
+		t.Fatal("expected write through escaping symlink to fail")
+	}
+	response.Body.Close()
+	if _, err := os.Stat(filepath.Join(outside, "new.md")); !os.IsNotExist(err) {
+		t.Fatalf("write escaped the vault root: %v", err)
+	}
+
+	response = authorized(t, http.MethodPut, httpServer.URL+"/api/v1/files?path=folder/new.md", strings.NewReader("# Rooted"), "text/markdown")
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("expected valid nested write to succeed, got %d: %s", response.StatusCode, readBody(response))
+	}
+	response.Body.Close()
+	written, err := os.ReadFile(filepath.Join(vaultRoot, "folder", "new.md"))
+	if err != nil || string(written) != "# Rooted" {
+		t.Fatalf("unexpected rooted write: %q, %v", written, err)
+	}
+}
+
 func TestDistributedIngestLifecycle(t *testing.T) {
 	vaultRoot := t.TempDir()
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})

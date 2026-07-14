@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -232,9 +233,17 @@ func (s *JobStore) readLocked(id string) (*Job, error) {
 	if !validJobID(id) {
 		return nil, fmt.Errorf("invalid job id")
 	}
-	data, err := os.ReadFile(filepath.Join(s.dir, id+".json"))
+	file, err := os.OpenInRoot(s.dir, id+".json")
 	if err != nil {
 		return nil, err
+	}
+	defer file.Close()
+	data, err := io.ReadAll(io.LimitReader(file, (1<<20)+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > 1<<20 {
+		return nil, fmt.Errorf("job file exceeds 1 MiB")
 	}
 	var job Job
 	if err := json.Unmarshal(data, &job); err != nil {

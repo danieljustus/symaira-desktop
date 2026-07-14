@@ -171,8 +171,9 @@ func TestInboxWatcher_IngestsAndRemoves_Integration(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
-	// Wait up to 5 seconds for debounce and ingestion
-	deadline := time.Now().Add(5 * time.Second)
+	// Production timing includes a two-second stability window and a one-second
+	// ticker. Leave enough headroom for service ingestion under the race detector.
+	deadline := time.Now().Add(10 * time.Second)
 	success := false
 	for time.Now().Before(deadline) {
 		// Check if file is removed from watchDir

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	cryptorand "crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
@@ -11,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log/slog"
 	"mime/multipart"
 	"net/http"
@@ -47,6 +49,7 @@ type Server struct {
 	cfg          ServerConfig
 	db           *sidecar.DB
 	jobs         *JobStore
+	vaultRoot    *os.Root
 	http         *http.Server
 	mux          *http.ServeMux
 	snapshotMu   sync.Mutex
@@ -82,8 +85,14 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		db.Close()
 		return nil, err
 	}
-	s := &Server{cfg: cfg, db: db, jobs: jobs, mux: http.NewServeMux()}
+	vaultRoot, err := os.OpenRoot(cfg.VaultRoot)
+	if err != nil {
+		db.Close()
+		return nil, fmt.Errorf("open vault root: %w", err)
+	}
+	s := &Server{cfg: cfg, db: db, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux()}
 	if err := s.refreshIndex(); err != nil {
+		vaultRoot.Close()
 		db.Close()
 		return nil, fmt.Errorf("index vault: %w", err)
 	}
@@ -97,7 +106,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	return s, nil
 }
 
-func (s *Server) Close() error { return s.db.Close() }
+func (s *Server) Close() error { return errors.Join(s.vaultRoot.Close(), s.db.Close()) }
 
 func (s *Server) ListenAndServe() error {
 	slog.Info("SymDesk server listening", "address", s.cfg.ListenAddress, "vault", s.cfg.VaultRoot)
@@ -255,23 +264,33 @@ func (s *Server) snapshotPayload() ([]byte, []byte, string, error) {
 }
 
 func (s *Server) handleGetFile(w http.ResponseWriter, r *http.Request) {
-	path, err := s.resolveRequestPath(r.URL.Query().Get("path"))
+	rel, err := resolveRequestPath(r.URL.Query().Get("path"))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	info, err := os.Stat(path)
+	s.serveVaultFile(w, r, rel, "inline", filepath.Base(rel))
+}
+
+func (s *Server) serveVaultFile(w http.ResponseWriter, r *http.Request, rel, disposition, filename string) {
+	file, err := s.vaultRoot.Open(rel)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "file not found")
+		return
+	}
+	defer file.Close()
+	info, err := file.Stat()
 	if err != nil || !info.Mode().IsRegular() {
 		writeError(w, http.StatusNotFound, "file not found")
 		return
 	}
-	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%q", filepath.Base(path)))
-	http.ServeFile(w, r, path)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("%s; filename=%q", disposition, safeFilename(filename)))
+	http.ServeContent(w, r, filepath.Base(rel), info.ModTime(), file)
 }
 
 func (s *Server) handlePutFile(w http.ResponseWriter, r *http.Request) {
-	path, err := s.resolveRequestPath(r.URL.Query().Get("path"))
-	if err != nil || strings.ToLower(filepath.Ext(path)) != ".md" {
+	rel, err := resolveRequestPath(r.URL.Query().Get("path"))
+	if err != nil || strings.ToLower(filepath.Ext(rel)) != ".md" {
 		writeError(w, http.StatusBadRequest, "only vault-relative Markdown files can be updated")
 		return
 	}
@@ -280,11 +299,15 @@ func (s *Server) handlePutFile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusRequestEntityTooLarge, err.Error())
 		return
 	}
-	if err := atomicWrite(path, data, 0644); err != nil {
+	if err := s.vaultRoot.MkdirAll(filepath.Dir(rel), 0750); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	doc, err := vault.ParseFile(path)
+	if err := atomicWrite(s.vaultRoot, rel, data, 0644); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	doc, err := vault.ParseBytes(filepath.Join(s.cfg.VaultRoot, rel), data)
 	if err == nil {
 		err = s.db.IndexDocument(doc)
 	}
@@ -314,23 +337,22 @@ func (s *Server) handleIngest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name := safeFilename(header.Filename)
-	rel := filepath.ToSlash(filepath.Join("archive", time.Now().UTC().Format("2006/01"), id+"-"+name))
-	path, err := vault.SecurePath(s.cfg.VaultRoot, rel)
+	rel, err := resolveRequestPath(filepath.ToSlash(filepath.Join("archive", time.Now().UTC().Format("2006/01"), id+"-"+name)))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
+	if err := s.vaultRoot.MkdirAll(filepath.Dir(rel), 0750); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	if err := writeUpload(path, file); err != nil {
+	if err := writeUpload(s.vaultRoot, rel, file); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	job, err := s.jobs.Create(rel, name, header.Header.Get("Content-Type"))
 	if err != nil {
-		os.Remove(path)
+		s.vaultRoot.Remove(rel)
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -431,13 +453,12 @@ func (s *Server) handleWorkerInput(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "job not found")
 		return
 	}
-	path, err := s.resolveRequestPath(job.SourcePath)
+	rel, err := resolveRequestPath(job.SourcePath)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", job.OriginalName))
-	http.ServeFile(w, r, path)
+	s.serveVaultFile(w, r, rel, "attachment", job.OriginalName)
 }
 
 type completionRequest struct {
@@ -508,12 +529,11 @@ func (s *Server) writeCompletedNote(job *Job, result completionRequest) (string,
 	if base == "" {
 		base = "Document"
 	}
-	rel := filepath.ToSlash(filepath.Join("inbox", base+"-"+job.ID[:8]+".md"))
-	path, err := vault.SecurePath(s.cfg.VaultRoot, rel)
+	rel, err := resolveRequestPath(filepath.ToSlash(filepath.Join("inbox", base+"-"+job.ID[:8]+".md")))
 	if err != nil {
 		return "", err
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
+	if err := s.vaultRoot.MkdirAll(filepath.Dir(rel), 0750); err != nil {
 		return "", err
 	}
 	fm := map[string]any{
@@ -526,10 +546,11 @@ func (s *Server) writeCompletedNote(job *Job, result completionRequest) (string,
 		return "", err
 	}
 	body := fmt.Sprintf("---\n%s---\n\n![[%s]]\n\n## OCR text\n\n%s\n", frontmatter, filepath.ToSlash(job.SourcePath), strings.TrimSpace(result.Text))
-	if err := atomicWrite(path, []byte(body), 0644); err != nil {
+	content := []byte(body)
+	if err := atomicWrite(s.vaultRoot, rel, content, 0644); err != nil {
 		return "", err
 	}
-	doc, err := vault.ParseFile(path)
+	doc, err := vault.ParseBytes(filepath.Join(s.cfg.VaultRoot, rel), content)
 	if err != nil {
 		return "", err
 	}
@@ -539,11 +560,19 @@ func (s *Server) writeCompletedNote(job *Job, result completionRequest) (string,
 	return rel, nil
 }
 
-func (s *Server) resolveRequestPath(rel string) (string, error) {
-	if rel == "" || filepath.IsAbs(rel) || strings.ContainsRune(rel, '\x00') {
+func resolveRequestPath(rel string) (string, error) {
+	if rel == "" || strings.ContainsAny(rel, "\\\x00") || !fs.ValidPath(rel) {
 		return "", fmt.Errorf("a vault-relative path is required")
 	}
-	return vault.SecurePath(s.cfg.VaultRoot, filepath.FromSlash(rel))
+	localized, err := filepath.Localize(rel)
+	if err != nil || !filepath.IsLocal(localized) {
+		return "", fmt.Errorf("a vault-relative path is required")
+	}
+	internal := ".symdesk"
+	if localized == internal || strings.HasPrefix(localized, internal+string(filepath.Separator)) {
+		return "", fmt.Errorf("internal server files are not available through the document API")
+	}
+	return localized, nil
 }
 
 func (s *Server) refreshIndex() error {
@@ -630,13 +659,12 @@ func safeFilename(name string) string {
 	return name
 }
 
-func writeUpload(path string, src multipart.File) error {
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".upload-*.tmp")
+func writeUpload(root *os.Root, path string, src multipart.File) error {
+	tmp, tmpName, err := createRootTemp(root, filepath.Dir(path), ".upload-")
 	if err != nil {
 		return err
 	}
-	name := tmp.Name()
-	defer os.Remove(name)
+	defer root.Remove(tmpName)
 	if err := tmp.Chmod(0640); err != nil {
 		tmp.Close()
 		return err
@@ -656,16 +684,15 @@ func writeUpload(path string, src multipart.File) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	return os.Rename(name, path)
+	return root.Rename(tmpName, path)
 }
 
-func atomicWrite(path string, data []byte, mode os.FileMode) error {
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".write-*.tmp")
+func atomicWrite(root *os.Root, path string, data []byte, mode os.FileMode) error {
+	tmp, tmpName, err := createRootTemp(root, filepath.Dir(path), ".write-")
 	if err != nil {
 		return err
 	}
-	name := tmp.Name()
-	defer os.Remove(name)
+	defer root.Remove(tmpName)
 	if err := tmp.Chmod(mode); err != nil {
 		tmp.Close()
 		return err
@@ -681,7 +708,23 @@ func atomicWrite(path string, data []byte, mode os.FileMode) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	return os.Rename(name, path)
+	return root.Rename(tmpName, path)
+}
+
+func createRootTemp(root *os.Root, dir, prefix string) (*os.File, string, error) {
+	for range 100 {
+		random := make([]byte, 12)
+		if _, err := cryptorand.Read(random); err != nil {
+			return nil, "", err
+		}
+		name := filepath.Join(dir, prefix+hex.EncodeToString(random)+".tmp")
+		file, err := root.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+		if errors.Is(err, fs.ErrExist) {
+			continue
+		}
+		return file, name, err
+	}
+	return nil, "", fmt.Errorf("create temporary file: too many collisions")
 }
 
 func readLimited(reader io.Reader, limit int64) ([]byte, error) {

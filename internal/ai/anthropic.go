@@ -10,13 +10,15 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/config"
 )
 
 var jsonMarshal = json.Marshal
 
 func streamAnthropic(ctx context.Context, apiKey, model, prompt string, out chan<- AskChunk) error {
 	if model == "" {
-		model = "claude-3-5-sonnet-20240620"
+		model = config.DefaultAnthropicModel
 	}
 
 	payload := map[string]interface{}{
@@ -63,6 +65,7 @@ func streamAnthropic(ctx context.Context, apiKey, model, prompt string, out chan
 	}
 
 	scanner := bufio.NewScanner(resp.Body)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if !strings.HasPrefix(line, "data: ") {

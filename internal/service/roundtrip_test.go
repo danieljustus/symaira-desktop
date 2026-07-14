@@ -86,6 +86,57 @@ func TestRoundtrip(t *testing.T) {
 	}
 }
 
+// TestLsPopulatesEmptySidecarFromExistingVaultFiles covers Ls's lazy
+// bootstrap path (service.go, "A per-vault sidecar may be new after an
+// upgrade"): a fresh, empty sidecar over a vault that already has Markdown
+// files on disk must still index them before Ls returns, now that this
+// delegates to sidecar.DB.RefreshIndex's stat-based fast path (issue #180).
+func TestLsPopulatesEmptySidecarFromExistingVaultFiles(t *testing.T) {
+	vaultPath, err := filepath.Abs("testdata/vault_bootstrap")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = os.RemoveAll(vaultPath)
+	_ = os.MkdirAll(vaultPath, 0755)
+	t.Cleanup(func() { _ = os.RemoveAll(vaultPath) })
+
+	if err := os.WriteFile(filepath.Join(vaultPath, "Existing.md"), []byte("---\ntitle: Existing\n---\nBody"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	dbPath := filepath.Join(vaultPath, "sidecar.db")
+	db, err := sidecar.Open(dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	svc := New(vaultPath, db)
+
+	ls, err := svc.Ls("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, l := range ls {
+		if l["path"] == "Existing.md" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected Ls to lazily index pre-existing vault files, got %v", ls)
+	}
+
+	// A second Ls call must keep returning the same result without error.
+	ls2, err := svc.Ls("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ls2) != len(ls) {
+		t.Fatalf("expected stable ls results, got %v then %v", ls, ls2)
+	}
+}
+
 func TestEventsStress(t *testing.T) {
 	// A simple test to simulate writing 1000 files
 	vaultPath, err := filepath.Abs("testdata/vault_stress")

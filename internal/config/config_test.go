@@ -99,6 +99,7 @@ func TestLoadFromPathEnvOverrideLLMSettings(t *testing.T) {
 	path := filepath.Join(dir, "config.toml")
 	content := `llm_provider = "ollama"
 llm_api_key = "file-key"
+llm_model = "file-model"
 `
 	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
@@ -106,6 +107,7 @@ llm_api_key = "file-key"
 
 	t.Setenv("SYMDESK_LLM_PROVIDER", "anthropic")
 	t.Setenv("SYMDESK_LLM_API_KEY", "env-key")
+	t.Setenv("SYMDESK_LLM_MODEL", "env-model")
 
 	cfg, err := LoadFromPath(path)
 	if err != nil {
@@ -117,6 +119,9 @@ llm_api_key = "file-key"
 	if cfg.LLMAPIKey != "env-key" {
 		t.Errorf("expected env API key 'env-key' to override the file value, got %q", cfg.LLMAPIKey)
 	}
+	if cfg.LLMModel != "env-model" {
+		t.Errorf("expected env model 'env-model' to override the file value, got %q", cfg.LLMModel)
+	}
 }
 
 func TestLoadFromPathEnvOverrideLLMSettingsWithoutFile(t *testing.T) {
@@ -125,13 +130,39 @@ func TestLoadFromPathEnvOverrideLLMSettingsWithoutFile(t *testing.T) {
 
 	t.Setenv("SYMDESK_LLM_PROVIDER", "anthropic")
 	t.Setenv("SYMDESK_LLM_API_KEY", "env-key")
+	t.Setenv("SYMDESK_LLM_MODEL", "env-model")
 
 	cfg, err := LoadFromPath(path)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if cfg.LLMProvider != "anthropic" || cfg.LLMAPIKey != "env-key" {
-		t.Errorf("expected env LLM settings to apply even without a config file, got provider=%q key=%q", cfg.LLMProvider, cfg.LLMAPIKey)
+	if cfg.LLMProvider != "anthropic" || cfg.LLMAPIKey != "env-key" || cfg.LLMModel != "env-model" {
+		t.Errorf("expected env LLM settings to apply even without a config file, got provider=%q key=%q model=%q", cfg.LLMProvider, cfg.LLMAPIKey, cfg.LLMModel)
+	}
+}
+
+func TestLoadFromPathLLMModelFromTOML(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.toml")
+	content := `llm_model = "claude-opus-4-8"
+`
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := LoadFromPath(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.LLMModel != "claude-opus-4-8" {
+		t.Errorf("expected llm_model from file 'claude-opus-4-8', got %q", cfg.LLMModel)
+	}
+}
+
+func TestDefaultConfigLLMModel(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.LLMModel != DefaultAnthropicModel {
+		t.Errorf("expected default LLMModel %q, got %q", DefaultAnthropicModel, cfg.LLMModel)
 	}
 }
 

@@ -786,6 +786,190 @@ func TestSearchPlanExactTagMatching(t *testing.T) {
 	}
 }
 
+// --- RefreshIndex stat-based fast path tests (issue #180) ---
+
+// fileIndexedAt reads the raw indexed_at column for path so tests can detect
+// whether a full IndexDocument ran (indexed_at changes) versus the
+// stat-based fast path skipping the file entirely (indexed_at unchanged).
+func fileIndexedAt(t *testing.T, db *DB, path string) string {
+	t.Helper()
+	var indexedAt string
+	if err := db.conn.QueryRow("SELECT indexed_at FROM files WHERE path = ?", path).Scan(&indexedAt); err != nil {
+		t.Fatalf("query indexed_at for %s: %v", path, err)
+	}
+	return indexedAt
+}
+
+// TestRefreshIndexSkipsUnchangedFilesWithoutReadingThem is the strongest
+// available proof that a warm RefreshIndex never performs a full read/hash
+// of an unchanged file: it revokes read permission on the file after the
+// first index. os.Stat (the fast path's only filesystem call) needs no read
+// access to the file itself, so if the second RefreshIndex call still
+// succeeds without touching the file's indexed_at, it could not have gone
+// through vault.ParseFile.
+func TestRefreshIndexSkipsUnchangedFilesWithoutReadingThem(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("running as root bypasses file permission checks")
+	}
+	vaultRoot := t.TempDir()
+	path := filepath.Join(vaultRoot, "Note.md")
+	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\nBody"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	db := setupTestDB(t)
+
+	if err := db.RefreshIndex(vaultRoot); err != nil {
+		t.Fatalf("initial RefreshIndex failed: %v", err)
+	}
+	firstIndexedAt := fileIndexedAt(t, db, path)
+
+	if err := os.Chmod(path, 0000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(path, 0644) })
+
+	if err := db.RefreshIndex(vaultRoot); err != nil {
+		t.Fatalf("expected warm refresh to skip the unreadable-but-unchanged file, got: %v", err)
+	}
+	if got := fileIndexedAt(t, db, path); got != firstIndexedAt {
+		t.Fatalf("expected indexed_at to stay %q on a no-op warm refresh, got %q", firstIndexedAt, got)
+	}
+}
+
+// TestRefreshIndexReindexesFilesChangedSinceLastRun covers a file that
+// changed on disk between two RefreshIndex calls (e.g. edited while the
+// server process was down): the differing size/mtime must not be skipped.
+func TestRefreshIndexReindexesFilesChangedSinceLastRun(t *testing.T) {
+	vaultRoot := t.TempDir()
+	path := filepath.Join(vaultRoot, "Note.md")
+	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\noriginal content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	db := setupTestDB(t)
+	if err := db.RefreshIndex(vaultRoot); err != nil {
+		t.Fatal(err)
+	}
+	if results, err := db.Search("original"); err != nil || len(results) != 1 {
+		t.Fatalf("expected original content indexed, results=%v err=%v", results, err)
+	}
+
+	future := time.Now().Add(2 * time.Second)
+	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\nreplaced content, much longer than before"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(path, future, future); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.RefreshIndex(vaultRoot); err != nil {
+		t.Fatal(err)
+	}
+	if results, err := db.Search("replaced"); err != nil || len(results) != 1 {
+		t.Fatalf("expected new content indexed after refresh, results=%v err=%v", results, err)
+	}
+	if results, err := db.Search("original"); err != nil || len(results) != 0 {
+		t.Fatalf("expected stale content gone after refresh, results=%v err=%v", results, err)
+	}
+}
+
+// TestRefreshIndexCatchesSameSizeEditByMtime covers the ambiguous case
+// called out by issue #180: a same-size edit. If the fast path trusted size
+// alone it would wrongly skip this file, since only the mtime differs.
+func TestRefreshIndexCatchesSameSizeEditByMtime(t *testing.T) {
+	vaultRoot := t.TempDir()
+	path := filepath.Join(vaultRoot, "Note.md")
+	original := []byte("---\ntitle: Note\n---\nAAAA")
+	if err := os.WriteFile(path, original, 0644); err != nil {
+		t.Fatal(err)
+	}
+	db := setupTestDB(t)
+	if err := db.RefreshIndex(vaultRoot); err != nil {
+		t.Fatal(err)
+	}
+	if results, err := db.Search("AAAA"); err != nil || len(results) != 1 {
+		t.Fatalf("expected original content indexed, results=%v err=%v", results, err)
+	}
+
+	edited := []byte("---\ntitle: Note\n---\nBBBB")
+	if len(edited) != len(original) {
+		t.Fatalf("test setup invariant broken: edited length %d != original length %d", len(edited), len(original))
+	}
+	if err := os.WriteFile(path, edited, 0644); err != nil {
+		t.Fatal(err)
+	}
+	// Force a clearly different, deterministic mtime instead of relying on
+	// filesystem timestamp resolution to have advanced between writes.
+	future := time.Now().Add(5 * time.Second)
+	if err := os.Chtimes(path, future, future); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.RefreshIndex(vaultRoot); err != nil {
+		t.Fatal(err)
+	}
+	if results, err := db.Search("BBBB"); err != nil || len(results) != 1 {
+		t.Fatalf("expected same-size edit to be re-indexed, results=%v err=%v", results, err)
+	}
+	if results, err := db.Search("AAAA"); err != nil || len(results) != 0 {
+		t.Fatalf("expected stale content gone after same-size edit, results=%v err=%v", results, err)
+	}
+}
+
+// TestRefreshIndexBackfillsStatWhenPreviouslyIndexedWithoutIt covers a row
+// indexed via IndexDocument directly from already-read bytes (as
+// handlePutFile / writeCompletedNote do), which never stats the file and so
+// has no cached mtime. The first RefreshIndex after that must fall back to
+// the hash check (finding the content unchanged), then backfill the stat
+// cache so a later refresh can use the fast path.
+func TestRefreshIndexBackfillsStatWhenPreviouslyIndexedWithoutIt(t *testing.T) {
+	vaultRoot := t.TempDir()
+	path := filepath.Join(vaultRoot, "Note.md")
+	content := []byte("---\ntitle: Note\n---\nBody")
+	if err := os.WriteFile(path, content, 0644); err != nil {
+		t.Fatal(err)
+	}
+	db := setupTestDB(t)
+
+	doc, err := vault.ParseBytes(path, content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.IndexDocument(doc); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok, err := db.StatCache(path); err != nil {
+		t.Fatal(err)
+	} else if ok {
+		t.Fatal("expected no usable stat cache before any RefreshIndex has stat'd the file")
+	}
+
+	if err := db.RefreshIndex(vaultRoot); err != nil {
+		t.Fatal(err)
+	}
+	cached, ok, err := db.StatCache(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("expected RefreshIndex to backfill the stat cache")
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cached.Size != info.Size() || cached.ModTime != info.ModTime().UnixNano() {
+		t.Fatalf("backfilled stat cache does not match disk: cached=%+v size=%d mtime=%d", cached, info.Size(), info.ModTime().UnixNano())
+	}
+
+	beforeSecond := fileIndexedAt(t, db, path)
+	if err := db.RefreshIndex(vaultRoot); err != nil {
+		t.Fatal(err)
+	}
+	if after := fileIndexedAt(t, db, path); after != beforeSecond {
+		t.Fatalf("expected fast path on second refresh, indexed_at changed %q -> %q", beforeSecond, after)
+	}
+}
+
 // --- Error-path tests for sidecar.Open (coverage target: db.go:29-49) ---
 
 func TestOpen_DefaultPathResolution(t *testing.T) {

@@ -12,6 +12,10 @@ import (
 
 const defaultReviewThreshold = 85
 
+// DefaultAnthropicModel is the Anthropic model used when no explicit model
+// is configured via llm_model / SYMDESK_LLM_MODEL.
+const DefaultAnthropicModel = "claude-sonnet-5"
+
 // Default retention for the version-history and trash safety net.
 const (
 	defaultHistoryMaxPerFile  = 20
@@ -25,6 +29,7 @@ type Config struct {
 	ReviewThreshold int    `toml:"review_threshold" env:"SYMDESK_REVIEW_THRESHOLD"`
 	LLMProvider     string `toml:"llm_provider" env:"SYMDESK_LLM_PROVIDER"`
 	LLMAPIKey       string `toml:"llm_api_key" env:"SYMDESK_LLM_API_KEY"`
+	LLMModel        string `toml:"llm_model" env:"SYMDESK_LLM_MODEL"`
 
 	// HistoryMaxPerFile is the maximum number of snapshots kept per file
 	// when pruning (0 = unlimited).
@@ -44,6 +49,7 @@ func DefaultConfig() *Config {
 		ReviewThreshold: defaultReviewThreshold,
 		LLMProvider:     "ollama",
 		LLMAPIKey:       "",
+		LLMModel:        DefaultAnthropicModel,
 
 		HistoryMaxPerFile:  defaultHistoryMaxPerFile,
 		HistoryMaxAgeDays:  defaultHistoryMaxAgeDays,
@@ -74,6 +80,9 @@ func applyEnvOverrides(cfg *Config) {
 	}
 	if envKey := os.Getenv("SYMDESK_LLM_API_KEY"); envKey != "" {
 		cfg.LLMAPIKey = envKey
+	}
+	if envModel := os.Getenv("SYMDESK_LLM_MODEL"); envModel != "" {
+		cfg.LLMModel = envModel
 	}
 	for _, ev := range []struct {
 		name   string

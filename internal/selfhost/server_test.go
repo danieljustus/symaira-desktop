@@ -85,6 +85,51 @@ func TestServerAuthSnapshotAndSecureFiles(t *testing.T) {
 	response.Body.Close()
 }
 
+// TestServerRestartReindexesCorrectlyFromAWarmSidecar exercises server.go's
+// refreshIndex (now delegating to sidecar.DB.RefreshIndex, see issue #180)
+// across a full server restart against the same vault: the second NewServer
+// call reopens the same sidecar.db under VaultRoot/.symdesk and must still
+// find the previously indexed note, whether the stat-based fast path skips
+// it or falls back to a full parse. Detailed coverage of the fast path
+// itself (skip on unchanged, re-index on change, same-size edits) lives in
+// internal/sidecar's RefreshIndex tests.
+func TestServerRestartReindexesCorrectlyFromAWarmSidecar(t *testing.T) {
+	vaultRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := server.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	restarted, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatalf("restart failed: %v", err)
+	}
+	t.Cleanup(func() { _ = restarted.Close() })
+
+	httpServer := httptest.NewServer(restarted.Handler())
+	t.Cleanup(httpServer.Close)
+	response := authorized(t, http.MethodGet, httpServer.URL+"/api/v1/snapshot", nil, "")
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("snapshot after restart returned %d", response.StatusCode)
+	}
+	var snapshot struct {
+		Notes []snapshotNote `json:"notes"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&snapshot); err != nil {
+		t.Fatal(err)
+	}
+	response.Body.Close()
+	if len(snapshot.Notes) != 1 || snapshot.Notes[0].Path != "Hello.md" {
+		t.Fatalf("unexpected snapshot after restart: %+v", snapshot)
+	}
+}
+
 func TestSnapshotSkipsRescanWhenVaultUnchanged(t *testing.T) {
 	vaultRoot := t.TempDir()
 	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
@@ -386,6 +431,81 @@ func TestHandleCommandStreamTruncatesOversizedOutput(t *testing.T) {
 	last := lines[len(lines)-1]
 	if !strings.Contains(last, `"type":"error"`) || !strings.Contains(last, "32 MiB") {
 		t.Fatalf("expected a trailing bounded-error NDJSON line, got: %s", last)
+	}
+}
+
+// TestHandleCommandScrubsServerTokensFromSubprocessEnv guards against
+// SYMDESK_SERVER_TOKEN/SYMDESK_WORKER_TOKEN leaking into the environment of
+// a remotely spawned symdesk subprocess (issue #175): a future command that
+// echoes its environment (e.g. a diagnostics extension of `doctor`) must not
+// be able to hand server credentials back to an authenticated remote client.
+func TestHandleCommandScrubsServerTokensFromSubprocessEnv(t *testing.T) {
+	if _, err := os.Stat("/bin/sh"); err != nil {
+		t.Skip("/bin/sh unavailable")
+	}
+	t.Setenv("SYMDESK_SERVER_TOKEN", "leaked-server-token-0123456789")
+	t.Setenv("SYMDESK_WORKER_TOKEN", "leaked-worker-token-0123456789")
+	script := fakeSymdeskScript(t, "env\n")
+	vaultRoot := t.TempDir()
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: script})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	httpServer := httptest.NewServer(server.Handler())
+	t.Cleanup(httpServer.Close)
+
+	body, err := json.Marshal(commandRequest{Arguments: []string{"ls"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := authorized(t, http.MethodPost, httpServer.URL+"/api/v1/command", bytes.NewReader(body), "application/json")
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("command returned %d: %s", response.StatusCode, readBody(response))
+	}
+	output := readBody(response)
+	if strings.Contains(output, "leaked-server-token-0123456789") {
+		t.Fatalf("SYMDESK_SERVER_TOKEN leaked into subprocess environment: %s", output)
+	}
+	if strings.Contains(output, "leaked-worker-token-0123456789") {
+		t.Fatalf("SYMDESK_WORKER_TOKEN leaked into subprocess environment: %s", output)
+	}
+	if !strings.Contains(output, "SYMDESK_SIDECAR=") {
+		t.Fatalf("expected SYMDESK_SIDECAR to be set in subprocess environment: %s", output)
+	}
+	if !strings.Contains(output, "PATH=") {
+		t.Fatalf("expected the subprocess to still inherit PATH: %s", output)
+	}
+}
+
+func TestSubprocessEnvExcludesTokensAndKeepsSidecar(t *testing.T) {
+	t.Setenv("SYMDESK_SERVER_TOKEN", "leaked-server-token-0123456789")
+	t.Setenv("SYMDESK_WORKER_TOKEN", "leaked-worker-token-0123456789")
+	t.Setenv("SYMDESK_LLM_PROVIDER", "anthropic")
+
+	server := &Server{cfg: ServerConfig{VaultRoot: t.TempDir()}}
+	env := server.subprocessEnv()
+
+	for _, kv := range env {
+		name, _, _ := strings.Cut(kv, "=")
+		if name == "SYMDESK_SERVER_TOKEN" || name == "SYMDESK_WORKER_TOKEN" {
+			t.Fatalf("expected %s to be excluded from subprocess environment, got %v", name, env)
+		}
+	}
+	var sawSidecar, sawProvider bool
+	for _, kv := range env {
+		if strings.HasPrefix(kv, "SYMDESK_SIDECAR=") {
+			sawSidecar = true
+		}
+		if kv == "SYMDESK_LLM_PROVIDER=anthropic" {
+			sawProvider = true
+		}
+	}
+	if !sawSidecar {
+		t.Fatalf("expected SYMDESK_SIDECAR to be present: %v", env)
+	}
+	if !sawProvider {
+		t.Fatalf("expected unrelated env vars such as SYMDESK_LLM_PROVIDER to pass through: %v", env)
 	}
 }
 

@@ -267,7 +267,7 @@ func newAskTool(getService serviceFactory) *mcpserver.Tool {
 				return nil, err
 			}
 			defer db.Close()
-			answer, err := svc.AskText(args.Query)
+			answer, err := svc.AskText(ctx, args.Query)
 			if err != nil {
 				return nil, err
 			}
@@ -300,7 +300,7 @@ func newTransformTool() *mcpserver.Tool {
 			}
 
 			chunks := make(chan ai.AskChunk)
-			go ai.Transform(args.Text, args.Intent, chunks)
+			go ai.Transform(ctx, args.Text, args.Intent, chunks)
 			var b strings.Builder
 			for c := range chunks {
 				b.WriteString(c.Chunk)

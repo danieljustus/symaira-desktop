@@ -5,6 +5,10 @@ services:
     restart: unless-stopped
     environment:
       SYMDESK_SERVER_TOKEN: ${SYMDESK_SERVER_TOKEN:?set a random token with at least 32 characters}
+      # Optional: a separate credential that only authorizes the OCR worker
+      # routes (lease/download/complete/fail). Leave unset to keep workers
+      # using SYMDESK_SERVER_TOKEN during migration.
+      SYMDESK_WORKER_TOKEN: ${SYMDESK_WORKER_TOKEN:-}
     ports:
       - "8787:8787"
     volumes:
@@ -29,7 +33,9 @@ services:
       - --engine
       - tesseract
     environment:
-      SYMDESK_SERVER_TOKEN: ${SYMDESK_SERVER_TOKEN:?set a random token with at least 32 characters}
+      # Prefers the worker-scoped credential; falls back to the admin/client
+      # token for deployments that have not set SYMDESK_WORKER_TOKEN yet.
+      SYMDESK_SERVER_TOKEN: ${SYMDESK_WORKER_TOKEN:-$SYMDESK_SERVER_TOKEN}
       SYMDESK_OCR_LANGUAGE: ${SYMDESK_OCR_LANGUAGE:-deu+eng}
     security_opt:
       - no-new-privileges:true

@@ -17,7 +17,7 @@ import (
 )
 
 func newServeCmd() *cobra.Command {
-	var listen, token, tlsCert, tlsKey string
+	var listen, token, workerToken, tlsCert, tlsKey string
 	var localWorker bool
 	var workerEngine, ollamaURL, ollamaModel, language string
 	cmd := &cobra.Command{
@@ -27,6 +27,9 @@ func newServeCmd() *cobra.Command {
 			ha := readHomeAssistantOptions()
 			if token == "" {
 				token = ha.ServerToken
+			}
+			if workerToken == "" {
+				workerToken = ha.WorkerToken
 			}
 			if ha.Listen != "" && !cmd.Flags().Changed("listen") {
 				listen = ha.Listen
@@ -54,7 +57,7 @@ func newServeCmd() *cobra.Command {
 				return err
 			}
 			server, err := selfhost.NewServer(selfhost.ServerConfig{
-				ListenAddress: listen, VaultRoot: root, Token: token, Version: version,
+				ListenAddress: listen, VaultRoot: root, Token: token, WorkerToken: workerToken, Version: version,
 				TLSCert: tlsCert, TLSKey: tlsKey,
 			})
 			if err != nil {
@@ -67,8 +70,12 @@ func newServeCmd() *cobra.Command {
 			errCh := make(chan error, 1)
 			go func() { errCh <- server.ListenAndServe() }()
 			if localWorker {
+				localWorkerToken := workerToken
+				if localWorkerToken == "" {
+					localWorkerToken = token
+				}
 				worker, workerErr := selfhost.NewWorker(selfhost.WorkerConfig{
-					ServerURL: "http://127.0.0.1:" + portFromListen(listen), Token: token,
+					ServerURL: "http://127.0.0.1:" + portFromListen(listen), Token: localWorkerToken,
 					WorkerID: "server-local-worker", Engine: workerEngine, OllamaURL: ollamaURL,
 					OllamaModel: ollamaModel, OCRLanguage: language, PollEvery: 5 * time.Second,
 				})
@@ -95,7 +102,8 @@ func newServeCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&listen, "listen", envOr("SYMDESK_SERVER_LISTEN", "127.0.0.1:8787"), "listen address")
-	cmd.Flags().StringVar(&token, "token", os.Getenv("SYMDESK_SERVER_TOKEN"), "bearer token (or SYMDESK_SERVER_TOKEN; minimum 32 characters)")
+	cmd.Flags().StringVar(&token, "token", os.Getenv("SYMDESK_SERVER_TOKEN"), "admin/client bearer token (or SYMDESK_SERVER_TOKEN; minimum 32 characters)")
+	cmd.Flags().StringVar(&workerToken, "worker-token", os.Getenv("SYMDESK_WORKER_TOKEN"), "separate bearer token scoped to worker routes only (or SYMDESK_WORKER_TOKEN; minimum 32 characters). When unset, workers must use --token instead")
 	cmd.Flags().StringVar(&tlsCert, "tls-cert", os.Getenv("SYMDESK_TLS_CERT"), "TLS certificate path")
 	cmd.Flags().StringVar(&tlsKey, "tls-key", os.Getenv("SYMDESK_TLS_KEY"), "TLS private-key path")
 	cmd.Flags().BoolVar(&localWorker, "local-worker", false, "process OCR jobs inside the server container")
@@ -151,6 +159,7 @@ func envOr(key, fallback string) string {
 
 type homeAssistantOptions struct {
 	ServerToken     string `json:"server_token"`
+	WorkerToken     string `json:"worker_token"`
 	Listen          string `json:"listen"`
 	Vault           string `json:"vault"`
 	LocalProcessing bool   `json:"local_processing"`

@@ -90,6 +90,14 @@ public struct AIEvent: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
+/// A bounded-error NDJSON line the server appends to a streaming
+/// `/api/v1/command` response when the subprocess fails or its output
+/// exceeded the size limit — see `internal/selfhost.streamCommand`.
+private struct RemoteStreamError: Codable, Sendable {
+    let type: String
+    let message: String
+}
+
 public struct DbFilter: Codable, Equatable, Sendable {
     public let key: String
     public let operatorString: String
@@ -746,9 +754,11 @@ public final class DeskCore: ObservableObject {
         return AsyncThrowingStream { continuation in
             Task {
                 do {
-					if self.remoteClient != nil {
-						let data = try await self.runChecked(arguments: ["ask", query, "--json"])
-						for line in String(decoding: data, as: UTF8.self).split(separator: "\n") {
+					if let remoteClient = self.remoteClient {
+						for try await line in remoteClient.commandStream(arguments: ["ask", query, "--json"]) {
+							if let streamError = try? JSONDecoder().decode(RemoteStreamError.self, from: Data(line.utf8)), streamError.type == "error" {
+								throw ServerConnectionError.server(status: 0, message: streamError.message)
+							}
 							if let event = try? JSONDecoder().decode(AIEvent.self, from: Data(line.utf8)) {
 								continuation.yield(event)
 							}
@@ -789,10 +799,12 @@ public final class DeskCore: ObservableObject {
         return AsyncThrowingStream { continuation in
             Task {
                 do {
-					if self.remoteClient != nil {
-						let data = try await self.runChecked(arguments: ["transform", intent, "--json"], stdin: text)
+					if let remoteClient = self.remoteClient {
 						struct RemoteChunk: Codable, Sendable { let chunk: String }
-						for line in String(decoding: data, as: UTF8.self).split(separator: "\n") {
+						for try await line in remoteClient.commandStream(arguments: ["transform", intent, "--json"], stdin: text) {
+							if let streamError = try? JSONDecoder().decode(RemoteStreamError.self, from: Data(line.utf8)), streamError.type == "error" {
+								throw ServerConnectionError.server(status: 0, message: streamError.message)
+							}
 							if let chunk = try? JSONDecoder().decode(RemoteChunk.self, from: Data(line.utf8)) {
 								continuation.yield(chunk.chunk)
 							}

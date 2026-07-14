@@ -19,6 +19,7 @@ ports_description:
   8787/tcp: SymDesk API
 options:
   server_token: null
+  worker_token: null
   listen: 0.0.0.0:8787
   vault: /data/vault
   local_processing: false
@@ -27,6 +28,7 @@ options:
   ollama_model: ""
 schema:
   server_token: password
+  worker_token: password?
   listen: str
   vault: str
   local_processing: bool

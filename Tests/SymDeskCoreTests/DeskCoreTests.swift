@@ -513,4 +513,75 @@ final class DeskCoreTests: XCTestCase {
 		XCTAssertEqual(remoteJob.id, "abcdef")
 		XCTAssertEqual(remoteJob.kind, "ocr")
 	}
+
+	func testCommandStreamYieldsLinesAsTheyArrive() async throws {
+		MockStreamingURLProtocol.statusCode = 200
+		MockStreamingURLProtocol.responseLines = [
+			#"{"type":"answer","text":"first"}"#,
+			#"{"type":"done"}"#,
+		]
+		let client = makeMockStreamingClient()
+
+		var lines: [String] = []
+		for try await line in client.commandStream(arguments: ["ask", "hi", "--json"]) {
+			lines.append(line)
+		}
+		XCTAssertEqual(lines, MockStreamingURLProtocol.responseLines)
+	}
+
+	func testCommandStreamThrowsOnServerErrorStatus() async throws {
+		MockStreamingURLProtocol.statusCode = 500
+		MockStreamingURLProtocol.responseLines = []
+		MockStreamingURLProtocol.errorBody = #"{"error":"boom"}"#
+		let client = makeMockStreamingClient()
+
+		do {
+			for try await _ in client.commandStream(arguments: ["ask", "hi", "--json"]) {}
+			XCTFail("expected commandStream to throw for a non-2xx response")
+		} catch let ServerConnectionError.server(status, message) {
+			XCTAssertEqual(status, 500)
+			XCTAssertEqual(message, "boom")
+		}
+	}
+
+	private func makeMockStreamingClient() -> RemoteDeskClient {
+		let configuration = URLSessionConfiguration.ephemeral
+		configuration.protocolClasses = [MockStreamingURLProtocol.self]
+		let session = URLSession(configuration: configuration)
+		let connection = ServerConnection(url: URL(string: "https://desk.example.test")!, token: String(repeating: "a", count: 32))
+		return RemoteDeskClient(connection: connection, session: session)
+	}
+}
+
+/// Simulates a streaming NDJSON response (or an error status) for
+/// `RemoteDeskClient.commandStream` tests without a real HTTP server.
+private final class MockStreamingURLProtocol: URLProtocol, @unchecked Sendable {
+	nonisolated(unsafe) static var responseLines: [String] = []
+	nonisolated(unsafe) static var statusCode: Int = 200
+	nonisolated(unsafe) static var errorBody: String = ""
+
+	override class func canInit(with request: URLRequest) -> Bool { true }
+	override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+	override func startLoading() {
+		guard let url = request.url,
+			  let response = HTTPURLResponse(
+				url: url, statusCode: Self.statusCode, httpVersion: "HTTP/1.1",
+				headerFields: ["Content-Type": "application/x-ndjson"]
+			  ) else {
+			client?.urlProtocol(self, didFailWithError: ServerConnectionError.invalidResponse)
+			return
+		}
+		client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+		if Self.statusCode >= 300 {
+			client?.urlProtocol(self, didLoad: Data(Self.errorBody.utf8))
+		} else {
+			for line in Self.responseLines {
+				client?.urlProtocol(self, didLoad: Data((line + "\n").utf8))
+			}
+		}
+		client?.urlProtocolDidFinishLoading(self)
+	}
+
+	override func stopLoading() {}
 }

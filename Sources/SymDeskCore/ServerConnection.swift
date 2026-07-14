@@ -142,6 +142,43 @@ public final class RemoteDeskClient: @unchecked Sendable {
         return try await request(path: "/api/v1/command", method: "POST", body: payload, contentType: "application/json")
     }
 
+    /// Streams a remote command's newline-delimited JSON output line by
+    /// line as the server produces it (see `POST /api/v1/command` on
+    /// `ask`/`transform`), instead of waiting for the full response body.
+    /// The stream is cancelled by cancelling the enclosing `Task`, which
+    /// aborts the underlying `URLSessionTask` and lets the server observe
+    /// the disconnect and kill its subprocess.
+    public func commandStream(arguments: [String], stdin: String = "") -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    let payload = try JSONEncoder().encode(CommandRequest(arguments: arguments, stdin: stdin))
+                    var request = try makeRequest(path: "/api/v1/command", method: "POST")
+                    request.httpBody = payload
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                    let (bytes, response) = try await session.bytes(for: request)
+                    guard let httpResponse = response as? HTTPURLResponse else {
+                        throw ServerConnectionError.invalidResponse
+                    }
+                    guard (200..<300).contains(httpResponse.statusCode) else {
+                        var body = Data()
+                        for try await byte in bytes { body.append(byte) }
+                        let payload = try? JSONDecoder().decode(ErrorPayload.self, from: body)
+                        throw ServerConnectionError.server(status: httpResponse.statusCode, message: payload?.error ?? "Unknown error")
+                    }
+                    for try await line in bytes.lines {
+                        try Task.checkCancellation()
+                        continuation.yield(line)
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
     public func noteContent(path: String) async throws -> String {
         let data = try await request(path: "/api/v1/files", query: [URLQueryItem(name: "path", value: path)])
         return String(decoding: data, as: UTF8.self)

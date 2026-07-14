@@ -1,6 +1,7 @@
 package selfhost
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"io"
@@ -194,6 +195,137 @@ func TestDistributedIngestLifecycle(t *testing.T) {
 	}
 	if !strings.Contains(string(note), "Invoice total: 42 EUR") || !strings.Contains(string(note), "archive_path:") {
 		t.Fatalf("completed note is incomplete: %s", note)
+	}
+}
+
+// fakeSymdeskScript writes an executable shell script standing in for the
+// symdesk binary, so streaming tests do not depend on a real AI backend.
+func fakeSymdeskScript(t *testing.T, body string) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "fake-symdesk.sh")
+	if err := os.WriteFile(path, []byte("#!/bin/sh\n"+body), 0755); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func TestHandleCommandStreamsAskIncrementally(t *testing.T) {
+	if _, err := os.Stat("/bin/sh"); err != nil {
+		t.Skip("/bin/sh unavailable")
+	}
+	script := fakeSymdeskScript(t, `echo '{"type":"answer","text":"first"}'
+sleep 0.2
+echo '{"type":"answer","text":"second"}'
+sleep 0.2
+echo '{"type":"done"}'
+`)
+	vaultRoot := t.TempDir()
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: script})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	httpServer := httptest.NewServer(server.Handler())
+	t.Cleanup(httpServer.Close)
+
+	body, err := json.Marshal(commandRequest{Arguments: []string{"ask", "what is this vault about"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request, err := http.NewRequest(http.MethodPost, httpServer.URL+"/api/v1/command", bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Header.Set("Authorization", "Bearer "+testToken)
+	request.Header.Set("Content-Type", "application/json")
+
+	start := time.Now()
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", response.StatusCode, readBody(response))
+	}
+	if contentType := response.Header.Get("Content-Type"); contentType != "application/x-ndjson" {
+		t.Fatalf("expected application/x-ndjson, got %q", contentType)
+	}
+
+	var lines []string
+	var arrivals []time.Duration
+	scanner := bufio.NewScanner(response.Body)
+	for scanner.Scan() {
+		arrivals = append(arrivals, time.Since(start))
+		lines = append(lines, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		t.Fatal(err)
+	}
+	if len(lines) != 3 {
+		t.Fatalf("expected 3 streamed lines, got %d: %v", len(lines), lines)
+	}
+	if !strings.Contains(lines[0], "first") || !strings.Contains(lines[1], "second") || !strings.Contains(lines[2], "done") {
+		t.Fatalf("unexpected streamed lines: %v", lines)
+	}
+	// The subprocess sleeps 200ms between each of its three writes (~400ms
+	// total). Delivery must not wait for the process to exit: the first
+	// line has to arrive long before the last one, proving the response is
+	// flushed incrementally rather than buffered until completion.
+	if arrivals[0] > 150*time.Millisecond {
+		t.Fatalf("first line arrived after %v; expected near-immediate delivery, not buffering until completion", arrivals[0])
+	}
+	if arrivals[2] < 300*time.Millisecond {
+		t.Fatalf("last line arrived after only %v; expected it to follow both sleeps", arrivals[2])
+	}
+}
+
+func TestHandleCommandStreamTruncatesOversizedOutput(t *testing.T) {
+	if _, err := os.Stat("/bin/sh"); err != nil {
+		t.Skip("/bin/sh unavailable")
+	}
+	// Print well over maxCommandBytes (32 MiB) worth of NDJSON lines.
+	script := fakeSymdeskScript(t, `awk 'BEGIN{for (i=0;i<450000;i++) print "{\"type\":\"answer\",\"text\":\"0123456789012345678901234567890123456789012345678901234567890123456789\"}"}'
+`)
+	vaultRoot := t.TempDir()
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: script})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	httpServer := httptest.NewServer(server.Handler())
+	t.Cleanup(httpServer.Close)
+
+	body, err := json.Marshal(commandRequest{Arguments: []string{"transform", "summarize"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request, err := http.NewRequest(http.MethodPost, httpServer.URL+"/api/v1/command", bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Header.Set("Authorization", "Bearer "+testToken)
+	request.Header.Set("Content-Type", "application/json")
+
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 (status already committed once streaming starts), got %d", response.StatusCode)
+	}
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if int64(len(data)) > maxCommandBytes+(1<<20) {
+		t.Fatalf("streamed body was not bounded: got %d bytes", len(data))
+	}
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	last := lines[len(lines)-1]
+	if !strings.Contains(last, `"type":"error"`) || !strings.Contains(last, "32 MiB") {
+		t.Fatalf("expected a trailing bounded-error NDJSON line, got: %s", last)
 	}
 }
 

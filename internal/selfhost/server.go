@@ -1,6 +1,7 @@
 package selfhost
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"context"
@@ -422,6 +423,12 @@ type commandRequest struct {
 	Stdin     string   `json:"stdin,omitempty"`
 }
 
+// streamingCommands emit newline-delimited JSON incrementally as an LLM
+// streams tokens (see cmd/symdesk's outputStream), rather than one JSON
+// document at completion. Their HTTP response is streamed line-by-line
+// instead of buffered, so a client sees partial output as it is produced.
+var streamingCommands = map[string]bool{"ask": true, "transform": true}
+
 func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
 	var request commandRequest
 	if err := decodeJSON(r, &request, 2<<20); err != nil {
@@ -442,6 +449,12 @@ func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
 	cmd := exec.CommandContext(ctx, s.cfg.Executable, args...)
 	cmd.Env = append(os.Environ(), "SYMDESK_SIDECAR="+filepath.Join(s.cfg.VaultRoot, ".symdesk", "server", "sidecar.db"))
 	cmd.Stdin = strings.NewReader(request.Stdin)
+
+	if streamingCommands[args[0]] {
+		s.streamCommand(w, cmd)
+		return
+	}
+
 	out := &limitedBuffer{limit: maxCommandBytes}
 	errOut := &limitedBuffer{limit: 1 << 20}
 	cmd.Stdout = out
@@ -462,6 +475,82 @@ func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(out.Bytes())
+}
+
+// streamCommand runs cmd and relays its stdout to w one NDJSON line at a
+// time, flushing after every line so the client observes output as the
+// subprocess produces it. Once the 200 status and first bytes are written,
+// errors can no longer change the HTTP status; a failure is instead reported
+// as a trailing NDJSON error line so the client can distinguish it from a
+// normal event. Cancellation (client disconnect or the 5-minute timeout)
+// flows through cmd's context and kills the subprocess.
+func (s *Server) streamCommand(w http.ResponseWriter, cmd *exec.Cmd) {
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	errOut := &limitedBuffer{limit: 1 << 20}
+	cmd.Stderr = errOut
+	if err := cmd.Start(); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/x-ndjson")
+	w.WriteHeader(http.StatusOK)
+	flusher, canFlush := w.(http.Flusher)
+
+	reader := bufio.NewReader(stdout)
+	var written int64
+	truncated := false
+	for {
+		line, readErr := reader.ReadBytes('\n')
+		if len(line) > 0 {
+			if !truncated {
+				if written+int64(len(line)) > maxCommandBytes {
+					truncated = true
+					_ = cmd.Process.Kill()
+				} else {
+					written += int64(len(line))
+					if _, writeErr := w.Write(line); writeErr != nil {
+						_ = cmd.Process.Kill()
+						_ = cmd.Wait()
+						return
+					}
+					if canFlush {
+						flusher.Flush()
+					}
+				}
+			}
+		}
+		if readErr != nil {
+			break
+		}
+	}
+
+	runErr := cmd.Wait()
+	var event map[string]string
+	switch {
+	case truncated:
+		event = map[string]string{"type": "error", "message": "command output exceeded 32 MiB"}
+	case runErr != nil:
+		message := strings.TrimSpace(errOut.String())
+		if message == "" {
+			message = runErr.Error()
+		}
+		event = map[string]string{"type": "error", "message": message}
+	default:
+		return
+	}
+	line, err := json.Marshal(event)
+	if err != nil {
+		return
+	}
+	_, _ = w.Write(append(line, '\n'))
+	if canFlush {
+		flusher.Flush()
+	}
 }
 
 type leaseRequest struct {

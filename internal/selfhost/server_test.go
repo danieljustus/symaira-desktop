@@ -229,6 +229,118 @@ func TestJobLeaseExpires(t *testing.T) {
 	}
 }
 
+const testWorkerToken = "fedcba9876543210fedcba9876543210"
+
+// TestAuthorizationMatrix exercises every authenticated route against every
+// credential class: the admin/client token (must always be accepted), the
+// worker-scoped token (must be accepted only on worker routes), and no
+// token / a wrong token (must always be rejected). It only asserts on
+// whether the request cleared authentication (non-401) or was rejected
+// (401) — business-level outcomes for malformed/missing resources are
+// covered by the other tests above.
+func TestAuthorizationMatrix(t *testing.T) {
+	vaultRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewServer(ServerConfig{
+		VaultRoot: vaultRoot, Token: testToken, WorkerToken: testWorkerToken,
+		Version: "test", Executable: "/bin/false",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	httpServer := httptest.NewServer(server.Handler())
+	t.Cleanup(httpServer.Close)
+
+	type route struct {
+		name   string
+		method string
+		path   string
+		scope  tokenScope
+		body   func() (io.Reader, string)
+	}
+	jsonBody := func(value any) func() (io.Reader, string) {
+		return func() (io.Reader, string) {
+			data, err := json.Marshal(value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return bytes.NewReader(data), "application/json"
+		}
+	}
+	routes := []route{
+		{"status", http.MethodGet, "/api/v1/status", scopeAdmin, nil},
+		{"snapshot", http.MethodGet, "/api/v1/snapshot", scopeAdmin, nil},
+		{"get-file", http.MethodGet, "/api/v1/files?path=Hello.md", scopeAdmin, nil},
+		{"put-file", http.MethodPut, "/api/v1/files?path=Hello.md", scopeAdmin, func() (io.Reader, string) {
+			return strings.NewReader("# Hello"), "text/markdown"
+		}},
+		{"ingest", http.MethodPost, "/api/v1/ingest", scopeAdmin, func() (io.Reader, string) {
+			var upload bytes.Buffer
+			writer := multipart.NewWriter(&upload)
+			part, err := writer.CreateFormFile("file", "doc.png")
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, _ = part.Write([]byte("fake image"))
+			_ = writer.Close()
+			return &upload, writer.FormDataContentType()
+		}},
+		{"jobs", http.MethodGet, "/api/v1/jobs", scopeAdmin, nil},
+		{"jobs-retry", http.MethodPost, "/api/v1/jobs/retry?id=missing", scopeAdmin, nil},
+		{"command", http.MethodPost, "/api/v1/command", scopeAdmin, jsonBody(commandRequest{Arguments: []string{"ls", "--json"}})},
+		{"worker-lease", http.MethodPost, "/api/v1/worker/lease", scopeWorker, jsonBody(leaseRequest{WorkerID: "w1", Capabilities: []string{"ocr"}})},
+		{"worker-input", http.MethodGet, "/api/v1/worker/input?id=missing", scopeWorker, nil},
+		{"worker-complete", http.MethodPost, "/api/v1/worker/complete", scopeWorker, jsonBody(completionRequest{JobID: "missing", WorkerID: "w1", Text: "x", Engine: "tesseract"})},
+		{"worker-fail", http.MethodPost, "/api/v1/worker/fail", scopeWorker, jsonBody(failRequest{JobID: "missing", WorkerID: "w1", Error: "x"})},
+	}
+
+	credentials := []struct {
+		name    string
+		token   string
+		allowed func(scope tokenScope) bool
+	}{
+		{"admin token", testToken, func(tokenScope) bool { return true }},
+		{"worker token", testWorkerToken, func(scope tokenScope) bool { return scope == scopeWorker }},
+		{"no token", "", func(tokenScope) bool { return false }},
+		{"wrong token", "0000000000000000000000000000wrong", func(tokenScope) bool { return false }},
+	}
+
+	for _, rt := range routes {
+		for _, cred := range credentials {
+			t.Run(rt.name+"/"+cred.name, func(t *testing.T) {
+				var body io.Reader
+				contentType := ""
+				if rt.body != nil {
+					body, contentType = rt.body()
+				}
+				request, err := http.NewRequest(rt.method, httpServer.URL+rt.path, body)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if cred.token != "" {
+					request.Header.Set("Authorization", "Bearer "+cred.token)
+				}
+				if contentType != "" {
+					request.Header.Set("Content-Type", contentType)
+				}
+				response, err := http.DefaultClient.Do(request)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer response.Body.Close()
+				wantAllowed := cred.allowed(rt.scope)
+				gotAllowed := response.StatusCode != http.StatusUnauthorized
+				if gotAllowed != wantAllowed {
+					t.Fatalf("%s with %s: expected allowed=%v, got status %d", rt.name, cred.name, wantAllowed, response.StatusCode)
+				}
+			})
+		}
+	}
+}
+
 func authorized(t *testing.T, method, url string, body io.Reader, contentType string) *http.Response {
 	t.Helper()
 	request, err := http.NewRequest(method, url, body)

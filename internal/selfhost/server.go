@@ -38,11 +38,18 @@ const (
 type ServerConfig struct {
 	ListenAddress string
 	VaultRoot     string
-	Token         string
-	Version       string
-	Executable    string
-	TLSCert       string
-	TLSKey        string
+	// Token is the admin/client credential. It authenticates every route,
+	// including the worker-scoped ones, for back-compat with single-token
+	// deployments that predate WorkerToken.
+	Token string
+	// WorkerToken, when set, is a separate credential that only authenticates
+	// the worker/lease/complete/fail routes. Deployments that have not
+	// migrated yet leave this empty and keep sharing Token with their workers.
+	WorkerToken string
+	Version     string
+	Executable  string
+	TLSCert     string
+	TLSKey      string
 }
 
 type Server struct {
@@ -61,6 +68,14 @@ type Server struct {
 func NewServer(cfg ServerConfig) (*Server, error) {
 	if len(cfg.Token) < 32 {
 		return nil, fmt.Errorf("server token must contain at least 32 characters")
+	}
+	if cfg.WorkerToken != "" {
+		if len(cfg.WorkerToken) < 32 {
+			return nil, fmt.Errorf("worker token must contain at least 32 characters")
+		}
+		if constantTimeEqual(cfg.WorkerToken, cfg.Token) {
+			return nil, fmt.Errorf("worker token must differ from the server token")
+		}
 	}
 	if cfg.ListenAddress == "" {
 		cfg.ListenAddress = "127.0.0.1:8787"
@@ -127,30 +142,55 @@ func (s *Server) routes() {
 		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, `{"status":"ok"}`)
 	})
-	s.mux.Handle("GET /api/v1/status", s.auth(http.HandlerFunc(s.handleStatus)))
-	s.mux.Handle("GET /api/v1/snapshot", s.auth(http.HandlerFunc(s.handleSnapshot)))
-	s.mux.Handle("GET /api/v1/files", s.auth(http.HandlerFunc(s.handleGetFile)))
-	s.mux.Handle("PUT /api/v1/files", s.auth(http.HandlerFunc(s.handlePutFile)))
-	s.mux.Handle("POST /api/v1/ingest", s.auth(http.HandlerFunc(s.handleIngest)))
-	s.mux.Handle("GET /api/v1/jobs", s.auth(http.HandlerFunc(s.handleJobs)))
-	s.mux.Handle("POST /api/v1/jobs/retry", s.auth(http.HandlerFunc(s.handleRetryJob)))
-	s.mux.Handle("POST /api/v1/command", s.auth(http.HandlerFunc(s.handleCommand)))
-	s.mux.Handle("POST /api/v1/worker/lease", s.auth(http.HandlerFunc(s.handleLease)))
-	s.mux.Handle("GET /api/v1/worker/input", s.auth(http.HandlerFunc(s.handleWorkerInput)))
-	s.mux.Handle("POST /api/v1/worker/complete", s.auth(http.HandlerFunc(s.handleComplete)))
-	s.mux.Handle("POST /api/v1/worker/fail", s.auth(http.HandlerFunc(s.handleFail)))
+	s.mux.Handle("GET /api/v1/status", s.auth(scopeAdmin, http.HandlerFunc(s.handleStatus)))
+	s.mux.Handle("GET /api/v1/snapshot", s.auth(scopeAdmin, http.HandlerFunc(s.handleSnapshot)))
+	s.mux.Handle("GET /api/v1/files", s.auth(scopeAdmin, http.HandlerFunc(s.handleGetFile)))
+	s.mux.Handle("PUT /api/v1/files", s.auth(scopeAdmin, http.HandlerFunc(s.handlePutFile)))
+	s.mux.Handle("POST /api/v1/ingest", s.auth(scopeAdmin, http.HandlerFunc(s.handleIngest)))
+	s.mux.Handle("GET /api/v1/jobs", s.auth(scopeAdmin, http.HandlerFunc(s.handleJobs)))
+	s.mux.Handle("POST /api/v1/jobs/retry", s.auth(scopeAdmin, http.HandlerFunc(s.handleRetryJob)))
+	s.mux.Handle("POST /api/v1/command", s.auth(scopeAdmin, http.HandlerFunc(s.handleCommand)))
+	s.mux.Handle("POST /api/v1/worker/lease", s.auth(scopeWorker, http.HandlerFunc(s.handleLease)))
+	s.mux.Handle("GET /api/v1/worker/input", s.auth(scopeWorker, http.HandlerFunc(s.handleWorkerInput)))
+	s.mux.Handle("POST /api/v1/worker/complete", s.auth(scopeWorker, http.HandlerFunc(s.handleComplete)))
+	s.mux.Handle("POST /api/v1/worker/fail", s.auth(scopeWorker, http.HandlerFunc(s.handleFail)))
 }
 
-func (s *Server) auth(next http.Handler) http.Handler {
+// tokenScope classifies which credential a route accepts. The admin/client
+// token (ServerConfig.Token) is always accepted, since it is the superset
+// credential and the back-compat single-token deployments rely on it also
+// working against worker routes.
+type tokenScope int
+
+const (
+	scopeAdmin tokenScope = iota
+	scopeWorker
+)
+
+func (s *Server) auth(scope tokenScope, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		provided := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
-		if len(provided) != len(s.cfg.Token) || subtle.ConstantTimeCompare([]byte(provided), []byte(s.cfg.Token)) != 1 {
+		if !s.tokenAllowed(scope, provided) {
 			w.Header().Set("WWW-Authenticate", "Bearer")
 			writeError(w, http.StatusUnauthorized, "authentication required")
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (s *Server) tokenAllowed(scope tokenScope, provided string) bool {
+	if constantTimeEqual(provided, s.cfg.Token) {
+		return true
+	}
+	if scope == scopeWorker && s.cfg.WorkerToken != "" && constantTimeEqual(provided, s.cfg.WorkerToken) {
+		return true
+	}
+	return false
+}
+
+func constantTimeEqual(a, b string) bool {
+	return len(a) == len(b) && subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
 }
 
 func (s *Server) securityHeaders(next http.Handler) http.Handler {

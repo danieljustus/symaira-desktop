@@ -39,11 +39,14 @@ Back up the complete `/data` volume. The important user data is the readable `va
 git clone https://github.com/danieljustus/symaira-desktop.git
 cd symaira-desktop
 export SYMDESK_SERVER_TOKEN="$(openssl rand -hex 32)"
+export SYMDESK_WORKER_TOKEN="$(openssl rand -hex 32)"
 docker compose up -d symdesk-server
 curl http://127.0.0.1:8787/healthz
 ```
 
 The server image runs as UID 10001, drops Linux capabilities in Compose, and requires a token of at least 32 characters. If a bind mount already exists, make sure UID 10001 can write `./data`.
+
+`SYMDESK_WORKER_TOKEN` is optional but recommended: it authorizes only the OCR worker routes (lease/download/complete/fail), not vault reads/writes or remote commands. Leave it unset to keep every credential on the legacy single-token path — see "Migrating to separate worker credentials" below.
 
 Run a Tesseract worker beside it when the server is powerful enough:
 
@@ -61,6 +64,7 @@ docker run -d --name symdesk \
   --restart unless-stopped \
   -p 8787:8787 \
   -e SYMDESK_SERVER_TOKEN="$SYMDESK_SERVER_TOKEN" \
+  -e SYMDESK_WORKER_TOKEN="$SYMDESK_WORKER_TOKEN" \
   -v "$PWD/data:/data" \
   symdesk-server
 ```
@@ -78,9 +82,9 @@ The repository contains `repository.yaml` and the app definition under `home-ass
 1. In Home Assistant, open **Settings → Apps → App store**.
 2. Add `https://github.com/danieljustus/symaira-desktop` as a repository.
 3. Install **SymDesk Server**.
-4. Set a random `server_token` with at least 32 characters.
+4. Set a random `server_token` with at least 32 characters, and optionally a separate random `worker_token` (also 32+ characters) for remote OCR workers.
 5. Keep **Process OCR on this server** disabled on a weak Raspberry Pi; expose port 8787 only to the trusted LAN/VPN.
-6. Connect the Apple apps to `http://HOME-ASSISTANT-IP:8787` with the same token.
+6. Connect the Apple apps to `http://HOME-ASSISTANT-IP:8787` with `server_token`. Give remote workers `worker_token` instead — it cannot read or write vault files.
 
 Home Assistant persists `/data` and supplies settings in `/data/options.json`; `symdesk serve` reads those options directly. The app supports `aarch64` and `amd64`.
 
@@ -94,7 +98,7 @@ Tesseract is predictable and lightweight:
 brew install tesseract tesseract-lang poppler
 symdesk worker \
   --server http://SERVER-IP:8787 \
-  --token "$SYMDESK_SERVER_TOKEN" \
+  --token "$SYMDESK_WORKER_TOKEN" \
   --engine tesseract \
   --ocr-language deu+eng
 ```
@@ -105,11 +109,13 @@ Ollama can use a vision model for difficult layouts:
 ollama pull gemma3
 symdesk worker \
   --server http://SERVER-IP:8787 \
-  --token "$SYMDESK_SERVER_TOKEN" \
+  --token "$SYMDESK_WORKER_TOKEN" \
   --engine ollama \
   --ollama-url http://127.0.0.1:11434 \
   --ollama-model gemma3
 ```
+
+`--token` accepts either credential. Prefer `SYMDESK_WORKER_TOKEN` (or `worker_token` under Home Assistant) so a compromised worker host cannot read or write arbitrary vault files or invoke remote commands — it can only lease, download, complete and fail its own OCR jobs. `SYMDESK_SERVER_TOKEN` still works here for deployments that have not migrated yet.
 
 PDF pages are rendered locally with `pdftoppm`; neither Ollama nor Tesseract needs access to the server filesystem. A lease expires after 15 minutes and is returned to the pending queue if a worker disappears. `--once` is useful for schedulers and debugging.
 
@@ -118,10 +124,22 @@ PDF pages are rendered locally with `pdftoppm`; neither Ollama nor Tesseract nee
 ```sh
 export SYMDESK_VAULT=/srv/symdesk/vault
 export SYMDESK_SERVER_TOKEN="$(openssl rand -hex 32)"
+export SYMDESK_WORKER_TOKEN="$(openssl rand -hex 32)"
 symdesk serve --listen 0.0.0.0:8787
 ```
 
-The default bind is `127.0.0.1:8787`; listening on all interfaces must be explicit (the container sets it for you). Native TLS is available with `--tls-cert` and `--tls-key`, although a well-maintained reverse proxy or trusted VPN is usually easier.
+The default bind is `127.0.0.1:8787`; listening on all interfaces must be explicit (the container sets it for you). Native TLS is available with `--tls-cert` and `--tls-key`, although a well-maintained reverse proxy or trusted VPN is usually easier. `--worker-token`/`SYMDESK_WORKER_TOKEN` is optional; see "Migrating to separate worker credentials" below.
+
+## Migrating to separate worker credentials
+
+Existing deployments that only set `SYMDESK_SERVER_TOKEN`/`server_token` keep working with no changes and no lockout risk: every route still accepts that credential, including the worker routes. To scope worker access down:
+
+1. Generate a second random token of at least 32 characters and set it as `SYMDESK_WORKER_TOKEN` (Compose/Docker/native) or `worker_token` (Home Assistant) alongside the existing admin token.
+2. Restart the server so it picks up the new credential — it now accepts either token, but only the worker credential is limited to lease/download/complete/fail.
+3. Point every remote `symdesk worker` process (and `--local-worker`, if enabled) at the new token via `--token`/`SYMDESK_SERVER_TOKEN` on the worker side.
+4. Rotate the admin/client token once every worker has switched over, if desired — workers no longer need it.
+
+There is no forced cutover: the admin/client token is always accepted on every route, so a worker can keep using it indefinitely if a separate credential is not needed.
 
 ## Connect the Apple apps
 
@@ -136,6 +154,7 @@ The iOS server client is currently a reader. Uploading and editing from iOS, bac
 
 - Every `/api/v1` endpoint requires a bearer token; only `/healthz` is public and contains no vault details.
 - Use a unique token with at least 32 random characters.
+- An optional, separate worker token can be scoped to only the worker lease/download/complete/fail routes, so a compromised worker credential cannot read or write arbitrary vault files or invoke remote commands. See "Migrating to separate worker credentials" above.
 - Vault-relative paths are canonicalized and checked against symlink/path traversal.
 - Uploads are limited to 100 MiB; Markdown writes, OCR results and command output have separate limits.
 - Remote CLI compatibility uses an explicit command allowlist. `serve`, `worker`, `mcp`, `ingest` with server-local paths, exports to arbitrary paths and demos cannot be invoked remotely.

@@ -397,6 +397,7 @@ final class MobileVaultStore: ObservableObject {
     private var hasSecurityScope = false
     private var loadGeneration = 0
 	private var remoteClient: MobileRemoteClient?
+	private var snapshotETag: String?
 
     init() {
 		if let connection = MobileServerConfig.connection() {
@@ -418,6 +419,7 @@ final class MobileVaultStore: ObservableObject {
     func selectVault(_ url: URL) {
 		MobileServerConfig.reset()
 		remoteClient = nil
+		snapshotETag = nil
 		serverURL = nil
         activate(url)
         do {
@@ -441,18 +443,28 @@ final class MobileVaultStore: ObservableObject {
         errorMessage = nil
 
         do {
-			let snapshot: MobileVaultSnapshot
 			if let remoteClient {
-				snapshot = try await remoteClient.snapshot()
+				switch try await remoteClient.snapshot(ifNoneMatch: snapshotETag) {
+				case .unchanged:
+					guard generation == loadGeneration else { return }
+					// Nothing to re-parse or re-render: the server confirmed
+					// the vault matches what we already have.
+				case .updated(let snapshot, let etag):
+					guard generation == loadGeneration else { return }
+					notes = snapshot.notes
+					skippedFiles = snapshot.skippedFiles
+					revision += 1
+					snapshotETag = etag
+				}
 			} else if let root = vaultURL {
-				snapshot = try await scanner.scan(root: root)
+				let snapshot = try await scanner.scan(root: root)
+				guard generation == loadGeneration else { return }
+				notes = snapshot.notes
+				skippedFiles = snapshot.skippedFiles
+				revision += 1
 			} else {
 				return
 			}
-			guard generation == loadGeneration else { return }
-            notes = snapshot.notes
-            skippedFiles = snapshot.skippedFiles
-            revision += 1
         } catch {
             guard generation == loadGeneration else { return }
             errorMessage = error.localizedDescription
@@ -477,6 +489,7 @@ final class MobileVaultStore: ObservableObject {
 		vaultURL = nil
 		UserDefaults.standard.removeObject(forKey: bookmarkKey)
 		remoteClient = client
+		snapshotETag = nil
 		serverURL = connection.url
 		notes = []
 		await reload()
@@ -497,6 +510,7 @@ final class MobileVaultStore: ObservableObject {
         vaultURL = nil
 		serverURL = nil
 		remoteClient = nil
+		snapshotETag = nil
         notes = []
         skippedFiles = 0
         revision += 1

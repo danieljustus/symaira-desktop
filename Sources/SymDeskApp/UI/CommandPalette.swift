@@ -30,22 +30,33 @@ struct CommandPalette: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 18))
                     .foregroundColor(SymairaTheme.goldPrimary)
-                TextField("Search notes or type to create...", text: $searchText)
+                TextField("Search notes or create a new one…", text: $searchText)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 24))
+                    .font(.title2)
                     .foregroundColor(SymairaTheme.textPrimary)
                     .onSubmit {
                         performSearch()
                     }
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                        searchResults = []
+                        searchHint = nil
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(SymairaTheme.textMuted)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Clear search")
+                }
+                Text("↩")
+                    .font(.caption.monospaced())
+                    .foregroundStyle(SymairaTheme.textMuted)
             }
-            .padding(12)
-            .background(SymairaTheme.bgCard)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
-            )
-            .cornerRadius(10)
-            .padding()
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .symDeskLiquidGlass(cornerRadius: 14, prominence: .elevated)
+            .padding(16)
 
             Text("Operators: path:, tag:, type:, status:, \"exact phrase\", -exclude, /regex/")
                 .font(.caption)
@@ -126,10 +137,13 @@ struct CommandPalette: View {
                     }
                 }
             }
+            .listStyle(.inset)
+            .scrollContentBackground(.hidden)
         }
-        .scrollContentBackground(.hidden)
-        .background(SymairaTheme.bgDark)
-        .frame(width: 600, height: 400)
+        .background {
+            SymairaScreen { Color.clear }
+        }
+        .frame(width: 640, height: 460)
         .onDisappear {
             searchText = ""
             searchResults = []

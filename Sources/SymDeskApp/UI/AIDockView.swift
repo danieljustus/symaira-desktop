@@ -24,11 +24,17 @@ struct AIDockView: View {
     @State private var isThinking = false
 
     var body: some View {
-        VStack {
-            Text("AI Dock")
-                .font(.headline)
-                .foregroundColor(SymairaTheme.goldPrimary)
-                .padding(.top)
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                    .foregroundStyle(SymairaTheme.goldPrimary)
+                Text("AI Dock")
+                    .font(.headline)
+                    .foregroundColor(SymairaTheme.textPrimary)
+                Spacer()
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
 
             Divider()
 
@@ -50,16 +56,16 @@ struct AIDockView: View {
                     }
                     .padding()
                 }
-                .onChange(of: chatHistory.count) { _ in
+                .onChange(of: chatHistory.count) {
                     scrollToBottom(proxy: proxy)
                 }
             }
 
             Divider()
 
-            HStack {
-                TextField("Ask about your vault...", text: $query)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+            HStack(spacing: 8) {
+                TextField("Ask about your vault…", text: $query)
+                    .textFieldStyle(.plain)
                     .onSubmit {
                         submitQuery()
                     }
@@ -68,12 +74,16 @@ struct AIDockView: View {
                     Image(systemName: "paperplane.fill")
                         .foregroundColor(SymairaTheme.goldPrimary)
                 }
+                .buttonStyle(.plain)
                 .disabled(query.trimmingCharacters(in: .whitespaces).isEmpty || isThinking)
             }
-            .padding()
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .symDeskLiquidGlass(cornerRadius: 14, prominence: .elevated)
+            .padding(12)
         }
         .frame(minWidth: 300, idealWidth: 300, maxWidth: .infinity)
-        .background(SymairaTheme.bgDarker)
+        .background(.clear)
     }
 
     @ViewBuilder
@@ -85,12 +95,11 @@ struct AIDockView: View {
                 Text(text)
                     .foregroundColor(SymairaTheme.textPrimary)
                     .padding()
-                    .background(SymairaTheme.goldPrimary.opacity(0.16))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
-                    )
+                    .background(SymairaTheme.goldPrimary.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(SymairaTheme.goldPrimary.opacity(0.3), lineWidth: 1)
+                    }
                     .frame(maxWidth: 250, alignment: .trailing)
             }
 
@@ -99,12 +108,7 @@ struct AIDockView: View {
                 Text(LocalizedStringKey(text))
                     .foregroundColor(SymairaTheme.textPrimary)
                     .padding()
-                    .background(SymairaTheme.bgCard)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(SymairaTheme.borderGlass, lineWidth: 1)
-                    )
+                    .symDeskLiquidGlass(cornerRadius: 14)
                     .frame(maxWidth: 250, alignment: .leading)
                 Spacer()
                 Button {

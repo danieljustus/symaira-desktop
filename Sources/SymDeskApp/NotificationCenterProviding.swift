@@ -4,7 +4,7 @@ import Foundation
 @MainActor
 protocol NotificationCenterProviding: AnyObject {
     func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
-    func notificationSettings() async -> UNNotificationSettings
+    func authorizationStatus() async -> UNAuthorizationStatus
     func removeAllPendingNotificationRequests()
     func add(_ request: UNNotificationRequest)
     func setBadgeCount(_ newBadgeCount: Int) async throws
@@ -23,8 +23,8 @@ final class UserNotificationCenterAdapter: NSObject, NotificationCenterProviding
         try await center.requestAuthorization(options: options)
     }
 
-    func notificationSettings() async -> UNNotificationSettings {
-        await center.notificationSettings()
+    func authorizationStatus() async -> UNAuthorizationStatus {
+        await center.notificationSettings().authorizationStatus
     }
 
     func removeAllPendingNotificationRequests() {

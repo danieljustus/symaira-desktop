@@ -10,6 +10,7 @@ struct DocumentGridView: View {
     let deepLinkPath: String?
 
     @State private var documents: [DocumentItem] = []
+    @State private var visibleDocuments: [DocumentItem] = []
     @State private var searchText = ""
     @State private var isLoading = false
     @State private var selectedDoc: DocumentItem?
@@ -23,41 +24,17 @@ struct DocumentGridView: View {
     @State private var selectedPaths: Set<String> = []
     @State private var selectionAnchor: String?
     @State private var batchSummary: String?
+    @State private var filterTask: Task<Void, Never>?
+    @State private var refreshTask: Task<Void, Never>?
+    @State private var todayString = Self.makeTodayString()
 
     private var selectedDocs: [DocumentItem] {
-        filteredDocs.filter { selectedPaths.contains($0.path) }
-    }
-
-    var filteredDocs: [DocumentItem] {
-        var result = documents
-        if let s = statusFilter, !s.isEmpty {
-            result = result.filter { $0.status == s }
-        }
-        if !searchText.isEmpty {
-            let q = searchText.lowercased()
-            result = result.filter {
-                $0.title.lowercased().contains(q)
-                || $0.correspondent.lowercased().contains(q)
-                || $0.person.lowercased().contains(q)
-                || $0.documentType.lowercased().contains(q)
-                || ($0.asn > 0 && String($0.asn).contains(q))
-            }
-        }
-        if sortByASN {
-            result.sort {
-                switch ($0.asn > 0, $1.asn > 0) {
-                case (true, true): return $0.asn == $1.asn ? $0.title < $1.title : $0.asn < $1.asn
-                case (true, false): return true
-                case (false, true): return false
-                case (false, false): return $0.title < $1.title
-                }
-            }
-        }
-        return result
+        visibleDocuments.filter { selectedPaths.contains($0.path) }
     }
 
     var body: some View {
         VStack(spacing: 0) {
+            documentHeader
             searchField
             Divider()
             if isLoading {
@@ -65,7 +42,7 @@ struct DocumentGridView: View {
                     .tint(SymairaTheme.goldPrimary)
                     .foregroundColor(SymairaTheme.textSecondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if filteredDocs.isEmpty {
+            } else if visibleDocuments.isEmpty {
                 emptyState
             } else {
                 gridContent
@@ -78,14 +55,22 @@ struct DocumentGridView: View {
                 openDoc = doc
             }
         }
+        .onChange(of: searchText) { scheduleFilterUpdate() }
+        .onChange(of: sortByASN) { applyFilters() }
+        .onChange(of: statusFilter) { applyFilters() }
         .onChange(of: watcher.latestEvent) {
-            Task { await fetchDocs() }
+            scheduleDocumentRefresh()
+        }
+        .onDisappear {
+            filterTask?.cancel()
+            refreshTask?.cancel()
         }
         .sheet(isPresented: $showAgentSheet) {
             agentSheet
         }
         .sheet(item: $openDoc) { doc in
             DocumentViewerView(document: doc)
+                .frame(minWidth: 980, idealWidth: 1_160, minHeight: 680, idealHeight: 780)
         }
         .alert("Batch Action", isPresented: Binding(
             get: { batchSummary != nil },
@@ -98,6 +83,28 @@ struct DocumentGridView: View {
     }
 
     // MARK: - Search Field
+
+    private var documentHeader: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(statusFilter.flatMap { DocumentStatus(rawValue: $0)?.label } ?? "All Documents")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(SymairaTheme.textPrimary)
+                Text("\(visibleDocuments.count) \(visibleDocuments.count == 1 ? "document" : "documents")")
+                    .font(.subheadline)
+                    .foregroundStyle(SymairaTheme.textSecondary)
+            }
+            Spacer()
+            if !selectedPaths.isEmpty {
+                Text("\(selectedPaths.count) selected")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(SymairaTheme.goldPrimary)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 8)
+    }
 
     private var searchField: some View {
         HStack(spacing: 8) {
@@ -143,12 +150,7 @@ struct DocumentGridView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(SymairaTheme.bgCard)
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(SymairaTheme.borderGlass, lineWidth: 1)
-        )
+        .symDeskLiquidGlass(cornerRadius: 12)
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
     }
@@ -177,12 +179,16 @@ struct DocumentGridView: View {
     private var gridContent: some View {
         ScrollView([.horizontal, .vertical]) {
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 220, maximum: 320), spacing: 16)],
+                columns: [GridItem(.adaptive(minimum: 260, maximum: 360), spacing: 16)],
                 alignment: .leading,
                 spacing: 16
             ) {
-                ForEach(filteredDocs) { doc in
-                    DocumentCard(doc: doc, isSelected: selectedDoc?.id == doc.id || selectedPaths.contains(doc.path))
+                ForEach(visibleDocuments) { doc in
+                    DocumentCard(
+                        doc: doc,
+                        isSelected: selectedDoc?.id == doc.id || selectedPaths.contains(doc.path),
+                        todayString: todayString
+                    )
                         .onTapGesture(count: 2) { openDoc = doc }
                         .onTapGesture { handleTap(doc: doc) }
                         .contextMenu {
@@ -221,10 +227,10 @@ struct DocumentGridView: View {
                 selectionAnchor = doc.path
             }
         } else if modifiers.contains(.shift), let anchor = selectionAnchor,
-                  let anchorIdx = filteredDocs.firstIndex(where: { $0.path == anchor }),
-                  let docIdx = filteredDocs.firstIndex(where: { $0.path == doc.path }) {
+                  let anchorIdx = visibleDocuments.firstIndex(where: { $0.path == anchor }),
+                  let docIdx = visibleDocuments.firstIndex(where: { $0.path == doc.path }) {
             let range = min(anchorIdx, docIdx)...max(anchorIdx, docIdx)
-            selectedPaths.formUnion(filteredDocs[range].map(\.path))
+            selectedPaths.formUnion(visibleDocuments[range].map(\.path))
         } else {
             selectedPaths = [doc.path]
             selectionAnchor = doc.path
@@ -233,8 +239,8 @@ struct DocumentGridView: View {
     }
 
     private func selectAllInFilter() {
-        selectedPaths = Set(filteredDocs.map(\.path))
-        selectionAnchor = filteredDocs.first?.path
+        selectedPaths = Set(visibleDocuments.map(\.path))
+        selectionAnchor = visibleDocuments.first?.path
     }
 
     private func clearSelection() {
@@ -398,10 +404,13 @@ struct DocumentGridView: View {
     // MARK: - Actions
 
     private func fetchDocs() async {
-        isLoading = true
-        defer { isLoading = false }
+        let showProgress = documents.isEmpty
+        if showProgress { isLoading = true }
+        defer { if showProgress { isLoading = false } }
         do {
             self.documents = try await core.docsList()
+            applyFilters()
+            selectedPaths.formIntersection(Set(documents.map(\.path)))
             if let path = deepLinkPath, !path.isEmpty,
                let doc = documents.first(where: { $0.path == path }) {
                 openDoc = doc
@@ -409,6 +418,64 @@ struct DocumentGridView: View {
         } catch {
             print("docsList failed: \(error)")
         }
+    }
+
+    /// Debounces typing so a large vault is filtered once per input burst
+    /// instead of rebuilding the grid for every key event.
+    private func scheduleFilterUpdate() {
+        filterTask?.cancel()
+        filterTask = Task {
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            guard !Task.isCancelled else { return }
+            applyFilters()
+        }
+    }
+
+    /// Coalesces watcher bursts (write + rename + index updates) into one CLI
+    /// refresh, avoiding repeated full-vault scans.
+    private func scheduleDocumentRefresh() {
+        refreshTask?.cancel()
+        refreshTask = Task {
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            guard !Task.isCancelled else { return }
+            await fetchDocs()
+        }
+    }
+
+    private func applyFilters() {
+        var result = documents
+        if let statusFilter, !statusFilter.isEmpty {
+            result = result.filter { $0.status == statusFilter }
+        }
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if !query.isEmpty {
+            result = result.filter {
+                $0.title.lowercased().contains(query)
+                    || $0.correspondent.lowercased().contains(query)
+                    || $0.person.lowercased().contains(query)
+                    || $0.documentType.lowercased().contains(query)
+                    || ($0.asn > 0 && String($0.asn).contains(query))
+            }
+        }
+        if sortByASN {
+            result.sort {
+                switch ($0.asn > 0, $1.asn > 0) {
+                case (true, true): return $0.asn == $1.asn ? $0.title < $1.title : $0.asn < $1.asn
+                case (true, false): return true
+                case (false, true): return false
+                case (false, false): return $0.title < $1.title
+                }
+            }
+        }
+        visibleDocuments = result
+    }
+
+    private static func makeTodayString() -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
     }
 
     private func setStatus(doc: DocumentItem, status: String) async {
@@ -443,12 +510,12 @@ struct DocumentGridView: View {
     }
 
     private func exportDocument(doc: DocumentItem) {
-        let url = URL(fileURLWithPath: doc.path)
+        guard let url = DocumentPreviewResolver.noteURL(documentPath: doc.path, vaultPath: core.vaultPath) else { return }
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
     private func deleteDocument(doc: DocumentItem) {
-        let url = URL(fileURLWithPath: doc.path)
+        guard let url = DocumentPreviewResolver.noteURL(documentPath: doc.path, vaultPath: core.vaultPath) else { return }
         do {
             try FileManager.default.trashItem(at: url, resultingItemURL: nil)
             Task { await fetchDocs() }
@@ -546,6 +613,7 @@ struct DocumentGridView: View {
 struct DocumentCard: View {
     let doc: DocumentItem
     var isSelected: Bool = false
+    let todayString: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -629,13 +697,11 @@ struct DocumentCard: View {
             }
         }
         .padding(12)
-        .background(isSelected ? SymairaTheme.bgCardHover : SymairaTheme.bgCard)
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(isSelected ? SymairaTheme.goldPrimary.opacity(0.6) : SymairaTheme.borderGlass, lineWidth: isSelected ? 1.5 : 1)
-        )
-        .shadow(color: .black.opacity(0.35), radius: 8, y: 4)
+        .symDeskLiquidGlass(cornerRadius: 14, prominence: isSelected ? .elevated : .standard)
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(isSelected ? SymairaTheme.goldPrimary.opacity(0.82) : .clear, lineWidth: 1.5)
+        }
     }
 
     private var statusBadge: some View {
@@ -694,9 +760,4 @@ struct DocumentCard: View {
         }
     }
 
-    private var todayString: String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: Date())
-    }
 }

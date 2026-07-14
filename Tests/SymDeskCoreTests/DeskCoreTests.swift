@@ -20,6 +20,23 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertEqual(note.modifiedAt, "2026-07-06T12:00:00Z")
     }
 
+    func testNoteDecodingAcceptsCurrentListShape() throws {
+        let json = """
+        {
+            "path": "notes/example.md",
+            "title": "Example",
+            "modified": "2026-07-13T12:00:00Z"
+        }
+        """.data(using: .utf8)!
+
+        let note = try JSONDecoder().decode(Note.self, from: json)
+
+        XCTAssertEqual(note.path, "notes/example.md")
+        XCTAssertEqual(note.modifiedAt, "2026-07-13T12:00:00Z")
+        XCTAssertEqual(note.sha256, "")
+        XCTAssertEqual(note.indexedAt, "")
+    }
+
     func testSearchResponseDecodingIncludesSyntaxHint() throws {
         let json = """
         {
@@ -105,6 +122,75 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertEqual(DocumentStatus.open.rawValue, "open")
         XCTAssertEqual(DocumentStatus.needsReview.rawValue, "needs_review")
         XCTAssertEqual(DocumentStatus.allCases.count, 6)
+    }
+
+    func testDocumentPreviewResolverMakesRelativeNotePathAbsolute() throws {
+        let vault = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let resolved = DocumentPreviewResolver.noteURL(
+            documentPath: "documents/invoice.md",
+            vaultPath: vault.path
+        )
+
+        XCTAssertEqual(
+            resolved?.path,
+            vault.appendingPathComponent("documents/invoice.md").standardizedFileURL.path
+        )
+    }
+
+    func testDocumentPreviewResolverPrefersArchivedOriginal() throws {
+        let vault = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let archive = vault.appendingPathComponent("archive/invoice.pdf")
+        let source = vault.appendingPathComponent("incoming/invoice.pdf")
+        try FileManager.default.createDirectory(at: archive.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: source.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("archive".utf8).write(to: archive)
+        try Data("source".utf8).write(to: source)
+        defer { try? FileManager.default.removeItem(at: vault) }
+
+        let resolved = DocumentPreviewResolver.sourceURL(
+            documentPath: "documents/invoice.md",
+            properties: [
+                "archive_path": "archive/invoice.pdf",
+                "source_path": source.path,
+            ],
+            vaultPath: vault.path
+        )
+
+        XCTAssertEqual(resolved?.path, archive.standardizedFileURL.path)
+    }
+
+    func testDocumentPreviewResolverFallsBackToSourceWhenArchiveIsMissing() throws {
+        let vault = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let source = vault.appendingPathComponent("source.pdf")
+        try FileManager.default.createDirectory(at: vault, withIntermediateDirectories: true)
+        try Data("source".utf8).write(to: source)
+        defer { try? FileManager.default.removeItem(at: vault) }
+
+        let resolved = DocumentPreviewResolver.sourceURL(
+            documentPath: "invoice.md",
+            properties: [
+                "archive_path": "missing.pdf",
+                "source_path": "source.pdf",
+            ],
+            vaultPath: vault.path
+        )
+
+        XCTAssertEqual(resolved?.path, source.standardizedFileURL.path)
+    }
+
+    func testDocumentPropertiesDecodesMixedFrontmatterValues() throws {
+        let data = #"{"archive_path":"/archive/invoice.pdf","confidence":91,"note_visible":true,"tags":["finance","paid"]}"#
+            .data(using: .utf8)!
+
+        let properties = try DocumentProperties.decode(data)
+
+        XCTAssertEqual(properties["archive_path"], "/archive/invoice.pdf")
+        XCTAssertEqual(properties["confidence"], "91")
+        XCTAssertEqual(properties["note_visible"], "true")
+        XCTAssertEqual(properties["tags"], "finance, paid")
     }
 
     func testDocumentStatusLabelsAndImages() {
@@ -409,4 +495,22 @@ final class DeskCoreTests: XCTestCase {
         let scheduler = NotificationScheduler(leadTimeDays: 3)
         XCTAssertEqual(scheduler.leadTimeDays, 3)
     }
+
+	func testServerURLNormalizationRequiresBareHTTPURL() {
+		XCTAssertEqual(ServerConnectionConfig.normalizedURL(" https://desk.example.test/ ")?.absoluteString, "https://desk.example.test")
+		XCTAssertEqual(ServerConnectionConfig.normalizedURL("http://192.168.1.4:8787")?.port, 8787)
+		XCTAssertNil(ServerConnectionConfig.normalizedURL("desk.example.test"))
+		XCTAssertNil(ServerConnectionConfig.normalizedURL("https://desk.example.test/api"))
+		XCTAssertNil(ServerConnectionConfig.normalizedURL("https://user:secret@desk.example.test"))
+		XCTAssertNil(ServerConnectionConfig.normalizedURL("https://desk.example.test?token=secret"))
+	}
+
+	func testIngestJobDecodesLocalNumericAndRemoteStringIDs() throws {
+		let local = Data(#"{"id":42,"document_id":1,"kind":"ocr","status":"failed","attempts":2,"created_at":"now","updated_at":"now","source_path":"a.pdf"}"#.utf8)
+		let remote = Data(#"{"id":"abcdef","status":"pending","capability":"ocr","error":"","created_at":"now","updated_at":"now","source_path":"archive/a.pdf"}"#.utf8)
+		XCTAssertEqual(try JSONDecoder().decode(IngestJob.self, from: local).id, "42")
+		let remoteJob = try JSONDecoder().decode(IngestJob.self, from: remote)
+		XCTAssertEqual(remoteJob.id, "abcdef")
+		XCTAssertEqual(remoteJob.kind, "ocr")
+	}
 }

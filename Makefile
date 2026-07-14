@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check benchmark-large clean
+.PHONY: build test lint fmt-check benchmark-large docker-build clean
 
 build:
 	@mkdir -p bin
@@ -15,6 +15,9 @@ fmt-check:
 
 benchmark-large:
 	go test -run '^$$' -bench BenchmarkLargeVaultIndexAndSearch -benchtime=1x ./internal/demo
+
+docker-build:
+	docker build -t symaira-desktop:dev .
 
 clean:
 	go clean -cache -testcache

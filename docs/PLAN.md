@@ -1,5 +1,10 @@
 # symdesk — Phasenplan für die Umsetzung
 
+> Update 2026-07-13: The earlier local-only transport decision below describes
+> the original MVP. SymDesk now also has an optional authenticated self-hosted
+> server and distributed OCR workers; see `SELF_HOSTING.md` and
+> `ARCHITECTURE.md`. Direct local CLI mode remains supported.
+
 > **Zweck dieses Dokuments:** Vollständiger, abarbeitbarer Bauplan für `symaira-desktop`. Geschrieben so, dass eine KI (oder ein Mensch) **ohne weiteren Konversations-Kontext** Phase für Phase umsetzen kann. Jede Phase hat Ziel, Aufgaben, Definition of Done (DoD) mit Prüfkommandos und endet mit Commit + Push + grüner CI, bevor die nächste Phase beginnt.
 >
 > Hintergrund/Begründungen: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (dieselbe `docs/`, gitignored). Bei Widerspruch gilt: dieses Dokument für das *Was/Wann*, ARCHITECTURE.md für das *Warum*.

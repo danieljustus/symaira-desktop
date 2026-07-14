@@ -1,6 +1,7 @@
 package sidecar
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"embed"
 	"fmt"
@@ -17,6 +18,31 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
+
+// OpenForVault keeps rebuildable indexes isolated per vault. This prevents a
+// configured vault from listing or searching rows indexed for another vault.
+func OpenForVault(vaultRoot string) (*DB, error) {
+	if explicit := os.Getenv("SYMDESK_SIDECAR"); explicit != "" {
+		return Open(explicit)
+	}
+	canonical, err := filepath.Abs(vaultRoot)
+	if err != nil {
+		return nil, fmt.Errorf("resolve vault for sidecar: %w", err)
+	}
+	if resolved, resolveErr := filepath.EvalSymlinks(canonical); resolveErr == nil {
+		canonical = resolved
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("user home dir: %w", err)
+	}
+	dataRoot := os.Getenv("XDG_DATA_HOME")
+	if dataRoot == "" {
+		dataRoot = filepath.Join(home, ".local", "share")
+	}
+	digest := fmt.Sprintf("%x", sha256.Sum256([]byte(canonical)))
+	return Open(filepath.Join(dataRoot, "symdesk", "vaults", digest[:16], "sidecar.db"))
+}
 
 //go:embed migrations/*.sql
 var migrationsFS embed.FS

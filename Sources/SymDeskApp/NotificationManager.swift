@@ -44,8 +44,7 @@ final class NotificationManager: NSObject, ObservableObject {
     }
 
     func checkPermissionStatus() async {
-        let settings = await center.notificationSettings()
-        permissionStatus = settings.authorizationStatus
+        permissionStatus = await center.authorizationStatus()
     }
 
     // MARK: - Scheduling

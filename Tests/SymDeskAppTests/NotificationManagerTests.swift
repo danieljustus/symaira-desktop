@@ -1,6 +1,7 @@
 import Foundation
 import XCTest
-@testable import SymDeskApp
+@testable import SymDesk
+@testable import SymDeskCore
 @preconcurrency import UserNotifications
 
 @MainActor
@@ -17,10 +18,8 @@ private final class FakeNotificationCenter: NotificationCenterProviding {
         return requestResult
     }
 
-    func notificationSettings() async -> UNNotificationSettings {
-        await MainActor.run {
-            FakeNotificationSettings(status: authStatus)
-        }
+    func authorizationStatus() async -> UNAuthorizationStatus {
+        authStatus
     }
 
     func removeAllPendingNotificationRequests() {
@@ -34,25 +33,6 @@ private final class FakeNotificationCenter: NotificationCenterProviding {
     func setBadgeCount(_ newBadgeCount: Int) async throws {
         badgeCount = newBadgeCount
     }
-}
-
-@MainActor
-private final class FakeNotificationSettings: UNNotificationSettings {
-    private let status: UNAuthorizationStatus
-
-    init(status: UNAuthorizationStatus) {
-        self.status = status
-    }
-
-    override var authorizationStatus: UNAuthorizationStatus { status }
-    override var soundSetting: UNNotificationSetting { .enabled }
-    override var badgeSetting: UNNotificationSetting { .enabled }
-    override var alertSetting: UNNotificationSetting { .enabled }
-    override var notificationCenterSetting: UNNotificationSetting { .enabled }
-    override var lockScreenSetting: UNNotificationSetting { .enabled }
-    override var carPlaySetting: UNNotificationSetting { .notSupported }
-    override var criticalAlertSetting: UNNotificationSetting { .notSupported }
-    override var showPreviewsSetting: UNShowPreviewsSetting { .always }
 }
 
 @MainActor
@@ -94,16 +74,19 @@ final class NotificationManagerTests: XCTestCase {
         let fake = FakeNotificationCenter()
         let manager = NotificationManager(center: fake)
 
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate]
+        let dueDate = formatter.string(from: Calendar.current.date(byAdding: .day, value: 2, to: Date())!)
         let doc = DocumentItem(
-            id: "test-id",
+            path: "test.md",
             title: "Test Doc",
-            fileName: "test.md",
-            filePath: "test.md",
-            status: .open,
-            createdAt: Date(),
-            updatedAt: Date(),
-            tags: [],
-            metadata: [:]
+            documentDate: "",
+            person: "",
+            status: "open",
+            dueDate: dueDate,
+            confidence: 95,
+            correspondent: "",
+            documentType: "invoice"
         )
 
         manager.scheduleNotifications(documents: [doc], reviewCount: 2)

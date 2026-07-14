@@ -60,7 +60,7 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 		if err != nil {
 			return nil, nil, err
 		}
-		db, err := sidecar.Open("")
+		db, err := sidecar.OpenForVault(vRoot)
 		if err != nil {
 			return nil, nil, err
 		}

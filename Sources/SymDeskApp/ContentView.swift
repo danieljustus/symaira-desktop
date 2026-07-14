@@ -9,6 +9,7 @@ struct ContentView: View {
     @EnvironmentObject var notificationManager: NotificationManager
 
     @State private var notes: [Note] = []
+    @State private var noteLookup: [String: Note] = [:]
     @State private var selectedNote: Note? = nil
     @State private var noteContent: String = ""
     @State private var doctorStatus: String = "Checking..."
@@ -21,9 +22,12 @@ struct ContentView: View {
     @State private var backlinks: [String] = []
     
     @AppStorage("isBlockMode") private var isBlockMode = false
+    @AppStorage("dismissedNotificationPermissionBanner") private var dismissedNotificationPermissionBanner = false
 
     // Auto-save debounce
     @State private var saveTask: Task<Void, Never>? = nil
+    @State private var eventRefreshTask: Task<Void, Never>? = nil
+    @State private var keyEventMonitor: Any?
 
     enum DisplayMode {
         case vault
@@ -60,7 +64,7 @@ struct ContentView: View {
                                 .foregroundColor(SymairaTheme.textPrimary)
                             Text(err)
                                 .foregroundColor(SymairaTheme.textSecondary)
-                            Text("Run `brew install danieljustus/tap/symdesk` to install the core CLI.")
+							Text(ServerConnectionConfig.hasConnection ? "Check the server URL, network and access token, then restart SymDesk." : "Run `brew install danieljustus/tap/symdesk` to install the core CLI.")
                                 .foregroundColor(SymairaTheme.textMuted)
                                 .padding(.top)
                         }
@@ -180,7 +184,10 @@ struct ContentView: View {
                         }
                     }
                     .scrollContentBackground(.hidden)
-                    .background(SymairaTheme.bgDarker)
+                    .listStyle(.sidebar)
+                    .buttonStyle(.plain)
+                    .frame(minWidth: 240, idealWidth: 268)
+                    .background(.clear)
                     .navigationTitle("SymDesk")
                 } detail: {
                     SymairaScreen {
@@ -228,8 +235,10 @@ struct ContentView: View {
                         if let note = selectedNote {
                             VStack(spacing: 0) {
                                 if isConflicted(note) {
-                                    HStack {
-                                        Text("⚠️ iCloud Sync Conflict detected")
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundStyle(SymairaTheme.goldPrimary)
+                                        Text("iCloud sync conflict detected")
                                             .font(.caption)
                                             .foregroundColor(SymairaTheme.goldSecondary)
                                         Spacer()
@@ -275,7 +284,7 @@ struct ContentView: View {
                                     
                                     // Dummy view to attach onChange (since we use if/else for the editor)
                                     Color.clear.frame(width: 0, height: 0)
-                                        .onChange(of: noteContent) { newValue in
+                                        .onChange(of: noteContent) { _, newValue in
                                             debouncedSave(note: note, content: newValue)
                                         }
 
@@ -322,12 +331,23 @@ struct ContentView: View {
                                 await loadBacklinks(for: note)
                             }
                         } else {
-                            Text("Select a note or press Cmd-K")
-                                .foregroundColor(SymairaTheme.textMuted)
+                            ContentUnavailableView {
+                                Label("No Note Selected", systemImage: "doc.text")
+                            } description: {
+                                Text("Choose a note in the sidebar or open Quick Search with ⌘K.")
+                            } actions: {
+                                Button("Open Quick Search") { isShowingPalette = true }
+                                    .buttonStyle(SymairaPrimaryButtonStyle())
+                            }
+                            .frame(maxWidth: 460)
+                            .padding(32)
+                            .symDeskLiquidGlass(cornerRadius: 20)
                         }
                     }
                     }
                 }
+                .navigationSplitViewStyle(.balanced)
+                .frame(minWidth: 980, minHeight: 640)
                 .inspector(isPresented: $isShowingInspector) {
                     if isShowingAIDock {
                         AIDockView()
@@ -417,7 +437,8 @@ struct ContentView: View {
                 }
                 // App-wide shortcut for Cmd-K
                 .onAppear {
-                    NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                    guard keyEventMonitor == nil else { return }
+                    keyEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                         if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "k" {
                             isShowingPalette.toggle()
                             return nil
@@ -425,15 +446,25 @@ struct ContentView: View {
                         return event
                     }
                 }
+                .onDisappear {
+                    saveTask?.cancel()
+                    eventRefreshTask?.cancel()
+                    if let keyEventMonitor {
+                        NSEvent.removeMonitor(keyEventMonitor)
+                        self.keyEventMonitor = nil
+                    }
+                }
                 .onReceive(NotificationCenter.default.publisher(for: .openDiscover)) { _ in
                     displayMode = .discover
                 }
                 .overlay(alignment: .top) {
-                    if notificationManager.isDenied {
-                        NotificationDeniedBanner()
+                    if notificationManager.isDenied && !dismissedNotificationPermissionBanner {
+                        NotificationDeniedBanner {
+                            dismissedNotificationPermissionBanner = true
+                        }
                     }
                 }
-                .onChange(of: notificationManager.deepLinkedDocumentPath) { path in
+                .onChange(of: notificationManager.deepLinkedDocumentPath) { _, path in
                     guard let path else { return }
                     deepLinkDocPath = path
                     displayMode = .docs
@@ -445,18 +476,8 @@ struct ContentView: View {
                     await fetchDoctor()
                     await fetchDocCounts()
                 }
-                .onChange(of: watcher.latestEvent) { ev in
-                    Task {
-                        // Refresh notes if a file changed
-                        await fetchNotes()
-                        await fetchDocCounts()
-                        // If the current note was changed externally, reload it
-                        if let selected = selectedNote, ev?.path == selected.path {
-                            await loadContent(for: selected)
-                        }
-                        // Refresh notifications when documents change
-                        await notificationManager.refreshNotifications(with: core)
-                    }
+                .onChange(of: watcher.latestEvent) { _, ev in
+                    scheduleEventRefresh(ev)
                 }
             }
         }
@@ -475,7 +496,17 @@ struct ContentView: View {
 
     private func fetchNotes() async {
         do {
-            self.notes = try await core.listFiles()
+            let loadedNotes = try await core.listFiles()
+            self.notes = loadedNotes
+            var lookup: [String: Note] = [:]
+            lookup.reserveCapacity(loadedNotes.count * 3)
+            for note in loadedNotes {
+                lookup[note.title.lowercased()] = note
+                let base = (note.path as NSString).lastPathComponent
+                lookup[base.lowercased()] = note
+                lookup[(base as NSString).deletingPathExtension.lowercased()] = note
+            }
+            noteLookup = lookup
         } catch {
             print("Failed to list files: \(error)")
         }
@@ -498,7 +529,19 @@ struct ContentView: View {
     }
 
     private func loadContent(for note: Note) async {
-        if let data = FileManager.default.contents(atPath: note.path),
+		if core.isRemote {
+			do {
+				self.noteContent = try await core.docNoteContent(path: note.path)
+			} catch {
+				self.noteContent = "Error reading file: \(error.localizedDescription)"
+			}
+			return
+		}
+        guard let path = absoluteNotePath(note.path) else {
+            self.noteContent = "Error reading file: no vault is configured."
+            return
+        }
+        if let data = FileManager.default.contents(atPath: path),
            let string = String(data: data, encoding: .utf8) {
             self.noteContent = string
         } else {
@@ -520,37 +563,51 @@ struct ContentView: View {
             try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
             guard !Task.isCancelled else { return }
 
-            // Atomic write
-            if let data = content.data(using: .utf8) {
-                let url = URL(fileURLWithPath: note.path)
-                do {
-                    try data.write(to: url, options: .atomic)
-                    // Core events watcher will pick this up
-                } catch {
-                    print("Failed to save: \(error)")
-                }
-            }
+			do {
+				if core.isRemote {
+					try await core.saveNoteContent(path: note.path, content: content)
+				} else if let path = absoluteNotePath(note.path) {
+					try await core.saveNoteContent(path: path, content: content)
+				}
+			} catch {
+				print("Failed to save: \(error)")
+			}
         }
     }
 
     /// Resolves a transclusion target ("Note Title" or relative path without
     /// extension) to the note's raw Markdown for the preview embeds.
     private func resolveNoteContent(_ target: String) -> String? {
-        let lowered = target.lowercased()
-        let found = notes.first { note in
-            if note.title.lowercased() == lowered { return true }
-            let base = (note.path as NSString).lastPathComponent
-            let stem = (base as NSString).deletingPathExtension
-            return stem.lowercased() == lowered || base.lowercased() == lowered
-        }
-        guard let found,
-              let data = FileManager.default.contents(atPath: found.path) else { return nil }
+		guard !core.isRemote else { return nil }
+        guard let found = noteLookup[target.lowercased()],
+              let path = absoluteNotePath(found.path),
+              let data = FileManager.default.contents(atPath: path) else { return nil }
         return String(data: data, encoding: .utf8)
     }
 
+    private func absoluteNotePath(_ path: String) -> String? {
+        DocumentPreviewResolver.noteURL(documentPath: path, vaultPath: core.vaultPath)?.path
+    }
+
     private func navigateToNote(title: String) {
-        if let found = notes.first(where: { $0.title == title }) {
+        if let found = noteLookup[title.lowercased()] {
             self.selectedNote = found
+        }
+    }
+
+    /// File watchers commonly emit several events for one atomic save. Wait
+    /// for the burst to settle before refreshing lists, counts, and reminders.
+    private func scheduleEventRefresh(_ event: VaultEvent?) {
+        eventRefreshTask?.cancel()
+        eventRefreshTask = Task {
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            guard !Task.isCancelled else { return }
+            await fetchNotes()
+            await fetchDocCounts()
+            if let selected = selectedNote, event?.path == selected.path {
+                await loadContent(for: selected)
+            }
+            await notificationManager.refreshNotifications(with: core)
         }
     }
 
@@ -577,24 +634,40 @@ struct ContentView: View {
 // MARK: - Notification Permission Denied Banner
 
 private struct NotificationDeniedBanner: View {
+    let dismiss: () -> Void
+
     var body: some View {
-        HStack {
-            Image(systemName: "bell.slash")
-                .foregroundColor(.white)
-            Text("Notifications are disabled. Enable in System Settings > Notifications > SymDesk.")
-                .font(.caption.bold())
-                .foregroundColor(.white)
-            Spacer()
+        HStack(spacing: 10) {
+            Image(systemName: "bell.slash.fill")
+                .foregroundStyle(SymairaTheme.goldPrimary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Notifications are off")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(SymairaTheme.textPrimary)
+                Text("Enable them in System Settings to receive review reminders.")
+                    .font(.caption2)
+                    .foregroundStyle(SymairaTheme.textSecondary)
+            }
+            Spacer(minLength: 12)
             Button("Open Settings") {
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications?PrivacyNotificationCenter") {
                     NSWorkspace.shared.open(url)
                 }
             }
-            .font(.caption)
-            .foregroundColor(.white.opacity(0.9))
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            Button(action: dismiss) {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(SymairaTheme.textSecondary)
+            .help("Dismiss notification reminder")
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(Color.orange)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .symDeskLiquidGlass(cornerRadius: 14, prominence: .elevated)
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .accessibilityElement(children: .contain)
     }
 }

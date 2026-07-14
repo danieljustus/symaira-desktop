@@ -54,12 +54,13 @@ public struct VaultConfig {
 
     /// Whether a vault has been configured (either real or demo).
     public static var hasConfiguredVault: Bool {
-        vaultPath() != nil
+        vaultPath() != nil || ServerConnectionConfig.hasConnection
     }
 
     /// Save a chosen vault folder URL. Stores both a security-scoped bookmark
     /// (for sandbox persistence) and the plain string path.
     public static func setVault(url: URL) {
+        ServerConnectionConfig.reset()
         let accessGranted = url.startAccessingSecurityScopedResource()
         defer {
             if accessGranted { url.stopAccessingSecurityScopedResource() }
@@ -71,6 +72,7 @@ public struct VaultConfig {
 
     /// Mark the current vault as demo mode and save the path.
     public static func setDemoVault(url: URL) {
+        ServerConnectionConfig.reset()
         let accessGranted = url.startAccessingSecurityScopedResource()
         defer {
             if accessGranted { url.stopAccessingSecurityScopedResource() }
@@ -82,6 +84,11 @@ public struct VaultConfig {
 
     /// Reset the vault configuration — used by Settings to re-enter onboarding.
     public static func reset() {
+		resetLocalVault()
+		ServerConnectionConfig.reset()
+	}
+
+	static func resetLocalVault() {
         UserDefaults.standard.removeObject(forKey: Key.vaultPath)
         UserDefaults.standard.removeObject(forKey: Key.vaultBookmark)
         UserDefaults.standard.removeObject(forKey: Key.isDemoMode)

@@ -79,7 +79,7 @@ func registerCommands(rootCmd *cobra.Command) {
 			}
 
 			// 3. Sidecar
-			db, err := sidecar.Open("")
+			db, err := sidecar.OpenForVault(vRoot)
 			if err != nil {
 				results["sidecar"] = map[string]string{"status": "error", "message": err.Error()}
 				allOk = false
@@ -209,7 +209,7 @@ func registerCommands(rootCmd *cobra.Command) {
 				return err
 			}
 
-			db, err := sidecar.Open("")
+			db, err := sidecar.OpenForVault(vRoot)
 			if err != nil {
 				return err
 			}
@@ -1255,7 +1255,7 @@ func initServiceDeps() (string, *sidecar.DB, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	db, err := sidecar.Open("")
+	db, err := sidecar.OpenForVault(vRoot)
 	if err != nil {
 		return "", nil, err
 	}

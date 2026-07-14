@@ -137,6 +137,7 @@ func newEventsCmd() *cobra.Command {
 
 			sigs := make(chan os.Signal, 1)
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+			defer signal.Stop(sigs)
 
 			stdinClosed := make(chan struct{})
 			go func() {
@@ -148,13 +149,8 @@ func newEventsCmd() *cobra.Command {
 
 			debounceMap := make(map[string]*DebouncedEvent)
 			var mu sync.Mutex
-
-			go func() {
-				for {
-					time.Sleep(500 * time.Millisecond)
-					flushDebounce(debounceMap, &mu, watcher, svc, os.Stdout)
-				}
-			}()
+			debounceTicker := time.NewTicker(500 * time.Millisecond)
+			defer debounceTicker.Stop()
 
 			for {
 				select {
@@ -162,6 +158,8 @@ func newEventsCmd() *cobra.Command {
 					return nil
 				case <-stdinClosed:
 					return nil
+				case <-debounceTicker.C:
+					flushDebounce(debounceMap, &mu, watcher, svc, os.Stdout)
 				case event, ok := <-watcher.Events:
 					if !ok {
 						return nil

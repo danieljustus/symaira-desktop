@@ -15,7 +15,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/mcp"
 )
 
-var version = "0.6.12"
+var version = "0.7.0"
 var schemaVersion = 1
 
 var (
@@ -97,6 +97,8 @@ func newRootCmd() *cobra.Command {
 	}
 	mcpCmd.Flags().BoolVar(&allowWrite, "allow-write", false, "enable mutating MCP tools (note creation, ingest, status changes)")
 	rootCmd.AddCommand(mcpCmd)
+	rootCmd.AddCommand(newServeCmd())
+	rootCmd.AddCommand(newWorkerCmd())
 
 	// 3. Doctor Command (Stub)
 	registerCommands(rootCmd)

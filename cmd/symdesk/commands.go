@@ -13,6 +13,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/demo"
 	"github.com/danieljustus/symaira-desktop/internal/secrets"
 	"github.com/danieljustus/symaira-desktop/internal/service"
@@ -135,6 +136,11 @@ func registerCommands(rootCmd *cobra.Command) {
 			aiMap := map[string]string{"provider": provider}
 			if provider == "anthropic" {
 				aiMap["secret_source"] = secrets.Source(cfg.LLMAPIKey)
+				model := cfg.LLMModel
+				if model == "" {
+					model = config.DefaultAnthropicModel
+				}
+				aiMap["model"] = model
 			}
 			results["ai"] = aiMap
 
@@ -180,10 +186,12 @@ func registerCommands(rootCmd *cobra.Command) {
 
 				fmt.Printf("ai: provider=%s", aiMap["provider"])
 				if src, ok := aiMap["secret_source"]; ok {
-					fmt.Printf(", secret_source=%s\n", src)
-				} else {
-					fmt.Println()
+					fmt.Printf(", secret_source=%s", src)
 				}
+				if model, ok := aiMap["model"]; ok {
+					fmt.Printf(", model=%s", model)
+				}
+				fmt.Println()
 
 				fmt.Printf("Overall status: %s\n", results["overall"])
 			}

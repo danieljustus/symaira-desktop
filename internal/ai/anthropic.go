@@ -10,13 +10,15 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/config"
 )
 
 var jsonMarshal = json.Marshal
 
 func streamAnthropic(ctx context.Context, apiKey, model, prompt string, out chan<- AskChunk) error {
 	if model == "" {
-		model = "claude-3-5-sonnet-20240620"
+		model = config.DefaultAnthropicModel
 	}
 
 	payload := map[string]interface{}{

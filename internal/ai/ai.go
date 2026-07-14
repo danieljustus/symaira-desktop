@@ -87,8 +87,7 @@ func Ask(query string, contextDocs []map[string]interface{}, out chan<- AskChunk
 				"Anthropic API-Key konnte nicht aufgelöst werden (Fehlendes Secret via symvault oder Umgebungsvariable).\n"}
 			return
 		}
-		model := os.Getenv("SYMDESK_LLM_MODEL")
-		if err := streamAnthropic(context.Background(), apiKey, model, buildPrompt(query, contextDocs), out); err != nil {
+		if err := streamAnthropic(context.Background(), apiKey, cfg.LLMModel, buildPrompt(query, contextDocs), out); err != nil {
 			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Anthropic-Anfrage fehlgeschlagen: %v\n", err)}
 		}
 		return
@@ -154,8 +153,7 @@ func Transform(text, intent string, out chan<- AskChunk) {
 				"Anthropic API-Key konnte nicht aufgelöst werden (Fehlendes Secret via symvault oder Umgebungsvariable).\n"}
 			return
 		}
-		model := os.Getenv("SYMDESK_LLM_MODEL")
-		if err := streamAnthropic(context.Background(), apiKey, model, buildTransformPrompt(text, intent), out); err != nil {
+		if err := streamAnthropic(context.Background(), apiKey, cfg.LLMModel, buildTransformPrompt(text, intent), out); err != nil {
 			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Anthropic-Anfrage fehlgeschlagen: %v\n", err)}
 		}
 		return
@@ -247,7 +245,6 @@ func promptOne(prompt string) (string, error) {
 		if apiKey == "" {
 			return "", errors.New("anthropic API key not resolved")
 		}
-		model := os.Getenv("SYMDESK_LLM_MODEL")
 		out := make(chan AskChunk, 1)
 		var result strings.Builder
 		done := make(chan struct{})
@@ -257,7 +254,7 @@ func promptOne(prompt string) (string, error) {
 			}
 			close(done)
 		}()
-		if err := streamAnthropic(context.Background(), apiKey, model, prompt, out); err != nil {
+		if err := streamAnthropic(context.Background(), apiKey, cfg.LLMModel, prompt, out); err != nil {
 			close(out)
 			<-done
 			return "", err

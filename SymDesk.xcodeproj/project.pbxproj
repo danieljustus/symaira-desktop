@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		00C7801D81436878B1F6C766 /* DbViewGallery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63AF82D799029EFC1957DB2F /* DbViewGallery.swift */; };
 		03618B7F81A04FE3E3DD2B01 /* ClassificationRulesViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95BE33F6E50098539F916385 /* ClassificationRulesViewModelTests.swift */; };
+		0777864A7A6E975929B7A320 /* AsyncActionTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8948F04EC3090C19864630CC /* AsyncActionTrackerTests.swift */; };
 		087490E1CC2A424C7AEF4AC1 /* DocumentGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF74B31CB37D574E3AC69032 /* DocumentGridView.swift */; };
 		08DDB4F6EED7DA64407BA23B /* MarkdownPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4361A3B66293519600E22473 /* MarkdownPreview.swift */; };
 		0C92622CE6B3BB5D9C7AEC4C /* DocumentViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */; };
@@ -51,6 +52,7 @@
 		894BF25DD7A7DE8807A137E1 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */; };
 		8D1D15CD36A1EDC8F6A23185 /* AIDockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0EF47CC7E6B528447433E8 /* AIDockView.swift */; };
 		8D9B2E4C882F19841C75104C /* MarkdownPreviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B2D66520688E3347706F2A /* MarkdownPreviewTests.swift */; };
+		93AB4112A5820CC47B45DB2E /* AsyncActionTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EBD01F47531831816ECBBC9 /* AsyncActionTracker.swift */; };
 		9CB84C5DEC5DFAA645786C79 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = CCF15BEFF6E2B7C5BDE99A2A /* SymairaToolKit */; };
 		A0E1A3C240D1E507A7E2EC9F /* AppUpdateCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E77F6F7A42131B3055841A /* AppUpdateCheckerTests.swift */; };
 		A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59762A8D6DF418D30855BEDA /* OnboardingView.swift */; };
@@ -150,6 +152,8 @@
 		641C263A0947A7D1CCBE84E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		78F76334FF1AA665F17F9B0C /* DbViewBoard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewBoard.swift; sourceTree = "<group>"; };
 		827CE03FB82C7640D64E4D97 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		8948F04EC3090C19864630CC /* AsyncActionTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncActionTrackerTests.swift; sourceTree = "<group>"; };
+		8EBD01F47531831816ECBBC9 /* AsyncActionTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncActionTracker.swift; sourceTree = "<group>"; };
 		937E397B9A403351E2774A73 /* MobileVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileVault.swift; sourceTree = "<group>"; };
 		93B2D66520688E3347706F2A /* MarkdownPreviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownPreviewTests.swift; sourceTree = "<group>"; };
 		95355A68097983C9F84AE919 /* EventWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventWatcher.swift; sourceTree = "<group>"; };
@@ -262,6 +266,7 @@
 		362E9BEEFFBA097C15F5579C /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				8EBD01F47531831816ECBBC9 /* AsyncActionTracker.swift */,
 				24A66FCAE94BEB5D93BE972B /* BlockNode.swift */,
 			);
 			path = Models;
@@ -340,6 +345,7 @@
 		ABFA5EB21A42FE473AFC31B1 /* SymDeskAppTests */ = {
 			isa = PBXGroup;
 			children = (
+				8948F04EC3090C19864630CC /* AsyncActionTrackerTests.swift */,
 				4CA283F51817DD589D19ADB4 /* NotificationManagerTests.swift */,
 			);
 			name = SymDeskAppTests;
@@ -580,6 +586,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0777864A7A6E975929B7A320 /* AsyncActionTrackerTests.swift in Sources */,
 				D8DB6D940F2257736D24B15E /* NotificationManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -628,6 +635,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D1D15CD36A1EDC8F6A23185 /* AIDockView.swift in Sources */,
+				93AB4112A5820CC47B45DB2E /* AsyncActionTracker.swift in Sources */,
 				52B0B883869C07C6C51D48C4 /* BlockEditorView.swift in Sources */,
 				8297EAB48FFFA51F537F9351 /* BlockNode.swift in Sources */,
 				D912C5E6E61A8D859E86A1F6 /* CommandPalette.swift in Sources */,

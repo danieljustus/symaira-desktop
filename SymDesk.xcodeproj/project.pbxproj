@@ -22,6 +22,7 @@
 		1D14D610EF1CD193F0A97065 /* SymairaTheme in Frameworks */ = {isa = PBXBuildFile; productRef = AAA444735FB3AB708D3BD4C4 /* SymairaTheme */; };
 		1ECCF881DFFB05C3E4DCA223 /* NotificationCenterProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = C65122A6938268B750A79E55 /* NotificationCenterProviding.swift */; };
 		1F1FA22E3100184255CC3362 /* DbViewTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EEEC588B327739FBAF693D4 /* DbViewTable.swift */; };
+		1F4F7DB3673E6ECA5569DAB0 /* fake-symdesk.sh in Resources */ = {isa = PBXBuildFile; fileRef = 7508239A9019F2C46A80B902 /* fake-symdesk.sh */; };
 		223A0903E7A1B2FF00EE3F7E /* MarkdownEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F547CF59C20684A5051D6B5 /* MarkdownEditorView.swift */; };
 		274F640915B4D63279459C99 /* DbViewCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48223DCBE4FF19264208BCB3 /* DbViewCalendar.swift */; };
 		2A33E6AC1739DB68412E9972 /* MarkdownTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6249D84E9A4012E9E8B0BFDB /* MarkdownTable.swift */; };
@@ -57,10 +58,12 @@
 		A0E1A3C240D1E507A7E2EC9F /* AppUpdateCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E77F6F7A42131B3055841A /* AppUpdateCheckerTests.swift */; };
 		A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59762A8D6DF418D30855BEDA /* OnboardingView.swift */; };
 		AAB2D778093607FBB326E837 /* SymDeskMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CAE9E046D07652DF79A3000 /* SymDeskMobileApp.swift */; };
+		ACEECA392E62D5A594FF6F5B /* DeskTransportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 748F5E216CEC59B66740A482 /* DeskTransportTests.swift */; };
 		AF33E56F24D6F0B026A98F5B /* PropertiesInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56278C647AEC161C2B94531F /* PropertiesInspector.swift */; };
 		B0BB83ED23EB9B4B5F55EF19 /* VaultAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A3B1306D1D67D45CE845EAF /* VaultAssets.swift */; };
 		B4BBDCDD200A14353CFF2B9F /* DeskCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F756739286BF26EA17456C99 /* DeskCore.swift */; };
 		B88D845C3B8D9C6FEC6D7006 /* DbViewList.swift in Sources */ = {isa = PBXBuildFile; fileRef = D23C8BFA56B2714D100315DB /* DbViewList.swift */; };
+		BD65FAB6BE6B206D608452DB /* DeskTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B442ECE47F4FC2E662B8D33 /* DeskTransport.swift */; };
 		C238FC5C1826BF80F001CE50 /* RulesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA57E256040FF30C447766E /* RulesSettingsView.swift */; };
 		C336F49BE61DBF2A7C03CE8E /* SymairaUpdateCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 596C4C9EB9845BC180C460A4 /* SymairaUpdateCheck */; };
 		C538D3C4A6BE4D9208A2DCCE /* SymairaUpdateCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 4D0E14080504B77CA18BBA53 /* SymairaUpdateCheck */; };
@@ -136,6 +139,7 @@
 		233223A3C27BEA490CADB82C /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
 		23EBE73852F5829E6BB25B82 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		24A66FCAE94BEB5D93BE972B /* BlockNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockNode.swift; sourceTree = "<group>"; };
+		2B442ECE47F4FC2E662B8D33 /* DeskTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskTransport.swift; sourceTree = "<group>"; };
 		2FBA5128D6B234381F73178F /* SymDesk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SymDesk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		36ACCC6F6DD37EEAD70151F2 /* ClassificationRulesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassificationRulesViewModel.swift; sourceTree = "<group>"; };
 		37BB0170D51D31EB825E5869 /* UpdateInstallerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateInstallerTests.swift; sourceTree = "<group>"; };
@@ -150,6 +154,8 @@
 		6249D84E9A4012E9E8B0BFDB /* MarkdownTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTable.swift; sourceTree = "<group>"; };
 		63AF82D799029EFC1957DB2F /* DbViewGallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewGallery.swift; sourceTree = "<group>"; };
 		641C263A0947A7D1CCBE84E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		748F5E216CEC59B66740A482 /* DeskTransportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskTransportTests.swift; sourceTree = "<group>"; };
+		7508239A9019F2C46A80B902 /* fake-symdesk.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "fake-symdesk.sh"; sourceTree = "<group>"; };
 		78F76334FF1AA665F17F9B0C /* DbViewBoard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewBoard.swift; sourceTree = "<group>"; };
 		827CE03FB82C7640D64E4D97 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		8948F04EC3090C19864630CC /* AsyncActionTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncActionTrackerTests.swift; sourceTree = "<group>"; };
@@ -237,6 +243,7 @@
 				A7C133D510BC5F4211286EC5 /* AppUpdateChecker.swift */,
 				36ACCC6F6DD37EEAD70151F2 /* ClassificationRulesViewModel.swift */,
 				F756739286BF26EA17456C99 /* DeskCore.swift */,
+				2B442ECE47F4FC2E662B8D33 /* DeskTransport.swift */,
 				95355A68097983C9F84AE919 /* EventWatcher.swift */,
 				4361A3B66293519600E22473 /* MarkdownPreview.swift */,
 				6249D84E9A4012E9E8B0BFDB /* MarkdownTable.swift */,
@@ -318,6 +325,14 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
+		6010C9B620B0150FC9F82BF5 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				7508239A9019F2C46A80B902 /* fake-symdesk.sh */,
+			);
+			path = Fixtures;
+			sourceTree = "<group>";
+		};
 		6F4FF8A139ED6CEFD8F23F76 /* SymDeskMobile */ = {
 			isa = PBXGroup;
 			children = (
@@ -371,9 +386,11 @@
 				E5E77F6F7A42131B3055841A /* AppUpdateCheckerTests.swift */,
 				95BE33F6E50098539F916385 /* ClassificationRulesViewModelTests.swift */,
 				1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */,
+				748F5E216CEC59B66740A482 /* DeskTransportTests.swift */,
 				93B2D66520688E3347706F2A /* MarkdownPreviewTests.swift */,
 				BD503BDFC58C49F251B9A606 /* MarkdownTableTests.swift */,
 				37BB0170D51D31EB825E5869 /* UpdateInstallerTests.swift */,
+				6010C9B620B0150FC9F82BF5 /* Fixtures */,
 			);
 			name = SymDeskCoreTests;
 			path = Tests/SymDeskCoreTests;
@@ -387,6 +404,7 @@
 			buildConfigurationList = D49042C5C1C7405E8AEB9A9D /* Build configuration list for PBXNativeTarget "SymDeskCoreTests" */;
 			buildPhases = (
 				E144D686F999064274379398 /* Sources */,
+				5A3DA0BF0EEE60A7D245B173 /* Resources */,
 				D76BB966D061F5FF849DABD9 /* Frameworks */,
 			);
 			buildRules = (
@@ -562,6 +580,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		5A3DA0BF0EEE60A7D245B173 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1F4F7DB3673E6ECA5569DAB0 /* fake-symdesk.sh in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXShellScriptBuildPhase section */
 		6BC0A652495F0DC35519721A /* Copy Swift Objective-C Interface Header */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -598,6 +627,7 @@
 				8598224B3A3003EC9273BD03 /* AppUpdateChecker.swift in Sources */,
 				2B00DA7BB2B7112DB63A3E17 /* ClassificationRulesViewModel.swift in Sources */,
 				B4BBDCDD200A14353CFF2B9F /* DeskCore.swift in Sources */,
+				BD65FAB6BE6B206D608452DB /* DeskTransport.swift in Sources */,
 				D32E9B586B362E4914175291 /* EventWatcher.swift in Sources */,
 				08DDB4F6EED7DA64407BA23B /* MarkdownPreview.swift in Sources */,
 				2A33E6AC1739DB68412E9972 /* MarkdownTable.swift in Sources */,
@@ -624,6 +654,7 @@
 				A0E1A3C240D1E507A7E2EC9F /* AppUpdateCheckerTests.swift in Sources */,
 				03618B7F81A04FE3E3DD2B01 /* ClassificationRulesViewModelTests.swift in Sources */,
 				FC481AC96D97F01753A861B0 /* DeskCoreTests.swift in Sources */,
+				ACEECA392E62D5A594FF6F5B /* DeskTransportTests.swift in Sources */,
 				8D9B2E4C882F19841C75104C /* MarkdownPreviewTests.swift in Sources */,
 				62EF7665587A0B5275D86D6F /* MarkdownTableTests.swift in Sources */,
 				5FD95A9B634F3C3A5DEC9547 /* UpdateInstallerTests.swift in Sources */,

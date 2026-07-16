@@ -1,6 +1,8 @@
 package compose
 
 import (
+	"errors"
+	"os"
 	"strings"
 	"testing"
 )
@@ -254,5 +256,91 @@ fi
 	t.Setenv("EXPORT_FAIL", "1")
 	if _, err := ExportMeetingMarkdown("m1"); err == nil || !strings.Contains(err.Error(), "export-boom") {
 		t.Errorf("expected wrapped export failure, got %v", err)
+	}
+}
+
+func TestExportMeetingSegments(t *testing.T) {
+	dir := t.TempDir()
+	writeMockTool(t, dir, "symmeet", `#!/bin/bash
+echo '{"schema_version":1,"meeting_id":"m1","segment_count":1,"segments":[{"segment_id":"seg-1","track_id":"t1","speaker_id":"speaker_0","start_ms":250,"end_ms":1750,"engine_text":"Hello.","edited_text":"Hello!","revision":"user_corrected"}]}'
+`)
+	withMockPath(t, dir)
+
+	segments, err := ExportMeetingSegments("m1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(segments) != 1 {
+		t.Fatalf("expected 1 segment, got %d", len(segments))
+	}
+	seg := segments[0]
+	if seg.SegmentID != "seg-1" || seg.SpeakerID != "speaker_0" || seg.StartMS != 250 || seg.EndMS != 1750 || seg.EditedText != "Hello!" {
+		t.Errorf("unexpected segment: %+v", seg)
+	}
+}
+
+func TestExportMeetingSegmentsMalformed(t *testing.T) {
+	dir := t.TempDir()
+	writeMockTool(t, dir, "symmeet", `#!/bin/bash
+echo 'not json'
+`)
+	withMockPath(t, dir)
+
+	if _, err := ExportMeetingSegments("m1"); err == nil || !strings.Contains(err.Error(), "unmarshal") {
+		t.Errorf("expected unmarshal error, got %v", err)
+	}
+}
+
+func TestSpeakerMutationCommands(t *testing.T) {
+	dir := t.TempDir()
+	log := dir + "/calls.log"
+	writeMockTool(t, dir, "symmeet", `#!/bin/bash
+echo "$@" >> "`+log+`"
+echo '{"status":"ok"}'
+`)
+	withMockPath(t, dir)
+
+	if err := LabelSpeaker("m1", "speaker_0", "Alice"); err != nil {
+		t.Fatal(err)
+	}
+	if err := MergeSpeakers("m1", "speaker_1", "speaker_0"); err != nil {
+		t.Fatal(err)
+	}
+	if err := SplitSpeaker("m1", "speaker_0", "seg-9"); err != nil {
+		t.Fatal(err)
+	}
+	if err := ResetSpeakers("m1"); err != nil {
+		t.Fatal(err)
+	}
+
+	data, err := os.ReadFile(log) //nolint:gosec // test-owned temp path
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(data)
+	for _, want := range []string{
+		"speaker label m1 speaker_0 Alice --json",
+		"speaker merge m1 speaker_1 speaker_0 --json",
+		"speaker split m1 speaker_0 --segment seg-9 --json",
+		"speaker reset m1 --json",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("expected call %q, log:\n%s", want, got)
+		}
+	}
+}
+
+func TestSpeakerMutationSurfacesExitCode(t *testing.T) {
+	dir := t.TempDir()
+	writeMockTool(t, dir, "symmeet", `#!/bin/bash
+echo "unknown meeting id" >&2
+exit 2
+`)
+	withMockPath(t, dir)
+
+	err := LabelSpeaker("missing", "speaker_0", "Alice")
+	var symErr *SymmeetError
+	if !errors.As(err, &symErr) || !symErr.IsNotFound() {
+		t.Errorf("expected not-found SymmeetError, got %v", err)
 	}
 }

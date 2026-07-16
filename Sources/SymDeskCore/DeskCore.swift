@@ -1070,6 +1070,109 @@ extension DeskCore {
         if apply { args.append("--apply") }
         return try await runDecoding(MeetingRefreshOutcome.self, arguments: args)
     }
+
+    /// Loads the time-coded transcript segments of a meeting note's source
+    /// artifact, for the synchronized review timeline. Throws when `symmeet`
+    /// is absent or the artifact is gone; callers show that as
+    /// "unavailable", never as note corruption.
+    public func meetingSegments(path: String) async throws -> [MeetingSegment] {
+        try await runDecoding([MeetingSegment].self, arguments: ["meeting", "segments", path, "--json"] + vaultArgs)
+    }
+
+    /// Lists the speakers of a meeting note's source artifact with their
+    /// current display labels from the symmeet edit layer.
+    public func meetingSpeakers(path: String) async throws -> [MeetingSpeaker] {
+        try await runDecoding([MeetingSpeaker].self, arguments: ["meeting", "speakers", path, "--json"] + vaultArgs)
+    }
+
+    /// Assigns a display label to an anonymous speaker in the source
+    /// artifact's edit layer.
+    public func meetingSpeakerLabel(path: String, speakerID: String, label: String) async throws {
+        _ = try await runDecoding([String: String].self, arguments: ["meeting", "speaker", "label", path, speakerID, label, "--json"] + vaultArgs)
+    }
+
+    /// Merges one speaker into another in the source artifact's edit layer.
+    public func meetingSpeakerMerge(path: String, fromSpeakerID: String, toSpeakerID: String) async throws {
+        _ = try await runDecoding([String: String].self, arguments: ["meeting", "speaker", "merge", path, fromSpeakerID, toSpeakerID, "--json"] + vaultArgs)
+    }
+
+    /// Splits a segment away from its current speaker in the source
+    /// artifact's edit layer.
+    public func meetingSpeakerSplit(path: String, speakerID: String, segmentID: String) async throws {
+        _ = try await runDecoding([String: String].self, arguments: ["meeting", "speaker", "split", path, speakerID, "--segment", segmentID, "--json"] + vaultArgs)
+    }
+
+    /// Discards all speaker edits for the source meeting, restoring raw
+    /// engine output.
+    public func meetingSpeakerReset(path: String) async throws {
+        _ = try await runDecoding([String: String].self, arguments: ["meeting", "speaker", "reset", path, "--json"] + vaultArgs)
+    }
+
+    /// Marks a meeting note as reviewed. The CLI snapshots the previous
+    /// note content to history before writing, so a review save is always
+    /// recoverable.
+    public func meetingMarkReviewed(path: String) async throws {
+        _ = try await runDecoding([String: String].self, arguments: ["meeting", "review", path, "--json"] + vaultArgs)
+    }
+}
+
+/// One time-coded transcript segment of a meeting's source artifact;
+/// mirrors the Go `compose.MeetingSegment` JSON shape. `editedText`, when
+/// present, is the user-corrected text that supersedes `engineText`.
+public struct MeetingSegment: Codable, Identifiable, Sendable, Equatable {
+    public var id: String { segmentID }
+    public let segmentID: String
+    public let speakerID: String
+    public let startMS: Int64
+    public let endMS: Int64
+    public let engineText: String
+    public let editedText: String?
+    public let revision: String
+
+    /// The text to display: the user correction when one exists, otherwise
+    /// the raw engine output.
+    public var displayText: String {
+        if let editedText, !editedText.isEmpty { return editedText }
+        return engineText
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case segmentID = "segment_id"
+        case speakerID = "speaker_id"
+        case startMS = "start_ms"
+        case endMS = "end_ms"
+        case engineText = "engine_text"
+        case editedText = "edited_text"
+        case revision
+    }
+
+    public init(segmentID: String, speakerID: String, startMS: Int64, endMS: Int64, engineText: String, editedText: String? = nil, revision: String = "engine") {
+        self.segmentID = segmentID
+        self.speakerID = speakerID
+        self.startMS = startMS
+        self.endMS = endMS
+        self.engineText = engineText
+        self.editedText = editedText
+        self.revision = revision
+    }
+}
+
+/// One speaker of a meeting's source artifact with its current display
+/// label; mirrors the Go `service.MeetingSpeaker` JSON shape.
+public struct MeetingSpeaker: Codable, Identifiable, Sendable, Equatable {
+    public var id: String { speakerID }
+    public let speakerID: String
+    public let label: String
+
+    enum CodingKeys: String, CodingKey {
+        case speakerID = "speaker_id"
+        case label
+    }
+
+    public init(speakerID: String, label: String) {
+        self.speakerID = speakerID
+        self.label = label
+    }
 }
 
 /// One vault note already imported from a SymMeet meeting; mirrors the Go

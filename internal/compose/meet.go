@@ -251,3 +251,76 @@ func ExportMeetingMarkdown(meetingID string) (string, error) {
 	}
 	return string(data), nil
 }
+
+// MeetingSegment is one time-coded transcript segment from
+// `symmeet export <id> --format json`. EditedText, when non-empty, is the
+// user-corrected text that supersedes EngineText.
+type MeetingSegment struct {
+	SegmentID  string `json:"segment_id"`
+	SpeakerID  string `json:"speaker_id"`
+	StartMS    int64  `json:"start_ms"`
+	EndMS      int64  `json:"end_ms"`
+	EngineText string `json:"engine_text"`
+	EditedText string `json:"edited_text,omitempty"`
+	Revision   string `json:"revision"`
+}
+
+// ExportMeetingSegments calls `symmeet export <id> --format json --output -`
+// (30s timeout, same as the markdown export) and returns the structured,
+// time-coded segments the synchronized review timeline needs. Like the
+// markdown export, symmeet prefers user-edited segments over raw engine
+// output.
+func ExportMeetingSegments(meetingID string) ([]MeetingSegment, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	var envelope struct {
+		Segments []MeetingSegment `json:"segments"`
+	}
+	if err := runSymmeetJSON(ctx, "export json", []string{"export", meetingID, "--format", "json", "--output", "-"}, &envelope); err != nil {
+		return nil, err
+	}
+	return envelope.Segments, nil
+}
+
+// LabelSpeaker calls `symmeet speaker label <id> <speaker> <label> --json`
+// (5s timeout) to assign a display label to an anonymous speaker. The edit
+// lives in the symmeet artifact's edit layer; raw engine output is never
+// mutated.
+func LabelSpeaker(meetingID, speakerID, label string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := runSymmeet(ctx, "speaker label", []string{"speaker", "label", meetingID, speakerID, label, "--json"})
+	return err
+}
+
+// MergeSpeakers calls `symmeet speaker merge <id> <from> <to> --json`
+// (5s timeout) to merge one anonymous speaker into another.
+func MergeSpeakers(meetingID, fromSpeakerID, toSpeakerID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := runSymmeet(ctx, "speaker merge", []string{"speaker", "merge", meetingID, fromSpeakerID, toSpeakerID, "--json"})
+	return err
+}
+
+// SplitSpeaker calls `symmeet speaker split <id> <speaker> --segment <seg>
+// --json` (5s timeout) to split one segment away from its current speaker.
+func SplitSpeaker(meetingID, speakerID, segmentID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := runSymmeet(ctx, "speaker split", []string{"speaker", "split", meetingID, speakerID, "--segment", segmentID, "--json"})
+	return err
+}
+
+// ResetSpeakers calls `symmeet speaker reset <id> --json` (5s timeout) to
+// discard all speaker edits for a meeting, restoring raw engine output.
+func ResetSpeakers(meetingID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := runSymmeet(ctx, "speaker reset", []string{"speaker", "reset", meetingID, "--json"})
+	return err
+}

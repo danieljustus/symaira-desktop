@@ -13,6 +13,13 @@ protocol MeetingsDataSource: Sendable {
     @discardableResult
     func meetingImport(meetingID: String) async throws -> String
     func meetingRefresh(path: String, apply: Bool) async throws -> MeetingRefreshOutcome
+    func meetingSegments(path: String) async throws -> [MeetingSegment]
+    func meetingSpeakers(path: String) async throws -> [MeetingSpeaker]
+    func meetingSpeakerLabel(path: String, speakerID: String, label: String) async throws
+    func meetingSpeakerMerge(path: String, fromSpeakerID: String, toSpeakerID: String) async throws
+    func meetingSpeakerSplit(path: String, speakerID: String, segmentID: String) async throws
+    func meetingSpeakerReset(path: String) async throws
+    func meetingMarkReviewed(path: String) async throws
 }
 
 extension DeskCore: MeetingsDataSource {}

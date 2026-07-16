@@ -40,6 +40,25 @@ final class MeetingReviewModel: ObservableObject {
     @Published private(set) var refreshError: String?
     @Published private(set) var lastRefresh: MeetingRefreshOutcome?
 
+    /// Structured, time-coded segments for the current selection. An
+    /// unavailable source artifact (symmeet absent, meeting gone) leaves
+    /// this empty with `segmentsError` set — the transcript text view still
+    /// works from the note body alone.
+    @Published private(set) var segments: [MeetingSegment] = []
+    @Published private(set) var segmentsError: String?
+
+    /// Speakers of the source artifact with their current edit-layer
+    /// labels, for the correction panel.
+    @Published private(set) var speakers: [MeetingSpeaker] = []
+    @Published private(set) var speakersError: String?
+
+    @Published var selectedSegmentID: String?
+    @Published private(set) var isCorrectingSpeaker = false
+    @Published private(set) var speakerActionError: String?
+
+    @Published private(set) var isSavingReview = false
+    @Published private(set) var reviewSaveError: String?
+
     private let dataSource: MeetingsDataSource
     private var detailLoadToken = UUID()
 
@@ -95,6 +114,36 @@ final class MeetingReviewModel: ObservableObject {
         } catch {
             guard detailLoadToken == token else { return }
             detailState = .failed(Self.friendlyMessage(for: error))
+            return
+        }
+
+        await loadProjection(for: path, token: token)
+    }
+
+    /// Loads the segment timeline and speaker list for a selection. Both
+    /// are best-effort overlays on the note: their failure ("meeting data
+    /// unavailable") never fails the detail view itself.
+    private func loadProjection(for path: String, token: UUID) async {
+        do {
+            let loaded = try await dataSource.meetingSegments(path: path)
+            guard detailLoadToken == token else { return }
+            segments = loaded
+            segmentsError = nil
+        } catch {
+            guard detailLoadToken == token else { return }
+            segments = []
+            segmentsError = Self.friendlyMessage(for: error)
+        }
+
+        do {
+            let loaded = try await dataSource.meetingSpeakers(path: path)
+            guard detailLoadToken == token else { return }
+            speakers = loaded
+            speakersError = nil
+        } catch {
+            guard detailLoadToken == token else { return }
+            speakers = []
+            speakersError = Self.friendlyMessage(for: error)
         }
     }
 
@@ -103,6 +152,13 @@ final class MeetingReviewModel: ObservableObject {
         selectedPath = nil
         selectedDetail = nil
         detailState = .idle
+        segments = []
+        segmentsError = nil
+        speakers = []
+        speakersError = nil
+        selectedSegmentID = nil
+        speakerActionError = nil
+        reviewSaveError = nil
     }
 
     /// Imports an available SymMeet meeting and, on success, refreshes the
@@ -140,6 +196,106 @@ final class MeetingReviewModel: ObservableObject {
         } catch {
             refreshError = Self.friendlyMessage(for: error)
         }
+    }
+
+    // MARK: - Speaker correction
+
+    /// Runs one speaker-correction command and then reloads the projection
+    /// (segments, speakers, and the note's exported transcript) so the UI
+    /// reflects the applied edit. Corrections live in the symmeet edit
+    /// layer; raw artifacts are never mutated.
+    private func performSpeakerAction(_ action: @escaping () async throws -> Void) async {
+        guard let path = selectedPath, !isCorrectingSpeaker else { return }
+        isCorrectingSpeaker = true
+        speakerActionError = nil
+        defer { isCorrectingSpeaker = false }
+
+        do {
+            try await action()
+            await refreshSelected(apply: true)
+            await loadProjection(for: path, token: detailLoadToken)
+        } catch {
+            speakerActionError = Self.friendlyMessage(for: error)
+        }
+    }
+
+    func labelSpeaker(speakerID: String, label: String) async {
+        guard let path = selectedPath else { return }
+        let source = dataSource
+        await performSpeakerAction {
+            try await source.meetingSpeakerLabel(path: path, speakerID: speakerID, label: label)
+        }
+    }
+
+    func mergeSpeaker(from fromSpeakerID: String, into toSpeakerID: String) async {
+        guard let path = selectedPath else { return }
+        let source = dataSource
+        await performSpeakerAction {
+            try await source.meetingSpeakerMerge(path: path, fromSpeakerID: fromSpeakerID, toSpeakerID: toSpeakerID)
+        }
+    }
+
+    func splitSegment(segmentID: String, from speakerID: String) async {
+        guard let path = selectedPath else { return }
+        let source = dataSource
+        await performSpeakerAction {
+            try await source.meetingSpeakerSplit(path: path, speakerID: speakerID, segmentID: segmentID)
+        }
+    }
+
+    func resetSpeakerEdits() async {
+        guard let path = selectedPath else { return }
+        let source = dataSource
+        await performSpeakerAction {
+            try await source.meetingSpeakerReset(path: path)
+        }
+    }
+
+    // MARK: - Review save
+
+    /// Marks the selected meeting note reviewed. The backend snapshots the
+    /// previous note content to history before writing, so the save is
+    /// recoverable; it never touches the raw symmeet artifact.
+    func markReviewed() async {
+        guard let path = selectedPath, !isSavingReview else { return }
+        isSavingReview = true
+        reviewSaveError = nil
+        defer { isSavingReview = false }
+
+        do {
+            try await dataSource.meetingMarkReviewed(path: path)
+            await selectMeeting(path: path)
+            await loadLibrary()
+        } catch {
+            reviewSaveError = Self.friendlyMessage(for: error)
+        }
+    }
+
+    // MARK: - Segment navigation
+
+    /// The segment containing a playback position, for keeping the
+    /// highlighted segment in sync with audio.
+    func segment(at milliseconds: Int64) -> MeetingSegment? {
+        segments.first { $0.startMS <= milliseconds && milliseconds < $0.endMS }
+    }
+
+    /// Moves the selection to the next (+1) or previous (-1) segment,
+    /// clamped at both ends; selects the first segment when nothing is
+    /// selected yet. Returns the newly selected segment so callers can
+    /// seek playback to it.
+    @discardableResult
+    func stepSegment(_ delta: Int) -> MeetingSegment? {
+        guard !segments.isEmpty else { return nil }
+        let currentIndex = segments.firstIndex { $0.segmentID == selectedSegmentID }
+        let newIndex: Int
+        if let currentIndex {
+            newIndex = min(max(currentIndex + delta, 0), segments.count - 1)
+        } else {
+            newIndex = delta >= 0 ? 0 : segments.count - 1
+        }
+        let segment = segments[newIndex]
+        selectedSegmentID = segment.segmentID
+        return segment
     }
 
     /// Maps a transport/decode failure to a message safe to show directly

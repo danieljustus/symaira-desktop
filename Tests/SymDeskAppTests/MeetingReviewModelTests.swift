@@ -51,6 +51,46 @@ private final class MockMeetingsDataSource: MeetingsDataSource, @unchecked Senda
         await log.record("meetingRefresh:\(path):\(apply)")
         return try meetingRefreshResult.get()
     }
+
+    var meetingSegmentsResult: Result<[MeetingSegment], Error> = .success([])
+    var meetingSpeakersResult: Result<[MeetingSpeaker], Error> = .success([])
+    var speakerMutationError: Error?
+    var markReviewedError: Error?
+
+    func meetingSegments(path: String) async throws -> [MeetingSegment] {
+        await log.record("meetingSegments:\(path)")
+        return try meetingSegmentsResult.get()
+    }
+
+    func meetingSpeakers(path: String) async throws -> [MeetingSpeaker] {
+        await log.record("meetingSpeakers:\(path)")
+        return try meetingSpeakersResult.get()
+    }
+
+    func meetingSpeakerLabel(path: String, speakerID: String, label: String) async throws {
+        await log.record("speakerLabel:\(speakerID):\(label)")
+        if let speakerMutationError { throw speakerMutationError }
+    }
+
+    func meetingSpeakerMerge(path: String, fromSpeakerID: String, toSpeakerID: String) async throws {
+        await log.record("speakerMerge:\(fromSpeakerID):\(toSpeakerID)")
+        if let speakerMutationError { throw speakerMutationError }
+    }
+
+    func meetingSpeakerSplit(path: String, speakerID: String, segmentID: String) async throws {
+        await log.record("speakerSplit:\(speakerID):\(segmentID)")
+        if let speakerMutationError { throw speakerMutationError }
+    }
+
+    func meetingSpeakerReset(path: String) async throws {
+        await log.record("speakerReset:\(path)")
+        if let speakerMutationError { throw speakerMutationError }
+    }
+
+    func meetingMarkReviewed(path: String) async throws {
+        await log.record("markReviewed:\(path)")
+        if let markReviewedError { throw markReviewedError }
+    }
 }
 
 private func makeDetail(meetingID: String = "m1", body: String? = "\n<!-- symmeet-transcript:start -->\nAlice: Hello.\n<!-- symmeet-transcript:end -->\n") -> MeetingDetail {
@@ -243,6 +283,132 @@ final class MeetingReviewModelTests: XCTestCase {
         XCTAssertEqual(model.transcript, "Alice: Hello, corrected.")
     }
 
+    // Segments and speakers are best-effort overlays: their failure must
+    // degrade to "segments unavailable", never fail the detail view.
+    func testSegmentsUnavailableDoesNotFailDetail() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+        source.meetingSegmentsResult = .failure(NSError(domain: "test", code: 6, userInfo: [NSLocalizedDescriptionKey: "symmeet not found on PATH"]))
+        source.meetingSpeakersResult = .failure(NSError(domain: "test", code: 6, userInfo: [NSLocalizedDescriptionKey: "symmeet not found on PATH"]))
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+
+        XCTAssertEqual(model.detailState, .loaded)
+        XCTAssertTrue(model.segments.isEmpty)
+        XCTAssertEqual(model.segmentsError, "symmeet not found on PATH")
+        XCTAssertEqual(model.speakersError, "symmeet not found on PATH")
+        XCTAssertEqual(model.transcript, "Alice: Hello.")
+    }
+
+    func testSelectMeetingLoadsSegmentsAndSpeakers() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+        source.meetingSegmentsResult = .success([
+            MeetingSegment(segmentID: "seg-1", speakerID: "speaker_0", startMS: 0, endMS: 1500, engineText: "Hello."),
+            MeetingSegment(segmentID: "seg-2", speakerID: "speaker_1", startMS: 1500, endMS: 4000, engineText: "Hi.", editedText: "Hi!", revision: "user_corrected"),
+        ])
+        source.meetingSpeakersResult = .success([
+            MeetingSpeaker(speakerID: "speaker_0", label: "Alice"),
+            MeetingSpeaker(speakerID: "speaker_1", label: "speaker_1"),
+        ])
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+
+        XCTAssertEqual(model.segments.count, 2)
+        XCTAssertEqual(model.segments[1].displayText, "Hi!")
+        XCTAssertEqual(model.speakers.count, 2)
+        XCTAssertNil(model.segmentsError)
+    }
+
+    // Speaker corrections must refresh the transcript projection so the
+    // applied edit is visible, and surface failures without losing state.
+    func testLabelSpeakerRefreshesProjection() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+        source.meetingSpeakersResult = .success([MeetingSpeaker(speakerID: "speaker_0", label: "speaker_0")])
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+
+        source.meetingSpeakersResult = .success([MeetingSpeaker(speakerID: "speaker_0", label: "Bob")])
+        await model.labelSpeaker(speakerID: "speaker_0", label: "Bob")
+
+        XCTAssertNil(model.speakerActionError)
+        XCTAssertEqual(model.speakers.first?.label, "Bob")
+        let calls = await source.log.calls
+        XCTAssertTrue(calls.contains("speakerLabel:speaker_0:Bob"))
+        XCTAssertTrue(calls.contains("meetingRefresh:meetings/meeting-m1.md:true"), "expected the transcript to refresh after a correction, calls: \(calls)")
+    }
+
+    func testSpeakerMutationFailureSurfacesError() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+        source.speakerMutationError = NSError(domain: "test", code: 7, userInfo: [NSLocalizedDescriptionKey: "unknown speaker id"])
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+        await model.mergeSpeaker(from: "speaker_9", into: "speaker_0")
+
+        XCTAssertEqual(model.speakerActionError, "unknown speaker id")
+        XCTAssertFalse(model.isCorrectingSpeaker)
+    }
+
+    // Review save: reloads the note (badge flips to reviewed) and the
+    // library; a failure surfaces without corrupting state.
+    func testMarkReviewedReloadsDetailAndLibrary() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+        await model.markReviewed()
+
+        XCTAssertNil(model.reviewSaveError)
+        XCTAssertFalse(model.isSavingReview)
+        let calls = await source.log.calls
+        XCTAssertTrue(calls.contains("markReviewed:meetings/meeting-m1.md"))
+        XCTAssertEqual(calls.filter { $0 == "meetingsList" }.count, 1, "expected the library to reload after a review save")
+    }
+
+    func testMarkReviewedFailureSurfacesError() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+        source.markReviewedError = NSError(domain: "test", code: 8, userInfo: [NSLocalizedDescriptionKey: "note changed on disk"])
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+        await model.markReviewed()
+
+        XCTAssertEqual(model.reviewSaveError, "note changed on disk")
+        XCTAssertFalse(model.isSavingReview)
+    }
+
+    // Segment navigation: stepping clamps at both ends and playback-time
+    // lookup finds the containing segment (the highlight source).
+    func testSegmentNavigationAndPlaybackLookup() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+        source.meetingSegmentsResult = .success([
+            MeetingSegment(segmentID: "seg-1", speakerID: "speaker_0", startMS: 0, endMS: 1500, engineText: "One."),
+            MeetingSegment(segmentID: "seg-2", speakerID: "speaker_0", startMS: 1500, endMS: 4000, engineText: "Two."),
+        ])
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+
+        XCTAssertEqual(model.stepSegment(1)?.segmentID, "seg-1")
+        XCTAssertEqual(model.stepSegment(1)?.segmentID, "seg-2")
+        XCTAssertEqual(model.stepSegment(1)?.segmentID, "seg-2", "stepping past the end must clamp")
+        XCTAssertEqual(model.stepSegment(-1)?.segmentID, "seg-1")
+        XCTAssertEqual(model.stepSegment(-1)?.segmentID, "seg-1", "stepping before the start must clamp")
+
+        XCTAssertEqual(model.segment(at: 0)?.segmentID, "seg-1")
+        XCTAssertEqual(model.segment(at: 1500)?.segmentID, "seg-2")
+        XCTAssertNil(model.segment(at: 4000))
+    }
+
     func testClearSelectionResetsDetailState() async {
         let source = MockMeetingsDataSource()
         source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
@@ -254,5 +420,8 @@ final class MeetingReviewModelTests: XCTestCase {
         XCTAssertNil(model.selectedPath)
         XCTAssertNil(model.selectedDetail)
         XCTAssertEqual(model.detailState, .idle)
+        XCTAssertTrue(model.segments.isEmpty)
+        XCTAssertTrue(model.speakers.isEmpty)
+        XCTAssertNil(model.selectedSegmentID)
     }
 }

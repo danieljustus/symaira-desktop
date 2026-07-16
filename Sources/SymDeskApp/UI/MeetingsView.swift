@@ -8,6 +8,8 @@ import SymairaTheme
 struct MeetingsView: View {
     @EnvironmentObject var core: DeskCore
     @StateObject private var model: MeetingReviewModel
+    @State private var showRecordingInfo = false
+    @State private var recordingInfoMessage = ""
 
     init(dataSource: MeetingsDataSource? = nil) {
         // `dataSource` is only ever overridden by tests/previews; production
@@ -95,6 +97,7 @@ struct MeetingsView: View {
                 }
             }
             Spacer()
+            recordingButton
             Button(action: { Task { await model.loadLibrary() } }) {
                 Image(systemName: "arrow.clockwise")
             }
@@ -102,6 +105,35 @@ struct MeetingsView: View {
             .accessibilityLabel("Refresh meeting library")
         }
         .padding(16)
+    }
+
+    /// Requests a recording by bringing the SymMeet menu-bar agent forward.
+    /// SymDesk deliberately cannot start a recording itself: capture,
+    /// consent, and the recording confirmation UI all live in SymMeetAgent,
+    /// so this action always ends in the agent's own confirmation flow.
+    private var recordingButton: some View {
+        Button(action: { requestRecording() }) {
+            Label("Request Recording", systemImage: "record.circle")
+        }
+        .buttonStyle(SymairaSecondaryButtonStyle())
+        .accessibilityLabel("Request a recording")
+        .accessibilityHint("Opens the SymMeet menu-bar agent, where recording must be confirmed")
+        .alert("Recording is confirmed in SymMeet", isPresented: $showRecordingInfo) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(recordingInfoMessage)
+        }
+    }
+
+    private func requestRecording() {
+        let bundleID = "dev.symaira.symmeet.agent"
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+            recordingInfoMessage = "SymMeet's menu-bar agent has been opened. Recording starts only after you confirm it there — SymDesk never records on its own."
+        } else {
+            recordingInfoMessage = "The SymMeet menu-bar agent is not installed. Install SymMeet to record meetings; SymDesk itself never captures audio."
+        }
+        showRecordingInfo = true
     }
 
     private func meetingRow(_ meeting: MeetingNoteSummary) -> some View {

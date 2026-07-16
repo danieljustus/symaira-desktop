@@ -61,7 +61,7 @@ struct MeetingReviewView: View {
             HStack(alignment: .top, spacing: 0) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        SpeakerReviewPanel(participants: detail.frontmatter.participants ?? [])
+                        SpeakerReviewPanel(model: model)
                         MeetingAudioPlayerView(model: audioPlayer, hasSource: false)
                     }
                     .padding(16)
@@ -70,17 +70,66 @@ struct MeetingReviewView: View {
 
                 Divider()
 
-                TranscriptTimelineView(transcript: model.transcript)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                TranscriptTimelineView(
+                    transcript: model.transcript,
+                    segments: model.segments,
+                    segmentsError: model.segmentsError,
+                    selectedSegmentID: model.selectedSegmentID,
+                    currentPlaybackMS: audioPlayer.isPlaying ? Int64(audioPlayer.currentTime * 1000) : nil,
+                    speakerLabels: Dictionary(uniqueKeysWithValues: model.speakers.map { ($0.speakerID, $0.label) }),
+                    onSelectSegment: { selectSegment($0) }
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
-            if let refreshError = model.refreshError {
-                Text(refreshError)
+            ForEach([model.refreshError, model.reviewSaveError].compactMap { $0 }, id: \.self) { error in
+                Text(error)
                     .font(.caption)
                     .foregroundColor(.red)
                     .padding(8)
             }
         }
+        .background(keyboardShortcuts)
+    }
+
+    /// Selecting a segment highlights it and seeks playback to its start —
+    /// and the reverse sync (playback position highlighting the row) comes
+    /// from `currentPlaybackMS` above, driven by the player's 50 ms time
+    /// observer, which keeps highlight and audio within the 100 ms budget.
+    private func selectSegment(_ segment: MeetingSegment) {
+        model.selectedSegmentID = segment.segmentID
+        audioPlayer.seek(to: TimeInterval(segment.startMS) / 1000)
+    }
+
+    /// Hidden keyboard controls for review: J/K step segments, ←/→ jump
+    /// playback by 5 s. Play/pause on space lives on the player's own
+    /// transport button.
+    private var keyboardShortcuts: some View {
+        Group {
+            Button("Next segment") {
+                if let segment = model.stepSegment(1) {
+                    audioPlayer.seek(to: TimeInterval(segment.startMS) / 1000)
+                }
+            }
+            .keyboardShortcut("j", modifiers: [])
+            Button("Previous segment") {
+                if let segment = model.stepSegment(-1) {
+                    audioPlayer.seek(to: TimeInterval(segment.startMS) / 1000)
+                }
+            }
+            .keyboardShortcut("k", modifiers: [])
+            Button("Jump back 5 seconds") {
+                audioPlayer.seek(to: max(audioPlayer.currentTime - 5, 0))
+            }
+            .keyboardShortcut(.leftArrow, modifiers: [])
+            Button("Jump forward 5 seconds") {
+                audioPlayer.seek(to: audioPlayer.currentTime + 5)
+            }
+            .keyboardShortcut(.rightArrow, modifiers: [])
+        }
+        .opacity(0)
+        .frame(width: 0, height: 0)
+        .accessibilityHidden(true)
     }
 
     private func metadataHeader(_ detail: MeetingDetail) -> some View {
@@ -103,7 +152,8 @@ struct MeetingReviewView: View {
                 .foregroundColor(SymairaTheme.textSecondary)
             }
             Spacer()
-            if model.isRefreshing {
+            reviewStateBadge
+            if model.isRefreshing || model.isSavingReview {
                 ProgressView().controlSize(.small)
             } else {
                 Button("Refresh Transcript") {
@@ -111,9 +161,37 @@ struct MeetingReviewView: View {
                 }
                 .buttonStyle(SymairaSecondaryButtonStyle())
                 .controlSize(.small)
+
+                if reviewState != "reviewed" {
+                    Button("Mark Reviewed") {
+                        Task { await model.markReviewed() }
+                    }
+                    .buttonStyle(SymairaPrimaryButtonStyle())
+                    .controlSize(.small)
+                    .keyboardShortcut("s", modifiers: [.command])
+                    .accessibilityLabel("Mark this meeting as reviewed")
+                    .accessibilityHint("Saves a recoverable history snapshot of the note first")
+                }
             }
         }
         .padding(16)
+    }
+
+    private var reviewState: String {
+        model.selectedDetail?.frontmatter.symmeetSource?.reviewState ?? ""
+    }
+
+    private var reviewStateBadge: some View {
+        let state = reviewState.isEmpty ? "unreviewed" : reviewState
+        let color: Color = state == "reviewed" ? .green : SymairaTheme.goldSecondary
+        return Text(state)
+            .font(.caption2.weight(.semibold))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(color.opacity(0.15))
+            .foregroundColor(color)
+            .cornerRadius(4)
+            .accessibilityLabel("Review state: \(state)")
     }
 
     private static func formatDuration(_ ms: Int64) -> String {

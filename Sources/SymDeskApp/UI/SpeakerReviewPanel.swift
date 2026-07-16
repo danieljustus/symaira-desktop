@@ -14,6 +14,7 @@ struct SpeakerReviewPanel: View {
     @State private var renamingSpeakerID: String?
     @State private var renameText = ""
     @State private var confirmingReset = false
+    @State private var confirmingParticipant: MeetingParticipant?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -161,11 +162,19 @@ struct SpeakerReviewPanel: View {
                                 .foregroundColor(SymairaTheme.textMuted)
                         }
                         Spacer()
+                        Button("Confirm…") { confirmingParticipant = participant }
+                            .buttonStyle(.plain)
+                            .font(.caption)
+                            .foregroundColor(SymairaTheme.goldPrimary)
+                            .accessibilityLabel("Confirm the person for \(participant.label.isEmpty ? "this unlabeled speaker" : participant.label)")
                     }
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("\(participant.label.isEmpty ? "Unlabeled speaker" : participant.label), \(participant.entityID == nil || participant.entityID?.isEmpty == true ? "not linked to a confirmed person" : "linked to a confirmed person")")
                 }
             }
+        }
+        .sheet(item: $confirmingParticipant) { participant in
+            ParticipantConfirmationView(model: model, participant: participant)
         }
     }
 }

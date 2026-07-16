@@ -91,6 +91,34 @@ private final class MockMeetingsDataSource: MeetingsDataSource, @unchecked Senda
         await log.record("markReviewed:\(path)")
         if let markReviewedError { throw markReviewedError }
     }
+
+    var participantCandidatesResult: Result<[ParticipantCandidate], Error> = .success([])
+    var participantActionError: Error?
+    var publishResult: Result<MeetingPublishOutcome, Error> = .success(
+        MeetingPublishOutcome(meetingEntityID: "e-meeting", relationsCreated: 0, factsPublished: nil, factsSkipped: 0)
+    )
+
+    func meetingParticipantCandidates(label: String) async throws -> [ParticipantCandidate] {
+        await log.record("candidates:\(label)")
+        return try participantCandidatesResult.get()
+    }
+
+    func meetingParticipantConfirm(path: String, speakerID: String, entityID: String?) async throws {
+        await log.record("confirm:\(speakerID):\(entityID ?? "<unlink>")")
+        if let participantActionError { throw participantActionError }
+    }
+
+    @discardableResult
+    func meetingParticipantCreate(path: String, speakerID: String, name: String) async throws -> String {
+        await log.record("create:\(speakerID):\(name)")
+        if let participantActionError { throw participantActionError }
+        return "e-new"
+    }
+
+    func meetingPublish(path: String, facts: [String]) async throws -> MeetingPublishOutcome {
+        await log.record("publish:\(path):\(facts.joined(separator: "|"))")
+        return try publishResult.get()
+    }
 }
 
 private func makeDetail(meetingID: String = "m1", body: String? = "\n<!-- symmeet-transcript:start -->\nAlice: Hello.\n<!-- symmeet-transcript:end -->\n") -> MeetingDetail {

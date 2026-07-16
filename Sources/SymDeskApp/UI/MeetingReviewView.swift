@@ -7,6 +7,7 @@ import SymairaTheme
 struct MeetingReviewView: View {
     @ObservedObject var model: MeetingReviewModel
     @StateObject private var audioPlayer = MeetingAudioPlayerModel()
+    @State private var showPublishSheet = false
 
     var body: some View {
         Group {
@@ -90,6 +91,9 @@ struct MeetingReviewView: View {
             }
         }
         .background(keyboardShortcuts)
+        .sheet(isPresented: $showPublishSheet) {
+            MeetingKnowledgeReviewView(model: model)
+        }
     }
 
     /// Selecting a segment highlights it and seeks playback to its start —
@@ -161,6 +165,12 @@ struct MeetingReviewView: View {
                 }
                 .buttonStyle(SymairaSecondaryButtonStyle())
                 .controlSize(.small)
+
+                Button("Publish to Memory…") { showPublishSheet = true }
+                    .buttonStyle(SymairaSecondaryButtonStyle())
+                    .controlSize(.small)
+                    .accessibilityLabel("Review and publish meeting knowledge to Memory")
+                    .accessibilityHint("Shows the exact writes before anything is applied")
 
                 if reviewState != "reviewed" {
                     Button("Mark Reviewed") {

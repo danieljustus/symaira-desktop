@@ -285,3 +285,83 @@ func TestMeetingSpeakerSplitRequiresSegmentCLI(t *testing.T) {
 		t.Errorf("expected --segment requirement error, got %v", err)
 	}
 }
+
+const mockSymmemoryScriptForCLI = `#!/bin/bash
+if [ "$1" = "entity" ] && [ "$2" = "list" ]; then
+  echo '[{"id":"e-alice","name":"Alice Example","type":"person","aliases":["Alice"],"description":""}]'
+elif [ "$1" = "entity" ] && [ "$2" = "show" ]; then
+  echo '{"id":"e-alice","name":"Alice Example","type":"person","aliases":["Alice"],"description":""}'
+elif [ "$1" = "entity" ] && [ "$2" = "relate" ]; then
+  echo 'ok'
+elif [ "$1" = "set" ]; then
+  echo '{"id":"mem-1","content":"decision","scope":"project","entities":["Meeting m1"]}'
+fi
+`
+
+func installMockSymmemory(t *testing.T) {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "symmemory"), []byte(mockSymmemoryScriptForCLI), 0755); err != nil { //nolint:gosec // test fixture must be executable
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
+}
+
+func TestMeetingParticipantCandidatesAndConfirmCLI(t *testing.T) {
+	setupReviewMeetingVault(t)
+	path := importMeetingViaCLI(t)
+	installMockSymmemory(t)
+
+	candOut, err := execRootCapture(t, "", "meeting", "participant", "candidates", "Alice", "--json")
+	if err != nil {
+		t.Fatalf("candidates failed: %v (output: %s)", err, candOut)
+	}
+	if !strings.Contains(candOut, "e-alice") || !strings.Contains(candOut, "match_reason") {
+		t.Errorf("expected candidate JSON with match reason, got %q", candOut)
+	}
+
+	confirmOut, err := execRootCapture(t, "", "meeting", "participant", "confirm", path, "speaker_0", "e-alice", "--json")
+	if err != nil {
+		t.Fatalf("confirm failed: %v (output: %s)", err, confirmOut)
+	}
+	if !strings.Contains(confirmOut, "confirmed") {
+		t.Errorf("expected confirmed status, got %q", confirmOut)
+	}
+
+	unlinkOut, err := execRootCapture(t, "", "meeting", "participant", "confirm", path, "speaker_0", "--json")
+	if err != nil {
+		t.Fatalf("unlink failed: %v (output: %s)", err, unlinkOut)
+	}
+	if !strings.Contains(unlinkOut, "unlinked") {
+		t.Errorf("expected unlinked status, got %q", unlinkOut)
+	}
+}
+
+func TestMeetingPublishCLI(t *testing.T) {
+	setupReviewMeetingVault(t)
+	path := importMeetingViaCLI(t)
+	installMockSymmemory(t)
+
+	if _, err := execRootCapture(t, "", "meeting", "participant", "confirm", path, "speaker_0", "e-alice", "--json"); err != nil {
+		t.Fatalf("confirm failed: %v", err)
+	}
+
+	pubOut, err := execRootCapture(t, "", "meeting", "publish", path, "--fact", "Decision: ship the beta.", "--json")
+	if err != nil {
+		t.Fatalf("publish failed: %v (output: %s)", err, pubOut)
+	}
+	if !strings.Contains(pubOut, "mem-1") || !strings.Contains(pubOut, "relations_created\":1") {
+		t.Errorf("expected publish result with fact id and relation count, got %q", pubOut)
+	}
+
+	// Idempotency: re-applying the same fact must skip, not duplicate.
+	pubOut2, err := execRootCapture(t, "", "meeting", "publish", path, "--fact", "Decision: ship the beta.", "--json")
+	if err != nil {
+		t.Fatalf("repeat publish failed: %v (output: %s)", err, pubOut2)
+	}
+	if !strings.Contains(pubOut2, "facts_skipped\":1") {
+		t.Errorf("expected repeat apply to skip the fact, got %q", pubOut2)
+	}
+}

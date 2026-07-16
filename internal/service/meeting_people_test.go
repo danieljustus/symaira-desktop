@@ -189,3 +189,77 @@ func TestConfirmParticipantNormalFollowUpSucceeds(t *testing.T) {
 		t.Fatalf("expected a normal follow-up confirm to succeed, got %v", err)
 	}
 }
+
+// mockSymmemoryPersonScript answers entity show for an existing person and
+// records entity add calls, for the create-new-person flow.
+const mockSymmemoryPersonScript = `#!/bin/bash
+if [ "$1" = "entity" ] && [ "$2" = "show" ]; then
+  if [ "$3" = "Carol New" ]; then
+    if [ -f "$SYMMEMORY_CREATED" ]; then
+      echo '{"id":"e-carol","name":"Carol New","type":"person","aliases":[],"description":""}'
+      exit 0
+    fi
+    echo "entity not found" >&2
+    exit 1
+  fi
+  echo '{"id":"e-alice","name":"Alice Example","type":"person","aliases":[],"description":""}'
+elif [ "$1" = "entity" ] && [ "$2" = "add" ]; then
+  touch "$SYMMEMORY_CREATED"
+  echo '{"id":"e-carol","name":"Carol New","type":"person"}'
+fi
+`
+
+func TestConfirmParticipantNewPersonCreatesAndLinks(t *testing.T) {
+	dir := t.TempDir()
+	svc, path := importFixtureMeeting(t, dir)
+	writeMockSymmemory(t, dir, mockSymmemoryPersonScript)
+	withMockSymmemoryPath(t, dir)
+	t.Setenv("SYMMEMORY_CREATED", dir+"/created")
+
+	entityID, err := svc.ConfirmParticipantNewPerson(path, "speaker_0", "Carol New")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entityID != "e-carol" {
+		t.Errorf("expected e-carol, got %q", entityID)
+	}
+	if _, err := os.Stat(dir + "/created"); err != nil {
+		t.Error("expected the person entity to be created in Memory")
+	}
+
+	doc, err := svc.MeetingShow(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	participants, _ := doc.Frontmatter["participants"].([]interface{})
+	if len(participants) == 0 {
+		t.Fatal("expected participants in frontmatter")
+	}
+	first, _ := participants[0].(map[string]interface{})
+	if first["entity_id"] != "e-carol" {
+		t.Errorf("expected linked entity_id e-carol, got %v", first["entity_id"])
+	}
+}
+
+func TestConfirmParticipantNewPersonRejectsEmptyName(t *testing.T) {
+	dir := t.TempDir()
+	svc, path := importFixtureMeeting(t, dir)
+	writeMockSymmemory(t, dir, mockSymmemoryPersonScript)
+	withMockSymmemoryPath(t, dir)
+
+	if _, err := svc.ConfirmParticipantNewPerson(path, "speaker_0", "   "); err == nil || !strings.Contains(err.Error(), "name is required") {
+		t.Errorf("expected name-required error, got %v", err)
+	}
+}
+
+func TestConfirmParticipantNewPersonSymmemoryUnavailable(t *testing.T) {
+	dir := t.TempDir()
+	svc, path := importFixtureMeeting(t, dir)
+
+	t.Setenv("PATH", "/usr/bin:/bin")
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
+	if _, err := svc.ConfirmParticipantNewPerson(path, "speaker_0", "Carol New"); err != ErrSymmemoryUnavailable {
+		t.Errorf("expected ErrSymmemoryUnavailable, got %v", err)
+	}
+}

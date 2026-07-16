@@ -1,0 +1,191 @@
+package service
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/danieljustus/symaira-desktop/internal/compose"
+)
+
+func writeMockSymmemory(t *testing.T, dir, script string) {
+	t.Helper()
+	path := filepath.Join(dir, "symmemory")
+	if err := os.WriteFile(path, []byte(script), 0755); err != nil { //nolint:gosec // test fixture must be executable
+		t.Fatal(err)
+	}
+}
+
+func withMockSymmemoryPath(t *testing.T, dir string) {
+	t.Helper()
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
+}
+
+const mockSymmemoryEntityListScript = `#!/bin/bash
+if [ "$1" = "entity" ] && [ "$2" = "list" ]; then
+  echo '[{"id":"e-alice","name":"Alice Example","type":"person","aliases":["Ali"],"description":""}]'
+fi
+`
+
+func importFixtureMeeting(t *testing.T, dir string) (*Service, string) {
+	t.Helper()
+	writeMockSymmeet(t, dir, mockSymmeetScript)
+	withMockSymmeetPath(t, dir)
+	t.Setenv("SYMMEET_TRANSCRIPT", "# Transcript\n\nAlice: Hello everyone.\n")
+
+	svc := newTestService(t)
+	path, err := svc.MeetingImport("m1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return svc, path
+}
+
+func TestResolveParticipantCandidatesSuccess(t *testing.T) {
+	dir := t.TempDir()
+	writeMockSymmemory(t, dir, mockSymmemoryEntityListScript)
+	withMockSymmemoryPath(t, dir)
+
+	svc := newTestService(t)
+	candidates, err := svc.ResolveParticipantCandidates("Alice Example")
+	if err != nil {
+		t.Fatalf("expected success, got %v", err)
+	}
+	if len(candidates) != 1 || candidates[0].EntityID != "e-alice" {
+		t.Errorf("unexpected candidates: %+v", candidates)
+	}
+}
+
+func TestResolveParticipantCandidatesSymmemoryUnavailable(t *testing.T) {
+	// A bare-bones PATH, not a prepended one: the real symmemory installed
+	// on the dev machine must not leak into this "unavailable" scenario.
+	t.Setenv("PATH", "/usr/bin:/bin")
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
+
+	svc := newTestService(t)
+	if _, err := svc.ResolveParticipantCandidates("Alice Example"); err != ErrSymmemoryUnavailable {
+		t.Errorf("expected ErrSymmemoryUnavailable, got %v", err)
+	}
+}
+
+func TestConfirmParticipantSetsEntityID(t *testing.T) {
+	dir := t.TempDir()
+	svc, path := importFixtureMeeting(t, dir)
+
+	if err := svc.ConfirmParticipant(path, "speaker_0", "e-alice"); err != nil {
+		t.Fatalf("expected success, got %v", err)
+	}
+
+	doc, err := svc.MeetingShow(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	participants, ok := doc.Frontmatter["participants"].([]interface{})
+	if !ok || len(participants) != 1 {
+		t.Fatalf("expected 1 participant in frontmatter, got %+v", doc.Frontmatter["participants"])
+	}
+	p, _ := participants[0].(map[string]interface{})
+	if p["entity_id"] != "e-alice" {
+		t.Errorf("expected entity_id e-alice, got %+v", p)
+	}
+	// speaker_id must be preserved unchanged alongside the new entity_id.
+	if label, _ := p["label"].(string); label != "Alice" {
+		t.Errorf("expected label preserved as Alice, got %+v", p)
+	}
+}
+
+func TestConfirmParticipantPreservesBodyAndUnrelatedContent(t *testing.T) {
+	dir := t.TempDir()
+	svc, path := importFixtureMeeting(t, dir)
+	absPath := filepath.Join(svc.VaultRoot, path)
+
+	original, err := os.ReadFile(absPath) //nolint:gosec // test reads its own temp vault fixture
+	if err != nil {
+		t.Fatal(err)
+	}
+	withManualNote := string(original) + "\n## Follow-up\n\nSend the recap.\n"
+	if err := os.WriteFile(absPath, []byte(withManualNote), 0600); err != nil { //nolint:gosec // test writes into its own temp vault fixture
+		t.Fatal(err)
+	}
+
+	if err := svc.ConfirmParticipant(path, "speaker_0", "e-alice"); err != nil {
+		t.Fatalf("expected success, got %v", err)
+	}
+
+	final, err := os.ReadFile(absPath) //nolint:gosec // test reads its own temp vault fixture
+	if err != nil {
+		t.Fatal(err)
+	}
+	finalStr := string(final)
+	if !strings.Contains(finalStr, "## Follow-up") || !strings.Contains(finalStr, "Send the recap.") {
+		t.Error("expected manual notes outside frontmatter to survive")
+	}
+	if !strings.Contains(finalStr, "Alice: Hello everyone.") {
+		t.Error("expected the transcript to survive")
+	}
+}
+
+func TestConfirmParticipantUnknownSpeakerID(t *testing.T) {
+	dir := t.TempDir()
+	svc, path := importFixtureMeeting(t, dir)
+
+	if err := svc.ConfirmParticipant(path, "speaker_99", "e-alice"); err == nil || !strings.Contains(err.Error(), "no participant with speaker id") {
+		t.Errorf("expected an unknown-speaker error, got %v", err)
+	}
+}
+
+// Exercises the same stale-write guard MeetingRefresh uses: a write built
+// from a doc read before a concurrent on-disk change must be rejected
+// instead of silently clobbering the newer content.
+func TestWriteMeetingFrontmatterConflictWhenChangedOnDisk(t *testing.T) {
+	dir := t.TempDir()
+	svc, path := importFixtureMeeting(t, dir)
+	absPath := filepath.Join(svc.VaultRoot, path)
+
+	doc, fm, err := svc.loadMeetingFrontmatter(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Simulate a concurrent edit landing after doc was read but before this
+	// write runs.
+	current, err := os.ReadFile(absPath) //nolint:gosec // test reads its own temp vault fixture
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(absPath, append(current, []byte("\n## Concurrent edit\n")...), 0600); err != nil { //nolint:gosec // test writes into its own temp vault fixture
+		t.Fatal(err)
+	}
+
+	fm.Participants[0].EntityID = "e-alice"
+	err = svc.writeMeetingFrontmatter(path, doc, fm)
+	if err == nil || !strings.Contains(err.Error(), "changed on disk since it was read") {
+		t.Errorf("expected a stale-write conflict error, got %v", err)
+	}
+
+	// The concurrent edit must survive untouched — the rejected write must
+	// not have partially applied.
+	final, err := os.ReadFile(absPath) //nolint:gosec // test reads its own temp vault fixture
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(final), "## Concurrent edit") {
+		t.Error("expected the concurrent edit to survive the rejected write")
+	}
+}
+
+func TestConfirmParticipantNormalFollowUpSucceeds(t *testing.T) {
+	dir := t.TempDir()
+	svc, path := importFixtureMeeting(t, dir)
+
+	if err := svc.ConfirmParticipant(path, "speaker_0", "e-alice"); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.ConfirmParticipant(path, "speaker_0", "e-alice-2"); err != nil {
+		t.Fatalf("expected a normal follow-up confirm to succeed, got %v", err)
+	}
+}

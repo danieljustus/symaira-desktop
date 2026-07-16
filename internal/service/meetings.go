@@ -245,6 +245,43 @@ func (s *Service) MeetingList() ([]MeetingNoteSummary, error) {
 	return results, nil
 }
 
+// AvailableMeetingSummary is one entry returned by AvailableMeetings: a raw
+// SymMeet meeting that has not yet been imported into the vault.
+type AvailableMeetingSummary struct {
+	MeetingID string `json:"meeting_id"`
+	Source    string `json:"source"`
+}
+
+// AvailableMeetings lists SymMeet meetings that are not yet imported into
+// the vault, for an "Import Existing SymMeet Meeting" picker. It never
+// mutates state.
+func (s *Service) AvailableMeetings() ([]AvailableMeetingSummary, error) {
+	if ok, _ := compose.HasSymmeet(); !ok {
+		return nil, ErrSymmeetUnavailable
+	}
+	all, err := compose.ListMeetings()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list symmeet meetings: %w", err)
+	}
+	imported, err := s.MeetingList()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list imported meeting notes: %w", err)
+	}
+	importedIDs := make(map[string]bool, len(imported))
+	for _, m := range imported {
+		importedIDs[m.MeetingID] = true
+	}
+
+	available := make([]AvailableMeetingSummary, 0, len(all))
+	for _, m := range all {
+		if importedIDs[m.MeetingID] {
+			continue
+		}
+		available = append(available, AvailableMeetingSummary{MeetingID: m.MeetingID, Source: m.Source})
+	}
+	return available, nil
+}
+
 // MeetingShow loads one meeting note by its vault-relative path.
 func (s *Service) MeetingShow(notePath string) (*vault.Document, error) {
 	absPath, err := vault.SecurePath(s.VaultRoot, notePath)

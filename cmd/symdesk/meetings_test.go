@@ -116,3 +116,53 @@ func TestMeetingImportRejectsMissingArg(t *testing.T) {
 		t.Error("expected an error for missing meeting id argument")
 	}
 }
+
+func TestMeetingAvailableCLI(t *testing.T) {
+	vaultDir := t.TempDir()
+	origCfg := cfg
+	cfg = &config.Config{Vault: vaultDir}
+	t.Cleanup(func() { cfg = origCfg })
+
+	dir := t.TempDir()
+	script := `#!/bin/bash
+case "$1" in
+  capabilities)
+    echo '{"tool":"symmeet","version":"1.0.0","schema_version":1,"artifact_schema_versions":[1],"export_formats":["markdown"]}'
+    ;;
+  meeting)
+    if [ "$2" = "list" ]; then
+      echo '{"meetings":[{"meeting_id":"m1","source":"recorded"}],"diagnostics":[]}'
+    fi
+    ;;
+esac
+`
+	if err := os.WriteFile(filepath.Join(dir, "symmeet"), []byte(script), 0755); err != nil { //nolint:gosec // test fixture must be executable
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
+
+	out, err := execRootCapture(t, "", "meeting", "available", "--json")
+	if err != nil {
+		t.Fatalf("available failed: %v (output: %s)", err, out)
+	}
+	if !strings.Contains(out, "m1") {
+		t.Errorf("expected available output to contain the unimported meeting id, got %q", out)
+	}
+}
+
+func TestMeetingAvailableCLISymmeetUnavailable(t *testing.T) {
+	vaultDir := t.TempDir()
+	origCfg := cfg
+	cfg = &config.Config{Vault: vaultDir}
+	t.Cleanup(func() { cfg = origCfg })
+
+	t.Setenv("PATH", "/usr/bin:/bin")
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
+
+	if _, err := execRootCapture(t, "", "meeting", "available", "--json"); err == nil {
+		t.Error("expected an error when symmeet is not on PATH")
+	}
+}

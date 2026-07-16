@@ -1030,3 +1030,207 @@ public struct DoctorReport: Codable, Sendable {
         tools = (try? c.decode(ToolAvailability.self, forKey: .tools)) ?? ToolAvailability()
     }
 }
+
+// MARK: - Meetings
+
+extension DeskCore {
+    /// Lists every meeting note already imported into the vault. Unlike
+    /// `meetingsAvailable`, this always works even when `symmeet` is not on
+    /// PATH, since it only walks already-written vault notes.
+    public func meetingsList() async throws -> [MeetingNoteSummary] {
+        try await runDecoding([MeetingNoteSummary].self, arguments: ["meeting", "list", "--json"] + vaultArgs)
+    }
+
+    /// Lists SymMeet meetings that have not yet been imported, for an
+    /// "Import Existing SymMeet Meeting" picker. Throws when `symmeet` is
+    /// not on PATH; callers should surface that as "unavailable", not as
+    /// note corruption.
+    public func meetingsAvailable() async throws -> [AvailableMeeting] {
+        try await runDecoding([AvailableMeeting].self, arguments: ["meeting", "available", "--json"] + vaultArgs)
+    }
+
+    /// Imports a SymMeet meeting into the vault and returns the new note's
+    /// vault-relative path.
+    @discardableResult
+    public func meetingImport(meetingID: String) async throws -> String {
+        struct ImportResult: Codable, Sendable { let path: String }
+        let result = try await runDecoding(ImportResult.self, arguments: ["meeting", "import", meetingID, "--json"] + vaultArgs)
+        return result.path
+    }
+
+    /// Loads one imported meeting note's metadata and transcript body.
+    public func meetingShow(path: String) async throws -> MeetingDetail {
+        try await runDecoding(MeetingDetail.self, arguments: ["meeting", "show", path, "--json"] + vaultArgs)
+    }
+
+    /// Previews (or, with `apply: true`, writes) a re-export of a meeting
+    /// note's transcript from SymMeet.
+    public func meetingRefresh(path: String, apply: Bool) async throws -> MeetingRefreshOutcome {
+        var args = ["meeting", "refresh", path, "--json"] + vaultArgs
+        if apply { args.append("--apply") }
+        return try await runDecoding(MeetingRefreshOutcome.self, arguments: args)
+    }
+}
+
+/// One vault note already imported from a SymMeet meeting; mirrors the Go
+/// `service.MeetingNoteSummary` JSON shape.
+public struct MeetingNoteSummary: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { path }
+    public let path: String
+    public let title: String
+    public let meetingID: String
+    public let startedAt: String
+    public let durationMS: Int64
+    public let language: String
+    public let reviewState: String
+
+    enum CodingKeys: String, CodingKey {
+        case path, title, language
+        case meetingID = "meeting_id"
+        case startedAt = "started_at"
+        case durationMS = "duration_ms"
+        case reviewState = "review_state"
+    }
+
+    public init(path: String, title: String, meetingID: String, startedAt: String, durationMS: Int64, language: String, reviewState: String) {
+        self.path = path
+        self.title = title
+        self.meetingID = meetingID
+        self.startedAt = startedAt
+        self.durationMS = durationMS
+        self.language = language
+        self.reviewState = reviewState
+    }
+}
+
+/// A raw SymMeet meeting not yet imported into the vault; mirrors the Go
+/// `service.AvailableMeetingSummary` JSON shape.
+public struct AvailableMeeting: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { meetingID }
+    public let meetingID: String
+    public let source: String
+
+    enum CodingKeys: String, CodingKey {
+        case meetingID = "meeting_id"
+        case source
+    }
+
+    public init(meetingID: String, source: String) {
+        self.meetingID = meetingID
+        self.source = source
+    }
+}
+
+/// One reviewed participant entry on a meeting note; mirrors the Go
+/// `service.MeetingParticipant` YAML/JSON shape (see VAULT.md section 8).
+/// `entityID` is only ever populated by the separate, explicitly reviewed
+/// participant-confirmation flow, never automatically.
+public struct MeetingParticipant: Codable, Equatable, Sendable {
+    public let label: String
+    public let speakerIDs: [String]
+    public let entityID: String?
+
+    enum CodingKeys: String, CodingKey {
+        case label
+        case speakerIDs = "speaker_ids"
+        case entityID = "entity_id"
+    }
+
+    public init(label: String, speakerIDs: [String], entityID: String? = nil) {
+        self.label = label
+        self.speakerIDs = speakerIDs
+        self.entityID = entityID
+    }
+}
+
+/// SymMeet artifact provenance recorded on a meeting note.
+public struct MeetingSourceInfo: Codable, Equatable, Sendable {
+    public let artifactSchemaVersion: Int
+    public let reviewState: String
+
+    enum CodingKeys: String, CodingKey {
+        case artifactSchemaVersion = "artifact_schema_version"
+        case reviewState = "review_state"
+    }
+
+    public init(artifactSchemaVersion: Int, reviewState: String) {
+        self.artifactSchemaVersion = artifactSchemaVersion
+        self.reviewState = reviewState
+    }
+}
+
+/// The frontmatter fields of an imported meeting note this app understands.
+/// Fields beyond `meetingID`/`startedAt` are optional so a note with a
+/// partially-populated or as-yet-unreviewed frontmatter still decodes
+/// instead of failing the whole detail load.
+public struct MeetingFrontmatter: Codable, Equatable, Sendable {
+    public let meetingID: String
+    public let startedAt: String
+    public let endedAt: String?
+    public let durationMS: Int64?
+    public let language: String?
+    public let participants: [MeetingParticipant]?
+    public let symmeetSource: MeetingSourceInfo?
+
+    enum CodingKeys: String, CodingKey {
+        case meetingID = "meeting_id"
+        case startedAt = "started_at"
+        case endedAt = "ended_at"
+        case durationMS = "duration_ms"
+        case language
+        case participants
+        case symmeetSource = "symmeet_source"
+    }
+
+    public init(meetingID: String, startedAt: String, endedAt: String? = nil, durationMS: Int64? = nil, language: String? = nil, participants: [MeetingParticipant]? = nil, symmeetSource: MeetingSourceInfo? = nil) {
+        self.meetingID = meetingID
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+        self.durationMS = durationMS
+        self.language = language
+        self.participants = participants
+        self.symmeetSource = symmeetSource
+    }
+}
+
+/// One imported meeting note's detail: metadata plus the transcript body,
+/// which embeds the reviewed transcript between symmeet-transcript markers
+/// (see VAULT.md section 8). Mirrors `vault.Document`'s default (untagged)
+/// Go JSON marshaling, so `CodingKeys` use the Go field names verbatim.
+public struct MeetingDetail: Codable, Sendable {
+    public let title: String
+    public let body: String
+    public let frontmatter: MeetingFrontmatter
+
+    enum CodingKeys: String, CodingKey {
+        case title = "Title"
+        case body = "Body"
+        case frontmatter = "Frontmatter"
+    }
+
+    public init(title: String, body: String, frontmatter: MeetingFrontmatter) {
+        self.title = title
+        self.body = body
+        self.frontmatter = frontmatter
+    }
+}
+
+/// Mirrors the Go `service.MeetingRefreshResult` JSON shape.
+public struct MeetingRefreshOutcome: Codable, Sendable {
+    public let path: String
+    public let changed: Bool
+    public let diffLines: [String]?
+    public let applied: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case path, changed, applied
+        case diffLines = "diff_lines"
+    }
+
+    public init(path: String, changed: Bool, diffLines: [String]? = nil, applied: Bool) {
+        self.path = path
+        self.changed = changed
+        self.diffLines = diffLines
+        self.applied = applied
+    }
+}

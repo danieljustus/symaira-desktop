@@ -55,6 +55,26 @@ func newMeetingCmd() *cobra.Command {
 	}
 	meetingCmd.AddCommand(listCmd)
 
+	availableCmd := &cobra.Command{
+		Use:   "available",
+		Short: "List SymMeet meetings that have not yet been imported",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			svc := service.New(vRoot, db)
+
+			results, err := svc.AvailableMeetings()
+			if err != nil {
+				return err
+			}
+			return outputResult(results)
+		},
+	}
+	meetingCmd.AddCommand(availableCmd)
+
 	showCmd := &cobra.Command{
 		Use:   "show <vault-note>",
 		Short: "Show one imported meeting note",

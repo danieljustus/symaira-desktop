@@ -1,0 +1,258 @@
+import XCTest
+@testable import SymDesk
+import SymDeskCore
+
+private actor CallLog {
+    private(set) var calls: [String] = []
+    func record(_ call: String) { calls.append(call) }
+}
+
+/// Configurable stub conforming to `MeetingsDataSource`, so
+/// `MeetingReviewModel` can be exercised without a real `symdesk` process.
+private final class MockMeetingsDataSource: MeetingsDataSource, @unchecked Sendable {
+    var meetingsListResult: Result<[MeetingNoteSummary], Error> = .success([])
+    var meetingsAvailableResult: Result<[AvailableMeeting], Error> = .success([])
+    var meetingShowResults: [String: Result<MeetingDetail, Error>] = [:]
+    var meetingShowDelays: [String: UInt64] = [:]
+    var meetingImportResult: Result<String, Error> = .success("meetings/meeting-m1.md")
+    var meetingRefreshResult: Result<MeetingRefreshOutcome, Error> = .success(
+        MeetingRefreshOutcome(path: "meetings/meeting-m1.md", changed: false, applied: false)
+    )
+    let log = CallLog()
+
+    func meetingsList() async throws -> [MeetingNoteSummary] {
+        await log.record("meetingsList")
+        return try meetingsListResult.get()
+    }
+
+    func meetingsAvailable() async throws -> [AvailableMeeting] {
+        await log.record("meetingsAvailable")
+        return try meetingsAvailableResult.get()
+    }
+
+    func meetingShow(path: String) async throws -> MeetingDetail {
+        await log.record("meetingShow:\(path)")
+        if let delay = meetingShowDelays[path] {
+            try await Task.sleep(nanoseconds: delay)
+        }
+        guard let result = meetingShowResults[path] else {
+            throw NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "no stub for \(path)"])
+        }
+        return try result.get()
+    }
+
+    @discardableResult
+    func meetingImport(meetingID: String) async throws -> String {
+        await log.record("meetingImport:\(meetingID)")
+        return try meetingImportResult.get()
+    }
+
+    func meetingRefresh(path: String, apply: Bool) async throws -> MeetingRefreshOutcome {
+        await log.record("meetingRefresh:\(path):\(apply)")
+        return try meetingRefreshResult.get()
+    }
+}
+
+private func makeDetail(meetingID: String = "m1", body: String? = "\n<!-- symmeet-transcript:start -->\nAlice: Hello.\n<!-- symmeet-transcript:end -->\n") -> MeetingDetail {
+    MeetingDetail(
+        title: "Meeting",
+        body: body ?? "",
+        frontmatter: MeetingFrontmatter(
+            meetingID: meetingID,
+            startedAt: "2026-07-01T10:00:00Z",
+            durationMS: 1800000,
+            language: "en",
+            participants: [MeetingParticipant(label: "Alice", speakerIDs: ["speaker_0"])]
+        )
+    )
+}
+
+@MainActor
+final class MeetingReviewModelTests: XCTestCase {
+    func testLoadLibrarySuccessPopulatesImportedAndAvailable() async {
+        let source = MockMeetingsDataSource()
+        source.meetingsListResult = .success([
+            MeetingNoteSummary(path: "meetings/meeting-m1.md", title: "Standup", meetingID: "m1", startedAt: "2026-07-01T10:00:00Z", durationMS: 60000, language: "en", reviewState: "unreviewed")
+        ])
+        source.meetingsAvailableResult = .success([AvailableMeeting(meetingID: "m2", source: "recorded")])
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.loadLibrary()
+
+        XCTAssertEqual(model.libraryState, .loaded)
+        XCTAssertEqual(model.importedMeetings.count, 1)
+        XCTAssertEqual(model.availableMeetings.count, 1)
+        XCTAssertNil(model.availableMeetingsError)
+    }
+
+    // symmeet being absent must not blank out an already-usable imported
+    // library — only the "available to import" section degrades.
+    func testSymmeetUnavailableDegradesOnlyAvailableSection() async {
+        let source = MockMeetingsDataSource()
+        source.meetingsListResult = .success([
+            MeetingNoteSummary(path: "meetings/meeting-m1.md", title: "Standup", meetingID: "m1", startedAt: "2026-07-01T10:00:00Z", durationMS: 60000, language: "en", reviewState: "unreviewed")
+        ])
+        source.meetingsAvailableResult = .failure(NSError(domain: "test", code: 2, userInfo: [NSLocalizedDescriptionKey: "symmeet not found on PATH"]))
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.loadLibrary()
+
+        XCTAssertEqual(model.libraryState, .loaded)
+        XCTAssertEqual(model.importedMeetings.count, 1)
+        XCTAssertTrue(model.availableMeetings.isEmpty)
+        XCTAssertEqual(model.availableMeetingsError, "symmeet not found on PATH")
+    }
+
+    func testLoadLibraryFailureSurfacesFriendlyState() async {
+        let source = MockMeetingsDataSource()
+        source.meetingsListResult = .failure(NSError(domain: "test", code: 3, userInfo: [NSLocalizedDescriptionKey: "vault unreadable"]))
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.loadLibrary()
+
+        guard case .failed(let message) = model.libraryState else {
+            return XCTFail("expected .failed, got \(model.libraryState)")
+        }
+        XCTAssertEqual(message, "vault unreadable")
+    }
+
+    func testSelectMeetingLoadsDetailAndTranscript() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+
+        XCTAssertEqual(model.detailState, .loaded)
+        XCTAssertEqual(model.selectedDetail?.frontmatter.meetingID, "m1")
+        XCTAssertEqual(model.transcript, "Alice: Hello.")
+    }
+
+    // Acceptance criterion: "Missing raw audio/transcript data is shown as
+    // unavailable, not treated as note corruption."
+    func testMissingTranscriptMarkersReportUnavailableNotError() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail(body: "no markers here"))
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+
+        XCTAssertEqual(model.detailState, .loaded)
+        XCTAssertNil(model.transcript)
+    }
+
+    // Acceptance criterion: corrupt/incompatible note data must not crash
+    // or silently show wrong content — it must surface as a clear failure.
+    func testCorruptNoteDataSurfacesAsFailureNotCrash() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .failure(
+            DecodingError.dataCorrupted(
+                DecodingError.Context(codingPath: [], debugDescription: "missing Frontmatter")
+            )
+        )
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+
+        guard case .failed(let message) = model.detailState else {
+            return XCTFail("expected .failed, got \(model.detailState)")
+        }
+        XCTAssertTrue(message.contains("could not be read"), "expected a friendly decode-failure message, got \(message)")
+        XCTAssertNil(model.selectedDetail)
+    }
+
+    // Cancellation / refresh-conflict acceptance criterion: selecting a
+    // second meeting while the first is still loading must not let the
+    // first (slower) response clobber the second (newer) selection.
+    func testStaleSelectionResultIsDiscardedAfterNewerSelection() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowDelays["meetings/meeting-slow.md"] = 200_000_000 // 200ms
+        source.meetingShowResults["meetings/meeting-slow.md"] = .success(makeDetail(meetingID: "slow"))
+        source.meetingShowResults["meetings/meeting-fast.md"] = .success(makeDetail(meetingID: "fast"))
+
+        let model = MeetingReviewModel(dataSource: source)
+
+        let slowLoad = Task { await model.selectMeeting(path: "meetings/meeting-slow.md") }
+        try? await Task.sleep(nanoseconds: 20_000_000) // let the slow load start first
+        await model.selectMeeting(path: "meetings/meeting-fast.md")
+        await slowLoad.value
+
+        XCTAssertEqual(model.selectedPath, "meetings/meeting-fast.md")
+        XCTAssertEqual(model.selectedDetail?.frontmatter.meetingID, "fast")
+    }
+
+    func testImportSuccessRefreshesLibraryAndSelectsImportedMeeting() async {
+        let source = MockMeetingsDataSource()
+        source.meetingImportResult = .success("meetings/meeting-m1.md")
+        source.meetingsListResult = .success([
+            MeetingNoteSummary(path: "meetings/meeting-m1.md", title: "Standup", meetingID: "m1", startedAt: "2026-07-01T10:00:00Z", durationMS: 60000, language: "en", reviewState: "unreviewed")
+        ])
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.importMeeting(meetingID: "m1")
+
+        XCTAssertNil(model.importError)
+        XCTAssertFalse(model.isImporting)
+        XCTAssertEqual(model.selectedPath, "meetings/meeting-m1.md")
+        XCTAssertEqual(model.importedMeetings.count, 1)
+    }
+
+    // Acceptance criterion: an incompatible artifact schema must be a clear
+    // review error, not a partial/silent import.
+    func testImportIncompatibleSchemaSurfacesError() async {
+        let source = MockMeetingsDataSource()
+        source.meetingImportResult = .failure(NSError(domain: "test", code: 4, userInfo: [NSLocalizedDescriptionKey: "unsupported meeting artifact schema version 2 (symdesk supports 1)"]))
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.importMeeting(meetingID: "m1")
+
+        XCTAssertEqual(model.importError, "unsupported meeting artifact schema version 2 (symdesk supports 1)")
+        XCTAssertFalse(model.isImporting)
+        XCTAssertNil(model.selectedPath)
+    }
+
+    // Refresh conflict: the note changed on disk since it was read. Must
+    // surface as a clear failure, not a silently discarded refresh.
+    func testRefreshConflictSurfacesErrorWithoutClearingSelection() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+        source.meetingRefreshResult = .failure(NSError(domain: "test", code: 5, userInfo: [NSLocalizedDescriptionKey: "meetings/meeting-m1.md changed on disk since it was read; re-run refresh"]))
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+        await model.refreshSelected(apply: true)
+
+        XCTAssertEqual(model.refreshError, "meetings/meeting-m1.md changed on disk since it was read; re-run refresh")
+        XCTAssertEqual(model.selectedPath, "meetings/meeting-m1.md")
+        XCTAssertNotNil(model.selectedDetail)
+    }
+
+    func testRefreshAppliedReloadsSelectedDetail() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail(body: "\n<!-- symmeet-transcript:start -->\nAlice: Hello.\n<!-- symmeet-transcript:end -->\n"))
+        source.meetingRefreshResult = .success(MeetingRefreshOutcome(path: "meetings/meeting-m1.md", changed: true, applied: true))
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail(body: "\n<!-- symmeet-transcript:start -->\nAlice: Hello, corrected.\n<!-- symmeet-transcript:end -->\n"))
+        await model.refreshSelected(apply: true)
+
+        XCTAssertNil(model.refreshError)
+        XCTAssertEqual(model.transcript, "Alice: Hello, corrected.")
+    }
+
+    func testClearSelectionResetsDetailState() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+        model.clearSelection()
+
+        XCTAssertNil(model.selectedPath)
+        XCTAssertNil(model.selectedDetail)
+        XCTAssertEqual(model.detailState, .idle)
+    }
+}

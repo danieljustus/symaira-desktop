@@ -184,6 +184,55 @@ func TestMeetingListAndShow(t *testing.T) {
 	}
 }
 
+func TestAvailableMeetingsExcludesImported(t *testing.T) {
+	dir := t.TempDir()
+	writeMockSymmeet(t, dir, `#!/bin/bash
+case "$1" in
+  capabilities)
+    echo '{"tool":"symmeet","version":"1.0.0","schema_version":1,"artifact_schema_versions":[1],"export_formats":["markdown"]}'
+    ;;
+  meeting)
+    if [ "$2" = "list" ]; then
+      echo '{"meetings":[{"meeting_id":"m1","source":"imported"},{"meeting_id":"m2","source":"recorded"}],"diagnostics":[]}'
+    elif [ "$2" = "show" ]; then
+      echo '{"schema_version":1,"meeting_id":"m1","source":"imported","created_at":"2026-07-01T10:00:00Z","updated_at":"2026-07-01T10:30:00Z","audio_tracks":[],"language":"en"}'
+    fi
+    ;;
+  speaker)
+    echo '{"meeting_id":"m1","speakers":[],"labels":{},"merged_speakers":{}}'
+    ;;
+  export)
+    printf '%s' "$SYMMEET_TRANSCRIPT"
+    ;;
+esac
+`)
+	withMockSymmeetPath(t, dir)
+	t.Setenv("SYMMEET_TRANSCRIPT", "# Transcript\n")
+
+	svc := newTestService(t)
+	if _, err := svc.MeetingImport("m1"); err != nil {
+		t.Fatal(err)
+	}
+
+	available, err := svc.AvailableMeetings()
+	if err != nil {
+		t.Fatalf("expected success, got %v", err)
+	}
+	if len(available) != 1 || available[0].MeetingID != "m2" {
+		t.Errorf("expected only unimported m2, got %+v", available)
+	}
+}
+
+func TestAvailableMeetingsSymmeetUnavailable(t *testing.T) {
+	dir := t.TempDir()
+	withMockSymmeetPath(t, dir) // empty dir: symmeet is not on PATH
+
+	svc := newTestService(t)
+	if _, err := svc.AvailableMeetings(); err != ErrSymmeetUnavailable {
+		t.Errorf("expected ErrSymmeetUnavailable, got %v", err)
+	}
+}
+
 func TestMeetingShowRejectsNonMeetingNote(t *testing.T) {
 	svc := newTestService(t)
 	path, err := svc.NoteNew("Not A Meeting", "body", "")

@@ -41,6 +41,7 @@ struct ContentView: View {
         case ingestQueue
         case reviewLane
         case rules
+        case meetings
     }
 
     @State private var displayMode: DisplayMode = .vault
@@ -107,6 +108,8 @@ struct ContentView: View {
                                 }
                             }
                         }
+
+                        meetingsSidebarSection
 
                         Section("Discover") {
                             Button(action: { displayMode = .discover }) {
@@ -199,6 +202,8 @@ struct ContentView: View {
                         IngestQueueView()
                     case .reviewLane:
                         ReviewLaneView()
+                    case .meetings:
+                        MeetingsView()
                     case .rules:
                         RulesSettingsView(vaultPath: core.vaultPath)
                     case .discover:
@@ -513,6 +518,22 @@ struct ContentView: View {
                 }
                 .onChange(of: watcher.latestEvent) { _, ev in
                     scheduleEventRefresh(ev)
+                }
+            }
+        }
+    }
+
+    /// Split out of the sidebar `List` body: inlining even one more
+    /// `Section` there pushes SwiftUI's ViewBuilder type-checker over its
+    /// complexity budget ("unable to type-check this expression in
+    /// reasonable time").
+    @ViewBuilder
+    private var meetingsSidebarSection: some View {
+        Section("Meetings") {
+            Button(action: { displayMode = .meetings }) {
+                HStack {
+                    Image(systemName: "person.wave.2")
+                    Text("Meetings")
                 }
             }
         }

@@ -26,6 +26,7 @@ func registerCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(newHistoryCmd())
 	rootCmd.AddCommand(newRestoreCmd())
 	rootCmd.AddCommand(newTrashCmd())
+	rootCmd.AddCommand(newMeetingCmd())
 	doctorCmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "Check system health, vault, and sidecar configuration",
@@ -102,7 +103,7 @@ func registerCommands(rootCmd *cobra.Command) {
 			// 4. Sibling-tool composition status.
 			tools := map[string]string{}
 			versions := map[string]string{}
-			for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault"} {
+			for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault", "symmeet"} {
 				if ok, version := compose.HasTool(name); ok {
 					tools[name] = "ok"
 					versions[name] = version
@@ -174,7 +175,7 @@ func registerCommands(rootCmd *cobra.Command) {
 					fmt.Println("conflicts: none")
 				}
 				fmt.Println("tools:")
-				for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault"} {
+				for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault", "symmeet"} {
 					status := tools[name]
 					version := versions[name]
 					if status == "ok" {

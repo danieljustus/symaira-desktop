@@ -1,0 +1,118 @@
+package main
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/config"
+)
+
+const mockSymmeetScriptForCLI = `#!/bin/bash
+case "$1" in
+  capabilities)
+    echo '{"tool":"symmeet","version":"1.0.0","schema_version":1,"artifact_schema_versions":[1],"export_formats":["markdown"]}'
+    ;;
+  meeting)
+    if [ "$2" = "show" ]; then
+      echo '{"schema_version":1,"meeting_id":"m1","source":"imported","created_at":"2026-07-01T10:00:00Z","updated_at":"2026-07-01T10:30:00Z","audio_tracks":[],"language":"en"}'
+    fi
+    ;;
+  speaker)
+    echo '{"meeting_id":"m1","speakers":[],"labels":{},"merged_speakers":{}}'
+    ;;
+  export)
+    printf '# Transcript\n\nHello.\n'
+    ;;
+esac
+`
+
+func setupMeetingVault(t *testing.T) string {
+	t.Helper()
+	vaultDir := t.TempDir()
+	origCfg := cfg
+	cfg = &config.Config{Vault: vaultDir}
+	t.Cleanup(func() { cfg = origCfg })
+
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "symmeet"), []byte(mockSymmeetScriptForCLI), 0755); err != nil { //nolint:gosec // test fixture must be executable
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
+
+	return vaultDir
+}
+
+func TestMeetingImportListShowCLI(t *testing.T) {
+	setupMeetingVault(t)
+
+	out, err := execRootCapture(t, "", "meeting", "import", "m1", "--json")
+	if err != nil {
+		t.Fatalf("import failed: %v (output: %s)", err, out)
+	}
+	var importResult map[string]string
+	if err := json.Unmarshal([]byte(out), &importResult); err != nil {
+		t.Fatalf("failed to parse import output %q: %v", out, err)
+	}
+	path := importResult["path"]
+	if path == "" {
+		t.Fatal("expected a non-empty imported note path")
+	}
+
+	listOut, err := execRootCapture(t, "", "meeting", "list", "--json")
+	if err != nil {
+		t.Fatalf("list failed: %v", err)
+	}
+	if !strings.Contains(listOut, "m1") {
+		t.Errorf("expected meeting list output to contain the meeting id, got %q", listOut)
+	}
+
+	showOut, err := execRootCapture(t, "", "meeting", "show", path, "--json")
+	if err != nil {
+		t.Fatalf("show failed: %v", err)
+	}
+	if !strings.Contains(showOut, "meeting_id") {
+		t.Errorf("expected show output to contain frontmatter, got %q", showOut)
+	}
+}
+
+func TestMeetingRefreshPreviewCLI(t *testing.T) {
+	setupMeetingVault(t)
+
+	out, err := execRootCapture(t, "", "meeting", "import", "m1", "--json")
+	if err != nil {
+		t.Fatalf("import failed: %v (output: %s)", err, out)
+	}
+	var importResult map[string]string
+	if err := json.Unmarshal([]byte(out), &importResult); err != nil {
+		t.Fatal(err)
+	}
+	path := importResult["path"]
+
+	refreshOut, err := execRootCapture(t, "", "meeting", "refresh", path, "--json")
+	if err != nil {
+		t.Fatalf("refresh failed: %v", err)
+	}
+	var refreshResult struct {
+		Changed bool `json:"changed"`
+		Applied bool `json:"applied"`
+	}
+	if err := json.Unmarshal([]byte(refreshOut), &refreshResult); err != nil {
+		t.Fatalf("failed to parse refresh output %q: %v", refreshOut, err)
+	}
+	if refreshResult.Applied {
+		t.Error("expected refresh without --apply to not apply changes")
+	}
+}
+
+func TestMeetingImportRejectsMissingArg(t *testing.T) {
+	setupMeetingVault(t)
+	if _, err := execRootCapture(t, "", "meeting", "import"); err == nil {
+		t.Error("expected an error for missing meeting id argument")
+	}
+}

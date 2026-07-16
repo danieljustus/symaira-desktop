@@ -59,7 +59,7 @@ func importReviewFixtureMeeting(t *testing.T, dir string) (*Service, string) {
 
 func readCallLog(t *testing.T) string {
 	t.Helper()
-	data, err := os.ReadFile(os.Getenv("SYMMEET_CALL_LOG"))
+	data, err := os.ReadFile(os.Getenv("SYMMEET_CALL_LOG")) //nolint:gosec // test-owned temp path
 	if err != nil {
 		t.Fatalf("no speaker call recorded: %v", err)
 	}

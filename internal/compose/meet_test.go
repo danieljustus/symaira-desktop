@@ -313,7 +313,7 @@ echo '{"status":"ok"}'
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(log)
+	data, err := os.ReadFile(log) //nolint:gosec // test-owned temp path
 	if err != nil {
 		t.Fatal(err)
 	}

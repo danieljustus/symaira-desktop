@@ -168,6 +168,10 @@ symdesk graph                  # nodes + edges for the link graph
 symdesk views ...              # saved database views
 symdesk ingest <file>          # copy a document into inbox/ + create a stub note
 symdesk ask "question?"        # AI answer grounded in vault search results
+symdesk meeting import <id>    # import a reviewed SymMeet meeting as a vault note (runtime-only, optional)
+symdesk meeting list           # list imported meeting notes
+symdesk meeting show <file>    # show one imported meeting note
+symdesk meeting refresh <file> [--apply]  # preview (or apply) a transcript re-export
 symdesk events --json          # NDJSON change stream (used by the app)
 symdesk recipe validate .symdesk/recipes/daily.yml  # validate automation without running it
 symdesk recipe run .symdesk/recipes/daily.yml       # stage runner proposals for review

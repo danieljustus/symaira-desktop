@@ -90,4 +90,30 @@ The following optional fields provide first-class document query metadata. They 
   - `history_max_per_file` / `SYMDESK_HISTORY_MAX_PER_FILE` — max snapshots kept per file on prune (default 20, 0 = unlimited).
   - `history_max_age_days` / `SYMDESK_HISTORY_MAX_AGE_DAYS` — snapshots older than this are pruned; the newest snapshot per file is always kept (default 90, 0 = unlimited).
   - `trash_retention_days` / `SYMDESK_TRASH_RETENTION_DAYS` — default age threshold for `trash purge` (default 30).
+
+## 8. Meeting Notes (contract_version 2)
+`symdesk meeting import` creates a reviewed meeting note from a `symmeet` artifact. Integration is runtime-only (PATH detection, no compile-time or bundling dependency on `symmeet`) and entirely optional: a vault with no meeting notes, or opened where `symmeet` is absent, behaves exactly as a v1/v2 vault always has.
+
+- `type` (string, `"meeting"`): marks a note as an imported meeting. Notes without this field are unaffected by any meeting-specific behavior.
+- `meeting_id` (string): the source `symmeet` meeting UUID. Re-importing the same ID updates the same note (`meetings/meeting-<id>.md`).
+- `started_at` / `ended_at` (string, ISO-8601): the meeting's recorded time range.
+- `duration_ms` (integer): `ended_at - started_at` in milliseconds.
+- `language` (string): the transcript language, when known.
+- `participants` (array of objects): one entry per known speaker.
+  - `label` (string): the speaker's display label (falls back to the raw anonymous `speaker_id` when unlabeled).
+  - `speaker_ids` (array of strings): the meeting-local anonymous speaker ID(s) this participant covers.
+  - `entity_id` (string, optional): set only by an explicit, separately reviewed participant-confirmation step. SymDesk never writes this automatically.
+- `symmeet_source` (object): artifact provenance.
+  - `artifact_schema_version` (integer): the meeting artifact schema version the note was imported from.
+  - `review_state` (string): `"unreviewed"` on import; set to `"reviewed"` by the user's own workflow (SymDesk does not change it automatically).
+
+The note body wraps the transcript in a pair of markers:
+```text
+<!-- symmeet-transcript:start -->
+...transcript markdown from `symmeet export --format markdown`...
+<!-- symmeet-transcript:end -->
+```
+`symdesk meeting refresh` only ever replaces the content strictly between these markers with a freshly exported transcript (which itself prefers `symmeet`-side edited segments over raw engine output). Anything written outside the markers — meeting notes, follow-ups, links — and the note's frontmatter (including any reviewed `entity_id`/`review_state`) survive a refresh untouched. If the markers are missing (e.g. the block was manually restructured), refresh fails safely instead of guessing where the transcript is. Refresh previews its diff by default; a `--apply` flag is required to write it.
+
+SymDesk never mutates the raw `symmeet` artifact directory: corrections to speaker labels or transcript text happen through `symmeet` itself, and the next import or refresh picks them up.
 - Trashing a file snapshots its final content first, so even a purged trash item stays recoverable until history retention drops it.

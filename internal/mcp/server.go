@@ -39,6 +39,8 @@ var ToolCapabilities = map[string]ToolCapability{
 	"docs_similar":      ReadOnly,
 	"desk_related":      ReadOnly,
 	"desk_ingest_jobs":  ReadOnly,
+	"meeting_list":      ReadOnly,
+	"meeting_get":       ReadOnly,
 	"desk_note_new":     Mutating,
 	"desk_ingest":       Mutating,
 	"doc_set_status":    Mutating,
@@ -46,6 +48,7 @@ var ToolCapabilities = map[string]ToolCapability{
 	"desk_clip":         Mutating,
 	"desk_export":       Mutating,
 	"desk_autofill":     Mutating,
+	"meeting_import":    Mutating,
 }
 
 func StartServer(cfg *config.Config, version string, allowWrite bool) error {
@@ -79,6 +82,8 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 	server.RegisterTool(newDocsSimilarTool(getService))
 	server.RegisterTool(newRelatedTool(getService))
 	server.RegisterTool(newIngestJobsTool(getService))
+	server.RegisterTool(newMeetingListTool(getService))
+	server.RegisterTool(newMeetingGetTool(getService))
 
 	if allowWrite {
 		server.RegisterTool(newNoteNewTool(getService))
@@ -88,6 +93,7 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 		server.RegisterTool(newClipTool(getService))
 		server.RegisterTool(newExportTool(getService))
 		server.RegisterTool(newAutofillTool(getService))
+		server.RegisterTool(newMeetingImportTool(getService))
 	}
 
 	return server.ServeStdio(context.Background())
@@ -635,6 +641,78 @@ func newClipTool(getService serviceFactory) *mcpserver.Tool {
 				return nil, err
 			}
 			return map[string]string{"path": path}, nil
+		},
+	}
+}
+
+func newMeetingListTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "meeting_list",
+		Description: "Lists meetings already imported into the vault as reviewed meeting notes.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{}}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close() //nolint:errcheck // matches every other read-only tool in this file
+			return svc.MeetingList()
+		},
+	}
+}
+
+func newMeetingGetTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "meeting_get",
+		Description: "Gets one imported meeting note by its vault-relative path, including the reviewed transcript.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"path":{"type":"string","description":"vault-relative meeting note path"}},"required":["path"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				Path string `json:"path"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.Path == "" {
+				return nil, fmt.Errorf("path is required")
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close() //nolint:errcheck // matches every other read-only tool in this file
+			return svc.MeetingShow(args.Path)
+		},
+	}
+}
+
+// newMeetingImportTool is a reviewed mutation: it is only registered when
+// allowWrite is set, exactly like the vault's other note-creating tools.
+func newMeetingImportTool(getService serviceFactory) *mcpserver.Tool {
+	return &mcpserver.Tool{
+		Name:        "meeting_import",
+		Description: "Imports one SymMeet meeting into the vault as a contract-v2 meeting note. Requires symmeet on PATH with a compatible artifact schema.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"meeting_id":{"type":"string"}},"required":["meeting_id"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				MeetingID string `json:"meeting_id"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.MeetingID == "" {
+				return nil, fmt.Errorf("meeting_id is required")
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer db.Close() //nolint:errcheck // matches every other mutating tool in this file
+			path, err := svc.MeetingImport(args.MeetingID)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{"path": path, "status": "imported"}, nil
 		},
 	}
 }

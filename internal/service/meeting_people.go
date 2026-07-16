@@ -153,3 +153,26 @@ func (s *Service) ConfirmParticipant(notePath, speakerID, entityID string) error
 
 	return s.writeMeetingFrontmatter(notePath, doc, fm)
 }
+
+// ConfirmParticipantNewPerson creates (or reuses, by exact name) a person
+// entity in Memory and links the participant to it. It exists for the
+// reviewed "create a new person" choice in the confirmation flow — the
+// reviewer explicitly typed and confirmed the name, so this is never an
+// automatic identity creation. Returns the entity ID that was linked.
+func (s *Service) ConfirmParticipantNewPerson(notePath, speakerID, name string) (string, error) {
+	if ok, _ := compose.HasSymmemory(); !ok {
+		return "", ErrSymmemoryUnavailable
+	}
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return "", fmt.Errorf("a person name is required")
+	}
+	entity, err := compose.EnsureEntity(trimmed, "person")
+	if err != nil {
+		return "", fmt.Errorf("failed to create Memory person %q: %w", trimmed, err)
+	}
+	if err := s.ConfirmParticipant(notePath, speakerID, entity.ID); err != nil {
+		return "", err
+	}
+	return entity.ID, nil
+}

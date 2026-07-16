@@ -271,6 +271,75 @@ final class MeetingReviewModel: ObservableObject {
         }
     }
 
+    // MARK: - Participant confirmation (reviewed, never automatic)
+
+    /// Loads deterministic Memory candidates for a participant label.
+    /// Returns them for the confirmation sheet instead of publishing state:
+    /// candidate display is transient UI, and duplicate aliases must be
+    /// shown side by side for an explicit choice, never auto-selected.
+    func participantCandidates(label: String) async throws -> [ParticipantCandidate] {
+        try await dataSource.meetingParticipantCandidates(label: label)
+    }
+
+    @Published private(set) var isConfirmingParticipant = false
+    @Published private(set) var participantActionError: String?
+
+    /// Links (or, with `entityID` nil, unlinks) a speaker to a confirmed
+    /// Memory entity and reloads the note so the confirmed mapping shows.
+    func confirmParticipant(speakerID: String, entityID: String?) async {
+        await performParticipantAction { path, source in
+            try await source.meetingParticipantConfirm(path: path, speakerID: speakerID, entityID: entityID)
+        }
+    }
+
+    /// Creates a confirmed new person from a reviewer-typed name and links
+    /// the speaker to it.
+    func createParticipant(speakerID: String, name: String) async {
+        await performParticipantAction { path, source in
+            try await source.meetingParticipantCreate(path: path, speakerID: speakerID, name: name)
+        }
+    }
+
+    private func performParticipantAction(_ action: @escaping (String, MeetingsDataSource) async throws -> Void) async {
+        guard let path = selectedPath, !isConfirmingParticipant else { return }
+        isConfirmingParticipant = true
+        participantActionError = nil
+        defer { isConfirmingParticipant = false }
+
+        do {
+            try await action(path, dataSource)
+            await selectMeeting(path: path)
+        } catch {
+            participantActionError = Self.friendlyMessage(for: error)
+        }
+    }
+
+    // MARK: - Reviewed Memory publish
+
+    @Published private(set) var isPublishing = false
+    @Published private(set) var publishError: String?
+    @Published private(set) var lastPublish: MeetingPublishOutcome?
+
+    /// Applies a reviewed publish proposal. Nothing reaches Memory before
+    /// this explicit call, a rejected (never-applied) proposal changes
+    /// nothing, and the backend skips already-published facts so a repeat
+    /// apply cannot duplicate them.
+    func publish(facts: [String]) async {
+        guard let path = selectedPath, !isPublishing else { return }
+        isPublishing = true
+        publishError = nil
+        defer { isPublishing = false }
+
+        do {
+            lastPublish = try await dataSource.meetingPublish(path: path, facts: facts)
+        } catch {
+            // A failed publish may still have written some items (partial
+            // failure); the backend's per-note fact ledger keeps the retry
+            // safe. Surface the error without clearing prior results.
+            publishError = Self.friendlyMessage(for: error)
+        }
+    }
+
     // MARK: - Segment navigation
 
     /// The segment containing a playback position, for keeping the

@@ -20,6 +20,11 @@ protocol MeetingsDataSource: Sendable {
     func meetingSpeakerSplit(path: String, speakerID: String, segmentID: String) async throws
     func meetingSpeakerReset(path: String) async throws
     func meetingMarkReviewed(path: String) async throws
+    func meetingParticipantCandidates(label: String) async throws -> [ParticipantCandidate]
+    func meetingParticipantConfirm(path: String, speakerID: String, entityID: String?) async throws
+    @discardableResult
+    func meetingParticipantCreate(path: String, speakerID: String, name: String) async throws -> String
+    func meetingPublish(path: String, facts: [String]) async throws -> MeetingPublishOutcome
 }
 
 extension DeskCore: MeetingsDataSource {}

@@ -1114,6 +1114,86 @@ extension DeskCore {
     public func meetingMarkReviewed(path: String) async throws {
         _ = try await runDecoding([String: String].self, arguments: ["meeting", "review", path, "--json"] + vaultArgs)
     }
+
+    /// Lists deterministic Memory person candidates for a participant
+    /// label. Every candidate is an exact-name or alias match with its
+    /// match reason — never a fuzzy guess.
+    public func meetingParticipantCandidates(label: String) async throws -> [ParticipantCandidate] {
+        try await runDecoding([ParticipantCandidate].self, arguments: ["meeting", "participant", "candidates", label, "--json"] + vaultArgs)
+    }
+
+    /// Links a speaker to a confirmed Memory entity; a `nil` or empty
+    /// entity ID unlinks the participant (back to anonymous).
+    public func meetingParticipantConfirm(path: String, speakerID: String, entityID: String?) async throws {
+        var args = ["meeting", "participant", "confirm", path, speakerID]
+        if let entityID, !entityID.isEmpty { args.append(entityID) }
+        args.append("--json")
+        _ = try await runDecoding([String: String].self, arguments: args + vaultArgs)
+    }
+
+    /// Creates a confirmed new Memory person (reviewer-typed name) and
+    /// links the speaker to it, returning the new entity ID.
+    @discardableResult
+    public func meetingParticipantCreate(path: String, speakerID: String, name: String) async throws -> String {
+        let result = try await runDecoding([String: String].self, arguments: ["meeting", "participant", "create", path, speakerID, name, "--json"] + vaultArgs)
+        return result["entity_id"] ?? ""
+    }
+
+    /// Publishes a reviewed proposal (confirmed-participant relations plus
+    /// the given facts) to Symaira Memory. Repeat applies are idempotent:
+    /// already-published facts are skipped, relations are idempotent.
+    public func meetingPublish(path: String, facts: [String]) async throws -> MeetingPublishOutcome {
+        var args = ["meeting", "publish", path]
+        for fact in facts {
+            args.append(contentsOf: ["--fact", fact])
+        }
+        args.append("--json")
+        return try await runDecoding(MeetingPublishOutcome.self, arguments: args + vaultArgs)
+    }
+}
+
+/// One deterministic Memory person candidate for a participant label;
+/// mirrors the Go `service.ParticipantCandidate` JSON shape.
+public struct ParticipantCandidate: Codable, Identifiable, Sendable, Equatable {
+    public var id: String { entityID }
+    public let entityID: String
+    public let name: String
+    public let matchReason: String
+
+    enum CodingKeys: String, CodingKey {
+        case entityID = "entity_id"
+        case name
+        case matchReason = "match_reason"
+    }
+
+    public init(entityID: String, name: String, matchReason: String) {
+        self.entityID = entityID
+        self.name = name
+        self.matchReason = matchReason
+    }
+}
+
+/// The result of one reviewed Memory publish; mirrors the Go
+/// `service.MeetingPublishResult` JSON shape.
+public struct MeetingPublishOutcome: Codable, Sendable, Equatable {
+    public let meetingEntityID: String
+    public let relationsCreated: Int
+    public let factsPublished: [String]?
+    public let factsSkipped: Int
+
+    enum CodingKeys: String, CodingKey {
+        case meetingEntityID = "meeting_entity_id"
+        case relationsCreated = "relations_created"
+        case factsPublished = "facts_published"
+        case factsSkipped = "facts_skipped"
+    }
+
+    public init(meetingEntityID: String, relationsCreated: Int, factsPublished: [String]?, factsSkipped: Int) {
+        self.meetingEntityID = meetingEntityID
+        self.relationsCreated = relationsCreated
+        self.factsPublished = factsPublished
+        self.factsSkipped = factsSkipped
+    }
 }
 
 /// One time-coded transcript segment of a meeting's source artifact;
@@ -1228,7 +1308,10 @@ public struct AvailableMeeting: Codable, Equatable, Identifiable, Sendable {
 /// `service.MeetingParticipant` YAML/JSON shape (see VAULT.md section 8).
 /// `entityID` is only ever populated by the separate, explicitly reviewed
 /// participant-confirmation flow, never automatically.
-public struct MeetingParticipant: Codable, Equatable, Sendable {
+public struct MeetingParticipant: Codable, Equatable, Sendable, Identifiable {
+    /// Stable identity for UI lists/sheets: the first (meeting-local)
+    /// speaker ID, which import guarantees to be unique per participant.
+    public var id: String { speakerIDs.first ?? label }
     public let label: String
     public let speakerIDs: [String]
     public let entityID: String?

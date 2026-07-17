@@ -116,6 +116,26 @@ func (s *Service) PublishMeetingProposal(notePath string, proposal MeetingPublis
 		newHashes = append(newHashes, hash)
 	}
 
+	// flushLedger persists every fact hash published so far to the note's
+	// frontmatter. symmemory `set` is not idempotent, so a fact already
+	// written to Memory but not yet recorded in this note's ledger would be
+	// resubmitted — and duplicated — by a retry. It is called immediately
+	// after every individual successful fact below, not only once the
+	// whole proposal has published: an interruption between two facts
+	// (a returned error, but also a crash, force-quit, or anything else
+	// that never returns control to this function) must not lose track of
+	// facts that already succeeded.
+	flushLedger := func() error {
+		absPath, err := vault.SecurePath(s.VaultRoot, notePath)
+		if err != nil {
+			return err
+		}
+		if err := vault.SetFrontmatterValue(absPath, publishedFactsFrontmatterKey, newHashes); err != nil {
+			return fmt.Errorf("published fact to Memory but failed to record it on the note (a repeat apply may duplicate it): %w", err)
+		}
+		return nil
+	}
+
 	for _, fact := range proposal.Facts {
 		value := strings.TrimSpace(fact.Value)
 		if value == "" {
@@ -133,15 +153,9 @@ func (s *Service) PublishMeetingProposal(notePath string, proposal MeetingPublis
 		result.FactsPublished = append(result.FactsPublished, record.ID)
 		alreadyPublished[hash] = true
 		newHashes = append(newHashes, hash)
-	}
 
-	if len(result.FactsPublished) > 0 {
-		absPath, err := vault.SecurePath(s.VaultRoot, notePath)
-		if err != nil {
+		if err := flushLedger(); err != nil {
 			return result, err
-		}
-		if err := vault.SetFrontmatterValue(absPath, publishedFactsFrontmatterKey, newHashes); err != nil {
-			return result, fmt.Errorf("published facts to Memory but failed to record them on the note (a repeat apply may duplicate them): %w", err)
 		}
 	}
 

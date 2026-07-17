@@ -295,7 +295,7 @@ func TestPublishMeetingProposalPartialFailureThenRetryDoesNotDuplicateFirstFact(
 		t.Errorf("expected exactly the previously-failed second fact to publish on retry, got %+v", second.FactsPublished)
 	}
 
-	logBytes, err := os.ReadFile(callLog)
+	logBytes, err := os.ReadFile(callLog) //nolint:gosec // test-owned temp path
 	if err != nil {
 		t.Fatal(err)
 	}

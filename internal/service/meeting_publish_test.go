@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -201,6 +203,105 @@ func TestPublishMeetingProposalBlankFactsAreIgnored(t *testing.T) {
 	}
 	if len(result.FactsPublished) != 0 {
 		t.Errorf("expected blank facts to be ignored, got %+v", result.FactsPublished)
+	}
+}
+
+// mockSymmemoryPublishScriptFailingNthSet is like mockSymmemoryPublishScript
+// but the Nth `set` call (counted across the mock's whole lifetime, i.e.
+// across retries too) fails once with a simulated transient error.
+func mockSymmemoryPublishScriptFailingNthSet(callLogPath, stateDir string, failOnCall int) string {
+	return `#!/bin/bash
+LOG="` + callLogPath + `"
+STATE="` + stateDir + `/set_count"
+if [ "$1" = "entity" ]; then
+  case "$2" in
+    show)
+      if [ "$3" = "Meeting m1" ] || [ "$3" = "Alice Example" ]; then
+        echo "entity_show $3" >> "$LOG"
+        if [ "$3" = "Meeting m1" ]; then
+          echo '{"id":"e-meeting","name":"Meeting m1","type":"other","aliases":[],"description":""}'
+        else
+          echo '{"id":"e-alice","name":"Alice Example","type":"person","aliases":[],"description":""}'
+        fi
+      else
+        echo "Error: entity not found: $3" >&2
+        exit 1
+      fi
+      ;;
+    add)
+      echo "entity_add $3" >> "$LOG"
+      echo "Entity created: $3"
+      ;;
+    list)
+      echo '[{"id":"e-alice","name":"Alice Example","type":"person","aliases":[],"description":""}]'
+      ;;
+    relate)
+      echo "entity_relate $3 $4 $5" >> "$LOG"
+      echo "Related: $3 --$4--> $5"
+      ;;
+  esac
+elif [ "$1" = "set" ]; then
+  n=$(( $(cat "$STATE" 2>/dev/null || echo 0) + 1 ))
+  echo "$n" > "$STATE"
+  echo "memory_set $n" >> "$LOG"
+  if [ "$n" = "` + fmt.Sprintf("%d", failOnCall) + `" ]; then
+    echo "Error: simulated transient failure" >&2
+    exit 1
+  fi
+  echo "{\"id\":\"mem-$n\",\"content\":\"x\",\"scope\":\"project\",\"entities\":[]}"
+fi
+`
+}
+
+// A publish that fails partway through a multi-fact proposal must not lose
+// track of the facts it already wrote before the failure: symmemory `set`
+// is not idempotent, so if a retry resubmits an already-succeeded fact it
+// creates a duplicate memory. This is the "partial failure, retry" case the
+// issue's acceptance criteria call out explicitly.
+func TestPublishMeetingProposalPartialFailureThenRetryDoesNotDuplicateFirstFact(t *testing.T) {
+	symmeetDir := t.TempDir()
+	symmemoryDir := t.TempDir()
+	callLog := symmemoryDir + "/calls.log"
+	svc, path := importFixtureMeeting(t, symmeetDir)
+	writeMockSymmemory(t, symmemoryDir, mockSymmemoryPublishScriptFailingNthSet(callLog, symmemoryDir, 2))
+	withMockSymmemoryPath(t, symmemoryDir)
+	if err := svc.ConfirmParticipant(path, "speaker_0", "e-alice"); err != nil {
+		t.Fatal(err)
+	}
+
+	proposal := MeetingPublishProposal{
+		Facts: []MeetingFact{
+			{Value: "Alice proposed the Q3 roadmap."},
+			{Value: "Bob will send the follow-up deck."},
+		},
+	}
+
+	first, err := svc.PublishMeetingProposal(path, proposal)
+	if err == nil {
+		t.Fatal("expected the simulated second-fact failure to surface as an error")
+	}
+	if len(first.FactsPublished) != 1 {
+		t.Fatalf("expected the first fact to have published before the failure, got %+v", first.FactsPublished)
+	}
+
+	second, err := svc.PublishMeetingProposal(path, proposal)
+	if err != nil {
+		t.Fatalf("retry: expected success, got %v", err)
+	}
+	if second.FactsSkipped != 1 {
+		t.Errorf("expected the already-published first fact to be skipped on retry, got %d skipped: %+v", second.FactsSkipped, second)
+	}
+	if len(second.FactsPublished) != 1 {
+		t.Errorf("expected exactly the previously-failed second fact to publish on retry, got %+v", second.FactsPublished)
+	}
+
+	logBytes, err := os.ReadFile(callLog) //nolint:gosec // test-owned temp path
+	if err != nil {
+		t.Fatal(err)
+	}
+	setCalls := strings.Count(string(logBytes), "memory_set")
+	if setCalls != 3 {
+		t.Errorf("expected exactly 3 set invocations across both applies (1 success, 1 simulated failure, 1 retry success), got %d — a higher count means the first fact was resubmitted and duplicated", setCalls)
 	}
 }
 

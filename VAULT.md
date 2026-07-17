@@ -117,3 +117,12 @@ The note body wraps the transcript in a pair of markers:
 
 SymDesk never mutates the raw `symmeet` artifact directory: corrections to speaker labels or transcript text happen through `symmeet` itself, and the next import or refresh picks them up.
 - Trashing a file snapshots its final content first, so even a purged trash item stays recoverable until history retention drops it.
+
+## 9. Meeting Knowledge Publishing (contract_version 2)
+`symdesk meeting publish` sends a reviewer-approved set of facts and participant relations from a meeting note (section 8) to Symaira Memory (`symmemory`). Nothing about a meeting is written to Memory automatically — publish requires the explicit command, reviewer-authored facts, and participants whose `entity_id` was already confirmed (see section 8: "SymDesk never writes this automatically").
+
+- `symmeet_published_facts` (array of strings, optional): SHA-256 hex hashes of the content of every fact/decision/action item already published to Memory for this note. Written automatically by `symdesk meeting publish` after each successful write; never written manually. `symmemory set` is not idempotent (two calls with identical content create two separate memories), so this ledger is what makes re-applying the same reviewed proposal safe — already-published facts are skipped instead of resubmitted.
+- **Meeting entity:** a Memory entity named literally `Meeting <meeting_id>` (type `other`) represents the meeting itself. It is created on first publish, or reused if it already exists.
+- **Attended relation:** for every participant with a confirmed `entity_id` (section 8), publish creates an `attended` relation from that person's Memory entity to the meeting entity. Relations are idempotent at the symmemory layer, so creating them on every publish is safe and expected.
+- Every published fact is stored in Memory scoped to (linked to) the meeting entity, so every write traces back to its source meeting. Reviewers may optionally prepend/append a transcript segment timestamp to a fact's text before publishing, as an additional evidence marker; SymDesk does not enforce or structure this — it is free text the reviewer controls.
+- Content published to Memory passes through symmemory's own automatic PII redaction (email addresses, phone numbers, API keys/credentials, credit card numbers) before storage. This happens transparently inside symmemory itself; SymDesk does not implement a separate content guard.

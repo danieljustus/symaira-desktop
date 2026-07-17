@@ -452,4 +452,111 @@ final class MeetingReviewModelTests: XCTestCase {
         XCTAssertTrue(model.speakers.isEmpty)
         XCTAssertNil(model.selectedSegmentID)
     }
+
+    // MARK: - Participant confirmation and publish
+
+    func testParticipantCandidatesReturnsCandidatesFromDataSource() async throws {
+        let source = MockMeetingsDataSource()
+        let expected = ParticipantCandidate(entityID: "e-alice", name: "Alice Example", matchReason: "exact_name")
+        source.participantCandidatesResult = .success([expected])
+
+        let model = MeetingReviewModel(dataSource: source)
+        let candidates = try await model.participantCandidates(label: "Alice")
+
+        XCTAssertEqual(candidates, [expected])
+        let calls = await source.log.calls
+        XCTAssertTrue(calls.contains("candidates:Alice"))
+    }
+
+    func testConfirmParticipantLinksAndReloadsDetail() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+        await model.confirmParticipant(speakerID: "speaker_0", entityID: "e-alice")
+
+        XCTAssertNil(model.participantActionError)
+        XCTAssertFalse(model.isConfirmingParticipant)
+        let calls = await source.log.calls
+        XCTAssertTrue(calls.contains("confirm:speaker_0:e-alice"))
+        XCTAssertEqual(calls.filter { $0 == "meetingShow:meetings/meeting-m1.md" }.count, 2, "expected the detail to reload after a successful confirm, calls: \(calls)")
+    }
+
+    func testConfirmParticipantUnlinkPassesNilEntityID() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+        await model.confirmParticipant(speakerID: "speaker_0", entityID: nil)
+
+        let calls = await source.log.calls
+        XCTAssertTrue(calls.contains("confirm:speaker_0:<unlink>"))
+    }
+
+    func testCreateParticipantCreatesAndReloadsDetail() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+        await model.createParticipant(speakerID: "speaker_0", name: "New Person")
+
+        XCTAssertNil(model.participantActionError)
+        let calls = await source.log.calls
+        XCTAssertTrue(calls.contains("create:speaker_0:New Person"))
+    }
+
+    func testConfirmParticipantFailureSurfacesError() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+        source.participantActionError = NSError(domain: "test", code: 9, userInfo: [NSLocalizedDescriptionKey: "unknown entity id"])
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+        await model.confirmParticipant(speakerID: "speaker_0", entityID: "e-alice")
+
+        XCTAssertEqual(model.participantActionError, "unknown entity id")
+        XCTAssertFalse(model.isConfirmingParticipant)
+    }
+
+    func testPublishSendsFactsAndStoresOutcome() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+        source.publishResult = .success(
+            MeetingPublishOutcome(meetingEntityID: "e-meeting", relationsCreated: 1, factsPublished: ["mem-1"], factsSkipped: 0)
+        )
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+        await model.publish(facts: ["Alice proposed the roadmap."])
+
+        XCTAssertNil(model.publishError)
+        XCTAssertEqual(model.lastPublish?.relationsCreated, 1)
+        XCTAssertEqual(model.lastPublish?.factsPublished, ["mem-1"])
+        let calls = await source.log.calls
+        XCTAssertTrue(calls.contains("publish:meetings/meeting-m1.md:Alice proposed the roadmap."))
+    }
+
+    // Doc-comment guarantee: a failed publish may still have written some
+    // items, so the error must not clobber a previously stored outcome.
+    func testPublishFailureAfterPriorSuccessDoesNotClearLastPublish() async {
+        let source = MockMeetingsDataSource()
+        source.meetingShowResults["meetings/meeting-m1.md"] = .success(makeDetail())
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.selectMeeting(path: "meetings/meeting-m1.md")
+
+        let firstOutcome = MeetingPublishOutcome(meetingEntityID: "e-meeting", relationsCreated: 1, factsPublished: ["mem-1"], factsSkipped: 0)
+        source.publishResult = .success(firstOutcome)
+        await model.publish(facts: ["Alice proposed the roadmap."])
+        XCTAssertEqual(model.lastPublish, firstOutcome)
+
+        source.publishResult = .failure(NSError(domain: "test", code: 10, userInfo: [NSLocalizedDescriptionKey: "symmemory not found on PATH"]))
+        await model.publish(facts: ["Bob agreed to the timeline."])
+
+        XCTAssertEqual(model.publishError, "symmemory not found on PATH")
+        XCTAssertEqual(model.lastPublish, firstOutcome, "a failed publish must not clear a prior successful outcome")
+    }
 }

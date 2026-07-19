@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
 func writeMockSymmemory(t *testing.T, dir, script string) {
@@ -175,6 +176,43 @@ func TestWriteMeetingFrontmatterConflictWhenChangedOnDisk(t *testing.T) {
 	}
 	if !strings.Contains(string(final), "## Concurrent edit") {
 		t.Error("expected the concurrent edit to survive the rejected write")
+	}
+}
+
+// A frontmatter-only concurrent change (e.g. a publish updating the
+// symmeet_published_facts ledger via vault.SetFrontmatterValue) leaves the
+// body untouched, so a body-suffix guard would miss it entirely and let the
+// stale write silently revert the ledger update. The content-hash guard must
+// catch this even though the body never changed.
+func TestWriteMeetingFrontmatterConflictWhenFrontmatterOnlyChangedOnDisk(t *testing.T) {
+	dir := t.TempDir()
+	svc, path := importFixtureMeeting(t, dir)
+	absPath := filepath.Join(svc.VaultRoot, path)
+
+	doc, fm, err := svc.loadMeetingFrontmatter(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Simulate a concurrent publish writing to the published-facts ledger:
+	// frontmatter changes, body bytes stay identical.
+	if err := vault.SetFrontmatterValue(absPath, "symmeet_published_facts", []string{"h1", "h2"}); err != nil {
+		t.Fatal(err)
+	}
+
+	fm.Participants[0].EntityID = "e-alice"
+	err = svc.writeMeetingFrontmatter(path, doc, fm)
+	if err == nil || !strings.Contains(err.Error(), "changed on disk since it was read") {
+		t.Errorf("expected a stale-write conflict error, got %v", err)
+	}
+
+	// The concurrent ledger update must survive untouched.
+	final, err := os.ReadFile(absPath) //nolint:gosec // test reads its own temp vault fixture
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(final), "symmeet_published_facts") {
+		t.Error("expected the concurrent published-facts ledger update to survive the rejected write")
 	}
 }
 

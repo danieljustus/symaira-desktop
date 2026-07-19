@@ -15,6 +15,7 @@ fmt-check:
 
 benchmark-large:
 	go test -run '^$$' -bench BenchmarkLargeVaultIndexAndSearch -benchtime=1x ./internal/demo
+	go test -run '^$$' -bench BenchmarkGraphLargeVaultWithEntities -benchtime=1x ./internal/service
 
 docker-build:
 	docker build -t symaira-desktop:dev .

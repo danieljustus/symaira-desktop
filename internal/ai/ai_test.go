@@ -479,9 +479,15 @@ func TestStreamAnthropicRequestConstructionError(t *testing.T) {
 func TestStreamAnthropicTruncation(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
-		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "truncated content"}}`)
-		fmt.Fprintln(w, `data: {"type": "message_delta", "delta": {"stop_reason": "max_tokens"}}`)
-		fmt.Fprintln(w, `data: [DONE]`)
+		if _, err := fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "truncated content"}}`); err != nil {
+			t.Fatalf("write SSE event: %v", err)
+		}
+		if _, err := fmt.Fprintln(w, `data: {"type": "message_delta", "delta": {"stop_reason": "max_tokens"}}`); err != nil {
+			t.Fatalf("write SSE event: %v", err)
+		}
+		if _, err := fmt.Fprintln(w, `data: [DONE]`); err != nil {
+			t.Fatalf("write SSE event: %v", err)
+		}
 	}))
 	defer srv.Close()
 

@@ -87,7 +87,7 @@ jobs:
         env:
           SYMAIRA_APPKIT_TOKEN: ${{ secrets.SYMAIRA_APPKIT_TOKEN }}
         run: |
-          git config --global url."https://x-access-token:${SYMAIRA_APPKIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://danieljustus:${SYMAIRA_APPKIT_TOKEN}@github.com/".insteadOf "https://github.com/"
         
       - name: Build App
         run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

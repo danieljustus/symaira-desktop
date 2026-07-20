@@ -51,8 +51,23 @@ func TestSource(t *testing.T) {
 	if src != "config/env" {
 		t.Errorf("Expected config/env, got %s", src)
 	}
+}
 
-	src = Source("op://vault/item/key")
+// Whether an op:// reference reports as resolvable depends on symvault's
+// presence, so this must run against a mocked PATH rather than whatever the
+// host machine happens to have installed.
+func TestSourceSymvaultPresent(t *testing.T) {
+	dir := t.TempDir()
+	writeMockTool(t, dir, "symvault", `#!/bin/bash
+if [ "$1" = "version" ]; then
+	echo '{"tool":"symvault","version":"1.0.0","schema_version":1}'
+	exit 0
+fi
+exit 1
+`)
+	withMockPath(t, dir)
+
+	src := Source("op://vault/item/key")
 	if src != "symvault" {
 		t.Errorf("Expected symvault, got %s", src)
 	}
@@ -179,8 +194,8 @@ func TestResolveKeySymvaultAbsent(t *testing.T) {
 func TestSourceSymvaultAbsent(t *testing.T) {
 	dir := t.TempDir()
 	old := os.Getenv("PATH")
-	os.Setenv("PATH", dir)
-	t.Cleanup(func() { os.Setenv("PATH", old) })
+	_ = os.Setenv("PATH", dir)
+	t.Cleanup(func() { _ = os.Setenv("PATH", old) })
 	compose.ResetCache()
 	t.Cleanup(compose.ResetCache)
 

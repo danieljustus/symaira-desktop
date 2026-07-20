@@ -30,8 +30,13 @@ func ResolveKey(ref string) string {
 		return ""
 	}
 
-	ok, _ := compose.HasTool("symvault")
-	if ok && strings.HasPrefix(ref, "op://") { // supports 1Password references via symvault
+	if strings.HasPrefix(ref, "op://") { // supports 1Password references via symvault
+		ok, _ := compose.HasTool("symvault")
+		if !ok {
+			// symvault is required to resolve this reference; never fall through
+			// to returning the raw op:// string as if it were the actual key.
+			return ""
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 		cmd := exec.CommandContext(ctx, "symvault", "get", ref)
@@ -62,7 +67,10 @@ func Source(ref string) string {
 		return "none"
 	}
 	if strings.HasPrefix(ref, "op://") {
-		return "symvault"
+		if ok, _ := compose.HasTool("symvault"); ok {
+			return "symvault"
+		}
+		return "symvault (missing)"
 	}
 	return "config/env"
 }

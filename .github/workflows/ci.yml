@@ -87,7 +87,15 @@ jobs:
         env:
           SYMAIRA_APPKIT_TOKEN: ${{ secrets.SYMAIRA_APPKIT_TOKEN }}
         run: |
-          git config --global url."https://danieljustus:${SYMAIRA_APPKIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git_config="$RUNNER_TEMP/symaira-gitconfig"
+          git config --file "$git_config" url."https://danieljustus:${SYMAIRA_APPKIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          echo "GIT_CONFIG_GLOBAL=$git_config" >> "$GITHUB_ENV"
+
+      - name: Verify private Swift package access
+        env:
+          SYMAIRA_APPKIT_TOKEN: ${{ secrets.SYMAIRA_APPKIT_TOKEN }}
+        run: |
+          git ls-remote https://github.com/danieljustus/symaira-appkit.git HEAD >/dev/null
         
       - name: Build App
         run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

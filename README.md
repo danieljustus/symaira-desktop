@@ -208,6 +208,13 @@ host GPU and the native app runtime.
 Baseline (2026-07-11): Apple M4 Pro, Go benchmark harness, one index-and-search
 pass: **3.44 s** (`BenchmarkLargeVaultIndexAndSearch`, `-benchtime=1x`).
 
+Baseline (2026-07-19): Apple M4 Pro, Go 1.26.5, one `symdesk graph` pass over
+the same fixture with Memory entities present: **488 ms**
+(`BenchmarkGraphLargeVaultWithEntities`, `-benchtime=1x`). Previously this scaled
+with entities × documents because each entity re-parsed every vault file from
+disk; the graph endpoint now parses each file once per call and reuses it
+across all matched entities.
+
 ### Reviewed recipes (optional)
 
 Recipes live in `.symdesk/recipes/*.yml`. They declare an allowed trigger, an

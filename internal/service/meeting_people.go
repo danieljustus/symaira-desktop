@@ -98,8 +98,8 @@ func (s *Service) writeMeetingFrontmatter(notePath string, doc *vault.Document, 
 	if err != nil {
 		return fmt.Errorf("failed to re-read %s: %w", notePath, err)
 	}
-	rawStr := string(raw)
-	if !strings.HasSuffix(rawStr, doc.Body) {
+	rawHash := sha256.Sum256(raw)
+	if hex.EncodeToString(rawHash[:]) != doc.SHA256 {
 		return fmt.Errorf("%s changed on disk since it was read; re-run", notePath)
 	}
 	newContent := "---\n" + string(newFmBytes) + "---\n" + doc.Body

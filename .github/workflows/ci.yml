@@ -91,7 +91,7 @@ jobs:
         env:
           SYMAIRA_APPKIT_TOKEN: ${{ secrets.SYMAIRA_APPKIT_TOKEN }}
         run: |
-          git config --global url."https://danieljustus:${SYMAIRA_APPKIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --global http.https://github.com/.extraheader "AUTHORIZATION: bearer ${SYMAIRA_APPKIT_TOKEN}"
           git ls-remote https://github.com/danieljustus/symaira-appkit.git HEAD >/dev/null
         
       - name: Build App

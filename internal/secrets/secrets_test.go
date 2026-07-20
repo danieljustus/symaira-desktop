@@ -51,8 +51,23 @@ func TestSource(t *testing.T) {
 	if src != "config/env" {
 		t.Errorf("Expected config/env, got %s", src)
 	}
+}
 
-	src = Source("op://vault/item/key")
+// Whether an op:// reference reports as resolvable depends on symvault's
+// presence, so this must run against a mocked PATH rather than whatever the
+// host machine happens to have installed.
+func TestSourceSymvaultPresent(t *testing.T) {
+	dir := t.TempDir()
+	writeMockTool(t, dir, "symvault", `#!/bin/bash
+if [ "$1" = "version" ]; then
+	echo '{"tool":"symvault","version":"1.0.0","schema_version":1}'
+	exit 0
+fi
+exit 1
+`)
+	withMockPath(t, dir)
+
+	src := Source("op://vault/item/key")
 	if src != "symvault" {
 		t.Errorf("Expected symvault, got %s", src)
 	}
@@ -158,6 +173,10 @@ exit 1
 	}
 }
 
+// With symvault unavailable, an op:// reference must never fall through and
+// resolve to the raw reference string — that string would then be sent
+// verbatim as the Anthropic API key, leaking the vault/item naming to a
+// third party.
 func TestResolveKeySymvaultAbsent(t *testing.T) {
 	dir := t.TempDir()
 	old := os.Getenv("PATH")
@@ -167,7 +186,21 @@ func TestResolveKeySymvaultAbsent(t *testing.T) {
 	t.Cleanup(compose.ResetCache)
 
 	key := ResolveKey("op://vault/item/key")
-	if key != "op://vault/item/key" {
-		t.Errorf("Expected raw ref when symvault absent, got %q", key)
+	if key != "" {
+		t.Errorf("Expected empty string when symvault absent, got %q", key)
+	}
+}
+
+func TestSourceSymvaultAbsent(t *testing.T) {
+	dir := t.TempDir()
+	old := os.Getenv("PATH")
+	_ = os.Setenv("PATH", dir)
+	t.Cleanup(func() { _ = os.Setenv("PATH", old) })
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
+
+	src := Source("op://vault/item/key")
+	if src != "symvault (missing)" {
+		t.Errorf("Expected %q, got %q", "symvault (missing)", src)
 	}
 }

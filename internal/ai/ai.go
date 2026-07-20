@@ -67,55 +67,39 @@ func DoneEvent() AIEvent {
 	return AIEvent{Type: AIEventDone}
 }
 
+var ErrNotConfigured = errors.New("AI feature not configured")
+
 const defaultModel = "llama3.2"
 
 // Ask streams an answer for query to out and always closes out.
 // contextDocs are FTS results from the sidecar ({path,title,snippet}).
-func Ask(ctx context.Context, query string, contextDocs []map[string]interface{}, out chan<- AskChunk) {
+func Ask(ctx context.Context, cfg *config.Config, query string, contextDocs []map[string]interface{}, out chan<- AskChunk) {
 	defer close(out)
 
-	cfg, _ := config.Load()
-	provider := cfg.LLMProvider
-	if provider == "" {
-		provider = "ollama"
-	}
-
-	if provider == "anthropic" {
-		apiKey := secrets.ResolveKey(cfg.LLMAPIKey)
-		if apiKey == "" {
-			out <- AskChunk{Chunk: "⚠️ **AI-Feature nicht konfiguriert.**\n\n" +
-				"Anthropic API-Key konnte nicht aufgelöst werden (Fehlendes Secret via symvault oder Umgebungsvariable).\n"}
-			return
-		}
-		if err := streamAnthropic(ctx, apiKey, cfg.LLMModel, buildPrompt(query, contextDocs), out); err != nil {
-			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Anthropic-Anfrage fehlgeschlagen: %v\n", err)}
-		}
-		return
-	}
-
-	// fallback to ollama
-	ollamaURL := strings.TrimRight(os.Getenv("SYMDESK_OLLAMA_URL"), "/")
-	if ollamaURL == "" {
-		out <- AskChunk{Chunk: "⚠️ **AI-Feature nicht konfiguriert.**\n\n" +
-			"`SYMDESK_OLLAMA_URL` ist nicht gesetzt (z. B. `http://localhost:11434`).\n\n" +
-			"Hier sind dennoch die relevantesten Suchergebnisse aus deinem Vault:\n\n"}
-		for i, doc := range contextDocs {
-			if i >= 3 {
-				break
+	if err := streamLLM(ctx, cfg, buildPrompt(cfg, query, contextDocs), out); err != nil {
+		if errors.Is(err, ErrNotConfigured) {
+			provider := cfg.LLMProvider
+			if provider == "" {
+				provider = "ollama"
 			}
-			path, _ := doc["path"].(string)
-			out <- AskChunk{Chunk: fmt.Sprintf("- [[%s]]\n", path)}
+			if provider == "anthropic" {
+				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
+					"Anthropic API key could not be resolved (missing secret via symvault or environment variable).\n"}
+			} else {
+				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
+					"`SYMDESK_OLLAMA_URL` is not set (e.g., `http://localhost:11434`).\n\n" +
+					"Here are the most relevant search results from your vault:\n\n"}
+				for i, doc := range contextDocs {
+					if i >= 3 {
+						break
+					}
+					path, _ := doc["path"].(string)
+					out <- AskChunk{Chunk: fmt.Sprintf("- [[%s]]\n", path)}
+				}
+			}
+		} else {
+			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Request failed: %v\n", err)}
 		}
-		return
-	}
-
-	model := os.Getenv("SYMDESK_OLLAMA_MODEL")
-	if model == "" {
-		model = defaultModel
-	}
-
-	if err := streamOllama(ctx, ollamaURL, model, buildPrompt(query, contextDocs), out); err != nil {
-		out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Ollama-Anfrage fehlgeschlagen: %v\n", err)}
 	}
 }
 
@@ -131,16 +115,36 @@ const (
 // degrades honestly: without SYMDESK_OLLAMA_URL configured it explains what is
 // missing instead of failing. Unlike Ask it operates purely on the provided
 // text and never touches the vault.
-func Transform(ctx context.Context, text, intent string, out chan<- AskChunk) {
+func Transform(ctx context.Context, cfg *config.Config, text, intent string, out chan<- AskChunk) {
 	defer close(out)
 
 	text = strings.TrimSpace(text)
 	if text == "" {
-		out <- AskChunk{Chunk: "⚠️ Kein Text übergeben – bitte zuerst Text auswählen.\n"}
+		out <- AskChunk{Chunk: "⚠️ No text provided – please select text first.\n"}
 		return
 	}
 
-	cfg, _ := config.Load()
+	if err := streamLLM(ctx, cfg, buildTransformPrompt(cfg, text, intent), out); err != nil {
+		if errors.Is(err, ErrNotConfigured) {
+			provider := cfg.LLMProvider
+			if provider == "" {
+				provider = "ollama"
+			}
+			if provider == "anthropic" {
+				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
+					"Anthropic API key could not be resolved (missing secret via symvault or environment variable).\n"}
+			} else {
+				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
+					"`SYMDESK_OLLAMA_URL` is not set (e.g., `http://localhost:11434`).\n"}
+			}
+		} else {
+			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Request failed: %v\n", err)}
+		}
+	}
+}
+
+// streamLLM is the unified dispatch/stream helper.
+func streamLLM(ctx context.Context, cfg *config.Config, prompt string, out chan<- AskChunk) error {
 	provider := cfg.LLMProvider
 	if provider == "" {
 		provider = "ollama"
@@ -149,22 +153,15 @@ func Transform(ctx context.Context, text, intent string, out chan<- AskChunk) {
 	if provider == "anthropic" {
 		apiKey := secrets.ResolveKey(cfg.LLMAPIKey)
 		if apiKey == "" {
-			out <- AskChunk{Chunk: "⚠️ **AI-Feature nicht konfiguriert.**\n\n" +
-				"Anthropic API-Key konnte nicht aufgelöst werden (Fehlendes Secret via symvault oder Umgebungsvariable).\n"}
-			return
+			return ErrNotConfigured
 		}
-		if err := streamAnthropic(ctx, apiKey, cfg.LLMModel, buildTransformPrompt(text, intent), out); err != nil {
-			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Anthropic-Anfrage fehlgeschlagen: %v\n", err)}
-		}
-		return
+		return streamAnthropic(ctx, cfg, apiKey, cfg.LLMModel, prompt, out)
 	}
 
 	// fallback to ollama
 	ollamaURL := strings.TrimRight(os.Getenv("SYMDESK_OLLAMA_URL"), "/")
 	if ollamaURL == "" {
-		out <- AskChunk{Chunk: "⚠️ **AI-Feature nicht konfiguriert.**\n\n" +
-			"`SYMDESK_OLLAMA_URL` ist nicht gesetzt (z. B. `http://localhost:11434`).\n"}
-		return
+		return ErrNotConfigured
 	}
 
 	model := os.Getenv("SYMDESK_OLLAMA_MODEL")
@@ -172,43 +169,50 @@ func Transform(ctx context.Context, text, intent string, out chan<- AskChunk) {
 		model = defaultModel
 	}
 
-	if err := streamOllama(ctx, ollamaURL, model, buildTransformPrompt(text, intent), out); err != nil {
-		out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Ollama-Anfrage fehlgeschlagen: %v\n", err)}
-	}
+	return streamOllama(ctx, ollamaURL, model, prompt, out)
 }
 
 // buildTransformPrompt renders an intent-specific instruction around the text.
-func buildTransformPrompt(text, intent string) string {
+func buildTransformPrompt(cfg *config.Config, text, intent string) string {
 	var instruction string
 	switch intent {
 	case IntentSummarize:
-		instruction = "Fasse den folgenden Text prägnant zusammen. " +
-			"Gib nur die Zusammenfassung zurück, ohne Vorrede."
+		instruction = "Summarize the following text concisely. " +
+			"Return only the summary, without introductory remarks."
 	case IntentContinue:
-		instruction = "Schreibe den folgenden Text im gleichen Stil und Ton sinnvoll weiter. " +
-			"Gib nur die Fortsetzung zurück, nicht den ursprünglichen Text."
+		instruction = "Continue the following text in a meaningful way, keeping the same style and tone. " +
+			"Return only the continuation, not the original text."
 	case IntentRewrite:
 		fallthrough
 	default:
-		instruction = "Formuliere den folgenden Text klarer und flüssiger um, " +
-			"ohne die Bedeutung zu verändern. Gib nur den überarbeiteten Text zurück."
+		instruction = "Rewrite the following text more clearly and fluently, " +
+			"without changing its meaning. Return only the revised text."
 	}
 
 	var b strings.Builder
 	b.WriteString(instruction)
-	b.WriteString(" Antworte auf Deutsch als reiner Markdown-Text.\n\n---\n")
+	if cfg.Language != "" {
+		fmt.Fprintf(&b, " Answer in %s as pure Markdown text.\n\n---\n", cfg.Language)
+	} else {
+		b.WriteString(" Answer in the language of the input text as pure Markdown text.\n\n---\n")
+	}
 	b.WriteString(text)
 	b.WriteString("\n---\n")
 	return b.String()
 }
 
 // buildPrompt grounds the model in the vault search results.
-func buildPrompt(query string, contextDocs []map[string]interface{}) string {
+func buildPrompt(cfg *config.Config, query string, contextDocs []map[string]interface{}) string {
 	var b strings.Builder
-	b.WriteString("Du bist der Assistent eines lokalen Markdown-Vaults. " +
-		"Beantworte die Frage ausschließlich anhand der folgenden Notiz-Auszüge. " +
-		"Wenn die Auszüge die Antwort nicht hergeben, sage das ehrlich. " +
-		"Verweise auf Notizen als [[pfad]].\n\n")
+	b.WriteString("You are the assistant of a local Markdown vault. " +
+		"Answer the question exclusively based on the following note excerpts. " +
+		"If the excerpts do not contain the answer, say so honestly. " +
+		"Refer to notes as [[path]].")
+	if cfg.Language != "" {
+		fmt.Fprintf(&b, " Answer in %s.\n\n", cfg.Language)
+	} else {
+		b.WriteString(" Answer in the language of the query.\n\n")
+	}
 	for i, doc := range contextDocs {
 		if i >= 5 {
 			break
@@ -219,9 +223,9 @@ func buildPrompt(query string, contextDocs []map[string]interface{}) string {
 		if len(snippet) > 1500 {
 			snippet = snippet[:1500]
 		}
-		fmt.Fprintf(&b, "--- Notiz [[%s]] (%s) ---\n%s\n\n", path, title, snippet)
+		fmt.Fprintf(&b, "--- Note [[%s]] (%s) ---\n%s\n\n", path, title, snippet)
 	}
-	fmt.Fprintf(&b, "Frage: %s\n", query)
+	fmt.Fprintf(&b, "Question: %s\n", query)
 	return b.String()
 }
 
@@ -234,43 +238,7 @@ var PromptOne = promptOne
 // temporarily override PromptOne to avoid real LLM calls.
 var PromptOneReal = promptOne
 
-func promptOne(prompt string) (string, error) {
-	cfg, _ := config.Load()
-	provider := cfg.LLMProvider
-	if provider == "" {
-		provider = "ollama"
-	}
-	if provider == "anthropic" {
-		apiKey := secrets.ResolveKey(cfg.LLMAPIKey)
-		if apiKey == "" {
-			return "", errors.New("anthropic API key not resolved")
-		}
-		out := make(chan AskChunk, 1)
-		var result strings.Builder
-		done := make(chan struct{})
-		go func() {
-			for chunk := range out {
-				result.WriteString(chunk.Chunk)
-			}
-			close(done)
-		}()
-		if err := streamAnthropic(context.Background(), apiKey, cfg.LLMModel, prompt, out); err != nil {
-			close(out)
-			<-done
-			return "", err
-		}
-		close(out)
-		<-done
-		return strings.TrimSpace(result.String()), nil
-	}
-	ollamaURL := strings.TrimRight(os.Getenv("SYMDESK_OLLAMA_URL"), "/")
-	if ollamaURL == "" {
-		return "", errors.New("SYMDESK_OLLAMA_URL not set")
-	}
-	model := os.Getenv("SYMDESK_OLLAMA_MODEL")
-	if model == "" {
-		model = defaultModel
-	}
+func promptOne(cfg *config.Config, prompt string) (string, error) {
 	out := make(chan AskChunk, 1)
 	var result strings.Builder
 	done := make(chan struct{})
@@ -280,13 +248,24 @@ func promptOne(prompt string) (string, error) {
 		}
 		close(done)
 	}()
-	if err := streamOllama(context.Background(), ollamaURL, model, prompt, out); err != nil {
-		close(out)
-		<-done
-		return "", err
-	}
+
+	err := streamLLM(context.Background(), cfg, prompt, out)
 	close(out)
 	<-done
+
+	if err != nil {
+		if errors.Is(err, ErrNotConfigured) {
+			provider := cfg.LLMProvider
+			if provider == "" {
+				provider = "ollama"
+			}
+			if provider == "anthropic" {
+				return "", errors.New("anthropic API key not resolved")
+			}
+			return "", errors.New("SYMDESK_OLLAMA_URL not set")
+		}
+		return "", err
+	}
 	return strings.TrimSpace(result.String()), nil
 }
 

@@ -239,6 +239,14 @@ export SYMDESK_OLLAMA_URL=http://localhost:11434
 export SYMDESK_OLLAMA_MODEL=llama3.2     # optional, default llama3.2
 ```
 
+The answer language is selected from the query by default. Set `language` in
+the config file or use `SYMDESK_LANG` to force a language for both `ask` and
+`transform`:
+
+```sh
+export SYMDESK_LANG=English
+```
+
 #### Cloud AI (Anthropic Claude)
 
 To use Anthropic's Claude models, set the provider, model, and API key:
@@ -247,6 +255,11 @@ To use Anthropic's Claude models, set the provider, model, and API key:
 export SYMDESK_LLM_PROVIDER=anthropic
 export SYMDESK_LLM_MODEL=claude-sonnet-5  # optional, default claude-sonnet-5
 ```
+
+Anthropic output is limited to `max_tokens = 8192` by default. Override it in
+the config file or with `SYMDESK_MAX_TOKENS`. If Anthropic stops at that limit,
+the stream ends with an explicit output-truncated notice instead of silently
+cutting off.
 
 The API key (`SYMDESK_LLM_API_KEY`) is resolved dynamically in priority order:
 

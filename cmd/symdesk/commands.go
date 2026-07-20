@@ -468,7 +468,7 @@ func registerCommands(rootCmd *cobra.Command) {
 			out := make(chan interface{})
 			go func() {
 				chunks := make(chan ai.AskChunk)
-				go ai.Transform(cmd.Context(), text, args[0], chunks)
+				go ai.Transform(cmd.Context(), cfg, text, args[0], chunks)
 				for c := range chunks {
 					out <- c
 				}

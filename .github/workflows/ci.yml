@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+# CodeQL default setup scans Python and Actions. Swift is excluded because the
+# macOS app depends on the private symaira-appkit repository, which the
+# repository-level GitHub token cannot clone during CodeQL autobuild.
+
 jobs:
   test:
     strategy:
@@ -87,14 +91,7 @@ jobs:
         env:
           SYMAIRA_APPKIT_TOKEN: ${{ secrets.SYMAIRA_APPKIT_TOKEN }}
         run: |
-          git_config="$RUNNER_TEMP/symaira-gitconfig"
-          git config --file "$git_config" url."https://danieljustus:${SYMAIRA_APPKIT_TOKEN}@github.com/".insteadOf "https://github.com/"
-          echo "GIT_CONFIG_GLOBAL=$git_config" >> "$GITHUB_ENV"
-
-      - name: Verify private Swift package access
-        env:
-          SYMAIRA_APPKIT_TOKEN: ${{ secrets.SYMAIRA_APPKIT_TOKEN }}
-        run: |
+          git config --global url."https://danieljustus:${SYMAIRA_APPKIT_TOKEN}@github.com/".insteadOf "https://github.com/"
           git ls-remote https://github.com/danieljustus/symaira-appkit.git HEAD >/dev/null
         
       - name: Build App

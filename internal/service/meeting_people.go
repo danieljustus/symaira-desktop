@@ -134,22 +134,11 @@ func (s *Service) ConfirmParticipant(notePath, speakerID, entityID string) error
 		return err
 	}
 
-	found := false
-	for i := range fm.Participants {
-		for _, id := range fm.Participants[i].SpeakerIDs {
-			if id == speakerID {
-				fm.Participants[i].EntityID = entityID
-				found = true
-				break
-			}
-		}
-		if found {
-			break
-		}
-	}
-	if !found {
+	idx := participantIndexBySpeaker(&fm, speakerID)
+	if idx < 0 {
 		return fmt.Errorf("no participant with speaker id %q in %s", speakerID, notePath)
 	}
+	fm.Participants[idx].EntityID = entityID
 
 	return s.writeMeetingFrontmatter(notePath, doc, fm)
 }

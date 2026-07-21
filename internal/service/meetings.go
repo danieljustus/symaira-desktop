@@ -32,10 +32,16 @@ var meetingIDUnsafeChars = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 // MeetingParticipant is one reviewed participant entry in a meeting note's
 // frontmatter. EntityID is left empty on import; it is populated only by
 // an explicit, separately reviewed participant-confirmation step.
+// ContactRef is equally optional and reviewed-only: an opaque reference to
+// the authoritative symrelate contact, never a copy of contact data (see
+// VAULT.md section 8). Extras preserves unknown fields written by newer
+// contract versions so an edit never strips them.
 type MeetingParticipant struct {
-	Label      string   `yaml:"label"`
-	SpeakerIDs []string `yaml:"speaker_ids"`
-	EntityID   string   `yaml:"entity_id,omitempty"`
+	Label      string                 `yaml:"label"`
+	SpeakerIDs []string               `yaml:"speaker_ids"`
+	EntityID   string                 `yaml:"entity_id,omitempty"`
+	ContactRef *compose.ContactRef    `yaml:"contact_ref,omitempty"`
+	Extras     map[string]interface{} `yaml:",inline"`
 }
 
 // MeetingSourceInfo records SymMeet artifact provenance on a meeting note.
@@ -45,19 +51,21 @@ type MeetingSourceInfo struct {
 }
 
 // meetingFrontmatter is the additive contract-v2 frontmatter shape written
-// for meeting notes; see VAULT.md section 8.
+// for meeting notes; see VAULT.md section 8. Extras preserves unknown
+// top-level fields (written by newer contract versions) across edits.
 type meetingFrontmatter struct {
-	Type          string               `yaml:"type"`
-	Title         string               `yaml:"title"`
-	Created       string               `yaml:"created"`
-	Tags          []string             `yaml:"tags"`
-	MeetingID     string               `yaml:"meeting_id"`
-	StartedAt     string               `yaml:"started_at"`
-	EndedAt       string               `yaml:"ended_at,omitempty"`
-	DurationMS    int64                `yaml:"duration_ms,omitempty"`
-	Language      string               `yaml:"language,omitempty"`
-	Participants  []MeetingParticipant `yaml:"participants,omitempty"`
-	SymmeetSource MeetingSourceInfo    `yaml:"symmeet_source"`
+	Type          string                 `yaml:"type"`
+	Title         string                 `yaml:"title"`
+	Created       string                 `yaml:"created"`
+	Tags          []string               `yaml:"tags"`
+	MeetingID     string                 `yaml:"meeting_id"`
+	StartedAt     string                 `yaml:"started_at"`
+	EndedAt       string                 `yaml:"ended_at,omitempty"`
+	DurationMS    int64                  `yaml:"duration_ms,omitempty"`
+	Language      string                 `yaml:"language,omitempty"`
+	Participants  []MeetingParticipant   `yaml:"participants,omitempty"`
+	SymmeetSource MeetingSourceInfo      `yaml:"symmeet_source"`
+	Extras        map[string]interface{} `yaml:",inline"`
 }
 
 func wrapTranscript(transcript string) string {

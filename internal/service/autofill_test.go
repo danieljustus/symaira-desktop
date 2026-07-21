@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/ai"
+	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -14,7 +15,7 @@ import (
 
 func setupAutofillTest(t *testing.T) (*Service, string) {
 	root := t.TempDir()
-	ai.PromptOne = func(prompt string) (string, error) {
+	ai.PromptOne = func(cfg *config.Config, prompt string) (string, error) {
 		if strings.Contains(prompt, "author") {
 			return "AI Author", nil
 		}

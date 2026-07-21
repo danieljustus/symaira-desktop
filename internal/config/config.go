@@ -12,6 +12,8 @@ import (
 
 const defaultReviewThreshold = 85
 
+const defaultMaxTokens = 8192
+
 // DefaultAnthropicModel is the Anthropic model used when no explicit model
 // is configured via llm_model / SYMDESK_LLM_MODEL.
 const DefaultAnthropicModel = "claude-sonnet-5"
@@ -30,6 +32,8 @@ type Config struct {
 	LLMProvider     string `toml:"llm_provider" env:"SYMDESK_LLM_PROVIDER"`
 	LLMAPIKey       string `toml:"llm_api_key" env:"SYMDESK_LLM_API_KEY"`
 	LLMModel        string `toml:"llm_model" env:"SYMDESK_LLM_MODEL"`
+	Language        string `toml:"language" env:"SYMDESK_LANG"`
+	MaxTokens       int    `toml:"max_tokens" env:"SYMDESK_MAX_TOKENS"`
 
 	// HistoryMaxPerFile is the maximum number of snapshots kept per file
 	// when pruning (0 = unlimited).
@@ -50,6 +54,8 @@ func DefaultConfig() *Config {
 		LLMProvider:     "ollama",
 		LLMAPIKey:       "",
 		LLMModel:        DefaultAnthropicModel,
+		Language:        "",
+		MaxTokens:       defaultMaxTokens,
 
 		HistoryMaxPerFile:  defaultHistoryMaxPerFile,
 		HistoryMaxAgeDays:  defaultHistoryMaxAgeDays,
@@ -83,6 +89,14 @@ func applyEnvOverrides(cfg *Config) {
 	}
 	if envModel := os.Getenv("SYMDESK_LLM_MODEL"); envModel != "" {
 		cfg.LLMModel = envModel
+	}
+	if envLang := os.Getenv("SYMDESK_LANG"); envLang != "" {
+		cfg.Language = envLang
+	}
+	if envMaxTokens := os.Getenv("SYMDESK_MAX_TOKENS"); envMaxTokens != "" {
+		if v, err := strconv.Atoi(envMaxTokens); err == nil && v > 0 {
+			cfg.MaxTokens = v
+		}
 	}
 	for _, ev := range []struct {
 		name   string

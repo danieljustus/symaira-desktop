@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/ai"
+	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
@@ -88,7 +89,7 @@ func (s *Service) Autofill(viewID, property, prompt string, dryRun bool) (*Autof
 			continue
 		}
 
-		value, err := runAutofillPrompt(doc, property, prompt)
+		value, err := runAutofillPrompt(s.Config, doc, property, prompt)
 		if err != nil {
 			res.Failed++
 			res.Errors = append(res.Errors, map[string]string{"path": relPath, "error": err.Error()})
@@ -128,7 +129,7 @@ func (s *Service) Autofill(viewID, property, prompt string, dryRun bool) (*Autof
 	return res, nil
 }
 
-func runAutofillPrompt(doc *vault.Document, property, extraPrompt string) (string, error) {
+func runAutofillPrompt(cfg *config.Config, doc *vault.Document, property, extraPrompt string) (string, error) {
 	property = strings.TrimSpace(property)
 	var instruction strings.Builder
 	fmt.Fprintf(&instruction, "Extract the value for the property %q from the note below. ", property)
@@ -143,5 +144,5 @@ func runAutofillPrompt(doc *vault.Document, property, extraPrompt string) (strin
 	instruction.WriteString(doc.Body)
 	instruction.WriteString("\n")
 
-	return ai.PromptOne(instruction.String())
+	return ai.PromptOne(cfg, instruction.String())
 }

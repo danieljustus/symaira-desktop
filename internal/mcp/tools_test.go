@@ -35,7 +35,7 @@ func TestAskToolFallbackWithoutOllama(t *testing.T) {
 		t.Fatal(err)
 	}
 	answer := out.(map[string]string)["answer"]
-	if !strings.Contains(answer, "nicht konfiguriert") {
+	if !strings.Contains(answer, "not configured") {
 		t.Errorf("expected honest unconfigured note, got: %s", answer)
 	}
 }

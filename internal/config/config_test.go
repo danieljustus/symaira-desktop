@@ -17,6 +17,12 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.ReviewThreshold != 85 {
 		t.Errorf("expected ReviewThreshold 85, got %d", cfg.ReviewThreshold)
 	}
+	if cfg.Language != "" {
+		t.Errorf("expected empty default language, got %q", cfg.Language)
+	}
+	if cfg.MaxTokens != 8192 {
+		t.Errorf("expected default MaxTokens 8192, got %d", cfg.MaxTokens)
+	}
 }
 
 func TestGlobalPathReturnsNonEmpty(t *testing.T) {
@@ -230,6 +236,22 @@ func TestLoadWrapsLoadFromPath(t *testing.T) {
 	}
 	if cfg == nil {
 		t.Fatal("Load() returned nil config")
+	}
+}
+
+func TestLoadFromPathEnvOverrideLanguageAndMaxTokens(t *testing.T) {
+	t.Setenv("SYMDESK_LANG", "French")
+	t.Setenv("SYMDESK_MAX_TOKENS", "12000")
+
+	cfg, err := LoadFromPath(filepath.Join(t.TempDir(), "nope.toml"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.Language != "French" {
+		t.Errorf("expected language override French, got %q", cfg.Language)
+	}
+	if cfg.MaxTokens != 12000 {
+		t.Errorf("expected max tokens override 12000, got %d", cfg.MaxTokens)
 	}
 }
 

@@ -15,8 +15,9 @@ import (
 )
 
 func collect(query string, docs []map[string]interface{}) string {
+	cfg, _ := config.Load()
 	out := make(chan AskChunk)
-	go Ask(context.Background(), query, docs, out)
+	go Ask(context.Background(), cfg, query, docs, out)
 	var b strings.Builder
 	for c := range out {
 		b.WriteString(c.Chunk)
@@ -33,7 +34,7 @@ func TestAskWithoutOllamaFallsBack(t *testing.T) {
 	}
 	got := collect("what is alpha?", docs)
 
-	if !strings.Contains(got, "nicht konfiguriert") {
+	if !strings.Contains(got, "not configured") {
 		t.Errorf("expected honest fallback, got: %s", got)
 	}
 	if !strings.Contains(got, "[[notes/a.md]]") {
@@ -73,16 +74,18 @@ func TestAskReportsOllamaError(t *testing.T) {
 }
 
 func TestBuildPromptGroundsInDocs(t *testing.T) {
+	cfg := config.DefaultConfig()
 	docs := []map[string]interface{}{{"path": "x.md", "title": "X", "snippet": "inhalt"}}
-	p := buildPrompt("frage?", docs)
+	p := buildPrompt(cfg, "frage?", docs)
 	if !strings.Contains(p, "[[x.md]]") || !strings.Contains(p, "inhalt") || !strings.Contains(p, "frage?") {
 		t.Errorf("prompt missing pieces: %s", p)
 	}
 }
 
 func collectTransform(text, intent string) string {
+	cfg, _ := config.Load()
 	out := make(chan AskChunk)
-	go Transform(context.Background(), text, intent, out)
+	go Transform(context.Background(), cfg, text, intent, out)
 	var b strings.Builder
 	for c := range out {
 		b.WriteString(c.Chunk)
@@ -93,7 +96,7 @@ func collectTransform(text, intent string) string {
 func TestTransformWithoutOllamaDegradesHonestly(t *testing.T) {
 	t.Setenv("SYMDESK_OLLAMA_URL", "")
 	got := collectTransform("etwas Text", IntentRewrite)
-	if !strings.Contains(got, "nicht konfiguriert") {
+	if !strings.Contains(got, "not configured") {
 		t.Errorf("expected honest degradation, got: %q", got)
 	}
 }
@@ -101,7 +104,7 @@ func TestTransformWithoutOllamaDegradesHonestly(t *testing.T) {
 func TestTransformEmptyTextIsRejected(t *testing.T) {
 	t.Setenv("SYMDESK_OLLAMA_URL", "http://127.0.0.1:0") // must never be reached
 	got := collectTransform("   ", IntentSummarize)
-	if !strings.Contains(got, "Kein Text") {
+	if !strings.Contains(got, "No text") {
 		t.Errorf("expected empty-text notice, got: %q", got)
 	}
 }
@@ -127,23 +130,24 @@ func TestTransformStreamsFromOllama(t *testing.T) {
 	if !strings.Contains(gotPrompt, "ein langer Absatz") {
 		t.Errorf("prompt should carry the source text, got: %q", gotPrompt)
 	}
-	if !strings.Contains(gotPrompt, "zusammen") {
-		t.Errorf("summarize prompt should carry summarize instruction, got: %q", gotPrompt)
+	if !strings.Contains(gotPrompt, "Summarize") {
+		t.Errorf("summarize prompt should carry Summarize instruction, got: %q", gotPrompt)
 	}
 }
 
 func TestBuildTransformPromptVariesByIntent(t *testing.T) {
+	cfg := config.DefaultConfig()
 	text := "quelle"
-	sum := buildTransformPrompt(text, IntentSummarize)
-	cont := buildTransformPrompt(text, IntentContinue)
-	rew := buildTransformPrompt(text, "unknown-defaults-to-rewrite")
-	if !strings.Contains(sum, "zusammen") {
+	sum := buildTransformPrompt(cfg, text, IntentSummarize)
+	cont := buildTransformPrompt(cfg, text, IntentContinue)
+	rew := buildTransformPrompt(cfg, text, "unknown-defaults-to-rewrite")
+	if !strings.Contains(sum, "Summarize") {
 		t.Errorf("summarize prompt missing instruction: %s", sum)
 	}
-	if !strings.Contains(cont, "weiter") {
+	if !strings.Contains(cont, "Continue") {
 		t.Errorf("continue prompt missing instruction: %s", cont)
 	}
-	if !strings.Contains(rew, "um") {
+	if !strings.Contains(rew, "Rewrite") {
 		t.Errorf("rewrite fallback prompt missing instruction: %s", rew)
 	}
 	for _, p := range []string{sum, cont, rew} {
@@ -185,7 +189,7 @@ func TestAskAnthropicProviderWithoutKeyDegradesHonestly(t *testing.T) {
 	t.Setenv("SYMDESK_LLM_API_KEY", "")
 
 	got := collect("frage?", nil)
-	if !strings.Contains(got, "nicht konfiguriert") {
+	if !strings.Contains(got, "not configured") {
 		t.Errorf("expected honest degradation without an API key, got: %q", got)
 	}
 	if !strings.Contains(got, "Anthropic") {
@@ -199,7 +203,7 @@ func TestAskAnthropicProviderSurfacesRequestError(t *testing.T) {
 	t.Setenv("SYMDESK_ANTHROPIC_URL", "http://127.0.0.1:0")
 
 	got := collect("frage?", nil)
-	if !strings.Contains(got, "fehlgeschlagen") {
+	if !strings.Contains(got, "failed") {
 		t.Errorf("expected a surfaced anthropic request error, got: %q", got)
 	}
 }
@@ -236,7 +240,7 @@ func TestTransformAnthropicProviderWithoutKeyDegradesHonestly(t *testing.T) {
 	t.Setenv("SYMDESK_LLM_API_KEY", "")
 
 	got := collectTransform("etwas Text", IntentRewrite)
-	if !strings.Contains(got, "nicht konfiguriert") {
+	if !strings.Contains(got, "not configured") {
 		t.Errorf("expected honest degradation without an API key, got: %q", got)
 	}
 }
@@ -262,7 +266,7 @@ func TestStreamAnthropicSuccess(t *testing.T) {
 	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
 
 	out := make(chan AskChunk, 10)
-	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	err := streamAnthropic(context.Background(), config.DefaultConfig(), "test-key", "model", "prompt", out)
 	close(out)
 
 	if err != nil {
@@ -296,7 +300,7 @@ func TestStreamAnthropicDefaultModel(t *testing.T) {
 	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
 
 	out := make(chan AskChunk, 10)
-	err := streamAnthropic(context.Background(), "test-key", "", "prompt", out)
+	err := streamAnthropic(context.Background(), config.DefaultConfig(), "test-key", "", "prompt", out)
 	close(out)
 	for range out {
 	}
@@ -310,8 +314,6 @@ func TestStreamAnthropicDefaultModel(t *testing.T) {
 }
 
 func TestStreamAnthropicLargeSSELine(t *testing.T) {
-	// A single content_block_delta line larger than the default bufio.Scanner
-	// 64 KiB token limit must not abort the stream.
 	largeText := strings.Repeat("x", 100*1024)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -330,7 +332,7 @@ func TestStreamAnthropicLargeSSELine(t *testing.T) {
 	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
 
 	out := make(chan AskChunk, 10)
-	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	err := streamAnthropic(context.Background(), config.DefaultConfig(), "test-key", "model", "prompt", out)
 	close(out)
 
 	if err != nil {
@@ -357,7 +359,7 @@ func TestStreamAnthropicHTTPError(t *testing.T) {
 	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
 
 	out := make(chan AskChunk, 10)
-	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	err := streamAnthropic(context.Background(), config.DefaultConfig(), "test-key", "model", "prompt", out)
 	close(out)
 
 	if err == nil {
@@ -379,7 +381,7 @@ func TestStreamAnthropicMalformedEvent(t *testing.T) {
 	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
 
 	out := make(chan AskChunk, 10)
-	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	err := streamAnthropic(context.Background(), config.DefaultConfig(), "test-key", "model", "prompt", out)
 	close(out)
 
 	if err != nil {
@@ -420,7 +422,7 @@ func TestStreamAnthropicCancellation(t *testing.T) {
 		cancel()
 	}()
 
-	err := streamAnthropic(ctx, "test-key", "model", "prompt", out)
+	err := streamAnthropic(ctx, config.DefaultConfig(), "test-key", "model", "prompt", out)
 	close(out)
 
 	if err == nil {
@@ -435,7 +437,7 @@ func TestStreamAnthropicNetworkError(t *testing.T) {
 	t.Setenv("SYMDESK_ANTHROPIC_URL", "http://127.0.0.1:0")
 
 	out := make(chan AskChunk, 10)
-	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	err := streamAnthropic(context.Background(), config.DefaultConfig(), "test-key", "model", "prompt", out)
 	close(out)
 
 	if err == nil {
@@ -451,7 +453,7 @@ func TestStreamAnthropicMarshalError(t *testing.T) {
 	defer func() { jsonMarshal = original }()
 
 	out := make(chan AskChunk, 10)
-	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	err := streamAnthropic(context.Background(), config.DefaultConfig(), "test-key", "model", "prompt", out)
 	close(out)
 
 	if err == nil {
@@ -466,11 +468,68 @@ func TestStreamAnthropicRequestConstructionError(t *testing.T) {
 	t.Setenv("SYMDESK_ANTHROPIC_URL", "http://bad url")
 
 	out := make(chan AskChunk, 10)
-	err := streamAnthropic(context.Background(), "test-key", "model", "prompt", out)
+	err := streamAnthropic(context.Background(), config.DefaultConfig(), "test-key", "model", "prompt", out)
 	close(out)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestStreamAnthropicTruncation(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		if _, err := fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "truncated content"}}`); err != nil {
+			t.Fatalf("write SSE event: %v", err)
+		}
+		if _, err := fmt.Fprintln(w, `data: {"type": "message_delta", "delta": {"stop_reason": "max_tokens"}}`); err != nil {
+			t.Fatalf("write SSE event: %v", err)
+		}
+		if _, err := fmt.Fprintln(w, `data: [DONE]`); err != nil {
+			t.Fatalf("write SSE event: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
+
+	out := make(chan AskChunk, 10)
+	err := streamAnthropic(context.Background(), config.DefaultConfig(), "test-key", "model", "prompt", out)
+	close(out)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	var chunks []string
+	for c := range out {
+		chunks = append(chunks, c.Chunk)
+	}
+	got := strings.Join(chunks, "")
+	if !strings.Contains(got, "truncated content") {
+		t.Errorf("expected 'truncated content' in output, got: %q", got)
+	}
+	if !strings.Contains(got, "[Output truncated due to token limit]") {
+		t.Errorf("expected truncation warning in output, got: %q", got)
+	}
+}
+
+func TestBuildPromptHonorsLanguage(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Language = "German"
+	docs := []map[string]interface{}{{"path": "x.md", "title": "X", "snippet": "inhalt"}}
+	p := buildPrompt(cfg, "frage?", docs)
+	if !strings.Contains(p, "Answer in German.") {
+		t.Errorf("expected prompt to honor configured language, got: %s", p)
+	}
+}
+
+func TestBuildTransformPromptHonorsLanguage(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Language = "French"
+	p := buildTransformPrompt(cfg, "source text", IntentSummarize)
+	if !strings.Contains(p, "Answer in French") {
+		t.Errorf("expected transform prompt to honor configured language, got: %s", p)
 	}
 }
 

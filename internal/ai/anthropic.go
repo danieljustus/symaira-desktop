@@ -16,14 +16,19 @@ import (
 
 var jsonMarshal = json.Marshal
 
-func streamAnthropic(ctx context.Context, apiKey, model, prompt string, out chan<- AskChunk) error {
+func streamAnthropic(ctx context.Context, cfg *config.Config, apiKey, model, prompt string, out chan<- AskChunk) error {
 	if model == "" {
 		model = config.DefaultAnthropicModel
 	}
 
+	maxTokens := cfg.MaxTokens
+	if maxTokens <= 0 {
+		maxTokens = 8192
+	}
+
 	payload := map[string]interface{}{
 		"model":      model,
-		"max_tokens": 4096,
+		"max_tokens": maxTokens,
 		"stream":     true,
 		"messages": []map[string]string{
 			{
@@ -86,6 +91,13 @@ func streamAnthropic(ctx context.Context, apiKey, model, prompt string, out chan
 			delta, _ := event["delta"].(map[string]interface{})
 			if text, ok := delta["text"].(string); ok {
 				out <- AskChunk{Chunk: text}
+			}
+		} else if eventType == "message_delta" {
+			delta, _ := event["delta"].(map[string]interface{})
+			if delta != nil {
+				if stopReason, ok := delta["stop_reason"].(string); ok && stopReason == "max_tokens" {
+					out <- AskChunk{Chunk: "\n\n⚠️ **[Output truncated due to token limit]**"}
+				}
 			}
 		}
 	}

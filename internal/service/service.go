@@ -15,6 +15,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/history"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
@@ -29,6 +30,7 @@ type Service struct {
 	DB        *sidecar.DB
 	ViewsMgr  *dbviews.Manager
 	History   *history.Store
+	Config    *config.Config
 }
 
 // New creates a new Service instance.
@@ -37,11 +39,16 @@ func New(vaultRoot string, db *sidecar.DB) *Service {
 	if err != nil {
 		canonical = vaultRoot
 	}
+	cfg, err := config.Load()
+	if err != nil {
+		cfg = config.DefaultConfig()
+	}
 	return &Service{
 		VaultRoot: canonical,
 		DB:        db,
 		ViewsMgr:  dbviews.NewManager(canonical),
 		History:   history.NewStore(canonical),
+		Config:    cfg,
 	}
 }
 
@@ -554,7 +561,7 @@ func (s *Service) Ask(ctx context.Context, query string, out chan<- interface{})
 	out <- ai.ToolEvent("llm", "running")
 	chunkChan := make(chan ai.AskChunk)
 	go func() {
-		ai.Ask(ctx, query, results, chunkChan)
+		ai.Ask(ctx, s.Config, query, results, chunkChan)
 	}()
 
 	for chunk := range chunkChan {
@@ -573,7 +580,7 @@ func (s *Service) AskText(ctx context.Context, query string) (string, error) {
 		return "", err
 	}
 	chunkChan := make(chan ai.AskChunk)
-	go ai.Ask(ctx, query, results, chunkChan)
+	go ai.Ask(ctx, s.Config, query, results, chunkChan)
 
 	var b strings.Builder
 	for chunk := range chunkChan {

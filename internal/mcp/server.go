@@ -76,7 +76,7 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 	server.RegisterTool(newPropsTool(getService))
 	server.RegisterTool(newBacklinksTool(getService))
 	server.RegisterTool(newAskTool(getService))
-	server.RegisterTool(newTransformTool())
+	server.RegisterTool(newTransformTool(cfg))
 	server.RegisterTool(newDocsTool(getService))
 	server.RegisterTool(newDocsReviewTool(getService, cfg))
 	server.RegisterTool(newDocsSimilarTool(getService))
@@ -288,7 +288,11 @@ func newAskTool(getService serviceFactory) *mcpserver.Tool {
 // newTransformTool applies a local AI action (summarize, rewrite, continue) to
 // a piece of text. It operates purely on the given text and never touches the
 // vault. MCP has no streaming result, so the chunks are aggregated.
-func newTransformTool() *mcpserver.Tool {
+func newTransformTool(configs ...*config.Config) *mcpserver.Tool {
+	cfg := config.DefaultConfig()
+	if len(configs) > 0 && configs[0] != nil {
+		cfg = configs[0]
+	}
 	return &mcpserver.Tool{
 		Name:        "desk_transform",
 		Description: "Transforms the given text with a local AI action. intent is one of summarize, rewrite or continue. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The result is returned as one aggregated text (no streaming).",
@@ -306,7 +310,7 @@ func newTransformTool() *mcpserver.Tool {
 			}
 
 			chunks := make(chan ai.AskChunk)
-			go ai.Transform(ctx, args.Text, args.Intent, chunks)
+			go ai.Transform(ctx, cfg, args.Text, args.Intent, chunks)
 			var b strings.Builder
 			for c := range chunks {
 				b.WriteString(c.Chunk)

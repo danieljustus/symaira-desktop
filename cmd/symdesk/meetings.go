@@ -317,6 +317,68 @@ func newMeetingParticipantCmd() *cobra.Command {
 	}
 	participantCmd.AddCommand(createCmd)
 
+	contactCmd := &cobra.Command{
+		Use:   "contact <relate_contact_id>",
+		Short: "Resolve a symrelate contact reference for review before linking",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			svc := service.New(vRoot, db)
+
+			ref, err := svc.ResolveMeetingContactRef(args[0])
+			if err != nil {
+				return err
+			}
+			return outputResult(ref)
+		},
+	}
+	participantCmd.AddCommand(contactCmd)
+
+	linkContactCmd := &cobra.Command{
+		Use:   "link-contact <vault-note> <speaker_id> <relate_contact_id>",
+		Short: "Link a speaker to a reviewed symrelate contact reference",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			svc := service.New(vRoot, db)
+
+			ref, err := svc.LinkParticipantContact(args[0], args[1], args[2])
+			if err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"speaker_id": args[1], "contact_id": ref.ID, "status": "linked"})
+		},
+	}
+	participantCmd.AddCommand(linkContactCmd)
+
+	unlinkContactCmd := &cobra.Command{
+		Use:   "unlink-contact <vault-note> <speaker_id>",
+		Short: "Remove a speaker's symrelate contact reference",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			svc := service.New(vRoot, db)
+
+			if err := svc.UnlinkParticipantContact(args[0], args[1]); err != nil {
+				return err
+			}
+			return outputResult(map[string]string{"speaker_id": args[1], "status": "unlinked"})
+		},
+	}
+	participantCmd.AddCommand(unlinkContactCmd)
+
 	return participantCmd
 }
 

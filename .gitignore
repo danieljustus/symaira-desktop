@@ -38,3 +38,5 @@ internal/service/testdata/
 
 # Local audit reports
 .github/audit/
+.github/coverage/
+.github/prerelease/

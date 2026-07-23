@@ -60,7 +60,9 @@
 		8D9B2E4C882F19841C75104C /* MarkdownPreviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B2D66520688E3347706F2A /* MarkdownPreviewTests.swift */; };
 		93AB4112A5820CC47B45DB2E /* AsyncActionTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EBD01F47531831816ECBBC9 /* AsyncActionTracker.swift */; };
 		94BE347F343E4274462CCFA1 /* MeetingReviewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4B7F3287A383E8C979FE50 /* MeetingReviewModel.swift */; };
+		951042A6C3918F1D3EA4CD32 /* ParticipantConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C3A8CB17DABF0648A84D9C6 /* ParticipantConfirmationView.swift */; };
 		9CB84C5DEC5DFAA645786C79 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = CCF15BEFF6E2B7C5BDE99A2A /* SymairaToolKit */; };
+		A069D366DE09F194427FA488 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B19FB8752DF2B7914F917FAE /* Assets.xcassets */; };
 		A0E1A3C240D1E507A7E2EC9F /* AppUpdateCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E77F6F7A42131B3055841A /* AppUpdateCheckerTests.swift */; };
 		A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59762A8D6DF418D30855BEDA /* OnboardingView.swift */; };
 		AAB2D778093607FBB326E837 /* SymDeskMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CAE9E046D07652DF79A3000 /* SymDeskMobileApp.swift */; };
@@ -73,6 +75,7 @@
 		BC3F2F58982E1AA5456634AF /* MeetingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D4E18EEA985A7CCFB138B7 /* MeetingsView.swift */; };
 		BD65FAB6BE6B206D608452DB /* DeskTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B442ECE47F4FC2E662B8D33 /* DeskTransport.swift */; };
 		C238FC5C1826BF80F001CE50 /* RulesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA57E256040FF30C447766E /* RulesSettingsView.swift */; };
+		C27BFEBB0F77B10FB04D8E2D /* MeetingKnowledgeReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 278FA07C11ECADBCDFD4ED6B /* MeetingKnowledgeReviewView.swift */; };
 		C336F49BE61DBF2A7C03CE8E /* SymairaUpdateCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 596C4C9EB9845BC180C460A4 /* SymairaUpdateCheck */; };
 		C538D3C4A6BE4D9208A2DCCE /* SymairaUpdateCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 4D0E14080504B77CA18BBA53 /* SymairaUpdateCheck */; };
 		C56310271DF0FBD1ED258CCA /* GraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF662679454A1D5730ECD171 /* GraphView.swift */; };
@@ -134,6 +137,7 @@
 
 /* Begin PBXFileReference section */
 		07FC117A1033D88F0534B546 /* SymDeskAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SymDeskAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0C3A8CB17DABF0648A84D9C6 /* ParticipantConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParticipantConfirmationView.swift; sourceTree = "<group>"; };
 		0CAE9E046D07652DF79A3000 /* SymDeskMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymDeskMobileApp.swift; sourceTree = "<group>"; };
 		0D31AEB4D808A7B5F64134E1 /* UpdateInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateInstaller.swift; sourceTree = "<group>"; };
 		0F5CBE2CE55A95870F3464BE /* ServerConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConnection.swift; sourceTree = "<group>"; };
@@ -147,6 +151,7 @@
 		233223A3C27BEA490CADB82C /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
 		23EBE73852F5829E6BB25B82 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		24A66FCAE94BEB5D93BE972B /* BlockNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockNode.swift; sourceTree = "<group>"; };
+		278FA07C11ECADBCDFD4ED6B /* MeetingKnowledgeReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingKnowledgeReviewView.swift; sourceTree = "<group>"; };
 		2B442ECE47F4FC2E662B8D33 /* DeskTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskTransport.swift; sourceTree = "<group>"; };
 		2FBA5128D6B234381F73178F /* SymDesk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SymDesk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		34D4E18EEA985A7CCFB138B7 /* MeetingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingsView.swift; sourceTree = "<group>"; };
@@ -188,6 +193,7 @@
 		A7C133D510BC5F4211286EC5 /* AppUpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateChecker.swift; sourceTree = "<group>"; };
 		AF3DE41EB61C376999197AEF /* libSymDeskCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSymDeskCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF74B31CB37D574E3AC69032 /* DocumentGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentGridView.swift; sourceTree = "<group>"; };
+		B19FB8752DF2B7914F917FAE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B58CE1AAB047E5C20B8DBC43 /* BlockEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockEditorView.swift; sourceTree = "<group>"; };
 		B652D24B94E01B080A5139C0 /* IngestQueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngestQueueView.swift; sourceTree = "<group>"; };
 		BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentViewerView.swift; sourceTree = "<group>"; };
@@ -300,6 +306,7 @@
 		4A8DF8842903AB56DF8195DC /* SymDeskApp */ = {
 			isa = PBXGroup;
 			children = (
+				B19FB8752DF2B7914F917FAE /* Assets.xcassets */,
 				61EE8B62E86F8FE234837F0A /* ContentView.swift */,
 				641C263A0947A7D1CCBE84E3 /* Info.plist */,
 				827CE03FB82C7640D64E4D97 /* main.swift */,
@@ -335,9 +342,11 @@
 				1F547CF59C20684A5051D6B5 /* MarkdownEditorView.swift */,
 				9E65A058CCDDBCCFB506217C /* MarkdownPreviewView.swift */,
 				6031E3F5930844C981F51544 /* MeetingAudioPlayer.swift */,
+				278FA07C11ECADBCDFD4ED6B /* MeetingKnowledgeReviewView.swift */,
 				95A9CC7BD653D742BBD137CC /* MeetingReviewView.swift */,
 				34D4E18EEA985A7CCFB138B7 /* MeetingsView.swift */,
 				59762A8D6DF418D30855BEDA /* OnboardingView.swift */,
+				0C3A8CB17DABF0648A84D9C6 /* ParticipantConfirmationView.swift */,
 				56278C647AEC161C2B94531F /* PropertiesInspector.swift */,
 				9C51F0367577777D2D842F81 /* ReviewLaneView.swift */,
 				9FA57E256040FF30C447766E /* RulesSettingsView.swift */,
@@ -524,6 +533,7 @@
 			buildConfigurationList = 079F2CA691C01B6B40F36781 /* Build configuration list for PBXNativeTarget "SymDesk" */;
 			buildPhases = (
 				EB018DADCE29E07CE91D2661 /* Sources */,
+				311D524130D35403C2562F8B /* Resources */,
 				60CC889C3FAFE4D9587F52F7 /* Frameworks */,
 			);
 			buildRules = (
@@ -594,10 +604,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				EBE65B0E9E86B3B5C227733D /* SymDesk */,
-				5EF7E5B99EA038662423E264 /* SymDeskAppTests */,
 				BC6FC56C1B486EFD0DE648A9 /* SymDeskCore */,
+				EBE65B0E9E86B3B5C227733D /* SymDesk */,
 				1191E80726DB65508E36E4E1 /* SymDeskCoreTests */,
+				5EF7E5B99EA038662423E264 /* SymDeskAppTests */,
 				EC2E2EF97B4E9B5D7E102563 /* SymDeskMobile */,
 				677F9797FB4D31DE40A190E0 /* SymDeskMobileTests */,
 			);
@@ -605,6 +615,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		311D524130D35403C2562F8B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A069D366DE09F194427FA488 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5A3DA0BF0EEE60A7D245B173 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -712,6 +730,7 @@
 				223A0903E7A1B2FF00EE3F7E /* MarkdownEditorView.swift in Sources */,
 				190EF5D4BA2FFAFB08B28434 /* MarkdownPreviewView.swift in Sources */,
 				4A0570925954FEF676DF3D27 /* MeetingAudioPlayer.swift in Sources */,
+				C27BFEBB0F77B10FB04D8E2D /* MeetingKnowledgeReviewView.swift in Sources */,
 				BB6C55D988F6B8302B5A25BB /* MeetingModels.swift in Sources */,
 				94BE347F343E4274462CCFA1 /* MeetingReviewModel.swift in Sources */,
 				0E431B578B8CAF857895099F /* MeetingReviewView.swift in Sources */,
@@ -719,6 +738,7 @@
 				1ECCF881DFFB05C3E4DCA223 /* NotificationCenterProviding.swift in Sources */,
 				40406909A4AAF62DD881D295 /* NotificationManager.swift in Sources */,
 				A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */,
+				951042A6C3918F1D3EA4CD32 /* ParticipantConfirmationView.swift in Sources */,
 				AF33E56F24D6F0B026A98F5B /* PropertiesInspector.swift in Sources */,
 				888252B8F6964BA6158F9CC6 /* ReviewLaneView.swift in Sources */,
 				C238FC5C1826BF80F001CE50 /* RulesSettingsView.swift in Sources */,

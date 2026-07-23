@@ -290,7 +290,13 @@ const mockSymmemoryScriptForCLI = `#!/bin/bash
 if [ "$1" = "entity" ] && [ "$2" = "list" ]; then
   echo '[{"id":"e-alice","name":"Alice Example","type":"person","aliases":["Alice"],"description":""}]'
 elif [ "$1" = "entity" ] && [ "$2" = "show" ]; then
-  echo '{"id":"e-alice","name":"Alice Example","type":"person","aliases":["Alice"],"description":""}'
+  if [ "$3" = "Carol New" ]; then
+    echo '{"id":"e-carol","name":"Carol New","type":"person","aliases":[],"description":""}'
+  else
+    echo '{"id":"e-alice","name":"Alice Example","type":"person","aliases":["Alice"],"description":""}'
+  fi
+elif [ "$1" = "entity" ] && [ "$2" = "add" ]; then
+  echo 'ok'
 elif [ "$1" = "entity" ] && [ "$2" = "relate" ]; then
   echo 'ok'
 elif [ "$1" = "set" ]; then
@@ -298,10 +304,34 @@ elif [ "$1" = "set" ]; then
 fi
 `
 
+const mockSymrelateScriptForCLI = `#!/bin/bash
+if [ "$1" = "contact" ] && [ "$2" = "ref" ]; then
+  case "$3" in
+    c-ada)
+      echo '{"provider":"symrelate","schema_version":1,"id":"c-ada","kind":"person","display_name":"Ada Lovelace"}'
+      exit 0 ;;
+    *)
+      echo 'symrelate: contact not found' >&2
+      exit 1 ;;
+  esac
+fi
+`
+
 func installMockSymmemory(t *testing.T) {
 	t.Helper()
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "symmemory"), []byte(mockSymmemoryScriptForCLI), 0755); err != nil { //nolint:gosec // test fixture must be executable
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
+}
+
+func installMockSymrelate(t *testing.T) {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "symrelate"), []byte(mockSymrelateScriptForCLI), 0755); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
@@ -333,6 +363,50 @@ func TestMeetingParticipantCandidatesAndConfirmCLI(t *testing.T) {
 	unlinkOut, err := execRootCapture(t, "", "meeting", "participant", "confirm", path, "speaker_0", "--json")
 	if err != nil {
 		t.Fatalf("unlink failed: %v (output: %s)", err, unlinkOut)
+	}
+	if !strings.Contains(unlinkOut, "unlinked") {
+		t.Errorf("expected unlinked status, got %q", unlinkOut)
+	}
+}
+
+func TestMeetingParticipantCreateCLI(t *testing.T) {
+	setupReviewMeetingVault(t)
+	path := importMeetingViaCLI(t)
+	installMockSymmemory(t)
+
+	createOut, err := execRootCapture(t, "", "meeting", "participant", "create", path, "speaker_0", "Carol New", "--json")
+	if err != nil {
+		t.Fatalf("create failed: %v (output: %s)", err, createOut)
+	}
+	if !strings.Contains(createOut, "created") || !strings.Contains(createOut, "Carol New") {
+		t.Errorf("expected created status with Carol New, got %q", createOut)
+	}
+}
+
+func TestMeetingParticipantContactCommandsCLI(t *testing.T) {
+	setupReviewMeetingVault(t)
+	path := importMeetingViaCLI(t)
+	installMockSymrelate(t)
+
+	contactOut, err := execRootCapture(t, "", "meeting", "participant", "contact", "c-ada", "--json")
+	if err != nil {
+		t.Fatalf("contact failed: %v (output: %s)", err, contactOut)
+	}
+	if !strings.Contains(contactOut, "Ada Lovelace") {
+		t.Errorf("expected contact info with Ada Lovelace, got %q", contactOut)
+	}
+
+	linkOut, err := execRootCapture(t, "", "meeting", "participant", "link-contact", path, "speaker_0", "c-ada", "--json")
+	if err != nil {
+		t.Fatalf("link-contact failed: %v (output: %s)", err, linkOut)
+	}
+	if !strings.Contains(linkOut, "linked") || !strings.Contains(linkOut, "c-ada") {
+		t.Errorf("expected linked status for c-ada, got %q", linkOut)
+	}
+
+	unlinkOut, err := execRootCapture(t, "", "meeting", "participant", "unlink-contact", path, "speaker_0", "--json")
+	if err != nil {
+		t.Fatalf("unlink-contact failed: %v (output: %s)", err, unlinkOut)
 	}
 	if !strings.Contains(unlinkOut, "unlinked") {
 		t.Errorf("expected unlinked status, got %q", unlinkOut)

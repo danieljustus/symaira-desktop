@@ -675,3 +675,123 @@ func readBody(response *http.Response) string {
 	data, _ := io.ReadAll(response.Body)
 	return string(data)
 }
+
+func TestJobStoreFailAndRetry(t *testing.T) {
+	dir := t.TempDir()
+	store, err := NewJobStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	job, err := store.Create("input.pdf", "Invoice.pdf", "application/pdf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	leased, err := store.Lease("w1", []string{"ocr"}, 10*time.Minute)
+	if err != nil || leased == nil {
+		t.Fatalf("failed to lease job: %v", err)
+	}
+
+	// Test Fail with wrong worker
+	if _, err := store.Fail(job.ID, "w2", "error msg", false); err == nil {
+		t.Error("expected error when failing with wrong workerID")
+	}
+
+	// Test Fail with retry=true
+	failedWithRetry, err := store.Fail(job.ID, "w1", "temporary error", true)
+	if err != nil {
+		t.Fatalf("failed to fail job: %v", err)
+	}
+	if failedWithRetry.Status != "pending" || failedWithRetry.WorkerID != "" {
+		t.Errorf("expected status 'pending' and empty workerID, got status %q worker %q", failedWithRetry.Status, failedWithRetry.WorkerID)
+	}
+
+	// Re-lease and Fail with retry=false
+	leased, err = store.Lease("w1", []string{"ocr"}, 10*time.Minute)
+	if err != nil || leased == nil {
+		t.Fatalf("failed to re-lease job: %v", err)
+	}
+	failedFinal, err := store.Fail(job.ID, "w1", "permanent error", false)
+	if err != nil {
+		t.Fatalf("failed to fail job finally: %v", err)
+	}
+	if failedFinal.Status != "failed" || failedFinal.Error != "permanent error" {
+		t.Errorf("expected status 'failed', got %q", failedFinal.Status)
+	}
+
+	// Test Retry on failed job
+	retried, err := store.Retry(job.ID)
+	if err != nil {
+		t.Fatalf("failed to retry job: %v", err)
+	}
+	if retried.Status != "pending" || retried.Error != "" {
+		t.Errorf("expected status 'pending' and empty error, got status %q error %q", retried.Status, retried.Error)
+	}
+
+	// Test Retry on non-failed job
+	if _, err := store.Retry(job.ID); err == nil {
+		t.Error("expected error when retrying non-failed job")
+	}
+}
+
+func TestHandleWorkerInputAndFailRetryEndpoints(t *testing.T) {
+	vaultRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(vaultRoot, "doc.txt"), []byte("Document content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts := httptest.NewServer(server.Handler())
+	defer ts.Close()
+
+	// 1. handleWorkerInput with missing job
+	res := authorized(t, http.MethodGet, ts.URL+"/api/v1/worker/input?id=missing", nil, "")
+	if res.StatusCode != http.StatusNotFound {
+		t.Errorf("expected 404 for missing input job, got %d", res.StatusCode)
+	}
+	res.Body.Close()
+
+	// 2. Create and lease job
+	job, err := server.jobs.Create("doc.txt", "doc.txt", "text/plain")
+	if err != nil {
+		t.Fatal(err)
+	}
+	leased, err := server.jobs.Lease("worker-1", []string{"ocr"}, 10*time.Minute)
+	if err != nil || leased == nil {
+		t.Fatalf("failed to lease job: %v", err)
+	}
+
+	// 3. handleWorkerInput for leased job
+	res = authorized(t, http.MethodGet, ts.URL+"/api/v1/worker/input?id="+job.ID, nil, "")
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("expected 200 for valid worker input, got %d", res.StatusCode)
+	}
+	res.Body.Close()
+
+	// 4. /api/v1/worker/fail endpoint
+	failPayload := `{"job_id":"` + job.ID + `","worker_id":"worker-1","error":"ocr failure","retry":false}`
+	res = authorized(t, http.MethodPost, ts.URL+"/api/v1/worker/fail", strings.NewReader(failPayload), "application/json")
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("expected 200 from worker fail endpoint, got %d", res.StatusCode)
+	}
+	res.Body.Close()
+
+	// 5. /api/v1/jobs/retry endpoint
+	res = authorized(t, http.MethodPost, ts.URL+"/api/v1/jobs/retry?id="+job.ID, nil, "")
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("expected 200 from queue retry endpoint, got %d", res.StatusCode)
+	}
+	res.Body.Close()
+
+	// 6. /api/v1/jobs/retry on non-failed job returns 409 StatusConflict
+	res = authorized(t, http.MethodPost, ts.URL+"/api/v1/jobs/retry?id="+job.ID, nil, "")
+	if res.StatusCode != http.StatusConflict {
+		t.Errorf("expected 409 when retrying non-failed job, got %d", res.StatusCode)
+	}
+	res.Body.Close()
+}
+
+

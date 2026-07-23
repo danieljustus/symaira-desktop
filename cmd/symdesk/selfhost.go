@@ -169,7 +169,11 @@ type homeAssistantOptions struct {
 }
 
 func readHomeAssistantOptions() homeAssistantOptions {
-	data, err := os.ReadFile("/data/options.json")
+	return readHomeAssistantOptionsFromFile("/data/options.json")
+}
+
+func readHomeAssistantOptionsFromFile(path string) homeAssistantOptions {
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return homeAssistantOptions{}
 	}

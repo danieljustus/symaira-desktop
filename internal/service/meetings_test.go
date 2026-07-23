@@ -19,7 +19,11 @@ func writeMockSymmeet(t *testing.T, dir, script string) {
 
 func withMockSymmeetPath(t *testing.T, dir string) {
 	t.Helper()
-	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	if _, err := os.Stat(filepath.Join(dir, "symmeet")); os.IsNotExist(err) {
+		t.Setenv("PATH", dir)
+	} else {
+		t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	}
 	compose.ResetCache()
 	t.Cleanup(compose.ResetCache)
 }

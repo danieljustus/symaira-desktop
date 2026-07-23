@@ -66,3 +66,23 @@ func TestWorkerRejectsNonBareServerURLs(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderInput(t *testing.T) {
+	ctx := context.Background()
+
+	// Supported image format
+	imgs, cleanup, err := renderInput(ctx, "sample.png")
+	if err != nil {
+		t.Fatalf("expected success for .png, got %v", err)
+	}
+	defer cleanup()
+	if len(imgs) != 1 || imgs[0] != "sample.png" {
+		t.Errorf("unexpected renderInput result: %+v", imgs)
+	}
+
+	// Unsupported extension
+	if _, _, err := renderInput(ctx, "sample.unsupported"); err == nil {
+		t.Error("expected error for unsupported extension")
+	}
+}
+

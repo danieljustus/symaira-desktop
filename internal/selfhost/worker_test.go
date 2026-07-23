@@ -85,4 +85,3 @@ func TestRenderInput(t *testing.T) {
 		t.Error("expected error for unsupported extension")
 	}
 }
-

@@ -793,5 +793,3 @@ func TestHandleWorkerInputAndFailRetryEndpoints(t *testing.T) {
 	}
 	res.Body.Close()
 }
-
-

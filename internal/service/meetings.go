@@ -213,7 +213,11 @@ type MeetingNoteSummary struct {
 // MeetingList returns every vault note whose frontmatter marks it as an
 // imported meeting.
 func (s *Service) MeetingList() ([]MeetingNoteSummary, error) {
-	var results []MeetingNoteSummary
+	// Start with an explicit empty slice, not a nil one: encoding/json
+	// marshals a nil slice as the JSON literal `null`, which the Swift
+	// client cannot decode as a top-level array and surfaces as a raw
+	// decode error on any vault with zero meeting notes.
+	results := []MeetingNoteSummary{}
 	err := vault.Walk(s.VaultRoot, func(path string) error {
 		doc, err := vault.ParseFile(path)
 		if err != nil {

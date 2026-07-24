@@ -177,7 +177,7 @@ struct DocumentGridView: View {
     // MARK: - Grid
 
     private var gridContent: some View {
-        ScrollView([.horizontal, .vertical]) {
+        ScrollView(.vertical) {
             LazyVGrid(
                 columns: [GridItem(.adaptive(minimum: 260, maximum: 360), spacing: 16)],
                 alignment: .leading,

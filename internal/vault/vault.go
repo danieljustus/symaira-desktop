@@ -91,6 +91,21 @@ func ResolveVaultRoot(flagPath string, cfg *config.Config) (string, error) {
 	return absPath, nil
 }
 
+// skipDirNames lists non-hidden directory names that are always excluded
+// from vault walks. These are conventional locations for third-party
+// dependency trees or build artifacts (e.g. an npm/pip project living
+// inside an otherwise ordinary documents folder) and should never be
+// treated as vault content, even though they aren't dot-prefixed.
+var skipDirNames = map[string]bool{
+	"node_modules": true,
+	"vendor":       true,
+	"dist":         true,
+	"build":        true,
+	"venv":         true,
+	".venv":        true,
+	"__pycache__":  true,
+}
+
 // Walk iterates over all Markdown files in the vault, respecting ignore rules.
 func Walk(vaultRoot string, fn func(path string) error) error {
 	return filepath.WalkDir(vaultRoot, func(path string, d fs.DirEntry, err error) error {
@@ -101,6 +116,9 @@ func Walk(vaultRoot string, fn func(path string) error) error {
 		// Ignore hidden directories (e.g., .obsidian, .trash, .git)
 		if d.IsDir() {
 			if strings.HasPrefix(d.Name(), ".") && d.Name() != "." {
+				return filepath.SkipDir
+			}
+			if skipDirNames[d.Name()] {
 				return filepath.SkipDir
 			}
 			return nil

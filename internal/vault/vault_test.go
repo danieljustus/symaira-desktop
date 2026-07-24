@@ -139,17 +139,17 @@ func TestWalkSkipsDependencyDirectories(t *testing.T) {
 	skipped := []string{"node_modules", "vendor", "dist", "build", "venv", ".venv", "__pycache__"}
 	for _, dirName := range skipped {
 		dir := filepath.Join(root, dirName)
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0755); err != nil { //nolint:gosec // test temp directory
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(filepath.Join(dir, "readme.md"), []byte("# should be skipped"), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, "readme.md"), []byte("# should be skipped"), 0644); err != nil { //nolint:gosec // test temp file
 			t.Fatal(err)
 		}
 	}
 
 	// A legitimate vault note at the root must still be visited.
 	wantPath := filepath.Join(root, "note.md")
-	if err := os.WriteFile(wantPath, []byte("# real note"), 0644); err != nil {
+	if err := os.WriteFile(wantPath, []byte("# real note"), 0644); err != nil { //nolint:gosec // test temp file
 		t.Fatal(err)
 	}
 

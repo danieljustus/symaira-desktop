@@ -72,7 +72,7 @@ struct OnboardingView: View {
 					do {
 						try await core.connectToServer(url: url, token: token)
 						isShowingServerConnection = false
-						dismissOnboarding()
+						advanceToReady()
 					} catch {
 						errorMessage = error.localizedDescription
 						isLoading = false
@@ -326,7 +326,7 @@ struct OnboardingView: View {
                         _ = try await core.indexVault(path: url.path)
                     }
 
-                    dismissOnboarding()
+                    advanceToReady()
                 } catch {
                     self.errorMessage = "Failed to set up vault: \(error.localizedDescription)"
                     self.isLoading = false
@@ -350,7 +350,11 @@ struct OnboardingView: View {
                 if FileManager.default.fileExists(atPath: markerURL.path) {
                     // Demo vault was already materialised in a previous run —
                     // `symdesk demo init` refuses non-empty directories, so reuse it.
+                    // Unlike the fresh-creation branch below, reuse does not get
+                    // indexed as a side effect of `initDemo`, so index it explicitly.
                     vaultPath = demoDir.path
+                    progressMessage = "Indexing vault…"
+                    _ = try await core.indexVault(path: vaultPath)
                 } else {
                     _ = try FileManager.default.createDirectory(at: demoDir, withIntermediateDirectories: true)
                     vaultPath = try await core.initDemo(into: demoDir.path)
@@ -360,12 +364,22 @@ struct OnboardingView: View {
                 VaultConfig.setDemoVault(url: vaultURL)
                 core.vaultPath = vaultPath
 
-                dismissOnboarding()
+                advanceToReady()
             } catch {
                 self.errorMessage = "Demo init failed: \(error.localizedDescription)"
                 self.isLoading = false
             }
         }
+    }
+
+    /// Move from vault setup into the "You're all set!" step instead of
+    /// dismissing onboarding immediately — every source (folder, existing
+    /// vault, demo data, self-hosted server) routes through this so the
+    /// completion screen's "Get Started" / "Explore Capabilities" buttons
+    /// are what actually dismiss onboarding.
+    private func advanceToReady() {
+        isLoading = false
+        step = .ready
     }
 
     private func dismissOnboarding() {
@@ -430,4 +444,8 @@ private struct ServerConnectionSheet: View {
 extension Notification.Name {
     static let onboardingComplete = Notification.Name("symdesk.onboardingComplete")
     static let openDiscover = Notification.Name("symdesk.openDiscover")
+    /// Posted when the active vault association is cleared from within the
+    /// running app (changing/resetting a local vault, leaving demo mode) so
+    /// onboarding should reappear in-place, without a relaunch.
+    static let vaultReset = Notification.Name("symdesk.vaultReset")
 }

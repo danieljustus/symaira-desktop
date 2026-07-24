@@ -74,8 +74,7 @@ private struct DemoBanner: View {
             Button("Leave Demo Mode") {
                 VaultConfig.reset()
                 core.vaultPath = nil
-                NotificationCenter.default.post(name: .onboardingComplete, object: nil)
-                NSApplication.shared.terminate(nil)
+                NotificationCenter.default.post(name: .vaultReset, object: nil)
             }
             .buttonStyle(.plain)
             .font(.caption.weight(.semibold))

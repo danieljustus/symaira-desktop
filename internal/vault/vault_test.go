@@ -129,6 +129,44 @@ func TestWalk(t *testing.T) {
 	}
 }
 
+// TestWalkSkipsDependencyDirectories guards issue #227: pointing the vault at
+// a folder that happens to contain coding projects must not walk into
+// dependency/build directories such as node_modules, even though they are
+// not dot-prefixed.
+func TestWalkSkipsDependencyDirectories(t *testing.T) {
+	root := t.TempDir()
+
+	skipped := []string{"node_modules", "vendor", "dist", "build", "venv", ".venv", "__pycache__"}
+	for _, dirName := range skipped {
+		dir := filepath.Join(root, dirName)
+		if err := os.MkdirAll(dir, 0755); err != nil { //nolint:gosec // test temp directory
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "readme.md"), []byte("# should be skipped"), 0644); err != nil { //nolint:gosec // test temp file
+			t.Fatal(err)
+		}
+	}
+
+	// A legitimate vault note at the root must still be visited.
+	wantPath := filepath.Join(root, "note.md")
+	if err := os.WriteFile(wantPath, []byte("# real note"), 0644); err != nil { //nolint:gosec // test temp file
+		t.Fatal(err)
+	}
+
+	var visited []string
+	err := Walk(root, func(p string) error {
+		visited = append(visited, p)
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk failed: %v", err)
+	}
+
+	if len(visited) != 1 || visited[0] != wantPath {
+		t.Fatalf("expected only %q to be visited, got %v", wantPath, visited)
+	}
+}
+
 func TestParseFileV2Metadata(t *testing.T) {
 	path, _ := filepath.Abs("../../testdata/vault/v2-sample.md")
 	doc, err := ParseFile(path)

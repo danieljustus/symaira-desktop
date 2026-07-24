@@ -823,16 +823,21 @@ type ReviewResult struct {
 }
 
 // ReviewQueue returns documents that need human review: confidence below the
-// given threshold, or missing document_type / document_date.
+// given threshold, or missing document_type / document_date. Documents the
+// user has explicitly dismissed as "not a document" (frontmatter
+// review_ignored: true, set via the Review Lane ignore action) are excluded
+// even if they would otherwise match, so a dismissal persists across refreshes.
 func (db *DB) ReviewQueue(threshold int) ([]ReviewResult, error) {
 	query := `
 		SELECT f.path, f.title, COALESCE(f.status,''),
 			COALESCE(fp_type.value,''), COALESCE(f.document_date,''), f.confidence
 		FROM files f
 		LEFT JOIN file_properties fp_type ON fp_type.file_id = f.id AND fp_type.key = 'document_type'
-		WHERE f.confidence < ?
+		LEFT JOIN file_properties fp_ignored ON fp_ignored.file_id = f.id AND fp_ignored.key = 'review_ignored'
+		WHERE (f.confidence < ?
 		   OR fp_type.value IS NULL OR fp_type.value = ''
-		   OR f.document_date IS NULL OR f.document_date = ''
+		   OR f.document_date IS NULL OR f.document_date = '')
+		   AND (fp_ignored.value IS NULL OR fp_ignored.value != 'true')
 		ORDER BY f.path ASC`
 	rows, err := db.conn.Query(query, threshold)
 	if err != nil {

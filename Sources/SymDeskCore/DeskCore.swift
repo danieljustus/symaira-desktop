@@ -923,6 +923,13 @@ public final class DeskCore: ObservableObject {
         try await noteEditProperty(path: path, key: "note_visible", value: visible ? "true" : "false")
     }
 
+    /// Marks (or unmarks) a file as "not a document" for Review Lane purposes.
+    /// Persisted as frontmatter, so the dismissal survives a later index
+    /// refresh instead of the entry resurfacing (issue #228).
+    public func docSetReviewIgnored(path: String, ignored: Bool) async throws {
+        try await noteEditProperty(path: path, key: "review_ignored", value: ignored ? "true" : "false")
+    }
+
     public func docSetTags(path: String, tags: String) async throws {
         try await noteEditProperty(path: path, key: "tags", value: tags)
     }

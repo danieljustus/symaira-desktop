@@ -393,6 +393,50 @@ func TestReviewQueue(t *testing.T) {
 	}
 }
 
+// TestReviewQueueExcludesIgnored guards issue #228's dismiss/ignore escape
+// hatch: a document flagged with frontmatter review_ignored: true (set via
+// the Review Lane "not a document" action, e.g. for a dependency-tree file
+// like an npm package README) must not resurface in the review queue on a
+// later refresh, even though it would otherwise match the low-signal filter.
+func TestReviewQueueExcludesIgnored(t *testing.T) {
+	db := setupTestDB(t)
+
+	docs := []*vault.Document{
+		{
+			Path: "/tmp/low.md", Title: "Low Confidence", Created: "2026-01-01T00:00:00Z", SHA256: "l1",
+			Body: "low conf", Confidence: 50, DocumentDate: "2026-07-01",
+			Frontmatter: map[string]interface{}{"document_type": "bill", "confidence": 50, "document_date": "2026-07-01"},
+		},
+		{
+			Path: "/tmp/node_modules_readme.md", Title: "README", Created: "2026-01-01T00:00:00Z", SHA256: "r1",
+			Body: "npm package readme", Confidence: 0,
+			Frontmatter: map[string]interface{}{"confidence": 0, "review_ignored": "true"},
+		},
+	}
+	for _, d := range docs {
+		if err := db.IndexDocument(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	results, err := db.ReviewQueue(85)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	paths := make(map[string]bool)
+	for _, r := range results {
+		paths[r.Path] = true
+	}
+
+	if !paths["/tmp/low.md"] {
+		t.Error("expected low confidence doc in review queue")
+	}
+	if paths["/tmp/node_modules_readme.md"] {
+		t.Error("expected review_ignored doc to be excluded from review queue")
+	}
+}
+
 func TestSimilarDocs(t *testing.T) {
 	db := setupTestDB(t)
 

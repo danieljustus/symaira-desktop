@@ -91,6 +91,7 @@
 		E0949CE5566FE358143A90F3 /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = 5B81234FBF41E06530F2A5C1 /* SymairaCLIRunner */; };
 		EDBAB66DD3722499129B80AE /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = E20080EE08C0202FC164E192 /* SymairaCLIRunner */; };
 		F157E0C3058BA227E6106A58 /* SymairaIngestContract in Frameworks */ = {isa = PBXBuildFile; productRef = 6730086BD27F282EAE58D774 /* SymairaIngestContract */; };
+		F2840BACD70B9D19E69E2AB7 /* MeetingsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701CAD285D8A611C5C6779AD /* MeetingsViewTests.swift */; };
 		F9D9027836F3132FDD8F6297 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827CE03FB82C7640D64E4D97 /* main.swift */; };
 		FC481AC96D97F01753A861B0 /* DeskCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */; };
 /* End PBXBuildFile section */
@@ -167,6 +168,7 @@
 		6249D84E9A4012E9E8B0BFDB /* MarkdownTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTable.swift; sourceTree = "<group>"; };
 		63AF82D799029EFC1957DB2F /* DbViewGallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewGallery.swift; sourceTree = "<group>"; };
 		641C263A0947A7D1CCBE84E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		701CAD285D8A611C5C6779AD /* MeetingsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingsViewTests.swift; sourceTree = "<group>"; };
 		748F5E216CEC59B66740A482 /* DeskTransportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskTransportTests.swift; sourceTree = "<group>"; };
 		7508239A9019F2C46A80B902 /* fake-symdesk.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "fake-symdesk.sh"; sourceTree = "<group>"; };
 		78F76334FF1AA665F17F9B0C /* DbViewBoard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewBoard.swift; sourceTree = "<group>"; };
@@ -389,6 +391,7 @@
 			children = (
 				8948F04EC3090C19864630CC /* AsyncActionTrackerTests.swift */,
 				A2BC2A21B0BFAB4B7F22A054 /* MeetingReviewModelTests.swift */,
+				701CAD285D8A611C5C6779AD /* MeetingsViewTests.swift */,
 				4CA283F51817DD589D19ADB4 /* NotificationManagerTests.swift */,
 			);
 			name = SymDeskAppTests;
@@ -653,6 +656,7 @@
 			files = (
 				0777864A7A6E975929B7A320 /* AsyncActionTrackerTests.swift in Sources */,
 				30F3B2FD4B8734AF6FFCA25A /* MeetingReviewModelTests.swift in Sources */,
+				F2840BACD70B9D19E69E2AB7 /* MeetingsViewTests.swift in Sources */,
 				D8DB6D940F2257736D24B15E /* NotificationManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -92,7 +92,7 @@ func TestExportCmdErrorsWithoutVault(t *testing.T) {
 
 func TestExportCmdRunWithVault(t *testing.T) {
 	vaultDir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultDir, "note.md"), []byte("---\ntitle: Test\n---\n\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultDir, "note.md"), []byte("---\ntitle: Test\n---\n\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	origCfg := cfg
@@ -256,7 +256,7 @@ func TestTrashCmdExecution(t *testing.T) {
 
 func TestLsCmdExecutionWithVault(t *testing.T) {
 	vaultDir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultDir, "note.md"), []byte("---\ntitle: Test\n---\n\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultDir, "note.md"), []byte("---\ntitle: Test\n---\n\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	origCfg := cfg
@@ -285,7 +285,7 @@ func TestLsCmdExecutionWithVault(t *testing.T) {
 
 func TestSearchCmdExecutionWithVault(t *testing.T) {
 	vaultDir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultDir, "note.md"), []byte("---\ntitle: Test\n---\n\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultDir, "note.md"), []byte("---\ntitle: Test\n---\n\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	origCfg := cfg
@@ -312,7 +312,7 @@ func TestSearchCmdExecutionWithVault(t *testing.T) {
 
 func TestEventsCmdExecution(t *testing.T) {
 	vaultDir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultDir, "note.md"), []byte("---\ntitle: Test\n---\n\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultDir, "note.md"), []byte("---\ntitle: Test\n---\n\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	origCfg := cfg

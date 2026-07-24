@@ -52,6 +52,10 @@ struct SymDeskApp: App {
                     await notificationManager.refreshNotifications(with: core)
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .vaultReset)) { _ in
+                vaultConfigured = false
+                showDemoBanner = false
+            }
         }
     }
 }

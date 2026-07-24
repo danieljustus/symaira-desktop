@@ -444,4 +444,8 @@ private struct ServerConnectionSheet: View {
 extension Notification.Name {
     static let onboardingComplete = Notification.Name("symdesk.onboardingComplete")
     static let openDiscover = Notification.Name("symdesk.openDiscover")
+    /// Posted when the active vault association is cleared from within the
+    /// running app (changing/resetting a local vault, leaving demo mode) so
+    /// onboarding should reappear in-place, without a relaunch.
+    static let vaultReset = Notification.Name("symdesk.vaultReset")
 }

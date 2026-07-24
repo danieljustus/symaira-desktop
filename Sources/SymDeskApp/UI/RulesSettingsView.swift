@@ -12,6 +12,7 @@ struct RulesSettingsView: View {
     @State private var showingMailEditor = false
     @State private var pendingDeleteRule: ClassificationRule?
     @State private var pendingDeleteMail: MailAccount?
+    @State private var showingChangeVaultConfirmation = false
 
     init(vaultPath: String? = nil) {
         _viewModel = StateObject(wrappedValue: ClassificationRulesViewModel(client: SymingestRulesClient(vaultPath: vaultPath)))
@@ -103,6 +104,16 @@ struct RulesSettingsView: View {
             }
             Button("Cancel", role: .cancel) { pendingDeleteMail = nil }
         }
+        .confirmationDialog("Change Vault?", isPresented: $showingChangeVaultConfirmation, titleVisibility: .visible) {
+            Button("Change Vault", role: .destructive) {
+                VaultConfig.reset()
+                core.vaultPath = nil
+                NotificationCenter.default.post(name: .vaultReset, object: nil)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This clears the current vault association and returns you to setup. Your files are not deleted.")
+        }
     }
 
     private var header: some View {
@@ -143,6 +154,11 @@ struct RulesSettingsView: View {
 						VaultConfig.reset()
 						core.disconnectServer()
 						NSApplication.shared.terminate(nil)
+					}
+					.buttonStyle(.bordered)
+				} else if !core.isDemoMode {
+					Button("Change Vault…") {
+						showingChangeVaultConfirmation = true
 					}
 					.buttonStyle(.bordered)
 				}

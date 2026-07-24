@@ -90,38 +90,50 @@ struct ReviewLaneView: View {
 
     private var docsList: some View {
         List(reviewDocs) { doc in
-            Button(action: {
-                selectDoc(doc)
-            }) {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(doc.title)
-                            .font(.headline)
-                            .foregroundColor(SymairaTheme.textPrimary)
+            HStack(alignment: .top, spacing: 4) {
+                Button(action: {
+                    selectDoc(doc)
+                }) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(doc.title)
+                                .font(.headline)
+                                .foregroundColor(SymairaTheme.textPrimary)
+                                .lineLimit(1)
+                            Spacer()
+                            confidenceBadge(doc.confidence)
+                        }
+
+                        Text(doc.path)
+                            .font(.caption2)
+                            .foregroundColor(SymairaTheme.textMuted)
                             .lineLimit(1)
-                        Spacer()
-                        confidenceBadge(doc.confidence)
-                    }
 
-                    Text(doc.path)
-                        .font(.caption2)
-                        .foregroundColor(SymairaTheme.textMuted)
-                        .lineLimit(1)
-
-                    ForEach(doc.reasons, id: \.self) { reason in
-                        HStack(spacing: 4) {
-                            Image(systemName: "exclamationmark.circle")
-                                .font(.caption2)
-                                .foregroundColor(SymairaTheme.goldSecondary)
-                            Text(reason)
-                                .font(.caption)
-                                .foregroundColor(SymairaTheme.textSecondary)
+                        ForEach(doc.reasons, id: \.self) { reason in
+                            HStack(spacing: 4) {
+                                Image(systemName: "exclamationmark.circle")
+                                    .font(.caption2)
+                                    .foregroundColor(SymairaTheme.goldSecondary)
+                                Text(reason)
+                                    .font(.caption)
+                                    .foregroundColor(SymairaTheme.textSecondary)
+                            }
                         }
                     }
+                    .padding(.vertical, 8)
                 }
-                .padding(.vertical, 8)
+                .buttonStyle(.plain)
+
+                Button(action: {
+                    Task { await ignoreDoc(doc) }
+                }) {
+                    Image(systemName: "eye.slash")
+                        .foregroundColor(SymairaTheme.textMuted)
+                }
+                .buttonStyle(.plain)
+                .help("Not a document — ignore, and don't show again")
+                .padding(.top, 8)
             }
-            .buttonStyle(.plain)
             .background(selectedDoc?.id == doc.id ? SymairaTheme.goldPrimary.opacity(0.12) : Color.clear)
             .cornerRadius(8)
             Divider()
@@ -250,6 +262,22 @@ struct ReviewLaneView: View {
                     dueDateString = due
                 }
             }
+        }
+    }
+
+    /// Dismisses a spurious entry (e.g. a dependency-tree README) from the
+    /// review queue. The dismissal is persisted as frontmatter on the file
+    /// (issue #228), so unlike simply removing it from the in-memory list,
+    /// it will not reappear the next time the list is refreshed.
+    private func ignoreDoc(_ doc: ReviewDoc) async {
+        do {
+            try await core.docSetReviewIgnored(path: doc.path, ignored: true)
+            reviewDocs.removeAll { $0.id == doc.id }
+            if selectedDoc?.id == doc.id {
+                selectedDoc = nil
+            }
+        } catch {
+            print("Failed to ignore document: \(error)")
         }
     }
 

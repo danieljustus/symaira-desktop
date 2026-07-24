@@ -514,6 +514,29 @@ final class DeskCoreTests: XCTestCase {
 		XCTAssertEqual(remoteJob.kind, "ocr")
 	}
 
+	/// Regression test: a Go CLI command that (mistakenly) returns the JSON
+	/// literal `null` for an array-typed result (e.g. `meeting list` on a
+	/// vault with zero meeting notes) must decode as an empty array instead
+	/// of throwing the raw "Cannot get unkeyed decoding container" error
+	/// that crashed the Meetings tab on every fresh vault.
+	func testDecodeTolerantOfNullArrayTreatsTopLevelNullAsEmptyArray() throws {
+		let data = Data("null".utf8)
+		let summaries = try DeskCore.decodeTolerantOfNullArray([MeetingNoteSummary].self, from: data)
+		XCTAssertEqual(summaries, [])
+	}
+
+	func testDecodeTolerantOfNullArrayStillDecodesNonEmptyArrays() throws {
+		let data = Data(#"[{"path":"meetings/m1.md","title":"Standup","meeting_id":"m1","started_at":"2026-07-06T12:00:00Z","duration_ms":60000,"language":"en","review_state":"draft"}]"#.utf8)
+		let summaries = try DeskCore.decodeTolerantOfNullArray([MeetingNoteSummary].self, from: data)
+		XCTAssertEqual(summaries.count, 1)
+		XCTAssertEqual(summaries[0].meetingID, "m1")
+	}
+
+	func testDecodeTolerantOfNullArrayStillThrowsForNonArrayNull() throws {
+		let data = Data("null".utf8)
+		XCTAssertThrowsError(try DeskCore.decodeTolerantOfNullArray(SearchResponse.self, from: data))
+	}
+
 	func testCommandStreamYieldsLinesAsTheyArrive() async throws {
 		MockStreamingURLProtocol.statusCode = 200
 		MockStreamingURLProtocol.responseLines = [

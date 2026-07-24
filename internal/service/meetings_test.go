@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -404,5 +405,31 @@ func TestDiffLinesIdentical(t *testing.T) {
 		if strings.HasPrefix(line, "+") || strings.HasPrefix(line, "-") {
 			t.Errorf("expected no additions/removals for identical text, got %v", diff)
 		}
+	}
+}
+
+// TestMeetingListOnEmptyVaultMarshalsAsEmptyArray guards against a
+// regression where `symdesk meeting list --json` on a vault with zero
+// meeting notes produced the JSON literal `null` (Go's zero value for a nil
+// slice) instead of `[]`. Swift's Decodable expects a top-level array and
+// cannot open an unkeyed container on `null`, so this crashed the Meetings
+// tab with a raw decode error on every fresh vault.
+func TestMeetingListOnEmptyVaultMarshalsAsEmptyArray(t *testing.T) {
+	svc := newTestService(t)
+
+	summaries, err := svc.MeetingList()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(summaries) != 0 {
+		t.Fatalf("expected zero meeting notes in a fresh vault, got %d: %+v", len(summaries), summaries)
+	}
+
+	b, err := json.Marshal(summaries)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(b) != "[]" {
+		t.Errorf("expected MeetingList() to marshal as JSON '[]' for an empty vault, got %q", string(b))
 	}
 }

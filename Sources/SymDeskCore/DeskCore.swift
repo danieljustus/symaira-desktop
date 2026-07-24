@@ -625,7 +625,33 @@ public final class DeskCore: ObservableObject {
 
 	private func runDecoding<T: Decodable & Sendable>(_ type: T.Type, arguments: [String], stdin: String = "") async throws -> T {
 		let data = try await runChecked(arguments: arguments, stdin: stdin)
-		return try JSONDecoder().decode(type, from: data)
+		return try Self.decodeTolerantOfNullArray(type, from: data)
+	}
+
+	/// Decodes `data` as `T`, treating a top-level JSON `null` as an empty
+	/// array when `T` is array-shaped.
+	///
+	/// Go's `encoding/json` marshals a nil slice as the literal `null`
+	/// rather than `[]`. `Decodable`'s array container init cannot open an
+	/// unkeyed container on `null`, so any CLI command that forgets to
+	/// initialize its result slice crashes every array-typed decode on the
+	/// empty case (e.g. a vault with zero meeting notes) with a raw
+	/// "Cannot get unkeyed decoding container" error. This is defense in
+	/// depth for that whole class of bug: the primary fix is on the Go
+	/// side (return `[]T{}`, not a nil slice), but the Swift decode path
+	/// stays tolerant so a future regression elsewhere degrades to an
+	/// empty list instead of a crash.
+	internal nonisolated static func decodeTolerantOfNullArray<T: Decodable & Sendable>(_ type: T.Type, from data: Data) throws -> T {
+		do {
+			return try JSONDecoder().decode(type, from: data)
+		} catch {
+			guard T.self is ExpressibleByArrayLiteral.Type,
+				  let text = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+				  text == "null" else {
+				throw error
+			}
+			return try JSONDecoder().decode(type, from: Data("[]".utf8))
+		}
 	}
 
     public func listFiles() async throws -> [Note] {

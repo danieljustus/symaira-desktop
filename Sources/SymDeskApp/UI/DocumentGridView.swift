@@ -633,6 +633,19 @@ struct DocumentCard: View {
                 .lineLimit(2)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
+            if let folder = Self.containingFolder(forPath: doc.path) {
+                HStack(spacing: 4) {
+                    Image(systemName: "folder")
+                        .font(.caption2)
+                        .foregroundColor(SymairaTheme.textMuted)
+                    Text(folder)
+                        .font(.caption)
+                        .foregroundColor(SymairaTheme.textMuted)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+            }
+
             if !doc.documentDate.isEmpty {
                 HStack(spacing: 4) {
                     Image(systemName: "calendar")
@@ -758,6 +771,20 @@ struct DocumentCard: View {
         case "insurance": return "shield"
         default: return "doc.text"
         }
+    }
+
+    /// Vault-relative containing folder for `path` (e.g. `"Invoices/2024"`
+    /// for `"Invoices/2024/receipt.md"`), or `nil` when the note lives at
+    /// the vault root and has no folder to show. Used as a fallback
+    /// disambiguator for cards that otherwise show an identical title
+    /// (e.g. multiple "README" notes from different folders).
+    static func containingFolder(forPath path: String) -> String? {
+        let trimmed = path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !trimmed.isEmpty else { return nil }
+        var components = trimmed.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
+        guard components.count > 1 else { return nil }
+        components.removeLast()
+        return components.joined(separator: "/")
     }
 
 }

@@ -350,7 +350,11 @@ struct OnboardingView: View {
                 if FileManager.default.fileExists(atPath: markerURL.path) {
                     // Demo vault was already materialised in a previous run —
                     // `symdesk demo init` refuses non-empty directories, so reuse it.
+                    // Unlike the fresh-creation branch below, reuse does not get
+                    // indexed as a side effect of `initDemo`, so index it explicitly.
                     vaultPath = demoDir.path
+                    progressMessage = "Indexing vault…"
+                    _ = try await core.indexVault(path: vaultPath)
                 } else {
                     _ = try FileManager.default.createDirectory(at: demoDir, withIntermediateDirectories: true)
                     vaultPath = try await core.initDemo(into: demoDir.path)

@@ -37,7 +37,9 @@ final class MeetingAudioPlayerModel: ObservableObject {
 
         let interval = CMTime(seconds: 0.05, preferredTimescale: 600)
         timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
-            self?.currentTime = time.seconds
+            Task { @MainActor [weak self] in
+                self?.currentTime = time.seconds
+            }
         }
     }
 

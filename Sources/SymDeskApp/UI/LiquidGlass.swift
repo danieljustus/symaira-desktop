@@ -29,16 +29,16 @@ struct SymDeskLiquidGlass: ViewModifier {
                     shape.stroke(SymairaTheme.borderGlassHover.opacity(0.78), lineWidth: 1)
                         .allowsHitTesting(false)
                 }
-        } else if #available(macOS 26.0, *) {
+        } else if #available(macOS 15.0, *) {
             content
                 .background(tint, in: shape)
-                .glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
+                .background(.regularMaterial, in: shape)
                 .overlay {
                     shape.stroke(SymairaTheme.borderGlassHover.opacity(0.72), lineWidth: 1)
                         .allowsHitTesting(false)
                 }
                 .shadow(
-                    color: prominence == .elevated ? .black.opacity(0.2) : .clear,
+                    color: prominence == .elevated ? Color.black.opacity(0.2) : .clear,
                     radius: prominence == .elevated ? 16 : 0,
                     y: prominence == .elevated ? 8 : 0
                 )

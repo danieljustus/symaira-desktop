@@ -60,6 +60,7 @@
 		93AB4112A5820CC47B45DB2E /* AsyncActionTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EBD01F47531831816ECBBC9 /* AsyncActionTracker.swift */; };
 		94BE347F343E4274462CCFA1 /* MeetingReviewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4B7F3287A383E8C979FE50 /* MeetingReviewModel.swift */; };
 		951042A6C3918F1D3EA4CD32 /* ParticipantConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C3A8CB17DABF0648A84D9C6 /* ParticipantConfirmationView.swift */; };
+		95958AA9ACDAB632B1BAF7F8 /* DocumentCardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA27EFFC69A6E08B2972334 /* DocumentCardTests.swift */; };
 		9CB84C5DEC5DFAA645786C79 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = CCF15BEFF6E2B7C5BDE99A2A /* SymairaToolKit */; };
 		A069D366DE09F194427FA488 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B19FB8752DF2B7914F917FAE /* Assets.xcassets */; };
 		A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59762A8D6DF418D30855BEDA /* OnboardingView.swift */; };
@@ -196,6 +197,7 @@
 		BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentViewerView.swift; sourceTree = "<group>"; };
 		BBD325D2A25FDF9FA519A6FA /* SymDeskApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymDeskApp.swift; sourceTree = "<group>"; };
 		BD503BDFC58C49F251B9A606 /* MarkdownTableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTableTests.swift; sourceTree = "<group>"; };
+		BFA27EFFC69A6E08B2972334 /* DocumentCardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentCardTests.swift; sourceTree = "<group>"; };
 		C41A2D45CCFD80688933E2FC /* MobileRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileRootView.swift; sourceTree = "<group>"; };
 		C43BCCCFE7CE2ED77DAFCF5D /* SymDeskMobileTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SymDeskMobileTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C65122A6938268B750A79E55 /* NotificationCenterProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterProviding.swift; sourceTree = "<group>"; };
@@ -388,6 +390,7 @@
 			isa = PBXGroup;
 			children = (
 				8948F04EC3090C19864630CC /* AsyncActionTrackerTests.swift */,
+				BFA27EFFC69A6E08B2972334 /* DocumentCardTests.swift */,
 				A2BC2A21B0BFAB4B7F22A054 /* MeetingReviewModelTests.swift */,
 				4CA283F51817DD589D19ADB4 /* NotificationManagerTests.swift */,
 			);
@@ -652,6 +655,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0777864A7A6E975929B7A320 /* AsyncActionTrackerTests.swift in Sources */,
+				95958AA9ACDAB632B1BAF7F8 /* DocumentCardTests.swift in Sources */,
 				30F3B2FD4B8734AF6FFCA25A /* MeetingReviewModelTests.swift in Sources */,
 				D8DB6D940F2257736D24B15E /* NotificationManagerTests.swift in Sources */,
 			);

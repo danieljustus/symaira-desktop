@@ -10,6 +10,8 @@ struct MeetingsView: View {
     @StateObject private var model: MeetingReviewModel
     @State private var showRecordingInfo = false
     @State private var recordingInfoMessage = ""
+    @State private var recordingInstallURL: URL?
+    @Environment(\.openURL) private var openURL
 
     init(dataSource: MeetingsDataSource? = nil) {
         // `dataSource` is only ever overridden by tests/previews; production
@@ -111,6 +113,15 @@ struct MeetingsView: View {
     /// SymDesk deliberately cannot start a recording itself: capture,
     /// consent, and the recording confirmation UI all live in SymMeetAgent,
     /// so this action always ends in the agent's own confirmation flow.
+    ///
+    /// SymDesk stays standalone-first (root `AGENTS.md`'s "Standalone-First
+    /// Synergy": public tools must not depend on another Symaira binary at
+    /// startup) and does not position itself as the tool hub (this repo's
+    /// `AGENTS.md`), so SymMeet remains a separate, runtime-composed app
+    /// rather than something bundled into `SymDesk.dmg`. Within that
+    /// architecture, the "not installed" path must still offer an
+    /// actionable next step instead of a dead-end message — matching how
+    /// Discover's compose cards link out to symseek/symmemory/symingest.
     private var recordingButton: some View {
         Button(action: { requestRecording() }) {
             Label("Request Recording", systemImage: "record.circle")
@@ -119,6 +130,9 @@ struct MeetingsView: View {
         .accessibilityLabel("Request a recording")
         .accessibilityHint("Opens the SymMeet menu-bar agent, where recording must be confirmed")
         .alert("Recording is confirmed in SymMeet", isPresented: $showRecordingInfo) {
+            if let installURL = recordingInstallURL {
+                Button("Install SymMeet") { openURL(installURL) }
+            }
             Button("OK", role: .cancel) {}
         } message: {
             Text(recordingInfoMessage)
@@ -127,13 +141,36 @@ struct MeetingsView: View {
 
     private func requestRecording() {
         let bundleID = "dev.symaira.symmeet.agent"
-        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
-            NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
-            recordingInfoMessage = "SymMeet's menu-bar agent has been opened. Recording starts only after you confirm it there — SymDesk never records on its own."
-        } else {
-            recordingInfoMessage = "The SymMeet menu-bar agent is not installed. Install SymMeet to record meetings; SymDesk itself never captures audio."
+        let agentURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+        if let agentURL {
+            NSWorkspace.shared.openApplication(at: agentURL, configuration: NSWorkspace.OpenConfiguration())
         }
+        let content = Self.recordingAlertContent(agentInstalled: agentURL != nil)
+        recordingInfoMessage = content.message
+        recordingInstallURL = content.installURL
         showRecordingInfo = true
+    }
+
+    /// One entry point for the recording alert's copy and (when the SymMeet
+    /// menu-bar agent is missing) its install link, kept as a pure function
+    /// so the "not installed" path's actionable next step is unit-testable
+    /// without driving `NSWorkspace` or SwiftUI state.
+    struct RecordingAlertContent: Equatable {
+        let message: String
+        let installURL: URL?
+    }
+
+    static func recordingAlertContent(agentInstalled: Bool) -> RecordingAlertContent {
+        if agentInstalled {
+            return RecordingAlertContent(
+                message: "SymMeet's menu-bar agent has been opened. Recording starts only after you confirm it there — SymDesk never records on its own.",
+                installURL: nil
+            )
+        }
+        return RecordingAlertContent(
+            message: "The SymMeet menu-bar agent is not installed. Install SymMeet to record meetings; SymDesk itself never captures audio.",
+            installURL: URL(string: "https://github.com/danieljustus/symaira-meet")
+        )
     }
 
     private func meetingRow(_ meeting: MeetingNoteSummary) -> some View {

@@ -500,8 +500,8 @@ func (s *Server) snapshotPayloadFiltered(user *permissions.User) ([]byte, []byte
 	}
 	// Parse and filter for non-admin users.
 	var payload struct {
-		Notes      []snapshotNote `json:"notes"`
-		GeneratedAt time.Time     `json:"generated_at"`
+		Notes       []snapshotNote `json:"notes"`
+		GeneratedAt time.Time      `json:"generated_at"`
 	}
 	if err := json.Unmarshal(plain, &payload); err != nil {
 		return nil, nil, "", err

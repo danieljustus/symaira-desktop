@@ -369,9 +369,9 @@ func (m *Manager) GetDocumentRule(path string) (*DocumentRule, error) {
 
 // --- Persistence --------------------------------------------------------------
 
-func (m *Manager) usersFilePath() string    { return filepath.Join(m.configDir, "users.json") }
-func (m *Manager) groupsFilePath() string   { return filepath.Join(m.configDir, "groups.json") }
-func (m *Manager) permsFilePath() string    { return filepath.Join(m.configDir, "permissions.json") }
+func (m *Manager) usersFilePath() string  { return filepath.Join(m.configDir, "users.json") }
+func (m *Manager) groupsFilePath() string { return filepath.Join(m.configDir, "groups.json") }
+func (m *Manager) permsFilePath() string  { return filepath.Join(m.configDir, "permissions.json") }
 
 func (m *Manager) loadUsers() ([]User, error) {
 	var users []User

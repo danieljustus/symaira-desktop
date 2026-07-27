@@ -44,6 +44,30 @@ final class ClassificationRulesViewModelTests: XCTestCase {
         XCTAssertTrue(mailSave)
         XCTAssertEqual(viewModel.mailAccounts.count, 1)
     }
+
+    func testMissingMailConfigIsHandledAsUnconfigured() async {
+        let client = FailingMailRulesClient(error: SymingestRulesError.commandFailed("CLI execution failed with exit code 9: read mail configuration: symingest configuration file not found: /tmp/config.toml"))
+        let viewModel = ClassificationRulesViewModel(client: client)
+        let loaded = await viewModel.loadMail()
+        XCTAssertTrue(loaded)
+        XCTAssertNil(viewModel.mailError)
+        XCTAssertTrue(viewModel.mailAccounts.isEmpty)
+    }
+}
+
+private actor FailingMailRulesClient: ClassificationRulesClient {
+    let error: Error
+    init(error: Error) { self.error = error }
+    func listRules() async throws -> [ClassificationRule] { [] }
+    func addRule(pattern: String, kind: String, value: String) async throws -> ClassificationRule { throw error }
+    func updateRule(id: Int64, pattern: String, kind: String, value: String) async throws -> ClassificationRule { throw error }
+    func deleteRule(id: Int64) async throws { throw error }
+    func testRules(text: String) async throws -> [ClassificationRuleMatch] { [] }
+    func dryRunRule(pattern: String, kind: String, value: String) async throws -> RulesDryRunResponse { throw error }
+    func listMailRules() async throws -> [MailAccount] { throw error }
+    func createMailRule(_ account: MailAccount) async throws -> MailAccount { throw error }
+    func updateMailRule(id: String, account: MailAccount) async throws -> MailAccount { throw error }
+    func deleteMailRule(id: String) async throws { throw error }
 }
 
 private actor FakeClassificationRulesClient: ClassificationRulesClient {

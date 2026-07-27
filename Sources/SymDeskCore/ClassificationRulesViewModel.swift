@@ -57,7 +57,18 @@ public final class ClassificationRulesViewModel: ObservableObject {
             mailAccounts = try await client.listMailRules()
             return true
         } catch {
-            mailError = error.localizedDescription
+            let desc = error.localizedDescription
+            let lower = desc.lowercased()
+            if lower.contains("configuration file not found") || lower.contains("config.toml") || (lower.contains("file not found") && lower.contains("symingest")) {
+                mailAccounts = []
+                mailError = nil
+                return true
+            }
+            var cleaned = desc
+            if let range = cleaned.range(of: #"CLI execution failed with exit code \d+:\s*"#, options: .regularExpression) {
+                cleaned.removeSubrange(range)
+            }
+            mailError = cleaned
             return false
         }
     }

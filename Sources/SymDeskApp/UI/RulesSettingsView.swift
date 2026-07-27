@@ -256,8 +256,15 @@ struct RulesSettingsView: View {
                         .tint(SymairaTheme.goldPrimary)
                 }
                 if viewModel.mailAccounts.isEmpty {
-                    Text("No IMAP accounts configured.")
-                        .foregroundStyle(SymairaTheme.textSecondary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Mail import isn't set up yet.")
+                            .font(.callout.weight(.medium))
+                            .foregroundStyle(SymairaTheme.textPrimary)
+                        Text("Click \"New Mail Account\" above to configure an IMAP account for automated email ingestion.")
+                            .font(.caption)
+                            .foregroundStyle(SymairaTheme.textSecondary)
+                    }
+                    .padding(.vertical, 4)
                 } else {
                     ForEach(viewModel.mailAccounts, id: \.stableID) { account in
                         HStack(alignment: .top, spacing: 12) {

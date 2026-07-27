@@ -658,9 +658,32 @@ public final class DeskCore: ObservableObject {
 		try await runDecoding([Note].self, arguments: ["ls", "--json"] + vaultArgs)
     }
 
+    public func getDoctorReport() async throws -> DoctorReport {
+		let data: Data
+		do {
+			data = try await runChecked(arguments: ["doctor", "--json"] + vaultArgs)
+		} catch {
+			let errStr = "\(error)"
+			if let start = errStr.firstIndex(of: "{"),
+			   let end = errStr.lastIndex(of: "}"),
+			   start <= end {
+				let jsonSub = String(errStr[start...end])
+				if let jsonBytes = jsonSub.data(using: .utf8),
+				   let report = try? JSONDecoder().decode(DoctorReport.self, from: jsonBytes) {
+					return report
+				}
+			}
+			throw error
+		}
+		return try JSONDecoder().decode(DoctorReport.self, from: data)
+    }
+
     public func getDoctor() async throws -> String {
-		let out = try await runChecked(arguments: ["doctor"] + vaultArgs)
-        return String(decoding: out, as: UTF8.self)
+		let report = try await getDoctorReport()
+		if let json = try? JSONEncoder().encode(report), let str = String(data: json, encoding: .utf8) {
+			return str
+		}
+		return "{\"overall\":\"\(report.overall)\"}"
     }
 
     public func search(query: String) async throws -> SearchResponse {
@@ -1010,11 +1033,48 @@ public struct ReviewDoc: Codable, Equatable, Identifiable, Sendable {
 
 // MARK: - Doctor Report
 
+// MARK: - Doctor Report
+
 public struct DoctorReport: Codable, Sendable {
     public let overall: String
-    public let vault: ToolAvailability
-    public let sidecar: ToolAvailability
+    public let vault: SubsystemStatus?
+    public let sidecar: SubsystemStatus?
+    public let contract: SubsystemStatus?
     public let tools: ToolAvailability
+    public let versions: [String: String]?
+    public let conflicts: [String]?
+    public let ai: AIReport?
+
+    public struct SubsystemStatus: Codable, Sendable {
+        public let status: String?
+        public let message: String?
+        public let path: String?
+        public let filesFound: Int?
+
+        enum CodingKeys: String, CodingKey {
+            case status
+            case message
+            case path
+            case filesFound = "files_found"
+        }
+
+        public init(status: String? = nil, message: String? = nil, path: String? = nil, filesFound: Int? = nil) {
+            self.status = status
+            self.message = message
+            self.path = path
+            self.filesFound = filesFound
+        }
+    }
+
+    public struct AIReport: Codable, Sendable {
+        public let provider: String?
+        public let model: String?
+
+        public init(provider: String? = nil, model: String? = nil) {
+            self.provider = provider
+            self.model = model
+        }
+    }
 
     public struct ToolAvailability: Codable, Sendable {
         public let symseek: String?
@@ -1022,13 +1082,15 @@ public struct DoctorReport: Codable, Sendable {
         public let symingest: String?
         public let symfetch: String?
         public let symvault: String?
+        public let symmeet: String?
 
-        public init(symseek: String? = nil, symmemory: String? = nil, symingest: String? = nil, symfetch: String? = nil, symvault: String? = nil) {
+        public init(symseek: String? = nil, symmemory: String? = nil, symingest: String? = nil, symfetch: String? = nil, symvault: String? = nil, symmeet: String? = nil) {
             self.symseek = symseek
             self.symmemory = symmemory
             self.symingest = symingest
             self.symfetch = symfetch
             self.symvault = symvault
+            self.symmeet = symmeet
         }
 
         /// Whether a tool name resolves to "ok" or "available".
@@ -1040,6 +1102,7 @@ public struct DoctorReport: Codable, Sendable {
             case "symingest": val = symingest
             case "symfetch": val = symfetch
             case "symvault": val = symvault
+            case "symmeet": val = symmeet
             default: val = nil
             }
             guard let v = val else { return false }
@@ -1048,19 +1111,36 @@ public struct DoctorReport: Codable, Sendable {
         }
     }
 
-    public init(overall: String, vault: ToolAvailability, sidecar: ToolAvailability, tools: ToolAvailability) {
+    public init(
+        overall: String = "unknown",
+        vault: SubsystemStatus? = nil,
+        sidecar: SubsystemStatus? = nil,
+        contract: SubsystemStatus? = nil,
+        tools: ToolAvailability = ToolAvailability(),
+        versions: [String: String]? = nil,
+        conflicts: [String]? = nil,
+        ai: AIReport? = nil
+    ) {
         self.overall = overall
         self.vault = vault
         self.sidecar = sidecar
+        self.contract = contract
         self.tools = tools
+        self.versions = versions
+        self.conflicts = conflicts
+        self.ai = ai
     }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         overall = (try? c.decode(String.self, forKey: .overall)) ?? "unknown"
-        vault = (try? c.decode(ToolAvailability.self, forKey: .vault)) ?? ToolAvailability()
-        sidecar = (try? c.decode(ToolAvailability.self, forKey: .sidecar)) ?? ToolAvailability()
+        vault = try? c.decode(SubsystemStatus.self, forKey: .vault)
+        sidecar = try? c.decode(SubsystemStatus.self, forKey: .sidecar)
+        contract = try? c.decode(SubsystemStatus.self, forKey: .contract)
         tools = (try? c.decode(ToolAvailability.self, forKey: .tools)) ?? ToolAvailability()
+        versions = try? c.decode([String: String].self, forKey: .versions)
+        conflicts = try? c.decode([String].self, forKey: .conflicts)
+        ai = try? c.decode(AIReport.self, forKey: .ai)
     }
 }
 

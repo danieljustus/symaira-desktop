@@ -115,7 +115,7 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 		return err
@@ -125,7 +125,7 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 
 	if _, err := io.Copy(d, s); err != nil {
 		return err

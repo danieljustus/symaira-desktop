@@ -40,7 +40,7 @@ func newRetentionEvalCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 
 			if rulesFile == "" {
 				rulesFile = filepath.Join(vRoot, ".symdesk", "retention-rules.yaml")
@@ -175,7 +175,7 @@ func newRetentionAcceptCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 
 			p, err := retention.LoadProposal(vRoot, args[0])
 			if err != nil {

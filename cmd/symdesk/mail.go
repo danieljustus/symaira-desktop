@@ -32,7 +32,7 @@ func newMailStatusCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 
 			svc := service.New(vRoot, db)
 			configPath := filepath.Join(os.Getenv("HOME"), ".config", "symingest", "config.toml")
@@ -72,7 +72,7 @@ func newMailFetchCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 
 			svc := service.New(vRoot, db)
 			configPath := filepath.Join(os.Getenv("HOME"), ".config", "symingest", "config.toml")

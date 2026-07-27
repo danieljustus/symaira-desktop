@@ -307,8 +307,8 @@ func TestSimhashDedup_ConsistentFingerprint(t *testing.T) {
 		Subject string `json:"subject"`
 		Body    string `json:"body"`
 	}
-	json.Unmarshal(data, &m1)
-	json.Unmarshal(data, &m2)
+	_ = json.Unmarshal(data, &m1)
+	_ = json.Unmarshal(data, &m2)
 
 	// Verify both produce identical content for simhash input.
 	t1 := m1.UID + "|" + m1.From + "|" + m1.Subject + "|" + m1.Body

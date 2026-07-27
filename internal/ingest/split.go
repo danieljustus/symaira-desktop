@@ -16,7 +16,8 @@ import (
 // of a section; the first section starts at page 1.
 //
 // Example: splitPoints = [3, 7] on a 10-page PDF yields three files:
-//   part-1.pdf (pages 1–3), part-2.pdf (pages 4–7), part-3.pdf (pages 8–10).
+//
+//	part-1.pdf (pages 1–3), part-2.pdf (pages 4–7), part-3.pdf (pages 8–10).
 //
 // Returns the paths of the generated part files in order.
 func SplitPDF(pdfPath string, splitPoints []int, outputDir string) ([]string, error) {
@@ -142,8 +143,8 @@ type BarcodeSplitResult struct {
 // the configured ASNPrefix pattern.
 func SplitPDFByBarcode(pdfPath string, cfg BarcodeConfig, outputDir string) (*BarcodeSplitResult, error) {
 	result := &BarcodeSplitResult{
-		ASNs:    make(map[int]int),
-		Errors:  make(map[int]string),
+		ASNs:   make(map[int]int),
+		Errors: make(map[int]string),
 	}
 
 	sepPages, err := ScanPDFForBarcodes(pdfPath, cfg)

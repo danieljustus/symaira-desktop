@@ -99,9 +99,9 @@ func IngestFile(vaultRoot, sourcePath string) (string, error) {
 // splitting for multi-page PDFs.
 //
 // When the input is a PDF and barcode scanning tools are available:
-//   1. Each page is scanned for a separator barcode matching cfg.SeparatorPattern.
-//   2. The PDF is split at separator boundaries.
-//   3. Each part is ingested as a separate document.
+//  1. Each page is scanned for a separator barcode matching cfg.SeparatorPattern.
+//  2. The PDF is split at separator boundaries.
+//  3. Each part is ingested as a separate document.
 //
 // When no separators are found, or the input is not a PDF, or scanning tools
 // are unavailable, the file is ingested as a single document.

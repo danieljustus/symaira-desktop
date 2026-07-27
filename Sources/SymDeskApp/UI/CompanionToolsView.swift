@@ -4,6 +4,12 @@ import SymDeskCore
 
 // MARK: - CompanionToolsView
 
+enum ToolInstallState {
+    case installed
+    case notInstalled
+    case unknown
+}
+
 struct CompanionToolsView: View {
     @EnvironmentObject var core: DeskCore
 
@@ -95,7 +101,12 @@ struct CompanionToolsView: View {
     }
 
     private func toolRow(_ tool: (id: String, name: String, tap: String)) -> some View {
-        let isInstalled = doctorReport?.tools.isAvailable(tool.id) ?? false
+        let installState: ToolInstallState = {
+            guard let report = doctorReport else { return .unknown }
+            return report.tools.isAvailable(tool.id) ? .installed : .notInstalled
+        }()
+        let isInstalled = installState == .installed
+        let isUnknown = installState == .unknown
         let isInstalling = installingTools.contains(tool.id)
         let version = doctorReport?.versions?[tool.id]
         let output = installOutput[tool.id]
@@ -115,6 +126,10 @@ struct CompanionToolsView: View {
                         Text("v\(version)")
                             .font(.caption)
                             .foregroundColor(SymairaTheme.textSecondary)
+                    } else if isUnknown {
+                        Text("could not read the vault health report")
+                            .font(.caption)
+                            .foregroundColor(SymairaTheme.textMuted)
                     } else if !isInstalled && !isInstalling {
                         Text("Not installed")
                             .font(.caption)
@@ -138,7 +153,7 @@ struct CompanionToolsView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
                     .tint(SymairaTheme.goldPrimary)
-                    .disabled(homebrewAvailable != true)
+                    .disabled(homebrewAvailable != true || isUnknown)
                 }
             }
 

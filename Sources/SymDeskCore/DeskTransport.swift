@@ -15,6 +15,12 @@ public protocol DeskTransport: Sendable {
     /// Runs a command and returns its raw response bytes.
     func command(arguments: [String], stdin: String) async throws -> Data
 
+    /// Runs a command and returns stdout, stderr, and exit code regardless of
+    /// exit status. Use when stdout is meaningful even on a non-zero exit
+    /// (e.g. a health-check command that exits 1 on warnings but still writes
+    /// a complete report on stdout).
+    func commandResult(arguments: [String]) async throws -> CLIResult
+
     /// Streams a command's newline-delimited JSON output line by line.
     func commandStream(arguments: [String], stdin: String) -> AsyncThrowingStream<String, Error>
 
@@ -46,6 +52,10 @@ public struct LocalDeskTransport: DeskTransport {
 
     public func command(arguments: [String], stdin: String) async throws -> Data {
         try await runner.runChecked(tool.location.url, arguments: arguments)
+    }
+
+    public func commandResult(arguments: [String]) async throws -> CLIResult {
+        try await runner.runAllowingFailure(tool.location.url, arguments: arguments)
     }
 
     public func commandStream(arguments: [String], stdin: String) -> AsyncThrowingStream<String, Error> {
@@ -148,6 +158,11 @@ public struct RemoteDeskTransport: DeskTransport {
 
     public func command(arguments: [String], stdin: String) async throws -> Data {
         try await client.command(arguments: arguments, stdin: stdin)
+    }
+
+    public func commandResult(arguments: [String]) async throws -> CLIResult {
+        let data = try await client.command(arguments: arguments, stdin: "")
+        return CLIResult(stdout: data, stderr: Data(), exitCode: 0)
     }
 
     public func commandStream(arguments: [String], stdin: String) -> AsyncThrowingStream<String, Error> {

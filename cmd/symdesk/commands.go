@@ -827,6 +827,7 @@ func registerCommands(rootCmd *cobra.Command) {
 	viewsCmd.AddCommand(viewsExecCmd)
 
 	rootCmd.AddCommand(newEventsCmd())
+	rootCmd.AddCommand(newPaperlessCmd())
 
 	docsCmd := &cobra.Command{
 		Use:   "docs",

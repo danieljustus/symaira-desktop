@@ -34,7 +34,13 @@ internal/service/testdata/
 /scratch/
 .omo/
 
+# Parallel worktree directories
+.worktrees/
+
 # Local audit reports
 .github/audit/
 .github/coverage/
 .github/prerelease/
+
+# Parallel agent worktrees
+.worktrees/

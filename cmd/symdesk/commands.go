@@ -22,11 +22,13 @@ import (
 )
 
 func registerCommands(rootCmd *cobra.Command) {
+	rootCmd.AddCommand(newMailCmd())
 	rootCmd.AddCommand(newRecipeCmd())
 	rootCmd.AddCommand(newHistoryCmd())
 	rootCmd.AddCommand(newRestoreCmd())
 	rootCmd.AddCommand(newTrashCmd())
 	rootCmd.AddCommand(newMeetingCmd())
+	rootCmd.AddCommand(newRetentionCmd())
 	doctorCmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "Check system health, vault, and sidecar configuration",
@@ -827,6 +829,7 @@ func registerCommands(rootCmd *cobra.Command) {
 	viewsCmd.AddCommand(viewsExecCmd)
 
 	rootCmd.AddCommand(newEventsCmd())
+	rootCmd.AddCommand(newPaperlessCmd())
 
 	docsCmd := &cobra.Command{
 		Use:   "docs",

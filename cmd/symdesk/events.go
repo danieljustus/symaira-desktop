@@ -18,6 +18,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 
+	"github.com/danieljustus/symaira-desktop/internal/mail"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 	deskwatcher "github.com/danieljustus/symaira-desktop/internal/watcher"
@@ -116,6 +117,23 @@ func newEventsCmd() *cobra.Command {
 				defer inboxWatcher.Close()
 			} else {
 				fmt.Fprintf(os.Stderr, "failed to start inbox watcher: %v\n", err)
+			}
+
+			// Start Mail Watcher in the background for IMAP email ingestion.
+			// It polls symingest mail accounts periodically and routes
+			// fetched messages through the same ingest pipeline.
+			mailConfigPath := filepath.Join(os.Getenv("HOME"), ".config", "symingest", "config.toml")
+			mailWatcher, err := mail.New(mailConfigPath, svc)
+			if err == nil {
+				mailCtx, mailCancel := context.WithCancel(context.Background())
+				defer mailCancel()
+				go func() {
+					if err := mailWatcher.Start(mailCtx); err != nil {
+						fmt.Fprintf(os.Stderr, "mail watcher error: %v\n", err)
+					}
+				}()
+			} else {
+				fmt.Fprintf(os.Stderr, "mail watcher not started (symingest or mail config not available): %v\n", err)
 			}
 
 			// Watch all subdirectories

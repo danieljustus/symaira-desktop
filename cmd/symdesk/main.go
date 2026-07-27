@@ -99,6 +99,7 @@ func newRootCmd() *cobra.Command {
 	rootCmd.AddCommand(mcpCmd)
 	rootCmd.AddCommand(newServeCmd())
 	rootCmd.AddCommand(newWorkerCmd())
+	rootCmd.AddCommand(newPermissionsCmd())
 
 	// 3. Doctor Command (Stub)
 	registerCommands(rootCmd)

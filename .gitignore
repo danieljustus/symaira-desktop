@@ -41,3 +41,6 @@ internal/service/testdata/
 .github/audit/
 .github/coverage/
 .github/prerelease/
+
+# Parallel agent worktrees
+.worktrees/

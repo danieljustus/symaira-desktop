@@ -21,6 +21,8 @@ struct ContentView: View {
     @State private var isShowingInspector = false
     @State private var isShowingPreview = false
     @State private var isShowingAIDock = false
+    @State private var isShowingNewNoteSheet = false
+    @State private var newNoteTitle = ""
     @State private var backlinks: [String] = []
     
     @AppStorage("isBlockMode") private var isBlockMode = false
@@ -35,6 +37,7 @@ struct ContentView: View {
     @State private var keyEventMonitor: Any?
 
     enum DisplayMode {
+        case dashboard
         case vault
         case graph
         case dbView
@@ -44,9 +47,10 @@ struct ContentView: View {
         case reviewLane
         case rules
         case meetings
+        case companionTools
     }
 
-    @State private var displayMode: DisplayMode = .vault
+    @State private var displayMode: DisplayMode = .dashboard
     @State private var selectedViewID: String?
     @State private var dbViews: [DbView] = []
     @State private var isShowingViewEditor = false
@@ -88,6 +92,15 @@ struct ContentView: View {
             } else {
                 NavigationSplitView {
                     List {
+                        Section {
+                            Button(action: { displayMode = .dashboard }) {
+                                HStack {
+                                    Image(systemName: "rectangle.grid.1x2")
+                                    Text("Dashboard")
+                                }
+                            }
+                        }
+
                         Section("Library") {
                             ForEach(DocFilterPreset.defaults) { preset in
                                 Button(action: {
@@ -118,6 +131,12 @@ struct ContentView: View {
                                 HStack {
                                     Image(systemName: "sparkles")
                                     Text("Discover")
+                                }
+                            }
+                            Button(action: { displayMode = .companionTools }) {
+                                HStack {
+                                    Image(systemName: "wrench.and.screwdriver")
+                                    Text("Companion Tools")
                                 }
                             }
                         }
@@ -189,6 +208,12 @@ struct ContentView: View {
                                     self.displayMode = .vault
                                 }
                             }
+                            Button(action: { isShowingNewNoteSheet = true }) {
+                                HStack {
+                                    Image(systemName: "plus")
+                                    Text("New Note")
+                                }
+                            }
                         }
                     }
                     .scrollContentBackground(.hidden)
@@ -200,6 +225,14 @@ struct ContentView: View {
                 } detail: {
                     SymairaScreen {
                     switch displayMode {
+                    case .dashboard:
+                        DashboardView(
+                            docCounts: docCounts,
+                            docTotalCount: docTotalCount,
+                            notes: notes,
+                            doctorReport: doctorReport,
+                            onNavigate: { mode in displayMode = mode }
+                        )
                     case .ingestQueue:
                         IngestQueueView()
                     case .reviewLane:
@@ -209,7 +242,12 @@ struct ContentView: View {
                     case .rules:
                         RulesSettingsView(vaultPath: core.vaultPath)
                     case .discover:
-                        DiscoverView()
+                        DiscoverView(onNavigateToTools: { displayMode = .companionTools })
+                    case .companionTools:
+                        CompanionToolsView(
+                            doctorReport: doctorReport,
+                            onDoctorRefresh: { await fetchDoctor() }
+                        )
                     case .graph:
                         GraphView { selectedNodeID in
                             navigateToNote(title: selectedNodeID)
@@ -486,6 +524,9 @@ struct ContentView: View {
                             }
                         }
                     )
+                }
+                .sheet(isPresented: $isShowingNewNoteSheet) {
+                    NewNoteSheet(isPresented: $isShowingNewNoteSheet, core: core)
                 }
                 // App-wide shortcut for Cmd-K
                 .onAppear {
@@ -858,6 +899,97 @@ private struct DoctorReportPopoverView: View {
 private struct IngestFailure: Equatable {
     let url: URL
     let message: String
+}
+
+// MARK: - New Note Sheet
+
+private struct NewNoteSheet: View {
+    @Binding var isPresented: Bool
+    let core: DeskCore
+    
+    @State private var title = ""
+    @State private var isCreating = false
+    @State private var errorMessage: String?
+    @FocusState private var isTitleFocused: Bool
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                Image(systemName: "doc.badge.plus")
+                    .font(.title2)
+                    .foregroundColor(SymairaTheme.goldPrimary)
+                TextField("Note title", text: $title)
+                    .textFieldStyle(.plain)
+                    .font(.title2)
+                    .foregroundColor(SymairaTheme.textPrimary)
+                    .focused($isTitleFocused)
+                    .onSubmit { createNote() }
+                    .disabled(isCreating)
+                if !title.isEmpty {
+                    Button {
+                        title = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(SymairaTheme.textMuted)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Clear")
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .symDeskLiquidGlass(cornerRadius: 14, prominence: .elevated)
+            .padding(16)
+            
+            HStack {
+                if isCreating {
+                    ProgressView()
+                        .controlSize(.small)
+                        .padding(.horizontal, 8)
+                }
+                if let err = errorMessage {
+                    Text(err)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+                Spacer()
+                Button("Cancel") { isPresented = false }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .disabled(isCreating)
+                Button("Create") { createNote() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .tint(SymairaTheme.goldPrimary)
+                    .disabled(title.isEmpty || isCreating)
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
+        }
+        .background { SymairaScreen { Color.clear } }
+        .frame(width: 440, height: 160)
+        .onAppear { isTitleFocused = true }
+    }
+    
+    private func createNote() {
+        guard !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        isCreating = true
+        errorMessage = nil
+        Task {
+            do {
+                let _ = try await core.noteNew(title: title.trimmingCharacters(in: .whitespaces))
+                await MainActor.run {
+                    isPresented = false
+                    isCreating = false
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Could not create note: \(error.localizedDescription)"
+                    isCreating = false
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Notification Permission Denied Banner

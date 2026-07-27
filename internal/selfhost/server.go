@@ -59,6 +59,7 @@ type Server struct {
 	cfg          ServerConfig
 	db           *sidecar.DB
 	jobs         *JobStore
+	shares       *ShareStore
 	vaultRoot    *os.Root
 	http         *http.Server
 	mux          *http.ServeMux
@@ -110,12 +111,17 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		db.Close()
 		return nil, err
 	}
+	shareStore, err := NewShareStore(filepath.Join(cfg.VaultRoot, ".symdesk", "server"))
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
 	vaultRoot, err := os.OpenRoot(cfg.VaultRoot)
 	if err != nil {
 		db.Close()
 		return nil, fmt.Errorf("open vault root: %w", err)
 	}
-	s := &Server{cfg: cfg, db: db, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux()}
+	s := &Server{cfg: cfg, db: db, jobs: jobs, shares: shareStore, vaultRoot: vaultRoot, mux: http.NewServeMux()}
 	s.snapshotDirty.Store(true)
 	if err := s.refreshIndex(); err != nil {
 		vaultRoot.Close()
@@ -239,6 +245,12 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/v1/worker/input", s.auth(scopeWorker, http.HandlerFunc(s.handleWorkerInput)))
 	s.mux.Handle("POST /api/v1/worker/complete", s.auth(scopeWorker, http.HandlerFunc(s.handleComplete)))
 	s.mux.Handle("POST /api/v1/worker/fail", s.auth(scopeWorker, http.HandlerFunc(s.handleFail)))
+
+	// Share links: unauthenticated read-only document access.
+	s.mux.HandleFunc("GET /s/{token}", s.handleShareAccess)
+	s.mux.Handle("POST /api/v1/share", s.auth(scopeAdmin, http.HandlerFunc(s.handleCreateShare)))
+	s.mux.Handle("GET /api/v1/shares", s.auth(scopeAdmin, http.HandlerFunc(s.handleListShares)))
+	s.mux.Handle("DELETE /api/v1/share/{id}", s.auth(scopeAdmin, http.HandlerFunc(s.handleRevokeShare)))
 }
 
 // tokenScope classifies which credential a route accepts. The admin/client
@@ -1022,4 +1034,117 @@ func (b *limitedBuffer) Write(p []byte) (int, error) {
 		return len(p), nil
 	}
 	return b.Buffer.Write(p)
+}
+
+// ---------------------------------------------------------------------------
+// Share link handlers
+// ---------------------------------------------------------------------------
+
+type shareRequest struct {
+	Path   string `json:"path"`   // vault-relative document path
+	Expiry int    `json:"expiry"` // hours until expiry; 0 defaults to 24
+}
+
+func (s *Server) handleCreateShare(w http.ResponseWriter, r *http.Request) {
+	var req shareRequest
+	if err := decodeJSON(r, &req, 2<<10); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.Path == "" {
+		writeError(w, http.StatusBadRequest, "path is required")
+		return
+	}
+	if req.Expiry <= 0 {
+		req.Expiry = 24
+	}
+	if req.Expiry > 720 { // 30 days max
+		writeError(w, http.StatusBadRequest, "expiry must be 720 hours or less")
+		return
+	}
+
+	// Verify the document exists.
+	rel, err := resolveRequestPath(req.Path)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid path")
+		return
+	}
+	if _, err := s.vaultRoot.Stat(rel); err != nil {
+		writeError(w, http.StatusNotFound, "document not found")
+		return
+	}
+
+	duration := time.Duration(req.Expiry) * time.Hour
+	link, token, err := s.shares.Create(req.Path, "api", duration)
+	if err != nil {
+		if strings.Contains(err.Error(), "too many active links") {
+			writeError(w, http.StatusTooManyRequests, err.Error())
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"id":         link.ID,
+		"path":       link.Path,
+		"token":      token,
+		"created_at": link.CreatedAt,
+		"expires_at": link.ExpiresAt,
+		"url":        fmt.Sprintf("/s/%s", token),
+	})
+}
+
+func (s *Server) handleListShares(w http.ResponseWriter, r *http.Request) {
+	links, err := s.shares.List()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if links == nil {
+		links = []ShareLink{}
+	}
+	writeJSON(w, http.StatusOK, links)
+}
+
+func (s *Server) handleRevokeShare(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "share id is required")
+		return
+	}
+	if err := s.shares.Revoke(id); err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
+}
+
+// handleShareAccess serves a vault document to an unauthenticated request
+// that presents a valid share token. Access is read-only — the document is
+// served as inline content. Rate limiting and token-hiding in logs are
+// enforced.
+func (s *Server) handleShareAccess(w http.ResponseWriter, r *http.Request) {
+	token := r.PathValue("token")
+	if token == "" || len(token) != 64 {
+		writeError(w, http.StatusNotFound, "not found")
+		return
+	}
+
+	link, err := s.shares.Lookup(token)
+	if err != nil {
+		// Never disclose whether the link never existed or merely expired.
+		writeError(w, http.StatusNotFound, "not found")
+		return
+	}
+
+	rel, err := resolveRequestPath(link.Path)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "not found")
+		return
+	}
+
+	// Serve with Content-Disposition: inline so the document is displayed,
+	// not force-downloaded.
+	s.serveVaultFile(w, r, rel, "inline", filepath.Base(rel))
 }

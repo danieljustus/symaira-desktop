@@ -40,3 +40,6 @@ internal/service/testdata/
 .github/audit/
 .github/coverage/
 .github/prerelease/
+
+# Parallel worktrees
+.worktrees/

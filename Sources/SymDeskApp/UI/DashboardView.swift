@@ -13,7 +13,9 @@ struct DashboardView: View {
     let doctorReport: DoctorReport?
     let onNavigate: (ContentView.DisplayMode) -> Void
 
-    @State private var recentNotes: [Note] = []
+    private var recentNotes: [Note] {
+        notes.sorted { $0.modifiedAt > $1.modifiedAt }.prefix(5).map { $0 }
+    }
 
     var body: some View {
         ScrollView {
@@ -32,9 +34,6 @@ struct DashboardView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .navigationTitle("Dashboard")
-        .task {
-            recentNotes = notes.sorted { $0.modifiedAt > $1.modifiedAt }.prefix(5).map { $0 }
-        }
     }
 
     // MARK: - Header

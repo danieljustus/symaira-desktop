@@ -22,6 +22,7 @@ import (
 )
 
 func registerCommands(rootCmd *cobra.Command) {
+	rootCmd.AddCommand(newMailCmd())
 	rootCmd.AddCommand(newRecipeCmd())
 	rootCmd.AddCommand(newHistoryCmd())
 	rootCmd.AddCommand(newRestoreCmd())

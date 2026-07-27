@@ -9,7 +9,7 @@ options:
 packages:
   symaira-appkit:
     url: https://github.com/danieljustus/symaira-appkit
-    branch: main
+    revision: 463cebd5c1c53353dc63da07f77730ff2611a90c
 
 targets:
   SymDeskCore:

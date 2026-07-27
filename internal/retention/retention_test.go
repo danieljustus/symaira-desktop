@@ -51,11 +51,11 @@ func TestSelectorMatches(t *testing.T) {
 func TestEvaluate(t *testing.T) {
 	now := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
 	rule := Rule{
-		Name:          "old invoices",
-		Period:        30 * 24 * time.Hour,
+		Name:           "old invoices",
+		Period:         30 * 24 * time.Hour,
 		ReferenceField: "document_date",
-		Action:        ActionTrash,
-		Selector:      Selector{DocumentType: "invoice"},
+		Action:         ActionTrash,
+		Selector:       Selector{DocumentType: "invoice"},
 	}
 
 	docs := []DocMeta{
@@ -94,10 +94,10 @@ func TestEvaluate(t *testing.T) {
 
 func TestValidate(t *testing.T) {
 	valid := Rule{
-		Name:          "test rule",
-		PeriodDays:    30,
+		Name:           "test rule",
+		PeriodDays:     30,
 		ReferenceField: "document_date",
-		Action:        ActionTrash,
+		Action:         ActionTrash,
 	}
 	if err := Validate(valid); err != nil {
 		t.Errorf("expected valid rule, got error: %v", err)

@@ -37,6 +37,8 @@ struct DiscoverView: View {
     @EnvironmentObject var core: DeskCore
     @Environment(\.openURL) private var openURL
 
+    var onNavigateToTools: (() -> Void)? = nil
+
     @AppStorage("discoverExploredIDs") private var exploredIDsRaw: String = "[]"
 
     @State private var exploredIDs: Set<String> = []
@@ -166,7 +168,11 @@ struct DiscoverView: View {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(cmd, forType: .string)
         case .openDocs(let url):
-            openURL(url)
+            if let tools = onNavigateToTools, isToolInstallURL(url) {
+                tools()
+            } else {
+                openURL(url)
+            }
         case .noop:
             break
         }
@@ -194,6 +200,11 @@ struct DiscoverView: View {
             doctorReport = nil
         }
         isLoadingDoctor = false
+    }
+    
+    private func isToolInstallURL(_ url: URL) -> Bool {
+        let str = url.absoluteString
+        return str.contains("symaira-seek") || str.contains("symaira-memory") || str.contains("symaira-ingest")
     }
 }
 

@@ -8,7 +8,7 @@ struct CompanionToolsView: View {
     @EnvironmentObject var core: DeskCore
 
     let doctorReport: DoctorReport?
-    let onDoctorRefresh: () async -> Void
+    let onDoctorRefresh: @Sendable () async -> Void
 
     @State private var installingTools: Set<String> = []
     @State private var installOutput: [String: String] = [:]
@@ -235,7 +235,7 @@ struct CompanionToolsView: View {
         }
     }
 
-    private func findBrewPath() -> String {
+    private nonisolated func findBrewPath() -> String {
         for path in ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"] {
             if FileManager.default.isExecutableFile(atPath: path) {
                 return path

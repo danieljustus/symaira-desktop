@@ -28,6 +28,7 @@ func registerCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(newRestoreCmd())
 	rootCmd.AddCommand(newTrashCmd())
 	rootCmd.AddCommand(newMeetingCmd())
+	rootCmd.AddCommand(newRetentionCmd())
 	doctorCmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "Check system health, vault, and sidecar configuration",

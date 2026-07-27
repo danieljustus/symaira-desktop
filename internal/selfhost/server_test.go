@@ -349,7 +349,7 @@ echo '{"type":"done"}'
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", response.StatusCode, readBody(response))
 	}
@@ -416,7 +416,7 @@ func TestHandleCommandStreamTruncatesOversizedOutput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200 (status already committed once streaming starts), got %d", response.StatusCode)
 	}
@@ -642,7 +642,7 @@ func TestAuthorizationMatrix(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				defer response.Body.Close()
+				defer func() { _ = response.Body.Close() }()
 				wantAllowed := cred.allowed(rt.requiresAdmin)
 				gotAllowed := response.StatusCode != http.StatusUnauthorized && response.StatusCode != http.StatusForbidden
 				if gotAllowed != wantAllowed {
@@ -671,7 +671,7 @@ func authorized(t *testing.T, method, url string, body io.Reader, contentType st
 }
 
 func readBody(response *http.Response) string {
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	data, _ := io.ReadAll(response.Body)
 	return string(data)
 }

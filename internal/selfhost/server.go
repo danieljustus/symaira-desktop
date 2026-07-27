@@ -552,7 +552,7 @@ func (s *Server) serveVaultFile(w http.ResponseWriter, r *http.Request, rel, dis
 		writeError(w, http.StatusNotFound, "file not found")
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	info, err := file.Stat()
 	if err != nil || !info.Mode().IsRegular() {
 		writeError(w, http.StatusNotFound, "file not found")
@@ -611,7 +611,7 @@ func (s *Server) handleIngest(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "multipart field 'file' is required")
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	id, err := NewJobID()
 	if err != nil {

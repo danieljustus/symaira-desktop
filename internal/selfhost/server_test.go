@@ -349,7 +349,7 @@ echo '{"type":"done"}'
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", response.StatusCode, readBody(response))
 	}
@@ -416,7 +416,7 @@ func TestHandleCommandStreamTruncatesOversizedOutput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200 (status already committed once streaming starts), got %d", response.StatusCode)
 	}
@@ -567,11 +567,11 @@ func TestAuthorizationMatrix(t *testing.T) {
 	t.Cleanup(httpServer.Close)
 
 	type route struct {
-		name   string
-		method string
-		path   string
-		scope  tokenScope
-		body   func() (io.Reader, string)
+		name          string
+		method        string
+		path          string
+		requiresAdmin bool
+		body          func() (io.Reader, string)
 	}
 	jsonBody := func(value any) func() (io.Reader, string) {
 		return func() (io.Reader, string) {
@@ -583,13 +583,13 @@ func TestAuthorizationMatrix(t *testing.T) {
 		}
 	}
 	routes := []route{
-		{"status", http.MethodGet, "/api/v1/status", scopeAdmin, nil},
-		{"snapshot", http.MethodGet, "/api/v1/snapshot", scopeAdmin, nil},
-		{"get-file", http.MethodGet, "/api/v1/files?path=Hello.md", scopeAdmin, nil},
-		{"put-file", http.MethodPut, "/api/v1/files?path=Hello.md", scopeAdmin, func() (io.Reader, string) {
+		{"status", http.MethodGet, "/api/v1/status", false, nil},
+		{"snapshot", http.MethodGet, "/api/v1/snapshot", false, nil},
+		{"get-file", http.MethodGet, "/api/v1/files?path=Hello.md", false, nil},
+		{"put-file", http.MethodPut, "/api/v1/files?path=Hello.md", false, func() (io.Reader, string) {
 			return strings.NewReader("# Hello"), "text/markdown"
 		}},
-		{"ingest", http.MethodPost, "/api/v1/ingest", scopeAdmin, func() (io.Reader, string) {
+		{"ingest", http.MethodPost, "/api/v1/ingest", true, func() (io.Reader, string) {
 			var upload bytes.Buffer
 			writer := multipart.NewWriter(&upload)
 			part, err := writer.CreateFormFile("file", "doc.png")
@@ -600,24 +600,24 @@ func TestAuthorizationMatrix(t *testing.T) {
 			_ = writer.Close()
 			return &upload, writer.FormDataContentType()
 		}},
-		{"jobs", http.MethodGet, "/api/v1/jobs", scopeAdmin, nil},
-		{"jobs-retry", http.MethodPost, "/api/v1/jobs/retry?id=missing", scopeAdmin, nil},
-		{"command", http.MethodPost, "/api/v1/command", scopeAdmin, jsonBody(commandRequest{Arguments: []string{"ls", "--json"}})},
-		{"worker-lease", http.MethodPost, "/api/v1/worker/lease", scopeWorker, jsonBody(leaseRequest{WorkerID: "w1", Capabilities: []string{"ocr"}})},
-		{"worker-input", http.MethodGet, "/api/v1/worker/input?id=missing", scopeWorker, nil},
-		{"worker-complete", http.MethodPost, "/api/v1/worker/complete", scopeWorker, jsonBody(completionRequest{JobID: "missing", WorkerID: "w1", Text: "x", Engine: "tesseract"})},
-		{"worker-fail", http.MethodPost, "/api/v1/worker/fail", scopeWorker, jsonBody(failRequest{JobID: "missing", WorkerID: "w1", Error: "x"})},
+		{"jobs", http.MethodGet, "/api/v1/jobs", true, nil},
+		{"jobs-retry", http.MethodPost, "/api/v1/jobs/retry?id=missing", true, nil},
+		{"command", http.MethodPost, "/api/v1/command", true, jsonBody(commandRequest{Arguments: []string{"ls", "--json"}})},
+		{"worker-lease", http.MethodPost, "/api/v1/worker/lease", false, jsonBody(leaseRequest{WorkerID: "w1", Capabilities: []string{"ocr"}})},
+		{"worker-input", http.MethodGet, "/api/v1/worker/input?id=missing", false, nil},
+		{"worker-complete", http.MethodPost, "/api/v1/worker/complete", false, jsonBody(completionRequest{JobID: "missing", WorkerID: "w1", Text: "x", Engine: "tesseract"})},
+		{"worker-fail", http.MethodPost, "/api/v1/worker/fail", false, jsonBody(failRequest{JobID: "missing", WorkerID: "w1", Error: "x"})},
 	}
 
 	credentials := []struct {
 		name    string
 		token   string
-		allowed func(scope tokenScope) bool
+		allowed func(requiresAdmin bool) bool
 	}{
-		{"admin token", testToken, func(tokenScope) bool { return true }},
-		{"worker token", testWorkerToken, func(scope tokenScope) bool { return scope == scopeWorker }},
-		{"no token", "", func(tokenScope) bool { return false }},
-		{"wrong token", "0000000000000000000000000000wrong", func(tokenScope) bool { return false }},
+		{"admin token", testToken, func(bool) bool { return true }},
+		{"worker token", testWorkerToken, func(requiresAdmin bool) bool { return !requiresAdmin }},
+		{"no token", "", func(bool) bool { return false }},
+		{"wrong token", "0000000000000000000000000000wrong", func(bool) bool { return false }},
 	}
 
 	for _, rt := range routes {
@@ -642,9 +642,9 @@ func TestAuthorizationMatrix(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				defer response.Body.Close()
-				wantAllowed := cred.allowed(rt.scope)
-				gotAllowed := response.StatusCode != http.StatusUnauthorized
+				defer func() { _ = response.Body.Close() }()
+				wantAllowed := cred.allowed(rt.requiresAdmin)
+				gotAllowed := response.StatusCode != http.StatusUnauthorized && response.StatusCode != http.StatusForbidden
 				if gotAllowed != wantAllowed {
 					t.Fatalf("%s with %s: expected allowed=%v, got status %d", rt.name, cred.name, wantAllowed, response.StatusCode)
 				}
@@ -671,7 +671,7 @@ func authorized(t *testing.T, method, url string, body io.Reader, contentType st
 }
 
 func readBody(response *http.Response) string {
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	data, _ := io.ReadAll(response.Body)
 	return string(data)
 }

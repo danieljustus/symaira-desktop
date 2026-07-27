@@ -44,6 +44,11 @@ type Config struct {
 	// TrashRetentionDays is the default age after which "trash purge"
 	// permanently removes soft-deleted files.
 	TrashRetentionDays int `toml:"trash_retention_days" env:"SYMDESK_TRASH_RETENTION_DAYS"`
+
+	// StoragePathTemplate is an optional template that determines where
+	// ingested documents are placed in the vault. See internal/templatepath
+	// for the supported syntax.
+	StoragePathTemplate string `toml:"storage_path_template" env:"SYMDESK_STORAGE_PATH_TEMPLATE"`
 }
 
 func DefaultConfig() *Config {

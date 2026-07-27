@@ -302,7 +302,7 @@ func TestSanitizeFileName(t *testing.T) {
 	}{
 		{"simple", "simple"},
 		{"file/name:test", "file_name_test"},
-		{"test*?.txt", "test_.txt"},      // * → _, ? → _, then __ collapsed
+		{"test*?.txt", "test_.txt"},           // * → _, ? → _, then __ collapsed
 		{"trailing dots...", "trailing dots"}, // dots trimmed, spaces left
 		{"a\nb	c", "a_b_c"},
 		{strings.Repeat("x", 150), strings.Repeat("x", 120)},

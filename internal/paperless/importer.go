@@ -32,12 +32,12 @@ type ImportResult struct {
 
 // ImportSummary holds aggregate counters from an import run.
 type ImportSummary struct {
-	Total     int            `json:"total"`
-	Created   int            `json:"created"`
-	Updated   int            `json:"updated"`
-	Skipped   int            `json:"skipped"`
-	Errors    int            `json:"errors"`
-	Results   []ImportResult `json:"results"`
+	Total   int            `json:"total"`
+	Created int            `json:"created"`
+	Updated int            `json:"updated"`
+	Skipped int            `json:"skipped"`
+	Errors  int            `json:"errors"`
+	Results []ImportResult `json:"results"`
 }
 
 // Import reads a Paperless-ngx export directory and creates or updates vault

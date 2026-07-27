@@ -8,22 +8,22 @@ import (
 
 // ManifestEntry represents a single document from a Paperless-ngx export manifest.
 type ManifestEntry struct {
-	ID                  int                 `json:"id"`
-	Correspondent       *string             `json:"correspondent"`
-	DocumentType        *string             `json:"document_type"`
-	Title               string              `json:"title"`
-	Content             string              `json:"content"`
-	Tags                []string            `json:"tags"`
-	Created             *string             `json:"created"`
-	Added               *string             `json:"added"`
-	Modified            *string             `json:"modified"`
-	FileSize            *int64              `json:"file_size"`
-	Checksum            *string             `json:"checksum"`
-	ArchiveSerialNumber *int                `json:"archive_serial_number"`
-	OriginalFileName    *string             `json:"original_file_name"`
-	ArchivedFileName    *string             `json:"archived_file_name"`
-	Notes               []ManifestNote      `json:"notes"`
-	Extra               map[string]any      `json:"-"`
+	ID                  int            `json:"id"`
+	Correspondent       *string        `json:"correspondent"`
+	DocumentType        *string        `json:"document_type"`
+	Title               string         `json:"title"`
+	Content             string         `json:"content"`
+	Tags                []string       `json:"tags"`
+	Created             *string        `json:"created"`
+	Added               *string        `json:"added"`
+	Modified            *string        `json:"modified"`
+	FileSize            *int64         `json:"file_size"`
+	Checksum            *string        `json:"checksum"`
+	ArchiveSerialNumber *int           `json:"archive_serial_number"`
+	OriginalFileName    *string        `json:"original_file_name"`
+	ArchivedFileName    *string        `json:"archived_file_name"`
+	Notes               []ManifestNote `json:"notes"`
+	Extra               map[string]any `json:"-"`
 }
 
 // ManifestNote represents a note attached to a document in the export.

@@ -27,6 +27,7 @@ struct ContentView: View {
     
     @AppStorage("isBlockMode") private var isBlockMode = false
     @AppStorage("dismissedNotificationPermissionBanner") private var dismissedNotificationPermissionBanner = false
+    @AppStorage("dismissedVersionMismatchBanner") private var dismissedVersionMismatchBanner = false
 
     @StateObject private var mutationTracker = AsyncActionTracker<String>()
     @State private var ingestFailure: IngestFailure? = nil
@@ -550,10 +551,29 @@ struct ContentView: View {
                 .onReceive(NotificationCenter.default.publisher(for: .openDiscover)) { _ in
                     displayMode = .discover
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .openCommandPalette)) { _ in
+                    isShowingPalette = true
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .openNewNoteSheet)) { _ in
+                    isShowingNewNoteSheet = true
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .openRulesSettings)) { _ in
+                    displayMode = .rules
+                }
                 .overlay(alignment: .top) {
-                    if notificationManager.isDenied && !dismissedNotificationPermissionBanner {
-                        NotificationDeniedBanner {
-                            dismissedNotificationPermissionBanner = true
+                    VStack(spacing: 0) {
+                        if !dismissedVersionMismatchBanner, let coreVer = core.coreVersion {
+                            let appVer = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+                            if !appVer.isEmpty && coreVer != appVer && appVer.compare(coreVer, options: .numeric) == .orderedDescending {
+                                VersionMismatchBanner(appVersion: appVer, coreVersion: coreVer) {
+                                    dismissedVersionMismatchBanner = true
+                                }
+                            }
+                        }
+                        if notificationManager.isDenied && !dismissedNotificationPermissionBanner {
+                            NotificationDeniedBanner {
+                                dismissedNotificationPermissionBanner = true
+                            }
                         }
                     }
                 }
@@ -1023,6 +1043,45 @@ private struct NotificationDeniedBanner: View {
             .buttonStyle(.plain)
             .foregroundStyle(SymairaTheme.textSecondary)
             .help("Dismiss notification reminder")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .symDeskLiquidGlass(cornerRadius: 14, prominence: .elevated)
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .accessibilityElement(children: .contain)
+    }
+}
+
+// MARK: - Version Mismatch Banner
+
+/// Persistent, dismissible banner shown when the installed `symdesk` CLI is
+/// older than the app version. An older CLI silently applies older vault rules,
+/// so the mismatch is surfaced rather than ignored (issue #246).
+private struct VersionMismatchBanner: View {
+    let appVersion: String
+    let coreVersion: String
+    let dismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(SymairaTheme.goldPrimary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("CLI version mismatch")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(SymairaTheme.textPrimary)
+                Text("App v\(appVersion) is driving CLI v\(coreVersion). Run `brew upgrade symdesk` to update.")
+                    .font(.caption2)
+                    .foregroundStyle(SymairaTheme.textSecondary)
+            }
+            Spacer(minLength: 12)
+            Button(action: dismiss) {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(SymairaTheme.textSecondary)
+            .help("Dismiss version mismatch warning")
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)

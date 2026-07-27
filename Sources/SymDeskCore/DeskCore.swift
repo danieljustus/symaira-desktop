@@ -5,6 +5,7 @@ import SymairaCLIRunner
 public enum DeskCoreError: Error {
     case coreNotFound
     case schemaMismatch(expected: Int, got: Int)
+    case cliExecutionFailed(exitCode: Int32, stderr: String)
 }
 
 public struct Note: Codable, Equatable, Identifiable, Hashable, Sendable {
@@ -530,6 +531,10 @@ public final class DeskCore: ObservableObject {
     @Published public private(set) var isReady = false
     @Published public private(set) var errorMessage: String?
 
+    /// The CLI version reported by `symdesk version --json`, cached once at
+    /// connect and nil when the CLI is unreachable or remote.
+    @Published public private(set) var coreVersion: String?
+
     @Published public var vaultPath: String?
 	@Published public private(set) var serverURL: URL?
 
@@ -586,6 +591,13 @@ public final class DeskCore: ObservableObject {
             try detector.requireSchemaVersion(1, of: detected)
             self.tool = detected
             self.transport = LocalDeskTransport(tool: detected)
+            // Cache the CLI version for compatibility checks (issue #246).
+            // A failure here is non-fatal — the version banner simply won't
+            // appear, and every other screen still works.
+            if let versionResult = try? await runCommandResult(arguments: ["version", "--json"]),
+               let status = try? JSONDecoder().decode(DeskStatus.self, from: versionResult.stdout) {
+                self.coreVersion = status.version
+            }
             self.isReady = true
         } catch {
             self.errorMessage = "symdesk schema mismatch: \(error)"
@@ -621,6 +633,11 @@ public final class DeskCore: ObservableObject {
 	private func runChecked(arguments: [String], stdin: String = "") async throws -> Data {
 		guard let transport else { throw DeskCoreError.coreNotFound }
 		return try await transport.command(arguments: arguments, stdin: stdin)
+	}
+
+	private func runCommandResult(arguments: [String]) async throws -> CLIResult {
+		guard let transport else { throw DeskCoreError.coreNotFound }
+		return try await transport.commandResult(arguments: arguments)
 	}
 
 	private func runDecoding<T: Decodable & Sendable>(_ type: T.Type, arguments: [String], stdin: String = "") async throws -> T {
@@ -659,23 +676,23 @@ public final class DeskCore: ObservableObject {
     }
 
     public func getDoctorReport() async throws -> DoctorReport {
-		let data: Data
-		do {
-			data = try await runChecked(arguments: ["doctor", "--json"] + vaultArgs)
-		} catch {
-			let errStr = "\(error)"
-			if let start = errStr.firstIndex(of: "{"),
-			   let end = errStr.lastIndex(of: "}"),
-			   start <= end {
-				let jsonSub = String(errStr[start...end])
-				if let jsonBytes = jsonSub.data(using: .utf8),
-				   let report = try? JSONDecoder().decode(DoctorReport.self, from: jsonBytes) {
-					return report
-				}
-			}
-			throw error
-		}
-		return try JSONDecoder().decode(DoctorReport.self, from: data)
+        // Use commandResult so stdout survives even when the CLI exits
+        // non-zero (symdesk doctor --json exits 1 on warnings but writes
+        // the complete report to stdout and nothing to stderr).
+        let result = try await runCommandResult(arguments: ["doctor", "--json"] + vaultArgs)
+
+        // Parse stdout regardless of exit code. Only fall back to an error
+        // when stdout is not valid JSON — that means the CLI genuinely
+        // could not produce a report.
+        if let report = try? JSONDecoder().decode(DoctorReport.self, from: result.stdout) {
+            return report
+        }
+
+        // No valid report on stdout: this is a genuine execution failure.
+        throw DeskCoreError.cliExecutionFailed(
+            exitCode: result.exitCode,
+            stderr: result.stderrText
+        )
     }
 
     public func getDoctor() async throws -> String {

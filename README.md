@@ -26,7 +26,7 @@ A local-first and self-hostable, **agent-native** workspace that unifies documen
 
 ## Status
 
-Working MVP: Go core (`symdesk`) with CLI, stdio MCP, SQLite/FTS5 sidecar, vault contract v2 ([VAULT.md](VAULT.md)), authenticated HTTP API, durable document queue, Docker deployment, and distributed Tesseract/Ollama OCR workers. The native macOS app provides editing, search, graph, saved views, document workflow, ingest and previews in local and server-connected modes. The iOS companion provides cached on-device search, document filters, Markdown reading, and native Quick Look previews from either Files/iCloud or a connected server.
+Working MVP: Go core (`symdesk`) with CLI, stdio MCP, SQLite/FTS5 sidecar, vault contract v2 ([VAULT.md](VAULT.md)), authenticated HTTP API, durable document queue, Docker deployment, and distributed Tesseract/Ollama OCR workers. The native macOS app provides a live dashboard, editing, sidebar note creation, full-text search, link graph, saved views, document workflow, ingest, companion tools installer, and previews in local and server-connected modes. The iOS companion provides cached on-device search, document filters, Markdown reading, and native Quick Look previews from either Files/iCloud or a connected server.
 
 This is not yet complete Paperless-ngx parity. The self-hosted path already covers central originals, Markdown, index, upload queue, remote OCR and native clients; advanced mail ingestion, multi-user permissions, automatic retention policies and a browser admin UI remain future work.
 
@@ -150,7 +150,7 @@ xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platfo
 
 ```text
 $ symdesk version --json
-{"tool":"symdesk","version":"0.7.0","schema_version":1}
+{"tool":"symdesk","version":"0.7.1","schema_version":1}
 ```
 
 ## Usage

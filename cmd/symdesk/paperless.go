@@ -46,7 +46,7 @@ document date — is preserved in the note frontmatter.`,
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 
 			svc := service.New(vRoot, db)
 			_ = svc

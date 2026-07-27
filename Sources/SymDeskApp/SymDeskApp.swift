@@ -57,6 +57,40 @@ struct SymDeskApp: App {
                 showDemoBanner = false
             }
         }
+        .commands {
+            CommandGroup(replacing: .appSettings) {
+                Button("Rules & Settings\u{2026}") {
+                    NotificationCenter.default.post(name: .openRulesSettings, object: nil)
+                }
+                .keyboardShortcut(",", modifiers: .command)
+            }
+            CommandMenu("File") {
+                Button("New Note") {
+                    NotificationCenter.default.post(name: .openNewNoteSheet, object: nil)
+                }
+                .keyboardShortcut("n", modifiers: .command)
+                Divider()
+                Button("Close") {
+                    NSApplication.shared.keyWindow?.close()
+                }
+                .keyboardShortcut("w", modifiers: .command)
+            }
+            CommandMenu("View") {
+                Button("Command Palette") {
+                    NotificationCenter.default.post(name: .openCommandPalette, object: nil)
+                }
+                .keyboardShortcut("k", modifiers: .command)
+                Divider()
+                Button("Dashboard") {
+                    NotificationCenter.default.post(name: .openDiscover, object: nil)
+                }
+            }
+        }
+
+        Settings {
+            RulesSettingsView(vaultPath: core.vaultPath)
+                .frame(minWidth: 520, minHeight: 400)
+        }
     }
 }
 

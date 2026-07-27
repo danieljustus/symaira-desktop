@@ -448,4 +448,8 @@ extension Notification.Name {
     /// running app (changing/resetting a local vault, leaving demo mode) so
     /// onboarding should reappear in-place, without a relaunch.
     static let vaultReset = Notification.Name("symdesk.vaultReset")
+    /// Posted by menu bar commands to trigger UI actions in ContentView.
+    static let openCommandPalette = Notification.Name("symdesk.openCommandPalette")
+    static let openNewNoteSheet = Notification.Name("symdesk.openNewNoteSheet")
+    static let openRulesSettings = Notification.Name("symdesk.openRulesSettings")
 }

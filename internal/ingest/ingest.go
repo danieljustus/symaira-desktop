@@ -184,13 +184,13 @@ func ingestBuiltin(vaultRoot, sourcePath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open source file: %w", err)
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 
 	dst, err := os.Create(targetFilePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to create target file: %w", err)
 	}
-	defer dst.Close()
+	defer func() { _ = dst.Close() }()
 
 	if _, err := io.Copy(dst, src); err != nil {
 		return "", fmt.Errorf("failed to copy file: %w", err)

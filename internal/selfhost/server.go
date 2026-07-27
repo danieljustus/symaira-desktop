@@ -25,6 +25,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/danieljustus/symaira-desktop/internal/permissions"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 	"github.com/fsnotify/fsnotify"
@@ -59,6 +60,7 @@ type Server struct {
 	cfg          ServerConfig
 	db           *sidecar.DB
 	jobs         *JobStore
+	perm         *permissions.Manager
 	vaultRoot    *os.Root
 	http         *http.Server
 	mux          *http.ServeMux
@@ -117,6 +119,43 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	}
 	s := &Server{cfg: cfg, db: db, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux()}
 	s.snapshotDirty.Store(true)
+
+	// Initialise the permissions manager. The config directory lives under
+	// .symdesk/ alongside the server state.
+	permDir := filepath.Join(cfg.VaultRoot, ".symdesk")
+	perm, err := permissions.NewManager(permDir)
+	if err != nil {
+		vaultRoot.Close()
+		db.Close()
+		return nil, fmt.Errorf("permissions: %w", err)
+	}
+	// Migration: when no users exist yet and a legacy token is set, create an
+	// admin user whose token hash matches the existing token so existing
+	// single-token deployments keep working without interruption.
+	if cfg.Token != "" {
+		users, err := perm.UserList()
+		if err != nil {
+			vaultRoot.Close()
+			db.Close()
+			return nil, fmt.Errorf("permissions: list users: %w", err)
+		}
+		if len(users) == 0 {
+			if _, err := perm.UserAdd("admin", "admin", "user"); err != nil {
+				vaultRoot.Close()
+				db.Close()
+				return nil, fmt.Errorf("permissions: create admin user: %w", err)
+			}
+			// Set the admin user's token hash to match the legacy token so
+			// existing clients authenticate without any change.
+			if err := perm.SetTokenHash("admin", permissions.HashToken(cfg.Token)); err != nil {
+				vaultRoot.Close()
+				db.Close()
+				return nil, fmt.Errorf("permissions: set admin token: %w", err)
+			}
+		}
+	}
+	s.perm = perm
+
 	if err := s.refreshIndex(); err != nil {
 		vaultRoot.Close()
 		db.Close()
@@ -227,51 +266,92 @@ func (s *Server) routes() {
 		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, `{"status":"ok"}`)
 	})
-	s.mux.Handle("GET /api/v1/status", s.auth(scopeAdmin, http.HandlerFunc(s.handleStatus)))
-	s.mux.Handle("GET /api/v1/snapshot", s.auth(scopeAdmin, http.HandlerFunc(s.handleSnapshot)))
-	s.mux.Handle("GET /api/v1/files", s.auth(scopeAdmin, http.HandlerFunc(s.handleGetFile)))
-	s.mux.Handle("PUT /api/v1/files", s.auth(scopeAdmin, http.HandlerFunc(s.handlePutFile)))
-	s.mux.Handle("POST /api/v1/ingest", s.auth(scopeAdmin, http.HandlerFunc(s.handleIngest)))
-	s.mux.Handle("GET /api/v1/jobs", s.auth(scopeAdmin, http.HandlerFunc(s.handleJobs)))
-	s.mux.Handle("POST /api/v1/jobs/retry", s.auth(scopeAdmin, http.HandlerFunc(s.handleRetryJob)))
-	s.mux.Handle("POST /api/v1/command", s.auth(scopeAdmin, http.HandlerFunc(s.handleCommand)))
-	s.mux.Handle("POST /api/v1/worker/lease", s.auth(scopeWorker, http.HandlerFunc(s.handleLease)))
-	s.mux.Handle("GET /api/v1/worker/input", s.auth(scopeWorker, http.HandlerFunc(s.handleWorkerInput)))
-	s.mux.Handle("POST /api/v1/worker/complete", s.auth(scopeWorker, http.HandlerFunc(s.handleComplete)))
-	s.mux.Handle("POST /api/v1/worker/fail", s.auth(scopeWorker, http.HandlerFunc(s.handleFail)))
+	s.mux.Handle("GET /api/v1/status", s.auth(http.HandlerFunc(s.handleStatus)))
+	s.mux.Handle("GET /api/v1/snapshot", s.auth(http.HandlerFunc(s.handleSnapshot)))
+	s.mux.Handle("GET /api/v1/files", s.auth(http.HandlerFunc(s.handleGetFile)))
+	s.mux.Handle("PUT /api/v1/files", s.auth(http.HandlerFunc(s.handlePutFile)))
+	s.mux.Handle("POST /api/v1/ingest", s.auth(http.HandlerFunc(s.handleIngest)))
+	s.mux.Handle("GET /api/v1/jobs", s.auth(http.HandlerFunc(s.handleJobs)))
+	s.mux.Handle("POST /api/v1/jobs/retry", s.auth(http.HandlerFunc(s.handleRetryJob)))
+	s.mux.Handle("POST /api/v1/command", s.auth(http.HandlerFunc(s.handleCommand)))
+	s.mux.Handle("POST /api/v1/worker/lease", s.auth(http.HandlerFunc(s.handleLease)))
+	s.mux.Handle("GET /api/v1/worker/input", s.auth(http.HandlerFunc(s.handleWorkerInput)))
+	s.mux.Handle("POST /api/v1/worker/complete", s.auth(http.HandlerFunc(s.handleComplete)))
+	s.mux.Handle("POST /api/v1/worker/fail", s.auth(http.HandlerFunc(s.handleFail)))
 }
 
-// tokenScope classifies which credential a route accepts. The admin/client
-// token (ServerConfig.Token) is always accepted, since it is the superset
-// credential and the back-compat single-token deployments rely on it also
-// working against worker routes.
-type tokenScope int
+// contextKey is the private type used for request-context values.
+type contextKey int
 
-const (
-	scopeAdmin tokenScope = iota
-	scopeWorker
-)
+const ctxKeyUser contextKey = iota
 
-func (s *Server) auth(scope tokenScope, next http.Handler) http.Handler {
+// auth authenticates the request via the permissions manager, attaches the
+// resolved user to the request context, and delegates to next. The legacy
+// single-token model is covered by the migration path: the admin token
+// created during NewServer matches ServerConfig.Token.
+//
+// Back-compat: the old worker-token / admin-token distinction still works
+// because any user with the "worker" role (and the admin user) can access
+// worker routes. The worker must be registered as a named user.
+func (s *Server) auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		provided := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
-		if !s.tokenAllowed(scope, provided) {
-			w.Header().Set("WWW-Authenticate", "Bearer")
-			writeError(w, http.StatusUnauthorized, "authentication required")
-			return
+
+		// Try the permissions manager first.
+		user, err := s.perm.Authenticate(provided)
+		if err != nil {
+			// Fall back to legacy constant-time comparison for the admin and
+			// worker tokens. This handles deployments where the users file hasn't
+			// been persisted yet (fresh container restarts with env-var tokens).
+			legacyRole := s.legacyTokenRole(provided)
+			if legacyRole == "" {
+				w.Header().Set("WWW-Authenticate", "Bearer")
+				writeError(w, http.StatusUnauthorized, "authentication required")
+				return
+			}
+			// Create a synthetic user reflecting the legacy token's scope.
+			if legacyRole == "admin" {
+				user = &permissions.User{Name: "admin", Roles: []string{"admin", "user"}}
+			} else {
+				user = &permissions.User{Name: "worker", Roles: []string{"worker"}}
+			}
 		}
-		next.ServeHTTP(w, r)
+
+		ctx := context.WithValue(r.Context(), ctxKeyUser, user)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func (s *Server) tokenAllowed(scope tokenScope, provided string) bool {
+// legacyTokenRole checks the provided token against the server's configured
+// admin and worker tokens using constant-time comparison, and returns the
+// legacy role name (\"admin\" or \"worker\") or empty string.
+func (s *Server) legacyTokenRole(provided string) string {
 	if constantTimeEqual(provided, s.cfg.Token) {
-		return true
+		return "admin"
 	}
-	if scope == scopeWorker && s.cfg.WorkerToken != "" && constantTimeEqual(provided, s.cfg.WorkerToken) {
-		return true
+	if s.cfg.WorkerToken != "" && constantTimeEqual(provided, s.cfg.WorkerToken) {
+		return "worker"
 	}
-	return false
+	return ""
+}
+
+// userFromContext extracts the authenticated user from the request context.
+// It returns nil when the request is unauthenticated (should not happen behind
+// the auth middleware).
+func userFromContext(r *http.Request) *permissions.User {
+	user, _ := r.Context().Value(ctxKeyUser).(*permissions.User)
+	return user
+}
+
+// requireAdmin writes a 403 response when the request is not from an admin
+// user. Callers must not write a response when this returns false.
+func (s *Server) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
+	user := userFromContext(r)
+	if user == nil || !user.HasRole("admin") {
+		writeError(w, http.StatusForbidden, "admin role required")
+		return false
+	}
+	return true
 }
 
 func constantTimeEqual(a, b string) bool {
@@ -302,7 +382,8 @@ type snapshotNote struct {
 }
 
 func (s *Server) handleSnapshot(w http.ResponseWriter, r *http.Request) {
-	plain, compressed, etag, err := s.snapshotPayload()
+	user := userFromContext(r)
+	plain, compressed, etag, err := s.snapshotPayloadFiltered(user)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -406,10 +487,60 @@ func (s *Server) snapshotPayload() ([]byte, []byte, string, error) {
 	return s.snapshotJSON, s.snapshotGZIP, etag, nil
 }
 
+// snapshotPayloadFiltered is like snapshotPayload but excludes documents the
+// user cannot read. Admins see everything (the existing behaviour).
+func (s *Server) snapshotPayloadFiltered(user *permissions.User) ([]byte, []byte, string, error) {
+	plain, compressed, etag, err := s.snapshotPayload()
+	if err != nil {
+		return nil, nil, "", err
+	}
+	// Admins get the full snapshot as before.
+	if user == nil || user.HasRole("admin") {
+		return plain, compressed, etag, nil
+	}
+	// Parse and filter for non-admin users.
+	var payload struct {
+		Notes      []snapshotNote `json:"notes"`
+		GeneratedAt time.Time     `json:"generated_at"`
+	}
+	if err := json.Unmarshal(plain, &payload); err != nil {
+		return nil, nil, "", err
+	}
+	filtered := payload.Notes[:0]
+	for _, n := range payload.Notes {
+		if s.perm.CanRead(user, n.Path) {
+			filtered = append(filtered, n)
+		}
+	}
+	payload.Notes = filtered
+	plain2, err := json.Marshal(payload)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	plain2 = append(plain2, '\n')
+	var comp2 bytes.Buffer
+	gz := gzip.NewWriter(&comp2)
+	if _, err := gz.Write(plain2); err != nil {
+		return nil, nil, "", err
+	}
+	if err := gz.Close(); err != nil {
+		return nil, nil, "", err
+	}
+	// Use a different etag for filtered snapshots so the client's 304
+	// cache doesn't leak data across users.
+	newETag := etag + ":" + user.Name
+	return plain2, comp2.Bytes(), newETag, nil
+}
+
 func (s *Server) handleGetFile(w http.ResponseWriter, r *http.Request) {
 	rel, err := resolveRequestPath(r.URL.Query().Get("path"))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	user := userFromContext(r)
+	if !s.perm.CanRead(user, rel) {
+		writeError(w, http.StatusForbidden, "access denied")
 		return
 	}
 	s.serveVaultFile(w, r, rel, "inline", filepath.Base(rel))
@@ -437,6 +568,11 @@ func (s *Server) handlePutFile(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "only vault-relative Markdown files can be updated")
 		return
 	}
+	user := userFromContext(r)
+	if !s.perm.CanWrite(user, rel) {
+		writeError(w, http.StatusForbidden, "access denied")
+		return
+	}
 	data, err := readLimited(r.Body, maxNoteBytes)
 	if err != nil {
 		writeError(w, http.StatusRequestEntityTooLarge, err.Error())
@@ -462,6 +598,9 @@ func (s *Server) handlePutFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleIngest(w http.ResponseWriter, r *http.Request) {
+	if !s.requireAdmin(w, r) {
+		return
+	}
 	r.Body = http.MaxBytesReader(w, r.Body, maxUploadBytes+(1<<20))
 	if err := r.ParseMultipartForm(maxUploadBytes); err != nil {
 		writeError(w, http.StatusRequestEntityTooLarge, "upload exceeds 100 MiB or is invalid")
@@ -502,7 +641,10 @@ func (s *Server) handleIngest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusAccepted, job)
 }
 
-func (s *Server) handleJobs(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
+	if !s.requireAdmin(w, r) {
+		return
+	}
 	jobs, err := s.jobs.List()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -512,6 +654,9 @@ func (s *Server) handleJobs(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) handleRetryJob(w http.ResponseWriter, r *http.Request) {
+	if !s.requireAdmin(w, r) {
+		return
+	}
 	job, err := s.jobs.Retry(r.URL.Query().Get("id"))
 	if err != nil {
 		writeError(w, http.StatusConflict, err.Error())
@@ -566,6 +711,9 @@ func (s *Server) subprocessEnv() []string {
 }
 
 func (s *Server) handleCommand(w http.ResponseWriter, r *http.Request) {
+	if !s.requireAdmin(w, r) {
+		return
+	}
 	var request commandRequest
 	if err := decodeJSON(r, &request, 2<<20); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())

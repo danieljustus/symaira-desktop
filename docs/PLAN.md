@@ -17,7 +17,7 @@
 
 - `symdesk` ist die **Kompositions-Schale** des Symaira-Ökosystems: eine local-first Arbeitsoberfläche über **einem Plain-Markdown-Vault** (Obsidian-kompatibler Ordner, iCloud-syncbar).
 - **Zwei Artefakte, ein Repo:** Go-Binary `symdesk` (CLI + MCP-Server + Service-Schicht, CGO-frei) und native SwiftUI-macOS-App `SymDesk.app` (auf [`symaira-appkit`](https://github.com/danieljustus/symaira-appkit), exakt gepinnt).
-- **Keine Web-UI.** Die früher geplante React-SPA ist verworfen (Entscheidung 2026-07-06).
+- **Browser-Zugriff geplant.** Der frühere Entscheid "Keine Web-UI" ist revidiert. Eine server-gerenderte Lese-Oberfläche, eingebettet im `symdesk`-Binary, ist als nächster Schritt akzeptiert; Details stehen in [`BROWSER-ACCESS.md`](./BROWSER-ACCESS.md).
 - Die App spricht mit dem Core **nur** über Subprozesse: kurze `symdesk … --json`-Calls (appkit-`CLIRunner`) plus **einen** langlaufenden `symdesk events --json`-NDJSON-Stream. Kein HTTP, kein Socket.
 - Der Core **komponiert** Geschwister-Tools zur Laufzeit per PATH-Probe (nie Compile-Time-Import): `symseek` (Suche), `symmemory` (RAG/Graph), `symfetch` (Web→MD), `symvault` (Secrets, `op://`-Schema), `symingest` (OCR/Ingest, hat eigenes `mcp`).
 - **Fundament:** `github.com/danieljustus/symaira-corekit` (`mcpserver`, `sqlitekit`, `configkit`, `fsutil`, `exitcodes`, `logkit`, `updatecheck`, `versionkit`); SQLite via `modernc.org/sqlite`.

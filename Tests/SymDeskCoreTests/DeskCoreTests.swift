@@ -292,7 +292,8 @@ final class DeskCoreTests: XCTestCase {
         let report = try JSONDecoder().decode(DoctorReport.self, from: json)
         XCTAssertEqual(report.overall, "degraded")
         XCTAssertFalse(report.tools.isAvailable("symseek"))
-        XCTAssertFalse(report.vault.isAvailable("symmemory"))
+        XCTAssertNil(report.vault)
+        XCTAssertFalse(report.tools.isAvailable("symmemory"))
     }
 
     func testDoctorReportToolAvailabilityVariants() {

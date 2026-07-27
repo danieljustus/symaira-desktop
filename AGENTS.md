@@ -2,7 +2,7 @@
 
 Local-first, self-hostable, agent-native workspace over a single plain-Markdown vault. `symdesk` (Go core) runs as CLI, stdio MCP server, authenticated self-hosted HTTP document API, or distributed OCR worker. Native SwiftUI apps for macOS (`SymDeskApp`) and iOS (`SymDeskMobile`) open a local/iCloud vault directly or connect to the self-hosted server.
 
-Identity: **Markdown-vault workspace product — NOT the tool hub** (hub is `symaira-hub`). There is **no embedded web UI**; the HTTP API serves JSON.
+Identity: **Markdown-vault workspace product — NOT the tool hub** (hub is `symaira-hub`). A **server-rendered browser UI** (Go templates + vanilla JS, embedded in the `symdesk` binary) is accepted in principle; see `docs/BROWSER-ACCESS.md`. The HTTP API also serves JSON for native and machine clients.
 
 ## Commands
 
@@ -56,7 +56,7 @@ docs/            # ARCHITECTURE.md, PLAN.md, SELF_HOSTING.md
 
 ## Anti-Patterns (this repo)
 
-- Do NOT add an embedded web UI / TS / React frontend — decided against; native SwiftUI only.
+- Do NOT add a separate SPA / TS / React frontend with its own build toolchain — the decided browser path is server-rendered HTML embedded in the Go binary (`docs/BROWSER-ACCESS.md`).
 - Do NOT position desktop as the tool hub (that is symaira-hub's role).
 - Do NOT add compile-time imports of sibling Symaira repos — runtime detection with graceful fallback.
 - Do NOT write vault state only to SQLite — Markdown files first, sidecar follows.

@@ -1,12 +1,18 @@
 import Foundation
 import SymairaIngestContract
 
+public enum RulesErrorKind {
+    case validation
+    case availability
+}
+
 @MainActor
 public final class ClassificationRulesViewModel: ObservableObject {
     @Published public var rules: [ClassificationRule] = []
     @Published public var isLoading = false
     @Published public var isPerformingOperation = false
     @Published public var lastError: String?
+    @Published public var lastErrorKind: RulesErrorKind = .availability
     @Published public var lastActionMessage: String?
 
     @Published public var testText: String = ""
@@ -45,6 +51,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
             return true
         } catch {
             lastError = error.localizedDescription
+            lastErrorKind = .availability
             isLoading = false
             return false
         }
@@ -85,6 +92,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
     public func saveRule(id: Int64?, pattern: String, kind: String, value: String) async -> Bool {
         guard let values = normalizedValues(pattern: pattern, kind: kind, value: value) else {
             lastError = "Pattern, kind, and value are required."
+            lastErrorKind = .validation
             return false
         }
         isPerformingOperation = true
@@ -103,6 +111,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
             return true
         } catch {
             lastError = error.localizedDescription
+            lastErrorKind = .availability
             isPerformingOperation = false
             return false
         }
@@ -119,6 +128,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
             return true
         } catch {
             lastError = error.localizedDescription
+            lastErrorKind = .availability
             isPerformingOperation = false
             return false
         }
@@ -129,6 +139,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
         let text = testText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
             lastError = "Enter sample text to test classification rules."
+            lastErrorKind = .validation
             return false
         }
         isPerformingOperation = true
@@ -139,6 +150,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
             return true
         } catch {
             lastError = error.localizedDescription
+            lastErrorKind = .availability
             isPerformingOperation = false
             return false
         }
@@ -148,6 +160,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
     public func runDryRun() async -> Bool {
         guard let values = normalizedValues(pattern: dryRunPattern, kind: dryRunKind, value: dryRunValue) else {
             lastError = "Pattern, kind, and value are required for the existing-document dry-run."
+            lastErrorKind = .validation
             return false
         }
         isPerformingOperation = true
@@ -159,6 +172,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
             return true
         } catch {
             lastError = error.localizedDescription
+            lastErrorKind = .availability
             isPerformingOperation = false
             return false
         }
@@ -183,6 +197,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
             return true
         } catch {
             lastError = error.localizedDescription
+            lastErrorKind = .availability
             isPerformingOperation = false
             return false
         }
@@ -192,6 +207,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
     public func deleteMail(id: String) async -> Bool {
         guard !id.isEmpty else {
             lastError = "Cannot delete account with empty identifier."
+            lastErrorKind = .validation
             return false
         }
         isPerformingOperation = true
@@ -203,6 +219,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
             return true
         } catch {
             lastError = error.localizedDescription
+            lastErrorKind = .availability
             isPerformingOperation = false
             return false
         }

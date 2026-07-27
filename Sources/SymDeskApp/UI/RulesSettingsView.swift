@@ -35,8 +35,9 @@ struct RulesSettingsView: View {
 					) { EmptyView() }
 				}
 				if !core.isRemote {
-                if let error = viewModel.lastError {
-                    messageCard(title: "symingest unavailable or incompatible", message: error, systemImage: "exclamationmark.triangle") {
+                if let error = viewModel.lastError, viewModel.lastErrorKind == .availability {
+                    let title = "symingest error"
+                    messageCard(title: title, message: error, systemImage: "exclamationmark.triangle") {
                         Button("Retry") { Task { await viewModel.load(); await viewModel.loadMail() } }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
@@ -233,6 +234,12 @@ struct RulesSettingsView: View {
                         .font(.callout)
                         .foregroundStyle(SymairaTheme.goldSecondary)
                 }
+            }
+
+            if let error = viewModel.lastError, viewModel.lastErrorKind == .validation {
+                Text(error)
+                    .font(.callout)
+                    .foregroundStyle(.red)
             }
         }
     }

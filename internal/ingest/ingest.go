@@ -47,6 +47,17 @@ func HasSymingest() (bool, string) {
 // If symingest is available, it delegates to symingest to perform OCR and metadata extraction.
 // Returns the relative path of the new markdown note.
 func IngestFile(vaultRoot, sourcePath string) (string, error) {
+	// Attempt barcode-based splitting for PDFs.
+	if strings.ToLower(filepath.Ext(sourcePath)) == ".pdf" {
+		if cfg := DefaultBarcodeConfig(); HasPdfToPPM() || hasSplitTools() {
+			notes, err := ingestPDFWithSplit(vaultRoot, sourcePath, cfg)
+			if err == nil && len(notes) > 0 {
+				return notes[0], nil // backward-compat: return first note
+			}
+			// Split failed or no separators found — fall through to normal ingest.
+		}
+	}
+
 	ok, _ := HasSymingest()
 	if ok {
 		// Attempt to use symingest ingest with --json (expected contract)
@@ -81,6 +92,80 @@ func IngestFile(vaultRoot, sourcePath string) (string, error) {
 	}
 
 	// Fallback to built-in copy behavior
+	return ingestBuiltin(vaultRoot, sourcePath)
+}
+
+// IngestFileWithBarcodeSplit ingests a file with configurable barcode-based
+// splitting for multi-page PDFs.
+//
+// When the input is a PDF and barcode scanning tools are available:
+//   1. Each page is scanned for a separator barcode matching cfg.SeparatorPattern.
+//   2. The PDF is split at separator boundaries.
+//   3. Each part is ingested as a separate document.
+//
+// When no separators are found, or the input is not a PDF, or scanning tools
+// are unavailable, the file is ingested as a single document.
+//
+// Returns a slice of relative note paths (one per resulting document).
+func IngestFileWithBarcodeSplit(vaultRoot, sourcePath string, cfg BarcodeConfig) ([]string, error) {
+	if strings.ToLower(filepath.Ext(sourcePath)) == ".pdf" && (HasPdfToPPM() || hasSplitTools()) {
+		notes, err := ingestPDFWithSplit(vaultRoot, sourcePath, cfg)
+		if err == nil && len(notes) > 0 {
+			return notes, nil
+		}
+		// Split failed or no separators — fall through to normal ingest.
+	}
+
+	notePath, err := IngestFile(vaultRoot, sourcePath)
+	if err != nil {
+		return nil, err
+	}
+	return []string{notePath}, nil
+}
+
+// ingestPDFWithSplit attempts barcode-based splitting and ingests each part.
+func ingestPDFWithSplit(vaultRoot, pdfPath string, cfg BarcodeConfig) ([]string, error) {
+	tmpDir, err := os.MkdirTemp("", "symdesk-split-*")
+	if err != nil {
+		return nil, fmt.Errorf("temp dir: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	result, err := SplitPDFByBarcode(pdfPath, cfg, tmpDir)
+	if err != nil {
+		return nil, fmt.Errorf("barcode split: %w", err)
+	}
+
+	if len(result.Parts) <= 1 && len(result.SeparatorPages) == 0 {
+		// No separators found — nothing to split.
+		return nil, nil
+	}
+
+	var notes []string
+	for i, partPath := range result.Parts {
+		notePath, err := IngestFile(vaultRoot, partPath)
+		if err != nil {
+			// Per-document failure: record but continue.
+			result.Errors[i+1] = err.Error()
+			continue
+		}
+		notes = append(notes, notePath)
+	}
+
+	if len(notes) == 0 {
+		return nil, fmt.Errorf("all parts failed to ingest")
+	}
+
+	return notes, nil
+}
+
+// hasSplitTools reports whether any PDF splitting tool is available.
+func hasSplitTools() bool {
+	return HasQPDF() || func() bool { ok, _ := HasSymingest(); return ok }()
+}
+
+// ingestBuiltin is the fallback copy-to-inbox path when symingest is not available.
+func ingestBuiltin(vaultRoot, sourcePath string) (string, error) {
 	inboxDir := filepath.Join(vaultRoot, "inbox")
 	if err := os.MkdirAll(inboxDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create inbox dir: %w", err)

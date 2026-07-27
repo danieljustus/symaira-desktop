@@ -130,7 +130,11 @@ struct IngestQueueView: View {
         errorMessage = nil
         isLoading = true
         do {
-            self.jobs = try await core.ingestJobs()
+            let fetched = try await core.ingestJobs()
+            self.jobs = fetched.filter { job in
+                let p = job.sourcePath.lowercased()
+                return !p.contains("symdesk-watcher-test-") && !p.contains("/inbox_watch/test-document.txt")
+            }
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -158,9 +162,9 @@ struct JobRow: View {
                 .font(.title2)
                 .padding(.top, 2)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(job.sourcePath)
+                    Text(displayFilename)
                         .font(.headline)
                         .foregroundColor(SymairaTheme.textPrimary)
                         .lineLimit(1)
@@ -169,6 +173,11 @@ struct JobRow: View {
                         .font(.system(.caption, design: .monospaced))
                         .foregroundColor(SymairaTheme.textMuted)
                 }
+                Text(job.sourcePath)
+                    .font(.caption2)
+                    .foregroundColor(SymairaTheme.textMuted)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
 
                 HStack(spacing: 12) {
                     Label(job.kind.capitalized, systemImage: "doc.text")
@@ -221,6 +230,11 @@ struct JobRow: View {
             return Image(systemName: "clock.fill")
                 .foregroundColor(SymairaTheme.goldSecondary)
         }
+    }
+
+    private var displayFilename: String {
+        let name = URL(fileURLWithPath: job.sourcePath).lastPathComponent
+        return name.isEmpty ? job.sourcePath : name
     }
 
     private func formattedDate(_ rawStr: String) -> String {

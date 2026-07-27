@@ -53,6 +53,7 @@ func setupWatcherTest(t *testing.T) (watchDir, vaultRoot string, svc *service.Se
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
 	cleanup = func() { _ = os.RemoveAll(tempDir) }
+	t.Setenv("HOME", tempDir)
 
 	vaultRoot = filepath.Join(tempDir, "vault")
 	if err := os.MkdirAll(filepath.Join(vaultRoot, "inbox"), 0755); err != nil {

@@ -144,6 +144,15 @@ struct CommandPalette: View {
             SymairaScreen { Color.clear }
         }
         .frame(width: 640, height: 460)
+        .onExitCommand {
+            if !searchText.isEmpty {
+                searchText = ""
+                searchResults = []
+                searchHint = nil
+            } else {
+                isPresented = false
+            }
+        }
         .onDisappear {
             searchText = ""
             searchResults = []

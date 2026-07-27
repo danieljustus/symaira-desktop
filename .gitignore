@@ -12,10 +12,8 @@ coverage.*
 # Go
 vendor/
 
-# Frontend (React/Vite SPA under web/)
+# Frontend (no separate web/ build; browser UI assets are embedded in the Go binary)
 node_modules/
-web/node_modules/
-web/dist/
 
 # macOS
 .DS_Store

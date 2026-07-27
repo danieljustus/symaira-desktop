@@ -189,10 +189,7 @@ struct DiscoverView: View {
     private func loadDoctor() async {
         isLoadingDoctor = true
         do {
-            let raw = try await core.getDoctor()
-            if let data = raw.data(using: .utf8) {
-                doctorReport = try? JSONDecoder().decode(DoctorReport.self, from: data)
-            }
+            doctorReport = try await core.getDoctorReport()
         } catch {
             doctorReport = nil
         }

@@ -13,6 +13,8 @@ struct ContentView: View {
     @State private var selectedNote: Note? = nil
     @State private var noteContent: String = ""
     @State private var doctorStatus: String = "Checking..."
+    @State private var doctorReport: DoctorReport? = nil
+    @State private var isShowingDoctorPopover = false
 
     // UI State
     @State private var isShowingPalette = false
@@ -443,10 +445,20 @@ struct ContentView: View {
                         .toggleStyle(.button)
                     }
                     ToolbarItem(placement: .status) {
-                        HStack {
-                            Text(doctorStatus)
-                                .font(.caption)
-                                .foregroundColor(SymairaTheme.textMuted)
+                        HStack(spacing: 8) {
+                            Button(action: { isShowingDoctorPopover.toggle() }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: (doctorReport?.overall == "ok" || doctorReport == nil) ? "checkmark.shield" : "exclamationmark.triangle")
+                                        .foregroundColor(doctorReport?.overall == "ok" ? SymairaTheme.goldPrimary : SymairaTheme.goldSecondary)
+                                    Text(doctorSummaryText)
+                                        .font(.caption)
+                                        .foregroundColor(SymairaTheme.textMuted)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                            .popover(isPresented: $isShowingDoctorPopover) {
+                                DoctorReportPopoverView(report: doctorReport)
+                            }
                             if let lastEv = watcher.latestEvent {
                                 Text("Last event: \(lastEv.event) on \(lastEv.path)")
                                     .font(.caption)
@@ -576,11 +588,33 @@ struct ContentView: View {
         }
     }
 
+    private var doctorSummaryText: String {
+        guard let report = doctorReport else {
+            return "Vault check offline"
+        }
+        var issues: [String] = []
+        if let v = report.vault, v.status != "ok" { issues.append("Vault") }
+        if let s = report.sidecar, s.status != "ok" { issues.append("Sidecar") }
+        if let c = report.contract, c.status != "ok" { issues.append("Contract") }
+        
+        let aiProvider = (report.ai?.provider ?? "Ollama").capitalized
+        if issues.isEmpty && report.overall == "ok" {
+            return "Vault healthy · AI: \(aiProvider)"
+        } else if !issues.isEmpty {
+            return "Vault: \(issues.joined(separator: ", ")) issue · AI: \(aiProvider)"
+        } else {
+            return "Vault warning · AI: \(aiProvider)"
+        }
+    }
+
     private func fetchDoctor() async {
         do {
-            self.doctorStatus = try await core.getDoctor()
+            let report = try await core.getDoctorReport()
+            self.doctorReport = report
+            self.doctorStatus = doctorSummaryText
         } catch {
-            self.doctorStatus = "Doctor Error"
+            self.doctorReport = nil
+            self.doctorStatus = "Vault check offline"
         }
     }
 
@@ -735,6 +769,87 @@ struct ContentView: View {
 
     private func isConflicted(_ note: Note) -> Bool {
         return note.path.contains(" 2.md") || note.path.contains("conflicted copy")
+    }
+}
+
+// MARK: - Doctor Report Popover View
+
+private struct DoctorReportPopoverView: View {
+    let report: DoctorReport?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("System Diagnostics")
+                .font(.headline)
+                .foregroundColor(SymairaTheme.textPrimary)
+
+            if let report {
+                VStack(alignment: .leading, spacing: 8) {
+                    statusRow(label: "Vault", status: report.vault?.status, detail: report.vault?.message ?? report.vault?.path)
+                    statusRow(label: "Sidecar Index", status: report.sidecar?.status, detail: report.sidecar?.message)
+                    statusRow(label: "Contract & ASN", status: report.contract?.status, detail: report.contract?.message ?? (report.contract?.filesFound.map { "\($0) files scanned" }))
+                    if let ai = report.ai {
+                        HStack {
+                            Text("AI Provider:").font(.caption.weight(.medium)).foregroundColor(SymairaTheme.textSecondary)
+                            Text("\(ai.provider ?? "Ollama") \(ai.model ?? "")").font(.caption).foregroundColor(SymairaTheme.textPrimary)
+                        }
+                    }
+                    Divider()
+                    Text("Tools:").font(.caption.weight(.semibold)).foregroundColor(SymairaTheme.textSecondary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        toolRow("symseek", report: report)
+                        toolRow("symmemory", report: report)
+                        toolRow("symingest", report: report)
+                        toolRow("symfetch", report: report)
+                        toolRow("symvault", report: report)
+                        toolRow("symmeet", report: report)
+                    }
+                }
+            } else {
+                Text("Doctor report unavailable.")
+                    .font(.caption)
+                    .foregroundColor(SymairaTheme.textSecondary)
+            }
+        }
+        .padding(16)
+        .frame(width: 280)
+    }
+
+    private func statusRow(label: String, status: String?, detail: String?) -> some View {
+        HStack(alignment: .top) {
+            Image(systemName: status == "ok" ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .foregroundColor(status == "ok" ? .green : .orange)
+                .font(.caption)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(label): \(status ?? "unknown")")
+                    .font(.caption.weight(.medium))
+                    .foregroundColor(SymairaTheme.textPrimary)
+                if let detail, !detail.isEmpty {
+                    Text(detail)
+                        .font(.caption2)
+                        .foregroundColor(SymairaTheme.textSecondary)
+                }
+            }
+        }
+    }
+
+    private func toolRow(_ tool: String, report: DoctorReport) -> some View {
+        let isAvail = report.tools.isAvailable(tool)
+        let version = report.versions?[tool] ?? ""
+        return HStack {
+            Image(systemName: isAvail ? "checkmark" : "xmark")
+                .font(.caption2)
+                .foregroundColor(isAvail ? .green : .secondary)
+            Text(tool)
+                .font(.caption)
+                .foregroundColor(SymairaTheme.textPrimary)
+            Spacer()
+            if !version.isEmpty {
+                Text("v\(version)")
+                    .font(.caption2)
+                    .foregroundColor(SymairaTheme.textMuted)
+            }
+        }
     }
 }
 

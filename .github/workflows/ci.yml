@@ -3,9 +3,24 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
+  schedule:
+    - cron: '51 5 * * 1'  # weekly Monday 05:51 UTC — full suite incl. macOS + app
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 
@@ -17,7 +32,8 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # PR gate is ubuntu-only; macOS runs on main pushes and weekly schedule.
+        os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest"]') }}
         go-version: ["1.26.4"]
     runs-on: ${{ matrix.os }}
     steps:
@@ -77,6 +93,7 @@ jobs:
           only-new-issues: true
 
   app:
+    if: github.event_name != 'pull_request'  # PR gate = lint + Go tests (ubuntu); app build on main/schedule
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

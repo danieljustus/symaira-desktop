@@ -3,6 +3,11 @@ name: Container
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
     tags: ["v*"]
   pull_request:
     paths:
@@ -15,6 +20,10 @@ on:
       - internal/**
       - .github/workflows/container.yml
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
   packages: write

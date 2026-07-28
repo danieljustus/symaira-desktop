@@ -22,19 +22,25 @@ xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platfo
 # Release: GoReleaser → linux/darwin/windows × amd64/arm64 + Homebrew formula
 ```
 
-Entry point: `cmd/symdesk/main.go`. Subcommands: `version`, `mcp`, `serve`, `worker`, `docbatch`, `history`, `events`, `meetings`, `recipes`, `doctor`.
+Entry point: `cmd/symdesk/main.go`. Subcommands: `version`, `mcp`, `serve`, `worker`, `mail`, `recipe`, `history`, `restore`, `trash`, `meeting`, `retention`, `permissions`, `paperless`, `events`, `doctor`.
 
 ## Structure
 
 ```
 cmd/symdesk/     # Go CLI entry + all commands (main.go, commands.go, selfhost.go, ...)
-internal/        # 19 Go packages:
+internal/        # 24 Go packages:
   mcp/           #   stdio MCP server (server.go, handlers, tools)
-  selfhost/      #   HTTP API server + OCR worker logic
+  selfhost/      #   HTTP API server + OCR worker logic (incl. share.go expiring links)
   service/       #   core service layer (vault svc, meetings, views, relations, templates)
   vault/         #   vault contract — Markdown files are the SSOT
   sidecar/       #   SQLite/FTS5 sidecar index (//go:embed migrations) — derived, rebuildable
   ingest/        #   OCR ingest pipeline (Tesseract / Ollama)
+  mail/          #   IMAP mail ingestion
+  permissions/   #   users, groups and document-level permissions (self-hosted server)
+  retention/     #   automatic retention rules
+  paperless/     #   Paperless-ngx export importer
+  templatepath/  #   storage-path templating
+  archive/       #   PDF/A archive generation
   ai/ compose/ config/ dbviews/ demo/ export/ history/ recipes/ searchquery/ secrets/ simhash/ watcher/
 Sources/
   SymDeskCore/   # Swift shared library bridging the Go core (consumes symaira-appkit, exact-pinned)

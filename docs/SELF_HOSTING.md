@@ -185,4 +185,4 @@ implementation baseline rather than a hardware guarantee.
 
 ## Paperless-ngx migration boundary
 
-SymDesk can already centralize new uploads, originals, OCR results and searchable Markdown. Existing Paperless-ngx bulk import is still best handled through `symaira-ingest` until a guided importer is added here. Before replacing a production Paperless instance, verify the features you depend on: mail rules, correspondents/document-type automation, retention, sharing/multi-user access and audit requirements are not all at Paperless parity yet.
+SymDesk can already centralize new uploads, originals, OCR results and searchable Markdown, and `symdesk paperless import <export-dir>` migrates an existing Paperless-ngx export (manifest.json + documents) into contract-v2 vault notes idempotently. IMAP mail ingestion, storage-path templating/retention rules, users/groups/document-level permissions, and expiring share links all exist; before replacing a production Paperless instance, still verify these against your specific correspondents/document-type automation and audit requirements, since full Paperless parity (e.g. a browser admin UI) is not yet reached.

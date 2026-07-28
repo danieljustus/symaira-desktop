@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -205,4 +207,109 @@ func newRandomHex(bytes int) (string, error) {
 func hashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
+}
+
+// ---------------------------------------------------------------------------
+// HTTP handlers
+// ---------------------------------------------------------------------------
+
+// handleCreateShare handles POST /api/v1/share — create a time-limited
+// read-only share link for a vault document.
+func (s *Server) handleCreateShare(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Path   string `json:"path"`
+		Expiry int    `json:"expiry"` // hours, max 168 (7 days)
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.Path == "" {
+		writeError(w, http.StatusBadRequest, "path is required")
+		return
+	}
+	if strings.Contains(req.Path, "..") || filepath.IsAbs(req.Path) {
+		writeError(w, http.StatusBadRequest, "invalid path")
+		return
+	}
+	if req.Expiry <= 0 || req.Expiry > 168 {
+		writeError(w, http.StatusBadRequest, "expiry must be between 1 and 168 hours")
+		return
+	}
+
+	// Verify the document exists in the vault.
+	fullPath := filepath.Join(s.cfg.VaultRoot, req.Path)
+	_, err := os.Stat(fullPath)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "document not found")
+		return
+	}
+
+	user := userFromContext(r)
+	link, token, err := s.shares.Create(req.Path, user.Name, time.Duration(req.Expiry)*time.Hour)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to create share link")
+		return
+	}
+	resp := struct {
+		ID        string    `json:"id"`
+		Token     string    `json:"token"`
+		Path      string    `json:"path"`
+		CreatedAt time.Time `json:"created_at"`
+		ExpiresAt time.Time `json:"expires_at"`
+		URL       string    `json:"url"`
+	}{
+		ID:        link.ID,
+		Token:     token,
+		Path:      req.Path,
+		CreatedAt: link.CreatedAt,
+		ExpiresAt: link.ExpiresAt,
+		URL:       "/s/" + token,
+	}
+	writeJSON(w, http.StatusCreated, resp)
+}
+
+// handleListShares handles GET /api/v1/shares — list all share links.
+func (s *Server) handleListShares(w http.ResponseWriter, r *http.Request) {
+	links, err := s.shares.List()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to list shares")
+		return
+	}
+	if links == nil {
+		links = []ShareLink{}
+	}
+	writeJSON(w, http.StatusOK, links)
+}
+
+// handleRevokeShare handles DELETE /api/v1/share/{id} — revoke a share link.
+func (s *Server) handleRevokeShare(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "id is required")
+		return
+	}
+	if err := s.shares.Revoke(id); err != nil {
+		writeError(w, http.StatusNotFound, "share link not found or already revoked")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
+}
+
+// handleAccessShare handles GET /s/{token} — serve a shared document
+// without authentication.
+func (s *Server) handleAccessShare(w http.ResponseWriter, r *http.Request) {
+	token := r.PathValue("token")
+	if token == "" {
+		writeError(w, http.StatusNotFound, "not found")
+		return
+	}
+	link, err := s.shares.Lookup(token)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "not found")
+		return
+	}
+	fullPath := filepath.Join(s.cfg.VaultRoot, link.Path)
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s"`, filepath.Base(link.Path)))
+	http.ServeFile(w, r, fullPath)
 }

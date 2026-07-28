@@ -61,6 +61,7 @@ type Server struct {
 	db           *sidecar.DB
 	jobs         *JobStore
 	perm         *permissions.Manager
+	shares       *ShareStore
 	vaultRoot    *os.Root
 	http         *http.Server
 	mux          *http.ServeMux
@@ -155,6 +156,15 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		}
 	}
 	s.perm = perm
+
+	sharesDir := filepath.Join(cfg.VaultRoot, ".symdesk", "server")
+	shares, err := NewShareStore(sharesDir)
+	if err != nil {
+		vaultRoot.Close()
+		db.Close()
+		return nil, fmt.Errorf("shares: %w", err)
+	}
+	s.shares = shares
 
 	if err := s.refreshIndex(); err != nil {
 		vaultRoot.Close()
@@ -278,6 +288,12 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/v1/worker/input", s.auth(http.HandlerFunc(s.handleWorkerInput)))
 	s.mux.Handle("POST /api/v1/worker/complete", s.auth(http.HandlerFunc(s.handleComplete)))
 	s.mux.Handle("POST /api/v1/worker/fail", s.auth(http.HandlerFunc(s.handleFail)))
+
+	// Share links — read-only time-limited access to individual documents.
+	s.mux.Handle("POST /api/v1/share", s.auth(http.HandlerFunc(s.handleCreateShare)))
+	s.mux.Handle("GET /api/v1/shares", s.auth(http.HandlerFunc(s.handleListShares)))
+	s.mux.Handle("DELETE /api/v1/share/{id}", s.auth(http.HandlerFunc(s.handleRevokeShare)))
+	s.mux.HandleFunc("GET /s/{token}", s.handleAccessShare)
 }
 
 // contextKey is the private type used for request-context values.

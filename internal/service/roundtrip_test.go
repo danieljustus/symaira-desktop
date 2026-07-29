@@ -40,7 +40,7 @@ func TestRoundtrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(results) == 0 || results[0]["title"] != "Roundtrip Test" {
+	if len(results) == 0 || results[0].Title != "Roundtrip Test" {
 		t.Errorf("expected to find note in search: %v", results)
 	}
 
@@ -77,7 +77,7 @@ func TestRoundtrip(t *testing.T) {
 	}
 	foundMoved := false
 	for _, l := range ls {
-		if l["path"] == "Moved_Note.md" {
+		if l.Path == "Moved_Note.md" {
 			foundMoved = true
 		}
 	}
@@ -119,7 +119,7 @@ func TestLsPopulatesEmptySidecarFromExistingVaultFiles(t *testing.T) {
 	}
 	found := false
 	for _, l := range ls {
-		if l["path"] == "Existing.md" {
+		if l.Path == "Existing.md" {
 			found = true
 		}
 	}

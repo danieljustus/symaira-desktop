@@ -81,16 +81,16 @@ func TestLsToolHappyPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	files, ok := out.([]map[string]interface{})
+	files, ok := out.([]service.FileEntry)
 	if !ok {
-		t.Fatalf("expected []map[string]interface{}, got %T", out)
+		t.Fatalf("expected []service.FileEntry, got %T", out)
 	}
 	if len(files) == 0 {
 		t.Fatal("expected at least one file from ls")
 	}
 	var found bool
 	for _, f := range files {
-		if p, _ := f["path"].(string); strings.Contains(p, "Hello") {
+		if strings.Contains(f.Path, "Hello") {
 			found = true
 		}
 	}
@@ -167,7 +167,7 @@ func TestSearchToolSupportsScopedOperators(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected service.SearchResponse, got %T", out)
 	}
-	if len(response.Results) != 1 || response.Results[0]["title"] != "Invoice" {
+	if len(response.Results) != 1 || response.Results[0].Title != "Invoice" {
 		t.Fatalf("unexpected results: %#v", response.Results)
 	}
 }

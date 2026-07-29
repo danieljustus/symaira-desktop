@@ -43,8 +43,8 @@ func TestSearchWithMetaOperators(t *testing.T) {
 	if len(response.Results) != 1 {
 		t.Fatalf("expected one result, got %#v", response.Results)
 	}
-	if response.Results[0]["path"] != filepath.Join("finance", "open.md") {
-		t.Errorf("path = %v, want finance/open.md", response.Results[0]["path"])
+	if response.Results[0].Path != filepath.Join("finance", "open.md") {
+		t.Errorf("path = %v, want finance/open.md", response.Results[0].Path)
 	}
 }
 

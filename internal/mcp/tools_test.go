@@ -79,7 +79,7 @@ func TestIngestToolCreatesInboxNote(t *testing.T) {
 	}
 	var found bool
 	for _, f := range files {
-		if f["path"] == path {
+		if f.Path == path {
 			found = true
 		}
 	}
@@ -88,6 +88,8 @@ func TestIngestToolCreatesInboxNote(t *testing.T) {
 	}
 }
 
+// TestIngestToolRequiresSourcePath verifies the tool returns an error when
+// source_path is missing.
 func TestIngestToolRequiresSourcePath(t *testing.T) {
 	tool := newIngestTool(testFactory(t))
 	if _, err := tool.Handler(context.Background(), json.RawMessage(`{}`)); err == nil {

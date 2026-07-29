@@ -110,8 +110,8 @@ fi
 	if len(searchResults) == 0 {
 		t.Fatalf("expected search results from composed symseek")
 	}
-	if searchResults[0]["title"] != "Compose Test Note" {
-		t.Errorf("expected title to be resolved as 'Compose Test Note', got '%v'", searchResults[0]["title"])
+	if searchResults[0].Title != "Compose Test Note" {
+		t.Errorf("expected title to be resolved as 'Compose Test Note', got '%v'", searchResults[0].Title)
 	}
 
 	// 6. Test Related Composition
@@ -507,7 +507,7 @@ func TestComposeFallback(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(searchResults) != 1 || searchResults[0]["title"] != "Compose Test Note" {
+	if len(searchResults) != 1 || searchResults[0].Title != "Compose Test Note" {
 		t.Errorf("expected fallback FTS search to find the note, got %v", searchResults)
 	}
 

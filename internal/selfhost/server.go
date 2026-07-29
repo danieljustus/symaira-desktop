@@ -7,7 +7,6 @@ import (
 	"context"
 	cryptorand "crypto/rand"
 	"crypto/sha256"
-	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -86,7 +85,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		if len(cfg.WorkerToken) < 32 {
 			return nil, fmt.Errorf("worker token must contain at least 32 characters")
 		}
-		if constantTimeEqual(cfg.WorkerToken, cfg.Token) {
+		if permissions.ConstantTimeEqual(cfg.WorkerToken, cfg.Token) {
 			return nil, fmt.Errorf("worker token must differ from the server token")
 		}
 	}
@@ -342,10 +341,10 @@ func (s *Server) auth(next http.Handler) http.Handler {
 // admin and worker tokens using constant-time comparison, and returns the
 // legacy role name (\"admin\" or \"worker\") or empty string.
 func (s *Server) legacyTokenRole(provided string) string {
-	if constantTimeEqual(provided, s.cfg.Token) {
+	if permissions.ConstantTimeEqual(provided, s.cfg.Token) {
 		return "admin"
 	}
-	if s.cfg.WorkerToken != "" && constantTimeEqual(provided, s.cfg.WorkerToken) {
+	if s.cfg.WorkerToken != "" && permissions.ConstantTimeEqual(provided, s.cfg.WorkerToken) {
 		return "worker"
 	}
 	return ""
@@ -368,10 +367,6 @@ func (s *Server) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	return true
-}
-
-func constantTimeEqual(a, b string) bool {
-	return len(a) == len(b) && subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
 }
 
 func (s *Server) securityHeaders(next http.Handler) http.Handler {

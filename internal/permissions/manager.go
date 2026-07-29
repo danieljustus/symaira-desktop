@@ -42,7 +42,7 @@ func (m *Manager) Authenticate(token string) (*User, error) {
 		return nil, err
 	}
 	for i := range users {
-		if users[i].TokenHash == hash {
+		if ConstantTimeEqual(users[i].TokenHash, hash) {
 			return &users[i], nil
 		}
 	}

@@ -91,7 +91,7 @@ func (s *Service) DeleteDocument(path string) error {
 }
 
 // Ls returns a list of files in the vault.
-func (s *Service) Ls(dirPrefix string) ([]map[string]interface{}, error) {
+func (s *Service) Ls(dirPrefix string) ([]FileEntry, error) {
 	docs, err := s.DB.ListFiles(dirPrefix)
 	if err != nil {
 		return nil, err
@@ -111,32 +111,50 @@ func (s *Service) Ls(dirPrefix string) ([]map[string]interface{}, error) {
 		}
 	}
 
-	var results []map[string]interface{}
+	var results []FileEntry
 	for _, d := range docs {
 		relPath, _ := filepath.Rel(s.VaultRoot, d.Path)
 		if relPath == "" {
 			relPath = d.Path
 		}
-		results = append(results, map[string]interface{}{
-			"path":     relPath,
-			"title":    d.Title,
-			"modified": d.Created, // Re-using Created field for modified_at in docs
+		results = append(results, FileEntry{
+			Path:     relPath,
+			Title:    d.Title,
+			Modified: d.Created, // Re-using Created field for modified_at in docs
 		})
 	}
 	return results, nil
+}
+
+// SearchResult is a single typed search hit emitted by Search and
+// SearchWithMeta. Its JSON tags match the legacy map[string]interface{} keys
+// to keep the CLI/MCP wire format byte-identical.
+type SearchResult struct {
+	Path    string  `json:"path"`
+	Title   string  `json:"title"`
+	Snippet string  `json:"snippet"`
+	Score   float64 `json:"score"`
+}
+
+// FileEntry is a typed directory listing entry returned by Ls. JSON tags
+// match the legacy map[string]interface{} keys for wire compatibility.
+type FileEntry struct {
+	Path     string `json:"path"`
+	Title    string `json:"title"`
+	Modified string `json:"modified"`
 }
 
 // SearchResponse is the shared result contract for CLI, MCP and the native app.
 // Hint is set only when malformed search syntax was safely retried as plain
 // full-text input.
 type SearchResponse struct {
-	Results []map[string]interface{} `json:"results"`
-	Hint    string                   `json:"hint,omitempty"`
+	Results []SearchResult `json:"results"`
+	Hint    string         `json:"hint,omitempty"`
 }
 
 // Search preserves the existing service API for internal callers such as Ask.
 // Interactive callers use SearchWithMeta so they can surface syntax hints.
-func (s *Service) Search(query string) ([]map[string]interface{}, error) {
+func (s *Service) Search(query string) ([]SearchResult, error) {
 	response, err := s.SearchWithMeta(query)
 	if err != nil {
 		return nil, err
@@ -150,7 +168,7 @@ func (s *Service) Search(query string) ([]map[string]interface{}, error) {
 // safe plain text and the caller receives a concise hint.
 func (s *Service) SearchWithMeta(query string) (SearchResponse, error) {
 	if strings.TrimSpace(query) == "" {
-		return SearchResponse{Results: []map[string]interface{}{}}, nil
+		return SearchResponse{Results: []SearchResult{}}, nil
 	}
 
 	plan, err := searchquery.Parse(query)
@@ -170,17 +188,17 @@ func (s *Service) SearchWithMeta(query string) (SearchResponse, error) {
 		if err != nil {
 			return SearchResponse{}, err
 		}
-		results := make([]map[string]interface{}, 0, len(matches))
+		results := make([]SearchResult, 0, len(matches))
 		for _, match := range matches {
 			relPath, err := filepath.Rel(s.VaultRoot, match.Path)
 			if err != nil {
 				relPath = match.Path
 			}
-			results = append(results, map[string]interface{}{
-				"path":    relPath,
-				"title":   match.Title,
-				"snippet": match.Snippet,
-				"score":   0.0,
+			results = append(results, SearchResult{
+				Path:    relPath,
+				Title:   match.Title,
+				Snippet: match.Snippet,
+				Score:   0.0,
 			})
 		}
 		return SearchResponse{Results: results}, nil
@@ -195,11 +213,11 @@ func (s *Service) SearchWithMeta(query string) (SearchResponse, error) {
 
 // searchPlain keeps the pre-query-language search behaviour, including the
 // optional symseek upgrade for ordinary unscoped full-text terms.
-func (s *Service) searchPlain(query string) ([]map[string]interface{}, error) {
+func (s *Service) searchPlain(query string) ([]SearchResult, error) {
 	if ok, _ := compose.HasSymseek(); ok {
 		seekResults, err := compose.Search(query)
 		if err == nil {
-			results := make([]map[string]interface{}, 0, len(seekResults))
+			results := make([]SearchResult, 0, len(seekResults))
 			for _, r := range seekResults {
 				relPath := r.Path
 				if filepath.IsAbs(r.Path) {
@@ -231,11 +249,11 @@ func (s *Service) searchPlain(query string) ([]map[string]interface{}, error) {
 					title = strings.TrimSuffix(base, filepath.Ext(base))
 				}
 
-				results = append(results, map[string]interface{}{
-					"path":    relPath,
-					"title":   title,
-					"snippet": r.Snippet,
-					"score":   r.Score,
+				results = append(results, SearchResult{
+					Path:    relPath,
+					Title:   title,
+					Snippet: r.Snippet,
+					Score:   r.Score,
 				})
 			}
 			if len(results) > 0 {
@@ -250,20 +268,20 @@ func (s *Service) searchPlain(query string) ([]map[string]interface{}, error) {
 // searchSidecarPlain is the safe FTS5-only fallback used when query syntax is
 // malformed. It intentionally does not delegate to a sibling search tool that
 // might interpret the invalid characters as its own query language.
-func (s *Service) searchSidecarPlain(query string) ([]map[string]interface{}, error) {
+func (s *Service) searchSidecarPlain(query string) ([]SearchResult, error) {
 	docs, err := s.DB.Search(query)
 	if err != nil {
 		return nil, err
 	}
 
-	results := make([]map[string]interface{}, 0, len(docs))
+	results := make([]SearchResult, 0, len(docs))
 	for _, d := range docs {
 		relPath, _ := filepath.Rel(s.VaultRoot, d.Path)
-		results = append(results, map[string]interface{}{
-			"path":    relPath,
-			"title":   d.Title,
-			"snippet": d.Body,
-			"score":   0.0, // FTS doesn't return score trivially here without further query modifications
+		results = append(results, SearchResult{
+			Path:    relPath,
+			Title:   d.Title,
+			Snippet: d.Body,
+			Score:   0.0, // FTS doesn't return score trivially here without further query modifications
 		})
 	}
 	return results, nil
@@ -551,17 +569,13 @@ func (s *Service) Ask(ctx context.Context, query string, out chan<- interface{})
 	out <- ai.ToolEvent("search", "done")
 
 	for _, r := range results {
-		path, _ := r["path"].(string)
-		title, _ := r["title"].(string)
-		snippet, _ := r["snippet"].(string)
-		score, _ := r["score"].(float64)
-		out <- ai.CitationEvent(path, title, snippet, score)
+		out <- ai.CitationEvent(r.Path, r.Title, r.Snippet, r.Score)
 	}
 
 	out <- ai.ToolEvent("llm", "running")
 	chunkChan := make(chan ai.AskChunk)
 	go func() {
-		ai.Ask(ctx, s.Config, query, results, chunkChan)
+		ai.Ask(ctx, s.Config, query, resultsToMapSlice(results), chunkChan)
 	}()
 
 	for chunk := range chunkChan {
@@ -580,13 +594,30 @@ func (s *Service) AskText(ctx context.Context, query string) (string, error) {
 		return "", err
 	}
 	chunkChan := make(chan ai.AskChunk)
-	go ai.Ask(ctx, s.Config, query, results, chunkChan)
+	go ai.Ask(ctx, s.Config, query, resultsToMapSlice(results), chunkChan)
 
 	var b strings.Builder
 	for chunk := range chunkChan {
 		b.WriteString(chunk.Chunk)
 	}
 	return b.String(), nil
+}
+
+// resultsToMapSlice is a bridge: it converts typed SearchResults to the
+// untyped []map[string]interface{} that the internal ai package still
+// expects. This conversion exists so that the ai package can be migrated
+// independently without breaking the typed service contract.
+func resultsToMapSlice(results []SearchResult) []map[string]interface{} {
+	out := make([]map[string]interface{}, len(results))
+	for i, r := range results {
+		out[i] = map[string]interface{}{
+			"path":    r.Path,
+			"title":   r.Title,
+			"snippet": r.Snippet,
+			"score":   r.Score,
+		}
+	}
+	return out
 }
 
 // Ingest copies a file into the inbox and indexes the new note.

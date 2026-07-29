@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/danieljustus/symaira-corekit/exitcodes"
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/config"
@@ -200,7 +201,7 @@ func registerCommands(rootCmd *cobra.Command) {
 			}
 
 			if !allOk {
-				os.Exit(1)
+				return exitcodes.Wrap(nil, exitcodes.ExitGeneric, exitcodes.KindInternal, "doctor: one or more health checks failed")
 			}
 			return nil
 		},

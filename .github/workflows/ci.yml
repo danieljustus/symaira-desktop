@@ -92,6 +92,57 @@ jobs:
           version: v2.12.2
           only-new-issues: true
 
+  version-consistency:
+    name: Version consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Check version consistency across all sources
+        run: |
+          set -euo pipefail
+
+          # Latest tag (strip leading 'v')
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
+          echo "Current tag version: ${TAG}"
+
+          # 1. project.yml MARKETING_VERSION (macOS + iOS targets)
+          for target in SymDesk SymDeskMobile; do
+            PM_VERSION=$(awk -v t="$target" '
+              $0 ~ "^  " t ":$" {found=1; next}
+              found && /MARKETING_VERSION:/ {
+                # Extract quoted value
+                gsub(/.*"([^"]+)".*/, "\\1")
+                print
+                exit
+              }
+            ' project.yml)
+            if [ "$PM_VERSION" != "$TAG" ]; then
+              echo "::error::project.yml $target MARKETING_VERSION=$PM_VERSION does not match tag $TAG"
+              exit 1
+            fi
+          done
+          echo "project.yml MARKETING_VERSION: OK"
+
+          # 2. Home Assistant addon config
+          HA_VERSION=$(grep '^version:' home-assistant-addon/symdesk/config.yaml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          if [ "$HA_VERSION" != "$TAG" ]; then
+            echo "::error::HA addon config version=$HA_VERSION does not match tag $TAG"
+            exit 1
+          fi
+          echo "HA addon config version: OK"
+
+          # 3. main.go version default must be empty (no hardcoded version)
+          if grep -qE 'var version = "(0|[1-9])' cmd/symdesk/main.go; then
+            echo "::error::cmd/symdesk/main.go has a hardcoded version string — use ldflags injection"
+            exit 1
+          fi
+          echo "main.go version default: OK (no hardcoded version)"
+
+          echo "All version sources consistent with tag ${TAG}"
+
   app:
     if: github.event_name != 'pull_request'  # PR gate = lint + Go tests (ubuntu); app build on main/schedule
     runs-on: macos-latest

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 // Manager orchestrates users, groups, and document-level permissions for a
@@ -16,6 +17,12 @@ import (
 type Manager struct {
 	configDir string
 	mu        sync.RWMutex
+
+	// In-memory caches for permissions and groups, validated by mtime.
+	cachedPerms  []DocumentRule
+	permsMtime   time.Time
+	cachedGroups []Group
+	groupsMtime  time.Time
 }
 
 // NewManager returns a ready-to-use Manager. If configDir does not exist it
@@ -60,7 +67,7 @@ func (m *Manager) CanRead(user *User, path string) bool {
 	if user.HasRole("admin") {
 		return true
 	}
-	rules, _ := m.loadPermissions()
+	rules, _ := m.loadPermissionsCached()
 	rule := findRule(rules, path)
 	// No rule → document is public (readable by authenticated users).
 	if rule == nil {
@@ -72,7 +79,7 @@ func (m *Manager) CanRead(user *User, path string) bool {
 	if containsString(rule.ReadUsers, user.Name) {
 		return true
 	}
-	groups, _ := m.loadGroups()
+	groups, _ := m.loadGroupsCached()
 	for _, g := range rule.ReadGroups {
 		if groupContains(groups, g, user.Name) {
 			return true
@@ -89,7 +96,7 @@ func (m *Manager) CanWrite(user *User, path string) bool {
 	if user.HasRole("admin") {
 		return true
 	}
-	rules, _ := m.loadPermissions()
+	rules, _ := m.loadPermissionsCached()
 	rule := findRule(rules, path)
 	// No rule → document is writable by authenticated users.
 	if rule == nil {
@@ -101,13 +108,64 @@ func (m *Manager) CanWrite(user *User, path string) bool {
 	if containsString(rule.WriteUsers, user.Name) {
 		return true
 	}
-	groups, _ := m.loadGroups()
+	groups, _ := m.loadGroupsCached()
 	for _, g := range rule.WriteGroups {
 		if groupContains(groups, g, user.Name) {
 			return true
 		}
 	}
 	return false
+}
+
+// CanReadMany filters the given vault-relative paths and returns only those
+// the user is allowed to read. It loads permissions and groups at most once
+// per call, so a batch of hundreds or thousands of paths incurs a single
+// stat (and, on cache miss, a single read) of each file instead of one per
+// path. Admins receive the unfiltered slice. A nil user receives nil.
+func (m *Manager) CanReadMany(user *User, paths []string) []string {
+	if user == nil {
+		return nil
+	}
+	if user.HasRole("admin") {
+		out := make([]string, len(paths))
+		copy(out, paths)
+		return out
+	}
+	rules, err := m.loadPermissionsCached()
+	if err != nil {
+		return nil
+	}
+	groups, err := m.loadGroupsCached()
+	if err != nil {
+		groups = nil
+	}
+	result := make([]string, 0, len(paths))
+	for _, path := range paths {
+		rule := findRule(rules, path)
+		if rule == nil {
+			result = append(result, path)
+			continue
+		}
+		if rule.Owner == user.Name {
+			result = append(result, path)
+			continue
+		}
+		if containsString(rule.ReadUsers, user.Name) {
+			result = append(result, path)
+			continue
+		}
+		allowed := false
+		for _, g := range rule.ReadGroups {
+			if groupContains(groups, g, user.Name) {
+				allowed = true
+				break
+			}
+		}
+		if allowed {
+			result = append(result, path)
+		}
+	}
+	return result
 }
 
 // --- User management ----------------------------------------------------------
@@ -360,7 +418,7 @@ func (m *Manager) SetDocumentRule(rule DocumentRule) error {
 // GetDocumentRule returns the permission rule for a path, or nil when none is
 // set.
 func (m *Manager) GetDocumentRule(path string) (*DocumentRule, error) {
-	rules, err := m.loadPermissions()
+	rules, err := m.loadPermissionsCached()
 	if err != nil {
 		return nil, err
 	}
@@ -393,8 +451,64 @@ func (m *Manager) loadGroups() ([]Group, error) {
 	return groups, nil
 }
 
+// loadGroupsCached returns the groups, using an in-memory cache that is
+// validated by comparing the on-disk file's mtime. When the file has not
+// been modified since the last load the call returns immediately without
+// touching the filesystem beyond a single stat.
+func (m *Manager) loadGroupsCached() ([]Group, error) {
+	// Fast path: check cache under read lock.
+	m.mu.RLock()
+	if m.cachedGroups != nil {
+		info, err := os.Stat(m.groupsFilePath())
+		if err == nil && info.ModTime().Equal(m.groupsMtime) {
+			groups := m.cachedGroups
+			m.mu.RUnlock()
+			return groups, nil
+		}
+	}
+	m.mu.RUnlock()
+
+	// Slow path: refresh under write lock.
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Double-check: another goroutine may have refreshed while we waited.
+	if m.cachedGroups != nil {
+		info, err := os.Stat(m.groupsFilePath())
+		if err == nil && info.ModTime().Equal(m.groupsMtime) {
+			return m.cachedGroups, nil
+		}
+	}
+
+	var groups []Group
+	if err := readJSONFile(m.groupsFilePath(), &groups); err != nil {
+		return nil, err
+	}
+	info, err := os.Stat(m.groupsFilePath())
+	if err != nil {
+		m.groupsMtime = time.Time{}
+	} else {
+		m.groupsMtime = info.ModTime()
+	}
+	m.cachedGroups = groups
+	return groups, nil
+}
+
 func (m *Manager) saveGroups(groups []Group) error {
-	return writeJSONFile(m.groupsFilePath(), groups)
+	if err := writeJSONFile(m.groupsFilePath(), groups); err != nil {
+		return err
+	}
+	// Update cache so reads after a write are served from memory.
+	// Caller holds m.mu.Lock().
+	info, err := os.Stat(m.groupsFilePath())
+	if err != nil {
+		m.cachedGroups = nil
+		m.groupsMtime = time.Time{}
+	} else {
+		m.cachedGroups = groups
+		m.groupsMtime = info.ModTime()
+	}
+	return nil
 }
 
 func (m *Manager) loadPermissions() ([]DocumentRule, error) {
@@ -405,8 +519,64 @@ func (m *Manager) loadPermissions() ([]DocumentRule, error) {
 	return rules, nil
 }
 
+// loadPermissionsCached returns the document rules, using an in-memory cache
+// that is validated by comparing the on-disk file's mtime. When the file has
+// not been modified since the last load the call returns immediately without
+// touching the filesystem beyond a single stat.
+func (m *Manager) loadPermissionsCached() ([]DocumentRule, error) {
+	// Fast path: check cache under read lock.
+	m.mu.RLock()
+	if m.cachedPerms != nil {
+		info, err := os.Stat(m.permsFilePath())
+		if err == nil && info.ModTime().Equal(m.permsMtime) {
+			rules := m.cachedPerms
+			m.mu.RUnlock()
+			return rules, nil
+		}
+	}
+	m.mu.RUnlock()
+
+	// Slow path: refresh under write lock.
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Double-check: another goroutine may have refreshed while we waited.
+	if m.cachedPerms != nil {
+		info, err := os.Stat(m.permsFilePath())
+		if err == nil && info.ModTime().Equal(m.permsMtime) {
+			return m.cachedPerms, nil
+		}
+	}
+
+	var rules []DocumentRule
+	if err := readJSONFile(m.permsFilePath(), &rules); err != nil {
+		return nil, err
+	}
+	info, err := os.Stat(m.permsFilePath())
+	if err != nil {
+		m.permsMtime = time.Time{}
+	} else {
+		m.permsMtime = info.ModTime()
+	}
+	m.cachedPerms = rules
+	return rules, nil
+}
+
 func (m *Manager) savePermissions(rules []DocumentRule) error {
-	return writeJSONFile(m.permsFilePath(), rules)
+	if err := writeJSONFile(m.permsFilePath(), rules); err != nil {
+		return err
+	}
+	// Update cache so reads after a write are served from memory.
+	// Caller holds m.mu.Lock().
+	info, err := os.Stat(m.permsFilePath())
+	if err != nil {
+		m.cachedPerms = nil
+		m.permsMtime = time.Time{}
+	} else {
+		m.cachedPerms = rules
+		m.permsMtime = info.ModTime()
+	}
+	return nil
 }
 
 // --- Helpers ------------------------------------------------------------------

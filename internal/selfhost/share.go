@@ -15,6 +15,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/permissions"
 )
 
 // ShareLink represents a time-limited read-only share link for a single
@@ -134,7 +136,7 @@ func (s *ShareStore) Lookup(token string) (*ShareLink, error) {
 		return nil, err
 	}
 	for i := range links {
-		if links[i].TokenHash != target {
+		if !permissions.ConstantTimeEqual(links[i].TokenHash, target) {
 			continue
 		}
 		if !links[i].IsActive() {

@@ -308,6 +308,13 @@ func (s *Server) handleAccessShare(w http.ResponseWriter, r *http.Request) {
 	}
 	link, err := s.shares.Lookup(token)
 	if err != nil {
+		// Share-token lookup failed — check rate limit before responding.
+		ip := clientIP(r)
+		if allowed, retryAfter := s.throttle.recordShareFailure(ip); !allowed {
+			w.Header().Set("Retry-After", retryAfterSeconds(retryAfter))
+			writeError(w, http.StatusTooManyRequests, "too many share access attempts")
+			return
+		}
 		writeError(w, http.StatusNotFound, "not found")
 		return
 	}

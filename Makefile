@@ -1,8 +1,11 @@
 .PHONY: build test lint fmt-check benchmark-large docker-build clean
 
+VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
+LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
+
 build:
 	@mkdir -p bin
-	go build -o bin/symdesk ./cmd/symdesk
+	go build -ldflags="$(LDFLAGS)" -o bin/symdesk ./cmd/symdesk
 
 test:
 	CGO_ENABLED=0 go test -race ./...

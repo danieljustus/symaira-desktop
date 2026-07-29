@@ -517,9 +517,20 @@ func (s *Server) snapshotPayloadFiltered(user *permissions.User) ([]byte, []byte
 	if err := json.Unmarshal(plain, &payload); err != nil {
 		return nil, nil, "", err
 	}
+	// Use CanReadMany to batch-check all paths in one call instead of
+	// hitting the permissions files individually for each note.
+	paths := make([]string, len(payload.Notes))
+	for i, n := range payload.Notes {
+		paths[i] = n.Path
+	}
+	allowed := s.perm.CanReadMany(user, paths)
+	allowedSet := make(map[string]bool, len(allowed))
+	for _, p := range allowed {
+		allowedSet[p] = true
+	}
 	filtered := payload.Notes[:0]
 	for _, n := range payload.Notes {
-		if s.perm.CanRead(user, n.Path) {
+		if allowedSet[n.Path] {
 			filtered = append(filtered, n)
 		}
 	}

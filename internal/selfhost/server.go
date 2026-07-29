@@ -61,6 +61,7 @@ type Server struct {
 	jobs         *JobStore
 	perm         *permissions.Manager
 	shares       *ShareStore
+	throttle     *throttle
 	vaultRoot    *os.Root
 	http         *http.Server
 	mux          *http.ServeMux
@@ -117,7 +118,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		db.Close()
 		return nil, fmt.Errorf("open vault root: %w", err)
 	}
-	s := &Server{cfg: cfg, db: db, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux()}
+	s := &Server{cfg: cfg, db: db, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux(), throttle: newThrottle()}
 	s.snapshotDirty.Store(true)
 
 	// Initialise the permissions manager. The config directory lives under
@@ -320,6 +321,14 @@ func (s *Server) auth(next http.Handler) http.Handler {
 			// been persisted yet (fresh container restarts with env-var tokens).
 			legacyRole := s.legacyTokenRole(provided)
 			if legacyRole == "" {
+				// Authentication failed — check rate limit before responding.
+				ip := clientIP(r)
+				if allowed, retryAfter := s.throttle.recordAuthFailure(ip); !allowed {
+					w.Header().Set("Retry-After", retryAfterSeconds(retryAfter))
+					w.Header().Set("WWW-Authenticate", "Bearer")
+					writeError(w, http.StatusTooManyRequests, "too many authentication attempts")
+					return
+				}
 				w.Header().Set("WWW-Authenticate", "Bearer")
 				writeError(w, http.StatusUnauthorized, "authentication required")
 				return

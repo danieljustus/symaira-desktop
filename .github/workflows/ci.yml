@@ -110,15 +110,7 @@ jobs:
 
           # 1. project.yml MARKETING_VERSION (macOS + iOS targets)
           for target in SymDesk SymDeskMobile; do
-            PM_VERSION=$(awk -v t="$target" '
-              $0 ~ "^  " t ":$" {found=1; next}
-              found && /MARKETING_VERSION:/ {
-                # Extract quoted value
-                gsub(/.*"([^"]+)".*/, "\\1")
-                print
-                exit
-              }
-            ' project.yml)
+            PM_VERSION=$(grep -A80 "^  $target:" project.yml | grep MARKETING_VERSION | head -1 | sed 's/.*"\(.*\)".*/\1/')
             if [ "$PM_VERSION" != "$TAG" ]; then
               echo "::error::project.yml $target MARKETING_VERSION=$PM_VERSION does not match tag $TAG"
               exit 1

@@ -342,8 +342,8 @@ func TestValidateUnsupportedLanguage(t *testing.T) {
 
 func TestValidateFatalOnly(t *testing.T) {
 	cfg := DefaultConfig()
-	cfg.MaxTokens = 0      // fatal
-	cfg.Language = "fr"    // warning only
+	cfg.MaxTokens = 0   // fatal
+	cfg.Language = "fr" // warning only
 	fatal := cfg.ValidateFatal()
 	if len(fatal) != 1 {
 		t.Errorf("expected 1 fatal finding, got %d", len(fatal))

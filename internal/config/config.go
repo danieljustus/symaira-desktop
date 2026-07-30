@@ -249,10 +249,10 @@ func (c *Config) Validate() []Finding {
 	// --- Enum-like field checks ---
 
 	validProviders := map[string]bool{
-		"ollama":   true,
+		"ollama":    true,
 		"anthropic": true,
-		"openai":   true,
-		"":         true, // empty = default, not an error
+		"openai":    true,
+		"":          true, // empty = default, not an error
 	}
 	if c.LLMProvider != "" && !validProviders[c.LLMProvider] {
 		findings = append(findings, Finding{

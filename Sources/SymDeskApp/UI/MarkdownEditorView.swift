@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import SymDeskCore
+import OSLog
 
 /// NSTextView that intercepts image pastes/drops and stores them as vault assets.
 final class MarkdownTextView: NSTextView {
@@ -204,7 +205,10 @@ struct MarkdownEditorView: NSViewRepresentable {
         /// Stores pasted/dropped image data as a vault asset and returns the
         /// Markdown snippet to insert, or nil if the vault root is unavailable.
         func storeImageAsset(data: Data, ext: String) -> String? {
-            guard let vaultRoot = parent.vaultRoot else { return nil }
+            guard let vaultRoot = parent.vaultRoot else {
+                os_log(.error, "MarkdownEditorView: vaultRoot is nil, cannot store image")
+                return nil
+            }
             do {
                 let relativePath = try VaultAssets.store(
                     imageData: data,
@@ -213,6 +217,8 @@ struct MarkdownEditorView: NSViewRepresentable {
                 )
                 return VaultAssets.markdownLink(for: relativePath)
             } catch {
+                os_log(.error, "MarkdownEditorView: failed to store image asset: %{public}@",
+                       error.localizedDescription)
                 return nil
             }
         }

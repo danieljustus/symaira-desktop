@@ -116,6 +116,7 @@ struct MarkdownEditorView: NSViewRepresentable {
         weak var textView: NSTextView?
         private var isFormatting = false
         private var isTransforming = false
+        private var highlightWorkItem: DispatchWorkItem?
 
         init(_ parent: MarkdownEditorView) {
             self.parent = parent
@@ -124,7 +125,20 @@ struct MarkdownEditorView: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView, !isFormatting else { return }
             self.parent.text = textView.string
-            highlight(textView: textView)
+            scheduleHighlight(textView: textView)
+        }
+
+        /// Debounce highlight calls so rapid typing does not re-highlight
+        /// the entire document on every keystroke. The highlight runs at most
+        /// once per 300 ms of idle time after the last text change.
+        private func scheduleHighlight(textView: NSTextView) {
+            highlightWorkItem?.cancel()
+            let workItem = DispatchWorkItem { [weak textView] in
+                guard let textView else { return }
+                self.highlight(textView: textView)
+            }
+            highlightWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
         }
 
         // MARK: - Inline AI actions

@@ -72,8 +72,8 @@ docker run -d --name symdesk \
 The same multi-architecture image runs on Linux `amd64` and `arm64`, including 64-bit Raspberry Pi OS and Apple-silicon container hosts.
 
 Published Home Assistant and GHCR installs use matching release tags. For
-example, app version `0.7.1` pulls `ghcr.io/danieljustus/symaira-desktop:0.7.1`;
-the container workflow publishes that tag when release tag `v0.7.1` is pushed.
+example, app version `0.7.3` pulls `ghcr.io/danieljustus/symaira-desktop:0.7.3`;
+the container workflow publishes that tag when release tag `v0.7.3` is pushed.
 
 ## Home Assistant OS
 

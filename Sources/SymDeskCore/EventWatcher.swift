@@ -13,9 +13,14 @@ public final class EventWatcher: ObservableObject {
     
     @Published public private(set) var latestEvent: VaultEvent?
     @Published public private(set) var allEvents: [VaultEvent] = []
+    @Published public private(set) var isWatching = false
     
     private var process: Process?
-    private var isWatching = false
+    
+    /// The 10 most recent events, newest first.
+    public var recentActivity: [VaultEvent] {
+        Array(allEvents.suffix(10).reversed())
+    }
     
     private init() {}
     

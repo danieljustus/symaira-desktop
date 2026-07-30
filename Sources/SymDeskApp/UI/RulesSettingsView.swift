@@ -5,6 +5,7 @@ import SymairaIngestContract
 
 struct RulesSettingsView: View {
 	@EnvironmentObject private var core: DeskCore
+	@EnvironmentObject private var watcher: EventWatcher
     @StateObject private var viewModel: ClassificationRulesViewModel
     @State private var editingRule: ClassificationRule?
     @State private var editingMail: MailAccount?
@@ -13,6 +14,10 @@ struct RulesSettingsView: View {
     @State private var pendingDeleteRule: ClassificationRule?
     @State private var pendingDeleteMail: MailAccount?
     @State private var showingChangeVaultConfirmation = false
+    @State private var consumeFolderStatus: DeskCore.ConsumeFolderStatus?
+    @State private var consumeFolderError: String?
+    @State private var editingConsumeFolderPath = false
+    @State private var editedConsumeFolderPath = ""
 
     init(vaultPath: String? = nil) {
         _viewModel = StateObject(wrappedValue: ClassificationRulesViewModel(client: SymingestRulesClient(vaultPath: vaultPath)))
@@ -51,6 +56,7 @@ struct RulesSettingsView: View {
                 classificationRulesCard
                 dryRunCard
                 mailRulesCard
+                consumeFolderCard
 				}
             }
             .frame(maxWidth: 960, alignment: .leading)
@@ -62,6 +68,7 @@ struct RulesSettingsView: View {
 			guard !core.isRemote else { return }
             await viewModel.load()
             await viewModel.loadMail()
+            await loadConsumeFolderStatus()
         }
         .sheet(isPresented: $showingRuleEditor) {
             RuleEditorView(existing: editingRule) { pattern, kind, value in
@@ -315,6 +322,159 @@ struct RulesSettingsView: View {
         .background(Color.white.opacity(0.04))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay { RoundedRectangle(cornerRadius: 12).stroke(SymairaTheme.borderGlass, lineWidth: 1) }
+    }
+
+    /// Card that shows and controls the consume (watched inbox) folder.
+    private var consumeFolderCard: some View {
+        settingsCard(title: "Consume folder", systemImage: "tray.and.arrow.down") {
+            if let error = consumeFolderError {
+                messageCard(title: "Could not load consume folder status", message: error, systemImage: "exclamationmark.triangle") {
+                    Button("Retry") {
+                        Task { await loadConsumeFolderStatus() }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            } else if let status = consumeFolderStatus {
+                VStack(alignment: .leading, spacing: 12) {
+                    // Folder path display / edit
+                    if editingConsumeFolderPath {
+                        VStack(alignment: .leading, spacing: 6) {
+                            TextField("Folder path", text: $editedConsumeFolderPath)
+                                .textFieldStyle(.roundedBorder)
+                            HStack {
+                                Button("Save") {
+                                    Task {
+                                        do {
+                                            try await core.setConsumeFolderPath(editedConsumeFolderPath)
+                                            editingConsumeFolderPath = false
+                                            await loadConsumeFolderStatus()
+                                        } catch {
+                                            consumeFolderError = error.localizedDescription
+                                        }
+                                    }
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.small)
+                                .tint(SymairaTheme.goldPrimary)
+                                Button("Cancel") {
+                                    editingConsumeFolderPath = false
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            }
+                        }
+                    } else {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(status.inboxPath)
+                                    .font(.headline)
+                                    .foregroundStyle(SymairaTheme.textPrimary)
+                                Text(status.configuredPath.isEmpty
+                                     ? "Default path (not explicitly configured)"
+                                     : "Configured in symdesk config")
+                                    .font(.caption)
+                                    .foregroundStyle(SymairaTheme.textMuted)
+                            }
+                            Spacer()
+                            Button("Change") {
+                                editedConsumeFolderPath = status.inboxPath
+                                editingConsumeFolderPath = true
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                    }
+
+                    Divider().overlay(SymairaTheme.borderGlass)
+
+                    // Watch status and toggle
+                    HStack {
+                        Label(watcher.isWatching ? "Running" : "Stopped",
+                              systemImage: watcher.isWatching ? "play.fill" : "stop.fill")
+                            .foregroundStyle(watcher.isWatching ? .green : SymairaTheme.textSecondary)
+                            .font(.subheadline)
+                        Spacer()
+                        if watcher.isWatching {
+                            Button("Stop") {
+                                watcher.stop()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        } else {
+                            Button("Start") {
+                                if let tool = core.tool {
+                                    watcher.start(tool: tool, vaultPath: core.vaultPath)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                            .tint(SymairaTheme.goldPrimary)
+                            .disabled(core.tool == nil)
+                        }
+                    }
+
+                    if !watcher.allEvents.isEmpty {
+                        Divider().overlay(SymairaTheme.borderGlass)
+
+                        // Recent activity
+                        Text("Recent activity")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(SymairaTheme.textPrimary)
+
+                        ForEach(watcher.recentActivity.prefix(5)) { event in
+                            HStack(spacing: 8) {
+                                Image(systemName: iconForEvent(event.event))
+                                    .foregroundStyle(SymairaTheme.goldSecondary)
+                                    .font(.caption)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(event.event.replacingOccurrences(of: "_", with: " ").capitalized)
+                                        .font(.caption.weight(.medium))
+                                        .foregroundStyle(SymairaTheme.textPrimary)
+                                    Text(URL(fileURLWithPath: event.path).lastPathComponent)
+                                        .font(.caption2)
+                                        .foregroundStyle(SymairaTheme.textMuted)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Text(formattedTimestamp(event.ts))
+                                    .font(.caption2)
+                                    .foregroundStyle(SymairaTheme.textMuted)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    }
+                }
+            } else {
+                ProgressView("Loading consume folder status…")
+                    .task { await loadConsumeFolderStatus() }
+            }
+        }
+    }
+
+    private func loadConsumeFolderStatus() async {
+        consumeFolderError = nil
+        do {
+            consumeFolderStatus = try await core.getConsumeFolderStatus()
+        } catch {
+            consumeFolderError = error.localizedDescription
+        }
+    }
+
+    private func iconForEvent(_ event: String) -> String {
+        switch event {
+        case "file_added", "index_updated": return "doc.badge.plus"
+        case "file_changed": return "doc.badge.gearshape"
+        case "file_removed": return "trash"
+        default: return "circle.fill"
+        }
+    }
+
+    private func formattedTimestamp(_ ts: Int64) -> String {
+        let date = Date(timeIntervalSince1970: TimeInterval(ts))
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: date, relativeTo: Date())
     }
 
     private func messageCard<Content: View>(title: String, message: String, systemImage: String, @ViewBuilder action: () -> Content) -> some View {

@@ -89,6 +89,8 @@ struct SymDeskApp: App {
 
         Settings {
             RulesSettingsView(vaultPath: core.vaultPath)
+                .environmentObject(core)
+                .environmentObject(watcher)
                 .frame(minWidth: 520, minHeight: 400)
         }
     }

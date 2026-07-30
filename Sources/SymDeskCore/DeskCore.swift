@@ -1027,79 +1027,38 @@ public final class DeskCore: ObservableObject {
         return result.path
     }
 
-    // MARK: - History & Restore
+    // MARK: - Consume Folder
 
-    public func historyList(path: String) async throws -> [HistoryEntry] {
-        try await runDecoding([HistoryEntry].self, arguments: ["history", path, "--json"] + vaultArgs)
-    }
+    /// Status of the consume (watched inbox) folder.
+    public struct ConsumeFolderStatus: Codable, Sendable, Equatable {
+        public let inboxPath: String
+        public let configuredPath: String
+        public let exists: Bool
+        public let vaultPath: String
 
-    public func historyRestore(path: String, at id: String = "") async throws {
-        var args = ["restore", path]
-        if !id.isEmpty {
-            args += ["--at", id]
+        enum CodingKeys: String, CodingKey {
+            case inboxPath = "inbox_path"
+            case configuredPath = "configured_path"
+            case exists
+            case vaultPath = "vault_path"
         }
-        args += ["--json"] + vaultArgs
-        _ = try await runChecked(arguments: args)
+
+        public init(inboxPath: String, configuredPath: String, exists: Bool, vaultPath: String) {
+            self.inboxPath = inboxPath
+            self.configuredPath = configuredPath
+            self.exists = exists
+            self.vaultPath = vaultPath
+        }
     }
 
-    // MARK: - Trash Management
-
-    public func trashList() async throws -> [TrashEntry] {
-        try await runDecoding([TrashEntry].self, arguments: ["trash", "list", "--json"] + vaultArgs)
+    /// Returns the current consume folder configuration from the CLI.
+    public func getConsumeFolderStatus() async throws -> ConsumeFolderStatus {
+        try await runDecoding(ConsumeFolderStatus.self, arguments: ["consume", "status", "--json"] + vaultArgs)
     }
 
-    public func trashRestore(name: String) async throws {
-        _ = try await runChecked(arguments: ["trash", "restore", name, "--json"] + vaultArgs)
-    }
-
-    public func trashPurgeAll() async throws {
-        _ = try await runChecked(arguments: ["trash", "purge", "--all", "--json"] + vaultArgs)
-    }
-
-    public func noteDelete(path: String) async throws {
-        _ = try await runChecked(arguments: ["delete", path, "--json"] + vaultArgs)
-    }
-}
-
-// MARK: - History & Trash Models
-
-public struct HistoryEntry: Codable, Equatable, Identifiable, Sendable {
-    public var id: String { snapshotID }
-    public let snapshotID: String
-    public let timestamp: String
-    public let size: Int64
-
-    public init(snapshotID: String, timestamp: String, size: Int64) {
-        self.snapshotID = snapshotID
-        self.timestamp = timestamp
-        self.size = size
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case snapshotID = "id"
-        case timestamp, size
-    }
-}
-
-public struct TrashEntry: Codable, Equatable, Identifiable, Sendable {
-    public var id: String { name }
-    public let name: String
-    public let originalPath: String
-    public let deletedAt: String
-    public let size: Int64
-
-    public init(name: String, originalPath: String, deletedAt: String, size: Int64) {
-        self.name = name
-        self.originalPath = originalPath
-        self.deletedAt = deletedAt
-        self.size = size
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case name
-        case originalPath = "original_path"
-        case deletedAt = "deleted_at"
-        case size
+    /// Sets the consume folder path in the symdesk config.
+    public func setConsumeFolderPath(_ path: String) async throws {
+        _ = try await runChecked(arguments: ["consume", "set-path", path] + vaultArgs)
     }
 }
 

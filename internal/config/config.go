@@ -32,6 +32,7 @@ type Config struct {
 	LLMProvider     string `toml:"llm_provider" env:"SYMDESK_LLM_PROVIDER"`
 	LLMAPIKey       string `toml:"llm_api_key" env:"SYMDESK_LLM_API_KEY"`
 	LLMModel        string `toml:"llm_model" env:"SYMDESK_LLM_MODEL"`
+	OllamaURL       string `toml:"ollama_url" env:"SYMDESK_OLLAMA_URL"`
 	Language        string `toml:"language" env:"SYMDESK_LANG"`
 	MaxTokens       int    `toml:"max_tokens" env:"SYMDESK_MAX_TOKENS"`
 

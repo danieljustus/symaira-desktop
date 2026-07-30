@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
 
@@ -16,6 +17,15 @@ func newTestService(t *testing.T) *Service {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { db.Close() })
+
+	// Prevent accidental calls to the real symseek binary on PATH during tests.
+	compose.SymseekBin = filepath.Join(vaultPath, ".symseek-disabled-in-test")
+	compose.ResetCache()
+	t.Cleanup(func() {
+		compose.SymseekBin = "symseek"
+		compose.ResetCache()
+	})
+
 	return New(vaultPath, db)
 }
 

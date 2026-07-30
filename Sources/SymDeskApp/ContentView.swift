@@ -62,6 +62,10 @@ struct ContentView: View {
     @State private var docTotalCount: Int = 0
     @State private var deepLinkDocPath: String?
 
+    // Tag browsing
+    @State private var tagCounts: [TagEntry] = []
+    @State private var tagFilter: String? = nil
+
     var body: some View {
         Group {
             if !core.isReady {
@@ -124,6 +128,14 @@ struct ContentView: View {
                                     }
                                 }
                             }
+                        }
+
+                        Section("Tags") {
+                            TagBrowserView(tags: tagCounts) { tag in
+                                tagFilter = tag
+                                displayMode = .docs
+                            }
+                            .frame(minHeight: 120)
                         }
 
                         meetingsSidebarSection
@@ -257,7 +269,7 @@ struct ContentView: View {
                         }
                     case .docs:
                         let statusVal = DocFilterPreset.defaults.first(where: { $0.id == docFilterID })?.status
-                        DocumentGridView(statusFilter: statusVal?.rawValue, deepLinkPath: deepLinkDocPath)
+                        DocumentGridView(statusFilter: statusVal?.rawValue, deepLinkPath: deepLinkDocPath, tagFilter: tagFilter)
                     case .dbView:
                         if let vid = selectedViewID {
                             if let view = dbViews.first(where: { $0.id == vid }) {
@@ -461,7 +473,10 @@ struct ContentView: View {
                     } else {
                         VStack(alignment: .leading, spacing: 0) {
                             if let note = selectedNote {
-                                PropertiesInspector(notePath: vaultRelativePath(note.path))
+                                PropertiesInspector(notePath: vaultRelativePath(note.path), onTagClick: { tag in
+                                    tagFilter = tag
+                                    displayMode = .docs
+                                })
                             }
                             Text("Backlinks")
                                 .font(.headline)
@@ -620,6 +635,7 @@ struct ContentView: View {
                     await fetchViews()
                     await fetchDoctor()
                     await fetchDocCounts()
+                    await fetchTagCounts()
                 }
                 .onChange(of: watcher.latestEvent) { _, ev in
                     scheduleEventRefresh(ev)
@@ -839,6 +855,7 @@ struct ContentView: View {
             guard !Task.isCancelled else { return }
             await fetchNotes()
             await fetchDocCounts()
+            await fetchTagCounts()
             if let selected = selectedNote, event?.path == selected.path {
                 await loadContent(for: selected)
             }
@@ -858,6 +875,16 @@ struct ContentView: View {
             docCounts = counts
         } catch {
             print("fetchDocCounts failed: \(error)")
+        }
+    }
+
+    /// Scan vault files and aggregate tag counts for the tag browser.
+    private func fetchTagCounts() async {
+        guard !notes.isEmpty else { return }
+        do {
+            tagCounts = try await TagStore.aggregate(from: notes, vaultPath: core.vaultPath, isRemote: core.isRemote, core: core)
+        } catch {
+            print("fetchTagCounts failed: \(error)")
         }
     }
 

@@ -60,12 +60,15 @@ fi
 		t.Fatal(err)
 	}
 
-	// Override PATH
-	oldPath := os.Getenv("PATH")
-	os.Setenv("PATH", tempDir+string(os.PathListSeparator)+oldPath)
-	defer os.Setenv("PATH", oldPath)
-
+	// Point compose at mock binaries
+	compose.SymseekBin = mockSeek
+	compose.SymmemoryBin = mockMemory
 	compose.ResetCache()
+	t.Cleanup(func() {
+		compose.SymseekBin = "symseek"
+		compose.SymmemoryBin = "symmemory"
+		compose.ResetCache()
+	})
 
 	// 3. Setup DB
 	dbPath := filepath.Join(vaultPath, "sidecar.db")
@@ -181,10 +184,12 @@ fi
 		t.Fatal(err)
 	}
 
-	oldPath := os.Getenv("PATH")
-	os.Setenv("PATH", tempDir+string(os.PathListSeparator)+oldPath)
-	defer os.Setenv("PATH", oldPath)
+	compose.SymmemoryBin = mockMemory
 	compose.ResetCache()
+	t.Cleanup(func() {
+		compose.SymmemoryBin = "symmemory"
+		compose.ResetCache()
+	})
 
 	dbPath := filepath.Join(vaultPath, "sidecar.db")
 	db, err := sidecar.Open(dbPath)
@@ -301,10 +306,12 @@ fi
 		t.Fatal(err)
 	}
 
-	oldPath := os.Getenv("PATH")
-	os.Setenv("PATH", tempDir+string(os.PathListSeparator)+oldPath)
-	defer os.Setenv("PATH", oldPath)
+	compose.SymmemoryBin = mockMemory
 	compose.ResetCache()
+	t.Cleanup(func() {
+		compose.SymmemoryBin = "symmemory"
+		compose.ResetCache()
+	})
 
 	dbPath := filepath.Join(vaultPath, "sidecar.db")
 	db, err := sidecar.Open(dbPath)

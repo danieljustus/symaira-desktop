@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/danieljustus/symaira-desktop/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/danieljustus/symaira-desktop/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/danieljustus/symaira-desktop)](https://github.com/danieljustus/symaira-desktop/releases) [![License](https://img.shields.io/github/license/danieljustus/symaira-desktop)](LICENSE)
 
+![Symaira Desktop social preview](docs/assets/social-preview.png)
+
 The composition **shell** of the [Symaira](https://github.com/danieljustus?tab=repositories&q=symaira) ecosystem.
 
 A local-first and self-hostable, **agent-native** workspace that unifies documents, notes, knowledge and AI over a single plain-Markdown vault. It is the realization of the "Paperless + Obsidian + Notion AI" dream as *one surface*, deliberately **not** a monolith and without making a proprietary database the source of truth.

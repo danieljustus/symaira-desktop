@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var noteLookup: [String: Note] = [:]
     @State private var selectedNote: Note? = nil
     @State private var noteContent: String = ""
+    @State private var loadError: String? = nil
     @State private var doctorStatus: String = "Checking..."
     @State private var doctorReport: DoctorReport? = nil
     @State private var isShowingDoctorPopover = false
@@ -347,33 +348,64 @@ struct ContentView: View {
                                     .padding(.top, 8)
                                 }
 
-                                HStack(spacing: 0) {
-                                    if isBlockMode {
-                                        BlockEditorView(text: $noteContent)
-                                            .padding(.top, 4)
-                                    } else {
-                                        MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
-                                            navigateToNote(title: targetTitle)
-                                        }, core: core)
-                                    }
-                                    
-                                    // Dummy view to attach onChange (since we use if/else for the editor)
-                                    Color.clear.frame(width: 0, height: 0)
-                                        .onChange(of: noteContent) { _, newValue in
-                                            debouncedSave(note: note, content: newValue)
-                                        }
-
-                                    if isShowingPreview {
-                                        Divider()
-                                        MarkdownPreviewView(
-                                            text: noteContent,
-                                            resolveNote: { target in resolveNoteContent(target) },
-                                            visited: [note.title],
-                                            onLinkClick: { targetTitle in
-                                                navigateToNote(title: targetTitle)
+                                if let loadError = loadError {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundStyle(.red)
+                                        Text(loadError)
+                                            .font(.caption)
+                                            .foregroundColor(SymairaTheme.textSecondary)
+                                        Spacer()
+                                        Button("Retry") {
+                                            self.loadError = nil
+                                            if let note = selectedNote {
+                                                Task { await loadContent(for: note) }
                                             }
-                                        )
-                                        .frame(maxWidth: .infinity)
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .controlSize(.small)
+                                        Button(action: { self.loadError = nil }) {
+                                            Image(systemName: "xmark")
+                                        }
+                                        .buttonStyle(.plain)
+                                        .foregroundStyle(SymairaTheme.textSecondary)
+                                    }
+                                    .padding(8)
+                                    .background(Color.red.opacity(0.12))
+                                    .cornerRadius(6)
+                                    .padding(.horizontal)
+                                    .padding(.top, 8)
+                                }
+
+                                if loadError == nil {
+                                    HStack(spacing: 0) {
+                                        if isBlockMode {
+                                            BlockEditorView(text: $noteContent)
+                                                .padding(.top, 4)
+                                        } else {
+                                            MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
+                                                navigateToNote(title: targetTitle)
+                                            }, core: core)
+                                        }
+                                        
+                                        // Dummy view to attach onChange (since we use if/else for the editor)
+                                        Color.clear.frame(width: 0, height: 0)
+                                            .onChange(of: noteContent) { _, newValue in
+                                                debouncedSave(note: note, content: newValue)
+                                            }
+
+                                        if isShowingPreview {
+                                            Divider()
+                                            MarkdownPreviewView(
+                                                text: noteContent,
+                                                resolveNote: { target in resolveNoteContent(target) },
+                                                visited: [note.title],
+                                                onLinkClick: { targetTitle in
+                                                    navigateToNote(title: targetTitle)
+                                                }
+                                            )
+                                            .frame(maxWidth: .infinity)
+                                        }
                                     }
                                 }
                             }
@@ -680,23 +712,24 @@ struct ContentView: View {
     }
 
     private func loadContent(for note: Note) async {
-		if core.isRemote {
-			do {
-				self.noteContent = try await core.docNoteContent(path: note.path)
-			} catch {
-				self.noteContent = "Error reading file: \(error.localizedDescription)"
-			}
-			return
-		}
+        self.loadError = nil
+        if core.isRemote {
+            do {
+                self.noteContent = try await core.docNoteContent(path: note.path)
+            } catch {
+                self.loadError = "Error reading file: \(error.localizedDescription)"
+            }
+            return
+        }
         guard let path = absoluteNotePath(note.path) else {
-            self.noteContent = "Error reading file: no vault is configured."
+            self.loadError = "Error reading file: no vault is configured."
             return
         }
         if let data = FileManager.default.contents(atPath: path),
            let string = String(data: data, encoding: .utf8) {
             self.noteContent = string
         } else {
-            self.noteContent = "Error reading file."
+            self.loadError = "Error reading file."
         }
     }
 

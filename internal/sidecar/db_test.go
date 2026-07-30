@@ -1240,13 +1240,13 @@ func TestPruneRemovesIgnoredFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 	hiddenPath := filepath.Join(hiddenDir, "config.md")
-	if err := os.WriteFile(hiddenPath, []byte("---\ntitle: Config\n---\nGit config"), 0644); err != nil {
+	if err := os.WriteFile(hiddenPath, []byte("---\ntitle: Config\n---\nGit config"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	// A normal file that should be kept
 	normalPath := filepath.Join(vaultRoot, "doc.md")
-	if err := os.WriteFile(normalPath, []byte("---\ntitle: Doc\n---\nNormal doc"), 0644); err != nil {
+	if err := os.WriteFile(normalPath, []byte("---\ntitle: Doc\n---\nNormal doc"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1303,12 +1303,12 @@ func TestPruneRemovesFilesInNodeModules(t *testing.T) {
 		t.Fatal(err)
 	}
 	nmPath := filepath.Join(nodeModules, "readme.md")
-	if err := os.WriteFile(nmPath, []byte("---\ntitle: README\n---\nnpm package readme"), 0644); err != nil {
+	if err := os.WriteFile(nmPath, []byte("---\ntitle: README\n---\nnpm package readme"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	normalPath := filepath.Join(vaultRoot, "real.md")
-	if err := os.WriteFile(normalPath, []byte("---\ntitle: Real\n---\nReal doc"), 0644); err != nil {
+	if err := os.WriteFile(normalPath, []byte("---\ntitle: Real\n---\nReal doc"), 0600); err != nil {
 		t.Fatal(err)
 	}
 

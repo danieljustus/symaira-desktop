@@ -1128,10 +1128,10 @@ func TestPruneRemovesDeletedFiles(t *testing.T) {
 	// Create two files in the vault
 	path1 := filepath.Join(vaultRoot, "keep.md")
 	path2 := filepath.Join(vaultRoot, "delete.md")
-	if err := os.WriteFile(path1, []byte("---\ntitle: Keep\n---\nBody one"), 0644); err != nil {
+	if err := os.WriteFile(path1, []byte("---\ntitle: Keep\n---\nBody one"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(path2, []byte("---\ntitle: Delete\n---\nBody two"), 0644); err != nil {
+	if err := os.WriteFile(path2, []byte("---\ntitle: Delete\n---\nBody two"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1199,7 +1199,7 @@ func TestPruneRemovesNothingWhenAllExist(t *testing.T) {
 	vaultRoot := t.TempDir()
 
 	path := filepath.Join(vaultRoot, "note.md")
-	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1236,7 +1236,7 @@ func TestPruneRemovesIgnoredFiles(t *testing.T) {
 
 	// A file inside a hidden directory that vault.Walk would skip
 	hiddenDir := filepath.Join(vaultRoot, ".git")
-	if err := os.MkdirAll(hiddenDir, 0755); err != nil {
+	if err := os.MkdirAll(hiddenDir, 0750); err != nil {
 		t.Fatal(err)
 	}
 	hiddenPath := filepath.Join(hiddenDir, "config.md")
@@ -1299,7 +1299,7 @@ func TestPruneRemovesFilesInNodeModules(t *testing.T) {
 	vaultRoot := t.TempDir()
 
 	nodeModules := filepath.Join(vaultRoot, "node_modules")
-	if err := os.MkdirAll(nodeModules, 0755); err != nil {
+	if err := os.MkdirAll(nodeModules, 0750); err != nil {
 		t.Fatal(err)
 	}
 	nmPath := filepath.Join(nodeModules, "readme.md")

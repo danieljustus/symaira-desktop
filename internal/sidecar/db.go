@@ -360,7 +360,7 @@ func (db *DB) Prune(vaultRoot string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("query indexed paths for prune: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var stale []string
 	for rows.Next() {
@@ -385,7 +385,7 @@ func (db *DB) Prune(vaultRoot string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("begin prune tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	for _, path := range stale {
 		if err := deleteDocumentRows(tx, path); err != nil {

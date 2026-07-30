@@ -84,6 +84,7 @@
 		C538D3C4A6BE4D9208A2DCCE /* SymairaUpdateCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 4D0E14080504B77CA18BBA53 /* SymairaUpdateCheck */; };
 		C56310271DF0FBD1ED258CCA /* GraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF662679454A1D5730ECD171 /* GraphView.swift */; };
 		C6F1120FFE339799B94C8BF7 /* TrashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFCFA06E53EB66006F8169C7 /* TrashView.swift */; };
+		C7C146956A2FA300951F787D /* DocumentThumbnailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2FC4C3A298D87F74C40AD0D /* DocumentThumbnailView.swift */; };
 		C85A4C45BB4E561D0049F805 /* UpdateInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D31AEB4D808A7B5F64134E1 /* UpdateInstaller.swift */; };
 		C8E2BB8E6DEC50C4AF30AEA5 /* TagStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3377E99C5896425F50A2293 /* TagStore.swift */; };
 		CBD99C1AAF0BA2BE2A136FA6 /* SymDeskApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD325D2A25FDF9FA519A6FA /* SymDeskApp.swift */; };
@@ -202,6 +203,7 @@
 		9FA57E256040FF30C447766E /* RulesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RulesSettingsView.swift; sourceTree = "<group>"; };
 		A175D91D3D83560906E78387 /* VaultConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultConfig.swift; sourceTree = "<group>"; };
 		A2BC2A21B0BFAB4B7F22A054 /* MeetingReviewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingReviewModelTests.swift; sourceTree = "<group>"; };
+		A2FC4C3A298D87F74C40AD0D /* DocumentThumbnailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentThumbnailView.swift; sourceTree = "<group>"; };
 		A60D1BDE16EFA4EF064577CB /* TranscriptTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptTimelineView.swift; sourceTree = "<group>"; };
 		A68D64871B4AA84AF8340744 /* MobileVaultParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileVaultParserTests.swift; sourceTree = "<group>"; };
 		AF3DE41EB61C376999197AEF /* libSymDeskCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSymDeskCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -354,6 +356,7 @@
 				39D62AD2CAE794AD863C9E92 /* DbViewTimeline.swift */,
 				15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */,
 				AF74B31CB37D574E3AC69032 /* DocumentGridView.swift */,
+				A2FC4C3A298D87F74C40AD0D /* DocumentThumbnailView.swift */,
 				BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */,
 				FF662679454A1D5730ECD171 /* GraphView.swift */,
 				B0F34CB14C3886867573D63C /* HistoryView.swift */,
@@ -758,6 +761,7 @@
 				85DECDD2DC5ADCC88C1E2BBC /* DbViewTimeline.swift in Sources */,
 				894BF25DD7A7DE8807A137E1 /* DiscoverView.swift in Sources */,
 				087490E1CC2A424C7AEF4AC1 /* DocumentGridView.swift in Sources */,
+				C7C146956A2FA300951F787D /* DocumentThumbnailView.swift in Sources */,
 				0C92622CE6B3BB5D9C7AEC4C /* DocumentViewerView.swift in Sources */,
 				C56310271DF0FBD1ED258CCA /* GraphView.swift in Sources */,
 				8EC2D4A9ACD0AE25F730956C /* HistoryView.swift in Sources */,

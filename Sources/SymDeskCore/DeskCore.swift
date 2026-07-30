@@ -1026,6 +1026,81 @@ public final class DeskCore: ObservableObject {
         let result = try JSONDecoder().decode(DemoInitResult.self, from: data)
         return result.path
     }
+
+    // MARK: - History & Restore
+
+    public func historyList(path: String) async throws -> [HistoryEntry] {
+        try await runDecoding([HistoryEntry].self, arguments: ["history", path, "--json"] + vaultArgs)
+    }
+
+    public func historyRestore(path: String, at id: String = "") async throws {
+        var args = ["restore", path]
+        if !id.isEmpty {
+            args += ["--at", id]
+        }
+        args += ["--json"] + vaultArgs
+        _ = try await runChecked(arguments: args)
+    }
+
+    // MARK: - Trash Management
+
+    public func trashList() async throws -> [TrashEntry] {
+        try await runDecoding([TrashEntry].self, arguments: ["trash", "list", "--json"] + vaultArgs)
+    }
+
+    public func trashRestore(name: String) async throws {
+        _ = try await runChecked(arguments: ["trash", "restore", name, "--json"] + vaultArgs)
+    }
+
+    public func trashPurgeAll() async throws {
+        _ = try await runChecked(arguments: ["trash", "purge", "--all", "--json"] + vaultArgs)
+    }
+
+    public func noteDelete(path: String) async throws {
+        _ = try await runChecked(arguments: ["delete", path, "--json"] + vaultArgs)
+    }
+}
+
+// MARK: - History & Trash Models
+
+public struct HistoryEntry: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { snapshotID }
+    public let snapshotID: String
+    public let timestamp: String
+    public let size: Int64
+
+    public init(snapshotID: String, timestamp: String, size: Int64) {
+        self.snapshotID = snapshotID
+        self.timestamp = timestamp
+        self.size = size
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case snapshotID = "id"
+        case timestamp, size
+    }
+}
+
+public struct TrashEntry: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { name }
+    public let name: String
+    public let originalPath: String
+    public let deletedAt: String
+    public let size: Int64
+
+    public init(name: String, originalPath: String, deletedAt: String, size: Int64) {
+        self.name = name
+        self.originalPath = originalPath
+        self.deletedAt = deletedAt
+        self.size = size
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case originalPath = "original_path"
+        case deletedAt = "deleted_at"
+        case size
+    }
 }
 
 public struct SimilarDoc: Codable, Equatable, Identifiable, Sendable {
@@ -1099,10 +1174,17 @@ public struct DoctorReport: Codable, Sendable {
     public struct AIReport: Codable, Sendable {
         public let provider: String?
         public let model: String?
+        public let ollamaURL: String?
 
-        public init(provider: String? = nil, model: String? = nil) {
+        public init(provider: String? = nil, model: String? = nil, ollamaURL: String? = nil) {
             self.provider = provider
             self.model = model
+            self.ollamaURL = ollamaURL
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case provider, model
+            case ollamaURL = "ollama_url"
         }
     }
 
@@ -1561,5 +1643,58 @@ public struct MeetingRefreshOutcome: Codable, Sendable {
         self.changed = changed
         self.diffLines = diffLines
         self.applied = applied
+    }
+}
+
+// MARK: - AI Config
+
+public struct AIConfigStatus: Codable, Sendable {
+    public let ollamaURL: String
+    public let ollamaModel: String
+    public let isConfigured: Bool
+
+    public init(ollamaURL: String, ollamaModel: String) {
+        self.ollamaURL = ollamaURL
+        self.ollamaModel = ollamaModel
+        self.isConfigured = !ollamaURL.isEmpty
+    }
+}
+
+extension DeskCore {
+    /// Fetches AI configuration status from the CLI.
+    /// Returns the current Ollama URL and model, plus whether AI is usable.
+    public func getAIConfig() async throws -> AIConfigStatus {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        let data = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["config", "list", "--json"]
+        )
+        let decoder = JSONDecoder()
+        let raw = try decoder.decode([String: String].self, from: data)
+        return AIConfigStatus(
+            ollamaURL: raw["ollama_url"] ?? "",
+            ollamaModel: raw["ollama_model"] ?? ""
+        )
+    }
+
+    /// Sets the Ollama URL and saves to config file.
+    public func setOllamaURL(_ url: String) async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        _ = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["config", "set", "ollama_url", url, "--json"]
+        )
+    }
+
+    /// Sets the Ollama model and saves to config file.
+    public func setOllamaModel(_ model: String) async throws {
+        guard let tool else { throw DeskCoreError.coreNotFound }
+        let runner = CLIRunner()
+        _ = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["config", "set", "ollama_model", model, "--json"]
+        )
     }
 }

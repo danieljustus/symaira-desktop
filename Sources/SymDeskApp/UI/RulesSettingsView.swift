@@ -13,6 +13,12 @@ struct RulesSettingsView: View {
     @State private var pendingDeleteRule: ClassificationRule?
     @State private var pendingDeleteMail: MailAccount?
     @State private var showingChangeVaultConfirmation = false
+    @State private var ollamaURL: String = ""
+    @State private var ollamaModel: String = ""
+    @State private var aiConfigLoaded = false
+    @State private var isSavingAI = false
+    @State private var aiSaveMessage: String?
+    @State private var aiSaveMessageIsError = false
 
     init(vaultPath: String? = nil) {
         _viewModel = StateObject(wrappedValue: ClassificationRulesViewModel(client: SymingestRulesClient(vaultPath: vaultPath)))
@@ -27,6 +33,7 @@ struct RulesSettingsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 header
 				connectionCard
+				aiSettingsCard
 				if core.isRemote {
 					messageCard(
 						title: "Processing is managed by SymDesk Server",
@@ -62,6 +69,7 @@ struct RulesSettingsView: View {
 			guard !core.isRemote else { return }
             await viewModel.load()
             await viewModel.loadMail()
+			await loadAIConfig()
         }
         .sheet(isPresented: $showingRuleEditor) {
             RuleEditorView(existing: editingRule) { pattern, kind, value in
@@ -301,6 +309,124 @@ struct RulesSettingsView: View {
                 }
             }
         }
+    }
+
+    private var aiSettingsCard: some View {
+        settingsCard(title: "AI Settings", systemImage: "sparkles") {
+            VStack(alignment: .leading, spacing: 12) {
+                if !aiConfigLoaded {
+                    ProgressView("Loading AI configuration…")
+                } else {
+                    // Status indicator
+                    HStack(spacing: 8) {
+                        Image(systemName: ollamaURL.isEmpty ? "exclamationmark.triangle" : "checkmark.circle")
+                            .foregroundStyle(ollamaURL.isEmpty ? SymairaTheme.goldSecondary : .green)
+                        Text(ollamaURL.isEmpty ? "AI not configured" : "Ollama endpoint configured")
+                            .font(.headline)
+                            .foregroundStyle(SymairaTheme.textPrimary)
+                        Spacer()
+                    }
+                    .padding(.bottom, 4)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Ollama URL")
+                            .font(.caption)
+                            .foregroundStyle(SymairaTheme.textSecondary)
+                        TextField("http://localhost:11434", text: $ollamaURL)
+                            .textFieldStyle(.plain)
+                            .padding(8)
+                            .background(Color.white.opacity(0.06))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(SymairaTheme.borderGlass, lineWidth: 1)
+                            )
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Model")
+                            .font(.caption)
+                            .foregroundStyle(SymairaTheme.textSecondary)
+                        TextField("llama3.2", text: $ollamaModel)
+                            .textFieldStyle(.plain)
+                            .padding(8)
+                            .background(Color.white.opacity(0.06))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(SymairaTheme.borderGlass, lineWidth: 1)
+                            )
+                    }
+
+                    HStack(spacing: 10) {
+                        Button(action: {
+                            Task { await saveAIConfig() }
+                        }) {
+                            if isSavingAI {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .tint(SymairaTheme.goldPrimary)
+                            } else {
+                                Label("Save", systemImage: "square.and.arrow.down")
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(SymairaTheme.goldPrimary)
+                        .disabled(isSavingAI)
+
+                        Spacer()
+
+                        if let msg = aiSaveMessage {
+                            Label(msg, systemImage: aiSaveMessageIsError ? "exclamationmark.triangle" : "checkmark.circle")
+                                .font(.caption)
+                                .foregroundStyle(aiSaveMessageIsError ? .red : .green)
+                        }
+                    }
+
+                    Text("Changes are saved to the global config file and persist across restarts. Environment variables override config values.")
+                        .font(.caption)
+                        .foregroundStyle(SymairaTheme.textMuted)
+                }
+            }
+        }
+    }
+
+    private func loadAIConfig() async {
+        guard aiConfigLoaded == false else { return }
+        do {
+            let config = try await core.getAIConfig()
+            await MainActor.run {
+                ollamaURL = config.ollamaURL
+                ollamaModel = config.ollamaModel
+                aiConfigLoaded = true
+                aiSaveMessage = nil
+            }
+        } catch {
+            await MainActor.run {
+                aiConfigLoaded = true
+                aiSaveMessage = "Failed to load: \(error.localizedDescription)"
+                aiSaveMessageIsError = true
+            }
+        }
+    }
+
+    private func saveAIConfig() async {
+        isSavingAI = true
+        aiSaveMessage = nil
+        do {
+            try await core.setOllamaURL(ollamaURL)
+            try await core.setOllamaModel(ollamaModel)
+            await MainActor.run {
+                aiSaveMessage = "Saved"
+                aiSaveMessageIsError = false
+            }
+        } catch {
+            await MainActor.run {
+                aiSaveMessage = "Save failed: \(error.localizedDescription)"
+                aiSaveMessageIsError = true
+            }
+        }
+        isSavingAI = false
     }
 
     private func settingsCard<Content: View>(title: String, systemImage: String, @ViewBuilder content: () -> Content) -> some View {

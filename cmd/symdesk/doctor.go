@@ -134,6 +134,13 @@ func newDoctorCmd() *cobra.Command {
 					model = config.DefaultAnthropicModel
 				}
 				aiMap["model"] = model
+			} else {
+				aiMap["ollama_url"] = cfg.OllamaURL
+				model := cfg.OllamaModel
+				if model == "" {
+					model = "llama3.2"
+				}
+				aiMap["model"] = model
 			}
 			results["ai"] = aiMap
 
@@ -183,6 +190,9 @@ func newDoctorCmd() *cobra.Command {
 				}
 				if model, ok := aiMap["model"]; ok {
 					fmt.Printf(", model=%s", model)
+				}
+				if url, ok := aiMap["ollama_url"]; ok && url != "" {
+					fmt.Printf(", ollama_url=%s", url)
 				}
 				fmt.Println()
 

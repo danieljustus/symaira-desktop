@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -87,7 +86,9 @@ func Ask(ctx context.Context, cfg *config.Config, query string, contextDocs []ma
 					"Anthropic API key could not be resolved (missing secret via symvault or environment variable).\n"}
 			} else {
 				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
-					"`SYMDESK_OLLAMA_URL` is not set (e.g., `http://localhost:11434`).\n\n" +
+					"**Ollama endpoint is not set.**\n\n" +
+					"Go to **Rules & Settings → AI Settings** to configure the Ollama URL, " +
+					"or set `SYMDESK_OLLAMA_URL` in your environment (e.g., `http://localhost:11434`).\n\n" +
 					"Here are the most relevant search results from your vault:\n\n"}
 				for i, doc := range contextDocs {
 					if i >= 3 {
@@ -112,7 +113,7 @@ const (
 
 // Transform streams an AI transformation of text according to intent
 // (summarize | rewrite | continue) to out and always closes out. Like Ask it
-// degrades honestly: without SYMDESK_OLLAMA_URL configured it explains what is
+// degrades honestly: without a configured Ollama endpoint it explains what is
 // missing instead of failing. Unlike Ask it operates purely on the provided
 // text and never touches the vault.
 func Transform(ctx context.Context, cfg *config.Config, text, intent string, out chan<- AskChunk) {
@@ -135,7 +136,9 @@ func Transform(ctx context.Context, cfg *config.Config, text, intent string, out
 					"Anthropic API key could not be resolved (missing secret via symvault or environment variable).\n"}
 			} else {
 				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
-					"`SYMDESK_OLLAMA_URL` is not set (e.g., `http://localhost:11434`).\n"}
+					"**Ollama endpoint is not set.**\n\n" +
+					"Go to **Rules & Settings → AI Settings** to configure the Ollama URL, " +
+					"or set `SYMDESK_OLLAMA_URL` in your environment (e.g., `http://localhost:11434`).\n"}
 			}
 		} else {
 			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Request failed: %v\n", err)}
@@ -159,12 +162,12 @@ func streamLLM(ctx context.Context, cfg *config.Config, prompt string, out chan<
 	}
 
 	// fallback to ollama
-	ollamaURL := strings.TrimRight(os.Getenv("SYMDESK_OLLAMA_URL"), "/")
+	ollamaURL := strings.TrimRight(cfg.OllamaURL, "/")
 	if ollamaURL == "" {
 		return ErrNotConfigured
 	}
 
-	model := os.Getenv("SYMDESK_OLLAMA_MODEL")
+	model := cfg.OllamaModel
 	if model == "" {
 		model = defaultModel
 	}
@@ -262,7 +265,7 @@ func promptOne(cfg *config.Config, prompt string) (string, error) {
 			if provider == "anthropic" {
 				return "", errors.New("anthropic API key not resolved")
 			}
-			return "", errors.New("SYMDESK_OLLAMA_URL not set")
+			return "", errors.New("ollama endpoint not configured — set Ollama URL in AI Settings or SYMDESK_OLLAMA_URL env var")
 		}
 		return "", err
 	}

@@ -49,6 +49,13 @@ type Config struct {
 	// ingested documents are placed in the vault. See internal/templatepath
 	// for the supported syntax.
 	StoragePathTemplate string `toml:"storage_path_template" env:"SYMDESK_STORAGE_PATH_TEMPLATE"`
+
+	// OllamaURL is the base URL of the local Ollama instance.
+	// Falls back to SYMDESK_OLLAMA_URL env var.
+	OllamaURL string `toml:"ollama_url" env:"SYMDESK_OLLAMA_URL"`
+	// OllamaModel is the Ollama model to use for AI operations.
+	// Falls back to SYMDESK_OLLAMA_MODEL env var; defaults to "llama3.2".
+	OllamaModel string `toml:"ollama_model" env:"SYMDESK_OLLAMA_MODEL"`
 }
 
 func DefaultConfig() *Config {
@@ -97,6 +104,12 @@ func applyEnvOverrides(cfg *Config) {
 	}
 	if envLang := os.Getenv("SYMDESK_LANG"); envLang != "" {
 		cfg.Language = envLang
+	}
+	if envOllamaURL := os.Getenv("SYMDESK_OLLAMA_URL"); envOllamaURL != "" {
+		cfg.OllamaURL = envOllamaURL
+	}
+	if envOllamaModel := os.Getenv("SYMDESK_OLLAMA_MODEL"); envOllamaModel != "" {
+		cfg.OllamaModel = envOllamaModel
 	}
 	if envMaxTokens := os.Getenv("SYMDESK_MAX_TOKENS"); envMaxTokens != "" {
 		if v, err := strconv.Atoi(envMaxTokens); err == nil && v > 0 {

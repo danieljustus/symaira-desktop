@@ -1117,3 +1117,239 @@ func TestGetTitle_ExistingPath(t *testing.T) {
 		t.Errorf("expected 'Test Title', got '%s'", title)
 	}
 }
+
+// --- Prune tests ---
+
+// TestPruneRemovesDeletedFiles verifies that Prune removes entries for files
+// that no longer exist on disk.
+func TestPruneRemovesDeletedFiles(t *testing.T) {
+	vaultRoot := t.TempDir()
+
+	// Create two files in the vault
+	path1 := filepath.Join(vaultRoot, "keep.md")
+	path2 := filepath.Join(vaultRoot, "delete.md")
+	if err := os.WriteFile(path1, []byte("---\ntitle: Keep\n---\nBody one"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path2, []byte("---\ntitle: Delete\n---\nBody two"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	db := setupTestDB(t)
+
+	// Index both
+	for _, p := range []string{path1, path2} {
+		doc, err := vault.ParseFile(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Verify both are indexed
+	before, err := db.ListFiles("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(before) != 2 {
+		t.Fatalf("expected 2 indexed files before prune, got %d", len(before))
+	}
+
+	// Delete one file from disk
+	if err := os.Remove(path2); err != nil {
+		t.Fatal(err)
+	}
+
+	// Prune
+	pruned, err := db.Prune(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pruned != 1 {
+		t.Errorf("expected 1 pruned entry, got %d", pruned)
+	}
+
+	// Verify only the kept file remains
+	after, err := db.ListFiles("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(after) != 1 {
+		t.Fatalf("expected 1 file after prune, got %d", len(after))
+	}
+	if after[0].Path != path1 {
+		t.Errorf("expected remaining file %s, got %s", path1, after[0].Path)
+	}
+
+	// Verify FTS is also cleaned up
+	results, err := db.Search("Body")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 {
+		t.Errorf("expected 1 FTS result after prune, got %d", len(results))
+	}
+}
+
+// TestPruneRemovesNothingWhenAllExist verifies that Prune is a no-op when all
+// indexed files are still on disk and not ignored.
+func TestPruneRemovesNothingWhenAllExist(t *testing.T) {
+	vaultRoot := t.TempDir()
+
+	path := filepath.Join(vaultRoot, "note.md")
+	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\nBody"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	db := setupTestDB(t)
+	doc, err := vault.ParseFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.IndexDocument(doc); err != nil {
+		t.Fatal(err)
+	}
+
+	pruned, err := db.Prune(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pruned != 0 {
+		t.Errorf("expected 0 pruned entries when all files exist, got %d", pruned)
+	}
+
+	count, err := db.ListFiles("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(count) != 1 {
+		t.Errorf("expected 1 file after no-op prune, got %d", len(count))
+	}
+}
+
+// TestPruneRemovesIgnoredFiles verifies that files inside hidden directories
+// (which vault.Walk skips) are removed from the index.
+func TestPruneRemovesIgnoredFiles(t *testing.T) {
+	vaultRoot := t.TempDir()
+
+	// A file inside a hidden directory that vault.Walk would skip
+	hiddenDir := filepath.Join(vaultRoot, ".git")
+	if err := os.MkdirAll(hiddenDir, 0750); err != nil {
+		t.Fatal(err)
+	}
+	hiddenPath := filepath.Join(hiddenDir, "config.md")
+	if err := os.WriteFile(hiddenPath, []byte("---\ntitle: Config\n---\nGit config"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	// A normal file that should be kept
+	normalPath := filepath.Join(vaultRoot, "doc.md")
+	if err := os.WriteFile(normalPath, []byte("---\ntitle: Doc\n---\nNormal doc"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	db := setupTestDB(t)
+
+	// Index both directly (bypassing Walk, simulating stale entries from a
+	// previous index run before the files were under ignore rules)
+	for _, p := range []string{hiddenPath, normalPath} {
+		doc, err := vault.ParseFile(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	before, err := db.ListFiles("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(before) != 2 {
+		t.Fatalf("expected 2 indexed files before prune, got %d", len(before))
+	}
+
+	// Prune — should remove the file under .git since vault.Walk skips hidden dirs
+	pruned, err := db.Prune(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pruned != 1 {
+		t.Errorf("expected 1 pruned entry (hidden dir file), got %d", pruned)
+	}
+
+	after, err := db.ListFiles("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(after) != 1 {
+		t.Fatalf("expected 1 file after prune, got %d", len(after))
+	}
+	if after[0].Path != normalPath {
+		t.Errorf("expected remaining file %s, got %s", normalPath, after[0].Path)
+	}
+}
+
+// TestPruneRemovesFilesInNodeModules covers the vault.Walk skipDirNames set
+// (node_modules, vendor, dist, build, venv).
+func TestPruneRemovesFilesInNodeModules(t *testing.T) {
+	vaultRoot := t.TempDir()
+
+	nodeModules := filepath.Join(vaultRoot, "node_modules")
+	if err := os.MkdirAll(nodeModules, 0750); err != nil {
+		t.Fatal(err)
+	}
+	nmPath := filepath.Join(nodeModules, "readme.md")
+	if err := os.WriteFile(nmPath, []byte("---\ntitle: README\n---\nnpm package readme"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	normalPath := filepath.Join(vaultRoot, "real.md")
+	if err := os.WriteFile(normalPath, []byte("---\ntitle: Real\n---\nReal doc"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	db := setupTestDB(t)
+	for _, p := range []string{nmPath, normalPath} {
+		doc, err := vault.ParseFile(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	pruned, err := db.Prune(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pruned != 1 {
+		t.Errorf("expected 1 pruned entry (node_modules), got %d", pruned)
+	}
+
+	after, err := db.ListFiles("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(after) != 1 || after[0].Path != normalPath {
+		t.Fatalf("expected only real.md to remain, got %v", after)
+	}
+}
+
+// TestPruneOnEmptyIndex verifies Prune handles an empty index gracefully.
+func TestPruneOnEmptyIndex(t *testing.T) {
+	vaultRoot := t.TempDir()
+	db := setupTestDB(t)
+
+	pruned, err := db.Prune(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pruned != 0 {
+		t.Errorf("expected 0 pruned entries on empty index, got %d", pruned)
+	}
+}

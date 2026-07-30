@@ -204,10 +204,11 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 
 		// Update files
 		_, err = tx.Exec(`UPDATE files SET sha256 = ?, title = ?, modified_at = ?, indexed_at = ?,
-			document_date = ?, person = ?, status = ?, due_date = ?, confidence = ?, ocr_json_path = ?, simhash = ?, asn = ?,
+			"type" = ?, document_date = ?, person = ?, status = ?, due_date = ?, confidence = ?, ocr_json_path = ?, simhash = ?, asn = ?,
 			size = ?, mtime_ns = ?
 			WHERE id = ?`,
 			doc.SHA256, doc.Title, doc.Created, time.Now(),
+			doc.Type,
 			nullStr(doc.DocumentDate), nullStr(doc.Person), nullStr(doc.Status),
 			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash), nullASN(doc.ASN),
 			doc.Size, nullModTime(doc.ModTime),
@@ -229,9 +230,10 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 	} else {
 		// New file
 		res, err := tx.Exec(`INSERT INTO files(path, sha256, title, modified_at, indexed_at,
-			document_date, person, status, due_date, confidence, ocr_json_path, simhash, asn, size, mtime_ns)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			"type", document_date, person, status, due_date, confidence, ocr_json_path, simhash, asn, size, mtime_ns)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			doc.Path, doc.SHA256, doc.Title, doc.Created, time.Now(),
+			doc.Type,
 			nullStr(doc.DocumentDate), nullStr(doc.Person), nullStr(doc.Status),
 			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash), nullASN(doc.ASN),
 			doc.Size, nullModTime(doc.ModTime))
@@ -651,7 +653,7 @@ func (db *DB) GetTitle(path string) (string, error) {
 
 // ListFiles returns all files, optionally filtered by a directory prefix.
 func (db *DB) ListFiles(dirPrefix string) ([]*vault.Document, error) {
-	query := `SELECT path, title, modified_at FROM files`
+	query := `SELECT path, title, modified_at, "type" FROM files`
 	var args []interface{}
 	if dirPrefix != "" {
 		query += ` WHERE path LIKE ?`
@@ -668,9 +670,11 @@ func (db *DB) ListFiles(dirPrefix string) ([]*vault.Document, error) {
 	var docs []*vault.Document
 	for rows.Next() {
 		var d vault.Document
-		if err := rows.Scan(&d.Path, &d.Title, &d.Created); err != nil {
+		var fileType sql.NullString
+		if err := rows.Scan(&d.Path, &d.Title, &d.Created, &fileType); err != nil {
 			return nil, err
 		}
+		d.Type = fileType.String
 		docs = append(docs, &d)
 	}
 	return docs, nil
@@ -752,7 +756,8 @@ func (db *DB) GetAllLinks() ([]Edge, error) {
 
 // DocsFilter holds optional filters for DocsList.
 type DocsFilter struct {
-	Type          string // document_type frontmatter value
+	Type          string // document_type frontmatter value (e.g. "invoice")
+	FileType      string // file kind: note|document|meeting
 	Status        string // enum status
 	Person        string // household member
 	Correspondent string // correspondent name
@@ -767,6 +772,7 @@ type DocsFilter struct {
 type DocsResult struct {
 	Path          string `json:"path"`
 	Title         string `json:"title"`
+	Type          string `json:"type,omitempty"`
 	DocumentDate  string `json:"document_date,omitempty"`
 	Person        string `json:"person,omitempty"`
 	Status        string `json:"status,omitempty"`
@@ -781,7 +787,7 @@ type DocsResult struct {
 // structured metadata rows. Existing ListFiles is left untouched.
 func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 	query := `
-		SELECT f.path, f.title, COALESCE(f.document_date,''), COALESCE(f.person,''),
+		SELECT f.path, f.title, f."type", COALESCE(f.document_date,''), COALESCE(f.person,''),
 			COALESCE(f.status,''), COALESCE(f.due_date,''), f.confidence,
 			COALESCE(fp_corr.value,''), COALESCE(fp_type.value,''), COALESCE(f.asn, 0)
 		FROM files f
@@ -790,6 +796,10 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 		WHERE 1=1`
 	var args []interface{}
 
+	if f.FileType != "" {
+		query += ` AND f."type" = ?`
+		args = append(args, f.FileType)
+	}
 	if f.Status != "" {
 		query += ` AND f.status = ?`
 		args = append(args, f.Status)
@@ -839,7 +849,7 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 	for rows.Next() {
 		var r DocsResult
 		var conf sql.NullInt64
-		if err := rows.Scan(&r.Path, &r.Title, &r.DocumentDate, &r.Person,
+		if err := rows.Scan(&r.Path, &r.Title, &r.Type, &r.DocumentDate, &r.Person,
 			&r.Status, &r.DueDate, &conf, &r.Correspondent, &r.DocumentType, &r.ASN); err != nil {
 			return nil, err
 		}

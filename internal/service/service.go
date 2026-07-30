@@ -127,6 +127,7 @@ func (s *Service) Ls(dirPrefix string) ([]FileEntry, error) {
 		results = append(results, FileEntry{
 			Path:     relPath,
 			Title:    d.Title,
+			Type:     d.Type,
 			Modified: d.Created, // Re-using Created field for modified_at in docs
 		})
 	}
@@ -148,6 +149,7 @@ type SearchResult struct {
 type FileEntry struct {
 	Path     string `json:"path"`
 	Title    string `json:"title"`
+	Type     string `json:"type,omitempty"`
 	Modified string `json:"modified"`
 }
 

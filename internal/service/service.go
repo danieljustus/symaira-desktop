@@ -90,6 +90,13 @@ func (s *Service) DeleteDocument(path string) error {
 	return nil
 }
 
+// Prune removes stale entries from the sidecar index: files that have been
+// deleted from the vault or that fall under ignore rules (hidden dirs,
+// node_modules, etc.). Returns the number of entries removed.
+func (s *Service) Prune() (int, error) {
+	return s.DB.Prune(s.VaultRoot)
+}
+
 // Ls returns a list of files in the vault.
 func (s *Service) Ls(dirPrefix string) ([]FileEntry, error) {
 	docs, err := s.DB.ListFiles(dirPrefix)

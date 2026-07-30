@@ -12,8 +12,10 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
+var indexPrune bool
+
 func newIndexCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "index [path]",
 		Short: "Index the full vault or a specific file",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -93,7 +95,29 @@ func newIndexCmd() *cobra.Command {
 				fmt.Printf("Index complete. %d new/updated files, %d skipped.\n", count, skipped)
 			}
 
+			// Prune stale entries if --prune was passed
+			if indexPrune {
+				pruned, err := db.Prune(vRoot)
+				if err != nil {
+					return fmt.Errorf("prune failed: %w", err)
+				}
+				if jsonFlag {
+					out := map[string]interface{}{
+						"status":  "ok",
+						"indexed": count,
+						"skipped": skipped,
+						"pruned":  pruned,
+					}
+					b, _ := json.Marshal(out)
+					fmt.Println(string(b))
+				} else {
+					fmt.Printf("Prune complete. %d stale entries removed.\n", pruned)
+				}
+			}
+
 			return nil
 		},
 	}
+	cmd.Flags().BoolVar(&indexPrune, "prune", false, "Remove stale entries for deleted or newly-ignored files")
+	return cmd
 }

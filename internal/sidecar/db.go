@@ -303,8 +303,18 @@ func (db *DB) DeleteDocument(path string) error {
 	}
 	defer tx.Rollback()
 
+	if err := deleteDocumentRows(tx, path); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+// deleteDocumentRows removes all sidecar rows for the given path within an
+// existing transaction. It is a no-op if the path is not indexed.
+func deleteDocumentRows(tx *sql.Tx, path string) error {
 	var fileID int64
-	err = tx.QueryRow("SELECT id FROM files WHERE path = ?", path).Scan(&fileID)
+	err := tx.QueryRow("SELECT id FROM files WHERE path = ?", path).Scan(&fileID)
 	if err == sql.ErrNoRows {
 		return nil
 	}
@@ -324,8 +334,70 @@ func (db *DB) DeleteDocument(path string) error {
 	if _, err := tx.Exec("DELETE FROM files WHERE id = ?", fileID); err != nil {
 		return err
 	}
+	return nil
+}
 
-	return tx.Commit()
+// Prune removes indexed entries for files that are no longer on disk or that
+// fall under vault ignore rules (hidden directories such as .git / .obsidian,
+// and conventional build-artifact directories such as node_modules, vendor,
+// dist, build, venv). Returns the number of pruned entries.
+//
+// The prune logic mirrors the same ignore semantics used by vault.Walk and
+// RefreshIndex: it walks the vault root to collect currently valid paths, then
+// deletes every indexed path not found in that set.
+func (db *DB) Prune(vaultRoot string) (int, error) {
+	// Build a set of valid paths by walking the vault (respects ignore rules).
+	valid := make(map[string]bool)
+	if err := vault.Walk(vaultRoot, func(path string) error {
+		valid[path] = true
+		return nil
+	}); err != nil {
+		return 0, fmt.Errorf("walk vault for prune: %w", err)
+	}
+
+	// Collect stale paths by diffing the index against the valid set.
+	rows, err := db.conn.Query("SELECT path FROM files")
+	if err != nil {
+		return 0, fmt.Errorf("query indexed paths for prune: %w", err)
+	}
+	defer rows.Close()
+
+	var stale []string
+	for rows.Next() {
+		var path string
+		if err := rows.Scan(&path); err != nil {
+			return 0, err
+		}
+		if !valid[path] {
+			stale = append(stale, path)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+
+	if len(stale) == 0 {
+		return 0, nil
+	}
+
+	// Delete all stale entries in a single transaction.
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("begin prune tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	for _, path := range stale {
+		if err := deleteDocumentRows(tx, path); err != nil {
+			return 0, fmt.Errorf("prune %s: %w", path, err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("commit prune: %w", err)
+	}
+
+	return len(stale), nil
 }
 
 // CheckIntegrity performs a basic check on the database.

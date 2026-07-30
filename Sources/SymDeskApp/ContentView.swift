@@ -26,6 +26,10 @@ struct ContentView: View {
     @State private var newNoteTitle = ""
     @State private var backlinks: [String] = []
     
+    // Folder tree state
+    @State private var expandedFolders: Set<String> = []
+    @State private var folderTree: [FolderNode] = []
+    
     @AppStorage("isBlockMode") private var isBlockMode = false
     @AppStorage("dismissedNotificationPermissionBanner") private var dismissedNotificationPermissionBanner = false
     @AppStorage("dismissedVersionMismatchBanner") private var dismissedVersionMismatchBanner = false
@@ -233,10 +237,12 @@ struct ContentView: View {
                         }
 
                         Section("Notes") {
-                            ForEach(notes) { note in
-                                Button(note.title) {
-                                    self.selectedNote = note
-                                    self.displayMode = .vault
+                            if folderTree.isEmpty {
+                                Text("No notes")
+                                    .foregroundColor(SymairaTheme.textMuted)
+                            } else {
+                                ForEach(folderTree) { node in
+                                    sidebarTreeNode(node)
                                 }
                             }
                             Button(action: { isShowingNewNoteSheet = true }) {
@@ -657,6 +663,17 @@ struct ContentView: View {
                     await fetchDoctor()
                     await fetchDocCounts()
                     await fetchTagCounts()
+                    // Restore expanded folder state from UserDefaults
+                    if let data = UserDefaults.standard.data(forKey: "sidebarExpandedFolders"),
+                       let folders = try? JSONDecoder().decode(Set<String>.self, from: data) {
+                        expandedFolders = folders
+                    }
+                }
+                .onChange(of: expandedFolders) { _, newValue in
+                    // Persist expanded folder state
+                    if let data = try? JSONEncoder().encode(newValue) {
+                        UserDefaults.standard.set(data, forKey: "sidebarExpandedFolders")
+                    }
                 }
                 .onChange(of: watcher.latestEvent) { _, ev in
                     scheduleEventRefresh(ev)
@@ -696,6 +713,7 @@ struct ContentView: View {
         do {
             let loadedNotes = try await core.listFiles()
             self.notes = loadedNotes
+            self.folderTree = buildFolderTree(from: loadedNotes, vaultPath: core.vaultPath)
             var lookup: [String: Note] = [:]
             lookup.reserveCapacity(loadedNotes.count * 3)
             for note in loadedNotes {
@@ -911,6 +929,169 @@ struct ContentView: View {
 
     private func isConflicted(_ note: Note) -> Bool {
         return note.path.contains(" 2.md") || note.path.contains("conflicted copy")
+    }
+
+    // MARK: - Folder Tree Support
+
+    /// Builds a folder tree from the flat list of notes.
+    private func buildFolderTree(from notes: [Note], vaultPath: String?) -> [FolderNode] {
+        guard let vaultPath = vaultPath, !vaultPath.isEmpty else {
+            return notes.map { FolderNode(id: $0.path, name: $0.title, isFolder: false, note: $0, children: [], containingFolder: nil) }
+        }
+
+        let normalizedVault = vaultPath.hasSuffix("/") ? vaultPath : vaultPath + "/"
+
+        // Count duplicate titles so identically-named notes show their folder context
+        let titleCounts = Dictionary(grouping: notes, by: \.title).mapValues(\.count)
+
+        // Build a trie from relative note paths
+        class TrieNode {
+            var name: String
+            var notes: [Note] = []
+            var children: [String: TrieNode] = [:]
+            init(name: String) { self.name = name }
+        }
+
+        let root = TrieNode(name: "")
+
+        for note in notes {
+            guard note.path.hasPrefix(normalizedVault) else { continue }
+            let relPath = String(note.path.dropFirst(normalizedVault.count))
+            var components = relPath.split(separator: "/").map(String.init)
+            guard !components.isEmpty else { continue }
+            components.removeLast() // strip the filename
+
+            var current = root
+            for component in components {
+                if current.children[component] == nil {
+                    current.children[component] = TrieNode(name: component)
+                }
+                current = current.children[component]!
+            }
+            current.notes.append(note)
+        }
+
+        func convert(_ node: TrieNode) -> [FolderNode] {
+            var result: [FolderNode] = []
+
+            // Folders first, sorted alphabetically
+            for key in node.children.keys.sorted(by: { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }) {
+                let child = node.children[key]!
+                let subChildren = convert(child)
+                result.append(FolderNode(
+                    id: key,
+                    name: key,
+                    isFolder: true,
+                    note: nil,
+                    children: subChildren,
+                    containingFolder: nil
+                ))
+            }
+
+            // Notes, sorted alphabetically by title
+            for note in node.notes.sorted(by: { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }) {
+                let hasDuplicates = (titleCounts[note.title] ?? 0) > 1
+                let containingFolder: String?
+                if hasDuplicates, !node.name.isEmpty {
+                    containingFolder = node.name
+                } else if hasDuplicates {
+                    containingFolder = "Vault root"
+                } else {
+                    containingFolder = nil
+                }
+                result.append(FolderNode(
+                    id: note.path,
+                    name: note.title,
+                    isFolder: false,
+                    note: note,
+                    children: [],
+                    containingFolder: containingFolder
+                ))
+            }
+
+            return result
+        }
+
+        return convert(root)
+    }
+
+    /// Recursively renders a folder tree node (folder or note leaf) in the sidebar.
+    @ViewBuilder
+    private func sidebarTreeNode(_ node: FolderNode) -> some View {
+        if node.isFolder {
+            DisclosureGroup(
+                isExpanded: Binding(
+                    get: { expandedFolders.contains(node.id) },
+                    set: { isExpanded in
+                        if isExpanded {
+                            expandedFolders.insert(node.id)
+                        } else {
+                            expandedFolders.remove(node.id)
+                        }
+                    }
+                ),
+                content: {
+                    ForEach(node.children) { child in
+                        AnyView(sidebarTreeNode(child))
+                    }
+                },
+                label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "folder")
+                            .foregroundColor(SymairaTheme.goldPrimary)
+                        Text(node.name)
+                            .foregroundColor(SymairaTheme.textPrimary)
+                    }
+                }
+            )
+        } else {
+            Button {
+                if let note = node.note {
+                    self.selectedNote = note
+                    self.displayMode = .vault
+                }
+            } label: {
+                if let folder = node.containingFolder {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(node.name)
+                            .foregroundColor(SymairaTheme.textPrimary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Text(folder)
+                            .font(.caption2)
+                            .foregroundColor(SymairaTheme.textMuted)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                } else {
+                    Text(node.name)
+                        .foregroundColor(SymairaTheme.textPrimary)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Folder Node Model
+
+/// A node in the sidebar folder tree — either a folder (with children)
+/// or a note leaf.
+private struct FolderNode: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let isFolder: Bool
+    let note: Note?
+    let children: [FolderNode]
+    /// Set for leaf nodes that share their title with another note.
+    /// Contains the parent folder name to help disambiguate.
+    let containingFolder: String?
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    static func == (lhs: FolderNode, rhs: FolderNode) -> Bool {
+        lhs.id == rhs.id
     }
 }
 

@@ -8,6 +8,7 @@ struct DocumentGridView: View {
 
     let statusFilter: String?
     let deepLinkPath: String?
+    let tagFilter: String?
 
     @State private var documents: [DocumentItem] = []
     @State private var visibleDocuments: [DocumentItem] = []
@@ -27,6 +28,8 @@ struct DocumentGridView: View {
     @State private var filterTask: Task<Void, Never>?
     @State private var refreshTask: Task<Void, Never>?
     @State private var todayString = Self.makeTodayString()
+    @State private var appliedTagFilter: String? = nil
+    @State private var tagFilteredPaths: Set<String>? = nil
 
     private var selectedDocs: [DocumentItem] {
         visibleDocuments.filter { selectedPaths.contains($0.path) }
@@ -58,6 +61,7 @@ struct DocumentGridView: View {
         .onChange(of: searchText) { scheduleFilterUpdate() }
         .onChange(of: sortByASN) { applyFilters() }
         .onChange(of: statusFilter) { applyFilters() }
+        .onChange(of: tagFilter) { applyTagFilterIfNeeded() }
         .onChange(of: watcher.latestEvent) {
             scheduleDocumentRefresh()
         }
@@ -87,9 +91,27 @@ struct DocumentGridView: View {
     private var documentHeader: some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(statusFilter.flatMap { DocumentStatus(rawValue: $0)?.label } ?? "All Documents")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(SymairaTheme.textPrimary)
+                if let tag = appliedTagFilter {
+                    HStack(spacing: 6) {
+                        Image(systemName: "tag.fill")
+                            .font(.caption)
+                            .foregroundColor(SymairaTheme.goldSecondary)
+                        Text("Tag: \(tag)")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(SymairaTheme.textPrimary)
+                        Button(action: { clearTagFilter() }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.caption)
+                                .foregroundColor(SymairaTheme.textMuted)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Clear tag filter")
+                    }
+                } else {
+                    Text(statusFilter.flatMap { DocumentStatus(rawValue: $0)?.label } ?? "All Documents")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(SymairaTheme.textPrimary)
+                }
                 Text("\(visibleDocuments.count) \(visibleDocuments.count == 1 ? "document" : "documents")")
                     .font(.subheadline)
                     .foregroundStyle(SymairaTheme.textSecondary)
@@ -431,7 +453,51 @@ struct DocumentGridView: View {
         }
     }
 
-    /// Coalesces watcher bursts (write + rename + index updates) into one CLI
+    /// Sets the tag filter by searching the vault with the `tag:` query operator.
+    /// Clears the tag filter when the user manually changes search text.
+    private func applyTagFilterIfNeeded() {
+        guard let tag = tagFilter, !tag.isEmpty else {
+            if appliedTagFilter != nil {
+                appliedTagFilter = nil
+                tagFilteredPaths = nil
+                searchText = ""
+                applyFilters()
+            }
+            return
+        }
+        // Avoid re-fetching if the tag is the same
+        if appliedTagFilter == tag, tagFilteredPaths != nil {
+            return
+        }
+        appliedTagFilter = tag
+        searchText = "tag:\(tag)"
+        Task {
+            do {
+                let response = try await core.search(query: "tag:\(tag)")
+                let paths = Set(response.results.map { $0.path })
+                await MainActor.run {
+                    tagFilteredPaths = paths
+                    applyFilters()
+                }
+            } catch {
+                print("tag search failed: \(error)")
+                await MainActor.run {
+                    tagFilteredPaths = []
+                    applyFilters()
+                }
+            }
+        }
+    }
+
+    /// Clear the active tag filter and return to unfiltered document view.
+    private func clearTagFilter() {
+        tagFilteredPaths = nil
+        appliedTagFilter = nil
+        searchText = ""
+        applyFilters()
+    }
+
+    /// Debounces watcher bursts (write + rename + index updates) into one CLI
     /// refresh, avoiding repeated full-vault scans.
     private func scheduleDocumentRefresh() {
         refreshTask?.cancel()
@@ -446,6 +512,9 @@ struct DocumentGridView: View {
         var result = documents
         if let statusFilter, !statusFilter.isEmpty {
             result = result.filter { $0.status == statusFilter }
+        }
+        if let tagFilteredPaths, appliedTagFilter != nil {
+            result = result.filter { tagFilteredPaths.contains($0.path) }
         }
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if !query.isEmpty {

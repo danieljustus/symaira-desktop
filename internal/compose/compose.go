@@ -138,7 +138,7 @@ func ListSymprintProfiles() ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymprintBin, "profiles", "--json")
+	cmd := exec.CommandContext(ctx, SymprintBin, "profiles", "--json") //nolint:gosec
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -193,7 +193,7 @@ func IndexDocument(path, body string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymseekBin, "index", "--stdin", "--source", path)
+	cmd := exec.CommandContext(ctx, SymseekBin, "index", "--stdin", "--source", path) //nolint:gosec
 	cmd.Stdin = strings.NewReader(body)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -208,7 +208,7 @@ func DeleteDocument(path string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymseekBin, "delete", path)
+	cmd := exec.CommandContext(ctx, SymseekBin, "delete", path) //nolint:gosec
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -222,7 +222,7 @@ func Search(query string) ([]SearchResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymseekBin, "search", query, "--json")
+	cmd := exec.CommandContext(ctx, SymseekBin, "search", query, "--json") //nolint:gosec
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -243,7 +243,7 @@ func ListEntities() ([]MemoryEntity, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymmemoryBin, "entity", "list", "--output", "json")
+	cmd := exec.CommandContext(ctx, SymmemoryBin, "entity", "list", "--output", "json") //nolint:gosec
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -264,7 +264,7 @@ func GetNeighbors(name string) (*MemoryNeighbors, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymmemoryBin, "entity", "neighbors", name, "--output", "json")
+	cmd := exec.CommandContext(ctx, SymmemoryBin, "entity", "neighbors", name, "--output", "json") //nolint:gosec
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out

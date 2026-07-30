@@ -50,6 +50,8 @@ struct ContentView: View {
         case rules
         case meetings
         case companionTools
+        case history
+        case trash
     }
 
     @State private var displayMode: DisplayMode = .dashboard
@@ -170,6 +172,21 @@ struct ContentView: View {
                             }
                         }
 
+                        Section("Safety Net") {
+                            Button(action: { displayMode = .history }) {
+                                HStack {
+                                    Image(systemName: "clock.arrow.circlepath")
+                                    Text("Version History")
+                                }
+                            }
+                            Button(action: { displayMode = .trash }) {
+                                HStack {
+                                    Image(systemName: "trash")
+                                    Text("Trash")
+                                }
+                            }
+                        }
+
                         Section("Settings") {
                             Button(action: { displayMode = .rules }) {
                                 HStack {
@@ -262,6 +279,10 @@ struct ContentView: View {
                             doctorReport: doctorReport,
                             onDoctorRefresh: { await fetchDoctor() }
                         )
+                    case .history:
+                        HistoryView()
+                    case .trash:
+                        TrashView()
                     case .graph:
                         GraphView { selectedNodeID in
                             navigateToNote(title: selectedNodeID)

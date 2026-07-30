@@ -37,8 +37,8 @@ func TestNoteMoveRemovesStaleIndexEntry(t *testing.T) {
 	if len(results) != 1 {
 		t.Fatalf("expected exactly 1 search hit after move, got %d (stale index entry?)", len(results))
 	}
-	if results[0]["path"] != "Moved.md" {
-		t.Errorf("expected hit at Moved.md, got %v", results[0]["path"])
+	if results[0].Path != "Moved.md" {
+		t.Errorf("expected hit at Moved.md, got %v", results[0].Path)
 	}
 
 	if _, err := os.Stat(filepath.Join(svc.VaultRoot, "Moved.md")); err != nil {
@@ -79,7 +79,7 @@ func TestIngestIndexesInboxNote(t *testing.T) {
 	}
 	var found bool
 	for _, f := range files {
-		if f["path"] == res["path"] {
+		if f.Path == res["path"] {
 			found = true
 		}
 	}

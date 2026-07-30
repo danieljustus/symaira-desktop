@@ -644,7 +644,7 @@ func TestAuthorizationMatrix(t *testing.T) {
 				}
 				defer func() { _ = response.Body.Close() }()
 				wantAllowed := cred.allowed(rt.requiresAdmin)
-				gotAllowed := response.StatusCode != http.StatusUnauthorized && response.StatusCode != http.StatusForbidden
+				gotAllowed := response.StatusCode != http.StatusUnauthorized && response.StatusCode != http.StatusForbidden && response.StatusCode != http.StatusTooManyRequests
 				if gotAllowed != wantAllowed {
 					t.Fatalf("%s with %s: expected allowed=%v, got status %d", rt.name, cred.name, wantAllowed, response.StatusCode)
 				}

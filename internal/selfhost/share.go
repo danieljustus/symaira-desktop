@@ -15,6 +15,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/permissions"
 )
 
 // ShareLink represents a time-limited read-only share link for a single
@@ -134,7 +136,7 @@ func (s *ShareStore) Lookup(token string) (*ShareLink, error) {
 		return nil, err
 	}
 	for i := range links {
-		if links[i].TokenHash != target {
+		if !permissions.ConstantTimeEqual(links[i].TokenHash, target) {
 			continue
 		}
 		if !links[i].IsActive() {
@@ -306,6 +308,13 @@ func (s *Server) handleAccessShare(w http.ResponseWriter, r *http.Request) {
 	}
 	link, err := s.shares.Lookup(token)
 	if err != nil {
+		// Share-token lookup failed — check rate limit before responding.
+		ip := clientIP(r)
+		if allowed, retryAfter := s.throttle.recordShareFailure(ip); !allowed {
+			w.Header().Set("Retry-After", retryAfterSeconds(retryAfter))
+			writeError(w, http.StatusTooManyRequests, "too many share access attempts")
+			return
+		}
 		writeError(w, http.StatusNotFound, "not found")
 		return
 	}

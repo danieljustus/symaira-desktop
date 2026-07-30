@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"runtime/debug"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -15,8 +17,24 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/mcp"
 )
 
-var version = "0.7.0"
+// version is set by ldflags at build time: -X main.version=...
+// When empty, debug.ReadBuildInfo() provides the module version (e.g. go install ...@latest).
+var version = ""
 var schemaVersion = 1
+
+func init() {
+	if version != "" {
+		return
+	}
+	if info, ok := debug.ReadBuildInfo(); ok {
+		v := strings.TrimPrefix(info.Main.Version, "v")
+		if v != "" && v != "(devel)" {
+			version = v
+			return
+		}
+	}
+	version = "(devel)"
+}
 
 var (
 	cfg       *config.Config

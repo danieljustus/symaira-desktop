@@ -7,7 +7,6 @@ import (
 	"context"
 	cryptorand "crypto/rand"
 	"crypto/sha256"
-	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -62,6 +61,7 @@ type Server struct {
 	jobs         *JobStore
 	perm         *permissions.Manager
 	shares       *ShareStore
+	throttle     *throttle
 	vaultRoot    *os.Root
 	http         *http.Server
 	mux          *http.ServeMux
@@ -76,7 +76,27 @@ type Server struct {
 	snapshotDirty atomic.Bool
 	vaultWatcher  *fsnotify.Watcher
 	watcherDone   chan struct{}
+
+	// Per-user filtered snapshot cache. Non-admin users re-use a previously
+	// computed and filtered payload when neither the vault nor the permissions
+	// files have changed since it was cached. The map is keyed by user name.
+	perUserCacheMu sync.Mutex
+	perUserCache   map[string]perUserCachedSnapshot
 }
+
+// perUserCachedSnapshot holds a filtered-and-compressed snapshot payload for
+// a specific non-admin user together with the invalidation signals that
+// identify when it was computed.
+type perUserCachedSnapshot struct {
+	plain       []byte
+	compressed  []byte
+	etag        string
+	adminETag   string    // vault ETag at cache time
+	permsMtime  time.Time // permissions.json mtime at cache time
+	groupsMtime time.Time // groups.json mtime at cache time
+}
+
+const maxPerUserCachedSnapshots = 64
 
 func NewServer(cfg ServerConfig) (*Server, error) {
 	if len(cfg.Token) < 32 {
@@ -86,7 +106,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		if len(cfg.WorkerToken) < 32 {
 			return nil, fmt.Errorf("worker token must contain at least 32 characters")
 		}
-		if constantTimeEqual(cfg.WorkerToken, cfg.Token) {
+		if permissions.ConstantTimeEqual(cfg.WorkerToken, cfg.Token) {
 			return nil, fmt.Errorf("worker token must differ from the server token")
 		}
 	}
@@ -118,7 +138,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		db.Close()
 		return nil, fmt.Errorf("open vault root: %w", err)
 	}
-	s := &Server{cfg: cfg, db: db, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux()}
+	s := &Server{cfg: cfg, db: db, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux(), throttle: newThrottle()}
 	s.snapshotDirty.Store(true)
 
 	// Initialise the permissions manager. The config directory lives under
@@ -321,6 +341,14 @@ func (s *Server) auth(next http.Handler) http.Handler {
 			// been persisted yet (fresh container restarts with env-var tokens).
 			legacyRole := s.legacyTokenRole(provided)
 			if legacyRole == "" {
+				// Authentication failed — check rate limit before responding.
+				ip := clientIP(r)
+				if allowed, retryAfter := s.throttle.recordAuthFailure(ip); !allowed {
+					w.Header().Set("Retry-After", retryAfterSeconds(retryAfter))
+					w.Header().Set("WWW-Authenticate", "Bearer")
+					writeError(w, http.StatusTooManyRequests, "too many authentication attempts")
+					return
+				}
 				w.Header().Set("WWW-Authenticate", "Bearer")
 				writeError(w, http.StatusUnauthorized, "authentication required")
 				return
@@ -342,10 +370,10 @@ func (s *Server) auth(next http.Handler) http.Handler {
 // admin and worker tokens using constant-time comparison, and returns the
 // legacy role name (\"admin\" or \"worker\") or empty string.
 func (s *Server) legacyTokenRole(provided string) string {
-	if constantTimeEqual(provided, s.cfg.Token) {
+	if permissions.ConstantTimeEqual(provided, s.cfg.Token) {
 		return "admin"
 	}
-	if s.cfg.WorkerToken != "" && constantTimeEqual(provided, s.cfg.WorkerToken) {
+	if s.cfg.WorkerToken != "" && permissions.ConstantTimeEqual(provided, s.cfg.WorkerToken) {
 		return "worker"
 	}
 	return ""
@@ -368,10 +396,6 @@ func (s *Server) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	return true
-}
-
-func constantTimeEqual(a, b string) bool {
-	return len(a) == len(b) && subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
 }
 
 func (s *Server) securityHeaders(next http.Handler) http.Handler {
@@ -504,17 +528,37 @@ func (s *Server) snapshotPayload() ([]byte, []byte, string, error) {
 }
 
 // snapshotPayloadFiltered is like snapshotPayload but excludes documents the
-// user cannot read. Admins see everything (the existing behaviour).
+// user cannot read. Admins see everything (the existing behaviour). Non-admin
+// filtered payloads are cached per user and invalidated when the vault ETag
+// or the permissions/groups file mtimes change.
 func (s *Server) snapshotPayloadFiltered(user *permissions.User) ([]byte, []byte, string, error) {
 	plain, compressed, etag, err := s.snapshotPayload()
 	if err != nil {
 		return nil, nil, "", err
 	}
-	// Admins get the full snapshot as before.
+	// Admins and nil users get the full snapshot as before.
 	if user == nil || user.HasRole("admin") {
 		return plain, compressed, etag, nil
 	}
-	// Parse and filter for non-admin users.
+
+	// Compute the permissions generation: mtimes of the two files that
+	// influence what documents a user can see.
+	permDir := filepath.Join(s.cfg.VaultRoot, ".symdesk")
+	permsMtime := fileMtime(filepath.Join(permDir, "permissions.json"))
+	groupsMtime := fileMtime(filepath.Join(permDir, "groups.json"))
+
+	// Check the per-user cache under lock.
+	s.perUserCacheMu.Lock()
+	if cached, ok := s.perUserCache[user.Name]; ok {
+		if cached.adminETag == etag && cached.permsMtime.Equal(permsMtime) && cached.groupsMtime.Equal(groupsMtime) {
+			plain2, comp2, userETag := cached.plain, cached.compressed, cached.etag
+			s.perUserCacheMu.Unlock()
+			return plain2, comp2, userETag, nil
+		}
+	}
+	s.perUserCacheMu.Unlock()
+
+	// Cache miss or stale — parse, filter, marshal and compress.
 	var payload struct {
 		Notes       []snapshotNote `json:"notes"`
 		GeneratedAt time.Time      `json:"generated_at"`
@@ -522,9 +566,20 @@ func (s *Server) snapshotPayloadFiltered(user *permissions.User) ([]byte, []byte
 	if err := json.Unmarshal(plain, &payload); err != nil {
 		return nil, nil, "", err
 	}
+	// Use CanReadMany to batch-check all paths in one call instead of
+	// hitting the permissions files individually for each note.
+	paths := make([]string, len(payload.Notes))
+	for i, n := range payload.Notes {
+		paths[i] = n.Path
+	}
+	allowed := s.perm.CanReadMany(user, paths)
+	allowedSet := make(map[string]bool, len(allowed))
+	for _, p := range allowed {
+		allowedSet[p] = true
+	}
 	filtered := payload.Notes[:0]
 	for _, n := range payload.Notes {
-		if s.perm.CanRead(user, n.Path) {
+		if allowedSet[n.Path] {
 			filtered = append(filtered, n)
 		}
 	}
@@ -545,7 +600,34 @@ func (s *Server) snapshotPayloadFiltered(user *permissions.User) ([]byte, []byte
 	// Use a different etag for filtered snapshots so the client's 304
 	// cache doesn't leak data across users.
 	newETag := etag + ":" + user.Name
+
+	// Store in per-user cache (bounded).
+	s.perUserCacheMu.Lock()
+	if s.perUserCache == nil {
+		s.perUserCache = make(map[string]perUserCachedSnapshot)
+	}
+	if len(s.perUserCache) >= maxPerUserCachedSnapshots {
+		// Bounds exceeded — clear and rebuild. Individual entries are
+		// small; a full flush is simpler than maintaining an LRU list.
+		s.perUserCache = make(map[string]perUserCachedSnapshot)
+	}
+	s.perUserCache[user.Name] = perUserCachedSnapshot{
+		plain: plain2, compressed: comp2.Bytes(), etag: newETag,
+		adminETag: etag, permsMtime: permsMtime, groupsMtime: groupsMtime,
+	}
+	s.perUserCacheMu.Unlock()
+
 	return plain2, comp2.Bytes(), newETag, nil
+}
+
+// fileMtime returns the modification time of path, or the zero time when
+// the file does not exist or cannot be stat'd.
+func fileMtime(path string) time.Time {
+	info, err := os.Stat(path)
+	if err != nil {
+		return time.Time{}
+	}
+	return info.ModTime()
 }
 
 func (s *Server) handleGetFile(w http.ResponseWriter, r *http.Request) {

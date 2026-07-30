@@ -67,10 +67,9 @@ func TestDoctorCommandExecution(t *testing.T) {
 	t.Cleanup(func() { cfg = origCfg })
 	t.Setenv("PATH", "/usr/bin:/bin")
 
-	// doctor exits via os.Exit(1) when allOk is false; we can't catch that in
-	// a test goroutine. Instead test through RunE and expect either nil error
-	// (all checks pass) or a panic from os.Exit which we also accept — the
-	// important thing is that the RunE path is exercised.
+	// doctor returns a non-nil error via RunE when checks fail; the test
+	// captures both the error and the JSON output (emitted before return).
+	// Previously this called os.Exit(1) directly which was untestable.
 
 	rootCmd := &cobra.Command{Use: "test"}
 	registerCommands(rootCmd)
@@ -108,9 +107,11 @@ func TestDoctorCommandExecution(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The RunE should either succeed or call os.Exit — we only care that
-	// lines 22-162 were reached.
-	_ = runErr
+	// RunE should return an error when checks fail (e.g. missing ollama).
+	// Previously the error was uncatchable due to os.Exit(1).
+	if runErr != nil {
+		t.Logf("doctor returned error (expected when checks fail): %v", runErr)
+	}
 
 	out := buf.String()
 	if len(out) > 0 {
@@ -163,7 +164,10 @@ func TestDoctorCommandTextOutput(t *testing.T) {
 	os.Stdout = w
 	t.Cleanup(func() { os.Stdout = origStdout })
 
-	_ = doctorCmd.RunE(doctorCmd, nil)
+	runErr := doctorCmd.RunE(doctorCmd, nil)
+	if runErr != nil {
+		t.Logf("doctor returned error (expected when checks fail): %v", runErr)
+	}
 
 	w.Close()
 	os.Stdout = origStdout

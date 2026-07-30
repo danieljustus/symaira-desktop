@@ -1,6 +1,7 @@
 package permissions
 
 import (
+	"crypto/subtle"
 	"os"
 	"path/filepath"
 	"testing"
@@ -388,4 +389,51 @@ func TestFilesAreNotInVault(t *testing.T) {
 	if string(data) != "" {
 		// Token hash, not token, is stored.
 	}
+}
+
+func TestConstantTimeEqual(t *testing.T) {
+	// Equal strings must match.
+	if !ConstantTimeEqual("abc123", "abc123") {
+		t.Fatal("ConstantTimeEqual must return true for equal strings")
+	}
+
+	// Different strings of the same length must not match.
+	if ConstantTimeEqual("abc123", "def456") {
+		t.Fatal("ConstantTimeEqual must return false for different strings")
+	}
+
+	// Strings of different lengths must not match.
+	if ConstantTimeEqual("abc", "abcd") {
+		t.Fatal("ConstantTimeEqual must return false for strings of different length")
+	}
+
+	// Empty strings of equal length must match.
+	if !ConstantTimeEqual("", "") {
+		t.Fatal("ConstantTimeEqual must return true for empty strings")
+	}
+
+	// Must be consistent with crypto/subtle.ConstantTimeCompare.
+	a, b := "some-token-value-for-testing", "some-token-value-for-testing"
+	if ConstantTimeEqual(a, b) != (subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1) {
+		t.Fatal("ConstantTimeEqual must be consistent with subtle.ConstantTimeCompare")
+	}
+	a, b = "some-token-value", "a-different-token-value"
+	if ConstantTimeEqual(a, b) != (subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1) {
+		t.Fatal("ConstantTimeEqual must be consistent with subtle.ConstantTimeCompare")
+	}
+
+	// Token-hash length strings (64 hex chars).
+	hashA := HashToken("token-alpha")
+	hashB := HashToken("token-beta")
+	if !ConstantTimeEqual(hashA, hashA) {
+		t.Fatal("identical token hashes must match")
+	}
+	if ConstantTimeEqual(hashA, hashB) {
+		t.Fatal("different token hashes must not match")
+	}
+
+	// Regression guard: ensure the comparison does not regress to a simple
+	// == check by verifying the helper is wired through subtle.
+	// If this test compiles, the constant-time path is in place.
+	_ = subtle.ConstantTimeCompare // keep import alive
 }

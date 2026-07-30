@@ -161,6 +161,11 @@ struct DocumentViewerView: View {
     @State private var editStatus: String = ""
     @State private var editDueDate: String = ""
     @State private var editType: String = ""
+    @State private var editTitle: String = ""
+    @State private var editCorrespondent: String = ""
+    @State private var editDocumentDate: String = ""
+    @State private var editPerson: String = ""
+    @State private var editASN: String = ""
     @State private var editTags: String = ""
     @State private var editNoteVisible: Bool = true
     @State private var isSaving = false
@@ -398,26 +403,12 @@ struct DocumentViewerView: View {
 
     private var infoTab: some View {
         VStack(alignment: .leading, spacing: 16) {
-            inspectorRow(label: "Title", value: document.title)
-            inspectorRow(label: "Type", value: document.documentType)
-            inspectorRow(label: "Document Date", value: document.documentDate)
-            inspectorRow(label: "Person", value: document.person)
-            inspectorRow(label: "Archive Serial Number", value: document.asn > 0 ? "\(document.asn)" : "", isMonospaced: true)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Correspondent")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                if !document.correspondent.isEmpty {
-                    Text("[[\(document.correspondent)]]")
-                        .font(.body)
-                        .foregroundColor(SymairaTheme.goldSecondary)
-                } else {
-                    Text("—")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                }
-            }
+            editableRow(label: "Title", text: $editTitle)
+            editableRow(label: "Type", text: $editType)
+            editableRow(label: "Document Date", text: $editDocumentDate, placeholder: "YYYY-MM-DD")
+            editableRow(label: "Person", text: $editPerson)
+            editableRow(label: "Correspondent", text: $editCorrespondent)
+            editableRow(label: "Archive Serial Number", text: $editASN, placeholder: "ASN (or \"next\")", monospaced: true)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Tags")
@@ -555,6 +546,17 @@ struct DocumentViewerView: View {
         }
     }
 
+    private func editableRow(label: String, text: Binding<String>, placeholder: String = "", monospaced: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            TextField(placeholder, text: text)
+                .textFieldStyle(.roundedBorder)
+                .font(monospaced ? .body.monospaced() : .body)
+        }
+    }
+
     private var confidenceBar: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
@@ -591,6 +593,11 @@ struct DocumentViewerView: View {
         editStatus != document.status
             || editDueDate != document.dueDate
             || editType != document.documentType
+            || editTitle != document.title
+            || editCorrespondent != document.correspondent
+            || editDocumentDate != document.documentDate
+            || editPerson != document.person
+            || editASN != (document.asn > 0 ? "\(document.asn)" : "")
             || editTags != (props["tags"] ?? "")
             || editNoteVisible != (props["note_visible"] != "false")
     }
@@ -615,6 +622,11 @@ struct DocumentViewerView: View {
         editStatus = document.status
         editDueDate = document.dueDate
         editType = document.documentType
+        editTitle = document.title
+        editCorrespondent = document.correspondent
+        editDocumentDate = document.documentDate
+        editPerson = document.person
+        editASN = document.asn > 0 ? "\(document.asn)" : ""
 
         async let loadedProps: [String: String] = loadProperties()
         async let loadedContent: String = loadNoteContent()
@@ -713,6 +725,22 @@ struct DocumentViewerView: View {
                 }
                 if editType != document.documentType {
                     try await core.docSetType(path: document.path, type: editType)
+                }
+                if editTitle != document.title {
+                    try await core.docSetTitle(path: document.path, title: editTitle)
+                }
+                if editCorrespondent != document.correspondent {
+                    try await core.docSetCorrespondent(path: document.path, name: editCorrespondent)
+                }
+                if editDocumentDate != document.documentDate {
+                    try await core.docSetDocumentDate(path: document.path, date: editDocumentDate)
+                }
+                if editPerson != document.person {
+                    try await core.docSetPerson(path: document.path, person: editPerson)
+                }
+                if editASN != (document.asn > 0 ? "\(document.asn)" : "") {
+                    let value = editASN.isEmpty ? "0" : editASN
+                    try await core.docSetASN(path: document.path, value: value)
                 }
                 if editTags != (props["tags"] ?? "") {
                     try await core.docSetTags(path: document.path, tags: editTags)

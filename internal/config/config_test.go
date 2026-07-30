@@ -263,3 +263,110 @@ func TestSaveBadDirPermission(t *testing.T) {
 		t.Error("expected error for unwritable path")
 	}
 }
+
+// --- Validation tests ---
+
+func TestValidateDefaultConfig(t *testing.T) {
+	cfg := DefaultConfig()
+	findings := cfg.Validate()
+	for _, f := range findings {
+		t.Errorf("unexpected finding in default config: [%s] %s", f.Field, f.Message)
+	}
+}
+
+func TestValidateReviewThresholdOutOfRange(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.ReviewThreshold = -1
+	findings := cfg.Validate()
+	if !hasFinding(findings, "review_threshold") {
+		t.Error("expected finding for negative review_threshold")
+	}
+
+	cfg.ReviewThreshold = 101
+	findings = cfg.Validate()
+	if !hasFinding(findings, "review_threshold") {
+		t.Error("expected finding for review_threshold > 100")
+	}
+}
+
+func TestValidateMaxTokensZero(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.MaxTokens = 0
+	findings := cfg.Validate()
+	if !hasFinding(findings, "max_tokens") {
+		t.Error("expected fatal finding for max_tokens = 0")
+	}
+	if !hasFatal(findings) {
+		t.Error("expected at least one fatal finding for max_tokens = 0")
+	}
+}
+
+func TestValidateHistoryMaxAgeDaysNegative(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.HistoryMaxAgeDays = -1
+	findings := cfg.Validate()
+	if !hasFinding(findings, "history_max_age_days") {
+		t.Error("expected finding for negative history_max_age_days")
+	}
+}
+
+func TestValidateNonExistentVaultPath(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Vault = "/nonexistent/vault/path"
+	findings := cfg.Validate()
+	if !hasFinding(findings, "vault") {
+		t.Error("expected fatal finding for non-existent vault path")
+	}
+	if !hasFatal(findings) {
+		t.Error("expected at least one fatal finding for missing vault")
+	}
+}
+
+func TestValidateUnsupportedProvider(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.LLMProvider = "cohere"
+	findings := cfg.Validate()
+	if !hasFinding(findings, "llm_provider") {
+		t.Error("expected finding for unsupported llm_provider")
+	}
+}
+
+func TestValidateUnsupportedLanguage(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Language = "fr"
+	findings := cfg.Validate()
+	if !hasFinding(findings, "language") {
+		t.Error("expected finding for unsupported language")
+	}
+}
+
+func TestValidateFatalOnly(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.MaxTokens = 0      // fatal
+	cfg.Language = "fr"    // warning only
+	fatal := cfg.ValidateFatal()
+	if len(fatal) != 1 {
+		t.Errorf("expected 1 fatal finding, got %d", len(fatal))
+	}
+	if fatal[0].Field != "max_tokens" {
+		t.Errorf("expected fatal on max_tokens, got %s", fatal[0].Field)
+	}
+}
+
+func hasFinding(findings []Finding, field string) bool {
+	for _, f := range findings {
+		if f.Field == field {
+			return true
+		}
+	}
+	return false
+}
+
+func hasFatal(findings []Finding) bool {
+	for _, f := range findings {
+		if f.Severity == SeverityFatal {
+			return true
+		}
+	}
+	return false
+}

@@ -159,3 +159,132 @@ func Save(path string, cfg *Config) error {
 	}
 	return nil
 }
+
+// Severity indicates whether a validation finding is fatal (blocks startup)
+// or a warning (startup proceeds with a hint).
+type Severity int
+
+const (
+	SeverityFatal   Severity = iota // must be fixed before startup
+	SeverityWarning                 // should be fixed, but startup can proceed
+)
+
+// Finding is a single validation result with a severity, field name and
+// human-readable message.
+type Finding struct {
+	Severity Severity
+	Field    string
+	Message  string
+}
+
+func (f Finding) Error() string {
+	return f.Message
+}
+
+// Validate checks every configurable field for sensible values and returns
+// all findings — both fatal and warning — so the caller can decide whether
+// to abort startup.
+func (c *Config) Validate() []Finding {
+	var findings []Finding
+
+	// --- Integer range checks ---
+
+	if c.ReviewThreshold < 0 || c.ReviewThreshold > 100 {
+		findings = append(findings, Finding{
+			Severity: SeverityFatal,
+			Field:    "review_threshold",
+			Message:  fmt.Sprintf("review_threshold must be 0–100, got %d", c.ReviewThreshold),
+		})
+	}
+	if c.MaxTokens <= 0 {
+		findings = append(findings, Finding{
+			Severity: SeverityFatal,
+			Field:    "max_tokens",
+			Message:  fmt.Sprintf("max_tokens must be > 0, got %d", c.MaxTokens),
+		})
+	}
+	if c.HistoryMaxAgeDays < 0 {
+		findings = append(findings, Finding{
+			Severity: SeverityWarning,
+			Field:    "history_max_age_days",
+			Message:  fmt.Sprintf("history_max_age_days must be >= 0, got %d", c.HistoryMaxAgeDays),
+		})
+	}
+	if c.TrashRetentionDays < 0 {
+		findings = append(findings, Finding{
+			Severity: SeverityWarning,
+			Field:    "trash_retention_days",
+			Message:  fmt.Sprintf("trash_retention_days must be >= 0, got %d", c.TrashRetentionDays),
+		})
+	}
+	if c.HistoryMaxPerFile < 0 {
+		findings = append(findings, Finding{
+			Severity: SeverityWarning,
+			Field:    "history_max_per_file",
+			Message:  fmt.Sprintf("history_max_per_file must be >= 0, got %d", c.HistoryMaxPerFile),
+		})
+	}
+
+	// --- Path existence checks ---
+
+	if c.Vault != "" {
+		if _, err := os.Stat(c.Vault); os.IsNotExist(err) {
+			findings = append(findings, Finding{
+				Severity: SeverityFatal,
+				Field:    "vault",
+				Message:  fmt.Sprintf("vault path does not exist: %s", c.Vault),
+			})
+		}
+	}
+	if c.Inbox != "" {
+		if _, err := os.Stat(c.Inbox); os.IsNotExist(err) {
+			findings = append(findings, Finding{
+				Severity: SeverityWarning,
+				Field:    "inbox",
+				Message:  fmt.Sprintf("inbox path does not exist: %s", c.Inbox),
+			})
+		}
+	}
+
+	// --- Enum-like field checks ---
+
+	validProviders := map[string]bool{
+		"ollama":   true,
+		"anthropic": true,
+		"openai":   true,
+		"":         true, // empty = default, not an error
+	}
+	if c.LLMProvider != "" && !validProviders[c.LLMProvider] {
+		findings = append(findings, Finding{
+			Severity: SeverityWarning,
+			Field:    "llm_provider",
+			Message:  fmt.Sprintf("unsupported llm_provider %q — expected one of: ollama, anthropic, openai", c.LLMProvider),
+		})
+	}
+
+	validLanguages := map[string]bool{
+		"en": true,
+		"de": true,
+		"":   true,
+	}
+	if c.Language != "" && !validLanguages[c.Language] {
+		findings = append(findings, Finding{
+			Severity: SeverityWarning,
+			Field:    "language",
+			Message:  fmt.Sprintf("unsupported language %q — expected en or de", c.Language),
+		})
+	}
+
+	return findings
+}
+
+// ValidateFatal returns only the fatal findings from Validate().
+func (c *Config) ValidateFatal() []Finding {
+	var fatal []Finding
+	for _, f := range c.Validate() {
+		if f.Severity == SeverityFatal {
+			fatal = append(fatal, f)
+		}
+	}
+	return fatal
+}

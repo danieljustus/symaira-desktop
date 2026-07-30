@@ -29,6 +29,7 @@ func newDocsCmd() *cobra.Command {
 
 			f := sidecar.DocsFilter{}
 			f.Type, _ = cmd.Flags().GetString("type")
+			f.FileType, _ = cmd.Flags().GetString("file-type")
 			f.Status, _ = cmd.Flags().GetString("status")
 			f.Person, _ = cmd.Flags().GetString("person")
 			f.Correspondent, _ = cmd.Flags().GetString("correspondent")
@@ -56,6 +57,7 @@ func newDocsCmd() *cobra.Command {
 		},
 	}
 	docsListCmd.Flags().String("type", "", "filter by document_type")
+	docsListCmd.Flags().String("file-type", "", "filter by file type (note|document|meeting)")
 	docsListCmd.Flags().String("status", "", "filter by status (open|paid|submitted|done|needs_review|waiting_for_reply)")
 	docsListCmd.Flags().String("person", "", "filter by person (household member)")
 	docsListCmd.Flags().String("correspondent", "", "filter by correspondent")

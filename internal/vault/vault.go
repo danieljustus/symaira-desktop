@@ -50,6 +50,10 @@ type Document struct {
 	OcrJSONPath  string // path to plain-text OCR JSON
 	Simhash      string // 64-bit SimHash hex
 	ASN          *int   // optional, vault-wide unique positive archive serial number
+
+	// Contract v3: document kind classification (note|document|meeting)
+	// Resolved at parse time: explicit frontmatter `type` wins, then inference.
+	Type string
 }
 
 // ValidStatuses enumerates the allowed values for Document.Status.
@@ -258,6 +262,9 @@ func ParseBytes(path string, fileBytes []byte) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Contract v3: resolve document kind (note|document|meeting)
+	doc.Type = inferType(doc.Frontmatter)
 
 	doc.Body = string(bodyBytes)
 	doc.Links = extractWikilinks(doc.Body)
@@ -648,4 +655,42 @@ func writeFileAtomic(path string, data []byte) error {
 		return fmt.Errorf("rename temp file: %w", err)
 	}
 	return nil
+}
+
+// documentInferenceFields lists frontmatter keys whose presence suggests a
+// file is a "document" rather than a free-form note.
+var documentInferenceFields = map[string]bool{
+	"source_path":   true,
+	"mime":          true,
+	"sha256":        true,
+	"document_date": true,
+	"asn":           true,
+}
+
+// inferType resolves a file's document kind when the frontmatter does not
+// contain an explicit `type` field. Evaluation order:
+//  1. If explicit `type` exists, return it.
+//  2. If any document-inference field is present → "document".
+//  3. If `meeting_id` is present → "meeting".
+//  4. Otherwise → "note".
+func inferType(fm map[string]interface{}) string {
+	if t, ok := fm["type"]; ok {
+		if s, ok := t.(string); ok {
+			switch s {
+			case "note", "document", "meeting":
+				return s
+			}
+		}
+	}
+	// Check inference rules for document
+	for key := range documentInferenceFields {
+		if _, ok := fm[key]; ok {
+			return "document"
+		}
+	}
+	// Check meeting_id
+	if _, ok := fm["meeting_id"]; ok {
+		return "meeting"
+	}
+	return "note"
 }

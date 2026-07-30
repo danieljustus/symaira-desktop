@@ -1,10 +1,10 @@
 # Symaira Vault Contract
 
-**contract_version: 2**
+**contract_version: 3**
 
 This document specifies the format and constraints of a Symaira Vault. Any application or service interacting with the Vault MUST comply with this contract to ensure interoperability across the ecosystem (e.g., `symaira-desktop`, `symaira-ingest`, `symaira-seek`).
 
-> **Backwards compatibility:** Contract v2 is additive. Parsers MUST preserve unknown fields. Vaults using only v1 fields continue to work; the new optional fields are only meaningful for document-oriented notes.
+> **Backwards compatibility:** Contract v3 is additive. Parsers MUST preserve unknown fields. Vaults using only v1/v2 fields continue to work; the new optional fields are only meaningful for document-oriented notes.
 
 ## 1. Vault Structure
 - **Root Directory:** A Vault is a directory on the local filesystem containing Markdown files and optional attachments.
@@ -22,6 +22,22 @@ The following YAML fields are defined by this contract. Parsers MUST preserve un
 - `title` (string): A human-readable title for the note.
 - `created` (string, ISO-8601): The creation timestamp of the note.
 - `tags` (array of strings): A list of tags. Can be empty `[]`.
+
+### Document Kind (contract_version 3)
+The `type` field classifies every markdown file in the vault into one of three kinds:
+
+- `note` (default): A free-form note or journal entry.
+- `document`: An imported or ingested document with structured metadata (e.g. invoices, letters, contracts).
+- `meeting`: A meeting note imported by `symmeet` (see section 8).
+
+**Explicit declaration:** A file with `type: note`, `type: document`, or `type: meeting` in its frontmatter is classified accordingly. Meeting-specific fields (section 8) SHOULD be paired with `type: meeting`.
+
+**Inference when absent:** A file with no `type` field is resolved at index time by the following rules (evaluated in order; the first match wins):
+1. If the frontmatter contains any of `source_path`, `mime`, `sha256`, `document_date`, or `asn` → the file is classified as `document`.
+2. If the frontmatter contains `meeting_id` → the file is classified as `meeting`.
+3. Otherwise → the file is classified as `note`.
+
+> **Backwards compatibility:** Contract v3 adds the `type` field. Existing vaults work without it — every file without `type` is classified at index time by inference. Parsers MUST treat an absent `type` as `note` when no inference triggers.
 
 ### Optional/Integration Fields (e.g., for `symaira-ingest`)
 The contract fully accepts and standardizes the following fields commonly written by `symingest`:

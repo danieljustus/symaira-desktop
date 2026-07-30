@@ -15,9 +15,10 @@ public struct Note: Codable, Equatable, Identifiable, Hashable, Sendable {
     public let sha256: String
     public let modifiedAt: String
     public let indexedAt: String
+    public let type: String
 
     enum CodingKeys: String, CodingKey {
-        case path, title, sha256
+        case path, title, sha256, type
         case modifiedAt = "modified_at"
         case indexedAt = "indexed_at"
         case modified
@@ -28,6 +29,7 @@ public struct Note: Codable, Equatable, Identifiable, Hashable, Sendable {
         path = try container.decode(String.self, forKey: .path)
         title = try container.decode(String.self, forKey: .title)
         sha256 = try container.decodeIfPresent(String.self, forKey: .sha256) ?? ""
+        type = (try? container.decodeIfPresent(String.self, forKey: .type)) ?? ""
         modifiedAt = try container.decodeIfPresent(String.self, forKey: .modifiedAt)
             ?? container.decodeIfPresent(String.self, forKey: .modified)
             ?? ""
@@ -39,6 +41,7 @@ public struct Note: Codable, Equatable, Identifiable, Hashable, Sendable {
         try container.encode(path, forKey: .path)
         try container.encode(title, forKey: .title)
         try container.encode(sha256, forKey: .sha256)
+        try container.encode(type, forKey: .type)
         try container.encode(modifiedAt, forKey: .modifiedAt)
         try container.encode(indexedAt, forKey: .indexedAt)
     }
@@ -217,6 +220,7 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
     public var id: String { path }
     public let path: String
     public let title: String
+    public let type: String
     public let documentDate: String
     public let person: String
     public let status: String
@@ -227,7 +231,7 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
     public let asn: Int
 
     enum CodingKeys: String, CodingKey {
-        case path, title, person, status, confidence, correspondent, asn
+        case path, title, type, person, status, confidence, correspondent, asn
         case documentDate = "document_date"
         case dueDate = "due_date"
         case documentType = "document_type"
@@ -237,6 +241,7 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         path = try c.decode(String.self, forKey: .path)
         title = try c.decode(String.self, forKey: .title)
+        type = (try? c.decodeIfPresent(String.self, forKey: .type)) ?? ""
         documentDate = (try? c.decode(String.self, forKey: .documentDate)) ?? ""
         person = (try? c.decode(String.self, forKey: .person)) ?? ""
         status = (try? c.decode(String.self, forKey: .status)) ?? ""
@@ -250,6 +255,7 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
     public init(
         path: String,
         title: String,
+        type: String = "",
         documentDate: String,
         person: String,
         status: String,
@@ -261,6 +267,7 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
     ) {
         self.path = path
         self.title = title
+        self.type = type
         self.documentDate = documentDate
         self.person = person
         self.status = status
@@ -481,21 +488,26 @@ public struct DocFilterPreset: Identifiable, Sendable {
     public let id: String
     public let label: String
     public let status: DocumentStatus?
+    public let fileType: String?
 
-    public init(id: String, label: String, status: DocumentStatus?) {
+    public init(id: String, label: String, status: DocumentStatus?, fileType: String? = nil) {
         self.id = id
         self.label = label
         self.status = status
+        self.fileType = fileType
     }
 
     public static let defaults: [DocFilterPreset] = [
-        .init(id: "all", label: "All Documents", status: nil),
-        .init(id: "open", label: "Open", status: .open),
-        .init(id: "needs_review", label: "Needs Review", status: .needsReview),
-        .init(id: "waiting_for_reply", label: "Waiting for Reply", status: .waitingForReply),
-        .init(id: "submitted", label: "Submitted", status: .submitted),
-        .init(id: "done", label: "Done", status: .done),
-        .init(id: "paid", label: "Paid", status: .paid),
+        .init(id: "all", label: "All Documents", status: nil, fileType: nil),
+        .init(id: "open", label: "Open", status: .open, fileType: nil),
+        .init(id: "needs_review", label: "Needs Review", status: .needsReview, fileType: nil),
+        .init(id: "waiting_for_reply", label: "Waiting for Reply", status: .waitingForReply, fileType: nil),
+        .init(id: "submitted", label: "Submitted", status: .submitted, fileType: nil),
+        .init(id: "done", label: "Done", status: .done, fileType: nil),
+        .init(id: "paid", label: "Paid", status: .paid, fileType: nil),
+        .init(id: "notes", label: "Notes", status: nil, fileType: "note"),
+        .init(id: "documents", label: "Documents", status: nil, fileType: "document"),
+        .init(id: "meetings", label: "Meetings", status: nil, fileType: "meeting"),
     ]
 }
 
@@ -848,10 +860,11 @@ public final class DeskCore: ObservableObject {
 
     // MARK: - Document Library
 
-    public func docsList(status: String? = nil, type: String? = nil, person: String? = nil, asn: Int? = nil) async throws -> [DocumentItem] {
+    public func docsList(status: String? = nil, type: String? = nil, fileType: String? = nil, person: String? = nil, asn: Int? = nil) async throws -> [DocumentItem] {
         var args = ["docs", "list", "--json"] + vaultArgs
         if let s = status, !s.isEmpty { args += ["--status", s] }
         if let t = type, !t.isEmpty { args += ["--type", t] }
+        if let ft = fileType, !ft.isEmpty { args += ["--file-type", ft] }
         if let p = person, !p.isEmpty { args += ["--person", p] }
         if let asn, asn > 0 { args += ["--asn", "\(asn)"] }
 		return try await runDecoding([DocumentItem].self, arguments: args)

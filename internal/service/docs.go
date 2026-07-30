@@ -14,6 +14,7 @@ import (
 type DocsListResult struct {
 	Path          string `json:"path"`
 	Title         string `json:"title"`
+	Type          string `json:"type,omitempty"`
 	DocumentDate  string `json:"document_date,omitempty"`
 	Person        string `json:"person,omitempty"`
 	Status        string `json:"status,omitempty"`
@@ -39,6 +40,7 @@ func (s *Service) DocsList(f sidecar.DocsFilter) ([]DocsListResult, error) {
 		results = append(results, DocsListResult{
 			Path:          relPath,
 			Title:         r.Title,
+			Type:          r.Type,
 			DocumentDate:  r.DocumentDate,
 			Person:        r.Person,
 			Status:        r.Status,

@@ -27,14 +27,45 @@ struct DocumentGridView: View {
     @State private var filterTask: Task<Void, Never>?
     @State private var refreshTask: Task<Void, Never>?
     @State private var todayString = Self.makeTodayString()
+    @State private var activeFilters: [SearchFilter] = []
 
     private var selectedDocs: [DocumentItem] {
         visibleDocuments.filter { selectedPaths.contains($0.path) }
     }
 
+    /// Unique document types present in the vault, for the chip picker.
+    private var availableDocTypes: [String] {
+        documents.map(\.documentType)
+            .filter { !$0.isEmpty }
+            .reduce(into: [String]()) { result, value in
+                if !result.contains(value) { result.append(value) }
+            }
+            .sorted()
+    }
+
+    /// All known document statuses, for the chip picker.
+    private var availableDocStatuses: [String] {
+        DocumentStatus.allCases.map(\.rawValue)
+    }
+
+    /// Unique folder paths in the vault, for the chip picker.
+    private var availableDocFolders: [String] {
+        documents.compactMap { DocumentCard.containingFolder(forPath: $0.path) }
+            .reduce(into: [String]()) { result, value in
+                if !result.contains(value) { result.append(value) }
+            }
+            .sorted()
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             documentHeader
+            FilterChipsView(filters: $activeFilters,
+                availableTypes: availableDocTypes,
+                availableStatuses: availableDocStatuses,
+                availableFolders: availableDocFolders)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 4)
             searchField
             Divider()
             if isLoading {
@@ -58,6 +89,7 @@ struct DocumentGridView: View {
         .onChange(of: searchText) { scheduleFilterUpdate() }
         .onChange(of: sortByASN) { applyFilters() }
         .onChange(of: statusFilter) { applyFilters() }
+        .onChange(of: activeFilters) { applyFilters() }
         .onChange(of: watcher.latestEvent) {
             scheduleDocumentRefresh()
         }
@@ -444,8 +476,35 @@ struct DocumentGridView: View {
 
     private func applyFilters() {
         var result = documents
+
+        // Apply sidebar status preset first.
         if let statusFilter, !statusFilter.isEmpty {
             result = result.filter { $0.status == statusFilter }
+        }
+
+        // Apply chip-based filters.
+        for filter in activeFilters {
+            switch filter.field {
+            case .type:
+                result = result.filter { $0.documentType == filter.value }
+            case .status:
+                result = result.filter { $0.status == filter.value }
+            case .tag:
+                // Tags are stored in frontmatter, not directly on DocumentItem.
+                // For the MVP we skip local tag filtering — the compiled
+                // query language handles it on the search/backend path.
+                break
+            case .correspondent:
+                result = result.filter { $0.correspondent == filter.value }
+            case .path:
+                result = result.filter { $0.path.hasPrefix(filter.value) }
+            case .folder:
+                result = result.filter { doc in
+                    (DocumentCard.containingFolder(forPath: doc.path) ?? "").localizedCaseInsensitiveContains(filter.value)
+                }
+            case .date:
+                break // Date range filter — future enhancement.
+            }
         }
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if !query.isEmpty {

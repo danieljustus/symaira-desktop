@@ -16,6 +16,7 @@ struct CommandPalette: View {
     @State private var searchHint: String?
     @State private var isSearching = false
     @State private var errorMessage: String?
+    @State private var activeFilters: [SearchFilter] = []
     
     var filteredNotes: [Note] {
         if searchText.isEmpty {
@@ -58,7 +59,11 @@ struct CommandPalette: View {
             .symDeskLiquidGlass(cornerRadius: 14, prominence: .elevated)
             .padding(16)
 
-            Text("Operators: path:, tag:, type:, status:, \"exact phrase\", -exclude, /regex/")
+            FilterChipsView(filters: $activeFilters)
+                .padding(.horizontal)
+                .padding(.bottom, 4)
+
+            Text("Filters compile to query syntax. Type raw queries or use the Filter button above.")
                 .font(.caption)
                 .foregroundColor(SymairaTheme.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -149,6 +154,8 @@ struct CommandPalette: View {
                 searchText = ""
                 searchResults = []
                 searchHint = nil
+            } else if !activeFilters.isEmpty {
+                activeFilters = []
             } else {
                 isPresented = false
             }
@@ -158,18 +165,24 @@ struct CommandPalette: View {
             searchResults = []
             searchHint = nil
             errorMessage = nil
+            activeFilters = []
         }
     }
     
     private func performSearch() {
-        guard !searchText.isEmpty else { return }
+        guard !searchText.isEmpty || !activeFilters.isEmpty else { return }
         isSearching = true
         errorMessage = nil
         searchHint = nil
+
+        let filterQuery = activeFilters.map(\.queryString).joined(separator: " ")
+        let fullQuery = [filterQuery, searchText]
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
         
         Task {
             do {
-                let response = try await core.search(query: searchText)
+                let response = try await core.search(query: fullQuery)
                 await MainActor.run {
                     self.searchResults = response.results
                     self.searchHint = response.hint

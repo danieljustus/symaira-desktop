@@ -74,6 +74,7 @@
 		BB6C55D988F6B8302B5A25BB /* MeetingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08CDFA027DFDFE0F07CFBA5 /* MeetingModels.swift */; };
 		BC3F2F58982E1AA5456634AF /* MeetingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34D4E18EEA985A7CCFB138B7 /* MeetingsView.swift */; };
 		BD65FAB6BE6B206D608452DB /* DeskTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B442ECE47F4FC2E662B8D33 /* DeskTransport.swift */; };
+		BF470309F3842EC5356B51C1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 22BF7512AD5CE2E3A5DE514E /* Assets.xcassets */; };
 		C238FC5C1826BF80F001CE50 /* RulesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA57E256040FF30C447766E /* RulesSettingsView.swift */; };
 		C27BFEBB0F77B10FB04D8E2D /* MeetingKnowledgeReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 278FA07C11ECADBCDFD4ED6B /* MeetingKnowledgeReviewView.swift */; };
 		C336F49BE61DBF2A7C03CE8E /* SymairaUpdateCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 596C4C9EB9845BC180C460A4 /* SymairaUpdateCheck */; };
@@ -150,6 +151,7 @@
 		203CD374D08A6A18BE8EF95A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		20BC6F58C62B4760E83EF56B /* DbViewEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewEditor.swift; sourceTree = "<group>"; };
 		2277ACA3457731ED5743E9C9 /* MobileTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileTheme.swift; sourceTree = "<group>"; };
+		22BF7512AD5CE2E3A5DE514E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		233223A3C27BEA490CADB82C /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
 		23EBE73852F5829E6BB25B82 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		24A66FCAE94BEB5D93BE972B /* BlockNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockNode.swift; sourceTree = "<group>"; };
@@ -373,6 +375,7 @@
 		6F4FF8A139ED6CEFD8F23F76 /* SymDeskMobile */ = {
 			isa = PBXGroup;
 			children = (
+				22BF7512AD5CE2E3A5DE514E /* Assets.xcassets */,
 				203CD374D08A6A18BE8EF95A /* Info.plist */,
 				565FECB395ABE250121EC9A8 /* MobileNoteDetailView.swift */,
 				C41A2D45CCFD80688933E2FC /* MobileRootView.swift */,
@@ -564,6 +567,7 @@
 			buildConfigurationList = ABC8005E2E8F20D340BEFFE5 /* Build configuration list for PBXNativeTarget "SymDeskMobile" */;
 			buildPhases = (
 				ED3D71D2BDF83885BB137B47 /* Sources */,
+				652E82CBF0E784432943C8EB /* Resources */,
 			);
 			buildRules = (
 			);
@@ -634,6 +638,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				1F4F7DB3673E6ECA5569DAB0 /* fake-symdesk.sh in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		652E82CBF0E784432943C8EB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BF470309F3842EC5356B51C1 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -857,7 +869,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.7.1;
+				MARKETING_VERSION = 0.7.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios;
 				PRODUCT_MODULE_NAME = SymDeskMobile;
 				PRODUCT_NAME = SymDesk;
@@ -904,7 +916,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.7.1;
+				MARKETING_VERSION = 0.7.3;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -984,7 +996,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.7.1;
+				MARKETING_VERSION = 0.7.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios;
 				PRODUCT_MODULE_NAME = SymDeskMobile;
 				PRODUCT_NAME = SymDesk;
@@ -1173,7 +1185,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.7.1;
+				MARKETING_VERSION = 0.7.3;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

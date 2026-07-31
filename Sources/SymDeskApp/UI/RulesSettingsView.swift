@@ -19,6 +19,18 @@ struct RulesSettingsView: View {
     @State private var editingConsumeFolderPath = false
     @State private var editedConsumeFolderPath = ""
 
+    @State private var aiConfig: DeskCore.AIConfig?
+    @State private var aiConfigError: String?
+    @State private var aiProvider: String = "ollama"
+    @State private var aiOllamaURL: String = ""
+    @State private var aiModel: String = ""
+    @State private var aiAPIKey: String = ""
+    @State private var aiMaxTokens: String = ""
+    @State private var aiAvailableModels: [String] = []
+    @State private var aiTestResult: DeskCore.AIConnectionTestResult?
+    @State private var aiIsTesting = false
+    @State private var aiIsSaving = false
+
     init(vaultPath: String? = nil) {
         _viewModel = StateObject(wrappedValue: ClassificationRulesViewModel(client: SymingestRulesClient(vaultPath: vaultPath)))
     }
@@ -58,6 +70,7 @@ struct RulesSettingsView: View {
                 dryRunCard
                 mailRulesCard
                 consumeFolderCard
+                aiSettingsCard
 				}
             }
             .frame(maxWidth: 960, alignment: .leading)
@@ -478,6 +491,153 @@ struct RulesSettingsView: View {
             consumeFolderStatus = try await core.getConsumeFolderStatus()
         } catch {
             consumeFolderError = error.localizedDescription
+        }
+    }
+
+    /// Card for configuring the AI provider (Ollama / Anthropic).
+    private var aiSettingsCard: some View {
+        settingsCard(title: "AI", systemImage: "sparkles") {
+            if let error = aiConfigError {
+                messageCard(title: "Could not load AI configuration", message: error, systemImage: "exclamationmark.triangle") {
+                    Button("Retry") {
+                        Task { await loadAIConfig() }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            } else if aiConfig == nil {
+                ProgressView("Loading AI configuration…")
+                    .task { await loadAIConfig() }
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    Picker("Provider", selection: $aiProvider) {
+                        Text("Ollama").tag("ollama")
+                        Text("Anthropic").tag("anthropic")
+                        Text("None").tag("none")
+                    }
+                    .pickerStyle(.segmented)
+
+                    if aiProvider == "ollama" {
+                        TextField("Ollama endpoint URL (e.g. http://localhost:11434)", text: $aiOllamaURL)
+                            .textFieldStyle(.roundedBorder)
+
+                        if aiAvailableModels.isEmpty {
+                            TextField("Model", text: $aiModel)
+                                .textFieldStyle(.roundedBorder)
+                        } else {
+                            Picker("Model", selection: $aiModel) {
+                                ForEach(aiAvailableModels, id: \.self) { name in
+                                    Text(name).tag(name)
+                                }
+                            }
+                        }
+                    } else if aiProvider == "anthropic" {
+                        SecureField("API key or symvault reference (op://...)", text: $aiAPIKey)
+                            .textFieldStyle(.roundedBorder)
+                        TextField("Model", text: $aiModel)
+                            .textFieldStyle(.roundedBorder)
+                    }
+
+                    TextField("Max tokens", text: $aiMaxTokens)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 160)
+
+                    HStack {
+                        Button("Test connection") {
+                            Task { await testAIConnection() }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(aiIsTesting)
+
+                        Button(aiIsSaving ? "Saving…" : "Save") {
+                            Task { await saveAIConfig() }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                        .tint(SymairaTheme.goldPrimary)
+                        .disabled(aiIsSaving)
+
+                        Spacer()
+                    }
+
+                    if aiIsTesting {
+                        ProgressView("Testing connection…")
+                    } else if let result = aiTestResult {
+                        if result.ok {
+                            Label(
+                                result.models?.isEmpty == false
+                                    ? "Connected. Models: \(result.models!.joined(separator: ", "))"
+                                    : "Connected.",
+                                systemImage: "checkmark.circle"
+                            )
+                            .foregroundStyle(.green)
+                            .font(.caption)
+                        } else {
+                            Label(result.error ?? "Connection failed.", systemImage: "exclamationmark.triangle")
+                                .foregroundStyle(.orange)
+                                .font(.caption)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func loadAIConfig() async {
+        aiConfigError = nil
+        do {
+            let config = try await core.getAIConfig()
+            aiConfig = config
+            aiProvider = config.provider
+            aiOllamaURL = config.ollamaURL
+            aiModel = config.model
+            aiMaxTokens = String(config.maxTokens)
+        } catch {
+            aiConfigError = error.localizedDescription
+        }
+    }
+
+    private func testAIConnection() async {
+        aiIsTesting = true
+        aiTestResult = nil
+        defer { aiIsTesting = false }
+        do {
+            // Save first so the test reflects the values currently on screen.
+            try await core.setAIConfig(
+                provider: aiProvider,
+                ollamaURL: aiOllamaURL,
+                model: aiModel.isEmpty ? nil : aiModel,
+                apiKey: aiProvider == "anthropic" ? aiAPIKey : nil,
+                maxTokens: Int(aiMaxTokens)
+            )
+            let result = try await core.testAIConnection()
+            aiTestResult = result
+            if let models = result.models, !models.isEmpty {
+                aiAvailableModels = models
+                if !models.contains(aiModel), let first = models.first {
+                    aiModel = first
+                }
+            }
+        } catch {
+            aiTestResult = DeskCore.AIConnectionTestResult(provider: aiProvider, ok: false, error: error.localizedDescription, models: nil)
+        }
+    }
+
+    private func saveAIConfig() async {
+        aiIsSaving = true
+        defer { aiIsSaving = false }
+        do {
+            try await core.setAIConfig(
+                provider: aiProvider,
+                ollamaURL: aiOllamaURL,
+                model: aiModel.isEmpty ? nil : aiModel,
+                apiKey: aiProvider == "anthropic" ? aiAPIKey : nil,
+                maxTokens: Int(aiMaxTokens)
+            )
+            await loadAIConfig()
+        } catch {
+            aiConfigError = error.localizedDescription
         }
     }
 

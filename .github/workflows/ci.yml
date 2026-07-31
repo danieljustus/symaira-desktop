@@ -179,6 +179,20 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
+      - name: Configure access to private Swift package
+        env:
+          SYMAIRA_APPKIT_TOKEN: ${{ secrets.SYMAIRA_APPKIT_TOKEN }}
+        run: |
+          while IFS= read -r config_key; do
+            git config --local --unset-all "$config_key" || true
+          done < <(git config --local --name-only --get-regexp '^includeIf\.gitdir:')
+          git config --global url."https://danieljustus:${SYMAIRA_APPKIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          api_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${SYMAIRA_APPKIT_TOKEN}" \
+            https://api.github.com/repos/danieljustus/symaira-appkit)"
+          test "$api_status" = "200"
+          git ls-remote https://github.com/danieljustus/symaira-appkit.git HEAD >/dev/null
+
       - name: Resolve pinned simulator device
         id: sim
         run: |

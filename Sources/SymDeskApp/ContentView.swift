@@ -63,6 +63,18 @@ struct ContentView: View {
         case trash
     }
 
+    // MARK: - Navigation History
+
+    /// Captures the full navigation context for history tracking.
+    private struct NavEntry: Equatable {
+        let displayMode: DisplayMode
+        let notePath: String?
+        let docFilterID: String
+        let tagFilter: String?
+        let deepLinkDocPath: String?
+        let selectedViewID: String?
+    }
+
     @State private var displayMode: DisplayMode = .dashboard
     @State private var selectedViewID: String?
     @State private var dbViews: [DbView] = []
@@ -72,6 +84,10 @@ struct ContentView: View {
     @State private var docCounts: [String: Int] = [:]
     @State private var docTotalCount: Int = 0
     @State private var deepLinkDocPath: String?
+
+    // Navigation history stacks
+    @State private var navBackStack: [NavEntry] = []
+    @State private var navForwardStack: [NavEntry] = []
 
     // Tag browsing
     @State private var tagCounts: [TagEntry] = []
@@ -127,7 +143,7 @@ struct ContentView: View {
 
                         List {
                             Section {
-                                Button(action: { displayMode = .dashboard }) {
+                                Button(action: { navigate(to: .dashboard) }) {
                                     HStack {
                                         Image(systemName: "rectangle.grid.1x2")
                                         Text("Dashboard")
@@ -138,14 +154,13 @@ struct ContentView: View {
                             Section("Library") {
                                 ForEach(DocFilterPreset.defaults) { preset in
                                     Button(action: {
-                                        docFilterID = preset.id
-                                        displayMode = .docs
+                                        navigate(to: .docs, docFilter: preset.id)
                                     }) {
                                         HStack {
                                             Text(preset.label)
                                             Spacer()
                                             if let count = preset.status == nil ? docTotalCount : docCounts[preset.status!.rawValue] {
-                                                Text("\\(count)")
+                                                Text("\(count)")
                                                     .font(.caption)
                                                     .foregroundColor(SymairaTheme.textSecondary)
                                                     .padding(.horizontal, 6)
@@ -160,8 +175,7 @@ struct ContentView: View {
 
                             Section("Tags") {
                                 TagBrowserView(tags: tagCounts) { tag in
-                                    tagFilter = tag
-                                    displayMode = .docs
+                                    navigate(to: .docs, tagFilter: tag)
                                 }
                                 .frame(minHeight: 120)
                             }
@@ -169,13 +183,13 @@ struct ContentView: View {
                             meetingsSidebarSection
 
                             Section("Discover") {
-                                Button(action: { displayMode = .discover }) {
+                                Button(action: { navigate(to: .discover) }) {
                                     HStack {
                                         Image(systemName: "sparkles")
                                         Text("Discover")
                                     }
                                 }
-                                Button(action: { displayMode = .companionTools }) {
+                                Button(action: { navigate(to: .companionTools) }) {
                                     HStack {
                                         Image(systemName: "wrench.and.screwdriver")
                                         Text("Companion Tools")
@@ -184,13 +198,13 @@ struct ContentView: View {
                             }
 
                             Section("Inbox & Processing") {
-                                Button(action: { displayMode = .ingestQueue }) {
+                                Button(action: { navigate(to: .ingestQueue) }) {
                                     HStack {
                                         Image(systemName: "tray.and.arrow.down")
                                         Text("Ingest Queue")
                                     }
                                 }
-                                Button(action: { displayMode = .reviewLane }) {
+                                Button(action: { navigate(to: .reviewLane) }) {
                                     HStack {
                                         Image(systemName: "exclamationmark.triangle")
                                         Text("Review Lane")
@@ -199,13 +213,13 @@ struct ContentView: View {
                             }
 
                             Section("Safety Net") {
-                                Button(action: { displayMode = .history }) {
+                                Button(action: { navigate(to: .history) }) {
                                     HStack {
                                         Image(systemName: "clock.arrow.circlepath")
                                         Text("Version History")
                                     }
                                 }
-                                Button(action: { displayMode = .trash }) {
+                                Button(action: { navigate(to: .trash) }) {
                                     HStack {
                                         Image(systemName: "trash")
                                         Text("Trash")
@@ -214,7 +228,7 @@ struct ContentView: View {
                             }
 
                             Section("Settings") {
-                                Button(action: { displayMode = .rules }) {
+                                Button(action: { navigate(to: .rules) }) {
                                     HStack {
                                         Image(systemName: "gearshape")
                                         Text("Rules & Settings")
@@ -223,15 +237,14 @@ struct ContentView: View {
                             }
 
                             Section("Views") {
-                                Button("Vault") { displayMode = .vault }
-                                Button("Graph") { displayMode = .graph }
+                                Button("Vault") { navigate(to: .vault) }
+                                Button("Graph") { navigate(to: .graph) }
                             }
 
                             Section("Saved Views") {
                                 ForEach(dbViews) { view in
                                     Button(view.name) {
-                                        selectedViewID = view.id
-                                        displayMode = .dbView
+                                        navigate(to: .dbView, viewID: view.id)
                                     }
                                     .contextMenu {
                                         Button("Edit View") {
@@ -284,7 +297,7 @@ struct ContentView: View {
                             docTotalCount: docTotalCount,
                             notes: notes,
                             doctorReport: doctorReport,
-                            onNavigate: { mode in displayMode = mode }
+                            onNavigate: { mode in navigate(to: mode) }
                         )
                     case .ingestQueue:
                         IngestQueueView()
@@ -295,7 +308,7 @@ struct ContentView: View {
                     case .rules:
                         RulesSettingsView(vaultPath: core.vaultPath)
                     case .discover:
-                        DiscoverView(onNavigateToTools: { displayMode = .companionTools })
+                        DiscoverView(onNavigateToTools: { navigate(to: .companionTools) })
                     case .companionTools:
                         CompanionToolsView(
                             doctorReport: doctorReport,
@@ -308,7 +321,6 @@ struct ContentView: View {
                     case .graph:
                         GraphView { selectedNodeID in
                             navigateToNote(title: selectedNodeID)
-                            displayMode = .vault
                         }
                     case .docs:
                         let statusVal = DocFilterPreset.defaults.first(where: { $0.id == docFilterID })?.status
@@ -494,8 +506,7 @@ struct ContentView: View {
                         VStack(alignment: .leading, spacing: 0) {
                             if let note = selectedNote {
                                 PropertiesInspector(notePath: vaultRelativePath(note.path), onTagClick: { tag in
-                                    tagFilter = tag
-                                    displayMode = .docs
+                                    navigate(to: .docs, tagFilter: tag)
                                 })
                             }
                             Text("Backlinks")
@@ -553,13 +564,31 @@ struct ContentView: View {
                 }
                 .toolbar {
                     ToolbarItem(placement: .navigation) {
-                        Button(action: { isShowingPalette.toggle() }) {
-                            Label("Command Palette", systemImage: "magnifyingglass")
-                        }
-                        .keyboardShortcut("k", modifiers: .command)
-                        
-                        Toggle(isOn: $isBlockMode) {
-                            Label("Block Mode", systemImage: "square.text.square")
+                        HStack(spacing: 0) {
+                            Button(action: { goBack() }) {
+                                Image(systemName: "chevron.left")
+                            }
+                            .disabled(!canGoBack)
+                            .help("Go back")
+
+                            Button(action: { goForward() }) {
+                                Image(systemName: "chevron.right")
+                            }
+                            .disabled(!canGoForward)
+                            .help("Go forward")
+
+                            Divider()
+                                .frame(height: 16)
+
+                            Button(action: { isShowingPalette.toggle() }) {
+                                Label("Command Palette", systemImage: "magnifyingglass")
+                            }
+                            .keyboardShortcut("k", modifiers: .command)
+
+                            Toggle(isOn: $isBlockMode) {
+                                Label("Block Mode", systemImage: "square.text.square")
+                            }
+                            .toggleStyle(.button)
                         }
                         .toggleStyle(.button)
                         
@@ -599,7 +628,7 @@ struct ContentView: View {
                                 DoctorReportPopoverView(report: doctorReport)
                             }
                             if let lastEv = watcher.latestEvent {
-                                Text("Last event: \(lastEv.event) on \(lastEv.path)")
+                                Text("Last event: \\(lastEv.event) on \\(lastEv.path)")
                                     .font(.caption)
                                     .foregroundColor(SymairaTheme.textMuted)
                             }
@@ -616,12 +645,12 @@ struct ContentView: View {
                         isPresented: $isShowingPalette,
                         allNotes: $notes,
                         onSelectNote: { note in
-                            self.selectedNote = note
+                            navigate(to: .vault, note: note)
                         },
                         onSelectSearchResult: { result in
                             // For search results, we match the path to a Note
                             if let found = notes.first(where: { $0.path == result.path }) {
-                                self.selectedNote = found
+                                navigate(to: .vault, note: found)
                             }
                         }
                     )
@@ -649,7 +678,7 @@ struct ContentView: View {
                     }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .openDiscover)) { _ in
-                    displayMode = .discover
+                    navigate(to: .discover)
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .openCommandPalette)) { _ in
                     isShowingPalette = true
@@ -658,7 +687,7 @@ struct ContentView: View {
                     isShowingNewNoteSheet = true
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .openRulesSettings)) { _ in
-                    displayMode = .rules
+                    navigate(to: .rules)
                 }
                 .overlay(alignment: .top) {
                     VStack(spacing: 0) {
@@ -686,8 +715,7 @@ struct ContentView: View {
                 }
                 .onChange(of: notificationManager.deepLinkedDocumentPath) { _, path in
                     guard let path else { return }
-                    deepLinkDocPath = path
-                    displayMode = .docs
+                    navigate(to: .docs, deepLinkPath: path)
                     notificationManager.deepLinkedDocumentPath = nil
                 }
                 .task {
@@ -722,7 +750,7 @@ struct ContentView: View {
     @ViewBuilder
     private var meetingsSidebarSection: some View {
         Section("Meetings") {
-            Button(action: { displayMode = .meetings }) {
+            Button(action: { navigate(to: .meetings) }) {
                 HStack {
                     Image(systemName: "person.wave.2")
                     Text("Meetings")
@@ -923,9 +951,71 @@ struct ContentView: View {
         DocumentPreviewResolver.noteURL(documentPath: path, vaultPath: core.vaultPath)?.path
     }
 
+    // MARK: - Navigation History Helpers
+
+    private var canGoBack: Bool { !navBackStack.isEmpty }
+    private var canGoForward: Bool { !navForwardStack.isEmpty }
+
+    /// Snapshots the current navigation state.
+    private func makeNavEntry() -> NavEntry {
+        NavEntry(
+            displayMode: displayMode,
+            notePath: selectedNote?.path,
+            docFilterID: docFilterID,
+            tagFilter: tagFilter,
+            deepLinkDocPath: deepLinkDocPath,
+            selectedViewID: selectedViewID
+        )
+    }
+
+    /// Restores a navigation state, re-resolving the note from the current
+    /// notes list since Note is a value type (new instance after refresh).
+    private func applyNavEntry(_ entry: NavEntry) {
+        displayMode = entry.displayMode
+        selectedNote = entry.notePath.flatMap { path in notes.first(where: { $0.path == path }) }
+        docFilterID = entry.docFilterID
+        tagFilter = entry.tagFilter
+        deepLinkDocPath = entry.deepLinkDocPath
+        selectedViewID = entry.selectedViewID
+    }
+
+    /// Navigate to a new destination, pushing the current state onto the
+    /// back stack so the user can return with the back button.
+    private func navigate(
+        to mode: DisplayMode,
+        note: Note? = nil,
+        docFilter: String? = nil,
+        tagFilter: String? = nil,
+        deepLinkPath: String? = nil,
+        viewID: String? = nil
+    ) {
+        navBackStack.append(makeNavEntry())
+        navForwardStack.removeAll()
+        displayMode = mode
+        if let note = note { selectedNote = note }
+        if let docFilter = docFilter { docFilterID = docFilter }
+        if let tagFilter = tagFilter { self.tagFilter = tagFilter }
+        if let deepLinkPath = deepLinkPath { deepLinkDocPath = deepLinkPath }
+        if let viewID = viewID { selectedViewID = viewID }
+    }
+
+    /// Go back one step in navigation history.
+    private func goBack() {
+        guard let entry = navBackStack.popLast() else { return }
+        navForwardStack.append(makeNavEntry())
+        applyNavEntry(entry)
+    }
+
+    /// Go forward one step in navigation history.
+    private func goForward() {
+        guard let entry = navForwardStack.popLast() else { return }
+        navBackStack.append(makeNavEntry())
+        applyNavEntry(entry)
+    }
+
     private func navigateToNote(title: String) {
         if let found = noteLookup[title.lowercased()] {
-            self.selectedNote = found
+            navigate(to: .vault, note: found)
         }
     }
 
@@ -1093,8 +1183,7 @@ struct ContentView: View {
         } else {
             Button {
                 if let note = node.note {
-                    self.selectedNote = note
-                    self.displayMode = .vault
+                    navigate(to: .vault, note: note)
                 }
             } label: {
                 if let folder = node.containingFolder {

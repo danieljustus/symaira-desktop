@@ -993,6 +993,10 @@ public final class DeskCore: ObservableObject {
     public func loadVaultFromConfig() {
         if let path = VaultConfig.vaultPath() {
             self.vaultPath = path
+            // Register in Finder's Favorites sidebar so vaults configured
+            // before this feature existed get picked up (see issue #299).
+            let vaultURL = URL(fileURLWithPath: path)
+            VaultConfig.registerInFinderFavorites(vaultURL)
         }
     }
 
@@ -1025,6 +1029,81 @@ public final class DeskCore: ObservableObject {
         }
         let result = try JSONDecoder().decode(DemoInitResult.self, from: data)
         return result.path
+    }
+
+    // MARK: - History & Restore
+
+    public func historyList(path: String) async throws -> [HistoryEntry] {
+        try await runDecoding([HistoryEntry].self, arguments: ["history", path, "--json"] + vaultArgs)
+    }
+
+    public func historyRestore(path: String, at id: String = "") async throws {
+        var args = ["restore", path]
+        if !id.isEmpty {
+            args += ["--at", id]
+        }
+        args += ["--json"] + vaultArgs
+        _ = try await runChecked(arguments: args)
+    }
+
+    // MARK: - Trash Management
+
+    public func trashList() async throws -> [TrashEntry] {
+        try await runDecoding([TrashEntry].self, arguments: ["trash", "list", "--json"] + vaultArgs)
+    }
+
+    public func trashRestore(name: String) async throws {
+        _ = try await runChecked(arguments: ["trash", "restore", name, "--json"] + vaultArgs)
+    }
+
+    public func trashPurgeAll() async throws {
+        _ = try await runChecked(arguments: ["trash", "purge", "--all", "--json"] + vaultArgs)
+    }
+
+    public func noteDelete(path: String) async throws {
+        _ = try await runChecked(arguments: ["delete", path, "--json"] + vaultArgs)
+    }
+}
+
+// MARK: - History & Trash Models
+
+public struct HistoryEntry: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { snapshotID }
+    public let snapshotID: String
+    public let timestamp: String
+    public let size: Int64
+
+    public init(snapshotID: String, timestamp: String, size: Int64) {
+        self.snapshotID = snapshotID
+        self.timestamp = timestamp
+        self.size = size
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case snapshotID = "id"
+        case timestamp, size
+    }
+}
+
+public struct TrashEntry: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { name }
+    public let name: String
+    public let originalPath: String
+    public let deletedAt: String
+    public let size: Int64
+
+    public init(name: String, originalPath: String, deletedAt: String, size: Int64) {
+        self.name = name
+        self.originalPath = originalPath
+        self.deletedAt = deletedAt
+        self.size = size
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case originalPath = "original_path"
+        case deletedAt = "deleted_at"
+        case size
     }
 }
 

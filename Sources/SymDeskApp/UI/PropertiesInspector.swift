@@ -8,6 +8,7 @@ import SymDeskCore
 struct PropertiesInspector: View {
     let notePath: String
     var onChanged: (() -> Void)? = nil
+    var onTagClick: ((String) -> Void)? = nil
 
     @EnvironmentObject var core: DeskCore
 
@@ -168,12 +169,16 @@ struct PropertiesInspector: View {
                     if !tags.isEmpty {
                         HStack {
                             ForEach(tags, id: \.self) { tag in
-                                Text(tag)
-                                    .font(.caption)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.white.opacity(0.08))
-                                    .cornerRadius(4)
+                                Button(action: { onTagClick?(tag) }) {
+                                    Text(tag)
+                                        .font(.caption)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.white.opacity(0.08))
+                                        .cornerRadius(4)
+                                }
+                                .buttonStyle(.plain)
+                                .help("Filter documents tagged \"\(tag)\"")
                             }
                         }
                     }

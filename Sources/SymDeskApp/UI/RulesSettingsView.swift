@@ -179,13 +179,41 @@ struct RulesSettingsView: View {
 	                }
 	                .buttonStyle(.bordered)
 	            } else if !core.isDemoMode {
+	                Button("Reveal in Finder") {
+	                    if let path = core.vaultPath {
+	                        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
+	                    }
+	                }
+	                .buttonStyle(.bordered)
 	                Button("Change Vault…") {
 	                    showingChangeVaultConfirmation = true
 	                }
 	                .buttonStyle(.bordered)
 	            }
 	        }
+	        if !core.isRemote && !core.isDemoMode {
+	            Divider().overlay(SymairaTheme.borderGlass)
+	            Toggle(isOn: finderFavoritesBinding) {
+	                VStack(alignment: .leading, spacing: 2) {
+	                    Text("Show vault in Finder's Favorites sidebar")
+	                        .font(.body)
+	                        .foregroundStyle(SymairaTheme.textPrimary)
+	                    Text("Adds the vault folder to Finder's sidebar for one-click access. Removing it from Finder's sidebar is respected and not undone automatically.")
+	                        .font(.caption)
+	                        .foregroundStyle(SymairaTheme.textSecondary)
+	                }
+	            }
+	            .toggleStyle(.switch)
+	            .tint(SymairaTheme.goldPrimary)
+	        }
 	    }
+	}
+
+	private var finderFavoritesBinding: Binding<Bool> {
+	    Binding(
+	        get: { VaultConfig.finderFavoritesEnabled },
+	        set: { VaultConfig.finderFavoritesEnabled = $0 }
+	    )
 	}
 
 	@AppStorage("showDocumentThumbnails") private var showThumbnails = true

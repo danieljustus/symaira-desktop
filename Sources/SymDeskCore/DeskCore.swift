@@ -972,6 +972,22 @@ public final class DeskCore: ObservableObject {
         try await noteEditProperty(path: path, key: "document_type", value: type)
     }
 
+    public func docSetTitle(path: String, title: String) async throws {
+        try await noteEditProperty(path: path, key: "title", value: title)
+    }
+
+    public func docSetCorrespondent(path: String, name: String) async throws {
+        try await noteEditProperty(path: path, key: "correspondent", value: name)
+    }
+
+    public func docSetDocumentDate(path: String, date: String) async throws {
+        try await noteEditProperty(path: path, key: "document_date", value: date)
+    }
+
+    public func docSetPerson(path: String, person: String) async throws {
+        try await noteEditProperty(path: path, key: "person", value: person)
+    }
+
     public func docSetNoteVisible(path: String, visible: Bool) async throws {
         try await noteEditProperty(path: path, key: "note_visible", value: visible ? "true" : "false")
     }

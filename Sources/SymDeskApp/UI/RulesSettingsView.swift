@@ -27,6 +27,7 @@ struct RulesSettingsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 header
 				connectionCard
+				displayCard
 				if core.isRemote {
 					messageCard(
 						title: "Processing is managed by SymDesk Server",
@@ -139,32 +140,51 @@ struct RulesSettingsView: View {
     }
 
 	private var connectionCard: some View {
-		settingsCard(title: core.isRemote ? "Self-hosted server" : "Local vault", systemImage: core.isRemote ? "server.rack" : "internaldrive") {
-			HStack(spacing: 14) {
-				VStack(alignment: .leading, spacing: 5) {
-					Text(core.isRemote ? (core.serverURL?.absoluteString ?? "Connected") : (core.vaultPath ?? "Not configured"))
-						.font(.headline)
-						.foregroundStyle(SymairaTheme.textPrimary)
-					Text(core.isRemote ? "Vault, originals, index and OCR queue live on this server." : "The app and CLI read this vault directly on your Mac.")
-						.font(.callout)
-						.foregroundStyle(SymairaTheme.textSecondary)
-				}
-				Spacer()
-				if core.isRemote {
-					Button("Disconnect", role: .destructive) {
-						VaultConfig.reset()
-						core.disconnectServer()
-						NSApplication.shared.terminate(nil)
-					}
-					.buttonStyle(.bordered)
-				} else if !core.isDemoMode {
-					Button("Change Vault…") {
-						showingChangeVaultConfirmation = true
-					}
-					.buttonStyle(.bordered)
-				}
-			}
-		}
+	    settingsCard(title: core.isRemote ? "Self-hosted server" : "Local vault", systemImage: core.isRemote ? "server.rack" : "internaldrive") {
+	        HStack(spacing: 14) {
+	            VStack(alignment: .leading, spacing: 5) {
+	                Text(core.isRemote ? (core.serverURL?.absoluteString ?? "Connected") : (core.vaultPath ?? "Not configured"))
+	                    .font(.headline)
+	                    .foregroundStyle(SymairaTheme.textPrimary)
+	                Text(core.isRemote ? "Vault, originals, index and OCR queue live on this server." : "The app and CLI read this vault directly on your Mac.")
+	                    .font(.callout)
+	                    .foregroundStyle(SymairaTheme.textSecondary)
+	            }
+	            Spacer()
+	            if core.isRemote {
+	                Button("Disconnect", role: .destructive) {
+	                    VaultConfig.reset()
+	                    core.disconnectServer()
+	                    NSApplication.shared.terminate(nil)
+	                }
+	                .buttonStyle(.bordered)
+	            } else if !core.isDemoMode {
+	                Button("Change Vault…") {
+	                    showingChangeVaultConfirmation = true
+	                }
+	                .buttonStyle(.bordered)
+	            }
+	        }
+	    }
+	}
+
+	@AppStorage("showDocumentThumbnails") private var showThumbnails = true
+
+	private var displayCard: some View {
+	    settingsCard(title: "Display", systemImage: "eye") {
+	        Toggle(isOn: $showThumbnails) {
+	            VStack(alignment: .leading, spacing: 2) {
+	                Text("Show content preview thumbnails")
+	                    .font(.body)
+	                    .foregroundStyle(SymairaTheme.textPrimary)
+	                Text("When enabled, document and note cards show a text preview of the first content instead of a generic SF Symbol icon.")
+	                    .font(.caption)
+	                    .foregroundStyle(SymairaTheme.textSecondary)
+	            }
+	        }
+	        .toggleStyle(.switch)
+	        .tint(SymairaTheme.goldPrimary)
+	    }
 	}
 
     private var classificationRulesCard: some View {

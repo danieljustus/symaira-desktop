@@ -179,17 +179,26 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
-      - name: Verify pinned simulator runtime is available
+      - name: Resolve pinned simulator device
+        id: sim
         run: |
           set -euo pipefail
-          if ! xcrun simctl list devices "iOS 18.2" | grep -q "iPhone 16"; then
-            echo "::error::Pinned simulator 'iPhone 16' on iOS 18.2 is not available on this runner image. Update the pinned device/OS in .github/workflows/ci.yml to match the runner's installed runtimes (see 'xcrun simctl list runtimes')."
-            xcrun simctl list runtimes
+          # Pin to a specific "iPhone 16" simulator instance rather than a
+          # generic destination. The exact OS runtime on hosted macOS runners
+          # shifts with the image, so resolve the UDID of whatever "iPhone 16"
+          # instance is actually installed instead of hardcoding an OS version
+          # that will eventually go stale.
+          UDID=$(xcrun simctl list devices available --json | python3 -c "import json,sys; data=json.load(sys.stdin); devices=[d['udid'] for lst in data['devices'].values() for d in lst if d['name']=='iPhone 16']; print(devices[0]) if devices else sys.exit(1)") || true
+          if [ -z "$UDID" ]; then
+            echo "::error::No available 'iPhone 16' simulator found on this runner image. Update the pinned device name in .github/workflows/ci.yml to match a device from 'xcrun simctl list devices available'."
+            xcrun simctl list devices available
             exit 1
           fi
+          echo "Resolved iPhone 16 simulator: $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
       - name: Build SymDeskMobile
-        run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDeskMobile -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.2' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDeskMobile -destination "id=${{ steps.sim.outputs.udid }}" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
       - name: Run SymDeskMobileTests
-        run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDeskMobile -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.2' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDeskMobile -destination "id=${{ steps.sim.outputs.udid }}" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

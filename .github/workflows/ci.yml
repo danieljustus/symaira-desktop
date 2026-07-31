@@ -183,18 +183,19 @@ jobs:
         id: sim
         run: |
           set -euo pipefail
-          # Pin to a specific "iPhone 16" simulator instance rather than a
-          # generic destination. The exact OS runtime on hosted macOS runners
-          # shifts with the image, so resolve the UDID of whatever "iPhone 16"
-          # instance is actually installed instead of hardcoding an OS version
-          # that will eventually go stale.
-          UDID=$(xcrun simctl list devices available --json | python3 -c "import json,sys; data=json.load(sys.stdin); devices=[d['udid'] for lst in data['devices'].values() for d in lst if d['name']=='iPhone 16']; print(devices[0]) if devices else sys.exit(1)") || true
+          # Pin to one specific, already-installed plain "iPhone N" simulator
+          # instance (no Pro/Plus/Max/mini/e variant, no destination string
+          # left generic) rather than a hardcoded OS version or model name.
+          # Hosted macOS runner images rotate their installed device roster
+          # frequently, so resolve the newest available plain iPhone at run
+          # time instead of guessing one that will eventually go stale.
+          UDID=$(xcrun simctl list devices available --json | python3 -c "import json,re,sys; data=json.load(sys.stdin); cands=sorted(((int(m.group(1)), d['udid']) for lst in data['devices'].values() for d in lst for m in [re.fullmatch(r'iPhone (\d+)', d['name'])] if m), reverse=True); print(cands[0][1]) if cands else sys.exit(1)") || true
           if [ -z "$UDID" ]; then
-            echo "::error::No available 'iPhone 16' simulator found on this runner image. Update the pinned device name in .github/workflows/ci.yml to match a device from 'xcrun simctl list devices available'."
+            echo "::error::No available plain 'iPhone N' simulator found on this runner image. Update the device-matching logic in .github/workflows/ci.yml to match a device from 'xcrun simctl list devices available'."
             xcrun simctl list devices available
             exit 1
           fi
-          echo "Resolved iPhone 16 simulator: $UDID"
+          echo "Resolved simulator: $UDID"
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
       - name: Build SymDeskMobile

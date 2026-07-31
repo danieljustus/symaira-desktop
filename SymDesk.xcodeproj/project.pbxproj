@@ -42,6 +42,7 @@
 		4C61971FE7AC481D84BE4B3D /* MobileTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2277ACA3457731ED5743E9C9 /* MobileTheme.swift */; };
 		501D1A781F9C96208374CF89 /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = 440538EBC91381E953CC1697 /* SymairaCLIRunner */; };
 		52B0B883869C07C6C51D48C4 /* BlockEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B58CE1AAB047E5C20B8DBC43 /* BlockEditorView.swift */; };
+		530730FA034501704933A33E /* FinderFavorites.swift in Sources */ = {isa = PBXBuildFile; fileRef = A155C168F7FCF9660B810D94 /* FinderFavorites.swift */; };
 		5559B886DFF79DF05589717E /* SymairaUpdateCheck in Frameworks */ = {isa = PBXBuildFile; productRef = CFBC6F0BE1C9C08829AF5DC6 /* SymairaUpdateCheck */; };
 		5698513BA081E184D06175F5 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = FB4C7E4FD05930A9DBAFDE35 /* SymairaToolKit */; };
 		571C6E466AA0EACEBA689E1F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61EE8B62E86F8FE234837F0A /* ContentView.swift */; };
@@ -200,6 +201,7 @@
 		9E0EF47CC7E6B528447433E8 /* AIDockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDockView.swift; sourceTree = "<group>"; };
 		9E65A058CCDDBCCFB506217C /* MarkdownPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownPreviewView.swift; sourceTree = "<group>"; };
 		9FA57E256040FF30C447766E /* RulesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RulesSettingsView.swift; sourceTree = "<group>"; };
+		A155C168F7FCF9660B810D94 /* FinderFavorites.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderFavorites.swift; sourceTree = "<group>"; };
 		A175D91D3D83560906E78387 /* VaultConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultConfig.swift; sourceTree = "<group>"; };
 		A2BC2A21B0BFAB4B7F22A054 /* MeetingReviewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingReviewModelTests.swift; sourceTree = "<group>"; };
 		A60D1BDE16EFA4EF064577CB /* TranscriptTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptTimelineView.swift; sourceTree = "<group>"; };
@@ -282,6 +284,7 @@
 				F756739286BF26EA17456C99 /* DeskCore.swift */,
 				2B442ECE47F4FC2E662B8D33 /* DeskTransport.swift */,
 				95355A68097983C9F84AE919 /* EventWatcher.swift */,
+				A155C168F7FCF9660B810D94 /* FinderFavorites.swift */,
 				4361A3B66293519600E22473 /* MarkdownPreview.swift */,
 				6249D84E9A4012E9E8B0BFDB /* MarkdownTable.swift */,
 				233223A3C27BEA490CADB82C /* NotificationScheduler.swift */,
@@ -706,6 +709,7 @@
 				B4BBDCDD200A14353CFF2B9F /* DeskCore.swift in Sources */,
 				BD65FAB6BE6B206D608452DB /* DeskTransport.swift in Sources */,
 				D32E9B586B362E4914175291 /* EventWatcher.swift in Sources */,
+				530730FA034501704933A33E /* FinderFavorites.swift in Sources */,
 				08DDB4F6EED7DA64407BA23B /* MarkdownPreview.swift in Sources */,
 				2A33E6AC1739DB68412E9972 /* MarkdownTable.swift in Sources */,
 				3D00605BDE73976880F49353 /* NotificationScheduler.swift in Sources */,

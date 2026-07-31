@@ -103,162 +103,173 @@ struct ContentView: View {
                 }
             } else {
                 NavigationSplitView {
-                    List {
-                        Section {
-                            Button(action: { displayMode = .dashboard }) {
-                                HStack {
-                                    Image(systemName: "rectangle.grid.1x2")
-                                    Text("Dashboard")
+                    VStack(spacing: 0) {
+                        // Fixed sidebar header with title and New Note button (#293, #294a)
+                        HStack {
+                            Text("SymDesk")
+                                .font(.title3.bold())
+                                .foregroundColor(SymairaTheme.textPrimary)
+                            Spacer()
+                            Button(action: { isShowingNewNoteSheet = true }) {
+                                Label("New Note", systemImage: "plus")
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                            .tint(SymairaTheme.goldPrimary)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+
+                        List {
+                            Section {
+                                Button(action: { displayMode = .dashboard }) {
+                                    HStack {
+                                        Image(systemName: "rectangle.grid.1x2")
+                                        Text("Dashboard")
+                                    }
                                 }
                             }
-                        }
 
-                        Section("Library") {
-                            ForEach(DocFilterPreset.defaults) { preset in
-                                Button(action: {
-                                    docFilterID = preset.id
-                                    displayMode = .docs
-                                }) {
-                                    HStack {
-                                        Text(preset.label)
-                                        Spacer()
-                                        if let count = preset.status == nil ? docTotalCount : docCounts[preset.status!.rawValue] {
-                                            Text("\(count)")
-                                                .font(.caption)
-                                                .foregroundColor(SymairaTheme.textSecondary)
-                                                .padding(.horizontal, 6)
-                                                .padding(.vertical, 2)
-                                                .background(Color.white.opacity(0.06))
-                                                .cornerRadius(4)
+                            Section("Library") {
+                                ForEach(DocFilterPreset.defaults) { preset in
+                                    Button(action: {
+                                        docFilterID = preset.id
+                                        displayMode = .docs
+                                    }) {
+                                        HStack {
+                                            Text(preset.label)
+                                            Spacer()
+                                            if let count = preset.status == nil ? docTotalCount : docCounts[preset.status!.rawValue] {
+                                                Text("\\(count)")
+                                                    .font(.caption)
+                                                    .foregroundColor(SymairaTheme.textSecondary)
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 2)
+                                                    .background(Color.white.opacity(0.06))
+                                                    .cornerRadius(4)
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        Section("Tags") {
-                            TagBrowserView(tags: tagCounts) { tag in
-                                tagFilter = tag
-                                displayMode = .docs
+                            Section("Tags") {
+                                TagBrowserView(tags: tagCounts) { tag in
+                                    tagFilter = tag
+                                    displayMode = .docs
+                                }
+                                .frame(minHeight: 120)
                             }
-                            .frame(minHeight: 120)
-                        }
 
-                        meetingsSidebarSection
+                            meetingsSidebarSection
 
-                        Section("Discover") {
-                            Button(action: { displayMode = .discover }) {
-                                HStack {
-                                    Image(systemName: "sparkles")
-                                    Text("Discover")
-                                }
-                            }
-                            Button(action: { displayMode = .companionTools }) {
-                                HStack {
-                                    Image(systemName: "wrench.and.screwdriver")
-                                    Text("Companion Tools")
-                                }
-                            }
-                        }
-
-                        Section("Inbox & Processing") {
-                            Button(action: { displayMode = .ingestQueue }) {
-                                HStack {
-                                    Image(systemName: "tray.and.arrow.down")
-                                    Text("Ingest Queue")
-                                }
-                            }
-                            Button(action: { displayMode = .reviewLane }) {
-                                HStack {
-                                    Image(systemName: "exclamationmark.triangle")
-                                    Text("Review Lane")
-                                }
-                            }
-                        }
-
-                        Section("Safety Net") {
-                            Button(action: { displayMode = .history }) {
-                                HStack {
-                                    Image(systemName: "clock.arrow.circlepath")
-                                    Text("Version History")
-                                }
-                            }
-                            Button(action: { displayMode = .trash }) {
-                                HStack {
-                                    Image(systemName: "trash")
-                                    Text("Trash")
-                                }
-                            }
-                        }
-
-                        Section("Settings") {
-                            Button(action: { displayMode = .rules }) {
-                                HStack {
-                                    Image(systemName: "gearshape")
-                                    Text("Rules & Settings")
-                                }
-                            }
-                        }
-
-                        Section("Views") {
-                            Button("Vault") { displayMode = .vault }
-                            Button("Graph") { displayMode = .graph }
-                        }
-
-                        Section("Saved Views") {
-                            ForEach(dbViews) { view in
-                                Button(view.name) {
-                                    selectedViewID = view.id
-                                    displayMode = .dbView
-                                }
-                                .contextMenu {
-                                    Button("Edit View") {
-                                        editingDbView = view
-                                        isShowingViewEditor = true
+                            Section("Discover") {
+                                Button(action: { displayMode = .discover }) {
+                                    HStack {
+                                        Image(systemName: "sparkles")
+                                        Text("Discover")
                                     }
-                                    Button("Delete View", role: .destructive) {
+                                }
+                                Button(action: { displayMode = .companionTools }) {
+                                    HStack {
+                                        Image(systemName: "wrench.and.screwdriver")
+                                        Text("Companion Tools")
+                                    }
+                                }
+                            }
+
+                            Section("Inbox & Processing") {
+                                Button(action: { displayMode = .ingestQueue }) {
+                                    HStack {
+                                        Image(systemName: "tray.and.arrow.down")
+                                        Text("Ingest Queue")
+                                    }
+                                }
+                                Button(action: { displayMode = .reviewLane }) {
+                                    HStack {
+                                        Image(systemName: "exclamationmark.triangle")
+                                        Text("Review Lane")
+                                    }
+                                }
+                            }
+
+                            Section("Safety Net") {
+                                Button(action: { displayMode = .history }) {
+                                    HStack {
+                                        Image(systemName: "clock.arrow.circlepath")
+                                        Text("Version History")
+                                    }
+                                }
+                                Button(action: { displayMode = .trash }) {
+                                    HStack {
+                                        Image(systemName: "trash")
+                                        Text("Trash")
+                                    }
+                                }
+                            }
+
+                            Section("Settings") {
+                                Button(action: { displayMode = .rules }) {
+                                    HStack {
+                                        Image(systemName: "gearshape")
+                                        Text("Rules & Settings")
+                                    }
+                                }
+                            }
+
+                            Section("Views") {
+                                Button("Vault") { displayMode = .vault }
+                                Button("Graph") { displayMode = .graph }
+                            }
+
+                            Section("Saved Views") {
+                                ForEach(dbViews) { view in
+                                    Button(view.name) {
+                                        selectedViewID = view.id
+                                        displayMode = .dbView
+                                    }
+                                    .contextMenu {
+                                        Button("Edit View") {
+                                            editingDbView = view
+                                            isShowingViewEditor = true
+                                        }
+                                        Button("Delete View", role: .destructive) {
+                                            Task { await deleteView(view) }
+                                        }
+                                        .disabled(mutationTracker.isInFlight(viewDeleteActionID(view)))
+                                    }
+                                    .asyncActionAlert(mutationTracker, id: viewDeleteActionID(view), title: "Couldn't Delete View") {
                                         Task { await deleteView(view) }
                                     }
-                                    .disabled(mutationTracker.isInFlight(viewDeleteActionID(view)))
                                 }
-                                .asyncActionAlert(mutationTracker, id: viewDeleteActionID(view), title: "Couldn't Delete View") {
-                                    Task { await deleteView(view) }
-                                }
-                            }
-                            Button(action: {
-                                editingDbView = nil
-                                isShowingViewEditor = true
-                            }) {
-                                HStack {
-                                    Image(systemName: "plus")
-                                    Text("New View")
+                                Button(action: {
+                                    editingDbView = nil
+                                    isShowingViewEditor = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "plus")
+                                        Text("New View")
+                                    }
                                 }
                             }
-                        }
 
-                        Section("Notes") {
-                            if folderTree.isEmpty {
-                                Text("No notes")
-                                    .foregroundColor(SymairaTheme.textMuted)
-                            } else {
-                                ForEach(folderTree) { node in
-                                    sidebarTreeNode(node)
-                                }
-                            }
-                            Button(action: { isShowingNewNoteSheet = true }) {
-                                HStack {
-                                    Image(systemName: "plus")
-                                    Text("New Note")
+                            Section("Notes") {
+                                if folderTree.isEmpty {
+                                    Text("No notes")
+                                        .foregroundColor(SymairaTheme.textMuted)
+                                } else {
+                                    ForEach(folderTree) { node in
+                                        sidebarTreeNode(node)
+                                    }
                                 }
                             }
                         }
+                        .scrollContentBackground(.hidden)
+                        .listStyle(.sidebar)
+                        .buttonStyle(.plain)
                     }
-                    .scrollContentBackground(.hidden)
-                    .listStyle(.sidebar)
-                    .buttonStyle(.plain)
                     .frame(minWidth: 240, idealWidth: 268)
                     .background(.clear)
-                    .navigationTitle("SymDesk")
                 } detail: {
                     SymairaScreen {
                     switch displayMode {
@@ -424,7 +435,7 @@ struct ContentView: View {
                                         } else {
                                             MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
                                                 navigateToNote(title: targetTitle)
-                                            }, core: core)
+                                            }, core: core, vaultRoot: core.vaultPath)
                                         }
                                         
                                         // Dummy view to attach onChange (since we use if/else for the editor)
@@ -449,29 +460,6 @@ struct ContentView: View {
                                 }
                             }
                             .navigationTitle(note.title)
-                            .toolbar {
-                                ToolbarItem {
-                                    Button(action: { isShowingPreview.toggle() }) {
-                                        Label("Toggle Preview", systemImage: "sidebar.right")
-                                    }
-                                }
-                                ToolbarItem {
-                                    Button(action: {
-                                        isShowingAIDock = true
-                                        isShowingInspector = true
-                                    }) {
-                                        Label("AI Dock", systemImage: "sparkles")
-                                    }
-                                }
-                                ToolbarItem {
-                                    Button(action: {
-                                        isShowingAIDock = false
-                                        isShowingInspector.toggle()
-                                    }) {
-                                        Label("Toggle Inspector", systemImage: "info.circle")
-                                    }
-                                }
-                            }
                             .task(id: note.id) {
                                 await loadContent(for: note)
                                 await loadBacklinks(for: note)
@@ -556,6 +544,26 @@ struct ContentView: View {
                             Label("Block Mode", systemImage: "square.text.square")
                         }
                         .toggleStyle(.button)
+                        
+                        if displayMode == .vault && selectedNote != nil {
+                            Button(action: { isShowingPreview.toggle() }) {
+                                Label("Toggle Preview", systemImage: "sidebar.right")
+                            }
+                            
+                            Button(action: {
+                                isShowingAIDock = true
+                                isShowingInspector = true
+                            }) {
+                                Label("AI Dock", systemImage: "sparkles")
+                            }
+                            
+                            Button(action: {
+                                isShowingAIDock = false
+                                isShowingInspector.toggle()
+                            }) {
+                                Label("Toggle Inspector", systemImage: "info.circle")
+                            }
+                        }
                     }
                     ToolbarItem(placement: .status) {
                         HStack(spacing: 8) {

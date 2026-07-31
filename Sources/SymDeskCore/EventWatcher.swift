@@ -1,10 +1,12 @@
 import Foundation
 import SymairaToolKit
 
-public struct VaultEvent: Codable, Equatable {
+public struct VaultEvent: Codable, Equatable, Identifiable {
     public let event: String
     public let path: String
     public let ts: Int64
+
+    public var id: String { "\(ts)-\(path)-\(event)" }
 }
 
 @MainActor

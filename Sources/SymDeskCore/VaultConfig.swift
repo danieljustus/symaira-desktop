@@ -68,6 +68,9 @@ public struct VaultConfig {
         saveBookmark(for: url)
         UserDefaults.standard.set(url.path, forKey: Key.vaultPath)
         UserDefaults.standard.set(false, forKey: Key.isDemoMode)
+        // Register in Finder's Favorites sidebar so the vault is always
+        // one click away (see issue #299).
+        registerInFinderFavorites(url)
     }
 
     /// Mark the current vault as demo mode and save the path.
@@ -80,6 +83,9 @@ public struct VaultConfig {
         saveBookmark(for: url)
         UserDefaults.standard.set(url.path, forKey: Key.vaultPath)
         UserDefaults.standard.set(true, forKey: Key.isDemoMode)
+        // Register in Finder's Favorites sidebar so the demo vault is
+        // reachable from the sidebar (see issue #299).
+        registerInFinderFavorites(url)
     }
 
     /// Reset the vault configuration — used by Settings to re-enter onboarding.
@@ -107,5 +113,14 @@ public struct VaultConfig {
             relativeTo: nil
         ) else { return }
         UserDefaults.standard.set(data, forKey: Key.vaultBookmark)
+    }
+
+    /// Adds `url` to Finder's Favorites sidebar so the vault folder is
+    /// always one click away.  This is a no‑op when the folder is already
+    /// in the sidebar.
+    static func registerInFinderFavorites(_ url: URL) {
+#if os(macOS)
+        FinderFavorites.addFolderToFavorites(url)
+#endif
     }
 }

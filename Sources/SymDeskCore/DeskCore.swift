@@ -1009,6 +1009,10 @@ public final class DeskCore: ObservableObject {
     public func loadVaultFromConfig() {
         if let path = VaultConfig.vaultPath() {
             self.vaultPath = path
+            // Register in Finder's Favorites sidebar so vaults configured
+            // before this feature existed get picked up (see issue #299).
+            let vaultURL = URL(fileURLWithPath: path)
+            VaultConfig.registerInFinderFavorites(vaultURL)
         }
     }
 

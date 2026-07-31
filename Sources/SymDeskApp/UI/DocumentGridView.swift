@@ -746,9 +746,7 @@ struct DocumentCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
-                Image(systemName: docTypeIcon)
-                    .font(.system(size: 28))
-                    .foregroundColor(SymairaTheme.goldPrimary)
+                DocumentThumbnailView(doc: doc)
                 Spacer()
                 if !doc.status.isEmpty {
                     statusBadge
@@ -887,18 +885,6 @@ struct DocumentCard: View {
         if doc.confidence >= 80 { return .green }
         if doc.confidence >= 50 { return .orange }
         return .red
-    }
-
-    private var docTypeIcon: String {
-        switch doc.documentType.lowercased() {
-        case "invoice": return "dollarsign.circle"
-        case "receipt": return "receipt"
-        case "contract": return "doc.plaintext"
-        case "letter": return "envelope"
-        case "tax": return "chart.bar.docpath"
-        case "insurance": return "shield"
-        default: return "doc.text"
-        }
     }
 
     /// Vault-relative containing folder for `path` (e.g. `"Invoices/2024"`

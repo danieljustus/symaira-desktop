@@ -166,3 +166,30 @@ jobs:
         
       - name: Run App and Core Tests
         run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+  app-ios:
+    name: iOS app
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Verify pinned simulator runtime is available
+        run: |
+          set -euo pipefail
+          if ! xcrun simctl list devices "iOS 18.2" | grep -q "iPhone 16"; then
+            echo "::error::Pinned simulator 'iPhone 16' on iOS 18.2 is not available on this runner image. Update the pinned device/OS in .github/workflows/ci.yml to match the runner's installed runtimes (see 'xcrun simctl list runtimes')."
+            xcrun simctl list runtimes
+            exit 1
+          fi
+
+      - name: Build SymDeskMobile
+        run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDeskMobile -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.2' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+      - name: Run SymDeskMobileTests
+        run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDeskMobile -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.2' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

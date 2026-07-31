@@ -25,6 +25,11 @@ struct ContentView: View {
     @State private var isShowingNewNoteSheet = false
     @State private var newNoteTitle = ""
     @State private var backlinks: [String] = []
+    @State private var backlinksError: String? = nil
+    
+    /// Ephemeral error banners shown at the top of the main content area.
+    /// Each banner is dismissible and auto-prefixed with a category label.
+    @State private var appErrors: [AppErrorMessage] = []
     
     // Folder tree state
     @State private var expandedFolders: Set<String> = []
@@ -497,6 +502,19 @@ struct ContentView: View {
                                 .font(.headline)
                                 .foregroundColor(SymairaTheme.goldPrimary)
                                 .padding()
+                            if let blErr = backlinksError {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(.orange)
+                                        .font(.caption2)
+                                    Text(blErr)
+                                        .font(.caption2)
+                                        .foregroundColor(SymairaTheme.textSecondary)
+                                    Spacer()
+                                }
+                                .padding(.horizontal)
+                                .padding(.bottom, 8)
+                            }
                             List(backlinks, id: \.self) { link in
                                 Button(link) {
                                     navigateToNote(title: link)
@@ -657,6 +675,13 @@ struct ContentView: View {
                                 dismissedNotificationPermissionBanner = true
                             }
                         }
+                        // Ephemeral error banners — dismissible, shown for app-level failures
+                        // that would previously have been print()-only console errors.
+                        ForEach(appErrors) { err in
+                            AppErrorBanner(error: err) {
+                                appErrors.removeAll { $0.id == err.id }
+                            }
+                        }
                     }
                 }
                 .onChange(of: notificationManager.deepLinkedDocumentPath) { _, path in
@@ -732,7 +757,10 @@ struct ContentView: View {
             }
             noteLookup = lookup
         } catch {
-            print("Failed to list files: \(error)")
+            appErrors.append(AppErrorMessage(
+                message: "Failed to load notes: \(error.localizedDescription)",
+                detail: "The vault may be inaccessible or the core CLI may not be running."
+            ))
         }
     }
 
@@ -740,13 +768,15 @@ struct ContentView: View {
         do {
             self.dbViews = try await core.viewsList()
         } catch {
-            print("Failed to list views: \(error)")
+            appErrors.append(AppErrorMessage(
+                message: "Failed to load saved views: \(error.localizedDescription)"
+            ))
         }
     }
 
     private var doctorSummaryText: String {
         guard let report = doctorReport else {
-            return "Vault check offline"
+            return "Vault check unavailable — run `symdesk doctor`"
         }
         var issues: [String] = []
         if let v = report.vault, v.status != "ok" { issues.append("Vault") }
@@ -770,7 +800,11 @@ struct ContentView: View {
             self.doctorStatus = doctorSummaryText
         } catch {
             self.doctorReport = nil
-            self.doctorStatus = "Vault check offline"
+            self.doctorStatus = "Vault check unavailable"
+            appErrors.append(AppErrorMessage(
+                message: "Doctor check failed: \(error.localizedDescription)",
+                detail: "Run `symdesk doctor` in a terminal for detailed diagnostics."
+            ))
         }
     }
 
@@ -799,8 +833,10 @@ struct ContentView: View {
     private func loadBacklinks(for note: Note) async {
         do {
             self.backlinks = try await core.backlinks(for: note.path)
+            self.backlinksError = nil
         } catch {
             self.backlinks = []
+            self.backlinksError = "Could not load backlinks: \(error.localizedDescription)"
         }
     }
 
@@ -921,7 +957,9 @@ struct ContentView: View {
             }
             docCounts = counts
         } catch {
-            print("fetchDocCounts failed: \(error)")
+            appErrors.append(AppErrorMessage(
+                message: "Failed to load document counts: \(error.localizedDescription)"
+            ))
         }
     }
 
@@ -1320,6 +1358,56 @@ private struct NotificationDeniedBanner: View {
         .padding(.horizontal, 16)
         .padding(.top, 10)
         .accessibilityElement(children: .contain)
+    }
+}
+
+// MARK: - App Error Banner
+
+/// A short-lived, dismissible error banner for app-level failures that would
+/// previously have been visible only in the Xcode console (print() calls).
+private struct AppErrorMessage: Identifiable, Equatable {
+    let id = UUID()
+    let message: String
+    var detail: String? = nil
+
+    static func == (lhs: AppErrorMessage, rhs: AppErrorMessage) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+private struct AppErrorBanner: View {
+    let error: AppErrorMessage
+    let dismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(SymairaTheme.goldPrimary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(error.message)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(SymairaTheme.textPrimary)
+                if let detail = error.detail {
+                    Text(detail)
+                        .font(.caption2)
+                        .foregroundStyle(SymairaTheme.textSecondary)
+                }
+            }
+            Spacer(minLength: 12)
+            Button(action: dismiss) {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(SymairaTheme.textSecondary)
+            .help("Dismiss error")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .symDeskLiquidGlass(cornerRadius: 14, prominence: .elevated)
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .accessibilityElement(children: .contain)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 }
 

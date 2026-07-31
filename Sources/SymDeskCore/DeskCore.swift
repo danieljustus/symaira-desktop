@@ -743,6 +743,15 @@ public final class DeskCore: ObservableObject {
 		_ = try await runChecked(arguments: ["props", "edit", path, key, value] + vaultArgs)
     }
 
+	/// Creates or opens today's daily note. Returns the note's vault-relative path.
+	public func noteDaily() async throws -> String {
+		struct NoteDailyResult: Codable, Sendable {
+			let path: String
+		}
+		let res = try await runDecoding(NoteDailyResult.self, arguments: ["note", "daily", "--json"] + vaultArgs)
+		return res.path
+	}
+
     public func getGraph() async throws -> GraphData {
 		try await runDecoding(GraphData.self, arguments: ["graph", "--json"] + vaultArgs)
     }

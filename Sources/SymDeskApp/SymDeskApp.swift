@@ -70,6 +70,10 @@ struct SymDeskApp: App {
                     NotificationCenter.default.post(name: .openNewNoteSheet, object: nil)
                 }
                 .keyboardShortcut("n", modifiers: .command)
+                Button("New Daily Note") {
+                    Task { _ = try? await core.noteDaily() }
+                }
+                .keyboardShortcut("d", modifiers: [.command, .shift])
                 Divider()
                 Button("Reveal Vault in Finder") {
                     if let path = core.vaultPath {

@@ -82,7 +82,7 @@ struct AIDockView: View {
             .symDeskLiquidGlass(cornerRadius: 14, prominence: .elevated)
             .padding(12)
         }
-        .frame(minWidth: 300, idealWidth: 300, maxWidth: .infinity)
+        .frame(minWidth: 280, idealWidth: 300, maxWidth: 420)
         .background(.clear)
     }
 

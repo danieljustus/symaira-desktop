@@ -31,6 +31,10 @@ struct ContentView: View {
     /// Each banner is dismissible and auto-prefixed with a category label.
     @State private var appErrors: [AppErrorMessage] = []
     
+    // Folder tree state
+    @State private var expandedFolders: Set<String> = []
+    @State private var folderTree: [FolderNode] = []
+    
     @AppStorage("isBlockMode") private var isBlockMode = false
     @AppStorage("dismissedNotificationPermissionBanner") private var dismissedNotificationPermissionBanner = false
     @AppStorage("dismissedVersionMismatchBanner") private var dismissedVersionMismatchBanner = false
@@ -104,160 +108,173 @@ struct ContentView: View {
                 }
             } else {
                 NavigationSplitView {
-                    List {
-                        Section {
-                            Button(action: { displayMode = .dashboard }) {
-                                HStack {
-                                    Image(systemName: "rectangle.grid.1x2")
-                                    Text("Dashboard")
+                    VStack(spacing: 0) {
+                        // Fixed sidebar header with title and New Note button (#293, #294a)
+                        HStack {
+                            Text("SymDesk")
+                                .font(.title3.bold())
+                                .foregroundColor(SymairaTheme.textPrimary)
+                            Spacer()
+                            Button(action: { isShowingNewNoteSheet = true }) {
+                                Label("New Note", systemImage: "plus")
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                            .tint(SymairaTheme.goldPrimary)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+
+                        List {
+                            Section {
+                                Button(action: { displayMode = .dashboard }) {
+                                    HStack {
+                                        Image(systemName: "rectangle.grid.1x2")
+                                        Text("Dashboard")
+                                    }
                                 }
                             }
-                        }
 
-                        Section("Library") {
-                            ForEach(DocFilterPreset.defaults) { preset in
-                                Button(action: {
-                                    docFilterID = preset.id
-                                    displayMode = .docs
-                                }) {
-                                    HStack {
-                                        Text(preset.label)
-                                        Spacer()
-                                        if let count = preset.status == nil ? docTotalCount : docCounts[preset.status!.rawValue] {
-                                            Text("\(count)")
-                                                .font(.caption)
-                                                .foregroundColor(SymairaTheme.textSecondary)
-                                                .padding(.horizontal, 6)
-                                                .padding(.vertical, 2)
-                                                .background(Color.white.opacity(0.06))
-                                                .cornerRadius(4)
+                            Section("Library") {
+                                ForEach(DocFilterPreset.defaults) { preset in
+                                    Button(action: {
+                                        docFilterID = preset.id
+                                        displayMode = .docs
+                                    }) {
+                                        HStack {
+                                            Text(preset.label)
+                                            Spacer()
+                                            if let count = preset.status == nil ? docTotalCount : docCounts[preset.status!.rawValue] {
+                                                Text("\\(count)")
+                                                    .font(.caption)
+                                                    .foregroundColor(SymairaTheme.textSecondary)
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 2)
+                                                    .background(Color.white.opacity(0.06))
+                                                    .cornerRadius(4)
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        Section("Tags") {
-                            TagBrowserView(tags: tagCounts) { tag in
-                                tagFilter = tag
-                                displayMode = .docs
+                            Section("Tags") {
+                                TagBrowserView(tags: tagCounts) { tag in
+                                    tagFilter = tag
+                                    displayMode = .docs
+                                }
+                                .frame(minHeight: 120)
                             }
-                            .frame(minHeight: 120)
-                        }
 
-                        meetingsSidebarSection
+                            meetingsSidebarSection
 
-                        Section("Discover") {
-                            Button(action: { displayMode = .discover }) {
-                                HStack {
-                                    Image(systemName: "sparkles")
-                                    Text("Discover")
-                                }
-                            }
-                            Button(action: { displayMode = .companionTools }) {
-                                HStack {
-                                    Image(systemName: "wrench.and.screwdriver")
-                                    Text("Companion Tools")
-                                }
-                            }
-                        }
-
-                        Section("Inbox & Processing") {
-                            Button(action: { displayMode = .ingestQueue }) {
-                                HStack {
-                                    Image(systemName: "tray.and.arrow.down")
-                                    Text("Ingest Queue")
-                                }
-                            }
-                            Button(action: { displayMode = .reviewLane }) {
-                                HStack {
-                                    Image(systemName: "exclamationmark.triangle")
-                                    Text("Review Lane")
-                                }
-                            }
-                        }
-
-                        Section("Safety Net") {
-                            Button(action: { displayMode = .history }) {
-                                HStack {
-                                    Image(systemName: "clock.arrow.circlepath")
-                                    Text("Version History")
-                                }
-                            }
-                            Button(action: { displayMode = .trash }) {
-                                HStack {
-                                    Image(systemName: "trash")
-                                    Text("Trash")
-                                }
-                            }
-                        }
-
-                        Section("Settings") {
-                            Button(action: { displayMode = .rules }) {
-                                HStack {
-                                    Image(systemName: "gearshape")
-                                    Text("Rules & Settings")
-                                }
-                            }
-                        }
-
-                        Section("Views") {
-                            Button("Vault") { displayMode = .vault }
-                            Button("Graph") { displayMode = .graph }
-                        }
-
-                        Section("Saved Views") {
-                            ForEach(dbViews) { view in
-                                Button(view.name) {
-                                    selectedViewID = view.id
-                                    displayMode = .dbView
-                                }
-                                .contextMenu {
-                                    Button("Edit View") {
-                                        editingDbView = view
-                                        isShowingViewEditor = true
+                            Section("Discover") {
+                                Button(action: { displayMode = .discover }) {
+                                    HStack {
+                                        Image(systemName: "sparkles")
+                                        Text("Discover")
                                     }
-                                    Button("Delete View", role: .destructive) {
+                                }
+                                Button(action: { displayMode = .companionTools }) {
+                                    HStack {
+                                        Image(systemName: "wrench.and.screwdriver")
+                                        Text("Companion Tools")
+                                    }
+                                }
+                            }
+
+                            Section("Inbox & Processing") {
+                                Button(action: { displayMode = .ingestQueue }) {
+                                    HStack {
+                                        Image(systemName: "tray.and.arrow.down")
+                                        Text("Ingest Queue")
+                                    }
+                                }
+                                Button(action: { displayMode = .reviewLane }) {
+                                    HStack {
+                                        Image(systemName: "exclamationmark.triangle")
+                                        Text("Review Lane")
+                                    }
+                                }
+                            }
+
+                            Section("Safety Net") {
+                                Button(action: { displayMode = .history }) {
+                                    HStack {
+                                        Image(systemName: "clock.arrow.circlepath")
+                                        Text("Version History")
+                                    }
+                                }
+                                Button(action: { displayMode = .trash }) {
+                                    HStack {
+                                        Image(systemName: "trash")
+                                        Text("Trash")
+                                    }
+                                }
+                            }
+
+                            Section("Settings") {
+                                Button(action: { displayMode = .rules }) {
+                                    HStack {
+                                        Image(systemName: "gearshape")
+                                        Text("Rules & Settings")
+                                    }
+                                }
+                            }
+
+                            Section("Views") {
+                                Button("Vault") { displayMode = .vault }
+                                Button("Graph") { displayMode = .graph }
+                            }
+
+                            Section("Saved Views") {
+                                ForEach(dbViews) { view in
+                                    Button(view.name) {
+                                        selectedViewID = view.id
+                                        displayMode = .dbView
+                                    }
+                                    .contextMenu {
+                                        Button("Edit View") {
+                                            editingDbView = view
+                                            isShowingViewEditor = true
+                                        }
+                                        Button("Delete View", role: .destructive) {
+                                            Task { await deleteView(view) }
+                                        }
+                                        .disabled(mutationTracker.isInFlight(viewDeleteActionID(view)))
+                                    }
+                                    .asyncActionAlert(mutationTracker, id: viewDeleteActionID(view), title: "Couldn't Delete View") {
                                         Task { await deleteView(view) }
                                     }
-                                    .disabled(mutationTracker.isInFlight(viewDeleteActionID(view)))
                                 }
-                                .asyncActionAlert(mutationTracker, id: viewDeleteActionID(view), title: "Couldn't Delete View") {
-                                    Task { await deleteView(view) }
-                                }
-                            }
-                            Button(action: {
-                                editingDbView = nil
-                                isShowingViewEditor = true
-                            }) {
-                                HStack {
-                                    Image(systemName: "plus")
-                                    Text("New View")
+                                Button(action: {
+                                    editingDbView = nil
+                                    isShowingViewEditor = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "plus")
+                                        Text("New View")
+                                    }
                                 }
                             }
-                        }
 
-                        Section("Notes") {
-                            ForEach(notes) { note in
-                                Button(note.title) {
-                                    self.selectedNote = note
-                                    self.displayMode = .vault
-                                }
-                            }
-                            Button(action: { isShowingNewNoteSheet = true }) {
-                                HStack {
-                                    Image(systemName: "plus")
-                                    Text("New Note")
+                            Section("Notes") {
+                                if folderTree.isEmpty {
+                                    Text("No notes")
+                                        .foregroundColor(SymairaTheme.textMuted)
+                                } else {
+                                    ForEach(folderTree) { node in
+                                        sidebarTreeNode(node)
+                                    }
                                 }
                             }
                         }
+                        .scrollContentBackground(.hidden)
+                        .listStyle(.sidebar)
+                        .buttonStyle(.plain)
                     }
-                    .scrollContentBackground(.hidden)
-                    .listStyle(.sidebar)
-                    .buttonStyle(.plain)
                     .frame(minWidth: 240, idealWidth: 268)
                     .background(.clear)
-                    .navigationTitle("SymDesk")
                 } detail: {
                     SymairaScreen {
                     switch displayMode {
@@ -423,7 +440,7 @@ struct ContentView: View {
                                         } else {
                                             MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
                                                 navigateToNote(title: targetTitle)
-                                            }, core: core)
+                                            }, core: core, vaultRoot: core.vaultPath)
                                         }
                                         
                                         // Dummy view to attach onChange (since we use if/else for the editor)
@@ -448,29 +465,6 @@ struct ContentView: View {
                                 }
                             }
                             .navigationTitle(note.title)
-                            .toolbar {
-                                ToolbarItem {
-                                    Button(action: { isShowingPreview.toggle() }) {
-                                        Label("Toggle Preview", systemImage: "sidebar.right")
-                                    }
-                                }
-                                ToolbarItem {
-                                    Button(action: {
-                                        isShowingAIDock = true
-                                        isShowingInspector = true
-                                    }) {
-                                        Label("AI Dock", systemImage: "sparkles")
-                                    }
-                                }
-                                ToolbarItem {
-                                    Button(action: {
-                                        isShowingAIDock = false
-                                        isShowingInspector.toggle()
-                                    }) {
-                                        Label("Toggle Inspector", systemImage: "info.circle")
-                                    }
-                                }
-                            }
                             .task(id: note.id) {
                                 await loadContent(for: note)
                                 await loadBacklinks(for: note)
@@ -568,6 +562,26 @@ struct ContentView: View {
                             Label("Block Mode", systemImage: "square.text.square")
                         }
                         .toggleStyle(.button)
+                        
+                        if displayMode == .vault && selectedNote != nil {
+                            Button(action: { isShowingPreview.toggle() }) {
+                                Label("Toggle Preview", systemImage: "sidebar.right")
+                            }
+                            
+                            Button(action: {
+                                isShowingAIDock = true
+                                isShowingInspector = true
+                            }) {
+                                Label("AI Dock", systemImage: "sparkles")
+                            }
+                            
+                            Button(action: {
+                                isShowingAIDock = false
+                                isShowingInspector.toggle()
+                            }) {
+                                Label("Toggle Inspector", systemImage: "info.circle")
+                            }
+                        }
                     }
                     ToolbarItem(placement: .status) {
                         HStack(spacing: 8) {
@@ -682,6 +696,17 @@ struct ContentView: View {
                     await fetchDoctor()
                     await fetchDocCounts()
                     await fetchTagCounts()
+                    // Restore expanded folder state from UserDefaults
+                    if let data = UserDefaults.standard.data(forKey: "sidebarExpandedFolders"),
+                       let folders = try? JSONDecoder().decode(Set<String>.self, from: data) {
+                        expandedFolders = folders
+                    }
+                }
+                .onChange(of: expandedFolders) { _, newValue in
+                    // Persist expanded folder state
+                    if let data = try? JSONEncoder().encode(newValue) {
+                        UserDefaults.standard.set(data, forKey: "sidebarExpandedFolders")
+                    }
                 }
                 .onChange(of: watcher.latestEvent) { _, ev in
                     scheduleEventRefresh(ev)
@@ -721,6 +746,7 @@ struct ContentView: View {
         do {
             let loadedNotes = try await core.listFiles()
             self.notes = loadedNotes
+            self.folderTree = buildFolderTree(from: loadedNotes, vaultPath: core.vaultPath)
             var lookup: [String: Note] = [:]
             lookup.reserveCapacity(loadedNotes.count * 3)
             for note in loadedNotes {
@@ -949,6 +975,169 @@ struct ContentView: View {
 
     private func isConflicted(_ note: Note) -> Bool {
         return note.path.contains(" 2.md") || note.path.contains("conflicted copy")
+    }
+
+    // MARK: - Folder Tree Support
+
+    /// Builds a folder tree from the flat list of notes.
+    private func buildFolderTree(from notes: [Note], vaultPath: String?) -> [FolderNode] {
+        guard let vaultPath = vaultPath, !vaultPath.isEmpty else {
+            return notes.map { FolderNode(id: $0.path, name: $0.title, isFolder: false, note: $0, children: [], containingFolder: nil) }
+        }
+
+        let normalizedVault = vaultPath.hasSuffix("/") ? vaultPath : vaultPath + "/"
+
+        // Count duplicate titles so identically-named notes show their folder context
+        let titleCounts = Dictionary(grouping: notes, by: \.title).mapValues(\.count)
+
+        // Build a trie from relative note paths
+        class TrieNode {
+            var name: String
+            var notes: [Note] = []
+            var children: [String: TrieNode] = [:]
+            init(name: String) { self.name = name }
+        }
+
+        let root = TrieNode(name: "")
+
+        for note in notes {
+            guard note.path.hasPrefix(normalizedVault) else { continue }
+            let relPath = String(note.path.dropFirst(normalizedVault.count))
+            var components = relPath.split(separator: "/").map(String.init)
+            guard !components.isEmpty else { continue }
+            components.removeLast() // strip the filename
+
+            var current = root
+            for component in components {
+                if current.children[component] == nil {
+                    current.children[component] = TrieNode(name: component)
+                }
+                current = current.children[component]!
+            }
+            current.notes.append(note)
+        }
+
+        func convert(_ node: TrieNode) -> [FolderNode] {
+            var result: [FolderNode] = []
+
+            // Folders first, sorted alphabetically
+            for key in node.children.keys.sorted(by: { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }) {
+                let child = node.children[key]!
+                let subChildren = convert(child)
+                result.append(FolderNode(
+                    id: key,
+                    name: key,
+                    isFolder: true,
+                    note: nil,
+                    children: subChildren,
+                    containingFolder: nil
+                ))
+            }
+
+            // Notes, sorted alphabetically by title
+            for note in node.notes.sorted(by: { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }) {
+                let hasDuplicates = (titleCounts[note.title] ?? 0) > 1
+                let containingFolder: String?
+                if hasDuplicates, !node.name.isEmpty {
+                    containingFolder = node.name
+                } else if hasDuplicates {
+                    containingFolder = "Vault root"
+                } else {
+                    containingFolder = nil
+                }
+                result.append(FolderNode(
+                    id: note.path,
+                    name: note.title,
+                    isFolder: false,
+                    note: note,
+                    children: [],
+                    containingFolder: containingFolder
+                ))
+            }
+
+            return result
+        }
+
+        return convert(root)
+    }
+
+    /// Recursively renders a folder tree node (folder or note leaf) in the sidebar.
+    @ViewBuilder
+    private func sidebarTreeNode(_ node: FolderNode) -> some View {
+        if node.isFolder {
+            DisclosureGroup(
+                isExpanded: Binding(
+                    get: { expandedFolders.contains(node.id) },
+                    set: { isExpanded in
+                        if isExpanded {
+                            expandedFolders.insert(node.id)
+                        } else {
+                            expandedFolders.remove(node.id)
+                        }
+                    }
+                ),
+                content: {
+                    ForEach(node.children) { child in
+                        AnyView(sidebarTreeNode(child))
+                    }
+                },
+                label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "folder")
+                            .foregroundColor(SymairaTheme.goldPrimary)
+                        Text(node.name)
+                            .foregroundColor(SymairaTheme.textPrimary)
+                    }
+                }
+            )
+        } else {
+            Button {
+                if let note = node.note {
+                    self.selectedNote = note
+                    self.displayMode = .vault
+                }
+            } label: {
+                if let folder = node.containingFolder {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(node.name)
+                            .foregroundColor(SymairaTheme.textPrimary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Text(folder)
+                            .font(.caption2)
+                            .foregroundColor(SymairaTheme.textMuted)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                } else {
+                    Text(node.name)
+                        .foregroundColor(SymairaTheme.textPrimary)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Folder Node Model
+
+/// A node in the sidebar folder tree — either a folder (with children)
+/// or a note leaf.
+private struct FolderNode: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let isFolder: Bool
+    let note: Note?
+    let children: [FolderNode]
+    /// Set for leaf nodes that share their title with another note.
+    /// Contains the parent folder name to help disambiguate.
+    let containingFolder: String?
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    static func == (lhs: FolderNode, rhs: FolderNode) -> Bool {
+        lhs.id == rhs.id
     }
 }
 

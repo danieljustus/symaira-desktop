@@ -34,6 +34,7 @@ struct SymDeskApp: App {
                 await core.initialize()
                 if VaultConfig.hasConfiguredVault {
                     core.loadVaultFromConfig()
+                    VaultConfig.reconcileFinderFavoritesOnLaunch()
                 }
                 if let tool = core.tool, vaultConfigured {
                     watcher.start(tool: tool, vaultPath: core.vaultPath)
@@ -69,6 +70,13 @@ struct SymDeskApp: App {
                     NotificationCenter.default.post(name: .openNewNoteSheet, object: nil)
                 }
                 .keyboardShortcut("n", modifiers: .command)
+                Divider()
+                Button("Reveal Vault in Finder") {
+                    if let path = core.vaultPath {
+                        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
+                    }
+                }
+                .disabled(core.vaultPath == nil)
                 Divider()
                 Button("Close") {
                     NSApplication.shared.keyWindow?.close()

@@ -13,6 +13,7 @@ public struct VaultConfig {
         static let vaultPath = "symdesk.vaultPath"
         static let vaultBookmark = "symdesk.vaultBookmark"
         static let isDemoMode = "symdesk.isDemoMode"
+        static let finderFavoritesEnabled = "symdesk.finderFavoritesEnabled"
     }
 
     // MARK: - Public API
@@ -68,9 +69,9 @@ public struct VaultConfig {
         saveBookmark(for: url)
         UserDefaults.standard.set(url.path, forKey: Key.vaultPath)
         UserDefaults.standard.set(false, forKey: Key.isDemoMode)
-        // Register in Finder's Favorites sidebar so the vault is always
-        // one click away (see issue #299).
-        registerInFinderFavorites(url)
+        if finderFavoritesEnabled {
+            registerInFinderFavorites(url)
+        }
     }
 
     /// Mark the current vault as demo mode and save the path.
@@ -83,13 +84,16 @@ public struct VaultConfig {
         saveBookmark(for: url)
         UserDefaults.standard.set(url.path, forKey: Key.vaultPath)
         UserDefaults.standard.set(true, forKey: Key.isDemoMode)
-        // Register in Finder's Favorites sidebar so the demo vault is
-        // reachable from the sidebar (see issue #299).
-        registerInFinderFavorites(url)
+        if finderFavoritesEnabled {
+            registerInFinderFavorites(url)
+        }
     }
 
     /// Reset the vault configuration — used by Settings to re-enter onboarding.
     public static func reset() {
+        if let path = vaultPath() {
+            unregisterFromFinderFavorites(URL(fileURLWithPath: path))
+        }
 		resetLocalVault()
 		ServerConnectionConfig.reset()
 	}
@@ -98,6 +102,46 @@ public struct VaultConfig {
         UserDefaults.standard.removeObject(forKey: Key.vaultPath)
         UserDefaults.standard.removeObject(forKey: Key.vaultBookmark)
         UserDefaults.standard.removeObject(forKey: Key.isDemoMode)
+    }
+
+    // MARK: - Finder Favorites (opt-in, see issue #299)
+
+    /// Whether the current vault should be kept registered in Finder's
+    /// Favorites sidebar. Off by default — the user opts in explicitly.
+    public static var finderFavoritesEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: Key.finderFavoritesEnabled) }
+        set {
+            UserDefaults.standard.set(newValue, forKey: Key.finderFavoritesEnabled)
+            guard let path = vaultPath() else { return }
+            let url = URL(fileURLWithPath: path)
+            if newValue {
+                registerInFinderFavorites(url)
+            } else {
+                unregisterFromFinderFavorites(url)
+            }
+        }
+    }
+
+    /// Whether the current vault is present in Finder's Favorites sidebar
+    /// right now. Used to detect a manual removal by the user so it is
+    /// respected instead of silently re-adding the entry.
+    public static func isVaultInFinderFavorites() -> Bool {
+#if os(macOS)
+        guard let path = vaultPath() else { return false }
+        return FinderFavorites.isFolderInFavorites(URL(fileURLWithPath: path))
+#else
+        return false
+#endif
+    }
+
+    /// Call once per launch after the vault is known. If the setting is
+    /// enabled but the entry was removed manually from Finder since then,
+    /// this respects that removal instead of re-adding it.
+    public static func reconcileFinderFavoritesOnLaunch() {
+        guard finderFavoritesEnabled, vaultPath() != nil else { return }
+        if !isVaultInFinderFavorites() {
+            UserDefaults.standard.set(false, forKey: Key.finderFavoritesEnabled)
+        }
     }
 
     // MARK: - Security-Scoped Bookmarks
@@ -121,6 +165,13 @@ public struct VaultConfig {
     static func registerInFinderFavorites(_ url: URL) {
 #if os(macOS)
         FinderFavorites.addFolderToFavorites(url)
+#endif
+    }
+
+    /// Removes `url` from Finder's Favorites sidebar.
+    static func unregisterFromFinderFavorites(_ url: URL) {
+#if os(macOS)
+        FinderFavorites.removeFolderFromFavorites(url)
 #endif
     }
 }

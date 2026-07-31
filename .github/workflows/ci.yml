@@ -166,3 +166,40 @@ jobs:
         
       - name: Run App and Core Tests
         run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+  app-ios:
+    name: iOS app
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Resolve pinned simulator device
+        id: sim
+        run: |
+          set -euo pipefail
+          # Pin to one specific, already-installed plain "iPhone N" simulator
+          # instance (no Pro/Plus/Max/mini/e variant, no destination string
+          # left generic) rather than a hardcoded OS version or model name.
+          # Hosted macOS runner images rotate their installed device roster
+          # frequently, so resolve the newest available plain iPhone at run
+          # time instead of guessing one that will eventually go stale.
+          UDID=$(xcrun simctl list devices available --json | python3 -c "import json,re,sys; data=json.load(sys.stdin); cands=sorted(((int(m.group(1)), d['udid']) for lst in data['devices'].values() for d in lst for m in [re.fullmatch(r'iPhone (\d+)', d['name'])] if m), reverse=True); print(cands[0][1]) if cands else sys.exit(1)") || true
+          if [ -z "$UDID" ]; then
+            echo "::error::No available plain 'iPhone N' simulator found on this runner image. Update the device-matching logic in .github/workflows/ci.yml to match a device from 'xcrun simctl list devices available'."
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "Resolved simulator: $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Build SymDeskMobile
+        run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDeskMobile -destination "id=${{ steps.sim.outputs.udid }}" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+      - name: Run SymDeskMobileTests
+        run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDeskMobile -destination "id=${{ steps.sim.outputs.udid }}" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

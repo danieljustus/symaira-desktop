@@ -87,8 +87,7 @@ func Ask(ctx context.Context, cfg *config.Config, query string, contextDocs []ma
 					"Anthropic API key could not be resolved (missing secret via symvault or environment variable).\n"}
 			} else {
 				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
-					"Set your Ollama endpoint in Settings → AI. " +
-					"You can also set `SYMDESK_OLLAMA_URL` in your environment.\n\n" +
+					"Set your Ollama endpoint in Settings → AI.\n\n" +
 					"Here are the most relevant search results from your vault:\n\n"}
 				for i, doc := range contextDocs {
 					if i >= 3 {
@@ -136,7 +135,7 @@ func Transform(ctx context.Context, cfg *config.Config, text, intent string, out
 					"Anthropic API key could not be resolved (missing secret via symvault or environment variable).\n"}
 			} else {
 				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
-					"`SYMDESK_OLLAMA_URL` is not set (e.g., `http://localhost:11434`).\n"}
+					"Set your Ollama endpoint in Settings → AI.\n"}
 			}
 		} else {
 			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Request failed: %v\n", err)}

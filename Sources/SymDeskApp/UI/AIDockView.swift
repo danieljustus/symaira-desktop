@@ -104,22 +104,34 @@ struct AIDockView: View {
             }
 
         case .answer(let id, let text):
-            HStack(alignment: .top) {
-                Text(LocalizedStringKey(text))
-                    .foregroundColor(SymairaTheme.textPrimary)
-                    .padding()
-                    .symDeskLiquidGlass(cornerRadius: 14)
-                    .frame(maxWidth: 250, alignment: .leading)
-                Spacer()
-                Button {
-                    copyToClipboard(text)
-                } label: {
-                    Image(systemName: "doc.on.doc")
-                        .font(.caption)
-                        .foregroundColor(SymairaTheme.textMuted)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .top) {
+                    Text(LocalizedStringKey(text))
+                        .foregroundColor(SymairaTheme.textPrimary)
+                        .padding()
+                        .symDeskLiquidGlass(cornerRadius: 14)
+                        .frame(maxWidth: 250, alignment: .leading)
+                    Spacer()
+                    Button {
+                        copyToClipboard(text)
+                    } label: {
+                        Image(systemName: "doc.on.doc")
+                            .font(.caption)
+                            .foregroundColor(SymairaTheme.textMuted)
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Copy answer")
                 }
-                .buttonStyle(.borderless)
-                .help("Copy answer")
+                if text.contains("AI feature not configured") {
+                    Button {
+                        NotificationCenter.default.post(name: .openRulesSettings, object: "ai")
+                    } label: {
+                        Label("Open AI Settings", systemImage: "gearshape")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.borderless)
+                    .foregroundColor(SymairaTheme.goldSecondary)
+                }
             }
             .id(id)
 

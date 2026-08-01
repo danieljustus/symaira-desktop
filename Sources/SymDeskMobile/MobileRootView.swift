@@ -217,6 +217,10 @@ private struct MobileOverviewView: View {
                         overviewHeader
                         metrics
 
+                        if !vault.recentlyOpened.isEmpty {
+                            section(title: "Recently opened", systemImage: "clock.fill", notes: vault.recentlyOpened)
+                        }
+
                         if !upcomingDocuments.isEmpty {
                             section(title: "Due next", systemImage: "calendar.badge.clock", notes: upcomingDocuments)
                         }

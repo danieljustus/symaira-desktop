@@ -35,6 +35,7 @@ struct MobileNoteDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
 		.task(id: noteID) {
 			guard let note else { return }
+			vault.recordOpened(note)
 			isLoadingAttachment = true
 			attachmentURL = await vault.attachmentURL(for: note)
 			isLoadingAttachment = false

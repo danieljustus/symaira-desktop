@@ -92,4 +92,40 @@ final class MobileVaultParserTests: XCTestCase {
 		XCTAssertNil(MobileServerConfig.normalizedURL("https://user:secret@example.test"))
 		XCTAssertNil(MobileServerConfig.normalizedURL("https://example.test?token=secret"))
 	}
+
+	@MainActor
+	func testRecordOpenedTracksMostRecentFirstDedupedAndBounded() throws {
+		let store = MobileVaultStore()
+		defer { store.resetVault() }
+
+		let root = URL(fileURLWithPath: "/tmp/SymDeskMobileVault", isDirectory: true)
+		func note(_ name: String) throws -> MobileNote {
+			try MobileVaultParser.parse(
+				data: Data("---\ntitle: \(name)\n---\n".utf8),
+				fileURL: root.appendingPathComponent("\(name).md"),
+				root: root,
+				modifiedAt: .now
+			)
+		}
+
+		let a = try note("a")
+		let b = try note("b")
+		let c = try note("c")
+
+		store.recordOpened(a)
+		store.recordOpened(b)
+		store.recordOpened(c)
+		XCTAssertEqual(store.recentlyOpenedPaths, ["c.md", "b.md", "a.md"])
+
+		// Re-opening an already-tracked note moves it to the front instead
+		// of appearing twice.
+		store.recordOpened(a)
+		XCTAssertEqual(store.recentlyOpenedPaths, ["a.md", "c.md", "b.md"])
+
+		for i in 0..<12 {
+			store.recordOpened(try note("extra\(i)"))
+		}
+		XCTAssertEqual(store.recentlyOpenedPaths.count, 10, "recents list must stay bounded")
+		XCTAssertEqual(store.recentlyOpenedPaths.first, "extra11.md")
+	}
 }

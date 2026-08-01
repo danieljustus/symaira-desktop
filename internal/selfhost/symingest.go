@@ -31,7 +31,7 @@ func (w *Worker) processViaSymingest(ctx context.Context, input string) (text, e
 	if err != nil {
 		return "", "", "", fmt.Errorf("create symingest scratch directory: %w", err)
 	}
-	defer os.RemoveAll(scratch)
+	defer func() { _ = os.RemoveAll(scratch) }()
 
 	scratchHome := filepath.Join(scratch, "home")
 	vaultRoot := filepath.Join(scratch, "vault")
@@ -43,7 +43,7 @@ func (w *Worker) processViaSymingest(ctx context.Context, input string) (text, e
 		return "", "", "", fmt.Errorf("create symingest scratch home: %w", err)
 	}
 
-	cmd := exec.CommandContext(ctx, binary,
+	cmd := exec.CommandContext(ctx, binary, //nolint:gosec // symingest is the intentional PATH integration boundary
 		"ingest",
 		"--vault", vaultRoot,
 		"--archive", archiveRoot,

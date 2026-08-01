@@ -35,7 +35,7 @@ engine="${MOCK_ENGINE:-tesseract}"
 printf '%s\n' '---' "title: Result" "ocr_engine: \"$engine\"" "archive_path: \"$input\"" '---' '' "$text" '' '---' "[Archived Original](file://$input)" > "$vault/result.md"
 printf 'ingested: %s\nengine: %s\ntext length: %s\n' "$input" "$engine" "${#text}"
 `
-	if err := os.WriteFile(path, []byte(script), 0755); err != nil {
+	if err := os.WriteFile(path, []byte(script), 0755); err != nil { //nolint:gosec // test fixture intentionally executable
 		t.Fatal(err)
 	}
 	return dir
@@ -109,7 +109,7 @@ func TestWorkerGuardRetriesOnce(t *testing.T) {
 	if text != goodText || engine != "tesseract" {
 		t.Fatalf("retry result = text %q engine %q", text, engine)
 	}
-	if got, err := os.ReadFile(counter); err != nil || string(got) != "2" {
+	if got, err := os.ReadFile(counter); err != nil || string(got) != "2" { //nolint:gosec // counter is a test-owned temp path
 		t.Fatalf("symingest invocation count = %q, err=%v; want 2", got, err)
 	}
 }
@@ -135,7 +135,7 @@ func TestWorkerGuardTruncatesAndMarksAfterSecondFailure(t *testing.T) {
 	if !strings.Contains(engine, "guard=truncated") {
 		t.Fatalf("engine %q does not mark truncated output", engine)
 	}
-	if got, err := os.ReadFile(counter); err != nil || string(got) != "2" {
+	if got, err := os.ReadFile(counter); err != nil || string(got) != "2" { //nolint:gosec // counter is a test-owned temp path
 		t.Fatalf("symingest invocation count = %q, err=%v; want 2", got, err)
 	}
 }

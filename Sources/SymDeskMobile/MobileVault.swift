@@ -391,9 +391,12 @@ final class MobileVaultStore: ObservableObject {
     @Published private(set) var revision = 0
 	@Published private(set) var serverURL: URL?
     @Published var errorMessage: String?
+    @Published private(set) var recentlyOpenedPaths: [String] = []
 
     private let scanner = MobileVaultScanner()
     private let bookmarkKey = "symdesk.mobile.vault-bookmark.v1"
+    private let recentsKey = "symdesk.mobile.recently-opened.v1"
+    private let maxRecents = 10
     private var hasSecurityScope = false
     private var loadGeneration = 0
 	private var remoteClient: MobileRemoteClient?
@@ -406,7 +409,26 @@ final class MobileVaultStore: ObservableObject {
 		} else {
 			restoreVault()
 		}
+		recentlyOpenedPaths = UserDefaults.standard.stringArray(forKey: recentsKey) ?? []
     }
+
+	/// Notes for `recentlyOpenedPaths`, most-recently-opened first, limited to
+	/// notes that still exist in the current snapshot.
+	var recentlyOpened: [MobileNote] {
+		let byPath = Dictionary(uniqueKeysWithValues: notes.map { ($0.path, $0) })
+		return recentlyOpenedPaths.compactMap { byPath[$0] }
+	}
+
+	/// Records `note` as opened, moving it to the front of the recents list
+	/// and persisting across launches. Call whenever a note is opened.
+	func recordOpened(_ note: MobileNote) {
+		var paths = recentlyOpenedPaths
+		paths.removeAll { $0 == note.path }
+		paths.insert(note.path, at: 0)
+		if paths.count > maxRecents { paths.removeLast(paths.count - maxRecents) }
+		recentlyOpenedPaths = paths
+		UserDefaults.standard.set(paths, forKey: recentsKey)
+	}
 
 	var isConfigured: Bool { vaultURL != nil || remoteClient != nil }
 	var isRemote: Bool { remoteClient != nil }
@@ -516,6 +538,8 @@ final class MobileVaultStore: ObservableObject {
         revision += 1
         UserDefaults.standard.removeObject(forKey: bookmarkKey)
 		MobileServerConfig.reset()
+		recentlyOpenedPaths = []
+		UserDefaults.standard.removeObject(forKey: recentsKey)
         Task { await scanner.clearCache() }
     }
 

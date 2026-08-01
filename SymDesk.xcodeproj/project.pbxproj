@@ -70,6 +70,7 @@
 		A069D366DE09F194427FA488 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B19FB8752DF2B7914F917FAE /* Assets.xcassets */; };
 		A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59762A8D6DF418D30855BEDA /* OnboardingView.swift */; };
 		AA0096EBBB63DF8E5B8A19CB /* TagBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02391589A785587023B6522C /* TagBrowserView.swift */; };
+		AAA1D950632521068B1C723B /* SymairaKeychain in Frameworks */ = {isa = PBXBuildFile; productRef = 3BE6FC74E55F85559F2EED8B /* SymairaKeychain */; };
 		AAB2D778093607FBB326E837 /* SymDeskMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CAE9E046D07652DF79A3000 /* SymDeskMobileApp.swift */; };
 		ACEECA392E62D5A594FF6F5B /* DeskTransportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 748F5E216CEC59B66740A482 /* DeskTransportTests.swift */; };
 		AF33E56F24D6F0B026A98F5B /* PropertiesInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56278C647AEC161C2B94531F /* PropertiesInspector.swift */; };
@@ -106,6 +107,7 @@
 		F735324626803159388F54EF /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805FBABA01057AAEA77CCF0D /* DashboardView.swift */; };
 		F9D9027836F3132FDD8F6297 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827CE03FB82C7640D64E4D97 /* main.swift */; };
 		FC481AC96D97F01753A861B0 /* DeskCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */; };
+		FCFB317B20C9D92FD0EB6821 /* SymairaKeychain in Frameworks */ = {isa = PBXBuildFile; productRef = 595C4A604BC01E3DA06950B3 /* SymairaKeychain */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -262,6 +264,15 @@
 				9CB84C5DEC5DFAA645786C79 /* SymairaToolKit in Frameworks */,
 				5559B886DFF79DF05589717E /* SymairaUpdateCheck in Frameworks */,
 				818D035A27199BE0E1034DE8 /* SymairaIngestContract in Frameworks */,
+				FCFB317B20C9D92FD0EB6821 /* SymairaKeychain in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7654B404BC933D9A7E943C22 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAA1D950632521068B1C723B /* SymairaKeychain in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -548,6 +559,7 @@
 				97180F7C8898D161854F5194 /* PBXTargetDependency */,
 				138AC3138B2CE91B37CF9606 /* PBXTargetDependency */,
 				6A14BC1AE4C6B872D7E57DCE /* PBXTargetDependency */,
+				22A1B0037CC68D90DBBFC4D8 /* PBXTargetDependency */,
 			);
 			name = SymDeskCore;
 			packageProductDependencies = (
@@ -556,6 +568,7 @@
 				5DFC096D268296578B37AFE2 /* SymairaToolKit */,
 				CA73FF20C975D4F48F801926 /* SymairaUpdateCheck */,
 				FBAEA75DDFFB2C6838CBE531 /* SymairaIngestContract */,
+				08CB4E22F18180CDF92120ED /* SymairaKeychain */,
 			);
 			productName = SymDeskCore;
 			productReference = AF3DE41EB61C376999197AEF /* libSymDeskCore.a */;
@@ -581,6 +594,7 @@
 				CCF15BEFF6E2B7C5BDE99A2A /* SymairaToolKit */,
 				CFBC6F0BE1C9C08829AF5DC6 /* SymairaUpdateCheck */,
 				A811DD5B1E907A8EF49849F7 /* SymairaIngestContract */,
+				595C4A604BC01E3DA06950B3 /* SymairaKeychain */,
 			);
 			productName = SymDesk;
 			productReference = 2FBA5128D6B234381F73178F /* SymDesk.app */;
@@ -592,6 +606,7 @@
 			buildPhases = (
 				ED3D71D2BDF83885BB137B47 /* Sources */,
 				652E82CBF0E784432943C8EB /* Resources */,
+				7654B404BC933D9A7E943C22 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -599,6 +614,7 @@
 			);
 			name = SymDeskMobile;
 			packageProductDependencies = (
+				3BE6FC74E55F85559F2EED8B /* SymairaKeychain */,
 			);
 			productName = SymDeskMobile;
 			productReference = D12A33A921664E123D86FAF9 /* SymDeskMobile.app */;
@@ -638,10 +654,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				BC6FC56C1B486EFD0DE648A9 /* SymDeskCore */,
 				EBE65B0E9E86B3B5C227733D /* SymDesk */,
-				1191E80726DB65508E36E4E1 /* SymDeskCoreTests */,
 				5EF7E5B99EA038662423E264 /* SymDeskAppTests */,
+				BC6FC56C1B486EFD0DE648A9 /* SymDeskCore */,
+				1191E80726DB65508E36E4E1 /* SymDeskCoreTests */,
 				EC2E2EF97B4E9B5D7E102563 /* SymDeskMobile */,
 				677F9797FB4D31DE40A190E0 /* SymDeskMobileTests */,
 			);
@@ -821,6 +837,10 @@
 		138AC3138B2CE91B37CF9606 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			productRef = CA73FF20C975D4F48F801926 /* SymairaUpdateCheck */;
+		};
+		22A1B0037CC68D90DBBFC4D8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 08CB4E22F18180CDF92120ED /* SymairaKeychain */;
 		};
 		2FE2A478EB6213861AB562BC /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1325,6 +1345,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		08CB4E22F18180CDF92120ED /* SymairaKeychain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
+			productName = SymairaKeychain;
+		};
+		3BE6FC74E55F85559F2EED8B /* SymairaKeychain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
+			productName = SymairaKeychain;
+		};
 		3BEF32958D7F1CBB107FC724 /* SymairaToolKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
@@ -1339,6 +1369,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
 			productName = SymairaUpdateCheck;
+		};
+		595C4A604BC01E3DA06950B3 /* SymairaKeychain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
+			productName = SymairaKeychain;
 		};
 		596C4C9EB9845BC180C460A4 /* SymairaUpdateCheck */ = {
 			isa = XCSwiftPackageProductDependency;

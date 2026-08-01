@@ -28,6 +28,8 @@ targets:
         product: SymairaUpdateCheck
       - package: symaira-appkit
         product: SymairaIngestContract
+      - package: symaira-appkit
+        product: SymairaKeychain
     settings:
       base:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
@@ -50,6 +52,8 @@ targets:
         product: SymairaUpdateCheck
       - package: symaira-appkit
         product: SymairaIngestContract
+      - package: symaira-appkit
+        product: SymairaKeychain
     settings:
       base:
         INFOPLIST_FILE: Sources/SymDeskApp/Info.plist
@@ -115,6 +119,9 @@ targets:
     platform: iOS
     sources:
       - Sources/SymDeskMobile
+    dependencies:
+      - package: symaira-appkit
+        product: SymairaKeychain
     settings:
       base:
         INFOPLIST_FILE: Sources/SymDeskMobile/Info.plist

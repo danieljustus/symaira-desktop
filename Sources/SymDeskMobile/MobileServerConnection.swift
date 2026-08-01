@@ -1,6 +1,7 @@
 import CryptoKit
 import Foundation
 import Security
+import SymairaKeychain
 
 enum MobileServerError: LocalizedError {
     case invalidURL
@@ -25,7 +26,11 @@ struct MobileServerConnection: Sendable {
 
 enum MobileServerConfig {
     private static let urlKey = "symdesk.mobile.server-url.v1"
-    private static let service = "com.symaira.desktop.ios.server"
+    // Reusing the existing service/account naming keeps this a drop-in
+    // replacement for the previous direct Keychain access: SymairaKeychain
+    // stores items under kSecClassGenericPassword exactly as before, so any
+    // already-saved token remains readable without a migration step.
+    private static let keychain = SymairaKeychain(service: "com.symaira.desktop.ios.server")
     private static let account = "self-hosted-token"
 
     static func connection() -> MobileServerConnection? {
@@ -45,12 +50,7 @@ enum MobileServerConfig {
 
     static func reset() {
         UserDefaults.standard.removeObject(forKey: urlKey)
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account
-        ]
-        SecItemDelete(query as CFDictionary)
+        keychain.delete(key: account)
     }
 
     static func normalizedURL(_ raw: String) -> URL? {
@@ -67,35 +67,24 @@ enum MobileServerConfig {
     }
 
     private static func readToken() throws -> String {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
-        guard status == errSecSuccess, let data = item as? Data, let token = String(data: data, encoding: .utf8) else {
-            throw MobileServerError.keychain(status)
+        do {
+            guard let token = try keychain.read(key: account) else {
+                throw MobileServerError.keychain(errSecItemNotFound)
+            }
+            return token
+        } catch let error as SymairaKeychainError {
+            if case .readFailed(let status) = error { throw MobileServerError.keychain(status) }
+            throw error
         }
-        return token
     }
 
     private static func writeToken(_ token: String) throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account
-        ]
-        let attributes: [String: Any] = [kSecValueData as String: Data(token.utf8)]
-        let update = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
-        if update == errSecSuccess { return }
-        guard update == errSecItemNotFound else { throw MobileServerError.keychain(update) }
-        var add = query
-        add[kSecValueData as String] = Data(token.utf8)
-        let status = SecItemAdd(add as CFDictionary, nil)
-        guard status == errSecSuccess else { throw MobileServerError.keychain(status) }
+        do {
+            try keychain.save(token, key: account)
+        } catch let error as SymairaKeychainError {
+            if case .saveFailed(let status) = error { throw MobileServerError.keychain(status) }
+            throw error
+        }
     }
 }
 

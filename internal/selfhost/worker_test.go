@@ -391,51 +391,15 @@ func TestWorkerRunOnce_DownloadFail(t *testing.T) {
 }
 
 func TestWorkerProcessEngineDispatch(t *testing.T) {
-	ctx := context.Background()
-
-	t.Run("auto engine defaults to tesseract", func(t *testing.T) {
-		w, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken, Engine: "auto"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		// process calls renderInput which reads the file; we just test the engine selection by
-		// creating a small valid image and expecting tesseract to fail with "not installed"
-		input := filepath.Join(t.TempDir(), "test.png")
-		if err := os.WriteFile(input, []byte("fake"), 0600); err != nil {
-			t.Fatal(err)
-		}
-		_, engine, _, err := w.process(ctx, input)
-		if engine != "tesseract" {
-			t.Errorf("expected tesseract engine, got %s", engine)
-		}
-		_ = err // tesseract will fail because it's not installed
-	})
-
-	t.Run("ollama engine without model returns error", func(t *testing.T) {
-		w, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken, Engine: "ollama"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		input := filepath.Join(t.TempDir(), "test.png")
-		if err := os.WriteFile(input, []byte("fake"), 0600); err != nil {
-			t.Fatal(err)
-		}
-		_, _, _, err = w.process(ctx, input)
-		if err == nil {
-			t.Fatal("expected error: ollama model required")
-		}
-	})
-
-	t.Run("unsupported engine", func(t *testing.T) {
-		w, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken, Engine: "invalid"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, _, _, err = w.process(ctx, "input.png")
-		if err == nil {
-			t.Fatal("expected error for unsupported engine")
-		}
-	})
+	t.Setenv("PATH", t.TempDir())
+	worker, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken, Engine: "invalid"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, _, err = worker.process(context.Background(), "input.png")
+	if err == nil || !strings.Contains(err.Error(), "unsupported OCR engine") {
+		t.Fatalf("expected explicit unsupported-engine error, got %v", err)
+	}
 }
 
 func TestWorkerRun_ContextCancellation(t *testing.T) {

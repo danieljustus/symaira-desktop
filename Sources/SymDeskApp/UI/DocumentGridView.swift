@@ -892,7 +892,7 @@ struct DocumentCard: View {
     /// the vault root and has no folder to show. Used as a fallback
     /// disambiguator for cards that otherwise show an identical title
     /// (e.g. multiple "README" notes from different folders).
-    static func containingFolder(forPath path: String) -> String? {
+    nonisolated static func containingFolder(forPath path: String) -> String? {
         let trimmed = path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard !trimmed.isEmpty else { return nil }
         var components = trimmed.split(separator: "/", omittingEmptySubsequences: true).map(String.init)

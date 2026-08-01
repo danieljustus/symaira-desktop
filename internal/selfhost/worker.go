@@ -3,21 +3,21 @@ package selfhost
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime"
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/ingest"
 )
 
 type WorkerConfig struct {
@@ -119,7 +119,7 @@ func (w *Worker) RunOnce(ctx context.Context) (bool, error) {
 	}
 	defer cleanup()
 
-	text, engine, model, err := w.process(ctx, input)
+	text, engine, model, err := w.processJob(ctx, job.ID, input)
 	if err != nil {
 		_ = w.fail(ctx, job.ID, err.Error(), false)
 		return true, err
@@ -195,132 +195,41 @@ func (w *Worker) download(ctx context.Context, job *Job) (string, func(), error)
 }
 
 func (w *Worker) process(ctx context.Context, input string) (text, engine, model string, err error) {
-	engine = strings.ToLower(w.cfg.Engine)
-	if engine == "auto" {
-		if w.cfg.OllamaModel != "" {
-			engine = "ollama"
-		} else {
-			engine = "tesseract"
-		}
-	}
-	switch engine {
-	case "ollama":
-		if w.cfg.OllamaModel == "" {
-			return "", "", "", fmt.Errorf("--ollama-model is required for the Ollama engine")
-		}
-		text, err = w.ollamaOCR(ctx, input)
-		return text, engine, w.cfg.OllamaModel, err
-	case "tesseract":
-		text, err = w.tesseractOCR(ctx, input)
-		return text, engine, "", err
-	default:
-		return "", "", "", fmt.Errorf("unsupported OCR engine %q", engine)
-	}
+	return w.processJob(ctx, "", input)
 }
 
-func (w *Worker) tesseractOCR(ctx context.Context, input string) (string, error) {
-	images, cleanup, err := renderInput(ctx, input)
+func (w *Worker) processJob(ctx context.Context, jobID, input string) (text, engine, model string, err error) {
+	text, engine, model, err = w.processViaSymingest(ctx, input)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
-	defer cleanup()
-	if _, err := exec.LookPath("tesseract"); err != nil {
-		return "", fmt.Errorf("tesseract is not installed")
+	verdict := ingest.InspectText(text)
+	if verdict.OK {
+		return text, engine, model, nil
 	}
-	var pages []string
-	for _, image := range images {
-		command := exec.CommandContext(ctx, "tesseract", image, "stdout", "-l", w.cfg.OCRLanguage)
-		output, err := command.CombinedOutput()
-		if err != nil {
-			return "", fmt.Errorf("tesseract: %s", strings.TrimSpace(string(output)))
-		}
-		pages = append(pages, strings.TrimSpace(string(output)))
+
+	logGuard(jobID, input, 1, verdict)
+	retryText, retryEngine, retryModel, retryErr := w.processViaSymingest(ctx, input)
+	if retryErr != nil {
+		return "", "", "", fmt.Errorf("OCR plausibility retry failed after %s: %w", verdict.Reason, retryErr)
 	}
-	return strings.Join(pages, "\n\n--- Page ---\n\n"), nil
+	retryVerdict := ingest.InspectText(retryText)
+	if retryVerdict.OK {
+		return retryText, retryEngine, retryModel, nil
+	}
+
+	logGuard(jobID, input, 2, retryVerdict)
+	truncated := ingest.TruncateText(retryText, ingest.GuardFallbackWordLimit)
+	markedEngine := fmt.Sprintf("%s; guard=truncated(%s)", retryEngine, retryVerdict.Reason)
+	return truncated, markedEngine, retryModel, nil
 }
 
-func (w *Worker) ollamaOCR(ctx context.Context, input string) (string, error) {
-	images, cleanup, err := renderInput(ctx, input)
-	if err != nil {
-		return "", err
+func logGuard(jobID, input string, attempt int, verdict ingest.Verdict) {
+	identifier := jobID
+	if identifier == "" {
+		identifier = filepath.Base(input)
 	}
-	defer cleanup()
-	var pages []string
-	for index, image := range images {
-		data, err := os.ReadFile(image)
-		if err != nil {
-			return "", err
-		}
-		payload := map[string]any{
-			"model": w.cfg.OllamaModel,
-			"messages": []map[string]any{{
-				"role":    "user",
-				"content": "Transcribe this document page exactly. Preserve paragraphs and tables as readable Markdown. Return only the transcription; do not summarize or invent content.",
-				"images":  []string{base64.StdEncoding.EncodeToString(data)},
-			}},
-			"stream": false,
-		}
-		encoded, _ := json.Marshal(payload)
-		endpoint := strings.TrimRight(w.cfg.OllamaURL, "/") + "/api/chat"
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(encoded))
-		if err != nil {
-			return "", err
-		}
-		req.Header.Set("Content-Type", "application/json")
-		resp, err := w.client.Do(req)
-		if err != nil {
-			return "", fmt.Errorf("ollama page %d: %w", index+1, err)
-		}
-		if resp.StatusCode != http.StatusOK {
-			err := responseError(resp)
-			resp.Body.Close()
-			return "", fmt.Errorf("ollama page %d: %w", index+1, err)
-		}
-		var result struct {
-			Message struct {
-				Content string `json:"content"`
-			} `json:"message"`
-		}
-		err = json.NewDecoder(io.LimitReader(resp.Body, maxOCRBytes)).Decode(&result)
-		resp.Body.Close()
-		if err != nil {
-			return "", err
-		}
-		pages = append(pages, strings.TrimSpace(result.Message.Content))
-	}
-	return strings.Join(pages, "\n\n--- Page ---\n\n"), nil
-}
-
-func renderInput(ctx context.Context, input string) ([]string, func(), error) {
-	ext := strings.ToLower(filepath.Ext(input))
-	switch ext {
-	case ".png", ".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".bmp", ".heic":
-		return []string{input}, func() {}, nil
-	case ".pdf":
-		if _, err := exec.LookPath("pdftoppm"); err != nil {
-			return nil, func() {}, fmt.Errorf("pdftoppm is not installed")
-		}
-		dir, err := os.MkdirTemp(filepath.Dir(input), "pages-*")
-		if err != nil {
-			return nil, func() {}, err
-		}
-		cleanup := func() { _ = os.RemoveAll(dir) }
-		prefix := filepath.Join(dir, "page")
-		output, err := exec.CommandContext(ctx, "pdftoppm", "-png", "-r", "200", "-f", "1", "-l", "100", input, prefix).CombinedOutput()
-		if err != nil {
-			cleanup()
-			return nil, func() {}, fmt.Errorf("pdftoppm: %s", strings.TrimSpace(string(output)))
-		}
-		images, err := filepath.Glob(prefix + "-*.png")
-		if err != nil || len(images) == 0 {
-			cleanup()
-			return nil, func() {}, fmt.Errorf("PDF rendering produced no pages")
-		}
-		sort.Strings(images)
-		return images, cleanup, nil
-	default:
-		return nil, func() {}, fmt.Errorf("OCR supports PDF and image files, got %q", ext)
-	}
+	log.Printf("OCR plausibility guard fired: job=%s attempt=%d reason=%s words=%d unique_ratio=%.3f", identifier, attempt, verdict.Reason, verdict.WordCount, verdict.UniqueRatio)
 }
 
 func (w *Worker) complete(ctx context.Context, jobID, text, engine, model string) error {

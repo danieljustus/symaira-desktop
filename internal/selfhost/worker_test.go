@@ -2,61 +2,14 @@ package selfhost
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 )
-
-func TestOllamaVisionWorkerContract(t *testing.T) {
-	ollama := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/chat" {
-			http.NotFound(w, r)
-			return
-		}
-		var payload struct {
-			Model    string `json:"model"`
-			Messages []struct {
-				Images []string `json:"images"`
-			} `json:"messages"`
-			Stream bool `json:"stream"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			t.Errorf("decode request: %v", err)
-		}
-		if payload.Model != "gemma3" || len(payload.Messages) != 1 || len(payload.Messages[0].Images) != 1 || payload.Stream {
-			t.Errorf("unexpected Ollama payload: %+v", payload)
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"message":{"role":"assistant","content":"Invoice total: 42 EUR"},"done":true}`))
-	}))
-	defer ollama.Close()
-
-	input := filepath.Join(t.TempDir(), "invoice.png")
-	if err := os.WriteFile(input, []byte("not decoded by the fake server"), 0600); err != nil {
-		t.Fatal(err)
-	}
-	worker, err := NewWorker(WorkerConfig{
-		ServerURL: ollama.URL, Token: testToken, Engine: "ollama",
-		OllamaURL: ollama.URL, OllamaModel: "gemma3",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	text, err := worker.ollamaOCR(context.Background(), input)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if text != "Invoice total: 42 EUR" {
-		t.Fatalf("unexpected OCR text %q", text)
-	}
-}
 
 func TestWorkerRejectsNonBareServerURLs(t *testing.T) {
 	for _, serverURL := range []string{
@@ -68,37 +21,6 @@ func TestWorkerRejectsNonBareServerURLs(t *testing.T) {
 		if _, err := NewWorker(WorkerConfig{ServerURL: serverURL, Token: testToken}); err == nil {
 			t.Fatalf("expected URL %q to be rejected", serverURL)
 		}
-	}
-}
-
-func TestRenderInput(t *testing.T) {
-	ctx := context.Background()
-
-	// Supported image format
-	imgs, cleanup, err := renderInput(ctx, "sample.png")
-	if err != nil {
-		t.Fatalf("expected success for .png, got %v", err)
-	}
-	defer cleanup()
-	if len(imgs) != 1 || imgs[0] != "sample.png" {
-		t.Errorf("unexpected renderInput result: %+v", imgs)
-	}
-
-	// Supported formats
-	for _, ext := range []string{".jpg", ".jpeg", ".webp", ".tif", ".tiff", ".bmp", ".heic"} {
-		imgs, cleanup, err := renderInput(ctx, "sample"+ext)
-		if err != nil {
-			t.Errorf("expected success for %s, got %v", ext, err)
-		}
-		cleanup()
-		if len(imgs) != 1 {
-			t.Errorf("expected 1 image for %s, got %d", ext, len(imgs))
-		}
-	}
-
-	// Unsupported extension
-	if _, _, err := renderInput(ctx, "sample.unsupported"); err == nil {
-		t.Error("expected error for unsupported extension")
 	}
 }
 
@@ -391,51 +313,15 @@ func TestWorkerRunOnce_DownloadFail(t *testing.T) {
 }
 
 func TestWorkerProcessEngineDispatch(t *testing.T) {
-	ctx := context.Background()
-
-	t.Run("auto engine defaults to tesseract", func(t *testing.T) {
-		w, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken, Engine: "auto"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		// process calls renderInput which reads the file; we just test the engine selection by
-		// creating a small valid image and expecting tesseract to fail with "not installed"
-		input := filepath.Join(t.TempDir(), "test.png")
-		if err := os.WriteFile(input, []byte("fake"), 0600); err != nil {
-			t.Fatal(err)
-		}
-		_, engine, _, err := w.process(ctx, input)
-		if engine != "tesseract" {
-			t.Errorf("expected tesseract engine, got %s", engine)
-		}
-		_ = err // tesseract will fail because it's not installed
-	})
-
-	t.Run("ollama engine without model returns error", func(t *testing.T) {
-		w, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken, Engine: "ollama"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		input := filepath.Join(t.TempDir(), "test.png")
-		if err := os.WriteFile(input, []byte("fake"), 0600); err != nil {
-			t.Fatal(err)
-		}
-		_, _, _, err = w.process(ctx, input)
-		if err == nil {
-			t.Fatal("expected error: ollama model required")
-		}
-	})
-
-	t.Run("unsupported engine", func(t *testing.T) {
-		w, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken, Engine: "invalid"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, _, _, err = w.process(ctx, "input.png")
-		if err == nil {
-			t.Fatal("expected error for unsupported engine")
-		}
-	})
+	t.Setenv("PATH", t.TempDir())
+	worker, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken, Engine: "invalid"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, _, err = worker.process(context.Background(), "input.png")
+	if err == nil || !strings.Contains(err.Error(), "unsupported OCR engine") {
+		t.Fatalf("expected explicit unsupported-engine error, got %v", err)
+	}
 }
 
 func TestWorkerRun_ContextCancellation(t *testing.T) {

@@ -160,7 +160,7 @@ struct MeetingsView: View {
         let installURL: URL?
     }
 
-    static func recordingAlertContent(agentInstalled: Bool) -> RecordingAlertContent {
+    nonisolated static func recordingAlertContent(agentInstalled: Bool) -> RecordingAlertContent {
         if agentInstalled {
             return RecordingAlertContent(
                 message: "SymMeet's menu-bar agent has been opened. Recording starts only after you confirm it there — SymDesk never records on its own.",

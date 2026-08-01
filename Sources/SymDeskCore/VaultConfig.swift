@@ -9,7 +9,8 @@ public struct VaultConfig {
 
     // MARK: - UserDefaults Keys
 
-    private enum Key {
+    // Kept internal so the registry migration reads the legacy keys from one source.
+    enum Key {
         static let vaultPath = "symdesk.vaultPath"
         static let vaultBookmark = "symdesk.vaultBookmark"
         static let isDemoMode = "symdesk.isDemoMode"

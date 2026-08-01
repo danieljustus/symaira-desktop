@@ -2,16 +2,13 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"strings"
 
 	"github.com/danieljustus/symaira-corekit/mcpserver"
 
-	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
+	"github.com/danieljustus/symaira-desktop/internal/tools"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
@@ -25,30 +22,16 @@ const (
 	Mutating ToolCapability = "mutating"
 )
 
-// ToolCapabilities maps tool names to their mutation capability.
-var ToolCapabilities = map[string]ToolCapability{
-	"desk_status":       ReadOnly,
-	"desk_ls":           ReadOnly,
-	"desk_search":       ReadOnly,
-	"desk_props":        ReadOnly,
-	"desk_backlinks":    ReadOnly,
-	"desk_ask":          ReadOnly,
-	"desk_transform":    ReadOnly,
-	"desk_docs":         ReadOnly,
-	"docs_review":       ReadOnly,
-	"docs_similar":      ReadOnly,
-	"desk_related":      ReadOnly,
-	"desk_ingest_jobs":  ReadOnly,
-	"meeting_list":      ReadOnly,
-	"meeting_get":       ReadOnly,
-	"desk_note_new":     Mutating,
-	"desk_ingest":       Mutating,
-	"doc_set_status":    Mutating,
-	"desk_ingest_retry": Mutating,
-	"desk_clip":         Mutating,
-	"desk_export":       Mutating,
-	"desk_autofill":     Mutating,
-	"meeting_import":    Mutating,
+// ToolCapabilities preserves the legacy MCP-facing capability map while the
+// canonical definitions live in internal/tools.
+var ToolCapabilities = canonicalToolCapabilities()
+
+func canonicalToolCapabilities() map[string]ToolCapability {
+	capabilities := make(map[string]ToolCapability)
+	for name, capability := range tools.Capabilities() {
+		capabilities[name] = ToolCapability(capability)
+	}
+	return capabilities
 }
 
 func StartServer(cfg *config.Config, version string, allowWrite bool) error {
@@ -70,653 +53,141 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 		return service.New(vRoot, db), db, nil
 	}
 
-	server.RegisterTool(newStatusTool(cfg, allowWrite))
-	server.RegisterTool(newLsTool(getService))
-	server.RegisterTool(newSearchTool(getService))
-	server.RegisterTool(newPropsTool(getService))
-	server.RegisterTool(newBacklinksTool(getService))
-	server.RegisterTool(newAskTool(getService))
-	server.RegisterTool(newTransformTool(cfg))
-	server.RegisterTool(newDocsTool(getService))
-	server.RegisterTool(newDocsReviewTool(getService, cfg))
-	server.RegisterTool(newDocsSimilarTool(getService))
-	server.RegisterTool(newRelatedTool(getService))
-	server.RegisterTool(newIngestJobsTool(getService))
-	server.RegisterTool(newMeetingListTool(getService))
-	server.RegisterTool(newMeetingGetTool(getService))
-
-	if allowWrite {
-		server.RegisterTool(newNoteNewTool(getService))
-		server.RegisterTool(newIngestTool(getService))
-		server.RegisterTool(newDocSetStatusTool(getService))
-		server.RegisterTool(newIngestRetryTool(getService))
-		server.RegisterTool(newClipTool(getService))
-		server.RegisterTool(newExportTool(getService))
-		server.RegisterTool(newAutofillTool(getService))
-		server.RegisterTool(newMeetingImportTool(getService))
+	registry := tools.NewRegistry(tools.RegistryOptions{
+		Config:        cfg,
+		GetService:    getService,
+		ServerVersion: ServerVersion,
+		AllowWrite:    allowWrite,
+	})
+	for _, entry := range registry.Enabled(allowWrite) {
+		server.RegisterTool(adaptTool(entry))
 	}
 
 	return server.ServeStdio(context.Background())
 }
 
 // serviceFactory opens a fresh service + sidecar per request; the caller
-// closes the returned DB.
-type serviceFactory func() (*service.Service, *sidecar.DB, error)
+// closes the returned DB. It aliases the canonical registry contract so MCP
+// tests and callers retain the existing local type name.
+type serviceFactory = tools.ServiceFactory
 
-func newStatusTool(cfg *config.Config, allowWrite bool) *mcpserver.Tool {
+func adaptTool(entry tools.Tool) *mcpserver.Tool {
 	return &mcpserver.Tool{
-		Name:        "desk_status",
-		Description: "Returns the current version and vault path configuration for symdesk.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{}}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			status := map[string]string{
-				"version": ServerVersion,
-				"vault":   cfg.Vault,
-			}
-			if allowWrite {
-				status["capabilities"] = "read_write"
-			} else {
-				status["capabilities"] = "read_only"
-			}
-			return status, nil
-		},
+		Name:        entry.Name,
+		Description: entry.Description,
+		InputSchema: entry.InputSchema,
+		Handler:     entry.Handler,
 	}
+}
+
+func registryTool(name string, getService serviceFactory, cfg *config.Config, allowWrite bool) *mcpserver.Tool {
+	entry, ok := tools.NewRegistry(tools.RegistryOptions{
+		Config:        cfg,
+		GetService:    getService,
+		ServerVersion: ServerVersion,
+		AllowWrite:    allowWrite,
+	}).Lookup(name)
+	if !ok {
+		panic("mcp: canonical tool not found: " + name)
+	}
+	return adaptTool(entry)
+}
+
+// The following constructors are kept as thin compatibility adapters for the
+// existing package-local tests. Production registration uses StartServer's
+// single registry traversal above.
+func newStatusTool(cfg *config.Config, allowWrite bool) *mcpserver.Tool {
+	return registryTool("desk_status", nil, cfg, allowWrite)
 }
 
 func newLsTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_ls",
-		Description: "Lists files in the vault.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"dir":{"type":"string"}}}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				Dir string `json:"dir"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			return svc.Ls(args.Dir)
-		},
-	}
+	return registryTool("desk_ls", getService, nil, false)
 }
 
 func newSearchTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_search",
-		Description: "Searches notes with full-text terms plus path:, tag:, type:, status:, quoted phrases, -negation and /regex/. Invalid syntax falls back to plain full-text and returns a hint.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				Query string `json:"query"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.Query == "" {
-				return nil, fmt.Errorf("query is required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			return svc.SearchWithMeta(args.Query)
-		},
-	}
+	return registryTool("desk_search", getService, nil, false)
 }
 
 func newPropsTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_props",
-		Description: "Gets properties (frontmatter) for a note.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"file":{"type":"string"}},"required":["file"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				File string `json:"file"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.File == "" {
-				return nil, fmt.Errorf("file is required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			return svc.Props(args.File)
-		},
-	}
+	return registryTool("desk_props", getService, nil, false)
 }
 
 func newBacklinksTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_backlinks",
-		Description: "Gets backlinks for a note.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"file":{"type":"string"}},"required":["file"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				File string `json:"file"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.File == "" {
-				return nil, fmt.Errorf("file is required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			return svc.Backlinks(args.File)
-		},
-	}
+	return registryTool("desk_backlinks", getService, nil, false)
 }
 
 func newNoteNewTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_note_new",
-		Description: "Create a new note in the Symaira vault.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"title":{"type":"string","description":"The title of the new note"},"content":{"type":"string","description":"The Markdown body content of the note"},"template":{"type":"string","description":"Optional template name to use"}},"required":["title","content"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				Title    string `json:"title"`
-				Content  string `json:"content"`
-				Template string `json:"template"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.Title == "" {
-				return nil, fmt.Errorf("title is required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			path, err := svc.NoteNew(args.Title, args.Content, args.Template)
-			if err != nil {
-				return nil, err
-			}
-			return map[string]string{"path": path}, nil
-		},
-	}
+	return registryTool("desk_note_new", getService, nil, true)
 }
 
-// newAskTool answers a question grounded in vault search results. MCP has
-// no streaming result, so the chunks are aggregated into one answer.
 func newAskTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_ask",
-		Description: "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming).",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				Query string `json:"query"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.Query == "" {
-				return nil, fmt.Errorf("query is required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			answer, err := svc.AskText(ctx, args.Query)
-			if err != nil {
-				return nil, err
-			}
-			return map[string]string{"answer": answer}, nil
-		},
-	}
+	return registryTool("desk_ask", getService, nil, false)
 }
 
-// newIngestTool copies a document into the vault inbox and creates a stub
-// note per the vault contract.
-//
-// newTransformTool applies a local AI action (summarize, rewrite, continue) to
-// a piece of text. It operates purely on the given text and never touches the
-// vault. MCP has no streaming result, so the chunks are aggregated.
 func newTransformTool(configs ...*config.Config) *mcpserver.Tool {
-	cfg := config.DefaultConfig()
-	if len(configs) > 0 && configs[0] != nil {
+	var cfg *config.Config
+	if len(configs) > 0 {
 		cfg = configs[0]
 	}
-	return &mcpserver.Tool{
-		Name:        "desk_transform",
-		Description: "Transforms the given text with a local AI action. intent is one of summarize, rewrite or continue. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The result is returned as one aggregated text (no streaming).",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"text":{"type":"string"},"intent":{"type":"string","enum":["summarize","rewrite","continue"]}},"required":["text","intent"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				Text   string `json:"text"`
-				Intent string `json:"intent"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.Text == "" {
-				return nil, fmt.Errorf("text is required")
-			}
-
-			chunks := make(chan ai.AskChunk)
-			go ai.Transform(ctx, cfg, args.Text, args.Intent, chunks)
-			var b strings.Builder
-			for c := range chunks {
-				b.WriteString(c.Chunk)
-			}
-			return map[string]string{"result": b.String()}, nil
-		},
-	}
+	return registryTool("desk_transform", nil, cfg, false)
 }
 
 func newIngestTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_ingest",
-		Description: "Ingests a file into the vault: copies it into inbox/ and creates a corresponding markdown note. Takes an absolute source path, returns the relative path of the new note.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"source_path":{"type":"string"}},"required":["source_path"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				SourcePath string `json:"source_path"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.SourcePath == "" {
-				return nil, fmt.Errorf("source_path is required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			return svc.Ingest(args.SourcePath)
-		},
-	}
+	return registryTool("desk_ingest", getService, nil, true)
 }
 
 func newDocsTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_docs",
-		Description: "Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Returns structured document metadata.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"type":{"type":"string"},"status":{"type":"string"},"person":{"type":"string"},"correspondent":{"type":"string"},"year":{"type":"string"},"due_before":{"type":"string"},"min_confidence":{"type":"integer"},"max_confidence":{"type":"integer"}}}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				Type          string `json:"type"`
-				Status        string `json:"status"`
-				Person        string `json:"person"`
-				Correspondent string `json:"correspondent"`
-				Year          string `json:"year"`
-				DueBefore     string `json:"due_before"`
-				MinConfidence *int   `json:"min_confidence"`
-				MaxConfidence *int   `json:"max_confidence"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-
-			f := sidecar.DocsFilter{
-				Type:          args.Type,
-				Status:        args.Status,
-				Person:        args.Person,
-				Correspondent: args.Correspondent,
-				Year:          args.Year,
-				DueBefore:     args.DueBefore,
-				MinConfidence: args.MinConfidence,
-				MaxConfidence: args.MaxConfidence,
-			}
-			return svc.DocsList(f)
-		},
-	}
+	return registryTool("desk_docs", getService, nil, false)
 }
 
 func newDocSetStatusTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "doc_set_status",
-		Description: "Sets the status of a document (open|paid|submitted|done|needs_review|waiting_for_reply). Updates frontmatter and re-indexes.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"file":{"type":"string"},"status":{"type":"string"}},"required":["file","status"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				File   string `json:"file"`
-				Status string `json:"status"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.File == "" || args.Status == "" {
-				return nil, fmt.Errorf("file and status are required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			if err := svc.DocStatus(args.File, args.Status); err != nil {
-				return nil, err
-			}
-			return map[string]string{"status": "updated", "file": args.File, "new_status": args.Status}, nil
-		},
-	}
+	return registryTool("doc_set_status", getService, nil, true)
 }
 
 func newDocsReviewTool(getService serviceFactory, cfg *config.Config) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "docs_review",
-		Description: "Returns documents needing review: confidence below threshold or missing document_type/document_date.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"threshold":{"type":"integer"}}}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				Threshold int `json:"threshold"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			threshold := cfg.ReviewThreshold
-			if args.Threshold > 0 {
-				threshold = args.Threshold
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			return svc.DocsReview(threshold)
-		},
-	}
+	return registryTool("docs_review", getService, cfg, false)
 }
 
 func newDocsSimilarTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "docs_similar",
-		Description: "Finds near-duplicate documents using SimHash similarity. Returns documents with similarity >= threshold.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"file":{"type":"string"},"threshold":{"type":"integer"}},"required":["file"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				File      string `json:"file"`
-				Threshold int    `json:"threshold"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.File == "" {
-				return nil, fmt.Errorf("file is required")
-			}
-			if args.Threshold <= 0 {
-				args.Threshold = 50
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			return svc.SimilarDocs(args.File, args.Threshold)
-		},
-	}
+	return registryTool("docs_similar", getService, nil, false)
 }
 
 func newExportTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_export",
-		Description: "Exports a note or view to PDF or HTML. Provide either note or view, not both.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"note":{"type":"string","description":"vault-relative note path"},"view":{"type":"string","description":"view id"},"output":{"type":"string","description":"output file path"},"format":{"type":"string","enum":["pdf","html"]},"profile":{"type":"string","description":"symprint profile for PDF"}},"oneOf":[{"required":["note"]},{"required":["view"]}]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				Note    string `json:"note"`
-				View    string `json:"view"`
-				Output  string `json:"output"`
-				Format  string `json:"format"`
-				Profile string `json:"profile"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.Note == "" && args.View == "" {
-				return nil, fmt.Errorf("note or view is required")
-			}
-			if args.Format == "" {
-				args.Format = "pdf"
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			return svc.Export(args.Note, args.View, args.Output, args.Format, args.Profile)
-		},
-	}
+	return registryTool("desk_export", getService, nil, true)
 }
 
 func newAutofillTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_autofill",
-		Description: "Autofills a frontmatter property on all notes matching a view using the configured AI provider.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"view":{"type":"string","description":"view id"},"property":{"type":"string","description":"frontmatter property to fill"},"prompt":{"type":"string","description":"extra instruction for the AI"},"dry_run":{"type":"boolean","description":"show changes without writing"}},"required":["view","property"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				View     string `json:"view"`
-				Property string `json:"property"`
-				Prompt   string `json:"prompt"`
-				DryRun   bool   `json:"dry_run"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.View == "" || args.Property == "" {
-				return nil, fmt.Errorf("view and property are required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			return svc.Autofill(args.View, args.Property, args.Prompt, args.DryRun)
-		},
-	}
+	return registryTool("desk_autofill", getService, nil, true)
 }
 
 func registerDeskStatus(server *mcpserver.Server, cfg *config.Config) {
-	server.RegisterTool(&mcpserver.Tool{
-		Name:        "desk_status",
-		Description: "Returns the current version and vault path configuration for symdesk.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{}}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			status := map[string]string{
-				"version":      ServerVersion,
-				"vault":        cfg.Vault,
-				"capabilities": "read_write",
-			}
-			return status, nil
-		},
-	})
+	server.RegisterTool(registryTool("desk_status", nil, cfg, true))
 }
 
 func newRelatedTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_related",
-		Description: "Gets related entities and notes for a given file path based on composition with symmemory.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"file":{"type":"string"}},"required":["file"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				File string `json:"file"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.File == "" {
-				return nil, fmt.Errorf("file is required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			return svc.Related(args.File)
-		},
-	}
+	return registryTool("desk_related", getService, nil, false)
 }
 
 func newIngestJobsTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_ingest_jobs",
-		Description: "Lists ingestion jobs in the queue from symingest.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{}}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			jobsStr, err := svc.IngestJobs()
-			if err != nil {
-				return nil, err
-			}
-			var jobs []any
-			if err := json.Unmarshal([]byte(jobsStr), &jobs); err != nil {
-				return nil, err
-			}
-			return jobs, nil
-		},
-	}
+	return registryTool("desk_ingest_jobs", getService, nil, false)
 }
 
 func newIngestRetryTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_ingest_retry",
-		Description: "Retries a failed ingestion job by ID.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				ID string `json:"id"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			err = svc.IngestRetry(args.ID)
-			if err != nil {
-				return nil, err
-			}
-			return map[string]string{"status": "ok"}, nil
-		},
-	}
+	return registryTool("desk_ingest_retry", getService, nil, true)
 }
 
 func newClipTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "desk_clip",
-		Description: "Fetches a URL via symfetch and saves it as a note in the vault.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"url":{"type":"string"}},"required":["url"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				URL string `json:"url"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.URL == "" {
-				return nil, fmt.Errorf("url is required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close()
-			path, err := svc.NoteClip(args.URL)
-			if err != nil {
-				return nil, err
-			}
-			return map[string]string{"path": path}, nil
-		},
-	}
+	return registryTool("desk_clip", getService, nil, true)
 }
 
 func newMeetingListTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "meeting_list",
-		Description: "Lists meetings already imported into the vault as reviewed meeting notes.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{}}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close() //nolint:errcheck // matches every other read-only tool in this file
-			return svc.MeetingList()
-		},
-	}
+	return registryTool("meeting_list", getService, nil, false)
 }
 
 func newMeetingGetTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "meeting_get",
-		Description: "Gets one imported meeting note by its vault-relative path, including the reviewed transcript.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"path":{"type":"string","description":"vault-relative meeting note path"}},"required":["path"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				Path string `json:"path"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.Path == "" {
-				return nil, fmt.Errorf("path is required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close() //nolint:errcheck // matches every other read-only tool in this file
-			return svc.MeetingShow(args.Path)
-		},
-	}
+	return registryTool("meeting_get", getService, nil, false)
 }
 
-// newMeetingImportTool is a reviewed mutation: it is only registered when
-// allowWrite is set, exactly like the vault's other note-creating tools.
 func newMeetingImportTool(getService serviceFactory) *mcpserver.Tool {
-	return &mcpserver.Tool{
-		Name:        "meeting_import",
-		Description: "Imports one SymMeet meeting into the vault as a contract-v2 meeting note. Requires symmeet on PATH with a compatible artifact schema.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"meeting_id":{"type":"string"}},"required":["meeting_id"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				MeetingID string `json:"meeting_id"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.MeetingID == "" {
-				return nil, fmt.Errorf("meeting_id is required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer db.Close() //nolint:errcheck // matches every other mutating tool in this file
-			path, err := svc.MeetingImport(args.MeetingID)
-			if err != nil {
-				return nil, err
-			}
-			return map[string]string{"path": path, "status": "imported"}, nil
-		},
-	}
+	return registryTool("meeting_import", getService, nil, true)
 }

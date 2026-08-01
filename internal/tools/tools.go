@@ -195,7 +195,7 @@ func newLsTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			return svc.Ls(args.Dir)
 		},
 	}
@@ -220,7 +220,7 @@ func newSearchTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			return svc.SearchWithMeta(args.Query)
 		},
 	}
@@ -245,7 +245,7 @@ func newPropsTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			return svc.Props(args.File)
 		},
 	}
@@ -270,7 +270,7 @@ func newBacklinksTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			return svc.Backlinks(args.File)
 		},
 	}
@@ -297,7 +297,7 @@ func newNoteNewTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			path, err := svc.NoteNew(args.Title, args.Content, args.Template)
 			if err != nil {
 				return nil, err
@@ -328,7 +328,7 @@ func newAskTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			answer, err := svc.AskText(ctx, args.Query)
 			if err != nil {
 				return nil, err
@@ -395,7 +395,7 @@ func newIngestTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			return svc.Ingest(args.SourcePath)
 		},
 	}
@@ -424,7 +424,7 @@ func newDocsTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 
 			f := sidecar.DocsFilter{
 				Type:          args.Type,
@@ -461,7 +461,7 @@ func newDocSetStatusTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			if err := svc.DocStatus(args.File, args.Status); err != nil {
 				return nil, err
 			}
@@ -490,7 +490,7 @@ func newDocsReviewTool(getService ServiceFactory, cfg *config.Config) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			return svc.DocsReview(threshold)
 		},
 	}
@@ -519,7 +519,7 @@ func newDocsSimilarTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			return svc.SimilarDocs(args.File, args.Threshold)
 		},
 	}
@@ -551,7 +551,7 @@ func newExportTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			return svc.Export(args.Note, args.View, args.Output, args.Format, args.Profile)
 		},
 	}
@@ -579,7 +579,7 @@ func newAutofillTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			return svc.Autofill(args.View, args.Property, args.Prompt, args.DryRun)
 		},
 	}
@@ -604,7 +604,7 @@ func newRelatedTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			return svc.Related(args.File)
 		},
 	}
@@ -620,7 +620,7 @@ func newIngestJobsTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			jobsStr, err := svc.IngestJobs()
 			if err != nil {
 				return nil, err
@@ -650,7 +650,7 @@ func newIngestRetryTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			err = svc.IngestRetry(args.ID)
 			if err != nil {
 				return nil, err
@@ -679,7 +679,7 @@ func newClipTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			path, err := svc.NoteClip(args.URL)
 			if err != nil {
 				return nil, err
@@ -699,7 +699,7 @@ func newMeetingListTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close() //nolint:errcheck // matches every other read-only tool in this file
+			defer func() { _ = db.Close() }() //nolint:errcheck // matches every other read-only tool in this file
 			return svc.MeetingList()
 		},
 	}
@@ -724,7 +724,7 @@ func newMeetingGetTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close() //nolint:errcheck // matches every other read-only tool in this file
+			defer func() { _ = db.Close() }() //nolint:errcheck // matches every other read-only tool in this file
 			return svc.MeetingShow(args.Path)
 		},
 	}
@@ -751,7 +751,7 @@ func newMeetingImportTool(getService ServiceFactory) *Tool {
 			if err != nil {
 				return nil, err
 			}
-			defer db.Close() //nolint:errcheck // matches every other mutating tool in this file
+			defer func() { _ = db.Close() }() //nolint:errcheck // matches every other mutating tool in this file
 			path, err := svc.MeetingImport(args.MeetingID)
 			if err != nil {
 				return nil, err

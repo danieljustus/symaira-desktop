@@ -79,8 +79,8 @@ final class VaultRegistryTests: XCTestCase {
         let suiteName = "symdesk-vault-registry-tests-\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-        addTeardownBlock {
-            defaults.removePersistentDomain(forName: suiteName)
+        addTeardownBlock { [suiteName] in
+            UserDefaults(suiteName: suiteName)?.removePersistentDomain(forName: suiteName)
         }
         return defaults
     }

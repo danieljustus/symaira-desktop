@@ -84,6 +84,8 @@ targets:
         product: SymairaUpdateCheck
       - package: symaira-appkit
         product: SymairaIngestContract
+      - package: symaira-appkit
+        product: SymairaKeychain
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "YES"
@@ -108,6 +110,8 @@ targets:
         product: SymairaUpdateCheck
       - package: symaira-appkit
         product: SymairaIngestContract
+      - package: symaira-appkit
+        product: SymairaKeychain
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "YES"

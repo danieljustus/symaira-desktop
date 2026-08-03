@@ -174,15 +174,18 @@ private struct OnboardingFeature: View {
 }
 
 private struct MobileWorkspaceView: View {
+    @EnvironmentObject private var vault: MobileVaultStore
+    @State private var isScannerPresented = false
+
     var body: some View {
         TabView {
-            MobileOverviewView()
+            MobileOverviewView(isScannerPresented: $isScannerPresented)
                 .tabItem { Label("Overview", systemImage: "sparkles.rectangle.stack") }
 
-            MobileLibraryView(documentsOnly: false)
+            MobileLibraryView(documentsOnly: false, isScannerPresented: $isScannerPresented)
                 .tabItem { Label("Notes", systemImage: "note.text") }
 
-            MobileLibraryView(documentsOnly: true)
+            MobileLibraryView(documentsOnly: true, isScannerPresented: $isScannerPresented)
                 .tabItem { Label("Documents", systemImage: "doc.text.image") }
 
             MobileSettingsView()
@@ -190,11 +193,16 @@ private struct MobileWorkspaceView: View {
         }
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+        .sheet(isPresented: $isScannerPresented) {
+            MobileScanView()
+                .environmentObject(vault)
+        }
     }
 }
 
 private struct MobileOverviewView: View {
     @EnvironmentObject private var vault: MobileVaultStore
+    @Binding var isScannerPresented: Bool
 
     private var recentNotes: [MobileNote] {
         Array(vault.notes.prefix(5))
@@ -266,6 +274,12 @@ private struct MobileOverviewView: View {
                     }
                     .disabled(vault.isLoading)
                     .accessibilityLabel("Refresh vault")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { isScannerPresented = true } label: {
+                        Image(systemName: "doc.viewfinder")
+                    }
+                    .accessibilityLabel("Scan document")
                 }
             }
         }
@@ -366,6 +380,7 @@ private struct MobileOutboxBanner: View {
 private struct MobileLibraryView: View {
     @EnvironmentObject private var vault: MobileVaultStore
     let documentsOnly: Bool
+    @Binding var isScannerPresented: Bool
 
     @State private var query = ""
     @State private var statusFilter = "All"
@@ -432,6 +447,12 @@ private struct MobileLibraryView: View {
                     }
                     .disabled(vault.isLoading)
                     .accessibilityLabel("Refresh vault")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { isScannerPresented = true } label: {
+                        Image(systemName: "doc.viewfinder")
+                    }
+                    .accessibilityLabel("Scan document")
                 }
             }
             .task(id: request) { await updateResults(for: request) }

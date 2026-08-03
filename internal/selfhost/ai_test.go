@@ -98,7 +98,7 @@ func newAITestServer(t *testing.T) (*httptest.Server, *Server, string) {
 	vaultRoot := t.TempDir()
 	write := func(name, content string) {
 		t.Helper()
-		if err := os.WriteFile(filepath.Join(vaultRoot, name), []byte(content), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(vaultRoot, name), []byte(content), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -169,7 +169,7 @@ func TestAIAskStreamsTokensIncrementally(t *testing.T) {
 
 	httpServer, _, _ := newAITestServer(t)
 	response := aiAsk(t, httpServer.URL, "Rechnung", testToken)
-	defer response.Body.Close()
+	t.Cleanup(func() { _ = response.Body.Close() })
 
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", response.StatusCode, readBody(response))
@@ -214,7 +214,7 @@ func TestAICitationsResolveThroughFileEndpoint(t *testing.T) {
 
 	httpServer, _, _ := newAITestServer(t)
 	response := aiAsk(t, httpServer.URL, "Rechnung", testToken)
-	defer response.Body.Close()
+	t.Cleanup(func() { _ = response.Body.Close() })
 
 	events := readAIEvents(t, response.Body)
 	for _, event := range events {
@@ -226,7 +226,7 @@ func TestAICitationsResolveThroughFileEndpoint(t *testing.T) {
 		if fileResponse.StatusCode != http.StatusOK {
 			t.Fatalf("citation path %q does not resolve through /api/v1/files (got %d)", event.Path, fileResponse.StatusCode)
 		}
-		fileResponse.Body.Close()
+		_ = fileResponse.Body.Close()
 	}
 }
 
@@ -240,7 +240,7 @@ func TestAIAskRejectsUnauthenticated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	t.Cleanup(func() { _ = response.Body.Close() })
 	if response.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("expected 401, got %d", response.StatusCode)
 	}

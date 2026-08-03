@@ -18,11 +18,32 @@ struct MobileRootView: View {
                 await vault.reload()
             }
         }
+        .sheet(isPresented: openNoteIsPresented) {
+            // Deep link target (Spotlight tap / symdesk:// URL / Handoff).
+            if let path = vault.pendingOpenPath {
+                NavigationStack {
+                    MobileNoteDetailView(noteID: path)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") { vault.pendingOpenPath = nil }
+                            }
+                        }
+                }
+                .presentationDetents([.large])
+            }
+        }
         .alert("Vault unavailable", isPresented: errorIsPresented) {
             Button("OK", role: .cancel) { vault.errorMessage = nil }
         } message: {
             Text(vault.errorMessage ?? "Please try again.")
         }
+    }
+
+    private var openNoteIsPresented: Binding<Bool> {
+        Binding(
+            get: { vault.pendingOpenPath != nil },
+            set: { if !$0 { vault.pendingOpenPath = nil } }
+        )
     }
 
     private var errorIsPresented: Binding<Bool> {

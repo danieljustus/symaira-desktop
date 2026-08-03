@@ -18,11 +18,32 @@ struct MobileRootView: View {
                 await vault.reload()
             }
         }
+        .sheet(isPresented: citationOpenIsPresented) {
+            // Citation tap from the AI chat: open the referenced note.
+            if let path = vault.pendingOpenPath {
+                NavigationStack {
+                    MobileNoteDetailView(noteID: path)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") { vault.pendingOpenPath = nil }
+                            }
+                        }
+                }
+                .presentationDetents([.large])
+            }
+        }
         .alert("Vault unavailable", isPresented: errorIsPresented) {
             Button("OK", role: .cancel) { vault.errorMessage = nil }
         } message: {
             Text(vault.errorMessage ?? "Please try again.")
         }
+    }
+
+    private var citationOpenIsPresented: Binding<Bool> {
+        Binding(
+            get: { vault.pendingOpenPath != nil },
+            set: { if !$0 { vault.pendingOpenPath = nil } }
+        )
     }
 
     private var errorIsPresented: Binding<Bool> {
@@ -184,6 +205,9 @@ private struct MobileWorkspaceView: View {
 
             MobileLibraryView(documentsOnly: true)
                 .tabItem { Label("Documents", systemImage: "doc.text.image") }
+
+            MobileChatView()
+                .tabItem { Label("Ask", systemImage: "bubble.left.and.bubble.right") }
 
             MobileSettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }

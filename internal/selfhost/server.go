@@ -53,11 +53,18 @@ type ServerConfig struct {
 	Executable  string
 	TLSCert     string
 	TLSKey      string
+	// StateDSN, when set, routes the server's persistent state store
+	// (config/session-cache) to PostgreSQL instead of the default SQLite
+	// database under <VaultRoot>/.symdesk/server/state.db. Multi-user
+	// production deployments should set this to a PostgreSQL connection
+	// string; single-user installs leave it empty.
+	StateDSN string
 }
 
 type Server struct {
 	cfg          ServerConfig
 	db           *sidecar.DB
+	state        *ServerState
 	jobs         *JobStore
 	perm         *permissions.Manager
 	shares       *ShareStore
@@ -128,17 +135,26 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	stateCtx, stateCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer stateCancel()
+	state, err := OpenServerState(stateCtx, cfg.VaultRoot, cfg.StateDSN)
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
 	jobs, err := NewJobStore(cfg.VaultRoot)
 	if err != nil {
 		db.Close()
+		state.Close()
 		return nil, err
 	}
 	vaultRoot, err := os.OpenRoot(cfg.VaultRoot)
 	if err != nil {
 		db.Close()
+		state.Close()
 		return nil, fmt.Errorf("open vault root: %w", err)
 	}
-	s := &Server{cfg: cfg, db: db, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux(), throttle: newThrottle()}
+	s := &Server{cfg: cfg, db: db, state: state, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux(), throttle: newThrottle()}
 	s.snapshotDirty.Store(true)
 
 	// Initialise the permissions manager. The config directory lives under
@@ -152,26 +168,46 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	}
 	// Migration: when no users exist yet and a legacy token is set, create an
 	// admin user whose token hash matches the existing token so existing
-	// single-token deployments keep working without interruption.
+	// single-token deployments keep working without interruption. The state
+	// store records that the migration ran once, so an administrator who
+	// deliberately removes every user later does not get the well-known
+	// legacy admin account resurrected on the next restart.
 	if cfg.Token != "" {
 		users, err := perm.UserList()
 		if err != nil {
 			vaultRoot.Close()
 			db.Close()
+			state.Close()
 			return nil, fmt.Errorf("permissions: list users: %w", err)
 		}
 		if len(users) == 0 {
-			if _, err := perm.UserAdd("admin", "admin", "user"); err != nil {
+			migrated, err := state.SetIfAbsent(stateCtx, StateKeyLegacyAdminMigrated,
+				[]byte(time.Now().UTC().Format(time.RFC3339)))
+			if err != nil {
 				vaultRoot.Close()
 				db.Close()
-				return nil, fmt.Errorf("permissions: create admin user: %w", err)
+				state.Close()
+				return nil, fmt.Errorf("server state: record legacy admin migration: %w", err)
 			}
-			// Set the admin user's token hash to match the legacy token so
-			// existing clients authenticate without any change.
-			if err := perm.SetTokenHash("admin", permissions.HashToken(cfg.Token)); err != nil {
-				vaultRoot.Close()
-				db.Close()
-				return nil, fmt.Errorf("permissions: set admin token: %w", err)
+			if !migrated {
+				// Users were removed deliberately after the one-time
+				// migration; do not recreate the legacy admin account.
+				slog.Warn("legacy-token admin migration already ran; not recreating admin user")
+			} else {
+				if _, err := perm.UserAdd("admin", "admin", "user"); err != nil {
+					vaultRoot.Close()
+					db.Close()
+					state.Close()
+					return nil, fmt.Errorf("permissions: create admin user: %w", err)
+				}
+				// Set the admin user's token hash to match the legacy token so
+				// existing clients authenticate without any change.
+				if err := perm.SetTokenHash("admin", permissions.HashToken(cfg.Token)); err != nil {
+					vaultRoot.Close()
+					db.Close()
+					state.Close()
+					return nil, fmt.Errorf("permissions: set admin token: %w", err)
+				}
 			}
 		}
 	}
@@ -182,6 +218,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	if err != nil {
 		vaultRoot.Close()
 		db.Close()
+		state.Close()
 		return nil, fmt.Errorf("shares: %w", err)
 	}
 	s.shares = shares
@@ -189,6 +226,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	if err := s.refreshIndex(); err != nil {
 		vaultRoot.Close()
 		db.Close()
+		state.Close()
 		return nil, fmt.Errorf("index vault: %w", err)
 	}
 	s.routes()
@@ -274,7 +312,7 @@ func (s *Server) Close() error {
 		_ = s.vaultWatcher.Close()
 		<-s.watcherDone
 	}
-	return errors.Join(s.vaultRoot.Close(), s.db.Close())
+	return errors.Join(s.vaultRoot.Close(), s.db.Close(), s.state.Close())
 }
 
 func (s *Server) ListenAndServe() error {

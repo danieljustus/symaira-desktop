@@ -229,9 +229,12 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
     public let correspondent: String
     public let documentType: String
     public let asn: Int
+    /// Tags carried by the document, parsed from its frontmatter tags
+    /// property. Empty when the document has no tags (issue #306).
+    public let tags: [String]
 
     enum CodingKeys: String, CodingKey {
-        case path, title, type, person, status, confidence, correspondent, asn
+        case path, title, type, person, status, confidence, correspondent, asn, tags
         case documentDate = "document_date"
         case dueDate = "due_date"
         case documentType = "document_type"
@@ -250,6 +253,7 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         correspondent = (try? c.decode(String.self, forKey: .correspondent)) ?? ""
         documentType = (try? c.decode(String.self, forKey: .documentType)) ?? ""
         asn = (try? c.decode(Int.self, forKey: .asn)) ?? 0
+        tags = (try? c.decodeIfPresent([String].self, forKey: .tags)) ?? []
     }
 
     public init(
@@ -263,7 +267,8 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         confidence: Int,
         correspondent: String,
         documentType: String,
-        asn: Int = 0
+        asn: Int = 0,
+        tags: [String] = []
     ) {
         self.path = path
         self.title = title
@@ -276,6 +281,7 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         self.correspondent = correspondent
         self.documentType = documentType
         self.asn = asn
+        self.tags = tags
     }
 }
 
@@ -945,6 +951,46 @@ public final class DeskCore: ObservableObject {
 
     public func docSetASN(path: String, value: String = "next") async throws {
 		_ = try await runChecked(arguments: ["doc", "asn", path, value] + vaultArgs)
+    }
+
+    // MARK: - Vault-wide tag management (issue #306)
+
+    /// Per-file outcome of a vault-wide tag operation.
+    public struct TagOpOutcome: Codable, Equatable, Sendable {
+        public struct Item: Codable, Equatable, Sendable {
+            public let file: String
+            public let status: String // "updated" | "skipped" | "error"
+            public let error: String?
+        }
+        public let items: [Item]
+        public var updatedCount: Int { items.filter { $0.status == "updated" }.count }
+    }
+
+    /// Renames a tag across the whole vault, rewriting frontmatter and
+    /// re-indexing every carrier so no stale index rows remain.
+    @discardableResult
+    public func renameTag(from old: String, to new: String) async throws -> TagOpOutcome {
+        try await runTagOp(["tags", "rename", old, new])
+    }
+
+    /// Merges one tag into another across the whole vault and re-indexes.
+    @discardableResult
+    public func mergeTag(from: String, into: String) async throws -> TagOpOutcome {
+        try await runTagOp(["tags", "merge", from, into])
+    }
+
+    /// Deletes a tag from every file across the whole vault and re-indexes.
+    @discardableResult
+    public func deleteTag(_ tag: String) async throws -> TagOpOutcome {
+        try await runTagOp(["tags", "delete", tag])
+    }
+
+    private func runTagOp(_ arguments: [String]) async throws -> TagOpOutcome {
+        let items: [TagOpOutcome.Item] = try await runDecoding(
+            [TagOpOutcome.Item].self,
+            arguments: arguments + ["--json"] + vaultArgs
+        )
+        return TagOpOutcome(items: items)
     }
 
     public func docsSimilar(path: String, threshold: Int = 50) async throws -> [SimilarDoc] {

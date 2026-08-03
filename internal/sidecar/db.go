@@ -977,7 +977,7 @@ func (db *DB) AllSimhashes() ([]SimilarResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck // result rows are fully drained below before return
 
 	var results []SimilarResult
 	for rows.Next() {

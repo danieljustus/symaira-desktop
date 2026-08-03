@@ -15,7 +15,7 @@ func writeIndexedDoc(t *testing.T, svc *Service, name, body string) {
 	t.Helper()
 	path := filepath.Join(svc.VaultRoot, name)
 	content := "---\ntitle: " + strings.TrimSuffix(name, ".md") + "\n---\n\n" + body + "\n"
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 	doc, err := vault.ParseFile(path)

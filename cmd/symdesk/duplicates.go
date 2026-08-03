@@ -17,7 +17,7 @@ func newDuplicatesCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
 			groups, err := service.New(vRoot, db).SimilarAll(threshold)
 			if err != nil {
 				return err

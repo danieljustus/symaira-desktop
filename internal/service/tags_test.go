@@ -10,14 +10,14 @@ import (
 func writeTaggedNote(t *testing.T, root, name, tags string) {
 	t.Helper()
 	content := "---\ntitle: " + strings.TrimSuffix(name, ".md") + "\ntags: [" + tags + "]\n---\n\nBody\n"
-	if err := os.WriteFile(filepath.Join(root, name), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, name), []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func readFile(t *testing.T, path string) string {
 	t.Helper()
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // test helper reading an explicit fixture path
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,7 +184,7 @@ func TestTagsOpsTolerateBrokenFilesWithoutAbortingBatch(t *testing.T) {
 	svc := newTestService(t)
 	writeTaggedNote(t, svc.VaultRoot, "a.md", "invoice")
 	// A file with malformed frontmatter that fails to parse.
-	if err := os.WriteFile(filepath.Join(svc.VaultRoot, "broken.md"), []byte("---\ntags: [unclosed\n---\nbody\n"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(svc.VaultRoot, "broken.md"), []byte("---\ntags: [unclosed\n---\nbody\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
 

@@ -23,7 +23,7 @@ func newTagsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
 			results, err := service.New(vRoot, db).TagsRename(args[0], args[1])
 			if err != nil {
 				return err
@@ -41,7 +41,7 @@ func newTagsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
 			results, err := service.New(vRoot, db).TagsMerge(args[0], args[1])
 			if err != nil {
 				return err
@@ -59,7 +59,7 @@ func newTagsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
 			results, err := service.New(vRoot, db).TagsDelete(args[0])
 			if err != nil {
 				return err

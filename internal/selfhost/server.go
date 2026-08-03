@@ -139,19 +139,19 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	defer stateCancel()
 	state, err := OpenServerState(stateCtx, cfg.VaultRoot, cfg.StateDSN)
 	if err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 	jobs, err := NewJobStore(cfg.VaultRoot)
 	if err != nil {
-		db.Close()
-		state.Close()
+		_ = db.Close()
+		_ = state.Close()
 		return nil, err
 	}
 	vaultRoot, err := os.OpenRoot(cfg.VaultRoot)
 	if err != nil {
-		db.Close()
-		state.Close()
+		_ = db.Close()
+		_ = state.Close()
 		return nil, fmt.Errorf("open vault root: %w", err)
 	}
 	s := &Server{cfg: cfg, db: db, state: state, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux(), throttle: newThrottle()}
@@ -162,8 +162,8 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	permDir := filepath.Join(cfg.VaultRoot, ".symdesk")
 	perm, err := permissions.NewManager(permDir)
 	if err != nil {
-		vaultRoot.Close()
-		db.Close()
+		_ = vaultRoot.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("permissions: %w", err)
 	}
 	// Migration: when no users exist yet and a legacy token is set, create an
@@ -175,18 +175,18 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	if cfg.Token != "" {
 		users, err := perm.UserList()
 		if err != nil {
-			vaultRoot.Close()
-			db.Close()
-			state.Close()
+			_ = vaultRoot.Close()
+			_ = db.Close()
+			_ = state.Close()
 			return nil, fmt.Errorf("permissions: list users: %w", err)
 		}
 		if len(users) == 0 {
 			migrated, err := state.SetIfAbsent(stateCtx, StateKeyLegacyAdminMigrated,
 				[]byte(time.Now().UTC().Format(time.RFC3339)))
 			if err != nil {
-				vaultRoot.Close()
-				db.Close()
-				state.Close()
+				_ = vaultRoot.Close()
+				_ = db.Close()
+				_ = state.Close()
 				return nil, fmt.Errorf("server state: record legacy admin migration: %w", err)
 			}
 			if !migrated {
@@ -195,17 +195,17 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 				slog.Warn("legacy-token admin migration already ran; not recreating admin user")
 			} else {
 				if _, err := perm.UserAdd("admin", "admin", "user"); err != nil {
-					vaultRoot.Close()
-					db.Close()
-					state.Close()
+					_ = vaultRoot.Close()
+					_ = db.Close()
+					_ = state.Close()
 					return nil, fmt.Errorf("permissions: create admin user: %w", err)
 				}
 				// Set the admin user's token hash to match the legacy token so
 				// existing clients authenticate without any change.
 				if err := perm.SetTokenHash("admin", permissions.HashToken(cfg.Token)); err != nil {
-					vaultRoot.Close()
-					db.Close()
-					state.Close()
+					_ = vaultRoot.Close()
+					_ = db.Close()
+					_ = state.Close()
 					return nil, fmt.Errorf("permissions: set admin token: %w", err)
 				}
 			}
@@ -216,17 +216,17 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	sharesDir := filepath.Join(cfg.VaultRoot, ".symdesk", "server")
 	shares, err := NewShareStore(sharesDir)
 	if err != nil {
-		vaultRoot.Close()
-		db.Close()
-		state.Close()
+		_ = vaultRoot.Close()
+		_ = db.Close()
+		_ = state.Close()
 		return nil, fmt.Errorf("shares: %w", err)
 	}
 	s.shares = shares
 
 	if err := s.refreshIndex(); err != nil {
-		vaultRoot.Close()
-		db.Close()
-		state.Close()
+		_ = vaultRoot.Close()
+		_ = db.Close()
+		_ = state.Close()
 		return nil, fmt.Errorf("index vault: %w", err)
 	}
 	s.routes()

@@ -174,15 +174,20 @@ private struct OnboardingFeature: View {
 }
 
 private struct MobileWorkspaceView: View {
+    @EnvironmentObject private var vault: MobileVaultStore
+    @State private var isComposerPresented = false
+    @State private var composerNote: MobileNote?
+    @State private var resumeDraft: MobileDraftStore.Draft?
+
     var body: some View {
         TabView {
-            MobileOverviewView()
+            MobileOverviewView(isComposerPresented: $isComposerPresented, resumeDraft: $resumeDraft)
                 .tabItem { Label("Overview", systemImage: "sparkles.rectangle.stack") }
 
-            MobileLibraryView(documentsOnly: false)
+            MobileLibraryView(documentsOnly: false, isComposerPresented: $isComposerPresented, composerNote: $composerNote)
                 .tabItem { Label("Notes", systemImage: "note.text") }
 
-            MobileLibraryView(documentsOnly: true)
+            MobileLibraryView(documentsOnly: true, isComposerPresented: $isComposerPresented, composerNote: $composerNote)
                 .tabItem { Label("Documents", systemImage: "doc.text.image") }
 
             MobileSettingsView()
@@ -190,11 +195,19 @@ private struct MobileWorkspaceView: View {
         }
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+        .sheet(isPresented: $isComposerPresented) {
+            MobileComposerView(editingNote: composerNote, resumeDraft: resumeDraft)
+                .environmentObject(vault)
+        }
     }
 }
 
 private struct MobileOverviewView: View {
     @EnvironmentObject private var vault: MobileVaultStore
+    @Binding var isComposerPresented: Bool
+    @Binding var resumeDraft: MobileDraftStore.Draft?
+    @State private var recoveredDrafts: [MobileDraftStore.Draft] = []
+    private let draftStore = try? MobileDraftStore()
 
     private var recentNotes: [MobileNote] {
         Array(vault.notes.prefix(5))
@@ -219,6 +232,10 @@ private struct MobileOverviewView: View {
 
                         if vault.pendingWriteCount > 0 {
                             MobileOutboxBanner()
+                        }
+
+                        if !recoveredDrafts.isEmpty {
+                            draftRecovery
                         }
 
                         if !vault.recentlyOpened.isEmpty {
@@ -267,8 +284,54 @@ private struct MobileOverviewView: View {
                     .disabled(vault.isLoading)
                     .accessibilityLabel("Refresh vault")
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { isComposerPresented = true } label: {
+                        Image(systemName: "square.and.pencil")
+                    }
+                    .accessibilityLabel("New note")
+                }
+            }
+            .task { recoveredDrafts = await loadDrafts() }
+        }
+    }
+
+    /// Autosaved drafts that were never finished (app terminated or user
+    /// cancelled). One tap reopens them in the composer — nothing typed is
+    /// ever lost.
+    private var draftRecovery: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Unfinished notes", systemImage: "pencil.and.outline")
+                .font(.headline)
+                .foregroundStyle(MobileTheme.textPrimary)
+
+            ForEach(recoveredDrafts) { draft in
+                Button {
+                    resumeDraft = draft
+                    isComposerPresented = true
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(draft.title.isEmpty ? "Untitled note" : draft.title)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(MobileTheme.textPrimary)
+                        Text(String(draft.body.replacingOccurrences(of: "\n", with: " ").prefix(120)))
+                            .font(.caption)
+                            .foregroundStyle(MobileTheme.textSecondary)
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(14)
+                    .mobileLiquidGlass(cornerRadius: 16)
+                }
+                .buttonStyle(.plain)
             }
         }
+    }
+
+    private func loadDrafts() async -> [MobileDraftStore.Draft] {
+        // Only new-note drafts are surfaced here; edit-mode drafts are
+        // reopened directly from the note's Edit action.
+        guard let drafts = try? await draftStore?.all() else { return [] }
+        return drafts.filter { !$0.id.hasPrefix("edit-") }
     }
 
     private var overviewHeader: some View {
@@ -366,6 +429,8 @@ private struct MobileOutboxBanner: View {
 private struct MobileLibraryView: View {
     @EnvironmentObject private var vault: MobileVaultStore
     let documentsOnly: Bool
+    @Binding var isComposerPresented: Bool
+    @Binding var composerNote: MobileNote?
 
     @State private var query = ""
     @State private var statusFilter = "All"

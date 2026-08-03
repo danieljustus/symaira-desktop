@@ -6,11 +6,13 @@ enum ChatEntry: Identifiable {
     case user(id: UUID, text: String)
     case answer(id: UUID, text: String)
     case citation(id: UUID, path: String, title: String, snippet: String, score: Double?)
-    case tool(id: UUID, toolName: String, status: String)
+    // status: legacy MCP status event ("running"/"done"/"error"); otherwise
+    // "call" (tool invoked, inputs present) or "result" (tool output).
+    case tool(id: UUID, toolName: String, status: String, iteration: Int?, inputs: String?, output: String?, truncated: Bool?)
 
     var id: UUID {
         switch self {
-        case .user(let id, _), .answer(let id, _), .citation(let id, _, _, _, _), .tool(let id, _, _):
+        case .user(let id, _), .answer(let id, _), .citation(let id, _, _, _, _), .tool(let id, _, _, _, _, _, _):
             return id
         }
     }
@@ -22,6 +24,7 @@ struct AIDockView: View {
     @State private var query: String = ""
     @State private var chatHistory: [ChatEntry] = []
     @State private var isThinking = false
+    @State private var agentMode = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -64,6 +67,15 @@ struct AIDockView: View {
             Divider()
 
             HStack(spacing: 8) {
+                Toggle(isOn: $agentMode) {
+                    Text("Agent")
+                        .font(.caption)
+                        .foregroundColor(SymairaTheme.textSecondary)
+                }
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .help("Run the bounded agentic tool loop (read-only tools) instead of a one-shot answer")
+
                 TextField("Ask about your vault…", text: $query)
                     .textFieldStyle(.plain)
                     .onSubmit {
@@ -174,29 +186,98 @@ struct AIDockView: View {
             )
             .frame(maxWidth: 280, alignment: .leading)
 
-        case .tool(_, let toolName, let status):
-            HStack(spacing: 6) {
-                if status == "running" {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(SymairaTheme.goldPrimary)
-                } else if status == "done" {
+        case .tool(_, let toolName, let status, let iteration, let inputs, let output, let truncated):
+            if status == "call" {
+                // Agentic loop (issue #317): the model invoked a read-only
+                // tool — show name + inputs instead of a bare spinner.
+                HStack(spacing: 6) {
+                    Image(systemName: "wand.and.stars")
+                        .font(.caption)
+                        .foregroundColor(SymairaTheme.goldPrimary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(iterationLabel(iteration, toolName: toolName))
+                            .font(.caption)
+                            .foregroundColor(SymairaTheme.textSecondary)
+                        if let inputs, !inputs.isEmpty, inputs != "{}" {
+                            Text(inputs)
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundColor(SymairaTheme.textMuted)
+                                .lineLimit(2)
+                                .truncationMode(.middle)
+                        }
+                    }
+                }
+                .padding(6)
+                .background(SymairaTheme.bgCard)
+                .cornerRadius(6)
+            } else if status == "result" {
+                HStack(spacing: 6) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.caption)
                         .foregroundColor(SymairaTheme.goldPrimary)
-                } else if status == "error" {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.caption)
-                        .foregroundColor(.orange)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(iterationLabel(iteration, toolName: toolName))
+                            .font(.caption)
+                            .foregroundColor(SymairaTheme.textSecondary)
+                        if let output {
+                            Text(output)
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundColor(SymairaTheme.textMuted)
+                                .lineLimit(3)
+                                .truncationMode(.tail)
+                            if truncated == true {
+                                Text("(output truncated for the model)")
+                                    .font(.caption2)
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                    }
                 }
-                Text("\(toolName): \(status)")
-                    .font(.caption)
-                    .foregroundColor(SymairaTheme.textSecondary)
+                .padding(6)
+                .background(SymairaTheme.bgCard)
+                .cornerRadius(6)
+            } else if status == "usage" {
+                // Terminal event footer: token usage / context window.
+                HStack(spacing: 6) {
+                    Image(systemName: "bolt.fill")
+                        .font(.caption2)
+                        .foregroundColor(SymairaTheme.textMuted)
+                    Text(toolName)
+                        .font(.caption2)
+                        .foregroundColor(SymairaTheme.textMuted)
+                }
+                .padding(4)
+            } else {
+                HStack(spacing: 6) {
+                    if status == "running" {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(SymairaTheme.goldPrimary)
+                    } else if status == "done" {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption)
+                            .foregroundColor(SymairaTheme.goldPrimary)
+                    } else if status == "error" {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
+                    Text("\(toolName): \(status)")
+                        .font(.caption)
+                        .foregroundColor(SymairaTheme.textSecondary)
+                }
+                .padding(6)
+                .background(SymairaTheme.bgCard)
+                .cornerRadius(6)
             }
-            .padding(6)
-            .background(SymairaTheme.bgCard)
-            .cornerRadius(6)
         }
+    }
+
+    private func iterationLabel(_ iteration: Int?, toolName: String) -> String {
+        if let iteration {
+            return "Iteration \(iteration) · \(toolName)"
+        }
+        return toolName
     }
 
     private func scrollToBottom(proxy: ScrollViewProxy) {
@@ -216,7 +297,7 @@ struct AIDockView: View {
 
         Task {
             do {
-                let stream = core.ask(query: q)
+                let stream = core.ask(query: q, agent: agentMode)
                 isThinking = false
 
                 for try await event in stream {
@@ -244,14 +325,54 @@ struct AIDockView: View {
                         ))
 
                     case .tool:
-                        chatHistory.append(.tool(
-                            id: UUID(),
-                            toolName: event.toolName ?? "unknown",
-                            status: event.status ?? "unknown"
-                        ))
+                        if let inputs = event.toolInputs {
+                            // Agentic loop: the model invoked a tool.
+                            chatHistory.append(.tool(
+                                id: UUID(),
+                                toolName: event.toolName ?? "unknown",
+                                status: "call",
+                                iteration: event.iteration,
+                                inputs: inputs,
+                                output: nil,
+                                truncated: nil
+                            ))
+                        } else if event.toolOutput != nil {
+                            // Agentic loop: tool finished, output reported.
+                            chatHistory.append(.tool(
+                                id: UUID(),
+                                toolName: event.toolName ?? "unknown",
+                                status: "result",
+                                iteration: event.iteration,
+                                inputs: nil,
+                                output: event.toolOutput,
+                                truncated: event.toolOutputTruncated
+                            ))
+                        } else {
+                            chatHistory.append(.tool(
+                                id: UUID(),
+                                toolName: event.toolName ?? "unknown",
+                                status: event.status ?? "unknown",
+                                iteration: nil,
+                                inputs: nil,
+                                output: nil,
+                                truncated: nil
+                            ))
+                        }
 
                     case .done:
-                        break
+                        if let usage = event.tokenUsage, usage > 0 {
+                            let window = event.contextWindow ?? 0
+                            let label = window > 0 ? "usage: \(usage) tokens · context \(window)" : "usage: \(usage) tokens"
+                            chatHistory.append(.tool(
+                                id: UUID(),
+                                toolName: label,
+                                status: "usage",
+                                iteration: nil,
+                                inputs: nil,
+                                output: nil,
+                                truncated: nil
+                            ))
+                        }
                     }
                 }
             } catch {

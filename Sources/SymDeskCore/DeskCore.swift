@@ -87,10 +87,101 @@ public struct AIEvent: Codable, Equatable, Identifiable, Sendable {
     public let score: Double?
     public let toolName: String?
     public let status: String?
+    /// Agentic loop (issue #317): iteration number of a tool call/result.
+    public let iteration: Int?
+    /// Agentic loop: raw JSON inputs of the requested tool call, kept as a
+    /// compact JSON string for display (the wire format is an object).
+    public let toolInputs: String?
+    /// Agentic loop: tool output for a tool-result event.
+    public let toolOutput: String?
+    /// Agentic loop: whether the tool output was truncated for the model.
+    public let toolOutputTruncated: Bool?
+    /// Terminal event: cumulative token usage of the whole run.
+    public let tokenUsage: Int?
+    /// Terminal event: the model's context window in tokens (0 when unknown).
+    public let contextWindow: Int?
 
     enum CodingKeys: String, CodingKey {
-        case type, text, path, title, snippet, score, status
+        case type, text, path, title, snippet, score, status, iteration
         case toolName = "tool_name"
+        case toolInputs = "tool_inputs"
+        case toolOutput = "tool_output"
+        case toolOutputTruncated = "tool_output_truncated"
+        case tokenUsage = "token_usage"
+        case contextWindow = "context_window"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        type = try c.decode(AIEventType.self, forKey: .type)
+        text = try c.decodeIfPresent(String.self, forKey: .text)
+        path = try c.decodeIfPresent(String.self, forKey: .path)
+        title = try c.decodeIfPresent(String.self, forKey: .title)
+        snippet = try c.decodeIfPresent(String.self, forKey: .snippet)
+        score = try c.decodeIfPresent(Double.self, forKey: .score)
+        toolName = try c.decodeIfPresent(String.self, forKey: .toolName)
+        status = try c.decodeIfPresent(String.self, forKey: .status)
+        iteration = try c.decodeIfPresent(Int.self, forKey: .iteration)
+        toolOutput = try c.decodeIfPresent(String.self, forKey: .toolOutput)
+        toolOutputTruncated = try c.decodeIfPresent(Bool.self, forKey: .toolOutputTruncated)
+        tokenUsage = try c.decodeIfPresent(Int.self, forKey: .tokenUsage)
+        contextWindow = try c.decodeIfPresent(Int.self, forKey: .contextWindow)
+        if c.contains(.toolInputs) {
+            let box = try c.decode(JSONValue.self, forKey: .toolInputs)
+            if let data = try? JSONEncoder().encode(box) {
+                toolInputs = String(data: data, encoding: .utf8)
+            } else {
+                toolInputs = nil
+            }
+        } else {
+            toolInputs = nil
+        }
+    }
+}
+
+/// Decodes an arbitrary JSON value (any shape) so it can be re-encoded as a
+/// compact string for display.
+private enum JSONValue: Codable, Sendable {
+    case string(String)
+    case bool(Bool)
+    case int(Int)
+    case double(Double)
+    case array([JSONValue])
+    case object([String: JSONValue])
+    case null
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if let v = try? c.decode(String.self) {
+            self = .string(v)
+        } else if let v = try? c.decode(Bool.self) {
+            self = .bool(v)
+        } else if let v = try? c.decode(Int.self) {
+            self = .int(v)
+        } else if let v = try? c.decode(Double.self) {
+            self = .double(v)
+        } else if let v = try? c.decode([JSONValue].self) {
+            self = .array(v)
+        } else if let v = try? c.decode([String: JSONValue].self) {
+            self = .object(v)
+        } else if c.decodeNil() {
+            self = .null
+        } else {
+            throw DecodingError.dataCorruptedError(in: c, debugDescription: "unsupported JSON value")
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        switch self {
+        case .string(let v): try c.encode(v)
+        case .bool(let v): try c.encode(v)
+        case .int(let v): try c.encode(v)
+        case .double(let v): try c.encode(v)
+        case .array(let v): try c.encode(v)
+        case .object(let v): try c.encode(v)
+        case .null: try c.encodeNil()
+        }
     }
 }
 
@@ -815,7 +906,11 @@ public final class DeskCore: ObservableObject {
 		try await transport.ingestRetry(jobID: jobID, vaultArgs: vaultArgs)
     }
 
-    public func ask(query: String) -> AsyncThrowingStream<AIEvent, Error> {
+    /// Streams an AI answer for the given query. When `agent` is true the
+    /// bounded agentic tool loop runs instead of the one-shot ask: the CLI
+    /// exposes only read-only tools and emits tool-call / tool-result events
+    /// alongside the answer chunks (issue #317).
+    public func ask(query: String, agent: Bool = false) -> AsyncThrowingStream<AIEvent, Error> {
         return AsyncThrowingStream { continuation in
             Task {
                 guard let transport = self.transport else {
@@ -823,7 +918,9 @@ public final class DeskCore: ObservableObject {
                     return
                 }
                 do {
-                    for try await line in transport.commandStream(arguments: ["ask", query, "--json"] + self.vaultArgs, stdin: "") {
+                    var args = ["ask", query, "--json"]
+                    if agent { args.append("--agent") }
+                    for try await line in transport.commandStream(arguments: args + self.vaultArgs, stdin: "") {
                         if let streamError = try? JSONDecoder().decode(RemoteStreamError.self, from: Data(line.utf8)), streamError.type == "error" {
                             throw ServerConnectionError.server(status: 0, message: streamError.message)
                         }

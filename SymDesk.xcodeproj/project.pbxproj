@@ -28,12 +28,14 @@
 		1F1FA22E3100184255CC3362 /* DbViewTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EEEC588B327739FBAF693D4 /* DbViewTable.swift */; };
 		1F4F7DB3673E6ECA5569DAB0 /* fake-symdesk.sh in Resources */ = {isa = PBXBuildFile; fileRef = 7508239A9019F2C46A80B902 /* fake-symdesk.sh */; };
 		223A0903E7A1B2FF00EE3F7E /* MarkdownEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F547CF59C20684A5051D6B5 /* MarkdownEditorView.swift */; };
+		227CDC44DBD51355AB08A34B /* SymairaKeychain in Frameworks */ = {isa = PBXBuildFile; productRef = 08090B38D748C027B90358FA /* SymairaKeychain */; };
 		274F640915B4D63279459C99 /* DbViewCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48223DCBE4FF19264208BCB3 /* DbViewCalendar.swift */; };
 		2A33E6AC1739DB68412E9972 /* MarkdownTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6249D84E9A4012E9E8B0BFDB /* MarkdownTable.swift */; };
 		2A9DFE1A981C4FBDB9D49061 /* DbViewBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78F76334FF1AA665F17F9B0C /* DbViewBoard.swift */; };
 		2B00DA7BB2B7112DB63A3E17 /* ClassificationRulesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36ACCC6F6DD37EEAD70151F2 /* ClassificationRulesViewModel.swift */; };
 		2BC4F88B2DF3C7035A2030A1 /* SymairaTheme in Frameworks */ = {isa = PBXBuildFile; productRef = B65D992D4DD6927D37A99FCD /* SymairaTheme */; };
 		30F3B2FD4B8734AF6FFCA25A /* MeetingReviewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2BC2A21B0BFAB4B7F22A054 /* MeetingReviewModelTests.swift */; };
+		339765624B98BAE38ED98952 /* VaultRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA7A55CA87C470A4D58490B /* VaultRegistryTests.swift */; };
 		38E3530E7E3A4E1D85CBC384 /* libSymDeskCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF3DE41EB61C376999197AEF /* libSymDeskCore.a */; };
 		3D00605BDE73976880F49353 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233223A3C27BEA490CADB82C /* NotificationScheduler.swift */; };
 		40406909A4AAF62DD881D295 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EBE73852F5829E6BB25B82 /* NotificationManager.swift */; };
@@ -52,6 +54,8 @@
 		649F594D8BA36896933EED49 /* TagEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51C61A8C8D833F893CA57C53 /* TagEntry.swift */; };
 		64C0919422B9FBF88A826757 /* IngestQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B652D24B94E01B080A5139C0 /* IngestQueueView.swift */; };
 		6A91EA1E38A414D990E92D61 /* TranscriptTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60D1BDE16EFA4EF064577CB /* TranscriptTimelineView.swift */; };
+		6F2C2AB3F563B8089400FF53 /* VaultRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA6C5A97D0123DAB847C4D86 /* VaultRegistry.swift */; };
+		6FCD2E684BED82EFC30F8E8F /* SymairaKeychain in Frameworks */ = {isa = PBXBuildFile; productRef = 0687139EDC20F1840AE4F33C /* SymairaKeychain */; };
 		71F20F1D5036D27530C70F14 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3BEF32958D7F1CBB107FC724 /* SymairaToolKit */; };
 		74DF8458BEC41A75D6F1604C /* MobileRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C41A2D45CCFD80688933E2FC /* MobileRootView.swift */; };
 		818D035A27199BE0E1034DE8 /* SymairaIngestContract in Frameworks */ = {isa = PBXBuildFile; productRef = A811DD5B1E907A8EF49849F7 /* SymairaIngestContract */; };
@@ -75,6 +79,7 @@
 		ACEECA392E62D5A594FF6F5B /* DeskTransportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 748F5E216CEC59B66740A482 /* DeskTransportTests.swift */; };
 		AF33E56F24D6F0B026A98F5B /* PropertiesInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56278C647AEC161C2B94531F /* PropertiesInspector.swift */; };
 		B0BB83ED23EB9B4B5F55EF19 /* VaultAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A3B1306D1D67D45CE845EAF /* VaultAssets.swift */; };
+		B10322DAF0DCCA2C314DEA10 /* DuplicatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D5805210CB482E1EB0394C2 /* DuplicatesView.swift */; };
 		B4BBDCDD200A14353CFF2B9F /* DeskCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F756739286BF26EA17456C99 /* DeskCore.swift */; };
 		B88D845C3B8D9C6FEC6D7006 /* DbViewList.swift in Sources */ = {isa = PBXBuildFile; fileRef = D23C8BFA56B2714D100315DB /* DbViewList.swift */; };
 		BB6C55D988F6B8302B5A25BB /* MeetingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08CDFA027DFDFE0F07CFBA5 /* MeetingModels.swift */; };
@@ -157,6 +162,7 @@
 		0F5CBE2CE55A95870F3464BE /* ServerConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConnection.swift; sourceTree = "<group>"; };
 		1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreTests.swift; sourceTree = "<group>"; };
 		15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
+		1D5805210CB482E1EB0394C2 /* DuplicatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicatesView.swift; sourceTree = "<group>"; };
 		1EEEC588B327739FBAF693D4 /* DbViewTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewTable.swift; sourceTree = "<group>"; };
 		1F547CF59C20684A5051D6B5 /* MarkdownEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditorView.swift; sourceTree = "<group>"; };
 		203CD374D08A6A18BE8EF95A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -233,9 +239,11 @@
 		D12A33A921664E123D86FAF9 /* SymDeskMobile.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SymDeskMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D23C8BFA56B2714D100315DB /* DbViewList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewList.swift; sourceTree = "<group>"; };
 		D3377E99C5896425F50A2293 /* TagStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagStore.swift; sourceTree = "<group>"; };
+		DA6C5A97D0123DAB847C4D86 /* VaultRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultRegistry.swift; sourceTree = "<group>"; };
 		EDBAE07809E36B3393ACA8A0 /* LiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlass.swift; sourceTree = "<group>"; };
 		F136EF877D776AFD6D2CE697 /* CommandPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandPalette.swift; sourceTree = "<group>"; };
 		F756739286BF26EA17456C99 /* DeskCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCore.swift; sourceTree = "<group>"; };
+		FAA7A55CA87C470A4D58490B /* VaultRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultRegistryTests.swift; sourceTree = "<group>"; };
 		FB4B7F3287A383E8C979FE50 /* MeetingReviewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingReviewModel.swift; sourceTree = "<group>"; };
 		FF662679454A1D5730ECD171 /* GraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -251,6 +259,7 @@
 				5698513BA081E184D06175F5 /* SymairaToolKit in Frameworks */,
 				C538D3C4A6BE4D9208A2DCCE /* SymairaUpdateCheck in Frameworks */,
 				DAC209DBEC4B228C9C2E0C65 /* SymairaIngestContract in Frameworks */,
+				227CDC44DBD51355AB08A34B /* SymairaKeychain in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -286,6 +295,7 @@
 				71F20F1D5036D27530C70F14 /* SymairaToolKit in Frameworks */,
 				C336F49BE61DBF2A7C03CE8E /* SymairaUpdateCheck in Frameworks */,
 				F157E0C3058BA227E6106A58 /* SymairaIngestContract in Frameworks */,
+				6FCD2E684BED82EFC30F8E8F /* SymairaKeychain in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -307,6 +317,7 @@
 				0D31AEB4D808A7B5F64134E1 /* UpdateInstaller.swift */,
 				9A3B1306D1D67D45CE845EAF /* VaultAssets.swift */,
 				A175D91D3D83560906E78387 /* VaultConfig.swift */,
+				DA6C5A97D0123DAB847C4D86 /* VaultRegistry.swift */,
 			);
 			name = SymDeskCore;
 			path = Sources/SymDeskCore;
@@ -374,6 +385,7 @@
 				AF74B31CB37D574E3AC69032 /* DocumentGridView.swift */,
 				A2FC4C3A298D87F74C40AD0D /* DocumentThumbnailView.swift */,
 				BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */,
+				1D5805210CB482E1EB0394C2 /* DuplicatesView.swift */,
 				3A52EF5C8FFEE77D751DDAFE /* FilterChipsView.swift */,
 				FF662679454A1D5730ECD171 /* GraphView.swift */,
 				B0F34CB14C3886867573D63C /* HistoryView.swift */,
@@ -467,6 +479,7 @@
 				93B2D66520688E3347706F2A /* MarkdownPreviewTests.swift */,
 				BD503BDFC58C49F251B9A606 /* MarkdownTableTests.swift */,
 				37BB0170D51D31EB825E5869 /* UpdateInstallerTests.swift */,
+				FAA7A55CA87C470A4D58490B /* VaultRegistryTests.swift */,
 				6010C9B620B0150FC9F82BF5 /* Fixtures */,
 			);
 			name = SymDeskCoreTests;
@@ -496,6 +509,7 @@
 				3BEF32958D7F1CBB107FC724 /* SymairaToolKit */,
 				596C4C9EB9845BC180C460A4 /* SymairaUpdateCheck */,
 				6730086BD27F282EAE58D774 /* SymairaIngestContract */,
+				0687139EDC20F1840AE4F33C /* SymairaKeychain */,
 			);
 			productName = SymDeskCoreTests;
 			productReference = CAD6A1DD667A2F7EA1706073 /* SymDeskCoreTests.xctest */;
@@ -521,6 +535,7 @@
 				FB4C7E4FD05930A9DBAFDE35 /* SymairaToolKit */,
 				4D0E14080504B77CA18BBA53 /* SymairaUpdateCheck */,
 				834BF5FB29F232C62B0E48E4 /* SymairaIngestContract */,
+				08090B38D748C027B90358FA /* SymairaKeychain */,
 			);
 			productName = SymDeskAppTests;
 			productReference = 07FC117A1033D88F0534B546 /* SymDeskAppTests.xctest */;
@@ -739,6 +754,7 @@
 				C85A4C45BB4E561D0049F805 /* UpdateInstaller.swift in Sources */,
 				B0BB83ED23EB9B4B5F55EF19 /* VaultAssets.swift in Sources */,
 				D0EC53A22588E1A56A3E2F2B /* VaultConfig.swift in Sources */,
+				6F2C2AB3F563B8089400FF53 /* VaultRegistry.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -760,6 +776,7 @@
 				8D9B2E4C882F19841C75104C /* MarkdownPreviewTests.swift in Sources */,
 				62EF7665587A0B5275D86D6F /* MarkdownTableTests.swift in Sources */,
 				5FD95A9B634F3C3A5DEC9547 /* UpdateInstallerTests.swift in Sources */,
+				339765624B98BAE38ED98952 /* VaultRegistryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -786,6 +803,7 @@
 				087490E1CC2A424C7AEF4AC1 /* DocumentGridView.swift in Sources */,
 				C7C146956A2FA300951F787D /* DocumentThumbnailView.swift in Sources */,
 				0C92622CE6B3BB5D9C7AEC4C /* DocumentViewerView.swift in Sources */,
+				B10322DAF0DCCA2C314DEA10 /* DuplicatesView.swift in Sources */,
 				0834028EA8B0BF5164C4EE4A /* FilterChipsView.swift in Sources */,
 				C56310271DF0FBD1ED258CCA /* GraphView.swift in Sources */,
 				8EC2D4A9ACD0AE25F730956C /* HistoryView.swift in Sources */,
@@ -1345,6 +1363,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0687139EDC20F1840AE4F33C /* SymairaKeychain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
+			productName = SymairaKeychain;
+		};
+		08090B38D748C027B90358FA /* SymairaKeychain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;
+			productName = SymairaKeychain;
+		};
 		08CB4E22F18180CDF92120ED /* SymairaKeychain */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */;

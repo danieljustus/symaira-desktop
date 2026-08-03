@@ -61,6 +61,7 @@ struct ContentView: View {
         case companionTools
         case history
         case trash
+        case duplicates
     }
 
     // MARK: - Navigation History
@@ -225,6 +226,12 @@ struct ContentView: View {
                                         Text("Trash")
                                     }
                                 }
+                                Button(action: { navigate(to: .duplicates) }) {
+                                    HStack {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                        Text("Possible Duplicates")
+                                    }
+                                }
                             }
 
                             Section("Settings") {
@@ -318,6 +325,8 @@ struct ContentView: View {
                         HistoryView()
                     case .trash:
                         TrashView()
+                    case .duplicates:
+                        DuplicatesView()
                     case .graph:
                         GraphView { selectedNodeID in
                             navigateToNote(title: selectedNodeID)

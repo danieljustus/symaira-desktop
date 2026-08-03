@@ -9,7 +9,10 @@ options:
 packages:
   symaira-appkit:
     url: https://github.com/danieljustus/symaira-appkit
-    revision: 463cebd5c1c53353dc63da07f77730ff2611a90c
+    # 0.7.0: type scale (SymairaTextRole/.symairaText), form scaffold
+    # (SymairaFormSection/Row), status components (SymairaStatusLabel) —
+    # required by issue #352.
+    revision: 188cd923a06532d7ce9de46e05afaa5670ff37f6
 
 targets:
   SymDeskCore:

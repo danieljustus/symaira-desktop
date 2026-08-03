@@ -59,11 +59,11 @@ struct CompanionToolsView: View {
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Companion Tools")
-                .font(.title2.bold())
+                .symairaText(.title).bold()
                 .foregroundColor(SymairaTheme.textPrimary)
 
             Text("Optional tools that extend SymDesk with search, memory, and OCR capabilities. Install them with one click.")
-                .font(.callout)
+                .symairaText(.callout)
                 .foregroundColor(SymairaTheme.textSecondary)
         }
     }
@@ -71,14 +71,14 @@ struct CompanionToolsView: View {
     private var noHomebrewWarning: some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.title3)
+                .symairaText(.heading)
                 .foregroundColor(.orange)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Homebrew not found")
-                    .font(.body.weight(.semibold))
+                    .symairaText(.body).fontWeight(.semibold)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Text("Homebrew is required to install companion tools. Install it from [brew.sh](https://brew.sh) and restart SymDesk.")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
             }
         }
@@ -91,7 +91,7 @@ struct CompanionToolsView: View {
     private var toolsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Available Tools")
-                .font(.headline)
+                .symairaText(.subheading)
                 .foregroundColor(SymairaTheme.goldPrimary)
 
             ForEach(managedTools, id: \.id) { tool in
@@ -115,24 +115,24 @@ struct CompanionToolsView: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: isInstalled ? "checkmark.seal.fill" : (isInstalling ? "arrow.down.circle" : "questionmark.circle"))
-                    .font(.title3)
+                    .symairaText(.heading)
                     .foregroundColor(isInstalled ? .green : (isInstalling ? SymairaTheme.goldPrimary : SymairaTheme.textMuted))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(tool.name)
-                        .font(.body.weight(.semibold))
+                        .symairaText(.body).fontWeight(.semibold)
                         .foregroundColor(SymairaTheme.textPrimary)
                     if let version {
                         Text("v\(version)")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textSecondary)
                     } else if isUnknown {
                         Text("could not read the vault health report")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textMuted)
                     } else if !isInstalled && !isInstalling {
                         Text("Not installed")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                 }
@@ -141,7 +141,7 @@ struct CompanionToolsView: View {
 
                 if isInstalled {
                     Label("Installed", systemImage: "checkmark")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(.green)
                 } else if isInstalling {
                     ProgressView()
@@ -159,14 +159,14 @@ struct CompanionToolsView: View {
 
             if isInstalling, let output {
                 Text(output)
-                    .font(.caption2.monospaced())
+                    .symairaText(.caption).monospaced()
                     .foregroundColor(SymairaTheme.textMuted)
                     .lineLimit(4)
             }
 
             if let error {
                 Text(error)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.red)
             }
         }

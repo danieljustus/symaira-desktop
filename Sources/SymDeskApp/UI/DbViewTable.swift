@@ -40,7 +40,7 @@ struct DbViewTable: View {
                         GridRow {
                             ForEach(columns, id: \.self) { col in
                                 Text(col.uppercased())
-                                    .font(.headline)
+                                    .symairaText(.subheading)
                                     .bold()
                                     .foregroundColor(SymairaTheme.goldPrimary)
                             }
@@ -66,7 +66,7 @@ struct DbViewTable: View {
                                                 .onExitCommand {
                                                     clearEdit()
                                                 }
-                                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                                .textFieldStyle(.symaira)
                                         } else {
                                             Text("\(row.data[col] ?? "")")
                                                 .lineLimit(1)

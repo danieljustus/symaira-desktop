@@ -52,11 +52,11 @@ struct ReviewLaneView: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Review Lane")
-                    .font(.title2)
+                    .symairaText(.title)
                     .fontWeight(.bold)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Text("Approve low-confidence or metadata-missing files")
-                    .font(.subheadline)
+                    .symairaText(.callout)
                     .foregroundColor(SymairaTheme.textSecondary)
             }
             Spacer()
@@ -74,15 +74,15 @@ struct ReviewLaneView: View {
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "checkmark.shield.fill")
-                .font(.system(size: 48))
+                .symairaText(.display)
                 .foregroundColor(SymairaTheme.goldPrimary)
                 .shadow(color: SymairaTheme.glowIntense, radius: 14)
             Text("All caught up!")
-                .font(.title3)
+                .symairaText(.heading)
                 .fontWeight(.medium)
                 .foregroundColor(SymairaTheme.textPrimary)
             Text("No documents require manual metadata review.")
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -97,7 +97,7 @@ struct ReviewLaneView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Text(doc.title)
-                                .font(.headline)
+                                .symairaText(.subheading)
                                 .foregroundColor(SymairaTheme.textPrimary)
                                 .lineLimit(1)
                             Spacer()
@@ -105,17 +105,17 @@ struct ReviewLaneView: View {
                         }
 
                         Text(doc.path)
-                            .font(.caption2)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textMuted)
                             .lineLimit(1)
 
                         ForEach(doc.reasons, id: \.self) { reason in
                             HStack(spacing: 4) {
                                 Image(systemName: "exclamationmark.circle")
-                                    .font(.caption2)
+                                    .symairaText(.caption)
                                     .foregroundColor(SymairaTheme.goldSecondary)
                                 Text(reason)
-                                    .font(.caption)
+                                    .symairaText(.caption)
                                     .foregroundColor(SymairaTheme.textSecondary)
                             }
                         }
@@ -146,10 +146,10 @@ struct ReviewLaneView: View {
     private var noSelectionState: some View {
         VStack(spacing: 12) {
             Image(systemName: "doc.text.magnifyingglass")
-                .font(.system(size: 48))
+                .symairaText(.display)
                 .foregroundColor(SymairaTheme.textMuted)
             Text("Select a document to review")
-                .font(.title3)
+                .symairaText(.heading)
                 .foregroundColor(SymairaTheme.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -159,16 +159,16 @@ struct ReviewLaneView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Document Metadata Review")
-                    .font(.title3)
+                    .symairaText(.heading)
                     .fontWeight(.bold)
                     .foregroundColor(SymairaTheme.goldPrimary)
 
                 Text(doc.title)
-                    .font(.headline)
+                    .symairaText(.subheading)
                     .foregroundColor(SymairaTheme.textPrimary)
 
                 Text(doc.path)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
 
                 Divider()
@@ -176,16 +176,16 @@ struct ReviewLaneView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Document Type")
-                        .font(.subheadline)
+                        .symairaText(.callout)
                         .fontWeight(.semibold)
                         .foregroundColor(SymairaTheme.textSecondary)
                     TextField("Invoice, Contract, Tax, Insurance, etc.", text: $documentType)
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(.symaira)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Status")
-                        .font(.subheadline)
+                        .symairaText(.callout)
                         .fontWeight(.semibold)
                         .foregroundColor(SymairaTheme.textSecondary)
                     Picker("Status", selection: $docStatus) {
@@ -199,11 +199,11 @@ struct ReviewLaneView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Due Date")
-                        .font(.subheadline)
+                        .symairaText(.callout)
                         .fontWeight(.semibold)
                         .foregroundColor(SymairaTheme.textSecondary)
                     TextField("YYYY-MM-DD", text: $dueDateString)
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(.symaira)
                 }
 
                 Divider()
@@ -230,7 +230,7 @@ struct ReviewLaneView: View {
     private func confidenceBadge(_ confidence: Int) -> some View {
         let color: Color = confidence >= 80 ? SymairaTheme.goldPrimary : (confidence >= 50 ? .orange : .red)
         return Text("\(confidence)%")
-            .font(.system(.caption, design: .monospaced))
+            .symairaText(.monoSmall)
             .fontWeight(.bold)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)

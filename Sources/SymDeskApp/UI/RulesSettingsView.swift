@@ -64,7 +64,7 @@ struct RulesSettingsView: View {
                 if let action = viewModel.lastActionMessage {
                     Label(action, systemImage: "checkmark.circle")
                         .foregroundStyle(SymairaTheme.goldPrimary)
-                        .font(.callout)
+                        .symairaText(.callout)
                 }
                 classificationRulesCard
                 dryRunCard
@@ -142,7 +142,7 @@ struct RulesSettingsView: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Rules & Settings")
-                    .font(.largeTitle.bold())
+                    .symairaText(.display).bold()
                     .foregroundStyle(SymairaTheme.textPrimary)
                 Text("Manage classification and mail-ingest behavior through symingest's versioned contract.")
                     .foregroundStyle(SymairaTheme.textSecondary)
@@ -164,10 +164,10 @@ struct RulesSettingsView: View {
 	        HStack(spacing: 14) {
 	            VStack(alignment: .leading, spacing: 5) {
 	                Text(core.isRemote ? (core.serverURL?.absoluteString ?? "Connected") : (core.vaultPath ?? "Not configured"))
-	                    .font(.headline)
+	                    .symairaText(.subheading)
 	                    .foregroundStyle(SymairaTheme.textPrimary)
 	                Text(core.isRemote ? "Vault, originals, index and OCR queue live on this server." : "The app and CLI read this vault directly on your Mac.")
-	                    .font(.callout)
+	                    .symairaText(.callout)
 	                    .foregroundStyle(SymairaTheme.textSecondary)
 	            }
 	            Spacer()
@@ -196,10 +196,10 @@ struct RulesSettingsView: View {
 	            Toggle(isOn: finderFavoritesBinding) {
 	                VStack(alignment: .leading, spacing: 2) {
 	                    Text("Show vault in Finder's Favorites sidebar")
-	                        .font(.body)
+	                        .symairaText(.body)
 	                        .foregroundStyle(SymairaTheme.textPrimary)
 	                    Text("Adds the vault folder to Finder's sidebar for one-click access. Removing it from Finder's sidebar is respected and not undone automatically.")
-	                        .font(.caption)
+	                        .symairaText(.caption)
 	                        .foregroundStyle(SymairaTheme.textSecondary)
 	                }
 	            }
@@ -223,10 +223,10 @@ struct RulesSettingsView: View {
 	        Toggle(isOn: $showThumbnails) {
 	            VStack(alignment: .leading, spacing: 2) {
 	                Text("Show content preview thumbnails")
-	                    .font(.body)
+	                    .symairaText(.body)
 	                    .foregroundStyle(SymairaTheme.textPrimary)
 	                Text("When enabled, document and note cards show a text preview of the first content instead of a generic SF Symbol icon.")
-	                    .font(.caption)
+	                    .symairaText(.caption)
 	                    .foregroundStyle(SymairaTheme.textSecondary)
 	            }
 	        }
@@ -249,9 +249,9 @@ struct RulesSettingsView: View {
                             Image(systemName: "line.3.horizontal.decrease.circle")
                                 .foregroundStyle(SymairaTheme.goldPrimary)
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(rule.pattern).font(.headline)
+                                Text(rule.pattern).symairaText(.subheading)
                                 Text("\(rule.kind) → \(rule.value)")
-                                    .font(.callout)
+                                    .symairaText(.callout)
                                     .foregroundStyle(SymairaTheme.textSecondary)
                             }
                             Spacer()
@@ -291,22 +291,22 @@ struct RulesSettingsView: View {
 
             if let result = viewModel.dryRunResult {
                 Text("\(result.matchedDocuments) of \(result.totalDocuments) documents match")
-                    .font(.headline)
+                    .symairaText(.subheading)
                 ForEach(result.matches) { match in
                     Label("\(match.title) — \(match.notePath)", systemImage: "checkmark.circle")
-                        .font(.callout)
+                        .symairaText(.callout)
                         .foregroundStyle(SymairaTheme.textSecondary)
                 }
                 ForEach(result.skipped) { skipped in
                     Label("Skipped: \(skipped.notePath) — \(skipped.reason)", systemImage: "exclamationmark.triangle")
-                        .font(.callout)
+                        .symairaText(.callout)
                         .foregroundStyle(SymairaTheme.goldSecondary)
                 }
             }
 
             if let error = viewModel.lastError, viewModel.lastErrorKind == .validation {
                 Text(error)
-                    .font(.callout)
+                    .symairaText(.callout)
                     .foregroundStyle(.red)
             }
         }
@@ -323,7 +323,7 @@ struct RulesSettingsView: View {
             } else {
                 HStack {
                     Text("Changes apply after restarting the symingest watcher.")
-                        .font(.callout)
+                        .symairaText(.callout)
                         .foregroundStyle(SymairaTheme.textSecondary)
                     Spacer()
                     Button("New Mail Account") { editingMail = nil; showingMailEditor = true }
@@ -333,10 +333,10 @@ struct RulesSettingsView: View {
                 if viewModel.mailAccounts.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Mail import isn't set up yet.")
-                            .font(.callout.weight(.medium))
+                            .symairaText(.callout).fontWeight(.medium)
                             .foregroundStyle(SymairaTheme.textPrimary)
                         Text("Click \"New Mail Account\" above to configure an IMAP account for automated email ingestion.")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundStyle(SymairaTheme.textSecondary)
                     }
                     .padding(.vertical, 4)
@@ -346,13 +346,13 @@ struct RulesSettingsView: View {
                             Image(systemName: "envelope")
                                 .foregroundStyle(SymairaTheme.goldPrimary)
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(account.username + "@" + account.host).font(.headline)
+                                Text(account.username + "@" + account.host).symairaText(.subheading)
                                 Text("\(account.action) · \(account.folder) · password: \(account.passwordSecretKind ?? "unknown")")
-                                    .font(.callout)
+                                    .symairaText(.callout)
                                     .foregroundStyle(SymairaTheme.textSecondary)
                                 if !account.from.isEmpty || !account.subject.isEmpty {
                                     Text("Filters: \((account.from + account.subject).joined(separator: ", "))")
-                                        .font(.caption)
+                                        .symairaText(.caption)
                                         .foregroundStyle(SymairaTheme.textMuted)
                                 }
                             }
@@ -371,18 +371,12 @@ struct RulesSettingsView: View {
         }
     }
 
+    /// Shared settings card, built on the appkit form scaffold (issue #352):
+    /// section label header + glass card body.
     private func settingsCard<Content: View>(title: String, systemImage: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Label(title, systemImage: systemImage)
-                .font(.title3.bold())
-                .foregroundStyle(SymairaTheme.textPrimary)
+        SymairaFormSection(title) {
             content()
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.04))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay { RoundedRectangle(cornerRadius: 12).stroke(SymairaTheme.borderGlass, lineWidth: 1) }
     }
 
     /// Card that shows and controls the consume (watched inbox) folder.
@@ -402,7 +396,7 @@ struct RulesSettingsView: View {
                     if editingConsumeFolderPath {
                         VStack(alignment: .leading, spacing: 6) {
                             TextField("Folder path", text: $editedConsumeFolderPath)
-                                .textFieldStyle(.roundedBorder)
+                                .textFieldStyle(.symaira)
                             HStack {
                                 Button("Save") {
                                     Task {
@@ -429,12 +423,12 @@ struct RulesSettingsView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(status.inboxPath)
-                                    .font(.headline)
+                                    .symairaText(.subheading)
                                     .foregroundStyle(SymairaTheme.textPrimary)
                                 Text(status.configuredPath.isEmpty
                                      ? "Default path (not explicitly configured)"
                                      : "Configured in symdesk config")
-                                    .font(.caption)
+                                    .symairaText(.caption)
                                     .foregroundStyle(SymairaTheme.textMuted)
                             }
                             Spacer()
@@ -454,7 +448,7 @@ struct RulesSettingsView: View {
                         Label(watcher.isWatching ? "Running" : "Stopped",
                               systemImage: watcher.isWatching ? "play.fill" : "stop.fill")
                             .foregroundStyle(watcher.isWatching ? .green : SymairaTheme.textSecondary)
-                            .font(.subheadline)
+                            .symairaText(.callout)
                         Spacer()
                         if watcher.isWatching {
                             Button("Stop") {
@@ -480,26 +474,26 @@ struct RulesSettingsView: View {
 
                         // Recent activity
                         Text("Recent activity")
-                            .font(.subheadline.weight(.semibold))
+                            .symairaText(.subheading)
                             .foregroundStyle(SymairaTheme.textPrimary)
 
                         ForEach(watcher.recentActivity.prefix(5)) { event in
                             HStack(spacing: 8) {
                                 Image(systemName: iconForEvent(event.event))
                                     .foregroundStyle(SymairaTheme.goldSecondary)
-                                    .font(.caption)
+                                    .symairaText(.caption)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(event.event.replacingOccurrences(of: "_", with: " ").capitalized)
-                                        .font(.caption.weight(.medium))
+                                        .symairaText(.caption).fontWeight(.medium)
                                         .foregroundStyle(SymairaTheme.textPrimary)
                                     Text(URL(fileURLWithPath: event.path).lastPathComponent)
-                                        .font(.caption2)
+                                        .symairaText(.caption)
                                         .foregroundStyle(SymairaTheme.textMuted)
                                         .lineLimit(1)
                                 }
                                 Spacer()
                                 Text(formattedTimestamp(event.ts))
-                                    .font(.caption2)
+                                    .symairaText(.caption)
                                     .foregroundStyle(SymairaTheme.textMuted)
                             }
                             .padding(.vertical, 2)
@@ -547,11 +541,11 @@ struct RulesSettingsView: View {
 
                     if aiProvider == "ollama" {
                         TextField("Ollama endpoint URL (e.g. http://localhost:11434)", text: $aiOllamaURL)
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(.symaira)
 
                         if aiAvailableModels.isEmpty {
                             TextField("Model", text: $aiModel)
-                                .textFieldStyle(.roundedBorder)
+                                .textFieldStyle(.symaira)
                         } else {
                             Picker("Model", selection: $aiModel) {
                                 ForEach(aiAvailableModels, id: \.self) { name in
@@ -561,13 +555,13 @@ struct RulesSettingsView: View {
                         }
                     } else if aiProvider == "anthropic" {
                         SecureField("API key or symvault reference (op://...)", text: $aiAPIKey)
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(.symaira)
                         TextField("Model", text: $aiModel)
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(.symaira)
                     }
 
                     TextField("Max tokens", text: $aiMaxTokens)
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(.symaira)
                         .frame(maxWidth: 160)
 
                     HStack {
@@ -600,11 +594,11 @@ struct RulesSettingsView: View {
                                 systemImage: "checkmark.circle"
                             )
                             .foregroundStyle(.green)
-                            .font(.caption)
+                            .symairaText(.caption)
                         } else {
                             Label(result.error ?? "Connection failed.", systemImage: "exclamationmark.triangle")
                                 .foregroundStyle(.orange)
-                                .font(.caption)
+                                .symairaText(.caption)
                         }
                     }
                 }
@@ -689,7 +683,7 @@ struct RulesSettingsView: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: systemImage).foregroundStyle(SymairaTheme.goldSecondary)
             VStack(alignment: .leading, spacing: 6) {
-                Text(title).font(.headline).foregroundStyle(SymairaTheme.textPrimary)
+                Text(title).symairaText(.subheading).foregroundStyle(SymairaTheme.textPrimary)
                 Text(message).foregroundStyle(SymairaTheme.textSecondary)
                 action()
             }
@@ -720,7 +714,7 @@ private struct RuleEditorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text(existing == nil ? "New Classification Rule" : "Edit Classification Rule")
-                .font(.title2.bold())
+                .symairaText(.title).bold()
             Form {
                 TextField("Pattern", text: $pattern)
                 TextField("Kind: category, tag, correspondent, document_type", text: $kind)
@@ -776,7 +770,7 @@ private struct MailEditorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(existing == nil ? "New Mail Account" : "Edit Mail Account")
-                .font(.title2.bold())
+                .symairaText(.title).bold()
             Form {
                 TextField("IMAP host", text: $host)
                 TextField("Port", text: $port)

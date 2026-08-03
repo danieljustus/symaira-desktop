@@ -38,14 +38,14 @@ struct PropertiesInspector: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Properties")
-                    .font(.headline)
+                    .symairaText(.subheading)
                     .foregroundColor(SymairaTheme.goldPrimary)
 
                 if isLoading && properties.isEmpty {
                     ProgressView().tint(SymairaTheme.goldPrimary)
                 } else if properties.isEmpty {
                     Text("No properties yet.")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
 
@@ -55,9 +55,9 @@ struct PropertiesInspector: View {
 
                 HStack {
                     TextField("Property", text: $newKey)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .textFieldStyle(.symaira)
                     TextField("Value", text: $newValue)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .textFieldStyle(.symaira)
                     Button {
                         let key = newKey.trimmingCharacters(in: .whitespaces)
                         guard !key.isEmpty else { return }
@@ -76,7 +76,7 @@ struct PropertiesInspector: View {
                 if !inverseRelations.isEmpty {
                     Divider().overlay(SymairaTheme.borderGlass)
                     Text("Linked From")
-                        .font(.headline)
+                        .symairaText(.subheading)
                         .foregroundColor(SymairaTheme.goldPrimary)
                     ForEach(inverseRelations) { relation in
                         HStack {
@@ -86,7 +86,7 @@ struct PropertiesInspector: View {
                                 Text(relation.title.isEmpty ? relation.source : relation.title)
                                     .foregroundColor(SymairaTheme.textPrimary)
                                 Text(relation.property == "_link" ? "wikilink" : "via \(relation.property)")
-                                    .font(.caption)
+                                    .symairaText(.caption)
                                     .foregroundColor(SymairaTheme.textMuted)
                             }
                         }
@@ -95,7 +95,7 @@ struct PropertiesInspector: View {
 
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(.red)
                 }
             }
@@ -135,7 +135,7 @@ struct PropertiesInspector: View {
         let kind = Self.kind(forKey: key, value: value)
         VStack(alignment: .leading, spacing: 2) {
             Text(key)
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textMuted)
             switch kind {
             case .status:
@@ -171,7 +171,7 @@ struct PropertiesInspector: View {
                             ForEach(tags, id: \.self) { tag in
                                 Button(action: { onTagClick?(tag) }) {
                                     Text(tag)
-                                        .font(.caption)
+                                        .symairaText(.caption)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
                                         .background(Color.white.opacity(0.08))
@@ -229,8 +229,8 @@ private struct CommitTextField: View {
 
     var body: some View {
         TextField("Value", text: $text)
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .font(monospaced ? .body.monospaced() : .body)
+            .textFieldStyle(.symaira)
+            .symairaText(monospaced ? .mono : .body)
             .focused($focused)
             .onSubmit { commit() }
             .onChange(of: focused) { _, isFocused in

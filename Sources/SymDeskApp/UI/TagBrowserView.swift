@@ -32,16 +32,16 @@ struct TagBrowserView: View {
             // Filter field
             HStack(spacing: 4) {
                 Image(systemName: "magnifyingglass")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
                 TextField("Filter tags…", text: $filterText)
                     .textFieldStyle(.plain)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textPrimary)
                 if !filterText.isEmpty {
                     Button(action: { filterText = "" }) {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                     .buttonStyle(.plain)
@@ -54,22 +54,22 @@ struct TagBrowserView: View {
             HStack(spacing: 4) {
                 Button(action: { sortByCount = true }) {
                     Text("Count")
-                        .font(.caption2)
+                        .symairaText(.caption)
                         .foregroundColor(sortByCount ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
                 }
                 .buttonStyle(.plain)
                 Text("·")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
                 Button(action: { sortByCount = false }) {
                     Text("A–Z")
-                        .font(.caption2)
+                        .symairaText(.caption)
                         .foregroundColor(!sortByCount ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
                 }
                 .buttonStyle(.plain)
                 Spacer()
                 Text("\(filteredTags.count) tag\(filteredTags.count == 1 ? "" : "s")")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             }
             .padding(.horizontal, 8)
@@ -79,10 +79,10 @@ struct TagBrowserView: View {
             if filteredTags.isEmpty {
                 VStack(spacing: 6) {
                     Image(systemName: "tag")
-                        .font(.title3)
+                        .symairaText(.heading)
                         .foregroundColor(SymairaTheme.textMuted)
                     Text(tags.isEmpty ? "No tags yet" : "No tags match")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 .frame(maxWidth: .infinity)
@@ -94,15 +94,15 @@ struct TagBrowserView: View {
                             Button(action: { onTagClick(tag.name) }) {
                                 HStack(spacing: 6) {
                                     Image(systemName: "tag.fill")
-                                        .font(.caption2)
+                                        .symairaText(.caption)
                                         .foregroundColor(SymairaTheme.goldSecondary)
                                     Text(tag.name)
-                                        .font(.caption)
+                                        .symairaText(.caption)
                                         .foregroundColor(SymairaTheme.textPrimary)
                                         .lineLimit(1)
                                     Spacer()
                                     Text("\\(tag.count)")
-                                        .font(.caption2)
+                                        .symairaText(.caption)
                                         .foregroundColor(SymairaTheme.textSecondary)
                                         .padding(.horizontal, 5)
                                         .padding(.vertical, 1)

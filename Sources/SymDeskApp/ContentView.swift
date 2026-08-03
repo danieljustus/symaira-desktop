@@ -100,10 +100,10 @@ struct ContentView: View {
                     SymairaScreen {
                         VStack(spacing: 12) {
                             Image(systemName: "exclamationmark.triangle")
-                                .font(.system(size: 40))
+                                .symairaText(.title)
                                 .foregroundColor(SymairaTheme.goldPrimary)
                             Text("Error")
-                                .font(.title.bold())
+                                .symairaText(.title).bold()
                                 .foregroundColor(SymairaTheme.textPrimary)
                             Text(err)
                                 .foregroundColor(SymairaTheme.textSecondary)
@@ -128,7 +128,7 @@ struct ContentView: View {
                         // Fixed sidebar header with title and New Note button (#293, #294a)
                         HStack {
                             Text("SymDesk")
-                                .font(.title3.bold())
+                                .symairaText(.heading).bold()
                                 .foregroundColor(SymairaTheme.textPrimary)
                             Spacer()
                             Button(action: { isShowingNewNoteSheet = true }) {
@@ -161,7 +161,7 @@ struct ContentView: View {
                                             Spacer()
                                             if let count = preset.status == nil ? docTotalCount : docCounts[preset.status!.rawValue] {
                                                 Text("\(count)")
-                                                    .font(.caption)
+                                                    .symairaText(.caption)
                                                     .foregroundColor(SymairaTheme.textSecondary)
                                                     .padding(.horizontal, 6)
                                                     .padding(.vertical, 2)
@@ -356,7 +356,7 @@ struct ContentView: View {
                                         Image(systemName: "exclamationmark.triangle.fill")
                                             .foregroundStyle(SymairaTheme.goldPrimary)
                                         Text("iCloud sync conflict detected")
-                                            .font(.caption)
+                                            .symairaText(.caption)
                                             .foregroundColor(SymairaTheme.goldSecondary)
                                         Spacer()
                                         Button("Keep Mine") {
@@ -394,7 +394,7 @@ struct ContentView: View {
                                         Image(systemName: "exclamationmark.triangle.fill")
                                             .foregroundStyle(.red)
                                         Text("Save failed: \(saveError)")
-                                            .font(.caption)
+                                            .symairaText(.caption)
                                             .foregroundColor(SymairaTheme.textSecondary)
                                         Spacer()
                                         Button("Retry") {
@@ -420,7 +420,7 @@ struct ContentView: View {
                                         Image(systemName: "exclamationmark.triangle.fill")
                                             .foregroundStyle(.red)
                                         Text(loadError)
-                                            .font(.caption)
+                                            .symairaText(.caption)
                                             .foregroundColor(SymairaTheme.textSecondary)
                                         Spacer()
                                         Button("Retry") {
@@ -510,16 +510,16 @@ struct ContentView: View {
                                 })
                             }
                             Text("Backlinks")
-                                .font(.headline)
+                                .symairaText(.subheading)
                                 .foregroundColor(SymairaTheme.goldPrimary)
                                 .padding()
                             if let blErr = backlinksError {
                                 HStack(spacing: 6) {
                                     Image(systemName: "exclamationmark.triangle.fill")
                                         .foregroundStyle(.orange)
-                                        .font(.caption2)
+                                        .symairaText(.caption)
                                     Text(blErr)
-                                        .font(.caption2)
+                                        .symairaText(.caption)
                                         .foregroundColor(SymairaTheme.textSecondary)
                                     Spacer()
                                 }
@@ -619,7 +619,7 @@ struct ContentView: View {
                                     Image(systemName: (doctorReport?.overall == "ok" || doctorReport == nil) ? "checkmark.shield" : "exclamationmark.triangle")
                                         .foregroundColor(doctorReport?.overall == "ok" ? SymairaTheme.goldPrimary : SymairaTheme.goldSecondary)
                                     Text(doctorSummaryText)
-                                        .font(.caption)
+                                        .symairaText(.caption)
                                         .foregroundColor(SymairaTheme.textMuted)
                                 }
                             }
@@ -629,7 +629,7 @@ struct ContentView: View {
                             }
                             if let lastEv = watcher.latestEvent {
                                 Text("Last event: \\(lastEv.event) on \\(lastEv.path)")
-                                    .font(.caption)
+                                    .symairaText(.caption)
                                     .foregroundColor(SymairaTheme.textMuted)
                             }
                         }
@@ -1193,7 +1193,7 @@ struct ContentView: View {
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Text(folder)
-                            .font(.caption2)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textMuted)
                             .lineLimit(1)
                             .truncationMode(.tail)
@@ -1238,7 +1238,7 @@ private struct DoctorReportPopoverView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("System Diagnostics")
-                .font(.headline)
+                .symairaText(.subheading)
                 .foregroundColor(SymairaTheme.textPrimary)
 
             if let report {
@@ -1248,12 +1248,12 @@ private struct DoctorReportPopoverView: View {
                     statusRow(label: "Contract & ASN", status: report.contract?.status, detail: report.contract?.message ?? (report.contract?.filesFound.map { "\($0) files scanned" }))
                     if let ai = report.ai {
                         HStack {
-                            Text("AI Provider:").font(.caption.weight(.medium)).foregroundColor(SymairaTheme.textSecondary)
-                            Text("\(ai.provider ?? "Ollama") \(ai.model ?? "")").font(.caption).foregroundColor(SymairaTheme.textPrimary)
+                            Text("AI Provider:").symairaText(.caption).fontWeight(.medium).foregroundColor(SymairaTheme.textSecondary)
+                            Text("\(ai.provider ?? "Ollama") \(ai.model ?? "")").symairaText(.caption).foregroundColor(SymairaTheme.textPrimary)
                         }
                     }
                     Divider()
-                    Text("Tools:").font(.caption.weight(.semibold)).foregroundColor(SymairaTheme.textSecondary)
+                    Text("Tools:").symairaText(.caption).fontWeight(.semibold).foregroundColor(SymairaTheme.textSecondary)
                     VStack(alignment: .leading, spacing: 4) {
                         toolRow("symseek", report: report)
                         toolRow("symmemory", report: report)
@@ -1265,7 +1265,7 @@ private struct DoctorReportPopoverView: View {
                 }
             } else {
                 Text("Doctor report unavailable.")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
             }
         }
@@ -1277,14 +1277,14 @@ private struct DoctorReportPopoverView: View {
         HStack(alignment: .top) {
             Image(systemName: status == "ok" ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                 .foregroundColor(status == "ok" ? .green : .orange)
-                .font(.caption)
+                .symairaText(.caption)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(label): \(status ?? "unknown")")
-                    .font(.caption.weight(.medium))
+                    .symairaText(.caption).fontWeight(.medium)
                     .foregroundColor(SymairaTheme.textPrimary)
                 if let detail, !detail.isEmpty {
                     Text(detail)
-                        .font(.caption2)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
                 }
             }
@@ -1296,15 +1296,15 @@ private struct DoctorReportPopoverView: View {
         let version = report.versions?[tool] ?? ""
         return HStack {
             Image(systemName: isAvail ? "checkmark" : "xmark")
-                .font(.caption2)
+                .symairaText(.caption)
                 .foregroundColor(isAvail ? .green : .secondary)
             Text(tool)
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textPrimary)
             Spacer()
             if !version.isEmpty {
                 Text("v\(version)")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             }
         }
@@ -1333,11 +1333,11 @@ private struct NewNoteSheet: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "doc.badge.plus")
-                    .font(.title2)
+                    .symairaText(.title)
                     .foregroundColor(SymairaTheme.goldPrimary)
                 TextField("Note title", text: $title)
                     .textFieldStyle(.plain)
-                    .font(.title2)
+                    .symairaText(.title)
                     .foregroundColor(SymairaTheme.textPrimary)
                     .focused($isTitleFocused)
                     .onSubmit { createNote() }
@@ -1366,7 +1366,7 @@ private struct NewNoteSheet: View {
                 }
                 if let err = errorMessage {
                     Text(err)
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(.red)
                 }
                 Spacer()
@@ -1420,10 +1420,10 @@ private struct NotificationDeniedBanner: View {
                 .foregroundStyle(SymairaTheme.goldPrimary)
             VStack(alignment: .leading, spacing: 1) {
                 Text("Notifications are off")
-                    .font(.caption.weight(.semibold))
+                    .symairaText(.caption).fontWeight(.semibold)
                     .foregroundStyle(SymairaTheme.textPrimary)
                 Text("Enable them in System Settings to receive review reminders.")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
             Spacer(minLength: 12)
@@ -1474,11 +1474,11 @@ private struct AppErrorBanner: View {
                 .foregroundStyle(SymairaTheme.goldPrimary)
             VStack(alignment: .leading, spacing: 1) {
                 Text(error.message)
-                    .font(.caption.weight(.semibold))
+                    .symairaText(.caption).fontWeight(.semibold)
                     .foregroundStyle(SymairaTheme.textPrimary)
                 if let detail = error.detail {
                     Text(detail)
-                        .font(.caption2)
+                        .symairaText(.caption)
                         .foregroundStyle(SymairaTheme.textSecondary)
                 }
             }
@@ -1516,10 +1516,10 @@ private struct VersionMismatchBanner: View {
                 .foregroundStyle(SymairaTheme.goldPrimary)
             VStack(alignment: .leading, spacing: 1) {
                 Text("CLI version mismatch")
-                    .font(.caption.weight(.semibold))
+                    .symairaText(.caption).fontWeight(.semibold)
                     .foregroundStyle(SymairaTheme.textPrimary)
                 Text("App v\(appVersion) is driving CLI v\(coreVersion). Run `brew upgrade symdesk` to update.")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
             Spacer(minLength: 12)

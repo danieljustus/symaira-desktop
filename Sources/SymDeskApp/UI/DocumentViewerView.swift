@@ -209,14 +209,14 @@ struct DocumentViewerView: View {
         HStack(spacing: 10) {
             Image(systemName: docTypeIcon)
                 .foregroundStyle(SymairaTheme.goldPrimary)
-                .font(.title3)
+                .symairaText(.heading)
             VStack(alignment: .leading, spacing: 1) {
                 Text(document.title)
-                    .font(.headline)
+                    .symairaText(.subheading)
                     .foregroundStyle(SymairaTheme.textPrimary)
                     .lineLimit(1)
                 Text(viewerSubtitle)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
             Spacer(minLength: 16)
@@ -234,7 +234,7 @@ struct DocumentViewerView: View {
                 .disabled(currentPageIndex <= 0)
                 .help("Previous page")
                 Text("\(currentPageIndex + 1) / \(pageCount)")
-                    .font(.caption.monospacedDigit())
+                    .symairaText(.caption).monospacedDigit()
                     .foregroundStyle(SymairaTheme.textSecondary)
                 Button(action: { goToNextPage() }) {
                     Image(systemName: "chevron.right")
@@ -311,7 +311,7 @@ struct DocumentViewerView: View {
                     VStack(spacing: 0) {
                         if let loadMessage {
                             Label(loadMessage, systemImage: "exclamationmark.triangle.fill")
-                                .font(.caption)
+                                .symairaText(.caption)
                                 .foregroundStyle(SymairaTheme.goldSecondary)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
@@ -343,13 +343,13 @@ struct DocumentViewerView: View {
     private var noContentView: some View {
         VStack(spacing: 12) {
             Image(systemName: "doc.text.magnifyingglass")
-                .font(.system(size: 48))
+                .symairaText(.display)
                 .foregroundColor(SymairaTheme.textMuted)
             Text("No preview available")
-                .font(.title3)
+                .symairaText(.heading)
                 .foregroundColor(SymairaTheme.textSecondary)
             Text(loadMessage ?? "The original file and its Markdown note could not be read.")
-                .font(.subheadline)
+                .symairaText(.callout)
                 .foregroundStyle(SymairaTheme.textMuted)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 420)
@@ -412,15 +412,15 @@ struct DocumentViewerView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Tags")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.secondary)
                 TextField("Tags (comma-separated)", text: $editTags)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.symaira)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Note")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.secondary)
                 Toggle("Visible in note", isOn: $editNoteVisible)
                     .toggleStyle(.checkbox)
@@ -429,12 +429,12 @@ struct DocumentViewerView: View {
             if document.confidence > 0 {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Classification Confidence")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(.secondary)
                     HStack {
                         confidenceBar
                         Text("\(document.confidence)%")
-                            .font(.caption.monospacedDigit())
+                            .symairaText(.caption).monospacedDigit()
                             .foregroundColor(.secondary)
                     }
                 }
@@ -446,7 +446,7 @@ struct DocumentViewerView: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Status")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.secondary)
                 FlowLayout(spacing: 6) {
                     ForEach(DocumentStatus.allCases) { status in
@@ -457,10 +457,10 @@ struct DocumentViewerView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Due Date")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.secondary)
                 TextField("YYYY-MM-DD", text: $editDueDate)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.symaira)
             }
         }
     }
@@ -469,9 +469,9 @@ struct DocumentViewerView: View {
         Button(action: { editStatus = status.rawValue }) {
             HStack(spacing: 4) {
                 Image(systemName: status.systemImage)
-                    .font(.caption2)
+                    .symairaText(.caption)
                 Text(status.label)
-                    .font(.caption)
+                    .symairaText(.caption)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -506,7 +506,7 @@ struct DocumentViewerView: View {
             if !props.isEmpty {
                 Divider()
                 Text("Properties")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.secondary)
                 ForEach(props.sorted(by: { $0.key < $1.key }), id: \.key) { key, value in
                     inspectorRow(label: key, value: value, isMonospaced: true)
@@ -519,7 +519,7 @@ struct DocumentViewerView: View {
                     Image(systemName: "doc.badge.gearshape")
                         .foregroundColor(SymairaTheme.goldSecondary)
                     Text(status)
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
                         .lineLimit(nil)
                 }
@@ -532,15 +532,15 @@ struct DocumentViewerView: View {
     private func inspectorRow(label: String, value: String, isMonospaced: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(.secondary)
             if value.isEmpty {
                 Text("—")
-                    .font(isMonospaced ? .caption.monospacedDigit() : .body)
+                    .symairaText(isMonospaced ? .monoSmall : .body).monospacedDigit()
                     .foregroundColor(.secondary)
             } else {
                 Text(value)
-                    .font(isMonospaced ? .caption.monospacedDigit() : .body)
+                    .symairaText(isMonospaced ? .monoSmall : .body).monospacedDigit()
                     .textSelection(.enabled)
             }
         }
@@ -549,11 +549,11 @@ struct DocumentViewerView: View {
     private func editableRow(label: String, text: Binding<String>, placeholder: String = "", monospaced: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(.secondary)
             TextField(placeholder, text: text)
-                .textFieldStyle(.roundedBorder)
-                .font(monospaced ? .body.monospaced() : .body)
+                .textFieldStyle(.symaira)
+                .symairaText(monospaced ? .mono : .body)
         }
     }
 
@@ -761,7 +761,9 @@ struct DocumentViewerView: View {
     private func checkReOCRAvailability() {
         Task {
             let locator = BinaryLocator(bundle: Bundle.main)
-            isReOCRAvailable = locator.locate(SymairaToolRegistry.ingestTool.binaryName) != nil
+            // ingestTool became throwing in appkit 0.7.0 (missing binary = nil).
+            let tool = try? SymairaToolRegistry.ingestTool
+            isReOCRAvailable = tool.map { locator.locate($0.binaryName) != nil } ?? false
         }
     }
 

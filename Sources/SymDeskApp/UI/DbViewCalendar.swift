@@ -44,7 +44,7 @@ struct DbViewCalendar: View {
                         ForEach(groupedItems, id: \.key) { group in
                             VStack(alignment: .leading) {
                                 Text(group.key)
-                                    .font(.title2)
+                                    .symairaText(.title)
                                     .bold()
                                     .foregroundColor(SymairaTheme.goldPrimary)
                                     .padding(.vertical, 8)
@@ -56,7 +56,7 @@ struct DbViewCalendar: View {
                                         VStack(alignment: .leading) {
                                             Text(title).bold().lineLimit(2)
                                                 .foregroundColor(SymairaTheme.textPrimary)
-                                            Text(fullDate).font(.caption).foregroundColor(SymairaTheme.textSecondary)
+                                            Text(fullDate).symairaText(.caption).foregroundColor(SymairaTheme.textSecondary)
                                         }
                                         .padding()
                                         .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)

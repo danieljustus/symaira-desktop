@@ -405,6 +405,7 @@ final class MobileVaultStore: ObservableObject {
 	private var snapshotETag: String?
     private let outbox: MobileOutbox
     private let writeCoordinator: MobileWriteCoordinator
+    private let shareInbox: MobileShareInbox?
 
     init(outbox: MobileOutbox? = nil) {
         let resolvedOutbox: MobileOutbox
@@ -419,6 +420,7 @@ final class MobileVaultStore: ObservableObject {
         }
         self.outbox = resolvedOutbox
         self.writeCoordinator = MobileWriteCoordinator(outbox: resolvedOutbox)
+        self.shareInbox = MobileShareInbox(coordinator: self.writeCoordinator)
         Task { await writeCoordinator.setOnChange { [weak self] in
             Task { @MainActor in await self?.refreshOutboxState() }
         } }
@@ -435,6 +437,17 @@ final class MobileVaultStore: ObservableObject {
 		recentlyOpenedPaths = UserDefaults.standard.stringArray(forKey: recentsKey) ?? []
         Task { await refreshOutboxState() }
         Task { await writeCoordinator.drain() }
+        drainShareInbox()
+    }
+
+    /// Moves share-extension items into the write layer. Called on launch
+    /// and whenever a backend becomes active, so shares filed while the
+    /// app was closed are queued as soon as the app can write.
+    private func drainShareInbox() {
+        Task {
+            await shareInbox?.drain()
+            await refreshOutboxState()
+        }
     }
 
     /// Republish the outbox's visible state on the main actor.
@@ -552,6 +565,7 @@ final class MobileVaultStore: ObservableObject {
 		serverURL = nil
         activate(url)
         Task { await writeCoordinator.setMode(MobileFilesWriteAdapter(vaultRoot: url.standardizedFileURL)) }
+        drainShareInbox()
         do {
             let data = try url.bookmarkData(
                 options: [.minimalBookmark],
@@ -627,6 +641,7 @@ final class MobileVaultStore: ObservableObject {
 		notes = []
 		await writeCoordinator.setMode(MobileServerWriteAdapter(connection: connection))
 		await reload()
+        drainShareInbox()
 	}
 
 	func attachmentURL(for note: MobileNote) async -> URL? {

@@ -178,16 +178,17 @@ private struct MobileWorkspaceView: View {
     @State private var isComposerPresented = false
     @State private var composerNote: MobileNote?
     @State private var resumeDraft: MobileDraftStore.Draft?
+    @State private var isScannerPresented = false
 
     var body: some View {
         TabView {
-            MobileOverviewView(isComposerPresented: $isComposerPresented, resumeDraft: $resumeDraft)
+            MobileOverviewView(isComposerPresented: $isComposerPresented, resumeDraft: $resumeDraft, isScannerPresented: $isScannerPresented)
                 .tabItem { Label("Overview", systemImage: "sparkles.rectangle.stack") }
 
-            MobileLibraryView(documentsOnly: false, isComposerPresented: $isComposerPresented, composerNote: $composerNote)
+            MobileLibraryView(documentsOnly: false, isComposerPresented: $isComposerPresented, composerNote: $composerNote, isScannerPresented: $isScannerPresented)
                 .tabItem { Label("Notes", systemImage: "note.text") }
 
-            MobileLibraryView(documentsOnly: true, isComposerPresented: $isComposerPresented, composerNote: $composerNote)
+            MobileLibraryView(documentsOnly: true, isComposerPresented: $isComposerPresented, composerNote: $composerNote, isScannerPresented: $isScannerPresented)
                 .tabItem { Label("Documents", systemImage: "doc.text.image") }
 
             MobileSettingsView()
@@ -199,6 +200,10 @@ private struct MobileWorkspaceView: View {
             MobileComposerView(editingNote: composerNote, resumeDraft: resumeDraft)
                 .environmentObject(vault)
         }
+        .sheet(isPresented: $isScannerPresented) {
+            MobileScanView()
+                .environmentObject(vault)
+        }
     }
 }
 
@@ -206,6 +211,7 @@ private struct MobileOverviewView: View {
     @EnvironmentObject private var vault: MobileVaultStore
     @Binding var isComposerPresented: Bool
     @Binding var resumeDraft: MobileDraftStore.Draft?
+    @Binding var isScannerPresented: Bool
     @State private var recoveredDrafts: [MobileDraftStore.Draft] = []
     private let draftStore = try? MobileDraftStore()
 
@@ -289,6 +295,13 @@ private struct MobileOverviewView: View {
                         Image(systemName: "square.and.pencil")
                     }
                     .accessibilityLabel("New note")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { isScannerPresented = true } label: {
+                        Image(systemName: "doc.viewfinder")
+                    }
+                    .accessibilityLabel("Scan document")
+                }
                 }
             }
             .task { recoveredDrafts = await loadDrafts() }
@@ -431,6 +444,7 @@ private struct MobileLibraryView: View {
     let documentsOnly: Bool
     @Binding var isComposerPresented: Bool
     @Binding var composerNote: MobileNote?
+    @Binding var isScannerPresented: Bool
 
     @State private var query = ""
     @State private var statusFilter = "All"
@@ -497,6 +511,12 @@ private struct MobileLibraryView: View {
                     }
                     .disabled(vault.isLoading)
                     .accessibilityLabel("Refresh vault")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { isScannerPresented = true } label: {
+                        Image(systemName: "doc.viewfinder")
+                    }
+                    .accessibilityLabel("Scan document")
                 }
             }
             .task(id: request) { await updateResults(for: request) }

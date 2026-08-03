@@ -114,7 +114,7 @@ func (b *SQLiteBackend) Query(ctx context.Context, prefix string) ([]Entry, erro
 	if err != nil {
 		return nil, fmt.Errorf("query storage keys with prefix %q: %w", prefix, err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	entries := make([]Entry, 0)
 	for rows.Next() {

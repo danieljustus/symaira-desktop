@@ -46,6 +46,25 @@
 	<true/>
 	<key>UILaunchScreen</key>
 	<dict/>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.symaira.desktop.ios.new-note</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>New note</string>
+			<key>UIApplicationShortcutItemIconType</key>
+			<string>UIApplicationShortcutIconTypeCompose</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.symaira.desktop.ios.scan</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Scan document</string>
+			<key>UIApplicationShortcutItemIconType</key>
+			<string>UIApplicationShortcutIconTypeCapturePhoto</string>
+		</dict>
+	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

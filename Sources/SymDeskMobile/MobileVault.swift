@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import WidgetKit
 
 struct MobileNote: Identifiable, Hashable, Sendable {
     let path: String
@@ -400,8 +401,6 @@ final class MobileVaultStore: ObservableObject {
 
     private let scanner = MobileVaultScanner()
     private let bookmarkKey = "symdesk.mobile.vault-bookmark.v1"
-    private let recentsKey = "symdesk.mobile.recently-opened.v1"
-    private let maxRecents = 10
     private var hasSecurityScope = false
     private var loadGeneration = 0
 	private var remoteClient: MobileRemoteClient?
@@ -447,7 +446,7 @@ final class MobileVaultStore: ObservableObject {
 				Task { await writeCoordinator.setMode(MobileFilesWriteAdapter(vaultRoot: root)) }
 			}
 		}
-		recentlyOpenedPaths = UserDefaults.standard.stringArray(forKey: recentsKey) ?? []
+		recentlyOpenedPaths = MobileRecentsStore.read().map(\.path)
         Task { await refreshOutboxState() }
         Task { await writeCoordinator.drain() }
         drainShareInbox()
@@ -582,12 +581,10 @@ final class MobileVaultStore: ObservableObject {
 	/// Records `note` as opened, moving it to the front of the recents list
 	/// and persisting across launches. Call whenever a note is opened.
 	func recordOpened(_ note: MobileNote) {
-		var paths = recentlyOpenedPaths
-		paths.removeAll { $0 == note.path }
-		paths.insert(note.path, at: 0)
-		if paths.count > maxRecents { paths.removeLast(paths.count - maxRecents) }
-		recentlyOpenedPaths = paths
-		UserDefaults.standard.set(paths, forKey: recentsKey)
+		MobileRecentsStore.record(path: note.path, title: note.title)
+		recentlyOpenedPaths = MobileRecentsStore.read().map(\.path)
+		// Keep the home-screen widget's recents in sync.
+		WidgetCenter.shared.reloadAllTimelines()
 	}
 
 	/// Resolves a deep link (`symdesk://open/<path>`) from Spotlight, a
@@ -761,7 +758,7 @@ final class MobileVaultStore: ObservableObject {
         UserDefaults.standard.removeObject(forKey: bookmarkKey)
 		MobileServerConfig.reset()
 		recentlyOpenedPaths = []
-		UserDefaults.standard.removeObject(forKey: recentsKey)
+		MobileRecentsStore.clear()
         // A disconnected vault must not leak queued writes into a new vault:
         // the whole queue is dropped and the write backend is detached.
         Task { await writeCoordinator.setMode(nil) }

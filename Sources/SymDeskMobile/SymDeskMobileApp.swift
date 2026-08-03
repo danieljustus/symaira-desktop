@@ -1,7 +1,9 @@
 import SwiftUI
+import UIKit
 
 @main
 struct SymDeskMobileApp: App {
+    @UIApplicationDelegateAdaptor(MobileAppDelegate.self) private var appDelegate
     @StateObject private var vault = MobileVaultStore()
 
     var body: some Scene {
@@ -21,6 +23,26 @@ struct SymDeskMobileApp: App {
                     }
                 }
         }
+    }
+}
+
+/// Routes home-screen quick actions (long-press icon) into the shared
+/// action store; the workspace presents the surface on activation.
+final class MobileAppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        performActionFor shortcutItem: UIApplicationShortcutItem,
+        completionHandler: @escaping (Bool) -> Void
+    ) {
+        switch shortcutItem.type {
+        case "com.symaira.desktop.ios.new-note":
+            MobileAppActionStore.set(.newNote)
+        case "com.symaira.desktop.ios.scan":
+            MobileAppActionStore.set(.scanDocument)
+        default:
+            break
+        }
+        completionHandler(true)
     }
 }
 

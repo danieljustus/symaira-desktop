@@ -196,6 +196,7 @@ private struct OnboardingFeature: View {
 
 private struct MobileWorkspaceView: View {
     @EnvironmentObject private var vault: MobileVaultStore
+    @Environment(\.scenePhase) private var scenePhase
     @State private var isComposerPresented = false
     @State private var composerNote: MobileNote?
     @State private var resumeDraft: MobileDraftStore.Draft?
@@ -224,6 +225,44 @@ private struct MobileWorkspaceView: View {
         .sheet(isPresented: $isScannerPresented) {
             MobileScanView()
                 .environmentObject(vault)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: MobileAppActionStore.didSetNotification)) { notification in
+            if let action = notification.object as? MobileAppAction {
+                present(action)
+            }
+        }
+        .onAppear {
+            // A widget tap or quick action may have parked an action while
+            // the app was not running; present it on launch.
+            if let action = MobileAppActionStore.pending() {
+                present(action)
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // Cold launch via widget/quick action: the pending action is
+            // read once the scene becomes active.
+            if phase == .active, let action = MobileAppActionStore.pending() {
+                present(action)
+            }
+        }
+    }
+
+    /// Presents the surface an external action asked for (widget button,
+    /// Shortcuts/Siri intent, home-screen quick action) and consumes the
+    /// parked action so it does not re-present on the next activation.
+    private func present(_ action: MobileAppAction) {
+        guard vault.isConfigured else {
+            MobileAppActionStore.clear()
+            return
+        }
+        MobileAppActionStore.clear()
+        switch action {
+        case .newNote:
+            composerNote = nil
+            resumeDraft = nil
+            isComposerPresented = true
+        case .scanDocument:
+            isScannerPresented = true
         }
     }
 }
@@ -322,7 +361,6 @@ private struct MobileOverviewView: View {
                         Image(systemName: "doc.viewfinder")
                     }
                     .accessibilityLabel("Scan document")
-                }
                 }
             }
             .task { recoveredDrafts = await loadDrafts() }

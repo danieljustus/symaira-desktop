@@ -61,6 +61,7 @@ struct ContentView: View {
         case companionTools
         case history
         case trash
+        case models
     }
 
     // MARK: - Navigation History
@@ -234,6 +235,12 @@ struct ContentView: View {
                                         Text("Rules & Settings")
                                     }
                                 }
+                                Button(action: { navigate(to: .models) }) {
+                                    HStack {
+                                        Image(systemName: "shippingbox")
+                                        Text("Local Models")
+                                    }
+                                }
                             }
 
                             Section("Views") {
@@ -318,6 +325,8 @@ struct ContentView: View {
                         HistoryView()
                     case .trash:
                         TrashView()
+                    case .models:
+                        ModelsView()
                     case .graph:
                         GraphView { selectedNodeID in
                             navigateToNote(title: selectedNodeID)

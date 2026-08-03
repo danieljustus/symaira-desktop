@@ -396,8 +396,8 @@ final class MobileVaultStore: ObservableObject {
 	@Published private(set) var serverURL: URL?
     @Published var errorMessage: String?
     @Published private(set) var recentlyOpenedPaths: [String] = []
-    /// Vault-relative path requested via a deep link (Spotlight tap or
-    /// `symdesk://open/<path>`). The root view presents the note when set.
+    /// Vault-relative path a citation or deep link requested; the root
+    /// view presents the note when set.
     @Published var pendingOpenPath: String?
 
     private let scanner = MobileVaultScanner()

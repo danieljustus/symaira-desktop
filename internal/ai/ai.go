@@ -5,6 +5,7 @@ package ai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -33,6 +34,13 @@ const (
 
 // AIEvent is the typed envelope for the ask streaming contract.
 // Each NDJSON line emitted by "symdesk ask --json" is one AIEvent.
+//
+// The agentic loop (issue #317) extends the envelope additively: the tool
+// event carries the iteration number and the raw tool inputs, a dedicated
+// tool-result event carries the truncated output, and the terminal done
+// event carries token usage and context window. All pre-existing fields keep
+// their meaning, so older consumers (MCP, the server command bridge) are
+// unaffected.
 type AIEvent struct {
 	Type AIEventType `json:"type"`
 	// answer
@@ -42,9 +50,17 @@ type AIEvent struct {
 	Title   string  `json:"title,omitempty"`
 	Snippet string  `json:"snippet,omitempty"`
 	Score   float64 `json:"score,omitempty"`
-	// tool
+	// tool (status event, legacy)
 	ToolName string `json:"tool_name,omitempty"`
 	Status   string `json:"status,omitempty"`
+	// tool call / tool result (agentic loop, issue #317)
+	Iteration           int             `json:"iteration,omitempty"`
+	ToolInputs          json.RawMessage `json:"tool_inputs,omitempty"`
+	ToolOutput          string          `json:"tool_output,omitempty"`
+	ToolOutputTruncated bool            `json:"tool_output_truncated,omitempty"`
+	// done (terminal event)
+	TokenUsage    int `json:"token_usage,omitempty"`
+	ContextWindow int `json:"context_window,omitempty"`
 }
 
 // AnswerEvent creates an answer-chunk event.
@@ -62,9 +78,27 @@ func ToolEvent(toolName, status string) AIEvent {
 	return AIEvent{Type: AIEventTool, ToolName: toolName, Status: status}
 }
 
+// ToolCallEvent announces that the model invoked a tool: the iteration
+// number, the tool name and the raw JSON inputs (issue #317).
+func ToolCallEvent(iteration int, toolName string, inputs json.RawMessage) AIEvent {
+	return AIEvent{Type: AIEventTool, ToolName: toolName, Iteration: iteration, ToolInputs: inputs}
+}
+
+// ToolResultEvent reports a tool's output, truncated to maxOutputChars with
+// the truncation flag set (issue #317).
+func ToolResultEvent(iteration int, toolName, output string, truncated bool) AIEvent {
+	return AIEvent{Type: AIEventTool, ToolName: toolName, Iteration: iteration, ToolOutput: output, ToolOutputTruncated: truncated}
+}
+
 // DoneEvent signals the end of the stream.
 func DoneEvent() AIEvent {
 	return AIEvent{Type: AIEventDone}
+}
+
+// TerminalEvent signals the end of an agentic run and carries the final
+// token usage and context window (issue #317).
+func TerminalEvent(tokenUsage, contextWindow int) AIEvent {
+	return AIEvent{Type: AIEventDone, TokenUsage: tokenUsage, ContextWindow: contextWindow}
 }
 
 var ErrNotConfigured = errors.New("AI feature not configured")

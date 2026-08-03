@@ -12,6 +12,7 @@ struct OnboardingView: View {
     @State private var progressMessage = ""
     @State private var errorMessage: String?
 	@State private var isShowingServerConnection = false
+	@State private var isShowingPaperlessImport = false
 
     enum Step {
         case chooseLocation
@@ -80,6 +81,9 @@ struct OnboardingView: View {
 					}
 				}
 			}
+		}
+		.sheet(isPresented: $isShowingPaperlessImport) {
+			PaperlessImportView()
 		}
     }
 
@@ -242,6 +246,18 @@ struct OnboardingView: View {
                 Text("Demo mode — sample data loaded.")
                     .font(.callout)
                     .foregroundColor(SymairaTheme.textSecondary)
+            }
+
+            // Migration path for Paperless-ngx users: discoverable during
+            // onboarding, exactly where new users set up their vault (issue #307).
+            if !core.isDemoMode {
+                Button {
+                    isShowingPaperlessImport = true
+                } label: {
+                    Label("Import from Paperless-ngx…", systemImage: "doc.badge.arrow.up")
+                }
+                .buttonStyle(SymairaSecondaryButtonStyle())
+                .help("Migrate an existing Paperless-ngx export into this vault")
             }
 
             Spacer()

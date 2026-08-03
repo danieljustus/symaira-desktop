@@ -1097,6 +1097,7 @@ var allowedRemoteCommands = map[string]map[string]bool{
 	"doctor": {"": true}, "ls": {"": true}, "search": {"": true}, "backlinks": {"": true},
 	"graph": {"": true}, "similar": {"": true}, "transform": {"": true}, "ask": {"": true},
 	"note":  {"new": true, "move": true, "delete": true, "daily": true},
+	"paperless": {"import": true},
 	"props": {"get": true, "edit": true}, "relations": {"inverse": true},
 	"views":    {"list": true, "get": true, "save": true, "delete": true, "new-entry": true, "siblings": true, "exec": true},
 	"docs":     {"list": true, "review": true},

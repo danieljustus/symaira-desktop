@@ -17,4 +17,8 @@ struct MobileServerAIProvider: MobileAIProvider {
     func ask(query: String, onEvent: @escaping @Sendable (MobileAIEvent) -> Void) async throws {
         try await client.ask(query: query, onEvent: onEvent)
     }
+
+    func transform(text: String, intent: String, onEvent: @escaping @Sendable (MobileAIEvent) -> Void) async throws {
+        try await client.transform(text: text, intent: intent, onEvent: onEvent)
+    }
 }

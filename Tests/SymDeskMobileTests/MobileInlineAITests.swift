@@ -4,7 +4,8 @@ import XCTest
 
 /// Tests for inline-AI actions (#332): desktop-compatible intent values,
 /// selection-aware text surgery, provider fallback, and the accept/undo
-/// write discipline (nothing is written before an explicit accept).
+/// write discipline (nothing is written before an explicit accept, and
+/// the contract-v2 frontmatter survives both accept and undo).
 @MainActor
 final class MobileInlineAITests: XCTestCase {
 
@@ -54,6 +55,81 @@ final class MobileInlineAITests: XCTestCase {
             replacing: NSRange(location: 100, length: 5)
         )
         XCTAssertEqual(merged, "Neuer Text", "out-of-range selection must fall back to whole text")
+    }
+
+    // MARK: - Frontmatter-preserving body replacement (#332)
+
+    func testReplacingBodyPreservesFrontmatterByteForByte() {
+        let raw = """
+        ---
+        title: "Notiz"
+        tags:
+          - work
+        ---
+
+        Alter Text.
+        """
+        let rebuilt = MobileInlineAIText.replacingBody(in: raw, with: "Neuer Text.")
+        XCTAssertEqual(
+            rebuilt,
+            """
+            ---
+            title: "Notiz"
+            tags:
+              - work
+            ---
+
+            Neuer Text.
+            """,
+            "frontmatter and the body region's surrounding whitespace must survive the rebuild"
+        )
+    }
+
+    func testReplacingBodyWithoutFrontmatterReplacesWholeText() {
+        // Plain notes have no frontmatter: the whole file is the body.
+        XCTAssertEqual(MobileInlineAIText.replacingBody(in: "Nur Text.", with: "Neu"), "Neu")
+        XCTAssertEqual(MobileInlineAIText.replacingBody(in: "Zeile 1\nZeile 2\n", with: "Neu"), "Neu")
+    }
+
+    func testReplacingBodyAddsBodyAfterBareFrontmatter() {
+        let raw = "---\ntitle: \"X\"\n---"
+        XCTAssertEqual(
+            MobileInlineAIText.replacingBody(in: raw, with: "Neu"),
+            "---\ntitle: \"X\"\n---\nNeu",
+            "a file ending at the closing delimiter must start the body on its own line"
+        )
+    }
+
+    func testReplacingBodyPreservesCRLFFrontmatter() {
+        let raw = "---\r\ntitle: \"X\"\r\n---\r\n\r\nAlt.\r\n"
+        XCTAssertEqual(
+            MobileInlineAIText.replacingBody(in: raw, with: "Neu"),
+            "---\r\ntitle: \"X\"\r\n---\r\n\r\nNeu\r\n",
+            "CRLF line endings in the frontmatter block must be preserved"
+        )
+    }
+
+    func testReplacingBodyWithParsedBodyRestoresExactRawContent() throws {
+        // The rebuild is the inverse of MobileVaultParser's split: feeding
+        // the parsed body back must reproduce the raw file exactly (the
+        // property undo relies on).
+        let raw = """
+        ---
+        title: "R"
+        tags:
+          - a
+        created: "2026-01-01T00:00:00Z"
+        ---
+
+        Inhalt.
+        """
+        let parsed = try MobileVaultParser.parse(
+            data: Data(raw.utf8),
+            fileURL: URL(fileURLWithPath: "/vault/r.md"),
+            root: URL(fileURLWithPath: "/vault"),
+            modifiedAt: .now
+        )
+        XCTAssertEqual(MobileInlineAIText.replacingBody(in: raw, with: parsed.body), raw)
     }
 
     // MARK: - Runner: provider selection and fallback
@@ -179,6 +255,110 @@ final class MobileInlineAITests: XCTestCase {
     }
 
     @MainActor
+    func testAcceptAndUndoPreserveFrontmatterThroughWriteLayer() async throws {
+        // A contract-v2 note with title, tags, created and document
+        // fields. Accepting an inline-AI change — and then undoing it —
+        // must leave the full frontmatter unchanged in the persisted file.
+        let vaultRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("InlineAITests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: vaultRoot, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: vaultRoot) }
+
+        let original = """
+        ---
+        title: "Protokoll AI"
+        tags:
+          - work
+          - ai
+        created: "2026-08-04T10:00:00Z"
+        status: "open"
+        archive_path: "archive/2026/protokoll-ai.pdf"
+        ---
+
+        Das ist der alte Text, den die KI umschreiben soll.
+        """
+        let frontmatter = """
+        ---
+        title: "Protokoll AI"
+        tags:
+          - work
+          - ai
+        created: "2026-08-04T10:00:00Z"
+        status: "open"
+        archive_path: "archive/2026/protokoll-ai.pdf"
+        ---
+
+        """
+
+        let target = vaultRoot.appendingPathComponent("protokoll-ai.md")
+        try Data(original.utf8).write(to: target)
+
+        let note = try MobileVaultParser.parse(
+            data: Data(original.utf8),
+            fileURL: target,
+            root: vaultRoot,
+            modifiedAt: .now
+        )
+        XCTAssertEqual(note.rawContent, original)
+
+        // Real write layer, exactly like the composer tests: outbox +
+        // coordinator + Files adapter, with the same stat-based
+        // precondition MobileVaultStore.enqueueUpdateNote computes.
+        let outbox = try MobileOutbox(directory: vaultRoot.appendingPathComponent("outbox", isDirectory: true))
+        let coordinator = MobileWriteCoordinator(outbox: outbox)
+        await coordinator.setMode(MobileFilesWriteAdapter(vaultRoot: vaultRoot))
+
+        let server = FakeProvider(displayName: "Server", isOnDevice: false, answer: "Kurzfassung des Textes.")
+        let model = MobileInlineAIModel(
+            original: note.rawContent,
+            runner: MobileInlineAIRunner(primary: { server }, onDeviceFallback: { nil }),
+            save: { content in
+                let values = try target.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
+                let precondition = MobileWritePrecondition(
+                    modifiedAt: values.contentModificationDate,
+                    size: values.fileSize
+                )
+                try await coordinator.enqueue(MobileOutboxEntry(
+                    kind: .updateNote,
+                    path: note.path,
+                    content: content,
+                    precondition: precondition
+                ))
+            }
+        )
+
+        // Accept a whole-text transform, mirroring the sheet's flow.
+        model.start(intent: .summarize, text: note.body, selectedRange: nil)
+        await waitUntil { model.phase == .done }
+        await model.accept(currentText: note.body, selectedRange: nil)
+        XCTAssertTrue(model.accepted)
+
+        try await waitForFile(target) { $0.contains("Kurzfassung des Textes.") }
+        var persisted = try String(contentsOf: target, encoding: .utf8)
+        XCTAssertTrue(
+            persisted.hasPrefix(frontmatter),
+            "frontmatter must survive accept unchanged, got:\n\(persisted)"
+        )
+
+        // The persisted file still parses with the same metadata.
+        let reparsed = try MobileVaultParser.parse(
+            data: Data(persisted.utf8),
+            fileURL: target,
+            root: vaultRoot,
+            modifiedAt: .now
+        )
+        XCTAssertEqual(reparsed.title, "Protokoll AI")
+        XCTAssertEqual(reparsed.tags, ["work", "ai"])
+        XCTAssertEqual(reparsed.created, "2026-08-04T10:00:00Z")
+
+        // Undo restores the exact original raw content, frontmatter and all.
+        await model.undo()
+        try await waitForFile(target) { $0 == original }
+        persisted = try String(contentsOf: target, encoding: .utf8)
+        XCTAssertEqual(persisted, original, "undo must restore the exact original raw content")
+    }
+
+    @MainActor
     func testFailedStreamShowsErrorAndNeverWrites() async {
         let server = FakeProvider(displayName: "Server", isOnDevice: false, error: TestError.boom)
         let recorder = SaveRecorder()
@@ -266,6 +446,23 @@ final class MobileInlineAITests: XCTestCase {
             try? await Task.sleep(nanoseconds: 20_000_000)
         }
         XCTFail("condition not met within \(timeout)s")
+    }
+
+    /// Waits until the file at `url` satisfies `condition` (the write
+    /// coordinator drains asynchronously after enqueue).
+    private func waitForFile(
+        _ url: URL,
+        timeout: TimeInterval = 3,
+        _ condition: @escaping (String) -> Bool
+    ) async throws {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if let current = try? String(contentsOf: url, encoding: .utf8), condition(current) {
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+        XCTFail("file condition not met within \(timeout)s: \(url.lastPathComponent)")
     }
 }
 

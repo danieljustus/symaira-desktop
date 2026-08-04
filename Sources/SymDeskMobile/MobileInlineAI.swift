@@ -61,6 +61,40 @@ enum MobileInlineAIText {
         let source = original as NSString
         return source.replacingCharacters(in: range, with: suggestion)
     }
+
+    /// Rebuilds a complete note file from a (possibly edited) body:
+    /// `newBody` replaces only the body of `rawContent` while the
+    /// frontmatter block (title, tags, created, document fields) and the
+    /// body region's original leading/trailing whitespace are preserved
+    /// byte-for-byte. Notes without frontmatter treat the whole file as
+    /// the body, so `newBody` replaces it entirely.
+    ///
+    /// This is the inverse of `MobileVaultParser`'s split: replacing the
+    /// parsed body back into the raw content reproduces the original file
+    /// exactly, which is what makes undo lossless.
+    static func replacingBody(in rawContent: String, with newBody: String) -> String {
+        let lines = rawContent.components(separatedBy: "\n")
+        guard lines.count > 1,
+              lines[0].trimmingCharacters(in: .whitespacesAndNewlines) == "---",
+              let closing = lines.dropFirst().firstIndex(where: {
+                  $0.trimmingCharacters(in: .whitespacesAndNewlines) == "---"
+              }) else {
+            return newBody
+        }
+
+        let prefix = lines[0...closing].joined(separator: "\n")
+        let after = closing + 1
+        guard after < lines.count else {
+            // The file ends at the closing delimiter: start the new body
+            // on its own line.
+            return prefix + "\n" + newBody
+        }
+
+        let bodyRegion = lines[after...].joined(separator: "\n")
+        let leading = String(bodyRegion.prefix(while: { $0.isWhitespace }))
+        let trailing = String(bodyRegion.reversed().prefix(while: { $0.isWhitespace }).reversed())
+        return prefix + "\n" + leading + newBody + trailing
+    }
 }
 
 /// Streams a transform through the same provider selection as chat:
@@ -162,11 +196,20 @@ final class MobileInlineAIModel: ObservableObject {
     /// The exact text the last transform ran on (the "Original" side).
     private(set) var transformedSource = ""
 
+    /// The exact raw file content the session started from (frontmatter
+    /// included). Undo restores this verbatim through the write layer, so
+    /// no metadata is ever lost.
     private let original: String
     private let runner: MobileInlineAIRunner
     private let save: (String) async throws -> Void
     private var task: Task<Void, Never>?
 
+    /// - Parameters:
+    ///   - original: the exact raw file content the session started from
+    ///     (frontmatter included); undo restores it verbatim. Accept
+    ///     rebuilds this file from the transformed body.
+    ///   - runner: streams the transform through provider selection.
+    ///   - save: writes a complete raw note file through the write layer.
     init(
         original: String,
         runner: MobileInlineAIRunner,
@@ -238,8 +281,9 @@ final class MobileInlineAIModel: ObservableObject {
     }
 
     /// The ONLY write path: merges the suggestion into the current text
-    /// (replacing the selection when one was active) and queues it through
-    /// the write layer. Never called implicitly.
+    /// (replacing the selection when one was active) and queues the full
+    /// note file — frontmatter preserved — through the write layer. Never
+    /// called implicitly.
     func accept(currentText: String, selectedRange: NSRange?) async {
         guard !suggestion.isEmpty, !accepted else { return }
         do {
@@ -248,7 +292,11 @@ final class MobileInlineAIModel: ObservableObject {
                 to: currentText,
                 replacing: selectedRange
             )
-            try await save(merged)
+            // The transform runs on the parsed body only; rebuild the
+            // complete contract-v2 file so the frontmatter (title, tags,
+            // created, document fields) survives the write.
+            let fullFile = MobileInlineAIText.replacingBody(in: original, with: merged)
+            try await save(fullFile)
             accepted = true
             canUndo = true
             errorMessage = nil
@@ -257,8 +305,9 @@ final class MobileInlineAIModel: ObservableObject {
         }
     }
 
-    /// Restores the text as it was before the AI session, through the same
-    /// write path (precondition checks still apply).
+    /// Restores the exact raw file content the session started from
+    /// (frontmatter included), through the same write path (precondition
+    /// checks still apply).
     func undo() async {
         guard canUndo else { return }
         do {

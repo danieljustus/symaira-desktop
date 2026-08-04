@@ -4,7 +4,8 @@ import UIKit
 /// Inline-AI sheet: choose an intent (Summarise / Rewrite / Continue),
 /// optionally select text in the editor, stream the suggestion, and only
 /// then accept — nothing is written before the explicit Accept. After an
-/// accept, Undo restores the pre-session text through the write layer.
+/// accept, Undo restores the pre-session raw file (frontmatter included)
+/// through the write layer.
 struct MobileInlineAIView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model: MobileInlineAIModel
@@ -19,7 +20,11 @@ struct MobileInlineAIView: View {
         self.note = note
         _editorText = State(initialValue: note.body)
         _model = StateObject(wrappedValue: MobileInlineAIModel(
-            original: note.body,
+            // The session's original is the full raw file (frontmatter
+            // included): the editor and the transform operate on the
+            // parsed body only, but accept rebuilds the complete file and
+            // undo restores exactly what was on disk.
+            original: note.rawContent,
             runner: MobileInlineAIRunner(
                 primary: {
                     MobileAIProviderFactory.select(

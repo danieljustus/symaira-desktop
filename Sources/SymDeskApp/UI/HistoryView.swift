@@ -344,7 +344,7 @@ struct HistoryView: View {
     private func diffLineRow(_ line: DiffLine) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Text(line.kind == .same ? " " : (line.kind == .added ? "+" : "−"))
-                .font(.caption2.monospaced())
+                .symairaText(.monoSmall)
                 .foregroundColor(line.kind == .added ? .green : (line.kind == .removed ? .red : .clear))
                 .frame(width: 10)
             Text(line.text.isEmpty ? " " : line.text)

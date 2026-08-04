@@ -75,7 +75,7 @@ struct ModelsView: View {
                     .foregroundStyle(SymairaTheme.textPrimary)
             }
             Text("On-device models are downloaded on demand into your Application Support folder — never into the app bundle, so the app stays signature-valid.")
-                .font(.subheadline)
+                .symairaText(.subheading)
                 .foregroundStyle(SymairaTheme.textSecondary)
         }
     }
@@ -86,7 +86,7 @@ struct ModelsView: View {
                 .symairaText(.subheading)
                 .foregroundStyle(SymairaTheme.textPrimary)
             Text("The download mechanism is ready — pinned revision, checksum verification, license confirmation, progress, cancel/resume and removal. Concrete models will be published here as their selection issues land.")
-                .font(.subheadline)
+                .symairaText(.subheading)
                 .foregroundStyle(SymairaTheme.textSecondary)
             Text("Models are stored in: \(manager.modelsDirectory.path)")
                 .symairaText(.caption)
@@ -120,7 +120,7 @@ struct ModelsView: View {
             HStack(spacing: 6) {
                 Text(model.licenseName)
                 Link("License", destination: model.licenseURL)
-                    .font(.subheadline)
+                    .symairaText(.subheading)
                 Spacer()
                 stateControls(model, state: state)
             }
@@ -174,10 +174,10 @@ struct ModelsView: View {
                 .symairaText(.subheading)
                 .foregroundStyle(SymairaTheme.textPrimary)
             Text("Before downloading \(model.displayName) (\(model.licenseName)), please review the model's license.")
-                .font(.subheadline)
+                .symairaText(.subheading)
                 .foregroundStyle(SymairaTheme.textSecondary)
             Link("Open license: \(model.licenseName)", destination: model.licenseURL)
-                .font(.subheadline)
+                .symairaText(.subheading)
             HStack {
                 Button("Cancel") { pendingModel = nil }
                     .buttonStyle(.bordered)

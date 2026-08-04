@@ -66,6 +66,7 @@ struct ContentView: View {
         case companionTools
         case history
         case trash
+        case models
         case duplicates
     }
 
@@ -249,6 +250,12 @@ struct ContentView: View {
                                         Text("Rules & Settings")
                                     }
                                 }
+                                Button(action: { navigate(to: .models) }) {
+                                    HStack {
+                                        Image(systemName: "shippingbox")
+                                        Text("Local Models")
+                                    }
+                                }
                             }
 
                             Section("Views") {
@@ -333,6 +340,8 @@ struct ContentView: View {
                         HistoryView(initialNotePath: historyInitialNotePath)
                     case .trash:
                         TrashView()
+                    case .models:
+                        ModelsView()
                     case .duplicates:
                         DuplicatesView()
                     case .graph:

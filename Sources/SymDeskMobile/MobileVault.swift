@@ -634,27 +634,6 @@ final class MobileVaultStore: ObservableObject {
 		}
 	}
 
-	/// Resolves a deep link (`symdesk://open/<path>`) from Spotlight, a
-	/// Handoff activity or a manual URL open. Presents the note when it is
-	/// already in the snapshot; otherwise triggers a reload and retries
-	/// once the snapshot arrives.
-	func openDeepLink(_ url: URL) {
-		guard let path = MobileSpotlightIndexer.path(from: url), !path.isEmpty else { return }
-		if notes.contains(where: { $0.path == path }) {
-			pendingOpenPath = path
-			return
-		}
-		// The note may not be in the (possibly cached) snapshot yet.
-		Task {
-			await reload()
-			if notes.contains(where: { $0.path == path }) {
-				pendingOpenPath = path
-			} else {
-				errorMessage = "The note “\(path)” is not in this vault."
-			}
-		}
-	}
-
 	var isConfigured: Bool { vaultURL != nil || remoteClient != nil }
 	var isRemote: Bool { remoteClient != nil }
 	var displayLocation: String { serverURL?.absoluteString ?? vaultURL?.path ?? "No vault" }

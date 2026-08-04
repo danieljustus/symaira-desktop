@@ -55,10 +55,12 @@
 		649F594D8BA36896933EED49 /* TagEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51C61A8C8D833F893CA57C53 /* TagEntry.swift */; };
 		64C0919422B9FBF88A826757 /* IngestQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B652D24B94E01B080A5139C0 /* IngestQueueView.swift */; };
 		6A91EA1E38A414D990E92D61 /* TranscriptTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60D1BDE16EFA4EF064577CB /* TranscriptTimelineView.swift */; };
+		6E590402856D2491045A5C95 /* MobileSearchIndexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFB5C11ABF9660DEC6F4CB1 /* MobileSearchIndexTests.swift */; };
 		6F2C2AB3F563B8089400FF53 /* VaultRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA6C5A97D0123DAB847C4D86 /* VaultRegistry.swift */; };
 		6FCD2E684BED82EFC30F8E8F /* SymairaKeychain in Frameworks */ = {isa = PBXBuildFile; productRef = 0687139EDC20F1840AE4F33C /* SymairaKeychain */; };
 		71F20F1D5036D27530C70F14 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3BEF32958D7F1CBB107FC724 /* SymairaToolKit */; };
 		74DF8458BEC41A75D6F1604C /* MobileRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C41A2D45CCFD80688933E2FC /* MobileRootView.swift */; };
+		7836BCA57E32D0A10B01DFE6 /* MobileSearchIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F412CD083C6229C36515FB /* MobileSearchIndex.swift */; };
 		818D035A27199BE0E1034DE8 /* SymairaIngestContract in Frameworks */ = {isa = PBXBuildFile; productRef = A811DD5B1E907A8EF49849F7 /* SymairaIngestContract */; };
 		8297EAB48FFFA51F537F9351 /* BlockNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A66FCAE94BEB5D93BE972B /* BlockNode.swift */; };
 		85DECDD2DC5ADCC88C1E2BBC /* DbViewTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D62AD2CAE794AD863C9E92 /* DbViewTimeline.swift */; };
@@ -160,6 +162,7 @@
 		0382BEE0DC98A06DAAE1E3D3 /* Notifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifications.swift; sourceTree = "<group>"; };
 		059DF1FA89D0D36B34EEA0B7 /* VaultSwitcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultSwitcherView.swift; sourceTree = "<group>"; };
 		07FC117A1033D88F0534B546 /* SymDeskAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SymDeskAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0BFB5C11ABF9660DEC6F4CB1 /* MobileSearchIndexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileSearchIndexTests.swift; sourceTree = "<group>"; };
 		0C3A8CB17DABF0648A84D9C6 /* ParticipantConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParticipantConfirmationView.swift; sourceTree = "<group>"; };
 		0CAE9E046D07652DF79A3000 /* SymDeskMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymDeskMobileApp.swift; sourceTree = "<group>"; };
 		0D31AEB4D808A7B5F64134E1 /* UpdateInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateInstaller.swift; sourceTree = "<group>"; };
@@ -179,6 +182,7 @@
 		278FA07C11ECADBCDFD4ED6B /* MeetingKnowledgeReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingKnowledgeReviewView.swift; sourceTree = "<group>"; };
 		2B442ECE47F4FC2E662B8D33 /* DeskTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskTransport.swift; sourceTree = "<group>"; };
 		2FBA5128D6B234381F73178F /* SymDesk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SymDesk.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		31F412CD083C6229C36515FB /* MobileSearchIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileSearchIndex.swift; sourceTree = "<group>"; };
 		346FBC22C24AA911360C416A /* MarkdownTextViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTextViewTests.swift; sourceTree = "<group>"; };
 		34D4E18EEA985A7CCFB138B7 /* MeetingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingsView.swift; sourceTree = "<group>"; };
 		36ACCC6F6DD37EEAD70151F2 /* ClassificationRulesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassificationRulesViewModel.swift; sourceTree = "<group>"; };
@@ -431,6 +435,7 @@
 				203CD374D08A6A18BE8EF95A /* Info.plist */,
 				565FECB395ABE250121EC9A8 /* MobileNoteDetailView.swift */,
 				C41A2D45CCFD80688933E2FC /* MobileRootView.swift */,
+				31F412CD083C6229C36515FB /* MobileSearchIndex.swift */,
 				C7BA0DB3A5FA63448B1F7895 /* MobileServerConnection.swift */,
 				2277ACA3457731ED5743E9C9 /* MobileTheme.swift */,
 				937E397B9A403351E2774A73 /* MobileVault.swift */,
@@ -443,6 +448,7 @@
 		71260B70D7AB7489C71887C3 /* SymDeskMobileTests */ = {
 			isa = PBXGroup;
 			children = (
+				0BFB5C11ABF9660DEC6F4CB1 /* MobileSearchIndexTests.swift */,
 				A68D64871B4AA84AF8340744 /* MobileVaultParserTests.swift */,
 			);
 			name = SymDeskMobileTests;
@@ -770,6 +776,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6E590402856D2491045A5C95 /* MobileSearchIndexTests.swift in Sources */,
 				19D58D1D913AEA689B0EEA71 /* MobileVaultParserTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -850,6 +857,7 @@
 			files = (
 				D7BD437D2AE86E66C864B0FC /* MobileNoteDetailView.swift in Sources */,
 				74DF8458BEC41A75D6F1604C /* MobileRootView.swift in Sources */,
+				7836BCA57E32D0A10B01DFE6 /* MobileSearchIndex.swift in Sources */,
 				11DDD21FB6492D602BB86A0F /* MobileServerConnection.swift in Sources */,
 				4C61971FE7AC481D84BE4B3D /* MobileTheme.swift in Sources */,
 				14AB9F440F4DF6813149FB4E /* MobileVault.swift in Sources */,

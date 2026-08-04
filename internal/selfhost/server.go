@@ -113,6 +113,14 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	if cfg.ListenAddress == "" {
 		cfg.ListenAddress = "127.0.0.1:8787"
 	}
+	// Canonicalize the vault root once so every subsystem — sidecar index,
+	// snapshot walk, watcher and service-layer search (which resolves
+	// symlinks internally) — agrees on one path form. Without this, a
+	// symlinked root (e.g. /var on macOS) yields search results whose
+	// relative paths do not resolve through /api/v1/files.
+	if resolved, err := filepath.EvalSymlinks(cfg.VaultRoot); err == nil {
+		cfg.VaultRoot = resolved
+	}
 	if cfg.Executable == "" {
 		var err error
 		cfg.Executable, err = os.Executable()
@@ -304,6 +312,8 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/v1/jobs", s.auth(http.HandlerFunc(s.handleJobs)))
 	s.mux.Handle("POST /api/v1/jobs/retry", s.auth(http.HandlerFunc(s.handleRetryJob)))
 	s.mux.Handle("POST /api/v1/command", s.auth(http.HandlerFunc(s.handleCommand)))
+	s.mux.Handle("POST /api/v1/ai/ask", s.auth(http.HandlerFunc(s.handleAIAsk)))
+	s.mux.Handle("POST /api/v1/ai/transform", s.auth(http.HandlerFunc(s.handleAITransform)))
 	s.mux.Handle("POST /api/v1/worker/lease", s.auth(http.HandlerFunc(s.handleLease)))
 	s.mux.Handle("GET /api/v1/worker/input", s.auth(http.HandlerFunc(s.handleWorkerInput)))
 	s.mux.Handle("POST /api/v1/worker/complete", s.auth(http.HandlerFunc(s.handleComplete)))

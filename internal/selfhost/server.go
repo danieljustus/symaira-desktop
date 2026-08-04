@@ -1095,7 +1095,7 @@ func (s *Server) refreshIndex() error {
 
 var allowedRemoteCommands = map[string]map[string]bool{
 	"doctor": {"": true}, "ls": {"": true}, "search": {"": true}, "backlinks": {"": true},
-	"graph": {"": true}, "similar": {"": true}, "transform": {"": true}, "ask": {"": true},
+	"graph": {"": true}, "similar": {"": true}, "duplicates": {"": true}, "transform": {"": true}, "ask": {"": true},
 	"note":      {"new": true, "move": true, "delete": true, "daily": true},
 	"paperless": {"import": true},
 	"props":     {"get": true, "edit": true}, "relations": {"inverse": true},

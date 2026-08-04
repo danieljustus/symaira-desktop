@@ -420,6 +420,14 @@ struct DocumentGridView: View {
         Button(action: { exportDocument(doc: doc) }) {
             Label("Reveal in Finder", systemImage: "folder")
         }
+        Menu("Export…") {
+            Button("Export as PDF…") {
+                exportToDisk(doc: doc, format: "pdf")
+            }
+            Button("Export as HTML…") {
+                exportToDisk(doc: doc, format: "html")
+            }
+        }
         Divider()
         Button(role: .destructive, action: { deleteDocument(doc: doc) }) {
             Label("Move to Trash", systemImage: "trash")
@@ -666,6 +674,28 @@ struct DocumentGridView: View {
     private func exportDocument(doc: DocumentItem) {
         guard let url = DocumentPreviewResolver.noteURL(documentPath: doc.path, vaultPath: core.vaultPath) else { return }
         NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+
+    /// Exports a document to PDF or HTML via the core CLI, with a save panel
+    /// for the destination (issue #307).
+    private func exportToDisk(doc: DocumentItem, format: String) {
+        let panel = NSSavePanel()
+        panel.title = "Export \(doc.title) as \(format.uppercased())"
+        panel.nameFieldStringValue = "\(doc.title).\(format)"
+        panel.allowedContentTypes = format == "pdf" ? [.pdf] : [.html]
+        panel.begin { response in
+            guard response == .OK, let outputURL = panel.url else { return }
+            Task { @MainActor in
+                do {
+                    let result = try await core.exportNote(path: doc.path, format: format, outputPath: outputURL.path)
+                    if let message = result.message, !message.isEmpty {
+                        print("Export: \(message)")
+                    }
+                } catch {
+                    print("Export failed: \(error.localizedDescription)")
+                }
+            }
+        }
     }
 
     private func deleteDocument(doc: DocumentItem) {

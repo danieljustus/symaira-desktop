@@ -1015,6 +1015,47 @@ public final class DeskCore: ObservableObject {
 		try await runDecoding([SimilarDoc].self, arguments: ["similar", path, "--threshold", "\(threshold)", "--json"] + vaultArgs)
     }
 
+    /// One cluster of possible duplicates from the vault-wide SimHash scan.
+    public struct DuplicateGroup: Codable, Equatable, Identifiable, Sendable {
+        public struct Member: Codable, Equatable, Sendable {
+            public let path: String
+            public let title: String
+            public let similarity: Int
+
+            public init(path: String, title: String, similarity: Int) {
+                self.path = path
+                self.title = title
+                self.similarity = similarity
+            }
+        }
+        public let path: String
+        public let title: String
+        public let members: [Member]
+        public var id: String { path }
+    }
+
+    /// Scans the whole vault for groups of possible duplicate documents.
+    public func duplicates(threshold: Int = 50) async throws -> [DuplicateGroup] {
+        try await runDecoding([DuplicateGroup].self, arguments: ["duplicates", "--threshold", "\(threshold)", "--json"] + vaultArgs)
+    }
+
+    /// Result of exporting a note or view to PDF/HTML.
+    public struct ExportResult: Codable, Equatable, Sendable {
+        public let format: String
+        public let path: String
+        public let profile: String?
+        public let rendered: Bool
+        public let message: String?
+    }
+
+    /// Exports a vault-relative note to PDF or HTML via the core CLI.
+    public func exportNote(path: String, format: String, outputPath: String) async throws -> ExportResult {
+        try await runDecoding(
+            ExportResult.self,
+            arguments: ["export", "--note", path, "--format", format, "--output", outputPath, "--json"] + vaultArgs
+        )
+    }
+
     public func docsReview(threshold: Int = 70) async throws -> [ReviewDoc] {
 		try await runDecoding([ReviewDoc].self, arguments: ["docs", "review", "--threshold", "\(threshold)", "--json"] + vaultArgs)
     }

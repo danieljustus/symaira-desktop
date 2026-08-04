@@ -366,6 +366,8 @@ private struct MobileLibraryView: View {
     @State private var query = ""
     @State private var statusFilter = "All"
     @State private var displayedNotes: [MobileNote] = []
+    /// Search-result snippets keyed by note path (only populated in search mode).
+    @State private var snippetsByPath: [String: String] = [:]
 
     private var availableStatuses: [String] {
         ["All"] + Array(Set(vault.documents.map(\.status).filter { !$0.isEmpty })).sorted()
@@ -394,7 +396,7 @@ private struct MobileLibraryView: View {
                                 NavigationLink {
                                     MobileNoteDetailView(noteID: note.id)
                                 } label: {
-                                    MobileNoteRow(note: note)
+                                    MobileNoteRow(note: note, snippet: snippetsByPath[note.path])
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -468,16 +470,36 @@ private struct MobileLibraryView: View {
 
         let notes = vault.notes
         let normalizedQuery = MobileVaultParser.normalizedSearchQuery(request.query)
-        let filtered = await Task.detached(priority: .userInitiated) {
-            notes.filter { note in
-                guard !request.documentsOnly || note.isDocument else { return false }
-                guard request.status == "All" || note.status == request.status else { return false }
-                return normalizedQuery.isEmpty || note.searchText.contains(normalizedQuery)
-            }
-        }.value
 
+        if normalizedQuery.isEmpty {
+            // Browsing mode: plain filter, parse order (already recency-sorted).
+            let filtered = await Task.detached(priority: .userInitiated) {
+                notes.filter { note in
+                    guard !request.documentsOnly || note.isDocument else { return false }
+                    guard request.status == "All" || note.status == request.status else { return false }
+                    return true
+                }
+            }.value
+            guard !Task.isCancelled else { return }
+            snippetsByPath = [:]
+            displayedNotes = filtered
+            return
+        }
+
+        // Search mode: ranked index, both connection modes feed it, so the
+        // same query path works for Files/iCloud and server snapshots.
+        let results = await vault.search(request.query)
         guard !Task.isCancelled else { return }
-        displayedNotes = filtered
+        let byPath = Dictionary(uniqueKeysWithValues: notes.map { ($0.path, $0) })
+        let ranked = results.compactMap { result -> (MobileNote, String)? in
+            guard let note = byPath[result.path] else { return nil }
+            guard !request.documentsOnly || note.isDocument else { return nil }
+            guard request.status == "All" || note.status == request.status else { return nil }
+            let snippet = MobileSearchSnippet.snippet(for: note.body, normalizedQuery: normalizedQuery)
+            return (note, snippet)
+        }
+        snippetsByPath = Dictionary(uniqueKeysWithValues: ranked.map { ($0.0.path, $0.1) })
+        displayedNotes = ranked.map(\.0)
     }
 }
 
@@ -490,6 +512,9 @@ private struct LibraryRequest: Hashable, Sendable {
 
 struct MobileNoteRow: View {
     let note: MobileNote
+    /// Optional search-result snippet; shown instead of the first line
+    /// when the row came from a ranked query.
+    var snippet: String? = nil
 
     var body: some View {
         HStack(alignment: .top, spacing: 13) {
@@ -505,6 +530,14 @@ struct MobileNoteRow: View {
                     .font(.headline)
                     .foregroundStyle(MobileTheme.textPrimary)
                     .lineLimit(2)
+
+                if let snippet, !snippet.isEmpty {
+                    Text(snippet)
+                        .font(.subheadline)
+                        .foregroundStyle(MobileTheme.textSecondary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
 
                 HStack(spacing: 7) {
                     if !note.documentType.isEmpty {

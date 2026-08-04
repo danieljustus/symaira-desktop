@@ -125,22 +125,7 @@ struct ContentView: View {
             } else {
                 NavigationSplitView {
                     VStack(spacing: 0) {
-                        // Fixed sidebar header with title and New Note button (#293, #294a)
-                        HStack {
-                            Text("SymDesk")
-                                .font(.title3.bold())
-                                .foregroundColor(SymairaTheme.textPrimary)
-                            Spacer()
-                            Button(action: { isShowingNewNoteSheet = true }) {
-                                Label("New Note", systemImage: "plus")
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
-                            .tint(SymairaTheme.goldPrimary)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-
+                        sidebarHeader
                         List {
                             Section {
                                 Button(action: { navigate(to: .dashboard) }) {
@@ -174,9 +159,27 @@ struct ContentView: View {
                             }
 
                             Section("Tags") {
-                                TagBrowserView(tags: tagCounts) { tag in
-                                    navigate(to: .docs, tagFilter: tag)
-                                }
+                                TagBrowserView(
+                                    tags: tagCounts,
+                                    onTagClick: { tag in
+                                        navigate(to: .docs, tagFilter: tag)
+                                    },
+                                    onRenameTag: { old, new in
+                                        await runTagOperation {
+                                            try await core.renameTag(from: old, to: new)
+                                        }
+                                    },
+                                    onMergeTag: { from, into in
+                                        await runTagOperation {
+                                            try await core.mergeTag(from: from, into: into)
+                                        }
+                                    },
+                                    onDeleteTag: { tag in
+                                        await runTagOperation {
+                                            try await core.deleteTag(tag)
+                                        }
+                                    }
+                                )
                                 .frame(minHeight: 120)
                             }
 
@@ -452,7 +455,12 @@ struct ContentView: View {
                                         } else {
                                             MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
                                                 navigateToNote(title: targetTitle)
-                                            }, core: core, vaultRoot: core.vaultPath)
+                                            }, core: core, vaultRoot: core.vaultPath, onImageError: { message in
+                                                appErrors.append(AppErrorMessage(
+                                                    message: message,
+                                                    detail: "The image was not inserted."
+                                                ))
+                                            })
                                         }
                                         
                                         // Dummy view to attach onChange (since we use if/else for the editor)
@@ -505,9 +513,13 @@ struct ContentView: View {
                     } else {
                         VStack(alignment: .leading, spacing: 0) {
                             if let note = selectedNote {
-                                PropertiesInspector(notePath: vaultRelativePath(note.path), onTagClick: { tag in
-                                    navigate(to: .docs, tagFilter: tag)
-                                })
+                                PropertiesInspector(
+                                    notePath: vaultRelativePath(note.path),
+                                    onTagClick: { tag in
+                                        navigate(to: .docs, tagFilter: tag)
+                                    },
+                                    allTags: tagCounts.map(\.name)
+                                )
                             }
                             Text("Backlinks")
                                 .font(.headline)
@@ -739,8 +751,47 @@ struct ContentView: View {
                 .onChange(of: watcher.latestEvent) { _, ev in
                     scheduleEventRefresh(ev)
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .vaultSwitched)) { _ in
+                    reloadAfterVaultSwitch()
+                }
             }
         }
+    }
+
+    /// The active vault changed: drop all per-vault state and reload so no
+    /// rows leak across vaults (issue #296).
+    private func reloadAfterVaultSwitch() {
+        selectedNote = nil
+        notes = []
+        noteLookup = [:]
+        noteContent = ""
+        folderTree = []
+        expandedFolders = []
+        tagCounts = []
+        Task {
+            await fetchNotes()
+            await fetchViews()
+            await fetchDoctor()
+            await fetchDocCounts()
+            await fetchTagCounts()
+        }
+    }
+
+    /// Fixed sidebar header: vault switcher + New Note button. Split out of
+    /// the sidebar body so the type-checker stays within budget (#293, #296).
+    private var sidebarHeader: some View {
+        HStack {
+            VaultSwitcherView()
+            Spacer()
+            Button(action: { isShowingNewNoteSheet = true }) {
+                Label("New Note", systemImage: "plus")
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
+            .tint(SymairaTheme.goldPrimary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
     }
 
     /// Split out of the sidebar `List` body: inlining even one more
@@ -1060,6 +1111,23 @@ struct ContentView: View {
             tagCounts = try await TagStore.aggregate(from: notes, vaultPath: core.vaultPath, isRemote: core.isRemote, core: core)
         } catch {
             print("fetchTagCounts failed: \(error)")
+        }
+    }
+
+    /// Runs a vault-wide tag operation (rename/merge/delete), refreshes the
+    /// tag list and notes, and surfaces failures as a visible banner
+    /// (issue #306).
+    private func runTagOperation(_ operation: () async throws -> Void) async {
+        do {
+            try await operation()
+            await fetchNotes()
+            await fetchTagCounts()
+            await fetchDocCounts()
+        } catch {
+            appErrors.append(AppErrorMessage(
+                message: "Tag operation failed: \(error.localizedDescription)",
+                detail: "No files were changed by the failed operation."
+            ))
         }
     }
 

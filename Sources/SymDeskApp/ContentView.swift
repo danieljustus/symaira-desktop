@@ -452,7 +452,12 @@ struct ContentView: View {
                                         } else {
                                             MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
                                                 navigateToNote(title: targetTitle)
-                                            }, core: core, vaultRoot: core.vaultPath)
+                                            }, core: core, vaultRoot: core.vaultPath, onImageError: { message in
+                                                appErrors.append(AppErrorMessage(
+                                                    message: message,
+                                                    detail: "The image was not inserted."
+                                                ))
+                                            })
                                         }
                                         
                                         // Dummy view to attach onChange (since we use if/else for the editor)

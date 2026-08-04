@@ -71,7 +71,7 @@ struct ModelsView: View {
                 Image(systemName: "shippingbox")
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 Text("Local Models")
-                    .font(.title2.bold())
+                    .symairaText(.title).bold()
                     .foregroundStyle(SymairaTheme.textPrimary)
             }
             Text("On-device models are downloaded on demand into your Application Support folder — never into the app bundle, so the app stays signature-valid.")
@@ -83,13 +83,13 @@ struct ModelsView: View {
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("No models available yet")
-                .font(.headline)
+                .symairaText(.subheading)
                 .foregroundStyle(SymairaTheme.textPrimary)
             Text("The download mechanism is ready — pinned revision, checksum verification, license confirmation, progress, cancel/resume and removal. Concrete models will be published here as their selection issues land.")
                 .font(.subheadline)
                 .foregroundStyle(SymairaTheme.textSecondary)
             Text("Models are stored in: \(manager.modelsDirectory.path)")
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundStyle(SymairaTheme.textSecondary)
                 .textSelection(.enabled)
         }
@@ -100,7 +100,7 @@ struct ModelsView: View {
 
     private var storageNote: some View {
         Text("Model storage: \(manager.modelsDirectory.path) · Downloads never modify the app bundle.")
-            .font(.caption)
+            .symairaText(.caption)
             .foregroundStyle(SymairaTheme.textSecondary)
             .textSelection(.enabled)
     }
@@ -110,11 +110,11 @@ struct ModelsView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text(model.displayName)
-                    .font(.headline)
+                    .symairaText(.subheading)
                     .foregroundStyle(SymairaTheme.textPrimary)
                 Spacer()
                 Text(ByteCountFormatter.string(fromByteCount: model.sizeBytes, countStyle: .file))
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
             HStack(spacing: 6) {
@@ -130,7 +130,7 @@ struct ModelsView: View {
             }
             if case .failed(let message) = state {
                 Text(message)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundStyle(.red)
             }
         }
@@ -171,7 +171,7 @@ struct ModelsView: View {
     private func licenseSheet(_ model: ModelDescriptor) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("License required")
-                .font(.headline)
+                .symairaText(.subheading)
                 .foregroundStyle(SymairaTheme.textPrimary)
             Text("Before downloading \(model.displayName) (\(model.licenseName)), please review the model's license.")
                 .font(.subheadline)

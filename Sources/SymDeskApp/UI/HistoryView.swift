@@ -280,7 +280,7 @@ struct HistoryView: View {
                 Image(systemName: "plus.forwardslash.minus")
                     .foregroundColor(SymairaTheme.goldPrimary)
                 Text("Diff vs. current")
-                    .font(.headline)
+                    .symairaText(.subheading)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
                 if isLoadingDiff {
@@ -299,7 +299,7 @@ struct HistoryView: View {
                         Image(systemName: "checkmark.circle")
                             .foregroundColor(SymairaTheme.goldSecondary)
                         Text("No differences — this version matches the current content.")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textSecondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -320,7 +320,7 @@ struct HistoryView: View {
                     Image(systemName: "doc.text.magnifyingglass")
                         .foregroundColor(SymairaTheme.textMuted)
                     Text("Select a version and press Diff to compare it with the current file.")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
                         .multilineTextAlignment(.center)
                 }
@@ -331,7 +331,7 @@ struct HistoryView: View {
                     Image(systemName: "clock.arrow.circlepath")
                         .foregroundColor(SymairaTheme.textMuted)
                     Text("Loading diff…")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -37,6 +37,7 @@ func registerCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(newPaperlessCmd())
 	rootCmd.AddCommand(newDocsCmd())
 	rootCmd.AddCommand(newDocCmd())
+	rootCmd.AddCommand(newTagsCmd())
 	rootCmd.AddCommand(newSimilarCmd())
 	rootCmd.AddCommand(newDuplicatesCmd())
 	rootCmd.AddCommand(newDemoCmd())

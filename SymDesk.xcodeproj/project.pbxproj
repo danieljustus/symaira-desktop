@@ -79,6 +79,7 @@
 		9CB84C5DEC5DFAA645786C79 /* SymairaToolKit in Frameworks */ = {isa = PBXBuildFile; productRef = CCF15BEFF6E2B7C5BDE99A2A /* SymairaToolKit */; };
 		A069D366DE09F194427FA488 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B19FB8752DF2B7914F917FAE /* Assets.xcassets */; };
 		A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59762A8D6DF418D30855BEDA /* OnboardingView.swift */; };
+		A2184394D8796CDCE1EAE341 /* VaultSwitcherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 059DF1FA89D0D36B34EEA0B7 /* VaultSwitcherView.swift */; };
 		AA0096EBBB63DF8E5B8A19CB /* TagBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02391589A785587023B6522C /* TagBrowserView.swift */; };
 		AAA1D950632521068B1C723B /* SymairaKeychain in Frameworks */ = {isa = PBXBuildFile; productRef = 3BE6FC74E55F85559F2EED8B /* SymairaKeychain */; };
 		AAB2D778093607FBB326E837 /* SymDeskMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CAE9E046D07652DF79A3000 /* SymDeskMobileApp.swift */; };
@@ -111,6 +112,7 @@
 		D912C5E6E61A8D859E86A1F6 /* CommandPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = F136EF877D776AFD6D2CE697 /* CommandPalette.swift */; };
 		DAC209DBEC4B228C9C2E0C65 /* SymairaIngestContract in Frameworks */ = {isa = PBXBuildFile; productRef = 834BF5FB29F232C62B0E48E4 /* SymairaIngestContract */; };
 		DAC3E722A9EF65A8E65C68FB /* libSymDeskCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF3DE41EB61C376999197AEF /* libSymDeskCore.a */; };
+		DD4F8A20E40BE6AB7E3564AC /* Notifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0382BEE0DC98A06DAAE1E3D3 /* Notifications.swift */; };
 		E0949CE5566FE358143A90F3 /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = 5B81234FBF41E06530F2A5C1 /* SymairaCLIRunner */; };
 		EDBAB66DD3722499129B80AE /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = E20080EE08C0202FC164E192 /* SymairaCLIRunner */; };
 		F157E0C3058BA227E6106A58 /* SymairaIngestContract in Frameworks */ = {isa = PBXBuildFile; productRef = 6730086BD27F282EAE58D774 /* SymairaIngestContract */; };
@@ -119,6 +121,7 @@
 		F9D9027836F3132FDD8F6297 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827CE03FB82C7640D64E4D97 /* main.swift */; };
 		FC481AC96D97F01753A861B0 /* DeskCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */; };
 		FCFB317B20C9D92FD0EB6821 /* SymairaKeychain in Frameworks */ = {isa = PBXBuildFile; productRef = 595C4A604BC01E3DA06950B3 /* SymairaKeychain */; };
+		FF9A55D65788461A8EA678DB /* PaperlessImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D9A9D5A06473CC244100C1 /* PaperlessImportView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -161,6 +164,8 @@
 
 /* Begin PBXFileReference section */
 		02391589A785587023B6522C /* TagBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagBrowserView.swift; sourceTree = "<group>"; };
+		0382BEE0DC98A06DAAE1E3D3 /* Notifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifications.swift; sourceTree = "<group>"; };
+		059DF1FA89D0D36B34EEA0B7 /* VaultSwitcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultSwitcherView.swift; sourceTree = "<group>"; };
 		07FC117A1033D88F0534B546 /* SymDeskAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SymDeskAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0BFB5C11ABF9660DEC6F4CB1 /* MobileSearchIndexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileSearchIndexTests.swift; sourceTree = "<group>"; };
 		0C3A8CB17DABF0648A84D9C6 /* ParticipantConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParticipantConfirmationView.swift; sourceTree = "<group>"; };
@@ -210,6 +215,7 @@
 		7946F6B3E83FEFA35F91B69F /* SpeakerReviewPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerReviewPanel.swift; sourceTree = "<group>"; };
 		805FBABA01057AAEA77CCF0D /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		827CE03FB82C7640D64E4D97 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		83D9A9D5A06473CC244100C1 /* PaperlessImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaperlessImportView.swift; sourceTree = "<group>"; };
 		8948F04EC3090C19864630CC /* AsyncActionTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncActionTrackerTests.swift; sourceTree = "<group>"; };
 		8EBD01F47531831816ECBBC9 /* AsyncActionTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncActionTracker.swift; sourceTree = "<group>"; };
 		937E397B9A403351E2774A73 /* MobileVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileVault.swift; sourceTree = "<group>"; };
@@ -324,6 +330,7 @@
 				A155C168F7FCF9660B810D94 /* FinderFavorites.swift */,
 				4361A3B66293519600E22473 /* MarkdownPreview.swift */,
 				6249D84E9A4012E9E8B0BFDB /* MarkdownTable.swift */,
+				0382BEE0DC98A06DAAE1E3D3 /* Notifications.swift */,
 				233223A3C27BEA490CADB82C /* NotificationScheduler.swift */,
 				0F5CBE2CE55A95870F3464BE /* ServerConnection.swift */,
 				0D31AEB4D808A7B5F64134E1 /* UpdateInstaller.swift */,
@@ -410,6 +417,7 @@
 				95A9CC7BD653D742BBD137CC /* MeetingReviewView.swift */,
 				34D4E18EEA985A7CCFB138B7 /* MeetingsView.swift */,
 				59762A8D6DF418D30855BEDA /* OnboardingView.swift */,
+				83D9A9D5A06473CC244100C1 /* PaperlessImportView.swift */,
 				0C3A8CB17DABF0648A84D9C6 /* ParticipantConfirmationView.swift */,
 				56278C647AEC161C2B94531F /* PropertiesInspector.swift */,
 				9C51F0367577777D2D842F81 /* ReviewLaneView.swift */,
@@ -419,6 +427,7 @@
 				02391589A785587023B6522C /* TagBrowserView.swift */,
 				A60D1BDE16EFA4EF064577CB /* TranscriptTimelineView.swift */,
 				BFCFA06E53EB66006F8169C7 /* TrashView.swift */,
+				059DF1FA89D0D36B34EEA0B7 /* VaultSwitcherView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -769,6 +778,7 @@
 				08DDB4F6EED7DA64407BA23B /* MarkdownPreview.swift in Sources */,
 				2A33E6AC1739DB68412E9972 /* MarkdownTable.swift in Sources */,
 				3D00605BDE73976880F49353 /* NotificationScheduler.swift in Sources */,
+				DD4F8A20E40BE6AB7E3564AC /* Notifications.swift in Sources */,
 				197AD7BDF025042D4AFAFFBE /* ServerConnection.swift in Sources */,
 				C85A4C45BB4E561D0049F805 /* UpdateInstaller.swift in Sources */,
 				B0BB83ED23EB9B4B5F55EF19 /* VaultAssets.swift in Sources */,
@@ -841,6 +851,7 @@
 				1ECCF881DFFB05C3E4DCA223 /* NotificationCenterProviding.swift in Sources */,
 				40406909A4AAF62DD881D295 /* NotificationManager.swift in Sources */,
 				A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */,
+				FF9A55D65788461A8EA678DB /* PaperlessImportView.swift in Sources */,
 				951042A6C3918F1D3EA4CD32 /* ParticipantConfirmationView.swift in Sources */,
 				AF33E56F24D6F0B026A98F5B /* PropertiesInspector.swift in Sources */,
 				888252B8F6964BA6158F9CC6 /* ReviewLaneView.swift in Sources */,
@@ -853,6 +864,7 @@
 				C8E2BB8E6DEC50C4AF30AEA5 /* TagStore.swift in Sources */,
 				6A91EA1E38A414D990E92D61 /* TranscriptTimelineView.swift in Sources */,
 				C6F1120FFE339799B94C8BF7 /* TrashView.swift in Sources */,
+				A2184394D8796CDCE1EAE341 /* VaultSwitcherView.swift in Sources */,
 				F9D9027836F3132FDD8F6297 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -42,6 +42,11 @@ struct ContentView: View {
     @StateObject private var mutationTracker = AsyncActionTracker<String>()
     @State private var ingestFailure: IngestFailure? = nil
 
+    /// Note selected via a context menu for the version-history screen.
+    @State private var historyInitialNotePath: String? = nil
+    /// Note the user asked to move to the trash (context menu, issue #307).
+    @State private var pendingTrashNote: Note? = nil
+
     // Auto-save debounce
     @State private var saveTask: Task<Void, Never>? = nil
     @State private var eventRefreshTask: Task<Void, Never>? = nil
@@ -61,6 +66,8 @@ struct ContentView: View {
         case companionTools
         case history
         case trash
+        case models
+        case duplicates
     }
 
     // MARK: - Navigation History
@@ -125,22 +132,7 @@ struct ContentView: View {
             } else {
                 NavigationSplitView {
                     VStack(spacing: 0) {
-                        // Fixed sidebar header with title and New Note button (#293, #294a)
-                        HStack {
-                            Text("SymDesk")
-                                .font(.title3.bold())
-                                .foregroundColor(SymairaTheme.textPrimary)
-                            Spacer()
-                            Button(action: { isShowingNewNoteSheet = true }) {
-                                Label("New Note", systemImage: "plus")
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
-                            .tint(SymairaTheme.goldPrimary)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-
+                        sidebarHeader
                         List {
                             Section {
                                 Button(action: { navigate(to: .dashboard) }) {
@@ -174,9 +166,27 @@ struct ContentView: View {
                             }
 
                             Section("Tags") {
-                                TagBrowserView(tags: tagCounts) { tag in
-                                    navigate(to: .docs, tagFilter: tag)
-                                }
+                                TagBrowserView(
+                                    tags: tagCounts,
+                                    onTagClick: { tag in
+                                        navigate(to: .docs, tagFilter: tag)
+                                    },
+                                    onRenameTag: { old, new in
+                                        await runTagOperation {
+                                            try await core.renameTag(from: old, to: new)
+                                        }
+                                    },
+                                    onMergeTag: { from, into in
+                                        await runTagOperation {
+                                            try await core.mergeTag(from: from, into: into)
+                                        }
+                                    },
+                                    onDeleteTag: { tag in
+                                        await runTagOperation {
+                                            try await core.deleteTag(tag)
+                                        }
+                                    }
+                                )
                                 .frame(minHeight: 120)
                             }
 
@@ -225,6 +235,12 @@ struct ContentView: View {
                                         Text("Trash")
                                     }
                                 }
+                                Button(action: { navigate(to: .duplicates) }) {
+                                    HStack {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                        Text("Possible Duplicates")
+                                    }
+                                }
                             }
 
                             Section("Settings") {
@@ -232,6 +248,12 @@ struct ContentView: View {
                                     HStack {
                                         Image(systemName: "gearshape")
                                         Text("Rules & Settings")
+                                    }
+                                }
+                                Button(action: { navigate(to: .models) }) {
+                                    HStack {
+                                        Image(systemName: "shippingbox")
+                                        Text("Local Models")
                                     }
                                 }
                             }
@@ -315,9 +337,13 @@ struct ContentView: View {
                             onDoctorRefresh: { await fetchDoctor() }
                         )
                     case .history:
-                        HistoryView()
+                        HistoryView(initialNotePath: historyInitialNotePath)
                     case .trash:
                         TrashView()
+                    case .models:
+                        ModelsView()
+                    case .duplicates:
+                        DuplicatesView()
                     case .graph:
                         GraphView { selectedNodeID in
                             navigateToNote(title: selectedNodeID)
@@ -452,7 +478,12 @@ struct ContentView: View {
                                         } else {
                                             MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
                                                 navigateToNote(title: targetTitle)
-                                            }, core: core, vaultRoot: core.vaultPath)
+                                            }, core: core, vaultRoot: core.vaultPath, onImageError: { message in
+                                                appErrors.append(AppErrorMessage(
+                                                    message: message,
+                                                    detail: "The image was not inserted."
+                                                ))
+                                            })
                                         }
                                         
                                         // Dummy view to attach onChange (since we use if/else for the editor)
@@ -505,9 +536,13 @@ struct ContentView: View {
                     } else {
                         VStack(alignment: .leading, spacing: 0) {
                             if let note = selectedNote {
-                                PropertiesInspector(notePath: vaultRelativePath(note.path), onTagClick: { tag in
-                                    navigate(to: .docs, tagFilter: tag)
-                                })
+                                PropertiesInspector(
+                                    notePath: vaultRelativePath(note.path),
+                                    onTagClick: { tag in
+                                        navigate(to: .docs, tagFilter: tag)
+                                    },
+                                    allTags: tagCounts.map(\.name)
+                                )
                             }
                             Text("Backlinks")
                                 .font(.headline)
@@ -658,6 +693,24 @@ struct ContentView: View {
                 .sheet(isPresented: $isShowingNewNoteSheet) {
                     NewNoteSheet(isPresented: $isShowingNewNoteSheet, core: core)
                 }
+                .confirmationDialog(
+                    "Move “\(pendingTrashNote?.title ?? "")” to Trash?",
+                    isPresented: Binding(
+                        get: { pendingTrashNote != nil },
+                        set: { if !$0 { pendingTrashNote = nil } }
+                    ),
+                    titleVisibility: .visible
+                ) {
+                    Button("Move to Trash", role: .destructive) {
+                        if let note = pendingTrashNote {
+                            Task { await moveToTrash(note) }
+                        }
+                        pendingTrashNote = nil
+                    }
+                    Button("Cancel", role: .cancel) { pendingTrashNote = nil }
+                } message: {
+                    Text("The note moves to the vault trash and can be restored from the Trash screen. Your files stay on disk.")
+                }
                 // App-wide shortcut for Cmd-K
                 .onAppear {
                     guard keyEventMonitor == nil else { return }
@@ -739,8 +792,47 @@ struct ContentView: View {
                 .onChange(of: watcher.latestEvent) { _, ev in
                     scheduleEventRefresh(ev)
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .vaultSwitched)) { _ in
+                    reloadAfterVaultSwitch()
+                }
             }
         }
+    }
+
+    /// The active vault changed: drop all per-vault state and reload so no
+    /// rows leak across vaults (issue #296).
+    private func reloadAfterVaultSwitch() {
+        selectedNote = nil
+        notes = []
+        noteLookup = [:]
+        noteContent = ""
+        folderTree = []
+        expandedFolders = []
+        tagCounts = []
+        Task {
+            await fetchNotes()
+            await fetchViews()
+            await fetchDoctor()
+            await fetchDocCounts()
+            await fetchTagCounts()
+        }
+    }
+
+    /// Fixed sidebar header: vault switcher + New Note button. Split out of
+    /// the sidebar body so the type-checker stays within budget (#293, #296).
+    private var sidebarHeader: some View {
+        HStack {
+            VaultSwitcherView()
+            Spacer()
+            Button(action: { isShowingNewNoteSheet = true }) {
+                Label("New Note", systemImage: "plus")
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
+            .tint(SymairaTheme.goldPrimary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
     }
 
     /// Split out of the sidebar `List` body: inlining even one more
@@ -1063,6 +1155,44 @@ struct ContentView: View {
         }
     }
 
+    /// Moves a note to the vault trash (restorable via the Trash screen) and
+    /// refreshes the note list. Failures surface as a visible banner
+    /// (issue #307).
+    private func moveToTrash(_ note: Note) async {
+        do {
+            try await core.noteDelete(path: note.path)
+            if selectedNote?.id == note.id {
+                selectedNote = nil
+                noteContent = ""
+            }
+            await fetchNotes()
+            await fetchTagCounts()
+            await fetchDocCounts()
+        } catch {
+            appErrors.append(AppErrorMessage(
+                message: "Could not move note to trash: \(error.localizedDescription)",
+                detail: "The note was left in place."
+            ))
+        }
+    }
+
+    /// Runs a vault-wide tag operation (rename/merge/delete), refreshes the
+    /// tag list and notes, and surfaces failures as a visible banner
+    /// (issue #306).
+    private func runTagOperation(_ operation: () async throws -> Void) async {
+        do {
+            try await operation()
+            await fetchNotes()
+            await fetchTagCounts()
+            await fetchDocCounts()
+        } catch {
+            appErrors.append(AppErrorMessage(
+                message: "Tag operation failed: \(error.localizedDescription)",
+                detail: "No files were changed by the failed operation."
+            ))
+        }
+    }
+
     private func isConflicted(_ note: Note) -> Bool {
         return note.path.contains(" 2.md") || note.path.contains("conflicted copy")
     }
@@ -1201,6 +1331,22 @@ struct ContentView: View {
                 } else {
                     Text(node.name)
                         .foregroundColor(SymairaTheme.textPrimary)
+                }
+            }
+            .contextMenu {
+                if let note = node.note {
+                    Button {
+                        historyInitialNotePath = note.path
+                        navigate(to: .history)
+                    } label: {
+                        Label("Show Version History", systemImage: "clock.arrow.circlepath")
+                    }
+                    Divider()
+                    Button(role: .destructive) {
+                        pendingTrashNote = note
+                    } label: {
+                        Label("Move to Trash", systemImage: "trash")
+                    }
                 }
             }
         }

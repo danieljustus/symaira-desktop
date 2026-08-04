@@ -123,6 +123,65 @@ public final class VaultRegistry {
         persist(entries)
     }
 
+    /// Appends an entry when no entry with the same id exists yet, otherwise
+    /// replaces the stored entry (same id keeps its position). Persists the
+    /// change. Returns the stored entry.
+    @discardableResult
+    public func upsert(_ entry: VaultEntry) -> VaultEntry {
+        var current = entries()
+        if let index = current.firstIndex(where: { $0.id == entry.id }) {
+            current[index] = entry
+        } else {
+            current.append(entry)
+        }
+        persist(current)
+        return entry
+    }
+
+    /// Removes an entry from the registry. Never touches the vault folder or
+    /// the server connection — it only forgets the entry (issue #296).
+    public func remove(id: UUID) {
+        var current = entries()
+        current.removeAll { $0.id == id }
+        persist(current)
+    }
+
+    /// Renames an entry in place. Returns the updated entry, or `nil` when
+    /// the identifier is not present.
+    @discardableResult
+    public func rename(id: UUID, to name: String) -> VaultEntry? {
+        var current = entries()
+        guard let index = current.firstIndex(where: { $0.id == id }) else {
+            return nil
+        }
+        current[index].name = name
+        persist(current)
+        return current[index]
+    }
+
+    /// Returns the entry with the given id, if present.
+    public func entry(id: UUID) -> VaultEntry? {
+        entries().first { $0.id == id }
+    }
+
+    /// Returns the local entry for a vault path, if one is registered.
+    /// Paths are compared after standardizing, so a trailing slash or a
+    /// `..` component does not hide an existing entry.
+    public func localEntry(path: String) -> VaultEntry? {
+        let normalized = standardized(path)
+        return entries().first { entry in
+            entry.kind == .local && entry.path.map(standardized) == normalized
+        }
+    }
+
+    /// The most recently opened entry of either kind, or `nil` when the
+    /// registry is empty. Used on relaunch to reopen the last active vault.
+    public func mostRecentlyOpened(now: Date = Date()) -> VaultEntry? {
+        entries(now: now)
+            .filter { $0.lastOpenedAt != nil }
+            .max { ($0.lastOpenedAt ?? .distantPast) < ($1.lastOpenedAt ?? .distantPast) }
+    }
+
     /// Updates the last-opened timestamp for an entry and persists the change.
     /// Returns the updated entry, or `nil` when the identifier is not present.
     @discardableResult
@@ -134,6 +193,47 @@ public final class VaultRegistry {
         current[index].lastOpenedAt = date
         persist(current)
         return current[index]
+    }
+
+    /// Creates or updates a local entry for a freshly picked vault folder.
+    /// Reuses an existing entry when the path is already registered so the
+    /// registry never accumulates duplicates of the same folder.
+    public func registerLocal(
+        name: String,
+        path: String,
+        bookmarkData: Data?,
+        isDemoMode: Bool = false,
+        now: Date = Date()
+    ) -> VaultEntry {
+        let normalized = standardized(path)
+        let existing = entries(now: now).first { entry in
+            entry.kind == .local && entry.path.map(standardized) == normalized
+        }
+        let entry: VaultEntry
+        if let existing {
+            entry = VaultEntry(
+                id: existing.id,
+                name: name.isEmpty ? existing.name : name,
+                kind: .local,
+                path: path,
+                bookmarkData: bookmarkData ?? existing.bookmarkData,
+                isDemoMode: isDemoMode,
+                lastOpenedAt: now
+            )
+        } else {
+            entry = VaultEntry.local(
+                name: name.isEmpty ? URL(fileURLWithPath: path).lastPathComponent : name,
+                path: path,
+                bookmarkData: bookmarkData,
+                isDemoMode: isDemoMode,
+                lastOpenedAt: now
+            )
+        }
+        return upsert(entry)
+    }
+
+    private func standardized(_ path: String) -> String {
+        URL(fileURLWithPath: path).standardizedFileURL.path
     }
 
     private func migrateLegacyLocalEntry(now: Date) -> [VaultEntry] {

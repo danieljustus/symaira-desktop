@@ -241,7 +241,10 @@ struct DocumentGridView: View {
                     DocumentCard(
                         doc: doc,
                         isSelected: selectedDoc?.id == doc.id || selectedPaths.contains(doc.path),
-                        todayString: todayString
+                        todayString: todayString,
+                        onTagClick: { tag in
+                            filterByTag(tag)
+                        }
                     )
                         .onTapGesture(count: 2) { openDoc = doc }
                         .onTapGesture { handleTap(doc: doc) }
@@ -417,6 +420,14 @@ struct DocumentGridView: View {
         Button(action: { exportDocument(doc: doc) }) {
             Label("Reveal in Finder", systemImage: "folder")
         }
+        Menu("Export…") {
+            Button("Export as PDF…") {
+                exportToDisk(doc: doc, format: "pdf")
+            }
+            Button("Export as HTML…") {
+                exportToDisk(doc: doc, format: "html")
+            }
+        }
         Divider()
         Button(role: .destructive, action: { deleteDocument(doc: doc) }) {
             Label("Move to Trash", systemImage: "trash")
@@ -527,6 +538,29 @@ struct DocumentGridView: View {
         appliedTagFilter = nil
         searchText = ""
         applyFilters()
+    }
+
+    /// Filters the grid to documents carrying `tag`, reusing the same
+    /// `tag:` search path as the sidebar tag browser (issue #306).
+    private func filterByTag(_ tag: String) {
+        appliedTagFilter = tag
+        searchText = "tag:\(tag)"
+        Task {
+            do {
+                let response = try await core.search(query: "tag:\(tag)")
+                let paths = Set(response.results.map { $0.path })
+                await MainActor.run {
+                    tagFilteredPaths = paths
+                    applyFilters()
+                }
+            } catch {
+                print("tag search failed: \(error)")
+                await MainActor.run {
+                    tagFilteredPaths = []
+                    applyFilters()
+                }
+            }
+        }
     }
 
     /// Debounces watcher bursts (write + rename + index updates) into one CLI
@@ -642,6 +676,28 @@ struct DocumentGridView: View {
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
+    /// Exports a document to PDF or HTML via the core CLI, with a save panel
+    /// for the destination (issue #307).
+    private func exportToDisk(doc: DocumentItem, format: String) {
+        let panel = NSSavePanel()
+        panel.title = "Export \(doc.title) as \(format.uppercased())"
+        panel.nameFieldStringValue = "\(doc.title).\(format)"
+        panel.allowedContentTypes = format == "pdf" ? [.pdf] : [.html]
+        panel.begin { response in
+            guard response == .OK, let outputURL = panel.url else { return }
+            Task { @MainActor in
+                do {
+                    let result = try await core.exportNote(path: doc.path, format: format, outputPath: outputURL.path)
+                    if let message = result.message, !message.isEmpty {
+                        print("Export: \(message)")
+                    }
+                } catch {
+                    print("Export failed: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
     private func deleteDocument(doc: DocumentItem) {
         guard let url = DocumentPreviewResolver.noteURL(documentPath: doc.path, vaultPath: core.vaultPath) else { return }
         do {
@@ -742,6 +798,9 @@ struct DocumentCard: View {
     let doc: DocumentItem
     var isSelected: Bool = false
     let todayString: String
+    /// Called when a tag chip on the card is clicked; filters the grid to
+    /// that tag (issue #306).
+    var onTagClick: ((String) -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -818,6 +877,31 @@ struct DocumentCard: View {
                     .font(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
                     .lineLimit(1)
+            }
+
+            if !doc.tags.isEmpty {
+                HStack(spacing: 4) {
+                    ForEach(doc.tags.prefix(4), id: \.self) { tag in
+                        Button {
+                            onTagClick?(tag)
+                        } label: {
+                            Text(tag)
+                                .font(.caption2)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(SymairaTheme.goldPrimary.opacity(0.14))
+                                .foregroundColor(SymairaTheme.textPrimary)
+                                .cornerRadius(3)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Filter documents tagged \"\(tag)\"")
+                    }
+                    if doc.tags.count > 4 {
+                        Text("+\(doc.tags.count - 4)")
+                            .font(.caption2)
+                            .foregroundColor(SymairaTheme.textMuted)
+                    }
+                }
             }
 
             if doc.confidence > 0 {

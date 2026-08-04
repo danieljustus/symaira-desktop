@@ -10,6 +10,9 @@ struct MobileNote: Identifiable, Hashable, Sendable {
     let tags: [String]
     let created: String
     let modifiedAt: Date
+    /// Byte size of the source file at parse time — part of the
+    /// mtime+size signature used for cache and search-index invalidation.
+    let fileSize: Int
     let documentDate: String
     let person: String
     let status: String
@@ -149,6 +152,7 @@ enum MobileVaultParser {
             tags: tags,
             created: created,
             modifiedAt: modifiedAt,
+            fileSize: data.count,
             documentDate: documentDate,
             person: person,
             status: status,
@@ -411,8 +415,11 @@ final class MobileVaultStore: ObservableObject {
     private let cacheURL: URL
     /// Feeds vault content into iOS Core Spotlight (home-screen search).
     private let spotlightIndexer = MobileSpotlightIndexer()
+    /// Ranked, persisted on-device search index. Fed from the parsed
+    /// snapshot after every reload in both connection modes.
+    private let searchIndex: MobileSearchIndex
 
-    init(outbox: MobileOutbox? = nil, cacheURL: URL = MobileVaultCache.defaultURL()) {
+    init(outbox: MobileOutbox? = nil, cacheURL: URL = MobileVaultCache.defaultURL(), searchIndex: MobileSearchIndex? = nil) {
         let resolvedOutbox: MobileOutbox
         if let outbox {
             resolvedOutbox = outbox
@@ -427,6 +434,19 @@ final class MobileVaultStore: ObservableObject {
         self.writeCoordinator = MobileWriteCoordinator(outbox: resolvedOutbox)
         self.shareInbox = MobileShareInbox(coordinator: self.writeCoordinator)
         self.cacheURL = cacheURL
+        if let searchIndex {
+            self.searchIndex = searchIndex
+        } else {
+            let base = (try? FileManager.default.url(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )) ?? FileManager.default.temporaryDirectory
+            self.searchIndex = MobileSearchIndex(
+                fileURL: base.appendingPathComponent("SymDeskMobile/search-index.json")
+            )
+        }
         // Cache-first launch: show the last parsed snapshot immediately,
         // then refresh in the background. The refresh replaces `notes`.
         if let cache = MobileVaultCache.load(from: cacheURL) {
@@ -555,6 +575,7 @@ final class MobileVaultStore: ObservableObject {
             tags: cached.tags,
             created: "",
             modifiedAt: cached.modifiedAt,
+            fileSize: 0,
             documentDate: "",
             person: "",
             status: cached.status,
@@ -571,6 +592,11 @@ final class MobileVaultStore: ObservableObject {
         )
     }
 
+    /// Ranked search over the persisted on-device index.
+    func search(_ query: String, limit: Int = 50) async -> [MobileSearchIndex.Result] {
+        await searchIndex.search(query: query, limit: limit)
+    }
+
 	/// Notes for `recentlyOpenedPaths`, most-recently-opened first, limited to
 	/// notes that still exist in the current snapshot.
 	var recentlyOpened: [MobileNote] {
@@ -585,6 +611,27 @@ final class MobileVaultStore: ObservableObject {
 		recentlyOpenedPaths = MobileRecentsStore.read().map(\.path)
 		// Keep the home-screen widget's recents in sync.
 		WidgetCenter.shared.reloadAllTimelines()
+	}
+
+	/// Resolves a deep link (`symdesk://open/<path>`) from Spotlight, a
+	/// Handoff activity or a manual URL open. Presents the note when it is
+	/// already in the snapshot; otherwise triggers a reload and retries
+	/// once the snapshot arrives.
+	func openDeepLink(_ url: URL) {
+		guard let path = MobileSpotlightIndexer.path(from: url), !path.isEmpty else { return }
+		if notes.contains(where: { $0.path == path }) {
+			pendingOpenPath = path
+			return
+		}
+		// The note may not be in the (possibly cached) snapshot yet.
+		Task {
+			await reload()
+			if notes.contains(where: { $0.path == path }) {
+				pendingOpenPath = path
+			} else {
+				errorMessage = "The note “\(path)” is not in this vault."
+			}
+		}
 	}
 
 	/// Resolves a deep link (`symdesk://open/<path>`) from Spotlight, a
@@ -657,6 +704,9 @@ final class MobileVaultStore: ObservableObject {
 					skippedFiles = snapshot.skippedFiles
 					revision += 1
 					snapshotETag = etag
+					// Both connection modes feed the same index path; the
+					// merge is incremental by mtime+size signature.
+					await searchIndex.merge(snapshot: snapshot.notes)
 				}
 			} else if let root = vaultURL {
 				let snapshot = try await scanner.scan(root: root)
@@ -664,6 +714,7 @@ final class MobileVaultStore: ObservableObject {
 				notes = snapshot.notes
 				skippedFiles = snapshot.skippedFiles
 				revision += 1
+				await searchIndex.merge(snapshot: snapshot.notes)
 			} else {
 				return
 			}
@@ -769,6 +820,9 @@ final class MobileVaultStore: ObservableObject {
         // or in Spotlight after the user removes the vault.
         MobileVaultCache.remove(at: cacheURL)
         spotlightIndexer.removeAll()
+        // The index belongs to the disconnected vault: purge it so stale
+        // results cannot surface after the user revokes access.
+        Task { await searchIndex.removeAll() }
     }
 
     private func restoreVault() {

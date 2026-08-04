@@ -630,15 +630,37 @@ func hasTag(raw, want string) bool {
 		return true
 	}
 
-	trimmed := strings.TrimPrefix(strings.TrimSuffix(raw, "]"), "[")
-	for _, tag := range strings.FieldsFunc(trimmed, func(r rune) bool {
-		return r == ',' || unicode.IsSpace(r)
-	}) {
-		if strings.EqualFold(strings.Trim(tag, `"'`), want) {
+	for _, tag := range parseTagsValue(raw) {
+		if strings.EqualFold(tag, want) {
 			return true
 		}
 	}
 	return false
+}
+
+// parseTagsValue splits a stored `tags` property into individual tags. The
+// value is the original frontmatter list (e.g. `[invoice, urgent]`,
+// `[invoice urgent]` or a bare comma-separated string) and is stored verbatim,
+// so both list and comma forms are handled here.
+func parseTagsValue(raw string) []string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil
+	}
+	trimmed := strings.TrimPrefix(strings.TrimSuffix(raw, "]"), "[")
+	if strings.TrimSpace(trimmed) == "" {
+		return nil
+	}
+	var tags []string
+	for _, tag := range strings.FieldsFunc(trimmed, func(r rune) bool {
+		return r == ',' || unicode.IsSpace(r)
+	}) {
+		cleaned := strings.Trim(tag, `"'`)
+		if cleaned != "" {
+			tags = append(tags, cleaned)
+		}
+	}
+	return tags
 }
 
 // GetTitle returns the title of the document at the given path.
@@ -781,6 +803,9 @@ type DocsResult struct {
 	Correspondent string `json:"correspondent,omitempty"`
 	DocumentType  string `json:"document_type,omitempty"`
 	ASN           int    `json:"asn,omitempty"`
+	// Tags is the parsed tag list from the file's tags frontmatter property.
+	// It is empty when the file carries no tags.
+	Tags []string `json:"tags,omitempty"`
 }
 
 // DocsList queries indexed documents with optional filters and returns
@@ -789,7 +814,9 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 	query := `
 		SELECT f.path, f.title, f."type", COALESCE(f.document_date,''), COALESCE(f.person,''),
 			COALESCE(f.status,''), COALESCE(f.due_date,''), f.confidence,
-			COALESCE(fp_corr.value,''), COALESCE(fp_type.value,''), COALESCE(f.asn, 0)
+			COALESCE(fp_corr.value,''), COALESCE(fp_type.value,''), COALESCE(f.asn, 0),
+			COALESCE((SELECT value FROM file_properties tag_prop
+				WHERE tag_prop.file_id = f.id AND tag_prop.key = 'tags'), '')
 		FROM files f
 		LEFT JOIN file_properties fp_corr ON fp_corr.file_id = f.id AND fp_corr.key = 'correspondent'
 		LEFT JOIN file_properties fp_type ON fp_type.file_id = f.id AND fp_type.key = 'document_type'
@@ -849,13 +876,15 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 	for rows.Next() {
 		var r DocsResult
 		var conf sql.NullInt64
+		var rawTags string
 		if err := rows.Scan(&r.Path, &r.Title, &r.Type, &r.DocumentDate, &r.Person,
-			&r.Status, &r.DueDate, &conf, &r.Correspondent, &r.DocumentType, &r.ASN); err != nil {
+			&r.Status, &r.DueDate, &conf, &r.Correspondent, &r.DocumentType, &r.ASN, &rawTags); err != nil {
 			return nil, err
 		}
 		if conf.Valid {
 			r.Confidence = int(conf.Int64)
 		}
+		r.Tags = parseTagsValue(rawTags)
 		results = append(results, r)
 	}
 	return results, nil
@@ -958,11 +987,36 @@ func reviewReasons(conf, threshold int, docType, docDate string) []string {
 	return reasons
 }
 
+// SimilarResult describes one document compared against a reference simhash.
 type SimilarResult struct {
 	Path       string `json:"path"`
 	Title      string `json:"title"`
 	Similarity int    `json:"similarity"`
 	Simhash    string `json:"simhash"`
+}
+
+// AllSimhashes returns every indexed document that has a simhash, in path
+// order. Used for vault-wide duplicate scans.
+func (db *DB) AllSimhashes() ([]SimilarResult, error) {
+	rows, err := db.conn.Query(`
+		SELECT path, title, COALESCE(simhash,'')
+		FROM files
+		WHERE simhash IS NOT NULL AND simhash != ''
+		ORDER BY path ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() //nolint:errcheck // result rows are fully drained below before return
+
+	var results []SimilarResult
+	for rows.Next() {
+		var r SimilarResult
+		if err := rows.Scan(&r.Path, &r.Title, &r.Simhash); err != nil {
+			return nil, err
+		}
+		results = append(results, r)
+	}
+	return results, nil
 }
 
 // SimilarDocs returns indexed documents whose simhash is within the given

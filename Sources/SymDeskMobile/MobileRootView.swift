@@ -498,6 +498,44 @@ private struct MobileOutboxBanner: View {
     }
 }
 
+/// Active filter selection for the library, persisted across relaunches so
+/// the user's narrowing survives app restarts (relaunch-persistent chips).
+struct MobileActiveFilters: Codable, Equatable, Hashable, Sendable {
+    var tags: [String] = []
+    var correspondents: [String] = []
+    var documentTypes: [String] = []
+    var dateFrom: String = ""
+    var dateTo: String = ""
+
+    var isActive: Bool {
+        !tags.isEmpty || !correspondents.isEmpty || !documentTypes.isEmpty || !dateFrom.isEmpty || !dateTo.isEmpty
+    }
+
+    static let storageKey = "symdesk.mobile.active-filters.v1"
+
+    static func load() -> MobileActiveFilters {
+        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return MobileActiveFilters() }
+        return (try? JSONDecoder().decode(MobileActiveFilters.self, from: data)) ?? MobileActiveFilters()
+    }
+
+    func save() {
+        guard let data = try? JSONEncoder().encode(self) else { return }
+        UserDefaults.standard.set(data, forKey: Self.storageKey)
+    }
+
+    var uiFilters: MobileSearchFilterEngine.UIFilters {
+        var ui = MobileSearchFilterEngine.UIFilters()
+        ui.tags = tags
+        ui.correspondents = correspondents
+        ui.documentTypes = documentTypes
+        if !dateFrom.isEmpty || !dateTo.isEmpty {
+            ui.dateRange = (dateFrom.isEmpty ? "0000-01-01" : dateFrom)
+                ... (dateTo.isEmpty ? "9999-12-31" : dateTo)
+        }
+        return ui
+    }
+}
+
 private struct MobileLibraryView: View {
     @EnvironmentObject private var vault: MobileVaultStore
     let documentsOnly: Bool
@@ -508,9 +546,17 @@ private struct MobileLibraryView: View {
     @State private var query = ""
     @State private var statusFilter = "All"
     @State private var displayedNotes: [MobileNote] = []
+    @State private var activeFilters = MobileActiveFilters.load()
+
+    /// Search-result snippets keyed by note path (only populated in search mode).
+    @State private var snippetsByPath: [String: String] = [:]
 
     private var availableStatuses: [String] {
         ["All"] + Array(Set(vault.documents.map(\.status).filter { !$0.isEmpty })).sorted()
+    }
+
+    private var facets: MobileSearchFilterEngine.Facets {
+        MobileSearchFilterEngine.facets(of: vault.notes)
     }
 
     private var request: LibraryRequest {
@@ -518,7 +564,8 @@ private struct MobileLibraryView: View {
             query: query,
             status: statusFilter,
             documentsOnly: documentsOnly,
-            revision: vault.revision
+            revision: vault.revision,
+            filters: activeFilters
         )
     }
 
@@ -526,9 +573,7 @@ private struct MobileLibraryView: View {
         NavigationStack {
             MobileBackdrop {
                 VStack(spacing: 0) {
-                    if documentsOnly, availableStatuses.count > 1 {
-                        statusFilters
-                    }
+                    filterChips
 
                     ScrollView {
                         LazyVStack(spacing: 10) {
@@ -536,7 +581,7 @@ private struct MobileLibraryView: View {
                                 NavigationLink {
                                     MobileNoteDetailView(noteID: note.id)
                                 } label: {
-                                    MobileNoteRow(note: note)
+                                    MobileNoteRow(note: note, snippet: snippetsByPath[note.path])
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -562,7 +607,7 @@ private struct MobileLibraryView: View {
                 }
             }
             .navigationTitle(documentsOnly ? "Documents" : "Notes")
-            .searchable(text: $query, prompt: documentsOnly ? "Search documents" : "Search notes")
+            .searchable(text: $query, prompt: documentsOnly ? "Search documents (tag:name, type:invoice…)" : "Search notes (tag:name, type:invoice…)")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { Task { await vault.reload() } } label: {
@@ -579,7 +624,166 @@ private struct MobileLibraryView: View {
                 }
             }
             .task(id: request) { await updateResults(for: request) }
+            .onChange(of: activeFilters) { _, newValue in
+                newValue.save()
+            }
         }
+    }
+
+    /// Removable active-filter chips plus a filter surface for values
+    /// derived from the vault's actual content.
+    private var filterChips: some View {
+        VStack(spacing: 8) {
+            if activeFilters.isActive {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(activeFilters.tags, id: \.self) { tag in
+                            chip("tag: \(tag)") { activeFilters.tags.removeAll { $0 == tag } }
+                        }
+                        ForEach(activeFilters.correspondents, id: \.self) { correspondent in
+                            chip("from: \(correspondent)") { activeFilters.correspondents.removeAll { $0 == correspondent } }
+                        }
+                        ForEach(activeFilters.documentTypes, id: \.self) { type in
+                            chip("type: \(type)") { activeFilters.documentTypes.removeAll { $0 == type } }
+                        }
+                        if !activeFilters.dateFrom.isEmpty || !activeFilters.dateTo.isEmpty {
+                            chip("\(activeFilters.dateFrom)–\(activeFilters.dateTo)") {
+                                activeFilters.dateFrom = ""
+                                activeFilters.dateTo = ""
+                            }
+                        }
+                        Button {
+                            activeFilters = MobileActiveFilters()
+                        } label: {
+                            Text("Clear all")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(MobileTheme.gold)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.trailing, 6)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                }
+                .background(.ultraThinMaterial)
+            }
+
+            if documentsOnly, availableStatuses.count > 1 {
+                statusFilters
+            }
+
+            filterSurface
+        }
+    }
+
+    private func chip(_ label: String, onRemove: @escaping () -> Void) -> some View {
+        HStack(spacing: 6) {
+            Text(label)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(MobileTheme.textPrimary)
+            Button(action: onRemove) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(MobileTheme.textMuted)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Remove \(label)")
+        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 7)
+        .background(MobileTheme.card, in: Capsule())
+    }
+
+    /// Value pickers for tag / correspondent / document type / date range,
+    /// populated from what the vault actually contains.
+    private var filterSurface: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                filterMenu("Tag", options: facets.tags, selection: $activeFilters.tags, icon: "tag")
+                filterMenu("From", options: facets.correspondents, selection: $activeFilters.correspondents, icon: "person.crop.circle")
+                filterMenu("Type", options: facets.documentTypes, selection: $activeFilters.documentTypes, icon: "doc.text.image")
+                dateRangeMenu
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+        }
+        .background(.ultraThinMaterial)
+    }
+
+    private func filterMenu(
+        _ title: String,
+        options: [String],
+        selection: Binding<[String]>,
+        icon: String
+    ) -> some View {
+        Menu {
+            ForEach(options, id: \.self) { option in
+                Button {
+                    if selection.wrappedValue.contains(option) {
+                        selection.wrappedValue.removeAll { $0 == option }
+                    } else {
+                        selection.wrappedValue.append(option)
+                    }
+                } label: {
+                    if selection.wrappedValue.contains(option) {
+                        Label(option, systemImage: "checkmark")
+                    } else {
+                        Text(option)
+                    }
+                }
+            }
+            if options.isEmpty {
+                Text("No values in vault")
+                    .font(.caption)
+                    .foregroundStyle(MobileTheme.textMuted)
+            }
+        } label: {
+            Label(
+                selection.wrappedValue.isEmpty ? title : title + " (\(selection.wrappedValue.count))",
+                systemImage: icon
+            )
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(MobileTheme.textPrimary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(MobileTheme.card, in: Capsule())
+        }
+    }
+
+    private var dateRangeMenu: some View {
+        Menu {
+            // Quick ranges over the ISO date prefix used by contract-v2.
+            Button("This month") { setMonthRange(offset: 0) }
+            Button("Last month") { setMonthRange(offset: -1) }
+            Button("This year") {
+                let year = String(Calendar.current.component(.year, from: Date()))
+                activeFilters.dateFrom = "\(year)-01-01"
+                activeFilters.dateTo = "\(year)-12-31"
+            }
+            Button("Clear date range") {
+                activeFilters.dateFrom = ""
+                activeFilters.dateTo = ""
+            }
+        } label: {
+            Label(activeFilters.dateFrom.isEmpty ? "Date" : "Date: \(activeFilters.dateFrom)…", systemImage: "calendar")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(MobileTheme.textPrimary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(MobileTheme.card, in: Capsule())
+        }
+    }
+
+    private func setMonthRange(offset: Int) {
+        let calendar = Calendar.current
+        let now = Date()
+        guard let month = calendar.date(byAdding: .month, value: offset, to: now) else { return }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let first = calendar.date(from: calendar.dateComponents([.year, .month], from: month)) ?? month
+        let last = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: first) ?? now
+        activeFilters.dateFrom = formatter.string(from: first)
+        activeFilters.dateTo = formatter.string(from: last)
     }
 
     private var statusFilters: some View {
@@ -615,16 +819,65 @@ private struct MobileLibraryView: View {
         guard !Task.isCancelled else { return }
 
         let notes = vault.notes
-        let normalizedQuery = MobileVaultParser.normalizedSearchQuery(request.query)
+        let uiFilters = request.filters.uiFilters
+
+        // Parse the operator grammar. On invalid syntax the whole query is
+        // degraded to safe plain full-text search — the same policy as the
+        // CLI (`searchquery.Parse` callers).
+        let plan: MobileSearchQueryParser.Plan
+        if let parsed = try? MobileSearchQueryParser.parse(request.query) {
+            plan = parsed
+        } else if request.query.isEmpty {
+            plan = MobileSearchQueryParser.Plan()
+        } else {
+            plan = MobileSearchQueryParser.Plan(
+                terms: [MobileSearchQueryParser.Term(value: request.query, phrase: false, negated: false)]
+            )
+        }
+
+        // Pure plain-text search (no operators, no chips, no status/side
+        // filters) goes through the ranked on-device index: fast prefix
+        // search, field-weighted ranking and snippets (#321).
+        let isPlainText = plan.filters.isEmpty && plan.regexes.isEmpty
+            && !plan.terms.contains(where: { $0.negated || $0.phrase })
+        if isPlainText && !request.query.isEmpty && !request.filters.isActive
+            && request.status == "All" && !request.documentsOnly {
+            let results = await vault.search(request.query)
+            guard !Task.isCancelled else { return }
+            let byPath = Dictionary(uniqueKeysWithValues: notes.map { ($0.path, $0) })
+            let ranked = results.compactMap { result -> (MobileNote, String)? in
+                guard let note = byPath[result.path] else { return nil }
+                let snippet = MobileSearchSnippet.snippet(
+                    for: note.body,
+                    normalizedQuery: MobileVaultParser.normalizedSearchQuery(request.query)
+                )
+                return (note, snippet)
+            }
+            snippetsByPath = Dictionary(uniqueKeysWithValues: ranked.map { ($0.0.path, $0.1) })
+            displayedNotes = ranked.map(\.0)
+            return
+        }
+
+        // Operators, chips or browsing mode: one predicate engine for both
+        // typed operators and chip selections (shared contract §2).
         let filtered = await Task.detached(priority: .userInitiated) {
-            notes.filter { note in
+            MobileSearchFilterEngine.filter(notes, plan: plan, ui: uiFilters).filter { note in
                 guard !request.documentsOnly || note.isDocument else { return false }
                 guard request.status == "All" || note.status == request.status else { return false }
-                return normalizedQuery.isEmpty || note.searchText.contains(normalizedQuery)
+                return true
             }
         }.value
-
         guard !Task.isCancelled else { return }
+
+        if request.query.isEmpty {
+            snippetsByPath = [:]
+        } else {
+            let plainQuery = plan.terms.map(\.value).joined(separator: " ")
+            snippetsByPath = Dictionary(uniqueKeysWithValues: filtered.compactMap { note in
+                let snippet = MobileSearchSnippet.snippet(for: note.body, normalizedQuery: plainQuery)
+                return snippet.isEmpty ? nil : (note.path, snippet)
+            })
+        }
         displayedNotes = filtered
     }
 }
@@ -634,10 +887,14 @@ private struct LibraryRequest: Hashable, Sendable {
     let status: String
     let documentsOnly: Bool
     let revision: Int
+    let filters: MobileActiveFilters
 }
 
 struct MobileNoteRow: View {
     let note: MobileNote
+    /// Optional search-result snippet; shown instead of the first line
+    /// when the row came from a ranked query.
+    var snippet: String? = nil
 
     var body: some View {
         HStack(alignment: .top, spacing: 13) {
@@ -653,6 +910,14 @@ struct MobileNoteRow: View {
                     .font(.headline)
                     .foregroundStyle(MobileTheme.textPrimary)
                     .lineLimit(2)
+
+                if let snippet, !snippet.isEmpty {
+                    Text(snippet)
+                        .font(.subheadline)
+                        .foregroundStyle(MobileTheme.textSecondary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
 
                 HStack(spacing: 7) {
                     if !note.documentType.isEmpty {

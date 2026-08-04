@@ -121,6 +121,7 @@
 		F9D9027836F3132FDD8F6297 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827CE03FB82C7640D64E4D97 /* main.swift */; };
 		FC481AC96D97F01753A861B0 /* DeskCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */; };
 		FCFB317B20C9D92FD0EB6821 /* SymairaKeychain in Frameworks */ = {isa = PBXBuildFile; productRef = 595C4A604BC01E3DA06950B3 /* SymairaKeychain */; };
+		FF9A55D65788461A8EA678DB /* PaperlessImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D9A9D5A06473CC244100C1 /* PaperlessImportView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -213,6 +214,7 @@
 		7946F6B3E83FEFA35F91B69F /* SpeakerReviewPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerReviewPanel.swift; sourceTree = "<group>"; };
 		805FBABA01057AAEA77CCF0D /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		827CE03FB82C7640D64E4D97 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		83D9A9D5A06473CC244100C1 /* PaperlessImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaperlessImportView.swift; sourceTree = "<group>"; };
 		8948F04EC3090C19864630CC /* AsyncActionTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncActionTrackerTests.swift; sourceTree = "<group>"; };
 		8EBD01F47531831816ECBBC9 /* AsyncActionTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncActionTracker.swift; sourceTree = "<group>"; };
 		937E397B9A403351E2774A73 /* MobileVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileVault.swift; sourceTree = "<group>"; };
@@ -414,6 +416,7 @@
 				95A9CC7BD653D742BBD137CC /* MeetingReviewView.swift */,
 				34D4E18EEA985A7CCFB138B7 /* MeetingsView.swift */,
 				59762A8D6DF418D30855BEDA /* OnboardingView.swift */,
+				83D9A9D5A06473CC244100C1 /* PaperlessImportView.swift */,
 				0C3A8CB17DABF0648A84D9C6 /* ParticipantConfirmationView.swift */,
 				56278C647AEC161C2B94531F /* PropertiesInspector.swift */,
 				9C51F0367577777D2D842F81 /* ReviewLaneView.swift */,
@@ -848,6 +851,7 @@
 				1ECCF881DFFB05C3E4DCA223 /* NotificationCenterProviding.swift in Sources */,
 				40406909A4AAF62DD881D295 /* NotificationManager.swift in Sources */,
 				A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */,
+				FF9A55D65788461A8EA678DB /* PaperlessImportView.swift in Sources */,
 				951042A6C3918F1D3EA4CD32 /* ParticipantConfirmationView.swift in Sources */,
 				AF33E56F24D6F0B026A98F5B /* PropertiesInspector.swift in Sources */,
 				888252B8F6964BA6158F9CC6 /* ReviewLaneView.swift in Sources */,

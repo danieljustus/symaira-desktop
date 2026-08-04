@@ -671,6 +671,9 @@ final class MobileVaultStore: ObservableObject {
         // the whole queue is dropped and the write backend is detached.
         Task { await writeCoordinator.setMode(nil) }
         Task { try? await writeCoordinator.clear() }
+        // …and shares still sitting in the App-Group inbox are dropped too,
+        // so they can never drain into the next vault that gets connected.
+        shareInbox?.purge()
         Task { await scanner.clearCache() }
     }
 

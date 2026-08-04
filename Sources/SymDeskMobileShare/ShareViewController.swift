@@ -11,6 +11,10 @@ final class ShareViewController: SLComposeServiceViewController {
 
     private static let appGroupID = "group.com.symaira.desktop.ios"
 
+    /// Optional comment collected via the configuration item; appended to
+    /// the note body for URL/text shares (#327 minimal share UI).
+    private var comment = ""
+
     override func isContentValid() -> Bool {
         // The content is valid as soon as there is anything to share; the
         // title field is optional.
@@ -71,14 +75,48 @@ final class ShareViewController: SLComposeServiceViewController {
     }
 
     override func configurationItems() -> [Any]! {
-        []
+        // Minimal share UI (#327): one optional-comment item. The comment
+        // travels inside the URL/text descriptor and lands in the note
+        // body. (A folder picker would be misleading here — the extension
+        // cannot enumerate the vault's folders.)
+        // The initializer is imported as optional (the Social framework
+        // lacks nullability annotations); it always succeeds in practice.
+        guard let commentItem = SLComposeSheetConfigurationItem() else { return [] }
+        commentItem.title = "Comment"
+        commentItem.value = comment.isEmpty ? "None" : comment
+        commentItem.tapHandler = { [weak self] in
+            self?.presentCommentEditor()
+        }
+        return [commentItem]
+    }
+
+    private func presentCommentEditor() {
+        let alert = UIAlertController(
+            title: "Comment",
+            message: "An optional comment is appended to the shared note.",
+            preferredStyle: .alert
+        )
+        alert.addTextField { [weak self] field in
+            field.text = self?.comment
+            field.placeholder = "Add a comment…"
+            field.autocorrectionType = .yes
+        }
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Save", style: .default) { [weak self] _ in
+            let text = alert.textFields?.first?.text?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            self?.comment = String(text.prefix(200))
+            self?.reloadConfigurationItems()
+        })
+        present(alert, animated: true)
     }
 
     // MARK: - Persistence into the App Group inbox
 
     private func saveItem(url: URL) {
         // Local files can be copied directly; remote URLs are saved as a
-        // small descriptor the app resolves (curl-style download) later.
+        // small descriptor the app turns into a note (source recorded in
+        // the frontmatter) on the next drain.
         if url.isFileURL {
             do {
                 let data = try Data(contentsOf: url)
@@ -87,13 +125,15 @@ final class ShareViewController: SLComposeServiceViewController {
                 finish(with: false)
             }
         } else {
-            let descriptor = "url: \(url.absoluteString)\n"
+            var descriptor = "url: \(url.absoluteString)\n"
+            if !comment.isEmpty { descriptor = "comment: \(comment)\n" + descriptor }
             saveData(Data(descriptor.utf8), ext: "url")
         }
     }
 
     private func saveText(_ text: String) {
-        let content = "text: \(text)\n"
+        var content = "text: \(text)\n"
+        if !comment.isEmpty { content = "comment: \(comment)\n" + content }
         saveData(Data(content.utf8), ext: "txt")
     }
 

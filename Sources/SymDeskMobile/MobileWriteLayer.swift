@@ -22,17 +22,16 @@ enum MobileNoteWriter {
     /// Contract-v2 frontmatter plus body, byte-identical in shape to what
     /// `note new` writes (`title`, `created`, `tags: []`), so the desktop
     /// parser and `MobileVaultParser.parse` both accept the result.
-    static func noteDocument(title: String, body: String, createdAt: Date = Date()) -> String {
+    /// `source` is optional provenance — e.g. the URL a share came from —
+    /// recorded as a scalar frontmatter field (#327).
+    static func noteDocument(title: String, body: String, source: String? = nil, createdAt: Date = Date()) -> String {
         let iso = ISO8601DateFormatter().string(from: createdAt)
-        return """
-        ---
-        title: "\(escaped(title))"
-        created: "\(iso)"
-        tags: []
-        ---
-
-        \(body)
-        """
+        var text = "---\ntitle: \"\(escaped(title))\"\ncreated: \"\(iso)\"\ntags: []"
+        if let source, !source.isEmpty {
+            text += "\nsource: \"\(escaped(source))\""
+        }
+        text += "\n---\n\n\(body)"
+        return text
     }
 
     /// Sibling conflict file name understood by the desktop

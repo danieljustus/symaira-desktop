@@ -167,7 +167,7 @@ struct PaperlessImportView: View {
     private func summaryStat(_ label: String, _ value: Int, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("\(value)")
-                .symairaText(.subheading).weight(.bold)
+                .symairaText(.subheading).fontWeight(.bold)
                 .foregroundStyle(color)
             Text(label)
                 .symairaText(.caption)

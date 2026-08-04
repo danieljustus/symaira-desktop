@@ -53,6 +53,19 @@ struct SymDeskApp: App {
                     await notificationManager.refreshNotifications(with: core)
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .vaultSwitched)) { _ in
+                // A different vault became active: tear down the event watcher
+                // and restart it against the new path so no events leak across
+                // vaults (issue #296).
+                watcher.reset()
+                showDemoBanner = VaultConfig.isDemoMode
+                if let tool = core.tool {
+                    watcher.start(tool: tool, vaultPath: core.vaultPath)
+                }
+                Task {
+                    await notificationManager.refreshNotifications(with: core)
+                }
+            }
             .onReceive(NotificationCenter.default.publisher(for: .vaultReset)) { _ in
                 vaultConfigured = false
                 showDemoBanner = false

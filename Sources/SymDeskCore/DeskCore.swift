@@ -229,9 +229,12 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
     public let correspondent: String
     public let documentType: String
     public let asn: Int
+    /// Tags carried by the document, parsed from its frontmatter tags
+    /// property. Empty when the document has no tags (issue #306).
+    public let tags: [String]
 
     enum CodingKeys: String, CodingKey {
-        case path, title, type, person, status, confidence, correspondent, asn
+        case path, title, type, person, status, confidence, correspondent, asn, tags
         case documentDate = "document_date"
         case dueDate = "due_date"
         case documentType = "document_type"
@@ -250,6 +253,7 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         correspondent = (try? c.decode(String.self, forKey: .correspondent)) ?? ""
         documentType = (try? c.decode(String.self, forKey: .documentType)) ?? ""
         asn = (try? c.decode(Int.self, forKey: .asn)) ?? 0
+        tags = (try? c.decodeIfPresent([String].self, forKey: .tags)) ?? []
     }
 
     public init(
@@ -263,7 +267,8 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         confidence: Int,
         correspondent: String,
         documentType: String,
-        asn: Int = 0
+        asn: Int = 0,
+        tags: [String] = []
     ) {
         self.path = path
         self.title = title
@@ -276,6 +281,7 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         self.correspondent = correspondent
         self.documentType = documentType
         self.asn = asn
+        self.tags = tags
     }
 }
 
@@ -632,6 +638,24 @@ public final class DeskCore: ObservableObject {
 			serverURL = nil
 			throw ServerConnectionError.server(status: 0, message: errorMessage ?? "Connection failed")
 		}
+		// Register the server as a peer entry in the vault registry so the
+		// switcher can return to it after using a local vault (issue #296).
+		// Reuses an existing entry for the same URL so reconnecting never
+		// accumulates duplicate server entries.
+		if let normalized = ServerConnectionConfig.normalizedURL(url) {
+			let registry = VaultRegistry()
+			let existing = registry.entries().first { entry in
+				entry.kind == .server && entry.serverURL == normalized
+			}
+			let entry: VaultEntry
+			if let existing {
+				entry = existing
+			} else {
+				entry = VaultEntry.server(name: normalized.host ?? "Server", url: normalized)
+				_ = registry.upsert(entry)
+			}
+			_ = registry.recordOpened(entry.id)
+		}
 	}
 
 	public func disconnectServer() {
@@ -947,8 +971,89 @@ public final class DeskCore: ObservableObject {
 		_ = try await runChecked(arguments: ["doc", "asn", path, value] + vaultArgs)
     }
 
+    // MARK: - Vault-wide tag management (issue #306)
+
+    /// Per-file outcome of a vault-wide tag operation.
+    public struct TagOpOutcome: Codable, Equatable, Sendable {
+        public struct Item: Codable, Equatable, Sendable {
+            public let file: String
+            public let status: String // "updated" | "skipped" | "error"
+            public let error: String?
+        }
+        public let items: [Item]
+        public var updatedCount: Int { items.filter { $0.status == "updated" }.count }
+    }
+
+    /// Renames a tag across the whole vault, rewriting frontmatter and
+    /// re-indexing every carrier so no stale index rows remain.
+    @discardableResult
+    public func renameTag(from old: String, to new: String) async throws -> TagOpOutcome {
+        try await runTagOp(["tags", "rename", old, new])
+    }
+
+    /// Merges one tag into another across the whole vault and re-indexes.
+    @discardableResult
+    public func mergeTag(from: String, into: String) async throws -> TagOpOutcome {
+        try await runTagOp(["tags", "merge", from, into])
+    }
+
+    /// Deletes a tag from every file across the whole vault and re-indexes.
+    @discardableResult
+    public func deleteTag(_ tag: String) async throws -> TagOpOutcome {
+        try await runTagOp(["tags", "delete", tag])
+    }
+
+    private func runTagOp(_ arguments: [String]) async throws -> TagOpOutcome {
+        let items: [TagOpOutcome.Item] = try await runDecoding(
+            [TagOpOutcome.Item].self,
+            arguments: arguments + ["--json"] + vaultArgs
+        )
+        return TagOpOutcome(items: items)
+    }
+
     public func docsSimilar(path: String, threshold: Int = 50) async throws -> [SimilarDoc] {
 		try await runDecoding([SimilarDoc].self, arguments: ["similar", path, "--threshold", "\(threshold)", "--json"] + vaultArgs)
+    }
+
+    /// One cluster of possible duplicates from the vault-wide SimHash scan.
+    public struct DuplicateGroup: Codable, Equatable, Identifiable, Sendable {
+        public struct Member: Codable, Equatable, Sendable {
+            public let path: String
+            public let title: String
+            public let similarity: Int
+
+            public init(path: String, title: String, similarity: Int) {
+                self.path = path
+                self.title = title
+                self.similarity = similarity
+            }
+        }
+        public let path: String
+        public let title: String
+        public let members: [Member]
+        public var id: String { path }
+    }
+
+    /// Scans the whole vault for groups of possible duplicate documents.
+    public func duplicates(threshold: Int = 50) async throws -> [DuplicateGroup] {
+        try await runDecoding([DuplicateGroup].self, arguments: ["duplicates", "--threshold", "\(threshold)", "--json"] + vaultArgs)
+    }
+
+    /// Result of exporting a note or view to PDF/HTML.
+    public struct ExportResult: Codable, Equatable, Sendable {
+        public let format: String
+        public let path: String
+        public let profile: String?
+        public let rendered: Bool
+        public let message: String?
+    }
+
+    /// Exports a vault-relative note to PDF or HTML via the core CLI.
+    public func exportNote(path: String, format: String, outputPath: String) async throws -> ExportResult {
+        try await runDecoding(
+            ExportResult.self,
+            arguments: ["export", "--note", path, "--format", format, "--output", outputPath, "--json"] + vaultArgs
+        )
     }
 
     public func docsReview(threshold: Int = 70) async throws -> [ReviewDoc] {
@@ -1016,12 +1121,90 @@ public final class DeskCore: ObservableObject {
 
     /// Load vault path from VaultConfig on app launch.
     public func loadVaultFromConfig() {
+        // Prefer the registry's most recently opened entry so a relaunch
+        // reopens the last active vault (issue #296). Falls back to the
+        // legacy single-vault keys, which the registry migrates on first use.
+        // A live server connection is never displaced: it owns the active mode.
+        if ServerConnectionConfig.connection() == nil,
+           let entry = VaultRegistry().mostRecentlyOpened() {
+            VaultConfig.activate(entry)
+        }
         if let path = VaultConfig.vaultPath() {
             self.vaultPath = path
             // Register in Finder's Favorites sidebar so vaults configured
             // before this feature existed get picked up (see issue #299).
             let vaultURL = URL(fileURLWithPath: path)
             VaultConfig.registerInFinderFavorites(vaultURL)
+        }
+    }
+
+    /// Switches the active vault to a registered local entry: activates the
+    /// entry's path/bookmark, tears down the event watcher and re-points every
+    /// `--vault` invocation by publishing the new `vaultPath`.
+    ///
+    /// The caller is responsible for restarting the event watcher and
+    /// reloading UI state; a `.vaultSwitched` notification is posted so the
+    /// app shell can react in one place.
+    public func switchVault(to entry: VaultEntry) {
+        guard entry.kind == .local, let path = entry.path else { return }
+        VaultConfig.activate(entry)
+        vaultPath = path
+        serverURL = nil
+        NotificationCenter.default.post(name: .vaultSwitched, object: nil)
+    }
+
+    /// Creates a new vault folder with the contract scaffold (templates/ and
+    /// assets/ directories, see VAULT.md), runs the first index so the sidecar
+    /// DB exists, registers the vault in the registry and activates it.
+    /// Returns the created entry.
+    public func createVault(named name: String, at url: URL) async throws -> VaultEntry {
+        let fileManager = FileManager.default
+        if !fileManager.fileExists(atPath: url.path) {
+            try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+        }
+        // Contract scaffold: templates/ for note templates, assets/ for
+        // pasted/dropped images. Both are referenced by the service layer.
+        try fileManager.createDirectory(
+            at: url.appendingPathComponent("templates", isDirectory: true),
+            withIntermediateDirectories: true
+        )
+        try fileManager.createDirectory(
+            at: url.appendingPathComponent(VaultAssets.defaultFolderName, isDirectory: true),
+            withIntermediateDirectories: true
+        )
+
+        _ = try await indexVault(path: url.path)
+
+        let bookmarkData = try? url.bookmarkData(
+            options: .withSecurityScope,
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil
+        )
+        let entry = VaultRegistry().registerLocal(
+            name: name,
+            path: url.path,
+            bookmarkData: bookmarkData
+        )
+        VaultConfig.activate(entry)
+        vaultPath = url.path
+        serverURL = nil
+        NotificationCenter.default.post(name: .vaultSwitched, object: nil)
+        return entry
+    }
+
+    /// Removes a vault from the registry list. The folder on disk and the
+    /// sidecar DB are left untouched (issue #296). When the removed entry is
+    /// the currently active vault, the active association is cleared so the
+    /// removed vault does not silently resurrect on the next relaunch.
+    public func removeVaultFromRegistry(id: UUID) {
+        let registry = VaultRegistry()
+        let removed = registry.entry(id: id)
+        registry.remove(id: id)
+        if let removed, removed.kind == .local, let path = removed.path,
+           path == VaultConfig.vaultPath() {
+            VaultConfig.resetLocalVault()
+            vaultPath = nil
+            NotificationCenter.default.post(name: .vaultReset, object: nil)
         }
     }
 
@@ -1060,6 +1243,17 @@ public final class DeskCore: ObservableObject {
 
     public func historyList(path: String) async throws -> [HistoryEntry] {
         try await runDecoding([HistoryEntry].self, arguments: ["history", path, "--json"] + vaultArgs)
+    }
+
+    /// Returns the stored content of a snapshot, used to render a diff
+    /// between a version and the current file (issue #307).
+    public func historyContent(id: String) async throws -> String {
+        struct HistoryShowPayload: Codable { let content: String }
+        let payload: HistoryShowPayload = try await runDecoding(
+            HistoryShowPayload.self,
+            arguments: ["history", "show", id, "--json"] + vaultArgs
+        )
+        return payload.content
     }
 
     public func historyRestore(path: String, at id: String = "") async throws {
@@ -1121,6 +1315,45 @@ public final class DeskCore: ObservableObject {
     /// Sets the consume folder path in the symdesk config.
     public func setConsumeFolderPath(_ path: String) async throws {
         _ = try await runChecked(arguments: ["consume", "set-path", path] + vaultArgs)
+    }
+
+    // MARK: - Paperless-ngx Import (issue #307)
+
+    /// Per-document outcome of a Paperless import.
+    public struct PaperlessImportResult: Codable, Equatable, Sendable {
+        public let action: String // "created" | "updated" | "skipped_idempotent" | "error"
+        public let paperlessID: Int
+        public let title: String
+        public let notePath: String?
+        public let asn: Int?
+        public let error: String?
+
+        enum CodingKeys: String, CodingKey {
+            case action
+            case paperlessID = "paperless_id"
+            case title
+            case notePath = "note_path"
+            case asn
+            case error
+        }
+    }
+
+    /// Aggregate summary of a Paperless import run.
+    public struct PaperlessImportSummary: Codable, Equatable, Sendable {
+        public let total: Int
+        public let created: Int
+        public let updated: Int
+        public let skipped: Int
+        public let errors: Int
+        public let results: [PaperlessImportResult]
+    }
+
+    /// Runs the Paperless-ngx export import through the core CLI. In dry-run
+    /// mode nothing is written; the summary reports what would happen.
+    public func paperlessImport(exportDir: String, dryRun: Bool = false) async throws -> PaperlessImportSummary {
+        var args = ["paperless", "import", exportDir, "--json"]
+        if dryRun { args.append("--dry-run") }
+        return try await runDecoding(PaperlessImportSummary.self, arguments: args + vaultArgs)
     }
 
     // MARK: - AI Settings

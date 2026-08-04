@@ -37,6 +37,9 @@ struct MobileNoteDetailView: View {
 		.task(id: noteID) {
 			guard let note else { return }
 			vault.recordOpened(note)
+			// Donate for Handoff / Siri Suggestions so the Mac app (or a
+			// second device) can pick the note up.
+			MobileNoteActivity.donate(for: note)
 			isLoadingAttachment = true
 			attachmentURL = await vault.attachmentURL(for: note)
 			isLoadingAttachment = false

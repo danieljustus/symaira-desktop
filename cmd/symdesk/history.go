@@ -73,6 +73,29 @@ func newHistoryCmd() *cobra.Command {
 	pruneCmd.Flags().Int("max-age-days", 0, "drop snapshots older than N days, newest always kept (0 = unlimited, default from config)")
 	historyCmd.AddCommand(pruneCmd)
 
+	showCmd := &cobra.Command{
+		Use:   "show <snapshot-id>",
+		Short: "Print the stored content of a snapshot (for diff previews)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			content, err := service.New(vRoot, db).HistoryContent(args[0])
+			if err != nil {
+				return err
+			}
+			if jsonFlag {
+				return outputResult(map[string]string{"id": args[0], "content": string(content)})
+			}
+			fmt.Print(string(content))
+			return nil
+		},
+	}
+	historyCmd.AddCommand(showCmd)
+
 	return historyCmd
 }
 

@@ -12,6 +12,7 @@ struct OnboardingView: View {
     @State private var progressMessage = ""
     @State private var errorMessage: String?
 	@State private var isShowingServerConnection = false
+	@State private var isShowingPaperlessImport = false
 
     enum Step {
         case chooseLocation
@@ -80,6 +81,9 @@ struct OnboardingView: View {
 					}
 				}
 			}
+		}
+		.sheet(isPresented: $isShowingPaperlessImport) {
+			PaperlessImportView()
 		}
     }
 
@@ -244,6 +248,18 @@ struct OnboardingView: View {
                     .foregroundColor(SymairaTheme.textSecondary)
             }
 
+            // Migration path for Paperless-ngx users: discoverable during
+            // onboarding, exactly where new users set up their vault (issue #307).
+            if !core.isDemoMode {
+                Button {
+                    isShowingPaperlessImport = true
+                } label: {
+                    Label("Import from Paperless-ngx…", systemImage: "doc.badge.arrow.up")
+                }
+                .buttonStyle(SymairaSecondaryButtonStyle())
+                .help("Migrate an existing Paperless-ngx export into this vault")
+            }
+
             Spacer()
 
             HStack(spacing: 12) {
@@ -387,7 +403,7 @@ struct OnboardingView: View {
     }
 }
 
-private struct ServerConnectionSheet: View {
+struct ServerConnectionSheet: View {
 	@Environment(\.dismiss) private var dismiss
 	@State private var serverURL = ""
 	@State private var token = ""
@@ -444,10 +460,6 @@ private struct ServerConnectionSheet: View {
 extension Notification.Name {
     static let onboardingComplete = Notification.Name("symdesk.onboardingComplete")
     static let openDiscover = Notification.Name("symdesk.openDiscover")
-    /// Posted when the active vault association is cleared from within the
-    /// running app (changing/resetting a local vault, leaving demo mode) so
-    /// onboarding should reappear in-place, without a relaunch.
-    static let vaultReset = Notification.Name("symdesk.vaultReset")
     /// Posted by menu bar commands to trigger UI actions in ContentView.
     static let openCommandPalette = Notification.Name("symdesk.openCommandPalette")
     static let openNewNoteSheet = Notification.Name("symdesk.openNewNoteSheet")

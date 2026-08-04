@@ -241,7 +241,10 @@ struct DocumentGridView: View {
                     DocumentCard(
                         doc: doc,
                         isSelected: selectedDoc?.id == doc.id || selectedPaths.contains(doc.path),
-                        todayString: todayString
+                        todayString: todayString,
+                        onTagClick: { tag in
+                            filterByTag(tag)
+                        }
                     )
                         .onTapGesture(count: 2) { openDoc = doc }
                         .onTapGesture { handleTap(doc: doc) }
@@ -529,6 +532,29 @@ struct DocumentGridView: View {
         applyFilters()
     }
 
+    /// Filters the grid to documents carrying `tag`, reusing the same
+    /// `tag:` search path as the sidebar tag browser (issue #306).
+    private func filterByTag(_ tag: String) {
+        appliedTagFilter = tag
+        searchText = "tag:\(tag)"
+        Task {
+            do {
+                let response = try await core.search(query: "tag:\(tag)")
+                let paths = Set(response.results.map { $0.path })
+                await MainActor.run {
+                    tagFilteredPaths = paths
+                    applyFilters()
+                }
+            } catch {
+                print("tag search failed: \(error)")
+                await MainActor.run {
+                    tagFilteredPaths = []
+                    applyFilters()
+                }
+            }
+        }
+    }
+
     /// Debounces watcher bursts (write + rename + index updates) into one CLI
     /// refresh, avoiding repeated full-vault scans.
     private func scheduleDocumentRefresh() {
@@ -742,6 +768,9 @@ struct DocumentCard: View {
     let doc: DocumentItem
     var isSelected: Bool = false
     let todayString: String
+    /// Called when a tag chip on the card is clicked; filters the grid to
+    /// that tag (issue #306).
+    var onTagClick: ((String) -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -818,6 +847,31 @@ struct DocumentCard: View {
                     .font(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
                     .lineLimit(1)
+            }
+
+            if !doc.tags.isEmpty {
+                HStack(spacing: 4) {
+                    ForEach(doc.tags.prefix(4), id: \.self) { tag in
+                        Button {
+                            onTagClick?(tag)
+                        } label: {
+                            Text(tag)
+                                .font(.caption2)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(SymairaTheme.goldPrimary.opacity(0.14))
+                                .foregroundColor(SymairaTheme.textPrimary)
+                                .cornerRadius(3)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Filter documents tagged \"\(tag)\"")
+                    }
+                    if doc.tags.count > 4 {
+                        Text("+\(doc.tags.count - 4)")
+                            .font(.caption2)
+                            .foregroundColor(SymairaTheme.textMuted)
+                    }
+                }
             }
 
             if doc.confidence > 0 {

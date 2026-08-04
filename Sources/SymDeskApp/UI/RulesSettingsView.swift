@@ -30,6 +30,7 @@ struct RulesSettingsView: View {
     @State private var aiTestResult: DeskCore.AIConnectionTestResult?
     @State private var aiIsTesting = false
     @State private var aiIsSaving = false
+    @State private var showingPaperlessImport = false
 
     init(vaultPath: String? = nil) {
         _viewModel = StateObject(wrappedValue: ClassificationRulesViewModel(client: SymingestRulesClient(vaultPath: vaultPath)))
@@ -70,6 +71,7 @@ struct RulesSettingsView: View {
                 dryRunCard
                 mailRulesCard
                 consumeFolderCard
+                paperlessImportCard
                 aiSettingsCard
 				}
             }
@@ -103,6 +105,9 @@ struct RulesSettingsView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showingPaperlessImport) {
+            PaperlessImportView()
         }
         .confirmationDialog("Delete Classification Rule?", isPresented: Binding(
             get: { pendingDeleteRule != nil },
@@ -383,6 +388,25 @@ struct RulesSettingsView: View {
         .background(Color.white.opacity(0.04))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay { RoundedRectangle(cornerRadius: 12).stroke(SymairaTheme.borderGlass, lineWidth: 1) }
+    }
+
+    /// Card offering the guided Paperless-ngx export import (issue #307).
+    private var paperlessImportCard: some View {
+        settingsCard(title: "Paperless-ngx import", systemImage: "doc.badge.arrow.up") {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Migrate documents from a Paperless-ngx export into this vault. Notes are created with contract frontmatter and the originals are archived under archive/paperless/.")
+                    .font(.callout)
+                    .foregroundStyle(SymairaTheme.textSecondary)
+                Button {
+                    showingPaperlessImport = true
+                } label: {
+                    Label("Import from Paperless…", systemImage: "arrow.down.doc")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(SymairaTheme.goldPrimary)
+                .controlSize(.small)
+            }
+        }
     }
 
     /// Card that shows and controls the consume (watched inbox) folder.

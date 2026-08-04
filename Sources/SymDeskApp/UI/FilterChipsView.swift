@@ -155,18 +155,18 @@ struct FilterChipsView: View {
     private func filterChipView(_ filter: SearchFilter) -> some View {
         HStack(spacing: 4) {
             Image(systemName: filter.field.icon)
-                .font(.caption2)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.goldPrimary)
             Text(filter.field.label + ":")
-                .font(.caption.weight(.medium))
+                .symairaText(.caption).fontWeight(.medium)
                 .foregroundColor(SymairaTheme.goldSecondary)
             Text(filter.value)
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textPrimary)
                 .lineLimit(1)
             Button(action: { removeFilter(filter) }) {
                 Image(systemName: "xmark")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             }
             .buttonStyle(.plain)
@@ -193,9 +193,9 @@ struct FilterChipsView: View {
         }) {
             HStack(spacing: 3) {
                 Image(systemName: "plus.circle")
-                    .font(.caption)
+                    .symairaText(.caption)
                 Text("Filter")
-                    .font(.caption)
+                    .symairaText(.caption)
             }
             .foregroundColor(SymairaTheme.goldSecondary)
             .padding(.horizontal, 8)
@@ -226,11 +226,11 @@ struct FilterChipsView: View {
     private var fieldPickerView: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Add Filter")
-                .font(.headline)
+                .symairaText(.subheading)
                 .foregroundColor(SymairaTheme.goldPrimary)
 
             Text("Select a field to filter by")
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textMuted)
 
             Divider()
@@ -248,7 +248,7 @@ struct FilterChipsView: View {
                             .foregroundColor(SymairaTheme.textPrimary)
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .font(.caption2)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                     .padding(.vertical, 6)
@@ -267,9 +267,9 @@ struct FilterChipsView: View {
                 Button(action: { pickerStep = .selectingField }) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
-                            .font(.caption)
+                            .symairaText(.caption)
                         Text("Back")
-                            .font(.caption)
+                            .symairaText(.caption)
                     }
                     .foregroundColor(SymairaTheme.goldSecondary)
                 }
@@ -278,7 +278,7 @@ struct FilterChipsView: View {
                 Spacer()
 
                 Text(field.label)
-                    .font(.headline)
+                    .symairaText(.subheading)
                     .foregroundColor(SymairaTheme.goldPrimary)
             }
 
@@ -294,7 +294,7 @@ struct FilterChipsView: View {
                 valueList(values: availableStatuses)
             case .date:
                 Text("Date range filter coming soon")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
                     .padding(.vertical, 8)
             }
@@ -334,7 +334,7 @@ struct FilterChipsView: View {
 
                 if filtered.isEmpty {
                     Text("No values available")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                         .padding(.vertical, 8)
                 } else {
@@ -345,11 +345,11 @@ struct FilterChipsView: View {
                             HStack {
                                 Text(value)
                                     .foregroundColor(SymairaTheme.textPrimary)
-                                    .font(.callout)
+                                    .symairaText(.callout)
                                 Spacer()
                                 if filters.contains(where: { $0.value == value }) {
                                     Image(systemName: "checkmark")
-                                        .font(.caption)
+                                        .symairaText(.caption)
                                         .foregroundColor(SymairaTheme.goldPrimary)
                                 }
                             }

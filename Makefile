@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check benchmark-large docker-build clean
+.PHONY: build test lint fmt-check font-guard benchmark-large docker-build clean
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -15,6 +15,12 @@ lint: fmt-check
 
 fmt-check:
 	@test -z "$$(gofmt -l .)" || (echo "gofmt diff found:" && gofmt -l . && exit 1)
+
+# Issue #352: macOS app text must use .symairaText(role) instead of inline
+# .font(.caption/.headline/...) literals so Dynamic Type scales.
+font-guard:
+	@HITS="$$(grep -rnE '\.font\(\.(caption|caption2|headline|callout|subheadline|title|title2|title3|body|largeTitle)' Sources/SymDeskApp/ || true)"; \
+	if [ -n "$$HITS" ]; then echo "$$HITS"; echo "inline role font literals found — use .symairaText(role) (issue #352)"; exit 1; fi
 
 benchmark-large:
 	go test -run '^$$' -bench BenchmarkLargeVaultIndexAndSearch -benchtime=1x ./internal/demo

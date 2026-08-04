@@ -25,7 +25,7 @@ struct DuplicatesView: View {
                 Image(systemName: "arrow.triangle.2.circlepath")
                     .foregroundColor(SymairaTheme.goldPrimary)
                 Text("Possible Duplicates")
-                    .font(.title2.weight(.semibold))
+                    .symairaText(.title).fontWeight(.semibold)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
                 Button(action: { Task { await loadDuplicates() } }) {
@@ -40,7 +40,7 @@ struct DuplicatesView: View {
             .padding(.bottom, 12)
 
             Text("Documents whose content looks near-identical, detected by SimHash while indexing. Merge the content you want to keep, then trash the rest.")
-                .font(.callout)
+                .symairaText(.callout)
                 .foregroundColor(SymairaTheme.textSecondary)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 12)
@@ -50,7 +50,7 @@ struct DuplicatesView: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.red)
                     Text(error)
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
                     Spacer()
                     Button("Retry") { Task { await loadDuplicates() } }
@@ -127,11 +127,11 @@ struct DuplicatesView: View {
                 Image(systemName: "doc.on.doc")
                     .foregroundColor(SymairaTheme.goldSecondary)
                 Text(group.title.isEmpty ? group.path : group.title)
-                    .font(.headline)
+                    .symairaText(.subheading)
                     .foregroundColor(SymairaTheme.textPrimary)
                     .lineLimit(1)
                 Text("+\(group.members.count) more")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
                 Spacer()
                 Button {
@@ -164,15 +164,15 @@ struct DuplicatesView: View {
     private func memberRow(path: String, title: String, similarity: Int?, isRepresentative: Bool) -> some View {
         HStack(spacing: 8) {
             Image(systemName: isRepresentative ? "star.fill" : "doc")
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(isRepresentative ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title.isEmpty ? path : title)
-                    .font(.callout)
+                    .symairaText(.callout)
                     .foregroundColor(SymairaTheme.textPrimary)
                     .lineLimit(1)
                 Text(path)
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -180,18 +180,18 @@ struct DuplicatesView: View {
             Spacer()
             if let similarity {
                 Text("\(similarity)% similar")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
             } else {
                 Text("Reference")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.goldSecondary)
             }
             Button {
                 pendingTrash = DeskCore.DuplicateGroup.Member(path: path, title: title, similarity: similarity ?? 0)
             } label: {
                 Image(systemName: "trash")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             }
             .buttonStyle(.plain)

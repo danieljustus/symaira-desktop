@@ -14,7 +14,7 @@ struct DbViewTimeline: View {
                 ForEach(rows.indices, id: \.self) { index in
                     let row = rows[index]
                     HStack(alignment: .top, spacing: 12) {
-                        Text((row[dateProperty] as? String) ?? "No date").font(.caption).frame(width: 100, alignment: .leading).foregroundColor(SymairaTheme.textMuted)
+                        Text((row[dateProperty] as? String) ?? "No date").symairaText(.caption).frame(width: 100, alignment: .leading).foregroundColor(SymairaTheme.textMuted)
                         VStack(alignment: .leading) {
                             Text((row["_title"] as? String) ?? "Untitled").foregroundColor(SymairaTheme.textPrimary)
                             Rectangle().fill(SymairaTheme.goldPrimary).frame(height: 6).cornerRadius(3)

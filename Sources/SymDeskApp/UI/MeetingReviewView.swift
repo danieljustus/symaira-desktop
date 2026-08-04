@@ -34,13 +34,13 @@ struct MeetingReviewView: View {
     private func failedState(_ message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 40))
+                .symairaText(.title)
                 .foregroundColor(SymairaTheme.goldPrimary)
             Text("Couldn't load this meeting")
-                .font(.title3)
+                .symairaText(.heading)
                 .foregroundColor(SymairaTheme.textPrimary)
             Text(message)
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textSecondary)
                 .multilineTextAlignment(.center)
             if let path = model.selectedPath {
@@ -85,7 +85,7 @@ struct MeetingReviewView: View {
 
             ForEach([model.refreshError, model.reviewSaveError].compactMap { $0 }, id: \.self) { error in
                 Text(error)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.red)
                     .padding(8)
             }
@@ -140,7 +140,7 @@ struct MeetingReviewView: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(detail.title.isEmpty ? detail.frontmatter.meetingID : detail.title)
-                    .font(.title3)
+                    .symairaText(.heading)
                     .fontWeight(.bold)
                     .foregroundColor(SymairaTheme.textPrimary)
                 HStack(spacing: 10) {
@@ -152,7 +152,7 @@ struct MeetingReviewView: View {
                         Label(Self.formatDuration(ms), systemImage: "clock")
                     }
                 }
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textSecondary)
             }
             Spacer()
@@ -195,7 +195,7 @@ struct MeetingReviewView: View {
         let state = reviewState.isEmpty ? "unreviewed" : reviewState
         let color: Color = state == "reviewed" ? .green : SymairaTheme.goldSecondary
         return Text(state)
-            .font(.caption2.weight(.semibold))
+            .symairaText(.caption).fontWeight(.semibold)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
             .background(color.opacity(0.15))

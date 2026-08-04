@@ -129,7 +129,7 @@ private struct DemoBanner: View {
             Image(systemName: "wand.and.stars")
                 .foregroundColor(.black)
             Text("Demo Mode")
-                .font(.caption.bold())
+                .symairaText(.caption).bold()
                 .foregroundColor(.black)
             Spacer()
             Button("Leave Demo Mode") {
@@ -138,7 +138,7 @@ private struct DemoBanner: View {
                 NotificationCenter.default.post(name: .vaultReset, object: nil)
             }
             .buttonStyle(.plain)
-            .font(.caption.weight(.semibold))
+            .symairaText(.caption).fontWeight(.semibold)
             .foregroundColor(.black.opacity(0.75))
         }
         .padding(.horizontal, 12)

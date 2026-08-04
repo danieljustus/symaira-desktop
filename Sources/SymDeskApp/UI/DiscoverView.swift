@@ -94,17 +94,17 @@ struct DiscoverView: View {
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("SymDesk Capabilities")
-                .font(.title2.bold())
+                .symairaText(.title).bold()
                 .foregroundColor(SymairaTheme.textPrimary)
 
             Text("Explore what your vault can do. Mark each capability as explored to track your progress.")
-                .font(.callout)
+                .symairaText(.callout)
                 .foregroundColor(SymairaTheme.textSecondary)
 
             if !isLoadingDoctor {
                 ProgressView(value: Double(exploredCount), total: Double(max(totalCards, 1))) {
                     Text("\(exploredCount) of \(totalCards) explored")
-                        .font(.caption.bold())
+                        .symairaText(.caption).bold()
                         .foregroundColor(SymairaTheme.textSecondary)
                 }
                 .progressViewStyle(.linear)
@@ -120,7 +120,7 @@ struct DiscoverView: View {
     private func groupSection(group: DiscoverCard.Group, cards: [DiscoverCard]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(group.rawValue)
-                .font(.headline)
+                .symairaText(.subheading)
                 .foregroundColor(SymairaTheme.goldPrimary)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 260, maximum: 400), spacing: 14)], spacing: 14) {
@@ -221,16 +221,16 @@ private struct DiscoverCardView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: card.icon)
-                    .font(.title2)
+                    .symairaText(.title)
                     .foregroundColor(isExplored ? SymairaTheme.iceSecondary : SymairaTheme.goldPrimary)
                     .frame(width: 28, height: 28)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(card.title)
-                        .font(.body.weight(.semibold))
+                        .symairaText(.body).fontWeight(.semibold)
                         .foregroundColor(SymairaTheme.textPrimary)
                     Text(card.description)
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
                         .lineLimit(3)
                 }
@@ -240,7 +240,7 @@ private struct DiscoverCardView: View {
                 if isExplored {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(SymairaTheme.goldPrimary)
-                        .font(.title3)
+                        .symairaText(.heading)
                 }
             }
 
@@ -251,7 +251,7 @@ private struct DiscoverCardView: View {
                 Spacer()
                 Button(action: onExplore) {
                     Text(isExplored ? "Visited" : card.actionLabel)
-                        .font(.caption.weight(.medium))
+                        .symairaText(.caption).fontWeight(.medium)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)

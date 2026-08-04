@@ -102,16 +102,16 @@ struct TagBrowserView: View {
             // Filter field
             HStack(spacing: 4) {
                 Image(systemName: "magnifyingglass")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
                 TextField("Filter tags…", text: $filterText)
                     .textFieldStyle(.plain)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textPrimary)
                 if !filterText.isEmpty {
                     Button(action: { filterText = "" }) {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                     .buttonStyle(.plain)
@@ -124,22 +124,22 @@ struct TagBrowserView: View {
             HStack(spacing: 4) {
                 Button(action: { sortByCount = true }) {
                     Text("Count")
-                        .font(.caption2)
+                        .symairaText(.caption)
                         .foregroundColor(sortByCount ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
                 }
                 .buttonStyle(.plain)
                 Text("·")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
                 Button(action: { sortByCount = false }) {
                     Text("A–Z")
-                        .font(.caption2)
+                        .symairaText(.caption)
                         .foregroundColor(!sortByCount ? SymairaTheme.goldPrimary : SymairaTheme.textMuted)
                 }
                 .buttonStyle(.plain)
                 Spacer()
                 Text("\(filteredTags.count) tag\(filteredTags.count == 1 ? "" : "s")")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             }
             .padding(.horizontal, 8)
@@ -149,10 +149,10 @@ struct TagBrowserView: View {
             if orderedRows.isEmpty {
                 VStack(spacing: 6) {
                     Image(systemName: "tag")
-                        .font(.title3)
+                        .symairaText(.heading)
                         .foregroundColor(SymairaTheme.textMuted)
                     Text(tags.isEmpty ? "No tags yet" : "No tags match")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 .frame(maxWidth: .infinity)
@@ -213,16 +213,16 @@ struct TagBrowserView: View {
         Button(action: { onTagClick(tag.name) }) {
             HStack(spacing: 6) {
                 Image(systemName: indent ? "tag" : "tag.fill")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(indent ? SymairaTheme.textMuted : SymairaTheme.goldSecondary)
                 Text(tag.name)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer()
                 Text("\(tag.count)")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
@@ -287,7 +287,7 @@ private struct RenameTagSheet: View {
                     .font(.system(size: 28))
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Rename Tag").font(.title2.bold())
+                    Text("Rename Tag").symairaText(.title).bold()
                     Text("“\(currentName)” is renamed in every file that carries it and re-indexed.")
                         .foregroundStyle(SymairaTheme.textSecondary)
                 }
@@ -351,7 +351,7 @@ private struct MergeTagSheet: View {
                     .font(.system(size: 28))
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Merge Tag").font(.title2.bold())
+                    Text("Merge Tag").symairaText(.title).bold()
                     Text("“\(sourceName)” is merged into the target tag across the whole vault and re-indexed.")
                         .foregroundStyle(SymairaTheme.textSecondary)
                 }
@@ -370,7 +370,7 @@ private struct MergeTagSheet: View {
                                 target = candidate
                             } label: {
                                 Text(candidate)
-                                    .font(.caption)
+                                    .symairaText(.caption)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(target == candidate ? SymairaTheme.goldPrimary.opacity(0.25) : Color.white.opacity(0.08))

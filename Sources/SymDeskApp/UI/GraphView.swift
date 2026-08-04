@@ -26,7 +26,7 @@ struct GraphView: View {
     var body: some View {
         VStack {
             TextField("Filter by name or path...", text: $filterText)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .textFieldStyle(.symaira)
                 .padding()
             
             GeometryReader { geo in
@@ -50,8 +50,11 @@ struct GraphView: View {
                             let rect = CGRect(x: p.x - 5, y: p.y - 5, width: 10, height: 10)
                             context.fill(Path(ellipseIn: rect), with: .color(SymairaTheme.goldPrimary))
 
-                            // Draw label
-                            let text = Text(node.label).font(.caption).foregroundColor(SymairaTheme.textSecondary)
+                            // GraphicsContext.draw needs a real Text, so the
+                            // role font is applied directly here (issue #352).
+                            let text = Text(node.label)
+                                .font(SymairaTextRole.caption.font)
+                                .foregroundColor(SymairaTheme.textSecondary)
                             context.draw(text, at: CGPoint(x: p.x, y: p.y + 10))
                         }
                     }

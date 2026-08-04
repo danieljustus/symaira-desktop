@@ -54,11 +54,11 @@ struct MeetingsView: View {
                 Section("Import Existing SymMeet Meeting") {
                     if let error = model.availableMeetingsError {
                         Text(error)
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textMuted)
                     } else if model.availableMeetings.isEmpty {
                         Text("No new meetings to import.")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textMuted)
                     } else {
                         ForEach(model.availableMeetings) { meeting in
@@ -72,7 +72,7 @@ struct MeetingsView: View {
 
             if let importError = model.importError {
                 Text(importError)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.red)
                     .padding(8)
             }
@@ -89,12 +89,12 @@ struct MeetingsView: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Meetings")
-                    .font(.title2)
+                    .symairaText(.title)
                     .fontWeight(.bold)
                     .foregroundColor(SymairaTheme.textPrimary)
                 if case .failed(let message) = model.libraryState {
                     Text(message)
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(.red)
                 }
             }
@@ -178,14 +178,14 @@ struct MeetingsView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(meeting.title.isEmpty ? meeting.meetingID : meeting.title)
-                        .font(.callout)
+                        .symairaText(.callout)
                         .foregroundColor(SymairaTheme.textPrimary)
                         .lineLimit(1)
                     Spacer()
                     reviewBadge(meeting.reviewState)
                 }
                 Text(meeting.startedAt)
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             }
             .padding(.vertical, 4)
@@ -199,10 +199,10 @@ struct MeetingsView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(meeting.meetingID)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Text(meeting.source)
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             }
             Spacer()
@@ -222,7 +222,7 @@ struct MeetingsView: View {
         let label = state.isEmpty ? "unreviewed" : state
         let color: Color = label == "reviewed" ? .green : SymairaTheme.goldSecondary
         return Text(label)
-            .font(.caption2.weight(.semibold))
+            .symairaText(.caption).fontWeight(.semibold)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
             .background(color.opacity(0.15))
@@ -233,10 +233,10 @@ struct MeetingsView: View {
     private var noSelectionState: some View {
         VStack(spacing: 12) {
             Image(systemName: "person.wave.2")
-                .font(.system(size: 48))
+                .symairaText(.display)
                 .foregroundColor(SymairaTheme.textMuted)
             Text("Select a meeting to review")
-                .font(.title3)
+                .symairaText(.heading)
                 .foregroundColor(SymairaTheme.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

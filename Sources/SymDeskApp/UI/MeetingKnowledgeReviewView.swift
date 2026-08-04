@@ -36,7 +36,7 @@ struct MeetingKnowledgeReviewView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Publish to Memory")
-                .font(.title3.weight(.bold))
+                .symairaText(.heading).fontWeight(.bold)
                 .foregroundColor(SymairaTheme.textPrimary)
 
             factEditor
@@ -47,7 +47,7 @@ struct MeetingKnowledgeReviewView: View {
 
             if let error = model.publishError {
                 Text(error)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.red)
             }
             if let result = model.lastPublish {
@@ -80,13 +80,13 @@ struct MeetingKnowledgeReviewView: View {
     private var factEditor: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Reviewed facts, decisions, and action items")
-                .font(.subheadline.weight(.semibold))
+                .symairaText(.subheading)
                 .foregroundColor(SymairaTheme.textSecondary)
 
             ForEach(Array(facts.enumerated()), id: \.offset) { index, fact in
                 HStack {
                     Text(fact)
-                        .font(.callout)
+                        .symairaText(.callout)
                         .foregroundColor(SymairaTheme.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Button {
@@ -105,7 +105,7 @@ struct MeetingKnowledgeReviewView: View {
 
             HStack {
                 TextField("e.g. Decision: ship the beta on Friday", text: $newFact)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.symaira)
                     .onSubmit { addFact() }
                     .accessibilityLabel("New fact to publish")
                 Button("Add") { addFact() }
@@ -120,7 +120,7 @@ struct MeetingKnowledgeReviewView: View {
                     newFact += " [evidence: \(TranscriptTimelineView.formatTimestamp(segment.startMS))]"
                 }
                 .buttonStyle(.plain)
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.goldSecondary)
                 .accessibilityLabel("Insert the selected segment's timestamp as evidence")
             }
@@ -130,12 +130,12 @@ struct MeetingKnowledgeReviewView: View {
     private var previewSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Exact Memory writes on apply")
-                .font(.subheadline.weight(.semibold))
+                .symairaText(.subheading)
                 .foregroundColor(SymairaTheme.textSecondary)
 
             if confirmedParticipants.isEmpty && facts.isEmpty {
                 Text("Nothing selected yet — confirm participants or add facts above. Applying an empty proposal writes nothing.")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             } else {
                 ScrollView {
@@ -155,7 +155,7 @@ struct MeetingKnowledgeReviewView: View {
 
     private func previewLine(_ text: String) -> some View {
         Text(text)
-            .font(.caption.monospaced())
+            .symairaText(.caption).monospaced()
             .foregroundColor(SymairaTheme.textPrimary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .textSelection(.enabled)
@@ -167,7 +167,7 @@ struct MeetingKnowledgeReviewView: View {
             "Applied: \(result.relationsCreated) relation(s), \(published) fact(s) published, \(result.factsSkipped) already published and skipped.",
             systemImage: "checkmark.circle"
         )
-        .font(.caption)
+        .symairaText(.caption)
         .foregroundColor(.green)
         .accessibilityLabel("Publish applied. \(result.relationsCreated) relations, \(published) new facts, \(result.factsSkipped) skipped as already published.")
     }

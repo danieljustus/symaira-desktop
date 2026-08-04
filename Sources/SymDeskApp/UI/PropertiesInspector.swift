@@ -9,6 +9,9 @@ struct PropertiesInspector: View {
     let notePath: String
     var onChanged: (() -> Void)? = nil
     var onTagClick: ((String) -> Void)? = nil
+    /// Existing tags in the vault, used for autocomplete when editing the
+    /// tags property (issue #306). Empty disables suggestions.
+    var allTags: [String] = []
 
     @EnvironmentObject var core: DeskCore
 
@@ -182,9 +185,13 @@ struct PropertiesInspector: View {
                             }
                         }
                     }
-                    CommitTextField(value: value, monospaced: false) { text in
-                        Task { await saveProperty(key: key, value: text) }
-                    }
+                    TagEditField(
+                        value: value,
+                        existingTags: allTags,
+                        onCommit: { text in
+                            Task { await saveProperty(key: key, value: text) }
+                        }
+                    )
                 }
             case .relation, .text:
                 CommitTextField(value: value, monospaced: false) { text in
@@ -240,6 +247,86 @@ private struct CommitTextField: View {
                 if !focused { text = newValue }
             }
             .onAppear { text = value }
+    }
+
+    private func commit() {
+        guard text != value else { return }
+        onCommit(text)
+    }
+}
+
+/// Tags property editor with autocomplete: while the user types, existing
+/// vault tags matching the last comma-separated token are offered as chips
+/// that complete the token (issue #306). Commits on submit or focus loss,
+/// exactly like `CommitTextField`.
+private struct TagEditField: View {
+    let value: String
+    let existingTags: [String]
+    let onCommit: (String) -> Void
+
+    @State private var text = ""
+    @FocusState private var focused: Bool
+
+    /// The token after the last comma — the one being typed right now.
+    private var currentToken: String {
+        guard let last = text.split(separator: ",", omittingEmptySubsequences: false).last else { return "" }
+        return String(last).trimmingCharacters(in: .whitespaces)
+    }
+
+    private var suggestions: [String] {
+        let token = currentToken.lowercased()
+        guard !token.isEmpty else { return [] }
+        return existingTags
+            .filter { $0.lowercased().contains(token) && $0.lowercased() != token }
+            .sorted()
+            .prefix(5)
+            .map { $0 }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            TextField("Value", text: $text)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .focused($focused)
+                .onSubmit { commit() }
+                .onChange(of: focused) { _, isFocused in
+                    if !isFocused { commit() }
+                }
+                .onChange(of: value) { _, newValue in
+                    if !focused { text = newValue }
+                }
+                .onAppear { text = value }
+
+            if focused && !suggestions.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(suggestions, id: \.self) { tag in
+                        Button {
+                            completeToken(with: tag)
+                        } label: {
+                            Text(tag)
+                                .symairaText(.caption)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(SymairaTheme.goldPrimary.opacity(0.18))
+                                .cornerRadius(4)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Add tag \"\(tag)\"")
+                    }
+                }
+                .transition(.opacity)
+            }
+        }
+    }
+
+    private func completeToken(with tag: String) {
+        var components = text.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
+        if components.isEmpty {
+            components = [tag]
+        } else {
+            components[components.count - 1] = tag
+        }
+        text = components.joined(separator: ", ")
     }
 
     private func commit() {

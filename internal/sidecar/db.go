@@ -987,11 +987,36 @@ func reviewReasons(conf, threshold int, docType, docDate string) []string {
 	return reasons
 }
 
+// SimilarResult describes one document compared against a reference simhash.
 type SimilarResult struct {
 	Path       string `json:"path"`
 	Title      string `json:"title"`
 	Similarity int    `json:"similarity"`
 	Simhash    string `json:"simhash"`
+}
+
+// AllSimhashes returns every indexed document that has a simhash, in path
+// order. Used for vault-wide duplicate scans.
+func (db *DB) AllSimhashes() ([]SimilarResult, error) {
+	rows, err := db.conn.Query(`
+		SELECT path, title, COALESCE(simhash,'')
+		FROM files
+		WHERE simhash IS NOT NULL AND simhash != ''
+		ORDER BY path ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() //nolint:errcheck // result rows are fully drained below before return
+
+	var results []SimilarResult
+	for rows.Next() {
+		var r SimilarResult
+		if err := rows.Scan(&r.Path, &r.Title, &r.Simhash); err != nil {
+			return nil, err
+		}
+		results = append(results, r)
+	}
+	return results, nil
 }
 
 // SimilarDocs returns indexed documents whose simhash is within the given

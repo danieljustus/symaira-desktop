@@ -110,15 +110,15 @@ struct VaultSwitcherView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: core.isRemote ? "server.rack" : "internaldrive")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 Text(activeName)
-                    .font(.title3.bold())
+                    .symairaText(.subheading).bold()
                     .foregroundStyle(SymairaTheme.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Image(systemName: "chevron.down")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -165,7 +165,7 @@ struct VaultSwitcherView: View {
         .overlay(alignment: .bottomLeading) {
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundStyle(.red)
                     .padding(6)
                     .background(Color.red.opacity(0.12))
@@ -282,7 +282,7 @@ private struct CreateVaultSheet: View {
                     .font(.system(size: 28))
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Create New Vault").font(.title2.bold())
+                    Text("Create New Vault").symairaText(.title).bold()
                     Text("A new empty vault is scaffolded with the contract layout and indexed immediately.")
                         .foregroundStyle(SymairaTheme.textSecondary)
                 }
@@ -297,7 +297,7 @@ private struct CreateVaultSheet: View {
                 LabeledContent("Location") {
                     HStack(spacing: 8) {
                         Text(pickedURL?.path ?? "Choose a folder…")
-                            .font(.callout)
+                            .symairaText(.callout)
                             .foregroundStyle(pickedURL == nil ? SymairaTheme.textSecondary : SymairaTheme.textPrimary)
                             .lineLimit(1)
                             .truncationMode(.middle)

@@ -72,7 +72,7 @@ struct MeetingAudioPlayerView: View {
             HStack(spacing: 12) {
                 Button(action: { model.togglePlayback() }) {
                     Image(systemName: model.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                        .font(.system(size: 22))
+                        .symairaText(.title)
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(SymairaTheme.goldPrimary)
@@ -89,7 +89,7 @@ struct MeetingAudioPlayerView: View {
                 .accessibilityLabel("Playback position")
 
                 Text(Self.format(model.currentTime) + " / " + Self.format(model.duration))
-                    .font(.caption.monospacedDigit())
+                    .symairaText(.caption).monospacedDigit()
                     .foregroundColor(SymairaTheme.textSecondary)
             }
         } else {
@@ -97,7 +97,7 @@ struct MeetingAudioPlayerView: View {
                 Image(systemName: "waveform.slash")
                     .foregroundColor(SymairaTheme.textMuted)
                 Text("Audio unavailable for this meeting")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             }
             .accessibilityElement(children: .combine)

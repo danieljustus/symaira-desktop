@@ -93,14 +93,14 @@ struct OnboardingView: View {
         VStack(spacing: 24) {
             VStack(spacing: 8) {
                 Image(systemName: "folder.badge.plus")
-                    .font(.system(size: 40))
+                    .symairaText(.title)
                     .foregroundColor(SymairaTheme.goldPrimary)
                     .shadow(color: SymairaTheme.glowIntense, radius: 12)
                 Text("Welcome to SymDesk")
-                    .font(.largeTitle.bold())
+                    .symairaText(.display).bold()
                     .foregroundColor(SymairaTheme.textPrimary)
                 Text("Where should your documents and notes live?")
-                    .font(.title3)
+                    .symairaText(.heading)
                     .foregroundColor(SymairaTheme.textSecondary)
                     .multilineTextAlignment(.center)
             }
@@ -148,7 +148,7 @@ struct OnboardingView: View {
             ScrollView {
                 Text(message)
                     .foregroundColor(.red)
-                    .font(.callout)
+                    .symairaText(.callout)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -183,20 +183,20 @@ struct OnboardingView: View {
             Button(action: action) {
                 HStack(spacing: 14) {
                     Image(systemName: source.icon)
-                        .font(.title3)
+                        .symairaText(.heading)
                         .foregroundColor(SymairaTheme.goldPrimary)
                         .frame(width: 28)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(source.rawValue)
-                            .font(.body.weight(.medium))
+                            .symairaText(.body).fontWeight(.medium)
                             .foregroundColor(SymairaTheme.textPrimary)
                         Text(source.description)
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textSecondary)
                     }
                     Spacer()
                     Image(systemName: "chevron.right")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 .padding(12)
@@ -220,16 +220,16 @@ struct OnboardingView: View {
             Spacer()
 
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 56))
+                .symairaText(.display)
                 .foregroundColor(SymairaTheme.goldPrimary)
                 .shadow(color: SymairaTheme.glowIntense, radius: 16)
 
             Text("You're all set!")
-                .font(.largeTitle.bold())
+                .symairaText(.display).bold()
                 .foregroundColor(SymairaTheme.textPrimary)
 
             Text("SymDesk is ready to explore your vault.")
-                .font(.title3)
+                .symairaText(.heading)
                 .foregroundColor(SymairaTheme.textSecondary)
 
             VStack(alignment: .leading, spacing: 12) {
@@ -244,7 +244,7 @@ struct OnboardingView: View {
 
             if core.isDemoMode {
                 Text("Demo mode — sample data loaded.")
-                    .font(.callout)
+                    .symairaText(.callout)
                     .foregroundColor(SymairaTheme.textSecondary)
             }
 
@@ -285,10 +285,10 @@ struct OnboardingView: View {
                 .foregroundColor(SymairaTheme.goldPrimary)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.body.weight(.medium))
+                    .symairaText(.body).fontWeight(.medium)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Text(desc)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
             }
         }
@@ -413,10 +413,10 @@ struct ServerConnectionSheet: View {
 		VStack(alignment: .leading, spacing: 22) {
 			HStack(alignment: .top, spacing: 14) {
 				Image(systemName: "server.rack")
-					.font(.system(size: 28))
+					.symairaText(.heading)
 					.foregroundStyle(SymairaTheme.goldPrimary)
 				VStack(alignment: .leading, spacing: 4) {
-					Text("Connect to SymDesk Server").font(.title2.bold())
+					Text("Connect to SymDesk Server").symairaText(.title).bold()
 					Text("Documents stay on your server. This Mac becomes a fast native frontend.")
 						.foregroundStyle(SymairaTheme.textSecondary)
 				}
@@ -425,12 +425,12 @@ struct ServerConnectionSheet: View {
 			VStack(alignment: .leading, spacing: 14) {
 				LabeledContent("Server URL") {
 					TextField("https://symdesk.example.net", text: $serverURL)
-						.textFieldStyle(.roundedBorder)
+						.textFieldStyle(.symaira)
 						.frame(width: 330)
 				}
 				LabeledContent("Access token") {
 					SecureField("At least 32 characters", text: $token)
-						.textFieldStyle(.roundedBorder)
+						.textFieldStyle(.symaira)
 						.frame(width: 330)
 				}
 			}
@@ -438,7 +438,7 @@ struct ServerConnectionSheet: View {
 			.glassmorphicPanel()
 
 			Label("Use HTTPS or a trusted VPN outside your home network. The token is stored in Keychain.", systemImage: "lock.shield")
-				.font(.callout)
+				.symairaText(.callout)
 				.foregroundStyle(SymairaTheme.textSecondary)
 
 			HStack {

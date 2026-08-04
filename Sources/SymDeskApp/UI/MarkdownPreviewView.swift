@@ -102,6 +102,8 @@ private struct MarkdownBlocksView: View {
         case .mermaid(let code):
             MermaidView(code: code)
         case .mathBlock(let tex):
+            // Serif italic is the conventional math-typesetting face; not
+            // covered by the Symaira text roles (issue #352 deviation).
             Text(MathTypesetter.render(tex))
                 .font(.system(size: 16, design: .serif).italic())
                 .foregroundColor(SymairaTheme.textPrimary)
@@ -111,11 +113,11 @@ private struct MarkdownBlocksView: View {
             VStack(alignment: .leading, spacing: 4) {
                 if !language.isEmpty {
                     Text(language)
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 Text(code)
-                    .font(.system(.body, design: .monospaced))
+                    .symairaText(.mono)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(8)
@@ -170,12 +172,14 @@ private struct MarkdownBlocksView: View {
         return result
     }
 
+    /// Heading font per markdown level, expressed through the shared type
+    /// scale (issue #352) so headings scale with Dynamic Type.
     private func headingFont(_ level: Int) -> Font {
         switch level {
-        case 1: return .system(size: 26, weight: .bold)
-        case 2: return .system(size: 22, weight: .bold)
-        case 3: return .system(size: 18, weight: .semibold)
-        default: return .system(size: 15, weight: .semibold)
+        case 1: return SymairaTextRole.heading.font
+        case 2: return SymairaTextRole.title.font
+        case 3: return SymairaTextRole.heading.font
+        default: return SymairaTextRole.callout.font
         }
     }
 }
@@ -253,10 +257,10 @@ private struct EmbedView: View {
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
                 Image(systemName: "rectangle.portrait.on.rectangle.portrait")
-                    .font(.caption)
+                    .symairaText(.caption)
                 Button(action: { onLinkClick?(target) }) {
                     Text(heading.map { "\(target) › \($0)" } ?? target)
-                        .font(.caption)
+                        .symairaText(.caption)
                 }
                 .buttonStyle(.plain)
             }
@@ -272,15 +276,15 @@ private struct EmbedView: View {
                 )
             case .cycle:
                 Label("Circular embed skipped", systemImage: "arrow.triangle.2.circlepath")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.orange)
             case .tooDeep:
                 Label("Embed nesting too deep", systemImage: "square.stack.3d.up.slash")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.orange)
             case .notFound:
                 Label("Note \u{201C}\(target)\u{201D} not found", systemImage: "questionmark.square.dashed")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             }
         }
@@ -306,10 +310,10 @@ private struct MermaidView: View {
         } else {
             VStack(alignment: .leading, spacing: 4) {
                 Label("Diagram (unsupported Mermaid type)", systemImage: "flowchart")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
                 Text(code)
-                    .font(.system(.caption, design: .monospaced))
+                    .symairaText(.monoSmall)
                     .foregroundColor(SymairaTheme.textSecondary)
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -356,7 +360,14 @@ private struct MermaidGraphView: View {
                         ctx.fill(arrow, with: .color(SymairaTheme.textMuted))
                         if let label = edge.label {
                             let mid = CGPoint(x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - 8)
-                            ctx.draw(Text(label).font(.caption2).foregroundColor(SymairaTheme.textMuted), at: mid)
+                            // GraphicsContext.draw needs a real Text, so the
+                            // role font is applied directly here (issue #352).
+                            ctx.draw(
+                                Text(label)
+                                    .font(SymairaTextRole.caption.font)
+                                    .foregroundColor(SymairaTheme.textMuted),
+                                at: mid
+                            )
                         }
                     }
                 }
@@ -366,7 +377,7 @@ private struct MermaidGraphView: View {
                 ForEach(graph.nodes, id: \.id) { node in
                     if let pos = positions[node.id] {
                         Text(node.label)
-                            .font(.caption)
+                            .symairaText(.caption)
                             .lineLimit(2)
                             .multilineTextAlignment(.center)
                             .foregroundColor(SymairaTheme.textPrimary)

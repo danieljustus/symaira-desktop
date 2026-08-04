@@ -39,6 +39,7 @@ func registerCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(newDocCmd())
 	rootCmd.AddCommand(newTagsCmd())
 	rootCmd.AddCommand(newSimilarCmd())
+	rootCmd.AddCommand(newDuplicatesCmd())
 	rootCmd.AddCommand(newDemoCmd())
 	rootCmd.AddCommand(newConflictCmd())
 	rootCmd.AddCommand(newClipCmd())

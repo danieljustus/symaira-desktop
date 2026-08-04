@@ -1,0 +1,4 @@
+mlx-lm>=0.29
+tokenizers
+numpy
+requests

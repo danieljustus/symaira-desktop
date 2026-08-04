@@ -42,6 +42,11 @@ struct ContentView: View {
     @StateObject private var mutationTracker = AsyncActionTracker<String>()
     @State private var ingestFailure: IngestFailure? = nil
 
+    /// Note selected via a context menu for the version-history screen.
+    @State private var historyInitialNotePath: String? = nil
+    /// Note the user asked to move to the trash (context menu, issue #307).
+    @State private var pendingTrashNote: Note? = nil
+
     // Auto-save debounce
     @State private var saveTask: Task<Void, Never>? = nil
     @State private var eventRefreshTask: Task<Void, Never>? = nil
@@ -61,6 +66,7 @@ struct ContentView: View {
         case companionTools
         case history
         case trash
+        case duplicates
     }
 
     // MARK: - Navigation History
@@ -228,6 +234,12 @@ struct ContentView: View {
                                         Text("Trash")
                                     }
                                 }
+                                Button(action: { navigate(to: .duplicates) }) {
+                                    HStack {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                        Text("Possible Duplicates")
+                                    }
+                                }
                             }
 
                             Section("Settings") {
@@ -318,9 +330,11 @@ struct ContentView: View {
                             onDoctorRefresh: { await fetchDoctor() }
                         )
                     case .history:
-                        HistoryView()
+                        HistoryView(initialNotePath: historyInitialNotePath)
                     case .trash:
                         TrashView()
+                    case .duplicates:
+                        DuplicatesView()
                     case .graph:
                         GraphView { selectedNodeID in
                             navigateToNote(title: selectedNodeID)
@@ -669,6 +683,24 @@ struct ContentView: View {
                 }
                 .sheet(isPresented: $isShowingNewNoteSheet) {
                     NewNoteSheet(isPresented: $isShowingNewNoteSheet, core: core)
+                }
+                .confirmationDialog(
+                    "Move “\(pendingTrashNote?.title ?? "")” to Trash?",
+                    isPresented: Binding(
+                        get: { pendingTrashNote != nil },
+                        set: { if !$0 { pendingTrashNote = nil } }
+                    ),
+                    titleVisibility: .visible
+                ) {
+                    Button("Move to Trash", role: .destructive) {
+                        if let note = pendingTrashNote {
+                            Task { await moveToTrash(note) }
+                        }
+                        pendingTrashNote = nil
+                    }
+                    Button("Cancel", role: .cancel) { pendingTrashNote = nil }
+                } message: {
+                    Text("The note moves to the vault trash and can be restored from the Trash screen. Your files stay on disk.")
                 }
                 // App-wide shortcut for Cmd-K
                 .onAppear {
@@ -1114,6 +1146,27 @@ struct ContentView: View {
         }
     }
 
+    /// Moves a note to the vault trash (restorable via the Trash screen) and
+    /// refreshes the note list. Failures surface as a visible banner
+    /// (issue #307).
+    private func moveToTrash(_ note: Note) async {
+        do {
+            try await core.noteDelete(path: note.path)
+            if selectedNote?.id == note.id {
+                selectedNote = nil
+                noteContent = ""
+            }
+            await fetchNotes()
+            await fetchTagCounts()
+            await fetchDocCounts()
+        } catch {
+            appErrors.append(AppErrorMessage(
+                message: "Could not move note to trash: \(error.localizedDescription)",
+                detail: "The note was left in place."
+            ))
+        }
+    }
+
     /// Runs a vault-wide tag operation (rename/merge/delete), refreshes the
     /// tag list and notes, and surfaces failures as a visible banner
     /// (issue #306).
@@ -1269,6 +1322,22 @@ struct ContentView: View {
                 } else {
                     Text(node.name)
                         .foregroundColor(SymairaTheme.textPrimary)
+                }
+            }
+            .contextMenu {
+                if let note = node.note {
+                    Button {
+                        historyInitialNotePath = note.path
+                        navigate(to: .history)
+                    } label: {
+                        Label("Show Version History", systemImage: "clock.arrow.circlepath")
+                    }
+                    Divider()
+                    Button(role: .destructive) {
+                        pendingTrashNote = note
+                    } label: {
+                        Label("Move to Trash", systemImage: "trash")
+                    }
                 }
             }
         }

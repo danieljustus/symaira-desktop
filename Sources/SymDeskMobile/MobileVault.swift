@@ -9,6 +9,9 @@ struct MobileNote: Identifiable, Hashable, Sendable {
     let tags: [String]
     let created: String
     let modifiedAt: Date
+    /// Byte size of the source file at parse time — part of the
+    /// mtime+size signature used for cache and search-index invalidation.
+    let fileSize: Int
     let documentDate: String
     let person: String
     let status: String
@@ -148,6 +151,7 @@ enum MobileVaultParser {
             tags: tags,
             created: created,
             modifiedAt: modifiedAt,
+            fileSize: data.count,
             documentDate: documentDate,
             person: person,
             status: status,
@@ -401,8 +405,24 @@ final class MobileVaultStore: ObservableObject {
     private var loadGeneration = 0
 	private var remoteClient: MobileRemoteClient?
 	private var snapshotETag: String?
+    /// Ranked, persisted on-device search index. Fed from the parsed
+    /// snapshot after every reload in both connection modes.
+    private let searchIndex: MobileSearchIndex
 
-    init() {
+    init(searchIndex: MobileSearchIndex? = nil) {
+        if let searchIndex {
+            self.searchIndex = searchIndex
+        } else {
+            let base = (try? FileManager.default.url(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )) ?? FileManager.default.temporaryDirectory
+            self.searchIndex = MobileSearchIndex(
+                fileURL: base.appendingPathComponent("SymDeskMobile/search-index.json")
+            )
+        }
 		if let connection = MobileServerConfig.connection() {
 			serverURL = connection.url
 			remoteClient = MobileRemoteClient(connection: connection)
@@ -410,6 +430,11 @@ final class MobileVaultStore: ObservableObject {
 			restoreVault()
 		}
 		recentlyOpenedPaths = UserDefaults.standard.stringArray(forKey: recentsKey) ?? []
+    }
+
+    /// Ranked search over the persisted on-device index.
+    func search(_ query: String, limit: Int = 50) async -> [MobileSearchIndex.Result] {
+        await searchIndex.search(query: query, limit: limit)
     }
 
 	/// Notes for `recentlyOpenedPaths`, most-recently-opened first, limited to
@@ -477,6 +502,9 @@ final class MobileVaultStore: ObservableObject {
 					skippedFiles = snapshot.skippedFiles
 					revision += 1
 					snapshotETag = etag
+					// Both connection modes feed the same index path; the
+					// merge is incremental by mtime+size signature.
+					await searchIndex.merge(snapshot: snapshot.notes)
 				}
 			} else if let root = vaultURL {
 				let snapshot = try await scanner.scan(root: root)
@@ -484,6 +512,7 @@ final class MobileVaultStore: ObservableObject {
 				notes = snapshot.notes
 				skippedFiles = snapshot.skippedFiles
 				revision += 1
+				await searchIndex.merge(snapshot: snapshot.notes)
 			} else {
 				return
 			}
@@ -541,6 +570,9 @@ final class MobileVaultStore: ObservableObject {
 		recentlyOpenedPaths = []
 		UserDefaults.standard.removeObject(forKey: recentsKey)
         Task { await scanner.clearCache() }
+        // The index belongs to the disconnected vault: purge it so stale
+        // results cannot surface after the user revokes access.
+        Task { await searchIndex.removeAll() }
     }
 
     private func restoreVault() {

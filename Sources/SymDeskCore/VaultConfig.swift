@@ -70,6 +70,7 @@ public struct VaultConfig {
         saveBookmark(for: url)
         UserDefaults.standard.set(url.path, forKey: Key.vaultPath)
         UserDefaults.standard.set(false, forKey: Key.isDemoMode)
+        registerActiveVault(name: nil, path: url.path, isDemoMode: false)
         if finderFavoritesEnabled {
             registerInFinderFavorites(url)
         }
@@ -85,9 +86,57 @@ public struct VaultConfig {
         saveBookmark(for: url)
         UserDefaults.standard.set(url.path, forKey: Key.vaultPath)
         UserDefaults.standard.set(true, forKey: Key.isDemoMode)
+        registerActiveVault(name: nil, path: url.path, isDemoMode: true)
         if finderFavoritesEnabled {
             registerInFinderFavorites(url)
         }
+    }
+
+    /// Activates a registry entry as the current vault: writes the legacy
+    /// single-vault keys (path, bookmark, demo flag) from the entry so every
+    /// existing `--vault`-based code path keeps working, records the entry as
+    /// last opened, and clears any server connection.
+    ///
+    /// The registry entry itself is owned by `VaultRegistry`; this method only
+    /// makes it the *active* vault (issue #296).
+    @discardableResult
+    public static func activate(_ entry: VaultEntry) -> VaultEntry {
+        if entry.kind == .local {
+            // Local and server mode exclude each other; activating a local
+            // vault clears any server connection. A server entry never resets
+            // the server config here — the server connection owns that mode.
+            ServerConnectionConfig.reset()
+            applyLocalKeys(entry, defaults: .standard)
+        }
+        let registry = VaultRegistry()
+        return registry.recordOpened(entry.id) ?? entry
+    }
+
+    /// Writes the legacy single-vault keys from a local registry entry.
+    /// Internal so tests can exercise the key mapping without touching the
+    /// real UserDefaults or the Keychain.
+    static func applyLocalKeys(_ entry: VaultEntry, defaults: UserDefaults) {
+        if let bookmark = entry.bookmarkData {
+            defaults.set(bookmark, forKey: Key.vaultBookmark)
+        }
+        if let path = entry.path {
+            defaults.set(path, forKey: Key.vaultPath)
+        }
+        defaults.set(entry.isDemoMode, forKey: Key.isDemoMode)
+    }
+
+    /// Adds the currently configured local vault to the registry if it is not
+    /// already present. Called by the onboarding flow after `setVault` /
+    /// `setDemoVault` so the first vault becomes a named registry entry.
+    private static func registerActiveVault(name: String?, path: String, isDemoMode: Bool) {
+        let registry = VaultRegistry()
+        let bookmark = UserDefaults.standard.data(forKey: Key.vaultBookmark)
+        _ = registry.registerLocal(
+            name: name ?? URL(fileURLWithPath: path).lastPathComponent,
+            path: path,
+            bookmarkData: bookmark,
+            isDemoMode: isDemoMode
+        )
     }
 
     /// Reset the vault configuration — used by Settings to re-enter onboarding.

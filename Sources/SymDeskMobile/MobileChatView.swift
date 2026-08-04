@@ -264,7 +264,7 @@ struct MobileChatView: View {
 
         let client = MobileAIClient(connection: connection)
         do {
-            let questionForServer = (contextPath.map { "Context note: \($0)\n\n" } ?? "") + question
+            let questionForServer = MobileChatPromptBuilder.serverQuery(question: question, contextNote: contextNote)
             try await client.ask(query: questionForServer) { event in
                 Task { @MainActor in
                     guard var current = activeConversation,
@@ -349,6 +349,30 @@ struct MobileChatView: View {
     private func loadConversations() async -> [MobileConversation] {
         guard let store = conversationStore else { return [] }
         return (try? await store.all()) ?? []
+    }
+}
+
+// MARK: - Prompt building
+
+/// Builds the query sent to the server for a chat message. When a context
+/// note is open, its title and text are embedded so "summarise this"
+/// prompts reach the answering side with the note's actual content;
+/// without a context note the question passes through unchanged.
+enum MobileChatPromptBuilder {
+    /// Maximum characters of note text embedded into a query, keeping the
+    /// request comfortably below the server's 8 KB body limit even after
+    /// JSON escaping.
+    static let maxContextNoteCharacters = 3000
+
+    static func serverQuery(question: String, contextNote: MobileNote?) -> String {
+        guard let contextNote else { return question }
+        let excerpt: String
+        if contextNote.body.count > maxContextNoteCharacters {
+            excerpt = String(contextNote.body.prefix(maxContextNoteCharacters)) + "\n\n…[truncated]"
+        } else {
+            excerpt = contextNote.body
+        }
+        return "Context note: \(contextNote.title)\n\n\(excerpt)\n\n\(question)"
     }
 }
 

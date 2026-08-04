@@ -27,6 +27,35 @@ struct MobileAIEvent: Decodable, Sendable {
     }
 }
 
+/// Persisted in-app AI settings (provider/model/endpoint). The keys are
+/// written by `MobileAISettingsView`; `MobileAIClient` reads them here at
+/// request time so a settings change takes effect for the next request
+/// without rebuilding the client.
+enum MobileAISettings {
+    static let providerKey = "symdesk.mobile.ai.provider.v1"
+    static let modelKey = "symdesk.mobile.ai.model.v1"
+    static let endpointKey = "symdesk.mobile.ai.endpoint.v1"
+
+    static func load(from defaults: UserDefaults = .standard) -> MobileAIConfig {
+        MobileAIConfig(
+            provider: defaults.string(forKey: providerKey) ?? MobileAIConfig.serverProvider,
+            model: defaults.string(forKey: modelKey) ?? "",
+            endpoint: defaults.string(forKey: endpointKey) ?? ""
+        )
+    }
+}
+
+/// The provider/model/endpoint the client applies to each request,
+/// resolved from the persisted in-app settings at request time.
+struct MobileAIConfig: Equatable, Sendable {
+    /// The default provider: the self-hosted server's own AI configuration.
+    static let serverProvider = "server"
+
+    var provider: String
+    var model: String
+    var endpoint: String
+}
+
 /// Streaming client for the server AI endpoints. Consumes NDJSON lines as
 /// they arrive and forwards each parsed event; `onEvent` runs on the
 /// session's serial queue, so the UI can render tokens progressively.
@@ -53,10 +82,12 @@ final class MobileAIClient: @unchecked Sendable {
 
     private let connection: MobileServerConnection
     private let session: URLSession
+    private let defaults: UserDefaults
 
-    init(connection: MobileServerConnection, session: URLSession = .shared) {
+    init(connection: MobileServerConnection, session: URLSession = .shared, defaults: UserDefaults = .standard) {
         self.connection = connection
         self.session = session
+        self.defaults = defaults
     }
 
     /// Streams an ask request. `onEvent` is called for every NDJSON event
@@ -92,7 +123,7 @@ final class MobileAIClient: @unchecked Sendable {
         request.setValue("Bearer \(connection.token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/x-ndjson", forHTTPHeaderField: "Accept")
-        request.httpBody = try JSONEncoder().encode(body)
+        request.httpBody = try JSONEncoder().encode(requestBody(body))
         request.timeoutInterval = 600
 
         let (bytes, response) = try await session.bytes(for: request)
@@ -115,6 +146,26 @@ final class MobileAIClient: @unchecked Sendable {
             }
             onEvent(event)
         }
+    }
+
+    /// Merges the caller's payload with the persisted AI settings,
+    /// resolved at request time (not cached) so a settings change applies
+    /// to the very next request. With the default "server" provider the
+    /// body is byte-identical to the previous behavior; an explicit
+    /// provider/model/endpoint selection travels with the request so the
+    /// answering side can honor it.
+    private func requestBody(_ base: [String: String]) -> [String: String] {
+        let config = MobileAISettings.load(from: defaults)
+        var body = base
+        guard config.provider != MobileAIConfig.serverProvider else { return body }
+        body["provider"] = config.provider
+        if !config.model.isEmpty {
+            body["model"] = config.model
+        }
+        if !config.endpoint.isEmpty {
+            body["endpoint"] = config.endpoint
+        }
+        return body
     }
 
     private func collectRemaining(_ bytes: URLSession.AsyncBytes) async throws -> Data {

@@ -383,6 +383,135 @@ func TestAITransformStreamsAndEndsWithDone(t *testing.T) {
 	}
 }
 
+// TestAIAskHonorsProviderAndModelOverrides proves the per-request
+// provider/model fields sent by the mobile settings pane override the
+// server's own AI configuration for that request only: the answer comes
+// from the overridden Anthropic provider with the overridden model, and
+// the server-configured Ollama endpoint is never called.
+func TestAIAskHonorsProviderAndModelOverrides(t *testing.T) {
+	// The server is configured for Ollama; the request overrides it.
+	decoy := newFakeOllama("darf-nicht-erscheinen")
+	decoyServer := httptest.NewServer(decoy.handler())
+	t.Cleanup(decoyServer.Close)
+	t.Setenv("SYMDESK_OLLAMA_URL", decoyServer.URL)
+	t.Setenv("SYMDESK_LLM_PROVIDER", "ollama")
+	t.Setenv("SYMDESK_LLM_MODEL", "server-model")
+
+	var gotModel string
+	anthropic := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Model string `json:"model"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotModel = body.Model
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = w.Write([]byte("data: {\"type\": \"content_block_delta\", \"delta\": {\"text\": \"Antwort\"}}\n"))
+		_, _ = w.Write([]byte("data: [DONE]\n"))
+	}))
+	t.Cleanup(anthropic.Close)
+	t.Setenv("SYMDESK_LLM_API_KEY", "test-key")
+	t.Setenv("SYMDESK_ANTHROPIC_URL", anthropic.URL)
+
+	httpServer, _, _ := newAITestServer(t)
+	payload, _ := json.Marshal(map[string]string{
+		"query":    "Rechnung",
+		"provider": "anthropic",
+		"model":    "claude-mobile-test",
+	})
+	request, _ := http.NewRequest(http.MethodPost, httpServer.URL+"/api/v1/ai/ask", bytes.NewReader(payload))
+	request.Header.Set("Authorization", "Bearer "+testToken)
+	request.Header.Set("Content-Type", "application/json")
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", response.StatusCode, readBody(response))
+	}
+
+	events := readAIEvents(t, response.Body)
+	var answers []string
+	for _, event := range events {
+		if event.Type == ai.AIEventAnswer {
+			answers = append(answers, event.Text)
+		}
+	}
+	if strings.Join(answers, "") != "Antwort" {
+		t.Fatalf("expected the overridden Anthropic provider to answer, got %q", answers)
+	}
+	if gotModel != "claude-mobile-test" {
+		t.Fatalf("expected the overridden model to reach the provider, got %q", gotModel)
+	}
+
+	decoy.mu.Lock()
+	decoyRequests := decoy.requests
+	decoy.mu.Unlock()
+	if decoyRequests != 0 {
+		t.Fatalf("server-configured Ollama endpoint must not be called when the provider is overridden, got %d requests", decoyRequests)
+	}
+}
+
+// TestAIAskHonorsEndpointOverride proves the per-request endpoint field
+// routes the Ollama call to the user-configured endpoint when the server
+// operator did not pin SYMDESK_OLLAMA_URL.
+func TestAIAskHonorsEndpointOverride(t *testing.T) {
+	ollama := newFakeOllama("Antwort.")
+	ollamaServer := httptest.NewServer(ollama.handler())
+	t.Cleanup(ollamaServer.Close)
+	t.Setenv("SYMDESK_LLM_PROVIDER", "ollama")
+
+	httpServer, _, _ := newAITestServer(t)
+	payload, _ := json.Marshal(map[string]string{
+		"query":    "Rechnung",
+		"provider": "ollama",
+		"endpoint": ollamaServer.URL,
+	})
+	request, _ := http.NewRequest(http.MethodPost, httpServer.URL+"/api/v1/ai/ask", bytes.NewReader(payload))
+	request.Header.Set("Authorization", "Bearer "+testToken)
+	request.Header.Set("Content-Type", "application/json")
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", response.StatusCode, readBody(response))
+	}
+
+	events := readAIEvents(t, response.Body)
+	var answers []string
+	for _, event := range events {
+		if event.Type == ai.AIEventAnswer {
+			answers = append(answers, event.Text)
+		}
+	}
+	if strings.Join(answers, "") != "Antwort." {
+		t.Fatalf("expected the overridden endpoint to answer, got %q", answers)
+	}
+}
+
+// TestAIAskRejectsUnknownProviderOverride proves the server refuses
+// provider values the app does not offer instead of silently falling back.
+func TestAIAskRejectsUnknownProviderOverride(t *testing.T) {
+	httpServer, _, _ := newAITestServer(t)
+	payload, _ := json.Marshal(map[string]string{
+		"query":    "Rechnung",
+		"provider": "not-a-provider",
+	})
+	request, _ := http.NewRequest(http.MethodPost, httpServer.URL+"/api/v1/ai/ask", bytes.NewReader(payload))
+	request.Header.Set("Authorization", "Bearer "+testToken)
+	request.Header.Set("Content-Type", "application/json")
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400 for an unknown provider override, got %d: %s", response.StatusCode, readBody(response))
+	}
+}
+
 // TestAIRateLimitRejectsExcessRequests proves the AI bucket applies and
 // responds 429 with Retry-After like the other throttled routes.
 func TestAIRateLimitRejectsExcessRequests(t *testing.T) {

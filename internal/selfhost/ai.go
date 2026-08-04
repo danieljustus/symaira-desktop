@@ -3,11 +3,13 @@ package selfhost
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/ai"
+	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 )
 
@@ -34,12 +36,18 @@ const (
 )
 
 type aiAskRequest struct {
-	Query string `json:"query"`
+	Query    string `json:"query"`
+	Provider string `json:"provider"`
+	Model    string `json:"model"`
+	Endpoint string `json:"endpoint"`
 }
 
 type aiTransformRequest struct {
-	Text   string `json:"text"`
-	Intent string `json:"intent"`
+	Text     string `json:"text"`
+	Intent   string `json:"intent"`
+	Provider string `json:"provider"`
+	Model    string `json:"model"`
+	Endpoint string `json:"endpoint"`
 }
 
 // handleAIAsk streams a grounded answer as NDJSON AIEvents. Citations carry
@@ -61,6 +69,11 @@ func (s *Server) handleAIAsk(w http.ResponseWriter, r *http.Request) {
 
 	user := userFromContext(r)
 	svc := service.New(s.cfg.VaultRoot, s.db)
+	effective := *svc.Config
+	if err := applyAIOverrides(&effective, request.Provider, request.Model, request.Endpoint); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	results, err := svc.Search(request.Query)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "retrieval failed: "+err.Error())
@@ -109,7 +122,7 @@ func (s *Server) handleAIAsk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	chunks := make(chan ai.AskChunk)
-	go ai.Ask(ctx, svc.Config, request.Query, contextDocs, chunks)
+	go ai.Ask(ctx, &effective, request.Query, contextDocs, chunks)
 
 	writer.event(ai.ToolEvent("llm", "running"))
 	for {
@@ -161,8 +174,13 @@ func (s *Server) handleAITransform(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	svc := service.New(s.cfg.VaultRoot, s.db)
+	effective := *svc.Config
+	if err := applyAIOverrides(&effective, request.Provider, request.Model, request.Endpoint); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	chunks := make(chan ai.AskChunk)
-	go ai.Transform(ctx, svc.Config, request.Text, request.Intent, chunks)
+	go ai.Transform(ctx, &effective, request.Text, request.Intent, chunks)
 
 	writer := newNDJSONWriter(w)
 	if !writer.begin() {
@@ -199,6 +217,34 @@ func (s *Server) allowAIRateLimited(w http.ResponseWriter, r *http.Request) bool
 		return false
 	}
 	return true
+}
+
+// applyAIOverrides applies the per-request provider/model/endpoint fields
+// sent by the mobile AI settings pane to a copy of the server config, so
+// concurrent requests never mutate the shared config. Empty fields keep
+// the server's own configuration; "server" provider explicitly means
+// "use the server's configuration". The model override reaches providers
+// that consume llm_model (Anthropic); the Ollama model stays the server's
+// own setting. The endpoint override maps to the Ollama endpoint, which
+// the server uses unless SYMDESK_OLLAMA_URL is pinned by the operator.
+func applyAIOverrides(cfg *config.Config, provider, model, endpoint string) error {
+	switch provider {
+	case "":
+		// No override.
+	case "server":
+		// Explicit "server" means the server's own configuration.
+	case "anthropic", "ollama":
+		cfg.LLMProvider = provider
+	default:
+		return fmt.Errorf("unsupported provider %q — expected one of: server, anthropic, ollama", provider)
+	}
+	if model != "" {
+		cfg.LLMModel = model
+	}
+	if endpoint != "" {
+		cfg.OllamaURL = strings.TrimRight(endpoint, "/")
+	}
+	return nil
 }
 
 func pathsOf(results []service.SearchResult) []string {

@@ -13,15 +13,11 @@ struct MobileAISettingsView: View {
     @State private var endpoint: String
     @State private var hasUnsavedChanges = false
 
-    private static let providerKey = "symdesk.mobile.ai.provider.v1"
-    private static let modelKey = "symdesk.mobile.ai.model.v1"
-    private static let endpointKey = "symdesk.mobile.ai.endpoint.v1"
-
     init() {
-        let defaults = UserDefaults.standard
-        _provider = State(initialValue: defaults.string(forKey: Self.providerKey) ?? "server")
-        _model = State(initialValue: defaults.string(forKey: Self.modelKey) ?? "")
-        _endpoint = State(initialValue: defaults.string(forKey: Self.endpointKey) ?? "")
+        let config = MobileAISettings.load()
+        _provider = State(initialValue: config.provider)
+        _model = State(initialValue: config.model)
+        _endpoint = State(initialValue: config.endpoint)
     }
 
     var body: some View {
@@ -117,9 +113,9 @@ struct MobileAISettingsView: View {
 
     private func save() {
         let defaults = UserDefaults.standard
-        defaults.set(provider, forKey: Self.providerKey)
-        defaults.set(model, forKey: Self.modelKey)
-        defaults.set(endpoint, forKey: Self.endpointKey)
+        defaults.set(provider, forKey: MobileAISettings.providerKey)
+        defaults.set(model, forKey: MobileAISettings.modelKey)
+        defaults.set(endpoint, forKey: MobileAISettings.endpointKey)
         hasUnsavedChanges = false
     }
 }

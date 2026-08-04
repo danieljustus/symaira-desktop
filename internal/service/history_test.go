@@ -49,6 +49,35 @@ func TestOverwriteLeavesRestorableVersion(t *testing.T) {
 	}
 }
 
+func TestHistoryContentReturnsStoredSnapshot(t *testing.T) {
+	svc := newTestService(t)
+
+	path, err := svc.NoteNew("Content Probe", "first version", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Overwrite to create a snapshot of the first version.
+	if _, err := svc.NoteNew("Content Probe", "second version", ""); err != nil {
+		t.Fatal(err)
+	}
+
+	entries, err := svc.HistoryList(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 snapshot, got %d", len(entries))
+	}
+
+	content, err := svc.HistoryContent(entries[0].ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(content), "first version") {
+		t.Fatalf("snapshot content does not match the original: %q", content)
+	}
+}
+
 func TestPropsEditIsSnapshotted(t *testing.T) {
 	svc := newTestService(t)
 	path, err := svc.NoteNew("Props", "body", "")

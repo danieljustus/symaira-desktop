@@ -70,4 +70,12 @@ public final class EventWatcher: ObservableObject {
         process = nil
         isWatching = false
     }
+
+    /// Stops watching and drops all collected events. Used when the active
+    /// vault changes so no events leak across vaults (issue #296).
+    public func reset() {
+        stop()
+        latestEvent = nil
+        allEvents = []
+    }
 }

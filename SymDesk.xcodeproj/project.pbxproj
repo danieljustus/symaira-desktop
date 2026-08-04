@@ -859,12 +859,9 @@
 			files = (
 				D7BD437D2AE86E66C864B0FC /* MobileNoteDetailView.swift in Sources */,
 				74DF8458BEC41A75D6F1604C /* MobileRootView.swift in Sources */,
-<<<<<<< HEAD
 				8857DF837949AA7EB0F632F0 /* MobileSearchFilterEngine.swift in Sources */,
 				0AA68FD715ADD5AA149856E5 /* MobileSearchQueryParser.swift in Sources */,
-=======
 				7836BCA57E32D0A10B01DFE6 /* MobileSearchIndex.swift in Sources */,
->>>>>>> origin/main
 				11DDD21FB6492D602BB86A0F /* MobileServerConnection.swift in Sources */,
 				4C61971FE7AC481D84BE4B3D /* MobileTheme.swift in Sources */,
 				14AB9F440F4DF6813149FB4E /* MobileVault.swift in Sources */,

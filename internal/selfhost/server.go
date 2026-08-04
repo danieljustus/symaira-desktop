@@ -1103,7 +1103,7 @@ var allowedRemoteCommands = map[string]map[string]bool{
 	"docs":     {"list": true, "review": true},
 	"doc":      {"status": true, "due": true, "type": true, "correspondent": true, "tag": true, "asn": true},
 	"tags":     {"rename": true, "merge": true, "delete": true},
-	"conflict": {"resolve": true}, "history": {"": true, "prune": true}, "restore": {"": true},
+	"conflict": {"resolve": true}, "history": {"": true, "prune": true, "show": true}, "restore": {"": true},
 	"trash": {"list": true, "restore": true, "delete": true},
 }
 

@@ -456,6 +456,7 @@ final class MobileVaultStore: ObservableObject {
             tags: cached.tags,
             created: "",
             modifiedAt: cached.modifiedAt,
+            fileSize: 0,
             documentDate: "",
             person: "",
             status: cached.status,

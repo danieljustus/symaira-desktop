@@ -41,6 +41,7 @@
 		40406909A4AAF62DD881D295 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EBE73852F5829E6BB25B82 /* NotificationManager.swift */; };
 		45C5391AC1D3FBABE28B94AF /* SymDeskDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB445023E5B108D54E2CADF5 /* SymDeskDesign.swift */; };
 		47B48D476FD69E6B4E906AF6 /* LiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDBAE07809E36B3393ACA8A0 /* LiquidGlass.swift */; };
+		483313DE21B978322F9804AB /* MarkdownTextViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 346FBC22C24AA911360C416A /* MarkdownTextViewTests.swift */; };
 		4A0570925954FEF676DF3D27 /* MeetingAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6031E3F5930844C981F51544 /* MeetingAudioPlayer.swift */; };
 		4C61971FE7AC481D84BE4B3D /* MobileTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2277ACA3457731ED5743E9C9 /* MobileTheme.swift */; };
 		501D1A781F9C96208374CF89 /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = 440538EBC91381E953CC1697 /* SymairaCLIRunner */; };
@@ -175,6 +176,7 @@
 		278FA07C11ECADBCDFD4ED6B /* MeetingKnowledgeReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingKnowledgeReviewView.swift; sourceTree = "<group>"; };
 		2B442ECE47F4FC2E662B8D33 /* DeskTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskTransport.swift; sourceTree = "<group>"; };
 		2FBA5128D6B234381F73178F /* SymDesk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SymDesk.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		346FBC22C24AA911360C416A /* MarkdownTextViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTextViewTests.swift; sourceTree = "<group>"; };
 		34D4E18EEA985A7CCFB138B7 /* MeetingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingsView.swift; sourceTree = "<group>"; };
 		36ACCC6F6DD37EEAD70151F2 /* ClassificationRulesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassificationRulesViewModel.swift; sourceTree = "<group>"; };
 		37BB0170D51D31EB825E5869 /* UpdateInstallerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateInstallerTests.swift; sourceTree = "<group>"; };
@@ -449,6 +451,7 @@
 			children = (
 				8948F04EC3090C19864630CC /* AsyncActionTrackerTests.swift */,
 				BFA27EFFC69A6E08B2972334 /* DocumentCardTests.swift */,
+				346FBC22C24AA911360C416A /* MarkdownTextViewTests.swift */,
 				A2BC2A21B0BFAB4B7F22A054 /* MeetingReviewModelTests.swift */,
 				701CAD285D8A611C5C6779AD /* MeetingsViewTests.swift */,
 				4CA283F51817DD589D19ADB4 /* NotificationManagerTests.swift */,
@@ -732,6 +735,7 @@
 			files = (
 				0777864A7A6E975929B7A320 /* AsyncActionTrackerTests.swift in Sources */,
 				95958AA9ACDAB632B1BAF7F8 /* DocumentCardTests.swift in Sources */,
+				483313DE21B978322F9804AB /* MarkdownTextViewTests.swift in Sources */,
 				30F3B2FD4B8734AF6FFCA25A /* MeetingReviewModelTests.swift in Sources */,
 				F2840BACD70B9D19E69E2AB7 /* MeetingsViewTests.swift in Sources */,
 				D8DB6D940F2257736D24B15E /* NotificationManagerTests.swift in Sources */,

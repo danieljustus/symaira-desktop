@@ -159,9 +159,27 @@ struct ContentView: View {
                             }
 
                             Section("Tags") {
-                                TagBrowserView(tags: tagCounts) { tag in
-                                    navigate(to: .docs, tagFilter: tag)
-                                }
+                                TagBrowserView(
+                                    tags: tagCounts,
+                                    onTagClick: { tag in
+                                        navigate(to: .docs, tagFilter: tag)
+                                    },
+                                    onRenameTag: { old, new in
+                                        await runTagOperation {
+                                            try await core.renameTag(from: old, to: new)
+                                        }
+                                    },
+                                    onMergeTag: { from, into in
+                                        await runTagOperation {
+                                            try await core.mergeTag(from: from, into: into)
+                                        }
+                                    },
+                                    onDeleteTag: { tag in
+                                        await runTagOperation {
+                                            try await core.deleteTag(tag)
+                                        }
+                                    }
+                                )
                                 .frame(minHeight: 120)
                             }
 
@@ -495,9 +513,13 @@ struct ContentView: View {
                     } else {
                         VStack(alignment: .leading, spacing: 0) {
                             if let note = selectedNote {
-                                PropertiesInspector(notePath: vaultRelativePath(note.path), onTagClick: { tag in
-                                    navigate(to: .docs, tagFilter: tag)
-                                })
+                                PropertiesInspector(
+                                    notePath: vaultRelativePath(note.path),
+                                    onTagClick: { tag in
+                                        navigate(to: .docs, tagFilter: tag)
+                                    },
+                                    allTags: tagCounts.map(\.name)
+                                )
                             }
                             Text("Backlinks")
                                 .font(.headline)
@@ -1089,6 +1111,23 @@ struct ContentView: View {
             tagCounts = try await TagStore.aggregate(from: notes, vaultPath: core.vaultPath, isRemote: core.isRemote, core: core)
         } catch {
             print("fetchTagCounts failed: \(error)")
+        }
+    }
+
+    /// Runs a vault-wide tag operation (rename/merge/delete), refreshes the
+    /// tag list and notes, and surfaces failures as a visible banner
+    /// (issue #306).
+    private func runTagOperation(_ operation: () async throws -> Void) async {
+        do {
+            try await operation()
+            await fetchNotes()
+            await fetchTagCounts()
+            await fetchDocCounts()
+        } catch {
+            appErrors.append(AppErrorMessage(
+                message: "Tag operation failed: \(error.localizedDescription)",
+                detail: "No files were changed by the failed operation."
+            ))
         }
     }
 

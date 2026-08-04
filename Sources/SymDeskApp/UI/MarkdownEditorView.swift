@@ -5,9 +5,13 @@ import OSLog
 
 /// NSTextView that intercepts image pastes/drops and stores them as vault assets.
 final class MarkdownTextView: NSTextView {
-    /// Returns the Markdown snippet to insert for the image, or nil to fall
-    /// through to default behavior.
+    /// Returns the Markdown snippet to insert for the image, or nil when the
+    /// image could not be stored as a vault asset.
     var onImageData: ((Data, String) -> String?)?
+    /// Called when image content was detected but could not be stored. The
+    /// message is user-visible; the paste is consumed so the failure never
+    /// silently degrades into a plain-text paste (issue #308).
+    var onImageError: ((String) -> Void)?
 
     private static let imageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "webp", "heic", "bmp"]
 
@@ -23,21 +27,46 @@ final class MarkdownTextView: NSTextView {
 
     /// Reads image content (raw image data or image file URLs) from the
     /// pasteboard, hands it to `onImageData` and inserts the returned link.
-    private func insertImages(from pasteboard: NSPasteboard) -> Bool {
+    ///
+    /// Returns `true` (consuming the paste) whenever image content was
+    /// detected, even if storing it failed — a failed image paste must show
+    /// an error instead of falling through to the default text paste.
+    func insertImages(from pasteboard: NSPasteboard) -> Bool {
         guard let handler = onImageData else { return false }
 
         // Image files (Finder drag or copied files)
         if let urls = pasteboard.readObjects(forClasses: [NSURL.self]) as? [URL], !urls.isEmpty {
             var snippets: [String] = []
+            var failed = 0
+            var unreadable = 0
             for url in urls {
                 let ext = url.pathExtension.lowercased()
-                guard Self.imageExtensions.contains(ext),
-                      let data = try? Data(contentsOf: url),
-                      let snippet = handler(data, ext) else { continue }
-                snippets.append(snippet)
+                guard Self.imageExtensions.contains(ext) else { continue }
+                guard let data = try? Data(contentsOf: url) else {
+                    unreadable += 1
+                    failed += 1
+                    continue
+                }
+                if let snippet = handler(data, ext) {
+                    snippets.append(snippet)
+                } else {
+                    failed += 1
+                }
             }
             if !snippets.isEmpty {
                 insertText(snippets.joined(separator: "\n"), replacementRange: selectedRange())
+            }
+            if failed > 0 {
+                // Store failures were already reported by the coordinator via
+                // `onImageError`; unreadable files have not, so report them here.
+                if unreadable > 0 && snippets.isEmpty {
+                    onImageError?("Could not read the dropped image file(s) from the pasteboard.")
+                }
+                // Consume the paste either way: a failed image paste must never
+                // silently degrade into a plain-text paste.
+                return true
+            }
+            if !snippets.isEmpty {
                 return true
             }
             if pasteboard.canReadObject(forClasses: [NSURL.self], options: nil) {
@@ -52,11 +81,19 @@ final class MarkdownTextView: NSTextView {
             var payload = data
             if type == .tiff {
                 guard let rep = NSBitmapImageRep(data: data),
-                      let png = rep.representation(using: .png, properties: [:]) else { continue }
+                      let png = rep.representation(using: .png, properties: [:]) else {
+                    onImageError?("The clipboard image could not be converted to PNG.")
+                    return true
+                }
                 payload = png
             }
-            guard let snippet = handler(payload, ext) else { continue }
-            insertText(snippet, replacementRange: selectedRange())
+            if let snippet = handler(payload, ext) {
+                insertText(snippet, replacementRange: selectedRange())
+                return true
+            }
+            // Image detected but storage failed — surface the error instead of
+            // falling through to a silent plain-text paste.
+            onImageError?("The image could not be stored in the vault.")
             return true
         }
         return false
@@ -71,6 +108,9 @@ struct MarkdownEditorView: NSViewRepresentable {
     var core: DeskCore?
     /// Vault root used to store pasted/dropped images under the assets folder.
     var vaultRoot: String?
+    /// Called with a user-visible message when a pasted/dropped image could
+    /// not be stored as a vault asset (issue #308).
+    var onImageError: ((String) -> Void)?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -82,6 +122,9 @@ struct MarkdownEditorView: NSViewRepresentable {
         context.coordinator.textView = textView
         textView.onImageData = { [weak coordinator = context.coordinator] data, ext in
             coordinator?.storeImageAsset(data: data, ext: ext)
+        }
+        textView.onImageError = { [weak coordinator = context.coordinator] message in
+            coordinator?.reportImageError(message)
         }
 
         textView.delegate = context.coordinator
@@ -203,10 +246,13 @@ struct MarkdownEditorView: NSViewRepresentable {
         // MARK: - Image paste/drop handling
 
         /// Stores pasted/dropped image data as a vault asset and returns the
-        /// Markdown snippet to insert, or nil if the vault root is unavailable.
+        /// Markdown snippet to insert, or nil if the vault root is unavailable
+        /// or the write failed. Failures are reported through
+        /// `parent.onImageError` so the UI can surface them (issue #308).
         func storeImageAsset(data: Data, ext: String) -> String? {
             guard let vaultRoot = parent.vaultRoot else {
                 os_log(.error, "MarkdownEditorView: vaultRoot is nil, cannot store image")
+                reportImageError("Image paste requires a local vault. Connect to a vault or open a folder to paste images.")
                 return nil
             }
             do {
@@ -219,8 +265,15 @@ struct MarkdownEditorView: NSViewRepresentable {
             } catch {
                 os_log(.error, "MarkdownEditorView: failed to store image asset: %{public}@",
                        error.localizedDescription)
+                reportImageError("Could not store image in the vault: \(error.localizedDescription)")
                 return nil
             }
+        }
+
+        /// Routes an image-paste failure to the view's error callback so the
+        /// app can show a visible banner instead of a silent no-op.
+        func reportImageError(_ message: String) {
+            parent.onImageError?(message)
         }
         
         func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {

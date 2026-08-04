@@ -278,7 +278,7 @@ func TestAIAskPermissionScoping(t *testing.T) {
 	}
 
 	response := aiAsk(t, httpServer.URL, "Rechnung", userToken)
-	defer response.Body.Close()
+	t.Cleanup(func() { _ = response.Body.Close() })
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", response.StatusCode, readBody(response))
 	}
@@ -333,7 +333,7 @@ func TestAIAskCancelsUpstreamOnDisconnect(t *testing.T) {
 	if !found {
 		t.Fatalf("no answer token received: %v", scanner.Err())
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 	cancel()
 
 	select {
@@ -363,7 +363,7 @@ func TestAITransformStreamsAndEndsWithDone(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer response.Body.Close()
+	t.Cleanup(func() { _ = response.Body.Close() })
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", response.StatusCode, readBody(response))
 	}
@@ -402,7 +402,7 @@ func TestAIRateLimitRejectsExcessRequests(t *testing.T) {
 	for i := 0; i < 14; i++ {
 		response := aiAsk(t, httpServer.URL, "Rechnung", testToken)
 		_, _ = io.Copy(io.Discard, response.Body)
-		response.Body.Close()
+		_ = response.Body.Close()
 		lastStatus = response.StatusCode
 		lastRetryAfter = response.Header.Get("Retry-After")
 		if lastStatus == http.StatusTooManyRequests {

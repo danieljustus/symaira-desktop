@@ -128,6 +128,10 @@ func (s *Server) handleAIAsk(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if !writer.event(ai.AnswerEvent(chunk.Chunk)) {
+				// Client went away mid-stream: drain so the producer
+				// goroutine can finish and close chunks instead of leaking.
+				for range chunks {
+				}
 				return
 			}
 		}
@@ -182,6 +186,10 @@ func (s *Server) handleAITransform(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if !writer.event(ai.AnswerEvent(chunk.Chunk)) {
+				// Client went away mid-stream: drain so the producer
+				// goroutine can finish and close chunks instead of leaking.
+				for range chunks {
+				}
 				return
 			}
 		}

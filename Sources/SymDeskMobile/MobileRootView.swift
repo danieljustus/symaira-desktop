@@ -385,6 +385,9 @@ private struct MobileLibraryView: View {
     @State private var displayedNotes: [MobileNote] = []
     @State private var activeFilters = MobileActiveFilters.load()
 
+    /// Search-result snippets keyed by note path (only populated in search mode).
+    @State private var snippetsByPath: [String: String] = [:]
+
     private var availableStatuses: [String] {
         ["All"] + Array(Set(vault.documents.map(\.status).filter { !$0.isEmpty })).sorted()
     }
@@ -415,7 +418,7 @@ private struct MobileLibraryView: View {
                                 NavigationLink {
                                     MobileNoteDetailView(noteID: note.id)
                                 } label: {
-                                    MobileNoteRow(note: note)
+                                    MobileNoteRow(note: note, snippet: snippetsByPath[note.path])
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -663,6 +666,31 @@ private struct MobileLibraryView: View {
             )
         }
 
+        // Pure plain-text search (no operators, no chips, no status/side
+        // filters) goes through the ranked on-device index: fast prefix
+        // search, field-weighted ranking and snippets (#321).
+        let isPlainText = plan.filters.isEmpty && plan.regexes.isEmpty
+            && !plan.terms.contains(where: { $0.negated || $0.phrase })
+        if isPlainText && !request.query.isEmpty && !request.filters.isActive
+            && request.status == "All" && !request.documentsOnly {
+            let results = await vault.search(request.query)
+            guard !Task.isCancelled else { return }
+            let byPath = Dictionary(uniqueKeysWithValues: notes.map { ($0.path, $0) })
+            let ranked = results.compactMap { result -> (MobileNote, String)? in
+                guard let note = byPath[result.path] else { return nil }
+                let snippet = MobileSearchSnippet.snippet(
+                    for: note.body,
+                    normalizedQuery: MobileVaultParser.normalizedSearchQuery(request.query)
+                )
+                return (note, snippet)
+            }
+            snippetsByPath = Dictionary(uniqueKeysWithValues: ranked.map { ($0.0.path, $0.1) })
+            displayedNotes = ranked.map(\.0)
+            return
+        }
+
+        // Operators, chips or browsing mode: one predicate engine for both
+        // typed operators and chip selections (shared contract §2).
         let filtered = await Task.detached(priority: .userInitiated) {
             MobileSearchFilterEngine.filter(notes, plan: plan, ui: uiFilters).filter { note in
                 guard !request.documentsOnly || note.isDocument else { return false }
@@ -670,8 +698,17 @@ private struct MobileLibraryView: View {
                 return true
             }
         }.value
-
         guard !Task.isCancelled else { return }
+
+        if request.query.isEmpty {
+            snippetsByPath = [:]
+        } else {
+            let plainQuery = plan.terms.map(\.value).joined(separator: " ")
+            snippetsByPath = Dictionary(uniqueKeysWithValues: filtered.compactMap { note in
+                let snippet = MobileSearchSnippet.snippet(for: note.body, normalizedQuery: plainQuery)
+                return snippet.isEmpty ? nil : (note.path, snippet)
+            })
+        }
         displayedNotes = filtered
     }
 }
@@ -686,6 +723,9 @@ private struct LibraryRequest: Hashable, Sendable {
 
 struct MobileNoteRow: View {
     let note: MobileNote
+    /// Optional search-result snippet; shown instead of the first line
+    /// when the row came from a ranked query.
+    var snippet: String? = nil
 
     var body: some View {
         HStack(alignment: .top, spacing: 13) {
@@ -701,6 +741,14 @@ struct MobileNoteRow: View {
                     .font(.headline)
                     .foregroundStyle(MobileTheme.textPrimary)
                     .lineLimit(2)
+
+                if let snippet, !snippet.isEmpty {
+                    Text(snippet)
+                        .font(.subheadline)
+                        .foregroundStyle(MobileTheme.textSecondary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
 
                 HStack(spacing: 7) {
                     if !note.documentType.isEmpty {

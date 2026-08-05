@@ -148,7 +148,14 @@ There is no forced cutover: the admin/client token is always accepted on every r
 - Tokens are stored in Apple Keychain, not UserDefaults.
 - Local/iCloud mode remains available in both apps and does not require a server.
 
-The iOS server client is currently a reader. Uploading and editing from iOS, background push refresh and offline write conflict resolution are not implemented yet.
+The iOS client writes through the same server API the Mac uses: a durable
+on-device outbox queues note creates/updates (`PUT /api/v1/files`) and
+original uploads (`POST /api/v1/ingest`), survives app termination and applies
+them when connectivity returns. Writes carry a content-hash precondition, so a
+note changed on another device while the phone was offline is preserved as a
+"conflicted copy" sibling file instead of being overwritten. Failed and
+pending writes are visible in the app (Overview banner and Settings list) with
+the server's reason. Background push refresh is not implemented yet.
 
 ## Security
 

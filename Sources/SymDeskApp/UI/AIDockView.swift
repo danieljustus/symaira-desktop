@@ -69,7 +69,7 @@ struct AIDockView: View {
             HStack(spacing: 8) {
                 Toggle(isOn: $agentMode) {
                     Text("Agent")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
                 }
                 .toggleStyle(.switch)
@@ -192,11 +192,11 @@ struct AIDockView: View {
                 // tool — show name + inputs instead of a bare spinner.
                 HStack(spacing: 6) {
                     Image(systemName: "wand.and.stars")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.goldPrimary)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(iterationLabel(iteration, toolName: toolName))
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textSecondary)
                         if let inputs, !inputs.isEmpty, inputs != "{}" {
                             Text(inputs)

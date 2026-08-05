@@ -34,9 +34,19 @@ previews resolve only files inside the granted vault, preferring contract
 metadata (`archive_path`, `source_path`, `original_path`) and then Markdown
 attachment links. Quick Look owns format rendering on iOS.
 
-The iOS client is deliberately read-only in both modes. Index management,
-ingest, graph construction and AI remain desktop/server workflows until mobile
-writes have explicit offline conflict handling.
+Mobile writes are not ad-hoc: every capture feature (composer, scanner, Share
+Extension, inline AI) funnels through one durable outbox that survives app
+termination and applies entries with exponential backoff when connectivity
+returns. Two adapters behind one protocol implement the same semantics — the
+server adapter writes through `PUT /api/v1/files` and `POST /api/v1/ingest`
+with a content-hash precondition; the Files/iCloud adapter writes through
+`NSFileCoordinator` with a modification-date/size precondition. iCloud Drive
+has no atomic compare-and-swap, so the Files-mode precondition is best-effort
+and the conflict path is the normal case, not the exception: when a write
+would overwrite a remote change, the losing version is preserved as a sibling
+"conflicted copy" file (the same convention the desktop `conflict resolve`
+command understands) and surfaced in the app's failed-write list. Nothing is
+silently discarded.
 
 ## Self-hosted server and distributed processing
 

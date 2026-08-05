@@ -242,6 +242,10 @@ private struct MobileOverviewView: View {
                         overviewHeader
                         metrics
 
+                        if vault.pendingWriteCount > 0 {
+                            MobileOutboxBanner()
+                        }
+
                         if !vault.recentlyOpened.isEmpty {
                             section(title: "Recently opened", systemImage: "clock.fill", notes: vault.recentlyOpened)
                         }
@@ -360,6 +364,27 @@ private struct MetricCard: View {
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .mobileLiquidGlass(cornerRadius: 20)
+    }
+}
+
+/// Shows the pending-write queue state on the workspace. Appears whenever
+/// writes are queued (offline) or actively uploading; the failed state is
+/// surfaced separately in Settings with retry/remove actions.
+private struct MobileOutboxBanner: View {
+    @EnvironmentObject private var vault: MobileVaultStore
+
+    var body: some View {
+        Label {
+            Text("\(vault.pendingWriteCount) change\(vault.pendingWriteCount == 1 ? "" : "s") waiting to sync")
+        } icon: {
+            Image(systemName: "arrow.up.circle.fill")
+        }
+        .font(.callout.weight(.medium))
+        .foregroundStyle(MobileTheme.textPrimary)
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .mobileLiquidGlass(cornerRadius: 16)
+        .accessibilityLabel("\(vault.pendingWriteCount) changes waiting to sync")
     }
 }
 
@@ -875,6 +900,10 @@ private struct MobileSettingsView: View {
                         }
                         .padding(18)
                         .mobileLiquidGlass(cornerRadius: 18)
+
+                        if !vault.failedWrites.isEmpty {
+                            MobileFailedWritesSection()
+                        }
                     }
                     .padding(16)
                     .frame(maxWidth: 680)
@@ -898,6 +927,59 @@ private struct MobileSettingsView: View {
 		.sheet(isPresented: $isServerSheetPresented) {
 			MobileServerConnectionView { isServerSheetPresented = false }
 		}
+    }
+}
+
+/// Lists failed writes with their reason and per-entry Retry/Remove
+/// actions, so a rejected or conflicted write is never invisible.
+private struct MobileFailedWritesSection: View {
+    @EnvironmentObject private var vault: MobileVaultStore
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Failed writes", systemImage: "exclamationmark.triangle.fill")
+                .font(.headline)
+                .foregroundStyle(MobileTheme.textPrimary)
+
+            ForEach(vault.failedWrites) { entry in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "doc.badge.ellipsis")
+                            .foregroundStyle(.red)
+                        Text(entry.originalFilename ?? URL(fileURLWithPath: entry.path).lastPathComponent)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(MobileTheme.textPrimary)
+                            .lineLimit(1)
+                        Spacer()
+                    }
+                    Text(entry.lastError ?? "Unknown error")
+                        .font(.caption)
+                        .foregroundStyle(MobileTheme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    HStack(spacing: 10) {
+                        Button {
+                            Task { await vault.retryWrite(id: entry.id) }
+                        } label: {
+                            Label("Retry", systemImage: "arrow.clockwise")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+
+                        Button(role: .destructive) {
+                            Task { await vault.removeWrite(id: entry.id) }
+                        } label: {
+                            Label("Remove", systemImage: "trash")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .mobileLiquidGlass(cornerRadius: 16)
+            }
+        }
     }
 }
 

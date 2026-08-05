@@ -396,6 +396,8 @@ final class MobileVaultStore: ObservableObject {
 	@Published private(set) var serverURL: URL?
     @Published var errorMessage: String?
     @Published private(set) var recentlyOpenedPaths: [String] = []
+    /// Visible write-queue state (pending + failed entries) for the UI.
+    @Published private(set) var outboxEntries: [MobileOutboxEntry] = []
     /// Vault-relative path a citation or deep link requested; the root
     /// view presents the note when set.
     @Published var pendingOpenPath: String?
@@ -411,11 +413,25 @@ final class MobileVaultStore: ObservableObject {
     private let cacheURL: URL
     /// Feeds vault content into iOS Core Spotlight (home-screen search).
     private let spotlightIndexer = MobileSpotlightIndexer()
+    private let outbox: MobileOutbox
+    private let writeCoordinator: MobileWriteCoordinator
     /// Ranked, persisted on-device search index. Fed from the parsed
     /// snapshot after every reload in both connection modes.
     private let searchIndex: MobileSearchIndex
 
-    init(cacheURL: URL = MobileVaultCache.defaultURL(), searchIndex: MobileSearchIndex? = nil) {
+    init(outbox: MobileOutbox? = nil, cacheURL: URL = MobileVaultCache.defaultURL(), searchIndex: MobileSearchIndex? = nil) {
+        let resolvedOutbox: MobileOutbox
+        if let outbox {
+            resolvedOutbox = outbox
+        } else {
+            // The default location lives in Application Support; tests inject
+            // a temporary directory instead.
+            resolvedOutbox = (try? MobileOutbox(directory: MobileOutbox.defaultDirectory()))
+                ?? (try? MobileOutbox(directory: FileManager.default.temporaryDirectory
+                    .appendingPathComponent("SymDeskMobile-Outbox-\(UUID().uuidString)")))!
+        }
+        self.outbox = resolvedOutbox
+        self.writeCoordinator = MobileWriteCoordinator(outbox: resolvedOutbox)
         self.cacheURL = cacheURL
         if let searchIndex {
             self.searchIndex = searchIndex
@@ -430,6 +446,9 @@ final class MobileVaultStore: ObservableObject {
                 fileURL: base.appendingPathComponent("SymDeskMobile/search-index.json")
             )
         }
+        Task { await writeCoordinator.setOnChange { [weak self] in
+            Task { @MainActor in await self?.refreshOutboxState() }
+        } }
         // Cache-first launch: show the last parsed snapshot immediately,
         // then refresh in the background. The refresh replaces `notes`.
         if let cache = MobileVaultCache.load(from: cacheURL) {
@@ -439,10 +458,98 @@ final class MobileVaultStore: ObservableObject {
 		if let connection = MobileServerConfig.connection() {
 			serverURL = connection.url
 			remoteClient = MobileRemoteClient(connection: connection)
+			Task { await writeCoordinator.setMode(MobileServerWriteAdapter(connection: connection)) }
 		} else {
 			restoreVault()
+			if let root = vaultURL {
+				Task { await writeCoordinator.setMode(MobileFilesWriteAdapter(vaultRoot: root)) }
+			}
 		}
 		recentlyOpenedPaths = UserDefaults.standard.stringArray(forKey: recentsKey) ?? []
+        Task { await refreshOutboxState() }
+        Task { await writeCoordinator.drain() }
+    }
+
+    /// Republish the outbox's visible state on the main actor.
+    private func refreshOutboxState() async {
+        outboxEntries = await writeCoordinator.entries()
+    }
+
+    /// Pending (queued + uploading) writes, for the workspace banner.
+    var pendingWriteCount: Int {
+        outboxEntries.filter { $0.state == .queued || $0.state == .uploading }.count
+    }
+
+    /// Failed writes with reasons, for the settings surface.
+    var failedWrites: [MobileOutboxEntry] {
+        outboxEntries.filter { $0.state == .failed }
+    }
+
+    // MARK: - Write API (all capture features route through the outbox)
+
+    /// Creates a new note through the outbox: contract-v2 frontmatter and
+    /// desktop-conformant file naming are applied here, so every consumer
+    /// (composer, share extension, intents) writes the same shape.
+    /// `folder` is an optional vault-relative target folder (default: vault
+    /// root, matching desktop `note new`). Returns the vault-relative path.
+    func enqueueCreateNote(title: String, body: String, folder: String? = nil) async throws -> String {
+        let filename = MobileNoteWriter.filename(for: title)
+        let path = folder.map { ($0 as NSString).appendingPathComponent(filename) } ?? filename
+        let content = MobileNoteWriter.noteDocument(title: title, body: body)
+        let entry = MobileOutboxEntry(kind: .createNote, path: path, content: content, folder: folder)
+        try await writeCoordinator.enqueue(entry)
+        return path
+    }
+
+    /// Queues an update of an existing note. The precondition captures what
+    /// the phone last saw (content hash in server mode, mtime+size in Files
+    /// mode) so a remote change made meanwhile produces a conflict file
+    /// instead of being overwritten.
+    func enqueueUpdateNote(_ note: MobileNote, content: String) async throws {
+        let precondition: MobileWritePrecondition
+        if let remoteClient {
+            precondition = MobileWritePrecondition(
+                etag: MobileServerWriteAdapter.sha256(Data(note.rawContent.utf8))
+            )
+        } else if let root = vaultURL {
+            let url = note.fileURL(in: root)
+            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
+            precondition = MobileWritePrecondition(
+                modifiedAt: values?.contentModificationDate,
+                size: values?.fileSize
+            )
+        } else {
+            precondition = .none
+        }
+        let entry = MobileOutboxEntry(
+            kind: .updateNote,
+            path: note.path,
+            content: content,
+            precondition: precondition
+        )
+        try await writeCoordinator.enqueue(entry)
+    }
+
+    /// Queues an original (scan, PDF, image) for ingestion. In server mode
+    /// it is uploaded to `POST /api/v1/ingest`; in Files mode it is written
+    /// into the consume folder (`consumeFolder` defaults to `inbox_watch`).
+    func enqueueUpload(data: Data, filename: String, consumeFolder: String? = nil) async throws {
+        let entry = MobileOutboxEntry(
+            kind: .uploadOriginal,
+            path: filename,
+            originalData: data,
+            originalFilename: filename,
+            folder: consumeFolder
+        )
+        try await writeCoordinator.enqueue(entry)
+    }
+
+    func retryWrite(id: UUID) async {
+        try? await writeCoordinator.retry(id: id)
+    }
+
+    func removeWrite(id: UUID) async {
+        try? await writeCoordinator.remove(id: id)
     }
 
     /// Converts a cached note back into the full in-memory shape. The body
@@ -531,6 +638,7 @@ final class MobileVaultStore: ObservableObject {
 		snapshotETag = nil
 		serverURL = nil
         activate(url)
+        Task { await writeCoordinator.setMode(MobileFilesWriteAdapter(vaultRoot: url.standardizedFileURL)) }
         do {
             let data = try url.bookmarkData(
                 options: [.minimalBookmark],
@@ -586,6 +694,10 @@ final class MobileVaultStore: ObservableObject {
         if generation == loadGeneration {
             isLoading = false
         }
+        // A successful reload means the backend is reachable again: give the
+        // outbox a chance to apply anything queued while offline.
+        await writeCoordinator.drain()
+
         // Persist the fresh snapshot for cache-first launch and feed the
         // system search index. Only a successful reload replaces the cache
         // and the index; a failed refresh must not wipe the last good state.
@@ -638,6 +750,7 @@ final class MobileVaultStore: ObservableObject {
 		snapshotETag = nil
 		serverURL = connection.url
 		notes = []
+		await writeCoordinator.setMode(MobileServerWriteAdapter(connection: connection))
 		await reload()
 	}
 
@@ -664,6 +777,10 @@ final class MobileVaultStore: ObservableObject {
 		MobileServerConfig.reset()
 		recentlyOpenedPaths = []
 		UserDefaults.standard.removeObject(forKey: recentsKey)
+        // A disconnected vault must not leak queued writes into a new vault:
+        // the whole queue is dropped and the write backend is detached.
+        Task { await writeCoordinator.setMode(nil) }
+        Task { try? await writeCoordinator.clear() }
         Task { await scanner.clearCache() }
         // Disconnecting revokes access: purge the local snapshot cache and
         // the system search index so no vault content stays on the device

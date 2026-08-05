@@ -416,10 +416,15 @@ func TestStartServerIntegration(t *testing.T) {
 	}
 	contentArr, _ := statusResult["content"].([]any)
 	firstContent, _ := contentArr[0].(map[string]any)
-	// text is the tool result serialized as a JSON object.
-	textObj, ok := firstContent["text"].(map[string]any)
+	// text is the tool result serialized as a JSON string (corekit ≥0.8
+	// enforces the MCP TextContent schema: text must be a string).
+	textStr, ok := firstContent["text"].(string)
 	if !ok {
-		t.Fatalf("expected text object in desk_status content, got %T: %v", firstContent["text"], firstContent["text"])
+		t.Fatalf("expected text string in desk_status content, got %T: %v", firstContent["text"], firstContent["text"])
+	}
+	var textObj map[string]any
+	if err := json.Unmarshal([]byte(textStr), &textObj); err != nil {
+		t.Fatalf("expected JSON object in desk_status text: %v", err)
 	}
 	version, _ := textObj["version"].(string)
 	vault, _ := textObj["vault"].(string)

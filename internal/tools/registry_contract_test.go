@@ -599,7 +599,7 @@ func TestToolHandlersHappyPaths(t *testing.T) {
 	t.Run("desk_ingest creates inbox note", func(t *testing.T) {
 		restrictPATH(t)
 		src := filepath.Join(t.TempDir(), "doc.txt")
-		if err := os.WriteFile(src, []byte("hello"), 0o644); err != nil {
+		if err := os.WriteFile(src, []byte("hello"), 0o600); err != nil {
 			t.Fatal(err)
 		}
 		tool := newIngestTool(testServiceFactory(t))
@@ -632,10 +632,10 @@ func TestToolHandlersHappyPaths(t *testing.T) {
 			t.Fatal(err)
 		}
 		content := "---\ntitle: \"Test\"\nstatus: \"open\"\n---\n\nBody.\n"
-		if err := os.WriteFile(filepath.Join(svc.VaultRoot, "test.md"), []byte(content), 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(svc.VaultRoot, "test.md"), []byte(content), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		db.Close()
+		_ = db.Close()
 		tool := newDocSetStatusTool(factory)
 		in, _ := json.Marshal(map[string]string{"file": "test.md", "status": "done"})
 		out, err := tool.Handler(ctx, in)
@@ -779,7 +779,7 @@ func createNote(t *testing.T, factory ServiceFactory, title, body string) string
 		t.Fatal(err)
 	}
 	path, err := svc.NoteNew(title, body, "")
-	db.Close()
+	_ = db.Close()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -29,7 +29,7 @@ struct AIDockView: View {
                 Image(systemName: "sparkles")
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 Text("AI Dock")
-                    .font(.headline)
+                    .symairaText(.subheading)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
             }
@@ -116,7 +116,7 @@ struct AIDockView: View {
                         copyToClipboard(text)
                     } label: {
                         Image(systemName: "doc.on.doc")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                     .buttonStyle(.borderless)
@@ -127,7 +127,7 @@ struct AIDockView: View {
                         NotificationCenter.default.post(name: .openRulesSettings, object: "ai")
                     } label: {
                         Label("Open AI Settings", systemImage: "gearshape")
-                            .font(.caption)
+                            .symairaText(.caption)
                     }
                     .buttonStyle(.borderless)
                     .foregroundColor(SymairaTheme.goldSecondary)
@@ -139,29 +139,29 @@ struct AIDockView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Image(systemName: "doc.text")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.goldPrimary)
                     Text(title.isEmpty ? path : title)
-                        .font(.caption.bold())
+                        .symairaText(.caption).bold()
                         .foregroundColor(SymairaTheme.textPrimary)
                     Spacer()
                     Button {
                         openFile(path)
                     } label: {
                         Image(systemName: "arrow.up.right.square")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.goldSecondary)
                     }
                     .buttonStyle(.borderless)
                     .help("Open note")
                 }
                 Text(snippet)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
                     .lineLimit(3)
                 if let score {
                     Text(String(format: "Score: %.2f", score))
-                        .font(.caption2)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
             }
@@ -182,15 +182,15 @@ struct AIDockView: View {
                         .tint(SymairaTheme.goldPrimary)
                 } else if status == "done" {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.goldPrimary)
                 } else if status == "error" {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(.orange)
                 }
                 Text("\(toolName): \(status)")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textSecondary)
             }
             .padding(6)

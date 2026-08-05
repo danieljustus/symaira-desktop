@@ -21,7 +21,7 @@ struct TrashView: View {
                 Image(systemName: "trash")
                     .foregroundColor(SymairaTheme.goldPrimary)
                 Text("Trash")
-                    .font(.title2.weight(.semibold))
+                    .symairaText(.title).fontWeight(.semibold)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
                 if !trashItems.isEmpty {
@@ -46,7 +46,7 @@ struct TrashView: View {
             .padding(.bottom, 12)
 
             Text("Items moved to the trash can be restored to their original location or permanently deleted.")
-                .font(.callout)
+                .symairaText(.callout)
                 .foregroundColor(SymairaTheme.textSecondary)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 12)
@@ -56,7 +56,7 @@ struct TrashView: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.red)
                     Text(error)
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
                     Spacer()
                     Button("Retry") {
@@ -118,20 +118,20 @@ struct TrashView: View {
 
         return HStack(spacing: 12) {
             Image(systemName: "doc.text")
-                .font(.title3)
+                .symairaText(.heading)
                 .foregroundColor(SymairaTheme.textMuted)
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(displayName(from: item.originalPath))
-                        .font(.body.weight(.medium))
+                        .symairaText(.body).fontWeight(.medium)
                         .foregroundColor(SymairaTheme.textPrimary)
                         .lineLimit(1)
                 }
 
                 HStack(spacing: 8) {
                     Label(item.originalPath, systemImage: "folder")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                         .lineLimit(1)
 
@@ -139,14 +139,14 @@ struct TrashView: View {
                         .foregroundColor(SymairaTheme.textMuted)
 
                     Label(formattedDate(item.deletedAt), systemImage: "clock")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
 
                     Text("·")
                         .foregroundColor(SymairaTheme.textMuted)
 
                     Text(formattedSize(item.size))
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
             }

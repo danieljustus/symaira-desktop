@@ -42,7 +42,7 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Dashboard")
-                    .font(.title2.bold())
+                    .symairaText(.title).bold()
                     .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
                 if let report = doctorReport {
@@ -50,13 +50,13 @@ struct DashboardView: View {
                         Image(systemName: report.overall == "ok" ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
                             .foregroundColor(report.overall == "ok" ? SymairaTheme.goldPrimary : .orange)
                         Text(report.overall == "ok" ? "Healthy" : "Issues found")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textSecondary)
                     }
                 }
             }
             Text("Your vault at a glance.")
-                .font(.callout)
+                .symairaText(.callout)
                 .foregroundColor(SymairaTheme.textSecondary)
         }
     }
@@ -99,13 +99,13 @@ struct DashboardView: View {
     private func statCard(icon: String, label: String, value: String, color: Color) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.title2)
+                .symairaText(.title)
                 .foregroundColor(color)
             Text(value)
-                .font(.title.weight(.bold))
+                .symairaText(.title).fontWeight(.bold)
                 .foregroundColor(SymairaTheme.textPrimary)
             Text(label)
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textSecondary)
         }
         .frame(maxWidth: .infinity)
@@ -118,7 +118,7 @@ struct DashboardView: View {
     private var documentStatusSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Document Status")
-                .font(.headline)
+                .symairaText(.subheading)
                 .foregroundColor(SymairaTheme.goldPrimary)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 200, maximum: 300), spacing: 10)], spacing: 10) {
@@ -134,7 +134,7 @@ struct DashboardView: View {
                                 .foregroundColor(SymairaTheme.textPrimary)
                             Spacer()
                             Text("\(count)")
-                                .font(.caption.weight(.medium))
+                                .symairaText(.caption).fontWeight(.medium)
                                 .foregroundColor(SymairaTheme.textSecondary)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
@@ -156,12 +156,12 @@ struct DashboardView: View {
     private var recentNotesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Recent Notes")
-                .font(.headline)
+                .symairaText(.subheading)
                 .foregroundColor(SymairaTheme.goldPrimary)
 
             if recentNotes.isEmpty {
                 Text("No notes yet — create one from the sidebar.")
-                    .font(.callout)
+                    .symairaText(.callout)
                     .foregroundColor(SymairaTheme.textMuted)
                     .padding(.vertical, 12)
             } else {
@@ -177,7 +177,7 @@ struct DashboardView: View {
                                 .lineLimit(1)
                             Spacer()
                             Text(shortDate(note.modifiedAt))
-                                .font(.caption)
+                                .symairaText(.caption)
                                 .foregroundColor(SymairaTheme.textMuted)
                         }
                         .padding(.horizontal, 12)
@@ -195,7 +195,7 @@ struct DashboardView: View {
     private var discoverLinkSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Explore")
-                .font(.headline)
+                .symairaText(.subheading)
                 .foregroundColor(SymairaTheme.goldPrimary)
 
             Button(action: {

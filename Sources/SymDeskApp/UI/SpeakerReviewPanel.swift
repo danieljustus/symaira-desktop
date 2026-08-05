@@ -20,7 +20,7 @@ struct SpeakerReviewPanel: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Speakers")
-                    .font(.subheadline)
+                    .symairaText(.callout)
                     .fontWeight(.semibold)
                     .foregroundColor(SymairaTheme.textSecondary)
                 Spacer()
@@ -29,7 +29,7 @@ struct SpeakerReviewPanel: View {
                 } else if !model.speakers.isEmpty {
                     Button("Reset Edits") { confirmingReset = true }
                         .buttonStyle(.plain)
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                         .accessibilityLabel("Reset all speaker edits")
                 }
@@ -37,11 +37,11 @@ struct SpeakerReviewPanel: View {
 
             if let error = model.speakersError {
                 Label(error, systemImage: "person.crop.circle.badge.questionmark")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             } else if model.speakers.isEmpty {
                 Text("No speakers recorded for this meeting.")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             } else {
                 ForEach(model.speakers) { speaker in
@@ -51,7 +51,7 @@ struct SpeakerReviewPanel: View {
 
             if let actionError = model.speakerActionError {
                 Text(actionError)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.red)
             }
 
@@ -77,23 +77,23 @@ struct SpeakerReviewPanel: View {
 
             if renamingSpeakerID == speaker.speakerID {
                 TextField("Speaker name", text: $renameText)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.callout)
+                    .textFieldStyle(.symaira)
+                    .symairaText(.callout)
                     .onSubmit { commitRename(speaker) }
                     .accessibilityLabel("New name for \(speaker.label)")
                 Button("Save") { commitRename(speaker) }
                     .buttonStyle(.plain)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.goldPrimary)
                     .keyboardShortcut(.defaultAction)
             } else {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(speaker.label)
-                        .font(.callout)
+                        .symairaText(.callout)
                         .foregroundColor(SymairaTheme.textPrimary)
                     if speaker.label != speaker.speakerID {
                         Text(speaker.speakerID)
-                            .font(.caption2)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                 }
@@ -146,7 +146,7 @@ struct SpeakerReviewPanel: View {
             if !participants.isEmpty {
                 Divider()
                 Text("Participants")
-                    .font(.subheadline)
+                    .symairaText(.callout)
                     .fontWeight(.semibold)
                     .foregroundColor(SymairaTheme.textSecondary)
                 ForEach(Array(participants.enumerated()), id: \.offset) { _, participant in
@@ -155,16 +155,16 @@ struct SpeakerReviewPanel: View {
                             .foregroundColor(participant.entityID == nil || participant.entityID?.isEmpty == true ? SymairaTheme.textMuted : SymairaTheme.goldPrimary)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(participant.label.isEmpty ? "Unlabeled speaker" : participant.label)
-                                .font(.callout)
+                                .symairaText(.callout)
                                 .foregroundColor(SymairaTheme.textPrimary)
                             Text(participant.speakerIDs.joined(separator: ", "))
-                                .font(.caption2)
+                                .symairaText(.caption)
                                 .foregroundColor(SymairaTheme.textMuted)
                         }
                         Spacer()
                         Button("Confirm…") { confirmingParticipant = participant }
                             .buttonStyle(.plain)
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.goldPrimary)
                             .accessibilityLabel("Confirm the person for \(participant.label.isEmpty ? "this unlabeled speaker" : participant.label)")
                     }

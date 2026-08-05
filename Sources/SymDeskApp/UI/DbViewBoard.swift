@@ -66,7 +66,7 @@ struct DbViewBoard: View {
                         ForEach(groupedItems, id: \.key) { group in
                             VStack(alignment: .leading) {
                                 Text(group.key.uppercased())
-                                    .font(.headline)
+                                    .symairaText(.subheading)
                                     .foregroundColor(SymairaTheme.goldPrimary)
                                     .padding(.bottom, 8)
 
@@ -75,7 +75,7 @@ struct DbViewBoard: View {
                                     VStack(alignment: .leading) {
                                         Text(title).bold()
                                             .foregroundColor(SymairaTheme.textPrimary)
-                                        Text(item.id).font(.caption).foregroundColor(SymairaTheme.textMuted)
+                                        Text(item.id).symairaText(.caption).foregroundColor(SymairaTheme.textMuted)
                                     }
                                     .padding()
                                     .frame(width: 250, alignment: .leading)

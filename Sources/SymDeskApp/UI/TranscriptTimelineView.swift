@@ -57,15 +57,15 @@ struct TranscriptTimelineView: View {
         return Button(action: { onSelectSegment?(segment) }) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text(Self.formatTimestamp(segment.startMS))
-                    .font(.caption.monospacedDigit())
+                    .symairaText(.caption).monospacedDigit()
                     .foregroundColor(SymairaTheme.textMuted)
                     .frame(width: 56, alignment: .trailing)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(speaker)
-                        .font(.caption.weight(.semibold))
+                        .symairaText(.caption).fontWeight(.semibold)
                         .foregroundColor(SymairaTheme.goldSecondary)
                     Text(segment.displayText)
-                        .font(.body)
+                        .symairaText(.body)
                         .foregroundColor(SymairaTheme.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -90,22 +90,22 @@ struct TranscriptTimelineView: View {
             VStack(alignment: .leading, spacing: 12) {
                 if let segmentsError {
                     Label("Time-coded segments unavailable: \(segmentsError)", systemImage: "clock.badge.exclamationmark")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 if let transcript, !transcript.isEmpty {
                     Text(transcript)
-                        .font(.system(.body, design: .monospaced))
+                        .symairaText(.mono)
                         .foregroundColor(SymairaTheme.textPrimary)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     VStack(spacing: 8) {
                         Image(systemName: "text.badge.xmark")
-                            .font(.system(size: 32))
+                            .symairaText(.title)
                             .foregroundColor(SymairaTheme.textMuted)
                         Text("Transcript unavailable")
-                            .font(.callout)
+                            .symairaText(.callout)
                             .foregroundColor(SymairaTheme.textMuted)
                     }
                     .frame(maxWidth: .infinity, minHeight: 160)

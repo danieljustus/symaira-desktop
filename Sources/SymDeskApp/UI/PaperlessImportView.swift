@@ -30,7 +30,7 @@ struct PaperlessImportView: View {
                 LabeledContent("Paperless export") {
                     HStack(spacing: 8) {
                         Text(exportDir ?? "Choose the export directory…")
-                            .font(.callout)
+                            .symairaText(.callout)
                             .foregroundStyle(exportDir == nil ? SymairaTheme.textSecondary : SymairaTheme.textPrimary)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -41,7 +41,7 @@ struct PaperlessImportView: View {
                     }
                 }
                 Text("A Paperless-ngx export (manifest.json + document files). The import is idempotent — re-running it updates notes instead of duplicating them.")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
             .padding(18)
@@ -83,7 +83,7 @@ struct PaperlessImportView: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.red)
                     Text(errorMessage)
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundStyle(SymairaTheme.textSecondary)
                     Spacer()
                 }
@@ -94,7 +94,7 @@ struct PaperlessImportView: View {
 
             if !progressMessage.isEmpty {
                 Label(progressMessage, systemImage: "shippingbox")
-                    .font(.callout)
+                    .symairaText(.callout)
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
 
@@ -115,7 +115,7 @@ struct PaperlessImportView: View {
                 .font(.system(size: 28))
                 .foregroundStyle(SymairaTheme.goldPrimary)
             VStack(alignment: .leading, spacing: 4) {
-                Text("Import from Paperless-ngx").font(.title2.bold())
+                Text("Import from Paperless-ngx").symairaText(.title).bold()
                 Text("Migrate your Paperless documents into the vault as contract notes with their original files archived.")
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
@@ -131,7 +131,7 @@ struct PaperlessImportView: View {
                 Image(systemName: "checkmark.seal")
                     .foregroundStyle(SymairaTheme.goldPrimary)
                 Text(summary.results.contains(where: { $0.action == "error" }) ? "Import finished with errors" : "Import complete")
-                    .font(.headline)
+                    .symairaText(.subheading)
                     .foregroundStyle(SymairaTheme.textPrimary)
                 Spacer()
             }
@@ -167,10 +167,10 @@ struct PaperlessImportView: View {
     private func summaryStat(_ label: String, _ value: Int, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("\(value)")
-                .font(.title3.weight(.bold))
+                .symairaText(.subheading).fontWeight(.bold)
                 .foregroundStyle(color)
             Text(label)
-                .font(.caption2)
+                .symairaText(.caption)
                 .foregroundStyle(SymairaTheme.textSecondary)
         }
     }
@@ -179,21 +179,21 @@ struct PaperlessImportView: View {
     private func resultRow(_ result: DeskCore.PaperlessImportResult) -> some View {
         HStack(spacing: 8) {
             Image(systemName: icon(for: result.action))
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundStyle(color(for: result.action))
             Text("#\(result.paperlessID) \(result.title)")
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundStyle(SymairaTheme.textPrimary)
                 .lineLimit(1)
             Spacer()
             if let error = result.error {
                 Text(error)
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundStyle(.red)
                     .lineLimit(1)
             } else if let path = result.notePath {
                 Text(path)
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundStyle(SymairaTheme.textSecondary)
                     .lineLimit(1)
                     .truncationMode(.middle)

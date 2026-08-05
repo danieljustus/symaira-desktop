@@ -174,6 +174,33 @@ This is a single-user/self-hosted security model. It does not provide tenant sep
 
 The versioned `/api/v1` contract includes authenticated status, compressed snapshots, secure file reads/writes, multipart ingest, queue listing/retry, allowlisted commands, and worker lease/input/complete/fail endpoints. JSON fields use `snake_case`.
 
+### Streaming AI endpoints
+
+`POST /api/v1/ai/ask` and `POST /api/v1/ai/transform` answer with
+newline-delimited JSON (NDJSON) of the same `AIEvent` types the CLI's
+`ask --json` / `transform --json` emit: `answer`, `citation`, `tool` and
+`done` lines. A client observes tokens as the model produces them; the
+stream always terminates with a `done` event.
+
+- **`POST /api/v1/ai/ask`** — body `{"query": "..."}`. Retrieval is scoped
+  by the caller's document permissions exactly like `GET /api/v1/snapshot`:
+  a user without read access to a document never receives it as context or
+  as a citation. Citation paths are vault-relative and resolve through
+  `GET /api/v1/files?path=...`.
+- **`POST /api/v1/ai/transform`** — body `{"text": "...", "intent":
+  "summarize" | "rewrite" | "continue"}`. Operates purely on the provided
+  text and never touches the vault.
+- **Cancellation** — a disconnecting client aborts the upstream model
+  request; the handler drains and stops instead of leaving the model call
+  running.
+- **Rate limiting** — both endpoints share a per-source-IP bucket
+  (12 requests / 30 s, blocked for 60 s) and answer `429` with `Retry-After`
+  like the other throttled routes.
+- **Auth** — both endpoints require the bearer token like every other
+  `/api/v1` route. The model is configured server-side via the usual
+  `SYMDESK_LLM_*` / `SYMDESK_OLLAMA_URL` variables or the config file;
+  clients cannot override the endpoint or model.
+
 ## Performance notes
 
 The server keeps generated snapshot JSON and gzip data in memory, while a

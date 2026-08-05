@@ -29,11 +29,11 @@ struct CommandPalette: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 18))
+                    .symairaText(.callout)
                     .foregroundColor(SymairaTheme.goldPrimary)
                 TextField("Search notes or create a new one…", text: $searchText)
                     .textFieldStyle(.plain)
-                    .font(.title2)
+                    .symairaText(.title)
                     .foregroundColor(SymairaTheme.textPrimary)
                     .onSubmit {
                         performSearch()
@@ -51,7 +51,7 @@ struct CommandPalette: View {
                     .help("Clear search")
                 }
                 Text("↩")
-                    .font(.caption.monospaced())
+                    .symairaText(.caption).monospaced()
                     .foregroundStyle(SymairaTheme.textMuted)
             }
             .padding(.horizontal, 14)
@@ -64,7 +64,7 @@ struct CommandPalette: View {
                 .padding(.bottom, 4)
 
             Text("Filters compile to query syntax. Type raw queries or use the Filter button above.")
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
@@ -82,7 +82,7 @@ struct CommandPalette: View {
 
             if let hint = searchHint {
                 Label(hint, systemImage: "info.circle")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.goldSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
@@ -118,10 +118,10 @@ struct CommandPalette: View {
                             }) {
                                 VStack(alignment: .leading) {
                                     Text(res.title)
-                                        .font(.headline)
+                                        .symairaText(.subheading)
                                         .foregroundColor(SymairaTheme.textPrimary)
                                     Text(res.snippet)
-                                        .font(.caption)
+                                        .symairaText(.caption)
                                         .foregroundColor(SymairaTheme.textSecondary)
                                 }
                             }

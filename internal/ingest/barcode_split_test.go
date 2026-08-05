@@ -112,6 +112,7 @@ exit 1
 func writeMockScript(t *testing.T, dir, name, body string) {
 	t.Helper()
 	p := filepath.Join(dir, name)
+	// #nosec G306 -- mock scripts must remain executable for exec.Command.
 	if err := os.WriteFile(p, []byte("#!/bin/sh\n"+body), 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -128,6 +129,7 @@ func writeBarcodePNG(t *testing.T, path, text string) {
 	img := image.NewRGBA(image.Rect(0, 0, bm.GetWidth()+2*margin, bm.GetHeight()+2*margin))
 	draw.Draw(img, img.Bounds(), image.NewUniform(color.White), image.Point{}, draw.Src)
 	draw.Draw(img, image.Rect(margin, margin, margin+bm.GetWidth(), margin+bm.GetHeight()), bm, image.Point{}, draw.Src)
+	// #nosec G304 -- fixture path under t.TempDir()
 	f, err := os.Create(path)
 	if err != nil {
 		t.Fatal(err)
@@ -141,6 +143,7 @@ func writeBarcodePNG(t *testing.T, path, text string) {
 // writeBlankPNG writes a plain white PNG.
 func writeBlankPNG(t *testing.T, path string) {
 	t.Helper()
+	// #nosec G304 -- fixture path under t.TempDir()
 	f, err := os.Create(path)
 	if err != nil {
 		t.Fatal(err)
@@ -159,7 +162,7 @@ func setupBarcodeFixture(t *testing.T, withSymingest bool) (imgDir, mockDir stri
 	writeBarcodePNG(t, filepath.Join(imgDir, "barcode.png"), "PATCH-T")
 	writeBarcodePNG(t, filepath.Join(imgDir, "other.png"), "HELLO")
 	writeBlankPNG(t, filepath.Join(imgDir, "blank.png"))
-	if err := os.WriteFile(filepath.Join(imgDir, "corrupt.png"), []byte("not an image"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(imgDir, "corrupt.png"), []byte("not an image"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -174,7 +177,7 @@ func setupBarcodeFixture(t *testing.T, withSymingest bool) (imgDir, mockDir stri
 func TestScanPDFForBarcodes(t *testing.T) {
 	imgDir, mockDir := setupBarcodeFixture(t, false)
 	pdfPath := filepath.Join(t.TempDir(), "scan.pdf")
-	if err := os.WriteFile(pdfPath, minimalPDF(), 0644); err != nil {
+	if err := os.WriteFile(pdfPath, minimalPDF(), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -249,7 +252,7 @@ func setMockSplitEnv(t *testing.T, withSymingest, firstScanHasBarcode bool) (vau
 
 	vaultRoot = t.TempDir()
 	pdfPath = filepath.Join(t.TempDir(), "scan.pdf")
-	if err := os.WriteFile(pdfPath, minimalPDF(), 0644); err != nil {
+	if err := os.WriteFile(pdfPath, minimalPDF(), 0600); err != nil {
 		t.Fatal(err)
 	}
 	return vaultRoot, pdfPath
@@ -283,7 +286,7 @@ func TestIngestPDFWithSplit_NoSeparators(t *testing.T) {
 func TestIngestPDFWithSplit_ScanError(t *testing.T) {
 	vaultRoot := t.TempDir()
 	pdfPath := filepath.Join(t.TempDir(), "scan.pdf")
-	if err := os.WriteFile(pdfPath, minimalPDF(), 0644); err != nil {
+	if err := os.WriteFile(pdfPath, minimalPDF(), 0600); err != nil {
 		t.Fatal(err)
 	}
 	// No pdftoppm / qpdf / symingest on PATH: scanning fails up front.

@@ -51,7 +51,7 @@ struct DocumentThumbnailView: View {
     private func thumbnailContent(text: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(text)
-                .font(.system(.caption2, design: .default))
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textSecondary.opacity(0.85))
                 .lineLimit(4)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -72,7 +72,7 @@ struct DocumentThumbnailView: View {
     /// Original type-based SF Symbol icon used when thumbnails are off.
     private var iconView: some View {
         Image(systemName: docTypeIcon)
-            .font(.system(size: 28))
+            .symairaText(.heading)
             .foregroundColor(SymairaTheme.goldPrimary)
     }
 

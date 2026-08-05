@@ -105,6 +105,18 @@ var ErrNotConfigured = errors.New("AI feature not configured")
 
 const defaultModel = "llama3.2"
 
+// sendChunk delivers a chunk to out unless ctx is already done. It lets
+// producer goroutines terminate promptly when the consumer goes away
+// (client disconnect), instead of blocking on an unbuffered channel forever.
+func sendChunk(ctx context.Context, out chan<- AskChunk, chunk AskChunk) bool {
+	select {
+	case <-ctx.Done():
+		return false
+	case out <- chunk:
+		return true
+	}
+}
+
 // Ask streams an answer for query to out and always closes out.
 // contextDocs are FTS results from the sidecar ({path,title,snippet}).
 func Ask(ctx context.Context, cfg *config.Config, query string, contextDocs []map[string]interface{}, out chan<- AskChunk) {
@@ -117,22 +129,22 @@ func Ask(ctx context.Context, cfg *config.Config, query string, contextDocs []ma
 				provider = "ollama"
 			}
 			if provider == "anthropic" {
-				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
-					"Anthropic API key could not be resolved (missing secret via symvault or environment variable).\n"}
+				sendChunk(ctx, out, AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
+					"Anthropic API key could not be resolved (missing secret via symvault or environment variable).\n"})
 			} else {
-				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
+				sendChunk(ctx, out, AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
 					"Set your Ollama endpoint in Settings → AI.\n\n" +
-					"Here are the most relevant search results from your vault:\n\n"}
+					"Here are the most relevant search results from your vault:\n\n"})
 				for i, doc := range contextDocs {
 					if i >= 3 {
 						break
 					}
 					path, _ := doc["path"].(string)
-					out <- AskChunk{Chunk: fmt.Sprintf("- [[%s]]\n", path)}
+					sendChunk(ctx, out, AskChunk{Chunk: fmt.Sprintf("- [[%s]]\n", path)})
 				}
 			}
 		} else {
-			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Request failed: %v\n", err)}
+			sendChunk(ctx, out, AskChunk{Chunk: fmt.Sprintf("⚠️ Request failed: %v\n", err)})
 		}
 	}
 }
@@ -154,7 +166,7 @@ func Transform(ctx context.Context, cfg *config.Config, text, intent string, out
 
 	text = strings.TrimSpace(text)
 	if text == "" {
-		out <- AskChunk{Chunk: "⚠️ No text provided – please select text first.\n"}
+		sendChunk(ctx, out, AskChunk{Chunk: "⚠️ No text provided – please select text first.\n"})
 		return
 	}
 
@@ -165,14 +177,14 @@ func Transform(ctx context.Context, cfg *config.Config, text, intent string, out
 				provider = "ollama"
 			}
 			if provider == "anthropic" {
-				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
-					"Anthropic API key could not be resolved (missing secret via symvault or environment variable).\n"}
+				sendChunk(ctx, out, AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
+					"Anthropic API key could not be resolved (missing secret via symvault or environment variable).\n"})
 			} else {
-				out <- AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
-					"Set your Ollama endpoint in Settings → AI.\n"}
+				sendChunk(ctx, out, AskChunk{Chunk: "⚠️ **AI feature not configured.**\n\n" +
+					"Set your Ollama endpoint in Settings → AI.\n"})
 			}
 		} else {
-			out <- AskChunk{Chunk: fmt.Sprintf("⚠️ Request failed: %v\n", err)}
+			sendChunk(ctx, out, AskChunk{Chunk: fmt.Sprintf("⚠️ Request failed: %v\n", err)})
 		}
 	}
 }
@@ -314,7 +326,7 @@ func streamOllama(ctx context.Context, baseURL, model, prompt string, out chan<-
 	})
 	err := client.Generate(ctx, model, prompt, nil, func(chunk ollamakit.GenerateResponse) error {
 		if chunk.Response != "" {
-			out <- AskChunk{Chunk: chunk.Response}
+			sendChunk(ctx, out, AskChunk{Chunk: chunk.Response})
 		}
 		return nil
 	})

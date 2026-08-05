@@ -27,6 +27,12 @@ type throttle struct {
 	shareMax    int
 	shareBlock  time.Duration
 
+	// Configuration for the AI-request bucket (generous but bounded, so a
+	// runaway client cannot pin the model).
+	aiWindow time.Duration
+	aiMax    int
+	aiBlock  time.Duration
+
 	// Housekeeping.
 	maxEntries      int
 	lastCleanup     time.Time
@@ -46,6 +52,11 @@ type ipState struct {
 		windowStart  time.Time
 		blockedUntil time.Time
 	}
+	ai struct {
+		count        int
+		windowStart  time.Time
+		blockedUntil time.Time
+	}
 	lastSeen time.Time
 }
 
@@ -58,6 +69,9 @@ func newThrottle() *throttle {
 		shareWindow:     30 * time.Second,
 		shareMax:        3,
 		shareBlock:      60 * time.Second,
+		aiWindow:        30 * time.Second,
+		aiMax:           12,
+		aiBlock:         60 * time.Second,
 		maxEntries:      5000,
 		cleanupInterval: 5 * time.Minute,
 		staleTimeout:    10 * time.Minute,
@@ -76,6 +90,13 @@ func (t *throttle) recordAuthFailure(ip string) (bool, time.Duration) {
 // respond with 429 and the Retry-After header set to retryAfter.
 func (t *throttle) recordShareFailure(ip string) (bool, time.Duration) {
 	return t.record(ip, t.shareWindow, t.shareMax, t.shareBlock, "share")
+}
+
+// recordAIRequest records a successful AI request from ip against the AI
+// bucket. Returns (allowed, retryAfter); when allowed is false the caller
+// must respond with 429 and the Retry-After header set to retryAfter.
+func (t *throttle) recordAIRequest(ip string) (bool, time.Duration) {
+	return t.record(ip, t.aiWindow, t.aiMax, t.aiBlock, "ai")
 }
 
 func (t *throttle) record(ip string, window time.Duration, max int, block time.Duration, kind string) (bool, time.Duration) {
@@ -116,6 +137,10 @@ func (t *throttle) record(ip string, window time.Duration, max int, block time.D
 		count = &st.share.count
 		windowStart = &st.share.windowStart
 		blockedUntil = &st.share.blockedUntil
+	case "ai":
+		count = &st.ai.count
+		windowStart = &st.ai.windowStart
+		blockedUntil = &st.ai.blockedUntil
 	default:
 		return true, 0
 	}

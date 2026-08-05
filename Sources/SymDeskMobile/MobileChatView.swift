@@ -20,6 +20,10 @@ struct MobileChatView: View {
     @State private var isSettingsPresented = false
     @State private var hasAcknowledgedPrivacy = false
 
+    /// Active provider for the current answer — always visible in the UI.
+    @State private var activeProviderName: String?
+    @State private var onDeviceCapabilityNote: String?
+
     private let conversationStore = try? MobileConversationStore()
 
     var body: some View {
@@ -40,12 +44,31 @@ struct MobileChatView: View {
                         errorBanner(streamError)
                     }
 
+                    if let onDeviceCapabilityNote, !isStreaming {
+                        Label(onDeviceCapabilityNote, systemImage: "cpu")
+                            .font(.caption)
+                            .foregroundStyle(MobileTheme.goldSoft)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 6)
+                    }
+
                     inputBar
                 }
             }
             .navigationTitle("Ask your vault")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    if let activeProviderName {
+                        Label(activeProviderName, systemImage: activeProviderName == "On-device" ? "cpu" : "server.rack")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(MobileTheme.textSecondary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(MobileTheme.card, in: Capsule())
+                            .accessibilityLabel("AI provider: \(activeProviderName)")
+                    }
+                }
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         ForEach(conversations) { conversation in
@@ -233,9 +256,24 @@ struct MobileChatView: View {
     private func send() async {
         let question = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty, !isStreaming else { return }
-        guard let connection = MobileServerConfig.connection() else {
-            streamError = "No server connection. Connect a server in Settings to use AI."
+
+        // Automatic provider selection: server when reachable, on-device
+        // otherwise (fallback also covers Files/iCloud mode). The active
+        // provider is always visible in the UI.
+        let selection = MobileAIProviderFactory.select(
+            connection: MobileServerConfig.connection(),
+            vaultNotes: vault.notes
+        )
+        guard let provider = selection.provider else {
+            streamError = selection.unavailableReason ?? "No AI provider is available."
             return
+        }
+        activeProviderName = provider.displayName
+        if provider.isOnDevice {
+            streamError = nil
+            onDeviceCapabilityNote = (provider as? MobileOnDeviceAIProvider)?.capabilityNote ?? "On-device model — answers are shorter and weaker than the server model."
+        } else {
+            onDeviceCapabilityNote = nil
         }
 
         if activeConversation == nil { newConversation() }
@@ -257,59 +295,88 @@ struct MobileChatView: View {
         isStreaming = true
 
         // Streaming placeholder: tokens accumulate into this message.
-        let assistantID = UUID()
         let placeholder = MobileChatMessage(role: .assistant, text: "")
         conversation.messages.append(placeholder)
         activeConversation = conversation
 
-        let client = MobileAIClient(connection: connection)
+        let questionForServer = (contextPath.map { "Context note: \($0)\n\n" } ?? "") + question
+
         do {
-            let questionForServer = MobileChatPromptBuilder.serverQuery(question: question, contextNote: contextNote)
-            try await client.ask(query: questionForServer) { event in
-                Task { @MainActor in
-                    guard var current = activeConversation,
-                          let index = current.messages.firstIndex(where: { $0.id == placeholder.id }) else { return }
-                    switch event.type {
-                    case .answer:
-                        current.messages[index].text += event.text ?? ""
-                    case .citation:
-                        let citation = MobileChatCitation(
-                            path: event.path ?? "",
-                            title: event.title ?? "",
-                            snippet: event.snippet ?? "",
-                            score: event.score ?? 0
-                        )
-                        if !citation.path.isEmpty, !current.messages[index].citations.contains(citation) {
-                            current.messages[index].citations.append(citation)
-                        }
-                    case .tool, .done:
-                        break
-                    }
-                    current.updatedAt = Date()
-                    activeConversation = current
-                }
-            }
-            // Stream ended normally.
-            if var current = activeConversation,
-               let index = current.messages.firstIndex(where: { $0.id == placeholder.id }) {
-                if current.messages[index].text.isEmpty {
-                    current.messages[index].text = "_No answer received._"
-                }
-                current.updatedAt = Date()
-                activeConversation = current
-                persist(current)
-            }
+            // Losing connectivity mid-session falls back to the on-device
+            // provider automatically — no manual switch. The server is
+            // tried first whenever a connection is configured.
+            try await answer(with: provider, query: questionForServer, placeholderID: placeholder.id)
         } catch {
-            if var current = activeConversation,
-               let index = current.messages.firstIndex(where: { $0.id == placeholder.id }) {
-                current.messages[index].text = "_Request failed._"
-                current.updatedAt = Date()
-                activeConversation = current
-                persist(current)
+            if !provider.isOnDevice, let onDevice = fallbackProvider() {
+                activeProviderName = onDevice.displayName
+                onDeviceCapabilityNote = onDevice.capabilityNote
+                streamError = nil
+                do {
+                    try await answer(with: onDevice, query: questionForServer, placeholderID: placeholder.id)
+                } catch {
+                    markFailed(placeholderID: placeholder.id, error: error)
+                }
+            } else {
+                markFailed(placeholderID: placeholder.id, error: error)
             }
-            streamError = error.localizedDescription
         }
         isStreaming = false
+    }
+
+    /// Runs one provider pass over the streaming placeholder.
+    private func answer(with provider: MobileAIProvider, query: String, placeholderID: UUID) async throws {
+        try await provider.ask(query: query) { event in
+            Task { @MainActor in
+                guard var current = activeConversation,
+                      let index = current.messages.firstIndex(where: { $0.id == placeholderID }) else { return }
+                switch event.type {
+                case .answer:
+                    current.messages[index].text += event.text ?? ""
+                case .citation:
+                    let citation = MobileChatCitation(
+                        path: event.path ?? "",
+                        title: event.title ?? "",
+                        snippet: event.snippet ?? "",
+                        score: event.score ?? 0
+                    )
+                    if !citation.path.isEmpty, !current.messages[index].citations.contains(citation) {
+                        current.messages[index].citations.append(citation)
+                    }
+                case .tool, .done:
+                    break
+                }
+                current.updatedAt = Date()
+                activeConversation = current
+            }
+        }
+        // Stream ended normally.
+        if var current = activeConversation,
+           let index = current.messages.firstIndex(where: { $0.id == placeholderID }) {
+            if current.messages[index].text.isEmpty {
+                current.messages[index].text = "_No answer received._"
+            }
+            current.updatedAt = Date()
+            activeConversation = current
+            persist(current)
+        }
+    }
+
+    /// The on-device provider to fall back to, when the device supports it.
+    private func fallbackProvider() -> MobileOnDeviceAIProvider? {
+        let onDevice = MobileOnDeviceAIProvider(vaultNotes: vault.notes)
+        guard onDevice.isAvailable else { return nil }
+        return onDevice
+    }
+
+    private func markFailed(placeholderID: UUID, error: Error) {
+        if var current = activeConversation,
+           let index = current.messages.firstIndex(where: { $0.id == placeholderID }) {
+            current.messages[index].text = "_Request failed._"
+            current.updatedAt = Date()
+            activeConversation = current
+            persist(current)
+        }
+        streamError = error.localizedDescription
     }
 
     // MARK: - Conversation management
@@ -349,30 +416,6 @@ struct MobileChatView: View {
     private func loadConversations() async -> [MobileConversation] {
         guard let store = conversationStore else { return [] }
         return (try? await store.all()) ?? []
-    }
-}
-
-// MARK: - Prompt building
-
-/// Builds the query sent to the server for a chat message. When a context
-/// note is open, its title and text are embedded so "summarise this"
-/// prompts reach the answering side with the note's actual content;
-/// without a context note the question passes through unchanged.
-enum MobileChatPromptBuilder {
-    /// Maximum characters of note text embedded into a query, keeping the
-    /// request comfortably below the server's 8 KB body limit even after
-    /// JSON escaping.
-    static let maxContextNoteCharacters = 3000
-
-    static func serverQuery(question: String, contextNote: MobileNote?) -> String {
-        guard let contextNote else { return question }
-        let excerpt: String
-        if contextNote.body.count > maxContextNoteCharacters {
-            excerpt = String(contextNote.body.prefix(maxContextNoteCharacters)) + "\n\n…[truncated]"
-        } else {
-            excerpt = contextNote.body
-        }
-        return "Context note: \(contextNote.title)\n\n\(excerpt)\n\n\(question)"
     }
 }
 

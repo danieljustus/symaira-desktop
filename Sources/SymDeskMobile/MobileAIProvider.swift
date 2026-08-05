@@ -25,7 +25,11 @@ enum MobileAIProviderFactory {
         let unavailableReason: String?
     }
 
-    static func select(connection: MobileServerConnection?, vaultNotes: [MobileNote]) -> Selection {
+    static func select(
+        connection: MobileServerConnection?,
+        vaultNotes: [MobileNote],
+        onDeviceModel: MobileOnDeviceModelProtocol = MobileOnDeviceModel()
+    ) -> Selection {
         if let connection {
             return Selection(
                 provider: MobileServerAIProvider(connection: connection),
@@ -34,7 +38,7 @@ enum MobileAIProviderFactory {
         }
         // Files/iCloud mode (or lost server config): fall back to the
         // device model.
-        let onDevice = MobileOnDeviceAIProvider(vaultNotes: vaultNotes)
+        let onDevice = MobileOnDeviceAIProvider(vaultNotes: vaultNotes, model: onDeviceModel)
         if onDevice.isAvailable {
             return Selection(provider: onDevice, unavailableReason: nil)
         }

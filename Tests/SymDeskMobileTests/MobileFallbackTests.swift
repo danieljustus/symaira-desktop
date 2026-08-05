@@ -23,10 +23,28 @@ final class MobileFallbackTests: XCTestCase {
     }
 
     func testOnDeviceFallbackWithoutServer() {
-        let selection = MobileAIProviderFactory.select(connection: nil, vaultNotes: [])
+        // Simulate a device without on-device model support: no server and
+        // an unavailable model must yield no provider and a clear reason.
+        let selection = MobileAIProviderFactory.select(
+            connection: nil,
+            vaultNotes: [],
+            onDeviceModel: FakeModel(isAvailable: false, answer: "")
+        )
         XCTAssertNil(selection.provider, "no server and no supported device model → no provider")
         XCTAssertNotNil(selection.unavailableReason)
         XCTAssertTrue(selection.unavailableReason!.contains("on-device"))
+    }
+
+    func testOnDeviceSelectedWithoutServerWhenModelAvailable() {
+        let selection = MobileAIProviderFactory.select(
+            connection: nil,
+            vaultNotes: [],
+            onDeviceModel: FakeModel(isAvailable: true, answer: "lokale Antwort")
+        )
+        XCTAssertNotNil(selection.provider)
+        XCTAssertEqual(selection.provider?.displayName, "On-device")
+        XCTAssertTrue(selection.provider?.isOnDevice ?? false)
+        XCTAssertNil(selection.unavailableReason)
     }
 
     func testOnDeviceSelectedWhenModelAvailable() {

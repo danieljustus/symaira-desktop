@@ -374,11 +374,11 @@ echo '{"type":"done"}'
 		t.Fatalf("unexpected streamed lines: %v", lines)
 	}
 	// The subprocess sleeps 200ms between each of its three writes (~400ms
-	// total). Delivery must not wait for the process to exit: the first
-	// line has to arrive long before the last one, proving the response is
-	// flushed incrementally rather than buffered until completion.
-	if arrivals[0] > 150*time.Millisecond {
-		t.Fatalf("first line arrived after %v; expected near-immediate delivery, not buffering until completion", arrivals[0])
+	// total). Use a relative assertion — the first line must arrive at least
+	// one sleep before the last — which proves the response is flushed
+	// incrementally without depending on absolute machine speed.
+	if arrivals[0] > arrivals[2]-150*time.Millisecond {
+		t.Fatalf("first line arrived after %v but the last after %v; expected incremental delivery, not buffering until completion", arrivals[0], arrivals[2])
 	}
 	if arrivals[2] < 300*time.Millisecond {
 		t.Fatalf("last line arrived after only %v; expected it to follow both sleeps", arrivals[2])

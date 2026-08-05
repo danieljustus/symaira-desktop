@@ -6,8 +6,9 @@ struct MobileNoteDetailView: View {
     let noteID: String
 
     @State private var mode: DetailMode = .preview
-	@State private var attachmentURL: URL?
-	@State private var isLoadingAttachment = false
+    @State private var attachmentURL: URL?
+    @State private var isLoadingAttachment = false
+    @State private var isChatPresented = false
 
     private enum DetailMode: String, CaseIterable {
         case preview = "Preview"
@@ -90,6 +91,12 @@ struct MobileNoteDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                Button { isChatPresented = true } label: {
+                    Image(systemName: "bubble.left.and.bubble.right")
+                }
+                .accessibilityLabel("Ask AI about this note")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
 				if let root = vault.vaultURL {
 					ShareLink(item: note.fileURL(in: root)) { Image(systemName: "square.and.arrow.up") }
 						.accessibilityLabel("Share note")
@@ -98,6 +105,11 @@ struct MobileNoteDetailView: View {
 						.accessibilityLabel("Share original")
 				}
             }
+        }
+        .sheet(isPresented: $isChatPresented) {
+            // Chat with the open note as context ("summarise this").
+            MobileChatView(contextNote: note)
+                .environmentObject(vault)
         }
     }
 

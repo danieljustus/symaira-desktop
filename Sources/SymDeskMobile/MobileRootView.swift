@@ -19,7 +19,8 @@ struct MobileRootView: View {
             }
         }
         .sheet(isPresented: openNoteIsPresented) {
-            // Deep link target (Spotlight tap / symdesk:// URL / Handoff).
+            // Deep link target (Spotlight tap / symdesk:// URL / Handoff /
+            // citation tap from the AI chat).
             if let path = vault.pendingOpenPath {
                 NavigationStack {
                     MobileNoteDetailView(noteID: path)
@@ -205,6 +206,9 @@ private struct MobileWorkspaceView: View {
 
             MobileLibraryView(documentsOnly: true)
                 .tabItem { Label("Documents", systemImage: "doc.text.image") }
+
+            MobileChatView()
+                .tabItem { Label("Ask", systemImage: "bubble.left.and.bubble.right") }
 
             MobileSettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }

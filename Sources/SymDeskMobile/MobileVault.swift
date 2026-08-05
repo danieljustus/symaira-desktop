@@ -399,8 +399,8 @@ final class MobileVaultStore: ObservableObject {
     @Published private(set) var recentlyOpenedPaths: [String] = []
     /// Visible write-queue state (pending + failed entries) for the UI.
     @Published private(set) var outboxEntries: [MobileOutboxEntry] = []
-    /// Vault-relative path requested via a deep link (Spotlight tap or
-    /// `symdesk://open/<path>`). The root view presents the note when set.
+    /// Vault-relative path a citation or deep link requested; the root
+    /// view presents the note when set.
     @Published var pendingOpenPath: String?
 
     private let scanner = MobileVaultScanner()

@@ -19,10 +19,10 @@ struct DbViewGallery: View {
                             let row = rows[index]
                             VStack(alignment: .leading, spacing: 8) {
                                 if let cover = (row["cover"] ?? row["image"] ?? row["asset"]) as? String, !cover.isEmpty {
-                                    Text(cover).font(.caption).lineLimit(1).foregroundColor(SymairaTheme.textMuted)
+                                    Text(cover).symairaText(.caption).lineLimit(1).foregroundColor(SymairaTheme.textMuted)
                                 }
-                                Text((row["_title"] as? String) ?? "Untitled").font(.headline).foregroundColor(SymairaTheme.textPrimary)
-                                Text((row["_path"] as? String) ?? "").font(.caption).lineLimit(1).foregroundColor(SymairaTheme.textMuted)
+                                Text((row["_title"] as? String) ?? "Untitled").symairaText(.subheading).foregroundColor(SymairaTheme.textPrimary)
+                                Text((row["_path"] as? String) ?? "").symairaText(.caption).lineLimit(1).foregroundColor(SymairaTheme.textMuted)
                             }
                             .padding().frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading).glassCard()
                         }

@@ -61,7 +61,7 @@ struct HistoryView: View {
                 Image(systemName: "doc.text")
                     .foregroundColor(SymairaTheme.goldPrimary)
                 Text("Notes")
-                    .font(.headline)
+                    .symairaText(.subheading)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
                 if isLoadingNotes {
@@ -77,7 +77,7 @@ struct HistoryView: View {
                     .foregroundColor(SymairaTheme.textMuted)
                 TextField("Filter notes…", text: $searchText)
                     .textFieldStyle(.plain)
-                    .font(.callout)
+                    .symairaText(.callout)
                     .foregroundColor(SymairaTheme.textPrimary)
             }
             .padding(8)
@@ -101,18 +101,18 @@ struct HistoryView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(note.title)
-                                    .font(.body.weight(.medium))
+                                    .symairaText(.body).fontWeight(.medium)
                                     .foregroundColor(SymairaTheme.textPrimary)
                                     .lineLimit(1)
                                 Text(note.path)
-                                    .font(.caption)
+                                    .symairaText(.caption)
                                     .foregroundColor(SymairaTheme.textMuted)
                                     .lineLimit(1)
                             }
                             Spacer()
                             if selectedNote?.id == note.id {
                                 Image(systemName: "chevron.right")
-                                    .font(.caption)
+                                    .symairaText(.caption)
                                     .foregroundColor(SymairaTheme.goldPrimary)
                             }
                         }
@@ -136,7 +136,7 @@ struct HistoryView: View {
                     Image(systemName: "clock.arrow.circlepath")
                         .foregroundColor(SymairaTheme.goldPrimary)
                     Text(note.title)
-                        .font(.title2.weight(.semibold))
+                        .symairaText(.title).fontWeight(.semibold)
                         .foregroundColor(SymairaTheme.textPrimary)
                         .lineLimit(1)
                 }
@@ -145,7 +145,7 @@ struct HistoryView: View {
                 .padding(.bottom, 4)
 
                 Text(note.path)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
@@ -155,7 +155,7 @@ struct HistoryView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text(error)
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textSecondary)
                         Spacer()
                     }
@@ -218,7 +218,7 @@ struct HistoryView: View {
                 HStack(spacing: 6) {
                     if isLatest {
                         Text("Current")
-                            .font(.caption2.weight(.bold))
+                            .symairaText(.caption).fontWeight(.bold)
                             .foregroundColor(.black)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
@@ -226,18 +226,18 @@ struct HistoryView: View {
                             .cornerRadius(3)
                     }
                     Text(formattedTimestamp(version.timestamp))
-                        .font(.body.weight(.medium))
+                        .symairaText(.body).fontWeight(.medium)
                         .foregroundColor(SymairaTheme.textPrimary)
                     Spacer()
                 }
                 HStack(spacing: 4) {
                     Text(version.snapshotID.prefix(12))
-                        .font(.caption2.monospaced())
+                        .symairaText(.caption).monospaced()
                         .foregroundColor(SymairaTheme.textMuted)
                     Text("·")
                         .foregroundColor(SymairaTheme.textMuted)
                     Text(formattedSize(version.size))
-                        .font(.caption2)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
             }
@@ -280,7 +280,7 @@ struct HistoryView: View {
                 Image(systemName: "plus.forwardslash.minus")
                     .foregroundColor(SymairaTheme.goldPrimary)
                 Text("Diff vs. current")
-                    .font(.headline)
+                    .symairaText(.subheading)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Spacer()
                 if isLoadingDiff {
@@ -299,7 +299,7 @@ struct HistoryView: View {
                         Image(systemName: "checkmark.circle")
                             .foregroundColor(SymairaTheme.goldSecondary)
                         Text("No differences — this version matches the current content.")
-                            .font(.caption)
+                            .symairaText(.caption)
                             .foregroundColor(SymairaTheme.textSecondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -320,7 +320,7 @@ struct HistoryView: View {
                     Image(systemName: "doc.text.magnifyingglass")
                         .foregroundColor(SymairaTheme.textMuted)
                     Text("Select a version and press Diff to compare it with the current file.")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
                         .multilineTextAlignment(.center)
                 }
@@ -331,7 +331,7 @@ struct HistoryView: View {
                     Image(systemName: "clock.arrow.circlepath")
                         .foregroundColor(SymairaTheme.textMuted)
                     Text("Loading diff…")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textSecondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -344,7 +344,7 @@ struct HistoryView: View {
     private func diffLineRow(_ line: DiffLine) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Text(line.kind == .same ? " " : (line.kind == .added ? "+" : "−"))
-                .font(.caption2.monospaced())
+                .symairaText(.monoSmall)
                 .foregroundColor(line.kind == .added ? .green : (line.kind == .removed ? .red : .clear))
                 .frame(width: 10)
             Text(line.text.isEmpty ? " " : line.text)

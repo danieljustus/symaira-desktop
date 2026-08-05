@@ -415,6 +415,8 @@ final class MobileVaultStore: ObservableObject {
     private let cacheURL: URL
     /// Feeds vault content into iOS Core Spotlight (home-screen search).
     private let spotlightIndexer = MobileSpotlightIndexer()
+    private let outbox: MobileOutbox
+    private let writeCoordinator: MobileWriteCoordinator
     /// Ranked, persisted on-device search index. Fed from the parsed
     /// snapshot after every reload in both connection modes.
     private let searchIndex: MobileSearchIndex
@@ -447,6 +449,9 @@ final class MobileVaultStore: ObservableObject {
                 fileURL: base.appendingPathComponent("SymDeskMobile/search-index.json")
             )
         }
+        Task { await writeCoordinator.setOnChange { [weak self] in
+            Task { @MainActor in await self?.refreshOutboxState() }
+        } }
         // Cache-first launch: show the last parsed snapshot immediately,
         // then refresh in the background. The refresh replaces `notes`.
         if let cache = MobileVaultCache.load(from: cacheURL) {

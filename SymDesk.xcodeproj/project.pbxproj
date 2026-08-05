@@ -105,8 +105,8 @@
 		ACEECA392E62D5A594FF6F5B /* DeskTransportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 748F5E216CEC59B66740A482 /* DeskTransportTests.swift */; };
 		AF33E56F24D6F0B026A98F5B /* PropertiesInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56278C647AEC161C2B94531F /* PropertiesInspector.swift */; };
 		B0BB83ED23EB9B4B5F55EF19 /* VaultAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A3B1306D1D67D45CE845EAF /* VaultAssets.swift */; };
-		B30A7969A90708A80F8EC725 /* ModelDownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB2FBFCEBE6C63897EFC0E31 /* ModelDownloadManagerTests.swift */; };
 		B10322DAF0DCCA2C314DEA10 /* DuplicatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D5805210CB482E1EB0394C2 /* DuplicatesView.swift */; };
+		B30A7969A90708A80F8EC725 /* ModelDownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB2FBFCEBE6C63897EFC0E31 /* ModelDownloadManagerTests.swift */; };
 		B4BBDCDD200A14353CFF2B9F /* DeskCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F756739286BF26EA17456C99 /* DeskCore.swift */; };
 		B4FA09C83F86BDA20281FBF3 /* MobileQuickOpenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 071FAFEC3F150F72466E8FE8 /* MobileQuickOpenTests.swift */; };
 		B88D845C3B8D9C6FEC6D7006 /* DbViewList.swift in Sources */ = {isa = PBXBuildFile; fileRef = D23C8BFA56B2714D100315DB /* DbViewList.swift */; };
@@ -221,11 +221,11 @@
 
 /* Begin PBXFileReference section */
 		02391589A785587023B6522C /* TagBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagBrowserView.swift; sourceTree = "<group>"; };
+		0382BEE0DC98A06DAAE1E3D3 /* Notifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifications.swift; sourceTree = "<group>"; };
+		059DF1FA89D0D36B34EEA0B7 /* VaultSwitcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultSwitcherView.swift; sourceTree = "<group>"; };
 		071FAFEC3F150F72466E8FE8 /* MobileQuickOpenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileQuickOpenTests.swift; sourceTree = "<group>"; };
 		07FC117A1033D88F0534B546 /* SymDeskAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SymDeskAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0C17BF528FA9DE4433173A6C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		0382BEE0DC98A06DAAE1E3D3 /* Notifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifications.swift; sourceTree = "<group>"; };
-		059DF1FA89D0D36B34EEA0B7 /* VaultSwitcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultSwitcherView.swift; sourceTree = "<group>"; };
 		0BFB5C11ABF9660DEC6F4CB1 /* MobileSearchIndexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileSearchIndexTests.swift; sourceTree = "<group>"; };
 		0C3A8CB17DABF0648A84D9C6 /* ParticipantConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParticipantConfirmationView.swift; sourceTree = "<group>"; };
 		0CAE9E046D07652DF79A3000 /* SymDeskMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymDeskMobileApp.swift; sourceTree = "<group>"; };
@@ -572,9 +572,11 @@
 				6A860CADC4C77161CF214DF1 /* MobileWriteLayer.swift */,
 				3A3BD65026305867CBCD1B1C /* MobileSpotlightIndexer.swift */,
 				D22E4BB32C21871A819BF170 /* MobileSearchFilterEngine.swift */,
-				B4045690FD4927A2DE0932BA /* MobileSearchQueryParser.swift */,
 				31F412CD083C6229C36515FB /* MobileSearchIndex.swift */,
+				B4045690FD4927A2DE0932BA /* MobileSearchQueryParser.swift */,
+				C7BA0DB3A5FA63448B1F7895 /* MobileServerConnection.swift */,
 				36E384239035C5E4EA873728 /* MobileVaultCache.swift */,
+				6A860CADC4C77161CF214DF1 /* MobileWriteLayer.swift */,
 				0CAE9E046D07652DF79A3000 /* SymDeskMobileApp.swift */,
 			);
 			name = SymDeskMobile;
@@ -589,8 +591,8 @@
 				AF3AB907D049AA91605CEE06 /* MobileComposerTests.swift */,
 				D004D51B133B26F28BBF9DA1 /* MobileScanTests.swift */,
 				071FAFEC3F150F72466E8FE8 /* MobileQuickOpenTests.swift */,
-				2448F2F4AC761DBAB48D7DD1 /* MobileSearchQueryTests.swift */,
 				0BFB5C11ABF9660DEC6F4CB1 /* MobileSearchIndexTests.swift */,
+				2448F2F4AC761DBAB48D7DD1 /* MobileSearchQueryTests.swift */,
 				A68D64871B4AA84AF8340744 /* MobileVaultParserTests.swift */,
 				E41862E9148BA99F226260FD /* MobileWriteLayerTests.swift */,
 			);
@@ -1095,9 +1097,11 @@
 				94895F53AF72E19ADE2FB7D5 /* MobileAppIntents.swift in Sources */,
 				472F4CA410107F91F7AE1430 /* MobileRecentsStore.swift in Sources */,
 				8857DF837949AA7EB0F632F0 /* MobileSearchFilterEngine.swift in Sources */,
-				0AA68FD715ADD5AA149856E5 /* MobileSearchQueryParser.swift in Sources */,
 				7836BCA57E32D0A10B01DFE6 /* MobileSearchIndex.swift in Sources */,
+				0AA68FD715ADD5AA149856E5 /* MobileSearchQueryParser.swift in Sources */,
+				11DDD21FB6492D602BB86A0F /* MobileServerConnection.swift in Sources */,
 				FA3C540585D3F48BD53607AB /* MobileVaultCache.swift in Sources */,
+				847C5EA1CFD86F897C55C0E3 /* MobileWriteLayer.swift in Sources */,
 				AAB2D778093607FBB326E837 /* SymDeskMobileApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1726,7 +1730,7 @@
 			repositoryURL = "https://github.com/danieljustus/symaira-appkit";
 			requirement = {
 				kind = revision;
-				revision = 463cebd5c1c53353dc63da07f77730ff2611a90c;
+				revision = 6ae9a09c9346da31a82cd7d4ce72b7871556122d;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

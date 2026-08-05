@@ -47,7 +47,7 @@ struct ParticipantConfirmationView: View {
 
             if let error = model.participantActionError {
                 Text(error)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(.red)
             }
 
@@ -61,14 +61,14 @@ struct ParticipantConfirmationView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Confirm Participant")
-                .font(.title3.weight(.bold))
+                .symairaText(.heading).fontWeight(.bold)
                 .foregroundColor(SymairaTheme.textPrimary)
             Text("\(participant.label.isEmpty ? "Unlabeled speaker" : participant.label) (\(participant.speakerIDs.joined(separator: ", ")))")
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textSecondary)
             if isConfirmed {
                 Text("Currently linked to a confirmed person.")
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.goldPrimary)
             }
         }
@@ -78,7 +78,7 @@ struct ParticipantConfirmationView: View {
     private var candidateSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Matching people in Memory")
-                .font(.subheadline.weight(.semibold))
+                .symairaText(.subheading)
                 .foregroundColor(SymairaTheme.textSecondary)
 
             switch candidatesState {
@@ -86,12 +86,12 @@ struct ParticipantConfirmationView: View {
                 ProgressView().controlSize(.small)
             case .failed(let message):
                 Text(message)
-                    .font(.caption)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             case .loaded:
                 if candidates.isEmpty {
                     Text("No exact or alias matches. Create a new person below, or keep the speaker anonymous.")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                 } else {
                     ForEach(candidates) { candidate in
@@ -106,10 +106,10 @@ struct ParticipantConfirmationView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(candidate.name)
-                    .font(.callout)
+                    .symairaText(.callout)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Text(candidate.matchReason)
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             }
             Spacer()
@@ -132,11 +132,11 @@ struct ParticipantConfirmationView: View {
     private var createSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Create a new person")
-                .font(.subheadline.weight(.semibold))
+                .symairaText(.subheading)
                 .foregroundColor(SymairaTheme.textSecondary)
             HStack {
                 TextField("Full name", text: $newPersonName)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.symaira)
                     .accessibilityLabel("Name of the new person")
                 Button("Create & Confirm") {
                     let name = newPersonName.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -157,10 +157,10 @@ struct ParticipantConfirmationView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Keep anonymous")
-                    .font(.subheadline.weight(.semibold))
+                    .symairaText(.subheading)
                     .foregroundColor(SymairaTheme.textSecondary)
                 Text("Anonymous speakers stay fully usable in the transcript, search, and export.")
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
             }
             Spacer()

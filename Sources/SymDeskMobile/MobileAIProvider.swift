@@ -13,6 +13,11 @@ protocol MobileAIProvider: Sendable {
     /// returns when the stream ends. Throws on transport/HTTP/model
     /// errors (mid-stream failures surface after delivered events).
     func ask(query: String, onEvent: @escaping @Sendable (MobileAIEvent) -> Void) async throws
+
+    /// Streams an intent-based transformation of `text` (`summarize |
+    /// rewrite | continue`, desktop-compatible values). Operates purely
+    /// on the provided text; the vault is never touched.
+    func transform(text: String, intent: String, onEvent: @escaping @Sendable (MobileAIEvent) -> Void) async throws
 }
 
 /// Automatic provider selection: the server wins when a connection is

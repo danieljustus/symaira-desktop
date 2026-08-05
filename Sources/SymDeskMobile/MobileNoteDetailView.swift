@@ -10,6 +10,7 @@ struct MobileNoteDetailView: View {
 	@State private var isLoadingAttachment = false
     @State private var isEditing = false
     @State private var isChatPresented = false
+    @State private var isAIPresented = false
 
     private enum DetailMode: String, CaseIterable {
         case preview = "Preview"
@@ -39,6 +40,11 @@ struct MobileNoteDetailView: View {
             if let note {
                 MobileComposerView(editingNote: note)
                     .environmentObject(vault)
+            }
+        }
+        .sheet(isPresented: $isAIPresented) {
+            if let note {
+                MobileInlineAIView(note: note, vault: vault)
             }
         }
 		.task(id: noteID) {
@@ -108,6 +114,16 @@ struct MobileNoteDetailView: View {
                     Image(systemName: "bubble.left.and.bubble.right")
                 }
                 .accessibilityLabel("Ask AI about this note")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                if !note.isDocument {
+                    Button {
+                        isAIPresented = true
+                    } label: {
+                        Image(systemName: "sparkles")
+                    }
+                    .accessibilityLabel("AI actions")
+                }
             }
             ToolbarItem(placement: .topBarTrailing) {
 				if let root = vault.vaultURL {

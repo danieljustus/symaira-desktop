@@ -61,6 +61,44 @@ struct MobileOnDeviceAIProvider: MobileAIProvider {
         onEvent(MobileAIEvent(type: .answer, text: answer, path: nil, title: nil, snippet: nil, score: nil, toolName: nil, status: nil))
         onEvent(MobileAIEvent(type: .done, text: nil, path: nil, title: nil, snippet: nil, score: nil, toolName: nil, status: nil))
     }
+
+    /// Intent-based transformation entirely on the device: the provided
+    /// text is transformed (summarize | rewrite | continue) without any
+    /// retrieval — like the server's transform endpoint, the vault is
+    /// never touched. No content leaves the device.
+    func transform(text: String, intent: String, onEvent: @escaping @Sendable (MobileAIEvent) -> Void) async throws {
+        guard isAvailable else {
+            throw MobileAIClient.AIError.notConfigured
+        }
+        let instruction = MobileOnDeviceTransformInstruction.forIntent(intent)
+        let prompt = """
+        You are a small on-device model. \(instruction)
+        Answer concisely, in the language of the text, and output only the transformed text.
+
+        Text:
+        \(text)
+        """
+        onEvent(MobileAIEvent(type: .tool, text: nil, path: nil, title: nil, snippet: nil, score: nil, toolName: "transform", status: "running"))
+        let answer = try await model.respond(to: prompt)
+        onEvent(MobileAIEvent(type: .tool, text: nil, path: nil, title: nil, snippet: nil, score: nil, toolName: "transform", status: "done"))
+        onEvent(MobileAIEvent(type: .answer, text: answer, path: nil, title: nil, snippet: nil, score: nil, toolName: nil, status: nil))
+        onEvent(MobileAIEvent(type: .done, text: nil, path: nil, title: nil, snippet: nil, score: nil, toolName: nil, status: nil))
+    }
+}
+
+/// Maps desktop intent values to the on-device instruction. Unknown
+/// intents fall back to rewrite, mirroring the server behaviour.
+enum MobileOnDeviceTransformInstruction {
+    static func forIntent(_ intent: String) -> String {
+        switch intent {
+        case "summarize":
+            return "Summarise the text below in a few sentences, in the language of the text."
+        case "continue":
+            return "Continue the text below naturally from where it ends, in the same language and style."
+        default:
+            return "Rewrite the text below to be clearer and better structured, keeping the meaning and the language."
+        }
+    }
 }
 
 /// Shared prompt construction: one path for server and on-device so

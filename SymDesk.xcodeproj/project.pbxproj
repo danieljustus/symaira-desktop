@@ -1097,16 +1097,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-<<<<<<< HEAD
 				5780F52A65766215C665EA3B /* MobileComposerView.swift in Sources */,
 				458C4ED10EE0E0F69A9FF3B7 /* MobileDraftStore.swift in Sources */,
 				C9F0878D19A296AD293027DE /* MobileDocumentScanner.swift in Sources */,
-=======
 				E076AC657C26853240193B11 /* MobileAIClient.swift in Sources */,
 				3CCD7C777856437FDF74FE8E /* MobileAISettingsView.swift in Sources */,
 				8DA4A62515C221B9755EA34E /* MobileChatView.swift in Sources */,
 				EE33FB9D33B18D7D9FB3F3A0 /* MobileConversationStore.swift in Sources */,
->>>>>>> origin/main
 				D7BD437D2AE86E66C864B0FC /* MobileNoteDetailView.swift in Sources */,
 				43D7F72894ECBE4D6D041244 /* MobileOutbox.swift in Sources */,
 				74DF8458BEC41A75D6F1604C /* MobileRootView.swift in Sources */,

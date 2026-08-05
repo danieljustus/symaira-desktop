@@ -196,15 +196,22 @@ private struct OnboardingFeature: View {
 }
 
 private struct MobileWorkspaceView: View {
+    @EnvironmentObject private var vault: MobileVaultStore
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var isComposerPresented = false
+    @State private var composerNote: MobileNote?
+    @State private var resumeDraft: MobileDraftStore.Draft?
+    @State private var isScannerPresented = false
+
     var body: some View {
         TabView {
-            MobileOverviewView()
+            MobileOverviewView(isComposerPresented: $isComposerPresented, resumeDraft: $resumeDraft, isScannerPresented: $isScannerPresented)
                 .tabItem { Label("Overview", systemImage: "sparkles.rectangle.stack") }
 
-            MobileLibraryView(documentsOnly: false)
+            MobileLibraryView(documentsOnly: false, isComposerPresented: $isComposerPresented, composerNote: $composerNote, isScannerPresented: $isScannerPresented)
                 .tabItem { Label("Notes", systemImage: "note.text") }
 
-            MobileLibraryView(documentsOnly: true)
+            MobileLibraryView(documentsOnly: true, isComposerPresented: $isComposerPresented, composerNote: $composerNote, isScannerPresented: $isScannerPresented)
                 .tabItem { Label("Documents", systemImage: "doc.text.image") }
 
             MobileChatView()
@@ -215,11 +222,62 @@ private struct MobileWorkspaceView: View {
         }
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+        .sheet(isPresented: $isComposerPresented) {
+            MobileComposerView(editingNote: composerNote, resumeDraft: resumeDraft)
+                .environmentObject(vault)
+        }
+        .sheet(isPresented: $isScannerPresented) {
+            MobileScanView()
+                .environmentObject(vault)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: MobileAppActionStore.didSetNotification)) { notification in
+            if let action = notification.object as? MobileAppAction {
+                present(action)
+            }
+        }
+        .onAppear {
+            // A widget tap or quick action may have parked an action while
+            // the app was not running; present it on launch.
+            if let action = MobileAppActionStore.pending() {
+                present(action)
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // Cold launch via widget/quick action: the pending action is
+            // read once the scene becomes active.
+            if phase == .active, let action = MobileAppActionStore.pending() {
+                present(action)
+            }
+        }
+    }
+
+    /// Presents the surface an external action asked for (widget button,
+    /// Shortcuts/Siri intent, home-screen quick action) and consumes the
+    /// parked action so it does not re-present on the next activation.
+    private func present(_ action: MobileAppAction) {
+        guard vault.isConfigured else {
+            MobileAppActionStore.clear()
+            return
+        }
+        MobileAppActionStore.clear()
+        switch action {
+        case .newNote:
+            composerNote = nil
+            resumeDraft = nil
+            isComposerPresented = true
+        case .scanDocument:
+            isScannerPresented = true
+        }
     }
 }
 
 private struct MobileOverviewView: View {
     @EnvironmentObject private var vault: MobileVaultStore
+    @Binding var isComposerPresented: Bool
+    @Binding var resumeDraft: MobileDraftStore.Draft?
+    @Binding var isScannerPresented: Bool
+    @State private var recoveredDrafts: [MobileDraftStore.Draft] = []
+    private let draftStore = try? MobileDraftStore()
 
     private var recentNotes: [MobileNote] {
         Array(vault.notes.prefix(5))
@@ -244,6 +302,10 @@ private struct MobileOverviewView: View {
 
                         if vault.pendingWriteCount > 0 {
                             MobileOutboxBanner()
+                        }
+
+                        if !recoveredDrafts.isEmpty {
+                            draftRecovery
                         }
 
                         if !vault.recentlyOpened.isEmpty {
@@ -292,8 +354,60 @@ private struct MobileOverviewView: View {
                     .disabled(vault.isLoading)
                     .accessibilityLabel("Refresh vault")
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { isComposerPresented = true } label: {
+                        Image(systemName: "square.and.pencil")
+                    }
+                    .accessibilityLabel("New note")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { isScannerPresented = true } label: {
+                        Image(systemName: "doc.viewfinder")
+                    }
+                    .accessibilityLabel("Scan document")
+                }
+            }
+            .task { recoveredDrafts = await loadDrafts() }
+        }
+    }
+
+    /// Autosaved drafts that were never finished (app terminated or user
+    /// cancelled). One tap reopens them in the composer — nothing typed is
+    /// ever lost.
+    private var draftRecovery: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Unfinished notes", systemImage: "pencil.and.outline")
+                .font(.headline)
+                .foregroundStyle(MobileTheme.textPrimary)
+
+            ForEach(recoveredDrafts) { draft in
+                Button {
+                    resumeDraft = draft
+                    isComposerPresented = true
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(draft.title.isEmpty ? "Untitled note" : draft.title)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(MobileTheme.textPrimary)
+                        Text(String(draft.body.replacingOccurrences(of: "\n", with: " ").prefix(120)))
+                            .font(.caption)
+                            .foregroundStyle(MobileTheme.textSecondary)
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(14)
+                    .mobileLiquidGlass(cornerRadius: 16)
+                }
+                .buttonStyle(.plain)
             }
         }
+    }
+
+    private func loadDrafts() async -> [MobileDraftStore.Draft] {
+        // Only new-note drafts are surfaced here; edit-mode drafts are
+        // reopened directly from the note's Edit action.
+        guard let drafts = try? await draftStore?.all() else { return [] }
+        return drafts.filter { !$0.id.hasPrefix("edit-") }
     }
 
     private var overviewHeader: some View {
@@ -429,6 +543,9 @@ struct MobileActiveFilters: Codable, Equatable, Hashable, Sendable {
 private struct MobileLibraryView: View {
     @EnvironmentObject private var vault: MobileVaultStore
     let documentsOnly: Bool
+    @Binding var isComposerPresented: Bool
+    @Binding var composerNote: MobileNote?
+    @Binding var isScannerPresented: Bool
 
     @State private var query = ""
     @State private var statusFilter = "All"
@@ -502,6 +619,12 @@ private struct MobileLibraryView: View {
                     }
                     .disabled(vault.isLoading)
                     .accessibilityLabel("Refresh vault")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { isScannerPresented = true } label: {
+                        Image(systemName: "doc.viewfinder")
+                    }
+                    .accessibilityLabel("Scan document")
                 }
             }
             .task(id: request) { await updateResults(for: request) }

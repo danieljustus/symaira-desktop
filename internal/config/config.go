@@ -35,6 +35,9 @@ type Config struct {
 	OllamaURL       string `toml:"ollama_url" env:"SYMDESK_OLLAMA_URL"`
 	Language        string `toml:"language" env:"SYMDESK_LANG"`
 	MaxTokens       int    `toml:"max_tokens" env:"SYMDESK_MAX_TOKENS"`
+	// AgentMaxIterations caps the agentic tool loop (issue #317). Zero uses
+	// the package default (5).
+	AgentMaxIterations int `toml:"agent_max_iterations" env:"SYMDESK_AGENT_MAX_ITERATIONS"`
 
 	// HistoryMaxPerFile is the maximum number of snapshots kept per file
 	// when pruning (0 = unlimited).

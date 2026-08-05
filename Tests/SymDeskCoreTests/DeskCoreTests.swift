@@ -365,6 +365,44 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertNil(event.path)
     }
 
+    // MARK: - Agentic loop events (issue #317)
+
+    func testAgentToolCallEventDecoding() throws {
+        let json = """
+        {"type":"tool","tool_name":"desk_search","iteration":1,"tool_inputs":{"query":"alpha"}}
+        """.data(using: .utf8)!
+
+        let event = try JSONDecoder().decode(AIEvent.self, from: json)
+        XCTAssertEqual(event.type, .tool)
+        XCTAssertEqual(event.toolName, "desk_search")
+        XCTAssertEqual(event.iteration, 1)
+        XCTAssertEqual(event.toolInputs, "{\"query\":\"alpha\"}")
+        XCTAssertNil(event.toolOutput)
+    }
+
+    func testAgentToolResultEventDecoding() throws {
+        let json = """
+        {"type":"tool","tool_name":"desk_search","iteration":2,"tool_output":"{\\"results\\":[]}","tool_output_truncated":true}
+        """.data(using: .utf8)!
+
+        let event = try JSONDecoder().decode(AIEvent.self, from: json)
+        XCTAssertEqual(event.iteration, 2)
+        XCTAssertEqual(event.toolOutput, "{\"results\":[]}")
+        XCTAssertEqual(event.toolOutputTruncated, true)
+        XCTAssertNil(event.toolInputs)
+    }
+
+    func testAgentTerminalEventDecoding() throws {
+        let json = """
+        {"type":"done","token_usage":1347,"context_window":8000}
+        """.data(using: .utf8)!
+
+        let event = try JSONDecoder().decode(AIEvent.self, from: json)
+        XCTAssertEqual(event.type, .done)
+        XCTAssertEqual(event.tokenUsage, 1347)
+        XCTAssertEqual(event.contextWindow, 8000)
+    }
+
     func testAIEventTypeRawValues() {
         XCTAssertEqual(AIEventType.answer.rawValue, "answer")
         XCTAssertEqual(AIEventType.citation.rawValue, "citation")

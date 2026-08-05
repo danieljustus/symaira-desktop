@@ -6,8 +6,9 @@ struct MobileNoteDetailView: View {
     let noteID: String
 
     @State private var mode: DetailMode = .preview
-    @State private var attachmentURL: URL?
-    @State private var isLoadingAttachment = false
+	@State private var attachmentURL: URL?
+	@State private var isLoadingAttachment = false
+    @State private var isEditing = false
     @State private var isChatPresented = false
 
     private enum DetailMode: String, CaseIterable {
@@ -34,6 +35,12 @@ struct MobileNoteDetailView: View {
         .background(MobileTheme.background)
         .navigationTitle(note?.title ?? "Note")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $isEditing) {
+            if let note {
+                MobileComposerView(editingNote: note)
+                    .environmentObject(vault)
+            }
+        }
 		.task(id: noteID) {
 			guard let note else { return }
 			vault.recordOpened(note)
@@ -91,6 +98,12 @@ struct MobileNoteDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+				Button {
+					isEditing = true
+				} label: {
+					Image(systemName: "pencil")
+				}
+				.accessibilityLabel("Edit note")
                 Button { isChatPresented = true } label: {
                     Image(systemName: "bubble.left.and.bubble.right")
                 }

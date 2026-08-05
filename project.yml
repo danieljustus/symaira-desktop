@@ -132,6 +132,8 @@ targets:
     dependencies:
       - package: symaira-appkit
         product: SymairaKeychain
+      - target: SymDeskMobileShare
+      - target: SymDeskWidget
     settings:
       base:
         INFOPLIST_FILE: Sources/SymDeskMobile/Info.plist
@@ -140,6 +142,51 @@ targets:
         PRODUCT_MODULE_NAME: SymDeskMobile
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: Sources/SymDeskMobile/AppGroup.entitlements
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        MARKETING_VERSION: "0.7.3"
+        CURRENT_PROJECT_VERSION: "1"
+
+  SymDeskMobileShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Sources/SymDeskMobileShare
+    settings:
+      base:
+        INFOPLIST_FILE: Sources/SymDeskMobileShare/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.symaira.desktop.ios.share
+        PRODUCT_NAME: SymDeskShare
+        PRODUCT_MODULE_NAME: SymDeskMobileShare
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: Sources/SymDeskMobile/AppGroup.entitlements
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        MARKETING_VERSION: "0.7.3"
+        CURRENT_PROJECT_VERSION: "1"
+
+  SymDeskWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Sources/SymDeskWidget
+      # Shared with the app target so widget buttons and Shortcuts/Siri
+      # intents are the same types (one shared-container decision).
+      - Sources/SymDeskMobile/MobileAppIntents.swift
+      - Sources/SymDeskMobile/MobileRecentsStore.swift
+    settings:
+      base:
+        INFOPLIST_FILE: Sources/SymDeskWidget/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.symaira.desktop.ios.widget
+        PRODUCT_NAME: SymDeskWidget
+        PRODUCT_MODULE_NAME: SymDeskWidget
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: Sources/SymDeskMobile/AppGroup.entitlements
         IPHONEOS_DEPLOYMENT_TARGET: "18.0"
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "6.0"

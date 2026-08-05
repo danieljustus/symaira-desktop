@@ -777,7 +777,7 @@ struct DocumentGridView: View {
         agentResult = ""
         Task {
             do {
-                let stream = core.ask(query: q)
+                let stream = core.ask(query: q, agent: true)
                 isAgentRunning = false
                 for try await chunk in stream {
                     if chunk.type == .answer, let text = chunk.text {

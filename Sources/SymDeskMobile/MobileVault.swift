@@ -415,8 +415,6 @@ final class MobileVaultStore: ObservableObject {
     private let cacheURL: URL
     /// Feeds vault content into iOS Core Spotlight (home-screen search).
     private let spotlightIndexer = MobileSpotlightIndexer()
-    private let outbox: MobileOutbox
-    private let writeCoordinator: MobileWriteCoordinator
     /// Ranked, persisted on-device search index. Fed from the parsed
     /// snapshot after every reload in both connection modes.
     private let searchIndex: MobileSearchIndex

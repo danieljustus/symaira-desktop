@@ -70,6 +70,16 @@ jobs:
       - name: Check formatting
         run: test -z "$(gofmt -l .)"
 
+      - name: Design-system font guard (no inline role font literals)
+        # Issue #352: app text must use .symairaText(role) instead of inline
+        # .font(.caption/.headline/...) literals so Dynamic Type scales.
+        run: |
+          HITS=$(grep -rnE '\.font\(\.(caption|caption2|headline|callout|subheadline|title|title2|title3|body|largeTitle)' Sources/SymDeskApp/ || true)
+          if [ -n "$HITS" ]; then
+            echo "$HITS"
+            exit 1
+          fi
+
   golangci-lint:
     runs-on: ubuntu-latest
     permissions:

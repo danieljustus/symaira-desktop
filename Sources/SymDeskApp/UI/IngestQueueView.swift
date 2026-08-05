@@ -41,11 +41,11 @@ struct IngestQueueView: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Ingest Queue")
-                    .font(.title2)
+                    .symairaText(.title)
                     .fontWeight(.bold)
                     .foregroundColor(SymairaTheme.textPrimary)
                 Text("Monitor active and historical document ingestion tasks")
-                    .font(.subheadline)
+                    .symairaText(.callout)
                     .foregroundColor(SymairaTheme.textSecondary)
             }
             Spacer()
@@ -63,14 +63,14 @@ struct IngestQueueView: View {
     private func errorState(_ msg: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 48))
+                .symairaText(.display)
                 .foregroundColor(.red)
             Text("Connection Failed")
-                .font(.title3)
+                .symairaText(.heading)
                 .fontWeight(.semibold)
                 .foregroundColor(SymairaTheme.textPrimary)
             Text(msg)
-                .font(.body)
+                .symairaText(.body)
                 .foregroundColor(SymairaTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
@@ -85,13 +85,13 @@ struct IngestQueueView: View {
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "tray")
-                .font(.system(size: 48))
+                .symairaText(.display)
                 .foregroundColor(SymairaTheme.textMuted)
             Text("Queue is empty")
-                .font(.title3)
+                .symairaText(.heading)
                 .foregroundColor(SymairaTheme.textSecondary)
             Text("Drop PDF or image files to start ingestion.")
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textMuted)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -159,22 +159,22 @@ struct JobRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             statusIcon
-                .font(.title2)
+                .symairaText(.title)
                 .padding(.top, 2)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(displayFilename)
-                        .font(.headline)
+                        .symairaText(.subheading)
                         .foregroundColor(SymairaTheme.textPrimary)
                         .lineLimit(1)
                     Spacer()
                     Text("Job #\(job.id)")
-                        .font(.system(.caption, design: .monospaced))
+                        .symairaText(.monoSmall)
                         .foregroundColor(SymairaTheme.textMuted)
                 }
                 Text(job.sourcePath)
-                    .font(.caption2)
+                    .symairaText(.caption)
                     .foregroundColor(SymairaTheme.textMuted)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -184,12 +184,12 @@ struct JobRow: View {
                     Label("Attempts: \(job.attempts)", systemImage: "arrow.counterclockwise")
                     Text("Created: \(formattedDate(job.createdAt))")
                 }
-                .font(.caption)
+                .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textSecondary)
 
                 if let err = job.lastError {
                     Text(err)
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(.red)
                         .padding(8)
                         .background(Color.red.opacity(0.1))

@@ -48,10 +48,10 @@ struct BlockRow: View {
             case .frontmatter:
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Frontmatter")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                     TextField("Frontmatter", text: $block.content, axis: .vertical)
-                        .font(.system(.body, design: .monospaced))
+                        .symairaText(.mono)
                         .padding(8)
                         .background(Color.white.opacity(0.04))
                         .cornerRadius(4)
@@ -70,10 +70,10 @@ struct BlockRow: View {
             case .list:
                 HStack(alignment: .top) {
                     Text("•")
-                        .font(.body)
+                        .symairaText(.body)
                         .padding(.top, 2)
                     TextField("List item", text: $block.content, axis: .vertical)
-                        .font(.body)
+                        .symairaText(.body)
                         .textFieldStyle(.plain)
                         .onChange(of: block.content) { _ in onUpdate() }
                 }
@@ -83,7 +83,7 @@ struct BlockRow: View {
                         .fill(SymairaTheme.goldShadow)
                         .frame(width: 4)
                     TextField("Quote", text: $block.content, axis: .vertical)
-                        .font(.body)
+                        .symairaText(.body)
                         .italic()
                         .textFieldStyle(.plain)
                         .onChange(of: block.content) { _ in onUpdate() }
@@ -92,10 +92,10 @@ struct BlockRow: View {
             case .codeFence(let lang):
                 VStack(alignment: .leading, spacing: 4) {
                     Text(lang.isEmpty ? "Code" : "Code (\(lang))")
-                        .font(.caption)
+                        .symairaText(.caption)
                         .foregroundColor(SymairaTheme.textMuted)
                     TextField("Code", text: $block.content, axis: .vertical)
-                        .font(.system(.body, design: .monospaced))
+                        .symairaText(.mono)
                         .padding(8)
                         .background(Color.white.opacity(0.04))
                         .cornerRadius(4)
@@ -103,7 +103,7 @@ struct BlockRow: View {
                 }
             case .paragraph:
                 TextField("Type '/' for commands", text: $block.content, axis: .vertical)
-                    .font(.body)
+                    .symairaText(.body)
                     .textFieldStyle(.plain)
                     .onChange(of: block.content) { _ in onUpdate() }
             case .raw:
@@ -114,13 +114,15 @@ struct BlockRow: View {
         }
     }
     
+    /// Heading font per markdown level, expressed through the shared type
+    /// scale (issue #352) so headings scale with Dynamic Type.
     private func headingFont(for level: Int) -> Font {
         switch level {
-        case 1: return .system(size: 24, weight: .bold)
-        case 2: return .system(size: 20, weight: .bold)
-        case 3: return .system(size: 18, weight: .semibold)
-        case 4: return .system(size: 16, weight: .semibold)
-        default: return .system(size: 14, weight: .semibold)
+        case 1: return SymairaTextRole.title.font
+        case 2: return SymairaTextRole.heading.font
+        case 3: return SymairaTextRole.heading.font
+        case 4: return SymairaTextRole.callout.font
+        default: return SymairaTextRole.callout.font
         }
     }
 }

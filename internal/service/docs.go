@@ -23,6 +23,8 @@ type DocsListResult struct {
 	Correspondent string `json:"correspondent,omitempty"`
 	DocumentType  string `json:"document_type,omitempty"`
 	ASN           int    `json:"asn,omitempty"`
+	// Tags carried by the document, parsed from its frontmatter tags property.
+	Tags []string `json:"tags,omitempty"`
 }
 
 func (s *Service) DocsList(f sidecar.DocsFilter) ([]DocsListResult, error) {
@@ -49,6 +51,7 @@ func (s *Service) DocsList(f sidecar.DocsFilter) ([]DocsListResult, error) {
 			Correspondent: r.Correspondent,
 			DocumentType:  r.DocumentType,
 			ASN:           r.ASN,
+			Tags:          r.Tags,
 		})
 	}
 	return results, nil

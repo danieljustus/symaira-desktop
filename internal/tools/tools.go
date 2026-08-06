@@ -8,6 +8,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/health"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
@@ -80,6 +81,7 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(true, newDocsTool(options.GetService)),
 		entry(true, newDocsReviewTool(options.GetService, cfg)),
 		entry(true, newDocsSimilarTool(options.GetService)),
+		entry(true, newVaultHealthTool(options.GetService)),
 		entry(true, newRelatedTool(options.GetService)),
 		entry(true, newIngestJobsTool(options.GetService)),
 		entry(true, newMeetingListTool(options.GetService)),
@@ -521,6 +523,31 @@ func newDocsSimilarTool(getService ServiceFactory) *Tool {
 			}
 			defer func() { _ = db.Close() }()
 			return svc.SimilarDocs(args.File, args.Threshold)
+		},
+	}
+}
+
+func newVaultHealthTool(getService ServiceFactory) *Tool {
+	return &Tool{
+		Name:        "vault_health",
+		Description: "Scans the Markdown vault for parse errors, missing frontmatter, broken wikilinks and near-duplicate documents, returning a reviewable repair plan without changing files.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"duplicate_threshold":{"type":"integer"}}}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				DuplicateThreshold int `json:"duplicate_threshold"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.DuplicateThreshold <= 0 {
+				args.DuplicateThreshold = 90
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer func() { _ = db.Close() }()
+			return health.Scan(svc.VaultRoot, db, args.DuplicateThreshold)
 		},
 	}
 }

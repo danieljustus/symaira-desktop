@@ -58,6 +58,9 @@ type AIEvent struct {
 	ToolInputs          json.RawMessage `json:"tool_inputs,omitempty"`
 	ToolOutput          string          `json:"tool_output,omitempty"`
 	ToolOutputTruncated bool            `json:"tool_output_truncated,omitempty"`
+	// advisory citation validation (issue #408); warnings never block writes.
+	CitationWarnings []CitationWarning `json:"citation_warnings,omitempty"`
+	ReadPaths        []string          `json:"read_paths,omitempty"`
 	// done (terminal event)
 	TokenUsage    int `json:"token_usage,omitempty"`
 	ContextWindow int `json:"context_window,omitempty"`

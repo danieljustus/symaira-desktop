@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
@@ -49,6 +50,11 @@ type AgentTurnResult struct {
 	// ContextWindow is the model's context window in tokens, or 0 when
 	// unknown.
 	ContextWindow int
+	// CitationWarnings are advisory links in Text that were not read during
+	// this run. They never prevent a caller from writing generated content.
+	CitationWarnings []CitationWarning
+	// ReadPaths is the cumulative set of document paths read in this run.
+	ReadPaths []string
 }
 
 // agentTurnFunc performs one provider round trip: sends the message history
@@ -70,7 +76,9 @@ type AgentMessage struct {
 	Text      string
 	ToolCalls []ToolCall
 	// ToolResult carries the outcome of one tool call (role "tool").
-	ToolResult *AgentToolResult
+	ToolResult       *AgentToolResult
+	CitationWarnings []CitationWarning
+	ReadPaths        []string
 }
 
 // AgentToolResult is the outcome of one executed tool call.
@@ -147,8 +155,10 @@ func RunAgent(
 	}
 
 	var totalUsage, contextWindow int
+	readPaths := make(map[string]struct{})
 	iterations := 0
 	hitCap := false
+	var lastWarnings []CitationWarning
 
 	for iterations < maxIterations {
 		iterations++
@@ -169,16 +179,23 @@ func RunAgent(
 		if result.ContextWindow > 0 {
 			contextWindow = result.ContextWindow
 		}
+		result.ReadPaths = sortedReadPaths(readPaths)
+		result.CitationWarnings = CheckCitationWarningsSafe(result.Text, result.ReadPaths)
+		lastWarnings = result.CitationWarnings
 
 		if len(result.ToolCalls) == 0 {
 			// end_turn (or any stop without tool calls): the accumulated
 			// text was already streamed — never swallow it.
-			out <- TerminalEvent(totalUsage, contextWindow)
+			messages = append(messages, AgentMessage{Role: "assistant", Text: result.Text, CitationWarnings: result.CitationWarnings, ReadPaths: result.ReadPaths})
+			done := TerminalEvent(totalUsage, contextWindow)
+			done.CitationWarnings = result.CitationWarnings
+			done.ReadPaths = result.ReadPaths
+			out <- done
 			return
 		}
 
 		// Execute the requested tools and append results.
-		assistantMsg := AgentMessage{Role: "assistant", Text: result.Text, ToolCalls: result.ToolCalls}
+		assistantMsg := AgentMessage{Role: "assistant", Text: result.Text, ToolCalls: result.ToolCalls, CitationWarnings: result.CitationWarnings, ReadPaths: result.ReadPaths}
 		messages = append(messages, assistantMsg)
 		for _, call := range result.ToolCalls {
 			out <- ToolCallEvent(iterations, call.Name, call.Input)
@@ -186,6 +203,9 @@ func RunAgent(
 			if err != nil {
 				output = fmt.Sprintf("tool error: %v", err)
 				truncated = false
+			}
+			for _, path := range readPathsForTool(call, output) {
+				readPaths[path] = struct{}{}
 			}
 			out <- ToolResultEvent(iterations, call.Name, output, truncated)
 			messages = append(messages, AgentMessage{
@@ -204,7 +224,19 @@ func RunAgent(
 	if hitCap {
 		out <- AnswerEvent("\n\n⚠️ **Reached the iteration limit — answer may be partial.**\n")
 	}
-	out <- TerminalEvent(totalUsage, contextWindow)
+	done := TerminalEvent(totalUsage, contextWindow)
+	done.CitationWarnings = lastWarnings
+	done.ReadPaths = sortedReadPaths(readPaths)
+	out <- done
+}
+
+func sortedReadPaths(paths map[string]struct{}) []string {
+	result := make([]string, 0, len(paths))
+	for path := range paths {
+		result = append(result, path)
+	}
+	sort.Strings(result)
+	return result
 }
 
 // executeTool runs one tool call, truncating its output for the next turn.

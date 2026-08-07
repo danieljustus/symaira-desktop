@@ -185,8 +185,9 @@ func RunAgent(
 
 		if len(result.ToolCalls) == 0 {
 			// end_turn (or any stop without tool calls): the accumulated
-			// text was already streamed — never swallow it.
-			messages = append(messages, AgentMessage{Role: "assistant", Text: result.Text, CitationWarnings: result.CitationWarnings, ReadPaths: result.ReadPaths})
+			// text was already streamed — never swallow it. The final
+			// assistant message carries the citation metadata so the UI
+			// can render warnings for the finished answer.
 			done := TerminalEvent(totalUsage, contextWindow)
 			done.CitationWarnings = result.CitationWarnings
 			done.ReadPaths = result.ReadPaths

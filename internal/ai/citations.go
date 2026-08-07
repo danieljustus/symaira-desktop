@@ -55,7 +55,7 @@ func CheckCitationWarnings(content string, readPaths []string) []CitationWarning
 			continue
 		}
 		seen[key] = struct{}{}
-		warnings = append(warnings, CitationWarning{Path: candidate.Path, Line: candidate.Line})
+		warnings = append(warnings, CitationWarning(candidate))
 	}
 	return warnings
 }

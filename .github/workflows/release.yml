@@ -226,16 +226,10 @@ jobs:
           mkdir -p dist/dmg-staging
           cp -R "$APP_PATH" dist/dmg-staging/
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "dist/SymDesk-${VERSION}.zip"
-          create-dmg \
-            --volname "SymDesk" \
-            --window-pos 200 120 \
-            --window-size 600 300 \
-            --icon-size 100 \
-            --icon "SymDesk.app" 175 120 \
-            --hide-extension "SymDesk.app" \
-            --app-drop-link 425 120 \
+          ./scripts/create-symaira-dmg.sh \
+            "$APP_PATH" \
             "dist/SymDesk-${VERSION}.dmg" \
-            dist/dmg-staging/
+            "SymDesk"
 
       - name: Notarize and staple DMG
         env:

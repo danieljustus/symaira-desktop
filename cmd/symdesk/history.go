@@ -47,11 +47,15 @@ func newHistoryCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			maxPerFile, _ := cmd.Flags().GetInt("max-per-file")
 			maxAgeDays, _ := cmd.Flags().GetInt("max-age-days")
+			checkpointAgeDays, _ := cmd.Flags().GetInt("checkpoint-age-days")
 			if !cmd.Flags().Changed("max-per-file") {
 				maxPerFile = cfg.HistoryMaxPerFile
 			}
 			if !cmd.Flags().Changed("max-age-days") {
 				maxAgeDays = cfg.HistoryMaxAgeDays
+			}
+			if !cmd.Flags().Changed("checkpoint-age-days") {
+				checkpointAgeDays = cfg.HistoryCheckpointMaxAgeDays
 			}
 			vRoot, db, err := initServiceDeps()
 			if err != nil {
@@ -60,8 +64,9 @@ func newHistoryCmd() *cobra.Command {
 			defer db.Close()
 			svc := service.New(vRoot, db)
 			removed, err := svc.HistoryPrune(history.RetentionPolicy{
-				MaxPerFile: maxPerFile,
-				MaxAge:     time.Duration(maxAgeDays) * 24 * time.Hour,
+				MaxPerFile:       maxPerFile,
+				MaxAge:           time.Duration(maxAgeDays) * 24 * time.Hour,
+				MaxCheckpointAge: time.Duration(checkpointAgeDays) * 24 * time.Hour,
 			})
 			if err != nil {
 				return err
@@ -71,6 +76,7 @@ func newHistoryCmd() *cobra.Command {
 	}
 	pruneCmd.Flags().Int("max-per-file", 0, "keep at most N snapshots per file (0 = unlimited, default from config)")
 	pruneCmd.Flags().Int("max-age-days", 0, "drop snapshots older than N days, newest always kept (0 = unlimited, default from config)")
+	pruneCmd.Flags().Int("checkpoint-age-days", 0, "drop task checkpoints older than N days (0 = unlimited, default from config)")
 	historyCmd.AddCommand(pruneCmd)
 
 	showCmd := &cobra.Command{

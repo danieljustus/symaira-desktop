@@ -47,6 +47,7 @@ func registerCommands(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(newAICmd())
 	rootCmd.AddCommand(newAIConfigCmd())
 	rootCmd.AddCommand(newConsumeCmd())
+	rootCmd.AddCommand(newVaultCmd())
 }
 
 func initServiceDeps() (string, *sidecar.DB, error) {

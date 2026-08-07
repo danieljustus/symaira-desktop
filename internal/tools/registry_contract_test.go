@@ -90,6 +90,12 @@ var toolContracts = []toolContract{
 		readOnly:    true,
 	},
 	{
+		name:        "vault_health",
+		description: "Scans the Markdown vault for parse errors, missing frontmatter, broken wikilinks and near-duplicate documents, returning a reviewable repair plan without changing files.",
+		schema:      `{"type":"object","properties":{"duplicate_threshold":{"type":"integer"}}}`,
+		readOnly:    true,
+	},
+	{
 		name:        "desk_related",
 		description: "Gets related entities and notes for a given file path based on composition with symmemory.",
 		schema:      `{"type":"object","properties":{"file":{"type":"string"}},"required":["file"]}`,

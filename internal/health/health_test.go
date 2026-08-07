@@ -42,7 +42,7 @@ func TestScanDoesNotFlagBarePersonLinks(t *testing.T) {
 func TestScanReportsParseErrorsWithoutStopping(t *testing.T) {
 	root := t.TempDir()
 	writeNote(t, root, "good.md", "---\ntitle: Good\n---\ncontent\n")
-	if err := os.WriteFile(filepath.Join(root, "bad.md"), []byte("---\ntitle: [broken\n---\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "bad.md"), []byte("---\ntitle: [broken\n---\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -57,7 +57,7 @@ func TestScanReportsParseErrorsWithoutStopping(t *testing.T) {
 
 func writeNote(t *testing.T, root, name, content string) {
 	t.Helper()
-	if err := os.WriteFile(filepath.Join(root, name), []byte(content), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, name), []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
 }

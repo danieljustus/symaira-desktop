@@ -310,6 +310,54 @@ func TestValidateHistoryMaxAgeDaysNegative(t *testing.T) {
 	}
 }
 
+func TestResultsRetentionDefaults(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.ResultsMaxAgeDays != 30 {
+		t.Errorf("expected default ResultsMaxAgeDays 30, got %d", cfg.ResultsMaxAgeDays)
+	}
+	if cfg.ResultsMaxPerTask != 20 {
+		t.Errorf("expected default ResultsMaxPerTask 20, got %d", cfg.ResultsMaxPerTask)
+	}
+}
+
+func TestLoadFromPathResultsRetentionEnvOverride(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.toml")
+	content := `results_max_age_days = 7
+results_max_per_task = 5
+`
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("SYMDESK_RESULTS_MAX_AGE_DAYS", "14")
+	t.Setenv("SYMDESK_RESULTS_MAX_PER_TASK", "9")
+
+	cfg, err := LoadFromPath(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Env vars take precedence over the TOML values.
+	if cfg.ResultsMaxAgeDays != 14 {
+		t.Errorf("expected env ResultsMaxAgeDays 14, got %d", cfg.ResultsMaxAgeDays)
+	}
+	if cfg.ResultsMaxPerTask != 9 {
+		t.Errorf("expected env ResultsMaxPerTask 9, got %d", cfg.ResultsMaxPerTask)
+	}
+}
+
+func TestValidateResultsRetentionNegative(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.ResultsMaxAgeDays = -1
+	cfg.ResultsMaxPerTask = -1
+	findings := cfg.Validate()
+	if !hasFinding(findings, "results_max_age_days") {
+		t.Error("expected finding for negative results_max_age_days")
+	}
+	if !hasFinding(findings, "results_max_per_task") {
+		t.Error("expected finding for negative results_max_per_task")
+	}
+}
+
 func TestValidateNonExistentVaultPath(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Vault = "/nonexistent/vault/path"

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf8"
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
@@ -178,5 +179,173 @@ func TestRunAgentExternalizesOversizedResults(t *testing.T) {
 	}
 	if strings.Contains(output, marker) {
 		t.Error("model-visible output must not contain the raw oversized blob tail")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Retention of externalized results (issue #418)
+// ---------------------------------------------------------------------------
+
+func TestPruneResultsAge(t *testing.T) {
+	root := t.TempDir()
+	taskDir := filepath.Join(root, "task-1")
+	if err := os.MkdirAll(taskDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	old := filepath.Join(taskDir, "desk_ls-001.txt")
+	fresh := filepath.Join(taskDir, "desk_ls-002.txt")
+	for _, p := range []string{old, fresh} {
+		if err := os.WriteFile(p, []byte("result"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Age one result 48h into the past; the other stays fresh.
+	aged := time.Now().Add(-48 * time.Hour)
+	if err := os.Chtimes(old, aged, aged); err != nil {
+		t.Fatal(err)
+	}
+
+	deleted, err := PruneResults(root, 24*time.Hour, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleted != 1 {
+		t.Fatalf("deleted %d files, want 1", deleted)
+	}
+	if _, err := os.Stat(old); !os.IsNotExist(err) {
+		t.Errorf("result older than maxAge must be pruned, stat err = %v", err)
+	}
+	if _, err := os.Stat(fresh); err != nil {
+		t.Errorf("fresh result must survive, stat err = %v", err)
+	}
+	// The task dir survives because it still holds a result.
+	if _, err := os.Stat(taskDir); err != nil {
+		t.Errorf("task dir with remaining results must survive, stat err = %v", err)
+	}
+}
+
+func TestPruneResultsMaxPerTask(t *testing.T) {
+	root := t.TempDir()
+	taskDir := filepath.Join(root, "task-1")
+	if err := os.MkdirAll(taskDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	names := []string{"a-001.txt", "a-002.txt", "a-003.txt"}
+	for i, name := range names {
+		p := filepath.Join(taskDir, name)
+		if err := os.WriteFile(p, []byte(name), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		// Distinct mtimes: file i is i hours old, so a-001.txt is the
+		// newest and a-003.txt the oldest.
+		age := time.Duration(i) * time.Hour
+		ts := time.Now().Add(-age)
+		if err := os.Chtimes(p, ts, ts); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	deleted, err := PruneResults(root, 0, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleted != 1 {
+		t.Fatalf("deleted %d files, want 1", deleted)
+	}
+	for _, name := range names[:2] {
+		if _, err := os.Stat(filepath.Join(taskDir, name)); err != nil {
+			t.Errorf("newest result %s must be kept, stat err = %v", name, err)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(taskDir, names[2])); !os.IsNotExist(err) {
+		t.Errorf("oldest result %s must be pruned, stat err = %v", names[2], err)
+	}
+}
+
+func TestPruneResultsEmptyDirRemoved(t *testing.T) {
+	root := t.TempDir()
+	taskDir := filepath.Join(root, "task-1")
+	if err := os.MkdirAll(taskDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(taskDir, "desk_ls-001.txt"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Age the result beyond the retention window so pruning removes it,
+	// leaving the task dir empty.
+	aged := time.Now().Add(-48 * time.Hour)
+	p := filepath.Join(taskDir, "desk_ls-001.txt")
+	if err := os.Chtimes(p, aged, aged); err != nil {
+		t.Fatal(err)
+	}
+
+	deleted, err := PruneResults(root, 24*time.Hour, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleted != 1 {
+		t.Fatalf("deleted %d files, want 1", deleted)
+	}
+	if _, err := os.Stat(taskDir); !os.IsNotExist(err) {
+		t.Errorf("task dir emptied by pruning must be removed, stat err = %v", err)
+	}
+}
+
+func TestResultsSize(t *testing.T) {
+	root := t.TempDir()
+	taskDir := filepath.Join(root, "task-1")
+	if err := os.MkdirAll(taskDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(taskDir, "a.txt"), []byte("12345"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(taskDir, "b.txt"), []byte("1234567890"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	bytes, files, err := ResultsSize(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes != 15 || files != 2 {
+		t.Fatalf("ResultsSize = %d bytes / %d files, want 15 / 2", bytes, files)
+	}
+
+	// A missing root is a clean zero report, not an error.
+	bytes, files, err = ResultsSize(filepath.Join(root, "missing"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes != 0 || files != 0 {
+		t.Fatalf("missing root: ResultsSize = %d bytes / %d files, want 0 / 0", bytes, files)
+	}
+}
+
+func TestReadExternalizedAfterPrune(t *testing.T) {
+	ext := NewExternalizer(t.TempDir(), "task-42")
+	handle, err := ext.Externalize("desk_ls", 1, strings.Repeat("x", 9000))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ReadExternalized(ext.Root, handle); err != nil {
+		t.Fatalf("result must be readable before pruning: %v", err)
+	}
+
+	// Age the result beyond the retention window, prune by age, and prove
+	// the handle resolves to a clear not-found error afterwards.
+	aged := time.Now().Add(-48 * time.Hour)
+	if err := os.Chtimes(filepath.Join(ext.Root, filepath.FromSlash(handle)), aged, aged); err != nil {
+		t.Fatal(err)
+	}
+	deleted, err := PruneResults(ext.Root, 24*time.Hour, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if deleted != 1 {
+		t.Fatalf("pruned %d files, want 1", deleted)
+	}
+	if _, err := ReadExternalized(ext.Root, handle); err == nil || !strings.Contains(err.Error(), "not found") {
+		t.Fatalf("read after prune must fail with a not-found error, got %v", err)
 	}
 }

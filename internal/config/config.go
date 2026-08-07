@@ -25,6 +25,13 @@ const (
 	defaultTrashRetentionDays = 30
 )
 
+// Default retention for the externalized agent-results area (issue #418):
+// task ids are unique per run, so the agent loop prunes by age and count.
+const (
+	defaultResultsMaxAgeDays = 30
+	defaultResultsMaxPerTask = 20
+)
+
 type Config struct {
 	Vault           string `toml:"vault" env:"SYMDESK_VAULT"`
 	Inbox           string `toml:"inbox" env:"SYMDESK_INBOX"`
@@ -49,6 +56,14 @@ type Config struct {
 	// permanently removes soft-deleted files.
 	TrashRetentionDays int `toml:"trash_retention_days" env:"SYMDESK_TRASH_RETENTION_DAYS"`
 
+	// ResultsMaxAgeDays drops externalized agent results older than this
+	// many days when the agent loop prunes the results area (0 = keep
+	// results of any age).
+	ResultsMaxAgeDays int `toml:"results_max_age_days" env:"SYMDESK_RESULTS_MAX_AGE_DAYS"`
+	// ResultsMaxPerTask caps the externalized results kept per agent run
+	// (newest wins; 0 = unlimited).
+	ResultsMaxPerTask int `toml:"results_max_per_task" env:"SYMDESK_RESULTS_MAX_PER_TASK"`
+
 	// StoragePathTemplate is an optional template that determines where
 	// ingested documents are placed in the vault. See internal/templatepath
 	// for the supported syntax.
@@ -69,6 +84,8 @@ func DefaultConfig() *Config {
 		HistoryMaxPerFile:  defaultHistoryMaxPerFile,
 		HistoryMaxAgeDays:  defaultHistoryMaxAgeDays,
 		TrashRetentionDays: defaultTrashRetentionDays,
+		ResultsMaxAgeDays:  defaultResultsMaxAgeDays,
+		ResultsMaxPerTask:  defaultResultsMaxPerTask,
 	}
 }
 
@@ -114,6 +131,8 @@ func applyEnvOverrides(cfg *Config) {
 		{"SYMDESK_HISTORY_MAX_PER_FILE", &cfg.HistoryMaxPerFile},
 		{"SYMDESK_HISTORY_MAX_AGE_DAYS", &cfg.HistoryMaxAgeDays},
 		{"SYMDESK_TRASH_RETENTION_DAYS", &cfg.TrashRetentionDays},
+		{"SYMDESK_RESULTS_MAX_AGE_DAYS", &cfg.ResultsMaxAgeDays},
+		{"SYMDESK_RESULTS_MAX_PER_TASK", &cfg.ResultsMaxPerTask},
 	} {
 		if raw := os.Getenv(ev.name); raw != "" {
 			if v, err := strconv.Atoi(raw); err == nil && v >= 0 {
@@ -226,6 +245,20 @@ func (c *Config) Validate() []Finding {
 			Severity: SeverityWarning,
 			Field:    "history_max_per_file",
 			Message:  fmt.Sprintf("history_max_per_file must be >= 0, got %d", c.HistoryMaxPerFile),
+		})
+	}
+	if c.ResultsMaxAgeDays < 0 {
+		findings = append(findings, Finding{
+			Severity: SeverityWarning,
+			Field:    "results_max_age_days",
+			Message:  fmt.Sprintf("results_max_age_days must be >= 0, got %d", c.ResultsMaxAgeDays),
+		})
+	}
+	if c.ResultsMaxPerTask < 0 {
+		findings = append(findings, Finding{
+			Severity: SeverityWarning,
+			Field:    "results_max_per_task",
+			Message:  fmt.Sprintf("results_max_per_task must be >= 0, got %d", c.ResultsMaxPerTask),
 		})
 	}
 

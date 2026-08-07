@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/danieljustus/symaira-corekit/exitcodes"
+	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/secrets"
@@ -136,6 +137,19 @@ func newDoctorCmd() *cobra.Command {
 				aiMap["model"] = model
 			}
 			results["ai"] = aiMap
+
+			// 7. Externalized agent-results area (issue #418). Informational
+			// only: the results area lives outside the vault tree so vault
+			// retention never sees it — surface its size so unbounded growth
+			// stays observable. A size failure does not fail doctor.
+			if vRoot != "" {
+				bytes, files, err := ai.ResultsSize(ai.ResultsRoot(vRoot))
+				if err != nil {
+					results["agent_results"] = map[string]string{"status": "error", "message": err.Error()}
+				} else {
+					results["agent_results"] = map[string]interface{}{"status": "ok", "files": files, "bytes": bytes}
+				}
+			}
 
 			if jsonFlag {
 				b, _ := json.Marshal(results)

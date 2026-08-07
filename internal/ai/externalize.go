@@ -155,12 +155,13 @@ func ReadExternalized(root, handle string) (string, error) {
 	if clean == "." || filepath.IsAbs(clean) || strings.HasPrefix(clean, ".."+string(filepath.Separator)) || clean == ".." {
 		return "", fmt.Errorf("invalid externalized-result handle: %q", handle)
 	}
-	path := filepath.Join(root, clean)
-	rel, err := filepath.Rel(root, path)
-	if err != nil || strings.HasPrefix(rel, "..") {
+	rel, err := filepath.Rel(root, filepath.Join(root, clean))
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", fmt.Errorf("invalid externalized-result handle: %q", handle)
 	}
-	data, err := os.ReadFile(path)
+	// The handle is confined to root/<taskID>/ by the checks above; the
+	// linter cannot see that invariant, so the read is annotated.
+	data, err := os.ReadFile(filepath.Join(root, clean)) //nolint:gosec // G304: handle verified confined to root above
 	if err != nil {
 		return "", fmt.Errorf("externalized result %q not found: %w", handle, err)
 	}

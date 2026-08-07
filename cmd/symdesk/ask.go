@@ -30,6 +30,10 @@ func newAskCmd() *cobra.Command {
 				// Agentic loop (issue #317): only read-only tools are ever
 				// exposed; the classic one-shot Ask remains the fallback
 				// when no tools are enabled.
+				// The resolved vault root also feeds the loop's result
+				// externalizer (issue #406), which stores over-threshold
+				// tool results outside the vault tree.
+				cfg.Vault = vRoot
 				agentTools := readOnlyAgentTools(vRoot, db, cfg)
 				if len(agentTools) == 0 {
 					go svc.Ask(cmd.Context(), args[0], out)

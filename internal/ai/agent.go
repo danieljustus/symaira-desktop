@@ -95,6 +95,11 @@ type AgentToolResult struct {
 // tool-result event.
 const maxToolOutputChars = 8000
 
+// externalizePreviewChars is how much of an externalized result stays
+// inline as a summary for the model (the full output is on disk behind the
+// handle).
+const externalizePreviewChars = 4000
+
 // defaultMaxIterations caps the agentic loop so a misbehaving model cannot
 // spin forever. The loop always yields a partial answer instead of hanging
 // (issue #317).
@@ -150,6 +155,16 @@ func RunAgent(
 		maxIterations = defaultMaxIterations
 	}
 
+	// Externalization (issue #406): over-threshold tool results are written
+	// to the per-vault results area and the model receives a compact summary
+	// plus a handle it can re-read via desk_read_result. Deterministic
+	// handles need a per-run task id; the loop generates one so every run's
+	// artifacts live under their own task directory. Without a vault root
+	// there is no results area — the loop degrades to inline truncation.
+	var externalizer *Externalizer
+	if cfg.Vault != "" {
+		externalizer = NewExternalizer(cfg.Vault, newTaskID())
+	}
 	messages := []AgentMessage{
 		{Role: "user", Text: buildAgentSystemPrompt(cfg) + "\n\nQuestion: " + query},
 	}
@@ -207,6 +222,18 @@ func RunAgent(
 			}
 			for _, path := range readPathsForTool(call, output) {
 				readPaths[path] = struct{}{}
+			}
+			// Externalize over-threshold results (issue #406): the full
+			// output goes to the results area, the model gets a summary
+			// plus the handle so it can re-read on demand.
+			if err == nil && externalizer != nil && externalizer.ShouldExternalize(call.Name, len(output)) {
+				if handle, xerr := externalizer.Externalize(call.Name, iterations, output); xerr == nil {
+					output = summarize(output, externalizePreviewChars) +
+						"\n\n[Full result externalized to " + handle + " — call desk_read_result with handle=\"" + handle + "\" to read it.]"
+					truncated = false
+				}
+				// On write failure keep the inline (possibly truncated)
+				// output — the model still gets a usable answer.
 			}
 			out <- ToolResultEvent(iterations, call.Name, output, truncated)
 			messages = append(messages, AgentMessage{

@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
 )
@@ -164,6 +166,15 @@ func RunAgent(
 	var externalizer *Externalizer
 	if cfg.Vault != "" {
 		externalizer = NewExternalizer(cfg.Vault, newTaskID())
+		// Retention (issue #418): task ids are unique per run, so the
+		// results area grows without bound unless pruned. Prune at run
+		// start on a best-effort basis; a failure must never abort the
+		// agent loop.
+		if cfg.ResultsMaxAgeDays > 0 || cfg.ResultsMaxPerTask > 0 {
+			if _, err := PruneResults(externalizer.Root, time.Duration(cfg.ResultsMaxAgeDays)*24*time.Hour, cfg.ResultsMaxPerTask); err != nil {
+				log.Printf("agent: prune externalized results: %v", err)
+			}
+		}
 	}
 	messages := []AgentMessage{
 		{Role: "user", Text: buildAgentSystemPrompt(cfg) + "\n\nQuestion: " + query},

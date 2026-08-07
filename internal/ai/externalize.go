@@ -3,8 +3,10 @@ package ai
 import (
 	"crypto/sha256"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -55,6 +57,18 @@ var externalizeSkip = map[string]bool{
 // nothing that would have been truncated silently is lost: over the cap it
 // is externalized instead of cut.
 const DefaultExternalizeThreshold = 8000
+
+// Retention policy for the externalized agent-results area (issue #418):
+// task ids are unique per run, so without pruning the results area grows
+// without bound on long-lived servers.
+const (
+	// DefaultResultsMaxAge is the default age after which a result is
+	// dropped, regardless of how few results its task holds.
+	DefaultResultsMaxAge = 30 * 24 * time.Hour
+	// DefaultResultsMaxPerTask is the default cap on results kept per
+	// task directory (newest wins).
+	DefaultResultsMaxPerTask = 20
+)
 
 // Externalizer writes over-threshold tool results to a per-vault results
 // area with deterministic paths: <root>/<taskID>/<toolName>-<iteration>.txt
@@ -167,6 +181,108 @@ func ReadExternalized(root, handle string) (string, error) {
 		return "", fmt.Errorf("externalized result %q not found: %w", handle, err)
 	}
 	return string(data), nil
+}
+
+// PruneResults enforces the retention policy on the results area (issue
+// #418). Within each task directory it keeps the newest maxPerTask results
+// and drops any result older than maxAge; task directories left empty are
+// removed. It returns the number of files deleted. A missing root is a
+// no-op (0, nil). maxAge <= 0 disables the age rule, maxPerTask <= 0 the
+// count rule; only regular files are ever deleted.
+func PruneResults(root string, maxAge time.Duration, maxPerTask int) (int, error) {
+	tasks, err := os.ReadDir(root)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	var cutoff time.Time
+	if maxAge > 0 {
+		cutoff = time.Now().Add(-maxAge)
+	}
+	deleted := 0
+	for _, task := range tasks {
+		if !task.IsDir() {
+			continue
+		}
+		taskDir := filepath.Join(root, task.Name())
+		entries, err := os.ReadDir(taskDir)
+		if err != nil {
+			return deleted, err
+		}
+		type candidate struct {
+			path string
+			mod  time.Time
+		}
+		var files []candidate
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
+			info, err := entry.Info()
+			if err != nil {
+				return deleted, err
+			}
+			if !info.Mode().IsRegular() {
+				continue
+			}
+			files = append(files, candidate{path: filepath.Join(taskDir, entry.Name()), mod: info.ModTime()})
+		}
+		// Newest first; both rules keep the newest results.
+		sort.Slice(files, func(i, j int) bool { return files[i].mod.After(files[j].mod) })
+		for i, f := range files {
+			if (maxAge > 0 && f.mod.Before(cutoff)) || (maxPerTask > 0 && i >= maxPerTask) {
+				if err := os.Remove(f.path); err != nil && !os.IsNotExist(err) {
+					return deleted, err
+				}
+				deleted++
+			}
+		}
+		// Remove task directories that pruning emptied.
+		if remaining, err := os.ReadDir(taskDir); err != nil {
+			if !os.IsNotExist(err) {
+				return deleted, err
+			}
+		} else if len(remaining) == 0 {
+			if err := os.Remove(taskDir); err != nil && !os.IsNotExist(err) {
+				return deleted, err
+			}
+		}
+	}
+	return deleted, nil
+}
+
+// ResultsSize reports the total bytes and file count of all regular files
+// under root (recursive). A missing root reports 0, 0, nil.
+func ResultsSize(root string) (int64, int, error) {
+	var total int64
+	var count int
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+		total += info.Size()
+		count++
+		return nil
+	})
+	if err != nil {
+		if os.IsNotExist(err) {
+			return 0, 0, nil
+		}
+		return 0, 0, err
+	}
+	return total, count, nil
 }
 
 // summarize truncates a long result for inline delivery, keeping the

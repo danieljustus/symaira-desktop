@@ -105,6 +105,7 @@ The following optional fields provide first-class document query metadata. They 
 - **Retention (configurable via config file or environment):**
   - `history_max_per_file` / `SYMDESK_HISTORY_MAX_PER_FILE` — max snapshots kept per file on prune (default 20, 0 = unlimited).
   - `history_max_age_days` / `SYMDESK_HISTORY_MAX_AGE_DAYS` — snapshots older than this are pruned; the newest snapshot per file is always kept (default 90, 0 = unlimited).
+  - `history_checkpoint_max_age_days` / `SYMDESK_HISTORY_CHECKPOINT_MAX_AGE_DAYS` — task checkpoints older than this are pruned; their blobs are then no longer protected from garbage collection (default 30, 0 = unlimited).
   - `trash_retention_days` / `SYMDESK_TRASH_RETENTION_DAYS` — default age threshold for `trash purge` (default 30).
 
 ## 8. Meeting Notes (contract_version 2)

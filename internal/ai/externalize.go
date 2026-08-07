@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // ---------------------------------------------------------------------------
@@ -169,10 +170,24 @@ func ReadExternalized(root, handle string) (string, error) {
 }
 
 // summarize truncates a long result for inline delivery, keeping the
-// beginning (head) so the model sees structure before the handle.
+// beginning (head) so the model sees structure before the handle. The cut
+// backs off to a UTF-8 rune boundary so a multi-byte rune (umlauts, emoji)
+// is never split mid-sequence — a truncated summary must stay valid UTF-8
+// for the model conversation.
 func summarize(output string, max int) string {
 	if len(output) <= max {
 		return output
 	}
-	return output[:max] + "\n…[externalized — full result via desk_read_result]"
+	cut := output[:max]
+	// A byte cut can land inside a multi-byte rune (or leave a dangling
+	// lead byte at the end). While the summary is not valid UTF-8, drop
+	// the final rune — an exact rune-boundary cut is kept as-is.
+	for !utf8.ValidString(cut) {
+		_, size := utf8.DecodeLastRuneInString(cut)
+		if size <= 0 {
+			break // defensive: cannot happen for a valid-prefix input
+		}
+		cut = cut[:len(cut)-size]
+	}
+	return cut + "\n…[externalized — full result via desk_read_result]"
 }

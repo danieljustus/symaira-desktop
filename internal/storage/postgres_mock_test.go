@@ -221,8 +221,8 @@ func TestPostgresQueryContextCancelled(t *testing.T) {
 
 func TestPostgresClose(t *testing.T) {
 	backend, _ := newMockPostgresBackend(t)
-	backend.Close()
-	backend.Close() // safe to call repeatedly
+	_ = backend.Close()
+	_ = backend.Close() // safe to call repeatedly
 }
 
 func TestPostgresMockInvalidKey(t *testing.T) {

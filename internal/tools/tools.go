@@ -86,6 +86,7 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(true, newIngestJobsTool(options.GetService)),
 		entry(true, newMeetingListTool(options.GetService)),
 		entry(true, newMeetingGetTool(options.GetService)),
+		entry(false, newUndoTaskTool(options.GetService)),
 		entry(false, newNoteNewTool(options.GetService)),
 		entry(false, newIngestTool(options.GetService)),
 		entry(false, newDocSetStatusTool(options.GetService)),
@@ -753,6 +754,45 @@ func newMeetingGetTool(getService ServiceFactory) *Tool {
 			}
 			defer func() { _ = db.Close() }() //nolint:errcheck // matches every other read-only tool in this file
 			return svc.MeetingShow(args.Path)
+		},
+	}
+}
+
+// newUndoTaskTool rejects a whole agent run as one unit: restores every
+// file recorded in the task's checkpoint and deletes files the task
+// created (issue #405). Mutating — only exposed on write-enabled surfaces.
+func newUndoTaskTool(getService ServiceFactory) *Tool {
+	return &Tool{
+		Name:        "desk_undo_task",
+		Description: "Rejects an agent run as a unit: restores every file that existed before the task and deletes files the task created. Takes the task id from a prior checkpoint.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"task_id":{"type":"string","description":"the checkpoint task id to undo"}},"required":["task_id"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				TaskID string `json:"task_id"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.TaskID == "" {
+				return nil, fmt.Errorf("task_id is required")
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer func() { _ = db.Close() }() //nolint:errcheck // matches every other mutating tool in this file
+			cp, err := svc.CheckpointUndo(args.TaskID)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]any{
+				"status":   "undone",
+				"task_id":  cp.TaskID,
+				"restored": len(cp.Files),
+				"deleted":  len(cp.NewFiles),
+				"skipped":  cp.Skipped,
+				"partial":  cp.Partial(),
+			}, nil
 		},
 	}
 }

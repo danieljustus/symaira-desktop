@@ -96,6 +96,103 @@ func newHistoryCmd() *cobra.Command {
 	}
 	historyCmd.AddCommand(showCmd)
 
+	// Task-scoped checkpoints (issue #405): group pre-write snapshots under
+	// one task id so a whole agent run can be rejected as a unit.
+	checkpointCmd := &cobra.Command{
+		Use:   "checkpoint <task-id> [file...]",
+		Short: "Record the pre-write state of files under a task id (lazily, before the task's first write)",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			svc := service.New(vRoot, db)
+			var cp *history.Checkpoint
+			if len(args) == 1 {
+				cp, err = svc.CheckpointBegin(args[0])
+			} else {
+				cp, err = svc.CheckpointFiles(args[0], args[1:])
+			}
+			if err != nil {
+				return err
+			}
+			if jsonFlag {
+				return outputResult(cp)
+			}
+			fmt.Printf("checkpoint %s: %d files, %d new, %d skipped\n",
+				cp.TaskID, len(cp.Files), len(cp.NewFiles), len(cp.Skipped))
+			if cp.Partial() {
+				fmt.Printf("warning: partial checkpoint — skipped: %v\n", cp.Skipped)
+			}
+			return nil
+		},
+	}
+	historyCmd.AddCommand(checkpointCmd)
+
+	tasksCmd := &cobra.Command{
+		Use:   "tasks",
+		Short: "List task-scoped checkpoints",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			checkpoints, err := service.New(vRoot, db).CheckpointList()
+			if err != nil {
+				return err
+			}
+			if jsonFlag {
+				return outputResult(checkpoints)
+			}
+			if len(checkpoints) == 0 {
+				fmt.Println("no task checkpoints")
+				return nil
+			}
+			for _, cp := range checkpoints {
+				partial := ""
+				if cp.Partial() {
+					partial = " (partial)"
+				}
+				fmt.Printf("%s  %s  %d files, %d new%s\n",
+					cp.TaskID, cp.Timestamp.Local().Format("2006-01-02 15:04:05"),
+					len(cp.Files), len(cp.NewFiles), partial)
+			}
+			return nil
+		},
+	}
+	historyCmd.AddCommand(tasksCmd)
+
+	undoTaskCmd := &cobra.Command{
+		Use:   "undo-task <task-id>",
+		Short: "Reject an agent run as a unit: restore every recorded file, delete files the task created",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			cp, err := service.New(vRoot, db).CheckpointUndo(args[0])
+			if err != nil {
+				return err
+			}
+			if jsonFlag {
+				return outputResult(cp)
+			}
+			fmt.Printf("undid task %s: %d files restored, %d new files deleted, %d skipped\n",
+				cp.TaskID, len(cp.Files), len(cp.NewFiles), len(cp.Skipped))
+			if cp.Partial() {
+				fmt.Printf("warning: partial undo — skipped: %v\n", cp.Skipped)
+			}
+			return nil
+		},
+	}
+	historyCmd.AddCommand(undoTaskCmd)
+
 	return historyCmd
 }
 

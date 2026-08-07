@@ -120,6 +120,12 @@ var toolContracts = []toolContract{
 		readOnly:    true,
 	},
 	{
+		name:        "desk_undo_task",
+		description: "Rejects an agent run as a unit: restores every file that existed before the task and deletes files the task created. Takes the task id from a prior checkpoint.",
+		schema:      `{"type":"object","properties":{"task_id":{"type":"string","description":"the checkpoint task id to undo"}},"required":["task_id"]}`,
+		readOnly:    false,
+	},
+	{
 		name:        "desk_note_new",
 		description: "Create a new note in the Symaira vault.",
 		schema:      `{"type":"object","properties":{"title":{"type":"string","description":"The title of the new note"},"content":{"type":"string","description":"The Markdown body content of the note"},"template":{"type":"string","description":"Optional template name to use"}},"required":["title","content"]}`,
@@ -389,6 +395,7 @@ func TestToolHandlersServiceError(t *testing.T) {
 		{"desk_ingest_jobs", `{}`},
 		{"meeting_list", `{}`},
 		{"meeting_get", `{"path":"meetings/nope.md"}`},
+		{"desk_undo_task", `{"task_id":"t1"}`},
 		{"desk_note_new", `{"title":"T","content":"C"}`},
 		{"desk_ingest", `{"source_path":"/tmp/x"}`},
 		{"doc_set_status", `{"file":"test.md","status":"done"}`},
@@ -411,6 +418,7 @@ func TestToolHandlersServiceError(t *testing.T) {
 		"desk_ingest_jobs":  newIngestJobsTool,
 		"meeting_list":      newMeetingListTool,
 		"meeting_get":       newMeetingGetTool,
+		"desk_undo_task":    newUndoTaskTool,
 		"desk_note_new":     newNoteNewTool,
 		"desk_ingest":       newIngestTool,
 		"doc_set_status":    newDocSetStatusTool,

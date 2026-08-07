@@ -57,6 +57,72 @@ func (s *Service) HistoryPrune(policy history.RetentionPolicy) (int, error) {
 	return s.History.Prune(policy)
 }
 
+// CheckpointBegin starts (or resumes) a task-scoped checkpoint so a whole
+// agent run can be rejected as one unit (issue #405).
+func (s *Service) CheckpointBegin(taskID string) (*history.Checkpoint, error) {
+	return s.History.BeginCheckpoint(taskID)
+}
+
+// CheckpointFiles records the pre-write state of relPaths under taskID,
+// lazily, before the task's first write (issue #405).
+func (s *Service) CheckpointFiles(taskID string, relPaths []string) (*history.Checkpoint, error) {
+	cp, err := s.History.BeginCheckpoint(taskID)
+	if err != nil {
+		return nil, err
+	}
+	for _, relPath := range relPaths {
+		absPath, err := vault.SecurePath(s.VaultRoot, relPath)
+		if err != nil {
+			return nil, err
+		}
+		rel, err := filepath.Rel(s.VaultRoot, absPath)
+		if err != nil {
+			return nil, err
+		}
+		cp, err = s.History.CheckpointFile(taskID, rel)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return cp, nil
+}
+
+// CheckpointUndo restores the pre-task state of a task as one unit:
+// recorded files are restored from their blobs, files created by the task
+// are deleted, and partial undos are reported (issue #405).
+func (s *Service) CheckpointUndo(taskID string) (*history.Checkpoint, error) {
+	cp, err := s.History.UndoCheckpoint(taskID)
+	if err != nil {
+		return nil, err
+	}
+	// Re-index every restored file so the sidecar matches the vault.
+	for _, f := range cp.Files {
+		absPath, err := vault.SecurePath(s.VaultRoot, f.RelPath)
+		if err != nil {
+			continue
+		}
+		if filepath.Ext(absPath) == ".md" {
+			if doc, err := vault.ParseFile(absPath); err == nil {
+				_ = s.IndexDocument(doc)
+			}
+		}
+	}
+	// Files the task created were deleted; drop them from the index too.
+	for _, rel := range cp.NewFiles {
+		absPath, err := vault.SecurePath(s.VaultRoot, rel)
+		if err != nil {
+			continue
+		}
+		_ = s.DeleteDocument(absPath)
+	}
+	return cp, nil
+}
+
+// CheckpointList lists all task checkpoints, newest first (issue #405).
+func (s *Service) CheckpointList() ([]history.Checkpoint, error) {
+	return s.History.ListCheckpoints()
+}
+
 // NoteDelete soft-deletes a vault file: the file moves to the vault-local
 // trash and is removed from the sidecar index.
 func (s *Service) NoteDelete(relPath string) (*history.TrashEntry, error) {

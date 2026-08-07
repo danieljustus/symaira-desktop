@@ -1,6 +1,7 @@
 package history
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -296,5 +297,164 @@ func TestTrashPurge(t *testing.T) {
 	entries, _ := s.List("a.md")
 	if len(entries) != 1 {
 		t.Fatal("trashed file content must be preserved as a snapshot")
+	}
+}
+
+// Regression test for issue #417: prune GC must never delete a blob that a
+// task checkpoint still references, even when the per-file manifest has aged
+// it out. Blobs are content-addressed and deduplicated, so a checkpoint
+// taken on an old, unchanged file references the same blob ID as an
+// aged-out manifest entry.
+func TestPruneKeepsCheckpointReferencedBlob(t *testing.T) {
+	root, s := newVault(t)
+	write(t, root, "notes/a.md", "v1")
+
+	if _, err := s.Snapshot("notes/a.md"); err != nil {
+		t.Fatal(err)
+	}
+	// The checkpoint references the same blob A as the manifest entry.
+	if _, err := s.CheckpointFile("task-a", "notes/a.md"); err != nil {
+		t.Fatal(err)
+	}
+	write(t, root, "notes/a.md", "v2")
+	if _, err := s.Snapshot("notes/a.md"); err != nil {
+		t.Fatal(err)
+	}
+
+	entries, err := s.List("notes/a.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 snapshots, got %d", len(entries))
+	}
+	blobA, blobB := entries[1].ID, entries[0].ID
+
+	removed, err := s.Prune(RetentionPolicy{MaxPerFile: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if removed != 1 {
+		t.Fatalf("removed = %d, want 1", removed)
+	}
+
+	// Blob A is still needed by the checkpoint and must survive the GC.
+	if _, err := os.Stat(filepath.Join(s.objectsDir(), blobA)); err != nil {
+		t.Fatalf("checkpoint-referenced blob %s was garbage-collected: %v", blobA, err)
+	}
+	if _, err := os.Stat(filepath.Join(s.objectsDir(), blobB)); err != nil {
+		t.Fatalf("kept blob %s missing: %v", blobB, err)
+	}
+	got, err := s.Content(blobA)
+	if err != nil || string(got) != "v1" {
+		t.Fatalf("Content(blobA) = %q, %v; want v1 (undo must still work)", got, err)
+	}
+}
+
+// backdateCheckpoint rewrites the checkpoint manifest on disk with the given
+// age, simulating a checkpoint created that long ago.
+func backdateCheckpoint(t *testing.T, s *Store, taskID string, age time.Duration) {
+	t.Helper()
+	cp, err := s.loadCheckpoint(taskID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cp.Timestamp = time.Now().UTC().Add(-age)
+	data, err := json.MarshalIndent(cp, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	path, err := s.checkpointPath(taskID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := writeFileAtomic(path, data, 0644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Aged-out checkpoints are pruned by MaxCheckpointAge while fresh ones
+// survive (issue #417 checkpoint retention path).
+func TestPruneRemovesOldCheckpoints(t *testing.T) {
+	root, s := newVault(t)
+	write(t, root, "a.md", "v1")
+	if _, err := s.CheckpointFile("task-a", "a.md"); err != nil {
+		t.Fatal(err)
+	}
+	write(t, root, "b.md", "v2")
+	if _, err := s.CheckpointFile("task-b", "b.md"); err != nil {
+		t.Fatal(err)
+	}
+
+	backdateCheckpoint(t, s, "task-a", 48*time.Hour)
+	backdateCheckpoint(t, s, "task-b", time.Hour)
+
+	removed, err := s.Prune(RetentionPolicy{MaxCheckpointAge: 24 * time.Hour})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if removed != 1 {
+		t.Fatalf("removed = %d, want 1 (only the aged-out checkpoint)", removed)
+	}
+
+	pa, _ := s.checkpointPath("task-a")
+	if _, err := os.Stat(pa); !os.IsNotExist(err) {
+		t.Fatalf("task-a manifest should be pruned, stat err = %v", err)
+	}
+	pb, _ := s.checkpointPath("task-b")
+	if _, err := os.Stat(pb); err != nil {
+		t.Fatalf("task-b manifest should survive, stat err = %v", err)
+	}
+}
+
+// After an aged-out checkpoint is pruned its blob loses protection and is
+// garbage-collected once no manifest references it, while the surviving
+// checkpoint's blob stays protected.
+func TestPruneCheckpointBlobProtected(t *testing.T) {
+	root, s := newVault(t)
+
+	write(t, root, "a.md", "a-v1")
+	if _, err := s.Snapshot("a.md"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.CheckpointFile("task-a", "a.md"); err != nil {
+		t.Fatal(err)
+	}
+	write(t, root, "a.md", "a-v2")
+	if _, err := s.Snapshot("a.md"); err != nil {
+		t.Fatal(err)
+	}
+
+	write(t, root, "b.md", "b-v1")
+	if _, err := s.Snapshot("b.md"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.CheckpointFile("task-b", "b.md"); err != nil {
+		t.Fatal(err)
+	}
+	write(t, root, "b.md", "b-v2")
+	if _, err := s.Snapshot("b.md"); err != nil {
+		t.Fatal(err)
+	}
+
+	entriesA, _ := s.List("a.md")
+	blobA := entriesA[1].ID // referenced only by the soon-to-be-pruned checkpoint
+	entriesB, _ := s.List("b.md")
+	blobB := entriesB[1].ID // referenced only by the surviving checkpoint
+
+	backdateCheckpoint(t, s, "task-a", 48*time.Hour)
+	backdateCheckpoint(t, s, "task-b", time.Hour)
+
+	if _, err := s.Prune(RetentionPolicy{MaxPerFile: 1, MaxCheckpointAge: 24 * time.Hour}); err != nil {
+		t.Fatal(err)
+	}
+
+	// task-a's checkpoint is gone, so its blob is now unreferenced and GC'd.
+	if _, err := os.Stat(filepath.Join(s.objectsDir(), blobA)); !os.IsNotExist(err) {
+		t.Fatalf("blob of pruned checkpoint should be garbage-collected, stat err = %v", err)
+	}
+	// task-b's checkpoint survives and still protects its blob.
+	if _, err := os.Stat(filepath.Join(s.objectsDir(), blobB)); err != nil {
+		t.Fatalf("blob of surviving checkpoint must not be garbage-collected: %v", err)
 	}
 }

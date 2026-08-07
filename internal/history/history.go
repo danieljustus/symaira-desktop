@@ -34,6 +34,11 @@ type RetentionPolicy struct {
 	// MaxAge drops snapshots older than this (0 = unlimited). The newest
 	// snapshot of a file is always kept regardless of age.
 	MaxAge time.Duration
+	// MaxCheckpointAge drops task checkpoints older than this (0 =
+	// unlimited). Aged-out checkpoints lose their blob protection before
+	// the GC runs, so their blobs become collectable once no manifest
+	// references them.
+	MaxCheckpointAge time.Duration
 }
 
 // Store manages snapshots and trash for a single vault.
@@ -205,9 +210,10 @@ func (s *Store) Restore(relPath, id string) (*Entry, error) {
 }
 
 // Prune applies the retention policy across all files and garbage-collects
-// unreferenced objects. It returns the number of snapshots removed.
+// unreferenced objects. Aged-out task checkpoints are pruned first, then the
+// surviving checkpoints' blobs are protected from GC. It returns the number
+// of snapshots and checkpoints removed.
 func (s *Store) Prune(policy RetentionPolicy) (int, error) {
-	manifestRoot := filepath.Join(s.historyDir(), "manifest")
 	removed := 0
 	referenced := map[string]bool{}
 	cutoff := time.Time{}
@@ -215,7 +221,44 @@ func (s *Store) Prune(policy RetentionPolicy) (int, error) {
 		cutoff = time.Now().UTC().Add(-policy.MaxAge)
 	}
 
-	err := filepath.Walk(manifestRoot, func(path string, info os.FileInfo, err error) error {
+	// Prune aged-out task checkpoints first, so their blobs lose protection
+	// before the reference scan below and can be collected once no manifest
+	// references them anymore.
+	if policy.MaxCheckpointAge > 0 {
+		cpCutoff := time.Now().UTC().Add(-policy.MaxCheckpointAge)
+		checkpoints, err := s.ListCheckpoints()
+		if err != nil {
+			return removed, err
+		}
+		for _, cp := range checkpoints {
+			if !cp.Timestamp.Before(cpCutoff) {
+				continue
+			}
+			path, err := s.checkpointPath(cp.TaskID)
+			if err != nil {
+				return removed, err
+			}
+			if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+				return removed, err
+			}
+			removed++
+		}
+	}
+
+	// Protect every blob still referenced by a surviving task checkpoint, so
+	// the content-addressed GC below never breaks a pending undo-task.
+	checkpoints, err := s.ListCheckpoints()
+	if err != nil {
+		return removed, err
+	}
+	for _, cp := range checkpoints {
+		for _, f := range cp.Files {
+			referenced[f.Entry.ID] = true
+		}
+	}
+
+	manifestRoot := filepath.Join(s.historyDir(), "manifest")
+	err = filepath.Walk(manifestRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			if os.IsNotExist(err) {
 				return nil

@@ -29,6 +29,7 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"desk_ingest_jobs",
 		"meeting_list",
 		"meeting_get",
+		"desk_read_result",
 		"desk_undo_task",
 		"desk_note_new",
 		"desk_ingest",
@@ -55,6 +56,7 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"desk_ingest_jobs": true,
 		"meeting_list":     true,
 		"meeting_get":      true,
+		"desk_read_result": true,
 	}
 
 	entries := registry.All()

@@ -120,6 +120,12 @@ var toolContracts = []toolContract{
 		readOnly:    true,
 	},
 	{
+		name:        "desk_read_result",
+		description: "Reads the full output of an externalized tool result by its handle (returned as \"[Full result externalized to <handle>…]\"). Use this to re-read a result that was summarized because it was large.",
+		schema:      `{"type":"object","properties":{"handle":{"type":"string","description":"the externalized-result handle from the tool output"}},"required":["handle"]}`,
+		readOnly:    true,
+	},
+	{
 		name:        "desk_undo_task",
 		description: "Rejects an agent run as a unit: restores every file that existed before the task and deletes files the task created. Takes the task id from a prior checkpoint.",
 		schema:      `{"type":"object","properties":{"task_id":{"type":"string","description":"the checkpoint task id to undo"}},"required":["task_id"]}`,
@@ -395,6 +401,7 @@ func TestToolHandlersServiceError(t *testing.T) {
 		{"desk_ingest_jobs", `{}`},
 		{"meeting_list", `{}`},
 		{"meeting_get", `{"path":"meetings/nope.md"}`},
+		{"desk_read_result", `{"handle":"task-1/desk_ls-001.txt"}`},
 		{"desk_undo_task", `{"task_id":"t1"}`},
 		{"desk_note_new", `{"title":"T","content":"C"}`},
 		{"desk_ingest", `{"source_path":"/tmp/x"}`},
@@ -418,6 +425,7 @@ func TestToolHandlersServiceError(t *testing.T) {
 		"desk_ingest_jobs":  newIngestJobsTool,
 		"meeting_list":      newMeetingListTool,
 		"meeting_get":       newMeetingGetTool,
+		"desk_read_result":  newReadResultTool,
 		"desk_undo_task":    newUndoTaskTool,
 		"desk_note_new":     newNoteNewTool,
 		"desk_ingest":       newIngestTool,

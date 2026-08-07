@@ -86,6 +86,7 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(true, newIngestJobsTool(options.GetService)),
 		entry(true, newMeetingListTool(options.GetService)),
 		entry(true, newMeetingGetTool(options.GetService)),
+		entry(true, newReadResultTool(options.GetService)),
 		entry(false, newUndoTaskTool(options.GetService)),
 		entry(false, newNoteNewTool(options.GetService)),
 		entry(false, newIngestTool(options.GetService)),
@@ -178,6 +179,35 @@ func newStatusTool(cfg *config.Config, allowWrite bool, version string) *Tool {
 				status["capabilities"] = "read_only"
 			}
 			return status, nil
+		},
+	}
+}
+
+// newReadResultTool reads back an externalized tool result by its handle
+// (issue #406). Handles are opaque task-scoped references like
+// "task-…/desk_search-001.txt"; resolution is confined to the per-vault
+// results area, so the tool cannot be used to read arbitrary files.
+func newReadResultTool(getService ServiceFactory) *Tool {
+	return &Tool{
+		Name:        "desk_read_result",
+		Description: "Reads the full output of an externalized tool result by its handle (returned as \"[Full result externalized to <handle>…]\"). Use this to re-read a result that was summarized because it was large.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"handle":{"type":"string","description":"the externalized-result handle from the tool output"}},"required":["handle"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				Handle string `json:"handle"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.Handle == "" {
+				return nil, fmt.Errorf("handle is required")
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer func() { _ = db.Close() }()
+			return ai.ReadExternalized(ai.ResultsRoot(svc.VaultRoot), args.Handle)
 		},
 	}
 }

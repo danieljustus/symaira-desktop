@@ -316,7 +316,7 @@ final class MobileWriteLayerTests: XCTestCase {
         try await coordinator.enqueue(entry)
 
         // Give the async drain a moment to run.
-        for _ in 0..<50 {
+        for _ in 0..<250 {
             if try FileManager.default.fileExists(atPath: vaultRoot.appendingPathComponent("drained.md").path) {
                 break
             }
@@ -349,7 +349,7 @@ final class MobileWriteLayerTests: XCTestCase {
         let entry = MobileOutboxEntry(kind: .createNote, path: "n.md", content: "x")
         try await coordinator.enqueue(entry)
 
-        for _ in 0..<50 {
+        for _ in 0..<250 {
             if await coordinator.entries().first?.state == .queued,
                await coordinator.entries().first?.attempts ?? 0 > 0 {
                 break

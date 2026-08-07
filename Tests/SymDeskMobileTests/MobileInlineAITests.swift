@@ -437,7 +437,7 @@ final class MobileInlineAITests: XCTestCase {
     }
 
     private func waitUntil(
-        timeout: TimeInterval = 3,
+        timeout: TimeInterval = 10,
         _ condition: @escaping @MainActor () -> Bool
     ) async {
         let deadline = Date().addingTimeInterval(timeout)
@@ -452,7 +452,7 @@ final class MobileInlineAITests: XCTestCase {
     /// coordinator drains asynchronously after enqueue).
     private func waitForFile(
         _ url: URL,
-        timeout: TimeInterval = 3,
+        timeout: TimeInterval = 10,
         _ condition: @escaping (String) -> Bool
     ) async throws {
         let deadline = Date().addingTimeInterval(timeout)

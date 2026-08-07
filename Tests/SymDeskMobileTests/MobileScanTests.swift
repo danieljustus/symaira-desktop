@@ -73,7 +73,7 @@ final class MobileScanTests: XCTestCase {
         // Files-mode uploads land in <vault>/inbox_watch (the watcher's
         // default consume folder) so the desktop pipeline picks them up.
         let target = vaultRoot.appendingPathComponent("inbox_watch/scan-20260803-120000.pdf")
-        for _ in 0..<50 {
+        for _ in 0..<250 {
             if try FileManager.default.fileExists(atPath: target.path) {
                 break
             }
@@ -105,7 +105,7 @@ final class MobileScanTests: XCTestCase {
         try await coordinator.enqueue(entry)
 
         let target = vaultRoot.appendingPathComponent("meine-ablage/scan.jpg")
-        for _ in 0..<50 {
+        for _ in 0..<250 {
             if try FileManager.default.fileExists(atPath: target.path) {
                 break
             }

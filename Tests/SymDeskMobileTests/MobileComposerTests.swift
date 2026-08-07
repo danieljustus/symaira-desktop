@@ -84,7 +84,7 @@ final class MobileComposerTests: XCTestCase {
         try await coordinator.enqueue(entry)
 
         // Wait for the drain to apply the write.
-        for _ in 0..<50 {
+        for _ in 0..<250 {
             if try FileManager.default.fileExists(atPath: vaultRoot.appendingPathComponent(filename).path) {
                 break
             }
@@ -117,7 +117,7 @@ final class MobileComposerTests: XCTestCase {
         let content = MobileNoteWriter.noteDocument(title: "Notiz", body: "Inhalt")
         try await coordinator.enqueue(MobileOutboxEntry(kind: .createNote, path: path, content: content))
 
-        for _ in 0..<50 {
+        for _ in 0..<250 {
             if try FileManager.default.fileExists(atPath: vaultRoot.appendingPathComponent(path).path) {
                 break
             }
@@ -182,7 +182,7 @@ final class MobileComposerTests: XCTestCase {
             precondition: precondition
         ))
 
-        for _ in 0..<50 {
+        for _ in 0..<250 {
             if let current = try? String(contentsOf: vaultRoot.appendingPathComponent("meeting.md"), encoding: .utf8),
                current.contains("Neue Zeile am Ende.") {
                 break

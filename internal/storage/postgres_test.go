@@ -143,7 +143,7 @@ func TestPostgresInvalidKey(t *testing.T) {
 	if err := backend.Set(ctx, "", []byte("x")); !errors.Is(err, ErrInvalidKey) {
 		t.Fatalf("Set(\"\") = %v, want ErrInvalidKey", err)
 	}
-	if err := backend.Get(ctx, ""); !errors.Is(err, ErrInvalidKey) {
+	if _, err := backend.Get(ctx, ""); !errors.Is(err, ErrInvalidKey) {
 		t.Fatalf("Get(\"\") = %v, want ErrInvalidKey", err)
 	}
 }

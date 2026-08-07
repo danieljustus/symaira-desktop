@@ -11,17 +11,18 @@ import (
 func writeVaultFile(t *testing.T, root, rel, content string) {
 	t.Helper()
 	path := filepath.Join(root, filepath.FromSlash(rel))
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func readVaultFile(t *testing.T, root, rel string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel)))
+	// Test helper: reads a known file inside the test's own temp vault.
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel))) //nolint:gosec // G304: test helper confined to t.TempDir
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,10 +43,12 @@ func TestCheckpointUndoRestoresAsUnit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	_ = cp
 	cp, err = store.CheckpointFile("task-1", "notes/b.md")
 	if err != nil {
 		t.Fatal(err)
 	}
+	_ = cp
 	// The task is expected to create notes/c.md: checkpoint it now (it does
 	// not exist yet → recorded as new) so undo can delete it.
 	cp, err = store.CheckpointFile("task-1", "notes/c.md")
@@ -122,6 +125,7 @@ func TestCheckpointFileIsLazyAndIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	_ = cp
 	if len(cp.Files) != 1 {
 		t.Fatalf("expected exactly one recorded file, got %d", len(cp.Files))
 	}
@@ -141,7 +145,7 @@ func TestCheckpointReportsPartialOnSnapshotFailure(t *testing.T) {
 	store := NewStore(root)
 	// A directory cannot be snapshotted as a file → skipped.
 	dirPath := filepath.Join(root, "blocked")
-	if err := os.MkdirAll(dirPath, 0o755); err != nil {
+	if err := os.MkdirAll(dirPath, 0o750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -221,7 +225,8 @@ func TestCheckpointReusesBlobStore(t *testing.T) {
 	}
 	// And the manifest lives under history/checkpoints.
 	manifest := filepath.Join(root, ".symdesk", "history", "checkpoints", "t.json")
-	data, err := os.ReadFile(manifest)
+	// Test reads its own generated manifest; the path is fixed by the test.
+	data, err := os.ReadFile(manifest) //nolint:gosec // G304: fixed test fixture path under t.TempDir
 	if err != nil {
 		t.Fatal(err)
 	}

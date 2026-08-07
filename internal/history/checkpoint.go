@@ -223,7 +223,9 @@ func (s *Store) loadCheckpoint(taskID string) (*Checkpoint, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(path)
+	// checkpointPath validates taskID (no traversal, no separators), so the
+	// manifest read is confined to the checkpoints dir.
+	data, err := os.ReadFile(path) //nolint:gosec // G304: taskID validated by validateTaskID via checkpointPath
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +237,7 @@ func (s *Store) loadCheckpoint(taskID string) (*Checkpoint, error) {
 }
 
 func (s *Store) saveCheckpoint(cp *Checkpoint) error {
-	if err := os.MkdirAll(s.checkpointsDir(), 0755); err != nil {
+	if err := os.MkdirAll(s.checkpointsDir(), 0o750); err != nil {
 		return err
 	}
 	path, err := s.checkpointPath(cp.TaskID)

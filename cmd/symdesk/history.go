@@ -107,7 +107,7 @@ func newHistoryCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
 			svc := service.New(vRoot, db)
 			var cp *history.Checkpoint
 			if len(args) == 1 {
@@ -140,7 +140,7 @@ func newHistoryCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
 			checkpoints, err := service.New(vRoot, db).CheckpointList()
 			if err != nil {
 				return err
@@ -175,7 +175,7 @@ func newHistoryCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
 			cp, err := service.New(vRoot, db).CheckpointUndo(args[0])
 			if err != nil {
 				return err

@@ -310,6 +310,15 @@ func TestValidateHistoryMaxAgeDaysNegative(t *testing.T) {
 	}
 }
 
+func TestValidateHistoryCheckpointMaxAgeDaysNegative(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.HistoryCheckpointMaxAgeDays = -1
+	findings := cfg.Validate()
+	if !hasFinding(findings, "history_checkpoint_max_age_days") {
+		t.Error("expected finding for negative history_checkpoint_max_age_days")
+	}
+}
+
 func TestValidateNonExistentVaultPath(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.Vault = "/nonexistent/vault/path"

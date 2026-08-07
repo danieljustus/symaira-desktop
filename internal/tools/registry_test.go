@@ -29,6 +29,7 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"desk_ingest_jobs",
 		"meeting_list",
 		"meeting_get",
+		"desk_undo_task",
 		"desk_note_new",
 		"desk_ingest",
 		"doc_set_status",

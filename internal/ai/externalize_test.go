@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
 )
@@ -108,6 +109,27 @@ func TestSummarizeCapsInlinePreview(t *testing.T) {
 	}
 	if !strings.Contains(s, "desk_read_result") {
 		t.Error("summary must mention the read tool")
+	}
+}
+
+func TestSummarizeNeverSplitsRune(t *testing.T) {
+	// Multi-byte runes (umlauts, emoji) must never be cut mid-sequence:
+	// the inline summary stays valid UTF-8 even when the byte cut lands
+	// inside a rune, and an exact rune-boundary cut loses no bytes.
+	big := strings.Repeat("äöüß", 3000) // 4 runes × 2 bytes each
+	note := "\n…[externalized — full result via desk_read_result]"
+	for _, max := range []int{5000, 5001, 5002, 4999} {
+		s := summarize(big, max)
+		if !utf8.ValidString(s) {
+			t.Fatalf("summary (max=%d) contains invalid UTF-8", max)
+		}
+		if !strings.HasSuffix(s, note) {
+			t.Errorf("summary (max=%d) must still end with the read-tool note", max)
+		}
+		cut := strings.TrimSuffix(s, note)
+		if !strings.HasPrefix(big, cut) || len(cut) > max {
+			t.Errorf("summary (max=%d) must be a prefix of the result (cut=%d bytes)", max, len(cut))
+		}
 	}
 }
 

@@ -6,8 +6,19 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+// pgxPool is the minimal connection-pool surface PostgresBackend needs. It
+// is satisfied by *pgxpool.Pool in production and by pgxmock in tests.
+type pgxPool interface {
+	Ping(ctx context.Context) error
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Close()
+}
 
 // PostgresBackend implements StorageBackend on PostgreSQL for production
 // self-hosting deployments. It owns the connection pool passed in by
@@ -16,10 +27,11 @@ import (
 // byte order (COLLATE "C") to match the contract's "sorted by key" guarantee
 // regardless of the cluster's locale.
 type PostgresBackend struct {
-	pool *pgxpool.Pool
+	pool pgxPool
 }
 
 var _ StorageBackend = (*PostgresBackend)(nil)
+var _ pgxPool = (*pgxpool.Pool)(nil)
 
 // OpenPostgres connects to PostgreSQL using a pgx connection string or URL
 // (e.g. "postgres://user:pass@host:5432/dbname" or the pgx keyword format)

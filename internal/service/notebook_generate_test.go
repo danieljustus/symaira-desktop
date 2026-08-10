@@ -56,7 +56,7 @@ func TestNotebookGenerate_BuiltinKind_WritesContractConformArtifact(t *testing.T
 		t.Errorf("Path = %q, want %q", res.Path, wantPath)
 	}
 
-	data, err := os.ReadFile(filepath.Join(svc.VaultRoot, wantPath))
+	data, err := os.ReadFile(filepath.Join(svc.VaultRoot, wantPath)) //nolint:gosec // wantPath is a fixed test-constructed path under t.TempDir()
 	if err != nil {
 		t.Fatalf("artifact was not written: %v", err)
 	}
@@ -256,7 +256,7 @@ func TestNotebookGenerate_RegenerateSnapshotsPreviousVersion(t *testing.T) {
 	if _, err := svc.HistoryRestore(relPath, ""); err != nil {
 		t.Fatalf("restore: %v", err)
 	}
-	data, err := os.ReadFile(filepath.Join(svc.VaultRoot, relPath))
+	data, err := os.ReadFile(filepath.Join(svc.VaultRoot, relPath)) //nolint:gosec // relPath is a fixed test-constructed path under t.TempDir()
 	if err != nil {
 		t.Fatal(err)
 	}

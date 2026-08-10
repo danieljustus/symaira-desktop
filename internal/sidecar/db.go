@@ -779,7 +779,7 @@ func (db *DB) GetAllLinks() ([]Edge, error) {
 // DocsFilter holds optional filters for DocsList.
 type DocsFilter struct {
 	Type          string // document_type frontmatter value (e.g. "invoice")
-	FileType      string // file kind: note|document|meeting
+	FileType      string // file kind: note|document|meeting|notebook
 	Status        string // enum status
 	Person        string // household member
 	Correspondent string // correspondent name

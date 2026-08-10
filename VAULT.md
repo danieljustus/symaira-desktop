@@ -1,10 +1,10 @@
 # Symaira Vault Contract
 
-**contract_version: 3**
+**contract_version: 4**
 
 This document specifies the format and constraints of a Symaira Vault. Any application or service interacting with the Vault MUST comply with this contract to ensure interoperability across the ecosystem (e.g., `symaira-desktop`, `symaira-ingest`, `symaira-seek`).
 
-> **Backwards compatibility:** Contract v3 is additive. Parsers MUST preserve unknown fields. Vaults using only v1/v2 fields continue to work; the new optional fields are only meaningful for document-oriented notes.
+> **Backwards compatibility:** Contract v4 is additive. Parsers MUST preserve unknown fields. Vaults using only v1/v2/v3 fields continue to work; the new optional fields are only meaningful for notebook notes (section 10).
 
 ## 1. Vault Structure
 - **Root Directory:** A Vault is a directory on the local filesystem containing Markdown files and optional attachments.
@@ -23,21 +23,24 @@ The following YAML fields are defined by this contract. Parsers MUST preserve un
 - `created` (string, ISO-8601): The creation timestamp of the note.
 - `tags` (array of strings): A list of tags. Can be empty `[]`.
 
-### Document Kind (contract_version 3)
-The `type` field classifies every markdown file in the vault into one of three kinds:
+### Document Kind (contract_version 4)
+The `type` field classifies every markdown file in the vault into one of four kinds:
 
 - `note` (default): A free-form note or journal entry.
 - `document`: An imported or ingested document with structured metadata (e.g. invoices, letters, contracts).
 - `meeting`: A meeting note imported by `symmeet` (see section 8).
+- `notebook`: A named, bounded set of vault sources used to scope AI grounding, retrieval and generated artifacts (see section 10). Added in contract_version 4.
 
-**Explicit declaration:** A file with `type: note`, `type: document`, or `type: meeting` in its frontmatter is classified accordingly. Meeting-specific fields (section 8) SHOULD be paired with `type: meeting`.
+**Explicit declaration:** A file with `type: note`, `type: document`, `type: meeting`, or `type: notebook` in its frontmatter is classified accordingly. Meeting-specific fields (section 8) SHOULD be paired with `type: meeting`; notebook-specific fields (section 10) SHOULD be paired with `type: notebook`.
 
 **Inference when absent:** A file with no `type` field is resolved at index time by the following rules (evaluated in order; the first match wins):
 1. If the frontmatter contains any of `source_path`, `mime`, `sha256`, `document_date`, or `asn` → the file is classified as `document`.
 2. If the frontmatter contains `meeting_id` → the file is classified as `meeting`.
 3. Otherwise → the file is classified as `note`.
 
-> **Backwards compatibility:** Contract v3 adds the `type` field. Existing vaults work without it — every file without `type` is classified at index time by inference. Parsers MUST treat an absent `type` as `note` when no inference triggers.
+`notebook` is never inferred — a `sources` list alone is not a strong enough signal, since a free-form note can legitimately link related files without being a notebook. A notebook note MUST declare `type: notebook` explicitly.
+
+> **Backwards compatibility:** Contract v3 added the `type` field; contract v4 adds the `notebook` kind. Existing vaults work without either — every file without `type` is classified at index time by inference, and a vault with no notebooks behaves exactly as a v1/v2/v3 vault always has. Parsers MUST treat an absent `type` as `note` when no inference triggers.
 
 ### Optional/Integration Fields (e.g., for `symaira-ingest`)
 The contract fully accepts and standardizes the following fields commonly written by `symingest`:
@@ -144,3 +147,19 @@ SymDesk never mutates the raw `symmeet` artifact directory: corrections to speak
 - **Attended relation:** for every participant with a confirmed `entity_id` (section 8), publish creates an `attended` relation from that person's Memory entity to the meeting entity. Relations are idempotent at the symmemory layer, so creating them on every publish is safe and expected.
 - Every published fact is stored in Memory scoped to (linked to) the meeting entity, so every write traces back to its source meeting. Reviewers may optionally prepend/append a transcript segment timestamp to a fact's text before publishing, as an additional evidence marker; SymDesk does not enforce or structure this — it is free text the reviewer controls.
 - Content published to Memory passes through symmemory's own automatic PII redaction (email addresses, phone numbers, API keys/credentials, credit card numbers) before storage. This happens transparently inside symmemory itself; SymDesk does not implement a separate content guard.
+
+## 10. Notebooks (contract_version 4)
+A notebook is a named, bounded set of vault sources (`symdesk notebook`, see the CLI help). It is an ordinary Markdown note — there is no separate database and no new source of truth. AI features (ask, the agentic loop, generated artifacts) can be scoped to a notebook so retrieval and citations are bounded to its sources instead of the whole vault.
+
+- `type` (string, `"notebook"`): marks a note as a notebook (section 3). Notes without this field are unaffected by any notebook-specific behavior.
+- `notebook_id` (string): a stable identifier for the notebook, generated once at creation and never changed by a rename. Other surfaces (MCP, HTTP API) address a notebook by this ID.
+- `sources` (array of strings): vault-relative paths of the files that make up the notebook's scope. A path MUST resolve inside the vault (section 1 sanitization rules apply); paths outside the vault or containing traversal segments MUST be rejected, not silently dropped.
+- `description` (string, optional): a short human-readable description of the notebook's purpose.
+
+**Storage convention:** notebook notes live under `notebooks/<slug>.md` at the vault root, where `<slug>` is derived from the title at creation time (mirrors the `meetings/meeting-<id>.md` convention in section 8).
+
+**Source visibility as backlinks:** a notebook's body lists its sources as wikilinks (e.g. `[[invoice-2026-03]]`) under a `## Sources` heading, regenerated from the `sources` frontmatter field on every `symdesk notebook` write. This is the same mechanism the vault already uses for backlinks (section 4) — no new link type is introduced. The `sources` frontmatter field is authoritative; the `## Sources` heading is a derived, human-readable view, the same way `symdesk meeting import` treats the transcript markers in section 8 — hand edits to that section are not read back and are overwritten on the next write.
+
+**Removing a source never deletes the referenced file.** A notebook only references other vault files; it never owns their lifecycle.
+
+> **Backwards compatibility:** Contract v4 adds the `notebook` type and its frontmatter fields. A vault with no notebooks indexes and behaves exactly as a v1/v2/v3 vault always has.

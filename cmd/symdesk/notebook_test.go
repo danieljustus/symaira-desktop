@@ -39,7 +39,9 @@ func TestNotebookCLI_NewListShowAddRemoveDelete(t *testing.T) {
 	t.Cleanup(func() { jsonFlag = false })
 
 	newCmd := findSubcommand(t, notebookCmd, "new")
-	newCmd.Flags().Set("description", "notes on X")
+	if err := newCmd.Flags().Set("description", "notes on X"); err != nil {
+		t.Fatal(err)
+	}
 	out, err := runCommand(t, newCmd, []string{"Research X"})
 	if err != nil {
 		t.Fatalf("notebook new: %v (out=%s)", err, out)

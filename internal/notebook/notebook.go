@@ -147,7 +147,7 @@ func Load(vaultRoot, relPath string) (*Notebook, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(absPath)
+	data, err := os.ReadFile(absPath) //nolint:gosec // absPath was already validated by vault.SecurePath above
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, ErrNotFound
@@ -314,14 +314,14 @@ func write(vaultRoot string, nb *Notebook) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(absPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(absPath), 0750); err != nil {
 		return fmt.Errorf("create notebooks directory: %w", err)
 	}
 	content, err := render(nb)
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(absPath, content, 0644); err != nil {
+	if err := os.WriteFile(absPath, content, 0600); err != nil {
 		return fmt.Errorf("write notebook note: %w", err)
 	}
 	return nil
@@ -357,7 +357,7 @@ func render(nb *Notebook) ([]byte, error) {
 	}
 	for _, src := range nb.Sources {
 		name := strings.TrimSuffix(filepath.Base(src), filepath.Ext(src))
-		body.WriteString(fmt.Sprintf("- [[%s]] (`%s`)\n", name, src))
+		fmt.Fprintf(&body, "- [[%s]] (`%s`)\n", name, src)
 	}
 
 	full := "---\n" + string(fmBytes) + "---\n\n" + body.String()

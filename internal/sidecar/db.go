@@ -492,7 +492,7 @@ func (db *DB) SearchScoped(query string, allowedPaths []string) ([]*vault.Docume
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var docs []*vault.Document
 	for rows.Next() {

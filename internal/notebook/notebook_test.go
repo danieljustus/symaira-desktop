@@ -15,10 +15,10 @@ func newTestVault(t *testing.T) string {
 func writeVaultFile(t *testing.T, vaultRoot, rel, content string) {
 	t.Helper()
 	abs := filepath.Join(vaultRoot, rel)
-	if err := os.MkdirAll(filepath.Dir(abs), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(abs), 0750); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(abs, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(abs, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -52,7 +52,7 @@ func TestNew_CreatesContractConformNote(t *testing.T) {
 	}
 
 	abs := filepath.Join(vaultRoot, nb.Path)
-	data, err := os.ReadFile(abs)
+	data, err := os.ReadFile(abs) //nolint:gosec // abs is built from t.TempDir() in this test
 	if err != nil {
 		t.Fatalf("read created note: %v", err)
 	}
@@ -227,7 +227,7 @@ func TestAddSource_IsIdempotentAndPersists(t *testing.T) {
 	}
 
 	abs := filepath.Join(vaultRoot, nb.Path)
-	data, err := os.ReadFile(abs)
+	data, err := os.ReadFile(abs) //nolint:gosec // abs is built from t.TempDir() in this test
 	if err != nil {
 		t.Fatal(err)
 	}

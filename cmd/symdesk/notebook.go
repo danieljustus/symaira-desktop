@@ -22,7 +22,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			svc := service.New(vRoot, db)
 
 			nb, err := svc.NotebookNew(args[0], description)
@@ -43,7 +43,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			svc := service.New(vRoot, db)
 
 			list, err := svc.NotebookList()
@@ -64,7 +64,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			svc := service.New(vRoot, db)
 
 			nb, err := svc.NotebookGet(args[0])
@@ -96,7 +96,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			svc := service.New(vRoot, db)
 
 			nb, err := svc.NotebookAddSource(args[0], args[1])
@@ -117,7 +117,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			svc := service.New(vRoot, db)
 
 			nb, err := svc.NotebookRemoveSource(args[0], args[1])
@@ -138,7 +138,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			svc := service.New(vRoot, db)
 
 			if err := svc.NotebookDelete(args[0]); err != nil {

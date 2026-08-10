@@ -154,7 +154,7 @@ func TestAskScoped_FlagsOutOfScopeCitationAsWarning(t *testing.T) {
 	// escapes decoding to real newlines inside the "response" field — a raw
 	// newline byte in the HTTP body itself would break the NDJSON framing.
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, `{"response":"Answer text.\n\n## Sources\n- [[%s]]\n- [[%s]]\n","done":true}`+"\n", inScope, outOfScope)
+		_, _ = fmt.Fprintf(w, `{"response":"Answer text.\n\n## Sources\n- [[%s]]\n- [[%s]]\n","done":true}`+"\n", inScope, outOfScope)
 	}))
 	defer srv.Close()
 	t.Setenv("SYMDESK_OLLAMA_URL", srv.URL)

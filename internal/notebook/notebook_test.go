@@ -1,6 +1,7 @@
 package notebook
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -174,6 +175,36 @@ func TestList_EmptyVaultReturnsEmptySlice(t *testing.T) {
 	if len(list) != 0 {
 		t.Errorf("len(list) = %d, want 0", len(list))
 	}
+	// Same cross-language JSON contract as sources (see
+	// TestNew_SourcesNeverSerializesAsJSONNull): a nil slice marshals as
+	// `null`, which native array-typed Decodable clients cannot decode.
+	raw, err := json.Marshal(list)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(raw) != "[]" {
+		t.Errorf("List() of an empty vault marshaled to %s, want []", raw)
+	}
+}
+
+// TestList_AfterEveryNotebookRemovedReturnsEmptySlice covers the loop path
+// in List (notebooks/ exists but every entry was skipped or trashed),
+// distinct from the "directory absent" path already covered above.
+func TestList_AfterEveryNotebookRemovedReturnsEmptySlice(t *testing.T) {
+	vaultRoot := newTestVault(t)
+	writeVaultFile(t, vaultRoot, "notebooks/not-a-notebook.md", "---\ntitle: Plain\ncreated: \"2026-01-01\"\ntags: []\n---\nbody\n")
+
+	list, err := List(vaultRoot)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	raw, err := json.Marshal(list)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(raw) != "[]" {
+		t.Errorf("List() with only a skipped non-notebook file marshaled to %s, want []", raw)
+	}
 }
 
 func TestAddSource_RejectsPathTraversal(t *testing.T) {
@@ -298,5 +329,44 @@ func TestResolveSources_ReportsMissingWithoutFailing(t *testing.T) {
 	}
 	if !byPath["docs/gone.md"].Missing {
 		t.Errorf("gone.md ref = %+v, want Missing=true", byPath["docs/gone.md"])
+	}
+}
+
+// TestNew_SourcesNeverSerializesAsJSONNull guards a real cross-language
+// contract bug: Go's encoding/json marshals a nil []string as the literal
+// `null`, which Swift's Decodable cannot decode into a non-optional array
+// field (the macOS app's Notebook.sources) — it fails with a generic
+// "data couldn't be read" error with no indication which field caused it.
+// An empty notebook must serialize as "sources":[], never "sources":null.
+func TestNew_SourcesNeverSerializesAsJSONNull(t *testing.T) {
+	vaultRoot := newTestVault(t)
+	nb, err := New(vaultRoot, "Empty Notebook", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	raw, err := json.Marshal(nb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), `"sources":null`) {
+		t.Fatalf("sources serialized as null, want []: %s", raw)
+	}
+	if !strings.Contains(string(raw), `"sources":[]`) {
+		t.Fatalf("expected \"sources\":[] in output: %s", raw)
+	}
+
+	// Also verify the on-disk round trip through Load (parse()), not only
+	// the freshly constructed value from New().
+	reloaded, err := Load(vaultRoot, nb.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err = json.Marshal(reloaded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), `"sources":null`) {
+		t.Fatalf("reloaded sources serialized as null, want []: %s", raw)
 	}
 }

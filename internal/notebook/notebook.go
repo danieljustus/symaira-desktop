@@ -134,6 +134,11 @@ func New(vaultRoot, title, description string) (*Notebook, error) {
 		Title:       title,
 		Description: description,
 		Created:     time.Now().UTC().Format(time.RFC3339),
+		// Never nil: Go's encoding/json marshals a nil slice as JSON null,
+		// which native Decodable clients (the macOS app) cannot decode into
+		// a non-optional array field. An empty notebook is `sources: []`,
+		// not `sources: null`.
+		Sources: []string{},
 	}
 	if err := write(vaultRoot, nb); err != nil {
 		return nil, err
@@ -195,7 +200,10 @@ func List(vaultRoot string) ([]*Notebook, error) {
 		return nil, err
 	}
 
-	var out []*Notebook
+	// Never nil, for the same JSON-null-vs-empty-array reason as Sources
+	// above: notebooks/ existing with zero valid notebooks in it is a
+	// legitimate empty result, not an absent one.
+	out := []*Notebook{}
 	for _, e := range entries {
 		if e.IsDir() || filepath.Ext(e.Name()) != ".md" {
 			continue
@@ -382,7 +390,9 @@ func parse(relPath string, data []byte) (*Notebook, error) {
 	}
 	description, _ := doc.Frontmatter["description"].(string)
 
-	var sources []string
+	// Never nil (see the same comment in New): an empty notebook must
+	// serialize as `sources: []`, not `sources: null`.
+	sources := []string{}
 	if raw, ok := doc.Frontmatter["sources"]; ok {
 		switch v := raw.(type) {
 		case []interface{}:

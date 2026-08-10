@@ -149,5 +149,31 @@ func newNotebookCmd() *cobra.Command {
 	}
 	notebookCmd.AddCommand(deleteCmd)
 
+	generateCmd := &cobra.Command{
+		Use:   "generate [notebook]",
+		Short: "Generate a studio artifact (briefing, study-guide, faq, timeline, or a custom templates/notebook-<kind>.md kind) from a notebook's sources",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			kind, _ := cmd.Flags().GetString("kind")
+			dryRun, _ := cmd.Flags().GetBool("dry-run")
+			vRoot, db, err := initServiceDeps()
+			if err != nil {
+				return err
+			}
+			defer func() { _ = db.Close() }()
+			svc := service.New(vRoot, db)
+
+			res, err := svc.NotebookGenerate(args[0], kind, dryRun)
+			if err != nil {
+				return err
+			}
+			return outputResult(res)
+		},
+	}
+	generateCmd.Flags().String("kind", "", "artifact kind: briefing, study-guide, faq, timeline, or a custom templates/notebook-<kind>.md kind")
+	generateCmd.Flags().Bool("dry-run", false, "generate and show the artifact without writing it to the vault")
+	_ = generateCmd.MarkFlagRequired("kind")
+	notebookCmd.AddCommand(generateCmd)
+
 	return notebookCmd
 }

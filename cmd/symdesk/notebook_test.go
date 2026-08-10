@@ -2,6 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -147,5 +150,84 @@ func TestNotebookCLI_AddSourceErrorSurfacesToUser(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "traversal") && !strings.Contains(err.Error(), "outside") {
 		t.Errorf("expected a traversal/outside-vault error, got: %v", err)
+	}
+}
+
+func TestNotebookCLI_GenerateRequiresKindFlag(t *testing.T) {
+	withTestVault(t)
+
+	newCmd := findSubcommand(t, newNotebookCmd(), "new")
+	if _, err := runCommand(t, newCmd, []string{"Gen Test"}); err != nil {
+		t.Fatal(err)
+	}
+
+	// MarkFlagRequired is enforced by cobra's own Execute(), not by calling
+	// RunE directly, so exercise it through rootCmd.Execute() instead of
+	// runCommand (which calls RunE directly, bypassing flag validation).
+	rootCmd := &cobra.Command{Use: "test"}
+	rootCmd.AddCommand(newNotebookCmd())
+	rootCmd.SetArgs([]string{"notebook", "generate", "gen-test"})
+	rootCmd.SilenceUsage = true
+	rootCmd.SilenceErrors = true
+	if err := rootCmd.Execute(); err == nil {
+		t.Fatal("expected an error when --kind is omitted")
+	}
+}
+
+func TestNotebookCLI_GenerateRegistered(t *testing.T) {
+	notebookCmd := newNotebookCmd()
+	generateCmd := findSubcommand(t, notebookCmd, "generate")
+	if generateCmd.Flags().Lookup("kind") == nil {
+		t.Error("generate command missing --kind flag")
+	}
+	if generateCmd.Flags().Lookup("dry-run") == nil {
+		t.Error("generate command missing --dry-run flag")
+	}
+}
+
+func TestNotebookCLI_GenerateEndToEnd(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = fmt.Fprintln(w, `{"response":"CLI-generated briefing.","done":true}`)
+	}))
+	defer srv.Close()
+	t.Setenv("SYMDESK_OLLAMA_URL", srv.URL)
+	withTestVault(t)
+
+	notebookCmd := newNotebookCmd()
+	jsonFlag = true
+	t.Cleanup(func() { jsonFlag = false })
+
+	newNoteCmd := findSubcommand(t, newNoteCmd(), "new")
+	if err := newNoteCmd.Flags().Set("title", "CLI Source Doc"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := runCommand(t, newNoteCmd, []string{"source body content"}); err != nil {
+		t.Fatal(err)
+	}
+
+	newCmd := findSubcommand(t, notebookCmd, "new")
+	if _, err := runCommand(t, newCmd, []string{"CLI Notebook"}); err != nil {
+		t.Fatal(err)
+	}
+
+	addCmd := findSubcommand(t, notebookCmd, "add-source")
+	if _, err := runCommand(t, addCmd, []string{"cli-notebook", "CLI_Source_Doc.md"}); err != nil {
+		t.Fatal(err)
+	}
+
+	generateCmd := findSubcommand(t, notebookCmd, "generate")
+	if err := generateCmd.Flags().Set("kind", "briefing"); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCommand(t, generateCmd, []string{"cli-notebook"})
+	if err != nil {
+		t.Fatalf("notebook generate: %v (out=%s)", err, out)
+	}
+	var res map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &res); err != nil {
+		t.Fatalf("unmarshal generate output: %v (out=%s)", err, out)
+	}
+	if !strings.Contains(res["content"].(string), "CLI-generated briefing.") {
+		t.Errorf("content = %v, want to contain the mocked response", res["content"])
 	}
 }

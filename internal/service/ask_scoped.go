@@ -91,6 +91,20 @@ func (s *Service) AskTextScoped(ctx context.Context, notebookRef, query string) 
 	return b.String(), nil
 }
 
+// ScopedSearchResults resolves notebookRef and returns the same
+// SearchResult entries AskScoped grounds its answer in. It exists for
+// callers outside this package that need to interleave their own logic
+// (e.g. the HTTP API's permission filter, see internal/selfhost/ai.go)
+// between retrieval and prompt-building rather than going through the
+// full AskScoped/AskTextScoped streaming pipeline.
+func (s *Service) ScopedSearchResults(notebookRef, query string) ([]SearchResult, []string, error) {
+	nb, err := notebook.Resolve(s.VaultRoot, notebookRef)
+	if err != nil {
+		return nil, nil, err
+	}
+	return s.scopedSearchResults(nb, query)
+}
+
 // scopedSearchResults returns SearchResult entries restricted to a
 // notebook's existing sources (missing sources are skipped, never erroring
 // the whole call), ranked by FTS relevance to query where possible. A

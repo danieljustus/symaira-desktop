@@ -35,6 +35,10 @@ const (
 
 type aiAskRequest struct {
 	Query string `json:"query"`
+	// Notebook is optional: when set, retrieval and citations are
+	// restricted to that notebook's sources instead of the whole vault
+	// (issue #428). Omitted or empty behaves exactly like before.
+	Notebook string `json:"notebook,omitempty"`
 }
 
 type aiTransformRequest struct {
@@ -61,9 +65,16 @@ func (s *Server) handleAIAsk(w http.ResponseWriter, r *http.Request) {
 
 	user := userFromContext(r)
 	svc := service.New(s.cfg.VaultRoot, s.db)
-	results, err := svc.Search(request.Query)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "retrieval failed: "+err.Error())
+	var results []service.SearchResult
+	var scopedPaths []string
+	var retrievalErr error
+	if request.Notebook != "" {
+		results, scopedPaths, retrievalErr = svc.ScopedSearchResults(request.Notebook, request.Query)
+	} else {
+		results, retrievalErr = svc.Search(request.Query)
+	}
+	if retrievalErr != nil {
+		writeError(w, http.StatusInternalServerError, "retrieval failed: "+retrievalErr.Error())
 		return
 	}
 
@@ -90,6 +101,18 @@ func (s *Server) handleAIAsk(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Citation-warning readPaths (notebook-scoped requests only) must go
+	// through the same permission filter as contextDocs — a source the
+	// caller cannot read was never actually part of this run's grounding.
+	var readPaths []string
+	if request.Notebook != "" {
+		for _, p := range scopedPaths {
+			if allowedSet[p] {
+				readPaths = append(readPaths, p)
+			}
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(r.Context(), aiAskTimeout)
 	defer cancel()
 
@@ -112,6 +135,7 @@ func (s *Server) handleAIAsk(w http.ResponseWriter, r *http.Request) {
 	go ai.Ask(ctx, svc.Config, request.Query, contextDocs, chunks)
 
 	writer.event(ai.ToolEvent("llm", "running"))
+	var answer strings.Builder
 	for {
 		select {
 		case <-ctx.Done():
@@ -124,9 +148,15 @@ func (s *Server) handleAIAsk(w http.ResponseWriter, r *http.Request) {
 		case chunk, ok := <-chunks:
 			if !ok {
 				writer.event(ai.ToolEvent("llm", "done"))
-				writer.event(ai.DoneEvent())
+				if request.Notebook != "" {
+					warnings := ai.CheckCitationWarningsSafe(answer.String(), readPaths)
+					writer.event(ai.AIEvent{Type: ai.AIEventDone, CitationWarnings: warnings, ReadPaths: readPaths})
+				} else {
+					writer.event(ai.DoneEvent())
+				}
 				return
 			}
+			answer.WriteString(chunk.Chunk)
 			if !writer.event(ai.AnswerEvent(chunk.Chunk)) {
 				// Client went away mid-stream: drain so the producer
 				// goroutine can finish and close chunks instead of leaking.

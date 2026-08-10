@@ -87,6 +87,9 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(true, newMeetingListTool(options.GetService)),
 		entry(true, newMeetingGetTool(options.GetService)),
 		entry(true, newReadResultTool(options.GetService)),
+		entry(true, newNotebookListTool(options.GetService)),
+		entry(true, newNotebookGetTool(options.GetService)),
+		entry(true, newNotebookAskTool(options.GetService)),
 		entry(false, newUndoTaskTool(options.GetService)),
 		entry(false, newNoteNewTool(options.GetService)),
 		entry(false, newIngestTool(options.GetService)),
@@ -94,6 +97,9 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(false, newIngestRetryTool(options.GetService)),
 		entry(false, newClipTool(options.GetService)),
 		entry(false, newExportTool(options.GetService)),
+		entry(false, newNotebookCreateTool(options.GetService)),
+		entry(false, newNotebookAddSourceTool(options.GetService)),
+		entry(false, newNotebookRemoveSourceTool(options.GetService)),
 		entry(false, newAutofillTool(options.GetService)),
 		entry(false, newMeetingImportTool(options.GetService)),
 	}
@@ -345,11 +351,12 @@ func newNoteNewTool(getService ServiceFactory) *Tool {
 func newAskTool(getService ServiceFactory) *Tool {
 	return &Tool{
 		Name:        "desk_ask",
-		Description: "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming).",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`),
+		Description: "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"query":{"type":"string"},"notebook":{"type":"string","description":"optional: notebook id or path to restrict retrieval and citations to"}},"required":["query"]}`),
 		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
 			var args struct {
-				Query string `json:"query"`
+				Query    string `json:"query"`
+				Notebook string `json:"notebook"`
 			}
 			if err := json.Unmarshal(input, &args); err != nil {
 				return nil, err
@@ -362,7 +369,7 @@ func newAskTool(getService ServiceFactory) *Tool {
 				return nil, err
 			}
 			defer func() { _ = db.Close() }()
-			answer, err := svc.AskText(ctx, args.Query)
+			answer, err := svc.AskTextScoped(ctx, args.Notebook, args.Query)
 			if err != nil {
 				return nil, err
 			}

@@ -22,6 +22,7 @@
 		0E431B578B8CAF857895099F /* MeetingReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95A9CC7BD653D742BBD137CC /* MeetingReviewView.swift */; };
 		0FCF15C93705A7EC381F622E /* CompanionToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 271AD84AE42D56DEA05C9642 /* CompanionToolsView.swift */; };
 		11DDD21FB6492D602BB86A0F /* MobileServerConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7BA0DB3A5FA63448B1F7895 /* MobileServerConnection.swift */; };
+		148B00ED8E7202BC9877013C /* AudioOverviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EE28AFB0BCAAA61ABD97B92 /* AudioOverviewTests.swift */; };
 		14AB9F440F4DF6813149FB4E /* MobileVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937E397B9A403351E2774A73 /* MobileVault.swift */; };
 		14F891ABD3302502994CB064 /* SymairaTheme in Frameworks */ = {isa = PBXBuildFile; productRef = 6BFDEE30809F14AC06D066FB /* SymairaTheme */; };
 		190EF5D4BA2FFAFB08B28434 /* MarkdownPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E65A058CCDDBCCFB506217C /* MarkdownPreviewView.swift */; };
@@ -96,6 +97,7 @@
 		8DA4A62515C221B9755EA34E /* MobileChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 441A424F476E950A61C5E3D4 /* MobileChatView.swift */; };
 		8EC2D4A9ACD0AE25F730956C /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0F34CB14C3886867573D63C /* HistoryView.swift */; };
 		8F73A29BCD5CE339DDFB340D /* MobileFallbackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ED4910C2AAB0E28F8439A27 /* MobileFallbackTests.swift */; };
+		8F9961D39DCEFE670F2BCCE6 /* AudioOverview.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA90D714EDFDB61E00133A5E /* AudioOverview.swift */; };
 		9137F4866B45AB38C2F9893B /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60D11F75DE8FA2F92A29F275 /* ShareViewController.swift */; };
 		93AB4112A5820CC47B45DB2E /* AsyncActionTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EBD01F47531831816ECBBC9 /* AsyncActionTracker.swift */; };
 		948BD7889E83F590617FC30A /* MobileScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D129D44067038FA7246871A0 /* MobileScanView.swift */; };
@@ -325,6 +327,7 @@
 		9C51F0367577777D2D842F81 /* ReviewLaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewLaneView.swift; sourceTree = "<group>"; };
 		9E0EF47CC7E6B528447433E8 /* AIDockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIDockView.swift; sourceTree = "<group>"; };
 		9E65A058CCDDBCCFB506217C /* MarkdownPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownPreviewView.swift; sourceTree = "<group>"; };
+		9EE28AFB0BCAAA61ABD97B92 /* AudioOverviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOverviewTests.swift; sourceTree = "<group>"; };
 		9FA57E256040FF30C447766E /* RulesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RulesSettingsView.swift; sourceTree = "<group>"; };
 		A155C168F7FCF9660B810D94 /* FinderFavorites.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderFavorites.swift; sourceTree = "<group>"; };
 		A175D91D3D83560906E78387 /* VaultConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultConfig.swift; sourceTree = "<group>"; };
@@ -372,6 +375,7 @@
 		E1DAD90AC555412E29F686DF /* MobileInlineAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileInlineAI.swift; sourceTree = "<group>"; };
 		E41862E9148BA99F226260FD /* MobileWriteLayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileWriteLayerTests.swift; sourceTree = "<group>"; };
 		E5DEC229A613FCBF72AB65DC /* MobileDocumentScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileDocumentScanner.swift; sourceTree = "<group>"; };
+		EA90D714EDFDB61E00133A5E /* AudioOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOverview.swift; sourceTree = "<group>"; };
 		EB570847E4BA53C453D1BCC8 /* MobileDraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileDraftStore.swift; sourceTree = "<group>"; };
 		EDBAE07809E36B3393ACA8A0 /* LiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlass.swift; sourceTree = "<group>"; };
 		EE12A137886DDBC71A688365 /* AppGroup.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppGroup.entitlements; sourceTree = "<group>"; };
@@ -522,6 +526,7 @@
 			isa = PBXGroup;
 			children = (
 				9E0EF47CC7E6B528447433E8 /* AIDockView.swift */,
+				EA90D714EDFDB61E00133A5E /* AudioOverview.swift */,
 				B58CE1AAB047E5C20B8DBC43 /* BlockEditorView.swift */,
 				E18125DA4B24D820B313F0C0 /* ChatTranscript.swift */,
 				F136EF877D776AFD6D2CE697 /* CommandPalette.swift */,
@@ -640,6 +645,7 @@
 			isa = PBXGroup;
 			children = (
 				8948F04EC3090C19864630CC /* AsyncActionTrackerTests.swift */,
+				9EE28AFB0BCAAA61ABD97B92 /* AudioOverviewTests.swift */,
 				BFA27EFFC69A6E08B2972334 /* DocumentCardTests.swift */,
 				D2F4F5D9C5735B931CCE6C1F /* HistoryDiffTests.swift */,
 				346FBC22C24AA911360C416A /* MarkdownTextViewTests.swift */,
@@ -984,6 +990,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0777864A7A6E975929B7A320 /* AsyncActionTrackerTests.swift in Sources */,
+				148B00ED8E7202BC9877013C /* AudioOverviewTests.swift in Sources */,
 				95958AA9ACDAB632B1BAF7F8 /* DocumentCardTests.swift in Sources */,
 				9A4AD42B789934CD952F8C45 /* HistoryDiffTests.swift in Sources */,
 				483313DE21B978322F9804AB /* MarkdownTextViewTests.swift in Sources */,
@@ -1076,6 +1083,7 @@
 			files = (
 				8D1D15CD36A1EDC8F6A23185 /* AIDockView.swift in Sources */,
 				93AB4112A5820CC47B45DB2E /* AsyncActionTracker.swift in Sources */,
+				8F9961D39DCEFE670F2BCCE6 /* AudioOverview.swift in Sources */,
 				52B0B883869C07C6C51D48C4 /* BlockEditorView.swift in Sources */,
 				8297EAB48FFFA51F537F9351 /* BlockNode.swift in Sources */,
 				EE88BD9D87DA0997E72A8F5E /* ChatTranscript.swift in Sources */,

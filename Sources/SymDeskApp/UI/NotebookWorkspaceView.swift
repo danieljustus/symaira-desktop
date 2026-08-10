@@ -1,3 +1,4 @@
+import AVFoundation
 import SwiftUI
 import SymairaTheme
 import SymDeskCore
@@ -182,6 +183,13 @@ private struct NotebookDetailView: View {
     @State private var artifact: NotebookArtifact?
     @State private var generateError: String?
 
+    // Audio Overview (issue #429): local-vault-only narration of the
+    // generated artifact via the system speech synthesizer.
+    @StateObject private var audioPlayerModel = MeetingAudioPlayerModel()
+    @State private var audioPath: String?
+    @State private var isGeneratingAudio = false
+    @State private var audioError: String?
+
     var body: some View {
         VStack(spacing: 0) {
             header
@@ -201,6 +209,8 @@ private struct NotebookDetailView: View {
             chatHistory = []
             artifact = nil
             generateError = nil
+            audioPath = nil
+            audioError = nil
             await load()
         }
     }
@@ -440,6 +450,8 @@ private struct NotebookDetailView: View {
                             }
                             .buttonStyle(.plain)
                             .foregroundColor(SymairaTheme.goldSecondary)
+
+                            audioOverviewSection(for: artifact)
                         }
                         if let warnings = artifact.citationWarnings, !warnings.isEmpty {
                             VStack(alignment: .leading, spacing: 2) {
@@ -509,9 +521,48 @@ private struct NotebookDetailView: View {
         }
     }
 
+    @ViewBuilder
+    private func audioOverviewSection(for artifact: NotebookArtifact) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Audio Overview")
+                .symairaText(.caption).bold()
+                .foregroundColor(SymairaTheme.textSecondary)
+
+            if let audioPath {
+                MeetingAudioPlayerView(model: audioPlayerModel, hasSource: true)
+                Text(audioPath)
+                    .symairaText(.caption)
+                    .foregroundColor(SymairaTheme.textMuted)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            } else {
+                Button(action: { Task { await generateAudio() } }) {
+                    HStack {
+                        if isGeneratingAudio {
+                            ProgressView().controlSize(.small)
+                        }
+                        Text(isGeneratingAudio ? "Narrating…" : "Generate Audio Overview")
+                    }
+                }
+                .buttonStyle(.bordered)
+                .disabled(isGeneratingAudio)
+            }
+            if let audioError {
+                Text(audioError)
+                    .symairaText(.caption)
+                    .foregroundColor(.red)
+            }
+        }
+        .padding(.top, 4)
+    }
+
     private func generate() async {
         isGenerating = true
         generateError = nil
+        // A fresh artifact invalidates any prior Audio Overview — it
+        // narrated the previous content.
+        audioPath = nil
+        audioError = nil
         defer { isGenerating = false }
         do {
             artifact = try await core.notebookGenerate(notebookID, kind: selectedKind, dryRun: generateDryRun)
@@ -520,6 +571,30 @@ private struct NotebookDetailView: View {
             }
         } catch {
             generateError = error.localizedDescription
+        }
+    }
+
+    private func generateAudio() async {
+        guard let artifact else { return }
+        isGeneratingAudio = true
+        audioError = nil
+        defer { isGeneratingAudio = false }
+        do {
+            let relPath = try await AudioOverview.generateAndStore(
+                artifactContent: artifact.content,
+                sources: artifact.sources,
+                notebookID: notebookID,
+                vaultRoot: core.vaultPath,
+                voiceIdentifier: nil,
+                rate: AVSpeechUtteranceDefaultSpeechRate
+            )
+            audioPath = relPath
+            if let vaultRoot = core.vaultPath {
+                let absURL = URL(fileURLWithPath: vaultRoot).appendingPathComponent(relPath)
+                audioPlayerModel.load(url: absURL)
+            }
+        } catch {
+            audioError = error.localizedDescription
         }
     }
 }

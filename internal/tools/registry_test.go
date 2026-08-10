@@ -30,6 +30,9 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"meeting_list",
 		"meeting_get",
 		"desk_read_result",
+		"notebook_list",
+		"notebook_get",
+		"notebook_ask",
 		"desk_undo_task",
 		"desk_note_new",
 		"desk_ingest",
@@ -37,6 +40,9 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"desk_ingest_retry",
 		"desk_clip",
 		"desk_export",
+		"notebook_create",
+		"notebook_add_source",
+		"notebook_remove_source",
 		"desk_autofill",
 		"meeting_import",
 	}
@@ -57,6 +63,9 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"meeting_list":     true,
 		"meeting_get":      true,
 		"desk_read_result": true,
+		"notebook_list":    true,
+		"notebook_get":     true,
+		"notebook_ask":     true,
 	}
 
 	entries := registry.All()

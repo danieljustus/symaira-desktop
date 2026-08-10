@@ -68,6 +68,7 @@ struct ContentView: View {
         case trash
         case models
         case duplicates
+        case notebooks
     }
 
     // MARK: - Navigation History
@@ -197,6 +198,12 @@ struct ContentView: View {
                                     HStack {
                                         Image(systemName: "sparkles")
                                         Text("Discover")
+                                    }
+                                }
+                                Button(action: { navigate(to: .notebooks) }) {
+                                    HStack {
+                                        Image(systemName: "books.vertical")
+                                        Text("Notebooks")
                                     }
                                 }
                                 Button(action: { navigate(to: .companionTools) }) {
@@ -344,6 +351,8 @@ struct ContentView: View {
                         ModelsView()
                     case .duplicates:
                         DuplicatesView()
+                    case .notebooks:
+                        NotebookWorkspaceView(onOpenPath: openNotebookSourcePath)
                     case .graph:
                         GraphView { selectedNodeID in
                             navigateToNote(title: selectedNodeID)
@@ -1107,6 +1116,14 @@ struct ContentView: View {
 
     private func navigateToNote(title: String) {
         if let found = noteLookup[title.lowercased()] {
+            navigate(to: .vault, note: found)
+        }
+    }
+
+    /// Opens a notebook source or citation by its vault-relative path
+    /// (issue #427) — unlike `navigateToNote`, which matches by title.
+    private func openNotebookSourcePath(_ path: String) {
+        if let found = notes.first(where: { $0.path == path }) {
             navigate(to: .vault, note: found)
         }
     }

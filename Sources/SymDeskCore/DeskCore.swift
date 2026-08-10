@@ -188,7 +188,7 @@ private enum JSONValue: Codable, Sendable {
 /// A bounded-error NDJSON line the server appends to a streaming
 /// `/api/v1/command` response when the subprocess fails or its output
 /// exceeded the size limit — see `internal/selfhost.streamCommand`.
-private struct RemoteStreamError: Codable, Sendable {
+struct RemoteStreamError: Codable, Sendable {
     let type: String
     let message: String
 }
@@ -654,12 +654,12 @@ public final class DeskCore: ObservableObject {
 	/// The active local-CLI or remote-HTTP transport, set alongside `tool`/
 	/// `remoteClient` in `initialize()`. Feature methods route through this
 	/// instead of branching on `remoteClient` individually.
-	private var transport: DeskTransport?
+	var transport: DeskTransport?
 
     private init() {}
 
     /// Appends `--vault <path>` when a vault is configured, empty otherwise.
-    private var vaultArgs: [String] {
+    var vaultArgs: [String] {
         guard let path = vaultPath, !path.isEmpty else { return [] }
         return ["--vault", path]
     }
@@ -757,7 +757,7 @@ public final class DeskCore: ObservableObject {
 		isReady = false
 	}
 
-	private func runChecked(arguments: [String], stdin: String = "") async throws -> Data {
+	func runChecked(arguments: [String], stdin: String = "") async throws -> Data {
 		guard let transport else { throw DeskCoreError.coreNotFound }
 		return try await transport.command(arguments: arguments, stdin: stdin)
 	}
@@ -767,7 +767,7 @@ public final class DeskCore: ObservableObject {
 		return try await transport.commandResult(arguments: arguments)
 	}
 
-	private func runDecoding<T: Decodable & Sendable>(_ type: T.Type, arguments: [String], stdin: String = "") async throws -> T {
+	func runDecoding<T: Decodable & Sendable>(_ type: T.Type, arguments: [String], stdin: String = "") async throws -> T {
 		let data = try await runChecked(arguments: arguments, stdin: stdin)
 		return try Self.decodeTolerantOfNullArray(type, from: data)
 	}

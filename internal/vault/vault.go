@@ -51,7 +51,7 @@ type Document struct {
 	Simhash      string // 64-bit SimHash hex
 	ASN          *int   // optional, vault-wide unique positive archive serial number
 
-	// Contract v3: document kind classification (note|document|meeting)
+	// Contract v3/v4: document kind classification (note|document|meeting|notebook)
 	// Resolved at parse time: explicit frontmatter `type` wins, then inference.
 	Type string
 }
@@ -263,7 +263,7 @@ func ParseBytes(path string, fileBytes []byte) (*Document, error) {
 		return nil, err
 	}
 
-	// Contract v3: resolve document kind (note|document|meeting)
+	// Contract v3/v4: resolve document kind (note|document|meeting|notebook)
 	doc.Type = inferType(doc.Frontmatter)
 
 	doc.Body = string(bodyBytes)
@@ -673,11 +673,15 @@ var documentInferenceFields = map[string]bool{
 //  2. If any document-inference field is present → "document".
 //  3. If `meeting_id` is present → "meeting".
 //  4. Otherwise → "note".
+//
+// "notebook" (contract_version 4) is never inferred — it is only ever
+// returned here when the frontmatter declares it explicitly (VAULT.md
+// section 3: "a sources list alone is not a strong enough signal").
 func inferType(fm map[string]interface{}) string {
 	if t, ok := fm["type"]; ok {
 		if s, ok := t.(string); ok {
 			switch s {
-			case "note", "document", "meeting":
+			case "note", "document", "meeting", "notebook":
 				return s
 			}
 		}

@@ -352,6 +352,8 @@ func (s *Server) routes() {
 	s.mux.Handle("POST /api/v1/command", s.auth(http.HandlerFunc(s.handleCommand)))
 	s.mux.Handle("POST /api/v1/ai/ask", s.auth(http.HandlerFunc(s.handleAIAsk)))
 	s.mux.Handle("POST /api/v1/ai/transform", s.auth(http.HandlerFunc(s.handleAITransform)))
+	s.mux.Handle("GET /api/v1/notebooks", s.auth(http.HandlerFunc(s.handleListNotebooks)))
+	s.mux.Handle("GET /api/v1/notebooks/{id}", s.auth(http.HandlerFunc(s.handleGetNotebook)))
 	s.mux.Handle("POST /api/v1/worker/lease", s.auth(http.HandlerFunc(s.handleLease)))
 	s.mux.Handle("GET /api/v1/worker/input", s.auth(http.HandlerFunc(s.handleWorkerInput)))
 	s.mux.Handle("POST /api/v1/worker/complete", s.auth(http.HandlerFunc(s.handleComplete)))

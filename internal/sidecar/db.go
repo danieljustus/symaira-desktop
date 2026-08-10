@@ -459,6 +459,54 @@ func (db *DB) Search(query string) ([]*vault.Document, error) {
 	return docs, nil
 }
 
+// SearchScoped is Search restricted to allowedPaths (absolute), ranked by
+// FTS relevance. Scoping happens in SQL via a path IN-list rather than by
+// post-filtering an unbounded result set, so a notebook-scoped ask (issue
+// #425) never has to fetch rows outside its source set to begin with. An
+// empty allowedPaths returns no results rather than falling back to an
+// unscoped search — an empty scope must never silently widen.
+func (db *DB) SearchScoped(query string, allowedPaths []string) ([]*vault.Document, error) {
+	if len(allowedPaths) == 0 {
+		return nil, nil
+	}
+	query = ftsQuote(query)
+	if query == "" {
+		return nil, nil
+	}
+
+	placeholders := make([]string, len(allowedPaths))
+	args := make([]interface{}, 0, len(allowedPaths)+1)
+	args = append(args, query)
+	for i, p := range allowedPaths {
+		placeholders[i] = "?"
+		args = append(args, p)
+	}
+
+	rows, err := db.conn.Query(fmt.Sprintf(`
+		SELECT f.path, f.title, snippet(fts_search, 1, '<b>', '</b>', '...', 64) as snippet
+		FROM fts_search s
+		JOIN files f ON f.id = s.rowid
+		WHERE fts_search MATCH ? AND f.path IN (%s)
+		ORDER BY rank LIMIT 20
+	`, strings.Join(placeholders, ",")), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var docs []*vault.Document
+	for rows.Next() {
+		var d vault.Document
+		var snippet string
+		if err := rows.Scan(&d.Path, &d.Title, &snippet); err != nil {
+			return nil, err
+		}
+		d.Body = snippet
+		docs = append(docs, &d)
+	}
+	return docs, nil
+}
+
 // SearchMatch is a sidecar search result with the raw indexed body retained for
 // the query language's regex post-filter. Body is never exposed directly by the
 // service; callers receive the existing snippet-only public shape.

@@ -125,7 +125,11 @@ struct VaultSwitcherView: View {
             .contentShape(Rectangle())
         }
         .menuStyle(.borderlessButton)
-        .fixedSize(horizontal: true, vertical: false)
+        // Deliberately not `fixedSize`: pinning this to its intrinsic width
+        // made a long vault name push the sidebar's primary action out of
+        // space, truncating "New Note" to "Ne…" (issue #445). The label above
+        // already truncates in the middle, so let it absorb the squeeze.
+        .layoutPriority(0)
         .help("Switch vault")
         .onAppear(perform: reloadEntries)
         .onReceive(NotificationCenter.default.publisher(for: .vaultSwitched)) { _ in

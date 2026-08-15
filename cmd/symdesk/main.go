@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -48,13 +49,19 @@ func main() {
 	rootCmd := newRootCmd()
 
 	if err := rootCmd.Execute(); err != nil {
-		if jsonFlag {
+		var reported jsonReportedError
+		switch {
+		case errors.As(err, &reported):
+			// The command already wrote a complete JSON report describing this
+			// failure; a second document would break strict decoders (#438).
+			// Only the exit code is still owed.
+		case jsonFlag:
 			// output error as JSON
 			errObj := map[string]string{"error": err.Error()}
 			if b, err := json.Marshal(errObj); err == nil {
 				fmt.Println(string(b))
 			}
-		} else {
+		default:
 			fmt.Fprintln(os.Stderr, exitcodes.FormatCLIError(err))
 		}
 		os.Exit(int(exitcodes.ExitCodeFromError(err)))

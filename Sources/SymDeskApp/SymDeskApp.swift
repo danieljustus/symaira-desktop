@@ -7,7 +7,11 @@ struct SymDeskApp: App {
     @StateObject private var watcher = EventWatcher.shared
     @StateObject private var notificationManager = NotificationManager.shared
 
+    /// Set when a vault is configured but its folder is gone, so onboarding can
+    /// name the path instead of opening it as an empty vault (issue #444).
+    @State private var missingVaultPath = VaultConfig.missingLocalVaultPath
     @State private var vaultConfigured = VaultConfig.hasConfiguredVault
+        && VaultConfig.missingLocalVaultPath == nil
     @State private var showDemoBanner = VaultConfig.isDemoMode
 
     var body: some Scene {
@@ -21,7 +25,7 @@ struct SymDeskApp: App {
                             }
                         }
                 } else {
-                    OnboardingView()
+                    OnboardingView(missingVaultPath: missingVaultPath)
                 }
             }
             .environmentObject(core)
@@ -32,7 +36,9 @@ struct SymDeskApp: App {
             .background(SymairaTheme.bgDark)
             .task {
                 await core.initialize()
-                if VaultConfig.hasConfiguredVault {
+                // Skipped when the configured folder is gone: loading it would
+                // point every command at a path that no longer exists (#444).
+                if vaultConfigured {
                     core.loadVaultFromConfig()
                     VaultConfig.reconcileFinderFavoritesOnLaunch()
                 }
@@ -43,6 +49,7 @@ struct SymDeskApp: App {
                 await notificationManager.refreshNotifications(with: core)
             }
             .onReceive(NotificationCenter.default.publisher(for: .onboardingComplete)) { _ in
+                missingVaultPath = nil
                 vaultConfigured = true
                 showDemoBanner = VaultConfig.isDemoMode
                 core.loadVaultFromConfig()
@@ -67,6 +74,7 @@ struct SymDeskApp: App {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .vaultReset)) { _ in
+                missingVaultPath = nil
                 vaultConfigured = false
                 showDemoBanner = false
             }

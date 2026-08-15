@@ -204,7 +204,15 @@ func newDoctorCmd() *cobra.Command {
 			}
 
 			if !allOk {
-				return exitcodes.Wrap(nil, exitcodes.ExitGeneric, exitcodes.KindInternal, "doctor: one or more health checks failed")
+				err := exitcodes.Wrap(nil, exitcodes.ExitGeneric, exitcodes.KindInternal, "doctor: one or more health checks failed")
+				if jsonFlag {
+					// The report above already carries "overall":"error", so
+					// the JSON error envelope would only add a second document
+					// to stdout and break strict decoders (issue #438). Keep
+					// the non-zero exit, drop the envelope.
+					return jsonReportedError{err}
+				}
+				return err
 			}
 			return nil
 		},

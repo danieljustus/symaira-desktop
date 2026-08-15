@@ -5,6 +5,10 @@ import SymDeskCore
 struct OnboardingView: View {
     @EnvironmentObject var core: DeskCore
 
+    /// Path of a previously opened vault whose folder is gone. Shown so the
+    /// user learns why they are back here instead of in their vault (#444).
+    var missingVaultPath: String?
+
     @State private var step: Step = .chooseLocation
     @State private var selectedSource: VaultSource?
     @State private var chosenURL: URL?
@@ -17,6 +21,16 @@ struct OnboardingView: View {
     enum Step {
         case chooseLocation
         case ready
+    }
+
+    /// Explains why the user is on the welcome screen when a vault had been
+    /// configured: its folder is gone (issue #444). Split out of the body so
+    /// the ViewBuilder type-checker stays within budget (#293, #296).
+    @ViewBuilder
+    private var missingVaultNotice: some View {
+        if let path = missingVaultPath {
+            MissingVaultNotice(path: path)
+        }
     }
 
     enum VaultSource: String, CaseIterable, Identifiable {
@@ -106,6 +120,8 @@ struct OnboardingView: View {
             }
             .padding(.top, 32)
             .padding(.horizontal, 40)
+
+            missingVaultNotice
 
             if isLoading {
                 VStack(spacing: 12) {
@@ -455,6 +471,35 @@ struct ServerConnectionSheet: View {
 		.frame(width: 590)
 		.background(SymairaTheme.bgDark)
 	}
+}
+
+/// Tells the user why they are back on the welcome screen: the vault they had
+/// open is no longer where it was (issue #444). Its own view so the welcome
+/// screen's ViewBuilder stays within the type-checker budget (#293, #296).
+private struct MissingVaultNotice: View {
+    let path: String
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Text("Your last vault is no longer there")
+                .symairaText(.body)
+                .foregroundColor(SymairaTheme.textPrimary)
+            Text(path)
+                .symairaText(.caption)
+                .foregroundColor(SymairaTheme.textSecondary)
+                .lineLimit(2)
+                .truncationMode(.middle)
+            Text("SymDesk did not change or delete anything. Pick the folder again if it moved, or choose another vault below.")
+                .symairaText(.caption)
+                .foregroundColor(SymairaTheme.textMuted)
+                .multilineTextAlignment(.center)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(SymairaTheme.bgCard)
+        .cornerRadius(10)
+        .padding(.horizontal, 40)
+    }
 }
 
 extension Notification.Name {

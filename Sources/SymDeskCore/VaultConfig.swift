@@ -59,6 +59,30 @@ public struct VaultConfig {
         vaultPath() != nil || ServerConnectionConfig.hasConnection
     }
 
+    /// Whether `path` cannot be opened as a vault because nothing is there any
+    /// more, or what is there is not a directory.
+    ///
+    /// Restoring a vault whose folder had been deleted presented it as a
+    /// valid, empty vault and invited the user to create notes inside a
+    /// directory that no longer exists (issue #444).
+    public static func isVaultDirectoryMissing(_ path: String) -> Bool {
+        guard !path.isEmpty else { return true }
+        var isDirectory: ObjCBool = false
+        let exists = FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
+        return !(exists && isDirectory.boolValue)
+    }
+
+    /// The configured local vault path when its folder is gone.
+    ///
+    /// Nil when no local vault is configured, when a server connection is
+    /// active (there is no local folder to check), or when the folder is
+    /// present — so a genuinely empty but existing vault is unaffected.
+    public static var missingLocalVaultPath: String? {
+        guard !ServerConnectionConfig.hasConnection else { return nil }
+        guard let path = vaultPath() else { return nil }
+        return isVaultDirectoryMissing(path) ? path : nil
+    }
+
     /// Save a chosen vault folder URL. Stores both a security-scoped bookmark
     /// (for sandbox persistence) and the plain string path.
     public static func setVault(url: URL) {

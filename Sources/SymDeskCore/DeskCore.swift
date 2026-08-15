@@ -635,10 +635,17 @@ public final class DeskCore: ObservableObject {
 
     private let locator = BinaryLocator(bundle: Bundle.main)
     private var detector: ToolDetector { ToolDetector(locator: locator) }
+    /// Used only when `detector` finds nothing — see `CoreBinaryDiscovery`.
+    private var relaxedDetector: ToolDetector { ToolDetector(locator: locator, allowUnverified: true) }
 
     @Published public private(set) var tool: DetectedTool?
     @Published public private(set) var isReady = false
     @Published public private(set) var errorMessage: String?
+
+    /// Non-fatal note set when the core was found outside a strictly-trusted
+    /// directory — most commonly a standard Homebrew prefix (#437). Nil when
+    /// the strict provenance search succeeded.
+    @Published public private(set) var coreProvenanceNote: String?
 
     /// The CLI version reported by `symdesk version --json`, cached once at
     /// connect and nil when the CLI is unreachable or remote.
@@ -691,10 +698,16 @@ public final class DeskCore: ObservableObject {
             return
         }
 
-        guard let detected = await detector.detect(deskTool) else {
+        guard let detection = await CoreBinaryDiscovery.detect(
+            deskTool,
+            strict: detector,
+            relaxed: relaxedDetector
+        ) else {
             self.errorMessage = "symdesk binary not found. Please install via Homebrew."
             return
         }
+        let detected = detection.tool
+        self.coreProvenanceNote = detection.provenanceNote
 
         do {
             try detector.requireSchemaVersion(1, of: detected)

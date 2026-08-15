@@ -742,6 +742,9 @@ struct ContentView: View {
                 .onReceive(NotificationCenter.default.publisher(for: .openDiscover)) { _ in
                     navigate(to: .discover)
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .openDashboard)) { _ in
+                    navigate(to: .dashboard)
+                }
                 .onReceive(NotificationCenter.default.publisher(for: .openCommandPalette)) { _ in
                     isShowingPalette = true
                 }

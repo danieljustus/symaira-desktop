@@ -114,7 +114,7 @@ struct SymDeskApp: App {
                 .keyboardShortcut("k", modifiers: .command)
                 Divider()
                 Button("Dashboard") {
-                    NotificationCenter.default.post(name: .openDiscover, object: nil)
+                    NotificationCenter.default.post(name: .openDashboard, object: nil)
                 }
             }
         }

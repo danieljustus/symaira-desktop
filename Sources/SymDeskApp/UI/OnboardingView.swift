@@ -460,6 +460,9 @@ struct ServerConnectionSheet: View {
 extension Notification.Name {
     static let onboardingComplete = Notification.Name("symdesk.onboardingComplete")
     static let openDiscover = Notification.Name("symdesk.openDiscover")
+    /// Opens the Dashboard. Distinct from `openDiscover`, which opens the
+    /// capabilities screen — the View menu item conflated the two (issue #443).
+    static let openDashboard = Notification.Name("symdesk.openDashboard")
     /// Posted by menu bar commands to trigger UI actions in ContentView.
     static let openCommandPalette = Notification.Name("symdesk.openCommandPalette")
     static let openNewNoteSheet = Notification.Name("symdesk.openNewNoteSheet")

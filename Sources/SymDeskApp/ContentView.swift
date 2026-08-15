@@ -742,6 +742,9 @@ struct ContentView: View {
                 .onReceive(NotificationCenter.default.publisher(for: .openDiscover)) { _ in
                     navigate(to: .discover)
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .openDashboard)) { _ in
+                    navigate(to: .dashboard)
+                }
                 .onReceive(NotificationCenter.default.publisher(for: .openCommandPalette)) { _ in
                     isShowingPalette = true
                 }
@@ -832,13 +835,17 @@ struct ContentView: View {
     private var sidebarHeader: some View {
         HStack {
             VaultSwitcherView()
-            Spacer()
+            Spacer(minLength: 8)
             Button(action: { isShowingNewNoteSheet = true }) {
                 Label("New Note", systemImage: "plus")
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.small)
             .tint(SymairaTheme.goldPrimary)
+            // Keep the primary action's label readable whatever the vault is
+            // called; the switcher truncates instead (issue #445).
+            .fixedSize(horizontal: true, vertical: false)
+            .layoutPriority(1)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)

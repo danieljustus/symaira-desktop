@@ -72,12 +72,12 @@ struct SymDeskApp: App {
             }
         }
         .commands {
-            CommandGroup(replacing: .appSettings) {
-                Button("Rules & Settings\u{2026}") {
-                    NotificationCenter.default.post(name: .openRulesSettings, object: nil)
-                }
-                .keyboardShortcut(",", modifiers: .command)
-            }
+            // No custom app-settings entry: the `Settings` scene below already
+            // contributes the standard "Settings…" item on Cmd+,. Declaring
+            // both put two settings entries in the app menu (issue #446). The
+            // in-app Rules screen stays reachable from the sidebar, and
+            // `openRulesSettings` is still posted from the AI chat panel.
+            //
             // These belong in the standard File and View menus. `CommandMenu`
             // always creates a *new* top-level menu, which left the menu bar
             // with two File menus and two View menus, and Cmd+N / Cmd+W each

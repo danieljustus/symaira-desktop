@@ -78,7 +78,15 @@ struct SymDeskApp: App {
                 }
                 .keyboardShortcut(",", modifiers: .command)
             }
-            CommandMenu("File") {
+            // These belong in the standard File and View menus. `CommandMenu`
+            // always creates a *new* top-level menu, which left the menu bar
+            // with two File menus and two View menus, and Cmd+N / Cmd+W each
+            // bound twice (issue #442). `CommandGroup` merges instead.
+            //
+            // New Note replaces New Window rather than sitting beside it: this
+            // is a single-vault workspace, so Cmd+N belongs to the note, and
+            // replacing the slot removes the duplicate binding outright.
+            CommandGroup(replacing: .newItem) {
                 Button("New Note") {
                     NotificationCenter.default.post(name: .openNewNoteSheet, object: nil)
                 }
@@ -87,6 +95,8 @@ struct SymDeskApp: App {
                     Task { _ = try? await core.noteDaily() }
                 }
                 .keyboardShortcut("d", modifiers: [.command, .shift])
+            }
+            CommandGroup(after: .newItem) {
                 Divider()
                 Button("Reveal Vault in Finder") {
                     if let path = core.vaultPath {
@@ -94,13 +104,10 @@ struct SymDeskApp: App {
                     }
                 }
                 .disabled(core.vaultPath == nil)
-                Divider()
-                Button("Close") {
-                    NSApplication.shared.keyWindow?.close()
-                }
-                .keyboardShortcut("w", modifiers: .command)
             }
-            CommandMenu("View") {
+            // No custom Close: the standard File menu already provides one on
+            // Cmd+W, and duplicating it was the second half of #442.
+            CommandGroup(after: .sidebar) {
                 Button("Command Palette") {
                     NotificationCenter.default.post(name: .openCommandPalette, object: nil)
                 }

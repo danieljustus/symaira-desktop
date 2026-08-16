@@ -427,6 +427,17 @@ func ftsQuote(query string) string {
 	return strings.Join(terms, " ")
 }
 
+// ftsSnippetExpr is the FTS5 snippet expression shared by every search path,
+// so the three query sites cannot drift apart.
+//
+// The highlight delimiters are empty on purpose. A snippet is plain text, not
+// HTML: the apps render it verbatim, and the same string is handed to the model
+// as citation and notebook source material. HTML markers therefore showed up as
+// literal "<b>" in the UI and as noise in prompts (issue #441). Highlighting,
+// if it is ever wanted, belongs in a separate structured field rather than as
+// inline markup in this one.
+const ftsSnippetExpr = `snippet(fts_search, 1, '', '', '...', 64)`
+
 // Search performs a basic FTS search over free-form user input.
 func (db *DB) Search(query string) ([]*vault.Document, error) {
 	query = ftsQuote(query)
@@ -434,7 +445,7 @@ func (db *DB) Search(query string) ([]*vault.Document, error) {
 		return nil, nil
 	}
 	rows, err := db.conn.Query(`
-		SELECT f.path, f.title, snippet(fts_search, 1, '<b>', '</b>', '...', 64) as snippet
+		SELECT f.path, f.title, `+ftsSnippetExpr+` as snippet
 		FROM fts_search s
 		JOIN files f ON f.id = s.rowid
 		WHERE fts_search MATCH ?
@@ -483,7 +494,7 @@ func (db *DB) SearchScoped(query string, allowedPaths []string) ([]*vault.Docume
 	}
 
 	rows, err := db.conn.Query(fmt.Sprintf(`
-		SELECT f.path, f.title, snippet(fts_search, 1, '<b>', '</b>', '...', 64) as snippet
+		SELECT f.path, f.title, `+ftsSnippetExpr+` as snippet
 		FROM fts_search s
 		JOIN files f ON f.id = s.rowid
 		WHERE fts_search MATCH ? AND f.path IN (%s)
@@ -537,7 +548,7 @@ func (db *DB) SearchPlan(plan searchquery.Plan) ([]SearchMatch, error) {
 	var query strings.Builder
 	query.WriteString(`SELECT f.path, f.title, `)
 	if hasFullText {
-		query.WriteString(`snippet(fts_search, 1, '<b>', '</b>', '...', 64), `)
+		query.WriteString(ftsSnippetExpr + `, `)
 	} else {
 		query.WriteString(`substr(COALESCE(fts_search.body, ''), 1, 256), `)
 	}

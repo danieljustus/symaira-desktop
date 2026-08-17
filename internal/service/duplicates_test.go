@@ -57,6 +57,43 @@ func TestSimilarAllFindsDuplicateGroups(t *testing.T) {
 	}
 }
 
+// The default threshold has to stay useful in both directions: a pair that
+// differs by only a word or two is still reported, while documents sharing
+// nothing but a frontmatter and heading skeleton are not (issue #452).
+func TestSimilarAllDefaultThresholdSeparatesNearIdenticalFromSkeletonShared(t *testing.T) {
+	svc := newTestService(t)
+
+	skeleton := "## Summary\n\n## Details\n\n## Notes\n\n"
+	invoice := strings.Repeat("Invoice line item amount total net gross tax due payable on receipt\n", 30)
+	writeIndexedDoc(t, svc, "invoice-april.md", skeleton+invoice+"Period April, total 1200 EUR\n")
+	writeIndexedDoc(t, svc, "invoice-may.md", skeleton+invoice+"Period May, total 1300 EUR\n")
+	writeIndexedDoc(t, svc, "letter.md",
+		skeleton+strings.Repeat("Dear neighbour thank you for watering the plants last weekend\n", 30))
+	writeIndexedDoc(t, svc, "statement.md",
+		skeleton+strings.Repeat("Bank statement balance carried forward interest credited quarterly\n", 30))
+
+	// 0 exercises the fallback, which must resolve to the same default.
+	for _, threshold := range []int{0, DefaultDuplicateThreshold} {
+		groups, err := svc.SimilarAll(threshold)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(groups) != 1 {
+			t.Fatalf("threshold %d: expected exactly 1 group, got %d: %#v", threshold, len(groups), groups)
+		}
+		paths := []string{groups[0].Path}
+		for _, m := range groups[0].Members {
+			paths = append(paths, m.Path)
+		}
+		if !containsPath(paths, "invoice-april.md") || !containsPath(paths, "invoice-may.md") {
+			t.Fatalf("threshold %d: expected both invoices grouped, got %#v", threshold, paths)
+		}
+		if containsPath(paths, "letter.md") || containsPath(paths, "statement.md") {
+			t.Fatalf("threshold %d: unrelated documents must not be grouped, got %#v", threshold, paths)
+		}
+	}
+}
+
 func TestSimilarAllEmptyVaultReturnsNoGroups(t *testing.T) {
 	svc := newTestService(t)
 	groups, err := svc.SimilarAll(50)

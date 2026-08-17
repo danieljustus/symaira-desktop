@@ -20,17 +20,13 @@ func newSimilarCmd() *cobra.Command {
 			svc := service.New(vRoot, db)
 
 			threshold, _ := cmd.Flags().GetInt("threshold")
-			if threshold <= 0 {
-				threshold = 50
-			}
-
-			results, err := svc.SimilarDocs(args[0], threshold)
+			results, err := svc.SimilarDocs(args[0], service.ResolveDuplicateThreshold(threshold))
 			if err != nil {
 				return err
 			}
 			return outputResult(results)
 		},
 	}
-	cmd.Flags().Int("threshold", 50, "minimum similarity percentage (0-100)")
+	cmd.Flags().Int("threshold", service.DefaultDuplicateThreshold, "minimum similarity percentage (0-100)")
 	return cmd
 }

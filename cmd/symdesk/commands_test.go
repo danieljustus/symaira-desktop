@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -161,8 +162,8 @@ func TestSimilarCommandFlagDefaults(t *testing.T) {
 	}
 
 	threshold, _ := similarCmd.Flags().GetInt("threshold")
-	if threshold != 50 {
-		t.Errorf("expected default threshold 50, got %d", threshold)
+	if threshold != service.DefaultDuplicateThreshold {
+		t.Errorf("expected default threshold %d, got %d", service.DefaultDuplicateThreshold, threshold)
 	}
 }
 

@@ -6,6 +6,26 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
 )
 
+// DefaultDuplicateThreshold is the single similarity percentage that decides
+// what counts as a near-duplicate. Every entry point into the SimHash scan —
+// the `duplicates` command, the `vault health` scan and the SimilarAll
+// fallback — resolves to this value, so the same vault yields the same answer
+// whichever one is used (issue #452). The value was measured while fixing
+// #439: at 85 a genuinely near-identical pair is still grouped, while
+// documents that merely share a frontmatter and heading skeleton are not.
+// The macOS app's DeskCore.defaultDuplicateThreshold mirrors it.
+const DefaultDuplicateThreshold = 85
+
+// ResolveDuplicateThreshold maps a caller-supplied threshold onto the value
+// actually used by the scan: a non-positive threshold means "unset" and falls
+// back to DefaultDuplicateThreshold.
+func ResolveDuplicateThreshold(threshold int) int {
+	if threshold <= 0 {
+		return DefaultDuplicateThreshold
+	}
+	return threshold
+}
+
 // DuplicateGroup is one cluster of mutually similar documents, assembled by a
 // vault-wide pairwise simhash scan (issue #307).
 type DuplicateGroup struct {
@@ -43,9 +63,7 @@ func (s *Service) SimilarAll(threshold int) ([]DuplicateGroup, error) {
 	if err != nil {
 		return nil, err
 	}
-	if threshold <= 0 {
-		threshold = 50
-	}
+	threshold = ResolveDuplicateThreshold(threshold)
 
 	type node struct {
 		path    string

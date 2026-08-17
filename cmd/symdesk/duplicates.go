@@ -25,6 +25,6 @@ func newDuplicatesCmd() *cobra.Command {
 			return outputResult(groups)
 		},
 	}
-	cmd.Flags().Int("threshold", 50, "minimum similarity percentage (0-100)")
+	cmd.Flags().Int("threshold", service.DefaultDuplicateThreshold, "minimum similarity percentage (0-100)")
 	return cmd
 }

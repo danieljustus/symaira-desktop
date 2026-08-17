@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/danieljustus/symaira-desktop/internal/health"
+	"github.com/danieljustus/symaira-desktop/internal/service"
 )
 
 func newVaultCmd() *cobra.Command {
@@ -34,6 +35,6 @@ func newVaultHealthCmd() *cobra.Command {
 			return outputResult(report)
 		},
 	}
-	cmd.Flags().Int("duplicate-threshold", 90, "minimum similarity percentage for near-duplicate findings")
+	cmd.Flags().Int("duplicate-threshold", service.DefaultDuplicateThreshold, "minimum similarity percentage for near-duplicate findings")
 	return cmd
 }

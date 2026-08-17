@@ -86,10 +86,7 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 	}
 
 	if db != nil {
-		if duplicateThreshold <= 0 {
-			duplicateThreshold = 90
-		}
-		groups, dupErr := service.New(vaultRoot, db).SimilarAll(duplicateThreshold)
+		groups, dupErr := service.New(vaultRoot, db).SimilarAll(service.ResolveDuplicateThreshold(duplicateThreshold))
 		if dupErr != nil {
 			return report, dupErr
 		}

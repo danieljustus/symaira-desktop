@@ -90,6 +90,9 @@ struct ContentView: View {
     @State private var editingDbView: DbView?
     @State private var docFilterID: String = "all"
     @State private var docCounts: [String: Int] = [:]
+    /// Per-type tally, so the Notes/Documents/Meetings presets report their own
+    /// number instead of the vault total (issue #440).
+    @State private var docTypeCounts: [String: Int] = [:]
     @State private var docTotalCount: Int = 0
     @State private var deepLinkDocPath: String?
 
@@ -152,15 +155,18 @@ struct ContentView: View {
                                         HStack {
                                             Text(preset.label)
                                             Spacer()
-                                            if let count = preset.status == nil ? docTotalCount : docCounts[preset.status!.rawValue] {
-                                                Text("\(count)")
-                                                    .symairaText(.caption)
-                                                    .foregroundColor(SymairaTheme.textSecondary)
-                                                    .padding(.horizontal, 6)
-                                                    .padding(.vertical, 2)
-                                                    .background(Color.white.opacity(0.06))
-                                                    .cornerRadius(4)
-                                            }
+                                            let count = preset.displayCount(
+                                                statusCounts: docCounts,
+                                                typeCounts: docTypeCounts,
+                                                total: docTotalCount
+                                            )
+                                            Text("\(count)")
+                                                .symairaText(.caption)
+                                                .foregroundColor(SymairaTheme.textSecondary)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(Color.white.opacity(0.06))
+                                                .cornerRadius(4)
                                         }
                                     }
                                 }
@@ -323,6 +329,7 @@ struct ContentView: View {
                     case .dashboard:
                         DashboardView(
                             docCounts: docCounts,
+                            docTypeCounts: docTypeCounts,
                             docTotalCount: docTotalCount,
                             notes: notes,
                             doctorReport: doctorReport,
@@ -1157,11 +1164,16 @@ struct ContentView: View {
             let all = try await core.docsList()
             docTotalCount = all.count
             var counts: [String: Int] = [:]
+            var typeCounts: [String: Int] = [:]
             for doc in all {
                 let key = doc.status.isEmpty ? "unset" : doc.status
                 counts[key, default: 0] += 1
+                if !doc.type.isEmpty {
+                    typeCounts[doc.type, default: 0] += 1
+                }
             }
             docCounts = counts
+            docTypeCounts = typeCounts
         } catch {
             appErrors.append(AppErrorMessage(
                 message: "Failed to load document counts: \(error.localizedDescription)"

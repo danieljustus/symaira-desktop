@@ -552,15 +552,12 @@ func newDocsSimilarTool(getService ServiceFactory) *Tool {
 			if args.File == "" {
 				return nil, fmt.Errorf("file is required")
 			}
-			if args.Threshold <= 0 {
-				args.Threshold = 50
-			}
 			svc, db, err := getService()
 			if err != nil {
 				return nil, err
 			}
 			defer func() { _ = db.Close() }()
-			return svc.SimilarDocs(args.File, args.Threshold)
+			return svc.SimilarDocs(args.File, service.ResolveDuplicateThreshold(args.Threshold))
 		},
 	}
 }
@@ -576,9 +573,6 @@ func newVaultHealthTool(getService ServiceFactory) *Tool {
 			}
 			if err := json.Unmarshal(input, &args); err != nil {
 				return nil, err
-			}
-			if args.DuplicateThreshold <= 0 {
-				args.DuplicateThreshold = 90
 			}
 			svc, db, err := getService()
 			if err != nil {

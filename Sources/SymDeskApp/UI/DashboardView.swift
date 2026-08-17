@@ -8,6 +8,7 @@ struct DashboardView: View {
     @EnvironmentObject var core: DeskCore
 
     let docCounts: [String: Int]
+    let docTypeCounts: [String: Int]
     let docTotalCount: Int
     let notes: [Note]
     let doctorReport: DoctorReport?
@@ -123,7 +124,11 @@ struct DashboardView: View {
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 200, maximum: 300), spacing: 10)], spacing: 10) {
                 ForEach(DocFilterPreset.defaults.dropFirst()) { preset in
-                    let count = preset.status == nil ? docTotalCount : docCounts[preset.status!.rawValue] ?? 0
+                    let count = preset.displayCount(
+                        statusCounts: docCounts,
+                        typeCounts: docTypeCounts,
+                        total: docTotalCount
+                    )
                     Button(action: {
                         onNavigate(.docs)
                     }) {

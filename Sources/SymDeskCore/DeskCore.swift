@@ -594,6 +594,23 @@ public struct DocFilterPreset: Identifiable, Sendable {
         self.fileType = fileType
     }
 
+    /// The number to show beside this preset.
+    ///
+    /// Callers used to branch on `status` alone, so every preset without one —
+    /// Notes, Documents and Meetings — displayed the vault total and a vault
+    /// with no meetings still reported "Meetings 15" (issue #440). Resolve a
+    /// type preset against the per-type tally instead; only the preset with
+    /// neither key means "everything".
+    public func displayCount(statusCounts: [String: Int], typeCounts: [String: Int], total: Int) -> Int {
+        if let status {
+            return statusCounts[status.rawValue] ?? 0
+        }
+        if let fileType {
+            return typeCounts[fileType] ?? 0
+        }
+        return total
+    }
+
     public static let defaults: [DocFilterPreset] = [
         .init(id: "all", label: "All Documents", status: nil, fileType: nil),
         .init(id: "open", label: "Open", status: .open, fileType: nil),

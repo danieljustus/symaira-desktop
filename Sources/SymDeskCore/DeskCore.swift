@@ -650,7 +650,22 @@ public struct GraphData: Codable, Equatable, Sendable {
 public final class DeskCore: ObservableObject {
     public static let shared = DeskCore()
 
-    private let locator = BinaryLocator(bundle: Bundle.main)
+    /// The managed runtime directory (`~/.symaira/bin`) is checked before
+    /// Homebrew prefixes. An absent directory simply falls through (#459).
+    private static let managedRuntimeDir: String = {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return "\(home)/.symaira/bin"
+    }()
+
+    private lazy var locator: BinaryLocator = {
+        var loc = BinaryLocator(bundle: Bundle.main)
+        // Prepend managed runtime so it is checked before Homebrew/PATH.
+        // The full priority reorder (before PATH) requires a symaira-appkit
+        // change; this is the best approximation within this repo.
+        loc.extraDirectories = [Self.managedRuntimeDir] + loc.extraDirectories
+        return loc
+    }()
+
     private var detector: ToolDetector { ToolDetector(locator: locator) }
     /// Used only when `detector` finds nothing — see `CoreBinaryDiscovery`.
     private var relaxedDetector: ToolDetector { ToolDetector(locator: locator, allowUnverified: true) }
@@ -720,7 +735,7 @@ public final class DeskCore: ObservableObject {
             strict: detector,
             relaxed: relaxedDetector
         ) else {
-            self.errorMessage = "symdesk binary not found. Please install via Homebrew."
+            self.errorMessage = "symdesk binary not found. If Symbrain is installed, run 'symbrain setup'; otherwise install via Homebrew."
             return
         }
         let detected = detection.tool

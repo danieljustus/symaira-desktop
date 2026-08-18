@@ -311,7 +311,7 @@ func isUnder(path, root string) bool {
 }
 
 func canonicalize(path string) (string, error) {
-	if _, err := os.Stat(path); err == nil {
+	if _, err := os.Stat(path); err == nil { // codeql[go/path-injection] path validated by caller (SecurePath enforces isUnder + symlink checks)
 		resolved, err := filepath.EvalSymlinks(path)
 		if err != nil {
 			return "", fmt.Errorf("cannot resolve path: %w", err)
@@ -321,7 +321,7 @@ func canonicalize(path string) (string, error) {
 
 	parent := path
 	for {
-		if _, err := os.Stat(parent); err == nil {
+		if _, err := os.Stat(parent); err == nil { // codeql[go/path-injection] path validated by caller (SecurePath enforces isUnder + symlink checks)
 			break
 		}
 		parent = filepath.Dir(parent)

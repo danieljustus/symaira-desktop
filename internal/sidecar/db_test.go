@@ -2,8 +2,10 @@ package sidecar
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -1351,5 +1353,105 @@ func TestPruneOnEmptyIndex(t *testing.T) {
 	}
 	if pruned != 0 {
 		t.Errorf("expected 0 pruned entries on empty index, got %d", pruned)
+	}
+}
+
+// TestGetBacklinksUsesToPathIndex verifies migration 006 added an index on
+// links(to_path) so GetBacklinks performs an index seek instead of a full
+// scan of the links table (issue #465).
+func TestGetBacklinksUsesToPathIndex(t *testing.T) {
+	db := setupTestDB(t)
+
+	rows, err := db.conn.Query(`
+		EXPLAIN QUERY PLAN
+		SELECT from_path FROM links
+		WHERE to_path = ? OR to_path = ?
+	`, "/tmp/target.md", "target")
+	if err != nil {
+		t.Fatalf("EXPLAIN QUERY PLAN failed: %v", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	cols, err := rows.Columns()
+	if err != nil {
+		t.Fatalf("failed to read columns: %v", err)
+	}
+
+	var plan strings.Builder
+	for rows.Next() {
+		vals := make([]interface{}, len(cols))
+		ptrs := make([]interface{}, len(cols))
+		for i := range vals {
+			ptrs[i] = &vals[i]
+		}
+		if err := rows.Scan(ptrs...); err != nil {
+			t.Fatalf("failed to scan query plan row: %v", err)
+		}
+		for _, v := range vals {
+			fmt.Fprintf(&plan, "%v ", v)
+		}
+		plan.WriteString("\n")
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("query plan iteration error: %v", err)
+	}
+
+	planText := plan.String()
+	if !strings.Contains(planText, "idx_links_to_path") {
+		t.Errorf("expected query plan to use idx_links_to_path, got:\n%s", planText)
+	}
+	if strings.Contains(planText, "SCAN links") {
+		t.Errorf("expected no full scan of links table, got:\n%s", planText)
+	}
+}
+
+// TestGetBacklinksResultsUnchangedWithIndex verifies backlink results are
+// still correct after the to_path index is applied (issue #465).
+func TestGetBacklinksResultsUnchangedWithIndex(t *testing.T) {
+	db := setupTestDB(t)
+
+	docs := []*vault.Document{
+		{
+			Path:    "/tmp/a.md",
+			Title:   "A",
+			Created: time.Now().Format(time.RFC3339),
+			SHA256:  "hash-a",
+			Body:    "links to target",
+			Links:   []string{"target"},
+		},
+		{
+			Path:    "/tmp/b.md",
+			Title:   "B",
+			Created: time.Now().Format(time.RFC3339),
+			SHA256:  "hash-b",
+			Body:    "also links to target",
+			Links:   []string{"/tmp/target.md"},
+		},
+		{
+			Path:    "/tmp/c.md",
+			Title:   "C",
+			Created: time.Now().Format(time.RFC3339),
+			SHA256:  "hash-c",
+			Body:    "links elsewhere",
+			Links:   []string{"other"},
+		},
+	}
+
+	for _, doc := range docs {
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatalf("IndexDocument(%s) failed: %v", doc.Path, err)
+		}
+	}
+
+	backlinks, err := db.GetBacklinks("/tmp/target.md")
+	if err != nil {
+		t.Fatalf("GetBacklinks failed: %v", err)
+	}
+
+	got := append([]string(nil), backlinks...)
+	sort.Strings(got)
+	want := []string{"/tmp/a.md", "/tmp/b.md"}
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Errorf("expected backlinks %v, got %v", want, got)
 	}
 }

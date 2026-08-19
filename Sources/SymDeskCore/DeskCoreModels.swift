@@ -1,0 +1,189 @@
+import Foundation
+
+// MARK: - History & Trash Models
+
+public struct HistoryEntry: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { snapshotID }
+    public let snapshotID: String
+    public let timestamp: String
+    public let size: Int64
+
+    public init(snapshotID: String, timestamp: String, size: Int64) {
+        self.snapshotID = snapshotID
+        self.timestamp = timestamp
+        self.size = size
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case snapshotID = "id"
+        case timestamp, size
+    }
+}
+
+public struct TrashEntry: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { name }
+    public let name: String
+    public let originalPath: String
+    public let deletedAt: String
+    public let size: Int64
+
+    public init(name: String, originalPath: String, deletedAt: String, size: Int64) {
+        self.name = name
+        self.originalPath = originalPath
+        self.deletedAt = deletedAt
+        self.size = size
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case originalPath = "original_path"
+        case deletedAt = "deleted_at"
+        case size
+    }
+}
+
+public struct SimilarDoc: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { path }
+    public let path: String
+    public let title: String
+    public let similarity: Int
+}
+
+public struct ReviewDoc: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { path }
+    public let path: String
+    public let title: String
+    public let status: String
+    public let documentType: String
+
+    enum CodingKeys: String, CodingKey {
+        case path, title, status, confidence, reasons
+        case documentType = "document_type"
+    }
+
+    public let confidence: Int
+    public let reasons: [String]
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        path = try c.decode(String.self, forKey: .path)
+        title = try c.decode(String.self, forKey: .title)
+        status = (try? c.decode(String.self, forKey: .status)) ?? ""
+        documentType = (try? c.decode(String.self, forKey: .documentType)) ?? ""
+        confidence = (try? c.decode(Int.self, forKey: .confidence)) ?? 0
+        reasons = (try? c.decode([String].self, forKey: .reasons)) ?? []
+    }
+}
+
+// MARK: - Doctor Report
+
+// MARK: - Doctor Report
+
+public struct DoctorReport: Codable, Sendable {
+    public let overall: String
+    public let vault: SubsystemStatus?
+    public let sidecar: SubsystemStatus?
+    public let contract: SubsystemStatus?
+    public let tools: ToolAvailability
+    public let versions: [String: String]?
+    public let conflicts: [String]?
+    public let ai: AIReport?
+
+    public struct SubsystemStatus: Codable, Sendable {
+        public let status: String?
+        public let message: String?
+        public let path: String?
+        public let filesFound: Int?
+
+        enum CodingKeys: String, CodingKey {
+            case status
+            case message
+            case path
+            case filesFound = "files_found"
+        }
+
+        public init(status: String? = nil, message: String? = nil, path: String? = nil, filesFound: Int? = nil) {
+            self.status = status
+            self.message = message
+            self.path = path
+            self.filesFound = filesFound
+        }
+    }
+
+    public struct AIReport: Codable, Sendable {
+        public let provider: String?
+        public let model: String?
+
+        public init(provider: String? = nil, model: String? = nil) {
+            self.provider = provider
+            self.model = model
+        }
+    }
+
+    public struct ToolAvailability: Codable, Sendable {
+        public let symseek: String?
+        public let symmemory: String?
+        public let symingest: String?
+        public let symfetch: String?
+        public let symvault: String?
+        public let symmeet: String?
+
+        public init(symseek: String? = nil, symmemory: String? = nil, symingest: String? = nil, symfetch: String? = nil, symvault: String? = nil, symmeet: String? = nil) {
+            self.symseek = symseek
+            self.symmemory = symmemory
+            self.symingest = symingest
+            self.symfetch = symfetch
+            self.symvault = symvault
+            self.symmeet = symmeet
+        }
+
+        /// Whether a tool name resolves to "ok" or "available".
+        public func isAvailable(_ name: String) -> Bool {
+            let val: String?
+            switch name {
+            case "symseek": val = symseek
+            case "symmemory": val = symmemory
+            case "symingest": val = symingest
+            case "symfetch": val = symfetch
+            case "symvault": val = symvault
+            case "symmeet": val = symmeet
+            default: val = nil
+            }
+            guard let v = val else { return false }
+            let lower = v.lowercased()
+            return lower == "ok" || lower == "available" || lower == "found"
+        }
+    }
+
+    public init(
+        overall: String = "unknown",
+        vault: SubsystemStatus? = nil,
+        sidecar: SubsystemStatus? = nil,
+        contract: SubsystemStatus? = nil,
+        tools: ToolAvailability = ToolAvailability(),
+        versions: [String: String]? = nil,
+        conflicts: [String]? = nil,
+        ai: AIReport? = nil
+    ) {
+        self.overall = overall
+        self.vault = vault
+        self.sidecar = sidecar
+        self.contract = contract
+        self.tools = tools
+        self.versions = versions
+        self.conflicts = conflicts
+        self.ai = ai
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        overall = (try? c.decode(String.self, forKey: .overall)) ?? "unknown"
+        vault = try? c.decode(SubsystemStatus.self, forKey: .vault)
+        sidecar = try? c.decode(SubsystemStatus.self, forKey: .sidecar)
+        contract = try? c.decode(SubsystemStatus.self, forKey: .contract)
+        tools = (try? c.decode(ToolAvailability.self, forKey: .tools)) ?? ToolAvailability()
+        versions = try? c.decode([String: String].self, forKey: .versions)
+        conflicts = try? c.decode([String].self, forKey: .conflicts)
+        ai = try? c.decode(AIReport.self, forKey: .ai)
+    }
+}

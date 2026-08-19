@@ -11,44 +11,94 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
+// registerCommands adds every subcommand to rootCmd, grouped for
+// `symdesk --help` (#467) so it reads as scannable sections instead of one
+// flat alphabetical list.
 func registerCommands(rootCmd *cobra.Command) {
-	rootCmd.AddCommand(newMailCmd())
-	rootCmd.AddCommand(newRecipeCmd())
-	rootCmd.AddCommand(newHistoryCmd())
-	rootCmd.AddCommand(newRestoreCmd())
-	rootCmd.AddCommand(newTrashCmd())
-	rootCmd.AddCommand(newMeetingCmd())
-	rootCmd.AddCommand(newRetentionCmd())
-	rootCmd.AddCommand(newDoctorCmd())
-	rootCmd.AddCommand(newIndexCmd())
-	rootCmd.AddCommand(newLsCmd())
-	rootCmd.AddCommand(newSearchCmd())
-	rootCmd.AddCommand(newPropsCmd())
-	rootCmd.AddCommand(newBacklinksCmd())
-	rootCmd.AddCommand(newRelationsCmd())
-	rootCmd.AddCommand(newAskCmd())
-	rootCmd.AddCommand(newTransformCmd())
-	rootCmd.AddCommand(newIngestCmd())
-	rootCmd.AddCommand(newNoteCmd())
-	rootCmd.AddCommand(newGraphCmd())
-	rootCmd.AddCommand(newRelatedCmd())
-	rootCmd.AddCommand(newViewsCmd())
-	rootCmd.AddCommand(newEventsCmd())
-	rootCmd.AddCommand(newPaperlessCmd())
-	rootCmd.AddCommand(newDocsCmd())
+	// Idempotent: newRootCmd already calls this, but registerCommands is
+	// also exercised directly by tests against a bare
+	// &cobra.Command{Use: "test"}, which needs the groups defined before
+	// AddCommand runs below (cobra panics on an unknown GroupID).
+	ensureCommandGroups(rootCmd)
+
+	addGrouped(rootCmd, groupVault,
+		newIndexCmd(),
+		newLsCmd(),
+		newSearchCmd(),
+		newPropsCmd(),
+		newBacklinksCmd(),
+		newRelationsCmd(),
+		newGraphCmd(),
+		newViewsCmd(),
+		newTagsCmd(),
+		newNoteCmd(),
+		newNotebookCmd(),
+		newVaultCmd(),
+	)
+
+	addGrouped(rootCmd, groupDocuments,
+		newDocsCmd(),
+		newDuplicatesCmd(),
+		newPaperlessCmd(),
+		newIngestCmd(),
+		newConsumeCmd(),
+		newExportCmd(),
+		newClipCmd(),
+		newConflictCmd(),
+	)
+
+	addGrouped(rootCmd, groupAI,
+		newAskCmd(),
+		newTransformCmd(),
+		newAICmd(),
+		newAIConfigCmd(),
+	)
+
+	addGrouped(rootCmd, groupMaintenance,
+		newMailCmd(),
+		newRecipeCmd(),
+		newHistoryCmd(),
+		newRestoreCmd(),
+		newTrashCmd(),
+		newMeetingCmd(),
+		newRetentionCmd(),
+		newDoctorCmd(),
+		newEventsCmd(),
+		newDemoCmd(),
+	)
+
+	// `doc` was a near-synonym command with a one-character name difference
+	// from `docs` and the same claimed purpose ("document metadata"); #467
+	// folds its subcommands into `docs` (see docs.go). The retired
+	// top-level `doc` command (doc.go) stays registered here, unhidden from
+	// GroupID assignment (it has none) but Hidden:true on the command
+	// itself, so `symdesk doc status ...` keeps working for existing
+	// scripts and MCP callers without appearing in `symdesk --help`.
 	rootCmd.AddCommand(newDocCmd())
-	rootCmd.AddCommand(newTagsCmd())
+
+	// `similar` named the same SimHash algorithm as `duplicates` and read
+	// as an indistinguishable sibling command (#467); it is folded into
+	// `duplicates similar` (see duplicates.go). The retired top-level
+	// `similar` command (similar.go) stays registered here, Hidden:true, so
+	// `symdesk similar <file>` keeps working unchanged.
 	rootCmd.AddCommand(newSimilarCmd())
-	rootCmd.AddCommand(newDuplicatesCmd())
-	rootCmd.AddCommand(newDemoCmd())
-	rootCmd.AddCommand(newConflictCmd())
-	rootCmd.AddCommand(newClipCmd())
-	rootCmd.AddCommand(newExportCmd())
-	rootCmd.AddCommand(newAICmd())
-	rootCmd.AddCommand(newAIConfigCmd())
-	rootCmd.AddCommand(newConsumeCmd())
-	rootCmd.AddCommand(newVaultCmd())
-	rootCmd.AddCommand(newNotebookCmd())
+
+	// `related` named a near-synonym concept to `relations` ("related
+	// entities and notes for a file" vs. "typed relations between notes")
+	// and read as an indistinguishable sibling command (#467); it is folded
+	// into `relations related` (see relations.go). The retired top-level
+	// `related` command (related.go) stays registered here, Hidden:true, so
+	// `symdesk related <file>` keeps working unchanged.
+	rootCmd.AddCommand(newRelatedCmd())
+}
+
+// addGrouped assigns groupID to every command and registers it on parent, so
+// group assignment can't drift out of sync with the AddCommand call.
+func addGrouped(parent *cobra.Command, groupID string, cmds ...*cobra.Command) {
+	for _, c := range cmds {
+		c.GroupID = groupID
+		parent.AddCommand(c)
+	}
 }
 
 func initServiceDeps() (string, *sidecar.DB, error) {

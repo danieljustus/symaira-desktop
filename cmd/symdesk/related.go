@@ -6,7 +6,10 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/service"
 )
 
-func newRelatedCmd() *cobra.Command {
+// newRelatedSubcommand builds the "related entities and notes for a file"
+// command body shared between the retired top-level `related` command and
+// the `relations related` subcommand it was folded into (#467).
+func newRelatedSubcommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "related [file]",
 		Short: "Get related entities and notes for a file",
@@ -26,4 +29,14 @@ func newRelatedCmd() *cobra.Command {
 			return outputResult(results)
 		},
 	}
+}
+
+// newRelatedCmd is the retired `related` command (#467, folded into
+// `relations related`). It is registered hidden so `symdesk related <file>`
+// keeps working for existing scripts and MCP callers without appearing in
+// `symdesk --help`.
+func newRelatedCmd() *cobra.Command {
+	cmd := newRelatedSubcommand()
+	cmd.Hidden = true
+	return cmd
 }

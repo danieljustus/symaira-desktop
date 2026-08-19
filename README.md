@@ -167,6 +167,8 @@ symdesk note new "My Note"     # create a note (frontmatter per vault contract)
 symdesk props <file>           # frontmatter properties
 symdesk backlinks <file>       # incoming wikilinks
 symdesk graph                  # nodes + edges for the link graph
+symdesk relations inverse <file>  # notes that reference a file via properties/wikilinks
+symdesk relations related <file>  # related entities and notes for a file (alias: `related <file>`)
 symdesk views ...              # saved database views
 symdesk ingest <file>          # copy a document into inbox/ + create a stub note
 symdesk ask "question?"        # AI answer grounded in vault search results
@@ -188,14 +190,32 @@ symdesk version --json         # {"tool":"symdesk","version":...,"schema_version
 ## Document workflow (vault contract v2)
 symdesk docs list --type invoice          # list indexed documents, with filters
 symdesk docs review                       # list documents needing review (low-confidence / missing metadata)
-symdesk doc status <file> paid            # set document status (open|paid|submitted|done|...)
-symdesk doc due <file> 2026-12-31        # set document due date (ISO-8601)
-symdesk similar <file>                    # find near-duplicate documents by SimHash
+symdesk docs status <file> paid           # set document status (open|paid|submitted|done|...) (alias: `doc status`)
+symdesk docs due <file> 2026-12-31        # set document due date (ISO-8601) (alias: `doc due`)
+symdesk duplicates                        # list groups of possible duplicate documents (SimHash)
+symdesk duplicates similar <file>         # find near-duplicates of one file (alias: `similar <file>`)
 symdesk demo init [dir]                   # materialise the built-in demo vault
 symdesk demo init --size large [dir]      # materialise a deterministic 10k-document benchmark vault
 ```
 
 All commands support `--json` for machine-readable output.
+
+### Command groups and retired aliases
+
+`symdesk --help` groups every command under **Vault**, **Document**, **AI**,
+**Server**, and **Maintenance** headings instead of one flat alphabetical
+list. Four pairs of near-synonym commands were collapsed into one command
+each with subcommands; the old names still work exactly as before (same
+flags, same `--json` output) but no longer appear in `--help`:
+
+| Current command | Retired hidden alias |
+| --- | --- |
+| `docs status` / `docs due` / `docs type` / `docs correspondent` / `docs tag` / `docs asn` | `doc status` / `doc due` / `doc type` / `doc correspondent` / `doc tag` / `doc asn` |
+| `duplicates similar <file>` | `similar <file>` |
+| `relations related <file>` | `related <file>` |
+
+`note` and `notebook` remain separate commands (different concepts), just
+grouped together under **Vault**.
 
 ### Large-vault performance baseline
 

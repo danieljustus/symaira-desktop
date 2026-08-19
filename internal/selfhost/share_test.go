@@ -12,6 +12,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/permissions"
 )
 
 func TestShareStoreCreateAndLookup(t *testing.T) {
@@ -444,6 +446,252 @@ func TestShareStoreAtomicWrite(t *testing.T) {
 	}
 	if len(links) != 1 {
 		t.Fatalf("expected 1 link, got %d", len(links))
+	}
+}
+
+// TestHandleCreateShareRejectsWorkerToken proves the worker-scoped
+// credential — which is not backed by a "user" or "admin" role — cannot
+// mint a public share link, closing off the path where a deliberately
+// scoped-down token could hand out read access to arbitrary vault
+// documents via GET /s/{token}.
+func TestHandleCreateShareRejectsWorkerToken(t *testing.T) {
+	vaultRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("World"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewServer(ServerConfig{
+		VaultRoot: vaultRoot, Token: testToken, WorkerToken: testWorkerToken,
+		Version: "test", Executable: "/bin/false",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	ts := httptest.NewServer(server.Handler())
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodPost, ts.URL+"/api/v1/share", strings.NewReader(`{"path":"Hello.md","expiry":1}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer "+testWorkerToken)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusForbidden {
+		t.Fatalf("expected 403 for worker token, got %d: %s", res.StatusCode, readBody(res))
+	}
+}
+
+// TestHandleCreateShareRejectsUnreadableDocument proves that a "user"-role
+// caller cannot mint a share link for a document they are not permitted to
+// read under the permissions manager, even though they hold a valid,
+// otherwise-privileged-enough token.
+func TestHandleCreateShareRejectsUnreadableDocument(t *testing.T) {
+	vaultRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Secret.md"), []byte("classified"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	ts := httptest.NewServer(server.Handler())
+	t.Cleanup(ts.Close)
+
+	restrictedToken, err := server.perm.UserAdd("restricted", "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := server.perm.SetDocumentRule(permissions.DocumentRule{
+		Path:  "Secret.md",
+		Owner: "admin",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if server.perm.CanRead(&permissions.User{Name: "restricted", Roles: []string{"user"}}, "Secret.md") {
+		t.Fatal("test setup error: restricted user should not read Secret.md")
+	}
+
+	req, err := http.NewRequest(http.MethodPost, ts.URL+"/api/v1/share", strings.NewReader(`{"path":"Secret.md","expiry":1}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer "+restrictedToken)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusForbidden {
+		t.Fatalf("expected 403 for unreadable document, got %d: %s", res.StatusCode, readBody(res))
+	}
+}
+
+// TestHandleAccessShareRejectsSymlinkEscape proves /s/{token} serves
+// through s.vaultRoot (the sandboxed os.Root every other file route uses)
+// so a symlink inside the vault that points outside it is never followed
+// on this route — the one route with no authentication at all.
+func TestHandleAccessShareRejectsSymlinkEscape(t *testing.T) {
+	outsideDir := t.TempDir()
+	secretPath := filepath.Join(outsideDir, "secret.txt")
+	if err := os.WriteFile(secretPath, []byte("outside the vault"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	vaultRoot := t.TempDir()
+	linkPath := filepath.Join(vaultRoot, "escape.md")
+	if err := os.Symlink(secretPath, linkPath); err != nil {
+		t.Skipf("symlinks not supported on this platform: %v", err)
+	}
+
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	ts := httptest.NewServer(server.Handler())
+	t.Cleanup(ts.Close)
+
+	// Create the share link directly against the store, bypassing the
+	// (correctly-enforcing) HTTP handler, to simulate a link that somehow
+	// points at the symlink — the serving path must still refuse to
+	// escape the vault root.
+	_, token, err := server.shares.Create("escape.md", "admin", time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res := unauthenticated(t, http.MethodGet, ts.URL+"/s/"+token, nil, "")
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+	if strings.Contains(string(body), "outside the vault") {
+		t.Fatal("symlink escape served content from outside the vault root")
+	}
+	if res.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected 404 for a symlink escaping the vault root, got %d: %s", res.StatusCode, body)
+	}
+}
+
+// TestHandleListAndRevokeShareScopedToOwner proves a non-admin caller only
+// sees and can only revoke the share links they created themselves — a
+// worker or restricted-user token cannot enumerate or revoke another
+// user's links.
+func TestHandleListAndRevokeShareScopedToOwner(t *testing.T) {
+	vaultRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Doc.md"), []byte("body"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	ts := httptest.NewServer(server.Handler())
+	t.Cleanup(ts.Close)
+
+	aliceToken, err := server.perm.UserAdd("alice", "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+	bobToken, err := server.perm.UserAdd("bob", "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Alice creates a share link.
+	req, err := http.NewRequest(http.MethodPost, ts.URL+"/api/v1/share", strings.NewReader(`{"path":"Doc.md","expiry":1}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer "+aliceToken)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var created struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&created); err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+	if res.StatusCode != http.StatusCreated {
+		t.Fatalf("alice's share creation failed: %d", res.StatusCode)
+	}
+
+	// Bob lists shares — must not see Alice's link.
+	bobList, err := http.NewRequest(http.MethodGet, ts.URL+"/api/v1/shares", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bobList.Header.Set("Authorization", "Bearer "+bobToken)
+	res, err = http.DefaultClient.Do(bobList)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var bobShares []ShareLink
+	if err := json.NewDecoder(res.Body).Decode(&bobShares); err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+	if len(bobShares) != 0 {
+		t.Fatalf("expected bob to see 0 shares, got %d", len(bobShares))
+	}
+
+	// Bob attempts to revoke Alice's link — must fail.
+	bobRevoke, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/share/"+created.ID, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bobRevoke.Header.Set("Authorization", "Bearer "+bobToken)
+	res, err = http.DefaultClient.Do(bobRevoke)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+	if res.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected 404 when bob revokes alice's link, got %d", res.StatusCode)
+	}
+
+	// Alice lists shares — must see her own link.
+	aliceList, err := http.NewRequest(http.MethodGet, ts.URL+"/api/v1/shares", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	aliceList.Header.Set("Authorization", "Bearer "+aliceToken)
+	res, err = http.DefaultClient.Do(aliceList)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var aliceShares []ShareLink
+	if err := json.NewDecoder(res.Body).Decode(&aliceShares); err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+	if len(aliceShares) != 1 || aliceShares[0].ID != created.ID {
+		t.Fatalf("expected alice to see her own share, got %+v", aliceShares)
+	}
+
+	// Alice revokes her own link — must succeed.
+	aliceRevoke, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/v1/share/"+created.ID, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	aliceRevoke.Header.Set("Authorization", "Bearer "+aliceToken)
+	res, err = http.DefaultClient.Do(aliceRevoke)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("expected alice to revoke her own share, got %d", res.StatusCode)
 	}
 }
 

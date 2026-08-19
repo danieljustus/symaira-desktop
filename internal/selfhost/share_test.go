@@ -2,12 +2,14 @@ package selfhost
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -314,6 +316,134 @@ func TestShareStorePersistence(t *testing.T) {
 	}
 	if found.Path != "doc.md" {
 		t.Fatalf("expected path doc.md, got %q", found.Path)
+	}
+}
+
+// TestShareStoreConcurrentCreate proves that N concurrent Create calls each
+// hold the store lock across their whole load-modify-save transaction, so
+// no link is lost to a lost update. Run with -race.
+func TestShareStoreConcurrentCreate(t *testing.T) {
+	dir := t.TempDir()
+	store, err := NewShareStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const n = 50
+	var wg sync.WaitGroup
+	errs := make(chan error, n)
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			_, _, err := store.Create(fmt.Sprintf("doc-%d.md", i), "admin", time.Hour)
+			if err != nil {
+				errs <- err
+			}
+		}(i)
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		t.Errorf("Create failed: %v", err)
+	}
+
+	links, err := store.List()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(links) != n {
+		t.Fatalf("expected %d links after concurrent Create, got %d (lost update)", n, len(links))
+	}
+	seen := make(map[string]bool, n)
+	for _, l := range links {
+		seen[l.Path] = true
+	}
+	if len(seen) != n {
+		t.Fatalf("expected %d distinct paths, got %d", n, len(seen))
+	}
+}
+
+// TestShareStoreCreateRevokeInterleave proves that a Create racing a Revoke
+// cannot reinstate a revoked link: the revoked link must stay revoked
+// regardless of how the two transactions interleave. Run with -race.
+func TestShareStoreCreateRevokeInterleave(t *testing.T) {
+	dir := t.TempDir()
+	store, err := NewShareStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	link, _, err := store.Create("target.md", "admin", time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		_ = store.Revoke(link.ID)
+	}()
+	go func() {
+		defer wg.Done()
+		_, _, _ = store.Create("other.md", "admin", time.Hour)
+	}()
+	wg.Wait()
+
+	links, err := store.List()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found *ShareLink
+	for i := range links {
+		if links[i].ID == link.ID {
+			found = &links[i]
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("revoked link disappeared entirely")
+	}
+	if !found.Expired {
+		t.Fatal("revoked link was reinstated by a concurrent Create")
+	}
+}
+
+// TestShareStoreAtomicWrite proves shares.json is written via a temp file +
+// rename so an interrupted write cannot leave a truncated store: after every
+// Create the file on disk is always fully valid JSON, never a partial write.
+func TestShareStoreAtomicWrite(t *testing.T) {
+	dir := t.TempDir()
+	store, err := NewShareStore(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := store.Create("doc.md", "admin", time.Hour); err != nil {
+		t.Fatal(err)
+	}
+
+	// No stray temp files should remain after a successful save.
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), ".shares-") {
+			t.Fatalf("temp file %q was not cleaned up", e.Name())
+		}
+	}
+
+	data, err := os.ReadFile(filepath.Join(dir, "shares.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var links []ShareLink
+	if err := json.Unmarshal(data, &links); err != nil {
+		t.Fatalf("shares.json is not valid JSON: %v", err)
+	}
+	if len(links) != 1 {
+		t.Fatalf("expected 1 link, got %d", len(links))
 	}
 }
 

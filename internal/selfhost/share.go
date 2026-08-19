@@ -59,9 +59,9 @@ func NewShareStore(configDir string) (*ShareStore, error) {
 	return &ShareStore{path: filepath.Join(configDir, "shares.json")}, nil
 }
 
-func (s *ShareStore) load() ([]ShareLink, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+// loadLocked reads and parses shares.json. The caller must already hold
+// s.mu (either the read lock or the write lock).
+func (s *ShareStore) loadLocked() ([]ShareLink, error) {
 	data, err := os.ReadFile(s.path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
@@ -76,21 +76,69 @@ func (s *ShareStore) load() ([]ShareLink, error) {
 	return links, nil
 }
 
-func (s *ShareStore) save(links []ShareLink) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+// saveLocked marshals links and writes them to shares.json atomically (via
+// a temp file in the same directory followed by a rename), so a crash or
+// power loss mid-write cannot leave a truncated store. The caller must
+// already hold s.mu.Lock().
+func (s *ShareStore) saveLocked(links []ShareLink) error {
 	data, err := json.MarshalIndent(links, "", "  ")
 	if err != nil {
 		return fmt.Errorf("shares: marshal store: %w", err)
 	}
-	return os.WriteFile(s.path, data, 0600)
+	return atomicWriteFile(s.path, data, 0600)
+}
+
+// load returns a point-in-time snapshot of the stored links under a read
+// lock. Callers that need to read-modify-write must not use this — take
+// s.mu.Lock() and call loadLocked/saveLocked directly instead, so the
+// whole transaction is covered by a single lock (see Create and Revoke).
+func (s *ShareStore) load() ([]ShareLink, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.loadLocked()
+}
+
+// atomicWriteFile writes data to path by first writing to a temporary file
+// in the same directory and then renaming it into place. This ensures a
+// reader never observes a partially written file and a crash mid-write
+// cannot truncate the previous contents.
+func atomicWriteFile(path string, data []byte, mode os.FileMode) error {
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, ".shares-*.tmp")
+	if err != nil {
+		return fmt.Errorf("shares: create temp file: %w", err)
+	}
+	tmpName := tmp.Name()
+	defer os.Remove(tmpName)
+	if err := tmp.Chmod(mode); err != nil {
+		tmp.Close()
+		return fmt.Errorf("shares: chmod temp file: %w", err)
+	}
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return fmt.Errorf("shares: write temp file: %w", err)
+	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return fmt.Errorf("shares: sync temp file: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		return fmt.Errorf("shares: close temp file: %w", err)
+	}
+	if err := os.Rename(tmpName, path); err != nil {
+		return fmt.Errorf("shares: rename temp file: %w", err)
+	}
+	return nil
 }
 
 // Create produces a new share link for the document at the given vault-
 // relative path. The plain-text token is returned so the caller can hand
 // it to the recipient; only its hash is stored.
 func (s *ShareStore) Create(path, createdBy string, duration time.Duration) (*ShareLink, string, error) {
-	links, err := s.load()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	links, err := s.loadLocked()
 	if err != nil {
 		return nil, "", err
 	}
@@ -117,7 +165,7 @@ func (s *ShareStore) Create(path, createdBy string, duration time.Duration) (*Sh
 	link.Token = token
 
 	links = append(links, link)
-	if err := s.save(links); err != nil {
+	if err := s.saveLocked(links); err != nil {
 		return nil, "", err
 	}
 	return &link, token, nil
@@ -170,7 +218,10 @@ func (s *ShareStore) List() ([]ShareLink, error) {
 // Revoke marks a share link as expired and records the revocation time.
 // It is a no-op for already-revoked links.
 func (s *ShareStore) Revoke(id string) error {
-	links, err := s.load()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	links, err := s.loadLocked()
 	if err != nil {
 		return err
 	}
@@ -191,7 +242,7 @@ func (s *ShareStore) Revoke(id string) error {
 	if !found {
 		return fmt.Errorf("shares: link not found")
 	}
-	return s.save(links)
+	return s.saveLocked(links)
 }
 
 // ---------------------------------------------------------------------------

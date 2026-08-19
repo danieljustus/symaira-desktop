@@ -40,7 +40,6 @@ func registerCommands(rootCmd *cobra.Command) {
 	addGrouped(rootCmd, groupDocuments,
 		newDocsCmd(),
 		newDuplicatesCmd(),
-		newSimilarCmd(),
 		newPaperlessCmd(),
 		newIngestCmd(),
 		newConsumeCmd(),
@@ -77,6 +76,13 @@ func registerCommands(rootCmd *cobra.Command) {
 	// itself, so `symdesk doc status ...` keeps working for existing
 	// scripts and MCP callers without appearing in `symdesk --help`.
 	rootCmd.AddCommand(newDocCmd())
+
+	// `similar` named the same SimHash algorithm as `duplicates` and read
+	// as an indistinguishable sibling command (#467); it is folded into
+	// `duplicates similar` (see duplicates.go). The retired top-level
+	// `similar` command (similar.go) stays registered here, Hidden:true, so
+	// `symdesk similar <file>` keeps working unchanged.
+	rootCmd.AddCommand(newSimilarCmd())
 }
 
 // addGrouped assigns groupID to every command and registers it on parent, so

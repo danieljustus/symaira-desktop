@@ -10,11 +10,11 @@ import (
 // writeExecutable writes an executable stub at dir/name so Resolve finds it.
 func writeExecutable(t *testing.T, dir, name string) string {
 	t.Helper()
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil { //nolint:gosec // test fixture directory under t.TempDir()
 		t.Fatal(err)
 	}
 	path := filepath.Join(dir, name)
-	if err := os.WriteFile(path, []byte("#!/bin/bash\nexit 0\n"), 0755); err != nil {
+	if err := os.WriteFile(path, []byte("#!/bin/bash\nexit 0\n"), 0755); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatal(err)
 	}
 	return path
@@ -175,7 +175,7 @@ func TestManagedRuntimeDirExists(t *testing.T) {
 	t.Run("present", func(t *testing.T) {
 		home := t.TempDir()
 		t.Setenv("HOME", home)
-		if err := os.MkdirAll(filepath.Join(home, ".symaira", "bin"), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Join(home, ".symaira", "bin"), 0755); err != nil { //nolint:gosec // test fixture directory under t.TempDir()
 			t.Fatal(err)
 		}
 		if !ManagedRuntimeDirExists() {

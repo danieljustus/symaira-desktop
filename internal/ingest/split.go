@@ -100,7 +100,7 @@ func splitWithSymingest(pdfPath string, splitPoints []int, outputDir string) ([]
 	if err != nil {
 		return nil, fmt.Errorf("symingest not found: %w", err)
 	}
-	cmd := exec.Command(bin, "split-pdf",
+	cmd := exec.Command(bin, "split-pdf", //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 		"--input", pdfPath,
 		"--split-at", strings.Join(strPoints, ","),
 		"--output-dir", outputDir,

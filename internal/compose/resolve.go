@@ -110,7 +110,7 @@ func managedRuntimeDirOrDefault() string {
 // is a regular, executable file; otherwise "".
 func executableIn(dir, name string) string {
 	candidate := filepath.Join(dir, name)
-	info, err := os.Stat(candidate)
+	info, err := os.Stat(candidate) //nolint:gosec // G703: candidate is dir+name joined for a binary lookup, not user-controlled file content
 	if err != nil || info.IsDir() {
 		return ""
 	}

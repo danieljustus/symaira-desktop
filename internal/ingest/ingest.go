@@ -65,7 +65,7 @@ func IngestFile(vaultRoot, sourcePath string) (string, error) {
 	ok, _ := HasSymingest()
 	if bin, err := compose.Resolve("symingest"); ok && err == nil {
 		// Attempt to use symingest ingest with --json (expected contract)
-		cmd := exec.Command(bin, "ingest", "--vault", vaultRoot, "--json", sourcePath)
+		cmd := exec.Command(bin, "ingest", "--vault", vaultRoot, "--json", sourcePath) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 		var out bytes.Buffer
 		cmd.Stdout = &out
 		runErr := cmd.Run()
@@ -85,7 +85,7 @@ func IngestFile(vaultRoot, sourcePath string) (string, error) {
 		}
 
 		// If --json fails (e.g. flag not defined in older v0.7.0 binaries), fallback to standard execution
-		cmd = exec.Command(bin, "ingest", "--vault", vaultRoot, sourcePath)
+		cmd = exec.Command(bin, "ingest", "--vault", vaultRoot, sourcePath) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 		if err := cmd.Run(); err != nil {
 			return "", fmt.Errorf("symingest failed: %w", err)
 		}
@@ -240,7 +240,7 @@ func IngestJobs() (string, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, bin, "jobs", "--json")
+	cmd := exec.CommandContext(ctx, bin, "jobs", "--json") //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
@@ -261,6 +261,6 @@ func IngestRetry(jobID string) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, bin, "retry", jobID)
+	cmd := exec.CommandContext(ctx, bin, "retry", jobID) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 	return cmd.Run()
 }

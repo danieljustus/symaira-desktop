@@ -445,7 +445,7 @@ func (s *Service) NoteClip(url string) (string, error) {
 	// > https://example.com
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, bin, url)
+	cmd := exec.CommandContext(ctx, bin, url) //nolint:gosec // resolved via compose.Resolve; url is a CLI argument, not shell-interpreted
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {

@@ -33,5 +33,13 @@ func newRelationsCmd() *cobra.Command {
 	}
 	relationsCmd.AddCommand(relationsInverseCmd)
 
+	// `related` named a near-synonym concept ("related entities and notes
+	// for a file" vs. "typed relations between notes") and read as an
+	// indistinguishable sibling command (#467); fold it in as a subcommand
+	// so both live under one discoverable entry point. The retired
+	// top-level `related` command (related.go) stays registered and hidden
+	// for backward compatibility.
+	relationsCmd.AddCommand(newRelatedSubcommand())
+
 	return relationsCmd
 }

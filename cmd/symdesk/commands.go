@@ -29,7 +29,6 @@ func registerCommands(rootCmd *cobra.Command) {
 		newBacklinksCmd(),
 		newRelationsCmd(),
 		newGraphCmd(),
-		newRelatedCmd(),
 		newViewsCmd(),
 		newTagsCmd(),
 		newNoteCmd(),
@@ -83,6 +82,14 @@ func registerCommands(rootCmd *cobra.Command) {
 	// `similar` command (similar.go) stays registered here, Hidden:true, so
 	// `symdesk similar <file>` keeps working unchanged.
 	rootCmd.AddCommand(newSimilarCmd())
+
+	// `related` named a near-synonym concept to `relations` ("related
+	// entities and notes for a file" vs. "typed relations between notes")
+	// and read as an indistinguishable sibling command (#467); it is folded
+	// into `relations related` (see relations.go). The retired top-level
+	// `related` command (related.go) stays registered here, Hidden:true, so
+	// `symdesk related <file>` keeps working unchanged.
+	rootCmd.AddCommand(newRelatedCmd())
 }
 
 // addGrouped assigns groupID to every command and registers it on parent, so

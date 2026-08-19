@@ -43,6 +43,36 @@ var (
 	vaultFlag string
 )
 
+// Command groups shown by `symdesk --help` (#467). Every command registered
+// on the root command should carry one of these GroupIDs so the help output
+// reads as scannable sections instead of one flat alphabetical list.
+const (
+	groupVault       = "vault"
+	groupDocuments   = "documents"
+	groupAI          = "ai"
+	groupServer      = "server"
+	groupMaintenance = "maintenance"
+)
+
+// ensureCommandGroups registers the #467 command groups on cmd if they
+// aren't already present. It is idempotent (checked via ContainsGroup) so it
+// can safely run both in newRootCmd and at the top of registerCommands,
+// which is also exercised directly by tests against a bare
+// &cobra.Command{Use: "test"} that never goes through newRootCmd.
+func ensureCommandGroups(cmd *cobra.Command) {
+	for _, g := range []*cobra.Group{
+		{ID: groupVault, Title: "Vault Commands:"},
+		{ID: groupDocuments, Title: "Document Commands:"},
+		{ID: groupAI, Title: "AI Commands:"},
+		{ID: groupServer, Title: "Server Commands:"},
+		{ID: groupMaintenance, Title: "Maintenance Commands:"},
+	} {
+		if !cmd.ContainsGroup(g.ID) {
+			cmd.AddGroup(g)
+		}
+	}
+}
+
 func main() {
 	cobra.OnInitialize(initConfig)
 
@@ -96,6 +126,17 @@ func newRootCmd() *cobra.Command {
 	rootCmd.PersistentFlags().BoolVar(&jsonFlag, "json", false, "output in JSON format")
 	rootCmd.PersistentFlags().StringVar(&vaultFlag, "vault", "", "override vault path")
 
+	// Command groups (#467): every command added below (here and in
+	// registerCommands) gets a GroupID so `symdesk --help` renders scannable
+	// sections instead of one 45-entry alphabetical list. `version` and the
+	// cobra-provided `completion`/`help` commands intentionally stay
+	// ungrouped and land under cobra's default "Additional Commands:".
+	// cobra.Command.AddCommand panics if a subcommand's GroupID isn't
+	// registered yet, so this must run before any GroupID-tagged
+	// AddCommand call below (and registerCommands calls it again,
+	// idempotently, for callers that build their own bare root command).
+	ensureCommandGroups(rootCmd)
+
 	// 1. Version Command
 	versionCmd := &cobra.Command{
 		Use:   "version",
@@ -114,17 +155,27 @@ func newRootCmd() *cobra.Command {
 	// 2. MCP Command
 	var allowWrite bool
 	mcpCmd := &cobra.Command{
-		Use:   "mcp",
-		Short: "Start the stdio MCP server",
+		Use:     "mcp",
+		Short:   "Start the stdio MCP server",
+		GroupID: groupServer,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return mcp.StartServer(cfg, version, allowWrite)
 		},
 	}
 	mcpCmd.Flags().BoolVar(&allowWrite, "allow-write", false, "enable mutating MCP tools (note creation, ingest, status changes)")
 	rootCmd.AddCommand(mcpCmd)
-	rootCmd.AddCommand(newServeCmd())
-	rootCmd.AddCommand(newWorkerCmd())
-	rootCmd.AddCommand(newPermissionsCmd())
+
+	serveCmd := newServeCmd()
+	serveCmd.GroupID = groupServer
+	rootCmd.AddCommand(serveCmd)
+
+	workerCmd := newWorkerCmd()
+	workerCmd.GroupID = groupServer
+	rootCmd.AddCommand(workerCmd)
+
+	permCmd := newPermissionsCmd()
+	permCmd.GroupID = groupServer
+	rootCmd.AddCommand(permCmd)
 
 	// 3. Doctor Command (Stub)
 	registerCommands(rootCmd)

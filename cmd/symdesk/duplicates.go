@@ -26,5 +26,14 @@ func newDuplicatesCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().Int("threshold", service.DefaultDuplicateThreshold, "minimum similarity percentage (0-100)")
+
+	// `similar` named the same SimHash algorithm and read as an
+	// indistinguishable sibling command (#467); fold it in as a subcommand
+	// so `duplicates` (groups) and `duplicates similar <file>` (one file's
+	// near-duplicates) live under a single, discoverable entry point. The
+	// retired top-level `similar` command (similar.go) stays registered and
+	// hidden for backward compatibility.
+	cmd.AddCommand(newSimilarSubcommand())
+
 	return cmd
 }

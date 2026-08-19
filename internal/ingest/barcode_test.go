@@ -165,6 +165,9 @@ func TestSplitPDFByBarcode_NoScanner(t *testing.T) {
 	// A PDF with no pdftoppm on path — should still work without splitting.
 	origPath := os.Getenv("PATH")
 	t.Setenv("PATH", "/usr/bin:/bin")
+	// Isolate $HOME so a real ~/.symaira/bin/symingest can't make this
+	// "no split tools" scenario find one via the managed-runtime tier.
+	t.Setenv("HOME", t.TempDir())
 	defer os.Setenv("PATH", origPath)
 
 	pdfPath := filepath.Join(tmpDir, "test.pdf")
@@ -212,6 +215,9 @@ func TestIngestFileWithBarcodeSplit_PDF(t *testing.T) {
 	// PDF is ingested normally.
 	origPath := os.Getenv("PATH")
 	t.Setenv("PATH", "/usr/bin:/bin")
+	// Isolate $HOME so a real ~/.symaira/bin/symingest can't make this
+	// "no split tools" scenario find one via the managed-runtime tier.
+	t.Setenv("HOME", t.TempDir())
 	defer os.Setenv("PATH", origPath)
 
 	cfg := DefaultBarcodeConfig()

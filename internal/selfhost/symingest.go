@@ -11,20 +11,23 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
-// processViaSymingest composes the sibling OCR tool through PATH. The child is
-// given a temporary vault so it can use its normal pipeline without writing a
-// second persistent note into the server vault.
+// processViaSymingest composes the sibling OCR tool, resolved via
+// compose.Resolve ($SYMAIRA_BIN, then the managed runtime directory
+// ~/.symaira/bin, then PATH). The child is given a temporary vault so it can
+// use its normal pipeline without writing a second persistent note into the
+// server vault.
 func (w *Worker) processViaSymingest(ctx context.Context, input string) (text, engine, model string, err error) {
 	mode, err := w.symingestMode()
 	if err != nil {
 		return "", "", "", err
 	}
-	binary, err := exec.LookPath("symingest")
+	binary, err := compose.Resolve("symingest")
 	if err != nil {
-		return "", "", "", fmt.Errorf("symingest is required for OCR but was not found on PATH; install symingest or add it to PATH")
+		return "", "", "", fmt.Errorf("symingest is required for OCR but was not found via $SYMAIRA_BIN, the managed runtime directory, or PATH: %w", err)
 	}
 
 	scratch, err := os.MkdirTemp("", "symdesk-symingest-*")

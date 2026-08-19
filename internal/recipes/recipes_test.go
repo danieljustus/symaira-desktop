@@ -107,8 +107,11 @@ printf '%s' '` + responseJSON + `' > "$RESPONSE"
 
 func TestStartRunnerMissing(t *testing.T) {
 	root := t.TempDir()
-	// Ensure symvibe is NOT on PATH
+	// Ensure symvibe is NOT on PATH, and isolate $HOME so a real
+	// ~/.symaira/bin/symvibe on the machine running this test can't be
+	// found via the managed-runtime tier either.
 	t.Setenv("PATH", t.TempDir())
+	t.Setenv("HOME", t.TempDir())
 	recipe := Recipe{Version: 1, Name: "test", Triggers: []string{"manual"}, Tools: []string{"desk_search"}, WriteCap: 1}
 	_, err := Start(context.Background(), root, recipe, "manual")
 	if err == nil {

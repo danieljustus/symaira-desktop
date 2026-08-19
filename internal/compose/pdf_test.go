@@ -67,6 +67,8 @@ exit 3
 func TestRenderPDFReportsMissingAndFailingSymprint(t *testing.T) {
 	t.Run("missing", func(t *testing.T) {
 		t.Setenv("PATH", t.TempDir())
+		t.Setenv("HOME", t.TempDir())
+		t.Setenv(SymairaBinEnvVar, "")
 		if _, err := RenderPDF([]byte("body"), filepath.Join(t.TempDir(), "out.pdf"), ""); err == nil || !strings.Contains(err.Error(), "symprint not found") {
 			t.Fatalf("expected missing symprint error, got %v", err)
 		}

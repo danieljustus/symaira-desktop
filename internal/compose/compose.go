@@ -109,9 +109,9 @@ func RenderPDF(markdown []byte, outputPath, profile string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	bin, err := exec.LookPath(SymprintBin)
+	bin, err := Resolve(SymprintBin)
 	if err != nil {
-		return "", fmt.Errorf("symprint not found on PATH")
+		return "", fmt.Errorf("symprint not found: %w", err)
 	}
 
 	dir := filepath.Dir(outputPath)
@@ -138,7 +138,11 @@ func ListSymprintProfiles() ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymprintBin, "profiles", "--json") //nolint:gosec
+	bin, err := Resolve(SymprintBin)
+	if err != nil {
+		return nil, fmt.Errorf("symprint not found: %w", err)
+	}
+	cmd := exec.CommandContext(ctx, bin, "profiles", "--json") //nolint:gosec
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -163,7 +167,7 @@ func ListSymprintProfiles() ([]string, error) {
 }
 
 func probeTool(name string) (bool, string) {
-	path, err := exec.LookPath(name)
+	path, err := Resolve(name)
 	if err != nil {
 		return false, "not_found"
 	}
@@ -193,7 +197,11 @@ func IndexDocument(path, body string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymseekBin, "index", "--stdin", "--source", path) //nolint:gosec
+	bin, err := Resolve(SymseekBin)
+	if err != nil {
+		return fmt.Errorf("symseek not found: %w", err)
+	}
+	cmd := exec.CommandContext(ctx, bin, "index", "--stdin", "--source", path) //nolint:gosec
 	cmd.Stdin = strings.NewReader(body)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -208,7 +216,11 @@ func DeleteDocument(path string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymseekBin, "delete", path) //nolint:gosec
+	bin, err := Resolve(SymseekBin)
+	if err != nil {
+		return fmt.Errorf("symseek not found: %w", err)
+	}
+	cmd := exec.CommandContext(ctx, bin, "delete", path) //nolint:gosec
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -222,7 +234,11 @@ func Search(query string) ([]SearchResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymseekBin, "search", query, "--json") //nolint:gosec
+	bin, err := Resolve(SymseekBin)
+	if err != nil {
+		return nil, fmt.Errorf("symseek not found: %w", err)
+	}
+	cmd := exec.CommandContext(ctx, bin, "search", query, "--json") //nolint:gosec
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -243,7 +259,11 @@ func ListEntities() ([]MemoryEntity, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymmemoryBin, "entity", "list", "--output", "json") //nolint:gosec
+	bin, err := Resolve(SymmemoryBin)
+	if err != nil {
+		return nil, fmt.Errorf("symmemory not found: %w", err)
+	}
+	cmd := exec.CommandContext(ctx, bin, "entity", "list", "--output", "json") //nolint:gosec
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -264,7 +284,11 @@ func GetNeighbors(name string) (*MemoryNeighbors, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, SymmemoryBin, "entity", "neighbors", name, "--output", "json") //nolint:gosec
+	bin, err := Resolve(SymmemoryBin)
+	if err != nil {
+		return nil, fmt.Errorf("symmemory not found: %w", err)
+	}
+	cmd := exec.CommandContext(ctx, bin, "entity", "neighbors", name, "--output", "json") //nolint:gosec
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out

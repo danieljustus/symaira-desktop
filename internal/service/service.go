@@ -431,10 +431,11 @@ func (s *Service) NoteDaily(dateStr string) (string, error) {
 
 // NoteClip fetches a URL via symfetch and saves it as a note.
 func (s *Service) NoteClip(url string) (string, error) {
-	// 1. Ensure symfetch is available
-	ok, _ := compose.HasTool("symfetch")
-	if !ok {
-		return "", fmt.Errorf("symfetch binary not found on PATH")
+	// 1. Resolve symfetch: $SYMAIRA_BIN, then the managed runtime directory
+	// (~/.symaira/bin), then PATH.
+	bin, err := compose.Resolve("symfetch")
+	if err != nil {
+		return "", fmt.Errorf("symfetch binary not found: %w", err)
 	}
 
 	// 2. Fetch as JSON to easily extract the title, and then as Markdown? No, wait...
@@ -444,11 +445,10 @@ func (s *Service) NoteClip(url string) (string, error) {
 	// > https://example.com
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "symfetch", url)
+	cmd := exec.CommandContext(ctx, bin, url)
 	var out bytes.Buffer
 	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("symfetch failed: %w", err)
 	}
 

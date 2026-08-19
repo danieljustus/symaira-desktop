@@ -60,6 +60,7 @@ func TestWorkerUsesSymingestFromPATH(t *testing.T) {
 
 func TestWorkerMissingSymingestIsExplicit(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
+	t.Setenv("HOME", t.TempDir())
 	worker, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken})
 	if err != nil {
 		t.Fatal(err)

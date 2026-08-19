@@ -19,6 +19,11 @@ func writeMockSymrelate(t *testing.T, dir, script string) {
 func withBarePATH(t *testing.T) {
 	t.Helper()
 	t.Setenv("PATH", "/usr/bin:/bin")
+	// Isolate $HOME and $SYMAIRA_BIN so a real managed-runtime directory on
+	// the machine running this test can never make symrelate resolvable
+	// when the test deliberately means to simulate its absence.
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv(SymairaBinEnvVar, "")
 	ResetCache()
 	t.Cleanup(ResetCache)
 }

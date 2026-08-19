@@ -16,6 +16,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
@@ -123,7 +124,7 @@ func Start(ctx context.Context, vaultRoot string, recipe Recipe, trigger string)
 	if !allowed {
 		return Manifest{}, fmt.Errorf("recipe %q does not allow %s runs", recipe.Name, trigger)
 	}
-	runner, err := exec.LookPath("symvibe")
+	runner, err := compose.Resolve("symvibe")
 	if err != nil {
 		return Manifest{}, errors.New("no compatible recipe runner found; install symvibe to run this recipe")
 	}

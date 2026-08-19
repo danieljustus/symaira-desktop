@@ -291,6 +291,7 @@ func TestIngestPDFWithSplit_ScanError(t *testing.T) {
 	}
 	// No pdftoppm / qpdf / symingest on PATH: scanning fails up front.
 	t.Setenv("PATH", "/usr/bin:/bin")
+	t.Setenv("HOME", t.TempDir())
 
 	notes, err := ingestPDFWithSplit(vaultRoot, pdfPath, DefaultBarcodeConfig())
 	if err == nil || !strings.Contains(err.Error(), "pdftoppm not found") {

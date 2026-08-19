@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/danieljustus/symaira-desktop/internal/compose"
 )
 
 // SplitPDF splits a PDF into multiple files at the given 1-based page
@@ -94,7 +96,11 @@ func splitWithSymingest(pdfPath string, splitPoints []int, outputDir string) ([]
 		strPoints[i] = strconv.Itoa(p)
 	}
 
-	cmd := exec.Command("symingest", "split-pdf",
+	bin, err := compose.Resolve("symingest")
+	if err != nil {
+		return nil, fmt.Errorf("symingest not found: %w", err)
+	}
+	cmd := exec.Command(bin, "split-pdf",
 		"--input", pdfPath,
 		"--split-at", strings.Join(strPoints, ","),
 		"--output-dir", outputDir,

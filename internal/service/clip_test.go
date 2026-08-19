@@ -41,6 +41,10 @@ func withFakeSymfetchOnPath(t *testing.T, dir string) {
 func TestNoteClipWithoutSymfetch(t *testing.T) {
 	svc := newTestService(t)
 	t.Setenv("PATH", "/usr/bin:/bin")
+	// Isolate $HOME too: a real ~/.symaira/bin/symfetch on the machine
+	// running this test must not make Resolve find a binary that PATH
+	// alone deliberately excludes here.
+	t.Setenv("HOME", t.TempDir())
 	compose.ResetCache()
 	t.Cleanup(compose.ResetCache)
 

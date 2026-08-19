@@ -20,6 +20,11 @@ func withMockPath(t *testing.T, dir string) {
 	old := os.Getenv("PATH")
 	os.Setenv("PATH", dir+string(os.PathListSeparator)+old)
 	t.Cleanup(func() { os.Setenv("PATH", old) })
+	// Isolate $HOME and $SYMAIRA_BIN so a real managed-runtime directory on
+	// the machine running this test (~/.symaira/bin) can never shadow the
+	// PATH-based mock tool these tests set up.
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv(SymairaBinEnvVar, "")
 	ResetCache()
 	t.Cleanup(ResetCache)
 }

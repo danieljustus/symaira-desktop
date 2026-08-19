@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -59,9 +58,9 @@ func NewShareStore(configDir string) (*ShareStore, error) {
 	return &ShareStore{path: filepath.Join(configDir, "shares.json")}, nil
 }
 
-func (s *ShareStore) load() ([]ShareLink, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+// loadLocked reads and parses shares.json. The caller must already hold
+// s.mu (either the read lock or the write lock).
+func (s *ShareStore) loadLocked() ([]ShareLink, error) {
 	data, err := os.ReadFile(s.path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
@@ -76,21 +75,69 @@ func (s *ShareStore) load() ([]ShareLink, error) {
 	return links, nil
 }
 
-func (s *ShareStore) save(links []ShareLink) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+// saveLocked marshals links and writes them to shares.json atomically (via
+// a temp file in the same directory followed by a rename), so a crash or
+// power loss mid-write cannot leave a truncated store. The caller must
+// already hold s.mu.Lock().
+func (s *ShareStore) saveLocked(links []ShareLink) error {
 	data, err := json.MarshalIndent(links, "", "  ")
 	if err != nil {
 		return fmt.Errorf("shares: marshal store: %w", err)
 	}
-	return os.WriteFile(s.path, data, 0600)
+	return atomicWriteFile(s.path, data, 0600)
+}
+
+// load returns a point-in-time snapshot of the stored links under a read
+// lock. Callers that need to read-modify-write must not use this — take
+// s.mu.Lock() and call loadLocked/saveLocked directly instead, so the
+// whole transaction is covered by a single lock (see Create and Revoke).
+func (s *ShareStore) load() ([]ShareLink, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.loadLocked()
+}
+
+// atomicWriteFile writes data to path by first writing to a temporary file
+// in the same directory and then renaming it into place. This ensures a
+// reader never observes a partially written file and a crash mid-write
+// cannot truncate the previous contents.
+func atomicWriteFile(path string, data []byte, mode os.FileMode) error {
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, ".shares-*.tmp")
+	if err != nil {
+		return fmt.Errorf("shares: create temp file: %w", err)
+	}
+	tmpName := tmp.Name()
+	defer func() { _ = os.Remove(tmpName) }()
+	if err := tmp.Chmod(mode); err != nil {
+		_ = tmp.Close()
+		return fmt.Errorf("shares: chmod temp file: %w", err)
+	}
+	if _, err := tmp.Write(data); err != nil {
+		_ = tmp.Close()
+		return fmt.Errorf("shares: write temp file: %w", err)
+	}
+	if err := tmp.Sync(); err != nil {
+		_ = tmp.Close()
+		return fmt.Errorf("shares: sync temp file: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		return fmt.Errorf("shares: close temp file: %w", err)
+	}
+	if err := os.Rename(tmpName, path); err != nil {
+		return fmt.Errorf("shares: rename temp file: %w", err)
+	}
+	return nil
 }
 
 // Create produces a new share link for the document at the given vault-
 // relative path. The plain-text token is returned so the caller can hand
 // it to the recipient; only its hash is stored.
 func (s *ShareStore) Create(path, createdBy string, duration time.Duration) (*ShareLink, string, error) {
-	links, err := s.load()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	links, err := s.loadLocked()
 	if err != nil {
 		return nil, "", err
 	}
@@ -117,7 +164,7 @@ func (s *ShareStore) Create(path, createdBy string, duration time.Duration) (*Sh
 	link.Token = token
 
 	links = append(links, link)
-	if err := s.save(links); err != nil {
+	if err := s.saveLocked(links); err != nil {
 		return nil, "", err
 	}
 	return &link, token, nil
@@ -170,7 +217,10 @@ func (s *ShareStore) List() ([]ShareLink, error) {
 // Revoke marks a share link as expired and records the revocation time.
 // It is a no-op for already-revoked links.
 func (s *ShareStore) Revoke(id string) error {
-	links, err := s.load()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	links, err := s.loadLocked()
 	if err != nil {
 		return err
 	}
@@ -191,7 +241,7 @@ func (s *ShareStore) Revoke(id string) error {
 	if !found {
 		return fmt.Errorf("shares: link not found")
 	}
-	return s.save(links)
+	return s.saveLocked(links)
 }
 
 // ---------------------------------------------------------------------------
@@ -216,8 +266,18 @@ func hashToken(token string) string {
 // ---------------------------------------------------------------------------
 
 // handleCreateShare handles POST /api/v1/share — create a time-limited
-// read-only share link for a vault document.
+// read-only share link for a vault document. Only "user" and "admin" role
+// principals may mint a link (the worker-scoped credential is rejected
+// outright), and the caller must additionally hold read access to the
+// requested document under the permissions manager, exactly like every
+// other read route (see handleGetFile).
 func (s *Server) handleCreateShare(w http.ResponseWriter, r *http.Request) {
+	user := userFromContext(r)
+	if user == nil || (!user.HasRole("user") && !user.HasRole("admin")) {
+		writeError(w, http.StatusForbidden, "access denied")
+		return
+	}
+
 	var req struct {
 		Path   string `json:"path"`
 		Expiry int    `json:"expiry"` // hours, max 168 (7 days)
@@ -230,8 +290,9 @@ func (s *Server) handleCreateShare(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "path is required")
 		return
 	}
-	if strings.Contains(req.Path, "..") || filepath.IsAbs(req.Path) {
-		writeError(w, http.StatusBadRequest, "invalid path")
+	rel, err := resolveRequestPath(req.Path)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	if req.Expiry <= 0 || req.Expiry > 168 {
@@ -239,16 +300,26 @@ func (s *Server) handleCreateShare(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify the document exists in the vault.
-	fullPath := filepath.Join(s.cfg.VaultRoot, req.Path)
-	_, err := os.Stat(fullPath)
+	if !s.perm.CanRead(user, rel) {
+		writeError(w, http.StatusForbidden, "access denied")
+		return
+	}
+
+	// Verify the document exists in the vault, through the same sandboxed
+	// os.Root the rest of the API uses (symlink containment included).
+	file, err := s.vaultRoot.Open(rel)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "document not found")
 		return
 	}
+	info, statErr := file.Stat()
+	_ = file.Close()
+	if statErr != nil || !info.Mode().IsRegular() {
+		writeError(w, http.StatusNotFound, "document not found")
+		return
+	}
 
-	user := userFromContext(r)
-	link, token, err := s.shares.Create(req.Path, user.Name, time.Duration(req.Expiry)*time.Hour)
+	link, token, err := s.shares.Create(rel, user.Name, time.Duration(req.Expiry)*time.Hour)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create share link")
 		return
@@ -263,7 +334,7 @@ func (s *Server) handleCreateShare(w http.ResponseWriter, r *http.Request) {
 	}{
 		ID:        link.ID,
 		Token:     token,
-		Path:      req.Path,
+		Path:      rel,
 		CreatedAt: link.CreatedAt,
 		ExpiresAt: link.ExpiresAt,
 		URL:       "/s/" + token,
@@ -271,12 +342,29 @@ func (s *Server) handleCreateShare(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, resp)
 }
 
-// handleListShares handles GET /api/v1/shares — list all share links.
+// handleListShares handles GET /api/v1/shares — list share links. Admins
+// see every link; everyone else sees only the links they created, so a
+// worker or restricted-user credential cannot enumerate other users'
+// share links.
 func (s *Server) handleListShares(w http.ResponseWriter, r *http.Request) {
 	links, err := s.shares.List()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to list shares")
 		return
+	}
+	user := userFromContext(r)
+	if user == nil {
+		writeError(w, http.StatusForbidden, "access denied")
+		return
+	}
+	if !user.HasRole("admin") {
+		owned := links[:0]
+		for _, l := range links {
+			if l.CreatedBy == user.Name {
+				owned = append(owned, l)
+			}
+		}
+		links = owned
 	}
 	if links == nil {
 		links = []ShareLink{}
@@ -284,12 +372,39 @@ func (s *Server) handleListShares(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, links)
 }
 
-// handleRevokeShare handles DELETE /api/v1/share/{id} — revoke a share link.
+// handleRevokeShare handles DELETE /api/v1/share/{id} — revoke a share
+// link. Admins may revoke any link; everyone else may only revoke a link
+// they created themselves.
 func (s *Server) handleRevokeShare(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if id == "" {
 		writeError(w, http.StatusBadRequest, "id is required")
 		return
+	}
+	user := userFromContext(r)
+	if user == nil {
+		writeError(w, http.StatusForbidden, "access denied")
+		return
+	}
+	if !user.HasRole("admin") {
+		links, err := s.shares.List()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to revoke share")
+			return
+		}
+		owned := false
+		for _, l := range links {
+			if l.ID == id {
+				owned = l.CreatedBy == user.Name
+				break
+			}
+		}
+		if !owned {
+			// Same response as "not found" — do not leak whether a link
+			// owned by someone else exists.
+			writeError(w, http.StatusNotFound, "share link not found or already revoked")
+			return
+		}
 	}
 	if err := s.shares.Revoke(id); err != nil {
 		writeError(w, http.StatusNotFound, "share link not found or already revoked")
@@ -299,7 +414,10 @@ func (s *Server) handleRevokeShare(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleAccessShare handles GET /s/{token} — serve a shared document
-// without authentication.
+// without authentication. The document is served through s.vaultRoot, the
+// same sandboxed os.Root every other file route uses, so a symlink inside
+// the vault that points outside it is never followed on this
+// authentication-free route either.
 func (s *Server) handleAccessShare(w http.ResponseWriter, r *http.Request) {
 	token := r.PathValue("token")
 	if token == "" {
@@ -318,7 +436,5 @@ func (s *Server) handleAccessShare(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "not found")
 		return
 	}
-	fullPath := filepath.Join(s.cfg.VaultRoot, link.Path)
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s"`, filepath.Base(link.Path)))
-	http.ServeFile(w, r, fullPath)
+	s.serveVaultFile(w, r, link.Path, "inline", filepath.Base(link.Path))
 }

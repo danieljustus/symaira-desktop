@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"container/list"
 	"context"
 	cryptorand "crypto/rand"
 	"crypto/sha256"
@@ -86,16 +87,35 @@ type Server struct {
 
 	// Per-user filtered snapshot cache. Non-admin users re-use a previously
 	// computed and filtered payload when neither the vault nor the permissions
-	// files have changed since it was cached. The map is keyed by user name.
-	perUserCacheMu sync.Mutex
-	perUserCache   map[string]perUserCachedSnapshot
+	// files have changed since it was cached. perUserCache maps a user name to
+	// its entry's element in perUserLRU, which orders entries from
+	// most-recently-used (front) to least-recently-used (back) so eviction is
+	// O(1). perUserCacheBytes tracks the combined size (in bytes) of every
+	// cached entry's gzip payload; once a new or refreshed entry would push
+	// the total over perUserCacheBudget, entries are evicted from the back of
+	// the list until it fits.
+	perUserCacheMu     sync.Mutex
+	perUserCache       map[string]*list.Element
+	perUserLRU         *list.List
+	perUserCacheBytes  int64
+	perUserCacheBudget int64
 }
 
-// perUserCachedSnapshot holds a filtered-and-compressed snapshot payload for
-// a specific non-admin user together with the invalidation signals that
-// identify when it was computed.
+// perUserCacheEntry is the value stored in each perUserLRU element: the
+// owning user name (so an eviction from the back of the list knows which
+// map key to delete) plus the cached snapshot itself.
+type perUserCacheEntry struct {
+	user string
+	snap perUserCachedSnapshot
+}
+
+// perUserCachedSnapshot holds a filtered snapshot payload for a specific
+// non-admin user together with the invalidation signals that identify when
+// it was computed. Only the gzip-compressed representation is retained —
+// each entry is a full copy of every readable note, so keeping an
+// uncompressed copy alongside it would roughly double resident memory for
+// no benefit; the rare non-gzip request decompresses on demand instead.
 type perUserCachedSnapshot struct {
-	plain       []byte
 	compressed  []byte
 	etag        string
 	adminETag   string    // vault ETag at cache time
@@ -103,7 +123,13 @@ type perUserCachedSnapshot struct {
 	groupsMtime time.Time // groups.json mtime at cache time
 }
 
-const maxPerUserCachedSnapshots = 64
+// defaultPerUserCacheBudget bounds the total size of every cached per-user
+// snapshot combined (see Server.perUserCacheBudget). Each entry is a full
+// gzip copy of every note a given user can read, so this is a real memory
+// ceiling, not a per-entry count: worst case resident memory for the whole
+// per-user cache is bounded by this many bytes regardless of how many
+// distinct users request a snapshot.
+const defaultPerUserCacheBudget = 64 << 20 // 64 MiB
 
 func NewServer(cfg ServerConfig) (*Server, error) {
 	if len(cfg.Token) < 32 {
@@ -162,7 +188,10 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		_ = state.Close()
 		return nil, fmt.Errorf("open vault root: %w", err)
 	}
-	s := &Server{cfg: cfg, db: db, state: state, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux(), throttle: newThrottle()}
+	s := &Server{
+		cfg: cfg, db: db, state: state, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux(), throttle: newThrottle(),
+		perUserCacheBudget: defaultPerUserCacheBudget,
+	}
 	s.snapshotDirty.Store(true)
 
 	// Initialise the permissions manager. The config directory lives under
@@ -473,7 +502,19 @@ type snapshotNote struct {
 
 func (s *Server) handleSnapshot(w http.ResponseWriter, r *http.Request) {
 	user := userFromContext(r)
-	plain, compressed, etag, err := s.snapshotPayloadFiltered(user)
+
+	// Admins (and the nil/unauthenticated-in-tests case) are served from
+	// the single global snapshot cache, which already keeps plain alongside
+	// its gzip — reuse it as-is rather than round-tripping through gzip.
+	// Everyone else goes through the bounded, gzip-only per-user cache.
+	var plain, compressed []byte
+	var etag string
+	var err error
+	if user == nil || user.HasRole("admin") {
+		plain, compressed, etag, err = s.snapshotPayload()
+	} else {
+		compressed, etag, err = s.snapshotPayloadFiltered(user)
+	}
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -489,7 +530,34 @@ func (s *Server) handleSnapshot(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(compressed)
 		return
 	}
+	if plain == nil {
+		// Non-admin path (or a client that skipped gzip): the per-user cache
+		// only retains the compressed body, so decompress on demand for this
+		// rare case instead of keeping a second, uncompressed copy resident
+		// for every cached user.
+		plain, err = gunzipAll(compressed)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
 	_, _ = w.Write(plain)
+}
+
+// gunzipAll decompresses a complete gzip payload into memory. Used only for
+// the rare non-gzip-accepting client hitting the per-user snapshot cache,
+// which retains just the compressed representation.
+func gunzipAll(compressed []byte) ([]byte, error) {
+	gz, err := gzip.NewReader(bytes.NewReader(compressed))
+	if err != nil {
+		return nil, fmt.Errorf("open gzip reader: %w", err)
+	}
+	defer func() { _ = gz.Close() }()
+	data, err := io.ReadAll(gz)
+	if err != nil {
+		return nil, fmt.Errorf("decompress: %w", err)
+	}
+	return data, nil
 }
 
 type snapshotFile struct {
@@ -578,17 +646,16 @@ func (s *Server) snapshotPayload() ([]byte, []byte, string, error) {
 }
 
 // snapshotPayloadFiltered is like snapshotPayload but excludes documents the
-// user cannot read. Admins see everything (the existing behaviour). Non-admin
-// filtered payloads are cached per user and invalidated when the vault ETag
-// or the permissions/groups file mtimes change.
-func (s *Server) snapshotPayloadFiltered(user *permissions.User) ([]byte, []byte, string, error) {
-	plain, compressed, etag, err := s.snapshotPayload()
+// user cannot read, returning only the gzip-compressed body (see
+// perUserCachedSnapshot). Callers must handle the admin/nil-user case
+// themselves — this is only the non-admin, per-user-cached path. Filtered
+// payloads are cached per user and invalidated when the vault ETag or the
+// permissions/groups file mtimes change; the cache is bounded by total
+// bytes with least-recently-used eviction (see storeUserSnapshotLocked).
+func (s *Server) snapshotPayloadFiltered(user *permissions.User) ([]byte, string, error) {
+	plain, _, etag, err := s.snapshotPayload()
 	if err != nil {
-		return nil, nil, "", err
-	}
-	// Admins and nil users get the full snapshot as before.
-	if user == nil || user.HasRole("admin") {
-		return plain, compressed, etag, nil
+		return nil, "", err
 	}
 
 	// Compute the permissions generation: mtimes of the two files that
@@ -599,11 +666,13 @@ func (s *Server) snapshotPayloadFiltered(user *permissions.User) ([]byte, []byte
 
 	// Check the per-user cache under lock.
 	s.perUserCacheMu.Lock()
-	if cached, ok := s.perUserCache[user.Name]; ok {
-		if cached.adminETag == etag && cached.permsMtime.Equal(permsMtime) && cached.groupsMtime.Equal(groupsMtime) {
-			plain2, comp2, userETag := cached.plain, cached.compressed, cached.etag
+	if el, ok := s.perUserCache[user.Name]; ok {
+		entry := el.Value.(*perUserCacheEntry)
+		if entry.snap.adminETag == etag && entry.snap.permsMtime.Equal(permsMtime) && entry.snap.groupsMtime.Equal(groupsMtime) {
+			s.perUserLRU.MoveToFront(el)
+			comp, userETag := entry.snap.compressed, entry.snap.etag
 			s.perUserCacheMu.Unlock()
-			return plain2, comp2, userETag, nil
+			return comp, userETag, nil
 		}
 	}
 	s.perUserCacheMu.Unlock()
@@ -614,7 +683,7 @@ func (s *Server) snapshotPayloadFiltered(user *permissions.User) ([]byte, []byte
 		GeneratedAt time.Time      `json:"generated_at"`
 	}
 	if err := json.Unmarshal(plain, &payload); err != nil {
-		return nil, nil, "", err
+		return nil, "", err
 	}
 	// Use CanReadMany to batch-check all paths in one call instead of
 	// hitting the permissions files individually for each note.
@@ -636,38 +705,71 @@ func (s *Server) snapshotPayloadFiltered(user *permissions.User) ([]byte, []byte
 	payload.Notes = filtered
 	plain2, err := json.Marshal(payload)
 	if err != nil {
-		return nil, nil, "", err
+		return nil, "", err
 	}
 	plain2 = append(plain2, '\n')
 	var comp2 bytes.Buffer
 	gz := gzip.NewWriter(&comp2)
 	if _, err := gz.Write(plain2); err != nil {
-		return nil, nil, "", err
+		return nil, "", err
 	}
 	if err := gz.Close(); err != nil {
-		return nil, nil, "", err
+		return nil, "", err
 	}
 	// Use a different etag for filtered snapshots so the client's 304
 	// cache doesn't leak data across users.
 	newETag := etag + ":" + user.Name
+	compressed := comp2.Bytes()
 
-	// Store in per-user cache (bounded).
 	s.perUserCacheMu.Lock()
-	if s.perUserCache == nil {
-		s.perUserCache = make(map[string]perUserCachedSnapshot)
-	}
-	if len(s.perUserCache) >= maxPerUserCachedSnapshots {
-		// Bounds exceeded — clear and rebuild. Individual entries are
-		// small; a full flush is simpler than maintaining an LRU list.
-		s.perUserCache = make(map[string]perUserCachedSnapshot)
-	}
-	s.perUserCache[user.Name] = perUserCachedSnapshot{
-		plain: plain2, compressed: comp2.Bytes(), etag: newETag,
+	s.storeUserSnapshotLocked(user.Name, perUserCachedSnapshot{
+		compressed: compressed, etag: newETag,
 		adminETag: etag, permsMtime: permsMtime, groupsMtime: groupsMtime,
-	}
+	})
 	s.perUserCacheMu.Unlock()
 
-	return plain2, comp2.Bytes(), newETag, nil
+	return compressed, newETag, nil
+}
+
+// storeUserSnapshotLocked inserts or replaces the cached snapshot for user
+// as the most-recently-used entry, evicting entries from the back of
+// perUserLRU (least-recently-used first) until the cache's total size fits
+// within perUserCacheBudget. The caller must hold s.perUserCacheMu.
+//
+// Unlike the previous "flush everything past N entries" policy, eviction
+// here is driven by actual memory footprint: each entry is a full gzip copy
+// of every note a user can read, so a handful of large vaults can dwarf a
+// count-based limit while a fleet of small ones would never approach it.
+func (s *Server) storeUserSnapshotLocked(user string, snap perUserCachedSnapshot) {
+	if s.perUserCache == nil {
+		s.perUserCache = make(map[string]*list.Element)
+		s.perUserLRU = list.New()
+	}
+
+	// Drop any existing entry for this user first so its old size is not
+	// double-counted while we decide what (if anything) else to evict.
+	if el, ok := s.perUserCache[user]; ok {
+		s.perUserCacheBytes -= int64(len(el.Value.(*perUserCacheEntry).snap.compressed))
+		s.perUserLRU.Remove(el)
+		delete(s.perUserCache, user)
+	}
+
+	budget := s.perUserCacheBudget
+	if budget <= 0 {
+		budget = defaultPerUserCacheBudget
+	}
+	size := int64(len(snap.compressed))
+	for s.perUserCacheBytes+size > budget && s.perUserLRU.Len() > 0 {
+		back := s.perUserLRU.Back()
+		evicted := back.Value.(*perUserCacheEntry)
+		s.perUserCacheBytes -= int64(len(evicted.snap.compressed))
+		s.perUserLRU.Remove(back)
+		delete(s.perUserCache, evicted.user)
+	}
+
+	el := s.perUserLRU.PushFront(&perUserCacheEntry{user: user, snap: snap})
+	s.perUserCache[user] = el
+	s.perUserCacheBytes += size
 }
 
 // fileMtime returns the modification time of path, or the zero time when

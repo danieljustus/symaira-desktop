@@ -6,12 +6,16 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/service"
 )
 
-func newDocCmd() *cobra.Command {
-	docCmd := &cobra.Command{
-		Use:   "doc",
-		Short: "Mutate document metadata (status, due date, archive serial number)",
-	}
-
+// newDocMutationSubcommands builds the "mutate one document field" subcommand
+// tree (status, due, type, correspondent, tag add/remove, asn). It is called
+// twice: once to build the retired top-level `doc` command (kept as a hidden
+// alias for backward compatibility, #467) and once to attach the same
+// subcommands under `docs` (the surviving, documented entry point). Cobra
+// commands can only have a single parent, so each call constructs fresh
+// *cobra.Command instances that share the same RunE bodies — the --json
+// output shape is identical regardless of which tree a caller reaches it
+// through.
+func newDocMutationSubcommands() []*cobra.Command {
 	docStatusCmd := &cobra.Command{
 		Use:   "status [file...] [status]",
 		Short: "Set document status on one or more files (open|paid|submitted|done|needs_review|waiting_for_reply)",
@@ -23,7 +27,6 @@ func newDocCmd() *cobra.Command {
 		},
 	}
 	addBatchStdinFlag(docStatusCmd)
-	docCmd.AddCommand(docStatusCmd)
 
 	docDueCmd := &cobra.Command{
 		Use:   "due [file...] [date]",
@@ -36,7 +39,6 @@ func newDocCmd() *cobra.Command {
 		},
 	}
 	addBatchStdinFlag(docDueCmd)
-	docCmd.AddCommand(docDueCmd)
 
 	docTypeCmd := &cobra.Command{
 		Use:   "type [file...] [type]",
@@ -49,7 +51,6 @@ func newDocCmd() *cobra.Command {
 		},
 	}
 	addBatchStdinFlag(docTypeCmd)
-	docCmd.AddCommand(docTypeCmd)
 
 	docCorrespondentCmd := &cobra.Command{
 		Use:   "correspondent [file...] [name]",
@@ -62,13 +63,11 @@ func newDocCmd() *cobra.Command {
 		},
 	}
 	addBatchStdinFlag(docCorrespondentCmd)
-	docCmd.AddCommand(docCorrespondentCmd)
 
 	docTagCmd := &cobra.Command{
 		Use:   "tag",
 		Short: "Add or remove tags on one or more files",
 	}
-	docCmd.AddCommand(docTagCmd)
 
 	docTagAddCmd := &cobra.Command{
 		Use:   "add [tag] [file...]",
@@ -113,7 +112,21 @@ func newDocCmd() *cobra.Command {
 			return outputResult(map[string]interface{}{"status": "updated", "file": args[0], "asn": asn})
 		},
 	}
-	docCmd.AddCommand(docASNCmd)
 
+	return []*cobra.Command{docStatusCmd, docDueCmd, docTypeCmd, docCorrespondentCmd, docTagCmd, docASNCmd}
+}
+
+// newDocCmd is the retired `doc` command (#467, folded into `docs`). It is
+// registered hidden so `symdesk doc status ...` etc. keep working for
+// existing scripts and MCP callers without appearing in `symdesk --help`.
+func newDocCmd() *cobra.Command {
+	docCmd := &cobra.Command{
+		Use:    "doc",
+		Short:  "Mutate document metadata (status, due date, archive serial number)",
+		Hidden: true,
+	}
+	for _, sub := range newDocMutationSubcommands() {
+		docCmd.AddCommand(sub)
+	}
 	return docCmd
 }

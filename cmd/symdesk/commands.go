@@ -39,7 +39,6 @@ func registerCommands(rootCmd *cobra.Command) {
 
 	addGrouped(rootCmd, groupDocuments,
 		newDocsCmd(),
-		newDocCmd(),
 		newDuplicatesCmd(),
 		newSimilarCmd(),
 		newPaperlessCmd(),
@@ -69,6 +68,15 @@ func registerCommands(rootCmd *cobra.Command) {
 		newEventsCmd(),
 		newDemoCmd(),
 	)
+
+	// `doc` was a near-synonym command with a one-character name difference
+	// from `docs` and the same claimed purpose ("document metadata"); #467
+	// folds its subcommands into `docs` (see docs.go). The retired
+	// top-level `doc` command (doc.go) stays registered here, unhidden from
+	// GroupID assignment (it has none) but Hidden:true on the command
+	// itself, so `symdesk doc status ...` keeps working for existing
+	// scripts and MCP callers without appearing in `symdesk --help`.
+	rootCmd.AddCommand(newDocCmd())
 }
 
 // addGrouped assigns groupID to every command and registers it on parent, so

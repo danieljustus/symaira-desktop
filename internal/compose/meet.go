@@ -1,7 +1,6 @@
 package compose
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -48,15 +47,12 @@ func (e *SymmeetError) IsPermissionDenied() bool { return e.ExitCode == 3 }
 func (e *SymmeetError) IsTransient() bool { return e.ExitCode == 1 }
 
 func runSymmeet(ctx context.Context, op string, args []string) ([]byte, error) {
-	bin, err := Resolve("symmeet")
+	bin, err := ResolveFunc("symmeet")
 	if err != nil {
 		return nil, fmt.Errorf("symmeet not found: %w", err)
 	}
-	cmd := exec.CommandContext(ctx, bin, args...) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/IDs, not shell-interpreted
-	var out, stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
+	out, stderr, err := runTool(ctx, bin, toolOpts{}, args...)
+	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			return nil, fmt.Errorf("symmeet %s timed out: %w", op, ctx.Err())
 		}

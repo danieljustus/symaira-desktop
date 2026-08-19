@@ -1,12 +1,10 @@
 package compose
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os/exec"
 	"strings"
 	"time"
 )
@@ -91,20 +89,16 @@ func sanitizeContactRefExtras(raw map[string]interface{}) map[string]interface{}
 }
 
 func runSymrelate(ctx context.Context, args []string) ([]byte, error) {
-	bin, err := Resolve("symrelate")
+	bin, err := ResolveFunc("symrelate")
 	if err != nil {
 		return nil, fmt.Errorf("symrelate not found: %w", err)
 	}
-	cmd := exec.CommandContext(ctx, bin, args...) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 	// CommandContext's kill targets only the direct child; a grandchild
 	// (e.g. a hung subprocess of symrelate) would keep the pipes open and
 	// block Wait forever. WaitDelay bounds that wait so the configured
 	// timeout stays a hard upper bound.
-	cmd.WaitDelay = 2 * time.Second
-	var out, stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
+	out, stderr, err := runTool(ctx, bin, toolOpts{WaitDelay: 2 * time.Second}, args...)
+	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			return nil, fmt.Errorf("symrelate %s timed out: %w", strings.Join(args, " "), ctx.Err())
 		}

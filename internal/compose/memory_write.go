@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
 	"time"
 )
@@ -50,11 +49,12 @@ func ResolveCandidates(label string) ([]CandidateMatch, error) {
 }
 
 func runSymmemory(ctx context.Context, args []string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, "symmemory", args...) //nolint:gosec // fixed binary name; args are CLI flags/values, not shell-interpreted
-	var out, stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
+	bin, err := ResolveFunc(symmemoryName)
+	if err != nil {
+		return nil, fmt.Errorf("symmemory not found: %w", err)
+	}
+	out, stderr, err := runTool(ctx, bin, toolOpts{}, args...)
+	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			return nil, fmt.Errorf("symmemory %s timed out: %w", strings.Join(args, " "), ctx.Err())
 		}

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -43,21 +42,36 @@ type MemoryNeighbors struct {
 	Edges []MemoryRelation `json:"edges"`
 }
 
+// Fixed sibling-tool binary names. These are constants, not overridable
+// package vars: the one seam for redirecting a tool during tests is
+// ResolveFunc below, not the name itself.
+const (
+	symseekName   = "symseek"
+	symmemoryName = "symmemory"
+	symprintName  = "symprint"
+)
+
 var (
 	cacheMu  sync.RWMutex
 	cacheMap = make(map[string]*ToolInfo)
 
-	// SymseekBin is the path or name of the symseek binary.
-	// Tests override this to avoid calling the real binary on PATH.
-	SymseekBin = "symseek"
-
-	// SymmemoryBin is the path or name of the symmemory binary.
-	// Tests override this to avoid calling the real binary on PATH.
-	SymmemoryBin = "symmemory"
-
-	// SymprintBin is the path or name of the symprint binary.
-	// Tests override this to avoid calling the real binary on PATH.
-	SymprintBin = "symprint"
+	// ResolveFunc resolves a sibling-tool binary name to a path. It is the
+	// single injectable lookup seam for this package: every function in
+	// internal/compose that needs to run a sibling tool calls ResolveFunc
+	// rather than Resolve directly, so tests can redirect one or more tool
+	// names to a double (e.g. a shell-script mock) without touching $PATH
+	// or $SYMAIRA_BIN.
+	//
+	// Production code should never reassign this; it always defaults to,
+	// and normally stays equal to, Resolve. Tests that need a double
+	// should reassign it and restore the original in t.Cleanup, e.g.:
+	//
+	//	compose.ResolveFunc = func(name string) (string, error) {
+	//		if name == "symseek" { return mockPath, nil }
+	//		return compose.Resolve(name)
+	//	}
+	//	t.Cleanup(func() { compose.ResolveFunc = compose.Resolve })
+	ResolveFunc = Resolve
 )
 
 // ResetCache clears the internal sibling tool probe cache.
@@ -90,17 +104,17 @@ func HasTool(name string) (bool, string) {
 
 // HasSymseek is a shorthand helper for symseek.
 func HasSymseek() (bool, string) {
-	return HasTool(SymseekBin)
+	return HasTool(symseekName)
 }
 
 // HasSymmemory is a shorthand helper for symmemory.
 func HasSymmemory() (bool, string) {
-	return HasTool(SymmemoryBin)
+	return HasTool(symmemoryName)
 }
 
 // HasSymprint is a shorthand helper for symprint.
 func HasSymprint() (bool, string) {
-	return HasTool(SymprintBin)
+	return HasTool(symprintName)
 }
 
 // RenderPDF writes a Markdown document to a PDF using symprint.
@@ -109,7 +123,7 @@ func RenderPDF(markdown []byte, outputPath, profile string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	bin, err := Resolve(SymprintBin)
+	bin, err := ResolveFunc(symprintName)
 	if err != nil {
 		return "", fmt.Errorf("symprint not found: %w", err)
 	}
@@ -123,11 +137,8 @@ func RenderPDF(markdown []byte, outputPath, profile string) (string, error) {
 	if profile != "" {
 		args = append(args, "-p", profile)
 	}
-	cmd := exec.CommandContext(ctx, bin, args...)
-	cmd.Stdin = bytes.NewReader(markdown)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
+	_, stderr, err := runTool(ctx, bin, toolOpts{Stdin: bytes.NewReader(markdown)}, args...)
+	if err != nil {
 		return "", fmt.Errorf("symprint render failed: %w (stderr: %s)", err, stderr.String())
 	}
 	return outputPath, nil
@@ -138,16 +149,12 @@ func ListSymprintProfiles() ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	bin, err := Resolve(SymprintBin)
+	bin, err := ResolveFunc(symprintName)
 	if err != nil {
 		return nil, fmt.Errorf("symprint not found: %w", err)
 	}
-	cmd := exec.CommandContext(ctx, bin, "profiles", "--json") //nolint:gosec
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
+	out, stderr, err := runTool(ctx, bin, toolOpts{}, "profiles", "--json")
+	if err != nil {
 		return nil, fmt.Errorf("symprint profiles failed: %w (stderr: %s)", err, stderr.String())
 	}
 
@@ -167,7 +174,7 @@ func ListSymprintProfiles() ([]string, error) {
 }
 
 func probeTool(name string) (bool, string) {
-	path, err := Resolve(name)
+	path, err := ResolveFunc(name)
 	if err != nil {
 		return false, "not_found"
 	}
@@ -175,10 +182,8 @@ func probeTool(name string) (bool, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, path, "version", "--json")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
+	out, _, err := runTool(ctx, path, toolOpts{}, "version", "--json")
+	if err != nil {
 		return true, "unknown"
 	}
 
@@ -197,15 +202,12 @@ func IndexDocument(path, body string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	bin, err := Resolve(SymseekBin)
+	bin, err := ResolveFunc(symseekName)
 	if err != nil {
 		return fmt.Errorf("symseek not found: %w", err)
 	}
-	cmd := exec.CommandContext(ctx, bin, "index", "--stdin", "--source", path) //nolint:gosec
-	cmd.Stdin = strings.NewReader(body)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
+	_, stderr, err := runTool(ctx, bin, toolOpts{Stdin: strings.NewReader(body)}, "index", "--stdin", "--source", path)
+	if err != nil {
 		return fmt.Errorf("symseek index failed: %w (stderr: %s)", err, stderr.String())
 	}
 	return nil
@@ -216,14 +218,12 @@ func DeleteDocument(path string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	bin, err := Resolve(SymseekBin)
+	bin, err := ResolveFunc(symseekName)
 	if err != nil {
 		return fmt.Errorf("symseek not found: %w", err)
 	}
-	cmd := exec.CommandContext(ctx, bin, "delete", path) //nolint:gosec
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
+	_, stderr, err := runTool(ctx, bin, toolOpts{}, "delete", path)
+	if err != nil {
 		return fmt.Errorf("symseek delete failed: %w (stderr: %s)", err, stderr.String())
 	}
 	return nil
@@ -234,16 +234,12 @@ func Search(query string) ([]SearchResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	bin, err := Resolve(SymseekBin)
+	bin, err := ResolveFunc(symseekName)
 	if err != nil {
 		return nil, fmt.Errorf("symseek not found: %w", err)
 	}
-	cmd := exec.CommandContext(ctx, bin, "search", query, "--json") //nolint:gosec
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
+	out, stderr, err := runTool(ctx, bin, toolOpts{}, "search", query, "--json")
+	if err != nil {
 		return nil, fmt.Errorf("symseek search failed: %w (stderr: %s)", err, stderr.String())
 	}
 
@@ -259,16 +255,12 @@ func ListEntities() ([]MemoryEntity, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	bin, err := Resolve(SymmemoryBin)
+	bin, err := ResolveFunc(symmemoryName)
 	if err != nil {
 		return nil, fmt.Errorf("symmemory not found: %w", err)
 	}
-	cmd := exec.CommandContext(ctx, bin, "entity", "list", "--output", "json") //nolint:gosec
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
+	out, stderr, err := runTool(ctx, bin, toolOpts{}, "entity", "list", "--output", "json")
+	if err != nil {
 		return nil, fmt.Errorf("symmemory entity list failed: %w (stderr: %s)", err, stderr.String())
 	}
 
@@ -284,16 +276,12 @@ func GetNeighbors(name string) (*MemoryNeighbors, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	bin, err := Resolve(SymmemoryBin)
+	bin, err := ResolveFunc(symmemoryName)
 	if err != nil {
 		return nil, fmt.Errorf("symmemory not found: %w", err)
 	}
-	cmd := exec.CommandContext(ctx, bin, "entity", "neighbors", name, "--output", "json") //nolint:gosec
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
+	out, stderr, err := runTool(ctx, bin, toolOpts{}, "entity", "neighbors", name, "--output", "json")
+	if err != nil {
 		return nil, fmt.Errorf("symmemory neighbors failed: %w (stderr: %s)", err, stderr.String())
 	}
 

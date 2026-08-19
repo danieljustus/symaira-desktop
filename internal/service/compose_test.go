@@ -61,14 +61,8 @@ fi
 	}
 
 	// Point compose at mock binaries
-	compose.SymseekBin = mockSeek
-	compose.SymmemoryBin = mockMemory
-	compose.ResetCache()
-	t.Cleanup(func() {
-		compose.SymseekBin = "symseek"
-		compose.SymmemoryBin = "symmemory"
-		compose.ResetCache()
-	})
+	withMockTool(t, "symseek", mockSeek)
+	withMockTool(t, "symmemory", mockMemory)
 
 	// 3. Setup DB
 	dbPath := filepath.Join(vaultPath, "sidecar.db")
@@ -184,12 +178,7 @@ fi
 		t.Fatal(err)
 	}
 
-	compose.SymmemoryBin = mockMemory
-	compose.ResetCache()
-	t.Cleanup(func() {
-		compose.SymmemoryBin = "symmemory"
-		compose.ResetCache()
-	})
+	withMockTool(t, "symmemory", mockMemory)
 
 	dbPath := filepath.Join(vaultPath, "sidecar.db")
 	db, err := sidecar.Open(dbPath)
@@ -306,12 +295,7 @@ fi
 		t.Fatal(err)
 	}
 
-	compose.SymmemoryBin = mockMemory
-	compose.ResetCache()
-	t.Cleanup(func() {
-		compose.SymmemoryBin = "symmemory"
-		compose.ResetCache()
-	})
+	withMockTool(t, "symmemory", mockMemory)
 
 	dbPath := filepath.Join(vaultPath, "sidecar.db")
 	db, err := sidecar.Open(dbPath)

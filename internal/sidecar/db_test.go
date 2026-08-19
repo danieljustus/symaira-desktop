@@ -1370,7 +1370,7 @@ func TestGetBacklinksUsesToPathIndex(t *testing.T) {
 	if err != nil {
 		t.Fatalf("EXPLAIN QUERY PLAN failed: %v", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	cols, err := rows.Columns()
 	if err != nil {

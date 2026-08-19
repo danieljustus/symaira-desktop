@@ -684,11 +684,11 @@ public final class DeskCore: ObservableObject {
     @Published public private(set) var coreVersion: String?
 
     @Published public var vaultPath: String?
-	@Published public private(set) var serverURL: URL?
+	@Published public internal(set) var serverURL: URL?
 
     public var isDemoMode: Bool { VaultConfig.isDemoMode }
 	public var isRemote: Bool { remoteClient != nil }
-	private var remoteClient: RemoteDeskClient?
+	internal var remoteClient: RemoteDeskClient?
 
 	/// The active local-CLI or remote-HTTP transport, set alongside `tool`/
 	/// `remoteClient` in `initialize()`. Feature methods route through this

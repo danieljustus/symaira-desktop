@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
@@ -143,11 +144,15 @@ func (w *MailWatcher) listAccounts() ([]accountInfo, error) {
 	if !ok {
 		return nil, fmt.Errorf("symingest not available")
 	}
+	bin, err := compose.Resolve("symingest")
+	if err != nil {
+		return nil, fmt.Errorf("symingest not available: %w", err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "symingest", "mail", "--json",
+	cmd := exec.CommandContext(ctx, bin, "mail", "--json", //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 		"--config", w.configPath, "list")
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -249,20 +254,24 @@ func (w *MailWatcher) fetchMessages(accountID string) ([]fetchMessage, error) {
 	if !ok {
 		return nil, fmt.Errorf("symingest not available")
 	}
+	bin, err := compose.Resolve("symingest")
+	if err != nil {
+		return nil, fmt.Errorf("symingest not available: %w", err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
 	var args []string
 	if accountID != "" {
-		args = []string{"symingest", "mail", "--json",
+		args = []string{"mail", "--json",
 			"--config", w.configPath, "fetch", "--id", accountID}
 	} else {
-		args = []string{"symingest", "mail", "--json",
+		args = []string{"mail", "--json",
 			"--config", w.configPath, "fetch"}
 	}
 
-	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
+	cmd := exec.CommandContext(ctx, bin, args...) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 	var out bytes.Buffer
 	cmd.Stdout = &out
 

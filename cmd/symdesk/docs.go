@@ -16,6 +16,13 @@ func newDocsCmd() *cobra.Command {
 		Short: "Manage document metadata (contract v2)",
 	}
 
+	// Fold doc's mutation subcommands (status, due, type, correspondent,
+	// tag, asn) directly into docs so both `symdesk docs status ...` and,
+	// via the alias above, `symdesk doc status ...` work identically.
+	for _, sub := range newDocMutationSubcommands() {
+		docsCmd.AddCommand(sub)
+	}
+
 	docsListCmd := &cobra.Command{
 		Use:   "list",
 		Short: "List indexed documents with filters",

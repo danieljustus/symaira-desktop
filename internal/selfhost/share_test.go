@@ -436,7 +436,7 @@ func TestShareStoreAtomicWrite(t *testing.T) {
 		}
 	}
 
-	data, err := os.ReadFile(filepath.Join(dir, "shares.json"))
+	data, err := os.ReadFile(filepath.Join(dir, "shares.json")) //nolint:gosec // G304: dir is a t.TempDir() for this test
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -456,7 +456,7 @@ func TestShareStoreAtomicWrite(t *testing.T) {
 // documents via GET /s/{token}.
 func TestHandleCreateShareRejectsWorkerToken(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("World"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("World"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{
@@ -480,7 +480,7 @@ func TestHandleCreateShareRejectsWorkerToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if res.StatusCode != http.StatusForbidden {
 		t.Fatalf("expected 403 for worker token, got %d: %s", res.StatusCode, readBody(res))
 	}
@@ -492,7 +492,7 @@ func TestHandleCreateShareRejectsWorkerToken(t *testing.T) {
 // otherwise-privileged-enough token.
 func TestHandleCreateShareRejectsUnreadableDocument(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Secret.md"), []byte("classified"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Secret.md"), []byte("classified"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
@@ -527,7 +527,7 @@ func TestHandleCreateShareRejectsUnreadableDocument(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if res.StatusCode != http.StatusForbidden {
 		t.Fatalf("expected 403 for unreadable document, got %d: %s", res.StatusCode, readBody(res))
 	}
@@ -540,7 +540,7 @@ func TestHandleCreateShareRejectsUnreadableDocument(t *testing.T) {
 func TestHandleAccessShareRejectsSymlinkEscape(t *testing.T) {
 	outsideDir := t.TempDir()
 	secretPath := filepath.Join(outsideDir, "secret.txt")
-	if err := os.WriteFile(secretPath, []byte("outside the vault"), 0644); err != nil {
+	if err := os.WriteFile(secretPath, []byte("outside the vault"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -568,7 +568,7 @@ func TestHandleAccessShareRejectsSymlinkEscape(t *testing.T) {
 	}
 
 	res := unauthenticated(t, http.MethodGet, ts.URL+"/s/"+token, nil, "")
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	body, _ := io.ReadAll(res.Body)
 	if strings.Contains(string(body), "outside the vault") {
 		t.Fatal("symlink escape served content from outside the vault root")
@@ -584,7 +584,7 @@ func TestHandleAccessShareRejectsSymlinkEscape(t *testing.T) {
 // user's links.
 func TestHandleListAndRevokeShareScopedToOwner(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Doc.md"), []byte("body"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Doc.md"), []byte("body"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
@@ -621,7 +621,7 @@ func TestHandleListAndRevokeShareScopedToOwner(t *testing.T) {
 	if err := json.NewDecoder(res.Body).Decode(&created); err != nil {
 		t.Fatal(err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 	if res.StatusCode != http.StatusCreated {
 		t.Fatalf("alice's share creation failed: %d", res.StatusCode)
 	}
@@ -640,7 +640,7 @@ func TestHandleListAndRevokeShareScopedToOwner(t *testing.T) {
 	if err := json.NewDecoder(res.Body).Decode(&bobShares); err != nil {
 		t.Fatal(err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 	if len(bobShares) != 0 {
 		t.Fatalf("expected bob to see 0 shares, got %d", len(bobShares))
 	}
@@ -655,7 +655,7 @@ func TestHandleListAndRevokeShareScopedToOwner(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 	if res.StatusCode != http.StatusNotFound {
 		t.Fatalf("expected 404 when bob revokes alice's link, got %d", res.StatusCode)
 	}
@@ -674,7 +674,7 @@ func TestHandleListAndRevokeShareScopedToOwner(t *testing.T) {
 	if err := json.NewDecoder(res.Body).Decode(&aliceShares); err != nil {
 		t.Fatal(err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 	if len(aliceShares) != 1 || aliceShares[0].ID != created.ID {
 		t.Fatalf("expected alice to see her own share, got %+v", aliceShares)
 	}
@@ -689,7 +689,7 @@ func TestHandleListAndRevokeShareScopedToOwner(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		t.Fatalf("expected alice to revoke her own share, got %d", res.StatusCode)
 	}

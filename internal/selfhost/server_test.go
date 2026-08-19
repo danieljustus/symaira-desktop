@@ -816,7 +816,7 @@ func TestPerUserSnapshotCacheStaysUnderByteBudget(t *testing.T) {
 		}
 		body := base64.StdEncoding.EncodeToString(raw)
 		name := fmt.Sprintf("note-%d.md", i)
-		if err := os.WriteFile(filepath.Join(vaultRoot, name), []byte(body), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(vaultRoot, name), []byte(body), 0600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -861,7 +861,7 @@ func TestPerUserSnapshotCacheStaysUnderByteBudget(t *testing.T) {
 		if res.StatusCode != http.StatusOK {
 			t.Fatalf("snapshot request %d returned %d", i, res.StatusCode)
 		}
-		res.Body.Close()
+		_ = res.Body.Close()
 
 		server.perUserCacheMu.Lock()
 		resident := server.perUserCacheBytes
@@ -896,7 +896,7 @@ func TestPerUserSnapshotCacheStaysUnderByteBudget(t *testing.T) {
 // gzip-only per-user cache, exactly like the admin path.
 func TestSnapshotIfNoneMatchShortCircuitsForNonAdmin(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("World"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("World"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
@@ -930,7 +930,7 @@ func TestSnapshotIfNoneMatchShortCircuitsForNonAdmin(t *testing.T) {
 		t.Fatalf("first snapshot returned %d", first.StatusCode)
 	}
 	etag := first.Header.Get("ETag")
-	first.Body.Close()
+	_ = first.Body.Close()
 	if etag == "" {
 		t.Fatal("expected an ETag on the first response")
 	}
@@ -945,7 +945,7 @@ func TestSnapshotIfNoneMatchShortCircuitsForNonAdmin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer second.Body.Close()
+	defer func() { _ = second.Body.Close() }()
 	if second.StatusCode != http.StatusNotModified {
 		t.Fatalf("expected cached snapshot to return 304 for non-admin user, got %d", second.StatusCode)
 	}

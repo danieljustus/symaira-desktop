@@ -404,10 +404,10 @@ func TestShareStoreCreateRevokeInterleave(t *testing.T) {
 			break
 		}
 	}
-	if found == nil {
+	if found == nil { //nolint:staticcheck // SA5011: t.Fatal below exits via runtime.Goexit, found is never nil past this point
 		t.Fatal("revoked link disappeared entirely")
 	}
-	if !found.Expired { //nolint:staticcheck // SA5011: t.Fatal above exits via runtime.Goexit, found is never nil here
+	if !found.Expired {
 		t.Fatal("revoked link was reinstated by a concurrent Create")
 	}
 }

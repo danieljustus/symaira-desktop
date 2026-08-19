@@ -3,7 +3,10 @@ package selfhost
 import (
 	"bufio"
 	"bytes"
+	cryptorand "crypto/rand"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -792,4 +795,158 @@ func TestHandleWorkerInputAndFailRetryEndpoints(t *testing.T) {
 		t.Errorf("expected 409 when retrying non-failed job, got %d", res.StatusCode)
 	}
 	res.Body.Close()
+}
+
+// TestPerUserSnapshotCacheStaysUnderByteBudget proves the per-user snapshot
+// cache is bounded by total bytes with LRU eviction rather than by entry
+// count: caching many distinct non-admin users against a synthetic vault
+// never lets the cache's resident size exceed the configured budget, and
+// older entries are evicted to make room for newer ones instead of the
+// whole cache being flushed at once.
+func TestPerUserSnapshotCacheStaysUnderByteBudget(t *testing.T) {
+	vaultRoot := t.TempDir()
+	// A handful of reasonably sized, high-entropy notes so each user's
+	// filtered-and-gzipped snapshot has a non-trivial, gzip-resistant size
+	// (repetitive text would compress away to almost nothing and never
+	// exercise eviction).
+	for i := 0; i < 5; i++ {
+		raw := make([]byte, 6000)
+		if _, err := cryptorand.Read(raw); err != nil {
+			t.Fatal(err)
+		}
+		body := base64.StdEncoding.EncodeToString(raw)
+		name := fmt.Sprintf("note-%d.md", i)
+		if err := os.WriteFile(filepath.Join(vaultRoot, name), []byte(body), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+
+	// Shrink the budget so eviction kicks in well before all N users would
+	// otherwise fit, without needing a huge synthetic vault. Each user's
+	// filtered-and-gzipped snapshot here runs ~30KB (high-entropy content
+	// barely compresses), so this budget comfortably holds a handful of
+	// users but not all 20 requested below.
+	const budget = 100 << 10 // 100KB
+	server.perUserCacheBudget = budget
+
+	ts := httptest.NewServer(server.Handler())
+	t.Cleanup(ts.Close)
+
+	const n = 20
+	tokens := make([]string, n)
+	for i := 0; i < n; i++ {
+		token, err := server.perm.UserAdd(fmt.Sprintf("user-%d", i), "user")
+		if err != nil {
+			t.Fatal(err)
+		}
+		tokens[i] = token
+	}
+
+	for i, token := range tokens {
+		req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/v1/snapshot", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if res.StatusCode != http.StatusOK {
+			t.Fatalf("snapshot request %d returned %d", i, res.StatusCode)
+		}
+		res.Body.Close()
+
+		server.perUserCacheMu.Lock()
+		resident := server.perUserCacheBytes
+		entries := len(server.perUserCache)
+		server.perUserCacheMu.Unlock()
+		if resident > budget {
+			t.Fatalf("after %d users, cache holds %d bytes > budget %d", i+1, resident, budget)
+		}
+		if entries > n {
+			t.Fatalf("cache has more entries (%d) than users requested (%d)", entries, i+1)
+		}
+	}
+
+	// After all N requests the cache must have evicted down to (well) under
+	// N entries — the old "flush everything past 64" policy would instead
+	// have kept growing (or periodically flushed to zero) regardless of
+	// actual memory footprint.
+	server.perUserCacheMu.Lock()
+	finalEntries := len(server.perUserCache)
+	finalBytes := server.perUserCacheBytes
+	server.perUserCacheMu.Unlock()
+	if finalEntries >= n {
+		t.Fatalf("expected LRU eviction to keep the cache well under %d entries, got %d", n, finalEntries)
+	}
+	if finalBytes > budget {
+		t.Fatalf("final cache size %d exceeds budget %d", finalBytes, budget)
+	}
+}
+
+// TestSnapshotIfNoneMatchShortCircuitsForNonAdmin proves a non-admin user's
+// repeat poll against an unchanged vault still gets a 304 from the
+// gzip-only per-user cache, exactly like the admin path.
+func TestSnapshotIfNoneMatchShortCircuitsForNonAdmin(t *testing.T) {
+	vaultRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("World"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = server.Close() })
+	ts := httptest.NewServer(server.Handler())
+	t.Cleanup(ts.Close)
+
+	userToken, err := server.perm.UserAdd("reader", "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	get := func() *http.Response {
+		req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/v1/snapshot", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+userToken)
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return res
+	}
+
+	first := get()
+	if first.StatusCode != http.StatusOK {
+		t.Fatalf("first snapshot returned %d", first.StatusCode)
+	}
+	etag := first.Header.Get("ETag")
+	first.Body.Close()
+	if etag == "" {
+		t.Fatal("expected an ETag on the first response")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/v1/snapshot", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer "+userToken)
+	req.Header.Set("If-None-Match", etag)
+	second, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer second.Body.Close()
+	if second.StatusCode != http.StatusNotModified {
+		t.Fatalf("expected cached snapshot to return 304 for non-admin user, got %d", second.StatusCode)
+	}
 }

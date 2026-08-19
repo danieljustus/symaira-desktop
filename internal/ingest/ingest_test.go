@@ -8,8 +8,10 @@ import (
 )
 
 func TestIngestFile(t *testing.T) {
-	// Ensure we test the fallback path by removing symingest from PATH
+	// Ensure we test the fallback path by removing symingest from PATH,
+	// and isolate $HOME so a real managed-runtime symingest can't be found.
 	t.Setenv("PATH", "/usr/bin:/bin")
+	t.Setenv("HOME", t.TempDir())
 	vaultRoot := t.TempDir()
 	srcDir := t.TempDir()
 

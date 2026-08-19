@@ -11,14 +11,18 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/compose"
 )
 
-// HasSymingest checks if symingest is available on PATH and supports schema_version 1.
-// Returns a boolean indicating compatibility, and an error string if there's a mismatch.
+// HasSymingest checks if symingest is available (via $SYMAIRA_BIN, the
+// managed runtime directory ~/.symaira/bin, or PATH — see compose.Resolve)
+// and supports schema_version 1. Returns a boolean indicating compatibility,
+// and an error string if there's a mismatch.
 func HasSymingest() (bool, string) {
-	path, err := exec.LookPath("symingest")
+	path, err := compose.Resolve("symingest")
 	if err != nil {
-		return false, "symingest not found on PATH"
+		return false, "symingest not found"
 	}
 
 	cmd := exec.Command(path, "version", "--json")
@@ -59,13 +63,13 @@ func IngestFile(vaultRoot, sourcePath string) (string, error) {
 	}
 
 	ok, _ := HasSymingest()
-	if ok {
+	if bin, err := compose.Resolve("symingest"); ok && err == nil {
 		// Attempt to use symingest ingest with --json (expected contract)
-		cmd := exec.Command("symingest", "ingest", "--vault", vaultRoot, "--json", sourcePath)
+		cmd := exec.Command(bin, "ingest", "--vault", vaultRoot, "--json", sourcePath) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 		var out bytes.Buffer
 		cmd.Stdout = &out
-		err := cmd.Run()
-		if err == nil {
+		runErr := cmd.Run()
+		if runErr == nil {
 			var result struct {
 				Path string `json:"path"`
 			}
@@ -81,7 +85,7 @@ func IngestFile(vaultRoot, sourcePath string) (string, error) {
 		}
 
 		// If --json fails (e.g. flag not defined in older v0.7.0 binaries), fallback to standard execution
-		cmd = exec.Command("symingest", "ingest", "--vault", vaultRoot, sourcePath)
+		cmd = exec.Command(bin, "ingest", "--vault", vaultRoot, sourcePath) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 		if err := cmd.Run(); err != nil {
 			return "", fmt.Errorf("symingest failed: %w", err)
 		}
@@ -230,9 +234,13 @@ func IngestJobs() (string, error) {
 	if !ok {
 		return "[]", fmt.Errorf("symingest not installed")
 	}
+	bin, err := compose.Resolve("symingest")
+	if err != nil {
+		return "[]", fmt.Errorf("symingest not installed: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "symingest", "jobs", "--json")
+	cmd := exec.CommandContext(ctx, bin, "jobs", "--json") //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
@@ -247,8 +255,12 @@ func IngestRetry(jobID string) error {
 	if !ok {
 		return fmt.Errorf("symingest not installed")
 	}
+	bin, err := compose.Resolve("symingest")
+	if err != nil {
+		return fmt.Errorf("symingest not installed: %w", err)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "symingest", "retry", jobID)
+	cmd := exec.CommandContext(ctx, bin, "retry", jobID) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 	return cmd.Run()
 }

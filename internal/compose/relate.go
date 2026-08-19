@@ -91,7 +91,11 @@ func sanitizeContactRefExtras(raw map[string]interface{}) map[string]interface{}
 }
 
 func runSymrelate(ctx context.Context, args []string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, "symrelate", args...) //nolint:gosec // fixed binary name; args are CLI flags/values, not shell-interpreted
+	bin, err := Resolve("symrelate")
+	if err != nil {
+		return nil, fmt.Errorf("symrelate not found: %w", err)
+	}
+	cmd := exec.CommandContext(ctx, bin, args...) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
 	// CommandContext's kill targets only the direct child; a grandchild
 	// (e.g. a hung subprocess of symrelate) would keep the pipes open and
 	// block Wait forever. WaitDelay bounds that wait so the configured

@@ -48,7 +48,11 @@ func (e *SymmeetError) IsPermissionDenied() bool { return e.ExitCode == 3 }
 func (e *SymmeetError) IsTransient() bool { return e.ExitCode == 1 }
 
 func runSymmeet(ctx context.Context, op string, args []string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, "symmeet", args...) //nolint:gosec // fixed binary name; args are CLI flags/IDs, not shell-interpreted
+	bin, err := Resolve("symmeet")
+	if err != nil {
+		return nil, fmt.Errorf("symmeet not found: %w", err)
+	}
+	cmd := exec.CommandContext(ctx, bin, args...) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/IDs, not shell-interpreted
 	var out, stderr bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr

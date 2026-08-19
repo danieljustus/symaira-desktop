@@ -25,6 +25,7 @@ func mockSymingestBinary(t *testing.T, extra string) {
 
 func TestIngestJobsWithoutSymingest(t *testing.T) {
 	t.Setenv("PATH", "/usr/bin:/bin")
+	t.Setenv("HOME", t.TempDir())
 
 	jobs, err := IngestJobs()
 	if err == nil {
@@ -66,6 +67,7 @@ func TestIngestJobsCommandFailure(t *testing.T) {
 
 func TestIngestRetryWithoutSymingest(t *testing.T) {
 	t.Setenv("PATH", "/usr/bin:/bin")
+	t.Setenv("HOME", t.TempDir())
 
 	if err := IngestRetry("job-1"); err == nil {
 		t.Fatal("expected an error when symingest is not installed")

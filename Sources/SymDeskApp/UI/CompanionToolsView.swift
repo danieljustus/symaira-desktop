@@ -214,7 +214,7 @@ struct CompanionToolsView: View {
             let task = Process()
             task.executableURL = URL(fileURLWithPath: brewPath)
             task.arguments = ["install", tool.tap]
-            task.environment = ["HOME": NSHomeDirectory(), "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"]
+            task.environment = ["HOME": NSHomeDirectory(), "PATH": resolvedInstallerPATH()]
 
             let pipe = Pipe()
             task.standardOutput = pipe
@@ -257,5 +257,23 @@ struct CompanionToolsView: View {
             }
         }
         return "/opt/homebrew/bin/brew"
+    }
+
+    /// Builds the PATH given to the `brew install`/probe subprocess using the
+    /// same resolution order as the Go core's compose.Resolve (issue #463):
+    /// $SYMAIRA_BIN, then the managed runtime directory (`~/.symaira/bin`),
+    /// ahead of the existing Homebrew/system fallback directories. A
+    /// GUI-launched app inherits launchd's minimal PATH, so without this the
+    /// subprocess could not see a managed-runtime-only install even though
+    /// the doctor report (which already checks these directories) says it's
+    /// there.
+    private nonisolated func resolvedInstallerPATH() -> String {
+        var components: [String] = []
+        if let symairaBin = ProcessInfo.processInfo.environment["SYMAIRA_BIN"], !symairaBin.isEmpty {
+            components.append(symairaBin)
+        }
+        components.append("\(NSHomeDirectory())/.symaira/bin")
+        components.append(contentsOf: ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin"])
+        return components.joined(separator: ":")
     }
 }

@@ -93,9 +93,15 @@ func newDoctorCmd() *cobra.Command {
 				results["overall"] = "error"
 			}
 
-			// 4. Sibling-tool composition status.
+			// 4. Sibling-tool composition status. origins records where each
+			// tool was actually resolved from ($SYMAIRA_BIN, the managed
+			// runtime directory ~/.symaira/bin, or PATH) so an "installed
+			// but not found" report is diagnosable (issue #463): a tool can
+			// be genuinely present yet invisible to a minimal-PATH caller
+			// such as a GUI-launched app.
 			tools := map[string]string{}
 			versions := map[string]string{}
+			origins := map[string]string{}
 			for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault", "symmeet"} {
 				if ok, version := compose.HasTool(name); ok {
 					tools[name] = "ok"
@@ -104,9 +110,28 @@ func newDoctorCmd() *cobra.Command {
 					tools[name] = "not_found"
 					versions[name] = ""
 				}
+				if _, origin, err := compose.ResolveWithOrigin(name); err == nil {
+					origins[name] = string(origin)
+				} else {
+					origins[name] = "not_found"
+				}
 			}
 			results["tools"] = tools
 			results["versions"] = versions
+			results["tool_origins"] = origins
+
+			// The managed runtime directory backs the "symaira_bin_env" and
+			// "managed_runtime" origins above. Its presence (or absence) is
+			// what should gate a "run `symbrain setup`" recommendation: that
+			// command populates this directory, so it is only useful advice
+			// when the directory doesn't exist yet — not when it exists but
+			// simply lacks a particular tool.
+			managedRuntimeDir := compose.ManagedRuntimeDir()
+			managedRuntimeExists := compose.ManagedRuntimeDirExists()
+			results["managed_runtime"] = map[string]interface{}{
+				"dir":    managedRuntimeDir,
+				"exists": managedRuntimeExists,
+			}
 
 			// 5. iCloud Sync Conflicts
 			conflicts := []string{}
@@ -156,7 +181,7 @@ func newDoctorCmd() *cobra.Command {
 				fmt.Println(string(b))
 			} else {
 				for k, v := range results {
-					if k != "overall" && k != "tools" && k != "versions" && k != "conflicts" && k != "asn" {
+					if k != "overall" && k != "tools" && k != "versions" && k != "tool_origins" && k != "managed_runtime" && k != "conflicts" && k != "asn" {
 						fmt.Printf("%s: %v\n", k, v)
 					}
 				}
@@ -181,13 +206,28 @@ func newDoctorCmd() *cobra.Command {
 					fmt.Println("conflicts: none")
 				}
 				fmt.Println("tools:")
+				missingAny := false
 				for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault", "symmeet"} {
 					status := tools[name]
 					version := versions[name]
 					if status == "ok" {
-						fmt.Printf("  %s: ok (version %s)\n", name, version)
+						fmt.Printf("  %s: ok (version %s, from %s)\n", name, version, origins[name])
 					} else {
 						fmt.Printf("  %s: not found\n", name)
+						missingAny = true
+					}
+				}
+				fmt.Printf("managed runtime: %s", managedRuntimeDir)
+				if managedRuntimeExists {
+					fmt.Println(" (present)")
+				} else {
+					fmt.Println(" (absent)")
+					// Only point at `symbrain setup` when the managed
+					// runtime directory doesn't exist yet: if it exists but
+					// a tool is still missing, reinstalling the runtime
+					// wouldn't be the fix.
+					if missingAny {
+						fmt.Println("  hint: run `symbrain setup` to install the managed runtime, or install the missing tools via Homebrew.")
 					}
 				}
 

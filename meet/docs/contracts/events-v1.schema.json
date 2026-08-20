@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://symaira.dev/contracts/symmeet/events-v1.schema.json",
+  "title": "SymMeet event envelope v1",
+  "type": "object",
+  "required": ["schema_version", "event_id", "meeting_id", "type", "occurred_at", "payload"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "event_id": { "type": "string", "format": "uuid" },
+    "meeting_id": { "type": "string", "format": "uuid" },
+    "type": { "enum": ["lifecycle_changed", "segment_added", "transcript_edited", "export_completed", "retention_requested"] },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": true
+}

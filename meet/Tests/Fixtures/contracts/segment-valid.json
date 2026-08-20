@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "segment_id": "CA40C4DA-012A-4A92-A282-1E7134BBD0F0",
+  "track_id": "A40C4DA0-012A-4A92-A282-1E7134BBD0F0",
+  "speaker_id": "speaker_anon_01",
+  "start_ms": 0,
+  "end_ms": 1300,
+  "engine_text": "Original engine words.",
+  "edited_text": "Corrected user-visible words.",
+  "confidence": 0.94,
+  "revision": "user_corrected",
+  "future_segment_field": { "preserve": true }
+}

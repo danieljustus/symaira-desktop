@@ -1,0 +1,11 @@
+{
+  "job_state" : "completed",
+  "meeting_id" : "22222222-2222-2222-2222-222222222222",
+  "meeting_source" : "imported",
+  "schema_version" : 1,
+  "segment_count" : 0,
+  "segment_source" : "raw",
+  "segments" : [
+
+  ]
+}

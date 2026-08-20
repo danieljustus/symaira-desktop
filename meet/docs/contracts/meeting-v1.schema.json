@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://symaira.dev/contracts/symmeet/meeting-v1.schema.json",
+  "title": "SymMeet meeting manifest v1",
+  "type": "object",
+  "required": ["schema_version", "meeting_id", "source", "created_at", "updated_at", "consent", "retention"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "meeting_id": { "type": "string", "format": "uuid" },
+    "source": { "enum": ["imported", "live_capture", "recovery"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "original_asset": { "type": "string" },
+    "audio_tracks": { "type": "array" },
+    "language": { "type": "string" },
+    "job": { "type": "object" },
+    "consent": { "type": "object" },
+    "retention": { "type": "object" }
+  },
+  "additionalProperties": true
+}

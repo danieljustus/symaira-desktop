@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "event_id": "DA40C4DA-012A-4A92-A282-1E7134BBD0F0",
+  "meeting_id": "0A40C4DA-012A-4A92-A282-1E7134BBD0F0",
+  "type": "lifecycle_changed",
+  "occurred_at": "2026-07-14T10:01:00Z",
+  "payload": {
+    "from": "created",
+    "to": "processing"
+  },
+  "future_metadata": true
+}

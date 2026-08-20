@@ -1,0 +1,12 @@
+.DS_Store
+.build/
+.swiftpm/
+xcuserdata/
+DerivedData/
+SymMeetAgent.xcodeproj/
+Generated/
+dist/
+.worktrees/
+coverage.lcov
+.github/coverage/*.lcov
+*.profraw

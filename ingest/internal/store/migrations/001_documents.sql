@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_path TEXT NOT NULL,
+    sha256 TEXT UNIQUE NOT NULL,
+    mime TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    vault_path TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_documents_sha256 ON documents(sha256);

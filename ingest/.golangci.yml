@@ -1,0 +1,14 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - govet
+    - misspell
+
+  exclusions:
+    paths:
+      - client
+      - docs
+      - scripts
+      - .github

@@ -1,0 +1,11 @@
+---
+source_path: /tmp/invoice.txt
+ingested_at: 2026-06-26T15:00:00Z
+sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+mime: text/plain
+tags: []
+category: ""
+archive_path: ""
+---
+
+Hello World

@@ -45,3 +45,6 @@ internal/service/testdata/
 
 # Parallel agent worktrees
 .worktrees/
+
+# Local app-test screenshots/reports (generated locally, never committed)
+docs/app-test/

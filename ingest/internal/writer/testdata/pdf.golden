@@ -1,0 +1,12 @@
+---
+source_path: /tmp/invoice.pdf
+ingested_at: 2026-06-26T15:00:00Z
+sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+mime: application/pdf
+tags: []
+category: ""
+ocr_engine: pdftoppm+tesseract
+archive_path: ""
+---
+
+Extracted text from PDF

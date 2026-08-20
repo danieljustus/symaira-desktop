@@ -1,0 +1,65 @@
+name: Symingest
+options:
+  bundleIdPrefix: dev.symaira
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: false
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.12.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+packages:
+  SymairaAppKit:
+    url: https://github.com/danieljustus/symaira-appkit
+    exactVersion: 0.2.0
+
+targets:
+  Symingest:
+    type: application
+    platform: macOS
+    deploymentTarget:
+      macOS: "14.0"
+    dependencies:
+      - package: SymairaAppKit
+        product: SymairaTheme
+      - package: SymairaAppKit
+        product: SymairaCLIRunner
+      - package: SymairaAppKit
+        product: SymairaToolKit
+      - package: SymairaAppKit
+        product: SymairaDaemonKit
+    sources:
+      - path: Sources/SymingestApp
+    entitlements:
+      path: Symingest.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.symaira.Symingest
+        INFOPLIST_FILE: Sources/SymingestApp/Info.plist
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        ENABLE_HARDENED_RUNTIME: true
+        COMBINE_HIDPI_IMAGES: true
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    postBuildScripts:
+      - name: Embed symingest Engine
+        script: |
+          # Copy the pre-built symingest binary into Contents/Resources.
+          # Build it first: cd .. && go build ./cmd/symingest
+          SRC="${PROJECT_DIR}/../symingest"
+          DST="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources"
+          if [ -f "$SRC" ]; then
+            mkdir -p "$DST"
+            cp "$SRC" "$DST/symingest"
+            chmod +x "$DST/symingest"
+            echo "Embedded symingest binary into $DST/symingest"
+          else
+            echo "warning: symingest binary not found at $SRC — run 'go build ./cmd/symingest' first"
+          fi
+        runOnlyWhenInstalling: false
+        basedOnDependencyAnalysis: false

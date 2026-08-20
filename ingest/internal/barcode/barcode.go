@@ -27,9 +27,9 @@ type Options struct {
 // Result describes barcode separation. A nil Paths slice means no separator
 // was found and the caller should ingest the original as one document.
 type Result struct {
-	Paths         []string
+	Paths          []string
 	SeparatorPages []int
-	Warning       string
+	Warning        string
 }
 
 // DefaultOptions uses the standard command names from Homebrew/Poppler/ZBar.

@@ -8,8 +8,8 @@ import (
 
 	"github.com/danieljustus/symaira-corekit/exitcodes"
 	"github.com/danieljustus/symaira-ingest/internal/paperlessimport"
-	"github.com/danieljustus/symaira-ingest/internal/vaultreview"
 	symseekint "github.com/danieljustus/symaira-ingest/internal/symseek"
+	"github.com/danieljustus/symaira-ingest/internal/vaultreview"
 )
 
 func runReviewReport(args []string) error {

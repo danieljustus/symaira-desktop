@@ -810,4 +810,3 @@ func TestStore_MailPollCursor(t *testing.T) {
 		t.Errorf("GetMailPollCursor updated returned unexpected values: %+v", c)
 	}
 }
-

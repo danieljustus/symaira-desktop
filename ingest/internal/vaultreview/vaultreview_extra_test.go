@@ -87,8 +87,8 @@ func TestValidateSafeTypes_DocumentIDNotNumeric(t *testing.T) {
 func TestValidateSafeTypes_ValidTypes(t *testing.T) {
 	report := &ValidationReport{}
 	meta := map[string]any{
-		"tags":       []any{"a", "b"},
-		"paperless":  map[string]any{"document_id": 42},
+		"tags":      []any{"a", "b"},
+		"paperless": map[string]any{"document_id": 42},
 	}
 	validateSafeTypes(report, "note.md", meta)
 	if len(report.Failures) != 0 {
@@ -99,12 +99,12 @@ func TestValidateSafeTypes_ValidTypes(t *testing.T) {
 func TestAddVerifyFindings_IncludeAll(t *testing.T) {
 	report := &ReviewReport{}
 	v := paperlessimport.VerifyReport{
-		Missing:           []int{1, 2},
-		Duplicate:         []int{3},
-		MissingArchive:    []int{4},
-		HashMismatch:      []int{5},
+		Missing:            []int{1, 2},
+		Duplicate:          []int{3},
+		MissingArchive:     []int{4},
+		HashMismatch:       []int{5},
 		SourceHashMismatch: []int{6},
-		DuplicateContent:  []int{7},
+		DuplicateContent:   []int{7},
 	}
 	addVerifyFindings(report, v, ReviewFilters{})
 	if len(report.Findings) != 7 {
@@ -361,24 +361,24 @@ func TestAddMigrationFindings_FilteredOut(t *testing.T) {
 
 func TestApplyCorrectionToMeta_TagOperations(t *testing.T) {
 	meta := map[string]any{
-		"source_path":  "/doc.pdf",
-		"ingested_at":  "2024-01-01",
-		"sha256":       "abc",
-		"mime":         "application/pdf",
-		"tags":         []any{"old_tag"},
-		"category":     "Finance",
+		"source_path":   "/doc.pdf",
+		"ingested_at":   "2024-01-01",
+		"sha256":        "abc",
+		"mime":          "application/pdf",
+		"tags":          []any{"old_tag"},
+		"category":      "Finance",
 		"correspondent": "Old Corp",
 		"document_type": "Invoice",
-		"ocr_engine":   "tesseract",
-		"archive_path": "/archive/abc.pdf",
+		"ocr_engine":    "tesseract",
+		"archive_path":  "/archive/abc.pdf",
 	}
 	c := Correction{
-		PaperlessID:    1,
-		AddTags:        []string{"new_tag"},
-		RemoveTags:     []string{"old_tag"},
-		Correspondent:  strPtr("New Corp"),
-		DocumentType:   strPtr("Receipt"),
-		StoragePath:    strPtr("Invoices/2024"),
+		PaperlessID:   1,
+		AddTags:       []string{"new_tag"},
+		RemoveTags:    []string{"old_tag"},
+		Correspondent: strPtr("New Corp"),
+		DocumentType:  strPtr("Receipt"),
+		StoragePath:   strPtr("Invoices/2024"),
 	}
 	applyCorrectionToMeta(meta, c, &UpdateResult{})
 

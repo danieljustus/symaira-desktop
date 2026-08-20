@@ -31,9 +31,9 @@ printf x > "$5-1.png"
 printf x > "$5-2.png"
 printf x > "$5-3.png"
 `),
-		ZBarImg: writeExecutable(t, dir, "zbarimg", `case "$3" in *-2.png) printf 'PATCHT-001\\n';; esac`),
+		ZBarImg:     writeExecutable(t, dir, "zbarimg", `case "$3" in *-2.png) printf 'PATCHT-001\\n';; esac`),
 		PDFSeparate: writeExecutable(t, dir, "pdfseparate", `out=$(printf "$6" "$2"); printf '%%PDF-1.4 page-%s\\n' "$2" > "$out"`),
-		PDFUnite: writeExecutable(t, dir, "pdfunite", `last=""; for arg in "$@"; do last="$arg"; done; cp "$1" "$last"`),
+		PDFUnite:    writeExecutable(t, dir, "pdfunite", `last=""; for arg in "$@"; do last="$arg"; done; cp "$1" "$last"`),
 	}
 	result, err := options.Separate(context.Background(), input, filepath.Join(dir, "documents"))
 	if err != nil {

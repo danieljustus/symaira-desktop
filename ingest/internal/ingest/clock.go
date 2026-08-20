@@ -47,12 +47,12 @@ func (realClock) StopTimer(t timer) bool {
 // ---------- fakeClock (deterministic, for tests) ----------
 
 type fakeClock struct {
-	mu       sync.Mutex
-	now      time.Time
-	nextID   int64
-	pending  []scheduledTimer // timers not yet fired
-	fired    []func()         // callbacks ready to be executed by Advance
-	firedMu  sync.Mutex       // guards fired
+	mu      sync.Mutex
+	now     time.Time
+	nextID  int64
+	pending []scheduledTimer // timers not yet fired
+	fired   []func()         // callbacks ready to be executed by Advance
+	firedMu sync.Mutex       // guards fired
 }
 
 type scheduledTimer struct {

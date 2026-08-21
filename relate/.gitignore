@@ -1,0 +1,17 @@
+/bin/
+/dist/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.DS_Store
+*.local.yaml
+.omo/
+.worktrees/
+.github/audit/
+coverage.out
+.github/coverage/
+.github/prerelease/
+.github/review/

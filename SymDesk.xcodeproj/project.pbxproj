@@ -321,6 +321,7 @@
 		6249D84E9A4012E9E8B0BFDB /* MarkdownTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTable.swift; sourceTree = "<group>"; };
 		63AF82D799029EFC1957DB2F /* DbViewGallery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewGallery.swift; sourceTree = "<group>"; };
 		641C263A0947A7D1CCBE84E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		64F7B37FFE5B2F1BE3C5D241 /* meet */ = {isa = PBXFileReference; lastKnownFileType = folder; name = meet; path = meet; sourceTree = SOURCE_ROOT; };
 		65599DAF58FD73838B2B81B0 /* MobileAISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileAISettingsView.swift; sourceTree = "<group>"; };
 		67032F1435DB95BCADBE6766 /* DeskCoreNotebooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreNotebooks.swift; sourceTree = "<group>"; };
 		6A13C8C1820E7FD3D336D83A /* MobileOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileOutbox.swift; sourceTree = "<group>"; };
@@ -516,6 +517,7 @@
 		1A9C7AB057DAB782D2D7E840 = {
 			isa = PBXGroup;
 			children = (
+				94C087DFF5D8D5CF1A9E7BE6 /* Packages */,
 				4A8DF8842903AB56DF8195DC /* SymDeskApp */,
 				ABFA5EB21A42FE473AFC31B1 /* SymDeskAppTests */,
 				17D7D58227078ADF1C6B20D6 /* SymDeskCore */,
@@ -685,6 +687,14 @@
 			);
 			name = SymDeskMobileTests;
 			path = Tests/SymDeskMobileTests;
+			sourceTree = "<group>";
+		};
+		94C087DFF5D8D5CF1A9E7BE6 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				64F7B37FFE5B2F1BE3C5D241 /* meet */,
+			);
+			name = Packages;
 			sourceTree = "<group>";
 		};
 		ABFA5EB21A42FE473AFC31B1 /* SymDeskAppTests */ = {
@@ -971,6 +981,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */,
+				A861B359DD62A2715E4C29FF /* XCLocalSwiftPackageReference "meet" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CC9141033E8D444BB9496E52 /* Products */;
@@ -1344,7 +1355,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.8.0;
+				MARKETING_VERSION = 0.9.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios;
 				PRODUCT_MODULE_NAME = SymDeskMobile;
 				PRODUCT_NAME = SymDesk;
@@ -1391,7 +1402,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.8.0;
+				MARKETING_VERSION = 0.9.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1472,7 +1483,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.8.0;
+				MARKETING_VERSION = 0.9.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios;
 				PRODUCT_MODULE_NAME = SymDeskMobile;
 				PRODUCT_NAME = SymDesk;
@@ -1512,7 +1523,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.8.0;
+				MARKETING_VERSION = 0.9.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.share;
 				PRODUCT_MODULE_NAME = SymDeskMobileShare;
 				PRODUCT_NAME = SymDeskShare;
@@ -1559,7 +1570,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.8.0;
+				MARKETING_VERSION = 0.9.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.share;
 				PRODUCT_MODULE_NAME = SymDeskMobileShare;
 				PRODUCT_NAME = SymDeskShare;
@@ -1583,7 +1594,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.8.0;
+				MARKETING_VERSION = 0.9.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.widget;
 				PRODUCT_MODULE_NAME = SymDeskWidget;
 				PRODUCT_NAME = SymDeskWidget;
@@ -1692,7 +1703,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.8.0;
+				MARKETING_VERSION = 0.9.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.widget;
 				PRODUCT_MODULE_NAME = SymDeskWidget;
 				PRODUCT_NAME = SymDeskWidget;
@@ -1757,7 +1768,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.8.0;
+				MARKETING_VERSION = 0.9.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1871,13 +1882,20 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		A861B359DD62A2715E4C29FF /* XCLocalSwiftPackageReference "meet" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = meet;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		6F9044F02A7E3CD6F55CC59A /* XCRemoteSwiftPackageReference "symaira-appkit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/danieljustus/symaira-appkit";
 			requirement = {
-				kind = revision;
-				revision = 6ae9a09c9346da31a82cd7d4ce72b7871556122d;
+				kind = exactVersion;
+				version = 0.9.2;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

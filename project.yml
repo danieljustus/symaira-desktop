@@ -9,13 +9,14 @@ options:
 packages:
   symaira-appkit:
     url: https://github.com/danieljustus/symaira-appkit
-    # 0.7.0 (188cd92) + iOS platform declaration restored (appkit PR #44,
-    # commit 6ae9a09): type scale (SymairaTextRole/.symairaText), form
-    # scaffold (SymairaFormSection/Row), status components
-    # (SymairaStatusLabel) — required by issue #352. 0.7.0 alone dropped
-    # the iOS declaration (appkit #36), which breaks the SymDeskMobile
-    # build; re-point at appkit main once PR #44 is merged.
-    revision: 6ae9a09c9346da31a82cd7d4ce72b7871556122d
+    # 0.9.2 (tag) — meet/ SPM integration (repo consolidation 2b) requires a
+    # shared exact-pinned appkit graph; meet pins 0.9.2. 0.9.2 is additive to
+    # the previously used 0.7.0 (SymairaMCP, MCPError data, registry entries),
+    # no breaking changes per CHANGELOG.
+    exactVersion: 0.9.2
+  symaira-meet:
+    url: https://github.com/danieljustus/symaira-meet
+    path: meet
 
 targets:
   SymDeskCore:

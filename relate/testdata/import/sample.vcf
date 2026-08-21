@@ -1,0 +1,28 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Jordan Example
+N:Example;Jordan;;;
+ORG:Example Co
+TITLE:Analyst
+EMAIL:jordan@example.com
+TEL:+15550100001
+UID:sample-vcard-uid-001
+END:VCARD
+BEGIN:VCARD
+VERSION:4.0
+FN:Taylor Sample
+N:Sample;Taylor;;;
+EMAIL:taylor@example.org
+TEL:+15550100002
+URL:https://taylor.example.org
+UID:sample-vcard-uid-002
+END:VCARD
+BEGIN:VCARD
+VERSION:4.0
+FN:Morgan Placeholder
+N:Placeholder;Morgan;;;
+ORG:Example Co
+TITLE:Coordinator
+EMAIL:morgan@example.com
+TEL:+15550100003
+END:VCARD

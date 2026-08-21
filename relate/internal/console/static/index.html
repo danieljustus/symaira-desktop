@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Symaira Relate</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>Symaira Relate</h1>
+    <nav aria-label="Main sections">
+      <button type="button" class="tab" data-view="contacts" aria-current="page">Contacts</button>
+      <button type="button" class="tab" data-view="organizations">Organizations</button>
+      <button type="button" class="tab" data-view="followups">Follow-ups</button>
+      <button type="button" class="tab" data-view="import">Import</button>
+    </nav>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <div id="status" role="status" aria-live="polite" class="visually-hidden"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -105,6 +105,7 @@ document date — is preserved in the note frontmatter.`,
 
 	importCmd.Flags().Bool("dry-run", false, "report what would happen without making changes")
 	paperlessCmd.AddCommand(importCmd)
+	paperlessCmd.AddCommand(newPaperlessMigrateCmd())
 
 	return paperlessCmd
 }

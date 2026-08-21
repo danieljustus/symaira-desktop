@@ -1,0 +1,86 @@
+# GoReleaser configuration for Symaira-Seek
+# https://goreleaser.com
+
+version: 2
+
+project_name: symaira-seek
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: symseek
+    main: ./cmd/symseek
+    binary: symseek
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+    hooks:
+      post:
+        # Sign macOS binaries when running on macOS with signing identity
+        - cmd: sh -c 'if [ "{{ .Os }}" = "darwin" ] && [ -n "${CODESIGN_IDENTITY:-}" ]; then codesign -s "$CODESIGN_IDENTITY" --timestamp --options runtime "{{ .Path }}"; echo "Signed {{ .Path }}"; fi'
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+
+release:
+  github:
+    owner: danieljustus
+    name: symaira-seek
+  draft: false
+  prerelease: auto
+  name_template: "v{{.Version}}"
+
+brews:
+  - name: symseek
+    repository:
+      owner: danieljustus
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/danieljustus/symaira-seek
+    description: Local-first, CGO-free document retrieval for AI agents
+    license: Apache-2.0
+    service: |
+      run "#{opt_bin}/symseek"
+    test: |
+      system "#{bin}/symseek", "version"

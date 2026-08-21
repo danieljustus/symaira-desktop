@@ -1,0 +1,21 @@
+queries:
+  - query: "Go programming language concurrency goroutines"
+    relevant_ids: ["go-programming"]
+  - query: "machine learning deep learning neural networks"
+    relevant_ids: ["machine-learning"]
+  - query: "vector database similarity search embeddings"
+    relevant_ids: ["vector-databases"]
+  - query: "Ollama local LLM running models"
+    relevant_ids: ["ollama-local-llm"]
+  - query: "reciprocal rank fusion RRF search ranking"
+    relevant_ids: ["reciprocal-rank-fusion"]
+  - query: "RAG retrieval augmented generation semantic search"
+    relevant_ids: ["semantic-search-rag"]
+  - query: "database indexing B-tree hash index"
+    relevant_ids: ["database-indexing"]
+  - query: "information retrieval precision recall MRR NDCG"
+    relevant_ids: ["information-retrieval"]
+  - query: "GGUF model file format"
+    relevant_ids: ["ollama-local-llm"]
+  - query: "HNSW IVF approximate nearest neighbor"
+    relevant_ids: ["vector-databases"]

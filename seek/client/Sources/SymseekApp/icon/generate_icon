@@ -1,0 +1,142 @@
+#!/usr/bin/env swift
+// generate_icon — Reproducible generator for the Symseek macOS app icon.
+//
+// Usage (from the repo root):
+//   export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
+//   swift client/Sources/SymseekApp/icon/generate_icon
+//
+// NOTE: no ".swift" extension on purpose — the SymseekApp SPM target compiles
+// every .swift file under Sources/SymseekApp, so an extensionless script stays
+// out of the build while `swift <path>` still runs it in interpreter mode.
+//
+// Draws the Symseek icon — dark rounded-rect background with a subtle vertical
+// gradient and a white magnifier glyph — at every .iconset size, then
+// assembles client/Sources/SymseekApp/icon/Symseek.icns via iconutil.
+// Intermediate PNGs live only in a temp directory and are never committed.
+
+import AppKit
+import Foundation
+
+// MARK: - Drawing
+
+/// Draws the icon into a bitmap of the given edge length (pixels).
+func drawIcon(edge: CGFloat) -> NSBitmapImageRep {
+    let rep = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: Int(edge),
+        pixelsHigh: Int(edge),
+        bitsPerSample: 8,
+        samplesPerPixel: 4,
+        hasAlpha: true,
+        isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0,
+        bitsPerPixel: 0
+    )!
+    rep.size = NSSize(width: edge, height: edge)
+
+    NSGraphicsContext.saveGraphicsState()
+    guard let ctx = NSGraphicsContext(bitmapImageRep: rep) else {
+        fatalError("Could not create graphics context")
+    }
+    NSGraphicsContext.current = ctx
+
+    let s = edge / 1024.0 // All geometry below is defined at 1024x1024.
+
+    // 1. Rounded-rect background with a subtle vertical gradient
+    //    (near-black blue at the bottom, slate blue at the top).
+    let background = NSBezierPath(
+        roundedRect: NSRect(x: 0, y: 0, width: edge, height: edge),
+        xRadius: 228 * s,
+        yRadius: 228 * s
+    )
+    let gradient = NSGradient(
+        starting: NSColor(calibratedRed: 0.10, green: 0.12, blue: 0.19, alpha: 1.0),
+        ending: NSColor(calibratedRed: 0.23, green: 0.27, blue: 0.38, alpha: 1.0)
+    )!
+    gradient.draw(in: background.bounds, angle: 90) // 90 degrees = bottom -> top
+
+    // 2. Subtle edge definition.
+    background.lineWidth = 3 * s
+    NSColor(white: 1.0, alpha: 0.10).setStroke()
+    background.stroke()
+
+    // 3. White magnifier glyph: ring + 45-degree handle.
+    let white = NSColor(white: 1.0, alpha: 0.96)
+
+    let ringCenter = NSPoint(x: 512 * s, y: 548 * s)
+    let ring = NSBezierPath()
+    ring.appendArc(withCenter: ringCenter, radius: 210 * s, startAngle: 0, endAngle: 360)
+    ring.lineWidth = 88 * s
+    white.setStroke()
+    ring.stroke()
+
+    let handle = NSBezierPath()
+    handle.move(to: NSPoint(x: 656 * s, y: 692 * s))
+    handle.line(to: NSPoint(x: 780 * s, y: 816 * s))
+    handle.lineWidth = 96 * s
+    handle.lineCapStyle = .round
+    white.setStroke()
+    handle.stroke()
+
+    ctx.flushGraphics()
+    NSGraphicsContext.restoreGraphicsState()
+    return rep
+}
+
+// MARK: - Iconsets & PNG export
+
+/// (filename inside the .iconset, pixel edge length)
+let sizes: [(name: String, edge: Int)] = [
+    ("icon_16x16.png", 16),
+    ("icon_16x16@2x.png", 32),
+    ("icon_32x32.png", 32),
+    ("icon_32x32@2x.png", 64),
+    ("icon_128x128.png", 128),
+    ("icon_128x128@2x.png", 256),
+    ("icon_256x256.png", 256),
+    ("icon_256x256@2x.png", 512),
+    ("icon_512x512.png", 512),
+    ("icon_512x512@2x.png", 1024),
+]
+
+func writePNG(_ rep: NSBitmapImageRep, to url: URL) throws {
+    guard let data = rep.representation(using: .png, properties: [:]) else {
+        fatalError("PNG encoding failed for \(url.lastPathComponent)")
+    }
+    try data.write(to: url)
+}
+
+// MARK: - Main
+
+let scriptDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+let outputURL = scriptDir.appendingPathComponent("Symseek.icns")
+let iconsetDir = URL(fileURLWithPath: NSTemporaryDirectory())
+    .appendingPathComponent("Symseek.iconset")
+
+if FileManager.default.fileExists(atPath: iconsetDir.path) {
+    try FileManager.default.removeItem(at: iconsetDir)
+}
+try FileManager.default.createDirectory(at: iconsetDir, withIntermediateDirectories: true)
+
+print("Rendering \(sizes.count) PNG sizes into \(iconsetDir.path)")
+for size in sizes {
+    let rep = drawIcon(edge: CGFloat(size.edge))
+    try writePNG(rep, to: iconsetDir.appendingPathComponent(size.name))
+}
+
+print("Assembling \(outputURL.path)")
+if FileManager.default.fileExists(atPath: outputURL.path) {
+    try FileManager.default.removeItem(at: outputURL)
+}
+
+let iconutil = Process()
+iconutil.executableURL = URL(fileURLWithPath: "/usr/bin/iconutil")
+iconutil.arguments = ["-c", "icns", iconsetDir.path, "-o", outputURL.path]
+try iconutil.run()
+iconutil.waitUntilExit()
+guard iconutil.terminationStatus == 0 else {
+    fatalError("iconutil failed with status \(iconutil.terminationStatus)")
+}
+
+print("Done: \(outputURL.path)")

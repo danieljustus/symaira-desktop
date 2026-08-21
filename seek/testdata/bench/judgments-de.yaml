@@ -1,0 +1,27 @@
+# German retrieval evaluation: semantic (paraphrase) queries.
+#
+# The queries deliberately avoid the documents' vocabulary so the evaluation
+# measures semantic retrieval quality (vector leg), not keyword echo (BM25).
+# Each query targets exactly one document; two queries per document where a
+# second angle matters (bahnreise, solaranlage).
+queries:
+  - query: "Wie komme ich günstig mit dem Zug in den Süden? Gibt es Rabatte für Vielfahrer und was passiert bei großer Verspätung?"
+    relevant_ids: ["bahnreise-deutschland"]
+  - query: "Lohnt sich eigene Stromerzeugung auf dem Dach? Wie hebe ich den Strom für den Abend auf und was zahlt das Netz dafür?"
+    relevant_ids: ["solaranlage-stromspeicher"]
+  - query: "Bis wann muss ich meine Abgaben beim Finanzamt einreichen und welche Nachweise sollte ich dafür sammeln?"
+    relevant_ids: ["steuererklaerung-belege"]
+  - query: "Wie bekomme ich ohne lange Wartezeit einen Termin bei einem Spezialisten?"
+    relevant_ids: ["gesundheit-arzttermin"]
+  - query: "Welche Ausgaben für meinen Büroplatz zu Hause kann ich von der Steuer absetzen und worauf muss ich bei der Einrichtung achten?"
+    relevant_ids: ["homeoffice-einrichtung"]
+  - query: "Wo melde ich mein Kleinkind für die Betreuung an und wie läuft die Eingewöhnung in der Einrichtung ab?"
+    relevant_ids: ["kita-anmeldung"]
+  - query: "Mein Rad quietscht und der Reifen ist platt — was muss ich regelmäßig warten und was kann ich selbst reparieren?"
+    relevant_ids: ["fahrrad-reparatur"]
+  - query: "Soll ich meine Autopolice wechseln? Was zahlt die Kasko und wie beeinflusst meine Schadenhistorie den Beitrag?"
+    relevant_ids: ["kfz-versicherung"]
+  - query: "Mein Zug ist ausgefallen — kann ich mein Geld zurückfordern und ab welcher Dauer?"
+    relevant_ids: ["bahnreise-deutschland"]
+  - query: "Wie nutze ich meine Anlage am besten, wenn ich tagsüber fast nie zu Hause bin?"
+    relevant_ids: ["solaranlage-stromspeicher"]

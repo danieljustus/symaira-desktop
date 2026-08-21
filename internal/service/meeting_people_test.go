@@ -31,18 +31,57 @@ if [ "$1" = "entity" ] && [ "$2" = "list" ]; then
 fi
 `
 
+const meetingNoteM1Fixture = `---
+type: meeting
+title: Meeting 2026-07-01 10:00
+created: 2026-07-01T10:00:00Z
+tags:
+  - meeting
+meeting_id: m1
+started_at: 2026-07-01T10:00:00Z
+symmeet_source:
+  artifact_schema_version: 1
+  review_state: reviewed
+participants:
+  - label: Alice
+    speaker_ids:
+      - speaker_0
+    entity_id: e-alice
+---
+
+<!-- symmeet-transcript:start -->
+Alice: Hello everyone.
+<!-- symmeet-transcript:end -->
+`
+
+const meetingNoteUnconfirmedFixture = `---
+type: meeting
+title: Meeting 2026-07-01 10:00
+created: 2026-07-01T10:00:00Z
+tags:
+  - meeting
+meeting_id: m1
+started_at: 2026-07-01T10:00:00Z
+symmeet_source:
+  artifact_schema_version: 1
+  review_state: reviewed
+participants:
+  - label: Alice
+    speaker_ids:
+      - speaker_0
+---
+
+<!-- symmeet-transcript:start -->
+Alice: Hello everyone.
+<!-- symmeet-transcript:end -->
+`
+
 func importFixtureMeeting(t *testing.T, dir string) (*Service, string) {
 	t.Helper()
-	writeMockSymmeet(t, dir, mockSymmeetScript)
-	withMockSymmeetPath(t, dir)
-	t.Setenv("SYMMEET_TRANSCRIPT", "# Transcript\n\nAlice: Hello everyone.\n")
-
 	svc := newTestService(t)
-	path, err := svc.MeetingImport("m1")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return svc, path
+	relPath := "meetings/meeting-m1.md"
+	writeMeetingNoteFixture(t, svc, relPath, meetingNoteM1Fixture)
+	return svc, relPath
 }
 
 func TestResolveParticipantCandidatesSuccess(t *testing.T) {

@@ -157,11 +157,12 @@ func TestPublishMeetingProposalNewFactAfterPriorPublishOnlySendsTheNewOne(t *tes
 }
 
 func TestPublishMeetingProposalSkipsUnconfirmedParticipants(t *testing.T) {
-	symmeetDir := t.TempDir()
 	symmemoryDir := t.TempDir()
 	callLog := symmemoryDir + "/calls.log"
 	// Import without confirming the participant — entity_id stays empty.
-	svc, path := importFixtureMeeting(t, symmeetDir)
+	svc := newTestService(t)
+	path := "meetings/meeting-m1.md"
+	writeMeetingNoteFixture(t, svc, path, meetingNoteUnconfirmedFixture)
 	writeMockSymmemory(t, symmemoryDir, mockSymmemoryPublishScript(callLog))
 	withMockSymmemoryPath(t, symmemoryDir)
 

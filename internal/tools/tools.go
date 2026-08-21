@@ -101,7 +101,6 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(false, newNotebookAddSourceTool(options.GetService)),
 		entry(false, newNotebookRemoveSourceTool(options.GetService)),
 		entry(false, newAutofillTool(options.GetService)),
-		entry(false, newMeetingImportTool(options.GetService)),
 	}
 	registry := &Registry{tools: make([]Tool, 0, len(entries)), byName: make(map[string]Tool, len(entries))}
 	for _, entry := range entries {
@@ -824,37 +823,6 @@ func newUndoTaskTool(getService ServiceFactory) *Tool {
 				"skipped":  cp.Skipped,
 				"partial":  cp.Partial(),
 			}, nil
-		},
-	}
-}
-
-// newMeetingImportTool is a reviewed mutation: it is only registered when
-// allowWrite is set, exactly like the vault's other note-creating tools.
-func newMeetingImportTool(getService ServiceFactory) *Tool {
-	return &Tool{
-		Name:        "meeting_import",
-		Description: "Imports one SymMeet meeting into the vault as a contract-v2 meeting note. Requires symmeet on PATH with a compatible artifact schema.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"meeting_id":{"type":"string"}},"required":["meeting_id"]}`),
-		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
-			var args struct {
-				MeetingID string `json:"meeting_id"`
-			}
-			if err := json.Unmarshal(input, &args); err != nil {
-				return nil, err
-			}
-			if args.MeetingID == "" {
-				return nil, fmt.Errorf("meeting_id is required")
-			}
-			svc, db, err := getService()
-			if err != nil {
-				return nil, err
-			}
-			defer func() { _ = db.Close() }() //nolint:errcheck // matches every other mutating tool in this file
-			path, err := svc.MeetingImport(args.MeetingID)
-			if err != nil {
-				return nil, err
-			}
-			return map[string]string{"path": path, "status": "imported"}, nil
 		},
 	}
 }

@@ -54,18 +54,13 @@ fi
 
 func importMeetingWithSymrelate(t *testing.T, dir, symrelateScript string) (*Service, string) {
 	t.Helper()
-	writeMockSymmeet(t, dir, mockSymmeetScript)
 	writeMockSymrelateBin(t, dir, symrelateScript)
-	withMockSymmeetPath(t, dir)
 	withMockSymrelatePath(t, dir)
-	t.Setenv("SYMMEET_TRANSCRIPT", "# Transcript\n\nAlice: Hello everyone.\n")
 
 	svc := newTestService(t)
-	path, err := svc.MeetingImport("m1")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return svc, path
+	relPath := "meetings/meeting-m1.md"
+	writeMeetingNoteFixture(t, svc, relPath, meetingNoteUnknownFieldsFixture)
+	return svc, relPath
 }
 
 const meetingNoteUnknownFieldsFixture = `---

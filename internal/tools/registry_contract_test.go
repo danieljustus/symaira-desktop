@@ -209,12 +209,6 @@ var toolContracts = []toolContract{
 		schema:      `{"type":"object","properties":{"view":{"type":"string","description":"view id"},"property":{"type":"string","description":"frontmatter property to fill"},"prompt":{"type":"string","description":"extra instruction for the AI"},"dry_run":{"type":"boolean","description":"show changes without writing"}},"required":["view","property"]}`,
 		readOnly:    false,
 	},
-	{
-		name:        "meeting_import",
-		description: "Imports one SymMeet meeting into the vault as a contract-v2 meeting note. Requires symmeet on PATH with a compatible artifact schema.",
-		schema:      `{"type":"object","properties":{"meeting_id":{"type":"string"}},"required":["meeting_id"]}`,
-		readOnly:    false,
-	},
 }
 
 func contractByName() map[string]toolContract {
@@ -373,7 +367,6 @@ func TestConstructorsExposeCanonicalContract(t *testing.T) {
 		{"newNotebookAddSourceTool", func() *Tool { return newNotebookAddSourceTool(nil) }},
 		{"newNotebookRemoveSourceTool", func() *Tool { return newNotebookRemoveSourceTool(nil) }},
 		{"newAutofillTool", func() *Tool { return newAutofillTool(nil) }},
-		{"newMeetingImportTool", func() *Tool { return newMeetingImportTool(nil) }},
 	}
 	for _, tc := range constructors {
 		t.Run(tc.label, func(t *testing.T) {
@@ -452,7 +445,6 @@ func TestToolHandlersServiceError(t *testing.T) {
 		{"desk_clip", `{"url":"https://example.com"}`},
 		{"desk_export", `{"note":"test.md","format":"html"}`},
 		{"desk_autofill", `{"view":"v","property":"p"}`},
-		{"meeting_import", `{"meeting_id":"m1"}`},
 	}
 	withError := map[string]func(ServiceFactory) *Tool{
 		"desk_ls":           newLsTool,
@@ -476,7 +468,6 @@ func TestToolHandlersServiceError(t *testing.T) {
 		"desk_clip":         newClipTool,
 		"desk_export":       newExportTool,
 		"desk_autofill":     newAutofillTool,
-		"meeting_import":    newMeetingImportTool,
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -510,7 +501,6 @@ func TestToolHandlersRequireArgs(t *testing.T) {
 		{"desk_export", newExportTool},
 		{"desk_autofill", newAutofillTool},
 		{"meeting_get", newMeetingGetTool},
-		{"meeting_import", newMeetingImportTool},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -547,7 +537,6 @@ func TestToolHandlersInvalidJSON(t *testing.T) {
 		{"desk_export", newExportTool},
 		{"desk_autofill", newAutofillTool},
 		{"meeting_get", newMeetingGetTool},
-		{"meeting_import", newMeetingImportTool},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -810,13 +799,6 @@ func TestToolHandlersHappyPaths(t *testing.T) {
 		}
 	})
 
-	t.Run("meeting_import degrades without symmeet", func(t *testing.T) {
-		restrictPATH(t)
-		tool := newMeetingImportTool(testServiceFactory(t))
-		if _, err := tool.Handler(ctx, json.RawMessage(`{"meeting_id":"m1"}`)); err == nil {
-			t.Error("expected error when symmeet is not installed")
-		}
-	})
 }
 
 // TestRegistryNilReceiverGuards pins the nil-safety of the registry methods.

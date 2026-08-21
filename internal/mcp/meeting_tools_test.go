@@ -41,25 +41,39 @@ func withMockSymmeetOnPath(t *testing.T) {
 	t.Cleanup(compose.ResetCache)
 }
 
-func TestMeetingImportToolRequiresMeetingID(t *testing.T) {
-	tool := newMeetingImportTool(testFactory(t))
-	if _, err := tool.Handler(context.Background(), json.RawMessage(`{}`)); err == nil {
-		t.Error("expected an error for missing meeting_id")
-	}
-}
-
-func TestMeetingImportToolAndFollowUpTools(t *testing.T) {
-	withMockSymmeetOnPath(t)
+func TestMeetingListAndGetTools(t *testing.T) {
 	factory := testFactory(t)
 
-	importTool := newMeetingImportTool(factory)
-	out, err := importTool.Handler(context.Background(), json.RawMessage(`{"meeting_id":"m1"}`))
+	// Create a meeting note in the vault so list/get have something to return.
+	svc, db, err := factory()
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := out.(map[string]string)["path"]
-	if path == "" {
-		t.Fatal("expected a non-empty imported note path")
+	defer func() { _ = db.Close() }()
+
+	abs := filepath.Join(svc.VaultRoot, "meetings")
+	if err := os.MkdirAll(abs, 0750); err != nil {
+		t.Fatal(err)
+	}
+	note := `---
+type: meeting
+title: Meeting 2026-07-21 10:00
+created: 2026-07-21T10:00:00Z
+tags:
+  - meeting
+meeting_id: m-fixture
+started_at: 2026-07-21T10:00:00Z
+symmeet_source:
+  artifact_schema_version: 1
+  review_state: reviewed
+---
+
+<!-- symmeet-transcript:start -->
+Alice: Hello everyone.
+<!-- symmeet-transcript:end -->
+`
+	if err := os.WriteFile(filepath.Join(svc.VaultRoot, "meetings/meeting-m1.md"), []byte(note), 0600); err != nil {
+		t.Fatal(err)
 	}
 
 	listTool := newMeetingListTool(factory)
@@ -68,12 +82,12 @@ func TestMeetingImportToolAndFollowUpTools(t *testing.T) {
 		t.Fatal(err)
 	}
 	summaries, ok := listOut.([]service.MeetingNoteSummary)
-	if !ok || len(summaries) != 1 || summaries[0].Path != path {
+	if !ok || len(summaries) != 1 {
 		t.Errorf("unexpected meeting_list result: %#v", listOut)
 	}
 
 	getTool := newMeetingGetTool(factory)
-	if _, err := getTool.Handler(context.Background(), json.RawMessage(`{"path":"`+path+`"}`)); err != nil {
+	if _, err := getTool.Handler(context.Background(), json.RawMessage(`{"path":"meetings/meeting-m1.md"}`)); err != nil {
 		t.Fatal(err)
 	}
 }

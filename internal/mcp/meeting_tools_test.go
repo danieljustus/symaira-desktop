@@ -49,7 +49,7 @@ func TestMeetingListAndGetTools(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	abs := filepath.Join(svc.VaultRoot, "meetings")
 	if err := os.MkdirAll(abs, 0750); err != nil {

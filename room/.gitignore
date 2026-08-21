@@ -1,0 +1,10 @@
+bin/
+.DS_Store
+.worktrees/
+coverage.out
+
+# Local working artifacts (audit/review/coverage/prerelease reports, never versioned)
+.github/audit/
+.github/review/
+.github/coverage/
+.github/prerelease/

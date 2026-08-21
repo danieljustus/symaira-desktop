@@ -1,0 +1,67 @@
+version: 2
+
+# v0.1 release boundary: this pipeline publishes native archives only.
+# Docker images are intentionally out of scope until a later release.
+project_name: symroom
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - id: symroom
+    main: ./cmd/symroom
+    binary: symroom
+    env:
+      - CGO_ENABLED=0
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X github.com/danieljustus/symaira-room/internal/version.Version={{ .Version }}
+
+archives:
+  - id: default
+    ids: [symroom]
+    formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE*
+      - README.md
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot"
+
+signs:
+  - artifacts: checksum
+    signature: "${artifact}.sig"
+    cmd: cosign
+    args:
+      - sign-blob
+      - --yes
+      - --output-signature=${signature}
+      - ${artifact}
+    env:
+      - COSIGN_EXPERIMENTAL=1
+
+sboms:
+  - artifacts: archive
+    cmd: syft
+    args:
+      - "${artifact}"
+      - --output
+      - "spdx-json=${document}"
+
+release:
+  draft: true
+  prerelease: auto
+  mode: replace
+  name_template: "symroom {{ .Tag }}"
+
+# No Docker images are configured for v0.1 by design. Add them only in a
+# subsequent issue with an explicit security and publishing plan.

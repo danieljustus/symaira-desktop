@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="350" viewBox="0 0 860 350">
+<rect width="860" height="350" rx="12" fill="#1e1e2e"/>
+<rect x="0" y="0" width="860" height="34" rx="12" fill="#181825"/>
+<circle cx="20" cy="17" r="7" fill="#f38ba8"/>
+<circle cx="40" cy="17" r="7" fill="#f9e2af"/>
+<circle cx="60" cy="17" r="7" fill="#a6e3a1"/>
+<text x="86" y="22" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="13" fill="#6c7086">symroom — verifiable work record</text>
+<text x="20" y="62" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#89b4fa">$ </text>
+<text x="38" y="62" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#d4d4d4">symroom identity create alice</text>
+<text x="38" y="84" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#a6e3a1">Created identity alice (mem_240ec92a360cf0ce)</text>
+<text x="20" y="106" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#89b4fa">$ </text>
+<text x="38" y="106" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#d4d4d4">symroom init --identity alice --name &quot;Demo Room&quot; .</text>
+<text x="38" y="128" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#a6e3a1">Initialized room rm_1486c1f886d3dd61 in . (owner: alice)</text>
+<text x="20" y="150" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#89b4fa">$ </text>
+<text x="38" y="150" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#d4d4d4">symroom note --identity alice &quot;Hello from the symroom demo&quot;</text>
+<text x="38" y="172" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#a6e3a1">ev_a49d4e73b0d0766aad88</text>
+<text x="20" y="194" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#89b4fa">$ </text>
+<text x="38" y="194" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#d4d4d4">symroom log</text>
+<text x="38" y="216" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#a6e3a1">[2026-08-05T15:13:53.022Z] mem_240ec92a360cf0ce (room.created): Demo Room</text>
+<text x="38" y="238" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#a6e3a1">[2026-08-05T15:13:54.688Z] mem_240ec92a360cf0ce (note.posted): Hello from the symroom demo</text>
+<text x="20" y="260" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#89b4fa">$ </text>
+<text x="38" y="260" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#d4d4d4">symroom member list</text>
+<text x="38" y="282" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#a6e3a1">ID                    NAME       ROLE   KIND</text>
+<text x="38" y="304" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#a6e3a1">mem_240ec92a360cf0ce  Demo Room  owner  human</text>
+<text x="20" y="326" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#89b4fa">$ </text>
+<text x="38" y="326" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#d4d4d4"></text>
+</svg>

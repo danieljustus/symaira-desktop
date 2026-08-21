@@ -411,7 +411,7 @@ func (m *mixedSpaceStore) SearchBM25WithPath(query string, pathPrefix string, li
 }
 
 func (m *mixedSpaceStore) Upsert(_ context.Context, _ []*db.Chunk) error { return nil }
-func (m *mixedSpaceStore) Delete(_ context.Context, _ string) error     { return nil }
+func (m *mixedSpaceStore) Delete(_ context.Context, _ string) error      { return nil }
 func (m *mixedSpaceStore) Search(_ context.Context, _ []float32, _ int) ([]*db.SearchResult, error) {
 	return nil, nil
 }
@@ -454,7 +454,7 @@ type fakeVectorStore struct {
 }
 
 func (f *fakeVectorStore) Upsert(_ context.Context, _ []*db.Chunk) error { return nil }
-func (f *fakeVectorStore) Delete(_ context.Context, _ string) error     { return nil }
+func (f *fakeVectorStore) Delete(_ context.Context, _ string) error      { return nil }
 func (f *fakeVectorStore) Search(_ context.Context, queryVec []float32, limit int) ([]*db.SearchResult, error) {
 	if f.searchFn != nil {
 		return f.searchFn(queryVec, limit)
@@ -545,7 +545,7 @@ func (p *pathFilterStore) DeleteDocument(path string) error                     
 func (p *pathFilterStore) GetDocument(path string) (*db.Document, error)            { return nil, nil }
 func (p *pathFilterStore) ListDocuments() ([]*db.Document, error)                   { return nil, nil }
 func (p *pathFilterStore) SaveChunks(chunks []*db.Chunk) error                      { return nil }
-func (p *pathFilterStore) GetChunksForDocument(docPath string) ([]*db.Chunk, error)  { return nil, nil }
+func (p *pathFilterStore) GetChunksForDocument(docPath string) ([]*db.Chunk, error) { return nil, nil }
 func (p *pathFilterStore) GetStats() (*db.Stats, error)                             { return &db.Stats{}, nil }
 func (p *pathFilterStore) SearchBM25(query string, limit int) ([]*db.SearchResult, error) {
 	return p.bm25Fn(query, "", limit)
@@ -559,22 +559,30 @@ func (p *pathFilterStore) SearchVector(queryVec []float32, limit int) ([]*db.Sea
 func (p *pathFilterStore) SearchVectorWithPath(queryVec []float32, pathPrefix string, limit int) ([]*db.SearchResult, error) {
 	return p.vectorFn(queryVec, pathPrefix, limit)
 }
-func (p *pathFilterStore) DetectMixedEmbeddingSpaces() (map[string]int, error) { return map[string]int{}, nil }
-func (p *pathFilterStore) SetFolderContext(path, text string) error             { return nil }
-func (p *pathFilterStore) GetFolderContexts() ([]db.FolderContext, error)          { return nil, nil }
+func (p *pathFilterStore) DetectMixedEmbeddingSpaces() (map[string]int, error) {
+	return map[string]int{}, nil
+}
+func (p *pathFilterStore) SetFolderContext(path, text string) error                  { return nil }
+func (p *pathFilterStore) GetFolderContexts() ([]db.FolderContext, error)            { return nil, nil }
 func (p *pathFilterStore) GetMatchingContext(path string) (*db.FolderContext, error) { return nil, nil }
-func (p *pathFilterStore) SaveExtractions(extractions []*db.Extraction) error     { return nil }
-func (p *pathFilterStore) DeleteExtractionsForDocument(docPath string) error      { return nil }
-func (p *pathFilterStore) GetDocumentExtractions(docPath string) ([]*db.Extraction, error) { return nil, nil }
-func (p *pathFilterStore) ListExtractions(class string, limit int) ([]*db.Extraction, error) { return nil, nil }
-func (p *pathFilterStore) SearchExtractions(queryStr string, limit int) ([]*db.Extraction, error) { return nil, nil }
+func (p *pathFilterStore) SaveExtractions(extractions []*db.Extraction) error        { return nil }
+func (p *pathFilterStore) DeleteExtractionsForDocument(docPath string) error         { return nil }
+func (p *pathFilterStore) GetDocumentExtractions(docPath string) ([]*db.Extraction, error) {
+	return nil, nil
+}
+func (p *pathFilterStore) ListExtractions(class string, limit int) ([]*db.Extraction, error) {
+	return nil, nil
+}
+func (p *pathFilterStore) SearchExtractions(queryStr string, limit int) ([]*db.Extraction, error) {
+	return nil, nil
+}
 
 type pathFilterVectorStore struct {
 	searchFn func(queryVec []float32, pathPrefix string, limit int) ([]*db.SearchResult, error)
 }
 
 func (p *pathFilterVectorStore) Upsert(_ context.Context, _ []*db.Chunk) error { return nil }
-func (p *pathFilterVectorStore) Delete(_ context.Context, _ string) error       { return nil }
+func (p *pathFilterVectorStore) Delete(_ context.Context, _ string) error      { return nil }
 func (p *pathFilterVectorStore) Search(_ context.Context, queryVec []float32, limit int) ([]*db.SearchResult, error) {
 	return p.searchFn(queryVec, "", limit)
 }
@@ -604,7 +612,9 @@ func (f *fallbackSpaceStore) DetectMixedEmbeddingSpaces() (map[string]int, error
 	return f.spaces, nil
 }
 
-func (f *fallbackSpaceStore) SearchBM25(query string, limit int) ([]*db.SearchResult, error) { return nil, nil }
+func (f *fallbackSpaceStore) SearchBM25(query string, limit int) ([]*db.SearchResult, error) {
+	return nil, nil
+}
 func (f *fallbackSpaceStore) SearchBM25WithPath(query string, pathPrefix string, limit int) ([]*db.SearchResult, error) {
 	return nil, nil
 }

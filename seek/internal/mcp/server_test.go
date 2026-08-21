@@ -1934,7 +1934,7 @@ func TestSearchDocuments_StructuredJSON(t *testing.T) {
 	embed := &fakeEmbedder{}
 	server := newTestServer(store, store, embed)
 
-		got, isError, err := callToolResult(t, server, "search_documents", map[string]interface{}{
+	got, isError, err := callToolResult(t, server, "search_documents", map[string]interface{}{
 		"query": "api",
 		"limit": float64(5),
 	})

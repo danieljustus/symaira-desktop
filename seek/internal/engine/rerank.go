@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	rerankTopN        = 20
-	rerankMaxContent  = 500
+	rerankTopN       = 20
+	rerankMaxContent = 500
 	strongBM25Thresh = 0.85
 )
 
@@ -150,7 +150,7 @@ func (r *Reranker) RerankResults(query string, results []*db.SearchResult) []*db
 	}
 
 	type scored struct {
-		result    *db.SearchResult
+		result     *db.SearchResult
 		finalScore float32
 	}
 	scoredResults := make([]scored, len(candidates))
@@ -237,5 +237,3 @@ func ollamaChatCompletion(url, model, prompt string, timeout time.Duration) (str
 	}
 	return result.Message.Content, nil
 }
-
-

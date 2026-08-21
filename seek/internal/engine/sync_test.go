@@ -832,9 +832,9 @@ func TestBuildChunksStableIDs(t *testing.T) {
 	path := "/docs/stable.md"
 
 	// Build content that splits deterministically into two chunks: the first
-	 // chunk is 1000 'a's, the second chunk is the trailing 200 'a's plus the
-	 // final 200 'b's (with 200-char overlap). Changing only the 'b' suffix
-	 // affects only the second chunk.
+	// chunk is 1000 'a's, the second chunk is the trailing 200 'a's plus the
+	// final 200 'b's (with 200-char overlap). Changing only the 'b' suffix
+	// affects only the second chunk.
 	content := strings.Repeat("a", 1000) + strings.Repeat("b", 200)
 
 	chunks1 := buildChunks(embedder, path, content)

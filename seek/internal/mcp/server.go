@@ -80,25 +80,25 @@ func registerSearchDocuments(server *mcpserver.Server, dbClient db.Store, vector
 			}
 
 			// Extract individual terms from the query for snippet focus.
-		queryTerms := strings.Fields(params.Query)
+			queryTerms := strings.Fields(params.Query)
 
-		switch strings.ToLower(params.Format) {
-		case "text":
-			return renderSearchText(results, dbClient, queryTerms)
-		default:
-			structured := make([]*db.StructuredSearchResult, 0, len(results))
-			for _, r := range results {
-				if s := r.Structured(); s != nil {
-					s.Snippet = engine.BuildSnippet(s.Snippet, queryTerms, engine.DefaultSnippetBound)
-					structured = append(structured, s)
+			switch strings.ToLower(params.Format) {
+			case "text":
+				return renderSearchText(results, dbClient, queryTerms)
+			default:
+				structured := make([]*db.StructuredSearchResult, 0, len(results))
+				for _, r := range results {
+					if s := r.Structured(); s != nil {
+						s.Snippet = engine.BuildSnippet(s.Snippet, queryTerms, engine.DefaultSnippetBound)
+						structured = append(structured, s)
+					}
 				}
+				data, err := json.Marshal(structured)
+				if err != nil {
+					return nil, fmt.Errorf("marshal search results: %w", err)
+				}
+				return string(data), nil
 			}
-			data, err := json.Marshal(structured)
-			if err != nil {
-				return nil, fmt.Errorf("marshal search results: %w", err)
-			}
-			return string(data), nil
-		}
 		},
 	})
 }

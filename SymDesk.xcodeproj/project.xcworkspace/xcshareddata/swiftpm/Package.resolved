@@ -1,12 +1,31 @@
 {
-  "originHash" : "6c773979578ffd924435cc795f430c181538022a4a99a2e469a8991a160620b2",
+  "originHash" : "191549ba2dfe38f56b2c5db3dc6b8694fb29e5423c0fb44b1efa567a69e53be7",
   "pins" : [
+    {
+      "identity" : "argmax-oss-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/argmaxinc/argmax-oss-swift",
+      "state" : {
+        "revision" : "1e2a163736dfa5a198e637ae44c114e1c6d5cc2d",
+        "version" : "1.1.0"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser.git",
+      "state" : {
+        "revision" : "6a52f3251125d74daf04fcbd5e6f08a75d074382",
+        "version" : "1.8.2"
+      }
+    },
     {
       "identity" : "symaira-appkit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/danieljustus/symaira-appkit",
       "state" : {
-        "revision" : "6ae9a09c9346da31a82cd7d4ce72b7871556122d"
+        "revision" : "6d4645b12c24b31ac3e8f356905bb2e9148a96b9",
+        "version" : "0.9.2"
       }
     }
   ],

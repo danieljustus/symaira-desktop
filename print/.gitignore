@@ -1,0 +1,39 @@
+# Build outputs
+/symprint
+dist/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Go
+*.test
+*.out
+vendor/
+
+# Config / secrets
+.env
+*.local
+
+# Rendered example PDFs
+examples/*.pdf
+
+# App test reports (screenshots may contain unrelated desktop windows)
+docs/app-test/
+
+# Local agent tooling state
+.omo/
+
+# Linked agent worktrees
+.worktrees/
+
+# Xcode & client build outputs
+client/build/
+client/*.xcodeproj
+
+internal/press/--version
+
+# Local review artifacts (gh-audit / 01-code-review / test-coverage)
+.github/audit/
+.github/review/
+.github/coverage/

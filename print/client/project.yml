@@ -1,0 +1,77 @@
+name: Symprint
+options:
+  bundleIdPrefix: dev.symaira
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: false
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.5.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+packages:
+  SymairaAppKit:
+    url: https://github.com/danieljustus/symaira-appkit
+    exactVersion: 0.1.0
+
+targets:
+  Symprint:
+    type: application
+    platform: macOS
+    deploymentTarget:
+      macOS: "14.0"
+    dependencies:
+      - package: SymairaAppKit
+        product: SymairaTheme
+      - package: SymairaAppKit
+        product: SymairaCLIRunner
+      - package: SymairaAppKit
+        product: SymairaToolKit
+    sources:
+      - path: Sources/SymprintApp
+    entitlements:
+      path: Symprint.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.symaira.Symprint
+        INFOPLIST_FILE: Sources/SymprintApp/Info.plist
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        ENABLE_HARDENED_RUNTIME: true
+        COMBINE_HIDPI_IMAGES: true
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    postBuildScripts:
+      - name: Embed symprint Engine
+        script: |
+          # Build the engine from source with the app's marketing version
+          # injected (so the bundled `symprint version` reports a real version,
+          # not "dev"), then embed it into Contents/Resources. Falls back to
+          # copying a pre-built binary when the Go toolchain is unavailable,
+          # and to a warning when neither source nor binary exists.
+          SRC_ROOT="${PROJECT_DIR}/.."
+          DST="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources"
+          mkdir -p "$DST"
+          if command -v go >/dev/null 2>&1; then
+            if (cd "$SRC_ROOT" && CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${MARKETING_VERSION}" -o "$DST/symprint" ./cmd/symprint); then
+              chmod +x "$DST/symprint"
+              echo "Built and embedded symprint ${MARKETING_VERSION} into $DST/symprint"
+            elif [ -f "$SRC_ROOT/symprint" ]; then
+              cp "$SRC_ROOT/symprint" "$DST/symprint"
+              chmod +x "$DST/symprint"
+              echo "warning: engine build failed — embedded pre-built symprint binary"
+            else
+              echo "warning: engine build failed and no pre-built binary found at $SRC_ROOT/symprint"
+            fi
+          elif [ -f "$SRC_ROOT/symprint" ]; then
+            cp "$SRC_ROOT/symprint" "$DST/symprint"
+            chmod +x "$DST/symprint"
+            echo "warning: Go toolchain unavailable — embedded pre-built symprint binary"
+          else
+            echo "warning: symprint binary not found at $SRC_ROOT/symprint — run 'make build' first"
+          fi
+        runOnlyWhenInstalling: false
+        basedOnDependencyAnalysis: false

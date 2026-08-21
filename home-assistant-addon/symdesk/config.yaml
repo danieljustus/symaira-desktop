@@ -1,5 +1,5 @@
 name: SymDesk Server
-version: "0.8.0"
+version: "0.9.0"
 slug: symdesk
 description: Self-hosted Markdown document vault with optional local or remote OCR workers
 url: https://github.com/danieljustus/symaira-desktop

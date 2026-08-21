@@ -187,7 +187,3 @@ func newMeetingListTool(getService serviceFactory) *mcpserver.Tool {
 func newMeetingGetTool(getService serviceFactory) *mcpserver.Tool {
 	return registryTool("meeting_get", getService, nil, false)
 }
-
-func newMeetingImportTool(getService serviceFactory) *mcpserver.Tool {
-	return registryTool("meeting_import", getService, nil, true)
-}

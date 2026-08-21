@@ -44,7 +44,6 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"notebook_add_source",
 		"notebook_remove_source",
 		"desk_autofill",
-		"meeting_import",
 	}
 	wantReadOnly := map[string]bool{
 		"desk_status":      true,

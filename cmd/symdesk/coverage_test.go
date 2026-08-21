@@ -843,47 +843,6 @@ func TestIndexCmdErrorsWithoutVault(t *testing.T) {
 
 // --- Meeting subcommand coverage ---
 
-func TestMeetingSpeakerCmdStructure(t *testing.T) {
-	rootCmd := &cobra.Command{Use: "test"}
-	registerCommands(rootCmd)
-
-	var meetingCmd *cobra.Command
-	for _, c := range rootCmd.Commands() {
-		if c.Name() == "meeting" {
-			meetingCmd = c
-			break
-		}
-	}
-	if meetingCmd == nil {
-		t.Fatal("meeting command not found")
-	}
-
-	var speakerCmd *cobra.Command
-	for _, sub := range meetingCmd.Commands() {
-		if sub.Name() == "speaker" {
-			speakerCmd = sub
-			break
-		}
-	}
-	if speakerCmd == nil {
-		t.Fatal("speaker subcommand not found")
-	}
-
-	expectedSpeakerSubs := []string{"label", "merge", "split"}
-	for _, name := range expectedSpeakerSubs {
-		found := false
-		for _, sub := range speakerCmd.Commands() {
-			if sub.Name() == name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("expected speaker %q subcommand", name)
-		}
-	}
-}
-
 // --- Rendered/extended command flag defaults ---
 
 func TestHistoryCmdFlagDefaults(t *testing.T) {

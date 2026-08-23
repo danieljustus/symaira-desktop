@@ -120,6 +120,30 @@ func TestRenderUnknownProfile(t *testing.T) {
 	}
 }
 
+// assertNotContractStage checks the one thing a profile-resolution test can
+// assert without depending on the machine: whichever profile was resolved,
+// the document must satisfy its contract. A nil error means the render also
+// reached the engine and succeeded, which is just as good an outcome — these
+// tests must pass both with and without typst installed, and they used to
+// require its absence.
+func assertNotContractStage(t *testing.T, err error) {
+	t.Helper()
+	if err == nil {
+		return
+	}
+	re, ok := err.(*RenderError)
+	if !ok {
+		t.Fatalf("want *RenderError, got %T: %v", err, err)
+	}
+	if re.Stage == "contract" {
+		t.Errorf("must not fail at the contract stage: %+v", re)
+	}
+}
+
+// mustRenderErr drops the result value so a render call reads as a single
+// expression in the assertions above.
+func mustRenderErr(_ *Result, err error) error { return err }
+
 func TestRenderProfileOverride(t *testing.T) {
 	// Override to report (needs only title) while frontmatter has behoerde (needs recipient+title+lang)
 	src := []byte("---\nprofile: behoerde\ntitle: Test\n---\nHello\n")
@@ -128,18 +152,9 @@ func TestRenderProfileOverride(t *testing.T) {
 		OutputPath:      filepath.Join(t.TempDir(), "out.pdf"),
 		ProfileOverride: "report",
 	}
-	_, err := Render(context.Background(), req)
-	if err == nil {
-		t.Fatal("expected error (no typst)")
-	}
-	re, ok := err.(*RenderError)
-	if !ok {
-		t.Fatalf("want *RenderError, got %T: %v", err, err)
-	}
-	// Should fail at engine, not contract — override profile only needs title
-	if re.Stage == "contract" {
-		t.Errorf("should not fail at contract stage with valid profile override: %+v", re)
-	}
+	// The override profile only needs a title, so contract validation must
+	// pass even though the frontmatter names behoerde (recipient+title+lang).
+	assertNotContractStage(t, mustRenderErr(Render(context.Background(), req)))
 }
 
 func TestRenderDefaultProfile(t *testing.T) {
@@ -150,17 +165,7 @@ func TestRenderDefaultProfile(t *testing.T) {
 		OutputPath:     filepath.Join(t.TempDir(), "out.pdf"),
 		DefaultProfile: "report",
 	}
-	_, err := Render(context.Background(), req)
-	if err == nil {
-		t.Fatal("expected error (no typst)")
-	}
-	re, ok := err.(*RenderError)
-	if !ok {
-		t.Fatalf("want *RenderError, got %T: %v", err, err)
-	}
-	if re.Stage == "contract" {
-		t.Errorf("should not fail at contract stage with default profile: %+v", re)
-	}
+	assertNotContractStage(t, mustRenderErr(Render(context.Background(), req)))
 }
 
 func TestRenderValidationFails(t *testing.T) {

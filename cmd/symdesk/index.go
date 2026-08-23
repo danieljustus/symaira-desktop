@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/danieljustus/symaira-desktop/internal/retrieval"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -67,6 +68,14 @@ func newIndexCmd() *cobra.Command {
 				if err := db.IndexDocument(doc); err != nil {
 					return fmt.Errorf("failed to index %s: %w", p, err)
 				}
+				// Indexing a document means both indexes: the sidecar above
+				// and the hybrid index. Service.IndexDocument pairs them for
+				// single-document writes; this bulk path bypasses the service
+				// and used to update only the sidecar, so a full `symdesk
+				// index` left hybrid search empty. That was invisible while
+				// retrieval was an optional sibling tool and is not once it
+				// ships in the binary. Failures stay best-effort.
+				retrieval.Index(doc.Path, doc.Body)
 				count++
 				return nil
 			}

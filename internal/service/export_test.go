@@ -140,7 +140,9 @@ func TestExportPDFUsesTheProfileAndRenderedMarkdown(t *testing.T) {
 	if call.OutputPath != output || call.Options.Profile != "behoerde" {
 		t.Errorf("unexpected render call: %#v", call)
 	}
-	if !strings.Contains(string(call.Source), "# Invoice") || !strings.Contains(string(call.Source), "Body text") {
+	// The renderer reads the title from frontmatter, not from a body
+	// heading — see internal/export.Note's PDF branch.
+	if !strings.Contains(string(call.Source), "title: Invoice") || !strings.Contains(string(call.Source), "Body text") {
 		t.Errorf("unexpected render input: %q", call.Source)
 	}
 

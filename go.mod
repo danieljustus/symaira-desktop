@@ -5,6 +5,7 @@ go 1.26.6
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/danieljustus/symaira-corekit v0.9.1
+	github.com/danieljustus/symaira-ingest v0.0.0
 	github.com/danieljustus/symaira-print v0.0.0
 	github.com/danieljustus/symaira-relate v0.0.0
 	github.com/danieljustus/symaira-seek v0.0.0
@@ -57,6 +58,7 @@ require (
 // independently buildable and testable, and the root module reaches their
 // public api/ packages through these replaces rather than a published tag.
 replace (
+	github.com/danieljustus/symaira-ingest => ./ingest
 	github.com/danieljustus/symaira-print => ./print
 	github.com/danieljustus/symaira-relate => ./relate
 	github.com/danieljustus/symaira-seek => ./seek

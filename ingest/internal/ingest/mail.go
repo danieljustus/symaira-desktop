@@ -207,6 +207,13 @@ type MailPoller struct {
 	cancel        context.CancelFunc
 	dialIMAP      func(ctx context.Context, addr string, host string) (imapClient, error)
 	newMailReader func(r io.Reader) (*mail.Reader, error)
+
+	// Enqueue optionally replaces the store-backed job enqueue for a staged
+	// attachment. The CLI leaves it nil and keeps the job queue, which its
+	// worker drains. An embedding consumer that runs its own ingest pipeline
+	// (api.FetchMail) sets it instead, so the attachment is handed over
+	// rather than queued for a worker that is not running.
+	Enqueue func(ctx context.Context, workPath, msgID, correspondent string) error
 }
 
 type MailPollerOptions struct {
@@ -323,6 +330,18 @@ func (m *MailPoller) pollAccountAndRecord(ctx context.Context, acc config.IMAPAc
 		log.Printf("[MailPoller] failed to record poll status for %s: %v", acc.Username, recErr)
 	}
 	return err
+}
+
+// PollOnce runs a single poll cycle for acc and records its outcome, without
+// starting the periodic loop. Consumers that drive their own schedule — the
+// companion application through api.FetchMail — use it instead of Start.
+func (m *MailPoller) PollOnce(ctx context.Context, acc config.IMAPAccount) error {
+	return m.pollAccountAndRecord(ctx, acc)
+}
+
+// Accounts returns the accounts this poller was configured with.
+func (m *MailPoller) Accounts() []config.IMAPAccount {
+	return m.accounts
 }
 
 func (m *MailPoller) pollAccount(ctx context.Context, acc config.IMAPAccount) error {
@@ -501,7 +520,11 @@ func (m *MailPoller) processMessage(ctx context.Context, acc config.IMAPAccount,
 		// skip processing if no attachments and config requires it
 	} else {
 		for _, attPath := range attachments {
-			if err := m.enqueueFile(ctx, attPath, msgID, correspondent); err != nil {
+			enqueue := m.enqueueFile
+			if m.Enqueue != nil {
+				enqueue = m.Enqueue
+			}
+			if err := enqueue(ctx, attPath, msgID, correspondent); err != nil {
 				return fmt.Errorf("enqueue attachment %s: %w", attPath, err)
 			}
 		}

@@ -58,6 +58,13 @@ type Result struct {
 	ExtractionCount int
 }
 
+// ExtractText recovers the text of a single file without persisting anything.
+// It is the extraction half of the pipeline, exposed for api.ExtractText so an
+// embedding consumer can run OCR without a vault, an archive or a store.
+func ExtractText(ctx context.Context, source string, kind extract.Kind, engine extract.Engine) (*extract.Result, error) {
+	return extractText(ctx, source, kind, engine)
+}
+
 func extractText(ctx context.Context, source string, kind extract.Kind, engine extract.Engine) (*extract.Result, error) {
 	var res *extract.Result
 	var err error

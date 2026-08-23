@@ -133,7 +133,7 @@ func newEventsCmd() *cobra.Command {
 					}
 				}()
 			} else {
-				fmt.Fprintf(os.Stderr, "mail watcher not started (symingest or mail config not available): %v\n", err)
+				fmt.Fprintf(os.Stderr, "mail watcher not started (mail config not available): %v\n", err)
 			}
 
 			// Watch all subdirectories

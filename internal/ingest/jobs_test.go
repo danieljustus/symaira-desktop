@@ -1,35 +1,37 @@
 package ingest
 
 import (
-	"os"
-	"path/filepath"
+	"context"
+	"errors"
 	"strings"
 	"testing"
+
+	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
-func mockSymingestBinary(t *testing.T, extra string) {
+// stubJobs points the job-queue seams at scripted doubles for one test.
+func stubJobs(t *testing.T,
+	list func() ([]ingestapi.Job, error),
+	retry func(int64) error,
+) {
 	t.Helper()
-	tempDir := t.TempDir()
-	script := "#!/bin/sh\n" +
-		"if [ \"$1\" = \"version\" ]; then\n" +
-		"	echo '{\"schema_version\": 1, \"version\": \"0.7.0\"}'\n" +
-		"	exit 0\n" +
-		"fi\n" +
-		extra +
-		"exit 1\n"
-	if err := os.WriteFile(filepath.Join(tempDir, "symingest"), []byte(script), 0755); err != nil {
-		t.Fatal(err)
+	originalList, originalRetry := JobsFunc, RetryJobFunc
+	t.Cleanup(func() { JobsFunc, RetryJobFunc = originalList, originalRetry })
+
+	if list != nil {
+		JobsFunc = func(context.Context, ingestapi.Options, int) ([]ingestapi.Job, error) { return list() }
 	}
-	t.Setenv("PATH", tempDir+":"+os.Getenv("PATH"))
+	if retry != nil {
+		RetryJobFunc = func(_ context.Context, _ ingestapi.Options, id int64) error { return retry(id) }
+	}
 }
 
-func TestIngestJobsWithoutSymingest(t *testing.T) {
-	t.Setenv("PATH", "/usr/bin:/bin")
-	t.Setenv("HOME", t.TempDir())
+func TestIngestJobsPipelineFailure(t *testing.T) {
+	stubJobs(t, func() ([]ingestapi.Job, error) { return nil, errors.New("store unavailable") }, nil)
 
 	jobs, err := IngestJobs()
 	if err == nil {
-		t.Fatal("expected an error when symingest is not installed")
+		t.Fatal("expected an error when the job queue cannot be read")
 	}
 	if jobs != "[]" {
 		t.Errorf("expected empty JSON array fallback, got %q", jobs)
@@ -37,55 +39,59 @@ func TestIngestJobsWithoutSymingest(t *testing.T) {
 }
 
 func TestIngestJobsSuccess(t *testing.T) {
-	mockSymingestBinary(t, "if [ \"$1\" = \"jobs\" ] && [ \"$2\" = \"--json\" ]; then\n"+
-		"	echo '[{\"id\":\"1\",\"status\":\"done\"}]'\n"+
-		"	exit 0\n"+
-		"fi\n")
+	stubJobs(t, func() ([]ingestapi.Job, error) {
+		return []ingestapi.Job{{ID: 1, Status: "done", Kind: "pdf", SourcePath: "/tmp/a.pdf"}}, nil
+	}, nil)
 
 	jobs, err := IngestJobs()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(jobs, `"id":"1"`) {
+	if !strings.Contains(jobs, `"id": 1`) || !strings.Contains(jobs, `"status": "done"`) {
 		t.Errorf("expected job list JSON, got %q", jobs)
 	}
 }
 
-func TestIngestJobsCommandFailure(t *testing.T) {
-	mockSymingestBinary(t, "if [ \"$1\" = \"jobs\" ]; then\n"+
-		"	exit 1\n"+
-		"fi\n")
+// An empty queue must serialize as [], never as JSON null: the MCP tool and
+// the Swift client both decode an array.
+func TestIngestJobsEmptyQueueIsEmptyArray(t *testing.T) {
+	stubJobs(t, func() ([]ingestapi.Job, error) { return nil, nil }, nil)
 
 	jobs, err := IngestJobs()
-	if err == nil {
-		t.Fatal("expected an error when the symingest command fails")
+	if err != nil {
+		t.Fatal(err)
 	}
 	if jobs != "[]" {
-		t.Errorf("expected empty JSON array fallback on command failure, got %q", jobs)
-	}
-}
-
-func TestIngestRetryWithoutSymingest(t *testing.T) {
-	t.Setenv("PATH", "/usr/bin:/bin")
-	t.Setenv("HOME", t.TempDir())
-
-	if err := IngestRetry("job-1"); err == nil {
-		t.Fatal("expected an error when symingest is not installed")
+		t.Errorf("expected [], got %q", jobs)
 	}
 }
 
 func TestIngestRetrySuccessAndFailure(t *testing.T) {
-	mockSymingestBinary(t, "if [ \"$1\" = \"retry\" ]; then\n"+
-		"	if [ \"$2\" = \"job-ok\" ]; then\n"+
-		"		exit 0\n"+
-		"	fi\n"+
-		"	exit 1\n"+
-		"fi\n")
+	stubJobs(t, nil, func(id int64) error {
+		if id == 7 {
+			return nil
+		}
+		return errors.New("no such job")
+	})
 
-	if err := IngestRetry("job-ok"); err != nil {
+	if err := IngestRetry("7"); err != nil {
 		t.Fatalf("expected success, got %v", err)
 	}
-	if err := IngestRetry("job-bad"); err == nil {
+	if err := IngestRetry("8"); err == nil {
 		t.Fatal("expected an error for a failing retry")
+	}
+}
+
+// Job IDs are numeric in the store; a non-numeric ID must be rejected before
+// the pipeline is touched.
+func TestIngestRetryRejectsNonNumericID(t *testing.T) {
+	stubJobs(t, nil, func(int64) error {
+		t.Fatal("retry seam must not be reached for a non-numeric job ID")
+		return nil
+	})
+
+	err := IngestRetry("job-1")
+	if err == nil || !strings.Contains(err.Error(), "invalid job ID") {
+		t.Fatalf("expected an invalid-job-ID error, got %v", err)
 	}
 }

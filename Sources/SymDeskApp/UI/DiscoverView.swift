@@ -436,18 +436,6 @@ enum DiscoverCardCatalog {
                 actionLabel: report.tools.isAvailable("symmemory") ? "Installed" : "Install",
                 action: report.tools.isAvailable("symmemory") ? .noop : .openDocs(URL(string: "https://github.com/danieljustus/symaira-memory") ?? URL(string: "https://apple.com")!)
             ))
-
-            cards.append(DiscoverCard(
-                id: "compose-symingest",
-                group: .captureAutomatic,
-                title: "SymIngest (OCR)",
-                description: report.tools.isAvailable("symingest")
-                    ? "SymIngest is installed — OCR and document ingestion are active."
-                    : "SymIngest is not on PATH. Install it to enable OCR on scanned documents.",
-                icon: report.tools.isAvailable("symingest") ? "checkmark.seal.fill" : "exclamationmark.triangle",
-                actionLabel: report.tools.isAvailable("symingest") ? "Installed" : "Install",
-                action: report.tools.isAvailable("symingest") ? .noop : .openDocs(URL(string: "https://github.com/danieljustus/symaira-ingest") ?? URL(string: "https://apple.com")!)
-            ))
         }
 
         return cards

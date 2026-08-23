@@ -108,7 +108,7 @@ func TestMailWatcher_ListsAccountsAndFetches(t *testing.T) {
 	stubMailPipeline(t, testAccounts(), nil)
 
 	configPath := filepath.Join(t.TempDir(), "config.toml")
-	if err := os.WriteFile(configPath, []byte(""), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(""), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -167,7 +167,7 @@ func TestMailWatcher_Deduplication(t *testing.T) {
 	stubMailPipeline(t, testAccounts(), nil)
 
 	configPath := filepath.Join(t.TempDir(), "config.toml")
-	if err := os.WriteFile(configPath, []byte(""), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(""), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -219,7 +219,7 @@ func TestMailWatcher_ErrorSurfacing(t *testing.T) {
 	stubMailPipeline(t, nil, errors.New("connection refused"))
 
 	configPath := filepath.Join(t.TempDir(), "config.toml")
-	if err := os.WriteFile(configPath, []byte(""), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(""), 0600); err != nil {
 		t.Fatal(err)
 	}
 

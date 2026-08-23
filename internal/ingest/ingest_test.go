@@ -87,7 +87,7 @@ func TestIngestDelegatesToPipeline(t *testing.T) {
 	})
 
 	srcFile := filepath.Join(t.TempDir(), "test.txt")
-	if err := os.WriteFile(srcFile, []byte("test"), 0644); err != nil {
+	if err := os.WriteFile(srcFile, []byte("test"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -112,7 +112,7 @@ func TestIngestFileRelativizesVaultPath(t *testing.T) {
 	})
 
 	srcFile := filepath.Join(t.TempDir(), "test.txt")
-	if err := os.WriteFile(srcFile, []byte("test"), 0644); err != nil {
+	if err := os.WriteFile(srcFile, []byte("test"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -133,7 +133,7 @@ func TestIngestFileSurfacesDuplicate(t *testing.T) {
 	})
 
 	srcFile := filepath.Join(t.TempDir(), "test.txt")
-	if err := os.WriteFile(srcFile, []byte("test"), 0644); err != nil {
+	if err := os.WriteFile(srcFile, []byte("test"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -151,7 +151,7 @@ func TestIngestFileFallsBackWhenPipelineUnavailable(t *testing.T) {
 
 	vaultRoot := t.TempDir()
 	srcFile := filepath.Join(t.TempDir(), "test.txt")
-	if err := os.WriteFile(srcFile, []byte("test"), 0644); err != nil {
+	if err := os.WriteFile(srcFile, []byte("test"), 0600); err != nil {
 		t.Fatal(err)
 	}
 

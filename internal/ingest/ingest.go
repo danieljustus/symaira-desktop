@@ -160,6 +160,9 @@ func hasSplitTools() bool {
 // cannot run — no vault configured, or no extraction engine available.
 func ingestBuiltin(vaultRoot, sourcePath string) (string, error) {
 	inboxDir := filepath.Join(vaultRoot, "inbox")
+	//nolint:gosec // G301: the vault inbox is group/other readable on purpose —
+	// other Symaira tools and the user's editor read it. Tightening it here
+	// would silently diverge from every other vault directory.
 	if err := os.MkdirAll(inboxDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create inbox dir: %w", err)
 	}

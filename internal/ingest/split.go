@@ -72,6 +72,9 @@ func splitWithQPDF(qpdfPath, pdfPath string, splitPoints []int, outputDir string
 }
 
 func qpdfExtract(qpdfPath, inputPath, outputPath, pageRange string) error {
+	//nolint:gosec // G204: qpdfPath comes from exec.LookPath, and the remaining
+	// arguments are a fixed argv of file paths and a page range, never shell-
+	// interpreted.
 	cmd := exec.Command(qpdfPath,
 		"--empty", "--pages", inputPath, pageRange,
 		"--", outputPath,

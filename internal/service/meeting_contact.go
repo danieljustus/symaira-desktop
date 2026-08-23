@@ -4,14 +4,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/contacts"
 )
 
-// ErrSymrelateUnavailable is returned by Relate-backed meeting operations
-// when symrelate is not installed on PATH. SymDesk must remain fully
-// usable in that case, mirroring ErrSymmeetUnavailable and
-// ErrSymmemoryUnavailable.
-var ErrSymrelateUnavailable = errors.New("symrelate not found on PATH")
+// ErrContactStoreUnavailable is returned by contact-backed meeting
+// operations when the local contact store cannot be opened. The store is
+// in-process since the repo consolidation, so this no longer means "a tool
+// is missing" — it means the store itself is unreadable. SymDesk must stay
+// fully usable in that case.
+var ErrContactStoreUnavailable = errors.New("symdesk contact store unavailable")
 
 // participantIndexBySpeaker returns the index of the participant covering
 // speakerID, or -1 when no participant does.
@@ -27,22 +28,21 @@ func participantIndexBySpeaker(fm *meetingFrontmatter, speakerID string) int {
 }
 
 // ResolveMeetingContactRef is the review step of the contact-linking flow:
-// it resolves a symrelate contact ID to its reference-only shape so the
-// reviewer can see who they are about to link. Nothing is written — no
-// contact is created, matched, or stored by this call.
-func (s *Service) ResolveMeetingContactRef(contactID string) (*compose.ContactRef, error) {
-	if ok, _ := compose.HasSymrelate(); !ok {
-		return nil, ErrSymrelateUnavailable
+// it resolves a contact ID to its reference-only shape so the reviewer can
+// see who they are about to link. Nothing is written — no contact is
+// created, matched, or stored by this call.
+func (s *Service) ResolveMeetingContactRef(contactID string) (*contacts.Ref, error) {
+	if !contacts.Available() {
+		return nil, ErrContactStoreUnavailable
 	}
-	return compose.ResolveContactRef(contactID)
+	return contacts.ResolveRef(contactID)
 }
 
-// LinkParticipantContact stores an opaque, reviewed symrelate contact
-// reference on a meeting participant, alongside any confirmed EntityID
-// (VAULT.md section 8). The reference is resolved and schema-checked at
-// link time; linking never creates a contact in symrelate and never copies
-// contact points, notes, or paths into the vault.
-func (s *Service) LinkParticipantContact(notePath, speakerID, contactID string) (*compose.ContactRef, error) {
+// LinkParticipantContact stores an opaque, reviewed contact reference on a
+// meeting participant, alongside any confirmed EntityID (VAULT.md section
+// 8). The reference is resolved at link time; linking never creates a
+// contact and never copies contact points, notes, or paths into the vault.
+func (s *Service) LinkParticipantContact(notePath, speakerID, contactID string) (*contacts.Ref, error) {
 	ref, err := s.ResolveMeetingContactRef(contactID)
 	if err != nil {
 		return nil, err

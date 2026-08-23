@@ -25,8 +25,32 @@ builds:
       post:
         - cmd: sh -c 'if [ "{{ .Os }}" = "darwin" ] && [ -n "${CODESIGN_IDENTITY:-}" ]; then codesign -s "$CODESIGN_IDENTITY" --timestamp --options runtime "{{ .Path }}"; echo "Signed {{ .Path }}"; fi'
 
+  # symroom is the one absorbed tool without an in-process call site: the room
+  # layer is its own surface, not something symdesk drives. The Homebrew
+  # formula `symroom` is deprecated in favour of symdesk, so the binary has to
+  # travel in this release for that deprecation to be honest.
+  - id: symroom
+    dir: ./room
+    main: ./cmd/symroom
+    binary: symroom
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X github.com/danieljustus/symaira-room/internal/version.Version={{.Version}}
+    hooks:
+      post:
+        - cmd: sh -c 'if [ "{{ .Os }}" = "darwin" ] && [ -n "${CODESIGN_IDENTITY:-}" ]; then codesign -s "$CODESIGN_IDENTITY" --timestamp --options runtime "{{ .Path }}"; echo "Signed {{ .Path }}"; fi'
+
 archives:
   - id: default
+    ids: [symdesk, symroom]
     formats: [tar.gz]
     name_template: >-
       {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}

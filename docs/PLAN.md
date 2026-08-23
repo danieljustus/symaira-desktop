@@ -1,5 +1,14 @@
 # symdesk — Phasenplan für die Umsetzung
 
+
+> **Nachtrag 2026-08-23 (Repo-Konsolidierung, Schritt 6):** Dieser Plan
+> beschreibt den Stand vor der Konsolidierung. `symseek`, `symprint`,
+> `symrelate`, `symmeet` und `symingest` sind keine Geschwister-Binaries mehr,
+> sondern nested Module dieses Repos und werden in-process aufgerufen; die
+> PATH-Probe gilt nur noch für `symmemory`, `symvault`, `symbrowse` und
+> (vorerst) `symingest`. `symfetch` ist in `symbrowse` aufgegangen. Der Text
+> unten bleibt als historische Planungsquelle unverändert.
+
 > Update 2026-07-13: The earlier local-only transport decision below describes
 > the original MVP. SymDesk now also has an optional authenticated self-hosted
 > server and distributed OCR workers; see `SELF_HOSTING.md` and

@@ -121,7 +121,7 @@ struct MeetingsView: View {
     /// rather than something bundled into `SymDesk.dmg`. Within that
     /// architecture, the "not installed" path must still offer an
     /// actionable next step instead of a dead-end message — matching how
-    /// Discover's compose cards link out to symseek/symmemory/symingest.
+    /// Discover's compose cards link out to symmemory/symvault/symbrowse.
     private var recordingButton: some View {
         Button(action: { requestRecording() }) {
             Label("Request Recording", systemImage: "record.circle")

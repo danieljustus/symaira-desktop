@@ -1437,12 +1437,10 @@ private struct DoctorReportPopoverView: View {
                     Divider()
                     Text("Tools:").symairaText(.caption).fontWeight(.semibold).foregroundColor(SymairaTheme.textSecondary)
                     VStack(alignment: .leading, spacing: 4) {
-                        toolRow("symseek", report: report)
                         toolRow("symmemory", report: report)
-                        toolRow("symingest", report: report)
-                        toolRow("symfetch", report: report)
                         toolRow("symvault", report: report)
-                        toolRow("symmeet", report: report)
+                        toolRow("symbrowse", report: report)
+                        toolRow("symingest", report: report)
                     }
                 }
             } else {

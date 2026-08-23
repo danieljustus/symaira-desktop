@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/contacts"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
@@ -34,7 +34,7 @@ type MeetingParticipant struct {
 	Label      string                 `yaml:"label"`
 	SpeakerIDs []string               `yaml:"speaker_ids"`
 	EntityID   string                 `yaml:"entity_id,omitempty"`
-	ContactRef *compose.ContactRef    `yaml:"contact_ref,omitempty"`
+	ContactRef *contacts.Ref          `yaml:"contact_ref,omitempty"`
 	Extras     map[string]interface{} `yaml:",inline"`
 }
 

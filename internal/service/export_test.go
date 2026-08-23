@@ -1,25 +1,59 @@
 package service
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
+	"github.com/danieljustus/symaira-desktop/internal/pdf"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	printapi "github.com/danieljustus/symaira-print/api"
 )
 
-func installMockSymprint(t *testing.T, script string) {
+// renderCall records one in-process render so a test can assert on what the
+// export path handed the renderer.
+type renderCall struct {
+	Source     []byte
+	OutputPath string
+	Options    printapi.Options
+}
+
+// withStubRenderer points the in-process PDF seam at a renderer that reports
+// an engine and writes a placeholder file, and returns the recorded calls.
+// It replaces the mock symprint binary the export path used to execute.
+func withStubRenderer(t *testing.T) *[]renderCall {
 	t.Helper()
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "symprint"), []byte(script), 0755); err != nil {
-		t.Fatal(err)
+	calls := &[]renderCall{}
+	prevRender, prevEngine := pdf.RenderFunc, pdf.EngineAvailableFunc
+
+	pdf.EngineAvailableFunc = func(context.Context) (bool, string) { return true, "1.2.3" }
+	pdf.RenderFunc = func(_ context.Context, src []byte, out string, opts printapi.Options) (*printapi.Result, error) {
+		*calls = append(*calls, renderCall{Source: src, OutputPath: out, Options: opts})
+		if err := os.WriteFile(out, []byte("mock pdf"), 0600); err != nil {
+			return nil, err
+		}
+		return &printapi.Result{
+			OutputPath:    out,
+			Profile:       opts.Profile,
+			EngineVersion: "1.2.3",
+			Bytes:         int64(len("mock pdf")),
+		}, nil
 	}
-	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
+	t.Cleanup(func() { pdf.RenderFunc, pdf.EngineAvailableFunc = prevRender, prevEngine })
+	return calls
+}
+
+// withoutRenderEngine simulates a machine without a typesetting engine.
+func withoutRenderEngine(t *testing.T) {
+	t.Helper()
+	prev := pdf.EngineAvailableFunc
+	pdf.EngineAvailableFunc = func(context.Context) (bool, string) {
+		return false, "typst not found on PATH"
+	}
+	t.Cleanup(func() { pdf.EngineAvailableFunc = prev })
 }
 
 func writeExportNote(t *testing.T, svc *Service, name, title, body string) string {
@@ -79,31 +113,8 @@ func TestExportNoteAndViewHTML(t *testing.T) {
 	}
 }
 
-func TestExportPDFUsesSymprintWithProfile(t *testing.T) {
-	argsPath := filepath.Join(t.TempDir(), "args.txt")
-	stdinPath := filepath.Join(t.TempDir(), "stdin.md")
-	installMockSymprint(t, `#!/bin/bash
-if [ "$1" = "version" ] && [ "$2" = "--json" ]; then
-  echo '{"tool":"symprint","version":"1.2.3","schema_version":1}'
-  exit 0
-fi
-if [ "$1" = "render" ]; then
-  printf '%s\n' "$@" > "$SYMDESK_TEST_ARGS"
-  cat > "$SYMDESK_TEST_STDIN"
-  while [ "$#" -gt 0 ]; do
-    if [ "$1" = "-o" ]; then
-      shift
-      printf 'mock pdf' > "$1"
-      exit 0
-    fi
-    shift
-  done
-fi
-echo "unexpected command: $*" >&2
-exit 2
-`)
-	t.Setenv("SYMDESK_TEST_ARGS", argsPath)
-	t.Setenv("SYMDESK_TEST_STDIN", stdinPath)
+func TestExportPDFUsesTheProfileAndRenderedMarkdown(t *testing.T) {
+	calls := withStubRenderer(t)
 
 	svc := newTestService(t)
 	writeExportNote(t, svc, "invoice.md", "Invoice", "Body text")
@@ -112,29 +123,25 @@ exit 2
 	if err != nil {
 		t.Fatalf("PDF export failed: %v", err)
 	}
-	if result.Format != "pdf" || result.Profile != "behoerde" || !strings.Contains(result.Message, "symprint 1.2.3") {
+	if result.Format != "pdf" || result.Profile != "behoerde" || !strings.Contains(result.Message, "typst 1.2.3") {
 		t.Errorf("unexpected PDF result: %#v", result)
 	}
-	pdf, err := os.ReadFile(output)
+	rendered, err := os.ReadFile(output) //nolint:gosec // test reads the file it just asked the stub renderer to write
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(pdf) != "mock pdf" {
-		t.Errorf("unexpected PDF content %q", pdf)
+	if string(rendered) != "mock pdf" {
+		t.Errorf("unexpected PDF content %q", rendered)
 	}
-	args, err := os.ReadFile(argsPath)
-	if err != nil {
-		t.Fatal(err)
+	if len(*calls) != 1 {
+		t.Fatalf("expected exactly one render call, got %d", len(*calls))
 	}
-	if strings.TrimSpace(string(args)) != strings.Join([]string{"render", "-", "-o", output, "-p", "behoerde"}, "\n") {
-		t.Errorf("unexpected symprint arguments:\n%s", args)
+	call := (*calls)[0]
+	if call.OutputPath != output || call.Options.Profile != "behoerde" {
+		t.Errorf("unexpected render call: %#v", call)
 	}
-	stdin, err := os.ReadFile(stdinPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(stdin), "# Invoice") || !strings.Contains(string(stdin), "Body text") {
-		t.Errorf("unexpected symprint input: %q", stdin)
+	if !strings.Contains(string(call.Source), "# Invoice") || !strings.Contains(string(call.Source), "Body text") {
+		t.Errorf("unexpected render input: %q", call.Source)
 	}
 
 	notePath := filepath.Join(svc.VaultRoot, "invoice.md")
@@ -164,14 +171,12 @@ exit 2
 	}
 }
 
-func TestExportPDFRequiresSymprint(t *testing.T) {
-	t.Setenv("PATH", t.TempDir())
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
+func TestExportPDFRequiresATypesettingEngine(t *testing.T) {
+	withoutRenderEngine(t)
 
 	svc := newTestService(t)
 	writeExportNote(t, svc, "invoice.md", "Invoice", "Body text")
-	if _, err := svc.Export("invoice.md", "", filepath.Join(t.TempDir(), "invoice.pdf"), "pdf", ""); err == nil || !strings.Contains(err.Error(), "PDF export requires symprint") {
-		t.Fatalf("expected graceful missing symprint error, got %v", err)
+	if _, err := svc.Export("invoice.md", "", filepath.Join(t.TempDir(), "invoice.pdf"), "pdf", ""); err == nil || !strings.Contains(err.Error(), "PDF export requires a typesetting engine") {
+		t.Fatalf("expected graceful missing engine error, got %v", err)
 	}
 }

@@ -28,31 +28,6 @@ func withMockSymmeetPath(t *testing.T, dir string) {
 	t.Cleanup(compose.ResetCache)
 }
 
-const mockSymmeetScript = `#!/bin/bash
-case "$1" in
-  capabilities)
-    echo '{"tool":"symmeet","version":"1.0.0","schema_version":1,"artifact_schema_versions":[1],"export_formats":["markdown"]}'
-    ;;
-  meeting)
-    if [ "$2" = "show" ]; then
-      if [ "$3" = "missing" ]; then
-        echo "unknown meeting id" >&2
-        exit 2
-      fi
-      echo '{"schema_version":1,"meeting_id":"m1","source":"imported","created_at":"2026-07-01T10:00:00Z","updated_at":"2026-07-01T10:30:00Z","audio_tracks":[],"language":"en","job":{"job_id":"j1","state":"completed"}}'
-    fi
-    ;;
-  speaker)
-    if [ "$2" = "list" ]; then
-      echo '{"meeting_id":"m1","speakers":["speaker_0"],"labels":{"speaker_0":"Alice"},"merged_speakers":{}}'
-    fi
-    ;;
-  export)
-    printf '%s' "$SYMMEET_TRANSCRIPT"
-    ;;
-esac
-`
-
 func TestMeetingListAndShow(t *testing.T) {
 	svc := newTestService(t)
 	path := "meetings/meeting-m1.md"

@@ -106,116 +106,16 @@ echo 'not json'
 	}
 }
 
-func TestHasSymseekAndHasSymmemoryShorthands(t *testing.T) {
+func TestHasSymmemoryShorthand(t *testing.T) {
 	dir := t.TempDir()
-	writeMockTool(t, dir, "symseek", `#!/bin/bash
-echo '{"tool":"symseek","version":"9.9.9","schema_version":1}'
-`)
 	writeMockTool(t, dir, "symmemory", `#!/bin/bash
 echo '{"tool":"symmemory","version":"8.8.8","schema_version":1}'
 `)
 	withMockPath(t, dir)
 
-	if ok, ver := HasSymseek(); !ok || ver != "9.9.9" {
-		t.Errorf("HasSymseek: expected true/9.9.9, got %v/%s", ok, ver)
-	}
 	if ok, ver := HasSymmemory(); !ok || ver != "8.8.8" {
 		t.Errorf("HasSymmemory: expected true/8.8.8, got %v/%s", ok, ver)
 	}
-}
-
-func TestIndexDocumentSuccessAndFailure(t *testing.T) {
-	dir := t.TempDir()
-	writeMockTool(t, dir, "symseek", `#!/bin/bash
-if [ "$1" = "index" ]; then
-  if [ "$SYMSEEK_FAIL" = "1" ]; then
-    echo "boom" >&2
-    exit 1
-  fi
-  cat >/dev/null
-  exit 0
-fi
-`)
-	withMockPath(t, dir)
-
-	if err := IndexDocument("notes/a.md", "body text"); err != nil {
-		t.Fatalf("expected success, got %v", err)
-	}
-
-	os.Setenv("SYMSEEK_FAIL", "1")
-	defer os.Unsetenv("SYMSEEK_FAIL")
-	err := IndexDocument("notes/a.md", "body text")
-	if err == nil {
-		t.Fatal("expected an error when symseek index fails")
-	}
-	if !strings.Contains(err.Error(), "symseek index failed") || !strings.Contains(err.Error(), "boom") {
-		t.Errorf("expected error to wrap command failure and stderr, got %v", err)
-	}
-}
-
-func TestDeleteDocumentSuccessAndFailure(t *testing.T) {
-	dir := t.TempDir()
-	writeMockTool(t, dir, "symseek", `#!/bin/bash
-if [ "$1" = "delete" ]; then
-  if [ "$SYMSEEK_FAIL" = "1" ]; then
-    echo "delete-boom" >&2
-    exit 1
-  fi
-  exit 0
-fi
-`)
-	withMockPath(t, dir)
-
-	if err := DeleteDocument("notes/a.md"); err != nil {
-		t.Fatalf("expected success, got %v", err)
-	}
-
-	os.Setenv("SYMSEEK_FAIL", "1")
-	defer os.Unsetenv("SYMSEEK_FAIL")
-	err := DeleteDocument("notes/a.md")
-	if err == nil {
-		t.Fatal("expected an error when symseek delete fails")
-	}
-	if !strings.Contains(err.Error(), "symseek delete failed") || !strings.Contains(err.Error(), "delete-boom") {
-		t.Errorf("expected error to wrap command failure and stderr, got %v", err)
-	}
-}
-
-func TestSearchSuccessAndErrors(t *testing.T) {
-	dir := t.TempDir()
-	writeMockTool(t, dir, "symseek", `#!/bin/bash
-if [ "$1" = "search" ]; then
-  if [ "$SYMSEEK_MODE" = "fail" ]; then
-    echo "search-boom" >&2
-    exit 1
-  fi
-  if [ "$SYMSEEK_MODE" = "badjson" ]; then
-    echo "not json"
-    exit 0
-  fi
-  echo '[{"path":"notes/a.md","score":0.9,"snippet":"hit"}]'
-fi
-`)
-	withMockPath(t, dir)
-
-	results, err := Search("query")
-	if err != nil {
-		t.Fatalf("expected success, got %v", err)
-	}
-	if len(results) != 1 || results[0].Path != "notes/a.md" {
-		t.Errorf("unexpected results: %+v", results)
-	}
-
-	os.Setenv("SYMSEEK_MODE", "fail")
-	if _, err := Search("query"); err == nil || !strings.Contains(err.Error(), "symseek search failed") {
-		t.Errorf("expected wrapped command failure, got %v", err)
-	}
-
-	os.Setenv("SYMSEEK_MODE", "badjson")
-	if _, err := Search("query"); err == nil || !strings.Contains(err.Error(), "unmarshal") {
-		t.Errorf("expected wrapped unmarshal failure, got %v", err)
-	}
-	os.Unsetenv("SYMSEEK_MODE")
 }
 
 func TestListEntitiesSuccessAndErrors(t *testing.T) {

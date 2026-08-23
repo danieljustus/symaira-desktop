@@ -412,16 +412,17 @@ enum DiscoverCardCatalog {
         if let report = doctorReport {
             let toolStatus = report.tools
 
+            // Hybrid search ships inside SymDesk since the repo
+            // consolidation, so this card describes a built-in capability
+            // rather than something to install.
             cards.append(DiscoverCard(
-                id: "compose-symseek",
+                id: "compose-search",
                 group: .findSearch,
-                title: "SymSeek (Search Engine)",
-                description: toolStatus.isAvailable("symseek")
-                    ? "SymSeek is installed and providing full-text search across your vault."
-                    : "SymSeek is not on PATH. Install it to enable fast full-text search.",
-                icon: toolStatus.isAvailable("symseek") ? "checkmark.seal.fill" : "exclamationmark.triangle",
-                actionLabel: toolStatus.isAvailable("symseek") ? "Installed" : "Install",
-                action: toolStatus.isAvailable("symseek") ? .noop : .openDocs(URL(string: "https://github.com/danieljustus/symaira-seek") ?? URL(string: "https://apple.com")!)
+                title: "Hybrid Search",
+                description: "Keyword and vector search across your vault is built into SymDesk — nothing to install.",
+                icon: "checkmark.seal.fill",
+                actionLabel: "Built in",
+                action: .noop
             ))
 
             cards.append(DiscoverCard(

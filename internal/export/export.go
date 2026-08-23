@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -24,20 +26,68 @@ type Options struct {
 	Profile string // symprint profile for PDF
 }
 
-// Note exports a single note to Markdown, resolving transclusions but not wikilinks.
-func Note(root, relPath string, opts Options) ([]byte, error) {
+// pdfFrontmatter renders the YAML frontmatter block the PDF renderer's
+// document contract expects.
+//
+// The PDF profiles require named fields — `report` needs a title, `meeting`
+// additionally a language and date, `behoerde` a recipient — and read them
+// from frontmatter, not from the Markdown body. Handing the renderer a bare
+// "# Title" heading therefore fails the contract before a page is typeset,
+// so the exported document carries the note's own frontmatter through, with
+// the resolved title filled in when the note did not set one explicitly.
+func pdfFrontmatter(front map[string]interface{}, title string) (string, error) {
+	meta := make(map[string]interface{}, len(front)+1)
+	for k, v := range front {
+		meta[k] = v
+	}
+	if _, ok := meta["title"]; !ok && title != "" {
+		meta["title"] = title
+	}
+	if len(meta) == 0 {
+		return "", nil
+	}
+
+	encoded, err := yaml.Marshal(meta)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode frontmatter: %w", err)
+	}
+	return "---\n" + string(encoded) + "---\n\n", nil
+}
+
+// noteMarkdown resolves a note to its exportable Markdown body, plus the
+// parsed document so callers can build a frontmatter block from it.
+func noteMarkdown(root, relPath string, opts Options) (*vault.Document, string, error) {
 	absPath, err := vault.SecurePath(root, relPath)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	doc, err := vault.ParseFile(absPath)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	body, err := resolveTransclusions(root, doc.Body, opts)
 	if err != nil {
+		return nil, "", err
+	}
+	return doc, body, nil
+}
+
+// Note exports a single note to Markdown, resolving transclusions but not wikilinks.
+func Note(root, relPath string, opts Options) ([]byte, error) {
+	doc, body, err := noteMarkdown(root, relPath, opts)
+	if err != nil {
 		return nil, err
+	}
+
+	// The PDF templates typeset the title themselves from frontmatter, so
+	// repeating it as a body heading would print it twice.
+	if opts.Format == "pdf" {
+		front, err := pdfFrontmatter(doc.Frontmatter, doc.Title)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(front + body), nil
 	}
 
 	out := ""
@@ -55,7 +105,17 @@ func Note(root, relPath string, opts Options) ([]byte, error) {
 // View exports a database view to a Markdown/HTML document.
 func View(root string, view *dbviews.View, rows []map[string]string, opts Options) ([]byte, error) {
 	var b strings.Builder
-	if view.Name != "" {
+
+	// A PDF document carries exactly one frontmatter block, at the top; the
+	// embedded notes contribute body only. Everything below therefore builds
+	// the body, and the block is prepended once at the end.
+	isPDF := opts.Format == "pdf"
+	noteOpts := opts
+	if isPDF {
+		noteOpts.Format = ""
+	}
+
+	if view.Name != "" && !isPDF {
 		fmt.Fprintf(&b, "# %s\n\n", view.Name)
 	}
 	if len(rows) == 0 {
@@ -72,11 +132,14 @@ func View(root string, view *dbviews.View, rows []map[string]string, opts Option
 			if filepath.IsAbs(path) {
 				relPath, _ = filepath.Rel(root, path)
 			}
-			md, err := Note(root, relPath, opts)
+			md, err := Note(root, relPath, noteOpts)
 			if err != nil {
 				fmt.Fprintf(&b, "\n*Error loading %s: %v*\n", relPath, err)
 				continue
 			}
+			// A horizontal rule between notes. In a PDF export this must not
+			// be the first thing in the document: three dashes at the very
+			// top would parse as the opening frontmatter fence.
 			b.WriteString("---\n\n")
 			b.Write(md)
 			b.WriteString("\n")
@@ -84,6 +147,13 @@ func View(root string, view *dbviews.View, rows []map[string]string, opts Option
 	}
 
 	out := b.String()
+	if isPDF {
+		front, err := pdfFrontmatter(nil, view.Name)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(front + out), nil
+	}
 	if opts.Format == "html" {
 		return []byte(noteToHTML(out)), nil
 	}

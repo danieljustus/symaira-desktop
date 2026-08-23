@@ -1,6 +1,7 @@
 package press
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -193,4 +194,27 @@ func mustParse(t *testing.T, src string) *Document {
 		t.Fatalf("parse: %v", err)
 	}
 	return doc
+}
+
+// TestLangOmittedWhenEmpty guards the template-default contract: an unset
+// language must not reach the engine as an empty string. Typst rejects
+// `set text(lang: "")`, so serializing the key with an empty value would
+// make every profile that does not require a language (report, brief,
+// rechnung) unrenderable unless the author supplied one.
+func TestLangOmittedWhenEmpty(t *testing.T) {
+	encoded, err := json.Marshal(Frontmatter{Title: "Report"})
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if strings.Contains(string(encoded), `"lang"`) {
+		t.Errorf("empty lang must be omitted so the template default applies, got %s", encoded)
+	}
+
+	encoded, err = json.Marshal(Frontmatter{Title: "Report", Lang: "de"})
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(encoded), `"lang":"de"`) {
+		t.Errorf("an explicit lang must survive, got %s", encoded)
+	}
 }

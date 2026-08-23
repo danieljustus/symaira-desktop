@@ -57,7 +57,13 @@ type Frontmatter struct {
 	Profile string `yaml:"profile" json:"profile"`
 
 	// Universal metadata
-	Lang     string     `yaml:"lang" json:"lang"`
+	// Lang is omitted when empty so the templates' own default ("de")
+	// applies. Serializing it as "" instead would satisfy Typst's
+	// `meta.at("lang", default: ...)` lookup with a present-but-invalid
+	// value, and `set text(lang: "")` fails the render outright — profiles
+	// that do not require a language (report, brief, rechnung) could then
+	// never be rendered without one.
+	Lang     string     `yaml:"lang" json:"lang,omitempty"`
 	Title    string     `yaml:"title" json:"title"`
 	Subtitle string     `yaml:"subtitle" json:"subtitle"`
 	Author   StringList `yaml:"author" json:"author,omitempty"`

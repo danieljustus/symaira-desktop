@@ -1,5 +1,13 @@
 # symaira-ingest (`symingest`)
 
+> **Dieses Verzeichnis war bis 2026-08-23 das eigenständige Repository
+> [`symaira-ingest`](https://github.com/danieljustus/symaira-ingest).** Es ist jetzt ein
+> nested Go-Modul von [`symaira-desktop`](../README.md); das Repo ist
+> archiviert und seine Homebrew-Formula deprecated. Die OCR-/Ingest-Pipeline wird über
+> `symdesk ingest` genutzt.
+> Die Badges, Installations- und Release-Hinweise unten stammen aus der
+> Zeit als eigenes Repo und gelten nicht mehr.
+
 > **Moved 2026-08-20** into `symaira-desktop/ingest/` as part of the Symaira
 > repo consolidation (27 → 13, `docs/repo-konsolidierung.md` §3.2). This Go
 > module now lives in symaira-desktop; the original
@@ -34,8 +42,8 @@ Drop a scanned PDF, image, or text-like export into a folder → get a searchabl
 **Homebrew (recommended for macOS):**
 
 ```bash
-brew install danieljustus/tap/symingest           # CLI only
-brew install --cask danieljustus/tap/symingest    # macOS GUI app (DMG)
+brew install danieljustus/tap/symdesk             # enthält die Ingest-Pipeline
+brew install --cask danieljustus/tap/symdesk-app  # macOS GUI app (DMG)
 ```
 
 **Go install:**

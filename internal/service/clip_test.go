@@ -114,7 +114,7 @@ func TestNoteClipPrefersSymbrowseAndReadsFrontmatterTitle(t *testing.T) {
 		t.Errorf("expected symbrowse to answer first, got %q", fileName)
 	}
 
-	content, err := os.ReadFile(filepath.Join(svc.VaultRoot, fileName))
+	content, err := os.ReadFile(filepath.Join(svc.VaultRoot, fileName)) //nolint:gosec // test reads its own temp vault fixture
 	if err != nil {
 		t.Fatalf("reading clipped note: %v", err)
 	}

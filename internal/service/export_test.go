@@ -126,7 +126,7 @@ func TestExportPDFUsesTheProfileAndRenderedMarkdown(t *testing.T) {
 	if result.Format != "pdf" || result.Profile != "behoerde" || !strings.Contains(result.Message, "typst 1.2.3") {
 		t.Errorf("unexpected PDF result: %#v", result)
 	}
-	rendered, err := os.ReadFile(output)
+	rendered, err := os.ReadFile(output) //nolint:gosec // test reads the file it just asked the stub renderer to write
 	if err != nil {
 		t.Fatal(err)
 	}

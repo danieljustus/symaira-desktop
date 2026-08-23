@@ -1,9 +1,16 @@
 # syntax=docker/dockerfile:1.7
-ARG GO_VERSION=1.26.4
+ARG GO_VERSION=1.26.6
 ARG VERSION=dev
 FROM golang:${GO_VERSION}-bookworm AS build
 WORKDIR /src
+# The absorbed tools are nested modules the root go.mod reaches through
+# `replace ./print`, `./relate`, `./seek`. Their go.mod/go.sum must be in
+# place before `go mod download` can resolve the module graph, so this stage
+# copies them alongside the root manifests rather than only with the sources.
 COPY go.mod go.sum ./
+COPY print/go.mod print/go.sum ./print/
+COPY relate/go.mod relate/go.sum ./relate/
+COPY seek/go.mod seek/go.sum ./seek/
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build \

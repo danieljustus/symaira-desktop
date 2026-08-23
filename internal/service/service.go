@@ -19,6 +19,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/history"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval"
 	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -70,11 +71,7 @@ func (s *Service) IndexDocument(doc *vault.Document) error {
 	if err := s.DB.IndexDocument(doc); err != nil {
 		return err
 	}
-	if ok, _ := compose.HasSymseek(); ok {
-		if err := compose.IndexDocument(doc.Path, doc.Body); err != nil {
-			return err
-		}
-	}
+	retrieval.Index(doc.Path, doc.Body)
 	return nil
 }
 
@@ -82,11 +79,7 @@ func (s *Service) DeleteDocument(path string) error {
 	if err := s.DB.DeleteDocument(path); err != nil {
 		return err
 	}
-	if ok, _ := compose.HasSymseek(); ok {
-		if err := compose.DeleteDocument(path); err != nil {
-			return err
-		}
-	}
+	retrieval.Delete(path)
 	return nil
 }
 
@@ -220,63 +213,61 @@ func (s *Service) SearchWithMeta(query string) (SearchResponse, error) {
 	return SearchResponse{Results: results}, nil
 }
 
-// searchPlain keeps the pre-query-language search behaviour, including the
-// optional symseek upgrade for ordinary unscoped full-text terms.
+// searchPlain keeps the pre-query-language search behaviour: hybrid
+// keyword+vector retrieval for ordinary unscoped full-text terms, falling
+// back to the sidecar full-text index when the hybrid index yields nothing
+// (or cannot be reached at all).
 func (s *Service) searchPlain(query string) ([]SearchResult, error) {
-	if ok, _ := compose.HasSymseek(); ok {
-		seekResults, err := compose.Search(query)
-		if err == nil {
-			results := make([]SearchResult, 0, len(seekResults))
-			for _, r := range seekResults {
-				relPath := r.Path
-				if filepath.IsAbs(r.Path) {
-					candidate := r.Path
-					if canonical, canonicalErr := filepath.EvalSymlinks(candidate); canonicalErr == nil {
-						candidate = canonical
-					}
-					rel, relErr := filepath.Rel(s.VaultRoot, candidate)
-					if relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-						continue
-					}
-					relPath = rel
-				}
-				resolved, secureErr := vault.SecurePath(s.VaultRoot, relPath)
-				if secureErr != nil {
-					continue
-				}
-				if info, statErr := os.Stat(resolved); statErr != nil || !info.Mode().IsRegular() {
-					continue
-				}
-
-				title := ""
-				if docTitle, err := s.DB.GetTitle(r.Path); err == nil {
-					title = docTitle
-				} else if docTitle, err := s.DB.GetTitle(resolved); err == nil {
-					title = docTitle
-				} else {
-					base := filepath.Base(r.Path)
-					title = strings.TrimSuffix(base, filepath.Ext(base))
-				}
-
-				results = append(results, SearchResult{
-					Path:    relPath,
-					Title:   title,
-					Snippet: r.Snippet,
-					Score:   r.Score,
-				})
+	seekResults := retrieval.Search(query)
+	results := make([]SearchResult, 0, len(seekResults))
+	for _, r := range seekResults {
+		relPath := r.Path
+		if filepath.IsAbs(r.Path) {
+			candidate := r.Path
+			if canonical, canonicalErr := filepath.EvalSymlinks(candidate); canonicalErr == nil {
+				candidate = canonical
 			}
-			if len(results) > 0 {
-				return results, nil
+			rel, relErr := filepath.Rel(s.VaultRoot, candidate)
+			if relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+				continue
 			}
+			relPath = rel
 		}
+		resolved, secureErr := vault.SecurePath(s.VaultRoot, relPath)
+		if secureErr != nil {
+			continue
+		}
+		if info, statErr := os.Stat(resolved); statErr != nil || !info.Mode().IsRegular() {
+			continue
+		}
+
+		title := ""
+		if docTitle, err := s.DB.GetTitle(r.Path); err == nil {
+			title = docTitle
+		} else if docTitle, err := s.DB.GetTitle(resolved); err == nil {
+			title = docTitle
+		} else {
+			base := filepath.Base(r.Path)
+			title = strings.TrimSuffix(base, filepath.Ext(base))
+		}
+
+		results = append(results, SearchResult{
+			Path:    relPath,
+			Title:   title,
+			Snippet: r.Snippet,
+			Score:   r.Score,
+		})
+	}
+	if len(results) > 0 {
+		return results, nil
 	}
 
 	return s.searchSidecarPlain(query)
 }
 
 // searchSidecarPlain is the safe FTS5-only fallback used when query syntax is
-// malformed. It intentionally does not delegate to a sibling search tool that
-// might interpret the invalid characters as its own query language.
+// malformed. It intentionally does not delegate to the hybrid engine, which
+// would interpret the invalid characters as its own query language.
 func (s *Service) searchSidecarPlain(query string) ([]SearchResult, error) {
 	docs, err := s.DB.Search(query)
 	if err != nil {
@@ -429,57 +420,96 @@ func (s *Service) NoteDaily(dateStr string) (string, error) {
 	return s.NoteNew(title, "", "daily")
 }
 
-// NoteClip fetches a URL via symfetch and saves it as a note.
-func (s *Service) NoteClip(url string) (string, error) {
-	// 1. Resolve symfetch: $SYMAIRA_BIN, then the managed runtime directory
-	// (~/.symaira/bin), then PATH.
-	bin, err := compose.Resolve("symfetch")
-	if err != nil {
-		return "", fmt.Errorf("symfetch binary not found: %w", err)
-	}
+// webClippers are the sibling binaries that can render a URL into the shared
+// fetch output schema, in preference order. symbrowse is first because it
+// absorbed symfetch's static engine in the repo consolidation; symfetch stays
+// supported so an existing installation keeps working.
+var webClippers = []struct {
+	binary string
+	args   func(url string) []string
+}{
+	{binary: "symbrowse", args: func(url string) []string { return []string{"read", url} }},
+	{binary: "symfetch", args: func(url string) []string { return []string{url} }},
+}
 
-	// 2. Fetch as JSON to easily extract the title, and then as Markdown? No, wait...
-	// Can we just run `symfetch url` and parse the header block?
-	// The header block looks like:
-	// > **Example Domain** · 200 · ~42 tokens
-	// > https://example.com
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, bin, url) //nolint:gosec // resolved via compose.Resolve; url is a CLI argument, not shell-interpreted
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("symfetch failed: %w", err)
-	}
-
-	bodyStr := out.String()
-	lines := strings.Split(bodyStr, "\n")
-	title := ""
-
-	// Try to extract title from the header `> **Title**`
-	if len(lines) > 0 && strings.HasPrefix(lines[0], "> **") {
-		parts := strings.SplitN(lines[0][4:], "**", 2)
-		if len(parts) > 1 && strings.TrimSpace(parts[0]) != "" {
-			title = strings.TrimSpace(parts[0])
+// clipURL renders a URL with the first available web clipper and returns its
+// markdown. Both clippers emit the same document schema, so the caller does
+// not need to know which one answered.
+func clipURL(url string) (string, error) {
+	var lastErr error
+	for _, clipper := range webClippers {
+		// Resolve order: $SYMAIRA_BIN, the managed runtime directory
+		// (~/.symaira/bin), then PATH.
+		bin, err := compose.Resolve(clipper.binary)
+		if err != nil {
+			continue
 		}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		cmd := exec.CommandContext(ctx, bin, clipper.args(url)...) //nolint:gosec // resolved via compose.Resolve; url is a CLI argument, not shell-interpreted
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		err = cmd.Run()
+		cancel()
+		if err != nil {
+			lastErr = fmt.Errorf("%s failed: %w", clipper.binary, err)
+			continue
+		}
+		return out.String(), nil
 	}
+	if lastErr != nil {
+		return "", lastErr
+	}
+	return "", fmt.Errorf("no web clipper found: install symbrowse (danieljustus/tap/symbrowse)")
+}
 
-	// Fallback to first # Heading
-	if title == "" {
-		for _, line := range lines {
-			if strings.HasPrefix(line, "# ") {
-				title = strings.TrimSpace(line[2:])
+// clipTitle extracts the document title from a clipper's markdown. It accepts
+// both shapes of the shared schema: the YAML frontmatter symbrowse emits and
+// the quoted header block symfetch emits.
+func clipTitle(body, url string) string {
+	lines := strings.Split(body, "\n")
+
+	// symbrowse: YAML frontmatter with a title key.
+	if len(lines) > 0 && strings.TrimSpace(lines[0]) == "---" {
+		for _, line := range lines[1:] {
+			if strings.TrimSpace(line) == "---" {
 				break
+			}
+			if rest, ok := strings.CutPrefix(line, "title:"); ok {
+				if t := strings.Trim(strings.TrimSpace(rest), `"`); t != "" {
+					return t
+				}
 			}
 		}
 	}
 
-	if title == "" {
-		// Fallback to URL hostname
-		title = url
+	// symfetch: `> **Title** · 200 · ~42 tokens`
+	if len(lines) > 0 && strings.HasPrefix(lines[0], "> **") {
+		parts := strings.SplitN(lines[0][4:], "**", 2)
+		if len(parts) > 1 && strings.TrimSpace(parts[0]) != "" {
+			return strings.TrimSpace(parts[0])
+		}
 	}
 
-	// 3. Prepare the note content
+	// Fallback to the first Markdown heading.
+	for _, line := range lines {
+		if strings.HasPrefix(line, "# ") {
+			return strings.TrimSpace(line[2:])
+		}
+	}
+
+	// Last resort: the URL itself.
+	return url
+}
+
+// NoteClip fetches a URL via the available web clipper and saves it as a note.
+func (s *Service) NoteClip(url string) (string, error) {
+	bodyStr, err := clipURL(url)
+	if err != nil {
+		return "", err
+	}
+	title := clipTitle(bodyStr, url)
+
+	// Prepare the note content
 	nowStr := time.Now().UTC().Format(time.RFC3339)
 	noteTitle := "Clipped: " + title
 

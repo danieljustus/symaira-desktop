@@ -1,15 +1,27 @@
 package service
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
+
+// withHybridHits points the in-process retrieval seam at a fixed result set,
+// so the composed search path is exercised without the machine running the
+// suite needing a populated symseek index or an embedding backend.
+func withHybridHits(t *testing.T, hits ...retrieval.Result) {
+	t.Helper()
+	prev := retrieval.SearchFunc
+	retrieval.SearchFunc = func(string, int) ([]retrieval.Result, error) {
+		return hits, nil
+	}
+	t.Cleanup(func() { retrieval.SearchFunc = prev })
+}
 
 func TestComposeSearchAndRelated(t *testing.T) {
 	// 1. Setup temp paths
@@ -24,22 +36,13 @@ func TestComposeSearchAndRelated(t *testing.T) {
 
 	notePath := filepath.Join(vaultPath, "compose-test-note.md")
 
-	// 2. Setup mocks
-	mockSeek := filepath.Join(tempDir, "symseek")
-	mockSeekContent := fmt.Sprintf(`#!/bin/bash
-if [ "$1" = "version" ] && [ "$2" = "--json" ]; then
-  echo '{"tool":"symseek","version":"0.1.0-mock","schema_version":1}'
-  exit 0
-elif [ "$1" = "search" ]; then
-  echo '[{"path":"%s","chunk_id":"mock-chunk-uuid","score":0.99,"snippet":"mock content snippet containing Mock Project keyword"}]'
-  exit 0
-else
-  exit 0
-fi
-`, notePath)
-	if err := os.WriteFile(mockSeek, []byte(mockSeekContent), 0755); err != nil {
-		t.Fatal(err)
-	}
+	// 2. Setup: symseek is in-process now, so its hits come from the seam;
+	// symmemory is still a sibling binary and stays mocked on PATH.
+	withHybridHits(t, retrieval.Result{
+		Path:    notePath,
+		Score:   0.99,
+		Snippet: "mock content snippet containing Mock Project keyword",
+	})
 
 	mockMemory := filepath.Join(tempDir, "symmemory")
 	mockMemoryContent := `#!/bin/bash
@@ -60,8 +63,7 @@ fi
 		t.Fatal(err)
 	}
 
-	// Point compose at mock binaries
-	withMockTool(t, "symseek", mockSeek)
+	// Point compose at the mock sibling binary
 	withMockTool(t, "symmemory", mockMemory)
 
 	// 3. Setup DB
@@ -88,12 +90,7 @@ fi
 		t.Fatal(err)
 	}
 
-	// 4. Verify tool probing
-	hasSeek, seekVer := compose.HasSymseek()
-	if !hasSeek || seekVer != "0.1.0-mock" {
-		t.Fatalf("expected HasSymseek to be true, got version %s", seekVer)
-	}
-
+	// 4. Verify sibling-tool probing
 	hasMem, memVer := compose.HasSymmemory()
 	if !hasMem || memVer != "0.1.0-mock" {
 		t.Fatalf("expected HasSymmemory to be true, got version %s", memVer)
@@ -105,7 +102,7 @@ fi
 		t.Fatal(err)
 	}
 	if len(searchResults) == 0 {
-		t.Fatalf("expected search results from composed symseek")
+		t.Fatalf("expected search results from the hybrid index")
 	}
 	if searchResults[0].Title != "Compose Test Note" {
 		t.Errorf("expected title to be resolved as 'Compose Test Note', got '%v'", searchResults[0].Title)
@@ -463,6 +460,9 @@ func TestComposeFallback(t *testing.T) {
 	oldPath := os.Getenv("PATH")
 	os.Setenv("PATH", tempDir) // empty path
 	defer os.Setenv("PATH", oldPath)
+
+	// No hybrid hits: search must fall back to the sidecar FTS5 index.
+	withHybridHits(t)
 
 	compose.ResetCache()
 

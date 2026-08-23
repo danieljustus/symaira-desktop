@@ -21,10 +21,13 @@ struct CompanionToolsView: View {
     @State private var installErrors: [String: String] = [:]
     @State private var homebrewAvailable: Bool?
 
+    /// Only genuinely separate products belong here. Search, PDF rendering
+    /// and contacts ship inside SymDesk since the repo consolidation, so
+    /// offering to install them would install nothing.
     private let managedTools: [(id: String, name: String, tap: String)] = [
-        ("symseek", "SymSeek", "danieljustus/tap/symseek"),
-        ("symmemory", "SymMemory", "danieljustus/tap/symmemory"),
-        ("symingest", "SymIngest", "danieljustus/tap/symingest"),
+        ("symbrain", "SymBrain", "danieljustus/tap/symbrain"),
+        ("symvault", "SymVault", "danieljustus/tap/symvault"),
+        ("symbrowse", "SymBrowse", "danieljustus/tap/symbrowse"),
     ]
 
     var body: some View {

@@ -120,33 +120,30 @@ public struct DoctorReport: Codable, Sendable {
         }
     }
 
+    /// The sibling binaries `symdesk doctor` still probes. Search, PDF
+    /// rendering, contacts and meeting capture were absorbed into `symdesk`
+    /// by the repo consolidation and are therefore no longer reported here.
     public struct ToolAvailability: Codable, Sendable {
-        public let symseek: String?
         public let symmemory: String?
-        public let symingest: String?
-        public let symfetch: String?
         public let symvault: String?
-        public let symmeet: String?
+        public let symbrowse: String?
+        public let symingest: String?
 
-        public init(symseek: String? = nil, symmemory: String? = nil, symingest: String? = nil, symfetch: String? = nil, symvault: String? = nil, symmeet: String? = nil) {
-            self.symseek = symseek
+        public init(symmemory: String? = nil, symvault: String? = nil, symbrowse: String? = nil, symingest: String? = nil) {
             self.symmemory = symmemory
-            self.symingest = symingest
-            self.symfetch = symfetch
             self.symvault = symvault
-            self.symmeet = symmeet
+            self.symbrowse = symbrowse
+            self.symingest = symingest
         }
 
         /// Whether a tool name resolves to "ok" or "available".
         public func isAvailable(_ name: String) -> Bool {
             let val: String?
             switch name {
-            case "symseek": val = symseek
             case "symmemory": val = symmemory
-            case "symingest": val = symingest
-            case "symfetch": val = symfetch
             case "symvault": val = symvault
-            case "symmeet": val = symmeet
+            case "symbrowse": val = symbrowse
+            case "symingest": val = symingest
             default: val = nil
             }
             guard let v = val else { return false }

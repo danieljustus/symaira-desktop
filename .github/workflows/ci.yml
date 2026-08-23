@@ -34,7 +34,7 @@ jobs:
       matrix:
         # PR gate is ubuntu-only; macOS runs on main pushes and weekly schedule.
         os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest"]') }}
-        go-version: ["1.26.4"]
+        go-version: ["1.26.6"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -55,6 +55,37 @@ jobs:
       - name: Test
         run: go test -race -count=1 ./...
 
+  nested-modules:
+    # The tools absorbed by the repo consolidation keep their own go.mod, so
+    # the root `go test ./...` above does not descend into them. Without this
+    # job their code — the majority of the repository — would ship untested.
+    # One leg per module so a failure is attributable by name.
+    name: nested (${{ matrix.module }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [ingest, print, relate, room, seek]
+    defaults:
+      run:
+        working-directory: ${{ matrix.module }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: ${{ matrix.module }}/go.mod
+          cache-dependency-path: ${{ matrix.module }}/go.sum
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -count=1 ./...
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -62,7 +93,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.26.4"
+          go-version: "1.26.6"
 
       - name: Vet
         run: go vet ./...
@@ -95,7 +126,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.26.4"
+          go-version: "1.26.6"
 
       # only-new-issues scopes the gate to lines touched by the current
       # push/PR diff. The repository has a pre-existing errcheck/gosec

@@ -19,6 +19,15 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
+// siblingTools are the binaries SymDesk still composes at runtime. Search
+// (symseek), PDF rendering (symprint), contacts (symrelate) and meeting
+// capture (symmeet) are no longer on this list: the repo consolidation moved
+// them into this binary, so probing for them would report a tool that is not
+// supposed to exist. What remains are the genuinely separate products —
+// symmemory and symvault from symbrain's side, symbrowse for web clipping —
+// plus symingest, which still runs out of process.
+var siblingTools = []string{"symmemory", "symvault", "symbrowse", "symingest"}
+
 func newDoctorCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "doctor",
@@ -102,7 +111,7 @@ func newDoctorCmd() *cobra.Command {
 			tools := map[string]string{}
 			versions := map[string]string{}
 			origins := map[string]string{}
-			for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault", "symmeet"} {
+			for _, name := range siblingTools {
 				if ok, version := compose.HasTool(name); ok {
 					tools[name] = "ok"
 					versions[name] = version
@@ -207,7 +216,7 @@ func newDoctorCmd() *cobra.Command {
 				}
 				fmt.Println("tools:")
 				missingAny := false
-				for _, name := range []string{"symseek", "symmemory", "symingest", "symfetch", "symvault", "symmeet"} {
+				for _, name := range siblingTools {
 					status := tools[name]
 					version := versions[name]
 					if status == "ok" {

@@ -1,61 +1,59 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/contacts"
 )
 
-func writeMockSymrelateBin(t *testing.T, dir, script string) {
+// adaRef is the one contact the fake store knows.
+var adaRef = &contacts.Ref{
+	Provider:      contacts.Provider,
+	SchemaVersion: contacts.SchemaVersion,
+	ID:            "c-ada",
+	Kind:          "person",
+	DisplayName:   "Ada Lovelace",
+}
+
+// withContactStore points the in-process contact seam at a fake store that
+// knows exactly the given references. Every other ID resolves to
+// ErrContactNotFound, which is how an erased contact behaves.
+func withContactStore(t *testing.T, refs ...*contacts.Ref) {
 	t.Helper()
-	path := filepath.Join(dir, "symrelate")
-	if err := os.WriteFile(path, []byte(script), 0755); err != nil { //nolint:gosec // test fixture must be executable
-		t.Fatal(err)
+	known := make(map[string]*contacts.Ref, len(refs))
+	for _, r := range refs {
+		known[r.ID] = r
 	}
+	prevAvailable, prevResolve := contacts.AvailableFunc, contacts.ResolveFunc
+	contacts.AvailableFunc = func(context.Context) bool { return true }
+	contacts.ResolveFunc = func(_ context.Context, id string) (*contacts.Ref, error) {
+		if r, ok := known[id]; ok {
+			clone := *r
+			return &clone, nil
+		}
+		return nil, contacts.ErrContactNotFound
+	}
+	t.Cleanup(func() {
+		contacts.AvailableFunc, contacts.ResolveFunc = prevAvailable, prevResolve
+	})
 }
 
-func withMockSymrelatePath(t *testing.T, dir string) {
+// withoutContactStore simulates an unreadable local contact store.
+func withoutContactStore(t *testing.T) {
 	t.Helper()
-	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
+	prevAvailable := contacts.AvailableFunc
+	contacts.AvailableFunc = func(context.Context) bool { return false }
+	t.Cleanup(func() { contacts.AvailableFunc = prevAvailable })
 }
 
-const mockSymrelateRefScript = `#!/bin/bash
-if [ "$1" = "contact" ] && [ "$2" = "ref" ]; then
-  case "$3" in
-    c-ada)
-      echo '{"provider":"symrelate","schema_version":1,"id":"c-ada","kind":"person","display_name":"Ada Lovelace","future_flag":true}'
-      exit 0 ;;
-    *)
-      echo 'symrelate: contact.GetRef: contact not found' >&2
-      exit 1 ;;
-  esac
-fi
-`
-
-const mockSymrelateSmuggleScript = `#!/bin/bash
-if [ "$1" = "contact" ] && [ "$2" = "ref" ]; then
-  echo '{"provider":"symrelate","schema_version":1,"id":"c-ada","kind":"person","display_name":"Ada Lovelace","future_flag":true,"email":"ada@private.example","phone":"+1 555 000 1111","address":"12 Secret Lane","notes":"secret board notes","transcript_path":"/Users/ada/private/t.md"}'
-  exit 0
-fi
-`
-
-const mockSymrelateV2Script = `#!/bin/bash
-if [ "$1" = "contact" ] && [ "$2" = "ref" ]; then
-  echo '{"provider":"symrelate","schema_version":2,"id":"c-ada","kind":"person","display_name":"Ada Lovelace"}'
-  exit 0
-fi
-`
-
-func importMeetingWithSymrelate(t *testing.T, dir, symrelateScript string) (*Service, string) {
+func importMeetingWithContactStore(t *testing.T) (*Service, string) {
 	t.Helper()
-	writeMockSymrelateBin(t, dir, symrelateScript)
-	withMockSymrelatePath(t, dir)
+	withContactStore(t, adaRef)
 
 	svc := newTestService(t)
 	relPath := "meetings/meeting-m1.md"
@@ -117,8 +115,7 @@ func participantFromDoc(t *testing.T, svc *Service, notePath string) map[string]
 }
 
 func TestLinkParticipantContactRetainsEntityIDAndSetsRef(t *testing.T) {
-	dir := t.TempDir()
-	svc, path := importMeetingWithSymrelate(t, dir, mockSymrelateRefScript)
+	svc, path := importMeetingWithContactStore(t)
 
 	if err := svc.ConfirmParticipant(path, "speaker_0", "e-alice"); err != nil {
 		t.Fatalf("ConfirmParticipant() error = %v", err)
@@ -144,9 +141,6 @@ func TestLinkParticipantContactRetainsEntityIDAndSetsRef(t *testing.T) {
 	if ref["schema_version"] != 1 {
 		t.Errorf("contact_ref schema_version = %v, want 1", ref["schema_version"])
 	}
-	if ref["future_flag"] != true {
-		t.Errorf("unknown additive field future_flag must be preserved, got %+v", ref)
-	}
 	for _, banned := range []string{"email", "phone", "address", "notes", "contact_points"} {
 		if _, found := ref[banned]; found {
 			t.Errorf("contact_ref must never contain %q", banned)
@@ -155,9 +149,7 @@ func TestLinkParticipantContactRetainsEntityIDAndSetsRef(t *testing.T) {
 }
 
 func TestLinkParticipantContactPreservesUnknownFields(t *testing.T) {
-	dir := t.TempDir()
-	writeMockSymrelateBin(t, dir, mockSymrelateRefScript)
-	withMockSymrelatePath(t, dir)
+	withContactStore(t, adaRef)
 
 	svc := newTestService(t)
 	writeMeetingNoteFixture(t, svc, "meetings/meeting-m-fixture.md", meetingNoteUnknownFieldsFixture)
@@ -207,9 +199,8 @@ func TestLinkParticipantContactPreservesUnknownFields(t *testing.T) {
 	}
 }
 
-func TestLinkParticipantContactFixtureContainsNoPrivateData(t *testing.T) {
-	dir := t.TempDir()
-	svc, path := importMeetingWithSymrelate(t, dir, mockSymrelateSmuggleScript)
+func TestLinkParticipantContactStoresOnlyReferenceFields(t *testing.T) {
+	svc, path := importMeetingWithContactStore(t)
 
 	if _, err := svc.LinkParticipantContact(path, "speaker_0", "c-ada"); err != nil {
 		t.Fatalf("LinkParticipantContact() error = %v", err)
@@ -220,26 +211,24 @@ func TestLinkParticipantContactFixtureContainsNoPrivateData(t *testing.T) {
 		t.Fatal(err)
 	}
 	content := string(raw)
-	for _, leak := range []string{"ada@private.example", "+1 555 000 1111", "12 Secret Lane", "secret board notes", "/Users/ada"} {
-		if strings.Contains(content, leak) {
-			t.Errorf("vault file contains smuggled private data %q:\n%s", leak, content)
-		}
-	}
 	fm := content
 	if idx := strings.Index(content[4:], "---"); idx != -1 {
 		fm = content[:idx+4]
 	}
+	// The reference type has no field that could carry a contact point, so
+	// this asserts the stored shape rather than a filter: a regression that
+	// widened the type would show up here.
 	for _, bannedKey := range []string{"email:", "phone:", "address:", "notes:", "_path:", "contact_point"} {
 		if strings.Contains(fm, bannedKey) {
 			t.Errorf("frontmatter contains forbidden key fragment %q:\n%s", bannedKey, fm)
 		}
 	}
-	if !strings.Contains(fm, "future_flag") {
-		t.Errorf("benign unknown field future_flag must be stored, frontmatter:\n%s", fm)
+	if !strings.Contains(fm, "id: c-ada") || !strings.Contains(fm, "kind: person") {
+		t.Errorf("frontmatter is missing the reference identity:\n%s", fm)
 	}
 }
 
-func TestLinkParticipantContactSymrelateUnavailable(t *testing.T) {
+func TestLinkParticipantContactStoreUnavailable(t *testing.T) {
 	dir := t.TempDir()
 	svc, path := importFixtureMeeting(t, dir)
 
@@ -248,14 +237,11 @@ func TestLinkParticipantContactSymrelateUnavailable(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// A bare-bones PATH: the real symrelate must not leak into this test.
-	t.Setenv("PATH", "/usr/bin:/bin")
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
+	withoutContactStore(t)
 
 	_, err = svc.LinkParticipantContact(path, "speaker_0", "c-ada")
-	if !errors.Is(err, ErrSymrelateUnavailable) {
-		t.Fatalf("expected ErrSymrelateUnavailable, got %v", err)
+	if !errors.Is(err, ErrContactStoreUnavailable) {
+		t.Fatalf("expected ErrContactStoreUnavailable, got %v", err)
 	}
 
 	after, err := os.ReadFile(filepath.Join(svc.VaultRoot, path)) //nolint:gosec // test reads its own temp vault fixture
@@ -263,46 +249,21 @@ func TestLinkParticipantContactSymrelateUnavailable(t *testing.T) {
 		t.Fatal(err)
 	}
 	if string(before) != string(after) {
-		t.Error("note must be unchanged when symrelate is unavailable")
-	}
-}
-
-func TestLinkParticipantContactIncompatibleSchema(t *testing.T) {
-	dir := t.TempDir()
-	svc, path := importMeetingWithSymrelate(t, dir, mockSymrelateV2Script)
-
-	before, err := os.ReadFile(filepath.Join(svc.VaultRoot, path)) //nolint:gosec // test reads its own temp vault fixture
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = svc.LinkParticipantContact(path, "speaker_0", "c-ada")
-	if !errors.Is(err, compose.ErrContactRefIncompatible) {
-		t.Fatalf("expected ErrContactRefIncompatible, got %v", err)
-	}
-
-	after, err := os.ReadFile(filepath.Join(svc.VaultRoot, path)) //nolint:gosec // test reads its own temp vault fixture
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(before) != string(after) {
-		t.Error("note must be unchanged for an incompatible reference")
+		t.Error("note must be unchanged when the contact store is unavailable")
 	}
 }
 
 func TestLinkParticipantContactErasedContact(t *testing.T) {
-	dir := t.TempDir()
-	svc, path := importMeetingWithSymrelate(t, dir, mockSymrelateRefScript)
+	svc, path := importMeetingWithContactStore(t)
 
 	_, err := svc.LinkParticipantContact(path, "speaker_0", "c-erased")
-	if !errors.Is(err, compose.ErrContactNotFound) {
+	if !errors.Is(err, contacts.ErrContactNotFound) {
 		t.Fatalf("expected ErrContactNotFound, got %v", err)
 	}
 }
 
 func TestLinkParticipantContactUnknownSpeaker(t *testing.T) {
-	dir := t.TempDir()
-	svc, path := importMeetingWithSymrelate(t, dir, mockSymrelateRefScript)
+	svc, path := importMeetingWithContactStore(t)
 
 	if _, err := svc.LinkParticipantContact(path, "speaker_99", "c-ada"); err == nil || !strings.Contains(err.Error(), "no participant with speaker id") {
 		t.Errorf("expected an unknown-speaker error, got %v", err)
@@ -310,8 +271,7 @@ func TestLinkParticipantContactUnknownSpeaker(t *testing.T) {
 }
 
 func TestUnlinkParticipantContactRemovesRef(t *testing.T) {
-	dir := t.TempDir()
-	svc, path := importMeetingWithSymrelate(t, dir, mockSymrelateRefScript)
+	svc, path := importMeetingWithContactStore(t)
 
 	if err := svc.ConfirmParticipant(path, "speaker_0", "e-alice"); err != nil {
 		t.Fatal(err)
@@ -333,39 +293,35 @@ func TestUnlinkParticipantContactRemovesRef(t *testing.T) {
 }
 
 func TestMeetingReadToleratesUnresolvableContactRef(t *testing.T) {
-	dir := t.TempDir()
-	svc, path := importMeetingWithSymrelate(t, dir, mockSymrelateRefScript)
+	svc, path := importMeetingWithContactStore(t)
 
 	if _, err := svc.LinkParticipantContact(path, "speaker_0", "c-ada"); err != nil {
 		t.Fatal(err)
 	}
 
-	// Relate disappears (or the contact was erased): reading, listing and
-	// rendering the note must keep working off the stored reference alone.
-	t.Setenv("PATH", "/usr/bin:/bin")
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
+	// The store becomes unreadable (or the contact was erased): reading,
+	// listing and rendering the note must keep working off the stored
+	// reference alone.
+	withoutContactStore(t)
 
 	doc, err := svc.MeetingShow(path)
 	if err != nil {
-		t.Fatalf("MeetingShow() with symrelate absent error = %v", err)
+		t.Fatalf("MeetingShow() with the contact store unavailable error = %v", err)
 	}
 	p, _ := doc.Frontmatter["participants"].([]interface{})
 	entry, _ := p[0].(map[string]interface{})
 	ref, ok := entry["contact_ref"].(map[string]interface{})
 	if !ok || ref["display_name"] != "Ada Lovelace" {
-		t.Errorf("stored contact_ref must render without symrelate: %+v", entry)
+		t.Errorf("stored contact_ref must render without the store: %+v", entry)
 	}
 
 	if _, err := svc.MeetingList(); err != nil {
-		t.Fatalf("MeetingList() with symrelate absent error = %v", err)
+		t.Fatalf("MeetingList() with the contact store unavailable error = %v", err)
 	}
 }
 
 func TestResolveMeetingContactRef(t *testing.T) {
-	dir := t.TempDir()
-	writeMockSymrelateBin(t, dir, mockSymrelateRefScript)
-	withMockSymrelatePath(t, dir)
+	withContactStore(t, adaRef)
 
 	svc := newTestService(t)
 	ref, err := svc.ResolveMeetingContactRef("c-ada")
@@ -378,12 +334,10 @@ func TestResolveMeetingContactRef(t *testing.T) {
 }
 
 func TestResolveMeetingContactRefUnavailable(t *testing.T) {
-	t.Setenv("PATH", "/usr/bin:/bin")
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
+	withoutContactStore(t)
 
 	svc := newTestService(t)
-	if _, err := svc.ResolveMeetingContactRef("c-ada"); !errors.Is(err, ErrSymrelateUnavailable) {
-		t.Fatalf("expected ErrSymrelateUnavailable, got %v", err)
+	if _, err := svc.ResolveMeetingContactRef("c-ada"); !errors.Is(err, ErrContactStoreUnavailable) {
+		t.Fatalf("expected ErrContactStoreUnavailable, got %v", err)
 	}
 }

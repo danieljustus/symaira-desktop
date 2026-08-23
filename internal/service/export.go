@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/export"
+	"github.com/danieljustus/symaira-desktop/internal/pdf"
 )
 
 // ExportResult is the service return value for an export operation.
@@ -78,20 +78,21 @@ func (s *Service) Export(relPath, viewID, outputPath, format, profile string) (*
 	}
 
 	if format == "pdf" {
-		ok, ver := compose.HasSymprint()
-		if !ok {
-			return nil, fmt.Errorf("PDF export requires symprint on PATH (install via danieljustus/tap/symprint)")
+		// The renderer is in-process; only the typesetting engine is an
+		// external requirement, so that is the one thing worth probing.
+		if ok, hint := pdf.EngineAvailable(); !ok {
+			return nil, fmt.Errorf("PDF export requires a typesetting engine: %s", hint)
 		}
-		out, err := compose.RenderPDF(rendered, outputPath, profile)
+		res, err := pdf.Render(rendered, outputPath, profile)
 		if err != nil {
 			return nil, err
 		}
 		return &ExportResult{
 			Format:   "pdf",
-			Path:     out,
-			Profile:  profile,
+			Path:     res.OutputPath,
+			Profile:  res.Profile,
 			Rendered: true,
-			Message:  fmt.Sprintf("Exported %s to PDF using symprint %s", sourceDesc, ver),
+			Message:  fmt.Sprintf("Exported %s to PDF (profile %s, typst %s)", sourceDesc, res.Profile, res.EngineVersion),
 		}, nil
 	}
 

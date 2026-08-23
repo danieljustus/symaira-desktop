@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/contacts"
 )
 
 const mockSymmeetScriptForCLI = `#!/bin/bash
@@ -149,19 +151,6 @@ elif [ "$1" = "set" ]; then
 fi
 `
 
-const mockSymrelateScriptForCLI = `#!/bin/bash
-if [ "$1" = "contact" ] && [ "$2" = "ref" ]; then
-  case "$3" in
-    c-ada)
-      echo '{"provider":"symrelate","schema_version":1,"id":"c-ada","kind":"person","display_name":"Ada Lovelace"}'
-      exit 0 ;;
-    *)
-      echo 'symrelate: contact not found' >&2
-      exit 1 ;;
-  esac
-fi
-`
-
 func installMockSymmemory(t *testing.T) {
 	t.Helper()
 	dir := t.TempDir()
@@ -173,15 +162,28 @@ func installMockSymmemory(t *testing.T) {
 	t.Cleanup(compose.ResetCache)
 }
 
-func installMockSymrelate(t *testing.T) {
+// withContactStore points the in-process contact seam at a fake store that
+// knows one contact. The contact store is part of this binary since the repo
+// consolidation, so there is no symrelate process to mock on $PATH.
+func withContactStore(t *testing.T) {
 	t.Helper()
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "symrelate"), []byte(mockSymrelateScriptForCLI), 0755); err != nil { //nolint:gosec // test fixture must be executable
-		t.Fatal(err)
+	prevAvailable, prevResolve := contacts.AvailableFunc, contacts.ResolveFunc
+	contacts.AvailableFunc = func(context.Context) bool { return true }
+	contacts.ResolveFunc = func(_ context.Context, id string) (*contacts.Ref, error) {
+		if id != "c-ada" {
+			return nil, contacts.ErrContactNotFound
+		}
+		return &contacts.Ref{
+			Provider:      contacts.Provider,
+			SchemaVersion: contacts.SchemaVersion,
+			ID:            "c-ada",
+			Kind:          "person",
+			DisplayName:   "Ada Lovelace",
+		}, nil
 	}
-	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
+	t.Cleanup(func() {
+		contacts.AvailableFunc, contacts.ResolveFunc = prevAvailable, prevResolve
+	})
 }
 
 func TestMeetingParticipantCandidatesAndConfirmCLI(t *testing.T) {
@@ -231,7 +233,7 @@ func TestMeetingParticipantCreateCLI(t *testing.T) {
 func TestMeetingParticipantContactCommandsCLI(t *testing.T) {
 	setupReviewMeetingVault(t)
 	path := importMeetingViaCLI(t)
-	installMockSymrelate(t)
+	withContactStore(t)
 
 	contactOut, err := execRootCapture(t, "", "meeting", "participant", "contact", "c-ada", "--json")
 	if err != nil {

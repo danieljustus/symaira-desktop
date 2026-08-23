@@ -1,5 +1,11 @@
 # symaira-meet
 
+> **Dieses Verzeichnis war bis 2026-08-23 das eigenständige Repository
+> [`symaira-meet`](https://github.com/danieljustus/symaira-meet).** Es ist jetzt ein
+> nested Swift-Package von [`symaira-desktop`](../README.md), eingebettet in das
+> SymDesk-App-Target; einen eigenen `symmeet`-Prozess startet der Go-Kern seit
+> #498 nicht mehr. Repo archiviert, Formula und Cask deprecated.
+
 > **Moved 2026-08-20** into `symaira-desktop/meet/` as part of the Symaira
 > repo consolidation (27 → 13, `docs/repo-konsolidierung.md` §3.2). The code
 > now lives in the symaira-desktop repository; the original
@@ -27,8 +33,8 @@ require another Symaira binary, a cloud account, or telemetry.
 ### Homebrew (recommended)
 
 ```bash
-brew install danieljustus/tap/symmeet                 # CLI
-brew install --cask danieljustus/tap/symmeet-agent    # menu-bar agent app
+brew install danieljustus/tap/symdesk                 # CLI (enthält meeting-Import)
+brew install --cask danieljustus/tap/symdesk-app      # macOS app
 ```
 
 Prebuilt binaries (CLI `.tar.gz`, agent `.dmg`, checksums, SBOM) are attached

@@ -1,5 +1,12 @@
 # symroom
 
+> **Dieses Verzeichnis war bis 2026-08-23 das eigenständige Repository
+> [`symaira-room`](https://github.com/danieljustus/symaira-room).** Es ist jetzt ein
+> nested Go-Modul von [`symaira-desktop`](../README.md). Room ist das einzige
+> absorbierte Tool ohne In-Process-Aufrufstelle: `symroom` wird weiterhin als
+> Binary ausgeliefert — allerdings mit dem `symdesk`-Release, nicht mehr aus
+> einem eigenen. Die `symroom`-Formula ist deprecated.
+
 > **Moved 2026-08-21** into `symaira-desktop/room/` as part of the Symaira
 > repo consolidation (27 → 13, `docs/repo-konsolidierung.md` §3.2). This Go
 > module (plus Swift client package) now lives in symaira-desktop; the
@@ -31,7 +38,7 @@ go install github.com/danieljustus/symaira-room/cmd/symroom@latest
 Or via Homebrew (macOS):
 
 ```sh
-brew install danieljustus/tap/symroom
+brew install danieljustus/tap/symdesk   # liefert symroom mit aus
 ```
 
 Or build from source:

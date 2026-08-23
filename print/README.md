@@ -1,5 +1,13 @@
 # symaira-print
 
+> **Dieses Verzeichnis war bis 2026-08-23 das eigenständige Repository
+> [`symaira-print`](https://github.com/danieljustus/symaira-print).** Es ist jetzt ein
+> nested Go-Modul von [`symaira-desktop`](../README.md); das Repo ist
+> archiviert und seine Homebrew-Formula deprecated. Die Markdown-nach-PDF-Renderer wird über
+> `symdesk export --format pdf` genutzt, angebunden über `print/api`.
+> Die Badges, Installations- und Release-Hinweise unten stammen aus der
+> Zeit als eigenes Repo und gelten nicht mehr.
+
 > **Moved 2026-08-21** into `symaira-desktop/print/` as part of the Symaira
 > repo consolidation (27 → 13, `docs/repo-konsolidierung.md` §3.2). This Go
 > module now lives in symaira-desktop; the original
@@ -103,7 +111,7 @@ Install via Go or Homebrew:
 
 ```bash
 go install github.com/danieljustus/symaira-print/cmd/symprint@latest
-brew install danieljustus/tap/symprint
+brew install danieljustus/tap/symdesk   # enthält den PDF-Renderer
 ```
 
 ## Quick start

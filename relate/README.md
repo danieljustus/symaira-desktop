@@ -1,5 +1,13 @@
 # Symaira Relate
 
+> **Dieses Verzeichnis war bis 2026-08-23 das eigenständige Repository
+> [`symaira-relate`](https://github.com/danieljustus/symaira-relate).** Es ist jetzt ein
+> nested Go-Modul von [`symaira-desktop`](../README.md); das Repo ist
+> archiviert und seine Homebrew-Formula deprecated. Die Kontakt- und Beziehungsverwaltung wird über
+> `symdesk contact` genutzt, angebunden über `relate/api`.
+> Die Badges, Installations- und Release-Hinweise unten stammen aus der
+> Zeit als eigenes Repo und gelten nicht mehr.
+
 > **Moved 2026-08-21** into `symaira-desktop/relate/` as part of the Symaira
 > repo consolidation (27 → 13, `docs/repo-konsolidierung.md` §3.2). This Go
 > module now lives in symaira-desktop; the original

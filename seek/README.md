@@ -1,5 +1,13 @@
 # Symaira-Seek
 
+> **Dieses Verzeichnis war bis 2026-08-23 das eigenständige Repository
+> [`symaira-seek`](https://github.com/danieljustus/symaira-seek).** Es ist jetzt ein
+> nested Go-Modul von [`symaira-desktop`](../README.md); das Repo ist
+> archiviert und seine Homebrew-Formula deprecated. Die Hybrid-Retrieval-Engine wird über
+> `symdesk search` genutzt, angebunden über `seek/api`.
+> Die Badges, Installations- und Release-Hinweise unten stammen aus der
+> Zeit als eigenes Repo und gelten nicht mehr.
+
 > **Moved 2026-08-21** into `symaira-desktop/seek/` as part of the Symaira
 > repo consolidation (27 → 13, `docs/repo-konsolidierung.md` §3.2). This Go
 > module (plus Swift feature package) now lives in symaira-desktop; the
@@ -56,7 +64,7 @@ Install via Homebrew tap:
 
 ```bash
 brew tap danieljustus/tap
-brew install symseek
+brew install danieljustus/tap/symdesk   # enthält die Retrieval-Engine
 ```
 
 ### Pre-built Binaries (Recommended)

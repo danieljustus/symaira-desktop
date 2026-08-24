@@ -16,7 +16,7 @@ settings:
 packages:
   SymairaAppKit:
     url: https://github.com/danieljustus/symaira-appkit
-    exactVersion: 0.10.0
+    exactVersion: 0.2.0
 
 targets:
   Symingest:

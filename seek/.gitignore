@@ -15,6 +15,7 @@
 
 # SwiftPM build artifacts (root package; client/ has its own .gitignore)
 /.build/
+cov_seek.out
 
 # Editor scratch
 *.swp

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
@@ -26,11 +27,100 @@ func (s *Service) ViewsSave(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	return s.ViewsMgr.Save(v)
+	if err := s.ViewsMgr.Save(v); err != nil {
+		return err
+	}
+	return s.reindexAllBases()
 }
 
 func (s *Service) ViewsDelete(id string) error {
-	return s.ViewsMgr.Delete(id)
+	if err := s.ViewsMgr.Delete(id); err != nil {
+		return err
+	}
+	return s.reindexAllBases()
+}
+
+// BaseNew creates a new base note in the vault and indexes it.
+func (s *Service) BaseNew(title, description string) (*dbviews.Base, error) {
+	slug := dbviews.Slugify(title)
+	base := &dbviews.Base{
+		ID:          slug,
+		Path:        filepath.Join(dbviews.Dir, slug+".md"),
+		Title:       title,
+		Description: description,
+		Created:     time.Now().UTC().Format(time.RFC3339),
+		Tags:        []string{"base"},
+		Views:       []dbviews.View{},
+	}
+	if err := s.ViewsMgr.SaveBase(base); err != nil {
+		return nil, err
+	}
+	if err := s.reindexBase(base); err != nil {
+		return base, err
+	}
+	return base, nil
+}
+
+// BaseList lists every base in the vault.
+func (s *Service) BaseList() ([]*dbviews.Base, error) {
+	return s.ViewsMgr.ListBases()
+}
+
+// BaseGet resolves a base by ID or path.
+func (s *Service) BaseGet(ref string) (*dbviews.Base, error) {
+	return s.ViewsMgr.GetBase(ref)
+}
+
+// BaseSave persists a base note and reindexes it into the sidecar.
+func (s *Service) BaseSave(b *dbviews.Base) error {
+	if err := s.ViewsMgr.SaveBase(b); err != nil {
+		return err
+	}
+	return s.reindexBase(b)
+}
+
+// BaseDelete moves a base note to the vault trash.
+func (s *Service) BaseDelete(ref string) error {
+	b, err := s.ViewsMgr.GetBase(ref)
+	if err != nil {
+		return err
+	}
+	_, err = s.NoteDelete(b.Path)
+	return err
+}
+
+func (s *Service) reindexAllBases() error {
+	if s.DB == nil {
+		return nil
+	}
+	bases, err := s.ViewsMgr.ListBases()
+	if err != nil {
+		return err
+	}
+	for _, b := range bases {
+		if err := s.reindexBase(b); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) reindexBase(b *dbviews.Base) error {
+	if s.DB == nil {
+		return nil
+	}
+	absPath, err := vault.SecurePath(s.VaultRoot, b.Path)
+	if err != nil {
+		return err
+	}
+	doc, err := vault.ParseFile(absPath)
+	if err != nil {
+		return fmt.Errorf("wrote base but failed to parse for indexing: %w", err)
+	}
+	if err := s.IndexDocument(doc); err != nil {
+		return fmt.Errorf("wrote base but failed to index: %w", err)
+	}
+	return nil
 }
 
 // ViewsSiblings returns views that point at the same source. An empty source

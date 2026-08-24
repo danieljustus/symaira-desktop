@@ -3,9 +3,11 @@ package service
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
+	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
@@ -799,5 +801,237 @@ func TestViewsExecPropertyFetchProportionalToScope(t *testing.T) {
 	}
 	if results[0]["_title"] != "Target" {
 		t.Errorf("expected Target, got %v", results[0]["_title"])
+	}
+}
+
+func TestBaseNotesIndexedInSearchAndGraph(t *testing.T) {
+	svc := newTestService(t)
+
+	// Create a base note via BaseNew
+	base, err := svc.BaseNew("Accounting Dashboard", "Central hub for financial views")
+	if err != nil {
+		t.Fatalf("BaseNew failed: %v", err)
+	}
+
+	// Add a view to the base
+	base.Views = append(base.Views, dbviews.View{
+		ID:     "v_acct_open",
+		Name:   "Open Invoices View",
+		Type:   "table",
+		Source: "invoices/",
+	})
+	if err := svc.BaseSave(base); err != nil {
+		t.Fatalf("BaseSave failed: %v", err)
+	}
+
+	// 1. Verify search returns the base note
+	searchResults, err := svc.Search("Accounting Dashboard")
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	foundInSearch := false
+	for _, res := range searchResults {
+		if strings.Contains(res.Path, "accounting-dashboard.md") {
+			foundInSearch = true
+			if res.Title != "Accounting Dashboard" {
+				t.Errorf("expected title 'Accounting Dashboard', got %q", res.Title)
+			}
+			break
+		}
+	}
+	if !foundInSearch {
+		t.Errorf("expected base note to be found in search results: %#v", searchResults)
+	}
+
+	// 2. Verify graph includes the base node
+	graphData, err := svc.Graph()
+	if err != nil {
+		t.Fatalf("Graph failed: %v", err)
+	}
+	foundInGraph := false
+	for _, node := range graphData.Nodes {
+		if node.ID == "bases/accounting-dashboard.md" {
+			foundInGraph = true
+			break
+		}
+	}
+	if !foundInGraph {
+		t.Errorf("expected base note in graph nodes: %#v", graphData.Nodes)
+	}
+}
+
+func TestBaseNotesWikilinksAndBacklinks(t *testing.T) {
+	svc := newTestService(t)
+
+	// Create target note
+	targetPath, err := svc.NoteNew("invoice_target", "Invoice details here", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a base note whose description links to the target note
+	base, err := svc.BaseNew("Client Billing", "See [[invoice_target]] for details")
+	if err != nil {
+		t.Fatal(err)
+	}
+	base.Views = []dbviews.View{
+		{ID: "v_client", Name: "Client View", Type: "table"},
+	}
+	if err := svc.BaseSave(base); err != nil {
+		t.Fatal(err)
+	}
+
+	// Backlinks for target note should contain the base note
+	backlinks, err := svc.Backlinks(targetPath)
+	if err != nil {
+		t.Fatalf("Backlinks failed: %v", err)
+	}
+	foundBacklink := false
+	for _, bl := range backlinks {
+		if bl == "bases/client-billing.md" {
+			foundBacklink = true
+			break
+		}
+	}
+	if !foundBacklink {
+		t.Errorf("expected bases/client-billing.md in backlinks of target note, got: %v", backlinks)
+	}
+}
+
+func TestBaseNotesInNotebookSources(t *testing.T) {
+	svc := newTestService(t)
+
+	// Create a base note
+	base, err := svc.BaseNew("Research Base", "Database views for research")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a notebook and add the base note as a source
+	nb, err := svc.NotebookNew("Q3 Project Notebook", "Description")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	updatedNb, err := svc.NotebookAddSource(nb.ID, base.Path)
+	if err != nil {
+		t.Fatalf("NotebookAddSource failed: %v", err)
+	}
+	if len(updatedNb.Sources) != 1 || updatedNb.Sources[0] != "bases/research-base.md" {
+		t.Fatalf("expected bases/research-base.md in notebook sources, got: %v", updatedNb.Sources)
+	}
+
+	// Resolve sources
+	sources, err := updatedNb.ResolveSources(svc.VaultRoot)
+	if err != nil {
+		t.Fatalf("ResolveSources failed: %v", err)
+	}
+	if len(sources) != 1 || sources[0].Missing || sources[0].Title != "Research Base" {
+		t.Errorf("unexpected resolved sources: %+v", sources)
+	}
+}
+
+func TestBaseMutationHistoryAndRestore(t *testing.T) {
+	svc := newTestService(t)
+
+	// Save view 1
+	v1 := []byte(`{"id":"v_hist","name":"Original Title","type":"table","columns":["title"]}`)
+	if err := svc.ViewsSave(v1); err != nil {
+		t.Fatal(err)
+	}
+
+	// Mutate view
+	v2 := []byte(`{"id":"v_hist","name":"Modified Title","type":"table","columns":["title","status"]}`)
+	if err := svc.ViewsSave(v2); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := svc.ViewsGet("v_hist")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "Modified Title" {
+		t.Fatalf("expected Modified Title, got %s", got.Name)
+	}
+
+	// Find the base note path
+	bases, err := svc.BaseList()
+	if err != nil || len(bases) == 0 {
+		t.Fatalf("failed to find base: %v", err)
+	}
+	basePath := bases[0].Path
+
+	// Verify history exists
+	entries, err := svc.History.List(basePath)
+	if err != nil {
+		t.Fatalf("History.List failed: %v", err)
+	}
+	if len(entries) == 0 {
+		t.Fatal("expected history snapshot to be created on mutation")
+	}
+
+	// Restore prior snapshot
+	if _, err := svc.History.Restore(basePath, entries[0].ID); err != nil {
+		t.Fatalf("History.Restore failed: %v", err)
+	}
+
+	// Reinitialize service to refresh memory state from restored note
+	svcRestored := New(svc.VaultRoot, svc.DB)
+	restoredView, err := svcRestored.ViewsGet("v_hist")
+	if err != nil {
+		t.Fatalf("ViewsGet after restore failed: %v", err)
+	}
+	if restoredView.Name != "Original Title" {
+		t.Errorf("expected restored name 'Original Title', got %q", restoredView.Name)
+	}
+}
+
+func TestServiceStartupMigratesLegacyViews(t *testing.T) {
+	root := t.TempDir()
+
+	// Write legacy .symdesk/views.json
+	symdeskDir := filepath.Join(root, ".symdesk")
+	if err := os.MkdirAll(symdeskDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	legacyJSON := []byte(`[{"id":"legacy_svc_1","name":"Legacy Svc View","type":"table","source":"invoices/"}]`)
+	legacyFile := filepath.Join(symdeskDir, "views.json")
+	if err := os.WriteFile(legacyFile, legacyJSON, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create service
+	dbPath := filepath.Join(root, "test.db")
+	db, err := sidecar.Open(dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	svc := New(root, db)
+
+	// List should return the migrated view
+	views, err := svc.ViewsList()
+	if err != nil {
+		t.Fatalf("ViewsList failed: %v", err)
+	}
+	if len(views) != 1 || views[0].ID != "legacy_svc_1" {
+		t.Fatalf("unexpected views after migration: %+v", views)
+	}
+
+	// Check that .symdesk/views.json is still intact
+	onDisk, err := os.ReadFile(legacyFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(onDisk) != string(legacyJSON) {
+		t.Error("legacy views.json was modified")
+	}
+
+	// Check base file exists in bases/
+	basesDir := filepath.Join(root, "bases")
+	entries, err := os.ReadDir(basesDir)
+	if err != nil || len(entries) == 0 {
+		t.Fatalf("expected base note in bases/, got %v (err: %v)", entries, err)
 	}
 }

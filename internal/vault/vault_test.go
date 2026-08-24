@@ -685,3 +685,67 @@ func TestSecurePath_WithinVault(t *testing.T) {
 		t.Errorf("expected %s, got %s", expected, abs)
 	}
 }
+
+func TestParseAliases(t *testing.T) {
+	tests := []struct {
+		name        string
+		content     string
+		wantAliases []string
+	}{
+		{
+			name: "list of aliases",
+			content: `---
+title: Bundesagentur für Arbeit
+aliases:
+  - BA
+  - Federal Agency
+---
+Body`,
+			wantAliases: []string{"BA", "Federal Agency"},
+		},
+		{
+			name: "inline yaml list",
+			content: `---
+title: Note
+aliases: [BA, "Federal Agency"]
+---
+Body`,
+			wantAliases: []string{"BA", "Federal Agency"},
+		},
+		{
+			name: "single string alias",
+			content: `---
+title: Note
+aliases: BA
+---
+Body`,
+			wantAliases: []string{"BA"},
+		},
+		{
+			name: "no aliases field (compatibility)",
+			content: `---
+title: Note
+tags: [tag1]
+---
+Body`,
+			wantAliases: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc, err := ParseBytes("/fake/note.md", []byte(tt.content))
+			if err != nil {
+				t.Fatalf("ParseBytes failed: %v", err)
+			}
+			if len(doc.Aliases) != len(tt.wantAliases) {
+				t.Fatalf("Aliases len = %d, want %d: %v", len(doc.Aliases), len(tt.wantAliases), doc.Aliases)
+			}
+			for i, want := range tt.wantAliases {
+				if doc.Aliases[i] != want {
+					t.Errorf("Aliases[%d] = %q, want %q", i, doc.Aliases[i], want)
+				}
+			}
+		})
+	}
+}

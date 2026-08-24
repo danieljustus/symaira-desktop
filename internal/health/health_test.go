@@ -55,6 +55,31 @@ func TestScanReportsParseErrorsWithoutStopping(t *testing.T) {
 	}
 }
 
+func TestScanResolvesAliasLinks(t *testing.T) {
+	root := t.TempDir()
+	// Note with aliases as list
+	writeNote(t, root, "agency.md", "---\ntitle: Bundesagentur für Arbeit\naliases:\n  - BA\n  - Arbeitsamt\n---\ncontent\n")
+	// Note with alias as single string
+	writeNote(t, root, "single.md", "---\ntitle: Single Alias Note\naliases: SingleAlias\n---\ncontent\n")
+	// Source linking to aliases and real target and a missing link
+	writeNote(t, root, "source.md", "---\ntitle: Source\n---\n[[BA.md]]\n[[Arbeitsamt.md]]\n[[SingleAlias.md]]\n[[missing_target.md]]\n")
+
+	report, err := Scan(root, nil, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.FilesScanned != 3 {
+		t.Fatalf("expected 3 files scanned, got %d", report.FilesScanned)
+	}
+	// Only missing_target.md should be flagged as broken_wikilink; BA.md, Arbeitsamt.md, SingleAlias.md resolve to aliases
+	if len(report.Findings) != 1 {
+		t.Fatalf("expected 1 finding (missing_target.md), got %d: %#v", len(report.Findings), report.Findings)
+	}
+	if report.Findings[0].Category != "broken_wikilink" {
+		t.Errorf("expected broken_wikilink, got %s", report.Findings[0].Category)
+	}
+}
+
 func writeNote(t *testing.T, root, name, content string) {
 	t.Helper()
 	dst := filepath.Join(root, name)

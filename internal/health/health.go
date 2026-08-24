@@ -45,6 +45,7 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 	var docs []*vault.Document
 	paths := make(map[string]struct{})
 	titles := make(map[string]struct{})
+	aliases := make(map[string]struct{})
 
 	err := vault.Walk(vaultRoot, func(path string) error {
 		rel, relErr := filepath.Rel(vaultRoot, path)
@@ -64,6 +65,11 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 		if doc.Title != "" {
 			titles[strings.ToLower(strings.TrimSpace(doc.Title))] = struct{}{}
 		}
+		for _, alias := range doc.Aliases {
+			if trimmed := strings.TrimSpace(alias); trimmed != "" {
+				aliases[strings.ToLower(trimmed)] = struct{}{}
+			}
+		}
 		if len(doc.Frontmatter) == 0 {
 			report.addFinding("missing_frontmatter", "warning", rel, "Markdown file has no frontmatter", "review-frontmatter", "Metadata is unavailable to the index and repair tools")
 		}
@@ -79,7 +85,7 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 			continue
 		}
 		for _, link := range doc.Links {
-			if target := normalizeLinkTarget(link); target != "" && !linkExists(target, paths, titles) {
+			if target := normalizeLinkTarget(link); target != "" && !linkExists(target, paths, titles, aliases) {
 				report.addFinding("broken_wikilink", "warning", filepath.ToSlash(rel), fmt.Sprintf("wikilink target %q does not resolve to a vault document", target), "review-link", "Choose an existing target or remove the stale link")
 			}
 		}
@@ -135,13 +141,42 @@ func normalizeLinkTarget(link string) string {
 	return filepath.ToSlash(strings.TrimPrefix(filepath.Clean(link), "./"))
 }
 
-func linkExists(target string, paths, titles map[string]struct{}) bool {
+func linkExists(target string, paths, titles, aliases map[string]struct{}) bool {
 	if _, ok := paths[target]; ok {
 		return true
 	}
-	if _, ok := paths[strings.TrimSuffix(target, filepath.Ext(target))]; ok {
+	targetNoExt := strings.TrimSuffix(target, filepath.Ext(target))
+	if _, ok := paths[targetNoExt]; ok {
 		return true
 	}
-	_, ok := titles[strings.ToLower(target)]
-	return ok
+	lowerTarget := strings.ToLower(target)
+	if _, ok := titles[lowerTarget]; ok {
+		return true
+	}
+	lowerTargetNoExt := strings.ToLower(targetNoExt)
+	if _, ok := titles[lowerTargetNoExt]; ok {
+		return true
+	}
+	base := filepath.Base(target)
+	lowerBase := strings.ToLower(base)
+	lowerBaseNoExt := strings.ToLower(strings.TrimSuffix(base, filepath.Ext(base)))
+	if _, ok := titles[lowerBase]; ok {
+		return true
+	}
+	if _, ok := titles[lowerBaseNoExt]; ok {
+		return true
+	}
+	if _, ok := aliases[lowerTarget]; ok {
+		return true
+	}
+	if _, ok := aliases[lowerTargetNoExt]; ok {
+		return true
+	}
+	if _, ok := aliases[lowerBase]; ok {
+		return true
+	}
+	if _, ok := aliases[lowerBaseNoExt]; ok {
+		return true
+	}
+	return false
 }

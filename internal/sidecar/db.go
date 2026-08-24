@@ -17,6 +17,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	"gopkg.in/yaml.v3"
 )
 
 // OpenForVault keeps rebuildable indexes isolated per vault. This prevents a
@@ -258,8 +259,8 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 
 	// 3. Insert file properties
 	for k, v := range doc.Frontmatter {
-		if k == "tags" {
-			continue // Handled below to ensure doc.Tags (frontmatter + inline) is indexed
+		if k == "tags" || k == "aliases" {
+			continue // Handled below to ensure doc.Tags and doc.Aliases are indexed
 		}
 		valStr := fmt.Sprintf("%v", v)
 		valType := "string" // Basic type inference could go here
@@ -280,6 +281,22 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 		valStr := fmt.Sprintf("%v", doc.Frontmatter["tags"])
 		_, err = tx.Exec(`INSERT INTO file_properties(file_id, key, value, value_type) VALUES (?, ?, ?, ?)`,
 			fileID, "tags", valStr, "string")
+		if err != nil {
+			return err
+		}
+	}
+	if len(doc.Aliases) > 0 {
+		b, _ := yaml.Marshal(doc.Aliases)
+		valStr := strings.TrimSpace(string(b))
+		_, err = tx.Exec(`INSERT INTO file_properties(file_id, key, value, value_type) VALUES (?, ?, ?, ?)`,
+			fileID, "aliases", valStr, "string")
+		if err != nil {
+			return err
+		}
+	} else if _, ok := doc.Frontmatter["aliases"]; ok {
+		valStr := fmt.Sprintf("%v", doc.Frontmatter["aliases"])
+		_, err = tx.Exec(`INSERT INTO file_properties(file_id, key, value, value_type) VALUES (?, ?, ?, ?)`,
+			fileID, "aliases", valStr, "string")
 		if err != nil {
 			return err
 		}
@@ -740,6 +757,84 @@ func parseTagsValue(raw string) []string {
 	return tags
 }
 
+// parseAliasesValue splits a stored `aliases` property into individual aliases.
+func parseAliasesValue(raw string) []string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil
+	}
+
+	if strings.HasPrefix(raw, "[") || strings.HasPrefix(raw, "-") {
+		var list []string
+		if err := yaml.Unmarshal([]byte(raw), &list); err == nil && len(list) > 0 {
+			var res []string
+			for _, s := range list {
+				if trimmed := strings.TrimSpace(s); trimmed != "" {
+					res = append(res, trimmed)
+				}
+			}
+			if len(res) > 0 {
+				return res
+			}
+		}
+	}
+
+	if strings.Contains(raw, ",") {
+		trimmed := strings.TrimPrefix(strings.TrimSuffix(raw, "]"), "[")
+		var res []string
+		for _, part := range strings.Split(trimmed, ",") {
+			cleaned := strings.Trim(strings.TrimSpace(part), `"'`)
+			if cleaned != "" {
+				res = append(res, cleaned)
+			}
+		}
+		if len(res) > 0 {
+			return res
+		}
+	}
+
+	var single string
+	if err := yaml.Unmarshal([]byte(raw), &single); err == nil {
+		single = strings.TrimSpace(single)
+		if single != "" && !strings.HasPrefix(single, "[") {
+			return []string{single}
+		}
+	}
+
+	cleaned := strings.Trim(strings.TrimPrefix(strings.TrimSuffix(raw, "]"), "["), `"'`)
+	if cleaned != "" {
+		return []string{cleaned}
+	}
+	return nil
+}
+
+// GetAllAliases returns a map from file path to its list of aliases.
+func (db *DB) GetAllAliases() (map[string][]string, error) {
+	rows, err := db.conn.Query(`
+		SELECT f.path, fp.value
+		FROM files f
+		JOIN file_properties fp ON fp.file_id = f.id
+		WHERE fp.key = 'aliases'
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	result := make(map[string][]string)
+	for rows.Next() {
+		var path, val string
+		if err := rows.Scan(&path, &val); err != nil {
+			return nil, err
+		}
+		aliases := parseAliasesValue(val)
+		if len(aliases) > 0 {
+			result[path] = aliases
+		}
+	}
+	return result, nil
+}
+
 // GetTitle returns the title of the document at the given path.
 func (db *DB) GetTitle(path string) (string, error) {
 	var title string
@@ -803,15 +898,65 @@ func (db *DB) GetProperties(path string) (map[string]interface{}, error) {
 	return props, nil
 }
 
-// GetBacklinks returns the paths of files that link to the given path or title.
+// GetBacklinks returns the paths of files that link to the given path, title, or aliases.
 func (db *DB) GetBacklinks(path string) ([]string, error) {
 	baseName := filepath.Base(path)
 	title := strings.TrimSuffix(baseName, filepath.Ext(baseName))
 
-	rows, err := db.conn.Query(`
-		SELECT from_path FROM links
-		WHERE to_path = ? OR to_path = ?
-	`, path, title)
+	targetsMap := make(map[string]struct{})
+	addTarget := func(t string) {
+		t = strings.TrimSpace(t)
+		if t == "" {
+			return
+		}
+		targetsMap[t] = struct{}{}
+		targetsMap[strings.ToLower(t)] = struct{}{}
+		if noExt := strings.TrimSuffix(t, filepath.Ext(t)); noExt != "" {
+			targetsMap[noExt] = struct{}{}
+			targetsMap[strings.ToLower(noExt)] = struct{}{}
+		}
+	}
+
+	addTarget(path)
+	addTarget(baseName)
+	addTarget(title)
+
+	var fileID int64
+	var docTitle string
+	err := db.conn.QueryRow("SELECT id, title FROM files WHERE path = ?", path).Scan(&fileID, &docTitle)
+	if err == sql.ErrNoRows {
+		err = db.conn.QueryRow("SELECT id, title FROM files WHERE title = ? COLLATE NOCASE OR path LIKE ? COLLATE NOCASE LIMIT 1", path, "%/"+baseName).Scan(&fileID, &docTitle)
+	}
+	if err == nil && fileID != 0 {
+		if docTitle != "" {
+			addTarget(docTitle)
+		}
+		var aliasesRaw sql.NullString
+		_ = db.conn.QueryRow("SELECT value FROM file_properties WHERE file_id = ? AND key = 'aliases'", fileID).Scan(&aliasesRaw)
+		if aliasesRaw.Valid {
+			for _, alias := range parseAliasesValue(aliasesRaw.String) {
+				addTarget(alias)
+			}
+		}
+	}
+
+	targets := make([]string, 0, len(targetsMap))
+	for t := range targetsMap {
+		targets = append(targets, t)
+	}
+	if len(targets) == 0 {
+		return nil, nil
+	}
+
+	placeholders := make([]string, len(targets))
+	args := make([]interface{}, len(targets))
+	for i, t := range targets {
+		placeholders[i] = "?"
+		args[i] = t
+	}
+
+	query := fmt.Sprintf("SELECT DISTINCT from_path FROM links WHERE to_path IN (%s)", strings.Join(placeholders, ",")) //nolint:gosec // query constructed with parameter placeholders only
+	rows, err := db.conn.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

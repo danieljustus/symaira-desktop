@@ -309,8 +309,15 @@ func (s *Service) Backlinks(file string) ([]string, error) {
 
 	var relLinks []string
 	for _, p := range links {
-		rel, _ := filepath.Rel(s.VaultRoot, p)
-		relLinks = append(relLinks, rel)
+		canonicalP, err := filepath.EvalSymlinks(p)
+		if err != nil {
+			canonicalP = p
+		}
+		rel, err := filepath.Rel(s.VaultRoot, canonicalP)
+		if err != nil {
+			rel = p
+		}
+		relLinks = append(relLinks, filepath.ToSlash(rel))
 	}
 	return relLinks, nil
 }

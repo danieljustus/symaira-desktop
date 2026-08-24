@@ -1,10 +1,10 @@
 # Symaira Vault Contract
 
-**contract_version: 4**
+**contract_version: 5**
 
 This document specifies the format and constraints of a Symaira Vault. Any application or service interacting with the Vault MUST comply with this contract to ensure interoperability across the ecosystem (e.g., `symaira-desktop`, `symaira-ingest`, `symaira-seek`).
 
-> **Backwards compatibility:** Contract v4 is additive. Parsers MUST preserve unknown fields. Vaults using only v1/v2/v3 fields continue to work; the new optional fields are only meaningful for notebook notes (section 10).
+> **Backwards compatibility:** Contract v5 is additive. Parsers MUST preserve unknown fields. Vaults using only v1/v2/v3/v4 fields continue to work; the new optional `aliases` field is only meaningful when alternative note names are declared (section 3).
 
 ## 1. Vault Structure
 - **Root Directory:** A Vault is a directory on the local filesystem containing Markdown files and optional attachments.
@@ -22,6 +22,12 @@ The following YAML fields are defined by this contract. Parsers MUST preserve un
 - `title` (string): A human-readable title for the note.
 - `created` (string, ISO-8601): The creation timestamp of the note.
 - `tags` (array of strings): A list of tags. Can be empty `[]`.
+
+### Aliases (contract_version 5)
+- `aliases` (array of strings, optional): Alternative human-readable names, acronyms, or identifiers for the note (e.g. `aliases: [BA, "Federal Agency"]` or `aliases: BA`).
+  - Parsers MUST accept both a YAML list of strings and a single string (`aliases: BA`).
+  - When present, wikilinks targeting any of the declared aliases resolve to this note in link resolution, backlinks, and graph edges (section 4).
+  - Backwards compatibility: Contract v5 adds the `aliases` field. Vaults with no `aliases` anywhere index and behave exactly as a v1/v2/v3/v4 vault always has.
 
 ### Tag Sources and Precedence
 Tags can be defined in two locations:
@@ -92,8 +98,13 @@ The following optional fields provide first-class document query metadata. They 
 
 ## 4. Wikilink Semantics
 - **Syntax:** `[[Filename]]` or `[[Filename|Display Text]]`.
-- **Target:** Wikilinks link to other Markdown files in the vault by their base name (without `.md`).
-- **Resolution:** Resolution is case-insensitive. If multiple files have the same name in different folders, the behavior is undefined (it is recommended to use unique names or fully qualified paths).
+- **Target:** Wikilinks link to other Markdown files in the vault by their base name (without `.md`), relative path, note title, or aliases.
+- **Resolution Order (contract_version 5):**
+  Wikilinks resolve against vault documents case-insensitively in the following precedence order:
+  1. **Exact relative path:** matching a vault file path (with or without `.md`, e.g. `[[folder/note]]` or `[[folder/note.md]]`).
+  2. **Base name / Title:** matching the note's file base name (without `.md`) or its explicit frontmatter `title`.
+  3. **Aliases:** matching any string declared in a note's frontmatter `aliases` list or scalar string.
+  If multiple files match, behavior is undefined (it is recommended to use unique names or fully qualified paths).
 
 ## 5. Attachments
 - Attachments (images, PDFs) should be referenced using standard Markdown links `[Title](path/to/file.pdf)` or embedded via `![Title](path/to/image.png)`.

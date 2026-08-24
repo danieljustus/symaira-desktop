@@ -29,6 +29,7 @@ type Document struct {
 	Title       string
 	Created     string
 	Tags        []string
+	Aliases     []string
 	Frontmatter map[string]interface{}
 	Body        string
 	Links       []string
@@ -247,6 +248,21 @@ func ParseBytes(path string, fileBytes []byte) (*Document, error) {
 		case string:
 			// single tag string
 			doc.Tags = append(doc.Tags, tv)
+		}
+	}
+
+	// Contract v5: parse aliases from frontmatter (optional, backwards-compatible)
+	if aliasesRaw, ok := doc.Frontmatter["aliases"]; ok {
+		switch av := aliasesRaw.(type) {
+		case []interface{}:
+			for _, item := range av {
+				if s, ok := item.(string); ok {
+					doc.Aliases = append(doc.Aliases, s)
+				}
+			}
+		case string:
+			// single alias string
+			doc.Aliases = append(doc.Aliases, av)
 		}
 	}
 

@@ -20,7 +20,7 @@ func newRelationsContactCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			svc := service.New(vRoot, db)
 
 			result, err := svc.ResolveContactReferences(args[0])

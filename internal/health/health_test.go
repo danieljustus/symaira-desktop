@@ -57,7 +57,11 @@ func TestScanReportsParseErrorsWithoutStopping(t *testing.T) {
 
 func writeNote(t *testing.T, root, name, content string) {
 	t.Helper()
-	if err := os.WriteFile(filepath.Join(root, name), []byte(content), 0o600); err != nil {
+	dst := filepath.Join(root, name)
+	if err := os.MkdirAll(filepath.Dir(dst), 0750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(dst, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/pdf"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
-	printapi "github.com/danieljustus/symaira-print/api"
 )
 
 // renderCall records one in-process render so a test can assert on what the
@@ -18,7 +17,7 @@ import (
 type renderCall struct {
 	Source     []byte
 	OutputPath string
-	Options    printapi.Options
+	Options    pdf.Options
 }
 
 // withStubRenderer points the in-process PDF seam at a renderer that reports
@@ -30,12 +29,12 @@ func withStubRenderer(t *testing.T) *[]renderCall {
 	prevRender, prevEngine := pdf.RenderFunc, pdf.EngineAvailableFunc
 
 	pdf.EngineAvailableFunc = func(context.Context) (bool, string) { return true, "1.2.3" }
-	pdf.RenderFunc = func(_ context.Context, src []byte, out string, opts printapi.Options) (*printapi.Result, error) {
+	pdf.RenderFunc = func(_ context.Context, src []byte, out string, opts pdf.Options) (*pdf.Result, error) {
 		*calls = append(*calls, renderCall{Source: src, OutputPath: out, Options: opts})
 		if err := os.WriteFile(out, []byte("mock pdf"), 0600); err != nil {
 			return nil, err
 		}
-		return &printapi.Result{
+		return &pdf.Result{
 			OutputPath:    out,
 			Profile:       opts.Profile,
 			EngineVersion: "1.2.3",
@@ -210,8 +209,8 @@ func TestExportPDFNestedNoteSourceDir(t *testing.T) {
 
 func TestExportPDFWithLocalImage(t *testing.T) {
 	prevRender, prevEngine := pdf.RenderFunc, pdf.EngineAvailableFunc
-	pdf.RenderFunc = printapi.Render
-	pdf.EngineAvailableFunc = printapi.EngineAvailable
+	pdf.RenderFunc = pdf.DefaultRenderFunc
+	pdf.EngineAvailableFunc = pdf.DefaultEngineAvailableFunc
 	t.Cleanup(func() {
 		pdf.RenderFunc, pdf.EngineAvailableFunc = prevRender, prevEngine
 	})
@@ -259,8 +258,8 @@ func TestExportPDFWithLocalImage(t *testing.T) {
 
 func TestExportPDFRejectsPathTraversalImage(t *testing.T) {
 	prevRender, prevEngine := pdf.RenderFunc, pdf.EngineAvailableFunc
-	pdf.RenderFunc = printapi.Render
-	pdf.EngineAvailableFunc = printapi.EngineAvailable
+	pdf.RenderFunc = pdf.DefaultRenderFunc
+	pdf.EngineAvailableFunc = pdf.DefaultEngineAvailableFunc
 	t.Cleanup(func() {
 		pdf.RenderFunc, pdf.EngineAvailableFunc = prevRender, prevEngine
 	})

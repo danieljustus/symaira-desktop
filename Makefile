@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check font-guard corekit-guard benchmark-large docker-build clean
+.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard benchmark-large docker-build clean
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -10,7 +10,7 @@ build:
 test:
 	CGO_ENABLED=0 go test -race ./...
 
-lint: fmt-check corekit-guard
+lint: fmt-check corekit-guard boundary-guard
 	go vet ./...
 
 fmt-check:
@@ -19,6 +19,10 @@ fmt-check:
 # Issue #526: corekit dependency pin must stay aligned across all 6 modules.
 corekit-guard:
 	@./scripts/check-corekit-pins.sh
+
+# Issue #536: packages outside permitted facades must not import absorbed library internals.
+boundary-guard:
+	@./scripts/check-module-boundaries.sh
 
 # Issue #352: macOS app text must use .symairaText(role) instead of inline
 # .font(.caption/.headline/...) literals so Dynamic Type scales.

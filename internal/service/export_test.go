@@ -182,3 +182,25 @@ func TestExportPDFRequiresATypesettingEngine(t *testing.T) {
 		t.Fatalf("expected graceful missing engine error, got %v", err)
 	}
 }
+
+// ExportProfiles is what the app's profile picker is built from; an empty or
+// malformed list silently degrades the picker to "default only".
+func TestExportProfilesReportsTheRendererProfiles(t *testing.T) {
+	profiles := ExportProfiles()
+	if len(profiles) == 0 {
+		t.Fatal("ExportProfiles returned no profiles; the app picker would be empty")
+	}
+	seen := map[string]bool{}
+	for _, p := range profiles {
+		if p.Name == "" || p.Title == "" {
+			t.Errorf("profile %+v is missing a name or title", p)
+		}
+		if seen[p.Name] {
+			t.Errorf("duplicate profile name %q", p.Name)
+		}
+		seen[p.Name] = true
+	}
+	if !seen["report"] {
+		t.Errorf("expected the built-in report profile, got %v", seen)
+	}
+}

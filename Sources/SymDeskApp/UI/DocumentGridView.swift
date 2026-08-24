@@ -30,6 +30,13 @@ struct DocumentGridView: View {
     @State private var todayString = Self.makeTodayString()
     @State private var activeFilters: [SearchFilter] = []
     @State private var appliedTagFilter: String? = nil
+    /// PDF profiles offered in the export menu (issue #514). Empty until the
+    /// core reports them, and empty stays a valid state: the plain
+    /// "Export as PDF…" entry keeps working without a profile.
+    @State private var exportProfiles: [DeskCore.ExportProfile] = []
+    /// Correspondent whose contact references are being inspected (issue
+    /// #516).
+    @State private var contactName: ContactNameSelection?
     @State private var tagFilteredPaths: Set<String>? = nil
 
     private var selectedDocs: [DocumentItem] {
@@ -83,6 +90,7 @@ struct DocumentGridView: View {
             }
         }
         .task { await fetchDocs() }
+        .task { await loadExportProfiles() }
         .task(id: deepLinkPath) {
             guard let path = deepLinkPath, !path.isEmpty else { return }
             if let doc = documents.first(where: { $0.path == path }) {
@@ -103,6 +111,13 @@ struct DocumentGridView: View {
         }
         .sheet(isPresented: $showAgentSheet) {
             agentSheet
+        }
+        .sheet(item: $contactName) { selection in
+            ContactReferencesView(name: selection.name) { path in
+                if let match = documents.first(where: { $0.path == path }) {
+                    openDoc = match
+                }
+            }
         }
         .sheet(item: $openDoc) { doc in
             DocumentViewerView(document: doc)
@@ -410,6 +425,11 @@ struct DocumentGridView: View {
         Divider()
         tagsSubmenu(doc: doc)
         Divider()
+        if !doc.correspondent.isEmpty {
+            Button(action: { contactName = ContactNameSelection(name: doc.correspondent) }) {
+                Label("Contact References…", systemImage: "person.crop.circle.badge.questionmark")
+            }
+        }
         Button(action: { findSimilar(doc: doc) }) {
             Label("Find Similar", systemImage: "arrow.triangle.2.circlepath")
         }
@@ -423,6 +443,15 @@ struct DocumentGridView: View {
         Menu("Export…") {
             Button("Export as PDF…") {
                 exportToDisk(doc: doc, format: "pdf")
+            }
+            if !exportProfiles.isEmpty {
+                Menu("Export as PDF with Profile") {
+                    ForEach(exportProfiles) { profile in
+                        Button(profile.title) {
+                            exportToDisk(doc: doc, format: "pdf", profile: profile.name)
+                        }
+                    }
+                }
             }
             Button("Export as HTML…") {
                 exportToDisk(doc: doc, format: "html")
@@ -678,7 +707,14 @@ struct DocumentGridView: View {
 
     /// Exports a document to PDF or HTML via the core CLI, with a save panel
     /// for the destination (issue #307).
-    private func exportToDisk(doc: DocumentItem, format: String) {
+    /// Loads the PDF profile list once. A failure is not surfaced: the menu
+    /// then simply offers the default export, exactly as before #514.
+    private func loadExportProfiles() async {
+        guard exportProfiles.isEmpty else { return }
+        exportProfiles = (try? await core.exportProfiles()) ?? []
+    }
+
+    private func exportToDisk(doc: DocumentItem, format: String, profile: String = "") {
         let panel = NSSavePanel()
         panel.title = "Export \(doc.title) as \(format.uppercased())"
         panel.nameFieldStringValue = "\(doc.title).\(format)"
@@ -687,7 +723,7 @@ struct DocumentGridView: View {
             guard response == .OK, let outputURL = panel.url else { return }
             Task { @MainActor in
                 do {
-                    let result = try await core.exportNote(path: doc.path, format: format, outputPath: outputURL.path)
+                    let result = try await core.exportNote(path: doc.path, format: format, outputPath: outputURL.path, profile: profile)
                     if let message = result.message, !message.isEmpty {
                         print("Export: \(message)")
                     }
@@ -985,4 +1021,11 @@ struct DocumentCard: View {
         return components.joined(separator: "/")
     }
 
+}
+
+/// Sheet identity for a correspondent lookup — `sheet(item:)` needs an
+/// Identifiable, and the name itself is the identity here.
+private struct ContactNameSelection: Identifiable {
+    let name: String
+    var id: String { name }
 }

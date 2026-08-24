@@ -102,11 +102,105 @@ extension DeskCore {
         public let message: String?
     }
 
+    /// Contact reference as stored in the vault: identity plus a display
+    /// name cache, never contact points.
+    public struct ContactRef: Codable, Equatable, Sendable, Identifiable {
+        public let provider: String
+        public let schemaVersion: Int
+        public let id: String
+        public let kind: String
+        public let displayName: String?
+
+        enum CodingKeys: String, CodingKey {
+            case provider
+            case schemaVersion = "schema_version"
+            case id, kind
+            case displayName = "display_name"
+        }
+    }
+
+    /// One meeting note referencing a contact.
+    public struct ContactMeetingRef: Codable, Equatable, Sendable, Identifiable {
+        public let path: String
+        public let title: String
+        public let meetingID: String?
+        public let startedAt: String?
+        public let participant: String?
+
+        public var id: String { path }
+
+        enum CodingKeys: String, CodingKey {
+            case path, title, participant
+            case meetingID = "meeting_id"
+            case startedAt = "started_at"
+        }
+    }
+
+    /// Resolution result for one correspondent name.
+    public struct ContactReferences: Codable, Equatable, Sendable {
+        public let name: String
+        public let refs: [ContactRef]
+        public let documents: [DocsListEntry]
+        public let meetings: [ContactMeetingRef]
+        /// False when the contact store could not be opened. The documents
+        /// are still valid then — only the identity half is unknown, which
+        /// must not be rendered as "no such contact".
+        public let storeAvailable: Bool
+
+        enum CodingKeys: String, CodingKey {
+            case name, refs, documents, meetings
+            case storeAvailable = "store_available"
+        }
+    }
+
+    /// One document row as `relations contact` reports it.
+    public struct DocsListEntry: Codable, Equatable, Sendable, Identifiable {
+        public let path: String
+        public let title: String
+        public let correspondent: String?
+
+        public var id: String { path }
+    }
+
+    /// One selectable symprint output profile, as reported by
+    /// `symdesk export profiles`.
+    public struct ExportProfile: Codable, Equatable, Sendable, Identifiable {
+        public let name: String
+        public let title: String
+        public let description: String
+        public let stability: String
+
+        public var id: String { name }
+    }
+
+    /// Lists the PDF profiles `exportNote` accepts. The list comes from the
+    /// core, which reads it from print/ — so a picker built on it cannot
+    /// drift from the renderer (issue #514).
+    public func exportProfiles() async throws -> [ExportProfile] {
+        try await runDecoding([ExportProfile].self, arguments: ["export", "profiles", "--json"])
+    }
+
     /// Exports a vault-relative note to PDF or HTML via the core CLI.
-    public func exportNote(path: String, format: String, outputPath: String) async throws -> ExportResult {
+    ///
+    /// An empty `profile` leaves the choice to the document frontmatter or
+    /// the configured default, which is what the CLI does without
+    /// `--profile`.
+    public func exportNote(path: String, format: String, outputPath: String, profile: String = "") async throws -> ExportResult {
+        var arguments = ["export", "--note", path, "--format", format, "--output", outputPath, "--json"]
+        if !profile.isEmpty {
+            arguments.append(contentsOf: ["--profile", profile])
+        }
+        return try await runDecoding(ExportResult.self, arguments: arguments + vaultArgs)
+    }
+
+    /// Everything the vault holds for one correspondent name: the contact
+    /// references carrying it, the documents filed under it, and the meeting
+    /// notes linked to those references (issue #516). Resolving only — the
+    /// call never creates or links a contact.
+    public func contactReferences(name: String) async throws -> ContactReferences {
         try await runDecoding(
-            ExportResult.self,
-            arguments: ["export", "--note", path, "--format", format, "--output", outputPath, "--json"] + vaultArgs
+            ContactReferences.self,
+            arguments: ["relations", "contact", name, "--json"] + vaultArgs
         )
     }
 

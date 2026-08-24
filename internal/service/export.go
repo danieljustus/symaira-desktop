@@ -19,6 +19,33 @@ type ExportResult struct {
 	Message  string `json:"message,omitempty"`
 }
 
+// ExportProfile is one selectable symprint output profile.
+type ExportProfile struct {
+	Name        string `json:"name"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Stability   string `json:"stability"`
+}
+
+// ExportProfiles returns the PDF profiles a caller may pass to Export, in
+// presentation order. The list comes from print/ itself, so a picker built on
+// it cannot drift from the renderer. It is a package function rather than a
+// method because the profile set is a property of the renderer, not of a
+// vault — listing it must not require an opened vault.
+func ExportProfiles() []ExportProfile {
+	all := pdf.Profiles()
+	out := make([]ExportProfile, 0, len(all))
+	for _, p := range all {
+		out = append(out, ExportProfile{
+			Name:        p.Name,
+			Title:       p.Title,
+			Description: p.Description,
+			Stability:   p.Stability,
+		})
+	}
+	return out
+}
+
 // Export renders a note or view to PDF or HTML.
 // For notes, relPath is the vault-relative path. For views, viewID is the view id.
 // Exactly one of relPath or viewID should be set.

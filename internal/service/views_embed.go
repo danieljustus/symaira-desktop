@@ -220,7 +220,7 @@ func renderInertMarkdownTable(cols []string, rows []map[string]interface{}, base
 	}
 
 	if capped && base != nil {
-		buf.WriteString(fmt.Sprintf("\n*Showing %d of %d rows. [[%s|Open %s]]*\n", len(rows), totalRows, base.Path, base.Title))
+		fmt.Fprintf(&buf, "\n*Showing %d of %d rows. [[%s|Open %s]]*\n", len(rows), totalRows, base.Path, base.Title)
 	}
 
 	return buf.String()

@@ -221,7 +221,7 @@ func TestViewsCLI_ExportAndImportCSVAndEmbed(t *testing.T) {
 Item Alpha,open,10.00
 Item Beta,paid,20.00
 `
-	if err := os.WriteFile(csvPath, []byte(csvContent), 0644); err != nil {
+	if err := os.WriteFile(csvPath, []byte(csvContent), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

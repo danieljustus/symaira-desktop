@@ -74,7 +74,7 @@ func (s *Service) Export(relPath, viewID, outputPath, format, profile string) (*
 			}
 			outputPath = filepath.Join(cwd, outputPath)
 		}
-		if err := os.WriteFile(outputPath, csvData, 0644); err != nil {
+		if err := os.WriteFile(outputPath, csvData, 0o600); err != nil {
 			return nil, fmt.Errorf("failed to write CSV: %w", err)
 		}
 		return &ExportResult{

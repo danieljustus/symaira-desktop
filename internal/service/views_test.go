@@ -1467,7 +1467,7 @@ Invoice Beta,2026-08-02,250.00,paid
 	}
 
 	// Verify file was written with frontmatter
-	data, err := os.ReadFile(targetFile)
+	data, err := os.ReadFile(targetFile) // #nosec G304 -- targetFile is inside the test vault.
 	if err != nil {
 		t.Fatalf("target file was not created: %v", err)
 	}
@@ -1478,7 +1478,7 @@ Invoice Beta,2026-08-02,250.00,paid
 
 	// Verify base was created
 	baseFile := filepath.Join(svc.VaultRoot, "bases", "finance-database.md")
-	baseData, err := os.ReadFile(baseFile)
+	baseData, err := os.ReadFile(baseFile) // #nosec G304 -- baseFile is inside the test vault.
 	if err != nil {
 		t.Fatalf("base note was not created: %v", err)
 	}

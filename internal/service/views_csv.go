@@ -115,11 +115,12 @@ func (s *Service) ViewsExportCSV(viewID string) ([]byte, error) {
 	// Write header row
 	headers := make([]string, len(cleanCols))
 	for i, c := range cleanCols {
-		if c == "_title" {
+		switch c {
+		case "_title":
 			headers[i] = "title"
-		} else if c == "_path" {
+		case "_path":
 			headers[i] = "path"
-		} else {
+		default:
 			headers[i] = c
 		}
 	}

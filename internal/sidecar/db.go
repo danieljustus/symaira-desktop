@@ -258,10 +258,28 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 
 	// 3. Insert file properties
 	for k, v := range doc.Frontmatter {
+		if k == "tags" {
+			continue // Handled below to ensure doc.Tags (frontmatter + inline) is indexed
+		}
 		valStr := fmt.Sprintf("%v", v)
 		valType := "string" // Basic type inference could go here
 		_, err = tx.Exec(`INSERT INTO file_properties(file_id, key, value, value_type) VALUES (?, ?, ?, ?)`,
 			fileID, k, valStr, valType)
+		if err != nil {
+			return err
+		}
+	}
+	if len(doc.Tags) > 0 {
+		valStr := fmt.Sprintf("%v", doc.Tags)
+		_, err = tx.Exec(`INSERT INTO file_properties(file_id, key, value, value_type) VALUES (?, ?, ?, ?)`,
+			fileID, "tags", valStr, "string")
+		if err != nil {
+			return err
+		}
+	} else if _, ok := doc.Frontmatter["tags"]; ok {
+		valStr := fmt.Sprintf("%v", doc.Frontmatter["tags"])
+		_, err = tx.Exec(`INSERT INTO file_properties(file_id, key, value, value_type) VALUES (?, ?, ?, ?)`,
+			fileID, "tags", valStr, "string")
 		if err != nil {
 			return err
 		}

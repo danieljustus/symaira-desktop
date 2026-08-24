@@ -17,9 +17,9 @@ type TagRenameResult struct {
 	Error  string `json:"error,omitempty"`
 }
 
-// TagsRename rewrites `from` to `to` in the frontmatter of every Markdown file
-// in the vault and re-indexes each changed file, so the sidecar never keeps a
-// stale row for the old tag (issue #306).
+// TagsRename rewrites `from` to `to` in the frontmatter and inline occurrences
+// of every Markdown file in the vault and re-indexes each changed file, so the
+// sidecar never keeps a stale row for the old tag (issue #306, issue #522).
 func (s *Service) TagsRename(from, to string) ([]TagRenameResult, error) {
 	from = normalizeTag(from)
 	to = normalizeTag(to)
@@ -33,24 +33,34 @@ func (s *Service) TagsRename(from, to string) ([]TagRenameResult, error) {
 		return nil, fmt.Errorf("source and target tag are identical")
 	}
 
-	return s.walkTags(func(doc *vault.Document) ([]string, bool) {
-		tags := append([]string(nil), doc.Tags...)
-		changed := false
-		for i, t := range tags {
-			if strings.EqualFold(strings.TrimSpace(t), from) {
-				tags[i] = to
-				changed = true
+	return s.walkTags(
+		func(fmTags []string) ([]string, bool) {
+			tags := append([]string(nil), fmTags...)
+			changed := false
+			for i, t := range tags {
+				if strings.EqualFold(strings.TrimSpace(t), from) {
+					tags[i] = to
+					changed = true
+				}
 			}
-		}
-		if !changed {
-			return nil, false
-		}
-		return dedupeTags(tags), true
-	})
+			if !changed {
+				return nil, false
+			}
+			return dedupeTags(tags), true
+		},
+		func(body string) (string, bool) {
+			return vault.RewriteInlineTags(body, func(tag string) (string, bool) {
+				if strings.EqualFold(strings.TrimSpace(tag), from) {
+					return to, true
+				}
+				return tag, true
+			})
+		},
+	)
 }
 
-// TagsMerge moves every occurrence of `from` onto `to` (deduplicated) and
-// re-indexes changed files.
+// TagsMerge moves every occurrence of `from` onto `to` (deduplicated) across
+// frontmatter and inline occurrences and re-indexes changed files.
 func (s *Service) TagsMerge(from, to string) ([]TagRenameResult, error) {
 	from = normalizeTag(from)
 	to = normalizeTag(to)
@@ -64,56 +74,79 @@ func (s *Service) TagsMerge(from, to string) ([]TagRenameResult, error) {
 		return nil, fmt.Errorf("source and target tag are identical")
 	}
 
-	return s.walkTags(func(doc *vault.Document) ([]string, bool) {
-		tags := append([]string(nil), doc.Tags...)
-		changed := false
-		out := tags[:0]
-		for _, t := range tags {
-			if strings.EqualFold(strings.TrimSpace(t), from) {
-				changed = true
-				continue
+	return s.walkTags(
+		func(fmTags []string) ([]string, bool) {
+			tags := append([]string(nil), fmTags...)
+			changed := false
+			out := tags[:0]
+			for _, t := range tags {
+				if strings.EqualFold(strings.TrimSpace(t), from) {
+					changed = true
+					continue
+				}
+				out = append(out, t)
 			}
-			out = append(out, t)
-		}
-		if !changed {
-			return nil, false
-		}
-		if !containsTag(out, to) {
-			out = append(out, to)
-		}
-		return out, true
-	})
+			if !changed {
+				return nil, false
+			}
+			if !containsTag(out, to) {
+				out = append(out, to)
+			}
+			return out, true
+		},
+		func(body string) (string, bool) {
+			return vault.RewriteInlineTags(body, func(tag string) (string, bool) {
+				if strings.EqualFold(strings.TrimSpace(tag), from) {
+					return to, true
+				}
+				return tag, true
+			})
+		},
+	)
 }
 
-// TagsDelete removes `tag` from the frontmatter of every Markdown file in the
-// vault and re-indexes changed files.
+// TagsDelete removes `tag` from the frontmatter and inline occurrences of every
+// Markdown file in the vault and re-indexes changed files.
 func (s *Service) TagsDelete(tag string) ([]TagRenameResult, error) {
 	tag = normalizeTag(tag)
 	if tag == "" {
 		return nil, fmt.Errorf("tag must not be empty")
 	}
 
-	return s.walkTags(func(doc *vault.Document) ([]string, bool) {
-		tags := append([]string(nil), doc.Tags...)
-		out := tags[:0]
-		changed := false
-		for _, t := range tags {
-			if strings.EqualFold(strings.TrimSpace(t), tag) {
-				changed = true
-				continue
+	return s.walkTags(
+		func(fmTags []string) ([]string, bool) {
+			tags := append([]string(nil), fmTags...)
+			out := tags[:0]
+			changed := false
+			for _, t := range tags {
+				if strings.EqualFold(strings.TrimSpace(t), tag) {
+					changed = true
+					continue
+				}
+				out = append(out, t)
 			}
-			out = append(out, t)
-		}
-		if !changed {
-			return nil, false
-		}
-		return out, true
-	})
+			if !changed {
+				return nil, false
+			}
+			return out, true
+		},
+		func(body string) (string, bool) {
+			return vault.RewriteInlineTags(body, func(t string) (string, bool) {
+				if strings.EqualFold(strings.TrimSpace(t), tag) {
+					return "", false
+				}
+				return t, true
+			})
+		},
+	)
 }
 
-// walkTags walks every Markdown file, applies `mutate` to its tag list and
-// writes + re-indexes the file when the mutation reports a change.
-func (s *Service) walkTags(mutate func(doc *vault.Document) ([]string, bool)) ([]TagRenameResult, error) {
+// walkTags walks every Markdown file, applies mutateFM and mutateBody, and
+// writes + re-indexes the file when mutations report a change.
+func (s *Service) walkTags(
+	mutateFM func(fmTags []string) ([]string, bool),
+	mutateBody func(body string) (string, bool),
+) ([]TagRenameResult, error) {
 	var results []TagRenameResult
 	err := vault.Walk(s.VaultRoot, func(path string) error {
 		rel := strings.TrimPrefix(path, s.VaultRoot)
@@ -124,18 +157,17 @@ func (s *Service) walkTags(mutate func(doc *vault.Document) ([]string, bool)) ([
 			results = append(results, TagRenameResult{File: rel, Status: "error", Error: err.Error()})
 			return nil // keep walking; one bad file must not abort the batch
 		}
-		tags, changed := mutate(doc)
+
+		changed, err := vault.RewriteDocumentTagsAndBody(path, doc, mutateFM, mutateBody)
+		if err != nil {
+			results = append(results, TagRenameResult{File: rel, Status: "error", Error: err.Error()})
+			return nil
+		}
 		if !changed {
 			results = append(results, TagRenameResult{File: rel, Status: "skipped"})
 			return nil
 		}
-		if tags == nil {
-			tags = []string{}
-		}
-		if err := vault.SetFrontmatterValue(path, "tags", tags); err != nil {
-			results = append(results, TagRenameResult{File: rel, Status: "error", Error: err.Error()})
-			return nil
-		}
+
 		reparsed, err := vault.ParseFile(path)
 		if err != nil {
 			results = append(results, TagRenameResult{File: rel, Status: "error", Error: err.Error()})

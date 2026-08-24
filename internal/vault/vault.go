@@ -269,7 +269,24 @@ func ParseBytes(path string, fileBytes []byte) (*Document, error) {
 	doc.Body = string(bodyBytes)
 	doc.Links = extractWikilinks(doc.Body)
 
+	// Extract inline tags from body (issue #522)
+	inlineTags := ExtractInlineTags(doc.Body)
+	for _, it := range inlineTags {
+		if !containsTagCaseInsensitive(doc.Tags, it) {
+			doc.Tags = append(doc.Tags, it)
+		}
+	}
+
 	return doc, nil
+}
+
+func containsTagCaseInsensitive(tags []string, tag string) bool {
+	for _, t := range tags {
+		if strings.EqualFold(strings.TrimSpace(t), tag) {
+			return true
+		}
+	}
+	return false
 }
 
 // SecurePath resolves a relative path against the vault root and ensures it does not traverse outside.

@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 import SymairaTheme
 import SymDeskCore
+import SymroomFeature
 
 struct ContentView: View {
     @EnvironmentObject var core: DeskCore
@@ -69,6 +70,8 @@ struct ContentView: View {
         case models
         case duplicates
         case notebooks
+        case room
+        case retrievalStatus
     }
 
     // MARK: - Navigation History
@@ -212,6 +215,18 @@ struct ContentView: View {
                                         Text("Notebooks")
                                     }
                                 }
+                                Button(action: { navigate(to: .retrievalStatus) }) {
+                                    HStack {
+                                        Image(systemName: "magnifyingglass.circle")
+                                        Text("Search Index")
+                                    }
+                                }
+                                Button(action: { navigate(to: .room) }) {
+                                    HStack {
+                                        Image(systemName: "door.left.hand.open")
+                                        Text("Project Journal")
+                                    }
+                                }
                                 Button(action: { navigate(to: .companionTools) }) {
                                     HStack {
                                         Image(systemName: "wrench.and.screwdriver")
@@ -345,6 +360,12 @@ struct ContentView: View {
                         RulesSettingsView(vaultPath: core.vaultPath)
                     case .discover:
                         DiscoverView(onNavigateToTools: { navigate(to: .companionTools) })
+                    case .retrievalStatus:
+                        RetrievalStatusView()
+                    case .room:
+                        // The module owns its own state and renders an install
+                        // tile when symroom is absent (issue #517).
+                        SymroomModuleView()
                     case .companionTools:
                         CompanionToolsView(
                             doctorReport: doctorReport,

@@ -11,7 +11,7 @@ let package = Package(
         .library(name: "SymroomFeature", targets: ["SymroomFeature"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/danieljustus/symaira-appkit.git", exact: "0.7.0"),
+        .package(url: "https://github.com/danieljustus/symaira-appkit.git", exact: "0.9.2"),
     ],
     targets: [
         // CLI bridge + models — reads symroom's --json output, never
@@ -23,8 +23,10 @@ let package = Package(
                 .product(name: "SymairaToolKit", package: "symaira-appkit"),
             ]
         ),
-        // Feature module (views + state, no app entry) — consumed by the
-        // Symaira Hub. The standalone GUI app is a separate decision (Gate G2).
+        // Feature module (views + state, no app entry) — embedded by SymDesk
+        // as its Project Journal surface (issue #517). symroom is the one
+        // absorbed tool without an in-process call site, so this stays a CLI
+        // bridge and degrades to an install tile when the binary is absent.
         .target(
             name: "SymroomFeature",
             dependencies: [

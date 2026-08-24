@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/danieljustus/symaira-desktop/internal/searchquery"
+	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
 func writeTaggedNote(t *testing.T, root, name, tags string) {
@@ -204,5 +207,143 @@ func TestTagsOpsTolerateBrokenFilesWithoutAbortingBatch(t *testing.T) {
 	}
 	if !updated || !errored {
 		t.Fatalf("expected a.md updated and broken.md errored, got %#v", results)
+	}
+}
+
+func TestTagsRenameInlineOccurrences(t *testing.T) {
+	svc := newTestService(t)
+
+	// inline.md has no frontmatter tags key, but has #invoice in body
+	inlineContent := "---\ntitle: Inline Note\n---\n\nThis note mentions #invoice and #nested/tag.\n"
+	if err := os.WriteFile(filepath.Join(svc.VaultRoot, "inline.md"), []byte(inlineContent), 0600); err != nil {
+		t.Fatal(err)
+	}
+	doc1, err := vault.ParseFile(filepath.Join(svc.VaultRoot, "inline.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.IndexDocument(doc1); err != nil {
+		t.Fatal(err)
+	}
+
+	// mixed.md has frontmatter tags AND inline tags
+	mixedContent := "---\ntitle: Mixed Note\ntags: [invoice]\n---\n\nAlso body with #invoice and #urgent.\n"
+	if err := os.WriteFile(filepath.Join(svc.VaultRoot, "mixed.md"), []byte(mixedContent), 0600); err != nil {
+		t.Fatal(err)
+	}
+	doc2, err := vault.ParseFile(filepath.Join(svc.VaultRoot, "mixed.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.IndexDocument(doc2); err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify before rename: tag search for invoice finds both
+	matches, err := svc.DB.SearchPlan(searchquery.Plan{
+		Filters: []searchquery.Filter{{Field: searchquery.FieldTag, Value: "invoice"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 2 {
+		t.Fatalf("expected 2 matches for tag:invoice before rename, got %d", len(matches))
+	}
+
+	results, err := svc.TagsRename("invoice", "receipt")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	updated := map[string]bool{}
+	for _, r := range results {
+		if r.Status == "updated" {
+			updated[r.File] = true
+		}
+	}
+	if !updated["inline.md"] || !updated["mixed.md"] {
+		t.Fatalf("expected both inline.md and mixed.md updated, got %#v", results)
+	}
+
+	// inline.md body updated, frontmatter does not gain a tags key
+	inlineGot := readFile(t, filepath.Join(svc.VaultRoot, "inline.md"))
+	if !strings.Contains(inlineGot, "#receipt") || strings.Contains(inlineGot, "#invoice") {
+		t.Fatalf("inline.md body not rewritten: %s", inlineGot)
+	}
+	reparsedInline, err := vault.ParseFile(filepath.Join(svc.VaultRoot, "inline.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := reparsedInline.Frontmatter["tags"]; ok {
+		t.Fatalf("inline.md should not gain frontmatter tags key: %#v", reparsedInline.Frontmatter)
+	}
+	if !containsTag(reparsedInline.Tags, "receipt") || containsTag(reparsedInline.Tags, "invoice") {
+		t.Fatalf("unexpected doc.Tags for inline.md: %v", reparsedInline.Tags)
+	}
+
+	// mixed.md frontmatter and body updated
+	mixedGot := readFile(t, filepath.Join(svc.VaultRoot, "mixed.md"))
+	if !strings.Contains(mixedGot, "receipt") || strings.Contains(mixedGot, "invoice") {
+		t.Fatalf("mixed.md not rewritten: %s", mixedGot)
+	}
+
+	// After rename: tag:invoice has 0 matches, tag:receipt has 2 matches
+	afterOld, err := svc.DB.SearchPlan(searchquery.Plan{
+		Filters: []searchquery.Filter{{Field: searchquery.FieldTag, Value: "invoice"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(afterOld) != 0 {
+		t.Fatalf("expected 0 matches for tag:invoice after rename, got %d", len(afterOld))
+	}
+
+	afterNew, err := svc.DB.SearchPlan(searchquery.Plan{
+		Filters: []searchquery.Filter{{Field: searchquery.FieldTag, Value: "receipt"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(afterNew) != 2 {
+		t.Fatalf("expected 2 matches for tag:receipt after rename, got %d", len(afterNew))
+	}
+}
+
+func TestTagsDeleteInlineOccurrences(t *testing.T) {
+	svc := newTestService(t)
+
+	content := "---\ntitle: Note\n---\n\nHere is #invoice to remove.\n"
+	if err := os.WriteFile(filepath.Join(svc.VaultRoot, "a.md"), []byte(content), 0600); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := vault.ParseFile(filepath.Join(svc.VaultRoot, "a.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.IndexDocument(doc); err != nil {
+		t.Fatal(err)
+	}
+
+	results, err := svc.TagsDelete("invoice")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 || results[0].Status != "updated" {
+		t.Fatalf("expected a.md updated, got %#v", results)
+	}
+
+	got := readFile(t, filepath.Join(svc.VaultRoot, "a.md"))
+	if strings.Contains(got, "invoice") {
+		t.Fatalf("a.md still contains invoice: %s", got)
+	}
+
+	matches, err := svc.DB.SearchPlan(searchquery.Plan{
+		Filters: []searchquery.Filter{{Field: searchquery.FieldTag, Value: "invoice"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 0 {
+		t.Fatalf("expected 0 matches for deleted tag, got %d", len(matches))
 	}
 }

@@ -23,6 +23,20 @@ The following YAML fields are defined by this contract. Parsers MUST preserve un
 - `created` (string, ISO-8601): The creation timestamp of the note.
 - `tags` (array of strings): A list of tags. Can be empty `[]`.
 
+### Tag Sources and Precedence
+Tags can be defined in two locations:
+1. **Frontmatter `tags`:** An array of strings (or a single string) in the frontmatter block.
+2. **Inline `#tag` markers:** Tags placed directly in the Markdown note body using the `#tag` syntax (including nested tags such as `#project/symaira`).
+
+**Precedence and deduplication rule:**
+When indexing or resolving tags for a document, frontmatter `tags` are parsed first. Inline `#tag` occurrences from the note body are appended in order of appearance, deduplicated case-insensitively against frontmatter tags and prior inline tags.
+
+**Inline tag syntax constraints:**
+- A tag starts with `#` and contains letters, numbers, underscores, hyphens, and slashes (`/`) for hierarchical tags.
+- A tag MUST contain at least one non-numeric character. Bare `#` followed by digits only (e.g. `#123` issue references) is not a tag.
+- `#` markers inside fenced code blocks, inline code spans (`` `...` ``), ATX headings (`# Heading`), wikilink targets/fragments (`[[Note#Heading]]`), markdown link targets (`[text](url#section)`), autolinks (`<https://...#frag>`), and bare URLs (`https://example.com/#frag`) MUST NOT be indexed as tags.
+- Tag management operations (`symdesk tags rename|merge|delete`) update both frontmatter and inline body occurrences in place without normalizing inline tags into frontmatter.
+
 ### Document Kind (contract_version 4)
 The `type` field classifies every markdown file in the vault into one of four kinds:
 

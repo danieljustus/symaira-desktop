@@ -1,18 +1,12 @@
 # Symaira Relate
 
 > **Dieses Verzeichnis war bis 2026-08-23 das eigenständige Repository
-> [`symaira-relate`](https://github.com/danieljustus/symaira-relate).** Es ist jetzt ein
-> nested Go-Modul von [`symaira-desktop`](../README.md); das Repo ist
-> archiviert und seine Homebrew-Formula deprecated. Die Kontakt- und Beziehungsverwaltung wird über
-> `symdesk contact` genutzt, angebunden über `relate/api`.
+> [`symaira-relate`](https://github.com/danieljustus/symaira-relate).** Die Go-Implementierung
+> ist nun direkt in das Root-Modul von [`symaira-desktop`](../README.md) unter `internal/contacts`
+> aufgelöst (Issue #538 Migration). Die Kontakt- und Beziehungsverwaltung wird über
+> `symdesk contact` genutzt.
 > Die Badges, Installations- und Release-Hinweise unten stammen aus der
 > Zeit als eigenes Repo und gelten nicht mehr.
-
-> **Moved 2026-08-21** into `symaira-desktop/relate/` as part of the Symaira
-> repo consolidation (27 → 13, `docs/repo-konsolidierung.md` §3.2). This Go
-> module now lives in symaira-desktop; the original
-> `danieljustus/symaira-relate` repo remains active until the deep
-> integration is done.
 
 *Local-first contact and relationship manager — CLI, web console and MCP server over one encrypted-at-rest-aware SQLite vault on your machine.*
 

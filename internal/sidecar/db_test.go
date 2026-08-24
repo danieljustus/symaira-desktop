@@ -1462,11 +1462,11 @@ func TestDerivedArtifactsExcludedFromIndex(t *testing.T) {
 
 	// 1. Create authoritative note and derived artifact
 	sourcePath := filepath.Join(vaultRoot, "source.md")
-	if err := os.WriteFile(sourcePath, []byte("---\ntitle: \"Source Note\"\n---\nImportant authoritative prose content here."), 0644); err != nil {
+	if err := os.WriteFile(sourcePath, []byte("---\ntitle: \"Source Note\"\n---\nImportant authoritative prose content here."), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	derivedPath := filepath.Join(vaultRoot, "derived.md")
-	if err := os.WriteFile(derivedPath, []byte("---\ntitle: \"Derived Summary\"\nderived_from: \"source.md\"\n---\nGenerated derivative prose content."), 0644); err != nil {
+	if err := os.WriteFile(derivedPath, []byte("---\ntitle: \"Derived Summary\"\nderived_from: \"source.md\"\n---\nGenerated derivative prose content."), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1516,7 +1516,7 @@ func TestDerivedArtifactsExcludedFromIndex(t *testing.T) {
 	}
 
 	// 7. Transition: Authoritative note becomes derived -> removed on refresh
-	if err := os.WriteFile(sourcePath, []byte("---\ntitle: \"Source Note\"\nderived: true\n---\nNow derived content."), 0644); err != nil {
+	if err := os.WriteFile(sourcePath, []byte("---\ntitle: \"Source Note\"\nderived: true\n---\nNow derived content."), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := db.RefreshIndex(vaultRoot); err != nil {

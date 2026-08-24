@@ -691,7 +691,7 @@ func TestParseFile_DerivedArtifact(t *testing.T) {
 
 	// 1. Note with derived_from string
 	p1 := filepath.Join(root, "derived1.md")
-	if err := os.WriteFile(p1, []byte("---\ntitle: \"Summary\"\nderived_from: \"source.md\"\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(p1, []byte("---\ntitle: \"Summary\"\nderived_from: \"source.md\"\n---\nBody"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	doc1, err := ParseFile(p1)
@@ -704,7 +704,7 @@ func TestParseFile_DerivedArtifact(t *testing.T) {
 
 	// 2. Note with derived: true
 	p2 := filepath.Join(root, "derived2.md")
-	if err := os.WriteFile(p2, []byte("---\ntitle: \"Generated\"\nderived: true\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(p2, []byte("---\ntitle: \"Generated\"\nderived: true\n---\nBody"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	doc2, err := ParseFile(p2)
@@ -717,7 +717,7 @@ func TestParseFile_DerivedArtifact(t *testing.T) {
 
 	// 3. Regular note
 	p3 := filepath.Join(root, "regular.md")
-	if err := os.WriteFile(p3, []byte("---\ntitle: \"Regular\"\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(p3, []byte("---\ntitle: \"Regular\"\n---\nBody"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	doc3, err := ParseFile(p3)

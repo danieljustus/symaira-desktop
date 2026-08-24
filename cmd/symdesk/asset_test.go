@@ -18,7 +18,7 @@ func TestAssetStoreCLI(t *testing.T) {
 
 	// Create a source file to store
 	srcFile := filepath.Join(t.TempDir(), "diagram.svg")
-	if err := os.WriteFile(srcFile, []byte("<svg></svg>"), 0644); err != nil {
+	if err := os.WriteFile(srcFile, []byte("<svg></svg>"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

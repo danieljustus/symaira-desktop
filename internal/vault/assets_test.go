@@ -93,6 +93,8 @@ func TestStoreAsset(t *testing.T) {
 		t.Errorf("expected assets/receipt.png, got %q", rel1)
 	}
 
+	// The path is derived from the service result and stays below t.TempDir.
+	//nolint:gosec // test-only read from the temporary vault
 	content1, err := os.ReadFile(filepath.Join(vaultRoot, filepath.FromSlash(rel1)))
 	if err != nil {
 		t.Fatalf("failed to read stored asset: %v", err)

@@ -91,6 +91,8 @@ func StoreAsset(vaultRoot string, data []byte, preferredName, ext, folder string
 		return "", fmt.Errorf("resolve assets folder: %w", err)
 	}
 
+	// folderName is validated above and dirPath is rooted by SecurePath.
+	//nolint:gosec // the directory is confined to the vault root
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
 		return "", fmt.Errorf("create assets directory: %w", err)
 	}

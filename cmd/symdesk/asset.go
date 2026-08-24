@@ -33,6 +33,8 @@ func newAssetStoreCmd() *cobra.Command {
 			if src == "-" {
 				data, err = io.ReadAll(os.Stdin)
 			} else {
+				// The CLI intentionally accepts an explicit source path from the user.
+				//nolint:gosec // this is the command's documented input path
 				data, err = os.ReadFile(src)
 			}
 			if err != nil {
@@ -48,7 +50,7 @@ func newAssetStoreCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			svc := service.New(vRoot, db)
 
 			ext := filepath.Ext(name)

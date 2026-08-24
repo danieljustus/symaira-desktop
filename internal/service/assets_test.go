@@ -16,7 +16,7 @@ func TestServiceStoreAssetAndWithLink(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	svc := New(vaultRoot, db)
 
@@ -30,6 +30,8 @@ func TestServiceStoreAssetAndWithLink(t *testing.T) {
 		t.Errorf("expected assets/photo.jpg, got %q", relPath)
 	}
 
+	// The path is derived from the service result and stays below t.TempDir.
+	//nolint:gosec // test-only read from the temporary vault
 	content, err := os.ReadFile(filepath.Join(vaultRoot, filepath.FromSlash(relPath)))
 	if err != nil {
 		t.Fatalf("failed to read stored asset: %v", err)

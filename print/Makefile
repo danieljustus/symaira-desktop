@@ -9,15 +9,7 @@ export DEVELOPER_DIR := $(shell if [ -d "/Applications/Xcode-beta.app" ]; then e
 VERSION_PKG = main
 
 .PHONY: all
-all: build test
-
-.PHONY: build
-build:
-	CGO_ENABLED=0 $(GO) build -ldflags "-s -w -X main.version=dev" -o $(BINARY_NAME) ./cmd/symprint
-
-.PHONY: build-version
-build-version:
-	CGO_ENABLED=0 $(GO) build -ldflags "-s -w -X $(VERSION_PKG).version=$(VERSION)" -o $(BINARY_NAME) ./cmd/symprint
+all: test
 
 .PHONY: test
 test:
@@ -38,12 +30,7 @@ lint:
 
 .PHONY: clean
 clean:
-	rm -f $(BINARY_NAME)
 	rm -rf dist/
-
-.PHONY: install
-install:
-	CGO_ENABLED=0 $(GO) install -ldflags "-s -w -X $(VERSION_PKG).version=dev" ./cmd/symprint
 
 # Regenerate testdata/example-hashes.sha256, the hashed reference outputs
 # that CI verifies on every push (render-regression gate). Run this after any

@@ -19,6 +19,10 @@ import (
 // engine timeout applies inside it.
 const renderTimeout = 60 * time.Second
 
+// ErrEngineUnavailable marks a render that failed because the typesetting
+// engine is missing.
+var ErrEngineUnavailable = printapi.ErrEngineUnavailable
+
 // The renderer seam. These are the single injectable entry points into
 // symprint, so a test can substitute a double without requiring a real typst
 // installation on the machine running the suite.
@@ -26,8 +30,10 @@ const renderTimeout = 60 * time.Second
 // Production code never reassigns them; a test that does must restore the
 // original in t.Cleanup.
 var (
-	RenderFunc          = printapi.Render
-	EngineAvailableFunc = printapi.EngineAvailable
+	DefaultRenderFunc          = printapi.Render
+	DefaultEngineAvailableFunc = printapi.EngineAvailable
+	RenderFunc                 = DefaultRenderFunc
+	EngineAvailableFunc        = DefaultEngineAvailableFunc
 )
 
 // Profile is a built-in output profile.

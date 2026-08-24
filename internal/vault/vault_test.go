@@ -176,33 +176,33 @@ func TestWalkAll(t *testing.T) {
 
 	// Note
 	notePath := filepath.Join(root, "note.md")
-	if err := os.WriteFile(notePath, []byte("# Note"), 0644); err != nil {
+	if err := os.WriteFile(notePath, []byte("# Note"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	// Attachment in assets
 	assetsDir := filepath.Join(root, "assets")
-	if err := os.MkdirAll(assetsDir, 0755); err != nil {
+	if err := os.MkdirAll(assetsDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	imgPath := filepath.Join(assetsDir, "scan.png")
-	if err := os.WriteFile(imgPath, []byte("png-bytes"), 0644); err != nil {
+	if err := os.WriteFile(imgPath, []byte("png-bytes"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	// Canvas
 	canvasPath := filepath.Join(root, "diagram.canvas")
-	if err := os.WriteFile(canvasPath, []byte("{}"), 0644); err != nil {
+	if err := os.WriteFile(canvasPath, []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	// Skipped node_modules attachment
 	nmDir := filepath.Join(root, "node_modules", "pkg")
-	if err := os.MkdirAll(nmDir, 0755); err != nil {
+	if err := os.MkdirAll(nmDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(nmDir, "ignored.png"), []byte("ignored"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(nmDir, "ignored.png"), []byte("ignored"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	// Hidden file
-	if err := os.WriteFile(filepath.Join(root, ".hidden.png"), []byte("hidden"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, ".hidden.png"), []byte("hidden"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -234,7 +234,7 @@ tags:
 # Drawing Data
 ` + "```json\n{\"elements\": [{\"type\": \"rectangle\", \"id\": \"123\"}]}\n```\n"
 
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

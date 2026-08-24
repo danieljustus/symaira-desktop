@@ -63,10 +63,10 @@ func TestScanResolvesAttachmentEmbeds(t *testing.T) {
 
 	// Create attachment in assets/
 	assetsDir := filepath.Join(root, "assets")
-	if err := os.MkdirAll(assetsDir, 0755); err != nil {
+	if err := os.MkdirAll(assetsDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(assetsDir, "scan.png"), []byte("pngdata"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(assetsDir, "scan.png"), []byte("pngdata"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -109,10 +109,10 @@ func TestScanIgnoredDirectoryAttachmentsNotResolvable(t *testing.T) {
 
 	// Create attachment inside ignored node_modules directory
 	nmDir := filepath.Join(root, "node_modules", "pkg")
-	if err := os.MkdirAll(nmDir, 0755); err != nil {
+	if err := os.MkdirAll(nmDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(nmDir, "vendor_asset.png"), []byte("data"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(nmDir, "vendor_asset.png"), []byte("data"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -133,10 +133,10 @@ func TestScanResolvesCanvasWikilinks(t *testing.T) {
 	writeNote(t, root, "note.md", "---\ntitle: Note\n---\n[[Board.canvas]]\n[[boards/Board.canvas]]\n[[missing.canvas]]\n")
 
 	boardsDir := filepath.Join(root, "boards")
-	if err := os.MkdirAll(boardsDir, 0755); err != nil {
+	if err := os.MkdirAll(boardsDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(boardsDir, "Board.canvas"), []byte("{}"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(boardsDir, "Board.canvas"), []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

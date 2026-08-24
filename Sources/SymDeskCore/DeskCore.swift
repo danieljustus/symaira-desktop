@@ -289,6 +289,85 @@ public struct InverseRelation: Codable, Equatable, Identifiable, Sendable {
     public let property: String
 }
 
+public struct PropertyConfig: Codable, Equatable, Sendable {
+    public let type: String?
+    public let label: String?
+    public let options: [String]?
+    public let description: String?
+    public let `default`: String?
+
+    public init(
+        type: String? = nil,
+        label: String? = nil,
+        options: [String]? = nil,
+        description: String? = nil,
+        default: String? = nil
+    ) {
+        self.type = type
+        self.label = label
+        self.options = options
+        self.description = description
+        self.default = `default`
+    }
+}
+
+public struct DbBase: Codable, Equatable, Identifiable, Sendable {
+    public let id: String
+    public let path: String
+    public let title: String
+    public let description: String?
+    public let created: String?
+    public let tags: [String]?
+    public let properties: [String: PropertyConfig]?
+    public let views: [DbView]
+
+    public init(
+        id: String,
+        path: String,
+        title: String,
+        description: String? = nil,
+        created: String? = nil,
+        tags: [String]? = nil,
+        properties: [String: PropertyConfig]? = nil,
+        views: [DbView] = []
+    ) {
+        self.id = id
+        self.path = path
+        self.title = title
+        self.description = description
+        self.created = created
+        self.tags = tags
+        self.properties = properties
+        self.views = views
+    }
+}
+
+public struct BaseEmbedResult: Codable, Equatable, Sendable {
+    public let baseID: String
+    public let basePath: String
+    public let baseTitle: String
+    public let viewID: String
+    public let viewName: String
+    public let columns: [String]
+    public let totalRows: Int
+    public let capped: Bool
+    public let rowCap: Int
+    public let markdown: String
+
+    enum CodingKeys: String, CodingKey {
+        case baseID = "base_id"
+        case basePath = "base_path"
+        case baseTitle = "base_title"
+        case viewID = "view_id"
+        case viewName = "view_name"
+        case columns
+        case totalRows = "total_rows"
+        case capped
+        case rowCap = "row_cap"
+        case markdown
+    }
+}
+
 public struct DbView: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let name: String
@@ -1005,6 +1084,33 @@ public final class DeskCore: ObservableObject {
     public func viewsExec(id: String) async throws -> Data {
         // We runChecked and just return the raw JSON data so the UI can parse it dynamically
 		return try await runChecked(arguments: ["views", "exec", id, "--json"] + vaultArgs)
+    }
+
+    public func baseList() async throws -> [DbBase] {
+        try await runDecoding([DbBase].self, arguments: ["views", "base", "list", "--json"] + vaultArgs)
+    }
+
+    public func baseGet(ref: String) async throws -> DbBase {
+        try await runDecoding(DbBase.self, arguments: ["views", "base", "get", ref, "--json"] + vaultArgs)
+    }
+
+    public func baseSave(_ base: DbBase) async throws {
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(base)
+        let json = String(decoding: data, as: UTF8.self)
+        _ = try await runChecked(arguments: ["views", "base", "save", json, "--json"] + vaultArgs)
+    }
+
+    public func baseDelete(ref: String) async throws {
+        _ = try await runChecked(arguments: ["views", "base", "delete", ref, "--json"] + vaultArgs)
+    }
+
+    public func viewsExportCSV(id: String) async throws -> Data {
+        try await runChecked(arguments: ["views", "export-csv", id] + vaultArgs)
+    }
+
+    public func viewsExecuteEmbed(spec: String) async throws -> BaseEmbedResult {
+        try await runDecoding(BaseEmbedResult.self, arguments: ["views", "embed", spec, "--json"] + vaultArgs)
     }
     public func ingest(fileURL: URL) async throws -> String {
 		guard let transport else { throw DeskCoreError.coreNotFound }

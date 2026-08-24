@@ -200,13 +200,19 @@ A base is a named collection of saved views over vault documents (`symdesk views
 
 - `type` (string, `"base"`): marks a note as a base (section 3).
 - `base_id` (string): a stable identifier for the base, generated once at creation and preserved across renames.
+- `properties` (map of objects, optional): declared property schema for documents associated with the base. Each property specifies:
+  - `type` (string): declared property data type (`"text"`, `"number"`, `"date"`, `"select"`, `"checkbox"` / `"boolean"`, `"tags"`).
+  - `label` (string, optional): human-readable display label.
+  - `options` (array of strings, optional): ordered choices for select properties.
+  - `description` (string, optional): description of the property's intent.
+  - `default` (string, optional): default value applied on new note creation.
 - `views` (array of objects): view definitions stored in frontmatter. Each view specifies:
   - `id` (string): stable identifier for the view.
   - `name` (string): human-readable view name.
   - `type` (string): view layout type (`table`, `board`, `calendar`, `gallery`, `timeline`, `list`).
   - `source` (string, optional): document scope (`folder/`, `tag:name`, `notebook:<id>`, or empty for whole vault).
   - `columns` (array of strings, optional): visible property columns.
-  - `filters` (array of objects, optional): filter criteria (`key`, `operator`, `value`).
+  - `filters` (array of objects, optional): filter criteria (`key`, `operator`, `value`). Rich operators include numeric (`>`, `>=`, `<`, `<=`, `gt`, `gte`, `lt`, `lte`), date (`before`, `after`, `on_or_before`, `on_or_after`), set (`in`, `not_in`, `contains_all`, `contains_any`, `contains_none`), and text matching (`equals`, `contains`, `starts_with`, `ends_with`).
   - `filter_group` (object, optional): recursive all/any condition groups.
   - `sorts` (array of objects, optional): sort ordering (`key`, `ascending`).
   - `group_by` (string, optional): property key to group cards/rows by.
@@ -217,9 +223,34 @@ A base is a named collection of saved views over vault documents (`symdesk views
 
 **Storage convention:** base notes live under `bases/<slug>.md` at the vault root, where `<slug>` is derived from the title at creation time (mirrors `notebooks/<slug>.md` in section 10 and `meetings/meeting-<id>.md` in section 8).
 
-**Human-readable view summary:** a base note's body lists its defined views under a `## Views` heading, regenerated from the `views` frontmatter field on every write. The frontmatter `views` definition is authoritative; the `## Views` heading is a derived, human-readable view. Hand edits to that section are overwritten on the next write.
+**Typed inspector fallback and board ordering:**
+- Property inspectors and board surfaces utilize declared property schemas when available.
+- If a property lacks declared schema, the inspector gracefully falls back to typed heuristic inference (`number`, `date`, `status`, `relation`, `tags`, `text`).
+- Board columns for select properties strictly follow the declared `options` ordering. Out-of-range or hand-edited property values are safely displayed in dedicated columns — unexpected values are never dropped, hidden, or silently rewritten.
+
+**Fenced Base Embeds (`symdesk-base`):**
+- Note bodies may include read-only fenced code blocks with language `symdesk-base` to embed live database queries:
+  ```yaml
+  ```symdesk-base
+  base: <base-slug-or-title>
+  view: <view-id-or-name>
+  limit: 10
+  columns: [title, status, due_date]
+  ```
+  ```
+- Evaluates the referenced base and view, applies the specified row cap (`limit`), and outputs an inert Markdown table representation with a link to open the authoritative base note.
+- Fenced `symdesk-base` blocks are fully guarded from leaking wikilinks or tags into the vault index.
+
+**One-Way CSV Interchange:**
+- `symdesk views export-csv <view-id>` (and `symdesk export --view <view-id> --format csv`) exports visible and computed view rows to standard CSV.
+- `symdesk views import-csv <file.csv>` performs one-way import of tabular records into individual frontmatter Markdown notes (`--apply` required; dry-run preview by default).
+- Supports column-to-property mapping, collision policies (`suffix`, `skip`, `error`), malformed row reporting, and optional base note creation with automatic property type inference (`number`, `date`, `select`, `text`).
+- CSV is strictly an import/export interchange format and never becomes the vault source of truth.
+
+**Human-readable view summary:** a base note's body lists its defined views and declared properties under `## Views` and `## Properties` headings, regenerated from frontmatter on every write. The frontmatter definition is authoritative.
 
 **Indexing and backlinks:** base notes are indexed as first-class vault documents in search and graph view. Wikilinks in base notes resolve in the link graph and backlinks.
 
 **Migration from legacy views:** on startup, existing `.symdesk/views.json` definitions are automatically migrated to base notes in `bases/` while leaving the original `.symdesk/views.json` intact.
+
 

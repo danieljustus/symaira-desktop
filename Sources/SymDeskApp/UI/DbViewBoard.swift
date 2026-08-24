@@ -11,6 +11,8 @@ struct DbViewBoard: View {
     @State private var isLoading = false
     @State private var groupBy: String = "status"
 
+    @State private var declaredOptions: [String] = []
+
     // We convert dictionary to identifiable structs for Board
     struct BoardItem: Identifiable, Equatable {
         let id: String // path
@@ -25,31 +27,43 @@ struct DbViewBoard: View {
 
     private var groupedItems: [(key: String, value: [BoardItem])] {
         var groups = [String: [BoardItem]]()
-        // Pre-fill some standard status groups if grouping by status to keep order nice, else dynamic
-        if groupBy == "status" {
+
+        // Pre-fill columns based on declared options or status enum to guarantee column order
+        let order: [String]
+        if !declaredOptions.isEmpty {
+            order = declaredOptions
+            for opt in declaredOptions {
+                groups[opt] = []
+            }
+        } else if groupBy == "status" {
+            order = DocumentStatus.allCases.map { $0.rawValue }
             for s in DocumentStatus.allCases {
                 groups[s.rawValue] = []
             }
+        } else {
+            order = []
         }
         
         for item in items {
-            let key = (item.data[groupBy] as? String) ?? "Unset"
-            let strKey = key.isEmpty ? "Unset" : key
+            let key = (item.data[groupBy] as? String) ?? ""
+            let strKey = key.trimmingCharacters(in: .whitespaces).isEmpty ? "Unset" : key
             groups[strKey, default: []].append(item)
         }
         
-        if groupBy == "status" {
-            // Sort according to DocumentStatus.allCases order
-            let statusOrder = DocumentStatus.allCases.map { $0.rawValue }
+        if !order.isEmpty {
             return groups.sorted { a, b in
-                let idxA = statusOrder.firstIndex(of: a.key) ?? 999
-                let idxB = statusOrder.firstIndex(of: b.key) ?? 999
+                let idxA = order.firstIndex(of: a.key) ?? (a.key == "Unset" ? 9999 : 1000)
+                let idxB = order.firstIndex(of: b.key) ?? (b.key == "Unset" ? 9999 : 1000)
                 if idxA == idxB { return a.key < b.key }
                 return idxA < idxB
             }
         }
         
-        return groups.sorted { $0.key < $1.key }
+        return groups.sorted { a, b in
+            if a.key == "Unset" { return false }
+            if b.key == "Unset" { return true }
+            return a.key < b.key
+        }
     }
 
     var body: some View {

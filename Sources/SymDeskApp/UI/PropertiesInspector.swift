@@ -13,6 +13,8 @@ struct PropertiesInspector: View {
     /// tags property (issue #306). Empty disables suggestions.
     var allTags: [String] = []
 
+    var schema: [String: PropertyConfig]? = nil
+
     @EnvironmentObject var core: DeskCore
 
     @State private var properties: [String: String] = [:]
@@ -22,11 +24,13 @@ struct PropertiesInspector: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
 
-    enum PropertyKind {
+    enum PropertyKind: Equatable {
         case text
         case number
         case date
         case status
+        case select(options: [String])
+        case boolean
         case tags
         case relation
     }
@@ -107,7 +111,25 @@ struct PropertiesInspector: View {
         .task(id: notePath) { await load() }
     }
 
-    static func kind(forKey key: String, value: String) -> PropertyKind {
+    static func kind(forKey key: String, value: String, schema: [String: PropertyConfig]? = nil) -> PropertyKind {
+        if let config = schema?[key] {
+            switch config.type?.lowercased() {
+            case "number":
+                return .number
+            case "date":
+                return .date
+            case "select":
+                return .select(options: config.options ?? [])
+            case "checkbox", "boolean", "bool":
+                return .boolean
+            case "tags":
+                return .tags
+            case "text":
+                return .text
+            default:
+                break
+            }
+        }
         if key == "status" { return .status }
         if key == "tags" { return .tags }
         if value.contains("[[") { return .relation }
@@ -135,12 +157,33 @@ struct PropertiesInspector: View {
 
     @ViewBuilder
     private func propertyRow(key: String, value: String) -> some View {
-        let kind = Self.kind(forKey: key, value: value)
+        let kind = Self.kind(forKey: key, value: value, schema: schema)
+        let displayLabel = schema?[key]?.label ?? key
         VStack(alignment: .leading, spacing: 2) {
-            Text(key)
+            Text(displayLabel)
                 .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textMuted)
             switch kind {
+            case .select(let options):
+                Picker("", selection: Binding(
+                    get: { value },
+                    set: { newValue in Task { await saveProperty(key: key, value: newValue) } }
+                )) {
+                    if !value.isEmpty && !options.contains(value) {
+                        Text("\(value) (custom)").tag(value)
+                    }
+                    ForEach(options, id: \.self) { Text($0).tag($0) }
+                }
+                .labelsHidden()
+            case .boolean:
+                Toggle(isOn: Binding(
+                    get: { value.lowercased() == "true" || value == "1" || value.lowercased() == "yes" },
+                    set: { newValue in Task { await saveProperty(key: key, value: newValue ? "true" : "false") } }
+                )) {
+                    Text(displayLabel)
+                }
+                .toggleStyle(.checkbox)
+                .labelsHidden()
             case .status:
                 Picker("", selection: Binding(
                     get: { value },

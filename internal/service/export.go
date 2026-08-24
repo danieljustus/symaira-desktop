@@ -51,8 +51,38 @@ func ExportProfiles() []ExportProfile {
 // Exactly one of relPath or viewID should be set.
 func (s *Service) Export(relPath, viewID, outputPath, format, profile string) (*ExportResult, error) {
 	format = strings.ToLower(format)
-	if format != "pdf" && format != "html" {
-		return nil, fmt.Errorf("unsupported export format %q: use pdf or html", format)
+	if format != "pdf" && format != "html" && format != "csv" {
+		return nil, fmt.Errorf("unsupported export format %q: use pdf, html, or csv", format)
+	}
+
+	if format == "csv" {
+		if viewID == "" {
+			return nil, fmt.Errorf("csv export is only supported for views (use --view)")
+		}
+		csvData, err := s.ViewsExportCSV(viewID)
+		if err != nil {
+			return nil, err
+		}
+		if outputPath == "" {
+			outputPath = defaultOutputPath(relPath, viewID, format)
+		}
+		outputPath = filepath.Clean(outputPath)
+		if !filepath.IsAbs(outputPath) {
+			cwd, err := os.Getwd()
+			if err != nil {
+				return nil, fmt.Errorf("cannot resolve cwd: %w", err)
+			}
+			outputPath = filepath.Join(cwd, outputPath)
+		}
+		if err := os.WriteFile(outputPath, csvData, 0644); err != nil {
+			return nil, fmt.Errorf("failed to write CSV: %w", err)
+		}
+		return &ExportResult{
+			Format:   "csv",
+			Path:     outputPath,
+			Rendered: true,
+			Message:  fmt.Sprintf("Exported view %s to CSV", viewID),
+		}, nil
 	}
 
 	opts := export.Options{Format: format, Profile: profile}
@@ -149,6 +179,9 @@ func defaultOutputPath(relPath, viewID, format string) string {
 	}
 	if format == "pdf" {
 		return base + ".pdf"
+	}
+	if format == "csv" {
+		return base + ".csv"
 	}
 	return base + ".html"
 }

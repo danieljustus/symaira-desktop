@@ -13,6 +13,7 @@ public enum PreviewBlock: Equatable, Sendable {
     case quote(lines: [String])
     case callout(type: String, title: String, lines: [String])
     case embed(target: String, heading: String?)
+    case baseEmbed(code: String)
     case mermaid(code: String)
     case mathBlock(tex: String)
     case codeBlock(language: String, code: String)
@@ -60,8 +61,11 @@ public struct MarkdownPreviewParser {
                 }
                 i += 1 // skip closing fence
                 let code = codeLines.joined(separator: "\n")
-                if language.lowercased() == "mermaid" {
+                let langLower = language.lowercased()
+                if langLower == "mermaid" {
                     blocks.append(.mermaid(code: code))
+                } else if langLower == "symdesk-base" || langLower == "base" {
+                    blocks.append(.baseEmbed(code: code))
                 } else {
                     blocks.append(.codeBlock(language: language, code: code))
                 }

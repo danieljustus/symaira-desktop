@@ -85,27 +85,38 @@ type View struct {
 	Template *Template `json:"template,omitempty" yaml:"template,omitempty"`
 }
 
+// PropertyConfig defines the declared schema and metadata for a note property in a base.
+type PropertyConfig struct {
+	Type        string   `json:"type,omitempty" yaml:"type,omitempty"`               // text, number, date, select, multiselect, status, tags, checkbox/bool, relation
+	Label       string   `json:"label,omitempty" yaml:"label,omitempty"`             // Human-readable display label
+	Options     []string `json:"options,omitempty" yaml:"options,omitempty"`         // Ordered allowed options for select/multiselect/status
+	Description string   `json:"description,omitempty" yaml:"description,omitempty"` // Description of the property
+	Default     string   `json:"default,omitempty" yaml:"default,omitempty"`         // Default value
+}
+
 // Base is a named collection of saved views stored as a readable Markdown note in bases/<slug>.md.
 type Base struct {
-	ID          string                 `json:"id"`
-	Path        string                 `json:"path"` // vault-relative, e.g. bases/invoices.md
-	Title       string                 `json:"title"`
-	Description string                 `json:"description,omitempty"`
-	Created     string                 `json:"created"`
-	Tags        []string               `json:"tags,omitempty"`
-	Views       []View                 `json:"views"`
-	Extras      map[string]interface{} `json:"-"`
+	ID          string                    `json:"id"`
+	Path        string                    `json:"path"` // vault-relative, e.g. bases/invoices.md
+	Title       string                    `json:"title"`
+	Description string                    `json:"description,omitempty"`
+	Created     string                    `json:"created"`
+	Tags        []string                  `json:"tags,omitempty"`
+	Properties  map[string]PropertyConfig `json:"properties,omitempty"`
+	Views       []View                    `json:"views"`
+	Extras      map[string]interface{}    `json:"-"`
 }
 
 type baseFrontmatter struct {
-	Type        string                 `yaml:"type"`
-	Title       string                 `yaml:"title"`
-	Created     string                 `yaml:"created"`
-	Tags        []string               `yaml:"tags,omitempty"`
-	BaseID      string                 `yaml:"base_id"`
-	Description string                 `yaml:"description,omitempty"`
-	Views       []View                 `yaml:"views"`
-	Extras      map[string]interface{} `yaml:",inline"`
+	Type        string                    `yaml:"type"`
+	Title       string                    `yaml:"title"`
+	Created     string                    `yaml:"created"`
+	Tags        []string                  `yaml:"tags,omitempty"`
+	BaseID      string                    `yaml:"base_id"`
+	Description string                    `yaml:"description,omitempty"`
+	Properties  map[string]PropertyConfig `yaml:"properties,omitempty"`
+	Views       []View                    `yaml:"views"`
+	Extras      map[string]interface{}    `yaml:",inline"`
 }
 
 // Slugify derives a filesystem-safe slug from a title: lowercased,
@@ -159,6 +170,7 @@ func RenderBase(b *Base) ([]byte, error) {
 		Tags:        tags,
 		BaseID:      b.ID,
 		Description: b.Description,
+		Properties:  b.Properties,
 		Views:       cleanViews,
 		Extras:      b.Extras,
 	}
@@ -270,6 +282,11 @@ func ParseBase(relPath string, data []byte) (*Base, error) {
 		}
 	}
 
+	props := fm.Properties
+	if props == nil {
+		props = make(map[string]PropertyConfig)
+	}
+
 	return &Base{
 		ID:          baseID,
 		Path:        relPath,
@@ -277,6 +294,7 @@ func ParseBase(relPath string, data []byte) (*Base, error) {
 		Description: description,
 		Created:     created,
 		Tags:        doc.Tags,
+		Properties:  props,
 		Views:       views,
 		Extras:      fm.Extras,
 	}, nil

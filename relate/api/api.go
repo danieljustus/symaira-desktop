@@ -15,6 +15,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/danieljustus/symaira-relate/internal/app"
 	"github.com/danieljustus/symaira-relate/internal/domain/contact"
@@ -84,4 +85,42 @@ func Available(ctx context.Context) bool {
 	}
 	defer func() { _ = a.Close() }()
 	return a.Ping(ctx) == nil
+}
+
+// FindContactRefs resolves a display name to the reference-only shapes that
+// carry it. It is the name-side counterpart to ResolveContactRef, for
+// consumers that hold a name rather than an ID — a document's correspondent,
+// for instance.
+//
+// Matching is exact but case-insensitive, and the result is reference-only
+// like everything else on this surface: no contact points, notes, tags or
+// paths. An unmatched name returns an empty slice, not an error: "nobody by
+// that name" is a normal answer, unlike a failing store.
+func FindContactRefs(ctx context.Context, name string) ([]Ref, error) {
+	if strings.TrimSpace(name) == "" {
+		return nil, nil
+	}
+
+	a, err := app.Open(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = a.Close() }()
+
+	found, err := a.Contacts.FindRefsByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	refs := make([]Ref, 0, len(found))
+	for _, ref := range found {
+		refs = append(refs, Ref{
+			Provider:      ref.Provider,
+			SchemaVersion: ref.SchemaVersion,
+			ID:            ref.ID,
+			Kind:          string(ref.Kind),
+			DisplayName:   ref.DisplayName,
+		})
+	}
+	return refs, nil
 }

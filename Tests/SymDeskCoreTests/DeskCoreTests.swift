@@ -297,20 +297,20 @@ final class DeskCoreTests: XCTestCase {
     }
 
     func testDoctorReportToolAvailabilityVariants() {
-        let available = DoctorReport.ToolAvailability(symseek: "ok", symmemory: nil, symingest: nil, symfetch: nil, symvault: nil)
-        XCTAssertTrue(available.isAvailable("symseek"))
+        let available = DoctorReport.ToolAvailability(symmemory: "ok")
+        XCTAssertTrue(available.isAvailable("symmemory"))
 
-        let found = DoctorReport.ToolAvailability(symseek: "found", symmemory: nil, symingest: nil, symfetch: nil, symvault: nil)
-        XCTAssertTrue(found.isAvailable("symseek"))
+        let found = DoctorReport.ToolAvailability(symmemory: "found")
+        XCTAssertTrue(found.isAvailable("symmemory"))
 
-        let status = DoctorReport.ToolAvailability(symseek: "Available", symmemory: nil, symingest: nil, symfetch: nil, symvault: nil)
-        XCTAssertTrue(status.isAvailable("symseek"))
+        let status = DoctorReport.ToolAvailability(symmemory: "Available")
+        XCTAssertTrue(status.isAvailable("symmemory"))
 
-        let missing = DoctorReport.ToolAvailability(symseek: "not found", symmemory: nil, symingest: nil, symfetch: nil, symvault: nil)
-        XCTAssertFalse(missing.isAvailable("symseek"))
+        let missing = DoctorReport.ToolAvailability(symmemory: "not found")
+        XCTAssertFalse(missing.isAvailable("symmemory"))
 
-        let unknown = DoctorReport.ToolAvailability(symseek: nil, symmemory: nil, symingest: nil, symfetch: nil, symvault: nil)
-        XCTAssertFalse(unknown.isAvailable("symseek"))
+        let unknown = DoctorReport.ToolAvailability(symmemory: nil)
+        XCTAssertFalse(unknown.isAvailable("symmemory"))
         XCTAssertFalse(unknown.isAvailable("unknown-tool"))
     }
 

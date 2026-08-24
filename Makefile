@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check font-guard benchmark-large docker-build clean
+.PHONY: build test lint fmt-check font-guard corekit-guard benchmark-large docker-build clean
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -10,11 +10,15 @@ build:
 test:
 	CGO_ENABLED=0 go test -race ./...
 
-lint: fmt-check
+lint: fmt-check corekit-guard
 	go vet ./...
 
 fmt-check:
 	@test -z "$$(gofmt -l .)" || (echo "gofmt diff found:" && gofmt -l . && exit 1)
+
+# Issue #526: corekit dependency pin must stay aligned across all 6 modules.
+corekit-guard:
+	@./scripts/check-corekit-pins.sh
 
 # Issue #352: macOS app text must use .symairaText(role) instead of inline
 # .font(.caption/.headline/...) literals so Dynamic Type scales.

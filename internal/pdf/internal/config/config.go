@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-corekit/configkit"
-	"github.com/danieljustus/symaira-print/internal/press"
+	"github.com/danieljustus/symaira-desktop/internal/pdf/internal/press"
 )
 
 // Config is the full symprint configuration.

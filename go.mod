@@ -6,7 +6,6 @@ require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/danieljustus/symaira-corekit v0.9.1
 	github.com/danieljustus/symaira-ingest v0.0.0
-	github.com/danieljustus/symaira-print v0.0.0
 	github.com/danieljustus/symaira-relate v0.0.0
 	github.com/danieljustus/symaira-seek v0.0.0
 	github.com/fsnotify/fsnotify v1.10.1
@@ -15,6 +14,7 @@ require (
 	github.com/pashagolub/pgxmock/v5 v5.1.0
 	github.com/pdfcpu/pdfcpu v0.15.0
 	github.com/spf13/cobra v1.10.2
+	golang.org/x/image v0.44.0
 	golang.org/x/text v0.40.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.56.0
@@ -42,7 +42,6 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.54.0 // indirect
-	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
@@ -59,7 +58,6 @@ require (
 // public api/ packages through these replaces rather than a published tag.
 replace (
 	github.com/danieljustus/symaira-ingest => ./ingest
-	github.com/danieljustus/symaira-print => ./print
 	github.com/danieljustus/symaira-relate => ./relate
 	github.com/danieljustus/symaira-seek => ./seek
 )

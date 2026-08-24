@@ -3,8 +3,6 @@ package pdf
 import (
 	"context"
 	"testing"
-
-	printapi "github.com/danieljustus/symaira-print/api"
 )
 
 func TestRenderPassesOptions(t *testing.T) {
@@ -13,12 +11,12 @@ func TestRenderPassesOptions(t *testing.T) {
 
 	var gotSource []byte
 	var gotOut string
-	var gotOpts printapi.Options
-	RenderFunc = func(_ context.Context, src []byte, out string, opts printapi.Options) (*printapi.Result, error) {
+	var gotOpts Options
+	RenderFunc = func(_ context.Context, src []byte, out string, opts Options) (*Result, error) {
 		gotSource = src
 		gotOut = out
 		gotOpts = opts
-		return &printapi.Result{
+		return &Result{
 			OutputPath:    out,
 			Profile:       opts.Profile,
 			EngineVersion: "1.0.0",

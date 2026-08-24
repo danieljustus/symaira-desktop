@@ -1,18 +1,12 @@
 # symaira-print
 
 > **Dieses Verzeichnis war bis 2026-08-23 das eigenständige Repository
-> [`symaira-print`](https://github.com/danieljustus/symaira-print).** Es ist jetzt ein
-> nested Go-Modul von [`symaira-desktop`](../README.md); das Repo ist
-> archiviert und seine Homebrew-Formula deprecated. Die Markdown-nach-PDF-Renderer wird über
-> `symdesk export --format pdf` genutzt, angebunden über `print/api`.
+> [`symaira-print`](https://github.com/danieljustus/symaira-print).** Die Go-Implementierung
+> ist nun direkt in das Root-Modul von [`symaira-desktop`](../README.md) unter `internal/pdf`
+> aufgelöst (Issue #537 Pilot-Migration). Der Markdown-nach-PDF-Renderer wird über
+> `symdesk export --format pdf` genutzt.
 > Die Badges, Installations- und Release-Hinweise unten stammen aus der
 > Zeit als eigenes Repo und gelten nicht mehr.
-
-> **Moved 2026-08-21** into `symaira-desktop/print/` as part of the Symaira
-> repo consolidation (27 → 13, `docs/repo-konsolidierung.md` §3.2). This Go
-> module now lives in symaira-desktop; the original
-> `danieljustus/symaira-print` repo remains active until the deep integration
-> is done.
 
 [![CI](https://github.com/danieljustus/symaira-print/actions/workflows/ci.yml/badge.svg)](https://github.com/danieljustus/symaira-print/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/danieljustus/symaira-print)](LICENSE)

@@ -7,7 +7,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MISMATCHES=0
 
 # 1. Check that absorbed library internal packages are never imported outside their own module.
-ABSORBED_MODULES=("print" "seek" "relate" "ingest" "room")
+ABSORBED_MODULES=("seek" "relate" "ingest" "room")
 
 for mod in "${ABSORBED_MODULES[@]}"; do
   import_pattern="github.com/danieljustus/symaira-${mod}/internal"
@@ -31,18 +31,19 @@ while IFS= read -r file; do
   [ -z "$file" ] && continue
   rel_path="${file#"${REPO_ROOT}/"}"
 
-  # Check print imports
+  # Check print imports (dissolved into internal/pdf; no file should import symaira-print)
   if grep -qE '"github\.com/danieljustus/symaira-print' "$file"; then
+    echo "::error::Boundary violation: ${rel_path} imports symaira-print (symaira-print is dissolved into internal/pdf)" >&2
+    MISMATCHES=$((MISMATCHES + 1))
+  fi
+
+  # Check internal/pdf/internal imports (must stay internal to internal/pdf/)
+  if grep -qE '"github\.com/danieljustus/symaira-desktop/internal/pdf/internal' "$file"; then
     case "$rel_path" in
-      internal/pdf/*|internal/testsupport/*)
-        # Permitted facade, must only import api
-        if grep -qE '"github\.com/danieljustus/symaira-print([^/"]|/[^a]|/a[^p]|/ap[^i]|/api/)' "$file"; then
-          echo "::error::Boundary violation: ${rel_path} must only import symaira-print/api" >&2
-          MISMATCHES=$((MISMATCHES + 1))
-        fi
+      internal/pdf/*)
         ;;
       *)
-        echo "::error::Facade violation: ${rel_path} imports symaira-print directly (use internal/pdf facade instead)" >&2
+        echo "::error::Internal import violation: ${rel_path} imports internal/pdf/internal directly (use internal/pdf facade instead)" >&2
         MISMATCHES=$((MISMATCHES + 1))
         ;;
     esac
@@ -114,7 +115,7 @@ while IFS= read -r file; do
 done < <(find "${REPO_ROOT}/cmd" "${REPO_ROOT}/internal" -name "*.go" -type f 2>/dev/null || true)
 
 # 3. Check that absorbed library modules do not keep absorbed cmd/ surfaces
-for mod in print seek relate ingest; do
+for mod in seek relate ingest; do
   if [ -d "${REPO_ROOT}/${mod}/cmd" ]; then
     echo "::error::Absorbed tool cmd/ entry point found: ${mod}/cmd (absorbed modules are consumed via api/)" >&2
     MISMATCHES=$((MISMATCHES + 1))

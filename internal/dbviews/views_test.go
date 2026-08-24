@@ -221,7 +221,7 @@ func TestManagerLegacyMigration(t *testing.T) {
 
 	// Write legacy .symdesk/views.json
 	symdeskDir := filepath.Join(root, ".symdesk")
-	if err := os.MkdirAll(symdeskDir, 0755); err != nil {
+	if err := os.MkdirAll(symdeskDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	legacyViews := []byte(`[
@@ -246,7 +246,7 @@ func TestManagerLegacyMigration(t *testing.T) {
   }
 ]`)
 	legacyFile := filepath.Join(symdeskDir, "views.json")
-	if err := os.WriteFile(legacyFile, legacyViews, 0644); err != nil {
+	if err := os.WriteFile(legacyFile, legacyViews, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -254,6 +254,7 @@ func TestManagerLegacyMigration(t *testing.T) {
 	mgr := NewManager(root)
 
 	// Verify .symdesk/views.json is intact
+	// #nosec G304 -- legacyFile is created below t.TempDir.
 	intactData, err := os.ReadFile(legacyFile)
 	if err != nil {
 		t.Fatalf("legacy file missing after migration: %v", err)

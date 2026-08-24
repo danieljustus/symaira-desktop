@@ -991,12 +991,12 @@ func TestServiceStartupMigratesLegacyViews(t *testing.T) {
 
 	// Write legacy .symdesk/views.json
 	symdeskDir := filepath.Join(root, ".symdesk")
-	if err := os.MkdirAll(symdeskDir, 0755); err != nil {
+	if err := os.MkdirAll(symdeskDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	legacyJSON := []byte(`[{"id":"legacy_svc_1","name":"Legacy Svc View","type":"table","source":"invoices/"}]`)
 	legacyFile := filepath.Join(symdeskDir, "views.json")
-	if err := os.WriteFile(legacyFile, legacyJSON, 0644); err != nil {
+	if err := os.WriteFile(legacyFile, legacyJSON, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1006,7 +1006,7 @@ func TestServiceStartupMigratesLegacyViews(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	svc := New(root, db)
 
@@ -1020,6 +1020,7 @@ func TestServiceStartupMigratesLegacyViews(t *testing.T) {
 	}
 
 	// Check that .symdesk/views.json is still intact
+	// #nosec G304 -- legacyFile is created below t.TempDir.
 	onDisk, err := os.ReadFile(legacyFile)
 	if err != nil {
 		t.Fatal(err)

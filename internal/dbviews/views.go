@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
 
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -313,21 +315,21 @@ func writeFileAtomic(path string, data []byte) error {
 	tmpName := tmp.Name()
 
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		os.Remove(tmpName)
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("write temp file: %w", err)
 	}
 	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		os.Remove(tmpName)
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("sync temp file: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("close temp file: %w", err)
 	}
 	if err := os.Rename(tmpName, path); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("rename temp file: %w", err)
 	}
 	return nil
@@ -356,6 +358,7 @@ func (m *Manager) SetSnapshotFn(fn func(absPath string)) {
 
 func (m *Manager) migrateLegacyViews() {
 	legacyPath := filepath.Join(m.vaultRoot, ".symdesk", "views.json")
+	// #nosec G304 -- legacyPath is derived from the trusted vault root and fixed filename.
 	data, err := os.ReadFile(legacyPath)
 	if err != nil {
 		return
@@ -393,7 +396,7 @@ func (m *Manager) migrateLegacyViews() {
 			title = strings.TrimSuffix(v.Source, "/")
 			title = strings.TrimPrefix(title, "tag:")
 			title = strings.TrimPrefix(title, "notebook:")
-			title = strings.Title(strings.ReplaceAll(title, "-", " "))
+			title = cases.Title(language.English).String(strings.ReplaceAll(title, "-", " "))
 		} else {
 			slug = Slugify(v.Name)
 			title = v.Name
@@ -450,6 +453,7 @@ func (m *Manager) listBasesLocked() ([]*Base, error) {
 		if err != nil {
 			continue
 		}
+		// #nosec G304 -- absPath has been confined with vault.SecurePath.
 		data, err := os.ReadFile(absPath)
 		if err != nil {
 			continue
@@ -486,6 +490,7 @@ func (m *Manager) GetBase(ref string) (*Base, error) {
 
 	absPath, err := vault.SecurePath(m.vaultRoot, rel)
 	if err == nil {
+		// #nosec G304 -- absPath has been confined with vault.SecurePath.
 		if data, err := os.ReadFile(absPath); err == nil {
 			return ParseBase(rel, data)
 		}

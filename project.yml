@@ -9,11 +9,11 @@ options:
 packages:
   symaira-appkit:
     url: https://github.com/danieljustus/symaira-appkit
-    # 0.9.2 (tag) — meet/ SPM integration (repo consolidation 2b) requires a
-    # shared exact-pinned appkit graph; meet pins 0.9.2. 0.9.2 is additive to
+    # 0.10.0 — meet/ SPM integration (repo consolidation 2b) requires a
+    # shared exact-pinned appkit graph; meet pins 0.9.2. 0.10.0 is additive to
     # the previously used 0.7.0 (SymairaMCP, MCPError data, registry entries),
     # no breaking changes per CHANGELOG.
-    exactVersion: 0.9.2
+    exactVersion: 0.10.0
   symaira-meet:
     url: https://github.com/danieljustus/symaira-meet
     path: meet
@@ -79,7 +79,7 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         SWIFT_VERSION: "6.0"
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited)"
-        MARKETING_VERSION: "0.9.0"
+        MARKETING_VERSION: "0.10.0"
         CURRENT_PROJECT_VERSION: "1"
 
   SymDeskCoreTests:
@@ -156,7 +156,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
-        MARKETING_VERSION: "0.9.0"
+        MARKETING_VERSION: "0.10.0"
         CURRENT_PROJECT_VERSION: "1"
 
   SymDeskMobileShare:
@@ -176,7 +176,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
-        MARKETING_VERSION: "0.9.0"
+        MARKETING_VERSION: "0.10.0"
         CURRENT_PROJECT_VERSION: "1"
 
   SymDeskWidget:
@@ -200,7 +200,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
-        MARKETING_VERSION: "0.9.0"
+        MARKETING_VERSION: "0.10.0"
         CURRENT_PROJECT_VERSION: "1"
 
   SymDeskMobileTests:

@@ -10,7 +10,7 @@ Identity: **Markdown-vault workspace product, and the human shell of the ecosyst
 # Go core (CLI/MCP/API/worker)
 make build              # → bin/symdesk (go build ./cmd/symdesk)
 make test               # CGO_ENABLED=0 go test -race ./...
-make lint               # gofmt + go vet + corekit-guard + boundary-guard
+make lint               # gofmt + go vet + corekit-guard + boundary-guard + nested-version-guard
 make docker-build       # self-host container
 
 # The nested modules are NOT covered by the root `./...` — Go does not
@@ -81,6 +81,11 @@ The absorbed tools live in this repository as nested modules with their own `go.
    - Root `go.mod` resolves absorbed modules via local `replace` directives pointing to `./print`, `./seek`, `./relate`, `./ingest`.
    - Absorbed modules (`print`, `seek`, `relate`, `ingest`) do NOT contain their own standalone `cmd/` entry points or duplicate tool launchers; `symdesk` is the single unified binary and human shell of the ecosystem.
    - Enforced automatically in `make lint` and CI via `scripts/check-module-boundaries.sh`.
+
+3. **Version alignment and resolution parity across nested modules (issue #535):**
+   - All Go directives across root and nested modules (`ingest`, `print`, `relate`, `room`, `seek`) are aligned with root Go version (`1.26.6`).
+   - Shared dependency versions must remain consistent across root and all nested modules so nested test resolution matches root resolution.
+   - Enforced automatically in `make lint` and CI via `scripts/check-nested-versions.sh`.
 
 ## Conventions (repo-specific)
 

@@ -96,8 +96,11 @@ The following optional fields provide first-class document query metadata. They 
 - **Resolution:** Resolution is case-insensitive. If multiple files have the same name in different folders, the behavior is undefined (it is recommended to use unique names or fully qualified paths).
 
 ## 5. Attachments
-- Attachments (images, PDFs) should be referenced using standard Markdown links `[Title](path/to/file.pdf)` or embedded via `![Title](path/to/image.png)`.
+- Attachments (images, PDFs, audio, documents) can be referenced in two ways:
+  1. Standard Markdown links `[Title](path/to/file.pdf)` or Markdown image embeds `![Title](path/to/image.png)`.
+  2. Wikilink transclusion embeds `![[filename.ext]]` (e.g. `![[scan.png]]`, `![[report.pdf]]`, or with vault-relative path `![[assets/scan.png]]`).
 - Attachments can be stored anywhere in the vault, though an `assets/` or `attachments/` subfolder is recommended.
+- Embed-style attachment references (`![[filename.ext]]`) resolve against non-Markdown files in the vault by vault-relative path or case-insensitive base name. Missing attachment targets are reported as missing attachments during health scanning.
 
 ## 6. Templates (contract_version 2)
 - Reusable note templates SHOULD be stored in the `templates/` folder at the root of the vault.
@@ -177,3 +180,10 @@ A notebook is a named, bounded set of vault sources (`symdesk notebook`, see the
 **Removing a source never deletes the referenced file.** A notebook only references other vault files; it never owns their lifecycle.
 
 > **Backwards compatibility:** Contract v4 adds the `notebook` type and its frontmatter fields. A vault with no notebooks indexes and behaves exactly as a v1/v2/v3 vault always has.
+
+## 11. Delegated Third-Party Formats
+SymDesk explicitly recognizes select third-party formats commonly used in Markdown vault ecosystems (e.g. Obsidian). These delegated formats are recognized by vault scanning and entity indexing, but are not interpreted, rendered, or mutated by SymDesk:
+
+- **Obsidian Canvas (`.canvas`):** Whiteboard and canvas files. Wikilinks to existing canvas files (e.g. `[[Board.canvas]]`) resolve as valid vault files and produce no broken link warnings. Canvas rendering and editing remain delegated to Obsidian.
+- **Excalidraw Drawings (`*.excalidraw.md`):** Diagram files using the `.excalidraw.md` extension. They remain recognized as vault file entities, but their embedded JSON drawing payloads are excluded from full-text search indexing to prevent search noise.
+- **Dataview and Templater Code Blocks:** Fenced code blocks in note bodies (e.g. ```` ```dataview ````, ```` ```templater ````). SymDesk leaves these blocks untouched and does not evaluate them. Wikilinks (`[[…]]`) and tags (`#tag`) within code blocks are ignored during link and tag extraction.

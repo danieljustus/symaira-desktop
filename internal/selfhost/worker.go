@@ -199,7 +199,7 @@ func (w *Worker) process(ctx context.Context, input string) (text, engine, model
 }
 
 func (w *Worker) processJob(ctx context.Context, jobID, input string) (text, engine, model string, err error) {
-	text, engine, model, err = w.processViaSymingest(ctx, input)
+	text, engine, model, err = w.processViaIngest(ctx, input)
 	if err != nil {
 		return "", "", "", err
 	}
@@ -209,7 +209,7 @@ func (w *Worker) processJob(ctx context.Context, jobID, input string) (text, eng
 	}
 
 	logGuard(jobID, input, 1, verdict)
-	retryText, retryEngine, retryModel, retryErr := w.processViaSymingest(ctx, input)
+	retryText, retryEngine, retryModel, retryErr := w.processViaIngest(ctx, input)
 	if retryErr != nil {
 		return "", "", "", fmt.Errorf("OCR plausibility retry failed after %s: %w", verdict.Reason, retryErr)
 	}

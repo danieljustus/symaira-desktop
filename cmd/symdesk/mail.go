@@ -44,7 +44,7 @@ func newMailStatusCmd() *cobra.Command {
 
 			// The status command doesn't start the watcher — it just
 			// surfaces the list of configured accounts and their current
-			// state by running a one-shot symingest mail list.
+			// state by reading the configured mail accounts once.
 			accounts, err := mail.ListConfiguredAccounts(configPath)
 			if err != nil {
 				return fmt.Errorf("failed to list mail accounts: %w", err)

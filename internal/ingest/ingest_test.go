@@ -1,15 +1,20 @@
 package ingest
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 func TestIngestFile(t *testing.T) {
-	// Ensure we test the fallback path by removing symingest from PATH,
-	// and isolate $HOME so a real managed-runtime symingest can't be found.
+	// Exercise the built-in fallback: the pipeline refuses, so IngestFile must
+	// still copy the file into the inbox and leave a placeholder note rather
+	// than losing it.
 	t.Setenv("PATH", "/usr/bin:/bin")
 	t.Setenv("HOME", t.TempDir())
 	vaultRoot := t.TempDir()
@@ -62,45 +67,102 @@ func TestIngestFileMissingSource(t *testing.T) {
 	}
 }
 
-func TestIngestDelegation(t *testing.T) {
-	tempDir := t.TempDir()
-
-	mockSymingest := filepath.Join(tempDir, "symingest")
-	script := "#!/bin/sh\n" +
-		"if [ \"$1\" = \"version\" ]; then\n" +
-		"	echo '{\"schema_version\": 1, \"version\": \"0.7.0\"}'\n" +
-		"	exit 0\n" +
-		"fi\n" +
-		"if [ \"$1\" = \"ingest\" ]; then\n" +
-		"	if [ \"$4\" = \"--json\" ]; then\n" +
-		"		echo '{\"path\": \"mock_output.md\"}'\n" +
-		"		exit 0\n" +
-		"	fi\n" +
-		"	exit 1\n" +
-		"fi\n" +
-		"exit 1\n"
-
-	if err := os.WriteFile(mockSymingest, []byte(script), 0755); err != nil {
-		t.Fatalf("failed to write mock script: %v", err)
+// stubIngest points the document-pipeline seam at a scripted double.
+func stubIngest(t *testing.T, fn func(source string, opts ingestapi.Options) (*ingestapi.Result, error)) {
+	t.Helper()
+	original := IngestFunc
+	t.Cleanup(func() { IngestFunc = original })
+	IngestFunc = func(_ context.Context, source string, opts ingestapi.Options) (*ingestapi.Result, error) {
+		return fn(source, opts)
 	}
+}
 
-	t.Setenv("PATH", tempDir+":"+os.Getenv("PATH"))
-
-	ok, _ := HasSymingest()
-	if !ok {
-		t.Fatalf("expected HasSymingest to be true with mock")
-	}
-
+func TestIngestDelegatesToPipeline(t *testing.T) {
 	vaultRoot := t.TempDir()
+
+	var seen ingestapi.Options
+	stubIngest(t, func(_ string, opts ingestapi.Options) (*ingestapi.Result, error) {
+		seen = opts
+		return &ingestapi.Result{VaultPath: "mock_output.md"}, nil
+	})
+
 	srcFile := filepath.Join(t.TempDir(), "test.txt")
-	os.WriteFile(srcFile, []byte("test"), 0644)
+	if err := os.WriteFile(srcFile, []byte("test"), 0600); err != nil {
+		t.Fatal(err)
+	}
 
 	relPath, err := IngestFile(vaultRoot, srcFile)
 	if err != nil {
 		t.Fatalf("IngestFile failed: %v", err)
 	}
-
 	if relPath != "mock_output.md" {
 		t.Errorf("expected mock_output.md, got %s", relPath)
+	}
+	if seen.Vault != vaultRoot {
+		t.Errorf("pipeline vault = %q, want %q", seen.Vault, vaultRoot)
+	}
+}
+
+// The pipeline reports notes as absolute paths; callers expect a path relative
+// to the vault they asked for.
+func TestIngestFileRelativizesVaultPath(t *testing.T) {
+	vaultRoot := t.TempDir()
+	stubIngest(t, func(string, ingestapi.Options) (*ingestapi.Result, error) {
+		return &ingestapi.Result{VaultPath: filepath.Join(vaultRoot, "notes", "scan.md")}, nil
+	})
+
+	srcFile := filepath.Join(t.TempDir(), "test.txt")
+	if err := os.WriteFile(srcFile, []byte("test"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	relPath, err := IngestFile(vaultRoot, srcFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if relPath != filepath.Join("notes", "scan.md") {
+		t.Errorf("expected a vault-relative note path, got %q", relPath)
+	}
+}
+
+// A duplicate is reported as such rather than silently rewritten through the
+// built-in fallback, which would write a second note for the same content.
+func TestIngestFileSurfacesDuplicate(t *testing.T) {
+	stubIngest(t, func(string, ingestapi.Options) (*ingestapi.Result, error) {
+		return nil, ingestapi.ErrDuplicate
+	})
+
+	srcFile := filepath.Join(t.TempDir(), "test.txt")
+	if err := os.WriteFile(srcFile, []byte("test"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := IngestFile(t.TempDir(), srcFile)
+	if !errors.Is(err, ingestapi.ErrDuplicate) {
+		t.Fatalf("expected ErrDuplicate, got %v", err)
+	}
+}
+
+// When the pipeline cannot run at all, the file must still land in the inbox.
+func TestIngestFileFallsBackWhenPipelineUnavailable(t *testing.T) {
+	stubIngest(t, func(string, ingestapi.Options) (*ingestapi.Result, error) {
+		return nil, ingestapi.ErrNoVault
+	})
+
+	vaultRoot := t.TempDir()
+	srcFile := filepath.Join(t.TempDir(), "test.txt")
+	if err := os.WriteFile(srcFile, []byte("test"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	relPath, err := IngestFile(vaultRoot, srcFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(relPath, "inbox/") {
+		t.Errorf("expected the built-in inbox fallback, got %q", relPath)
+	}
+	if _, err := os.Stat(filepath.Join(vaultRoot, relPath)); err != nil {
+		t.Errorf("fallback note was not written: %v", err)
 	}
 }

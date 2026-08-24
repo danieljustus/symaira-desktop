@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -17,16 +16,22 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/secrets"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 // siblingTools are the binaries SymDesk still composes at runtime. Search
-// (symseek), PDF rendering (symprint), contacts (symrelate) and meeting
-// capture (symmeet) are no longer on this list: the repo consolidation moved
-// them into this binary, so probing for them would report a tool that is not
-// supposed to exist. What remains are the genuinely separate products —
-// symmemory and symvault from symbrain's side, symbrowse for web clipping —
-// plus symingest, which still runs out of process.
-var siblingTools = []string{"symmemory", "symvault", "symbrowse", "symingest"}
+// (symseek), PDF rendering (symprint), contacts (symrelate), meeting capture
+// (symmeet) and document ingest (symingest) are no longer on this list: the
+// repo consolidation moved them into this binary, so probing for them would
+// report a tool that is not supposed to exist. What remains are the genuinely
+// separate products — symmemory and symvault from symbrain's side, symbrowse
+// for web clipping.
+var siblingTools = []string{"symmemory", "symvault", "symbrowse"}
+
+// ArchivePathFunc resolves where the absorbed ingest pipeline preserves
+// originals. It is a variable so a doctor test can pin the answer instead of
+// depending on the developer's own symingest configuration.
+var ArchivePathFunc = ingestapi.ArchivePath
 
 func newDoctorCmd() *cobra.Command {
 	return &cobra.Command{
@@ -268,33 +273,17 @@ func newDoctorCmd() *cobra.Command {
 	}
 }
 
-// checkArchiveInVault tries to discover the symingest archive path and reports
-// whether it is contained inside the vault directory. It prefers the
-// symingest JSON doctor output, falls back to the SYMINGEST_ARCHIVE_PATH env
-// variable, and finally uses the XDG default.
+// checkArchiveInVault resolves the ingest archive path and reports whether it
+// is contained inside the vault directory — a layout that would make the vault
+// index its own archived originals. The path comes from the absorbed ingest
+// pipeline, which resolves it exactly as the CLI does; the env variable and
+// XDG fallbacks below remain for the case where that resolution fails.
 func checkArchiveInVault(vaultPath string) (string, bool, error) {
 	archivePath := ""
 
-	// 1. Try symingest doctor JSON.
-	if ok, _ := compose.HasTool("symingest"); ok {
-		out, err := exec.Command("symingest", "doctor", "--json").Output()
-		if err == nil {
-			var report struct {
-				Checks []struct {
-					Name    string `json:"name"`
-					Status  string `json:"status"`
-					Message string `json:"message"`
-				} `json:"checks"`
-			}
-			if json.Unmarshal(out, &report) == nil {
-				for _, check := range report.Checks {
-					if check.Name == "path.archive" && check.Message != "" {
-						archivePath = check.Message
-						break
-					}
-				}
-			}
-		}
+	// 1. Ask the absorbed ingest pipeline.
+	if path, err := ArchivePathFunc(); err == nil {
+		archivePath = path
 	}
 
 	// 2. Env override.

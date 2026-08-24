@@ -121,19 +121,18 @@ public struct DoctorReport: Codable, Sendable {
     }
 
     /// The sibling binaries `symdesk doctor` still probes. Search, PDF
-    /// rendering, contacts and meeting capture were absorbed into `symdesk`
-    /// by the repo consolidation and are therefore no longer reported here.
+    /// rendering, contacts, meeting capture and document ingest were absorbed
+    /// into `symdesk` by the repo consolidation and are therefore no longer
+    /// reported here.
     public struct ToolAvailability: Codable, Sendable {
         public let symmemory: String?
         public let symvault: String?
         public let symbrowse: String?
-        public let symingest: String?
 
-        public init(symmemory: String? = nil, symvault: String? = nil, symbrowse: String? = nil, symingest: String? = nil) {
+        public init(symmemory: String? = nil, symvault: String? = nil, symbrowse: String? = nil) {
             self.symmemory = symmemory
             self.symvault = symvault
             self.symbrowse = symbrowse
-            self.symingest = symingest
         }
 
         /// Whether a tool name resolves to "ok" or "available".
@@ -143,7 +142,6 @@ public struct DoctorReport: Codable, Sendable {
             case "symmemory": val = symmemory
             case "symvault": val = symvault
             case "symbrowse": val = symbrowse
-            case "symingest": val = symingest
             default: val = nil
             }
             guard let v = val else { return false }

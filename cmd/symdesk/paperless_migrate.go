@@ -6,18 +6,18 @@ import (
 
 	"github.com/spf13/cobra"
 
-	symingestconfig "github.com/danieljustus/symaira-desktop/internal/symingest/config"
-	"github.com/danieljustus/symaira-desktop/internal/symingest/ingest"
-	"github.com/danieljustus/symaira-desktop/internal/symingest/ocr"
-	"github.com/danieljustus/symaira-desktop/internal/symingest/paperlessimport"
-	"github.com/danieljustus/symaira-desktop/internal/symingest/store"
-	"github.com/danieljustus/symaira-desktop/internal/symingest/writer"
+	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
+// PaperlessMigrateFunc is the migration seam. The pipeline runs in-process, so
+// a test overrides this rather than keeping a sibling binary off $PATH.
+var PaperlessMigrateFunc = ingestapi.PaperlessMigrate
+
 // newPaperlessMigrateCmd imports documents from a live Paperless-ngx instance
-// through its API, using the absorbed symingest pipeline (OCR + store +
-// writer). It complements the export-based `paperless import` command: this is
-// the direct API migration path (repo consolidation step 3b).
+// through its API, using the absorbed ingest pipeline (OCR + store + writer)
+// via its public api package. It complements the export-based `paperless
+// import` command: this is the direct API migration path (repo consolidation
+// step 3b).
 func newPaperlessMigrateCmd() *cobra.Command {
 	var (
 		baseURL     string
@@ -49,49 +49,27 @@ updates existing notes keyed on the Paperless document ID and checksum.`,
 				return fmt.Errorf("--token is required")
 			}
 
-			cfg, err := symingestconfig.Load()
-			if err != nil {
-				return fmt.Errorf("load symingest config: %w", err)
-			}
-
-			st, err := store.Open(cfg.DBPath)
-			if err != nil {
-				return fmt.Errorf("open document store: %w", err)
-			}
-			defer st.Close()
-
-			engine := ocr.NewEngine(cfg.OCRLang, cfg.OllamaBaseURL, cfg.OllamaModel)
-			pipeline := &ingest.Pipeline{
-				Engine:     engine,
-				Store:      st,
-				Writer:     &writer.NoteWriter{Vault: cfg.Vault},
-				ArchiveDir: cfg.ArchivePath,
-			}
-
 			var since time.Time
 			if sinceStr != "" {
-				since, err = time.Parse(time.RFC3339, sinceStr)
+				parsed, err := time.Parse(time.RFC3339, sinceStr)
 				if err != nil {
 					return fmt.Errorf("invalid --since (want RFC3339): %w", err)
 				}
+				since = parsed
 			}
 
-			opts := paperlessimport.Options{
-				BaseURL:       baseURL,
-				Token:         token,
-				Since:         since,
-				DryRun:        dryRun,
-				Plan:          plan,
-				Resume:        resume,
-				DeepVerify:    deepVerify,
-				RetryFailed:   retryFailed,
-				Concurrency:   concurrency,
-				Limit:         limit,
-				TargetVault:   cfg.Vault,
-				TargetArchive: cfg.ArchivePath,
-			}
-
-			stats, err := paperlessimport.Run(ctx, opts, pipeline)
+			stats, err := PaperlessMigrateFunc(ctx, ingestapi.PaperlessOptions{
+				BaseURL:     baseURL,
+				Token:       token,
+				Since:       since,
+				DryRun:      dryRun,
+				Plan:        plan,
+				Resume:      resume,
+				DeepVerify:  deepVerify,
+				RetryFailed: retryFailed,
+				Concurrency: concurrency,
+				Limit:       limit,
+			})
 			if err != nil {
 				return fmt.Errorf("paperless migration failed: %w", err)
 			}

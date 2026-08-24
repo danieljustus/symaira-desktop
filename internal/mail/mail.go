@@ -1,31 +1,28 @@
-// Package mail implements automated IMAP mail ingestion through symingest,
-// following the same scheduled-intake pattern as the inbox watcher. It
-// periodically calls symingest to fetch mail for configured accounts and
-// routes the resulting documents through the existing ingest pipeline.
+// Package mail implements automated IMAP mail ingestion through the absorbed
+// ingest pipeline, following the same scheduled-intake pattern as the inbox
+// watcher. It periodically polls the configured accounts and routes the
+// fetched attachments through the existing ingest pipeline.
 //
-// Password safety: this package never logs or stores credential values. It
-// shells out to symingest, which reads credentials from its own config
-// (TOML with symvault:// references or redacted plaintext passwords).
+// Password safety: this package never logs, stores, or even sees credential
+// values. The pipeline resolves them from its own config (TOML with
+// symvault:// references or redacted plaintext passwords) and only ever hands
+// back staged files.
 package mail
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
+	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 // Status holds the runtime state for a single mail account.
@@ -39,8 +36,8 @@ type Status struct {
 	LastRunCount  int       `json:"last_run_count"`
 }
 
-// MailWatcher periodically fetches mail through symingest and routes
-// resulting documents into the vault through the existing ingest pipeline.
+// MailWatcher periodically polls the configured IMAP accounts and routes the
+// fetched attachments into the vault through the existing ingest pipeline.
 // It tracks per-account status and deduplicates processed messages using
 // SimHash fingerprints.
 type MailWatcher struct {
@@ -55,9 +52,9 @@ type MailWatcher struct {
 	vaultRoot string // cached for path operations
 }
 
-// New creates a MailWatcher with the given symingest config path and
-// service reference. The config path should point to the symingest
-// config.toml that holds mail account definitions.
+// New creates a MailWatcher with the given mail config path and service
+// reference. The config path should point to the symingest config.toml that
+// holds the mail account definitions.
 func New(configPath string, svc *service.Service) (*MailWatcher, error) {
 	if configPath == "" {
 		configPath = filepath.Join(os.Getenv("HOME"), ".config", "symingest", "config.toml")
@@ -129,48 +126,31 @@ func (w *MailWatcher) fetchAll(ctx context.Context) {
 	}
 }
 
-// accountInfo is a minimal representation parsed from symingest mail list.
+// accountInfo is a minimal representation of a configured mail account.
 type accountInfo struct {
 	ID       string `json:"id"`
 	Host     string `json:"host"`
 	Username string `json:"username"`
 }
 
-// listAccounts returns the configured mail accounts from symingest.
-// On error (missing binary, no config, etc.) it returns an empty slice
-// and logs the error; the watcher continues to retry on the next tick.
+// listAccounts returns the configured mail accounts. On error (unreadable
+// config, and so on) it returns an empty slice and logs the error; the watcher
+// continues to retry on the next tick.
 func (w *MailWatcher) listAccounts() ([]accountInfo, error) {
-	ok, _ := ingest.HasSymingest()
-	if !ok {
-		return nil, fmt.Errorf("symingest not available")
-	}
-	bin, err := compose.Resolve("symingest")
+	accounts, err := ingest.MailAccountsFunc(w.configPath)
 	if err != nil {
-		return nil, fmt.Errorf("symingest not available: %w", err)
+		return nil, fmt.Errorf("read mail accounts: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, bin, "mail", "--json", //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
-		"--config", w.configPath, "list")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &out
-
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("symingest mail list failed: %w (output: %s)", err, strings.TrimSpace(out.String()))
+	result := make([]accountInfo, 0, len(accounts))
+	for _, account := range accounts {
+		result = append(result, accountInfo{
+			ID:       account.ID,
+			Host:     account.Host,
+			Username: account.Username,
+		})
 	}
-
-	var response struct {
-		SchemaVersion int           `json:"schema_version"`
-		Accounts      []accountInfo `json:"accounts"`
-	}
-	if err := json.Unmarshal(out.Bytes(), &response); err != nil {
-		return nil, fmt.Errorf("failed to parse mail list response: %w", err)
-	}
-
-	return response.Accounts, nil
+	return result, nil
 }
 
 // fetchAccount fetches mail for a single account and processes results.
@@ -229,8 +209,8 @@ type fetchMessage struct {
 	Subject string `json:"subject"`
 	Date    string `json:"date"`
 	Body    string `json:"body"`
-	// The symingest output may include a temp file path for the rendered
-	// .eml or .md content.
+	// FilePath is the staged attachment the poll wrote to disk. The watcher
+	// hands that file to the service ingest pipeline as-is.
 	FilePath string `json:"file_path"`
 }
 
@@ -246,63 +226,43 @@ func (m *fetchMessage) simhash() string {
 	return simhash.ComputeHex(text)
 }
 
-// fetchMessages calls symingest mail fetch for the given account and
-// returns the parsed message list. The symingest binary handles IMAP
-// connection, authentication, and message retrieval.
+// fetchMessages runs a single IMAP poll for the given account and returns the
+// attachments it staged. Idempotency (per-message tracking and the per-account
+// UID cursor) lives in the pipeline's own store, so a message is fetched once
+// even across restarts of this watcher.
 func (w *MailWatcher) fetchMessages(accountID string) ([]fetchMessage, error) {
-	ok, _ := ingest.HasSymingest()
-	if !ok {
-		return nil, fmt.Errorf("symingest not available")
-	}
-	bin, err := compose.Resolve("symingest")
-	if err != nil {
-		return nil, fmt.Errorf("symingest not available: %w", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
-	var args []string
-	if accountID != "" {
-		args = []string{"mail", "--json",
-			"--config", w.configPath, "fetch", "--id", accountID}
-	} else {
-		args = []string{"mail", "--json",
-			"--config", w.configPath, "fetch"}
+	stagingDir := filepath.Join(w.vaultRoot, "inbox", ".mail_tmp")
+
+	result, err := ingest.FetchMailFunc(ctx, ingestapi.MailFetchOptions{
+		ConfigPath: w.configPath,
+		AccountID:  accountID,
+		StagingDir: stagingDir,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("mail fetch failed: %w", err)
+	}
+	if reason, ok := result.Errors[accountID]; ok {
+		return nil, fmt.Errorf("mail fetch failed: %s", reason)
 	}
 
-	cmd := exec.CommandContext(ctx, bin, args...) //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
-	var out bytes.Buffer
-	cmd.Stdout = &out
-
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("symingest mail fetch failed: %w (output: %s)", err, strings.TrimSpace(out.String()))
+	messages := make([]fetchMessage, 0, len(result.Attachments))
+	for _, attachment := range result.Attachments {
+		messages = append(messages, fetchMessage{
+			UID:      attachment.MessageID,
+			From:     attachment.Correspondent,
+			FilePath: attachment.Path,
+		})
 	}
-
-	// Parse the fetch response. Each line is a JSON object.
-	var messages []fetchMessage
-	scanner := bufio.NewScanner(&out)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		var msg fetchMessage
-		if err := json.Unmarshal([]byte(line), &msg); err != nil {
-			log.Printf("MailWatcher: failed to parse fetch output line: %v", err)
-			continue
-		}
-		messages = append(messages, msg)
-	}
-
 	return messages, nil
 }
 
-// ingestMessage writes the fetched message content to a temp file and
-// routes it through the existing service ingest pipeline. The service
-// handles note creation, indexing, and symingest OCR delegation.
+// ingestMessage routes a fetched message through the existing service ingest
+// pipeline. The service handles note creation, indexing, and OCR.
 func (w *MailWatcher) ingestMessage(ctx context.Context, msg fetchMessage) error {
-	// If symingest already wrote a file, use it directly.
+	// The poll already staged the attachment on disk; use that file directly.
 	if msg.FilePath != "" {
 		if _, err := os.Stat(msg.FilePath); err == nil {
 			_, err := w.svc.Ingest(msg.FilePath)

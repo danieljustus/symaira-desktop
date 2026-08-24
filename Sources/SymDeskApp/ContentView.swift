@@ -1440,7 +1440,6 @@ private struct DoctorReportPopoverView: View {
                         toolRow("symmemory", report: report)
                         toolRow("symvault", report: report)
                         toolRow("symbrowse", report: report)
-                        toolRow("symingest", report: report)
                     }
                 }
             } else {

@@ -3,16 +3,18 @@ package mail_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/mail"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
+	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 func setupMailTest(t *testing.T) (vaultRoot string, svc *service.Service, cleanup func()) {
@@ -47,71 +49,66 @@ func setupMailTest(t *testing.T) (vaultRoot string, svc *service.Service, cleanu
 	return vaultRoot, svc, cleanup
 }
 
-// writeMockSymingest writes a mock symingest binary to dir that can handle
-// mail list and mail fetch commands.
-func writeMockSymingest(t *testing.T, dir string, accountsJSON string) {
+// stubMailPipeline points the account-listing and poll seams at doubles.
+//
+// The mail poll runs in-process now, so a test scripts these seams instead of
+// putting a fake symingest binary on $PATH. Each poll returns the same two
+// staged attachments, which is what lets the deduplication test observe the
+// watcher skipping messages it has already ingested.
+func stubMailPipeline(t *testing.T, accounts []ingestapi.MailAccount, fetchErr error) {
 	t.Helper()
+	originalAccounts, originalFetch := ingest.MailAccountsFunc, ingest.FetchMailFunc
+	t.Cleanup(func() {
+		ingest.MailAccountsFunc, ingest.FetchMailFunc = originalAccounts, originalFetch
+	})
 
-	// Write a mock that responds to version, mail list, mail fetch, and ingest.
-	// Arguments: symingest {version,mail,ingest} ...
-	script := `#!/bin/sh
-subcmd=""
-for a in "$@"; do
-  case "$a" in
-    version|mail|ingest) subcmd="$a";;
-  esac
-done
-case "$subcmd" in
-  version)
-    printf '{"schema_version":1,"version":"0.7.0"}\n'
-    exit 0
-    ;;
-  mail)
-    # Find the action (list/fetch)
-    action=""
-    for a in "$@"; do
-      case "$a" in
-        list|fetch) action="$a";;
-      esac
-    done
-    case "$action" in
-      list)
-        printf '%s\n' '` + strings.ReplaceAll(accountsJSON, `'`, `'"'"'`) + `'
-        exit 0
-        ;;
-      fetch)
-        printf '%s\n' '{"uid":"001","from":"alice@example.com","subject":"Test Email","date":"2026-01-01","body":"This is a test email body unique content 42."}'
-        printf '%s\n' '{"uid":"002","from":"bob@example.com","subject":"Another Email","date":"2026-01-02","body":"Different test content for dedup check."}'
-        exit 0
-        ;;
-    esac
-    ;;
-  ingest)
-    # Accept --json or --vault flags, write a dummy result
-    printf '{"path":"mock_mail_note.md"}\n'
-    exit 0
-    ;;
-esac
-exit 1
-`
-	path := filepath.Join(dir, "symingest")
-	if err := os.WriteFile(path, []byte(script), 0755); err != nil {
-		t.Fatalf("failed to write mock symingest: %v", err)
+	ingest.MailAccountsFunc = func(string) ([]ingestapi.MailAccount, error) {
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
+		return accounts, nil
 	}
+
+	ingest.FetchMailFunc = func(_ context.Context, opts ingestapi.MailFetchOptions) (*ingestapi.MailFetchResult, error) {
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
+		if err := os.MkdirAll(opts.StagingDir, 0o700); err != nil {
+			return nil, err
+		}
+
+		result := &ingestapi.MailFetchResult{}
+		for _, m := range []struct{ id, from, body string }{
+			{"msg-001", "alice@example.com", "This is a test email body unique content 42."},
+			{"msg-002", "bob@example.com", "Different test content for dedup check."},
+		} {
+			path := filepath.Join(opts.StagingDir, m.id+".eml")
+			if err := os.WriteFile(path, []byte(m.body), 0o600); err != nil {
+				return nil, err
+			}
+			result.Attachments = append(result.Attachments, ingestapi.MailAttachment{
+				Path:          path,
+				MessageID:     m.id,
+				Correspondent: m.from,
+				AccountID:     opts.AccountID,
+			})
+		}
+		return result, nil
+	}
+}
+
+func testAccounts() []ingestapi.MailAccount {
+	return []ingestapi.MailAccount{{ID: "acc1", Host: "imap.example.com", Username: "alice"}}
 }
 
 func TestMailWatcher_ListsAccountsAndFetches(t *testing.T) {
 	_, svc, cleanup := setupMailTest(t)
 	defer cleanup()
 
-	tmpDir := t.TempDir()
-	t.Setenv("PATH", tmpDir+":"+os.Getenv("PATH"))
+	stubMailPipeline(t, testAccounts(), nil)
 
-	accountsJSON := `{"schema_version":1,"accounts":[{"id":"acc1","host":"imap.example.com","username":"alice"}]}`
-	writeMockSymingest(t, tmpDir, accountsJSON)
-
-	configPath := filepath.Join(tmpDir, "config.toml")
-	if err := os.WriteFile(configPath, []byte(""), 0644); err != nil {
+	configPath := filepath.Join(t.TempDir(), "config.toml")
+	if err := os.WriteFile(configPath, []byte(""), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -139,7 +136,7 @@ func TestMailWatcher_ListsAccountsAndFetches(t *testing.T) {
 			fetchCount.Store(1)
 			break
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 
 	cancel()
@@ -167,14 +164,10 @@ func TestMailWatcher_Deduplication(t *testing.T) {
 	_, svc, cleanup := setupMailTest(t)
 	defer cleanup()
 
-	tmpDir := t.TempDir()
-	t.Setenv("PATH", tmpDir+":"+os.Getenv("PATH"))
+	stubMailPipeline(t, testAccounts(), nil)
 
-	accountsJSON := `{"schema_version":1,"accounts":[{"id":"acc1","host":"imap.example.com","username":"alice"}]}`
-	writeMockSymingest(t, tmpDir, accountsJSON)
-
-	configPath := filepath.Join(tmpDir, "config.toml")
-	if err := os.WriteFile(configPath, []byte(""), 0644); err != nil {
+	configPath := filepath.Join(t.TempDir(), "config.toml")
+	if err := os.WriteFile(configPath, []byte(""), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -202,7 +195,7 @@ func TestMailWatcher_Deduplication(t *testing.T) {
 		t.Fatal("expected at least one account status entry")
 	}
 
-	// The first run should have ingested 2 messages (both from mock).
+	// The first run should have ingested 2 messages (both from the stub).
 	// Subsequent runs should find them as duplicates and add 0.
 	// The MessagesTotal should be exactly 2, not more.
 	s := statuses[0]
@@ -213,7 +206,7 @@ func TestMailWatcher_Deduplication(t *testing.T) {
 		t.Error("expected at least one message to be ingested")
 	}
 
-	// MessagesTotal should not exceed 2 (the number of unique messages our mock produces).
+	// MessagesTotal should not exceed 2 (the number of unique messages the stub produces).
 	if s.MessagesTotal > 2 {
 		t.Errorf("expected at most 2 messages total (dedup should prevent re-ingesting), got %d", s.MessagesTotal)
 	}
@@ -223,29 +216,10 @@ func TestMailWatcher_ErrorSurfacing(t *testing.T) {
 	_, svc, cleanup := setupMailTest(t)
 	defer cleanup()
 
-	tmpDir := t.TempDir()
-	t.Setenv("PATH", tmpDir+":"+os.Getenv("PATH"))
+	stubMailPipeline(t, nil, errors.New("connection refused"))
 
-	// Write a mock that always errors on list.
-	script := `#!/bin/sh
-case "$1" in
-  version)
-    echo '{"schema_version":1,"version":"0.7.0"}'
-    ;;
-  mail)
-    echo '{"schema_version":1,"accounts":[],"error":"connection refused"}' >&2
-    exit 1
-    ;;
-esac
-exit 1
-`
-	mockPath := filepath.Join(tmpDir, "symingest")
-	if err := os.WriteFile(mockPath, []byte(script), 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	configPath := filepath.Join(tmpDir, "config.toml")
-	if err := os.WriteFile(configPath, []byte(""), 0644); err != nil {
+	configPath := filepath.Join(t.TempDir(), "config.toml")
+	if err := os.WriteFile(configPath, []byte(""), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -267,9 +241,11 @@ exit 1
 	cancel()
 	<-done
 
-	// The watcher should not panic and should return empty statuses.
-	statuses := w.Statuses()
-	_ = statuses // verifying no panic is the main test
+	// A failing poll must leave the watcher alive with no account statuses,
+	// rather than panicking or recording a phantom account.
+	if statuses := w.Statuses(); len(statuses) != 0 {
+		t.Errorf("expected no account statuses after a failing poll, got %v", statuses)
+	}
 }
 
 func TestRedactCredentials(t *testing.T) {

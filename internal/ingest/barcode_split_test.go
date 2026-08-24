@@ -1,6 +1,8 @@
 package ingest
 
 import (
+	"context"
+	"errors"
 	"image"
 	"image/color"
 	"image/draw"
@@ -13,11 +15,13 @@ import (
 
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/oned"
+
+	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 // The tests in this file exercise ScanPDFForBarcodes and ingestPDFWithSplit
-// with fake pdftoppm / symingest binaries on PATH (same pattern as
-// mockSymingestBinary in jobs_test.go).  The fake pdftoppm "renders" pages
+// with a fake pdftoppm binary on PATH and the split/ingest pipeline seams
+// stubbed out (see stubSplitPipeline).  The fake pdftoppm "renders" pages
 // by copying pre-generated PNG files (real Code39 barcodes produced with the
 // gozxing writer, so the detection pipeline is exercised end to end).
 
@@ -64,48 +68,6 @@ for p in $MOCK_CORRUPT_PAGES; do
 	cp "$MOCK_IMG_DIR/corrupt.png" "$prefix-$num.png" || exit 1
 done
 exit 0
-`
-
-// mockSymingestScript answers version, splits any PDF into two parts via
-// split-pdf, and reports a note path per ingested part.  Set
-// MOCK_INGEST_FAIL=1 to make every ingest fail.
-const mockSymingestScript = `if [ "$1" = "version" ]; then
-	echo '{"schema_version": 1, "version": "0.7.0"}'
-	exit 0
-fi
-if [ "$1" = "split-pdf" ]; then
-	outdir=""
-	prev=""
-	for a in "$@"; do
-		if [ "$prev" = "--output-dir" ]; then
-			outdir="$a"
-		fi
-		prev="$a"
-	done
-	if [ -z "$outdir" ]; then
-		exit 1
-	fi
-	echo "part-1" > "$outdir/part-1.pdf"
-	echo "part-2" > "$outdir/part-2.pdf"
-	exit 0
-fi
-if [ "$1" = "ingest" ]; then
-	if [ "$MOCK_INGEST_FAIL" = "1" ]; then
-		exit 1
-	fi
-	path=""
-	prev=""
-	for a in "$@"; do
-		if [ "$prev" = "--json" ]; then
-			path="$a"
-		fi
-		prev="$a"
-	done
-	base="${path##*/}"
-	echo "{\"path\": \"note-${base%.pdf}.md\"}"
-	exit 0
-fi
-exit 1
 `
 
 // writeMockScript writes an executable shell script into dir.
@@ -156,7 +118,7 @@ func writeBlankPNG(t *testing.T, path string) {
 
 // setupBarcodeFixture creates the shared image set and a mock dir with
 // pdftoppm (and optionally symingest) fakes.
-func setupBarcodeFixture(t *testing.T, withSymingest bool) (imgDir, mockDir string) {
+func setupBarcodeFixture(t *testing.T) (imgDir, mockDir string) {
 	t.Helper()
 	imgDir = t.TempDir()
 	writeBarcodePNG(t, filepath.Join(imgDir, "barcode.png"), "PATCH-T")
@@ -168,14 +130,41 @@ func setupBarcodeFixture(t *testing.T, withSymingest bool) (imgDir, mockDir stri
 
 	mockDir = t.TempDir()
 	writeMockScript(t, mockDir, "pdftoppm", mockPdftoppmScript)
-	if withSymingest {
-		writeMockScript(t, mockDir, "symingest", mockSymingestScript)
-	}
 	return imgDir, mockDir
 }
 
+// stubSplitPipeline points the split and ingest seams at doubles that mirror
+// what the pipeline does for these fixtures: every split yields two parts, and
+// every part ingests to a note named after it. ingestFails makes every ingest
+// fail, so the all-parts-failed path can be exercised.
+func stubSplitPipeline(t *testing.T, ingestFails bool) {
+	t.Helper()
+	originalSplit, originalIngest := SplitPDFFunc, IngestFunc
+	t.Cleanup(func() { SplitPDFFunc, IngestFunc = originalSplit, originalIngest })
+
+	SplitPDFFunc = func(_ context.Context, _, _, outputDir string) ([]string, error) {
+		var parts []string
+		for _, name := range []string{"part-1.pdf", "part-2.pdf"} {
+			path := filepath.Join(outputDir, name)
+			if err := os.WriteFile(path, minimalPDF(), 0600); err != nil {
+				return nil, err
+			}
+			parts = append(parts, path)
+		}
+		return parts, nil
+	}
+
+	IngestFunc = func(_ context.Context, source string, _ ingestapi.Options) (*ingestapi.Result, error) {
+		if ingestFails {
+			return nil, errors.New("ingest failed")
+		}
+		base := strings.TrimSuffix(filepath.Base(source), ".pdf")
+		return &ingestapi.Result{VaultPath: "note-" + base + ".md"}, nil
+	}
+}
+
 func TestScanPDFForBarcodes(t *testing.T) {
-	imgDir, mockDir := setupBarcodeFixture(t, false)
+	imgDir, mockDir := setupBarcodeFixture(t)
 	pdfPath := filepath.Join(t.TempDir(), "scan.pdf")
 	if err := os.WriteFile(pdfPath, minimalPDF(), 0600); err != nil {
 		t.Fatal(err)
@@ -225,16 +214,19 @@ func TestScanPDFForBarcodes(t *testing.T) {
 }
 
 // envForSplitTools points PATH at the mock dir plus the system dirs that
-// contain only coreutils (no qpdf / pdftoppm / symingest).
+// contain only coreutils (no qpdf / pdftoppm).
 const envForSplitTools = "%s:/bin:/usr/bin"
 
-// setMockSplitEnv installs the fake pdftoppm (and symingest) tools and the
-// barcode image fixture.  When firstScanHasBarcode is true, the first page
+// setMockSplitEnv installs the fake pdftoppm tool, the barcode image fixture
+// and — when withPipeline is set — the split/ingest seam doubles.  When firstScanHasBarcode is true, the first page
 // scan reports a separator on page 2 while later scans (of split parts)
 // report none.
-func setMockSplitEnv(t *testing.T, withSymingest, firstScanHasBarcode bool) (vaultRoot, pdfPath string) {
+func setMockSplitEnv(t *testing.T, withPipeline, firstScanHasBarcode bool) (vaultRoot, pdfPath string) {
 	t.Helper()
-	imgDir, mockDir := setupBarcodeFixture(t, withSymingest)
+	imgDir, mockDir := setupBarcodeFixture(t)
+	if withPipeline {
+		stubSplitPipeline(t, false)
+	}
 	stateDir := t.TempDir()
 
 	t.Setenv("PATH", strings.ReplaceAll(envForSplitTools, "%s", mockDir))
@@ -289,7 +281,7 @@ func TestIngestPDFWithSplit_ScanError(t *testing.T) {
 	if err := os.WriteFile(pdfPath, minimalPDF(), 0600); err != nil {
 		t.Fatal(err)
 	}
-	// No pdftoppm / qpdf / symingest on PATH: scanning fails up front.
+	// No pdftoppm / qpdf on PATH: scanning fails up front.
 	t.Setenv("PATH", "/usr/bin:/bin")
 	t.Setenv("HOME", t.TempDir())
 
@@ -303,8 +295,8 @@ func TestIngestPDFWithSplit_ScanError(t *testing.T) {
 }
 
 func TestIngestPDFWithSplit_AllPartsFailed(t *testing.T) {
-	vaultRoot, pdfPath := setMockSplitEnv(t, true, true)
-	t.Setenv("MOCK_INGEST_FAIL", "1")
+	vaultRoot, pdfPath := setMockSplitEnv(t, false, true)
+	stubSplitPipeline(t, true)
 
 	notes, err := ingestPDFWithSplit(vaultRoot, pdfPath, DefaultBarcodeConfig())
 	if err == nil || !strings.Contains(err.Error(), "all parts failed to ingest") {
@@ -329,7 +321,7 @@ func TestIngestFileWithBarcodeSplit_SplitToolsNoSeparators(t *testing.T) {
 		t.Fatalf("expected 1 note (fallback), got %d: %v", len(notes), notes)
 	}
 	if !strings.HasPrefix(notes[0], "note-") {
-		t.Errorf("expected note from symingest ingest, got %q", notes[0])
+		t.Errorf("expected note from the ingest pipeline, got %q", notes[0])
 	}
 }
 

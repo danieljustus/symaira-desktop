@@ -2,15 +2,14 @@ package ingest
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"time"
 )
 
 // SplitPDF splits a PDF into multiple files at the given 1-based page
@@ -36,17 +35,14 @@ func SplitPDF(pdfPath string, splitPoints []int, outputDir string) ([]string, er
 		return []string{dst}, nil
 	}
 
-	// Prefer qpdf for splitting; fall back to symingest if available.
+	// Prefer qpdf for splitting; otherwise go through the in-process ingest
+	// pipeline, which drives the Poppler utilities and reports its own
+	// missing-tool error — so this does not gate on HasPopplerSplit and
+	// swallow a pipeline that is present but failing for another reason.
 	if qpdfPath, err := exec.LookPath("qpdf"); err == nil {
 		return splitWithQPDF(qpdfPath, pdfPath, splitPoints, outputDir)
 	}
-
-	// Try symingest as a fallback.
-	if ok, _ := HasSymingest(); ok {
-		return splitWithSymingest(pdfPath, splitPoints, outputDir)
-	}
-
-	return nil, fmt.Errorf("no PDF split tool available: install qpdf or symingest")
+	return splitWithPipeline(pdfPath, splitPoints, outputDir)
 }
 
 // splitWithQPDF uses qpdf to extract page ranges.
@@ -76,6 +72,9 @@ func splitWithQPDF(qpdfPath, pdfPath string, splitPoints []int, outputDir string
 }
 
 func qpdfExtract(qpdfPath, inputPath, outputPath, pageRange string) error {
+	//nolint:gosec // G204: qpdfPath comes from exec.LookPath, and the remaining
+	// arguments are a fixed argv of file paths and a page range, never shell-
+	// interpreted.
 	cmd := exec.Command(qpdfPath,
 		"--empty", "--pages", inputPath, pageRange,
 		"--", outputPath,
@@ -88,42 +87,35 @@ func qpdfExtract(qpdfPath, inputPath, outputPath, pageRange string) error {
 	return nil
 }
 
-// splitWithSymingest shells out to symingest split-pdf.
-func splitWithSymingest(pdfPath string, splitPoints []int, outputDir string) ([]string, error) {
-	// Build the split_at argument: comma-separated page numbers.
+// splitWithPipeline splits through the absorbed ingest pipeline, which runs
+// the Poppler utilities in-process rather than as a sibling symingest binary.
+func splitWithPipeline(pdfPath string, splitPoints []int, outputDir string) ([]string, error) {
+	// The pipeline's selector lists the pages to split *after*, which is the
+	// same meaning splitPoints carries here.
 	strPoints := make([]string, len(splitPoints))
 	for i, p := range splitPoints {
 		strPoints[i] = strconv.Itoa(p)
 	}
 
-	bin, err := compose.Resolve("symingest")
-	if err != nil {
-		return nil, fmt.Errorf("symingest not found: %w", err)
-	}
-	cmd := exec.Command(bin, "split-pdf", //nolint:gosec // resolved via compose.Resolve; args are CLI flags/values, not shell-interpreted
-		"--input", pdfPath,
-		"--split-at", strings.Join(strPoints, ","),
-		"--output-dir", outputDir,
-	)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("symingest split-pdf: %w: %s", err, stderr.String())
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
 
-	// symingest produces files like part-1.pdf, part-2.pdf, ...
-	entries, err := os.ReadDir(outputDir)
+	parts, err := SplitPDFFunc(ctx, pdfPath, strings.Join(strPoints, ","), outputDir)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("split pdf: %w", err)
 	}
-	var parts []string
-	for _, e := range entries {
-		if !e.IsDir() && strings.HasPrefix(e.Name(), "part-") && strings.HasSuffix(e.Name(), ".pdf") {
-			parts = append(parts, filepath.Join(outputDir, e.Name()))
+	return parts, nil
+}
+
+// HasPopplerSplit reports whether the Poppler utilities the pipeline's split
+// needs are all available on PATH.
+func HasPopplerSplit() bool {
+	for _, tool := range []string{"pdfinfo", "pdfseparate", "pdfunite"} {
+		if _, err := exec.LookPath(tool); err != nil {
+			return false
 		}
 	}
-	sort.Slice(parts, func(i, j int) bool { return parts[i] < parts[j] })
-	return parts, nil
+	return true
 }
 
 // BarcodeSplitResult holds the result of splitting a PDF by barcode separators.

@@ -3,10 +3,14 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
+	"github.com/danieljustus/symaira-desktop/internal/sidecar"
+	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
 func (s *Service) ViewsList() ([]dbviews.View, error) {
@@ -84,13 +88,105 @@ func (s *Service) ViewsNewEntry(id, title string) (string, error) {
 	return path, nil
 }
 
+// resolveViewDocuments resolves the scoped candidate documents for a view
+// before properties are retrieved.
+// Supported source scopes:
+//   - empty (""): entire vault
+//   - folder prefix (e.g. "invoices/"): only documents under that directory
+//   - tag (e.g. "tag:invoice"): only documents carrying that tag
+//   - notebook (e.g. "notebook:<id>"): only documents in that notebook's sources
+func (s *Service) resolveViewDocuments(view *dbviews.View) ([]*vault.Document, error) {
+	source := strings.TrimSpace(view.Source)
+	if source == "" {
+		return s.DB.ListFiles("")
+	}
+
+	if strings.HasPrefix(source, "tag:") {
+		tagName := strings.TrimSpace(strings.TrimPrefix(source, "tag:"))
+		tagName = strings.TrimPrefix(tagName, "#")
+		if tagName == "" {
+			return nil, fmt.Errorf("view source tag cannot be empty")
+		}
+		docsList, err := s.DB.DocsList(sidecar.DocsFilter{})
+		if err != nil {
+			return nil, err
+		}
+		var docs []*vault.Document
+		for _, r := range docsList {
+			if containsTag(r.Tags, tagName) {
+				docs = append(docs, &vault.Document{
+					Path:  r.Path,
+					Title: r.Title,
+				})
+			}
+		}
+		return docs, nil
+	}
+
+	if strings.HasPrefix(source, "notebook:") {
+		notebookRef := strings.TrimSpace(strings.TrimPrefix(source, "notebook:"))
+		if notebookRef == "" {
+			return nil, fmt.Errorf("view source notebook reference cannot be empty")
+		}
+		nb, err := s.NotebookGet(notebookRef)
+		if err != nil {
+			return nil, fmt.Errorf("view source notebook %q not found: %w", notebookRef, err)
+		}
+		var docs []*vault.Document
+		for _, src := range nb.Sources {
+			absPath, err := vault.SecurePath(s.VaultRoot, src)
+			if err != nil {
+				continue
+			}
+			info, statErr := os.Stat(absPath)
+			if statErr != nil || info.IsDir() {
+				continue
+			}
+			title := ""
+			if docTitle, err := s.DB.GetTitle(absPath); err == nil && docTitle != "" {
+				title = docTitle
+			} else if parsed, err := vault.ParseFile(absPath); err == nil && parsed.Title != "" {
+				title = parsed.Title
+			} else {
+				base := filepath.Base(src)
+				title = strings.TrimSuffix(base, filepath.Ext(base))
+			}
+			docs = append(docs, &vault.Document{
+				Path:  absPath,
+				Title: title,
+			})
+		}
+		return docs, nil
+	}
+
+	// Folder prefix source
+	folderRel := strings.TrimPrefix(source, "/")
+	absDir, err := vault.SecurePath(s.VaultRoot, folderRel)
+	if err != nil {
+		return nil, fmt.Errorf("view source folder %q is invalid: %w", view.Source, err)
+	}
+	info, statErr := os.Stat(absDir)
+	if statErr != nil {
+		if os.IsNotExist(statErr) {
+			return nil, fmt.Errorf("view source folder %q does not exist", view.Source)
+		}
+		return nil, fmt.Errorf("view source folder %q: %w", view.Source, statErr)
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("view source folder %q is not a directory", view.Source)
+	}
+
+	dirPrefix := filepath.Clean(absDir) + string(filepath.Separator)
+	return s.DB.ListFiles(dirPrefix)
+}
+
 func (s *Service) ViewsExec(id string) ([]map[string]interface{}, error) {
 	view, err := s.ViewsGet(id)
 	if err != nil {
 		return nil, err
 	}
 
-	docs, err := s.DB.ListFiles("")
+	docs, err := s.resolveViewDocuments(view)
 	if err != nil {
 		return nil, err
 	}

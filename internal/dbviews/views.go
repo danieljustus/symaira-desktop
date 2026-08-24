@@ -51,8 +51,13 @@ type View struct {
 	FilterGroup  *FilterGroup              `json:"filter_group,omitempty"`
 	Sorts        []Sort                    `json:"sorts"`
 	Columns      []string                  `json:"columns"`
-	Source       string                    `json:"source,omitempty"`
-	Template     *Template                 `json:"template,omitempty"`
+	// Source defines the scope of documents evaluated by the view:
+	// - empty (""): query the entire vault
+	// - folder prefix (e.g. "invoices/"): only documents under that directory
+	// - tag (e.g. "tag:invoice"): only documents carrying that tag
+	// - notebook (e.g. "notebook:<id>"): only documents in the notebook's sources
+	Source   string    `json:"source,omitempty"`
+	Template *Template `json:"template,omitempty"`
 }
 
 func (m *Manager) Delete(id string) error {

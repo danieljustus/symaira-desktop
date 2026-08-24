@@ -4,7 +4,7 @@ go 1.26.5
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/danieljustus/symaira-corekit v0.9.0
+	github.com/danieljustus/symaira-corekit v0.9.1
 	modernc.org/sqlite v1.56.0
 )
 

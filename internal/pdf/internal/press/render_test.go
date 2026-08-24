@@ -194,6 +194,7 @@ func mockTypst(t *testing.T, dir string, succeed bool) string {
 	script := filepath.Join(dir, "typst")
 	content := "#!/bin/sh\n"
 	if succeed {
+		content += "if [ \"$1\" = \"--version\" ]; then echo 'typst 0.15.0 (abcd1234)'; exit 0; fi\n"
 		// The output file is the last argument; eval is POSIX sh portable
 		// (unlike bash's ${!#}, which dash on CI runners doesn't support).
 		content += "eval out=\\${$#}; > \"$out\"\n"

@@ -22,7 +22,6 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/pdf"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval"
 	ingestapi "github.com/danieljustus/symaira-ingest/api"
-	printapi "github.com/danieljustus/symaira-print/api"
 )
 
 // errIsolated is what every inert ingest seam returns. A test that wants a
@@ -49,8 +48,8 @@ func IsolateSideEffects() {
 	pdf.EngineAvailableFunc = func(context.Context) (bool, string) {
 		return false, "no typesetting engine in tests"
 	}
-	pdf.RenderFunc = func(context.Context, []byte, string, printapi.Options) (*printapi.Result, error) {
-		return nil, printapi.ErrEngineUnavailable
+	pdf.RenderFunc = func(context.Context, []byte, string, pdf.Options) (*pdf.Result, error) {
+		return nil, pdf.ErrEngineUnavailable
 	}
 
 	// ErrNoVault, not errIsolated: an isolated test should see what a machine

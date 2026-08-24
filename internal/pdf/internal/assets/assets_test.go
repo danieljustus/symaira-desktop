@@ -146,9 +146,10 @@ func TestMaterialize(t *testing.T) {
 
 // TestMaterializeFonts writes every embedded brand font into a target dir,
 // asserts the returned dir path, and checks byte equality per file against
-// the embedded content (TTF binaries and the license text).
+// the embedded content (TTF binaries).
 func TestMaterializeFonts(t *testing.T) {
-	names, err := fs.Glob(fontFS, "fonts/*")
+	fontFS := FontsFS()
+	names, err := fs.Glob(fontFS, "*.ttf")
 	if err != nil {
 		t.Fatalf("listing embedded fonts: %v", err)
 	}

@@ -1,7 +1,8 @@
-// Package assets embeds the Typst profile templates and brand fonts into the
-// binary and materializes them to a real directory so the external typst process
-// can read them. Keeping templates and fonts embedded keeps symprint a single
-// self-contained binary (standalone-first).
+// Package assets embeds the Typst profile templates and vendored packages into
+// the binary and materializes them to a real directory so the external typst
+// process can read them. Keeping templates and vendored packages embedded (and
+// reaching brand fonts via internal/draw/fonts without duplicating them) keeps
+// the PDF renderer self-contained.
 package assets
 
 import (
@@ -12,13 +13,12 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	drawfonts "github.com/danieljustus/symaira-desktop/internal/draw/fonts"
 )
 
 //go:embed templates/*.typ
 var fsys embed.FS
-
-//go:embed fonts/*.ttf fonts/*.txt
-var fontFS embed.FS
 
 // packagesFS embeds vendored Typst packages so every render works offline.
 // Currently holds @preview/cmarker:0.1.9 (MIT) and @preview/mitex:0.2.7
@@ -33,6 +33,10 @@ var packagesFS embed.FS
 // and callers that want to read package files directly.
 func PackagesFS() embed.FS { return packagesFS }
 
+// FontsFS returns the embedded filesystem containing the brand font files,
+// shared with the SymDraw renderer to maintain a single source of truth.
+func FontsFS() embed.FS { return drawfonts.FS() }
+
 // VersionKey returns a deterministic content hash over every embedded tree
 // (templates, fonts and vendored packages), covering both file paths and file
 // contents. It changes whenever any embedded asset changes, so callers can key
@@ -45,7 +49,7 @@ func VersionKey() (string, error) {
 		fsys fs.FS
 	}{
 		{"templates", fsys},
-		{"fonts", fontFS},
+		{"fonts", drawfonts.FS()},
 		{"packages", packagesFS},
 	} {
 		h.Write([]byte(tree.name + "\x00"))
@@ -91,12 +95,14 @@ func Materialize(dir string) error {
 	})
 }
 
-// MaterializeFonts writes every embedded font into dir as real files so typst
-// can discover them via --font-path. Returns the path to the font directory.
+// MaterializeFonts writes every embedded font from internal/draw/fonts into dir
+// as real files so typst can discover them via --font-path. Returns the path to
+// the font directory.
 func MaterializeFonts(dir string) (string, error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
+	fontFS := drawfonts.FS()
 	err := fs.WalkDir(fontFS, ".", func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err

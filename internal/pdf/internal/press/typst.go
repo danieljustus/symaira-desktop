@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/danieljustus/symaira-print/internal/assets"
+	"github.com/danieljustus/symaira-desktop/internal/pdf/internal/assets"
 )
 
 // cmarkerVersion pins the vendored @preview/cmarker package that parses

@@ -3,6 +3,7 @@ package health
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -78,9 +79,29 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 		if relErr != nil {
 			continue
 		}
+		relSlash := filepath.ToSlash(rel)
+
+		// Check derived artifact health
+		if doc.IsDerived() && doc.DerivedFrom != "" {
+			sourcePath, exists, _ := resolveDerivedSource(vaultRoot, doc.Path, doc.DerivedFrom)
+			if !exists {
+				report.addFinding("orphaned_derived_artifact", "warning", relSlash,
+					fmt.Sprintf("derived artifact %q source %q does not exist", relSlash, doc.DerivedFrom),
+					"review-derived", "Source document is missing or has been deleted")
+			} else {
+				sourceInfo, sErr := os.Stat(sourcePath)
+				derivedInfo, dErr := os.Stat(doc.Path)
+				if sErr == nil && dErr == nil && sourceInfo.ModTime().After(derivedInfo.ModTime()) {
+					report.addFinding("stale_derived_artifact", "warning", relSlash,
+						fmt.Sprintf("derived artifact %q is older than its source %q", relSlash, doc.DerivedFrom),
+						"regenerate-derived", "Source document was modified after artifact generation")
+				}
+			}
+		}
+
 		for _, link := range doc.Links {
 			if target := normalizeLinkTarget(link); target != "" && !linkExists(target, paths, titles) {
-				report.addFinding("broken_wikilink", "warning", filepath.ToSlash(rel), fmt.Sprintf("wikilink target %q does not resolve to a vault document", target), "review-link", "Choose an existing target or remove the stale link")
+				report.addFinding("broken_wikilink", "warning", relSlash, fmt.Sprintf("wikilink target %q does not resolve to a vault document", target), "review-link", "Choose an existing target or remove the stale link")
 			}
 		}
 	}
@@ -144,4 +165,66 @@ func linkExists(target string, paths, titles map[string]struct{}) bool {
 	}
 	_, ok := titles[strings.ToLower(target)]
 	return ok
+}
+
+// resolveDerivedSource locates the authoritative source note for a derived artifact.
+// It checks vault-relative paths, paths relative to the derived note's directory,
+// and note titles/basenames.
+func resolveDerivedSource(vaultRoot, docPath, derivedFrom string) (string, bool, error) {
+	target := strings.TrimSpace(derivedFrom)
+	if strings.HasPrefix(target, "[[") && strings.HasSuffix(target, "]]") {
+		target = strings.TrimPrefix(strings.TrimSuffix(target, "]]"), "[[")
+		if pipe := strings.IndexByte(target, '|'); pipe >= 0 {
+			target = target[:pipe]
+		}
+		if anchor := strings.IndexAny(target, "#^"); anchor >= 0 {
+			target = target[:anchor]
+		}
+	}
+	target = strings.TrimSpace(target)
+	if target == "" {
+		return "", false, nil
+	}
+
+	candidates := []string{
+		filepath.Join(vaultRoot, target),
+		filepath.Join(filepath.Dir(docPath), target),
+	}
+	if filepath.Ext(target) == "" {
+		candidates = append(candidates,
+			filepath.Join(vaultRoot, target+".md"),
+			filepath.Join(filepath.Dir(docPath), target+".md"),
+		)
+	}
+
+	for _, cand := range candidates {
+		rel, err := filepath.Rel(vaultRoot, cand)
+		if err != nil || strings.HasPrefix(rel, "..") {
+			continue
+		}
+		resolved, err := vault.SecurePath(vaultRoot, rel)
+		if err == nil {
+			if info, err := os.Stat(resolved); err == nil && !info.IsDir() {
+				return resolved, true, nil
+			}
+		}
+	}
+
+	var foundPath string
+	_ = vault.Walk(vaultRoot, func(p string) error {
+		if foundPath != "" {
+			return nil
+		}
+		base := filepath.Base(p)
+		nameWithoutExt := strings.TrimSuffix(base, filepath.Ext(base))
+		if strings.EqualFold(base, target) || strings.EqualFold(nameWithoutExt, target) || strings.EqualFold(p, target) {
+			foundPath = p
+		}
+		return nil
+	})
+	if foundPath != "" {
+		return foundPath, true, nil
+	}
+
+	return "", false, nil
 }

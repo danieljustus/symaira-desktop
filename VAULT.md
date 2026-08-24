@@ -90,14 +90,30 @@ The following optional fields provide first-class document query metadata. They 
 - `simhash` (string, 16-char hex): 64-bit text SimHash for near-duplicate / template detection.
 - `asn` (positive integer): A vault-wide unique archive serial number for the physical paper archive. It is optional, but when present it MUST be a YAML integer greater than zero and MUST not be assigned to any other note in the vault. `symdesk doc asn <file> next` allocates the lowest available number; `symdesk doctor` reports malformed or duplicate assignments.
 
+### Derived Artifacts (contract_version 4)
+Files in the vault generated from an authoritative source note (such as summaries, converted formats, or rendered graphics) can declare provenance via frontmatter:
+- `derived_from` (string): vault-relative path or wikilink to the authoritative source note (e.g. `notes/report.md` or `[[Report]]`).
+- `derived` (boolean, optional): explicitly marks the file as a derived artifact even if no specific source note is tracked.
+
+**Index exclusion:** Derived artifacts are excluded from the sidecar index (`files`, full-text search, document listings). They do not pollute search results or list operations as if they were authoritative human-written prose.
+**Rebuild durability:** Provenance is stored directly in the Markdown frontmatter, so the distinction between authoritative notes and derived artifacts survives a complete sidecar rebuild from disk.
+**Health checks:** `vault_health` inspects derived files with a `derived_from` field:
+- If the source note is missing: reported as an `orphaned_derived_artifact` finding.
+- If the source note has a modification timestamp newer than the derived artifact: reported as a `stale_derived_artifact` finding.
+
 ## 4. Wikilink Semantics
 - **Syntax:** `[[Filename]]` or `[[Filename|Display Text]]`.
 - **Target:** Wikilinks link to other Markdown files in the vault by their base name (without `.md`).
 - **Resolution:** Resolution is case-insensitive. If multiple files have the same name in different folders, the behavior is undefined (it is recommended to use unique names or fully qualified paths).
 
-## 5. Attachments
-- Attachments (images, PDFs) should be referenced using standard Markdown links `[Title](path/to/file.pdf)` or embedded via `![Title](path/to/image.png)`.
-- Attachments can be stored anywhere in the vault, though an `assets/` or `attachments/` subfolder is recommended.
+## 5. Attachments & Assets
+- Attachments (images, PDFs, binary assets) should be referenced using standard Markdown links `[Title](path/to/file.pdf)` or embedded via `![Title](path/to/image.png)`.
+- Attachments can be stored anywhere in the vault, though an `assets/` or `attachments/` subfolder is recommended (default: `assets`).
+- **Vault Asset Writer:** Binary assets stored through the Go core (`symdesk asset store`, MCP `desk_asset_store`, `vault.StoreAsset`) or the native app follow shared safety and naming rules:
+  - **Folder resolution:** Confined to the vault root; absolute paths and `..` traversal are rejected and fall back safely to `assets`.
+  - **Collision-safe naming:** Stored assets use `base.ext`, `base-2.ext`, `base-3.ext`, ... to prevent accidental overwrites.
+  - **Base name sanitization:** Path separators (`/`, `\`, `:`), control characters, and newlines in preferred names are replaced with hyphens.
+  - **Atomic writes:** Writes use a temp file and atomic rename so partial writes cannot corrupt the vault.
 
 ## 6. Templates (contract_version 2)
 - Reusable note templates SHOULD be stored in the `templates/` folder at the root of the vault.

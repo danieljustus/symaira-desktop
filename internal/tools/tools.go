@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -101,6 +102,7 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(false, newNotebookAddSourceTool(options.GetService)),
 		entry(false, newNotebookRemoveSourceTool(options.GetService)),
 		entry(false, newAutofillTool(options.GetService)),
+		entry(false, newAssetStoreTool(options.GetService)),
 	}
 	registry := &Registry{tools: make([]Tool, 0, len(entries)), byName: make(map[string]Tool, len(entries))}
 	for _, entry := range entries {
@@ -822,6 +824,51 @@ func newUndoTaskTool(getService ServiceFactory) *Tool {
 				"deleted":  len(cp.NewFiles),
 				"skipped":  cp.Skipped,
 				"partial":  cp.Partial(),
+			}, nil
+		},
+	}
+}
+
+func newAssetStoreTool(getService ServiceFactory) *Tool {
+	return &Tool{
+		Name:        "desk_asset_store",
+		Description: "Stores binary data (base64-encoded or plain text) into the vault assets folder with collision-safe naming and returns the vault-relative path and Markdown link.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"data":{"type":"string","description":"content to store (base64 string or plain text)"},"preferred_name":{"type":"string","description":"optional preferred filename (e.g. image.png)"},"extension":{"type":"string","description":"file extension (e.g. png, pdf, svg)"},"is_base64":{"type":"boolean","description":"true if data is base64 encoded"}},"required":["data"]}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				Data          string `json:"data"`
+				PreferredName string `json:"preferred_name"`
+				Extension     string `json:"extension"`
+				IsBase64      bool   `json:"is_base64"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			if args.Data == "" {
+				return nil, fmt.Errorf("data is required")
+			}
+			var content []byte
+			if args.IsBase64 {
+				decoded, err := base64.StdEncoding.DecodeString(args.Data)
+				if err != nil {
+					return nil, fmt.Errorf("decode base64 data: %w", err)
+				}
+				content = decoded
+			} else {
+				content = []byte(args.Data)
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer func() { _ = db.Close() }()
+			relPath, mdLink, err := svc.StoreAssetWithLink(content, args.PreferredName, args.Extension)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{
+				"path":          relPath,
+				"markdown_link": mdLink,
 			}, nil
 		},
 	}

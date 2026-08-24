@@ -147,6 +147,7 @@ func (db *DB) RefreshIndex(vaultRoot string) error {
 		if err != nil {
 			return err
 		}
+
 		if cached, ok, err := db.StatCache(path); err != nil {
 			return err
 		} else if ok && cached.Size == info.Size() && cached.ModTime == info.ModTime().UnixNano() {
@@ -157,6 +158,10 @@ func (db *DB) RefreshIndex(vaultRoot string) error {
 		if err != nil {
 			return err
 		}
+		if doc.IsDerived() {
+			return db.DeleteDocument(doc.Path)
+		}
+
 		indexed, err := db.IsIndexed(doc.Path, doc.SHA256)
 		if err != nil {
 			return err
@@ -173,6 +178,9 @@ func (db *DB) RefreshIndex(vaultRoot string) error {
 
 // IndexDocument indexes a single document into the sidecar.
 func (db *DB) IndexDocument(doc *vault.Document) error {
+	if doc.IsDerived() {
+		return db.DeleteDocument(doc.Path)
+	}
 	if doc.ASN != nil {
 		if err := vault.ValidateASN(*doc.ASN); err != nil {
 			return fmt.Errorf("invalid document ASN: %w", err)
@@ -369,6 +377,10 @@ func (db *DB) Prune(vaultRoot string) (int, error) {
 	// Build a set of valid paths by walking the vault (respects ignore rules).
 	valid := make(map[string]bool)
 	if err := vault.Walk(vaultRoot, func(path string) error {
+		doc, err := vault.ParseFile(path)
+		if err == nil && doc.IsDerived() {
+			return nil
+		}
 		valid[path] = true
 		return nil
 	}); err != nil {

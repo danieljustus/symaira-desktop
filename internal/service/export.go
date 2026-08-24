@@ -110,7 +110,13 @@ func (s *Service) Export(relPath, viewID, outputPath, format, profile string) (*
 		if ok, hint := pdf.EngineAvailable(); !ok {
 			return nil, fmt.Errorf("PDF export requires a typesetting engine: %s", hint)
 		}
-		res, err := pdf.Render(rendered, outputPath, profile)
+		var sourceDir string
+		if relPath != "" {
+			sourceDir = filepath.Dir(filepath.Join(s.VaultRoot, relPath))
+		} else if viewID != "" {
+			sourceDir = s.VaultRoot
+		}
+		res, err := pdf.Render(rendered, outputPath, profile, sourceDir)
 		if err != nil {
 			return nil, err
 		}

@@ -60,7 +60,7 @@ func writeExportNote(t *testing.T, svc *Service, name, title, body string) strin
 	t.Helper()
 	path := filepath.Join(svc.VaultRoot, name)
 	content := "---\ntitle: " + title + "\n---\n\n" + body + "\n"
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 	return path
@@ -137,7 +137,7 @@ func TestExportPDFUsesTheProfileAndRenderedMarkdown(t *testing.T) {
 		t.Fatalf("expected exactly one render call, got %d", len(*calls))
 	}
 	call := (*calls)[0]
-	if call.OutputPath != output || call.Options.Profile != "behoerde" {
+	if call.OutputPath != output || call.Options.Profile != "behoerde" || call.Options.SourceDir != svc.VaultRoot {
 		t.Errorf("unexpected render call: %#v", call)
 	}
 	// The renderer reads the title from frontmatter, not from a body
@@ -170,6 +170,115 @@ func TestExportPDFUsesTheProfileAndRenderedMarkdown(t *testing.T) {
 	}
 	if string(viewPDF) != "mock pdf" {
 		t.Errorf("unexpected view PDF content %q", viewPDF)
+	}
+	if len(*calls) != 2 {
+		t.Fatalf("expected two render calls, got %d", len(*calls))
+	}
+	viewCall := (*calls)[1]
+	if viewCall.OutputPath != viewOutput || viewCall.Options.Profile != "report" || viewCall.Options.SourceDir != svc.VaultRoot {
+		t.Errorf("unexpected view render call: %#v", viewCall)
+	}
+}
+
+func TestExportPDFNestedNoteSourceDir(t *testing.T) {
+	calls := withStubRenderer(t)
+
+	svc := newTestService(t)
+	nestedDir := filepath.Join(svc.VaultRoot, "sub", "folder")
+	if err := os.MkdirAll(nestedDir, 0750); err != nil {
+		t.Fatal(err)
+	}
+	notePath := filepath.Join("sub", "folder", "nested.md")
+	writeExportNote(t, svc, notePath, "Nested Note", "Nested body")
+
+	output := filepath.Join(t.TempDir(), "nested.pdf")
+	result, err := svc.Export(notePath, "", output, "pdf", "report")
+	if err != nil {
+		t.Fatalf("PDF export failed: %v", err)
+	}
+	if !result.Rendered {
+		t.Errorf("expected rendered result")
+	}
+	if len(*calls) != 1 {
+		t.Fatalf("expected one render call, got %d", len(*calls))
+	}
+	call := (*calls)[0]
+	if call.Options.SourceDir != nestedDir {
+		t.Errorf("got SourceDir %q, want %q", call.Options.SourceDir, nestedDir)
+	}
+}
+
+func TestExportPDFWithLocalImage(t *testing.T) {
+	prevRender, prevEngine := pdf.RenderFunc, pdf.EngineAvailableFunc
+	pdf.RenderFunc = printapi.Render
+	pdf.EngineAvailableFunc = printapi.EngineAvailable
+	t.Cleanup(func() {
+		pdf.RenderFunc, pdf.EngineAvailableFunc = prevRender, prevEngine
+	})
+
+	if ok, _ := pdf.EngineAvailable(); !ok {
+		t.Skip("skipping integration test: typst engine unavailable")
+	}
+
+	svc := newTestService(t)
+	imgDir := filepath.Join(svc.VaultRoot, "assets")
+	if err := os.MkdirAll(imgDir, 0750); err != nil {
+		t.Fatal(err)
+	}
+	// 1x1 transparent PNG
+	pngData := []byte{
+		0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+		0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+		0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4, 0x89, 0x00, 0x00, 0x00,
+		0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+		0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+		0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+	}
+	if err := os.WriteFile(filepath.Join(imgDir, "foo.png"), pngData, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	writeExportNote(t, svc, "with_image.md", "Image Note", "Here is an image:\n\n![alt](assets/foo.png)")
+	output := filepath.Join(t.TempDir(), "image_note.pdf")
+
+	result, err := svc.Export("with_image.md", "", output, "pdf", "report")
+	if err != nil {
+		t.Fatalf("PDF export failed for note with local image: %v", err)
+	}
+	if !result.Rendered || result.Path != output {
+		t.Errorf("unexpected result: %#v", result)
+	}
+	fi, err := os.Stat(output)
+	if err != nil {
+		t.Fatalf("output file stat failed: %v", err)
+	}
+	if fi.Size() == 0 {
+		t.Errorf("output PDF is empty")
+	}
+}
+
+func TestExportPDFRejectsPathTraversalImage(t *testing.T) {
+	prevRender, prevEngine := pdf.RenderFunc, pdf.EngineAvailableFunc
+	pdf.RenderFunc = printapi.Render
+	pdf.EngineAvailableFunc = printapi.EngineAvailable
+	t.Cleanup(func() {
+		pdf.RenderFunc, pdf.EngineAvailableFunc = prevRender, prevEngine
+	})
+
+	if ok, _ := pdf.EngineAvailable(); !ok {
+		t.Skip("skipping integration test: typst engine unavailable")
+	}
+
+	svc := newTestService(t)
+	writeExportNote(t, svc, "bad_image.md", "Bad Image Note", "![bad](../outside.png)")
+	output := filepath.Join(t.TempDir(), "bad_image.pdf")
+
+	_, err := svc.Export("bad_image.md", "", output, "pdf", "report")
+	if err == nil {
+		t.Fatal("expected error on path traversal image, got nil")
+	}
+	if !strings.Contains(err.Error(), "traversal") && !strings.Contains(err.Error(), "escapes") {
+		t.Errorf("expected traversal error message, got: %v", err)
 	}
 }
 

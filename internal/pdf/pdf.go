@@ -49,11 +49,15 @@ func EngineAvailable() (bool, string) {
 
 // Render writes a rendered Markdown document to a PDF at outputPath using the
 // named profile (empty means the document's frontmatter or the configured
-// default decides). It returns the render result.
-func Render(markdown []byte, outputPath, profile string) (*Result, error) {
+// default decides) and sourceDir to resolve local Markdown image references.
+// It returns the render result.
+func Render(markdown []byte, outputPath, profile, sourceDir string) (*Result, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), renderTimeout)
 	defer cancel()
-	return RenderFunc(ctx, markdown, outputPath, printapi.Options{Profile: profile})
+	return RenderFunc(ctx, markdown, outputPath, printapi.Options{
+		Profile:   profile,
+		SourceDir: sourceDir,
+	})
 }
 
 // Profiles returns the built-in profiles in presentation order.

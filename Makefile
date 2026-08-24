@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard benchmark-large docker-build clean
+.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard benchmark-large docker-build clean
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -10,7 +10,7 @@ build:
 test:
 	CGO_ENABLED=0 go test -race ./...
 
-lint: fmt-check corekit-guard boundary-guard
+lint: fmt-check corekit-guard boundary-guard nested-version-guard
 	go vet ./...
 
 fmt-check:
@@ -23,6 +23,10 @@ corekit-guard:
 # Issue #536: packages outside permitted facades must not import absorbed library internals.
 boundary-guard:
 	@./scripts/check-module-boundaries.sh
+
+# Issue #535: Go version directive and shared dependency versions must stay aligned across root and nested modules.
+nested-version-guard:
+	@./scripts/check-nested-versions.sh
 
 # Issue #352: macOS app text must use .symairaText(role) instead of inline
 # .font(.caption/.headline/...) literals so Dynamic Type scales.

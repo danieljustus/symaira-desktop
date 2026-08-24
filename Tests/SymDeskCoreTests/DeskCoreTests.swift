@@ -269,17 +269,17 @@ final class DeskCoreTests: XCTestCase {
         let json = """
         {
             "overall": "ok",
-            "vault": {"symseek": "ok", "symmemory": "ok"},
-            "sidecar": {"symingest": "available"},
-            "tools": {"symseek": "ok", "symmemory": "not found", "symingest": "ok"}
+            "vault": {"status": "ok"},
+            "sidecar": {"status": "available"},
+            "tools": {"symvault": "ok", "symmemory": "not found", "symbrowse": "available"}
         }
         """.data(using: .utf8)!
 
         let report = try JSONDecoder().decode(DoctorReport.self, from: json)
         XCTAssertEqual(report.overall, "ok")
-        XCTAssertTrue(report.tools.isAvailable("symseek"))
+        XCTAssertTrue(report.tools.isAvailable("symvault"))
         XCTAssertFalse(report.tools.isAvailable("symmemory"))
-        XCTAssertTrue(report.tools.isAvailable("symingest"))
+        XCTAssertTrue(report.tools.isAvailable("symbrowse"))
     }
 
     func testDoctorReportDecodingWithMissingFields() throws {
@@ -291,7 +291,7 @@ final class DeskCoreTests: XCTestCase {
 
         let report = try JSONDecoder().decode(DoctorReport.self, from: json)
         XCTAssertEqual(report.overall, "degraded")
-        XCTAssertFalse(report.tools.isAvailable("symseek"))
+        XCTAssertFalse(report.tools.isAvailable("symvault"))
         XCTAssertNil(report.vault)
         XCTAssertFalse(report.tools.isAvailable("symmemory"))
     }

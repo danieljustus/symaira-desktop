@@ -48,15 +48,13 @@ func EmitSVG(sc *scene.Scene, opts SVGEmitOptions) ([]byte, error) {
 	// XML Header & SVG root tag
 	sb.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
 	sb.WriteString("\n")
-	sb.WriteString(fmt.Sprintf(
-		`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="%s %s %s %s" width="%s" height="%s">`,
+	fmt.Fprintf(&sb, `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="%s %s %s %s" width="%s" height="%s">`,
 		formatFloat(sc.ViewBox.X),
 		formatFloat(sc.ViewBox.Y),
 		formatFloat(sc.ViewBox.Width),
 		formatFloat(sc.ViewBox.Height),
 		formatFloat(sc.Width),
-		formatFloat(sc.Height),
-	))
+		formatFloat(sc.Height))
 	sb.WriteString("\n")
 
 	// Metadata
@@ -74,8 +72,8 @@ func EmitSVG(sc *scene.Scene, opts SVGEmitOptions) ([]byte, error) {
 	}
 
 	sb.WriteString("  <metadata>\n")
-	sb.WriteString(fmt.Sprintf("    <symdraw:font-hash>%s</symdraw:font-hash>\n", escapeXML(fontHash)))
-	sb.WriteString(fmt.Sprintf("    <symdraw:generator>%s</symdraw:generator>\n", escapeXML(generator)))
+	fmt.Fprintf(&sb, "    <symdraw:font-hash>%s</symdraw:font-hash>\n", escapeXML(fontHash))
+	fmt.Fprintf(&sb, "    <symdraw:generator>%s</symdraw:generator>\n", escapeXML(generator))
 
 	if len(sc.Metadata) > 0 {
 		var metaKeys []string
@@ -86,7 +84,7 @@ func EmitSVG(sc *scene.Scene, opts SVGEmitOptions) ([]byte, error) {
 		}
 		sort.Strings(metaKeys)
 		for _, k := range metaKeys {
-			sb.WriteString(fmt.Sprintf("    <symdraw:meta name=\"%s\">%s</symdraw:meta>\n", escapeAttr(k), escapeXML(sc.Metadata[k])))
+			fmt.Fprintf(&sb, "    <symdraw:meta name=\"%s\">%s</symdraw:meta>\n", escapeAttr(k), escapeXML(sc.Metadata[k]))
 		}
 	}
 	sb.WriteString("  </metadata>\n")
@@ -95,8 +93,7 @@ func EmitSVG(sc *scene.Scene, opts SVGEmitOptions) ([]byte, error) {
 	if len(sc.Markers) > 0 {
 		sb.WriteString("  <defs>\n")
 		for _, m := range sc.Markers {
-			sb.WriteString(fmt.Sprintf(
-				"    <marker id=\"%s\" viewBox=\"%s %s %s %s\" refX=\"%s\" refY=\"%s\" markerWidth=\"%s\" markerHeight=\"%s\" orient=\"%s\">\n",
+			fmt.Fprintf(&sb, "    <marker id=\"%s\" viewBox=\"%s %s %s %s\" refX=\"%s\" refY=\"%s\" markerWidth=\"%s\" markerHeight=\"%s\" orient=\"%s\">\n",
 				escapeAttr(m.ID),
 				formatFloat(m.ViewBox.X),
 				formatFloat(m.ViewBox.Y),
@@ -106,8 +103,7 @@ func EmitSVG(sc *scene.Scene, opts SVGEmitOptions) ([]byte, error) {
 				formatFloat(m.RefY),
 				formatFloat(m.MarkerWidth),
 				formatFloat(m.MarkerHeight),
-				escapeAttr(m.Orient),
-			))
+				escapeAttr(m.Orient))
 			if m.Path != nil {
 				sb.WriteString("      ")
 				writePrimitive(&sb, m.Path, opts, "      ")
@@ -120,14 +116,12 @@ func EmitSVG(sc *scene.Scene, opts SVGEmitOptions) ([]byte, error) {
 
 	// Background
 	if sc.Background != "" && sc.Background != "none" && sc.Background != "transparent" {
-		sb.WriteString(fmt.Sprintf(
-			"  <rect x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" fill=\"%s\" />\n",
+		fmt.Fprintf(&sb, "  <rect x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" fill=\"%s\" />\n",
 			formatFloat(sc.ViewBox.X),
 			formatFloat(sc.ViewBox.Y),
 			formatFloat(sc.ViewBox.Width),
 			formatFloat(sc.ViewBox.Height),
-			escapeAttr(sc.Background),
-		))
+			escapeAttr(sc.Background))
 	}
 
 	// Primitives
@@ -144,10 +138,10 @@ func EmitSVG(sc *scene.Scene, opts SVGEmitOptions) ([]byte, error) {
 func writePrimitiveWithLink(sb *strings.Builder, p scene.Primitive, opts SVGEmitOptions, indent string) {
 	link := getLink(p)
 	if link != "" {
-		sb.WriteString(fmt.Sprintf("%s<a href=\"%s\">\n", indent, escapeAttr(link)))
+		fmt.Fprintf(sb, "%s<a href=\"%s\">\n", indent, escapeAttr(link))
 		writePrimitive(sb, p, opts, indent+"  ")
 		sb.WriteString("\n")
-		sb.WriteString(fmt.Sprintf("%s</a>", indent))
+		fmt.Fprintf(sb, "%s</a>", indent)
 	} else {
 		sb.WriteString(indent)
 		writePrimitive(sb, p, opts, indent)
@@ -178,40 +172,40 @@ func writePrimitive(sb *strings.Builder, p scene.Primitive, opts SVGEmitOptions,
 	case *scene.RectElement:
 		sb.WriteString("<rect")
 		writeCommonAttrs(sb, el.ID, el.Class, el.Fill, el.Stroke, el.StrokeWidth, el.DashArray, el.Opacity)
-		sb.WriteString(fmt.Sprintf(" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\"",
-			formatFloat(el.X), formatFloat(el.Y), formatFloat(el.Width), formatFloat(el.Height)))
+		fmt.Fprintf(sb, " x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\"",
+			formatFloat(el.X), formatFloat(el.Y), formatFloat(el.Width), formatFloat(el.Height))
 		if el.Rx > 0 {
-			sb.WriteString(fmt.Sprintf(" rx=\"%s\"", formatFloat(el.Rx)))
+			fmt.Fprintf(sb, " rx=\"%s\"", formatFloat(el.Rx))
 		}
 		if el.Ry > 0 {
-			sb.WriteString(fmt.Sprintf(" ry=\"%s\"", formatFloat(el.Ry)))
+			fmt.Fprintf(sb, " ry=\"%s\"", formatFloat(el.Ry))
 		}
 		sb.WriteString(" />")
 
 	case *scene.CircleElement:
 		sb.WriteString("<circle")
 		writeCommonAttrs(sb, el.ID, el.Class, el.Fill, el.Stroke, el.StrokeWidth, "", el.Opacity)
-		sb.WriteString(fmt.Sprintf(" cx=\"%s\" cy=\"%s\" r=\"%s\"",
-			formatFloat(el.CX), formatFloat(el.CY), formatFloat(el.R)))
+		fmt.Fprintf(sb, " cx=\"%s\" cy=\"%s\" r=\"%s\"",
+			formatFloat(el.CX), formatFloat(el.CY), formatFloat(el.R))
 		sb.WriteString(" />")
 
 	case *scene.EllipseElement:
 		sb.WriteString("<ellipse")
 		writeCommonAttrs(sb, el.ID, el.Class, el.Fill, el.Stroke, el.StrokeWidth, "", el.Opacity)
-		sb.WriteString(fmt.Sprintf(" cx=\"%s\" cy=\"%s\" rx=\"%s\" ry=\"%s\"",
-			formatFloat(el.CX), formatFloat(el.CY), formatFloat(el.RX), formatFloat(el.RY)))
+		fmt.Fprintf(sb, " cx=\"%s\" cy=\"%s\" rx=\"%s\" ry=\"%s\"",
+			formatFloat(el.CX), formatFloat(el.CY), formatFloat(el.RX), formatFloat(el.RY))
 		sb.WriteString(" />")
 
 	case *scene.LineElement:
 		sb.WriteString("<line")
 		writeCommonAttrs(sb, el.ID, el.Class, "", el.Stroke, el.StrokeWidth, el.DashArray, el.Opacity)
-		sb.WriteString(fmt.Sprintf(" x1=\"%s\" y1=\"%s\" x2=\"%s\" y2=\"%s\"",
-			formatFloat(el.X1), formatFloat(el.Y1), formatFloat(el.X2), formatFloat(el.Y2)))
+		fmt.Fprintf(sb, " x1=\"%s\" y1=\"%s\" x2=\"%s\" y2=\"%s\"",
+			formatFloat(el.X1), formatFloat(el.Y1), formatFloat(el.X2), formatFloat(el.Y2))
 		if el.MarkerStart != "" {
-			sb.WriteString(fmt.Sprintf(" marker-start=\"url(#%s)\"", escapeAttr(el.MarkerStart)))
+			fmt.Fprintf(sb, " marker-start=\"url(#%s)\"", escapeAttr(el.MarkerStart))
 		}
 		if el.MarkerEnd != "" {
-			sb.WriteString(fmt.Sprintf(" marker-end=\"url(#%s)\"", escapeAttr(el.MarkerEnd)))
+			fmt.Fprintf(sb, " marker-end=\"url(#%s)\"", escapeAttr(el.MarkerEnd))
 		}
 		sb.WriteString(" />")
 
@@ -222,9 +216,9 @@ func writePrimitive(sb *strings.Builder, p scene.Primitive, opts SVGEmitOptions,
 		for _, pt := range el.Points {
 			pts = append(pts, fmt.Sprintf("%s,%s", formatFloat(pt.X), formatFloat(pt.Y)))
 		}
-		sb.WriteString(fmt.Sprintf(" points=\"%s\"", strings.Join(pts, " ")))
+		fmt.Fprintf(sb, " points=\"%s\"", strings.Join(pts, " "))
 		if el.MarkerEnd != "" {
-			sb.WriteString(fmt.Sprintf(" marker-end=\"url(#%s)\"", escapeAttr(el.MarkerEnd)))
+			fmt.Fprintf(sb, " marker-end=\"url(#%s)\"", escapeAttr(el.MarkerEnd))
 		}
 		sb.WriteString(" />")
 
@@ -235,7 +229,7 @@ func writePrimitive(sb *strings.Builder, p scene.Primitive, opts SVGEmitOptions,
 		for _, pt := range el.Points {
 			pts = append(pts, fmt.Sprintf("%s,%s", formatFloat(pt.X), formatFloat(pt.Y)))
 		}
-		sb.WriteString(fmt.Sprintf(" points=\"%s\"", strings.Join(pts, " ")))
+		fmt.Fprintf(sb, " points=\"%s\"", strings.Join(pts, " "))
 		sb.WriteString(" />")
 
 	case *scene.PathElement:
@@ -245,9 +239,9 @@ func writePrimitive(sb *strings.Builder, p scene.Primitive, opts SVGEmitOptions,
 		if d == "" && len(el.Segments) > 0 {
 			d = measure.SegmentsToSVGPath(el.Segments)
 		}
-		sb.WriteString(fmt.Sprintf(" d=\"%s\"", escapeAttr(d)))
+		fmt.Fprintf(sb, " d=\"%s\"", escapeAttr(d))
 		if el.MarkerEnd != "" {
-			sb.WriteString(fmt.Sprintf(" marker-end=\"url(#%s)\"", escapeAttr(el.MarkerEnd)))
+			fmt.Fprintf(sb, " marker-end=\"url(#%s)\"", escapeAttr(el.MarkerEnd))
 		}
 		sb.WriteString(" />")
 
@@ -261,13 +255,13 @@ func writePrimitive(sb *strings.Builder, p scene.Primitive, opts SVGEmitOptions,
 	case *scene.GroupElement:
 		sb.WriteString("<g")
 		if el.ID != "" {
-			sb.WriteString(fmt.Sprintf(" id=\"%s\"", escapeAttr(el.ID)))
+			fmt.Fprintf(sb, " id=\"%s\"", escapeAttr(el.ID))
 		}
 		if el.Class != "" {
-			sb.WriteString(fmt.Sprintf(" class=\"%s\"", escapeAttr(el.Class)))
+			fmt.Fprintf(sb, " class=\"%s\"", escapeAttr(el.Class))
 		}
 		if el.Transform != "" {
-			sb.WriteString(fmt.Sprintf(" transform=\"%s\"", escapeAttr(el.Transform)))
+			fmt.Fprintf(sb, " transform=\"%s\"", escapeAttr(el.Transform))
 		}
 		sb.WriteString(">\n")
 		for _, child := range el.Children {
@@ -281,37 +275,37 @@ func writePrimitive(sb *strings.Builder, p scene.Primitive, opts SVGEmitOptions,
 
 func writeCommonAttrs(sb *strings.Builder, id, class, fill, stroke string, strokeWidth float64, dashArray string, opacity float64) {
 	if id != "" {
-		sb.WriteString(fmt.Sprintf(" id=\"%s\"", escapeAttr(id)))
+		fmt.Fprintf(sb, " id=\"%s\"", escapeAttr(id))
 	}
 	if class != "" {
-		sb.WriteString(fmt.Sprintf(" class=\"%s\"", escapeAttr(class)))
+		fmt.Fprintf(sb, " class=\"%s\"", escapeAttr(class))
 	}
 	if fill != "" {
-		sb.WriteString(fmt.Sprintf(" fill=\"%s\"", escapeAttr(fill)))
+		fmt.Fprintf(sb, " fill=\"%s\"", escapeAttr(fill))
 	} else if stroke != "" {
 		sb.WriteString(" fill=\"none\"")
 	}
 	if stroke != "" {
-		sb.WriteString(fmt.Sprintf(" stroke=\"%s\"", escapeAttr(stroke)))
+		fmt.Fprintf(sb, " stroke=\"%s\"", escapeAttr(stroke))
 	}
 	if strokeWidth > 0 {
-		sb.WriteString(fmt.Sprintf(" stroke-width=\"%s\"", formatFloat(strokeWidth)))
+		fmt.Fprintf(sb, " stroke-width=\"%s\"", formatFloat(strokeWidth))
 	}
 	if dashArray != "" {
-		sb.WriteString(fmt.Sprintf(" stroke-dasharray=\"%s\"", escapeAttr(dashArray)))
+		fmt.Fprintf(sb, " stroke-dasharray=\"%s\"", escapeAttr(dashArray))
 	}
 	if opacity > 0 && opacity < 1 {
-		sb.WriteString(fmt.Sprintf(" opacity=\"%s\"", formatFloat(opacity)))
+		fmt.Fprintf(sb, " opacity=\"%s\"", formatFloat(opacity))
 	}
 }
 
 func writeTextElement(sb *strings.Builder, el *scene.TextElement) {
 	sb.WriteString("<text")
 	if el.ID != "" {
-		sb.WriteString(fmt.Sprintf(" id=\"%s\"", escapeAttr(el.ID)))
+		fmt.Fprintf(sb, " id=\"%s\"", escapeAttr(el.ID))
 	}
 	if el.Class != "" {
-		sb.WriteString(fmt.Sprintf(" class=\"%s\"", escapeAttr(el.Class)))
+		fmt.Fprintf(sb, " class=\"%s\"", escapeAttr(el.Class))
 	}
 
 	fontFamily := el.FontFamily
@@ -327,19 +321,19 @@ func writeTextElement(sb *strings.Builder, el *scene.TextElement) {
 		fill = "#F5F4F0"
 	}
 
-	sb.WriteString(fmt.Sprintf(" x=\"%s\" y=\"%s\"", formatFloat(el.X), formatFloat(el.Y)))
-	sb.WriteString(fmt.Sprintf(" font-family=\"%s\" font-size=\"%s\"", escapeAttr(fontFamily), formatFloat(fontSize)))
+	fmt.Fprintf(sb, " x=\"%s\" y=\"%s\"", formatFloat(el.X), formatFloat(el.Y))
+	fmt.Fprintf(sb, " font-family=\"%s\" font-size=\"%s\"", escapeAttr(fontFamily), formatFloat(fontSize))
 
 	if el.FontWeight == measure.WeightBold {
 		sb.WriteString(" font-weight=\"bold\"")
 	}
-	sb.WriteString(fmt.Sprintf(" fill=\"%s\"", escapeAttr(fill)))
+	fmt.Fprintf(sb, " fill=\"%s\"", escapeAttr(fill))
 
 	if el.Anchor != "" && el.Anchor != scene.AnchorStart {
-		sb.WriteString(fmt.Sprintf(" text-anchor=\"%s\"", escapeAttr(string(el.Anchor))))
+		fmt.Fprintf(sb, " text-anchor=\"%s\"", escapeAttr(string(el.Anchor)))
 	}
 	if el.Baseline != "" && el.Baseline != scene.BaselineAlphabetic {
-		sb.WriteString(fmt.Sprintf(" dominant-baseline=\"%s\"", escapeAttr(string(el.Baseline))))
+		fmt.Fprintf(sb, " dominant-baseline=\"%s\"", escapeAttr(string(el.Baseline)))
 	}
 
 	textLen := el.TextLength
@@ -347,11 +341,11 @@ func writeTextElement(sb *strings.Builder, el *scene.TextElement) {
 		textLen, _ = measure.Default().MeasureText(el.Text, fontSize, el.FontWeight)
 	}
 	if textLen > 0 {
-		sb.WriteString(fmt.Sprintf(" textLength=\"%s\"", formatFloat(textLen)))
+		fmt.Fprintf(sb, " textLength=\"%s\"", formatFloat(textLen))
 	}
 
 	if el.Opacity > 0 && el.Opacity < 1 {
-		sb.WriteString(fmt.Sprintf(" opacity=\"%s\"", formatFloat(el.Opacity)))
+		fmt.Fprintf(sb, " opacity=\"%s\"", formatFloat(el.Opacity))
 	}
 
 	sb.WriteString(">")
@@ -400,15 +394,15 @@ func writeTextAsPath(sb *strings.Builder, el *scene.TextElement) {
 	}
 
 	d := measure.SegmentsToSVGPath(segs)
-	sb.WriteString(fmt.Sprintf("<path fill=\"%s\" d=\"%s\"", escapeAttr(fill), escapeAttr(d)))
+	fmt.Fprintf(sb, "<path fill=\"%s\" d=\"%s\"", escapeAttr(fill), escapeAttr(d))
 	if el.ID != "" {
-		sb.WriteString(fmt.Sprintf(" id=\"%s\"", escapeAttr(el.ID)))
+		fmt.Fprintf(sb, " id=\"%s\"", escapeAttr(el.ID))
 	}
 	if el.Class != "" {
-		sb.WriteString(fmt.Sprintf(" class=\"%s\"", escapeAttr(el.Class)))
+		fmt.Fprintf(sb, " class=\"%s\"", escapeAttr(el.Class))
 	}
 	if el.Opacity > 0 && el.Opacity < 1 {
-		sb.WriteString(fmt.Sprintf(" opacity=\"%s\"", formatFloat(el.Opacity)))
+		fmt.Fprintf(sb, " opacity=\"%s\"", formatFloat(el.Opacity))
 	}
 	sb.WriteString(" />")
 }

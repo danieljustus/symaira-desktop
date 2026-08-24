@@ -112,7 +112,7 @@ func SegmentsToSVGPath(segments []PathSegment) string {
 			if j > 0 {
 				sb.WriteByte(' ')
 			}
-			sb.WriteString(fmt.Sprintf("%.2f %.2f", pt.X, pt.Y))
+			fmt.Fprintf(&sb, "%.2f %.2f", pt.X, pt.Y)
 		}
 	}
 	return sb.String()

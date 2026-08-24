@@ -122,23 +122,23 @@ func verifyOrUpdateGolden(t *testing.T, goldenPath string, actual []byte) {
 	t.Helper()
 
 	if *updateGolden {
-		if err := os.MkdirAll(filepath.Dir(goldenPath), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(goldenPath), 0o700); err != nil {
 			t.Fatalf("create golden dir: %v", err)
 		}
-		if err := os.WriteFile(goldenPath, actual, 0o644); err != nil {
+		if err := os.WriteFile(goldenPath, actual, 0o600); err != nil {
 			t.Fatalf("write golden file %s: %v", goldenPath, err)
 		}
 		return
 	}
 
-	expected, err := os.ReadFile(goldenPath)
+	expected, err := os.ReadFile(goldenPath) // #nosec G304 -- paths come from the fixed golden test table.
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Auto-generate if missing
-			if err := os.MkdirAll(filepath.Dir(goldenPath), 0o755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(goldenPath), 0o700); err != nil {
 				t.Fatalf("create golden dir: %v", err)
 			}
-			if err := os.WriteFile(goldenPath, actual, 0o644); err != nil {
+			if err := os.WriteFile(goldenPath, actual, 0o600); err != nil {
 				t.Fatalf("write initial golden file %s: %v", goldenPath, err)
 			}
 			return

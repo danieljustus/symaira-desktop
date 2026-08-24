@@ -258,16 +258,18 @@ func BuildSceneFromIR(d *ir.Diagram) (*scene.Scene, error) {
 		}
 
 		markerEnd := ""
-		if edge.Arrow == ir.ArrowSingle || edge.Arrow == "" {
+		switch edge.Arrow {
+		case ir.ArrowSingle, "":
 			markerEnd = "arrow-end"
-		} else if edge.Arrow == ir.ArrowDouble {
+		case ir.ArrowDouble:
 			markerEnd = "arrow-end"
 		}
 
 		dash := ""
-		if edge.Style == ir.EdgeDashed {
+		switch edge.Style {
+		case ir.EdgeDashed:
 			dash = "6 4"
-		} else if edge.Style == ir.EdgeDotted {
+		case ir.EdgeDotted:
 			dash = "2 3"
 		}
 

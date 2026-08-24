@@ -868,3 +868,17 @@ func (s *Service) IngestJobs() (string, error) {
 func (s *Service) IngestRetry(jobID string) error {
 	return ingest.IngestRetry(jobID)
 }
+
+// StoreAsset stores a binary asset in the vault's assets folder under collision-safe naming rules.
+func (s *Service) StoreAsset(data []byte, preferredName, ext string) (string, error) {
+	return vault.StoreAsset(s.VaultRoot, data, preferredName, ext, "", time.Now())
+}
+
+// StoreAssetWithLink stores a binary asset and returns both its vault-relative path and standard Markdown link snippet.
+func (s *Service) StoreAssetWithLink(data []byte, preferredName, ext string) (relPath string, mdLink string, err error) {
+	relPath, err = s.StoreAsset(data, preferredName, ext)
+	if err != nil {
+		return "", "", err
+	}
+	return relPath, vault.AssetMarkdownLink(relPath), nil
+}

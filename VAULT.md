@@ -95,12 +95,17 @@ The following optional fields provide first-class document query metadata. They 
 - **Target:** Wikilinks link to other Markdown files in the vault by their base name (without `.md`).
 - **Resolution:** Resolution is case-insensitive. If multiple files have the same name in different folders, the behavior is undefined (it is recommended to use unique names or fully qualified paths).
 
-## 5. Attachments
+## 5. Attachments & Assets
 - Attachments (images, PDFs, audio, documents) can be referenced in two ways:
   1. Standard Markdown links `[Title](path/to/file.pdf)` or Markdown image embeds `![Title](path/to/image.png)`.
   2. Wikilink transclusion embeds `![[filename.ext]]` (e.g. `![[scan.png]]`, `![[report.pdf]]`, or with vault-relative path `![[assets/scan.png]]`).
 - Attachments can be stored anywhere in the vault, though an `assets/` or `attachments/` subfolder is recommended.
 - Embed-style attachment references (`![[filename.ext]]`) resolve against non-Markdown files in the vault by vault-relative path or case-insensitive base name. Missing attachment targets are reported as missing attachments during health scanning.
+- **Vault Asset Writer:** Binary assets stored through the Go core (`symdesk asset store`, MCP `desk_asset_store`, `vault.StoreAsset`) or the native app follow shared safety and naming rules:
+  - **Folder resolution:** Confined to the vault root; absolute paths and `..` traversal are rejected and fall back safely to `assets`.
+  - **Collision-safe naming:** Stored assets use `base.ext`, `base-2.ext`, `base-3.ext`, ... to prevent accidental overwrites.
+  - **Base name sanitization:** Path separators (`/`, `\`, `:`), control characters, and newlines in preferred names are replaced with hyphens.
+  - **Atomic writes:** Writes use a temp file and atomic rename so partial writes cannot corrupt the vault.
 
 ## 6. Templates (contract_version 2)
 - Reusable note templates SHOULD be stored in the `templates/` folder at the root of the vault.

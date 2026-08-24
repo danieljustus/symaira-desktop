@@ -209,6 +209,12 @@ var toolContracts = []toolContract{
 		schema:      `{"type":"object","properties":{"view":{"type":"string","description":"view id"},"property":{"type":"string","description":"frontmatter property to fill"},"prompt":{"type":"string","description":"extra instruction for the AI"},"dry_run":{"type":"boolean","description":"show changes without writing"}},"required":["view","property"]}`,
 		readOnly:    false,
 	},
+	{
+		name:        "desk_asset_store",
+		description: "Stores binary data (base64-encoded or plain text) into the vault assets folder with collision-safe naming and returns the vault-relative path and Markdown link.",
+		schema:      `{"type":"object","properties":{"data":{"type":"string","description":"content to store (base64 string or plain text)"},"extension":{"type":"string","description":"file extension (e.g. png, pdf, svg)"},"is_base64":{"type":"boolean","description":"true if data is base64 encoded"},"preferred_name":{"type":"string","description":"optional preferred filename (e.g. image.png)"}},"required":["data"]}`,
+		readOnly:    false,
+	},
 }
 
 func contractByName() map[string]toolContract {
@@ -367,6 +373,7 @@ func TestConstructorsExposeCanonicalContract(t *testing.T) {
 		{"newNotebookAddSourceTool", func() *Tool { return newNotebookAddSourceTool(nil) }},
 		{"newNotebookRemoveSourceTool", func() *Tool { return newNotebookRemoveSourceTool(nil) }},
 		{"newAutofillTool", func() *Tool { return newAutofillTool(nil) }},
+		{"newAssetStoreTool", func() *Tool { return newAssetStoreTool(nil) }},
 	}
 	for _, tc := range constructors {
 		t.Run(tc.label, func(t *testing.T) {
@@ -445,6 +452,7 @@ func TestToolHandlersServiceError(t *testing.T) {
 		{"desk_clip", `{"url":"https://example.com"}`},
 		{"desk_export", `{"note":"test.md","format":"html"}`},
 		{"desk_autofill", `{"view":"v","property":"p"}`},
+		{"desk_asset_store", `{"data":"aGVsbG8=","is_base64":true}`},
 	}
 	withError := map[string]func(ServiceFactory) *Tool{
 		"desk_ls":           newLsTool,
@@ -468,6 +476,7 @@ func TestToolHandlersServiceError(t *testing.T) {
 		"desk_clip":         newClipTool,
 		"desk_export":       newExportTool,
 		"desk_autofill":     newAutofillTool,
+		"desk_asset_store":  newAssetStoreTool,
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -500,6 +509,7 @@ func TestToolHandlersRequireArgs(t *testing.T) {
 		{"desk_clip", newClipTool},
 		{"desk_export", newExportTool},
 		{"desk_autofill", newAutofillTool},
+		{"desk_asset_store", newAssetStoreTool},
 		{"meeting_get", newMeetingGetTool},
 	}
 	for _, tc := range cases {
@@ -536,6 +546,7 @@ func TestToolHandlersInvalidJSON(t *testing.T) {
 		{"desk_clip", newClipTool},
 		{"desk_export", newExportTool},
 		{"desk_autofill", newAutofillTool},
+		{"desk_asset_store", newAssetStoreTool},
 		{"meeting_get", newMeetingGetTool},
 	}
 	for _, tc := range cases {
@@ -799,6 +810,29 @@ func TestToolHandlersHappyPaths(t *testing.T) {
 		}
 	})
 
+	t.Run("desk_asset_store writes asset and returns link", func(t *testing.T) {
+		tool := newAssetStoreTool(testServiceFactory(t))
+		in, _ := json.Marshal(map[string]any{
+			"data":           "aGVsbG8td29ybGQ=",
+			"preferred_name": "icon.png",
+			"extension":      "png",
+			"is_base64":      true,
+		})
+		out, err := tool.Handler(ctx, in)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res, ok := out.(map[string]string)
+		if !ok {
+			t.Fatalf("expected map[string]string, got %T", out)
+		}
+		if res["path"] != "assets/icon.png" {
+			t.Errorf("expected assets/icon.png, got %q", res["path"])
+		}
+		if res["markdown_link"] != "![icon.png](assets/icon.png)" {
+			t.Errorf("expected ![icon.png](assets/icon.png), got %q", res["markdown_link"])
+		}
+	})
 }
 
 // TestRegistryNilReceiverGuards pins the nil-safety of the registry methods.

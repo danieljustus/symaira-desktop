@@ -54,6 +54,19 @@ type Document struct {
 	// Contract v3/v4: document kind classification (note|document|meeting|notebook)
 	// Resolved at parse time: explicit frontmatter `type` wins, then inference.
 	Type string
+
+	// Contract v4: derived artifact handling (issue #531)
+	DerivedFrom string // path or name of source document this note was generated from
+	Derived     bool   // true if explicitly marked derived (or derived_from is non-empty)
+}
+
+// IsDerived reports whether the document is a generated/derived artifact
+// rather than an authoritative document.
+func (d *Document) IsDerived() bool {
+	if d == nil {
+		return false
+	}
+	return d.Derived || d.DerivedFrom != ""
 }
 
 // ValidStatuses enumerates the allowed values for Document.Status.
@@ -283,6 +296,15 @@ func ParseBytes(path string, fileBytes []byte) (*Document, error) {
 
 	// Contract v3/v4: resolve document kind (note|document|meeting|notebook)
 	doc.Type = inferType(doc.Frontmatter)
+
+	// Contract v4: extract derived artifact metadata
+	doc.DerivedFrom = getStringFrontmatter(doc.Frontmatter, "derived_from")
+	if d, ok := doc.Frontmatter["derived"].(bool); ok {
+		doc.Derived = d
+	}
+	if doc.DerivedFrom != "" {
+		doc.Derived = true
+	}
 
 	if IsExcalidrawFile(path) {
 		doc.Body = ""

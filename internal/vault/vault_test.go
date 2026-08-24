@@ -800,3 +800,46 @@ func TestSecurePath_WithinVault(t *testing.T) {
 		t.Errorf("expected %s, got %s", expected, abs)
 	}
 }
+
+func TestParseFile_DerivedArtifact(t *testing.T) {
+	root := t.TempDir()
+
+	// 1. Note with derived_from string
+	p1 := filepath.Join(root, "derived1.md")
+	if err := os.WriteFile(p1, []byte("---\ntitle: \"Summary\"\nderived_from: \"source.md\"\n---\nBody"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	doc1, err := ParseFile(p1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !doc1.IsDerived() || !doc1.Derived || doc1.DerivedFrom != "source.md" {
+		t.Errorf("expected derived document from source.md, got Derived=%v DerivedFrom=%q", doc1.Derived, doc1.DerivedFrom)
+	}
+
+	// 2. Note with derived: true
+	p2 := filepath.Join(root, "derived2.md")
+	if err := os.WriteFile(p2, []byte("---\ntitle: \"Generated\"\nderived: true\n---\nBody"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	doc2, err := ParseFile(p2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !doc2.IsDerived() || !doc2.Derived {
+		t.Errorf("expected IsDerived=true, got %v", doc2.IsDerived())
+	}
+
+	// 3. Regular note
+	p3 := filepath.Join(root, "regular.md")
+	if err := os.WriteFile(p3, []byte("---\ntitle: \"Regular\"\n---\nBody"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	doc3, err := ParseFile(p3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc3.IsDerived() || doc3.Derived || doc3.DerivedFrom != "" {
+		t.Errorf("expected regular non-derived document, got IsDerived=%v", doc3.IsDerived())
+	}
+}

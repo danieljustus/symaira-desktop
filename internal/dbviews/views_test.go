@@ -89,6 +89,17 @@ func TestBaseRenderAndParse(t *testing.T) {
 		Description: "Tracks open invoices and payments.",
 		Created:     "2026-08-24T20:00:00Z",
 		Tags:        []string{"base", "finance"},
+		Properties: map[string]PropertyConfig{
+			"status": {
+				Type:    "select",
+				Label:   "Payment Status",
+				Options: []string{"open", "paid", "cancelled"},
+			},
+			"amount": {
+				Type:  "number",
+				Label: "Invoice Amount",
+			},
+		},
 		Views: []View{
 			{
 				ID:           "v_table",
@@ -136,6 +147,9 @@ func TestBaseRenderAndParse(t *testing.T) {
 	if !strings.Contains(renderedStr, "base_id: finance-tracker") {
 		t.Errorf("expected base_id: finance-tracker in frontmatter, got:\n%s", renderedStr)
 	}
+	if !strings.Contains(renderedStr, "Payment Status") {
+		t.Errorf("expected Payment Status label in frontmatter, got:\n%s", renderedStr)
+	}
 	if !strings.Contains(renderedStr, "## Views") {
 		t.Errorf("expected ## Views section, got:\n%s", renderedStr)
 	}
@@ -159,6 +173,15 @@ func TestBaseRenderAndParse(t *testing.T) {
 	}
 	if parsed.Description != b.Description {
 		t.Errorf("expected Description %q, got %q", b.Description, parsed.Description)
+	}
+	if len(parsed.Properties) != 2 {
+		t.Fatalf("expected 2 properties, got %d", len(parsed.Properties))
+	}
+	if parsed.Properties["status"].Type != "select" || parsed.Properties["status"].Label != "Payment Status" {
+		t.Errorf("unexpected status property config: %+v", parsed.Properties["status"])
+	}
+	if len(parsed.Properties["status"].Options) != 3 {
+		t.Errorf("unexpected status options: %+v", parsed.Properties["status"].Options)
 	}
 	if len(parsed.Views) != 2 {
 		t.Fatalf("expected 2 views, got %d", len(parsed.Views))

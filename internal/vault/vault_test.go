@@ -97,6 +97,7 @@ func TestExtractWikilinks(t *testing.T) {
 		{"empty after strip", "[[#Heading only]]", nil},
 		{"attachment embed", "![[scan.png]] and ![[report.pdf]]", []string{"scan.png", "report.pdf"}},
 		{"dataview code block ignored", "```dataview\nTABLE [[Fake Note]] FROM #tag\n```\n[[Real Note]]", []string{"Real Note"}},
+		{"symdesk-base code block ignored", "```symdesk-base\nbase: [[Fake Base]]\nview: v1\n```\n[[Real Note]]", []string{"Real Note"}},
 		{"templater code block ignored", "```templater\n<% tp.file.include(\"[[Template Link]]\") %>\n```\n![[embed.png]]", []string{"embed.png"}},
 		{"inline code span ignored", "Code: `[[Inline Link]]` and prose [[Prose Link]]", []string{"Prose Link"}},
 	}

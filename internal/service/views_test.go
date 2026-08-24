@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1034,5 +1035,473 @@ func TestServiceStartupMigratesLegacyViews(t *testing.T) {
 	entries, err := os.ReadDir(basesDir)
 	if err != nil || len(entries) == 0 {
 		t.Fatalf("expected base note in bases/, got %v (err: %v)", entries, err)
+	}
+}
+
+func TestViewsExecNumericFiltering(t *testing.T) {
+	svc := newTestService(t)
+
+	docs := []*vault.Document{
+		{
+			Path:        filepath.Join(svc.VaultRoot, "inv1.md"),
+			Title:       "Invoice 1",
+			Frontmatter: map[string]interface{}{"amount": "100.50", "status": "open"},
+		},
+		{
+			Path:        filepath.Join(svc.VaultRoot, "inv2.md"),
+			Title:       "Invoice 2",
+			Frontmatter: map[string]interface{}{"amount": "25.00", "status": "open"},
+		},
+		{
+			Path:        filepath.Join(svc.VaultRoot, "inv3.md"),
+			Title:       "Invoice 3",
+			Frontmatter: map[string]interface{}{"amount": "5.00", "status": "open"},
+		},
+		{
+			Path:        filepath.Join(svc.VaultRoot, "inv4.md"),
+			Title:       "Invoice 4",
+			Frontmatter: map[string]interface{}{"amount": "100.50", "status": "paid"},
+		},
+	}
+	for _, d := range docs {
+		if err := svc.DB.IndexDocument(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// 1. Greater than (amount > 20) -> should match inv1, inv2, inv4
+	vGt := dbviews.View{
+		ID:      "v_gt",
+		Name:    "GT 20",
+		Filters: []dbviews.Filter{{Key: "amount", Operator: ">", Value: "20"}},
+	}
+	if err := svc.ViewsMgr.Save(vGt); err != nil {
+		t.Fatal(err)
+	}
+	resGt, err := svc.ViewsExec("v_gt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resGt) != 3 {
+		t.Fatalf("expected 3 results > 20, got %d", len(resGt))
+	}
+
+	// 2. Less than (amount < 25) -> should match inv3 (5.00)
+	vLt := dbviews.View{
+		ID:      "v_lt",
+		Name:    "LT 25",
+		Filters: []dbviews.Filter{{Key: "amount", Operator: "less_than", Value: "25"}},
+	}
+	if err := svc.ViewsMgr.Save(vLt); err != nil {
+		t.Fatal(err)
+	}
+	resLt, err := svc.ViewsExec("v_lt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resLt) != 1 || resLt[0]["_title"] != "Invoice 3" {
+		t.Fatalf("expected Invoice 3 for < 25, got: %+v", resLt)
+	}
+
+	// 3. Greater than or equal (amount >= 100.50) -> should match inv1 and inv4
+	vGte := dbviews.View{
+		ID:      "v_gte",
+		Name:    "GTE 100.50",
+		Filters: []dbviews.Filter{{Key: "amount", Operator: ">=", Value: "100.50"}},
+	}
+	if err := svc.ViewsMgr.Save(vGte); err != nil {
+		t.Fatal(err)
+	}
+	resGte, err := svc.ViewsExec("v_gte")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resGte) != 2 {
+		t.Fatalf("expected 2 results >= 100.50, got %d", len(resGte))
+	}
+}
+
+func TestViewsExecDateFiltering(t *testing.T) {
+	svc := newTestService(t)
+
+	docs := []*vault.Document{
+		{
+			Path:        filepath.Join(svc.VaultRoot, "d1.md"),
+			Title:       "Doc 1",
+			Frontmatter: map[string]interface{}{"document_date": "2026-07-01"},
+		},
+		{
+			Path:        filepath.Join(svc.VaultRoot, "d2.md"),
+			Title:       "Doc 2",
+			Frontmatter: map[string]interface{}{"document_date": "2026-08-15"},
+		},
+		{
+			Path:        filepath.Join(svc.VaultRoot, "d3.md"),
+			Title:       "Doc 3",
+			Frontmatter: map[string]interface{}{"document_date": "2026-09-30"},
+		},
+	}
+	for _, d := range docs {
+		if err := svc.DB.IndexDocument(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// After 2026-08-01 -> Doc 2 and Doc 3
+	vAfter := dbviews.View{
+		ID:      "v_after",
+		Name:    "After Aug 1",
+		Filters: []dbviews.Filter{{Key: "document_date", Operator: "after", Value: "2026-08-01"}},
+	}
+	if err := svc.ViewsMgr.Save(vAfter); err != nil {
+		t.Fatal(err)
+	}
+	resAfter, err := svc.ViewsExec("v_after")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resAfter) != 2 {
+		t.Fatalf("expected 2 docs after 2026-08-01, got %d", len(resAfter))
+	}
+
+	// Before 2026-08-01 -> Doc 1
+	vBefore := dbviews.View{
+		ID:      "v_before",
+		Name:    "Before Aug 1",
+		Filters: []dbviews.Filter{{Key: "document_date", Operator: "before", Value: "2026-08-01"}},
+	}
+	if err := svc.ViewsMgr.Save(vBefore); err != nil {
+		t.Fatal(err)
+	}
+	resBefore, err := svc.ViewsExec("v_before")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resBefore) != 1 || resBefore[0]["_title"] != "Doc 1" {
+		t.Fatalf("expected Doc 1 before 2026-08-01, got %+v", resBefore)
+	}
+}
+
+func TestViewsExecSetFiltering(t *testing.T) {
+	svc := newTestService(t)
+
+	docs := []*vault.Document{
+		{
+			Path:        filepath.Join(svc.VaultRoot, "t1.md"),
+			Title:       "T1",
+			Frontmatter: map[string]interface{}{"tags": []string{"finance", "tax", "2026"}},
+		},
+		{
+			Path:        filepath.Join(svc.VaultRoot, "t2.md"),
+			Title:       "T2",
+			Frontmatter: map[string]interface{}{"tags": []string{"finance", "payroll"}},
+		},
+		{
+			Path:        filepath.Join(svc.VaultRoot, "t3.md"),
+			Title:       "T3",
+			Frontmatter: map[string]interface{}{"tags": []string{"legal"}},
+		},
+	}
+	for _, d := range docs {
+		if err := svc.DB.IndexDocument(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// 1. contains_all "finance, tax" -> T1 only
+	vAll := dbviews.View{
+		ID:      "v_set_all",
+		Name:    "All",
+		Filters: []dbviews.Filter{{Key: "tags", Operator: "contains_all", Value: "finance, tax"}},
+	}
+	if err := svc.ViewsMgr.Save(vAll); err != nil {
+		t.Fatal(err)
+	}
+	resAll, err := svc.ViewsExec("v_set_all")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resAll) != 1 || resAll[0]["_title"] != "T1" {
+		t.Fatalf("expected T1, got %+v", resAll)
+	}
+
+	// 2. contains_any "payroll, legal" -> T2 and T3
+	vAny := dbviews.View{
+		ID:      "v_set_any",
+		Name:    "Any",
+		Filters: []dbviews.Filter{{Key: "tags", Operator: "contains_any", Value: "payroll, legal"}},
+	}
+	if err := svc.ViewsMgr.Save(vAny); err != nil {
+		t.Fatal(err)
+	}
+	resAny, err := svc.ViewsExec("v_set_any")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resAny) != 2 {
+		t.Fatalf("expected 2 results for contains_any, got %d", len(resAny))
+	}
+
+	// 3. contains_none "finance" -> T3 only
+	vNone := dbviews.View{
+		ID:      "v_set_none",
+		Name:    "None",
+		Filters: []dbviews.Filter{{Key: "tags", Operator: "contains_none", Value: "finance"}},
+	}
+	if err := svc.ViewsMgr.Save(vNone); err != nil {
+		t.Fatal(err)
+	}
+	resNone, err := svc.ViewsExec("v_set_none")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resNone) != 1 || resNone[0]["_title"] != "T3" {
+		t.Fatalf("expected T3 for contains_none finance, got %+v", resNone)
+	}
+}
+
+func TestExecuteBaseEmbed(t *testing.T) {
+	svc := newTestService(t)
+
+	// Create base with view
+	base, err := svc.BaseNew("Project Tasks", "Tasks base")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tasksDir := filepath.Join(svc.VaultRoot, "tasks")
+	if err := os.MkdirAll(tasksDir, 0750); err != nil {
+		t.Fatal(err)
+	}
+
+	base.Properties = map[string]dbviews.PropertyConfig{
+		"priority": {Type: "select", Label: "Priority Level"},
+	}
+	base.Views = []dbviews.View{
+		{
+			ID:      "v_tasks_all",
+			Name:    "All Tasks",
+			Type:    "table",
+			Source:  "tasks/",
+			Columns: []string{"title", "priority", "status"},
+		},
+	}
+	if err := svc.BaseSave(base); err != nil {
+		t.Fatal(err)
+	}
+
+	// Index 5 task documents in tasks/
+	for i := 1; i <= 5; i++ {
+		doc := &vault.Document{
+			Path:        filepath.Join(tasksDir, fmt.Sprintf("task_%d.md", i)),
+			Title:       fmt.Sprintf("Task %d", i),
+			Frontmatter: map[string]interface{}{"priority": "high", "status": "open"},
+		}
+		if err := svc.DB.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// 1. Execute embed with limit: 2
+	specYAML := `
+base: project-tasks
+view: v_tasks_all
+limit: 2
+`
+	res, err := svc.ExecuteBaseEmbed(specYAML)
+	if err != nil {
+		t.Fatalf("ExecuteBaseEmbed failed: %v", err)
+	}
+	if res.BaseID != "project-tasks" {
+		t.Errorf("expected BaseID project-tasks, got %s", res.BaseID)
+	}
+	if len(res.Rows) != 2 {
+		t.Errorf("expected 2 rows due to limit, got %d", len(res.Rows))
+	}
+	if res.TotalRows != 5 {
+		t.Errorf("expected TotalRows 5, got %d", res.TotalRows)
+	}
+	if !res.Capped {
+		t.Error("expected Capped to be true")
+	}
+	if !strings.Contains(res.Markdown, "| Priority Level |") {
+		t.Errorf("expected Priority Level column header in markdown:\n%s", res.Markdown)
+	}
+	if !strings.Contains(res.Markdown, "Showing 2 of 5 rows") {
+		t.Errorf("expected Showing 2 of 5 rows in markdown footer:\n%s", res.Markdown)
+	}
+	if !strings.Contains(res.Markdown, "[[bases/project-tasks.md|Open Project Tasks]]") {
+		t.Errorf("expected link to base in markdown footer:\n%s", res.Markdown)
+	}
+
+	// 2. Error cases
+	// Missing base
+	_, err = svc.ExecuteBaseEmbed("base: nonexistent-base\n")
+	if err == nil || !strings.Contains(err.Error(), "not found") {
+		t.Errorf("expected base not found error, got: %v", err)
+	}
+
+	// Missing view
+	_, err = svc.ExecuteBaseEmbed("base: project-tasks\nview: nonexistent-view\n")
+	if err == nil || !strings.Contains(err.Error(), "not found") {
+		t.Errorf("expected view not found error, got: %v", err)
+	}
+
+	// Empty spec
+	_, err = svc.ExecuteBaseEmbed("")
+	if err == nil {
+		t.Error("expected error for empty embed spec")
+	}
+}
+
+func TestViewsExportCSV(t *testing.T) {
+	svc := newTestService(t)
+
+	// Index notes
+	doc1 := &vault.Document{
+		Path:        filepath.Join(svc.VaultRoot, "note1.md"),
+		Title:       "Note One",
+		Frontmatter: map[string]interface{}{"category": "work", "amount": "100.00"},
+	}
+	doc2 := &vault.Document{
+		Path:        filepath.Join(svc.VaultRoot, "note2.md"),
+		Title:       "Note Two, with comma",
+		Frontmatter: map[string]interface{}{"category": "home", "amount": "50.00"},
+	}
+	if err := svc.DB.IndexDocument(doc1); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.DB.IndexDocument(doc2); err != nil {
+		t.Fatal(err)
+	}
+
+	view := dbviews.View{
+		ID:      "v_export",
+		Name:    "Export View",
+		Type:    "table",
+		Columns: []string{"title", "category", "amount"},
+		Computed: map[string]dbviews.ComputedColumn{
+			"summary": {Formula: "{category} - {amount}"},
+		},
+	}
+	if err := svc.ViewsMgr.Save(view); err != nil {
+		t.Fatal(err)
+	}
+
+	csvBytes, err := svc.ViewsExportCSV("v_export")
+	if err != nil {
+		t.Fatalf("ViewsExportCSV failed: %v", err)
+	}
+
+	csvStr := string(csvBytes)
+	lines := strings.Split(strings.TrimSpace(csvStr), "\n")
+	if len(lines) != 3 {
+		t.Fatalf("expected 3 CSV lines (header + 2 rows), got %d:\n%s", len(lines), csvStr)
+	}
+
+	if lines[0] != "title,category,amount" {
+		t.Errorf("unexpected CSV header: %s", lines[0])
+	}
+	if !strings.Contains(csvStr, "\"Note Two, with comma\"") {
+		t.Errorf("expected quoted note title with comma, got:\n%s", csvStr)
+	}
+}
+
+func TestCSVImportDryRunAndApply(t *testing.T) {
+	svc := newTestService(t)
+
+	csvContent := `Title,Date,Amount,Status
+Invoice Alpha,2026-08-01,150.00,open
+Invoice Beta,2026-08-02,250.00,paid
+`
+
+	// 1. Dry-run mode (Apply: false)
+	optsDry := CSVImportOptions{
+		CSVData:  strings.NewReader(csvContent),
+		Apply:    false,
+		Folder:   "finance",
+		BaseName: "Finance Database",
+	}
+
+	reportDry, err := svc.CSVImport(optsDry)
+	if err != nil {
+		t.Fatalf("CSVImport dry-run failed: %v", err)
+	}
+
+	if !reportDry.DryRun {
+		t.Error("expected DryRun=true in report")
+	}
+	if reportDry.ImportedCount != 2 {
+		t.Errorf("expected 2 imported preview rows, got %d", reportDry.ImportedCount)
+	}
+	if len(reportDry.Rows) != 2 {
+		t.Fatalf("expected 2 row results, got %d", len(reportDry.Rows))
+	}
+	if reportDry.Rows[0].Status != "preview" {
+		t.Errorf("expected status 'preview', got %s", reportDry.Rows[0].Status)
+	}
+
+	// Verify no files written to disk
+	targetFile := filepath.Join(svc.VaultRoot, "finance", "invoice-alpha.md")
+	if _, err := os.Stat(targetFile); !os.IsNotExist(err) {
+		t.Error("expected no file written during dry-run")
+	}
+
+	// 2. Apply mode (Apply: true)
+	optsApply := CSVImportOptions{
+		CSVData:  strings.NewReader(csvContent),
+		Apply:    true,
+		Folder:   "finance",
+		BaseName: "Finance Database",
+	}
+
+	reportApply, err := svc.CSVImport(optsApply)
+	if err != nil {
+		t.Fatalf("CSVImport apply failed: %v", err)
+	}
+
+	if reportApply.DryRun {
+		t.Error("expected DryRun=false in apply report")
+	}
+	if reportApply.ImportedCount != 2 {
+		t.Errorf("expected 2 created notes, got %d", reportApply.ImportedCount)
+	}
+
+	// Verify file was written with frontmatter
+	data, err := os.ReadFile(targetFile) // #nosec G304 -- targetFile is inside the test vault.
+	if err != nil {
+		t.Fatalf("target file was not created: %v", err)
+	}
+	docStr := string(data)
+	if !strings.Contains(docStr, "title: Invoice Alpha") || !strings.Contains(docStr, "amount: \"150.00\"") {
+		t.Errorf("unexpected note content:\n%s", docStr)
+	}
+
+	// Verify base was created
+	baseFile := filepath.Join(svc.VaultRoot, "bases", "finance-database.md")
+	baseData, err := os.ReadFile(baseFile) // #nosec G304 -- baseFile is inside the test vault.
+	if err != nil {
+		t.Fatalf("base note was not created: %v", err)
+	}
+	if !strings.Contains(string(baseData), "type: base") {
+		t.Errorf("unexpected base content:\n%s", string(baseData))
+	}
+
+	// 3. Collision handling (re-import with same CSV)
+	optsCollision := CSVImportOptions{
+		CSVData:     strings.NewReader(csvContent),
+		Apply:       true,
+		Folder:      "finance",
+		OnCollision: "suffix",
+	}
+	reportCollision, err := svc.CSVImport(optsCollision)
+	if err != nil {
+		t.Fatalf("CSVImport collision failed: %v", err)
+	}
+	if reportCollision.CollisionCount != 2 {
+		t.Errorf("expected 2 collisions, got %d", reportCollision.CollisionCount)
+	}
+	suffixedFile := filepath.Join(svc.VaultRoot, "finance", "invoice-alpha-2.md")
+	if _, err := os.Stat(suffixedFile); err != nil {
+		t.Errorf("expected suffixed file invoice-alpha-2.md to exist: %v", err)
 	}
 }

@@ -165,3 +165,103 @@ func TestViewsCLI_ExecUnresolvableSourceError(t *testing.T) {
 		t.Fatal("expected error executing view with unresolvable source")
 	}
 }
+
+func TestViewsCLI_ExportAndImportCSVAndEmbed(t *testing.T) {
+	vaultDir := setupTestVault(t)
+	origCfg := cfg
+	cfg = &config.Config{Vault: vaultDir}
+	t.Cleanup(func() { cfg = origCfg })
+
+	jsonFlag = true
+	t.Cleanup(func() { jsonFlag = false })
+
+	vRoot, db, err := initServiceDeps()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		_ = db.Close()
+	}()
+	svc := service.New(vRoot, db)
+
+	// Create a test note
+	doc := &vault.Document{
+		Path:        filepath.Join(svc.VaultRoot, "item.md"),
+		Title:       "Test Item",
+		Frontmatter: map[string]interface{}{"status": "open", "amount": "99.99"},
+	}
+	if err := svc.DB.IndexDocument(doc); err != nil {
+		t.Fatal(err)
+	}
+
+	viewsCmd := newViewsCmd()
+	saveCmd := findSubcommand(t, viewsCmd, "save")
+	exportCSVCmd := findSubcommand(t, viewsCmd, "export-csv")
+	importCSVCmd := findSubcommand(t, viewsCmd, "import-csv")
+	embedCmd := findSubcommand(t, viewsCmd, "embed")
+
+	// Save view
+	vJSON := `{"id":"v_test_export","name":"Export View","type":"table","columns":["title","status","amount"]}`
+	if _, err := runCommand(t, saveCmd, []string{vJSON}); err != nil {
+		t.Fatal(err)
+	}
+
+	// 1. Test export-csv
+	out, err := runCommand(t, exportCSVCmd, []string{"v_test_export"})
+	if err != nil {
+		t.Fatalf("export-csv failed: %v", err)
+	}
+	if !strings.Contains(out, "title,status,amount") || !strings.Contains(out, "Test Item,open,99.99") {
+		t.Errorf("unexpected export-csv output:\n%s", out)
+	}
+
+	// 2. Test import-csv
+	csvPath := filepath.Join(t.TempDir(), "import.csv")
+	csvContent := `Title,Status,Amount
+Item Alpha,open,10.00
+Item Beta,paid,20.00
+`
+	if err := os.WriteFile(csvPath, []byte(csvContent), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	// Dry run
+	out, err = runCommand(t, importCSVCmd, []string{csvPath})
+	if err != nil {
+		t.Fatalf("import-csv dry-run failed: %v", err)
+	}
+	if !strings.Contains(out, "dry_run\":true") || !strings.Contains(out, "imported_count\":2") {
+		t.Errorf("unexpected import-csv dry run output:\n%s", out)
+	}
+
+	// Apply
+	_ = importCSVCmd.Flags().Set("apply", "true")
+	_ = importCSVCmd.Flags().Set("folder", "imported")
+	_ = importCSVCmd.Flags().Set("base", "Imported Base")
+	out, err = runCommand(t, importCSVCmd, []string{csvPath})
+	if err != nil {
+		t.Fatalf("import-csv apply failed: %v", err)
+	}
+	if !strings.Contains(out, "dry_run\":false") || !strings.Contains(out, "imported_count\":2") {
+		t.Errorf("unexpected import-csv apply output:\n%s", out)
+	}
+
+	// Verify imported file on disk
+	importedNote := filepath.Join(svc.VaultRoot, "imported", "item-alpha.md")
+	if _, err := os.Stat(importedNote); err != nil {
+		t.Fatalf("expected imported note at %s, err: %v", importedNote, err)
+	}
+
+	// 3. Test embed
+	embedSpec := `
+base: imported-base
+limit: 5
+`
+	out, err = runCommand(t, embedCmd, []string{embedSpec})
+	if err != nil {
+		t.Fatalf("embed command failed: %v", err)
+	}
+	if !strings.Contains(out, "base_id\":\"imported-base\"") || !strings.Contains(out, "markdown\"") {
+		t.Errorf("unexpected embed output:\n%s", out)
+	}
+}

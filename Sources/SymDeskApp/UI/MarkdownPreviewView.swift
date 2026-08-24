@@ -99,6 +99,8 @@ private struct MarkdownBlocksView: View {
                 visited: visited,
                 onLinkClick: onLinkClick
             )
+        case .baseEmbed(let code):
+            BaseEmbedView(spec: code, onLinkClick: onLinkClick)
         case .mermaid(let code):
             MermaidView(code: code)
         case .mathBlock(let tex):
@@ -448,3 +450,74 @@ private struct PreviewTableView: View {
         .cornerRadius(6)
     }
 }
+
+// MARK: - Base Embeds (Issue #554)
+
+private struct BaseEmbedView: View {
+    let spec: String
+    var onLinkClick: ((String) -> Void)?
+
+    @EnvironmentObject var core: DeskCore
+    @State private var result: BaseEmbedResult?
+    @State private var errorMessage: String?
+    @State private var isLoading = true
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if isLoading {
+                ProgressView()
+                    .tint(SymairaTheme.goldPrimary)
+                    .padding(8)
+            } else if let err = errorMessage {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    Text(err)
+                        .symairaText(.caption)
+                        .foregroundColor(.orange)
+                }
+                .padding(8)
+            } else if let res = result {
+                HStack(spacing: 4) {
+                    Image(systemName: "tablecells")
+                        .symairaText(.caption)
+                    Button(action: { onLinkClick?(res.basePath) }) {
+                        Text("\(res.baseTitle) › \(res.viewName)")
+                            .symairaText(.caption)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .foregroundColor(SymairaTheme.textMuted)
+
+                // Parse and render inert markdown table
+                MarkdownBlocksView(
+                    blocks: MarkdownPreviewParser.parse(res.markdown),
+                    resolveNote: { _ in nil },
+                    visited: [],
+                    onLinkClick: onLinkClick
+                )
+            }
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.03))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(SymairaTheme.borderGlass, lineWidth: 1)
+        )
+        .cornerRadius(6)
+        .task(id: spec) {
+            isLoading = true
+            defer { isLoading = false }
+            do {
+                let res = try await core.viewsExecuteEmbed(spec: spec)
+                result = res
+                errorMessage = nil
+            } catch {
+                errorMessage = error.localizedDescription
+                result = nil
+            }
+        }
+    }
+}
+

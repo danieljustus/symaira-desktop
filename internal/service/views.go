@@ -359,27 +359,317 @@ func matchesGroup(props map[string]interface{}, group dbviews.FilterGroup) bool 
 	return matched > 0
 }
 
+func parseNumberFlexible(s string) (float64, bool) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return 0, false
+	}
+	f, err := strconv.ParseFloat(s, 64)
+	return f, err == nil
+}
+
+func parseDateFlexible(s string) (time.Time, bool) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return time.Time{}, false
+	}
+	formats := []string{
+		"2006-01-02",
+		time.RFC3339,
+		"2006-01-02T15:04:05Z",
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05",
+		"2006-01-02 15:04",
+	}
+	for _, f := range formats {
+		if t, err := time.Parse(f, s); err == nil {
+			return t, true
+		}
+	}
+	return time.Time{}, false
+}
+
+func extractSetElements(val interface{}) []string {
+	if val == nil {
+		return nil
+	}
+	switch v := val.(type) {
+	case []string:
+		var res []string
+		for _, s := range v {
+			trimmed := strings.TrimSpace(s)
+			if trimmed != "" {
+				res = append(res, trimmed)
+			}
+		}
+		return res
+	case []interface{}:
+		var res []string
+		for _, item := range v {
+			trimmed := strings.TrimSpace(fmt.Sprintf("%v", item))
+			if trimmed != "" && trimmed != "<nil>" {
+				res = append(res, trimmed)
+			}
+		}
+		return res
+	case string:
+		s := strings.TrimSpace(v)
+		if s == "" || s == "<nil>" {
+			return nil
+		}
+		// Handle Go slice string formatting like "[a b c]" or "[a, b, c]"
+		if strings.HasPrefix(s, "[") && strings.HasSuffix(s, "]") {
+			s = strings.TrimPrefix(s, "[")
+			s = strings.TrimSuffix(s, "]")
+			s = strings.TrimSpace(s)
+		}
+		if s == "" {
+			return nil
+		}
+		var items []string
+		if strings.Contains(s, ",") {
+			items = strings.Split(s, ",")
+		} else {
+			items = strings.Fields(s)
+		}
+		var res []string
+		for _, item := range items {
+			trimmed := strings.TrimSpace(item)
+			if trimmed != "" {
+				res = append(res, trimmed)
+			}
+		}
+		return res
+	default:
+		s := strings.TrimSpace(fmt.Sprintf("%v", val))
+		if s != "" && s != "<nil>" {
+			return []string{s}
+		}
+		return nil
+	}
+}
+
 func matchesFilter(props map[string]interface{}, filter dbviews.Filter) bool {
 	value, exists := props[filter.Key]
-	actual := fmt.Sprintf("%v", value)
-	switch strings.ToLower(filter.Operator) {
-	case "is_empty", "empty":
-		return !exists || actual == ""
-	case "is_not_empty", "not_empty":
-		return exists && actual != ""
-	case "not_equals", "is_not":
-		return !exists || actual != filter.Value
-	case "contains":
-		return exists && strings.Contains(strings.ToLower(actual), strings.ToLower(filter.Value))
-	case "not_contains":
-		return !exists || !strings.Contains(strings.ToLower(actual), strings.ToLower(filter.Value))
-	case "greater_than", "after":
-		return exists && actual > filter.Value
-	case "less_than", "before":
-		return exists && actual < filter.Value
-	default: // empty operator retains the original equality behavior.
-		return exists && actual == filter.Value
+	actual := ""
+	if exists && value != nil {
+		actual = fmt.Sprintf("%v", value)
 	}
+	op := strings.ToLower(strings.TrimSpace(filter.Operator))
+	filterVal := strings.TrimSpace(filter.Value)
+
+	switch op {
+	case "is_empty", "empty":
+		return !exists || actual == "" || actual == "<nil>"
+	case "is_not_empty", "not_empty":
+		return exists && actual != "" && actual != "<nil>"
+	case "not_equals", "is_not", "!=":
+		if !exists || actual == "<nil>" {
+			return true
+		}
+		return !valuesEqual(actual, filterVal)
+	case "contains":
+		return exists && strings.Contains(strings.ToLower(actual), strings.ToLower(filterVal))
+	case "not_contains":
+		return !exists || !strings.Contains(strings.ToLower(actual), strings.ToLower(filterVal))
+	case "starts_with", "prefix":
+		return exists && strings.HasPrefix(strings.ToLower(actual), strings.ToLower(filterVal))
+	case "ends_with", "suffix":
+		return exists && strings.HasSuffix(strings.ToLower(actual), strings.ToLower(filterVal))
+
+	// Numeric and relational operators
+	case "greater_than", "gt", ">":
+		if !exists || actual == "" {
+			return false
+		}
+		return compareRelational(actual, filterVal) > 0
+	case "greater_than_or_equal", "gte", ">=":
+		if !exists || actual == "" {
+			return false
+		}
+		return compareRelational(actual, filterVal) >= 0
+	case "less_than", "lt", "<":
+		if !exists || actual == "" {
+			return false
+		}
+		return compareRelational(actual, filterVal) < 0
+	case "less_than_or_equal", "lte", "<=":
+		if !exists || actual == "" {
+			return false
+		}
+		return compareRelational(actual, filterVal) <= 0
+
+	// Date-specific operators
+	case "after":
+		if !exists || actual == "" {
+			return false
+		}
+		if dActual, okA := parseDateFlexible(actual); okA {
+			if dFilter, okF := parseDateFlexible(filterVal); okF {
+				return dActual.After(dFilter)
+			}
+		}
+		return actual > filterVal
+	case "before":
+		if !exists || actual == "" {
+			return false
+		}
+		if dActual, okA := parseDateFlexible(actual); okA {
+			if dFilter, okF := parseDateFlexible(filterVal); okF {
+				return dActual.Before(dFilter)
+			}
+		}
+		return actual < filterVal
+	case "on_or_after":
+		if !exists || actual == "" {
+			return false
+		}
+		if dActual, okA := parseDateFlexible(actual); okA {
+			if dFilter, okF := parseDateFlexible(filterVal); okF {
+				return dActual.After(dFilter) || dActual.Equal(dFilter)
+			}
+		}
+		return actual >= filterVal
+	case "on_or_before":
+		if !exists || actual == "" {
+			return false
+		}
+		if dActual, okA := parseDateFlexible(actual); okA {
+			if dFilter, okF := parseDateFlexible(filterVal); okF {
+				return dActual.Before(dFilter) || dActual.Equal(dFilter)
+			}
+		}
+		return actual <= filterVal
+
+	// Set / Multi-value operators
+	case "in":
+		if !exists || actual == "" {
+			return false
+		}
+		filterSet := extractSetElements(filterVal)
+		actualItems := extractSetElements(value)
+		for _, a := range actualItems {
+			for _, f := range filterSet {
+				if strings.EqualFold(a, f) {
+					return true
+				}
+			}
+		}
+		return false
+	case "not_in":
+		if !exists || actual == "" {
+			return true
+		}
+		filterSet := extractSetElements(filterVal)
+		actualItems := extractSetElements(value)
+		for _, a := range actualItems {
+			for _, f := range filterSet {
+				if strings.EqualFold(a, f) {
+					return false
+				}
+			}
+		}
+		return true
+	case "contains_all":
+		if !exists || actual == "" {
+			return false
+		}
+		filterSet := extractSetElements(filterVal)
+		actualItems := extractSetElements(value)
+		for _, f := range filterSet {
+			found := false
+			for _, a := range actualItems {
+				if strings.EqualFold(a, f) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return false
+			}
+		}
+		return len(filterSet) > 0
+	case "contains_any":
+		if !exists || actual == "" {
+			return false
+		}
+		filterSet := extractSetElements(filterVal)
+		actualItems := extractSetElements(value)
+		for _, f := range filterSet {
+			for _, a := range actualItems {
+				if strings.EqualFold(a, f) {
+					return true
+				}
+			}
+		}
+		return false
+	case "contains_none":
+		if !exists || actual == "" {
+			return true
+		}
+		filterSet := extractSetElements(filterVal)
+		actualItems := extractSetElements(value)
+		for _, f := range filterSet {
+			for _, a := range actualItems {
+				if strings.EqualFold(a, f) {
+					return false
+				}
+			}
+		}
+		return true
+
+	default: // "equals", "is", "=", "==", ""
+		if !exists {
+			return filterVal == ""
+		}
+		return valuesEqual(actual, filterVal)
+	}
+}
+
+func valuesEqual(a, b string) bool {
+	if a == b {
+		return true
+	}
+	if nA, okA := parseNumberFlexible(a); okA {
+		if nB, okB := parseNumberFlexible(b); okB {
+			return nA == nB
+		}
+	}
+	if dA, okA := parseDateFlexible(a); okA {
+		if dB, okB := parseDateFlexible(b); okB {
+			return dA.Equal(dB)
+		}
+	}
+	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
+}
+
+func compareRelational(a, b string) int {
+	if nA, okA := parseNumberFlexible(a); okA {
+		if nB, okB := parseNumberFlexible(b); okB {
+			if nA < nB {
+				return -1
+			} else if nA > nB {
+				return 1
+			}
+			return 0
+		}
+	}
+	if dA, okA := parseDateFlexible(a); okA {
+		if dB, okB := parseDateFlexible(b); okB {
+			if dA.Before(dB) {
+				return -1
+			} else if dA.After(dB) {
+				return 1
+			}
+			return 0
+		}
+	}
+	if a < b {
+		return -1
+	} else if a > b {
+		return 1
+	}
+	return 0
 }
 
 func (s *Service) evaluateFormula(formula string, props map[string]interface{}) string {

@@ -3,6 +3,7 @@ package health
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -46,28 +47,43 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 	var docs []*vault.Document
 	paths := make(map[string]struct{})
 	titles := make(map[string]struct{})
+	attachments := make(map[string]struct{})
 
-	err := vault.Walk(vaultRoot, func(path string) error {
+	err := vault.WalkAll(vaultRoot, func(path string, d fs.DirEntry) error {
 		rel, relErr := filepath.Rel(vaultRoot, path)
 		if relErr != nil {
 			return relErr
 		}
 		rel = filepath.ToSlash(rel)
-		report.FilesScanned++
-		doc, parseErr := vault.ParseFile(path)
-		if parseErr != nil {
-			report.addFinding("parse_error", "error", rel, parseErr.Error(), "review", "The file could not be parsed safely")
+
+		if filepath.Ext(d.Name()) == ".md" {
+			report.FilesScanned++
+			doc, parseErr := vault.ParseFile(path)
+			if parseErr != nil {
+				report.addFinding("parse_error", "error", rel, parseErr.Error(), "review", "The file could not be parsed safely")
+				return nil
+			}
+			docs = append(docs, doc)
+			relLower := strings.ToLower(rel)
+			baseLower := strings.ToLower(filepath.Base(rel))
+			paths[relLower] = struct{}{}
+			paths[strings.TrimSuffix(relLower, ".md")] = struct{}{}
+			paths[baseLower] = struct{}{}
+			paths[strings.TrimSuffix(baseLower, ".md")] = struct{}{}
+			if doc.Title != "" {
+				titles[strings.ToLower(strings.TrimSpace(doc.Title))] = struct{}{}
+			}
+			if len(doc.Frontmatter) == 0 {
+				report.addFinding("missing_frontmatter", "warning", rel, "Markdown file has no frontmatter", "review-frontmatter", "Metadata is unavailable to the index and repair tools")
+			}
 			return nil
 		}
-		docs = append(docs, doc)
-		paths[rel] = struct{}{}
-		paths[strings.TrimSuffix(rel, filepath.Ext(rel))] = struct{}{}
-		if doc.Title != "" {
-			titles[strings.ToLower(strings.TrimSpace(doc.Title))] = struct{}{}
-		}
-		if len(doc.Frontmatter) == 0 {
-			report.addFinding("missing_frontmatter", "warning", rel, "Markdown file has no frontmatter", "review-frontmatter", "Metadata is unavailable to the index and repair tools")
-		}
+
+		// Non-Markdown file (attachment, canvas, etc.)
+		relLower := strings.ToLower(rel)
+		baseLower := strings.ToLower(filepath.Base(rel))
+		attachments[relLower] = struct{}{}
+		attachments[baseLower] = struct{}{}
 		return nil
 	})
 	if err != nil {
@@ -100,8 +116,13 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 		}
 
 		for _, link := range doc.Links {
-			if target := normalizeLinkTarget(link); target != "" && !linkExists(target, paths, titles) {
-				report.addFinding("broken_wikilink", "warning", relSlash, fmt.Sprintf("wikilink target %q does not resolve to a vault document", target), "review-link", "Choose an existing target or remove the stale link")
+			if target := normalizeLinkTarget(link); target != "" && !linkExists(target, paths, titles, attachments) {
+				ext := strings.ToLower(filepath.Ext(target))
+				if ext != "" && ext != ".md" && ext != ".canvas" {
+					report.addFinding("broken_wikilink", "warning", filepath.ToSlash(rel), fmt.Sprintf("attachment target %q does not resolve to a vault attachment", target), "review-link", "Choose an existing target or remove the stale link")
+				} else {
+					report.addFinding("broken_wikilink", "warning", filepath.ToSlash(rel), fmt.Sprintf("wikilink target %q does not resolve to a vault document", target), "review-link", "Choose an existing target or remove the stale link")
+				}
 			}
 		}
 	}
@@ -156,20 +177,27 @@ func normalizeLinkTarget(link string) string {
 	return filepath.ToSlash(strings.TrimPrefix(filepath.Clean(link), "./"))
 }
 
-func linkExists(target string, paths, titles map[string]struct{}) bool {
-	if _, ok := paths[target]; ok {
+func linkExists(target string, paths, titles, attachments map[string]struct{}) bool {
+	targetLower := strings.ToLower(target)
+	if _, ok := paths[targetLower]; ok {
 		return true
 	}
-	if _, ok := paths[strings.TrimSuffix(target, filepath.Ext(target))]; ok {
+	if _, ok := paths[strings.TrimSuffix(targetLower, filepath.Ext(targetLower))]; ok {
 		return true
 	}
-	_, ok := titles[strings.ToLower(target)]
-	return ok
+	if _, ok := titles[targetLower]; ok {
+		return true
+	}
+	if _, ok := attachments[targetLower]; ok {
+		return true
+	}
+	targetBaseLower := strings.ToLower(filepath.Base(target))
+	if _, ok := attachments[targetBaseLower]; ok {
+		return true
+	}
+	return false
 }
 
-// resolveDerivedSource locates the authoritative source note for a derived artifact.
-// It checks vault-relative paths, paths relative to the derived note's directory,
-// and note titles/basenames.
 func resolveDerivedSource(vaultRoot, docPath, derivedFrom string) (string, bool, error) {
 	target := strings.TrimSpace(derivedFrom)
 	if strings.HasPrefix(target, "[[") && strings.HasSuffix(target, "]]") {

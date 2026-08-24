@@ -127,6 +127,10 @@ jobs:
             exit 1
           fi
 
+      - name: Corekit manifest pin guard
+        # Issue #526: corekit dependency pin must stay aligned across all 6 modules.
+        run: ./scripts/check-corekit-pins.sh
+
   golangci-lint:
     runs-on: ubuntu-latest
     permissions:
@@ -206,6 +210,9 @@ jobs:
             exit 1
           fi
           echo "main.go version default: OK (no hardcoded version)"
+
+          # 4. corekit dependency pin consistency across all 6 go.mod manifests (issue #526)
+          ./scripts/check-corekit-pins.sh
 
           echo "All version sources consistent with tag ${TAG}"
 

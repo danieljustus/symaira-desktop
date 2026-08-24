@@ -70,6 +70,38 @@ public struct SearchResponse: Codable, Equatable, Sendable {
     public let hint: String?
 }
 
+/// Snapshot of the hybrid search index and the embedding backend behind it.
+public struct RetrievalStatus: Codable, Equatable, Sendable {
+    public let documentCount: Int
+    public let chunkCount: Int
+    public let databaseBytes: Int64
+    public let lastIndexedAt: String?
+    public let embeddingModel: String
+    /// False means the configured backend did not answer and queries fall
+    /// back to the local hash embedding: search still returns, but ranking is
+    /// degraded. This is deliberately distinct from an empty index.
+    public let backendAvailable: Bool
+
+    public var isEmpty: Bool { documentCount == 0 }
+
+    enum CodingKeys: String, CodingKey {
+        case documentCount = "document_count"
+        case chunkCount = "chunk_count"
+        case databaseBytes = "database_bytes"
+        case lastIndexedAt = "last_indexed_at"
+        case embeddingModel = "embedding_model"
+        case backendAvailable = "backend_available"
+    }
+}
+
+/// Result of a vault re-index run.
+public struct ReindexResult: Codable, Equatable, Sendable {
+    public let status: String
+    public let indexed: Int
+    public let skipped: Int
+    public let pruned: Int?
+}
+
 public enum AIEventType: String, Codable, Sendable {
     case answer
     case citation
@@ -877,6 +909,24 @@ public final class DeskCore: ObservableObject {
 
     public func search(query: String) async throws -> SearchResponse {
 		try await runDecoding(SearchResponse.self, arguments: ["search", query, "--json"] + vaultArgs)
+    }
+
+    /// Reports the hybrid search index and its embedding backend (issue
+    /// #515). Retrieval degrades silently — queries still answer, just worse
+    /// — so this is the only way the app can tell the user why results got
+    /// thin.
+    public func retrievalStatus() async throws -> RetrievalStatus {
+		try await runDecoding(RetrievalStatus.self, arguments: ["index", "status", "--json"])
+    }
+
+    /// Re-indexes the whole vault, optionally pruning entries for files that
+    /// no longer exist. Mirrors `symdesk index [--prune]`.
+    public func reindexVault(prune: Bool) async throws -> ReindexResult {
+        var arguments = ["index", "--json"]
+        if prune {
+            arguments.append("--prune")
+        }
+		return try await runDecoding(ReindexResult.self, arguments: arguments + vaultArgs)
     }
 
     public func backlinks(for path: String) async throws -> [String] {

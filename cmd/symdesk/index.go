@@ -92,34 +92,32 @@ func newIndexCmd() *cobra.Command {
 				return err
 			}
 
+			// Prune stale entries if --prune was passed. The result is
+			// folded into the single report below: emitting one JSON object
+			// per phase would hand a `--prune --json` caller two documents on
+			// one stream, which no JSON decoder accepts.
+			pruned := 0
+			if indexPrune {
+				pruned, err = db.Prune(vRoot)
+				if err != nil {
+					return fmt.Errorf("prune failed: %w", err)
+				}
+			}
+
 			if jsonFlag {
 				out := map[string]interface{}{
 					"status":  "ok",
 					"indexed": count,
 					"skipped": skipped,
 				}
+				if indexPrune {
+					out["pruned"] = pruned
+				}
 				b, _ := json.Marshal(out)
 				fmt.Println(string(b))
 			} else {
 				fmt.Printf("Index complete. %d new/updated files, %d skipped.\n", count, skipped)
-			}
-
-			// Prune stale entries if --prune was passed
-			if indexPrune {
-				pruned, err := db.Prune(vRoot)
-				if err != nil {
-					return fmt.Errorf("prune failed: %w", err)
-				}
-				if jsonFlag {
-					out := map[string]interface{}{
-						"status":  "ok",
-						"indexed": count,
-						"skipped": skipped,
-						"pruned":  pruned,
-					}
-					b, _ := json.Marshal(out)
-					fmt.Println(string(b))
-				} else {
+				if indexPrune {
 					fmt.Printf("Prune complete. %d stale entries removed.\n", pruned)
 				}
 			}
@@ -128,5 +126,23 @@ func newIndexCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().BoolVar(&indexPrune, "prune", false, "Remove stale entries for deleted or newly-ignored files")
+	cmd.AddCommand(newIndexStatusCmd())
 	return cmd
+}
+
+// newIndexStatusCmd reports the hybrid index snapshot and whether the
+// embedding backend answers. Without it a degraded retrieval path is
+// invisible: queries still return, just worse (issue #515).
+func newIndexStatusCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "status",
+		Short: "Report the hybrid search index and embedding backend state",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			status, err := retrieval.CurrentStatus()
+			if err != nil {
+				return err
+			}
+			return outputResult(status)
+		},
+	}
 }

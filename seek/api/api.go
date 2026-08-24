@@ -12,6 +12,7 @@ package api
 
 import (
 	"strings"
+	"time"
 
 	"github.com/danieljustus/symaira-seek/internal/config"
 	"github.com/danieljustus/symaira-seek/internal/db"
@@ -140,4 +141,57 @@ func Search(query string, limit int) ([]Result, error) {
 	}
 	defer func() { _ = c.Close() }()
 	return c.Search(query, limit)
+}
+
+// Status is a snapshot of the local index and its embedding backend. It is
+// what a consumer needs to tell "no hits because nothing matches" from "no
+// hits because retrieval is degraded".
+type Status struct {
+	// DocumentCount and ChunkCount describe how much is indexed.
+	DocumentCount int `json:"document_count"`
+	ChunkCount    int `json:"chunk_count"`
+	// DatabaseBytes is the on-disk size of the index.
+	DatabaseBytes int64 `json:"database_bytes"`
+	// LastIndexedAt is the most recent document update, empty when the
+	// index carries no such metadata.
+	LastIndexedAt string `json:"last_indexed_at,omitempty"`
+	// EmbeddingModel is the model the backend actually answered with.
+	EmbeddingModel string `json:"embedding_model"`
+	// BackendAvailable reports whether the configured embedding backend
+	// answered. When false, the model above is the local hash fallback and
+	// search quality is degraded even though queries still return.
+	BackendAvailable bool `json:"backend_available"`
+}
+
+// Status reports the index snapshot plus a live probe of the embedding
+// backend. The probe embeds a fixed short string without retrying, so it
+// costs one request and never blocks an interactive caller for long.
+func (c *Client) Status() (*Status, error) {
+	stats, err := c.db.GetStats()
+	if err != nil {
+		return nil, err
+	}
+	probe := c.embedder.GenerateVectorNoRetryWithModel("symdesk retrieval status probe")
+	status := &Status{
+		DocumentCount:    stats.DocumentCount,
+		ChunkCount:       stats.ChunkCount,
+		DatabaseBytes:    stats.DatabaseSize,
+		EmbeddingModel:   probe.Model,
+		BackendAvailable: probe.Model != engine.LocalHashModelName,
+	}
+	if !stats.LastIndexedAt.IsZero() {
+		status.LastIndexedAt = stats.LastIndexedAt.UTC().Format(time.RFC3339)
+	}
+	return status, nil
+}
+
+// CurrentStatus opens the index, takes one status snapshot, and closes again.
+// It is not named Status because that is the result type.
+func CurrentStatus() (*Status, error) {
+	c, err := Open()
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = c.Close() }()
+	return c.Status()
 }

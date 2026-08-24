@@ -17,6 +17,10 @@ struct CommandPalette: View {
     @State private var isSearching = false
     @State private var errorMessage: String?
     @State private var activeFilters: [SearchFilter] = []
+    /// Set when retrieval is degraded (cold index or unreachable embedding
+    /// backend). Search still answers in that state, so without this the user
+    /// only sees thin results and no reason (issue #515).
+    @State private var retrievalWarning: String?
     
     var filteredNotes: [Note] {
         if searchText.isEmpty {
@@ -78,6 +82,15 @@ struct CommandPalette: View {
             
             if let err = errorMessage {
                 Text(err).foregroundColor(.red).padding()
+            }
+
+            if let retrievalWarning {
+                Label(retrievalWarning, systemImage: "exclamationmark.triangle")
+                    .symairaText(.caption)
+                    .foregroundColor(.orange)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
             }
 
             if let hint = searchHint {
@@ -166,6 +179,7 @@ struct CommandPalette: View {
             searchHint = nil
             errorMessage = nil
             activeFilters = []
+            retrievalWarning = nil
         }
     }
     
@@ -181,6 +195,7 @@ struct CommandPalette: View {
             .joined(separator: " ")
         
         Task {
+            await checkRetrievalHealth()
             do {
                 let response = try await core.search(query: fullQuery)
                 await MainActor.run {
@@ -197,6 +212,17 @@ struct CommandPalette: View {
         }
     }
     
+    /// Reads the retrieval state once per palette session. A failure here is
+    /// not surfaced: it must never turn a working search into an error.
+    private func checkRetrievalHealth() async {
+        guard retrievalWarning == nil, let status = try? await core.retrievalStatus() else { return }
+        if status.isEmpty {
+            retrievalWarning = "The search index is empty — results come from plain full-text matching. Open Search Index to build it."
+        } else if !status.backendAvailable {
+            retrievalWarning = "The embedding backend is unreachable — semantic ranking is degraded. See Search Index."
+        }
+    }
+
     private func createNote() {
         guard !searchText.isEmpty else { return }
         isSearching = true

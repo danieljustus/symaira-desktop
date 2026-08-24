@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -10,11 +9,6 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/contacts"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
-
-// ErrSymmeetUnavailable is returned by meeting operations when symmeet is
-// not installed on PATH. SymDesk must remain fully usable in that case;
-// callers surface this as a clear, non-fatal message rather than a crash.
-var ErrSymmeetUnavailable = errors.New("symmeet not found on PATH")
 
 const (
 	transcriptStartMarker = "<!-- symmeet-transcript:start -->"

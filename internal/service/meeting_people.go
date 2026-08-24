@@ -16,7 +16,7 @@ import (
 
 // ErrSymmemoryUnavailable is returned by Memory-backed meeting operations
 // when symmemory is not installed on PATH. SymDesk must remain fully
-// usable in that case, mirroring ErrSymmeetUnavailable.
+// usable in that case.
 var ErrSymmemoryUnavailable = errors.New("symmemory not found on PATH")
 
 // ParticipantCandidate is one Memory entity Symaira Memory suggests for a

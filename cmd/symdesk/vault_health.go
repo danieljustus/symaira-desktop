@@ -8,8 +8,9 @@ import (
 )
 
 func newVaultCmd() *cobra.Command {
-	cmd := &cobra.Command{Use: "vault", Short: "Inspect vault state"}
+	cmd := &cobra.Command{Use: "vault", Short: "Inspect and manage vault state"}
 	cmd.AddCommand(newVaultHealthCmd())
+	cmd.AddCommand(newVaultAdoptCmd())
 	return cmd
 }
 

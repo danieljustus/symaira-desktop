@@ -6,7 +6,7 @@ vector graphic that lands in the vault as an asset and can be embedded in any
 document. Like SymPrint it is a library inside `symdesk`, reachable from the
 CLI, the MCP server, the self-hosted API and both native apps.
 
-Status: proposal. Nothing here is implemented yet.
+Status: in implementation. Core deterministic diagram renderer pipeline (Stage A) implemented in internal/draw.
 
 ## 1. Why SymDraw
 

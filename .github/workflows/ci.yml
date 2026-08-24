@@ -55,6 +55,22 @@ jobs:
       - name: Test
         run: go test -race -count=1 ./...
 
+      - name: Coverage gate
+        if: matrix.os == 'ubuntu-latest'
+        # Floor set to the measured baseline (issue #488: 73.6%) minus a small
+        # buffer, so the gate blocks regressions without failing on today's
+        # code. Raise COVERAGE_THRESHOLD as coverage improves.
+        env:
+          COVERAGE_THRESHOLD: "70"
+        run: |
+          set -euo pipefail
+          go test -count=1 -coverprofile=coverage.out ./...
+          TOTAL=$(go tool cover -func=coverage.out | tail -1 | grep -oE '[0-9]+\.[0-9]+')
+          echo "Total coverage: ${TOTAL}% (threshold: ${COVERAGE_THRESHOLD}%)"
+          awk -v total="$TOTAL" -v threshold="$COVERAGE_THRESHOLD" 'BEGIN { exit !(total < threshold) }' \
+            && { echo "::error::Coverage ${TOTAL}% is below the ${COVERAGE_THRESHOLD}% gate"; exit 1; }
+          echo "Coverage gate passed."
+
   nested-modules:
     # The tools absorbed by the repo consolidation keep their own go.mod, so
     # the root `go test ./...` above does not descend into them. Without this

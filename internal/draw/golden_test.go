@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"flag"
+	"image/png"
 	"os"
 	"path/filepath"
 	"testing"
@@ -112,9 +113,53 @@ func TestGoldenOutputs(t *testing.T) {
 				if err != nil {
 					t.Fatalf("render PNG failed: %v", err)
 				}
-				verifyOrUpdateGolden(t, tc.goldenPNG, resPNG.Data)
+				verifyOrUpdateGoldenPNG(t, tc.goldenPNG, resPNG.Data)
 			}
 		})
+	}
+}
+
+func verifyOrUpdateGoldenPNG(t *testing.T, goldenPath string, actual []byte) {
+	t.Helper()
+
+	if *updateGolden {
+		verifyOrUpdateGolden(t, goldenPath, actual)
+		return
+	}
+
+	expected, err := os.ReadFile(goldenPath) // #nosec G304 -- paths come from the fixed golden test table.
+	if err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(filepath.Dir(goldenPath), 0o700); err != nil {
+				t.Fatalf("create golden dir: %v", err)
+			}
+			if err := os.WriteFile(goldenPath, actual, 0o600); err != nil {
+				t.Fatalf("write initial golden file %s: %v", goldenPath, err)
+			}
+			return
+		}
+		t.Fatalf("read golden file %s: %v", goldenPath, err)
+	}
+
+	expectedImage, err := png.Decode(bytes.NewReader(expected))
+	if err != nil {
+		t.Fatalf("decode golden file %s: %v", goldenPath, err)
+	}
+	actualImage, err := png.Decode(bytes.NewReader(actual))
+	if err != nil {
+		t.Fatalf("decode actual PNG for %s: %v", goldenPath, err)
+	}
+	if expectedImage.Bounds() != actualImage.Bounds() {
+		t.Fatalf("PNG bounds mismatch for %s: expected %v, got %v", goldenPath, expectedImage.Bounds(), actualImage.Bounds())
+	}
+	for y := expectedImage.Bounds().Min.Y; y < expectedImage.Bounds().Max.Y; y++ {
+		for x := expectedImage.Bounds().Min.X; x < expectedImage.Bounds().Max.X; x++ {
+			er, eg, eb, ea := expectedImage.At(x, y).RGBA()
+			ar, ag, ab, aa := actualImage.At(x, y).RGBA()
+			if er != ar || eg != ag || eb != ab || ea != aa {
+				t.Fatalf("PNG pixel mismatch for %s at (%d,%d)", goldenPath, x, y)
+			}
+		}
 	}
 }
 

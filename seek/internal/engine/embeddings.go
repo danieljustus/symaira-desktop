@@ -103,6 +103,12 @@ const defaultEmbeddingDim = 768
 // mixed-space corruption.
 const localHashModelName = "local-hash"
 
+// LocalHashModelName exposes the fallback model name so consumers outside
+// this package can tell "embedded by the configured backend" from "embedded
+// by the local hash fallback" — the difference between working retrieval and
+// silently degraded retrieval.
+const LocalHashModelName = localHashModelName
+
 // Dim returns the cached embedding dimension. If no Ollama response has been
 // received yet and no config-driven dimension was set, it returns the legacy
 // default of 768 for backwards compatibility.

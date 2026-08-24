@@ -998,3 +998,47 @@ func TestRootCommandWithVaultFlag(t *testing.T) {
 		}
 	}
 }
+
+// `index --prune --json` used to print one JSON object per phase, so the app
+// received two documents on one stream and every decoder rejected the second.
+// The report is one object.
+func TestIndexPruneEmitsASingleJSONDocument(t *testing.T) {
+	vaultDir := setupTestVault(t)
+	origCfg := cfg
+	cfg = &config.Config{Vault: vaultDir}
+	t.Cleanup(func() { cfg = origCfg })
+
+	jsonFlag = true
+	t.Cleanup(func() { jsonFlag = false; indexPrune = false })
+
+	// newIndexCmd binds --prune to indexPrune, resetting it to the flag
+	// default, so the flag is set on the constructed command.
+	cmd := newIndexCmd()
+	if err := cmd.Flags().Set("prune", "true"); err != nil {
+		t.Fatal(err)
+	}
+	out, err := runCommand(t, cmd, nil)
+	if err != nil {
+		t.Fatalf("index --prune: %v", err)
+	}
+
+	dec := json.NewDecoder(strings.NewReader(out))
+	var report struct {
+		Status  string `json:"status"`
+		Indexed int    `json:"indexed"`
+		Pruned  *int   `json:"pruned"`
+	}
+	if err := dec.Decode(&report); err != nil {
+		t.Fatalf("decoding the report failed: %v (output %q)", err, out)
+	}
+	if report.Status != "ok" {
+		t.Errorf("status = %q, want ok", report.Status)
+	}
+	if report.Pruned == nil {
+		t.Error("pruned is absent; --prune must report its result in the same object")
+	}
+	var trailing json.RawMessage
+	if err := dec.Decode(&trailing); err == nil {
+		t.Errorf("a second JSON document follows the report: %s", trailing)
+	}
+}

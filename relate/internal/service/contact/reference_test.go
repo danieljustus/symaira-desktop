@@ -230,3 +230,62 @@ func TestGetRef_PersonAndOrganizationIDsAreDistinct(t *testing.T) {
 		t.Errorf("person and organization share ID %q — references must be unambiguous", pref.ID)
 	}
 }
+
+// FindRefsByName is the name-side entry point (symdesk issue #516). It must
+// obey the same privacy contract as GetRef: reference-only, no contact
+// points, notes, aliases or paths — even when the matched contact is fully
+// populated with all of them.
+func TestFindRefsByNameLeaksNothingPrivate(t *testing.T) {
+	ctx := context.Background()
+	s := newTestService(t)
+	_, private := seedFullyPopulatedPerson(t, ctx, s)
+
+	refs, err := s.FindRefsByName(ctx, "Ada Lovelace")
+	if err != nil {
+		t.Fatalf("FindRefsByName() error = %v", err)
+	}
+	if len(refs) != 1 {
+		t.Fatalf("FindRefsByName() returned %d refs, want 1", len(refs))
+	}
+
+	encoded, err := json.Marshal(refs[0])
+	if err != nil {
+		t.Fatalf("marshalling the ref failed: %v", err)
+	}
+	for _, secret := range private {
+		if strings.Contains(string(encoded), secret) {
+			t.Errorf("ref leaked %q: %s", secret, encoded)
+		}
+	}
+}
+
+// Matching is case-insensitive but exact: a prefix must not silently assert
+// an identity the user never confirmed.
+func TestFindRefsByNameMatchesExactlyAndIgnoresCase(t *testing.T) {
+	ctx := context.Background()
+	s := newTestService(t)
+	if _, err := s.CreatePerson(ctx, contact.PersonInput{DisplayName: "Ada Lovelace"}); err != nil {
+		t.Fatalf("CreatePerson() error = %v", err)
+	}
+
+	refs, err := s.FindRefsByName(ctx, "ada lovelace")
+	if err != nil {
+		t.Fatalf("FindRefsByName() error = %v", err)
+	}
+	if len(refs) != 1 {
+		t.Fatalf("case-insensitive match returned %d refs, want 1", len(refs))
+	}
+	if refs[0].Kind != contact.RefKindPerson {
+		t.Errorf("Kind = %q, want person", refs[0].Kind)
+	}
+
+	for _, query := range []string{"Ada", "Ada Lovelace II", "  "} {
+		got, err := s.FindRefsByName(ctx, query)
+		if err != nil {
+			t.Fatalf("FindRefsByName(%q) error = %v", query, err)
+		}
+		if len(got) != 0 {
+			t.Errorf("FindRefsByName(%q) = %+v, want no match", query, got)
+		}
+	}
+}

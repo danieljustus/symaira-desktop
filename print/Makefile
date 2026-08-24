@@ -88,15 +88,3 @@ else
 	verapdf -f ua1 --format text dist/behoerde.pdf | grep -q 'isCompliant="true"'
 endif
 	@echo "==> veraPDF: all checks passed."
-
-.PHONY: client-gen
-client-gen:
-	cd client && xcodegen generate --spec project.yml
-
-.PHONY: client-build
-client-build: build client-gen
-	xcodebuild -project client/Symprint.xcodeproj -scheme Symprint -configuration Release -derivedDataPath client/build
-
-.PHONY: client-dmg
-client-dmg: client-build
-	./scripts/package-dmg.sh client/build/Build/Products/Release/Symprint.app dist/Symprint.dmg

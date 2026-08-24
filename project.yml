@@ -17,6 +17,12 @@ packages:
   symaira-meet:
     url: https://github.com/danieljustus/symaira-meet
     path: meet
+  # room/client is the SwiftUI module for the signed project journal. symroom
+  # ships as a binary in the symdesk release (it is the one absorbed tool with
+  # no in-process call site), so this module bridges the CLI rather than
+  # linking Go code. Its appkit pin matches the shared exact-pinned graph.
+  symaira-room-client:
+    path: room/client
 
 targets:
   SymDeskCore:
@@ -49,6 +55,8 @@ targets:
       - Sources/SymDeskApp
     dependencies:
       - target: SymDeskCore
+      - package: symaira-room-client
+        product: SymroomFeature
       - package: symaira-appkit
         product: SymairaTheme
       - package: symaira-appkit

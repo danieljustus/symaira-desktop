@@ -86,32 +86,6 @@ sudo mv symseek /usr/local/bin/
 # Extract the .zip and add to PATH
 ```
 
-### macOS App (Symseek.app)
-
-For macOS users who prefer a native GUI, download `Symseek.dmg` from [GitHub Releases](https://github.com/danieljustus/symaira-seek/releases):
-
-1. Open the downloaded DMG.
-2. Drag `Symseek.app` into `/Applications`.
-3. Launch `Symseek.app` from Launchpad or Finder.
-
-The app bundles the Go backend and runs it as a local daemon via `SymairaDaemonKit`. It uses the same SQLite database and configuration as the CLI, so indexes and settings are shared.
-
-To build the app from source, ensure you have Xcode installed (the CI build uses `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer`) and run:
-
-```bash
-./client/build.sh
-```
-
-This produces `client/build/Symseek.app` and `client/build/Symseek.dmg`.
-
-> Note: The macOS app is also embeddable as a module in the Symaira Hub via `SymseekModuleView`. Its expected CLI JSON schema version is `1`.
-
-Verify the installation:
-```bash
-symseek version
-symseek version --json
-```
-
 ### Build from Source
 
 Ensure you have [Go](https://go.dev/) installed.

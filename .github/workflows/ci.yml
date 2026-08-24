@@ -241,6 +241,11 @@ jobs:
       - name: Run App and Core Tests
         run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
+      # room/client is a local Swift package embedded by the app (issue #517).
+      # The app scheme builds it but does not run its own test target.
+      - name: Run Room Module Tests
+        run: swift test --package-path room/client
+
   app-ios:
     name: iOS app
     runs-on: macos-latest

@@ -61,8 +61,9 @@ var callTimeout = 5 * time.Second
 // Production code never reassigns them; a test that does must restore the
 // original in t.Cleanup.
 var (
-	AvailableFunc = relateapi.Available
-	ResolveFunc   = resolve
+	AvailableFunc  = relateapi.Available
+	ResolveFunc    = resolve
+	FindByNameFunc = findByName
 )
 
 func resolve(ctx context.Context, contactID string) (*Ref, error) {
@@ -79,6 +80,24 @@ func resolve(ctx context.Context, contactID string) (*Ref, error) {
 	}, nil
 }
 
+func findByName(ctx context.Context, name string) ([]Ref, error) {
+	found, err := relateapi.FindContactRefs(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	refs := make([]Ref, 0, len(found))
+	for _, ref := range found {
+		refs = append(refs, Ref{
+			Provider:      ref.Provider,
+			SchemaVersion: ref.SchemaVersion,
+			ID:            ref.ID,
+			Kind:          ref.Kind,
+			DisplayName:   ref.DisplayName,
+		})
+	}
+	return refs, nil
+}
+
 // Available reports whether the local contact store can be opened.
 func Available() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), callTimeout)
@@ -92,4 +111,13 @@ func ResolveRef(contactID string) (*Ref, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), callTimeout)
 	defer cancel()
 	return ResolveFunc(ctx, contactID)
+}
+
+// FindRefsByName resolves a display name to the contact references carrying
+// it. A name nobody carries yields an empty slice — that is an answer, not a
+// failure, and callers must render it as "unresolved" rather than an error.
+func FindRefsByName(name string) ([]Ref, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), callTimeout)
+	defer cancel()
+	return FindByNameFunc(ctx, name)
 }

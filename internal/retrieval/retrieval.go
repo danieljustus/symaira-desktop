@@ -19,6 +19,9 @@ import (
 // Result is one search hit.
 type Result = seekapi.Result
 
+// Status is a snapshot of the hybrid index and its embedding backend.
+type Status = seekapi.Status
+
 // DefaultLimit is the number of hits Search returns by default.
 const DefaultLimit = seekapi.DefaultLimit
 
@@ -32,6 +35,7 @@ var (
 	IndexFunc  = seekapi.Index
 	DeleteFunc = seekapi.Delete
 	SearchFunc = seekapi.Search
+	StatusFunc = seekapi.CurrentStatus
 )
 
 // Index adds or replaces one document in the search index. A failure is
@@ -61,4 +65,12 @@ func Search(query string) []Result {
 		return nil
 	}
 	return results
+}
+
+// CurrentStatus reports the hybrid index snapshot and whether the embedding
+// backend answered. Unlike Index/Delete/Search this does propagate its error:
+// a caller asking for the health of retrieval must be told when even that
+// cannot be determined, rather than shown a confident zero.
+func CurrentStatus() (*Status, error) {
+	return StatusFunc()
 }

@@ -44,6 +44,7 @@ func IsolateSideEffects() {
 	contacts.ResolveFunc = func(context.Context, string) (*contacts.Ref, error) {
 		return nil, contacts.ErrContactNotFound
 	}
+	contacts.FindByNameFunc = func(context.Context, string) ([]contacts.Ref, error) { return nil, nil }
 
 	pdf.EngineAvailableFunc = func(context.Context) (bool, string) {
 		return false, "no typesetting engine in tests"

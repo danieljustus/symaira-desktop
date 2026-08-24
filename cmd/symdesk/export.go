@@ -37,5 +37,19 @@ func newExportCmd() *cobra.Command {
 	cmd.Flags().String("format", "pdf", "pdf or html")
 	cmd.Flags().String("profile", "", "symprint profile for PDF")
 	cmd.MarkFlagsMutuallyExclusive("note", "view")
+	cmd.AddCommand(newExportProfilesCmd())
 	return cmd
+}
+
+// newExportProfilesCmd lists the PDF profiles `export --profile` accepts. The
+// app builds its profile picker from this, so the picker cannot drift from
+// print/.
+func newExportProfilesCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "profiles",
+		Short: "List the symprint profiles available for PDF export",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return outputResult(service.ExportProfiles())
+		},
+	}
 }

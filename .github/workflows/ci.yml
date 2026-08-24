@@ -131,6 +131,10 @@ jobs:
         # Issue #526: corekit dependency pin must stay aligned across all 6 modules.
         run: ./scripts/check-corekit-pins.sh
 
+      - name: Module boundary guard
+        # Issue #536: packages outside permitted facades must not import absorbed library internals.
+        run: ./scripts/check-module-boundaries.sh
+
   golangci-lint:
     runs-on: ubuntu-latest
     permissions:

@@ -140,6 +140,7 @@ backup notes and worker options, see [Self-hosting SymDesk](docs/SELF_HOSTING.md
 ```sh
 make build          # → bin/symdesk
 make test           # go test -race ./...
+make lint           # gofmt + go vet + corekit-guard + boundary-guard
 make benchmark-large # generate and index a deterministic 10k-document vault
 docker compose build # multi-architecture-compatible Linux server/worker image
 ```

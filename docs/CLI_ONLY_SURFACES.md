@@ -13,6 +13,23 @@ work, with the reasoning per capability.
 | Expiring share links | `symdesk server share ...` (internal/selfhost/share.go) | none | Share links are a server-side feature: they expose vault documents over HTTP with expiry and access control. Managing them requires the server operator's mental model (token, expiry, TLS/reverse-proxy setup) and is inherently tied to the `symdesk server` lifecycle, which runs outside the desktop app. The app is a *client* of the server and has no privileged server context. |
 | Users / groups / permissions | `symdesk perm user/group/...` | none | Permissions gate who can read what on the **server**. Like share links, they belong to the server operator's surface (multi-user setups, token minting, group membership). The desktop app operates as one authenticated user and must not be able to mint users or tokens — that would be an escalation path. A permissions UI belongs in a server admin surface, not the client app. |
 
+## Capabilities from the absorbed modules
+
+The repo consolidation moved `seek/`, `print/`, `relate/`, `ingest/`, `meet/`
+and `room/` into this repository. Their capabilities are covered by the same
+rule; this section accounts for them (issue #519).
+
+| Capability | Module | App surface | Note |
+|---|---|---|---|
+| Hybrid search | `seek/` | Command Palette | Runs in-process; the palette is the primary surface. |
+| Retrieval index state and re-indexing | `seek/` | Search Index (sidebar → Discover) | #515. Also warns in the Command Palette when the index is cold or the embedding backend is unreachable, because retrieval degrades silently otherwise. |
+| PDF export | `print/` | Document context menu → Export | Profiles are selectable (#514); the list comes from `print/` itself. |
+| Contact references | `relate/` | Meeting participant confirmation; document context menu → Contact References (#516) | Resolve-only. No app path creates or implicitly matches a contact — an identity is asserted only by explicit confirmation. |
+| OCR / document ingest | `ingest/` | Ingest Queue, Review Lane, Rules, Paperless import, Duplicates | In-process since #507. |
+| Meeting capture | `meet/` | Meetings, transcript timeline, speaker and participant review | Recording itself stays in the separate SymMeet agent, which SymDesk brings forward; SymDesk never captures audio. |
+| Signed project journal, approvals, participants | `room/` | Project Journal (sidebar → Discover) | #517. `symroom` is the one absorbed tool with no in-process call site, so the surface bridges the CLI and degrades to an install tile when the binary is absent. |
+| Mail accounts, barcode split, retention of originals | `ingest/`, core | see the CLI-only table above where applicable | Server- and automation-scoped paths keep their existing rationale. |
+
 ## What the app does surface (complementary)
 
 - **Export** — now in the app: document context menu → Export as PDF/HTML
@@ -26,6 +43,14 @@ work, with the reasoning per capability.
 - **Paperless import** — Settings and onboarding (guided import flow).
 - **Daily note** — File menu → New Daily Note (Cmd+Shift+D) and the Command
   Palette.
+- **Search index health and re-index** — sidebar → Search Index
+  (`symdesk index status`, `symdesk index [--prune]`).
+- **PDF profiles** — document context menu → Export as PDF with Profile
+  (`symdesk export --profile`, list from `symdesk export profiles`).
+- **Contact references** — document context menu → Contact References
+  (`symdesk relations contact <name>`).
+- **Project journal** — sidebar → Project Journal (the embedded `symroom`
+  module).
 
 The CLI-only capabilities above are intentionally not duplicated in the app:
 each is either destructive-and-auditable (retention, recipes), network- and

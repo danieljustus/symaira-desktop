@@ -843,3 +843,33 @@ func TestParseFile_DerivedArtifact(t *testing.T) {
 		t.Errorf("expected regular non-derived document, got IsDerived=%v", doc3.IsDerived())
 	}
 }
+
+func TestParseFile_BaseKind(t *testing.T) {
+	root := t.TempDir()
+
+	// 1. Explicit type: base
+	p1 := filepath.Join(root, "base1.md")
+	if err := os.WriteFile(p1, []byte("---\ntitle: \"Invoices Base\"\ntype: base\nbase_id: invoices\n---\n# Invoices"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	doc1, err := ParseFile(p1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc1.Type != "base" {
+		t.Errorf("expected doc1.Type='base', got %q", doc1.Type)
+	}
+
+	// 2. Inferred from base_id
+	p2 := filepath.Join(root, "base2.md")
+	if err := os.WriteFile(p2, []byte("---\ntitle: \"Tasks Base\"\nbase_id: tasks\n---\n# Tasks"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	doc2, err := ParseFile(p2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc2.Type != "base" {
+		t.Errorf("expected doc2.Type='base' inferred from base_id, got %q", doc2.Type)
+	}
+}

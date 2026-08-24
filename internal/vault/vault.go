@@ -861,7 +861,8 @@ var documentInferenceFields = map[string]bool{
 //  1. If explicit `type` exists, return it.
 //  2. If any document-inference field is present → "document".
 //  3. If `meeting_id` is present → "meeting".
-//  4. Otherwise → "note".
+//  4. If `base_id` is present → "base".
+//  5. Otherwise → "note".
 //
 // "notebook" (contract_version 4) is never inferred — it is only ever
 // returned here when the frontmatter declares it explicitly (VAULT.md
@@ -870,7 +871,7 @@ func inferType(fm map[string]interface{}) string {
 	if t, ok := fm["type"]; ok {
 		if s, ok := t.(string); ok {
 			switch s {
-			case "note", "document", "meeting", "notebook":
+			case "note", "document", "meeting", "notebook", "base":
 				return s
 			}
 		}
@@ -884,6 +885,10 @@ func inferType(fm map[string]interface{}) string {
 	// Check meeting_id
 	if _, ok := fm["meeting_id"]; ok {
 		return "meeting"
+	}
+	// Check base_id
+	if _, ok := fm["base_id"]; ok {
+		return "base"
 	}
 	return "note"
 }

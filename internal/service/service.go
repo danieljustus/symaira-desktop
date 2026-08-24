@@ -44,13 +44,17 @@ func New(vaultRoot string, db *sidecar.DB) *Service {
 	if err != nil {
 		cfg = config.DefaultConfig()
 	}
-	return &Service{
+	svc := &Service{
 		VaultRoot: canonical,
 		DB:        db,
 		ViewsMgr:  dbviews.NewManager(canonical),
 		History:   history.NewStore(canonical),
 		Config:    cfg,
 	}
+	svc.ViewsMgr.SetSnapshotFn(func(absPath string) {
+		svc.snapshotBefore(absPath)
+	})
+	return svc
 }
 
 // snapshotBefore records a history snapshot of the file at absPath before a

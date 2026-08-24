@@ -16,7 +16,6 @@ manifests = [
     "go.mod",
     "ingest/go.mod",
     "room/go.mod",
-    "seek/go.mod",
 ]
 
 errors = 0
@@ -65,7 +64,6 @@ local_modules = {
     "github.com/danieljustus/symaira-desktop",
     "github.com/danieljustus/symaira-ingest",
     "github.com/danieljustus/symaira-room",
-    "github.com/danieljustus/symaira-seek",
 }
 
 for m in manifests:
@@ -97,5 +95,5 @@ if errors != 0:
     print(f"Found {errors} version mismatch(es) across modules.", file=sys.stderr)
     sys.exit(1)
 
-print(f"All 4 modules have consistent Go version ({root_go}) and {shared_deps} shared dependencies.")
+print(f"All 3 modules have consistent Go version ({root_go}) and {shared_deps} shared dependencies.")
 PYEOF

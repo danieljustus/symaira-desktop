@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/danieljustus/symaira-seek/internal/db"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 )
 
 // TestHashKeyEntropy is a regression test for issue #39. The cache key

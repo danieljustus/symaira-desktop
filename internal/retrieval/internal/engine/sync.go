@@ -17,8 +17,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/uuid"
 
-	"github.com/danieljustus/symaira-seek/internal/db"
-	"github.com/danieljustus/symaira-seek/internal/parser"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/parser"
 )
 
 // chunkNamespace is the deterministic UUID namespace used for all chunk IDs.

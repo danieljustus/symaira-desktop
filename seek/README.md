@@ -1,18 +1,12 @@
-# Symaira-Seek
+# Symaira Seek
 
 > **Dieses Verzeichnis war bis 2026-08-23 das eigenständige Repository
-> [`symaira-seek`](https://github.com/danieljustus/symaira-seek).** Es ist jetzt ein
-> nested Go-Modul von [`symaira-desktop`](../README.md); das Repo ist
-> archiviert und seine Homebrew-Formula deprecated. Die Hybrid-Retrieval-Engine wird über
-> `symdesk search` genutzt, angebunden über `seek/api`.
+> [`symaira-seek`](https://github.com/danieljustus/symaira-seek).** Die Go-Implementierung
+> ist nun direkt in das Root-Modul von [`symaira-desktop`](../README.md) unter `internal/retrieval`
+> aufgelöst (Issue #539 Migration). Die Hybrid-Retrieval-Engine wird über
+> `symdesk search` und `internal/retrieval` genutzt.
 > Die Badges, Installations- und Release-Hinweise unten stammen aus der
 > Zeit als eigenes Repo und gelten nicht mehr.
-
-> **Moved 2026-08-21** into `symaira-desktop/seek/` as part of the Symaira
-> repo consolidation (27 → 13, `docs/repo-konsolidierung.md` §3.2). This Go
-> module (plus Swift feature package) now lives in symaira-desktop; the
-> original `danieljustus/symaira-seek` repo remains active until the deep
-> integration is done.
 
 > Local-first, CGO-free document retrieval for AI agents with hybrid BM25+vector search.
 

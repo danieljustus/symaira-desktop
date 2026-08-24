@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/danieljustus/symaira-corekit/vectorkit/turboquant"
-	"github.com/danieljustus/symaira-seek/internal/db"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 )
 
 func BackfillQuantSidecars(d *db.DB, bitWidth int, seed int, onProgress func(processed, total int)) (int, error) {

@@ -81,7 +81,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [ingest, room, seek]
+        module: [ingest, room]
     defaults:
       run:
         working-directory: ${{ matrix.module }}

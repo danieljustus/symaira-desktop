@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/danieljustus/symaira-seek/internal/db"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 )
 
 const (

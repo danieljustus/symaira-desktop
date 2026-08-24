@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/danieljustus/symaira-seek/internal/db"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 )
 
 // makeTestEmbedding returns a deterministic 768-dim embedding with L2 norm = 1.

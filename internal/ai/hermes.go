@@ -40,7 +40,7 @@ func streamHermes(ctx context.Context, cfg HermesConfig, prompt string, out chan
 	cmdCtx, cancel := context.WithTimeout(ctx, hermesTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(cmdCtx, hermesBinary, args...)
+	cmd := exec.CommandContext(cmdCtx, hermesBinary, args...) //nolint:gosec // G204: hermesBinary is a fixed constant resolved from PATH, args are the caller's own prompt
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

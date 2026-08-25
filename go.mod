@@ -5,7 +5,8 @@ go 1.26.6
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/danieljustus/symaira-corekit v0.9.1
-	github.com/danieljustus/symaira-ingest v0.0.0
+	github.com/emersion/go-imap/v2 v2.0.0-beta.8
+	github.com/emersion/go-message v0.18.2
 	github.com/emersion/go-vcard v0.0.0-20260618161152-d854b7e0e2d3
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/google/uuid v1.6.0
@@ -28,8 +29,6 @@ require (
 require (
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/emersion/go-imap/v2 v2.0.0-beta.8 // indirect
-	github.com/emersion/go-message v0.18.2 // indirect
 	github.com/emersion/go-sasl v0.0.0-20241020182733-b788ff22d5a6 // indirect
 	github.com/hhrutter/tiff v1.0.6 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -49,9 +48,3 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
-
-// The absorbed tools live in this repository as nested modules (repo
-// consolidation step 6). They keep their own go.mod so each stays
-// independently buildable and testable, and the root module reaches their
-// public api/ packages through these replaces rather than a published tag.
-replace github.com/danieljustus/symaira-ingest => ./ingest

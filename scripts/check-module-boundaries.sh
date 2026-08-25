@@ -7,7 +7,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MISMATCHES=0
 
 # 1. Check that absorbed library internal packages are never imported outside their own module.
-ABSORBED_MODULES=("ingest" "room")
+ABSORBED_MODULES=("room")
 
 for mod in "${ABSORBED_MODULES[@]}"; do
   import_pattern="github.com/danieljustus/symaira-${mod}/internal"
@@ -85,18 +85,19 @@ while IFS= read -r file; do
     esac
   fi
 
-  # Check ingest imports
+  # Check ingest imports (dissolved into internal/ingest; no file should import symaira-ingest)
   if grep -qE '"github\.com/danieljustus/symaira-ingest' "$file"; then
+    echo "::error::Boundary violation: ${rel_path} imports symaira-ingest (symaira-ingest is dissolved into internal/ingest)" >&2
+    MISMATCHES=$((MISMATCHES + 1))
+  fi
+
+  # Check internal/ingest/internal imports (must stay internal to internal/ingest/)
+  if grep -qE '"github\.com/danieljustus/symaira-desktop/internal/ingest/internal' "$file"; then
     case "$rel_path" in
-      internal/ingest/*|internal/mail/*|internal/selfhost/*|internal/testsupport/*|cmd/symdesk/doctor.go|cmd/symdesk/paperless_migrate.go)
-        # Permitted facade, must only import api
-        if grep -qE '"github\.com/danieljustus/symaira-ingest([^/"]|/[^a]|/a[^p]|/ap[^i]|/api/)' "$file"; then
-          echo "::error::Boundary violation: ${rel_path} must only import symaira-ingest/api" >&2
-          MISMATCHES=$((MISMATCHES + 1))
-        fi
+      internal/ingest/*)
         ;;
       *)
-        echo "::error::Facade violation: ${rel_path} imports symaira-ingest directly outside permitted facades" >&2
+        echo "::error::Internal import violation: ${rel_path} imports internal/ingest/internal directly (use internal/ingest facade instead)" >&2
         MISMATCHES=$((MISMATCHES + 1))
         ;;
     esac
@@ -115,14 +116,6 @@ while IFS= read -r file; do
   fi
 
 done < <(find "${REPO_ROOT}/cmd" "${REPO_ROOT}/internal" -name "*.go" -type f 2>/dev/null || true)
-
-# 3. Check that absorbed library modules do not keep absorbed cmd/ surfaces
-for mod in ingest; do
-  if [ -d "${REPO_ROOT}/${mod}/cmd" ]; then
-    echo "::error::Absorbed tool cmd/ entry point found: ${mod}/cmd (absorbed modules are consumed via api/)" >&2
-    MISMATCHES=$((MISMATCHES + 1))
-  fi
-done
 
 if [ "$MISMATCHES" -ne 0 ]; then
   echo "Found ${MISMATCHES} module boundary violation(s)." >&2

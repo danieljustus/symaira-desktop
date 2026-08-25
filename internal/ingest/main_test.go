@@ -5,8 +5,6 @@ import (
 	"errors"
 	"os"
 	"testing"
-
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 // errNotStubbed is what the seams return by default in this package's tests.
@@ -29,21 +27,21 @@ func isolateSeams() {
 	// same thing it would on a machine with no vault configured, which is what
 	// the built-in inbox fallback exists for. A test that wants the pipeline
 	// to succeed stubs this seam.
-	IngestFunc = func(context.Context, string, ingestapi.Options) (*ingestapi.Result, error) {
-		return nil, ingestapi.ErrNoVault
+	IngestFunc = func(context.Context, string, Options) (*Result, error) {
+		return nil, ErrNoVault
 	}
-	JobsFunc = func(context.Context, ingestapi.Options, int) ([]ingestapi.Job, error) {
+	JobsFunc = func(context.Context, Options, int) ([]Job, error) {
 		return nil, errNotStubbed
 	}
-	RetryJobFunc = func(context.Context, ingestapi.Options, int64) error { return errNotStubbed }
+	RetryJobFunc = func(context.Context, Options, int64) error { return errNotStubbed }
 	SplitPDFFunc = func(context.Context, string, string, string) ([]string, error) {
 		return nil, errNotStubbed
 	}
-	ExtractTextFunc = func(context.Context, string, ingestapi.Options) (*ingestapi.Extraction, error) {
+	ExtractTextFunc = func(context.Context, string, Options) (*Extraction, error) {
 		return nil, errNotStubbed
 	}
-	MailAccountsFunc = func(string) ([]ingestapi.MailAccount, error) { return nil, nil }
-	FetchMailFunc = func(context.Context, ingestapi.MailFetchOptions) (*ingestapi.MailFetchResult, error) {
-		return &ingestapi.MailFetchResult{}, nil
+	MailAccountsFunc = func(string) ([]MailAccount, error) { return nil, nil }
+	FetchMailFunc = func(context.Context, MailFetchOptions) (*MailFetchResult, error) {
+		return &MailFetchResult{}, nil
 	}
 }

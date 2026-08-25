@@ -8,19 +8,18 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 // stubExtract points the OCR seam at a scripted extractor for one test and
 // returns a pointer to the call counter, so a test can assert how often the
 // guard retried.
-func stubExtract(t *testing.T, fn func(call int, opts ingestapi.Options) (*ingestapi.Extraction, error)) *int {
+func stubExtract(t *testing.T, fn func(call int, opts ingest.Options) (*ingest.Extraction, error)) *int {
 	t.Helper()
 	original := ingest.ExtractTextFunc
 	t.Cleanup(func() { ingest.ExtractTextFunc = original })
 
 	calls := 0
-	ingest.ExtractTextFunc = func(_ context.Context, _ string, opts ingestapi.Options) (*ingestapi.Extraction, error) {
+	ingest.ExtractTextFunc = func(_ context.Context, _ string, opts ingest.Options) (*ingest.Extraction, error) {
 		calls++
 		return fn(calls, opts)
 	}
@@ -28,8 +27,8 @@ func stubExtract(t *testing.T, fn func(call int, opts ingestapi.Options) (*inges
 }
 
 func TestWorkerExtractsInProcess(t *testing.T) {
-	stubExtract(t, func(int, ingestapi.Options) (*ingestapi.Extraction, error) {
-		return &ingestapi.Extraction{Text: "Invoice total: 42 EUR", Engine: "tesseract"}, nil
+	stubExtract(t, func(int, ingest.Options) (*ingest.Extraction, error) {
+		return &ingest.Extraction{Text: "Invoice total: 42 EUR", Engine: "tesseract"}, nil
 	})
 
 	worker, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken, Engine: "tesseract"})
@@ -48,10 +47,10 @@ func TestWorkerExtractsInProcess(t *testing.T) {
 // An explicit tesseract choice must not inherit a VLM model from the user's
 // symingest configuration.
 func TestWorkerTesseractModeDisablesVLM(t *testing.T) {
-	var seen ingestapi.Options
-	stubExtract(t, func(_ int, opts ingestapi.Options) (*ingestapi.Extraction, error) {
+	var seen ingest.Options
+	stubExtract(t, func(_ int, opts ingest.Options) (*ingest.Extraction, error) {
 		seen = opts
-		return &ingestapi.Extraction{Text: "text", Engine: "tesseract"}, nil
+		return &ingest.Extraction{Text: "text", Engine: "tesseract"}, nil
 	})
 
 	worker, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken, Engine: "tesseract"})
@@ -70,7 +69,7 @@ func TestWorkerTesseractModeDisablesVLM(t *testing.T) {
 }
 
 func TestWorkerExtractionFailureIsExplicit(t *testing.T) {
-	stubExtract(t, func(int, ingestapi.Options) (*ingestapi.Extraction, error) {
+	stubExtract(t, func(int, ingest.Options) (*ingest.Extraction, error) {
 		return nil, errors.New("no tesseract binary")
 	})
 
@@ -85,8 +84,8 @@ func TestWorkerExtractionFailureIsExplicit(t *testing.T) {
 }
 
 func TestWorkerPreservesModelProvenance(t *testing.T) {
-	stubExtract(t, func(int, ingestapi.Options) (*ingestapi.Extraction, error) {
-		return &ingestapi.Extraction{Text: "text", Engine: "paddleocr-vl"}, nil
+	stubExtract(t, func(int, ingest.Options) (*ingest.Extraction, error) {
+		return &ingest.Extraction{Text: "text", Engine: "paddleocr-vl"}, nil
 	})
 
 	worker, err := NewWorker(WorkerConfig{
@@ -108,11 +107,11 @@ func TestWorkerGuardRetriesOnce(t *testing.T) {
 	goodText := "The retry returned healthy prose with enough distinct words for the plausibility guard to accept this result."
 	badText := strings.TrimSpace(strings.Repeat("loading ", 250))
 
-	calls := stubExtract(t, func(call int, _ ingestapi.Options) (*ingestapi.Extraction, error) {
+	calls := stubExtract(t, func(call int, _ ingest.Options) (*ingest.Extraction, error) {
 		if call == 1 {
-			return &ingestapi.Extraction{Text: badText, Engine: "tesseract"}, nil
+			return &ingest.Extraction{Text: badText, Engine: "tesseract"}, nil
 		}
-		return &ingestapi.Extraction{Text: goodText, Engine: "tesseract"}, nil
+		return &ingest.Extraction{Text: goodText, Engine: "tesseract"}, nil
 	})
 
 	worker, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken})
@@ -133,8 +132,8 @@ func TestWorkerGuardRetriesOnce(t *testing.T) {
 
 func TestWorkerGuardTruncatesAndMarksAfterSecondFailure(t *testing.T) {
 	badText := strings.TrimSpace(strings.Repeat("loading ", 250))
-	calls := stubExtract(t, func(int, ingestapi.Options) (*ingestapi.Extraction, error) {
-		return &ingestapi.Extraction{Text: badText, Engine: "tesseract"}, nil
+	calls := stubExtract(t, func(int, ingest.Options) (*ingest.Extraction, error) {
+		return &ingest.Extraction{Text: badText, Engine: "tesseract"}, nil
 	})
 
 	worker, err := NewWorker(WorkerConfig{ServerURL: "http://server:8787", Token: testToken})

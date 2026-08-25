@@ -14,7 +14,6 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/mail"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 func setupMailTest(t *testing.T) (vaultRoot string, svc *service.Service, cleanup func()) {
@@ -55,21 +54,21 @@ func setupMailTest(t *testing.T) (vaultRoot string, svc *service.Service, cleanu
 // putting a fake symingest binary on $PATH. Each poll returns the same two
 // staged attachments, which is what lets the deduplication test observe the
 // watcher skipping messages it has already ingested.
-func stubMailPipeline(t *testing.T, accounts []ingestapi.MailAccount, fetchErr error) {
+func stubMailPipeline(t *testing.T, accounts []ingest.MailAccount, fetchErr error) {
 	t.Helper()
 	originalAccounts, originalFetch := ingest.MailAccountsFunc, ingest.FetchMailFunc
 	t.Cleanup(func() {
 		ingest.MailAccountsFunc, ingest.FetchMailFunc = originalAccounts, originalFetch
 	})
 
-	ingest.MailAccountsFunc = func(string) ([]ingestapi.MailAccount, error) {
+	ingest.MailAccountsFunc = func(string) ([]ingest.MailAccount, error) {
 		if fetchErr != nil {
 			return nil, fetchErr
 		}
 		return accounts, nil
 	}
 
-	ingest.FetchMailFunc = func(_ context.Context, opts ingestapi.MailFetchOptions) (*ingestapi.MailFetchResult, error) {
+	ingest.FetchMailFunc = func(_ context.Context, opts ingest.MailFetchOptions) (*ingest.MailFetchResult, error) {
 		if fetchErr != nil {
 			return nil, fetchErr
 		}
@@ -77,7 +76,7 @@ func stubMailPipeline(t *testing.T, accounts []ingestapi.MailAccount, fetchErr e
 			return nil, err
 		}
 
-		result := &ingestapi.MailFetchResult{}
+		result := &ingest.MailFetchResult{}
 		for _, m := range []struct{ id, from, body string }{
 			{"msg-001", "alice@example.com", "This is a test email body unique content 42."},
 			{"msg-002", "bob@example.com", "Different test content for dedup check."},
@@ -86,7 +85,7 @@ func stubMailPipeline(t *testing.T, accounts []ingestapi.MailAccount, fetchErr e
 			if err := os.WriteFile(path, []byte(m.body), 0o600); err != nil {
 				return nil, err
 			}
-			result.Attachments = append(result.Attachments, ingestapi.MailAttachment{
+			result.Attachments = append(result.Attachments, ingest.MailAttachment{
 				Path:          path,
 				MessageID:     m.id,
 				Correspondent: m.from,
@@ -97,8 +96,8 @@ func stubMailPipeline(t *testing.T, accounts []ingestapi.MailAccount, fetchErr e
 	}
 }
 
-func testAccounts() []ingestapi.MailAccount {
-	return []ingestapi.MailAccount{{ID: "acc1", Host: "imap.example.com", Username: "alice"}}
+func testAccounts() []ingest.MailAccount {
+	return []ingest.MailAccount{{ID: "acc1", Host: "imap.example.com", Username: "alice"}}
 }
 
 func TestMailWatcher_ListsAccountsAndFetches(t *testing.T) {

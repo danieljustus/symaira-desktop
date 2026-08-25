@@ -46,6 +46,13 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"notebook_remove_source",
 		"desk_autofill",
 		"desk_asset_store",
+		// Legacy compatibility aliases (issue #598) — appended after the
+		// canonical catalog, in NewRegistry order.
+		"ingest_file",
+		"list_jobs",
+		"retry_job",
+		"list_documents",
+		"search_documents",
 	}
 	wantReadOnly := map[string]bool{
 		"desk_status":      true,
@@ -68,6 +75,9 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"notebook_list":    true,
 		"notebook_get":     true,
 		"notebook_ask":     true,
+		"list_jobs":        true,
+		"list_documents":   true,
+		"search_documents": true,
 	}
 
 	entries := registry.All()

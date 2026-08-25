@@ -105,6 +105,54 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(false, newAutofillTool(options.GetService)),
 		entry(false, newAssetStoreTool(options.GetService)),
 	}
+	// Legacy compatibility aliases (issue #598): the absorbed SymIngest and
+	// SymSeek tools exposed historical MCP contracts that existing harnesses
+	// still call. Where a canonical symdesk tool implements the same
+	// capability with compatible request/response semantics, the legacy name
+	// is registered as an alias delegating to the exact same handler.
+	// Capabilities with no semantic equivalent are documented in
+	// docs/MCP-MIGRATION.md instead of being faked here.
+	canonicalByName := make(map[string]Tool, len(entries))
+	for _, e := range entries {
+		canonicalByName[e.Name] = e
+	}
+	legacyAliases := []struct{ alias, canonical, description string }{
+		{
+			alias:       "ingest_file",
+			canonical:   "desk_ingest",
+			description: "Ingests a file into the vault: copies it into inbox/ and creates a corresponding markdown note. Legacy alias for desk_ingest.",
+		},
+		{
+			alias:       "list_jobs",
+			canonical:   "desk_ingest_jobs",
+			description: "Lists ingestion jobs in the queue. Legacy alias for desk_ingest_jobs.",
+		},
+		{
+			alias:       "retry_job",
+			canonical:   "desk_ingest_retry",
+			description: "Retries a failed ingestion job by ID. Legacy alias for desk_ingest_retry.",
+		},
+		{
+			alias:       "list_documents",
+			canonical:   "desk_docs",
+			description: "Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Legacy alias for desk_docs.",
+		},
+		{
+			alias:       "search_documents",
+			canonical:   "desk_search",
+			description: "Searches notes with full-text terms plus path:, tag:, type:, status:, quoted phrases, -negation and /regex/. Legacy alias for desk_search.",
+		},
+	}
+	for _, la := range legacyAliases {
+		canonical, ok := canonicalByName[la.canonical]
+		if !ok {
+			continue // defensive: a config typo must not panic the registry
+		}
+		alias := canonical
+		alias.Name = la.alias
+		alias.Description = la.description
+		entries = append(entries, alias)
+	}
 	registry := &Registry{tools: make([]Tool, 0, len(entries)), byName: make(map[string]Tool, len(entries))}
 	for _, entry := range entries {
 		registry.tools = append(registry.tools, entry)

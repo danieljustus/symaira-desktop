@@ -221,6 +221,40 @@ var toolContracts = []toolContract{
 		schema:      `{"type":"object","properties":{"data":{"type":"string","description":"content to store (base64 string or plain text)"},"extension":{"type":"string","description":"file extension (e.g. png, pdf, svg)"},"is_base64":{"type":"boolean","description":"true if data is base64 encoded"},"preferred_name":{"type":"string","description":"optional preferred filename (e.g. image.png)"}},"required":["data"]}`,
 		readOnly:    false,
 	},
+	// Legacy compatibility aliases (issue #598): the absorbed SymIngest and
+	// SymSeek MCP contracts. Each alias delegates to the canonical tool's
+	// handler, so name, description and schema are pinned here exactly as
+	// NewRegistry exposes them.
+	{
+		name:        "ingest_file",
+		description: "Ingests a file into the vault: copies it into inbox/ and creates a corresponding markdown note. Legacy alias for desk_ingest.",
+		schema:      `{"type":"object","properties":{"source_path":{"type":"string"}},"required":["source_path"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "list_jobs",
+		description: "Lists ingestion jobs in the queue. Legacy alias for desk_ingest_jobs.",
+		schema:      `{"type":"object","properties":{}}`,
+		readOnly:    true,
+	},
+	{
+		name:        "retry_job",
+		description: "Retries a failed ingestion job by ID. Legacy alias for desk_ingest_retry.",
+		schema:      `{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "list_documents",
+		description: "Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Legacy alias for desk_docs.",
+		schema:      `{"type":"object","properties":{"type":{"type":"string"},"status":{"type":"string"},"person":{"type":"string"},"correspondent":{"type":"string"},"year":{"type":"string"},"due_before":{"type":"string"},"min_confidence":{"type":"integer"},"max_confidence":{"type":"integer"}}}`,
+		readOnly:    true,
+	},
+	{
+		name:        "search_documents",
+		description: "Searches notes with full-text terms plus path:, tag:, type:, status:, quoted phrases, -negation and /regex/. Legacy alias for desk_search.",
+		schema:      `{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`,
+		readOnly:    true,
+	},
 }
 
 func contractByName() map[string]toolContract {

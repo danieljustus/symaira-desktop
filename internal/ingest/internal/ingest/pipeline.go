@@ -42,6 +42,11 @@ type Pipeline struct {
 // ErrDuplicate is returned when a source has already been ingested.
 var ErrDuplicate = errors.New("source already ingested")
 
+// ErrNoArchivedOriginal is returned when Reprocess is asked to re-OCR a
+// document that has no archived original recorded — the reocr command's
+// error path a caller must distinguish from an unknown document ID.
+var ErrNoArchivedOriginal = errors.New("archived original not recorded")
+
 // ReprocessJobKind is the stable queue kind used by the reocr command.
 const ReprocessJobKind = "reocr"
 
@@ -62,7 +67,7 @@ func (p *Pipeline) Reprocess(ctx context.Context, documentID int64, source strin
 		return nil, fmt.Errorf("get document: %w", err)
 	}
 	if doc.ArchivePath == nil || *doc.ArchivePath == "" {
-		return nil, fmt.Errorf("archived source is not recorded for document %d", documentID)
+		return nil, fmt.Errorf("%w: document %d", ErrNoArchivedOriginal, documentID)
 	}
 	if doc.VaultPath == nil || *doc.VaultPath == "" {
 		return nil, fmt.Errorf("output note is not recorded for document %d", documentID)

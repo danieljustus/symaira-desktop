@@ -85,6 +85,9 @@ symdesk relations inverse <file>  # notes that reference a file via properties/w
 symdesk relations related <file>  # related entities and notes for a file (alias: `related <file>`)
 symdesk views ...              # saved database views
 symdesk ingest <file>          # copy a document into inbox/ + create a stub note
+symdesk ingest reocr <archive-path>  # re-run OCR/extraction for an already-ingested document (or --document-id)
+symdesk rules list|add|update|delete|test|dry-run  # manage document classification rules
+symdesk mail rules list|create|update|delete       # manage configured IMAP mail accounts (create/update read JSON from stdin)
 symdesk ask "question?"        # AI answer grounded in vault search results
 symdesk meeting import <id>    # import a reviewed SymMeet meeting as a vault note (runtime-only, optional)
 symdesk meeting list           # list imported meeting notes

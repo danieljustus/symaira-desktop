@@ -2,10 +2,12 @@ package ingest
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/config"
@@ -32,6 +34,14 @@ var ErrDuplicate = ingestengine.ErrDuplicate
 // without one configured. Consumers use it to prompt for vault setup instead
 // of surfacing a generic failure.
 var ErrNoVault = errors.New("no vault configured")
+
+// ErrNoArchivedOriginal reports that Reprocess was asked to re-OCR a document
+// that has no archived original recorded.
+var ErrNoArchivedOriginal = ingestengine.ErrNoArchivedOriginal
+
+// ErrDocumentNotFound reports that a document ID or archive path does not
+// match any ingested document.
+var ErrDocumentNotFound = errors.New("document not found")
 
 // Version returns the symingest version this package was built from.
 func Version() string { return version.Version }
@@ -590,4 +600,545 @@ func PaperlessMigrate(ctx context.Context, opts PaperlessOptions) (*PaperlessSta
 		Failed:   stats.Failed,
 		Warnings: stats.Warnings,
 	}, nil
+}
+
+// Rule is a classification rule, reduced to a facade-level type with JSON
+// tags matching symaira-appkit's SymingestRulesContract.ClassificationRule
+// (issue #609) — store.ClassificationRule never crosses the package boundary.
+type Rule struct {
+	ID        int64  `json:"id"`
+	Pattern   string `json:"pattern"`
+	Kind      string `json:"kind"`
+	Value     string `json:"value"`
+	CreatedAt string `json:"created_at"`
+}
+
+func newRule(r *store.ClassificationRule) Rule {
+	return Rule{ID: r.ID, Pattern: r.Pattern, Kind: r.Kind, Value: r.Value, CreatedAt: r.CreatedAt}
+}
+
+// RuleMatch is a classification rule that matched a piece of text, reduced to
+// the fields the rules-test contract carries — no created_at, matching
+// symaira-appkit's ClassificationRuleMatch. Rule is not reused here because
+// its extra field would not match the contract byte-for-byte.
+type RuleMatch struct {
+	ID      int64  `json:"id"`
+	Pattern string `json:"pattern"`
+	Kind    string `json:"kind"`
+	Value   string `json:"value"`
+}
+
+// Rules lists every configured classification rule.
+func Rules(ctx context.Context, opts Options) ([]Rule, error) {
+	st, closeStore, err := openStore(opts)
+	if err != nil {
+		return nil, err
+	}
+	defer closeStore()
+
+	rules, err := st.ListRules(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list rules: %w", err)
+	}
+	out := make([]Rule, 0, len(rules))
+	for _, r := range rules {
+		out = append(out, newRule(r))
+	}
+	return out, nil
+}
+
+// AddRule adds a new classification rule. kind must be one of "category",
+// "tag", "correspondent" or "document_type".
+func AddRule(ctx context.Context, opts Options, pattern, kind, value string) (*Rule, error) {
+	st, closeStore, err := openStore(opts)
+	if err != nil {
+		return nil, err
+	}
+	defer closeStore()
+
+	r, err := st.AddRule(ctx, pattern, kind, value)
+	if err != nil {
+		return nil, err
+	}
+	rule := newRule(r)
+	return &rule, nil
+}
+
+// UpdateRule replaces an existing classification rule's fields.
+func UpdateRule(ctx context.Context, opts Options, id int64, pattern, kind, value string) (*Rule, error) {
+	st, closeStore, err := openStore(opts)
+	if err != nil {
+		return nil, err
+	}
+	defer closeStore()
+
+	r, err := st.UpdateRule(ctx, id, pattern, kind, value)
+	if err != nil {
+		return nil, err
+	}
+	rule := newRule(r)
+	return &rule, nil
+}
+
+// DeleteRule deletes a classification rule by ID.
+func DeleteRule(ctx context.Context, opts Options, id int64) error {
+	st, closeStore, err := openStore(opts)
+	if err != nil {
+		return err
+	}
+	defer closeStore()
+
+	return st.DeleteRule(ctx, id)
+}
+
+// TestRules reports which configured rules would match text, using the exact
+// case-insensitive substring semantics the pipeline uses to classify a
+// document (pipeline.go:296-330) — this is not a second matching rule.
+func TestRules(ctx context.Context, opts Options, text string) ([]RuleMatch, error) {
+	st, closeStore, err := openStore(opts)
+	if err != nil {
+		return nil, err
+	}
+	defer closeStore()
+
+	rules, err := st.ListRules(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list rules: %w", err)
+	}
+
+	lowerText := strings.ToLower(text)
+	var matches []RuleMatch
+	for _, r := range rules {
+		if strings.Contains(lowerText, strings.ToLower(r.Pattern)) {
+			matches = append(matches, RuleMatch{ID: r.ID, Pattern: r.Pattern, Kind: r.Kind, Value: r.Value})
+		}
+	}
+	return matches, nil
+}
+
+// ProposedRule is a not-yet-persisted classification rule under test by
+// DryRunRule, matching symaira-appkit's ProposedClassificationRule (no id or
+// created_at — the rule does not exist yet).
+type ProposedRule struct {
+	Pattern string `json:"pattern"`
+	Kind    string `json:"kind"`
+	Value   string `json:"value"`
+}
+
+// DryRunMatch is one document a proposed rule would match.
+type DryRunMatch struct {
+	DocumentID int64  `json:"document_id"`
+	NotePath   string `json:"note_path"`
+	Title      string `json:"title"`
+	// MatchedRuleIDs is always [0], a placeholder for the proposed rule,
+	// which has no ID of its own since it is never persisted. The field
+	// exists for parity with symaira-appkit's RulesDryRunMatch contract.
+	MatchedRuleIDs []int64 `json:"matched_rule_ids"`
+}
+
+// DryRunSkipped is one document DryRunRule could not evaluate.
+type DryRunSkipped struct {
+	DocumentID int64  `json:"document_id"`
+	NotePath   string `json:"note_path"`
+	Reason     string `json:"reason"`
+}
+
+// DryRunResult reports which already-ingested documents a proposed
+// classification rule would match, without persisting the rule or touching
+// any document.
+type DryRunResult struct {
+	ProposedRule     ProposedRule    `json:"proposed_rule"`
+	VaultPath        string          `json:"vault_path"`
+	TotalDocuments   int             `json:"total_documents"`
+	MatchedDocuments int             `json:"matched_documents"`
+	SkippedDocuments int             `json:"skipped_documents"`
+	Matches          []DryRunMatch   `json:"matches"`
+	Skipped          []DryRunSkipped `json:"skipped"`
+}
+
+// DryRunRule validates a proposed classification rule and reports which
+// already-ingested documents its pattern would match by reading each
+// document's note file under the vault — never persisting the rule. A
+// document whose note file is missing or unreadable is reported in Skipped
+// with a reason rather than silently dropped.
+func DryRunRule(ctx context.Context, opts Options, pattern, kind, value string) (*DryRunResult, error) {
+	if err := store.ValidateClassificationRule(pattern, kind, value); err != nil {
+		return nil, err
+	}
+	r, err := opts.resolve()
+	if err != nil {
+		return nil, err
+	}
+
+	st, err := store.Open(r.dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("open document store: %w", err)
+	}
+	defer st.Close()
+
+	docs, err := st.ListDocuments(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list documents: %w", err)
+	}
+
+	result := &DryRunResult{
+		ProposedRule:   ProposedRule{Pattern: pattern, Kind: kind, Value: value},
+		VaultPath:      r.vault,
+		TotalDocuments: len(docs),
+		Matches:        []DryRunMatch{},
+		Skipped:        []DryRunSkipped{},
+	}
+
+	patternLower := strings.ToLower(pattern)
+	for _, doc := range docs {
+		var notePath string
+		if doc.VaultPath != nil {
+			notePath = *doc.VaultPath
+		}
+		if notePath == "" {
+			result.Skipped = append(result.Skipped, DryRunSkipped{DocumentID: doc.ID, Reason: "no note path recorded"})
+			continue
+		}
+		data, readErr := os.ReadFile(notePath)
+		if readErr != nil {
+			result.Skipped = append(result.Skipped, DryRunSkipped{DocumentID: doc.ID, NotePath: notePath, Reason: readErr.Error()})
+			continue
+		}
+		if !strings.Contains(strings.ToLower(noteBody(string(data))), patternLower) {
+			continue
+		}
+		title := strings.TrimSuffix(filepath.Base(notePath), filepath.Ext(notePath))
+		result.Matches = append(result.Matches, DryRunMatch{
+			DocumentID:     doc.ID,
+			NotePath:       notePath,
+			Title:          title,
+			MatchedRuleIDs: []int64{0},
+		})
+	}
+	result.MatchedDocuments = len(result.Matches)
+	result.SkippedDocuments = len(result.Skipped)
+	return result, nil
+}
+
+// noteBody strips the YAML frontmatter writer.NoteWriter always emits
+// ("---\n<yaml>---\n\n<body>"), so DryRunRule matches against the same
+// extracted text the pipeline classified rather than incidental frontmatter.
+func noteBody(content string) string {
+	const delim = "---\n"
+	if !strings.HasPrefix(content, delim) {
+		return content
+	}
+	rest := content[len(delim):]
+	idx := strings.Index(rest, "\n---\n")
+	if idx == -1 {
+		return content
+	}
+	return strings.TrimPrefix(rest[idx+len("\n---\n"):], "\n")
+}
+
+// MailAccountRecord is the full mail-account representation used by the
+// `symdesk mail rules` CLI surface, matching symaira-appkit's
+// SymingestRulesContract.MailAccount field-for-field. It is distinct from
+// MailAccount (used by MailAccounts/FetchMail) because that type is reduced
+// to what the mail poller displays and omits the filter/action fields a
+// client editing an account needs to round-trip.
+type MailAccountRecord struct {
+	ID             string   `json:"id"`
+	Host           string   `json:"host"`
+	Port           int      `json:"port"`
+	Username       string   `json:"username"`
+	PasswordSecret string   `json:"password_secret"`
+	Folder         string   `json:"folder"`
+	From           []string `json:"from"`
+	Subject        []string `json:"subject"`
+	HasAttachment  bool     `json:"has_attachment"`
+	Action         string   `json:"action"`
+	MoveTo         string   `json:"move_to"`
+	ArchiveMail    bool     `json:"archive_mail"`
+}
+
+func toIMAPAccount(a MailAccountRecord) config.IMAPAccount {
+	return config.IMAPAccount{
+		Host:           a.Host,
+		Port:           a.Port,
+		Username:       a.Username,
+		PasswordSecret: a.PasswordSecret,
+		Folder:         a.Folder,
+		From:           a.From,
+		Subject:        a.Subject,
+		HasAttachment:  a.HasAttachment,
+		Action:         a.Action,
+		MoveTo:         a.MoveTo,
+		ArchiveMail:    a.ArchiveMail,
+	}
+}
+
+func fromIMAPAccount(a config.IMAPAccount) MailAccountRecord {
+	view := config.ViewAccount(a)
+	return MailAccountRecord{
+		ID:             view.ID,
+		Host:           view.Host,
+		Port:           view.Port,
+		Username:       view.Username,
+		PasswordSecret: view.PasswordSecret,
+		Folder:         view.Folder,
+		From:           view.From,
+		Subject:        view.Subject,
+		HasAttachment:  view.HasAttachment,
+		Action:         view.Action,
+		MoveTo:         view.MoveTo,
+		ArchiveMail:    view.ArchiveMail,
+	}
+}
+
+func viewAccounts(accounts []config.IMAPAccount) []MailAccountRecord {
+	out := make([]MailAccountRecord, 0, len(accounts))
+	for _, a := range accounts {
+		out = append(out, fromIMAPAccount(a))
+	}
+	return out
+}
+
+// MailConfigurationResult is what every mail-account facade write/read
+// function below returns, matching symaira-appkit's
+// SymingestRulesContract.MailConfigurationResponse minus schema_version and
+// operation, which the CLI attaches (they vary per call site, not per type).
+type MailConfigurationResult struct {
+	ConfigPath     string              `json:"config_path"`
+	Accounts       []MailAccountRecord `json:"accounts"`
+	ReloadRequired bool                `json:"reload_required"`
+	Warnings       []string            `json:"warnings"`
+}
+
+// readMailConfigLenient treats a missing configuration file as an empty
+// document rather than an error, for callers (ListMailAccounts,
+// CreateMailAccount) where "nothing configured yet" is a normal starting
+// state rather than a failure.
+func readMailConfigLenient(path string) (*config.MailConfigDocument, error) {
+	doc, err := config.ReadMailConfig(path)
+	if err != nil {
+		if errors.Is(err, config.ErrConfigNotFound) {
+			return &config.MailConfigDocument{Path: path}, nil
+		}
+		return nil, fmt.Errorf("read mail configuration: %w", err)
+	}
+	return doc, nil
+}
+
+// writeAccountsAt validates and writes accounts to an already-resolved path,
+// then returns them read back and masked.
+func writeAccountsAt(path string, accounts []config.IMAPAccount, pollInterval string) (*MailConfigurationResult, error) {
+	validation := config.ValidateMailAccounts(accounts, pollInterval)
+	if !validation.Valid {
+		return nil, fmt.Errorf("invalid mail configuration: %s", strings.Join(validation.Errors, "; "))
+	}
+	if err := config.WriteMailConfig(path, accounts, pollInterval); err != nil {
+		return nil, fmt.Errorf("write mail configuration: %w", err)
+	}
+	return &MailConfigurationResult{
+		ConfigPath:     path,
+		Accounts:       viewAccounts(accounts),
+		ReloadRequired: true,
+		Warnings:       validation.Warnings,
+	}, nil
+}
+
+// ListMailAccounts reads every configured mail account for the `mail rules
+// list` CLI surface. A missing configuration file is not an error — mail
+// ingestion is optional — so the result is an empty account list.
+func ListMailAccounts(configPath string) (*MailConfigurationResult, error) {
+	path, err := config.ConfigPath(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("resolve mail config path: %w", err)
+	}
+	doc, err := readMailConfigLenient(path)
+	if err != nil {
+		return nil, err
+	}
+	return &MailConfigurationResult{
+		ConfigPath:     path,
+		Accounts:       viewAccounts(doc.Accounts),
+		ReloadRequired: false,
+		Warnings:       []string{},
+	}, nil
+}
+
+// SetMailAccounts validates and replaces the entire configured account list
+// at configPath. An empty configPath uses the location the CLI would use.
+func SetMailAccounts(configPath string, accounts []MailAccountRecord, pollInterval string) (*MailConfigurationResult, error) {
+	path, err := config.ConfigPath(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("resolve mail config path: %w", err)
+	}
+	converted := make([]config.IMAPAccount, len(accounts))
+	for i, a := range accounts {
+		converted[i] = toIMAPAccount(a)
+	}
+	return writeAccountsAt(path, converted, pollInterval)
+}
+
+// CreateMailAccount appends a new IMAP account to the mail configuration.
+// account.PasswordSecret is stored as given: this is a new account, so there
+// is no prior stored secret to preserve.
+func CreateMailAccount(configPath string, account MailAccountRecord) (*MailConfigurationResult, error) {
+	path, err := config.ConfigPath(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("resolve mail config path: %w", err)
+	}
+	doc, err := readMailConfigLenient(path)
+	if err != nil {
+		return nil, err
+	}
+	accounts := append(doc.Accounts, toIMAPAccount(account))
+	return writeAccountsAt(path, accounts, doc.IMAPPollInterval)
+}
+
+// UpdateMailAccount replaces the fields of the configured account identified
+// by id (as returned by ListMailAccounts). Never overwrites the stored
+// secret with a masked value: when account.PasswordSecret is empty or equals
+// the mask of the account's current secret — the value a client round-trips
+// unchanged after reading it — the existing stored secret is kept.
+func UpdateMailAccount(configPath, id string, account MailAccountRecord) (*MailConfigurationResult, error) {
+	path, err := config.ConfigPath(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("resolve mail config path: %w", err)
+	}
+	doc, err := config.ReadMailConfig(path)
+	if err != nil {
+		return nil, fmt.Errorf("read mail configuration: %w", err)
+	}
+	idx := indexOfAccount(doc.Accounts, id)
+	if idx == -1 {
+		return nil, fmt.Errorf("no configured mail account with ID %q", id)
+	}
+
+	existing := doc.Accounts[idx]
+	updated := toIMAPAccount(account)
+	if updated.PasswordSecret == "" || updated.PasswordSecret == config.MaskPasswordSecret(existing.PasswordSecret) {
+		updated.PasswordSecret = existing.PasswordSecret
+	}
+	doc.Accounts[idx] = updated
+	return writeAccountsAt(path, doc.Accounts, doc.IMAPPollInterval)
+}
+
+// DeleteMailAccount removes the configured account identified by id.
+func DeleteMailAccount(configPath, id string) (*MailConfigurationResult, error) {
+	path, err := config.ConfigPath(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("resolve mail config path: %w", err)
+	}
+	doc, err := config.ReadMailConfig(path)
+	if err != nil {
+		return nil, fmt.Errorf("read mail configuration: %w", err)
+	}
+	idx := indexOfAccount(doc.Accounts, id)
+	if idx == -1 {
+		return nil, fmt.Errorf("no configured mail account with ID %q", id)
+	}
+	accounts := append(append([]config.IMAPAccount{}, doc.Accounts[:idx]...), doc.Accounts[idx+1:]...)
+	return writeAccountsAt(path, accounts, doc.IMAPPollInterval)
+}
+
+func indexOfAccount(accounts []config.IMAPAccount, id string) int {
+	for i, a := range accounts {
+		if config.AccountID(a) == id {
+			return i
+		}
+	}
+	return -1
+}
+
+// ReprocessResult reports the outcome of a re-OCR run against an existing
+// document — a facade-level reduction of ingestengine.ReprocessResult that
+// never exposes store.Job.
+type ReprocessResult struct {
+	DocumentID int64  `json:"document_id"`
+	JobID      int64  `json:"job_id"`
+	Status     string `json:"status"` // "completed" or "already_running"
+	OutputPath string `json:"output_path"`
+}
+
+func newReprocessResult(documentID int64, res *ingestengine.ReprocessResult) *ReprocessResult {
+	out := &ReprocessResult{DocumentID: documentID}
+	if res.Job != nil {
+		out.JobID = res.Job.ID
+	}
+	if res.AlreadyRunning {
+		out.Status = "already_running"
+		return out
+	}
+	out.Status = "completed"
+	if res.Result != nil {
+		out.OutputPath = res.Result.VaultPath
+	}
+	return out
+}
+
+func newReprocessPipeline(r resolved, st *store.Store) *ingestengine.Pipeline {
+	return &ingestengine.Pipeline{
+		Engine:     ocr.NewEngine(r.ocrLang, r.ollamaBaseURL, r.ollamaModel),
+		Store:      st,
+		Writer:     &writer.NoteWriter{Vault: r.vault},
+		ArchiveDir: r.archive,
+	}
+}
+
+// Reprocess re-runs OCR/extraction for an already-ingested document,
+// wrapping Pipeline.Reprocess (the reocr job kind). A document ID with no
+// matching document returns ErrDocumentNotFound; a document with no archived
+// original returns ErrNoArchivedOriginal. A pending or running reprocess job
+// for the same document is reported with Status "already_running" rather
+// than duplicated.
+func Reprocess(ctx context.Context, opts Options, documentID int64) (*ReprocessResult, error) {
+	r, err := opts.resolve()
+	if err != nil {
+		return nil, err
+	}
+	st, err := store.Open(r.dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("open document store: %w", err)
+	}
+	defer st.Close()
+
+	res, err := newReprocessPipeline(r, st).Reprocess(ctx, documentID, "", nil)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%w: id %d", ErrDocumentNotFound, documentID)
+		}
+		return nil, err
+	}
+	return newReprocessResult(documentID, res), nil
+}
+
+// ReprocessByArchivePath is Reprocess for a caller that has the archived
+// original's path rather than the document ID — the CLI's positional
+// argument form of `ingest reocr`.
+func ReprocessByArchivePath(ctx context.Context, opts Options, archivePath string) (*ReprocessResult, error) {
+	abs, err := filepath.Abs(archivePath)
+	if err != nil {
+		return nil, fmt.Errorf("invalid archive path %q: %w", archivePath, err)
+	}
+	r, err := opts.resolve()
+	if err != nil {
+		return nil, err
+	}
+	st, err := store.Open(r.dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("open document store: %w", err)
+	}
+	defer st.Close()
+
+	doc, err := st.ByArchivePath(ctx, abs)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%w: archive path %q", ErrDocumentNotFound, abs)
+		}
+		return nil, fmt.Errorf("look up document by archive path: %w", err)
+	}
+
+	res, err := newReprocessPipeline(r, st).Reprocess(ctx, doc.ID, "", nil)
+	if err != nil {
+		return nil, err
+	}
+	return newReprocessResult(doc.ID, res), nil
 }

@@ -1,3 +1,4 @@
+//nolint:gosec // Test helper builds a throwaway symroom binary; G204 is not applicable.
 package mcp
 
 import (

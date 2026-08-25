@@ -18,7 +18,7 @@ func fakeHermesScript(t *testing.T, dir string) {
 echo "fake-answer session=$HERMES_FAKE_SESSION"
 `
 	path := filepath.Join(dir, "hermes")
-	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+	if err := os.WriteFile(path, []byte(script), 0o700); err != nil { //nolint:gosec // G306: test fixture binary needs exec permission
 		t.Fatal(err)
 	}
 }

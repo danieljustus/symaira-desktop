@@ -74,7 +74,11 @@ func (s *Service) DocStatus(relPath, status string) error {
 	if err != nil {
 		return err
 	}
-	return s.IndexDocument(doc)
+	if err := s.IndexDocument(doc); err != nil {
+		return err
+	}
+	_ = s.RecordActivity("status_changed", relPath, doc.Title, "status set to "+status)
+	return nil
 }
 
 // DocDue sets the due_date frontmatter key of a document and re-indexes.
@@ -91,7 +95,11 @@ func (s *Service) DocDue(relPath, date string) error {
 	if err != nil {
 		return err
 	}
-	return s.IndexDocument(doc)
+	if err := s.IndexDocument(doc); err != nil {
+		return err
+	}
+	_ = s.RecordActivity("file_changed", relPath, doc.Title, "due date set to "+date)
+	return nil
 }
 
 // DocASN assigns an archive serial number and reindexes the document. "next"

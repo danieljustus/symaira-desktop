@@ -48,6 +48,12 @@ var toolContracts = []toolContract{
 		readOnly:    true,
 	},
 	{
+		name:        "vault_timeline",
+		description: "Answers \"what happened on day X\": returns journal activity from the vault (daily NDJSON journal) plus indexed documents whose document date or modification time falls in the given range. Dates are YYYY-MM-DD; from and to default to today.",
+		schema:      `{"type":"object","properties":{"from":{"type":"string"},"to":{"type":"string"},"limit":{"type":"integer"}}}`,
+		readOnly:    true,
+	},
+	{
 		name:        "desk_props",
 		description: "Gets properties (frontmatter) for a note.",
 		schema:      `{"type":"object","properties":{"file":{"type":"string"}},"required":["file"]}`,
@@ -433,6 +439,7 @@ func TestToolHandlersServiceError(t *testing.T) {
 	}{
 		{"desk_ls", `{"dir":"test"}`},
 		{"desk_search", `{"query":"test"}`},
+		{"vault_timeline", `{"from":"2026-08-01","to":"2026-08-02"}`},
 		{"desk_props", `{"file":"test.md"}`},
 		{"desk_backlinks", `{"file":"test.md"}`},
 		{"desk_ask", `{"query":"test"}`},
@@ -457,6 +464,7 @@ func TestToolHandlersServiceError(t *testing.T) {
 	withError := map[string]func(ServiceFactory) *Tool{
 		"desk_ls":           newLsTool,
 		"desk_search":       newSearchTool,
+		"vault_timeline":    newTimelineTool,
 		"desk_props":        newPropsTool,
 		"desk_backlinks":    newBacklinksTool,
 		"desk_ask":          newAskTool,
@@ -531,6 +539,7 @@ func TestToolHandlersInvalidJSON(t *testing.T) {
 	}{
 		{"desk_ls", newLsTool},
 		{"desk_search", newSearchTool},
+		{"vault_timeline", newTimelineTool},
 		{"desk_props", newPropsTool},
 		{"desk_backlinks", newBacklinksTool},
 		{"desk_ask", newAskTool},

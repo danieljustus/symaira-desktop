@@ -51,7 +51,11 @@ public struct LocalDeskTransport: DeskTransport {
     }
 
     public func command(arguments: [String], stdin: String) async throws -> Data {
-        try await runner.runChecked(tool.location.url, arguments: arguments)
+        // `stdin` used to be dropped on the floor here — harmless while every
+        // caller sent empty input, but the mail-account create/update
+        // commands (#610) pipe the account JSON on stdin and need it to
+        // actually reach the subprocess.
+        try await runner.runChecked(tool.location.url, arguments: arguments, stdin: stdin.isEmpty ? nil : Data(stdin.utf8))
     }
 
     public func commandResult(arguments: [String]) async throws -> CLIResult {

@@ -45,12 +45,29 @@ final class ClassificationRulesViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.mailAccounts.count, 1)
     }
 
-    func testMissingMailConfigIsHandledAsUnconfigured() async {
-        let client = FailingMailRulesClient(error: SymingestRulesError.commandFailed("CLI execution failed with exit code 9: read mail configuration: symingest configuration file not found: /tmp/config.toml"))
+    // The new `mail rules list` surface returns an empty account list rather
+    // than an error when nothing is configured (mail ingestion is optional),
+    // so there is no special-casing left in `loadMail()` to exercise — this
+    // is just the ordinary success path with a fake client that has nothing
+    // stored (#610 point 6).
+    func testMissingMailConfigReturnsEmptyAccountsWithoutError() async {
+        let client = FakeClassificationRulesClient()
         let viewModel = ClassificationRulesViewModel(client: client)
         let loaded = await viewModel.loadMail()
         XCTAssertTrue(loaded)
         XCTAssertNil(viewModel.mailError)
+        XCTAssertTrue(viewModel.mailAccounts.isEmpty)
+    }
+
+    // Now that `loadMail()` no longer sniffs the error text for a
+    // "not found" phrase, a genuine failure must surface to `mailError`
+    // instead of being silently swallowed.
+    func testMailListFailureSurfacesAsError() async {
+        let client = FailingMailRulesClient(error: SymingestRulesError.commandFailed("permission denied"))
+        let viewModel = ClassificationRulesViewModel(client: client)
+        let loaded = await viewModel.loadMail()
+        XCTAssertFalse(loaded)
+        XCTAssertEqual(viewModel.mailError, "permission denied")
         XCTAssertTrue(viewModel.mailAccounts.isEmpty)
     }
 }

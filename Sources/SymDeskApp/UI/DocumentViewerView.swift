@@ -4,7 +4,6 @@ import QuickLookUI
 import SymairaTheme
 import SymDeskCore
 import SymairaIngestContract
-import SymairaToolKit
 
 // MARK: - PDFKit View Wrapper
 
@@ -758,13 +757,11 @@ struct DocumentViewerView: View {
         }
     }
 
+    // Availability now follows whether the core is ready, not whether a
+    // separately located `symingest` binary exists (#610) — reocr runs
+    // in-process through `symdesk ingest reocr` via `core`.
     private func checkReOCRAvailability() {
-        Task {
-            let locator = BinaryLocator(bundle: Bundle.main)
-            // ingestTool became throwing in appkit 0.7.0 (missing binary = nil).
-            let tool = try? SymairaToolRegistry.ingestTool
-            isReOCRAvailable = tool.map { locator.locate($0.binaryName) != nil } ?? false
-        }
+        isReOCRAvailable = core.isReady
     }
 
     private func runReOCR() {
@@ -774,8 +771,7 @@ struct DocumentViewerView: View {
             reOCRStatus = nil
             defer { isReOCRRunning = false }
             do {
-                let client = SymingestReOCRClient(vaultPath: core.vaultPath)
-                let response = try await client.reprocess(archivePath: sourcePath)
+                let response = try await core.reprocess(archivePath: sourcePath)
                 if response.status == "completed" {
                     reOCRStatus = "Re-OCR completed (job \(response.jobID))"
                 } else if response.status == "already_running" {

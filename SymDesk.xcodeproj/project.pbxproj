@@ -27,6 +27,7 @@
 		148B00ED8E7202BC9877013C /* AudioOverviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EE28AFB0BCAAA61ABD97B92 /* AudioOverviewTests.swift */; };
 		14AB9F440F4DF6813149FB4E /* MobileVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937E397B9A403351E2774A73 /* MobileVault.swift */; };
 		14F891ABD3302502994CB064 /* SymroomFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 6959E31C9FC8DDF630AB6F31 /* SymroomFeature */; };
+		1690DE640422CCE1E31B7616 /* DeskCoreReOCR.swift in Sources */ = {isa = PBXBuildFile; fileRef = A385C79A5970CEA674B78CB0 /* DeskCoreReOCR.swift */; };
 		190EF5D4BA2FFAFB08B28434 /* MarkdownPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E65A058CCDDBCCFB506217C /* MarkdownPreviewView.swift */; };
 		197AD7BDF025042D4AFAFFBE /* ServerConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F5CBE2CE55A95870F3464BE /* ServerConnection.swift */; };
 		19D58D1D913AEA689B0EEA71 /* MobileVaultParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68D64871B4AA84AF8340744 /* MobileVaultParserTests.swift */; };
@@ -94,6 +95,7 @@
 		78F10DF5899EEA805770D0F3 /* SymDeskVaultWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 709DC395FB99E7C155370B31 /* SymDeskVaultWidget.swift */; };
 		7C2F07AD46BF233EA001E8EF /* CoreBinaryDiscoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 367F383D52E1C599FC13E8B4 /* CoreBinaryDiscoveryTests.swift */; };
 		7F1E10853CF5FF4E4B200CAB /* MobileShareInboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236368393EE29942F774E3C7 /* MobileShareInboxTests.swift */; };
+		7F2CAEA437797E13245E960B /* DeskCoreIngestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 066D06F617AADB44570E9D94 /* DeskCoreIngestTests.swift */; };
 		818D035A27199BE0E1034DE8 /* SymairaUpdateCheck in Frameworks */ = {isa = PBXBuildFile; productRef = CFBC6F0BE1C9C08829AF5DC6 /* SymairaUpdateCheck */; };
 		81EC8D6E3F1AEC5055591FF9 /* ModelsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E1C1E4B0F6A58788B3C0F5 /* ModelsView.swift */; };
 		821BBB6688CB3D7FE25D943C /* VaultAvailabilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCF6BD41C7B07849B8A25596 /* VaultAvailabilityTests.swift */; };
@@ -119,6 +121,7 @@
 		95958AA9ACDAB632B1BAF7F8 /* DocumentCardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA27EFFC69A6E08B2972334 /* DocumentCardTests.swift */; };
 		9A4AD42B789934CD952F8C45 /* HistoryDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F4F5D9C5735B931CCE6C1F /* HistoryDiffTests.swift */; };
 		9CB84C5DEC5DFAA645786C79 /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = 440538EBC91381E953CC1697 /* SymairaCLIRunner */; };
+		9E11CD0E6E35F9DCEFD0B3A3 /* DeskCoreRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BEAE732E5A965CF86E19185 /* DeskCoreRules.swift */; };
 		A069D366DE09F194427FA488 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B19FB8752DF2B7914F917FAE /* Assets.xcassets */; };
 		A07A852CE4060BD17E9EC844 /* DeskCoreInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A6AAD155CC4C1EF993C0DE1 /* DeskCoreInspector.swift */; };
 		A138AFCFEA44C4E485B65257 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59762A8D6DF418D30855BEDA /* OnboardingView.swift */; };
@@ -262,6 +265,7 @@
 		02391589A785587023B6522C /* TagBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagBrowserView.swift; sourceTree = "<group>"; };
 		0382BEE0DC98A06DAAE1E3D3 /* Notifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifications.swift; sourceTree = "<group>"; };
 		059DF1FA89D0D36B34EEA0B7 /* VaultSwitcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultSwitcherView.swift; sourceTree = "<group>"; };
+		066D06F617AADB44570E9D94 /* DeskCoreIngestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreIngestTests.swift; sourceTree = "<group>"; };
 		071FAFEC3F150F72466E8FE8 /* MobileQuickOpenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileQuickOpenTests.swift; sourceTree = "<group>"; };
 		07FC117A1033D88F0534B546 /* SymDeskAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SymDeskAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		09191C4770F9BB06CC2C5F40 /* ContactReferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactReferencesView.swift; sourceTree = "<group>"; };
@@ -304,6 +308,7 @@
 		39D62AD2CAE794AD863C9E92 /* DbViewTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewTimeline.swift; sourceTree = "<group>"; };
 		3A3BD65026305867CBCD1B1C /* MobileSpotlightIndexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileSpotlightIndexer.swift; sourceTree = "<group>"; };
 		3A52EF5C8FFEE77D751DDAFE /* FilterChipsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterChipsView.swift; sourceTree = "<group>"; };
+		3BEAE732E5A965CF86E19185 /* DeskCoreRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreRules.swift; sourceTree = "<group>"; };
 		402C51836E43171C7FCAFADE /* MobileShareInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileShareInbox.swift; sourceTree = "<group>"; };
 		4361A3B66293519600E22473 /* MarkdownPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownPreview.swift; sourceTree = "<group>"; };
 		436C333742B9311361D21717 /* NotebookWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotebookWorkspaceView.swift; sourceTree = "<group>"; };
@@ -369,6 +374,7 @@
 		A1E6F584BF386E62EAE36CEC /* DeskCoreTrash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreTrash.swift; sourceTree = "<group>"; };
 		A2BC2A21B0BFAB4B7F22A054 /* MeetingReviewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingReviewModelTests.swift; sourceTree = "<group>"; };
 		A2FC4C3A298D87F74C40AD0D /* DocumentThumbnailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentThumbnailView.swift; sourceTree = "<group>"; };
+		A385C79A5970CEA674B78CB0 /* DeskCoreReOCR.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreReOCR.swift; sourceTree = "<group>"; };
 		A60D1BDE16EFA4EF064577CB /* TranscriptTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptTimelineView.swift; sourceTree = "<group>"; };
 		A68D64871B4AA84AF8340744 /* MobileVaultParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileVaultParserTests.swift; sourceTree = "<group>"; };
 		AA776EFDE9606A0A931C0DA0 /* MobileAIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileAIClient.swift; sourceTree = "<group>"; };
@@ -501,6 +507,8 @@
 				E56B93A09A224783CB0CC57F /* DeskCoreModels.swift */,
 				67032F1435DB95BCADBE6766 /* DeskCoreNotebooks.swift */,
 				484D17A7AFDF08CBDCF52D76 /* DeskCorePaperless.swift */,
+				A385C79A5970CEA674B78CB0 /* DeskCoreReOCR.swift */,
+				3BEAE732E5A965CF86E19185 /* DeskCoreRules.swift */,
 				4ECC061F608A1EBD12BD49FA /* DeskCoreTagManagement.swift */,
 				A1E6F584BF386E62EAE36CEC /* DeskCoreTrash.swift */,
 				622B79A38CA0384A1C10A734 /* DeskCoreVaultSetup.swift */,
@@ -747,6 +755,7 @@
 				95BE33F6E50098539F916385 /* ClassificationRulesViewModelTests.swift */,
 				367F383D52E1C599FC13E8B4 /* CoreBinaryDiscoveryTests.swift */,
 				50F3708EC2D67EBB7114F23A /* DeskCoreExportTests.swift */,
+				066D06F617AADB44570E9D94 /* DeskCoreIngestTests.swift */,
 				94F7D81A91C35F15B74B8A20 /* DeskCoreNotebooksTests.swift */,
 				1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */,
 				748F5E216CEC59B66740A482 /* DeskTransportTests.swift */,
@@ -1094,6 +1103,8 @@
 				397273912263BD42916D5D1B /* DeskCoreModels.swift in Sources */,
 				524E51523D98702E134FDEF6 /* DeskCoreNotebooks.swift in Sources */,
 				828D7A1D7B361AE01F65600A /* DeskCorePaperless.swift in Sources */,
+				1690DE640422CCE1E31B7616 /* DeskCoreReOCR.swift in Sources */,
+				9E11CD0E6E35F9DCEFD0B3A3 /* DeskCoreRules.swift in Sources */,
 				3D7FF457BB8F9D51AA0C9F2C /* DeskCoreTagManagement.swift in Sources */,
 				238ED4B096471A99B6A84CA7 /* DeskCoreTrash.swift in Sources */,
 				69E8275CFA16038317202BCE /* DeskCoreVaultSetup.swift in Sources */,
@@ -1158,6 +1169,7 @@
 				03618B7F81A04FE3E3DD2B01 /* ClassificationRulesViewModelTests.swift in Sources */,
 				7C2F07AD46BF233EA001E8EF /* CoreBinaryDiscoveryTests.swift in Sources */,
 				60D1C031A05062847C04D9CC /* DeskCoreExportTests.swift in Sources */,
+				7F2CAEA437797E13245E960B /* DeskCoreIngestTests.swift in Sources */,
 				F71FC307A748372B1DE9E7DA /* DeskCoreNotebooksTests.swift in Sources */,
 				FC481AC96D97F01753A861B0 /* DeskCoreTests.swift in Sources */,
 				ACEECA392E62D5A594FF6F5B /* DeskTransportTests.swift in Sources */,
@@ -1373,7 +1385,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.10.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios;
 				PRODUCT_MODULE_NAME = SymDeskMobile;
 				PRODUCT_NAME = SymDesk;
@@ -1420,12 +1432,13 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.10.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop;
+				PRODUCT_NAME = SymDesk;
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
 				SWIFT_VERSION = 6.0;
@@ -1501,7 +1514,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.10.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios;
 				PRODUCT_MODULE_NAME = SymDeskMobile;
 				PRODUCT_NAME = SymDesk;
@@ -1541,7 +1554,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.10.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.share;
 				PRODUCT_MODULE_NAME = SymDeskMobileShare;
 				PRODUCT_NAME = SymDeskShare;
@@ -1588,7 +1601,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.10.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.share;
 				PRODUCT_MODULE_NAME = SymDeskMobileShare;
 				PRODUCT_NAME = SymDeskShare;
@@ -1612,7 +1625,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.10.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.widget;
 				PRODUCT_MODULE_NAME = SymDeskWidget;
 				PRODUCT_NAME = SymDeskWidget;
@@ -1721,7 +1734,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.10.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop.ios.widget;
 				PRODUCT_MODULE_NAME = SymDeskWidget;
 				PRODUCT_NAME = SymDeskWidget;
@@ -1786,12 +1799,13 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.10.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.symaira.desktop;
+				PRODUCT_NAME = SymDesk;
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
 				SWIFT_VERSION = 6.0;

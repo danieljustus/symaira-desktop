@@ -32,8 +32,8 @@ struct RulesSettingsView: View {
     @State private var aiIsSaving = false
     @State private var showingPaperlessImport = false
 
-    init(vaultPath: String? = nil) {
-        _viewModel = StateObject(wrappedValue: ClassificationRulesViewModel(client: SymingestRulesClient(vaultPath: vaultPath)))
+    init() {
+        _viewModel = StateObject(wrappedValue: ClassificationRulesViewModel(client: DeskCore.shared))
     }
 
     init(client: any ClassificationRulesClient) {
@@ -55,7 +55,7 @@ struct RulesSettingsView: View {
 				}
 				if !core.isRemote {
                 if let error = viewModel.lastError, viewModel.lastErrorKind == .availability {
-                    let title = "symingest error"
+                    let title = "Rules unavailable"
                     messageCard(title: title, message: error, systemImage: "exclamationmark.triangle") {
                         Button("Retry") { Task { await viewModel.load(); await viewModel.loadMail() } }
                             .buttonStyle(.bordered)
@@ -149,7 +149,7 @@ struct RulesSettingsView: View {
                 Text("Rules & Settings")
                     .symairaText(.display).bold()
                     .foregroundStyle(SymairaTheme.textPrimary)
-                Text("Manage classification and mail-ingest behavior through symingest's versioned contract.")
+                Text("Manage classification and mail-ingest behavior through symdesk's versioned contract.")
                     .foregroundStyle(SymairaTheme.textSecondary)
             }
             Spacer()
@@ -327,7 +327,7 @@ struct RulesSettingsView: View {
                 }
             } else {
                 HStack {
-                    Text("Changes apply after restarting the symingest watcher.")
+                    Text("Changes apply after restarting the mail watcher.")
                         .symairaText(.callout)
                         .foregroundStyle(SymairaTheme.textSecondary)
                     Spacer()

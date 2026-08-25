@@ -21,6 +21,16 @@ final class DeskTransportTests: XCTestCase {
         XCTAssertEqual(text, #"{"result":"ok"}"#)
     }
 
+    // `command` used to drop `stdin` on the floor (issue #610) — the mail
+    // rules create/update commands pipe the account JSON on stdin and need
+    // it to actually reach the subprocess, unlike `commandStream`, which
+    // already forwarded it correctly (see testLocalCommandStreamForwardsStdin).
+    func testLocalCommandForwardsStdin() async throws {
+        let transport = try await makeLocalTransport()
+        let data = try await transport.command(arguments: ["echo-stdin"], stdin: "hello-command-stdin")
+        XCTAssertEqual(String(decoding: data, as: UTF8.self), "hello-command-stdin")
+    }
+
     func testLocalCommandThrowsOnNonZeroExit() async throws {
         let transport = try await makeLocalTransport()
         do {

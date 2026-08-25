@@ -198,8 +198,7 @@ func outputMailRulesResult(operation string, result *ingest.MailConfigurationRes
 		if err != nil {
 			return err
 		}
-		// codeql[go/clear-text-logging]
-		fmt.Println(string(encoded))
+		fmt.Println(string(encoded)) // codeql[go/clear-text-logging]
 		return nil
 	}
 	fmt.Printf("%s: %d account(s) at %s\n", operation, len(result.Accounts), result.ConfigPath)

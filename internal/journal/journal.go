@@ -107,16 +107,16 @@ func Append(vaultRoot string, entry Entry) error {
 	writeMu.Lock()
 	defer writeMu.Unlock()
 
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0750); err != nil {
 		return fmt.Errorf("create journal dir: %w", err)
 	}
 
 	filePath := DailyFilePath(vaultRoot, entry.Timestamp)
-	f, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	f, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644) //nolint:gosec // G304: filePath is derived from the vault root and entry timestamp
 	if err != nil {
 		return fmt.Errorf("open journal file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	data, err := json.Marshal(entry)
 	if err != nil {
@@ -132,14 +132,14 @@ func Append(vaultRoot string, entry Entry) error {
 // ReadDay reads all journal entries for a specific YYYY-MM-DD date.
 func ReadDay(vaultRoot string, day time.Time) ([]Entry, error) {
 	filePath := DailyFilePath(vaultRoot, day)
-	f, err := os.Open(filePath)
+	f, err := os.Open(filePath) //nolint:gosec // G304: filePath is derived from the vault root and day argument
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var entries []Entry
 	scanner := bufio.NewScanner(f)

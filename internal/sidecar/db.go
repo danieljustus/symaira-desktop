@@ -1160,7 +1160,7 @@ func (db *DB) TimelineDocs(fromDate, toDate string) ([]DocsResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var results []DocsResult
 	for rows.Next() {

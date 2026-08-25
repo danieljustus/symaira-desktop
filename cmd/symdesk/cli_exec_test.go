@@ -1042,3 +1042,44 @@ func TestIndexPruneEmitsASingleJSONDocument(t *testing.T) {
 		t.Errorf("a second JSON document follows the report: %s", trailing)
 	}
 }
+
+func TestBacklinksCommandWithAliases(t *testing.T) {
+	vaultDir := t.TempDir()
+	origCfg := cfg
+	cfg = &config.Config{Vault: vaultDir}
+	t.Cleanup(func() { cfg = origCfg })
+
+	agencyPath := filepath.Join(vaultDir, "agency.md")
+	agencyContent := "---\ntitle: Bundesagentur für Arbeit\naliases:\n  - BA\n---\nAgency body\n"
+	if err := os.WriteFile(agencyPath, []byte(agencyContent), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	sourcePath := filepath.Join(vaultDir, "source.md")
+	sourceContent := "---\ntitle: Source Note\n---\nLink to [[BA]]\n"
+	if err := os.WriteFile(sourcePath, []byte(sourceContent), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	indexCmd := newIndexCmd()
+	if _, err := runCommand(t, indexCmd, nil); err != nil {
+		t.Fatalf("index failed: %v", err)
+	}
+
+	backlinksCmd := newBacklinksCmd()
+	jsonFlag = true
+	t.Cleanup(func() { jsonFlag = false })
+
+	out, err := runCommand(t, backlinksCmd, []string{"agency.md"})
+	if err != nil {
+		t.Fatalf("backlinks returned error: %v", err)
+	}
+
+	var results []string
+	if err := json.Unmarshal([]byte(out), &results); err != nil {
+		t.Fatalf("backlinks output is not valid JSON: %v\noutput: %s", err, out)
+	}
+	if len(results) != 1 || results[0] != "source.md" {
+		t.Errorf("expected [source.md], got %v", results)
+	}
+}

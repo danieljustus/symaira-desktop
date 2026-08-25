@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	"gopkg.in/yaml.v3"
 )
 
 // InverseRelation describes a note that points at the target note, either via
@@ -33,6 +34,32 @@ func (s *Service) RelationsInverse(relPath string) ([]InverseRelation, error) {
 	baseName := filepath.Base(absPath)
 	title := strings.TrimSuffix(baseName, filepath.Ext(baseName))
 
+	targetNames := []string{title, baseName}
+	if props, err := s.DB.GetProperties(absPath); err == nil {
+		if t, ok := props["title"].(string); ok && t != "" {
+			targetNames = append(targetNames, t)
+		}
+		if aRaw, ok := props["aliases"]; ok {
+			aliasesStr := fmt.Sprintf("%v", aRaw)
+			var list []string
+			if err := yaml.Unmarshal([]byte(aliasesStr), &list); err == nil && len(list) > 0 {
+				for _, item := range list {
+					if trimmed := strings.TrimSpace(item); trimmed != "" {
+						targetNames = append(targetNames, trimmed)
+					}
+				}
+			} else {
+				trimmed := strings.TrimPrefix(strings.TrimSuffix(aliasesStr, "]"), "[")
+				for _, part := range strings.Split(trimmed, ",") {
+					cleaned := strings.Trim(strings.TrimSpace(part), `"'`)
+					if cleaned != "" {
+						targetNames = append(targetNames, cleaned)
+					}
+				}
+			}
+		}
+	}
+
 	docs, err := s.DB.ListFiles("")
 	if err != nil {
 		return nil, err
@@ -46,6 +73,7 @@ func (s *Service) RelationsInverse(relPath string) ([]InverseRelation, error) {
 		if err != nil {
 			rel = sourceAbs
 		}
+		rel = filepath.ToSlash(rel)
 		key := rel + "\x00" + property
 		if seen[key] {
 			return
@@ -68,8 +96,11 @@ func (s *Service) RelationsInverse(relPath string) ([]InverseRelation, error) {
 		}
 		sort.Strings(keys)
 		for _, k := range keys {
-			if propertyReferences(props[k], title) {
-				add(d.Path, d.Title, k)
+			for _, targetName := range targetNames {
+				if propertyReferences(props[k], targetName) {
+					add(d.Path, d.Title, k)
+					break
+				}
 			}
 		}
 	}

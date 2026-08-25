@@ -94,3 +94,56 @@ func TestRelationsInverseRejectsPathEscape(t *testing.T) {
 		t.Error("expected error for path escape")
 	}
 }
+
+func TestRelationsInverseWithAliases(t *testing.T) {
+	svc := newTestService(t)
+
+	// Target note with aliases
+	targetDoc := &vault.Document{
+		Path:        filepath.Join(svc.VaultRoot, "bundesagentur.md"),
+		Title:       "Bundesagentur für Arbeit",
+		Aliases:     []string{"BA", "Federal Agency"},
+		Created:     "2026-01-01T00:00:00Z",
+		SHA256:      "h-target",
+		Frontmatter: map[string]interface{}{"aliases": []interface{}{"BA", "Federal Agency"}},
+	}
+	if err := svc.DB.IndexDocument(targetDoc); err != nil {
+		t.Fatal(err)
+	}
+
+	// 1. Doc linking to alias via frontmatter property
+	indexRelationDoc(t, svc, "task.md", "Task", map[string]interface{}{
+		"assigned_to": "[[BA]]",
+	}, nil)
+
+	// 2. Doc linking to multi-word alias via frontmatter
+	indexRelationDoc(t, svc, "meeting.md", "Meeting", map[string]interface{}{
+		"organization": "[[Federal Agency]]",
+	}, nil)
+
+	// 3. Doc linking to alias in body
+	indexRelationDoc(t, svc, "journal.md", "Journal", nil, []string{"BA"})
+
+	rels, err := svc.RelationsInverse("bundesagentur.md")
+	if err != nil {
+		t.Fatalf("RelationsInverse failed: %v", err)
+	}
+
+	got := make(map[string]string, len(rels))
+	for _, r := range rels {
+		got[r.Source+"#"+r.Property] = r.Title
+	}
+	want := map[string]string{
+		"task.md#assigned_to":     "Task",
+		"meeting.md#organization": "Meeting",
+		"journal.md#_link":        "Journal",
+	}
+	if len(rels) != len(want) {
+		t.Fatalf("expected %d relations, got %d: %+v", len(want), len(rels), rels)
+	}
+	for key, title := range want {
+		if got[key] != title {
+			t.Errorf("missing or wrong relation %s: got %q, want %q", key, got[key], title)
+		}
+	}
+}

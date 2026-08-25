@@ -1456,6 +1456,237 @@ func TestGetBacklinksResultsUnchangedWithIndex(t *testing.T) {
 	}
 }
 
+func TestParseAliasesValue(t *testing.T) {
+	tests := []struct {
+		name string
+		raw  string
+		want []string
+	}{
+		{
+			name: "yaml list format",
+			raw:  "- BA\n- Federal Agency\n",
+			want: []string{"BA", "Federal Agency"},
+		},
+		{
+			name: "flow list format",
+			raw:  "[BA, Federal Agency]",
+			want: []string{"BA", "Federal Agency"},
+		},
+		{
+			name: "quoted flow list format",
+			raw:  `["BA", "Federal Agency"]`,
+			want: []string{"BA", "Federal Agency"},
+		},
+		{
+			name: "single string",
+			raw:  "BA",
+			want: []string{"BA"},
+		},
+		{
+			name: "quoted single string",
+			raw:  `"BA"`,
+			want: []string{"BA"},
+		},
+		{
+			name: "comma separated",
+			raw:  "BA, Federal Agency",
+			want: []string{"BA", "Federal Agency"},
+		},
+		{
+			name: "empty string",
+			raw:  "",
+			want: nil,
+		},
+		{
+			name: "empty brackets",
+			raw:  "[]",
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseAliasesValue(tt.raw)
+			if len(got) != len(tt.want) {
+				t.Fatalf("parseAliasesValue(%q) len = %d, want %d: %v", tt.raw, len(got), len(tt.want), got)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("parseAliasesValue(%q)[%d] = %q, want %q", tt.raw, i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}
+
+func TestGetBacklinksWithAliases(t *testing.T) {
+	db := setupTestDB(t)
+
+	// Document with aliases
+	agencyDoc := &vault.Document{
+		Path:    "/tmp/notes/bundesagentur.md",
+		Title:   "Bundesagentur für Arbeit",
+		Aliases: []string{"BA", "Federal Agency"},
+		Created: time.Now().Format(time.RFC3339),
+		SHA256:  "hash-ba",
+		Body:    "Agency details",
+	}
+	if err := db.IndexDocument(agencyDoc); err != nil {
+		t.Fatalf("IndexDocument(agency) failed: %v", err)
+	}
+
+	// Document with single string alias
+	singleAliasDoc := &vault.Document{
+		Path:    "/tmp/notes/single.md",
+		Title:   "Single Alias Note",
+		Aliases: []string{"Single"},
+		Created: time.Now().Format(time.RFC3339),
+		SHA256:  "hash-single",
+		Body:    "Single details",
+	}
+	if err := db.IndexDocument(singleAliasDoc); err != nil {
+		t.Fatalf("IndexDocument(single) failed: %v", err)
+	}
+
+	// Document without aliases (compatibility)
+	plainDoc := &vault.Document{
+		Path:    "/tmp/notes/plain.md",
+		Title:   "Plain Note",
+		Created: time.Now().Format(time.RFC3339),
+		SHA256:  "hash-plain",
+		Body:    "Plain details",
+	}
+	if err := db.IndexDocument(plainDoc); err != nil {
+		t.Fatalf("IndexDocument(plain) failed: %v", err)
+	}
+
+	// Linking documents:
+	// Doc 1 links via uppercase alias [[BA]]
+	doc1 := &vault.Document{
+		Path:    "/tmp/notes/doc1.md",
+		Title:   "Doc 1",
+		Created: time.Now().Format(time.RFC3339),
+		SHA256:  "hash-doc1",
+		Links:   []string{"BA"},
+	}
+	// Doc 2 links via lowercase alias [[ba]]
+	doc2 := &vault.Document{
+		Path:    "/tmp/notes/doc2.md",
+		Title:   "Doc 2",
+		Created: time.Now().Format(time.RFC3339),
+		SHA256:  "hash-doc2",
+		Links:   []string{"ba"},
+	}
+	// Doc 3 links via multi-word alias [[Federal Agency]]
+	doc3 := &vault.Document{
+		Path:    "/tmp/notes/doc3.md",
+		Title:   "Doc 3",
+		Created: time.Now().Format(time.RFC3339),
+		SHA256:  "hash-doc3",
+		Links:   []string{"Federal Agency"},
+	}
+	// Doc 4 links via canonical full title [[Bundesagentur für Arbeit]]
+	doc4 := &vault.Document{
+		Path:    "/tmp/notes/doc4.md",
+		Title:   "Doc 4",
+		Created: time.Now().Format(time.RFC3339),
+		SHA256:  "hash-doc4",
+		Links:   []string{"Bundesagentur für Arbeit"},
+	}
+	// Doc 5 links to single alias [[Single]]
+	doc5 := &vault.Document{
+		Path:    "/tmp/notes/doc5.md",
+		Title:   "Doc 5",
+		Created: time.Now().Format(time.RFC3339),
+		SHA256:  "hash-doc5",
+		Links:   []string{"Single"},
+	}
+	// Doc 6 links to plain note [[Plain Note]]
+	doc6 := &vault.Document{
+		Path:    "/tmp/notes/doc6.md",
+		Title:   "Doc 6",
+		Created: time.Now().Format(time.RFC3339),
+		SHA256:  "hash-doc6",
+		Links:   []string{"Plain Note"},
+	}
+
+	for _, d := range []*vault.Document{doc1, doc2, doc3, doc4, doc5, doc6} {
+		if err := db.IndexDocument(d); err != nil {
+			t.Fatalf("IndexDocument(%s) failed: %v", d.Path, err)
+		}
+	}
+
+	// 1. Backlinks for agencyDoc should resolve links to BA, ba, Federal Agency, and Bundesagentur für Arbeit
+	bl, err := db.GetBacklinks("/tmp/notes/bundesagentur.md")
+	if err != nil {
+		t.Fatalf("GetBacklinks failed: %v", err)
+	}
+	sort.Strings(bl)
+	wantBL := []string{"/tmp/notes/doc1.md", "/tmp/notes/doc2.md", "/tmp/notes/doc3.md", "/tmp/notes/doc4.md"}
+	if len(bl) != len(wantBL) {
+		t.Fatalf("expected %d backlinks for bundesagentur.md, got %d: %v", len(wantBL), len(bl), bl)
+	}
+	for i := range wantBL {
+		if bl[i] != wantBL[i] {
+			t.Errorf("bl[%d] = %q, want %q", i, bl[i], wantBL[i])
+		}
+	}
+
+	// 2. Backlinks for singleAliasDoc
+	blSingle, err := db.GetBacklinks("/tmp/notes/single.md")
+	if err != nil {
+		t.Fatalf("GetBacklinks single failed: %v", err)
+	}
+	if len(blSingle) != 1 || blSingle[0] != "/tmp/notes/doc5.md" {
+		t.Errorf("expected [/tmp/notes/doc5.md], got %v", blSingle)
+	}
+
+	// 3. Backlinks for plainDoc (no aliases)
+	blPlain, err := db.GetBacklinks("/tmp/notes/plain.md")
+	if err != nil {
+		t.Fatalf("GetBacklinks plain failed: %v", err)
+	}
+	if len(blPlain) != 1 || blPlain[0] != "/tmp/notes/doc6.md" {
+		t.Errorf("expected [/tmp/notes/doc6.md], got %v", blPlain)
+	}
+}
+
+func TestGetAllAliases(t *testing.T) {
+	db := setupTestDB(t)
+
+	doc1 := &vault.Document{
+		Path:    "/tmp/notes/a.md",
+		Title:   "A",
+		Aliases: []string{"Alpha", "First"},
+		Created: time.Now().Format(time.RFC3339),
+		SHA256:  "h1",
+	}
+	doc2 := &vault.Document{
+		Path:    "/tmp/notes/b.md",
+		Title:   "B",
+		Created: time.Now().Format(time.RFC3339),
+		SHA256:  "h2",
+	}
+
+	if err := db.IndexDocument(doc1); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.IndexDocument(doc2); err != nil {
+		t.Fatal(err)
+	}
+
+	aliases, err := db.GetAllAliases()
+	if err != nil {
+		t.Fatalf("GetAllAliases failed: %v", err)
+	}
+	if len(aliases) != 1 {
+		t.Fatalf("expected 1 file with aliases, got %d", len(aliases))
+	}
+	if len(aliases["/tmp/notes/a.md"]) != 2 {
+		t.Errorf("expected 2 aliases for a.md, got %v", aliases["/tmp/notes/a.md"])
+	}
+}
+
 func TestDerivedArtifactsExcludedFromIndex(t *testing.T) {
 	vaultRoot := t.TempDir()
 	db := setupTestDB(t)

@@ -47,6 +47,7 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 	var docs []*vault.Document
 	paths := make(map[string]struct{})
 	titles := make(map[string]struct{})
+	aliases := make(map[string]struct{})
 	attachments := make(map[string]struct{})
 
 	err := vault.WalkAll(vaultRoot, func(path string, d fs.DirEntry) error {
@@ -72,6 +73,11 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 			paths[strings.TrimSuffix(baseLower, ".md")] = struct{}{}
 			if doc.Title != "" {
 				titles[strings.ToLower(strings.TrimSpace(doc.Title))] = struct{}{}
+			}
+			for _, alias := range doc.Aliases {
+				if trimmed := strings.TrimSpace(alias); trimmed != "" {
+					aliases[strings.ToLower(trimmed)] = struct{}{}
+				}
 			}
 			if len(doc.Frontmatter) == 0 {
 				report.addFinding("missing_frontmatter", "warning", rel, "Markdown file has no frontmatter", "review-frontmatter", "Metadata is unavailable to the index and repair tools")
@@ -116,7 +122,7 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 		}
 
 		for _, link := range doc.Links {
-			if target := normalizeLinkTarget(link); target != "" && !linkExists(target, paths, titles, attachments) {
+			if target := normalizeLinkTarget(link); target != "" && !linkExists(target, paths, titles, aliases, attachments) {
 				ext := strings.ToLower(filepath.Ext(target))
 				if ext != "" && ext != ".md" && ext != ".canvas" {
 					report.addFinding("broken_wikilink", "warning", filepath.ToSlash(rel), fmt.Sprintf("attachment target %q does not resolve to a vault attachment", target), "review-link", "Choose an existing target or remove the stale link")
@@ -177,12 +183,13 @@ func normalizeLinkTarget(link string) string {
 	return filepath.ToSlash(strings.TrimPrefix(filepath.Clean(link), "./"))
 }
 
-func linkExists(target string, paths, titles, attachments map[string]struct{}) bool {
+func linkExists(target string, paths, titles, aliases, attachments map[string]struct{}) bool {
 	targetLower := strings.ToLower(target)
 	if _, ok := paths[targetLower]; ok {
 		return true
 	}
-	if _, ok := paths[strings.TrimSuffix(targetLower, filepath.Ext(targetLower))]; ok {
+	targetNoExtLower := strings.TrimSuffix(targetLower, filepath.Ext(targetLower))
+	if _, ok := paths[targetNoExtLower]; ok {
 		return true
 	}
 	if _, ok := titles[targetLower]; ok {
@@ -193,6 +200,19 @@ func linkExists(target string, paths, titles, attachments map[string]struct{}) b
 	}
 	targetBaseLower := strings.ToLower(filepath.Base(target))
 	if _, ok := attachments[targetBaseLower]; ok {
+		return true
+	}
+	if _, ok := aliases[targetLower]; ok {
+		return true
+	}
+	if _, ok := aliases[targetNoExtLower]; ok {
+		return true
+	}
+	if _, ok := aliases[targetBaseLower]; ok {
+		return true
+	}
+	targetBaseNoExtLower := strings.TrimSuffix(targetBaseLower, filepath.Ext(targetBaseLower))
+	if _, ok := aliases[targetBaseNoExtLower]; ok {
 		return true
 	}
 	return false

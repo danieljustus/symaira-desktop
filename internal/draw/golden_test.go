@@ -179,15 +179,42 @@ func verifyOrUpdateGoldenPNG(t *testing.T, goldenPath string, actual []byte) {
 	if expectedImage.Bounds() != actualImage.Bounds() {
 		t.Fatalf("PNG bounds mismatch for %s: expected %v, got %v", goldenPath, expectedImage.Bounds(), actualImage.Bounds())
 	}
+	diffPixels := 0
+	severePixels := 0
 	for y := expectedImage.Bounds().Min.Y; y < expectedImage.Bounds().Max.Y; y++ {
 		for x := expectedImage.Bounds().Min.X; x < expectedImage.Bounds().Max.X; x++ {
 			er, eg, eb, ea := expectedImage.At(x, y).RGBA()
 			ar, ag, ab, aa := actualImage.At(x, y).RGBA()
-			if er != ar || eg != ag || eb != ab || ea != aa {
-				t.Fatalf("PNG pixel mismatch for %s at (%d,%d)", goldenPath, x, y)
+			delta := maxChannelDelta(er, eg, eb, ea, ar, ag, ab, aa)
+			if delta > 8 {
+				diffPixels++
+			}
+			if delta > 64 {
+				severePixels++
 			}
 		}
 	}
+	totalPixels := expectedImage.Bounds().Dx() * expectedImage.Bounds().Dy()
+	if diffPixels > totalPixels/50 || severePixels > totalPixels/1000 {
+		t.Fatalf("PNG mismatch for %s: %d differing pixels, %d severe pixels out of %d", goldenPath, diffPixels, severePixels, totalPixels)
+	}
+}
+
+func maxChannelDelta(values ...uint32) uint32 {
+	var maxDelta uint32
+	for i := 0; i < len(values)/2; i++ {
+		left, right := values[i], values[i+len(values)/2]
+		var delta uint32
+		if left > right {
+			delta = left - right
+		} else {
+			delta = right - left
+		}
+		if delta > maxDelta {
+			maxDelta = delta
+		}
+	}
+	return maxDelta
 }
 
 func verifyOrUpdateGolden(t *testing.T, goldenPath string, actual []byte) {

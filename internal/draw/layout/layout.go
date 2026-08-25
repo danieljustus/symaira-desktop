@@ -479,12 +479,13 @@ func assignCoordinates(result *Result, layers [][]string, nodes map[string]ir.No
 		}
 	}
 
-	if direction == ir.DirBT {
+	switch direction {
+	case ir.DirBT:
 		for id, box := range result.Nodes {
 			box.Y = result.Height - box.Y - box.Height
 			result.Nodes[id] = box
 		}
-	} else if direction == ir.DirRL {
+	case ir.DirRL:
 		for id, box := range result.Nodes {
 			box.X = result.Width - box.X - box.Width
 			result.Nodes[id] = box

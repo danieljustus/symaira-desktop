@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/danieljustus/symaira-seek/internal/db"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 )
 
 // TestMain opts the engine test suite into indexing loopback URLs so the

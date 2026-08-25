@@ -15,8 +15,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/danieljustus/symaira-corekit/configkit"
-	"github.com/danieljustus/symaira-seek/internal/db"
-	"github.com/danieljustus/symaira-seek/internal/engine"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/engine"
 )
 
 // Config holds user configuration for symseek.

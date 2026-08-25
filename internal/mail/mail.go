@@ -353,11 +353,13 @@ func redactCredentials(s string) string {
 		{`password_secret: "`, `"`},
 	}
 	for _, p := range patterns {
+		searchFrom := 0
 		for {
-			idx := strings.Index(s, p.prefix)
+			idx := strings.Index(s[searchFrom:], p.prefix)
 			if idx < 0 {
 				break
 			}
+			idx += searchFrom
 			start := idx + len(p.prefix)
 			end := strings.Index(s[start:], p.suffix)
 			if end < 0 {
@@ -365,6 +367,10 @@ func redactCredentials(s string) string {
 				break
 			}
 			s = s[:start] + "<redacted>" + s[start+end:]
+			// Resume after the inserted marker; the redacted form still
+			// contains the prefix/suffix delimiters, so scanning from 0
+			// would match forever.
+			searchFrom = start + len("<redacted>")
 		}
 	}
 

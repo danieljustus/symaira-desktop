@@ -49,6 +49,7 @@ func (s *Service) HistoryRestore(relPath, id string) (*history.Entry, error) {
 	if err := s.IndexDocument(doc); err != nil {
 		return entry, fmt.Errorf("restored file but failed to re-index: %w", err)
 	}
+	_ = s.RecordActivity("file_changed", rel, "", "restored snapshot "+id)
 	return entry, nil
 }
 
@@ -141,6 +142,7 @@ func (s *Service) NoteDelete(relPath string) (*history.TrashEntry, error) {
 	if err := s.DeleteDocument(absPath); err != nil {
 		return entry, fmt.Errorf("moved to trash but failed to deindex: %w", err)
 	}
+	_ = s.RecordActivity("file_removed", rel, entry.Name, "moved to trash")
 	return entry, nil
 }
 
@@ -169,6 +171,7 @@ func (s *Service) TrashRestore(name string) (*history.TrashEntry, error) {
 			return entry, fmt.Errorf("restored file but failed to re-index: %w", err)
 		}
 	}
+	_ = s.RecordActivity("file_added", entry.OriginalPath, "", "restored from trash")
 	return entry, nil
 }
 

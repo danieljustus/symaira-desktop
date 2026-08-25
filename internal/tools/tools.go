@@ -75,6 +75,7 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(true, newStatusTool(cfg, options.AllowWrite, options.ServerVersion)),
 		entry(true, newLsTool(options.GetService)),
 		entry(true, newSearchTool(options.GetService)),
+		entry(true, newTimelineTool(options.GetService)),
 		entry(true, newPropsTool(options.GetService)),
 		entry(true, newBacklinksTool(options.GetService)),
 		entry(true, newAskTool(options.GetService)),
@@ -262,6 +263,30 @@ func newSearchTool(getService ServiceFactory) *Tool {
 			}
 			defer func() { _ = db.Close() }()
 			return svc.SearchWithMeta(args.Query)
+		},
+	}
+}
+
+func newTimelineTool(getService ServiceFactory) *Tool {
+	return &Tool{
+		Name:        "vault_timeline",
+		Description: "Answers \"what happened on day X\": returns journal activity from the vault (daily NDJSON journal) plus indexed documents whose document date or modification time falls in the given range. Dates are YYYY-MM-DD; from and to default to today.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"from":{"type":"string"},"to":{"type":"string"},"limit":{"type":"integer"}}}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			var args struct {
+				From  string `json:"from"`
+				To    string `json:"to"`
+				Limit int    `json:"limit"`
+			}
+			if err := json.Unmarshal(input, &args); err != nil {
+				return nil, err
+			}
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer func() { _ = db.Close() }()
+			return svc.Timeline(args.From, args.To, args.Limit)
 		},
 	}
 }

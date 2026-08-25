@@ -407,6 +407,8 @@ func (s *Service) NoteNew(title, content, templateName string) (string, error) {
 		return fileName, fmt.Errorf("failed to index new file: %w", err)
 	}
 
+	_ = s.RecordActivity("file_added", fileName, title, "created note")
+
 	return fileName, nil
 }
 
@@ -694,6 +696,8 @@ func (s *Service) Ingest(sourcePath string) (map[string]string, error) {
 		_ = s.IndexDocument(doc)
 	}
 
+	_ = s.RecordActivity("file_added", relPath, "", "ingested document")
+
 	return map[string]string{"path": relPath}, nil
 }
 
@@ -898,5 +902,6 @@ func (s *Service) StoreAssetWithLink(data []byte, preferredName, ext string) (re
 	if err != nil {
 		return "", "", err
 	}
+	_ = s.RecordActivity("asset_added", relPath, preferredName, "stored asset")
 	return relPath, vault.AssetMarkdownLink(relPath), nil
 }

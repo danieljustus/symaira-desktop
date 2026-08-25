@@ -1141,6 +1141,45 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 	return results, nil
 }
 
+// TimelineDocs queries indexed documents with document_date or modified_at falling in [fromDate, toDate].
+func (db *DB) TimelineDocs(fromDate, toDate string) ([]DocsResult, error) {
+	query := `
+		SELECT f.path, f.title, f."type", COALESCE(f.document_date,''), COALESCE(f.person,''),
+			COALESCE(f.status,''), COALESCE(f.due_date,''), f.confidence,
+			COALESCE(fp_corr.value,''), COALESCE(fp_type.value,''), COALESCE(f.asn, 0),
+			COALESCE((SELECT value FROM file_properties tag_prop
+				WHERE tag_prop.file_id = f.id AND tag_prop.key = 'tags'), '')
+		FROM files f
+		LEFT JOIN file_properties fp_corr ON fp_corr.file_id = f.id AND fp_corr.key = 'correspondent'
+		LEFT JOIN file_properties fp_type ON fp_type.file_id = f.id AND fp_type.key = 'document_type'
+		WHERE (f.document_date != '' AND f.document_date >= ? AND f.document_date <= ?)
+		   OR (f.modified_at != '' AND f.modified_at >= ? AND f.modified_at <= ?)
+		ORDER BY f.path ASC`
+
+	rows, err := db.conn.Query(query, fromDate, toDate, fromDate, toDate+"T23:59:59Z")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []DocsResult
+	for rows.Next() {
+		var r DocsResult
+		var conf sql.NullInt64
+		var rawTags string
+		if err := rows.Scan(&r.Path, &r.Title, &r.Type, &r.DocumentDate, &r.Person,
+			&r.Status, &r.DueDate, &conf, &r.Correspondent, &r.DocumentType, &r.ASN, &rawTags); err != nil {
+			return nil, err
+		}
+		if conf.Valid {
+			r.Confidence = int(conf.Int64)
+		}
+		r.Tags = parseTagsValue(rawTags)
+		results = append(results, r)
+	}
+	return results, nil
+}
+
 // DocsCounts returns aggregate counts for the given filter set.
 type DocsCounts struct {
 	Total  int            `json:"total"`

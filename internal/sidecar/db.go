@@ -14,6 +14,7 @@ import (
 	"github.com/danieljustus/symaira-corekit/sqlitekit"
 	_ "modernc.org/sqlite"
 
+	"github.com/danieljustus/symaira-desktop/internal/contacts"
 	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -298,6 +299,17 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 		// To path would typically be resolved, here we just save the name
 		_, err = tx.Exec(`INSERT INTO links(from_path, to_path, kind) VALUES (?, ?, 'wikilink')`,
 			doc.Path, target)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Contact references are derived graph edges. The target is an opaque
+	// contact-store token, never contact data, so backlinks can show which
+	// notes mention a contact without making the vault authoritative for it.
+	for _, ref := range contacts.ReferencesInFrontmatter(doc.Frontmatter) {
+		_, err = tx.Exec(`INSERT OR IGNORE INTO links(from_path, to_path, kind) VALUES (?, ?, 'contact_ref')`,
+			doc.Path, contacts.ReferenceTarget(ref))
 		if err != nil {
 			return err
 		}
@@ -815,15 +827,19 @@ func (db *DB) GetProperties(path string) (map[string]interface{}, error) {
 	return props, nil
 }
 
-// GetBacklinks returns the paths of files that link to the given path or title.
+// GetBacklinks returns the paths of files that link to the given path, title,
+// or opaque contact reference target.
 func (db *DB) GetBacklinks(path string) ([]string, error) {
-	baseName := filepath.Base(path)
-	title := strings.TrimSuffix(baseName, filepath.Ext(baseName))
+	query := `SELECT DISTINCT from_path FROM links WHERE to_path = ?`
+	args := []interface{}{path}
+	if _, isContact := contacts.ParseReferenceTarget(path); !isContact {
+		baseName := filepath.Base(path)
+		title := strings.TrimSuffix(baseName, filepath.Ext(baseName))
+		query += ` OR to_path = ?`
+		args = append(args, title)
+	}
 
-	rows, err := db.conn.Query(`
-		SELECT from_path FROM links
-		WHERE to_path = ? OR to_path = ?
-	`, path, title)
+	rows, err := db.conn.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -836,6 +852,9 @@ func (db *DB) GetBacklinks(path string) ([]string, error) {
 			return nil, err
 		}
 		links = append(links, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return links, nil
 }

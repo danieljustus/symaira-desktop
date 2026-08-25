@@ -20,6 +20,7 @@ import (
 // name never creates, links, or modifies a contact (issue #516).
 type ContactReferences struct {
 	Name      string              `json:"name"`
+	ContactID string              `json:"contact_id,omitempty"`
 	Refs      []contacts.Ref      `json:"refs"`
 	Documents []DocsListResult    `json:"documents"`
 	Meetings  []ContactMeetingRef `json:"meetings"`

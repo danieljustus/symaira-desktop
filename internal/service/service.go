@@ -16,6 +16,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/contacts"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/history"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
@@ -300,20 +301,29 @@ func (s *Service) Props(file string) (map[string]interface{}, error) {
 	return s.DB.GetProperties(absPath)
 }
 
-// Backlinks returns the files linking to the given file.
+// Backlinks returns the files linking to the given file or opaque contact
+// reference target.
 func (s *Service) Backlinks(file string) ([]string, error) {
-	absPath, err := vault.SecurePath(s.VaultRoot, file)
-	if err != nil {
-		return nil, err
+	queryTarget := file
+	if _, isContact := contacts.ParseReferenceTarget(file); !isContact {
+		absPath, err := vault.SecurePath(s.VaultRoot, file)
+		if err != nil {
+			return nil, err
+		}
+		queryTarget = absPath
 	}
-	links, err := s.DB.GetBacklinks(absPath)
+
+	links, err := s.DB.GetBacklinks(queryTarget)
 	if err != nil {
 		return nil, err
 	}
 
-	var relLinks []string
+	relLinks := make([]string, 0, len(links))
 	for _, p := range links {
-		rel, _ := filepath.Rel(s.VaultRoot, p)
+		rel, err := filepath.Rel(s.VaultRoot, p)
+		if err != nil {
+			rel = p
+		}
 		relLinks = append(relLinks, rel)
 	}
 	return relLinks, nil

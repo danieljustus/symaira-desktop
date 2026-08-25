@@ -352,7 +352,7 @@ func stripComment(line string) string {
 			continue
 		}
 
-		if r == '%' && i+1 < len(runes) && runes[i+1] == '%' && !(i+2 < len(runes) && runes[i+2] == '{') {
+		if r == '%' && i+1 < len(runes) && runes[i+1] == '%' && (i+2 >= len(runes) || runes[i+2] != '{') {
 			// Comment begins; ignore the rest of the line. An init
 			// directive (%%{init: ...}%%) is not a comment and reaches
 			// the unsupported-directive check below.
@@ -824,9 +824,10 @@ func scanConnector(s string, lineNum int, rawLine string) (connectorInfo, string
 				label = strings.Trim(label, `"'`)
 				restAfter := rest[idx+1+len(endDef.arrowStr):]
 				style := endDef.style
-				if prefix == "-." {
+				switch prefix {
+				case "-.":
 					style = ir.EdgeDashed
-				} else if prefix == "==" {
+				case "==":
 					style = ir.EdgeThick
 				}
 				return connectorInfo{

@@ -1,37 +1,36 @@
 // Package contacts resolves opaque contact references for meeting notes.
 //
-// The contact store is symrelate, which lives in this repository as the
-// nested relate/ module since the repo consolidation. It is linked in-process
-// through relate/api — there is no symrelate binary to find and no
-// subprocess.
+// The contact store is the absorbed SymRelate store, which lives directly in
+// internal/contacts/ (with internal subpackages app, domain, service, storage,
+// etc.). It is linked in-process — there is no symrelate binary to find, no
+// PATH probe, and no subprocess.
 //
 // Only the reference-only contract is reachable from here: a reference
 // carries provider, schema version, ID, kind and a display-name cache, and
 // never contact points, notes, tags, or filesystem paths. That boundary is
-// now structural — relate/api's return type has no field that could hold a
-// private value — where it used to be a deny-list applied to whatever JSON a
-// separately versioned symrelate binary printed.
-//
-// For the same reason there is no schema-compatibility check any more: the
-// store is compiled from this repository, so producer and consumer cannot
-// disagree about the reference schema.
+// structural — Ref has no field that could hold a private value.
 package contacts
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strings"
 	"time"
 
-	relateapi "github.com/danieljustus/symaira-relate/api"
+	"github.com/danieljustus/symaira-desktop/internal/contacts/internal/app"
+	"github.com/danieljustus/symaira-desktop/internal/contacts/internal/domain/contact"
+	"github.com/danieljustus/symaira-desktop/internal/contacts/internal/errs"
 )
 
 // Provider is the provider marker every reference carries.
-const Provider = relateapi.Provider
+const Provider = contact.RefProvider
 
 // SchemaVersion is the contact-reference schema version this consumer speaks.
-const SchemaVersion = relateapi.SchemaVersion
+const SchemaVersion = contact.RefSchemaVersion
 
 // ErrContactNotFound marks an unknown or erased contact ID.
-var ErrContactNotFound = relateapi.ErrContactNotFound
+var ErrContactNotFound = errors.New("symrelate contact not found")
 
 // Ref is the opaque contact reference as it is stored in a meeting note's
 // frontmatter. Identity is ID + Kind; DisplayName is a refreshable rendering
@@ -41,13 +40,101 @@ type Ref struct {
 	SchemaVersion int    `json:"schema_version" yaml:"schema_version"`
 	ID            string `json:"id" yaml:"id"`
 	Kind          string `json:"kind" yaml:"kind"`
-	DisplayName   string `json:"display_name" yaml:"display_name,omitempty"`
+	DisplayName   string `json:"display_name,omitempty" yaml:"display_name,omitempty"`
 
 	// Extras carries additive fields found in notes written by an earlier
 	// SymDesk, so re-saving such a note does not silently drop them. It is
 	// never populated by ResolveRef — the in-process store cannot produce
 	// fields this type does not know.
 	Extras map[string]interface{} `json:"-" yaml:",inline"`
+}
+
+// ReferenceTargetPrefix is the sidecar link-graph namespace for contact
+// references. It is deliberately not a filesystem path: a contact is owned by
+// the contact store, not by the vault.
+const ReferenceTargetPrefix = "contact:"
+
+// ReferenceTarget returns the stable derived link target for a contact
+// reference. Provider, kind and ID are all included so IDs from another
+// provider or contact kind cannot collide in the sidecar graph.
+func ReferenceTarget(ref Ref) string {
+	return ReferenceTargetPrefix + ref.Provider + ":" + ref.Kind + ":" + ref.ID
+}
+
+// ParseReferenceTarget recognizes a target returned by ReferenceTarget. It is
+// intentionally strict so a malformed user-supplied backlinks query cannot
+// accidentally be treated as a contact.
+func ParseReferenceTarget(target string) (Ref, bool) {
+	if !strings.HasPrefix(target, ReferenceTargetPrefix) {
+		return Ref{}, false
+	}
+	parts := strings.Split(strings.TrimPrefix(target, ReferenceTargetPrefix), ":")
+	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
+		return Ref{}, false
+	}
+	return Ref{Provider: parts[0], Kind: parts[1], ID: parts[2]}, true
+}
+
+// ReferencesInFrontmatter extracts only structurally valid opaque contact
+// references from arbitrary decoded YAML. Meeting participants nest these
+// under participants[].contact_ref, while future note types may place them at
+// another depth. No other contact-store data is copied into the index.
+func ReferencesInFrontmatter(frontmatter map[string]interface{}) []Ref {
+	var refs []Ref
+	var walk func(interface{})
+	walk = func(value interface{}) {
+		switch v := value.(type) {
+		case map[string]interface{}:
+			if ref, ok := refFromMap(v); ok {
+				refs = append(refs, ref)
+				return
+			}
+			for _, child := range v {
+				walk(child)
+			}
+		case []interface{}:
+			for _, child := range v {
+				walk(child)
+			}
+		}
+	}
+	walk(frontmatter)
+	return refs
+}
+
+func refFromMap(value map[string]interface{}) (Ref, bool) {
+	provider, _ := value["provider"].(string)
+	id, _ := value["id"].(string)
+	kind, _ := value["kind"].(string)
+	if provider == "" || id == "" || kind == "" {
+		return Ref{}, false
+	}
+	version := 0
+	switch v := value["schema_version"].(type) {
+	case int:
+		version = v
+	case int64:
+		version = int(v)
+	case uint64:
+		if v > uint64(^uint(0)>>1) {
+			return Ref{}, false
+		}
+		version = int(v)
+	case float64:
+		version = int(v)
+	}
+	return Ref{
+		Provider:      provider,
+		SchemaVersion: version,
+		ID:            id,
+		Kind:          kind,
+		DisplayName:   stringValue(value["display_name"]),
+	}, true
+}
+
+func stringValue(value interface{}) string {
+	result, _ := value.(string)
+	return result
 }
 
 // callTimeout bounds a single contact-store call. It is a package variable so
@@ -61,37 +148,74 @@ var callTimeout = 5 * time.Second
 // Production code never reassigns them; a test that does must restore the
 // original in t.Cleanup.
 var (
-	AvailableFunc  = relateapi.Available
-	ResolveFunc    = resolve
-	FindByNameFunc = findByName
+	DefaultAvailableFunc  = defaultAvailable
+	DefaultResolveFunc    = defaultResolve
+	DefaultFindByNameFunc = defaultFindByName
+	AvailableFunc         = DefaultAvailableFunc
+	ResolveFunc           = DefaultResolveFunc
+	FindByNameFunc        = DefaultFindByNameFunc
 )
 
-func resolve(ctx context.Context, contactID string) (*Ref, error) {
-	ref, err := relateapi.ResolveContactRef(ctx, contactID)
+func defaultResolve(ctx context.Context, contactID string) (*Ref, error) {
+	if contactID == "" {
+		return nil, fmt.Errorf("a symrelate contact id is required")
+	}
+
+	a, err := app.Open(ctx)
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = a.Close() }()
+
+	ref, err := a.Contacts.GetRef(ctx, contactID)
+	if err != nil {
+		if errs.KindOf(err) == errs.KindNotFound {
+			return nil, ErrContactNotFound
+		}
+		return nil, err
+	}
+
 	return &Ref{
 		Provider:      ref.Provider,
 		SchemaVersion: ref.SchemaVersion,
 		ID:            ref.ID,
-		Kind:          ref.Kind,
+		Kind:          string(ref.Kind),
 		DisplayName:   ref.DisplayName,
 	}, nil
 }
 
-func findByName(ctx context.Context, name string) ([]Ref, error) {
-	found, err := relateapi.FindContactRefs(ctx, name)
+func defaultAvailable(ctx context.Context) bool {
+	a, err := app.Open(ctx)
+	if err != nil {
+		return false
+	}
+	defer func() { _ = a.Close() }()
+	return a.Ping(ctx) == nil
+}
+
+func defaultFindByName(ctx context.Context, name string) ([]Ref, error) {
+	if strings.TrimSpace(name) == "" {
+		return nil, nil
+	}
+
+	a, err := app.Open(ctx)
 	if err != nil {
 		return nil, err
 	}
+	defer func() { _ = a.Close() }()
+
+	found, err := a.Contacts.FindRefsByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
 	refs := make([]Ref, 0, len(found))
 	for _, ref := range found {
 		refs = append(refs, Ref{
 			Provider:      ref.Provider,
 			SchemaVersion: ref.SchemaVersion,
 			ID:            ref.ID,
-			Kind:          ref.Kind,
+			Kind:          string(ref.Kind),
 			DisplayName:   ref.DisplayName,
 		})
 	}

@@ -21,8 +21,6 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/pdf"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval"
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
-	printapi "github.com/danieljustus/symaira-print/api"
 )
 
 // errIsolated is what every inert ingest seam returns. A test that wants a
@@ -49,29 +47,29 @@ func IsolateSideEffects() {
 	pdf.EngineAvailableFunc = func(context.Context) (bool, string) {
 		return false, "no typesetting engine in tests"
 	}
-	pdf.RenderFunc = func(context.Context, []byte, string, printapi.Options) (*printapi.Result, error) {
-		return nil, printapi.ErrEngineUnavailable
+	pdf.RenderFunc = func(context.Context, []byte, string, pdf.Options) (*pdf.Result, error) {
+		return nil, pdf.ErrEngineUnavailable
 	}
 
 	// ErrNoVault, not errIsolated: an isolated test should see what a machine
 	// with no vault configured sees, so the built-in inbox fallback still runs
 	// and the note-writing paths stay under test.
-	ingest.IngestFunc = func(context.Context, string, ingestapi.Options) (*ingestapi.Result, error) {
-		return nil, ingestapi.ErrNoVault
+	ingest.IngestFunc = func(context.Context, string, ingest.Options) (*ingest.Result, error) {
+		return nil, ingest.ErrNoVault
 	}
-	ingest.JobsFunc = func(context.Context, ingestapi.Options, int) ([]ingestapi.Job, error) {
+	ingest.JobsFunc = func(context.Context, ingest.Options, int) ([]ingest.Job, error) {
 		return nil, errIsolated
 	}
-	ingest.RetryJobFunc = func(context.Context, ingestapi.Options, int64) error { return errIsolated }
+	ingest.RetryJobFunc = func(context.Context, ingest.Options, int64) error { return errIsolated }
 	ingest.SplitPDFFunc = func(context.Context, string, string, string) ([]string, error) {
 		return nil, errIsolated
 	}
 
-	ingest.ExtractTextFunc = func(context.Context, string, ingestapi.Options) (*ingestapi.Extraction, error) {
+	ingest.ExtractTextFunc = func(context.Context, string, ingest.Options) (*ingest.Extraction, error) {
 		return nil, errIsolated
 	}
-	ingest.MailAccountsFunc = func(string) ([]ingestapi.MailAccount, error) { return nil, nil }
-	ingest.FetchMailFunc = func(context.Context, ingestapi.MailFetchOptions) (*ingestapi.MailFetchResult, error) {
-		return &ingestapi.MailFetchResult{}, nil
+	ingest.MailAccountsFunc = func(string) ([]ingest.MailAccount, error) { return nil, nil }
+	ingest.FetchMailFunc = func(context.Context, ingest.MailFetchOptions) (*ingest.MailFetchResult, error) {
+		return &ingest.MailFetchResult{}, nil
 	}
 }

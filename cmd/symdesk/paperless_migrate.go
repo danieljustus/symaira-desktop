@@ -6,12 +6,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
+	"github.com/danieljustus/symaira-desktop/internal/ingest"
 )
 
 // PaperlessMigrateFunc is the migration seam. The pipeline runs in-process, so
 // a test overrides this rather than keeping a sibling binary off $PATH.
-var PaperlessMigrateFunc = ingestapi.PaperlessMigrate
+var PaperlessMigrateFunc = ingest.PaperlessMigrate
 
 // newPaperlessMigrateCmd imports documents from a live Paperless-ngx instance
 // through its API, using the absorbed ingest pipeline (OCR + store + writer)
@@ -58,7 +58,7 @@ updates existing notes keyed on the Paperless document ID and checksum.`,
 				since = parsed
 			}
 
-			stats, err := PaperlessMigrateFunc(ctx, ingestapi.PaperlessOptions{
+			stats, err := PaperlessMigrateFunc(ctx, ingest.PaperlessOptions{
 				BaseURL:     baseURL,
 				Token:       token,
 				Since:       since,

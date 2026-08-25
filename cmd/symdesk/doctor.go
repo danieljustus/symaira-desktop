@@ -13,10 +13,10 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/secrets"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 // siblingTools are the binaries SymDesk still composes at runtime. Search
@@ -31,7 +31,7 @@ var siblingTools = []string{"symmemory", "symvault", "symbrowse"}
 // ArchivePathFunc resolves where the absorbed ingest pipeline preserves
 // originals. It is a variable so a doctor test can pin the answer instead of
 // depending on the developer's own symingest configuration.
-var ArchivePathFunc = ingestapi.ArchivePath
+var ArchivePathFunc = ingest.ArchivePath
 
 func newDoctorCmd() *cobra.Command {
 	return &cobra.Command{

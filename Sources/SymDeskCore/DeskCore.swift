@@ -289,6 +289,85 @@ public struct InverseRelation: Codable, Equatable, Identifiable, Sendable {
     public let property: String
 }
 
+public struct PropertyConfig: Codable, Equatable, Sendable {
+    public let type: String?
+    public let label: String?
+    public let options: [String]?
+    public let description: String?
+    public let `default`: String?
+
+    public init(
+        type: String? = nil,
+        label: String? = nil,
+        options: [String]? = nil,
+        description: String? = nil,
+        default: String? = nil
+    ) {
+        self.type = type
+        self.label = label
+        self.options = options
+        self.description = description
+        self.default = `default`
+    }
+}
+
+public struct DbBase: Codable, Equatable, Identifiable, Sendable {
+    public let id: String
+    public let path: String
+    public let title: String
+    public let description: String?
+    public let created: String?
+    public let tags: [String]?
+    public let properties: [String: PropertyConfig]?
+    public let views: [DbView]
+
+    public init(
+        id: String,
+        path: String,
+        title: String,
+        description: String? = nil,
+        created: String? = nil,
+        tags: [String]? = nil,
+        properties: [String: PropertyConfig]? = nil,
+        views: [DbView] = []
+    ) {
+        self.id = id
+        self.path = path
+        self.title = title
+        self.description = description
+        self.created = created
+        self.tags = tags
+        self.properties = properties
+        self.views = views
+    }
+}
+
+public struct BaseEmbedResult: Codable, Equatable, Sendable {
+    public let baseID: String
+    public let basePath: String
+    public let baseTitle: String
+    public let viewID: String
+    public let viewName: String
+    public let columns: [String]
+    public let totalRows: Int
+    public let capped: Bool
+    public let rowCap: Int
+    public let markdown: String
+
+    enum CodingKeys: String, CodingKey {
+        case baseID = "base_id"
+        case basePath = "base_path"
+        case baseTitle = "base_title"
+        case viewID = "view_id"
+        case viewName = "view_name"
+        case columns
+        case totalRows = "total_rows"
+        case capped
+        case rowCap = "row_cap"
+        case markdown
+    }
+}
+
 public struct DbView: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let name: String
@@ -678,6 +757,122 @@ public struct GraphData: Codable, Equatable, Sendable {
     }
 }
 
+/// Context captured from the active SymDesk work surface for an AI request.
+///
+/// The context is opt-in at the dock. It identifies the active surface without
+/// silently sending an entire document to a remote provider.
+public struct DeskChatContext: Equatable, Sendable {
+    public let activeDocument: String?
+    public let selectionText: String?
+    public let visibleExcerpt: String?
+    public let scope: String?
+    public let recentDocuments: [String]
+
+    public init(
+        activeDocument: String? = nil,
+        selectionText: String? = nil,
+        visibleExcerpt: String? = nil,
+        scope: String? = nil,
+        recentDocuments: [String] = []
+    ) {
+        self.activeDocument = Self.normalized(activeDocument)
+        self.selectionText = Self.normalized(selectionText)
+        self.visibleExcerpt = Self.normalized(visibleExcerpt)
+        self.scope = Self.normalized(scope)
+        self.recentDocuments = Array(
+            recentDocuments.compactMap(Self.normalized).reduce(into: [String]()) { result, path in
+                if !result.contains(path) { result.append(path) }
+            }.prefix(4)
+        )
+    }
+
+    public var isEmpty: Bool {
+        activeDocument == nil && selectionText == nil && visibleExcerpt == nil
+            && scope == nil && recentDocuments.isEmpty
+    }
+
+    public var summary: String {
+        if let activeDocument {
+            return URL(fileURLWithPath: activeDocument).lastPathComponent
+        }
+        return scope ?? "Context"
+    }
+
+    /// Returns a Unicode-safe excerpt bounded to `limit` characters. When a
+    /// selection is available, the excerpt is centered around its first
+    /// occurrence so the visible context and selection travel together.
+    public static func boundedExcerpt(
+        _ text: String,
+        around selection: String? = nil,
+        limit: Int = 2_400
+    ) -> String {
+        let source = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard limit > 0, !source.isEmpty else { return "" }
+        guard source.count > limit else { return source }
+
+        let marker = "… [truncated]"
+        guard limit > marker.count * 2 else { return String(source.prefix(limit)) }
+
+        if let selection = normalized(selection), selection.count < limit - marker.count * 2,
+           let range = source.range(of: selection) {
+            let available = limit - marker.count * 2 - selection.count
+            let leading = available / 2
+            let trailing = available - leading
+            let start = source.index(
+                range.lowerBound,
+                offsetBy: -min(leading, source.distance(from: source.startIndex, to: range.lowerBound))
+            )
+            let end = source.index(
+                range.upperBound,
+                offsetBy: min(trailing, source.distance(from: range.upperBound, to: source.endIndex))
+            )
+            return marker + source[start..<end] + marker
+        }
+
+        return String(source.prefix(limit - marker.count)) + marker
+    }
+
+    /// Builds a reference-only prompt section. Note content is wrapped as
+    /// context so instructions inside a document are not mistaken for the
+    /// user's new request.
+    public func prompt(for query: String) -> String {
+        let question = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !isEmpty else { return question }
+
+        var lines = ["[Current SymDesk context — reference only]"]
+        if let scope { lines.append("Scope: \(scope)") }
+        if let activeDocument { lines.append("Active document: \(activeDocument)") }
+        if let selectionText {
+            lines.append("Editor selection:\n\(Self.indented(selectionText))")
+        }
+        if let visibleExcerpt {
+            lines.append("Visible excerpt:\n\(Self.indented(visibleExcerpt))")
+        }
+        if !recentDocuments.isEmpty {
+            lines.append("Recent documents: \(recentDocuments.joined(separator: ", "))")
+        }
+        lines.append("[End current context]")
+        lines.append("")
+        lines.append(question)
+        return lines.joined(separator: "\n")
+    }
+
+    private static func normalized(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private static func indented(_ value: String) -> String {
+        value.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { "  \($0)" }
+            .joined(separator: "\n")
+    }
+}
+
+/// Compatibility name for callers from the first implementation pass.
+public typealias AIDockContext = DeskChatContext
+
 @MainActor
 public final class DeskCore: ObservableObject {
     public static let shared = DeskCore()
@@ -1006,6 +1201,33 @@ public final class DeskCore: ObservableObject {
         // We runChecked and just return the raw JSON data so the UI can parse it dynamically
 		return try await runChecked(arguments: ["views", "exec", id, "--json"] + vaultArgs)
     }
+
+    public func baseList() async throws -> [DbBase] {
+        try await runDecoding([DbBase].self, arguments: ["views", "base", "list", "--json"] + vaultArgs)
+    }
+
+    public func baseGet(ref: String) async throws -> DbBase {
+        try await runDecoding(DbBase.self, arguments: ["views", "base", "get", ref, "--json"] + vaultArgs)
+    }
+
+    public func baseSave(_ base: DbBase) async throws {
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(base)
+        let json = String(decoding: data, as: UTF8.self)
+        _ = try await runChecked(arguments: ["views", "base", "save", json, "--json"] + vaultArgs)
+    }
+
+    public func baseDelete(ref: String) async throws {
+        _ = try await runChecked(arguments: ["views", "base", "delete", ref, "--json"] + vaultArgs)
+    }
+
+    public func viewsExportCSV(id: String) async throws -> Data {
+        try await runChecked(arguments: ["views", "export-csv", id] + vaultArgs)
+    }
+
+    public func viewsExecuteEmbed(spec: String) async throws -> BaseEmbedResult {
+        try await runDecoding(BaseEmbedResult.self, arguments: ["views", "embed", spec, "--json"] + vaultArgs)
+    }
     public func ingest(fileURL: URL) async throws -> String {
 		guard let transport else { throw DeskCoreError.coreNotFound }
 		return try await transport.ingestFile(fileURL, vaultArgs: vaultArgs)
@@ -1023,6 +1245,13 @@ public final class DeskCore: ObservableObject {
 	public func ingestRetry(jobID: String) async throws {
 		guard let transport else { throw DeskCoreError.coreNotFound }
 		try await transport.ingestRetry(jobID: jobID, vaultArgs: vaultArgs)
+    }
+
+    /// Streams an AI answer with optional work-surface context. A nil or
+    /// empty context delegates to the original ask path unchanged, so scoped
+    /// notebook callers continue to use `askScoped` without prompt rewriting.
+    public func ask(query: String, context: DeskChatContext?, agent: Bool = false) -> AsyncThrowingStream<AIEvent, Error> {
+        ask(query: context?.isEmpty == false ? context?.prompt(for: query) ?? query : query, agent: agent)
     }
 
     /// Streams an AI answer for the given query. When `agent` is true the

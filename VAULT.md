@@ -4,7 +4,7 @@
 
 This document specifies the format and constraints of a Symaira Vault. Any application or service interacting with the Vault MUST comply with this contract to ensure interoperability across the ecosystem (e.g., `symaira-desktop`, `symaira-ingest`, `symaira-seek`).
 
-> **Backwards compatibility:** Contract v5 is additive. Parsers MUST preserve unknown fields. Vaults using only v1/v2/v3/v4 fields continue to work; the new optional `aliases` field is only meaningful when alternative note names are declared (section 3).
+> **Backwards compatibility:** Contract v5 is additive. Parsers MUST preserve unknown fields. Vaults using only v1/v2/v3/v4 fields continue to work; the new optional fields are only meaningful for base notes (section 12) and notebook notes (section 10), and the new optional `aliases` field is only meaningful when alternative note names are declared (section 3).
 
 ## 1. Vault Structure
 - **Root Directory:** A Vault is a directory on the local filesystem containing Markdown files and optional attachments.
@@ -43,24 +43,26 @@ When indexing or resolving tags for a document, frontmatter `tags` are parsed fi
 - `#` markers inside fenced code blocks, inline code spans (`` `...` ``), ATX headings (`# Heading`), wikilink targets/fragments (`[[Note#Heading]]`), markdown link targets (`[text](url#section)`), autolinks (`<https://...#frag>`), and bare URLs (`https://example.com/#frag`) MUST NOT be indexed as tags.
 - Tag management operations (`symdesk tags rename|merge|delete`) update both frontmatter and inline body occurrences in place without normalizing inline tags into frontmatter.
 
-### Document Kind (contract_version 4)
-The `type` field classifies every markdown file in the vault into one of four kinds:
+### Document Kind (contract_version 5)
+The `type` field classifies every markdown file in the vault into one of five kinds:
 
 - `note` (default): A free-form note or journal entry.
 - `document`: An imported or ingested document with structured metadata (e.g. invoices, letters, contracts).
 - `meeting`: A meeting note imported by `symmeet` (see section 8).
 - `notebook`: A named, bounded set of vault sources used to scope AI grounding, retrieval and generated artifacts (see section 10). Added in contract_version 4.
+- `base`: A saved database view or collection of views over vault documents (see section 12). Added in contract_version 5.
 
-**Explicit declaration:** A file with `type: note`, `type: document`, `type: meeting`, or `type: notebook` in its frontmatter is classified accordingly. Meeting-specific fields (section 8) SHOULD be paired with `type: meeting`; notebook-specific fields (section 10) SHOULD be paired with `type: notebook`.
+**Explicit declaration:** A file with `type: note`, `type: document`, `type: meeting`, `type: notebook`, or `type: base` in its frontmatter is classified accordingly. Meeting-specific fields (section 8) SHOULD be paired with `type: meeting`; notebook-specific fields (section 10) SHOULD be paired with `type: notebook`; base-specific fields (section 12) SHOULD be paired with `type: base`.
 
 **Inference when absent:** A file with no `type` field is resolved at index time by the following rules (evaluated in order; the first match wins):
 1. If the frontmatter contains any of `source_path`, `mime`, `sha256`, `document_date`, or `asn` → the file is classified as `document`.
 2. If the frontmatter contains `meeting_id` → the file is classified as `meeting`.
-3. Otherwise → the file is classified as `note`.
+3. If the frontmatter contains `base_id` → the file is classified as `base`.
+4. Otherwise → the file is classified as `note`.
 
 `notebook` is never inferred — a `sources` list alone is not a strong enough signal, since a free-form note can legitimately link related files without being a notebook. A notebook note MUST declare `type: notebook` explicitly.
 
-> **Backwards compatibility:** Contract v3 added the `type` field; contract v4 adds the `notebook` kind. Existing vaults work without either — every file without `type` is classified at index time by inference, and a vault with no notebooks behaves exactly as a v1/v2/v3 vault always has. Parsers MUST treat an absent `type` as `note` when no inference triggers.
+> **Backwards compatibility:** Contract v3 added the `type` field; contract v4 adds the `notebook` kind; contract v5 adds the `base` kind. Existing vaults work without either — every file without `type` is classified at index time by inference, and a vault with no bases or notebooks behaves exactly as a v1/v2/v3 vault always has. Parsers MUST treat an absent `type` as `note` when no inference triggers.
 
 ### Optional/Integration Fields (e.g., for `symaira-ingest`)
 The contract fully accepts and standardizes the following fields commonly written by `symingest`:
@@ -74,6 +76,7 @@ The contract fully accepts and standardizes the following fields commonly writte
 - `mime` (string): The MIME type of the original document.
 - `category` (string): A document category.
 - `correspondent` (string): The correspondent or author of the original document. When this value matches an existing note title in the vault, a `correspondent` link edge is recorded so backlinks answer "all documents from X".
+- `contact` (object, optional): An opaque, reviewed reference to the authoritative local contact store. It uses the same reference-only shape as meeting `contact_ref` in section 8; identity is the stored `id` + `kind`, while `display_name` is only a refreshable rendering cache. Use `symdesk relations contact link <file> <contact-id>` and `unlink` for explicit changes. The sidecar records a contact backlink edge, but no email, phone, address, URL, handle, notes, transcript text, or local path is copied into the vault. Name-based `correspondent` behavior remains the fallback when no `contact` reference is present.
 - `document_type` (string): The type of the document (e.g., "invoice").
 - `ocr_engine` (string): The OCR engine used to extract text.
 - `archive_path` (string): A link to the archived original file.
@@ -106,9 +109,17 @@ The following optional fields provide first-class document query metadata. They 
   3. **Aliases:** matching any string declared in a note's frontmatter `aliases` list or scalar string.
   If multiple files match, behavior is undefined (it is recommended to use unique names or fully qualified paths).
 
-## 5. Attachments
-- Attachments (images, PDFs) should be referenced using standard Markdown links `[Title](path/to/file.pdf)` or embedded via `![Title](path/to/image.png)`.
+## 5. Attachments & Assets
+- Attachments (images, PDFs, audio, documents) can be referenced in two ways:
+  1. Standard Markdown links `[Title](path/to/file.pdf)` or Markdown image embeds `![Title](path/to/image.png)`.
+  2. Wikilink transclusion embeds `![[filename.ext]]` (e.g. `![[scan.png]]`, `![[report.pdf]]`, or with vault-relative path `![[assets/scan.png]]`).
 - Attachments can be stored anywhere in the vault, though an `assets/` or `attachments/` subfolder is recommended.
+- Embed-style attachment references (`![[filename.ext]]`) resolve against non-Markdown files in the vault by vault-relative path or case-insensitive base name. Missing attachment targets are reported as missing attachments during health scanning.
+- **Vault Asset Writer:** Binary assets stored through the Go core (`symdesk asset store`, MCP `desk_asset_store`, `vault.StoreAsset`) or the native app follow shared safety and naming rules:
+  - **Folder resolution:** Confined to the vault root; absolute paths and `..` traversal are rejected and fall back safely to `assets`.
+  - **Collision-safe naming:** Stored assets use `base.ext`, `base-2.ext`, `base-3.ext`, ... to prevent accidental overwrites.
+  - **Base name sanitization:** Path separators (`/`, `\`, `:`), control characters, and newlines in preferred names are replaced with hyphens.
+  - **Atomic writes:** Writes use a temp file and atomic rename so partial writes cannot corrupt the vault.
 
 ## 6. Templates (contract_version 2)
 - Reusable note templates SHOULD be stored in the `templates/` folder at the root of the vault.
@@ -188,3 +199,70 @@ A notebook is a named, bounded set of vault sources (`symdesk notebook`, see the
 **Removing a source never deletes the referenced file.** A notebook only references other vault files; it never owns their lifecycle.
 
 > **Backwards compatibility:** Contract v4 adds the `notebook` type and its frontmatter fields. A vault with no notebooks indexes and behaves exactly as a v1/v2/v3 vault always has.
+
+## 11. Delegated Third-Party Formats
+SymDesk explicitly recognizes select third-party formats commonly used in Markdown vault ecosystems (e.g. Obsidian). These delegated formats are recognized by vault scanning and entity indexing, but are not interpreted, rendered, or mutated by SymDesk:
+
+- **Obsidian Canvas (`.canvas`):** Whiteboard and canvas files. Wikilinks to existing canvas files (e.g. `[[Board.canvas]]`) resolve as valid vault files and produce no broken link warnings. Canvas rendering and editing remain delegated to Obsidian.
+- **Excalidraw Drawings (`*.excalidraw.md`):** Diagram files using the `.excalidraw.md` extension. They remain recognized as vault file entities, but their embedded JSON drawing payloads are excluded from full-text search indexing to prevent search noise.
+- **Dataview and Templater Code Blocks:** Fenced code blocks in note bodies (e.g. ```` ```dataview ````, ```` ```templater ````). SymDesk leaves these blocks untouched and does not evaluate them. Wikilinks (`[[…]]`) and tags (`#tag`) within code blocks are ignored during link and tag extraction.
+
+## 12. Bases & Saved Views (contract_version 5)
+A base is a named collection of saved views over vault documents (`symdesk views`, see CLI help). Like notebooks and meeting notes, a base is an ordinary Markdown note stored in the vault — Markdown is the single source of truth and there is no hidden database.
+
+- `type` (string, `"base"`): marks a note as a base (section 3).
+- `base_id` (string): a stable identifier for the base, generated once at creation and preserved across renames.
+- `properties` (map of objects, optional): declared property schema for documents associated with the base. Each property specifies:
+  - `type` (string): declared property data type (`"text"`, `"number"`, `"date"`, `"select"`, `"checkbox"` / `"boolean"`, `"tags"`).
+  - `label` (string, optional): human-readable display label.
+  - `options` (array of strings, optional): ordered choices for select properties.
+  - `description` (string, optional): description of the property's intent.
+  - `default` (string, optional): default value applied on new note creation.
+- `views` (array of objects): view definitions stored in frontmatter. Each view specifies:
+  - `id` (string): stable identifier for the view.
+  - `name` (string): human-readable view name.
+  - `type` (string): view layout type (`table`, `board`, `calendar`, `gallery`, `timeline`, `list`).
+  - `source` (string, optional): document scope (`folder/`, `tag:name`, `notebook:<id>`, or empty for whole vault).
+  - `columns` (array of strings, optional): visible property columns.
+  - `filters` (array of objects, optional): filter criteria (`key`, `operator`, `value`). Rich operators include numeric (`>`, `>=`, `<`, `<=`, `gt`, `gte`, `lt`, `lte`), date (`before`, `after`, `on_or_before`, `on_or_after`), set (`in`, `not_in`, `contains_all`, `contains_any`, `contains_none`), and text matching (`equals`, `contains`, `starts_with`, `ends_with`).
+  - `filter_group` (object, optional): recursive all/any condition groups.
+  - `sorts` (array of objects, optional): sort ordering (`key`, `ascending`).
+  - `group_by` (string, optional): property key to group cards/rows by.
+  - `date_property` (string, optional): date property used for calendar/timeline views.
+  - `computed` (map of objects, optional): formula and rollup column specifications.
+  - `template` (object, optional): note creation template ref and default property values.
+- `description` (string, optional): a short human-readable description of the base.
+
+**Storage convention:** base notes live under `bases/<slug>.md` at the vault root, where `<slug>` is derived from the title at creation time (mirrors `notebooks/<slug>.md` in section 10 and `meetings/meeting-<id>.md` in section 8).
+
+**Typed inspector fallback and board ordering:**
+- Property inspectors and board surfaces utilize declared property schemas when available.
+- If a property lacks declared schema, the inspector gracefully falls back to typed heuristic inference (`number`, `date`, `status`, `relation`, `tags`, `text`).
+- Board columns for select properties strictly follow the declared `options` ordering. Out-of-range or hand-edited property values are safely displayed in dedicated columns — unexpected values are never dropped, hidden, or silently rewritten.
+
+**Fenced Base Embeds (`symdesk-base`):**
+- Note bodies may include read-only fenced code blocks with language `symdesk-base` to embed live database queries:
+  ```yaml
+  ```symdesk-base
+  base: <base-slug-or-title>
+  view: <view-id-or-name>
+  limit: 10
+  columns: [title, status, due_date]
+  ```
+  ```
+- Evaluates the referenced base and view, applies the specified row cap (`limit`), and outputs an inert Markdown table representation with a link to open the authoritative base note.
+- Fenced `symdesk-base` blocks are fully guarded from leaking wikilinks or tags into the vault index.
+
+**One-Way CSV Interchange:**
+- `symdesk views export-csv <view-id>` (and `symdesk export --view <view-id> --format csv`) exports visible and computed view rows to standard CSV.
+- `symdesk views import-csv <file.csv>` performs one-way import of tabular records into individual frontmatter Markdown notes (`--apply` required; dry-run preview by default).
+- Supports column-to-property mapping, collision policies (`suffix`, `skip`, `error`), malformed row reporting, and optional base note creation with automatic property type inference (`number`, `date`, `select`, `text`).
+- CSV is strictly an import/export interchange format and never becomes the vault source of truth.
+
+**Human-readable view summary:** a base note's body lists its defined views and declared properties under `## Views` and `## Properties` headings, regenerated from frontmatter on every write. The frontmatter definition is authoritative.
+
+**Indexing and backlinks:** base notes are indexed as first-class vault documents in search and graph view. Wikilinks in base notes resolve in the link graph and backlinks.
+
+**Migration from legacy views:** on startup, existing `.symdesk/views.json` definitions are automatically migrated to base notes in `bases/` while leaving the original `.symdesk/views.json` intact.
+
+

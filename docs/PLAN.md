@@ -4,9 +4,9 @@
 > **Nachtrag 2026-08-23 (Repo-Konsolidierung, Schritt 6):** Dieser Plan
 > beschreibt den Stand vor der Konsolidierung. `symseek`, `symprint`,
 > `symrelate`, `symmeet` und `symingest` sind keine Geschwister-Binaries mehr,
-> sondern nested Module dieses Repos und werden in-process aufgerufen; die
-> PATH-Probe gilt nur noch für `symmemory`, `symvault`, `symbrowse` und
-> (vorerst) `symingest`. `symfetch` ist in `symbrowse` aufgegangen. Der Text
+> sondern direkt im Root-Modul bzw. als nested Module dieses Repos integriert
+> und werden in-process aufgerufen; die PATH-Probe gilt nur noch für `symmemory`,
+> `symvault` und `symbrowse`. `symfetch` ist in `symbrowse` aufgegangen. Der Text
 > unten bleibt als historische Planungsquelle unverändert.
 
 > Update 2026-07-13: The earlier local-only transport decision below describes

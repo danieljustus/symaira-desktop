@@ -81,7 +81,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [ingest, print, relate, room, seek]
+        module: [room]
     defaults:
       run:
         working-directory: ${{ matrix.module }}
@@ -126,6 +126,18 @@ jobs:
             echo "$HITS"
             exit 1
           fi
+
+      - name: Corekit manifest pin guard
+        # Issue #526: corekit dependency pin must stay aligned across all 6 modules.
+        run: ./scripts/check-corekit-pins.sh
+
+      - name: Nested module version guard
+        # Issue #535: Go version directive and shared dependency versions must stay aligned across root and nested modules.
+        run: ./scripts/check-nested-versions.sh
+
+      - name: Module boundary guard
+        # Issue #536: packages outside permitted facades must not import absorbed library internals.
+        run: ./scripts/check-module-boundaries.sh
 
   golangci-lint:
     runs-on: ubuntu-latest
@@ -207,7 +219,14 @@ jobs:
           fi
           echo "main.go version default: OK (no hardcoded version)"
 
+          # 4. corekit dependency pin consistency across all 6 go.mod manifests (issue #526)
+          ./scripts/check-corekit-pins.sh
+
+          # 5. nested module Go version and shared dependency consistency (issue #535)
+          ./scripts/check-nested-versions.sh
+
           echo "All version sources consistent with tag ${TAG}"
+
 
   app:
     if: github.event_name != 'pull_request'  # PR gate = lint + Go tests (ubuntu); app build on main/schedule

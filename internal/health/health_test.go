@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestScanFindsBrokenLinksAndBuildsPlan(t *testing.T) {
@@ -80,6 +81,108 @@ func TestScanResolvesAliasLinks(t *testing.T) {
 	}
 }
 
+func TestScanResolvesAttachmentEmbeds(t *testing.T) {
+	root := t.TempDir()
+	// Create note with embed forms and standard markdown link
+	noteContent := "---\ntitle: Note with Attachments\n---\n![[scan.png]]\n![[assets/scan.png]]\n![[Scan.PNG]]\n![Image](assets/scan.png)\n"
+	writeNote(t, root, "note.md", noteContent)
+
+	// Create attachment in assets/
+	assetsDir := filepath.Join(root, "assets")
+	if err := os.MkdirAll(assetsDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(assetsDir, "scan.png"), []byte("pngdata"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	report, err := Scan(root, nil, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.FilesScanned != 1 {
+		t.Fatalf("expected 1 markdown file scanned, got %d", report.FilesScanned)
+	}
+	if !report.Healthy || len(report.Findings) != 0 {
+		t.Fatalf("expected 0 findings for valid attachment embeds, got %#v", report.Findings)
+	}
+}
+
+func TestScanMissingAttachmentEmbedReportsDistinguishedMessage(t *testing.T) {
+	root := t.TempDir()
+	writeNote(t, root, "note.md", "---\ntitle: Missing\n---\n![[missing.png]]\n")
+
+	report, err := Scan(root, nil, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Healthy || len(report.Findings) != 1 {
+		t.Fatalf("expected 1 finding for missing attachment, got %#v", report.Findings)
+	}
+	f := report.Findings[0]
+	if f.Category != "broken_wikilink" {
+		t.Errorf("expected category 'broken_wikilink', got %q", f.Category)
+	}
+	wantMsg := `attachment target "missing.png" does not resolve to a vault attachment`
+	if f.Message != wantMsg {
+		t.Errorf("expected message %q, got %q", wantMsg, f.Message)
+	}
+}
+
+func TestScanIgnoredDirectoryAttachmentsNotResolvable(t *testing.T) {
+	root := t.TempDir()
+	writeNote(t, root, "note.md", "---\ntitle: Note\n---\n![[vendor_asset.png]]\n")
+
+	// Create attachment inside ignored node_modules directory
+	nmDir := filepath.Join(root, "node_modules", "pkg")
+	if err := os.MkdirAll(nmDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(nmDir, "vendor_asset.png"), []byte("data"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	report, err := Scan(root, nil, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Healthy || len(report.Findings) != 1 {
+		t.Fatalf("expected 1 finding because node_modules is ignored, got %#v", report.Findings)
+	}
+	if report.Findings[0].Category != "broken_wikilink" {
+		t.Errorf("expected broken_wikilink finding, got %v", report.Findings[0])
+	}
+}
+
+func TestScanResolvesCanvasWikilinks(t *testing.T) {
+	root := t.TempDir()
+	writeNote(t, root, "note.md", "---\ntitle: Note\n---\n[[Board.canvas]]\n[[boards/Board.canvas]]\n[[missing.canvas]]\n")
+
+	boardsDir := filepath.Join(root, "boards")
+	if err := os.MkdirAll(boardsDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(boardsDir, "Board.canvas"), []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	report, err := Scan(root, nil, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(report.Findings) != 1 {
+		t.Fatalf("expected 1 finding for missing.canvas, got %d: %#v", len(report.Findings), report.Findings)
+	}
+	f := report.Findings[0]
+	if f.Category != "broken_wikilink" {
+		t.Errorf("expected category 'broken_wikilink', got %q", f.Category)
+	}
+	wantMsg := `wikilink target "missing.canvas" does not resolve to a vault document`
+	if f.Message != wantMsg {
+		t.Errorf("expected message %q, got %q", wantMsg, f.Message)
+	}
+}
+
 func writeNote(t *testing.T, root, name, content string) {
 	t.Helper()
 	dst := filepath.Join(root, name)
@@ -88,5 +191,80 @@ func writeNote(t *testing.T, root, name, content string) {
 	}
 	if err := os.WriteFile(dst, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestScanReportsOrphanedDerivedArtifact(t *testing.T) {
+	root := t.TempDir()
+	writeNote(t, root, "derived.md", "---\ntitle: Summary\nderived_from: missing_source.md\n---\nGenerated text\n")
+
+	report, err := Scan(root, nil, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Healthy {
+		t.Fatal("expected report to be unhealthy for orphaned artifact")
+	}
+	var found bool
+	for _, f := range report.Findings {
+		if f.Category == "orphaned_derived_artifact" && f.Path == "derived.md" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected orphaned_derived_artifact finding, got %#v", report.Findings)
+	}
+}
+
+func TestScanReportsStaleDerivedArtifact(t *testing.T) {
+	root := t.TempDir()
+	writeNote(t, root, "source.md", "---\ntitle: Source Note\n---\nOriginal text\n")
+	writeNote(t, root, "derived.md", "---\ntitle: Summary\nderived_from: source.md\n---\nGenerated text\n")
+
+	// Make source.md newer than derived.md
+	past := time.Now().Add(-1 * time.Hour)
+	now := time.Now()
+	_ = os.Chtimes(filepath.Join(root, "derived.md"), past, past)
+	_ = os.Chtimes(filepath.Join(root, "source.md"), now, now)
+
+	report, err := Scan(root, nil, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Healthy {
+		t.Fatal("expected report to be unhealthy for stale artifact")
+	}
+	var found bool
+	for _, f := range report.Findings {
+		if f.Category == "stale_derived_artifact" && f.Path == "derived.md" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected stale_derived_artifact finding, got %#v", report.Findings)
+	}
+}
+
+func TestScanFreshDerivedArtifactHasNoFindings(t *testing.T) {
+	root := t.TempDir()
+	writeNote(t, root, "source.md", "---\ntitle: Source Note\n---\nOriginal text\n")
+	writeNote(t, root, "derived.md", "---\ntitle: Summary\nderived_from: source.md\n---\nGenerated text\n")
+
+	// Make derived.md newer than source.md
+	past := time.Now().Add(-1 * time.Hour)
+	now := time.Now()
+	_ = os.Chtimes(filepath.Join(root, "source.md"), past, past)
+	_ = os.Chtimes(filepath.Join(root, "derived.md"), now, now)
+
+	report, err := Scan(root, nil, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range report.Findings {
+		if f.Category == "stale_derived_artifact" || f.Category == "orphaned_derived_artifact" {
+			t.Fatalf("unexpected derived artifact finding on fresh artifact: %#v", f)
+		}
 	}
 }

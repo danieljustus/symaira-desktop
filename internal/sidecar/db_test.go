@@ -1686,3 +1686,78 @@ func TestGetAllAliases(t *testing.T) {
 		t.Errorf("expected 2 aliases for a.md, got %v", aliases["/tmp/notes/a.md"])
 	}
 }
+
+func TestDerivedArtifactsExcludedFromIndex(t *testing.T) {
+	vaultRoot := t.TempDir()
+	db := setupTestDB(t)
+
+	// 1. Create authoritative note and derived artifact
+	sourcePath := filepath.Join(vaultRoot, "source.md")
+	if err := os.WriteFile(sourcePath, []byte("---\ntitle: \"Source Note\"\n---\nImportant authoritative prose content here."), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	derivedPath := filepath.Join(vaultRoot, "derived.md")
+	if err := os.WriteFile(derivedPath, []byte("---\ntitle: \"Derived Summary\"\nderived_from: \"source.md\"\n---\nGenerated derivative prose content."), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	// 2. Refresh index
+	if err := db.RefreshIndex(vaultRoot); err != nil {
+		t.Fatalf("RefreshIndex failed: %v", err)
+	}
+
+	// 3. Verify ListFiles only returns source.md
+	files, err := db.ListFiles("")
+	if err != nil {
+		t.Fatalf("ListFiles failed: %v", err)
+	}
+	if len(files) != 1 || files[0].Path != sourcePath {
+		t.Fatalf("expected only source.md in ListFiles, got %#v", files)
+	}
+
+	// 4. Verify Search only finds authoritative note
+	results, err := db.Search("prose")
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	if len(results) != 1 || results[0].Path != sourcePath {
+		t.Fatalf("expected Search to only find source.md, got %#v", results)
+	}
+
+	// 5. Verify DocsList does not contain derived.md
+	docs, err := db.DocsList(DocsFilter{})
+	if err != nil {
+		t.Fatalf("DocsList failed: %v", err)
+	}
+	if len(docs) != 1 || docs[0].Path != sourcePath {
+		t.Fatalf("expected DocsList to only contain source.md, got %#v", docs)
+	}
+
+	// 6. Test rebuild from scratch survives and preserves exclusion
+	rebuildDB := setupTestDB(t)
+	if err := rebuildDB.RefreshIndex(vaultRoot); err != nil {
+		t.Fatalf("Rebuild RefreshIndex failed: %v", err)
+	}
+	rebuildFiles, err := rebuildDB.ListFiles("")
+	if err != nil {
+		t.Fatalf("Rebuild ListFiles failed: %v", err)
+	}
+	if len(rebuildFiles) != 1 || rebuildFiles[0].Path != sourcePath {
+		t.Fatalf("expected rebuild to still exclude derived.md, got %#v", rebuildFiles)
+	}
+
+	// 7. Transition: Authoritative note becomes derived -> removed on refresh
+	if err := os.WriteFile(sourcePath, []byte("---\ntitle: \"Source Note\"\nderived: true\n---\nNow derived content."), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.RefreshIndex(vaultRoot); err != nil {
+		t.Fatalf("RefreshIndex after transition failed: %v", err)
+	}
+	filesAfter, err := db.ListFiles("")
+	if err != nil {
+		t.Fatalf("ListFiles after transition failed: %v", err)
+	}
+	if len(filesAfter) != 0 {
+		t.Fatalf("expected 0 files after transition to derived, got %d", len(filesAfter))
+	}
+}

@@ -8,8 +8,8 @@ import (
 
 func newBacklinksCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "backlinks [file]",
-		Short: "Get backlinks for a file",
+		Use:   "backlinks [file|contact-target]",
+		Short: "Get backlinks for a file or opaque contact reference target",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vRoot, db, err := initServiceDeps()

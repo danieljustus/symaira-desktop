@@ -40,6 +40,11 @@ func TestExtractInlineTags(t *testing.T) {
 			want: []string{"valid-tag"},
 		},
 		{
+			name: "skip fenced code block symdesk-base",
+			body: "Before embed\n```symdesk-base\nbase: base-id\n#not-a-tag\n```\nAfter embed with #valid-tag",
+			want: []string{"valid-tag"},
+		},
+		{
 			name: "skip fenced code block tildes",
 			body: "Before code\n~~~\n#not-a-tag\n~~~\nAfter code with #valid-tag",
 			want: []string{"valid-tag"},

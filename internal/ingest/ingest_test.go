@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 func TestIngestFile(t *testing.T) {
@@ -68,11 +66,11 @@ func TestIngestFileMissingSource(t *testing.T) {
 }
 
 // stubIngest points the document-pipeline seam at a scripted double.
-func stubIngest(t *testing.T, fn func(source string, opts ingestapi.Options) (*ingestapi.Result, error)) {
+func stubIngest(t *testing.T, fn func(source string, opts Options) (*Result, error)) {
 	t.Helper()
 	original := IngestFunc
 	t.Cleanup(func() { IngestFunc = original })
-	IngestFunc = func(_ context.Context, source string, opts ingestapi.Options) (*ingestapi.Result, error) {
+	IngestFunc = func(_ context.Context, source string, opts Options) (*Result, error) {
 		return fn(source, opts)
 	}
 }
@@ -80,10 +78,10 @@ func stubIngest(t *testing.T, fn func(source string, opts ingestapi.Options) (*i
 func TestIngestDelegatesToPipeline(t *testing.T) {
 	vaultRoot := t.TempDir()
 
-	var seen ingestapi.Options
-	stubIngest(t, func(_ string, opts ingestapi.Options) (*ingestapi.Result, error) {
+	var seen Options
+	stubIngest(t, func(_ string, opts Options) (*Result, error) {
 		seen = opts
-		return &ingestapi.Result{VaultPath: "mock_output.md"}, nil
+		return &Result{VaultPath: "mock_output.md"}, nil
 	})
 
 	srcFile := filepath.Join(t.TempDir(), "test.txt")
@@ -107,8 +105,8 @@ func TestIngestDelegatesToPipeline(t *testing.T) {
 // to the vault they asked for.
 func TestIngestFileRelativizesVaultPath(t *testing.T) {
 	vaultRoot := t.TempDir()
-	stubIngest(t, func(string, ingestapi.Options) (*ingestapi.Result, error) {
-		return &ingestapi.Result{VaultPath: filepath.Join(vaultRoot, "notes", "scan.md")}, nil
+	stubIngest(t, func(string, Options) (*Result, error) {
+		return &Result{VaultPath: filepath.Join(vaultRoot, "notes", "scan.md")}, nil
 	})
 
 	srcFile := filepath.Join(t.TempDir(), "test.txt")
@@ -128,8 +126,8 @@ func TestIngestFileRelativizesVaultPath(t *testing.T) {
 // A duplicate is reported as such rather than silently rewritten through the
 // built-in fallback, which would write a second note for the same content.
 func TestIngestFileSurfacesDuplicate(t *testing.T) {
-	stubIngest(t, func(string, ingestapi.Options) (*ingestapi.Result, error) {
-		return nil, ingestapi.ErrDuplicate
+	stubIngest(t, func(string, Options) (*Result, error) {
+		return nil, ErrDuplicate
 	})
 
 	srcFile := filepath.Join(t.TempDir(), "test.txt")
@@ -138,15 +136,15 @@ func TestIngestFileSurfacesDuplicate(t *testing.T) {
 	}
 
 	_, err := IngestFile(t.TempDir(), srcFile)
-	if !errors.Is(err, ingestapi.ErrDuplicate) {
+	if !errors.Is(err, ErrDuplicate) {
 		t.Fatalf("expected ErrDuplicate, got %v", err)
 	}
 }
 
 // When the pipeline cannot run at all, the file must still land in the inbox.
 func TestIngestFileFallsBackWhenPipelineUnavailable(t *testing.T) {
-	stubIngest(t, func(string, ingestapi.Options) (*ingestapi.Result, error) {
-		return nil, ingestapi.ErrNoVault
+	stubIngest(t, func(string, Options) (*Result, error) {
+		return nil, ErrNoVault
 	})
 
 	vaultRoot := t.TempDir()

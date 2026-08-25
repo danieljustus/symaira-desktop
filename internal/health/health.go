@@ -3,6 +3,8 @@ package health
 
 import (
 	"fmt"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -46,33 +48,48 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 	paths := make(map[string]struct{})
 	titles := make(map[string]struct{})
 	aliases := make(map[string]struct{})
+	attachments := make(map[string]struct{})
 
-	err := vault.Walk(vaultRoot, func(path string) error {
+	err := vault.WalkAll(vaultRoot, func(path string, d fs.DirEntry) error {
 		rel, relErr := filepath.Rel(vaultRoot, path)
 		if relErr != nil {
 			return relErr
 		}
 		rel = filepath.ToSlash(rel)
-		report.FilesScanned++
-		doc, parseErr := vault.ParseFile(path)
-		if parseErr != nil {
-			report.addFinding("parse_error", "error", rel, parseErr.Error(), "review", "The file could not be parsed safely")
+
+		if filepath.Ext(d.Name()) == ".md" {
+			report.FilesScanned++
+			doc, parseErr := vault.ParseFile(path)
+			if parseErr != nil {
+				report.addFinding("parse_error", "error", rel, parseErr.Error(), "review", "The file could not be parsed safely")
+				return nil
+			}
+			docs = append(docs, doc)
+			relLower := strings.ToLower(rel)
+			baseLower := strings.ToLower(filepath.Base(rel))
+			paths[relLower] = struct{}{}
+			paths[strings.TrimSuffix(relLower, ".md")] = struct{}{}
+			paths[baseLower] = struct{}{}
+			paths[strings.TrimSuffix(baseLower, ".md")] = struct{}{}
+			if doc.Title != "" {
+				titles[strings.ToLower(strings.TrimSpace(doc.Title))] = struct{}{}
+			}
+			for _, alias := range doc.Aliases {
+				if trimmed := strings.TrimSpace(alias); trimmed != "" {
+					aliases[strings.ToLower(trimmed)] = struct{}{}
+				}
+			}
+			if len(doc.Frontmatter) == 0 {
+				report.addFinding("missing_frontmatter", "warning", rel, "Markdown file has no frontmatter", "review-frontmatter", "Metadata is unavailable to the index and repair tools")
+			}
 			return nil
 		}
-		docs = append(docs, doc)
-		paths[rel] = struct{}{}
-		paths[strings.TrimSuffix(rel, filepath.Ext(rel))] = struct{}{}
-		if doc.Title != "" {
-			titles[strings.ToLower(strings.TrimSpace(doc.Title))] = struct{}{}
-		}
-		for _, alias := range doc.Aliases {
-			if trimmed := strings.TrimSpace(alias); trimmed != "" {
-				aliases[strings.ToLower(trimmed)] = struct{}{}
-			}
-		}
-		if len(doc.Frontmatter) == 0 {
-			report.addFinding("missing_frontmatter", "warning", rel, "Markdown file has no frontmatter", "review-frontmatter", "Metadata is unavailable to the index and repair tools")
-		}
+
+		// Non-Markdown file (attachment, canvas, etc.)
+		relLower := strings.ToLower(rel)
+		baseLower := strings.ToLower(filepath.Base(rel))
+		attachments[relLower] = struct{}{}
+		attachments[baseLower] = struct{}{}
 		return nil
 	})
 	if err != nil {
@@ -84,9 +101,34 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 		if relErr != nil {
 			continue
 		}
+		relSlash := filepath.ToSlash(rel)
+
+		// Check derived artifact health
+		if doc.IsDerived() && doc.DerivedFrom != "" {
+			sourcePath, exists, _ := resolveDerivedSource(vaultRoot, doc.Path, doc.DerivedFrom)
+			if !exists {
+				report.addFinding("orphaned_derived_artifact", "warning", relSlash,
+					fmt.Sprintf("derived artifact %q source %q does not exist", relSlash, doc.DerivedFrom),
+					"review-derived", "Source document is missing or has been deleted")
+			} else {
+				sourceInfo, sErr := os.Stat(sourcePath)
+				derivedInfo, dErr := os.Stat(doc.Path)
+				if sErr == nil && dErr == nil && sourceInfo.ModTime().After(derivedInfo.ModTime()) {
+					report.addFinding("stale_derived_artifact", "warning", relSlash,
+						fmt.Sprintf("derived artifact %q is older than its source %q", relSlash, doc.DerivedFrom),
+						"regenerate-derived", "Source document was modified after artifact generation")
+				}
+			}
+		}
+
 		for _, link := range doc.Links {
-			if target := normalizeLinkTarget(link); target != "" && !linkExists(target, paths, titles, aliases) {
-				report.addFinding("broken_wikilink", "warning", filepath.ToSlash(rel), fmt.Sprintf("wikilink target %q does not resolve to a vault document", target), "review-link", "Choose an existing target or remove the stale link")
+			if target := normalizeLinkTarget(link); target != "" && !linkExists(target, paths, titles, aliases, attachments) {
+				ext := strings.ToLower(filepath.Ext(target))
+				if ext != "" && ext != ".md" && ext != ".canvas" {
+					report.addFinding("broken_wikilink", "warning", filepath.ToSlash(rel), fmt.Sprintf("attachment target %q does not resolve to a vault attachment", target), "review-link", "Choose an existing target or remove the stale link")
+				} else {
+					report.addFinding("broken_wikilink", "warning", filepath.ToSlash(rel), fmt.Sprintf("wikilink target %q does not resolve to a vault document", target), "review-link", "Choose an existing target or remove the stale link")
+				}
 			}
 		}
 	}
@@ -141,42 +183,96 @@ func normalizeLinkTarget(link string) string {
 	return filepath.ToSlash(strings.TrimPrefix(filepath.Clean(link), "./"))
 }
 
-func linkExists(target string, paths, titles, aliases map[string]struct{}) bool {
-	if _, ok := paths[target]; ok {
+func linkExists(target string, paths, titles, aliases, attachments map[string]struct{}) bool {
+	targetLower := strings.ToLower(target)
+	if _, ok := paths[targetLower]; ok {
 		return true
 	}
-	targetNoExt := strings.TrimSuffix(target, filepath.Ext(target))
-	if _, ok := paths[targetNoExt]; ok {
+	targetNoExtLower := strings.TrimSuffix(targetLower, filepath.Ext(targetLower))
+	if _, ok := paths[targetNoExtLower]; ok {
 		return true
 	}
-	lowerTarget := strings.ToLower(target)
-	if _, ok := titles[lowerTarget]; ok {
+	if _, ok := titles[targetLower]; ok {
 		return true
 	}
-	lowerTargetNoExt := strings.ToLower(targetNoExt)
-	if _, ok := titles[lowerTargetNoExt]; ok {
+	if _, ok := attachments[targetLower]; ok {
 		return true
 	}
-	base := filepath.Base(target)
-	lowerBase := strings.ToLower(base)
-	lowerBaseNoExt := strings.ToLower(strings.TrimSuffix(base, filepath.Ext(base)))
-	if _, ok := titles[lowerBase]; ok {
+	targetBaseLower := strings.ToLower(filepath.Base(target))
+	if _, ok := attachments[targetBaseLower]; ok {
 		return true
 	}
-	if _, ok := titles[lowerBaseNoExt]; ok {
+	if _, ok := aliases[targetLower]; ok {
 		return true
 	}
-	if _, ok := aliases[lowerTarget]; ok {
+	if _, ok := aliases[targetNoExtLower]; ok {
 		return true
 	}
-	if _, ok := aliases[lowerTargetNoExt]; ok {
+	if _, ok := aliases[targetBaseLower]; ok {
 		return true
 	}
-	if _, ok := aliases[lowerBase]; ok {
-		return true
-	}
-	if _, ok := aliases[lowerBaseNoExt]; ok {
+	targetBaseNoExtLower := strings.TrimSuffix(targetBaseLower, filepath.Ext(targetBaseLower))
+	if _, ok := aliases[targetBaseNoExtLower]; ok {
 		return true
 	}
 	return false
+}
+
+func resolveDerivedSource(vaultRoot, docPath, derivedFrom string) (string, bool, error) {
+	target := strings.TrimSpace(derivedFrom)
+	if strings.HasPrefix(target, "[[") && strings.HasSuffix(target, "]]") {
+		target = strings.TrimPrefix(strings.TrimSuffix(target, "]]"), "[[")
+		if pipe := strings.IndexByte(target, '|'); pipe >= 0 {
+			target = target[:pipe]
+		}
+		if anchor := strings.IndexAny(target, "#^"); anchor >= 0 {
+			target = target[:anchor]
+		}
+	}
+	target = strings.TrimSpace(target)
+	if target == "" {
+		return "", false, nil
+	}
+
+	candidates := []string{
+		filepath.Join(vaultRoot, target),
+		filepath.Join(filepath.Dir(docPath), target),
+	}
+	if filepath.Ext(target) == "" {
+		candidates = append(candidates,
+			filepath.Join(vaultRoot, target+".md"),
+			filepath.Join(filepath.Dir(docPath), target+".md"),
+		)
+	}
+
+	for _, cand := range candidates {
+		rel, err := filepath.Rel(vaultRoot, cand)
+		if err != nil || strings.HasPrefix(rel, "..") {
+			continue
+		}
+		resolved, err := vault.SecurePath(vaultRoot, rel)
+		if err == nil {
+			if info, err := os.Stat(resolved); err == nil && !info.IsDir() {
+				return resolved, true, nil
+			}
+		}
+	}
+
+	var foundPath string
+	_ = vault.Walk(vaultRoot, func(p string) error {
+		if foundPath != "" {
+			return nil
+		}
+		base := filepath.Base(p)
+		nameWithoutExt := strings.TrimSuffix(base, filepath.Ext(base))
+		if strings.EqualFold(base, target) || strings.EqualFold(nameWithoutExt, target) || strings.EqualFold(p, target) {
+			foundPath = p
+		}
+		return nil
+	})
+	if foundPath != "" {
+		return foundPath, true, nil
+	}
+
+	return "", false, nil
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/danieljustus/symaira-corekit/sqlitekit"
 	_ "modernc.org/sqlite"
 
+	"github.com/danieljustus/symaira-desktop/internal/contacts"
 	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -148,6 +149,7 @@ func (db *DB) RefreshIndex(vaultRoot string) error {
 		if err != nil {
 			return err
 		}
+
 		if cached, ok, err := db.StatCache(path); err != nil {
 			return err
 		} else if ok && cached.Size == info.Size() && cached.ModTime == info.ModTime().UnixNano() {
@@ -158,6 +160,10 @@ func (db *DB) RefreshIndex(vaultRoot string) error {
 		if err != nil {
 			return err
 		}
+		if doc.IsDerived() {
+			return db.DeleteDocument(doc.Path)
+		}
+
 		indexed, err := db.IsIndexed(doc.Path, doc.SHA256)
 		if err != nil {
 			return err
@@ -174,6 +180,9 @@ func (db *DB) RefreshIndex(vaultRoot string) error {
 
 // IndexDocument indexes a single document into the sidecar.
 func (db *DB) IndexDocument(doc *vault.Document) error {
+	if doc.IsDerived() {
+		return db.DeleteDocument(doc.Path)
+	}
 	if doc.ASN != nil {
 		if err := vault.ValidateASN(*doc.ASN); err != nil {
 			return fmt.Errorf("invalid document ASN: %w", err)
@@ -312,6 +321,17 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 		}
 	}
 
+	// Contact references are derived graph edges. The target is an opaque
+	// contact-store token, never contact data, so backlinks can show which
+	// notes mention a contact without making the vault authoritative for it.
+	for _, ref := range contacts.ReferencesInFrontmatter(doc.Frontmatter) {
+		_, err = tx.Exec(`INSERT OR IGNORE INTO links(from_path, to_path, kind) VALUES (?, ?, 'contact_ref')`,
+			doc.Path, contacts.ReferenceTarget(ref))
+		if err != nil {
+			return err
+		}
+	}
+
 	// 5. Correspondent backlink: if correspondent matches an existing note title, record a link edge
 	if doc.Frontmatter != nil {
 		if correspondent, ok := doc.Frontmatter["correspondent"].(string); ok && correspondent != "" {
@@ -386,6 +406,10 @@ func (db *DB) Prune(vaultRoot string) (int, error) {
 	// Build a set of valid paths by walking the vault (respects ignore rules).
 	valid := make(map[string]bool)
 	if err := vault.Walk(vaultRoot, func(path string) error {
+		doc, err := vault.ParseFile(path)
+		if err == nil && doc.IsDerived() {
+			return nil
+		}
 		valid[path] = true
 		return nil
 	}); err != nil {
@@ -898,11 +922,9 @@ func (db *DB) GetProperties(path string) (map[string]interface{}, error) {
 	return props, nil
 }
 
-// GetBacklinks returns the paths of files that link to the given path, title, or aliases.
+// GetBacklinks returns the paths of files that link to the given path, title,
+// aliases, or opaque contact reference target.
 func (db *DB) GetBacklinks(path string) ([]string, error) {
-	baseName := filepath.Base(path)
-	title := strings.TrimSuffix(baseName, filepath.Ext(baseName))
-
 	targetsMap := make(map[string]struct{})
 	addTarget := func(t string) {
 		t = strings.TrimSpace(t)
@@ -918,8 +940,12 @@ func (db *DB) GetBacklinks(path string) ([]string, error) {
 	}
 
 	addTarget(path)
-	addTarget(baseName)
-	addTarget(title)
+	baseName := filepath.Base(path)
+	title := strings.TrimSuffix(baseName, filepath.Ext(baseName))
+	if _, isContact := contacts.ParseReferenceTarget(path); !isContact {
+		addTarget(baseName)
+		addTarget(title)
+	}
 
 	var fileID int64
 	var docTitle string
@@ -969,6 +995,9 @@ func (db *DB) GetBacklinks(path string) ([]string, error) {
 			return nil, err
 		}
 		links = append(links, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return links, nil
 }

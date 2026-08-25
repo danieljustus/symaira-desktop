@@ -5,13 +5,11 @@ import (
 	"errors"
 	"strings"
 	"testing"
-
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 // stubJobs points the job-queue seams at scripted doubles for one test.
 func stubJobs(t *testing.T,
-	list func() ([]ingestapi.Job, error),
+	list func() ([]Job, error),
 	retry func(int64) error,
 ) {
 	t.Helper()
@@ -19,15 +17,15 @@ func stubJobs(t *testing.T,
 	t.Cleanup(func() { JobsFunc, RetryJobFunc = originalList, originalRetry })
 
 	if list != nil {
-		JobsFunc = func(context.Context, ingestapi.Options, int) ([]ingestapi.Job, error) { return list() }
+		JobsFunc = func(context.Context, Options, int) ([]Job, error) { return list() }
 	}
 	if retry != nil {
-		RetryJobFunc = func(_ context.Context, _ ingestapi.Options, id int64) error { return retry(id) }
+		RetryJobFunc = func(_ context.Context, _ Options, id int64) error { return retry(id) }
 	}
 }
 
 func TestIngestJobsPipelineFailure(t *testing.T) {
-	stubJobs(t, func() ([]ingestapi.Job, error) { return nil, errors.New("store unavailable") }, nil)
+	stubJobs(t, func() ([]Job, error) { return nil, errors.New("store unavailable") }, nil)
 
 	jobs, err := IngestJobs()
 	if err == nil {
@@ -39,8 +37,8 @@ func TestIngestJobsPipelineFailure(t *testing.T) {
 }
 
 func TestIngestJobsSuccess(t *testing.T) {
-	stubJobs(t, func() ([]ingestapi.Job, error) {
-		return []ingestapi.Job{{ID: 1, Status: "done", Kind: "pdf", SourcePath: "/tmp/a.pdf"}}, nil
+	stubJobs(t, func() ([]Job, error) {
+		return []Job{{ID: 1, Status: "done", Kind: "pdf", SourcePath: "/tmp/a.pdf"}}, nil
 	}, nil)
 
 	jobs, err := IngestJobs()
@@ -55,7 +53,7 @@ func TestIngestJobsSuccess(t *testing.T) {
 // An empty queue must serialize as [], never as JSON null: the MCP tool and
 // the Swift client both decode an array.
 func TestIngestJobsEmptyQueueIsEmptyArray(t *testing.T) {
-	stubJobs(t, func() ([]ingestapi.Job, error) { return nil, nil }, nil)
+	stubJobs(t, func() ([]Job, error) { return nil, nil }, nil)
 
 	jobs, err := IngestJobs()
 	if err != nil {

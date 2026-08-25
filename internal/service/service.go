@@ -16,6 +16,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/contacts"
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/history"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
@@ -44,13 +45,17 @@ func New(vaultRoot string, db *sidecar.DB) *Service {
 	if err != nil {
 		cfg = config.DefaultConfig()
 	}
-	return &Service{
+	svc := &Service{
 		VaultRoot: canonical,
 		DB:        db,
 		ViewsMgr:  dbviews.NewManager(canonical),
 		History:   history.NewStore(canonical),
 		Config:    cfg,
 	}
+	svc.ViewsMgr.SetSnapshotFn(func(absPath string) {
+		svc.snapshotBefore(absPath)
+	})
+	return svc
 }
 
 // snapshotBefore records a history snapshot of the file at absPath before a
@@ -296,18 +301,24 @@ func (s *Service) Props(file string) (map[string]interface{}, error) {
 	return s.DB.GetProperties(absPath)
 }
 
-// Backlinks returns the files linking to the given file.
+// Backlinks returns the files linking to the given file or opaque contact
+// reference target.
 func (s *Service) Backlinks(file string) ([]string, error) {
-	absPath, err := vault.SecurePath(s.VaultRoot, file)
-	if err != nil {
-		return nil, err
+	queryTarget := file
+	if _, isContact := contacts.ParseReferenceTarget(file); !isContact {
+		absPath, err := vault.SecurePath(s.VaultRoot, file)
+		if err != nil {
+			return nil, err
+		}
+		queryTarget = absPath
 	}
-	links, err := s.DB.GetBacklinks(absPath)
+
+	links, err := s.DB.GetBacklinks(queryTarget)
 	if err != nil {
 		return nil, err
 	}
 
-	var relLinks []string
+	relLinks := make([]string, 0, len(links))
 	for _, p := range links {
 		canonicalP, err := filepath.EvalSymlinks(p)
 		if err != nil {
@@ -874,4 +885,18 @@ func (s *Service) IngestJobs() (string, error) {
 // IngestRetry retries a failed job by ID in symingest.
 func (s *Service) IngestRetry(jobID string) error {
 	return ingest.IngestRetry(jobID)
+}
+
+// StoreAsset stores a binary asset in the vault's assets folder under collision-safe naming rules.
+func (s *Service) StoreAsset(data []byte, preferredName, ext string) (string, error) {
+	return vault.StoreAsset(s.VaultRoot, data, preferredName, ext, "", time.Now())
+}
+
+// StoreAssetWithLink stores a binary asset and returns both its vault-relative path and standard Markdown link snippet.
+func (s *Service) StoreAssetWithLink(data []byte, preferredName, ext string) (relPath string, mdLink string, err error) {
+	relPath, err = s.StoreAsset(data, preferredName, ext)
+	if err != nil {
+		return "", "", err
+	}
+	return relPath, vault.AssetMarkdownLink(relPath), nil
 }

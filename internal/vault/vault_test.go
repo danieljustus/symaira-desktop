@@ -95,6 +95,11 @@ func TestExtractWikilinks(t *testing.T) {
 		{"block ref", "![[Note#^block-id]]", []string{"Note"}},
 		{"deduplicated", "[[Note]] and ![[Note#Heading]]", []string{"Note"}},
 		{"empty after strip", "[[#Heading only]]", nil},
+		{"attachment embed", "![[scan.png]] and ![[report.pdf]]", []string{"scan.png", "report.pdf"}},
+		{"dataview code block ignored", "```dataview\nTABLE [[Fake Note]] FROM #tag\n```\n[[Real Note]]", []string{"Real Note"}},
+		{"symdesk-base code block ignored", "```symdesk-base\nbase: [[Fake Base]]\nview: v1\n```\n[[Real Note]]", []string{"Real Note"}},
+		{"templater code block ignored", "```templater\n<% tp.file.include(\"[[Template Link]]\") %>\n```\n![[embed.png]]", []string{"embed.png"}},
+		{"inline code span ignored", "Code: `[[Inline Link]]` and prose [[Prose Link]]", []string{"Prose Link"}},
 	}
 
 	for _, tc := range cases {
@@ -164,6 +169,117 @@ func TestWalkSkipsDependencyDirectories(t *testing.T) {
 
 	if len(visited) != 1 || visited[0] != wantPath {
 		t.Fatalf("expected only %q to be visited, got %v", wantPath, visited)
+	}
+}
+
+func TestWalkAll(t *testing.T) {
+	root := t.TempDir()
+
+	// Note
+	notePath := filepath.Join(root, "note.md")
+	if err := os.WriteFile(notePath, []byte("# Note"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Attachment in assets
+	assetsDir := filepath.Join(root, "assets")
+	if err := os.MkdirAll(assetsDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	imgPath := filepath.Join(assetsDir, "scan.png")
+	if err := os.WriteFile(imgPath, []byte("png-bytes"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Canvas
+	canvasPath := filepath.Join(root, "diagram.canvas")
+	if err := os.WriteFile(canvasPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Skipped node_modules attachment
+	nmDir := filepath.Join(root, "node_modules", "pkg")
+	if err := os.MkdirAll(nmDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(nmDir, "ignored.png"), []byte("ignored"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Hidden file
+	if err := os.WriteFile(filepath.Join(root, ".hidden.png"), []byte("hidden"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var visited []string
+	err := WalkAll(root, func(p string, d os.DirEntry) error {
+		if !d.IsDir() {
+			visited = append(visited, p)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("WalkAll failed: %v", err)
+	}
+
+	if len(visited) != 3 {
+		t.Fatalf("expected 3 visited files, got %d: %v", len(visited), visited)
+	}
+}
+
+func TestParseFileExcalidrawExcludesBody(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "sketch.excalidraw.md")
+	content := `---
+title: "System Architecture"
+tags:
+  - diagram
+---
+
+# Drawing Data
+` + "```json\n{\"elements\": [{\"type\": \"rectangle\", \"id\": \"123\"}]}\n```\n"
+
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	doc, err := ParseFile(path)
+	if err != nil {
+		t.Fatalf("ParseFile failed: %v", err)
+	}
+
+	if doc.Title != "System Architecture" {
+		t.Errorf("expected Title 'System Architecture', got %q", doc.Title)
+	}
+	if len(doc.Tags) != 1 || doc.Tags[0] != "diagram" {
+		t.Errorf("expected Tags ['diagram'], got %v", doc.Tags)
+	}
+	if doc.Body != "" {
+		t.Errorf("expected Body to be empty for .excalidraw.md, got %q", doc.Body)
+	}
+	if len(doc.Links) != 0 {
+		t.Errorf("expected 0 links for .excalidraw.md, got %v", doc.Links)
+	}
+	if doc.Size != int64(len(content)) {
+		t.Errorf("expected Size %d, got %d", len(content), doc.Size)
+	}
+}
+
+func TestDelegatedFormatHelpers(t *testing.T) {
+	if !IsExcalidrawFile("my-drawing.excalidraw.md") {
+		t.Errorf("expected true for my-drawing.excalidraw.md")
+	}
+	if !IsExcalidrawFile("PATH/TO/DRAWING.EXCALIDRAW.MD") {
+		t.Errorf("expected true for case-insensitive excalidraw")
+	}
+	if IsExcalidrawFile("note.md") {
+		t.Errorf("expected false for note.md")
+	}
+
+	if !IsCanvasFile("board.canvas") {
+		t.Errorf("expected true for board.canvas")
+	}
+	if !IsCanvasFile("BOARDS/PROJECT.CANVAS") {
+		t.Errorf("expected true for case-insensitive canvas")
+	}
+	if IsCanvasFile("board.md") {
+		t.Errorf("expected false for board.md")
 	}
 }
 
@@ -747,5 +863,78 @@ Body`,
 				}
 			}
 		})
+	}
+}
+
+func TestParseFile_DerivedArtifact(t *testing.T) {
+	root := t.TempDir()
+
+	// 1. Note with derived_from string
+	p1 := filepath.Join(root, "derived1.md")
+	if err := os.WriteFile(p1, []byte("---\ntitle: \"Summary\"\nderived_from: \"source.md\"\n---\nBody"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	doc1, err := ParseFile(p1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !doc1.IsDerived() || !doc1.Derived || doc1.DerivedFrom != "source.md" {
+		t.Errorf("expected derived document from source.md, got Derived=%v DerivedFrom=%q", doc1.Derived, doc1.DerivedFrom)
+	}
+
+	// 2. Note with derived: true
+	p2 := filepath.Join(root, "derived2.md")
+	if err := os.WriteFile(p2, []byte("---\ntitle: \"Generated\"\nderived: true\n---\nBody"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	doc2, err := ParseFile(p2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !doc2.IsDerived() || !doc2.Derived {
+		t.Errorf("expected IsDerived=true, got %v", doc2.IsDerived())
+	}
+
+	// 3. Regular note
+	p3 := filepath.Join(root, "regular.md")
+	if err := os.WriteFile(p3, []byte("---\ntitle: \"Regular\"\n---\nBody"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	doc3, err := ParseFile(p3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc3.IsDerived() || doc3.Derived || doc3.DerivedFrom != "" {
+		t.Errorf("expected regular non-derived document, got IsDerived=%v", doc3.IsDerived())
+	}
+}
+
+func TestParseFile_BaseKind(t *testing.T) {
+	root := t.TempDir()
+
+	// 1. Explicit type: base
+	p1 := filepath.Join(root, "base1.md")
+	if err := os.WriteFile(p1, []byte("---\ntitle: \"Invoices Base\"\ntype: base\nbase_id: invoices\n---\n# Invoices"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	doc1, err := ParseFile(p1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc1.Type != "base" {
+		t.Errorf("expected doc1.Type='base', got %q", doc1.Type)
+	}
+
+	// 2. Inferred from base_id
+	p2 := filepath.Join(root, "base2.md")
+	if err := os.WriteFile(p2, []byte("---\ntitle: \"Tasks Base\"\nbase_id: tasks\n---\n# Tasks"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	doc2, err := ParseFile(p2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc2.Type != "base" {
+		t.Errorf("expected doc2.Type='base' inferred from base_id, got %q", doc2.Type)
 	}
 }

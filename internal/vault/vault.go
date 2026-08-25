@@ -55,6 +55,19 @@ type Document struct {
 	// Contract v3/v4: document kind classification (note|document|meeting|notebook)
 	// Resolved at parse time: explicit frontmatter `type` wins, then inference.
 	Type string
+
+	// Contract v4: derived artifact handling (issue #531)
+	DerivedFrom string // path or name of source document this note was generated from
+	Derived     bool   // true if explicitly marked derived (or derived_from is non-empty)
+}
+
+// IsDerived reports whether the document is a generated/derived artifact
+// rather than an authoritative document.
+func (d *Document) IsDerived() bool {
+	if d == nil {
+		return false
+	}
+	return d.Derived || d.DerivedFrom != ""
 }
 
 // ValidStatuses enumerates the allowed values for Document.Status.
@@ -111,8 +124,10 @@ var skipDirNames = map[string]bool{
 	"__pycache__":  true,
 }
 
-// Walk iterates over all Markdown files in the vault, respecting ignore rules.
-func Walk(vaultRoot string, fn func(path string) error) error {
+// WalkAll iterates over all non-ignored files (both Markdown and non-Markdown)
+// in the vault, respecting ignore rules for hidden directories (e.g. .obsidian,
+// .trash, .git), dependency directories (skipDirNames), and hidden files.
+func WalkAll(vaultRoot string, fn func(path string, d fs.DirEntry) error) error {
 	return filepath.WalkDir(vaultRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -133,12 +148,28 @@ func Walk(vaultRoot string, fn func(path string) error) error {
 			return nil
 		}
 
+		return fn(path, d)
+	})
+}
+
+// Walk iterates over all Markdown files in the vault, respecting ignore rules.
+func Walk(vaultRoot string, fn func(path string) error) error {
+	return WalkAll(vaultRoot, func(path string, d fs.DirEntry) error {
 		if filepath.Ext(d.Name()) == ".md" {
 			return fn(path)
 		}
-
 		return nil
 	})
+}
+
+// IsExcalidrawFile reports whether path has the delegated Excalidraw drawing extension (.excalidraw.md).
+func IsExcalidrawFile(path string) bool {
+	return strings.HasSuffix(strings.ToLower(path), ".excalidraw.md")
+}
+
+// IsCanvasFile reports whether path has the delegated Obsidian Canvas extension (.canvas).
+func IsCanvasFile(path string) bool {
+	return strings.HasSuffix(strings.ToLower(path), ".canvas")
 }
 
 // ParseFile parses a markdown file, extracting frontmatter, body, and wikilinks.
@@ -282,14 +313,29 @@ func ParseBytes(path string, fileBytes []byte) (*Document, error) {
 	// Contract v3/v4: resolve document kind (note|document|meeting|notebook)
 	doc.Type = inferType(doc.Frontmatter)
 
-	doc.Body = string(bodyBytes)
+	// Contract v4: extract derived artifact metadata
+	doc.DerivedFrom = getStringFrontmatter(doc.Frontmatter, "derived_from")
+	if d, ok := doc.Frontmatter["derived"].(bool); ok {
+		doc.Derived = d
+	}
+	if doc.DerivedFrom != "" {
+		doc.Derived = true
+	}
+
+	if IsExcalidrawFile(path) {
+		doc.Body = ""
+	} else {
+		doc.Body = string(bodyBytes)
+	}
 	doc.Links = extractWikilinks(doc.Body)
 
 	// Extract inline tags from body (issue #522)
-	inlineTags := ExtractInlineTags(doc.Body)
-	for _, it := range inlineTags {
-		if !containsTagCaseInsensitive(doc.Tags, it) {
-			doc.Tags = append(doc.Tags, it)
+	if doc.Body != "" {
+		inlineTags := ExtractInlineTags(doc.Body)
+		for _, it := range inlineTags {
+			if !containsTagCaseInsensitive(doc.Tags, it) {
+				doc.Tags = append(doc.Tags, it)
+			}
 		}
 	}
 
@@ -372,11 +418,137 @@ func canonicalize(path string) (string, error) {
 	return filepath.Join(resolvedParent, remaining), nil
 }
 
+// stripCodeBlocksAndSpans removes fenced code blocks and inline code spans
+// from markdown body text so wikilinks and tags within them are not extracted.
+func stripCodeBlocksAndSpans(body string) string {
+	n := len(body)
+	if n == 0 {
+		return ""
+	}
+
+	var buf strings.Builder
+	buf.Grow(n)
+
+	i := 0
+	inCodeBlock := false
+	var fenceChar byte
+	fenceLen := 0
+
+	for i < n {
+		lineStart := i
+
+		// Check leading spaces (up to 3) for code block fence
+		spaces := 0
+		temp := i
+		for temp < n && (body[temp] == ' ' || body[temp] == '\t') && spaces < 3 {
+			if body[temp] == ' ' {
+				spaces++
+			} else {
+				spaces += 4
+			}
+			temp++
+		}
+
+		// Check for code fence at line start
+		if temp < n && (body[temp] == '`' || body[temp] == '~') {
+			ch := body[temp]
+			count := 0
+			for temp < n && body[temp] == ch {
+				count++
+				temp++
+			}
+			if count >= 3 {
+				if !inCodeBlock {
+					// Opening code fence
+					inCodeBlock = true
+					fenceChar = ch
+					fenceLen = count
+					i = temp
+					for i < n && body[i] != '\n' {
+						i++
+					}
+					if i < n && body[i] == '\n' {
+						i++
+					}
+					buf.WriteByte('\n')
+					continue
+				} else if ch == fenceChar && count >= fenceLen {
+					// Check if only whitespace until end of line
+					onlyWhitespace := true
+					for temp < n && body[temp] != '\n' && body[temp] != '\r' {
+						if body[temp] != ' ' && body[temp] != '\t' {
+							onlyWhitespace = false
+							break
+						}
+						temp++
+					}
+					if onlyWhitespace {
+						// Closing code fence
+						inCodeBlock = false
+						i = temp
+						if i < n && body[i] == '\r' {
+							i++
+						}
+						if i < n && body[i] == '\n' {
+							i++
+						}
+						buf.WriteByte('\n')
+						continue
+					}
+				}
+			}
+		}
+
+		if inCodeBlock {
+			// Skip this entire line
+			for i < n && body[i] != '\n' {
+				i++
+			}
+			if i < n && body[i] == '\n' {
+				i++
+			}
+			buf.WriteByte('\n')
+			continue
+		}
+
+		// Scan line for inline code spans
+		i = lineStart
+		for i < n && body[i] != '\n' {
+			if body[i] == '`' {
+				btCount := 0
+				for i < n && body[i] == '`' {
+					btCount++
+					i++
+				}
+				closingIdx := findClosingBackticks(body, i, btCount)
+				if closingIdx != -1 {
+					i = closingIdx + btCount
+					buf.WriteString(" ")
+					continue
+				}
+				buf.WriteString(strings.Repeat("`", btCount))
+				continue
+			}
+			buf.WriteByte(body[i])
+			i++
+		}
+
+		if i < n && body[i] == '\n' {
+			buf.WriteByte('\n')
+			i++
+		}
+	}
+
+	return buf.String()
+}
+
 // extractWikilinks extracts links from markdown body. Both plain wikilinks
 // ([[Note]]) and transclusion embeds (![[Note]], ![[Note#Heading]]) are
 // indexed as links so backlinks and the graph see embedded notes too.
+// Fenced code blocks and inline code spans are ignored.
 func extractWikilinks(body string) []string {
-	matches := wikilinkRegex.FindAllStringSubmatch(body, -1)
+	cleanBody := stripCodeBlocksAndSpans(body)
+	matches := wikilinkRegex.FindAllStringSubmatch(cleanBody, -1)
 	var links []string
 	seen := make(map[string]bool)
 	for _, m := range matches {
@@ -705,7 +877,8 @@ var documentInferenceFields = map[string]bool{
 //  1. If explicit `type` exists, return it.
 //  2. If any document-inference field is present → "document".
 //  3. If `meeting_id` is present → "meeting".
-//  4. Otherwise → "note".
+//  4. If `base_id` is present → "base".
+//  5. Otherwise → "note".
 //
 // "notebook" (contract_version 4) is never inferred — it is only ever
 // returned here when the frontmatter declares it explicitly (VAULT.md
@@ -714,7 +887,7 @@ func inferType(fm map[string]interface{}) string {
 	if t, ok := fm["type"]; ok {
 		if s, ok := t.(string); ok {
 			switch s {
-			case "note", "document", "meeting", "notebook":
+			case "note", "document", "meeting", "notebook", "base":
 				return s
 			}
 		}
@@ -728,6 +901,10 @@ func inferType(fm map[string]interface{}) string {
 	// Check meeting_id
 	if _, ok := fm["meeting_id"]; ok {
 		return "meeting"
+	}
+	// Check base_id
+	if _, ok := fm["base_id"]; ok {
+		return "base"
 	}
 	return "note"
 }

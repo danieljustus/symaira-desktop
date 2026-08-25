@@ -22,7 +22,6 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 // Status holds the runtime state for a single mail account.
@@ -236,7 +235,7 @@ func (w *MailWatcher) fetchMessages(accountID string) ([]fetchMessage, error) {
 
 	stagingDir := filepath.Join(w.vaultRoot, "inbox", ".mail_tmp")
 
-	result, err := ingest.FetchMailFunc(ctx, ingestapi.MailFetchOptions{
+	result, err := ingest.FetchMailFunc(ctx, ingest.MailFetchOptions{
 		ConfigPath: w.configPath,
 		AccountID:  accountID,
 		StagingDir: stagingDir,

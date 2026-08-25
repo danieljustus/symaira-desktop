@@ -200,6 +200,36 @@ func BuildSceneFromIR(d *ir.Diagram) (*scene.Scene, error) {
 				Link:        node.Note,
 			}
 
+		case ir.ShapeAsymmetric:
+			prim = &scene.PolygonElement{
+				ID: node.ID,
+				Points: []measure.Point{
+					{X: nx, Y: ny},
+					{X: nx + w - 10, Y: ny},
+					{X: nx + w, Y: ny + h/2.0},
+					{X: nx + w - 10, Y: ny + h},
+					{X: nx, Y: ny + h},
+				},
+				Fill:        fill,
+				Stroke:      stroke,
+				StrokeWidth: sw,
+			}
+
+		case ir.ShapeSubroutine:
+			prim = &scene.RectElement{
+				ID:          node.ID,
+				X:           nx,
+				Y:           ny,
+				Width:       w,
+				Height:      h,
+				Rx:          0,
+				Ry:          0,
+				Fill:        fill,
+				Stroke:      stroke,
+				StrokeWidth: sw,
+				Link:        node.Note,
+			}
+
 		default: // ShapeRect
 			prim = &scene.RectElement{
 				ID:          node.ID,

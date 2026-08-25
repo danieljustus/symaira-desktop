@@ -195,4 +195,56 @@ func TestPublicFacadeMethods(t *testing.T) {
 	if err := ValidateJSON([]byte(invalidJSON)); err == nil {
 		t.Error("expected error for invalid JSON, got nil")
 	}
+
+	if ver := DialectVersion(); ver != "1.0" {
+		t.Errorf("expected dialect version '1.0', got %q", ver)
+	}
+}
+
+func TestRenderWithMermaidAndJSONSource(t *testing.T) {
+	ctx := context.Background()
+
+	// 1. Render from Mermaid source
+	mermaidSrc := `graph TD
+	A[Ingest] --> B[(Database)]
+	`
+	resMermaid, err := Render(ctx, RenderRequest{
+		Source: mermaidSrc,
+		Format: FormatSVG,
+	})
+	if err != nil {
+		t.Fatalf("Render with Mermaid Source failed: %v", err)
+	}
+	if !bytes.Contains(resMermaid.Data, []byte("Ingest")) || !bytes.Contains(resMermaid.Data, []byte("Database")) {
+		t.Errorf("Mermaid render output missing node labels: %s", string(resMermaid.Data))
+	}
+
+	// 2. Render from JSON source
+	jsonSrc := `{"kind": "graph", "direction": "LR", "nodes": [{"id": "x", "label": "Alpha"}, {"id": "y", "label": "Beta"}], "edges": [{"from": "x", "to": "y"}]}`
+	resJSON, err := Render(ctx, RenderRequest{
+		Source: jsonSrc,
+		Format: FormatSVG,
+	})
+	if err != nil {
+		t.Fatalf("Render with JSON Source failed: %v", err)
+	}
+	if !bytes.Contains(resJSON.Data, []byte("Alpha")) || !bytes.Contains(resJSON.Data, []byte("Beta")) {
+		t.Errorf("JSON render output missing node labels: %s", string(resJSON.Data))
+	}
+
+	// 3. Facade parse functions
+	diagMermaid, err := ParseMermaid("graph TD\nA --> B")
+	if err != nil || len(diagMermaid.Nodes) != 2 {
+		t.Fatalf("ParseMermaid failed: %v, nodes: %+v", err, diagMermaid)
+	}
+
+	diagJSON, err := ParseJSON([]byte(jsonSrc))
+	if err != nil || len(diagJSON.Nodes) != 2 {
+		t.Fatalf("ParseJSON failed: %v, nodes: %+v", err, diagJSON)
+	}
+
+	diagAuto, err := Parse("graph LR\nA --> B")
+	if err != nil || diagAuto.Direction != ir.DirLR {
+		t.Fatalf("Parse auto failed: %v", err)
+	}
 }

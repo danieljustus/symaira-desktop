@@ -6,7 +6,6 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 MANIFESTS=(
   "go.mod"
-  "ingest/go.mod"
   "room/go.mod"
 )
 
@@ -46,4 +45,4 @@ if [ "$MISMATCHES" -ne 0 ]; then
   exit 1
 fi
 
-echo "All 3 modules have consistent symaira-corekit pin (${ROOT_PIN})."
+echo "All 2 modules have consistent symaira-corekit pin (${ROOT_PIN})."

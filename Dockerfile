@@ -3,13 +3,7 @@ ARG GO_VERSION=1.26.6
 ARG VERSION=dev
 FROM golang:${GO_VERSION}-bookworm AS build
 WORKDIR /src
-# The absorbed tools are nested modules the root go.mod reaches through
-# `replace ./ingest`. Their go.mod/go.sum must
-# be in place before `go mod download` can resolve the module graph, so this
-# stage copies them alongside the root manifests rather than only with the
-# sources. Adding a `replace` to a nested module means adding it here too.
 COPY go.mod go.sum ./
-COPY ingest/go.mod ingest/go.sum ./ingest/
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build \

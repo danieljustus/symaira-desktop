@@ -15,8 +15,6 @@ import (
 
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/oned"
-
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 // The tests in this file exercise ScanPDFForBarcodes and ingestPDFWithSplit
@@ -154,12 +152,12 @@ func stubSplitPipeline(t *testing.T, ingestFails bool) {
 		return parts, nil
 	}
 
-	IngestFunc = func(_ context.Context, source string, _ ingestapi.Options) (*ingestapi.Result, error) {
+	IngestFunc = func(_ context.Context, source string, _ Options) (*Result, error) {
 		if ingestFails {
 			return nil, errors.New("ingest failed")
 		}
 		base := strings.TrimSuffix(filepath.Base(source), ".pdf")
-		return &ingestapi.Result{VaultPath: "note-" + base + ".md"}, nil
+		return &Result{VaultPath: "note-" + base + ".md"}, nil
 	}
 }
 

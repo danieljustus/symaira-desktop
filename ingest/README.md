@@ -1,18 +1,15 @@
 # symaira-ingest (`symingest`)
 
 > **Dieses Verzeichnis war bis 2026-08-23 das eigenständige Repository
-> [`symaira-ingest`](https://github.com/danieljustus/symaira-ingest).** Es ist jetzt ein
-> nested Go-Modul von [`symaira-desktop`](../README.md); das Repo ist
-> archiviert und seine Homebrew-Formula deprecated. Die OCR-/Ingest-Pipeline wird über
+> [`symaira-ingest`](https://github.com/danieljustus/symaira-ingest).** Die Go-Implementierung
+> ist nun direkt in das Root-Modul von [`symaira-desktop`](../README.md) unter `internal/ingest`
+> aufgelöst (Issue #540 Migration). Die OCR-/Ingest-Pipeline wird über
 > `symdesk ingest` genutzt.
 > Die Badges, Installations- und Release-Hinweise unten stammen aus der
 > Zeit als eigenes Repo und gelten nicht mehr.
-
-> **Moved 2026-08-20** into `symaira-desktop/ingest/` as part of the Symaira
-> repo consolidation (27 → 13, `docs/repo-konsolidierung.md` §3.2). This Go
-> module now lives in symaira-desktop; the original
-> `danieljustus/symaira-ingest` repo remains active until the deep integration
-> (Paperless/barcode de-duplication) is done.
+>
+> Dieses Verzeichnis dient als historische Ablage für Dokumentation (`docs/`), Packaging-Skripte (`scripts/`),
+> Standalone-Client-Referenz (`client/`) und Marken-Assets (`assets/`).
 
 [![CI](https://github.com/danieljustus/symaira-ingest/actions/workflows/ci.yml/badge.svg)](https://github.com/danieljustus/symaira-ingest/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)

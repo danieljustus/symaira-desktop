@@ -11,12 +11,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 // The ingest pipeline runs in-process since the repo consolidation absorbed
-// symaira-ingest as a nested module. These seams keep it out of a plain
+// symaira-ingest into this repository. These seams keep it out of a plain
 // `go test ./...`, which would otherwise write into the developer's real
 // vault, archive and document store under $HOME and reach their real IMAP
 // accounts. Tests override them through testsupport.IsolateSideEffects.
@@ -25,13 +23,13 @@ import (
 // list — including internal/mail and internal/selfhost, which cannot host
 // their own seams without an import cycle through testsupport.
 var (
-	IngestFunc       = ingestapi.Ingest
-	JobsFunc         = ingestapi.Jobs
-	RetryJobFunc     = ingestapi.RetryJob
-	SplitPDFFunc     = ingestapi.SplitPDF
-	ExtractTextFunc  = ingestapi.ExtractText
-	MailAccountsFunc = ingestapi.MailAccounts
-	FetchMailFunc    = ingestapi.FetchMail
+	IngestFunc       = Ingest
+	JobsFunc         = Jobs
+	RetryJobFunc     = RetryJob
+	SplitPDFFunc     = SplitPDFAtSpec
+	ExtractTextFunc  = ExtractText
+	MailAccountsFunc = MailAccounts
+	FetchMailFunc    = FetchMail
 )
 
 // HasSymingest reports whether the ingest pipeline is usable, and why not when
@@ -42,7 +40,7 @@ var (
 // and the CLI's status output still ask. It reports unavailable only when the
 // configuration cannot be read at all.
 func HasSymingest() (bool, string) {
-	if _, err := ingestapi.ArchivePath(); err != nil {
+	if _, err := ArchivePath(); err != nil {
 		return false, fmt.Sprintf("ingest configuration unavailable: %v", err)
 	}
 	return true, ""
@@ -66,14 +64,14 @@ func IngestFile(vaultRoot, sourcePath string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	result, err := IngestFunc(ctx, sourcePath, ingestapi.Options{Vault: vaultRoot})
+	result, err := IngestFunc(ctx, sourcePath, Options{Vault: vaultRoot})
 	if err != nil {
 		// Fall back to the built-in inbox copy only when the pipeline could
 		// not run at all, so a file is never lost for want of configuration.
 		// Every other failure — a corrupt source, a duplicate, a broken OCR
 		// run — is reported: silently writing a placeholder note in those
 		// cases would hide the real problem behind a plausible-looking note.
-		if errors.Is(err, ingestapi.ErrNoVault) {
+		if errors.Is(err, ErrNoVault) {
 			return ingestBuiltin(vaultRoot, sourcePath)
 		}
 		return "", err
@@ -225,12 +223,12 @@ func IngestJobs() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	jobs, err := JobsFunc(ctx, ingestapi.Options{}, 0)
+	jobs, err := JobsFunc(ctx, Options{}, 0)
 	if err != nil {
 		return "[]", err
 	}
 	if jobs == nil {
-		jobs = []ingestapi.Job{}
+		jobs = []Job{}
 	}
 	data, err := json.MarshalIndent(jobs, "", "  ")
 	if err != nil {
@@ -248,5 +246,5 @@ func IngestRetry(jobID string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	return RetryJobFunc(ctx, ingestapi.Options{}, id)
+	return RetryJobFunc(ctx, Options{}, id)
 }

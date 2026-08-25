@@ -14,7 +14,6 @@ repo_root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
 
 manifests = [
     "go.mod",
-    "ingest/go.mod",
     "room/go.mod",
 ]
 
@@ -62,7 +61,6 @@ for m in manifests[1:]:
 dep_map = {}
 local_modules = {
     "github.com/danieljustus/symaira-desktop",
-    "github.com/danieljustus/symaira-ingest",
     "github.com/danieljustus/symaira-room",
 }
 
@@ -95,5 +93,5 @@ if errors != 0:
     print(f"Found {errors} version mismatch(es) across modules.", file=sys.stderr)
     sys.exit(1)
 
-print(f"All 3 modules have consistent Go version ({root_go}) and {shared_deps} shared dependencies.")
+print(f"All 2 modules have consistent Go version ({root_go}) and {shared_deps} shared dependencies.")
 PYEOF

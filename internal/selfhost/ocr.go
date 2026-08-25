@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
-	ingestapi "github.com/danieljustus/symaira-ingest/api"
 )
 
 // processViaIngest runs the absorbed extraction pipeline over input and
@@ -19,7 +18,7 @@ func (w *Worker) processViaIngest(ctx context.Context, input string) (text, engi
 		return "", "", "", err
 	}
 
-	opts := ingestapi.Options{OCRLang: w.cfg.OCRLanguage}
+	opts := ingest.Options{OCRLang: w.cfg.OCRLanguage}
 	if mode == "ollama" {
 		opts.OllamaBaseURL = w.cfg.OllamaURL
 		opts.OllamaModel = w.cfg.OllamaModel

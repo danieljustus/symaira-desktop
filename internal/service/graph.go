@@ -2,6 +2,7 @@ package service
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -48,14 +49,117 @@ func (s *Service) Graph() (*GraphData, error) {
 
 	for _, d := range docs {
 		relPath, _ := filepath.Rel(s.VaultRoot, d.Path)
+		relPath = filepath.ToSlash(relPath)
 		addNode(relPath, d.Title)
 	}
 
-	// We don't have a GetLinks method that returns all links efficiently.
-	// Let's just expose a method in sidecar to get all edges.
 	edgesRaw, err := s.DB.GetAllLinks()
 	if err != nil {
 		return nil, err
+	}
+
+	aliasMap, _ := s.DB.GetAllAliases()
+
+	// Build resolution lookup maps in contract precedence order:
+	// 1. Exact relative path
+	// 2. Base name / title
+	// 3. Aliases
+	pathToNode := make(map[string]string, len(docs)*2)
+	baseToNode := make(map[string]string, len(docs)*2)
+	titleToNode := make(map[string]string, len(docs)*2)
+	aliasToNode := make(map[string]string)
+
+	for _, d := range docs {
+		relPath, _ := filepath.Rel(s.VaultRoot, d.Path)
+		relPath = filepath.ToSlash(relPath)
+		lowerRel := strings.ToLower(relPath)
+		lowerRelNoExt := strings.ToLower(strings.TrimSuffix(relPath, filepath.Ext(relPath)))
+		if _, exists := pathToNode[lowerRel]; !exists {
+			pathToNode[lowerRel] = relPath
+		}
+		if _, exists := pathToNode[lowerRelNoExt]; !exists {
+			pathToNode[lowerRelNoExt] = relPath
+		}
+
+		baseName := filepath.Base(relPath)
+		lowerBase := strings.ToLower(baseName)
+		lowerBaseNoExt := strings.ToLower(strings.TrimSuffix(baseName, filepath.Ext(baseName)))
+		if _, exists := baseToNode[lowerBase]; !exists {
+			baseToNode[lowerBase] = relPath
+		}
+		if _, exists := baseToNode[lowerBaseNoExt]; !exists {
+			baseToNode[lowerBaseNoExt] = relPath
+		}
+
+		if d.Title != "" {
+			lowerTitle := strings.ToLower(strings.TrimSpace(d.Title))
+			if _, exists := titleToNode[lowerTitle]; !exists {
+				titleToNode[lowerTitle] = relPath
+			}
+			lowerTitleNoExt := strings.ToLower(strings.TrimSuffix(strings.TrimSpace(d.Title), filepath.Ext(d.Title)))
+			if _, exists := titleToNode[lowerTitleNoExt]; !exists {
+				titleToNode[lowerTitleNoExt] = relPath
+			}
+		}
+
+		if aliases, ok := aliasMap[d.Path]; ok {
+			for _, a := range aliases {
+				trimmed := strings.TrimSpace(a)
+				if trimmed != "" {
+					lowerAlias := strings.ToLower(trimmed)
+					if _, exists := aliasToNode[lowerAlias]; !exists {
+						aliasToNode[lowerAlias] = relPath
+					}
+					lowerAliasNoExt := strings.ToLower(strings.TrimSuffix(trimmed, filepath.Ext(trimmed)))
+					if _, exists := aliasToNode[lowerAliasNoExt]; !exists {
+						aliasToNode[lowerAliasNoExt] = relPath
+					}
+				}
+			}
+		}
+	}
+
+	resolveTarget := func(target string) string {
+		trimmed := strings.TrimSpace(target)
+		lower := strings.ToLower(trimmed)
+		lowerNoExt := strings.ToLower(strings.TrimSuffix(trimmed, filepath.Ext(trimmed)))
+
+		// 1. Exact path
+		if node, ok := pathToNode[lower]; ok {
+			return node
+		}
+		if node, ok := pathToNode[lowerNoExt]; ok {
+			return node
+		}
+		// 2. Base name or title
+		if node, ok := baseToNode[lower]; ok {
+			return node
+		}
+		if node, ok := baseToNode[lowerNoExt]; ok {
+			return node
+		}
+		if node, ok := titleToNode[lower]; ok {
+			return node
+		}
+		if node, ok := titleToNode[lowerNoExt]; ok {
+			return node
+		}
+		// 3. Aliases
+		if node, ok := aliasToNode[lower]; ok {
+			return node
+		}
+		if node, ok := aliasToNode[lowerNoExt]; ok {
+			return node
+		}
+
+		// Fallback for compatibility
+		if nodeSet[target] {
+			return target
+		}
+		if nodeSet[target+".md"] {
+			return target + ".md"
+		}
+		return target
 	}
 
 	edges := make([]GraphEdge, 0, len(edgesRaw))
@@ -71,12 +175,8 @@ func (s *Service) Graph() (*GraphData, error) {
 
 	for _, e := range edgesRaw {
 		relSource, _ := filepath.Rel(s.VaultRoot, e.Source)
-		targetID := e.Target
-		if !nodeSet[targetID] {
-			if nodeSet[targetID+".md"] {
-				targetID = targetID + ".md"
-			}
-		}
+		relSource = filepath.ToSlash(relSource)
+		targetID := resolveTarget(e.Target)
 		addEdge(relSource, targetID)
 	}
 

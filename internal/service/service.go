@@ -320,11 +320,15 @@ func (s *Service) Backlinks(file string) ([]string, error) {
 
 	relLinks := make([]string, 0, len(links))
 	for _, p := range links {
-		rel, err := filepath.Rel(s.VaultRoot, p)
+		canonicalP, err := filepath.EvalSymlinks(p)
+		if err != nil {
+			canonicalP = p
+		}
+		rel, err := filepath.Rel(s.VaultRoot, canonicalP)
 		if err != nil {
 			rel = p
 		}
-		relLinks = append(relLinks, rel)
+		relLinks = append(relLinks, filepath.ToSlash(rel))
 	}
 	return relLinks, nil
 }

@@ -1,10 +1,12 @@
 package service
 
 import (
+	"path/filepath"
 	"sort"
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
 const mockSymmemoryGraphScript = `#!/bin/bash
@@ -116,5 +118,58 @@ func TestGraphWithoutSymmemoryReturnsDocumentNodesOnly(t *testing.T) {
 	}
 	if len(data.Edges) != 0 {
 		t.Errorf("expected no edges, got %+v", data.Edges)
+	}
+}
+
+func TestGraphResolvesWikilinksThroughAliases(t *testing.T) {
+	svc := newTestService(t)
+
+	// Note A with aliases
+	agencyDoc := &vault.Document{
+		Path:    filepath.Join(svc.VaultRoot, "Bundesagentur.md"),
+		Title:   "Bundesagentur für Arbeit",
+		Aliases: []string{"BA", "Federal Agency"},
+		Created: "2026-01-01T00:00:00Z",
+		SHA256:  "h-ba",
+		Body:    "Agency details",
+	}
+	if err := svc.DB.IndexDocument(agencyDoc); err != nil {
+		t.Fatal(err)
+	}
+
+	// Note B linking to [[BA]]
+	sourceDoc := &vault.Document{
+		Path:    filepath.Join(svc.VaultRoot, "Source.md"),
+		Title:   "Source",
+		Created: "2026-01-01T00:00:00Z",
+		SHA256:  "h-src",
+		Links:   []string{"BA"},
+	}
+	if err := svc.DB.IndexDocument(sourceDoc); err != nil {
+		t.Fatal(err)
+	}
+
+	// Note C linking to multi-word alias [[Federal Agency]]
+	otherDoc := &vault.Document{
+		Path:    filepath.Join(svc.VaultRoot, "Other.md"),
+		Title:   "Other",
+		Created: "2026-01-01T00:00:00Z",
+		SHA256:  "h-oth",
+		Links:   []string{"Federal Agency"},
+	}
+	if err := svc.DB.IndexDocument(otherDoc); err != nil {
+		t.Fatal(err)
+	}
+
+	data, err := svc.Graph()
+	if err != nil {
+		t.Fatalf("Graph failed: %v", err)
+	}
+
+	if countEdge(data, "Source.md", "Bundesagentur.md") != 1 {
+		t.Errorf("expected edge Source.md -> Bundesagentur.md, got edges: %+v", data.Edges)
+	}
+	if countEdge(data, "Other.md", "Bundesagentur.md") != 1 {
+		t.Errorf("expected edge Other.md -> Bundesagentur.md, got edges: %+v", data.Edges)
 	}
 }

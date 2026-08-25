@@ -965,16 +965,42 @@ func ListMailAccounts(configPath string) (*MailConfigurationResult, error) {
 
 // SetMailAccounts validates and replaces the entire configured account list
 // at configPath. An empty configPath uses the location the CLI would use.
+//
+// Like UpdateMailAccount, it never writes a masked value back over a stored
+// secret: an account whose PasswordSecret is empty or equals the mask of the
+// secret currently stored under the same ID keeps that stored secret. A
+// caller that reads accounts (which are masked) and writes the list back
+// unchanged must not silently destroy every password.
 func SetMailAccounts(configPath string, accounts []MailAccountRecord, pollInterval string) (*MailConfigurationResult, error) {
 	path, err := config.ConfigPath(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("resolve mail config path: %w", err)
 	}
+	existing, err := readMailConfigLenient(path)
+	if err != nil {
+		return nil, err
+	}
 	converted := make([]config.IMAPAccount, len(accounts))
 	for i, a := range accounts {
-		converted[i] = toIMAPAccount(a)
+		converted[i] = preserveStoredSecret(toIMAPAccount(a), existing.Accounts)
 	}
 	return writeAccountsAt(path, converted, pollInterval)
+}
+
+// preserveStoredSecret returns account with its PasswordSecret restored from
+// the matching stored account when the caller supplied nothing or echoed the
+// mask back. Returns it unchanged when the caller supplied a real new secret
+// or when no stored account shares its ID.
+func preserveStoredSecret(account config.IMAPAccount, stored []config.IMAPAccount) config.IMAPAccount {
+	idx := indexOfAccount(stored, config.AccountID(account))
+	if idx == -1 {
+		return account
+	}
+	prior := stored[idx].PasswordSecret
+	if account.PasswordSecret == "" || account.PasswordSecret == config.MaskPasswordSecret(prior) {
+		account.PasswordSecret = prior
+	}
+	return account
 }
 
 // CreateMailAccount appends a new IMAP account to the mail configuration.

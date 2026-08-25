@@ -162,3 +162,34 @@ func TestSetMailAccounts(t *testing.T) {
 		t.Error("expected validation error for a missing host")
 	}
 }
+
+// A client reads accounts (masked) and writes the list back. Without secret
+// preservation that round-trip replaces every plaintext password on disk with
+// the mask, silently locking the user out of their own mail accounts.
+func TestSetMailAccountsPreservesStoredSecretOnMaskedRoundTrip(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "config.toml")
+
+	created, err := CreateMailAccount(configPath, MailAccountRecord{
+		Host: "imap.example.com", Port: 993, Username: "a@example.com",
+		PasswordSecret: "plaintext-password", Folder: "INBOX", Action: "mark_seen",
+	})
+	if err != nil {
+		t.Fatalf("CreateMailAccount failed: %v", err)
+	}
+	if got := created.Accounts[0].PasswordSecret; got == "plaintext-password" {
+		t.Fatalf("plaintext secret was returned unmasked: %q", got)
+	}
+
+	// Write back exactly what a reader would have received.
+	if _, err := SetMailAccounts(configPath, created.Accounts, ""); err != nil {
+		t.Fatalf("SetMailAccounts failed: %v", err)
+	}
+
+	raw, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(raw), "plaintext-password") {
+		t.Errorf("stored secret was destroyed by the masked round-trip:\n%s", raw)
+	}
+}

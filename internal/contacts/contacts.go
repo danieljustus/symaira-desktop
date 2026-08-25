@@ -116,6 +116,9 @@ func refFromMap(value map[string]interface{}) (Ref, bool) {
 	case int64:
 		version = int(v)
 	case uint64:
+		if v > uint64(^uint(0)>>1) {
+			return Ref{}, false
+		}
 		version = int(v)
 	case float64:
 		version = int(v)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/danieljustus/symaira-desktop/internal/draw/ir"
+	"github.com/danieljustus/symaira-desktop/internal/draw/layout"
 	"github.com/danieljustus/symaira-desktop/internal/draw/measure"
 	"github.com/danieljustus/symaira-desktop/internal/draw/scene"
 	"github.com/danieljustus/symaira-desktop/internal/draw/theme"
@@ -44,6 +45,18 @@ func BuildSceneFromIR(d *ir.Diagram) (*scene.Scene, error) {
 		}
 	}
 
+	// Graph diagrams without explicit coordinates use the layered engine. A
+	// caller-provided position remains an intentional escape hatch for hand-laid
+	// diagrams and keeps the existing IR contract backwards compatible.
+	var graphLayout *layout.Result
+	if d.Kind == ir.KindGraph && !hasPositions {
+		var err error
+		graphLayout, err = layout.Layout(d)
+		if err != nil {
+			return nil, fmt.Errorf("layout graph: %w", err)
+		}
+	}
+
 	curX := 60.0
 	curY := 60.0
 
@@ -58,7 +71,12 @@ func BuildSceneFromIR(d *ir.Diagram) (*scene.Scene, error) {
 
 		nx := node.X
 		ny := node.Y
-		if !hasPositions {
+		if graphLayout != nil {
+			if box, ok := graphLayout.Nodes[node.ID]; ok {
+				nx, ny = box.X, box.Y
+				w, h = box.Width, box.Height
+			}
+		} else if !hasPositions {
 			if d.Direction == ir.DirLR || d.Direction == ir.DirRL {
 				nx = curX
 				ny = 100.0
@@ -237,6 +255,10 @@ func BuildSceneFromIR(d *ir.Diagram) (*scene.Scene, error) {
 		fromBox, ok1 := nodeBounds[edge.From]
 		toBox, ok2 := nodeBounds[edge.To]
 		if !ok1 || !ok2 {
+			continue
+		}
+		if graphLayout != nil {
+			renderLayoutEdge(sc, edge, i, graphLayout.Routes[i], th)
 			continue
 		}
 

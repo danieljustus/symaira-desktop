@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="69.25 29.25 222.66 233.84" width="222.66" height="233.84">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="9.25 9.25 222.66 245.84" width="222.66" height="245.84">
   <metadata>
     <symdraw:font-hash>0eab2c8dd6221438ca217c9d9189985ce0c24752f9fa96f52044b743869b6e80</symdraw:font-hash>
     <symdraw:generator>symdraw</symdraw:generator>
@@ -15,11 +15,11 @@
       <circle fill="#1E3D59" cx="5.00" cy="5.00" r="4.00" />
     </marker>
   </defs>
-  <rect x="69.25" y="29.25" width="222.66" height="233.84" fill="#FFFFFF" />
-  <rect id="m1" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1.50" x="100.00" y="60.00" width="91.11" height="44.94" />
-  <text id="m1-text-0" x="145.55" y="87.56" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#111827" text-anchor="middle" textLength="51.11">Agenda</text>
-  <polygon id="m2" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1.50" points="180.58,164.94 261.16,198.64 180.58,232.34 100.00,198.64" />
-  <text id="m2-text-0" x="180.58" y="203.73" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#111827" text-anchor="middle" textLength="67.44">Beschluss</text>
-  <line id="edge-0" fill="none" stroke="#374151" stroke-width="1.50" x1="145.55" y1="104.94" x2="180.58" y2="164.94" marker-end="url(#arrow-end)" />
-  <text x="169.07" y="130.94" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#6B7280" dominant-baseline="middle" textLength="57.17">abstimmen</text>
+  <rect x="9.25" y="9.25" width="222.66" height="245.84" fill="#FFFFFF" />
+  <rect id="m1" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1.50" x="75.02" y="40.00" width="91.11" height="44.94" />
+  <text id="m1-text-0" x="120.58" y="67.56" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#111827" text-anchor="middle" textLength="51.11">Agenda</text>
+  <polygon id="m2" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1.50" points="120.58,156.94 201.16,190.64 120.58,224.34 40.00,190.64" />
+  <text id="m2-text-0" x="120.58" y="195.73" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#111827" text-anchor="middle" textLength="67.44">Beschluss</text>
+  <line id="edge-0" fill="none" stroke="#374151" stroke-width="1.50" x1="120.58" y1="84.94" x2="120.58" y2="156.94" marker-end="url(#arrow-end)" />
+  <text id="edge-0-label" x="126.58" y="152.94" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#6B7280" dominant-baseline="middle" textLength="57.17">abstimmen</text>
 </svg>

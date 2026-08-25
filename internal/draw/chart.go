@@ -28,6 +28,15 @@ func BuildChartScene(d *ir.Diagram) (*scene.Scene, error) {
 
 	sc := scene.NewScene(width, height, th)
 	chart := d.Chart
+	accessibilityTitle := chart.Title
+	if accessibilityTitle == "" {
+		accessibilityTitle = d.Title
+	}
+	if accessibilityTitle == "" {
+		accessibilityTitle = fmt.Sprintf("%s chart", chart.Type)
+	}
+	sc.Metadata["title"] = accessibilityTitle
+	sc.Metadata["description"] = fmt.Sprintf("%s chart with %d series", chart.Type, len(chart.Series))
 
 	// Title
 	titleY := 35.0
@@ -67,36 +76,55 @@ func BuildChartScene(d *ir.Diagram) (*scene.Scene, error) {
 				minY, maxY = pt.Y, pt.Y
 				firstPoint = false
 			} else {
-				if pt.Y < minY {
-					minY = pt.Y
-				}
-				if pt.Y > maxY {
-					maxY = pt.Y
-				}
+				minY = math.Min(minY, pt.Y)
+				maxY = math.Max(maxY, pt.Y)
 			}
 		}
 	}
-
+	if firstPoint {
+		minY, maxY = 0, 1
+	}
 	if chart.YAxis.Min != nil {
 		minY = *chart.YAxis.Min
 	} else if minY > 0 {
-		minY = 0 // Baseline zero for bar/line charts if all positive
+		minY = 0
 	}
 	if chart.YAxis.Max != nil {
 		maxY = *chart.YAxis.Max
 	}
-	if maxY == minY {
-		maxY = minY + 10
+	minY, maxY, ticks := niceAxis(minY, maxY, 5)
+	minX, maxX := 0.0, 1.0
+	if chart.Type == ir.ChartScatter {
+		firstX := true
+		for _, s := range chart.Series {
+			for _, pt := range s.Data {
+				if firstX {
+					minX, maxX = pt.X, pt.X
+					firstX = false
+				} else {
+					minX = math.Min(minX, pt.X)
+					maxX = math.Max(maxX, pt.X)
+				}
+			}
+		}
+		if chart.XAxis.Min != nil {
+			minX = *chart.XAxis.Min
+		}
+		if chart.XAxis.Max != nil {
+			maxX = *chart.XAxis.Max
+		}
+		minX, maxX, xTicks := niceAxis(minX, maxX, 5)
+		for _, val := range xTicks {
+			xPos := plotLeft + (val-minX)/(maxX-minX)*plotW
+			sc.Add(&scene.LineElement{X1: xPos, Y1: plotTop, X2: xPos, Y2: plotBottom, Stroke: th.Grid, StrokeWidth: 1, DashArray: "4 4"})
+			sc.Add(&scene.TextElement{X: xPos, Y: plotBottom + 18, Text: formatTick(val), FontSize: 10, Fill: th.TextMuted, Anchor: scene.AnchorMiddle, Baseline: scene.BaselineMiddle})
+		}
 	}
 
 	// Grid & Axes
-	numTicks := 5
-	for i := 0; i <= numTicks; i++ {
-		tVal := float64(i) / float64(numTicks)
+	for _, val := range ticks {
+		tVal := (val - minY) / (maxY - minY)
 		yPos := plotBottom - tVal*plotH
-		val := minY + tVal*(maxY-minY)
-
-		// Grid line
 		sc.Add(&scene.LineElement{
 			X1:          plotLeft,
 			Y1:          yPos,
@@ -106,12 +134,10 @@ func BuildChartScene(d *ir.Diagram) (*scene.Scene, error) {
 			StrokeWidth: 1,
 			DashArray:   "4 4",
 		})
-
-		// Y Tick label
 		sc.Add(&scene.TextElement{
 			X:          plotLeft - 10,
 			Y:          yPos,
-			Text:       fmt.Sprintf("%.1f", val),
+			Text:       formatTick(val),
 			FontSize:   10,
 			FontWeight: measure.WeightRegular,
 			Fill:       th.TextMuted,
@@ -147,7 +173,7 @@ func BuildChartScene(d *ir.Diagram) (*scene.Scene, error) {
 	case ir.ChartPie, ir.ChartDonut:
 		renderPieChart(sc, chart, th, width, height, chart.Type == ir.ChartDonut)
 	case ir.ChartScatter:
-		renderScatterChart(sc, chart, th, plotLeft, plotTop, plotW, plotH, plotBottom, minY, maxY)
+		renderScatterChart(sc, chart, th, plotLeft, plotTop, plotW, plotH, plotBottom, minY, maxY, minX, maxX)
 	default:
 		renderBarChart(sc, chart, th, plotLeft, plotTop, plotW, plotH, plotBottom, minY, maxY)
 	}
@@ -186,6 +212,49 @@ func BuildChartScene(d *ir.Diagram) (*scene.Scene, error) {
 	return sc, nil
 }
 
+func niceAxis(minValue, maxValue float64, targetIntervals int) (float64, float64, []float64) {
+	if targetIntervals < 1 {
+		targetIntervals = 1
+	}
+	if maxValue <= minValue {
+		span := math.Abs(minValue)
+		if span == 0 {
+			span = 1
+		}
+		minValue -= span / 2
+		maxValue += span / 2
+	}
+	span := maxValue - minValue
+	rawStep := span / float64(targetIntervals)
+	power := math.Pow(10, math.Floor(math.Log10(rawStep)))
+	unit := rawStep / power
+	factor := 1.0
+	switch {
+	case unit > 5:
+		factor = 10
+	case unit > 2:
+		factor = 5
+	case unit > 1:
+		factor = 2
+	}
+	step := factor * power
+	axisMin := math.Floor(minValue/step) * step
+	axisMax := math.Ceil(maxValue/step) * step
+	count := int(math.Round((axisMax - axisMin) / step))
+	ticks := make([]float64, 0, count+1)
+	for i := 0; i <= count; i++ {
+		ticks = append(ticks, axisMin+float64(i)*step)
+	}
+	return axisMin, axisMax, ticks
+}
+
+func formatTick(value float64) string {
+	if math.Abs(value) < 1e-9 {
+		value = 0
+	}
+	return fmt.Sprintf("%g", value)
+}
+
 func renderBarChart(
 	sc *scene.Scene,
 	chart *ir.ChartSpec,
@@ -213,6 +282,7 @@ func renderBarChart(
 	availableWidth := catWidth - barGroupPadding*2
 	barWidth := availableWidth / float64(numSeries)
 
+	baselineY := plotBottom - ((0 - minY) / (maxY - minY) * plotH)
 	for catIdx := 0; catIdx < numCats; catIdx++ {
 		catCenterX := plotLeft + float64(catIdx)*catWidth + catWidth/2.0
 
@@ -231,9 +301,10 @@ func renderBarChart(
 			}
 
 			normY := (pt.Y - minY) / (maxY - minY)
-			barH := normY * plotH
+			valueY := plotBottom - normY*plotH
+			barY := math.Min(valueY, baselineY)
+			barH := math.Abs(valueY - baselineY)
 			barX := plotLeft + float64(catIdx)*catWidth + barGroupPadding + float64(sIdx)*barWidth
-			barY := plotBottom - barH
 
 			sc.Add(&scene.RectElement{
 				X:      barX,
@@ -245,12 +316,15 @@ func renderBarChart(
 				Fill:   color,
 			})
 
-			// Label
-			if pt.Label != "" && sIdx == 0 {
+			label := pt.Label
+			if catIdx < len(chart.XAxis.Labels) {
+				label = chart.XAxis.Labels[catIdx]
+			}
+			if label != "" && sIdx == 0 {
 				sc.Add(&scene.TextElement{
 					X:          catCenterX,
 					Y:          plotBottom + 18,
-					Text:       pt.Label,
+					Text:       label,
 					FontSize:   11,
 					FontWeight: measure.WeightRegular,
 					Fill:       th.TextMuted,
@@ -298,11 +372,15 @@ func renderLineChart(
 				StrokeWidth: 1.5,
 			})
 
-			if pt.Label != "" {
+			label := pt.Label
+			if i < len(chart.XAxis.Labels) {
+				label = chart.XAxis.Labels[i]
+			}
+			if label != "" {
 				sc.Add(&scene.TextElement{
 					X:          px,
 					Y:          plotBottom + 18,
-					Text:       pt.Label,
+					Text:       label,
 					FontSize:   11,
 					FontWeight: measure.WeightRegular,
 					Fill:       th.TextMuted,
@@ -326,7 +404,7 @@ func renderScatterChart(
 	chart *ir.ChartSpec,
 	th theme.Theme,
 	plotLeft, plotTop, plotW, plotH, plotBottom float64,
-	minY, maxY float64,
+	minY, maxY, minX, maxX float64,
 ) {
 	for sIdx, s := range chart.Series {
 		color := s.Color
@@ -334,7 +412,7 @@ func renderScatterChart(
 			color = th.Palette[sIdx%len(th.Palette)]
 		}
 		for _, pt := range s.Data {
-			px := plotLeft + (pt.X/100.0)*plotW
+			px := plotLeft + ((pt.X-minX)/(maxX-minX))*plotW
 			normY := (pt.Y - minY) / (maxY - minY)
 			py := plotBottom - normY*plotH
 

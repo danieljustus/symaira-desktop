@@ -58,6 +58,19 @@ func sampleChartIR() *ir.Diagram {
 	}
 }
 
+func sampleChartIRForType(chartType ir.ChartType) *ir.Diagram {
+	diag := sampleChartIR()
+	diag.Chart.Type = chartType
+	if chartType == ir.ChartScatter {
+		for seriesIndex := range diag.Chart.Series {
+			for pointIndex := range diag.Chart.Series[seriesIndex].Data {
+				diag.Chart.Series[seriesIndex].Data[pointIndex].X = float64(pointIndex + seriesIndex + 1)
+			}
+		}
+	}
+	return diag
+}
+
 func TestRenderPipelineSVGAndPNG(t *testing.T) {
 	ctx := context.Background()
 	diag := sampleArchitectureIR()

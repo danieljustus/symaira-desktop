@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="69.25 29.25 216.67 211.38" width="216.67" height="211.38">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="9.25 9.25 216.67 223.38" width="216.67" height="223.38">
   <metadata>
     <symdraw:font-hash>0eab2c8dd6221438ca217c9d9189985ce0c24752f9fa96f52044b743869b6e80</symdraw:font-hash>
     <symdraw:generator>symdraw</symdraw:generator>
@@ -15,11 +15,11 @@
       <circle fill="#1F4E79" cx="5.00" cy="5.00" r="4.00" />
     </marker>
   </defs>
-  <rect x="69.25" y="29.25" width="216.67" height="211.38" fill="#FFFFFF" />
-  <rect id="node1" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.50" x="100.00" y="60.00" width="141.58" height="44.94" rx="8.00" ry="8.00" />
-  <text id="node1-text-0" x="170.79" y="87.56" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#1E293B" text-anchor="middle" textLength="101.58">Quartalsbericht</text>
-  <rect id="node2" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.50" x="100.00" y="164.94" width="155.17" height="44.94" rx="22.47" ry="22.47" />
-  <text id="node2-text-0" x="177.59" y="192.50" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#1E293B" text-anchor="middle" textLength="92.70">Genehmigung</text>
-  <line id="edge-0" fill="none" stroke="#475569" stroke-width="1.50" x1="170.79" y1="104.94" x2="177.59" y2="164.94" marker-end="url(#arrow-end)" />
-  <text x="180.19" y="130.94" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#64748B" dominant-baseline="middle" textLength="45.66">vorlegen</text>
+  <rect x="9.25" y="9.25" width="216.67" height="223.38" fill="#FFFFFF" />
+  <rect id="node1" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.50" x="46.80" y="40.00" width="141.58" height="44.94" rx="8.00" ry="8.00" />
+  <text id="node1-text-0" x="117.59" y="67.56" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#1E293B" text-anchor="middle" textLength="101.58">Quartalsbericht</text>
+  <rect id="node2" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.50" x="40.00" y="156.94" width="155.17" height="44.94" rx="22.47" ry="22.47" />
+  <text id="node2-text-0" x="117.59" y="184.50" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#1E293B" text-anchor="middle" textLength="92.70">Genehmigung</text>
+  <line id="edge-0" fill="none" stroke="#475569" stroke-width="1.50" x1="117.59" y1="84.94" x2="117.59" y2="156.94" marker-end="url(#arrow-end)" />
+  <text id="edge-0-label" x="123.59" y="152.94" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#64748B" dominant-baseline="middle" textLength="45.66">vorlegen</text>
 </svg>

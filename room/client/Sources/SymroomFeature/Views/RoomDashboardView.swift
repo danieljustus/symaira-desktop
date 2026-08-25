@@ -8,6 +8,19 @@ struct RoomDashboardView: View {
     @Environment(RoomAppState.self) private var appState
 
     var body: some View {
+        VStack(spacing: 0) {
+            if let note = appState.provenanceNote {
+                ProvenanceNoteView(note: note)
+            }
+            content
+        }
+        .task(id: appState.roomDirectory) {
+            if appState.roomDirectory != nil { await appState.refresh() }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         Group {
             if !appState.isInstalled {
                 InstallTileView()
@@ -36,9 +49,6 @@ struct RoomDashboardView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .task(id: appState.roomDirectory) {
-            if appState.roomDirectory != nil { await appState.refresh() }
-        }
     }
 
     private func pickRoom() {
@@ -54,8 +64,9 @@ struct RoomDashboardView: View {
     }
 }
 
-/// Shown when the `symroom` CLI is not installed: module renders an install
-/// tile instead of the room UI (module integration contract).
+/// Shown when the `symroom` CLI is genuinely not found (neither the strict
+/// nor the relaxed search located it): module renders an install tile
+/// instead of the room UI (module integration contract).
 private struct InstallTileView: View {
     var body: some View {
         VStack(spacing: 12) {
@@ -64,13 +75,31 @@ private struct InstallTileView: View {
                 .foregroundStyle(.secondary)
             Text("symroom is not installed")
                 .font(.headline)
-            Text("Install it via 'brew install danieljustus/tap/symroom' to use the room module.")
+            // danieljustus/tap/symroom is disabled since v0.10.0 — symroom
+            // ships inside the symdesk formula now (#608).
+            Text("Install it via 'brew install danieljustus/tap/symdesk' to use the room module. symroom has shipped with Symaira Desktop since v0.10.0.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding(32)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// Secondary banner shown when `symroom` was located only via the relaxed
+/// search (e.g. Homebrew's group-writable `/opt/homebrew/bin`) — the
+/// relaxation is surfaced rather than hidden (#608).
+private struct ProvenanceNoteView: View {
+    let note: String
+
+    var body: some View {
+        Text(note)
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

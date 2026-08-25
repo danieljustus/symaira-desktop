@@ -36,7 +36,10 @@ let package = Package(
         ),
         .testTarget(
             name: "SymroomFeatureTests",
-            dependencies: ["SymroomKit"]
+            dependencies: [
+                "SymroomKit",
+                .product(name: "SymairaToolKit", package: "symaira-appkit"),
+            ]
         ),
     ]
 )

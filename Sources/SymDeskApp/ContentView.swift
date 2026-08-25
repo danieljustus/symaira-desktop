@@ -376,7 +376,7 @@ struct ContentView: View {
                     case .meetings:
                         MeetingsView()
                     case .rules:
-                        RulesSettingsView(vaultPath: core.vaultPath)
+                        RulesSettingsView()
                     case .discover:
                         DiscoverView(onNavigateToTools: { navigate(to: .companionTools) })
                     case .retrievalStatus:

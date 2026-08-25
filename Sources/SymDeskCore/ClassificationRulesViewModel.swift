@@ -29,11 +29,12 @@ public final class ClassificationRulesViewModel: ObservableObject {
     private let client: any ClassificationRulesClient
     private let configPath: String?
 
-    public convenience init(vaultPath: String? = nil, configPath: String? = nil) {
-        self.init(
-            client: SymingestRulesClient(vaultPath: vaultPath, configPath: configPath ?? defaultConfigPath()),
-            configPath: configPath ?? defaultConfigPath()
-        )
+    // `DeskCore.shared` conforms to `ClassificationRulesClient` (see
+    // DeskCoreRules.swift) and already tracks the active vault, so this no
+    // longer needs a `vaultPath` override or a pinned config path — the
+    // `symdesk` CLI resolves its own (#610 point 7).
+    public convenience init(configPath: String? = nil) {
+        self.init(client: DeskCore.shared, configPath: configPath)
     }
 
     public init(client: any ClassificationRulesClient, configPath: String? = nil) {
@@ -57,6 +58,10 @@ public final class ClassificationRulesViewModel: ObservableObject {
         }
     }
 
+    // A missing mail config is not a special case any more: `mail rules
+    // list` returns an empty account list rather than an error (mail
+    // ingestion is optional), so there is nothing left to sniff for in the
+    // error text here (#610 point 6).
     @discardableResult
     public func loadMail() async -> Bool {
         mailError = nil
@@ -64,14 +69,7 @@ public final class ClassificationRulesViewModel: ObservableObject {
             mailAccounts = try await client.listMailRules()
             return true
         } catch {
-            let desc = error.localizedDescription
-            let lower = desc.lowercased()
-            if lower.contains("configuration file not found") || lower.contains("config.toml") || (lower.contains("file not found") && lower.contains("symingest")) {
-                mailAccounts = []
-                mailError = nil
-                return true
-            }
-            var cleaned = desc
+            var cleaned = error.localizedDescription
             if let range = cleaned.range(of: #"CLI execution failed with exit code \d+:\s*"#, options: .regularExpression) {
                 cleaned.removeSubrange(range)
             }
@@ -224,8 +222,4 @@ public final class ClassificationRulesViewModel: ObservableObject {
             return false
         }
     }
-}
-
-private func defaultConfigPath() -> String {
-    FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/symingest/config.toml").path
 }

@@ -19,6 +19,10 @@ public final class RoomAppState {
 
     public var isInstalled: Bool { client.isInstalled }
 
+    /// Set when `symroom` was found only via the relaxed search (#608) —
+    /// surfaced by the dashboard instead of hiding the relaxation.
+    public var provenanceNote: String? { client.provenanceNote }
+
     public func select(roomDirectory: String) async {
         self.roomDirectory = roomDirectory
         await refresh()

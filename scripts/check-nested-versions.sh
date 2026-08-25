@@ -14,7 +14,6 @@ repo_root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
 
 manifests = [
     "go.mod",
-    "room/go.mod",
 ]
 
 errors = 0
@@ -41,7 +40,7 @@ for m in manifests:
 if errors > 0:
     sys.exit(1)
 
-# 1. Verify Go version directive alignment across all manifests
+# 1. Verify Go version directive in root module
 root_go = modules_data["go.mod"].get("Go", "")
 if not root_go:
     print("::error::root go.mod is missing a Go version directive", file=sys.stderr)
@@ -57,11 +56,10 @@ for m in manifests[1:]:
     else:
         print(f"{m}: Go {mod_go} (OK)")
 
-# 2. Verify shared dependency versions alignment across all manifests
+# 2. Verify shared dependency versions alignment across manifests if nested modules exist
 dep_map = {}
 local_modules = {
     "github.com/danieljustus/symaira-desktop",
-    "github.com/danieljustus/symaira-room",
 }
 
 for m in manifests:
@@ -93,5 +91,8 @@ if errors != 0:
     print(f"Found {errors} version mismatch(es) across modules.", file=sys.stderr)
     sys.exit(1)
 
-print(f"All 2 modules have consistent Go version ({root_go}) and {shared_deps} shared dependencies.")
+if len(manifests) == 1:
+    print(f"Root Go version {root_go} verified. No nested Go modules remain.")
+else:
+    print(f"All {len(manifests)} modules have consistent Go version ({root_go}) and {shared_deps} shared dependencies.")
 PYEOF

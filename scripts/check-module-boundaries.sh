@@ -6,26 +6,8 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 MISMATCHES=0
 
-# 1. Check that absorbed library internal packages are never imported outside their own module.
-ABSORBED_MODULES=("room")
-
-for mod in "${ABSORBED_MODULES[@]}"; do
-  import_pattern="github.com/danieljustus/symaira-${mod}/internal"
-  
-  # Search all .go files in repo excluding the module's own directory and vendor/.
-  while IFS= read -r match; do
-    [ -z "$match" ] && continue
-    echo "::error::Internal import violation: ${match} imports ${import_pattern}" >&2
-    MISMATCHES=$((MISMATCHES + 1))
-  done < <(grep -rnE "\"${import_pattern}(/|\")" "${REPO_ROOT}" \
-    --include="*.go" \
-    --exclude-dir="vendor" \
-    --exclude-dir=".build" \
-    --exclude-dir="${mod}" 2>/dev/null || true)
-done
-
-# 2. Check permitted facades in the root Go module (cmd/ and internal/).
-# Any import of absorbed modules in the root module must go strictly through permitted facades and api/ packages.
+# 1. Check permitted facades and internal boundaries in the root Go module (cmd/ and internal/).
+# Any import of dissolved modules in the root module must go strictly through permitted facades.
 
 while IFS= read -r file; do
   [ -z "$file" ] && continue
@@ -103,10 +85,22 @@ while IFS= read -r file; do
     esac
   fi
 
-  # Check room imports in root module (room is a standalone binary symroom, not linked into symdesk)
+  # Check room imports in root module (dissolved into internal/room and cmd/symroom; no file should import symaira-room)
   if grep -qE '"github\.com/danieljustus/symaira-room' "$file"; then
-    echo "::error::Boundary violation: ${rel_path} imports symaira-room (room ships as standalone symroom binary)" >&2
+    echo "::error::Boundary violation: ${rel_path} imports symaira-room (room is dissolved into internal/room and cmd/symroom)" >&2
     MISMATCHES=$((MISMATCHES + 1))
+  fi
+
+  # Check internal/room imports (must stay internal to internal/room/ and cmd/symroom/)
+  if grep -qE '"github\.com/danieljustus/symaira-desktop/internal/room' "$file"; then
+    case "$rel_path" in
+      internal/room/*|cmd/symroom/*)
+        ;;
+      *)
+        echo "::error::Internal import violation: ${rel_path} imports internal/room directly (room is a standalone symroom binary, not linked into symdesk)" >&2
+        MISMATCHES=$((MISMATCHES + 1))
+        ;;
+    esac
   fi
 
   # Check meet imports in root module (meet is a standalone menu-bar app, not linked into symdesk Go core)

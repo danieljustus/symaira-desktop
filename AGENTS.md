@@ -13,10 +13,10 @@ make test               # CGO_ENABLED=0 go test -race ./...
 make lint               # gofmt + go vet + corekit-guard + boundary-guard + nested-version-guard
 make docker-build       # self-host container
 
-# The nested modules are NOT covered by the root `./...` — Go does not
-# descend into directories with their own go.mod. CI runs them as a
-# `nested (<module>)` matrix job; locally:
-for m in ingest print relate room seek; do (cd $m && go test ./...); done
+# The nested Go modules were dissolved into the root module (issues #537–
+#540 and #541): root `go test ./...` now covers everything. Only the Swift
+# Project Journal UI remains as `room/client/` (embedded in the app, not
+# part of the Go module).
 
 # macOS app (XcodeGen required: brew install xcodegen)
 xcodegen generate
@@ -51,9 +51,7 @@ internal/        # Go packages (see also the nested modules below):
   templatepath/  #   storage-path templating
   archive/       #   PDF/A archive generation
   ai/ compose/ config/ dbviews/ demo/ export/ history/ recipes/ searchquery/ secrets/ simhash/ watcher/
-seek/ print/ relate/ room/ ingest/   # nested Go modules, each with its own go.mod
-                 #   reached only through their public api/ package — internal/
-                 #   is not importable across a module boundary
+room/client/       # Swift Project Journal UI module, embedded in the SymDesk app target
 meet/            # nested Swift package, embedded in the SymDesk app target
 Sources/
   SymDeskCore/   # Swift shared library bridging the Go core (consumes symaira-appkit, exact-pinned)
@@ -65,26 +63,24 @@ docs/            # ARCHITECTURE.md, PLAN.md, SELF_HOSTING.md
 
 ## Module Boundaries and Permitted Facades (issue #536)
 
-The absorbed tools live in this repository as nested modules with their own `go.mod`. To preserve clear architectural separation and avoid tight coupling:
+The absorbed tools live in this repository in the root module (the nested `go.mod` layout was dissolved in issues #537–541). `make lint` enforces the boundary and pin rules below via `scripts/check-module-boundaries.sh` and `scripts/check-corekit-pins.sh`.
 
 1. **Permitted in-process facades in `symaira-desktop` (`internal/`):**
-   - `print/api` → wrapped exclusively by `internal/pdf` (and `internal/testsupport`)
-   - `seek/api` → wrapped exclusively by `internal/retrieval` (and `internal/testsupport`)
-   - `relate/api` → wrapped exclusively by `internal/contacts` (and `internal/testsupport`)
-   - `ingest/api` → wrapped by `internal/ingest`, `internal/mail`, `internal/selfhost`, `internal/testsupport`, plus `cmd/symdesk` migration/doctor commands
-   - `room/` → standalone `symroom` binary (entry point in `room/cmd/symroom`, not linked in Go core)
+   - `internal/pdf` wraps the former `print/api` (and `internal/testsupport`)
+   - `internal/retrieval` wraps the former `seek/api` (and `internal/testsupport`)
+   - `internal/contacts` wraps the former `relate/api` (and `internal/testsupport`)
+   - `internal/ingest` wraps the former `ingest/api`, used by `internal/mail`, `internal/selfhost`, `internal/testsupport`, plus `cmd/symdesk` migration/doctor commands
+   - `internal/room` + `cmd/symroom` → the former `room/` module, kept as a standalone `symroom` binary (decision recorded in issue #541); its `run/` and `version/` packages are root-module packages now
    - `meet/` → standalone Swift menu-bar agent (not linked in Go core)
 
 2. **Boundary and replacement rules:**
-   - Packages in `symaira-desktop` must NEVER import absorbed library internals (`.../internal/...`).
-   - Packages outside the permitted facades must NEVER import absorbed modules directly; they must access functionality through the designated facade (e.g. use `internal/pdf` rather than importing `print/api`).
-   - Root `go.mod` resolves absorbed modules via local `replace` directives pointing to `./print`, `./seek`, `./relate`, `./ingest`.
-   - Absorbed modules (`print`, `seek`, `relate`, `ingest`) do NOT contain their own standalone `cmd/` entry points or duplicate tool launchers; `symdesk` is the single unified binary and human shell of the ecosystem.
+   - Packages in `symaira-desktop` must NEVER import absorbed tool internals (`.../internal/...`).
+   - Packages outside the permitted facades must NEVER import the former module internals directly; they must access functionality through the designated facade (e.g. use `internal/pdf` rather than its underlying packages).
+   - `symdesk` is the single unified binary and human shell of the ecosystem; `cmd/symroom` exists only because the Project Journal surface bridges a separate binary (see issue #541).
    - Enforced automatically in `make lint` and CI via `scripts/check-module-boundaries.sh`.
 
-3. **Version alignment and resolution parity across nested modules (issue #535):**
-   - All Go directives across root and nested modules (`ingest`, `print`, `relate`, `room`, `seek`) are aligned with root Go version (`1.26.6`).
-   - Shared dependency versions must remain consistent across root and all nested modules so nested test resolution matches root resolution.
+3. **Version alignment (issue #535):**
+   - All Go directives across the repository are aligned with root Go version (`1.26.6`), enforced by `scripts/check-corekit-pins.sh`.
    - Enforced automatically in `make lint` and CI via `scripts/check-nested-versions.sh`.
 
 ## Conventions (repo-specific)

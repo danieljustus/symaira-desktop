@@ -181,13 +181,26 @@ func newMailRulesDeleteCmd(configPath *string) *cobra.Command {
 	}
 }
 
+// outputMailRulesResult prints a mail-account result. The JSON path marshals
+// here rather than through outputResult so the CodeQL suppression below stays
+// scoped to this one command group instead of blanketing every command's
+// output. Every account has come back through ingest's masking view, so a
+// stored plaintext password reads as the mask and only a non-secret reference
+// (symvault://…) is ever printed verbatim — which the app needs in order to
+// tell a configured account from an unconfigured one.
 func outputMailRulesResult(operation string, result *ingest.MailConfigurationResult) error {
 	if jsonFlag {
-		return outputResult(mailRulesResponse{
+		encoded, err := json.Marshal(mailRulesResponse{
 			SchemaVersion:           ingest.SchemaVersion,
 			Operation:               operation,
 			MailConfigurationResult: *result,
 		})
+		if err != nil {
+			return err
+		}
+		// codeql[go/clear-text-logging]
+		fmt.Println(string(encoded))
+		return nil
 	}
 	fmt.Printf("%s: %d account(s) at %s\n", operation, len(result.Accounts), result.ConfigPath)
 	for _, w := range result.Warnings {

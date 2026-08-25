@@ -774,7 +774,7 @@ func DryRunRule(ctx context.Context, opts Options, pattern, kind, value string) 
 	if err != nil {
 		return nil, fmt.Errorf("open document store: %w", err)
 	}
-	defer st.Close()
+	defer func() { _ = st.Close() }()
 
 	docs, err := st.ListDocuments(ctx)
 	if err != nil {
@@ -799,6 +799,8 @@ func DryRunRule(ctx context.Context, opts Options, pattern, kind, value string) 
 			result.Skipped = append(result.Skipped, DryRunSkipped{DocumentID: doc.ID, Reason: "no note path recorded"})
 			continue
 		}
+		// #nosec G304 -- notePath is the note location this pipeline
+		// recorded for the document, under the configured vault root.
 		data, readErr := os.ReadFile(notePath)
 		if readErr != nil {
 			result.Skipped = append(result.Skipped, DryRunSkipped{DocumentID: doc.ID, NotePath: notePath, Reason: readErr.Error()})
@@ -1124,7 +1126,7 @@ func Reprocess(ctx context.Context, opts Options, documentID int64) (*ReprocessR
 	if err != nil {
 		return nil, fmt.Errorf("open document store: %w", err)
 	}
-	defer st.Close()
+	defer func() { _ = st.Close() }()
 
 	res, err := newReprocessPipeline(r, st).Reprocess(ctx, documentID, "", nil)
 	if err != nil {
@@ -1152,7 +1154,7 @@ func ReprocessByArchivePath(ctx context.Context, opts Options, archivePath strin
 	if err != nil {
 		return nil, fmt.Errorf("open document store: %w", err)
 	}
-	defer st.Close()
+	defer func() { _ = st.Close() }()
 
 	doc, err := st.ByArchivePath(ctx, abs)
 	if err != nil {

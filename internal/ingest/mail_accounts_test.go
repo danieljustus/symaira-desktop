@@ -27,7 +27,7 @@ func TestMailAccountsCRUDRoundTrip(t *testing.T) {
 		Host:           "imap.example.com",
 		Port:           993,
 		Username:       "user@example.com",
-		PasswordSecret: "symvault://mail/example",
+		PasswordSecret: "symvault://mail/example", // #nosec G101 -- a symvault reference, not a credential
 		Folder:         "INBOX",
 		From:           []string{"billing@example.com"},
 		Action:         "mark_seen",
@@ -106,6 +106,7 @@ func TestMailAccountUpdatePreservesMaskedPlaintextSecret(t *testing.T) {
 		t.Fatalf("expected the secret to still read as masked, got %q", updated.Accounts[0].PasswordSecret)
 	}
 
+	// #nosec G304 -- configPath is created under this test's t.TempDir.
 	raw, err := os.ReadFile(configPath)
 	if err != nil {
 		t.Fatal(err)
@@ -146,8 +147,8 @@ func TestSetMailAccounts(t *testing.T) {
 	configPath := filepath.Join(t.TempDir(), "config.toml")
 
 	result, err := SetMailAccounts(configPath, []MailAccountRecord{
-		{Host: "imap.example.com", Port: 993, Username: "a@example.com", PasswordSecret: "symvault://a", Action: "mark_seen"},
-		{Host: "imap.example.com", Port: 993, Username: "b@example.com", PasswordSecret: "symvault://b", Action: "mark_seen"},
+		{Host: "imap.example.com", Port: 993, Username: "a@example.com", PasswordSecret: "symvault://a", Action: "mark_seen"}, // #nosec G101 -- a symvault reference, not a credential
+		{Host: "imap.example.com", Port: 993, Username: "b@example.com", PasswordSecret: "symvault://b", Action: "mark_seen"}, // #nosec G101 -- a symvault reference, not a credential
 	}, "")
 	if err != nil {
 		t.Fatalf("SetMailAccounts failed: %v", err)
@@ -185,6 +186,7 @@ func TestSetMailAccountsPreservesStoredSecretOnMaskedRoundTrip(t *testing.T) {
 		t.Fatalf("SetMailAccounts failed: %v", err)
 	}
 
+	// #nosec G304 -- configPath is created under this test's t.TempDir.
 	raw, err := os.ReadFile(configPath)
 	if err != nil {
 		t.Fatal(err)

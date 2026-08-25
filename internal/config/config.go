@@ -41,8 +41,12 @@ type Config struct {
 	LLMAPIKey       string `toml:"llm_api_key" env:"SYMDESK_LLM_API_KEY"`
 	LLMModel        string `toml:"llm_model" env:"SYMDESK_LLM_MODEL"`
 	OllamaURL       string `toml:"ollama_url" env:"SYMDESK_OLLAMA_URL"`
-	Language        string `toml:"language" env:"SYMDESK_LANG"`
-	MaxTokens       int    `toml:"max_tokens" env:"SYMDESK_MAX_TOKENS"`
+	// HermesSession is the Hermes session id or title resumed by the optional
+	// Hermes backend (llm_provider = hermes). Empty uses the most recent
+	// session (issue #559).
+	HermesSession string `toml:"hermes_session" env:"SYMDESK_HERMES_SESSION"`
+	Language      string `toml:"language" env:"SYMDESK_LANG"`
+	MaxTokens     int    `toml:"max_tokens" env:"SYMDESK_MAX_TOKENS"`
 	// AgentMaxIterations caps the agentic tool loop (issue #317). Zero uses
 	// the package default (5).
 	AgentMaxIterations int `toml:"agent_max_iterations" env:"SYMDESK_AGENT_MAX_ITERATIONS"`
@@ -121,6 +125,9 @@ func applyEnvOverrides(cfg *Config) {
 	}
 	if envModel := os.Getenv("SYMDESK_LLM_MODEL"); envModel != "" {
 		cfg.LLMModel = envModel
+	}
+	if envSession := os.Getenv("SYMDESK_HERMES_SESSION"); envSession != "" {
+		cfg.HermesSession = envSession
 	}
 	if envLang := os.Getenv("SYMDESK_LANG"); envLang != "" {
 		cfg.Language = envLang
@@ -303,13 +310,14 @@ func (c *Config) Validate() []Finding {
 		"ollama":    true,
 		"anthropic": true,
 		"openai":    true,
+		"hermes":    true,
 		"":          true, // empty = default, not an error
 	}
 	if c.LLMProvider != "" && !validProviders[c.LLMProvider] {
 		findings = append(findings, Finding{
 			Severity: SeverityWarning,
 			Field:    "llm_provider",
-			Message:  fmt.Sprintf("unsupported llm_provider %q — expected one of: ollama, anthropic, openai", c.LLMProvider),
+			Message:  fmt.Sprintf("unsupported llm_provider %q — expected one of: ollama, anthropic, openai, hermes", c.LLMProvider),
 		})
 	}
 

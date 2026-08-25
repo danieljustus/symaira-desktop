@@ -70,6 +70,7 @@ The contract fully accepts and standardizes the following fields commonly writte
 - `mime` (string): The MIME type of the original document.
 - `category` (string): A document category.
 - `correspondent` (string): The correspondent or author of the original document. When this value matches an existing note title in the vault, a `correspondent` link edge is recorded so backlinks answer "all documents from X".
+- `contact` (object, optional): An opaque, reviewed reference to the authoritative local contact store. It uses the same reference-only shape as meeting `contact_ref` in section 8; identity is the stored `id` + `kind`, while `display_name` is only a refreshable rendering cache. Use `symdesk relations contact link <file> <contact-id>` and `unlink` for explicit changes. The sidecar records a contact backlink edge, but no email, phone, address, URL, handle, notes, transcript text, or local path is copied into the vault. Name-based `correspondent` behavior remains the fallback when no `contact` reference is present.
 - `document_type` (string): The type of the document (e.g., "invoice").
 - `ocr_engine` (string): The OCR engine used to extract text.
 - `archive_path` (string): A link to the archived original file.

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/contacts"
+	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
 // adaRef is the one contact the fake store knows.
@@ -339,5 +340,55 @@ func TestResolveMeetingContactRefUnavailable(t *testing.T) {
 	svc := newTestService(t)
 	if _, err := svc.ResolveMeetingContactRef("c-ada"); !errors.Is(err, ErrContactStoreUnavailable) {
 		t.Fatalf("expected ErrContactStoreUnavailable, got %v", err)
+	}
+}
+
+func TestLinkNoteContactStoresReferenceOnlyAndUnlinks(t *testing.T) {
+	withContactStore(t, adaRef)
+	svc := newTestService(t)
+	path := "notes/contact-link.md"
+	abs := filepath.Join(svc.VaultRoot, path)
+	if err := os.MkdirAll(filepath.Dir(abs), 0750); err != nil {
+		t.Fatal(err)
+	}
+	content := "---\ntype: note\ntitle: Contact link\ncreated: 2026-07-21T10:00:00Z\ntags: [test]\nother: keep\n---\n\nBody survives.\n"
+	if err := os.WriteFile(abs, []byte(content), 0600); err != nil { //nolint:gosec // test fixture mirrors vault permissions
+		t.Fatal(err)
+	}
+
+	if _, err := svc.LinkNoteContact(path, "c-ada"); err != nil {
+		t.Fatalf("LinkNoteContact() error = %v", err)
+	}
+	doc, err := vault.ParseFile(abs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ref, ok := doc.Frontmatter["contact"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("contact reference missing: %+v", doc.Frontmatter)
+	}
+	for _, key := range []string{"provider", "schema_version", "id", "kind", "display_name"} {
+		if _, ok := ref[key]; !ok {
+			t.Errorf("reference field %q missing: %+v", key, ref)
+		}
+	}
+	for _, banned := range []string{"email", "phone", "address", "url", "handle", "notes"} {
+		if _, ok := ref[banned]; ok {
+			t.Errorf("contact point %q leaked into the vault reference: %+v", banned, ref)
+		}
+	}
+	if doc.Frontmatter["other"] != "keep" || !strings.Contains(doc.Body, "Body survives.") {
+		t.Fatalf("link did not preserve unrelated vault content: %+v %q", doc.Frontmatter, doc.Body)
+	}
+
+	if err := svc.UnlinkNoteContact(path); err != nil {
+		t.Fatalf("UnlinkNoteContact() error = %v", err)
+	}
+	doc, err = vault.ParseFile(abs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := doc.Frontmatter["contact"]; ok {
+		t.Fatalf("contact reference survived unlink: %+v", doc.Frontmatter)
 	}
 }

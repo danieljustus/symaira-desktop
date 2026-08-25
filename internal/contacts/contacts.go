@@ -49,6 +49,94 @@ type Ref struct {
 	Extras map[string]interface{} `json:"-" yaml:",inline"`
 }
 
+// ReferenceTargetPrefix is the sidecar link-graph namespace for contact
+// references. It is deliberately not a filesystem path: a contact is owned by
+// the contact store, not by the vault.
+const ReferenceTargetPrefix = "contact:"
+
+// ReferenceTarget returns the stable derived link target for a contact
+// reference. Provider, kind and ID are all included so IDs from another
+// provider or contact kind cannot collide in the sidecar graph.
+func ReferenceTarget(ref Ref) string {
+	return ReferenceTargetPrefix + ref.Provider + ":" + ref.Kind + ":" + ref.ID
+}
+
+// ParseReferenceTarget recognizes a target returned by ReferenceTarget. It is
+// intentionally strict so a malformed user-supplied backlinks query cannot
+// accidentally be treated as a contact.
+func ParseReferenceTarget(target string) (Ref, bool) {
+	if !strings.HasPrefix(target, ReferenceTargetPrefix) {
+		return Ref{}, false
+	}
+	parts := strings.Split(strings.TrimPrefix(target, ReferenceTargetPrefix), ":")
+	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
+		return Ref{}, false
+	}
+	return Ref{Provider: parts[0], Kind: parts[1], ID: parts[2]}, true
+}
+
+// ReferencesInFrontmatter extracts only structurally valid opaque contact
+// references from arbitrary decoded YAML. Meeting participants nest these
+// under participants[].contact_ref, while future note types may place them at
+// another depth. No other contact-store data is copied into the index.
+func ReferencesInFrontmatter(frontmatter map[string]interface{}) []Ref {
+	var refs []Ref
+	var walk func(interface{})
+	walk = func(value interface{}) {
+		switch v := value.(type) {
+		case map[string]interface{}:
+			if ref, ok := refFromMap(v); ok {
+				refs = append(refs, ref)
+				return
+			}
+			for _, child := range v {
+				walk(child)
+			}
+		case []interface{}:
+			for _, child := range v {
+				walk(child)
+			}
+		}
+	}
+	walk(frontmatter)
+	return refs
+}
+
+func refFromMap(value map[string]interface{}) (Ref, bool) {
+	provider, _ := value["provider"].(string)
+	id, _ := value["id"].(string)
+	kind, _ := value["kind"].(string)
+	if provider == "" || id == "" || kind == "" {
+		return Ref{}, false
+	}
+	version := 0
+	switch v := value["schema_version"].(type) {
+	case int:
+		version = v
+	case int64:
+		version = int(v)
+	case uint64:
+		if v > uint64(^uint(0)>>1) {
+			return Ref{}, false
+		}
+		version = int(v)
+	case float64:
+		version = int(v)
+	}
+	return Ref{
+		Provider:      provider,
+		SchemaVersion: version,
+		ID:            id,
+		Kind:          kind,
+		DisplayName:   stringValue(value["display_name"]),
+	}, true
+}
+
+func stringValue(value interface{}) string {
+	result, _ := value.(string)
+	return result
+}
+
 // callTimeout bounds a single contact-store call. It is a package variable so
 // tests can shrink it instead of sleeping.
 var callTimeout = 5 * time.Second

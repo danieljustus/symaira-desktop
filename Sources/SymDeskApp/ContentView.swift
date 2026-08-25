@@ -107,6 +107,25 @@ struct ContentView: View {
     @State private var tagCounts: [TagEntry] = []
     @State private var tagFilter: String? = nil
 
+    private var aiDockContext: DeskChatContext? {
+        let document = selectedNote.map { vaultRelativePath($0.path) }
+        let excerpt = DeskChatContext.boundedExcerpt(noteContent)
+        let scope: String? = {
+            if let selectedViewID {
+                return "\(displayMode) / view \(selectedViewID)"
+            }
+            return String(describing: displayMode)
+        }()
+        let recent = notes.prefix(4).map { vaultRelativePath($0.path) }
+        let context = DeskChatContext(
+            activeDocument: document,
+            visibleExcerpt: excerpt,
+            scope: scope,
+            recentDocuments: Array(recent)
+        )
+        return context.isEmpty ? nil : context
+    }
+
     var body: some View {
         Group {
             if !core.isReady {
@@ -569,7 +588,7 @@ struct ContentView: View {
                 .frame(minWidth: 980, minHeight: 640)
                 .inspector(isPresented: $isShowingInspector) {
                     if isShowingAIDock {
-                        AIDockView()
+                        AIDockView(context: aiDockContext)
                     } else {
                         VStack(alignment: .leading, spacing: 0) {
                             if let note = selectedNote {

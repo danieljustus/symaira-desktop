@@ -757,6 +757,122 @@ public struct GraphData: Codable, Equatable, Sendable {
     }
 }
 
+/// Context captured from the active SymDesk work surface for an AI request.
+///
+/// The context is opt-in at the dock. It identifies the active surface without
+/// silently sending an entire document to a remote provider.
+public struct DeskChatContext: Equatable, Sendable {
+    public let activeDocument: String?
+    public let selectionText: String?
+    public let visibleExcerpt: String?
+    public let scope: String?
+    public let recentDocuments: [String]
+
+    public init(
+        activeDocument: String? = nil,
+        selectionText: String? = nil,
+        visibleExcerpt: String? = nil,
+        scope: String? = nil,
+        recentDocuments: [String] = []
+    ) {
+        self.activeDocument = Self.normalized(activeDocument)
+        self.selectionText = Self.normalized(selectionText)
+        self.visibleExcerpt = Self.normalized(visibleExcerpt)
+        self.scope = Self.normalized(scope)
+        self.recentDocuments = Array(
+            recentDocuments.compactMap(Self.normalized).reduce(into: [String]()) { result, path in
+                if !result.contains(path) { result.append(path) }
+            }.prefix(4)
+        )
+    }
+
+    public var isEmpty: Bool {
+        activeDocument == nil && selectionText == nil && visibleExcerpt == nil
+            && scope == nil && recentDocuments.isEmpty
+    }
+
+    public var summary: String {
+        if let activeDocument {
+            return URL(fileURLWithPath: activeDocument).lastPathComponent
+        }
+        return scope ?? "Context"
+    }
+
+    /// Returns a Unicode-safe excerpt bounded to `limit` characters. When a
+    /// selection is available, the excerpt is centered around its first
+    /// occurrence so the visible context and selection travel together.
+    public static func boundedExcerpt(
+        _ text: String,
+        around selection: String? = nil,
+        limit: Int = 2_400
+    ) -> String {
+        let source = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard limit > 0, !source.isEmpty else { return "" }
+        guard source.count > limit else { return source }
+
+        let marker = "… [truncated]"
+        guard limit > marker.count * 2 else { return String(source.prefix(limit)) }
+
+        if let selection = normalized(selection), selection.count < limit - marker.count * 2,
+           let range = source.range(of: selection) {
+            let available = limit - marker.count * 2 - selection.count
+            let leading = available / 2
+            let trailing = available - leading
+            let start = source.index(
+                range.lowerBound,
+                offsetBy: -min(leading, source.distance(from: source.startIndex, to: range.lowerBound))
+            )
+            let end = source.index(
+                range.upperBound,
+                offsetBy: min(trailing, source.distance(from: range.upperBound, to: source.endIndex))
+            )
+            return marker + source[start..<end] + marker
+        }
+
+        return String(source.prefix(limit - marker.count)) + marker
+    }
+
+    /// Builds a reference-only prompt section. Note content is wrapped as
+    /// context so instructions inside a document are not mistaken for the
+    /// user's new request.
+    public func prompt(for query: String) -> String {
+        let question = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !isEmpty else { return question }
+
+        var lines = ["[Current SymDesk context — reference only]"]
+        if let scope { lines.append("Scope: \(scope)") }
+        if let activeDocument { lines.append("Active document: \(activeDocument)") }
+        if let selectionText {
+            lines.append("Editor selection:\n\(Self.indented(selectionText))")
+        }
+        if let visibleExcerpt {
+            lines.append("Visible excerpt:\n\(Self.indented(visibleExcerpt))")
+        }
+        if !recentDocuments.isEmpty {
+            lines.append("Recent documents: \(recentDocuments.joined(separator: ", "))")
+        }
+        lines.append("[End current context]")
+        lines.append("")
+        lines.append(question)
+        return lines.joined(separator: "\n")
+    }
+
+    private static func normalized(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private static func indented(_ value: String) -> String {
+        value.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { "  \($0)" }
+            .joined(separator: "\n")
+    }
+}
+
+/// Compatibility name for callers from the first implementation pass.
+public typealias AIDockContext = DeskChatContext
+
 @MainActor
 public final class DeskCore: ObservableObject {
     public static let shared = DeskCore()
@@ -1129,6 +1245,13 @@ public final class DeskCore: ObservableObject {
 	public func ingestRetry(jobID: String) async throws {
 		guard let transport else { throw DeskCoreError.coreNotFound }
 		try await transport.ingestRetry(jobID: jobID, vaultArgs: vaultArgs)
+    }
+
+    /// Streams an AI answer with optional work-surface context. A nil or
+    /// empty context delegates to the original ask path unchanged, so scoped
+    /// notebook callers continue to use `askScoped` without prompt rewriting.
+    public func ask(query: String, context: DeskChatContext?, agent: Bool = false) -> AsyncThrowingStream<AIEvent, Error> {
+        ask(query: context?.isEmpty == false ? context?.prompt(for: query) ?? query : query, agent: agent)
     }
 
     /// Streams an AI answer for the given query. When `agent` is true the

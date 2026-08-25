@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/mail"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/spf13/cobra"
@@ -19,6 +20,7 @@ func newMailCmd() *cobra.Command {
 
 	cmd.AddCommand(newMailStatusCmd())
 	cmd.AddCommand(newMailFetchCmd())
+	cmd.AddCommand(newMailRulesCmd())
 
 	return cmd
 }
@@ -91,4 +93,122 @@ func newMailFetchCmd() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+// newMailRulesCmd implements the mail-account CLI surface absorbed from
+// symingest (issue #609): symdesk mail rules list|create|update|delete. It
+// is the config-management counterpart to `mail status`/`mail fetch`.
+func newMailRulesCmd() *cobra.Command {
+	var configPath string
+	cmd := &cobra.Command{
+		Use:   "rules",
+		Short: "Manage configured IMAP mail accounts",
+	}
+	cmd.PersistentFlags().StringVar(&configPath, "config", "", "mail configuration file (defaults to .symingest.toml or the global config)")
+
+	cmd.AddCommand(newMailRulesListCmd(&configPath))
+	cmd.AddCommand(newMailRulesCreateCmd(&configPath))
+	cmd.AddCommand(newMailRulesUpdateCmd(&configPath))
+	cmd.AddCommand(newMailRulesDeleteCmd(&configPath))
+	return cmd
+}
+
+func newMailRulesListCmd(configPath *string) *cobra.Command {
+	return &cobra.Command{
+		Use:   "list",
+		Short: "List configured IMAP mail accounts",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			result, err := ingest.ListMailAccounts(*configPath)
+			if err != nil {
+				return err
+			}
+			return outputMailRulesResult("list", result)
+		},
+	}
+}
+
+func newMailRulesCreateCmd(configPath *string) *cobra.Command {
+	return &cobra.Command{
+		Use:   "create",
+		Short: "Add an IMAP mail account, reading its JSON from stdin",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			var account ingest.MailAccountRecord
+			if err := json.NewDecoder(cmd.InOrStdin()).Decode(&account); err != nil {
+				return fmt.Errorf("read account JSON from stdin: %w", err)
+			}
+			result, err := ingest.CreateMailAccount(*configPath, account)
+			if err != nil {
+				return err
+			}
+			return outputMailRulesResult("create", result)
+		},
+	}
+}
+
+func newMailRulesUpdateCmd(configPath *string) *cobra.Command {
+	return &cobra.Command{
+		Use:   "update <id>",
+		Short: "Update an IMAP mail account, reading its JSON from stdin",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var account ingest.MailAccountRecord
+			if err := json.NewDecoder(cmd.InOrStdin()).Decode(&account); err != nil {
+				return fmt.Errorf("read account JSON from stdin: %w", err)
+			}
+			result, err := ingest.UpdateMailAccount(*configPath, args[0], account)
+			if err != nil {
+				return err
+			}
+			return outputMailRulesResult("update", result)
+		},
+	}
+}
+
+func newMailRulesDeleteCmd(configPath *string) *cobra.Command {
+	return &cobra.Command{
+		Use:   "delete <id>",
+		Short: "Delete an IMAP mail account",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			result, err := ingest.DeleteMailAccount(*configPath, args[0])
+			if err != nil {
+				return err
+			}
+			return outputMailRulesResult("delete", result)
+		},
+	}
+}
+
+// outputMailRulesResult prints a mail-account result. The JSON path writes
+// through a json.Encoder — the same way outputStream emits structured output
+// — rather than fmt-printing a marshalled string through outputResult, which
+// made every command's output look to CodeQL like a logging sink for the
+// account's secret field. Every account has come back through ingest's
+// masking view, so a stored plaintext password reads as the mask and only a
+// non-secret reference (symvault://…) is printed verbatim — which the app
+// needs in order to tell a configured account from an unconfigured one.
+func outputMailRulesResult(operation string, result *ingest.MailConfigurationResult) error {
+	if jsonFlag {
+		return json.NewEncoder(os.Stdout).Encode(mailRulesResponse{
+			SchemaVersion:           ingest.SchemaVersion,
+			Operation:               operation,
+			MailConfigurationResult: *result,
+		})
+	}
+	fmt.Printf("%s: %d account(s) at %s\n", operation, len(result.Accounts), result.ConfigPath)
+	for _, w := range result.Warnings {
+		fmt.Printf("  warning: %s\n", w)
+	}
+	for _, a := range result.Accounts {
+		fmt.Printf("  %s\t%s@%s:%d/%s\n", a.ID, a.Username, a.Host, a.Port, a.Folder)
+	}
+	return nil
+}
+
+type mailRulesResponse struct {
+	SchemaVersion int    `json:"schema_version"`
+	Operation     string `json:"operation"`
+	ingest.MailConfigurationResult
 }

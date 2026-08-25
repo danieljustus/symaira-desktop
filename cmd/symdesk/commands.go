@@ -42,6 +42,7 @@ func registerCommands(rootCmd *cobra.Command) {
 		newDuplicatesCmd(),
 		newPaperlessCmd(),
 		newIngestCmd(),
+		newRulesCmd(),
 		newConsumeCmd(),
 		newExportCmd(),
 		newClipCmd(),

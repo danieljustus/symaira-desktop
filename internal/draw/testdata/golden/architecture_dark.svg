@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="49.50 29.25 267.56 360.06" width="267.56" height="360.06">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-10.50 9.25 267.56 384.06" width="267.56" height="384.06">
   <metadata>
     <symdraw:font-hash>0eab2c8dd6221438ca217c9d9189985ce0c24752f9fa96f52044b743869b6e80</symdraw:font-hash>
     <symdraw:generator>symdraw</symdraw:generator>
@@ -15,19 +15,19 @@
       <circle fill="#E5C397" cx="5.00" cy="5.00" r="4.00" />
     </marker>
   </defs>
-  <rect x="49.50" y="29.25" width="267.56" height="360.06" fill="#0D0C0A" />
+  <rect x="-10.50" y="9.25" width="267.56" height="384.06" fill="#0D0C0A" />
   <a href="Projekte/Ingest.md">
-<rect id="ingest" fill="#1A1916" stroke="#2E2C28" stroke-width="1.50" x="100.00" y="60.00" width="134.52" height="44.94" rx="8.00" ry="8.00" />
+<rect id="ingest" fill="#1A1916" stroke="#2E2C28" stroke-width="1.50" x="56.02" y="40.00" width="134.52" height="44.94" rx="8.00" ry="8.00" />
   </a>
-  <text id="ingest-text-0" x="167.26" y="87.56" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#F5F4F0" text-anchor="middle" textLength="94.52">Ingest Service</text>
-  <rect id="sidecar" fill="#1A1916" stroke="#2E2C28" stroke-width="1.50" x="100.00" y="164.94" width="166.56" height="68.94" rx="12.00" ry="12.00" />
-  <text id="sidecar-text-0" x="183.28" y="204.50" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#F5F4F0" text-anchor="middle" textLength="116.56">Sidecar Database</text>
-  <rect id="search" fill="#1A1916" stroke="#2E2C28" stroke-width="1.50" x="100.00" y="293.88" width="149.36" height="44.94" rx="22.47" ry="22.47" />
-  <text id="search-text-0" x="174.68" y="321.44" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#F5F4F0" text-anchor="middle" textLength="86.89">Search Index</text>
-  <line id="edge-0" fill="none" stroke="#B8B4A8" stroke-width="1.50" x1="167.26" y1="104.94" x2="183.28" y2="164.94" marker-end="url(#arrow-end)" />
-  <text x="181.27" y="130.94" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#9E9B90" dominant-baseline="middle" textLength="38.36">derives</text>
-  <line id="edge-1" fill="none" stroke="#B8B4A8" stroke-width="1.50" stroke-dasharray="6 4" x1="183.28" y1="233.88" x2="174.68" y2="293.88" marker-end="url(#arrow-end)" />
-  <text x="184.98" y="259.88" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#9E9B90" dominant-baseline="middle" textLength="40.53">indexes</text>
-  <rect id="group-0" fill="#141310" stroke="#3D3A35" stroke-width="1.00" stroke-dasharray="4 4" x="80.00" y="144.94" width="206.56" height="213.88" rx="6.00" ry="6.00" />
-  <text x="92.00" y="160.94" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="12.00" font-weight="bold" fill="#9E9B90" dominant-baseline="middle" textLength="82.06">Storage Layer</text>
+  <text id="ingest-text-0" x="123.28" y="67.56" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#F5F4F0" text-anchor="middle" textLength="94.52">Ingest Service</text>
+  <rect id="sidecar" fill="#1A1916" stroke="#2E2C28" stroke-width="1.50" x="40.00" y="156.94" width="166.56" height="68.94" rx="12.00" ry="12.00" />
+  <text id="sidecar-text-0" x="123.28" y="196.50" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#F5F4F0" text-anchor="middle" textLength="116.56">Sidecar Database</text>
+  <rect id="search" fill="#1A1916" stroke="#2E2C28" stroke-width="1.50" x="48.60" y="297.88" width="149.36" height="44.94" rx="22.47" ry="22.47" />
+  <text id="search-text-0" x="123.28" y="325.44" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="14.00" fill="#F5F4F0" text-anchor="middle" textLength="86.89">Search Index</text>
+  <line id="edge-0" fill="none" stroke="#B8B4A8" stroke-width="1.50" x1="123.28" y1="84.94" x2="123.28" y2="156.94" marker-end="url(#arrow-end)" />
+  <text id="edge-0-label" x="129.28" y="152.94" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#9E9B90" dominant-baseline="middle" textLength="38.36">derives</text>
+  <line id="edge-1" fill="none" stroke="#B8B4A8" stroke-width="1.50" stroke-dasharray="6 4" x1="123.28" y1="225.88" x2="123.28" y2="297.88" marker-end="url(#arrow-end)" />
+  <text id="edge-1-label" x="129.28" y="293.88" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#9E9B90" dominant-baseline="middle" textLength="40.53">indexes</text>
+  <rect id="group-0" fill="#141310" stroke="#3D3A35" stroke-width="1.00" stroke-dasharray="4 4" x="20.00" y="136.94" width="206.56" height="225.88" rx="6.00" ry="6.00" />
+  <text x="32.00" y="152.94" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="12.00" font-weight="bold" fill="#9E9B90" dominant-baseline="middle" textLength="82.06">Storage Layer</text>
 </svg>

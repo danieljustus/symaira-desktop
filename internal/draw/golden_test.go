@@ -42,6 +42,33 @@ func TestGoldenOutputs(t *testing.T) {
 			goldenPNG: "testdata/golden/chart_light.png",
 		},
 		{
+			name: "line_light",
+			req: RenderRequest{
+				IR:     sampleChartIRForType(ir.ChartLine),
+				Format: FormatSVG,
+			},
+			goldenSVG: "testdata/golden/line_light.svg",
+			goldenPNG: "testdata/golden/line_light.png",
+		},
+		{
+			name: "pie_light",
+			req: RenderRequest{
+				IR:     sampleChartIRForType(ir.ChartPie),
+				Format: FormatSVG,
+			},
+			goldenSVG: "testdata/golden/pie_light.svg",
+			goldenPNG: "testdata/golden/pie_light.png",
+		},
+		{
+			name: "scatter_light",
+			req: RenderRequest{
+				IR:     sampleChartIRForType(ir.ChartScatter),
+				Format: FormatSVG,
+			},
+			goldenSVG: "testdata/golden/scatter_light.svg",
+			goldenPNG: "testdata/golden/scatter_light.png",
+		},
+		{
 			name: "architecture_text_as_paths",
 			req: RenderRequest{
 				IR:          sampleArchitectureIR(),

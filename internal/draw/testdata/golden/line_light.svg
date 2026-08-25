@@ -3,7 +3,7 @@
   <metadata>
     <symdraw:font-hash>0eab2c8dd6221438ca217c9d9189985ce0c24752f9fa96f52044b743869b6e80</symdraw:font-hash>
     <symdraw:generator>symdraw</symdraw:generator>
-    <symdraw:meta name="description">bar chart with 2 series</symdraw:meta>
+    <symdraw:meta name="description">line chart with 2 series</symdraw:meta>
     <symdraw:meta name="title">Monthly Vault Growth</symdraw:meta>
   </metadata>
   <defs>
@@ -33,15 +33,20 @@
   <text x="50.00" y="60.00" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="10.00" fill="#6C757D" text-anchor="end" dominant-baseline="middle" textLength="18.34">250</text>
   <line fill="none" stroke="#D0D5DD" stroke-width="1.50" x1="60.00" y1="60.00" x2="60.00" y2="310.00" />
   <line fill="none" stroke="#D0D5DD" stroke-width="1.50" x1="60.00" y1="310.00" x2="460.00" y2="310.00" />
-  <rect fill="#1E3D59" x="86.67" y="190.00" width="38.00" height="120.00" rx="3.00" ry="3.00" />
-  <text x="126.67" y="328.00" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#6C757D" text-anchor="middle" dominant-baseline="middle" textLength="18.95">Jan</text>
-  <rect fill="#17B978" x="126.67" y="265.00" width="38.00" height="45.00" rx="3.00" ry="3.00" />
-  <rect fill="#1E3D59" x="220.00" y="130.00" width="38.00" height="180.00" rx="3.00" ry="3.00" />
+  <circle fill="#1E3D59" stroke="#FFFFFF" stroke-width="1.50" cx="60.00" cy="190.00" r="4.00" />
+  <text x="60.00" y="328.00" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#6C757D" text-anchor="middle" dominant-baseline="middle" textLength="18.95">Jan</text>
+  <circle fill="#1E3D59" stroke="#FFFFFF" stroke-width="1.50" cx="260.00" cy="130.00" r="4.00" />
   <text x="260.00" y="328.00" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#6C757D" text-anchor="middle" dominant-baseline="middle" textLength="19.64">Feb</text>
-  <rect fill="#17B978" x="260.00" y="220.00" width="38.00" height="90.00" rx="3.00" ry="3.00" />
-  <rect fill="#1E3D59" x="353.33" y="70.00" width="38.00" height="240.00" rx="3.00" ry="3.00" />
-  <text x="393.33" y="328.00" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#6C757D" text-anchor="middle" dominant-baseline="middle" textLength="20.25">Mar</text>
-  <rect fill="#17B978" x="393.33" y="175.00" width="38.00" height="135.00" rx="3.00" ry="3.00" />
+  <circle fill="#1E3D59" stroke="#FFFFFF" stroke-width="1.50" cx="460.00" cy="70.00" r="4.00" />
+  <text x="460.00" y="328.00" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#6C757D" text-anchor="middle" dominant-baseline="middle" textLength="20.25">Mar</text>
+  <polyline fill="none" stroke="#1E3D59" stroke-width="2.50" points="60.00,190.00 260.00,130.00 460.00,70.00" />
+  <circle fill="#17B978" stroke="#FFFFFF" stroke-width="1.50" cx="60.00" cy="265.00" r="4.00" />
+  <text x="60.00" y="328.00" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#6C757D" text-anchor="middle" dominant-baseline="middle" textLength="18.95">Jan</text>
+  <circle fill="#17B978" stroke="#FFFFFF" stroke-width="1.50" cx="260.00" cy="220.00" r="4.00" />
+  <text x="260.00" y="328.00" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#6C757D" text-anchor="middle" dominant-baseline="middle" textLength="19.64">Feb</text>
+  <circle fill="#17B978" stroke="#FFFFFF" stroke-width="1.50" cx="460.00" cy="175.00" r="4.00" />
+  <text x="460.00" y="328.00" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="11.00" fill="#6C757D" text-anchor="middle" dominant-baseline="middle" textLength="20.25">Mar</text>
+  <polyline fill="none" stroke="#17B978" stroke-width="2.50" points="60.00,265.00 260.00,220.00 460.00,175.00" />
   <rect fill="#1E3D59" x="480.00" y="70.00" width="12.00" height="12.00" rx="2.00" ry="2.00" />
   <text x="498.00" y="79.00" font-family="Inter, -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, sans-serif" font-size="12.00" fill="#1A1D20" dominant-baseline="middle" textLength="64.67">Documents</text>
   <rect fill="#17B978" x="480.00" y="94.00" width="12.00" height="12.00" rx="2.00" ry="2.00" />

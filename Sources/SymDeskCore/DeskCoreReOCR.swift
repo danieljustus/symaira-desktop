@@ -12,7 +12,7 @@ extension DeskCore: ReOCRClient {
     }
 
     public func reprocess(archivePath: String) async throws -> ReOCRResponse {
-        try await runReOCR(arguments: ["ingest", "reocr", archivePath, "--json"] + vaultArgs)
+        try await runReOCR(arguments: ["ingest", "reocr", "--json"] + vaultArgs + ["--", archivePath])
     }
 
     // `ingest reocr` writes its {document_id, status, error} envelope to

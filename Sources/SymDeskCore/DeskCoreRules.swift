@@ -12,32 +12,32 @@ import SymairaIngestContract
 // client used.
 extension DeskCore: ClassificationRulesClient {
     public func listRules() async throws -> [ClassificationRule] {
-        let data = try await runChecked(arguments: ["rules", "list", "--json"] + vaultArgs)
+        let data = try await runChecked(arguments: rulesArgs("list"))
         return try SymingestRulesContract.decodeList(from: data).rules
     }
 
     public func addRule(pattern: String, kind: String, value: String) async throws -> ClassificationRule {
-        let data = try await runChecked(arguments: ["rules", "add", pattern, kind, value, "--json"] + vaultArgs)
+        let data = try await runChecked(arguments: rulesArgs("add", pattern, kind, value))
         return try SymingestRulesContract.decodeRule(from: data).rule
     }
 
     public func updateRule(id: Int64, pattern: String, kind: String, value: String) async throws -> ClassificationRule {
-        let data = try await runChecked(arguments: ["rules", "update", String(id), pattern, kind, value, "--json"] + vaultArgs)
+        let data = try await runChecked(arguments: rulesArgs("update", String(id), pattern, kind, value))
         return try SymingestRulesContract.decodeRule(from: data).rule
     }
 
     public func deleteRule(id: Int64) async throws {
-        let data = try await runChecked(arguments: ["rules", "delete", String(id), "--json"] + vaultArgs)
+        let data = try await runChecked(arguments: rulesArgs("delete", String(id)))
         _ = try SymingestRulesContract.decodeDelete(from: data)
     }
 
     public func testRules(text: String) async throws -> [ClassificationRuleMatch] {
-        let data = try await runChecked(arguments: ["rules", "test", text, "--json"] + vaultArgs)
+        let data = try await runChecked(arguments: rulesArgs("test", text))
         return try SymingestRulesContract.decodeTest(from: data).matches
     }
 
     public func dryRunRule(pattern: String, kind: String, value: String) async throws -> RulesDryRunResponse {
-        let data = try await runChecked(arguments: ["rules", "dry-run", pattern, kind, value, "--json"] + vaultArgs)
+        let data = try await runChecked(arguments: rulesArgs("dry-run", pattern, kind, value))
         return try SymingestRulesContract.decodeDryRun(from: data)
     }
 
@@ -65,6 +65,19 @@ extension DeskCore: ClassificationRulesClient {
     public func deleteMailRule(id: String) async throws {
         let data = try await runChecked(arguments: ["mail", "rules", "delete", id, "--json"])
         _ = try SymingestRulesContract.decodeMail(from: data)
+    }
+
+    // Positional arguments come after a `--` terminator: a rule pattern or a
+    // block of text under test can legitimately begin with a dash (pasting a
+    // bulleted line is the obvious case), and without the terminator cobra
+    // reads it as a flag and fails with "unknown shorthand flag".
+    private func rulesArgs(_ subcommand: String, _ positionals: String...) -> [String] {
+        var args = ["rules", subcommand, "--json"] + vaultArgs
+        if !positionals.isEmpty {
+            args.append("--")
+            args.append(contentsOf: positionals)
+        }
+        return args
     }
 
     private func encoded(_ account: MailAccount) throws -> String {

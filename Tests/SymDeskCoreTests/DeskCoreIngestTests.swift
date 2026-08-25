@@ -46,7 +46,7 @@ final class DeskCoreIngestTests: XCTestCase {
 
         let rule = try await DeskCore.shared.addRule(pattern: "receipt", kind: "tag", value: "Review")
 
-        XCTAssertEqual(transport.lastArguments, ["rules", "add", "receipt", "tag", "Review", "--json", "--vault", "/tmp/vault"])
+        XCTAssertEqual(transport.lastArguments, ["rules", "add", "--json", "--vault", "/tmp/vault", "--", "receipt", "tag", "Review"])
         XCTAssertEqual(rule.id, 2)
     }
 
@@ -55,7 +55,7 @@ final class DeskCoreIngestTests: XCTestCase {
 
         let rule = try await DeskCore.shared.updateRule(id: 2, pattern: "receipt", kind: "tag", value: "Archive")
 
-        XCTAssertEqual(transport.lastArguments, ["rules", "update", "2", "receipt", "tag", "Archive", "--json", "--vault", "/tmp/vault"])
+        XCTAssertEqual(transport.lastArguments, ["rules", "update", "--json", "--vault", "/tmp/vault", "--", "2", "receipt", "tag", "Archive"])
         XCTAssertEqual(rule.value, "Archive")
     }
 
@@ -64,7 +64,7 @@ final class DeskCoreIngestTests: XCTestCase {
 
         try await DeskCore.shared.deleteRule(id: 2)
 
-        XCTAssertEqual(transport.lastArguments, ["rules", "delete", "2", "--json", "--vault", "/tmp/vault"])
+        XCTAssertEqual(transport.lastArguments, ["rules", "delete", "--json", "--vault", "/tmp/vault", "--", "2"])
     }
 
     func testTestRulesDecodesMatches() async throws {
@@ -72,8 +72,21 @@ final class DeskCoreIngestTests: XCTestCase {
 
         let matches = try await DeskCore.shared.testRules(text: "invoice #123")
 
-        XCTAssertEqual(transport.lastArguments, ["rules", "test", "invoice #123", "--json", "--vault", "/tmp/vault"])
+        XCTAssertEqual(transport.lastArguments, ["rules", "test", "--json", "--vault", "/tmp/vault", "--", "invoice #123"])
         XCTAssertEqual(matches.map(\.id), [1])
+    }
+
+    /// Text under test is arbitrary user input: pasting a bulleted line
+    /// starts it with a dash. Without the `--` terminator cobra reads that as
+    /// a flag and the command fails with "unknown shorthand flag".
+    func testTestRulesPassesLeadingDashTextAsAPositional() async throws {
+        transport.response = Data(#"{"schema_version":1,"matches":[]}"#.utf8)
+
+        _ = try await DeskCore.shared.testRules(text: "- Abzug von der Miete")
+
+        let args = transport.lastArguments
+        let terminator = try XCTUnwrap(args.firstIndex(of: "--"))
+        XCTAssertEqual(Array(args[terminator...]), ["--", "- Abzug von der Miete"])
     }
 
     func testDryRunRuleDecodesResponse() async throws {
@@ -84,7 +97,7 @@ final class DeskCoreIngestTests: XCTestCase {
 
         let result = try await DeskCore.shared.dryRunRule(pattern: "invoice", kind: "category", value: "Finance")
 
-        XCTAssertEqual(transport.lastArguments, ["rules", "dry-run", "invoice", "category", "Finance", "--json", "--vault", "/tmp/vault"])
+        XCTAssertEqual(transport.lastArguments, ["rules", "dry-run", "--json", "--vault", "/tmp/vault", "--", "invoice", "category", "Finance"])
         XCTAssertEqual(result.matchedDocuments, 1)
     }
 
@@ -156,7 +169,7 @@ final class DeskCoreIngestTests: XCTestCase {
 
         let response = try await DeskCore.shared.reprocess(archivePath: "/vault/originals/doc.pdf")
 
-        XCTAssertEqual(transport.lastArguments, ["ingest", "reocr", "/vault/originals/doc.pdf", "--json", "--vault", "/tmp/vault"])
+        XCTAssertEqual(transport.lastArguments, ["ingest", "reocr", "--json", "--vault", "/tmp/vault", "--", "/vault/originals/doc.pdf"])
         XCTAssertEqual(response.status, "completed")
     }
 

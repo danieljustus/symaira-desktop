@@ -162,7 +162,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
-          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
+          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/Symaira Desktop.app"
           PLIST_VERSION=$(plutil -extract CFBundleShortVersionString raw -o - "$APP_PATH/Contents/Info.plist")
           echo "CFBundleShortVersionString: $PLIST_VERSION"
           if [ "$PLIST_VERSION" != "$VERSION" ]; then
@@ -179,7 +179,7 @@ jobs:
       - name: Sign and verify app bundle
         run: |
           set -euo pipefail
-          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
+          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/Symaira Desktop.app"
           test -d "$APP_PATH"
           while IFS= read -r -d '' item; do
             if file "$item" | grep -q "Mach-O"; then
@@ -206,7 +206,7 @@ jobs:
           API_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
           echo -n "$NOTARY_API_KEY" | base64 --decode -o "$API_KEY_PATH"
 
-          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
+          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/Symaira Desktop.app"
           SUBMISSION_ARCHIVE="$RUNNER_TEMP/SymDesk-notarization.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$SUBMISSION_ARCHIVE"
           xcrun notarytool submit "$SUBMISSION_ARCHIVE" \
@@ -221,15 +221,15 @@ jobs:
       - name: Package release assets
         run: |
           set -euo pipefail
-          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app"
+          APP_PATH="$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/Symaira Desktop.app"
           VERSION="${GITHUB_REF_NAME#v}"
           mkdir -p dist/dmg-staging
           cp -R "$APP_PATH" dist/dmg-staging/
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "dist/SymDesk-${VERSION}.zip"
           ./scripts/create-symaira-dmg.sh \
             "$APP_PATH" \
-            "dist/SymDesk-${VERSION}.dmg" \
-            "SymDesk"
+            "dist/Symaira-Desktop-${VERSION}-macos.dmg" \
+            "Symaira Desktop"
 
       - name: Notarize and staple DMG
         env:
@@ -239,7 +239,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
-          DMG_PATH="dist/SymDesk-${VERSION}.dmg"
+          DMG_PATH="dist/Symaira-Desktop-${VERSION}-macos.dmg"
           API_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
           echo -n "$NOTARY_API_KEY" | base64 --decode -o "$API_KEY_PATH"
           xcrun notarytool submit "$DMG_PATH" \
@@ -255,7 +255,7 @@ jobs:
         with:
           files: |
             dist/SymDesk-*.zip
-            dist/SymDesk-*.dmg
+            dist/Symaira-Desktop-*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -265,7 +265,7 @@ jobs:
           name: SymDesk-macos
           path: |
             dist/SymDesk-*.zip
-            dist/SymDesk-*.dmg
+            dist/Symaira-Desktop-*.dmg
           if-no-files-found: error
 
       - name: Clean up signing material
@@ -294,9 +294,9 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
-          DMG_URL="https://github.com/danieljustus/symaira-desktop/releases/download/${GITHUB_REF_NAME}/SymDesk-${VERSION}.dmg"
-          curl -fsSL -o "SymDesk-${VERSION}.dmg" "$DMG_URL"
-          SHA256=$(shasum -a 256 "SymDesk-${VERSION}.dmg" | awk '{print $1}')
+          DMG_URL="https://github.com/danieljustus/symaira-desktop/releases/download/${GITHUB_REF_NAME}/Symaira-Desktop-${VERSION}-macos.dmg"
+          curl -fsSL -o "Symaira-Desktop-${VERSION}-macos.dmg" "$DMG_URL"
+          SHA256=$(shasum -a 256 "Symaira-Desktop-${VERSION}-macos.dmg" | awk '{print $1}')
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "SHA256=$SHA256" >> "$GITHUB_ENV"
 
@@ -309,20 +309,20 @@ jobs:
             version "${VERSION}"
             sha256 "${SHA256}"
 
-            url "https://github.com/danieljustus/symaira-desktop/releases/download/v#{version}/SymDesk-#{version}.dmg"
-            name "SymDesk"
+            url "https://github.com/danieljustus/symaira-desktop/releases/download/v#{version}/Symaira-Desktop-#{version}-macos.dmg"
+            name "Symaira Desktop"
             desc "Local-first markdown vault workspace"
             homepage "https://github.com/danieljustus/symaira-desktop"
 
             livecheck do
               url "https://github.com/danieljustus/symaira-desktop/releases/latest"
               strategy :header_match
-              regex(/SymDesk-(\d+(?:\.\d+)*)\.dmg/i)
+              regex(/Symaira-Desktop-(\d+(?:\.\d+)*)-macos\.dmg/i)
             end
 
             depends_on macos: :sonoma
 
-            app "SymDesk.app"
+            app "Symaira Desktop.app"
 
             zap trash: [
               "~/Library/Application Support/SymDesk",

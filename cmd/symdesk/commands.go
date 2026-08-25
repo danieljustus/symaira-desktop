@@ -66,6 +66,7 @@ func registerCommands(rootCmd *cobra.Command) {
 		newDoctorCmd(),
 		newEventsCmd(),
 		newDemoCmd(),
+		newConfigCmd(),
 	)
 
 	// `doc` was a near-synonym command with a one-character name difference

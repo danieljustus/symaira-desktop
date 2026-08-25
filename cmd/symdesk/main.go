@@ -38,9 +38,10 @@ func init() {
 }
 
 var (
-	cfg       *config.Config
-	jsonFlag  bool
-	vaultFlag string
+	cfg        *config.Config
+	jsonFlag   bool
+	outputFlag string
+	vaultFlag  string
 )
 
 // Command groups shown by `symdesk --help` (#467). Every command registered
@@ -120,10 +121,24 @@ func newRootCmd() *cobra.Command {
 			if vaultFlag != "" {
 				cfg.Vault = vaultFlag
 			}
+			// --output text|json|yaml is the canonical output switch;
+			// --json stays as a bit-for-bit alias for --output json.
+			if outputFlag != "" {
+				switch outputFlag {
+				case "json":
+					jsonFlag = true
+				case "text", "yaml":
+					jsonFlag = false
+				default:
+					fmt.Fprintf(os.Stderr, "invalid --output value %q (want text|json|yaml)\n", outputFlag)
+					os.Exit(int(exitcodes.ExitGeneric))
+				}
+			}
 		},
 	}
 	rootCmd.Version = version
 	rootCmd.PersistentFlags().BoolVar(&jsonFlag, "json", false, "output in JSON format")
+	rootCmd.PersistentFlags().StringVar(&outputFlag, "output", "", "output format: text|json|yaml (--json is shorthand for --output json)")
 	rootCmd.PersistentFlags().StringVar(&vaultFlag, "vault", "", "override document vault path (the Markdown workspace; unrelated to symvault)")
 
 	// Command groups (#467): every command added below (here and in

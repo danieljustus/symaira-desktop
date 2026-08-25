@@ -36,7 +36,7 @@ var ArchivePathFunc = ingest.ArchivePath
 func newDoctorCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "doctor",
-		Short: "Check system health, vault, and sidecar configuration",
+		Short: "Check system health, document vault, and sidecar configuration",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			results := make(map[string]interface{})
 			allOk := true

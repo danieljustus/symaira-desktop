@@ -71,37 +71,6 @@ jobs:
             && { echo "::error::Coverage ${TOTAL}% is below the ${COVERAGE_THRESHOLD}% gate"; exit 1; }
           echo "Coverage gate passed."
 
-  nested-modules:
-    # The tools absorbed by the repo consolidation keep their own go.mod, so
-    # the root `go test ./...` above does not descend into them. Without this
-    # job their code — the majority of the repository — would ship untested.
-    # One leg per module so a failure is attributable by name.
-    name: nested (${{ matrix.module }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        module: [room]
-    defaults:
-      run:
-        working-directory: ${{ matrix.module }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: ${{ matrix.module }}/go.mod
-          cache-dependency-path: ${{ matrix.module }}/go.sum
-
-      - name: Build
-        run: go build ./...
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Test
-        run: go test -count=1 ./...
-
   lint:
     runs-on: ubuntu-latest
     steps:

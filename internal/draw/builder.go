@@ -20,6 +20,11 @@ func BuildSceneFromIR(d *ir.Diagram) (*scene.Scene, error) {
 		return BuildChartScene(d)
 	}
 
+	// Sequence diagrams use the closed-form lifeline layout (issue #547).
+	if d.Kind == ir.KindSequence {
+		return buildSequenceScene(d)
+	}
+
 	th := theme.Resolve(d.Theme)
 	width := d.Width
 	if width <= 0 {

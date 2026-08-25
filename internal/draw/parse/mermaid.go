@@ -10,7 +10,7 @@ import (
 
 var (
 	// Regex matching unsupported Mermaid diagram header keywords.
-	unsupportedDiagramRegex = regexp.MustCompile(`(?i)^(sequencediagram|pie|classdiagram(-v2)?|statediagram(-v2)?|erdiagram|gantt|gitgraph|journey|mindmap|quadrantchart|xychart(-beta)?|requirementdiagram|c4context|c4container|c4component|c4dynamic|c4deployment|architecture(-beta)?|packet(-beta)?|kanban|block(-beta)?|sankey(-beta)?)\b`)
+	unsupportedDiagramRegex = regexp.MustCompile(`(?i)^(pie|classdiagram(-v2)?|statediagram(-v2)?|erdiagram|gantt|gitgraph|journey|mindmap|quadrantchart|xychart(-beta)?|requirementdiagram|c4context|c4container|c4component|c4dynamic|c4deployment|architecture(-beta)?|packet(-beta)?|kanban|block(-beta)?|sankey(-beta)?)\b`)
 
 	// Regex matching unsupported inline directives in flowchart source.
 	unsupportedDirectiveRegex = regexp.MustCompile(`(?i)^(click|style|classdef|class|linkstyle|acctitle|accdescr|direction|interpolate)\b`)
@@ -119,6 +119,10 @@ func parseMermaidInternal(source string) (*ir.Diagram, error) {
 
 	headerParts := strings.Fields(headerLine)
 	firstWord := strings.ToLower(headerParts[0])
+
+	if firstWord == "sequencediagram" || firstWord == "sequence" {
+		return parseSequenceMermaid(source, headerLineNum, lines)
+	}
 
 	if firstWord != "graph" && firstWord != "flowchart" {
 		return nil, NewSyntaxError(

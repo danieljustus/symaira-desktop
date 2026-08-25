@@ -384,7 +384,6 @@ func TestUnsupportedDiagramTypesProduceTypedError(t *testing.T) {
 		src  string
 		kind string
 	}{
-		{"sequence", "sequenceDiagram\nAlice->>Bob: Hi", "sequenceDiagram"},
 		{"pie", "pie\n\"A\": 10\n\"B\": 20", "pie"},
 		{"class", "classDiagram\nclass Animal", "classDiagram"},
 		{"state", "stateDiagram\n[*] --> State1", "stateDiagram"},
@@ -574,18 +573,15 @@ func TestSwiftTestParityCases(t *testing.T) {
 		}
 	})
 
-	// 3. testUnsupportedDiagramReturnsNil (in Go: returns typed ParseError)
-	t.Run("Swift parity sequence diagram rejection", func(t *testing.T) {
-		_, err := ParseMermaid("sequenceDiagram\nAlice->>Bob: Hi")
-		if err == nil {
-			t.Fatal("expected rejection of sequenceDiagram")
+	// 3. Sequence diagrams are now a supported subset (issue #547); pie stays
+	//    rejected as a Swift-parity check.
+	t.Run("Swift parity sequence diagram supported", func(t *testing.T) {
+		d, err := ParseMermaid("sequenceDiagram\nAlice->>Bob: Hi")
+		if err != nil {
+			t.Fatalf("sequenceDiagram should parse, got error: %v", err)
 		}
-		var pe *ParseError
-		if !errors.As(err, &pe) {
-			t.Fatalf("expected *ParseError, got %T", err)
-		}
-		if !strings.Contains(pe.Message, "sequenceDiagram") {
-			t.Errorf("expected message to contain sequenceDiagram, got %q", pe.Message)
+		if d.Kind != ir.KindSequence {
+			t.Errorf("kind = %q, want sequence", d.Kind)
 		}
 	})
 

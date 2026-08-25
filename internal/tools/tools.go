@@ -85,6 +85,7 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(true, newDocsSimilarTool(options.GetService)),
 		entry(true, newVaultHealthTool(options.GetService)),
 		entry(true, newRelatedTool(options.GetService)),
+		entry(true, newDiagramTool(options.GetService)),
 		entry(true, newIngestJobsTool(options.GetService)),
 		entry(true, newMeetingListTool(options.GetService)),
 		entry(true, newMeetingGetTool(options.GetService)),
@@ -945,4 +946,75 @@ func newAssetStoreTool(getService ServiceFactory) *Tool {
 			}, nil
 		},
 	}
+}
+
+// newDiagramTool renders the vault's own link graph as a diagram (issue
+// #548). It is the vault-native surface that lets agents and the app turn
+// the sidecar link table into a picture without leaving symdesk.
+func newDiagramTool(getService ServiceFactory) *Tool {
+	return &Tool{
+		Name:        "desk_diagram",
+		Description: "Renders the vault link graph as an SVG diagram. Returns the SVG document; use it to embed or display the vault's structure.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"title":{"type":"string","description":"optional diagram title"}}}`),
+		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
+			svc, db, err := getService()
+			if err != nil {
+				return nil, err
+			}
+			defer func() { _ = db.Close() }()
+			g, err := svc.Graph()
+			if err != nil {
+				return nil, err
+			}
+			svg, err := renderVaultGraphSVG(g)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{"svg": svg}, nil
+		},
+	}
+}
+
+// renderVaultGraphSVG builds a minimal, deterministic SVG from the vault
+// link graph: one labelled node per note and one line per link. Node
+// positions follow a stable column layout so repeated renders are
+// reproducible for embedding and diffing.
+func renderVaultGraphSVG(g *service.GraphData) (string, error) {
+	if g == nil {
+		return "", fmt.Errorf("graph data is nil")
+	}
+	var b strings.Builder
+	b.WriteString(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" font-family="system-ui, sans-serif">` + "\n")
+	for i, n := range g.Nodes {
+		col := i % 4
+		row := i / 4
+		x := 80 + col*280
+		y := 60 + row*90
+		fmt.Fprintf(&b, `<g transform="translate(%d,%d)"><rect width="240" height="60" rx="8" fill="#f3f4f6" stroke="#9ca3af"/><text x="120" y="36" text-anchor="middle" font-size="13">%s</text></g>`+"\n", x, y, xmlEscape(n.Label))
+	}
+	for _, e := range g.Edges {
+		// Deterministic mid-edge line using node index columns.
+		fx := 0
+		tx := 0
+		for i, n := range g.Nodes {
+			if n.ID == e.Source {
+				fx = (i%4)*280 + 200
+			}
+			if n.ID == e.Target {
+				tx = (i%4)*280 + 80
+			}
+		}
+		fmt.Fprintf(&b, `<line x1="%d" y1="120" x2="%d" y2="120" stroke="#c4b5fd" stroke-width="1.5"/>`+"\n", fx+80, tx+80)
+	}
+	b.WriteString(`</svg>` + "\n")
+	return b.String(), nil
+}
+
+// xmlEscape escapes text for safe embedding in SVG output.
+func xmlEscape(s string) string {
+	s = strings.ReplaceAll(s, "&", "&amp;")
+	s = strings.ReplaceAll(s, "<", "&lt;")
+	s = strings.ReplaceAll(s, ">", "&gt;")
+	s = strings.ReplaceAll(s, `"`, "&quot;")
+	return s
 }

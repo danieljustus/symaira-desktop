@@ -199,6 +199,10 @@ func streamLLM(ctx context.Context, cfg *config.Config, prompt string, out chan<
 		provider = "ollama"
 	}
 
+	if provider == "hermes" {
+		return streamHermes(ctx, HermesConfig{Session: cfg.HermesSession}, prompt, out)
+	}
+
 	if provider == "anthropic" {
 		apiKey := secrets.ResolveKey(cfg.LLMAPIKey)
 		if apiKey == "" {

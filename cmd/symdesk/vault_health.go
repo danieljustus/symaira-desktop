@@ -8,7 +8,7 @@ import (
 )
 
 func newVaultCmd() *cobra.Command {
-	cmd := &cobra.Command{Use: "vault", Short: "Inspect and manage vault state"}
+	cmd := &cobra.Command{Use: "vault", Short: "Inspect and manage the document vault (Markdown workspace, not symvault)"}
 	cmd.AddCommand(newVaultHealthCmd())
 	cmd.AddCommand(newVaultAdoptCmd())
 	return cmd
@@ -17,7 +17,7 @@ func newVaultCmd() *cobra.Command {
 func newVaultHealthCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "health",
-		Short: "Scan the vault and emit a reviewable repair plan",
+		Short: "Scan the document vault and emit a reviewable repair plan",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			threshold, err := cmd.Flags().GetInt("duplicate-threshold")

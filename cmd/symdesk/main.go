@@ -124,7 +124,7 @@ func newRootCmd() *cobra.Command {
 	}
 	rootCmd.Version = version
 	rootCmd.PersistentFlags().BoolVar(&jsonFlag, "json", false, "output in JSON format")
-	rootCmd.PersistentFlags().StringVar(&vaultFlag, "vault", "", "override vault path")
+	rootCmd.PersistentFlags().StringVar(&vaultFlag, "vault", "", "override document vault path (the Markdown workspace; unrelated to symvault)")
 
 	// Command groups (#467): every command added below (here and in
 	// registerCommands) gets a GroupID so `symdesk --help` renders scannable

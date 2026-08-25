@@ -5,7 +5,6 @@ package draw
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -13,9 +12,13 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/draw/fonts"
 	"github.com/danieljustus/symaira-desktop/internal/draw/ir"
 	"github.com/danieljustus/symaira-desktop/internal/draw/measure"
+	"github.com/danieljustus/symaira-desktop/internal/draw/parse"
 	"github.com/danieljustus/symaira-desktop/internal/draw/scene"
 	"github.com/danieljustus/symaira-desktop/internal/draw/theme"
 )
+
+// ParseError is the typed error produced when parsing or validating diagram input.
+type ParseError = parse.ParseError
 
 // Format specifies the output serialization target.
 type Format string
@@ -29,6 +32,7 @@ const (
 
 // RenderRequest specifies a diagram rendering task.
 type RenderRequest struct {
+	Source      string       `json:"source,omitempty"` // Mermaid source or JSON IR
 	IR          *ir.Diagram  `json:"ir,omitempty"`
 	Scene       *scene.Scene `json:"scene,omitempty"`
 	Format      Format       `json:"format,omitempty"`
@@ -60,10 +64,18 @@ func Render(ctx context.Context, req RenderRequest) (*RenderResult, error) {
 
 	sc := req.Scene
 	if sc == nil {
-		if req.IR == nil {
-			return nil, fmt.Errorf("either IR or Scene must be provided in RenderRequest")
+		diag := req.IR
+		if diag == nil && req.Source != "" {
+			var err error
+			diag, err = Parse(req.Source)
+			if err != nil {
+				return nil, fmt.Errorf("parse diagram source: %w", err)
+			}
 		}
-		built, err := BuildSceneFromIR(req.IR)
+		if diag == nil {
+			return nil, fmt.Errorf("either Source, IR or Scene must be provided in RenderRequest")
+		}
+		built, err := BuildSceneFromIR(diag)
 		if err != nil {
 			return nil, fmt.Errorf("build scene from ir: %w", err)
 		}
@@ -142,18 +154,35 @@ func RenderScene(sc *scene.Scene, format Format) ([]byte, error) {
 	return res.Data, nil
 }
 
+// Parse auto-detects whether the source is Mermaid or JSON IR and parses it into an ir.Diagram.
+func Parse(source string) (*ir.Diagram, error) {
+	return parse.Source(source)
+}
+
+// ParseMermaid parses Mermaid flowchart/graph source into an ir.Diagram.
+func ParseMermaid(source string) (*ir.Diagram, error) {
+	return parse.ParseMermaid(source)
+}
+
+// ParseJSON parses a JSON diagram byte slice into an ir.Diagram with strict schema validation.
+func ParseJSON(data []byte) (*ir.Diagram, error) {
+	return parse.ParseJSON(data)
+}
+
+// DialectVersion returns the version of the supported Mermaid dialect subset.
+func DialectVersion() string {
+	return parse.DialectVersion
+}
+
 // Validate checks an IR Diagram against schema and structural rules.
 func Validate(d *ir.Diagram) error {
 	return ir.Validate(d)
 }
 
-// ValidateJSON validates a raw JSON byte slice against the IR schema.
+// ValidateJSON validates a raw JSON byte slice against the IR schema with strict validation.
 func ValidateJSON(data []byte) error {
-	var d ir.Diagram
-	if err := json.Unmarshal(data, &d); err != nil {
-		return fmt.Errorf("invalid json: %w", err)
-	}
-	return ir.Validate(&d)
+	_, err := parse.ParseJSON(data)
+	return err
 }
 
 // Kinds returns all supported diagram kinds.

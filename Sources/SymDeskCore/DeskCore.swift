@@ -818,15 +818,21 @@ public struct DeskChatContext: Equatable, Sendable {
             let available = limit - marker.count * 2 - selection.count
             let leading = available / 2
             let trailing = available - leading
+            // `range` is Range<String.Index>; the indices below stay
+            // String.Index so the slice is Unicode-safe on every toolchain
+            // (an older Xcode release toolchain rejects mixed Int/Index
+            // subscripts on this line).
+            let lower: String.Index = range.lowerBound
+            let upper: String.Index = range.upperBound
             let start = source.index(
-                range.lowerBound,
-                offsetBy: -min(leading, source.distance(from: source.startIndex, to: range.lowerBound))
+                lower,
+                offsetBy: -min(leading, source.distance(from: source.startIndex, to: lower))
             )
             let end = source.index(
-                range.upperBound,
-                offsetBy: min(trailing, source.distance(from: range.upperBound, to: source.endIndex))
+                upper,
+                offsetBy: min(trailing, source.distance(from: upper, to: source.endIndex))
             )
-            return marker + source[start..<end] + marker
+            return marker + String(source[start..<end]) + marker
         }
 
         return String(source.prefix(limit - marker.count)) + marker

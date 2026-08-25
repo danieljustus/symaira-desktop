@@ -48,3 +48,16 @@ internal/service/testdata/
 
 # Local app-test screenshots/reports (generated locally, never committed)
 docs/app-test/
+
+# --- Symaira internal working artifacts (never published; see root AGENTS.md) ---
+.github/app-test/
+.github/admin/
+.github/branch-protection/
+**/docs/adopt/
+**/docs/teardown/
+**/docs/planned/
+**/docs/intern/
+**/docs/roadmap.md
+PLANUNG.md
+ARCHITEKTUR.md
+.claude/

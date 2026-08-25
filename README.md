@@ -4,8 +4,6 @@
 
 ![Symaira Desktop social preview](docs/assets/social-preview.png)
 
-![SymDesk app screenshot](docs/app-test/2026-08-15T13-36-35Z--symaira-desktop/07-dashboard-demovault.png)
-
 The composition **shell** of the [Symaira](https://github.com/danieljustus?tab=repositories&q=symaira) ecosystem.
 
 A local-first and self-hostable, **agent-native** workspace that unifies documents, notes, knowledge and AI over a single plain-Markdown vault. It is the realization of the "Paperless + Obsidian + Notion AI" dream as *one surface*, deliberately **not** a monolith and without making a proprietary database the source of truth.

@@ -108,6 +108,12 @@ var toolContracts = []toolContract{
 		readOnly:    true,
 	},
 	{
+		name:        "desk_diagram",
+		description: "Renders the vault link graph as an SVG diagram. Returns the SVG document; use it to embed or display the vault's structure.",
+		schema:      `{"type":"object","properties":{"title":{"type":"string","description":"optional diagram title"}}}`,
+		readOnly:    true,
+	},
+	{
 		name:        "desk_ingest_jobs",
 		description: "Lists ingestion jobs in the queue from symingest.",
 		schema:      `{"type":"object","properties":{}}`,

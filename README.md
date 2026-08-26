@@ -186,8 +186,10 @@ across all matched entities.
 
 Recipes live in `.symdesk/recipes/*.yml`. They declare an allowed trigger, an
 explicit tool allow-list, and a hard `write_cap`. `symdesk` delegates execution
-to an optional `symvibe` runtime through a versioned JSON request/response
-contract; the runtime can only propose file contents. Each run is retained in
+to the runner named by `recipe_runner` (config or `SYMDESK_RECIPE_RUNNER`)
+through a versioned JSON request/response contract; the runner can only
+propose file contents. No runner ships by default — without `recipe_runner`,
+`validate` and `accept` still work and `run` reports that none is configured. Each run is retained in
 `.symdesk/runs/<id>/` as JSON plus a readable Markdown trace. No proposal
 changes the vault until `symdesk recipe accept <id>` is invoked; rejected runs
 remain available for inspection.

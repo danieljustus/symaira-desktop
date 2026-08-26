@@ -34,7 +34,7 @@ func newRecipeCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			m, err := recipes.Start(context.Background(), root, r, trigger)
+			m, err := recipes.Start(context.Background(), root, r, trigger, cfg.RecipeRunner)
 			if err != nil {
 				return err
 			}

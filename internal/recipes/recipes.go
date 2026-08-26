@@ -104,10 +104,11 @@ func Validate(r Recipe) error {
 	return nil
 }
 
-// Start delegates to the optional symvibe executable. The runner receives a
-// versioned JSON request and can only return proposed file changes, never a
-// command for SymDesk to execute.
-func Start(ctx context.Context, vaultRoot string, recipe Recipe, trigger string) (Manifest, error) {
+// Start delegates to the configured runner executable (config
+// recipe_runner). The runner receives a versioned JSON request and can only
+// return proposed file changes, never a command for SymDesk to execute. An
+// empty runnerName disables execution.
+func Start(ctx context.Context, vaultRoot string, recipe Recipe, trigger string, runnerName string) (Manifest, error) {
 	if err := Validate(recipe); err != nil {
 		return Manifest{}, err
 	}
@@ -124,9 +125,12 @@ func Start(ctx context.Context, vaultRoot string, recipe Recipe, trigger string)
 	if !allowed {
 		return Manifest{}, fmt.Errorf("recipe %q does not allow %s runs", recipe.Name, trigger)
 	}
-	runner, err := compose.Resolve("symvibe")
+	if runnerName == "" {
+		return Manifest{}, errors.New("no recipe runner configured; set recipe_runner (or SYMDESK_RECIPE_RUNNER) to an executable that speaks the recipe contract")
+	}
+	runner, err := compose.Resolve(runnerName)
 	if err != nil {
-		return Manifest{}, errors.New("no compatible recipe runner found; install symvibe to run this recipe")
+		return Manifest{}, fmt.Errorf("configured recipe runner %q not found on PATH, in $SYMAIRA_BIN or the managed runtime", runnerName)
 	}
 	runID := fmt.Sprintf("%d-%s", time.Now().UTC().UnixNano(), safeName(recipe.Name))
 	req := Request{ContractVersion: ContractVersion, RunID: runID, Vault: vaultRoot, Recipe: recipe, Trigger: trigger}

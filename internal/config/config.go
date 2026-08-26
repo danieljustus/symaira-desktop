@@ -41,6 +41,11 @@ type Config struct {
 	LLMAPIKey       string `toml:"llm_api_key" env:"SYMDESK_LLM_API_KEY"`
 	LLMModel        string `toml:"llm_model" env:"SYMDESK_LLM_MODEL"`
 	OllamaURL       string `toml:"ollama_url" env:"SYMDESK_OLLAMA_URL"`
+	// RecipeRunner names the executable that `symdesk recipe run` delegates
+	// change proposals to, resolved via internal/compose. Empty disables
+	// recipe execution; validate/accept keep working. Previously hardwired
+	// to symvibe, which was discontinued on 2026-08-26.
+	RecipeRunner string `toml:"recipe_runner" env:"SYMDESK_RECIPE_RUNNER"`
 	// HermesSession is the Hermes session id or title resumed by the optional
 	// Hermes backend (llm_provider = hermes). Empty uses the most recent
 	// session (issue #559).

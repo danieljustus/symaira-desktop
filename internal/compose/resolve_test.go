@@ -150,14 +150,14 @@ func TestResolveOrderAcrossThreeSources(t *testing.T) {
 	t.Run("Resolve returns just the path", func(t *testing.T) {
 		isolateEnv(t)
 		pathDir := t.TempDir()
-		writeExecutable(t, pathDir, "symvibe")
+		writeExecutable(t, pathDir, "symtestbin")
 		t.Setenv("PATH", pathDir)
 
-		path, err := Resolve("symvibe")
+		path, err := Resolve("symtestbin")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if want := filepath.Join(pathDir, "symvibe"); path != want {
+		if want := filepath.Join(pathDir, "symtestbin"); path != want {
 			t.Errorf("expected path %q, got %q", want, path)
 		}
 	})

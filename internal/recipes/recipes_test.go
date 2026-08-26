@@ -84,10 +84,14 @@ func TestChangeValidationEnforcesCapAndVaultBoundary(t *testing.T) {
 	}
 }
 
-func writeFakeSymvibe(t *testing.T, responseJSON string) string {
+// testRunnerName is the executable name the fake runner is written as;
+// recipe execution is runner-agnostic since symvibe was discontinued.
+const testRunnerName = "testrunner"
+
+func writeFakeRunner(t *testing.T, responseJSON string) string {
 	t.Helper()
 	dir := t.TempDir()
-	script := filepath.Join(dir, "symvibe")
+	script := filepath.Join(dir, testRunnerName)
 	content := `#!/bin/sh
 REQUEST="" ; RESPONSE=""
 while [ $# -gt 0 ]; do
@@ -107,22 +111,31 @@ printf '%s' '` + responseJSON + `' > "$RESPONSE"
 
 func TestStartRunnerMissing(t *testing.T) {
 	root := t.TempDir()
-	// Ensure symvibe is NOT on PATH, and isolate $HOME so a real
-	// ~/.symaira/bin/symvibe on the machine running this test can't be
+	// Ensure the runner is NOT on PATH, and isolate $HOME so a real
+	// ~/.symaira/bin/<runner> on the machine running this test can't be
 	// found via the managed-runtime tier either.
 	t.Setenv("PATH", t.TempDir())
 	t.Setenv("HOME", t.TempDir())
 	recipe := Recipe{Version: 1, Name: "test", Triggers: []string{"manual"}, Tools: []string{"desk_search"}, WriteCap: 1}
-	_, err := Start(context.Background(), root, recipe, "manual")
+	_, err := Start(context.Background(), root, recipe, "manual", testRunnerName)
 	if err == nil {
-		t.Fatal("expected error when symvibe is missing")
+		t.Fatal("expected error when the configured runner is missing")
+	}
+}
+
+func TestStartNoRunnerConfigured(t *testing.T) {
+	root := t.TempDir()
+	recipe := Recipe{Version: 1, Name: "test", Triggers: []string{"manual"}, Tools: []string{"desk_search"}, WriteCap: 1}
+	_, err := Start(context.Background(), root, recipe, "manual", "")
+	if err == nil {
+		t.Fatal("expected error when no recipe runner is configured")
 	}
 }
 
 func TestStartTriggerNotInAllowList(t *testing.T) {
 	root := t.TempDir()
 	recipe := Recipe{Version: 1, Name: "test", Triggers: []string{"manual"}, Tools: []string{"desk_search"}, WriteCap: 1}
-	_, err := Start(context.Background(), root, recipe, "schedule")
+	_, err := Start(context.Background(), root, recipe, "schedule", testRunnerName)
 	if err == nil {
 		t.Fatal("expected error for trigger not in recipe allow-list")
 	}
@@ -130,11 +143,11 @@ func TestStartTriggerNotInAllowList(t *testing.T) {
 
 func TestStartHappyPath(t *testing.T) {
 	root := t.TempDir()
-	binDir := writeFakeSymvibe(t, `{"contract_version":1,"trace":["running"],"changes":[{"path":"notes/hello.md","content":"hello"}]}`)
+	binDir := writeFakeRunner(t, `{"contract_version":1,"trace":["running"],"changes":[{"path":"notes/hello.md","content":"hello"}]}`)
 	t.Setenv("PATH", binDir+":"+os.Getenv("PATH"))
 
 	recipe := Recipe{Version: 1, Name: "test-recipe", Triggers: []string{"manual"}, Tools: []string{"desk_search"}, WriteCap: 2}
-	m, err := Start(context.Background(), root, recipe, "manual")
+	m, err := Start(context.Background(), root, recipe, "manual", testRunnerName)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -166,11 +179,11 @@ func TestStartHappyPath(t *testing.T) {
 
 func TestStartContractVersionMismatch(t *testing.T) {
 	root := t.TempDir()
-	binDir := writeFakeSymvibe(t, `{"contract_version":999,"trace":[],"changes":[]}`)
+	binDir := writeFakeRunner(t, `{"contract_version":999,"trace":[],"changes":[]}`)
 	t.Setenv("PATH", binDir+":"+os.Getenv("PATH"))
 
 	recipe := Recipe{Version: 1, Name: "test", Triggers: []string{"manual"}, Tools: []string{"desk_search"}, WriteCap: 1}
-	_, err := Start(context.Background(), root, recipe, "manual")
+	_, err := Start(context.Background(), root, recipe, "manual", testRunnerName)
 	if err == nil {
 		t.Fatal("expected error for contract version mismatch")
 	}
@@ -178,11 +191,11 @@ func TestStartContractVersionMismatch(t *testing.T) {
 
 func TestStartExceedsWriteCap(t *testing.T) {
 	root := t.TempDir()
-	binDir := writeFakeSymvibe(t, `{"contract_version":1,"trace":[],"changes":[{"path":"a.md","content":"a"},{"path":"b.md","content":"b"}]}`)
+	binDir := writeFakeRunner(t, `{"contract_version":1,"trace":[],"changes":[{"path":"a.md","content":"a"},{"path":"b.md","content":"b"}]}`)
 	t.Setenv("PATH", binDir+":"+os.Getenv("PATH"))
 
 	recipe := Recipe{Version: 1, Name: "test", Triggers: []string{"manual"}, Tools: []string{"desk_search"}, WriteCap: 1}
-	_, err := Start(context.Background(), root, recipe, "manual")
+	_, err := Start(context.Background(), root, recipe, "manual", testRunnerName)
 	if err == nil {
 		t.Fatal("expected error when changes exceed write_cap")
 	}

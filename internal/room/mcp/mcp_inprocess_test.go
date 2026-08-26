@@ -326,70 +326,110 @@ func (tr toolResult) text() string {
 	return string(tr.Content[0].Text)
 }
 
-// extractToolResult unwraps the tools/call envelope from a response frame.
-func extractToolResult(t *testing.T, frame []byte) toolResult {
+// toolResultFor unwraps the tools/call envelope from a response frame.
+func toolResultFor(t *testing.T, resps map[int]jsonRPCResponse, id int) toolResult {
 	t.Helper()
-	var resp jsonRPCResponse
-	if err := json.Unmarshal(frame, &resp); err != nil {
-		t.Fatalf("unmarshal response frame: %v", err)
+	resp, ok := resps[id]
+	if !ok {
+		t.Fatalf("no response frame for request id %d", id)
 	}
 	if resp.Error != nil {
-		t.Fatalf("unexpected JSON-RPC error: %s", string(resp.Error))
+		t.Fatalf("unexpected JSON-RPC error for id %d: %s", id, string(resp.Error))
 	}
 	var tr toolResult
 	if err := json.Unmarshal(resp.Result, &tr); err != nil {
-		t.Fatalf("unmarshal tool result: %v", err)
+		t.Fatalf("unmarshal tool result for id %d: %v", id, err)
 	}
 	return tr
 }
 
 // TestServeIOEndToEnd drives the registered mux through the framed JSON-RPC
 // protocol in-process and asserts real response content for every handler.
+//
+// Since corekit v0.12.0, mcpserver.ServeIO dispatches tools/call handlers
+// concurrently, so response frames arrive in completion order, not request
+// order. The test therefore correlates responses by JSON-RPC id — exactly
+// what a real MCP client does — and runs the one order-dependent call
+// (room_artifact_list must observe the earlier room_artifact_link) in a
+// second ServeIO pass, matching a synchronous client that awaits each
+// response before sending the next request. No in-repo or known external
+// symroom MCP client pipelines tools/call without awaiting responses, so
+// the previously positional assertion was a test-only assumption.
 func TestServeIOEndToEnd(t *testing.T) {
 	_, owner, roomDir := newInProcessServer(t)
-	srv := NewServer(roomDir, owner, "") // *mcpserver.Server with all tools registered
 
 	doc := filepath.Join(roomDir, "e2e.txt")
 	if err := os.WriteFile(doc, []byte("e2e"), 0o644); err != nil {
 		t.Fatalf("write e2e artifact: %v", err)
 	}
 
-	var in bytes.Buffer
-	reqs := []struct {
+	type rpcReq struct {
 		id     int
 		method string
 		params map[string]any
-	}{
+	}
+	// serve runs one ServeIO pass over reqs against a fresh server on the same
+	// room dir (state is persisted on disk) and returns responses keyed by id.
+	serve := func(reqs []rpcReq) map[int]jsonRPCResponse {
+		t.Helper()
+		var in bytes.Buffer
+		for _, r := range reqs {
+			in.Write(framedRequest(t, r.id, r.method, r.params))
+		}
+		var out bytes.Buffer
+		srv := NewServer(roomDir, owner, "")
+		if err := srv.ServeIO(context.Background(), &in, &out); err != nil {
+			t.Fatalf("ServeIO: %v", err)
+		}
+		frames := splitFrames(out.Bytes())
+		if len(frames) != len(reqs) {
+			t.Fatalf("got %d response frames, want %d", len(frames), len(reqs))
+		}
+		resps := make(map[int]jsonRPCResponse, len(frames))
+		for _, f := range frames {
+			var resp jsonRPCResponse
+			if err := json.Unmarshal([]byte(f), &resp); err != nil {
+				t.Fatalf("unmarshal response frame: %v", err)
+			}
+			var id int
+			if err := json.Unmarshal(resp.ID, &id); err != nil {
+				t.Fatalf("response frame without integer id: %v", err)
+			}
+			if _, dup := resps[id]; dup {
+				t.Fatalf("duplicate response frame for id %d", id)
+			}
+			resps[id] = resp
+		}
+		return resps
+	}
+
+	// Pass A: every request whose result does not depend on the effects of a
+	// sibling request — room_journal_tail asserts the room.created and
+	// member.added events that newInProcessServer already persisted, not the
+	// note posted by request 5.
+	resps := serve([]rpcReq{
 		{1, "initialize", nil},
 		{2, "tools/list", nil},
 		{3, "tools/call", map[string]any{"name": "room_status", "arguments": map[string]any{}}},
 		{4, "tools/call", map[string]any{"name": "room_journal_tail", "arguments": map[string]any{"limit": 5}}},
 		{5, "tools/call", map[string]any{"name": "room_note_post", "arguments": map[string]any{"text": "e2e note"}}},
 		{6, "tools/call", map[string]any{"name": "room_artifact_link", "arguments": map[string]any{"path": doc, "title": "E2E Doc"}}},
-		{7, "tools/call", map[string]any{"name": "room_artifact_list", "arguments": map[string]any{}}},
 		{8, "tools/call", map[string]any{"name": "room_run_request", "arguments": map[string]any{"title": "E2E run"}}},
 		{9, "tools/call", map[string]any{"name": "room_run_wait", "arguments": map[string]any{"run_id": "run_missing", "timeout_seconds": 0.2}}},
 		{10, "tools/call", map[string]any{"name": "room_checkpoint_request", "arguments": map[string]any{"run_id": "run_missing", "question": "ok?"}}},
 		{11, "tools/call", map[string]any{"name": "no_such_tool", "arguments": map[string]any{}}},
-	}
-	for _, r := range reqs {
-		in.Write(framedRequest(t, r.id, r.method, r.params))
-	}
+	})
 
-	var out bytes.Buffer
-	if err := srv.ServeIO(context.Background(), &in, &out); err != nil {
-		t.Fatalf("ServeIO: %v", err)
-	}
-
-	frames := splitFrames(out.Bytes())
-	if len(frames) != len(reqs) {
-		t.Fatalf("got %d response frames, want %d", len(frames), len(reqs))
-	}
+	// Pass B: the order-dependent room_artifact_list, sent only after
+	// room_artifact_link has completed — as a synchronous real client would.
+	respsB := serve([]rpcReq{
+		{7, "tools/call", map[string]any{"name": "room_artifact_list", "arguments": map[string]any{}}},
+	})
 
 	// 1: initialize.
-	var initResp jsonRPCResponse
-	if err := json.Unmarshal([]byte(frames[0]), &initResp); err != nil {
-		t.Fatalf("initialize frame: %v", err)
+	initResp, ok := resps[1]
+	if !ok {
+		t.Fatal("no response frame for request id 1")
 	}
 	var initResult map[string]any
 	if err := json.Unmarshal(initResp.Result, &initResult); err != nil {
@@ -407,9 +447,9 @@ func TestServeIOEndToEnd(t *testing.T) {
 	}
 
 	// 2: tools/list exposes all eight room tools.
-	var listResp jsonRPCResponse
-	if err := json.Unmarshal([]byte(frames[1]), &listResp); err != nil {
-		t.Fatalf("tools/list frame: %v", err)
+	listResp, ok := resps[2]
+	if !ok {
+		t.Fatal("no response frame for request id 2")
 	}
 	var listResult struct {
 		Tools []struct {
@@ -430,57 +470,57 @@ func TestServeIOEndToEnd(t *testing.T) {
 	}
 
 	// 3: room_status.
-	tr := extractToolResult(t, []byte(frames[2]))
+	tr := toolResultFor(t, resps, 3)
 	if tr.IsError || !strings.Contains(tr.text(), `"id":"rm_`) {
 		t.Errorf("room_status = %+v, want room config JSON", tr)
 	}
 
 	// 4: room_journal_tail contains the room.created and member.added events.
-	tr = extractToolResult(t, []byte(frames[3]))
+	tr = toolResultFor(t, resps, 4)
 	if tr.IsError || !strings.Contains(tr.text(), `"kind":"room.created"`) || !strings.Contains(tr.text(), `"kind":"member.added"`) {
 		t.Errorf("room_journal_tail = %+v, want merged events", tr)
 	}
 
 	// 5: room_note_post persisted a signed note.
-	tr = extractToolResult(t, []byte(frames[4]))
+	tr = toolResultFor(t, resps, 5)
 	if tr.IsError || !strings.Contains(tr.text(), `"kind":"note.posted"`) || !strings.Contains(tr.text(), "e2e note") {
 		t.Errorf("room_note_post = %+v, want note.posted event", tr)
 	}
 
 	// 6: room_artifact_link.
-	tr = extractToolResult(t, []byte(frames[5]))
+	tr = toolResultFor(t, resps, 6)
 	if tr.IsError || !strings.Contains(tr.text(), `"kind":"artifact.linked"`) {
 		t.Errorf("room_artifact_link = %+v, want artifact.linked event", tr)
 	}
 
 	// 7: room_artifact_list shows the linked artifact.
-	tr = extractToolResult(t, []byte(frames[6]))
+	tr = toolResultFor(t, respsB, 7)
 	if tr.IsError || !strings.Contains(tr.text(), "E2E Doc") {
 		t.Errorf("room_artifact_list = %+v, want linked artifact", tr)
 	}
 
 	// 8: room_run_request.
-	tr = extractToolResult(t, []byte(frames[7]))
+	tr = toolResultFor(t, resps, 8)
 	if tr.IsError || !strings.Contains(tr.text(), `"kind":"run.requested"`) {
 		t.Errorf("room_run_request = %+v, want run.requested event", tr)
 	}
 
 	// 9: room_run_wait times out for an unknown run (tool error, not JSON-RPC error).
-	tr = extractToolResult(t, []byte(frames[8]))
+	tr = toolResultFor(t, resps, 9)
 	if !tr.IsError || !strings.Contains(tr.text(), "timed out") {
 		t.Errorf("room_run_wait = %+v, want timeout tool error", tr)
 	}
 
 	// 10: room_checkpoint_request.
-	tr = extractToolResult(t, []byte(frames[9]))
+	tr = toolResultFor(t, resps, 10)
 	if tr.IsError || !strings.Contains(tr.text(), `"kind":"checkpoint.requested"`) {
 		t.Errorf("room_checkpoint_request = %+v, want checkpoint.requested event", tr)
 	}
 
 	// 11: unknown tool yields a JSON-RPC method-not-found error.
-	var errResp jsonRPCResponse
-	if err := json.Unmarshal([]byte(frames[10]), &errResp); err != nil {
-		t.Fatalf("unknown tool frame: %v", err)
+	errResp, ok := resps[11]
+	if !ok {
+		t.Fatal("no response frame for request id 11")
 	}
 	if errResp.Error == nil || !strings.Contains(string(errResp.Error), "-32601") {
 		t.Errorf("unknown tool error = %s, want code -32601", string(errResp.Error))

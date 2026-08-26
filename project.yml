@@ -9,11 +9,11 @@ options:
 packages:
   symaira-appkit:
     url: https://github.com/danieljustus/symaira-appkit
-    # 0.10.0 — meet/ SPM integration (repo consolidation 2b) requires a
-    # shared exact-pinned appkit graph; meet pins 0.10.0. 0.10.0 is additive to
-    # the previously used 0.7.0 (SymairaMCP, MCPError data, registry entries),
-    # no breaking changes per CHANGELOG.
-    exactVersion: 0.10.0
+    # 0.14.0 — shared exact-pinned appkit graph. 0.13.0 added
+    # SymairaProviderKit (provider settings layer, #119); 0.14.0 added
+    # verified keychain saves and bounded reads. Additive, no breaking
+    # changes per CHANGELOG.
+    exactVersion: 0.14.0
   symaira-meet:
     url: https://github.com/danieljustus/symaira-meet
     path: meet
@@ -69,6 +69,8 @@ targets:
         product: SymairaIngestContract
       - package: symaira-appkit
         product: SymairaKeychain
+      - package: symaira-appkit
+        product: SymairaProviderKit
     settings:
       base:
         INFOPLIST_FILE: Sources/SymDeskApp/Info.plist
@@ -133,6 +135,8 @@ targets:
         product: SymairaIngestContract
       - package: symaira-appkit
         product: SymairaKeychain
+      - package: symaira-appkit
+        product: SymairaProviderKit
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "YES"

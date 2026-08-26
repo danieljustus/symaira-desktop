@@ -1,4 +1,5 @@
 import SwiftUI
+import SymairaProviderKit
 import SymairaTheme
 import SymDeskCore
 import SymairaIngestContract
@@ -556,12 +557,26 @@ struct RulesSettingsView: View {
                     .task { await loadAIConfig() }
             } else {
                 VStack(alignment: .leading, spacing: 12) {
-                    Picker("Provider", selection: $aiProvider) {
-                        Text("Ollama").tag("ollama")
-                        Text("Anthropic").tag("anthropic")
-                        Text("None").tag("none")
+                    // AI off is a desk-level state, not a provider: the
+                    // shared picker (appkit) manages only real providers,
+                    // filtered to the ones the Go core implements.
+                    Toggle("Enable AI", isOn: Binding(
+                        get: { aiProvider != "none" },
+                        set: { aiProvider = $0 ? "ollama" : "none" }
+                    ))
+                    .toggleStyle(.switch)
+                    .symairaText(.body)
+
+                    if aiProvider != "none" {
+                        if let catalog = aiProviderCatalog {
+                            SymairaProviderPicker(selection: $aiProvider, catalog: catalog, title: "Provider")
+                                .pickerStyle(.segmented)
+                        } else {
+                            Text("Provider catalog unavailable")
+                                .symairaText(.caption)
+                                .foregroundStyle(SymairaTheme.textSecondary)
+                        }
                     }
-                    .pickerStyle(.segmented)
 
                     if aiProvider == "ollama" {
                         TextField("Ollama endpoint URL (e.g. http://localhost:11434)", text: $aiOllamaURL)
@@ -628,6 +643,12 @@ struct RulesSettingsView: View {
                 }
             }
         }
+    }
+
+    private var aiProviderCatalog: SymairaProviderCatalog? {
+        let all = SymairaProviderCatalog.bundled
+        let supported = all.providers.filter { ["ollama", "anthropic"].contains($0.id) }
+        return try? SymairaProviderCatalog(schemaVersion: 1, providers: supported)
     }
 
     private func loadAIConfig() async {

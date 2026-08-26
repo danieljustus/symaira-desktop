@@ -293,8 +293,8 @@ func TestStreamAnthropicDefaultModel(t *testing.T) {
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		gotModel = body.Model
 		w.Header().Set("Content-Type", "text/event-stream")
-		fmt.Fprintln(w, `data: {"type":"message_start","message":{"role":"assistant"}}`)
-		fmt.Fprintln(w, `data: [DONE]`)
+		_, _ = fmt.Fprintln(w, `data: {"type":"message_start","message":{"role":"assistant"}}`)
+		_, _ = fmt.Fprintln(w, `data: [DONE]`)
 	}))
 	defer srv.Close()
 

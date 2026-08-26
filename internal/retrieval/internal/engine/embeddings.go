@@ -1,17 +1,13 @@
 package engine
 
 import (
-	"bytes"
 	"container/list"
 	"context"
 	"crypto/sha256"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"io"
 	"math"
-	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -20,7 +16,7 @@ import (
 
 	"golang.org/x/sync/singleflight"
 
-	"github.com/danieljustus/symaira-corekit/ollamakit"
+	"github.com/danieljustus/symaira-corekit/llmkit"
 )
 
 const (
@@ -41,7 +37,7 @@ type EmbeddingsGenerator struct {
 	RetryBackoff time.Duration
 	configDim    int                 // from config; 0 means auto-detect from first response
 	sleepFn      func(time.Duration) // injectable for tests; defaults to time.Sleep
-	ollama       *ollamakit.Client
+	ollama       *llmkit.Client
 	cache        map[string]*list.Element
 	cacheOrder   *list.List
 	cacheMu      sync.Mutex
@@ -72,15 +68,29 @@ func newEmbeddingsGenerator() *EmbeddingsGenerator {
 	return eg
 }
 
-// rebuildOllamaClient (re)constructs the shared ollamakit client from the
+// rebuildOllamaClient (re)constructs the shared llmkit client from the
 // generator's current OllamaURL/Model/Timeout. Must be called whenever any
-// of those fields change after construction.
+// of those fields change after construction. The base URL is normalized
+// onto the OpenAI-compatible /v1 path the transport speaks.
 func (eg *EmbeddingsGenerator) rebuildOllamaClient() {
-	eg.ollama = ollamakit.New(ollamakit.Config{
-		BaseURL: ollamaBaseURL(eg.OllamaURL),
-		Model:   eg.Model,
-		Timeout: eg.Timeout,
-	})
+	desc, ok := llmkit.Lookup("ollama")
+	if !ok {
+		// The embedded registry is part of the library; missing means a
+		// broken build. Surface it as an unreachable transport so the
+		// caller degrades to the hash fallback.
+		eg.ollama = nil
+		return
+	}
+	base := ollamaBaseURL(eg.OllamaURL)
+	if !strings.HasSuffix(base, "/v1") {
+		base = strings.TrimRight(base, "/") + "/v1"
+	}
+	cl, err := llmkit.NewClient(desc, "", llmkit.WithBaseURL(base), llmkit.WithTimeout(eg.Timeout))
+	if err != nil {
+		eg.ollama = nil
+		return
+	}
+	eg.ollama = cl
 }
 
 // ollamaBaseURL strips a configured Ollama endpoint path (e.g.
@@ -458,45 +468,23 @@ type embedResponse struct {
 	Embeddings [][]float32 `json:"embeddings"`
 }
 
-// embedWithDim posts to Ollama's /api/embed with a pinned output dimension.
-// Errors are wrapped in the same shapes ollamakit produces (ErrUnreachable /
-// ResponseError) so the shared transient-error classification keeps working.
+// embedWithDim embeds with a pinned output dimension through the shared
+// llmkit transport (Matryoshka truncation via the OpenAI-wire dimensions
+// field). Errors are classified by llmkit; the shared transient-error
+// classification keeps working.
 func (eg *EmbeddingsGenerator) embedWithDim(ctx context.Context, texts []string, dim int) ([][]float32, error) {
-	u := strings.TrimSuffix(ollamaBaseURL(eg.OllamaURL), "/") + "/api/embed"
-	body, err := json.Marshal(embedRequestWithDim{Model: eg.Model, Input: texts, Dimensions: dim})
+	if eg.ollama == nil {
+		return nil, errOllamaUnavailable
+	}
+	embs, err := eg.ollama.Embed(ctx, eg.Model, texts, llmkit.WithEmbedDimensions(dim))
 	if err != nil {
-		return nil, fmt.Errorf("engine: encode embed request: %w", err)
+		return nil, err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("engine: build embed request: %w", err)
+	vecs := make([][]float32, len(embs))
+	for i, e := range embs {
+		vecs[i] = e.Vector
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
-	client := &http.Client{Timeout: eg.Timeout}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("ollamakit: %w: %v", ollamakit.ErrUnreachable, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, ollamakit.ErrModelNotFound
-	}
-	if resp.StatusCode >= 300 {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, 4<<10))
-		return nil, &ollamakit.ResponseError{StatusCode: resp.StatusCode, Body: strings.TrimSpace(string(b))}
-	}
-
-	var er embedResponse
-	if err := json.NewDecoder(resp.Body).Decode(&er); err != nil {
-		return nil, fmt.Errorf("engine: decode embed response: %w", err)
-	}
-	if len(er.Embeddings) != len(texts) {
-		return nil, fmt.Errorf("engine: expected %d embeddings, got %d", len(texts), len(er.Embeddings))
-	}
-	return er.Embeddings, nil
+	return vecs, nil
 }
 
 // embedWithRetries is the core transport for Ollama embedding requests via
@@ -533,7 +521,18 @@ func (eg *EmbeddingsGenerator) embedWithRetries(texts []string, maxRetries int) 
 			// (Matryoshka truncation) via the dimensions body parameter.
 			vecs, err = eg.embedWithDim(context.Background(), texts, eg.configDim)
 		} else {
-			vecs, err = eg.ollama.Embed(context.Background(), eg.Model, texts)
+			if eg.ollama == nil {
+				err = errOllamaUnavailable
+			} else {
+				var embs []llmkit.Embedding
+				embs, err = eg.ollama.Embed(context.Background(), eg.Model, texts)
+				if err == nil {
+					vecs = make([][]float32, len(embs))
+					for i, e := range embs {
+						vecs[i] = e.Vector
+					}
+				}
+			}
 		}
 		if err == nil {
 			return vecs, nil
@@ -551,15 +550,24 @@ func (eg *EmbeddingsGenerator) embedWithRetries(texts []string, maxRetries int) 
 // non-5xx response (redirect, malformed request, ...) will not succeed on
 // retry, so those return immediately.
 func isTransientOllamaError(err error) bool {
-	if errors.Is(err, ollamakit.ErrUnreachable) {
+	if errors.Is(err, errOllamaUnavailable) {
 		return true
 	}
-	var respErr *ollamakit.ResponseError
-	if errors.As(err, &respErr) {
-		return respErr.StatusCode >= 500
+	var e *llmkit.Error
+	if errors.As(err, &e) {
+		switch {
+		case e.Code == llmkit.ErrCodeTransport:
+			return true
+		case e.StatusCode >= 500:
+			return true
+		}
 	}
 	return false
 }
+
+// errOllamaUnavailable is the sentinel used when the embedded registry
+// cannot produce an ollama client (broken build) — treated as transient.
+var errOllamaUnavailable = fmt.Errorf("engine: ollama transport unavailable")
 
 // GenerateLocalHashVector utilizes the "Hashing Trick" to produce a normalized
 // 768-dimensional float32 vector based on word hashes.

@@ -35,10 +35,10 @@ func TestNewEmbeddingsGeneratorWithOllamaConfig_AppliesConfig(t *testing.T) {
 		t.Errorf("expected RetryBackoff %v, got %v", cfg.RetryBackoff, eg.RetryBackoff)
 	}
 	if eg.ollama == nil {
-		t.Fatal("expected the ollamakit client to be initialized")
+		t.Fatal("expected the llmkit client to be initialized")
 	}
-	if eg.ollama.BaseURL() != "http://example.test" {
-		t.Errorf("expected ollamakit base URL %q, got %q", "http://example.test", eg.ollama.BaseURL())
+	if eg.ollama.BaseURL() != "http://example.test/v1" {
+		t.Errorf("expected llmkit base URL %q, got %q", "http://example.test/v1", eg.ollama.BaseURL())
 	}
 }
 
@@ -75,9 +75,9 @@ func TestNewEmbeddingsGeneratorWithOllamaConfig_PositiveRetryCountHonored(t *tes
 	}
 }
 
-// embedServer returns an httptest server that answers Ollama's /api/embed
-// endpoint. handler receives the decoded input texts and returns the
-// vectors to send back (one per input, in order).
+// embedServer returns an httptest server that answers the OpenAI-wire
+// /v1/embeddings endpoint llmkit speaks. handler receives the decoded input
+// texts and returns the vectors to send back (one per input, in order).
 func embedServer(t *testing.T, handler func(inputs []string) (status int, vecs [][]float32)) *httptest.Server {
 	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +90,11 @@ func embedServer(t *testing.T, handler func(inputs []string) (status int, vecs [
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
 		if status >= 200 && status < 300 {
-			_ = json.NewEncoder(w).Encode(map[string]interface{}{"embeddings": vecs})
+			data := make([]map[string]any, len(vecs))
+			for i, v := range vecs {
+				data[i] = map[string]any{"embedding": v}
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": data})
 		}
 	}))
 }
@@ -559,7 +563,7 @@ func TestConfiguredDim_SendsDimensionsParameter(t *testing.T) {
 		_ = json.NewDecoder(r.Body).Decode(&req)
 		gotDim = req.Dimensions
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"embeddings": [][]float32{vec768}})
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{"embedding": vec768}}})
 	}))
 	defer srv.Close()
 
@@ -576,8 +580,8 @@ func TestConfiguredDim_SendsDimensionsParameter(t *testing.T) {
 	if gotDim != 768 {
 		t.Errorf("expected dimensions=768 in request, got %d", gotDim)
 	}
-	if gotPath != "/api/embed" {
-		t.Errorf("expected request to /api/embed, got %q", gotPath)
+	if gotPath != "/v1/embeddings" {
+		t.Errorf("expected request to /v1/embeddings, got %q", gotPath)
 	}
 }
 
@@ -591,7 +595,7 @@ func TestAutoDetectDim_OmitsDimensionsParameter(t *testing.T) {
 		_ = json.NewDecoder(r.Body).Decode(&req)
 		_, sawDim = req["dimensions"]
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"embeddings": [][]float32{{0.1, 0.2}}})
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{"embedding": []float32{0.1, 0.2}}}})
 	}))
 	defer srv.Close()
 
@@ -622,7 +626,7 @@ func TestConfiguredDim_RetriesOn5xx(t *testing.T) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"embeddings": [][]float32{{0.1, 0.2, 0.3}}})
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{"embedding": []float32{0.1, 0.2, 0.3}}}})
 	}))
 	defer srv.Close()
 

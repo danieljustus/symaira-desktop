@@ -11,7 +11,7 @@ let package = Package(
         .library(name: "SymroomFeature", targets: ["SymroomFeature"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/danieljustus/symaira-appkit.git", exact: "0.10.0"),
+        .package(url: "https://github.com/danieljustus/symaira-appkit.git", exact: "0.14.0"),
     ],
     targets: [
         // CLI bridge + models — reads symroom's --json output, never

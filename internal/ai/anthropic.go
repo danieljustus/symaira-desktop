@@ -1,106 +1,58 @@
 package ai
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
-	"strings"
 	"time"
 
+	"github.com/danieljustus/symaira-corekit/llmkit"
 	"github.com/danieljustus/symaira-desktop/internal/config"
 )
 
-var jsonMarshal = json.Marshal
-
+// streamAnthropic streams an Anthropic-wire chat completion through the
+// shared llmkit transport (issue #617). The SYMDESK_ANTHROPIC_URL env
+// override keeps working as a base-URL override for self-hosted gateways;
+// the credential is either injected directly (secrets.ResolveKey result)
+// or resolved by llmkit from ANTHROPIC_API_KEY.
 func streamAnthropic(ctx context.Context, cfg *config.Config, apiKey, model, prompt string, out chan<- AskChunk) error {
+	desc, ok := llmkit.Lookup("anthropic")
+	if !ok {
+		return fmt.Errorf("anthropic descriptor missing from embedded registry")
+	}
 	if model == "" {
 		model = config.DefaultAnthropicModel
 	}
-
 	maxTokens := cfg.MaxTokens
 	if maxTokens <= 0 {
 		maxTokens = 8192
 	}
 
-	payload := map[string]interface{}{
-		"model":      model,
-		"max_tokens": maxTokens,
-		"stream":     true,
-		"messages": []map[string]string{
-			{
-				"role":    "user",
-				"content": prompt,
-			},
+	opts := []llmkit.Option{llmkit.WithTimeout(5 * time.Minute)}
+	if apiKey != "" {
+		opts = append(opts, llmkit.WithAPIKey(apiKey))
+	}
+	if apiURL := os.Getenv("SYMDESK_ANTHROPIC_URL"); apiURL != "" {
+		opts = append(opts, llmkit.WithBaseURL(apiURL))
+	}
+	cl, err := llmkit.NewClient(desc, "", opts...)
+	if err != nil {
+		return err
+	}
+
+	err = cl.StreamChat(ctx, model, []llmkit.Message{{Role: "user", Content: prompt}},
+		&llmkit.ChatOptions{MaxTokens: maxTokens},
+		func(delta string) error {
+			sendChunk(ctx, out, AskChunk{Chunk: delta})
+			return nil
 		},
-	}
-
-	body, err := jsonMarshal(payload)
-	if err != nil {
-		return err
-	}
-
-	apiURL := os.Getenv("SYMDESK_ANTHROPIC_URL")
-	if apiURL == "" {
-		apiURL = "https://api.anthropic.com/v1/messages"
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", apiURL, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("x-api-key", apiKey)
-	req.Header.Set("anthropic-version", "2023-06-01")
-	req.Header.Set("content-type", "application/json")
-
-	client := &http.Client{Timeout: 5 * time.Minute}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		var errResp map[string]interface{}
-		json.NewDecoder(resp.Body).Decode(&errResp)
-		return fmt.Errorf("anthropic api error (HTTP %d): %v", resp.StatusCode, errResp)
-	}
-
-	scanner := bufio.NewScanner(resp.Body)
-	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !strings.HasPrefix(line, "data: ") {
-			continue
-		}
-		dataStr := strings.TrimPrefix(line, "data: ")
-		if dataStr == "[DONE]" {
-			break
-		}
-
-		var event map[string]interface{}
-		if err := json.Unmarshal([]byte(dataStr), &event); err != nil {
-			continue
-		}
-
-		eventType, _ := event["type"].(string)
-		if eventType == "content_block_delta" {
-			delta, _ := event["delta"].(map[string]interface{})
-			if text, ok := delta["text"].(string); ok {
-				out <- AskChunk{Chunk: text}
+		llmkit.WithStreamFinished(func(reason string) {
+			if reason == "max_tokens" {
+				sendChunk(ctx, out, AskChunk{Chunk: "\n\n⚠️ **[Output truncated due to token limit]**"})
 			}
-		} else if eventType == "message_delta" {
-			delta, _ := event["delta"].(map[string]interface{})
-			if delta != nil {
-				if stopReason, ok := delta["stop_reason"].(string); ok && stopReason == "max_tokens" {
-					out <- AskChunk{Chunk: "\n\n⚠️ **[Output truncated due to token limit]**"}
-				}
-			}
-		}
+		}))
+	if err != nil {
+		return fmt.Errorf("anthropic: %w", err)
 	}
-
-	return scanner.Err()
+	return nil
 }

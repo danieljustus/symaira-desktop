@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/danieljustus/symaira-corekit/ollamakit"
+	"github.com/danieljustus/symaira-corekit/llmkit"
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/secrets"
 )
@@ -192,6 +192,18 @@ func Transform(ctx context.Context, cfg *config.Config, text, intent string, out
 	}
 }
 
+// ollamaRoot strips any path (including the OpenAI-compatible /v1 prefix)
+// from a configured endpoint, because Ollama's native /api/* surface
+// (Generate) lives at the scheme+host root.
+func ollamaRoot(raw string) string {
+	for i := 0; i < len(raw); i++ {
+		if raw[i] == '/' && i > len("http://") {
+			return raw[:i]
+		}
+	}
+	return raw
+}
+
 // streamLLM is the unified dispatch/stream helper.
 func streamLLM(ctx context.Context, cfg *config.Config, prompt string, out chan<- AskChunk) error {
 	provider := cfg.LLMProvider
@@ -326,23 +338,25 @@ func promptOne(cfg *config.Config, prompt string) (string, error) {
 }
 
 func streamOllama(ctx context.Context, baseURL, model, prompt string, out chan<- AskChunk) error {
-	client := ollamakit.New(ollamakit.Config{
-		BaseURL: baseURL,
-		Model:   model,
-		Timeout: 5 * time.Minute,
-	})
-	err := client.Generate(ctx, model, prompt, nil, func(chunk ollamakit.GenerateResponse) error {
+	desc, ok := llmkit.Lookup("ollama")
+	if !ok {
+		return fmt.Errorf("ollama descriptor missing from embedded registry")
+	}
+	// Generate speaks Ollama's native /api/generate surface, which lives
+	// at the scheme+host root — never under the /v1 compatibility prefix.
+	base := ollamaRoot(baseURL)
+	cl, err := llmkit.NewClient(desc, "", llmkit.WithBaseURL(base), llmkit.WithTimeout(5*time.Minute))
+	if err != nil {
+		return err
+	}
+	err = cl.Generate(ctx, model, prompt, func(chunk llmkit.GenerateResponse) error {
 		if chunk.Response != "" {
 			sendChunk(ctx, out, AskChunk{Chunk: chunk.Response})
 		}
 		return nil
 	})
-	if err == nil {
-		return nil
+	if err != nil {
+		return fmt.Errorf("ollama: %w", err)
 	}
-	var respErr *ollamakit.ResponseError
-	if errors.As(err, &respErr) {
-		return fmt.Errorf("ollama: %s (HTTP %d)", respErr.Body, respErr.StatusCode)
-	}
-	return err
+	return nil
 }

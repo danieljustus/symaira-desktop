@@ -293,6 +293,7 @@ func TestStreamAnthropicDefaultModel(t *testing.T) {
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		gotModel = body.Model
 		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprintln(w, `data: {"type":"message_start","message":{"role":"assistant"}}`)
 		fmt.Fprintln(w, `data: [DONE]`)
 	}))
 	defer srv.Close()
@@ -365,7 +366,7 @@ func TestStreamAnthropicHTTPError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if !strings.Contains(err.Error(), "HTTP 400") || !strings.Contains(err.Error(), "bad api key") {
+	if !strings.Contains(err.Error(), "400") || !strings.Contains(err.Error(), "bad api key") {
 		t.Errorf("unexpected error message: %v", err)
 	}
 }
@@ -445,22 +446,22 @@ func TestStreamAnthropicNetworkError(t *testing.T) {
 	}
 }
 
-func TestStreamAnthropicMarshalError(t *testing.T) {
-	original := jsonMarshal
-	jsonMarshal = func(v interface{}) ([]byte, error) {
-		return nil, errors.New("marshal failed")
-	}
-	defer func() { jsonMarshal = original }()
+func TestStreamAnthropicServerError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, `{"error":{"message":"overloaded","type":"overloaded_error"}}`, http.StatusServiceUnavailable)
+	}))
+	defer srv.Close()
+	t.Setenv("SYMDESK_ANTHROPIC_URL", srv.URL)
 
 	out := make(chan AskChunk, 10)
 	err := streamAnthropic(context.Background(), config.DefaultConfig(), "test-key", "model", "prompt", out)
 	close(out)
 
 	if err == nil {
-		t.Fatal("expected error, got nil")
+		t.Fatal("expected error from failing endpoint, got nil")
 	}
-	if !strings.Contains(err.Error(), "marshal failed") {
-		t.Errorf("expected marshal error, got: %v", err)
+	if !strings.Contains(err.Error(), "anthropic") {
+		t.Errorf("expected anthropic error context, got: %v", err)
 	}
 }
 

@@ -493,3 +493,65 @@ func TestProcessEvent_MdWithoutFrontmatter(t *testing.T) {
 		t.Errorf("expected path=%s, got %v", mdPath, evt["path"])
 	}
 }
+
+// --- accumulateDebounce tests (issue #647) ---
+
+func TestAccumulateDebounce_CreateThenWriteStaysCreate(t *testing.T) {
+	m := make(map[string]*DebouncedEvent)
+	accumulateDebounce(m, "/vault/note.md", fsnotify.Create)
+	accumulateDebounce(m, "/vault/note.md", fsnotify.Write)
+	accumulateDebounce(m, "/vault/note.md", fsnotify.Chmod)
+
+	ev := m["/vault/note.md"]
+	if ev == nil {
+		t.Fatal("expected debounce entry")
+	}
+	if ev.Op&fsnotify.Create == 0 {
+		t.Errorf("op = %v, want Create bit preserved after Write/Chmod", ev.Op)
+	}
+}
+
+func TestAccumulateDebounce_NewEntryKeepsFreshTimestamp(t *testing.T) {
+	m := make(map[string]*DebouncedEvent)
+	before := time.Now()
+	accumulateDebounce(m, "/vault/a.md", fsnotify.Write)
+	if m["/vault/a.md"].Ts.Before(before) {
+		t.Error("fresh entry timestamp predates the call")
+	}
+}
+
+// TestEventsAccumulatedCreateEmitsNDJSON covers the full debounce path
+// (issue #647): a Create followed by Write/Chmod on a new .md file must
+// still flush as one event (index_updated for a new file), not a change
+// event with no prior index entry.
+func TestEventsAccumulatedCreateEmitsNDJSON(t *testing.T) {
+	svc := newTestEventService(t)
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = watcher.Close() }()
+
+	dir := t.TempDir()
+	mdPath := writeTestMd(t, dir, "repro-notiz.md", "Repro Notiz")
+
+	m := make(map[string]*DebouncedEvent)
+	// The usual event burst an editor produces for one atomic save.
+	accumulateDebounce(m, mdPath, fsnotify.Create)
+	accumulateDebounce(m, mdPath, fsnotify.Write)
+	accumulateDebounce(m, mdPath, fsnotify.Chmod)
+	// Backdate past the 500ms debounce window so flushDebounce emits.
+	m[mdPath].Ts = time.Now().Add(-600 * time.Millisecond)
+
+	var buf bytes.Buffer
+	flushDebounce(m, &sync.Mutex{}, watcher, svc, &buf)
+
+	out := bytes.TrimSpace(buf.Bytes())
+	if len(out) == 0 {
+		t.Fatal("expected NDJSON output for the accumulated create burst, got none")
+	}
+	evt := parseNDJSON(t, out)
+	if evt["event"] != "index_updated" {
+		t.Errorf("event = %v, want index_updated (create preserved through Write/Chmod)", evt["event"])
+	}
+}

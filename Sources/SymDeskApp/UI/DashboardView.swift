@@ -13,6 +13,7 @@ struct DashboardView: View {
     let notes: [Note]
     let doctorReport: DoctorReport?
     let onNavigate: (ContentView.DisplayMode) -> Void
+    var onOpenNote: ((Note) -> Void)? = nil
 
     private var recentNotes: [Note] {
         notes.sorted { $0.modifiedAt > $1.modifiedAt }.prefix(5).map { $0 }
@@ -172,7 +173,12 @@ struct DashboardView: View {
             } else {
                 ForEach(recentNotes) { note in
                     Button(action: {
-                        onNavigate(.vault)
+                        // Open the note itself, not an empty Vault view (issue #649).
+                        if let onOpenNote {
+                            onOpenNote(note)
+                        } else {
+                            onNavigate(.vault)
+                        }
                     }) {
                         HStack {
                             Image(systemName: "doc.text")

@@ -14,6 +14,9 @@ struct ContentView: View {
     @State private var selectedNote: Note? = nil
     @State private var noteContent: String = ""
     @State private var loadError: String? = nil
+    /// Set together with loadError when the note's backing file could not be
+    /// read — the banner then offers "Remove from index" (issue #650).
+    @State private var loadErrorNote: Note? = nil
     @State private var doctorStatus: String = "Checking..."
     @State private var doctorReport: DoctorReport? = nil
     @State private var isShowingDoctorPopover = false
@@ -367,7 +370,8 @@ struct ContentView: View {
                             docTotalCount: docTotalCount,
                             notes: notes,
                             doctorReport: doctorReport,
-                            onNavigate: { mode in navigate(to: mode) }
+                            onNavigate: { mode in navigate(to: mode) },
+                            onOpenNote: { note in navigate(to: .vault, note: note) }
                         )
                     case .ingestQueue:
                         IngestQueueView()
@@ -406,7 +410,14 @@ struct ContentView: View {
                         }
                     case .docs:
                         let statusVal = DocFilterPreset.defaults.first(where: { $0.id == docFilterID })?.status
-                        DocumentGridView(statusFilter: statusVal?.rawValue, deepLinkPath: deepLinkDocPath, tagFilter: tagFilter)
+                        DocumentGridView(
+                            statusFilter: statusVal?.rawValue,
+                            deepLinkPath: deepLinkDocPath,
+                            tagFilter: tagFilter,
+                            onOpenInEditor: { (doc: DocumentItem) -> Void in
+                                openDocumentInEditor(doc)
+                            }
+                        )
                     case .dbView:
                         if let vid = selectedViewID {
                             if let view = dbViews.first(where: { $0.id == vid }) {
@@ -431,156 +442,7 @@ struct ContentView: View {
                                 .foregroundColor(SymairaTheme.textMuted)
                         }
                     case .vault:
-                        if let note = selectedNote {
-                            VStack(spacing: 0) {
-                                if isConflicted(note) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .foregroundStyle(SymairaTheme.goldPrimary)
-                                        Text("iCloud sync conflict detected")
-                                            .symairaText(.caption)
-                                            .foregroundColor(SymairaTheme.goldSecondary)
-                                        Spacer()
-                                        Button("Keep Mine") {
-                                            Task { await resolveConflict(note: note, action: "keep-mine") }
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .controlSize(.small)
-                                        .disabled(mutationTracker.isInFlight(conflictActionID(note: note, action: "keep-mine")))
-                                        Button("Keep Theirs") {
-                                            Task { await resolveConflict(note: note, action: "keep-theirs") }
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .controlSize(.small)
-                                        .disabled(mutationTracker.isInFlight(conflictActionID(note: note, action: "keep-theirs")))
-                                    }
-                                    .padding(8)
-                                    .background(SymairaTheme.goldPrimary.opacity(0.12))
-                                    .cornerRadius(6)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
-                                    )
-                                    .padding(.horizontal)
-                                    .padding(.top, 8)
-                                    .asyncActionAlert(mutationTracker, id: conflictActionID(note: note, action: "keep-mine"), title: "Couldn't Resolve Conflict") {
-                                        Task { await resolveConflict(note: note, action: "keep-mine") }
-                                    }
-                                    .asyncActionAlert(mutationTracker, id: conflictActionID(note: note, action: "keep-theirs"), title: "Couldn't Resolve Conflict") {
-                                        Task { await resolveConflict(note: note, action: "keep-theirs") }
-                                    }
-                                }
-
-                                if let saveError = mutationTracker.failureMessage(for: saveActionID(note)) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .foregroundStyle(.red)
-                                        Text("Save failed: \(saveError)")
-                                            .symairaText(.caption)
-                                            .foregroundColor(SymairaTheme.textSecondary)
-                                        Spacer()
-                                        Button("Retry") {
-                                            Task { await performSave(note: note, content: noteContent) }
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .controlSize(.small)
-                                        Button(action: { mutationTracker.clearFailure(for: saveActionID(note)) }) {
-                                            Image(systemName: "xmark")
-                                        }
-                                        .buttonStyle(.plain)
-                                        .foregroundStyle(SymairaTheme.textSecondary)
-                                    }
-                                    .padding(8)
-                                    .background(Color.red.opacity(0.12))
-                                    .cornerRadius(6)
-                                    .padding(.horizontal)
-                                    .padding(.top, 8)
-                                }
-
-                                if let loadError = loadError {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .foregroundStyle(.red)
-                                        Text(loadError)
-                                            .symairaText(.caption)
-                                            .foregroundColor(SymairaTheme.textSecondary)
-                                        Spacer()
-                                        Button("Retry") {
-                                            self.loadError = nil
-                                            if let note = selectedNote {
-                                                Task { await loadContent(for: note) }
-                                            }
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .controlSize(.small)
-                                        Button(action: { self.loadError = nil }) {
-                                            Image(systemName: "xmark")
-                                        }
-                                        .buttonStyle(.plain)
-                                        .foregroundStyle(SymairaTheme.textSecondary)
-                                    }
-                                    .padding(8)
-                                    .background(Color.red.opacity(0.12))
-                                    .cornerRadius(6)
-                                    .padding(.horizontal)
-                                    .padding(.top, 8)
-                                }
-
-                                if loadError == nil {
-                                    HStack(spacing: 0) {
-                                        if isBlockMode {
-                                            BlockEditorView(text: $noteContent)
-                                                .padding(.top, 4)
-                                        } else {
-                                            MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
-                                                navigateToNote(title: targetTitle)
-                                            }, core: core, vaultRoot: core.vaultPath, onImageError: { message in
-                                                appErrors.append(AppErrorMessage(
-                                                    message: message,
-                                                    detail: "The image was not inserted."
-                                                ))
-                                            })
-                                        }
-                                        
-                                        // Dummy view to attach onChange (since we use if/else for the editor)
-                                        Color.clear.frame(width: 0, height: 0)
-                                            .onChange(of: noteContent) { _, newValue in
-                                                debouncedSave(note: note, content: newValue)
-                                            }
-
-                                        if isShowingPreview {
-                                            Divider()
-                                            MarkdownPreviewView(
-                                                text: noteContent,
-                                                resolveNote: { target in resolveNoteContent(target) },
-                                                visited: [note.title],
-                                                onLinkClick: { targetTitle in
-                                                    navigateToNote(title: targetTitle)
-                                                }
-                                            )
-                                            .frame(maxWidth: .infinity)
-                                        }
-                                    }
-                                }
-                            }
-                            .navigationTitle(note.title)
-                            .task(id: note.id) {
-                                await loadContent(for: note)
-                                await loadBacklinks(for: note)
-                            }
-                        } else {
-                            ContentUnavailableView {
-                                Label("No Note Selected", systemImage: "doc.text")
-                            } description: {
-                                Text("Choose a note in the sidebar or open Quick Search with ⌘K.")
-                            } actions: {
-                                Button("Open Quick Search") { isShowingPalette = true }
-                                    .buttonStyle(SymairaPrimaryButtonStyle())
-                            }
-                            .frame(maxWidth: 460)
-                            .padding(32)
-                            .symDeskLiquidGlass(cornerRadius: 20)
-                        }
+                        vaultPane
                     }
                     }
                 }
@@ -747,7 +609,13 @@ struct ContentView: View {
                     )
                 }
                 .sheet(isPresented: $isShowingNewNoteSheet) {
-                    NewNoteSheet(isPresented: $isShowingNewNoteSheet, core: core)
+                    NewNoteSheet(
+                        isPresented: $isShowingNewNoteSheet,
+                        core: core,
+                        onCreated: { (refreshedNotes: [Note], created: Note?) -> Void in
+                            applyCreatedNote(refreshedNotes, created: created)
+                        }
+                    )
                 }
                 .confirmationDialog(
                     "Move “\(pendingTrashNote?.title ?? "")” to Trash?",
@@ -836,6 +704,9 @@ struct ContentView: View {
                     await fetchDoctor()
                     await fetchDocCounts()
                     await fetchTagCounts()
+                    // Reconcile the index against the vault so notes deleted
+                    // outside the app disappear from every list (issue #650).
+                    await reconcileIndex()
                     // Restore expanded folder state from UserDefaults
                     if let data = UserDefaults.standard.data(forKey: "sidebarExpandedFolders"),
                        let folders = try? JSONDecoder().decode(Set<String>.self, from: data) {
@@ -858,6 +729,24 @@ struct ContentView: View {
         }
     }
 
+    /// Opens a Markdown document from the document library in the note
+    /// editor (issue #648): resolves the document to a note and navigates.
+    private func openDocumentInEditor(_ doc: DocumentItem) {
+        guard let found = notes.first(where: { $0.path == doc.path }) else { return }
+        navigate(to: .vault, note: found)
+    }
+
+    /// Applies a freshly created note: refreshes the note lists and selects
+    /// the new note right away instead of waiting for the watcher (#647).
+    private func applyCreatedNote(_ refreshedNotes: [Note], created: Note?) {
+        self.notes = refreshedNotes
+        self.folderTree = buildFolderTree(from: refreshedNotes, vaultPath: core.vaultPath)
+        if let created {
+            self.selectedNote = created
+            self.displayMode = .vault
+        }
+    }
+
     /// The active vault changed: drop all per-vault state and reload so no
     /// rows leak across vaults (issue #296).
     private func reloadAfterVaultSwitch() {
@@ -874,6 +763,7 @@ struct ContentView: View {
             await fetchDoctor()
             await fetchDocCounts()
             await fetchTagCounts()
+            await reconcileIndex()
         }
     }
 
@@ -993,24 +883,37 @@ struct ContentView: View {
 
     private func loadContent(for note: Note) async {
         self.loadError = nil
+        self.loadErrorNote = nil
         if core.isRemote {
             do {
                 self.noteContent = try await core.docNoteContent(path: note.path)
             } catch {
-                self.loadError = "Error reading file: \(error.localizedDescription)"
+                self.loadError = "Error reading file \(note.path): \(error.localizedDescription)"
+                self.loadErrorNote = note
             }
             return
         }
         guard let path = absoluteNotePath(note.path) else {
-            self.loadError = "Error reading file: no vault is configured."
+            self.loadError = "Error reading file \(note.path): no vault is configured."
             return
         }
         if let data = FileManager.default.contents(atPath: path),
            let string = String(data: data, encoding: .utf8) {
             self.noteContent = string
         } else {
-            self.loadError = "Error reading file."
+            // The file is gone or unreadable — name it and offer a way out
+            // instead of a dead-end banner (issue #650).
+            self.loadError = "Error reading file \(note.path): the file may have been deleted or moved outside the app."
+            self.loadErrorNote = note
         }
+    }
+
+    /// Reconciles the sidecar index against the vault by pruning entries
+    /// whose files no longer exist — the `symdesk index --prune` equivalent —
+    /// and refreshes the note lists (issue #650).
+    private func reconcileIndex() async {
+        _ = try? await core.reindexVault(prune: true)
+        await fetchNotes()
     }
 
     private func loadBacklinks(for note: Note) async {
@@ -1273,88 +1176,160 @@ struct ContentView: View {
         return note.path.contains(" 2.md") || note.path.contains("conflicted copy")
     }
 
-    // MARK: - Folder Tree Support
+    /// The Vault editor pane (issue #650 family): extracted from `body` so
+    /// the compiler can type-check the giant split-view body in time.
+    @ViewBuilder
+    private var vaultPane: some View {
+                if let note = selectedNote {
+                    VStack(spacing: 0) {
+                        if isConflicted(note) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(SymairaTheme.goldPrimary)
+                                Text("iCloud sync conflict detected")
+                                    .symairaText(.caption)
+                                    .foregroundColor(SymairaTheme.goldSecondary)
+                                Spacer()
+                                Button("Keep Mine") {
+                                    Task { await resolveConflict(note: note, action: "keep-mine") }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(mutationTracker.isInFlight(conflictActionID(note: note, action: "keep-mine")))
+                                Button("Keep Theirs") {
+                                    Task { await resolveConflict(note: note, action: "keep-theirs") }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(mutationTracker.isInFlight(conflictActionID(note: note, action: "keep-theirs")))
+                            }
+                            .padding(8)
+                            .background(SymairaTheme.goldPrimary.opacity(0.12))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
+                            )
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                            .asyncActionAlert(mutationTracker, id: conflictActionID(note: note, action: "keep-mine"), title: "Couldn't Resolve Conflict") {
+                                Task { await resolveConflict(note: note, action: "keep-mine") }
+                            }
+                            .asyncActionAlert(mutationTracker, id: conflictActionID(note: note, action: "keep-theirs"), title: "Couldn't Resolve Conflict") {
+                                Task { await resolveConflict(note: note, action: "keep-theirs") }
+                            }
+                        }
 
-    /// Builds a folder tree from the flat list of notes.
-    private func buildFolderTree(from notes: [Note], vaultPath: String?) -> [FolderNode] {
-        guard let vaultPath = vaultPath, !vaultPath.isEmpty else {
-            return notes.map { FolderNode(id: $0.path, name: $0.title, isFolder: false, note: $0, children: [], containingFolder: nil) }
-        }
+                        if let saveError = mutationTracker.failureMessage(for: saveActionID(note)) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.red)
+                                Text("Save failed: \(saveError)")
+                                    .symairaText(.caption)
+                                    .foregroundColor(SymairaTheme.textSecondary)
+                                Spacer()
+                                Button("Retry") {
+                                    Task { await performSave(note: note, content: noteContent) }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                Button(action: { mutationTracker.clearFailure(for: saveActionID(note)) }) {
+                                    Image(systemName: "xmark")
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(SymairaTheme.textSecondary)
+                            }
+                            .padding(8)
+                            .background(Color.red.opacity(0.12))
+                            .cornerRadius(6)
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                        }
 
-        let normalizedVault = vaultPath.hasSuffix("/") ? vaultPath : vaultPath + "/"
+                        if let message = loadError {
+                            LoadErrorBanner(
+                                message: message,
+                                showsRemoveAction: loadErrorNote != nil,
+                                onRetry: {
+                                    self.loadError = nil
+                                    if let note = selectedNote {
+                                        Task { await loadContent(for: note) }
+                                    }
+                                },
+                                onRemoveFromIndex: {
+                                    Task {
+                                        await reconcileIndex()
+                                        if selectedNote?.id == loadErrorNote?.id {
+                                            selectedNote = nil
+                                            noteContent = ""
+                                        }
+                                        loadError = nil
+                                        loadErrorNote = nil
+                                    }
+                                },
+                                onDismiss: { self.loadError = nil }
+                            )
+                        }
 
-        // Count duplicate titles so identically-named notes show their folder context
-        let titleCounts = Dictionary(grouping: notes, by: \.title).mapValues(\.count)
+                        if loadError == nil {
+                            HStack(spacing: 0) {
+                                if isBlockMode {
+                                    BlockEditorView(text: $noteContent)
+                                        .padding(.top, 4)
+                                } else {
+                                    MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
+                                        navigateToNote(title: targetTitle)
+                                    }, core: core, vaultRoot: core.vaultPath, onImageError: { message in
+                                        appErrors.append(AppErrorMessage(
+                                            message: message,
+                                            detail: "The image was not inserted."
+                                        ))
+                                    })
+                                }
+                                
+                                // Dummy view to attach onChange (since we use if/else for the editor)
+                                Color.clear.frame(width: 0, height: 0)
+                                    .onChange(of: noteContent) { _, newValue in
+                                        // Do not autosave into a buffer whose backing file
+                                        // failed to load — the save would resurrect a dead
+                                        // path or clobber the real file (issue #650).
+                                        guard loadError == nil else { return }
+                                        debouncedSave(note: note, content: newValue)
+                                    }
 
-        // Build a trie from relative note paths
-        class TrieNode {
-            var name: String
-            var notes: [Note] = []
-            var children: [String: TrieNode] = [:]
-            init(name: String) { self.name = name }
-        }
-
-        let root = TrieNode(name: "")
-
-        for note in notes {
-            guard note.path.hasPrefix(normalizedVault) else { continue }
-            let relPath = String(note.path.dropFirst(normalizedVault.count))
-            var components = relPath.split(separator: "/").map(String.init)
-            guard !components.isEmpty else { continue }
-            components.removeLast() // strip the filename
-
-            var current = root
-            for component in components {
-                if current.children[component] == nil {
-                    current.children[component] = TrieNode(name: component)
-                }
-                current = current.children[component]!
-            }
-            current.notes.append(note)
-        }
-
-        func convert(_ node: TrieNode) -> [FolderNode] {
-            var result: [FolderNode] = []
-
-            // Folders first, sorted alphabetically
-            for key in node.children.keys.sorted(by: { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }) {
-                let child = node.children[key]!
-                let subChildren = convert(child)
-                result.append(FolderNode(
-                    id: key,
-                    name: key,
-                    isFolder: true,
-                    note: nil,
-                    children: subChildren,
-                    containingFolder: nil
-                ))
-            }
-
-            // Notes, sorted alphabetically by title
-            for note in node.notes.sorted(by: { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }) {
-                let hasDuplicates = (titleCounts[note.title] ?? 0) > 1
-                let containingFolder: String?
-                if hasDuplicates, !node.name.isEmpty {
-                    containingFolder = node.name
-                } else if hasDuplicates {
-                    containingFolder = "Vault root"
+                                if isShowingPreview {
+                                    Divider()
+                                    MarkdownPreviewView(
+                                        text: noteContent,
+                                        resolveNote: { target in resolveNoteContent(target) },
+                                        visited: [note.title],
+                                        onLinkClick: { targetTitle in
+                                            navigateToNote(title: targetTitle)
+                                        }
+                                    )
+                                    .frame(maxWidth: .infinity)
+                                }
+                            }
+                        }
+                    }
+                    .navigationTitle(note.title)
+                    .task(id: note.id) {
+                        await loadContent(for: note)
+                        await loadBacklinks(for: note)
+                    }
                 } else {
-                    containingFolder = nil
+                    ContentUnavailableView {
+                        Label("No Note Selected", systemImage: "doc.text")
+                    } description: {
+                        Text("Choose a note in the sidebar or open Quick Search with ⌘K.")
+                    } actions: {
+                        Button("Open Quick Search") { isShowingPalette = true }
+                            .buttonStyle(SymairaPrimaryButtonStyle())
+                    }
+                    .frame(maxWidth: 460)
+                    .padding(32)
+                    .symDeskLiquidGlass(cornerRadius: 20)
                 }
-                result.append(FolderNode(
-                    id: note.path,
-                    name: note.title,
-                    isFolder: false,
-                    note: note,
-                    children: [],
-                    containingFolder: containingFolder
-                ))
-            }
-
-            return result
-        }
-
-        return convert(root)
     }
 
     /// Recursively renders a folder tree node (folder or note leaf) in the sidebar.
@@ -1426,29 +1401,6 @@ struct ContentView: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - Folder Node Model
-
-/// A node in the sidebar folder tree — either a folder (with children)
-/// or a note leaf.
-private struct FolderNode: Identifiable, Hashable {
-    let id: String
-    let name: String
-    let isFolder: Bool
-    let note: Note?
-    let children: [FolderNode]
-    /// Set for leaf nodes that share their title with another note.
-    /// Contains the parent folder name to help disambiguate.
-    let containingFolder: String?
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-
-    static func == (lhs: FolderNode, rhs: FolderNode) -> Bool {
-        lhs.id == rhs.id
     }
 }
 
@@ -1542,6 +1494,9 @@ private struct IngestFailure: Equatable {
 private struct NewNoteSheet: View {
     @Binding var isPresented: Bool
     let core: DeskCore
+    /// Called with the refreshed note list and the newly created note so the
+    /// caller can refresh its lists and select it immediately (issue #647).
+    var onCreated: (([Note], Note?) -> Void)? = nil
     
     @State private var title = ""
     @State private var isCreating = false
@@ -1613,10 +1568,15 @@ private struct NewNoteSheet: View {
         errorMessage = nil
         Task {
             do {
-                let _ = try await core.noteNew(title: title.trimmingCharacters(in: .whitespaces))
+                let path = try await core.noteNew(title: title.trimmingCharacters(in: .whitespaces))
+                // Refresh and report immediately (issue #647): relying on the
+                // file watcher left the new note invisible until restart.
+                let notes = try await core.listFiles()
+                let created = notes.first { $0.path == path }
                 await MainActor.run {
                     isPresented = false
                     isCreating = false
+                    onCreated?(notes, created)
                 }
             } catch {
                 await MainActor.run {
@@ -1755,5 +1715,48 @@ private struct VersionMismatchBanner: View {
         .padding(.horizontal, 16)
         .padding(.top, 10)
         .accessibilityElement(children: .contain)
+    }
+}
+
+
+// MARK: - Load Error Banner
+
+/// Red banner shown when a note's backing file could not be read (issue
+/// #650): names the file, offers Retry, and — when the note is known —
+/// "Remove from index" to reconcile the stale sidecar entry away.
+private struct LoadErrorBanner: View {
+    let message: String
+    let showsRemoveAction: Bool
+    let onRetry: () -> Void
+    let onRemoveFromIndex: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+            Text(message)
+                .symairaText(.caption)
+                .foregroundColor(SymairaTheme.textSecondary)
+            Spacer()
+            Button("Retry", action: onRetry)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            if showsRemoveAction {
+                Button("Remove from index", action: onRemoveFromIndex)
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+            }
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(SymairaTheme.textSecondary)
+        }
+        .padding(8)
+        .background(Color.red.opacity(0.12))
+        .cornerRadius(6)
+        .padding(.horizontal)
+        .padding(.top, 8)
     }
 }

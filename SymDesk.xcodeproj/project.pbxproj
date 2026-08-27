@@ -77,6 +77,7 @@
 		5DED4D6730EF5229F41C0241 /* NotebookWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 436C333742B9311361D21717 /* NotebookWorkspaceView.swift */; };
 		5FD95A9B634F3C3A5DEC9547 /* UpdateInstallerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37BB0170D51D31EB825E5869 /* UpdateInstallerTests.swift */; };
 		60D1C031A05062847C04D9CC /* DeskCoreExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F3708EC2D67EBB7114F23A /* DeskCoreExportTests.swift */; };
+		621C64AD1586132988803861 /* NoteFolderTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC987A20ACFBC40ECC154307 /* NoteFolderTree.swift */; };
 		62EF7665587A0B5275D86D6F /* MarkdownTableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD503BDFC58C49F251B9A606 /* MarkdownTableTests.swift */; };
 		6382B5007E07D28E2289F3E9 /* MobileAppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = C086DC7E588B90BD2A8BD511 /* MobileAppIntents.swift */; };
 		649F594D8BA36896933EED49 /* TagEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51C61A8C8D833F893CA57C53 /* TagEntry.swift */; };
@@ -107,6 +108,7 @@
 		888252B8F6964BA6158F9CC6 /* ReviewLaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C51F0367577777D2D842F81 /* ReviewLaneView.swift */; };
 		894BF25DD7A7DE8807A137E1 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */; };
 		89D311A34BCFE5653628E45D /* MobileShareInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 402C51836E43171C7FCAFADE /* MobileShareInbox.swift */; };
+		8BCFD386CE4976121A53496A /* NoteFolderTreeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75B99A90C8392BE1761530B1 /* NoteFolderTreeTests.swift */; };
 		8D1D15CD36A1EDC8F6A23185 /* AIDockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0EF47CC7E6B528447433E8 /* AIDockView.swift */; };
 		8D9B2E4C882F19841C75104C /* MarkdownPreviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B2D66520688E3347706F2A /* MarkdownPreviewTests.swift */; };
 		8DA4A62515C221B9755EA34E /* MobileChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 441A424F476E950A61C5E3D4 /* MobileChatView.swift */; };
@@ -345,6 +347,7 @@
 		736ED2B5B34127D2C3DB76BE /* MenuCommandNotificationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuCommandNotificationsTests.swift; sourceTree = "<group>"; };
 		748F5E216CEC59B66740A482 /* DeskTransportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskTransportTests.swift; sourceTree = "<group>"; };
 		7508239A9019F2C46A80B902 /* fake-symdesk.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "fake-symdesk.sh"; sourceTree = "<group>"; };
+		75B99A90C8392BE1761530B1 /* NoteFolderTreeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteFolderTreeTests.swift; sourceTree = "<group>"; };
 		76573EF9330F66FBFF530350 /* RetrievalStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetrievalStatusView.swift; sourceTree = "<group>"; };
 		77EFBE961E405D3DD1E993FC /* MobileChatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileChatTests.swift; sourceTree = "<group>"; };
 		78F76334FF1AA665F17F9B0C /* DbViewBoard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewBoard.swift; sourceTree = "<group>"; };
@@ -419,6 +422,7 @@
 		D3377E99C5896425F50A2293 /* TagStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagStore.swift; sourceTree = "<group>"; };
 		D60608BA682AC02285E915B4 /* client */ = {isa = PBXFileReference; lastKnownFileType = folder; name = client; path = room/client; sourceTree = SOURCE_ROOT; };
 		DA6C5A97D0123DAB847C4D86 /* VaultRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultRegistry.swift; sourceTree = "<group>"; };
+		DC987A20ACFBC40ECC154307 /* NoteFolderTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteFolderTree.swift; sourceTree = "<group>"; };
 		E18125DA4B24D820B313F0C0 /* ChatTranscript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatTranscript.swift; sourceTree = "<group>"; };
 		E1DAD90AC555412E29F686DF /* MobileInlineAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileInlineAI.swift; sourceTree = "<group>"; };
 		E41862E9148BA99F226260FD /* MobileWriteLayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileWriteLayerTests.swift; sourceTree = "<group>"; };
@@ -581,6 +585,7 @@
 				61EE8B62E86F8FE234837F0A /* ContentView.swift */,
 				641C263A0947A7D1CCBE84E3 /* Info.plist */,
 				827CE03FB82C7640D64E4D97 /* main.swift */,
+				DC987A20ACFBC40ECC154307 /* NoteFolderTree.swift */,
 				C65122A6938268B750A79E55 /* NotificationCenterProviding.swift */,
 				23EBE73852F5829E6BB25B82 /* NotificationManager.swift */,
 				BBD325D2A25FDF9FA519A6FA /* SymDeskApp.swift */,
@@ -732,6 +737,7 @@
 				A2BC2A21B0BFAB4B7F22A054 /* MeetingReviewModelTests.swift */,
 				701CAD285D8A611C5C6779AD /* MeetingsViewTests.swift */,
 				736ED2B5B34127D2C3DB76BE /* MenuCommandNotificationsTests.swift */,
+				75B99A90C8392BE1761530B1 /* NoteFolderTreeTests.swift */,
 				4CA283F51817DD589D19ADB4 /* NotificationManagerTests.swift */,
 			);
 			name = SymDeskAppTests;
@@ -1089,6 +1095,7 @@
 				30F3B2FD4B8734AF6FFCA25A /* MeetingReviewModelTests.swift in Sources */,
 				F2840BACD70B9D19E69E2AB7 /* MeetingsViewTests.swift in Sources */,
 				13B0621B4B86F3BB27926ECA /* MenuCommandNotificationsTests.swift in Sources */,
+				8BCFD386CE4976121A53496A /* NoteFolderTreeTests.swift in Sources */,
 				D8DB6D940F2257736D24B15E /* NotificationManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1231,6 +1238,7 @@
 				0E431B578B8CAF857895099F /* MeetingReviewView.swift in Sources */,
 				BC3F2F58982E1AA5456634AF /* MeetingsView.swift in Sources */,
 				81EC8D6E3F1AEC5055591FF9 /* ModelsView.swift in Sources */,
+				621C64AD1586132988803861 /* NoteFolderTree.swift in Sources */,
 				5DED4D6730EF5229F41C0241 /* NotebookWorkspaceView.swift in Sources */,
 				1ECCF881DFFB05C3E4DCA223 /* NotificationCenterProviding.swift in Sources */,
 				40406909A4AAF62DD881D295 /* NotificationManager.swift in Sources */,

@@ -10,6 +10,10 @@ struct CommandPalette: View {
     
     var onSelectNote: (Note) -> Void
     var onSelectSearchResult: (SearchResult) -> Void
+    /// Called after a note was created so the caller can refresh its lists
+    /// and select the new note immediately (issue #647) instead of waiting
+    /// for the file watcher.
+    var onNoteCreated: ((Note) -> Void)? = nil
     
     @State private var searchText = ""
     @State private var searchResults: [SearchResult] = []
@@ -228,12 +232,21 @@ struct CommandPalette: View {
         isSearching = true
         Task {
             do {
-                let _ = try await core.noteNew(title: searchText)
-                // The EventWatcher will catch the new file and update `allNotes`.
-                // We just close the palette.
+                let path = try await core.noteNew(title: searchText)
+                // Refresh and select immediately (issue #647): the watcher
+                // path is debounced and may never fire for the creating
+                // window, which left the new note invisible until restart.
+                let notes = try await core.listFiles()
+                let created = notes.first { $0.path == path }
+                    ?? notes.first { $0.title.caseInsensitiveCompare(searchText) == .orderedSame }
                 await MainActor.run {
+                    self.allNotes = notes
                     self.isPresented = false
                     self.isSearching = false
+                    if let created {
+                        self.onSelectNote(created)
+                        onNoteCreated?(created)
+                    }
                 }
             } catch {
                 await MainActor.run {

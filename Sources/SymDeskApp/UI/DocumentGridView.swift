@@ -9,6 +9,9 @@ struct DocumentGridView: View {
     let statusFilter: String?
     let deepLinkPath: String?
     let tagFilter: String?
+    /// Opens a Markdown document in the note editor (issue #648). Receives
+    /// the document item; the caller resolves it to a note and navigates.
+    var onOpenInEditor: ((DocumentItem) -> Void)? = nil
 
     @State private var documents: [DocumentItem] = []
     @State private var visibleDocuments: [DocumentItem] = []
@@ -120,7 +123,7 @@ struct DocumentGridView: View {
             }
         }
         .sheet(item: $openDoc) { doc in
-            DocumentViewerView(document: doc)
+            DocumentViewerView(document: doc, onOpenInEditor: onOpenInEditor)
                 .frame(minWidth: 980, idealWidth: 1_160, minHeight: 680, idealHeight: 780)
         }
         .alert("Batch Action", isPresented: Binding(
@@ -420,6 +423,11 @@ struct DocumentGridView: View {
             Label("Open", systemImage: "doc.text")
         }
         .keyboardShortcut("o", modifiers: .command)
+        if doc.path.lowercased().hasSuffix(".md") {
+            Button(action: { onOpenInEditor?(doc) }) {
+                Label("Open in Editor", systemImage: "pencil.and.outline")
+            }
+        }
         Divider()
         statusSubmenu(doc: doc)
         Divider()

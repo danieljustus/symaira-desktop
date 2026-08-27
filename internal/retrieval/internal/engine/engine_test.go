@@ -175,6 +175,46 @@ func (f *fakeEmbedder) ModelName() string {
 	return "fake-model"
 }
 
+// fallbackEmbedder mimics the engine when the embedding backend is
+// unavailable: every vector is the deterministic local-hash fallback tagged
+// with localHashModelName. Used to test that unembeddable chunks are recorded
+// as pending rather than stored as semantic vectors (issue #663/#678).
+type fallbackEmbedder struct {
+	dim int
+}
+
+func (f *fallbackEmbedder) GenerateVector(text string) []float32 {
+	return GenerateLocalHashVector(text, f.dim)
+}
+
+func (f *fallbackEmbedder) GenerateVectors(texts []string) [][]float32 {
+	out := make([][]float32, len(texts))
+	for i, t := range texts {
+		out[i] = f.GenerateVector(t)
+	}
+	return out
+}
+
+func (f *fallbackEmbedder) GenerateVectorsWithModel(texts []string) []EmbeddingResult {
+	out := make([]EmbeddingResult, len(texts))
+	for i, t := range texts {
+		out[i] = EmbeddingResult{Vector: f.GenerateVector(t), Model: localHashModelName}
+	}
+	return out
+}
+
+func (f *fallbackEmbedder) GenerateVectorNoRetry(text string) []float32 {
+	return f.GenerateVector(text)
+}
+
+func (f *fallbackEmbedder) GenerateVectorNoRetryWithModel(text string) EmbeddingResult {
+	return EmbeddingResult{Vector: f.GenerateVector(text), Model: localHashModelName}
+}
+
+func (f *fallbackEmbedder) Dim() int { return f.dim }
+
+func (f *fallbackEmbedder) ModelName() string { return localHashModelName }
+
 // TestSearchHybridAcceptsEmbedderInterface guards the contract from #35:
 // the indexer must depend on the Embedder interface, not the concrete
 // *EmbeddingsGenerator, so callers can substitute behavior in tests.

@@ -952,3 +952,66 @@ func TestBuildChunks_RecordsActualEmbeddingModel(t *testing.T) {
 		t.Error("expected at least one local-hash chunk")
 	}
 }
+
+// TestIndexWithUnavailableBackendMarksChunksPending verifies issue #663/#678:
+// when the embedding backend is unavailable, chunks are recorded as pending
+// (no semantic vector stored) rather than persisted as local-hash vectors,
+// and the index is not flagged as a mixed embedding space.
+func TestIndexWithUnavailableBackendMarksChunksPending(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "seek-678-test")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+	t.Setenv("HOME", tempDir)
+
+	dbClient, err := db.Open()
+	if err != nil {
+		t.Fatalf("failed to open database: %v", err)
+	}
+	defer dbClient.Close()
+
+	embedder := &fallbackEmbedder{dim: 768}
+	source := "doc.md"
+	body := strings.Repeat("semantic search needs real embeddings ", 200)
+
+	if err := IndexStdin(dbClient, embedder, strings.NewReader(body), source); err != nil {
+		t.Fatalf("IndexStdin: %v", err)
+	}
+
+	chunks, err := dbClient.GetChunksForDocument(source)
+	if err != nil {
+		t.Fatalf("GetChunksForDocument: %v", err)
+	}
+	if len(chunks) == 0 {
+		t.Fatal("expected chunks to be stored")
+	}
+	for _, c := range chunks {
+		if !c.EmbeddingPending {
+			t.Errorf("chunk %d should be pending (backend unavailable)", c.ChunkIndex)
+		}
+		if len(c.Embedding) != 0 {
+			t.Errorf("chunk %d must not store a semantic vector when pending (got %d dims)", c.ChunkIndex, len(c.Embedding))
+		}
+		if c.Model != localHashModelName {
+			t.Errorf("chunk %d model = %q, want %q", c.ChunkIndex, c.Model, localHashModelName)
+		}
+	}
+
+	// A backend-down index must not be reported as a mixed embedding space.
+	spaces, err := dbClient.DetectMixedEmbeddingSpaces()
+	if err != nil {
+		t.Fatalf("DetectMixedEmbeddingSpaces: %v", err)
+	}
+	if len(spaces) != 0 {
+		t.Errorf("backend-down index should report no embedding spaces, got %v", spaces)
+	}
+
+	pending, err := dbClient.CountPendingChunks()
+	if err != nil {
+		t.Fatalf("CountPendingChunks: %v", err)
+	}
+	if pending != len(chunks) {
+		t.Errorf("CountPendingChunks = %d, want %d", pending, len(chunks))
+	}
+}

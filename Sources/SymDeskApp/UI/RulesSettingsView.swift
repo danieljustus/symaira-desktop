@@ -25,12 +25,12 @@ struct RulesSettingsView: View {
     @State private var aiProvider: String = "ollama"
     @State private var aiOllamaURL: String = ""
     @State private var aiModel: String = ""
-    @State private var aiAPIKey: String = ""
     @State private var aiMaxTokens: String = ""
     @State private var aiAvailableModels: [String] = []
     @State private var aiTestResult: DeskCore.AIConnectionTestResult?
     @State private var aiIsTesting = false
     @State private var aiIsSaving = false
+    private let aiCredentialStore = SymairaProviderCredentialStore()
     @State private var showingPaperlessImport = false
 
     init() {
@@ -593,8 +593,13 @@ struct RulesSettingsView: View {
                             }
                         }
                     } else if aiProvider == "anthropic" {
-                        SecureField("API key or symvault reference (op://...)", text: $aiAPIKey)
-                            .textFieldStyle(.symaira)
+                        SymairaProviderCredentialField(
+                            providerID: aiProvider,
+                            store: aiCredentialStore,
+                            title: "API key or symvault reference (op://...)",
+                            onCredentialChange: { aiTestResult = nil }
+                        )
+                        .id(aiProvider)
                         TextField("Model", text: $aiModel)
                             .textFieldStyle(.symaira)
                     }
@@ -665,6 +670,11 @@ struct RulesSettingsView: View {
         }
     }
 
+    private func storedAICredential() -> String? {
+        guard aiProvider == "anthropic" else { return nil }
+        return try? aiCredentialStore.credential(for: aiProvider)
+    }
+
     private func testAIConnection() async {
         aiIsTesting = true
         aiTestResult = nil
@@ -675,7 +685,7 @@ struct RulesSettingsView: View {
                 provider: aiProvider,
                 ollamaURL: aiOllamaURL,
                 model: aiModel.isEmpty ? nil : aiModel,
-                apiKey: aiProvider == "anthropic" ? aiAPIKey : nil,
+                apiKey: storedAICredential(),
                 maxTokens: Int(aiMaxTokens)
             )
             let result = try await core.testAIConnection()
@@ -699,7 +709,7 @@ struct RulesSettingsView: View {
                 provider: aiProvider,
                 ollamaURL: aiOllamaURL,
                 model: aiModel.isEmpty ? nil : aiModel,
-                apiKey: aiProvider == "anthropic" ? aiAPIKey : nil,
+                apiKey: storedAICredential(),
                 maxTokens: Int(aiMaxTokens)
             )
             await loadAIConfig()

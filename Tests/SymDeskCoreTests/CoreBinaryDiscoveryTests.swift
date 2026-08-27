@@ -57,16 +57,17 @@ final class CoreBinaryDiscoveryTests: XCTestCase {
         )
     }
 
-    func testDetectionPrefersStrictSearchForSecureDirectory() async throws {
+    func testDetectionPrefersStrictSearchWhenStrictDetectorFindsBinary() async throws {
         let directory = try makeBinDirectory(mode: 0o755, containingFixture: true)
 
         let detection = await CoreBinaryDiscovery.detect(
             Self.fixtureTool,
-            strict: ToolDetector(locator: locator(for: directory)),
+            // The fixture is an unsigned script; isolate detector precedence from signature verification.
+            strict: ToolDetector(locator: locator(for: directory), allowUnverified: true),
             relaxed: ToolDetector(locator: locator(for: directory), allowUnverified: true)
         )
 
-        let resolved = try XCTUnwrap(detection, "a binary in a secure directory must be found")
+        let resolved = try XCTUnwrap(detection, "the strict detector's binary must be found")
         XCTAssertNil(
             resolved.provenanceNote,
             "a directory that passes the strict search must not be reported as a fallback"

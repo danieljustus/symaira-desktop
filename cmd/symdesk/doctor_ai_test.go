@@ -196,7 +196,11 @@ func TestDoctorReportsPendingChunks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		if rerr := os.RemoveAll(tempDir); rerr != nil {
+			t.Logf("cleanup temp dir: %v", rerr)
+		}
+	}()
 	t.Setenv("HOME", tempDir)
 
 	// The retrieval seam is injected so the check is deterministic and does

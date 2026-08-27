@@ -441,19 +441,16 @@ func (s *Service) NoteDaily(dateStr string) (string, error) {
 }
 
 // webClippers are the sibling binaries that can render a URL into the shared
-// fetch output schema, in preference order. symbrowse is first because it
-// absorbed symfetch's static engine in the repo consolidation; symfetch stays
-// supported so an existing installation keeps working.
+// fetch output schema. symbrowse is the only web clipper.
 var webClippers = []struct {
 	binary string
 	args   func(url string) []string
 }{
 	{binary: "symbrowse", args: func(url string) []string { return []string{"read", url} }},
-	{binary: "symfetch", args: func(url string) []string { return []string{url} }},
 }
 
-// clipURL renders a URL with the first available web clipper and returns its
-// markdown. Both clippers emit the same document schema, so the caller does
+// clipURL renders a URL with the available web clipper and returns its
+// markdown. The clipper emits the shared document schema, so the caller does
 // not need to know which one answered.
 func clipURL(url string) (string, error) {
 	var lastErr error
@@ -479,12 +476,11 @@ func clipURL(url string) (string, error) {
 	if lastErr != nil {
 		return "", lastErr
 	}
-	return "", fmt.Errorf("no web clipper found: install symbrowse (danieljustus/tap/symbrowse)")
+	return "", fmt.Errorf("no web clipper found: install symbrowse with brew install danieljustus/tap/symbrowse")
 }
 
 // clipTitle extracts the document title from a clipper's markdown. It accepts
-// both shapes of the shared schema: the YAML frontmatter symbrowse emits and
-// the quoted header block symfetch emits.
+// the YAML frontmatter shape symbrowse emits.
 func clipTitle(body, url string) string {
 	lines := strings.Split(body, "\n")
 
@@ -499,14 +495,6 @@ func clipTitle(body, url string) string {
 					return t
 				}
 			}
-		}
-	}
-
-	// symfetch: `> **Title** · 200 · ~42 tokens`
-	if len(lines) > 0 && strings.HasPrefix(lines[0], "> **") {
-		parts := strings.SplitN(lines[0][4:], "**", 2)
-		if len(parts) > 1 && strings.TrimSpace(parts[0]) != "" {
-			return strings.TrimSpace(parts[0])
 		}
 	}
 

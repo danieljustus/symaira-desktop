@@ -387,14 +387,14 @@ func TestDocsSimilarToolInvalidJSON(t *testing.T) {
 	}
 }
 
-func TestClipToolWithoutSymfetch(t *testing.T) {
+func TestClipToolWithoutSymbrowse(t *testing.T) {
 	t.Setenv("PATH", "/usr/bin:/bin")
 	tool := newClipTool(testFactory(t))
 
 	in, _ := json.Marshal(map[string]string{"url": "https://example.com"})
 	_, err := tool.Handler(context.Background(), in)
 	if err == nil {
-		t.Error("expected an error when symfetch is not installed")
+		t.Error("expected an error when symbrowse is not installed")
 	}
 }
 

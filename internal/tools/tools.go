@@ -840,7 +840,7 @@ func newIngestRetryTool(getService ServiceFactory) *Tool {
 func newClipTool(getService ServiceFactory) *Tool {
 	return &Tool{
 		Name:        "desk_clip",
-		Description: "Fetches a URL via symfetch and saves it as a note in the vault.",
+		Description: "Fetches a URL via symbrowse and saves it as a note in the vault.",
 		InputSchema: json.RawMessage(`{"type":"object","properties":{"url":{"type":"string"}},"required":["url"]}`),
 		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
 			var args struct {

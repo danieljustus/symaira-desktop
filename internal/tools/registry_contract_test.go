@@ -235,7 +235,7 @@ var toolContracts = []toolContract{
 	},
 	{
 		name:        "desk_clip",
-		description: "Fetches a URL via symfetch and saves it as a note in the vault.",
+		description: "Fetches a URL via symbrowse and saves it as a note in the vault.",
 		schema:      `{"type":"object","properties":{"url":{"type":"string"}},"required":["url"]}`,
 		readOnly:    false,
 	},
@@ -389,8 +389,8 @@ func errorServiceFactory() ServiceFactory {
 	}
 }
 
-// restrictPATH hides the symaira companion binaries (symingest, symfetch,
-// symmeet, symmemory, symprint) so external-tool paths fail deterministically.
+// restrictPATH hides the symaira companion binaries (symingest, symmeet,
+// symmemory, symprint) so external-tool paths fail deterministically.
 func restrictPATH(t *testing.T) {
 	t.Helper()
 	t.Setenv("PATH", "/usr/bin:/bin")
@@ -723,8 +723,8 @@ func TestToolHandlersInvalidJSON(t *testing.T) {
 }
 
 // TestToolHandlersHappyPaths exercises each handler end-to-end against a real
-// service, including the external-tool degradation paths (symingest,
-// symfetch, symmeet, symmemory not installed).
+// service, including the external-tool degradation paths (symingest, symmeet,
+// symmemory not installed).
 func TestToolHandlersHappyPaths(t *testing.T) {
 	ctx := context.Background()
 
@@ -924,12 +924,12 @@ func TestToolHandlersHappyPaths(t *testing.T) {
 		}
 	})
 
-	t.Run("desk_clip degrades without symfetch", func(t *testing.T) {
+	t.Run("desk_clip degrades without symbrowse", func(t *testing.T) {
 		restrictPATH(t)
 		tool := newClipTool(testServiceFactory(t))
 		in, _ := json.Marshal(map[string]string{"url": "https://example.com"})
 		if _, err := tool.Handler(ctx, in); err == nil {
-			t.Error("expected error when symfetch is not installed")
+			t.Error("expected error when symbrowse is not installed")
 		}
 	})
 

@@ -116,16 +116,16 @@ func TestResolveOrderAcrossThreeSources(t *testing.T) {
 		t.Setenv(SymairaBinEnvVar, emptyEnvDir)
 
 		managedDir := filepath.Join(home, ".symaira", "bin")
-		writeExecutable(t, managedDir, "symfetch")
+		writeExecutable(t, managedDir, "symbrowse")
 
-		path, origin, err := ResolveWithOrigin("symfetch")
+		path, origin, err := ResolveWithOrigin("symbrowse")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if origin != OriginManagedRuntime {
 			t.Errorf("expected origin %q, got %q", OriginManagedRuntime, origin)
 		}
-		if want := filepath.Join(managedDir, "symfetch"); path != want {
+		if want := filepath.Join(managedDir, "symbrowse"); path != want {
 			t.Errorf("expected path %q, got %q", want, path)
 		}
 	})

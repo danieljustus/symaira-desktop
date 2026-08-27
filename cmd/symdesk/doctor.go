@@ -123,7 +123,7 @@ func newDoctorCmd() *cobra.Command {
 					if pending > 0 {
 						retStatus = "warn"
 					}
-					results["retrieval"] = map[string]interface{}{
+					retrievalResult := map[string]interface{}{
 						"status":            retStatus,
 						"backend_available": retrievalStatus.BackendAvailable,
 						"embedding_model":   retrievalStatus.EmbeddingModel,
@@ -131,6 +131,10 @@ func newDoctorCmd() *cobra.Command {
 						"document_count":    retrievalStatus.DocumentCount,
 						"chunk_count":       retrievalStatus.ChunkCount,
 					}
+					if pending > 0 {
+						retrievalResult["detail"] = "index has unembeddable (pending) chunks; run `symdesk index --re-embed` once the embedding backend is available"
+					}
+					results["retrieval"] = retrievalResult
 				}
 			}
 

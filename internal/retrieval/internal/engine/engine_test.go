@@ -602,6 +602,10 @@ func (p *pathFilterStore) SearchVectorWithPath(queryVec []float32, pathPrefix st
 func (p *pathFilterStore) DetectMixedEmbeddingSpaces() (map[string]int, error) {
 	return map[string]int{}, nil
 }
+func (p *pathFilterStore) CountPendingChunks() (int, error) { return 0, nil }
+func (p *pathFilterStore) CountPendingChunksForDocument(docPath string) (int, error) {
+	return 0, nil
+}
 func (p *pathFilterStore) SetFolderContext(path, text string) error                  { return nil }
 func (p *pathFilterStore) GetFolderContexts() ([]db.FolderContext, error)            { return nil, nil }
 func (p *pathFilterStore) GetMatchingContext(path string) (*db.FolderContext, error) { return nil, nil }

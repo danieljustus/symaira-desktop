@@ -145,6 +145,8 @@ type Store interface {
 	SearchBM25WithPath(queryStr string, pathPrefix string, limit int) ([]*SearchResult, error)
 	SearchVectorWithPath(queryVec []float32, pathPrefix string, limit int) ([]*SearchResult, error)
 	DetectMixedEmbeddingSpaces() (map[string]int, error)
+	CountPendingChunks() (int, error)
+	CountPendingChunksForDocument(docPath string) (int, error)
 	SetFolderContext(path, text string) error
 	GetFolderContexts() ([]FolderContext, error)
 	GetMatchingContext(path string) (*FolderContext, error)
@@ -480,6 +482,18 @@ func (db *DB) CountPendingChunks() (int, error) {
 	var n int
 	if err := db.conn.QueryRow("SELECT COUNT(*) FROM chunks WHERE embedding_pending = 1").Scan(&n); err != nil {
 		return 0, fmt.Errorf("count pending chunks: %w", err)
+	}
+	return n, nil
+}
+
+// CountPendingChunksForDocument returns how many chunks of a single document
+// are still pending (unembeddable fallback placeholders). The re-embed path
+// (#663/#679) uses it to decide whether an otherwise-unchanged document needs
+// re-indexing once the backend becomes available.
+func (db *DB) CountPendingChunksForDocument(docPath string) (int, error) {
+	var n int
+	if err := db.conn.QueryRow("SELECT COUNT(*) FROM chunks WHERE document_path = ? AND embedding_pending = 1", docPath).Scan(&n); err != nil {
+		return 0, fmt.Errorf("count pending chunks for document: %w", err)
 	}
 	return n, nil
 }

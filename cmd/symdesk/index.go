@@ -14,6 +14,7 @@ import (
 )
 
 var indexPrune bool
+var indexReembed bool
 
 func newIndexCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -34,6 +35,20 @@ func newIndexCmd() *cobra.Command {
 				return err
 			}
 			defer db.Close()
+
+			// --re-embed forces re-embedding of every document that still
+			// holds pending (unembeddable) chunks, then runs the normal
+			// index pass so any newly-available backend fills the gaps
+			// (#663/#679).
+			if indexReembed {
+				n, rerr := retrieval.ReembedPending()
+				if rerr != nil {
+					return fmt.Errorf("re-embed failed: %w", rerr)
+				}
+				if !jsonFlag {
+					fmt.Printf("Re-embedded %d document(s) with pending chunks.\n", n)
+				}
+			}
 
 			target := vRoot
 			if len(args) > 0 {
@@ -61,7 +76,7 @@ func newIndexCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				if indexed {
+				if indexed && !indexReembed {
 					skipped++
 					return nil
 				}
@@ -126,6 +141,7 @@ func newIndexCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().BoolVar(&indexPrune, "prune", false, "Remove stale entries for deleted or newly-ignored files")
+	cmd.Flags().BoolVar(&indexReembed, "re-embed", false, "Re-embed documents that are still pending because the embedding backend was unavailable")
 	cmd.AddCommand(newIndexStatusCmd())
 	return cmd
 }

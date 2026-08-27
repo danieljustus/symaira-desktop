@@ -510,6 +510,9 @@ extension Notification.Name {
     static let openDashboard = Notification.Name("symdesk.openDashboard")
     /// Posted by menu bar commands to trigger UI actions in ContentView.
     static let openCommandPalette = Notification.Name("symdesk.openCommandPalette")
+    static let toggleEditorPreview = Notification.Name("symdesk.toggleEditorPreview")
+    static let toggleEditorInspector = Notification.Name("symdesk.toggleEditorInspector")
+    static let openEditorAIDock = Notification.Name("symdesk.openEditorAIDock")
     static let openNewNoteSheet = Notification.Name("symdesk.openNewNoteSheet")
     static let openRulesSettings = Notification.Name("symdesk.openRulesSettings")
 }

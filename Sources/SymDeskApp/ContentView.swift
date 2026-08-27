@@ -431,156 +431,7 @@ struct ContentView: View {
                                 .foregroundColor(SymairaTheme.textMuted)
                         }
                     case .vault:
-                        if let note = selectedNote {
-                            VStack(spacing: 0) {
-                                if isConflicted(note) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .foregroundStyle(SymairaTheme.goldPrimary)
-                                        Text("iCloud sync conflict detected")
-                                            .symairaText(.caption)
-                                            .foregroundColor(SymairaTheme.goldSecondary)
-                                        Spacer()
-                                        Button("Keep Mine") {
-                                            Task { await resolveConflict(note: note, action: "keep-mine") }
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .controlSize(.small)
-                                        .disabled(mutationTracker.isInFlight(conflictActionID(note: note, action: "keep-mine")))
-                                        Button("Keep Theirs") {
-                                            Task { await resolveConflict(note: note, action: "keep-theirs") }
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .controlSize(.small)
-                                        .disabled(mutationTracker.isInFlight(conflictActionID(note: note, action: "keep-theirs")))
-                                    }
-                                    .padding(8)
-                                    .background(SymairaTheme.goldPrimary.opacity(0.12))
-                                    .cornerRadius(6)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
-                                    )
-                                    .padding(.horizontal)
-                                    .padding(.top, 8)
-                                    .asyncActionAlert(mutationTracker, id: conflictActionID(note: note, action: "keep-mine"), title: "Couldn't Resolve Conflict") {
-                                        Task { await resolveConflict(note: note, action: "keep-mine") }
-                                    }
-                                    .asyncActionAlert(mutationTracker, id: conflictActionID(note: note, action: "keep-theirs"), title: "Couldn't Resolve Conflict") {
-                                        Task { await resolveConflict(note: note, action: "keep-theirs") }
-                                    }
-                                }
-
-                                if let saveError = mutationTracker.failureMessage(for: saveActionID(note)) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .foregroundStyle(.red)
-                                        Text("Save failed: \(saveError)")
-                                            .symairaText(.caption)
-                                            .foregroundColor(SymairaTheme.textSecondary)
-                                        Spacer()
-                                        Button("Retry") {
-                                            Task { await performSave(note: note, content: noteContent) }
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .controlSize(.small)
-                                        Button(action: { mutationTracker.clearFailure(for: saveActionID(note)) }) {
-                                            Image(systemName: "xmark")
-                                        }
-                                        .buttonStyle(.plain)
-                                        .foregroundStyle(SymairaTheme.textSecondary)
-                                    }
-                                    .padding(8)
-                                    .background(Color.red.opacity(0.12))
-                                    .cornerRadius(6)
-                                    .padding(.horizontal)
-                                    .padding(.top, 8)
-                                }
-
-                                if let loadError = loadError {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .foregroundStyle(.red)
-                                        Text(loadError)
-                                            .symairaText(.caption)
-                                            .foregroundColor(SymairaTheme.textSecondary)
-                                        Spacer()
-                                        Button("Retry") {
-                                            self.loadError = nil
-                                            if let note = selectedNote {
-                                                Task { await loadContent(for: note) }
-                                            }
-                                        }
-                                        .buttonStyle(.bordered)
-                                        .controlSize(.small)
-                                        Button(action: { self.loadError = nil }) {
-                                            Image(systemName: "xmark")
-                                        }
-                                        .buttonStyle(.plain)
-                                        .foregroundStyle(SymairaTheme.textSecondary)
-                                    }
-                                    .padding(8)
-                                    .background(Color.red.opacity(0.12))
-                                    .cornerRadius(6)
-                                    .padding(.horizontal)
-                                    .padding(.top, 8)
-                                }
-
-                                if loadError == nil {
-                                    HStack(spacing: 0) {
-                                        if isBlockMode {
-                                            BlockEditorView(text: $noteContent)
-                                                .padding(.top, 4)
-                                        } else {
-                                            MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
-                                                navigateToNote(title: targetTitle)
-                                            }, core: core, vaultRoot: core.vaultPath, onImageError: { message in
-                                                appErrors.append(AppErrorMessage(
-                                                    message: message,
-                                                    detail: "The image was not inserted."
-                                                ))
-                                            })
-                                        }
-                                        
-                                        // Dummy view to attach onChange (since we use if/else for the editor)
-                                        Color.clear.frame(width: 0, height: 0)
-                                            .onChange(of: noteContent) { _, newValue in
-                                                debouncedSave(note: note, content: newValue)
-                                            }
-
-                                        if isShowingPreview {
-                                            Divider()
-                                            MarkdownPreviewView(
-                                                text: noteContent,
-                                                resolveNote: { target in resolveNoteContent(target) },
-                                                visited: [note.title],
-                                                onLinkClick: { targetTitle in
-                                                    navigateToNote(title: targetTitle)
-                                                }
-                                            )
-                                            .frame(maxWidth: .infinity)
-                                        }
-                                    }
-                                }
-                            }
-                            .navigationTitle(note.title)
-                            .task(id: note.id) {
-                                await loadContent(for: note)
-                                await loadBacklinks(for: note)
-                            }
-                        } else {
-                            ContentUnavailableView {
-                                Label("No Note Selected", systemImage: "doc.text")
-                            } description: {
-                                Text("Choose a note in the sidebar or open Quick Search with ⌘K.")
-                            } actions: {
-                                Button("Open Quick Search") { isShowingPalette = true }
-                                    .buttonStyle(SymairaPrimaryButtonStyle())
-                            }
-                            .frame(maxWidth: 460)
-                            .padding(32)
-                            .symDeskLiquidGlass(cornerRadius: 20)
-                        }
+                        vaultPane
                     }
                     }
                 }
@@ -654,77 +505,7 @@ struct ContentView: View {
                     Text(ingestFailure?.message ?? "")
                 }
                 .toolbar {
-                    ToolbarItem(placement: .navigation) {
-                        HStack(spacing: 0) {
-                            Button(action: { goBack() }) {
-                                Image(systemName: "chevron.left")
-                            }
-                            .disabled(!canGoBack)
-                            .help("Go back")
-
-                            Button(action: { goForward() }) {
-                                Image(systemName: "chevron.right")
-                            }
-                            .disabled(!canGoForward)
-                            .help("Go forward")
-
-                            Divider()
-                                .frame(height: 16)
-
-                            Button(action: { isShowingPalette.toggle() }) {
-                                Label("Command Palette", systemImage: "magnifyingglass")
-                            }
-                            .keyboardShortcut("k", modifiers: .command)
-
-                            Toggle(isOn: $isBlockMode) {
-                                Label("Block Mode", systemImage: "square.text.square")
-                            }
-                            .toggleStyle(.button)
-                        }
-                        .toggleStyle(.button)
-                        
-                        if displayMode == .vault && selectedNote != nil {
-                            Button(action: { isShowingPreview.toggle() }) {
-                                Label("Toggle Preview", systemImage: "sidebar.right")
-                            }
-                            
-                            Button(action: {
-                                isShowingAIDock = true
-                                isShowingInspector = true
-                            }) {
-                                Label("AI Dock", systemImage: "sparkles")
-                            }
-                            
-                            Button(action: {
-                                isShowingAIDock = false
-                                isShowingInspector.toggle()
-                            }) {
-                                Label("Toggle Inspector", systemImage: "info.circle")
-                            }
-                        }
-                    }
-                    ToolbarItem(placement: .status) {
-                        HStack(spacing: 8) {
-                            Button(action: { isShowingDoctorPopover.toggle() }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: (doctorReport?.overall == "ok" || doctorReport == nil) ? "checkmark.shield" : "exclamationmark.triangle")
-                                        .foregroundColor(doctorReport?.overall == "ok" ? SymairaTheme.goldPrimary : SymairaTheme.goldSecondary)
-                                    Text(doctorSummaryText)
-                                        .symairaText(.caption)
-                                        .foregroundColor(SymairaTheme.textMuted)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .popover(isPresented: $isShowingDoctorPopover) {
-                                DoctorReportPopoverView(report: doctorReport)
-                            }
-                            if let lastEv = watcher.latestEvent {
-                                Text("Last event: \\(lastEv.event) on \\(lastEv.path)")
-                                    .symairaText(.caption)
-                                    .foregroundColor(SymairaTheme.textMuted)
-                            }
-                        }
-                    }
+                    mainToolbar
                 }
                 .sheet(isPresented: $isShowingViewEditor) {
                     DbViewEditor(existing: editingDbView) {
@@ -768,16 +549,7 @@ struct ContentView: View {
                     Text("The note moves to the vault trash and can be restored from the Trash screen. Your files stay on disk.")
                 }
                 // App-wide shortcut for Cmd-K
-                .onAppear {
-                    guard keyEventMonitor == nil else { return }
-                    keyEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                        if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "k" {
-                            isShowingPalette.toggle()
-                            return nil
-                        }
-                        return event
-                    }
-                }
+                .onAppear { installKeyEventMonitor() }
                 .onDisappear {
                     saveTask?.cancel()
                     eventRefreshTask?.cancel()
@@ -786,14 +558,19 @@ struct ContentView: View {
                         self.keyEventMonitor = nil
                     }
                 }
-                .onReceive(NotificationCenter.default.publisher(for: .openDiscover)) { _ in
-                    navigate(to: .discover)
-                }
-                .onReceive(NotificationCenter.default.publisher(for: .openDashboard)) { _ in
-                    navigate(to: .dashboard)
-                }
+                .onReceive(NotificationCenter.default.publisher(for: .openDiscover)) { _ in openDiscover() }
+                .onReceive(NotificationCenter.default.publisher(for: .openDashboard)) { _ in openDashboard() }
                 .onReceive(NotificationCenter.default.publisher(for: .openCommandPalette)) { _ in
                     isShowingPalette = true
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .toggleEditorPreview)) { _ in
+                    isShowingPreview.toggle()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .toggleEditorInspector)) { _ in
+                    toggleInspector()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .openEditorAIDock)) { _ in
+                    openAIDock()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .openNewNoteSheet)) { _ in
                     isShowingNewNoteSheet = true
@@ -842,12 +619,7 @@ struct ContentView: View {
                         expandedFolders = folders
                     }
                 }
-                .onChange(of: expandedFolders) { _, newValue in
-                    // Persist expanded folder state
-                    if let data = try? JSONEncoder().encode(newValue) {
-                        UserDefaults.standard.set(data, forKey: "sidebarExpandedFolders")
-                    }
-                }
+                .onChange(of: expandedFolders) { _, newValue in persistExpandedFolders(newValue) }
                 .onChange(of: watcher.latestEvent) { _, ev in
                     scheduleEventRefresh(ev)
                 }
@@ -1136,6 +908,270 @@ struct ContentView: View {
 
     /// Navigate to a new destination, pushing the current state onto the
     /// back stack so the user can return with the back button.
+    /// The window toolbar (issue #651): extracted from `body` so the giant
+    /// split-view body stays within the type-checker's budget.
+    @ToolbarContentBuilder
+    private var mainToolbar: some ToolbarContent {
+                ToolbarItem(placement: .navigation) {
+                    HStack(spacing: 0) {
+                        Button(action: { goBack() }) {
+                            Image(systemName: "chevron.left")
+                        }
+                        .disabled(!canGoBack)
+                        .help("Go back")
+
+                        Button(action: { goForward() }) {
+                            Image(systemName: "chevron.right")
+                        }
+                        .disabled(!canGoForward)
+                        .help("Go forward")
+
+                        Divider()
+                            .frame(height: 16)
+
+                        Button(action: { isShowingPalette.toggle() }) {
+                            Label("Command Palette", systemImage: "magnifyingglass")
+                        }
+                        .keyboardShortcut("k", modifiers: .command)
+
+                        Toggle(isOn: $isBlockMode) {
+                            Label("Block Mode", systemImage: "square.text.square")
+                        }
+                        .toggleStyle(.button)
+                    }
+                    .toggleStyle(.button)
+                    
+                }
+                // Each editor surface gets its own ToolbarItem — they were
+                // previously declared as a second top-level view inside the
+                // navigation item and never rendered (issue #651).
+                ToolbarItem(placement: .primaryAction) {
+                    if displayMode == .vault && selectedNote != nil {
+                        Button(action: { isShowingPreview.toggle() }) {
+                            Label("Toggle Preview", systemImage: "sidebar.right")
+                        }
+                        .help("Show or hide the Markdown preview (⌥⌘P)")
+                    }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    if displayMode == .vault && selectedNote != nil {
+                        Button(action: { openAIDock() }) {
+                            Label("AI Dock", systemImage: "sparkles")
+                        }
+                        .help("Open the AI chat dock (⌥⌘A)")
+                    }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    if displayMode == .vault && selectedNote != nil {
+                        Button(action: { toggleInspector() }) {
+                            Label("Toggle Inspector", systemImage: "info.circle")
+                        }
+                        .help("Show or hide the properties inspector (⌥⌘I)")
+                    }
+                }
+                ToolbarItem(placement: .status) {
+                    HStack(spacing: 8) {
+                        Button(action: { isShowingDoctorPopover.toggle() }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: (doctorReport?.overall == "ok" || doctorReport == nil) ? "checkmark.shield" : "exclamationmark.triangle")
+                                    .foregroundColor(doctorReport?.overall == "ok" ? SymairaTheme.goldPrimary : SymairaTheme.goldSecondary)
+                                Text(doctorSummaryText)
+                                    .symairaText(.caption)
+                                    .foregroundColor(SymairaTheme.textMuted)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $isShowingDoctorPopover) {
+                            DoctorReportPopoverView(report: doctorReport)
+                        }
+                        if let lastEv = watcher.latestEvent {
+                            Text("Last event: \(lastEv.event) on \(vaultRelativePath(lastEv.path))")
+                                .symairaText(.caption)
+                                .foregroundColor(SymairaTheme.textMuted)
+                        }
+                    }
+                }
+    }
+
+    /// The Vault editor pane (issues #651/#652): extracted from `body` so
+    /// the compiler can type-check the giant split-view body in time.
+    @ViewBuilder
+    private var vaultPane: some View {
+                if let note = selectedNote {
+                    VStack(spacing: 0) {
+                        if isConflicted(note) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(SymairaTheme.goldPrimary)
+                                Text("iCloud sync conflict detected")
+                                    .symairaText(.caption)
+                                    .foregroundColor(SymairaTheme.goldSecondary)
+                                Spacer()
+                                Button("Keep Mine") {
+                                    Task { await resolveConflict(note: note, action: "keep-mine") }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(mutationTracker.isInFlight(conflictActionID(note: note, action: "keep-mine")))
+                                Button("Keep Theirs") {
+                                    Task { await resolveConflict(note: note, action: "keep-theirs") }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(mutationTracker.isInFlight(conflictActionID(note: note, action: "keep-theirs")))
+                            }
+                            .padding(8)
+                            .background(SymairaTheme.goldPrimary.opacity(0.12))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(SymairaTheme.borderGlassHover, lineWidth: 1)
+                            )
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                            .asyncActionAlert(mutationTracker, id: conflictActionID(note: note, action: "keep-mine"), title: "Couldn't Resolve Conflict") {
+                                Task { await resolveConflict(note: note, action: "keep-mine") }
+                            }
+                            .asyncActionAlert(mutationTracker, id: conflictActionID(note: note, action: "keep-theirs"), title: "Couldn't Resolve Conflict") {
+                                Task { await resolveConflict(note: note, action: "keep-theirs") }
+                            }
+                        }
+
+                        if let saveError = mutationTracker.failureMessage(for: saveActionID(note)) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.red)
+                                Text("Save failed: \(saveError)")
+                                    .symairaText(.caption)
+                                    .foregroundColor(SymairaTheme.textSecondary)
+                                Spacer()
+                                Button("Retry") {
+                                    Task { await performSave(note: note, content: noteContent) }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                Button(action: { mutationTracker.clearFailure(for: saveActionID(note)) }) {
+                                    Image(systemName: "xmark")
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(SymairaTheme.textSecondary)
+                            }
+                            .padding(8)
+                            .background(Color.red.opacity(0.12))
+                            .cornerRadius(6)
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                        }
+
+                        if let loadError = loadError {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.red)
+                                Text(loadError)
+                                    .symairaText(.caption)
+                                    .foregroundColor(SymairaTheme.textSecondary)
+                                Spacer()
+                                Button("Retry") {
+                                    self.loadError = nil
+                                    if let note = selectedNote {
+                                        Task { await loadContent(for: note) }
+                                    }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                Button(action: { self.loadError = nil }) {
+                                    Image(systemName: "xmark")
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(SymairaTheme.textSecondary)
+                            }
+                            .padding(8)
+                            .background(Color.red.opacity(0.12))
+                            .cornerRadius(6)
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                        }
+
+                        if loadError == nil {
+                            HStack(spacing: 0) {
+                                if isBlockMode {
+                                    BlockEditorView(text: $noteContent)
+                                        .padding(.top, 4)
+                                } else {
+                                    MarkdownEditorView(text: $noteContent, onLinkClick: { targetTitle in
+                                        navigateToNote(title: targetTitle)
+                                    }, core: core, vaultRoot: core.vaultPath, onImageError: { message in
+                                        appErrors.append(AppErrorMessage(
+                                            message: message,
+                                            detail: "The image was not inserted."
+                                        ))
+                                    })
+                                }
+                                
+                                // Dummy view to attach onChange (since we use if/else for the editor)
+                                Color.clear.frame(width: 0, height: 0)
+                                    .onChange(of: noteContent) { _, newValue in
+                                        debouncedSave(note: note, content: newValue)
+                                    }
+
+                                if isShowingPreview {
+                                    Divider()
+                                    MarkdownPreviewView(
+                                        text: noteContent,
+                                        resolveNote: { target in resolveNoteContent(target) },
+                                        visited: [note.title],
+                                        onLinkClick: { targetTitle in
+                                            navigateToNote(title: targetTitle)
+                                        }
+                                    )
+                                    .frame(maxWidth: .infinity)
+                                }
+                            }
+                        }
+                    }
+                    .navigationTitle(note.title)
+                    .task(id: note.id) {
+                        await loadContent(for: note)
+                        await loadBacklinks(for: note)
+                    }
+                } else {
+                    ContentUnavailableView {
+                        Label("No Note Selected", systemImage: "doc.text")
+                    } description: {
+                        Text("Choose a note in the sidebar or open Quick Search with ⌘K.")
+                    } actions: {
+                        Button("Open Quick Search") { isShowingPalette = true }
+                            .buttonStyle(SymairaPrimaryButtonStyle())
+                    }
+                    .frame(maxWidth: 460)
+                    .padding(32)
+                    .symDeskLiquidGlass(cornerRadius: 20)
+                }
+    }
+
+    // MARK: - Body helper methods (extracted so `body` stays within the
+    // type-checker's budget on the current toolchain)
+
+    func installKeyEventMonitor() {
+        guard keyEventMonitor == nil else { return }
+        keyEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "k" {
+                isShowingPalette.toggle()
+                return nil
+            }
+            return event
+        }
+    }
+
+    private func openDiscover() { navigate(to: .discover) }
+    private func openDashboard() { navigate(to: .dashboard) }
+
+    private func persistExpandedFolders(_ newValue: Set<String>) {
+        if let data = try? JSONEncoder().encode(newValue) {
+            UserDefaults.standard.set(data, forKey: "sidebarExpandedFolders")
+        }
+    }
+
     private func navigate(
         to mode: DisplayMode,
         note: Note? = nil,
@@ -1355,6 +1391,22 @@ struct ContentView: View {
         }
 
         return convert(root)
+    }
+
+    // MARK: - Editor Surface Toggles (issue #651)
+
+    /// Opens the AI chat dock (and focuses the inspector beside it). Shared
+    /// by the toolbar button and the View-menu command so both stay in sync.
+    func openAIDock() {
+        isShowingAIDock = true
+        isShowingInspector = true
+    }
+
+    /// Shows or hides the properties inspector. Shared by the toolbar button
+    /// and the View-menu command (issue #651).
+    func toggleInspector() {
+        isShowingAIDock = false
+        isShowingInspector.toggle()
     }
 
     /// Recursively renders a folder tree node (folder or note leaf) in the sidebar.

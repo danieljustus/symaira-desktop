@@ -125,6 +125,25 @@ struct SymDeskApp: App {
                     NotificationCenter.default.post(name: .openDashboard, object: nil)
                 }
             }
+            // View-menu commands for the editor surfaces so preview,
+            // inspector and AI dock stay reachable when the toolbar is
+            // crowded or hidden (issue #651). The notifications are handled
+            // by ContentView below the toolbar declarations.
+            CommandGroup(after: .sidebar) {
+                Divider()
+                Button("Toggle Markdown Preview") {
+                    NotificationCenter.default.post(name: .toggleEditorPreview, object: nil)
+                }
+                .keyboardShortcut("p", modifiers: [.command, .option])
+                Button("Toggle Properties Inspector") {
+                    NotificationCenter.default.post(name: .toggleEditorInspector, object: nil)
+                }
+                .keyboardShortcut("i", modifiers: [.command, .option])
+                Button("Open AI Dock") {
+                    NotificationCenter.default.post(name: .openEditorAIDock, object: nil)
+                }
+                .keyboardShortcut("a", modifiers: [.command, .option])
+            }
         }
 
         Settings {

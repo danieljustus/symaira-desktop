@@ -86,6 +86,24 @@ func (c *Client) Delete(path string) error {
 	return c.db.DeleteDocument(path)
 }
 
+// ReembedPending re-embeds every document that still holds pending
+// (unembeddable) chunks now that the backend is available, returning the
+// number of documents repaired (#663/#679).
+func (c *Client) ReembedPending() (int, error) {
+	return engine.ReembedPending(c.db, c.embedder)
+}
+
+// ReembedPending is the package-level entry point for the forced re-embed
+// repair path; see Client.ReembedPending.
+func ReembedPending() (int, error) {
+	c, err := Open()
+	if err != nil {
+		return 0, err
+	}
+	defer func() { _ = c.Close() }()
+	return c.ReembedPending()
+}
+
 // Search runs the hybrid keyword+vector search and returns at most limit hits,
 // each with a query-centered snippet. A limit <= 0 means DefaultLimit.
 func (c *Client) Search(query string, limit int) ([]Result, error) {

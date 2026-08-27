@@ -1015,3 +1015,66 @@ func TestIndexWithUnavailableBackendMarksChunksPending(t *testing.T) {
 		t.Errorf("CountPendingChunks = %d, want %d", pending, len(chunks))
 	}
 }
+
+// TestReembedPendingRepairsUnavailableBackendIndex verifies issue #663/#679:
+// a document indexed while the backend was down (pending chunks) is re-embedded
+// with real vectors once the backend returns, leaving a uniform provenance.
+func TestReembedPendingRepairsUnavailableBackendIndex(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "seek-679-test")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+	t.Setenv("HOME", tempDir)
+
+	dbClient, err := db.Open()
+	if err != nil {
+		t.Fatalf("failed to open database: %v", err)
+	}
+	defer dbClient.Close()
+
+	source := filepath.Join(tempDir, "doc.md")
+	body := strings.Repeat("semantic search needs real embeddings ", 200)
+	if err := os.WriteFile(source, []byte(body), 0644); err != nil {
+		t.Fatalf("write doc: %v", err)
+	}
+
+	// First pass: backend unavailable -> pending chunks.
+	if err := IndexStdin(dbClient, &fallbackEmbedder{dim: 768}, strings.NewReader(body), source); err != nil {
+		t.Fatalf("IndexStdin (down): %v", err)
+	}
+	pendingBefore, _ := dbClient.CountPendingChunks()
+	if pendingBefore == 0 {
+		t.Fatal("expected pending chunks before re-embed")
+	}
+
+	// Re-embed with a working backend -> all chunks become real embeddings.
+	n, err := ReembedPending(dbClient, &fakeEmbedder{dim: 768})
+	if err != nil {
+		t.Fatalf("ReembedPending: %v", err)
+	}
+	if n != 1 {
+		t.Errorf("ReembedPending repaired %d docs, want 1", n)
+	}
+
+	chunks, err := dbClient.GetChunksForDocument(source)
+	if err != nil {
+		t.Fatalf("GetChunksForDocument: %v", err)
+	}
+	for _, c := range chunks {
+		if c.EmbeddingPending {
+			t.Errorf("chunk %d still pending after re-embed", c.ChunkIndex)
+		}
+		if len(c.Embedding) == 0 {
+			t.Errorf("chunk %d has no embedding after re-embed", c.ChunkIndex)
+		}
+		if c.Model != "fake-model" {
+			t.Errorf("chunk %d model = %q, want real model", c.ChunkIndex, c.Model)
+		}
+	}
+
+	pendingAfter, _ := dbClient.CountPendingChunks()
+	if pendingAfter != 0 {
+		t.Errorf("CountPendingChunks after re-embed = %d, want 0", pendingAfter)
+	}
+}

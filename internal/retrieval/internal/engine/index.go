@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/parser"
 )
 
 const (
@@ -264,6 +265,64 @@ func indexContent(dbClient db.Store, embedder Embedder, source, content string) 
 
 	// Build chunks and persist via the shared commit path used by file and
 	// directory indexing, so the chunk pipeline lives in exactly one place.
+	chunks := buildChunks(embedder, source, content)
+	doc := &db.Document{
+		Path:      source,
+		Hash:      currentHash,
+		UpdatedAt: time.Now(),
+	}
+	return commitIndex(dbClient, source, chunks, doc, existing, "")
+}
+
+// ReembedPending re-embeds every document that still holds pending
+// (unembeddable) chunks, once the embedding backend is available again
+// (#663/#679). It is the explicit repair path triggered by `symdesk index
+// --re-embed`; the normal index pass also re-embeds pending documents it
+// encounters, so this is the forced/everything variant.
+//
+// A document is re-embedded by re-parsing and rebuilding its chunks; because
+// the backend now answers, buildChunks produces real embeddings and the
+// pending flag is cleared. Documents whose content has changed since the
+// pending chunks were stored are handled by the normal index pass instead.
+func ReembedPending(dbClient db.Store, embedder Embedder) (int, error) {
+	docs, err := dbClient.ListDocuments()
+	if err != nil {
+		return 0, fmt.Errorf("failed to list documents: %w", err)
+	}
+	reembedded := 0
+	for _, doc := range docs {
+		pending, perr := dbClient.CountPendingChunksForDocument(doc.Path)
+		if perr != nil {
+			return reembedded, perr
+		}
+		if pending == 0 {
+			continue
+		}
+		content, perr := parser.ParseFile(doc.Path)
+		if perr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to re-parse %s for re-embed: %v\n", doc.Path, perr)
+			continue
+		}
+		if err := reembedDocument(dbClient, embedder, doc.Path, content); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to re-embed %s: %v\n", doc.Path, err)
+			continue
+		}
+		reembedded++
+	}
+	return reembedded, nil
+}
+
+// reembedDocument forces a rebuild of a document's chunks regardless of its
+// stored hash, replacing any pending placeholders with real embeddings.
+func reembedDocument(dbClient db.Store, embedder Embedder, source, content string) error {
+	hashSum := sha256.Sum256([]byte(content))
+	currentHash := hex.EncodeToString(hashSum[:])
+
+	existing, err := dbClient.GetDocument(source)
+	if err != nil {
+		return fmt.Errorf("failed to check existing document: %w", err)
+	}
+
 	chunks := buildChunks(embedder, source, content)
 	doc := &db.Document{
 		Path:      source,

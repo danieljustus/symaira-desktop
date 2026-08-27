@@ -463,7 +463,15 @@ func prepareIndex(dbClient db.Store, embedder Embedder, path string) ([]*db.Chun
 		return nil, nil, nil, false, "", fmt.Errorf("failed to query document from DB: %w", err)
 	}
 	if existing != nil && existing.Hash == currentHash {
-		return nil, nil, existing, true, "", nil
+		// An unchanged document is normally skipped — but if it still holds
+		// pending (unembeddable) chunks, re-embed it now that the backend may
+		// be available again (#663/#679).
+		pending, perr := dbClient.CountPendingChunksForDocument(path)
+		if perr == nil && pending > 0 {
+			// fall through to re-index below
+		} else {
+			return nil, nil, existing, true, "", nil
+		}
 	}
 
 	content, err := parser.ParseFile(path)

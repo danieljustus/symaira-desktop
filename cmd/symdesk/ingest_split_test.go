@@ -32,7 +32,7 @@ startxref
 149
 %%EOF
 `
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -46,6 +46,7 @@ func makeMultiPagePDF(t *testing.T, srcDir, outPath string) {
 	}
 	one := filepath.Join(srcDir, "one.pdf")
 	writeMinimalPDF(t, one)
+	//nolint:gosec // test fixture construction with qpdf; paths are test-controlled
 	cmd := exec.Command("qpdf", "--empty", "--pages", one, "1", one, "1", one, "1", "--", outPath)
 	out, err := cmd.CombinedOutput()
 	if err != nil && !strings.Contains(string(out), "operation succeeded with warnings") {

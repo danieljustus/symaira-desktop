@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"math"
 	"math/bits"
 )
@@ -15,6 +16,20 @@ func Float32SliceToBytes(slice []float32) []byte {
 		buf[i*4+3] = byte(bits >> 24)
 	}
 	return buf
+}
+
+// boolToInt maps a Go bool to the SQLite integer (0/1) used for the
+// embedding_pending column.
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+// intToBool maps a SQLite integer (or NULL) back to a Go bool.
+func intToBool(v sql.NullInt64) bool {
+	return v.Valid && v.Int64 != 0
 }
 
 func BytesToFloat32Slice(buf []byte) []float32 {

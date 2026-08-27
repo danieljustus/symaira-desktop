@@ -31,6 +31,11 @@ type Chunk struct {
 	Model        string    `json:"embedding_model"`
 	CharStart    *int      `json:"char_start,omitempty"`
 	CharEnd      *int      `json:"char_end,omitempty"`
+	// EmbeddingPending marks a chunk whose embedding could not be produced
+	// by the configured backend (the local-hash fallback was used). Pending
+	// chunks carry no semantic vector and are excluded from the vector
+	// search leg until re-embedded (issue #663/#678).
+	EmbeddingPending bool `json:"embedding_pending"`
 }
 
 // Extraction is a persisted grounded extraction linked to a document and,
@@ -219,7 +224,7 @@ func (db *DB) checkGeneration() {
 // rebuildVectorIndex reconstructs the in-memory IVF index from the current
 // chunks table and persists the result.
 func (db *DB) rebuildVectorIndex() {
-	rows, err := db.conn.Query("SELECT id, embedding FROM chunks")
+	rows, err := db.conn.Query("SELECT id, embedding FROM chunks WHERE embedding_pending = 0")
 	if err != nil {
 		db.vectorIndex = nil
 		return
@@ -403,8 +408,8 @@ func (db *DB) SaveChunks(chunks []*Chunk) error {
 	}
 	defer tx.Rollback()
 
-	query := `INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm, binary_signature, embedding_dim, embedding_model, char_start, char_end)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm, binary_signature, embedding_dim, embedding_model, char_start, char_end, embedding_pending)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	stmt, err := tx.Prepare(query)
 	if err != nil {
@@ -416,7 +421,7 @@ func (db *DB) SaveChunks(chunks []*Chunk) error {
 		c.Norm = l2Norm(c.Embedding)
 		embBytes := Float32SliceToBytes(c.Embedding)
 		sigBytes := SignBinarySignature(c.Embedding)
-		res, err := stmt.Exec(c.UUID, c.DocumentPath, c.ChunkIndex, c.Content, embBytes, c.Hash, c.Norm, sigBytes, c.Dim, c.Model, c.CharStart, c.CharEnd)
+		res, err := stmt.Exec(c.UUID, c.DocumentPath, c.ChunkIndex, c.Content, embBytes, c.Hash, c.Norm, sigBytes, c.Dim, c.Model, c.CharStart, c.CharEnd, boolToInt(c.EmbeddingPending))
 		if err != nil {
 			return fmt.Errorf("failed to insert chunk: %w", err)
 		}
@@ -445,7 +450,7 @@ func (db *DB) SaveChunks(chunks []*Chunk) error {
 }
 
 func (db *DB) GetChunksForDocument(docPath string) ([]*Chunk, error) {
-	query := "SELECT id, uuid, document_path, chunk_index, content, embedding, hash, norm, embedding_dim, embedding_model, char_start, char_end FROM chunks WHERE document_path = ? ORDER BY chunk_index ASC"
+	query := "SELECT id, uuid, document_path, chunk_index, content, embedding, hash, norm, embedding_dim, embedding_model, char_start, char_end, embedding_pending FROM chunks WHERE document_path = ? ORDER BY chunk_index ASC"
 	rows, err := db.conn.Query(query, docPath)
 	if err != nil {
 		return nil, err
@@ -456,13 +461,27 @@ func (db *DB) GetChunksForDocument(docPath string) ([]*Chunk, error) {
 	for rows.Next() {
 		var c Chunk
 		var embBytes []byte
-		if err := rows.Scan(&c.ID, &c.UUID, &c.DocumentPath, &c.ChunkIndex, &c.Content, &embBytes, &c.Hash, &c.Norm, &c.Dim, &c.Model, &c.CharStart, &c.CharEnd); err != nil {
+		var pending sql.NullInt64
+		if err := rows.Scan(&c.ID, &c.UUID, &c.DocumentPath, &c.ChunkIndex, &c.Content, &embBytes, &c.Hash, &c.Norm, &c.Dim, &c.Model, &c.CharStart, &c.CharEnd, &pending); err != nil {
 			return nil, err
 		}
 		c.Embedding = BytesToFloat32Slice(embBytes)
+		c.EmbeddingPending = intToBool(pending)
 		chunks = append(chunks, &c)
 	}
 	return chunks, nil
+}
+
+// CountPendingChunks returns the number of chunks whose embedding could not be
+// produced by the configured backend (local-hash fallback placeholders). It is
+// used by the re-embed path (#663/#679) and the doctor check (#663/#680) to
+// report and repair a degraded index.
+func (db *DB) CountPendingChunks() (int, error) {
+	var n int
+	if err := db.conn.QueryRow("SELECT COUNT(*) FROM chunks WHERE embedding_pending = 1").Scan(&n); err != nil {
+		return 0, fmt.Errorf("count pending chunks: %w", err)
+	}
+	return n, nil
 }
 
 // GetChunkSpansForDocument returns just the id/char_start/char_end triples
@@ -534,12 +553,16 @@ func (db *DB) GetStats() (*Stats, error) {
 }
 
 // DetectMixedEmbeddingSpaces returns the distinct (dim, model) combinations
-// present in the chunks table and their row counts.  NULL values in
+// present in the chunks table and their row counts. NULL values in
 // embedding_dim or embedding_model are treated as a distinct group keyed by
 // "unknown/<model-or-unknown>" so that legacy rows never cause a scan error.
+//
+// Pending chunks (embedding_pending = 1, unembeddable fallback placeholders
+// from issue #663/#678) are excluded: they carry no semantic vector and must
+// not be mistaken for a competing embedding space.
 func (db *DB) DetectMixedEmbeddingSpaces() (map[string]int, error) {
 	rows, err := db.conn.Query(
-		"SELECT embedding_dim, embedding_model, COUNT(*) FROM chunks GROUP BY embedding_dim, embedding_model",
+		"SELECT embedding_dim, embedding_model, COUNT(*) FROM chunks WHERE embedding_pending = 0 GROUP BY embedding_dim, embedding_model",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("detect mixed embedding spaces: %w", err)

@@ -498,18 +498,29 @@ func buildChunks(embedder Embedder, source, content string) []*db.Chunk {
 		hashSum := sha256.Sum256([]byte(tc))
 		chunkHash := hex.EncodeToString(hashSum[:])
 		start, end := spans[idx].Start, spans[idx].End
-		chunks = append(chunks, &db.Chunk{
+		res := embeddings[idx]
+		chunk := &db.Chunk{
 			UUID:         deriveChunkID(source, chunkHash, start),
 			DocumentPath: source,
 			ChunkIndex:   idx,
 			Content:      tc,
-			Embedding:    embeddings[idx].Vector,
+			Embedding:    res.Vector,
 			Hash:         chunkHash,
-			Dim:          len(embeddings[idx].Vector),
-			Model:        embeddings[idx].Model,
+			Dim:          len(res.Vector),
+			Model:        res.Model,
 			CharStart:    &start,
 			CharEnd:      &end,
-		})
+		}
+		// A fallback (local-hash) vector is not a real embedding: record the
+		// chunk as pending rather than storing a meaningless semantic vector
+		// in the index. The vault write still succeeds; re-embedding later
+		// repairs it (#663/#678).
+		if res.Model == localHashModelName {
+			chunk.EmbeddingPending = true
+			chunk.Embedding = nil
+			chunk.Dim = 0
+		}
+		chunks = append(chunks, chunk)
 	}
 	return chunks
 }
@@ -543,12 +554,12 @@ func commitIndex(dbClient db.Store, path string, chunks []*db.Chunk, doc *db.Doc
 
 	fallbackCount := 0
 	for _, c := range chunks {
-		if c.Model == localHashModelName {
+		if c.EmbeddingPending {
 			fallbackCount++
 		}
 	}
 	if fallbackCount > 0 {
-		fmt.Fprintf(os.Stderr, "Indexed: %s (%d chunks, %d fallback)\n", path, len(chunks), fallbackCount)
+		fmt.Fprintf(os.Stderr, "Indexed: %s (%d chunks, %d pending — embedding backend unavailable, will re-embed when available)\n", path, len(chunks), fallbackCount)
 	} else {
 		fmt.Fprintf(os.Stderr, "Indexed: %s (%d chunks)\n", path, len(chunks))
 	}

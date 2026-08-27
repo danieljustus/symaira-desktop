@@ -24,6 +24,16 @@ A local-first and self-hostable, **agent-native** workspace that unifies documen
 
 ![SymDesk architecture](assets/symdesk-architecture.svg)
 
+## Status and stability
+
+Symaira Desktop is in **active development and pre-1.0**: the `symdesk` CLI,
+MCP tools, vault contract and `/api/v1` server contract are stabilizing but
+may still change between releases. The current release is a working MVP — see
+the status summary above for what works today. Per-release notes are in
+[release-notes.md](release-notes.md) and on the
+[GitHub Releases](https://github.com/danieljustus/symaira-desktop/releases)
+page; the near-term roadmap is in [docs/PLAN.md](docs/PLAN.md).
+
 ## Why Symaira Desktop
 
 - One plain-Markdown vault remains the source of truth instead of locking data into a proprietary database.

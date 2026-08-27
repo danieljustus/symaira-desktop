@@ -105,7 +105,13 @@ func TestExportCmdRunWithVault(t *testing.T) {
 	// Runs through initServiceDeps → svc.Export; Export fails gracefully
 	// because no sidecar DB exists, but the RunE closure lines are exercised.
 	err := cmd.RunE(cmd, nil)
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: no typesetting engine in the isolated environment")
+	}
+	if !strings.Contains(err.Error(), "PDF export requires a typesetting engine") {
+		t.Fatalf("error = %v, want engine-unavailable contract", err)
+	}
+
 }
 
 // --- newAICmd coverage ---
@@ -280,7 +286,9 @@ func TestLsCmdExecutionWithVault(t *testing.T) {
 	}
 
 	err := lsCmd.RunE(lsCmd, nil)
-	_ = err // Expected to fail if no sidecar DB, but RunE closure is exercised
+	if err != nil {
+		t.Fatalf("command should succeed in the isolated environment: %v", err)
+	}
 }
 
 func TestSearchCmdExecutionWithVault(t *testing.T) {
@@ -307,7 +315,9 @@ func TestSearchCmdExecutionWithVault(t *testing.T) {
 	}
 
 	err := searchCmd.RunE(searchCmd, []string{"test query"})
-	_ = err // Expected to fail if no sidecar DB
+	if err != nil {
+		t.Fatalf("command should succeed in the isolated environment: %v", err)
+	}
 }
 
 func TestEventsCmdExecution(t *testing.T) {
@@ -380,7 +390,13 @@ func TestClipCmdExecution(t *testing.T) {
 
 	// RunE expects exactly 1 arg (URL); initServiceDeps will fail without vault
 	err := clipCmd.RunE(clipCmd, []string{"https://example.com"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 func TestConflictResolveCmdExecution(t *testing.T) {
@@ -411,7 +427,13 @@ func TestConflictResolveCmdExecution(t *testing.T) {
 
 	// Resolve expects exactly 1 arg (path)
 	err := resolveCmd.RunE(resolveCmd, []string{"/tmp/fake-conflict.md"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected a validation error before any vault access")
+	}
+	if !strings.Contains(err.Error(), "invalid action: must be keep-mine or keep-theirs") {
+		t.Fatalf("error = %v, want invalid-action contract", err)
+	}
+
 }
 
 func TestPropsGetCmdExecution(t *testing.T) {
@@ -442,7 +464,13 @@ func TestPropsGetCmdExecution(t *testing.T) {
 
 	// Get expects exactly 1 arg (file)
 	err := getCmd.RunE(getCmd, []string{"note.md"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 func TestPropsEditCmdExecution(t *testing.T) {
@@ -472,7 +500,13 @@ func TestPropsEditCmdExecution(t *testing.T) {
 	}
 
 	err := editCmd.RunE(editCmd, []string{"note.md", "status", "done"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 func TestBacklinksCmdExecution(t *testing.T) {
@@ -491,7 +525,13 @@ func TestBacklinksCmdExecution(t *testing.T) {
 	}
 
 	err := blCmd.RunE(blCmd, []string{"note.md"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 func TestRelationsInverseCmdExecution(t *testing.T) {
@@ -521,7 +561,13 @@ func TestRelationsInverseCmdExecution(t *testing.T) {
 	}
 
 	err := invCmd.RunE(invCmd, []string{"note.md"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 func TestGraphCmdExecution(t *testing.T) {
@@ -540,7 +586,13 @@ func TestGraphCmdExecution(t *testing.T) {
 	}
 
 	err := graphCmd.RunE(graphCmd, nil)
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 func TestRelatedCmdExecution(t *testing.T) {
@@ -559,7 +611,13 @@ func TestRelatedCmdExecution(t *testing.T) {
 	}
 
 	err := relatedCmd.RunE(relatedCmd, []string{"note.md"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 func TestNoteNewCmdExecution(t *testing.T) {
@@ -591,7 +649,13 @@ func TestNoteNewCmdExecution(t *testing.T) {
 	// --title is required
 	_ = newCmd.Flags().Set("title", "Test Note")
 	err := newCmd.RunE(newCmd, []string{"content body"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 func TestNoteDailyCmdExecution(t *testing.T) {
@@ -621,7 +685,13 @@ func TestNoteDailyCmdExecution(t *testing.T) {
 	}
 
 	err := dailyCmd.RunE(dailyCmd, nil)
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 func TestAskCmdExecution(t *testing.T) {
@@ -641,7 +711,13 @@ func TestAskCmdExecution(t *testing.T) {
 
 	// Ask expects exactly 1 arg
 	err := askCmd.RunE(askCmd, []string{"test query"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 // --- Additional inline command execution tests ---
@@ -684,17 +760,32 @@ func runRegisteredCommand(t *testing.T, args []string) error {
 
 func TestDocStatusCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"doc", "status", "test.md", "done"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestDocDueCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"doc", "due", "test.md", "2026-07-24"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestDocTypeCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"doc", "type", "test.md", "report"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestIngestCmdRunE(t *testing.T) {
@@ -714,82 +805,152 @@ func TestIngestCmdRunE(t *testing.T) {
 
 	// ingest takes a path argument; will fail at initServiceDeps
 	err := ingestCmd.RunE(ingestCmd, []string{"/tmp/test.pdf"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 func TestIngestJobsCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"ingest", "jobs"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestIngestRetryCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"ingest", "retry", "42"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestViewsListCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"views", "list"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestViewsGetCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"views", "get", "test-view"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestViewsSaveCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"views", "save", `{"id":"test","name":"Test"}`})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
+
 }
 
 func TestDocCorrespondentCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"doc", "correspondent", "note.md", "Alice"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestDocTagCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"doc", "tag", "note.md", "important"})
-	_ = err
+	if err != nil {
+		t.Fatalf("command should complete in the isolated environment: %v", err)
+	}
 }
 
 func TestDocASNCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"doc", "asn", "note.md", "42"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestNoteShowCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"note", "show", "note.md"})
-	_ = err
+	if err != nil {
+		t.Fatalf("command should complete in the isolated environment: %v", err)
+	}
 }
 
 func TestNoteEditCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"note", "edit", "note.md", "body"})
-	_ = err
+	if err != nil {
+		t.Fatalf("command should complete in the isolated environment: %v", err)
+	}
 }
 
 func TestViewsDeleteCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"views", "delete", "test-view-id"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestViewsNewEntryCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"views", "new-entry", "test-view", "New Note"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestDocListCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"doc", "list"})
-	_ = err
+	if err != nil {
+		t.Fatalf("command should complete in the isolated environment: %v", err)
+	}
 }
 
 func TestDocsListCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"docs", "list"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestDocsReviewCmdRunE(t *testing.T) {
 	err := runRegisteredCommand(t, []string{"docs", "review"})
-	_ = err
+	if err == nil {
+		t.Fatal("expected an error: the isolated test environment has no vault configured")
+	}
+	if !strings.Contains(err.Error(), "vault path not configured") {
+		t.Fatalf("error = %v, want vault-not-configured contract", err)
+	}
 }
 
 func TestSimilarCmdHelp(t *testing.T) {

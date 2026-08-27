@@ -22,11 +22,30 @@ type Tools struct {
 	QPDF        string
 }
 
+// toolsFactory returns the Tools value each operation uses. Tests can
+// override it with WithToolsFactory to inject fake tool paths without
+// touching PATH (issue #644).
+var toolsFactory = DefaultTools
+
+// WithToolsFactory replaces the package-level tools factory for the duration
+// of fn and restores it afterwards. It is safe for sequential test use; tests
+// calling it must not run in parallel with other pdfops tests.
+func WithToolsFactory(factory func() Tools, fn func()) {
+	prev := toolsFactory
+	toolsFactory = factory
+	defer func() { toolsFactory = prev }()
+	fn()
+}
+
 // DefaultTools resolves the standard Poppler/qpdf command names through PATH
 // when each operation is executed.
 func DefaultTools() Tools {
 	return Tools{PDFInfo: "pdfinfo", PDFSeparate: "pdfseparate", PDFUnite: "pdfunite", QPDF: "qpdf"}
 }
+
+// NewTools returns the currently configured Tools value, consulting the
+// (overridable) package tools factory so tests can inject fake tool paths.
+func NewTools() Tools { return toolsFactory() }
 
 // ParsePages parses a comma-separated page selector such as "1-3,5" into
 // sorted, unique, one-based page numbers.

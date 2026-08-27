@@ -130,10 +130,10 @@ func TestSearchPropagatesMixedSpaceError(t *testing.T) {
 
 	docA := filepath.Join(tempDir, "a.md")
 	docB := filepath.Join(tempDir, "b.md")
-	if err := os.WriteFile(docA, []byte(strings.Repeat("alpha beta ", 50)), 0644); err != nil {
+	if err := os.WriteFile(docA, []byte(strings.Repeat("alpha beta ", 50)), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(docB, []byte(strings.Repeat("gamma delta ", 50)), 0644); err != nil {
+	if err := os.WriteFile(docB, []byte(strings.Repeat("gamma delta ", 50)), 0600); err != nil {
 		t.Fatal(err)
 	}
 	if err := engine.IndexStdin(dbClient, embA, strings.NewReader(strings.Repeat("alpha beta ", 50)), docA); err != nil {
@@ -171,7 +171,7 @@ func TestSearchPropagatesVectorMode(t *testing.T) {
 
 	doc := filepath.Join(tempDir, "doc.md")
 	body := strings.Repeat("semantic search needs real embeddings ", 50)
-	if err := os.WriteFile(doc, []byte(body), 0644); err != nil {
+	if err := os.WriteFile(doc, []byte(body), 0600); err != nil {
 		t.Fatal(err)
 	}
 	if err := engine.IndexStdin(dbClient, indexEmbedder, strings.NewReader(body), doc); err != nil {

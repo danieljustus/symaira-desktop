@@ -21,7 +21,7 @@ Project maintainers are responsible for clarifying and enforcing these standards
 
 ## Scope and reporting
 
-This Code of Conduct applies within project spaces and when an individual is officially representing the project. Report unacceptable behavior to the project maintainers through the private security-reporting channel described in [SECURITY.md](SECURITY.md). Reports will be reviewed and handled confidentially where possible.
+This Code of Conduct applies within project spaces and when an individual is officially representing the project. Report unacceptable behavior to the project maintainers through the private security-reporting channel described in [SECURITY.md](.github/SECURITY.md). Reports will be reviewed and handled confidentially where possible.
 
 ## Attribution
 

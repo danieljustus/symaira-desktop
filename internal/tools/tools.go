@@ -87,6 +87,7 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(true, newRelatedTool(options.GetService)),
 		entry(true, newDiagramTool(options.GetService)),
 		entry(true, newIngestJobsTool(options.GetService)),
+		entry(true, newRulesListTool(cfg)),
 		entry(true, newMeetingListTool(options.GetService)),
 		entry(true, newMeetingGetTool(options.GetService)),
 		entry(true, newReadResultTool(options.GetService)),
@@ -98,6 +99,13 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(false, newIngestTool(options.GetService)),
 		entry(false, newDocSetStatusTool(options.GetService)),
 		entry(false, newIngestRetryTool(options.GetService)),
+		entry(false, newIngestReocrTool(cfg)),
+		entry(false, newRulesAddTool(cfg)),
+		entry(false, newRulesUpdateTool(cfg)),
+		entry(false, newRulesDeleteTool(cfg)),
+		entry(false, newSplitPDFTool()),
+		entry(false, newMergePDFTool()),
+		entry(false, newRotatePDFTool()),
 		entry(false, newClipTool(options.GetService)),
 		entry(false, newExportTool(options.GetService)),
 		entry(false, newNotebookCreateTool(options.GetService)),
@@ -142,6 +150,41 @@ func NewRegistry(options RegistryOptions) *Registry {
 			alias:       "search_documents",
 			canonical:   "desk_search",
 			description: "Searches notes with full-text terms plus path:, tag:, type:, status:, quoted phrases, -negation and /regex/. Legacy alias for desk_search.",
+		},
+		{
+			alias:       "reocr",
+			canonical:   "desk_ingest_reocr",
+			description: "Re-runs OCR/extraction for an already-ingested document by document ID or registered archived source path. Legacy alias for desk_ingest_reocr.",
+		},
+		{
+			alias:       "list_rules",
+			canonical:   "desk_rules_list",
+			description: "Lists the configured document classification rules. Legacy alias for desk_rules_list.",
+		},
+		{
+			alias:       "add_rule",
+			canonical:   "desk_rules_add",
+			description: "Adds a document classification rule (kind: category|tag|correspondent|document_type). Legacy alias for desk_rules_add.",
+		},
+		{
+			alias:       "delete_rule",
+			canonical:   "desk_rules_delete",
+			description: "Deletes a document classification rule by ID. Legacy alias for desk_rules_delete.",
+		},
+		{
+			alias:       "split_pdf",
+			canonical:   "desk_split_pdf",
+			description: "Splits a PDF into parts after the given pages. Legacy alias for desk_split_pdf.",
+		},
+		{
+			alias:       "merge_pdf",
+			canonical:   "desk_merge_pdf",
+			description: "Merges two or more PDFs into one output file. Legacy alias for desk_merge_pdf.",
+		},
+		{
+			alias:       "rotate_pdf",
+			canonical:   "desk_rotate_pdf",
+			description: "Rotates pages of a PDF and writes the result to an output path. Legacy alias for desk_rotate_pdf.",
 		},
 	}
 	for _, la := range legacyAliases {

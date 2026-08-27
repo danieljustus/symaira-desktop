@@ -22,6 +22,13 @@ var legacyAliasContract = []struct {
 	{alias: "retry_job", canonical: "desk_ingest_retry", readOnly: false},
 	{alias: "list_documents", canonical: "desk_docs", readOnly: true},
 	{alias: "search_documents", canonical: "desk_search", readOnly: true},
+	{alias: "reocr", canonical: "desk_ingest_reocr", readOnly: false},
+	{alias: "list_rules", canonical: "desk_rules_list", readOnly: true},
+	{alias: "add_rule", canonical: "desk_rules_add", readOnly: false},
+	{alias: "delete_rule", canonical: "desk_rules_delete", readOnly: false},
+	{alias: "split_pdf", canonical: "desk_split_pdf", readOnly: false},
+	{alias: "merge_pdf", canonical: "desk_merge_pdf", readOnly: false},
+	{alias: "rotate_pdf", canonical: "desk_rotate_pdf", readOnly: false},
 }
 
 // TestLegacyAliasesRegistered verifies every legacy alias is present in the

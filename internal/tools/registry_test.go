@@ -29,6 +29,7 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"desk_related",
 		"desk_diagram",
 		"desk_ingest_jobs",
+		"desk_rules_list",
 		"meeting_list",
 		"meeting_get",
 		"desk_read_result",
@@ -40,6 +41,13 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"desk_ingest",
 		"doc_set_status",
 		"desk_ingest_retry",
+		"desk_ingest_reocr",
+		"desk_rules_add",
+		"desk_rules_update",
+		"desk_rules_delete",
+		"desk_split_pdf",
+		"desk_merge_pdf",
+		"desk_rotate_pdf",
 		"desk_clip",
 		"desk_export",
 		"notebook_create",
@@ -54,6 +62,13 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"retry_job",
 		"list_documents",
 		"search_documents",
+		"reocr",
+		"list_rules",
+		"add_rule",
+		"delete_rule",
+		"split_pdf",
+		"merge_pdf",
+		"rotate_pdf",
 	}
 	wantReadOnly := map[string]bool{
 		"desk_status":      true,
@@ -71,6 +86,7 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"desk_related":     true,
 		"desk_diagram":     true,
 		"desk_ingest_jobs": true,
+		"desk_rules_list":  true,
 		"meeting_list":     true,
 		"meeting_get":      true,
 		"desk_read_result": true,
@@ -80,6 +96,7 @@ func TestRegistryCatalogOrderAndCapabilities(t *testing.T) {
 		"list_jobs":        true,
 		"list_documents":   true,
 		"search_documents": true,
+		"list_rules":       true,
 	}
 
 	entries := registry.All()

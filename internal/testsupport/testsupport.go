@@ -72,4 +72,23 @@ func IsolateSideEffects() {
 	ingest.FetchMailFunc = func(context.Context, ingest.MailFetchOptions) (*ingest.MailFetchResult, error) {
 		return &ingest.MailFetchResult{}, nil
 	}
+
+	ingest.RulesFunc = func(context.Context, ingest.Options) ([]ingest.Rule, error) {
+		return nil, errIsolated
+	}
+	ingest.AddRuleFunc = func(context.Context, ingest.Options, string, string, string) (*ingest.Rule, error) {
+		return nil, errIsolated
+	}
+	ingest.UpdateRuleFunc = func(context.Context, ingest.Options, int64, string, string, string) (*ingest.Rule, error) {
+		return nil, errIsolated
+	}
+	ingest.DeleteRuleFunc = func(context.Context, ingest.Options, int64) error { return errIsolated }
+	ingest.ReprocessFunc = func(context.Context, ingest.Options, int64) (*ingest.ReprocessResult, error) {
+		return nil, errIsolated
+	}
+	ingest.ReprocessByArchivePathFunc = func(context.Context, ingest.Options, string) (*ingest.ReprocessResult, error) {
+		return nil, errIsolated
+	}
+	ingest.MergePDFsFunc = func(context.Context, []string, string) error { return errIsolated }
+	ingest.RotatePDFFunc = func(context.Context, string, string, int, string) error { return errIsolated }
 }

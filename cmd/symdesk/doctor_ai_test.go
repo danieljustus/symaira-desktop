@@ -6,8 +6,10 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval"
 	"github.com/spf13/cobra"
 )
 
@@ -183,5 +185,64 @@ func TestDoctorTextOutputReportsOllamaProviderWithoutSecretSource(t *testing.T) 
 	}
 	if strings.Contains(out, "secret_source") {
 		t.Errorf("did not expect secret_source in text output for the ollama provider, got:\n%s", out)
+	}
+}
+
+// TestDoctorReportsPendingChunks verifies the doctor check surfaces how many
+// chunks in the hybrid index are still pending (unembeddable fallback
+// placeholders) so a degraded index is visible from the CLI (#663/#680).
+func TestDoctorReportsPendingChunks(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "doctor-680-test")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer func() {
+		if rerr := os.RemoveAll(tempDir); rerr != nil {
+			t.Logf("cleanup temp dir: %v", rerr)
+		}
+	}()
+	t.Setenv("HOME", tempDir)
+
+	// The retrieval seam is injected so the check is deterministic and does
+	// not depend on a locally running Ollama backend.
+	origCount := retrieval.CountPendingChunksFunc
+	origStatus := retrieval.StatusFunc
+	retrieval.CountPendingChunksFunc = func() (int, error) { return 7, nil }
+	retrieval.StatusFunc = func() (*retrieval.Status, error) {
+		return &retrieval.Status{
+			BackendAvailable: false,
+			EmbeddingModel:   "local-hash",
+			DocumentCount:    3,
+			ChunkCount:       120,
+			DatabaseBytes:    4096,
+			LastIndexedAt:    time.Now().UTC().Format(time.RFC3339),
+		}, nil
+	}
+	t.Cleanup(func() {
+		retrieval.CountPendingChunksFunc = origCount
+		retrieval.StatusFunc = origStatus
+	})
+
+	origCfg := cfg
+	cfg = &config.Config{Vault: tempDir, LLMProvider: "", LLMAPIKey: ""}
+	t.Cleanup(func() { cfg = origCfg })
+	t.Setenv("PATH", "/usr/bin:/bin")
+
+	results := runDoctorCaptured(t)
+	retrievalInfo, ok := results["retrieval"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected a 'retrieval' object in doctor output, got: %#v", results["retrieval"])
+	}
+	if retrievalInfo["pending_chunks"] == nil {
+		t.Fatalf("expected retrieval.pending_chunks in doctor output, got: %#v", retrievalInfo)
+	}
+	if int(retrievalInfo["pending_chunks"].(float64)) != 7 {
+		t.Errorf("doctor reported pending_chunks=%v, want 7", retrievalInfo["pending_chunks"])
+	}
+	if retrievalInfo["status"] != "warn" {
+		t.Errorf("expected retrieval status 'warn' when pending chunks exist, got %v", retrievalInfo["status"])
+	}
+	if retrievalInfo["backend_available"] != false {
+		t.Errorf("expected retrieval.backend_available=false, got %v", retrievalInfo["backend_available"])
 	}
 }

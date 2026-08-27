@@ -14,6 +14,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval"
 	"github.com/danieljustus/symaira-desktop/internal/secrets"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -99,6 +100,41 @@ func newDoctorCmd() *cobra.Command {
 					allOk = false
 				} else {
 					results["sidecar"] = map[string]string{"status": "ok"}
+				}
+			}
+
+			// 3b. Hybrid search index: backend reachability and how many
+			// chunks are still pending (unembeddable fallback placeholders).
+			// A degraded index is otherwise invisible from the CLI (#663/#680).
+			retrievalStatus, retErr := retrieval.CurrentStatus()
+			if retErr != nil {
+				results["retrieval"] = map[string]string{"status": "error", "message": retErr.Error()}
+				allOk = false
+			} else {
+				pending, pendErr := retrieval.CountPendingChunks()
+				if pendErr != nil {
+					results["retrieval"] = map[string]string{"status": "error", "message": pendErr.Error()}
+					allOk = false
+				} else {
+					retStatus := "ok"
+					if !retrievalStatus.BackendAvailable {
+						retStatus = "warn"
+					}
+					if pending > 0 {
+						retStatus = "warn"
+					}
+					retrievalResult := map[string]interface{}{
+						"status":            retStatus,
+						"backend_available": retrievalStatus.BackendAvailable,
+						"embedding_model":   retrievalStatus.EmbeddingModel,
+						"pending_chunks":    pending,
+						"document_count":    retrievalStatus.DocumentCount,
+						"chunk_count":       retrievalStatus.ChunkCount,
+					}
+					if pending > 0 {
+						retrievalResult["detail"] = "index has unembeddable (pending) chunks; run `symdesk index --re-embed` once the embedding backend is available"
+					}
+					results["retrieval"] = retrievalResult
 				}
 			}
 

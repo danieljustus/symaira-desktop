@@ -104,6 +104,24 @@ func ReembedPending() (int, error) {
 	return c.ReembedPending()
 }
 
+// CountPendingChunks returns how many chunks in the hybrid index are still
+// pending (unembeddable fallback placeholders) — used by the doctor check
+// (#663/#680) to surface a degraded index without opening the app.
+func CountPendingChunks() (int, error) {
+	return CountPendingChunksFunc()
+}
+
+// defaultCountPendingChunks is the production implementation behind
+// CountPendingChunksFunc; it opens the index and reads the pending count.
+func defaultCountPendingChunks() (int, error) {
+	c, err := Open()
+	if err != nil {
+		return 0, err
+	}
+	defer func() { _ = c.Close() }()
+	return c.db.CountPendingChunks()
+}
+
 // Search runs the hybrid keyword+vector search and returns at most limit hits,
 // each with a query-centered snippet. A limit <= 0 means DefaultLimit.
 func (c *Client) Search(query string, limit int) ([]Result, error) {
@@ -221,10 +239,14 @@ var (
 	DefaultDeleteFunc = defaultDelete
 	DefaultSearchFunc = defaultSearch
 	DefaultStatusFunc = defaultStatus
-	IndexFunc         = DefaultIndexFunc
-	DeleteFunc        = DefaultDeleteFunc
-	SearchFunc        = DefaultSearchFunc
-	StatusFunc        = DefaultStatusFunc
+	// DefaultCountPendingChunksFunc is the production implementation of
+	// CountPendingChunksFunc; see CountPendingChunks (#663/#680).
+	DefaultCountPendingChunksFunc = defaultCountPendingChunks
+	IndexFunc                     = DefaultIndexFunc
+	DeleteFunc                    = DefaultDeleteFunc
+	SearchFunc                    = DefaultSearchFunc
+	StatusFunc                    = DefaultStatusFunc
+	CountPendingChunksFunc        = DefaultCountPendingChunksFunc
 )
 
 // Index adds or replaces one document in the search index. A failure is

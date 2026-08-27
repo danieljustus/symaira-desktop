@@ -9,7 +9,7 @@ import (
 func newClipCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "clip <url>",
-		Short: "Fetch a URL via symfetch and save it as a note",
+		Short: "Fetch a URL via symbrowse and save it as a note",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			urlStr := args[0]

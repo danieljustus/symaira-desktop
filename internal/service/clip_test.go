@@ -56,12 +56,15 @@ func TestNoteClipWithoutAnyClipper(t *testing.T) {
 	if !strings.Contains(err.Error(), "symbrowse") {
 		t.Errorf("expected error to point at symbrowse, got %q", err)
 	}
+	if !strings.Contains(err.Error(), "brew install") {
+		t.Errorf("expected error to include install instructions, got %q", err)
+	}
 }
 
-func TestNoteClipCreatesNoteFromSymfetchOutput(t *testing.T) {
+func TestNoteClipCreatesNoteFromSymbrowseOutput(t *testing.T) {
 	svc := newTestService(t)
 	dir := t.TempDir()
-	writeFakeClipper(t, dir, "symfetch", "#!/bin/sh\ncat <<'EOF'\n> **Example Domain** \xc2\xb7 200 \xc2\xb7 ~42 tokens\n> https://example.com\n\n# Example Domain\n\nThis domain is for illustrative examples.\nEOF\n")
+	writeFakeClipper(t, dir, "symbrowse", "#!/bin/sh\ncat <<'EOF'\n---\ntitle: Example Domain\nurl: https://example.com\nfetched_at: 2026-08-23T10:00:00Z\n---\n# Example Domain\n\nThis domain is for illustrative examples.\nEOF\n")
 	withFakeClipperOnPath(t, dir)
 
 	fileName, err := svc.NoteClip("https://example.com")
@@ -96,14 +99,12 @@ func TestNoteClipCreatesNoteFromSymfetchOutput(t *testing.T) {
 	}
 }
 
-func TestNoteClipPrefersSymbrowseAndReadsFrontmatterTitle(t *testing.T) {
+func TestNoteClipReadsSymbrowseFrontmatterTitle(t *testing.T) {
 	svc := newTestService(t)
 	dir := t.TempDir()
-	// symbrowse answers with the shared schema's YAML frontmatter; symfetch
-	// is present too and would answer with a different title, so a wrong
-	// preference order would show up as the wrong note name.
+	// symbrowse answers with the shared schema's YAML frontmatter; the note
+	// name must come from its title key.
 	writeFakeClipper(t, dir, "symbrowse", "#!/bin/sh\ncat <<'EOF'\n---\ntitle: Browsed Page\nurl: https://example.net/\nfetched_at: 2026-08-23T10:00:00Z\n---\n# Browsed Page\n\nRendered by the browser engine.\nEOF\n")
-	writeFakeClipper(t, dir, "symfetch", "#!/bin/sh\ncat <<'EOF'\n> **Fetched Page**\n\n# Fetched Page\nEOF\n")
 	withFakeClipperOnPath(t, dir)
 
 	fileName, err := svc.NoteClip("https://example.net")
@@ -111,7 +112,7 @@ func TestNoteClipPrefersSymbrowseAndReadsFrontmatterTitle(t *testing.T) {
 		t.Fatalf("NoteClip: %v", err)
 	}
 	if fileName != "Clipped:_Browsed_Page.md" {
-		t.Errorf("expected symbrowse to answer first, got %q", fileName)
+		t.Errorf("expected the note name to come from the symbrowse frontmatter title, got %q", fileName)
 	}
 
 	content, err := os.ReadFile(filepath.Join(svc.VaultRoot, fileName)) //nolint:gosec // test reads its own temp vault fixture
@@ -123,28 +124,10 @@ func TestNoteClipPrefersSymbrowseAndReadsFrontmatterTitle(t *testing.T) {
 	}
 }
 
-func TestNoteClipFallsBackToSymfetchWhenSymbrowseFails(t *testing.T) {
+func TestNoteClipFallsBackToHeadingWhenNoFrontmatterTitle(t *testing.T) {
 	svc := newTestService(t)
 	dir := t.TempDir()
-	// A symbrowse without a running daemon exits non-zero; symfetch must
-	// still be able to answer rather than the clip failing outright.
-	writeFakeClipper(t, dir, "symbrowse", "#!/bin/sh\necho 'daemon not running' >&2\nexit 1\n")
-	writeFakeClipper(t, dir, "symfetch", "#!/bin/sh\ncat <<'EOF'\n> **Fetched Page**\n\n# Fetched Page\n\nStatic body.\nEOF\n")
-	withFakeClipperOnPath(t, dir)
-
-	fileName, err := svc.NoteClip("https://example.net")
-	if err != nil {
-		t.Fatalf("NoteClip: %v", err)
-	}
-	if fileName != "Clipped:_Fetched_Page.md" {
-		t.Errorf("expected the symfetch fallback to answer, got %q", fileName)
-	}
-}
-
-func TestNoteClipFallsBackToHeadingWhenNoHeaderTitle(t *testing.T) {
-	svc := newTestService(t)
-	dir := t.TempDir()
-	writeFakeClipper(t, dir, "symfetch", "#!/bin/sh\ncat <<'EOF'\n# Fallback Heading\n\nBody text.\nEOF\n")
+	writeFakeClipper(t, dir, "symbrowse", "#!/bin/sh\ncat <<'EOF'\n# Fallback Heading\n\nBody text.\nEOF\n")
 	withFakeClipperOnPath(t, dir)
 
 	fileName, err := svc.NoteClip("https://example.org")
@@ -159,7 +142,7 @@ func TestNoteClipFallsBackToHeadingWhenNoHeaderTitle(t *testing.T) {
 func TestNoteClipFallsBackToURLWhenNoTitleFound(t *testing.T) {
 	svc := newTestService(t)
 	dir := t.TempDir()
-	writeFakeClipper(t, dir, "symfetch", "#!/bin/sh\necho 'just some plain text with no title markers'\n")
+	writeFakeClipper(t, dir, "symbrowse", "#!/bin/sh\necho 'just some plain text with no title markers'\n")
 	withFakeClipperOnPath(t, dir)
 
 	// The URL includes a path and scheme separators ("://", "/") to confirm
@@ -177,17 +160,17 @@ func TestNoteClipFallsBackToURLWhenNoTitleFound(t *testing.T) {
 	}
 }
 
-func TestNoteClipPropagatesSymfetchFailure(t *testing.T) {
+func TestNoteClipPropagatesSymbrowseFailure(t *testing.T) {
 	svc := newTestService(t)
 	dir := t.TempDir()
-	writeFakeClipper(t, dir, "symfetch", "#!/bin/sh\necho 'boom' >&2\nexit 1\n")
+	writeFakeClipper(t, dir, "symbrowse", "#!/bin/sh\necho 'boom' >&2\nexit 1\n")
 	withFakeClipperOnPath(t, dir)
 
 	_, err := svc.NoteClip("https://example.com")
 	if err == nil {
-		t.Fatal("expected an error when symfetch exits non-zero")
+		t.Fatal("expected an error when symbrowse exits non-zero")
 	}
-	if !strings.Contains(err.Error(), "symfetch failed") {
-		t.Errorf("expected error to mention symfetch failure, got %q", err)
+	if !strings.Contains(err.Error(), "symbrowse failed") {
+		t.Errorf("expected error to mention symbrowse failure, got %q", err)
 	}
 }

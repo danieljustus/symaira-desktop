@@ -406,12 +406,15 @@ func TestServeIOEndToEnd(t *testing.T) {
 	// Pass A: every request whose result does not depend on the effects of a
 	// sibling request — room_journal_tail asserts the room.created and
 	// member.added events that newInProcessServer already persisted, not the
-	// note posted by request 5.
+	// note posted by request 5. The limit is generous: ServeIO dispatches
+	// tools/call concurrently (corekit v0.12.0), so the later requests may
+	// complete before the tail request, pushing additional events past a
+	// small limit and evicting the room.created bootstrap event.
 	resps := serve([]rpcReq{
 		{1, "initialize", nil},
 		{2, "tools/list", nil},
 		{3, "tools/call", map[string]any{"name": "room_status", "arguments": map[string]any{}}},
-		{4, "tools/call", map[string]any{"name": "room_journal_tail", "arguments": map[string]any{"limit": 5}}},
+		{4, "tools/call", map[string]any{"name": "room_journal_tail", "arguments": map[string]any{"limit": 50}}},
 		{5, "tools/call", map[string]any{"name": "room_note_post", "arguments": map[string]any{"text": "e2e note"}}},
 		{6, "tools/call", map[string]any{"name": "room_artifact_link", "arguments": map[string]any{"path": doc, "title": "E2E Doc"}}},
 		{8, "tools/call", map[string]any{"name": "room_run_request", "arguments": map[string]any{"title": "E2E run"}}},

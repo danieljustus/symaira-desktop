@@ -1,8 +1,32 @@
-# Default ownership for the public repository.
+# CODEOWNERS — explicit ownership for danieljustus/symaira-desktop.
+# Code-owner review is intentionally NOT required on any branch ruleset:
+# this repository has a single owner, so the rule stays off (issue #629).
+# Default ownership applies to everything not matched below.
+
 * @danieljustus
 
-# Security-sensitive paths.
-/.github/ @danieljustus
+# Core Go — CLI entry point and commands.
+/cmd/ @danieljustus
+
+# Core Go — internal packages and service layer.
+/internal/ @danieljustus
+
+# Swift sources — shared core, macOS app, iOS app.
+/Sources/ @danieljustus
+
+# Swift tests.
+/Tests/ @danieljustus
+
+# Embedded Swift modules — Project Journal UI and meeting capture.
+/meet/ @danieljustus
+/room/client/ @danieljustus
+
+# CI/CD workflows.
+/.github/workflows/ @danieljustus
+
+# Security policy and security-sensitive paths.
+/.github/SECURITY.md @danieljustus
 /internal/secrets/ @danieljustus
 /internal/vault/ @danieljustus
-/Sources/SymDeskCore/ @danieljustus
+/internal/permissions/ @danieljustus
+/internal/selfhost/ @danieljustus

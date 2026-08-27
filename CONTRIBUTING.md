@@ -31,4 +31,4 @@ Use a focused branch and describe the change, verification performed, and any co
 
 ## Reporting security issues
 
-Do not open a public issue for a suspected vulnerability. Follow [SECURITY.md](SECURITY.md) instead.
+Do not open a public issue for a suspected vulnerability. Follow [SECURITY.md](.github/SECURITY.md) instead.

@@ -118,12 +118,13 @@ func runMCP(t *testing.T, binPath string, env []string, roomDir string, sendFn f
 	}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
+	var stdoutMu sync.Mutex
 	var wg sync.WaitGroup
 
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		_, _ = io.Copy(&stdoutBuf, stdoutPipe)
+		_, _ = io.Copy(&lockedBuffer{mu: &stdoutMu, buf: &stdoutBuf}, stdoutPipe)
 	}()
 	go func() {
 		defer wg.Done()
@@ -135,6 +136,11 @@ func runMCP(t *testing.T, binPath string, env []string, roomDir string, sendFn f
 	}
 
 	sendFn(stdin)
+	// Do not close stdin immediately: the server may still be starting up
+	// (identity/room load), and an immediate EOF can race the first frame
+	// read, producing an empty stdout on slow CI runners. Wait for the first
+	// response byte before signalling EOF so the handshake is observed.
+	waitForOutput(t, &stdoutBuf, &stdoutMu, 5*time.Second)
 	_ = stdin.Close()
 
 	if err := cmd.Wait(); err != nil {
@@ -145,6 +151,35 @@ func runMCP(t *testing.T, binPath string, env []string, roomDir string, sendFn f
 
 	wg.Wait()
 	return mcpResult{stdoutBuf.Bytes(), stderrBuf.Bytes()}
+}
+
+// lockedBuffer serializes writes to an underlying bytes.Buffer so the polling
+// reader can observe progress without racing the io.Copy goroutine.
+type lockedBuffer struct {
+	mu  *sync.Mutex
+	buf *bytes.Buffer
+}
+
+func (l *lockedBuffer) Write(p []byte) (int, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.buf.Write(p)
+}
+
+// waitForOutput blocks until buf is non-empty or the timeout elapses, so
+// subprocess MCP handshakes are not raced by an immediate stdin EOF.
+func waitForOutput(t *testing.T, buf *bytes.Buffer, mu *sync.Mutex, timeout time.Duration) {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for {
+		mu.Lock()
+		n := buf.Len()
+		mu.Unlock()
+		if n > 0 || time.Now().After(deadline) {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 // ---- Stdout validation ------------------------------------------------------

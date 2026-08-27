@@ -514,7 +514,7 @@ func SplitPDFAtSpec(ctx context.Context, input, atSpec, outputDir string) ([]str
 	if err != nil {
 		return nil, fmt.Errorf("invalid split output directory %q: %w", outputDir, err)
 	}
-	return pdfops.DefaultTools().Split(ctx, abs, atSpec, outDir)
+	return pdfops.NewTools().Split(ctx, abs, atSpec, outDir)
 }
 
 // MergePDFs combines two or more PDFs into output without modifying the inputs.
@@ -533,7 +533,7 @@ func MergePDFs(ctx context.Context, inputs []string, output string) error {
 	if err != nil {
 		return fmt.Errorf("invalid merge output %q: %w", output, err)
 	}
-	return pdfops.DefaultTools().Merge(ctx, absInputs, absOut)
+	return pdfops.NewTools().Merge(ctx, absInputs, absOut)
 }
 
 // RotatePDF rotates selected pages of input by degrees and writes the result
@@ -548,7 +548,7 @@ func RotatePDF(ctx context.Context, input, output string, degrees int, pageSpec 
 	if err != nil {
 		return fmt.Errorf("invalid rotate output %q: %w", output, err)
 	}
-	return pdfops.DefaultTools().Rotate(ctx, abs, absOut, degrees, pageSpec)
+	return pdfops.NewTools().Rotate(ctx, abs, absOut, degrees, pageSpec)
 }
 
 // PaperlessOptions configures a migration from a live Paperless-ngx instance.

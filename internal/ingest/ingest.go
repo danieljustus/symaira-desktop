@@ -23,13 +23,21 @@ import (
 // list — including internal/mail and internal/selfhost, which cannot host
 // their own seams without an import cycle through testsupport.
 var (
-	IngestFunc       = Ingest
-	JobsFunc         = Jobs
-	RetryJobFunc     = RetryJob
-	SplitPDFFunc     = SplitPDFAtSpec
-	ExtractTextFunc  = ExtractText
-	MailAccountsFunc = MailAccounts
-	FetchMailFunc    = FetchMail
+	IngestFunc                 = Ingest
+	JobsFunc                   = Jobs
+	RetryJobFunc               = RetryJob
+	SplitPDFFunc               = SplitPDFAtSpec
+	ExtractTextFunc            = ExtractText
+	MailAccountsFunc           = MailAccounts
+	FetchMailFunc              = FetchMail
+	RulesFunc                  = Rules
+	AddRuleFunc                = AddRule
+	UpdateRuleFunc             = UpdateRule
+	DeleteRuleFunc             = DeleteRule
+	ReprocessFunc              = Reprocess
+	ReprocessByArchivePathFunc = ReprocessByArchivePath
+	MergePDFsFunc              = MergePDFs
+	RotatePDFFunc              = RotatePDF
 )
 
 // HasSymingest reports whether the ingest pipeline is usable, and why not when

@@ -93,8 +93,112 @@ func newIngestCmd() *cobra.Command {
 	ingestCmd.AddCommand(ingestJobsCmd)
 	ingestCmd.AddCommand(ingestRetryCmd)
 	ingestCmd.AddCommand(newIngestReocrCmd())
+	ingestCmd.AddCommand(newIngestSplitCmd())
+	ingestCmd.AddCommand(newIngestMergeCmd())
+	ingestCmd.AddCommand(newIngestRotateCmd())
 
 	return ingestCmd
+}
+
+// newIngestSplitCmd exposes the in-process SplitPDFAtSpec as `symdesk ingest
+// split` (issue #636). It mirrors the absorbed `symingest split --at N,M
+// --output-dir DIR <input.pdf>` contract and fails with a clear message when
+// the Poppler utilities probed by internal/ingest/split.go are absent instead
+// of erroring opaquely deeper in the pipeline.
+func newIngestSplitCmd() *cobra.Command {
+	var atSpec string
+	var outputDir string
+	cmd := &cobra.Command{
+		Use:   "split <input.pdf>",
+		Short: "Split a PDF into parts after the given pages",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if atSpec == "" {
+				return fmt.Errorf("--at is required (comma-separated pages, e.g. 2,4 or 2-3,6)")
+			}
+			if outputDir == "" {
+				return fmt.Errorf("--output-dir is required")
+			}
+			if !ingest.HasPopplerSplit() {
+				return fmt.Errorf("PDF splitting requires the Poppler utilities pdfinfo, pdfseparate and pdfunite on PATH (brew install poppler)")
+			}
+			parts, err := ingest.SplitPDFAtSpec(cmd.Context(), args[0], atSpec, outputDir)
+			if err != nil {
+				return err
+			}
+			if jsonFlag {
+				return outputResult(map[string]interface{}{"schema_version": ingest.SchemaVersion, "parts": parts})
+			}
+			for _, p := range parts {
+				fmt.Println(p)
+			}
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&atSpec, "at", "", "split after these pages, e.g. 2,4 or 2-3,6")
+	cmd.Flags().StringVar(&outputDir, "output-dir", "", "directory for the generated part PDFs")
+	return cmd
+}
+
+// newIngestMergeCmd exposes the in-process PDF merge (issue #637) as `symdesk
+// ingest merge`. It mirrors the absorbed `symingest merge` contract: combine
+// two or more PDFs into one output file without modifying the inputs.
+func newIngestMergeCmd() *cobra.Command {
+	var output string
+	cmd := &cobra.Command{
+		Use:   "merge <input.pdf> [<input.pdf> ...]",
+		Short: "Merge two or more PDFs into one file",
+		Args:  cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if output == "" {
+				return fmt.Errorf("--output is required")
+			}
+			if err := ingest.MergePDFs(cmd.Context(), args, output); err != nil {
+				return err
+			}
+			if jsonFlag {
+				return outputResult(map[string]interface{}{"schema_version": ingest.SchemaVersion, "output": output})
+			}
+			fmt.Println(output)
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&output, "output", "", "destination PDF path")
+	return cmd
+}
+
+// newIngestRotateCmd exposes the in-process PDF rotation (issue #637) as
+// `symdesk ingest rotate`. It mirrors the absorbed `symingest rotate` contract:
+// rotate all pages or a page selector by a multiple of 90 degrees.
+func newIngestRotateCmd() *cobra.Command {
+	var output string
+	var degrees int
+	var pages string
+	cmd := &cobra.Command{
+		Use:   "rotate <input.pdf>",
+		Short: "Rotate pages of a PDF and write the result",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if output == "" {
+				return fmt.Errorf("--output is required")
+			}
+			if degrees == 0 {
+				return fmt.Errorf("--degrees is required (one of -270, -180, -90, 90, 180, 270)")
+			}
+			if err := ingest.RotatePDF(cmd.Context(), args[0], output, degrees, pages); err != nil {
+				return err
+			}
+			if jsonFlag {
+				return outputResult(map[string]interface{}{"schema_version": ingest.SchemaVersion, "output": output})
+			}
+			fmt.Println(output)
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&output, "output", "", "destination PDF path")
+	cmd.Flags().IntVar(&degrees, "degrees", 0, "rotation in degrees (one of -270, -180, -90, 90, 180, 270)")
+	cmd.Flags().StringVar(&pages, "pages", "", "optional 1-based page selector, e.g. 1-3,5 (empty rotates all pages)")
+	return cmd
 }
 
 // newIngestReocrCmd wraps the absorbed pipeline's reocr job kind (issue

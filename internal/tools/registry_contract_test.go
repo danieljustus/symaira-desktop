@@ -120,6 +120,12 @@ var toolContracts = []toolContract{
 		readOnly:    true,
 	},
 	{
+		name:        "desk_rules_list",
+		description: "Lists the configured document classification rules. Legacy alias: list_rules.",
+		schema:      `{"type":"object","properties":{}}`,
+		readOnly:    true,
+	},
+	{
 		name:        "meeting_list",
 		description: "Lists meetings already imported into the vault as reviewed meeting notes.",
 		schema:      `{"type":"object","properties":{}}`,
@@ -183,6 +189,48 @@ var toolContracts = []toolContract{
 		name:        "desk_ingest_retry",
 		description: "Retries a failed ingestion job by ID.",
 		schema:      `{"type":"object","properties":{"id":{"type":"string"}},"required":["id"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "desk_ingest_reocr",
+		description: "Re-runs OCR/extraction for an already-ingested document, either by its registered archived source path or by document ID, and refreshes the existing note in place. Legacy alias: reocr.",
+		schema:      `{"type":"object","properties":{"document_id":{"type":"integer","description":"reprocess by document ID"},"archive_path":{"type":"string","description":"the registered archived original path"},"source":{"type":"string","description":"legacy alias for archive_path"}},"anyOf":[{"required":["document_id"]},{"required":["archive_path"]}]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "desk_rules_add",
+		description: "Adds a document classification rule. kind must be one of category, tag, correspondent or document_type. Legacy alias: add_rule.",
+		schema:      `{"type":"object","properties":{"pattern":{"type":"string","description":"case-insensitive substring matched against extracted document text"},"kind":{"type":"string","enum":["category","tag","correspondent","document_type"]},"value":{"type":"string","description":"the category, tag, correspondent or document type to assign"}},"required":["pattern","kind","value"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "desk_rules_update",
+		description: "Updates an existing document classification rule by ID, replacing its pattern, kind and value.",
+		schema:      `{"type":"object","properties":{"id":{"type":"integer","description":"rule ID"},"pattern":{"type":"string"},"kind":{"type":"string","enum":["category","tag","correspondent","document_type"]},"value":{"type":"string"}},"required":["id","pattern","kind","value"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "desk_rules_delete",
+		description: "Deletes a document classification rule by ID. Legacy alias: delete_rule.",
+		schema:      `{"type":"object","properties":{"id":{"type":"integer","description":"rule ID"}},"required":["id"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "desk_split_pdf",
+		description: "Splits a PDF into parts after the given pages and writes them into an output directory. at is a comma-separated page spec such as \"2,4\" or \"2-3,6\". Requires the Poppler utilities (pdfinfo, pdfseparate, pdfunite) on PATH. Legacy alias: split_pdf.",
+		schema:      `{"type":"object","properties":{"input":{"type":"string","description":"input PDF path"},"at":{"type":"string","description":"split after these pages, e.g. 2,4 or 2-3,6"},"output_dir":{"type":"string","description":"directory for the generated part PDFs"}},"required":["input","at","output_dir"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "desk_merge_pdf",
+		description: "Merges two or more PDFs into one output file without modifying the inputs. inputs is an array of PDF paths; output is the destination PDF path. Requires the Poppler utility pdfunite on PATH. Legacy alias: merge_pdf.",
+		schema:      `{"type":"object","properties":{"inputs":{"type":"array","items":{"type":"string"},"description":"input PDF paths, at least two"},"output":{"type":"string","description":"destination PDF path"}},"required":["inputs","output"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "desk_rotate_pdf",
+		description: "Rotates pages of a PDF and writes the result to an output path without modifying the input. degrees must be one of -270, -180, -90, 90, 180, 270; pages is an optional comma-separated 1-based page selector (e.g. 1-3,5), empty rotates all pages. Requires qpdf on PATH. Legacy alias: rotate_pdf.",
+		schema:      `{"type":"object","properties":{"input":{"type":"string","description":"input PDF path"},"output":{"type":"string","description":"destination PDF path"},"degrees":{"type":"integer","description":"rotation in degrees: -270, -180, -90, 90, 180 or 270"},"pages":{"type":"string","description":"optional page selector, e.g. 1-3,5; empty rotates all pages"}},"required":["input","output","degrees"]}`,
 		readOnly:    false,
 	},
 	{
@@ -260,6 +308,48 @@ var toolContracts = []toolContract{
 		description: "Searches notes with full-text terms plus path:, tag:, type:, status:, quoted phrases, -negation and /regex/. Legacy alias for desk_search.",
 		schema:      `{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`,
 		readOnly:    true,
+	},
+	{
+		name:        "reocr",
+		description: "Re-runs OCR/extraction for an already-ingested document by document ID or registered archived source path. Legacy alias for desk_ingest_reocr.",
+		schema:      `{"type":"object","properties":{"document_id":{"type":"integer","description":"reprocess by document ID"},"archive_path":{"type":"string","description":"the registered archived original path"},"source":{"type":"string","description":"legacy alias for archive_path"}},"anyOf":[{"required":["document_id"]},{"required":["archive_path"]}]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "list_rules",
+		description: "Lists the configured document classification rules. Legacy alias for desk_rules_list.",
+		schema:      `{"type":"object","properties":{}}`,
+		readOnly:    true,
+	},
+	{
+		name:        "add_rule",
+		description: "Adds a document classification rule (kind: category|tag|correspondent|document_type). Legacy alias for desk_rules_add.",
+		schema:      `{"type":"object","properties":{"pattern":{"type":"string","description":"case-insensitive substring matched against extracted document text"},"kind":{"type":"string","enum":["category","tag","correspondent","document_type"]},"value":{"type":"string","description":"the category, tag, correspondent or document type to assign"}},"required":["pattern","kind","value"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "delete_rule",
+		description: "Deletes a document classification rule by ID. Legacy alias for desk_rules_delete.",
+		schema:      `{"type":"object","properties":{"id":{"type":"integer","description":"rule ID"}},"required":["id"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "split_pdf",
+		description: "Splits a PDF into parts after the given pages. Legacy alias for desk_split_pdf.",
+		schema:      `{"type":"object","properties":{"input":{"type":"string","description":"input PDF path"},"at":{"type":"string","description":"split after these pages, e.g. 2,4 or 2-3,6"},"output_dir":{"type":"string","description":"directory for the generated part PDFs"}},"required":["input","at","output_dir"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "merge_pdf",
+		description: "Merges two or more PDFs into one output file. Legacy alias for desk_merge_pdf.",
+		schema:      `{"type":"object","properties":{"inputs":{"type":"array","items":{"type":"string"},"description":"input PDF paths, at least two"},"output":{"type":"string","description":"destination PDF path"}},"required":["inputs","output"]}`,
+		readOnly:    false,
+	},
+	{
+		name:        "rotate_pdf",
+		description: "Rotates pages of a PDF and writes the result to an output path. Legacy alias for desk_rotate_pdf.",
+		schema:      `{"type":"object","properties":{"input":{"type":"string","description":"input PDF path"},"output":{"type":"string","description":"destination PDF path"},"degrees":{"type":"integer","description":"rotation in degrees: -270, -180, -90, 90, 180 or 270"},"pages":{"type":"string","description":"optional page selector, e.g. 1-3,5; empty rotates all pages"}},"required":["input","output","degrees"]}`,
+		readOnly:    false,
 	},
 }
 
@@ -404,6 +494,7 @@ func TestConstructorsExposeCanonicalContract(t *testing.T) {
 		{"newDocsSimilarTool", func() *Tool { return newDocsSimilarTool(nil) }},
 		{"newRelatedTool", func() *Tool { return newRelatedTool(nil) }},
 		{"newIngestJobsTool", func() *Tool { return newIngestJobsTool(nil) }},
+		{"newRulesListTool", func() *Tool { return newRulesListTool(&config.Config{Vault: "/test/vault"}) }},
 		{"newMeetingListTool", func() *Tool { return newMeetingListTool(nil) }},
 		{"newMeetingGetTool", func() *Tool { return newMeetingGetTool(nil) }},
 		{"newNotebookListTool", func() *Tool { return newNotebookListTool(nil) }},
@@ -413,6 +504,13 @@ func TestConstructorsExposeCanonicalContract(t *testing.T) {
 		{"newIngestTool", func() *Tool { return newIngestTool(nil) }},
 		{"newDocSetStatusTool", func() *Tool { return newDocSetStatusTool(nil) }},
 		{"newIngestRetryTool", func() *Tool { return newIngestRetryTool(nil) }},
+		{"newIngestReocrTool", func() *Tool { return newIngestReocrTool(&config.Config{Vault: "/test/vault"}) }},
+		{"newRulesAddTool", func() *Tool { return newRulesAddTool(&config.Config{Vault: "/test/vault"}) }},
+		{"newRulesUpdateTool", func() *Tool { return newRulesUpdateTool(&config.Config{Vault: "/test/vault"}) }},
+		{"newRulesDeleteTool", func() *Tool { return newRulesDeleteTool(&config.Config{Vault: "/test/vault"}) }},
+		{"newSplitPDFTool", func() *Tool { return newSplitPDFTool() }},
+		{"newMergePDFTool", func() *Tool { return newMergePDFTool() }},
+		{"newRotatePDFTool", func() *Tool { return newRotatePDFTool() }},
 		{"newClipTool", func() *Tool { return newClipTool(nil) }},
 		{"newExportTool", func() *Tool { return newExportTool(nil) }},
 		{"newNotebookCreateTool", func() *Tool { return newNotebookCreateTool(nil) }},
@@ -559,6 +657,14 @@ func TestToolHandlersRequireArgs(t *testing.T) {
 		{"desk_autofill", newAutofillTool},
 		{"desk_asset_store", newAssetStoreTool},
 		{"meeting_get", newMeetingGetTool},
+		{"desk_ingest_reocr", func(f ServiceFactory) *Tool { return newIngestReocrTool(&config.Config{Vault: "/test/vault"}) }},
+		{"desk_rules_list", func(f ServiceFactory) *Tool { return newRulesListTool(&config.Config{Vault: "/test/vault"}) }},
+		{"desk_rules_add", func(f ServiceFactory) *Tool { return newRulesAddTool(&config.Config{Vault: "/test/vault"}) }},
+		{"desk_rules_update", func(f ServiceFactory) *Tool { return newRulesUpdateTool(&config.Config{Vault: "/test/vault"}) }},
+		{"desk_rules_delete", func(f ServiceFactory) *Tool { return newRulesDeleteTool(&config.Config{Vault: "/test/vault"}) }},
+		{"desk_split_pdf", func(f ServiceFactory) *Tool { return newSplitPDFTool() }},
+		{"desk_merge_pdf", func(f ServiceFactory) *Tool { return newMergePDFTool() }},
+		{"desk_rotate_pdf", func(f ServiceFactory) *Tool { return newRotatePDFTool() }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -597,6 +703,14 @@ func TestToolHandlersInvalidJSON(t *testing.T) {
 		{"desk_autofill", newAutofillTool},
 		{"desk_asset_store", newAssetStoreTool},
 		{"meeting_get", newMeetingGetTool},
+		{"desk_ingest_reocr", func(f ServiceFactory) *Tool { return newIngestReocrTool(&config.Config{Vault: "/test/vault"}) }},
+		{"desk_rules_list", func(f ServiceFactory) *Tool { return newRulesListTool(&config.Config{Vault: "/test/vault"}) }},
+		{"desk_rules_add", func(f ServiceFactory) *Tool { return newRulesAddTool(&config.Config{Vault: "/test/vault"}) }},
+		{"desk_rules_update", func(f ServiceFactory) *Tool { return newRulesUpdateTool(&config.Config{Vault: "/test/vault"}) }},
+		{"desk_rules_delete", func(f ServiceFactory) *Tool { return newRulesDeleteTool(&config.Config{Vault: "/test/vault"}) }},
+		{"desk_split_pdf", func(f ServiceFactory) *Tool { return newSplitPDFTool() }},
+		{"desk_merge_pdf", func(f ServiceFactory) *Tool { return newMergePDFTool() }},
+		{"desk_rotate_pdf", func(f ServiceFactory) *Tool { return newRotatePDFTool() }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

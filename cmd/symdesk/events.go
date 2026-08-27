@@ -30,6 +30,18 @@ type DebouncedEvent struct {
 	Ts time.Time
 }
 
+// accumulateDebounce merges a new filesystem event into the debounce map,
+// keeping the earliest timestamp and OR-ing the operation bits so a Create
+// followed by Write/Chmod still resolves to a create, not a plain change.
+// Caller must hold the debounce mutex.
+func accumulateDebounce(debounceMap map[string]*DebouncedEvent, path string, op fsnotify.Op) {
+	if ev, ok := debounceMap[path]; ok {
+		ev.Op |= op
+		return
+	}
+	debounceMap[path] = &DebouncedEvent{Op: op, Ts: time.Now()}
+}
+
 // processEvent handles a single debounced filesystem event. It determines the
 // operation name, performs side effects (indexing, deletion for .md files), and
 // writes the NDJSON event line to out when the file is markdown.
@@ -182,11 +194,7 @@ func newEventsCmd() *cobra.Command {
 					if !ok {
 						return nil
 					}
-					mu.Lock()
-					debounceMap[event.Name] = &DebouncedEvent{
-						Op: event.Op,
-						Ts: time.Now(),
-					}
+					accumulateDebounce(debounceMap, event.Name, event.Op)
 					mu.Unlock()
 				case err, ok := <-watcher.Errors:
 					if !ok {

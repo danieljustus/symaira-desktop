@@ -140,6 +140,8 @@ struct QuickLookPreviewView: NSViewRepresentable {
 
 struct DocumentViewerView: View {
     let document: DocumentItem
+    /// Opens the document in the note editor (issue #648).
+    var onOpenInEditor: ((DocumentItem) -> Void)? = nil
 
     @EnvironmentObject var core: DeskCore
     @Environment(\.dismiss) private var dismiss
@@ -258,7 +260,19 @@ struct DocumentViewerView: View {
             }
             .help("Toggle inspector (Cmd+I)")
 
-            if isReOCRAvailable {
+            if document.path.lowercased().hasSuffix(".md") {
+                Button(action: {
+                    onOpenInEditor?(document)
+                    dismiss()
+                }) {
+                    Label("Open in Editor", systemImage: "pencil.and.outline")
+                }
+                .help("Edit this note in the vault editor")
+            }
+
+            // Re-run OCR only makes sense with an archived original to
+            // re-process; a hand-written Markdown note has none (issue #648).
+            if isReOCRAvailable, fileURL != nil {
                 Button(action: { runReOCR() }) {
                     if isReOCRRunning {
                         ProgressView().controlSize(.small)

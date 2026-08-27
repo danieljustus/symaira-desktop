@@ -26,6 +26,12 @@ type Result struct {
 	Path    string  `json:"path"`
 	Score   float64 `json:"score"`
 	Snippet string  `json:"snippet"`
+	// VectorMode reports how the vector leg of the search was scored:
+	// "semantic" for a real embedding model, "fallback" when the query fell
+	// back to the local hash vector while the index uses an Ollama model, or
+	// empty when only the keyword leg contributed. It lets a consumer warn the
+	// user that semantic scores may be unreliable (#663/#681).
+	VectorMode string `json:"vector_mode,omitempty"`
 }
 
 // DefaultLimit is the number of hits Search returns by default.
@@ -142,9 +148,10 @@ func (c *Client) Search(query string, limit int) ([]Result, error) {
 			continue
 		}
 		out = append(out, Result{
-			Path:    s.Path,
-			Score:   float64(s.Score),
-			Snippet: engine.BuildSnippet(s.Snippet, terms, engine.DefaultSnippetBound),
+			Path:       s.Path,
+			Score:      float64(s.Score),
+			Snippet:    engine.BuildSnippet(s.Snippet, terms, engine.DefaultSnippetBound),
+			VectorMode: s.VectorMode,
 		})
 	}
 	return out, nil

@@ -19,6 +19,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/parser"
+	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
 // chunkNamespace is the deterministic UUID namespace used for all chunk IDs.
@@ -175,6 +176,13 @@ func IndexDirectory(dbClient db.Store, embedder Embedder, dirPath string) error 
 // original PDF/Office file; search results still resolve to the note path while
 // retaining the original's durable location anchor.
 func IndexFileWithSource(dbClient db.Store, embedder Embedder, source, sourcePath string) (string, error) {
+	return IndexFileWithSourceAndMetadata(dbClient, embedder, source, sourcePath, SearchMetadata{})
+}
+
+// IndexFileWithSourceAndMetadata is the metadata-aware variant of
+// IndexFileWithSource. Keeping the original API above preserves callers that do
+// not have parsed vault metadata.
+func IndexFileWithSourceAndMetadata(dbClient db.Store, embedder Embedder, source, sourcePath string, metadata SearchMetadata) (string, error) {
 	currentHash, err := parser.GetFileHash(source)
 	if err != nil {
 		return "", fmt.Errorf("failed to compute hash for %s: %w", source, err)
@@ -190,9 +198,28 @@ func IndexFileWithSource(dbClient db.Store, embedder Embedder, source, sourcePat
 	if err != nil {
 		return "", fmt.Errorf("failed to parse %s: %w", sourcePath, err)
 	}
+	sections = prependSearchMetadata(sections, metadata)
 	chunks := buildChunksFromSections(embedder, source, sections)
 	doc := &db.Document{Path: source, Hash: currentHash, UpdatedAt: time.Now()}
 	return currentHash, commitIndex(dbClient, source, chunks, doc, existing, "")
+}
+
+// IndexFileWithMetadata indexes a file with a deterministic synthetic metadata
+// section followed by its source sections. Metadata-only edits therefore change
+// the indexed representation and are not skipped by the file hash check.
+func IndexFileWithMetadata(dbClient db.Store, embedder Embedder, path string, metadata SearchMetadata) (string, error) {
+	chunks, doc, existing, skipped, _, err := prepareIndexWithMetadata(dbClient, embedder, path, metadata)
+	if err != nil {
+		return "", err
+	}
+	if skipped {
+		currentHash, _ := parser.GetFileHash(path)
+		return currentHash, nil
+	}
+	if err := commitIndex(dbClient, path, chunks, doc, existing, ""); err != nil {
+		return "", err
+	}
+	return doc.Hash, nil
 }
 
 // IndexFile indexes a single file by delegating to the shared prepareIndex/commitIndex pipeline.
@@ -478,6 +505,19 @@ func processFilesInParallel(dbClient db.Store, embedder Embedder, paths map[stri
 }
 
 func prepareIndex(dbClient db.Store, embedder Embedder, path string) ([]*db.Chunk, *db.Document, *db.Document, bool, string, error) {
+	return prepareIndexWithMetadata(dbClient, embedder, path, searchMetadataForPath(path))
+}
+
+func searchMetadataForPath(path string) SearchMetadata {
+	if strings.EqualFold(filepath.Ext(path), ".md") || strings.EqualFold(filepath.Ext(path), ".markdown") {
+		if doc, err := vault.ParseFile(path); err == nil {
+			return SearchMetadataFromVault(doc)
+		}
+	}
+	return SearchMetadata{}
+}
+
+func prepareIndexWithMetadata(dbClient db.Store, embedder Embedder, path string, metadata SearchMetadata) ([]*db.Chunk, *db.Document, *db.Document, bool, string, error) {
 	currentHash, err := parser.GetFileHash(path)
 	if err != nil {
 		return nil, nil, nil, false, "", fmt.Errorf("failed to compute hash for %s: %w", path, err)
@@ -503,9 +543,13 @@ func prepareIndex(dbClient db.Store, embedder Embedder, path string) ([]*db.Chun
 	if err != nil {
 		return nil, nil, nil, false, "", fmt.Errorf("failed to parse %s: %w", path, err)
 	}
-	content := joinSectionText(sections)
-	chunks := buildChunksFromSections(embedder, path, sections)
-	sidecarPath := detectSidecarPath(path, content)
+	metadataSections := prependSearchMetadata(sections, metadata)
+	chunks := buildChunksFromSections(embedder, path, metadataSections)
+	rawContent, err := parser.ParseFile(path)
+	if err != nil {
+		return nil, nil, nil, false, "", fmt.Errorf("failed to parse %s: %w", path, err)
+	}
+	sidecarPath := detectSidecarPath(path, rawContent)
 
 	return chunks, &db.Document{
 		Path:      path,
@@ -538,21 +582,25 @@ func joinSectionText(sections []parser.Section) string {
 // (PDF pages and Markdown heading sections), while preserving global byte spans.
 func buildChunksFromSections(embedder Embedder, source string, sections []parser.Section) []*db.Chunk {
 	var spans []struct {
-		span   parser.Span
-		anchor parser.Anchor
+		span      parser.Span
+		anchor    parser.Anchor
+		synthetic bool
 	}
 	for _, section := range sections {
 		for _, span := range parser.SplitTextWithSpans(section.Text, 1000, 200) {
-			span.Start += section.Start
-			span.End += section.Start
+			if !section.Synthetic {
+				span.Start += section.Start
+				span.End += section.Start
+			}
 			anchor := section.Anchor
-			if anchor.Kind == "text" {
+			if anchor.Kind == "text" && !section.Synthetic {
 				anchor.Value = fmt.Sprintf("offset:%d", span.Start)
 			}
 			spans = append(spans, struct {
-				span   parser.Span
-				anchor parser.Anchor
-			}{span: span, anchor: anchor})
+				span      parser.Span
+				anchor    parser.Anchor
+				synthetic bool
+			}{span: span, anchor: anchor, synthetic: section.Synthetic})
 		}
 	}
 	textChunks := make([]string, len(spans))
@@ -567,6 +615,10 @@ func buildChunksFromSections(embedder Embedder, source string, sections []parser
 		chunkHash := hex.EncodeToString(hashSum[:])
 		start, end := spans[idx].span.Start, spans[idx].span.End
 		res := embeddings[idx]
+		var startPtr, endPtr *int
+		if !spans[idx].synthetic {
+			startPtr, endPtr = &start, &end
+		}
 		chunk := &db.Chunk{
 			UUID:         deriveChunkID(source, chunkHash, start),
 			DocumentPath: source,
@@ -576,8 +628,8 @@ func buildChunksFromSections(embedder Embedder, source string, sections []parser
 			Hash:         chunkHash,
 			Dim:          len(res.Vector),
 			Model:        res.Model,
-			CharStart:    &start,
-			CharEnd:      &end,
+			CharStart:    startPtr,
+			CharEnd:      endPtr,
 			AnchorKind:   spans[idx].anchor.Kind,
 			AnchorValue:  spans[idx].anchor.Value,
 		}

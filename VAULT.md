@@ -99,6 +99,17 @@ The following optional fields provide first-class document query metadata. They 
 - `simhash` (string, 16-char hex): 64-bit text SimHash for near-duplicate / template detection.
 - `asn` (positive integer): A vault-wide unique archive serial number for the physical paper archive. It is optional, but when present it MUST be a YAML integer greater than zero and MUST not be assigned to any other note in the vault. `symdesk doc asn <file> next` allocates the lowest available number; `symdesk doctor` reports malformed or duplicate assignments.
 
+### Hybrid Free-Text Index Representation (issue #665)
+Ordinary free-text hybrid search indexes the Markdown body together with the following selected contract metadata fields. This supplements, and does not replace, the sidecar's structured metadata filters:
+
+- `title` and `tags` are weighted three times each; `aliases` is weighted twice.
+- `created`, `document_date`, `due_date`, `confidence`, `person`, `status`, `type`, `document_type`, `correspondent`, `asn`, `ocr_json_path`, `simhash`, `source_path`, `mime`, `category`, `ocr_engine`, `archive_path`, `imported_from`, `import_run_id`, `source_uri`, `download_uri`, `ingested_at`, `sha256`, `meeting_id`, `notebook_id`, and `base_id` are each included once when present.
+- Each metadata field is represented as a deterministic `field: value` line. Fields use a fixed canonical order, scalar whitespace is normalized to single spaces, and values are never inferred or copied from unknown frontmatter keys.
+- Title and tag matches receive a small fixed ranking boost in addition to their repeated representation. Search results expose the matching metadata field names through `metadata_matches`; metadata-only text is removed from user-facing snippets.
+- Metadata is synthetic index content and has no source character span. Existing location anchors for body content remain unchanged. A local file's complete content hash is used for the skip check, so a frontmatter-only edit causes its hybrid chunks to be replaced.
+
+This is an additive representation change: old index rows remain searchable and readable, and a normal re-index replaces them with the metadata-aware representation. The selected field list is intentionally fixed; it is not a new frontmatter schema and does not add query filter syntax.
+
 ## 4. Wikilink Semantics
 - **Syntax:** `[[Filename]]` or `[[Filename|Display Text]]`.
 - **Target:** Wikilinks link to other Markdown files in the vault by their base name (without `.md`), relative path, note title, or aliases.

@@ -303,6 +303,7 @@ func ReembedPending(dbClient db.Store, embedder Embedder) (int, error) {
 			fmt.Fprintf(os.Stderr, "Warning: failed to re-parse %s for re-embed: %v\n", doc.Path, perr)
 			continue
 		}
+		sections = prependSearchMetadata(sections, searchMetadataForPath(doc.Path))
 		if err := reembedDocumentSections(dbClient, embedder, doc.Path, sections); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to re-embed %s: %v\n", doc.Path, err)
 			continue
@@ -316,6 +317,9 @@ func reembedDocumentSections(dbClient db.Store, embedder Embedder, source string
 	content := joinSectionText(sections)
 	hashSum := sha256.Sum256([]byte(content))
 	currentHash := hex.EncodeToString(hashSum[:])
+	if fileHash, err := parser.GetFileHash(source); err == nil {
+		currentHash = fileHash
+	}
 	existing, err := dbClient.GetDocument(source)
 	if err != nil {
 		return fmt.Errorf("failed to check existing document: %w", err)

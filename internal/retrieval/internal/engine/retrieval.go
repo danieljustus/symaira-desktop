@@ -168,7 +168,8 @@ func SearchHybridWithOptions(dbClient db.Store, vectorStore db.VectorStore, embe
 		if res.VectorRank > 0 {
 			score += 1.0 / (k + float32(res.VectorRank))
 		}
-		res.RRFScore = score
+		res.RRFScore = score + metadataBoost(MetadataMatches(query, res.Chunk.Content))
+		res.MetadataMatches = MetadataMatches(query, res.Chunk.Content)
 		combined = append(combined, res)
 	}
 

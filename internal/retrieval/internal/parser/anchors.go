@@ -21,9 +21,10 @@ type Anchor struct {
 // Section is an independently chunkable portion of a source document. Keeping
 // sections separate prevents a chunk from crossing a page or heading boundary.
 type Section struct {
-	Text   string
-	Start  int
-	Anchor Anchor
+	Text      string
+	Start     int
+	Anchor    Anchor
+	Synthetic bool
 }
 
 // ParseFileSections is the anchor-aware counterpart to ParseFile. ParseFile is
@@ -93,7 +94,7 @@ func parseMarkdownSections(path string) ([]Section, error) {
 	if len(data) > MaxIndexFileSize {
 		return nil, fmt.Errorf("file %s exceeds %d byte limit (%d bytes)", path, MaxIndexFileSize, len(data))
 	}
-	text := string(data)
+	text, baseOffset := stripMarkdownFrontmatter(string(data))
 	lines := strings.SplitAfter(text, "\n")
 	type heading struct {
 		start int
@@ -110,12 +111,12 @@ func parseMarkdownSections(path string) ([]Section, error) {
 		offset += len(line)
 	}
 	if len(headings) == 0 {
-		return sectionsFromText(text), nil
+		return sectionsFromTextAt(text, baseOffset), nil
 	}
 
 	sections := make([]Section, 0, len(headings)+1)
 	if prefix := text[:headings[0].start]; strings.TrimSpace(prefix) != "" {
-		sections = append(sections, Section{Text: strings.TrimSpace(prefix), Start: 0, Anchor: Anchor{Kind: "text", Value: "offset:0"}})
+		sections = append(sections, Section{Text: strings.TrimSpace(prefix), Start: baseOffset, Anchor: Anchor{Kind: "text", Value: fmt.Sprintf("offset:%d", baseOffset)}})
 	}
 	pathParts := make([]string, 0, 6)
 	for i, h := range headings {
@@ -133,11 +134,37 @@ func parseMarkdownSections(path string) ([]Section, error) {
 		}
 		sections = append(sections, Section{
 			Text:   body,
-			Start:  h.start,
+			Start:  baseOffset + h.start,
 			Anchor: Anchor{Kind: "heading", Value: strings.Join(pathParts, " > ")},
 		})
 	}
 	return sections, nil
+}
+
+func sectionsFromTextAt(text string, start int) []Section {
+	if strings.TrimSpace(text) == "" {
+		return nil
+	}
+	return []Section{{Text: text, Start: start, Anchor: Anchor{Kind: "text", Value: fmt.Sprintf("offset:%d", start)}}}
+}
+
+func stripMarkdownFrontmatter(text string) (string, int) {
+	if !strings.HasPrefix(text, "---") {
+		return text, 0
+	}
+	lines := strings.SplitAfter(text, "\n")
+	if len(lines) == 0 || strings.TrimSpace(lines[0]) != "---" {
+		return text, 0
+	}
+	offset := len(lines[0])
+	for _, line := range lines[1:] {
+		if strings.TrimSpace(strings.TrimSuffix(line, "\n")) == "---" {
+			end := offset + len(line)
+			return text[end:], end
+		}
+		offset += len(line)
+	}
+	return text, 0
 }
 
 func markdownHeading(line string) (int, string, bool) {

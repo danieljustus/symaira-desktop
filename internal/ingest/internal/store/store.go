@@ -35,6 +35,7 @@ type Document struct {
 	Correspondent string
 	DocumentType  string
 	SourceMailID  *string
+	VaultRoot     string
 }
 
 // ClassificationRule represents a row in the classification_rules table.
@@ -93,10 +94,16 @@ func (s *Store) Close() error {
 	return s.db.Close()
 }
 
-// CreateOrGet creates a document row for the given hash if it does not exist,
-// returning the document and a boolean indicating if it was created (inserted).
-func (s *Store) CreateOrGet(ctx context.Context, sourcePath, sha256, mime string) (*Document, bool, error) {
-	existing, err := s.ByHash(ctx, sha256)
+// CreateOrGet creates a document row for the given hash in the destination
+// vault if it does not exist, returning the document and a boolean indicating
+// if it was created (inserted). The optional vault root keeps compatibility
+// with callers that only need the legacy global lookup behavior.
+func (s *Store) CreateOrGet(ctx context.Context, sourcePath, sha256, mime string, vaultRoots ...string) (*Document, bool, error) {
+	vaultRoot := ""
+	if len(vaultRoots) > 0 {
+		vaultRoot = vaultRoots[0]
+	}
+	existing, err := s.ByHashInVault(ctx, sha256, vaultRoot)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, false, err
 	}
@@ -105,16 +112,16 @@ func (s *Store) CreateOrGet(ctx context.Context, sourcePath, sha256, mime string
 	}
 
 	res, err := s.db.ExecContext(ctx,
-		`INSERT INTO documents (source_path, sha256, mime, status) VALUES (?, ?, ?, 'pending')`,
-		sourcePath, sha256, mime)
+		`INSERT INTO documents (source_path, sha256, mime, vault_root, status) VALUES (?, ?, ?, ?, 'pending')`,
+		sourcePath, sha256, mime, vaultRoot)
 	if err != nil {
-		if existing, lookupErr := s.ByHash(ctx, sha256); lookupErr == nil && existing != nil {
+		if existing, lookupErr := s.ByHashInVault(ctx, sha256, vaultRoot); lookupErr == nil && existing != nil {
 			return existing, false, nil
 		}
 		return nil, false, fmt.Errorf("insert document: %w", err)
 	}
 	id, _ := res.LastInsertId()
-	return &Document{ID: id, SourcePath: sourcePath, SHA256: sha256, MIME: mime, Status: "pending"}, true, nil
+	return &Document{ID: id, SourcePath: sourcePath, SHA256: sha256, MIME: mime, Status: "pending", VaultRoot: vaultRoot}, true, nil
 }
 
 // ListDocuments returns ingested documents with note paths in deterministic
@@ -123,7 +130,7 @@ func (s *Store) CreateOrGet(ctx context.Context, sourcePath, sha256, mime string
 func (s *Store) ListDocuments(ctx context.Context) ([]*Document, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT id, source_path, sha256, mime, status, vault_path, archive_path,
-		       category, tags, correspondent, document_type, source_mail_id
+		       category, tags, correspondent, document_type, source_mail_id, vault_root
 		FROM documents
 		WHERE vault_path IS NOT NULL AND vault_path <> ''
 		ORDER BY vault_path ASC, id ASC
@@ -153,9 +160,9 @@ type rowScanner interface {
 
 func scanDocument(row rowScanner) (*Document, error) {
 	var d Document
-	var vaultPath, archivePath, category, tags, correspondent, documentType, sourceMailID sql.NullString
+	var vaultPath, archivePath, category, tags, correspondent, documentType, sourceMailID, vaultRoot sql.NullString
 	if err := row.Scan(&d.ID, &d.SourcePath, &d.SHA256, &d.MIME, &d.Status,
-		&vaultPath, &archivePath, &category, &tags, &correspondent, &documentType, &sourceMailID); err != nil {
+		&vaultPath, &archivePath, &category, &tags, &correspondent, &documentType, &sourceMailID, &vaultRoot); err != nil {
 		return nil, err
 	}
 	if vaultPath.Valid {
@@ -179,22 +186,42 @@ func scanDocument(row rowScanner) (*Document, error) {
 	if sourceMailID.Valid {
 		d.SourceMailID = &sourceMailID.String
 	}
+	if vaultRoot.Valid {
+		d.VaultRoot = vaultRoot.String
+	}
 	return &d, nil
 }
 
-// ByHash returns the document with the given sha256.
+// ByHash returns the first document with the given sha256. New ingest callers
+// should use ByHashInVault when the destination is known.
 func (s *Store) ByHash(ctx context.Context, sha256 string) (*Document, error) {
+	return s.byHash(ctx, sha256, nil)
+}
+
+// ByHashInVault returns the document with the given sha256 in vaultRoot.
+// The vault root is part of the deduplication key because the document store
+// is shared by all vaults on the machine.
+func (s *Store) ByHashInVault(ctx context.Context, sha256, vaultRoot string) (*Document, error) {
+	return s.byHash(ctx, sha256, &vaultRoot)
+}
+
+func (s *Store) byHash(ctx context.Context, sha256 string, vaultRoot *string) (*Document, error) {
 	var d Document
-	var vaultPath sql.NullString
-	var archivePath sql.NullString
-	var category sql.NullString
-	var tags sql.NullString
-	var correspondent sql.NullString
-	var documentType sql.NullString
-	var sourceMailID sql.NullString
-	err := s.db.QueryRowContext(ctx,
-		`SELECT id, source_path, sha256, mime, status, vault_path, archive_path, category, tags, correspondent, document_type, source_mail_id FROM documents WHERE sha256 = ?`,
-		sha256).Scan(&d.ID, &d.SourcePath, &d.SHA256, &d.MIME, &d.Status, &vaultPath, &archivePath, &category, &tags, &correspondent, &documentType, &sourceMailID)
+	var vaultPath, archivePath, category, tags, correspondent, documentType, sourceMailID, storedVaultRoot sql.NullString
+	query := `SELECT id, source_path, sha256, mime, status, vault_path, archive_path, category, tags, correspondent, document_type, source_mail_id, vault_root FROM documents WHERE sha256 = ?`
+	args := []any{sha256}
+	if vaultRoot != nil {
+		// Rows written before vault scoping have an empty vault_root. Their
+		// existing note path still lets us preserve same-vault deduplication
+		// without treating the legacy row as a global duplicate.
+		query += ` AND (vault_root = ? OR (vault_root = '' AND instr(vault_path, ?) = 1))`
+		args = append(args, *vaultRoot, *vaultRoot+string(filepath.Separator))
+	}
+	query += ` ORDER BY id ASC LIMIT 1`
+	err := s.db.QueryRowContext(ctx, query, args...).Scan(
+		&d.ID, &d.SourcePath, &d.SHA256, &d.MIME, &d.Status, &vaultPath, &archivePath,
+		&category, &tags, &correspondent, &documentType, &sourceMailID, &storedVaultRoot,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -215,6 +242,12 @@ func (s *Store) ByHash(ctx context.Context, sha256 string) (*Document, error) {
 	}
 	if documentType.Valid {
 		d.DocumentType = documentType.String
+	}
+	if sourceMailID.Valid {
+		d.SourceMailID = &sourceMailID.String
+	}
+	if storedVaultRoot.Valid {
+		d.VaultRoot = storedVaultRoot.String
 	}
 	return &d, nil
 }
@@ -273,9 +306,10 @@ func (s *Store) ByID(ctx context.Context, id int64) (*Document, error) {
 	var tags sql.NullString
 	var correspondent sql.NullString
 	var documentType sql.NullString
+	var vaultRoot sql.NullString
 	err := s.db.QueryRowContext(ctx,
-		`SELECT id, source_path, sha256, mime, status, vault_path, archive_path, category, tags, correspondent, document_type FROM documents WHERE id = ?`,
-		id).Scan(&d.ID, &d.SourcePath, &d.SHA256, &d.MIME, &d.Status, &vaultPath, &archivePath, &category, &tags, &correspondent, &documentType)
+		`SELECT id, source_path, sha256, mime, status, vault_path, archive_path, category, tags, correspondent, document_type, vault_root FROM documents WHERE id = ?`,
+		id).Scan(&d.ID, &d.SourcePath, &d.SHA256, &d.MIME, &d.Status, &vaultPath, &archivePath, &category, &tags, &correspondent, &documentType, &vaultRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -296,6 +330,9 @@ func (s *Store) ByID(ctx context.Context, id int64) (*Document, error) {
 	}
 	if documentType.Valid {
 		d.DocumentType = documentType.String
+	}
+	if vaultRoot.Valid {
+		d.VaultRoot = vaultRoot.String
 	}
 	return &d, nil
 }

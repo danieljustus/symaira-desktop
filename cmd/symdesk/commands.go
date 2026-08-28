@@ -66,6 +66,7 @@ func registerCommands(rootCmd *cobra.Command) {
 		newMeetingCmd(),
 		newRetentionCmd(),
 		newDoctorCmd(),
+		newSidecarCmd(),
 		newEventsCmd(),
 		newDemoCmd(),
 		newConfigCmd(),

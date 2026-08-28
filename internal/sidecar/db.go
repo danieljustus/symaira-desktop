@@ -34,16 +34,27 @@ func OpenForVault(vaultRoot string) (*DB, error) {
 	if resolved, resolveErr := filepath.EvalSymlinks(canonical); resolveErr == nil {
 		canonical = resolved
 	}
-	home, err := os.UserHomeDir()
+	root, err := SidecarRoot()
 	if err != nil {
-		return nil, fmt.Errorf("user home dir: %w", err)
+		return nil, err
 	}
-	dataRoot := os.Getenv("XDG_DATA_HOME")
-	if dataRoot == "" {
-		dataRoot = filepath.Join(home, ".local", "share")
+	if isTemporaryVault(canonical) && os.Getenv("XDG_DATA_HOME") == "" {
+		// Test and scratch vaults must not materialize state below the user's
+		// persistent data root, but repeated calls for one vault still need a
+		// stable database during that process.
+		root = filepath.Join(os.TempDir(), "symdesk", "test-vaults")
 	}
 	digest := fmt.Sprintf("%x", sha256.Sum256([]byte(canonical)))
-	return Open(filepath.Join(dataRoot, "symdesk", "vaults", digest[:16], "sidecar.db"))
+	path := filepath.Join(root, digest[:16], "sidecar.db")
+	db, err := Open(path)
+	if err != nil {
+		return nil, err
+	}
+	if err := recordSidecarMetadata(filepath.Dir(path), canonical); err != nil {
+		_ = db.Close()
+		return nil, err
+	}
+	return db, nil
 }
 
 //go:embed migrations/*.sql

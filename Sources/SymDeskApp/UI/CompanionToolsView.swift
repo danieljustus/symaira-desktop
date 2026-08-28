@@ -24,11 +24,7 @@ struct CompanionToolsView: View {
     /// Only genuinely separate products belong here. Search, PDF rendering
     /// and contacts ship inside SymDesk since the repo consolidation, so
     /// offering to install them would install nothing.
-    private let managedTools: [(id: String, name: String, tap: String)] = [
-        ("symbrain", "SymBrain", "danieljustus/tap/symbrain"),
-        ("symvault", "SymVault", "danieljustus/tap/symvault"),
-        ("symbrowse", "SymBrowse", "danieljustus/tap/symbrowse"),
-    ]
+    private let managedTools = DoctorReport.ToolAvailability.managedTools
 
     var body: some View {
         ScrollView {
@@ -103,7 +99,7 @@ struct CompanionToolsView: View {
         }
     }
 
-    private func toolRow(_ tool: (id: String, name: String, tap: String)) -> some View {
+    private func toolRow(_ tool: DoctorReport.ToolAvailability.ManagedTool) -> some View {
         let installState: ToolInstallState = {
             guard let report = doctorReport else { return .unknown }
             return report.tools.isAvailable(tool.id) ? .installed : .notInstalled
@@ -206,7 +202,7 @@ struct CompanionToolsView: View {
 
     // MARK: - Install tool
 
-    private func installTool(_ tool: (id: String, name: String, tap: String)) {
+    private func installTool(_ tool: DoctorReport.ToolAvailability.ManagedTool) {
         installingTools.insert(tool.id)
         installOutput[tool.id] = "Installing \(tool.name)…"
         installErrors[tool.id] = nil

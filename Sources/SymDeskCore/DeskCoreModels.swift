@@ -125,6 +125,26 @@ public struct DoctorReport: Codable, Sendable {
     /// into `symdesk` by the repo consolidation and are therefore no longer
     /// reported here.
     public struct ToolAvailability: Codable, Sendable {
+        /// Metadata for the separate companion tools reported by `symdesk doctor`.
+        /// Keep the identifiers aligned with the JSON payload keys below.
+        public struct ManagedTool: Equatable, Sendable {
+            public let id: String
+            public let name: String
+            public let tap: String
+
+            public init(id: String, name: String, tap: String) {
+                self.id = id
+                self.name = name
+                self.tap = tap
+            }
+        }
+
+        public static let managedTools: [ManagedTool] = [
+            ManagedTool(id: "symmemory", name: "SymMemory", tap: "danieljustus/tap/symmemory"),
+            ManagedTool(id: "symvault", name: "SymVault", tap: "danieljustus/tap/symvault"),
+            ManagedTool(id: "symbrowse", name: "SymBrowse", tap: "danieljustus/tap/symbrowse"),
+        ]
+
         public let symmemory: String?
         public let symvault: String?
         public let symbrowse: String?

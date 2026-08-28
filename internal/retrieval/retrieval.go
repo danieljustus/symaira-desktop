@@ -12,8 +12,12 @@
 package retrieval
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -88,6 +92,24 @@ func (c *Client) Close() error {
 		return nil
 	}
 	return c.db.Close()
+}
+
+// IndexDirectory indexes a read-only external folder in place. The folder is
+// never copied or modified; its canonical file paths are the search identities.
+func (c *Client) IndexDirectory(dirPath string) error {
+	return engine.IndexDirectory(c.db, c.embedder, dirPath)
+}
+
+// WatchDirectory keeps an external folder incrementally synchronized until ctx
+// is cancelled. It never writes to the watched folder.
+func (c *Client) WatchDirectory(ctx context.Context, dirPath string) error {
+	return engine.WatchDirectory(ctx, c.db, c.embedder, dirPath)
+}
+
+// RemoveDirectory removes indexed documents under dirPath without touching the
+// folder on disk.
+func (c *Client) RemoveDirectory(dirPath string) (int, error) {
+	return engine.RemoveDirectory(c.db, dirPath)
 }
 
 // Index adds or replaces one document in the index. The source label is the
@@ -200,15 +222,64 @@ func defaultCountPendingChunks() (int, error) {
 // Search runs the hybrid keyword+vector search and returns at most limit hits,
 // each with a query-centered snippet. A limit <= 0 means DefaultLimit.
 func (c *Client) Search(query string, limit int) ([]Result, error) {
+	return c.searchWithOptions(query, limit, engine.SearchOptions{ExpandCfg: c.expand})
+}
+
+// SearchInPaths searches only documents below the supplied canonical directory
+// roots. The retrieval database is shared across vaults, so callers must use
+// this scoped entry point when combining a vault with its registered external
+// sources.
+func (c *Client) SearchInPaths(query string, paths []string, limit int) ([]Result, error) {
 	if limit <= 0 {
 		limit = DefaultLimit
 	}
-	hits, err := engine.SearchHybridWithOptions(c.db, c.db, c.embedder, query, limit,
-		engine.SearchOptions{ExpandCfg: c.expand})
+	if len(paths) == 0 {
+		return []Result{}, nil
+	}
+	byPath := make(map[string]Result)
+	for _, path := range paths {
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return nil, fmt.Errorf("resolve search scope %q: %w", path, err)
+		}
+		absPath = filepath.Clean(absPath)
+		if linkInfo, lstatErr := os.Lstat(absPath); lstatErr == nil && linkInfo.Mode()&os.ModeSymlink != 0 {
+			if canonical, evalErr := filepath.EvalSymlinks(absPath); evalErr == nil {
+				absPath = filepath.Clean(canonical)
+			}
+		}
+		hits, err := c.searchWithOptions(query, limit, engine.SearchOptions{
+			ExpandCfg:  c.expand,
+			PathFilter: absPath + string(os.PathSeparator),
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, hit := range hits {
+			if _, exists := byPath[hit.Path]; !exists {
+				byPath[hit.Path] = hit
+			}
+		}
+	}
+	out := make([]Result, 0, len(byPath))
+	for _, result := range byPath {
+		out = append(out, result)
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Score > out[j].Score })
+	if len(out) > limit {
+		out = out[:limit]
+	}
+	return out, nil
+}
+
+func (c *Client) searchWithOptions(query string, limit int, opts engine.SearchOptions) ([]Result, error) {
+	if limit <= 0 {
+		limit = DefaultLimit
+	}
+	hits, err := engine.SearchHybridWithOptions(c.db, c.db, c.embedder, query, limit, opts)
 	if err != nil {
 		return nil, err
 	}
-
 	terms := strings.Fields(query)
 	out := make([]Result, 0, len(hits))
 	for _, h := range hits {
@@ -362,6 +433,39 @@ func IndexWithMetadata(path, body string, metadata SearchMetadata) error {
 	return c.IndexWithMetadata(path, body, metadata)
 }
 
+// IndexDirectory indexes one external folder using the configured retrieval
+// client. Unlike Index, errors are returned because registration callers need
+// to report a failed initial pass.
+func IndexDirectory(dirPath string) error {
+	c, err := Open()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = c.Close() }()
+	return c.IndexDirectory(dirPath)
+}
+
+// RemoveDirectory removes indexed documents under dirPath and leaves the
+// external folder untouched.
+func RemoveDirectory(dirPath string) (int, error) {
+	c, err := Open()
+	if err != nil {
+		return 0, err
+	}
+	defer func() { _ = c.Close() }()
+	return c.RemoveDirectory(dirPath)
+}
+
+// WatchDirectory watches one external folder until ctx is cancelled.
+func WatchDirectory(ctx context.Context, dirPath string) error {
+	c, err := Open()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = c.Close() }()
+	return c.WatchDirectory(ctx, dirPath)
+}
+
 // Index adds or replaces one document in the search index. A failure is
 // logged and swallowed: the document is already stored in the vault and in
 // the sidecar index, and a degraded hybrid search must not fail the write.
@@ -377,6 +481,18 @@ func Delete(path string) {
 	if err := DeleteFunc(path); err != nil {
 		slog.Warn("search index delete failed", "path", path, "error", err)
 	}
+}
+
+// SearchInPaths searches only documents below the supplied directory roots.
+// Errors are returned so callers can distinguish an unavailable shared index
+// from a valid empty result.
+func SearchInPaths(query string, paths []string, limit int) ([]Result, error) {
+	c, err := Open()
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = c.Close() }()
+	return c.SearchInPaths(query, paths, limit)
 }
 
 // Search runs the hybrid keyword+vector search. It returns nil (not an error)

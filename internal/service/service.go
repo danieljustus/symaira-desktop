@@ -138,6 +138,10 @@ type SearchResult struct {
 	Score           float64                   `json:"score"`
 	Anchor          *retrieval.LocationAnchor `json:"anchor,omitempty"`
 	MetadataMatches []string                  `json:"metadata_matches,omitempty"`
+	// SourceType and ReadOnly are set for external-folder hits. Vault note
+	// responses omit them to preserve the legacy wire shape.
+	SourceType string `json:"source_type,omitempty"`
+	ReadOnly   bool   `json:"read_only,omitempty"`
 }
 
 // FileEntry is a typed directory listing entry returned by Ls. JSON tags
@@ -216,29 +220,76 @@ func (s *Service) SearchWithMeta(query string) (SearchResponse, error) {
 	return SearchResponse{Results: results}, nil
 }
 
-// searchPlain keeps the pre-query-language search behaviour: hybrid
-// keyword+vector retrieval for ordinary unscoped full-text terms, falling
-// back to the sidecar full-text index when the hybrid index yields nothing
-// (or cannot be reached at all).
+// externalSourceRoots returns only sources registered for this vault. The
+// retrieval DB is shared, so this list is also the search boundary.
+func (s *Service) externalSourceRoots() []retrieval.Source {
+	registry, err := retrieval.NewSourceRegistry(s.VaultRoot)
+	if err != nil {
+		return nil
+	}
+	sources, err := registry.List()
+	if err != nil {
+		slog.Warn("external source registry unavailable", "error", err)
+		return nil
+	}
+	return sources
+}
+
+func pathWithin(path, root string) bool {
+	rel, err := filepath.Rel(root, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+// searchPlain keeps the pre-query-language search behaviour while adding the
+// active vault's registered read-only folders to the retrieval scope.
 func (s *Service) searchPlain(query string) ([]SearchResult, error) {
-	seekResults := retrieval.Search(query)
+	sources := s.externalSourceRoots()
+	var seekResults []retrieval.Result
+	if len(sources) == 0 {
+		seekResults = retrieval.Search(query)
+	} else {
+		paths := make([]string, 0, len(sources)+1)
+		paths = append(paths, s.VaultRoot)
+		for _, source := range sources {
+			paths = append(paths, source.Path)
+		}
+		var searchErr error
+		seekResults, searchErr = retrieval.SearchInPaths(query, paths, retrieval.DefaultLimit)
+		if searchErr != nil {
+			slog.Warn("scoped hybrid search unavailable", "error", searchErr)
+			seekResults = nil
+		}
+	}
 	results := make([]SearchResult, 0, len(seekResults))
 	for _, r := range seekResults {
 		relPath := r.Path
+		external := false
+		candidate := r.Path
 		if filepath.IsAbs(r.Path) {
-			candidate := r.Path
 			if canonical, canonicalErr := filepath.EvalSymlinks(candidate); canonicalErr == nil {
 				candidate = canonical
 			}
-			rel, relErr := filepath.Rel(s.VaultRoot, candidate)
-			if relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			for _, source := range sources {
+				if pathWithin(candidate, source.Path) {
+					external = true
+					break
+				}
+			}
+			if !external {
+				rel, relErr := filepath.Rel(s.VaultRoot, candidate)
+				if relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+					continue
+				}
+				relPath = rel
+			}
+		}
+		resolved := candidate
+		if !external {
+			var secureErr error
+			resolved, secureErr = vault.SecurePath(s.VaultRoot, relPath)
+			if secureErr != nil {
 				continue
 			}
-			relPath = rel
-		}
-		resolved, secureErr := vault.SecurePath(s.VaultRoot, relPath)
-		if secureErr != nil {
-			continue
 		}
 		if info, statErr := os.Stat(resolved); statErr != nil || !info.Mode().IsRegular() {
 			continue
@@ -254,14 +305,20 @@ func (s *Service) searchPlain(query string) ([]SearchResult, error) {
 			title = strings.TrimSuffix(base, filepath.Ext(base))
 		}
 
-		results = append(results, SearchResult{
+		result := SearchResult{
 			Path:            relPath,
 			Title:           title,
 			Snippet:         r.Snippet,
 			Score:           r.Score,
 			Anchor:          r.Anchor,
 			MetadataMatches: r.MetadataMatches,
-		})
+		}
+		if external {
+			result.Path = candidate
+			result.SourceType = "external"
+			result.ReadOnly = true
+		}
+		results = append(results, result)
 	}
 	if len(results) > 0 {
 		return results, nil

@@ -8,6 +8,7 @@ import SymDeskCore
 /// mock instead of shelling out to a real `symdesk` process.
 protocol MeetingsDataSource: Sendable {
     func meetingsList() async throws -> [MeetingNoteSummary]
+    func meetingsListReport() async throws -> MeetingListResult
     func meetingsAvailable() async throws -> [AvailableMeeting]
     func meetingShow(path: String) async throws -> MeetingDetail
     @discardableResult
@@ -25,6 +26,14 @@ protocol MeetingsDataSource: Sendable {
     @discardableResult
     func meetingParticipantCreate(path: String, speakerID: String, name: String) async throws -> String
     func meetingPublish(path: String, facts: [String]) async throws -> MeetingPublishOutcome
+}
+
+extension MeetingsDataSource {
+    /// Older data sources can keep the array-shaped list contract; they have
+    /// no per-file failures to report.
+    func meetingsListReport() async throws -> MeetingListResult {
+        MeetingListResult(meetings: try await meetingsList(), failures: [])
+    }
 }
 
 extension DeskCore: MeetingsDataSource {}

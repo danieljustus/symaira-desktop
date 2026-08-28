@@ -11,6 +11,7 @@ private actor CallLog {
 /// `MeetingReviewModel` can be exercised without a real `symdesk` process.
 private final class MockMeetingsDataSource: MeetingsDataSource, @unchecked Sendable {
     var meetingsListResult: Result<[MeetingNoteSummary], Error> = .success([])
+    var meetingsListReportResult: Result<MeetingListResult, Error>?
     var meetingsAvailableResult: Result<[AvailableMeeting], Error> = .success([])
     var meetingShowResults: [String: Result<MeetingDetail, Error>] = [:]
     var meetingShowDelays: [String: UInt64] = [:]
@@ -23,6 +24,14 @@ private final class MockMeetingsDataSource: MeetingsDataSource, @unchecked Senda
     func meetingsList() async throws -> [MeetingNoteSummary] {
         await log.record("meetingsList")
         return try meetingsListResult.get()
+    }
+
+    func meetingsListReport() async throws -> MeetingListResult {
+        await log.record("meetingsListReport")
+        if let meetingsListReportResult {
+            return try meetingsListReportResult.get()
+        }
+        return MeetingListResult(meetings: try meetingsListResult.get(), failures: [])
     }
 
     func meetingsAvailable() async throws -> [AvailableMeeting] {
@@ -151,6 +160,21 @@ final class MeetingReviewModelTests: XCTestCase {
         XCTAssertEqual(model.importedMeetings.count, 1)
         XCTAssertEqual(model.availableMeetings.count, 1)
         XCTAssertNil(model.availableMeetingsError)
+    }
+
+    func testMalformedMeetingFileIsRetainedAsActionableFailure() async {
+        let source = MockMeetingsDataSource()
+        source.meetingsListReportResult = .success(MeetingListResult(
+            meetings: [],
+            failures: [MeetingListFailure(path: "meetings/broken.md", message: "invalid frontmatter")]
+        ))
+
+        let model = MeetingReviewModel(dataSource: source)
+        await model.loadLibrary()
+
+        XCTAssertEqual(model.libraryFailures, [MeetingListFailure(path: "meetings/broken.md", message: "invalid frontmatter")])
+        model.skipLibraryFailure(path: "meetings/broken.md")
+        XCTAssertTrue(model.libraryFailures.isEmpty)
     }
 
     // symmeet being absent must not blank out an already-usable imported

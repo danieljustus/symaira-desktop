@@ -12,7 +12,9 @@ final class RetrievalStatusTests: XCTestCase {
             "embedding_model": "qwen3-embedding:0.6b",
             "backend_available": true,
             "pending_chunk_count": 2,
-            "mixed_embedding_spaces": false
+            "mixed_embedding_spaces": false,
+            "index_scope": "shared",
+            "vault_document_count": 3
         }
         """.data(using: .utf8)!
 
@@ -20,6 +22,8 @@ final class RetrievalStatusTests: XCTestCase {
         XCTAssertTrue(status.backendAvailable)
         XCTAssertTrue(status.hasStoredDegradation)
         XCTAssertEqual(status.pendingChunkCount, 2)
+        XCTAssertEqual(status.indexScope, "shared")
+        XCTAssertEqual(status.vaultDocumentCount, 3)
     }
 
     func testTemporaryBackendOutageDoesNotImplyStoredDegradation() throws {
@@ -38,6 +42,17 @@ final class RetrievalStatusTests: XCTestCase {
         let status = try JSONDecoder().decode(RetrievalStatus.self, from: json)
         XCTAssertFalse(status.backendAvailable)
         XCTAssertFalse(status.hasStoredDegradation)
+    }
+
+    func testMeetingListResultDecodesPerFileFailures() throws {
+        let json = Data(#"{
+            "meetings": [],
+            "failures": [{"path":"meetings/broken.md","message":"invalid frontmatter"}]
+        }"#.utf8)
+
+        let result = try JSONDecoder().decode(MeetingListResult.self, from: json)
+        XCTAssertTrue(result.meetings.isEmpty)
+        XCTAssertEqual(result.failures, [MeetingListFailure(path: "meetings/broken.md", message: "invalid frontmatter")])
     }
 
     func testOlderStatusPayloadRemainsDecodable() throws {

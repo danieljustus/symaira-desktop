@@ -85,6 +85,14 @@ public struct RetrievalStatus: Codable, Equatable, Sendable {
     /// Optional fields keep the app compatible with an older local binary.
     public let pendingChunkCount: Int?
     public let mixedEmbeddingSpaces: Bool?
+    /// The retrieval database is currently shared across vaults rather than
+    /// scoped to the active vault. Keep this explicit so global figures are
+    /// never mistaken for active-vault counts.
+    public let indexScope: String?
+    /// Number of Markdown files in the active vault, when the CLI was given a
+    /// vault path and could enumerate it. This is a comparison figure, not an
+    /// assertion that the shared retrieval index contains only this vault.
+    public let vaultDocumentCount: Int?
 
     public var isEmpty: Bool { documentCount == 0 }
     public var hasStoredDegradation: Bool {
@@ -100,6 +108,8 @@ public struct RetrievalStatus: Codable, Equatable, Sendable {
         case backendAvailable = "backend_available"
         case pendingChunkCount = "pending_chunk_count"
         case mixedEmbeddingSpaces = "mixed_embedding_spaces"
+        case indexScope = "index_scope"
+        case vaultDocumentCount = "vault_document_count"
     }
 }
 
@@ -1154,7 +1164,7 @@ public final class DeskCore: ObservableObject {
     /// — so this is the only way the app can tell the user why results got
     /// thin.
     public func retrievalStatus() async throws -> RetrievalStatus {
-		try await runDecoding(RetrievalStatus.self, arguments: ["index", "status", "--json"])
+		try await runDecoding(RetrievalStatus.self, arguments: ["index", "status", "--json"] + vaultArgs)
     }
 
     /// Re-indexes the whole vault, optionally pruning entries for files that
@@ -1373,6 +1383,13 @@ extension DeskCore {
         try await runDecoding([MeetingNoteSummary].self, arguments: ["meeting", "list", "--json"] + vaultArgs)
     }
 
+    /// Lists imported meeting notes and per-file decode failures. The latter
+    /// are returned as data so the UI can offer a truthful reveal/skip path
+    /// instead of silently dropping a malformed file.
+    public func meetingsListReport() async throws -> MeetingListResult {
+        try await runDecoding(MeetingListResult.self, arguments: ["meeting", "list", "--include-errors", "--json"] + vaultArgs)
+    }
+
     /// Lists SymMeet meetings that have not yet been imported, for an
     /// "Import Existing SymMeet Meeting" picker. Throws when `symmeet` is
     /// not on PATH; callers should surface that as "unavailable", not as
@@ -1584,6 +1601,32 @@ public struct MeetingSpeaker: Codable, Identifiable, Sendable, Equatable {
     public init(speakerID: String, label: String) {
         self.speakerID = speakerID
         self.label = label
+    }
+}
+
+/// One per-file failure returned by the detailed meeting-list endpoint.
+/// Failures are non-fatal: the rest of the meeting library remains usable,
+/// while the UI can name the file and offer reveal/skip actions.
+public struct MeetingListFailure: Codable, Equatable, Identifiable, Sendable {
+    public var id: String { path }
+    public let path: String
+    public let message: String
+
+    public init(path: String, message: String) {
+        self.path = path
+        self.message = message
+    }
+}
+
+/// Detailed meeting-list response used by the native UI. The legacy
+/// `meetingsList()` array endpoint remains available for older callers.
+public struct MeetingListResult: Codable, Equatable, Sendable {
+    public let meetings: [MeetingNoteSummary]
+    public let failures: [MeetingListFailure]
+
+    public init(meetings: [MeetingNoteSummary], failures: [MeetingListFailure]) {
+        self.meetings = meetings
+        self.failures = failures
     }
 }
 

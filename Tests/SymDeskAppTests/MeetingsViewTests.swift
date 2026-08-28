@@ -21,3 +21,18 @@ final class MeetingsViewTests: XCTestCase {
         XCTAssertTrue(content.message.contains("SymMeet"))
     }
 }
+
+
+extension MeetingsViewTests {
+    func testRetrievalTimestampFormattingDoesNotInventEpochDate() {
+        XCTAssertNotEqual(
+            RetrievalStatusView.formatTimestamp("2026-08-28T10:00:00Z"),
+            "unknown"
+        )
+        XCTAssertEqual(
+            RetrievalStatusView.formatTimestamp("not-a-timestamp"),
+            "not-a-timestamp"
+        )
+        XCTAssertEqual(RetrievalStatusView.formatTimestamp(nil), "unknown")
+    }
+}

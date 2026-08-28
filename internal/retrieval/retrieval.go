@@ -181,6 +181,12 @@ type Status struct {
 	// unlike the live backend probe above.
 	PendingChunkCount    int  `json:"pending_chunk_count"`
 	MixedEmbeddingSpaces bool `json:"mixed_embedding_spaces"`
+	// IndexScope is explicit because the retrieval database is shared across
+	// vaults; document counts must not be read as active-vault counts.
+	IndexScope string `json:"index_scope"`
+	// VaultDocumentCount is populated by the CLI when an active vault can be
+	// enumerated. It is a comparison figure for the shared index.
+	VaultDocumentCount *int `json:"vault_document_count,omitempty"`
 }
 
 // Status reports the index snapshot plus a live probe of the embedding
@@ -208,6 +214,7 @@ func (c *Client) Status() (*Status, error) {
 		BackendAvailable:     probe.Model != engine.LocalHashModelName,
 		PendingChunkCount:    pending,
 		MixedEmbeddingSpaces: len(spaces) > 1,
+		IndexScope:           "shared",
 	}
 	if !stats.LastIndexedAt.IsZero() {
 		status.LastIndexedAt = stats.LastIndexedAt.UTC().Format(time.RFC3339)

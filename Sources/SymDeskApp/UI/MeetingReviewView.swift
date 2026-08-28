@@ -6,6 +6,7 @@ import SymairaTheme
 /// participants, audio transport (when available), and the transcript.
 struct MeetingReviewView: View {
     @ObservedObject var model: MeetingReviewModel
+    @EnvironmentObject var core: DeskCore
     @StateObject private var audioPlayer = MeetingAudioPlayerModel()
     @State private var showPublishSheet = false
 
@@ -33,25 +34,65 @@ struct MeetingReviewView: View {
 
     private func failedState(_ message: String) -> some View {
         VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
+            Image(systemName: "exclamationmark.triangle.fill")
                 .symairaText(.title)
-                .foregroundColor(SymairaTheme.goldPrimary)
-            Text("Couldn't load this meeting")
-                .symairaText(.heading)
-                .foregroundColor(SymairaTheme.textPrimary)
+                .foregroundColor(.red)
+            if let path = model.selectedPath {
+                Text("Couldn't load \(fileName(for: path))")
+                    .symairaText(.heading)
+                    .foregroundColor(SymairaTheme.textPrimary)
+                Text(path)
+                    .symairaText(.caption)
+                    .monospaced()
+                    .foregroundColor(SymairaTheme.textSecondary)
+                    .textSelection(.enabled)
+            } else {
+                Text("Couldn't load this meeting")
+                    .symairaText(.heading)
+                    .foregroundColor(SymairaTheme.textPrimary)
+            }
             Text(message)
                 .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textSecondary)
                 .multilineTextAlignment(.center)
-            if let path = model.selectedPath {
-                Button("Retry") {
-                    Task { await model.selectMeeting(path: path) }
+            HStack(spacing: 10) {
+                if let path = model.selectedPath {
+                    Button("Retry") {
+                        Task { await model.selectMeeting(path: path) }
+                    }
+                    .buttonStyle(SymairaSecondaryButtonStyle())
+                    if canRevealFiles {
+                        Button("Reveal") { reveal(path: path) }
+                            .buttonStyle(SymairaSecondaryButtonStyle())
+                    }
+                    Button("Skip") { model.clearSelection() }
+                        .buttonStyle(.plain)
+                        .foregroundColor(SymairaTheme.textSecondary)
                 }
-                .buttonStyle(SymairaSecondaryButtonStyle())
             }
         }
-        .frame(maxWidth: 420)
+        .padding(20)
+        .background(Color.red.opacity(0.08))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.red.opacity(0.35), lineWidth: 1)
+        }
+        .frame(maxWidth: 520)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var canRevealFiles: Bool {
+        !core.isRemote && core.vaultPath != nil
+    }
+
+    private func fileName(for path: String) -> String {
+        URL(fileURLWithPath: path).lastPathComponent
+    }
+
+    private func reveal(path: String) {
+        guard let vaultPath = core.vaultPath else { return }
+        let fileURL = URL(fileURLWithPath: vaultPath).appendingPathComponent(path)
+        NSWorkspace.shared.activateFileViewerSelecting([fileURL])
     }
 
     private func loadedContent(_ detail: MeetingDetail) -> some View {

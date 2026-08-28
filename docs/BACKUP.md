@@ -30,10 +30,11 @@ The sidecar index powers search, backlinks, and views. It is derived from the va
 
 symingest keeps the original PDFs/images/EMLs it consumed. These are the raw sources that Re-OCR and audit rely on.
 
-- **Default path:** `~/.local/share/symingest/archive` (or `SYMINGEST_ARCHIVE_PATH`).
-- **Backup:** Must be included in your backup.
+- **Default path:** `<vault>/archive/ingest/` when a vault is configured; the legacy `~/.local/share/symingest/archive` (or `SYMINGEST_ARCHIVE_PATH`) remains the fallback when no vault is set.
+- **Vault-relative contract:** every note's `archive_path` frontmatter is now stored as a vault-relative path (for example `archive/ingest/<sha>.pdf`), not an absolute machine path. Copying or syncing the vault to another machine keeps every `archive_path` resolvable (#660). Run `symdesk doctor` to see notes that still carry a pre-#660 absolute `archive_path`.
+- **Shared archive:** a deliberately global archive (shared between vaults) is configured by setting `Options.Archive` / `SYMINGEST_ARCHIVE_PATH` to an explicit outside-the-vault directory. In that case the note's `archive_path` is kept absolute because the vault has no way to resolve a relative one.
+- **Backup:** Must be included in your backup. With the default vault-relative layout, a single vault backup covers both notes and archived originals.
 - **Restore:** Copy the archive directory back to the same path. If the path changes, update `SYMINGEST_ARCHIVE_PATH` or the config file.
-- **Important:** The archive should live **inside** the vault directory if possible, so one backup covers both. If the archive is outside the vault, your backup must include both paths.
 
 ### 4. symingest database and queue — PRECIOUS
 

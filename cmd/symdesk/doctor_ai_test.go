@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -244,5 +245,48 @@ func TestDoctorReportsPendingChunks(t *testing.T) {
 	}
 	if retrievalInfo["backend_available"] != false {
 		t.Errorf("expected retrieval.backend_available=false, got %v", retrievalInfo["backend_available"])
+	}
+}
+
+func TestCheckArchivePathsInVault(t *testing.T) {
+	vaultRoot := t.TempDir()
+	archiveDir := filepath.Join(vaultRoot, "archive", "ingest")
+	if err := os.MkdirAll(archiveDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	goodArchive := filepath.Join(archiveDir, "good.pdf")
+	if err := os.WriteFile(goodArchive, []byte("pdf"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	absoluteArchive := filepath.Join(t.TempDir(), "legacy.pdf")
+	if err := os.WriteFile(absoluteArchive, []byte("pdf"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	writeNote := func(name, archivePath string) {
+		t.Helper()
+		content := "---\narchive_path: " + archivePath + "\n---\n\nbody\n"
+		if err := os.WriteFile(filepath.Join(vaultRoot, name), []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeNote("good.md", "archive/ingest/good.pdf")
+	writeNote("missing.md", "archive/ingest/missing.pdf")
+	writeNote("legacy-present.md", absoluteArchive)
+	writeNote("legacy-missing.md", filepath.Join(t.TempDir(), "gone.pdf"))
+	writeNote("escaping.md", "../outside.pdf")
+
+	unresolved, unresolvedCount, absoluteCount, err := checkArchivePathsInVault(vaultRoot)
+	if err != nil {
+		t.Fatalf("checkArchivePathsInVault: %v", err)
+	}
+	if unresolvedCount != 3 {
+		t.Errorf("unresolvedCount = %d, want 3", unresolvedCount)
+	}
+	if len(unresolved) != 3 {
+		t.Errorf("len(unresolved) = %d, want 3", len(unresolved))
+	}
+	if absoluteCount != 2 {
+		t.Errorf("absoluteCount = %d, want 2", absoluteCount)
 	}
 }

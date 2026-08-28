@@ -104,8 +104,20 @@ func (o Options) resolve() (resolved, error) {
 	}
 
 	if r.archive == "" {
-		if r.archive, err = defaultDataPath("archive"); err != nil {
-			return resolved{}, err
+		if r.vault != "" {
+			// Vault-relative default (#660): keep the archive inside the
+			// active vault so a copied or synced vault stays self-contained.
+			// The Paperless importer already uses the same shape with
+			// `<vault>/archive/paperless`; ingest follows the same convention
+			// under `<vault>/archive/ingest`. A caller that wants a shared
+			// archive outside the vault sets Options.Archive explicitly.
+			r.archive = filepath.Join(r.vault, "archive", "ingest")
+		} else {
+			// No vault: fall back to the legacy XDG default so an embedded
+			// consumer without a configured vault still works.
+			if r.archive, err = defaultDataPath("archive"); err != nil {
+				return resolved{}, err
+			}
 		}
 	}
 	if r.dbPath == "" {
@@ -140,8 +152,8 @@ func defaultDataPath(name string) (string, error) {
 }
 
 // ArchivePath reports where symingest preserves original files, resolved the
-// same way the CLI resolves it. Consumers use it to warn when the archive sits
-// inside the vault, which would make the vault index its own originals.
+// same way the CLI resolves it. The default is inside the configured vault;
+// callers that configure an explicit shared archive receive that path instead.
 func ArchivePath() (string, error) {
 	r, err := Options{}.resolve()
 	if err != nil {
@@ -197,6 +209,7 @@ func Ingest(ctx context.Context, source string, opts Options) (*Result, error) {
 		Store:      st,
 		Writer:     &writer.NoteWriter{Vault: r.vault},
 		ArchiveDir: r.archive,
+		VaultRoot:  r.vault,
 	}
 
 	res, err := pipeline.Ingest(ctx, abs, nil)
@@ -607,6 +620,7 @@ func PaperlessMigrate(ctx context.Context, opts PaperlessOptions) (*PaperlessSta
 		Store:      st,
 		Writer:     &writer.NoteWriter{Vault: r.vault},
 		ArchiveDir: r.archive,
+		VaultRoot:  r.vault,
 	}
 
 	stats, err := paperlessimport.Run(ctx, paperlessimport.Options{
@@ -1142,6 +1156,7 @@ func newReprocessPipeline(r resolved, st *store.Store) *ingestengine.Pipeline {
 		Store:      st,
 		Writer:     &writer.NoteWriter{Vault: r.vault},
 		ArchiveDir: r.archive,
+		VaultRoot:  r.vault,
 	}
 }
 
@@ -1172,30 +1187,92 @@ func Reprocess(ctx context.Context, opts Options, documentID int64) (*ReprocessR
 	return newReprocessResult(documentID, res), nil
 }
 
+// archivePathCandidates returns the stored-path and physical-path forms a caller
+// may have supplied. New notes store the vault-relative form; legacy notes and
+// explicit shared archives may still store an absolute form.
+func archivePathCandidates(r resolved, input string) ([]string, error) {
+	if input == "" {
+		return nil, fmt.Errorf("archive path is empty")
+	}
+
+	candidates := make([]string, 0, 3)
+	appendCandidate := func(candidate string) {
+		for _, existing := range candidates {
+			if existing == candidate {
+				return
+			}
+		}
+		candidates = append(candidates, candidate)
+	}
+
+	if filepath.IsAbs(input) {
+		abs, err := filepath.Abs(input)
+		if err != nil {
+			return nil, fmt.Errorf("invalid archive path %q: %w", input, err)
+		}
+		if r.vault != "" {
+			vaultRoot, rootErr := filepath.Abs(r.vault)
+			if rootErr != nil {
+				return nil, fmt.Errorf("invalid vault path %q: %w", r.vault, rootErr)
+			}
+			rel, relErr := filepath.Rel(vaultRoot, abs)
+			if relErr == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && !filepath.IsAbs(rel) {
+				appendCandidate(filepath.ToSlash(rel))
+			}
+		}
+		appendCandidate(filepath.Clean(abs))
+		return candidates, nil
+	}
+
+	rel := filepath.Clean(filepath.FromSlash(input))
+	appendCandidate(filepath.ToSlash(rel))
+	if r.vault != "" {
+		physical, err := filepath.Abs(filepath.Join(r.vault, rel))
+		if err != nil {
+			return nil, fmt.Errorf("invalid archive path %q: %w", input, err)
+		}
+		appendCandidate(filepath.Clean(physical))
+	} else {
+		physical, err := filepath.Abs(rel)
+		if err != nil {
+			return nil, fmt.Errorf("invalid archive path %q: %w", input, err)
+		}
+		appendCandidate(filepath.Clean(physical))
+	}
+	return candidates, nil
+}
+
 // ReprocessByArchivePath is Reprocess for a caller that has the archived
 // original's path rather than the document ID — the CLI's positional
 // argument form of `ingest reocr`.
 func ReprocessByArchivePath(ctx context.Context, opts Options, archivePath string) (*ReprocessResult, error) {
-	abs, err := filepath.Abs(archivePath)
-	if err != nil {
-		return nil, fmt.Errorf("invalid archive path %q: %w", archivePath, err)
-	}
 	r, err := opts.resolve()
 	if err != nil {
 		return nil, err
 	}
+	candidates, err := archivePathCandidates(r, archivePath)
+	if err != nil {
+		return nil, err
+	}
+
 	st, err := store.Open(r.dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("open document store: %w", err)
 	}
 	defer func() { _ = st.Close() }()
 
-	doc, err := st.ByArchivePath(ctx, abs)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("%w: archive path %q", ErrDocumentNotFound, abs)
+	var doc *store.Document
+	for _, candidate := range candidates {
+		doc, err = st.ByArchivePath(ctx, candidate)
+		if err == nil {
+			break
 		}
-		return nil, fmt.Errorf("look up document by archive path: %w", err)
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("look up document by archive path: %w", err)
+		}
+	}
+	if doc == nil {
+		return nil, fmt.Errorf("%w: archive path %q", ErrDocumentNotFound, archivePath)
 	}
 
 	res, err := newReprocessPipeline(r, st).Reprocess(ctx, doc.ID, "", nil)

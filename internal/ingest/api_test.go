@@ -67,6 +67,71 @@ func TestArchivePath(t *testing.T) {
 	}
 }
 
+// TestOptionsResolveVaultRelativeArchive verifies #660: when the caller sets
+// only Vault and no explicit Archive, the default archive lives under
+// `<vault>/archive/ingest` so a copied or synced vault stays self-contained
+// (the same shape the Paperless importer already uses for `<vault>/archive/paperless`).
+func TestOptionsResolveVaultRelativeArchive(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("HOME", t.TempDir())
+
+	vault := t.TempDir()
+	opts := Options{Vault: vault}
+	r, err := opts.resolve()
+	if err != nil {
+		t.Fatalf("resolve failed: %v", err)
+	}
+	want := filepath.Join(vault, "archive", "ingest")
+	if r.archive != want {
+		t.Errorf("r.archive = %q, want %q (vault-relative default)", r.archive, want)
+	}
+	// The DB stays under XDG_DATA_HOME (not vault-relative) — that is a
+	// shared, derived index, not a per-vault artefact.
+	if r.dbPath == "" {
+		t.Error("r.dbPath is empty; expected XDG default")
+	}
+}
+
+// TestOptionsResolveExplicitArchiveWins verifies that a caller who explicitly
+// sets Options.Archive (for example a shared archive outside the vault) is
+// respected and not silently overridden by the vault-relative default.
+func TestOptionsResolveExplicitArchiveWins(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("HOME", t.TempDir())
+
+	opts := Options{Vault: t.TempDir(), Archive: "/shared/archive"}
+	r, err := opts.resolve()
+	if err != nil {
+		t.Fatalf("resolve failed: %v", err)
+	}
+	if r.archive != "/shared/archive" {
+		t.Errorf("r.archive = %q, want explicit %q", r.archive, "/shared/archive")
+	}
+}
+
+// TestOptionsResolveNoVaultFallsBackToXDG verifies the legacy behaviour: when
+// the caller does not pass a Vault, the archive still falls back to the
+// XDG_DATA_HOME default so an embedded consumer without a vault keeps
+// working.
+func TestOptionsResolveNoVaultFallsBackToXDG(t *testing.T) {
+	dataHome := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", dataHome)
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("HOME", t.TempDir())
+
+	opts := Options{}
+	r, err := opts.resolve()
+	if err != nil {
+		t.Fatalf("resolve failed: %v", err)
+	}
+	want := filepath.Join(dataHome, "symingest", "archive")
+	if r.archive != want {
+		t.Errorf("r.archive = %q, want XDG fallback %q", r.archive, want)
+	}
+}
+
 func TestIngestDirect(t *testing.T) {
 	tempDir := t.TempDir()
 	vaultDir := filepath.Join(tempDir, "vault")

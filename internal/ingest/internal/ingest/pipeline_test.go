@@ -514,6 +514,92 @@ func TestPipeline_ArchiveDirectoryFailure(t *testing.T) {
 	}
 }
 
+// TestPipeline_ArchivePathVaultRelative verifies #660: when an archive is
+// written inside the active vault, the recorded ArchivePath is vault-relative
+// (`archive/ingest/<sha>.<ext>`) so a copied or synced vault keeps the
+// original resolvable.
+func TestPipeline_ArchivePathVaultRelative(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "docs.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	vault := filepath.Join(dir, "vault")
+	if err := os.MkdirAll(vault, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	// Archive lives inside the vault (the new default after #660).
+	archive := filepath.Join(vault, "archive", "ingest")
+	eng := extract.Engine(&fakePipelineEngine{result: &extract.Result{Text: "ocr text"}})
+	p := &Pipeline{
+		Engine:     eng,
+		Store:      s,
+		Writer:     &writer.NoteWriter{Vault: vault},
+		ArchiveDir: archive,
+		VaultRoot:  vault,
+	}
+
+	path := filepath.Join(dir, "scan.png")
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := p.Ingest(context.Background(), path, nil)
+	if err != nil {
+		t.Fatalf("Ingest: %v", err)
+	}
+	want := filepath.Join("archive", "ingest", filepath.Base(res.ArchivePath))
+	if filepath.IsAbs(res.ArchivePath) {
+		t.Errorf("ArchivePath = %q, want vault-relative (not absolute)", res.ArchivePath)
+	}
+	if res.ArchivePath != want {
+		t.Errorf("ArchivePath = %q, want %q", res.ArchivePath, want)
+	}
+	// The physical file must still exist at the absolute location.
+	physical := filepath.Join(archive, filepath.Base(res.ArchivePath))
+	if _, err := os.Stat(physical); err != nil {
+		t.Errorf("physical archive missing at %q: %v", physical, err)
+	}
+}
+
+// TestPipeline_ArchivePathAbsoluteWhenOutsideVault verifies the deliberate
+// case: a shared archive outside the vault keeps the absolute path because
+// the vault has no way to resolve a relative one.
+func TestPipeline_ArchivePathAbsoluteWhenOutsideVault(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "docs.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	vault := filepath.Join(dir, "vault")
+	sharedArchive := filepath.Join(dir, "shared-archive") // outside the vault
+	eng := extract.Engine(&fakePipelineEngine{result: &extract.Result{Text: "ocr text"}})
+	p := &Pipeline{
+		Engine:     eng,
+		Store:      s,
+		Writer:     &writer.NoteWriter{Vault: vault},
+		ArchiveDir: sharedArchive,
+		VaultRoot:  vault,
+	}
+
+	path := filepath.Join(dir, "scan.png")
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := p.Ingest(context.Background(), path, nil)
+	if err != nil {
+		t.Fatalf("Ingest: %v", err)
+	}
+	if !filepath.IsAbs(res.ArchivePath) {
+		t.Errorf("ArchivePath = %q, want absolute (shared archive outside vault)", res.ArchivePath)
+	}
+}
+
 func TestPipeline_AtomicCopySourceReadError(t *testing.T) {
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "docs.db"))

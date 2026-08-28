@@ -21,10 +21,16 @@ import (
 
 // Pipeline orchestrates extraction, persistence, and Markdown output.
 type Pipeline struct {
-	Engine       extract.Engine
-	Store        *store.Store
-	Writer       *writer.NoteWriter
-	ArchiveDir   string
+	Engine     extract.Engine
+	Store      *store.Store
+	Writer     *writer.NoteWriter
+	ArchiveDir string
+	// VaultRoot, when non-empty, is the active vault the note is being
+	// ingested into. Archives under it are stored as vault-relative paths
+	// (`archive/ingest/<sha>.<ext>`) so a copied vault stays self-contained
+	// (#660). When ArchiveDir points outside VaultRoot, the absolute path
+	// is kept — a shared archive deliberately lives outside the vault.
+	VaultRoot    string
 	ProcessedDir string
 	FailedDir    string
 	// PostIndex optionally indexes the generated Markdown note after a
@@ -46,6 +52,47 @@ var ErrDuplicate = errors.New("source already ingested")
 // document that has no archived original recorded — the reocr command's
 // error path a caller must distinguish from an unknown document ID.
 var ErrNoArchivedOriginal = errors.New("archived original not recorded")
+
+// vaultRelativeArchive returns a vault-relative path for an archive that
+// lives inside the active vault, or the absolute path unchanged when the
+// archive sits outside the vault (a shared, deliberately global archive).
+// When no VaultRoot is configured, the absolute path is kept.
+func (p *Pipeline) vaultRelativeArchive(physicalPath string) string {
+	if p.VaultRoot == "" {
+		return physicalPath
+	}
+	root, err := filepath.Abs(p.VaultRoot)
+	if err != nil {
+		return physicalPath
+	}
+	absArchive, err := filepath.Abs(physicalPath)
+	if err != nil {
+		return physicalPath
+	}
+	rel, err := filepath.Rel(root, absArchive)
+	if err != nil {
+		return absArchive
+	}
+	// Only relativize when the archive is actually under the vault root;
+	// a shared archive outside the vault must keep its absolute path so
+	// the note can still resolve it.
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || filepath.IsAbs(rel) {
+		return absArchive
+	}
+	// Vault-relative paths use slash separators even on Windows so a synced
+	// vault keeps the same frontmatter contract across platforms.
+	return filepath.ToSlash(rel)
+}
+
+// resolveArchivePath turns the stored archive_path contract back into a path
+// that can be opened on disk. New notes store vault-relative paths; legacy
+// notes may still contain absolute paths, which remain valid as-is.
+func (p *Pipeline) resolveArchivePath(storedPath string) string {
+	if storedPath == "" || filepath.IsAbs(storedPath) || p.VaultRoot == "" {
+		return storedPath
+	}
+	return filepath.Join(p.VaultRoot, filepath.FromSlash(storedPath))
+}
 
 // ReprocessJobKind is the stable queue kind used by the reocr command.
 const ReprocessJobKind = "reocr"
@@ -73,7 +120,7 @@ func (p *Pipeline) Reprocess(ctx context.Context, documentID int64, source strin
 		return nil, fmt.Errorf("output note is not recorded for document %d", documentID)
 	}
 	if source == "" {
-		source = *doc.ArchivePath
+		source = p.resolveArchivePath(*doc.ArchivePath)
 	}
 	info, err := os.Stat(source)
 	if err != nil {
@@ -246,7 +293,8 @@ func (p *Pipeline) processJob(ctx context.Context, job *store.Job, opts *IngestO
 		if doc.ArchivePath == nil || *doc.ArchivePath == "" {
 			return nil, fmt.Errorf("archived source is not recorded for document %d", doc.ID)
 		}
-		kind, err := extract.Detect(*doc.ArchivePath)
+		archiveSource := p.resolveArchivePath(*doc.ArchivePath)
+		kind, err := extract.Detect(archiveSource)
 		if err != nil {
 			return nil, fmt.Errorf("detect archived source type: %w", err)
 		}
@@ -260,7 +308,7 @@ func (p *Pipeline) processJob(ctx context.Context, job *store.Job, opts *IngestO
 		if doc.VaultPath != nil {
 			opts.ExistingVaultPath = *doc.VaultPath
 		}
-		return p.processSource(ctx, *doc.ArchivePath, doc.SHA256, kind, opts)
+		return p.processSource(ctx, archiveSource, doc.SHA256, kind, opts)
 	}
 	return p.processSource(ctx, doc.SourcePath, doc.SHA256, extract.Kind(job.Kind), opts)
 }
@@ -286,10 +334,15 @@ func (p *Pipeline) processSource(ctx context.Context, source, hash string, kind 
 		archivePath = opts.ArchivePathOverride
 	} else if p.ArchiveDir != "" {
 		ext := filepath.Ext(source)
-		archivePath = filepath.Join(p.ArchiveDir, hash+ext)
-		if err := atomicCopy(source, archivePath); err != nil {
+		physicalArchive := filepath.Join(p.ArchiveDir, hash+ext)
+		if err := atomicCopy(source, physicalArchive); err != nil {
 			return nil, fmt.Errorf("archive file: %w", err)
 		}
+		// #660: when the archive lives inside the active vault, record a
+		// vault-relative path so a copied vault stays self-contained.
+		// For shared archives deliberately kept outside the vault, keep
+		// the absolute path because the vault has no way to resolve it.
+		archivePath = p.vaultRelativeArchive(physicalArchive)
 	}
 
 	// Classify based on rules

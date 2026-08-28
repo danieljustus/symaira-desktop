@@ -27,7 +27,7 @@ func setupReprocessFixture(t *testing.T) (Options, *Result) {
 		t.Fatal(err)
 	}
 
-	opts := Options{Vault: vaultDir, Archive: filepath.Join(tempDir, "archive"), DBPath: filepath.Join(tempDir, "docs.db")}
+	opts := Options{Vault: vaultDir, DBPath: filepath.Join(tempDir, "docs.db")}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

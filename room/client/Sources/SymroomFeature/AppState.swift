@@ -20,8 +20,12 @@ public final class RoomAppState {
     public var isInstalled: Bool { client.isInstalled }
 
     /// Set when `symroom` was found only via the relaxed search (#608) —
-    /// surfaced by the dashboard instead of hiding the relaxation.
+    /// surfaced by the dashboard as a user-facing warning.
     public var provenanceNote: String? { client.provenanceNote }
+
+    /// The folder containing a relaxed-only helper installation, used by the
+    /// warning's single action to reveal the location in Finder.
+    public var provenanceDirectory: String? { client.provenanceDirectory }
 
     public func select(roomDirectory: String) async {
         self.roomDirectory = roomDirectory

@@ -15,7 +15,7 @@ public enum RoomCLIError: Error, LocalizedError, Sendable {
             // now ships inside the symdesk formula (#608).
             return "The symroom binary could not be found in PATH or Homebrew paths. Install it via 'brew install danieljustus/tap/symdesk' (symroom ships with Symaira Desktop since v0.10.0)."
         case .notARoom:
-            return "The selected directory is not a room (no .symroom found). Run 'symroom init' there first."
+            return "The selected folder is not a Project Journal folder (no .symroom found). Initialize Project Journal there first."
         case .executionFailed(let code, let message):
             return "symroom failed with exit code \(code): \(message)"
         case .invalidJSON(let err):
@@ -54,6 +54,11 @@ public final class RoomCLIClient: Sendable {
     /// only covered the `symdesk` core and never reached this module.
     public let provenanceNote: String?
 
+    /// Directory containing a relaxed-only installation. The feature view
+    /// uses this to offer a user-facing "Show in Finder" action instead of
+    /// exposing the locator's implementation wording.
+    public let provenanceDirectory: String?
+
     public convenience init() {
         // The managed runtime dir (~/.symaira/bin) is checked before the
         // Homebrew prefixes, matching DeskCore's locator (#459) — a
@@ -79,14 +84,17 @@ public final class RoomCLIClient: Sendable {
         if let strictHit = locator.locate("symroom", allowUnverified: false) {
             resolved = strictHit
             provenanceNote = nil
+            provenanceDirectory = nil
         } else if let relaxedHit = locator.locate("symroom", allowUnverified: true) {
             resolved = relaxedHit
             let directory = relaxedHit.url.deletingLastPathComponent().path
             provenanceNote = "Loaded symroom from \(directory). "
                 + "That directory is group- or world-writable, so it did not pass the strict provenance check."
+            provenanceDirectory = directory
         } else {
             resolved = nil
             provenanceNote = nil
+            provenanceDirectory = nil
         }
     }
 

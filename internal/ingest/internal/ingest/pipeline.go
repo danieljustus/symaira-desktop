@@ -94,6 +94,24 @@ func (p *Pipeline) resolveArchivePath(storedPath string) string {
 	return filepath.Join(p.VaultRoot, filepath.FromSlash(storedPath))
 }
 
+// destinationVaultRoot is the stable identity used for deduplication. Older
+// callers populated only NoteWriter.Vault, so retain that as a compatibility
+// fallback while allowing the pipeline's explicit VaultRoot to be authoritative.
+func (p *Pipeline) destinationVaultRoot() string {
+	root := p.VaultRoot
+	if root == "" && p.Writer != nil {
+		root = p.Writer.Vault
+	}
+	if root == "" {
+		return ""
+	}
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return filepath.Clean(root)
+	}
+	return filepath.Clean(abs)
+}
+
 // ReprocessJobKind is the stable queue kind used by the reocr command.
 const ReprocessJobKind = "reocr"
 
@@ -191,10 +209,15 @@ type DuplicateError struct {
 	SourcePath  string
 	VaultPath   string
 	ArchivePath string
+	VaultRoot   string
 }
 
 func (e *DuplicateError) Error() string {
-	return fmt.Sprintf("source already ingested: %s (vault: %s, archive: %s)", e.SourcePath, e.VaultPath, e.ArchivePath)
+	vault := e.VaultRoot
+	if vault == "" {
+		vault = e.VaultPath
+	}
+	return fmt.Sprintf("source already ingested: %s (vault: %s, note: %s, archive: %s)", e.SourcePath, vault, e.VaultPath, e.ArchivePath)
 }
 
 func (e *DuplicateError) Is(target error) bool {
@@ -222,7 +245,7 @@ func (p *Pipeline) Ingest(ctx context.Context, source string, opts *IngestOption
 		return nil, fmt.Errorf("hash source: %w", err)
 	}
 
-	doc, created, err := p.Store.CreateOrGet(ctx, source, hash, string(kind))
+	doc, created, err := p.Store.CreateOrGet(ctx, source, hash, string(kind), p.destinationVaultRoot())
 	if err != nil {
 		return nil, fmt.Errorf("record document: %w", err)
 	}
@@ -244,6 +267,7 @@ func (p *Pipeline) Ingest(ctx context.Context, source string, opts *IngestOption
 			SourcePath:  source,
 			VaultPath:   vPath,
 			ArchivePath: aPath,
+			VaultRoot:   doc.VaultRoot,
 		}
 	}
 
@@ -498,7 +522,7 @@ func (p *Pipeline) processSource(ctx context.Context, source, hash string, kind 
 				}
 			}
 			if p.Store != nil && len(extractions) > 0 {
-				doc, dErr := p.Store.ByHash(ctx, hash)
+				doc, dErr := p.Store.ByHashInVault(ctx, hash, p.destinationVaultRoot())
 				if dErr == nil {
 					if sErr := p.Store.RecordExtractions(ctx, doc.ID, p.ExtractionProfile, extractions); sErr != nil {
 						log.Printf("annotate: record extractions to store failed: %v", sErr)

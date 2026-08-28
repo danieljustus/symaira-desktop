@@ -25,6 +25,7 @@ struct RulesSettingsView: View {
     @State private var aiProvider: String = "ollama"
     @State private var aiOllamaURL: String = ""
     @State private var aiModel: String = ""
+    @State private var aiModelNotice: String?
     @State private var aiMaxTokens: String = ""
     @State private var aiAvailableModels: [String] = []
     @State private var aiTestResult: DeskCore.AIConnectionTestResult?
@@ -562,15 +563,22 @@ struct RulesSettingsView: View {
                     // filtered to the ones the Go core implements.
                     Toggle("Enable AI", isOn: Binding(
                         get: { aiProvider != "none" },
-                        set: { aiProvider = $0 ? "ollama" : "none" }
+                        set: { setAIProvider($0 ? "ollama" : "none") }
                     ))
                     .toggleStyle(.switch)
                     .symairaText(.body)
+                    .accessibilityLabel("Enable AI")
 
                     if aiProvider != "none" {
                         if let catalog = aiProviderCatalog {
-                            SymairaProviderPicker(selection: $aiProvider, catalog: catalog, title: "Provider")
-                                .pickerStyle(.segmented)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Provider")
+                                    .symairaText(.caption)
+                                    .foregroundStyle(SymairaTheme.textSecondary)
+                                SymairaProviderPicker(selection: aiProviderBinding, catalog: catalog, title: "Provider")
+                                    .pickerStyle(.segmented)
+                                    .accessibilityLabel("AI provider")
+                            }
                         } else {
                             Text("Provider catalog unavailable")
                                 .symairaText(.caption)
@@ -579,34 +587,71 @@ struct RulesSettingsView: View {
                     }
 
                     if aiProvider == "ollama" {
-                        TextField("Ollama endpoint URL (e.g. http://localhost:11434)", text: $aiOllamaURL)
-                            .textFieldStyle(.symaira)
-
-                        if aiAvailableModels.isEmpty {
-                            TextField("Model", text: $aiModel)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Ollama endpoint URL")
+                                .symairaText(.caption)
+                                .foregroundStyle(SymairaTheme.textSecondary)
+                            TextField("http://localhost:11434", text: $aiOllamaURL)
                                 .textFieldStyle(.symaira)
-                        } else {
-                            Picker("Model", selection: $aiModel) {
-                                ForEach(aiAvailableModels, id: \.self) { name in
-                                    Text(name).tag(name)
+                                .accessibilityLabel("Ollama endpoint URL")
+                        }
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Model")
+                                .symairaText(.caption)
+                                .foregroundStyle(SymairaTheme.textSecondary)
+                            if aiAvailableModels.isEmpty {
+                                TextField("Enter an Ollama model", text: $aiModel)
+                                    .textFieldStyle(.symaira)
+                                    .accessibilityLabel("Ollama model")
+                            } else {
+                                Picker("", selection: $aiModel) {
+                                    ForEach(aiAvailableModels, id: \.self) { name in
+                                        Text(name).tag(name)
+                                    }
                                 }
+                                .accessibilityLabel("Ollama model")
                             }
                         }
                     } else if aiProvider == "anthropic" {
-                        SymairaProviderCredentialField(
-                            providerID: aiProvider,
-                            store: aiCredentialStore,
-                            title: "API key or symvault reference (op://...)",
-                            onCredentialChange: { aiTestResult = nil }
-                        )
-                        .id(aiProvider)
-                        TextField("Model", text: $aiModel)
-                            .textFieldStyle(.symaira)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("API key or symvault reference (op://...)")
+                                .symairaText(.caption)
+                                .foregroundStyle(SymairaTheme.textSecondary)
+                            SymairaProviderCredentialField(
+                                providerID: aiProvider,
+                                store: aiCredentialStore,
+                                title: "Enter API key or symvault reference",
+                                onCredentialChange: { aiTestResult = nil }
+                            )
+                            .id(aiProvider)
+                            .accessibilityLabel("Anthropic API key or symvault reference")
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Model")
+                                .symairaText(.caption)
+                                .foregroundStyle(SymairaTheme.textSecondary)
+                            TextField("Enter an Anthropic model", text: $aiModel)
+                                .textFieldStyle(.symaira)
+                                .accessibilityLabel("Anthropic model")
+                        }
                     }
 
-                    TextField("Max tokens", text: $aiMaxTokens)
-                        .textFieldStyle(.symaira)
-                        .frame(maxWidth: 160)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Max tokens")
+                            .symairaText(.caption)
+                            .foregroundStyle(SymairaTheme.textSecondary)
+                        TextField("Maximum response tokens", text: $aiMaxTokens)
+                            .textFieldStyle(.symaira)
+                            .frame(maxWidth: 160)
+                            .accessibilityLabel("Maximum response tokens")
+                    }
+
+                    if let aiModelNotice {
+                        Label(aiModelNotice, systemImage: "info.circle")
+                            .foregroundStyle(SymairaTheme.goldSecondary)
+                            .symairaText(.caption)
+                    }
 
                     HStack {
                         Button("Test connection") {
@@ -630,17 +675,23 @@ struct RulesSettingsView: View {
                     if aiIsTesting {
                         ProgressView("Testing connection…")
                     } else if let result = aiTestResult {
+                        let providerName = aiProviderDisplayName(result.provider)
+                        let modelName = aiModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+                            ? aiModel
+                            : "default model"
                         if result.ok {
-                            Label(
-                                result.models?.isEmpty == false
-                                    ? "Connected. Models: \(result.models!.joined(separator: ", "))"
-                                    : "Connected.",
-                                systemImage: "checkmark.circle"
-                            )
-                            .foregroundStyle(.green)
-                            .symairaText(.caption)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Label("Connected to \(providerName) using \(modelName).", systemImage: "checkmark.circle")
+                                    .foregroundStyle(.green)
+                                    .symairaText(.caption)
+                                if let models = result.models, !models.isEmpty {
+                                    Text("Available models: \(models.joined(separator: ", "))")
+                                        .foregroundStyle(SymairaTheme.textSecondary)
+                                        .symairaText(.caption)
+                                }
+                            }
                         } else {
-                            Label(result.error ?? "Connection failed.", systemImage: "exclamationmark.triangle")
+                            Label("Connection failed for \(providerName) using \(modelName): \(result.error ?? "Connection failed.")", systemImage: "exclamationmark.triangle")
                                 .foregroundStyle(.orange)
                                 .symairaText(.caption)
                         }
@@ -656,6 +707,53 @@ struct RulesSettingsView: View {
         return try? SymairaProviderCatalog(schemaVersion: 1, providers: supported)
     }
 
+    private var aiProviderBinding: Binding<String> {
+        Binding(
+            get: { aiProvider },
+            set: { setAIProvider($0) }
+        )
+    }
+
+    private func aiProviderDisplayName(_ providerID: String) -> String {
+        aiProviderCatalog?.provider(id: providerID)?.displayName ?? providerID.capitalized
+    }
+
+    private func setAIProvider(_ newProvider: String) {
+        guard aiProvider != newProvider else { return }
+        aiProvider = newProvider
+        aiAvailableModels = []
+        aiTestResult = nil
+
+        let previousModel = aiModel.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !previousModel.isEmpty else {
+            aiModelNotice = nil
+            return
+        }
+
+        aiModel = ""
+        aiModelNotice = "The previous model was cleared because the provider changed. Choose a model for \(aiProviderDisplayName(newProvider))."
+    }
+
+    private func compatibleAIModel(_ model: String, for provider: String) -> String {
+        let trimmed = model.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+
+        // The Go defaults historically pair Ollama with an Anthropic model.
+        // Never carry that mismatch into a new provider request.
+        if provider == "ollama" && isAnthropicModel(trimmed) {
+            return ""
+        }
+        if provider == "anthropic" && !isAnthropicModel(trimmed) {
+            return ""
+        }
+        return trimmed
+    }
+
+    private func isAnthropicModel(_ model: String) -> Bool {
+        let normalized = model.lowercased()
+        return normalized.hasPrefix("claude") || normalized.contains("anthropic")
+    }
+
     private func loadAIConfig() async {
         aiConfigError = nil
         do {
@@ -663,7 +761,11 @@ struct RulesSettingsView: View {
             aiConfig = config
             aiProvider = config.provider
             aiOllamaURL = config.ollamaURL
-            aiModel = config.model
+            let loadedModel = compatibleAIModel(config.model, for: config.provider)
+            aiModel = loadedModel
+            aiModelNotice = loadedModel.isEmpty && !config.model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? "The saved model was cleared because it is not compatible with the \(aiProviderDisplayName(config.provider)) provider."
+                : nil
             aiMaxTokens = String(config.maxTokens)
         } catch {
             aiConfigError = error.localizedDescription

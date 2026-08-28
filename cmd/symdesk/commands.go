@@ -23,6 +23,7 @@ func registerCommands(rootCmd *cobra.Command) {
 
 	addGrouped(rootCmd, groupVault,
 		newIndexCmd(),
+		newSourcesCmd(),
 		newLsCmd(),
 		newSearchCmd(),
 		newPropsCmd(),

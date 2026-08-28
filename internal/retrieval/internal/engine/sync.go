@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -89,30 +91,56 @@ var supportedExtensions = map[string]bool{
 	".odp":  true,
 }
 
-// IndexDirectory crawls a directory, computes hashes, parses changed files,
-// generates embeddings, saves to DB, and deletes orphan documents.
-func IndexDirectory(dbClient db.Store, embedder Embedder, dirPath string) error {
+// canonicalIndexDirectory resolves a directory before it becomes an index
+// identity. This prevents symlink aliases from creating duplicate documents and
+// makes the watched/indexed boundary explicit.
+func canonicalIndexDirectory(dirPath string) (string, error) {
 	absPath, err := filepath.Abs(dirPath)
 	if err != nil {
-		return userFriendlyError(err, "failed to get absolute path",
+		return "", userFriendlyError(err, "failed to get absolute path",
 			"Check that the path is valid and try again")
 	}
-
-	// Verify target path exists and is a directory
+	absPath = filepath.Clean(absPath)
+	// Preserve lexical absolute paths unless the supplied directory itself is a
+	// symlink. This avoids rewriting ordinary macOS paths through /var aliases,
+	// while collapsing an explicit source alias to one stable root.
+	if linkInfo, lstatErr := os.Lstat(absPath); lstatErr == nil && linkInfo.Mode()&os.ModeSymlink != 0 {
+		absPath, err = filepath.EvalSymlinks(absPath)
+		if err != nil {
+			return "", userFriendlyError(err, "cannot access directory",
+				"Check that the path is valid and try again")
+		}
+	}
 	info, err := os.Stat(absPath)
 	if err != nil {
-		return userFriendlyError(err, "cannot access directory",
+		return "", userFriendlyError(err, "cannot access directory",
 			"Check file permissions and ensure the directory exists")
 	}
 	if !info.IsDir() {
-		return fmt.Errorf("target path is not a directory: %s", absPath)
+		return "", fmt.Errorf("target path is not a directory: %s", absPath)
 	}
+	f, err := os.Open(absPath) // #nosec G304 -- explicit local index source.
+	if err != nil {
+		return "", fmt.Errorf("source directory is not readable: %w", err)
+	}
+	_, readErr := f.Readdirnames(1)
+	closeErr := f.Close()
+	if readErr != nil && !errors.Is(readErr, io.EOF) {
+		return "", fmt.Errorf("source directory is not readable: %w", readErr)
+	}
+	if closeErr != nil {
+		return "", fmt.Errorf("close source directory: %w", closeErr)
+	}
+	return filepath.Clean(absPath), nil
+}
 
-	// Normalize the path at the sink. filepath.Abs already cleans, but the
-	// explicit Clean documents the controlled flow for scanners: the path
-	// originates from an explicit user command (CLI/HTTP) or from the MCP
-	// layer, which enforces pathutil.RestrictToHome before calling here.
-	absPath = filepath.Clean(absPath)
+// IndexDirectory crawls a directory, computes hashes, parses changed files,
+// generates embeddings, saves to DB, and deletes orphan documents.
+func IndexDirectory(dbClient db.Store, embedder Embedder, dirPath string) error {
+	absPath, err := canonicalIndexDirectory(dirPath)
+	if err != nil {
+		return err
+	}
 
 	// 1. Scan directory for valid files
 	foundPaths := make(map[string]bool)
@@ -125,6 +153,12 @@ func IndexDirectory(dbClient db.Store, embedder Embedder, dirPath string) error 
 			if shouldSkipDir(d.Name()) {
 				return filepath.SkipDir
 			}
+			return nil
+		}
+		// Do not follow file symlinks: a source must not index content outside
+		// its registered directory, and the symlink path is not a stable file
+		// identity when its target changes.
+		if d.Type()&os.ModeSymlink != 0 {
 			return nil
 		}
 
@@ -169,6 +203,32 @@ func IndexDirectory(dbClient db.Store, embedder Embedder, dirPath string) error 
 	}
 
 	return nil
+}
+
+// RemoveDirectory removes only indexed documents whose canonical identities are
+// within dirPath. It never touches the source folder on disk, so unregistering
+// a source is safe even when the folder is read-only or already gone.
+func RemoveDirectory(dbClient db.Store, dirPath string) (int, error) {
+	absPath, err := filepath.Abs(dirPath)
+	if err != nil {
+		return 0, fmt.Errorf("resolve source directory: %w", err)
+	}
+	absPath = filepath.Clean(absPath)
+	docs, err := dbClient.ListDocuments()
+	if err != nil {
+		return 0, fmt.Errorf("failed listing existing documents: %w", err)
+	}
+	removed := 0
+	for _, doc := range docs {
+		if !isWithinDir(doc.Path, absPath) {
+			continue
+		}
+		if err := dbClient.DeleteDocument(doc.Path); err != nil {
+			return removed, fmt.Errorf("failed to remove indexed document %s: %w", doc.Path, err)
+		}
+		removed++
+	}
+	return removed, nil
 }
 
 // IndexFileWithSource indexes sourcePath's extracted content under source. This
@@ -241,10 +301,9 @@ func IndexFile(dbClient db.Store, embedder Embedder, path string) (string, error
 // WatchDirectory watches a directory for changes and re-indexes when files change.
 // It uses fsnotify for efficient event-based watching instead of polling.
 func WatchDirectory(ctx context.Context, dbClient db.Store, embedder Embedder, dirPath string) error {
-	absPath, err := filepath.Abs(dirPath)
+	absPath, err := canonicalIndexDirectory(dirPath)
 	if err != nil {
-		return userFriendlyError(err, "failed to get absolute path",
-			"Check that the path is valid and try again")
+		return err
 	}
 
 	watcher, err := fsnotify.NewWatcher()

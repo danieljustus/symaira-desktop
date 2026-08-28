@@ -94,6 +94,59 @@ func TestSimilarAllDefaultThresholdSeparatesNearIdenticalFromSkeletonShared(t *t
 	}
 }
 
+func TestSimilarAllDoesNotGroupShortDifferentlyTitledNotes(t *testing.T) {
+	svc := newTestService(t)
+
+	// The bodies are intentionally identical and short; only the frontmatter
+	// titles differ. A body-only hash is still 100% here, so the short-body cap
+	// must keep these notes out of Possible Duplicates.
+	writeIndexedDoc(t, svc, "call-alice.md", "Remember this item")
+	writeIndexedDoc(t, svc, "call-bob.md", "Remember this item")
+	// A frontmatter-only note has no meaningful body and must not participate in
+	// the scan at all, even though its whitespace body would hash to zero.
+	writeIndexedDoc(t, svc, "frontmatter-only.md", "")
+
+	groups, err := svc.SimilarAll(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(groups) != 0 {
+		t.Fatalf("expected short/frontmatter-only notes to stay out of duplicate groups, got %#v", groups)
+	}
+}
+
+func TestSimilarAllHashesBodyInsteadOfPersistedSimhash(t *testing.T) {
+	svc := newTestService(t)
+
+	// Simulate legacy rows whose persisted frontmatter simhash is identical.
+	// The body texts are unrelated and must be the source of truth for grouping.
+	docs := []*vault.Document{
+		{
+			Path: filepath.Join(svc.VaultRoot, "invoice.md"), Title: "Invoice",
+			SHA256: "invoice", Body: strings.Repeat("Invoice amount due payable receipt ", 20),
+			Simhash: "0000000000000000", Frontmatter: map[string]interface{}{"simhash": "0000000000000000"},
+		},
+		{
+			Path: filepath.Join(svc.VaultRoot, "contract.md"), Title: "Contract",
+			SHA256: "contract", Body: strings.Repeat("Contract party agrees term duration notice ", 20),
+			Simhash: "0000000000000000", Frontmatter: map[string]interface{}{"simhash": "0000000000000000"},
+		},
+	}
+	for _, doc := range docs {
+		if err := svc.DB.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	groups, err := svc.SimilarAll(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(groups) != 0 {
+		t.Fatalf("expected unrelated bodies not to group despite matching persisted simhash, got %#v", groups)
+	}
+}
+
 func TestSimilarAllEmptyVaultReturnsNoGroups(t *testing.T) {
 	svc := newTestService(t)
 	groups, err := svc.SimilarAll(50)

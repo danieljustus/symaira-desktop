@@ -282,13 +282,37 @@ type Job struct {
 	Kind       string `json:"kind"`
 	SourcePath string `json:"source_path"`
 	LastError  string `json:"last_error,omitempty"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
+}
+
+// JobPage is the paged queue response used by the CLI and newer clients.
+// Jobs that still expect the legacy top-level array can use Jobs unchanged.
+type JobPage struct {
+	Jobs   []Job `json:"jobs"`
+	Total  int   `json:"total"`
+	Limit  int   `json:"limit"`
+	Offset int   `json:"offset"`
 }
 
 // Jobs lists the most recent queued jobs, newest first, capped at limit
-// (a limit of zero or less applies the CLI's default of 100).
+// (a limit of zero or less applies the CLI's default of 100). It preserves the
+// legacy array response and now honors opts.Vault when supplied.
 func Jobs(ctx context.Context, opts Options, limit int) ([]Job, error) {
+	page, err := JobsPage(ctx, opts, limit, 0)
+	if err != nil {
+		return nil, err
+	}
+	return page.Jobs, nil
+}
+
+// JobsPage lists one vault-scoped page and its total count.
+func JobsPage(ctx context.Context, opts Options, limit, offset int) (*JobPage, error) {
 	if limit <= 0 {
 		limit = 100
+	}
+	if offset < 0 {
+		offset = 0
 	}
 	st, closeStore, err := openStore(opts)
 	if err != nil {
@@ -296,27 +320,29 @@ func Jobs(ctx context.Context, opts Options, limit int) ([]Job, error) {
 	}
 	defer closeStore()
 
-	jobs, err := st.ListJobs(ctx, limit)
+	vaultRoot := opts.Vault
+	if vaultRoot != "" {
+		if abs, absErr := filepath.Abs(vaultRoot); absErr == nil {
+			vaultRoot = filepath.Clean(abs)
+		}
+	}
+	jobs, total, err := st.ListJobsPage(ctx, vaultRoot, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list jobs: %w", err)
 	}
-
 	out := make([]Job, 0, len(jobs))
 	for _, j := range jobs {
 		job := Job{
-			ID:         j.ID,
-			DocumentID: j.DocumentID,
-			Status:     j.Status,
-			Attempts:   j.Attempts,
-			Kind:       j.Kind,
-			SourcePath: j.SourcePath,
+			ID: j.ID, DocumentID: j.DocumentID, Status: j.Status,
+			Attempts: j.Attempts, Kind: j.Kind, SourcePath: j.SourcePath,
+			CreatedAt: j.CreatedAt, UpdatedAt: j.UpdatedAt,
 		}
 		if j.LastError != nil {
 			job.LastError = *j.LastError
 		}
 		out = append(out, job)
 	}
-	return out, nil
+	return &JobPage{Jobs: out, Total: total, Limit: limit, Offset: offset}, nil
 }
 
 // RetryJob resets a failed job to pending so the worker picks it up again.

@@ -78,14 +78,32 @@ func (s *JobStore) Create(sourcePath, originalName, contentType string) (*Job, e
 }
 
 func (s *JobStore) List() ([]Job, error) {
+	jobs, _, err := s.ListPage(0, 0)
+	return jobs, err
+}
+
+// ListPage returns a newest-first page and the total number of jobs. A limit
+// of zero returns all jobs after offset, preserving List's legacy behavior.
+func (s *JobStore) ListPage(limit, offset int) ([]Job, int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	jobs, err := s.readAllLocked()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	sort.Slice(jobs, func(i, j int) bool { return jobs[i].CreatedAt.After(jobs[j].CreatedAt) })
-	return jobs, nil
+	total := len(jobs)
+	if offset < 0 {
+		offset = 0
+	}
+	if offset >= total {
+		return []Job{}, total, nil
+	}
+	end := total
+	if limit > 0 && offset+limit < end {
+		end = offset + limit
+	}
+	return jobs[offset:end], total, nil
 }
 
 func (s *JobStore) Get(id string) (*Job, error) {

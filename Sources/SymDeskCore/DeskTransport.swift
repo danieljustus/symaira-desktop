@@ -33,11 +33,24 @@ public protocol DeskTransport: Sendable {
     /// Ingests a local file into the vault, returning an implementation-defined identifier for the created item.
     func ingestFile(_ fileURL: URL, vaultArgs: [String]) async throws -> String
 
-    /// Lists ingest jobs.
+    /// Lists ingest jobs in the legacy array shape.
     func ingestJobs(vaultArgs: [String]) async throws -> [IngestJob]
+
+    /// Lists a page of ingest jobs and its total count.
+    func ingestJobPage(vaultArgs: [String], limit: Int, offset: Int) async throws -> IngestJobPage
 
     /// Retries a failed ingest job.
     func ingestRetry(jobID: String, vaultArgs: [String]) async throws
+}
+
+public extension DeskTransport {
+    /// Compatibility default for transports that only implement the original
+    /// array response. Local and remote transports override this to request
+    /// real pagination.
+    func ingestJobPage(vaultArgs: [String], limit: Int, offset: Int) async throws -> IngestJobPage {
+        let jobs = try await ingestJobs(vaultArgs: vaultArgs)
+        return IngestJobPage(jobs: jobs, total: jobs.count, limit: limit, offset: offset)
+    }
 }
 
 /// Executes the contract against a local `symdesk` CLI subprocess.
@@ -128,17 +141,31 @@ public struct LocalDeskTransport: DeskTransport {
     }
 
     public func ingestJobs(vaultArgs: [String]) async throws -> [IngestJob] {
-        // Not `runner.runDecoding`: IngestJob's custom `init(from:)` already
-        // maps its own explicit snake_case CodingKeys, and layering
-        // `.convertFromSnakeCase` on top of that double-transforms every
-        // multi-word key (source_path, document_id, ...) into a lookup
-        // miss. Match RemoteDeskTransport's plain-decoder approach instead.
         let data = try await runner.runChecked(
             tool.location.url,
             arguments: ["ingest", "jobs", "--json"] + vaultArgs
         )
         do {
+            if let page = try? JSONDecoder().decode(IngestJobPage.self, from: data) {
+                return page.jobs
+            }
             return try JSONDecoder().decode([IngestJob].self, from: data)
+        } catch {
+            throw CLIRunnerError.invalidJSON(description: String(describing: error))
+        }
+    }
+
+    public func ingestJobPage(vaultArgs: [String], limit: Int, offset: Int) async throws -> IngestJobPage {
+        let data = try await runner.runChecked(
+            tool.location.url,
+            arguments: ["ingest", "jobs", "--json", "--limit", "\(limit)", "--offset", "\(offset)"] + vaultArgs
+        )
+        do {
+            if let page = try? JSONDecoder().decode(IngestJobPage.self, from: data) {
+                return page
+            }
+            let jobs = try JSONDecoder().decode([IngestJob].self, from: data)
+            return IngestJobPage(jobs: jobs, total: jobs.count, limit: limit, offset: offset)
         } catch {
             throw CLIRunnerError.invalidJSON(description: String(describing: error))
         }
@@ -187,7 +214,19 @@ public struct RemoteDeskTransport: DeskTransport {
 
     public func ingestJobs(vaultArgs: [String]) async throws -> [IngestJob] {
         let data = try await client.jobs()
+        if let page = try? JSONDecoder().decode(IngestJobPage.self, from: data) {
+            return page.jobs
+        }
         return try JSONDecoder().decode([IngestJob].self, from: data)
+    }
+
+    public func ingestJobPage(vaultArgs: [String], limit: Int, offset: Int) async throws -> IngestJobPage {
+        let data = try await client.jobs(limit: limit, offset: offset)
+        if let page = try? JSONDecoder().decode(IngestJobPage.self, from: data) {
+            return page
+        }
+        let jobs = try JSONDecoder().decode([IngestJob].self, from: data)
+        return IngestJobPage(jobs: jobs, total: jobs.count, limit: limit, offset: offset)
     }
 
     public func ingestRetry(jobID: String, vaultArgs: [String]) async throws {

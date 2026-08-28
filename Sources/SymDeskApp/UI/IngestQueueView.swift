@@ -5,6 +5,9 @@ import SymDeskCore
 struct IngestQueueView: View {
     @EnvironmentObject var core: DeskCore
     @State private var jobs: [IngestJob] = []
+    @State private var totalJobs = 0
+    @State private var pageOffset = 0
+    private let pageSize = 100
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
     @State private var timer: Timer? = nil
@@ -50,7 +53,7 @@ struct IngestQueueView: View {
             }
             Spacer()
             Button(action: {
-                Task { await fetchJobs() }
+                Task { await fetchJobs(offset: pageOffset) }
             }) {
                 Label("Refresh", systemImage: "arrow.clockwise")
             }
@@ -75,7 +78,7 @@ struct IngestQueueView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
             Button("Retry Connection") {
-                Task { await fetchJobs() }
+                Task { await fetchJobs(offset: pageOffset) }
             }
             .buttonStyle(SymairaPrimaryButtonStyle())
         }
@@ -112,10 +115,29 @@ struct IngestQueueView: View {
                         Task { await retryJob(job) }
                     }
                 }
+                paginationFooter
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 16)
         }
+    }
+
+    private var paginationFooter: some View {
+        HStack {
+            Text("Jobs \(totalJobs == 0 ? 0 : pageOffset + 1)-\(min(pageOffset + jobs.count, totalJobs)) of \(totalJobs)")
+                .symairaText(.caption)
+                .foregroundColor(SymairaTheme.textSecondary)
+            Spacer()
+            Button("Previous") {
+                Task { await fetchJobs(offset: max(0, pageOffset - pageSize)) }
+            }
+            .disabled(pageOffset == 0 || isLoading)
+            Button("Next") {
+                Task { await fetchJobs(offset: pageOffset + pageSize) }
+            }
+            .disabled(pageOffset + jobs.count >= totalJobs || isLoading)
+        }
+        .padding(.top, 6)
     }
 
     private func retryJob(_ job: IngestJob) async {
@@ -123,18 +145,20 @@ struct IngestQueueView: View {
             try await core.ingestRetry(jobID: job.id)
         }
         guard succeeded else { return }
-        await fetchJobs()
+        await fetchJobs(offset: pageOffset)
     }
 
-    private func fetchJobs() async {
+    private func fetchJobs(offset: Int = 0) async {
         errorMessage = nil
         isLoading = true
         do {
-            let fetched = try await core.ingestJobs()
-            self.jobs = fetched.filter { job in
+            let fetched = try await core.ingestJobPage(limit: pageSize, offset: offset)
+            self.jobs = fetched.jobs.filter { job in
                 let p = job.sourcePath.lowercased()
                 return !p.contains("symdesk-watcher-test-") && !p.contains("/inbox_watch/test-document.txt")
             }
+            self.totalJobs = fetched.total
+            self.pageOffset = fetched.offset
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -182,7 +206,9 @@ struct JobRow: View {
                 HStack(spacing: 12) {
                     Label(job.kind.capitalized, systemImage: "doc.text")
                     Label("Attempts: \(job.attempts)", systemImage: "arrow.counterclockwise")
-                    Text("Created: \(formattedDate(job.createdAt))")
+                    if !job.createdAt.isEmpty {
+                        Text("Created: \(formattedDate(job.createdAt))")
+                    }
                 }
                 .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textSecondary)

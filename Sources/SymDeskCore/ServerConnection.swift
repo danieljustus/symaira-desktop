@@ -185,6 +185,13 @@ public final class RemoteDeskClient: @unchecked Sendable {
         try await request(path: "/api/v1/jobs")
     }
 
+    public func jobs(limit: Int, offset: Int) async throws -> Data {
+        try await request(path: "/api/v1/jobs", query: [
+            URLQueryItem(name: "limit", value: String(limit)),
+            URLQueryItem(name: "offset", value: String(offset)),
+        ])
+    }
+
     public func retryJob(id: String) async throws {
         _ = try await request(path: "/api/v1/jobs/retry", query: [URLQueryItem(name: "id", value: id)], method: "POST")
     }

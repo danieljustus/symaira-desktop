@@ -39,6 +39,9 @@ case "$1" in
           *BADJSON*)
             echo 'not json'
             ;;
+          *--limit*)
+            echo '{"jobs":[{"id":"1","document_id":1,"kind":"ocr","status":"pending","attempts":0,"created_at":"now","updated_at":"now","source_path":"a.pdf"}],"total":101,"limit":100,"offset":100}'
+            ;;
           *)
             echo '[{"id":"1","document_id":1,"kind":"ocr","status":"pending","attempts":0,"created_at":"now","updated_at":"now","source_path":"a.pdf"}]'
             ;;

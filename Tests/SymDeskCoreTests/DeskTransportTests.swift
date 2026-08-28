@@ -128,6 +128,14 @@ final class DeskTransportTests: XCTestCase {
         }
     }
 
+    func testLocalIngestJobPageDecodesTotalAndOffset() async throws {
+        let transport = try await makeLocalTransport()
+        let page = try await transport.ingestJobPage(vaultArgs: ["--vault", "/tmp/active-vault"], limit: 100, offset: 100)
+        XCTAssertEqual(page.jobs.map(\.id), ["1"])
+        XCTAssertEqual(page.total, 101)
+        XCTAssertEqual(page.offset, 100)
+    }
+
     func testLocalIngestRetrySucceeds() async throws {
         let transport = try await makeLocalTransport()
         try await transport.ingestRetry(jobID: "42", vaultArgs: [])
@@ -214,6 +222,19 @@ final class DeskTransportTests: XCTestCase {
         } catch is DecodingError {
             // expected
         }
+    }
+
+    func testRemoteIngestJobPageRequestsPaginationAndDecodesEnvelope() async throws {
+        MockDeskServerURLProtocol.reset()
+        MockDeskServerURLProtocol.responseBody = Data(#"{"jobs":[{"id":"7","status":"pending","capability":"ocr","error":"","created_at":"now","updated_at":"now","source_path":"a.pdf"}],"total":101,"limit":100,"offset":100}"#.utf8)
+        let transport = RemoteDeskTransport(client: makeMockClient())
+
+        let page = try await transport.ingestJobPage(vaultArgs: [], limit: 100, offset: 100)
+
+        XCTAssertEqual(page.jobs.map(\.id), ["7"])
+        XCTAssertEqual(page.total, 101)
+        XCTAssertEqual(MockDeskServerURLProtocol.lastRequest?.url?.path, "/api/v1/jobs")
+        XCTAssertEqual(MockDeskServerURLProtocol.lastRequest?.url?.query, "limit=100&offset=100")
     }
 
     func testRemoteIngestRetryPostsToJobsRetryWithQueryID() async throws {

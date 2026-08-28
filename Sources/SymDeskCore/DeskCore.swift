@@ -678,6 +678,34 @@ public struct IngestJob: Decodable, Identifiable, Sendable {
 	}
 }
 
+/// A page of ingest jobs. The explicit envelope lets clients display the
+/// total queue size while older servers/CLIs can still return a top-level array.
+public struct IngestJobPage: Decodable, Sendable {
+    public let jobs: [IngestJob]
+    public let total: Int
+    public let limit: Int
+    public let offset: Int
+
+    enum CodingKeys: String, CodingKey {
+        case jobs, total, limit, offset
+    }
+
+    public init(jobs: [IngestJob], total: Int, limit: Int, offset: Int) {
+        self.jobs = jobs
+        self.total = total
+        self.limit = limit
+        self.offset = offset
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        jobs = try c.decode([IngestJob].self, forKey: .jobs)
+        total = (try? c.decode(Int.self, forKey: .total)) ?? jobs.count
+        limit = (try? c.decode(Int.self, forKey: .limit)) ?? jobs.count
+        offset = (try? c.decode(Int.self, forKey: .offset)) ?? 0
+    }
+}
+
 public enum DocumentStatus: String, CaseIterable, Identifiable, Sendable {
     case open
     case paid
@@ -1265,6 +1293,12 @@ public final class DeskCore: ObservableObject {
 	public func ingestJobs() async throws -> [IngestJob] {
 		guard let transport else { throw DeskCoreError.coreNotFound }
 		return try await transport.ingestJobs(vaultArgs: vaultArgs)
+    }
+
+    /// Lists a page of ingest jobs for the active vault.
+    public func ingestJobPage(limit: Int = 100, offset: Int = 0) async throws -> IngestJobPage {
+		guard let transport else { throw DeskCoreError.coreNotFound }
+		return try await transport.ingestJobPage(vaultArgs: vaultArgs, limit: limit, offset: offset)
     }
 
 	public func ingestRetry(jobID: String) async throws {

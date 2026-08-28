@@ -35,6 +35,7 @@ func newIngestCmd() *cobra.Command {
 		},
 	}
 
+	var jobsLimit, jobsOffset int
 	ingestJobsCmd := &cobra.Command{
 		Use:   "jobs",
 		Short: "List ingestion jobs in the queue",
@@ -46,7 +47,7 @@ func newIngestCmd() *cobra.Command {
 			defer db.Close()
 			svc := service.New(vRoot, db)
 
-			res, err := svc.IngestJobs()
+			res, err := svc.IngestJobsPage(jobsLimit, jobsOffset)
 			if err != nil {
 				return err
 			}
@@ -54,17 +55,25 @@ func newIngestCmd() *cobra.Command {
 				fmt.Println(res)
 				return nil
 			}
-			var rawJobs []map[string]interface{}
-			if err := json.Unmarshal([]byte(res), &rawJobs); err == nil {
-				for _, rj := range rawJobs {
-					fmt.Printf("Job ID: %v | Status: %v | Source: %v\n", rj["id"], rj["status"], rj["source_path"])
-				}
-			} else {
+			var page struct {
+				Jobs   []map[string]interface{} `json:"jobs"`
+				Total  int                      `json:"total"`
+				Limit  int                      `json:"limit"`
+				Offset int                      `json:"offset"`
+			}
+			if err := json.Unmarshal([]byte(res), &page); err != nil {
 				fmt.Println(res)
+				return nil
+			}
+			fmt.Printf("Jobs %d-%d of %d\n", page.Offset+1, page.Offset+len(page.Jobs), page.Total)
+			for _, rj := range page.Jobs {
+				fmt.Printf("Job ID: %v | Status: %v | Source: %v\n", rj["id"], rj["status"], rj["source_path"])
 			}
 			return nil
 		},
 	}
+	ingestJobsCmd.Flags().IntVar(&jobsLimit, "limit", 100, "maximum jobs to return")
+	ingestJobsCmd.Flags().IntVar(&jobsOffset, "offset", 0, "number of jobs to skip")
 
 	ingestRetryCmd := &cobra.Command{
 		Use:   "retry [job-id]",

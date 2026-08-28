@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -895,12 +896,46 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 	if !s.requireAdmin(w, r) {
 		return
 	}
-	jobs, err := s.jobs.List()
+	query := r.URL.Query()
+	paged := query.Has("limit") || query.Has("offset")
+	limit, offset, err := parseJobPage(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	jobs, total, err := s.jobs.ListPage(limit, offset)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, jobs)
+	if !paged {
+		writeJSON(w, http.StatusOK, jobs)
+		return
+	}
+	writeJSON(w, http.StatusOK, struct {
+		Jobs   []Job `json:"jobs"`
+		Total  int   `json:"total"`
+		Limit  int   `json:"limit"`
+		Offset int   `json:"offset"`
+	}{Jobs: jobs, Total: total, Limit: limit, Offset: offset})
+}
+
+func parseJobPage(r *http.Request) (int, int, error) {
+	limit, offset := 100, 0
+	var err error
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		limit, err = strconv.Atoi(raw)
+		if err != nil || limit <= 0 {
+			return 0, 0, fmt.Errorf("limit must be a positive integer")
+		}
+	}
+	if raw := r.URL.Query().Get("offset"); raw != "" {
+		offset, err = strconv.Atoi(raw)
+		if err != nil || offset < 0 {
+			return 0, 0, fmt.Errorf("offset must be a non-negative integer")
+		}
+	}
+	return limit, offset, nil
 }
 
 func (s *Server) handleRetryJob(w http.ResponseWriter, r *http.Request) {

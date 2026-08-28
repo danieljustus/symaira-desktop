@@ -669,18 +669,48 @@ func (s *Store) FailJob(ctx context.Context, jobID int64, errStr string) error {
 
 // ListJobs lists jobs in the queue ordered by creation date (newest first).
 // A limit of 0 or negative returns all jobs; a positive limit caps the result set.
+// It retains the original unscoped behavior for callers that do not yet know
+// which vault they are presenting.
 func (s *Store) ListJobs(ctx context.Context, limit int) ([]*Job, error) {
+	jobs, _, err := s.ListJobsPage(ctx, "", limit, 0)
+	return jobs, err
+}
+
+// ListJobsPage returns one page of jobs for vaultRoot and the matching total.
+// A non-empty vault root scopes rows to that destination vault. Rows written
+// before vault scoping have an empty vault_root; when their note path identifies
+// the requested vault, they remain visible there for a safe migration path.
+func (s *Store) ListJobsPage(ctx context.Context, vaultRoot string, limit, offset int) ([]*Job, int, error) {
+	if limit < 0 {
+		limit = 0
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	where := ""
+	args := []any{}
+	if vaultRoot != "" {
+		where = " WHERE d.vault_root = ? OR (d.vault_root = '' AND instr(d.vault_path, ?) = 1)"
+		args = append(args, vaultRoot, vaultRoot+string(filepath.Separator))
+	}
+
+	var total int
+	if err := s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM jobs j JOIN documents d ON j.document_id = d.id"+where, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count jobs: %w", err)
+	}
+
 	query := `
 		SELECT j.id, j.document_id, j.kind, j.status, j.attempts, j.last_error, j.created_at, j.updated_at, d.source_path
 		FROM jobs j
-		JOIN documents d ON j.document_id = d.id
-		ORDER BY j.id DESC`
+		JOIN documents d ON j.document_id = d.id` + where + ` ORDER BY j.id DESC`
 	if limit > 0 {
-		query += fmt.Sprintf(" LIMIT %d", limit)
+		query += " LIMIT ? OFFSET ?"
+		args = append(args, limit, offset)
 	}
-	rows, err := s.db.QueryContext(ctx, query)
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("query jobs: %w", err)
+		return nil, 0, fmt.Errorf("query jobs: %w", err)
 	}
 	defer rows.Close()
 
@@ -688,19 +718,8 @@ func (s *Store) ListJobs(ctx context.Context, limit int) ([]*Job, error) {
 	for rows.Next() {
 		var j Job
 		var lastErr sql.NullString
-		err := rows.Scan(
-			&j.ID,
-			&j.DocumentID,
-			&j.Kind,
-			&j.Status,
-			&j.Attempts,
-			&lastErr,
-			&j.CreatedAt,
-			&j.UpdatedAt,
-			&j.SourcePath,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("scan job: %w", err)
+		if err := rows.Scan(&j.ID, &j.DocumentID, &j.Kind, &j.Status, &j.Attempts, &lastErr, &j.CreatedAt, &j.UpdatedAt, &j.SourcePath); err != nil {
+			return nil, 0, fmt.Errorf("scan job: %w", err)
 		}
 		if lastErr.Valid {
 			j.LastError = &lastErr.String
@@ -708,9 +727,14 @@ func (s *Store) ListJobs(ctx context.Context, limit int) ([]*Job, error) {
 		jobs = append(jobs, &j)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return jobs, nil
+	return jobs, total, nil
+}
+
+// ListJobsInVault is the explicit scoped form for new callers.
+func (s *Store) ListJobsInVault(ctx context.Context, vaultRoot string, limit, offset int) ([]*Job, int, error) {
+	return s.ListJobsPage(ctx, vaultRoot, limit, offset)
 }
 
 // RetryJob resets a failed job back to pending and 0 attempts.

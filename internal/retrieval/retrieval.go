@@ -175,6 +175,12 @@ type Status struct {
 	// answered. When false, the model above is the local hash fallback and
 	// search quality is degraded even though queries still return.
 	BackendAvailable bool `json:"backend_available"`
+	// PendingChunkCount reports stored chunks that still need a real
+	// embedding. MixedEmbeddingSpaces reports whether the stored vectors use
+	// more than one dimension/model pair. Both describe persisted index state,
+	// unlike the live backend probe above.
+	PendingChunkCount    int  `json:"pending_chunk_count"`
+	MixedEmbeddingSpaces bool `json:"mixed_embedding_spaces"`
 }
 
 // Status reports the index snapshot plus a live probe of the embedding
@@ -185,13 +191,23 @@ func (c *Client) Status() (*Status, error) {
 	if err != nil {
 		return nil, err
 	}
+	pending, err := c.db.CountPendingChunks()
+	if err != nil {
+		return nil, err
+	}
+	spaces, err := c.db.DetectMixedEmbeddingSpaces()
+	if err != nil {
+		return nil, err
+	}
 	probe := c.embedder.GenerateVectorNoRetryWithModel("symdesk retrieval status probe")
 	status := &Status{
-		DocumentCount:    stats.DocumentCount,
-		ChunkCount:       stats.ChunkCount,
-		DatabaseBytes:    stats.DatabaseSize,
-		EmbeddingModel:   probe.Model,
-		BackendAvailable: probe.Model != engine.LocalHashModelName,
+		DocumentCount:        stats.DocumentCount,
+		ChunkCount:           stats.ChunkCount,
+		DatabaseBytes:        stats.DatabaseSize,
+		EmbeddingModel:       probe.Model,
+		BackendAvailable:     probe.Model != engine.LocalHashModelName,
+		PendingChunkCount:    pending,
+		MixedEmbeddingSpaces: len(spaces) > 1,
 	}
 	if !stats.LastIndexedAt.IsZero() {
 		status.LastIndexedAt = stats.LastIndexedAt.UTC().Format(time.RFC3339)

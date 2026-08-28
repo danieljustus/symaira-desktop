@@ -81,8 +81,15 @@ public struct RetrievalStatus: Codable, Equatable, Sendable {
     /// back to the local hash embedding: search still returns, but ranking is
     /// degraded. This is deliberately distinct from an empty index.
     public let backendAvailable: Bool
+    /// Persisted index degradation, distinct from the live backend probe.
+    /// Optional fields keep the app compatible with an older local binary.
+    public let pendingChunkCount: Int?
+    public let mixedEmbeddingSpaces: Bool?
 
     public var isEmpty: Bool { documentCount == 0 }
+    public var hasStoredDegradation: Bool {
+        (pendingChunkCount ?? 0) > 0 || mixedEmbeddingSpaces == true
+    }
 
     enum CodingKeys: String, CodingKey {
         case documentCount = "document_count"
@@ -91,6 +98,8 @@ public struct RetrievalStatus: Codable, Equatable, Sendable {
         case lastIndexedAt = "last_indexed_at"
         case embeddingModel = "embedding_model"
         case backendAvailable = "backend_available"
+        case pendingChunkCount = "pending_chunk_count"
+        case mixedEmbeddingSpaces = "mixed_embedding_spaces"
     }
 }
 

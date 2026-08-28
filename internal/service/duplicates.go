@@ -2,6 +2,7 @@ package service
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
 )
@@ -53,11 +54,13 @@ func vaultRel(vaultRoot, path string) string {
 	return filepath.ToSlash(rel)
 }
 
-// SimilarAll scans every indexed document with a simhash and returns clusters
-// of near-duplicates above the given similarity threshold (0-100). Clusters
-// are built by connected components: two documents belong to the same group
-// when either is similar to the group's representative, which keeps genuine
-// chains (A~B, B~C) together without exploding into O(n²) pair rows.
+// SimilarAll scans every indexed document with non-empty body content and
+// returns clusters of near-duplicates above the given similarity threshold
+// (0-100). Hashes are computed from body text here rather than trusting the
+// persisted frontmatter simhash, so titles and metadata cannot create a match.
+// Clusters are built by connected components: two documents belong to the same
+// group when either is similar to the group's representative, which keeps
+// genuine chains (A~B, B~C) together without exploding into O(n²) pair rows.
 func (s *Service) SimilarAll(threshold int) ([]DuplicateGroup, error) {
 	docs, err := s.DB.AllSimhashes()
 	if err != nil {
@@ -68,17 +71,21 @@ func (s *Service) SimilarAll(threshold int) ([]DuplicateGroup, error) {
 	type node struct {
 		path    string
 		title   string
+		body    string
 		hash    uint64
 		group   int
 		visited bool
 	}
 	nodes := make([]node, 0, len(docs))
 	for _, d := range docs {
-		h, err := simhash.ParseHex(d.Simhash)
-		if err != nil {
+		body := strings.TrimSpace(d.Body)
+		if body == "" {
 			continue
 		}
-		nodes = append(nodes, node{path: d.Path, title: d.Title, hash: h, group: -1})
+		nodes = append(nodes, node{
+			path: d.Path, title: d.Title, body: body,
+			hash: simhash.Compute(body), group: -1,
+		})
 	}
 
 	var groups [][]int // indices into nodes
@@ -99,7 +106,9 @@ func (s *Service) SimilarAll(threshold int) ([]DuplicateGroup, error) {
 				if nodes[j].visited {
 					continue
 				}
-				if simhash.Similarity(nodes[cur].hash, nodes[j].hash) >= threshold {
+				if simhash.SimilarityForContent(
+					nodes[cur].hash, nodes[j].hash, nodes[cur].body, nodes[j].body,
+				) >= threshold {
 					nodes[j].visited = true
 					nodes[j].group = nodes[cur].group
 					queue = append(queue, j)
@@ -122,7 +131,7 @@ func (s *Service) SimilarAll(threshold int) ([]DuplicateGroup, error) {
 			g.Members = append(g.Members, DuplicateMember{
 				Path:       vaultRel(s.VaultRoot, nodes[idx].path),
 				Title:      nodes[idx].title,
-				Similarity: simhash.Similarity(rep.hash, nodes[idx].hash),
+				Similarity: simhash.SimilarityForContent(rep.hash, nodes[idx].hash, rep.body, nodes[idx].body),
 			})
 		}
 		// Stable sort: similarity desc, path asc.

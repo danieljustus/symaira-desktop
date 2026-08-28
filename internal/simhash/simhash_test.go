@@ -1,6 +1,7 @@
 package simhash
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -92,5 +93,23 @@ func TestEmptyText(t *testing.T) {
 	h := Compute("")
 	if h != 0 {
 		t.Errorf("expected 0 hash for empty text, got %x", h)
+	}
+}
+
+func TestSimilarityForContentCapsShortBodies(t *testing.T) {
+	body := "same short note"
+	got := SimilarityForContent(Compute(body), Compute(body), body, body)
+	if got != ShortBodySimilarityCap {
+		t.Fatalf("expected short-body similarity cap %d, got %d", ShortBodySimilarityCap, got)
+	}
+}
+
+func TestSimilarityForContentKeepsLongBodiesUnchanged(t *testing.T) {
+	a := strings.Repeat("monthly utility bill amount due ", 8)
+	b := strings.Repeat("monthly utility bill amount paid ", 8)
+	got := SimilarityForContent(Compute(a), Compute(b), a, b)
+	want := Similarity(Compute(a), Compute(b))
+	if got != want {
+		t.Fatalf("expected long-body similarity %d, got %d", want, got)
 	}
 }

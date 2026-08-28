@@ -1283,16 +1283,19 @@ type SimilarResult struct {
 	Title      string `json:"title"`
 	Similarity int    `json:"similarity"`
 	Simhash    string `json:"simhash"`
+	Body       string `json:"-"`
 }
 
-// AllSimhashes returns every indexed document that has a simhash, in path
-// order. Used for vault-wide duplicate scans.
+// AllSimhashes returns every indexed document with non-empty body content, in
+// path order. The body is carried internally so the duplicate grouping path
+// can compute a fresh hash instead of trusting frontmatter metadata.
 func (db *DB) AllSimhashes() ([]SimilarResult, error) {
 	rows, err := db.conn.Query(`
-		SELECT path, title, COALESCE(simhash,'')
+		SELECT files.path, files.title, COALESCE(files.simhash,''), fts_search.body
 		FROM files
-		WHERE simhash IS NOT NULL AND simhash != ''
-		ORDER BY path ASC`)
+		JOIN fts_search ON fts_search.rowid = files.id
+		WHERE trim(COALESCE(fts_search.body,'')) != ''
+		ORDER BY files.path ASC`)
 	if err != nil {
 		return nil, err
 	}
@@ -1301,7 +1304,7 @@ func (db *DB) AllSimhashes() ([]SimilarResult, error) {
 	var results []SimilarResult
 	for rows.Next() {
 		var r SimilarResult
-		if err := rows.Scan(&r.Path, &r.Title, &r.Simhash); err != nil {
+		if err := rows.Scan(&r.Path, &r.Title, &r.Simhash, &r.Body); err != nil {
 			return nil, err
 		}
 		results = append(results, r)

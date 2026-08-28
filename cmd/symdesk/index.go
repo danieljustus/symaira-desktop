@@ -90,7 +90,7 @@ func newIndexCmd() *cobra.Command {
 				// index` left hybrid search empty. That was invisible while
 				// retrieval was an optional sibling tool and is not once it
 				// ships in the binary. Failures stay best-effort.
-				retrieval.Index(doc.Path, doc.Body)
+				retrieval.IndexWithMetadata(doc.Path, doc.Body, retrieval.SearchMetadataFromVault(doc))
 				count++
 				return nil
 			}

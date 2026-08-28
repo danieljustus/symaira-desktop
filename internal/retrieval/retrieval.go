@@ -26,6 +26,14 @@ import (
 // depend on the retrieval database's internal package.
 type LocationAnchor = db.LocationAnchor
 
+// SearchMetadata is the stable metadata contract added to each local file's
+// hybrid-search representation. Fields are sorted into a canonical order for
+// deterministic repeatable indexing.
+type SearchMetadata = engine.SearchMetadata
+
+// SearchMetadataField is one field in SearchMetadata.
+type SearchMetadataField = engine.SearchMetadataField
+
 // Result is one search hit, reduced to the fields a consumer displays.
 type Result struct {
 	Path    string  `json:"path"`
@@ -33,6 +41,9 @@ type Result struct {
 	Snippet string  `json:"snippet"`
 	// Anchor is omitted for legacy index rows that predate location metadata.
 	Anchor *db.LocationAnchor `json:"anchor,omitempty"`
+	// MetadataMatches identifies the indexed fields that matched the free-text
+	// query, allowing consumers to distinguish metadata-only hits from body hits.
+	MetadataMatches []string `json:"metadata_matches,omitempty"`
 	// VectorMode reports how the vector leg of the search was scored:
 	// "semantic" for a real embedding model, "fallback" when the query fell
 	// back to the local hash vector while the index uses an Ollama model, or
@@ -119,6 +130,24 @@ func archivePathFromMarkdown(path string) string {
 	return ""
 }
 
+// IndexWithMetadata adds or replaces one local document and includes the
+// supplied metadata in its hybrid-search representation. Non-local sources
+// use the compatibility body-only path because they have no vault metadata
+// file to update.
+func (c *Client) IndexWithMetadata(source, body string, metadata SearchMetadata) error {
+	if info, err := os.Stat(source); err == nil && info.Mode().IsRegular() {
+		if archivePath := archivePathFromMarkdown(source); archivePath != "" {
+			if archiveInfo, archiveErr := os.Stat(archivePath); archiveErr == nil && archiveInfo.Mode().IsRegular() {
+				_, err := engine.IndexFileWithSourceAndMetadata(c.db, c.embedder, source, archivePath, metadata)
+				return err
+			}
+		}
+		_, err := engine.IndexFileWithMetadata(c.db, c.embedder, source, metadata)
+		return err
+	}
+	return engine.IndexStdin(c.db, c.embedder, strings.NewReader(body), source)
+}
+
 // Delete removes a document and its chunks from the index. Deleting a
 // document that is not indexed is not an error.
 func (c *Client) Delete(path string) error {
@@ -188,11 +217,12 @@ func (c *Client) Search(query string, limit int) ([]Result, error) {
 			continue
 		}
 		out = append(out, Result{
-			Path:       s.Path,
-			Score:      float64(s.Score),
-			Snippet:    engine.BuildSnippet(s.Snippet, terms, engine.DefaultSnippetBound),
-			Anchor:     s.Anchor,
-			VectorMode: s.VectorMode,
+			Path:            s.Path,
+			Score:           float64(s.Score),
+			Snippet:         engine.StripSearchMetadata(engine.BuildSnippet(s.Snippet, terms, engine.DefaultSnippetBound)),
+			Anchor:          s.Anchor,
+			MetadataMatches: s.MetadataMatches,
+			VectorMode:      s.VectorMode,
 		})
 	}
 	return out, nil
@@ -319,6 +349,18 @@ var (
 	StatusFunc                    = DefaultStatusFunc
 	CountPendingChunksFunc        = DefaultCountPendingChunksFunc
 )
+
+// IndexWithMetadata adds or replaces a local document with its parsed vault
+// metadata included in the hybrid index. Errors are returned so callers that
+// already maintain an authoritative sidecar can log them as best effort.
+func IndexWithMetadata(path, body string, metadata SearchMetadata) error {
+	c, err := Open()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = c.Close() }()
+	return c.IndexWithMetadata(path, body, metadata)
+}
 
 // Index adds or replaces one document in the search index. A failure is
 // logged and swallowed: the document is already stored in the vault and in

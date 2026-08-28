@@ -59,11 +59,12 @@ type Extraction struct {
 }
 
 type SearchResult struct {
-	Chunk       *Chunk  `json:"chunk"`
-	BM25Rank    int     `json:"bm25_rank"`
-	VectorRank  int     `json:"vector_rank"`
-	RRFScore    float32 `json:"rrf_score"`
-	CosineScore float32 `json:"cosine_score"`
+	Chunk           *Chunk   `json:"chunk"`
+	BM25Rank        int      `json:"bm25_rank"`
+	VectorRank      int      `json:"vector_rank"`
+	RRFScore        float32  `json:"rrf_score"`
+	CosineScore     float32  `json:"cosine_score"`
+	MetadataMatches []string `json:"metadata_matches,omitempty"`
 	// VectorMode reports how the query vector was produced. It is set by the
 	// engine search path and echoed into structured JSON/MCP output.
 	VectorMode string `json:"vector_mode,omitempty"`
@@ -81,14 +82,15 @@ type LocationAnchor struct {
 }
 
 type StructuredSearchResult struct {
-	Path       string          `json:"path"`
-	ChunkID    string          `json:"chunk_id"`
-	CharStart  *int            `json:"char_start,omitempty"`
-	CharEnd    *int            `json:"char_end,omitempty"`
-	Score      float32         `json:"score"`
-	Snippet    string          `json:"snippet"`
-	Anchor     *LocationAnchor `json:"anchor,omitempty"`
-	VectorMode string          `json:"vector_mode,omitempty"`
+	Path            string          `json:"path"`
+	ChunkID         string          `json:"chunk_id"`
+	CharStart       *int            `json:"char_start,omitempty"`
+	CharEnd         *int            `json:"char_end,omitempty"`
+	Score           float32         `json:"score"`
+	Snippet         string          `json:"snippet"`
+	Anchor          *LocationAnchor `json:"anchor,omitempty"`
+	MetadataMatches []string        `json:"metadata_matches,omitempty"`
+	VectorMode      string          `json:"vector_mode,omitempty"`
 }
 
 // Structured converts a SearchResult into the shared consumer-facing shape.
@@ -102,14 +104,15 @@ func (r *SearchResult) Structured() *StructuredSearchResult {
 		anchor = &LocationAnchor{Kind: r.Chunk.AnchorKind, Value: r.Chunk.AnchorValue}
 	}
 	return &StructuredSearchResult{
-		Path:       r.Chunk.DocumentPath,
-		ChunkID:    r.Chunk.UUID,
-		CharStart:  r.Chunk.CharStart,
-		CharEnd:    r.Chunk.CharEnd,
-		Anchor:     anchor,
-		Score:      r.RRFScore,
-		Snippet:    r.Chunk.Content,
-		VectorMode: r.VectorMode,
+		Path:            r.Chunk.DocumentPath,
+		ChunkID:         r.Chunk.UUID,
+		CharStart:       r.Chunk.CharStart,
+		CharEnd:         r.Chunk.CharEnd,
+		Anchor:          anchor,
+		Score:           r.RRFScore,
+		Snippet:         r.Chunk.Content,
+		MetadataMatches: r.MetadataMatches,
+		VectorMode:      r.VectorMode,
 	}
 }
 

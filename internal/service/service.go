@@ -76,7 +76,9 @@ func (s *Service) IndexDocument(doc *vault.Document) error {
 	if err := s.DB.IndexDocument(doc); err != nil {
 		return err
 	}
-	retrieval.Index(doc.Path, doc.Body)
+	if err := retrieval.IndexWithMetadata(doc.Path, doc.Body, retrieval.SearchMetadataFromVault(doc)); err != nil {
+		slog.Warn("search index update failed", "path", doc.Path, "error", err)
+	}
 	return nil
 }
 
@@ -136,11 +138,12 @@ func (s *Service) Ls(dirPrefix string) ([]FileEntry, error) {
 // SearchWithMeta. Its JSON tags match the legacy map[string]interface{} keys
 // to keep the CLI/MCP wire format byte-identical.
 type SearchResult struct {
-	Path    string                    `json:"path"`
-	Title   string                    `json:"title"`
-	Snippet string                    `json:"snippet"`
-	Score   float64                   `json:"score"`
-	Anchor  *retrieval.LocationAnchor `json:"anchor,omitempty"`
+	Path            string                    `json:"path"`
+	Title           string                    `json:"title"`
+	Snippet         string                    `json:"snippet"`
+	Score           float64                   `json:"score"`
+	Anchor          *retrieval.LocationAnchor `json:"anchor,omitempty"`
+	MetadataMatches []string                  `json:"metadata_matches,omitempty"`
 }
 
 // FileEntry is a typed directory listing entry returned by Ls. JSON tags
@@ -258,11 +261,12 @@ func (s *Service) searchPlain(query string) ([]SearchResult, error) {
 		}
 
 		results = append(results, SearchResult{
-			Path:    relPath,
-			Title:   title,
-			Snippet: r.Snippet,
-			Score:   r.Score,
-			Anchor:  r.Anchor,
+			Path:            relPath,
+			Title:           title,
+			Snippet:         r.Snippet,
+			Score:           r.Score,
+			Anchor:          r.Anchor,
+			MetadataMatches: r.MetadataMatches,
 		})
 	}
 	if len(results) > 0 {

@@ -57,12 +57,29 @@ public struct DeskStatus: Codable, Sendable {
     }
 }
 
+public struct SearchAnchor: Codable, Equatable, Hashable, Sendable {
+    public let kind: String
+    public let value: String
+
+    public var displayValue: String {
+        switch kind {
+        case "page": return "Page \(value)"
+        case "heading": return value
+        case "section": return value
+        case "text": return value
+        default: return value
+        }
+    }
+}
+
 public struct SearchResult: Codable, Equatable, Identifiable, Sendable {
-    public var id: String { path }
+    public var id: String { path + "#" + (anchor?.kind ?? "") + ":" + (anchor?.value ?? "") }
     public let path: String
     public let title: String
     public let snippet: String
     public let score: Double?
+    /// Optional for compatibility with search responses from older cores.
+    public let anchor: SearchAnchor?
 }
 
 public struct SearchResponse: Codable, Equatable, Sendable {

@@ -142,6 +142,11 @@ struct DocumentViewerView: View {
     let document: DocumentItem
     /// Opens the document in the note editor (issue #648).
     var onOpenInEditor: ((DocumentItem) -> Void)? = nil
+    /// Search location that should be visible when the viewer opens.
+    var initialAnchor: SearchAnchor? = nil
+    /// Complete ordered search set; used for next/previous hit navigation.
+    var searchHits: [SearchResult] = []
+    var onNavigateToSearchHit: ((SearchResult) -> Void)? = nil
 
     @EnvironmentObject var core: DeskCore
     @Environment(\.dismiss) private var dismiss
@@ -194,7 +199,7 @@ struct DocumentViewerView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             viewerHeader
         }
-        .task(id: document.id) { await loadDocument() }
+        .task(id: viewerLoadID) { await loadDocument() }
         .task { checkReOCRAvailability() }
         .background(
             KeyboardHandler(
@@ -202,6 +207,14 @@ struct DocumentViewerView: View {
                 onCmdI: { showInspector.toggle() }
             )
         )
+    }
+
+    private var viewerLoadID: String {
+        document.id + "|" + (initialAnchor?.kind ?? "") + "|" + (initialAnchor?.value ?? "")
+    }
+
+    private var currentHitIndex: Int? {
+        searchHits.firstIndex { $0.path == document.path && $0.anchor == initialAnchor }
     }
 
     // MARK: - Main Content
@@ -226,6 +239,21 @@ struct DocumentViewerView: View {
                 Label(isPDFMode ? "Text" : "Preview", systemImage: isPDFMode ? "doc.text" : "doc.richtext")
             }
             .help("Toggle PDF/Text view (Space)")
+
+            if !searchHits.isEmpty {
+                viewerDivider
+                Button(action: goToPreviousHit) { Image(systemName: "arrow.up.to.line") }
+                    .disabled(currentHitIndex == nil || currentHitIndex == 0)
+                    .help("Previous search hit")
+                Button(action: goToNextHit) { Image(systemName: "arrow.down.to.line") }
+                    .disabled(currentHitIndex == nil || currentHitIndex == searchHits.count - 1)
+                    .help("Next search hit")
+                if let currentHitIndex {
+                    Text("Hit \(currentHitIndex + 1) / \(searchHits.count)")
+                        .symairaText(.caption).monospacedDigit()
+                        .foregroundStyle(SymairaTheme.textSecondary)
+                }
+            }
 
             if isPDFMode, fileURL?.pathExtension.lowercased() == "pdf", pageCount > 0 {
                 viewerDivider
@@ -617,6 +645,7 @@ struct DocumentViewerView: View {
 
     private var viewerSubtitle: String {
         if isLoadingDocument { return "Loading preview…" }
+        if let initialAnchor { return initialAnchor.displayValue }
         if !isPDFMode { return "Extracted text" }
         if let fileURL { return fileURL.lastPathComponent }
         return "Rendered note"
@@ -669,6 +698,9 @@ struct DocumentViewerView: View {
         if fileURL == nil, !DocumentPreviewResolver.sourcePropertyKeys.allSatisfy({ newProps[$0] == nil }) {
             loadMessage = "The archived original referenced by this note was not found."
         }
+        if initialAnchor?.kind == "page", let page = Int(initialAnchor?.value ?? ""), page > 0 {
+            currentPageIndex = page - 1
+        }
         isLoadingDocument = false
     }
 
@@ -700,6 +732,16 @@ struct DocumentViewerView: View {
             loadMessage = "The Markdown note could not be read: \(error.localizedDescription)"
             return ""
         }
+    }
+
+    private func goToPreviousHit() {
+        guard let index = currentHitIndex, index > 0 else { return }
+        onNavigateToSearchHit?(searchHits[index - 1])
+    }
+
+    private func goToNextHit() {
+        guard let index = currentHitIndex, index + 1 < searchHits.count else { return }
+        onNavigateToSearchHit?(searchHits[index + 1])
     }
 
     private func goToPreviousPage() {

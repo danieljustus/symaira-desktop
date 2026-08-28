@@ -136,10 +136,11 @@ func (s *Service) Ls(dirPrefix string) ([]FileEntry, error) {
 // SearchWithMeta. Its JSON tags match the legacy map[string]interface{} keys
 // to keep the CLI/MCP wire format byte-identical.
 type SearchResult struct {
-	Path    string  `json:"path"`
-	Title   string  `json:"title"`
-	Snippet string  `json:"snippet"`
-	Score   float64 `json:"score"`
+	Path    string                    `json:"path"`
+	Title   string                    `json:"title"`
+	Snippet string                    `json:"snippet"`
+	Score   float64                   `json:"score"`
+	Anchor  *retrieval.LocationAnchor `json:"anchor,omitempty"`
 }
 
 // FileEntry is a typed directory listing entry returned by Ls. JSON tags
@@ -261,6 +262,7 @@ func (s *Service) searchPlain(query string) ([]SearchResult, error) {
 			Title:   title,
 			Snippet: r.Snippet,
 			Score:   r.Score,
+			Anchor:  r.Anchor,
 		})
 	}
 	if len(results) > 0 {

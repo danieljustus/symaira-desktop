@@ -2,9 +2,21 @@ import SwiftUI
 import SymairaTheme
 import SymDeskCore
 
+private struct SearchAnchorEnvironmentKey: EnvironmentKey {
+    static let defaultValue: SearchAnchor? = nil
+}
+
+extension EnvironmentValues {
+    var searchAnchor: SearchAnchor? {
+        get { self[SearchAnchorEnvironmentKey.self] }
+        set { self[SearchAnchorEnvironmentKey.self] = newValue }
+    }
+}
+
 struct DocumentGridView: View {
     @EnvironmentObject var core: DeskCore
     @EnvironmentObject var watcher: EventWatcher
+    @Environment(\.searchAnchor) private var deepLinkAnchor
 
     let statusFilter: String?
     let deepLinkPath: String?
@@ -24,6 +36,7 @@ struct DocumentGridView: View {
     @State private var agentResult = ""
     @State private var isAgentRunning = false
     @State private var openDoc: DocumentItem?
+
     @State private var sortByASN = false
     @State private var selectedPaths: Set<String> = []
     @State private var selectionAnchor: String?
@@ -41,6 +54,7 @@ struct DocumentGridView: View {
     /// #516).
     @State private var contactName: ContactNameSelection?
     @State private var tagFilteredPaths: Set<String>? = nil
+
 
     private var selectedDocs: [DocumentItem] {
         visibleDocuments.filter { selectedPaths.contains($0.path) }
@@ -123,8 +137,7 @@ struct DocumentGridView: View {
             }
         }
         .sheet(item: $openDoc) { doc in
-            DocumentViewerView(document: doc, onOpenInEditor: onOpenInEditor)
-                .frame(minWidth: 980, idealWidth: 1_160, minHeight: 680, idealHeight: 780)
+            documentViewer(for: doc)
         }
         .alert("Batch Action", isPresented: Binding(
             get: { batchSummary != nil },
@@ -137,6 +150,16 @@ struct DocumentGridView: View {
     }
 
     // MARK: - Search Field
+
+    private func documentViewer(for document: DocumentItem) -> some View {
+        DocumentViewerView(
+            document: document,
+            onOpenInEditor: onOpenInEditor,
+            initialAnchor: deepLinkAnchor
+        )
+        .frame(minWidth: 980, idealWidth: 1_160, minHeight: 680, idealHeight: 780)
+    }
+
 
     private var documentHeader: some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {

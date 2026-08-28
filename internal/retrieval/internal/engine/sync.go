@@ -170,6 +170,31 @@ func IndexDirectory(dbClient db.Store, embedder Embedder, dirPath string) error 
 	return nil
 }
 
+// IndexFileWithSource indexes sourcePath's extracted content under source. This
+// is used for generated Markdown notes whose archive_path points at the
+// original PDF/Office file; search results still resolve to the note path while
+// retaining the original's durable location anchor.
+func IndexFileWithSource(dbClient db.Store, embedder Embedder, source, sourcePath string) (string, error) {
+	currentHash, err := parser.GetFileHash(source)
+	if err != nil {
+		return "", fmt.Errorf("failed to compute hash for %s: %w", source, err)
+	}
+	existing, err := dbClient.GetDocument(source)
+	if err != nil {
+		return "", fmt.Errorf("failed to query document from DB: %w", err)
+	}
+	if existing != nil && existing.Hash == currentHash {
+		return currentHash, nil
+	}
+	sections, err := parser.ParseFileSections(sourcePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse %s: %w", sourcePath, err)
+	}
+	chunks := buildChunksFromSections(embedder, source, sections)
+	doc := &db.Document{Path: source, Hash: currentHash, UpdatedAt: time.Now()}
+	return currentHash, commitIndex(dbClient, source, chunks, doc, existing, "")
+}
+
 // IndexFile indexes a single file by delegating to the shared prepareIndex/commitIndex pipeline.
 func IndexFile(dbClient db.Store, embedder Embedder, path string) (string, error) {
 	chunks, doc, existing, skipped, sidecarPath, err := prepareIndex(dbClient, embedder, path)
@@ -474,12 +499,12 @@ func prepareIndex(dbClient db.Store, embedder Embedder, path string) ([]*db.Chun
 		}
 	}
 
-	content, err := parser.ParseFile(path)
+	sections, err := parser.ParseFileSections(path)
 	if err != nil {
 		return nil, nil, nil, false, "", fmt.Errorf("failed to parse %s: %w", path, err)
 	}
-
-	chunks := buildChunks(embedder, path, content)
+	content := joinSectionText(sections)
+	chunks := buildChunksFromSections(embedder, path, sections)
 	sidecarPath := detectSidecarPath(path, content)
 
 	return chunks, &db.Document{
@@ -494,10 +519,45 @@ func prepareIndex(dbClient db.Store, embedder Embedder, path string) ([]*db.Chun
 // pipeline shared by file/directory indexing (prepareIndex) and content-based
 // indexing (indexContent for URLs and stdin).
 func buildChunks(embedder Embedder, source, content string) []*db.Chunk {
-	spans := parser.SplitTextWithSpans(content, 1000, 200)
+	return buildChunksFromSections(embedder, source, []parser.Section{{
+		Text: content, Anchor: parser.Anchor{Kind: "text", Value: "offset:0"},
+	}})
+}
+
+func joinSectionText(sections []parser.Section) string {
+	parts := make([]string, 0, len(sections))
+	for _, section := range sections {
+		if strings.TrimSpace(section.Text) != "" {
+			parts = append(parts, section.Text)
+		}
+	}
+	return strings.Join(parts, "\n\n")
+}
+
+// buildChunksFromSections keeps chunks inside the parser's durable boundaries
+// (PDF pages and Markdown heading sections), while preserving global byte spans.
+func buildChunksFromSections(embedder Embedder, source string, sections []parser.Section) []*db.Chunk {
+	var spans []struct {
+		span   parser.Span
+		anchor parser.Anchor
+	}
+	for _, section := range sections {
+		for _, span := range parser.SplitTextWithSpans(section.Text, 1000, 200) {
+			span.Start += section.Start
+			span.End += section.Start
+			anchor := section.Anchor
+			if anchor.Kind == "text" {
+				anchor.Value = fmt.Sprintf("offset:%d", span.Start)
+			}
+			spans = append(spans, struct {
+				span   parser.Span
+				anchor parser.Anchor
+			}{span: span, anchor: anchor})
+		}
+	}
 	textChunks := make([]string, len(spans))
-	for i, s := range spans {
-		textChunks[i] = s.Text
+	for i, item := range spans {
+		textChunks[i] = item.span.Text
 	}
 	embeddings := embedder.GenerateVectorsWithModel(textChunks)
 
@@ -505,7 +565,7 @@ func buildChunks(embedder Embedder, source, content string) []*db.Chunk {
 	for idx, tc := range textChunks {
 		hashSum := sha256.Sum256([]byte(tc))
 		chunkHash := hex.EncodeToString(hashSum[:])
-		start, end := spans[idx].Start, spans[idx].End
+		start, end := spans[idx].span.Start, spans[idx].span.End
 		res := embeddings[idx]
 		chunk := &db.Chunk{
 			UUID:         deriveChunkID(source, chunkHash, start),
@@ -518,11 +578,9 @@ func buildChunks(embedder Embedder, source, content string) []*db.Chunk {
 			Model:        res.Model,
 			CharStart:    &start,
 			CharEnd:      &end,
+			AnchorKind:   spans[idx].anchor.Kind,
+			AnchorValue:  spans[idx].anchor.Value,
 		}
-		// A fallback (local-hash) vector is not a real embedding: record the
-		// chunk as pending rather than storing a meaningless semantic vector
-		// in the index. The vault write still succeeds; re-embedding later
-		// repairs it (#663/#678).
 		if res.Model == localHashModelName {
 			chunk.EmbeddingPending = true
 			chunk.Embedding = nil

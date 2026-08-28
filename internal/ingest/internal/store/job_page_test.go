@@ -12,7 +12,7 @@ func TestListJobsPageScopesVaultAndReportsTotal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	vaultA := filepath.Join(t.TempDir(), "vault-a")
 	vaultB := filepath.Join(t.TempDir(), "vault-b")

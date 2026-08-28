@@ -100,7 +100,7 @@ func (c *Client) Index(source, body string) error {
 }
 
 func archivePathFromMarkdown(path string) string {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is constrained by the indexed document boundary.
 	if err != nil {
 		return ""
 	}

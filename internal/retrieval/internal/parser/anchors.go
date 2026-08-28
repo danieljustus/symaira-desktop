@@ -55,7 +55,7 @@ func parsePDFSections(path string) ([]Section, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open PDF: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var sections []Section
 	offset := 0
@@ -86,7 +86,7 @@ func parsePDFSections(path string) ([]Section, error) {
 }
 
 func parseMarkdownSections(path string) ([]Section, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- parser receives a validated document path.
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}

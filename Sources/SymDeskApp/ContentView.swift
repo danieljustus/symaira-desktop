@@ -1499,7 +1499,7 @@ private struct SidebarDisclosureSection<Content: View>: View {
                 content()
             } label: {
                 Label(title, systemImage: systemImage)
-                    .font(.subheadline.weight(.semibold))
+                    .symairaText(.subheading).fontWeight(.semibold)
                     .foregroundStyle(SymairaTheme.textPrimary)
                     .accessibilityValue(isCollapsed ? "Collapsed" : "Expanded")
             }

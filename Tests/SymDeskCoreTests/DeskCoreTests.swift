@@ -314,6 +314,23 @@ final class DeskCoreTests: XCTestCase {
         XCTAssertFalse(unknown.isAvailable("unknown-tool"))
     }
 
+    func testManagedToolIdentifiersMatchDoctorPayloadKeys() throws {
+        let availability = DoctorReport.ToolAvailability(
+            symmemory: "available",
+            symvault: "available",
+            symbrowse: "available"
+        )
+        let data = try JSONEncoder().encode(availability)
+        let payload = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let payloadKeys = Set(payload.keys)
+        let managedToolIDs = Set(DoctorReport.ToolAvailability.managedTools.map(\.id))
+
+        XCTAssertEqual(managedToolIDs, payloadKeys)
+        XCTAssertTrue(DoctorReport.ToolAvailability.managedTools.allSatisfy {
+            availability.isAvailable($0.id)
+        })
+    }
+
     // MARK: - AIEvent Tests
 
     func testAnswerEventDecoding() throws {

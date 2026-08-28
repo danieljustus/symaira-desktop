@@ -1761,3 +1761,65 @@ func TestDerivedArtifactsExcludedFromIndex(t *testing.T) {
 		t.Fatalf("expected 0 files after transition to derived, got %d", len(filesAfter))
 	}
 }
+
+func TestSearchPlanFilenameFiletypeAndDateFilters(t *testing.T) {
+	db := setupTestDB(t)
+	fixedNow := time.Date(2026, 8, 28, 12, 0, 0, 0, time.UTC)
+	docs := []*vault.Document{
+		{Path: "/vault/invoice.pdf", Title: "Invoice PDF", Created: "2026-08-01T10:00:00Z", ModTime: time.Date(2026, 8, 27, 9, 0, 0, 0, time.UTC), SHA256: "pdf", Body: "invoice", Frontmatter: map[string]interface{}{}},
+		{Path: "/vault/invoice.epub", Title: "Invoice EPUB", Created: "2026-08-15T10:00:00Z", ModTime: time.Date(2026, 8, 22, 9, 0, 0, 0, time.UTC), SHA256: "epub", Body: "invoice", Frontmatter: map[string]interface{}{}},
+		{Path: "/vault/invoice/notes.md", Title: "Invoice directory note", Created: "2026-08-15T10:00:00Z", ModTime: time.Date(2026, 8, 27, 9, 0, 0, 0, time.UTC), SHA256: "dir", Body: "invoice", Frontmatter: map[string]interface{}{}},
+		{Path: "/vault/old.csv", Title: "Old CSV", Created: "2026-07-01T10:00:00Z", ModTime: time.Date(2026, 7, 1, 9, 0, 0, 0, time.UTC), SHA256: "old", Body: "invoice", Frontmatter: map[string]interface{}{}},
+	}
+	for _, doc := range docs {
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	tests := []struct {
+		name  string
+		query string
+		want  []string
+	}{
+		{name: "filetype alternatives", query: "filetype:pdf,epub", want: []string{"/vault/invoice.epub", "/vault/invoice.pdf"}},
+		{name: "base name only", query: "filename:invoice", want: []string{"/vault/invoice.epub", "/vault/invoice.pdf"}},
+		{name: "last week", query: "modified:last week", want: []string{"/vault/invoice.epub", "/vault/invoice.pdf", "/vault/invoice/notes.md"}},
+		{name: "explicit range", query: "modified:2026-08-20..2026-08-22", want: []string{"/vault/invoice.epub"}},
+		{name: "created range", query: "created:2026-08-01..2026-08-10", want: []string{"/vault/invoice.pdf"}},
+		{name: "AND negation and list", query: "filetype:pdf,epub -filename:invoice", want: []string{}},
+		{name: "AND free text and negation", query: "filetype:pdf,epub invoice -filename:invoice", want: []string{}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			plan, err := searchquery.Parse(tt.query)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := db.SearchPlanAt(plan, fixedNow)
+			if err != nil {
+				t.Fatal(err)
+			}
+			paths := make([]string, 0, len(got))
+			for _, match := range got {
+				paths = append(paths, match.Path)
+			}
+			sort.Strings(paths)
+			if !equalStrings(paths, tt.want) {
+				t.Fatalf("paths = %v, want %v", paths, tt.want)
+			}
+		})
+	}
+}
+
+func equalStrings(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}

@@ -71,7 +71,7 @@ struct CommandPalette: View {
                 .padding(.horizontal)
                 .padding(.bottom, 4)
 
-            Text("Filters compile to query syntax. Type raw queries or use the Filter button above.")
+            Text("Filters compile to query syntax. Supported: filename:name, filetype:pdf,epub, created:YYYY-MM-DD..YYYY-MM-DD, modified:last week. Type raw queries or use the Filter button above; filters combine with AND and support -negation.")
                 .symairaText(.caption)
                 .foregroundColor(SymairaTheme.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)

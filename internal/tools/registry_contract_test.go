@@ -43,7 +43,7 @@ var toolContracts = []toolContract{
 	},
 	{
 		name:        "desk_search",
-		description: "Searches notes with full-text terms plus path:, tag:, type:, status:, quoted phrases, -negation and /regex/. Invalid syntax falls back to plain full-text and returns a hint.",
+		description: "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint.",
 		schema:      `{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`,
 		readOnly:    true,
 	},
@@ -305,7 +305,7 @@ var toolContracts = []toolContract{
 	},
 	{
 		name:        "search_documents",
-		description: "Searches notes with full-text terms plus path:, tag:, type:, status:, quoted phrases, -negation and /regex/. Legacy alias for desk_search.",
+		description: "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint. Legacy alias for desk_search.",
 		schema:      `{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`,
 		readOnly:    true,
 	},

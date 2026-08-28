@@ -11,6 +11,10 @@ enum SearchFilterField: String, CaseIterable, Identifiable {
     case correspondent
     case folder
     case path
+    case filename
+    case filetype
+    case created
+    case modified
     case date
 
     var id: String { rawValue }
@@ -23,6 +27,10 @@ enum SearchFilterField: String, CaseIterable, Identifiable {
         case .correspondent: return "Correspondent"
         case .folder: return "Folder"
         case .path: return "Path"
+        case .filename: return "Filename"
+        case .filetype: return "File type"
+        case .created: return "Created"
+        case .modified: return "Modified"
         case .date: return "Date"
         }
     }
@@ -35,6 +43,10 @@ enum SearchFilterField: String, CaseIterable, Identifiable {
         case .correspondent: return "person"
         case .folder: return "folder"
         case .path: return "link"
+        case .filename: return "character.text.square"
+        case .filetype: return "doc"
+        case .created: return "calendar.badge.plus"
+        case .modified: return "calendar.badge.clock"
         case .date: return "calendar"
         }
     }
@@ -286,7 +298,7 @@ struct FilterChipsView: View {
                 .background(SymairaTheme.borderGlassHover)
 
             switch field {
-            case .tag, .correspondent, .folder, .path:
+            case .tag, .correspondent, .folder, .path, .filename, .filetype, .created, .modified:
                 customValueField(for: field)
             case .type:
                 valueList(values: availableTypes)

@@ -8,6 +8,10 @@ import Foundation
 ///
 /// Supported syntax (AND semantics, all entries combined):
 ///   - `path:substring`  case-insensitive path substring (LIKE %v%)
+///   - `filename:substring`  case-insensitive base-name substring (no parent directories)
+///   - `filetype:pdf,epub`  case-insensitive extension alternatives
+///   - `created:2026-08-01..2026-08-31`  inclusive creation date/range
+///   - `modified:last day|week|month|year`  relative modification window
 ///   - `tag:name`        case-insensitive exact tag match
 ///   - `type:invoice`    case-insensitive exact document_type match
 ///   - `status:open`     case-insensitive exact status match
@@ -19,6 +23,10 @@ enum MobileSearchQueryParser {
 
     enum Field: String, CaseIterable {
         case path
+        case filename
+        case filetype
+        case created
+        case modified
         case tag
         case type
         case status
@@ -55,6 +63,7 @@ enum MobileSearchQueryParser {
         case unterminatedRegex
         case invalidRegex(String)
         case operatorRequiresValue(String)
+        case invalidDate(String)
         case unknownOperator(String)
         case expectedTerm
     }
@@ -107,8 +116,22 @@ enum MobileSearchQueryParser {
                 if value.isEmpty {
                     throw ParseError.expectedTerm
                 }
+                var consumed = value.count
                 do {
-                    if let (field, filterValue) = try filter(value) {
+                    if let (field, parsedValue) = try filter(value) {
+                        var filterValue = parsedValue
+                        if isDateField(field), filterValue.lowercased() == "last" {
+                            var unitStart = i + consumed
+                            while unitStart < characters.count, characters[unitStart].isWhitespace { unitStart += 1 }
+                            let unitStartValue = unitStart
+                            while unitStart < characters.count, !characters[unitStart].isWhitespace { unitStart += 1 }
+                            let unit = String(characters[unitStartValue..<unitStart]).lowercased()
+                            if isDateUnit(unit) {
+                                filterValue += " " + unit
+                                consumed = unitStart - i
+                            }
+                        }
+                        if isDateField(field) { try validateDateValue(filterValue) }
                         plan.filters.append(Filter(field: field, value: filterValue, negated: negated))
                     } else {
                         plan.terms.append(Term(value: value, phrase: false, negated: negated))
@@ -116,7 +139,7 @@ enum MobileSearchQueryParser {
                 } catch let error as ParseError {
                     throw error
                 }
-                i += value.count
+                i += consumed
             }
 
             if i < characters.count, !characters[i].isWhitespace {
@@ -209,6 +232,39 @@ enum MobileSearchQueryParser {
             return nil
         }
         return (field, value)
+    }
+
+    private static func isDateField(_ field: Field) -> Bool {
+        field == .created || field == .modified
+    }
+
+    private static func isDateUnit(_ value: String) -> Bool {
+        ["day", "week", "month", "year"].contains(value.lowercased())
+    }
+
+    private static func validateDateValue(_ value: String) throws {
+        let expressions = value.split(separator: ",", omittingEmptySubsequences: false)
+        guard !expressions.isEmpty else { throw ParseError.invalidDate(value) }
+        for expression in expressions {
+            let expression = String(expression).trimmingCharacters(in: .whitespaces)
+            let lower = expression.lowercased()
+            if ["last day", "last week", "last month", "last year"].contains(lower) { continue }
+            let parts = expression.components(separatedBy: "..")
+            guard parts.count <= 2, parts.allSatisfy({ !$0.trimmingCharacters(in: .whitespaces).isEmpty }) else {
+                throw ParseError.invalidDate(value)
+            }
+            for part in parts {
+                let trimmed = part.trimmingCharacters(in: .whitespaces)
+                if ISO8601DateFormatter().date(from: trimmed) == nil {
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.calendar = Calendar(identifier: .gregorian)
+                    dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+                    dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+                    dateFormatter.dateFormat = "yyyy-MM-dd"
+                    guard dateFormatter.date(from: trimmed) != nil else { throw ParseError.invalidDate(value) }
+                }
+            }
+        }
     }
 
     /// `[[:alpha:]][[:alnum:]_-]*` — the Go port's operator-name shape.

@@ -110,13 +110,22 @@ enum MobileSearchFilterEngine {
         let matched: Bool
         switch filter.field {
         case .path:
-            matched = note.path.lowercased().contains(filter.value.lowercased())
+            matched = anyFilterValue(filter.value) { note.path.lowercased().contains($0.lowercased()) }
+        case .filename:
+            matched = anyFilterValue(filter.value) { note.filename.lowercased().contains($0.lowercased()) }
+        case .filetype:
+            let fileType = URL(fileURLWithPath: note.filename).pathExtension.lowercased()
+            matched = anyFilterValue(filter.value) { fileType == $0.trimmingCharacters(in: CharacterSet(charactersIn: ".")).lowercased() }
+        case .created:
+            matched = matchesDateFilter(note.created, expression: filter.value, reference: Date())
+        case .modified:
+            matched = matchesDateFilter(note.modifiedAt, expression: filter.value, reference: Date())
         case .tag:
-            matched = note.tags.contains { $0.caseInsensitiveCompare(filter.value) == .orderedSame }
+            matched = anyFilterValue(filter.value) { wanted in note.tags.contains { $0.caseInsensitiveCompare(wanted) == .orderedSame } }
         case .type:
-            matched = note.documentType.caseInsensitiveCompare(filter.value) == .orderedSame
+            matched = anyFilterValue(filter.value) { note.documentType.caseInsensitiveCompare($0) == .orderedSame }
         case .status:
-            matched = note.status.caseInsensitiveCompare(filter.value) == .orderedSame
+            matched = anyFilterValue(filter.value) { note.status.caseInsensitiveCompare($0) == .orderedSame }
         }
         return filter.negated ? !matched : matched
     }
@@ -146,6 +155,62 @@ enum MobileSearchFilterEngine {
     }
 
     // MARK: - Helpers
+
+    private static func anyFilterValue(_ value: String, matches: (String) -> Bool) -> Bool {
+        value.split(separator: ",").contains { part in
+            let trimmed = part.trimmingCharacters(in: .whitespaces)
+            return !trimmed.isEmpty && matches(trimmed)
+        }
+    }
+
+    private static func matchesDateFilter(_ raw: String, expression: String, reference: Date) -> Bool {
+        guard let date = parseDate(raw) else { return false }
+        return expression.split(separator: ",").contains { part in
+            guard let range = parseDateRange(String(part), reference: reference) else { return false }
+            return range.contains(date)
+        }
+    }
+
+    private static func matchesDateFilter(_ date: Date, expression: String, reference: Date) -> Bool {
+        expression.split(separator: ",").contains { part in
+            guard let range = parseDateRange(String(part), reference: reference) else { return false }
+            return range.contains(date)
+        }
+    }
+
+    private static func parseDate(_ raw: String) -> Date? {
+        let iso = ISO8601DateFormatter()
+        if let date = iso.date(from: raw) { return date }
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: String(raw.prefix(10)))
+    }
+
+    private static func parseDateRange(_ raw: String, reference: Date) -> ClosedRange<Date>? {
+        let value = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let calendar = Calendar(identifier: .gregorian)
+        if value.hasPrefix("last ") {
+            let component: Calendar.Component
+            switch value {
+            case "last day": component = .day
+            case "last week": component = .weekOfYear
+            case "last month": component = .month
+            case "last year": component = .year
+            default: return nil
+            }
+            guard let from = calendar.date(byAdding: component, value: -1, to: reference) else { return nil }
+            return from...reference
+        }
+        let parts = value.components(separatedBy: "..")
+        guard parts.count <= 2, let from = parseDate(parts[0]) else { return nil }
+        let to = parts.count == 2 ? parseDate(parts[1]) : from
+        guard let end = to else { return nil }
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: end))?.addingTimeInterval(-0.001) ?? end
+        return calendar.startOfDay(for: from)...endOfDay
+    }
 
     private static func orderedUnique(_ values: [String]) -> [String] {
         var seen: Set<String> = []

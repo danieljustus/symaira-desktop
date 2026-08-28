@@ -62,6 +62,32 @@ func TestParse(t *testing.T) {
 			query:            "tag:",
 			wantErrSubstring: "requires a value",
 		},
+		{
+			name:  "file format list and filename",
+			query: "filetype:pdf,epub filename:invoice",
+			wantFilters: []Filter{
+				{Field: FieldFileType, Value: "pdf,epub"},
+				{Field: FieldFilename, Value: "invoice"},
+			},
+			wantSidecar: true,
+		},
+		{
+			name:        "relative date window",
+			query:       "modified:last week",
+			wantFilters: []Filter{{Field: FieldModified, Value: "last week"}},
+			wantSidecar: true,
+		},
+		{
+			name:        "explicit date range",
+			query:       "created:2026-08-01..2026-08-31",
+			wantFilters: []Filter{{Field: FieldCreated, Value: "2026-08-01..2026-08-31"}},
+			wantSidecar: true,
+		},
+		{
+			name:             "invalid date expression",
+			query:            "modified:tomorrow",
+			wantErrSubstring: "invalid date",
+		},
 	}
 
 	for _, tt := range tests {

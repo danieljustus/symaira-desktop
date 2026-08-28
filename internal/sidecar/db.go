@@ -213,11 +213,11 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 		}
 
 		// Update files
-		_, err = tx.Exec(`UPDATE files SET sha256 = ?, title = ?, modified_at = ?, indexed_at = ?,
+		_, err = tx.Exec(`UPDATE files SET sha256 = ?, title = ?, created_at = ?, modified_at = ?, indexed_at = ?,
 			"type" = ?, document_date = ?, person = ?, status = ?, due_date = ?, confidence = ?, ocr_json_path = ?, simhash = ?, asn = ?,
 			size = ?, mtime_ns = ?
 			WHERE id = ?`,
-			doc.SHA256, doc.Title, doc.Created, time.Now(),
+			doc.SHA256, doc.Title, doc.Created, documentModifiedAt(doc), time.Now(),
 			doc.Type,
 			nullStr(doc.DocumentDate), nullStr(doc.Person), nullStr(doc.Status),
 			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash), nullASN(doc.ASN),
@@ -239,10 +239,10 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 
 	} else {
 		// New file
-		res, err := tx.Exec(`INSERT INTO files(path, sha256, title, modified_at, indexed_at,
+		res, err := tx.Exec(`INSERT INTO files(path, sha256, title, created_at, modified_at, indexed_at,
 			"type", document_date, person, status, due_date, confidence, ocr_json_path, simhash, asn, size, mtime_ns)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			doc.Path, doc.SHA256, doc.Title, doc.Created, time.Now(),
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			doc.Path, doc.SHA256, doc.Title, doc.Created, documentModifiedAt(doc), time.Now(),
 			doc.Type,
 			nullStr(doc.DocumentDate), nullStr(doc.Person), nullStr(doc.Status),
 			nullStr(doc.DueDate), nullInt(doc.Confidence), nullStr(doc.OcrJSONPath), nullStr(doc.Simhash), nullASN(doc.ASN),
@@ -581,18 +581,30 @@ func (db *DB) SearchScoped(query string, allowedPaths []string) ([]*vault.Docume
 // the query language's regex post-filter. Body is never exposed directly by the
 // service; callers receive the existing snippet-only public shape.
 type SearchMatch struct {
-	Path    string
-	Title   string
-	Snippet string
-	Body    string
-	Tags    string
+	Path       string
+	Title      string
+	Snippet    string
+	Body       string
+	Tags       string
+	Status     string
+	Type       string
+	CreatedAt  string
+	ModifiedAt string
 }
 
 // SearchPlan applies a parsed search plan. Metadata and FTS filters run in
 // SQLite; regex and the legacy, unnormalised tags value are applied after the
 // database has narrowed the candidate set. The latter avoids a schema migration
 // while preserving exact tag matching for existing sidecars.
+var searchClock = time.Now
+
+// SearchPlan evaluates a plan using the current clock. SearchPlanAt is exposed
+// for deterministic callers and tests that need a fixed reference instant.
 func (db *DB) SearchPlan(plan searchquery.Plan) ([]SearchMatch, error) {
+	return db.SearchPlanAt(plan, searchClock())
+}
+
+func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]SearchMatch, error) {
 	positiveTerms := make([]searchquery.Term, 0, len(plan.Terms))
 	negativeTerms := make([]searchquery.Term, 0, len(plan.Terms))
 	for _, term := range plan.Terms {
@@ -613,7 +625,11 @@ func (db *DB) SearchPlan(plan searchquery.Plan) ([]SearchMatch, error) {
 	}
 	query.WriteString(`COALESCE(fts_search.body, ''),
 		COALESCE((SELECT value FROM file_properties tag_prop
-			WHERE tag_prop.file_id = f.id AND tag_prop.key = 'tags'), '')
+			WHERE tag_prop.file_id = f.id AND tag_prop.key = 'tags'), ''),
+		COALESCE(f.status, ''), COALESCE(f."type", ''),
+		COALESCE(f.created_at, (SELECT value FROM file_properties created_prop
+			WHERE created_prop.file_id = f.id AND created_prop.key = 'created'), ''),
+		COALESCE(f.modified_at, '')
 		FROM files f `)
 	if hasFullText {
 		query.WriteString(`JOIN fts_search ON fts_search.rowid = f.id WHERE fts_search MATCH ?`)
@@ -629,6 +645,9 @@ func (db *DB) SearchPlan(plan searchquery.Plan) ([]SearchMatch, error) {
 	for _, filter := range plan.Filters {
 		switch filter.Field {
 		case searchquery.FieldPath:
+			if strings.Contains(filter.Value, ",") {
+				continue
+			}
 			operator := "LIKE"
 			if filter.Negated {
 				operator = "NOT LIKE"
@@ -636,6 +655,9 @@ func (db *DB) SearchPlan(plan searchquery.Plan) ([]SearchMatch, error) {
 			query.WriteString(` AND LOWER(f.path) ` + operator + ` LOWER(?) ESCAPE '\'`)
 			args = append(args, "%"+escapeLike(filter.Value)+"%")
 		case searchquery.FieldStatus:
+			if strings.Contains(filter.Value, ",") {
+				continue
+			}
 			operator := "="
 			if filter.Negated {
 				operator = "!="
@@ -643,6 +665,9 @@ func (db *DB) SearchPlan(plan searchquery.Plan) ([]SearchMatch, error) {
 			query.WriteString(` AND COALESCE(f.status, '') ` + operator + ` ? COLLATE NOCASE`)
 			args = append(args, filter.Value)
 		case searchquery.FieldType:
+			if strings.Contains(filter.Value, ",") {
+				continue
+			}
 			operator := "EXISTS"
 			if filter.Negated {
 				operator = "NOT EXISTS"
@@ -683,10 +708,10 @@ func (db *DB) SearchPlan(plan searchquery.Plan) ([]SearchMatch, error) {
 	results := make([]SearchMatch, 0)
 	for rows.Next() {
 		var match SearchMatch
-		if err := rows.Scan(&match.Path, &match.Title, &match.Snippet, &match.Body, &match.Tags); err != nil {
+		if err := rows.Scan(&match.Path, &match.Title, &match.Snippet, &match.Body, &match.Tags, &match.Status, &match.Type, &match.CreatedAt, &match.ModifiedAt); err != nil {
 			return nil, err
 		}
-		if !matchesPlanPostFilters(match, plan) {
+		if !matchesPlanPostFiltersAt(match, plan, reference) {
 			continue
 		}
 		results = append(results, match)
@@ -719,11 +744,61 @@ func escapeLike(value string) string {
 }
 
 func matchesPlanPostFilters(match SearchMatch, plan searchquery.Plan) bool {
+	return matchesPlanPostFiltersAt(match, plan, searchClock())
+}
+
+func matchesPlanPostFiltersAt(match SearchMatch, plan searchquery.Plan, reference time.Time) bool {
 	for _, filter := range plan.Filters {
+		if filter.Field == searchquery.FieldPath {
+			if !strings.Contains(filter.Value, ",") {
+				continue
+			}
+			matched := hasAnyValue(match.Path, filter.Value, func(raw, wanted string) bool {
+				return strings.Contains(strings.ToLower(raw), strings.ToLower(wanted))
+			})
+			if filter.Negated == matched {
+				return false
+			}
+			continue
+		}
+		if filter.Field == searchquery.FieldStatus || filter.Field == searchquery.FieldType {
+			if !strings.Contains(filter.Value, ",") {
+				continue
+			}
+			raw := match.Status
+			if filter.Field == searchquery.FieldType {
+				raw = match.Type
+			}
+			matched := hasAnyValue(raw, filter.Value, func(value, wanted string) bool {
+				return strings.EqualFold(value, wanted)
+			})
+			if filter.Negated == matched {
+				return false
+			}
+			continue
+		}
+		if filter.Field == searchquery.FieldCreated || filter.Field == searchquery.FieldModified {
+			value := match.CreatedAt
+			if filter.Field == searchquery.FieldModified {
+				value = match.ModifiedAt
+			}
+			matched := matchesDateList(value, filter.Value, reference)
+			if filter.Negated == matched {
+				return false
+			}
+			continue
+		}
+		if filter.Field == searchquery.FieldFilename || filter.Field == searchquery.FieldFileType {
+			matched := matchesFilenameFilter(match.Path, filter)
+			if filter.Negated == matched {
+				return false
+			}
+			continue
+		}
 		if filter.Field != searchquery.FieldTag {
 			continue
 		}
-		matched := hasTag(match.Tags, filter.Value)
+		matched := hasAnyValue(match.Tags, filter.Value, hasTag)
 		if filter.Negated == matched {
 			return false
 		}
@@ -1387,4 +1462,66 @@ func nullModTime(t time.Time) interface{} {
 		return nil
 	}
 	return t.UnixNano()
+}
+
+func documentModifiedAt(doc *vault.Document) string {
+	if !doc.ModTime.IsZero() {
+		return doc.ModTime.UTC().Format(time.RFC3339Nano)
+	}
+	if doc.Created != "" {
+		return doc.Created
+	}
+	return searchClock().UTC().Format(time.RFC3339Nano)
+}
+
+func hasAnyValue(raw, wanted string, match func(string, string) bool) bool {
+	for _, value := range strings.Split(wanted, ",") {
+		if value = strings.TrimSpace(value); value != "" && match(raw, value) {
+			return true
+		}
+	}
+	return false
+}
+
+func matchesFilenameFilter(path string, filter searchquery.Filter) bool {
+	base := filepath.Base(filepath.ToSlash(path))
+	if filter.Field == searchquery.FieldFileType {
+		ext := strings.TrimPrefix(strings.ToLower(filepath.Ext(base)), ".")
+		for _, wanted := range strings.Split(filter.Value, ",") {
+			if strings.EqualFold(ext, strings.TrimPrefix(strings.TrimSpace(wanted), ".")) {
+				return true
+			}
+		}
+		return false
+	}
+	for _, wanted := range strings.Split(filter.Value, ",") {
+		if wanted = strings.TrimSpace(wanted); wanted != "" && strings.Contains(strings.ToLower(base), strings.ToLower(wanted)) {
+			return true
+		}
+	}
+	return false
+}
+
+func matchesDateList(raw, wanted string, reference time.Time) bool {
+	value, err := parseIndexedTime(raw)
+	if err != nil {
+		return false
+	}
+	for _, expression := range strings.Split(wanted, ",") {
+		rangeValue, err := searchquery.ParseDateValue(strings.TrimSpace(expression), reference)
+		if err == nil && !value.Before(rangeValue.From) && !value.After(rangeValue.To) {
+			return true
+		}
+	}
+	return false
+}
+
+func parseIndexedTime(value string) (time.Time, error) {
+	value = strings.TrimSpace(value)
+	for _, layout := range []string{time.RFC3339Nano, time.RFC3339, "2006-01-02 15:04:05-07:00", "2006-01-02 15:04:05"} {
+		if parsed, err := time.Parse(layout, value); err == nil {
+			return parsed.UTC(), nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("invalid indexed timestamp %q", value)
 }

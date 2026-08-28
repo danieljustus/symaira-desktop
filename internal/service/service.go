@@ -869,9 +869,15 @@ func matchesOther(doc *vault.Document, e compose.MemoryEntity) bool {
 	return false
 }
 
-// IngestJobs lists the jobs from symingest.
+// IngestJobs lists the jobs from the active vault using the legacy array shape.
 func (s *Service) IngestJobs() (string, error) {
-	return ingest.IngestJobs()
+	return ingest.IngestJobsForVault(s.VaultRoot, 0)
+}
+
+// IngestJobsPage lists a page of jobs from the active vault and includes the
+// total count for UI pagination.
+func (s *Service) IngestJobsPage(limit, offset int) (string, error) {
+	return ingest.IngestJobsPage(s.VaultRoot, limit, offset)
 }
 
 // IngestRetry retries a failed job by ID in symingest.

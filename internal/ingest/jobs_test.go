@@ -93,3 +93,25 @@ func TestIngestRetryRejectsNonNumericID(t *testing.T) {
 		t.Fatalf("expected an invalid-job-ID error, got %v", err)
 	}
 }
+
+func TestIngestJobsForVaultPassesScopeAndLimit(t *testing.T) {
+	var got Options
+	var gotLimit int
+	stubJobs(t, func() ([]Job, error) { return []Job{{ID: 2, SourcePath: "/vault-b/b.pdf"}}, nil }, nil)
+	original := JobsFunc
+	JobsFunc = func(_ context.Context, opts Options, limit int) ([]Job, error) {
+		got, gotLimit = opts, limit
+		return original(context.Background(), opts, limit)
+	}
+
+	jobs, err := IngestJobsForVault("/vault-b", 25)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Vault != "/vault-b" || gotLimit != 25 {
+		t.Fatalf("JobsFunc received opts=%+v limit=%d", got, gotLimit)
+	}
+	if !strings.Contains(jobs, `"source_path": "/vault-b/b.pdf"`) {
+		t.Fatalf("expected scoped job in JSON, got %s", jobs)
+	}
+}

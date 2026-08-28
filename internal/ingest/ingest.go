@@ -226,12 +226,18 @@ date: "%s"
 	return filepath.Join("inbox", noteName), nil
 }
 
-// IngestJobs lists the queued ingest jobs as a JSON array.
+// IngestJobs lists the queued ingest jobs as the legacy JSON array.
 func IngestJobs() (string, error) {
+	return IngestJobsForVault("", 0)
+}
+
+// IngestJobsForVault lists jobs for one vault while retaining the legacy array
+// response. It is used by MCP and older integrations.
+func IngestJobsForVault(vaultRoot string, limit int) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	jobs, err := JobsFunc(ctx, Options{}, 0)
+	jobs, err := JobsFunc(ctx, Options{Vault: vaultRoot}, limit)
 	if err != nil {
 		return "[]", err
 	}
@@ -241,6 +247,21 @@ func IngestJobs() (string, error) {
 	data, err := json.MarshalIndent(jobs, "", "  ")
 	if err != nil {
 		return "[]", fmt.Errorf("failed to marshal jobs: %w", err)
+	}
+	return string(data), nil
+}
+
+// IngestJobsPage returns the new paged JSON envelope for CLI/UI consumers.
+func IngestJobsPage(vaultRoot string, limit, offset int) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	page, err := JobsPage(ctx, Options{Vault: vaultRoot}, limit, offset)
+	if err != nil {
+		return `{"jobs":[],"total":0}`, err
+	}
+	data, err := json.MarshalIndent(page, "", "  ")
+	if err != nil {
+		return `{"jobs":[],"total":0}`, fmt.Errorf("failed to marshal job page: %w", err)
 	}
 	return string(data), nil
 }

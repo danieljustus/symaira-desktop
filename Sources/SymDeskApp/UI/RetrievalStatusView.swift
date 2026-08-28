@@ -67,12 +67,19 @@ struct RetrievalStatusView: View {
                 title: "The index is empty",
                 detail: "Nothing is indexed yet, so search falls back to plain full-text matching. Run an index pass below."
             )
+        } else if status.hasStoredDegradation {
+            banner(
+                icon: "exclamationmark.triangle.fill",
+                tint: .orange,
+                title: "The stored index needs repair",
+                detail: storedDegradationDetail(status)
+            )
         } else if !status.backendAvailable {
             banner(
                 icon: "bolt.horizontal.circle",
                 tint: .orange,
                 title: "Embedding backend unreachable",
-                detail: "Queries are embedded with the local fallback (\(status.embeddingModel)) instead of the configured model, which makes semantic ranking noticeably worse. Start the embedding backend, then reload."
+                detail: "The stored index is healthy, but semantic queries are temporarily unavailable. Start the embedding backend, then reload."
             )
         } else {
             banner(
@@ -82,6 +89,18 @@ struct RetrievalStatusView: View {
                 detail: "Indexed and embedding with \(status.embeddingModel)."
             )
         }
+    }
+
+    private func storedDegradationDetail(_ status: RetrievalStatus) -> String {
+        var problems: [String] = []
+        if let pending = status.pendingChunkCount, pending > 0 {
+            problems.append("\(pending) chunk\(pending == 1 ? "" : "s") still need real embeddings")
+        }
+        if status.mixedEmbeddingSpaces == true {
+            problems.append("stored vectors use mixed embedding spaces")
+        }
+        return problems.joined(separator: "; ")
+            + ". Start the embedding backend, then run an index pass with re-embed to repair semantic search."
     }
 
     private func banner(icon: String, tint: Color, title: String, detail: String) -> some View {

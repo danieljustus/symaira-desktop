@@ -148,7 +148,7 @@ func ParseFile(path string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to open file: %w", err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		data, err := io.ReadAll(io.LimitReader(f, MaxIndexFileSize+1))
 		if err != nil {
 			return "", fmt.Errorf("failed to read file: %w", err)
@@ -163,11 +163,12 @@ func ParseFile(path string) (string, error) {
 // parseRTF extracts visible text from an RTF stream without treating control
 // words as content. Destination groups such as font tables are skipped.
 func parseRTF(path string) (string, error) {
+	// #nosec G304 -- the path is selected by the vault-scoped parser boundary.
 	f, err := os.Open(path)
 	if err != nil {
 		return "", fmt.Errorf("failed to open RTF: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	data, err := io.ReadAll(io.LimitReader(f, MaxIndexFileSize+1))
 	if err != nil {
 		return "", fmt.Errorf("failed to read RTF: %w", err)
@@ -239,7 +240,7 @@ func parseEPUB(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open EPUB: %w", err)
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 	if err := checkArchiveEntryCount(path, r.File); err != nil {
 		return "", err
 	}
@@ -286,7 +287,7 @@ func extractEPUBChapter(f *zip.File, budget *archiveBudget) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 	cr := &countingReader{r: rc}
 	data, err := io.ReadAll(io.LimitReader(cr, budget.limit()))
 	budget.spend(cr.n)
@@ -329,7 +330,7 @@ func parseHTML(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	data, err := io.ReadAll(io.LimitReader(f, MaxIndexFileSize+1))
 	if err != nil {
@@ -385,7 +386,7 @@ func parsePDF(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open PDF: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var text strings.Builder
 	for i := 1; i <= r.NumPage(); i++ {
@@ -430,7 +431,7 @@ func parseCSV(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	data, err := io.ReadAll(io.LimitReader(f, MaxIndexFileSize+1))
 	if err != nil {
@@ -463,7 +464,7 @@ func parseXLSX(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open XLSX: %w", err)
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	if err := checkArchiveEntryCount(path, r.File); err != nil {
 		return "", err
@@ -510,7 +511,7 @@ func parsePPTX(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open PPTX: %w", err)
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	if err := checkArchiveEntryCount(path, r.File); err != nil {
 		return "", err
@@ -787,7 +788,7 @@ func parseOfficeXMLPart(path, xmlEntry string, extract func(io.Reader) (string, 
 	if err != nil {
 		return "", fmt.Errorf("failed to open Office XML: %w", err)
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	if err := checkArchiveEntryCount(path, r.File); err != nil {
 		return "", err
@@ -1004,7 +1005,7 @@ func readXLSXSharedStrings(files []*zip.File, budget *archiveBudget) ([]string, 
 			if err != nil {
 				return nil, err
 			}
-			defer rc.Close()
+			defer func() { _ = rc.Close() }()
 			cr := &countingReader{r: rc}
 			strings_, err := parseSharedStrings(io.LimitReader(cr, budget.limit()))
 			budget.spend(cr.n)
@@ -1057,7 +1058,7 @@ func extractXLSXSheetText(f *zip.File, sharedStrings []string, budget *archiveBu
 	if err != nil {
 		return "", err
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 
 	cr := &countingReader{r: rc}
 	decoder := xml.NewDecoder(io.LimitReader(cr, budget.limit()))
@@ -1130,7 +1131,7 @@ func extractPPTXSlideText(f *zip.File, budget *archiveBudget) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 
 	cr := &countingReader{r: rc}
 	content, err := extractXMLText(io.LimitReader(cr, budget.limit()))

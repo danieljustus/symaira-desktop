@@ -1100,7 +1100,7 @@ func createFakeZipFile(t *testing.T, xmlContent string) *zip.File {
 func TestParseFileRTFVisibleText(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "sample.rtf")
 	content := "{" + string(rune(92)) + "rtf1" + string(rune(92)) + "ansi{" + string(rune(92)) + "fonttbl{" + string(rune(92)) + "f0 Helvetica;}}Hello " + string(rune(92)) + "b world" + string(rune(92)) + "b0." + string(rune(92)) + "par Second" + string(rune(92)) + "tab line.}"
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatalf("write RTF: %v", err)
 	}
 	got, err := ParseFile(path)

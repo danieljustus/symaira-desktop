@@ -201,7 +201,7 @@ func IsUnsupportedKind(kind Kind) bool {
 func UnsupportedFormatError(kind Kind) error {
 	for _, format := range UnsupportedFormats {
 		if format.Kind == kind {
-			return fmt.Errorf("unsupported document format %s: %s", format.Format.Name, format.Reason)
+			return fmt.Errorf("unsupported document format %s: %s", format.Name, format.Reason)
 		}
 	}
 	return fmt.Errorf("unsupported document format %q", kind)

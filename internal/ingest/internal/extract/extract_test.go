@@ -15,7 +15,7 @@ func TestDetectMatchesSharedSupportedContract(t *testing.T) {
 		ext := ext
 		t.Run(ext, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "fixture"+ext)
-			if err := os.WriteFile(path, nil, 0644); err != nil {
+			if err := os.WriteFile(path, nil, 0o600); err != nil {
 				t.Fatalf("write fixture: %v", err)
 			}
 			want, ok := documentformat.KindForExtension(ext)

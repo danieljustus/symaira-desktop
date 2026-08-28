@@ -43,6 +43,9 @@ type Notebook struct {
 	Created     string `json:"created"`
 	// Sources are vault-relative paths, sorted and deduplicated.
 	Sources []string `json:"sources"`
+	// Query is set for notebooks promoted from a search result set. It is
+	// optional so ordinary hand-created notebooks keep the existing shape.
+	Query string `json:"query,omitempty"`
 }
 
 // SourceRef is one resolved source: the reference path plus what could be
@@ -67,6 +70,7 @@ type frontmatter struct {
 	NotebookID  string                 `yaml:"notebook_id"`
 	Description string                 `yaml:"description,omitempty"`
 	Sources     []string               `yaml:"sources"`
+	Query       string                 `yaml:"query,omitempty"`
 	Extras      map[string]interface{} `yaml:",inline"`
 }
 
@@ -108,6 +112,21 @@ func canonicalRoot(vaultRoot string) string {
 // The slug is derived from title and de-duplicated against existing
 // notebooks by appending "-2", "-3", ... The caller is responsible for
 // re-indexing the written file (see Service.NotebookNew).
+// NewWithQuery creates a notebook whose Markdown frontmatter remembers the
+// search query that produced it. The query is metadata only; Sources remains
+// the bounded grounding set and the Markdown note remains the authority.
+func NewWithQuery(vaultRoot, title, description, query string) (*Notebook, error) {
+	nb, err := New(vaultRoot, title, description)
+	if err != nil {
+		return nil, err
+	}
+	nb.Query = strings.TrimSpace(query)
+	if err := write(canonicalRoot(vaultRoot), nb); err != nil {
+		return nil, err
+	}
+	return nb, nil
+}
+
 func New(vaultRoot, title, description string) (*Notebook, error) {
 	vaultRoot = canonicalRoot(vaultRoot)
 	title = strings.TrimSpace(title)
@@ -348,6 +367,7 @@ func render(nb *Notebook) ([]byte, error) {
 		NotebookID:  nb.ID,
 		Description: nb.Description,
 		Sources:     nb.Sources,
+		Query:       nb.Query,
 	}
 	fmBytes, err := yaml.Marshal(fm)
 	if err != nil {
@@ -389,6 +409,7 @@ func parse(relPath string, data []byte) (*Notebook, error) {
 		id = strings.TrimSuffix(filepath.Base(relPath), ".md")
 	}
 	description, _ := doc.Frontmatter["description"].(string)
+	query, _ := doc.Frontmatter["query"].(string)
 
 	// Never nil (see the same comment in New): an empty notebook must
 	// serialize as `sources: []`, not `sources: null`.
@@ -413,6 +434,7 @@ func parse(relPath string, data []byte) (*Notebook, error) {
 		Title:       doc.Title,
 		Description: description,
 		Created:     doc.Created,
+		Query:       query,
 		Sources:     sources,
 	}, nil
 }

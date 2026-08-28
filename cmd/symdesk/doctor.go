@@ -75,8 +75,8 @@ func newDoctorCmd() *cobra.Command {
 				}
 			}
 
-			// 2b. Archive path coverage: warn when the symingest archive is not
-			// inside the vault directory, because backup strategies must cover both.
+			// 2b. Archive path coverage: report whether the symingest archive
+			// is inside the vault, so one backup covers both data sets.
 			if vRoot != "" {
 				if archivePath, archiveOk, archiveErr := checkArchiveInVault(vRoot); archiveErr != nil {
 					results["archive_backup"] = map[string]string{"status": "error", "message": archiveErr.Error()}
@@ -85,6 +85,40 @@ func newDoctorCmd() *cobra.Command {
 					results["archive_backup"] = map[string]string{"status": "ok", "path": archivePath}
 				} else {
 					results["archive_backup"] = map[string]string{"status": "warn", "path": archivePath, "message": "archive is outside the vault; include it separately in backups"}
+				}
+			}
+
+			// 2c. Note-level archive_path resolution (#660): walk the vault for
+			// Markdown notes whose frontmatter `archive_path` either points at
+			// a missing file or is stored in the old absolute-machine-path
+			// shape. The new contract is vault-relative; a relative path that
+			// does not resolve is a stale or half-archived note.
+			if vRoot != "" {
+				unresolved, unresolvedCount, absoluteCount, scanErr := checkArchivePathsInVault(vRoot)
+				if scanErr != nil {
+					results["archive_paths"] = map[string]string{"status": "error", "message": scanErr.Error()}
+					allOk = false
+				} else {
+					entry := map[string]interface{}{
+						"status":            "ok",
+						"unresolved_count":  unresolvedCount,
+						"absolute_count":    absoluteCount,
+						"vault_relative_ok": true,
+					}
+					var messages []string
+					if unresolvedCount > 0 {
+						entry["status"] = "warn"
+						entry["unresolved"] = unresolved
+						messages = append(messages, "one or more notes have an archive_path that does not resolve under the vault; re-ingest or move the original back into the vault")
+					}
+					if absoluteCount > 0 {
+						entry["status"] = "warn"
+						messages = append(messages, "one or more notes still use absolute archive_path values from a pre-#660 install; re-ingest the affected notes to rewrite the path in the vault-relative form")
+					}
+					if len(messages) > 0 {
+						entry["message"] = strings.Join(messages, "; ")
+					}
+					results["archive_paths"] = entry
 				}
 			}
 
@@ -310,10 +344,10 @@ func newDoctorCmd() *cobra.Command {
 }
 
 // checkArchiveInVault resolves the ingest archive path and reports whether it
-// is contained inside the vault directory — a layout that would make the vault
-// index its own archived originals. The path comes from the absorbed ingest
-// pipeline, which resolves it exactly as the CLI does; the env variable and
-// XDG fallbacks below remain for the case where that resolution fails.
+// is contained inside the vault directory, so the backup coverage is explicit.
+// The path comes from the absorbed ingest pipeline, which resolves it exactly
+// as the CLI does; the env variable and XDG fallbacks below remain for the case
+// where that resolution fails.
 func checkArchiveInVault(vaultPath string) (string, bool, error) {
 	archivePath := ""
 
@@ -357,4 +391,66 @@ func checkArchiveInVault(vaultPath string) (string, bool, error) {
 	}
 	inVault := !strings.HasPrefix(rel, "..") && rel != ".."
 	return archivePath, inVault, nil
+}
+
+// checkArchivePathsInVault walks every Markdown note in vRoot and reports the
+// `archive_path` values that do not resolve on this machine (#660). It also
+// counts the pre-#660 absolute-path notes that should be re-ingested to
+// rewrite the path in the vault-relative form. The walk is best-effort:
+// a single bad note does not abort the scan, and the detail list is capped.
+func checkArchivePathsInVault(vRoot string) ([]map[string]string, int, int, error) {
+	var (
+		unresolved      []map[string]string
+		unresolvedCount int
+		absoluteCount   int
+	)
+	recordUnresolved := func(notePath, archivePath, reason string) {
+		unresolvedCount++
+		if len(unresolved) < 20 {
+			unresolved = append(unresolved, map[string]string{
+				"note":         notePath,
+				"archive_path": archivePath,
+				"reason":       reason,
+			})
+		}
+	}
+
+	walkErr := vault.Walk(vRoot, func(p string) error {
+		doc, err := vault.ParseFile(p)
+		if err != nil {
+			return nil
+		}
+		raw, ok := doc.Frontmatter["archive_path"].(string)
+		if !ok || raw == "" {
+			return nil
+		}
+		if filepath.IsAbs(raw) {
+			absoluteCount++
+			info, statErr := os.Stat(raw)
+			if statErr != nil {
+				recordUnresolved(p, raw, "missing absolute archive")
+			} else if info.IsDir() {
+				recordUnresolved(p, raw, "archive_path is a directory")
+			}
+			return nil
+		}
+
+		rel := filepath.Clean(filepath.FromSlash(raw))
+		if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || filepath.IsAbs(rel) {
+			recordUnresolved(p, raw, "archive_path escapes the vault")
+			return nil
+		}
+		candidate := filepath.Join(vRoot, rel)
+		info, statErr := os.Stat(candidate)
+		if statErr != nil {
+			recordUnresolved(p, raw, "missing vault-relative archive")
+		} else if info.IsDir() {
+			recordUnresolved(p, raw, "archive_path is a directory")
+		}
+		return nil
+	})
+	if walkErr != nil {
+		return unresolved, unresolvedCount, absoluteCount, walkErr
+	}
+	return unresolved, unresolvedCount, absoluteCount, nil
 }

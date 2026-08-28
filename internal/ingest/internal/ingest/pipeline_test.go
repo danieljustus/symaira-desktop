@@ -524,7 +524,11 @@ func TestPipeline_ArchivePathVaultRelative(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() {
+		if err := s.Close(); err != nil {
+			t.Logf("close store: %v", err)
+		}
+	}()
 
 	vault := filepath.Join(dir, "vault")
 	if err := os.MkdirAll(vault, 0o750); err != nil {
@@ -542,7 +546,7 @@ func TestPipeline_ArchivePathVaultRelative(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "scan.png")
-	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -573,7 +577,11 @@ func TestPipeline_ArchivePathAbsoluteWhenOutsideVault(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() {
+		if err := s.Close(); err != nil {
+			t.Logf("close store: %v", err)
+		}
+	}()
 
 	vault := filepath.Join(dir, "vault")
 	sharedArchive := filepath.Join(dir, "shared-archive") // outside the vault
@@ -587,7 +595,7 @@ func TestPipeline_ArchivePathAbsoluteWhenOutsideVault(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "scan.png")
-	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 

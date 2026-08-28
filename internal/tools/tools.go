@@ -149,7 +149,7 @@ func NewRegistry(options RegistryOptions) *Registry {
 		{
 			alias:       "search_documents",
 			canonical:   "desk_search",
-			description: "Searches notes with full-text terms plus path:, tag:, type:, status:, quoted phrases, -negation and /regex/. Legacy alias for desk_search.",
+			description: "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint. Legacy alias for desk_search.",
 		},
 		{
 			alias:       "reocr",
@@ -337,7 +337,7 @@ func newLsTool(getService ServiceFactory) *Tool {
 func newSearchTool(getService ServiceFactory) *Tool {
 	return &Tool{
 		Name:        "desk_search",
-		Description: "Searches notes with full-text terms plus path:, tag:, type:, status:, quoted phrases, -negation and /regex/. Invalid syntax falls back to plain full-text and returns a hint.",
+		Description: "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint.",
 		InputSchema: json.RawMessage(`{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}`),
 		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
 			var args struct {

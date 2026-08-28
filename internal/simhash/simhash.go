@@ -11,6 +11,36 @@ import (
 	"strings"
 )
 
+// MinimumBodyLength is the minimum amount of meaningful body text for a
+// similarity score to be considered reliable. SimHash is intentionally kept
+// unchanged; this guard prevents a handful of tokens (or only whitespace)
+// from producing an overconfident duplicate score.
+const MinimumBodyLength = 64
+
+// ShortBodySimilarityCap is the highest similarity reported when either
+// document is shorter than MinimumBodyLength. The duplicate scan's default
+// threshold is higher than this cap, so short notes cannot form a duplicate
+// group without changing the established threshold policy.
+const ShortBodySimilarityCap = 50
+
+// ContentLength returns the number of non-whitespace Unicode characters in a
+// document body.
+func ContentLength(text string) int {
+	return len([]rune(strings.TrimSpace(text)))
+}
+
+// SimilarityForContent applies the conservative short-body policy to the
+// regular SimHash similarity calculation.
+func SimilarityForContent(a, b uint64, aBody, bBody string) int {
+	similarity := Similarity(a, b)
+	if ContentLength(aBody) < MinimumBodyLength || ContentLength(bBody) < MinimumBodyLength {
+		if similarity > ShortBodySimilarityCap {
+			return ShortBodySimilarityCap
+		}
+	}
+	return similarity
+}
+
 // Compute returns the 64-bit SimHash fingerprint of text.
 // The computation is deterministic: identical input always yields the same hash.
 func Compute(text string) uint64 {

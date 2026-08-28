@@ -13,6 +13,7 @@ package retrieval
 
 import (
 	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -21,11 +22,17 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/engine"
 )
 
+// LocationAnchor is re-exported so service and transport consumers do not
+// depend on the retrieval database's internal package.
+type LocationAnchor = db.LocationAnchor
+
 // Result is one search hit, reduced to the fields a consumer displays.
 type Result struct {
 	Path    string  `json:"path"`
 	Score   float64 `json:"score"`
 	Snippet string  `json:"snippet"`
+	// Anchor is omitted for legacy index rows that predate location metadata.
+	Anchor *db.LocationAnchor `json:"anchor,omitempty"`
 	// VectorMode reports how the vector leg of the search was scored:
 	// "semantic" for a real embedding model, "fallback" when the query fell
 	// back to the local hash vector while the index uses an Ollama model, or
@@ -76,7 +83,40 @@ func (c *Client) Close() error {
 // document's stable identity (symdesk passes the vault-relative path), and
 // body is its full text.
 func (c *Client) Index(source, body string) error {
+	// Prefer the source file when available: format-aware parsing retains page
+	// and heading anchors. Body indexing remains the compatibility fallback
+	// for URLs, stdin labels, and callers whose source is not a local file.
+	if info, err := os.Stat(source); err == nil && info.Mode().IsRegular() {
+		if archivePath := archivePathFromMarkdown(source); archivePath != "" {
+			if archiveInfo, archiveErr := os.Stat(archivePath); archiveErr == nil && archiveInfo.Mode().IsRegular() {
+				_, err := engine.IndexFileWithSource(c.db, c.embedder, source, archivePath)
+				return err
+			}
+		}
+		_, err := engine.IndexFile(c.db, c.embedder, source)
+		return err
+	}
 	return engine.IndexStdin(c.db, c.embedder, strings.NewReader(body), source)
+}
+
+func archivePathFromMarkdown(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	lines := strings.Split(string(data), "\n")
+	if len(lines) == 0 || strings.TrimSpace(lines[0]) != "---" {
+		return ""
+	}
+	for _, line := range lines[1:] {
+		if strings.TrimSpace(line) == "---" {
+			break
+		}
+		if key, value, ok := strings.Cut(line, ":"); ok && strings.TrimSpace(key) == "archive_path" {
+			return strings.Trim(strings.TrimSpace(value), "\"'")
+		}
+	}
+	return ""
 }
 
 // Delete removes a document and its chunks from the index. Deleting a
@@ -151,6 +191,7 @@ func (c *Client) Search(query string, limit int) ([]Result, error) {
 			Path:       s.Path,
 			Score:      float64(s.Score),
 			Snippet:    engine.BuildSnippet(s.Snippet, terms, engine.DefaultSnippetBound),
+			Anchor:     s.Anchor,
 			VectorMode: s.VectorMode,
 		})
 	}

@@ -298,18 +298,31 @@ func ReembedPending(dbClient db.Store, embedder Embedder) (int, error) {
 		if pending == 0 {
 			continue
 		}
-		content, perr := parser.ParseFile(doc.Path)
+		sections, perr := parser.ParseFileSections(doc.Path)
 		if perr != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to re-parse %s for re-embed: %v\n", doc.Path, perr)
 			continue
 		}
-		if err := reembedDocument(dbClient, embedder, doc.Path, content); err != nil {
+		if err := reembedDocumentSections(dbClient, embedder, doc.Path, sections); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to re-embed %s: %v\n", doc.Path, err)
 			continue
 		}
 		reembedded++
 	}
 	return reembedded, nil
+}
+
+func reembedDocumentSections(dbClient db.Store, embedder Embedder, source string, sections []parser.Section) error {
+	content := joinSectionText(sections)
+	hashSum := sha256.Sum256([]byte(content))
+	currentHash := hex.EncodeToString(hashSum[:])
+	existing, err := dbClient.GetDocument(source)
+	if err != nil {
+		return fmt.Errorf("failed to check existing document: %w", err)
+	}
+	chunks := buildChunksFromSections(embedder, source, sections)
+	doc := &db.Document{Path: source, Hash: currentHash, UpdatedAt: time.Now()}
+	return commitIndex(dbClient, source, chunks, doc, existing, "")
 }
 
 // reembedDocument forces a rebuild of a document's chunks regardless of its

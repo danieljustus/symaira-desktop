@@ -31,6 +31,8 @@ type Chunk struct {
 	Model        string    `json:"embedding_model"`
 	CharStart    *int      `json:"char_start,omitempty"`
 	CharEnd      *int      `json:"char_end,omitempty"`
+	AnchorKind   string    `json:"anchor_kind,omitempty"`
+	AnchorValue  string    `json:"anchor_value,omitempty"`
 	// EmbeddingPending marks a chunk whose embedding could not be produced
 	// by the configured backend (the local-hash fallback was used). Pending
 	// chunks carry no semantic vector and are excluded from the vector
@@ -71,14 +73,22 @@ type SearchResult struct {
 // --json output and the MCP search_documents tool. It exposes only the fields
 // callers need to cite or navigate to a source passage, omitting the full
 // embedding vector.
+// LocationAnchor is a stable, format-neutral source location. Kind is one of
+// page, heading, section, or text; Value is interpreted by the viewer.
+type LocationAnchor struct {
+	Kind  string `json:"kind"`
+	Value string `json:"value"`
+}
+
 type StructuredSearchResult struct {
-	Path       string  `json:"path"`
-	ChunkID    string  `json:"chunk_id"`
-	CharStart  *int    `json:"char_start,omitempty"`
-	CharEnd    *int    `json:"char_end,omitempty"`
-	Score      float32 `json:"score"`
-	Snippet    string  `json:"snippet"`
-	VectorMode string  `json:"vector_mode,omitempty"`
+	Path       string          `json:"path"`
+	ChunkID    string          `json:"chunk_id"`
+	CharStart  *int            `json:"char_start,omitempty"`
+	CharEnd    *int            `json:"char_end,omitempty"`
+	Score      float32         `json:"score"`
+	Snippet    string          `json:"snippet"`
+	Anchor     *LocationAnchor `json:"anchor,omitempty"`
+	VectorMode string          `json:"vector_mode,omitempty"`
 }
 
 // Structured converts a SearchResult into the shared consumer-facing shape.
@@ -87,11 +97,16 @@ func (r *SearchResult) Structured() *StructuredSearchResult {
 	if r == nil || r.Chunk == nil {
 		return nil
 	}
+	var anchor *LocationAnchor
+	if r.Chunk.AnchorKind != "" && r.Chunk.AnchorValue != "" {
+		anchor = &LocationAnchor{Kind: r.Chunk.AnchorKind, Value: r.Chunk.AnchorValue}
+	}
 	return &StructuredSearchResult{
 		Path:       r.Chunk.DocumentPath,
 		ChunkID:    r.Chunk.UUID,
 		CharStart:  r.Chunk.CharStart,
 		CharEnd:    r.Chunk.CharEnd,
+		Anchor:     anchor,
 		Score:      r.RRFScore,
 		Snippet:    r.Chunk.Content,
 		VectorMode: r.VectorMode,
@@ -410,8 +425,8 @@ func (db *DB) SaveChunks(chunks []*Chunk) error {
 	}
 	defer tx.Rollback()
 
-	query := `INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm, binary_signature, embedding_dim, embedding_model, char_start, char_end, embedding_pending)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm, binary_signature, embedding_dim, embedding_model, char_start, char_end, embedding_pending, anchor_kind, anchor_value)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	stmt, err := tx.Prepare(query)
 	if err != nil {
@@ -423,7 +438,7 @@ func (db *DB) SaveChunks(chunks []*Chunk) error {
 		c.Norm = l2Norm(c.Embedding)
 		embBytes := Float32SliceToBytes(c.Embedding)
 		sigBytes := SignBinarySignature(c.Embedding)
-		res, err := stmt.Exec(c.UUID, c.DocumentPath, c.ChunkIndex, c.Content, embBytes, c.Hash, c.Norm, sigBytes, c.Dim, c.Model, c.CharStart, c.CharEnd, boolToInt(c.EmbeddingPending))
+		res, err := stmt.Exec(c.UUID, c.DocumentPath, c.ChunkIndex, c.Content, embBytes, c.Hash, c.Norm, sigBytes, c.Dim, c.Model, c.CharStart, c.CharEnd, boolToInt(c.EmbeddingPending), c.AnchorKind, c.AnchorValue)
 		if err != nil {
 			return fmt.Errorf("failed to insert chunk: %w", err)
 		}
@@ -452,7 +467,7 @@ func (db *DB) SaveChunks(chunks []*Chunk) error {
 }
 
 func (db *DB) GetChunksForDocument(docPath string) ([]*Chunk, error) {
-	query := "SELECT id, uuid, document_path, chunk_index, content, embedding, hash, norm, embedding_dim, embedding_model, char_start, char_end, embedding_pending FROM chunks WHERE document_path = ? ORDER BY chunk_index ASC"
+	query := "SELECT id, uuid, document_path, chunk_index, content, embedding, hash, norm, embedding_dim, embedding_model, char_start, char_end, embedding_pending, anchor_kind, anchor_value FROM chunks WHERE document_path = ? ORDER BY chunk_index ASC"
 	rows, err := db.conn.Query(query, docPath)
 	if err != nil {
 		return nil, err
@@ -464,7 +479,7 @@ func (db *DB) GetChunksForDocument(docPath string) ([]*Chunk, error) {
 		var c Chunk
 		var embBytes []byte
 		var pending sql.NullInt64
-		if err := rows.Scan(&c.ID, &c.UUID, &c.DocumentPath, &c.ChunkIndex, &c.Content, &embBytes, &c.Hash, &c.Norm, &c.Dim, &c.Model, &c.CharStart, &c.CharEnd, &pending); err != nil {
+		if err := rows.Scan(&c.ID, &c.UUID, &c.DocumentPath, &c.ChunkIndex, &c.Content, &embBytes, &c.Hash, &c.Norm, &c.Dim, &c.Model, &c.CharStart, &c.CharEnd, &pending, &c.AnchorKind, &c.AnchorValue); err != nil {
 			return nil, err
 		}
 		c.Embedding = BytesToFloat32Slice(embBytes)

@@ -86,6 +86,7 @@ struct ContentView: View {
         let docFilterID: String
         let tagFilter: String?
         let deepLinkDocPath: String?
+        let deepLinkAnchor: SearchAnchor?
         let selectedViewID: String?
     }
 
@@ -101,6 +102,8 @@ struct ContentView: View {
     @State private var docTypeCounts: [String: Int] = [:]
     @State private var docTotalCount: Int = 0
     @State private var deepLinkDocPath: String?
+    @State private var deepLinkAnchor: SearchAnchor?
+
 
     // Navigation history stacks
     @State private var navBackStack: [NavEntry] = []
@@ -418,6 +421,7 @@ struct ContentView: View {
                                 openDocumentInEditor(doc)
                             }
                         )
+                        .environment(\.searchAnchor, deepLinkAnchor)
                     case .dbView:
                         if let vid = selectedViewID {
                             if let view = dbViews.first(where: { $0.id == vid }) {
@@ -531,10 +535,7 @@ struct ContentView: View {
                             navigate(to: .vault, note: note)
                         },
                         onSelectSearchResult: { result in
-                            // For search results, we match the path to a Note
-                            if let found = notes.first(where: { $0.path == result.path }) {
-                                navigate(to: .vault, note: found)
-                            }
+                            navigate(to: .docs, deepLinkPath: result.path, deepLinkAnchor: result.anchor)
                         }
                     )
                 }
@@ -943,6 +944,8 @@ struct ContentView: View {
             docFilterID: docFilterID,
             tagFilter: tagFilter,
             deepLinkDocPath: deepLinkDocPath,
+            deepLinkAnchor: deepLinkAnchor,
+
             selectedViewID: selectedViewID
         )
     }
@@ -955,6 +958,8 @@ struct ContentView: View {
         docFilterID = entry.docFilterID
         tagFilter = entry.tagFilter
         deepLinkDocPath = entry.deepLinkDocPath
+        deepLinkAnchor = entry.deepLinkAnchor
+
         selectedViewID = entry.selectedViewID
     }
 
@@ -1074,6 +1079,8 @@ struct ContentView: View {
         docFilter: String? = nil,
         tagFilter: String? = nil,
         deepLinkPath: String? = nil,
+        deepLinkAnchor: SearchAnchor? = nil,
+
         viewID: String? = nil
     ) {
         navBackStack.append(makeNavEntry())
@@ -1083,6 +1090,8 @@ struct ContentView: View {
         if let docFilter = docFilter { docFilterID = docFilter }
         if let tagFilter = tagFilter { self.tagFilter = tagFilter }
         if let deepLinkPath = deepLinkPath { deepLinkDocPath = deepLinkPath }
+        if let deepLinkAnchor = deepLinkAnchor { self.deepLinkAnchor = deepLinkAnchor }
+
         if let viewID = viewID { selectedViewID = viewID }
     }
 

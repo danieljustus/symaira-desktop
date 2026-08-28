@@ -649,6 +649,8 @@ struct DocumentGridView: View {
                 result = result.filter { $0.documentType == filter.value }
             case .status:
                 result = result.filter { $0.status == filter.value }
+            case .indexState:
+                result = result.filter { $0.indexState == filter.value }
             case .tag:
                 // Tags are stored in frontmatter, not directly on DocumentItem.
                 // For the MVP we skip local tag filtering — the compiled
@@ -662,8 +664,12 @@ struct DocumentGridView: View {
                 result = result.filter { doc in
                     (DocumentCard.containingFolder(forPath: doc.path) ?? "").localizedCaseInsensitiveContains(filter.value)
                 }
-            case .date:
-                break // Date range filter — future enhancement.
+            case .filename:
+                result = result.filter { URL(fileURLWithPath: $0.path).lastPathComponent.localizedCaseInsensitiveContains(filter.value) }
+            case .filetype:
+                result = result.filter { $0.documentType.localizedCaseInsensitiveContains(filter.value) }
+            case .created, .modified, .date:
+                break // Date range filters — future enhancement.
             }
         }
         if let tagFilteredPaths, appliedTagFilter != nil {

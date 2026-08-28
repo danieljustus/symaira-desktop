@@ -959,7 +959,7 @@ func TestSetValue_UnknownKeyListsRegistryKeysInOrder(t *testing.T) {
 
 	wantNames := []string{
 		"ollama_url", "model", "embedding_dim", "timeout_seconds", "retry_count",
-		"retry_backoff_ms", "index_cooldown_seconds", "vector_backend",
+		"retry_backoff_ms", "index_cooldown_seconds", "vector_backend", "index_path",
 		"vector_quantization", "vector_quant_bits", "vector_quantized_shortlist",
 		"vector_exact_rerank", "rerank_query", "rerank_model",
 		"rerank_timeout_seconds", "expand_query", "expand_model",

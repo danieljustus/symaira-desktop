@@ -75,7 +75,11 @@ func Open() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	dbClient, err := db.Open()
+	indexPath, err := configuredIndexPath(cfg)
+	if err != nil {
+		return nil, err
+	}
+	dbClient, err := db.OpenAt(indexPath)
 	if err != nil {
 		return nil, err
 	}
@@ -84,6 +88,17 @@ func Open() (*Client, error) {
 		embedder: engine.NewEmbeddingsGeneratorWithOllamaConfig(cfg.OllamaConfig()),
 		expand:   cfg.ExpandConfig(),
 	}, nil
+}
+
+func configuredIndexPath(cfg *config.Config) (string, error) {
+	if cfg != nil && strings.TrimSpace(cfg.IndexPath) != "" {
+		path, err := filepath.Abs(cfg.IndexPath)
+		if err != nil {
+			return "", fmt.Errorf("absolute index path: %w", err)
+		}
+		return filepath.Clean(path), nil
+	}
+	return db.DefaultPath()
 }
 
 // Close releases the index handle.
@@ -328,7 +343,8 @@ type Status struct {
 	IndexScope string `json:"index_scope"`
 	// VaultDocumentCount is populated by the CLI when an active vault can be
 	// enumerated. It is a comparison figure for the shared index.
-	VaultDocumentCount *int `json:"vault_document_count,omitempty"`
+	VaultDocumentCount *int   `json:"vault_document_count,omitempty"`
+	IndexLocation      string `json:"index_location"`
 }
 
 // Status reports the index snapshot plus a live probe of the embedding
@@ -348,6 +364,10 @@ func (c *Client) Status() (*Status, error) {
 		return nil, err
 	}
 	probe := c.embedder.GenerateVectorNoRetryWithModel("symdesk retrieval status probe")
+	location, err := IndexLocation()
+	if err != nil {
+		return nil, err
+	}
 	status := &Status{
 		DocumentCount:        stats.DocumentCount,
 		ChunkCount:           stats.ChunkCount,
@@ -357,6 +377,7 @@ func (c *Client) Status() (*Status, error) {
 		PendingChunkCount:    pending,
 		MixedEmbeddingSpaces: len(spaces) > 1,
 		IndexScope:           "shared",
+		IndexLocation:        location,
 	}
 	if !stats.LastIndexedAt.IsZero() {
 		status.LastIndexedAt = stats.LastIndexedAt.UTC().Format(time.RFC3339)

@@ -217,7 +217,7 @@ func StripSearchMetadata(content string) string {
 	}
 	end := strings.Index(content[start+len(searchMetadataStart):], searchMetadataEnd)
 	if end < 0 {
-		return content
+		return strings.TrimSpace(content[:start])
 	}
 	end += start + len(searchMetadataStart) + len(searchMetadataEnd)
 	return strings.TrimSpace(content[:start] + "\n" + content[end:])

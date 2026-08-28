@@ -43,6 +43,20 @@ struct ContentView: View {
     @AppStorage("dismissedNotificationPermissionBanner") private var dismissedNotificationPermissionBanner = false
     @AppStorage("dismissedVersionMismatchBanner") private var dismissedVersionMismatchBanner = false
 
+    // Sidebar sections default to a compact state so the note tree stays in
+    // the first viewport. Each disclosure is persisted independently, letting
+    // users keep their preferred workspace between launches (issue #657).
+    @AppStorage("sidebar.library.collapsed") private var isLibrarySectionCollapsed = true
+    @AppStorage("sidebar.tags.collapsed") private var isTagsSectionCollapsed = true
+    @AppStorage("sidebar.meetings.collapsed") private var isMeetingsSectionCollapsed = true
+    @AppStorage("sidebar.discover.collapsed") private var isDiscoverSectionCollapsed = true
+    @AppStorage("sidebar.inbox.collapsed") private var isInboxSectionCollapsed = true
+    @AppStorage("sidebar.safety.collapsed") private var isSafetySectionCollapsed = true
+    @AppStorage("sidebar.settings.collapsed") private var isSettingsSectionCollapsed = true
+    @AppStorage("sidebar.views.collapsed") private var isViewsSectionCollapsed = true
+    @AppStorage("sidebar.savedViews.collapsed") private var isSavedViewsSectionCollapsed = true
+    @AppStorage("sidebar.notes.collapsed") private var isNotesSectionCollapsed = false
+
     @StateObject private var mutationTracker = AsyncActionTracker<String>()
     @State private var ingestFailure: IngestFailure? = nil
 
@@ -163,41 +177,74 @@ struct ContentView: View {
                     VStack(spacing: 0) {
                         sidebarHeader
                         List {
+                            // Notes are the primary workspace: keep them directly
+                            // below the vault controls instead of below every
+                            // secondary destination (issue #657).
+                            SidebarDisclosureSection(
+                                title: "Notes",
+                                systemImage: "doc.text",
+                                isCollapsed: $isNotesSectionCollapsed
+                            ) {
+                                if folderTree.isEmpty {
+                                    Text("No notes")
+                                        .foregroundColor(SymairaTheme.textMuted)
+                                } else {
+                                    ForEach(folderTree) { node in
+                                        sidebarTreeNode(node)
+                                    }
+                                }
+                            }
+
                             Section {
-                                Button(action: { navigate(to: .dashboard) }) {
-                                    HStack {
-                                        Image(systemName: "rectangle.grid.1x2")
-                                        Text("Dashboard")
-                                    }
+                                Button { navigate(to: .dashboard) } label: {
+                                    Label("Dashboard", systemImage: "rectangle.grid.1x2")
                                 }
                             }
 
-                            Section("Library") {
-                                ForEach(DocFilterPreset.defaults) { preset in
-                                    Button(action: {
-                                        navigate(to: .docs, docFilter: preset.id)
-                                    }) {
-                                        HStack {
-                                            Text(preset.label)
-                                            Spacer()
-                                            let count = preset.displayCount(
-                                                statusCounts: docCounts,
-                                                typeCounts: docTypeCounts,
-                                                total: docTotalCount
-                                            )
-                                            Text("\(count)")
-                                                .symairaText(.caption)
-                                                .foregroundColor(SymairaTheme.textSecondary)
-                                                .padding(.horizontal, 6)
-                                                .padding(.vertical, 2)
-                                                .background(Color.white.opacity(0.06))
-                                                .cornerRadius(4)
+                            SidebarDisclosureSection(
+                                title: "Library",
+                                systemImage: "books.vertical",
+                                isCollapsed: $isLibrarySectionCollapsed
+                            ) {
+                                HStack(spacing: 8) {
+                                    Button {
+                                        navigate(to: .docs, docFilter: "all")
+                                    } label: {
+                                        Label("All Documents", systemImage: "doc.on.doc")
+                                    }
+                                    .buttonStyle(.plain)
+                                    Spacer(minLength: 4)
+                                    Text("\(docTotalCount)")
+                                        .symairaText(.caption)
+                                        .foregroundColor(SymairaTheme.textSecondary)
+                                    Menu {
+                                        ForEach(DocFilterPreset.defaults) { preset in
+                                            Button {
+                                                navigate(to: .docs, docFilter: preset.id)
+                                            } label: {
+                                                let count = preset.displayCount(
+                                                    statusCounts: docCounts,
+                                                    typeCounts: docTypeCounts,
+                                                    total: docTotalCount
+                                                )
+                                                Text("\(preset.label) (\(count))")
+                                            }
                                         }
+                                    } label: {
+                                        Label("Filter Library", systemImage: "line.3.horizontal.decrease.circle")
+                                            .labelStyle(.iconOnly)
                                     }
+                                    .menuStyle(.borderlessButton)
+                                    .help("Filter Library")
+                                    .accessibilityLabel("Filter Library")
                                 }
                             }
 
-                            Section("Tags") {
+                            SidebarDisclosureSection(
+                                title: "Tags",
+                                systemImage: "number",
+                                isCollapsed: $isTagsSectionCollapsed
+                            ) {
                                 TagBrowserView(
                                     tags: tagCounts,
                                     onTagClick: { tag in
@@ -224,96 +271,84 @@ struct ContentView: View {
 
                             meetingsSidebarSection
 
-                            Section("Discover") {
-                                Button(action: { navigate(to: .discover) }) {
-                                    HStack {
-                                        Image(systemName: "sparkles")
-                                        Text("Discover")
-                                    }
+                            SidebarDisclosureSection(
+                                title: "Discover",
+                                systemImage: "sparkles",
+                                isCollapsed: $isDiscoverSectionCollapsed
+                            ) {
+                                Button { navigate(to: .discover) } label: {
+                                    Label("Discover", systemImage: "sparkles")
                                 }
-                                Button(action: { navigate(to: .notebooks) }) {
-                                    HStack {
-                                        Image(systemName: "books.vertical")
-                                        Text("Notebooks")
-                                    }
+                                Button { navigate(to: .notebooks) } label: {
+                                    Label("Notebooks", systemImage: "books.vertical")
                                 }
-                                Button(action: { navigate(to: .retrievalStatus) }) {
-                                    HStack {
-                                        Image(systemName: "magnifyingglass.circle")
-                                        Text("Search Index")
-                                    }
+                                Button { navigate(to: .retrievalStatus) } label: {
+                                    Label("Search Index", systemImage: "magnifyingglass.circle")
                                 }
-                                Button(action: { navigate(to: .room) }) {
-                                    HStack {
-                                        Image(systemName: "door.left.hand.open")
-                                        Text("Project Journal")
-                                    }
+                                Button { navigate(to: .room) } label: {
+                                    Label("Project Journal", systemImage: "door.left.hand.open")
                                 }
-                                Button(action: { navigate(to: .companionTools) }) {
-                                    HStack {
-                                        Image(systemName: "wrench.and.screwdriver")
-                                        Text("Companion Tools")
-                                    }
+                                Button { navigate(to: .companionTools) } label: {
+                                    Label("Companion Tools", systemImage: "wrench.and.screwdriver")
                                 }
                             }
 
-                            Section("Inbox & Processing") {
-                                Button(action: { navigate(to: .ingestQueue) }) {
-                                    HStack {
-                                        Image(systemName: "tray.and.arrow.down")
-                                        Text("Ingest Queue")
-                                    }
+                            SidebarDisclosureSection(
+                                title: "Inbox & Processing",
+                                systemImage: "tray.and.arrow.down",
+                                isCollapsed: $isInboxSectionCollapsed
+                            ) {
+                                Button { navigate(to: .ingestQueue) } label: {
+                                    Label("Ingest Queue", systemImage: "tray.and.arrow.down")
                                 }
-                                Button(action: { navigate(to: .reviewLane) }) {
-                                    HStack {
-                                        Image(systemName: "exclamationmark.triangle")
-                                        Text("Review Lane")
-                                    }
+                                Button { navigate(to: .reviewLane) } label: {
+                                    Label("Review Lane", systemImage: "exclamationmark.triangle")
                                 }
                             }
 
-                            Section("Safety Net") {
-                                Button(action: { navigate(to: .history) }) {
-                                    HStack {
-                                        Image(systemName: "clock.arrow.circlepath")
-                                        Text("Version History")
-                                    }
+                            SidebarDisclosureSection(
+                                title: "Safety Net",
+                                systemImage: "shield",
+                                isCollapsed: $isSafetySectionCollapsed
+                            ) {
+                                Button { navigate(to: .history) } label: {
+                                    Label("Version History", systemImage: "clock.arrow.circlepath")
                                 }
-                                Button(action: { navigate(to: .trash) }) {
-                                    HStack {
-                                        Image(systemName: "trash")
-                                        Text("Trash")
-                                    }
+                                Button { navigate(to: .trash) } label: {
+                                    Label("Trash", systemImage: "trash")
                                 }
-                                Button(action: { navigate(to: .duplicates) }) {
-                                    HStack {
-                                        Image(systemName: "arrow.triangle.2.circlepath")
-                                        Text("Possible Duplicates")
-                                    }
+                                Button { navigate(to: .duplicates) } label: {
+                                    Label("Possible Duplicates", systemImage: "arrow.triangle.2.circlepath")
                                 }
                             }
 
-                            Section("Settings") {
-                                Button(action: { navigate(to: .rules) }) {
-                                    HStack {
-                                        Image(systemName: "gearshape")
-                                        Text("Rules & Settings")
-                                    }
+                            SidebarDisclosureSection(
+                                title: "Settings",
+                                systemImage: "gearshape",
+                                isCollapsed: $isSettingsSectionCollapsed
+                            ) {
+                                Button { navigate(to: .rules) } label: {
+                                    Label("Rules & Settings", systemImage: "gearshape")
                                 }
-                                Button(action: { navigate(to: .models) }) {
-                                    HStack {
-                                        Image(systemName: "shippingbox")
-                                        Text("Local Models")
-                                    }
-                                }
+                                // Local Models stays available in code for its
+                                // eventual launch, but is intentionally not a
+                                // navigation row while its catalog is empty.
                             }
 
-                            Section("Views") {
+                            SidebarDisclosureSection(
+                                title: "Views",
+                                systemImage: "square.grid.2x2",
+                                isCollapsed: $isViewsSectionCollapsed
+                            ) {
                                 Button("Vault") { navigate(to: .vault) }
                                 Button("Graph") { navigate(to: .graph) }
                             }
 
-                            Section("Saved Views") {
+                            SidebarDisclosureSection(
+                                title: "Saved Views",
+                                systemImage: "bookmark",
+                                isCollapsed: $isSavedViewsSectionCollapsed
+                            ) {
                                 ForEach(dbViews) { view in
                                     Button(view.name) {
                                         navigate(to: .dbView, viewID: view.id)
@@ -332,25 +367,11 @@ struct ContentView: View {
                                         Task { await deleteView(view) }
                                     }
                                 }
-                                Button(action: {
+                                Button {
                                     editingDbView = nil
                                     isShowingViewEditor = true
-                                }) {
-                                    HStack {
-                                        Image(systemName: "plus")
-                                        Text("New View")
-                                    }
-                                }
-                            }
-
-                            Section("Notes") {
-                                if folderTree.isEmpty {
-                                    Text("No notes")
-                                        .foregroundColor(SymairaTheme.textMuted)
-                                } else {
-                                    ForEach(folderTree) { node in
-                                        sidebarTreeNode(node)
-                                    }
+                                } label: {
+                                    Label("New View", systemImage: "plus")
                                 }
                             }
                         }
@@ -709,18 +730,16 @@ struct ContentView: View {
         .padding(.vertical, 8)
     }
 
-    /// Split out of the sidebar `List` body: inlining even one more
-    /// `Section` there pushes SwiftUI's ViewBuilder type-checker over its
-    /// complexity budget ("unable to type-check this expression in
-    /// reasonable time").
-    @ViewBuilder
+    /// Split out of the sidebar `List` body so every destination section has
+    /// the same persisted disclosure behavior (issue #657).
     private var meetingsSidebarSection: some View {
-        Section("Meetings") {
-            Button(action: { navigate(to: .meetings) }) {
-                HStack {
-                    Image(systemName: "person.wave.2")
-                    Text("Meetings")
-                }
+        SidebarDisclosureSection(
+            title: "Meetings",
+            systemImage: "person.wave.2",
+            isCollapsed: $isMeetingsSectionCollapsed
+        ) {
+            Button { navigate(to: .meetings) } label: {
+                Label("Meetings", systemImage: "person.wave.2")
             }
         }
     }
@@ -1444,6 +1463,45 @@ struct ContentView: View {
                         Label("Move to Trash", systemImage: "trash")
                     }
                 }
+            }
+        }
+    }
+}
+
+/// A compact, accessible sidebar section whose disclosure state is stored in
+/// the parent's `@AppStorage` binding.
+private struct SidebarDisclosureSection<Content: View>: View {
+    let title: String
+    let systemImage: String
+    @Binding var isCollapsed: Bool
+    @ViewBuilder let content: () -> Content
+
+    init(
+        title: String,
+        systemImage: String,
+        isCollapsed: Binding<Bool>,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.title = title
+        self.systemImage = systemImage
+        self._isCollapsed = isCollapsed
+        self.content = content
+    }
+
+    var body: some View {
+        Section {
+            DisclosureGroup(
+                isExpanded: Binding(
+                    get: { !isCollapsed },
+                    set: { isCollapsed = !$0 }
+                )
+            ) {
+                content()
+            } label: {
+                Label(title, systemImage: systemImage)
+                    .symairaText(.subheading).fontWeight(.semibold)
+                    .foregroundStyle(SymairaTheme.textPrimary)
+                    .accessibilityValue(isCollapsed ? "Collapsed" : "Expanded")
             }
         }
     }

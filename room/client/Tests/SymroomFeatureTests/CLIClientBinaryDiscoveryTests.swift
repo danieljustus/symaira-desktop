@@ -50,6 +50,7 @@ final class CLIClientBinaryDiscoveryTests: XCTestCase {
 
         XCTAssertTrue(client.isInstalled)
         XCTAssertNil(client.provenanceNote)
+        XCTAssertNil(client.provenanceDirectory)
     }
 
     func testStrictMissRelaxedHitReportsInstalledWithProvenanceNote() {
@@ -63,6 +64,7 @@ final class CLIClientBinaryDiscoveryTests: XCTestCase {
         XCTAssertNotNil(client.provenanceNote)
         XCTAssertTrue(client.provenanceNote?.contains(tempDir.path) ?? false)
         XCTAssertTrue(client.provenanceNote?.contains("group- or world-writable") ?? false)
+        XCTAssertEqual(client.provenanceDirectory, tempDir.path)
     }
 
     func testBothMissReportsNotInstalled() {
@@ -71,5 +73,6 @@ final class CLIClientBinaryDiscoveryTests: XCTestCase {
 
         XCTAssertFalse(client.isInstalled)
         XCTAssertNil(client.provenanceNote)
+        XCTAssertNil(client.provenanceDirectory)
     }
 }

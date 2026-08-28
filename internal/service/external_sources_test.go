@@ -45,7 +45,7 @@ func TestSearchIncludesRegisteredExternalSourceInPlace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	svc := New(vaultRoot, db)
 	response, err := svc.SearchWithMeta(needle)
 	if err != nil {

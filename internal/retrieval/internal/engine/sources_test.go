@@ -29,7 +29,7 @@ func TestIndexDirectoryUsesCanonicalRootAndRejectsSymlinkEscapes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer dbClient.Close()
+	defer func() { _ = dbClient.Close() }()
 	if err := IndexDirectory(dbClient, &fakeEmbedder{dim: 8}, alias); err != nil {
 		t.Fatalf("IndexDirectory via alias: %v", err)
 	}

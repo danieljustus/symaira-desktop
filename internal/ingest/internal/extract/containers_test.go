@@ -123,19 +123,27 @@ func TestDetect_UnrecognizedContainerNoError(t *testing.T) {
 
 // TestDetect_OLEStreamName: an OLE compound file is classified by its
 // mandated stream name; with no legacy kinds in the surface it is reported
-// as unknown rather than guessed, and never as an error.
+// as the detected legacy kind rather than guessed from an extension.
 func TestDetect_OLEStreamName(t *testing.T) {
 	dir := t.TempDir()
-	for _, stream := range []string{"WordDocument", "PowerPoint Document", "Workbook", "Book"} {
-		t.Run(stream, func(t *testing.T) {
+	for _, tc := range []struct {
+		stream string
+		want   Kind
+	}{
+		{"WordDocument", KindDOC},
+		{"PowerPoint Document", KindPPT},
+		{"Workbook", KindXLS},
+		{"Book", KindXLS},
+	} {
+		t.Run(tc.stream, func(t *testing.T) {
 			path := filepath.Join(dir, "legacy.doc")
-			writeOLEFixture(t, path, stream)
+			writeOLEFixture(t, path, tc.stream)
 			kind, err := Detect(path)
 			if err != nil {
 				t.Fatalf("Detect: unexpected error %v", err)
 			}
-			if kind != KindUnknown {
-				t.Fatalf("kind = %q, want KindUnknown (no legacy kind yet)", kind)
+			if kind != tc.want {
+				t.Fatalf("kind = %q, want %q", kind, tc.want)
 			}
 		})
 	}
@@ -150,8 +158,8 @@ func TestDetect_OLEWithTxtExtension(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Detect: unexpected error %v", err)
 	}
-	if kind != KindUnknown {
-		t.Fatalf("kind = %q, want KindUnknown", kind)
+	if kind != KindDOC {
+		t.Fatalf("kind = %q, want KindDOC", kind)
 	}
 }
 

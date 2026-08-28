@@ -19,6 +19,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/uuid"
 
+	"github.com/danieljustus/symaira-desktop/internal/documentformat"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/parser"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -67,29 +68,16 @@ func shouldSkipDir(name string) bool {
 	return false
 }
 
-var supportedExtensions = map[string]bool{
-	".md":   true,
-	".txt":  true,
-	".go":   true,
-	".py":   true,
-	".js":   true,
-	".ts":   true,
-	".json": true,
-	".yaml": true,
-	".yml":  true,
-	".sh":   true,
-	".html": true,
-	".htm":  true,
-	".css":  true,
-	".csv":  true,
-	".pdf":  true,
-	".docx": true,
-	".pptx": true,
-	".xlsx": true,
-	".odt":  true,
-	".ods":  true,
-	".odp":  true,
-}
+var supportedExtensions = func() map[string]bool {
+	result := map[string]bool{
+		".go": true, ".py": true, ".js": true, ".ts": true,
+		".json": true, ".yaml": true, ".yml": true, ".sh": true, ".css": true,
+	}
+	for _, ext := range documentformat.SupportedExtensions() {
+		result[ext] = true
+	}
+	return result
+}()
 
 // canonicalIndexDirectory resolves a directory before it becomes an index
 // identity. This prevents symlink aliases from creating duplicate documents and
@@ -144,6 +132,7 @@ func IndexDirectory(dbClient db.Store, embedder Embedder, dirPath string) error 
 
 	// 1. Scan directory for valid files
 	foundPaths := make(map[string]bool)
+	var documentIssues []string
 	err = filepath.WalkDir(absPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -173,7 +162,9 @@ func IndexDirectory(dbClient db.Store, embedder Embedder, dirPath string) error 
 		} else if parser.IsKnownDocumentExtension(ext) {
 			// Make unindexable document formats visible instead of
 			// silently ignoring them (issue #341).
-			fmt.Fprintf(os.Stderr, "%s\n", parser.UnsupportedDocumentSkipMessage(path, ext))
+			message := parser.UnsupportedDocumentSkipMessage(path, ext)
+			fmt.Fprintln(os.Stderr, message)
+			documentIssues = append(documentIssues, message)
 		}
 
 		return nil
@@ -189,7 +180,7 @@ func IndexDirectory(dbClient db.Store, embedder Embedder, dirPath string) error 
 		return fmt.Errorf("failed listing existing documents: %w", err)
 	}
 
-	processFilesInParallel(dbClient, embedder, foundPaths)
+	documentIssues = append(documentIssues, processFilesInParallel(dbClient, embedder, foundPaths)...)
 
 	// 4. Orphan detection: delete DB documents that no longer exist on disk
 	for _, doc := range existingDocs {
@@ -202,6 +193,9 @@ func IndexDirectory(dbClient db.Store, embedder Embedder, dirPath string) error 
 		}
 	}
 
+	if len(documentIssues) > 0 {
+		return fmt.Errorf("document format issues:\n%s", strings.Join(documentIssues, "\n"))
+	}
 	return nil
 }
 
@@ -503,15 +497,16 @@ var indexParallelism = func() int {
 	return n
 }()
 
-func processFilesInParallel(dbClient db.Store, embedder Embedder, paths map[string]bool) {
+func processFilesInParallel(dbClient db.Store, embedder Embedder, paths map[string]bool) []string {
 	if len(paths) == 0 {
-		return
+		return nil
 	}
 
 	workers := indexParallelism
 	if workers > len(paths) {
 		workers = len(paths)
 	}
+	var documentIssues []string
 
 	type result struct {
 		path        string
@@ -554,6 +549,9 @@ func processFilesInParallel(dbClient db.Store, embedder Embedder, paths map[stri
 		}
 		if r.err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: %v\n", r.err)
+			if errors.Is(r.err, documentformat.ErrDRMProtected) {
+				documentIssues = append(documentIssues, fmt.Sprintf("DRM-protected document %s: %v", r.path, r.err))
+			}
 			continue
 		}
 		if err := commitIndex(dbClient, r.path, r.chunks, r.doc, r.existing, r.sidecarPath); err != nil {
@@ -561,6 +559,7 @@ func processFilesInParallel(dbClient db.Store, embedder Embedder, paths map[stri
 			continue
 		}
 	}
+	return documentIssues
 }
 
 func prepareIndex(dbClient db.Store, embedder Embedder, path string) ([]*db.Chunk, *db.Document, *db.Document, bool, string, error) {

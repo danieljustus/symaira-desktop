@@ -6,7 +6,32 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/danieljustus/symaira-desktop/internal/documentformat"
 )
+
+func TestDetectMatchesSharedSupportedContract(t *testing.T) {
+	for _, ext := range documentformat.SupportedExtensions() {
+		ext := ext
+		t.Run(ext, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "fixture"+ext)
+			if err := os.WriteFile(path, nil, 0644); err != nil {
+				t.Fatalf("write fixture: %v", err)
+			}
+			want, ok := documentformat.KindForExtension(ext)
+			if !ok || !documentformat.IsSupported(ext) {
+				t.Fatalf("shared contract entry %q is not supported", ext)
+			}
+			got, err := Detect(path)
+			if err != nil {
+				t.Fatalf("Detect: %v", err)
+			}
+			if got != want {
+				t.Fatalf("Detect(%q) = %q, want shared kind %q", ext, got, want)
+			}
+		})
+	}
+}
 
 // zipBytes builds a zip archive in memory for detection fixtures.
 func zipBytes(t *testing.T, files map[string]string) []byte {

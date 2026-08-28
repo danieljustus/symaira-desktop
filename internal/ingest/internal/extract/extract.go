@@ -21,32 +21,43 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/danieljustus/symaira-desktop/internal/documentformat"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/filetype"
 )
 
-// Kind is a normalized MIME-like type for supported sources.
-type Kind string
+// Kind is kept as an alias for compatibility with the ingest API. The values
+// are owned by the shared document-format contract.
+type Kind = documentformat.Kind
 
 const (
-	KindPDF      Kind = "application/pdf"
+	KindPDF           = documentformat.KindPDF
 	KindPNG      Kind = "image/png"
 	KindJPEG     Kind = "image/jpeg"
 	KindTIFF     Kind = "image/tiff"
 	KindWebP     Kind = "image/webp"
 	KindHEIC     Kind = "image/heic"
-	KindText     Kind = "text/plain"
-	KindCSV      Kind = "text/csv"
-	KindMarkdown Kind = "text/markdown"
-	KindHTML     Kind = "text/html"
-	KindRTF      Kind = "application/rtf"
-	KindDOCX     Kind = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-	KindXLSX     Kind = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-	KindPPTX     Kind = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-	KindODT      Kind = "application/vnd.oasis.opendocument.text"
-	KindODS      Kind = "application/vnd.oasis.opendocument.spreadsheet"
-	KindODP      Kind = "application/vnd.oasis.opendocument.presentation"
-	KindEPUB     Kind = "application/epub+zip"
+	KindText          = documentformat.KindText
+	KindCSV           = documentformat.KindCSV
+	KindMarkdown      = documentformat.KindMarkdown
+	KindHTML          = documentformat.KindHTML
+	KindRTF           = documentformat.KindRTF
+	KindDOCX          = documentformat.KindDOCX
+	KindXLSX          = documentformat.KindXLSX
+	KindPPTX          = documentformat.KindPPTX
+	KindODT           = documentformat.KindODT
+	KindODS           = documentformat.KindODS
+	KindODP           = documentformat.KindODP
+	KindEPUB          = documentformat.KindEPUB
 	KindEML      Kind = "message/rfc822"
+	KindMOBI          = documentformat.KindMOBI
+	KindAZW3          = documentformat.KindAZW3
+	KindPages         = documentformat.KindPages
+	KindKeynote       = documentformat.KindKeynote
+	KindNumbers       = documentformat.KindNumbers
+	KindDOC           = documentformat.KindDOC
+	KindXLS           = documentformat.KindXLS
+	KindPPT           = documentformat.KindPPT
+	KindDjVu          = documentformat.KindDjVu
 	KindUnknown  Kind = ""
 )
 
@@ -116,53 +127,35 @@ func Detect(path string) (Kind, error) {
 
 	if kind == "" && !isContainerSignature(head) {
 		ext := strings.ToLower(filepath.Ext(path))
-		switch ext {
-		case ".txt", ".text":
-			kind = KindText
-		case ".csv":
-			kind = KindCSV
-		case ".md", ".markdown":
-			kind = KindMarkdown
-		case ".html", ".htm":
-			kind = KindHTML
-		case ".rtf":
-			kind = KindRTF
-		case ".docx":
-			kind = KindDOCX
-		case ".xlsx":
-			kind = KindXLSX
-		case ".pptx":
-			kind = KindPPTX
-		case ".odt":
-			kind = KindODT
-		case ".ods":
-			kind = KindODS
-		case ".odp":
-			kind = KindODP
-		case ".epub":
-			kind = KindEPUB
-		case ".eml":
-			kind = KindEML
-		case ".pdf":
-			kind = KindPDF
-		case ".png":
-			kind = KindPNG
-		case ".jpg", ".jpeg":
-			kind = KindJPEG
-		case ".tiff", ".tif":
-			kind = KindTIFF
-		case ".webp":
-			kind = KindWebP
-		case ".heic", ".heif":
-			kind = KindHEIC
+		if detected, ok := documentformat.KindForExtension(ext); ok {
+			kind = detected
+		} else {
+			switch ext {
+			case ".eml":
+				kind = KindEML
+			case ".png":
+				kind = KindPNG
+			case ".jpg", ".jpeg":
+				kind = KindJPEG
+			case ".tiff", ".tif":
+				kind = KindTIFF
+			case ".webp":
+				kind = KindWebP
+			case ".heic", ".heif":
+				kind = KindHEIC
+			}
 		}
 	}
 
 	if kind == "" {
 		// A signature-carrying container that could not be resolved is
-		// reported as unknown without an error; only genuinely signature-less
-		// files fail detection.
+		// reported as unknown unless its extension is a recognized blocked
+		// document format. The latter needs a visible reason rather than an
+		// opaque "unknown container" result.
 		if isContainerSignature(head) {
+			if detected, ok := documentformat.KindForExtension(filepath.Ext(path)); ok && documentformat.IsUnsupportedKind(detected) {
+				return detected, nil
+			}
 			return KindUnknown, nil
 		}
 		return KindUnknown, fmt.Errorf("unsupported file type: %s", path)
@@ -177,12 +170,17 @@ func Detect(path string) (Kind, error) {
 	return kind, nil
 }
 
+// SupportedExtensions returns the shared format contract in deterministic order.
+func SupportedExtensions() []string {
+	return documentformat.SupportedExtensions()
+}
+
 func IsExplicitlyUnsupported(kind Kind) bool {
-	return false
+	return documentformat.IsUnsupportedKind(kind)
 }
 
 func UnsupportedFormatError(kind Kind) error {
-	return fmt.Errorf("unsupported extraction format %q", kind)
+	return documentformat.UnsupportedFormatError(kind)
 }
 
 func isHEIFBrand(brand string) bool {

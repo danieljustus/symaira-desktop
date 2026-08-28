@@ -3,11 +3,14 @@ package parser
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/danieljustus/symaira-desktop/internal/documentformat"
 )
 
 func TestGetFileHashAndParse(t *testing.T) {
@@ -601,9 +604,9 @@ func TestParseFileCSV(t *testing.T) {
 }
 
 func TestIsKnownDocumentExtension(t *testing.T) {
-	for _, ext := range []string{".rtf", ".RTF", ".epub", ".doc", ".xls", ".ppt", ".odg"} {
+	for _, ext := range []string{".mobi", ".MOBI", ".azw3", ".pages", ".key", ".numbers", ".doc", ".xls", ".ppt", ".djvu", ".odg"} {
 		if !IsKnownDocumentExtension(ext) {
-			t.Errorf("expected %s to be a known document format", ext)
+			t.Errorf("expected %s to be a known unsupported document format", ext)
 		}
 	}
 	for _, ext := range []string{".md", ".txt", ".html", ".htm", ".pdf", ".docx", ".xlsx", ".pptx", ".odt", ".ods", ".odp", ".csv"} {
@@ -614,11 +617,11 @@ func TestIsKnownDocumentExtension(t *testing.T) {
 }
 
 func TestUnsupportedDocumentSkipMessage(t *testing.T) {
-	msg := UnsupportedDocumentSkipMessage("/home/user/docs/manual.rtf", ".rtf")
-	if !strings.Contains(msg, "/home/user/docs/manual.rtf") {
+	msg := UnsupportedDocumentSkipMessage("/home/user/docs/manual.mobi", ".mobi")
+	if !strings.Contains(msg, "/home/user/docs/manual.mobi") {
 		t.Errorf("skip message must name the file, got %q", msg)
 	}
-	if !strings.Contains(msg, "not indexed") {
+	if !strings.Contains(msg, "no bundled MOBI parser") {
 		t.Errorf("skip message must give the reason, got %q", msg)
 	}
 }
@@ -1092,6 +1095,48 @@ func createFakeZipFile(t *testing.T, xmlContent string) *zip.File {
 		t.Fatalf("open zip reader: %v", err)
 	}
 	return r.File[0]
+}
+
+func TestParseFileRTFVisibleText(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "sample.rtf")
+	content := "{" + string(rune(92)) + "rtf1" + string(rune(92)) + "ansi{" + string(rune(92)) + "fonttbl{" + string(rune(92)) + "f0 Helvetica;}}Hello " + string(rune(92)) + "b world" + string(rune(92)) + "b0." + string(rune(92)) + "par Second" + string(rune(92)) + "tab line.}"
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatalf("write RTF: %v", err)
+	}
+	got, err := ParseFile(path)
+	if err != nil {
+		t.Fatalf("ParseFile(.rtf): %v", err)
+	}
+	if got != "Hello world.\nSecond line." {
+		t.Fatalf("visible RTF text = %q", got)
+	}
+}
+
+func TestParseFileEPUBAndDRM(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "book.epub")
+	createZip(t, path, map[string]string{
+		"OEBPS/02.xhtml":         `<html><body><p>Chapter two</p></body></html>`,
+		"OEBPS/01.xhtml":         `<html><body><h1>Chapter one</h1></body></html>`,
+		"META-INF/container.xml": `<container/>`,
+	})
+	got, err := ParseFile(path)
+	if err != nil {
+		t.Fatalf("ParseFile(.epub): %v", err)
+	}
+	if got != "Chapter one\n\nChapter two" {
+		t.Fatalf("EPUB text = %q", got)
+	}
+
+	drmPath := filepath.Join(dir, "drm.epub")
+	createZip(t, drmPath, map[string]string{
+		"META-INF/rights.xml": `<rights/>`,
+		"OEBPS/01.xhtml":      `<html><body>secret</body></html>`,
+	})
+	_, err = ParseFile(drmPath)
+	if !errors.Is(err, documentformat.ErrDRMProtected) {
+		t.Fatalf("DRM error = %v, want errors.Is(documentformat.ErrDRMProtected)", err)
+	}
 }
 
 // createZip writes a ZIP archive to disk with the given entries.

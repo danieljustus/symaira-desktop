@@ -3,6 +3,7 @@ package extract
 import (
 	"archive/zip"
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -138,6 +139,25 @@ func TestReadStructuredKind_EPUB(t *testing.T) {
 	}
 	if res.MIME != string(KindEPUB) || res.Engine != "epub-native" {
 		t.Fatalf("metadata = %q/%q", res.MIME, res.Engine)
+	}
+}
+
+func TestReadStructuredKind_EPUBDRM(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "drm.epub")
+	writeZip(t, path, map[string]string{
+		"META-INF/encryption.xml": `<encryption/>`,
+		"OEBPS/chapter.xhtml":     `<html><body>secret</body></html>`,
+	})
+	_, err := ReadStructuredKind(context.Background(), path, KindEPUB)
+	if !errors.Is(err, ErrDRMProtected) {
+		t.Fatalf("error = %v, want errors.Is(ErrDRMProtected)", err)
+	}
+}
+
+func TestReadStructuredKind_UnsupportedHasReason(t *testing.T) {
+	_, err := ReadStructuredKind(context.Background(), "book.mobi", KindMOBI)
+	if err == nil || !strings.Contains(err.Error(), "no bundled MOBI parser") {
+		t.Fatalf("error = %v, want visible MOBI parser reason", err)
 	}
 }
 

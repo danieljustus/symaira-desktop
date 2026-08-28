@@ -18,10 +18,20 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/danieljustus/symaira-desktop/internal/documentformat"
 )
+
+// ErrDRMProtected identifies a document whose payload is encrypted or whose
+// rights metadata marks it as DRM-protected. Callers can present this
+// separately from parser failures.
+var ErrDRMProtected = documentformat.ErrDRMProtected
 
 // ReadStructuredKind extracts text from supported text-like container formats.
 func ReadStructuredKind(ctx context.Context, path string, kind Kind) (*Result, error) {
+	if IsExplicitlyUnsupported(kind) {
+		return nil, UnsupportedFormatError(kind)
+	}
 	if err := ctxErr(ctx); err != nil {
 		return nil, err
 	}
@@ -168,7 +178,7 @@ func rtfToText(s string) string {
 					out.WriteByte('\n')
 				}
 			} else if word == "tab" && ignoreDepth == 0 {
-				out.WriteByte('\t')
+				out.WriteByte(' ')
 			}
 			for j < len(s) && (s[j] == '-' || (s[j] >= '0' && s[j] <= '9')) {
 				j++
@@ -416,15 +426,17 @@ func readODP(path string) (string, error) {
 	return readODFContent(path, "odp")
 }
 
-// readEPUB extracts the text of every XHTML chapter, separating chapters
-// with a blank line. The package-level navigation (toc.ncx, META-INF/) is
-// skipped so the table of contents does not duplicate chapter text.
+// META-INF/rights.xml and META-INF/encryption.xml are treated as DRM
+// indicators. We do not attempt to decrypt them.
 func readEPUB(path string) (string, error) {
 	a, err := openZip(path)
 	if err != nil {
 		return "", fmt.Errorf("open epub: %w", err)
 	}
 	defer closeZip(a)
+	if a.find("META-INF/rights.xml") != nil || a.find("META-INF/encryption.xml") != nil {
+		return "", fmt.Errorf("%w: EPUB rights or encryption metadata is present", ErrDRMProtected)
+	}
 	var names []string
 	for _, f := range a.rc.File {
 		name := f.Name

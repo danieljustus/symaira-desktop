@@ -151,15 +151,13 @@ func kindFromOPCMainPart(mainPart string) Kind {
 }
 
 // oleMainStreamKinds maps the mandated OLE root-storage stream names to
-// kinds. No legacy binary formats are part of the extraction surface yet, so
-// every entry currently resolves to KindUnknown; this table is the single
-// place to extend when .doc/.xls/.ppt land, and until then renamed OLE files
-// are reported as unknown rather than guessed.
+// explicitly unsupported legacy document kinds. Classification is useful for
+// reporting, but no binary Office parser is bundled.
 var oleMainStreamKinds = map[string]Kind{
-	"WordDocument":        KindUnknown,
-	"PowerPoint Document": KindUnknown,
-	"Workbook":            KindUnknown,
-	"Book":                KindUnknown,
+	"WordDocument":        KindDOC,
+	"PowerPoint Document": KindPPT,
+	"Workbook":            KindXLS,
+	"Book":                KindXLS,
 }
 
 // detectOLEContainer classifies an OLE compound file by the mandated stream

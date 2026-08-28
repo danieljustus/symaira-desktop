@@ -11,10 +11,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/danieljustus/symaira-desktop/internal/documentformat"
 	"github.com/ledongthuc/pdf"
 	"golang.org/x/net/html"
 )
@@ -36,30 +38,26 @@ const MaxArchiveEntries = 10000
 // (issue #342).
 const MaxArchiveDecompressedBytes = 100 << 20
 
-// knownDocumentExtensions are document formats the indexer recognizes but
-// does not index (no extraction branch exists). They are reported with an
-// explicit skip message when encountered so unsupported documents are
-// visible instead of silently ignored (issue #341).
-var knownDocumentExtensions = map[string]bool{
-	".doc":  true,
-	".xls":  true,
-	".ppt":  true,
-	".rtf":  true,
-	".epub": true,
-	".odg":  true,
+// SupportedExtensions returns the shared format contract in deterministic order.
+func SupportedExtensions() []string {
+	return documentformat.SupportedExtensions()
 }
 
 // IsKnownDocumentExtension reports whether ext is a recognized document
-// format that the indexer does not support.
+// format that is intentionally unsupported by the shared extraction contract.
 func IsKnownDocumentExtension(ext string) bool {
-	return knownDocumentExtensions[strings.ToLower(ext)]
+	return documentformat.IsUnsupported(ext)
 }
 
 // UnsupportedDocumentSkipMessage returns the one-line skip message emitted
-// when a known document format cannot be indexed. It names the file and
-// the reason, following the "Skipping %s: ..." stderr pattern.
+// when a recognized document format cannot be indexed. It names the file and
+// gives the actionable reason from the shared format contract.
 func UnsupportedDocumentSkipMessage(path, ext string) string {
-	return fmt.Sprintf("Skipping %s: %s is a known document format that is not indexed", path, ext)
+	ext = documentformat.NormalizeExtension(ext)
+	if reason, ok := documentformat.UnsupportedReason(ext); ok {
+		return fmt.Sprintf("Skipping %s: %s (%s)", path, ext, reason)
+	}
+	return fmt.Sprintf("Skipping %s: %s is a recognized document format that is not indexed", path, ext)
 }
 
 var (
@@ -134,16 +132,23 @@ func ParseFile(path string) (string, error) {
 		return parsePPTX(path)
 	case ".odt", ".ods", ".odp":
 		return parseODF(path)
+	case ".rtf":
+		return parseRTF(path)
+	case ".epub":
+		return parseEPUB(path)
 	case ".csv":
 		return parseCSV(path)
 	case ".html", ".htm":
 		return parseHTML(path)
 	default:
+		if reason, ok := documentformat.UnsupportedReason(ext); ok {
+			return "", fmt.Errorf("unsupported document format %s: %s", ext, reason)
+		}
 		f, err := os.Open(path)
 		if err != nil {
 			return "", fmt.Errorf("failed to open file: %w", err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		data, err := io.ReadAll(io.LimitReader(f, MaxIndexFileSize+1))
 		if err != nil {
 			return "", fmt.Errorf("failed to read file: %w", err)
@@ -153,6 +158,150 @@ func ParseFile(path string) (string, error) {
 		}
 		return string(data), nil
 	}
+}
+
+// parseRTF extracts visible text from an RTF stream without treating control
+// words as content. Destination groups such as font tables are skipped.
+func parseRTF(path string) (string, error) {
+	// #nosec G304 -- the path is selected by the vault-scoped parser boundary.
+	f, err := os.Open(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to open RTF: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+	data, err := io.ReadAll(io.LimitReader(f, MaxIndexFileSize+1))
+	if err != nil {
+		return "", fmt.Errorf("failed to read RTF: %w", err)
+	}
+	if int64(len(data)) > MaxIndexFileSize {
+		return "", fmt.Errorf("file %s exceeds %d byte limit (%d bytes)", path, MaxIndexFileSize, len(data))
+	}
+	var out strings.Builder
+	ignoreDepth, depth := 0, 0
+	for i := 0; i < len(data); i++ {
+		switch data[i] {
+		case '{':
+			depth++
+			if i+1 < len(data) && (bytes.HasPrefix(data[i+1:], []byte("\\fonttbl")) || bytes.HasPrefix(data[i+1:], []byte("\\colortbl")) || bytes.HasPrefix(data[i+1:], []byte("\\stylesheet")) || bytes.HasPrefix(data[i+1:], []byte("\\*"))) {
+				ignoreDepth = depth
+			}
+		case '}':
+			if ignoreDepth == depth {
+				ignoreDepth = 0
+			}
+			if depth > 0 {
+				depth--
+			}
+		case '\\':
+			start := i + 1
+			if start >= len(data) {
+				continue
+			}
+			if data[start] == '\\' || data[start] == '{' || data[start] == '}' {
+				if ignoreDepth == 0 {
+					out.WriteByte(data[start])
+				}
+				i++
+				continue
+			}
+			j := start
+			for j < len(data) && ((data[j] >= 'a' && data[j] <= 'z') || (data[j] >= 'A' && data[j] <= 'Z')) {
+				j++
+			}
+			word := string(data[start:j])
+			if ignoreDepth == 0 {
+				switch word {
+				case "par", "line", "page":
+					out.WriteByte('\n')
+				case "tab":
+					out.WriteByte(' ')
+				}
+			}
+			for j < len(data) && (data[j] == '-' || (data[j] >= '0' && data[j] <= '9')) {
+				j++
+			}
+			if j < len(data) && data[j] == ' ' {
+				j++
+			}
+			i = j - 1
+		default:
+			if ignoreDepth == 0 && data[i] != '\r' && data[i] != '\n' {
+				out.WriteByte(data[i])
+			}
+		}
+	}
+	return strings.TrimSpace(collapseNewlineRuns(out.String())), nil
+}
+
+// parseEPUB extracts text from XHTML chapters in an EPUB ZIP archive. EPUB
+// rights/encryption metadata is reported distinctly; no decryption is tried.
+func parseEPUB(path string) (string, error) {
+	r, err := zip.OpenReader(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to open EPUB: %w", err)
+	}
+	defer func() { _ = r.Close() }()
+	if err := checkArchiveEntryCount(path, r.File); err != nil {
+		return "", err
+	}
+	if zipFind(&r.Reader, "META-INF/rights.xml") != nil || zipFind(&r.Reader, "META-INF/encryption.xml") != nil {
+		return "", fmt.Errorf("%w: EPUB rights or encryption metadata is present", documentformat.ErrDRMProtected)
+	}
+	budget := &archiveBudget{remaining: MaxArchiveDecompressedBytes}
+	var names []string
+	for _, f := range r.File {
+		if strings.HasPrefix(f.Name, "META-INF/") || strings.HasSuffix(f.Name, "toc.ncx") {
+			continue
+		}
+		switch strings.ToLower(filepath.Ext(f.Name)) {
+		case ".xhtml", ".html", ".htm":
+			names = append(names, f.Name)
+		}
+	}
+	sort.Strings(names)
+	var out strings.Builder
+	for _, name := range names {
+		if budget.exhausted() {
+			return "", archiveBudgetExceededError(path)
+		}
+		f := zipFind(&r.Reader, name)
+		text, err := extractEPUBChapter(f, budget)
+		if err != nil {
+			return "", err
+		}
+		if strings.TrimSpace(text) != "" {
+			if out.Len() > 0 {
+				out.WriteString("\n\n")
+			}
+			out.WriteString(text)
+		}
+	}
+	return strings.TrimSpace(out.String()), nil
+}
+
+func extractEPUBChapter(f *zip.File, budget *archiveBudget) (string, error) {
+	if f == nil {
+		return "", fmt.Errorf("EPUB chapter is missing from archive")
+	}
+	rc, err := f.Open()
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = rc.Close() }()
+	cr := &countingReader{r: rc}
+	data, err := io.ReadAll(io.LimitReader(cr, budget.limit()))
+	budget.spend(cr.n)
+	if err != nil {
+		return "", err
+	}
+	if budget.exhausted() {
+		return "", archiveBudgetExceededError(f.Name)
+	}
+	doc, err := html.Parse(bytes.NewReader(data))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse EPUB chapter %s: %w", f.Name, err)
+	}
+	return extractHTMLText(doc), nil
 }
 
 // blockHTMLElements are HTML block-level elements whose end introduces a
@@ -181,7 +330,7 @@ func parseHTML(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	data, err := io.ReadAll(io.LimitReader(f, MaxIndexFileSize+1))
 	if err != nil {
@@ -237,7 +386,7 @@ func parsePDF(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open PDF: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var text strings.Builder
 	for i := 1; i <= r.NumPage(); i++ {
@@ -282,7 +431,7 @@ func parseCSV(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	data, err := io.ReadAll(io.LimitReader(f, MaxIndexFileSize+1))
 	if err != nil {
@@ -315,7 +464,7 @@ func parseXLSX(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open XLSX: %w", err)
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	if err := checkArchiveEntryCount(path, r.File); err != nil {
 		return "", err
@@ -362,7 +511,7 @@ func parsePPTX(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open PPTX: %w", err)
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	if err := checkArchiveEntryCount(path, r.File); err != nil {
 		return "", err
@@ -639,7 +788,7 @@ func parseOfficeXMLPart(path, xmlEntry string, extract func(io.Reader) (string, 
 	if err != nil {
 		return "", fmt.Errorf("failed to open Office XML: %w", err)
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	if err := checkArchiveEntryCount(path, r.File); err != nil {
 		return "", err
@@ -706,6 +855,15 @@ func (c *countingReader) Read(p []byte) (int, error) {
 	n, err := c.r.Read(p)
 	c.n += int64(n)
 	return n, err
+}
+
+func zipFind(zr *zip.Reader, name string) *zip.File {
+	for _, f := range zr.File {
+		if f.Name == name {
+			return f
+		}
+	}
+	return nil
 }
 
 // checkArchiveEntryCount rejects archives whose entry count exceeds
@@ -847,7 +1005,7 @@ func readXLSXSharedStrings(files []*zip.File, budget *archiveBudget) ([]string, 
 			if err != nil {
 				return nil, err
 			}
-			defer rc.Close()
+			defer func() { _ = rc.Close() }()
 			cr := &countingReader{r: rc}
 			strings_, err := parseSharedStrings(io.LimitReader(cr, budget.limit()))
 			budget.spend(cr.n)
@@ -900,7 +1058,7 @@ func extractXLSXSheetText(f *zip.File, sharedStrings []string, budget *archiveBu
 	if err != nil {
 		return "", err
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 
 	cr := &countingReader{r: rc}
 	decoder := xml.NewDecoder(io.LimitReader(cr, budget.limit()))
@@ -973,7 +1131,7 @@ func extractPPTXSlideText(f *zip.File, budget *archiveBudget) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 
 	cr := &countingReader{r: rc}
 	content, err := extractXMLText(io.LimitReader(cr, budget.limit()))

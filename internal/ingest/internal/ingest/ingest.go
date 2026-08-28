@@ -66,6 +66,9 @@ func ExtractText(ctx context.Context, source string, kind extract.Kind, engine e
 }
 
 func extractText(ctx context.Context, source string, kind extract.Kind, engine extract.Engine) (*extract.Result, error) {
+	if extract.IsExplicitlyUnsupported(kind) {
+		return nil, extract.UnsupportedFormatError(kind)
+	}
 	var res *extract.Result
 	var err error
 

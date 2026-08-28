@@ -73,13 +73,7 @@ func (s *Service) snapshotBefore(absPath string) {
 }
 
 func (s *Service) IndexDocument(doc *vault.Document) error {
-	if err := s.DB.IndexDocument(doc); err != nil {
-		return err
-	}
-	if err := retrieval.IndexWithMetadata(doc.Path, doc.Body, retrieval.SearchMetadataFromVault(doc)); err != nil {
-		slog.Warn("search index update failed", "path", doc.Path, "error", err)
-	}
-	return nil
+	return s.DB.IndexDocument(doc)
 }
 
 func (s *Service) DeleteDocument(path string) error {

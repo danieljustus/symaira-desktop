@@ -50,7 +50,7 @@ func recordSidecarMetadata(dir, vaultPath string) error {
 		return fmt.Errorf("create sidecar metadata: %w", err)
 	}
 	tmpName := tmp.Name()
-	defer os.Remove(tmpName)
+	defer func() { _ = os.Remove(tmpName) }()
 	if err := tmp.Chmod(0600); err != nil {
 		_ = tmp.Close()
 		return fmt.Errorf("secure sidecar metadata: %w", err)
@@ -108,7 +108,7 @@ func ListSidecars() ([]SidecarEntry, error) {
 			continue
 		}
 		entry := SidecarEntry{Path: dbPath, Size: info.Size()}
-		metadata, err := os.ReadFile(filepath.Join(root, dir.Name(), metadataFileName))
+		metadata, err := os.ReadFile(filepath.Join(root, dir.Name(), metadataFileName)) //nolint:gosec // dir.Name() comes from the bounded SidecarRoot directory
 		if err == nil {
 			var recorded sidecarMetadata
 			if json.Unmarshal(metadata, &recorded) == nil && recorded.VaultPath != "" {

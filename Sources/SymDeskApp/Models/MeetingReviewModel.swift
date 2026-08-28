@@ -21,6 +21,9 @@ final class MeetingReviewModel: ObservableObject {
 
     @Published private(set) var importedMeetings: [MeetingNoteSummary] = []
     @Published private(set) var libraryState: LoadState = .idle
+    /// Files skipped by the detailed list response are retained as explicit
+    /// failures so the UI can name each file and offer reveal/skip actions.
+    @Published private(set) var libraryFailures: [MeetingListFailure] = []
 
     /// Available-to-import meetings are tracked separately from
     /// `libraryState`: `symmeet` being absent must not blank out an already
@@ -77,7 +80,9 @@ final class MeetingReviewModel: ObservableObject {
     func loadLibrary() async {
         libraryState = .loading
         do {
-            importedMeetings = try await dataSource.meetingsList()
+            let result = try await dataSource.meetingsListReport()
+            importedMeetings = result.meetings
+            libraryFailures = result.failures
             libraryState = .loaded
         } catch {
             libraryState = .failed(Self.friendlyMessage(for: error))
@@ -145,6 +150,13 @@ final class MeetingReviewModel: ObservableObject {
             speakers = []
             speakersError = Self.friendlyMessage(for: error)
         }
+    }
+
+    /// Dismisses one non-fatal list failure for this refresh cycle. This does
+    /// not delete or mutate the vault file; a later refresh will report it
+    /// again if it still cannot be decoded.
+    func skipLibraryFailure(path: String) {
+        libraryFailures.removeAll { $0.path == path }
     }
 
     func clearSelection() {

@@ -158,6 +158,24 @@ func newIndexStatusCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			// Retrieval currently stores one shared database, while the
+			// sidecar and vault are selected by --vault. Include the active
+			// vault's Markdown count as a comparison figure so consumers can
+			// reconcile the global index count without implying scoping.
+			if cfg != nil && cfg.Vault != "" {
+				vRoot, resolveErr := vault.ResolveVaultRoot("", cfg)
+				if resolveErr != nil {
+					return resolveErr
+				}
+				vaultCount := 0
+				if walkErr := vault.Walk(vRoot, func(path string) error {
+					vaultCount++
+					return nil
+				}); walkErr != nil {
+					return walkErr
+				}
+				status.VaultDocumentCount = &vaultCount
+			}
 			return outputResult(status)
 		},
 	}

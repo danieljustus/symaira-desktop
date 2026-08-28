@@ -124,8 +124,14 @@ struct RetrievalStatusView: View {
 
     private func statsCard(_ status: RetrievalStatus) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            row("Documents", "\(status.documentCount)")
+            row("Indexed documents", "\(status.documentCount)")
             row("Chunks", "\(status.chunkCount)")
+            if status.indexScope == "shared" {
+                row("Index scope", "Shared across vaults")
+                if let vaultCount = status.vaultDocumentCount {
+                    row("Active vault files", "\(vaultCount)")
+                }
+            }
             row("Index size", Self.formatBytes(status.databaseBytes))
             row("Last indexed", Self.formatTimestamp(status.lastIndexedAt))
             row("Embedding model", status.embeddingModel)

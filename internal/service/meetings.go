@@ -96,26 +96,58 @@ type MeetingNoteSummary struct {
 	ReviewState string `json:"review_state"`
 }
 
-// MeetingList returns every vault note whose frontmatter marks it as an
-// imported meeting.
+// MeetingListFailure identifies a vault file that could not be decoded while
+// building the meeting list. It is intentionally non-fatal: one corrupt note
+// must not hide every other meeting, but the UI must name the file so the user
+// can reveal or skip it instead of silently losing it.
+type MeetingListFailure struct {
+	Path    string `json:"path"`
+	Message string `json:"message"`
+}
+
+// MeetingListResult is the detailed meeting-list response used by the native
+// client. The legacy MeetingList method below remains array-shaped for callers
+// that only need the successfully parsed notes.
+type MeetingListResult struct {
+	Meetings []MeetingNoteSummary `json:"meetings"`
+	Failures []MeetingListFailure `json:"failures"`
+}
+
+// MeetingList returns every successfully parsed vault note whose frontmatter
+// marks it as an imported meeting. Parse failures are intentionally omitted for
+// backwards compatibility; MeetingListDetailed exposes them to actionable UI.
 func (s *Service) MeetingList() ([]MeetingNoteSummary, error) {
-	// Start with an explicit empty slice, not a nil one: encoding/json
-	// marshals a nil slice as the JSON literal `null`, which the Swift
-	// client cannot decode as a top-level array and surfaces as a raw
-	// decode error on any vault with zero meeting notes.
-	results := []MeetingNoteSummary{}
+	result, err := s.MeetingListDetailed()
+	if err != nil {
+		return nil, err
+	}
+	return result.Meetings, nil
+}
+
+// MeetingListDetailed returns parsed meeting notes plus per-file failures.
+func (s *Service) MeetingListDetailed() (*MeetingListResult, error) {
+	// Start with explicit empty slices, not nil ones: encoding/json marshals a
+	// nil slice as `null`, which Swift cannot decode as an array.
+	result := &MeetingListResult{
+		Meetings: []MeetingNoteSummary{},
+		Failures: []MeetingListFailure{},
+	}
 	err := vault.Walk(s.VaultRoot, func(path string) error {
+		rel, relErr := filepath.Rel(s.VaultRoot, path)
+		if relErr != nil {
+			rel = path
+		}
+
 		doc, err := vault.ParseFile(path)
 		if err != nil {
-			// A single unparsable note must not fail the whole listing.
+			result.Failures = append(result.Failures, MeetingListFailure{
+				Path:    rel,
+				Message: err.Error(),
+			})
 			return nil
 		}
 		if t, _ := doc.Frontmatter["type"].(string); t != "meeting" {
 			return nil
-		}
-		rel, err := filepath.Rel(s.VaultRoot, path)
-		if err != nil {
-			rel = path
 		}
 
 		summary := MeetingNoteSummary{Path: rel, Title: doc.Title}
@@ -134,13 +166,13 @@ func (s *Service) MeetingList() ([]MeetingNoteSummary, error) {
 			summary.ReviewState, _ = src["review_state"].(string)
 		}
 
-		results = append(results, summary)
+		result.Meetings = append(result.Meetings, summary)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return results, nil
+	return result, nil
 }
 
 // MeetingShow loads one meeting note by its vault-relative path.

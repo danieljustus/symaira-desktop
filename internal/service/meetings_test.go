@@ -74,6 +74,33 @@ func TestMeetingShowRejectsNonMeetingNote(t *testing.T) {
 	}
 }
 
+// TestMeetingListDetailedReportsMalformedFiles verifies that one unreadable
+// meeting candidate remains actionable instead of disappearing from the list.
+func TestMeetingListDetailedReportsMalformedFiles(t *testing.T) {
+	svc := newTestService(t)
+	path := filepath.Join(svc.VaultRoot, "meetings", "broken.md")
+	if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte("---\ntitle: [broken\n---\nbody\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	result, err := svc.MeetingListDetailed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Failures) != 1 {
+		t.Fatalf("expected one list failure, got %d: %+v", len(result.Failures), result.Failures)
+	}
+	if result.Failures[0].Path != filepath.Join("meetings", "broken.md") {
+		t.Errorf("failure path = %q, want meetings/broken.md", result.Failures[0].Path)
+	}
+	if result.Failures[0].Message == "" {
+		t.Error("failure message must explain why the file could not be read")
+	}
+}
+
 // TestMeetingListOnEmptyVaultMarshalsAsEmptyArray guards against a
 // regression where `symdesk meeting list --json` on a vault with zero
 // meeting notes produced the JSON literal `null` (Go's zero value for a nil

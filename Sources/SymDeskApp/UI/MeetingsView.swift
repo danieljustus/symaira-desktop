@@ -43,6 +43,14 @@ struct MeetingsView: View {
             Divider()
 
             List {
+                if !model.libraryFailures.isEmpty {
+                    Section("Needs attention") {
+                        ForEach(model.libraryFailures) { failure in
+                            libraryFailureRow(failure)
+                        }
+                    }
+                }
+
                 if !model.importedMeetings.isEmpty {
                     Section("Meetings") {
                         ForEach(model.importedMeetings) { meeting in
@@ -171,6 +179,56 @@ struct MeetingsView: View {
             message: "The SymMeet menu-bar agent is not installed. Install SymMeet to record meetings; SymDesk itself never captures audio.",
             installURL: URL(string: "https://github.com/danieljustus/symaira-meet")
         )
+    }
+
+    private func libraryFailureRow(_ failure: MeetingListFailure) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label("Could not read \(fileName(for: failure.path))", systemImage: "exclamationmark.triangle.fill")
+                .symairaText(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(.red)
+            Text(failure.path)
+                .symairaText(.caption)
+                .monospaced()
+                .foregroundColor(SymairaTheme.textSecondary)
+                .lineLimit(2)
+            Text(failure.message)
+                .symairaText(.caption)
+                .foregroundColor(SymairaTheme.textMuted)
+                .lineLimit(3)
+            HStack(spacing: 8) {
+                if canRevealFiles {
+                    Button("Reveal") { reveal(path: failure.path) }
+                        .buttonStyle(SymairaSecondaryButtonStyle())
+                        .controlSize(.small)
+                }
+                Button("Skip") { model.skipLibraryFailure(path: failure.path) }
+                    .buttonStyle(.plain)
+                    .foregroundColor(SymairaTheme.textSecondary)
+            }
+        }
+        .padding(8)
+        .background(Color.red.opacity(0.08))
+        .overlay {
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color.red.opacity(0.35), lineWidth: 1)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Meeting file could not be read: \(failure.path)")
+    }
+
+    private var canRevealFiles: Bool {
+        !core.isRemote && core.vaultPath != nil
+    }
+
+    private func fileName(for path: String) -> String {
+        URL(fileURLWithPath: path).lastPathComponent
+    }
+
+    private func reveal(path: String) {
+        guard let vaultPath = core.vaultPath else { return }
+        let fileURL = URL(fileURLWithPath: vaultPath).appendingPathComponent(path)
+        NSWorkspace.shared.activateFileViewerSelecting([fileURL])
     }
 
     private func meetingRow(_ meeting: MeetingNoteSummary) -> some View {

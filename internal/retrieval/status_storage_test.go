@@ -46,6 +46,12 @@ func TestStatusReportsStoredRetrievalDegradation(t *testing.T) {
 	if !status.MixedEmbeddingSpaces {
 		t.Fatal("MixedEmbeddingSpaces = false, want true for model-a + model-b")
 	}
+	if status.IndexScope != "shared" {
+		t.Fatalf("IndexScope = %q, want shared", status.IndexScope)
+	}
+	if status.LastIndexedAt == "" {
+		t.Fatal("LastIndexedAt is empty after indexing documents")
+	}
 }
 
 func TestStatusDoesNotConfuseBackendOutageWithStoredDegradation(t *testing.T) {

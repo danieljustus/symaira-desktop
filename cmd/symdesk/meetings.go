@@ -7,6 +7,7 @@ import (
 )
 
 func newMeetingCmd() *cobra.Command {
+	var includeErrors bool
 	meetingCmd := &cobra.Command{
 		Use:   "meeting",
 		Short: "Import and review SymMeet meeting artifacts",
@@ -22,6 +23,13 @@ func newMeetingCmd() *cobra.Command {
 			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
 			svc := service.New(vRoot, db)
 
+			if includeErrors {
+				result, err := svc.MeetingListDetailed()
+				if err != nil {
+					return err
+				}
+				return outputResult(result)
+			}
 			results, err := svc.MeetingList()
 			if err != nil {
 				return err
@@ -29,6 +37,7 @@ func newMeetingCmd() *cobra.Command {
 			return outputResult(results)
 		},
 	}
+	listCmd.Flags().BoolVar(&includeErrors, "include-errors", false, "include per-file decode failures in the response")
 	meetingCmd.AddCommand(listCmd)
 	showCmd := &cobra.Command{
 		Use:   "show <vault-note>",

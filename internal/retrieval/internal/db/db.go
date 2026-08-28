@@ -558,10 +558,26 @@ func (db *DB) GetStats() (*Stats, error) {
 	s.DatabaseSize = pageCount * pageSize
 
 	// Best-effort: read the most recent document update as a proxy for
-	// last index time.  A zero/null value leaves LastIndexedAt as its
-	// zero value (omitted from JSON), so missing metadata degrades
-	// gracefully instead of failing the call.
-	_ = db.conn.QueryRow("SELECT MAX(updated_at) FROM documents").Scan(&s.LastIndexedAt)
+	// last index time. SQLite returns MAX(datetime) as text with the
+	// modernc driver; scanning directly into time.Time silently leaves the
+	// value empty. Parse the stored representation explicitly so a completed
+	// index pass produces a real timestamp in the status response.
+	var rawLastIndexed string
+	if err := db.conn.QueryRow("SELECT MAX(updated_at) FROM documents").Scan(&rawLastIndexed); err == nil && rawLastIndexed != "" {
+		// database/sql may persist time.Time using its String form, which
+		// appends a monotonic-clock suffix ("m=+..."). It is not part of
+		// the wall-clock value and must be removed before parsing.
+		parts := strings.Fields(rawLastIndexed)
+		if len(parts) >= 4 {
+			rawLastIndexed = strings.Join(parts[:4], " ")
+		}
+		for _, layout := range []string{time.RFC3339Nano, "2006-01-02 15:04:05.999999 -0700 MST", "2006-01-02 15:04:05.999999999 -0700 MST", "2006-01-02 15:04:05 -0700 MST"} {
+			if parsed, parseErr := time.Parse(layout, rawLastIndexed); parseErr == nil {
+				s.LastIndexedAt = parsed
+				break
+			}
+		}
+	}
 
 	return &s, nil
 }

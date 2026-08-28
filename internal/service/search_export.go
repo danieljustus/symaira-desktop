@@ -143,9 +143,6 @@ func (s *Service) ExportSearchResults(query, title, outputPath, format string, r
 	if ok, hint := pdf.EngineAvailable(); !ok {
 		return nil, fmt.Errorf("PDF export requires a typesetting engine: %s", hint)
 	}
-	if _, err := os.Stat(outputPath); err == nil {
-		// pdf.Render follows the existing renderer overwrite behavior for PDFs.
-	}
 	if _, err := pdf.Render(content, outputPath, "", s.VaultRoot); err != nil {
 		return nil, err
 	}

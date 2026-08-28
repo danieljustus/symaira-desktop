@@ -65,7 +65,7 @@ func SearchResults(query, title, created string, hits []SearchHit, format string
 	b.WriteString("Query: `")
 	b.WriteString(codeText(query))
 	b.WriteString("`\n\n")
-	b.WriteString(fmt.Sprintf("**%d result", len(hits)))
+	fmt.Fprintf(&b, "**%d result", len(hits))
 	if len(hits) != 1 {
 		b.WriteString("s")
 	}
@@ -91,7 +91,7 @@ func SearchResults(query, title, created string, hits []SearchHit, format string
 		} else {
 			b.WriteString("**Location:** Not available\n")
 		}
-		b.WriteString(fmt.Sprintf("**Score:** %.6f\n", hit.Score))
+		fmt.Fprintf(&b, "**Score:** %.6f\n", hit.Score)
 		if len(hit.MetadataMatches) > 0 {
 			b.WriteString("**Metadata matches:** ")
 			for i, field := range hit.MetadataMatches {

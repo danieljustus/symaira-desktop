@@ -40,6 +40,10 @@ type IngestOptions struct {
 	ExistingVaultPath string
 	// ArchivePathOverride keeps the original archived path during reprocessing.
 	ArchivePathOverride string
+	// OCRLanguage overrides the configured OCR language for this document
+	// (Tesseract traineddata code, e.g. "deu+eng"). Set from the note's
+	// ocr_language frontmatter on reprocessing.
+	OCRLanguage string
 }
 
 // Result is the outcome of a one-shot ingest.

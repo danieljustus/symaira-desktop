@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/extract"
+	"github.com/danieljustus/symaira-desktop/internal/textnorm"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -39,6 +40,30 @@ func DefaultRunner(ocrLang string) *Runner {
 		PDFToPPM:  filepath.Clean("pdftoppm"),
 		SIPS:      filepath.Clean("sips"),
 		OCRLang:   ocrLang,
+	}
+}
+
+// WithLanguage returns a copy of the runner that uses the given OCR
+// language. The language-validation cache is intentionally not carried
+// over: it is keyed by language and cheap to rebuild.
+func (r *Runner) WithLanguage(ocrLang string) *Runner {
+	return &Runner{
+		Tesseract: r.Tesseract,
+		PDFToPPM:  r.PDFToPPM,
+		SIPS:      r.SIPS,
+		OCRLang:   ocrLang,
+	}
+}
+
+// WithLanguage returns a copy of the VLM runner whose Tesseract fallback
+// uses the given OCR language. The VLM model itself is multilingual and
+// does not take a language parameter.
+func (r *VLMRunner) WithLanguage(ocrLang string) *VLMRunner {
+	return &VLMRunner{
+		Ollama:      r.Ollama,
+		OllamaModel: r.OllamaModel,
+		Prompt:      r.Prompt,
+		Fallback:    r.Fallback.WithLanguage(ocrLang),
 	}
 }
 
@@ -98,6 +123,10 @@ func (r *Runner) validateLanguages(ctx context.Context) (string, error) {
 	if lang == "" {
 		lang = "eng"
 	}
+	return r.validateLanguagesFor(ctx, lang)
+}
+
+func (r *Runner) validateLanguagesFor(ctx context.Context, lang string) (string, error) {
 	r.langMu.Lock()
 	if r.validatedLangCached && r.validatedLangKey == lang {
 		cachedLang, cachedErr := r.validatedLang, r.validatedLangErr
@@ -222,11 +251,42 @@ func (r *Runner) extractImage(ctx context.Context, path string) (*extract.Result
 	if err != nil {
 		return nil, fmt.Errorf("tesseract failed: %w", err)
 	}
+	text := extract.NormalizeText(string(out))
+	if retry := r.languageRetry(ctx, lang, text); retry != "" {
+		if out2, rerr := r.runToolInDir(ctx, filepath.Dir(path), r.Tesseract, "-l", retry, filepath.Base(path), "stdout"); rerr == nil {
+			text = extract.NormalizeText(string(out2))
+			lang = retry
+		}
+	}
 	return &extract.Result{
-		Text:   extract.NormalizeText(string(out)),
-		MIME:   "image/ocr",
-		Engine: "tesseract",
+		Text:     text,
+		MIME:     "image/ocr",
+		Engine:   "tesseract",
+		Language: lang,
 	}, nil
+}
+
+// languageRetry reports the language OCR should be retried with when the
+// text recognised with lang is clearly German but lang has no German model
+// loaded. It returns "" when no retry is worthwhile: the configured
+// language already covers German, the text is not clearly German, or no
+// German traineddata is installed (validateLanguagesFor falls back to the
+// installed subset, so a missing "deu" yields the original language and the
+// retry is skipped). The retry happens at most once per document.
+func (r *Runner) languageRetry(ctx context.Context, lang, text string) string {
+	if strings.Contains(lang, textnorm.LangGerman) {
+		return ""
+	}
+	if textnorm.DetectLanguage(text) != textnorm.LangGerman {
+		return ""
+	}
+	candidate := textnorm.LangGerman + "+" + lang
+	retry, err := r.validateLanguagesFor(ctx, candidate)
+	if err != nil || retry == lang || !strings.Contains(retry, textnorm.LangGerman) {
+		return ""
+	}
+	fmt.Fprintf(os.Stderr, "OCR: document language looks German, re-running with %q instead of %q\n", retry, lang)
+	return retry
 }
 
 func (r *Runner) extractHEIC(ctx context.Context, path string) (*extract.Result, error) {
@@ -288,6 +348,29 @@ func (r *Runner) extractPDF(ctx context.Context, path string) (*extract.Result, 
 	}
 	sort.Strings(pages)
 
+	raw, err := r.ocrPDFPages(ctx, pages, lang)
+	if err != nil {
+		return nil, err
+	}
+	text := extract.NormalizeText(raw)
+	if retry := r.languageRetry(ctx, lang, text); retry != "" {
+		if raw2, rerr := r.ocrPDFPages(ctx, pages, retry); rerr == nil {
+			text = extract.NormalizeText(raw2)
+			lang = retry
+		}
+	}
+
+	return &extract.Result{
+		Text:     text,
+		MIME:     "application/pdf",
+		Engine:   "pdftoppm+tesseract",
+		Language: lang,
+	}, nil
+}
+
+// ocrPDFPages runs tesseract over the rendered pages concurrently and
+// returns the page texts joined in page order.
+func (r *Runner) ocrPDFPages(ctx context.Context, pages []string, lang string) (string, error) {
 	// Process pages concurrently with errgroup.
 	// Results are collected in order by page index.
 	g, ctx := errgroup.WithContext(ctx)
@@ -311,7 +394,7 @@ func (r *Runner) extractPDF(ctx context.Context, path string) (*extract.Result, 
 		})
 	}
 	if err := g.Wait(); err != nil {
-		return nil, err
+		return "", err
 	}
 
 	var sb strings.Builder
@@ -319,12 +402,7 @@ func (r *Runner) extractPDF(ctx context.Context, path string) (*extract.Result, 
 		sb.WriteString(text)
 		sb.WriteByte('\n')
 	}
-
-	return &extract.Result{
-		Text:   extract.NormalizeText(sb.String()),
-		MIME:   "application/pdf",
-		Engine: "pdftoppm+tesseract",
-	}, nil
+	return sb.String(), nil
 }
 
 // runTool runs a command with stdout/stderr captured away from the process stdout.

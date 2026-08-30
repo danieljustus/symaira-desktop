@@ -66,6 +66,10 @@ type Result struct {
 	Text   string
 	MIME   string
 	Engine string
+	// Language is the OCR language actually used for the extraction
+	// (Tesseract traineddata code such as "eng" or "deu+eng"). Empty for
+	// non-OCR extraction paths.
+	Language string
 }
 
 // Engine extracts text from a file.

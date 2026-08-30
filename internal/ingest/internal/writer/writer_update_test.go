@@ -14,7 +14,8 @@ func TestUpdateNote_UpdatesMachineFieldsPreservesUserFields(t *testing.T) {
 
 	// Write an initial note
 	initialPath, err := w.WriteNote(
-		"/tmp/original.pdf", "hash1", "application/pdf", "tesseract", "Original body",
+		"/tmp/original.pdf", "hash1", "application/pdf", "tesseract",
+		"", "Original body",
 		"/archive/hash1.pdf", time.Unix(100, 0).UTC(), "invoice", []string{"financial"},
 		"Acme Corp", "Invoice", "", "", "", "", nil, nil,
 	)
@@ -70,7 +71,8 @@ func TestUpdateNote_DeleteCorrespondentWhenEmpty(t *testing.T) {
 
 	// Write note with a correspondent
 	path, err := w.WriteNote(
-		"/tmp/doc.pdf", "hash", "application/pdf", "", "body",
+		"/tmp/doc.pdf", "hash", "application/pdf", "",
+		"", "body",
 		"", time.Unix(0, 0).UTC(), "", nil, "Old Corp", "OldType", "", "", "", "", nil, nil,
 	)
 	if err != nil {
@@ -167,7 +169,8 @@ func TestWriteNote_WithArchivePath(t *testing.T) {
 	w := &NoteWriter{Vault: vault}
 
 	path, err := w.WriteNote(
-		"/tmp/doc.pdf", "hash", "application/pdf", "", "body text",
+		"/tmp/doc.pdf", "hash", "application/pdf", "",
+		"", "body text",
 		"/archive/hash.pdf", time.Unix(0, 0).UTC(), "", nil, "", "", "", "", "", "", nil, nil,
 	)
 	if err != nil {
@@ -231,5 +234,27 @@ func TestUpdateMachineFields_WithTags(t *testing.T) {
 	}
 	if len(tags) != 2 || tags[0] != "a" || tags[1] != "b" {
 		t.Errorf("tags = %v, want [a b]", tags)
+	}
+}
+
+func TestReadOCRLanguage(t *testing.T) {
+	dir := t.TempDir()
+	note := dir + "/doc.md"
+	content := "---\ntitle: test\nocr_language: deu+eng\n---\n\nbody\n"
+	if err := os.WriteFile(note, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := ReadOCRLanguage(note); got != "deu+eng" {
+		t.Fatalf("ReadOCRLanguage() = %q, want deu+eng", got)
+	}
+	if got := ReadOCRLanguage(dir + "/missing.md"); got != "" {
+		t.Fatalf("ReadOCRLanguage(missing) = %q, want empty", got)
+	}
+	plain := dir + "/plain.md"
+	if err := os.WriteFile(plain, []byte("no frontmatter\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := ReadOCRLanguage(plain); got != "" {
+		t.Fatalf("ReadOCRLanguage(no frontmatter) = %q, want empty", got)
 	}
 }

@@ -7,6 +7,9 @@ import (
 )
 
 func TestDefaults(t *testing.T) {
+	t.Setenv("LC_ALL", "en_US.UTF-8")
+	t.Setenv("LC_MESSAGES", "")
+	t.Setenv("LANG", "en_US.UTF-8")
 	cfg := Defaults()
 	if cfg == nil {
 		t.Fatal("Defaults() returned nil")
@@ -172,5 +175,14 @@ func TestLoad_DefaultsWhenNothingSet(t *testing.T) {
 	}
 	if cfg.SymseekEnabled {
 		t.Error("SymseekEnabled = true, want false (default)")
+	}
+}
+
+func TestDefaultsGermanLocale(t *testing.T) {
+	t.Setenv("LC_ALL", "de_DE.UTF-8")
+	t.Setenv("LC_MESSAGES", "")
+	t.Setenv("LANG", "en_US.UTF-8")
+	if got := Defaults().OCRLang; got != "deu+eng" {
+		t.Fatalf("OCRLang = %q, want deu+eng", got)
 	}
 }

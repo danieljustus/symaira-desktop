@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/documentformat"
+	"github.com/danieljustus/symaira-desktop/internal/textnorm"
 )
 
 // ErrDRMProtected identifies a document whose payload is encrypted or whose
@@ -846,10 +847,11 @@ func zipFind(zr *zip.Reader, name string) *zip.File {
 	return nil
 }
 
-func normalizeExtractedText(s string) string {
+func NormalizeText(s string) string {
 	s = strings.ReplaceAll(s, "\u00a0", " ")
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 	s = strings.ReplaceAll(s, "\r", "\n")
+	s = textnorm.Dehyphenate(s)
 	lines := strings.Split(s, "\n")
 	for i, line := range lines {
 		line = spaceRe.ReplaceAllString(line, " ")
@@ -858,4 +860,8 @@ func normalizeExtractedText(s string) string {
 	s = strings.Join(lines, "\n")
 	s = blankLineRe.ReplaceAllString(s, "\n\n")
 	return strings.TrimSpace(s)
+}
+
+func normalizeExtractedText(s string) string {
+	return NormalizeText(s)
 }

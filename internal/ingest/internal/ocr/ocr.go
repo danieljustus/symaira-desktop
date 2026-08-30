@@ -223,7 +223,7 @@ func (r *Runner) extractImage(ctx context.Context, path string) (*extract.Result
 		return nil, fmt.Errorf("tesseract failed: %w", err)
 	}
 	return &extract.Result{
-		Text:   strings.TrimSpace(string(out)),
+		Text:   extract.NormalizeText(string(out)),
 		MIME:   "image/ocr",
 		Engine: "tesseract",
 	}, nil
@@ -321,7 +321,7 @@ func (r *Runner) extractPDF(ctx context.Context, path string) (*extract.Result, 
 	}
 
 	return &extract.Result{
-		Text:   strings.TrimSpace(sb.String()),
+		Text:   extract.NormalizeText(sb.String()),
 		MIME:   "application/pdf",
 		Engine: "pdftoppm+tesseract",
 	}, nil

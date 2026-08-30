@@ -432,8 +432,6 @@ func (db *DB) Prune(vaultRoot string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("query indexed paths for prune: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
-
 	var stale []string
 	for rows.Next() {
 		var path string
@@ -447,9 +445,12 @@ func (db *DB) Prune(vaultRoot string) (int, error) {
 	if err := rows.Err(); err != nil {
 		return 0, err
 	}
+	if err := rows.Close(); err != nil {
+		return 0, err
+	}
 
 	if len(stale) == 0 {
-		return 0, nil
+		return db.PruneIndexStatuses(vaultRoot)
 	}
 
 	// Delete all stale entries in a single transaction.
@@ -468,8 +469,12 @@ func (db *DB) Prune(vaultRoot string) (int, error) {
 	if err := tx.Commit(); err != nil {
 		return 0, fmt.Errorf("commit prune: %w", err)
 	}
+	cleaned, err := db.PruneIndexStatuses(vaultRoot)
+	if err != nil {
+		return len(stale), err
+	}
 
-	return len(stale), nil
+	return len(stale) + cleaned, nil
 }
 
 // CheckIntegrity performs a basic check on the database.
@@ -592,15 +597,17 @@ func (db *DB) SearchScoped(query string, allowedPaths []string) ([]*vault.Docume
 // the query language's regex post-filter. Body is never exposed directly by the
 // service; callers receive the existing snippet-only public shape.
 type SearchMatch struct {
-	Path       string
-	Title      string
-	Snippet    string
-	Body       string
-	Tags       string
-	Status     string
-	Type       string
-	CreatedAt  string
-	ModifiedAt string
+	Path        string
+	Title       string
+	Snippet     string
+	Body        string
+	Tags        string
+	Status      string
+	Type        string
+	CreatedAt   string
+	ModifiedAt  string
+	IndexState  string
+	IndexReason string
 }
 
 // SearchPlan applies a parsed search plan. Metadata and FTS filters run in
@@ -640,8 +647,9 @@ func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]Search
 		COALESCE(f.status, ''), COALESCE(f."type", ''),
 		COALESCE(f.created_at, (SELECT value FROM file_properties created_prop
 			WHERE created_prop.file_id = f.id AND created_prop.key = 'created'), ''),
-		COALESCE(f.modified_at, '')
-		FROM files f `)
+		COALESCE(f.modified_at, ''),
+		COALESCE(lifecycle.state, 'indexed'), COALESCE(lifecycle.reason, '')
+		FROM files f LEFT JOIN index_lifecycle lifecycle ON lifecycle.path = f.path `)
 	if hasFullText {
 		query.WriteString(`JOIN fts_search ON fts_search.rowid = f.id WHERE fts_search MATCH ?`)
 	} else {
@@ -674,6 +682,13 @@ func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]Search
 				operator = "!="
 			}
 			query.WriteString(` AND COALESCE(f.status, '') ` + operator + ` ? COLLATE NOCASE`)
+			args = append(args, filter.Value)
+		case searchquery.FieldIndexState:
+			operator := "="
+			if filter.Negated {
+				operator = "!="
+			}
+			query.WriteString(` AND COALESCE(lifecycle.state, 'indexed') ` + operator + ` ? COLLATE NOCASE`)
 			args = append(args, filter.Value)
 		case searchquery.FieldType:
 			if strings.Contains(filter.Value, ",") {
@@ -719,7 +734,7 @@ func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]Search
 	results := make([]SearchMatch, 0)
 	for rows.Next() {
 		var match SearchMatch
-		if err := rows.Scan(&match.Path, &match.Title, &match.Snippet, &match.Body, &match.Tags, &match.Status, &match.Type, &match.CreatedAt, &match.ModifiedAt); err != nil {
+		if err := rows.Scan(&match.Path, &match.Title, &match.Snippet, &match.Body, &match.Tags, &match.Status, &match.Type, &match.CreatedAt, &match.ModifiedAt, &match.IndexState, &match.IndexReason); err != nil {
 			return nil, err
 		}
 		if !matchesPlanPostFiltersAt(match, plan, reference) {
@@ -1117,7 +1132,8 @@ func (db *DB) GetAllLinks() ([]Edge, error) {
 type DocsFilter struct {
 	Type          string // document_type frontmatter value (e.g. "invoice")
 	FileType      string // file kind: note|document|meeting|notebook
-	Status        string // enum status
+	Status        string // workflow status
+	IndexState    string // retrieval lifecycle state
 	Person        string // household member
 	Correspondent string // correspondent name
 	Year          string // 4-digit year, filters document_date
@@ -1142,7 +1158,9 @@ type DocsResult struct {
 	ASN           int    `json:"asn,omitempty"`
 	// Tags is the parsed tag list from the file's tags frontmatter property.
 	// It is empty when the file carries no tags.
-	Tags []string `json:"tags,omitempty"`
+	Tags               []string `json:"tags,omitempty"`
+	IndexState         string   `json:"index_state"`
+	IndexFailureReason string   `json:"index_failure_reason,omitempty"`
 }
 
 // DocsList queries indexed documents with optional filters and returns
@@ -1153,8 +1171,10 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 			COALESCE(f.status,''), COALESCE(f.due_date,''), f.confidence,
 			COALESCE(fp_corr.value,''), COALESCE(fp_type.value,''), COALESCE(f.asn, 0),
 			COALESCE((SELECT value FROM file_properties tag_prop
-				WHERE tag_prop.file_id = f.id AND tag_prop.key = 'tags'), '')
+				WHERE tag_prop.file_id = f.id AND tag_prop.key = 'tags'), ''),
+			COALESCE(lifecycle.state, 'indexed'), COALESCE(lifecycle.reason, '')
 		FROM files f
+		LEFT JOIN index_lifecycle lifecycle ON lifecycle.path = f.path
 		LEFT JOIN file_properties fp_corr ON fp_corr.file_id = f.id AND fp_corr.key = 'correspondent'
 		LEFT JOIN file_properties fp_type ON fp_type.file_id = f.id AND fp_type.key = 'document_type'
 		WHERE 1=1`
@@ -1167,6 +1187,10 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 	if f.Status != "" {
 		query += ` AND f.status = ?`
 		args = append(args, f.Status)
+	}
+	if f.IndexState != "" {
+		query += ` AND COALESCE(lifecycle.state, 'indexed') = ? COLLATE NOCASE`
+		args = append(args, f.IndexState)
 	}
 	if f.Person != "" {
 		query += ` AND f.person = ?`
@@ -1214,14 +1238,17 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 		var r DocsResult
 		var conf sql.NullInt64
 		var rawTags string
+		var state, reason string
 		if err := rows.Scan(&r.Path, &r.Title, &r.Type, &r.DocumentDate, &r.Person,
-			&r.Status, &r.DueDate, &conf, &r.Correspondent, &r.DocumentType, &r.ASN, &rawTags); err != nil {
+			&r.Status, &r.DueDate, &conf, &r.Correspondent, &r.DocumentType, &r.ASN, &rawTags, &state, &reason); err != nil {
 			return nil, err
 		}
 		if conf.Valid {
 			r.Confidence = int(conf.Int64)
 		}
 		r.Tags = parseTagsValue(rawTags)
+		r.IndexState = state
+		r.IndexFailureReason = reason
 		results = append(results, r)
 	}
 	return results, nil

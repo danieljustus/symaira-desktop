@@ -2,12 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 
+	"github.com/danieljustus/symaira-desktop/internal/documentformat"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -68,41 +71,30 @@ func newIndexCmd() *cobra.Command {
 			skipped := 0
 
 			processFile := func(p string) error {
-				doc, err := vault.ParseFile(p)
-				if err != nil {
-					return fmt.Errorf("failed to parse %s: %w", p, err)
-				}
-				indexed, err := db.IsIndexed(doc.Path, doc.SHA256)
+				indexed, err := indexOneFile(db, p, indexReembed)
 				if err != nil {
 					return err
 				}
-				if indexed && !indexReembed {
+				if indexed {
+					count++
+				} else {
 					skipped++
-					return nil
 				}
-				if err := db.IndexDocument(doc); err != nil {
-					return fmt.Errorf("failed to index %s: %w", p, err)
-				}
-				// Indexing a document means both indexes: the sidecar above
-				// and the hybrid index. Service.IndexDocument pairs them for
-				// single-document writes; this bulk path bypasses the service
-				// and used to update only the sidecar, so a full `symdesk
-				// index` left hybrid search empty. That was invisible while
-				// retrieval was an optional sibling tool and is not once it
-				// ships in the binary. Failures stay best-effort.
-				if err := retrieval.IndexWithMetadata(doc.Path, doc.Body, retrieval.SearchMetadataFromVault(doc)); err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: failed to update hybrid index for %s: %v\n", doc.Path, err)
-				}
-				count++
 				return nil
 			}
 
 			if info.IsDir() {
-				err = vault.Walk(target, processFile)
-			} else {
-				if filepath.Ext(target) == ".md" {
-					err = processFile(target)
+				err = vault.WalkAll(target, func(path string, entry fs.DirEntry) error {
+					markUnsupportedFile(db, path)
+					return nil
+				})
+				if err == nil {
+					err = vault.Walk(target, processFile)
 				}
+			} else if filepath.Ext(target) == ".md" {
+				err = processFile(target)
+			} else {
+				markUnsupportedFile(db, target)
 			}
 
 			if err != nil {
@@ -145,17 +137,38 @@ func newIndexCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&indexPrune, "prune", false, "Remove stale entries for deleted or newly-ignored files")
 	cmd.Flags().BoolVar(&indexReembed, "re-embed", false, "Re-embed documents that are still pending because the embedding backend was unavailable")
 	cmd.AddCommand(newIndexStatusCmd())
+	cmd.AddCommand(newIndexRetryCmd())
+	cmd.AddCommand(newIndexMaintenanceCmd())
 	return cmd
 }
 
 // newIndexStatusCmd reports the hybrid index snapshot and whether the
 // embedding backend answers. Without it a degraded retrieval path is
 // invisible: queries still return, just worse (issue #515).
+var indexStatusDocuments bool
+var indexStatusState string
+
 func newIndexStatusCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Report the hybrid search index and embedding backend state",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if indexStatusDocuments {
+				vRoot, err := vault.ResolveVaultRoot("", cfg)
+				if err != nil {
+					return err
+				}
+				db, err := sidecar.OpenForVault(vRoot)
+				if err != nil {
+					return err
+				}
+				defer func() { _ = db.Close() }()
+				rows, err := db.ListIndexStatuses(sidecar.IndexState(indexStatusState))
+				if err != nil {
+					return err
+				}
+				return outputResult(rows)
+			}
 			status, err := retrieval.CurrentStatus()
 			if err != nil {
 				return err
@@ -181,4 +194,55 @@ func newIndexStatusCmd() *cobra.Command {
 			return outputResult(status)
 		},
 	}
+	cmd.Flags().BoolVar(&indexStatusDocuments, "documents", false, "List per-document index lifecycle states")
+	cmd.Flags().StringVar(&indexStatusState, "state", "", "Filter document states (queued, indexing, indexed, failed, encrypted, unsupported)")
+	return cmd
+}
+
+func markUnsupportedFile(db *sidecar.DB, path string) {
+	if reason, ok := documentformat.UnsupportedReason(filepath.Ext(path)); ok {
+		recordIndexStatus(db, path, sidecar.IndexStateUnsupported, reason)
+	}
+}
+
+func recordIndexStatus(db *sidecar.DB, path string, state sidecar.IndexState, reason string) {
+	if err := db.SetIndexStatus(path, state, reason); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to record index status for %s: %v\n", path, err)
+	}
+}
+
+func indexOneFile(db *sidecar.DB, path string, force bool) (bool, error) {
+	recordIndexStatus(db, path, sidecar.IndexStateIndexing, "")
+	doc, err := vault.ParseFile(path)
+	if err != nil {
+		state := sidecar.IndexStateFailed
+		if errors.Is(err, documentformat.ErrDRMProtected) {
+			state = sidecar.IndexStateEncrypted
+		}
+		if documentformat.IsUnsupported(filepath.Ext(path)) {
+			state = sidecar.IndexStateUnsupported
+		}
+		recordIndexStatus(db, path, state, err.Error())
+		return false, fmt.Errorf("failed to parse %s: %w", path, err)
+	}
+	indexed, err := db.IsIndexed(doc.Path, doc.SHA256)
+	if err != nil {
+		recordIndexStatus(db, path, sidecar.IndexStateFailed, err.Error())
+		return false, err
+	}
+	if indexed && !force {
+		recordIndexStatus(db, path, sidecar.IndexStateIndexed, "")
+		return false, nil
+	}
+	if err := db.IndexDocument(doc); err != nil {
+		recordIndexStatus(db, path, sidecar.IndexStateFailed, err.Error())
+		return false, fmt.Errorf("failed to index %s: %w", path, err)
+	}
+	if err := retrieval.IndexWithMetadata(doc.Path, doc.Body, retrieval.SearchMetadataFromVault(doc)); err != nil {
+		recordIndexStatus(db, path, sidecar.IndexStateFailed, err.Error())
+		fmt.Fprintf(os.Stderr, "Warning: failed to update hybrid index for %s: %v\n", doc.Path, err)
+		return true, nil
+	}
+	recordIndexStatus(db, path, sidecar.IndexStateIndexed, "")
+	return true, nil
 }

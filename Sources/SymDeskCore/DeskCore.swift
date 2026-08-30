@@ -110,6 +110,7 @@ public struct RetrievalStatus: Codable, Equatable, Sendable {
     /// vault path and could enumerate it. This is a comparison figure, not an
     /// assertion that the shared retrieval index contains only this vault.
     public let vaultDocumentCount: Int?
+    public let indexLocation: String?
 
     public var isEmpty: Bool { documentCount == 0 }
     public var hasStoredDegradation: Bool {
@@ -127,6 +128,7 @@ public struct RetrievalStatus: Codable, Equatable, Sendable {
         case mixedEmbeddingSpaces = "mixed_embedding_spaces"
         case indexScope = "index_scope"
         case vaultDocumentCount = "vault_document_count"
+        case indexLocation = "index_location"
     }
 }
 
@@ -136,6 +138,13 @@ public struct ReindexResult: Codable, Equatable, Sendable {
     public let indexed: Int
     public let skipped: Int
     public let pruned: Int?
+}
+
+public struct IndexRetryResult: Codable, Equatable, Sendable {
+    public let status: String
+    public let attempted: Int
+    public let succeeded: Int
+    public let failed: Int
 }
 
 public enum AIEventType: String, Codable, Sendable {
@@ -466,6 +475,8 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
     public let confidence: Int
     public let correspondent: String
     public let documentType: String
+    public let indexState: String
+    public let indexFailureReason: String
     public let asn: Int
     /// Tags carried by the document, parsed from its frontmatter tags
     /// property. Empty when the document has no tags (issue #306).
@@ -476,6 +487,8 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         case documentDate = "document_date"
         case dueDate = "due_date"
         case documentType = "document_type"
+        case indexState = "index_state"
+        case indexFailureReason = "index_failure_reason"
     }
 
     public init(from decoder: Decoder) throws {
@@ -490,6 +503,8 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         confidence = (try? c.decode(Int.self, forKey: .confidence)) ?? 0
         correspondent = (try? c.decode(String.self, forKey: .correspondent)) ?? ""
         documentType = (try? c.decode(String.self, forKey: .documentType)) ?? ""
+        indexState = (try? c.decode(String.self, forKey: .indexState)) ?? "indexed"
+        indexFailureReason = (try? c.decode(String.self, forKey: .indexFailureReason)) ?? ""
         asn = (try? c.decode(Int.self, forKey: .asn)) ?? 0
         tags = (try? c.decodeIfPresent([String].self, forKey: .tags)) ?? []
     }
@@ -505,6 +520,8 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         confidence: Int,
         correspondent: String,
         documentType: String,
+        indexState: String = "indexed",
+        indexFailureReason: String = "",
         asn: Int = 0,
         tags: [String] = []
     ) {
@@ -518,6 +535,8 @@ public struct DocumentItem: Codable, Equatable, Identifiable, Sendable {
         self.confidence = confidence
         self.correspondent = correspondent
         self.documentType = documentType
+        self.indexState = indexState
+        self.indexFailureReason = indexFailureReason
         self.asn = asn
         self.tags = tags
     }
@@ -1196,6 +1215,26 @@ public final class DeskCore: ObservableObject {
 
     public func backlinks(for path: String) async throws -> [String] {
 		try await runDecoding([String].self, arguments: ["backlinks", path, "--json"] + vaultArgs)
+    }
+
+    /// Creates a private, atomic backup of the derived retrieval index.
+    public func backupIndex(to path: String) async throws {
+        try await runChecked(arguments: ["index", "maintenance", "backup", "--output", path] + vaultArgs)
+    }
+
+    /// Restores a derived retrieval index backup without modifying vault Markdown.
+    public func restoreIndex(from path: String) async throws {
+        try await runChecked(arguments: ["index", "maintenance", "restore", "--input", path] + vaultArgs)
+    }
+
+    /// Moves the derived retrieval index and persists its new location.
+    public func relocateIndex(to path: String) async throws {
+        try await runChecked(arguments: ["index", "maintenance", "relocate", "--output", path] + vaultArgs)
+    }
+
+    /// Retries every failed per-document retrieval index update.
+    public func retryFailedIndex() async throws -> IndexRetryResult {
+        try await runDecoding(IndexRetryResult.self, arguments: ["index", "retry", "--json"] + vaultArgs)
     }
 
     public func noteNew(title: String, template: String = "") async throws -> String {

@@ -43,8 +43,11 @@ func (db *DB) SearchBM25WithPath(queryStr string, pathPrefix string, limit int) 
 			SELECT rowid, bm25(chunks_fts) AS bm FROM chunks_fts WHERE chunks_fts MATCH ?
 			UNION ALL
 			SELECT rowid, NULL FROM chunks_norm WHERE chunks_norm MATCH ?
+			UNION ALL
+			SELECT rowid, NULL FROM chunks_tri WHERE chunks_tri MATCH ?
 		) GROUP BY rowid
 	) sm ON sm.rowid = c.id`
+	triQuery := searchquery.GermanTrigramQuery(queryStr)
 	if pathPrefix != "" {
 		sqlQuery = `
 			SELECT c.id, c.uuid, c.document_path, c.chunk_index, c.content, c.embedding, c.hash
@@ -52,14 +55,14 @@ func (db *DB) SearchBM25WithPath(queryStr string, pathPrefix string, limit int) 
 			WHERE c.document_path LIKE ? || '%'
 			ORDER BY sm.bm IS NULL, sm.bm ASC
 			LIMIT ?`
-		args = []any{escapedQuery, escapedQuery, pathPrefix, limit}
+		args = []any{escapedQuery, escapedQuery, triQuery, pathPrefix, limit}
 	} else {
 		sqlQuery = `
 			SELECT c.id, c.uuid, c.document_path, c.chunk_index, c.content, c.embedding, c.hash
 			FROM chunks c` + matchJoin + `
 			ORDER BY sm.bm IS NULL, sm.bm ASC
 			LIMIT ?`
-		args = []any{escapedQuery, escapedQuery, limit}
+		args = []any{escapedQuery, escapedQuery, triQuery, limit}
 	}
 
 	rows, err := db.conn.Query(sqlQuery, args...)

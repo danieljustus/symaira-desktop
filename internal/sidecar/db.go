@@ -283,6 +283,9 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 		if _, err = tx.Exec("DELETE FROM fts_norm WHERE rowid = ?", fileID); err != nil {
 			return err
 		}
+		if _, err = tx.Exec("DELETE FROM fts_tri WHERE rowid = ?", fileID); err != nil {
+			return err
+		}
 
 		// Update files
 		_, err = tx.Exec(`UPDATE files SET sha256 = ?, title = ?, created_at = ?, modified_at = ?, indexed_at = ?,
@@ -340,6 +343,11 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 	// Keep the normalised German token index in step so inflected and
 	// umlaut-bearing queries match (#672).
 	if _, err = tx.Exec("INSERT INTO fts_norm(rowid, norm) VALUES (?, ?)", fileID, searchquery.GermanNormText(ftsTitle+" "+doc.Body)); err != nil {
+		return err
+	}
+	// Keep the trigram substring index in step so compound parts are
+	// findable anywhere inside a token (#673).
+	if _, err = tx.Exec("INSERT INTO fts_tri(rowid, body) VALUES (?, ?)", fileID, doc.Body); err != nil {
 		return err
 	}
 
@@ -460,6 +468,9 @@ func deleteDocumentRows(tx *sql.Tx, path string) error {
 		return err
 	}
 	if _, err := tx.Exec("DELETE FROM fts_norm WHERE rowid = ?", fileID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM fts_tri WHERE rowid = ?", fileID); err != nil {
 		return err
 	}
 	if _, err := tx.Exec("DELETE FROM file_properties WHERE file_id = ?", fileID); err != nil {
@@ -584,11 +595,14 @@ const ftsMatchJoin = ` JOIN (
 		SELECT rowid, rank, ` + ftsSnippetExpr + ` AS snip, body FROM fts_search WHERE fts_search MATCH ?
 		UNION ALL
 		SELECT rowid, NULL, NULL, NULL FROM fts_norm WHERE fts_norm MATCH ?
+		UNION ALL
+		SELECT rowid, NULL, NULL, NULL FROM fts_tri WHERE fts_tri MATCH ?
 	) GROUP BY rowid
 ) sm ON sm.rowid = f.id`
 
 // Search performs a basic FTS search over free-form user input.
 func (db *DB) Search(query string) ([]*vault.Document, error) {
+	triQuery := searchquery.GermanTrigramQuery(query)
 	query = ftsQuote(query)
 	if query == "" {
 		return nil, nil
@@ -597,7 +611,7 @@ func (db *DB) Search(query string) ([]*vault.Document, error) {
 		SELECT f.path, f.title, COALESCE(sm.snip, '') as snippet
 		FROM files f`+ftsMatchJoin+`
 		ORDER BY sm.rank IS NULL, sm.rank LIMIT 20
-	`, query, query)
+	`, query, query, triQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -627,14 +641,15 @@ func (db *DB) SearchScoped(query string, allowedPaths []string) ([]*vault.Docume
 	if len(allowedPaths) == 0 {
 		return nil, nil
 	}
+	triQuery := searchquery.GermanTrigramQuery(query)
 	query = ftsQuote(query)
 	if query == "" {
 		return nil, nil
 	}
 
 	placeholders := make([]string, len(allowedPaths))
-	args := make([]interface{}, 0, len(allowedPaths)+2)
-	args = append(args, query, query)
+	args := make([]interface{}, 0, len(allowedPaths)+3)
+	args = append(args, query, query, triQuery)
 	for i, p := range allowedPaths {
 		placeholders[i] = "?"
 		args = append(args, p)
@@ -704,9 +719,11 @@ func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]Search
 
 	hasFullText := len(positiveTerms) > 0
 	ftsQuery := ""
+	triQuery := ""
 	if hasFullText {
 		ftsQuery = ftsExpression(positiveTerms)
 		hasFullText = ftsQuery != ""
+		triQuery = triExpression(positiveTerms)
 	}
 	var query strings.Builder
 	query.WriteString(`SELECT f.path, f.title, `)
@@ -734,9 +751,9 @@ func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]Search
 		query.WriteString(`LEFT JOIN fts_search ON fts_search.rowid = f.id WHERE 1 = 1`)
 	}
 
-	args := make([]interface{}, 0, len(plan.Filters)+2*len(plan.Terms)+2)
+	args := make([]interface{}, 0, len(plan.Filters)+2*len(plan.Terms)+3)
 	if hasFullText {
-		args = append(args, ftsQuery, ftsQuery)
+		args = append(args, ftsQuery, ftsQuery, triQuery)
 	}
 
 	for _, filter := range plan.Filters {
@@ -827,6 +844,23 @@ func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]Search
 		return nil, err
 	}
 	return results, nil
+}
+
+// triExpression builds the trigram-leg query for the positive terms (#673):
+// every term must be expressible against the trigram index, otherwise the
+// leg is skipped entirely ("") and only prefix/norm matching applies —
+// trigram tokens shorter than three runes silently match nothing, which
+// would void the AND semantics.
+func triExpression(terms []searchquery.Term) string {
+	parts := make([]string, 0, len(terms))
+	for _, term := range terms {
+		expression := searchquery.GermanTrigramTerm(term.Value, term.Phrase)
+		if expression == `""` {
+			return `""`
+		}
+		parts = append(parts, expression)
+	}
+	return strings.Join(parts, " AND ")
 }
 
 func ftsExpression(terms []searchquery.Term) string {

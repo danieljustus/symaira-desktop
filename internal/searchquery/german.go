@@ -54,6 +54,62 @@ func GermanFTSQuery(value string) string {
 	return strings.Join(parts, " AND ")
 }
 
+// GermanTrigramQuery builds the query for the trigram substring indexes
+// (#673). Stems are prefix-preserving (stemming only strips suffixes), so a
+// stemmed term is always a substring of its inflected forms, and substring
+// matching finds terms inside compounds ("bemessungsgrenz" within
+// "beitragsbemessungsgrenze") without a splitting dictionary.
+//
+// The return value is always a valid FTS5 MATCH expression: when any token
+// is unusable — shorter than three runes (the trigram minimum, shorter
+// tokens silently match nothing and would void the AND semantics) or
+// carrying non-word characters — the neutral empty phrase `""` is returned,
+// which matches no rows, so callers can pass the result unconditionally.
+func GermanTrigramQuery(value string) string {
+	tokens := GermanSearchTokens(value)
+	if len(tokens) == 0 {
+		return `""`
+	}
+	for _, token := range tokens {
+		if len([]rune(token)) < 3 || !wordRunesOnly(token) {
+			return `""`
+		}
+	}
+	return strings.Join(tokens, " AND ")
+}
+
+// GermanTrigramTerm returns the trigram-leg expression for one parsed
+// search term: the stem for word terms, the folded phrase for phrase terms.
+// The neutral empty phrase `""` means the term cannot be used against a
+// trigram index.
+func GermanTrigramTerm(value string, phrase bool) string {
+	if phrase {
+		fields := strings.Fields(strings.ToLower(value))
+		parts := make([]string, 0, len(fields))
+		for _, field := range fields {
+			token := trimToken(field)
+			if token == "" || len([]rune(token)) < 3 || !wordRunesOnly(token) {
+				return `""`
+			}
+			parts = append(parts, foldUmlauts(token))
+		}
+		if len(parts) == 0 {
+			return `""`
+		}
+		return `"` + strings.Join(parts, " ") + `"`
+	}
+	return GermanTrigramQuery(value)
+}
+
+func wordRunesOnly(value string) bool {
+	for _, r := range value {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
+}
+
 // GermanFTSTerm returns the FTS expression for one parsed search term.
 // Phrases retain their boundary while receiving the same stopword/stemming
 // normalization as ordinary terms.

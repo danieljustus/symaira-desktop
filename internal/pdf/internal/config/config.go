@@ -81,8 +81,9 @@ func (e Engine) Timeout() time.Duration {
 }
 
 var loader = configkit.NewLoader[Config](configkit.Options{
-	AppName:   "symprint",
-	EnvPrefix: "SYMPRINT",
+	AppName:             "symprint",
+	EnvPrefix:           "SYMPRINT",
+	UseLegacyConfigPath: true,
 }, Default)
 
 // Load reads config from disk and environment, falling back to defaults.

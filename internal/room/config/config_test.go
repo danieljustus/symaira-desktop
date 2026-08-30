@@ -68,7 +68,7 @@ func TestEnvOverrides(t *testing.T) {
 func TestInvalidTOML(t *testing.T) {
 	tempDir := t.TempDir()
 	t.Setenv("HOME", tempDir)
-	t.Setenv("XDG_CONFIG_HOME", filepath.Join(tempDir, ".config"))
+	t.Setenv("XDG_CONFIG_HOME", tempDir)
 
 	symroomDir := filepath.Join(tempDir, ".config", "symroom")
 	if err := os.MkdirAll(symroomDir, 0755); err != nil {

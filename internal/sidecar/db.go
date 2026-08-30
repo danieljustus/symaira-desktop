@@ -87,7 +87,7 @@ func Open(path string) (*DB, error) {
 	}
 
 	if err := backfillNormIndex(conn); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, fmt.Errorf("backfill norm index: %w", err)
 	}
 

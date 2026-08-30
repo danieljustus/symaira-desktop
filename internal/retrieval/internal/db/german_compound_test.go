@@ -4,7 +4,7 @@ import "testing"
 
 func TestSearchBM25GermanCompoundParts(t *testing.T) {
 	d := openTestDB(t)
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 	const docPath = "/docs/german-compound.md"
 	if err := d.SaveDocument(&Document{Path: docPath, Hash: "hash-german-compound"}); err != nil {
 		t.Fatalf("SaveDocument: %v", err)

@@ -222,7 +222,7 @@ func OpenAt(dbPath string) (*DB, error) {
 
 	db := &DB{conn: conn}
 	if err := db.backfillContentNorm(); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, fmt.Errorf("failed to backfill normalised content: %w", err)
 	}
 	db.generation = db.loadGeneration()

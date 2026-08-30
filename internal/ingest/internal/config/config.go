@@ -76,9 +76,10 @@ func defaultOCRLanguage() string {
 
 // Loader is the application-wide config loader.
 var Loader = configkit.NewLoader(configkit.Options{
-	AppName:    "symingest",
-	EnvPrefix:  "SYMINGEST",
-	ConfigName: "symingest",
+	AppName:             "symingest",
+	EnvPrefix:           "SYMINGEST",
+	ConfigName:          "symingest",
+	UseLegacyConfigPath: true,
 }, Defaults)
 
 // Load returns the loaded configuration.

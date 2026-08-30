@@ -44,8 +44,9 @@ func DefaultConfig() *Config {
 
 func NewLoader() *configkit.Loader[Config] {
 	opts := configkit.Options{
-		AppName:   "symroom",
-		EnvPrefix: "SYMROOM",
+		AppName:             "symroom",
+		EnvPrefix:           "SYMROOM",
+		UseLegacyConfigPath: true,
 	}
 	return configkit.NewLoader[Config](opts, DefaultConfig)
 }

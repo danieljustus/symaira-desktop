@@ -14,7 +14,6 @@ import (
 	"unicode"
 
 	"github.com/BurntSushi/toml"
-	"github.com/danieljustus/symaira-corekit/configkit"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/engine"
 )
@@ -98,7 +97,11 @@ func Reload() (*Config, error) {
 }
 
 func GlobalPath() string {
-	return configkit.DefaultPath("symseek")
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return filepath.Join(".config", "symseek", "config.toml")
+	}
+	return filepath.Join(home, ".config", "symseek", "config.toml")
 }
 
 // ConfigDir returns the XDG config directory for symseek

@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/danieljustus/symaira-corekit/ollamakit"
+	"github.com/danieljustus/symaira-corekit/llmkit"
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/secrets"
 )
@@ -138,23 +138,32 @@ func newAIConfigTestCmd() *cobra.Command {
 					result["ok"] = false
 					result["error"] = "Ollama URL is not set."
 				} else {
-					client := ollamakit.New(ollamakit.Config{BaseURL: baseURL})
-					if err := client.Ping(ctx); err != nil {
+					desc, ok := llmkit.Lookup("ollama")
+					if !ok {
 						result["ok"] = false
-						result["error"] = err.Error()
+						result["error"] = "Ollama provider descriptor is unavailable."
 					} else {
-						models, err := client.ListModels(ctx)
+						client, err := llmkit.NewClient(desc, "", llmkit.WithBaseURL(baseURL))
 						if err != nil {
-							result["ok"] = true
-							result["models"] = []string{}
-							result["models_error"] = err.Error()
+							result["ok"] = false
+							result["error"] = err.Error()
+						} else if err := client.Ping(ctx); err != nil {
+							result["ok"] = false
+							result["error"] = err.Error()
 						} else {
-							names := make([]string, 0, len(models))
-							for _, m := range models {
-								names = append(names, m.Name)
+							models, err := client.ListModels(ctx)
+							if err != nil {
+								result["ok"] = true
+								result["models"] = []string{}
+								result["models_error"] = err.Error()
+							} else {
+								names := make([]string, 0, len(models))
+								for _, m := range models {
+									names = append(names, m.ID)
+								}
+								result["ok"] = true
+								result["models"] = names
 							}
-							result["ok"] = true
-							result["models"] = names
 						}
 					}
 				}

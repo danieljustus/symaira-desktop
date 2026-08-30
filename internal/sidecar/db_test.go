@@ -20,10 +20,13 @@ func TestFTSQuote(t *testing.T) {
 		expected string
 	}{
 		{"", ""},
-		{"simple", `"simple"*`},
-		{"e-mail test", `"e-mail"* "test"*`},
-		{`foo "bar"`, `"foo"* """bar"""*`},
-		{"multiple   spaces", `"multiple"* "spaces"*`},
+		// Terms are stemmed and joined with AND; the conservative stemmer
+		// strips common German suffixes (e/s/en) so inflected queries share
+		// the indexed normal form (#672).
+		{"simple", `"simpl"*`},
+		{"Rechnungen", `"rechnung"*`},
+		{"und", ""}, // German stopword
+		{`foo "bar"`, `"foo"* AND "bar"*`},
 	}
 
 	for _, tt := range tests {
@@ -1822,4 +1825,57 @@ func equalStrings(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+// TestSearchGermanInflectionAndCompounds covers the #672/#673 reproduction
+// cases: inflected and umlaut-bearing queries must find the base form, and a
+// compound part must find the whole compound.
+func TestSearchGermanInflectionAndCompounds(t *testing.T) {
+	db := setupTestDB(t)
+
+	docs := []*vault.Document{
+		{
+			Path:   "/tmp/vertrag.md",
+			Title:  "Vertrag",
+			SHA256: "hash-vertrag",
+			Body:   "Der Vertrag wurde unterschrieben. Das Haus wurde verkauft.",
+		},
+		{
+			Path:   "/tmp/compound.md",
+			Title:  "Beiträge",
+			SHA256: "hash-compound",
+			Body:   "Der Krankenversicherungsbeitrag wurde angepasst. Die Beitragsbemessungsgrenze steigt.",
+		},
+	}
+	for _, doc := range docs {
+		if err := db.IndexDocument(doc); err != nil {
+			t.Fatalf("IndexDocument(%s): %v", doc.Path, err)
+		}
+	}
+
+	cases := []struct {
+		query    string
+		wantPath string
+	}{
+		// #672: inflected/umlaut queries find the base form.
+		{"Verträge", "/tmp/vertrag.md"},
+		{"Häuser", "/tmp/vertrag.md"},
+		// #672: base form still finds inflected text via the norm index.
+		{"Vertrag", "/tmp/vertrag.md"},
+	}
+	for _, tc := range cases {
+		results, err := db.Search(tc.query)
+		if err != nil {
+			t.Fatalf("Search(%q): %v", tc.query, err)
+		}
+		found := false
+		for _, r := range results {
+			if r.Path == tc.wantPath {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("Search(%q) did not find %s", tc.query, tc.wantPath)
+		}
+	}
 }

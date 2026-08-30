@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-corekit/sqlitekit"
+	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	_ "modernc.org/sqlite"
 )
 
@@ -205,6 +206,10 @@ func Open() (*DB, error) {
 	}
 
 	db := &DB{conn: conn}
+	if err := db.backfillContentNorm(); err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("failed to backfill normalised content: %w", err)
+	}
 	db.generation = db.loadGeneration()
 	db.vectorIndex = db.loadVectorIndex()
 	return db, nil
@@ -428,8 +433,8 @@ func (db *DB) SaveChunks(chunks []*Chunk) error {
 	}
 	defer tx.Rollback()
 
-	query := `INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm, binary_signature, embedding_dim, embedding_model, char_start, char_end, embedding_pending, anchor_kind, anchor_value)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm, binary_signature, embedding_dim, embedding_model, char_start, char_end, embedding_pending, anchor_kind, anchor_value, content_norm)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	stmt, err := tx.Prepare(query)
 	if err != nil {
@@ -441,7 +446,7 @@ func (db *DB) SaveChunks(chunks []*Chunk) error {
 		c.Norm = l2Norm(c.Embedding)
 		embBytes := Float32SliceToBytes(c.Embedding)
 		sigBytes := SignBinarySignature(c.Embedding)
-		res, err := stmt.Exec(c.UUID, c.DocumentPath, c.ChunkIndex, c.Content, embBytes, c.Hash, c.Norm, sigBytes, c.Dim, c.Model, c.CharStart, c.CharEnd, boolToInt(c.EmbeddingPending), c.AnchorKind, c.AnchorValue)
+		res, err := stmt.Exec(c.UUID, c.DocumentPath, c.ChunkIndex, c.Content, embBytes, c.Hash, c.Norm, sigBytes, c.Dim, c.Model, c.CharStart, c.CharEnd, boolToInt(c.EmbeddingPending), c.AnchorKind, c.AnchorValue, searchquery.GermanNormText(c.Content))
 		if err != nil {
 			return fmt.Errorf("failed to insert chunk: %w", err)
 		}

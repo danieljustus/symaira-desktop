@@ -7,6 +7,8 @@ import (
 	"math"
 	"sort"
 	"strings"
+
+	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 )
 
 // binarySignatureCandidateMultiplier controls the Hamming shortlist size as
@@ -15,15 +17,10 @@ import (
 const binarySignatureCandidateMultiplier = 4
 
 func escapeFTS5Query(query string) string {
-	tokens := strings.Fields(query)
-	if len(tokens) == 0 {
-		return ""
+	if normalized := searchquery.GermanFTSQuery(query); normalized != "" {
+		return normalized
 	}
-	for i, token := range tokens {
-		escaped := strings.ReplaceAll(token, "\"", "\"\"")
-		tokens[i] = "\"" + escaped + "\""
-	}
-	return strings.Join(tokens, " AND ")
+	return ""
 }
 
 func (db *DB) SearchBM25(queryStr string, limit int) ([]*SearchResult, error) {
@@ -34,24 +31,35 @@ func (db *DB) SearchBM25WithPath(queryStr string, pathPrefix string, limit int) 
 	var sqlQuery string
 	var args []any
 	escapedQuery := escapeFTS5Query(queryStr)
+	if escapedQuery == "" {
+		return nil, nil
+	}
+	// Chunk ids matched by the original text or by the normalised German
+	// token index (#672), combined and deduplicated before ranking. The
+	// MATCH constraints live inside subquery legs because FTS5 rejects
+	// MATCH/bm25 on a table that is not directly pattern-constrained.
+	matchJoin := ` JOIN (
+		SELECT rowid, MAX(bm) AS bm FROM (
+			SELECT rowid, bm25(chunks_fts) AS bm FROM chunks_fts WHERE chunks_fts MATCH ?
+			UNION ALL
+			SELECT rowid, NULL FROM chunks_norm WHERE chunks_norm MATCH ?
+		) GROUP BY rowid
+	) sm ON sm.rowid = c.id`
 	if pathPrefix != "" {
 		sqlQuery = `
 			SELECT c.id, c.uuid, c.document_path, c.chunk_index, c.content, c.embedding, c.hash
-			FROM chunks c
-			JOIN chunks_fts f ON c.id = f.rowid
-			WHERE chunks_fts MATCH ? AND c.document_path LIKE ? || '%'
-			ORDER BY bm25(chunks_fts) ASC
+			FROM chunks c` + matchJoin + `
+			WHERE c.document_path LIKE ? || '%'
+			ORDER BY sm.bm IS NULL, sm.bm ASC
 			LIMIT ?`
-		args = []any{escapedQuery, pathPrefix, limit}
+		args = []any{escapedQuery, escapedQuery, pathPrefix, limit}
 	} else {
 		sqlQuery = `
 			SELECT c.id, c.uuid, c.document_path, c.chunk_index, c.content, c.embedding, c.hash
-			FROM chunks c
-			JOIN chunks_fts f ON c.id = f.rowid
-			WHERE chunks_fts MATCH ?
-			ORDER BY bm25(chunks_fts) ASC
+			FROM chunks c` + matchJoin + `
+			ORDER BY sm.bm IS NULL, sm.bm ASC
 			LIMIT ?`
-		args = []any{escapedQuery, limit}
+		args = []any{escapedQuery, escapedQuery, limit}
 	}
 
 	rows, err := db.conn.Query(sqlQuery, args...)

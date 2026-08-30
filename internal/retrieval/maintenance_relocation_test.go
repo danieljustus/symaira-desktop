@@ -35,7 +35,7 @@ func TestRelocateIndexPersistsConfiguredLocation(t *testing.T) {
 	if gotLocation != destination {
 		t.Fatalf("IndexLocation() = %q, want %q", gotLocation, destination)
 	}
-	got, err := os.ReadFile(destination)
+	got, err := os.ReadFile(destination) //nolint:gosec // G304: destination is a t.TempDir() path built by this test
 	if err != nil {
 		t.Fatal(err)
 	}

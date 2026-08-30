@@ -62,7 +62,7 @@ func TestPruneIndexStatusesOnlyRemovesMissingDerivedRows(t *testing.T) {
 	db := setupTestDB(t)
 	vaultRoot := t.TempDir()
 	kept := filepath.Join(vaultRoot, "kept.md")
-	if err := os.WriteFile(kept, []byte("# kept"), 0o644); err != nil {
+	if err := os.WriteFile(kept, []byte("# kept"), 0o644); err != nil { //nolint:gosec // G306: test fixture, permissions are irrelevant here
 		t.Fatal(err)
 	}
 	if err := db.SetIndexStatus(kept, IndexStateIndexed, ""); err != nil {

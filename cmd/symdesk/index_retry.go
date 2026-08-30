@@ -28,7 +28,7 @@ func newIndexRetryCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 			failed, err := db.ListIndexStatuses(sidecar.IndexStateFailed)
 			if err != nil {
 				return err

@@ -162,7 +162,7 @@ func newIndexStatusCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				defer db.Close()
+				defer func() { _ = db.Close() }()
 				rows, err := db.ListIndexStatuses(sidecar.IndexState(indexStatusState))
 				if err != nil {
 					return err

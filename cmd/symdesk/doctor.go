@@ -170,7 +170,7 @@ func newDoctorCmd() *cobra.Command {
 					}
 					if vRoot != "" {
 						if lifecycleDB, lifecycleErr := sidecar.OpenForVault(vRoot); lifecycleErr == nil {
-							defer lifecycleDB.Close()
+							defer func() { _ = lifecycleDB.Close() }()
 							failed, _ := lifecycleDB.ListIndexStatuses(sidecar.IndexStateFailed)
 							unsupported, _ := lifecycleDB.ListIndexStatuses(sidecar.IndexStateUnsupported)
 							encrypted, _ := lifecycleDB.ListIndexStatuses(sidecar.IndexStateEncrypted)
@@ -178,7 +178,7 @@ func newDoctorCmd() *cobra.Command {
 							retrievalResult["unsupported_documents"] = len(unsupported)
 							retrievalResult["encrypted_documents"] = len(encrypted)
 							if len(failed) > 0 {
-								retStatus = "warn"
+								retrievalResult["status"] = "warn"
 							}
 						}
 					}

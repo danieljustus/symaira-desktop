@@ -4,6 +4,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -98,7 +100,11 @@ func ResetForTest() {
 
 // Path returns the global config file path (~/.config/symprint/config.toml).
 func Path() string {
-	return configkit.DefaultPath("symprint")
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return filepath.Join(".config", "symprint", "config.toml")
+	}
+	return filepath.Join(home, ".config", "symprint", "config.toml")
 }
 
 // DefaultConfigTOML is the template written by `symprint config init`.

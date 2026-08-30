@@ -517,16 +517,7 @@ struct ContentView: View {
                         .background(SymairaTheme.bgDarker)
                     }
                 }
-                .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-                    for provider in providers {
-                        provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, error in
-                            if let data = item as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                                Task { await ingestFile(url) }
-                            }
-                        }
-                    }
-                    return true
-                }
+                .onDrop(of: [.fileURL], isTargeted: nil, perform: handleDrop)
                 .alert("Couldn't Import File", isPresented: Binding(
                     get: { ingestFailure != nil },
                     set: { isPresented in if !isPresented { ingestFailure = nil } }
@@ -920,6 +911,19 @@ struct ContentView: View {
 
     private func ingestActionID(_ url: URL) -> String {
         "ingest:\(url.path)"
+    }
+
+    private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
+        for provider in providers {
+            provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, _ in
+                guard let data = item as? Data,
+                      let url = URL(dataRepresentation: data, relativeTo: nil) else { return }
+                Task { @MainActor in
+                    await ingestFile(url)
+                }
+            }
+        }
+        return true
     }
 
     private func ingestFile(_ url: URL) async {

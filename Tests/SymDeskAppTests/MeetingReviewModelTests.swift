@@ -421,7 +421,7 @@ final class MeetingReviewModelTests: XCTestCase {
         XCTAssertFalse(model.isSavingReview)
         let calls = await source.log.calls
         XCTAssertTrue(calls.contains("markReviewed:meetings/meeting-m1.md"))
-        XCTAssertEqual(calls.filter { $0 == "meetingsList" }.count, 1, "expected the library to reload after a review save")
+        XCTAssertEqual(calls.filter { $0 == "meetingsListReport" }.count, 1, "expected the library to reload after a review save")
     }
 
     func testMarkReviewedFailureSurfacesError() async {

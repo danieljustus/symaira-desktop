@@ -110,9 +110,10 @@ func (r *VLMRunner) extractWithVLM(ctx context.Context, path string, kind extrac
 		// Note the VLM failure in the engine name so downstream can see
 		// that the result came from the fallback.
 		return &extract.Result{
-			Text:   res.Text,
-			MIME:   res.MIME,
-			Engine: "tesseract(vlm-fallback)",
+			Text:     res.Text,
+			MIME:     res.MIME,
+			Engine:   "tesseract(vlm-fallback)",
+			Language: res.Language,
 		}, nil
 	}
 

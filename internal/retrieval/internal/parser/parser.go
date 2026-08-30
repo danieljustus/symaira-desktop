@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/danieljustus/symaira-desktop/internal/documentformat"
+	"github.com/danieljustus/symaira-desktop/internal/textnorm"
 	"github.com/ledongthuc/pdf"
 	"golang.org/x/net/html"
 )
@@ -406,6 +407,9 @@ func parsePDF(path string) (string, error) {
 	if result == "" {
 		return "", fmt.Errorf("PDF contains no extractable text (may be image-only)")
 	}
+	// Typeset PDFs hyphenate words at line and page breaks; rejoin them so
+	// the broken forms do not reach the index and the embeddings.
+	result = textnorm.Dehyphenate(result)
 	return result, nil
 }
 

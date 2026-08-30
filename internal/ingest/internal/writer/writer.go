@@ -27,6 +27,7 @@ type Note struct {
 	Correspondent   string         `yaml:"correspondent,omitempty"`
 	DocumentType    string         `yaml:"document_type,omitempty"`
 	OCREngine       string         `yaml:"ocr_engine,omitempty"`
+	OCRLanguage     string         `yaml:"ocr_language,omitempty"`
 	ArchivePath     string         `yaml:"archive_path"`
 	SidecarPath     string         `yaml:"sidecar_path,omitempty"`
 	ExtractionCount int            `yaml:"extraction_count,omitempty"`
@@ -135,7 +136,7 @@ func fileExists(path string) bool {
 // WriteNote writes a Markdown note with YAML frontmatter atomically.
 // It returns the vault path and any error. A write failure must not leave
 // a partially written file behind.
-func (w *NoteWriter) WriteNote(sourcePath, sha256, mime, ocrEngine, text, archivePath string, ingestedAt time.Time, category string, tags []string, correspondent, documentType, importedFrom, importRunID, sourceURI, downloadURI string, paperless *PaperlessMeta, layout *NoteLayout) (string, error) {
+func (w *NoteWriter) WriteNote(sourcePath, sha256, mime, ocrEngine, ocrLanguage, text, archivePath string, ingestedAt time.Time, category string, tags []string, correspondent, documentType, importedFrom, importRunID, sourceURI, downloadURI string, paperless *PaperlessMeta, layout *NoteLayout) (string, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -158,6 +159,7 @@ func (w *NoteWriter) WriteNote(sourcePath, sha256, mime, ocrEngine, text, archiv
 		Correspondent: correspondent,
 		DocumentType:  documentType,
 		OCREngine:     ocrEngine,
+		OCRLanguage:   ocrLanguage,
 		ArchivePath:   archivePath,
 		Paperless:     paperless,
 	}
@@ -237,6 +239,22 @@ func (w *NoteWriter) UpdateNoteSidecar(vaultPath, sidecarPath string, extraction
 	return nil
 }
 
+// ReadOCRLanguage returns the ocr_language frontmatter field of an existing
+// note, or "" when the note has none or cannot be parsed. Callers use it to
+// honour a per-document OCR language override on reprocessing.
+func ReadOCRLanguage(vaultPath string) string {
+	data, err := os.ReadFile(vaultPath) // #nosec G304 -- vault path from the document store
+	if err != nil {
+		return ""
+	}
+	fields, _, err := parseFrontmatter(string(data))
+	if err != nil {
+		return ""
+	}
+	lang, _ := fields["ocr_language"].(string)
+	return strings.TrimSpace(lang)
+}
+
 func parseFrontmatter(content string) (map[string]interface{}, string, error) {
 	if !strings.HasPrefix(content, "---\n") {
 		return nil, "", fmt.Errorf("note missing YAML frontmatter")
@@ -275,6 +293,11 @@ func updateMachineFields(fields map[string]interface{}, meta Note) {
 		fields["document_type"] = meta.DocumentType
 	}
 	fields["ocr_engine"] = meta.OCREngine
+	if meta.OCRLanguage == "" {
+		delete(fields, "ocr_language")
+	} else {
+		fields["ocr_language"] = meta.OCRLanguage
+	}
 	fields["archive_path"] = meta.ArchivePath
 }
 

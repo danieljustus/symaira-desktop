@@ -15,6 +15,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/annotate"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/extract"
+	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/ocr"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/store"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/writer"
 )
@@ -180,6 +181,11 @@ func (p *Pipeline) Reprocess(ctx context.Context, documentID int64, source strin
 	opts.SourcePathOverride = doc.SourcePath
 	opts.ExistingVaultPath = *doc.VaultPath
 	opts.ArchivePathOverride = *doc.ArchivePath
+	// A per-document ocr_language frontmatter field overrides the configured
+	// default for this reprocessing run (issue #671).
+	if lang := writer.ReadOCRLanguage(p.resolveArchivePath(*doc.VaultPath)); lang != "" {
+		opts.OCRLanguage = lang
+	}
 	res, err := p.processJob(ctx, claimed, opts)
 	if err != nil {
 		if failErr := p.Store.FailJob(ctx, claimed.ID, err.Error()); failErr != nil {
@@ -337,6 +343,22 @@ func (p *Pipeline) processJob(ctx context.Context, job *store.Job, opts *IngestO
 	return p.processSource(ctx, doc.SourcePath, doc.SHA256, extract.Kind(job.Kind), opts)
 }
 
+// engineFor returns the extraction engine for one job, honouring a
+// per-document OCR language override from the note frontmatter.
+func (p *Pipeline) engineFor(opts *IngestOptions) extract.Engine {
+	if opts == nil || opts.OCRLanguage == "" {
+		return p.Engine
+	}
+	switch e := p.Engine.(type) {
+	case *ocr.Runner:
+		return e.WithLanguage(opts.OCRLanguage)
+	case *ocr.VLMRunner:
+		return e.WithLanguage(opts.OCRLanguage)
+	default:
+		return p.Engine
+	}
+}
+
 func (p *Pipeline) processSource(ctx context.Context, source, hash string, kind extract.Kind, opts *IngestOptions) (*Result, error) {
 	var extractRes *extract.Result
 	var err error
@@ -347,7 +369,7 @@ func (p *Pipeline) processSource(ctx context.Context, source, hash string, kind 
 		if p.Engine == nil {
 			return nil, fmt.Errorf("no extraction engine available for %q", kind)
 		}
-		extractRes, err = extractText(ctx, source, kind, p.Engine)
+		extractRes, err = extractText(ctx, source, kind, p.engineFor(opts))
 	}
 	if err != nil {
 		return nil, err
@@ -458,6 +480,7 @@ func (p *Pipeline) processSource(ctx context.Context, source, hash string, kind 
 			Correspondent: correspondent,
 			DocumentType:  documentType,
 			OCREngine:     extractRes.Engine,
+			OCRLanguage:   extractRes.Language,
 			ArchivePath:   archivePath,
 		}, extractRes.Text)
 	} else {
@@ -466,6 +489,7 @@ func (p *Pipeline) processSource(ctx context.Context, source, hash string, kind 
 			hash,
 			extractRes.MIME,
 			extractRes.Engine,
+			extractRes.Language,
 			extractRes.Text,
 			archivePath,
 			time.Now().UTC(),

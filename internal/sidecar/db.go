@@ -86,7 +86,65 @@ func Open(path string) (*DB, error) {
 		return nil, fmt.Errorf("migrate: %w", err)
 	}
 
+	if err := backfillNormIndex(conn); err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("backfill norm index: %w", err)
+	}
+
 	return &DB{conn: conn}, nil
+}
+
+// backfillNormIndex populates the normalised German token index for rows
+// that predate migration 009. Stemming lives in Go, so the backfill cannot
+// be expressed in the SQL migration itself; it runs once, inside a single
+// transaction, and is a no-op once the two indexes hold the same rows.
+func backfillNormIndex(conn *sql.DB) error {
+	var missing int
+	if err := conn.QueryRow("SELECT COUNT(*) FROM fts_search WHERE rowid NOT IN (SELECT rowid FROM fts_norm)").Scan(&missing); err != nil {
+		return err
+	}
+	if missing == 0 {
+		return nil
+	}
+
+	rows, err := conn.Query("SELECT rowid, title, body FROM fts_search WHERE rowid NOT IN (SELECT rowid FROM fts_norm)")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = rows.Close() }()
+
+	tx, err := conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	type normRow struct {
+		id   int64
+		norm string
+	}
+	var pending []normRow
+	for rows.Next() {
+		var id int64
+		var title, body string
+		if err := rows.Scan(&id, &title, &body); err != nil {
+			return err
+		}
+		pending = append(pending, normRow{id: id, norm: searchquery.GermanNormText(title + " " + body)})
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+
+	for _, row := range pending {
+		if _, err := tx.Exec("INSERT INTO fts_norm(rowid, norm) VALUES (?, ?)", row.id, row.norm); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 // Close closes the database connection.
@@ -222,6 +280,12 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 		if err != nil {
 			return err
 		}
+		if _, err = tx.Exec("DELETE FROM fts_norm WHERE rowid = ?", fileID); err != nil {
+			return err
+		}
+		if _, err = tx.Exec("DELETE FROM fts_tri WHERE rowid = ?", fileID); err != nil {
+			return err
+		}
 
 		// Update files
 		_, err = tx.Exec(`UPDATE files SET sha256 = ?, title = ?, created_at = ?, modified_at = ?, indexed_at = ?,
@@ -274,6 +338,16 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 	}
 	_, err = tx.Exec("INSERT INTO fts_search(rowid, title, body) VALUES (?, ?, ?)", fileID, ftsTitle, doc.Body)
 	if err != nil {
+		return err
+	}
+	// Keep the normalised German token index in step so inflected and
+	// umlaut-bearing queries match (#672).
+	if _, err = tx.Exec("INSERT INTO fts_norm(rowid, norm) VALUES (?, ?)", fileID, searchquery.GermanNormText(ftsTitle+" "+doc.Body)); err != nil {
+		return err
+	}
+	// Keep the trigram substring index in step so compound parts are
+	// findable anywhere inside a token (#673).
+	if _, err = tx.Exec("INSERT INTO fts_tri(rowid, body) VALUES (?, ?)", fileID, doc.Body); err != nil {
 		return err
 	}
 
@@ -393,6 +467,12 @@ func deleteDocumentRows(tx *sql.Tx, path string) error {
 	if _, err := tx.Exec("DELETE FROM fts_search WHERE rowid = ?", fileID); err != nil {
 		return err
 	}
+	if _, err := tx.Exec("DELETE FROM fts_norm WHERE rowid = ?", fileID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM fts_tri WHERE rowid = ?", fileID); err != nil {
+		return err
+	}
 	if _, err := tx.Exec("DELETE FROM file_properties WHERE file_id = ?", fileID); err != nil {
 		return err
 	}
@@ -494,12 +574,7 @@ func (db *DB) CheckIntegrity() error {
 // whitespace-separated token becomes a quoted prefix term, so operators
 // and punctuation ("e-mail", "foo:bar") cannot break the MATCH syntax.
 func ftsQuote(query string) string {
-	fields := strings.Fields(query)
-	terms := make([]string, 0, len(fields))
-	for _, f := range fields {
-		terms = append(terms, `"`+strings.ReplaceAll(f, `"`, `""`)+`"*`)
-	}
-	return strings.Join(terms, " ")
+	return searchquery.GermanFTSQuery(query)
 }
 
 // ftsSnippetExpr is the FTS5 snippet expression shared by every search path,
@@ -513,19 +588,35 @@ func ftsQuote(query string) string {
 // inline markup in this one.
 const ftsSnippetExpr = `snippet(fts_search, 1, '', '', '...', 64)`
 
+// ftsMatchJoin is the shared driving subquery for full-text search: the
+// union of original-text matches (with rank and snippet) and normalised
+// German token matches (#672), deduplicated per document. The MATCH
+// constraints live inside the subquery legs because FTS5 does not allow
+// MATCH on a LEFT JOINed table; the outer query joins the materialised
+// match set and can filter and order freely. Norm-only matches carry NULL
+// rank and sort after ranked matches via "sm.rank IS NULL, sm.rank".
+const ftsMatchJoin = ` JOIN (
+	SELECT rowid, MAX(rank) AS rank, MAX(snip) AS snip, MAX(body) AS body FROM (
+		SELECT rowid, rank, ` + ftsSnippetExpr + ` AS snip, body FROM fts_search WHERE fts_search MATCH ?
+		UNION ALL
+		SELECT rowid, NULL, NULL, NULL FROM fts_norm WHERE fts_norm MATCH ?
+		UNION ALL
+		SELECT rowid, NULL, NULL, NULL FROM fts_tri WHERE fts_tri MATCH ?
+	) GROUP BY rowid
+) sm ON sm.rowid = f.id`
+
 // Search performs a basic FTS search over free-form user input.
 func (db *DB) Search(query string) ([]*vault.Document, error) {
+	triQuery := searchquery.GermanTrigramQuery(query)
 	query = ftsQuote(query)
 	if query == "" {
 		return nil, nil
 	}
 	rows, err := db.conn.Query(`
-		SELECT f.path, f.title, `+ftsSnippetExpr+` as snippet
-		FROM fts_search s
-		JOIN files f ON f.id = s.rowid
-		WHERE fts_search MATCH ?
-		ORDER BY rank LIMIT 20
-	`, query)
+		SELECT f.path, f.title, COALESCE(sm.snip, '') as snippet
+		FROM files f`+ftsMatchJoin+`
+		ORDER BY sm.rank IS NULL, sm.rank LIMIT 20
+	`, query, query, triQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -555,25 +646,25 @@ func (db *DB) SearchScoped(query string, allowedPaths []string) ([]*vault.Docume
 	if len(allowedPaths) == 0 {
 		return nil, nil
 	}
+	triQuery := searchquery.GermanTrigramQuery(query)
 	query = ftsQuote(query)
 	if query == "" {
 		return nil, nil
 	}
 
 	placeholders := make([]string, len(allowedPaths))
-	args := make([]interface{}, 0, len(allowedPaths)+1)
-	args = append(args, query)
+	args := make([]interface{}, 0, len(allowedPaths)+3)
+	args = append(args, query, query, triQuery)
 	for i, p := range allowedPaths {
 		placeholders[i] = "?"
 		args = append(args, p)
 	}
 
 	rows, err := db.conn.Query(fmt.Sprintf(`
-		SELECT f.path, f.title, `+ftsSnippetExpr+` as snippet
-		FROM fts_search s
-		JOIN files f ON f.id = s.rowid
-		WHERE fts_search MATCH ? AND f.path IN (%s)
-		ORDER BY rank LIMIT 20
+		SELECT f.path, f.title, COALESCE(sm.snip, '') as snippet
+		FROM files f`+ftsMatchJoin+`
+		WHERE f.path IN (%s)
+		ORDER BY sm.rank IS NULL, sm.rank LIMIT 20
 	`, strings.Join(placeholders, ",")), args...)
 	if err != nil {
 		return nil, err
@@ -634,14 +725,26 @@ func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]Search
 	}
 
 	hasFullText := len(positiveTerms) > 0
+	ftsQuery := ""
+	triQuery := ""
+	if hasFullText {
+		ftsQuery = ftsExpression(positiveTerms)
+		hasFullText = ftsQuery != ""
+		triQuery = triExpression(positiveTerms)
+	}
 	var query strings.Builder
 	query.WriteString(`SELECT f.path, f.title, `)
 	if hasFullText {
-		query.WriteString(ftsSnippetExpr + `, `)
+		query.WriteString(`COALESCE(sm.snip, ''), `)
 	} else {
 		query.WriteString(`substr(COALESCE(fts_search.body, ''), 1, 256), `)
 	}
-	query.WriteString(`COALESCE(fts_search.body, ''),
+	if hasFullText {
+		query.WriteString(`COALESCE(sm.body, ''),`)
+	} else {
+		query.WriteString(`COALESCE(fts_search.body, ''),`)
+	}
+	query.WriteString(`
 		COALESCE((SELECT value FROM file_properties tag_prop
 			WHERE tag_prop.file_id = f.id AND tag_prop.key = 'tags'), ''),
 		COALESCE(f.status, ''), COALESCE(f."type", ''),
@@ -651,14 +754,14 @@ func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]Search
 		COALESCE(lifecycle.state, 'indexed'), COALESCE(lifecycle.reason, '')
 		FROM files f LEFT JOIN index_lifecycle lifecycle ON lifecycle.path = f.path `)
 	if hasFullText {
-		query.WriteString(`JOIN fts_search ON fts_search.rowid = f.id WHERE fts_search MATCH ?`)
+		query.WriteString(ftsMatchJoin + ` WHERE 1 = 1`)
 	} else {
 		query.WriteString(`LEFT JOIN fts_search ON fts_search.rowid = f.id WHERE 1 = 1`)
 	}
 
-	args := make([]interface{}, 0, len(plan.Filters)+len(plan.Terms)+1)
+	args := make([]interface{}, 0, len(plan.Filters)+2*len(plan.Terms)+3)
 	if hasFullText {
-		args = append(args, ftsExpression(positiveTerms))
+		args = append(args, ftsQuery, ftsQuery, triQuery)
 	}
 
 	for _, filter := range plan.Filters {
@@ -712,15 +815,22 @@ func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]Search
 	}
 
 	for _, term := range negativeTerms {
+		expression := ftsExpression([]searchquery.Term{term})
+		if expression == "" {
+			continue
+		}
 		query.WriteString(` AND NOT EXISTS (
 			SELECT 1 FROM fts_search
 			WHERE fts_search.rowid = f.id AND fts_search MATCH ?
+		) AND NOT EXISTS (
+			SELECT 1 FROM fts_norm
+			WHERE fts_norm.rowid = f.id AND fts_norm MATCH ?
 		)`)
-		args = append(args, ftsExpression([]searchquery.Term{term}))
+		args = append(args, expression, expression)
 	}
 
 	if hasFullText {
-		query.WriteString(` ORDER BY rank`)
+		query.WriteString(` ORDER BY sm.rank IS NULL, sm.rank`)
 	} else {
 		query.WriteString(` ORDER BY f.path COLLATE NOCASE`)
 	}
@@ -751,16 +861,32 @@ func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]Search
 	return results, nil
 }
 
+// triExpression builds the trigram-leg query for the positive terms (#673):
+// every term must be expressible against the trigram index, otherwise the
+// leg is skipped entirely ("") and only prefix/norm matching applies —
+// trigram tokens shorter than three runes silently match nothing, which
+// would void the AND semantics.
+func triExpression(terms []searchquery.Term) string {
+	parts := make([]string, 0, len(terms))
+	for _, term := range terms {
+		expression := searchquery.GermanTrigramTerm(term.Value, term.Phrase)
+		if expression == `""` {
+			return `""`
+		}
+		parts = append(parts, expression)
+	}
+	return strings.Join(parts, " AND ")
+}
+
 func ftsExpression(terms []searchquery.Term) string {
 	parts := make([]string, 0, len(terms))
 	for _, term := range terms {
-		quoted := `"` + strings.ReplaceAll(term.Value, `"`, `""`) + `"`
-		if !term.Phrase {
-			quoted += "*"
+		expression := searchquery.GermanFTSTerm(term.Value, term.Phrase)
+		if expression != "" {
+			parts = append(parts, expression)
 		}
-		parts = append(parts, quoted)
 	}
-	return strings.Join(parts, " ")
+	return strings.Join(parts, " AND ")
 }
 
 func escapeLike(value string) string {

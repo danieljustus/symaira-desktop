@@ -2,6 +2,9 @@
 package config
 
 import (
+	"os"
+	"strings"
+
 	"github.com/danieljustus/symaira-corekit/configkit"
 )
 
@@ -47,7 +50,7 @@ type IMAPAccount struct {
 func Defaults() *Config {
 	return &Config{
 		Vault:            "",
-		OCRLang:          "eng",
+		OCRLang:          defaultOCRLanguage(),
 		DBPath:           "",
 		ArchivePath:      "",
 		Inbox:            "",
@@ -57,6 +60,18 @@ func Defaults() *Config {
 		IMAPAccounts:     nil,
 		IMAPPollInterval: "5m",
 	}
+}
+
+// defaultOCRLanguage derives a useful OCR model from the process locale.
+// Explicit config and environment values still override this default.
+func defaultOCRLanguage() string {
+	for _, key := range []string{"LC_ALL", "LC_MESSAGES", "LANG"} {
+		locale := strings.ToLower(os.Getenv(key))
+		if strings.HasPrefix(locale, "de") {
+			return "deu+eng"
+		}
+	}
+	return "eng"
 }
 
 // Loader is the application-wide config loader.

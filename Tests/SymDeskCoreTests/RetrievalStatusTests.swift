@@ -45,10 +45,12 @@ final class RetrievalStatusTests: XCTestCase {
     }
 
     func testMeetingListResultDecodesPerFileFailures() throws {
-        let json = Data(#"{
+        let json = Data("""
+        {
             "meetings": [],
             "failures": [{"path":"meetings/broken.md","message":"invalid frontmatter"}]
-        }"#.utf8)
+        }
+        """.utf8)
 
         let result = try JSONDecoder().decode(MeetingListResult.self, from: json)
         XCTAssertTrue(result.meetings.isEmpty)

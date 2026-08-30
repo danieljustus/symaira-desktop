@@ -29,6 +29,7 @@ type Config struct {
 	RetryBackoffMS       int    `json:"retry_backoff_ms" toml:"retry_backoff_ms"`
 	IndexCooldownSeconds int    `json:"index_cooldown_seconds" toml:"index_cooldown_seconds"`
 	VectorBackend        string `json:"vector_backend" toml:"vector_backend"`
+	IndexPath            string `json:"index_path" toml:"index_path"`
 
 	// Quantized vector search (opt-in, off by default).
 	VectorQuantization       string `json:"vector_quantization" toml:"vector_quantization"`               // "off" | "turbo-prod"
@@ -334,6 +335,13 @@ var configKeys = []configKey{
 			return fmt.Errorf("invalid %s %q (only %q is currently supported)", key, value, "sqlite")
 		}
 		cfg.VectorBackend = value
+		return nil
+	}},
+	{name: "index_path", desc: "Retrieval index database path", set: func(cfg *Config, key, value string) error {
+		if err := requireValue(key, value); err != nil {
+			return err
+		}
+		cfg.IndexPath = value
 		return nil
 	}},
 	{name: "vector_quantization", desc: `Vector quantization mode ("off" or "turbo-prod")`, set: func(cfg *Config, key, value string) error {

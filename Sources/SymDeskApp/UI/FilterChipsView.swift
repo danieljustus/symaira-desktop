@@ -8,6 +8,7 @@ enum SearchFilterField: String, CaseIterable, Identifiable {
     case tag
     case type
     case status
+    case indexState = "index"
     case correspondent
     case folder
     case path
@@ -24,6 +25,7 @@ enum SearchFilterField: String, CaseIterable, Identifiable {
         case .tag: return "Tag"
         case .type: return "Type"
         case .status: return "Status"
+        case .indexState: return "Index state"
         case .correspondent: return "Correspondent"
         case .folder: return "Folder"
         case .path: return "Path"
@@ -40,6 +42,7 @@ enum SearchFilterField: String, CaseIterable, Identifiable {
         case .tag: return "tag"
         case .type: return "doc.text"
         case .status: return "flag"
+        case .indexState: return "arrow.triangle.2.circlepath"
         case .correspondent: return "person"
         case .folder: return "folder"
         case .path: return "link"
@@ -304,6 +307,8 @@ struct FilterChipsView: View {
                 valueList(values: availableTypes)
             case .status:
                 valueList(values: availableStatuses)
+            case .indexState:
+                valueList(values: ["queued", "indexing", "indexed", "failed", "encrypted", "unsupported"])
             case .date:
                 Text("Date range filter coming soon")
                     .symairaText(.caption)

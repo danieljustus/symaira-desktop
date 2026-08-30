@@ -178,18 +178,33 @@ type Store interface {
 
 var _ Store = (*DB)(nil)
 
-func Open() (*DB, error) {
+func DefaultPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user home directory: %w", err)
+		return "", fmt.Errorf("failed to get user home directory: %w", err)
 	}
+	return filepath.Join(home, ".local", "share", "symaira-seek", "symseek.db"), nil
+}
 
-	dir := filepath.Join(home, ".local", "share", "symaira-seek")
-	if err := os.MkdirAll(dir, 0700); err != nil {
+func Open() (*DB, error) {
+	dbPath, err := DefaultPath()
+	if err != nil {
+		return nil, err
+	}
+	return OpenAt(dbPath)
+}
+
+func OpenAt(dbPath string) (*DB, error) {
+	if strings.TrimSpace(dbPath) == "" {
+		return nil, fmt.Errorf("database path is required")
+	}
+	dbPath, err := filepath.Abs(dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("resolve database path: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0700); err != nil {
 		return nil, fmt.Errorf("failed to create database directory: %w", err)
 	}
-
-	dbPath := filepath.Join(dir, "symseek.db")
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		if f, err := os.OpenFile(dbPath, os.O_CREATE|os.O_RDWR, 0600); err == nil {
 			f.Close()

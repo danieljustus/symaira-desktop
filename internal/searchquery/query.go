@@ -24,6 +24,9 @@ const (
 	FieldFileType Field = "filetype"
 	FieldCreated  Field = "created"
 	FieldModified Field = "modified"
+	// FieldIndexState is deliberately separate from workflow status, which is
+	// already exposed as status:. Use index: (or index_status:) in queries.
+	FieldIndexState Field = "index"
 )
 
 // Filter limits results using an indexed metadata field.
@@ -76,7 +79,7 @@ func (p Plan) RequiresSidecar() bool {
 	return false
 }
 
-// Parse parses path:, tag:, type:, status:, filename:, filetype:, created:,
+// Parse parses path:, tag:, type:, status:, index:, filename:, filetype:, created:,
 // modified:, quoted phrases, -negation and /regular expressions/. A syntax error
 // is intentionally returned to callers;
 // they can then degrade the whole original query to safe plain full-text search.
@@ -243,6 +246,8 @@ func filter(token string) (Field, string, bool, error) {
 		return FieldType, value, true, nil
 	case string(FieldStatus):
 		return FieldStatus, value, true, nil
+	case string(FieldIndexState), "index_status":
+		return FieldIndexState, value, true, nil
 	case string(FieldFilename):
 		return FieldFilename, value, true, nil
 	case string(FieldFileType):

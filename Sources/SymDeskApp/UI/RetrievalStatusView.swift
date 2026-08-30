@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import SymairaTheme
 import SymDeskCore
 
@@ -14,7 +15,9 @@ struct RetrievalStatusView: View {
     @State private var status: RetrievalStatus?
     @State private var loadError: String?
     @State private var isReindexing = false
+    @State private var isRetrying = false
     @State private var reindexSummary: String?
+    @State private var maintenanceSummary: String?
     @State private var pruneStale = true
 
     var body: some View {
@@ -133,11 +136,35 @@ struct RetrievalStatusView: View {
                 }
             }
             row("Index size", Self.formatBytes(status.databaseBytes))
+            if let location = status.indexLocation, !location.isEmpty {
+                row("Index location", location)
+                maintenanceControls
+            }
             row("Last indexed", Self.formatTimestamp(status.lastIndexedAt))
             row("Embedding model", status.embeddingModel)
         }
         .padding(14)
         .glassCard()
+    }
+
+    private var maintenanceControls: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
+                Button("Back Up…") { chooseBackupDestination() }
+                    .buttonStyle(.bordered)
+                Button("Restore…") { chooseRestoreSource() }
+                    .buttonStyle(.bordered)
+                Button("Relocate…") { chooseRelocationDestination() }
+                    .buttonStyle(.bordered)
+            }
+            .controlSize(.small)
+            .disabled(isReindexing || isRetrying)
+            if let maintenanceSummary {
+                Text(maintenanceSummary)
+                    .symairaText(.caption)
+                    .foregroundColor(SymairaTheme.textSecondary)
+            }
+        }
     }
 
     private func errorCard(_ message: String) -> some View {
@@ -163,9 +190,15 @@ struct RetrievalStatusView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(SymairaTheme.goldPrimary)
-                .disabled(isReindexing || core.vaultPath == nil)
+                .disabled(isReindexing || isRetrying || core.vaultPath == nil)
 
-                if isReindexing {
+                Button(isRetrying ? "Retrying…" : "Retry failed") {
+                    Task { await retryFailed() }
+                }
+                .buttonStyle(.bordered)
+                .disabled(isReindexing || isRetrying || core.vaultPath == nil)
+
+                if isReindexing || isRetrying {
                     ProgressView().controlSize(.small)
                 }
             }
@@ -203,6 +236,18 @@ struct RetrievalStatusView: View {
         }
     }
 
+    private func retryFailed() async {
+        isRetrying = true
+        defer { isRetrying = false }
+        do {
+            let result = try await core.retryFailedIndex()
+            reindexSummary = "Retried \(result.attempted): \(result.succeeded) succeeded, \(result.failed) failed."
+        } catch {
+            reindexSummary = "Retry failed: \(error.localizedDescription)"
+        }
+        await load()
+    }
+
     private func reindex() async {
         isReindexing = true
         defer { isReindexing = false }
@@ -217,6 +262,61 @@ struct RetrievalStatusView: View {
             reindexSummary = "Index pass failed: \(error.localizedDescription)"
         }
         await load()
+    }
+
+    private func chooseBackupDestination() {
+        let panel = NSSavePanel()
+        panel.title = "Back Up Search Index"
+        panel.nameFieldStringValue = "symseek.db.backup"
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            Task { @MainActor in
+                do {
+                    try await core.backupIndex(to: url.path)
+                    maintenanceSummary = "Backup created at \(url.path)."
+                } catch {
+                    maintenanceSummary = "Backup failed: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+
+    private func chooseRestoreSource() {
+        let panel = NSOpenPanel()
+        panel.title = "Restore Search Index"
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            Task { @MainActor in
+                do {
+                    try await core.restoreIndex(from: url.path)
+                    maintenanceSummary = "Index restored from \(url.path)."
+                    await load()
+                } catch {
+                    maintenanceSummary = "Restore failed: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+
+    private func chooseRelocationDestination() {
+        let panel = NSSavePanel()
+        panel.title = "Relocate Search Index"
+        panel.nameFieldStringValue = "symseek.db"
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            Task { @MainActor in
+                do {
+                    try await core.relocateIndex(to: url.path)
+                    maintenanceSummary = "Index relocated to \(url.path)."
+                    await load()
+                } catch {
+                    maintenanceSummary = "Relocation failed: \(error.localizedDescription)"
+                }
+            }
+        }
     }
 
     // MARK: - Formatting

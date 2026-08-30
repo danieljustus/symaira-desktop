@@ -168,6 +168,21 @@ func newDoctorCmd() *cobra.Command {
 					if pending > 0 {
 						retrievalResult["detail"] = "index has unembeddable (pending) chunks; run `symdesk index --re-embed` once the embedding backend is available"
 					}
+					if vRoot != "" {
+						if lifecycleDB, lifecycleErr := sidecar.OpenForVault(vRoot); lifecycleErr == nil {
+							defer func() { _ = lifecycleDB.Close() }()
+							failed, _ := lifecycleDB.ListIndexStatuses(sidecar.IndexStateFailed)
+							unsupported, _ := lifecycleDB.ListIndexStatuses(sidecar.IndexStateUnsupported)
+							encrypted, _ := lifecycleDB.ListIndexStatuses(sidecar.IndexStateEncrypted)
+							retrievalResult["failed_documents"] = len(failed)
+							retrievalResult["unsupported_documents"] = len(unsupported)
+							retrievalResult["encrypted_documents"] = len(encrypted)
+							if len(failed) > 0 {
+								retrievalResult["status"] = "warn"
+							}
+						}
+					}
+					retrievalResult["index_location"] = retrievalStatus.IndexLocation
 					results["retrieval"] = retrievalResult
 				}
 			}

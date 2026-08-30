@@ -2,17 +2,20 @@ package ocr
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/danieljustus/symaira-corekit/ollamakit"
+	"github.com/danieljustus/symaira-corekit/llmkit"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/extract"
 )
 
-// fakeOllamaClient is an in-memory stand-in for *ollamakit.Client. It
+// fakeOllamaClient is an in-memory stand-in for *llmkit.Client. It
 // satisfies the ollamaClient seam used by VLMRunner, so no live Ollama
 // service is needed.
 type fakeOllamaClient struct {
@@ -26,7 +29,7 @@ type fakeOllamaClient struct {
 	gotPrompt string
 }
 
-func (f *fakeOllamaClient) Generate(_ context.Context, model, prompt string, _ *ollamakit.GenerateOptions, cb func(ollamakit.GenerateResponse) error) error {
+func (f *fakeOllamaClient) Generate(_ context.Context, model, prompt string, cb func(llmkit.GenerateResponse) error, _ ...llmkit.GenerateOption) error {
 	f.calls++
 	f.gotModel = model
 	f.gotPrompt = prompt
@@ -34,7 +37,7 @@ func (f *fakeOllamaClient) Generate(_ context.Context, model, prompt string, _ *
 		return f.err
 	}
 	if f.response != "" {
-		return cb(ollamakit.GenerateResponse{Response: f.response, Done: true})
+		return cb(llmkit.GenerateResponse{Response: f.response, Done: true})
 	}
 	return nil
 }
@@ -287,5 +290,40 @@ func TestVLMRunner_Extract_UnsupportedKind(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "unsupported source kind") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestNewVLMRunner_UsesLLMKitNativeGenerate(t *testing.T) {
+	var request struct {
+		Model  string   `json:"model"`
+		Images []string `json:"images"`
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/generate" {
+			t.Fatalf("request path = %q, want /api/generate", r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		_, _ = w.Write([]byte(`{"response":"recognized","done":true}`))
+	}))
+	defer srv.Close()
+
+	dir := t.TempDir()
+	img := writeFakeImage(t, dir, "scan.png")
+	r := NewVLMRunner(srv.URL, "vision-model", "eng", &Runner{Tesseract: filepath.Join(dir, "missing")})
+
+	res, err := r.Extract(context.Background(), img, extract.KindPNG)
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	if res.Text != "recognized" {
+		t.Fatalf("text = %q, want recognized", res.Text)
+	}
+	if request.Model != "vision-model" {
+		t.Fatalf("model = %q, want vision-model", request.Model)
+	}
+	if len(request.Images) != 1 || request.Images[0] == "" {
+		t.Fatalf("images = %#v, want one encoded image", request.Images)
 	}
 }

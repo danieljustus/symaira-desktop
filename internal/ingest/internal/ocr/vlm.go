@@ -7,13 +7,19 @@ import (
 	"os"
 	"strings"
 
-	"github.com/danieljustus/symaira-corekit/ollamakit"
+	"github.com/danieljustus/symaira-corekit/llmkit"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/extract"
 )
 
 // ollamaClient is the minimal Ollama surface VLMRunner needs.
 type ollamaClient interface {
-	Generate(ctx context.Context, model, prompt string, opts *ollamakit.GenerateOptions, cb func(ollamakit.GenerateResponse) error) error
+	Generate(ctx context.Context, model, prompt string, callback func(llmkit.GenerateResponse) error, opts ...llmkit.GenerateOption) error
+}
+
+type unavailableOllamaClient struct{ err error }
+
+func (c unavailableOllamaClient) Generate(context.Context, string, string, func(llmkit.GenerateResponse) error, ...llmkit.GenerateOption) error {
+	return c.err
 }
 
 // VLMRunner implements extract.Engine using a local vision-language model
@@ -42,11 +48,28 @@ func NewVLMRunner(baseURL, model, ocrLang string, fallback *Runner) *VLMRunner {
 	if fallback == nil {
 		fallback = DefaultRunner(ocrLang)
 	}
+
+	ollama := newOllamaClient(baseURL)
 	return &VLMRunner{
-		Ollama:      ollamakit.New(ollamakit.Config{BaseURL: baseURL, Model: model}),
+		Ollama:      ollama,
 		OllamaModel: model,
 		Fallback:    fallback,
 	}
+}
+
+func newOllamaClient(baseURL string) ollamaClient {
+	desc, ok := llmkit.Lookup("ollama")
+	if !ok {
+		return unavailableOllamaClient{err: fmt.Errorf("ollama provider descriptor missing from embedded registry")}
+	}
+	if baseURL == "" {
+		baseURL = "http://localhost:11434"
+	}
+	client, err := llmkit.NewClient(desc, "", llmkit.WithBaseURL(baseURL))
+	if err != nil {
+		return unavailableOllamaClient{err: err}
+	}
+	return client
 }
 
 // NewEngine returns the configured VLM engine or the standard Tesseract runner.
@@ -95,11 +118,10 @@ func (r *VLMRunner) extractWithVLM(ctx context.Context, path string, kind extrac
 
 	var resultText string
 	err = r.Ollama.Generate(ctx, r.OllamaModel, r.prompt(),
-		&ollamakit.GenerateOptions{Images: []string{b64}},
-		func(resp ollamakit.GenerateResponse) error {
+		func(resp llmkit.GenerateResponse) error {
 			resultText += resp.Response
 			return nil
-		})
+		}, llmkit.WithGenerateImages([]string{b64}))
 
 	if err != nil {
 		// Fall back to Tesseract on any Ollama error.

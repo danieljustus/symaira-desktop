@@ -36,7 +36,7 @@ type IMAPAccount struct {
 	Host           string   `json:"host" toml:"host"`
 	Port           int      `json:"port" toml:"port"`
 	Username       string   `json:"username" toml:"username"`
-	PasswordSecret string   `json:"password_secret" toml:"password_secret"` // symvault:// or env:// or plaintext
+	PasswordSecret string   `json:"password_secret" toml:"password_secret"` // secretref reference or bare environment-variable name
 	Folder         string   `json:"folder" toml:"folder"`                   // e.g. "INBOX"
 	From           []string `json:"from" toml:"from"`                       // filter rules
 	Subject        []string `json:"subject" toml:"subject"`                 // filter rules

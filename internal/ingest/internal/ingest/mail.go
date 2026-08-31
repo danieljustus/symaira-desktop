@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/danieljustus/symaira-corekit/secretref"
+
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/extract"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/secret"
@@ -253,7 +255,7 @@ func (m *MailPoller) Start(ctx context.Context) error {
 
 	for i, acc := range m.accounts {
 		if secret.IsPlaintext(acc.PasswordSecret) {
-			log.Printf("[MailPoller] Account %d (%s) stores its password in plaintext config; use keychain:// or symvault:// instead (run 'symingest doctor' for details)", i, acc.Username)
+			log.Printf("[MailPoller] Account %d (%s) has a bare password_secret value; it will be resolved as an environment variable name, not as a password. Use symvault://, keychain:// or env:// explicitly (run 'symingest doctor' for details)", i, acc.Username)
 		}
 		m.wg.Add(1)
 		go func(account config.IMAPAccount, index int) {
@@ -345,7 +347,7 @@ func (m *MailPoller) Accounts() []config.IMAPAccount {
 }
 
 func (m *MailPoller) pollAccount(ctx context.Context, acc config.IMAPAccount) error {
-	pwd, err := secret.Resolve(ctx, acc.PasswordSecret)
+	pwd, err := secretref.Resolve(ctx, acc.PasswordSecret, "")
 	if err != nil {
 		return fmt.Errorf("resolve password_secret for %s: %w", acc.Username, err)
 	}

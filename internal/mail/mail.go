@@ -4,9 +4,8 @@
 // fetched attachments through the existing ingest pipeline.
 //
 // Password safety: this package never logs, stores, or even sees credential
-// values. The pipeline resolves them from its own config (TOML with
-// symvault:// references or redacted plaintext passwords) and only ever hands
-// back staged files.
+// values. The pipeline resolves secret references through the shared resolver
+// and only ever hands back staged files.
 package mail
 
 import (

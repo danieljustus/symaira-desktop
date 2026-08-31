@@ -42,6 +42,7 @@ Supported operations are `list`, `validate`, `create`, `update`, `delete`, and `
 Password safety rules:
 
 - secret references such as `symvault://...` remain visible as references
+- bare values are treated as environment-variable names and fail if unset
 - plaintext password values are returned only as `<redacted>`
 - updates that omit `password_secret` preserve the existing value
 - the desktop UI never displays resolved credentials

@@ -16,7 +16,7 @@ func TestWatcher_CheckStabilityReschedulesAfterFileChange(t *testing.T) {
 	w, s, inbox, clk := newTestWatcher(t)
 	ctx := context.Background()
 	path := filepath.Join(inbox, "changing.txt")
-	if err := os.WriteFile(path, []byte("initial"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("initial"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -26,7 +26,7 @@ func TestWatcher_CheckStabilityReschedulesAfterFileChange(t *testing.T) {
 	w.mu.Unlock()
 
 	changed := []byte("changed while waiting")
-	if err := os.WriteFile(path, changed, 0o644); err != nil {
+	if err := os.WriteFile(path, changed, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -74,7 +74,7 @@ func TestMailPoller_PollAccount_StartUIDContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",

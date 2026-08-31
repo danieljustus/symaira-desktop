@@ -186,7 +186,7 @@ func newMailRulesDeleteCmd(configPath *string) *cobra.Command {
 // — rather than fmt-printing a marshalled string through outputResult, which
 // made every command's output look to CodeQL like a logging sink for the
 // account's secret field. Every account has come back through ingest's
-// masking view, so a stored plaintext password reads as the mask and only a
+// masking view, so a stored bare value reads as the mask and only a
 // non-secret reference (symvault://…) is printed verbatim — which the app
 // needs in order to tell a configured account from an unconfigured one.
 func outputMailRulesResult(operation string, result *ingest.MailConfigurationResult) error {

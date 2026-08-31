@@ -183,7 +183,8 @@ imap_poll_interval = "5m"
 host            = "imap.example.com"
 port            = 993
 username        = "invoices@example.com"
-password_secret = "symvault://imap/invoices"   # or "env://IMAP_PASSWORD", "keychain://symingest/invoices", or a plaintext password
+password_secret = "symvault://imap/invoices"   # or "env://IMAP_PASSWORD" or "keychain://symingest/invoices"
+# Bare values are treated as environment-variable names, not literal passwords.
 folder          = "INBOX"
 from            = ["billing@vendor.com"]        # optional sender filter
 subject         = ["Invoice"]                   # optional subject filter
@@ -193,7 +194,7 @@ move_to         = "Processed"                   # required when action = "move"
 archive_mail    = false                         # also ingest the .eml message body itself
 ```
 
-Each matching attachment is ingested through the normal pipeline (OCR, extraction, classification) exactly like a file dropped into the watched inbox, and appears in `symingest jobs` with the same retry semantics as filesystem-sourced jobs. Messages are tracked by Message-ID, so a mailbox is never re-ingested on the next poll. `password_secret` supports the same secret backends as other credentials in symingest (`symvault://`, `env://`, `keychain://`, or a plaintext fallback) — see `internal/secret` for resolution order. Connection or authentication failures for an account are surfaced by `symingest doctor` and logged on each poll attempt.
+Each matching attachment is ingested through the normal pipeline (OCR, extraction, classification) exactly like a file dropped into the watched inbox, and appears in `symingest jobs` with the same retry semantics as filesystem-sourced jobs. Messages are tracked by Message-ID, so a mailbox is never re-ingested on the next poll. `password_secret` supports `symvault://`, `env://`, and `keychain://` references; a bare value is interpreted as an environment-variable name and fails clearly when that variable is unset. Connection or authentication failures for an account are surfaced by `symingest doctor` and logged on each poll attempt.
 
 **Manage classification rules:**
 

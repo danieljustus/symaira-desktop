@@ -200,15 +200,16 @@ func defaultDialIMAP(ctx context.Context, addr string, host string) (imapClient,
 
 // MailPoller periodically connects to IMAP accounts to fetch and ingest attachments.
 type MailPoller struct {
-	store         *store.Store
-	accounts      []config.IMAPAccount
-	interval      time.Duration
-	processingDir string
-	failedDir     string
-	wg            sync.WaitGroup
-	cancel        context.CancelFunc
-	dialIMAP      func(ctx context.Context, addr string, host string) (imapClient, error)
-	newMailReader func(r io.Reader) (*mail.Reader, error)
+	store             *store.Store
+	accounts          []config.IMAPAccount
+	interval          time.Duration
+	processingDir     string
+	failedDir         string
+	wg                sync.WaitGroup
+	cancel            context.CancelFunc
+	dialIMAP          func(ctx context.Context, addr string, host string) (imapClient, error)
+	newMailReader     func(r io.Reader) (*mail.Reader, error)
+	getMailPollCursor func(ctx context.Context, accountID string) (*store.MailPollCursor, error)
 
 	// Enqueue optionally replaces the store-backed job enqueue for a staged
 	// attachment. The CLI leaves it nil and keeps the job queue, which its
@@ -238,13 +239,14 @@ func NewMailPoller(s *store.Store, accounts []config.IMAPAccount, opts MailPolle
 		return nil, fmt.Errorf("resolve failed dir: %w", err)
 	}
 	return &MailPoller{
-		store:         s,
-		accounts:      accounts,
-		interval:      opts.Interval,
-		processingDir: processingDir,
-		failedDir:     failedDir,
-		dialIMAP:      defaultDialIMAP,
-		newMailReader: mail.CreateReader,
+		store:             s,
+		accounts:          accounts,
+		interval:          opts.Interval,
+		processingDir:     processingDir,
+		failedDir:         failedDir,
+		dialIMAP:          defaultDialIMAP,
+		newMailReader:     mail.CreateReader,
+		getMailPollCursor: s.GetMailPollCursor,
 	}, nil
 }
 
@@ -376,7 +378,7 @@ func (m *MailPoller) pollAccount(ctx context.Context, acc config.IMAPAccount) er
 	// still the one we last saw; otherwise (first poll, or the server
 	// assigned a new UID sequence) scan from the beginning.
 	accountID := config.AccountID(acc)
-	cursor, err := m.store.GetMailPollCursor(ctx, accountID)
+	cursor, err := m.getMailPollCursor(ctx, accountID)
 	if err != nil {
 		return fmt.Errorf("load poll cursor: %w", err)
 	}

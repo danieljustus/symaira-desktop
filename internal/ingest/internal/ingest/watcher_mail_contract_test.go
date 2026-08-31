@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -122,6 +123,52 @@ func TestMailPoller_PollAccount_StartUIDContract(t *testing.T) {
 		t.Fatalf("reset poll: %v", err)
 	}
 	assertSearchStartUID(t, fakeClient.lastSearchCriteria, 1)
+}
+
+func TestMailPoller_PollAccount_CursorLoadError(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "mail.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.Close() }()
+
+	acc := config.IMAPAccount{
+		Username:       "test@example.com",
+		PasswordSecret: "myplaintextpw",
+		Host:           "imap.example.com",
+		Port:           993,
+	}
+	poller, err := NewMailPoller(s, []config.IMAPAccount{acc}, MailPollerOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fakeClient := &fakeIMAPClient{
+		selectStatus: &mailboxStatus{UIDValidity: 7, UIDNext: 11},
+	}
+	poller.dialIMAP = func(context.Context, string, string) (imapClient, error) {
+		return fakeClient, nil
+	}
+
+	cursorErr := errors.New("cursor store unavailable")
+	poller.getMailPollCursor = func(context.Context, string) (*store.MailPollCursor, error) {
+		return nil, cursorErr
+	}
+
+	err = poller.pollAccount(context.Background(), acc)
+	if err == nil {
+		t.Fatal("expected cursor-load error, got nil")
+	}
+	if !errors.Is(err, cursorErr) {
+		t.Fatalf("error = %v, want underlying cursor error", err)
+	}
+	if got, want := err.Error(), "load poll cursor: cursor store unavailable"; got != want {
+		t.Fatalf("error = %q, want %q", got, want)
+	}
+	if fakeClient.lastSearchCriteria != nil {
+		t.Fatal("expected poll to stop before searching after cursor-load failure")
+	}
 }
 
 func assertSearchStartUID(t *testing.T, criteria *imap.SearchCriteria, want uint32) {

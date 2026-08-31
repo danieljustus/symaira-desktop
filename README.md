@@ -79,6 +79,24 @@ On first launch, choose a vault in Files/iCloud or enter a SymDesk Server URL
 and token. Server snapshots are searched on-device and originals are downloaded
 only when a preview is opened.
 
+To create and validate a signed App Store Connect archive locally, use the
+repository script on a Mac with Xcode 26.x and the required Apple signing
+profiles installed:
+
+```sh
+IOS_VERSION=0.11.0 \
+IOS_BUILD_NUMBER=1 \
+DEVELOPMENT_TEAM=M4744F3TAA \
+bash scripts/release-ios.sh
+```
+
+The script validates the main app, Share Extension, Widget, bundle identifiers,
+versions, build number, and privacy manifests. Add `--upload` only when
+`APP_STORE_CONNECT_API_KEY_ID`, `APP_STORE_CONNECT_API_ISSUER_ID`, and
+`APP_STORE_CONNECT_API_PRIVATE_KEY_PATH` point to credentials managed outside
+the repository. Use `bash scripts/release-ios.sh --dry-run` to validate the
+source configuration without signing credentials or Xcode.
+
 ## Usage
 
 ```sh

@@ -246,6 +246,9 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
+      - name: Validate iOS release configuration
+        run: bash scripts/release-ios.sh --dry-run
+
       - name: Configure access to private Swift package
         env:
           SYMAIRA_APPKIT_TOKEN: ${{ secrets.SYMAIRA_APPKIT_TOKEN }}

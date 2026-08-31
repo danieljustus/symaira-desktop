@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'SemVer marketing version for a manually triggered build'
+        required: false
+        type: string
+      build_number:
+        description: 'Positive App Store build number (defaults to the workflow run number)'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -11,6 +21,7 @@ permissions:
 jobs:
   release-cli:
     name: Signed CLI release
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: macos-15
     environment: release
     steps:
@@ -87,6 +98,7 @@ jobs:
 
   release-macos-app:
     name: Signed and notarized SymDesk app
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: macos-15
     environment: release
     needs: release-cli
@@ -275,8 +287,148 @@ jobs:
             security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
           fi
 
+  release-ios-testflight:
+    name: Signed iOS TestFlight build
+    runs-on: macos-15
+    environment: ios-testflight
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode 26
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
+        with:
+          xcode-version: '26.0'
+
+      - name: Verify Xcode toolchain
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcodebuild -version | grep -q '^Xcode 26\.'
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate --spec project.yml
+
+      - name: Validate iOS release configuration
+        run: bash scripts/release-ios.sh --dry-run
+
+      - name: Configure access to private Swift package
+        env:
+          SYMAIRA_APPKIT_TOKEN: ${{ secrets.SYMAIRA_APPKIT_TOKEN }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r config_key; do
+            git config --local --unset-all "$config_key" || true
+          done < <(git config --local --name-only --get-regexp '^includeIf\.gitdir:')
+          git config --global url."https://danieljustus:${SYMAIRA_APPKIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          api_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${SYMAIRA_APPKIT_TOKEN}" \
+            https://api.github.com/repos/danieljustus/symaira-appkit)"
+          test "$api_status" = "200"
+          git ls-remote https://github.com/danieljustus/symaira-appkit.git HEAD >/dev/null
+
+      - name: Import iOS distribution certificate
+        uses: Apple-Actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466 # v7.0.0
+        with:
+          p12-file-base64: ${{ secrets.IOS_CERTIFICATE_P12 }}
+          p12-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+
+      - name: Download main app provisioning profile
+        uses: Apple-Actions/download-provisioning-profiles@2126b5f86a0e2863cbf4d2d312112b22b943a594 # v6.1.0
+        with:
+          bundle-id: com.symaira.desktop.ios
+          profile-type: IOS_APP_STORE
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+      - name: Download Share Extension provisioning profile
+        uses: Apple-Actions/download-provisioning-profiles@2126b5f86a0e2863cbf4d2d312112b22b943a594 # v6.1.0
+        with:
+          bundle-id: com.symaira.desktop.ios.share
+          profile-type: IOS_APP_STORE
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+      - name: Download Widget provisioning profile
+        uses: Apple-Actions/download-provisioning-profiles@2126b5f86a0e2863cbf4d2d312112b22b943a594 # v6.1.0
+        with:
+          bundle-id: com.symaira.desktop.ios.widget
+          profile-type: IOS_APP_STORE
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+      - name: Set release version and build number
+        env:
+          IOS_RELEASE_VERSION: ${{ inputs.version }}
+          IOS_RELEASE_BUILD_NUMBER: ${{ inputs.build_number }}
+        run: |
+          set -euo pipefail
+          VERSION="${IOS_RELEASE_VERSION:-${GITHUB_REF_NAME#v}}"
+          BUILD_NUMBER="${IOS_RELEASE_BUILD_NUMBER:-$GITHUB_RUN_NUMBER}"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || {
+            echo "::error::Provide a SemVer version through the tag or workflow_dispatch input 'version'."
+            exit 2
+          }
+          [[ "$BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]] || {
+            echo "::error::Build number must be a positive integer."
+            exit 2
+          }
+          echo "IOS_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "IOS_BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+          echo "Using iOS version $VERSION and build number $BUILD_NUMBER"
+
+      - name: Archive and export iOS product
+        env:
+          DEVELOPMENT_TEAM: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          bash scripts/release-ios.sh \
+            --archive-path "$RUNNER_TEMP/SymDeskMobile.xcarchive" \
+            --export-path "$RUNNER_TEMP/ios-export"
+
+      - name: Locate exported IPA
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          IPAS=("$RUNNER_TEMP/ios-export"/*.ipa)
+          shopt -u nullglob
+          test "${#IPAS[@]}" -eq 1
+          echo "IOS_IPA_PATH=${IPAS[0]}" >> "$GITHUB_ENV"
+          echo "Exported IPA: $(basename "${IPAS[0]}")"
+
+      - name: Upload IPA, dSYMs, and archive as workflow artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: SymDesk-iOS-${{ github.run_number }}
+          path: |
+            ${{ env.IOS_IPA_PATH }}
+            ${{ runner.temp }}/SymDeskMobile.xcarchive/dSYMs
+          if-no-files-found: error
+
+      - name: Upload build to TestFlight
+        uses: Apple-Actions/upload-testflight-build@5e75ff58276689011512ba87a381d93dc67dbcf8 # v5.3.0
+        with:
+          app-path: ${{ env.IOS_IPA_PATH }}
+          app-type: ios
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+          wait-for-processing: 'true'
+
   bump-homebrew-cask:
     name: Bump Homebrew cask
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: macos-15
     environment: release
     needs: release-macos-app

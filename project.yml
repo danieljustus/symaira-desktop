@@ -148,6 +148,8 @@ targets:
     platform: iOS
     sources:
       - Sources/SymDeskMobile
+    resources:
+      - Sources/SymDeskMobile/PrivacyInfo.xcprivacy
     dependencies:
       - package: symaira-appkit
         product: SymairaKeychain
@@ -174,6 +176,8 @@ targets:
     platform: iOS
     sources:
       - Sources/SymDeskMobileShare
+    resources:
+      - Sources/SymDeskMobileShare/PrivacyInfo.xcprivacy
     settings:
       base:
         INFOPLIST_FILE: Sources/SymDeskMobileShare/Info.plist
@@ -198,6 +202,8 @@ targets:
       # intents are the same types (one shared-container decision).
       - Sources/SymDeskMobile/MobileAppIntents.swift
       - Sources/SymDeskMobile/MobileRecentsStore.swift
+    resources:
+      - Sources/SymDeskWidget/PrivacyInfo.xcprivacy
     settings:
       base:
         INFOPLIST_FILE: Sources/SymDeskWidget/Info.plist

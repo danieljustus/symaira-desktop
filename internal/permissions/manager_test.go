@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -436,4 +437,155 @@ func TestConstantTimeEqual(t *testing.T) {
 	// == check by verifying the helper is wired through subtle.
 	// If this test compiles, the constant-time path is in place.
 	_ = subtle.ConstantTimeCompare // keep import alive
+}
+
+func TestCanReadMany(t *testing.T) {
+	adminPaths := []string{"first.md", "second.md"}
+	cases := []struct {
+		name   string
+		user   *User
+		paths  []string
+		setup  func(*testing.T, *Manager)
+		want   []string
+		verify func(*testing.T, []string)
+	}{
+		{
+			name:  "nil user",
+			paths: []string{"public.md"},
+			want:  nil,
+		},
+		{
+			name:  "admin receives a copy",
+			user:  &User{Name: "admin", Roles: []string{"admin"}},
+			paths: adminPaths,
+			want:  []string{"first.md", "second.md"},
+			verify: func(t *testing.T, got []string) {
+				t.Helper()
+				got[0] = "result-mutated.md"
+				if adminPaths[0] != "first.md" {
+					t.Fatalf("result aliases input: input changed to %q", adminPaths[0])
+				}
+				adminPaths[1] = "input-mutated.md"
+				if got[1] != "second.md" {
+					t.Fatalf("result aliases input: result changed to %q", got[1])
+				}
+			},
+		},
+		{
+			name:  "unrestricted paths",
+			user:  &User{Name: "reader", Roles: []string{"user"}},
+			paths: []string{"public.md", "also-public.md"},
+			want:  []string{"public.md", "also-public.md"},
+		},
+		{
+			name:  "owner",
+			user:  &User{Name: "alice", Roles: []string{"user"}},
+			paths: []string{"owned.md", "other.md"},
+			setup: func(t *testing.T, m *Manager) {
+				t.Helper()
+				if err := m.SetDocumentRule(DocumentRule{Path: "owned.md", Owner: "alice"}); err != nil {
+					t.Fatalf("SetDocumentRule: %v", err)
+				}
+			},
+			want: []string{"owned.md", "other.md"},
+		},
+		{
+			name:  "explicit reader",
+			user:  &User{Name: "bob", Roles: []string{"user"}},
+			paths: []string{"reader.md", "other.md"},
+			setup: func(t *testing.T, m *Manager) {
+				t.Helper()
+				if err := m.SetDocumentRule(DocumentRule{
+					Path:      "reader.md",
+					Owner:     "alice",
+					ReadUsers: []string{"bob"},
+				}); err != nil {
+					t.Fatalf("SetDocumentRule: %v", err)
+				}
+			},
+			want: []string{"reader.md", "other.md"},
+		},
+		{
+			name:  "group reader",
+			user:  &User{Name: "carol", Roles: []string{"user"}},
+			paths: []string{"group.md", "other.md"},
+			setup: func(t *testing.T, m *Manager) {
+				t.Helper()
+				if err := m.GroupAdd("readers"); err != nil {
+					t.Fatalf("GroupAdd: %v", err)
+				}
+				if err := m.GroupAddMember("readers", "carol"); err != nil {
+					t.Fatalf("GroupAddMember: %v", err)
+				}
+				if err := m.SetDocumentRule(DocumentRule{
+					Path:       "group.md",
+					Owner:      "alice",
+					ReadGroups: []string{"readers"},
+				}); err != nil {
+					t.Fatalf("SetDocumentRule: %v", err)
+				}
+			},
+			want: []string{"group.md", "other.md"},
+		},
+		{
+			name:  "deny",
+			user:  &User{Name: "dave", Roles: []string{"user"}},
+			paths: []string{"denied.md", "public.md"},
+			setup: func(t *testing.T, m *Manager) {
+				t.Helper()
+				if err := m.SetDocumentRule(DocumentRule{Path: "denied.md", Owner: "alice"}); err != nil {
+					t.Fatalf("SetDocumentRule: %v", err)
+				}
+			},
+			want: []string{"public.md"},
+		},
+		{
+			name:  "permission load failure",
+			user:  &User{Name: "reader", Roles: []string{"user"}},
+			paths: []string{"any.md"},
+			setup: func(t *testing.T, m *Manager) {
+				t.Helper()
+				if err := os.Mkdir(m.permsFilePath(), 0700); err != nil {
+					t.Fatalf("Mkdir permissions path: %v", err)
+				}
+			},
+			want: nil,
+		},
+		{
+			name:  "group load failure",
+			user:  &User{Name: "carol", Roles: []string{"user"}},
+			paths: []string{"group.md", "public.md"},
+			setup: func(t *testing.T, m *Manager) {
+				t.Helper()
+				if err := m.SetDocumentRule(DocumentRule{
+					Path:       "group.md",
+					Owner:      "alice",
+					ReadGroups: []string{"readers"},
+				}); err != nil {
+					t.Fatalf("SetDocumentRule: %v", err)
+				}
+				if err := os.Mkdir(m.groupsFilePath(), 0700); err != nil {
+					t.Fatalf("Mkdir groups path: %v", err)
+				}
+			},
+			want: []string{"public.md"},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			m, _ := tempManager(t)
+			if tt.setup != nil {
+				tt.setup(t, m)
+			}
+
+			got := m.CanReadMany(tt.user, tt.paths)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Fatalf("CanReadMany() = %#v, want %#v", got, tt.want)
+			}
+			if tt.verify != nil {
+				tt.verify(t, got)
+			}
+		})
+	}
 }

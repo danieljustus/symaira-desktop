@@ -1733,8 +1733,8 @@ func TestMailPoller_Start_WarnsOnPlaintextPasswordSecret(t *testing.T) {
 	poller.Close()
 
 	output := logBuf.String()
-	if !strings.Contains(output, "plaintext config") {
-		t.Errorf("expected log to warn about plaintext password_secret, got: %s", output)
+	if !strings.Contains(output, "bare password_secret value") {
+		t.Errorf("expected log to warn about a bare password_secret, got: %s", output)
 	}
 	if strings.Contains(output, "hunter2") {
 		t.Errorf("log must not contain the plaintext secret value, got: %s", output)

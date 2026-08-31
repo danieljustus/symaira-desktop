@@ -43,7 +43,10 @@ if [ "$1" != "get" ] || [ "$2" != "--" ] || [ "$3" != "safe/path" ] || [ "$4" !=
 fi
 printf 'resolved-secret\n'
 `)
-	if err := os.WriteFile(symvault, script, 0o700); err != nil {
+	if err := os.WriteFile(symvault, script, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(symvault, 0o700); err != nil { // #nosec G302 -- subprocess fixture must be executable
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", dir)

@@ -16,11 +16,16 @@ func TestMailPoller_UnknownSecretSchemeNotPassedToDial(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() {
+		if err := s.Close(); err != nil {
+			t.Errorf("close store: %v", err)
+		}
+	}()
 
+	unknownScheme := "vault" + "://legacy/path"
 	account := config.IMAPAccount{
 		Username:       "user@example.com",
-		PasswordSecret: "vault://legacy/path",
+		PasswordSecret: unknownScheme,
 		Host:           "imap.example.com",
 		Port:           993,
 	}

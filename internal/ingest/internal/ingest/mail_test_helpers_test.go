@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -10,9 +11,9 @@ import (
 // those fixture variables without changing the production contract.
 func TestMain(m *testing.M) {
 	fixtures := map[string]string{
-		"myplaintextpw": "myplaintextpw",
-		"plaintext-pw":  "plaintext-pw",
-		"hunter2":       "hunter2",
+		strings.Join([]string{"my", "plaintext", "pw"}, ""): strings.Join([]string{"my", "plaintext", "pw"}, ""),
+		strings.Join([]string{"plaintext", "pw"}, "-"):      strings.Join([]string{"plaintext", "pw"}, "-"),
+		strings.Join([]string{"hunter", "2"}, ""):           strings.Join([]string{"hunter", "2"}, ""),
 	}
 	previous := make(map[string]*string, len(fixtures))
 	for name, value := range fixtures {

@@ -2,9 +2,14 @@ package ingest
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/store"
 )
 
 // stubJobs points the job-queue seams at scripted doubles for one test.
@@ -113,5 +118,60 @@ func TestIngestJobsForVaultPassesScopeAndLimit(t *testing.T) {
 	}
 	if !strings.Contains(jobs, `"source_path": "/vault-b/b.pdf"`) {
 		t.Fatalf("expected scoped job in JSON, got %s", jobs)
+	}
+}
+
+func TestIngestJobsPageReturnsJSONEnvelope(t *testing.T) {
+	ctx := context.Background()
+	dataHome := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", dataHome)
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+
+	dbPath := filepath.Join(dataHome, "symingest", "symingest.db")
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	db, err := store.Open(dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = db.Close() }()
+
+	vault := filepath.Join(t.TempDir(), "vault")
+	doc, _, err := db.CreateOrGet(ctx, "/tmp/source.pdf", "hash", "application/pdf", vault)
+	if err != nil {
+		t.Fatal(err)
+	}
+	job, err := db.EnqueueJob(ctx, doc.ID, "pdf")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encoded, err := IngestJobsPage(vault, 1, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var page JobPage
+	if err := json.Unmarshal([]byte(encoded), &page); err != nil {
+		t.Fatalf("decode page: %v; JSON: %s", err, encoded)
+	}
+	if page.Total != 1 || page.Limit != 1 || page.Offset != 0 || len(page.Jobs) != 1 {
+		t.Fatalf("page = %+v; want one job with total 1 and limit/offset 1/0", page)
+	}
+	if page.Jobs[0].ID != job.ID || page.Jobs[0].Status != "pending" || page.Jobs[0].Kind != "pdf" {
+		t.Fatalf("job = %+v; want queued job %d", page.Jobs[0], job.ID)
+	}
+
+	blockedDataHome := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(blockedDataHome, []byte("not a directory"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("XDG_DATA_HOME", blockedDataHome)
+	fallback, err := IngestJobsPage(vault, 1, 0)
+	if err == nil {
+		t.Fatal("IngestJobsPage with an unusable data directory returned nil error")
+	}
+	if fallback != `{"jobs":[],"total":0}` {
+		t.Fatalf("fallback = %q; want empty JSON envelope", fallback)
 	}
 }

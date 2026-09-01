@@ -159,15 +159,30 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Latest tag (strip leading 'v')
+          # Latest tag (strip leading 'v'). During release preparation the
+          # next version is intentionally ahead of the latest published tag:
+          # release/<version> PRs and their resulting main commit validate
+          # against that explicit preparation version instead.
           TAG=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
+          EXPECTED_VERSION="$TAG"
+          if [[ "${GITHUB_HEAD_REF:-}" =~ ^release/v?([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            EXPECTED_VERSION="${BASH_REMATCH[1]}"
+            echo "Release preparation branch version: ${EXPECTED_VERSION}"
+          elif [[ "${GITHUB_REF:-}" == "refs/heads/main" ]]; then
+            COMMIT_SUBJECT=$(git log -1 --format='%s')
+            if [[ "$COMMIT_SUBJECT" =~ [Pp]repare[[:space:]]v?([0-9]+\.[0-9]+\.[0-9]+)[[:space:]]release[[:space:]]metadata ]]; then
+              EXPECTED_VERSION="${BASH_REMATCH[1]}"
+              echo "Release preparation commit version: ${EXPECTED_VERSION}"
+            fi
+          fi
           echo "Current tag version: ${TAG}"
+          echo "Expected source version: ${EXPECTED_VERSION}"
 
           # 1. project.yml MARKETING_VERSION (macOS + iOS targets)
           for target in SymDesk SymDeskMobile; do
             PM_VERSION=$(grep -A80 "^  $target:" project.yml | grep MARKETING_VERSION | head -1 | sed 's/.*"\(.*\)".*/\1/')
-            if [ "$PM_VERSION" != "$TAG" ]; then
-              echo "::error::project.yml $target MARKETING_VERSION=$PM_VERSION does not match tag $TAG"
+            if [ "$PM_VERSION" != "$EXPECTED_VERSION" ]; then
+              echo "::error::project.yml $target MARKETING_VERSION=$PM_VERSION does not match expected version $EXPECTED_VERSION"
               exit 1
             fi
           done
@@ -175,8 +190,8 @@ jobs:
 
           # 2. Home Assistant addon config
           HA_VERSION=$(grep '^version:' home-assistant-addon/symdesk/config.yaml | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          if [ "$HA_VERSION" != "$TAG" ]; then
-            echo "::error::HA addon config version=$HA_VERSION does not match tag $TAG"
+          if [ "$HA_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "::error::HA addon config version=$HA_VERSION does not match expected version $EXPECTED_VERSION"
             exit 1
           fi
           echo "HA addon config version: OK"
@@ -194,7 +209,7 @@ jobs:
           # 5. nested module Go version and shared dependency consistency (issue #535)
           ./scripts/check-nested-versions.sh
 
-          echo "All version sources consistent with tag ${TAG}"
+          echo "All version sources consistent with ${EXPECTED_VERSION}"
 
 
   app:

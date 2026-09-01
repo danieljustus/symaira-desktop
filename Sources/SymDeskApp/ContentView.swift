@@ -146,6 +146,93 @@ struct ContentView: View {
         return context.isEmpty ? nil : context
     }
 
+    @ViewBuilder
+    private var detailContent: some View {
+        switch displayMode {
+        case .dashboard:
+            DashboardView(
+                docCounts: docCounts,
+                docTypeCounts: docTypeCounts,
+                docTotalCount: docTotalCount,
+                notes: notes,
+                doctorReport: doctorReport,
+                onNavigate: { mode in navigate(to: mode) },
+                onOpenNote: { note in navigate(to: .vault, note: note) }
+            )
+        case .ingestQueue:
+            IngestQueueView()
+        case .reviewLane:
+            ReviewLaneView()
+        case .meetings:
+            MeetingsView()
+        case .rules:
+            RulesSettingsView()
+        case .discover:
+            DiscoverView(onNavigateToTools: { navigate(to: .companionTools) })
+        case .retrievalStatus:
+            RetrievalStatusView()
+        case .room:
+            // The module owns its own state and renders an install
+            // tile when symroom is absent (issue #517).
+            SymroomModuleView()
+        case .companionTools:
+            CompanionToolsView(
+                doctorReport: doctorReport,
+                onDoctorRefresh: { await fetchDoctor() }
+            )
+        case .history:
+            HistoryView(initialNotePath: historyInitialNotePath)
+        case .trash:
+            TrashView()
+        case .models:
+            ModelsView()
+        case .duplicates:
+            DuplicatesView()
+        case .notebooks:
+            NotebookWorkspaceView(onOpenPath: openNotebookSourcePath)
+        case .graph:
+            GraphView { selectedNodeID in
+                navigateToNote(title: selectedNodeID)
+            }
+        case .docs:
+            let statusVal = DocFilterPreset.defaults.first(where: { $0.id == docFilterID })?.status
+            DocumentGridView(
+                statusFilter: statusVal?.rawValue,
+                deepLinkPath: deepLinkDocPath,
+                tagFilter: tagFilter,
+                onOpenInEditor: { (doc: DocumentItem) -> Void in
+                    openDocumentInEditor(doc)
+                }
+            )
+            .environment(\.searchAnchor, deepLinkAnchor)
+        case .dbView:
+            if let vid = selectedViewID {
+                if let view = dbViews.first(where: { $0.id == vid }) {
+                    if view.type == "board" {
+                        DbViewBoard(viewID: vid)
+                    } else if view.type == "calendar" {
+                        DbViewCalendar(viewID: vid)
+                    } else if view.type == "gallery" {
+                        DbViewGallery(viewID: vid)
+                    } else if view.type == "timeline" {
+                        DbViewTimeline(viewID: vid)
+                    } else if view.type == "list" {
+                        DbViewList(viewID: vid)
+                    } else {
+                        DbViewTable(viewID: vid)
+                    }
+                } else {
+                    DbViewTable(viewID: vid)
+                }
+            } else {
+                Text("Select a view")
+                    .foregroundColor(SymairaTheme.textMuted)
+            }
+        case .vault:
+            vaultPane
+        }
+    }
+
     var body: some View {
         Group {
             if !core.isReady {
@@ -386,89 +473,7 @@ struct ContentView: View {
                     .background(.clear)
                 } detail: {
                     SymairaScreen {
-                    switch displayMode {
-                    case .dashboard:
-                        DashboardView(
-                            docCounts: docCounts,
-                            docTypeCounts: docTypeCounts,
-                            docTotalCount: docTotalCount,
-                            notes: notes,
-                            doctorReport: doctorReport,
-                            onNavigate: { mode in navigate(to: mode) },
-                            onOpenNote: { note in navigate(to: .vault, note: note) }
-                        )
-                    case .ingestQueue:
-                        IngestQueueView()
-                    case .reviewLane:
-                        ReviewLaneView()
-                    case .meetings:
-                        MeetingsView()
-                    case .rules:
-                        RulesSettingsView()
-                    case .discover:
-                        DiscoverView(onNavigateToTools: { navigate(to: .companionTools) })
-                    case .retrievalStatus:
-                        RetrievalStatusView()
-                    case .room:
-                        // The module owns its own state and renders an install
-                        // tile when symroom is absent (issue #517).
-                        SymroomModuleView()
-                    case .companionTools:
-                        CompanionToolsView(
-                            doctorReport: doctorReport,
-                            onDoctorRefresh: { await fetchDoctor() }
-                        )
-                    case .history:
-                        HistoryView(initialNotePath: historyInitialNotePath)
-                    case .trash:
-                        TrashView()
-                    case .models:
-                        ModelsView()
-                    case .duplicates:
-                        DuplicatesView()
-                    case .notebooks:
-                        NotebookWorkspaceView(onOpenPath: openNotebookSourcePath)
-                    case .graph:
-                        GraphView { selectedNodeID in
-                            navigateToNote(title: selectedNodeID)
-                        }
-                    case .docs:
-                        let statusVal = DocFilterPreset.defaults.first(where: { $0.id == docFilterID })?.status
-                        DocumentGridView(
-                            statusFilter: statusVal?.rawValue,
-                            deepLinkPath: deepLinkDocPath,
-                            tagFilter: tagFilter,
-                            onOpenInEditor: { (doc: DocumentItem) -> Void in
-                                openDocumentInEditor(doc)
-                            }
-                        )
-                        .environment(\.searchAnchor, deepLinkAnchor)
-                    case .dbView:
-                        if let vid = selectedViewID {
-                            if let view = dbViews.first(where: { $0.id == vid }) {
-                                if view.type == "board" {
-                                    DbViewBoard(viewID: vid)
-                                } else if view.type == "calendar" {
-                                    DbViewCalendar(viewID: vid)
-                                } else if view.type == "gallery" {
-                                    DbViewGallery(viewID: vid)
-                                } else if view.type == "timeline" {
-                                    DbViewTimeline(viewID: vid)
-                                } else if view.type == "list" {
-                                    DbViewList(viewID: vid)
-                                } else {
-                                    DbViewTable(viewID: vid)
-                                }
-                            } else {
-                                DbViewTable(viewID: vid)
-                            }
-                        } else {
-                            Text("Select a view")
-                                .foregroundColor(SymairaTheme.textMuted)
-                        }
-                    case .vault:
-                        vaultPane
-                    }
+                        detailContent
                     }
                 }
                 .navigationSplitViewStyle(.balanced)

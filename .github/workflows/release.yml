@@ -308,8 +308,15 @@ jobs:
       - name: Verify Xcode toolchain
         run: |
           set -euo pipefail
-          xcodebuild -version
-          xcodebuild -version | grep -q '^Xcode 26\.'
+          XCODE_VERSION="$(xcodebuild -version)"
+          echo "$XCODE_VERSION"
+          case "$XCODE_VERSION" in
+            Xcode\ 26.*) ;;
+            *)
+              echo "::error::Expected Xcode 26.x, got: $XCODE_VERSION"
+              exit 1
+              ;;
+          esac
 
       - name: Install xcodegen
         run: brew install xcodegen

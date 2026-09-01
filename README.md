@@ -84,7 +84,7 @@ repository script on a Mac with Xcode 26.x and the required Apple signing
 profiles installed:
 
 ```sh
-IOS_VERSION=0.11.0 \
+IOS_VERSION=0.11.1 \
 IOS_BUILD_NUMBER=1 \
 DEVELOPMENT_TEAM=M4744F3TAA \
 bash scripts/release-ios.sh
@@ -140,7 +140,7 @@ symdesk version --json         # {"tool":"symdesk","version":...,"schema_version
 
 ```text
 $ symdesk version --json
-{"tool":"symdesk","version":"0.11.0","schema_version":1}
+{"tool":"symdesk","version":"0.11.1","schema_version":1}
 ```
 
 ## Development

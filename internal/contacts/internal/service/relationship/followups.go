@@ -116,7 +116,7 @@ func (s *Service) ListOrganizationFollowUps(ctx context.Context, organizationID 
 func listFollowUps(ctx context.Context, db *sql.DB, ref entityRef, filter FollowUpFilter) ([]relationship.FollowUp, error) {
 	const op = "relationship.listFollowUps"
 
-	query := fmt.Sprintf("SELECT id, due_at, notes, status, completed_at, cancelled_at, created_at, updated_at FROM follow_ups WHERE %s = ?", ref.column)
+	query := fmt.Sprintf("SELECT id, due_at, notes, status, completed_at, cancelled_at, created_at, updated_at FROM follow_ups WHERE %s = ?", ref.column) //nolint:gosec // ref.column is selected from fixed entity references
 	args := []any{ref.id}
 
 	switch filter {
@@ -139,7 +139,7 @@ func listFollowUps(ctx context.Context, db *sql.DB, ref entityRef, filter Follow
 	if err != nil {
 		return nil, errs.Internal(op, "failed to list follow-ups", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []relationship.FollowUp
 	for rows.Next() {

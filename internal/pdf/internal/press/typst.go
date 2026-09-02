@@ -69,12 +69,12 @@ func ResetAssetsCache() {
 	assetsCacheMu.Lock()
 	defer assetsCacheMu.Unlock()
 	if assetsCacheDir != "" {
-		os.RemoveAll(assetsCacheDir)
+		_ = os.RemoveAll(assetsCacheDir)
 		assetsCacheDir = ""
 	}
 	assetsCacheErr = nil
 	if dir, err := persistentAssetsCacheDir(); err == nil {
-		os.RemoveAll(dir)
+		_ = os.RemoveAll(dir)
 	}
 }
 
@@ -135,7 +135,7 @@ func sweepStaleAssetsTemps(cacheRoot string) {
 			continue
 		}
 		if info.ModTime().Before(cutoff) {
-			os.RemoveAll(filepath.Join(cacheRoot, e.Name()))
+			_ = os.RemoveAll(filepath.Join(cacheRoot, e.Name()))
 		}
 	}
 }
@@ -159,7 +159,7 @@ func initializePersistentAssetsCache() (string, error) {
 
 	cacheRoot := filepath.Dir(filepath.Dir(versionedDir))
 	// The rename target's parent (…/symprint) must exist before os.Rename.
-	if err := os.MkdirAll(filepath.Dir(versionedDir), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(versionedDir), 0o700); err != nil {
 		return "", err
 	}
 
@@ -177,11 +177,11 @@ func initializePersistentAssetsCache() (string, error) {
 			return "", err
 		}
 		if err := materializeAssets(tmpDir); err != nil {
-			os.RemoveAll(tmpDir)
+			_ = os.RemoveAll(tmpDir)
 			return "", err
 		}
-		if err := os.WriteFile(filepath.Join(tmpDir, assetsCompleteMarker), []byte(versionedDir), 0o644); err != nil {
-			os.RemoveAll(tmpDir)
+		if err := os.WriteFile(filepath.Join(tmpDir, assetsCompleteMarker), []byte(versionedDir), 0o600); err != nil {
+			_ = os.RemoveAll(tmpDir)
 			return "", err
 		}
 
@@ -190,7 +190,7 @@ func initializePersistentAssetsCache() (string, error) {
 			sweepStaleAssetsTemps(cacheRoot)
 			return versionedDir, nil
 		}
-		os.RemoveAll(tmpDir)
+		_ = os.RemoveAll(tmpDir)
 
 		if assetsCacheComplete(versionedDir) {
 			// Lost the rename race: the winner's directory is complete.
@@ -210,7 +210,7 @@ func initializePersistentAssetsCache() (string, error) {
 		}
 		// An old markerless directory is a stale/partial leftover: drop it
 		// and retry with a fresh materialization.
-		os.RemoveAll(versionedDir)
+		_ = os.RemoveAll(versionedDir)
 	}
 	return "", fmt.Errorf("could not initialize assets cache at %s", versionedDir)
 }
@@ -242,7 +242,7 @@ func getOrInitializeAssetsCache() (string, error) {
 		return "", err
 	}
 	if err := materializeAssets(dir); err != nil {
-		os.RemoveAll(dir)
+		_ = os.RemoveAll(dir)
 		assetsCacheErr = err
 		return "", err
 	}
@@ -274,7 +274,7 @@ func renderTypst(ctx context.Context, eng EngineInfo, job typstJob) (*Result, er
 	if err != nil {
 		return nil, &RenderError{Stage: "write", Message: "could not create work dir", Err: err}
 	}
-	defer os.RemoveAll(work)
+	defer func() { _ = os.RemoveAll(work) }()
 
 	cacheDir, err := getOrInitializeAssetsCache()
 	if err != nil {
@@ -306,10 +306,10 @@ func renderTypst(ctx context.Context, eng EngineInfo, job typstJob) (*Result, er
 	if err != nil {
 		return nil, &RenderError{Stage: "write", Message: "could not encode metadata", Err: err}
 	}
-	if err := os.WriteFile(filepath.Join(work, "meta.json"), metaJSON, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(work, "meta.json"), metaJSON, 0o600); err != nil {
 		return nil, &RenderError{Stage: "write", Message: "could not write metadata", Err: err}
 	}
-	if err := os.WriteFile(filepath.Join(work, "body.md"), job.body, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(work, "body.md"), job.body, 0o600); err != nil {
 		return nil, &RenderError{Stage: "write", Message: "could not write body", Err: err}
 	}
 	// Copy locally referenced Markdown images into the work dir so the engine
@@ -318,7 +318,7 @@ func renderTypst(ctx context.Context, eng EngineInfo, job typstJob) (*Result, er
 	if err := collectAssets(job.sourceDir, work, job.body); err != nil {
 		return nil, err
 	}
-	if err := os.WriteFile(filepath.Join(work, "main.typ"), []byte(mainTyp(job.profile.Template)), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(work, "main.typ"), []byte(mainTyp(job.profile.Template)), 0o600); err != nil {
 		return nil, &RenderError{Stage: "write", Message: "could not write entry", Err: err}
 	}
 
@@ -326,7 +326,7 @@ func renderTypst(ctx context.Context, eng EngineInfo, job typstJob) (*Result, er
 	if err != nil {
 		return nil, &RenderError{Stage: "write", Message: "invalid output path", Err: err}
 	}
-	if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(out), 0o700); err != nil {
 		return nil, &RenderError{Stage: "write", Message: "could not create output dir", Err: err}
 	}
 
@@ -372,7 +372,7 @@ func renderTypst(ctx context.Context, eng EngineInfo, job typstJob) (*Result, er
 	cctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(cctx, eng.Path, args...)
+	cmd := exec.CommandContext(cctx, eng.Path, args...) //nolint:gosec // eng.Path is the configured renderer and args are generated/validated
 	cmd.Dir = work
 	cmd.WaitDelay = 5 * time.Second
 	if job.reproducible {

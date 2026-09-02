@@ -35,13 +35,13 @@ func Open(ctx context.Context, path string) (*sql.DB, error) {
 		"PRAGMA foreign_keys=ON",
 	} {
 		if _, err := db.ExecContext(ctx, pragma); err != nil {
-			db.Close()
+			_ = db.Close()
 			return nil, errs.Internal(op, "failed to apply pragma: "+pragma, err)
 		}
 	}
 
 	if err := Migrate(ctx, db); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 
@@ -57,7 +57,7 @@ func WithTx(ctx context.Context, db *sql.DB, fn func(tx *sql.Tx) error) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := fn(tx); err != nil {
 		return err
@@ -77,12 +77,12 @@ func OpenMemory(ctx context.Context) (*sql.DB, error) {
 	db.SetMaxOpenConns(1)
 
 	if _, err := db.ExecContext(ctx, "PRAGMA foreign_keys=ON"); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, errs.Internal(op, "failed to enable foreign keys", err)
 	}
 
 	if err := Migrate(ctx, db); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 

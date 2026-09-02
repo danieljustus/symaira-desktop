@@ -64,7 +64,7 @@ func Candidates(ctx context.Context, query string, opts CandidateOptions) ([]Can
 	ctx, cancel := context.WithTimeout(ctx, DefaultTimeout)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, binPath, args...).Output()
+	out, err := exec.CommandContext(ctx, binPath, args...).Output() //nolint:gosec // binPath is resolved by exec.LookPath and args are constructed locally
 	if err != nil {
 		return nil, ErrUnavailable
 	}

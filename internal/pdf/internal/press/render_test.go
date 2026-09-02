@@ -201,7 +201,8 @@ func mockTypst(t *testing.T, dir string, succeed bool) string {
 	} else {
 		content += "echo 'error: test error' >&2\nexit 1\n"
 	}
-	if err := os.WriteFile(script, []byte(content), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(script, []byte(content), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	return dir
@@ -212,8 +213,8 @@ func TestRenderTypstSuccess(t *testing.T) {
 	binDir := t.TempDir()
 	mockTypst(t, binDir, true)
 	origPath := os.Getenv("PATH")
-	os.Setenv("PATH", binDir+":"+origPath)
-	defer os.Setenv("PATH", origPath)
+	_ = os.Setenv("PATH", binDir+":"+origPath)
+	defer func() { _ = os.Setenv("PATH", origPath) }()
 
 	eng := EngineInfo{
 		Available: true,
@@ -301,7 +302,8 @@ func TestRenderTypstFontArgs(t *testing.T) {
 	binDir := t.TempDir()
 	argCapture := filepath.Join(binDir, "args.txt")
 	script := "#!/bin/sh\necho \"$@\" > " + argCapture + "\neval out=\\${$#}; > \"$out\"\n"
-	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -331,7 +333,7 @@ func TestRenderTypstFontArgs(t *testing.T) {
 	}
 
 	// Read captured args
-	data, err := os.ReadFile(argCapture)
+	data, err := os.ReadFile(argCapture) //nolint:gosec // test path is created under t.TempDir
 	if err != nil {
 		t.Fatalf("failed to read captured args: %v", err)
 	}
@@ -356,7 +358,8 @@ func TestRenderTypstReproducibleEnv(t *testing.T) {
 	binDir := t.TempDir()
 	envCapture := filepath.Join(binDir, "env.txt")
 	script := "#!/bin/sh\nenv > " + envCapture + "\ntouch \"$5\"\n"
-	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -382,7 +385,7 @@ func TestRenderTypstReproducibleEnv(t *testing.T) {
 		t.Fatalf("renderTypst failed: %v", err)
 	}
 
-	data, err := os.ReadFile(envCapture)
+	data, err := os.ReadFile(envCapture) //nolint:gosec // test path is created under t.TempDir
 	if err != nil {
 		t.Fatalf("failed to read env capture: %v", err)
 	}
@@ -399,7 +402,8 @@ func TestRenderTypstTimeout(t *testing.T) {
 	// and cmd.Wait() blocks for the full 5s WaitDelay before forcing cleanup.
 	binDir := t.TempDir()
 	script := "#!/bin/sh\nexec sleep 100\n"
-	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -438,8 +442,8 @@ func TestRenderIntegration(t *testing.T) {
 	binDir := t.TempDir()
 	mockTypst(t, binDir, true)
 	origPath := os.Getenv("PATH")
-	os.Setenv("PATH", binDir+":"+origPath)
-	defer os.Setenv("PATH", origPath)
+	_ = os.Setenv("PATH", binDir+":"+origPath)
+	defer func() { _ = os.Setenv("PATH", origPath) }()
 
 	src := []byte("---\nprofile: report\ntitle: Test\ndate: 30.06.2026\n---\n# Hello World\n")
 	req := Request{
@@ -473,8 +477,8 @@ func TestDetectTypstNotFound(t *testing.T) {
 	ResetProbeCache()
 	defer ResetProbeCache()
 	origPath := os.Getenv("PATH")
-	os.Setenv("PATH", "")
-	defer os.Setenv("PATH", origPath)
+	_ = os.Setenv("PATH", "")
+	defer func() { _ = os.Setenv("PATH", origPath) }()
 
 	info := DetectTypst(context.Background(), "")
 	if info.Available {
@@ -492,8 +496,8 @@ func TestDetectTypstWithOverride(t *testing.T) {
 	binDir := t.TempDir()
 	mockTypst(t, binDir, true)
 	origPath := os.Getenv("PATH")
-	os.Setenv("PATH", "")
-	defer os.Setenv("PATH", origPath)
+	_ = os.Setenv("PATH", "")
+	defer func() { _ = os.Setenv("PATH", origPath) }()
 
 	info := DetectTypst(context.Background(), filepath.Join(binDir, "typst"))
 	if !info.Available {
@@ -507,12 +511,13 @@ func TestDetectTypstWithOverride(t *testing.T) {
 func TestDetectTypstVersionParsing(t *testing.T) {
 	binDir := t.TempDir()
 	script := "#!/bin/sh\necho 'typst 0.15.0 (abcd1234)'\n"
-	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	origPath := os.Getenv("PATH")
-	os.Setenv("PATH", "")
-	defer os.Setenv("PATH", origPath)
+	_ = os.Setenv("PATH", "")
+	defer func() { _ = os.Setenv("PATH", origPath) }()
 
 	info := DetectTypst(context.Background(), filepath.Join(binDir, "typst"))
 	if !info.Available {
@@ -526,12 +531,13 @@ func TestDetectTypstVersionParsing(t *testing.T) {
 func TestDetectTypstVersionParseError(t *testing.T) {
 	binDir := t.TempDir()
 	script := "#!/bin/sh\necho 'typst'\n"
-	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	origPath := os.Getenv("PATH")
-	os.Setenv("PATH", "")
-	defer os.Setenv("PATH", origPath)
+	_ = os.Setenv("PATH", "")
+	defer func() { _ = os.Setenv("PATH", origPath) }()
 
 	info := DetectTypst(context.Background(), filepath.Join(binDir, "typst"))
 	if !info.Available {
@@ -545,7 +551,8 @@ func TestDetectTypstVersionParseError(t *testing.T) {
 func TestTypstVersionSuccess(t *testing.T) {
 	binDir := t.TempDir()
 	script := "#!/bin/sh\necho 'typst 0.15.0 (abcd1234)'\n"
-	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -558,7 +565,8 @@ func TestTypstVersionSuccess(t *testing.T) {
 func TestTypstVersionFailure(t *testing.T) {
 	binDir := t.TempDir()
 	script := "#!/bin/sh\nexit 1\n"
-	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -571,7 +579,8 @@ func TestTypstVersionFailure(t *testing.T) {
 func TestTypstVersionShortOutput(t *testing.T) {
 	binDir := t.TempDir()
 	script := "#!/bin/sh\necho 'typst'\n"
-	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -585,8 +594,8 @@ func TestRenderMeetingSuccess(t *testing.T) {
 	binDir := t.TempDir()
 	mockTypst(t, binDir, true)
 	origPath := os.Getenv("PATH")
-	os.Setenv("PATH", binDir+":"+origPath)
-	defer os.Setenv("PATH", origPath)
+	_ = os.Setenv("PATH", binDir+":"+origPath)
+	defer func() { _ = os.Setenv("PATH", origPath) }()
 
 	src := []byte(`---
 profile: meeting
@@ -630,7 +639,8 @@ func TestDetectTypstCache(t *testing.T) {
 	counterFile := filepath.Join(binDir, "calls.txt")
 	script := fmt.Sprintf("#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then\n  echo 1 >> %s\n  echo 'typst 0.15.0 (abcd1234)'\nfi\n", counterFile)
 	mockBin := filepath.Join(binDir, "typst-mock-cache")
-	if err := os.WriteFile(mockBin, []byte(script), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(mockBin, []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -643,7 +653,7 @@ func TestDetectTypstCache(t *testing.T) {
 	}
 
 	// Read call counter
-	data, err := os.ReadFile(counterFile)
+	data, err := os.ReadFile(counterFile) //nolint:gosec // test path is created under t.TempDir
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -658,7 +668,7 @@ func TestDetectTypstCache(t *testing.T) {
 	}
 
 	// Verify call counter didn't increase
-	data, err = os.ReadFile(counterFile)
+	data, err = os.ReadFile(counterFile) //nolint:gosec // test path is created under t.TempDir
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -701,8 +711,8 @@ func TestAssetsCache(t *testing.T) {
 	binDir := t.TempDir()
 	mockTypst(t, binDir, true)
 	origPath := os.Getenv("PATH")
-	os.Setenv("PATH", binDir+":"+origPath)
-	defer os.Setenv("PATH", origPath)
+	_ = os.Setenv("PATH", binDir+":"+origPath)
+	defer func() { _ = os.Setenv("PATH", origPath) }()
 
 	eng := EngineInfo{
 		Available: true,
@@ -731,7 +741,8 @@ func captureArgsTypst(t *testing.T, dir string) string {
 	t.Helper()
 	argCapture := filepath.Join(dir, "args.txt")
 	script := "#!/bin/sh\necho \"$@\" > " + argCapture + "\neval out=\\${$#}; > \"$out\"\n"
-	if err := os.WriteFile(filepath.Join(dir, "typst"), []byte(script), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(filepath.Join(dir, "typst"), []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	return argCapture
@@ -768,7 +779,7 @@ func TestRenderTypstPackageArgs(t *testing.T) {
 		t.Fatalf("renderTypst failed: %v", err)
 	}
 
-	data, err := os.ReadFile(argCapture)
+	data, err := os.ReadFile(argCapture) //nolint:gosec // test path is created under t.TempDir
 	if err != nil {
 		t.Fatalf("failed to read captured args: %v", err)
 	}
@@ -806,7 +817,7 @@ func TestRenderTypstShortDiagnosticsFlag(t *testing.T) {
 	if _, err := renderTypst(context.Background(), eng, job); err != nil {
 		t.Fatalf("renderTypst (short diagnostics) failed: %v", err)
 	}
-	data, err := os.ReadFile(argCapture)
+	data, err := os.ReadFile(argCapture) //nolint:gosec // test path is created under t.TempDir
 	if err != nil {
 		t.Fatalf("failed to read captured args: %v", err)
 	}
@@ -819,7 +830,7 @@ func TestRenderTypstShortDiagnosticsFlag(t *testing.T) {
 	if _, err := renderTypst(context.Background(), eng, job); err != nil {
 		t.Fatalf("renderTypst (default diagnostics) failed: %v", err)
 	}
-	data, err = os.ReadFile(argCapture)
+	data, err = os.ReadFile(argCapture) //nolint:gosec // test path is created under t.TempDir
 	if err != nil {
 		t.Fatalf("failed to read captured args: %v", err)
 	}
@@ -840,7 +851,8 @@ func TestRenderTypstShortDiagnosticsCompactShape(t *testing.T) {
 		"echo '/main.typ:1:1: error: unknown variable: foo' >&2\n" +
 		"echo '/main.typ:4:2: error: unclosed delimiter' >&2\n" +
 		"exit 1\n"
-	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(filepath.Join(binDir, "typst"), []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 

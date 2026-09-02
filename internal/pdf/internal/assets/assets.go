@@ -77,7 +77,7 @@ func VersionKey() (string, error) {
 // Materialize writes every embedded template into dir as real files so typst
 // can import them (typst resolves imports from the filesystem, not embed.FS).
 func Materialize(dir string) error {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
 	return fs.WalkDir(fsys, "templates", func(p string, d fs.DirEntry, err error) error {
@@ -91,7 +91,7 @@ func Materialize(dir string) error {
 		if err != nil {
 			return err
 		}
-		return os.WriteFile(filepath.Join(dir, d.Name()), b, 0o644)
+		return os.WriteFile(filepath.Join(dir, d.Name()), b, 0o600)
 	})
 }
 
@@ -99,7 +99,7 @@ func Materialize(dir string) error {
 // as real files so typst can discover them via --font-path. Returns the path to
 // the font directory.
 func MaterializeFonts(dir string) (string, error) {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return "", err
 	}
 	fontFS := drawfonts.FS()
@@ -115,7 +115,7 @@ func MaterializeFonts(dir string) (string, error) {
 			return err
 		}
 		// Write to the root of the font dir (flatten the structure).
-		return os.WriteFile(filepath.Join(dir, d.Name()), b, 0o644)
+		return os.WriteFile(filepath.Join(dir, d.Name()), b, 0o600)
 	})
 	if err != nil {
 		return "", err
@@ -133,12 +133,12 @@ func MaterializePackages(dir string) error {
 			return err
 		}
 		if d.IsDir() {
-			return os.MkdirAll(filepath.Join(dir, p), 0o755)
+			return os.MkdirAll(filepath.Join(dir, p), 0o700)
 		}
 		b, err := packagesFS.ReadFile(p)
 		if err != nil {
 			return err
 		}
-		return os.WriteFile(filepath.Join(dir, p), b, 0o644)
+		return os.WriteFile(filepath.Join(dir, p), b, 0o600)
 	})
 }

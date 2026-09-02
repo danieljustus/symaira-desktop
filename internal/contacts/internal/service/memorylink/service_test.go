@@ -22,7 +22,7 @@ func newFixture(t *testing.T) *testFixture {
 	if err != nil {
 		t.Fatalf("OpenMemory() error = %v", err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { _ = db.Close() })
 	return &testFixture{contacts: contactsvc.New(db), links: New(db)}
 }
 

@@ -49,7 +49,7 @@ func Migrate(ctx context.Context, db *sql.DB) error {
 	for rows.Next() {
 		var v int
 		if err := rows.Scan(&v); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return errs.Internal(op, "failed to scan schema_migrations", err)
 		}
 		applied[v] = true
@@ -57,7 +57,7 @@ func Migrate(ctx context.Context, db *sql.DB) error {
 	if err := rows.Err(); err != nil {
 		return errs.Internal(op, "failed to iterate schema_migrations", err)
 	}
-	rows.Close()
+	_ = rows.Close()
 
 	for _, m := range migrations {
 		if applied[m.version] {
@@ -76,7 +76,7 @@ func applyMigration(ctx context.Context, db *sql.DB, m migration) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	for _, stmt := range splitStatements(m.sql) {
 		if strings.TrimSpace(stmt) == "" {

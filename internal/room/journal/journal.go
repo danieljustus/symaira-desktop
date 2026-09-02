@@ -88,7 +88,7 @@ func (j *Journal) Append(ev *event.Event) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 
-	if err := os.MkdirAll(j.Dir, 0755); err != nil {
+	if err := os.MkdirAll(j.Dir, 0700); err != nil {
 		return fmt.Errorf("mkdir journal dir: %w", err)
 	}
 
@@ -111,7 +111,7 @@ func (j *Journal) Append(ev *event.Event) error {
 		return fmt.Errorf("marshal event line: %w", err)
 	}
 
-	f, err := os.OpenFile(segPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	f, err := os.OpenFile(segPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600) //nolint:gosec // segPath is derived from the journal directory
 	if err != nil {
 		return fmt.Errorf("open segment file: %w", err)
 	}

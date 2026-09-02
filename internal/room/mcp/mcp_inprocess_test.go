@@ -158,7 +158,7 @@ func TestArtifactHandlersInProcess(t *testing.T) {
 
 	// Link a file inside the room dir.
 	doc := filepath.Join(roomDir, "doc.md")
-	if err := os.WriteFile(doc, []byte("# doc\n"), 0o644); err != nil {
+	if err := os.WriteFile(doc, []byte("# doc\n"), 0o600); err != nil {
 		t.Fatalf("write artifact file: %v", err)
 	}
 	res, err = s.artifactLink(context.Background(), json.RawMessage(`{"path":"`+doc+`","title":"My Doc"}`))
@@ -191,7 +191,7 @@ func TestArtifactHandlersInProcess(t *testing.T) {
 		t.Errorf("artifactLink empty path err = %v, want %q", err, "path is required")
 	}
 	outside := filepath.Join(t.TempDir(), "outside.txt")
-	if err := os.WriteFile(outside, []byte("x"), 0o644); err != nil {
+	if err := os.WriteFile(outside, []byte("x"), 0o600); err != nil {
 		t.Fatalf("write outside file: %v", err)
 	}
 	if _, err := s.artifactLink(context.Background(), json.RawMessage(`{"path":"`+outside+`"}`)); err == nil {
@@ -359,7 +359,7 @@ func TestServeIOEndToEnd(t *testing.T) {
 	_, owner, roomDir := newInProcessServer(t)
 
 	doc := filepath.Join(roomDir, "e2e.txt")
-	if err := os.WriteFile(doc, []byte("e2e"), 0o644); err != nil {
+	if err := os.WriteFile(doc, []byte("e2e"), 0o600); err != nil {
 		t.Fatalf("write e2e artifact: %v", err)
 	}
 

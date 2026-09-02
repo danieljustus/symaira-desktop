@@ -65,7 +65,7 @@ func Discover(ctx context.Context) (Capabilities, error) {
 	ctx, cancel := context.WithTimeout(ctx, DefaultTimeout)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, binPath, "capabilities", "--json").Output()
+	out, err := exec.CommandContext(ctx, binPath, "capabilities", "--json").Output() //nolint:gosec // binPath is resolved by exec.LookPath
 	if err != nil {
 		return Capabilities{}, ErrUnavailable
 	}

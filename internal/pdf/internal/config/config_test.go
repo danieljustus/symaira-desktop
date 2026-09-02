@@ -102,7 +102,7 @@ func TestLoad_GlobalFileOverridesDefaults(t *testing.T) {
 	t.Chdir(t.TempDir())
 
 	configDir := filepath.Join(home, ".config", "symprint")
-	if err := os.MkdirAll(configDir, 0o755); err != nil {
+	if err := os.MkdirAll(configDir, 0o700); err != nil {
 		t.Fatalf("MkdirAll() error = %v", err)
 	}
 	tomlContent := `[engine]
@@ -112,7 +112,7 @@ timeout_seconds = 120
 [defaults]
 profile = "brief"
 `
-	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(tomlContent), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(tomlContent), 0o600); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
 	loader.ResetCache()
@@ -138,13 +138,13 @@ func TestLoad_EnvOverridesFile(t *testing.T) {
 	t.Chdir(t.TempDir())
 
 	configDir := filepath.Join(home, ".config", "symprint")
-	if err := os.MkdirAll(configDir, 0o755); err != nil {
+	if err := os.MkdirAll(configDir, 0o700); err != nil {
 		t.Fatalf("MkdirAll() error = %v", err)
 	}
 	tomlContent := `[defaults]
 profile = "brief"
 `
-	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(tomlContent), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(tomlContent), 0o600); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
 
@@ -170,13 +170,13 @@ func TestLoad_MCPOutputRoot_FromFile(t *testing.T) {
 	t.Chdir(t.TempDir())
 
 	configDir := filepath.Join(home, ".config", "symprint")
-	if err := os.MkdirAll(configDir, 0o755); err != nil {
+	if err := os.MkdirAll(configDir, 0o700); err != nil {
 		t.Fatalf("MkdirAll() error = %v", err)
 	}
 	tomlContent := `[mcp]
 output_root = "/tmp/symprint-out"
 `
-	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(tomlContent), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(tomlContent), 0o600); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
 	loader.ResetCache()

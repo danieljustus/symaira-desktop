@@ -63,7 +63,7 @@ func (p StaticKeyProvider) Resolve(context.Context) ([]byte, string, error) {
 
 // DefaultPassphraseEnvVar is the environment variable EnvKeyProvider reads
 // by default.
-const DefaultPassphraseEnvVar = "SYMRELATE_BACKUP_PASSPHRASE"
+const DefaultPassphraseEnvVar = "SYMRELATE_BACKUP_PASSPHRASE" //nolint:gosec // this is an environment-variable name, not a credential
 
 // EnvKeyProvider reads a passphrase from an environment variable.
 type EnvKeyProvider struct {
@@ -104,7 +104,7 @@ func (p SymVaultKeyProvider) Resolve(ctx context.Context) ([]byte, string, error
 	if keyName == "" {
 		keyName = DefaultSymVaultKeyName
 	}
-	out, err := exec.CommandContext(ctx, binPath, "get", keyName).Output()
+	out, err := exec.CommandContext(ctx, binPath, "get", keyName).Output() //nolint:gosec // binPath is resolved by exec.LookPath
 	if err != nil {
 		return nil, "", ErrKeyUnavailable
 	}

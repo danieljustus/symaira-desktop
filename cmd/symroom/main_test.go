@@ -15,7 +15,7 @@ import (
 func buildBinary(t *testing.T) string {
 	t.Helper()
 	binPath := filepath.Join(t.TempDir(), "symroom")
-	cmd := exec.Command("go", "build", "-o", binPath, ".")
+	cmd := exec.Command("go", "build", "-o", binPath, ".") //nolint:gosec // fixed Go test build command; output is t.TempDir
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to build test binary: %v, output: %s", err, string(out))
 	}
@@ -24,7 +24,7 @@ func buildBinary(t *testing.T) string {
 
 func TestCLIUsage(t *testing.T) {
 	binPath := buildBinary(t)
-	cmd := exec.Command(binPath)
+	cmd := exec.Command(binPath) //nolint:gosec // binary was built in t.TempDir
 	err := cmd.Run()
 	if err == nil {
 		t.Fatalf("expected error/exit code 2 when running without arguments, got success")
@@ -45,7 +45,7 @@ func TestCLISubcommand(t *testing.T) {
 		"brain-profile", "doctor", "version", "mcp", "member",
 	}
 	for _, sub := range subcommands {
-		cmd := exec.Command(binPath, sub, "--help")
+		cmd := exec.Command(binPath, sub, "--help") //nolint:gosec // binary and subcommand are fixed test inputs
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("subcommand %s failed: %v, output: %s", sub, err, string(out))
@@ -86,7 +86,7 @@ func TestCLIMemberManagement(t *testing.T) {
 
 	runCLI := func(args ...string) (string, int) {
 		t.Helper()
-		cmd := exec.Command(binPath, args...)
+		cmd := exec.Command(binPath, args...) //nolint:gosec // binary was built in t.TempDir and args are test inputs
 		cmd.Dir = roomDir
 		out, err := cmd.CombinedOutput()
 		code := 0

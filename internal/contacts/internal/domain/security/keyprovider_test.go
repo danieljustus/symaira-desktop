@@ -71,8 +71,8 @@ func TestSymVaultAndTerminalProvidersUnavailableWithoutExternalInput(t *testing.
 	if err != nil {
 		t.Fatalf("os.Pipe() error = %v", err)
 	}
-	defer readEnd.Close()
-	defer writeEnd.Close()
+	defer func() { _ = readEnd.Close() }()
+	defer func() { _ = writeEnd.Close() }()
 	if _, _, err := (TerminalKeyProvider{StdinFunc: func() *os.File { return readEnd }}).Resolve(context.Background()); !errors.Is(err, ErrKeyUnavailable) {
 		t.Fatalf("non-terminal provider error = %v, want unavailable", err)
 	}

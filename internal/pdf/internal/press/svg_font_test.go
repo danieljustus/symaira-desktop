@@ -34,7 +34,7 @@ func TestSVGFontFamilyResolution(t *testing.T) {
   <text x="20" y="100" font-family="Inter" font-weight="bold" font-size="18" fill="#111827">Inter Bold Heading Label</text>
   <text x="20" y="150" style="font-family: Inter; font-weight: 700; font-size: 16px;" fill="#374151">Inter CSS Styled Label</text>
 </svg>`
-	if err := os.WriteFile(svgPath, []byte(svgContent), 0o644); err != nil {
+	if err := os.WriteFile(svgPath, []byte(svgContent), 0o600); err != nil {
 		t.Fatalf("failed to write SVG fixture: %v", err)
 	}
 
@@ -70,7 +70,7 @@ Below is an embedded SVG vector graphic using Inter font families:
 		t.Errorf("expected engine %q, got %q", "typst", res.Engine)
 	}
 
-	pdfData, err := os.ReadFile(outPath)
+	pdfData, err := os.ReadFile(outPath) //nolint:gosec // test path is created under t.TempDir
 	if err != nil {
 		t.Fatalf("failed to read output PDF: %v", err)
 	}

@@ -39,7 +39,7 @@ func ReadJournalStats(roomDir string) (*JournalStats, error) {
 	for _, entry := range entries {
 		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".jsonl") {
 			filePath := filepath.Join(journalDir, entry.Name())
-			f, err := os.Open(filePath)
+			f, err := os.Open(filePath) //nolint:gosec // filePath is assembled from a journal directory entry
 			if err != nil {
 				continue
 			}
@@ -70,7 +70,7 @@ func ReadJournalStats(roomDir string) (*JournalStats, error) {
 
 func GetAuthorStats(roomDir, authorID string) (seq uint64, prevHash string, err error) {
 	journalFile := filepath.Join(roomDir, "journal", authorID+".jsonl")
-	f, err := os.Open(journalFile)
+	f, err := os.Open(journalFile) //nolint:gosec // journalFile is rooted in the requested room directory
 	if err != nil {
 		if os.IsNotExist(err) {
 			return 0, "sha256:0000000000000000000000000000000000000000000000000000000000000000", nil
@@ -103,7 +103,7 @@ func AppendEvent(roomDir string, ev *event.Event) error {
 	defer appendMu.Unlock()
 
 	journalDir := filepath.Join(roomDir, "journal")
-	if err := os.MkdirAll(journalDir, 0755); err != nil {
+	if err := os.MkdirAll(journalDir, 0700); err != nil {
 		return fmt.Errorf("mkdir journal: %w", err)
 	}
 
@@ -113,7 +113,7 @@ func AppendEvent(roomDir string, ev *event.Event) error {
 	}
 
 	journalFile := filepath.Join(journalDir, ev.Author+".jsonl")
-	f, err := os.OpenFile(journalFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	f, err := os.OpenFile(journalFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600) //nolint:gosec // journalFile is rooted in the requested room directory
 	if err != nil {
 		return fmt.Errorf("open journal file: %w", err)
 	}
@@ -126,7 +126,7 @@ func AppendEvent(roomDir string, ev *event.Event) error {
 }
 
 func ReadRoomConfig(roomDir string) (*RoomConfig, error) {
-	data, err := os.ReadFile(filepath.Join(roomDir, "room.toml"))
+	data, err := os.ReadFile(filepath.Join(roomDir, "room.toml")) //nolint:gosec // roomDir is the caller-selected room root
 	if err != nil {
 		return nil, fmt.Errorf("read room.toml: %w", err)
 	}

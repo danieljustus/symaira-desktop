@@ -78,7 +78,7 @@ func listInteractions(ctx context.Context, db *sql.DB, ref entityRef) ([]relatio
 	if err != nil {
 		return nil, errs.Internal(op, "failed to list interactions", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []relationship.Interaction
 	for rows.Next() {

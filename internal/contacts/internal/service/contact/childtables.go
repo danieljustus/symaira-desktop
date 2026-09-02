@@ -25,7 +25,7 @@ func listAliases(ctx context.Context, x execer, ref entityRef) ([]string, error)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []string
 	for rows.Next() {
@@ -76,7 +76,7 @@ func listTags(ctx context.Context, x execer, ref entityRef) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []string
 	for rows.Next() {
@@ -114,7 +114,7 @@ func listClassifications(ctx context.Context, x execer, ref entityRef) ([]contac
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []contact.Classification
 	for rows.Next() {
@@ -168,7 +168,7 @@ func listContactPoints(ctx context.Context, x execer, ref entityRef) ([]contact.
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []contact.ContactPoint
 	for rows.Next() {

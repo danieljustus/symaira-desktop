@@ -9,10 +9,10 @@ import (
 
 func writeTestFile(t *testing.T, path string, content []byte) {
 	t.Helper()
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(path, content, 0o644); err != nil {
+	if err := os.WriteFile(path, content, 0o600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -32,7 +32,7 @@ func TestCollectAssetsCopiesLocalImages(t *testing.T) {
 	}
 
 	for _, rel := range []string{"logo.png", filepath.Join("img", "photo.jpg")} {
-		got, err := os.ReadFile(filepath.Join(dst, rel))
+		got, err := os.ReadFile(filepath.Join(dst, rel)) //nolint:gosec // test path is created under t.TempDir
 		if err != nil {
 			t.Fatalf("expected %s copied into work dir: %v", rel, err)
 		}
@@ -133,14 +133,14 @@ func TestCopyFileCopiesContents(t *testing.T) {
 	writeTestFile(t, src, content)
 
 	dstDir := filepath.Join(t.TempDir(), "out")
-	if err := os.MkdirAll(dstDir, 0o755); err != nil {
+	if err := os.MkdirAll(dstDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	dst := filepath.Join(dstDir, "in.png")
 	if err := copyFile(src, dst); err != nil {
 		t.Fatalf("copyFile: %v", err)
 	}
-	got, err := os.ReadFile(dst)
+	got, err := os.ReadFile(dst) //nolint:gosec // test path is created under t.TempDir
 	if err != nil {
 		t.Fatalf("read copied file: %v", err)
 	}

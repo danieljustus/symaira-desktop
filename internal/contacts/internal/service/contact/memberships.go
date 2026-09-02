@@ -71,6 +71,7 @@ func (s *Service) ListMembershipsByOrganization(ctx context.Context, organizatio
 
 func (s *Service) listMemberships(ctx context.Context, column, id string) ([]contact.Membership, error) {
 	const op = "contact.listMemberships"
+	//nolint:gosec // column is selected from the fixed person_id/organization_id API paths
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT id, person_id, organization_id, COALESCE(role, ''), COALESCE(title, ''), valid_from, valid_to, created_at, updated_at
 		FROM organization_memberships WHERE `+column+` = ?
@@ -78,7 +79,7 @@ func (s *Service) listMemberships(ctx context.Context, column, id string) ([]con
 	if err != nil {
 		return nil, errs.Internal(op, "failed to list memberships", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []contact.Membership
 	for rows.Next() {

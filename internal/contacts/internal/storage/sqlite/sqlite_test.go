@@ -18,7 +18,7 @@ func TestOpen_CreatesWALDatabase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open() error = %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	var mode string
 	if err := db.QueryRowContext(ctx, "PRAGMA journal_mode").Scan(&mode); err != nil {
@@ -47,7 +47,7 @@ func TestMigrate_CleanDatabaseAppliesAllMigrations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenMemory() error = %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	migrations, err := loadMigrations()
 	if err != nil {
@@ -87,7 +87,7 @@ func TestMigrate_IsIdempotentOnUpgrade(t *testing.T) {
 	if err != nil {
 		t.Fatalf("second Open() error = %v", err)
 	}
-	defer db2.Close()
+	defer func() { _ = db2.Close() }()
 
 	var value string
 	if err := db2.QueryRowContext(ctx, "SELECT value FROM settings WHERE key = 'probe'").Scan(&value); err != nil {
@@ -104,7 +104,7 @@ func TestWithTx_CommitsAndRollsBack(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenMemory() error = %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	if err := WithTx(ctx, db, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, "INSERT INTO settings (key, value) VALUES ('tx-commit', 'saved')")

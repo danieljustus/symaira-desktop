@@ -38,7 +38,7 @@ func newFixture(t *testing.T) *Service {
 	if err != nil {
 		t.Fatalf("OpenMemory() error = %v", err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { _ = db.Close() })
 	return New(db, contactsvc.New(db))
 }
 
@@ -50,7 +50,7 @@ func TestPlan_DryRunNeverWrites(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open fixture error = %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	rows, issues, err := importerdomain.ParseVCard(f)
 	if err != nil {
 		t.Fatalf("ParseVCard() error = %v", err)
@@ -81,7 +81,7 @@ func TestApply_ImportsVCardFixturePredictably(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open fixture error = %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	rows, issues, err := importerdomain.ParseVCard(f)
 	if err != nil {
 		t.Fatalf("ParseVCard() error = %v", err)
@@ -103,9 +103,9 @@ func TestApply_ImportsVCardFixturePredictably(t *testing.T) {
 	}
 
 	var personCount, orgCount, cpCount int
-	s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM persons").Scan(&personCount)
-	s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM organizations").Scan(&orgCount)
-	s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM contact_points").Scan(&cpCount)
+	_ = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM persons").Scan(&personCount)
+	_ = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM organizations").Scan(&orgCount)
+	_ = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM contact_points").Scan(&cpCount)
 	if personCount != 3 {
 		t.Errorf("persons = %d, want 3", personCount)
 	}
@@ -117,7 +117,7 @@ func TestApply_ImportsVCardFixturePredictably(t *testing.T) {
 	}
 
 	var membershipCount int
-	s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM organization_memberships").Scan(&membershipCount)
+	_ = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM organization_memberships").Scan(&membershipCount)
 	if membershipCount != 2 {
 		t.Errorf("memberships = %d, want 2 (Jordan and Morgan both belong to Example Co)", membershipCount)
 	}
@@ -131,7 +131,7 @@ func TestApply_InvalidRowsNeverReachTheDatabase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open fixture error = %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	header := importerdomain.DetectColumnMapping([]string{"Full Name", "Email", "Phone", "Company"})
 	rows, issues, err := importerdomain.ParseCSV(f, header)
 	if err != nil {
@@ -157,7 +157,7 @@ func TestApply_InvalidRowsNeverReachTheDatabase(t *testing.T) {
 	}
 
 	var count int
-	s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM persons WHERE display_name = ''").Scan(&count)
+	_ = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM persons WHERE display_name = ''").Scan(&count)
 	if count != 0 {
 		t.Errorf("found %d persons created from the invalid row, want 0", count)
 	}
@@ -172,7 +172,7 @@ func TestApply_ReImportSameVCardIsIdempotent(t *testing.T) {
 		if err != nil {
 			t.Fatalf("open fixture error = %v", err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		rows, issues, err := importerdomain.ParseVCard(f)
 		if err != nil {
 			t.Fatalf("ParseVCard() error = %v", err)
@@ -200,7 +200,7 @@ func TestApply_ReImportSameVCardIsIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open fixture error = %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	rows, issues, err := importerdomain.ParseVCard(f)
 	if err != nil {
 		t.Fatalf("ParseVCard() error = %v", err)
@@ -227,7 +227,7 @@ func TestApply_ReImportSameVCardIsIdempotent(t *testing.T) {
 	}
 
 	var personCount int
-	s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM persons").Scan(&personCount)
+	_ = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM persons").Scan(&personCount)
 	if personCount != 3 {
 		t.Errorf("persons after re-import = %d, want still 3", personCount)
 	}
@@ -276,7 +276,7 @@ func TestApply_DuplicateCandidateRequiresExplicitResolution(t *testing.T) {
 	}
 
 	var personCount int
-	s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM persons").Scan(&personCount)
+	_ = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM persons").Scan(&personCount)
 	if personCount != 1 {
 		t.Errorf("persons after merge = %d, want still 1 (merge must not create a new person)", personCount)
 	}
@@ -309,7 +309,7 @@ func TestApply_ExplicitCreateOverridesDuplicateWarning(t *testing.T) {
 	}
 
 	var personCount int
-	s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM persons").Scan(&personCount)
+	_ = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM persons").Scan(&personCount)
 	if personCount != 2 {
 		t.Errorf("persons = %d, want 2 (explicit create must add a second person)", personCount)
 	}
@@ -323,7 +323,7 @@ func TestListRuns_RecordsApplyOutcome(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open fixture error = %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	rows, issues, err := importerdomain.ParseVCard(f)
 	if err != nil {
 		t.Fatalf("ParseVCard() error = %v", err)
@@ -358,7 +358,7 @@ func TestApply_ImportedPersonsAreReadableThroughContactService(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenMemory() error = %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	contacts := contactsvc.New(db)
 	s := New(db, contacts)
 
@@ -366,7 +366,7 @@ func TestApply_ImportedPersonsAreReadableThroughContactService(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open fixture error = %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	rows, issues, err := importerdomain.ParseVCard(f)
 	if err != nil {
 		t.Fatalf("ParseVCard() error = %v", err)

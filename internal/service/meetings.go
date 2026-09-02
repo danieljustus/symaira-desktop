@@ -161,4 +161,3 @@ type MeetingRefreshResult struct {
 	DiffLines []string `json:"diff_lines,omitempty"`
 	Applied   bool     `json:"applied"`
 }
-

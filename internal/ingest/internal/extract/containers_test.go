@@ -412,12 +412,12 @@ func writeOLEFixture(t *testing.T, path, streamName string) {
 	rootName := "Root Entry"
 	copy(dir[0:], utf16LEBytes(rootName))
 	binary.LittleEndian.PutUint16(dir[64:66], uint16(len(rootName)*2+2)) //nolint:gosec // G115: test fixture; rootName is a short constant string
-	dir[66] = 5 // STGTY_ROOT
+	dir[66] = 5                                                          // STGTY_ROOT
 	// Entry 1: the mandated stream.
 	off := 128
 	copy(dir[off:], utf16LEBytes(streamName))
 	binary.LittleEndian.PutUint16(dir[off+64:off+66], uint16(len(streamName)*2+2)) //nolint:gosec // G115: test fixture; streamName is a short test-provided string
-	dir[off+66] = 2 // STGTY_STREAM
+	dir[off+66] = 2                                                                // STGTY_STREAM
 
 	data := append(head, dir...)
 	if err := os.WriteFile(path, data, 0o644); err != nil {

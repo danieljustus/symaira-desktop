@@ -328,4 +328,3 @@ func reembedDocumentSections(dbClient db.Store, embedder Embedder, source string
 	doc := &db.Document{Path: source, Hash: currentHash, UpdatedAt: time.Now()}
 	return commitIndex(dbClient, source, chunks, doc, existing, "")
 }
-

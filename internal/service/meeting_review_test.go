@@ -1,42 +1,8 @@
 package service
 
 import (
-	"os"
 	"testing"
 )
-
-// mockSymmeetReviewScript extends the base mock with structured segment
-// export and speaker mutation commands, recording every speaker mutation
-// into $SYMMEET_CALL_LOG for assertion.
-const mockSymmeetReviewScript = `#!/bin/bash
-case "$1" in
-  capabilities)
-    echo '{"tool":"symmeet","version":"1.0.0","schema_version":1,"artifact_schema_versions":[1],"export_formats":["markdown","json"]}'
-    ;;
-  meeting)
-    if [ "$2" = "show" ]; then
-      echo '{"schema_version":1,"meeting_id":"m1","source":"imported","created_at":"2026-07-01T10:00:00Z","updated_at":"2026-07-01T10:30:00Z","audio_tracks":[],"language":"en","job":{"job_id":"j1","state":"completed"}}'
-    fi
-    ;;
-  speaker)
-    echo "$@" >> "$SYMMEET_CALL_LOG"
-    if [ "$2" = "list" ]; then
-      echo '{"meeting_id":"m1","speakers":["speaker_0","speaker_1"],"labels":{"speaker_0":"Alice"},"merged_speakers":{}}'
-    else
-      echo '{"meeting_id":"m1","status":"ok"}'
-    fi
-    ;;
-  export)
-    for arg in "$@"; do
-      if [ "$arg" = "json" ]; then
-        echo '{"schema_version":1,"meeting_id":"m1","segment_count":2,"segments":[{"segment_id":"seg-1","track_id":"t1","speaker_id":"speaker_0","start_ms":0,"end_ms":1500,"engine_text":"Hello everyone.","revision":"engine"},{"segment_id":"seg-2","track_id":"t1","speaker_id":"speaker_1","start_ms":1500,"end_ms":4000,"engine_text":"Hi Alice.","edited_text":"Hi, Alice!","revision":"user_corrected"}]}'
-        exit 0
-      fi
-    done
-    printf '%s' "$SYMMEET_TRANSCRIPT"
-    ;;
-esac
-`
 
 func importReviewFixtureMeeting(t *testing.T, dir string) (*Service, string) {
 	t.Helper()
@@ -44,15 +10,6 @@ func importReviewFixtureMeeting(t *testing.T, dir string) (*Service, string) {
 	relPath := "meetings/meeting-m1.md"
 	writeMeetingNoteFixture(t, svc, relPath, meetingNoteUnknownFieldsFixture)
 	return svc, relPath
-}
-
-func readCallLog(t *testing.T) string {
-	t.Helper()
-	data, err := os.ReadFile(os.Getenv("SYMMEET_CALL_LOG")) //nolint:gosec // test-owned temp path
-	if err != nil {
-		t.Fatalf("no speaker call recorded: %v", err)
-	}
-	return string(data)
 }
 
 func TestMeetingMarkReviewedSetsStateAndSnapshotsHistory(t *testing.T) {

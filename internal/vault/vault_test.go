@@ -500,7 +500,7 @@ func TestSetFrontmatterValueAddNewPreservesOrder(t *testing.T) {
 	titleIdx := strings.Index(result, "title:")
 	createdIdx := strings.Index(result, "created:")
 	dueIdx := strings.Index(result, "due_date:")
-	if !(titleIdx < createdIdx && createdIdx < dueIdx) {
+	if titleIdx >= createdIdx || createdIdx >= dueIdx {
 		t.Errorf("expected key order title < created < due_date, got:\n%s", result)
 	}
 

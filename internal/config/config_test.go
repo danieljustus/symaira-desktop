@@ -32,6 +32,50 @@ func TestGlobalPathReturnsNonEmpty(t *testing.T) {
 	}
 }
 
+func TestMailConfigPathExplicitWins(t *testing.T) {
+	explicit := filepath.Join(t.TempDir(), "custom-mail.toml")
+	got, err := MailConfigPath(explicit)
+	if err != nil {
+		t.Fatalf("MailConfigPath(explicit) error: %v", err)
+	}
+	want, err := filepath.Abs(explicit)
+	if err != nil {
+		t.Fatalf("filepath.Abs: %v", err)
+	}
+	if got != want {
+		t.Errorf("MailConfigPath(%q) = %q, want %q", explicit, got, want)
+	}
+}
+
+func TestMailConfigPathHonoursXDGConfigHome(t *testing.T) {
+	xdg := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", xdg)
+
+	got, err := MailConfigPath("")
+	if err != nil {
+		t.Fatalf("MailConfigPath(\"\") error: %v", err)
+	}
+	want := filepath.Join(xdg, "symingest", "config.toml")
+	if got != want {
+		t.Errorf("MailConfigPath(\"\") = %q, want %q under XDG_CONFIG_HOME", got, want)
+	}
+}
+
+func TestMailConfigPathFallsBackToHomeConfig(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", "")
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	got, err := MailConfigPath("")
+	if err != nil {
+		t.Fatalf("MailConfigPath(\"\") error: %v", err)
+	}
+	want := filepath.Join(home, ".config", "symingest", "config.toml")
+	if got != want {
+		t.Errorf("MailConfigPath(\"\") = %q, want %q under $HOME/.config", got, want)
+	}
+}
+
 func TestLoadFromPathNonExistent(t *testing.T) {
 	cfg, err := LoadFromPath(filepath.Join(t.TempDir(), "nope.toml"))
 	if err != nil {

@@ -3,6 +3,7 @@ package history
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -42,16 +43,28 @@ type Checkpoint struct {
 	Skipped []string `json:"skipped"`
 }
 
-// checkpointsDir is where task checkpoint manifests live.
-func (s *Store) checkpointsDir() string {
-	return filepath.Join(s.historyDir(), "checkpoints")
+// checkpointsRelDir is where task checkpoint manifests live, relative to
+// vaultRoot (used for os.Root-scoped I/O).
+func checkpointsRelDir() string {
+	return filepath.Join(historyRelDir(), "checkpoints")
 }
 
-func (s *Store) checkpointPath(taskID string) (string, error) {
+func checkpointRelPath(taskID string) (string, error) {
 	if err := validateTaskID(taskID); err != nil {
 		return "", err
 	}
-	return filepath.Join(s.checkpointsDir(), taskID+".json"), nil
+	return filepath.Join(checkpointsRelDir(), taskID+".json"), nil
+}
+
+// checkpointPath is the absolute form of checkpointRelPath. It exists for
+// tests that need to inspect the on-disk checkpoint manifest directly;
+// production code only ever accesses it through the os.Root-scoped helpers.
+func (s *Store) checkpointPath(taskID string) (string, error) {
+	rel, err := checkpointRelPath(taskID)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(s.vaultRoot, rel), nil
 }
 
 // validateTaskID rejects task ids that could escape the checkpoints
@@ -168,9 +181,12 @@ func (s *Store) UndoCheckpoint(taskID string) (*Checkpoint, error) {
 		}
 		restored++
 	}
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
 	for _, rel := range cp.NewFiles {
-		target := filepath.Join(s.vaultRoot, filepath.FromSlash(rel))
-		if err := os.Remove(target); err != nil && !os.IsNotExist(err) {
+		if err := root.Remove(filepath.FromSlash(rel)); err != nil && !os.IsNotExist(err) {
 			failed = append(failed, rel)
 			continue
 		}
@@ -186,7 +202,11 @@ func (s *Store) UndoCheckpoint(taskID string) (*Checkpoint, error) {
 
 // ListCheckpoints returns all task checkpoints, newest first.
 func (s *Store) ListCheckpoints() ([]Checkpoint, error) {
-	items, err := os.ReadDir(s.checkpointsDir())
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
+	items, err := fs.ReadDir(root.FS(), checkpointsRelDir())
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -198,7 +218,7 @@ func (s *Store) ListCheckpoints() ([]Checkpoint, error) {
 		if item.IsDir() || !strings.HasSuffix(item.Name(), ".json") {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(s.checkpointsDir(), item.Name()))
+		data, err := root.ReadFile(filepath.Join(checkpointsRelDir(), item.Name()))
 		if err != nil {
 			return nil, err
 		}
@@ -219,13 +239,18 @@ func (cp *Checkpoint) Partial() bool {
 }
 
 func (s *Store) loadCheckpoint(taskID string) (*Checkpoint, error) {
-	path, err := s.checkpointPath(taskID)
+	relPath, err := checkpointRelPath(taskID)
 	if err != nil {
 		return nil, err
 	}
-	// checkpointPath validates taskID (no traversal, no separators), so the
-	// manifest read is confined to the checkpoints dir.
-	data, err := os.ReadFile(path) //nolint:gosec // G304: taskID validated by validateTaskID via checkpointPath
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
+	// checkpointRelPath validates taskID (no traversal, no separators) and
+	// root confines the read to the vault, so this can never escape the
+	// checkpoints dir.
+	data, err := root.ReadFile(relPath)
 	if err != nil {
 		return nil, err
 	}
@@ -237,10 +262,14 @@ func (s *Store) loadCheckpoint(taskID string) (*Checkpoint, error) {
 }
 
 func (s *Store) saveCheckpoint(cp *Checkpoint) error {
-	if err := os.MkdirAll(s.checkpointsDir(), 0o750); err != nil {
+	root, err := s.openRoot()
+	if err != nil {
 		return err
 	}
-	path, err := s.checkpointPath(cp.TaskID)
+	if err := root.MkdirAll(checkpointsRelDir(), 0o750); err != nil {
+		return err
+	}
+	relPath, err := checkpointRelPath(cp.TaskID)
 	if err != nil {
 		return err
 	}
@@ -248,5 +277,5 @@ func (s *Store) saveCheckpoint(cp *Checkpoint) error {
 	if err != nil {
 		return err
 	}
-	return writeFileAtomic(path, data, 0644)
+	return writeFileAtomicRoot(root, relPath, data, 0644)
 }

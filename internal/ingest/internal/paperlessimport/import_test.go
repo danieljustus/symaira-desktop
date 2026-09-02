@@ -61,7 +61,7 @@ func TestRun_DryRun(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},
@@ -138,7 +138,7 @@ func TestRun_DryRun_AuditReport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Store:      s,
@@ -191,9 +191,9 @@ func TestRun_Import(t *testing.T) {
 		if handleEmptyLookups(w, r) {
 			return
 		}
-		switch {
-		case r.URL.Path == "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+		switch r.URL.Path {
+		case "/api/documents/":
+			_ = json.NewEncoder(w).Encode(map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{
@@ -206,8 +206,8 @@ func TestRun_Import(t *testing.T) {
 				},
 				"next": nil,
 			})
-		case r.URL.Path == "/api/documents/1/download/":
-			w.Write([]byte("invoice content"))
+		case "/api/documents/1/download/":
+			_, _ = w.Write([]byte("invoice content"))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -219,7 +219,7 @@ func TestRun_Import(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},
@@ -293,7 +293,7 @@ func TestRun_ResolvesIDsViaLookups(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},
@@ -371,7 +371,7 @@ func TestRun_PreservesPaperlessMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},
@@ -454,7 +454,7 @@ func TestRun_PaperlessTraceabilityAndDownloadHeaderExtension(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},
@@ -541,7 +541,7 @@ func TestRun_ResumesAfterPartialFailure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},
@@ -631,7 +631,7 @@ func TestRun_RetryFailedUsesCurrentTargetAndCheckpoints(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	vault := filepath.Join(dir, "vault")
 	archive := filepath.Join(dir, "archive")
@@ -721,7 +721,7 @@ func TestRun_CancellationStopsDuringNextDownloadAfterStateRecorded(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -779,7 +779,7 @@ func TestRun_SinceFilter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Store:      s,
@@ -807,9 +807,9 @@ func TestRun_Limit(t *testing.T) {
 		if handleEmptyLookups(w, r) {
 			return
 		}
-		switch {
-		case r.URL.Path == "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+		switch r.URL.Path {
+		case "/api/documents/":
+			_ = json.NewEncoder(w).Encode(map[string]any{
 				"count": 3,
 				"results": []map[string]any{
 					{"id": 1, "title": "Doc 1", "created_date": "2026-01-15", "file_type": ".txt"},
@@ -818,10 +818,10 @@ func TestRun_Limit(t *testing.T) {
 				},
 				"next": nil,
 			})
-		case r.URL.Path == "/api/documents/1/download/":
-			w.Write([]byte("content 1"))
-		case r.URL.Path == "/api/documents/2/download/":
-			w.Write([]byte("content 2"))
+		case "/api/documents/1/download/":
+			_, _ = w.Write([]byte("content 1"))
+		case "/api/documents/2/download/":
+			_, _ = w.Write([]byte("content 2"))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -833,7 +833,7 @@ func TestRun_Limit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},
@@ -895,7 +895,7 @@ func TestRun_ExplicitIDs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},
@@ -947,7 +947,7 @@ func TestRun_ExplicitIDs_DryRunHonorsBound(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Store:      s,
@@ -1009,7 +1009,7 @@ func TestRun_PreserveStoragePaths(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},
@@ -1060,7 +1060,7 @@ func TestRun_ErrorStatus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Store:      s,
@@ -1112,7 +1112,7 @@ func TestRun_ImportsPaperlessCSVWhenFileTypeIsNull(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},

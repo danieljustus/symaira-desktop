@@ -133,9 +133,10 @@ func newEventsCmd() *cobra.Command {
 
 			// Start Mail Watcher in the background for IMAP email ingestion.
 			// It polls symingest mail accounts periodically and routes
-			// fetched messages through the same ingest pipeline.
-			mailConfigPath := filepath.Join(os.Getenv("HOME"), ".config", "symingest", "config.toml")
-			mailWatcher, err := mail.New(mailConfigPath, svc)
+			// fetched messages through the same ingest pipeline. An empty
+			// path resolves through config.MailConfigPath (XDG-aware,
+			// issue #755).
+			mailWatcher, err := mail.New("", svc)
 			if err == nil {
 				mailCtx, mailCancel := context.WithCancel(context.Background())
 				defer mailCancel()

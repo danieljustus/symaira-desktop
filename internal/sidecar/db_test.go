@@ -1019,6 +1019,187 @@ func TestRefreshIndexBackfillsStatWhenPreviouslyIndexedWithoutIt(t *testing.T) {
 	}
 }
 
+// TestIndexDocumentsCommitsInBatches covers #760: IndexDocuments must commit
+// in chunks of maxIndexBatchSize rather than opening one transaction per
+// document. A batch of 2.5x the chunk size should produce exactly 3 commits
+// (200 + 200 + 50), not 450.
+func TestIndexDocumentsCommitsInBatches(t *testing.T) {
+	vaultRoot := t.TempDir()
+	db := setupTestDB(t)
+
+	const total = maxIndexBatchSize*2 + 50
+	docs := make([]*vault.Document, 0, total)
+	for i := 0; i < total; i++ {
+		path := filepath.Join(vaultRoot, fmt.Sprintf("Note%04d.md", i))
+		content := []byte(fmt.Sprintf("---\ntitle: Note %d\n---\nBody content %d", i, i))
+		doc, err := vault.ParseBytes(path, content)
+		if err != nil {
+			t.Fatal(err)
+		}
+		docs = append(docs, doc)
+	}
+
+	if err := db.IndexDocuments(docs); err != nil {
+		t.Fatalf("IndexDocuments failed: %v", err)
+	}
+
+	wantCommits := 3
+	if db.indexBatchCommits != wantCommits {
+		t.Fatalf("expected %d batch commits for %d documents (chunks of %d), got %d",
+			wantCommits, total, maxIndexBatchSize, db.indexBatchCommits)
+	}
+
+	for i := 0; i < total; i += 137 { // spot-check without searching every row
+		want := fmt.Sprintf("Body content %d", i)
+		results, err := db.Search(want)
+		if err != nil {
+			t.Fatalf("search failed: %v", err)
+		}
+		if len(results) != 1 {
+			t.Fatalf("expected document %d to be indexed, got %d results", i, len(results))
+		}
+	}
+}
+
+// TestIndexDocumentsCommitsPartialBatchOnError covers the "commit early on
+// error" behavior described in #760: when a document in the middle of a
+// batch fails (here, an invalid ASN), the documents already applied earlier
+// in that same batch must still be committed instead of rolled back.
+func TestIndexDocumentsCommitsPartialBatchOnError(t *testing.T) {
+	vaultRoot := t.TempDir()
+	db := setupTestDB(t)
+
+	good1, err := vault.ParseBytes(filepath.Join(vaultRoot, "Good1.md"), []byte("---\ntitle: Good1\n---\nfirst body"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	badASN := -1
+	bad, err := vault.ParseBytes(filepath.Join(vaultRoot, "Bad.md"), []byte("---\ntitle: Bad\n---\nbad body"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	bad.ASN = &badASN
+	good2, err := vault.ParseBytes(filepath.Join(vaultRoot, "Good2.md"), []byte("---\ntitle: Good2\n---\nsecond body"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = db.IndexDocuments([]*vault.Document{good1, bad, good2})
+	if err == nil {
+		t.Fatal("expected IndexDocuments to fail on the invalid ASN")
+	}
+
+	indexed, statErr := db.IsIndexed(good1.Path, good1.SHA256)
+	if statErr != nil {
+		t.Fatal(statErr)
+	}
+	if !indexed {
+		t.Fatal("expected the document preceding the failure to remain committed")
+	}
+
+	if indexed, statErr := db.IsIndexed(bad.Path, bad.SHA256); statErr != nil {
+		t.Fatal(statErr)
+	} else if indexed {
+		t.Fatal("expected the failing document itself not to be indexed")
+	}
+
+	if indexed, statErr := db.IsIndexed(good2.Path, good2.SHA256); statErr != nil {
+		t.Fatal(statErr)
+	} else if indexed {
+		t.Fatal("expected documents after the failure to be skipped, not indexed")
+	}
+}
+
+// TestRefreshIndexUsesBatchedIndexDocuments covers #760: a cold RefreshIndex
+// over a vault larger than one batch must route through IndexDocuments'
+// chunked commits rather than committing once per file.
+func TestRefreshIndexUsesBatchedIndexDocuments(t *testing.T) {
+	vaultRoot := t.TempDir()
+	const total = maxIndexBatchSize + 10
+	for i := 0; i < total; i++ {
+		path := filepath.Join(vaultRoot, fmt.Sprintf("Note%04d.md", i))
+		content := []byte(fmt.Sprintf("---\ntitle: Note %d\n---\nBody %d", i, i))
+		if err := os.WriteFile(path, content, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	db := setupTestDB(t)
+
+	if err := db.RefreshIndex(vaultRoot); err != nil {
+		t.Fatal(err)
+	}
+
+	wantCommits := 2 // 200 + 10
+	if db.indexBatchCommits != wantCommits {
+		t.Fatalf("expected RefreshIndex to commit in %d batches for %d files, got %d",
+			wantCommits, total, db.indexBatchCommits)
+	}
+}
+
+// benchIndexDocCount is a supplementary, in-package comparison for #760.
+// `make benchmark-large` runs internal/demo.BenchmarkLargeVaultIndexAndSearch,
+// whose hot loop calls db.IndexDocument directly in a vault.Walk callback —
+// it never goes through RefreshIndex or IndexDocuments, so it does not
+// exercise the batching added here. These two benchmarks measure the same
+// synthetic corpus through the old one-transaction-per-document path
+// (BenchmarkIndexDocumentPerFile) and the new batched path
+// (BenchmarkIndexDocumentsBatched) to quantify the commit overhead
+// IndexDocuments removes. Run with:
+//
+//	go test -run '^$' -bench 'BenchmarkIndexDocument(PerFile|sBatched)' -benchtime=1x ./internal/sidecar
+const benchIndexDocCount = 2000
+
+func generateBenchDocs(b *testing.B, vaultDir string) []*vault.Document {
+	b.Helper()
+	docs := make([]*vault.Document, 0, benchIndexDocCount)
+	for i := 0; i < benchIndexDocCount; i++ {
+		path := filepath.Join(vaultDir, fmt.Sprintf("Note%04d.md", i))
+		content := []byte(fmt.Sprintf(
+			"---\ntitle: Note %d\n---\nDeterministic benchmark body number %d with some extra padding words for a realistic note size.",
+			i, i))
+		doc, err := vault.ParseBytes(path, content)
+		if err != nil {
+			b.Fatal(err)
+		}
+		docs = append(docs, doc)
+	}
+	return docs
+}
+
+func BenchmarkIndexDocumentPerFile(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		docs := generateBenchDocs(b, b.TempDir())
+		db, err := Open(filepath.Join(b.TempDir(), "sidecar.db"))
+		if err != nil {
+			b.Fatal(err)
+		}
+		for _, doc := range docs {
+			if err := db.IndexDocument(doc); err != nil {
+				b.Fatal(err)
+			}
+		}
+		if err := db.Close(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkIndexDocumentsBatched(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		docs := generateBenchDocs(b, b.TempDir())
+		db, err := Open(filepath.Join(b.TempDir(), "sidecar.db"))
+		if err != nil {
+			b.Fatal(err)
+		}
+		if err := db.IndexDocuments(docs); err != nil {
+			b.Fatal(err)
+		}
+		if err := db.Close(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 // --- Error-path tests for sidecar.Open (coverage target: db.go:29-49) ---
 
 func TestOpen_DefaultPathResolution(t *testing.T) {

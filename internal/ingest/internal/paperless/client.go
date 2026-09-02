@@ -72,7 +72,7 @@ func (c *Client) doRequest(ctx context.Context, url string, result any) error {
 	if err != nil {
 		return fmt.Errorf("execute request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return apiError(resp)
@@ -216,7 +216,7 @@ func (c *Client) DownloadDocumentWithMetadata(ctx context.Context, id int, dst i
 	if err != nil {
 		return DownloadMetadata{}, fmt.Errorf("execute request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return DownloadMetadata{}, apiError(resp)

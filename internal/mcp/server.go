@@ -152,14 +152,6 @@ func newDocsSimilarTool(getService serviceFactory) *mcpserver.Tool {
 	return registryTool("docs_similar", getService, nil, false)
 }
 
-func newExportTool(getService serviceFactory) *mcpserver.Tool {
-	return registryTool("desk_export", getService, nil, true)
-}
-
-func newAutofillTool(getService serviceFactory) *mcpserver.Tool {
-	return registryTool("desk_autofill", getService, nil, true)
-}
-
 func registerDeskStatus(server *mcpserver.Server, cfg *config.Config) {
 	server.RegisterTool(registryTool("desk_status", nil, cfg, true))
 }

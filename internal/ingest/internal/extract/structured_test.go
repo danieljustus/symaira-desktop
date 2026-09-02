@@ -372,6 +372,7 @@ func TestCtxErr_Cancelled(t *testing.T) {
 }
 
 func TestCtxErr_Nil(t *testing.T) {
+	//nolint:staticcheck // SA1012: this test specifically covers ctxErr's documented nil-context handling
 	if ctxErr(nil) != nil {
 		t.Fatal("expected nil for nil context")
 	}
@@ -392,15 +393,15 @@ func TestZipFind_Found(t *testing.T) {
 	}
 	zw := zip.NewWriter(f)
 	w, _ := zw.Create("target.txt")
-	w.Write([]byte("hello"))
-	zw.Close()
-	f.Close()
+	_, _ = w.Write([]byte("hello"))
+	_ = zw.Close()
+	_ = f.Close()
 
 	rf, err := zip.OpenReader(zipPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer rf.Close()
+	defer func() { _ = rf.Close() }()
 
 	found := zipFind(&rf.Reader, "target.txt")
 	if found == nil {

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 
+	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/mail"
 	"github.com/danieljustus/symaira-desktop/internal/service"
@@ -37,7 +37,10 @@ func newMailStatusCmd() *cobra.Command {
 			defer func() { _ = db.Close() }()
 
 			svc := service.New(vRoot, db)
-			configPath := filepath.Join(os.Getenv("HOME"), ".config", "symingest", "config.toml")
+			configPath, err := config.MailConfigPath("")
+			if err != nil {
+				return fmt.Errorf("resolve mail config path: %w", err)
+			}
 
 			w, err := mail.NewWithInterval(configPath, svc, 0)
 			if err != nil {
@@ -77,7 +80,10 @@ func newMailFetchCmd() *cobra.Command {
 			defer func() { _ = db.Close() }()
 
 			svc := service.New(vRoot, db)
-			configPath := filepath.Join(os.Getenv("HOME"), ".config", "symingest", "config.toml")
+			configPath, err := config.MailConfigPath("")
+			if err != nil {
+				return fmt.Errorf("resolve mail config path: %w", err)
+			}
 
 			w, err := mail.NewWithInterval(configPath, svc, 0)
 			if err != nil {
@@ -104,7 +110,7 @@ func newMailRulesCmd() *cobra.Command {
 		Use:   "rules",
 		Short: "Manage configured IMAP mail accounts",
 	}
-	cmd.PersistentFlags().StringVar(&configPath, "config", "", "mail configuration file (defaults to .symingest.toml or the global config)")
+	cmd.PersistentFlags().StringVar(&configPath, "config", "", "mail configuration file (defaults to the local mail config or the global config)")
 
 	cmd.AddCommand(newMailRulesListCmd(&configPath))
 	cmd.AddCommand(newMailRulesCreateCmd(&configPath))

@@ -75,16 +75,16 @@ func (s *Service) exportPeople(ctx context.Context) ([]ExportPerson, error) {
 	for rows.Next() {
 		var p ExportPerson
 		if err := rows.Scan(&p.ID, &p.DisplayName, &p.GivenName, &p.FamilyName); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return nil, err
 		}
 		out = append(out, p)
 	}
 	if err := rows.Err(); err != nil {
-		rows.Close()
+		_ = rows.Close()
 		return nil, err
 	}
-	rows.Close()
+	_ = rows.Close()
 
 	cpRows, err := s.db.QueryContext(ctx,
 		"SELECT person_id, kind, raw_value FROM contact_points ORDER BY person_id, kind, is_preferred DESC, created_at")
@@ -95,7 +95,7 @@ func (s *Service) exportPeople(ctx context.Context) ([]ExportPerson, error) {
 	for cpRows.Next() {
 		var personID, kind, value string
 		if err := cpRows.Scan(&personID, &kind, &value); err != nil {
-			cpRows.Close()
+			_ = cpRows.Close()
 			return nil, err
 		}
 		if cpMap[personID] == nil {
@@ -104,10 +104,10 @@ func (s *Service) exportPeople(ctx context.Context) ([]ExportPerson, error) {
 		cpMap[personID][kind] = append(cpMap[personID][kind], value)
 	}
 	if err := cpRows.Err(); err != nil {
-		cpRows.Close()
+		_ = cpRows.Close()
 		return nil, err
 	}
-	cpRows.Close()
+	_ = cpRows.Close()
 
 	tagRows, err := s.db.QueryContext(ctx,
 		"SELECT et.person_id, t.name FROM tags t JOIN entity_tags et ON et.tag_id = t.id ORDER BY et.person_id, t.name")
@@ -118,16 +118,16 @@ func (s *Service) exportPeople(ctx context.Context) ([]ExportPerson, error) {
 	for tagRows.Next() {
 		var personID, name string
 		if err := tagRows.Scan(&personID, &name); err != nil {
-			tagRows.Close()
+			_ = tagRows.Close()
 			return nil, err
 		}
 		tagMap[personID] = append(tagMap[personID], name)
 	}
 	if err := tagRows.Err(); err != nil {
-		tagRows.Close()
+		_ = tagRows.Close()
 		return nil, err
 	}
-	tagRows.Close()
+	_ = tagRows.Close()
 
 	for i := range out {
 		if cp := cpMap[out[i].ID]; cp != nil {

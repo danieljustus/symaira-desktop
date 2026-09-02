@@ -64,7 +64,7 @@ func NewWorker(cfg WorkerConfig) (*Worker, error) {
 	}
 	ollama, err := url.Parse(strings.TrimRight(cfg.OllamaURL, "/"))
 	if err != nil || !isBareHTTPURL(ollama) {
-		return nil, fmt.Errorf("Ollama host must be a bare http(s) base URL")
+		return nil, fmt.Errorf("ollama host must be a bare http(s) base URL")
 	}
 	cfg.OllamaURL = strings.TrimRight(ollama.String(), "/")
 	return &Worker{cfg: cfg, client: &http.Client{Timeout: 15 * time.Minute}}, nil

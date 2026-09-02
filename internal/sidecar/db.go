@@ -63,6 +63,12 @@ var migrationsFS embed.FS
 // DB represents a connection to the sidecar database.
 type DB struct {
 	conn *sql.DB
+
+	// indexBatchCommits counts how many transactions IndexDocuments has
+	// committed. It exists purely so tests can assert that a large batch is
+	// committed in chunks rather than once per document (#760); production
+	// code never reads it.
+	indexBatchCommits int
 }
 
 // Open opens the sidecar database at the specified path and runs migrations.
@@ -202,6 +208,12 @@ func (db *DB) SetFileStat(path string, size int64, modTimeUnixNano int64) error 
 	return err
 }
 
+// maxIndexBatchSize caps how many documents share one transaction in
+// IndexDocuments. It bounds how much work (and how long a write lock is
+// held) a single failing or slow batch can accumulate before committing
+// (#760).
+const maxIndexBatchSize = 200
+
 // RefreshIndex walks vaultRoot and brings the index up to date with every
 // Markdown file found. For each file it first tries a cheap os.Stat-based
 // fast path: if the cached size and mtime from the last index still match
@@ -212,8 +224,25 @@ func (db *DB) SetFileStat(path string, size int64, modTimeUnixNano int64) error 
 // still differs — it falls back to the pre-existing correctness path: parse
 // the file, hash it, and compare against the stored SHA-256 via IsIndexed
 // before deciding whether a re-index is actually needed.
+//
+// Files that need indexing are queued and indexed via IndexDocuments so a
+// full or initial refresh commits in batches instead of once per file
+// (#760).
 func (db *DB) RefreshIndex(vaultRoot string) error {
-	return vault.Walk(vaultRoot, func(path string) error {
+	batch := make([]*vault.Document, 0, maxIndexBatchSize)
+	flush := func() error {
+		if len(batch) == 0 {
+			return nil
+		}
+		// Detach and reset the batch before indexing so a failed flush is
+		// never retried with the same documents by a later flush call (the
+		// deferred one after the walk always runs, success or not).
+		docs := batch
+		batch = make([]*vault.Document, 0, maxIndexBatchSize)
+		return db.IndexDocuments(docs)
+	}
+
+	walkErr := vault.Walk(vaultRoot, func(path string) error {
 		info, err := os.Stat(path)
 		if err != nil {
 			return err
@@ -243,15 +272,104 @@ func (db *DB) RefreshIndex(vaultRoot string) error {
 			// added); just record the stat so future refreshes can skip it.
 			return db.SetFileStat(doc.Path, doc.Size, doc.ModTime.UnixNano())
 		}
-		return db.IndexDocument(doc)
+
+		batch = append(batch, doc)
+		if len(batch) >= maxIndexBatchSize {
+			return flush()
+		}
+		return nil
 	})
+	// Flush whatever accumulated even if the walk itself failed partway
+	// through, so a mid-vault error does not discard documents already
+	// parsed and queued in this run.
+	if err := flush(); err != nil {
+		return err
+	}
+	return walkErr
 }
 
-// IndexDocument indexes a single document into the sidecar.
+// IndexDocument indexes a single document into the sidecar, in its own
+// transaction. Prefer IndexDocuments when indexing more than one document —
+// e.g. an initial or full-rebuild pass over a vault — so the documents share
+// transactions instead of committing one at a time (#760).
 func (db *DB) IndexDocument(doc *vault.Document) error {
 	if doc.IsDerived() {
 		return db.DeleteDocument(doc.Path)
 	}
+
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if err := indexDocumentTx(tx, doc); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// IndexDocuments indexes a batch of documents, committing every
+// maxIndexBatchSize documents (200) in a single transaction instead of once
+// per document. This is what lets the initial index of a large vault, and
+// every full rebuild, commit in batches rather than one commit per file
+// (#760).
+//
+// If a document in the middle of a batch fails (e.g. an invalid ASN), the
+// documents already applied earlier in that same batch are committed before
+// the error is returned, so a mid-batch failure does not lose progress
+// already made.
+func (db *DB) IndexDocuments(docs []*vault.Document) error {
+	for len(docs) > 0 {
+		n := len(docs)
+		if n > maxIndexBatchSize {
+			n = maxIndexBatchSize
+		}
+		if err := db.indexDocumentBatch(docs[:n]); err != nil {
+			return err
+		}
+		docs = docs[n:]
+	}
+	return nil
+}
+
+// indexDocumentBatch indexes up to maxIndexBatchSize documents in a single
+// transaction.
+func (db *DB) indexDocumentBatch(docs []*vault.Document) error {
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	for _, doc := range docs {
+		if doc.IsDerived() {
+			if err := deleteDocumentRows(tx, doc.Path); err != nil {
+				return fmt.Errorf("delete derived document %s: %w", doc.Path, err)
+			}
+			continue
+		}
+		if err := indexDocumentTx(tx, doc); err != nil {
+			// Commit the documents already applied earlier in this batch
+			// rather than rolling the whole batch back, so a single bad
+			// document does not undo work already done on its neighbors.
+			if commitErr := tx.Commit(); commitErr != nil {
+				return commitErr
+			}
+			return fmt.Errorf("index %s: %w", doc.Path, err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	db.indexBatchCommits++
+	return nil
+}
+
+// indexDocumentTx performs the actual insert/update/FTS work for doc within
+// an already-open transaction. It is shared by IndexDocument (one document,
+// one transaction) and indexDocumentBatch (many documents, one transaction).
+func indexDocumentTx(tx *sql.Tx, doc *vault.Document) error {
 	if doc.ASN != nil {
 		if err := vault.ValidateASN(*doc.ASN); err != nil {
 			return fmt.Errorf("invalid document ASN: %w", err)
@@ -261,15 +379,9 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 		doc.Simhash = simhash.ComputeHex(doc.Body)
 	}
 
-	tx, err := db.conn.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
 	// 1. Check if exists to potentially delete from FTS first
 	var fileID int64
-	err = tx.QueryRow("SELECT id FROM files WHERE path = ?", doc.Path).Scan(&fileID)
+	err := tx.QueryRow("SELECT id FROM files WHERE path = ?", doc.Path).Scan(&fileID)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
@@ -433,7 +545,7 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 		}
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 // DeleteDocument removes a document and all derived rows (FTS, properties,
@@ -893,10 +1005,6 @@ func escapeLike(value string) string {
 	value = strings.ReplaceAll(value, `\`, `\\`)
 	value = strings.ReplaceAll(value, "%", `\%`)
 	return strings.ReplaceAll(value, "_", `\_`)
-}
-
-func matchesPlanPostFilters(match SearchMatch, plan searchquery.Plan) bool {
-	return matchesPlanPostFiltersAt(match, plan, searchClock())
 }
 
 func matchesPlanPostFiltersAt(match SearchMatch, plan searchquery.Plan, reference time.Time) bool {

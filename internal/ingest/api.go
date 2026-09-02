@@ -624,10 +624,10 @@ func PaperlessMigrate(ctx context.Context, opts PaperlessOptions) (*PaperlessSta
 		return nil, fmt.Errorf("BaseURL is required")
 	}
 	if opts.Token == "" {
-		return nil, fmt.Errorf("Token is required")
+		return nil, fmt.Errorf("token is required")
 	}
 
-	r, err := opts.Options.resolve()
+	r, err := opts.resolve()
 	if err != nil {
 		return nil, err
 	}

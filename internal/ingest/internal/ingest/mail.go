@@ -90,7 +90,7 @@ func (c *realIMAPClient) FetchEnvelopesUID(uids []imap.UID) ([]*imapMessage, err
 	fetchOptions := &imap.FetchOptions{
 		Envelope: true,
 	}
-	fetchCmd := c.Client.Fetch(uidSet, fetchOptions)
+	fetchCmd := c.Fetch(uidSet, fetchOptions)
 	defer fetchCmd.Close()
 
 	var results []*imapMessage
@@ -130,7 +130,7 @@ func (c *realIMAPClient) FetchUID(uids []imap.UID) ([]*imapMessage, error) {
 			{Peek: true},
 		},
 	}
-	fetchCmd := c.Client.Fetch(uidSet, fetchOptions)
+	fetchCmd := c.Fetch(uidSet, fetchOptions)
 	defer fetchCmd.Close()
 
 	var results []*imapMessage
@@ -257,7 +257,7 @@ func (m *MailPoller) Start(ctx context.Context) error {
 
 	for i, acc := range m.accounts {
 		if secret.IsPlaintext(acc.PasswordSecret) {
-			log.Printf("[MailPoller] Account %d (%s) has a bare password_secret value; it will be resolved as an environment variable name, not as a password. Use symvault://, keychain:// or env:// explicitly (run 'symingest doctor' for details)", i, acc.Username)
+			log.Printf("[MailPoller] Account %d (%s) has a bare password_secret value; it will be resolved as an environment variable name, not as a password. Use symvault://, keychain:// or env:// explicitly (run 'symdesk doctor' for details)", i, acc.Username)
 		}
 		m.wg.Add(1)
 		go func(account config.IMAPAccount, index int) {
@@ -304,7 +304,7 @@ func (m *MailPoller) pollLoop(ctx context.Context, acc config.IMAPAccount, index
 
 	// Initial poll
 	if err := m.pollAccountAndRecord(ctx, acc); err != nil {
-		log.Printf("[MailPoller] Account %d (%s) initial poll failed: %s (run 'symingest doctor' for details)", index, acc.Username, mailPollLogReason(err))
+		log.Printf("[MailPoller] Account %d (%s) initial poll failed: %s (run 'symdesk doctor' for details)", index, acc.Username, mailPollLogReason(err))
 	}
 
 	for {
@@ -313,7 +313,7 @@ func (m *MailPoller) pollLoop(ctx context.Context, acc config.IMAPAccount, index
 			return
 		case <-ticker.C:
 			if err := m.pollAccountAndRecord(ctx, acc); err != nil {
-				log.Printf("[MailPoller] Account %d (%s) poll failed: %s (run 'symingest doctor' for details)", index, acc.Username, mailPollLogReason(err))
+				log.Printf("[MailPoller] Account %d (%s) poll failed: %s (run 'symdesk doctor' for details)", index, acc.Username, mailPollLogReason(err))
 			}
 		}
 	}
@@ -483,10 +483,7 @@ func (m *MailPoller) processMessage(ctx context.Context, acc config.IMAPAccount,
 
 	var attachments []string
 
-	for {
-		if ctx.Err() != nil {
-			break
-		}
+	for ctx.Err() == nil {
 		p, err := mr.NextPart()
 		if err == io.EOF {
 			break

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/danieljustus/symaira-corekit/configkit"
@@ -184,6 +185,18 @@ func LoadFromPath(path string) (*Config, error) {
 
 func GlobalPath() string {
 	return configkit.DefaultPath("symdesk")
+}
+
+// MailConfigPath resolves the IMAP mail configuration file location: an
+// explicit path wins, otherwise it falls back to configkit's XDG-aware
+// default (XDG_CONFIG_HOME, then $HOME/.config), matching every other
+// absorbed store's resolver instead of a hardcoded $HOME/.config/symingest
+// path (issue #755).
+func MailConfigPath(explicit string) (string, error) {
+	if strings.TrimSpace(explicit) != "" {
+		return filepath.Abs(explicit)
+	}
+	return configkit.DefaultPath("symingest"), nil
 }
 
 func Save(path string, cfg *Config) error {

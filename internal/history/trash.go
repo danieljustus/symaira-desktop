@@ -3,6 +3,7 @@ package history
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,8 +22,8 @@ type TrashEntry struct {
 	Size int64 `json:"size"`
 }
 
-func (s *Store) trashDir() string {
-	return filepath.Join(s.vaultRoot, ".symdesk", "trash")
+func trashRelDir() string {
+	return filepath.Join(".symdesk", "trash")
 }
 
 const trashMetaSuffix = ".trashinfo.json"
@@ -35,8 +36,11 @@ func (s *Store) Trash(relPath string) (*TrashEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	src := filepath.Join(s.vaultRoot, rel)
-	info, err := os.Stat(src)
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
+	info, err := root.Stat(rel)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +52,7 @@ func (s *Store) Trash(relPath string) (*TrashEntry, error) {
 		return nil, err
 	}
 
-	if err := os.MkdirAll(s.trashDir(), 0755); err != nil {
+	if err := root.MkdirAll(trashRelDir(), 0750); err != nil {
 		return nil, err
 	}
 
@@ -56,7 +60,7 @@ func (s *Store) Trash(relPath string) (*TrashEntry, error) {
 	base := strings.ReplaceAll(filepath.ToSlash(rel), "/", "__")
 	name := base
 	for i := 1; ; i++ {
-		if _, err := os.Stat(filepath.Join(s.trashDir(), name)); os.IsNotExist(err) {
+		if _, err := root.Stat(filepath.Join(trashRelDir(), name)); os.IsNotExist(err) {
 			break
 		}
 		name = fmt.Sprintf("%s.%d", base, i)
@@ -72,11 +76,15 @@ func (s *Store) Trash(relPath string) (*TrashEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := writeFileAtomic(filepath.Join(s.trashDir(), name+trashMetaSuffix), meta, 0644); err != nil {
+	trashRelName := filepath.Join(trashRelDir(), name)
+	metaRelName := filepath.Join(trashRelDir(), name+trashMetaSuffix)
+	if err := writeFileAtomicRoot(root, metaRelName, meta, 0644); err != nil {
 		return nil, err
 	}
-	if err := os.Rename(src, filepath.Join(s.trashDir(), name)); err != nil {
-		os.Remove(filepath.Join(s.trashDir(), name+trashMetaSuffix))
+	if err := root.Rename(rel, trashRelName); err != nil {
+		if rmErr := root.Remove(metaRelName); rmErr != nil && !os.IsNotExist(rmErr) {
+			return nil, fmt.Errorf("rename failed: %w (cleanup also failed: %v)", err, rmErr)
+		}
 		return nil, err
 	}
 	return &entry, nil
@@ -84,7 +92,11 @@ func (s *Store) Trash(relPath string) (*TrashEntry, error) {
 
 // TrashList returns all trash entries, newest deletion first.
 func (s *Store) TrashList() ([]TrashEntry, error) {
-	items, err := os.ReadDir(s.trashDir())
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
+	items, err := fs.ReadDir(root.FS(), trashRelDir())
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -96,7 +108,7 @@ func (s *Store) TrashList() ([]TrashEntry, error) {
 		if item.IsDir() || !strings.HasSuffix(item.Name(), trashMetaSuffix) {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(s.trashDir(), item.Name()))
+		data, err := root.ReadFile(filepath.Join(trashRelDir(), item.Name()))
 		if err != nil {
 			return nil, err
 		}
@@ -127,17 +139,24 @@ func (s *Store) TrashRestore(name string) (*TrashEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	dst := filepath.Join(s.vaultRoot, rel)
-	if _, err := os.Stat(dst); err == nil {
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
+	if _, err := root.Stat(rel); err == nil {
 		return nil, fmt.Errorf("cannot restore %s: %s already exists", name, entry.OriginalPath)
 	}
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if dir := filepath.Dir(rel); dir != "." {
+		if err := root.MkdirAll(dir, 0750); err != nil {
+			return nil, err
+		}
+	}
+	if err := root.Rename(filepath.Join(trashRelDir(), entry.Name), rel); err != nil {
 		return nil, err
 	}
-	if err := os.Rename(filepath.Join(s.trashDir(), entry.Name), dst); err != nil {
+	if err := root.Remove(filepath.Join(trashRelDir(), entry.Name+trashMetaSuffix)); err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
-	os.Remove(filepath.Join(s.trashDir(), entry.Name+trashMetaSuffix))
 	return entry, nil
 }
 
@@ -148,16 +167,20 @@ func (s *Store) TrashPurge(maxAge time.Duration) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	root, err := s.openRoot()
+	if err != nil {
+		return 0, err
+	}
 	cutoff := time.Now().UTC().Add(-maxAge)
 	purged := 0
 	for _, e := range entries {
 		if maxAge > 0 && e.DeletedAt.After(cutoff) {
 			continue
 		}
-		if err := os.Remove(filepath.Join(s.trashDir(), e.Name)); err != nil && !os.IsNotExist(err) {
+		if err := root.Remove(filepath.Join(trashRelDir(), e.Name)); err != nil && !os.IsNotExist(err) {
 			return purged, err
 		}
-		if err := os.Remove(filepath.Join(s.trashDir(), e.Name+trashMetaSuffix)); err != nil && !os.IsNotExist(err) {
+		if err := root.Remove(filepath.Join(trashRelDir(), e.Name+trashMetaSuffix)); err != nil && !os.IsNotExist(err) {
 			return purged, err
 		}
 		purged++
@@ -169,7 +192,11 @@ func (s *Store) trashEntry(name string) (*TrashEntry, error) {
 	if strings.ContainsAny(name, "/\\") || name == "." || name == ".." {
 		return nil, fmt.Errorf("invalid trash item name: %q", name)
 	}
-	data, err := os.ReadFile(filepath.Join(s.trashDir(), name+trashMetaSuffix))
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
+	data, err := root.ReadFile(filepath.Join(trashRelDir(), name+trashMetaSuffix))
 	if err != nil {
 		return nil, fmt.Errorf("trash item %q not found: %w", name, err)
 	}

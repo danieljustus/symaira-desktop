@@ -29,9 +29,12 @@ With the supplied container, `/data` is the persistent volume:
     inbox/                 generated Markdown notes awaiting review
     .symdesk/server/       queue records and the server-side index
   state/                   XDG application state
+    config/symingest/config.toml   IMAP mail account configuration
 ```
 
 Back up the complete `/data` volume. The important user data is the readable `vault/`; the index can be rebuilt.
+
+The IMAP mail configuration (`symdesk mail`, `symdesk events`) resolves the same way as every other absorbed store: an explicit `--config` flag wins, otherwise it follows `XDG_CONFIG_HOME` (`$XDG_CONFIG_HOME/symingest/config.toml`), falling back to `$HOME/.config/symingest/config.toml`. The container sets `XDG_CONFIG_HOME=/data/state/config`, so the file lives inside the persistent volume at `/data/state/config/symingest/config.toml` — run `symdesk doctor` to see the resolved path.
 
 ## Docker Compose
 

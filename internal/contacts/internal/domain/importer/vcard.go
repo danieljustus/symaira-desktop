@@ -73,6 +73,6 @@ func ParseVCard(r io.Reader) ([]ImportRow, []ValidationIssue, error) {
 // UID-less card is still recognized as the same source.
 func vcardRowHash(row ImportRow) string {
 	h := sha256.New()
-	fmt.Fprintf(h, "%s|%s|%s|%s", row.DisplayName, row.GivenName, row.FamilyName, strings.Join(row.Emails, ","))
+	_, _ = fmt.Fprintf(h, "%s|%s|%s|%s", row.DisplayName, row.GivenName, row.FamilyName, strings.Join(row.Emails, ","))
 	return "vcard-hash:" + hex.EncodeToString(h.Sum(nil))[:16]
 }

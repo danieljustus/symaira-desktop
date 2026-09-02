@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
@@ -52,10 +53,15 @@ type MailWatcher struct {
 
 // New creates a MailWatcher with the given mail config path and service
 // reference. The config path should point to the symingest config.toml that
-// holds the mail account definitions.
+// holds the mail account definitions. An empty configPath resolves through
+// config.MailConfigPath (XDG_CONFIG_HOME-aware, issue #755).
 func New(configPath string, svc *service.Service) (*MailWatcher, error) {
 	if configPath == "" {
-		configPath = filepath.Join(os.Getenv("HOME"), ".config", "symingest", "config.toml")
+		resolved, err := config.MailConfigPath("")
+		if err != nil {
+			return nil, fmt.Errorf("resolve mail config path: %w", err)
+		}
+		configPath = resolved
 	}
 	return NewWithInterval(configPath, svc, 5*time.Minute)
 }

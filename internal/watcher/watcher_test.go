@@ -52,7 +52,6 @@ func setupWatcherTest(t *testing.T) (watchDir, vaultRoot string, svc *service.Se
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	cleanup = func() { _ = os.RemoveAll(tempDir) }
 	t.Setenv("HOME", tempDir)
 
 	vaultRoot = filepath.Join(tempDir, "vault")
@@ -98,9 +97,7 @@ func TestInboxWatcher_IngestsAndRemoves(t *testing.T) {
 	defer cancel()
 
 	go func() {
-		if err := w.Start(ctx); err != nil {
-			// ignore start error when context cancelled
-		}
+		_ = w.Start(ctx) // ignore start error when context cancelled
 	}()
 
 	testFilePath := filepath.Join(watchDir, "test-document.txt")
@@ -159,9 +156,7 @@ func TestInboxWatcher_IngestsAndRemoves_Integration(t *testing.T) {
 	defer cancel()
 
 	go func() {
-		if err := w.Start(ctx); err != nil {
-			// ignore start error when context cancelled
-		}
+		_ = w.Start(ctx) // ignore start error when context cancelled
 	}()
 	time.Sleep(200 * time.Millisecond)
 

@@ -200,7 +200,7 @@ func newMeetingParticipantCmd() *cobra.Command {
 
 	contactCmd := &cobra.Command{
 		Use:   "contact <relate_contact_id>",
-		Short: "Resolve a symrelate contact reference for review before linking",
+		Short: "Resolve a contact reference for review before linking",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vRoot, db, err := initServiceDeps()
@@ -221,7 +221,7 @@ func newMeetingParticipantCmd() *cobra.Command {
 
 	linkContactCmd := &cobra.Command{
 		Use:   "link-contact <vault-note> <speaker_id> <relate_contact_id>",
-		Short: "Link a speaker to a reviewed symrelate contact reference",
+		Short: "Link a speaker to a reviewed contact reference",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vRoot, db, err := initServiceDeps()
@@ -242,7 +242,7 @@ func newMeetingParticipantCmd() *cobra.Command {
 
 	unlinkContactCmd := &cobra.Command{
 		Use:   "unlink-contact <vault-note> <speaker_id>",
-		Short: "Remove a speaker's symrelate contact reference",
+		Short: "Remove a speaker's contact reference",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vRoot, db, err := initServiceDeps()

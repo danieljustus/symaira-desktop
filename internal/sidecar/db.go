@@ -301,7 +301,7 @@ func (db *DB) IndexDocument(doc *vault.Document) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := indexDocumentTx(tx, doc); err != nil {
 		return err

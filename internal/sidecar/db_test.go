@@ -1119,7 +1119,7 @@ func TestRefreshIndexUsesBatchedIndexDocuments(t *testing.T) {
 	for i := 0; i < total; i++ {
 		path := filepath.Join(vaultRoot, fmt.Sprintf("Note%04d.md", i))
 		content := []byte(fmt.Sprintf("---\ntitle: Note %d\n---\nBody %d", i, i))
-		if err := os.WriteFile(path, content, 0644); err != nil {
+		if err := os.WriteFile(path, content, 0600); err != nil {
 			t.Fatal(err)
 		}
 	}

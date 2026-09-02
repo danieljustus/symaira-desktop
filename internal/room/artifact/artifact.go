@@ -33,7 +33,7 @@ type ArtifactRef struct {
 }
 
 func ComputeSHA256(path string) (string, error) {
-	f, err := os.Open(path)
+	f, err := os.Open(path) //nolint:gosec // callers provide paths confined to the artifact root
 	if err != nil {
 		return "", err
 	}

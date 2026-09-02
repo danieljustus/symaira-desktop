@@ -87,7 +87,7 @@ func TestChainTamperingDetection(t *testing.T) {
 
 	// Tamper line 2 in file
 	segPath := j.SegmentPath(id.MemberID)
-	data, err := os.ReadFile(segPath)
+	data, err := os.ReadFile(segPath) //nolint:gosec // segPath is a test fixture under t.TempDir
 	if err != nil {
 		t.Fatalf("failed to read segment: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestChainTamperingDetection(t *testing.T) {
 	// Modify line 2
 	lines[1] = strings.Replace(lines[1], `"hello"`, `"tampered"`, 1)
 
-	if err := os.WriteFile(segPath, []byte(strings.Join(lines, "\n")), 0644); err != nil {
+	if err := os.WriteFile(segPath, []byte(strings.Join(lines, "\n")), 0600); err != nil { //nolint:gosec // segPath is a test fixture under t.TempDir
 		t.Fatalf("failed to write tampered segment: %v", err)
 	}
 

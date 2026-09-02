@@ -52,7 +52,7 @@ func TestExecuteAdapterEndToEnd(t *testing.T) {
 
 	// Verify logs written to .symroom/runs/<id>/stdout.log
 	logPath := filepath.Join(tempDir, ".symroom", "runs", runID, "stdout.log")
-	content, err := os.ReadFile(logPath)
+	content, err := os.ReadFile(logPath) //nolint:gosec // path is a test fixture under t.TempDir
 	if err != nil {
 		t.Fatalf("Failed to read stdout log: %v", err)
 	}

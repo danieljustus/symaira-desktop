@@ -29,7 +29,7 @@ func TestMergePropertyRandomOrder(t *testing.T) {
 	canonicalMerged := Merge(segments)
 
 	// Randomly shuffle input slices 100 times and verify identical merge output
-	r := rand.New(rand.NewSource(42))
+	r := rand.New(rand.NewSource(42)) //nolint:gosec // deterministic pseudo-random test data
 	for i := 0; i < 100; i++ {
 		var all []*event.Event
 		all = append(all, e1, e2, e3, e4)

@@ -20,7 +20,7 @@ func TestArtifactLinkUnlinkList(t *testing.T) {
 	}
 
 	docPath := filepath.Join(tempDir, "doc.txt")
-	if err := os.WriteFile(docPath, []byte("hello artifact"), 0644); err != nil {
+	if err := os.WriteFile(docPath, []byte("hello artifact"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
 
@@ -46,7 +46,7 @@ func TestArtifactLinkUnlinkList(t *testing.T) {
 	}
 
 	// 3. Modify artifact file -> status modified
-	if err := os.WriteFile(docPath, []byte("modified content"), 0644); err != nil {
+	if err := os.WriteFile(docPath, []byte("modified content"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
 	listMod, _ := List(tempDir, tempDir)
@@ -72,7 +72,7 @@ func TestArtifactOutsideRootRefused(t *testing.T) {
 	ownerID, _ := identity.Generate("owner")
 
 	outsidePath := filepath.Join(os.TempDir(), "outside.txt")
-	if err := os.WriteFile(outsidePath, []byte("outside"), 0644); err != nil {
+	if err := os.WriteFile(outsidePath, []byte("outside"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
 	defer func() { _ = os.Remove(outsidePath) }()
@@ -93,7 +93,7 @@ func TestHandleDeskEventRecordsChanges(t *testing.T) {
 		t.Fatalf("generate identity: %v", err)
 	}
 	docPath := filepath.Join(tempDir, "doc.txt")
-	if err := os.WriteFile(docPath, []byte("before"), 0o644); err != nil {
+	if err := os.WriteFile(docPath, []byte("before"), 0o600); err != nil {
 		t.Fatalf("write document: %v", err)
 	}
 	if _, err := Link(tempDir, tempDir, docPath, "Document", ownerID); err != nil {

@@ -85,7 +85,7 @@ func Save(id *Identity) error {
 		PrivateKey: hex.EncodeToString(id.PrivateKey),
 	}
 
-	data, err := json.MarshalIndent(stored, "", "  ")
+	data, err := json.MarshalIndent(stored, "", "  ") //nolint:gosec // private key is deliberately serialized to the 0600 identity file
 	if err != nil {
 		return fmt.Errorf("marshal identity: %w", err)
 	}
@@ -120,7 +120,7 @@ func Load(name string) (*Identity, error) {
 
 	// Chain 2: symvault via shell-out when on PATH
 	if symvaultPath, err := exec.LookPath("symvault"); err == nil && symvaultPath != "" {
-		cmd := exec.Command(symvaultPath, "get", "symroom/identities/"+name)
+		cmd := exec.Command(symvaultPath, "get", "symroom/identities/"+name) //nolint:gosec // symvaultPath is resolved with exec.LookPath and exec has no shell
 		if out, err := cmd.Output(); err == nil {
 			keyStr := strings.TrimSpace(string(out))
 			if keyBytes, err := hex.DecodeString(keyStr); err == nil && len(keyBytes) == ed25519.PrivateKeySize {
@@ -138,7 +138,7 @@ func Load(name string) (*Identity, error) {
 
 	// Chain 3: macOS Keychain (if on darwin)
 	if runtime.GOOS == "darwin" {
-		cmd := exec.Command("security", "find-generic-password", "-s", "symroom-identity", "-a", name, "-w")
+		cmd := exec.Command("security", "find-generic-password", "-s", "symroom-identity", "-a", name, "-w") //nolint:gosec // fixed macOS Keychain binary; exec has no shell
 		if out, err := cmd.Output(); err == nil {
 			keyStr := strings.TrimSpace(string(out))
 			if keyBytes, err := hex.DecodeString(keyStr); err == nil && len(keyBytes) == ed25519.PrivateKeySize {
@@ -156,7 +156,7 @@ func Load(name string) (*Identity, error) {
 
 	// Chain 4: File in ~/.local/share/symroom/identities/<name>.json
 	filePath := filepath.Join(IdentitiesDir(), name+".json")
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(filePath) //nolint:gosec // filePath is rooted in IdentitiesDir
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil, ErrIdentityNotFound

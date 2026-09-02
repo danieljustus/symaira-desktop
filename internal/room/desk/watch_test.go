@@ -3,8 +3,10 @@ package desk_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,12 +25,12 @@ func TestWatchStreamOnlyLinkedArtifactsProduceEvents(t *testing.T) {
 	}
 
 	linkedPath := filepath.Join(tempDir, "linked.txt")
-	if err := os.WriteFile(linkedPath, []byte("original content"), 0644); err != nil {
+	if err := os.WriteFile(linkedPath, []byte("original content"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
 
 	unlinkedPath := filepath.Join(tempDir, "unlinked.txt")
-	if err := os.WriteFile(unlinkedPath, []byte("noise content"), 0644); err != nil {
+	if err := os.WriteFile(unlinkedPath, []byte("noise content"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
 
@@ -39,7 +41,7 @@ func TestWatchStreamOnlyLinkedArtifactsProduceEvents(t *testing.T) {
 	}
 
 	// Modify linked file
-	if err := os.WriteFile(linkedPath, []byte("updated content"), 0644); err != nil {
+	if err := os.WriteFile(linkedPath, []byte("updated content"), 0600); err != nil {
 		t.Fatalf("write file: %v", err)
 	}
 
@@ -97,10 +99,10 @@ func TestWatchDeskStreamsEvents(t *testing.T) {
 	tempDir := t.TempDir()
 	fake := filepath.Join(tempDir, "symdesk")
 	script := "#!/bin/sh\nprintf 'not-json-line\\n{\"event\":\"file_changed\",\"path\":\"/tmp/note.md\"}\\n'\n"
-	if err := os.WriteFile(fake, []byte(script), 0o755); err != nil {
+	if err := os.WriteFile(fake, []byte(script), 0o755); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatalf("write fake symdesk: %v", err)
 	}
-	if err := os.Chmod(fake, 0o755); err != nil {
+	if err := os.Chmod(fake, 0o755); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatalf("chmod fake symdesk: %v", err)
 	}
 	t.Setenv("PATH", tempDir)
@@ -125,5 +127,15 @@ func TestWatchDeskStreamsEvents(t *testing.T) {
 	}
 	if items[0].Path != "/tmp/note.md" {
 		t.Errorf("expected path /tmp/note.md, got %s", items[0].Path)
+	}
+}
+
+func TestWatchStreamPropagatesHandlerError(t *testing.T) {
+	wantErr := errors.New("handler failed")
+	err := desk.WatchStream(context.Background(), strings.NewReader(`{"event":"file_changed","path":"/tmp/note.md"}`), func(*desk.EventStreamItem) error {
+		return wantErr
+	})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("WatchStream error = %v, want %v", err, wantErr)
 	}
 }

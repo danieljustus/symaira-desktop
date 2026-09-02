@@ -88,6 +88,16 @@ func newDoctorCmd() *cobra.Command {
 				}
 			}
 
+			// 2b2. Mail config path (#755): report the resolved location of
+			// the IMAP mail configuration, honouring XDG_CONFIG_HOME like
+			// every other absorbed store.
+			if mailConfigPath, mailErr := config.MailConfigPath(""); mailErr != nil {
+				results["mail_config"] = map[string]string{"status": "error", "message": mailErr.Error()}
+				allOk = false
+			} else {
+				results["mail_config"] = map[string]string{"status": "ok", "path": mailConfigPath}
+			}
+
 			// 2c. Note-level archive_path resolution (#660): walk the vault for
 			// Markdown notes whose frontmatter `archive_path` either points at
 			// a missing file or is stored in the old absolute-machine-path

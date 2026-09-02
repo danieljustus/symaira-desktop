@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard benchmark-large docker-build clean
+.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard vuln benchmark-large docker-build clean
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -33,6 +33,17 @@ nested-version-guard:
 font-guard:
 	@HITS="$$(grep -rnE '\.font\(\.(caption|caption2|headline|callout|subheadline|title|title2|title3|body|largeTitle)' Sources/SymDeskApp/ || true)"; \
 	if [ -n "$$HITS" ]; then echo "$$HITS"; echo "inline role font literals found — use .symairaText(role) (issue #352)"; exit 1; fi
+
+# Issue #753: govulncheck flags known vulnerabilities reachable from this
+# module's code paths (its default text/json summary already excludes
+# unreachable/informational findings, so no extra flags are needed here).
+# Kept out of the `lint` dependency chain — unlike fmt-check/corekit-guard/
+# boundary-guard/nested-version-guard, this hits the vulnerability database
+# over the network, so it shouldn't make routine offline `make lint` runs
+# fail or make lint's runtime depend on network latency. Run it directly, or
+# via CI's dedicated govulncheck job.
+vuln:
+	@govulncheck ./...
 
 benchmark-large:
 	go test -run '^$$' -bench BenchmarkLargeVaultIndexAndSearch -benchtime=1x ./internal/demo

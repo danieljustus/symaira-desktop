@@ -216,7 +216,7 @@ func OpenAt(dbPath string) (*DB, error) {
 	}
 
 	if err := RunMigrations(conn); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
@@ -269,7 +269,7 @@ func (db *DB) rebuildVectorIndex() {
 		db.vectorIndex = nil
 		return
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var chunks []*Chunk
 	for rows.Next() {
@@ -356,7 +356,7 @@ func (db *DB) DeleteDocument(path string) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// If an IVF index is warm, remove the affected chunk IDs from it before
 	// deleting the rows.  This keeps the index current without forcing a full
@@ -370,16 +370,16 @@ func (db *DB) DeleteDocument(path string) error {
 		for rows.Next() {
 			var id int64
 			if err := rows.Scan(&id); err != nil {
-				rows.Close()
+				_ = rows.Close()
 				return err
 			}
 			chunkIDs = append(chunkIDs, id)
 		}
 		if err := rows.Err(); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return err
 		}
-		rows.Close()
+		_ = rows.Close()
 	}
 
 	_, err = tx.Exec("DELETE FROM extractions WHERE document_path = ?", path)
@@ -428,7 +428,7 @@ func (db *DB) ListDocuments() ([]*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var docs []*Document
 	for rows.Next() {
@@ -446,7 +446,7 @@ func (db *DB) SaveChunks(chunks []*Chunk) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	query := `INSERT INTO chunks (uuid, document_path, chunk_index, content, embedding, hash, norm, binary_signature, embedding_dim, embedding_model, char_start, char_end, embedding_pending, anchor_kind, anchor_value, content_norm)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -455,7 +455,7 @@ func (db *DB) SaveChunks(chunks []*Chunk) error {
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
+	defer func() { _ = stmt.Close() }()
 
 	for _, c := range chunks {
 		c.Norm = l2Norm(c.Embedding)
@@ -495,7 +495,7 @@ func (db *DB) GetChunksForDocument(docPath string) ([]*Chunk, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var chunks []*Chunk
 	for rows.Next() {
@@ -546,7 +546,7 @@ func (db *DB) GetChunkSpansForDocument(docPath string) ([]*Chunk, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var chunks []*Chunk
 	for rows.Next() {
@@ -635,7 +635,7 @@ func (db *DB) DetectMixedEmbeddingSpaces() (map[string]int, error) {
 	if err != nil {
 		return nil, fmt.Errorf("detect mixed embedding spaces: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	result := make(map[string]int)
 	for rows.Next() {
@@ -676,7 +676,7 @@ func (db *DB) GetFolderContexts() ([]FolderContext, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var contexts []FolderContext
 	for rows.Next() {
@@ -696,7 +696,7 @@ func (db *DB) GetMatchingContext(path string) (*FolderContext, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var best *FolderContext
 	bestLen := 0
@@ -725,7 +725,7 @@ func (db *DB) SaveExtractions(extractions []*Extraction) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	query := `INSERT INTO extractions (document_path, chunk_id, class, value, evidence_text, span_start, span_end, matched, producer, source_ref, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -733,7 +733,7 @@ func (db *DB) SaveExtractions(extractions []*Extraction) error {
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
+	defer func() { _ = stmt.Close() }()
 
 	for _, e := range extractions {
 		res, err := stmt.Exec(e.DocumentPath, e.ChunkID, e.Class, e.Value, e.EvidenceText, e.SpanStart, e.SpanEnd, e.Matched, e.Producer, e.SourceRef, e.CreatedAt)
@@ -766,7 +766,7 @@ func (db *DB) GetDocumentExtractions(docPath string) ([]*Extraction, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanExtractions(rows)
 }
 
@@ -790,7 +790,7 @@ func (db *DB) ListExtractions(class string, limit int) ([]*Extraction, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanExtractions(rows)
 }
 
@@ -810,7 +810,7 @@ func (db *DB) SearchExtractions(queryStr string, limit int) ([]*Extraction, erro
 	if err != nil {
 		return nil, fmt.Errorf("search extractions: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanExtractions(rows)
 }
 

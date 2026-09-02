@@ -155,7 +155,6 @@ func Verify(ctx context.Context, opts Options, vault string, st *store.Store) (*
 			if docOK {
 				report.Missing = append(report.Missing, doc.ID)
 			}
-			docOK = false
 			continue
 		}
 		if len(matches) > 1 {

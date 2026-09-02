@@ -320,11 +320,12 @@ func createMinimalXLSX(t *testing.T, path string, sharedStrings []string, rows [
 				cellType = cellTypes[rowIdx][colIdx]
 			}
 			cellRef := fmt.Sprintf("%c%d", cols[colIdx%len(cols)], rowIdx+1)
-			if cellType == "s" {
+			switch cellType {
+			case "s":
 				sheet.WriteString(fmt.Sprintf(`<c r="%s" t="s"><v>%s</v></c>`, cellRef, val))
-			} else if cellType == "inlineStr" {
+			case "inlineStr":
 				sheet.WriteString(fmt.Sprintf(`<c r="%s" t="inlineStr"><is><t>%s</t></is></c>`, cellRef, val))
-			} else {
+			default:
 				sheet.WriteString(fmt.Sprintf(`<c r="%s"><v>%s</v></c>`, cellRef, val))
 			}
 		}

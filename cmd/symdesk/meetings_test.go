@@ -12,43 +12,6 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/contacts"
 )
 
-const mockSymmeetScriptForCLI = `#!/bin/bash
-case "$1" in
-  capabilities)
-    echo '{"tool":"symmeet","version":"1.0.0","schema_version":1,"artifact_schema_versions":[1],"export_formats":["markdown"]}'
-    ;;
-  meeting)
-    if [ "$2" = "show" ]; then
-      echo '{"schema_version":1,"meeting_id":"m1","source":"imported","created_at":"2026-07-01T10:00:00Z","updated_at":"2026-07-01T10:30:00Z","audio_tracks":[],"language":"en"}'
-    fi
-    ;;
-  speaker)
-    echo '{"meeting_id":"m1","speakers":[],"labels":{},"merged_speakers":{}}'
-    ;;
-  export)
-    printf '# Transcript\n\nHello.\n'
-    ;;
-esac
-`
-
-func setupMeetingVault(t *testing.T) string {
-	t.Helper()
-	vaultDir := t.TempDir()
-	origCfg := cfg
-	cfg = &config.Config{Vault: vaultDir}
-	t.Cleanup(func() { cfg = origCfg })
-
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "symmeet"), []byte(mockSymmeetScriptForCLI), 0755); err != nil { //nolint:gosec // test fixture must be executable
-		t.Fatal(err)
-	}
-	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
-
-	return vaultDir
-}
-
 const mockSymmeetReviewScriptForCLI = `#!/bin/bash
 case "$1" in
   capabilities)

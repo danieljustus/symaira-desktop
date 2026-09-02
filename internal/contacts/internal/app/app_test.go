@@ -16,7 +16,7 @@ func TestOpenMemory_WiresServicesAndSupportsQuickAdd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenMemory() error = %v", err)
 	}
-	defer a.Close()
+	defer func() { _ = a.Close() }()
 
 	if err := a.Ping(ctx); err != nil {
 		t.Fatalf("Ping() error = %v", err)
@@ -68,7 +68,7 @@ func TestOpen_ResolvesAndCreatesProfileDirectories(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open() error = %v", err)
 	}
-	defer a.Close()
+	defer func() { _ = a.Close() }()
 
 	for _, path := range []string{a.Paths.ConfigDir, a.Paths.DataDir, a.Paths.CacheDir} {
 		info, err := os.Stat(path)

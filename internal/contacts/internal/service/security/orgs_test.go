@@ -30,7 +30,7 @@ func newOrgEraseFixture(t *testing.T) *orgEraseFixture {
 	if err != nil {
 		t.Fatalf("OpenMemory() error = %v", err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { _ = db.Close() })
 	return &orgEraseFixture{
 		contacts:      contactsvc.New(db),
 		relationships: relationshipsvc.New(db),

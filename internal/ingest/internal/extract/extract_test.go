@@ -3,6 +3,7 @@ package extract
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -118,7 +119,7 @@ func TestReadText(t *testing.T) {
 	if err := os.WriteFile(path, []byte(want), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	res, err := ReadText(nil, path)
+	res, err := ReadText(context.TODO(), path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,7 +138,7 @@ func TestReadTextKind_PreservesCSVKind(t *testing.T) {
 	if err := os.WriteFile(path, []byte(want), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	res, err := ReadTextKind(nil, path, KindCSV)
+	res, err := ReadTextKind(context.TODO(), path, KindCSV)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -641,7 +641,7 @@ type fallbackQueryEmbedder struct {
 }
 
 func (f *fallbackQueryEmbedder) GenerateVectorNoRetryWithModel(text string) EmbeddingResult {
-	return EmbeddingResult{Vector: f.fakeEmbedder.GenerateVectorNoRetry(text), Model: localHashModelName}
+	return EmbeddingResult{Vector: f.GenerateVectorNoRetry(text), Model: localHashModelName}
 }
 
 // fallbackSpaceStore is a minimal in-memory store that reports a single

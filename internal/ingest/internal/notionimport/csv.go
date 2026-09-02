@@ -86,7 +86,7 @@ func convertCSV(entry ExportEntry, vault string, runID string, dryRun bool) []Pa
 		rowHash := sha256Hex([]byte(strings.Join(row, "\x1f")))
 		if !dryRun {
 			rowFrontmatter := buildCSVRowFrontmatter(entry, props, runID, rowHash)
-			if err := writeNoteWithFrontmatter(rowPath, rowFrontmatter, buildCSVRowBody(props)); err != nil {
+			if err := writeNoteWithFrontmatter(vault, rowPath, rowFrontmatter, buildCSVRowBody(props)); err != nil {
 				results = append(results, PageResult{
 					SourcePath: entry.SourcePath,
 					Status:     "failed",
@@ -115,7 +115,7 @@ func convertCSV(entry ExportEntry, vault string, runID string, dryRun bool) []Pa
 	} else {
 		if !dryRun {
 			indexNote := buildCSVIndexNote(entry, runID, fileHash)
-			if err := writeNoteWithFrontmatter(indexPath, indexNote, buildCSVIndexBody(entry, headers, len(records)-1)); err != nil {
+			if err := writeNoteWithFrontmatter(vault, indexPath, indexNote, buildCSVIndexBody(entry, headers, len(records)-1)); err != nil {
 				results = append(results, PageResult{
 					SourcePath: entry.SourcePath,
 					Status:     "failed",
@@ -189,7 +189,7 @@ func buildCSVRowBody(props map[string]string) string {
 	sort.Strings(keys)
 	for _, k := range keys {
 		if v := props[k]; v != "" {
-			sb.WriteString(fmt.Sprintf("**%s:** %s\n\n", k, v))
+			_, _ = fmt.Fprintf(&sb, "**%s:** %s\n\n", k, v)
 		}
 	}
 	return sb.String()
@@ -212,11 +212,11 @@ func buildCSVIndexNote(entry ExportEntry, runID, sha256 string) writer.Note {
 // buildCSVIndexBody generates the Markdown body for a CSV database index note.
 func buildCSVIndexBody(entry ExportEntry, headers []string, rowCount int) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("# %s\n\n", entry.DisplayName))
-	sb.WriteString(fmt.Sprintf("Database with %d rows and %d columns.\n\n", rowCount, len(headers)))
+	_, _ = fmt.Fprintf(&sb, "# %s\n\n", entry.DisplayName)
+	_, _ = fmt.Fprintf(&sb, "Database with %d rows and %d columns.\n\n", rowCount, len(headers))
 	sb.WriteString("## Columns\n\n")
 	for _, h := range headers {
-		sb.WriteString(fmt.Sprintf("- %s\n", h))
+		_, _ = fmt.Fprintf(&sb, "- %s\n", h)
 	}
 	sb.WriteString("\n")
 	return sb.String()

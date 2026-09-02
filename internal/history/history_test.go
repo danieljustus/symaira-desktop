@@ -1,7 +1,6 @@
 package history
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,17 +16,17 @@ func newVault(t *testing.T) (string, *Store) {
 func write(t *testing.T, root, rel, content string) {
 	t.Helper()
 	p := filepath.Join(root, rel)
-	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(p), 0750); err != nil { //nolint:gosec // G301: test fixture directory under t.TempDir
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(p, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(p, []byte(content), 0600); err != nil { //nolint:gosec // G306: test fixture file under t.TempDir
 		t.Fatal(err)
 	}
 }
 
 func read(t *testing.T, root, rel string) string {
 	t.Helper()
-	b, err := os.ReadFile(filepath.Join(root, rel))
+	b, err := os.ReadFile(filepath.Join(root, rel)) //nolint:gosec // G304: root and rel are test-controlled, confined to t.TempDir
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,9 +97,13 @@ func TestSnapshotDedupAndMissingFile(t *testing.T) {
 func TestRestoreByPrefixAndLatest(t *testing.T) {
 	root, s := newVault(t)
 	write(t, root, "a.md", "v1")
-	s.Snapshot("a.md")
+	if _, err := s.Snapshot("a.md"); err != nil {
+		t.Fatal(err)
+	}
 	write(t, root, "a.md", "v2")
-	s.Snapshot("a.md")
+	if _, err := s.Snapshot("a.md"); err != nil {
+		t.Fatal(err)
+	}
 	write(t, root, "a.md", "working copy")
 
 	// Empty id restores the latest snapshot (v2).
@@ -132,6 +135,36 @@ func TestPathTraversalRejected(t *testing.T) {
 		if _, err := s.Snapshot(p); err == nil {
 			t.Fatalf("expected error for %q", p)
 		}
+	}
+}
+
+// TestSnapshotCannotEscapeVaultViaSymlink is a regression test for the
+// os.Root conversion (gosec G122/G703): even if the history objects
+// directory is replaced by a symlink pointing outside the vault (e.g. a
+// TOCTOU swap racing a filepath.Walk-based implementation), the Store must
+// refuse to write through it rather than silently escaping the vault root.
+func TestSnapshotCannotEscapeVaultViaSymlink(t *testing.T) {
+	root, s := newVault(t)
+	outside := t.TempDir()
+
+	if err := os.MkdirAll(filepath.Join(root, ".symdesk", "history"), 0750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(root, ".symdesk", "history", "objects")); err != nil {
+		t.Skipf("symlinks unsupported on this platform: %v", err)
+	}
+
+	write(t, root, "a.md", "content")
+	if _, err := s.Snapshot("a.md"); err == nil {
+		t.Fatal("expected Snapshot to reject a symlinked objects directory escaping the vault root")
+	}
+
+	entries, err := os.ReadDir(outside)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("no blob should have been written outside the vault root, found %d entries", len(entries))
 	}
 }
 
@@ -168,7 +201,9 @@ func TestPruneMaxPerFileAndGC(t *testing.T) {
 func TestPruneMaxAgeKeepsNewest(t *testing.T) {
 	root, s := newVault(t)
 	write(t, root, "a.md", "old")
-	s.Snapshot("a.md")
+	if _, err := s.Snapshot("a.md"); err != nil {
+		t.Fatal(err)
+	}
 
 	// Backdate the manifest entry.
 	entries, _ := s.List("a.md")
@@ -187,7 +222,9 @@ func TestPruneMaxAgeKeepsNewest(t *testing.T) {
 
 	// Add a second, current snapshot; now the old one is prunable.
 	write(t, root, "a.md", "new")
-	s.Snapshot("a.md")
+	if _, err := s.Snapshot("a.md"); err != nil {
+		t.Fatal(err)
+	}
 	removed, err = s.Prune(RetentionPolicy{MaxAge: time.Hour})
 	if err != nil {
 		t.Fatal(err)
@@ -275,7 +312,9 @@ func TestTrashNameCollision(t *testing.T) {
 func TestTrashPurge(t *testing.T) {
 	root, s := newVault(t)
 	write(t, root, "a.md", "x")
-	s.Trash("a.md")
+	if _, err := s.Trash("a.md"); err != nil {
+		t.Fatal(err)
+	}
 
 	// Fresh item survives an age-based purge.
 	purged, err := s.TrashPurge(24 * time.Hour)
@@ -360,15 +399,7 @@ func backdateCheckpoint(t *testing.T, s *Store, taskID string, age time.Duration
 		t.Fatal(err)
 	}
 	cp.Timestamp = time.Now().UTC().Add(-age)
-	data, err := json.MarshalIndent(cp, "", "  ")
-	if err != nil {
-		t.Fatal(err)
-	}
-	path, err := s.checkpointPath(taskID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := writeFileAtomic(path, data, 0644); err != nil {
+	if err := s.saveCheckpoint(cp); err != nil {
 		t.Fatal(err)
 	}
 }

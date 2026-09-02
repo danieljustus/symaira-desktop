@@ -163,7 +163,7 @@ func rtfToText(s string) string {
 			if next == '\'' && wordStart+2 < len(s) {
 				if ignoreDepth == 0 {
 					var b byte
-					fmt.Sscanf(s[wordStart+1:wordStart+3], "%02x", &b)
+					_, _ = fmt.Sscanf(s[wordStart+1:wordStart+3], "%02x", &b)
 					out.WriteByte(b)
 				}
 				i += 3
@@ -202,7 +202,7 @@ func readDOCX(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("open docx: %w", err)
 	}
-	defer closeZip(a)
+	defer func() { _ = closeZip(a) }()
 	data, err := a.readPart("word/document.xml")
 	if err != nil {
 		return "", err
@@ -312,7 +312,7 @@ func readODFContent(path, what string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("open %s: %w", what, err)
 	}
-	defer closeZip(a)
+	defer func() { _ = closeZip(a) }()
 	data, err := a.readPart("content.xml")
 	if err != nil {
 		return "", err
@@ -360,7 +360,7 @@ func readPPTX(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("open pptx: %w", err)
 	}
-	defer closeZip(a)
+	defer func() { _ = closeZip(a) }()
 	var names []string
 	for _, f := range a.rc.File {
 		if strings.HasPrefix(f.Name, "ppt/slides/slide") && strings.HasSuffix(f.Name, ".xml") {
@@ -434,7 +434,7 @@ func readEPUB(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("open epub: %w", err)
 	}
-	defer closeZip(a)
+	defer func() { _ = closeZip(a) }()
 	if a.find("META-INF/rights.xml") != nil || a.find("META-INF/encryption.xml") != nil {
 		return "", fmt.Errorf("%w: EPUB rights or encryption metadata is present", ErrDRMProtected)
 	}
@@ -475,7 +475,7 @@ func readXLSX(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("open xlsx: %w", err)
 	}
-	defer closeZip(a)
+	defer func() { _ = closeZip(a) }()
 	shared, err := readSharedStrings(a)
 	if err != nil {
 		return "", err

@@ -35,7 +35,7 @@ func detectZIPContainer(path string) Kind {
 	if err != nil {
 		return ""
 	}
-	defer closeZip(a)
+	defer func() { _ = closeZip(a) }()
 
 	// ODF and EPUB carry a mandatory, authoritative mimetype part.
 	if data, err := a.readPart("mimetype"); err == nil && data != nil {

@@ -5,28 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/danieljustus/symaira-desktop/internal/compose"
 )
-
-func writeMockSymmeet(t *testing.T, dir, script string) {
-	t.Helper()
-	path := filepath.Join(dir, "symmeet")
-	if err := os.WriteFile(path, []byte(script), 0755); err != nil { //nolint:gosec // test fixture must be executable
-		t.Fatal(err)
-	}
-}
-
-func withMockSymmeetPath(t *testing.T, dir string) {
-	t.Helper()
-	if _, err := os.Stat(filepath.Join(dir, "symmeet")); os.IsNotExist(err) {
-		t.Setenv("PATH", dir)
-	} else {
-		t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
-	}
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
-}
 
 func TestMeetingListAndShow(t *testing.T) {
 	svc := newTestService(t)

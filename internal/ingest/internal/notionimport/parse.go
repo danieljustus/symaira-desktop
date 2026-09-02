@@ -118,14 +118,14 @@ func discoverExport(dir string) ([]ExportEntry, error) {
 		lower := strings.ToLower(name)
 		ext := filepath.Ext(lower)
 
-		switch {
-		case ext == ".md":
+		switch ext {
+		case ".md":
 			entry := parseMarkdownEntry(path, rel, exportRoot)
 			entries = append(entries, entry)
-		case ext == ".csv":
+		case ".csv":
 			entry := parseCSVEntry(path, rel, exportRoot)
 			entries = append(entries, entry)
-		case ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".gif" || ext == ".svg" || ext == ".webp" || ext == ".pdf" || ext == ".mp3" || ext == ".mp4":
+		case ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".pdf", ".mp3", ".mp4":
 			// Assets are handled separately during page processing.
 		}
 

@@ -22,7 +22,6 @@ func setupMailTest(t *testing.T) (vaultRoot string, svc *service.Service, cleanu
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	cleanup = func() { _ = os.RemoveAll(tempDir) }
 	t.Setenv("HOME", tempDir)
 
 	vaultRoot = filepath.Join(tempDir, "vault")

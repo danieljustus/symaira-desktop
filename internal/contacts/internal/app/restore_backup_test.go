@@ -32,7 +32,7 @@ func TestRestoreBackup_RoundTripsIntoCleanProfile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenMemory() error = %v", err)
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 
 	for _, name := range []string{"Ada Lovelace", "Grace Hopper"} {
 		if _, err := src.CreatePersonWithContactPoints(ctx, contact.PersonInput{DisplayName: name}, "", ""); err != nil {
@@ -61,7 +61,7 @@ func TestRestoreBackup_RoundTripsIntoCleanProfile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenAt(restored) error = %v", err)
 	}
-	defer restored.Close()
+	defer func() { _ = restored.Close() }()
 	if got := countPersons(t, restored); got != want {
 		t.Fatalf("restored person count = %d, want %d", got, want)
 	}
@@ -74,7 +74,7 @@ func TestRestoreBackup_WrongPassphraseReturnsInvalidAndLeavesNoFile(t *testing.T
 	if err != nil {
 		t.Fatalf("OpenMemory() error = %v", err)
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 
 	if _, err := src.CreatePersonWithContactPoints(ctx, contact.PersonInput{DisplayName: "Ada Lovelace"}, "", ""); err != nil {
 		t.Fatalf("CreatePersonWithContactPoints() error = %v", err)

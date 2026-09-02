@@ -167,6 +167,6 @@ func splitMulti(v string) []string {
 // (unchanged) is recognized as the same source on every run.
 func csvRowHash(row ImportRow) string {
 	h := sha256.New()
-	fmt.Fprintf(h, "%s|%s|%s|%s", row.DisplayName, row.GivenName, row.FamilyName, strings.Join(row.Emails, ","))
+	_, _ = fmt.Fprintf(h, "%s|%s|%s|%s", row.DisplayName, row.GivenName, row.FamilyName, strings.Join(row.Emails, ","))
 	return "csv:" + hex.EncodeToString(h.Sum(nil))[:16]
 }

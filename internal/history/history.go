@@ -6,14 +6,18 @@
 package history
 
 import (
+	cryptorand "crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -44,6 +48,10 @@ type RetentionPolicy struct {
 // Store manages snapshots and trash for a single vault.
 type Store struct {
 	vaultRoot string
+
+	rootOnce sync.Once
+	root     *os.Root
+	rootErr  error
 }
 
 // NewStore creates a Store rooted at vaultRoot. No directories are created
@@ -52,20 +60,42 @@ func NewStore(vaultRoot string) *Store {
 	return &Store{vaultRoot: vaultRoot}
 }
 
-func (s *Store) historyDir() string {
-	return filepath.Join(s.vaultRoot, ".symdesk", "history")
+// openRoot lazily opens (and caches) an *os.Root confined to vaultRoot.
+// Every filesystem access in this package goes through it — the same
+// os.Root pattern internal/selfhost uses — so a snapshot, restore, trash, or
+// checkpoint operation can never be redirected outside the vault via a
+// symlink or a crafted relative path, closing the path-traversal and
+// symlink-TOCTOU findings that raw path joins left open.
+func (s *Store) openRoot() (*os.Root, error) {
+	s.rootOnce.Do(func() {
+		s.root, s.rootErr = os.OpenRoot(s.vaultRoot)
+	})
+	return s.root, s.rootErr
 }
 
-func (s *Store) objectsDir() string {
-	return filepath.Join(s.historyDir(), "objects")
+// ---- vaultRoot-relative path helpers (used for os.Root-scoped I/O) ----
+
+func historyRelDir() string {
+	return filepath.Join(".symdesk", "history")
 }
 
-func (s *Store) manifestPath(relPath string) (string, error) {
+func objectsRelDir() string {
+	return filepath.Join(historyRelDir(), "objects")
+}
+
+func manifestRelPath(relPath string) (string, error) {
 	rel, err := cleanRel(relPath)
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(s.historyDir(), "manifest", rel+".json"), nil
+	return filepath.Join(historyRelDir(), "manifest", rel+".json"), nil
+}
+
+// objectsDir is the absolute form of objectsRelDir. It exists for tests
+// that need to inspect the on-disk object store directly; production code
+// only ever accesses it through the os.Root-scoped helpers above.
+func (s *Store) objectsDir() string {
+	return filepath.Join(s.vaultRoot, objectsRelDir())
 }
 
 // cleanRel normalizes a vault-relative path and rejects traversal.
@@ -85,7 +115,11 @@ func (s *Store) Snapshot(relPath string) (*Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(filepath.Join(s.vaultRoot, rel))
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
+	data, err := root.ReadFile(rel)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -104,12 +138,12 @@ func (s *Store) Snapshot(relPath string) (*Entry, error) {
 		return &entries[0], nil // unchanged since last snapshot
 	}
 
-	if err := os.MkdirAll(s.objectsDir(), 0755); err != nil {
+	if err := root.MkdirAll(objectsRelDir(), 0750); err != nil {
 		return nil, err
 	}
-	objPath := filepath.Join(s.objectsDir(), id)
-	if _, err := os.Stat(objPath); os.IsNotExist(err) {
-		if err := writeFileAtomic(objPath, data, 0644); err != nil {
+	objRel := filepath.Join(objectsRelDir(), id)
+	if _, err := root.Stat(objRel); os.IsNotExist(err) {
+		if err := writeFileAtomicRoot(root, objRel, data, 0644); err != nil {
 			return nil, err
 		}
 	}
@@ -124,11 +158,15 @@ func (s *Store) Snapshot(relPath string) (*Entry, error) {
 
 // List returns the snapshots for relPath, newest first.
 func (s *Store) List(relPath string) ([]Entry, error) {
-	mp, err := s.manifestPath(relPath)
+	relMp, err := manifestRelPath(relPath)
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(mp)
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
+	data, err := root.ReadFile(relMp)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -148,7 +186,11 @@ func (s *Store) Content(id string) ([]byte, error) {
 	if !isHexID(id) {
 		return nil, fmt.Errorf("invalid snapshot id: %q", id)
 	}
-	data, err := os.ReadFile(filepath.Join(s.objectsDir(), id))
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
+	data, err := root.ReadFile(filepath.Join(objectsRelDir(), id))
 	if err != nil {
 		return nil, fmt.Errorf("snapshot object %s not found: %w", id, err)
 	}
@@ -199,11 +241,16 @@ func (s *Store) Restore(relPath, id string) (*Entry, error) {
 		return nil, err
 	}
 
-	dst := filepath.Join(s.vaultRoot, rel)
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	root, err := s.openRoot()
+	if err != nil {
 		return nil, err
 	}
-	if err := writeFileAtomic(dst, data, 0644); err != nil {
+	if dir := filepath.Dir(rel); dir != "." {
+		if err := root.MkdirAll(dir, 0750); err != nil {
+			return nil, err
+		}
+	}
+	if err := writeFileAtomicRoot(root, rel, data, 0644); err != nil {
 		return nil, err
 	}
 	return target, nil
@@ -221,6 +268,11 @@ func (s *Store) Prune(policy RetentionPolicy) (int, error) {
 		cutoff = time.Now().UTC().Add(-policy.MaxAge)
 	}
 
+	root, err := s.openRoot()
+	if err != nil {
+		return removed, err
+	}
+
 	// Prune aged-out task checkpoints first, so their blobs lose protection
 	// before the reference scan below and can be collected once no manifest
 	// references them anymore.
@@ -234,11 +286,11 @@ func (s *Store) Prune(policy RetentionPolicy) (int, error) {
 			if !cp.Timestamp.Before(cpCutoff) {
 				continue
 			}
-			path, err := s.checkpointPath(cp.TaskID)
+			relPath, err := checkpointRelPath(cp.TaskID)
 			if err != nil {
 				return removed, err
 			}
-			if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			if err := root.Remove(relPath); err != nil && !os.IsNotExist(err) {
 				return removed, err
 			}
 			removed++
@@ -257,22 +309,18 @@ func (s *Store) Prune(policy RetentionPolicy) (int, error) {
 		}
 	}
 
-	manifestRoot := filepath.Join(s.historyDir(), "manifest")
-	err = filepath.Walk(manifestRoot, func(path string, info os.FileInfo, err error) error {
+	manifestRelRoot := filepath.Join(historyRelDir(), "manifest")
+	err = fs.WalkDir(root.FS(), manifestRelRoot, func(relPath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			if os.IsNotExist(err) {
 				return nil
 			}
 			return err
 		}
-		if info.IsDir() || !strings.HasSuffix(path, ".json") {
+		if d.IsDir() || !strings.HasSuffix(relPath, ".json") {
 			return nil
 		}
-		rel, err := filepath.Rel(manifestRoot, path)
-		if err != nil {
-			return err
-		}
-		rel = strings.TrimSuffix(rel, ".json")
+		rel := strings.TrimSuffix(strings.TrimPrefix(relPath, manifestRelRoot+"/"), ".json")
 
 		entries, err := s.List(rel)
 		if err != nil {
@@ -301,7 +349,7 @@ func (s *Store) Prune(policy RetentionPolicy) (int, error) {
 			return nil
 		}
 		if len(kept) == 0 {
-			return os.Remove(path)
+			return root.Remove(relPath)
 		}
 		return s.writeManifest(rel, kept)
 	})
@@ -310,7 +358,7 @@ func (s *Store) Prune(policy RetentionPolicy) (int, error) {
 	}
 
 	// Garbage-collect unreferenced objects.
-	objs, err := os.ReadDir(s.objectsDir())
+	objs, err := fs.ReadDir(root.FS(), objectsRelDir())
 	if err != nil {
 		if os.IsNotExist(err) {
 			return removed, nil
@@ -321,7 +369,7 @@ func (s *Store) Prune(policy RetentionPolicy) (int, error) {
 		if o.IsDir() || referenced[o.Name()] {
 			continue
 		}
-		if err := os.Remove(filepath.Join(s.objectsDir(), o.Name())); err != nil {
+		if err := root.Remove(filepath.Join(objectsRelDir(), o.Name())); err != nil {
 			return removed, err
 		}
 	}
@@ -329,18 +377,22 @@ func (s *Store) Prune(policy RetentionPolicy) (int, error) {
 }
 
 func (s *Store) writeManifest(rel string, entries []Entry) error {
-	mp, err := s.manifestPath(rel)
+	relMp, err := manifestRelPath(rel)
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(mp), 0755); err != nil {
+	root, err := s.openRoot()
+	if err != nil {
+		return err
+	}
+	if err := root.MkdirAll(filepath.Dir(relMp), 0750); err != nil {
 		return err
 	}
 	data, err := json.MarshalIndent(entries, "", "  ")
 	if err != nil {
 		return err
 	}
-	return writeFileAtomic(mp, data, 0644)
+	return writeFileAtomicRoot(root, relMp, data, 0644)
 }
 
 func isHexID(id string) bool {
@@ -351,15 +403,15 @@ func isHexID(id string) bool {
 	return err == nil
 }
 
-// writeFileAtomic writes data via a temp file + rename in the target dir.
-func writeFileAtomic(path string, data []byte, perm os.FileMode) error {
-	dir := filepath.Dir(path)
-	tmp, err := os.CreateTemp(dir, ".symdesk-history-*.tmp")
+// writeFileAtomicRoot atomically writes data to name (relative to root) via
+// a temp file created alongside it and renamed into place. Every step is
+// confined to root, so the write can never be redirected outside vaultRoot.
+func writeFileAtomicRoot(root *os.Root, name string, data []byte, perm os.FileMode) error {
+	tmp, tmpName, err := createRootTemp(root, filepath.Dir(name), ".symdesk-history-")
 	if err != nil {
 		return err
 	}
-	tmpName := tmp.Name()
-	cleanup := func() { tmp.Close(); os.Remove(tmpName) }
+	cleanup := func() { _ = tmp.Close(); _ = root.Remove(tmpName) }
 	if _, err := tmp.Write(data); err != nil {
 		cleanup()
 		return err
@@ -369,16 +421,34 @@ func writeFileAtomic(path string, data []byte, perm os.FileMode) error {
 		return err
 	}
 	if err := tmp.Close(); err != nil {
-		os.Remove(tmpName)
+		_ = root.Remove(tmpName)
 		return err
 	}
-	if err := os.Chmod(tmpName, perm); err != nil {
-		os.Remove(tmpName)
+	if err := root.Chmod(tmpName, perm); err != nil {
+		_ = root.Remove(tmpName)
 		return err
 	}
-	if err := os.Rename(tmpName, path); err != nil {
-		os.Remove(tmpName)
+	if err := root.Rename(tmpName, name); err != nil {
+		_ = root.Remove(tmpName)
 		return err
 	}
 	return nil
+}
+
+// createRootTemp creates a uniquely-named temp file inside dir (relative to
+// root) and returns it along with its root-relative name.
+func createRootTemp(root *os.Root, dir, prefix string) (*os.File, string, error) {
+	for range 100 {
+		random := make([]byte, 12)
+		if _, err := cryptorand.Read(random); err != nil {
+			return nil, "", err
+		}
+		name := filepath.Join(dir, prefix+hex.EncodeToString(random)+".tmp")
+		file, err := root.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+		if errors.Is(err, fs.ErrExist) {
+			continue
+		}
+		return file, name, err
+	}
+	return nil, "", fmt.Errorf("create temporary file: too many collisions")
 }

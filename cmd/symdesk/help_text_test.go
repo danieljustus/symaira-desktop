@@ -81,7 +81,7 @@ func TestHelpTextHasNoRetiredToolNames(t *testing.T) {
 // (a new or edited log line naming a retired tool) fails here too.
 func TestMailPollerLogHasNoRetiredToolNames(t *testing.T) {
 	pollerSrc := filepath.Join("..", "..", "internal", "ingest", "internal", "ingest", "mail.go")
-	src, err := os.ReadFile(pollerSrc)
+	src, err := os.ReadFile(pollerSrc) //nolint:gosec // fixed, repo-relative test path; not user input
 	if err != nil {
 		t.Fatalf("read mail poller source %s: %v", pollerSrc, err)
 	}

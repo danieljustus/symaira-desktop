@@ -108,6 +108,19 @@ jobs:
         # Issue #536: packages outside permitted facades must not import absorbed library internals.
         run: ./scripts/check-module-boundaries.sh
 
+  govulncheck:
+    name: govulncheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # Issue #753: fails the job only on vulnerabilities reachable from this
+      # module's code (govulncheck's default text summary already excludes
+      # unreachable/informational findings; no extra flags needed).
+      - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
+        with:
+          go-version-input: "1.26.6"
+
   golangci-lint:
     runs-on: ubuntu-latest
     permissions:

@@ -70,29 +70,31 @@ func newIndexCmd() *cobra.Command {
 			count := 0
 			skipped := 0
 
-			processFile := func(p string) error {
-				indexed, err := indexOneFile(db, p, indexReembed)
-				if err != nil {
-					return err
-				}
-				if indexed {
-					count++
-				} else {
-					skipped++
-				}
-				return nil
-			}
-
 			if info.IsDir() {
+				// A directory is the full/initial index pass, so route it
+				// through the batched path: indexDirectory commits up to
+				// indexBatchSize documents per transaction instead of one
+				// commit per file (#760).
 				err = vault.WalkAll(target, func(path string, entry fs.DirEntry) error {
 					markUnsupportedFile(db, path)
 					return nil
 				})
 				if err == nil {
-					err = vault.Walk(target, processFile)
+					count, skipped, err = indexDirectory(db, target, indexReembed)
 				}
 			} else if filepath.Ext(target) == ".md" {
-				err = processFile(target)
+				// A single explicit file stays on the unbatched, one-file
+				// path: batching only pays off for the full/initial index
+				// (#760).
+				var indexed bool
+				indexed, err = indexOneFile(db, target, indexReembed)
+				if err == nil {
+					if indexed {
+						count++
+					} else {
+						skipped++
+					}
+				}
 			} else {
 				markUnsupportedFile(db, target)
 			}
@@ -209,6 +211,96 @@ func recordIndexStatus(db *sidecar.DB, path string, state sidecar.IndexState, re
 	if err := db.SetIndexStatus(path, state, reason); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to record index status for %s: %v\n", path, err)
 	}
+}
+
+// indexBatchSize matches the sidecar's per-transaction batch size (#760) so
+// a full/initial vault index commits in the same-sized chunks whether it
+// runs through RefreshIndex or through this CLI command.
+const indexBatchSize = 200
+
+// indexDirectory walks root (the full/initial index case for `symdesk
+// index`) and indexes every Markdown file that needs it, committing to the
+// sidecar in batches of up to indexBatchSize documents via
+// db.IndexDocuments instead of once per file (#760). Per-file bookkeeping
+// that indexOneFile does around a single sidecar commit — hybrid retrieval
+// indexing and index-status recording — still happens per file, just after
+// its batch has committed rather than after its own individual commit.
+//
+// A file that fails to parse or whose IsIndexed check errors aborts the
+// walk, same as the previous one-file-at-a-time path; any batch already
+// accumulated at that point is still flushed first so its documents are not
+// lost.
+func indexDirectory(db *sidecar.DB, root string, force bool) (indexed int, skipped int, err error) {
+	batch := make([]*vault.Document, 0, indexBatchSize)
+
+	flush := func() error {
+		if len(batch) == 0 {
+			return nil
+		}
+		// Detach and reset the batch before indexing so a failed flush is
+		// never retried with the same documents by the deferred flush that
+		// always runs after the walk.
+		docs := batch
+		batch = make([]*vault.Document, 0, indexBatchSize)
+
+		if ferr := db.IndexDocuments(docs); ferr != nil {
+			return fmt.Errorf("failed to index batch: %w", ferr)
+		}
+		for _, doc := range docs {
+			if rerr := retrieval.IndexWithMetadata(doc.Path, doc.Body, retrieval.SearchMetadataFromVault(doc)); rerr != nil {
+				recordIndexStatus(db, doc.Path, sidecar.IndexStateFailed, rerr.Error())
+				fmt.Fprintf(os.Stderr, "Warning: failed to update hybrid index for %s: %v\n", doc.Path, rerr)
+				continue
+			}
+			recordIndexStatus(db, doc.Path, sidecar.IndexStateIndexed, "")
+		}
+		indexed += len(docs)
+		return nil
+	}
+
+	walkErr := vault.Walk(root, func(path string) error {
+		recordIndexStatus(db, path, sidecar.IndexStateIndexing, "")
+		doc, perr := vault.ParseFile(path)
+		if perr != nil {
+			state := sidecar.IndexStateFailed
+			if errors.Is(perr, documentformat.ErrDRMProtected) {
+				state = sidecar.IndexStateEncrypted
+			}
+			if documentformat.IsUnsupported(filepath.Ext(path)) {
+				state = sidecar.IndexStateUnsupported
+			}
+			recordIndexStatus(db, path, state, perr.Error())
+			return fmt.Errorf("failed to parse %s: %w", path, perr)
+		}
+		alreadyIndexed, ierr := db.IsIndexed(doc.Path, doc.SHA256)
+		if ierr != nil {
+			recordIndexStatus(db, path, sidecar.IndexStateFailed, ierr.Error())
+			return ierr
+		}
+		if alreadyIndexed && !force {
+			recordIndexStatus(db, path, sidecar.IndexStateIndexed, "")
+			skipped++
+			return nil
+		}
+
+		batch = append(batch, doc)
+		if len(batch) >= indexBatchSize {
+			return flush()
+		}
+		return nil
+	})
+
+	// Flush whatever accumulated even if the walk stopped early on an
+	// error, so a mid-vault failure does not discard documents already
+	// parsed and queued in this run (#760). A flush already triggered from
+	// within the walk callback above leaves the batch empty, so this is a
+	// no-op in that case.
+	if ferr := flush(); ferr != nil {
+		if walkErr == nil {
+			return indexed, skipped, ferr
+		}
+	}
+	return indexed, skipped, walkErr
 }
 
 func indexOneFile(db *sidecar.DB, path string, force bool) (bool, error) {

@@ -14,7 +14,8 @@ lint: fmt-check corekit-guard boundary-guard nested-version-guard
 	go vet ./...
 
 fmt-check:
-	@test -z "$$(gofmt -l .)" || (echo "gofmt diff found:" && gofmt -l . && exit 1)
+	@UNFORMATTED="$$(git ls-files -z -- '*.go' | xargs -0 gofmt -l)"; \
+	if [ -n "$$UNFORMATTED" ]; then echo "gofmt diff found:"; echo "$$UNFORMATTED"; exit 1; fi
 
 # Issue #526: corekit dependency pin must stay aligned across all 6 modules.
 corekit-guard:

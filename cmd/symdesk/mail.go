@@ -104,7 +104,7 @@ func newMailRulesCmd() *cobra.Command {
 		Use:   "rules",
 		Short: "Manage configured IMAP mail accounts",
 	}
-	cmd.PersistentFlags().StringVar(&configPath, "config", "", "mail configuration file (defaults to .symingest.toml or the global config)")
+	cmd.PersistentFlags().StringVar(&configPath, "config", "", "mail configuration file (defaults to the local mail config or the global config)")
 
 	cmd.AddCommand(newMailRulesListCmd(&configPath))
 	cmd.AddCommand(newMailRulesCreateCmd(&configPath))

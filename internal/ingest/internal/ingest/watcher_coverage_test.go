@@ -14,21 +14,21 @@ func newTestWatcher(t *testing.T) (*Watcher, *store.Store, string, *fakeClock) {
 	t.Helper()
 	dir := t.TempDir()
 	inbox := filepath.Join(dir, "inbox")
-	if err := os.MkdirAll(inbox, 0o755); err != nil {
+	if err := os.MkdirAll(inbox, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	s, err := store.Open(filepath.Join(dir, "docs.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { s.Close() })
+	t.Cleanup(func() { closeTestResource(t, "store", s) })
 
 	clk := newFakeClock()
 	w, err := NewWatcherWithOptions(s, inbox, WatcherOptions{Clock: clk})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { w.Close() })
+	t.Cleanup(func() { closeTestResource(t, "watcher", w) })
 
 	return w, s, inbox, clk
 }
@@ -49,7 +49,7 @@ func TestWatcher_RemovedBeforeStable_DoesNotEnqueue(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	path := filepath.Join(inbox, "vanishing.txt")
-	if err := os.WriteFile(path, []byte("here for a moment"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("here for a moment"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	// Wait for the create event to reach the event loop and schedule a timer.
@@ -87,7 +87,7 @@ func TestCancelDebounce_StopsTimerAndClearsPending(t *testing.T) {
 	w, _, inbox, clk := newTestWatcher(t)
 
 	path := filepath.Join(inbox, "doc.txt")
-	if err := os.WriteFile(path, []byte("content"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -139,7 +139,7 @@ func TestWatcher_NewSubdirectoryIsWatchedRecursively(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	subdir := filepath.Join(inbox, "incoming")
-	if err := os.MkdirAll(subdir, 0o755); err != nil {
+	if err := os.MkdirAll(subdir, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	// Give fsnotify time to deliver the directory-create event and for
@@ -147,7 +147,7 @@ func TestWatcher_NewSubdirectoryIsWatchedRecursively(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	nestedPath := filepath.Join(subdir, "nested.txt")
-	if err := os.WriteFile(nestedPath, []byte("nested content"), 0o644); err != nil {
+	if err := os.WriteFile(nestedPath, []byte("nested content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	// Wait for the create event to schedule a debounce timer.
@@ -179,7 +179,7 @@ func TestCheckStability_ForceEnqueuesAfterMaxPendingAge(t *testing.T) {
 	ctx := context.Background()
 
 	path := filepath.Join(inbox, "stuck.txt")
-	if err := os.WriteFile(path, []byte("still being written"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("still being written"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	info, err := os.Stat(path)
@@ -227,7 +227,7 @@ func TestCheckStability_FileGoneDuringWait(t *testing.T) {
 	ctx := context.Background()
 
 	path := filepath.Join(inbox, "gone.txt")
-	if err := os.WriteFile(path, []byte("temporary"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("temporary"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	info, err := os.Stat(path)
@@ -278,7 +278,7 @@ func TestWatcher_CloseWhileDebouncePending(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	path := filepath.Join(inbox, "pending-on-close.txt")
-	if err := os.WriteFile(path, []byte("not yet stable"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("not yet stable"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	// Let the create event register and start the debounce timer, but

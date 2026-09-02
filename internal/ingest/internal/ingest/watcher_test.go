@@ -16,7 +16,7 @@ import (
 func TestWatcher_DebouncesAndEnqueues(t *testing.T) {
 	dir := t.TempDir()
 	inbox := filepath.Join(dir, "inbox")
-	if err := os.MkdirAll(inbox, 0o755); err != nil {
+	if err := os.MkdirAll(inbox, 0o700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -25,14 +25,14 @@ func TestWatcher_DebouncesAndEnqueues(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	clk := newFakeClock()
 	w, err := NewWatcherWithOptions(s, inbox, WatcherOptions{Clock: clk})
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer w.Close()
+	defer func() { closeTestResource(t, "watcher", w) }()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -43,12 +43,12 @@ func TestWatcher_DebouncesAndEnqueues(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	ignoredPath := filepath.Join(inbox, "test.tmp")
-	if err := os.WriteFile(ignoredPath, []byte("ignored"), 0o644); err != nil {
+	if err := os.WriteFile(ignoredPath, []byte("ignored"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	realPath := filepath.Join(inbox, "doc.txt")
-	if err := os.WriteFile(realPath, []byte("init"), 0o644); err != nil {
+	if err := os.WriteFile(realPath, []byte("init"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -57,12 +57,12 @@ func TestWatcher_DebouncesAndEnqueues(t *testing.T) {
 	// previous timer and schedules a new one.  No Advance between writes
 	// ensures the timer never fires prematurely.
 	time.Sleep(50 * time.Millisecond)
-	if err := os.WriteFile(realPath, []byte("init updated"), 0o644); err != nil {
+	if err := os.WriteFile(realPath, []byte("init updated"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(50 * time.Millisecond)
-	if err := os.WriteFile(realPath, []byte("final content"), 0o644); err != nil {
+	if err := os.WriteFile(realPath, []byte("final content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -88,7 +88,7 @@ func TestWatcher_MovesStableFileToProcessing(t *testing.T) {
 	dir := t.TempDir()
 	inbox := filepath.Join(dir, "inbox")
 	processing := filepath.Join(dir, "processing")
-	if err := os.MkdirAll(inbox, 0o755); err != nil {
+	if err := os.MkdirAll(inbox, 0o700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -96,13 +96,13 @@ func TestWatcher_MovesStableFileToProcessing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	w, err := NewWatcherWithOptions(s, inbox, WatcherOptions{StableFor: 50 * time.Millisecond, ProcessingDir: processing})
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer w.Close()
+	defer func() { closeTestResource(t, "watcher", w) }()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -111,7 +111,7 @@ func TestWatcher_MovesStableFileToProcessing(t *testing.T) {
 	}
 
 	source := filepath.Join(inbox, "doc.txt")
-	if err := os.WriteFile(source, []byte("ready"), 0o644); err != nil {
+	if err := os.WriteFile(source, []byte("ready"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -135,7 +135,7 @@ func TestWatcher_MovesUnsupportedFileToFailedAndContinues(t *testing.T) {
 	dir := t.TempDir()
 	inbox := filepath.Join(dir, "inbox")
 	failed := filepath.Join(dir, "failed")
-	if err := os.MkdirAll(inbox, 0o755); err != nil {
+	if err := os.MkdirAll(inbox, 0o700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -143,13 +143,13 @@ func TestWatcher_MovesUnsupportedFileToFailedAndContinues(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	w, err := NewWatcherWithOptions(s, inbox, WatcherOptions{StableFor: 50 * time.Millisecond, FailedDir: failed})
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer w.Close()
+	defer func() { closeTestResource(t, "watcher", w) }()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -158,11 +158,11 @@ func TestWatcher_MovesUnsupportedFileToFailedAndContinues(t *testing.T) {
 	}
 
 	bad := filepath.Join(inbox, "broken.bin")
-	if err := os.WriteFile(bad, []byte{0x01, 0x02, 0x03}, 0o644); err != nil {
+	if err := os.WriteFile(bad, []byte{0x01, 0x02, 0x03}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 	good := filepath.Join(inbox, "good.txt")
-	if err := os.WriteFile(good, []byte("keep going"), 0o644); err != nil {
+	if err := os.WriteFile(good, []byte("keep going"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -172,7 +172,7 @@ func TestWatcher_MovesUnsupportedFileToFailedAndContinues(t *testing.T) {
 		return err == nil
 	})
 	var sidecar failureSidecar
-	data, err := os.ReadFile(failedFile + ".error.json")
+	data, err := readTestFile(failedFile + ".error.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,16 +195,16 @@ func TestWorker_MovesCompletedAndFailedSources(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	processed := filepath.Join(dir, "processed")
 	failed := filepath.Join(dir, "failed")
 	good := filepath.Join(dir, "good.txt")
 	bad := filepath.Join(dir, "bad.png")
-	if err := os.WriteFile(good, []byte("hello"), 0o644); err != nil {
+	if err := os.WriteFile(good, []byte("hello"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(bad, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(bad, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 

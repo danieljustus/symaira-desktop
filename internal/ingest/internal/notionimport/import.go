@@ -112,7 +112,7 @@ func Run(ctx context.Context, opts Options) (*Stats, error) {
 		if err := ctx.Err(); err != nil {
 			return stats, err
 		}
-		fmt.Fprintf(progress, "[%d/%d] %s\n", i+1, stats.Total, entry.DisplayName)
+		_, _ = fmt.Fprintf(progress, "[%d/%d] %s\n", i+1, stats.Total, entry.DisplayName)
 
 		results := processEntry(ctx, entry, opts, runID, pageNameMap)
 		stats.Results = append(stats.Results, results...)
@@ -202,7 +202,7 @@ func processEntry(_ context.Context, entry ExportEntry, opts Options, runID stri
 		Category:     entry.Category,
 	}
 
-	if err := writeNoteWithFrontmatter(vaultPath, note, text); err != nil {
+	if err := writeNoteWithFrontmatter(opts.Vault, vaultPath, note, text); err != nil {
 		result.Error = fmt.Sprintf("write note: %v", err)
 		return single(result)
 	}
@@ -269,7 +269,14 @@ func computeVaultPath(vault string, entry ExportEntry) string {
 }
 
 // writeNoteWithFrontmatter writes a complete vault note with YAML frontmatter.
-func writeNoteWithFrontmatter(vaultPath string, note any, body string) error {
+// vault is the import's target root; vaultPath is re-validated against it
+// here (in addition to the sanitization computeVaultPath already applies to
+// every path segment) so this write can never land outside the vault even
+// if a future caller passes an unsanitized path.
+func writeNoteWithFrontmatter(vault, vaultPath string, note any, body string) error {
+	if err := requireWithinDir(vault, vaultPath); err != nil {
+		return err
+	}
 	if err := os.MkdirAll(filepath.Dir(vaultPath), 0o700); err != nil {
 		return fmt.Errorf("create vault directory: %w", err)
 	}

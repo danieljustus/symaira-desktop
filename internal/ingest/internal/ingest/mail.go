@@ -90,7 +90,7 @@ func (c *realIMAPClient) FetchEnvelopesUID(uids []imap.UID) ([]*imapMessage, err
 	fetchOptions := &imap.FetchOptions{
 		Envelope: true,
 	}
-	fetchCmd := c.Client.Fetch(uidSet, fetchOptions)
+	fetchCmd := c.Fetch(uidSet, fetchOptions)
 	defer fetchCmd.Close()
 
 	var results []*imapMessage
@@ -130,7 +130,7 @@ func (c *realIMAPClient) FetchUID(uids []imap.UID) ([]*imapMessage, error) {
 			{Peek: true},
 		},
 	}
-	fetchCmd := c.Client.Fetch(uidSet, fetchOptions)
+	fetchCmd := c.Fetch(uidSet, fetchOptions)
 	defer fetchCmd.Close()
 
 	var results []*imapMessage
@@ -483,10 +483,7 @@ func (m *MailPoller) processMessage(ctx context.Context, acc config.IMAPAccount,
 
 	var attachments []string
 
-	for {
-		if ctx.Err() != nil {
-			break
-		}
+	for ctx.Err() == nil {
 		p, err := mr.NextPart()
 		if err == io.EOF {
 			break

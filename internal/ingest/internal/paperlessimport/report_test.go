@@ -19,17 +19,17 @@ func TestBuildMigrationReport_RealImport(t *testing.T) {
 		if handleEmptyLookups(w, r) {
 			return
 		}
-		switch {
-		case r.URL.Path == "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+		switch r.URL.Path {
+		case "/api/documents/":
+			_ = json.NewEncoder(w).Encode(map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{"id": 7, "title": "Doc 7", "created_date": "2026-01-15", "file_type": ".txt"},
 				},
 				"next": nil,
 			})
-		case r.URL.Path == "/api/documents/7/download/":
-			w.Write([]byte("content 7"))
+		case "/api/documents/7/download/":
+			_, _ = w.Write([]byte("content 7"))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -41,7 +41,7 @@ func TestBuildMigrationReport_RealImport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},

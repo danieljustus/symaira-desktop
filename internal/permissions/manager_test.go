@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -368,7 +369,8 @@ func TestTokenGeneration(t *testing.T) {
 
 func TestFilesAreNotInVault(t *testing.T) {
 	m, dir := tempManager(t)
-	if _, err := m.UserAdd("testuser"); err != nil {
+	token, err := m.UserAdd("testuser")
+	if err != nil {
 		t.Fatalf("UserAdd: %v", err)
 	}
 
@@ -386,9 +388,9 @@ func TestFilesAreNotInVault(t *testing.T) {
 	if len(data) == 0 {
 		t.Fatal("empty users file")
 	}
-	// Token should NOT appear in plain text.
-	if string(data) != "" {
-		// Token hash, not token, is stored.
+	// Token should NOT appear in plain text; only its hash is stored.
+	if strings.Contains(string(data), token) {
+		t.Fatal("users file contains the raw token in plain text")
 	}
 }
 

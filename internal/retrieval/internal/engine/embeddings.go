@@ -453,21 +453,6 @@ func (eg *EmbeddingsGenerator) queryOllamaBatch(texts []string) ([][]float32, er
 	return eg.embedWithRetries(texts, eg.RetryCount)
 }
 
-// embedRequestWithDim mirrors ollamakit's embed request but additionally pins
-// the output dimension (Matryoshka truncation) via Ollama's `dimensions`
-// body parameter. ollamakit (corekit v0.8.0) does not expose that parameter
-// yet; once it does, this local transport can be removed.
-type embedRequestWithDim struct {
-	Model      string   `json:"model"`
-	Input      []string `json:"input"`
-	Dimensions int      `json:"dimensions,omitempty"`
-}
-
-// embedResponse is the Ollama /api/embed response body.
-type embedResponse struct {
-	Embeddings [][]float32 `json:"embeddings"`
-}
-
 // embedWithDim embeds with a pinned output dimension through the shared
 // llmkit transport (Matryoshka truncation via the OpenAI-wire dimensions
 // field). Errors are classified by llmkit; the shared transient-error

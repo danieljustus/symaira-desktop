@@ -38,7 +38,7 @@ func (s *Service) ListAuditEvents(ctx context.Context) ([]security.AuditEvent, e
 	if err != nil {
 		return nil, errs.Internal(op, "failed to list audit events", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []security.AuditEvent
 	for rows.Next() {

@@ -46,9 +46,9 @@ func (s *Service) Backup(ctx context.Context, passphrase []byte, w io.Writer) er
 		return errs.Internal(op, "failed to create temp snapshot file", err)
 	}
 	tmpPath := tmp.Name()
-	tmp.Close()
-	os.Remove(tmpPath) // VACUUM INTO requires the target not to exist yet
-	defer os.Remove(tmpPath)
+	_ = tmp.Close()
+	_ = os.Remove(tmpPath) // VACUUM INTO requires the target not to exist yet
+	defer func() { _ = os.Remove(tmpPath) }()
 
 	if _, err := s.db.ExecContext(ctx, "VACUUM INTO ?", tmpPath); err != nil {
 		return errs.Internal(op, "failed to snapshot database", err)
@@ -115,7 +115,7 @@ func Restore(ctx context.Context, passphrase []byte, r io.Reader, targetDBPath s
 		return errs.Internal(op, "failed to write restored database", err)
 	}
 	if err := os.Rename(tmpPath, targetDBPath); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return errs.Internal(op, "failed to finalize restored database", err)
 	}
 
@@ -126,7 +126,7 @@ func Restore(ctx context.Context, passphrase []byte, r io.Reader, targetDBPath s
 	if err != nil {
 		return errs.Internal(op, "restored database failed to open", err)
 	}
-	defer restoredDB.Close()
+	defer func() { _ = restoredDB.Close() }()
 	return recordAudit(ctx, restoredDB, "backup_restored", "", "", fmt.Sprintf("bytes=%d", len(plaintext)))
 }
 

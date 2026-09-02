@@ -33,7 +33,7 @@ func newConflictCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 
 			var absConflict string
 			if filepath.IsAbs(conflictPath) {
@@ -48,11 +48,12 @@ func newConflictCmd() *cobra.Command {
 
 			originalPath := deriveOriginalPath(absConflict)
 
-			if action == "keep-mine" {
+			switch action {
+			case "keep-mine":
 				if err := os.Remove(absConflict); err != nil {
 					return fmt.Errorf("failed to remove conflict file: %w", err)
 				}
-			} else if action == "keep-theirs" {
+			case "keep-theirs":
 				content, err := os.ReadFile(absConflict)
 				if err != nil {
 					return fmt.Errorf("failed to read conflict file: %w", err)

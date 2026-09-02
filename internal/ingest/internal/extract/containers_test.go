@@ -319,7 +319,7 @@ func TestDetectOLE_ContainerEdgeBranches(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		if kind := detectOLEContainer(f, head); kind != "" {
 			t.Fatalf("detectOLEContainer = %q, want \"\"", kind)
 		}
@@ -338,7 +338,7 @@ func TestDetectOLE_ContainerEdgeBranches(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		if kind := detectOLEContainer(f, head); kind != "" {
 			t.Fatalf("detectOLEContainer = %q, want \"\"", kind)
 		}
@@ -354,14 +354,14 @@ func TestDetectOLE_ContainerEdgeBranches(t *testing.T) {
 		// Entry 2: a valid name not in the mandated map.
 		unmapped := "CustomStream"
 		copy(dirSector[256:], utf16LEBytes(unmapped))
-		binary.LittleEndian.PutUint16(dirSector[256+64:256+66], uint16(len(unmapped)*2+2))
+		binary.LittleEndian.PutUint16(dirSector[256+64:256+66], uint16(len(unmapped)*2+2)) //nolint:gosec // G115: test fixture; unmapped is a short constant string
 		writeOLERaw(t, path, 0, dirSector)
 
 		f, err := os.Open(path)
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		head := make([]byte, 512)
 		if _, err := f.ReadAt(head, 0); err != nil {
 			t.Fatal(err)
@@ -411,12 +411,12 @@ func writeOLEFixture(t *testing.T, path, streamName string) {
 	// Entry 0: root storage.
 	rootName := "Root Entry"
 	copy(dir[0:], utf16LEBytes(rootName))
-	binary.LittleEndian.PutUint16(dir[64:66], uint16(len(rootName)*2+2))
+	binary.LittleEndian.PutUint16(dir[64:66], uint16(len(rootName)*2+2)) //nolint:gosec // G115: test fixture; rootName is a short constant string
 	dir[66] = 5 // STGTY_ROOT
 	// Entry 1: the mandated stream.
 	off := 128
 	copy(dir[off:], utf16LEBytes(streamName))
-	binary.LittleEndian.PutUint16(dir[off+64:off+66], uint16(len(streamName)*2+2))
+	binary.LittleEndian.PutUint16(dir[off+64:off+66], uint16(len(streamName)*2+2)) //nolint:gosec // G115: test fixture; streamName is a short test-provided string
 	dir[off+66] = 2 // STGTY_STREAM
 
 	data := append(head, dir...)
@@ -428,7 +428,7 @@ func writeOLEFixture(t *testing.T, path, streamName string) {
 func utf16LEBytes(s string) []byte {
 	out := make([]byte, 0, len(s)*2+2)
 	for _, r := range s {
-		out = append(out, byte(r), byte(r>>8))
+		out = append(out, byte(r), byte(r>>8)) //nolint:gosec // G115: test fixture; s is always ASCII test input, well within byte range
 	}
 	return append(out, 0, 0) // NUL terminator
 }

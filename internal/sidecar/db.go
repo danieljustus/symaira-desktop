@@ -1007,10 +1007,6 @@ func escapeLike(value string) string {
 	return strings.ReplaceAll(value, "_", `\_`)
 }
 
-func matchesPlanPostFilters(match SearchMatch, plan searchquery.Plan) bool {
-	return matchesPlanPostFiltersAt(match, plan, searchClock())
-}
-
 func matchesPlanPostFiltersAt(match SearchMatch, plan searchquery.Plan, reference time.Time) bool {
 	for _, filter := range plan.Filters {
 		if filter.Field == searchquery.FieldPath {

@@ -25,7 +25,7 @@ func newFixture(t *testing.T) *fixture {
 	if err != nil {
 		t.Fatalf("OpenMemory() error = %v", err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { _ = db.Close() })
 	return &fixture{contacts: contactsvc.New(db), security: New(db)}
 }
 
@@ -74,7 +74,7 @@ func TestBackupRestore_RoundTrips(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open restored db error = %v", err)
 	}
-	defer restoredDB.Close()
+	defer func() { _ = restoredDB.Close() }()
 
 	var displayName string
 	if err := restoredDB.QueryRowContext(ctx, "SELECT display_name FROM persons WHERE id = ?", personID).Scan(&displayName); err != nil {

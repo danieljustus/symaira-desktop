@@ -211,11 +211,12 @@ date: "%s"
 `, baseName, time.Now().Format(time.RFC3339))
 
 	var body string
-	if ext == ".pdf" {
+	switch ext {
+	case ".pdf":
 		body = fmt.Sprintf("\n![[%s]]\n\n*OCR Text pending (ingest pipeline unavailable)...*\n", relAssetPath)
-	} else if ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
+	case ".png", ".jpg", ".jpeg":
 		body = fmt.Sprintf("\n![[%s]]\n\n*Image description pending (ingest pipeline unavailable)...*\n", relAssetPath)
-	} else {
+	default:
 		body = fmt.Sprintf("\n[[%s]]\n\n*Content pending (ingest pipeline unavailable)...*\n", relAssetPath)
 	}
 

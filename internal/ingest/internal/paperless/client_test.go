@@ -17,7 +17,7 @@ func TestListDocuments(t *testing.T) {
 		if r.Header.Get("Authorization") != "Token test-token" {
 			t.Errorf("Authorization header = %q, want Token test-token", r.Header.Get("Authorization"))
 		}
-		json.NewEncoder(w).Encode(listResponse[Document]{
+		_ = json.NewEncoder(w).Encode(listResponse[Document]{
 			Count: 1,
 			Results: []Document{
 				{ID: 1, Title: "Test Doc", CreatedDate: FlexDate{time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)}},
@@ -48,13 +48,13 @@ func TestListDocuments_Pagination(t *testing.T) {
 	mux.HandleFunc("/api/documents/", func(w http.ResponseWriter, r *http.Request) {
 		callCount++
 		if callCount == 1 {
-			json.NewEncoder(w).Encode(listResponse[Document]{
+			_ = json.NewEncoder(w).Encode(listResponse[Document]{
 				Count:   2,
 				Results: []Document{{ID: 1, Title: "Doc 1"}},
 				Next:    baseURL + "/api/documents/?format=json&page=2",
 			})
 		} else {
-			json.NewEncoder(w).Encode(listResponse[Document]{
+			_ = json.NewEncoder(w).Encode(listResponse[Document]{
 				Count:   2,
 				Results: []Document{{ID: 2, Title: "Doc 2"}},
 				Next:    "",
@@ -89,13 +89,13 @@ func TestListDocuments_LimitStopsPagination(t *testing.T) {
 			if got := r.URL.Query().Get("page_size"); got != "2" {
 				t.Errorf("page_size = %q, want 2", got)
 			}
-			json.NewEncoder(w).Encode(listResponse[Document]{
+			_ = json.NewEncoder(w).Encode(listResponse[Document]{
 				Count:   3,
 				Results: []Document{{ID: 1, Title: "Doc 1"}},
 				Next:    baseURL + "/api/documents/?format=json&page=2",
 			})
 		case 2:
-			json.NewEncoder(w).Encode(listResponse[Document]{
+			_ = json.NewEncoder(w).Encode(listResponse[Document]{
 				Count:   3,
 				Results: []Document{{ID: 2, Title: "Doc 2"}},
 				Next:    baseURL + "/api/documents/?format=json&page=3",
@@ -132,14 +132,14 @@ func TestListDocuments_PaginationAbsoluteNextMissingPort(t *testing.T) {
 			// exactly as the real Paperless API was observed to do.
 			u, _ := url.Parse(srvURL)
 			next := "http://" + u.Hostname() + "/api/documents/?format=json&page=2"
-			json.NewEncoder(w).Encode(listResponse[Document]{
+			_ = json.NewEncoder(w).Encode(listResponse[Document]{
 				Count:   2,
 				Results: []Document{{ID: 1, Title: "Doc 1"}},
 				Next:    next,
 			})
 			return
 		}
-		json.NewEncoder(w).Encode(listResponse[Document]{
+		_ = json.NewEncoder(w).Encode(listResponse[Document]{
 			Count:   2,
 			Results: []Document{{ID: 2, Title: "Doc 2"}},
 			Next:    "",
@@ -168,14 +168,14 @@ func TestListDocuments_PaginationRelativeNext(t *testing.T) {
 	mux.HandleFunc("/api/documents/", func(w http.ResponseWriter, r *http.Request) {
 		callCount++
 		if callCount == 1 {
-			json.NewEncoder(w).Encode(listResponse[Document]{
+			_ = json.NewEncoder(w).Encode(listResponse[Document]{
 				Count:   2,
 				Results: []Document{{ID: 1, Title: "Doc 1"}},
 				Next:    "/api/documents/?format=json&page=2",
 			})
 			return
 		}
-		json.NewEncoder(w).Encode(listResponse[Document]{
+		_ = json.NewEncoder(w).Encode(listResponse[Document]{
 			Count:   2,
 			Results: []Document{{ID: 2, Title: "Doc 2"}},
 			Next:    "",
@@ -202,7 +202,7 @@ func TestListDocuments_SinceFilter(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/documents/", func(w http.ResponseWriter, r *http.Request) {
 		gotQuery = r.URL.Query()
-		json.NewEncoder(w).Encode(listResponse[Document]{Next: ""})
+		_ = json.NewEncoder(w).Encode(listResponse[Document]{Next: ""})
 	})
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
@@ -227,7 +227,7 @@ func TestListDocuments_NoSinceOmitsDateFilter(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/documents/", func(w http.ResponseWriter, r *http.Request) {
 		gotQuery = r.URL.Query()
-		json.NewEncoder(w).Encode(listResponse[Document]{Next: ""})
+		_ = json.NewEncoder(w).Encode(listResponse[Document]{Next: ""})
 	})
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
@@ -244,7 +244,7 @@ func TestListDocuments_NoSinceOmitsDateFilter(t *testing.T) {
 func TestGetDocument(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/documents/42/", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(Document{ID: 42, Title: "Specific Doc"})
+		_ = json.NewEncoder(w).Encode(Document{ID: 42, Title: "Specific Doc"})
 	})
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
@@ -262,7 +262,7 @@ func TestGetDocument(t *testing.T) {
 func TestDownloadDocument(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/documents/5/download/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("file content here"))
+		_, _ = w.Write([]byte("file content here"))
 	})
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
@@ -283,7 +283,7 @@ func TestDownloadDocumentWithMetadata(t *testing.T) {
 	mux.HandleFunc("/api/documents/5/download/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 		w.Header().Set("Content-Disposition", `attachment; filename="ledger.csv"`)
-		w.Write([]byte("a,b\n1,2\n"))
+		_, _ = w.Write([]byte("a,b\n1,2\n"))
 	})
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
@@ -312,7 +312,7 @@ func TestDownloadDocument_SlowBodyDoesNotUseWholeRequestTimeout(t *testing.T) {
 			flusher.Flush()
 		}
 		time.Sleep(50 * time.Millisecond)
-		w.Write([]byte("slow body"))
+		_, _ = w.Write([]byte("slow body"))
 	})
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
@@ -333,7 +333,7 @@ func TestDownloadDocument_SlowBodyDoesNotUseWholeRequestTimeout(t *testing.T) {
 func TestListTags(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/tags/", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(listResponse[Tag]{
+		_ = json.NewEncoder(w).Encode(listResponse[Tag]{
 			Results: []Tag{{ID: 1, Name: "invoice", Slug: "invoice"}},
 		})
 	})
@@ -353,7 +353,7 @@ func TestListTags(t *testing.T) {
 func TestListCorrespondents(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/correspondents/", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(listResponse[Correspondent]{
+		_ = json.NewEncoder(w).Encode(listResponse[Correspondent]{
 			Results: []Correspondent{{ID: 1, Name: "Acme Corp"}},
 		})
 	})
@@ -373,7 +373,7 @@ func TestListCorrespondents(t *testing.T) {
 func TestListDocumentTypes(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/document_types/", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(listResponse[DocumentType]{
+		_ = json.NewEncoder(w).Encode(listResponse[DocumentType]{
 			Results: []DocumentType{{ID: 1, Name: "Invoice"}},
 		})
 	})
@@ -393,7 +393,7 @@ func TestListDocumentTypes(t *testing.T) {
 func TestListStoragePaths(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/storage_paths/", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(listResponse[StoragePath]{
+		_ = json.NewEncoder(w).Encode(listResponse[StoragePath]{
 			Results: []StoragePath{{ID: 11, Name: "Finance/Invoices"}},
 		})
 	})
@@ -413,7 +413,7 @@ func TestListStoragePaths(t *testing.T) {
 func TestListDocuments_RealAPIShape(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/documents/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"count": 1,
 			"results": [{
 				"id": 1,
@@ -487,7 +487,7 @@ func TestListDocuments_RealAPIShape(t *testing.T) {
 func TestListDocuments_EmbeddedRefShape(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/documents/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"count": 1,
 			"results": [{
 				"id": 1,
@@ -527,7 +527,7 @@ func TestListDocuments_EmbeddedRefShape(t *testing.T) {
 func TestClient_ErrorStatus(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("unauthorized"))
+		_, _ = w.Write([]byte("unauthorized"))
 	}))
 	defer srv.Close()
 
@@ -543,7 +543,7 @@ func TestClient_ErrorStatus_TruncatesSingleLineBody(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusBadGateway)
-		w.Write([]byte(largeHTML))
+		_, _ = w.Write([]byte(largeHTML))
 	}))
 	defer srv.Close()
 

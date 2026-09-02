@@ -329,22 +329,3 @@ func reembedDocumentSections(dbClient db.Store, embedder Embedder, source string
 	return commitIndex(dbClient, source, chunks, doc, existing, "")
 }
 
-// reembedDocument forces a rebuild of a document's chunks regardless of its
-// stored hash, replacing any pending placeholders with real embeddings.
-func reembedDocument(dbClient db.Store, embedder Embedder, source, content string) error {
-	hashSum := sha256.Sum256([]byte(content))
-	currentHash := hex.EncodeToString(hashSum[:])
-
-	existing, err := dbClient.GetDocument(source)
-	if err != nil {
-		return fmt.Errorf("failed to check existing document: %w", err)
-	}
-
-	chunks := buildChunks(embedder, source, content)
-	doc := &db.Document{
-		Path:      source,
-		Hash:      currentHash,
-		UpdatedAt: time.Now(),
-	}
-	return commitIndex(dbClient, source, chunks, doc, existing, "")
-}

@@ -81,7 +81,7 @@ func (a *zipArchive) readPart(name string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open part %q: %w", name, err)
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 	// Read one byte past the cap so an overrun errors instead of truncating.
 	data, err := io.ReadAll(io.LimitReader(rc, maxZipEntryBytes+1))
 	if err != nil {

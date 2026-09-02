@@ -3,19 +3,10 @@ package service
 import (
 	"fmt"
 	"path/filepath"
-	"regexp"
-	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/contacts"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
-
-const (
-	transcriptStartMarker = "<!-- symmeet-transcript:start -->"
-	transcriptEndMarker   = "<!-- symmeet-transcript:end -->"
-)
-
-var meetingIDUnsafeChars = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 
 // MeetingParticipant is one reviewed participant entry in a meeting note's
 // frontmatter. EntityID is left empty on import; it is populated only by
@@ -54,35 +45,6 @@ type meetingFrontmatter struct {
 	Participants  []MeetingParticipant   `yaml:"participants,omitempty"`
 	SymmeetSource MeetingSourceInfo      `yaml:"symmeet_source"`
 	Extras        map[string]interface{} `yaml:",inline"`
-}
-
-func wrapTranscript(transcript string) string {
-	return transcriptStartMarker + "\n" + strings.TrimRight(transcript, "\n") + "\n" + transcriptEndMarker + "\n"
-}
-
-// findTranscriptMarkers returns the byte span of the content strictly
-// between the transcript markers. Refresh refuses to proceed when the
-// markers are missing rather than guessing where the transcript is, so a
-// manually restructured note is never silently clobbered.
-func findTranscriptMarkers(body string) (start, end int, err error) {
-	startIdx := strings.Index(body, transcriptStartMarker)
-	if startIdx == -1 {
-		return 0, 0, fmt.Errorf("missing %s marker", transcriptStartMarker)
-	}
-	contentStart := startIdx + len(transcriptStartMarker)
-	endIdx := strings.Index(body[contentStart:], transcriptEndMarker)
-	if endIdx == -1 {
-		return 0, 0, fmt.Errorf("missing %s marker", transcriptEndMarker)
-	}
-	return contentStart, contentStart + endIdx, nil
-}
-
-// meetingNotePath returns the vault-relative path a meeting note is
-// imported to for a given meeting ID. Import and refresh both derive the
-// path this way so re-importing the same meeting updates the same note.
-func meetingNotePath(meetingID string) string {
-	safe := meetingIDUnsafeChars.ReplaceAllString(meetingID, "_")
-	return filepath.Join("meetings", "meeting-"+safe+".md")
 }
 
 // MeetingNoteSummary is one entry returned by MeetingList.
@@ -200,12 +162,3 @@ type MeetingRefreshResult struct {
 	Applied   bool     `json:"applied"`
 }
 
-// maxDiffCells bounds the O(n*m) line-diff table so a pathologically large
-// transcript cannot exhaust memory; beyond it, MeetingRefresh still reports
-// whether the transcript changed, just without a line-level diff.
-const maxDiffCells = 4_000_000
-
-// diffLines returns a minimal unified-style line diff between old and new,
-// prefixing unchanged lines with "  ", removed lines with "- " and added
-// lines with "+ ". It is intended for moderate-length meeting transcripts;
-// callers should bound its O(n*m) table for very large inputs.

@@ -122,7 +122,7 @@ func (s *Service) ListOutgoingFromPerson(ctx context.Context, personID string) (
 	if err != nil {
 		return nil, errs.Internal(op, "failed to list relationships", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanRelationships(rows)
 }
 
@@ -136,7 +136,7 @@ func (s *Service) ListIncomingToPerson(ctx context.Context, personID string) ([]
 	if err != nil {
 		return nil, errs.Internal(op, "failed to list relationships", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanRelationships(rows)
 }
 
@@ -150,7 +150,7 @@ func (s *Service) ListIncomingToOrganization(ctx context.Context, organizationID
 	if err != nil {
 		return nil, errs.Internal(op, "failed to list relationships", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanRelationships(rows)
 }
 

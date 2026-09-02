@@ -132,7 +132,7 @@ func TestMaterialize(t *testing.T) {
 			if err != nil {
 				t.Fatalf("reading embedded %s: %v", name, err)
 			}
-			got, err := os.ReadFile(filepath.Join(dir, filepath.Base(name)))
+			got, err := os.ReadFile(filepath.Join(dir, filepath.Base(name))) //nolint:gosec // test path is created under t.TempDir
 			if err != nil {
 				t.Fatalf("materialized template %s missing: %v", filepath.Base(name), err)
 			}
@@ -172,7 +172,7 @@ func TestMaterializeFonts(t *testing.T) {
 			if err != nil {
 				t.Fatalf("reading embedded %s: %v", name, err)
 			}
-			got, err := os.ReadFile(filepath.Join(dir, filepath.Base(name)))
+			got, err := os.ReadFile(filepath.Join(dir, filepath.Base(name))) //nolint:gosec // test path is created under t.TempDir
 			if err != nil {
 				t.Fatalf("materialized font %s missing: %v", filepath.Base(name), err)
 			}
@@ -197,7 +197,7 @@ func TestMaterializePackagesErrors(t *testing.T) {
 			name: "target nested under a regular file",
 			target: func(t *testing.T) string {
 				blocker := filepath.Join(t.TempDir(), "blocker")
-				if err := os.WriteFile(blocker, []byte("x"), 0o644); err != nil {
+				if err := os.WriteFile(blocker, []byte("x"), 0o600); err != nil {
 					t.Fatalf("creating blocker file: %v", err)
 				}
 				return filepath.Join(blocker, "out")
@@ -208,11 +208,13 @@ func TestMaterializePackagesErrors(t *testing.T) {
 			skipAsRoot: true,
 			target: func(t *testing.T) string {
 				dir := t.TempDir()
-				if err := os.Chmod(dir, 0o555); err != nil {
+				//nolint:gosec // this test deliberately removes write permission
+				if err := os.Chmod(dir, 0o500); err != nil {
 					t.Fatalf("chmod target dir: %v", err)
 				}
 				t.Cleanup(func() {
-					if err := os.Chmod(dir, 0o755); err != nil {
+					//nolint:gosec // this test restores the deliberately restricted directory
+					if err := os.Chmod(dir, 0o700); err != nil {
 						t.Errorf("restoring target dir permissions: %v", err)
 					}
 				})
@@ -274,7 +276,7 @@ func TestMaterializeErrors(t *testing.T) {
 	} {
 		t.Run(materialize.name+"/mkdir", func(t *testing.T) {
 			blocker := filepath.Join(t.TempDir(), "file")
-			if err := os.WriteFile(blocker, []byte("blocker"), 0o644); err != nil {
+			if err := os.WriteFile(blocker, []byte("blocker"), 0o600); err != nil {
 				t.Fatal(err)
 			}
 			if err := materialize.fn(filepath.Join(blocker, "nested")); err == nil {
@@ -288,7 +290,7 @@ func TestMaterializeErrors(t *testing.T) {
 			if materialize.name == "fonts" {
 				file = "Inter-Regular.ttf"
 			}
-			if err := os.Mkdir(filepath.Join(dir, file), 0o755); err != nil {
+			if err := os.Mkdir(filepath.Join(dir, file), 0o700); err != nil {
 				t.Fatal(err)
 			}
 			if err := materialize.fn(dir); err == nil {

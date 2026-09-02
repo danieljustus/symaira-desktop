@@ -41,7 +41,7 @@ func Context(ctx context.Context, entityID string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, DefaultTimeout)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, binPath, "entity", "show", entityID, "--output", "json").Output()
+	out, err := exec.CommandContext(ctx, binPath, "entity", "show", entityID, "--output", "json").Output() //nolint:gosec // binPath is resolved by exec.LookPath
 	if err != nil {
 		return "", ErrUnavailable
 	}

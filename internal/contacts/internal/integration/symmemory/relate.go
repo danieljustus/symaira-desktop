@@ -84,7 +84,7 @@ func Relate(ctx context.Context, in RelateInput) (*Relation, error) {
 	ctx, cancel := context.WithTimeout(ctx, DefaultTimeout)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, binPath, args...).Output()
+	out, err := exec.CommandContext(ctx, binPath, args...).Output() //nolint:gosec // binPath is resolved by exec.LookPath and args are constructed locally
 	if err != nil {
 		return nil, ErrUnavailable
 	}
@@ -112,7 +112,7 @@ func Unrelate(ctx context.Context, relationID string) (*Relation, error) {
 	ctx, cancel := context.WithTimeout(ctx, DefaultTimeout)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, binPath, "entity", "unrelate", "--relation-id", relationID, "--output", "json").Output()
+	out, err := exec.CommandContext(ctx, binPath, "entity", "unrelate", "--relation-id", relationID, "--output", "json").Output() //nolint:gosec // binPath is resolved by exec.LookPath
 	if err != nil {
 		return nil, ErrUnavailable
 	}

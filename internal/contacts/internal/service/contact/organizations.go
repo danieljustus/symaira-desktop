@@ -92,7 +92,7 @@ func (s *Service) ListOrganizations(ctx context.Context, opts ListOrganizationsO
 	if err != nil {
 		return page.Result[contact.Organization]{}, errs.Internal(op, "failed to list organizations", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []contact.Organization
 	for rows.Next() {
@@ -130,7 +130,7 @@ func (s *Service) UpdateOrganization(ctx context.Context, id string, upd contact
 	}
 	args = append(args, id)
 
-	res, err := s.db.ExecContext(ctx, "UPDATE organizations SET "+strings.Join(sets, ", ")+" WHERE id = ?", args...)
+	res, err := s.db.ExecContext(ctx, "UPDATE organizations SET "+strings.Join(sets, ", ")+" WHERE id = ?", args...) //nolint:gosec // sets contain only fixed SQL fragments and placeholders
 	if err != nil {
 		return nil, errs.Internal(op, "failed to update organization", err)
 	}

@@ -123,7 +123,7 @@ func copyAsset(srcRoot, srcDir, dst, ref string) error {
 	}
 
 	dstPath := filepath.Join(dst, clean)
-	if err := os.MkdirAll(filepath.Dir(dstPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dstPath), 0o700); err != nil {
 		return &RenderError{Stage: "write", Message: "could not create asset directory in work dir", Err: err}
 	}
 	if err := copyFile(resolved, dstPath); err != nil {
@@ -133,13 +133,13 @@ func copyAsset(srcRoot, srcDir, dst, ref string) error {
 }
 
 func copyFile(src, dst string) error {
-	in, err := os.Open(src)
+	in, err := os.Open(src) //nolint:gosec // src is resolved and contained by copyAsset before this call
 	if err != nil {
 		return err
 	}
 	defer func() { _ = in.Close() }()
 
-	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) //nolint:gosec // dst is derived from the contained work directory
 	if err != nil {
 		return err
 	}

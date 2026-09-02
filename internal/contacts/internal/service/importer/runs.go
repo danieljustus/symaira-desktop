@@ -27,7 +27,7 @@ func (s *Service) ListRuns(ctx context.Context) ([]Run, error) {
 	if err != nil {
 		return nil, errs.Internal(op, "failed to list import runs", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []Run
 	for rows.Next() {

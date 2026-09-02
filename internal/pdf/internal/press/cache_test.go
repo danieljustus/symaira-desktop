@@ -74,7 +74,7 @@ func TestAssetsCacheReuseAndPersistence(t *testing.T) {
 	// A sentinel file planted after the first materialization survives only
 	// if the directory is reused as-is.
 	sentinel := filepath.Join(dir1, "templates", "sentinel.txt")
-	if err := os.WriteFile(sentinel, []byte("persisted"), 0o644); err != nil {
+	if err := os.WriteFile(sentinel, []byte("persisted"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	dir3, err := initializePersistentAssetsCache()
@@ -129,7 +129,7 @@ func TestAssetsCacheVersioningAndStaleReplacement(t *testing.T) {
 	// cache generation: it must be left untouched.
 	otherDir := filepath.Join(filepath.Dir(realDir), "assets-v1-deadbeefcafef00d")
 	writeTestFile(t, filepath.Join(otherDir, "templates", "other.typ"), []byte("other"))
-	if err := os.WriteFile(filepath.Join(otherDir, assetsCompleteMarker), []byte("x"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(otherDir, assetsCompleteMarker), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if otherDir == realDir {
@@ -315,7 +315,7 @@ func TestMaterializeAssetsFailsWhenFontsPathBlocked(t *testing.T) {
 	// Templates materialize fine; a regular file at <dir>/fonts makes
 	// assets.MaterializeFonts fail, exercising the second error branch.
 	dir := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(dir, "templates"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, "templates"), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	blockPathWithFile(t, filepath.Join(dir, "fonts"))
@@ -330,10 +330,10 @@ func TestMaterializeAssetsFailsWhenPackagesPathBlocked(t *testing.T) {
 	// makes assets.MaterializePackages fail, exercising the third error
 	// branch.
 	dir := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(dir, "templates"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, "templates"), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(filepath.Join(dir, "fonts"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, "fonts"), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	blockPathWithFile(t, filepath.Join(dir, "packages"))
@@ -355,12 +355,12 @@ func TestAssetsCacheFailureIsCached(t *testing.T) {
 	// os.MkdirTemp and would fail afterwards.
 	missingTmp := filepath.Join(t.TempDir(), "does-not-exist")
 	origTmp, hadTmp := os.LookupEnv("TMPDIR")
-	os.Setenv("TMPDIR", missingTmp)
+	_ = os.Setenv("TMPDIR", missingTmp)
 	t.Cleanup(func() {
 		if hadTmp {
-			os.Setenv("TMPDIR", origTmp)
+			_ = os.Setenv("TMPDIR", origTmp)
 		} else {
-			os.Unsetenv("TMPDIR")
+			_ = os.Unsetenv("TMPDIR")
 		}
 	})
 

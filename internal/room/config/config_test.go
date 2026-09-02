@@ -71,11 +71,11 @@ func TestInvalidTOML(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", tempDir)
 
 	symroomDir := filepath.Join(tempDir, ".config", "symroom")
-	if err := os.MkdirAll(symroomDir, 0755); err != nil {
+	if err := os.MkdirAll(symroomDir, 0700); err != nil {
 		t.Fatalf("failed to create dir: %v", err)
 	}
 	invalidFile := filepath.Join(symroomDir, "config.toml")
-	if err := os.WriteFile(invalidFile, []byte("[approval]\ndefault_ttl = [invalid toml syntax"), 0644); err != nil {
+	if err := os.WriteFile(invalidFile, []byte("[approval]\ndefault_ttl = [invalid toml syntax"), 0600); err != nil {
 		t.Fatalf("failed to write invalid toml: %v", err)
 	}
 
@@ -112,7 +112,7 @@ func TestTOMLFileApplied(t *testing.T) {
 	t.Setenv("HOME", tempDir)
 
 	cfgDir := filepath.Join(tempDir, ".config", "symroom")
-	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
+	if err := os.MkdirAll(cfgDir, 0o700); err != nil {
 		t.Fatalf("mkdir config dir: %v", err)
 	}
 	tomlContent := `default_identity = "agent-file"
@@ -120,7 +120,7 @@ func TestTOMLFileApplied(t *testing.T) {
 [approval]
 default_ttl = "45m"
 `
-	if err := os.WriteFile(filepath.Join(cfgDir, "config.toml"), []byte(tomlContent), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(cfgDir, "config.toml"), []byte(tomlContent), 0o600); err != nil {
 		t.Fatalf("write config.toml: %v", err)
 	}
 
@@ -149,13 +149,13 @@ func TestTOMLFalseValueIgnored(t *testing.T) {
 	t.Setenv("HOME", tempDir)
 
 	cfgDir := filepath.Join(tempDir, ".config", "symroom")
-	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
+	if err := os.MkdirAll(cfgDir, 0o700); err != nil {
 		t.Fatalf("mkdir config dir: %v", err)
 	}
 	tomlContent := `[updatecheck]
 enabled = false
 `
-	if err := os.WriteFile(filepath.Join(cfgDir, "config.toml"), []byte(tomlContent), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(cfgDir, "config.toml"), []byte(tomlContent), 0o600); err != nil {
 		t.Fatalf("write config.toml: %v", err)
 	}
 
@@ -192,7 +192,7 @@ func TestTOMLWithAdaptersReturnsError(t *testing.T) {
 	t.Setenv("HOME", tempDir)
 
 	cfgDir := filepath.Join(tempDir, ".config", "symroom")
-	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
+	if err := os.MkdirAll(cfgDir, 0o700); err != nil {
 		t.Fatalf("mkdir config dir: %v", err)
 	}
 	tomlContent := `default_identity = "agent-file"
@@ -201,7 +201,7 @@ func TestTOMLWithAdaptersReturnsError(t *testing.T) {
 command = ["echo", "hi"]
 workdir = "/tmp"
 `
-	if err := os.WriteFile(filepath.Join(cfgDir, "config.toml"), []byte(tomlContent), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(cfgDir, "config.toml"), []byte(tomlContent), 0o600); err != nil {
 		t.Fatalf("write config.toml: %v", err)
 	}
 
@@ -228,7 +228,7 @@ func TestLoadOrExit(t *testing.T) {
 
 	runHelper := func(t *testing.T, home string) (string, int) {
 		t.Helper()
-		cmd := exec.Command(os.Args[0], "-test.run=^TestLoadOrExit$")
+		cmd := exec.Command(os.Args[0], "-test.run=^TestLoadOrExit$") //nolint:gosec // reruns this test binary with a fixed test selector
 		var env []string
 		for _, kv := range os.Environ() {
 			if strings.HasPrefix(kv, "SYMROOM_") {
@@ -254,10 +254,10 @@ func TestLoadOrExit(t *testing.T) {
 	t.Run("invalid config exits with ExitNoInput", func(t *testing.T) {
 		home := t.TempDir()
 		cfgDir := filepath.Join(home, ".config", "symroom")
-		if err := os.MkdirAll(cfgDir, 0o755); err != nil {
+		if err := os.MkdirAll(cfgDir, 0o700); err != nil {
 			t.Fatalf("mkdir config dir: %v", err)
 		}
-		if err := os.WriteFile(filepath.Join(cfgDir, "config.toml"), []byte("[approval]\ndefault_ttl = [broken"), 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(cfgDir, "config.toml"), []byte("[approval]\ndefault_ttl = [broken"), 0o600); err != nil {
 			t.Fatalf("write config.toml: %v", err)
 		}
 

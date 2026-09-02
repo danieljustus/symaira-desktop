@@ -25,7 +25,7 @@ func New(dbPath string) *Indexer {
 func (idx *Indexer) Rebuild(j *journal.Journal) error {
 	_ = os.Remove(idx.DBPath)
 
-	if err := os.MkdirAll(filepath.Dir(idx.DBPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(idx.DBPath), 0700); err != nil {
 		return fmt.Errorf("mkdir db dir: %w", err)
 	}
 

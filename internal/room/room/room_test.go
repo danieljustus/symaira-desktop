@@ -41,7 +41,7 @@ func TestInitRoom(t *testing.T) {
 
 	// Verify .gitignore excludes .symroom/
 	gitIgnorePath := filepath.Join(roomDir, ".gitignore")
-	data, err := os.ReadFile(gitIgnorePath)
+	data, err := os.ReadFile(gitIgnorePath) //nolint:gosec // path is a test fixture under t.TempDir
 	if err != nil {
 		t.Fatalf("failed to read .gitignore: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestInitRoom(t *testing.T) {
 
 	// Verify journal/<owner-id>.jsonl exists and room.created verifies against root_pubkey
 	journalPath := filepath.Join(roomDir, "journal", id.MemberID+".jsonl")
-	jData, err := os.ReadFile(journalPath)
+	jData, err := os.ReadFile(journalPath) //nolint:gosec // path is a test fixture under t.TempDir
 	if err != nil {
 		t.Fatalf("failed to read journal file: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestInitRoomNameSpecialCharsRoundTrip(t *testing.T) {
 
 	// The room name itself round-trips exactly through the room.created event body.
 	journalPath := filepath.Join(roomDir, "journal", id.MemberID+".jsonl")
-	jData, err := os.ReadFile(journalPath)
+	jData, err := os.ReadFile(journalPath) //nolint:gosec // path is a test fixture under t.TempDir
 	if err != nil {
 		t.Fatalf("failed to read journal file: %v", err)
 	}
@@ -167,10 +167,10 @@ func TestInitRefusesNonEmptyDir(t *testing.T) {
 	}
 
 	roomDir := filepath.Join(tempDir, "existing-room")
-	if err := os.MkdirAll(roomDir, 0755); err != nil {
+	if err := os.MkdirAll(roomDir, 0700); err != nil {
 		t.Fatalf("failed to mkdir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(roomDir, "some-file.txt"), []byte("data"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(roomDir, "some-file.txt"), []byte("data"), 0600); err != nil {
 		t.Fatalf("failed to write dummy file: %v", err)
 	}
 

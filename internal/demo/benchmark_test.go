@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
-	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
 // BenchmarkLargeVaultIndexAndSearch is intentionally opt-in: the 10k fixture
@@ -21,13 +20,7 @@ func BenchmarkLargeVaultIndexAndSearch(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		if err := vault.Walk(vaultDir, func(path string) error {
-			doc, err := vault.ParseFile(path)
-			if err != nil {
-				return err
-			}
-			return db.IndexDocument(doc)
-		}); err != nil {
+		if err := db.RefreshIndex(vaultDir); err != nil {
 			_ = db.Close()
 			b.Fatal(err)
 		}

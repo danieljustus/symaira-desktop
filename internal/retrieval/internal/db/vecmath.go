@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"encoding/binary"
 	"math"
 	"math/bits"
 )
@@ -9,11 +10,7 @@ import (
 func Float32SliceToBytes(slice []float32) []byte {
 	buf := make([]byte, len(slice)*4)
 	for i, f := range slice {
-		bits := math.Float32bits(f)
-		buf[i*4] = byte(bits)
-		buf[i*4+1] = byte(bits >> 8)
-		buf[i*4+2] = byte(bits >> 16)
-		buf[i*4+3] = byte(bits >> 24)
+		binary.LittleEndian.PutUint32(buf[i*4:], math.Float32bits(f))
 	}
 	return buf
 }
@@ -127,15 +124,7 @@ func SignBinarySignature(vec []float32) []byte {
 	// Encode as little-endian uint64 words.
 	buf := make([]byte, nWords*8)
 	for i, w := range words {
-		off := i * 8
-		buf[off] = byte(w)
-		buf[off+1] = byte(w >> 8)
-		buf[off+2] = byte(w >> 16)
-		buf[off+3] = byte(w >> 24)
-		buf[off+4] = byte(w >> 32)
-		buf[off+5] = byte(w >> 40)
-		buf[off+6] = byte(w >> 48)
-		buf[off+7] = byte(w >> 56)
+		binary.LittleEndian.PutUint64(buf[i*8:], w)
 	}
 	return buf
 }

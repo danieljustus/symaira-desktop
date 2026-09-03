@@ -67,7 +67,7 @@ func TestDatabaseOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	t.Setenv("HOME", tempDir)
 
@@ -75,7 +75,7 @@ func TestDatabaseOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open test database: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// Test SaveDocument
 	docPath := filepath.Join(tempDir, "test.md")
@@ -321,7 +321,7 @@ func (db *DB) searchVectorTwoPass(queryVec []float32, candidateIDs []int64, limi
 			var embBytes []byte
 			var discard float32 // SQL still selects norm; scan it to keep column alignment
 			if err := rows.Scan(&id, &embBytes, &discard); err != nil {
-				rows.Close()
+				_ = rows.Close()
 				return nil, err
 			}
 
@@ -337,7 +337,7 @@ func (db *DB) searchVectorTwoPass(queryVec []float32, candidateIDs []int64, limi
 
 			topK = insertSorted(topK, &scoredEntry{id: id, score: score}, limit)
 		}
-		rows.Close()
+		_ = rows.Close()
 
 		if batchCount < vectorBatchSize {
 			break
@@ -362,6 +362,7 @@ func (db *DB) searchVectorTwoPass(queryVec []float32, candidateIDs []int64, limi
 	for i := range placeholders {
 		placeholders[i] = "?"
 	}
+	// #nosec G201 -- only generated placeholders are interpolated; values stay bound.
 	query := fmt.Sprintf(
 		"SELECT id, uuid, document_path, chunk_index, content, embedding, hash FROM chunks WHERE id IN (%s)",
 		strings.Join(placeholders, ","),
@@ -371,7 +372,7 @@ func (db *DB) searchVectorTwoPass(queryVec []float32, candidateIDs []int64, limi
 	if err != nil {
 		return nil, err
 	}
-	defer detailRows.Close()
+	defer func() { _ = detailRows.Close() }()
 
 	unsortedResults := make([]*SearchResult, 0, len(topK))
 	for detailRows.Next() {
@@ -405,14 +406,14 @@ func TestChunkDimModelMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 	t.Setenv("HOME", tempDir)
 
 	db, err := Open()
 	if err != nil {
 		t.Fatalf("failed to open test database: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	docPath := filepath.Join(tempDir, "dimtest.md")
 	doc := &Document{Path: docPath, Hash: "dimhash", UpdatedAt: time.Now()}

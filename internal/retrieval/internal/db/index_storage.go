@@ -26,26 +26,59 @@ func (vi *VectorIndex) Serialize(generation int64) ([]byte, error) {
 		totalSize += 4 + len(ids)*8
 	}
 
+	generationValue, err := checkedUint64("generation", generation)
+	if err != nil {
+		return nil, err
+	}
+	dimValue, err := checkedUint32("dimension", vi.dim)
+	if err != nil {
+		return nil, err
+	}
+	kValue, err := checkedUint32("cluster count", vi.k)
+	if err != nil {
+		return nil, err
+	}
+	nprobeValue, err := checkedUint32("probe count", vi.nprobe)
+	if err != nil {
+		return nil, err
+	}
+	totalNValue, err := checkedUint32("total chunk count", vi.totalN)
+	if err != nil {
+		return nil, err
+	}
+	baseTotalNValue, err := checkedUint32("base chunk count", vi.baseTotalN)
+	if err != nil {
+		return nil, err
+	}
+	churnAddedValue, err := checkedUint32("added chunk count", vi.churnAdded)
+	if err != nil {
+		return nil, err
+	}
+	churnDeletedValue, err := checkedUint32("deleted chunk count", vi.churnDeleted)
+	if err != nil {
+		return nil, err
+	}
+
 	buf := make([]byte, totalSize)
 	off := 0
 
 	buf[off] = indexStorageVersion
 	off++
-	binary.LittleEndian.PutUint64(buf[off:], uint64(generation))
+	binary.LittleEndian.PutUint64(buf[off:], generationValue)
 	off += 8
-	binary.LittleEndian.PutUint32(buf[off:], uint32(vi.dim))
+	binary.LittleEndian.PutUint32(buf[off:], dimValue)
 	off += 4
-	binary.LittleEndian.PutUint32(buf[off:], uint32(vi.k))
+	binary.LittleEndian.PutUint32(buf[off:], kValue)
 	off += 4
-	binary.LittleEndian.PutUint32(buf[off:], uint32(vi.nprobe))
+	binary.LittleEndian.PutUint32(buf[off:], nprobeValue)
 	off += 4
-	binary.LittleEndian.PutUint32(buf[off:], uint32(vi.totalN))
+	binary.LittleEndian.PutUint32(buf[off:], totalNValue)
 	off += 4
-	binary.LittleEndian.PutUint32(buf[off:], uint32(vi.baseTotalN))
+	binary.LittleEndian.PutUint32(buf[off:], baseTotalNValue)
 	off += 4
-	binary.LittleEndian.PutUint32(buf[off:], uint32(vi.churnAdded))
+	binary.LittleEndian.PutUint32(buf[off:], churnAddedValue)
 	off += 4
-	binary.LittleEndian.PutUint32(buf[off:], uint32(vi.churnDeleted))
+	binary.LittleEndian.PutUint32(buf[off:], churnDeletedValue)
 	off += 4
 
 	for _, cent := range vi.centroids {
@@ -56,15 +89,37 @@ func (vi *VectorIndex) Serialize(generation int64) ([]byte, error) {
 	}
 
 	for _, ids := range vi.inverted {
-		binary.LittleEndian.PutUint32(buf[off:], uint32(len(ids)))
+		bucketSize, err := checkedUint32("bucket size", len(ids))
+		if err != nil {
+			return nil, err
+		}
+		binary.LittleEndian.PutUint32(buf[off:], bucketSize)
 		off += 4
 		for _, id := range ids {
-			binary.LittleEndian.PutUint64(buf[off:], uint64(id))
+			idValue, err := checkedUint64("chunk ID", id)
+			if err != nil {
+				return nil, err
+			}
+			binary.LittleEndian.PutUint64(buf[off:], idValue)
 			off += 8
 		}
 	}
 
 	return buf, nil
+}
+
+func checkedUint32(name string, value int) (uint32, error) {
+	if value < 0 || uint64(value) > uint64(^uint32(0)) {
+		return 0, fmt.Errorf("%s does not fit in uint32: %d", name, value)
+	}
+	return uint32(value), nil // #nosec G115 -- range checked above.
+}
+
+func checkedUint64(name string, value int64) (uint64, error) {
+	if value < 0 {
+		return 0, fmt.Errorf("%s must be non-negative: %d", name, value)
+	}
+	return uint64(value), nil // #nosec G115 -- non-negative value checked above.
 }
 
 // DeserializeIndex unpacks a binary IVF index snapshot.  It returns the index
@@ -81,7 +136,11 @@ func DeserializeIndex(data []byte) (*VectorIndex, int64, error) {
 		return nil, 0, fmt.Errorf("unsupported index storage version: %d", version)
 	}
 
-	generation := int64(binary.LittleEndian.Uint64(data[off:]))
+	generationRaw := binary.LittleEndian.Uint64(data[off:])
+	if generationRaw > uint64(1<<63-1) {
+		return nil, 0, fmt.Errorf("index generation overflows int64: %d", generationRaw)
+	}
+	generation := int64(generationRaw) // #nosec G115 -- range checked above.
 	off += 8
 	dim := int(binary.LittleEndian.Uint32(data[off:]))
 	off += 4
@@ -126,7 +185,11 @@ func DeserializeIndex(data []byte) (*VectorIndex, int64, error) {
 		}
 		ids := make([]int64, n)
 		for j := 0; j < n; j++ {
-			ids[j] = int64(binary.LittleEndian.Uint64(data[off:]))
+			idRaw := binary.LittleEndian.Uint64(data[off:])
+			if idRaw > uint64(1<<63-1) {
+				return nil, 0, fmt.Errorf("chunk ID overflows int64: %d", idRaw)
+			}
+			ids[j] = int64(idRaw) // #nosec G115 -- range checked above.
 			off += 8
 		}
 		inverted[i] = ids

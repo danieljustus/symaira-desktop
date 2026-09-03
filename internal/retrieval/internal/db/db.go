@@ -206,8 +206,13 @@ func OpenAt(dbPath string) (*DB, error) {
 		return nil, fmt.Errorf("failed to create database directory: %w", err)
 	}
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		if f, err := os.OpenFile(dbPath, os.O_CREATE|os.O_RDWR, 0600); err == nil {
-			f.Close()
+		// #nosec G304 -- dbPath is normalized and its parent directory is created above.
+		f, err := os.OpenFile(dbPath, os.O_CREATE|os.O_RDWR, 0600)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create database file: %w", err)
+		}
+		if err := f.Close(); err != nil {
+			return nil, fmt.Errorf("failed to close database file: %w", err)
 		}
 	}
 	conn, err := sqlitekit.Open(dbPath)

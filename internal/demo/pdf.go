@@ -42,17 +42,17 @@ func generatePDF(title string, lines []string) []byte {
 	// Cross-reference table
 	xrefStart := b.Len()
 	b.WriteString("xref\n")
-	b.WriteString(fmt.Sprintf("0 %d\n", len(offsets)+1))
+	_, _ = fmt.Fprintf(&b, "0 %d\n", len(offsets)+1)
 	b.WriteString("0000000000 65535 f \n")
 	for _, off := range offsets {
-		b.WriteString(fmt.Sprintf("%010d 00000 n \n", off))
+		_, _ = fmt.Fprintf(&b, "%010d 00000 n \n", off)
 	}
 
 	// Trailer
 	b.WriteString("trailer\n")
-	b.WriteString(fmt.Sprintf("<< /Size %d /Root 1 0 R >>\n", len(offsets)+1))
+	_, _ = fmt.Fprintf(&b, "<< /Size %d /Root 1 0 R >>\n", len(offsets)+1)
 	b.WriteString("startxref\n")
-	b.WriteString(fmt.Sprintf("%d\n", xrefStart))
+	_, _ = fmt.Fprintf(&b, "%d\n", xrefStart)
 	b.WriteString("%%EOF\n")
 
 	return []byte(b.String())

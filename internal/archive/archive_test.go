@@ -63,7 +63,7 @@ func TestHasTextLayer(t *testing.T) {
 	// Create a minimal PDF with text operators
 	pdfWithText := filepath.Join(dir, "with_text.pdf")
 	content := "%PDF-1.4\n1 0 obj\n<< /Type /Page /Parent 2 0 R /Contents 3 0 R >>\nendobj\n3 0 obj\n<< >>\nstream\nBT\n/F1 12 Tf\n(Hello) Tj\nET\nendstream\nendobj\n"
-	if err := os.WriteFile(pdfWithText, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(pdfWithText, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 	if !HasTextLayer(pdfWithText) {
@@ -73,7 +73,7 @@ func TestHasTextLayer(t *testing.T) {
 	// Create a minimal PDF without text operators
 	pdfNoText := filepath.Join(dir, "no_text.pdf")
 	content2 := "%PDF-1.4\n1 0 obj\n<< /Type /Page >>\nendobj\n"
-	if err := os.WriteFile(pdfNoText, []byte(content2), 0644); err != nil {
+	if err := os.WriteFile(pdfNoText, []byte(content2), 0600); err != nil {
 		t.Fatal(err)
 	}
 	if HasTextLayer(pdfNoText) {
@@ -90,7 +90,7 @@ func TestOCRTextFromFile(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "ocr.txt")
 	content := "Hello World\nThis is OCR text"
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 	text, err := OCRTextFromFile(path)

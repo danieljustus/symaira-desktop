@@ -10,7 +10,7 @@ import (
 func writeMockTool(t *testing.T, dir, name, script string) {
 	t.Helper()
 	path := filepath.Join(dir, name)
-	if err := os.WriteFile(path, []byte(script), 0755); err != nil {
+	if err := os.WriteFile(path, []byte(script), 0755); err != nil { //nolint:gosec // G306: test fixture must be executable.
 		t.Fatal(err)
 	}
 }
@@ -18,8 +18,7 @@ func writeMockTool(t *testing.T, dir, name, script string) {
 func withMockPath(t *testing.T, dir string) {
 	t.Helper()
 	old := os.Getenv("PATH")
-	os.Setenv("PATH", dir+string(os.PathListSeparator)+old)
-	t.Cleanup(func() { os.Setenv("PATH", old) })
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+old)
 	// Isolate $HOME and $SYMAIRA_BIN so a real managed-runtime directory on
 	// the machine running this test (~/.symaira/bin) can never shadow the
 	// PATH-based mock tool these tests set up.
@@ -51,7 +50,7 @@ fi
 		t.Fatalf("expected cached result available=true version=1.2.3, got %v/%s", ok2, ver2)
 	}
 
-	data, err := os.ReadFile(calls)
+	data, err := os.ReadFile(calls) //nolint:gosec // G304: calls is a test fixture under t.TempDir.
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,16 +142,16 @@ fi
 		t.Errorf("unexpected entities: %+v", entities)
 	}
 
-	os.Setenv("SYMMEMORY_MODE", "fail")
+	t.Setenv("SYMMEMORY_MODE", "fail")
 	if _, err := ListEntities(); err == nil || !strings.Contains(err.Error(), "symmemory entity list failed") {
 		t.Errorf("expected wrapped command failure, got %v", err)
 	}
 
-	os.Setenv("SYMMEMORY_MODE", "badjson")
+	t.Setenv("SYMMEMORY_MODE", "badjson")
 	if _, err := ListEntities(); err == nil || !strings.Contains(err.Error(), "unmarshal") {
 		t.Errorf("expected wrapped unmarshal failure, got %v", err)
 	}
-	os.Unsetenv("SYMMEMORY_MODE")
+	t.Setenv("SYMMEMORY_MODE", "")
 }
 
 func TestGetNeighborsSuccessAndErrors(t *testing.T) {
@@ -180,14 +179,14 @@ fi
 		t.Errorf("unexpected neighbors: %+v", neighbors)
 	}
 
-	os.Setenv("SYMMEMORY_MODE", "fail")
+	t.Setenv("SYMMEMORY_MODE", "fail")
 	if _, err := GetNeighbors("Mock"); err == nil || !strings.Contains(err.Error(), "symmemory neighbors failed") {
 		t.Errorf("expected wrapped command failure, got %v", err)
 	}
 
-	os.Setenv("SYMMEMORY_MODE", "badjson")
+	t.Setenv("SYMMEMORY_MODE", "badjson")
 	if _, err := GetNeighbors("Mock"); err == nil || !strings.Contains(err.Error(), "unmarshal") {
 		t.Errorf("expected wrapped unmarshal failure, got %v", err)
 	}
-	os.Unsetenv("SYMMEMORY_MODE")
+	t.Setenv("SYMMEMORY_MODE", "")
 }

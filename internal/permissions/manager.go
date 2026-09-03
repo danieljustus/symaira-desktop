@@ -582,7 +582,7 @@ func (m *Manager) savePermissions(rules []DocumentRule) error {
 // --- Helpers ------------------------------------------------------------------
 
 func readJSONFile(path string, dest any) error {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: path is always a manager-owned permissions file.
 	if os.IsNotExist(err) {
 		return nil // empty state is valid
 	}

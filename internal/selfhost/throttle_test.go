@@ -311,7 +311,7 @@ func TestThrottleBoundedMemory(t *testing.T) {
 
 func TestServerAuthRateLimitEnforced(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
@@ -343,7 +343,7 @@ func TestServerAuthRateLimitEnforced(t *testing.T) {
 		body, _ := json.MarshalIndent(json.RawMessage(readBody(resp)), "", "  ")
 		t.Fatalf("first failure: expected 401, got %d: %s", resp.StatusCode, body)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Second failure hits the threshold (max=2) — should return 429.
 	resp = wrongAuth()
@@ -354,19 +354,19 @@ func TestServerAuthRateLimitEnforced(t *testing.T) {
 	if resp.Header.Get("Retry-After") == "" {
 		t.Fatal("expected Retry-After header on 429 response")
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Successful auth should still work (unaffected by rate limit).
 	goodResp := authorized(t, http.MethodGet, httpServer.URL+"/api/v1/status", nil, "")
 	if goodResp.StatusCode != http.StatusOK {
 		t.Fatalf("successful auth should be unaffected by rate limit, got %d", goodResp.StatusCode)
 	}
-	goodResp.Body.Close()
+	_ = goodResp.Body.Close()
 }
 
 func TestServerShareTokenRateLimitEnforced(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
@@ -395,7 +395,7 @@ func TestServerShareTokenRateLimitEnforced(t *testing.T) {
 	if resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("first failure: expected 404, got %d", resp.StatusCode)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Second failure hits the threshold (max=2) — should return 429.
 	resp = badShare()
@@ -405,12 +405,12 @@ func TestServerShareTokenRateLimitEnforced(t *testing.T) {
 	if resp.Header.Get("Retry-After") == "" {
 		t.Fatal("expected Retry-After header on 429 response")
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 }
 
 func TestServerShareTokenRateLimitReset(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
@@ -441,21 +441,21 @@ func TestServerShareTokenRateLimitReset(t *testing.T) {
 	if resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("first failure: expected 404, got %d", resp.StatusCode)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Second failure: hits threshold (max=2) → 429.
 	resp = badShare()
 	if resp.StatusCode != http.StatusTooManyRequests {
 		t.Fatalf("second failure: expected 429, got %d", resp.StatusCode)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Third failure during block: should still be 429.
 	resp = badShare()
 	if resp.StatusCode != http.StatusTooManyRequests {
 		t.Fatalf("third failure during block: expected 429, got %d", resp.StatusCode)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Wait for block (300ms) to expire. By then the window (200ms) has
 	// also expired, so the count resets.
@@ -466,12 +466,12 @@ func TestServerShareTokenRateLimitReset(t *testing.T) {
 	if resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("after reset: expected 404, got %d", resp.StatusCode)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 }
 
 func TestSuccessfulRequestsUnaffected(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
@@ -493,7 +493,7 @@ func TestSuccessfulRequestsUnaffected(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Verify block is engaged.
 	req, _ = http.NewRequest(http.MethodGet, httpServer.URL+"/api/v1/status", nil)
@@ -505,7 +505,7 @@ func TestSuccessfulRequestsUnaffected(t *testing.T) {
 	if resp.StatusCode != http.StatusTooManyRequests {
 		t.Fatalf("expected 429 for blocked IP, got %d", resp.StatusCode)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Successful auth should still work — a valid token bypasses the
 	// rate limit entirely.
@@ -513,5 +513,5 @@ func TestSuccessfulRequestsUnaffected(t *testing.T) {
 	if goodResp.StatusCode != http.StatusOK {
 		t.Fatalf("successful auth should be unaffected: got %d", goodResp.StatusCode)
 	}
-	goodResp.Body.Close()
+	_ = goodResp.Body.Close()
 }

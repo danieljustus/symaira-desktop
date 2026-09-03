@@ -13,7 +13,7 @@ import (
 func writeMockSymmemory(t *testing.T, dir, script string) {
 	t.Helper()
 	path := filepath.Join(dir, "symmemory")
-	if err := os.WriteFile(path, []byte(script), 0755); err != nil { //nolint:gosec // test fixture must be executable
+	if err := os.WriteFile(path, []byte(script), 0700); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatal(err)
 	}
 }

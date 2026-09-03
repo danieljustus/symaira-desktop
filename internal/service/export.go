@@ -159,7 +159,7 @@ func (s *Service) Export(relPath, viewID, outputPath, format, profile string) (*
 		}, nil
 	}
 
-	if err := os.WriteFile(outputPath, rendered, 0644); err != nil {
+	if err := os.WriteFile(outputPath, rendered, 0644); err != nil { //nolint:gosec // exported HTML preserves the established user-readable mode
 		return nil, fmt.Errorf("failed to write HTML: %w", err)
 	}
 	return &ExportResult{

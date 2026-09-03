@@ -443,7 +443,7 @@ func (s *Service) NoteNew(title, content, templateName string) (string, error) {
 	if templateName != "" {
 		tplPath, err := vault.SecurePath(s.VaultRoot, filepath.Join("templates", templateName+".md"))
 		if err == nil {
-			if b, err := os.ReadFile(tplPath); err == nil {
+			if b, err := os.ReadFile(tplPath); err == nil { //nolint:gosec // tplPath was validated by vault.SecurePath above
 				templateContent = string(b)
 			}
 		}
@@ -473,7 +473,7 @@ func (s *Service) NoteNew(title, content, templateName string) (string, error) {
 	}
 
 	s.snapshotBefore(absPath)
-	if err := os.WriteFile(absPath, []byte(fullContent), 0644); err != nil {
+	if err := os.WriteFile(absPath, []byte(fullContent), 0644); err != nil { //nolint:gosec // vault notes intentionally use the established 0644 mode
 		return "", fmt.Errorf("failed to write file: %w", err)
 	}
 
@@ -624,7 +624,7 @@ func (s *Service) NoteClip(url string) (string, error) {
 		noteTitle, nowStr, url, nowStr, bodyStr)
 
 	s.snapshotBefore(absPath)
-	if err := os.WriteFile(absPath, []byte(fullContent), 0644); err != nil {
+	if err := os.WriteFile(absPath, []byte(fullContent), 0644); err != nil { //nolint:gosec // vault notes intentionally use the established 0644 mode
 		return "", fmt.Errorf("failed to write clipped file: %w", err)
 	}
 

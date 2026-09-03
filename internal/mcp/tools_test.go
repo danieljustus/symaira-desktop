@@ -53,7 +53,7 @@ func TestIngestToolCreatesInboxNote(t *testing.T) {
 	tool := newIngestTool(factory)
 
 	src := filepath.Join(t.TempDir(), "doc.txt")
-	if err := os.WriteFile(src, []byte("hello"), 0644); err != nil {
+	if err := os.WriteFile(src, []byte("hello"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -72,7 +72,7 @@ func TestIngestToolCreatesInboxNote(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	files, err := svc.Ls("")
 	if err != nil {
 		t.Fatal(err)
@@ -128,11 +128,11 @@ func TestDocSetStatusToolUpdatesFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	content := "---\ntitle: \"Test\"\nstatus: \"open\"\n---\n\nBody.\n"
 	absPath := filepath.Join(svc.VaultRoot, "test.md")
-	if err := os.WriteFile(absPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(absPath, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 

@@ -37,7 +37,7 @@ func seedNote(t *testing.T, factory serviceFactory, title, content string) strin
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	path, err := svc.NoteNew(title, content, "")
 	if err != nil {
 		t.Fatal(err)
@@ -142,7 +142,7 @@ func TestSearchToolSupportsScopedOperators(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	if err := svc.DB.IndexDocument(&vault.Document{
 		Path:    filepath.Join(svc.VaultRoot, "finance", "invoice.md"),
 		Title:   "Invoice",
@@ -252,17 +252,17 @@ func TestStartServerReadOnlyOmitsMutatingTools(t *testing.T) {
 	errCh := make(chan error, 1)
 	go func() {
 		errCh <- StartServer(cfg, "test", false)
-		stdoutW.Close()
+		_ = stdoutW.Close()
 	}()
 
 	sendRequest := func(request map[string]any) map[string]any {
 		t.Helper()
 		reqBytes, _ := json.Marshal(request)
 		reqBytes = append(reqBytes, '\n')
-		stdinW.Write(reqBytes)
+		_, _ = stdinW.Write(reqBytes)
 		decoder := json.NewDecoder(stdoutR)
 		var resp map[string]any
-		decoder.Decode(&resp)
+		_ = decoder.Decode(&resp)
 		return resp
 	}
 
@@ -289,14 +289,14 @@ func TestStartServerReadOnlyOmitsMutatingTools(t *testing.T) {
 		}
 	}
 
-	stdinW.Close()
+	_ = stdinW.Close()
 	select {
 	case <-errCh:
 	case <-time.After(5 * time.Second):
 	}
 	os.Stdin, os.Stdout = origStdin, origStdout
-	stdinR.Close()
-	stdoutR.Close()
+	_ = stdinR.Close()
+	_ = stdoutR.Close()
 }
 
 func TestStartServerReadWriteIncludesMutatingTools(t *testing.T) {
@@ -312,17 +312,17 @@ func TestStartServerReadWriteIncludesMutatingTools(t *testing.T) {
 	errCh := make(chan error, 1)
 	go func() {
 		errCh <- StartServer(cfg, "test", true)
-		stdoutW.Close()
+		_ = stdoutW.Close()
 	}()
 
 	sendRequest := func(request map[string]any) map[string]any {
 		t.Helper()
 		reqBytes, _ := json.Marshal(request)
 		reqBytes = append(reqBytes, '\n')
-		stdinW.Write(reqBytes)
+		_, _ = stdinW.Write(reqBytes)
 		decoder := json.NewDecoder(stdoutR)
 		var resp map[string]any
-		decoder.Decode(&resp)
+		_ = decoder.Decode(&resp)
 		return resp
 	}
 
@@ -344,14 +344,14 @@ func TestStartServerReadWriteIncludesMutatingTools(t *testing.T) {
 		}
 	}
 
-	stdinW.Close()
+	_ = stdinW.Close()
 	select {
 	case <-errCh:
 	case <-time.After(5 * time.Second):
 	}
 	os.Stdin, os.Stdout = origStdin, origStdout
-	stdinR.Close()
-	stdoutR.Close()
+	_ = stdinR.Close()
+	_ = stdoutR.Close()
 }
 
 // --- StartServer integration test ---
@@ -373,7 +373,7 @@ func TestStartServerIntegration(t *testing.T) {
 	errCh := make(chan error, 1)
 	go func() {
 		errCh <- StartServer(cfg, "test-version", false)
-		stdoutW.Close()
+		_ = stdoutW.Close()
 	}()
 
 	// Helper: send a JSON-RPC request and read the response line.
@@ -450,7 +450,7 @@ func TestStartServerIntegration(t *testing.T) {
 	}
 
 	// Shut down.
-	stdinW.Close()
+	_ = stdinW.Close()
 	select {
 	case err := <-errCh:
 		if err != nil && err != io.EOF && !strings.Contains(err.Error(), "EOF") {
@@ -462,8 +462,8 @@ func TestStartServerIntegration(t *testing.T) {
 
 	// Restore original stdio.
 	os.Stdin, os.Stdout = origStdin, origStdout
-	stdinR.Close()
-	stdoutR.Close()
+	_ = stdinR.Close()
+	_ = stdoutR.Close()
 }
 
 // --- Verify zero stdio pollution ---
@@ -482,7 +482,7 @@ func TestStartServerZeroStdioPollution(t *testing.T) {
 	errCh := make(chan error, 1)
 	go func() {
 		errCh <- StartServer(cfg, "", false)
-		stdoutW.Close()
+		_ = stdoutW.Close()
 	}()
 
 	// Send one request and close stdin.
@@ -491,14 +491,14 @@ func TestStartServerZeroStdioPollution(t *testing.T) {
 		"params": map[string]any{"name": "desk_status", "arguments": map[string]any{}},
 	})
 	req = append(req, '\n')
-	stdinW.Write(req)
-	stdinW.Close()
+	_, _ = stdinW.Write(req)
+	_ = stdinW.Close()
 
 	// Capture all stdout output.
 	var stdoutBuf bytes.Buffer
 	done := make(chan struct{})
 	go func() {
-		io.Copy(&stdoutBuf, stdoutR)
+		_, _ = io.Copy(&stdoutBuf, stdoutR)
 		close(done)
 	}()
 
@@ -526,5 +526,5 @@ func TestStartServerZeroStdioPollution(t *testing.T) {
 	}
 
 	os.Stdin, os.Stdout = origStdin, origStdout
-	stdinR.Close()
+	_ = stdinR.Close()
 }

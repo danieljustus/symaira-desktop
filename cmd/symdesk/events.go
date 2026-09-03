@@ -50,7 +50,9 @@ func processEvent(path string, ev *DebouncedEvent, w *fsnotify.Watcher, svc *ser
 	if ev.Op&fsnotify.Create == fsnotify.Create {
 		opName = "file_added"
 		if info, err := os.Stat(path); err == nil && info.IsDir() {
-			w.Add(path)
+			if err := w.Add(path); err != nil {
+				fmt.Fprintf(os.Stderr, "failed to watch created directory %s: %v\n", path, err)
+			}
 		}
 	} else if ev.Op&fsnotify.Write == fsnotify.Write {
 		opName = "file_changed"
@@ -75,7 +77,9 @@ func processEvent(path string, ev *DebouncedEvent, w *fsnotify.Watcher, svc *ser
 			"ts":    ev.Ts.UTC().Format(time.RFC3339),
 		}
 		b, _ := json.Marshal(evt)
-		fmt.Fprintln(out, string(b))
+		if _, err := fmt.Fprintln(out, string(b)); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to emit filesystem event for %s: %v\n", path, err)
+		}
 	}
 }
 
@@ -102,7 +106,7 @@ func newEventsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 
 			svc := service.New(vRoot, db)
 
@@ -110,7 +114,7 @@ func newEventsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer watcher.Close()
+			defer closeWithWarning("filesystem watcher", watcher.Close)
 
 			// Start Inbox Watcher in the background
 			inboxDir := cfg.Inbox
@@ -126,7 +130,7 @@ func newEventsCmd() *cobra.Command {
 						fmt.Fprintf(os.Stderr, "inbox watcher error: %v\n", err)
 					}
 				}()
-				defer inboxWatcher.Close()
+				defer closeWithWarning("inbox watcher", inboxWatcher.Close)
 			} else {
 				fmt.Fprintf(os.Stderr, "failed to start inbox watcher: %v\n", err)
 			}

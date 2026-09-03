@@ -104,7 +104,7 @@ func newDocMutationSubcommands() []*cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			asn, err := service.New(vRoot, db).DocASN(args[0], args[1])
 			if err != nil {
 				return err

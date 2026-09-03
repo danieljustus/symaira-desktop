@@ -77,7 +77,7 @@ func TestExportNoteAndViewHTML(t *testing.T) {
 	if note.Format != "html" || !note.Rendered || note.Path != noteOutput {
 		t.Errorf("unexpected note result: %#v", note)
 	}
-	noteHTML, err := os.ReadFile(noteOutput)
+	noteHTML, err := os.ReadFile(noteOutput) //nolint:gosec // noteOutput is a test-owned temporary path
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestExportNoteAndViewHTML(t *testing.T) {
 	if view.Format != "html" || !view.Rendered || view.Path != viewOutput {
 		t.Errorf("unexpected view result: %#v", view)
 	}
-	viewHTML, err := os.ReadFile(viewOutput)
+	viewHTML, err := os.ReadFile(viewOutput) //nolint:gosec // viewOutput is a test-owned temporary path
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -163,7 +163,7 @@ func TestExportPDFUsesTheProfileAndRenderedMarkdown(t *testing.T) {
 	if viewResult.Format != "pdf" || viewResult.Profile != "report" || !viewResult.Rendered {
 		t.Errorf("unexpected view PDF result: %#v", viewResult)
 	}
-	viewPDF, err := os.ReadFile(viewOutput)
+	viewPDF, err := os.ReadFile(viewOutput) //nolint:gosec // viewOutput is a test-owned temporary path
 	if err != nil {
 		t.Fatal(err)
 	}

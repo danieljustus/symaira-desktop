@@ -13,12 +13,12 @@ func TestTemplatesAndDailyNotes(t *testing.T) {
 
 	// Create a template
 	templateDir := filepath.Join(svc.VaultRoot, "templates")
-	if err := os.MkdirAll(templateDir, 0755); err != nil {
+	if err := os.MkdirAll(templateDir, 0700); err != nil {
 		t.Fatal(err)
 	}
 
 	tplContent := `---\ncustom_field: "yes"\n---\nHello {{title}}, today is {{date}} at {{time}}.`
-	if err := os.WriteFile(filepath.Join(templateDir, "meeting.md"), []byte(tplContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(templateDir, "meeting.md"), []byte(tplContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -28,7 +28,7 @@ func TestTemplatesAndDailyNotes(t *testing.T) {
 		t.Fatalf("NoteNew with template failed: %v", err)
 	}
 
-	contentBytes, err := os.ReadFile(filepath.Join(svc.VaultRoot, path))
+	contentBytes, err := os.ReadFile(filepath.Join(svc.VaultRoot, path)) //nolint:gosec // path is a service-generated test note inside t.TempDir()
 	if err != nil {
 		t.Fatal(err)
 	}

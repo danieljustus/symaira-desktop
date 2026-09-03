@@ -22,7 +22,7 @@ const testToken = "0123456789abcdef0123456789abcdef"
 
 func TestServerAuthSnapshotAndSecureFiles(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
@@ -40,7 +40,7 @@ func TestServerAuthSnapshotAndSecureFiles(t *testing.T) {
 	if response.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("expected 401, got %d", response.StatusCode)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 
 	response = authorized(t, http.MethodGet, httpServer.URL+"/api/v1/snapshot", nil, "")
 	if response.StatusCode != http.StatusOK {
@@ -52,7 +52,7 @@ func TestServerAuthSnapshotAndSecureFiles(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&snapshot); err != nil {
 		t.Fatal(err)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 	if len(snapshot.Notes) != 1 || snapshot.Notes[0].Path != "Hello.md" {
 		t.Fatalf("unexpected snapshot: %+v", snapshot)
 	}
@@ -70,22 +70,22 @@ func TestServerAuthSnapshotAndSecureFiles(t *testing.T) {
 	if response.StatusCode != http.StatusNotModified {
 		t.Fatalf("expected cached snapshot to return 304, got %d", response.StatusCode)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nChanged body"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nChanged body"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	response = authorized(t, http.MethodGet, httpServer.URL+"/api/v1/snapshot", nil, "")
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("changed snapshot returned %d", response.StatusCode)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 
 	response = authorized(t, http.MethodGet, httpServer.URL+"/api/v1/files?path=../outside", nil, "")
 	if response.StatusCode != http.StatusBadRequest {
 		t.Fatalf("expected traversal rejection, got %d", response.StatusCode)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 }
 
 // TestServerRestartReindexesCorrectlyFromAWarmSidecar exercises server.go's
@@ -98,7 +98,7 @@ func TestServerAuthSnapshotAndSecureFiles(t *testing.T) {
 // internal/sidecar's RefreshIndex tests.
 func TestServerRestartReindexesCorrectlyFromAWarmSidecar(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
@@ -127,7 +127,7 @@ func TestServerRestartReindexesCorrectlyFromAWarmSidecar(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&snapshot); err != nil {
 		t.Fatal(err)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 	if len(snapshot.Notes) != 1 || snapshot.Notes[0].Path != "Hello.md" {
 		t.Fatalf("unexpected snapshot after restart: %+v", snapshot)
 	}
@@ -135,7 +135,7 @@ func TestServerRestartReindexesCorrectlyFromAWarmSidecar(t *testing.T) {
 
 func TestSnapshotSkipsRescanWhenVaultUnchanged(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
@@ -154,7 +154,7 @@ func TestSnapshotSkipsRescanWhenVaultUnchanged(t *testing.T) {
 		t.Fatalf("first snapshot returned %d", response.StatusCode)
 	}
 	firstETag := response.Header.Get("ETag")
-	response.Body.Close()
+	_ = response.Body.Close()
 
 	if server.snapshotDirty.Load() {
 		t.Fatal("expected the snapshot to be marked clean right after a successful computation")
@@ -167,12 +167,12 @@ func TestSnapshotSkipsRescanWhenVaultUnchanged(t *testing.T) {
 	if response.Header.Get("ETag") != firstETag {
 		t.Fatalf("etag changed with no vault modification: %q -> %q", firstETag, response.Header.Get("ETag"))
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 	if server.snapshotDirty.Load() {
 		t.Fatal("an unchanged-vault request must not mark the snapshot dirty")
 	}
 
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nChanged body"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nChanged body"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	deadline := time.Now().Add(2 * time.Second)
@@ -190,7 +190,7 @@ func TestSnapshotSkipsRescanWhenVaultUnchanged(t *testing.T) {
 	if response.Header.Get("ETag") == firstETag {
 		t.Fatal("expected a fresh etag after the vault changed")
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 }
 
 func TestServerRootedFilesystemRejectsEscapes(t *testing.T) {
@@ -213,25 +213,25 @@ func TestServerRootedFilesystemRejectsEscapes(t *testing.T) {
 	for _, path := range []string{"../outside.md", "/etc/passwd", `escape\\secret.md`, ".symdesk/server/sidecar.db"} {
 		response := authorized(t, http.MethodGet, httpServer.URL+"/api/v1/files?path="+path, nil, "")
 		if response.StatusCode != http.StatusBadRequest {
-			response.Body.Close()
+			_ = response.Body.Close()
 			t.Fatalf("expected %q to be rejected with 400, got %d", path, response.StatusCode)
 		}
-		response.Body.Close()
+		_ = response.Body.Close()
 	}
 
 	response := authorized(t, http.MethodGet, httpServer.URL+"/api/v1/files?path=escape/secret.md", nil, "")
 	if response.StatusCode != http.StatusNotFound {
-		response.Body.Close()
+		_ = response.Body.Close()
 		t.Fatalf("expected symlink escape to be unavailable, got %d", response.StatusCode)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 
 	response = authorized(t, http.MethodPut, httpServer.URL+"/api/v1/files?path=escape/new.md", strings.NewReader("outside write"), "text/markdown")
 	if response.StatusCode == http.StatusOK {
-		response.Body.Close()
+		_ = response.Body.Close()
 		t.Fatal("expected write through escaping symlink to fail")
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 	if _, err := os.Stat(filepath.Join(outside, "new.md")); !os.IsNotExist(err) {
 		t.Fatalf("write escaped the vault root: %v", err)
 	}
@@ -240,8 +240,8 @@ func TestServerRootedFilesystemRejectsEscapes(t *testing.T) {
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("expected valid nested write to succeed, got %d: %s", response.StatusCode, readBody(response))
 	}
-	response.Body.Close()
-	written, err := os.ReadFile(filepath.Join(vaultRoot, "folder", "new.md"))
+	_ = response.Body.Close()
+	written, err := os.ReadFile(filepath.Join(vaultRoot, "folder", "new.md")) //nolint:gosec // test reads a fixed file inside t.TempDir()
 	if err != nil || string(written) != "# Rooted" {
 		t.Fatalf("unexpected rooted write: %q, %v", written, err)
 	}
@@ -273,14 +273,14 @@ func TestDistributedIngestLifecycle(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&job); err != nil {
 		t.Fatal(err)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 
 	leaseBody, _ := json.Marshal(map[string]any{"worker_id": "macbook", "capabilities": []string{"ocr"}})
 	response = authorized(t, http.MethodPost, httpServer.URL+"/api/v1/worker/lease", bytes.NewReader(leaseBody), "application/json")
 	if response.StatusCode != http.StatusOK {
 		t.Fatalf("lease returned %d", response.StatusCode)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 
 	completeBody, _ := json.Marshal(map[string]string{
 		"job_id": job.ID, "worker_id": "macbook", "text": "Invoice total: 42 EUR", "engine": "ollama", "model": "gemma3",
@@ -293,11 +293,11 @@ func TestDistributedIngestLifecycle(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&completed); err != nil {
 		t.Fatal(err)
 	}
-	response.Body.Close()
+	_ = response.Body.Close()
 	if completed.Status != "completed" || completed.NotePath == "" {
 		t.Fatalf("unexpected completed job: %+v", completed)
 	}
-	note, err := os.ReadFile(filepath.Join(vaultRoot, filepath.FromSlash(completed.NotePath)))
+	note, err := os.ReadFile(filepath.Join(vaultRoot, filepath.FromSlash(completed.NotePath))) //nolint:gosec // NotePath is generated by the server inside t.TempDir()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -311,7 +311,7 @@ func TestDistributedIngestLifecycle(t *testing.T) {
 func fakeSymdeskScript(t *testing.T, body string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "fake-symdesk.sh")
-	if err := os.WriteFile(path, []byte("#!/bin/sh\n"+body), 0755); err != nil {
+	if err := os.WriteFile(path, []byte("#!/bin/sh\n"+body), 0700); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatal(err)
 	}
 	return path
@@ -555,7 +555,7 @@ const testWorkerToken = "fedcba9876543210fedcba9876543210"
 // covered by the other tests above.
 func TestAuthorizationMatrix(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{
@@ -740,7 +740,7 @@ func TestJobStoreFailAndRetry(t *testing.T) {
 
 func TestHandleWorkerInputAndFailRetryEndpoints(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "doc.txt"), []byte("Document content"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "doc.txt"), []byte("Document content"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	server, err := NewServer(ServerConfig{VaultRoot: vaultRoot, Token: testToken, Version: "test", Executable: "/bin/false"})
@@ -755,7 +755,7 @@ func TestHandleWorkerInputAndFailRetryEndpoints(t *testing.T) {
 	if res.StatusCode != http.StatusNotFound {
 		t.Errorf("expected 404 for missing input job, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// 2. Create and lease job
 	job, err := server.jobs.Create("doc.txt", "doc.txt", "text/plain")
@@ -772,7 +772,7 @@ func TestHandleWorkerInputAndFailRetryEndpoints(t *testing.T) {
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("expected 200 for valid worker input, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// 4. /api/v1/worker/fail endpoint
 	failPayload := `{"job_id":"` + job.ID + `","worker_id":"worker-1","error":"ocr failure","retry":false}`
@@ -780,21 +780,21 @@ func TestHandleWorkerInputAndFailRetryEndpoints(t *testing.T) {
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("expected 200 from worker fail endpoint, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// 5. /api/v1/jobs/retry endpoint
 	res = authorized(t, http.MethodPost, ts.URL+"/api/v1/jobs/retry?id="+job.ID, nil, "")
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("expected 200 from queue retry endpoint, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// 6. /api/v1/jobs/retry on non-failed job returns 409 StatusConflict
 	res = authorized(t, http.MethodPost, ts.URL+"/api/v1/jobs/retry?id="+job.ID, nil, "")
 	if res.StatusCode != http.StatusConflict {
 		t.Errorf("expected 409 when retrying non-failed job, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 }
 
 // TestPerUserSnapshotCacheStaysUnderByteBudget proves the per-user snapshot

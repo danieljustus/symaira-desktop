@@ -24,7 +24,7 @@ func newIngestCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			res, err := svc.Ingest(args[0])
@@ -44,7 +44,7 @@ func newIngestCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			res, err := svc.IngestJobsPage(jobsLimit, jobsOffset)
@@ -84,7 +84,7 @@ func newIngestCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			err = svc.IngestRetry(args[0])

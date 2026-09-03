@@ -118,7 +118,7 @@ func TestScopeAgentToolsToNotebook_OnlyScopesDiscoveryTools(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() { _ = db.Close() }()
+	defer closeWithWarning("sidecar database", db.Close)
 	svc := service.New(vRoot, db)
 
 	docPath, err := svc.NoteNew("Doc", "body", "")
@@ -168,7 +168,7 @@ func TestScopeAgentToolsToNotebook_UnknownNotebookErrors(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() { _ = db.Close() }()
+	defer closeWithWarning("sidecar database", db.Close)
 
 	if _, err := scopeAgentToolsToNotebook(vRoot, "does-not-exist", nil); err == nil {
 		t.Fatal("expected an error scoping to a nonexistent notebook")

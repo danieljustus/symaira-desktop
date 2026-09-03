@@ -179,9 +179,7 @@ func TestViewsCLI_ExportAndImportCSVAndEmbed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() {
-		_ = db.Close()
-	}()
+	defer closeWithWarning("sidecar database", db.Close)
 	svc := service.New(vRoot, db)
 
 	// Create a test note

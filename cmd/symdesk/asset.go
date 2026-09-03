@@ -50,7 +50,7 @@ func newAssetStoreCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			ext := filepath.Ext(name)

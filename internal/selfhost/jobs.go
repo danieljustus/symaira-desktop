@@ -247,7 +247,7 @@ func (s *JobStore) readAllLocked() ([]Job, error) {
 	return jobs, nil
 }
 
-func (s *JobStore) readLocked(id string) (*Job, error) {
+func (s *JobStore) readLocked(id string) (job *Job, readErr error) {
 	if !validJobID(id) {
 		return nil, fmt.Errorf("invalid job id")
 	}
@@ -255,7 +255,11 @@ func (s *JobStore) readLocked(id string) (*Job, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			readErr = errors.Join(readErr, fmt.Errorf("close job file: %w", closeErr))
+		}
+	}()
 	data, err := io.ReadAll(io.LimitReader(file, (1<<20)+1))
 	if err != nil {
 		return nil, err
@@ -263,11 +267,11 @@ func (s *JobStore) readLocked(id string) (*Job, error) {
 	if len(data) > 1<<20 {
 		return nil, fmt.Errorf("job file exceeds 1 MiB")
 	}
-	var job Job
-	if err := json.Unmarshal(data, &job); err != nil {
+	job = &Job{}
+	if err := json.Unmarshal(data, job); err != nil {
 		return nil, fmt.Errorf("decode job %s: %w", id, err)
 	}
-	return &job, nil
+	return job, nil
 }
 
 func (s *JobStore) writeLocked(job *Job) error {
@@ -278,29 +282,43 @@ func (s *JobStore) writeLocked(job *Job) error {
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(s.dir, job.ID+".json")
 	tmp, err := os.CreateTemp(s.dir, ".job-*.tmp")
 	if err != nil {
 		return err
 	}
 	tmpName := tmp.Name()
-	defer os.Remove(tmpName)
+	removeTemp := func() error {
+		if err := os.Remove(tmpName); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("remove temporary job file: %w", err)
+		}
+		return nil
+	}
+	fail := func(operationErr error) error {
+		return errors.Join(operationErr, tmp.Close(), removeTemp())
+	}
 	if err := tmp.Chmod(0600); err != nil {
-		tmp.Close()
-		return err
+		return fail(err)
 	}
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		return err
+		return fail(err)
 	}
 	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		return err
+		return fail(err)
 	}
 	if err := tmp.Close(); err != nil {
-		return err
+		return errors.Join(err, removeTemp())
 	}
-	return os.Rename(tmpName, path)
+
+	root, err := os.OpenRoot(s.dir)
+	if err != nil {
+		return errors.Join(err, removeTemp())
+	}
+	renameErr := root.Rename(filepath.Base(tmpName), job.ID+".json")
+	closeErr := root.Close()
+	if renameErr != nil {
+		return errors.Join(renameErr, closeErr, removeTemp())
+	}
+	return closeErr
 }
 
 func validJobID(id string) bool {

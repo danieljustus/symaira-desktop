@@ -28,7 +28,7 @@ func newVaultHealthCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches existing CLI command pattern
+			defer closeWithWarning("sidecar database", db.Close)
 			report, err := health.Scan(vRoot, db, threshold)
 			if err != nil {
 				return err

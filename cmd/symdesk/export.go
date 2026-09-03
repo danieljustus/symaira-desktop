@@ -15,7 +15,7 @@ func newExportCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			relPath, _ := cmd.Flags().GetString("note")

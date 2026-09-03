@@ -56,7 +56,7 @@ func newTestService(t *testing.T) *Service {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { _ = db.Close() })
 
 	// Prevent accidental calls to the real symseek binary on PATH during tests.
 	withDisabledTool(t, "symseek")
@@ -106,7 +106,7 @@ func TestIngestIndexesInboxNote(t *testing.T) {
 	svc := newTestService(t)
 
 	src := filepath.Join(t.TempDir(), "doc.txt")
-	if err := os.WriteFile(src, []byte("hello"), 0644); err != nil {
+	if err := os.WriteFile(src, []byte("hello"), 0600); err != nil {
 		t.Fatal(err)
 	}
 

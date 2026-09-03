@@ -53,7 +53,7 @@ func BenchmarkGraphLargeVaultWithEntities(b *testing.B) {
 	}
 
 	symmemoryPath := filepath.Join(dir, "symmemory")
-	if err := os.WriteFile(symmemoryPath, []byte(mockSymmemoryLargeVaultScript), 0755); err != nil { //nolint:gosec // benchmark fixture must be executable
+	if err := os.WriteFile(symmemoryPath, []byte(mockSymmemoryLargeVaultScript), 0700); err != nil { //nolint:gosec // benchmark fixture must be executable
 		b.Fatal(err)
 	}
 	b.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))

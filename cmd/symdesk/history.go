@@ -20,7 +20,7 @@ func newHistoryCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			entries, err := svc.HistoryList(args[0])
 			if err != nil {
@@ -61,7 +61,7 @@ func newHistoryCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			removed, err := svc.HistoryPrune(history.RetentionPolicy{
 				MaxPerFile:       maxPerFile,
@@ -88,7 +88,7 @@ func newHistoryCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			content, err := service.New(vRoot, db).HistoryContent(args[0])
 			if err != nil {
 				return err
@@ -113,7 +113,7 @@ func newHistoryCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			var cp *history.Checkpoint
 			if len(args) == 1 {
@@ -146,7 +146,7 @@ func newHistoryCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			checkpoints, err := service.New(vRoot, db).CheckpointList()
 			if err != nil {
 				return err
@@ -181,7 +181,7 @@ func newHistoryCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			cp, err := service.New(vRoot, db).CheckpointUndo(args[0])
 			if err != nil {
 				return err
@@ -213,7 +213,7 @@ func newRestoreCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			entry, err := svc.HistoryRestore(args[0], at)
 			if err != nil {
@@ -246,7 +246,7 @@ func newTrashCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			entries, err := service.New(vRoot, db).TrashList()
 			if err != nil {
 				return err
@@ -275,7 +275,7 @@ func newTrashCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			entry, err := service.New(vRoot, db).TrashRestore(args[0])
 			if err != nil {
 				return err
@@ -303,7 +303,7 @@ func newTrashCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			purged, err := service.New(vRoot, db).TrashPurge(maxAge)
 			if err != nil {
 				return err
@@ -328,7 +328,7 @@ func newNoteDeleteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			entry, err := service.New(vRoot, db).NoteDelete(args[0])
 			if err != nil {
 				return err

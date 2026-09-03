@@ -14,12 +14,12 @@ func TestRestrictToHome_InsideHome(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	t.Setenv("HOME", tempDir)
 
 	file := filepath.Join(tempDir, "test.md")
-	if err := os.WriteFile(file, []byte("test"), 0644); err != nil {
+	if err := os.WriteFile(file, []byte("test"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -40,12 +40,12 @@ func TestRestrictToHome_OutsideHome(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	t.Setenv("HOME", tempDir)
 
 	outside := filepath.Join(tempDir, "..", "outside.md")
-	if err := os.WriteFile(outside, []byte("test"), 0644); err != nil {
+	if err := os.WriteFile(outside, []byte("test"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -60,21 +60,21 @@ func TestRestrictToHome_SymlinkOutsideHome(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	t.Setenv("HOME", tempDir)
 
 	outsideDir := filepath.Join(tempDir, "..", "secret")
-	if err := os.MkdirAll(outsideDir, 0755); err != nil {
+	if err := os.MkdirAll(outsideDir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	outsideFile := filepath.Join(outsideDir, "data.txt")
-	if err := os.WriteFile(outsideFile, []byte("secret"), 0644); err != nil {
+	if err := os.WriteFile(outsideFile, []byte("secret"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	linkDir := filepath.Join(tempDir, "notes")
-	if err := os.MkdirAll(linkDir, 0755); err != nil {
+	if err := os.MkdirAll(linkDir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	link := filepath.Join(linkDir, "secret.txt")
@@ -93,7 +93,7 @@ func TestRestrictToHome_NonExistent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	t.Setenv("HOME", tempDir)
 
@@ -108,13 +108,13 @@ func TestRestrictToHome_ReturnsResolvedPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	t.Setenv("HOME", tempDir)
 
 	link := filepath.Join(tempDir, "link")
 	target := filepath.Join(tempDir, "target.md")
-	if err := os.WriteFile(target, []byte("content"), 0644); err != nil {
+	if err := os.WriteFile(target, []byte("content"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(target, link); err != nil {
@@ -137,7 +137,7 @@ func TestRestrictToHome_BrokenSymlink(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	t.Setenv("HOME", tempDir)
 
@@ -157,16 +157,16 @@ func TestRestrictToHome_RelativePath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	t.Setenv("HOME", tempDir)
 
 	subDir := filepath.Join(tempDir, "docs")
-	if err := os.MkdirAll(subDir, 0755); err != nil {
+	if err := os.MkdirAll(subDir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	file := filepath.Join(subDir, "note.md")
-	if err := os.WriteFile(file, []byte("note"), 0644); err != nil {
+	if err := os.WriteFile(file, []byte("note"), 0600); err != nil {
 		t.Fatal(err)
 	}
 

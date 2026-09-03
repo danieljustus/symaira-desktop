@@ -47,7 +47,7 @@ func runDoctorCaptured(t *testing.T) map[string]interface{} {
 	doctorCmd := findDoctorCmd(t)
 	runErr := doctorCmd.RunE(doctorCmd, nil)
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	out, _ := io.ReadAll(r)
 	if runErr != nil {
@@ -144,7 +144,7 @@ func runDoctorTextCaptured(t *testing.T) string {
 	doctorCmd := findDoctorCmd(t)
 	runErr := doctorCmd.RunE(doctorCmd, nil)
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	out, _ := io.ReadAll(r)
 	if runErr != nil {

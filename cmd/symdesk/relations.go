@@ -20,7 +20,7 @@ func newRelationsContactCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			var result *service.ContactReferences
@@ -46,7 +46,7 @@ func newRelationsContactCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			ref, err := svc.LinkNoteContact(args[0], args[1])
 			if err != nil {
@@ -66,7 +66,7 @@ func newRelationsContactCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			if err := svc.UnlinkNoteContact(args[0]); err != nil {
 				return err
@@ -93,7 +93,7 @@ func newRelationsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			results, err := svc.RelationsInverse(args[0])

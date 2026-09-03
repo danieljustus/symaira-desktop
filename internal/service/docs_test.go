@@ -14,7 +14,7 @@ func TestDocASNAllocatesLowestFreeRejectsCollisionsAndIndexes(t *testing.T) {
 	svc := newTestService(t)
 	for _, name := range []string{"first.md", "second.md", "third.md"} {
 		content := "---\ntitle: " + strings.TrimSuffix(name, ".md") + "\n---\n\nBody\n"
-		if err := os.WriteFile(filepath.Join(svc.VaultRoot, name), []byte(content), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(svc.VaultRoot, name), []byte(content), 0600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -142,7 +142,7 @@ func TestDocStatusSetsFrontmatter(t *testing.T) {
 	fileName := "status_test.md"
 	absPath := filepath.Join(svc.VaultRoot, fileName)
 	content := "---\ntitle: \"Status Test\"\nstatus: \"open\"\n---\n\nBody.\n"
-	if err := os.WriteFile(absPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(absPath, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -183,7 +183,7 @@ func TestDocDueSetsFrontmatter(t *testing.T) {
 	fileName := "due_test.md"
 	absPath := filepath.Join(svc.VaultRoot, fileName)
 	content := "---\ntitle: \"Due Test\"\n---\n\nBody.\n"
-	if err := os.WriteFile(absPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(absPath, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -287,7 +287,7 @@ func TestSimilarDocsComputesSimhashWhenEmpty(t *testing.T) {
 
 	path := filepath.Join(svc.VaultRoot, "nohash.md")
 	content := "---\ntitle: \"No Hash\"\n---\n\nSome body text for simhash computation.\n"
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -317,10 +317,10 @@ func TestSimilarDocsFindsNearDuplicates(t *testing.T) {
 	origContent := "---\ntitle: \"Orig\"\nsimhash: \"a1b2c3d4e5f6a7b8\"\n---\n\nMonthly bill for Alice from Power Co.\n"
 	cloneContent := "---\ntitle: \"Clone\"\nsimhash: \"a1b2c3d4e5f6a7b0\"\n---\n\nMonthly bill for Alice from Power Co.\n"
 
-	if err := os.WriteFile(origPath, []byte(origContent), 0644); err != nil {
+	if err := os.WriteFile(origPath, []byte(origContent), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(clonePath, []byte(cloneContent), 0644); err != nil {
+	if err := os.WriteFile(clonePath, []byte(cloneContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -366,7 +366,7 @@ func TestSimilarDocsFindsNearDuplicates(t *testing.T) {
 func writeTestDoc(t *testing.T, svc *Service, name, content string) string {
 	t.Helper()
 	absPath := filepath.Join(svc.VaultRoot, name)
-	if err := os.WriteFile(absPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(absPath, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 	return absPath

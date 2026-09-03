@@ -21,7 +21,7 @@ func newPropsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			res, err := svc.Props(args[0])
 			if err != nil {
@@ -41,7 +41,7 @@ func newPropsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			err = svc.PropsEdit(args[0], args[1], args[2])
 			if err != nil {

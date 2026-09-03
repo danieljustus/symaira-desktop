@@ -282,7 +282,7 @@ func TestReadStructuredKind_EMLIgnoresAttachments(t *testing.T) {
 func writeTempFile(t *testing.T, name, content string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), name)
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	return path
@@ -290,7 +290,7 @@ func writeTempFile(t *testing.T, name, content string) string {
 
 func writeZip(t *testing.T, path string, files map[string]string) {
 	t.Helper()
-	f, err := os.Create(path)
+	f, err := os.Create(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -387,7 +387,7 @@ func TestCtxErr_NilDeadline(t *testing.T) {
 func TestZipFind_Found(t *testing.T) {
 	dir := t.TempDir()
 	zipPath := filepath.Join(dir, "test.zip")
-	f, err := os.Create(zipPath)
+	f, err := os.Create(zipPath) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}

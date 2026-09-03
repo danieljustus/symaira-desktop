@@ -2,6 +2,7 @@
 package ocr
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -86,7 +87,7 @@ func isTesseractLikelyAvailable() bool {
 	for _, name := range []string{"tesseract"} {
 		for _, dir := range filepath.SplitList(os.Getenv("PATH")) {
 			p := filepath.Join(dir, name)
-			if fi, err := os.Stat(p); err == nil && !fi.IsDir() && fi.Mode()&0111 != 0 {
+			if fi, err := os.Stat(p); err == nil && !fi.IsDir() && fi.Mode()&0111 != 0 { //nolint:gosec // G703: PATH entries and the executable name are used only for availability probing
 				return true
 			}
 		}
@@ -126,7 +127,7 @@ func renderTextToImage(text string) *image.RGBA {
 // GenerateCorpus renders all corpus entries to PNG images in dir.
 // Returns the entries with their image paths.
 func GenerateCorpus(dir string) ([]CorpusEntryWithImage, error) {
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, err
 	}
 	corpus := GermanReferenceCorpus()
@@ -134,15 +135,20 @@ func GenerateCorpus(dir string) ([]CorpusEntryWithImage, error) {
 	for _, e := range corpus {
 		img := renderTextToImage(e.GroundTruth)
 		imgPath := filepath.Join(dir, e.ID+".png")
-		f, err := os.Create(imgPath)
+		f, err := os.Create(imgPath) //nolint:gosec // G304: image path is derived from the caller-provided corpus directory and stable corpus ID
 		if err != nil {
 			return nil, err
 		}
 		if err := png.Encode(f, img); err != nil {
-			f.Close()
+			closeErr := f.Close()
+			if closeErr != nil {
+				return nil, fmt.Errorf("encode image: %w; close image: %v", err, closeErr)
+			}
 			return nil, err
 		}
-		f.Close()
+		if err := f.Close(); err != nil {
+			return nil, fmt.Errorf("close image: %w", err)
+		}
 		out = append(out, CorpusEntryWithImage{
 			CorpusEntry: e,
 			ImagePath:   imgPath,

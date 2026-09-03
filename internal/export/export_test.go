@@ -20,7 +20,7 @@ title: Hello
 - item one
 - item two
 `
-	if err := os.WriteFile(notePath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(notePath, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -46,10 +46,10 @@ title: Hello
 
 func TestNoteTransclusion(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "a.md"), []byte("common content"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "a.md"), []byte("common content"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "b.md"), []byte("![[a.md]]\n"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "b.md"), []byte("![[a.md]]\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -64,10 +64,10 @@ func TestNoteTransclusion(t *testing.T) {
 
 func TestViewToMarkdown(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "a.md"), []byte("---\ntitle: Rechnung A\nstatus: paid\n---\n"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "a.md"), []byte("---\ntitle: Rechnung A\nstatus: paid\n---\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "b.md"), []byte("---\ntitle: Rechnung B\nstatus: open\n---\n"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "b.md"), []byte("---\ntitle: Rechnung B\nstatus: open\n---\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	view := &dbviews.View{ID: "v1", Name: "Rechnungen", Columns: []string{"status", "title"}}

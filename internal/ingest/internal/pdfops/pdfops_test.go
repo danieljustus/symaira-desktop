@@ -11,7 +11,7 @@ import (
 func writeExecutable(t *testing.T, dir, name, body string) string {
 	t.Helper()
 	path := filepath.Join(dir, name)
-	if err := os.WriteFile(path, []byte("#!/bin/sh\n"+body), 0o755); err != nil {
+	if err := os.WriteFile(path, []byte("#!/bin/sh\n"+body), 0o700); err != nil { //nolint:gosec // G306: test helper must be executable; mode is owner-only 0700
 		t.Fatal(err)
 	}
 	return path
@@ -64,7 +64,7 @@ cp "$1" "$last"
 		t.Fatalf("outputs = %v, want two parts", outputs)
 	}
 	for _, output := range outputs {
-		data, err := os.ReadFile(output)
+		data, err := os.ReadFile(output) //nolint:gosec // G304: test path is confined to the test fixture directory
 		if err != nil {
 			t.Fatal(err)
 		}

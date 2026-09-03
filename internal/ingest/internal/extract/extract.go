@@ -16,6 +16,7 @@ package extract
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -86,12 +87,17 @@ type Engine interface {
 // back. When the optional magika CLI (google/magika) is installed, its result
 // is compared against the detected kind and mismatches are logged as warnings
 // to stderr. The magika result never overrides the detected kind.
-func Detect(path string) (Kind, error) {
-	f, err := os.Open(path)
+func Detect(path string) (kind Kind, err error) {
+	f, err := os.Open(path) //nolint:gosec // G304: path is the source selected by the extraction API
 	if err != nil {
 		return KindUnknown, fmt.Errorf("open file: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("close file: %w", closeErr))
+			kind = KindUnknown
+		}
+	}()
 
 	buf := make([]byte, 512)
 	n, err := f.Read(buf)
@@ -99,8 +105,6 @@ func Detect(path string) (Kind, error) {
 		return KindUnknown, fmt.Errorf("read file: %w", err)
 	}
 	head := buf[:n]
-
-	var kind Kind
 
 	switch {
 	case len(head) >= 4 && bytes.Equal(head[:4], []byte("%PDF")):
@@ -203,7 +207,7 @@ func ReadText(ctx context.Context, path string) (*Result, error) {
 
 // ReadTextKind reads a text-like file directly while preserving its normalized MIME kind.
 func ReadTextKind(ctx context.Context, path string, kind Kind) (*Result, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: path is the source selected by the extraction API
 	if err != nil {
 		return nil, fmt.Errorf("read text file: %w", err)
 	}

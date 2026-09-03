@@ -39,7 +39,7 @@ func ResolveKey(ref string) string {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		cmd := exec.CommandContext(ctx, "symvault", "get", ref)
+		cmd := exec.CommandContext(ctx, "symvault", "get", ref) //nolint:gosec // G204: fixed symvault binary; ref is an argv value, not shell input.
 		var out bytes.Buffer
 		cmd.Stdout = &out
 		if err := cmd.Run(); err == nil {

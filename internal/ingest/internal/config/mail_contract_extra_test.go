@@ -39,7 +39,7 @@ func TestAccountID_FormatsCorrectly(t *testing.T) {
 }
 
 func TestViewAccount_PreservesFieldsAndMasksSecret(t *testing.T) {
-	account := IMAPAccount{
+	account := IMAPAccount{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 		Host:           "imap.example.com",
 		Port:           993,
 		Username:       "daniel",
@@ -100,7 +100,7 @@ func TestViewAccount_PreservesFieldsAndMasksSecret(t *testing.T) {
 }
 
 func TestViewAccount_MasksPlaintextSecret(t *testing.T) {
-	account := IMAPAccount{
+	account := IMAPAccount{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 		Host:           "imap.example.com",
 		Port:           993,
 		Username:       "user",
@@ -191,7 +191,11 @@ func TestConfigPath_ProjectFileWins(t *testing.T) {
 	if err := os.Chdir(dir); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chdir(origDir)
+	defer func() {
+		if err := os.Chdir(origDir); err != nil {
+			t.Errorf("restore working directory: %v", err)
+		}
+	}()
 
 	got, err := ConfigPath("")
 	if err != nil {
@@ -239,7 +243,7 @@ func TestValidateMailAccounts_AllBranches(t *testing.T) {
 	}{
 		{
 			name: "empty host",
-			accounts: []IMAPAccount{{
+			accounts: []IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 				Host:           "",
 				Port:           993,
 				Username:       "user",
@@ -250,7 +254,7 @@ func TestValidateMailAccounts_AllBranches(t *testing.T) {
 		},
 		{
 			name: "port out of range",
-			accounts: []IMAPAccount{{
+			accounts: []IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 				Host:           "imap.example.com",
 				Port:           0,
 				Username:       "user",
@@ -261,7 +265,7 @@ func TestValidateMailAccounts_AllBranches(t *testing.T) {
 		},
 		{
 			name: "empty username",
-			accounts: []IMAPAccount{{
+			accounts: []IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 				Host:           "imap.example.com",
 				Port:           993,
 				Username:       "",
@@ -294,7 +298,7 @@ func TestValidateMailAccounts_AllBranches(t *testing.T) {
 		},
 		{
 			name: "invalid action",
-			accounts: []IMAPAccount{{
+			accounts: []IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 				Host:           "imap.example.com",
 				Port:           993,
 				Username:       "user",
@@ -306,7 +310,7 @@ func TestValidateMailAccounts_AllBranches(t *testing.T) {
 		},
 		{
 			name: "move without move_to",
-			accounts: []IMAPAccount{{
+			accounts: []IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 				Host:           "imap.example.com",
 				Port:           993,
 				Username:       "user",
@@ -319,7 +323,7 @@ func TestValidateMailAccounts_AllBranches(t *testing.T) {
 		},
 		{
 			name: "valid with all fields",
-			accounts: []IMAPAccount{{
+			accounts: []IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 				Host:           "imap.example.com",
 				Port:           993,
 				Username:       "user",
@@ -339,7 +343,7 @@ func TestValidateMailAccounts_AllBranches(t *testing.T) {
 		},
 		{
 			name: "invalid poll interval",
-			accounts: []IMAPAccount{{
+			accounts: []IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 				Host:           "imap.example.com",
 				Port:           993,
 				Username:       "user",
@@ -351,7 +355,7 @@ func TestValidateMailAccounts_AllBranches(t *testing.T) {
 		},
 		{
 			name: "mark_seen is valid action",
-			accounts: []IMAPAccount{{
+			accounts: []IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 				Host:           "imap.example.com",
 				Port:           993,
 				Username:       "user",
@@ -491,8 +495,10 @@ func splitLines(s string) []string {
 func TestWriteMailConfig_BrokenExistingTOML(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.toml")
-	os.WriteFile(path, []byte("[[imap_accounts]\nbroken"), 0o600)
-	accounts := []IMAPAccount{{
+	if err := os.WriteFile(path, []byte("[[imap_accounts]\nbroken"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	accounts := []IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 		Host: "imap.example.com", Port: 993, Username: "u",
 		PasswordSecret: "env://PASS", Folder: "INBOX",
 		Action: "mark_seen",
@@ -515,7 +521,7 @@ func TestWriteMailConfig_InvalidAccounts(t *testing.T) {
 func TestWriteMailConfig_NewFileInNewDir(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "subdir", "config.toml")
-	accounts := []IMAPAccount{{
+	accounts := []IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 		Host: "imap.example.com", Port: 993, Username: "u",
 		PasswordSecret: "env://PASS", Folder: "INBOX",
 		Action: "mark_seen",

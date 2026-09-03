@@ -87,7 +87,7 @@ func TestDetect(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			path := filepath.Join(dir, tc.name+tc.ext)
-			if err := os.WriteFile(path, tc.data, 0o644); err != nil {
+			if err := os.WriteFile(path, tc.data, 0o600); err != nil {
 				t.Fatal(err)
 			}
 			got, err := Detect(path)
@@ -104,7 +104,7 @@ func TestDetect(t *testing.T) {
 func TestDetect_Unknown(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "foo.bin")
-	if err := os.WriteFile(path, []byte("\x00\x01\x02\x03"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("\x00\x01\x02\x03"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := Detect(path); err == nil {
@@ -116,7 +116,7 @@ func TestReadText(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "note.txt")
 	want := "hello world"
-	if err := os.WriteFile(path, []byte(want), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte(want), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	res, err := ReadText(context.TODO(), path)
@@ -135,7 +135,7 @@ func TestReadTextKind_PreservesCSVKind(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "transactions.csv")
 	want := "date,amount\n2026-07-02,12.34\n"
-	if err := os.WriteFile(path, []byte(want), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte(want), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	res, err := ReadTextKind(context.TODO(), path, KindCSV)

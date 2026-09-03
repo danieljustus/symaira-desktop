@@ -2,6 +2,7 @@ package watcher
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"path/filepath"
@@ -41,7 +42,7 @@ type InboxWatcher struct {
 }
 
 func NewInboxWatcher(inboxDir string, svc *service.Service) (*InboxWatcher, error) {
-	if err := os.MkdirAll(inboxDir, 0755); err != nil {
+	if err := os.MkdirAll(inboxDir, 0755); err != nil { //nolint:gosec // G301: inbox directories are intentionally user-accessible.
 		return nil, err
 	}
 	fw, err := fsnotify.NewWatcher()
@@ -49,8 +50,7 @@ func NewInboxWatcher(inboxDir string, svc *service.Service) (*InboxWatcher, erro
 		return nil, err
 	}
 	if err := fw.Add(inboxDir); err != nil {
-		fw.Close()
-		return nil, err
+		return nil, errors.Join(err, fw.Close())
 	}
 	return NewInboxWatcherWithSource(inboxDir, svc, &fsnotifySource{watcher: fw})
 }
@@ -76,7 +76,7 @@ func NewInboxWatcherWithTiming(
 	tickerInterval time.Duration,
 	stabilityTimeout time.Duration,
 ) (*InboxWatcher, error) {
-	if err := os.MkdirAll(inboxDir, 0755); err != nil {
+	if err := os.MkdirAll(inboxDir, 0755); err != nil { //nolint:gosec // G301: inbox directories are intentionally user-accessible.
 		return nil, err
 	}
 	return &InboxWatcher{

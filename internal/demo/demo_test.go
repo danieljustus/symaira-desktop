@@ -59,10 +59,10 @@ func TestInitRefusesNonEmptyDir(t *testing.T) {
 	dir := t.TempDir()
 	vaultDir := filepath.Join(dir, "existing")
 
-	if err := os.MkdirAll(vaultDir, 0755); err != nil {
+	if err := os.MkdirAll(vaultDir, 0755); err != nil { //nolint:gosec // G301: test fixture directory mirrors the demo vault.
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(vaultDir, "keep-me.txt"), []byte("hello"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultDir, "keep-me.txt"), []byte("hello"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -77,7 +77,7 @@ func TestInitIdempotentOnEmptyDir(t *testing.T) {
 	dir := t.TempDir()
 	vaultDir := filepath.Join(dir, "empty-vault")
 
-	if err := os.MkdirAll(vaultDir, 0755); err != nil {
+	if err := os.MkdirAll(vaultDir, 0755); err != nil { //nolint:gosec // G301: test fixture directory mirrors the demo vault.
 		t.Fatal(err)
 	}
 
@@ -163,7 +163,11 @@ func TestNearDuplicatePair(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("close sidecar db: %v", err)
+		}
+	}()
 
 	indexAll(t, vaultDir, db)
 
@@ -205,7 +209,11 @@ func TestReviewQueueNonEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("close sidecar db: %v", err)
+		}
+	}()
 
 	indexAll(t, vaultDir, db)
 
@@ -256,7 +264,7 @@ func TestSavedViews(t *testing.T) {
 		}
 	}
 
-	viewsJSON, err := os.ReadFile(filepath.Join(vaultDir, ".symdesk", "views.json"))
+	viewsJSON, err := os.ReadFile(filepath.Join(vaultDir, ".symdesk", "views.json")) //nolint:gosec // G304: path is confined to the test vault.
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -278,7 +286,11 @@ func TestDocsListAfterIndex(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("close sidecar db: %v", err)
+		}
+	}()
 
 	indexAll(t, vaultDir, db)
 
@@ -426,7 +438,7 @@ func collectAllText(t *testing.T, dir string) string {
 		if info.IsDir() {
 			return nil
 		}
-		data, err := os.ReadFile(path)
+		data, err := os.ReadFile(path) //nolint:gosec // G304: filepath.Walk is confined to the test vault.
 		if err != nil {
 			return nil
 		}

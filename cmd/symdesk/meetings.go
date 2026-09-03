@@ -20,7 +20,7 @@ func newMeetingCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			if includeErrors {
@@ -48,7 +48,7 @@ func newMeetingCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			doc, err := svc.MeetingShow(args[0])
@@ -68,7 +68,7 @@ func newMeetingCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			if err := svc.MeetingMarkReviewed(args[0]); err != nil {
@@ -96,7 +96,7 @@ func newMeetingCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			proposal := service.MeetingPublishProposal{}
@@ -136,7 +136,7 @@ func newMeetingParticipantCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			candidates, err := svc.ResolveParticipantCandidates(args[0])
@@ -162,7 +162,7 @@ func newMeetingParticipantCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			if err := svc.ConfirmParticipant(args[0], args[1], entityID); err != nil {
@@ -186,7 +186,7 @@ func newMeetingParticipantCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			entityID, err := svc.ConfirmParticipantNewPerson(args[0], args[1], args[2])
@@ -207,7 +207,7 @@ func newMeetingParticipantCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			ref, err := svc.ResolveMeetingContactRef(args[0])
@@ -228,7 +228,7 @@ func newMeetingParticipantCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			ref, err := svc.LinkParticipantContact(args[0], args[1], args[2])
@@ -249,7 +249,7 @@ func newMeetingParticipantCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close() //nolint:errcheck // matches the existing CLI command pattern in this package
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			if err := svc.UnlinkParticipantContact(args[0], args[1]); err != nil {

@@ -19,7 +19,7 @@ func newAICmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			viewID, _ := cmd.Flags().GetString("view")
@@ -38,8 +38,8 @@ func newAICmd() *cobra.Command {
 	autofillCmd.Flags().String("property", "", "frontmatter property to fill")
 	autofillCmd.Flags().String("prompt", "", "extra prompt/instruction for the AI")
 	autofillCmd.Flags().Bool("dry-run", false, "show what would be changed without writing")
-	autofillCmd.MarkFlagRequired("view")
-	autofillCmd.MarkFlagRequired("property")
+	markFlagRequired(autofillCmd, "view")
+	markFlagRequired(autofillCmd, "property")
 	cmd.AddCommand(autofillCmd)
 	return cmd
 }

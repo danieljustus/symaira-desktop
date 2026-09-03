@@ -31,7 +31,7 @@ func newDocsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			f := sidecar.DocsFilter{}
@@ -83,7 +83,7 @@ func newDocsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			threshold, _ := cmd.Flags().GetInt("threshold")

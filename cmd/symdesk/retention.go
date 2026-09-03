@@ -40,7 +40,7 @@ func newRetentionEvalCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 
 			if rulesFile == "" {
 				rulesFile = filepath.Join(vRoot, ".symdesk", "retention-rules.yaml")
@@ -175,7 +175,7 @@ func newRetentionAcceptCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 
 			p, err := retention.LoadProposal(vRoot, args[0])
 			if err != nil {
@@ -213,18 +213,22 @@ func newRetentionAcceptCmd() *cobra.Command {
 					}
 				}
 
-				retention.AppendHistory(vRoot, retention.HistoryEntry{
+				if err := retention.AppendHistory(vRoot, retention.HistoryEntry{
 					Timestamp: now.UTC(),
 					RuleName:  item.RuleName,
 					Action:    item.Action,
 					Path:      item.Path,
 					Title:     item.Title,
-				})
+				}); err != nil {
+					return fmt.Errorf("append retention history for %s: %w", item.Path, err)
+				}
 				acted++
 			}
 
 			p.Status = "accepted"
-			retention.WriteProposal(vRoot, p)
+			if err := retention.WriteProposal(vRoot, p); err != nil {
+				return fmt.Errorf("save accepted retention proposal: %w", err)
+			}
 
 			return outputResult(map[string]interface{}{
 				"status": "accepted",

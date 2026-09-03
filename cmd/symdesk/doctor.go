@@ -138,7 +138,7 @@ func newDoctorCmd() *cobra.Command {
 				results["sidecar"] = map[string]string{"status": "error", "message": err.Error()}
 				allOk = false
 			} else {
-				defer db.Close()
+				defer closeWithWarning("sidecar database", db.Close)
 				if err := db.CheckIntegrity(); err != nil {
 					results["sidecar"] = map[string]string{"status": "error", "message": err.Error()}
 					allOk = false
@@ -180,7 +180,7 @@ func newDoctorCmd() *cobra.Command {
 					}
 					if vRoot != "" {
 						if lifecycleDB, lifecycleErr := sidecar.OpenForVault(vRoot); lifecycleErr == nil {
-							defer func() { _ = lifecycleDB.Close() }()
+							defer closeWithWarning("sidecar database", lifecycleDB.Close)
 							failed, _ := lifecycleDB.ListIndexStatuses(sidecar.IndexStateFailed)
 							unsupported, _ := lifecycleDB.ListIndexStatuses(sidecar.IndexStateUnsupported)
 							encrypted, _ := lifecycleDB.ListIndexStatuses(sidecar.IndexStateEncrypted)

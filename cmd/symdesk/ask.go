@@ -25,7 +25,13 @@ func newAskCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			closeDB := func() {
+				if db != nil {
+					closeWithWarning("sidecar database", db.Close)
+					db = nil
+				}
+			}
+			defer closeDB()
 			svc := service.New(vRoot, db)
 
 			notebookRef, _ := cmd.Flags().GetString("notebook")
@@ -55,7 +61,7 @@ func newAskCmd() *cobra.Command {
 					// The CLI's own db handle is only used by the one-shot
 					// Ask fallback; the loop's tools open fresh sidecars per
 					// call, so release the shared handle before running.
-					_ = db.Close()
+					closeDB()
 					events := make(chan ai.AIEvent)
 					go ai.RunAgent(cmd.Context(), cfg, args[0], agentTools, events)
 					go func() {

@@ -21,9 +21,7 @@ func setupTestVault(t *testing.T) string {
 	t.Helper()
 	vaultDir := t.TempDir()
 	md := "---\ntitle: Test Note\n---\n\nBody\n"
-	if err := os.WriteFile(filepath.Join(vaultDir, "note.md"), []byte(md), 0644); err != nil {
-		t.Fatal(err)
-	}
+	writeTestFile(t, filepath.Join(vaultDir, "note.md"), md)
 	return vaultDir
 }
 
@@ -43,7 +41,7 @@ func runCommand(t *testing.T, cmd *cobra.Command, args []string) (string, error)
 
 	runErr := cmd.RunE(cmd, args)
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
@@ -100,7 +98,7 @@ func TestDoctorCommandExecution(t *testing.T) {
 
 	runErr := doctorCmd.RunE(doctorCmd, nil)
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
@@ -169,7 +167,7 @@ func TestDoctorCommandTextOutput(t *testing.T) {
 		t.Logf("doctor returned error (expected when checks fail): %v", runErr)
 	}
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
@@ -394,7 +392,7 @@ func TestSearchCommandNoArgs(t *testing.T) {
 
 	runErr := cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, errCopy := io.Copy(&buf, r); errCopy != nil {
@@ -637,7 +635,7 @@ func TestNewEventsCmdExecution(t *testing.T) {
 	os.Stdin = r
 	t.Cleanup(func() { os.Stdin = origStdin })
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 
 	done := make(chan error, 1)
 	go func() {
@@ -715,7 +713,7 @@ func TestNewRootCmdVersionJSON(t *testing.T) {
 
 	runErr := cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
@@ -765,7 +763,7 @@ func TestRootCommandDoctorViaSetArgs(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
@@ -803,7 +801,7 @@ func TestRootCommandIndexViaSetArgs(t *testing.T) {
 
 	runErr := cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
@@ -840,7 +838,7 @@ func TestRootCommandLsViaSetArgs(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
@@ -873,7 +871,7 @@ func TestRootCommandSearchViaSetArgs(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
@@ -908,7 +906,7 @@ func TestRootCommandDemoInitViaSetArgs(t *testing.T) {
 
 	runErr := cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
@@ -941,7 +939,7 @@ func TestRootCommandVersionViaSetArgs(t *testing.T) {
 
 	runErr := cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
@@ -979,7 +977,7 @@ func TestRootCommandWithVaultFlag(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {

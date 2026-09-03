@@ -150,7 +150,7 @@ func fetchWithSymfetch(symfetchPath, url string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), symfetchTimeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, symfetchPath, "get", url, "--format", "md")
+	cmd := exec.CommandContext(ctx, symfetchPath, "get", url, "--format", "md") // #nosec G204 -- symfetchPath comes directly from exec.LookPath.
 	cmd.Stderr = os.Stderr
 
 	output, err := cmd.Output()
@@ -201,7 +201,11 @@ func fetchWithHTTP(rawURL, pinnedIP string) (string, error) {
 		return "", userFriendlyError(err, "HTTP request failed",
 			"Check your internet connection and verify the URL is correct")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "engine: failed to close HTTP response body: %v\n", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("HTTP GET returned status %d", resp.StatusCode)

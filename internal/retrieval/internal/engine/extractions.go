@@ -94,11 +94,15 @@ func detectSidecarPath(path, content string) string {
 // re-running an import) never duplicates rows and never leaves stale ones
 // behind. Exported for reuse by the CLI's manual "extract import" command.
 func ImportExtractionSidecar(dbClient db.Store, docPath, sidecarPath string) error {
-	f, err := os.Open(sidecarPath)
+	f, err := os.Open(sidecarPath) // #nosec G304 -- sidecarPath is an explicit local sidecar selected by the caller.
 	if err != nil {
 		return fmt.Errorf("open sidecar %s: %w", sidecarPath, err)
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "engine: failed to close extraction sidecar %s: %v\n", sidecarPath, err)
+		}
+	}()
 
 	chunkSpans, err := chunkSpansStore(dbClient, docPath)
 	if err != nil {

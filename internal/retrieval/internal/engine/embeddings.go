@@ -581,7 +581,9 @@ func GenerateLocalHashVector(text string, dimensions int) []float32 {
 		}
 
 		h := fnv.New32a()
-		h.Write([]byte(word))
+		if _, err := h.Write([]byte(word)); err != nil {
+			continue
+		}
 		hashVal := h.Sum32()
 
 		idx := int(hashVal) % dimensions

@@ -138,27 +138,13 @@ jobs:
         with:
           go-version: "1.26.6"
 
-      # The gate is scoped to lines touched by the current push/PR. The
-      # repository has a pre-existing errcheck/gosec backlog (hundreds of
-      # findings); gating on the full backlog would require an unrelated mass
-      # cleanup, so this starter job instead blocks new regressions while the
-      # backlog is worked down separately.
-      #
-      # The scope comes from --new-from-rev rather than the action's
-      # only-new-issues, which fetches the PR patch through the GitHub API.
-      # That API refuses diffs over 20,000 lines, and on a refusal the action
-      # falls back to reporting the entire backlog — which is what issue #492
-      # describes. A consolidation PR that deletes an absorbed tool's
-      # duplicated tree crosses that limit easily (PR #507 deleted ~31k
-      # lines). --new-from-rev computes the same scope from local git, which
-      # the fetch-depth: 0 above already guarantees, and has no size limit.
+      # The pre-existing errcheck/gosec backlog (issue #752 and its
+      # package-scoped leaves) is cleared, so the gate now covers the full
+      # tree instead of only lines touched by the current push/PR.
       - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           version: v2.12.2
           only-new-issues: false
-          args: >-
-            --new-from-rev=${{ github.event_name == 'pull_request'
-            && format('origin/{0}', github.base_ref) || 'HEAD~1' }}
 
   version-consistency:
     name: Version consistency

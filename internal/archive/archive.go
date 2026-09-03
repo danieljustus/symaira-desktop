@@ -111,17 +111,17 @@ func splitPages(text string) []string {
 
 // copyFile copies a file from src to dst.
 func copyFile(src, dst string) error {
-	s, err := os.Open(src)
+	s, err := os.Open(src) //nolint:gosec // G304: src is an explicit archive input path.
 	if err != nil {
 		return err
 	}
 	defer func() { _ = s.Close() }()
 
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil { //nolint:gosec // G301: archive output directories follow the vault layout.
 		return err
 	}
 
-	d, err := os.Create(dst)
+	d, err := os.Create(dst) //nolint:gosec // G304: dst is the explicit archive output path.
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func copyFile(src, dst string) error {
 // OCRTextFromFile reads OCR text from a plain-text OCR sidecar file.
 // If the file is JSON (symingest format), it extracts the "text" field.
 func OCRTextFromFile(ocrJSONPath string) (string, error) {
-	data, err := os.ReadFile(ocrJSONPath)
+	data, err := os.ReadFile(ocrJSONPath) //nolint:gosec // G304: path is the caller-selected OCR sidecar.
 	if err != nil {
 		return "", err
 	}
@@ -156,7 +156,7 @@ func ArchivePath(docRelPath string) string {
 // HasTextLayer performs a quick check: does the PDF contain text operators
 // (BT/ET blocks) indicating it has a text layer?
 func HasTextLayer(pdfPath string) bool {
-	data, err := os.ReadFile(pdfPath)
+	data, err := os.ReadFile(pdfPath) //nolint:gosec // G304: path is the caller-selected PDF to inspect.
 	if err != nil {
 		return false
 	}

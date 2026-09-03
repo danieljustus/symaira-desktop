@@ -84,10 +84,10 @@ func TestVerifyModifiedEvent(t *testing.T) {
 
 	// Tamper note line in file
 	segPath := j.SegmentPath(ownerID.MemberID)
-	data, _ := os.ReadFile(segPath)
+	data, _ := os.ReadFile(segPath) //nolint:gosec // segPath is a test fixture under t.TempDir
 	lines := strings.Split(string(data), "\n")
 	lines[1] = strings.Replace(lines[1], `"hello"`, `"tampered"`, 1)
-	if err := os.WriteFile(segPath, []byte(strings.Join(lines, "\n")), 0644); err != nil {
+	if err := os.WriteFile(segPath, []byte(strings.Join(lines, "\n")), 0600); err != nil { //nolint:gosec // segPath is a test fixture under t.TempDir
 		t.Fatalf("write tampered segment: %v", err)
 	}
 
@@ -195,7 +195,7 @@ func TestVerifyForkDetection(t *testing.T) {
 
 	// Write both lines into segment
 	segPath := j.SegmentPath(ownerID.MemberID)
-	f, _ := os.OpenFile(segPath, os.O_WRONLY|os.O_APPEND, 0644)
+	f, _ := os.OpenFile(segPath, os.O_WRONLY|os.O_APPEND, 0600) //nolint:gosec // segPath is a test fixture under t.TempDir
 	if _, err := f.Write(lineA); err != nil {
 		t.Fatalf("write fork line A: %v", err)
 	}

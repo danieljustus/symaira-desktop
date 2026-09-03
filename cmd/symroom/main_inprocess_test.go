@@ -49,7 +49,7 @@ func runMain(t *testing.T, dir, xdgData, xdgConfig string, args ...string) (stri
 	if err != nil {
 		t.Fatalf("marshal args %v: %v", args, err)
 	}
-	cmd := exec.Command(os.Args[0], "-test.run=^$")
+	cmd := exec.Command(os.Args[0], "-test.run=^$") //nolint:gosec // reruns this test binary with a fixed test selector
 	cmd.Dir = dir
 	cmd.Stdin = strings.NewReader("") // immediate EOF so mcp mode exits cleanly
 	cmd.Env = append(filterEnv("PATH=", "SYMROOM_IDENTITY_KEY="),
@@ -201,7 +201,7 @@ func TestMainDispatchCoversSubcommands(t *testing.T) {
 
 	// ---- artifact ------------------------------------------------------------
 	docPath := filepath.Join(roomDir, "doc.md")
-	if err := os.WriteFile(docPath, []byte("# doc\n"), 0o644); err != nil {
+	if err := os.WriteFile(docPath, []byte("# doc\n"), 0o600); err != nil {
 		t.Fatalf("write doc.md: %v", err)
 	}
 	assertRun(roomDir, 0, nil, "artifact", "link", "--identity", "alice", docPath)

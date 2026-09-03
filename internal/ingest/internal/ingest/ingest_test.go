@@ -20,7 +20,7 @@ func (f *fakeEngine) Extract(ctx context.Context, path string, kind extract.Kind
 func TestExtractText_TextFile(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "note.txt")
-	if err := os.WriteFile(path, []byte("hello"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("hello"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	kind, err := extract.Detect(path)
@@ -39,7 +39,7 @@ func TestExtractText_TextFile(t *testing.T) {
 func TestExtractText_Engine(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "scan.png")
-	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 	kind, err := extract.Detect(path)
@@ -58,7 +58,7 @@ func TestExtractText_Engine(t *testing.T) {
 func TestExtractText_StructuredEMLDoesNotUseOCREngine(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "mail.eml")
-	if err := os.WriteFile(path, []byte("Subject: hi\n\nbody"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("Subject: hi\n\nbody"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	kind, err := extract.Detect(path)

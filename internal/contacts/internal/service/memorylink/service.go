@@ -61,6 +61,7 @@ func (s *Service) link(ctx context.Context, column, id string, in memorylink.Lin
 	}
 
 	linkID := newID()
+	//nolint:gosec // column is selected from the fixed person_id/organization_id API paths
 	_, err := s.db.ExecContext(ctx, `
 		INSERT INTO memory_links (id, `+column+`, memory_entity_id, memory_entity_type, linked_by, created_at)
 		VALUES (?, ?, ?, ?, ?, ?)`,
@@ -89,6 +90,7 @@ func (s *Service) GetOrganizationLink(ctx context.Context, organizationID string
 
 func (s *Service) get(ctx context.Context, column, id string) (*memorylink.Link, error) {
 	const op = "memorylink.get"
+	//nolint:gosec // column is selected from the fixed person_id/organization_id API paths
 	row := s.db.QueryRowContext(ctx, `
 		SELECT id, COALESCE(person_id, ''), COALESCE(organization_id, ''), memory_entity_id, memory_entity_type, linked_by, created_at
 		FROM memory_links WHERE `+column+` = ?`, id)
@@ -119,6 +121,7 @@ func (s *Service) UnlinkOrganization(ctx context.Context, organizationID string)
 
 func (s *Service) unlink(ctx context.Context, column, id string) error {
 	const op = "memorylink.unlink"
+	//nolint:gosec // column is selected from the fixed person_id/organization_id API paths
 	if _, err := s.db.ExecContext(ctx, "DELETE FROM memory_links WHERE "+column+" = ?", id); err != nil {
 		return errs.Internal(op, "failed to remove memory link", err)
 	}

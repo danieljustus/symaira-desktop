@@ -24,7 +24,8 @@ func withFakeBinary(t *testing.T, script string) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "symmeet")
 	content := "#!/bin/sh\n" + script + "\n"
-	if err := os.WriteFile(path, []byte(content), 0o755); err != nil {
+	//nolint:gosec // test fixture is an executable script in a temporary directory
+	if err := os.WriteFile(path, []byte(content), 0o700); err != nil {
 		t.Fatalf("failed to write fake symmeet binary: %v", err)
 	}
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))

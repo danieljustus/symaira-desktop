@@ -203,6 +203,7 @@ func (s *Service) batchFindImportSources(ctx context.Context, source importer.So
 		for _, ref := range chunk {
 			args = append(args, ref)
 		}
+		//nolint:gosec // ph contains only locally generated SQL placeholders
 		rows, err := s.db.QueryContext(ctx, `
 			SELECT src.source_ref, p.id, p.display_name FROM import_sources src
 			JOIN persons p ON p.id = src.person_id
@@ -213,16 +214,16 @@ func (s *Service) batchFindImportSources(ctx context.Context, source importer.So
 		for rows.Next() {
 			var ref, id, name string
 			if err := rows.Scan(&ref, &id, &name); err != nil {
-				rows.Close()
+				_ = rows.Close()
 				return nil, err
 			}
 			result[ref] = personMatch{id: id, name: name}
 		}
 		if err := rows.Err(); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return nil, err
 		}
-		rows.Close()
+		_ = rows.Close()
 	}
 	return result, nil
 }
@@ -240,6 +241,7 @@ func (s *Service) batchContactPointMatches(ctx context.Context, kind contactdoma
 		for _, v := range chunk {
 			args = append(args, v)
 		}
+		//nolint:gosec // ph contains only locally generated SQL placeholders
 		rows, err := s.db.QueryContext(ctx, `
 			SELECT DISTINCT cp.normalized_value, p.id, p.display_name FROM contact_points cp
 			JOIN persons p ON p.id = cp.person_id
@@ -250,16 +252,16 @@ func (s *Service) batchContactPointMatches(ctx context.Context, kind contactdoma
 		for rows.Next() {
 			var nv, id, name string
 			if err := rows.Scan(&nv, &id, &name); err != nil {
-				rows.Close()
+				_ = rows.Close()
 				return nil, err
 			}
 			result[nv] = append(result[nv], personMatch{id: id, name: name})
 		}
 		if err := rows.Err(); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return nil, err
 		}
-		rows.Close()
+		_ = rows.Close()
 	}
 	return result, nil
 }
@@ -276,6 +278,7 @@ func (s *Service) batchNameMatches(ctx context.Context, names []string) (map[str
 		for _, name := range chunk {
 			args = append(args, name)
 		}
+		//nolint:gosec // ph contains only locally generated SQL placeholders
 		rows, err := s.db.QueryContext(ctx, `
 			SELECT id, display_name FROM persons
 			WHERE display_name COLLATE NOCASE IN (`+ph+`)`, args...)
@@ -285,7 +288,7 @@ func (s *Service) batchNameMatches(ctx context.Context, names []string) (map[str
 		for rows.Next() {
 			var id, displayName string
 			if err := rows.Scan(&id, &displayName); err != nil {
-				rows.Close()
+				_ = rows.Close()
 				return nil, err
 			}
 			// Map the result back to every queried name that matches
@@ -297,10 +300,10 @@ func (s *Service) batchNameMatches(ctx context.Context, names []string) (map[str
 			}
 		}
 		if err := rows.Err(); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return nil, err
 		}
-		rows.Close()
+		_ = rows.Close()
 	}
 	return result, nil
 }

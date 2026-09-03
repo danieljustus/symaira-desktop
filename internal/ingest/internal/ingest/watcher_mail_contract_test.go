@@ -75,7 +75,7 @@ func TestMailPoller_PollAccount_StartUIDContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() { _ = s.Close() }()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -131,7 +131,7 @@ func TestMailPoller_PollAccount_CursorLoadError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() { _ = s.Close() }()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",

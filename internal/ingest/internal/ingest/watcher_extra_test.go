@@ -95,7 +95,7 @@ func TestMoveFileToDir(t *testing.T) {
 	dstDir := t.TempDir()
 
 	src := filepath.Join(srcDir, "test.txt")
-	if err := os.WriteFile(src, []byte("test"), 0o644); err != nil {
+	if err := os.WriteFile(src, []byte("test"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -136,7 +136,7 @@ func TestWriteFailureSidecar(t *testing.T) {
 		t.Errorf("sidecar not written: %v", err)
 	}
 
-	data, err := os.ReadFile(sidecar)
+	data, err := readTestFile(sidecar)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -183,7 +183,7 @@ func TestNewWatcherWithOptions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer st.Close()
+	defer func() { closeTestResource(t, "SMTP server", st) }()
 
 	w, err := NewWatcherWithOptions(st, dir, WatcherOptions{
 		StableFor: 100 * time.Millisecond,
@@ -205,7 +205,7 @@ func TestStartWorker_ContextCancel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer st.Close()
+	defer func() { closeTestResource(t, "SMTP server", st) }()
 
 	pipeline := &Pipeline{
 		Store: st,
@@ -236,7 +236,7 @@ func TestFileExists(t *testing.T) {
 		t.Error("fileExists returned true for non-existent file")
 	}
 
-	if err := os.WriteFile(path, []byte("test"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("test"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

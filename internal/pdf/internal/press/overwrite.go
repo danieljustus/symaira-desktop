@@ -34,11 +34,12 @@ func CheckOverwrite(path string, overwrite bool) error {
 }
 
 func hasPDFHeader(path string) (bool, error) {
+	//nolint:gosec // path is supplied by the caller after overwrite validation
 	f, err := os.Open(path)
 	if err != nil {
 		return false, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	buf := make([]byte, 4)
 	n, err := f.Read(buf)

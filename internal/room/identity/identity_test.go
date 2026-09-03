@@ -124,10 +124,10 @@ func TestSymvaultFallbackToFile(t *testing.T) {
 func writeFakeBin(t *testing.T, dir, binName, script string) string {
 	t.Helper()
 	path := filepath.Join(dir, binName)
-	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+	if err := os.WriteFile(path, []byte(script), 0o755); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatalf("write fake %s: %v", binName, err)
 	}
-	if err := os.Chmod(path, 0o755); err != nil {
+	if err := os.Chmod(path, 0o755); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatalf("chmod fake %s: %v", binName, err)
 	}
 	return path

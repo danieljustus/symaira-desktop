@@ -84,26 +84,33 @@ func Install(profName, content string) (string, error) {
 			return "", fmt.Errorf("symbrain not installed and user home not found: %w", err)
 		}
 		dir := filepath.Join(home, ".config", "symbrain", "profiles")
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0700); err != nil {
 			return "", err
 		}
 		path := filepath.Join(dir, fmt.Sprintf("%s.toml", profName))
-		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 			return "", err
 		}
 		return fmt.Sprintf("symbrain is not installed on PATH. Profile written to %s", path), nil
 	}
 
-	cmd := exec.Command(symbrainBin, "profile", "add", profName)
+	cmd := exec.Command(symbrainBin, "profile", "add", profName) //nolint:gosec // symbrainBin is resolved with exec.LookPath
 	cmd.Stdin = strings.NewReader(content)
 	if output, err := cmd.CombinedOutput(); err == nil {
 		return string(output), nil
 	}
 
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("resolve user home for profile fallback: %w", err)
+	}
 	dir := filepath.Join(home, ".config", "symbrain", "profiles")
-	_ = os.MkdirAll(dir, 0755)
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return "", fmt.Errorf("create profile directory: %w", err)
+	}
 	path := filepath.Join(dir, fmt.Sprintf("%s.toml", profName))
-	_ = os.WriteFile(path, []byte(content), 0644)
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+		return "", fmt.Errorf("write profile fallback: %w", err)
+	}
 	return fmt.Sprintf("Profile written to %s", path), nil
 }

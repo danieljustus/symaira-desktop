@@ -111,7 +111,7 @@ func (s *Service) ListPersons(ctx context.Context, opts ListPersonsOptions) (pag
 	if err != nil {
 		return page.Result[contact.Person]{}, errs.Internal(op, "failed to list persons", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []contact.Person
 	for rows.Next() {
@@ -158,7 +158,7 @@ func (s *Service) UpdatePerson(ctx context.Context, id string, upd contact.Perso
 	}
 	args = append(args, id)
 
-	res, err := s.db.ExecContext(ctx, "UPDATE persons SET "+strings.Join(sets, ", ")+" WHERE id = ?", args...)
+	res, err := s.db.ExecContext(ctx, "UPDATE persons SET "+strings.Join(sets, ", ")+" WHERE id = ?", args...) //nolint:gosec // sets contain only fixed SQL fragments and placeholders
 	if err != nil {
 		return nil, errs.Internal(op, "failed to update person", err)
 	}

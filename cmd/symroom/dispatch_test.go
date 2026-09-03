@@ -352,7 +352,7 @@ func TestRunRoomCommandsInProcess(t *testing.T) {
 
 	// artifact link + list (human + json).
 	docPath := filepath.Join(roomDirPath, "doc.md")
-	if err := os.WriteFile(docPath, []byte("# doc\n"), 0o644); err != nil {
+	if err := os.WriteFile(docPath, []byte("# doc\n"), 0o600); err != nil {
 		t.Fatalf("write doc.md: %v", err)
 	}
 	code, out, errOut = runInProcess(runArtifact, []string{"symroom", "artifact", "link", "--identity", "owner", docPath})

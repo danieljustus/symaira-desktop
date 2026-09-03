@@ -54,7 +54,7 @@ func (s *Service) Backup(ctx context.Context, passphrase []byte, w io.Writer) er
 		return errs.Internal(op, "failed to snapshot database", err)
 	}
 
-	plaintext, err := os.ReadFile(tmpPath)
+	plaintext, err := os.ReadFile(tmpPath) //nolint:gosec // tmpPath is created by os.CreateTemp and never comes from a caller
 	if err != nil {
 		return errs.Internal(op, "failed to read database snapshot", err)
 	}

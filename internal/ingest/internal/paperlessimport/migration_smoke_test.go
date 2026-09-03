@@ -3,7 +3,6 @@ package paperlessimport
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -25,7 +24,7 @@ import (
 // document content carries a unique token so search results can be
 // verified unambiguously.
 func TestMigrationSmoke_PaperlessToSearchableVault(t *testing.T) {
-	const uniqueToken = "SYMINGEST_SMOKE_TOKEN_7f3a9c1e"
+	const uniqueToken = "smoke-document-marker"
 
 	// 1. Fixture Paperless API responses matching the real API shape
 	// (see internal/paperless/types.go: id, title, created/created_date,
@@ -34,7 +33,7 @@ func TestMigrationSmoke_PaperlessToSearchableVault(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{
@@ -55,14 +54,14 @@ func TestMigrationSmoke_PaperlessToSearchableVault(t *testing.T) {
 				"next": nil,
 			})
 		case "/api/documents/314/download/":
-			w.Write([]byte(uniqueToken + " — this is the migrated document body.\n"))
+			mustWrite(w, []byte(uniqueToken+" — this is the migrated document body.\n"))
 		case "/api/tags/", "/api/correspondents/", "/api/document_types/", "/api/storage_paths/":
-			json.NewEncoder(w).Encode(map[string]any{"count": 0, "results": []any{}, "next": nil})
+			mustEncode(w, map[string]any{"count": 0, "results": []any{}, "next": nil})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	// 2. Run import into a temp vault/archive/db.
 	dir := t.TempDir()
@@ -71,7 +70,7 @@ func TestMigrationSmoke_PaperlessToSearchableVault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("store.Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	pipeline := &ingest.Pipeline{
 		Store:      s,
@@ -143,7 +142,7 @@ func TestMigrationSmoke_PaperlessToSearchableVault(t *testing.T) {
 	runSymseek := func(args ...string) (string, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		cmd := exec.CommandContext(ctx, symseekPath, args...)
+		cmd := exec.CommandContext(ctx, symseekPath, args...) //nolint:gosec // integration test runs the discovered fixture binary
 		cmd.Env = []string{"HOME=" + fakeHome, "PATH=" + os.Getenv("PATH")}
 		var out bytes.Buffer
 		cmd.Stdout = &out

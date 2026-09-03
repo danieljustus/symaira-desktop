@@ -14,7 +14,7 @@ func TestCreateOrGet_Deduplicates(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 	d1, created1, err := s.CreateOrGet(ctx, "/tmp/a.pdf", "abc123", "application/pdf")
@@ -42,7 +42,7 @@ func TestSetVaultAndArchivePath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 	d, _, err := s.CreateOrGet(ctx, "/tmp/a.pdf", "abc", "application/pdf")
@@ -85,7 +85,7 @@ func TestStore_JobsQueue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 
@@ -261,7 +261,7 @@ func TestStore_ClaimJobByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 
@@ -325,7 +325,7 @@ func TestStore_Rules(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 
@@ -400,7 +400,7 @@ func TestPaperlessImportState_UpsertAndStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	const baseURL = "https://paperless.local"
@@ -485,7 +485,7 @@ func TestPaperlessImportState_TargetsAreIndependent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	const baseURL = "https://paperless.local"
@@ -541,7 +541,7 @@ func TestEnqueueSkippedJob(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 	doc, _, err := s.CreateOrGet(ctx, "/tmp/a.pdf", "hash1", "application/pdf")
@@ -590,7 +590,7 @@ func TestResetRunningJobs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 	doc, _, err := s.CreateOrGet(ctx, "/tmp/a.pdf", "hash-reset", "application/pdf")
@@ -635,7 +635,7 @@ func TestRecordAndListExtractions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 	doc, _, err := s.CreateOrGet(ctx, "/tmp/invoice.pdf", "hash-ext", "application/pdf")
@@ -687,7 +687,7 @@ func TestListExtractions_Empty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 	doc, _, err := s.CreateOrGet(ctx, "/tmp/empty.pdf", "hash-empty", "application/pdf")
@@ -710,7 +710,7 @@ func TestPaperlessImportStateByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 	baseURL := "https://paperless.example"
@@ -743,7 +743,7 @@ func TestPaperlessImportStateByID_NotFound(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 	state, err := s.PaperlessImportStateByID(ctx, "https://paperless.example", 999)
@@ -761,7 +761,7 @@ func TestStore_MailPollCursor(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	ctx := context.Background()
 

@@ -2,7 +2,6 @@ package paperlessimport
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -20,7 +19,7 @@ func TestVerify_WithStoreUsesImportStateAndDetectsHashMismatch(t *testing.T) {
 		}
 		switch {
 		case r.URL.Path == "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{{
 					"id": 1, "title": "Doc 1",
@@ -30,12 +29,12 @@ func TestVerify_WithStoreUsesImportStateAndDetectsHashMismatch(t *testing.T) {
 				"next": nil,
 			})
 		case strings.HasPrefix(r.URL.Path, "/api/documents/") && strings.HasSuffix(r.URL.Path, "/download/"):
-			w.Write([]byte("hello"))
+			mustWrite(w, []byte("hello"))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	vault := filepath.Join(dir, "vault")
@@ -60,7 +59,7 @@ func TestVerify_WithStoreUsesImportStateAndDetectsHashMismatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer st.Close()
+	defer closeTestResource(t, st)
 	if err := st.UpsertPaperlessImportStateForTarget(context.Background(), srv.URL, vault, archive, 1, "imported", "", notePath, archivePath, "0000000000000000000000000000000000000000000000000000000000000000"); err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +83,7 @@ func TestVerify_DuplicateContentWithSeparateIDs(t *testing.T) {
 		}
 		switch {
 		case r.URL.Path == "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 2,
 				"results": []map[string]any{
 					{"id": 1, "title": "Doc 1", "created_date": "2026-01-15T00:00:00Z", "created": "2026-01-15T00:00:00Z", "file_type": ".txt"},
@@ -93,14 +92,14 @@ func TestVerify_DuplicateContentWithSeparateIDs(t *testing.T) {
 				"next": nil,
 			})
 		case strings.HasPrefix(r.URL.Path, "/api/documents/") && strings.HasSuffix(r.URL.Path, "/download/"):
-			w.Write([]byte("same content"))
+			mustWrite(w, []byte("same content"))
 		case strings.HasPrefix(r.URL.Path, "/api/documents/"):
-			json.NewEncoder(w).Encode(map[string]any{"id": 1, "title": "Doc 1", "created_date": "2026-01-15T00:00:00Z", "created": "2026-01-15T00:00:00Z", "file_type": ".txt"})
+			mustEncode(w, map[string]any{"id": 1, "title": "Doc 1", "created_date": "2026-01-15T00:00:00Z", "created": "2026-01-15T00:00:00Z", "file_type": ".txt"})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	vault := filepath.Join(dir, "vault")
@@ -116,7 +115,7 @@ func TestVerify_DuplicateContentWithSeparateIDs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer st.Close()
+	defer closeTestResource(t, st)
 	sha := "fake-sha-duplicate"
 	if err := st.UpsertPaperlessImportStateForTarget(context.Background(), srv.URL, vault, archive, 1, "imported", "", filepath.Join(vault, "doc1.md"), filepath.Join(archive, "doc1.txt"), sha); err != nil {
 		t.Fatal(err)

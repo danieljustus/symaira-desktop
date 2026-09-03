@@ -16,7 +16,7 @@ func writeFakeClipper(t *testing.T, dir, name, script string) {
 		name += ".bat"
 	}
 	path := filepath.Join(dir, name)
-	if err := os.WriteFile(path, []byte(script), 0755); err != nil {
+	if err := os.WriteFile(path, []byte(script), 0700); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatal(err)
 	}
 }
@@ -30,11 +30,11 @@ func writeFakeClipper(t *testing.T, dir, name, script string) {
 func withFakeClipperOnPath(t *testing.T, dir string) {
 	t.Helper()
 	old := os.Getenv("PATH")
-	os.Setenv("PATH", dir+string(os.PathListSeparator)+"/usr/bin:/bin")
+	_ = os.Setenv("PATH", dir+string(os.PathListSeparator)+"/usr/bin:/bin")
 	t.Setenv("HOME", t.TempDir())
 	compose.ResetCache()
 	t.Cleanup(func() {
-		os.Setenv("PATH", old)
+		_ = os.Setenv("PATH", old)
 		compose.ResetCache()
 	})
 }
@@ -75,7 +75,7 @@ func TestNoteClipCreatesNoteFromSymbrowseOutput(t *testing.T) {
 		t.Errorf("unexpected file name: %q", fileName)
 	}
 
-	content, err := os.ReadFile(filepath.Join(svc.VaultRoot, fileName))
+	content, err := os.ReadFile(filepath.Join(svc.VaultRoot, fileName)) //nolint:gosec // fileName is a test fixture path inside t.TempDir()
 	if err != nil {
 		t.Fatalf("reading clipped note: %v", err)
 	}

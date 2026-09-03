@@ -118,6 +118,22 @@ func initServiceDeps() (string, *sidecar.DB, error) {
 	return vRoot, db, nil
 }
 
+// closeWithWarning makes deferred cleanup failures visible without masking the
+// command's primary result.
+func closeWithWarning(name string, close func() error) {
+	if err := close(); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: failed to close %s: %v\n", name, err)
+	}
+}
+
+// markFlagRequired treats a failure here as a command-construction bug. The
+// flags are static, so continuing with an invalid command is not meaningful.
+func markFlagRequired(cmd *cobra.Command, name string) {
+	if err := cmd.MarkFlagRequired(name); err != nil {
+		panic(fmt.Sprintf("mark flag %q required: %v", name, err))
+	}
+}
+
 func outputResult(data interface{}) error {
 	if jsonFlag {
 		b, err := json.Marshal(data)

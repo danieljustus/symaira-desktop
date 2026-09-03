@@ -29,10 +29,10 @@ func TestComposeSearchAndRelated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	vaultPath := filepath.Join(tempDir, "vault")
-	_ = os.MkdirAll(vaultPath, 0755)
+	_ = os.MkdirAll(vaultPath, 0700)
 
 	notePath := filepath.Join(vaultPath, "compose-test-note.md")
 
@@ -59,7 +59,7 @@ else
   exit 0
 fi
 `
-	if err := os.WriteFile(mockMemory, []byte(mockMemoryContent), 0755); err != nil {
+	if err := os.WriteFile(mockMemory, []byte(mockMemoryContent), 0700); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatal(err)
 	}
 
@@ -72,13 +72,13 @@ fi
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	svc := New(vaultPath, db)
 
 	// Write mock file in vault matching search path
 	noteContent := "---\ntitle: \"Compose Test Note\"\n---\nSome text mentioning Mock Project"
-	if err := os.WriteFile(notePath, []byte(noteContent), 0644); err != nil {
+	if err := os.WriteFile(notePath, []byte(noteContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -147,10 +147,10 @@ func TestRelatedEntityMatchingBranches(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	vaultPath := filepath.Join(tempDir, "vault")
-	_ = os.MkdirAll(vaultPath, 0755)
+	_ = os.MkdirAll(vaultPath, 0700)
 	vaultPath, err = filepath.EvalSymlinks(vaultPath)
 	if err != nil {
 		t.Fatal(err)
@@ -171,7 +171,7 @@ else
   exit 0
 fi
 `
-	if err := os.WriteFile(mockMemory, []byte(mockMemoryContent), 0755); err != nil {
+	if err := os.WriteFile(mockMemory, []byte(mockMemoryContent), 0700); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatal(err)
 	}
 
@@ -182,7 +182,7 @@ fi
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	svc := New(vaultPath, db)
 
@@ -197,7 +197,7 @@ fi
 
 	for name, content := range notes {
 		path := filepath.Join(vaultPath, name)
-		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 			t.Fatal(err)
 		}
 		doc, err := vault.ParseFile(path)
@@ -264,10 +264,10 @@ func TestRelatedMainDocMatchBranches(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	vaultPath := filepath.Join(tempDir, "vault")
-	_ = os.MkdirAll(vaultPath, 0755)
+	_ = os.MkdirAll(vaultPath, 0700)
 	vaultPath, err = filepath.EvalSymlinks(vaultPath)
 	if err != nil {
 		t.Fatal(err)
@@ -288,7 +288,7 @@ else
   exit 0
 fi
 `
-	if err := os.WriteFile(mockMemory, []byte(mockMemoryContent), 0755); err != nil {
+	if err := os.WriteFile(mockMemory, []byte(mockMemoryContent), 0700); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatal(err)
 	}
 
@@ -299,14 +299,14 @@ fi
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	svc := New(vaultPath, db)
 
 	writeNote := func(name, content string) {
 		t.Helper()
 		path := filepath.Join(vaultPath, name)
-		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 			t.Fatal(err)
 		}
 		doc, err := vault.ParseFile(path)
@@ -455,11 +455,11 @@ func TestComposeFallback(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	oldPath := os.Getenv("PATH")
-	os.Setenv("PATH", tempDir) // empty path
-	defer os.Setenv("PATH", oldPath)
+	_ = os.Setenv("PATH", tempDir) // empty path
+	defer func() { _ = os.Setenv("PATH", oldPath) }()
 
 	// No hybrid hits: search must fall back to the sidecar FTS5 index.
 	withHybridHits(t)
@@ -467,21 +467,21 @@ func TestComposeFallback(t *testing.T) {
 	compose.ResetCache()
 
 	vaultPath := filepath.Join(tempDir, "vault")
-	_ = os.MkdirAll(vaultPath, 0755)
+	_ = os.MkdirAll(vaultPath, 0700)
 
 	dbPath := filepath.Join(vaultPath, "sidecar.db")
 	db, err := sidecar.Open(dbPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	svc := New(vaultPath, db)
 
 	// Write mock file in vault
 	notePath := filepath.Join(vaultPath, "compose-test-note.md")
 	noteContent := "---\ntitle: \"Compose Test Note\"\n---\nSome text mentioning Mock Project"
-	if err := os.WriteFile(notePath, []byte(noteContent), 0644); err != nil {
+	if err := os.WriteFile(notePath, []byte(noteContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 

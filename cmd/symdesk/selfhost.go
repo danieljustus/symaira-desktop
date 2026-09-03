@@ -63,7 +63,7 @@ func newServeCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer server.Close()
+			defer closeWithWarning("HTTP server", server.Close)
 
 			ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
@@ -173,6 +173,8 @@ func readHomeAssistantOptions() homeAssistantOptions {
 }
 
 func readHomeAssistantOptionsFromFile(path string) homeAssistantOptions {
+	// The production caller uses the fixed Home Assistant options path.
+	//nolint:gosec // path is integration configuration, not user document input
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return homeAssistantOptions{}

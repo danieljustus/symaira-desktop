@@ -26,7 +26,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			res, err := svc.ViewsList()
 			if err != nil {
@@ -46,7 +46,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			res, err := svc.ViewsGet(args[0])
 			if err != nil {
@@ -66,7 +66,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			err = svc.ViewsSave([]byte(args[0]))
 			if err != nil {
@@ -86,7 +86,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			if err := svc.ViewsDelete(args[0]); err != nil {
 				return err
@@ -105,7 +105,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			path, err := service.New(vRoot, db).ViewsNewEntry(args[0], args[1])
 			if err != nil {
 				return err
@@ -124,7 +124,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			result, err := service.New(vRoot, db).ViewsSiblings(args[0])
 			if err != nil {
 				return err
@@ -143,7 +143,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			res, err := svc.ViewsExec(args[0])
 			if err != nil {
@@ -163,7 +163,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			data, err := svc.ViewsExportCSV(args[0])
 			if err != nil {
@@ -192,7 +192,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			// #nosec G304 -- args[0] is user-provided CLI file input.
@@ -200,7 +200,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("open csv file: %w", err)
 			}
-			defer func() { _ = f.Close() }()
+			defer closeWithWarning("CSV export file", f.Close)
 
 			apply, _ := cmd.Flags().GetBool("apply")
 			folder, _ := cmd.Flags().GetString("folder")
@@ -253,7 +253,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			var specYAML string
@@ -316,7 +316,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			bases, err := svc.BaseList()
 			if err != nil {
@@ -336,7 +336,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			base, err := svc.BaseGet(args[0])
 			if err != nil {
@@ -356,7 +356,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			var base dbviews.Base
@@ -380,7 +380,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			if err := svc.BaseDelete(args[0]); err != nil {
 				return err
@@ -399,7 +399,7 @@ func newViewsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 			desc := ""
 			if len(args) > 1 {

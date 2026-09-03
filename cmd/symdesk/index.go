@@ -37,7 +37,7 @@ func newIndexCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 
 			// --re-embed forces re-embedding of every document that still
 			// holds pending (unembeddable) chunks, then runs the normal
@@ -164,7 +164,7 @@ func newIndexStatusCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				defer func() { _ = db.Close() }()
+				defer closeWithWarning("sidecar database", db.Close)
 				rows, err := db.ListIndexStatuses(sidecar.IndexState(indexStatusState))
 				if err != nil {
 					return err

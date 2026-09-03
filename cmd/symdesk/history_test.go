@@ -13,9 +13,7 @@ func setupHistoryTestVault(t *testing.T) string {
 	t.Helper()
 	vaultDir := t.TempDir()
 	md := "---\ntitle: Test Note\n---\n\nBody\n"
-	if err := os.WriteFile(filepath.Join(vaultDir, "note.md"), []byte(md), 0644); err != nil {
-		t.Fatal(err)
-	}
+	writeTestFile(t, filepath.Join(vaultDir, "note.md"), md)
 	return vaultDir
 }
 
@@ -41,7 +39,7 @@ func TestHistoryCommandJSON(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -75,7 +73,7 @@ func TestHistoryPruneCommandJSON(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -109,7 +107,7 @@ func TestHistoryPruneCommandUsesConfigDefaults(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -139,7 +137,7 @@ func TestRestoreCommandJSON(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -169,7 +167,7 @@ func TestTrashListCommandJSON(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -199,7 +197,7 @@ func TestTrashRestoreCommandJSON(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -232,7 +230,7 @@ func TestTrashPurgeCommandJSON(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -265,7 +263,7 @@ func TestTrashPurgeCommandAll(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -295,7 +293,7 @@ func TestDeleteCommandJSON(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -325,7 +323,7 @@ func TestHistoryCommandEmptyVault(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -355,7 +353,7 @@ func TestTrashListCommandEmpty(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -385,7 +383,7 @@ func TestHistoryPruneCommandWithFlags(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -415,7 +413,7 @@ func TestTrashPurgeCommandOlderThanDays(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -445,7 +443,7 @@ func TestRestoreCommandWithAtFlag(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -475,7 +473,7 @@ func TestDeleteCommandNonexistent(t *testing.T) {
 
 	runErr := cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -509,7 +507,7 @@ func TestHistoryCommandJSONOutput(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {
@@ -546,7 +544,7 @@ func TestTrashListCommandJSONOutput(t *testing.T) {
 
 	_ = cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf []byte
 	if _, err := r.Read(buf); err != nil && err.Error() != "EOF" {

@@ -33,7 +33,7 @@ func newConflictCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 
 			var absConflict string
 			if filepath.IsAbs(conflictPath) {
@@ -54,11 +54,16 @@ func newConflictCmd() *cobra.Command {
 					return fmt.Errorf("failed to remove conflict file: %w", err)
 				}
 			case "keep-theirs":
+				// The conflict path is an explicit command argument, not an indirect
+				// path assembled from untrusted document metadata.
+				//nolint:gosec // documented CLI input path for conflict resolution
 				content, err := os.ReadFile(absConflict)
 				if err != nil {
 					return fmt.Errorf("failed to read conflict file: %w", err)
 				}
-				if err := os.WriteFile(originalPath, content, 0644); err != nil {
+				// The destination is derived from the same explicit conflict path.
+				//nolint:gosec // documented CLI input path for conflict resolution
+				if err := os.WriteFile(originalPath, content, 0600); err != nil {
 					return fmt.Errorf("failed to write original file: %w", err)
 				}
 				if err := os.Remove(absConflict); err != nil {
@@ -85,7 +90,7 @@ func newConflictCmd() *cobra.Command {
 		},
 	}
 	conflictResolveCmd.Flags().String("action", "", "resolution action (keep-mine|keep-theirs)")
-	_ = conflictResolveCmd.MarkFlagRequired("action")
+	markFlagRequired(conflictResolveCmd, "action")
 	conflictCmd.AddCommand(conflictResolveCmd)
 
 	return conflictCmd

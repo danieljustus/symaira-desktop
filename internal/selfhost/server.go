@@ -332,7 +332,9 @@ func (s *Server) Handler() http.Handler              { return s.http.Handler }
 func (s *Server) routes() {
 	s.mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w, `{"status":"ok"}`)
+		if _, err := io.WriteString(w, `{"status":"ok"}`); err != nil {
+			slog.Error("write health response", "error", err)
+		}
 	})
 	s.mux.Handle("GET /api/v1/status", s.auth(http.HandlerFunc(s.handleStatus)))
 	s.mux.Handle("GET /api/v1/snapshot", s.auth(http.HandlerFunc(s.handleSnapshot)))

@@ -39,7 +39,7 @@ history safety net (.symdesk/history/) before any file is written.`,
 				d, err := sidecar.OpenForVault(vRoot)
 				if err == nil {
 					db = d
-					defer db.Close() //nolint:errcheck
+					defer closeWithWarning("sidecar database", db.Close)
 				}
 			}
 

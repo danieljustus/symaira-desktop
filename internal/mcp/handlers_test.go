@@ -66,7 +66,7 @@ func TestNewRelatedToolReturnsEmptyWithoutComposition(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	if _, err := svc.NoteNew("Related Note", "some content", ""); err != nil {
 		t.Fatal(err)
 	}

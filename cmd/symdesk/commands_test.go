@@ -76,7 +76,7 @@ func TestInitServiceDepsWithVault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	defer db.Close()
+	defer closeWithWarning("sidecar database", db.Close)
 
 	if vRoot != vaultDir {
 		t.Errorf("expected vault root %q, got %q", vaultDir, vRoot)

@@ -247,7 +247,7 @@ func TestWriteSidecar(t *testing.T) {
 	}
 
 	path := SidecarPath(vault, sha)
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatalf("read sidecar: %v", err)
 	}

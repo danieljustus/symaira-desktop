@@ -47,7 +47,7 @@ func (f *fakeOllamaClient) Generate(_ context.Context, model, prompt string, cb 
 func writeFakeImage(t *testing.T, dir, name string) string {
 	t.Helper()
 	path := filepath.Join(dir, name)
-	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 	return path
@@ -224,7 +224,7 @@ func TestVLMRunner_Extract_PDFAndHEICDelegateToFallback(t *testing.T) {
 	t.Run("pdf", func(t *testing.T) {
 		pdfppm := writeFakeBin(t, dir, "pdftoppm", `echo "page-1.png" > "$5-page-1.png"`)
 		pdf := filepath.Join(dir, "doc.pdf")
-		if err := os.WriteFile(pdf, []byte("%PDF-1.4"), 0o644); err != nil {
+		if err := os.WriteFile(pdf, []byte("%PDF-1.4"), 0o600); err != nil {
 			t.Fatal(err)
 		}
 		client := &fakeOllamaClient{response: "must not be used"}
@@ -253,7 +253,7 @@ func TestVLMRunner_Extract_PDFAndHEICDelegateToFallback(t *testing.T) {
 
 	t.Run("heic", func(t *testing.T) {
 		heic := filepath.Join(dir, "scan.heic")
-		if err := os.WriteFile(heic, []byte("fake heic"), 0o644); err != nil {
+		if err := os.WriteFile(heic, []byte("fake heic"), 0o600); err != nil {
 			t.Fatal(err)
 		}
 		sips := writeFakeBin(t, dir, "sips", `echo "converted" > "$6"`)

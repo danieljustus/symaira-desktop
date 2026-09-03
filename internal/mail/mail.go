@@ -276,7 +276,7 @@ func (w *MailWatcher) ingestMessage(ctx context.Context, msg fetchMessage) error
 
 	// Otherwise create a temp .eml or .md file from the message content.
 	tmpDir := filepath.Join(w.vaultRoot, "inbox", ".mail_tmp")
-	if err := os.MkdirAll(tmpDir, 0755); err != nil {
+	if err := os.MkdirAll(tmpDir, 0700); err != nil {
 		return fmt.Errorf("failed to create mail tmp dir: %w", err)
 	}
 
@@ -290,7 +290,7 @@ func (w *MailWatcher) ingestMessage(ctx context.Context, msg fetchMessage) error
 			msg.From, msg.Subject, msg.Date)
 	}
 
-	if err := os.WriteFile(tmpPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(tmpPath, []byte(content), 0600); err != nil {
 		return fmt.Errorf("failed to write mail temp file: %w", err)
 	}
 

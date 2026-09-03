@@ -11,7 +11,7 @@ import (
 func writeExecutable(t *testing.T, dir, name, body string) string {
 	t.Helper()
 	path := filepath.Join(dir, name)
-	if err := os.WriteFile(path, []byte("#!/bin/sh\n"+body), 0o755); err != nil {
+	if err := os.WriteFile(path, []byte("#!/bin/sh\n"+body), 0o700); err != nil { //nolint:gosec // G306: test helper must be executable; mode is owner-only 0700
 		t.Fatal(err)
 	}
 	return path

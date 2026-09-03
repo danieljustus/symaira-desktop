@@ -48,7 +48,7 @@ cat "$1" "$2" > "$last"
 	if err != nil {
 		t.Fatalf("Merge: %v", err)
 	}
-	data, err := os.ReadFile(output)
+	data, err := os.ReadFile(output) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +94,9 @@ func TestMerge_EmptyInputs(t *testing.T) {
 func TestRotate_InvalidDegrees(t *testing.T) {
 	dir := t.TempDir()
 	input := filepath.Join(dir, "input.pdf")
-	os.WriteFile(input, []byte("%PDF-1.4\n"), 0o600)
+	if err := os.WriteFile(input, []byte("%PDF-1.4\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	tools := Tools{QPDF: "qpdf"}
 
 	for _, deg := range []int{0, 45, 100, -45, 360, 91} {
@@ -108,7 +110,9 @@ func TestRotate_InvalidDegrees(t *testing.T) {
 func TestRotate_ValidDegreesWithoutQPDF(t *testing.T) {
 	dir := t.TempDir()
 	input := filepath.Join(dir, "input.pdf")
-	os.WriteFile(input, []byte("%PDF-1.4\n"), 0o600)
+	if err := os.WriteFile(input, []byte("%PDF-1.4\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	// Use a fake qpdf that succeeds
 	qpdf := writeExecutable(t, dir, "qpdf", `cp "$2" "$3"`)
@@ -116,7 +120,9 @@ func TestRotate_ValidDegreesWithoutQPDF(t *testing.T) {
 	output := filepath.Join(dir, "rotated.pdf")
 
 	// We need to write a real-looking PDF for requireFile
-	os.WriteFile(input, []byte("%PDF-1.4\nvalid\n"), 0o600)
+	if err := os.WriteFile(input, []byte("%PDF-1.4\nvalid\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	err := tools.Rotate(context.Background(), input, output, 90, "")
 	if err != nil {
@@ -130,7 +136,9 @@ func TestRotate_ValidDegreesWithoutQPDF(t *testing.T) {
 func TestRotate_WithPageSpec(t *testing.T) {
 	dir := t.TempDir()
 	input := filepath.Join(dir, "input.pdf")
-	os.WriteFile(input, []byte("%PDF-1.4\nvalid\n"), 0o600)
+	if err := os.WriteFile(input, []byte("%PDF-1.4\nvalid\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	qpdf := writeExecutable(t, dir, "qpdf", `cp "$2" "$3"`)
 	tools := Tools{QPDF: qpdf}
@@ -145,7 +153,9 @@ func TestRotate_WithPageSpec(t *testing.T) {
 func TestRotate_InvalidPageSpec(t *testing.T) {
 	dir := t.TempDir()
 	input := filepath.Join(dir, "input.pdf")
-	os.WriteFile(input, []byte("%PDF-1.4\nvalid\n"), 0o600)
+	if err := os.WriteFile(input, []byte("%PDF-1.4\nvalid\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	tools := Tools{QPDF: "qpdf"}
 	output := filepath.Join(dir, "rotated.pdf")
@@ -267,7 +277,9 @@ func TestSplit_MissingInputFile(t *testing.T) {
 func TestSplit_OutsideDocumentPage(t *testing.T) {
 	dir := t.TempDir()
 	input := filepath.Join(dir, "input.pdf")
-	os.WriteFile(input, []byte("%PDF-1.4\n"), 0o600)
+	if err := os.WriteFile(input, []byte("%PDF-1.4\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	tools := Tools{
 		PDFInfo: writeExecutable(t, dir, "pdfinfo", "printf 'Pages: 2\\n'"),

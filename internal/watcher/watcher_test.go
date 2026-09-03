@@ -55,7 +55,7 @@ func setupWatcherTest(t *testing.T) (watchDir, vaultRoot string, svc *service.Se
 	t.Setenv("HOME", tempDir)
 
 	vaultRoot = filepath.Join(tempDir, "vault")
-	if err := os.MkdirAll(filepath.Join(vaultRoot, "inbox"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(vaultRoot, "inbox"), 0700); err != nil {
 		t.Fatalf("failed to create vault inbox: %v", err)
 	}
 
@@ -71,7 +71,7 @@ func setupWatcherTest(t *testing.T) (watchDir, vaultRoot string, svc *service.Se
 
 	svc = service.New(vaultRoot, db)
 	watchDir = filepath.Join(tempDir, "inbox_watch")
-	if err := os.MkdirAll(watchDir, 0755); err != nil {
+	if err := os.MkdirAll(watchDir, 0700); err != nil {
 		t.Fatalf("failed to create watch dir: %v", err)
 	}
 
@@ -91,7 +91,11 @@ func TestInboxWatcher_IngestsAndRemoves(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create watcher: %v", err)
 	}
-	defer w.Close()
+	defer func() {
+		if err := w.Close(); err != nil {
+			t.Errorf("close watcher: %v", err)
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -102,7 +106,7 @@ func TestInboxWatcher_IngestsAndRemoves(t *testing.T) {
 
 	testFilePath := filepath.Join(watchDir, "test-document.txt")
 	testContent := fmt.Sprintf("Test content for watched inbox: %d", time.Now().UnixNano())
-	if err := os.WriteFile(testFilePath, []byte(testContent), 0644); err != nil {
+	if err := os.WriteFile(testFilePath, []byte(testContent), 0600); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
@@ -150,7 +154,11 @@ func TestInboxWatcher_IngestsAndRemoves_Integration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create watcher: %v", err)
 	}
-	defer w.Close()
+	defer func() {
+		if err := w.Close(); err != nil {
+			t.Errorf("close watcher: %v", err)
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -162,7 +170,7 @@ func TestInboxWatcher_IngestsAndRemoves_Integration(t *testing.T) {
 
 	testFilePath := filepath.Join(watchDir, "test-document.txt")
 	testContent := fmt.Sprintf("Test content for watched inbox: %d", time.Now().UnixNano())
-	err = os.WriteFile(testFilePath, []byte(testContent), 0644)
+	err = os.WriteFile(testFilePath, []byte(testContent), 0600)
 	if err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}

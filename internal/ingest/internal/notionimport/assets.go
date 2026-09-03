@@ -62,7 +62,7 @@ func copyAndRewriteAssets(srcAssetDir, dstAssetDir, body string) (string, error)
 		if err := requireWithinDir(srcAssetDir, src); err != nil {
 			continue
 		}
-		if _, err := os.Stat(src); os.IsNotExist(err) {
+		if _, err := os.Stat(src); os.IsNotExist(err) { //nolint:gosec // G703: the imported path is checked with requireWithinDir before filesystem access
 			continue
 		}
 
@@ -71,7 +71,7 @@ func copyAndRewriteAssets(srcAssetDir, dstAssetDir, body string) (string, error)
 		}
 
 		// Generate a content-addressed filename to avoid collisions.
-		data, err := os.ReadFile(src)
+		data, err := os.ReadFile(src) //nolint:gosec // G304: asset path is checked with requireWithinDir before filesystem access
 		if err != nil {
 			continue
 		}
@@ -100,16 +100,16 @@ func copyAndRewriteAssets(srcAssetDir, dstAssetDir, body string) (string, error)
 
 // copyFile copies src to dst, creating parent directories as needed.
 func copyFile(src, dst string) error {
-	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil { //nolint:gosec // G703: the imported path is checked with requireWithinDir before filesystem access
 		return err
 	}
-	sf, err := os.Open(src)
+	sf, err := os.Open(src) //nolint:gosec // G304: asset path is checked with requireWithinDir before filesystem access
 	if err != nil {
 		return err
 	}
 	defer func() { _ = sf.Close() }()
 
-	df, err := os.Create(dst)
+	df, err := os.Create(dst) //nolint:gosec // G304: asset path is checked with requireWithinDir before filesystem access
 	if err != nil {
 		return err
 	}

@@ -25,7 +25,7 @@ func FuzzExtract(f *testing.F) {
 		if err != nil || d.IsDir() {
 			return nil
 		}
-		if data, err := os.ReadFile(path); err == nil {
+		if data, err := os.ReadFile(path); err == nil { //nolint:gosec // G304: test path is confined to the test fixture directory
 			f.Add(data)
 		}
 		return nil
@@ -46,7 +46,7 @@ func FuzzExtract(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "fuzz.bin")
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		for _, kind := range kinds {

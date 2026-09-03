@@ -215,7 +215,7 @@ func WriteMailConfig(path string, accounts []IMAPAccount, pollInterval string) e
 			return fmt.Errorf("config path is not a regular file: %s", path)
 		}
 		mode = info.Mode().Perm()
-		original, err = os.ReadFile(path)
+		original, err = os.ReadFile(path) //nolint:gosec // G304: path is the explicitly resolved mail configuration file
 		if err != nil {
 			return fmt.Errorf("read config: %w", err)
 		}

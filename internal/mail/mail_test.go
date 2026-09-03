@@ -25,7 +25,7 @@ func setupMailTest(t *testing.T) (vaultRoot string, svc *service.Service, cleanu
 	t.Setenv("HOME", tempDir)
 
 	vaultRoot = filepath.Join(tempDir, "vault")
-	if err := os.MkdirAll(filepath.Join(vaultRoot, "inbox"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(vaultRoot, "inbox"), 0700); err != nil {
 		t.Fatalf("failed to create vault inbox: %v", err)
 	}
 

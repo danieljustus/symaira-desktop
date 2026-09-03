@@ -66,17 +66,23 @@ func NewWatcherWithOptions(s *store.Store, inboxDir string, opts WatcherOptions)
 
 	processingDir, err := cleanOptionalDir(opts.ProcessingDir)
 	if err != nil {
-		fw.Close()
+		if closeErr := fw.Close(); closeErr != nil {
+			log.Printf("[Watcher] failed to close watcher after processing dir error: %v", closeErr)
+		}
 		return nil, fmt.Errorf("resolve processing dir: %w", err)
 	}
 	processedDir, err := cleanOptionalDir(opts.ProcessedDir)
 	if err != nil {
-		fw.Close()
+		if closeErr := fw.Close(); closeErr != nil {
+			log.Printf("[Watcher] failed to close watcher after processed dir error: %v", closeErr)
+		}
 		return nil, fmt.Errorf("resolve processed dir: %w", err)
 	}
 	failedDir, err := cleanOptionalDir(opts.FailedDir)
 	if err != nil {
-		fw.Close()
+		if closeErr := fw.Close(); closeErr != nil {
+			log.Printf("[Watcher] failed to close watcher after failed dir error: %v", closeErr)
+		}
 		return nil, fmt.Errorf("resolve failed dir: %w", err)
 	}
 
@@ -137,13 +143,19 @@ func (w *Watcher) Start(ctx context.Context) error {
 		return nil
 	})
 	if err != nil {
-		w.watcher.Close()
+		if closeErr := w.watcher.Close(); closeErr != nil {
+			log.Printf("[Watcher] failed to close watcher after setup error: %v", closeErr)
+		}
 		return fmt.Errorf("initial watch setup walk: %w", err)
 	}
 
 	// 2. Event loop
 	go func() {
-		defer w.watcher.Close()
+		defer func() {
+			if closeErr := w.watcher.Close(); closeErr != nil {
+				log.Printf("[Watcher] failed to close watcher: %v", closeErr)
+			}
+		}()
 		defer func() {
 			w.mu.Lock()
 			for _, state := range w.pending {

@@ -31,7 +31,7 @@ func TestPipeline_Deduplicates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	vault := filepath.Join(dir, "vault")
 	archive := filepath.Join(dir, "archive")
@@ -43,7 +43,7 @@ func TestPipeline_Deduplicates(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "note.txt")
-	if err := os.WriteFile(path, []byte("hello"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("hello"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -76,7 +76,7 @@ func TestPipeline_Deduplicates(t *testing.T) {
 
 	// Test duplicate from a different source path
 	otherPath := filepath.Join(dir, "other.txt")
-	if err := os.WriteFile(otherPath, []byte("hello"), 0o644); err != nil {
+	if err := os.WriteFile(otherPath, []byte("hello"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	_, err = p.Ingest(context.Background(), otherPath, nil)
@@ -108,7 +108,7 @@ func TestPipeline_ExtractsWithEngine(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	vault := filepath.Join(dir, "vault")
 	eng := extract.Engine(&fakePipelineEngine{result: &extract.Result{Text: "ocr text"}})
@@ -120,7 +120,7 @@ func TestPipeline_ExtractsWithEngine(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "scan.png")
-	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -139,7 +139,7 @@ func TestPipeline_ClassifiesWithRules(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	ctx := context.Background()
 	// Add some classification rules
@@ -159,7 +159,7 @@ func TestPipeline_ClassifiesWithRules(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "scan.png")
-	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -216,13 +216,17 @@ func TestAtomicCopy_SourcePermDenied(t *testing.T) {
 
 	dir := t.TempDir()
 	src := filepath.Join(dir, "readonly.txt")
-	if err := os.WriteFile(src, []byte("content"), 0o644); err != nil {
+	if err := os.WriteFile(src, []byte("content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Chmod(src, 0o000); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chmod(src, 0o644)
+	defer func() {
+		if err := os.Chmod(src, 0o600); err != nil {
+			t.Errorf("restore source permissions: %v", err)
+		}
+	}()
 
 	dst := filepath.Join(dir, "dst.txt")
 	err := atomicCopy(src, dst)
@@ -238,12 +242,12 @@ func TestAtomicCopy_DirCreateFail(t *testing.T) {
 
 	dir := t.TempDir()
 	src := filepath.Join(dir, "file.txt")
-	if err := os.WriteFile(src, []byte("content"), 0o644); err != nil {
+	if err := os.WriteFile(src, []byte("content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	blocker := filepath.Join(dir, "blocker")
-	if err := os.WriteFile(blocker, []byte("x"), 0o644); err != nil {
+	if err := os.WriteFile(blocker, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	dst := filepath.Join(blocker, "subdir", "file.txt")
@@ -257,18 +261,22 @@ func TestAtomicCopy_DirCreateFail(t *testing.T) {
 func TestAtomicCopy_RenameFail(t *testing.T) {
 	dir := t.TempDir()
 	src := filepath.Join(dir, "file.txt")
-	if err := os.WriteFile(src, []byte("content"), 0o644); err != nil {
+	if err := os.WriteFile(src, []byte("content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	dstDir := filepath.Join(dir, "dst")
-	if err := os.MkdirAll(dstDir, 0o755); err != nil {
+	if err := os.MkdirAll(dstDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Chmod(dstDir, 0o555); err != nil {
+	if err := os.Chmod(dstDir, 0o400); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chmod(dstDir, 0o755)
+	defer func() {
+		if err := os.Chmod(dstDir, 0o700); err != nil { //nolint:gosec // restore permissions for the temporary test directory
+			t.Errorf("restore destination permissions: %v", err)
+		}
+	}()
 
 	dst := filepath.Join(dstDir, "file.txt")
 	err := atomicCopy(src, dst)
@@ -280,12 +288,12 @@ func TestAtomicCopy_RenameFail(t *testing.T) {
 func TestAtomicCopy_AlreadyExists(t *testing.T) {
 	dir := t.TempDir()
 	src := filepath.Join(dir, "file.txt")
-	if err := os.WriteFile(src, []byte("new content"), 0o644); err != nil {
+	if err := os.WriteFile(src, []byte("new content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	dst := filepath.Join(dir, "existing.txt")
-	if err := os.WriteFile(dst, []byte("old content"), 0o644); err != nil {
+	if err := os.WriteFile(dst, []byte("old content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -294,7 +302,7 @@ func TestAtomicCopy_AlreadyExists(t *testing.T) {
 		t.Fatalf("expected nil when destination exists, got: %v", err)
 	}
 
-	data, err := os.ReadFile(dst)
+	data, err := readTestFile(dst)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -320,7 +328,7 @@ func TestPipeline_EnqueueSkippedJobFailure(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "note.txt")
-	if err := os.WriteFile(path, []byte("hello"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("hello"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -329,7 +337,7 @@ func TestPipeline_EnqueueSkippedJobFailure(t *testing.T) {
 		t.Fatalf("first ingest: %v", err)
 	}
 
-	s.Close()
+	closeTestResource(t, "store", s)
 
 	_, err = p.Ingest(context.Background(), path, nil)
 	if err == nil {
@@ -343,7 +351,7 @@ func TestPipeline_PresetOverridesClassification(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	ctx := context.Background()
 	_, _ = s.AddRule(ctx, "acme", "category", "invoices")
@@ -361,7 +369,7 @@ func TestPipeline_PresetOverridesClassification(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "scan.png")
-	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -397,7 +405,7 @@ func TestPipeline_PresetOnlyOverridesSetFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	ctx := context.Background()
 	_, _ = s.AddRule(ctx, "acme", "category", "invoices")
@@ -415,7 +423,7 @@ func TestPipeline_PresetOnlyOverridesSetFields(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "scan.png")
-	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -448,7 +456,7 @@ func TestPipeline_NilOptsBackwardCompatible(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	ctx := context.Background()
 	_, _ = s.AddRule(ctx, "acme", "category", "invoices")
@@ -463,7 +471,7 @@ func TestPipeline_NilOptsBackwardCompatible(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "doc.txt")
-	if err := os.WriteFile(path, []byte("Acme invoice document"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("Acme invoice document"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -483,13 +491,13 @@ func TestPipeline_ArchiveDirectoryFailure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	vault := filepath.Join(dir, "vault")
 	eng := extract.Engine(&fakePipelineEngine{result: &extract.Result{Text: "test"}})
 
 	archiveDir := filepath.Join(dir, "archive")
-	if err := os.WriteFile(archiveDir, []byte("not a dir"), 0o644); err != nil {
+	if err := os.WriteFile(archiveDir, []byte("not a dir"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -501,7 +509,7 @@ func TestPipeline_ArchiveDirectoryFailure(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "doc.txt")
-	if err := os.WriteFile(path, []byte("test content"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("test content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -614,7 +622,7 @@ func TestPipeline_AtomicCopySourceReadError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	vault := filepath.Join(dir, "vault")
 	eng := extract.Engine(&fakePipelineEngine{result: &extract.Result{Text: "test"}})
@@ -626,14 +634,18 @@ func TestPipeline_AtomicCopySourceReadError(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "doc.txt")
-	if err := os.WriteFile(path, []byte("test content"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("test content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := os.Chmod(path, 0o000); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chmod(path, 0o644)
+	defer func() {
+		if err := os.Chmod(path, 0o600); err != nil {
+			t.Errorf("restore source permissions: %v", err)
+		}
+	}()
 
 	_, err = p.Ingest(context.Background(), path, nil)
 	if err == nil {
@@ -647,7 +659,7 @@ func TestPipeline_ClassificationRuleLoadingError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	vault := filepath.Join(dir, "vault")
 	eng := extract.Engine(&fakePipelineEngine{result: &extract.Result{Text: "test"}})
@@ -659,17 +671,17 @@ func TestPipeline_ClassificationRuleLoadingError(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "doc.txt")
-	if err := os.WriteFile(path, []byte("test content"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("test content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
-	s.Close()
+	closeTestResource(t, "store", s)
 
 	s2, err := store.Open(filepath.Join(dir, "docs2.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s2.Close()
+	defer func() { closeTestResource(t, "store", s2) }()
 
 	p.Store = s2
 

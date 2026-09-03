@@ -34,3 +34,16 @@ func TestMain(m *testing.M) {
 	}
 	os.Exit(code)
 }
+
+func closeTestResource(t *testing.T, name string, closer interface{ Close() error }) {
+	t.Helper()
+	if err := closer.Close(); err != nil {
+		t.Errorf("close %s: %v", name, err)
+	}
+}
+
+// readTestFile is restricted to paths created by the tests in temporary
+// directories; the wrapper keeps the gosec exception narrowly scoped.
+func readTestFile(path string) ([]byte, error) { //nolint:gosec // test-owned temporary path
+	return os.ReadFile(path) //nolint:gosec // path is a test-owned temporary file
+}

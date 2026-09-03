@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"math/big"
 	"net"
 	"testing"
@@ -166,15 +167,23 @@ func testIMAPServer(t *testing.T) (addr string, rootCAs *x509.CertPool, cleanup 
 		t.Fatalf("listen: %v", err)
 	}
 
-	go server.Serve(ln)
+	go func() {
+		if serveErr := server.Serve(ln); serveErr != nil && !errors.Is(serveErr, net.ErrClosed) {
+			t.Errorf("serve IMAP test server: %v", serveErr)
+		}
+	}()
 
 	// Build a CertPool containing the test CA so clients can verify the server cert.
 	rootCAs = x509.NewCertPool()
 	rootCAs.AddCert(caCert)
 
 	return ln.Addr().String(), rootCAs, func() {
-		server.Close()
-		ln.Close()
+		if err := server.Close(); err != nil {
+			t.Errorf("close IMAP test server: %v", err)
+		}
+		if err := ln.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
+			t.Errorf("close IMAP listener: %v", err)
+		}
 	}
 }
 
@@ -203,7 +212,9 @@ func TestRealIMAPClient_Login(t *testing.T) {
 		t.Fatalf("Login failed: %v", err)
 	}
 
-	c.Logout().Wait()
+	if err := c.Logout().Wait(); err != nil {
+		t.Errorf("logout: %v", err)
+	}
 }
 
 func TestRealIMAPClient_Login_Failure(t *testing.T) {
@@ -218,7 +229,9 @@ func TestRealIMAPClient_Login_Failure(t *testing.T) {
 		t.Fatal("expected login failure with wrong password")
 	}
 
-	c.Logout().Wait()
+	if err := c.Logout().Wait(); err != nil {
+		t.Errorf("logout: %v", err)
+	}
 }
 
 func TestRealIMAPClient_Select(t *testing.T) {
@@ -236,7 +249,9 @@ func TestRealIMAPClient_Select(t *testing.T) {
 		t.Fatalf("Select failed: %v", err)
 	}
 
-	c.Logout().Wait()
+	if err := c.Logout().Wait(); err != nil {
+		t.Errorf("logout: %v", err)
+	}
 }
 
 func TestRealIMAPClient_Search(t *testing.T) {
@@ -280,7 +295,9 @@ func TestRealIMAPClient_Search(t *testing.T) {
 		t.Fatalf("expected 1 message for Subject=Invoice, got %d", len(uids))
 	}
 
-	c.Logout().Wait()
+	if err := c.Logout().Wait(); err != nil {
+		t.Errorf("logout: %v", err)
+	}
 }
 
 func TestRealIMAPClient_Fetch(t *testing.T) {
@@ -339,7 +356,9 @@ func TestRealIMAPClient_Fetch(t *testing.T) {
 		t.Fatalf("expected nil for empty fetch, got %v", msgs)
 	}
 
-	c.Logout().Wait()
+	if err := c.Logout().Wait(); err != nil {
+		t.Errorf("logout: %v", err)
+	}
 }
 
 func TestRealIMAPClient_FetchEnvelopesUID(t *testing.T) {
@@ -398,7 +417,9 @@ func TestRealIMAPClient_FetchEnvelopesUID(t *testing.T) {
 		t.Fatalf("expected nil for empty fetch, got %v", msgs)
 	}
 
-	c.Logout().Wait()
+	if err := c.Logout().Wait(); err != nil {
+		t.Errorf("logout: %v", err)
+	}
 }
 
 func TestRealIMAPClient_StoreSeen(t *testing.T) {
@@ -434,7 +455,9 @@ func TestRealIMAPClient_StoreSeen(t *testing.T) {
 		t.Errorf("expected unseen message UID 2, got %d", uids[0])
 	}
 
-	c.Logout().Wait()
+	if err := c.Logout().Wait(); err != nil {
+		t.Errorf("logout: %v", err)
+	}
 }
 
 func TestRealIMAPClient_Move(t *testing.T) {
@@ -483,7 +506,9 @@ func TestRealIMAPClient_Move(t *testing.T) {
 		t.Fatalf("expected 1 message in Archive after move, got %d", len(uids))
 	}
 
-	c.Logout().Wait()
+	if err := c.Logout().Wait(); err != nil {
+		t.Errorf("logout: %v", err)
+	}
 }
 
 func TestRealIMAPClient_Close(t *testing.T) {
@@ -563,13 +588,13 @@ func TestRealIMAPClient_EndToEnd(t *testing.T) {
 }
 
 func TestDefaultDialIMAP(t *testing.T) {
-	addr, _, cleanup := testIMAPServer(t)
+	addr, rootCAs, cleanup := testIMAPServer(t)
 	defer cleanup()
 
 	origTLSConfig := defaultIMAPTLSConfig
 	defer func() { defaultIMAPTLSConfig = origTLSConfig }()
 	defaultIMAPTLSConfig = func(_ string) *tls.Config {
-		return &tls.Config{InsecureSkipVerify: true}
+		return &tls.Config{RootCAs: rootCAs}
 	}
 
 	ic, err := defaultDialIMAP(t.Context(), addr, "localhost")
@@ -584,5 +609,5 @@ func TestDefaultDialIMAP(t *testing.T) {
 		t.Fatalf("Select: %v", err)
 	}
 
-	ic.Close()
+	closeTestResource(t, "IMAP client", ic)
 }

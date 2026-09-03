@@ -23,7 +23,7 @@ func TestPropsEditUpdatesFrontmatterAndReindexes(t *testing.T) {
 	}
 
 	absPath := filepath.Join(svc.VaultRoot, "Props_Note.md")
-	raw, err := os.ReadFile(absPath)
+	raw, err := os.ReadFile(absPath) //nolint:gosec // absPath was validated by the service and is inside t.TempDir()
 	if err != nil {
 		t.Fatal(err)
 	}

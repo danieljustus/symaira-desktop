@@ -31,7 +31,7 @@ func TestOverwriteLeavesRestorableVersion(t *testing.T) {
 	if _, err := svc.HistoryRestore(path, ""); err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(svc.VaultRoot, path))
+	data, err := os.ReadFile(filepath.Join(svc.VaultRoot, path)) //nolint:gosec // path is a service-generated test note inside t.TempDir()
 	if err != nil {
 		t.Fatal(err)
 	}

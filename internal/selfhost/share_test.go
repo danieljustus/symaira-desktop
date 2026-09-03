@@ -134,7 +134,7 @@ func TestShareStoreExpiration(t *testing.T) {
 
 func TestServerShareEndpoints(t *testing.T) {
 	vaultRoot := t.TempDir()
-	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nWorld"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultRoot, "Hello.md"), []byte("---\ntitle: Hello\n---\nWorld"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -165,7 +165,7 @@ func TestServerShareEndpoints(t *testing.T) {
 	if err := json.NewDecoder(res.Body).Decode(&created); err != nil {
 		t.Fatal(err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	if created.ID == "" || created.Token == "" {
 		t.Fatal("expected id and token in response")
@@ -185,14 +185,14 @@ func TestServerShareEndpoints(t *testing.T) {
 	if ct := res.Header.Get("Content-Disposition"); !strings.Contains(ct, "Hello.md") {
 		t.Fatalf("expected content-disposition to contain Hello.md, got %q", ct)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// GET /s/<bad-token> returns 404
 	res = unauthenticated(t, http.MethodGet, ts.URL+"/s/bad", nil, "")
 	if res.StatusCode != http.StatusNotFound {
 		t.Fatalf("expected 404 for bad token, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// GET /api/v1/shares — list shares.
 	res = authorized(t, http.MethodGet, ts.URL+"/api/v1/shares", nil, "")
@@ -203,7 +203,7 @@ func TestServerShareEndpoints(t *testing.T) {
 	if err := json.NewDecoder(res.Body).Decode(&shares); err != nil {
 		t.Fatal(err)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 	if len(shares) != 1 {
 		t.Fatalf("expected 1 share, got %d", len(shares))
 	}
@@ -216,21 +216,21 @@ func TestServerShareEndpoints(t *testing.T) {
 	if res.StatusCode != http.StatusOK {
 		t.Fatalf("revoke share returned %d: %s", res.StatusCode, readBody(res))
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// After revocation, access is denied.
 	res = unauthenticated(t, http.MethodGet, ts.URL+"/s/"+created.Token, nil, "")
 	if res.StatusCode != http.StatusNotFound {
 		t.Fatalf("expected 404 after revoke, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// Revoking again returns 404.
 	res = authorized(t, http.MethodDelete, ts.URL+"/api/v1/share/"+created.ID, nil, "")
 	if res.StatusCode != http.StatusNotFound {
 		t.Fatalf("expected 404 on double-revoke, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 }
 
 func TestShareEndpointValidation(t *testing.T) {
@@ -249,49 +249,49 @@ func TestShareEndpointValidation(t *testing.T) {
 	if res.StatusCode != http.StatusBadRequest {
 		t.Fatalf("expected 400 for missing path, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// Invalid path.
 	res = authorized(t, http.MethodPost, ts.URL+"/api/v1/share", strings.NewReader(`{"path":"../bad","expiry":1}`), "application/json")
 	if res.StatusCode != http.StatusBadRequest {
 		t.Fatalf("expected 400 for invalid path, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// Non-existent document.
 	res = authorized(t, http.MethodPost, ts.URL+"/api/v1/share", strings.NewReader(`{"path":"nope.md","expiry":1}`), "application/json")
 	if res.StatusCode != http.StatusNotFound {
 		t.Fatalf("expected 404 for non-existent doc, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// Expiry too large.
 	res = authorized(t, http.MethodPost, ts.URL+"/api/v1/share", strings.NewReader(`{"path":"nope.md","expiry":99999}`), "application/json")
 	if res.StatusCode != http.StatusBadRequest {
 		t.Fatalf("expected 400 for excessive expiry, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// Unauthenticated share creation fails.
 	res = unauthenticated(t, http.MethodPost, ts.URL+"/api/v1/share", strings.NewReader(`{"path":"x.md"}`), "application/json")
 	if res.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("expected 401 for unauthenticated share create, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// Unauthenticated list fails.
 	res = unauthenticated(t, http.MethodGet, ts.URL+"/api/v1/shares", nil, "")
 	if res.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("expected 401 for unauthenticated list, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 
 	// GET /s/ with empty token returns 404.
 	res = unauthenticated(t, http.MethodGet, ts.URL+"/s/", nil, "")
 	if res.StatusCode != http.StatusNotFound {
 		t.Fatalf("expected 404 for empty token, got %d", res.StatusCode)
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 }
 
 func TestShareStorePersistence(t *testing.T) {

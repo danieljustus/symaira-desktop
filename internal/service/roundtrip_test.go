@@ -16,7 +16,7 @@ func TestRoundtrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = os.RemoveAll(vaultPath)
-	_ = os.MkdirAll(vaultPath, 0755)
+	_ = os.MkdirAll(vaultPath, 0700)
 
 	dbPath := filepath.Join(vaultPath, "sidecar.db")
 	_ = os.Remove(dbPath)
@@ -25,7 +25,7 @@ func TestRoundtrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	svc := New(vaultPath, db)
 
@@ -97,10 +97,10 @@ func TestLsPopulatesEmptySidecarFromExistingVaultFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = os.RemoveAll(vaultPath)
-	_ = os.MkdirAll(vaultPath, 0755)
+	_ = os.MkdirAll(vaultPath, 0700)
 	t.Cleanup(func() { _ = os.RemoveAll(vaultPath) })
 
-	if err := os.WriteFile(filepath.Join(vaultPath, "Existing.md"), []byte("---\ntitle: Existing\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(vaultPath, "Existing.md"), []byte("---\ntitle: Existing\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -109,7 +109,7 @@ func TestLsPopulatesEmptySidecarFromExistingVaultFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	svc := New(vaultPath, db)
 
@@ -144,14 +144,14 @@ func TestEventsStress(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = os.RemoveAll(vaultPath)
-	_ = os.MkdirAll(vaultPath, 0755)
+	_ = os.MkdirAll(vaultPath, 0700)
 
 	dbPath := filepath.Join(vaultPath, "sidecar.db")
 	db, err := sidecar.Open(dbPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	svc := New(vaultPath, db)
 

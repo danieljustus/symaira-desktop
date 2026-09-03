@@ -136,18 +136,15 @@ func (w *Worker) lease(ctx context.Context) (*Job, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNoContent {
-		return nil, ErrNoPendingJob
+		return nil, errors.Join(ErrNoPendingJob, resp.Body.Close())
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, responseError(resp)
+		return nil, errors.Join(responseError(resp), resp.Body.Close())
 	}
 	var job Job
-	if err := json.NewDecoder(resp.Body).Decode(&job); err != nil {
-		return nil, err
-	}
-	return &job, nil
+	decodeErr := json.NewDecoder(resp.Body).Decode(&job)
+	return &job, errors.Join(decodeErr, resp.Body.Close())
 }
 
 func (w *Worker) download(ctx context.Context, job *Job) (string, func(), error) {
@@ -155,36 +152,40 @@ func (w *Worker) download(ctx context.Context, job *Job) (string, func(), error)
 	if err != nil {
 		return "", func() {}, err
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", func() {}, responseError(resp)
+		responseErr := responseError(resp)
+		return "", func() {}, errors.Join(responseErr, resp.Body.Close())
 	}
 	dir, err := os.MkdirTemp("", "symdesk-worker-*")
 	if err != nil {
-		return "", func() {}, err
+		return "", func() {}, errors.Join(err, resp.Body.Close())
 	}
 	cleanup := func() { _ = os.RemoveAll(dir) }
-	ext := filepath.Ext(job.OriginalName)
+	ext := filepath.Ext(filepath.Base(job.OriginalName))
 	if ext == "" {
 		extensions, _ := mime.ExtensionsByType(job.ContentType)
 		if len(extensions) > 0 {
 			ext = extensions[0]
 		}
 	}
-	path := filepath.Join(dir, "input"+ext)
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0600)
+	root, err := os.OpenRoot(dir)
 	if err != nil {
 		cleanup()
-		return "", func() {}, err
+		return "", func() {}, errors.Join(err, resp.Body.Close())
+	}
+	path := filepath.Join(dir, "input"+ext)
+	file, err := root.OpenFile("input"+ext, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0600)
+	if err != nil {
+		cleanup()
+		return "", func() {}, errors.Join(err, root.Close(), resp.Body.Close())
 	}
 	_, copyErr := io.Copy(file, io.LimitReader(resp.Body, maxUploadBytes+1))
-	closeErr := file.Close()
-	if copyErr != nil || closeErr != nil {
+	fileCloseErr := file.Close()
+	rootCloseErr := root.Close()
+	respCloseErr := resp.Body.Close()
+	if copyErr != nil || fileCloseErr != nil || rootCloseErr != nil || respCloseErr != nil {
 		cleanup()
-		if copyErr != nil {
-			return "", func() {}, copyErr
-		}
-		return "", func() {}, closeErr
+		return "", func() {}, errors.Join(copyErr, fileCloseErr, rootCloseErr, respCloseErr)
 	}
 	info, err := os.Stat(path)
 	if err != nil || info.Size() > maxUploadBytes {
@@ -240,11 +241,10 @@ func (w *Worker) complete(ctx context.Context, jobID, text, engine, model string
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return responseError(resp)
+		return errors.Join(responseError(resp), resp.Body.Close())
 	}
-	return nil
+	return resp.Body.Close()
 }
 
 func (w *Worker) fail(ctx context.Context, jobID, message string, retry bool) error {
@@ -255,11 +255,10 @@ func (w *Worker) fail(ctx context.Context, jobID, message string, retry bool) er
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return responseError(resp)
+		return errors.Join(responseError(resp), resp.Body.Close())
 	}
-	return nil
+	return resp.Body.Close()
 }
 
 func (w *Worker) request(ctx context.Context, method, path, contentType string, body io.Reader) (*http.Response, error) {

@@ -28,14 +28,14 @@ func setupAutofillTest(t *testing.T) (*Service, string) {
 	writeNote(t, root, "c.md", "---\ntitle: Note C\n---\ncontent C\n")
 
 	repo := filepath.Join(root, ".symdesk")
-	if err := os.MkdirAll(repo, 0755); err != nil {
+	if err := os.MkdirAll(repo, 0700); err != nil {
 		t.Fatal(err)
 	}
 	db, err := sidecar.Open(filepath.Join(repo, "db.sqlite"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { _ = db.Close() })
 
 	svc := New(root, db)
 
@@ -62,7 +62,7 @@ func setupAutofillTest(t *testing.T) (*Service, string) {
 }
 
 func writeNote(t *testing.T, root, name, content string) {
-	if err := os.WriteFile(filepath.Join(root, name), []byte(content), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, name), []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 }

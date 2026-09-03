@@ -117,9 +117,19 @@ func copyIndexFile(source, destination string) error {
 		_ = tmp.Close()
 		return fmt.Errorf("protect temporary index file: %w", err)
 	}
-	if _, err := io.Copy(tmp, input); err != nil {
+	sourceInfo, err := input.Stat()
+	if err != nil {
+		_ = tmp.Close()
+		return fmt.Errorf("stat source index file: %w", err)
+	}
+	copied, err := io.Copy(tmp, input)
+	if err != nil {
 		_ = tmp.Close()
 		return fmt.Errorf("copy index file: %w", err)
+	}
+	if copied != sourceInfo.Size() {
+		_ = tmp.Close()
+		return fmt.Errorf("copy index file: copied %d bytes, want %d", copied, sourceInfo.Size())
 	}
 	if err := tmp.Sync(); err != nil {
 		_ = tmp.Close()

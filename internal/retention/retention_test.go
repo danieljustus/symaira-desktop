@@ -184,7 +184,7 @@ selector:
   status: paid
 `
 	path := filepath.Join(dir, "rules.yaml")
-	if err := os.WriteFile(path, []byte(yamlContent), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(yamlContent), 0600); err != nil {
 		t.Fatal(err)
 	}
 	rules, err := LoadRules(path)

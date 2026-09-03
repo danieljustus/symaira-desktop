@@ -181,7 +181,7 @@ func ParseFile(path string) (*Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("stat file: %w", err)
 	}
-	fileBytes, err := os.ReadFile(path)
+	fileBytes, err := os.ReadFile(path) //nolint:gosec // path is the caller-selected vault document
 	if err != nil {
 		return nil, fmt.Errorf("read file: %w", err)
 	}
@@ -599,7 +599,7 @@ func getIntFrontmatter(fm map[string]interface{}, key string) int {
 // block of a markdown file, preserving every other byte exactly.  Only bare
 // scalar values (strings, numbers) are supported.
 func SetFrontmatterKey(filePath, key, value string) error {
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(filePath) //nolint:gosec // filePath is the caller-selected vault document path
 	if err != nil {
 		return fmt.Errorf("read file: %w", err)
 	}
@@ -625,7 +625,7 @@ func SetFrontmatterKey(filePath, key, value string) error {
 		newLines = append(newLines, key+": "+quoteYAML(value))
 		newLines = append(newLines, "---")
 		newLines = append(newLines, lines...)
-		return os.WriteFile(filePath, []byte(strings.Join(newLines, "\n")), 0644)
+		return os.WriteFile(filePath, []byte(strings.Join(newLines, "\n")), 0644) //nolint:gosec // vault notes intentionally remain user-readable
 	}
 
 	keyPrefix := key + ": "
@@ -644,7 +644,7 @@ func SetFrontmatterKey(filePath, key, value string) error {
 		lines = append(lines[:fmEnd], append([]string{newLine}, lines[fmEnd:]...)...)
 	}
 
-	return os.WriteFile(filePath, []byte(strings.Join(lines, "\n")), 0644)
+	return os.WriteFile(filePath, []byte(strings.Join(lines, "\n")), 0644) //nolint:gosec // vault notes intentionally remain user-readable
 }
 
 // quoteYAML returns a YAML-safe quoted string; numeric-looking values are
@@ -679,7 +679,7 @@ func quoteYAML(v string) string {
 // as far as possible. The write is performed atomically (temp file + fsync +
 // rename) so a failed write cannot leave a partially written note.
 func SetFrontmatterValue(filePath, key string, value interface{}) error {
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(filePath) //nolint:gosec // filePath is the caller-selected vault document path
 	if err != nil {
 		return fmt.Errorf("read file: %w", err)
 	}
@@ -732,7 +732,7 @@ func SetFrontmatterValue(filePath, key string, value interface{}) error {
 // DeleteFrontmatterValue removes a frontmatter key while preserving the rest of
 // the frontmatter block and body. If the key does not exist the file is unchanged.
 func DeleteFrontmatterValue(filePath, key string) error {
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(filePath) //nolint:gosec // filePath is the caller-selected vault document path
 	if err != nil {
 		return fmt.Errorf("read file: %w", err)
 	}
@@ -842,21 +842,21 @@ func writeFileAtomic(path string, data []byte) error {
 	tmpName := tmp.Name()
 
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		os.Remove(tmpName)
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("write temp file: %w", err)
 	}
 	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		os.Remove(tmpName)
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("sync temp file: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("close temp file: %w", err)
 	}
 	if err := os.Rename(tmpName, path); err != nil {
-		os.Remove(tmpName)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("rename temp file: %w", err)
 	}
 	return nil

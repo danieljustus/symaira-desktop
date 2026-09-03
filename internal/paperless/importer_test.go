@@ -40,7 +40,7 @@ func TestParseManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(manifestPath, data, 0644); err != nil {
+	if err := os.WriteFile(manifestPath, data, 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -91,7 +91,7 @@ func TestParseManifest_Empty(t *testing.T) {
 	manifestPath := filepath.Join(dir, "manifest.json")
 
 	data := []byte("[]")
-	if err := os.WriteFile(manifestPath, data, 0644); err != nil {
+	if err := os.WriteFile(manifestPath, data, 0600); err != nil {
 		t.Fatal(err)
 	}
 

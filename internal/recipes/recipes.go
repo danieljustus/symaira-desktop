@@ -59,7 +59,7 @@ type Manifest struct {
 }
 
 func Load(path string) (Recipe, error) {
-	b, err := os.ReadFile(path)
+	b, err := os.ReadFile(path) //nolint:gosec // recipe path is explicitly selected by the caller
 	if err != nil {
 		return Recipe{}, err
 	}
@@ -135,6 +135,7 @@ func Start(ctx context.Context, vaultRoot string, recipe Recipe, trigger string,
 	runID := fmt.Sprintf("%d-%s", time.Now().UTC().UnixNano(), safeName(recipe.Name))
 	req := Request{ContractVersion: ContractVersion, RunID: runID, Vault: vaultRoot, Recipe: recipe, Trigger: trigger}
 	dir := runDir(vaultRoot, runID)
+	//nolint:gosec // dir is the generated run directory under the selected vault
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return Manifest{}, err
 	}
@@ -142,11 +143,11 @@ func Start(ctx context.Context, vaultRoot string, recipe Recipe, trigger string,
 	if err := writeJSON(requestPath, req); err != nil {
 		return Manifest{}, err
 	}
-	cmd := exec.CommandContext(ctx, runner, "recipe", "run", "--request", requestPath, "--response", responsePath)
+	cmd := exec.CommandContext(ctx, runner, "recipe", "run", "--request", requestPath, "--response", responsePath) //nolint:gosec // runner is resolved by compose.Resolve and paths are generated locally
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return Manifest{}, fmt.Errorf("recipe runner failed: %w: %s", err, strings.TrimSpace(string(output)))
 	}
-	b, err := os.ReadFile(responsePath)
+	b, err := os.ReadFile(responsePath) //nolint:gosec // responsePath is the generated file inside the run directory
 	if err != nil {
 		return Manifest{}, fmt.Errorf("recipe runner did not produce a response: %w", err)
 	}
@@ -194,6 +195,7 @@ func Accept(vaultRoot, runID string) error {
 	}
 	temps := make([]string, len(m.Response.Changes))
 	for i, c := range m.Response.Changes {
+		//nolint:gosec // paths[i] was validated by vault.SecurePath
 		if err := os.MkdirAll(filepath.Dir(paths[i]), 0755); err != nil {
 			return err
 		}
@@ -224,7 +226,7 @@ func Accept(vaultRoot, runID string) error {
 	backups := make([][]byte, len(paths))
 	existed := make([]bool, len(paths))
 	for i, target := range paths {
-		if b, err := os.ReadFile(target); err == nil {
+		if b, err := os.ReadFile(target); err == nil { //nolint:gosec // target was validated by vault.SecurePath
 			backups[i], existed[i] = b, true
 		} else if !errors.Is(err, os.ErrNotExist) {
 			return err
@@ -234,7 +236,7 @@ func Accept(vaultRoot, runID string) error {
 		if err := os.Rename(temps[i], target); err != nil {
 			for j := 0; j < i; j++ {
 				if existed[j] {
-					_ = os.WriteFile(paths[j], backups[j], 0644)
+					_ = os.WriteFile(paths[j], backups[j], 0644) //nolint:gosec // restore target was validated by vault.SecurePath
 				} else {
 					_ = os.Remove(paths[j])
 				}
@@ -298,11 +300,11 @@ func writeJSON(path string, v any) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, b, 0644)
+	return os.WriteFile(path, b, 0644) //nolint:gosec // recipe manifests are intentionally user-readable
 }
 func loadManifest(root, id string) (Manifest, string, error) {
 	path := filepath.Join(runDir(root, id), "manifest.json")
-	b, err := os.ReadFile(path)
+	b, err := os.ReadFile(path) //nolint:gosec // recipe path is explicitly selected by the caller
 	if err != nil {
 		return Manifest{}, path, err
 	}
@@ -323,5 +325,5 @@ func writeTrace(path string, m Manifest) error {
 	for _, p := range paths {
 		lines = append(lines, "- `"+p+"`")
 	}
-	return os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0644)
+	return os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0644) //nolint:gosec // trace files are intentionally user-readable
 }

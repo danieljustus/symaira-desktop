@@ -56,6 +56,7 @@ func Import(opts ImportOptions) (*ImportSummary, error) {
 	// Ensure archive directory exists (unless dry-run)
 	archiveDir := filepath.Join(opts.VaultRoot, "archive", "paperless")
 	if !opts.DryRun {
+		//nolint:gosec // archive directory is intentionally user-readable under the selected vault
 		if err := os.MkdirAll(archiveDir, 0755); err != nil {
 			return nil, fmt.Errorf("create archive dir: %w", err)
 		}
@@ -138,6 +139,7 @@ func Import(opts ImportOptions) (*ImportSummary, error) {
 			result.NotePath = noteRelPath
 			// Ensure parent dir exists
 			if !opts.DryRun {
+				//nolint:gosec // note directory is intentionally user-readable under the selected vault
 				if err := os.MkdirAll(filepath.Dir(noteAbsPath), 0755); err != nil {
 					result.Action = "error"
 					result.Error = fmt.Sprintf("create note dir: %v", err)
@@ -176,6 +178,7 @@ func Import(opts ImportOptions) (*ImportSummary, error) {
 		noteContent := buildNote(entry, archiveRelPath, sourceID, now)
 
 		// Write the note
+		//nolint:gosec // imported vault notes intentionally remain user-readable
 		if err := os.WriteFile(noteAbsPath, []byte(noteContent), 0644); err != nil {
 			result.Action = "error"
 			result.Error = fmt.Sprintf("write note: %v", err)
@@ -268,13 +271,13 @@ func sanitizeFileName(s string) string {
 
 // copyFile copies a file from src to dst.
 func copyFile(src, dst string) error {
-	s, err := os.Open(src)
+	s, err := os.Open(src) //nolint:gosec // source is under the caller-selected Paperless export directory
 	if err != nil {
 		return err
 	}
 	defer func() { _ = s.Close() }()
 
-	d, err := os.Create(dst)
+	d, err := os.Create(dst) //nolint:gosec // destination is under the caller-selected vault archive directory
 	if err != nil {
 		return err
 	}
@@ -292,14 +295,14 @@ func buildNote(entry ManifestEntry, archiveRelPath, sourceID string, now time.Ti
 
 	// Frontmatter
 	sb.WriteString("---\n")
-	sb.WriteString(fmt.Sprintf("title: %q\n", entry.Title))
-	sb.WriteString(fmt.Sprintf("created: %q\n", now.Format(time.RFC3339)))
+	_, _ = fmt.Fprintf(&sb, "title: %q\n", entry.Title)
+	_, _ = fmt.Fprintf(&sb, "created: %q\n", now.Format(time.RFC3339))
 
 	// Tags
 	if len(entry.Tags) > 0 {
 		sb.WriteString("tags:\n")
 		for _, t := range entry.Tags {
-			sb.WriteString(fmt.Sprintf("  - %q\n", t))
+			_, _ = fmt.Fprintf(&sb, "  - %q\n", t)
 		}
 	} else {
 		sb.WriteString("tags: []\n")
@@ -309,49 +312,49 @@ func buildNote(entry ManifestEntry, archiveRelPath, sourceID string, now time.Ti
 	sb.WriteString("status: \"open\"\n")
 
 	// Source traceability
-	sb.WriteString(fmt.Sprintf("source_identifier: %q\n", sourceID))
+	_, _ = fmt.Fprintf(&sb, "source_identifier: %q\n", sourceID)
 	sb.WriteString("imported_from: \"paperless\"\n")
 
 	// Correspondent
 	if entry.Correspondent != nil && *entry.Correspondent != "" {
-		sb.WriteString(fmt.Sprintf("correspondent: %q\n", *entry.Correspondent))
+		_, _ = fmt.Fprintf(&sb, "correspondent: %q\n", *entry.Correspondent)
 	}
 
 	// Document type
 	if entry.DocumentType != nil && *entry.DocumentType != "" {
-		sb.WriteString(fmt.Sprintf("document_type: %q\n", *entry.DocumentType))
+		_, _ = fmt.Fprintf(&sb, "document_type: %q\n", *entry.DocumentType)
 	}
 
 	// Document date (use created date from Paperless)
 	if entry.Created != nil && *entry.Created != "" {
 		docDate := extractDate(*entry.Created)
 		if docDate != "" {
-			sb.WriteString(fmt.Sprintf("document_date: %q\n", docDate))
+			_, _ = fmt.Fprintf(&sb, "document_date: %q\n", docDate)
 		}
 	}
 
 	// ASN
 	if entry.ArchiveSerialNumber != nil && *entry.ArchiveSerialNumber > 0 {
-		sb.WriteString(fmt.Sprintf("asn: %d\n", *entry.ArchiveSerialNumber))
+		_, _ = fmt.Fprintf(&sb, "asn: %d\n", *entry.ArchiveSerialNumber)
 	}
 
 	// Archive path
-	sb.WriteString(fmt.Sprintf("archive_path: %q\n", archiveRelPath))
+	_, _ = fmt.Fprintf(&sb, "archive_path: %q\n", archiveRelPath)
 
 	// Paperless metadata
 	sb.WriteString("paperless:\n")
-	sb.WriteString(fmt.Sprintf("  id: %d\n", entry.ID))
+	_, _ = fmt.Fprintf(&sb, "  id: %d\n", entry.ID)
 	if entry.Checksum != nil {
-		sb.WriteString(fmt.Sprintf("  checksum: %q\n", *entry.Checksum))
+		_, _ = fmt.Fprintf(&sb, "  checksum: %q\n", *entry.Checksum)
 	}
 	if entry.Added != nil {
-		sb.WriteString(fmt.Sprintf("  added: %q\n", *entry.Added))
+		_, _ = fmt.Fprintf(&sb, "  added: %q\n", *entry.Added)
 	}
 	if entry.Modified != nil {
-		sb.WriteString(fmt.Sprintf("  modified: %q\n", *entry.Modified))
+		_, _ = fmt.Fprintf(&sb, "  modified: %q\n", *entry.Modified)
 	}
 	if entry.OriginalFileName != nil {
-		sb.WriteString(fmt.Sprintf("  original_file_name: %q\n", *entry.OriginalFileName))
+		_, _ = fmt.Fprintf(&sb, "  original_file_name: %q\n", *entry.OriginalFileName)
 	}
 
 	// Confidence: paperless source of truth = 100
@@ -362,7 +365,7 @@ func buildNote(entry ManifestEntry, archiveRelPath, sourceID string, now time.Ti
 		ext := strings.ToLower(filepath.Ext(*entry.ArchivedFileName))
 		mime := mimeFromExt(ext)
 		if mime != "" {
-			sb.WriteString(fmt.Sprintf("mime: %q\n", mime))
+			_, _ = fmt.Fprintf(&sb, "mime: %q\n", mime)
 		}
 	}
 
@@ -375,15 +378,15 @@ func buildNote(entry ManifestEntry, archiveRelPath, sourceID string, now time.Ti
 	}
 
 	// Reference the archived file
-	sb.WriteString(fmt.Sprintf("[[%s]]\n", archiveRelPath))
+	_, _ = fmt.Fprintf(&sb, "[[%s]]\n", archiveRelPath)
 
 	// Notes from Paperless
 	if len(entry.Notes) > 0 {
 		sb.WriteString("\n## Paperless Notes\n\n")
 		for _, note := range entry.Notes {
-			sb.WriteString(fmt.Sprintf("- %s\n", note.Note))
+			_, _ = fmt.Fprintf(&sb, "- %s\n", note.Note)
 			if note.Created != nil {
-				sb.WriteString(fmt.Sprintf("  (added: %s)\n", *note.Created))
+				_, _ = fmt.Fprintf(&sb, "  (added: %s)\n", *note.Created)
 			}
 		}
 	}

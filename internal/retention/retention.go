@@ -108,7 +108,7 @@ type HistoryEntry struct {
 // LoadRules reads retention rules from a YAML file (one rule per document,
 // separated by ---).
 func LoadRules(path string) ([]Rule, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // retention path is rooted in the explicitly selected vault
 	if err != nil {
 		return nil, err
 	}
@@ -269,6 +269,7 @@ func HistoryPath(vaultRoot string) string {
 // WriteProposal saves a proposal to disk.
 func WriteProposal(vaultRoot string, p Proposal) error {
 	dir := ProposalDir(vaultRoot)
+	//nolint:gosec // retention state is stored under the selected vault
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
@@ -278,13 +279,13 @@ func WriteProposal(vaultRoot string, p Proposal) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0644)
+	return os.WriteFile(path, data, 0644) //nolint:gosec // retention state is intentionally user-readable
 }
 
 // LoadProposal reads a proposal from disk.
 func LoadProposal(vaultRoot, runID string) (Proposal, error) {
 	path := filepath.Join(ProposalDir(vaultRoot), fmt.Sprintf("%s.json", runID))
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // retention path is rooted in the explicitly selected vault
 	if err != nil {
 		return Proposal{}, err
 	}
@@ -298,11 +299,12 @@ func LoadProposal(vaultRoot, runID string) (Proposal, error) {
 // AppendHistory adds an entry to the retention history log.
 func AppendHistory(vaultRoot string, entry HistoryEntry) error {
 	path := HistoryPath(vaultRoot)
+	//nolint:gosec // retention state is stored under the selected vault
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 	var entries []HistoryEntry
-	if data, err := os.ReadFile(path); err == nil {
+	if data, err := os.ReadFile(path); err == nil { //nolint:gosec // history path is rooted in the explicitly selected vault
 		_ = json.Unmarshal(data, &entries)
 	}
 	entries = append(entries, entry)
@@ -310,13 +312,13 @@ func AppendHistory(vaultRoot string, entry HistoryEntry) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0644)
+	return os.WriteFile(path, data, 0644) //nolint:gosec // retention state is intentionally user-readable
 }
 
 // LoadHistory reads the retention history log.
 func LoadHistory(vaultRoot string) ([]HistoryEntry, error) {
 	path := HistoryPath(vaultRoot)
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // retention path is rooted in the explicitly selected vault
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil

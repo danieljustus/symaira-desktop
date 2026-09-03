@@ -80,11 +80,15 @@ func writeSidecarJSONL(t *testing.T, path string, extractions []sidecarExtractio
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	f, err := os.Create(path)
+	f, err := os.Create(path) // #nosec G304 -- path is a test fixture under a test-owned temporary directory.
 	if err != nil {
 		t.Fatalf("create sidecar: %v", err)
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			t.Errorf("close sidecar: %v", err)
+		}
+	}()
 	for _, e := range extractions {
 		line, err := json.Marshal(e)
 		if err != nil {
@@ -104,7 +108,11 @@ func testDBForExtractions(t *testing.T) *db.DB {
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
-	t.Cleanup(func() { dbClient.Close() })
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 	return dbClient
 }
 
@@ -119,7 +127,7 @@ func TestIndexFile_ImportsExtractionSidecar(t *testing.T) {
 	docPath := filepath.Join(vault, "invoice.md")
 	content := "---\nsource_path: /tmp/invoice.pdf\nsha256: " + sha + "\nmime: application/pdf\n---\n\n" +
 		"Invoice total due is listed below.\nTotal: $500.00 due by end of month.\n"
-	if err := os.WriteFile(docPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(docPath, []byte(content), 0600); err != nil {
 		t.Fatalf("write doc: %v", err)
 	}
 
@@ -169,7 +177,7 @@ func TestIndexFile_ReindexDoesNotDuplicateExtractions(t *testing.T) {
 	sha := "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
 	docPath := filepath.Join(vault, "note.md")
 	content := "---\nsha256: " + sha + "\n---\n\nBody content here that is long enough to chunk sensibly.\n"
-	if err := os.WriteFile(docPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(docPath, []byte(content), 0600); err != nil {
 		t.Fatalf("write doc: %v", err)
 	}
 	sidecarPath := filepath.Join(vault, sidecarDirName, sha+".jsonl")
@@ -197,7 +205,7 @@ func TestIndexFile_ReindexDoesNotDuplicateExtractions(t *testing.T) {
 	// Change the document body (same sidecar/sha in frontmatter): reindex
 	// must replace, not accumulate, extraction rows.
 	content2 := "---\nsha256: " + sha + "\n---\n\nUpdated body content, still chunked sensibly for testing.\n"
-	if err := os.WriteFile(docPath, []byte(content2), 0644); err != nil {
+	if err := os.WriteFile(docPath, []byte(content2), 0600); err != nil {
 		t.Fatalf("rewrite doc: %v", err)
 	}
 	if _, err := IndexFile(dbClient, embedder, docPath); err != nil {

@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -59,7 +60,7 @@ func rerankPrompt(query string, results []*db.SearchResult) string {
 		if len(content) > rerankMaxContent {
 			content = content[:rerankMaxContent] + "..."
 		}
-		b.WriteString(fmt.Sprintf("[%d] %s\n", i, content))
+		b.WriteString("[" + strconv.Itoa(i) + "] " + content + "\n")
 	}
 	b.WriteString("\nReturn ONLY a JSON array of integers, one per candidate, in order. Example: [95, 42, 80]")
 	return b.String()
@@ -220,7 +221,11 @@ func ollamaChatCompletion(url, model, prompt string, timeout time.Duration) (str
 	if err != nil {
 		return "", fmt.Errorf("ollama chat request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "engine: failed to close Ollama response body: %v\n", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))

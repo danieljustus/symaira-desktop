@@ -223,7 +223,11 @@ func TestSearchHybridAcceptsEmbedderInterface(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -231,18 +235,24 @@ func TestSearchHybridAcceptsEmbedderInterface(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	docPath := filepath.Join(tempDir, "test.md")
-	dbClient.SaveDocument(&db.Document{
+	if err := dbClient.SaveDocument(&db.Document{
 		Path:      docPath,
 		Hash:      "ifacehash",
 		UpdatedAt: time.Now(),
-	})
+	}); err != nil {
+		t.Fatalf("SaveDocument: %v", err)
+	}
 
 	var ie Embedder = &fakeEmbedder{dim: 768}
 
-	dbClient.SaveChunks([]*db.Chunk{
+	if err := dbClient.SaveChunks([]*db.Chunk{
 		{
 			UUID:         "iface-uuid-1",
 			DocumentPath: docPath,
@@ -251,7 +261,9 @@ func TestSearchHybridAcceptsEmbedderInterface(t *testing.T) {
 			Embedding:    ie.GenerateVector("interface driven search"),
 			Hash:         "h1",
 		},
-	})
+	}); err != nil {
+		t.Fatalf("SaveChunks: %v", err)
+	}
 
 	res, err := SearchHybrid(dbClient, dbClient, ie, "interface", 5)
 	if err != nil {
@@ -273,7 +285,11 @@ func TestSearchHybridSemanticOnlyMatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -281,14 +297,20 @@ func TestSearchHybridSemanticOnlyMatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	docPath := filepath.Join(tempDir, "test.md")
-	dbClient.SaveDocument(&db.Document{
+	if err := dbClient.SaveDocument(&db.Document{
 		Path:      docPath,
 		Hash:      "semhash",
 		UpdatedAt: time.Now(),
-	})
+	}); err != nil {
+		t.Fatalf("SaveDocument: %v", err)
+	}
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -316,7 +338,7 @@ func TestSearchHybridSemanticOnlyMatch(t *testing.T) {
 		embeddingB[i] /= norm
 	}
 
-	dbClient.SaveChunks([]*db.Chunk{
+	if err := dbClient.SaveChunks([]*db.Chunk{
 		{
 			UUID:         "uuid-keyword",
 			DocumentPath: docPath,
@@ -333,7 +355,9 @@ func TestSearchHybridSemanticOnlyMatch(t *testing.T) {
 			Embedding:    embeddingB,
 			Hash:         "hb",
 		},
-	})
+	}); err != nil {
+		t.Fatalf("SaveChunks: %v", err)
+	}
 
 	// Search for "falcon" — BM25 will find chunk A but not chunk B.
 	// The fix ensures chunk B still appears via full vector scan.
@@ -363,7 +387,11 @@ func TestHybridSearch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -371,14 +399,20 @@ func TestHybridSearch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	docPath := filepath.Join(tempDir, "test.md")
-	dbClient.SaveDocument(&db.Document{
+	if err := dbClient.SaveDocument(&db.Document{
 		Path:      docPath,
 		Hash:      "hash123",
 		UpdatedAt: time.Now(),
-	})
+	}); err != nil {
+		t.Fatalf("SaveDocument: %v", err)
+	}
 
 	embedder := newTestEmbeddingsGenerator()
 
@@ -386,7 +420,7 @@ func TestHybridSearch(t *testing.T) {
 	text1 := "The swift azure falcon soars above the sleeping canine"
 	text2 := "Database management system optimization strategies"
 
-	dbClient.SaveChunks([]*db.Chunk{
+	if err := dbClient.SaveChunks([]*db.Chunk{
 		{
 			UUID:         "uuid1",
 			DocumentPath: docPath,
@@ -403,7 +437,9 @@ func TestHybridSearch(t *testing.T) {
 			Embedding:    embedder.GenerateVector(text2),
 			Hash:         "chash2",
 		},
-	})
+	}); err != nil {
+		t.Fatalf("SaveChunks: %v", err)
+	}
 
 	// Search for something related to text1
 	res, err := SearchHybrid(dbClient, dbClient, embedder, "falcon soars", 2)
@@ -510,14 +546,22 @@ func TestSearchHybridUsesVectorStore(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 	t.Setenv("HOME", tempDir)
 
 	dbClient, err := db.Open()
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -698,7 +742,9 @@ func TestSearchHybrid_FallbackQueryAgainstOllamaIndex_WarnsAndMarksVectorMode(t 
 
 	results, err := SearchHybrid(store, store, embedder, "query", 5)
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		t.Errorf("close pipe: %v", err)
+	}
 	os.Stderr = oldStderr
 
 	if err != nil {
@@ -743,7 +789,9 @@ func TestSearchHybrid_FallbackQueryAgainstFallbackIndex_NoWarning(t *testing.T) 
 
 	results, err := SearchHybrid(store, store, embedder, "query", 5)
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		t.Errorf("close pipe: %v", err)
+	}
 	os.Stderr = oldStderr
 
 	if err != nil {
@@ -782,7 +830,9 @@ func TestSearchHybrid_OllamaQueryAgainstOllamaIndex_NoWarning(t *testing.T) {
 
 	results, err := SearchHybrid(store, store, embedder, "query", 5)
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		t.Errorf("close pipe: %v", err)
+	}
 	os.Stderr = oldStderr
 
 	if err != nil {

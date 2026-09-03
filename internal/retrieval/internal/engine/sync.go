@@ -305,7 +305,11 @@ func WatchDirectory(ctx context.Context, dbClient db.Store, embedder Embedder, d
 		return userFriendlyError(err, "failed to create file watcher",
 			"Ensure you have the necessary permissions to watch the directory")
 	}
-	defer watcher.Close()
+	defer func() {
+		if err := watcher.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "engine: failed to close file watcher: %v\n", err)
+		}
+	}()
 
 	// Walk the directory and add all subdirectories to the watcher
 	err = filepath.WalkDir(absPath, func(path string, d fs.DirEntry, err error) error {
@@ -377,7 +381,9 @@ func WatchDirectory(ctx context.Context, dbClient db.Store, embedder Embedder, d
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					info, err := os.Stat(event.Name)
 					if err == nil && info.IsDir() && !shouldSkipDir(info.Name()) {
-						watcher.Add(event.Name)
+						if err := watcher.Add(event.Name); err != nil {
+							fmt.Fprintf(os.Stderr, "Warning: failed to watch directory %s: %v\n", event.Name, err)
+						}
 					}
 				}
 

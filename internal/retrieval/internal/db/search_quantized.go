@@ -47,7 +47,7 @@ func (db *DB) SearchVectorQuantizedWithPath(queryVec []float32, pathPrefix strin
 	return results, nil
 }
 
-func (db *DB) searchVectorQuantizedInnerWithPath(queryVec []float32, queryNorm float32, pathPrefix string, cfg *QuantConfig, limit int) ([]*SearchResult, error) {
+func (db *DB) searchVectorQuantizedInnerWithPath(queryVec []float32, queryNorm float32, pathPrefix string, cfg *QuantConfig, limit int) (results []*SearchResult, err error) {
 	codec, err := turboquant.NewCodec(len(queryVec), turboquant.BitWidth(cfg.BitWidth), cfg.Seed, 0)
 	if err != nil {
 		return nil, fmt.Errorf("create codec: %w", err)
@@ -66,7 +66,11 @@ func (db *DB) searchVectorQuantizedInnerWithPath(queryVec []float32, queryNorm f
 	if err != nil {
 		return nil, fmt.Errorf("quantized scan query: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("quantized rows close: %w", closeErr)
+		}
+	}()
 
 	var candidates []quantCandidate
 	for rows.Next() {
@@ -165,7 +169,7 @@ func (db *DB) buildQuantResults(candidates []quantCandidate, limit int) ([]*Sear
 	return results, nil
 }
 
-func (db *DB) exactRerankShortlistWithPath(queryVec []float32, queryNorm float32, pathPrefix string, shortlistIDs []int64, limit int) ([]*SearchResult, error) {
+func (db *DB) exactRerankShortlistWithPath(queryVec []float32, queryNorm float32, pathPrefix string, shortlistIDs []int64, limit int) (results []*SearchResult, err error) {
 	placeholders := make([]string, len(shortlistIDs))
 	args := make([]interface{}, 0, len(shortlistIDs)+1)
 	for i, id := range shortlistIDs {
@@ -179,6 +183,7 @@ func (db *DB) exactRerankShortlistWithPath(queryVec []float32, queryNorm float32
 		args = append(args, pathPrefix)
 	}
 
+	// #nosec G201 -- only generated placeholders are interpolated; values stay bound.
 	query := fmt.Sprintf(
 		"SELECT id, uuid, document_path, chunk_index, embedding, hash, norm, embedding_dim, embedding_model FROM chunks WHERE %s",
 		whereClause,
@@ -188,7 +193,11 @@ func (db *DB) exactRerankShortlistWithPath(queryVec []float32, queryNorm float32
 	if err != nil {
 		return nil, fmt.Errorf("rerank fetch query: %w", err)
 	}
-	defer fetchRows.Close()
+	defer func() {
+		if closeErr := fetchRows.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("rerank rows close: %w", closeErr)
+		}
+	}()
 
 	type fetchedRow struct {
 		chunk    Chunk
@@ -225,7 +234,7 @@ func (db *DB) exactRerankShortlistWithPath(queryVec []float32, queryNorm float32
 	sort.SliceStable(*h, func(i, j int) bool {
 		return (*h)[i].CosineScore > (*h)[j].CosineScore
 	})
-	results := ([]*SearchResult)(*h)
+	results = ([]*SearchResult)(*h)
 
 	for i, r := range results {
 		r.VectorRank = i + 1

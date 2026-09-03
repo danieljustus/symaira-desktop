@@ -35,6 +35,12 @@ type Tool struct {
 	InputSchema json.RawMessage
 	Handler     Handler
 	ReadOnly    bool
+
+	// Destructive marks a tool that deletes or overwrites vault content or
+	// stored configuration as an unambiguous part of its normal operation
+	// (as opposed to merely writing new content). It maps to the MCP
+	// DestructiveHint annotation.
+	Destructive bool
 }
 
 // Definition is an alternate descriptive name for Tool for callers that
@@ -71,6 +77,12 @@ func NewRegistry(options RegistryOptions) *Registry {
 		tool.ReadOnly = readOnly
 		return *tool
 	}
+	// destructive marks a tool that deletes or overwrites vault content or
+	// stored configuration as an unambiguous part of its normal operation.
+	destructive := func(tool Tool) Tool {
+		tool.Destructive = true
+		return tool
+	}
 	entries := []Tool{
 		entry(true, newStatusTool(cfg, options.AllowWrite, options.ServerVersion)),
 		entry(true, newLsTool(options.GetService)),
@@ -94,7 +106,7 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(true, newNotebookListTool(options.GetService)),
 		entry(true, newNotebookGetTool(options.GetService)),
 		entry(true, newNotebookAskTool(options.GetService)),
-		entry(false, newUndoTaskTool(options.GetService)),
+		destructive(entry(false, newUndoTaskTool(options.GetService))),
 		entry(false, newNoteNewTool(options.GetService)),
 		entry(false, newIngestTool(options.GetService)),
 		entry(false, newDocSetStatusTool(options.GetService)),
@@ -102,7 +114,7 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(false, newIngestReocrTool(cfg)),
 		entry(false, newRulesAddTool(cfg)),
 		entry(false, newRulesUpdateTool(cfg)),
-		entry(false, newRulesDeleteTool(cfg)),
+		destructive(entry(false, newRulesDeleteTool(cfg))),
 		entry(false, newSplitPDFTool()),
 		entry(false, newMergePDFTool()),
 		entry(false, newRotatePDFTool()),
@@ -110,7 +122,7 @@ func NewRegistry(options RegistryOptions) *Registry {
 		entry(false, newExportTool(options.GetService)),
 		entry(false, newNotebookCreateTool(options.GetService)),
 		entry(false, newNotebookAddSourceTool(options.GetService)),
-		entry(false, newNotebookRemoveSourceTool(options.GetService)),
+		destructive(entry(false, newNotebookRemoveSourceTool(options.GetService))),
 		entry(false, newAutofillTool(options.GetService)),
 		entry(false, newAssetStoreTool(options.GetService)),
 	}

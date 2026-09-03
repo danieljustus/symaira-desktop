@@ -77,6 +77,10 @@ func adaptTool(entry tools.Tool) *mcpserver.Tool {
 		Description: entry.Description,
 		InputSchema: entry.InputSchema,
 		Handler:     entry.Handler,
+		Annotations: &mcpserver.ToolAnnotations{
+			ReadOnlyHint:    entry.ReadOnly,
+			DestructiveHint: entry.Destructive,
+		},
 	}
 }
 

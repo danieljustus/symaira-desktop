@@ -19,7 +19,7 @@ func TestIngestFile(t *testing.T) {
 	srcDir := t.TempDir()
 
 	src := filepath.Join(srcDir, "scan.pdf")
-	if err := os.WriteFile(src, []byte("%PDF-1.4 fake"), 0644); err != nil {
+	if err := os.WriteFile(src, []byte("%PDF-1.4 fake"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -31,7 +31,7 @@ func TestIngestFile(t *testing.T) {
 		t.Errorf("unexpected note path: %s", relNote)
 	}
 
-	noteBytes, err := os.ReadFile(filepath.Join(vaultRoot, relNote))
+	noteBytes, err := os.ReadFile(filepath.Join(vaultRoot, relNote)) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}

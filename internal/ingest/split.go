@@ -25,11 +25,11 @@ func SplitPDF(pdfPath string, splitPoints []int, outputDir string) ([]string, er
 	if len(splitPoints) == 0 {
 		// No splits — copy the original as a single part.
 		dst := filepath.Join(outputDir, "part-1.pdf")
-		data, err := os.ReadFile(pdfPath)
+		data, err := os.ReadFile(pdfPath) //nolint:gosec // G304: input/output paths are supplied to the PDF split API
 		if err != nil {
 			return nil, fmt.Errorf("read input: %w", err)
 		}
-		if err := os.WriteFile(dst, data, 0644); err != nil {
+		if err := os.WriteFile(dst, data, 0o600); err != nil { //nolint:gosec // G703: output path is supplied to the PDF split API and stays within its output directory
 			return nil, fmt.Errorf("write part: %w", err)
 		}
 		return []string{dst}, nil

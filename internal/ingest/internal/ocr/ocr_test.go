@@ -23,7 +23,7 @@ func writeFakeBin(t *testing.T, dir, name, script string) string {
 	} else {
 		script = "#!/bin/sh\n" + script
 	}
-	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+	if err := os.WriteFile(path, []byte(script), 0o700); err != nil { //nolint:gosec // G306: test helper must be executable; mode is owner-only 0700
 		t.Fatal(err)
 	}
 	return path
@@ -75,7 +75,7 @@ func TestRunner_ExtractImage(t *testing.T) {
 
 	r := &Runner{Tesseract: tess, OCRLang: "eng"}
 	img := filepath.Join(dir, "scan.png")
-	if err := os.WriteFile(img, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(img, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -111,11 +111,11 @@ echo "extracted from $3"
 `)
 
 	imgDir := filepath.Join(dir, "images")
-	if err := os.MkdirAll(imgDir, 0o755); err != nil {
+	if err := os.MkdirAll(imgDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	img := filepath.Join(imgDir, "scan.png")
-	if err := os.WriteFile(img, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(img, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -151,7 +151,7 @@ func TestRunner_ExtractPDF(t *testing.T) {
 
 	r := &Runner{Tesseract: tess, PDFToPPM: pdfppm, OCRLang: "eng"}
 	pdf := filepath.Join(dir, "doc.pdf")
-	if err := os.WriteFile(pdf, []byte("%PDF-1.4"), 0o644); err != nil {
+	if err := os.WriteFile(pdf, []byte("%PDF-1.4"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -172,7 +172,7 @@ func TestRunner_ExtractPDF_MissingPDFToPPM(t *testing.T) {
 	tess := writeFakeBin(t, dir, "tesseract", fakeTesseractScript("ok"))
 	r := &Runner{Tesseract: tess, PDFToPPM: filepath.Join(dir, "missing"), OCRLang: "eng"}
 	pdf := filepath.Join(dir, "doc.pdf")
-	if err := os.WriteFile(pdf, []byte("%PDF-1.4"), 0o644); err != nil {
+	if err := os.WriteFile(pdf, []byte("%PDF-1.4"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := r.Extract(context.Background(), pdf, extract.KindPDF); err == nil {
@@ -213,7 +213,7 @@ func TestRunner_ExtractPDF_MaintainsPageOrder(t *testing.T) {
 	tess := writeFakeBin(t, dir, "tesseract", fakeTesseractScript("page text from $(basename \"$3\")"))
 	r := &Runner{Tesseract: tess, PDFToPPM: pdfppm, OCRLang: "eng"}
 	pdf := filepath.Join(dir, "doc.pdf")
-	if err := os.WriteFile(pdf, []byte("%PDF-1.4"), 0o644); err != nil {
+	if err := os.WriteFile(pdf, []byte("%PDF-1.4"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	res, err := r.Extract(context.Background(), pdf, extract.KindPDF)
@@ -238,7 +238,7 @@ func TestRunner_CapturesStderr(t *testing.T) {
 	tess := writeFakeBin(t, dir, "tesseract", fakeTesseractScriptEx("broken", 1, "some stderr output"))
 	r := &Runner{Tesseract: tess, OCRLang: "eng"}
 	img := filepath.Join(dir, "scan.png")
-	if err := os.WriteFile(img, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+	if err := os.WriteFile(img, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := r.Extract(context.Background(), img, extract.KindPNG); err == nil {
@@ -322,7 +322,7 @@ echo "extracted text"
 	r := &Runner{Tesseract: tess, OCRLang: "eng"}
 	for i := 0; i < 2; i++ {
 		img := filepath.Join(dir, fmt.Sprintf("scan-%d.png", i))
-		if err := os.WriteFile(img, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644); err != nil {
+		if err := os.WriteFile(img, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		if _, err := r.Extract(context.Background(), img, extract.KindPNG); err != nil {
@@ -330,7 +330,7 @@ echo "extracted text"
 		}
 	}
 
-	data, err := os.ReadFile(counter)
+	data, err := os.ReadFile(counter) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatalf("read counter: %v", err)
 	}
@@ -357,7 +357,7 @@ func TestRunner_Integration(t *testing.T) {
 		t.Fatalf("decode png fixture: %v", err)
 	}
 	pngPath := filepath.Join(dir, "test.png")
-	if err := os.WriteFile(pngPath, pngBytes, 0o644); err != nil {
+	if err := os.WriteFile(pngPath, pngBytes, 0o600); err != nil {
 		t.Fatalf("write png file: %v", err)
 	}
 
@@ -378,7 +378,7 @@ func TestRunner_Integration(t *testing.T) {
 		t.Fatalf("decode pdf fixture: %v", err)
 	}
 	pdfPath := filepath.Join(dir, "test.pdf")
-	if err := os.WriteFile(pdfPath, pdfBytes, 0o644); err != nil {
+	if err := os.WriteFile(pdfPath, pdfBytes, 0o600); err != nil {
 		t.Fatalf("write pdf file: %v", err)
 	}
 

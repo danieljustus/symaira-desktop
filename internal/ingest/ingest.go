@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -127,7 +128,11 @@ func ingestPDFWithSplit(vaultRoot, pdfPath string, cfg BarcodeConfig) ([]string,
 	if err != nil {
 		return nil, fmt.Errorf("temp dir: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if cleanupErr := os.RemoveAll(tmpDir); cleanupErr != nil {
+			log.Printf("split workspace cleanup failed: %v", cleanupErr)
+		}
+	}()
 
 	result, err := SplitPDFByBarcode(pdfPath, cfg, tmpDir)
 	if err != nil {
@@ -182,13 +187,13 @@ func ingestBuiltin(vaultRoot, sourcePath string) (string, error) {
 	targetFilePath := filepath.Join(inboxDir, targetFileName)
 
 	// Copy the file
-	src, err := os.Open(sourcePath)
+	src, err := os.Open(sourcePath) //nolint:gosec // G304: source and destination paths are selected by the ingest API and vault root
 	if err != nil {
 		return "", fmt.Errorf("failed to open source file: %w", err)
 	}
 	defer func() { _ = src.Close() }()
 
-	dst, err := os.Create(targetFilePath)
+	dst, err := os.Create(targetFilePath) //nolint:gosec // G304: source and destination paths are selected by the ingest API and vault root
 	if err != nil {
 		return "", fmt.Errorf("failed to create target file: %w", err)
 	}
@@ -220,7 +225,7 @@ date: "%s"
 		body = fmt.Sprintf("\n[[%s]]\n\n*Content pending (ingest pipeline unavailable)...*\n", relAssetPath)
 	}
 
-	if err := os.WriteFile(notePath, []byte(frontmatter+body), 0644); err != nil {
+	if err := os.WriteFile(notePath, []byte(frontmatter+body), 0o600); err != nil {
 		return "", fmt.Errorf("failed to write markdown note: %w", err)
 	}
 

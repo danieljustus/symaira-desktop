@@ -16,14 +16,14 @@ func TestVectorStoreRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 	t.Setenv("HOME", tempDir)
 
 	dbClient, err := Open()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer dbClient.Close()
+	defer func() { _ = dbClient.Close() }()
 
 	var vs VectorStore = dbClient
 	ctx := context.Background()

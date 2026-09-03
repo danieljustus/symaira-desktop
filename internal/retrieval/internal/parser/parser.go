@@ -68,7 +68,7 @@ var (
 
 // GetFileHash computes the SHA-256 hash of a file.
 // Uses file metadata (mod time + size) to skip hash computation for unchanged files.
-func GetFileHash(path string) (string, error) {
+func GetFileHash(path string) (hash string, err error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return "", err
@@ -90,18 +90,23 @@ func GetFileHash(path string) (string, error) {
 		}
 	}
 
+	// #nosec G304 -- path is selected by the vault-scoped parser boundary.
 	file, err := os.Open(path)
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("close file after hashing: %w", closeErr)
+		}
+	}()
 
 	h := sha256.New()
 	if _, err := io.Copy(h, file); err != nil {
 		return "", err
 	}
 
-	hash := hex.EncodeToString(h.Sum(nil))
+	hash = hex.EncodeToString(h.Sum(nil))
 
 	fileCacheMu.Lock()
 	fileCache[path] = fileCacheEntry{ModTime: modTime, Size: size, Hash: hash}
@@ -145,6 +150,7 @@ func ParseFile(path string) (string, error) {
 		if reason, ok := documentformat.UnsupportedReason(ext); ok {
 			return "", fmt.Errorf("unsupported document format %s: %s", ext, reason)
 		}
+		// #nosec G304 -- path is selected by the vault-scoped parser boundary.
 		f, err := os.Open(path)
 		if err != nil {
 			return "", fmt.Errorf("failed to open file: %w", err)
@@ -327,6 +333,7 @@ var blockHTMLElements = map[string]bool{
 // read through the same capped reader as plain text, so the size limit
 // applies to HTML input as well (issue #340).
 func parseHTML(path string) (string, error) {
+	// #nosec G304 -- path is selected by the vault-scoped parser boundary.
 	f, err := os.Open(path)
 	if err != nil {
 		return "", fmt.Errorf("failed to open file: %w", err)
@@ -431,6 +438,7 @@ func parseODF(path string) (string, error) {
 // with a newline (issue #341). The file is read through the same capped
 // reader as plain text, so the size limit applies.
 func parseCSV(path string) (string, error) {
+	// #nosec G304 -- path is selected by the vault-scoped parser boundary.
 	f, err := os.Open(path)
 	if err != nil {
 		return "", fmt.Errorf("failed to open file: %w", err)
@@ -812,9 +820,15 @@ func parseOfficeXMLPart(path, xmlEntry string, extract func(io.Reader) (string, 
 		}
 		cr := &countingReader{r: rc}
 		content, err := extract(io.LimitReader(cr, budget.limit()))
-		rc.Close()
+		closeErr := rc.Close()
 		budget.spend(cr.n)
-		return content, err
+		if err != nil {
+			return "", err
+		}
+		if closeErr != nil {
+			return "", fmt.Errorf("close %s: %w", xmlEntry, closeErr)
+		}
+		return content, nil
 	}
 	return "", fmt.Errorf("entry %s not found in archive", xmlEntry)
 }
@@ -1099,8 +1113,10 @@ func extractXLSXSheetText(f *zip.File, sharedStrings []string, budget *archiveBu
 				val := cellValue.String()
 				if cellType == "s" && sharedStrings != nil {
 					idx := 0
-					fmt.Sscanf(val, "%d", &idx)
-					if idx < len(sharedStrings) {
+					if _, err := fmt.Sscanf(val, "%d", &idx); err != nil {
+						idx = -1
+					}
+					if idx >= 0 && idx < len(sharedStrings) {
 						val = sharedStrings[idx]
 					}
 				}

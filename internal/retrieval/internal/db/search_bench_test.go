@@ -70,7 +70,7 @@ func BenchmarkSearchVector(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				d.vectorIndex = nil
-				d.SearchVector(queryVec, 10)
+				_, _ = d.SearchVector(queryVec, 10)
 			}
 		})
 	}
@@ -115,7 +115,7 @@ func BenchmarkSearchVectorQuantized(b *testing.B) {
 					ProjectionSeed: meta.ProjectionSeed,
 					Norm:           meta.Norm,
 				})
-				d.conn.Exec(
+				_, _ = d.conn.Exec(
 					"UPDATE chunks SET embedding_quant = ?, embedding_quant_meta = ? WHERE id = ?",
 					blob, string(metaBytes), chunkID,
 				)
@@ -132,7 +132,7 @@ func BenchmarkSearchVectorQuantized(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				d.vectorIndex = nil
-				d.SearchVectorQuantized(queryVec, 10)
+				_, _ = d.SearchVectorQuantized(queryVec, 10)
 			}
 		})
 	}

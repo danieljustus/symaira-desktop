@@ -18,11 +18,11 @@ func TestGetFileHashAndParse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	filePath := filepath.Join(tempDir, "sample.txt")
 	content := "Hello Symaira Seek!\nWelcome to Phase 2."
-	err = os.WriteFile(filePath, []byte(content), 0644)
+	err = os.WriteFile(filePath, []byte(content), 0600)
 	if err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
@@ -72,14 +72,14 @@ func TestParseFileRejectsOversizedText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	bigPath := filepath.Join(tempDir, "big.txt")
 	bigData := make([]byte, MaxIndexFileSize+1)
 	for i := range bigData {
 		bigData[i] = 'A'
 	}
-	if err := os.WriteFile(bigPath, bigData, 0644); err != nil {
+	if err := os.WriteFile(bigPath, bigData, 0600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -97,7 +97,7 @@ func TestParseDOCXZipBomb(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	docxPath := filepath.Join(tempDir, "bomb.docx")
 	createZipBomb(t, docxPath, "word/document.xml", MaxIndexFileSize+1)
@@ -113,7 +113,7 @@ func TestParseXLSXZipBomb(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	xlsxPath := filepath.Join(tempDir, "bomb.xlsx")
 	createZipBomb(t, xlsxPath, "xl/sharedStrings.xml", MaxIndexFileSize+1)
@@ -129,7 +129,7 @@ func TestParsePPTXZipBomb(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	pptxPath := filepath.Join(tempDir, "bomb.pptx")
 	createZipBomb(t, pptxPath, "ppt/slides/slide1.xml", MaxIndexFileSize+1)
@@ -184,7 +184,7 @@ func createMinimalPDF(t *testing.T, path, text string) {
 	}
 	buf = append(buf, []byte(trailer.String())...)
 
-	if err := os.WriteFile(path, buf, 0644); err != nil {
+	if err := os.WriteFile(path, buf, 0600); err != nil {
 		t.Fatalf("write PDF: %v", err)
 	}
 }
@@ -218,7 +218,7 @@ func createEmptyTextPDF(t *testing.T, path string) {
 	}
 	fmt.Fprintf(&buf, "trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n", len(segs), xrefOff)
 
-	if err := os.WriteFile(path, buf.Bytes(), 0644); err != nil {
+	if err := os.WriteFile(path, buf.Bytes(), 0600); err != nil {
 		t.Fatalf("write empty PDF: %v", err)
 	}
 }
@@ -228,7 +228,7 @@ func TestParseFilePDF(t *testing.T) {
 	if err != nil {
 		t.Fatalf("temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	pdfPath := filepath.Join(tempDir, "hello.pdf")
 	createMinimalPDF(t, pdfPath, "Hello PDF")
@@ -257,7 +257,7 @@ func TestParseFilePDFEmptyText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	pdfPath := filepath.Join(tempDir, "empty.pdf")
 	createEmptyTextPDF(t, pdfPath)
@@ -279,11 +279,12 @@ func TestParseFilePDFEmptyText(t *testing.T) {
 func createMinimalXLSX(t *testing.T, path string, sharedStrings []string, rows [][]string, cellTypes [][]string) {
 	t.Helper()
 
+	//nolint:gosec // test fixture path is created below a temporary directory.
 	f, err := os.Create(path)
 	if err != nil {
 		t.Fatalf("create xlsx: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	w := zip.NewWriter(f)
 
@@ -294,9 +295,9 @@ func createMinimalXLSX(t *testing.T, path string, sharedStrings []string, rows [
 		}
 		var ss strings.Builder
 		ss.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
-		ss.WriteString(fmt.Sprintf(`<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="%d" uniqueCount="%d">`, len(sharedStrings), len(sharedStrings)))
+		_, _ = fmt.Fprintf(&ss, `<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="%d" uniqueCount="%d">`, len(sharedStrings), len(sharedStrings))
 		for _, s := range sharedStrings {
-			ss.WriteString(fmt.Sprintf(`<si><t>%s</t></si>`, s))
+			_, _ = fmt.Fprintf(&ss, `<si><t>%s</t></si>`, s)
 		}
 		ss.WriteString("</sst>")
 		if _, err := ssWriter.Write([]byte(ss.String())); err != nil {
@@ -312,7 +313,7 @@ func createMinimalXLSX(t *testing.T, path string, sharedStrings []string, rows [
 	sheet.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
 	sheet.WriteString(`<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>`)
 	for rowIdx, row := range rows {
-		sheet.WriteString(fmt.Sprintf(`<row r="%d">`, rowIdx+1))
+		_, _ = fmt.Fprintf(&sheet, `<row r="%d">`, rowIdx+1)
 		cols := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		for colIdx, val := range row {
 			cellType := ""
@@ -322,11 +323,11 @@ func createMinimalXLSX(t *testing.T, path string, sharedStrings []string, rows [
 			cellRef := fmt.Sprintf("%c%d", cols[colIdx%len(cols)], rowIdx+1)
 			switch cellType {
 			case "s":
-				sheet.WriteString(fmt.Sprintf(`<c r="%s" t="s"><v>%s</v></c>`, cellRef, val))
+				_, _ = fmt.Fprintf(&sheet, `<c r="%s" t="s"><v>%s</v></c>`, cellRef, val)
 			case "inlineStr":
-				sheet.WriteString(fmt.Sprintf(`<c r="%s" t="inlineStr"><is><t>%s</t></is></c>`, cellRef, val))
+				_, _ = fmt.Fprintf(&sheet, `<c r="%s" t="inlineStr"><is><t>%s</t></is></c>`, cellRef, val)
 			default:
-				sheet.WriteString(fmt.Sprintf(`<c r="%s"><v>%s</v></c>`, cellRef, val))
+				_, _ = fmt.Fprintf(&sheet, `<c r="%s"><v>%s</v></c>`, cellRef, val)
 			}
 		}
 		sheet.WriteString("</row>")
@@ -346,7 +347,7 @@ func TestParseFileXLSXWithSharedStrings(t *testing.T) {
 	if err != nil {
 		t.Fatalf("temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	xlsxPath := filepath.Join(tempDir, "data.xlsx")
 	sharedStrings := []string{"Hello", "World"}
@@ -369,7 +370,7 @@ func TestParseFileXLSXWithMixedCellTypes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	xlsxPath := filepath.Join(tempDir, "mixed.xlsx")
 	sharedStrings := []string{"Alpha", "Beta"}
@@ -392,7 +393,7 @@ func TestParseFileXLSXWithNumbers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	xlsxPath := filepath.Join(tempDir, "numbers.xlsx")
 	rows := [][]string{{"42", "3.14"}}
@@ -414,7 +415,7 @@ func TestParseFileXLSXEmptyText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	xlsxPath := filepath.Join(tempDir, "empty.xlsx")
 	createMinimalXLSX(t, xlsxPath, nil, nil, nil)
@@ -452,7 +453,7 @@ func TestParseFileHTML(t *testing.T) {
 </body>
 </html>`
 	htmlPath := filepath.Join(t.TempDir(), "docs.html")
-	if err := os.WriteFile(htmlPath, []byte(htmlContent), 0644); err != nil {
+	if err := os.WriteFile(htmlPath, []byte(htmlContent), 0600); err != nil {
 		t.Fatalf("write html: %v", err)
 	}
 
@@ -490,7 +491,7 @@ func TestParseFileHTML(t *testing.T) {
 func TestParseFileHTM(t *testing.T) {
 	htmPath := filepath.Join(t.TempDir(), "page.htm")
 	content := `<html><body><p>Htm works too.</p></body></html>`
-	if err := os.WriteFile(htmPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(htmPath, []byte(content), 0600); err != nil {
 		t.Fatalf("write htm: %v", err)
 	}
 
@@ -509,7 +510,7 @@ func TestParseFileHTMLRejectsOversized(t *testing.T) {
 	for i := range bigData {
 		bigData[i] = 'A'
 	}
-	if err := os.WriteFile(htmlPath, bigData, 0644); err != nil {
+	if err := os.WriteFile(htmlPath, bigData, 0600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -590,7 +591,7 @@ func TestParseFileODP(t *testing.T) {
 func TestParseFileCSV(t *testing.T) {
 	csvPath := filepath.Join(t.TempDir(), "people.csv")
 	content := "name,role\nada,engineer\nbob,designer\n"
-	if err := os.WriteFile(csvPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(csvPath, []byte(content), 0600); err != nil {
 		t.Fatalf("write csv: %v", err)
 	}
 
@@ -791,11 +792,12 @@ func TestParseFilePPTX_MultiSlideStillIndexes(t *testing.T) {
 // entry carries namedContent, all other entries hold a single byte.
 func createManyEntryZip(t *testing.T, zipPath string, count int, namedEntry, namedContent string) {
 	t.Helper()
+	//nolint:gosec // test fixture path is created below a temporary directory.
 	f, err := os.Create(zipPath)
 	if err != nil {
 		t.Fatalf("create zip: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	w := zip.NewWriter(f)
 	for i := 0; i < count; i++ {
@@ -822,11 +824,12 @@ func createManyEntryZip(t *testing.T, zipPath string, count int, namedEntry, nam
 // valid sheet whose single cell holds size bytes of text.
 func createBudgetBombXLSX(t *testing.T, xlsxPath string, n, size int) {
 	t.Helper()
+	//nolint:gosec // test fixture path is created below a temporary directory.
 	f, err := os.Create(xlsxPath)
 	if err != nil {
 		t.Fatalf("create zip: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	w := zip.NewWriter(f)
 	for i := 1; i <= n; i++ {
@@ -1143,11 +1146,12 @@ func TestParseFileEPUBAndDRM(t *testing.T) {
 // createZip writes a ZIP archive to disk with the given entries.
 func createZip(t *testing.T, zipPath string, entries map[string]string) {
 	t.Helper()
+	//nolint:gosec // test fixture path is created below a temporary directory.
 	f, err := os.Create(zipPath)
 	if err != nil {
 		t.Fatalf("create zip: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	w := zip.NewWriter(f)
 	for name, content := range entries {
@@ -1168,11 +1172,12 @@ func createZip(t *testing.T, zipPath string, entries map[string]string) {
 // decompressed content exceeds MaxIndexFileSize bytes.
 func createZipBomb(t *testing.T, zipPath, entryName string, decompressedSize int) {
 	t.Helper()
+	//nolint:gosec // test fixture path is created below a temporary directory.
 	f, err := os.Create(zipPath)
 	if err != nil {
 		t.Fatalf("create zip: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	w := zip.NewWriter(f)
 	entry, err := w.Create(entryName)

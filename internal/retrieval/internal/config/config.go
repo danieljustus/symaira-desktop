@@ -76,9 +76,12 @@ func Load() (*Config, error) {
 }
 
 func LoadFromPath(path string) (*Config, error) {
-	MigrateJSONToTOMLAt(path)
+	if err := MigrateJSONToTOMLAt(path); err != nil {
+		return nil, fmt.Errorf("failed to migrate config: %w", err)
+	}
 
 	cfg := DefaultConfig()
+	// #nosec G304 -- path is selected by the configuration boundary.
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -122,6 +125,7 @@ func APITokenPath() string {
 // or malformed file is returned as an error so callers can fail the serve
 // command instead of silently falling back to an unauthenticated daemon.
 func LoadOrCreateAPIToken(path string) (token string, created bool, err error) {
+	// #nosec G304 -- path is selected by the configuration boundary.
 	data, err := os.ReadFile(path)
 	if err == nil {
 		token = strings.TrimSpace(string(data))
@@ -212,52 +216,67 @@ func (c *Config) QuantDBConfig() *db.QuantConfig {
 	}
 }
 
-func MigrateJSONToTOMLAt(tomlPath string) {
+func MigrateJSONToTOMLAt(tomlPath string) error {
 	jsonPath := filepath.Join(filepath.Dir(tomlPath), "config.json")
 
 	if _, err := os.Stat(tomlPath); err == nil {
-		return
+		return nil
 	}
 
+	// #nosec G304 -- path is selected by the configuration boundary.
 	data, err := os.ReadFile(jsonPath)
 	if err != nil {
-		return
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("read legacy JSON config: %w", err)
 	}
 
 	var cfg Config
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return
+		return nil
 	}
 
 	dir := filepath.Dir(tomlPath)
 	if err := os.MkdirAll(dir, 0700); err != nil {
-		return
+		return fmt.Errorf("create config directory: %w", err)
 	}
 
+	// #nosec G304 -- path is selected by the configuration boundary.
 	f, err := os.OpenFile(tomlPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
-		return
+		return fmt.Errorf("create migrated TOML config: %w", err)
 	}
-	defer f.Close()
-
-	_ = toml.NewEncoder(f).Encode(cfg)
+	if err := toml.NewEncoder(f).Encode(cfg); err != nil {
+		_ = f.Close()
+		return fmt.Errorf("encode migrated TOML config: %w", err)
+	}
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("close migrated TOML config: %w", err)
+	}
+	return nil
 }
 
-func MigrateJSONToTOML() {
-	MigrateJSONToTOMLAt(GlobalPath())
+func MigrateJSONToTOML() error {
+	return MigrateJSONToTOMLAt(GlobalPath())
 }
 
 // Save writes the config to the specified TOML file.
-func Save(path string, cfg *Config) error {
+func Save(path string, cfg *Config) (err error) {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
+	// #nosec G304 -- path is selected by the configuration boundary.
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		if closeErr := f.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("failed to close config file: %w", closeErr)
+		}
+	}()
 	if err := toml.NewEncoder(f).Encode(cfg); err != nil {
 		return fmt.Errorf("failed to encode config: %w", err)
 	}

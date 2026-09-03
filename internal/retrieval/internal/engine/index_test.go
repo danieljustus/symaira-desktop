@@ -18,7 +18,9 @@ import (
 // behavior (rejecting private/loopback/bad-scheme URLs) is covered explicitly
 // by TestValidatePublicURL_RejectsPrivateAndBadScheme.
 func TestMain(m *testing.M) {
-	os.Setenv("SEEK_ALLOW_PRIVATE_URLS", "1")
+	if err := os.Setenv("SEEK_ALLOW_PRIVATE_URLS", "1"); err != nil {
+		panic(fmt.Sprintf("set private URL test environment: %v", err))
+	}
 	os.Exit(m.Run())
 }
 
@@ -43,7 +45,11 @@ func TestIndexURL_WithSymfetch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -51,12 +57,16 @@ func TestIndexURL_WithSymfetch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
 	binDir := filepath.Join(tempDir, "bin")
-	if err := os.MkdirAll(binDir, 0755); err != nil {
+	if err := os.MkdirAll(binDir, 0700); err != nil {
 		t.Fatalf("failed to create bin dir: %v", err)
 	}
 
@@ -65,7 +75,8 @@ func TestIndexURL_WithSymfetch(t *testing.T) {
 echo "# Test Document from symfetch"
 echo "This content was fetched by the fake symfetch."
 `
-	if err := os.WriteFile(fakeSymfetch, []byte(script), 0755); err != nil {
+	// #nosec G306 -- test executable requires owner-only execute permission.
+	if err := os.WriteFile(fakeSymfetch, []byte(script), 0700); err != nil {
 		t.Fatalf("failed to write fake symfetch: %v", err)
 	}
 
@@ -102,7 +113,11 @@ func TestIndexURL_HTTPFallback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -110,14 +125,22 @@ func TestIndexURL_HTTPFallback(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		fmt.Fprintln(w, "# Test Document from HTTP")
-		fmt.Fprintln(w, "This content was fetched via HTTP GET fallback.")
+		if _, err := fmt.Fprintln(w, "# Test Document from HTTP"); err != nil {
+			t.Errorf("write response: %v", err)
+		}
+		if _, err := fmt.Fprintln(w, "This content was fetched via HTTP GET fallback."); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -153,7 +176,11 @@ func TestIndexURL_HTTPFallback_HTMLToText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -161,7 +188,11 @@ func TestIndexURL_HTTPFallback_HTMLToText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -179,7 +210,9 @@ func TestIndexURL_HTTPFallback_HTMLToText(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, htmlContent)
+		if _, err := fmt.Fprint(w, htmlContent); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -217,7 +250,11 @@ func TestIndexStdin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -225,7 +262,11 @@ func TestIndexStdin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -262,7 +303,11 @@ func TestIndexStdin_EmptyContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -270,7 +315,11 @@ func TestIndexStdin_EmptyContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -290,7 +339,11 @@ func TestIndexStdin_DefaultSource(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -298,7 +351,11 @@ func TestIndexStdin_DefaultSource(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -323,7 +380,11 @@ func TestIndexContent_UnchangedSkip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -331,7 +392,11 @@ func TestIndexContent_UnchangedSkip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -359,7 +424,11 @@ func TestIndexContent_UpdatedContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -367,7 +436,11 @@ func TestIndexContent_UpdatedContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -448,7 +521,9 @@ func TestFetchURLContent_SymfetchNotFound(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		fmt.Fprintln(w, "Fallback content")
+		if _, err := fmt.Fprintln(w, "Fallback content"); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -482,10 +557,14 @@ func TestFetchWithSymfetch_CommandFails(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	binDir := filepath.Join(tempDir, "bin")
-	if err := os.MkdirAll(binDir, 0755); err != nil {
+	if err := os.MkdirAll(binDir, 0700); err != nil {
 		t.Fatalf("failed to create bin dir: %v", err)
 	}
 
@@ -493,7 +572,8 @@ func TestFetchWithSymfetch_CommandFails(t *testing.T) {
 	script := `#!/bin/sh
 exit 1
 `
-	if err := os.WriteFile(fakeSymfetch, []byte(script), 0755); err != nil {
+	// #nosec G306 -- test executable requires owner-only execute permission.
+	if err := os.WriteFile(fakeSymfetch, []byte(script), 0700); err != nil {
 		t.Fatalf("failed to write fake symfetch: %v", err)
 	}
 
@@ -508,7 +588,11 @@ func TestIndexURL_HTTPFallback_NotFound(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -516,7 +600,11 @@ func TestIndexURL_HTTPFallback_NotFound(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -538,7 +626,11 @@ func TestIndexContent_IndexAndSearch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -546,7 +638,11 @@ func TestIndexContent_IndexAndSearch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -581,7 +677,9 @@ func TestFetchWithHTTP_LargeResponse(t *testing.T) {
 	largeContent := strings.Repeat("A", 11<<20)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		fmt.Fprint(w, largeContent)
+		if _, err := fmt.Fprint(w, largeContent); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -598,7 +696,9 @@ func TestFetchWithHTTP_LargeResponse(t *testing.T) {
 func TestFetchWithHTTP_NonHTMLContentType(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `{"key": "value"}`)
+		if _, err := fmt.Fprint(w, `{"key": "value"}`); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -617,7 +717,11 @@ func TestIndexStdin_LargeContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -625,7 +729,11 @@ func TestIndexStdin_LargeContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -651,7 +759,11 @@ func TestIndexContent_MultipleSources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -659,7 +771,11 @@ func TestIndexContent_MultipleSources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
@@ -710,7 +826,7 @@ func TestUserFriendlyError(t *testing.T) {
 // when the server redirects more than 10 times. Covers index.go:184-186.
 func TestFetchWithHTTP_RedirectLoop(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, r.URL.Path, http.StatusFound)
+		http.Redirect(w, r, "/loop", http.StatusFound)
 	}))
 	defer server.Close()
 
@@ -753,14 +869,20 @@ func TestFetchWithHTTP_ConnectionError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to listen: %v", err)
 	}
-	defer ln.Close()
+	t.Cleanup(func() {
+		if err := ln.Close(); err != nil {
+			t.Errorf("close listener: %v", err)
+		}
+	})
 	go func() {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
 				return
 			}
-			conn.Close()
+			if err := conn.Close(); err != nil {
+				t.Errorf("close connection: %v", err)
+			}
 		}
 	}()
 
@@ -792,7 +914,9 @@ func TestFetchWithHTTP_StatusErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tc.statusCode)
-				fmt.Fprint(w, "error page")
+				if _, err := fmt.Fprint(w, "error page"); err != nil {
+					t.Errorf("write response: %v", err)
+				}
 			}))
 			defer server.Close()
 
@@ -813,7 +937,9 @@ func TestFetchWithHTTP_LargeResponseTruncation(t *testing.T) {
 	oversized := strings.Repeat("X", int(maxHTTPResponseSize)+1024)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		fmt.Fprint(w, oversized)
+		if _, err := fmt.Fprint(w, oversized); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -870,7 +996,9 @@ func TestFetchWithHTTP_ContentTypeBranches(t *testing.T) {
 				if tc.contentType != "" {
 					w.Header().Set("Content-Type", tc.contentType)
 				}
-				fmt.Fprint(w, tc.body)
+				if _, err := fmt.Fprint(w, tc.body); err != nil {
+					t.Errorf("write response: %v", err)
+				}
 			}))
 			defer server.Close()
 
@@ -970,7 +1098,9 @@ func TestValidatePublicURL_AllBranches(t *testing.T) {
 func TestFetchWithHTTP_RedirectToPublicHost(t *testing.T) {
 	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		fmt.Fprint(w, "redirect target content")
+		if _, err := fmt.Fprint(w, "redirect target content"); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer target.Close()
 

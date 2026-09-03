@@ -300,7 +300,9 @@ func TestOllamaChatCompletion_Success(t *testing.T) {
 		receivedBody = body
 
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"message":{"content":"[95, 42, 80]"}}`)
+		if _, err := fmt.Fprintf(w, `{"message":{"content":"[95, 42, 80]"}}`); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer srv.Close()
 
@@ -327,7 +329,9 @@ func TestOllamaChatCompletion_EmbedURLRewrite(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path = r.URL.Path
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"message":{"content":"ok"}}`)
+		if _, err := fmt.Fprintf(w, `{"message":{"content":"ok"}}`); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer srv.Close()
 
@@ -343,7 +347,9 @@ func TestOllamaChatCompletion_EmbedURLRewrite(t *testing.T) {
 func TestOllamaChatCompletion_HTTPError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "model not found")
+		if _, err := fmt.Fprintf(w, "model not found"); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer srv.Close()
 
@@ -359,7 +365,9 @@ func TestOllamaChatCompletion_HTTPError(t *testing.T) {
 func TestOllamaChatCompletion_BadJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"message":{"content":123}}`)
+		if _, err := fmt.Fprintf(w, `{"message":{"content":123}}`); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer srv.Close()
 
@@ -373,7 +381,9 @@ func TestOllamaChatCompletion_Timeout(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(200 * time.Millisecond)
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"message":{"content":"late"}}`)
+		if _, err := fmt.Fprintf(w, `{"message":{"content":"late"}}`); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	defer srv.Close()
 

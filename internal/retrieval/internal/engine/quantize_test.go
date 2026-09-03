@@ -59,14 +59,22 @@ func TestBackfillQuantSidecars(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 	t.Setenv("HOME", tempDir)
 
 	d, err := db.Open()
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer d.Close()
+	t.Cleanup(func() {
+		if err := d.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	// Insert a document and chunks (no sidecars yet).
 	docPath := filepath.Join(tempDir, "test.md")
@@ -122,14 +130,22 @@ func TestBackfillQuantSidecarsInvalidBitWidth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 	t.Setenv("HOME", tempDir)
 
 	d, err := db.Open()
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer d.Close()
+	t.Cleanup(func() {
+		if err := d.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	count, err := BackfillQuantSidecars(d, 99, 42, nil)
 	if err == nil {
@@ -147,14 +163,22 @@ func TestBackfillQuantSidecarsEmptyDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 	t.Setenv("HOME", tempDir)
 
 	d, err := db.Open()
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer d.Close()
+	t.Cleanup(func() {
+		if err := d.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	count, err := BackfillQuantSidecars(d, 4, 42, nil)
 	if err != nil {

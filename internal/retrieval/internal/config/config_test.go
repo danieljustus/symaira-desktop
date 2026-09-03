@@ -152,6 +152,7 @@ func TestSetValue_PersistsToFile(t *testing.T) {
 		t.Fatalf("SetValue: %v", err)
 	}
 
+	//nolint:gosec // test fixture path is created below a temporary directory.
 	data, err := os.ReadFile(cfgFile)
 	if err != nil {
 		t.Fatalf("ReadFile: %v", err)
@@ -182,7 +183,7 @@ func TestMigrateJSONToTOML_MigratesWhenTOMLMissing(t *testing.T) {
 	dir := t.TempDir()
 
 	configDir := filepath.Join(dir, ".config", "symseek")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	if err := os.MkdirAll(configDir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	jsonPath := filepath.Join(configDir, "config.json")
@@ -193,9 +194,12 @@ func TestMigrateJSONToTOML_MigratesWhenTOMLMissing(t *testing.T) {
 
 	t.Setenv("HOME", dir)
 
-	MigrateJSONToTOML()
+	if err := MigrateJSONToTOML(); err != nil {
+		t.Fatal(err)
+	}
 
 	tomlPath := filepath.Join(configDir, "config.toml")
+	//nolint:gosec // test fixture path is created below a temporary directory.
 	data, err := os.ReadFile(tomlPath)
 	if err != nil {
 		t.Fatalf("expected TOML file to exist: %v", err)
@@ -209,7 +213,7 @@ func TestMigrateJSONToTOML_SkipsWhenTOMLExists(t *testing.T) {
 	dir := t.TempDir()
 
 	configDir := filepath.Join(dir, ".config", "symseek")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	if err := os.MkdirAll(configDir, 0700); err != nil {
 		t.Fatal(err)
 	}
 
@@ -223,8 +227,11 @@ model = "existing-model"
 
 	t.Setenv("HOME", dir)
 
-	MigrateJSONToTOML()
+	if err := MigrateJSONToTOML(); err != nil {
+		t.Fatal(err)
+	}
 
+	//nolint:gosec // test fixture path is created below a temporary directory.
 	data, err := os.ReadFile(tomlPath)
 	if err != nil {
 		t.Fatal(err)
@@ -238,7 +245,9 @@ func TestMigrateJSONToTOML_SkipsWhenNeitherExists(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)
 
-	MigrateJSONToTOML()
+	if err := MigrateJSONToTOML(); err != nil {
+		t.Fatal(err)
+	}
 
 	tomlPath := filepath.Join(dir, ".config", "symseek", "config.toml")
 	if _, err := os.Stat(tomlPath); !os.IsNotExist(err) {
@@ -555,6 +564,7 @@ func TestSetValue_PersistsRerankConfig(t *testing.T) {
 		t.Fatalf("SetValue: %v", err)
 	}
 
+	//nolint:gosec // test fixture path is created below a temporary directory.
 	data, err := os.ReadFile(cfgFile)
 	if err != nil {
 		t.Fatalf("ReadFile: %v", err)
@@ -695,6 +705,7 @@ func TestSetValue_PersistsExpandConfig(t *testing.T) {
 		t.Fatalf("SetValue: %v", err)
 	}
 
+	//nolint:gosec // test fixture path is created below a temporary directory.
 	data, err := os.ReadFile(cfgFile)
 	if err != nil {
 		t.Fatalf("ReadFile: %v", err)
@@ -928,17 +939,17 @@ func TestSave_EncodeError_BrokenPipe(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r.Close()
+	_ = r.Close()
 
 	fdLink := filepath.Join("/dev", "fd", fmt.Sprintf("%d", w.Fd()))
 	if err := os.Symlink(fdLink, cfgFile); err != nil {
-		w.Close()
+		_ = w.Close()
 		t.Skipf("symlink not supported: %v", err)
 	}
 
 	cfg := DefaultConfig()
 	saveErr := Save(cfgFile, cfg)
-	w.Close()
+	_ = w.Close()
 
 	if saveErr == nil {
 		t.Skip("encode succeeded on broken pipe (OS buffered the write)")
@@ -1048,6 +1059,7 @@ func TestLoadOrCreateAPIToken_CreatesOnFirstStart(t *testing.T) {
 		t.Errorf("expected 64-hex-char token, got %d chars", len(token))
 	}
 
+	//nolint:gosec // test fixture path is created below a temporary directory.
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read token file: %v", err)

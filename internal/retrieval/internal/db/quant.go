@@ -160,7 +160,7 @@ func (db *DB) ClearQuantizedSidecar(chunkID int64) error {
 func (db *DB) BackfillQuantizedSidecar(
 	fn func(chunkID int64, embedding []float32, norm float32) ([]byte, *QuantSidecarMeta, error),
 	onProgress func(processed, total int),
-) (int, error) {
+) (backfilled int, err error) {
 	if fn == nil {
 		return 0, nil
 	}
@@ -171,7 +171,11 @@ func (db *DB) BackfillQuantizedSidecar(
 	if err != nil {
 		return 0, fmt.Errorf("backfill query: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("backfill rows close: %w", closeErr)
+		}
+	}()
 
 	type pendingRow struct {
 		id   int64
@@ -193,7 +197,6 @@ func (db *DB) BackfillQuantizedSidecar(
 	}
 
 	total := len(pending)
-	backfilled := 0
 	for i, r := range pending {
 		quant, meta, err := fn(r.id, r.emb, r.norm)
 		if err != nil {
@@ -212,14 +215,13 @@ func (db *DB) BackfillQuantizedSidecar(
 
 // GetChunksWithQuantSidecar returns the IDs of all chunks that have
 // quantized sidecar data.  Useful for diagnostics and testing.
-func (db *DB) GetChunksWithQuantSidecar() ([]int64, error) {
+func (db *DB) GetChunksWithQuantSidecar() (ids []int64, err error) {
 	rows, err := db.conn.Query("SELECT id FROM chunks WHERE embedding_quant IS NOT NULL ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
-	var ids []int64
 	for rows.Next() {
 		var id int64
 		if err := rows.Scan(&id); err != nil {
@@ -232,14 +234,13 @@ func (db *DB) GetChunksWithQuantSidecar() ([]int64, error) {
 
 // GetChunksWithoutQuantSidecar returns the IDs of all chunks that
 // lack quantized sidecar data.
-func (db *DB) GetChunksWithoutQuantSidecar() ([]int64, error) {
+func (db *DB) GetChunksWithoutQuantSidecar() (ids []int64, err error) {
 	rows, err := db.conn.Query("SELECT id FROM chunks WHERE embedding_quant IS NULL ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
-	var ids []int64
 	for rows.Next() {
 		var id int64
 		if err := rows.Scan(&id); err != nil {

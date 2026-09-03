@@ -27,7 +27,7 @@ func (db *DB) SearchBM25(queryStr string, limit int) ([]*SearchResult, error) {
 	return db.SearchBM25WithPath(queryStr, "", limit)
 }
 
-func (db *DB) SearchBM25WithPath(queryStr string, pathPrefix string, limit int) ([]*SearchResult, error) {
+func (db *DB) SearchBM25WithPath(queryStr string, pathPrefix string, limit int) (results []*SearchResult, err error) {
 	var sqlQuery string
 	var args []any
 	escapedQuery := escapeFTS5Query(queryStr)
@@ -69,9 +69,12 @@ func (db *DB) SearchBM25WithPath(queryStr string, pathPrefix string, limit int) 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("BM25 rows close: %w", closeErr)
+		}
+	}()
 
-	var results []*SearchResult
 	rank := 1
 	for rows.Next() {
 		var c Chunk
@@ -254,7 +257,7 @@ func (db *DB) scanAndScore(rows *sql.Rows, queryVec []float32, queryNorm float32
 	return results, nil
 }
 
-func (db *DB) searchVectorFilteredWithPath(queryVec []float32, queryNorm float32, pathPrefix string, candidateIDs []int64, limit int) ([]*SearchResult, error) {
+func (db *DB) searchVectorFilteredWithPath(queryVec []float32, queryNorm float32, pathPrefix string, candidateIDs []int64, limit int) (results []*SearchResult, err error) {
 	placeholders := make([]string, len(candidateIDs))
 	args := make([]interface{}, 0, len(candidateIDs)+1)
 	for i, id := range candidateIDs {
@@ -272,12 +275,16 @@ func (db *DB) searchVectorFilteredWithPath(queryVec []float32, queryNorm float32
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("filtered vector rows close: %w", closeErr)
+		}
+	}()
 
 	return db.scanAndScore(rows, queryVec, queryNorm, limit, true, nil)
 }
 
-func (db *DB) searchVectorFullScanWithPath(queryVec []float32, queryNorm float32, pathPrefix string, limit int) ([]*SearchResult, error) {
+func (db *DB) searchVectorFullScanWithPath(queryVec []float32, queryNorm float32, pathPrefix string, limit int) (results []*SearchResult, err error) {
 	query := searchVectorScanSelect
 	args := []any{}
 	if pathPrefix != "" {
@@ -289,7 +296,11 @@ func (db *DB) searchVectorFullScanWithPath(queryVec []float32, queryNorm float32
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("full vector rows close: %w", closeErr)
+		}
+	}()
 
 	// Only build the IVF index from a full, unfiltered scan so the index covers
 	// the entire corpus and remains useful for future queries regardless of path
@@ -300,7 +311,7 @@ func (db *DB) searchVectorFullScanWithPath(queryVec []float32, queryNorm float32
 		collectIndex = &indexChunks
 	}
 
-	results, err := db.scanAndScore(rows, queryVec, queryNorm, limit, true, collectIndex)
+	results, err = db.scanAndScore(rows, queryVec, queryNorm, limit, true, collectIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -318,19 +329,23 @@ func (db *DB) searchVectorFullScanWithPath(queryVec []float32, queryNorm float32
 // searchVectorFullScanCosine scores every chunk with exact cosine similarity
 // without binary pre-filtering. Used as a baseline for benchmarks and recall
 // tests.
-func (db *DB) searchVectorFullScanCosine(queryVec []float32, queryNorm float32, limit int) ([]*SearchResult, error) {
+func (db *DB) searchVectorFullScanCosine(queryVec []float32, queryNorm float32, limit int) (results []*SearchResult, err error) {
 	rows, err := db.conn.Query(searchVectorScanSelect)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("cosine rows close: %w", closeErr)
+		}
+	}()
 
 	return db.scanAndScore(rows, queryVec, queryNorm, limit, false, nil)
 }
 
 // hydrateContent fills in Chunk.Content for the given results using a single
 // IN-list query keyed on the surviving chunk ids.
-func (db *DB) hydrateContent(results []*SearchResult) error {
+func (db *DB) hydrateContent(results []*SearchResult) (err error) {
 	if len(results) == 0 {
 		return nil
 	}
@@ -342,12 +357,17 @@ func (db *DB) hydrateContent(results []*SearchResult) error {
 		args[i] = r.Chunk.ID
 	}
 
+	// #nosec G202 -- only generated placeholders are concatenated; values stay bound.
 	query := "SELECT id, content FROM chunks WHERE id IN (" + strings.Repeat("?,", len(results)-1) + "?)"
 	rows, err := db.conn.Query(query, args...)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("content rows close: %w", closeErr)
+		}
+	}()
 
 	for rows.Next() {
 		var id int64

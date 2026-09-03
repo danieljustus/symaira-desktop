@@ -24,12 +24,12 @@ func openTestDB(t testing.TB) *DB {
 
 	d, err := Open()
 	if err != nil {
-		os.RemoveAll(tempDir)
+		_ = os.RemoveAll(tempDir)
 		t.Fatalf("failed to open test database: %v", err)
 	}
 	t.Cleanup(func() {
-		d.Close()
-		os.RemoveAll(tempDir)
+		_ = d.Close()
+		_ = os.RemoveAll(tempDir)
 	})
 	return d
 }
@@ -70,7 +70,7 @@ func TestQuantMigrationFromBaseline(t *testing.T) {
 	if err != nil {
 		t.Fatalf("PRAGMA table_info: %v", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var cid int
 		var name, colType string
@@ -350,7 +350,7 @@ func TestQuantMixedOldNewRows(t *testing.T) {
 			BitWidth:      4,
 			QuantizerMode: "product",
 		}
-		if err := d.SaveQuantizedSidecar(id, []byte{byte(id), 0x42}, &meta); err != nil {
+		if err := d.SaveQuantizedSidecar(id, []byte{0x01, 0x42}, &meta); err != nil {
 			t.Fatalf("SaveQuantizedSidecar for chunk %d: %v", id, err)
 		}
 	}

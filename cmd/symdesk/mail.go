@@ -34,7 +34,7 @@ func newMailStatusCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 
 			svc := service.New(vRoot, db)
 			configPath, err := config.MailConfigPath("")
@@ -77,7 +77,7 @@ func newMailFetchCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 
 			svc := service.New(vRoot, db)
 			configPath, err := config.MailConfigPath("")

@@ -16,7 +16,7 @@ func newBacklinksCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			results, err := svc.Backlinks(args[0])

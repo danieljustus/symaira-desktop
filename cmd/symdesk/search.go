@@ -22,7 +22,7 @@ func newSearchCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			results, err := svc.SearchWithMeta(args[0])
@@ -50,7 +50,7 @@ func newSearchExportCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			result, err := service.New(vRoot, db).ExportSearch(args[0], title, outputPath, format)
 			if err != nil {
 				return err
@@ -76,7 +76,7 @@ func newSearchNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			nb, err := service.New(vRoot, db).SearchNotebook(args[0], title)
 			if err != nil {
 				return err

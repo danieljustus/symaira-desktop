@@ -17,9 +17,7 @@ func setupBatchVault(t *testing.T, names ...string) string {
 	vaultDir := t.TempDir()
 	for _, n := range names {
 		md := "---\ntitle: \"" + strings.TrimSuffix(n, ".md") + "\"\nstatus: \"open\"\ntags: []\n---\n\nBody\n"
-		if err := os.WriteFile(filepath.Join(vaultDir, n), []byte(md), 0644); err != nil {
-			t.Fatal(err)
-		}
+		writeTestFile(t, filepath.Join(vaultDir, n), md)
 	}
 	origCfg := cfg
 	cfg = &config.Config{Vault: vaultDir}
@@ -48,7 +46,7 @@ func execRootCapture(t *testing.T, stdin string, args ...string) (string, error)
 
 	execErr := cmd.Execute()
 
-	w.Close()
+	closeTestResource(t, "stdout pipe writer", w.Close)
 	os.Stdout = origStdout
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
@@ -89,7 +87,7 @@ func TestDocStatusBatchMultipleFiles(t *testing.T) {
 		t.Fatalf("expected 3 updates, got %+v", p)
 	}
 	for _, n := range []string{"a.md", "b.md", "c.md"} {
-		data, _ := os.ReadFile(filepath.Join(vaultDir, n))
+		data := readTestFile(t, filepath.Join(vaultDir, n))
 		if !strings.Contains(string(data), "status: \"done\"") {
 			t.Errorf("%s frontmatter not updated: %s", n, data)
 		}
@@ -123,7 +121,7 @@ func TestDocStatusBatchStdin(t *testing.T) {
 	if p.Updated != 2 || p.Failed != 0 {
 		t.Fatalf("expected 2 updates via stdin, got %+v", p)
 	}
-	data, _ := os.ReadFile(filepath.Join(vaultDir, "a.md"))
+	data := readTestFile(t, filepath.Join(vaultDir, "a.md"))
 	if !strings.Contains(string(data), "status: \"paid\"") {
 		t.Errorf("a.md not updated: %s", data)
 	}
@@ -147,7 +145,7 @@ func TestDocTagBatchAddRemove(t *testing.T) {
 	if p := decodeBatch(t, out); p.Updated != 2 {
 		t.Fatalf("expected 2 tag adds, got %+v", p)
 	}
-	data, _ := os.ReadFile(filepath.Join(vaultDir, "a.md"))
+	data := readTestFile(t, filepath.Join(vaultDir, "a.md"))
 	if !strings.Contains(string(data), "\"urgent\"") {
 		t.Errorf("a.md missing tag: %s", data)
 	}
@@ -159,7 +157,7 @@ func TestDocTagBatchAddRemove(t *testing.T) {
 	if p := decodeBatch(t, out); p.Updated != 1 {
 		t.Fatalf("expected 1 tag removal, got %+v", p)
 	}
-	data, _ = os.ReadFile(filepath.Join(vaultDir, "a.md"))
+	data = readTestFile(t, filepath.Join(vaultDir, "a.md"))
 	if strings.Contains(string(data), "urgent") {
 		t.Errorf("a.md still has tag: %s", data)
 	}
@@ -174,7 +172,7 @@ func TestDocTypeAndCorrespondentBatch(t *testing.T) {
 	if _, err := execRootCapture(t, "", "doc", "correspondent", "a.md", "Power Co", "--json"); err != nil {
 		t.Fatal(err)
 	}
-	data, _ := os.ReadFile(filepath.Join(vaultDir, "a.md"))
+	data := readTestFile(t, filepath.Join(vaultDir, "a.md"))
 	if !strings.Contains(string(data), "document_type: \"invoice\"") || !strings.Contains(string(data), "correspondent: \"Power Co\"") {
 		t.Errorf("a.md missing type/correspondent: %s", data)
 	}

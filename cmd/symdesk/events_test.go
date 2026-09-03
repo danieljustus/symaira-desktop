@@ -23,7 +23,7 @@ func newTestEventService(t *testing.T) *service.Service {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { closeTestResource(t, "sidecar database", db.Close) })
 	return service.New(vaultPath, db)
 }
 
@@ -32,9 +32,7 @@ func writeTestMd(t *testing.T, dir, name, title string) string {
 	t.Helper()
 	path := filepath.Join(dir, name)
 	content := "---\ntitle: " + title + "\n---\n\nBody content\n"
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-		t.Fatal(err)
-	}
+	writeTestFile(t, path, content)
 	return path
 }
 
@@ -56,7 +54,7 @@ func TestProcessEvent_CreateMd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	mdPath := writeTestMd(t, dir, "note.md", "Test Note")
@@ -88,15 +86,13 @@ func TestProcessEvent_WriteMd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	mdPath := writeTestMd(t, dir, "note.md", "Original")
 
 	// Write again to simulate a change
-	if err := os.WriteFile(mdPath, []byte("---\ntitle: Updated\n---\n\nUpdated body\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
+	writeTestFile(t, mdPath, "---\ntitle: Updated\n---\n\nUpdated body\n")
 
 	var buf bytes.Buffer
 	ev := &DebouncedEvent{Op: fsnotify.Write, Ts: time.Now()}
@@ -119,7 +115,7 @@ func TestProcessEvent_RemoveMd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	mdPath := writeTestMd(t, dir, "note.md", "To Remove")
@@ -148,7 +144,7 @@ func TestProcessEvent_RenameMd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	mdPath := writeTestMd(t, dir, "note.md", "To Rename")
@@ -174,13 +170,11 @@ func TestProcessEvent_NonMdFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	txtPath := filepath.Join(dir, "readme.txt")
-	if err := os.WriteFile(txtPath, []byte("hello"), 0644); err != nil {
-		t.Fatal(err)
-	}
+	writeTestFile(t, txtPath, "hello")
 
 	var buf bytes.Buffer
 	ev := &DebouncedEvent{Op: fsnotify.Create, Ts: time.Now()}
@@ -197,11 +191,11 @@ func TestProcessEvent_CreateDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	subDir := filepath.Join(dir, "subdir")
-	if err := os.Mkdir(subDir, 0755); err != nil {
+	if err := os.Mkdir(subDir, 0o750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -223,7 +217,7 @@ func TestFlushDebounce_MaturedEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	mdPath := writeTestMd(t, dir, "note.md", "Flushed")
@@ -260,7 +254,7 @@ func TestFlushDebounce_ImmatureEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	mdPath := writeTestMd(t, dir, "note.md", "Too Fresh")
@@ -291,7 +285,7 @@ func TestFlushDebounce_MixedEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	maturePath := writeTestMd(t, dir, "mature.md", "Mature")
@@ -333,7 +327,7 @@ func TestFlushDebounce_EmptyMap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	debounceMap := map[string]*DebouncedEvent{}
 	var mu sync.Mutex
@@ -352,7 +346,7 @@ func TestFlushDebounce_RemoveEvent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	mdPath := writeTestMd(t, dir, "gone.md", "Deleted")
@@ -386,7 +380,7 @@ func TestEventLoop_Integration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	if err := watcher.Add(dir); err != nil {
 		t.Fatal(err)
@@ -466,14 +460,12 @@ func TestProcessEvent_MdWithoutFrontmatter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer watcher.Close()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	// Create a .md file without frontmatter — ParseFile still succeeds (empty frontmatter)
 	mdPath := filepath.Join(dir, "plain.md")
-	if err := os.WriteFile(mdPath, []byte("Just plain text, no frontmatter\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
+	writeTestFile(t, mdPath, "Just plain text, no frontmatter\n")
 
 	var buf bytes.Buffer
 	ev := &DebouncedEvent{Op: fsnotify.Create, Ts: time.Now()}
@@ -530,7 +522,7 @@ func TestEventsAccumulatedCreateEmitsNDJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() { _ = watcher.Close() }()
+	defer closeTestResource(t, "filesystem watcher", watcher.Close)
 
 	dir := t.TempDir()
 	mdPath := writeTestMd(t, dir, "repro-notiz.md", "Repro Notiz")

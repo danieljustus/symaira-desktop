@@ -22,7 +22,7 @@ func newNoteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			// Simple content logic
@@ -40,7 +40,7 @@ func newNoteCmd() *cobra.Command {
 	}
 	noteNewCmd.Flags().String("title", "", "title of the new note")
 	noteNewCmd.Flags().String("template", "", "template name to use (optional)")
-	noteNewCmd.MarkFlagRequired("title")
+	markFlagRequired(noteNewCmd, "title")
 	noteCmd.AddCommand(noteNewCmd)
 
 	noteDailyCmd := &cobra.Command{
@@ -52,7 +52,7 @@ func newNoteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			path, err := svc.NoteDaily(dateStr)
@@ -74,7 +74,7 @@ func newNoteCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			err = svc.NoteMove(args[0], args[1])

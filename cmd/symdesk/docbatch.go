@@ -99,7 +99,7 @@ func execDocBatch(files []string, fn func(svc *service.Service, file string) err
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer closeWithWarning("sidecar database", db.Close)
 	svc := service.New(vRoot, db)
 
 	results, updated, failed := svc.DocBatch(files, func(file string) error {

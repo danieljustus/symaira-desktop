@@ -22,7 +22,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			nb, err := svc.NotebookNew(args[0], description)
@@ -43,7 +43,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			list, err := svc.NotebookList()
@@ -64,7 +64,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			nb, err := svc.NotebookGet(args[0])
@@ -96,7 +96,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			nb, err := svc.NotebookAddSource(args[0], args[1])
@@ -117,7 +117,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			nb, err := svc.NotebookRemoveSource(args[0], args[1])
@@ -138,7 +138,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			if err := svc.NotebookDelete(args[0]); err != nil {
@@ -160,7 +160,7 @@ func newNotebookCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer func() { _ = db.Close() }()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			res, err := svc.NotebookGenerate(args[0], kind, dryRun)
@@ -172,7 +172,7 @@ func newNotebookCmd() *cobra.Command {
 	}
 	generateCmd.Flags().String("kind", "", "artifact kind: briefing, study-guide, faq, timeline, or a custom templates/notebook-<kind>.md kind")
 	generateCmd.Flags().Bool("dry-run", false, "generate and show the artifact without writing it to the vault")
-	_ = generateCmd.MarkFlagRequired("kind")
+	markFlagRequired(generateCmd, "kind")
 	notebookCmd.AddCommand(generateCmd)
 
 	return notebookCmd

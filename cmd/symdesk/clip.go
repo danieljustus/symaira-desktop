@@ -17,7 +17,7 @@ func newClipCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer db.Close()
+			defer closeWithWarning("sidecar database", db.Close)
 			svc := service.New(vRoot, db)
 
 			path, err := svc.NoteClip(urlStr)

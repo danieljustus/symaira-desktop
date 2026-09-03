@@ -1,6 +1,7 @@
 package barcode
 
 import (
+	"context"
 	"testing"
 )
 
@@ -101,7 +102,7 @@ func TestEnabled(t *testing.T) {
 
 func TestSeparate_DisabledReturnsEmpty(t *testing.T) {
 	opts := Options{}
-	result, err := opts.Separate(nil, "/tmp/any.pdf", "/tmp/out")
+	result, err := opts.Separate(context.TODO(), "/tmp/any.pdf", "/tmp/out")
 	if err != nil {
 		t.Fatal(err)
 	}

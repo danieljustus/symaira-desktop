@@ -3,6 +3,7 @@ package annotate
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -17,14 +18,19 @@ type ValidationResult struct {
 
 // Validate checks that a sidecar JSONL file is well-formed and each line
 // contains required fields (span, snippet, value).
-func Validate(path string) (*ValidationResult, error) {
-	f, err := os.Open(path)
+func Validate(path string) (result *ValidationResult, err error) {
+	f, err := os.Open(path) //nolint:gosec // G304: path is intentionally supplied by the package API
 	if err != nil {
 		return nil, fmt.Errorf("open sidecar: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("close sidecar: %w", closeErr))
+			result = nil
+		}
+	}()
 
-	result := &ValidationResult{Valid: true}
+	result = &ValidationResult{Valid: true}
 	scanner := bufio.NewScanner(f)
 	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
 

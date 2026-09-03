@@ -109,7 +109,7 @@ func (r *VLMRunner) Extract(ctx context.Context, path string, kind extract.Kind)
 }
 
 func (r *VLMRunner) extractWithVLM(ctx context.Context, path string, kind extract.Kind) (*extract.Result, error) {
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec // G304: path is the source selected by the extraction pipeline
 	if err != nil {
 		return nil, fmt.Errorf("vlm ocr: read image: %w", err)
 	}

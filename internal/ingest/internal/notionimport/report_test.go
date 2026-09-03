@@ -108,7 +108,7 @@ func TestWriteMigrationReport(t *testing.T) {
 		t.Fatalf("WriteMigrationReport: %v", err)
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatalf("ReadFile: %v", err)
 	}

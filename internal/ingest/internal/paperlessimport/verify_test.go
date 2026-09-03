@@ -2,7 +2,6 @@ package paperlessimport
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -54,7 +53,7 @@ func newVerifyServer(t *testing.T, docs []verifyDoc) *httptest.Server {
 		}
 		switch {
 		case r.URL.Path == "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": len(results), "results": results, "next": nil,
 			})
 		case strings.HasPrefix(r.URL.Path, "/api/documents/") && strings.HasSuffix(r.URL.Path, "/download/"):
@@ -65,7 +64,7 @@ func newVerifyServer(t *testing.T, docs []verifyDoc) *httptest.Server {
 					if body == "" {
 						body = "content of " + r.URL.Path
 					}
-					w.Write([]byte(body))
+					mustWrite(w, []byte(body))
 					return
 				}
 			}
@@ -75,7 +74,7 @@ func newVerifyServer(t *testing.T, docs []verifyDoc) *httptest.Server {
 			id := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/documents/"), "/")
 			for _, res := range results {
 				if strconv.Itoa(res["id"].(int)) == id {
-					json.NewEncoder(w).Encode(res)
+					mustEncode(w, res)
 					return
 				}
 			}
@@ -95,7 +94,7 @@ func importForVerify(t *testing.T, srvURL string, opts Options) (vault string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { s.Close() })
+	t.Cleanup(func() { closeTestResource(t, s) })
 
 	pipeline := &ingest.Pipeline{
 		Engine:     fakeEngine{},
@@ -118,7 +117,7 @@ func importForVerify(t *testing.T, srvURL string, opts Options) (vault string) {
 func TestVerify_CompleteAfterImport(t *testing.T) {
 	docs := []verifyDoc{{id: 1, title: "Doc 1"}, {id: 2, title: "Doc 2"}}
 	srv := newVerifyServer(t, docs)
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	vault := importForVerify(t, srv.URL, Options{})
 
@@ -146,7 +145,7 @@ func TestVerify_AllowsDuplicateContentWhenEachPaperlessIDHasNote(t *testing.T) {
 		{id: 2, title: "Doc 2", download: "same original bytes", correspondent: map[string]any{"id": 2, "name": "Beta GmbH"}, tags: []map[string]any{{"id": 2, "name": "beta"}}},
 	}
 	srv := newVerifyServer(t, docs)
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	vault := importForVerify(t, srv.URL, Options{})
 	report, err := Verify(context.Background(), Options{BaseURL: srv.URL, Token: "test-token"}, vault, nil)
@@ -167,7 +166,7 @@ func TestVerify_AllowsDuplicateContentWhenEachPaperlessIDHasNote(t *testing.T) {
 func TestVerify_DeepVerifyMatchesPaperlessDownload(t *testing.T) {
 	docs := []verifyDoc{{id: 1, title: "Doc 1", download: "paperless original"}}
 	srv := newVerifyServer(t, docs)
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	vault := importForVerify(t, srv.URL, Options{})
 
@@ -186,7 +185,7 @@ func TestVerify_DeepVerifyMatchesPaperlessDownload(t *testing.T) {
 func TestVerify_DeepVerifyDetectsPaperlessDownloadMismatch(t *testing.T) {
 	docs := []verifyDoc{{id: 1, title: "Doc 1", download: "original during import"}}
 	srv := newVerifyServer(t, docs)
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	vault := importForVerify(t, srv.URL, Options{})
 	docs[0].download = "changed source after import"
@@ -209,7 +208,7 @@ func TestVerify_DeepVerifyDetectsPaperlessDownloadMismatch(t *testing.T) {
 func TestVerify_MissingDocument(t *testing.T) {
 	docs := []verifyDoc{{id: 1, title: "Doc 1"}, {id: 2, title: "Doc 2"}}
 	srv := newVerifyServer(t, docs)
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	// Import only document 1, leaving document 2 missing from the vault.
 	vault := importForVerify(t, srv.URL, Options{IDs: []int{1}})
@@ -229,7 +228,7 @@ func TestVerify_MissingDocument(t *testing.T) {
 func TestVerify_MissingArchivedOriginal(t *testing.T) {
 	docs := []verifyDoc{{id: 1, title: "Doc 1"}}
 	srv := newVerifyServer(t, docs)
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	vault := importForVerify(t, srv.URL, Options{})
 
@@ -264,7 +263,7 @@ func TestVerify_MetadataMismatch(t *testing.T) {
 		correspondent: map[string]any{"id": 5, "name": "Acme Corp"},
 	}}
 	srv := newVerifyServer(t, docs)
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	vault := importForVerify(t, srv.URL, Options{})
 
@@ -307,7 +306,7 @@ func tamperNoteCorrespondent(t *testing.T, vault string, note *writer.Note, newV
 	if out == string(data) {
 		t.Fatalf("could not find correspondent %q to replace in note", note.Correspondent)
 	}
-	if err := os.WriteFile(matches[0], []byte(out), 0o644); err != nil {
+	if err := os.WriteFile(matches[0], []byte(out), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 }
@@ -318,7 +317,7 @@ func TestVerify_DuplicateNotes(t *testing.T) {
 	// Set up a server that returns one document.
 	docs := []verifyDoc{{id: 1, title: "Doc 1"}}
 	srv := newVerifyServer(t, docs)
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	// Import once to create the vault.
 	vault := importForVerify(t, srv.URL, Options{})
@@ -335,7 +334,7 @@ func TestVerify_DuplicateNotes(t *testing.T) {
 	}
 	// Write the duplicate note under a different filename.
 	dupPath := filepath.Join(vault, "duplicate-note.md")
-	if err := os.WriteFile(dupPath, data, 0o644); err != nil {
+	if err := os.WriteFile(dupPath, data, 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 
@@ -361,7 +360,7 @@ func TestVerify_StoragePathMismatch(t *testing.T) {
 		}
 		switch {
 		case r.URL.Path == "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{{
 					"id": 1, "title": "Doc 1",
@@ -372,11 +371,11 @@ func TestVerify_StoragePathMismatch(t *testing.T) {
 				"next": nil,
 			})
 		case strings.HasPrefix(r.URL.Path, "/api/documents/") && strings.HasSuffix(r.URL.Path, "/download/"):
-			w.Write([]byte("content"))
+			mustWrite(w, []byte("content"))
 		case strings.HasPrefix(r.URL.Path, "/api/documents/"):
 			id := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/documents/"), "/")
 			if id == "1" {
-				json.NewEncoder(w).Encode(map[string]any{
+				mustEncode(w, map[string]any{
 					"id": 1, "title": "Doc 1",
 					"created_date": "2026-01-15T00:00:00Z", "created": "2026-01-15T00:00:00Z",
 					"file_type":    ".txt",
@@ -389,7 +388,7 @@ func TestVerify_StoragePathMismatch(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	vault := importForVerify(t, srv.URL, Options{})
 
@@ -408,7 +407,7 @@ func TestVerify_StoragePathMismatch(t *testing.T) {
 			break
 		}
 	}
-	if err := os.WriteFile(matches[0], []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+	if err := os.WriteFile(matches[0], []byte(strings.Join(lines, "\n")), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 
@@ -437,7 +436,7 @@ func TestVerify_CreatedDateMismatch(t *testing.T) {
 		}
 		switch {
 		case r.URL.Path == "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{{
 					"id": 1, "title": "Doc 1",
@@ -448,11 +447,11 @@ func TestVerify_CreatedDateMismatch(t *testing.T) {
 				"next": nil,
 			})
 		case strings.HasPrefix(r.URL.Path, "/api/documents/") && strings.HasSuffix(r.URL.Path, "/download/"):
-			w.Write([]byte("content"))
+			mustWrite(w, []byte("content"))
 		case strings.HasPrefix(r.URL.Path, "/api/documents/"):
 			id := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/documents/"), "/")
 			if id == "1" {
-				json.NewEncoder(w).Encode(map[string]any{
+				mustEncode(w, map[string]any{
 					"id": 1, "title": "Doc 1",
 					"created_date": "2026-01-15T00:00:00Z",
 					"created":      "2026-01-15T08:30:00Z",
@@ -465,7 +464,7 @@ func TestVerify_CreatedDateMismatch(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	vault := importForVerify(t, srv.URL, Options{})
 
@@ -484,7 +483,7 @@ func TestVerify_CreatedDateMismatch(t *testing.T) {
 			break
 		}
 	}
-	if err := os.WriteFile(matches[0], []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+	if err := os.WriteFile(matches[0], []byte(strings.Join(lines, "\n")), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 
@@ -513,7 +512,7 @@ func TestVerify_TagsMismatch(t *testing.T) {
 		}
 		switch {
 		case r.URL.Path == "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{{
 					"id": 1, "title": "Doc 1",
@@ -525,11 +524,11 @@ func TestVerify_TagsMismatch(t *testing.T) {
 				"next": nil,
 			})
 		case strings.HasPrefix(r.URL.Path, "/api/documents/") && strings.HasSuffix(r.URL.Path, "/download/"):
-			w.Write([]byte("content"))
+			mustWrite(w, []byte("content"))
 		case strings.HasPrefix(r.URL.Path, "/api/documents/"):
 			id := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/documents/"), "/")
 			if id == "1" {
-				json.NewEncoder(w).Encode(map[string]any{
+				mustEncode(w, map[string]any{
 					"id": 1, "title": "Doc 1",
 					"created_date": "2026-01-15T00:00:00Z",
 					"created":      "2026-01-15T00:00:00Z",
@@ -543,7 +542,7 @@ func TestVerify_TagsMismatch(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	vault := importForVerify(t, srv.URL, Options{})
 	if vault == "" {
@@ -566,7 +565,7 @@ func TestVerify_TagsMismatch(t *testing.T) {
 			break
 		}
 	}
-	if err := os.WriteFile(matches[0], []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+	if err := os.WriteFile(matches[0], []byte(strings.Join(lines, "\n")), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 
@@ -595,7 +594,7 @@ func TestVerify_DocumentTypeMismatch(t *testing.T) {
 		}
 		switch {
 		case r.URL.Path == "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{{
 					"id": 1, "title": "Doc 1",
@@ -607,11 +606,11 @@ func TestVerify_DocumentTypeMismatch(t *testing.T) {
 				"next": nil,
 			})
 		case strings.HasPrefix(r.URL.Path, "/api/documents/") && strings.HasSuffix(r.URL.Path, "/download/"):
-			w.Write([]byte("content"))
+			mustWrite(w, []byte("content"))
 		case strings.HasPrefix(r.URL.Path, "/api/documents/"):
 			id := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/documents/"), "/")
 			if id == "1" {
-				json.NewEncoder(w).Encode(map[string]any{
+				mustEncode(w, map[string]any{
 					"id": 1, "title": "Doc 1",
 					"created_date":  "2026-01-15T00:00:00Z",
 					"created":       "2026-01-15T00:00:00Z",
@@ -625,7 +624,7 @@ func TestVerify_DocumentTypeMismatch(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	vault := importForVerify(t, srv.URL, Options{})
 
@@ -644,7 +643,7 @@ func TestVerify_DocumentTypeMismatch(t *testing.T) {
 			break
 		}
 	}
-	if err := os.WriteFile(matches[0], []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+	if err := os.WriteFile(matches[0], []byte(strings.Join(lines, "\n")), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 
@@ -669,7 +668,7 @@ func TestVerify_DocumentTypeMismatch(t *testing.T) {
 func TestVerify_EmptyVault(t *testing.T) {
 	docs := []verifyDoc{{id: 1, title: "Doc 1"}}
 	srv := newVerifyServer(t, docs)
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	// Use a non-existent vault directory.
 	vault := filepath.Join(t.TempDir(), "nonexistent-vault")
@@ -685,11 +684,11 @@ func TestVerify_EmptyVault(t *testing.T) {
 func TestVerify_NonDirectoryVault(t *testing.T) {
 	docs := []verifyDoc{{id: 1, title: "Doc 1"}}
 	srv := newVerifyServer(t, docs)
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	// Use a file path (not a directory) as vault.
 	vault := filepath.Join(t.TempDir(), "not-a-dir.md")
-	if err := os.WriteFile(vault, []byte("some content"), 0o644); err != nil {
+	if err := os.WriteFile(vault, []byte("some content"), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 	report, err := Verify(context.Background(), Options{BaseURL: srv.URL, Token: "test-token"}, vault, nil)
@@ -723,7 +722,7 @@ func TestScanVaultNotes_NonExistentVault(t *testing.T) {
 
 func TestScanVaultNotes_NonDirectoryVault(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "file.txt")
-	if err := os.WriteFile(path, []byte("content"), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte("content"), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 	notes, err := scanVaultNotes(path)
@@ -738,7 +737,7 @@ func TestScanVaultNotes_NonDirectoryVault(t *testing.T) {
 func TestScanVaultNotes_IgnoresNonMarkdown(t *testing.T) {
 	dir := t.TempDir()
 	// Write a non-markdown file.
-	if err := os.WriteFile(filepath.Join(dir, "readme.txt"), []byte("hello"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "readme.txt"), []byte("hello"), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 	notes, err := scanVaultNotes(dir)
@@ -753,7 +752,7 @@ func TestScanVaultNotes_IgnoresNonMarkdown(t *testing.T) {
 func TestScanVaultNotes_IgnoresNoFrontmatter(t *testing.T) {
 	dir := t.TempDir()
 	// Write a markdown file without frontmatter.
-	if err := os.WriteFile(filepath.Join(dir, "note.md"), []byte("# Just a heading\n\nNo frontmatter here."), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "note.md"), []byte("# Just a heading\n\nNo frontmatter here."), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 	notes, err := scanVaultNotes(dir)
@@ -769,7 +768,7 @@ func TestScanVaultNotes_IgnoresMalformedYAML(t *testing.T) {
 	dir := t.TempDir()
 	// Write a markdown file with broken YAML frontmatter.
 	bad := "---\ninvalid: yaml: [broken\n---\ncontent"
-	if err := os.WriteFile(filepath.Join(dir, "bad.md"), []byte(bad), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "bad.md"), []byte(bad), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 	notes, err := scanVaultNotes(dir)
@@ -785,7 +784,7 @@ func TestScanVaultNotes_IgnoresMissingEndDelimiter(t *testing.T) {
 	dir := t.TempDir()
 	// Write a markdown file with frontmatter open but no close.
 	noEnd := "---\ntitle: test\nsome_key: value\n# No closing ---"
-	if err := os.WriteFile(filepath.Join(dir, "noend.md"), []byte(noEnd), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "noend.md"), []byte(noEnd), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 	notes, err := scanVaultNotes(dir)
@@ -844,7 +843,7 @@ func TestFormatDate_ValidTime(t *testing.T) {
 func TestVerify_MissingArchivePathEmpty(t *testing.T) {
 	docs := []verifyDoc{{id: 1, title: "Doc 1"}}
 	srv := newVerifyServer(t, docs)
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	vault := importForVerify(t, srv.URL, Options{})
 
@@ -863,7 +862,7 @@ func TestVerify_MissingArchivePathEmpty(t *testing.T) {
 			break
 		}
 	}
-	if err := os.WriteFile(matches[0], []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+	if err := os.WriteFile(matches[0], []byte(strings.Join(lines, "\n")), 0o600); err != nil { //nolint:gosec // test writes the temporary fixture path it created
 		t.Fatal(err)
 	}
 

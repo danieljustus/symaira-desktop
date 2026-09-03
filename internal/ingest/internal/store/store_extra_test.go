@@ -49,7 +49,7 @@ func TestListDocuments_ReturnsDocumentsWithPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	// Create a document and set vault path
@@ -102,7 +102,7 @@ func TestListDocuments_Empty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	docs, err := s.ListDocuments(context.Background())
 	if err != nil {
@@ -119,14 +119,14 @@ func TestListDocuments_OrderedByVaultPathThenID(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	// Create two documents with different vault paths
 	doc1, _, _ := s.CreateOrGet(ctx, "/tmp/a.pdf", "hash-a", "application/pdf")
-	s.SetVaultAndArchivePath(ctx, doc1.ID, "/vault/b.md", "", "", nil, "", "")
+	mustStoreCall(t, func() error { return s.SetVaultAndArchivePath(ctx, doc1.ID, "/vault/b.md", "", "", nil, "", "") })
 	doc2, _, _ := s.CreateOrGet(ctx, "/tmp/b.pdf", "hash-b", "application/pdf")
-	s.SetVaultAndArchivePath(ctx, doc2.ID, "/vault/a.md", "", "", nil, "", "")
+	mustStoreCall(t, func() error { return s.SetVaultAndArchivePath(ctx, doc2.ID, "/vault/a.md", "", "", nil, "", "") })
 
 	docs, err := s.ListDocuments(ctx)
 	if err != nil {
@@ -147,12 +147,14 @@ func TestListDocuments_WithSourceMailID(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/mail.pdf", "hash-mail", "application/pdf")
-	s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/mail.pdf.md", "/archive/mail.pdf", "", nil, "", "")
-	s.SetProvenance(ctx, doc.ID, "msg-123", "sender@example.com")
+	mustStoreCall(t, func() error {
+		return s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/mail.pdf.md", "/archive/mail.pdf", "", nil, "", "")
+	})
+	mustStoreCall(t, func() error { return s.SetProvenance(ctx, doc.ID, "msg-123", "sender@example.com") })
 
 	docs, err := s.ListDocuments(ctx)
 	if err != nil {
@@ -172,11 +174,13 @@ func TestByArchivePath_FoundAndNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.pdf", "hash-archive", "application/pdf")
-	s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.pdf.md", "/archive/doc.pdf", "", nil, "", "")
+	mustStoreCall(t, func() error {
+		return s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.pdf.md", "/archive/doc.pdf", "", nil, "", "")
+	})
 
 	// Found
 	found, err := s.ByArchivePath(ctx, "/archive/doc.pdf")
@@ -200,11 +204,13 @@ func TestEnqueueReprocessJob_CreatesAndDeduplicates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.pdf", "hash-reprocess", "application/pdf")
-	s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.pdf.md", "/archive/doc.pdf", "", nil, "", "")
+	mustStoreCall(t, func() error {
+		return s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.pdf.md", "/archive/doc.pdf", "", nil, "", "")
+	})
 
 	// First call creates
 	job, created, err := s.EnqueueReprocessJob(ctx, doc.ID)
@@ -240,11 +246,13 @@ func TestSetProvenance_And_HasMailMessage_And_TrackMailMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/mail.pdf", "hash-prov", "application/pdf")
-	s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/mail.pdf.md", "/archive/mail.pdf", "", nil, "", "")
+	mustStoreCall(t, func() error {
+		return s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/mail.pdf.md", "/archive/mail.pdf", "", nil, "", "")
+	})
 
 	if err := s.SetProvenance(ctx, doc.ID, "msg-456", "alice@example.com"); err != nil {
 		t.Fatalf("SetProvenance: %v", err)
@@ -300,7 +308,7 @@ func TestRecordAndGetMailPollStatus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	// GetMailPollStatus — nil for an account never polled.
@@ -371,7 +379,7 @@ func containsSubstring(s, sub string) bool {
 func TestUpdateRule_ValidationErrors(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	rule, _ := s.AddRule(ctx, "test", "category", "Finance")
@@ -408,7 +416,7 @@ func TestUpdateRule_ValidationErrors(t *testing.T) {
 func TestByID_NotFound(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	_, err := s.ByID(context.Background(), 9999)
 	if err == nil {
@@ -419,7 +427,7 @@ func TestByID_NotFound(t *testing.T) {
 func TestFailJob(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.pdf", "hash-fail", "application/pdf")
@@ -441,7 +449,7 @@ func TestFailJob(t *testing.T) {
 func TestCompleteJob(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer closeTestResource(t, s)
 	ctx := context.Background()
 
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.pdf", "hash-complete", "application/pdf")

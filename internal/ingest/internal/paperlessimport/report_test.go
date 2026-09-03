@@ -21,7 +21,7 @@ func TestBuildMigrationReport_RealImport(t *testing.T) {
 		}
 		switch r.URL.Path {
 		case "/api/documents/":
-			_ = json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{"id": 7, "title": "Doc 7", "created_date": "2026-01-15", "file_type": ".txt"},
@@ -34,7 +34,7 @@ func TestBuildMigrationReport_RealImport(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -87,7 +87,7 @@ func TestBuildMigrationReport_DryRunCarriesAudit(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{
@@ -99,19 +99,19 @@ func TestBuildMigrationReport_DryRunCarriesAudit(t *testing.T) {
 				"next": nil,
 			})
 		case "/api/tags/", "/api/correspondents/", "/api/document_types/", "/api/storage_paths/":
-			json.NewEncoder(w).Encode(map[string]any{"count": 0, "results": []any{}, "next": nil})
+			mustEncode(w, map[string]any{"count": 0, "results": []any{}, "next": nil})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer closeTestResource(t, s)
 
 	pipeline := &ingest.Pipeline{
 		Store:      s,
@@ -152,7 +152,7 @@ func TestWriteMigrationReport_WritesValidJSON(t *testing.T) {
 		t.Fatalf("WriteMigrationReport: %v", err)
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // test reads the temporary report it created
 	if err != nil {
 		t.Fatal(err)
 	}

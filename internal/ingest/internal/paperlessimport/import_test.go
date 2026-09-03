@@ -2,7 +2,6 @@ package paperlessimport
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -29,7 +28,7 @@ func (fakeEngine) Extract(ctx context.Context, path string, kind extract.Kind) (
 func handleEmptyLookups(w http.ResponseWriter, r *http.Request) bool {
 	switch r.URL.Path {
 	case "/api/tags/", "/api/correspondents/", "/api/document_types/", "/api/storage_paths/":
-		json.NewEncoder(w).Encode(map[string]any{"count": 0, "results": []any{}, "next": nil})
+		mustEncode(w, map[string]any{"count": 0, "results": []any{}, "next": nil})
 		return true
 	default:
 		return false
@@ -43,7 +42,7 @@ func TestRun_DryRun(t *testing.T) {
 		}
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{"id": 1, "title": "Test Doc", "created_date": "2026-01-15T00:00:00Z", "file_type": ".pdf"},
@@ -54,7 +53,7 @@ func TestRun_DryRun(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -99,7 +98,7 @@ func TestRun_DryRun_AuditReport(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 3,
 				"results": []map[string]any{
 					{
@@ -122,16 +121,16 @@ func TestRun_DryRun_AuditReport(t *testing.T) {
 				"next": nil,
 			})
 		case "/api/tags/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1, "results": []map[string]any{{"id": 1, "name": "financial"}}, "next": nil,
 			})
 		case "/api/correspondents/", "/api/document_types/", "/api/storage_paths/":
-			json.NewEncoder(w).Encode(map[string]any{"count": 0, "results": []any{}, "next": nil})
+			mustEncode(w, map[string]any{"count": 0, "results": []any{}, "next": nil})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -193,7 +192,7 @@ func TestRun_Import(t *testing.T) {
 		}
 		switch r.URL.Path {
 		case "/api/documents/":
-			_ = json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{
@@ -212,7 +211,7 @@ func TestRun_Import(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -252,7 +251,7 @@ func TestRun_ResolvesIDsViaLookups(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{
@@ -267,26 +266,26 @@ func TestRun_ResolvesIDsViaLookups(t *testing.T) {
 				"next": nil,
 			})
 		case "/api/documents/1/download/":
-			w.Write([]byte("invoice content"))
+			mustWrite(w, []byte("invoice content"))
 		case "/api/tags/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1, "results": []map[string]any{{"id": 1, "name": "financial"}}, "next": nil,
 			})
 		case "/api/correspondents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1, "results": []map[string]any{{"id": 2, "name": "Acme Corp"}}, "next": nil,
 			})
 		case "/api/document_types/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1, "results": []map[string]any{{"id": 3, "name": "Invoice"}}, "next": nil,
 			})
 		case "/api/storage_paths/":
-			json.NewEncoder(w).Encode(map[string]any{"count": 0, "results": []any{}, "next": nil})
+			mustEncode(w, map[string]any{"count": 0, "results": []any{}, "next": nil})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -340,7 +339,7 @@ func TestRun_PreservesPaperlessMetadata(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{
@@ -357,14 +356,14 @@ func TestRun_PreservesPaperlessMetadata(t *testing.T) {
 				"next": nil,
 			})
 		case "/api/documents/7/download/":
-			w.Write([]byte("invoice content"))
+			mustWrite(w, []byte("invoice content"))
 		case "/api/tags/", "/api/correspondents/", "/api/document_types/", "/api/storage_paths/":
-			json.NewEncoder(w).Encode(map[string]any{"count": 0, "results": []any{}, "next": nil})
+			mustEncode(w, map[string]any{"count": 0, "results": []any{}, "next": nil})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -424,7 +423,7 @@ func TestRun_PaperlessTraceabilityAndDownloadHeaderExtension(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{
@@ -440,14 +439,14 @@ func TestRun_PaperlessTraceabilityAndDownloadHeaderExtension(t *testing.T) {
 		case "/api/documents/9/download/":
 			w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 			w.Header().Set("Content-Disposition", `attachment; filename="ledger.csv"`)
-			w.Write([]byte("a,b\n1,2\n"))
+			mustWrite(w, []byte("a,b\n1,2\n"))
 		case "/api/tags/", "/api/correspondents/", "/api/document_types/", "/api/storage_paths/":
-			json.NewEncoder(w).Encode(map[string]any{"count": 0, "results": []any{}, "next": nil})
+			mustEncode(w, map[string]any{"count": 0, "results": []any{}, "next": nil})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -512,7 +511,7 @@ func TestRun_ResumesAfterPartialFailure(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 2,
 				"results": []map[string]any{
 					{"id": 1, "title": "Good Doc", "created_date": "2026-01-15", "file_type": ".txt"},
@@ -521,20 +520,20 @@ func TestRun_ResumesAfterPartialFailure(t *testing.T) {
 				"next": nil,
 			})
 		case "/api/documents/1/download/":
-			w.Write([]byte("good content"))
+			mustWrite(w, []byte("good content"))
 		case "/api/documents/2/download/":
 			if failDownload {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			w.Write([]byte("recovered content"))
+			mustWrite(w, []byte("recovered content"))
 		case "/api/tags/", "/api/correspondents/", "/api/document_types/", "/api/storage_paths/":
-			json.NewEncoder(w).Encode(map[string]any{"count": 0, "results": []any{}, "next": nil})
+			mustEncode(w, map[string]any{"count": 0, "results": []any{}, "next": nil})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -609,7 +608,7 @@ func TestRun_RetryFailedUsesCurrentTargetAndCheckpoints(t *testing.T) {
 		}
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 3,
 				"results": []map[string]any{
 					{"id": 1, "title": "Already Done", "created_date": "2026-01-15", "file_type": ".txt"},
@@ -619,12 +618,12 @@ func TestRun_RetryFailedUsesCurrentTargetAndCheckpoints(t *testing.T) {
 				"next": nil,
 			})
 		case "/api/documents/2/download/":
-			w.Write([]byte("recovered content"))
+			mustWrite(w, []byte("recovered content"))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -694,7 +693,7 @@ func TestRun_CancellationStopsDuringNextDownloadAfterStateRecorded(t *testing.T)
 		}
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 2,
 				"results": []map[string]any{
 					{"id": 1, "title": "First Doc", "created_date": "2026-01-15", "file_type": ".txt"},
@@ -703,7 +702,7 @@ func TestRun_CancellationStopsDuringNextDownloadAfterStateRecorded(t *testing.T)
 				"next": nil,
 			})
 		case "/api/documents/1/download/":
-			w.Write([]byte("first content"))
+			mustWrite(w, []byte("first content"))
 		case "/api/documents/2/download/":
 			select {
 			case secondStarted <- struct{}{}:
@@ -714,7 +713,7 @@ func TestRun_CancellationStopsDuringNextDownloadAfterStateRecorded(t *testing.T)
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -768,11 +767,11 @@ func TestRun_SinceFilter(t *testing.T) {
 		if r.URL.Path == "/api/documents/" {
 			requestedURL = r.URL.String()
 		}
-		json.NewEncoder(w).Encode(map[string]any{
+		mustEncode(w, map[string]any{
 			"count": 0, "results": []any{}, "next": nil,
 		})
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -809,7 +808,7 @@ func TestRun_Limit(t *testing.T) {
 		}
 		switch r.URL.Path {
 		case "/api/documents/":
-			_ = json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 3,
 				"results": []map[string]any{
 					{"id": 1, "title": "Doc 1", "created_date": "2026-01-15", "file_type": ".txt"},
@@ -826,7 +825,7 @@ func TestRun_Limit(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -879,16 +878,16 @@ func TestRun_ExplicitIDs(t *testing.T) {
 			listCalled = true
 			w.WriteHeader(http.StatusInternalServerError)
 		case "/api/documents/42/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"id": 42, "title": "Doc 42", "created_date": "2026-01-15", "file_type": ".txt",
 			})
 		case "/api/documents/42/download/":
-			w.Write([]byte("content 42"))
+			mustWrite(w, []byte("content 42"))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -933,14 +932,14 @@ func TestRun_ExplicitIDs_DryRunHonorsBound(t *testing.T) {
 			t.Error("dry-run with --ids must not list the full archive")
 			w.WriteHeader(http.StatusInternalServerError)
 		case "/api/documents/7/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"id": 7, "title": "Doc 7", "created_date": "2026-01-15", "file_type": ".pdf",
 			})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -983,7 +982,7 @@ func TestRun_PreserveStoragePaths(t *testing.T) {
 		}
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{
@@ -996,12 +995,12 @@ func TestRun_PreserveStoragePaths(t *testing.T) {
 				"next": nil,
 			})
 		case "/api/documents/5/download/":
-			w.Write([]byte("invoice content"))
+			mustWrite(w, []byte("invoice content"))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	vault := filepath.Join(dir, "vault")
@@ -1038,7 +1037,7 @@ func TestRun_PreserveStoragePaths(t *testing.T) {
 		t.Fatalf("note not placed under storage path (%v); vault root has %v", err, rootMatches)
 	}
 
-	content, err := os.ReadFile(wantPath)
+	content, err := os.ReadFile(wantPath) //nolint:gosec // test reads the temporary fixture path it created
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1051,9 +1050,9 @@ func TestRun_PreserveStoragePaths(t *testing.T) {
 func TestRun_ErrorStatus(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("unauthorized"))
+		mustWrite(w, []byte("unauthorized"))
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "test.db"))
@@ -1084,7 +1083,7 @@ func TestRun_ImportsPaperlessCSVWhenFileTypeIsNull(t *testing.T) {
 		}
 		switch r.URL.Path {
 		case "/api/documents/":
-			json.NewEncoder(w).Encode(map[string]any{
+			mustEncode(w, map[string]any{
 				"count": 1,
 				"results": []map[string]any{
 					{
@@ -1099,12 +1098,12 @@ func TestRun_ImportsPaperlessCSVWhenFileTypeIsNull(t *testing.T) {
 			})
 		case "/api/documents/13/download/":
 			w.Header().Set("Content-Type", "text/csv")
-			w.Write([]byte("date,description,amount\n2026-07-02,Test CSV,12.34\n"))
+			mustWrite(w, []byte("date,description,amount\n2026-07-02,Test CSV,12.34\n"))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer srv.Close()
+	defer closeTestServer(t, srv)
 
 	dir := t.TempDir()
 	archive := filepath.Join(dir, "archive")

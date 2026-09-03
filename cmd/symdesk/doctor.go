@@ -197,6 +197,23 @@ func newDoctorCmd() *cobra.Command {
 				}
 			}
 
+			// 3c. Retrieval index path (#756): report where this vault's
+			// per-vault hybrid retrieval index lives — right next to the FTS
+			// sidecar's own sidecar.db — in the same style as mail_config
+			// above. This is the per-vault path service.Service now scopes
+			// Index/Delete/Search to; it can differ from the "retrieval"
+			// section's index_location above when no service.Service has run
+			// in this process yet (that section reports the legacy shared
+			// index in that case).
+			if vRoot != "" {
+				if retrievalIndexPath, riErr := retrieval.IndexPathForVault(vRoot); riErr != nil {
+					results["retrieval_index"] = map[string]string{"status": "error", "message": riErr.Error()}
+					allOk = false
+				} else {
+					results["retrieval_index"] = map[string]string{"status": "ok", "path": retrievalIndexPath}
+				}
+			}
+
 			results["overall"] = "ok"
 			if !allOk {
 				results["overall"] = "error"

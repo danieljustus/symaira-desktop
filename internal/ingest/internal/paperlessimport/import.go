@@ -329,12 +329,17 @@ func stageFromError(err error) string {
 func paperlessSourceURI(id int) string   { return fmt.Sprintf("paperless://documents/%d", id) }
 func paperlessDownloadURI(id int) string { return paperlessSourceURI(id) + "/download" }
 
-func hashFile(path string) (string, error) {
-	f, err := os.Open(path)
+func hashFile(path string) (hash string, err error) {
+	f, err := os.Open(path) //nolint:gosec // path is the caller-selected Paperless archive file
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil && err == nil {
+			hash = ""
+			err = fmt.Errorf("close file: %w", closeErr)
+		}
+	}()
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
 		return "", err
@@ -365,6 +370,18 @@ func progressWriter(opts Options) io.Writer {
 		return opts.Progress
 	}
 	return os.Stderr
+}
+
+func writeProgress(w io.Writer, format string, args ...any) {
+	if _, err := fmt.Fprintf(w, format, args...); err != nil {
+		log.Printf("write progress: %v", err)
+	}
+}
+
+func removeImportFile(path string) {
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		log.Printf("remove temporary import file %q: %v", path, err)
+	}
 }
 
 func importTargets(opts Options, pipeline *ingest.Pipeline) (vault, archive string) {
@@ -399,8 +416,10 @@ func printCheckpoint(w io.Writer, stats *Stats) {
 	if elapsed > 0 {
 		rate = float64(processed) / elapsed.Minutes()
 	}
-	fmt.Fprintf(w, "checkpoint: processed=%d/%d imported=%d skipped=%d failed=%d rate=%.1f/min eta=%s\n",
-		processed, stats.Total, stats.Imported, stats.Skipped, stats.Failed, rate, formatETA(stats.StartedAt, processed, stats.Total))
+	if _, err := fmt.Fprintf(w, "checkpoint: processed=%d/%d imported=%d skipped=%d failed=%d rate=%.1f/min eta=%s\n",
+		processed, stats.Total, stats.Imported, stats.Skipped, stats.Failed, rate, formatETA(stats.StartedAt, processed, stats.Total)); err != nil {
+		log.Printf("write checkpoint: %v", err)
+	}
 }
 
 func Run(ctx context.Context, opts Options, pipeline *ingest.Pipeline) (*Stats, error) {
@@ -501,7 +520,7 @@ func Run(ctx context.Context, opts Options, pipeline *ingest.Pipeline) (*Stats, 
 		}
 		doc := docs[i]
 		progressMu.Lock()
-		fmt.Fprintf(progressOut, "[%d/%d] %s\n", i+1, stats.Total, doc.Title)
+		writeProgress(progressOut, "[%d/%d] %s\n", i+1, stats.Total, doc.Title)
 		progressMu.Unlock()
 
 		state, serr := pipeline.Store.PaperlessImportStateForTarget(ctx, opts.BaseURL, targetVault, targetArchive, doc.ID)
@@ -521,7 +540,7 @@ func Run(ctx context.Context, opts Options, pipeline *ingest.Pipeline) (*Stats, 
 		}
 		if serr == nil && found && status == "imported" {
 			progressMu.Lock()
-			fmt.Fprintf(progressOut, "  skipped (already imported in a previous run)\n")
+			writeProgress(progressOut, "  skipped (already imported in a previous run)\n")
 			progressMu.Unlock()
 			result := plannedDocumentResult(doc, stats.RunID, "skipped")
 			result.Reason = "already imported in a previous run"
@@ -547,7 +566,7 @@ func Run(ctx context.Context, opts Options, pipeline *ingest.Pipeline) (*Stats, 
 				return ctxErr
 			}
 			progressMu.Lock()
-			fmt.Fprintf(progressOut, "  failed: %v\n", err)
+			writeProgress(progressOut, "  failed: %v\n", err)
 			progressMu.Unlock()
 			reason := boundedErrorString(err)
 			result.Status = "failed"
@@ -694,11 +713,13 @@ func importOne(ctx context.Context, client *paperless.Client, doc paperless.Docu
 		return result, warnings, stageError("download", fmt.Errorf("create temp file: %w", err))
 	}
 	tmpName := tmpFile.Name()
-	defer os.Remove(tmpName)
+	defer removeImportFile(tmpName)
 
 	downloadMeta, err := client.DownloadDocumentWithMetadata(ctx, doc.ID, tmpFile)
 	if err != nil {
-		tmpFile.Close()
+		if closeErr := tmpFile.Close(); closeErr != nil {
+			log.Printf("close temporary download file after download error: %v", closeErr)
+		}
 		return result, warnings, stageError("download", fmt.Errorf("download document: %w", err))
 	}
 	if err := tmpFile.Close(); err != nil {
@@ -717,7 +738,7 @@ func importOne(ctx context.Context, client *paperless.Client, doc paperless.Docu
 	if err := os.Rename(tmpName, finalPath); err != nil {
 		return result, warnings, stageError("download", fmt.Errorf("rename temp file: %w", err))
 	}
-	defer os.Remove(finalPath)
+	defer removeImportFile(finalPath)
 
 	result.SHA256, err = hashFile(finalPath)
 	if err != nil {

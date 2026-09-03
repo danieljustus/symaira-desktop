@@ -21,22 +21,20 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// OpenForVault keeps rebuildable indexes isolated per vault. This prevents a
-// configured vault from listing or searching rows indexed for another vault.
-func OpenForVault(vaultRoot string) (*DB, error) {
-	if explicit := os.Getenv("SYMDESK_SIDECAR"); explicit != "" {
-		return Open(explicit)
-	}
+// VaultDir returns the canonical per-vault directory used for rebuildable
+// sidecar state. Retrieval and other derived stores use this resolver so all
+// per-vault databases remain colocated without duplicating the hash scheme.
+func VaultDir(vaultRoot string) (string, error) {
 	canonical, err := filepath.Abs(vaultRoot)
 	if err != nil {
-		return nil, fmt.Errorf("resolve vault for sidecar: %w", err)
+		return "", fmt.Errorf("resolve vault for sidecar: %w", err)
 	}
 	if resolved, resolveErr := filepath.EvalSymlinks(canonical); resolveErr == nil {
 		canonical = resolved
 	}
 	root, err := SidecarRoot()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if isTemporaryVault(canonical) && os.Getenv("XDG_DATA_HOME") == "" {
 		// Test and scratch vaults must not materialize state below the user's
@@ -45,10 +43,31 @@ func OpenForVault(vaultRoot string) (*DB, error) {
 		root = filepath.Join(os.TempDir(), "symdesk", "test-vaults")
 	}
 	digest := fmt.Sprintf("%x", sha256.Sum256([]byte(canonical)))
-	path := filepath.Join(root, digest[:16], "sidecar.db")
+	return filepath.Join(root, digest[:16]), nil
+}
+
+// OpenForVault keeps rebuildable indexes isolated per vault. This prevents a
+// configured vault from listing or searching rows indexed for another vault.
+func OpenForVault(vaultRoot string) (*DB, error) {
+	if explicit := os.Getenv("SYMDESK_SIDECAR"); explicit != "" {
+		return Open(explicit)
+	}
+	dir, err := VaultDir(vaultRoot)
+	if err != nil {
+		return nil, err
+	}
+	path := filepath.Join(dir, "sidecar.db")
 	db, err := Open(path)
 	if err != nil {
 		return nil, err
+	}
+	canonical, canonicalErr := filepath.Abs(vaultRoot)
+	if canonicalErr != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("resolve vault for sidecar metadata: %w", canonicalErr)
+	}
+	if resolved, resolveErr := filepath.EvalSymlinks(canonical); resolveErr == nil {
+		canonical = resolved
 	}
 	if err := recordSidecarMetadata(filepath.Dir(path), canonical); err != nil {
 		_ = db.Close()

@@ -182,7 +182,7 @@ func (w *NoteWriter) WriteNote(sourcePath, sha256, mime, ocrEngine, ocrLanguage,
 	}
 	if archivePath != "" {
 		sb.WriteString("\n---\n")
-		sb.WriteString(fmt.Sprintf("[Archived Original](file://%s)\n", filepath.ToSlash(archivePath)))
+		fmt.Fprintf(&sb, "[Archived Original](file://%s)\n", filepath.ToSlash(archivePath))
 	}
 
 	if err := fsutil.AtomicWriteFile(vaultPath, []byte(sb.String()), 0o600); err != nil {
@@ -198,7 +198,7 @@ func (w *NoteWriter) UpdateNote(vaultPath string, meta Note, text string) error 
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	data, err := os.ReadFile(vaultPath)
+	data, err := os.ReadFile(vaultPath) //nolint:gosec // G304: vault path comes from the document store or the validated writer vault
 	if err != nil {
 		return fmt.Errorf("read note: %w", err)
 	}
@@ -221,7 +221,7 @@ func (w *NoteWriter) UpdateNoteSidecar(vaultPath, sidecarPath string, extraction
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	data, err := os.ReadFile(vaultPath)
+	data, err := os.ReadFile(vaultPath) //nolint:gosec // G304: vault path comes from the document store or the validated writer vault
 	if err != nil {
 		return fmt.Errorf("read note: %w", err)
 	}
@@ -309,7 +309,7 @@ func renderBody(text, archivePath string) string {
 	}
 	if archivePath != "" {
 		sb.WriteString("\n---\n")
-		sb.WriteString(fmt.Sprintf("[Archived Original](file://%s)\n", filepath.ToSlash(archivePath)))
+		fmt.Fprintf(&sb, "[Archived Original](file://%s)\n", filepath.ToSlash(archivePath))
 	}
 	return sb.String()
 }

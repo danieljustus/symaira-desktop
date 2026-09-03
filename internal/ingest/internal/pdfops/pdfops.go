@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -111,7 +112,11 @@ func (t Tools) Split(ctx context.Context, input, atSpec, outputDir string) ([]st
 	if err != nil {
 		return nil, fmt.Errorf("create PDF split workspace: %w", err)
 	}
-	defer os.RemoveAll(tmp)
+	defer func() {
+		if cleanupErr := os.RemoveAll(tmp); cleanupErr != nil {
+			log.Printf("PDF split workspace cleanup failed: %v", cleanupErr)
+		}
+	}()
 
 	pagePaths := make([]string, pages)
 	for page := 1; page <= pages; page++ {
@@ -195,7 +200,7 @@ func (t Tools) pageCount(ctx context.Context, input string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	cmd := exec.CommandContext(ctx, path, input)
+	cmd := exec.CommandContext(ctx, path, input) //nolint:gosec // G204: executable is validated with exec.LookPath before invocation; arguments are controlled paths/options
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -219,7 +224,7 @@ func (t Tools) run(ctx context.Context, name string, args ...string) error {
 	if err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, path, args...)
+	cmd := exec.CommandContext(ctx, path, args...) //nolint:gosec // G204: executable is validated with exec.LookPath before invocation; arguments are controlled paths/options
 	var stderr bytes.Buffer
 	cmd.Stdout = &bytes.Buffer{}
 	cmd.Stderr = &stderr

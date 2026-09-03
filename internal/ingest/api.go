@@ -184,7 +184,7 @@ type Result struct {
 // equivalent of `symingest ingest`.
 //
 // A source whose content hash is already recorded returns ErrDuplicate.
-func Ingest(ctx context.Context, source string, opts Options) (*Result, error) {
+func Ingest(ctx context.Context, source string, opts Options) (result *Result, err error) {
 	r, err := opts.resolve()
 	if err != nil {
 		return nil, err
@@ -202,7 +202,12 @@ func Ingest(ctx context.Context, source string, opts Options) (*Result, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open document store: %w", err)
 	}
-	defer st.Close()
+	defer func() {
+		if closeErr := st.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("close document store: %w", closeErr))
+			result = nil
+		}
+	}()
 
 	pipeline := &ingestengine.Pipeline{
 		Engine:     ocr.NewEngine(r.ocrLang, r.ollamaBaseURL, r.ollamaModel),
@@ -619,7 +624,7 @@ type PaperlessStats struct {
 // PaperlessMigrate imports the documents of a running Paperless-ngx instance
 // through the ingest pipeline. It is idempotent: re-running updates the notes
 // already keyed on the Paperless document ID and checksum.
-func PaperlessMigrate(ctx context.Context, opts PaperlessOptions) (*PaperlessStats, error) {
+func PaperlessMigrate(ctx context.Context, opts PaperlessOptions) (result *PaperlessStats, err error) {
 	if opts.BaseURL == "" {
 		return nil, fmt.Errorf("BaseURL is required")
 	}
@@ -639,7 +644,12 @@ func PaperlessMigrate(ctx context.Context, opts PaperlessOptions) (*PaperlessSta
 	if err != nil {
 		return nil, fmt.Errorf("open document store: %w", err)
 	}
-	defer st.Close()
+	defer func() {
+		if closeErr := st.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("close document store: %w", closeErr))
+			result = nil
+		}
+	}()
 
 	pipeline := &ingestengine.Pipeline{
 		Engine:     ocr.NewEngine(r.ocrLang, r.ollamaBaseURL, r.ollamaModel),

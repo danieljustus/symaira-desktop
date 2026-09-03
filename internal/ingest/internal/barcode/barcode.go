@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -77,7 +78,11 @@ func (o Options) Separate(ctx context.Context, input, outputDir string) (Result,
 	if err != nil {
 		return Result{}, fmt.Errorf("create barcode workspace: %w", err)
 	}
-	defer os.RemoveAll(workspace)
+	defer func() {
+		if cleanupErr := os.RemoveAll(workspace); cleanupErr != nil {
+			log.Printf("barcode workspace cleanup failed: %v", cleanupErr)
+		}
+	}()
 	prefix := filepath.Join(workspace, "page")
 	if err := o.run(ctx, o.PDFToPPM, "-png", "-r", "150", input, prefix); err != nil {
 		return Result{Warning: fmt.Sprintf("barcode rasterization unavailable: %v", err)}, nil
@@ -153,7 +158,7 @@ func (o Options) decode(ctx context.Context, image string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	cmd := exec.CommandContext(ctx, path, "--quiet", "--raw", image)
+	cmd := exec.CommandContext(ctx, path, "--quiet", "--raw", image) //nolint:gosec // G204: executable is validated with exec.LookPath before invocation; arguments are controlled paths/options
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
@@ -180,7 +185,7 @@ func (o Options) run(ctx context.Context, name string, args ...string) error {
 	if err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, path, args...)
+	cmd := exec.CommandContext(ctx, path, args...) //nolint:gosec // G204: executable is validated with exec.LookPath before invocation; arguments are controlled paths/options
 	var stderr bytes.Buffer
 	cmd.Stdout = &bytes.Buffer{}
 	cmd.Stderr = &stderr

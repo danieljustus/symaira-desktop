@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -209,7 +210,7 @@ func (r *Runner) availableLanguages(ctx context.Context) (map[string]bool, error
 	}
 
 	// We capture stdout and stderr separately
-	cmd := exec.CommandContext(ctx, execPath, "--list-langs")
+	cmd := exec.CommandContext(ctx, execPath, "--list-langs") //nolint:gosec // G204: executable is validated with exec.LookPath before invocation; arguments are controlled paths/options
 	var stdoutBuf, stderrBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = &stderrBuf
@@ -301,7 +302,11 @@ func (r *Runner) extractHEIC(ctx context.Context, path string) (*extract.Result,
 	if err != nil {
 		return nil, fmt.Errorf("create temp dir: %w", err)
 	}
-	defer os.RemoveAll(dir)
+	defer func() {
+		if cleanupErr := os.RemoveAll(dir); cleanupErr != nil {
+			log.Printf("OCR temporary directory cleanup failed: %v", cleanupErr)
+		}
+	}()
 	converted := filepath.Join(dir, "converted.png")
 	if _, err := r.runTool(ctx, sipsPath, "-s", "format", "png", path, "--out", converted); err != nil {
 		return nil, fmt.Errorf("sips HEIC conversion failed: %w", err)
@@ -328,7 +333,11 @@ func (r *Runner) extractPDF(ctx context.Context, path string) (*extract.Result, 
 	if err != nil {
 		return nil, fmt.Errorf("create temp dir: %w", err)
 	}
-	defer os.RemoveAll(dir)
+	defer func() {
+		if cleanupErr := os.RemoveAll(dir); cleanupErr != nil {
+			log.Printf("OCR temporary directory cleanup failed: %v", cleanupErr)
+		}
+	}()
 
 	prefix := filepath.Join(dir, "page")
 	if _, err := r.runTool(ctx, r.PDFToPPM, "-png", "-r", "150", path, prefix); err != nil {
@@ -415,7 +424,7 @@ func (r *Runner) runTool(ctx context.Context, name string, args ...string) ([]by
 // process's current directory when dir is empty), capturing stdout/stderr
 // away from the process stdout. On error the captured stderr is included.
 func (r *Runner) runToolInDir(ctx context.Context, dir, name string, args ...string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, name, args...)
+	cmd := exec.CommandContext(ctx, name, args...) //nolint:gosec // G204: executable is validated with exec.LookPath before invocation; arguments are controlled paths/options
 	cmd.Dir = dir
 	var out, stderr bytes.Buffer
 	cmd.Stdout = &out

@@ -246,7 +246,7 @@ func TestRun_Import(t *testing.T) {
 		if err != nil || d.IsDir() || !strings.HasSuffix(d.Name(), ".md") {
 			return nil
 		}
-		data, rerr := os.ReadFile(path)
+		data, rerr := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 		if rerr != nil {
 			return nil
 		}
@@ -361,7 +361,7 @@ func TestConvertCSV(t *testing.T) {
 	}
 
 	// Verify row frontmatter contains CSV columns as top-level properties.
-	data, err := os.ReadFile(rowPath)
+	data, err := os.ReadFile(rowPath) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatalf("read row note: %v", err)
 	}

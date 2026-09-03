@@ -43,7 +43,7 @@ func setupTestDB(t *testing.T) *DB {
 	if err != nil {
 		t.Fatalf("failed to open test db: %v", err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { _ = db.Close() })
 	return db
 }
 
@@ -862,7 +862,7 @@ func TestRefreshIndexSkipsUnchangedFilesWithoutReadingThem(t *testing.T) {
 	}
 	vaultRoot := t.TempDir()
 	path := filepath.Join(vaultRoot, "Note.md")
-	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\nBody"), 0644); err != nil {
+	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\nBody"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	db := setupTestDB(t)
@@ -875,7 +875,7 @@ func TestRefreshIndexSkipsUnchangedFilesWithoutReadingThem(t *testing.T) {
 	if err := os.Chmod(path, 0000); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(path, 0644) })
+	t.Cleanup(func() { _ = os.Chmod(path, 0644) }) //nolint:gosec // restores permissions after the intentional unreadable-file test
 
 	if err := db.RefreshIndex(vaultRoot); err != nil {
 		t.Fatalf("expected warm refresh to skip the unreadable-but-unchanged file, got: %v", err)
@@ -891,7 +891,7 @@ func TestRefreshIndexSkipsUnchangedFilesWithoutReadingThem(t *testing.T) {
 func TestRefreshIndexReindexesFilesChangedSinceLastRun(t *testing.T) {
 	vaultRoot := t.TempDir()
 	path := filepath.Join(vaultRoot, "Note.md")
-	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\noriginal content"), 0644); err != nil {
+	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\noriginal content"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	db := setupTestDB(t)
@@ -903,7 +903,7 @@ func TestRefreshIndexReindexesFilesChangedSinceLastRun(t *testing.T) {
 	}
 
 	future := time.Now().Add(2 * time.Second)
-	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\nreplaced content, much longer than before"), 0644); err != nil {
+	if err := os.WriteFile(path, []byte("---\ntitle: Note\n---\nreplaced content, much longer than before"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Chtimes(path, future, future); err != nil {
@@ -928,7 +928,7 @@ func TestRefreshIndexCatchesSameSizeEditByMtime(t *testing.T) {
 	vaultRoot := t.TempDir()
 	path := filepath.Join(vaultRoot, "Note.md")
 	original := []byte("---\ntitle: Note\n---\nAAAA")
-	if err := os.WriteFile(path, original, 0644); err != nil {
+	if err := os.WriteFile(path, original, 0600); err != nil {
 		t.Fatal(err)
 	}
 	db := setupTestDB(t)
@@ -943,7 +943,7 @@ func TestRefreshIndexCatchesSameSizeEditByMtime(t *testing.T) {
 	if len(edited) != len(original) {
 		t.Fatalf("test setup invariant broken: edited length %d != original length %d", len(edited), len(original))
 	}
-	if err := os.WriteFile(path, edited, 0644); err != nil {
+	if err := os.WriteFile(path, edited, 0600); err != nil {
 		t.Fatal(err)
 	}
 	// Force a clearly different, deterministic mtime instead of relying on
@@ -974,7 +974,7 @@ func TestRefreshIndexBackfillsStatWhenPreviouslyIndexedWithoutIt(t *testing.T) {
 	vaultRoot := t.TempDir()
 	path := filepath.Join(vaultRoot, "Note.md")
 	content := []byte("---\ntitle: Note\n---\nBody")
-	if err := os.WriteFile(path, content, 0644); err != nil {
+	if err := os.WriteFile(path, content, 0600); err != nil {
 		t.Fatal(err)
 	}
 	db := setupTestDB(t)
@@ -1235,7 +1235,7 @@ func TestOpen_InvalidPath(t *testing.T) {
 	// A path whose parent directory is a regular file should fail at sqlitekit.Open.
 	tmpDir := t.TempDir()
 	blocker := filepath.Join(tmpDir, "not-a-dir")
-	if err := os.WriteFile(blocker, []byte("x"), 0o644); err != nil {
+	if err := os.WriteFile(blocker, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	_, err := Open(filepath.Join(blocker, "test.db"))
@@ -1260,7 +1260,7 @@ func TestOpen_MigrationFailure(t *testing.T) {
 	if _, err := raw.Exec("CREATE TABLE files (id INTEGER PRIMARY KEY)"); err != nil {
 		t.Fatalf("pre-create: %v", err)
 	}
-	raw.Close()
+	_ = raw.Close()
 
 	_, err = Open(dbPath)
 	if err == nil {

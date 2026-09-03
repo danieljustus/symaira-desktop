@@ -100,5 +100,5 @@ func TestSecurePath_LegitimateNestedPath(t *testing.T) {
 }
 
 func writeFile(path, content string) error {
-	return os.WriteFile(path, []byte(content), 0644)
+	return os.WriteFile(path, []byte(content), 0600)
 }

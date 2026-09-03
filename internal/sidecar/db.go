@@ -107,7 +107,7 @@ func Open(path string) (*DB, error) {
 	}
 
 	if err := sqlitekit.Migrate(conn, migrationsFS); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, fmt.Errorf("migrate: %w", err)
 	}
 
@@ -359,7 +359,7 @@ func (db *DB) indexDocumentBatch(docs []*vault.Document) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	for _, doc := range docs {
 		if doc.IsDerived() {
@@ -574,7 +574,7 @@ func (db *DB) DeleteDocument(path string) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := deleteDocumentRows(tx, path); err != nil {
 		return err
@@ -751,7 +751,7 @@ func (db *DB) Search(query string) ([]*vault.Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var docs []*vault.Document
 	for rows.Next() {
@@ -970,7 +970,7 @@ func (db *DB) SearchPlanAt(plan searchquery.Plan, reference time.Time) ([]Search
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	results := make([]SearchMatch, 0)
 	for rows.Next() {
@@ -1237,7 +1237,7 @@ func (db *DB) ListFiles(dirPrefix string) ([]*vault.Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var docs []*vault.Document
 	for rows.Next() {
@@ -1263,7 +1263,7 @@ func (db *DB) GetProperties(path string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	props := make(map[string]interface{})
 	for rows.Next() {
@@ -1340,7 +1340,7 @@ func (db *DB) GetBacklinks(path string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var links []string
 	for rows.Next() {
@@ -1368,7 +1368,7 @@ func (db *DB) GetAllLinks() ([]Edge, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var edges []Edge
 	for rows.Next() {
@@ -1484,7 +1484,7 @@ func (db *DB) DocsList(f DocsFilter) ([]DocsResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var results []DocsResult
 	for rows.Next() {
@@ -1610,7 +1610,7 @@ func (db *DB) ReviewQueue(threshold int) ([]ReviewResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var results []ReviewResult
 	for rows.Next() {
@@ -1665,7 +1665,7 @@ func (db *DB) AllSimhashes() ([]SimilarResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close() //nolint:errcheck // result rows are fully drained below before return
+	defer func() { _ = rows.Close() }() //nolint:errcheck // result rows are fully drained below before return
 
 	var results []SimilarResult
 	for rows.Next() {
@@ -1698,7 +1698,7 @@ func (db *DB) SimilarDocs(refSimhash string, similarityThreshold int) ([]Similar
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var results []SimilarResult
 	for rows.Next() {

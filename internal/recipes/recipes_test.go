@@ -10,7 +10,7 @@ import (
 func TestLoadAndValidateRecipe(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "daily.yml")
-	if err := os.WriteFile(path, []byte("version: 1\nname: daily\ntriggers: [manual, save]\ntools: [desk_search]\nwrite_cap: 2\n"), 0644); err != nil {
+	if err := os.WriteFile(path, []byte("version: 1\nname: daily\ntriggers: [manual, save]\ntools: [desk_search]\nwrite_cap: 2\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	r, err := Load(path)
@@ -38,7 +38,7 @@ func TestAcceptAndRejectKeepChangesPendingUntilApproved(t *testing.T) {
 	root := t.TempDir()
 	m := Manifest{Request: Request{RunID: "run-1", Recipe: Recipe{Version: 1, Name: "x", Triggers: []string{"manual"}, Tools: []string{"desk_search"}, WriteCap: 1}}, Response: Response{ContractVersion: 1, Changes: []Change{{Path: "notes/a.md", Content: "approved"}}}, Status: "pending"}
 	dir := runDir(root, "run-1")
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	if err := writeJSON(filepath.Join(dir, "manifest.json"), m); err != nil {
@@ -47,7 +47,7 @@ func TestAcceptAndRejectKeepChangesPendingUntilApproved(t *testing.T) {
 	if err := Accept(root, "run-1"); err != nil {
 		t.Fatal(err)
 	}
-	b, err := os.ReadFile(filepath.Join(root, "notes", "a.md"))
+	b, err := os.ReadFile(filepath.Join(root, "notes", "a.md")) //nolint:gosec // test reads a file under t.TempDir
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestAcceptAndRejectKeepChangesPendingUntilApproved(t *testing.T) {
 
 	m.Request.RunID, m.Status = "run-2", "pending"
 	dir = runDir(root, "run-2")
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	if err := writeJSON(filepath.Join(dir, "manifest.json"), m); err != nil {
@@ -103,7 +103,8 @@ while [ $# -gt 0 ]; do
 done
 printf '%s' '` + responseJSON + `' > "$RESPONSE"
 `
-	if err := os.WriteFile(script, []byte(content), 0755); err != nil {
+	//nolint:gosec // executable test fixture is confined to t.TempDir
+	if err := os.WriteFile(script, []byte(content), 0700); err != nil {
 		t.Fatal(err)
 	}
 	return dir
@@ -168,7 +169,7 @@ func TestStartHappyPath(t *testing.T) {
 	}
 	// Verify trace.md was written
 	tracePath := filepath.Join(runDir(root, runID), "trace.md")
-	b, err := os.ReadFile(tracePath)
+	b, err := os.ReadFile(tracePath) //nolint:gosec // test reads a file under t.TempDir
 	if err != nil {
 		t.Fatalf("trace.md not created: %v", err)
 	}
@@ -205,7 +206,7 @@ func TestPendingDiff(t *testing.T) {
 	root := t.TempDir()
 	runID := "test-run"
 	dir := runDir(root, runID)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	m := Manifest{
@@ -256,7 +257,7 @@ func TestWriteTrace(t *testing.T) {
 	if err := writeTrace(tracePath, m); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	b, err := os.ReadFile(tracePath)
+	b, err := os.ReadFile(tracePath) //nolint:gosec // test reads a file under t.TempDir
 	if err != nil {
 		t.Fatal(err)
 	}

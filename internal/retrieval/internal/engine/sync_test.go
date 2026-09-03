@@ -28,7 +28,11 @@ func TestIndexFileSingleGetDocumentCall(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -36,13 +40,17 @@ func TestIndexFileSingleGetDocumentCall(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	cs := &countingStore{Store: dbClient}
 	embedder := &fakeEmbedder{dim: 768}
 
 	file := filepath.Join(tempDir, "doc.md")
-	if err := os.WriteFile(file, []byte("original content"), 0644); err != nil {
+	if err := os.WriteFile(file, []byte("original content"), 0600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -66,7 +74,7 @@ func TestIndexFileSingleGetDocumentCall(t *testing.T) {
 
 	// Third index: changed file — expect 1 GetDocument (prepareIndex), 0 in commitIndex
 	cs.getDocCalls = 0
-	if err := os.WriteFile(file, []byte("updated content"), 0644); err != nil {
+	if err := os.WriteFile(file, []byte("updated content"), 0600); err != nil {
 		t.Fatalf("update: %v", err)
 	}
 	if _, err := IndexFile(cs, embedder, file); err != nil {
@@ -83,7 +91,11 @@ func TestIndexContentSingleGetDocumentCall(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -91,7 +103,11 @@ func TestIndexContentSingleGetDocumentCall(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	cs := &countingStore{Store: dbClient}
 	embedder := &fakeEmbedder{dim: 768}
@@ -132,7 +148,11 @@ func TestParallelIndexSkipsUnchangedFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -140,21 +160,25 @@ func TestParallelIndexSkipsUnchangedFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &countingEmbedder{dim: 768}
 
 	docsDir := filepath.Join(tempDir, "docs")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
 
 	file1 := filepath.Join(docsDir, "a.md")
 	file2 := filepath.Join(docsDir, "b.md")
-	if err := os.WriteFile(file1, []byte("content one"), 0644); err != nil {
+	if err := os.WriteFile(file1, []byte("content one"), 0600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
-	if err := os.WriteFile(file2, []byte("content two"), 0644); err != nil {
+	if err := os.WriteFile(file2, []byte("content two"), 0600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -220,7 +244,11 @@ func TestIndexDirectorySiblingPrefix(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -228,25 +256,29 @@ func TestIndexDirectorySiblingPrefix(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
 	docsDir := filepath.Join(tempDir, "docs")
 	docs2Dir := filepath.Join(tempDir, "docs2")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0700); err != nil {
 		t.Fatalf("mkdir docs: %v", err)
 	}
-	if err := os.MkdirAll(docs2Dir, 0755); err != nil {
+	if err := os.MkdirAll(docs2Dir, 0700); err != nil {
 		t.Fatalf("mkdir docs2: %v", err)
 	}
 
 	file1 := filepath.Join(docsDir, "a.md")
 	file2 := filepath.Join(docs2Dir, "b.md")
-	if err := os.WriteFile(file1, []byte("content in docs"), 0644); err != nil {
+	if err := os.WriteFile(file1, []byte("content in docs"), 0600); err != nil {
 		t.Fatalf("write a.md: %v", err)
 	}
-	if err := os.WriteFile(file2, []byte("content in docs2"), 0644); err != nil {
+	if err := os.WriteFile(file2, []byte("content in docs2"), 0600); err != nil {
 		t.Fatalf("write b.md: %v", err)
 	}
 
@@ -282,30 +314,36 @@ func TestApplyIncrementalChangesTouchesOnlyChangedFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
-	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", originalHome)
+	t.Setenv("HOME", tempDir)
 
 	dbClient, err := db.Open()
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := newTestEmbeddingsGenerator()
 
 	docsDir := filepath.Join(tempDir, "docs")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0700); err != nil {
 		t.Fatalf("failed to create docs dir: %v", err)
 	}
 	untouched := filepath.Join(docsDir, "untouched.md")
-	if err := os.WriteFile(untouched, []byte("untouched original content"), 0644); err != nil {
+	if err := os.WriteFile(untouched, []byte("untouched original content"), 0600); err != nil {
 		t.Fatalf("failed to write untouched.md: %v", err)
 	}
 	changed := filepath.Join(docsDir, "changed.md")
-	if err := os.WriteFile(changed, []byte("changed original content"), 0644); err != nil {
+	if err := os.WriteFile(changed, []byte("changed original content"), 0600); err != nil {
 		t.Fatalf("failed to write changed.md: %v", err)
 	}
 
@@ -319,7 +357,7 @@ func TestApplyIncrementalChangesTouchesOnlyChangedFiles(t *testing.T) {
 	}
 	originalUntouchedHash := untouchedDoc.Hash
 
-	if err := os.WriteFile(changed, []byte("changed updated content"), 0644); err != nil {
+	if err := os.WriteFile(changed, []byte("changed updated content"), 0600); err != nil {
 		t.Fatalf("failed to update changed.md: %v", err)
 	}
 
@@ -353,26 +391,32 @@ func TestApplyIncrementalChangesDropsMissingFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
-	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", originalHome)
+	t.Setenv("HOME", tempDir)
 
 	dbClient, err := db.Open()
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := newTestEmbeddingsGenerator()
 
 	docsDir := filepath.Join(tempDir, "docs")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0700); err != nil {
 		t.Fatalf("failed to create docs dir: %v", err)
 	}
 	doomed := filepath.Join(docsDir, "doomed.md")
-	if err := os.WriteFile(doomed, []byte("doomed content"), 0644); err != nil {
+	if err := os.WriteFile(doomed, []byte("doomed content"), 0600); err != nil {
 		t.Fatalf("failed to write doomed.md: %v", err)
 	}
 	if err := IndexDirectory(dbClient, embedder, docsDir); err != nil {
@@ -408,29 +452,35 @@ func TestProcessFilesInParallelMatchesSequential(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
-	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", originalHome)
+	t.Setenv("HOME", tempDir)
 
 	dbClient, err := db.Open()
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := newTestEmbeddingsGenerator()
 
 	const nFiles = 20
 	docsDir := filepath.Join(tempDir, "docs")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0700); err != nil {
 		t.Fatalf("failed to create docs dir: %v", err)
 	}
 	paths := make(map[string]bool, nFiles)
 	for i := 0; i < nFiles; i++ {
 		p := filepath.Join(docsDir, fmt.Sprintf("file_%02d.md", i))
-		if err := os.WriteFile(p, []byte(fmt.Sprintf("content of file %d", i)), 0644); err != nil {
+		if err := os.WriteFile(p, []byte(fmt.Sprintf("content of file %d", i)), 0600); err != nil {
 			t.Fatalf("failed to write %s: %v", p, err)
 		}
 		paths[p] = true
@@ -477,29 +527,35 @@ func benchmarkIndexDirectory(b *testing.B, parallel bool) {
 	if err != nil {
 		b.Fatalf("tempdir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	b.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			b.Errorf("remove temp dir: %v", err)
+		}
+	})
 
-	originalHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", originalHome)
+	b.Setenv("HOME", tempDir)
 
 	dbClient, err := db.Open()
 	if err != nil {
 		b.Fatalf("db.Open: %v", err)
 	}
-	defer dbClient.Close()
+	b.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			b.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := newTestEmbeddingsGenerator()
 
 	const nFiles = 20
 	docsDir := filepath.Join(tempDir, "docs")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0700); err != nil {
 		b.Fatalf("mkdir: %v", err)
 	}
 	paths := make(map[string]bool, nFiles)
 	for i := 0; i < nFiles; i++ {
 		p := filepath.Join(docsDir, fmt.Sprintf("file_%02d.md", i))
-		if err := os.WriteFile(p, []byte(fmt.Sprintf("content of file %d", i)), 0644); err != nil {
+		if err := os.WriteFile(p, []byte(fmt.Sprintf("content of file %d", i)), 0600); err != nil {
 			b.Fatalf("write: %v", err)
 		}
 		paths[p] = true
@@ -524,7 +580,11 @@ func TestWatchDirectory_CreatesAndIndexes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -532,12 +592,16 @@ func TestWatchDirectory_CreatesAndIndexes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
 	docsDir := filepath.Join(tempDir, "docs")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
 
@@ -552,7 +616,7 @@ func TestWatchDirectory_CreatesAndIndexes(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 
 	newFile := filepath.Join(docsDir, "new.md")
-	if err := os.WriteFile(newFile, []byte("watched content"), 0644); err != nil {
+	if err := os.WriteFile(newFile, []byte("watched content"), 0600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -575,7 +639,11 @@ func TestWatchDirectory_ModifiesFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -583,17 +651,21 @@ func TestWatchDirectory_ModifiesFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
 	docsDir := filepath.Join(tempDir, "docs")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
 
 	existingFile := filepath.Join(docsDir, "existing.md")
-	if err := os.WriteFile(existingFile, []byte("original content"), 0644); err != nil {
+	if err := os.WriteFile(existingFile, []byte("original content"), 0600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -622,7 +694,7 @@ func TestWatchDirectory_ModifiesFile(t *testing.T) {
 	}
 	originalHash := doc.Hash
 
-	if err := os.WriteFile(existingFile, []byte("updated content for watcher"), 0644); err != nil {
+	if err := os.WriteFile(existingFile, []byte("updated content for watcher"), 0600); err != nil {
 		t.Fatalf("update: %v", err)
 	}
 
@@ -648,7 +720,11 @@ func TestWatchDirectory_RemovesFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -656,17 +732,21 @@ func TestWatchDirectory_RemovesFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fakeEmbedder{dim: 768}
 
 	docsDir := filepath.Join(tempDir, "docs")
-	if err := os.MkdirAll(docsDir, 0755); err != nil {
+	if err := os.MkdirAll(docsDir, 0700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
 
 	doomedFile := filepath.Join(docsDir, "doomed.md")
-	if err := os.WriteFile(doomedFile, []byte("about to be deleted"), 0644); err != nil {
+	if err := os.WriteFile(doomedFile, []byte("about to be deleted"), 0600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -708,7 +788,11 @@ func TestIndexDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 
 	t.Setenv("HOME", tempDir)
 
@@ -716,25 +800,29 @@ func TestIndexDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := newTestEmbeddingsGenerator()
 
 	// 1. Create a dummy folder with markdown files
 	docsDir := filepath.Join(tempDir, "docs")
-	err = os.MkdirAll(docsDir, 0755)
+	err = os.MkdirAll(docsDir, 0700)
 	if err != nil {
 		t.Fatalf("failed to create docs dir: %v", err)
 	}
 
 	file1 := filepath.Join(docsDir, "first.md")
-	err = os.WriteFile(file1, []byte("# First Document\nThis is the content of the first file."), 0644)
+	err = os.WriteFile(file1, []byte("# First Document\nThis is the content of the first file."), 0600)
 	if err != nil {
 		t.Fatalf("failed to write first.md: %v", err)
 	}
 
 	file2 := filepath.Join(docsDir, "second.txt")
-	err = os.WriteFile(file2, []byte("Second document contains simple plain text data."), 0644)
+	err = os.WriteFile(file2, []byte("Second document contains simple plain text data."), 0600)
 	if err != nil {
 		t.Fatalf("failed to write second.txt: %v", err)
 	}
@@ -755,7 +843,7 @@ func TestIndexDirectory(t *testing.T) {
 
 	// 3. Test update (incremental change)
 	time.Sleep(10 * time.Millisecond) // Ensure file modification times would update if checked
-	err = os.WriteFile(file1, []byte("# First Document\nThis is updated content of the first file with extra information."), 0644)
+	err = os.WriteFile(file1, []byte("# First Document\nThis is updated content of the first file with extra information."), 0600)
 	if err != nil {
 		t.Fatalf("failed to update first.md: %v", err)
 	}
@@ -962,14 +1050,22 @@ func TestIndexWithUnavailableBackendMarksChunksPending(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 	t.Setenv("HOME", tempDir)
 
 	dbClient, err := db.Open()
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	embedder := &fallbackEmbedder{dim: 768}
 	source := "doc.md"
@@ -1024,18 +1120,26 @@ func TestReembedPendingRepairsUnavailableBackendIndex(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove temp dir: %v", err)
+		}
+	})
 	t.Setenv("HOME", tempDir)
 
 	dbClient, err := db.Open()
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
-	defer dbClient.Close()
+	t.Cleanup(func() {
+		if err := dbClient.Close(); err != nil {
+			t.Errorf("close database: %v", err)
+		}
+	})
 
 	source := filepath.Join(tempDir, "doc.md")
 	body := strings.Repeat("semantic search needs real embeddings ", 200)
-	if err := os.WriteFile(source, []byte(body), 0644); err != nil {
+	if err := os.WriteFile(source, []byte(body), 0600); err != nil {
 		t.Fatalf("write doc: %v", err)
 	}
 

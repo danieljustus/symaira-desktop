@@ -45,12 +45,12 @@ func setupDB(t testing.TB) *DB {
 
 	d, err := Open()
 	if err != nil {
-		os.RemoveAll(tempDir)
+		_ = os.RemoveAll(tempDir)
 		t.Fatalf("failed to open db: %v", err)
 	}
 	t.Cleanup(func() {
-		d.Close()
-		os.RemoveAll(tempDir)
+		_ = d.Close()
+		_ = os.RemoveAll(tempDir)
 	})
 	return d
 }
@@ -553,7 +553,7 @@ func TestPersistedVectorIndexLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 	t.Setenv("HOME", tempDir)
 
 	db1, err := Open()
@@ -607,13 +607,13 @@ func TestPersistedVectorIndexLoad(t *testing.T) {
 		t.Fatal("expected index to be built and persisted")
 	}
 	bucketCount := db1.vectorIndex.BucketCount()
-	db1.Close()
+	_ = db1.Close()
 
 	db2, err := Open()
 	if err != nil {
 		t.Fatalf("failed to open db2: %v", err)
 	}
-	defer db2.Close()
+	defer func() { _ = db2.Close() }()
 
 	if db2.vectorIndex == nil || !db2.vectorIndex.IsReady() {
 		t.Fatal("expected persisted index to be loaded on open")
@@ -636,7 +636,7 @@ func TestPersistedVectorIndexStaleDetection(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 	t.Setenv("HOME", tempDir)
 
 	db1, err := Open()
@@ -686,7 +686,7 @@ func TestPersistedVectorIndexStaleDetection(t *testing.T) {
 	if _, err := db1.SearchVector(query, 5); err != nil {
 		t.Fatalf("SearchVector: %v", err)
 	}
-	db1.Close()
+	_ = db1.Close()
 
 	db2, err := Open()
 	if err != nil {
@@ -706,13 +706,13 @@ func TestPersistedVectorIndexStaleDetection(t *testing.T) {
 	if err := db2.SaveChunks(extra); err != nil {
 		t.Fatalf("SaveChunks extra: %v", err)
 	}
-	db2.Close()
+	_ = db2.Close()
 
 	db3, err := Open()
 	if err != nil {
 		t.Fatalf("failed to open db3: %v", err)
 	}
-	defer db3.Close()
+	defer func() { _ = db3.Close() }()
 
 	if db3.vectorIndex != nil && db3.vectorIndex.IsReady() {
 		t.Fatal("expected persisted index to be discarded because generation changed")
@@ -739,14 +739,14 @@ func TestSearchVectorDetectsExternalWrites(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 	t.Setenv("HOME", tempDir)
 
 	db1, err := Open()
 	if err != nil {
 		t.Fatalf("failed to open db1: %v", err)
 	}
-	defer db1.Close()
+	defer func() { _ = db1.Close() }()
 
 	docPath1 := filepath.Join(t.TempDir(), "external1.md")
 	if err := db1.SaveDocument(&Document{Path: docPath1, Hash: "ext1", UpdatedAt: time.Now()}); err != nil {
@@ -800,7 +800,7 @@ func TestSearchVectorDetectsExternalWrites(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open db2: %v", err)
 	}
-	defer db2.Close()
+	defer func() { _ = db2.Close() }()
 
 	docPath2 := filepath.Join(t.TempDir(), "external2.md")
 	if err := db2.SaveDocument(&Document{Path: docPath2, Hash: "ext2", UpdatedAt: time.Now()}); err != nil {

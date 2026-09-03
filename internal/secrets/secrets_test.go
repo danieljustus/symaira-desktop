@@ -11,7 +11,7 @@ import (
 func writeMockTool(t *testing.T, dir, name, script string) {
 	t.Helper()
 	path := filepath.Join(dir, name)
-	if err := os.WriteFile(path, []byte(script), 0755); err != nil {
+	if err := os.WriteFile(path, []byte(script), 0755); err != nil { //nolint:gosec // G306: test fixture must be executable.
 		t.Fatal(err)
 	}
 }
@@ -19,16 +19,14 @@ func writeMockTool(t *testing.T, dir, name, script string) {
 func withMockPath(t *testing.T, dir string) {
 	t.Helper()
 	old := os.Getenv("PATH")
-	os.Setenv("PATH", dir+string(os.PathListSeparator)+old)
-	t.Cleanup(func() { os.Setenv("PATH", old) })
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+old)
 	compose.ResetCache()
 	t.Cleanup(compose.ResetCache)
 }
 
 func TestResolveKey(t *testing.T) {
 	// Set an env var
-	os.Setenv("SYMDESK_LLM_API_KEY", "test-env-key")
-	defer os.Unsetenv("SYMDESK_LLM_API_KEY")
+	t.Setenv("SYMDESK_LLM_API_KEY", "test-env-key")
 
 	// Empty ref should fallback to env var
 	key := ResolveKey("")
@@ -44,8 +42,7 @@ func TestResolveKey(t *testing.T) {
 }
 
 func TestSource(t *testing.T) {
-	os.Setenv("SYMDESK_LLM_API_KEY", "test-env-key")
-	defer os.Unsetenv("SYMDESK_LLM_API_KEY")
+	t.Setenv("SYMDESK_LLM_API_KEY", "test-env-key")
 
 	src := Source("")
 	if src != "config/env" {
@@ -85,13 +82,7 @@ exit 1
 	withMockPath(t, dir)
 
 	// Ensure no env var gets in the way
-	oldEnv := os.Getenv("SYMDESK_LLM_API_KEY")
-	os.Unsetenv("SYMDESK_LLM_API_KEY")
-	defer func() {
-		if oldEnv != "" {
-			os.Setenv("SYMDESK_LLM_API_KEY", oldEnv)
-		}
-	}()
+	t.Setenv("SYMDESK_LLM_API_KEY", "")
 
 	key := ResolveKey("")
 	if key != "keychain-secret" {
@@ -111,13 +102,7 @@ exit 1
 `)
 	withMockPath(t, dir)
 
-	oldEnv := os.Getenv("SYMDESK_LLM_API_KEY")
-	os.Unsetenv("SYMDESK_LLM_API_KEY")
-	defer func() {
-		if oldEnv != "" {
-			os.Setenv("SYMDESK_LLM_API_KEY", oldEnv)
-		}
-	}()
+	t.Setenv("SYMDESK_LLM_API_KEY", "")
 
 	key := ResolveKey("")
 	if key != "" {
@@ -179,9 +164,7 @@ exit 1
 // third party.
 func TestResolveKeySymvaultAbsent(t *testing.T) {
 	dir := t.TempDir()
-	old := os.Getenv("PATH")
-	os.Setenv("PATH", dir)
-	t.Cleanup(func() { os.Setenv("PATH", old) })
+	t.Setenv("PATH", dir)
 	compose.ResetCache()
 	t.Cleanup(compose.ResetCache)
 
@@ -193,9 +176,7 @@ func TestResolveKeySymvaultAbsent(t *testing.T) {
 
 func TestSourceSymvaultAbsent(t *testing.T) {
 	dir := t.TempDir()
-	old := os.Getenv("PATH")
-	_ = os.Setenv("PATH", dir)
-	t.Cleanup(func() { _ = os.Setenv("PATH", old) })
+	t.Setenv("PATH", dir)
 	compose.ResetCache()
 	t.Cleanup(compose.ResetCache)
 

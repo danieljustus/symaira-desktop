@@ -88,7 +88,7 @@ func ctxErr(ctx context.Context) error {
 }
 
 func readHTML(path string) (string, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: path is intentionally supplied by the package API
 	if err != nil {
 		return "", fmt.Errorf("read html: %w", err)
 	}
@@ -121,7 +121,7 @@ func htmlToText(s string) string {
 }
 
 func readRTF(path string) (string, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: path is intentionally supplied by the package API
 	if err != nil {
 		return "", fmt.Errorf("read rtf: %w", err)
 	}
@@ -757,7 +757,7 @@ func collectXMLText(dec *xml.Decoder, endLocal string) (string, error) {
 }
 
 func readEML(path string) (string, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: path is intentionally supplied by the package API
 	if err != nil {
 		return "", fmt.Errorf("read eml: %w", err)
 	}

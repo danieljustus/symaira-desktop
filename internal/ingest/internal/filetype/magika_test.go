@@ -16,7 +16,7 @@ func writeFakeMagika(t *testing.T, script string) {
 	t.Helper()
 	dir := t.TempDir()
 	bin := filepath.Join(dir, "magika")
-	if err := os.WriteFile(bin, []byte("#!/bin/sh\n"+script), 0o755); err != nil {
+	if err := os.WriteFile(bin, []byte("#!/bin/sh\n"+script), 0o700); err != nil { //nolint:gosec // G306: test helper must be executable; mode is owner-only 0700
 		t.Fatalf("write fake magika: %v", err)
 	}
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))

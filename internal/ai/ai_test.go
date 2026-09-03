@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,6 +14,13 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
 )
+
+func writeTestResponse(t *testing.T, w io.Writer, data string) {
+	t.Helper()
+	if _, err := io.WriteString(w, data); err != nil {
+		t.Errorf("write test response: %v", err)
+	}
+}
 
 func collect(query string, docs []map[string]interface{}) string {
 	cfg, _ := config.Load()
@@ -47,8 +55,8 @@ func TestAskStreamsFromOllama(t *testing.T) {
 		if r.URL.Path != "/api/generate" {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
-		fmt.Fprintln(w, `{"response":"Hallo ","done":false}`)
-		fmt.Fprintln(w, `{"response":"Welt","done":true}`)
+		writeTestResponse(t, w, "{\"response\":\"Hallo \",\"done\":false}\n")
+		writeTestResponse(t, w, "{\"response\":\"Welt\",\"done\":true}\n")
 	}))
 	defer srv.Close()
 
@@ -62,7 +70,7 @@ func TestAskStreamsFromOllama(t *testing.T) {
 func TestAskReportsOllamaError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintln(w, `{"error":"model not found"}`)
+		writeTestResponse(t, w, "{\"error\":\"model not found\"}\n")
 	}))
 	defer srv.Close()
 
@@ -117,8 +125,8 @@ func TestTransformStreamsFromOllama(t *testing.T) {
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		gotPrompt = body.Prompt
-		fmt.Fprintln(w, `{"response":"Kurz","done":false}`)
-		fmt.Fprintln(w, `{"response":"fassung","done":true}`)
+		writeTestResponse(t, w, "{\"response\":\"Kurz\",\"done\":false}\n")
+		writeTestResponse(t, w, "{\"response\":\"fassung\",\"done\":true}\n")
 	}))
 	defer srv.Close()
 
@@ -166,8 +174,8 @@ func TestAskStreamsFromAnthropicProvider(t *testing.T) {
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		gotModel = body.Model
 		w.Header().Set("Content-Type", "text/event-stream")
-		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "Antwort"}}`)
-		fmt.Fprintln(w, `data: [DONE]`)
+		writeTestResponse(t, w, "data: {\"type\": \"content_block_delta\", \"delta\": {\"text\": \"Antwort\"}}\n")
+		writeTestResponse(t, w, "data: [DONE]\n")
 	}))
 	defer srv.Close()
 
@@ -217,8 +225,8 @@ func TestTransformStreamsFromAnthropicProvider(t *testing.T) {
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		gotModel = body.Model
 		w.Header().Set("Content-Type", "text/event-stream")
-		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "Kurz"}}`)
-		fmt.Fprintln(w, `data: [DONE]`)
+		writeTestResponse(t, w, "data: {\"type\": \"content_block_delta\", \"delta\": {\"text\": \"Kurz\"}}\n")
+		writeTestResponse(t, w, "data: [DONE]\n")
 	}))
 	defer srv.Close()
 
@@ -254,12 +262,12 @@ func TestStreamAnthropicSuccess(t *testing.T) {
 		if r.Header.Get("anthropic-version") != "2023-06-01" {
 			t.Errorf("expected version header '2023-06-01', got %q", r.Header.Get("anthropic-version"))
 		}
-		fmt.Fprintln(w, `data: {"type": "message_start"}`)
-		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "Hello"}}`)
-		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"invalid_delta_field": true}}`)
-		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "!"}}`)
-		fmt.Fprintln(w, `not data line`)
-		fmt.Fprintln(w, `data: [DONE]`)
+		writeTestResponse(t, w, "data: {\"type\": \"message_start\"}\n")
+		writeTestResponse(t, w, "data: {\"type\": \"content_block_delta\", \"delta\": {\"text\": \"Hello\"}}\n")
+		writeTestResponse(t, w, "data: {\"type\": \"content_block_delta\", \"delta\": {\"invalid_delta_field\": true}}\n")
+		writeTestResponse(t, w, "data: {\"type\": \"content_block_delta\", \"delta\": {\"text\": \"!\"}}\n")
+		writeTestResponse(t, w, "not data line\n")
+		writeTestResponse(t, w, "data: [DONE]\n")
 	}))
 	defer srv.Close()
 
@@ -293,8 +301,8 @@ func TestStreamAnthropicDefaultModel(t *testing.T) {
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		gotModel = body.Model
 		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = fmt.Fprintln(w, `data: {"type":"message_start","message":{"role":"assistant"}}`)
-		_, _ = fmt.Fprintln(w, `data: [DONE]`)
+		writeTestResponse(t, w, "data: {\"type\":\"message_start\",\"message\":{\"role\":\"assistant\"}}\n")
+		writeTestResponse(t, w, "data: [DONE]\n")
 	}))
 	defer srv.Close()
 
@@ -325,8 +333,8 @@ func TestStreamAnthropicLargeSSELine(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to marshal large event: %v", err)
 		}
-		fmt.Fprintf(w, "data: %s\n", event)
-		fmt.Fprintln(w, `data: [DONE]`)
+		writeTestResponse(t, w, fmt.Sprintf("data: %s\n", event))
+		writeTestResponse(t, w, "data: [DONE]\n")
 	}))
 	defer srv.Close()
 
@@ -353,7 +361,7 @@ func TestStreamAnthropicLargeSSELine(t *testing.T) {
 func TestStreamAnthropicHTTPError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error": {"type": "invalid_request_error", "message": "bad api key"}}`))
+		writeTestResponse(t, w, `{"error": {"type": "invalid_request_error", "message": "bad api key"}}`)
 	}))
 	defer srv.Close()
 
@@ -373,9 +381,9 @@ func TestStreamAnthropicHTTPError(t *testing.T) {
 
 func TestStreamAnthropicMalformedEvent(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, `data: {invalid json`)
-		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "recovered"}}`)
-		fmt.Fprintln(w, `data: [DONE]`)
+		writeTestResponse(t, w, "data: {invalid json\n")
+		writeTestResponse(t, w, "data: {\"type\": \"content_block_delta\", \"delta\": {\"text\": \"recovered\"}}\n")
+		writeTestResponse(t, w, "data: [DONE]\n")
 	}))
 	defer srv.Close()
 
@@ -403,7 +411,7 @@ func TestStreamAnthropicMalformedEvent(t *testing.T) {
 func TestStreamAnthropicCancellation(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
-		fmt.Fprintln(w, `data: {"type": "content_block_delta", "delta": {"text": "first"}}`)
+		writeTestResponse(t, w, "data: {\"type\": \"content_block_delta\", \"delta\": {\"text\": \"first\"}}\n")
 		w.(http.Flusher).Flush()
 
 		select {

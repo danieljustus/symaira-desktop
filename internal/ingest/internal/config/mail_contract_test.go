@@ -42,7 +42,7 @@ imap_poll_interval = "5m"
 	if err := os.WriteFile(path, []byte(original), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	accounts := []IMAPAccount{{
+	accounts := []IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 		Host:           "imap.example.com",
 		Port:           993,
 		Username:       "daniel",
@@ -56,7 +56,7 @@ imap_poll_interval = "5m"
 	if err := WriteMailConfig(path, accounts, "10m"); err != nil {
 		t.Fatalf("WriteMailConfig: %v", err)
 	}
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func TestReadMailConfigRejectsMalformedTOML(t *testing.T) {
 }
 
 func TestValidateMailAccountsRejectsInvalidActionAndMissingMoveTarget(t *testing.T) {
-	report := ValidateMailAccounts([]IMAPAccount{{
+	report := ValidateMailAccounts([]IMAPAccount{{ //nolint:gosec // G101: test fixture uses synthetic secret-reference values to exercise validation
 		Host:           "imap.example.com",
 		Port:           993,
 		Username:       "daniel",

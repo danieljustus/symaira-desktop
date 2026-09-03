@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -79,11 +80,15 @@ func Open(path string) (*Store, error) {
 	}
 	db.SetMaxOpenConns(1)
 	if _, err := db.Exec(`PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL;`); err != nil {
-		db.Close()
+		if closeErr := db.Close(); closeErr != nil {
+			return nil, fmt.Errorf("configure store: %w (close store: %v)", err, closeErr)
+		}
 		return nil, fmt.Errorf("configure store: %w", err)
 	}
 	if err := sqlitekit.Migrate(db, migrationsFS); err != nil {
-		db.Close()
+		if closeErr := db.Close(); closeErr != nil {
+			return nil, fmt.Errorf("migrate store: %w (close store: %v)", err, closeErr)
+		}
 		return nil, fmt.Errorf("migrate store: %w", err)
 	}
 	return &Store{db: db}, nil
@@ -138,7 +143,11 @@ func (s *Store) ListDocuments(ctx context.Context) ([]*Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("query documents: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close store rows: %v", err)
+		}
+	}()
 
 	var documents []*Document
 	for rows.Next() {
@@ -372,7 +381,11 @@ func (s *Store) EnqueueReprocessJob(ctx context.Context, docID int64) (*Job, boo
 	if err != nil {
 		return nil, false, err
 	}
-	defer tx.Rollback()
+	defer func() {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			log.Printf("rollback store transaction: %v", err)
+		}
+	}()
 
 	var job Job
 	var lastErr sql.NullString
@@ -624,7 +637,11 @@ func (s *Store) CompleteJob(ctx context.Context, jobID int64) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			log.Printf("rollback store transaction: %v", err)
+		}
+	}()
 
 	var docID int64
 	err = tx.QueryRowContext(ctx, `UPDATE jobs SET status = 'completed', updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING document_id`, jobID).Scan(&docID)
@@ -646,7 +663,11 @@ func (s *Store) FailJob(ctx context.Context, jobID int64, errStr string) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			log.Printf("rollback store transaction: %v", err)
+		}
+	}()
 
 	var docID int64
 	var attempts int
@@ -712,7 +733,11 @@ func (s *Store) ListJobsPage(ctx context.Context, vaultRoot string, limit, offse
 	if err != nil {
 		return nil, 0, fmt.Errorf("query jobs: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close store rows: %v", err)
+		}
+	}()
 
 	var jobs []*Job
 	for rows.Next() {
@@ -743,7 +768,11 @@ func (s *Store) RetryJob(ctx context.Context, jobID int64) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			log.Printf("rollback store transaction: %v", err)
+		}
+	}()
 
 	var docID int64
 	err = tx.QueryRowContext(ctx,
@@ -809,7 +838,11 @@ func (s *Store) ListRules(ctx context.Context) ([]*ClassificationRule, error) {
 	if err != nil {
 		return nil, fmt.Errorf("query rules: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close store rows: %v", err)
+		}
+	}()
 
 	var rules []*ClassificationRule
 	for rows.Next() {
@@ -990,7 +1023,11 @@ func (s *Store) ListPaperlessImportState(ctx context.Context, baseURL, statusFil
 	if err != nil {
 		return nil, fmt.Errorf("list paperless import state: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close store rows: %v", err)
+		}
+	}()
 
 	var states []*PaperlessImportState
 	for rows.Next() {
@@ -1095,7 +1132,11 @@ func (s *Store) ListExtractions(ctx context.Context, documentID int64) ([]annota
 	if err != nil {
 		return nil, fmt.Errorf("query extractions: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close store rows: %v", err)
+		}
+	}()
 
 	var result []annotate.Extraction
 	for rows.Next() {

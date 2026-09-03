@@ -24,6 +24,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/engine"
+	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
 
 // LocationAnchor is re-exported so service and transport consumers do not
@@ -66,10 +67,28 @@ type Client struct {
 	db       *db.DB
 	embedder engine.Embedder
 	expand   engine.ExpandConfig
+	// indexPath is the resolved database path this client actually opened —
+	// the legacy shared path, an explicit cfg.IndexPath override, or a
+	// per-vault path from OpenForVault. Status() reports this directly
+	// instead of recomputing IndexLocation(), which only knows the legacy
+	// (vault-agnostic) resolution and would otherwise misreport a per-vault
+	// client's location (#756).
+	indexPath string
+	// vaultScoped is true when this client was opened via OpenForVault at
+	// its computed per-vault path (not a plain Open or an explicit
+	// cfg.IndexPath override), and drives Status().IndexScope (#756).
+	vaultScoped bool
 }
 
 // Open opens the local index and prepares the configured embedding backend.
 // The caller must Close the returned client.
+//
+// This always resolves to the legacy shared index (or the cfg.IndexPath
+// override): it has no vault to scope to. Callers that know their vault
+// should call OpenForVault instead, which is what service.Service does; Open
+// remains for standalone maintenance tooling with no vault context (index
+// backup/restore/relocate) and as the fallback openActive uses when no vault
+// is active (#756).
 func Open() (*Client, error) {
 	cfg, err := config.Load()
 	if err != nil {
@@ -79,17 +98,64 @@ func Open() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	return openClientAt(cfg, indexPath)
+}
+
+// OpenForVault opens the retrieval index scoped to vaultRoot:
+// <SidecarRoot>/<hash>/retrieval.db, right next to the FTS sidecar's own
+// <hash>/sidecar.db for the same vault (see vaultIndexPath). cfg.IndexPath,
+// when set, remains an explicit override and takes priority over the
+// computed per-vault default, exactly as it did for the legacy shared index.
+//
+// On first open of the computed per-vault path, a pre-existing legacy shared
+// index (db.DefaultPath()) is moved into it, so upgrading users keep their
+// already-built index instead of starting over (#756).
+func OpenForVault(vaultRoot string) (*Client, error) {
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, err
+	}
+	if cfg != nil && strings.TrimSpace(cfg.IndexPath) != "" {
+		return Open()
+	}
+	indexPath, err := vaultIndexPath(vaultRoot)
+	if err != nil {
+		return nil, err
+	}
+	if err := migrateLegacyIndex(indexPath); err != nil {
+		return nil, fmt.Errorf("migrate legacy retrieval index: %w", err)
+	}
+	client, err := openClientAt(cfg, indexPath)
+	if err != nil {
+		return nil, err
+	}
+	client.vaultScoped = true
+	return client, nil
+}
+
+// openActive is used only by the package-level one-shot helpers. Callers
+// with vault context, such as service.Service, own a Client opened with
+// OpenForVault instead of sharing mutable package state.
+func openActive() (*Client, error) {
+	return Open()
+}
+
+func openClientAt(cfg *config.Config, indexPath string) (*Client, error) {
 	dbClient, err := db.OpenAt(indexPath)
 	if err != nil {
 		return nil, err
 	}
 	return &Client{
-		db:       dbClient,
-		embedder: engine.NewEmbeddingsGeneratorWithOllamaConfig(cfg.OllamaConfig()),
-		expand:   cfg.ExpandConfig(),
+		db:        dbClient,
+		embedder:  engine.NewEmbeddingsGeneratorWithOllamaConfig(cfg.OllamaConfig()),
+		expand:    cfg.ExpandConfig(),
+		indexPath: indexPath,
 	}, nil
 }
 
+// configuredIndexPath resolves the legacy shared index location: the
+// cfg.IndexPath override when set, otherwise db.DefaultPath(). It has no
+// vault context; see vaultIndexPath for the per-vault equivalent.
 func configuredIndexPath(cfg *config.Config) (string, error) {
 	if cfg != nil && strings.TrimSpace(cfg.IndexPath) != "" {
 		path, err := filepath.Abs(cfg.IndexPath)
@@ -99,6 +165,70 @@ func configuredIndexPath(cfg *config.Config) (string, error) {
 		return filepath.Clean(path), nil
 	}
 	return db.DefaultPath()
+}
+
+// vaultIndexPath returns <SidecarRoot>/<hash>/retrieval.db for vaultRoot,
+// colocated with the sidecar database through the sidecar package's canonical
+// per-vault directory resolver.
+func vaultIndexPath(vaultRoot string) (string, error) {
+	dir, err := sidecar.VaultDir(vaultRoot)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "retrieval.db"), nil
+}
+
+// migrateLegacyIndex performs the one-time upgrade from the absorbed
+// retrieval store's legacy shared path. It returns an error for a failed move
+// instead of opening a fresh database and silently losing the old index.
+func migrateLegacyIndex(newPath string) error {
+	if _, err := os.Stat(newPath); err == nil || !os.IsNotExist(err) {
+		// Already migrated, already has data, or unreadable: leave it alone.
+		return nil
+	}
+	legacyPath, err := db.DefaultPath()
+	if err != nil {
+		return err
+	}
+	if filepath.Clean(legacyPath) == filepath.Clean(newPath) {
+		return nil
+	}
+	info, err := os.Stat(legacyPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("legacy retrieval index is not a regular file: %s", legacyPath)
+	}
+	if err := copyIndexFile(legacyPath, newPath); err != nil {
+		return err
+	}
+	if err := os.Remove(legacyPath); err != nil {
+		if cleanupErr := os.Remove(newPath); cleanupErr != nil {
+			return fmt.Errorf("remove migrated legacy retrieval index: %w (remove incomplete destination: %v)", err, cleanupErr)
+		}
+		return fmt.Errorf("remove migrated legacy retrieval index: %w", err)
+	}
+	slog.Info("migrated legacy retrieval index to per-vault location", "legacy_path", legacyPath, "new_path", newPath)
+	return nil
+}
+
+// IndexPathForVault returns the retrieval index path OpenForVault would use
+// for vaultRoot, without opening the database or migrating a legacy index.
+// It exists for reporting commands (`symdesk doctor`) that need the path
+// without a side-effecting open (#756).
+func IndexPathForVault(vaultRoot string) (string, error) {
+	cfg, err := config.Load()
+	if err != nil {
+		return "", err
+	}
+	if cfg != nil && strings.TrimSpace(cfg.IndexPath) != "" {
+		return configuredIndexPath(cfg)
+	}
+	return vaultIndexPath(vaultRoot)
 }
 
 // Close releases the index handle.
@@ -208,7 +338,7 @@ func (c *Client) ReembedPending() (int, error) {
 // ReembedPending is the package-level entry point for the forced re-embed
 // repair path; see Client.ReembedPending.
 func ReembedPending() (int, error) {
-	c, err := Open()
+	c, err := openActive()
 	if err != nil {
 		return 0, err
 	}
@@ -226,7 +356,7 @@ func CountPendingChunks() (int, error) {
 // defaultCountPendingChunks is the production implementation behind
 // CountPendingChunksFunc; it opens the index and reads the pending count.
 func defaultCountPendingChunks() (int, error) {
-	c, err := Open()
+	c, err := openActive()
 	if err != nil {
 		return 0, err
 	}
@@ -338,8 +468,11 @@ type Status struct {
 	// unlike the live backend probe above.
 	PendingChunkCount    int  `json:"pending_chunk_count"`
 	MixedEmbeddingSpaces bool `json:"mixed_embedding_spaces"`
-	// IndexScope is explicit because the retrieval database is shared across
-	// vaults; document counts must not be read as active-vault counts.
+	// IndexScope is explicit because a client opened via the legacy Open
+	// resolves to an index shared across vaults ("shared"); document counts
+	// there must not be read as active-vault counts. A client opened via
+	// OpenForVault reports "vault" since its index is exclusive to that one
+	// vault (#756).
 	IndexScope string `json:"index_scope"`
 	// VaultDocumentCount is populated by the CLI when an active vault can be
 	// enumerated. It is a comparison figure for the shared index.
@@ -364,9 +497,9 @@ func (c *Client) Status() (*Status, error) {
 		return nil, err
 	}
 	probe := c.embedder.GenerateVectorNoRetryWithModel("symdesk retrieval status probe")
-	location, err := IndexLocation()
-	if err != nil {
-		return nil, err
+	scope := "shared"
+	if c.vaultScoped {
+		scope = "vault"
 	}
 	status := &Status{
 		DocumentCount:        stats.DocumentCount,
@@ -376,8 +509,8 @@ func (c *Client) Status() (*Status, error) {
 		BackendAvailable:     probe.Model != engine.LocalHashModelName,
 		PendingChunkCount:    pending,
 		MixedEmbeddingSpaces: len(spaces) > 1,
-		IndexScope:           "shared",
-		IndexLocation:        location,
+		IndexScope:           scope,
+		IndexLocation:        c.indexPath,
 	}
 	if !stats.LastIndexedAt.IsZero() {
 		status.LastIndexedAt = stats.LastIndexedAt.UTC().Format(time.RFC3339)
@@ -386,7 +519,7 @@ func (c *Client) Status() (*Status, error) {
 }
 
 func defaultIndex(source, body string) error {
-	c, err := Open()
+	c, err := openActive()
 	if err != nil {
 		return err
 	}
@@ -395,7 +528,7 @@ func defaultIndex(source, body string) error {
 }
 
 func defaultDelete(path string) error {
-	c, err := Open()
+	c, err := openActive()
 	if err != nil {
 		return err
 	}
@@ -404,7 +537,7 @@ func defaultDelete(path string) error {
 }
 
 func defaultSearch(query string, limit int) ([]Result, error) {
-	c, err := Open()
+	c, err := openActive()
 	if err != nil {
 		return nil, err
 	}
@@ -413,7 +546,7 @@ func defaultSearch(query string, limit int) ([]Result, error) {
 }
 
 func defaultStatus() (*Status, error) {
-	c, err := Open()
+	c, err := openActive()
 	if err != nil {
 		return nil, err
 	}
@@ -446,7 +579,7 @@ var (
 // metadata included in the hybrid index. Errors are returned so callers that
 // already maintain an authoritative sidecar can log them as best effort.
 func IndexWithMetadata(path, body string, metadata SearchMetadata) error {
-	c, err := Open()
+	c, err := openActive()
 	if err != nil {
 		return err
 	}
@@ -458,7 +591,7 @@ func IndexWithMetadata(path, body string, metadata SearchMetadata) error {
 // client. Unlike Index, errors are returned because registration callers need
 // to report a failed initial pass.
 func IndexDirectory(dirPath string) error {
-	c, err := Open()
+	c, err := openActive()
 	if err != nil {
 		return err
 	}
@@ -469,7 +602,7 @@ func IndexDirectory(dirPath string) error {
 // RemoveDirectory removes indexed documents under dirPath and leaves the
 // external folder untouched.
 func RemoveDirectory(dirPath string) (int, error) {
-	c, err := Open()
+	c, err := openActive()
 	if err != nil {
 		return 0, err
 	}
@@ -479,7 +612,7 @@ func RemoveDirectory(dirPath string) (int, error) {
 
 // WatchDirectory watches one external folder until ctx is cancelled.
 func WatchDirectory(ctx context.Context, dirPath string) error {
-	c, err := Open()
+	c, err := openActive()
 	if err != nil {
 		return err
 	}
@@ -508,7 +641,7 @@ func Delete(path string) {
 // Errors are returned so callers can distinguish an unavailable shared index
 // from a valid empty result.
 func SearchInPaths(query string, paths []string, limit int) ([]Result, error) {
-	c, err := Open()
+	c, err := openActive()
 	if err != nil {
 		return nil, err
 	}

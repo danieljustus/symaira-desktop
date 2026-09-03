@@ -565,30 +565,38 @@ func (p *Pipeline) processSource(ctx context.Context, source, hash string, kind 
 }
 
 func hashFile(path string) (string, error) {
-	f, err := os.Open(path)
+	f, err := os.Open(path) //nolint:gosec // callers provide the intended ingest source path
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
 
 	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return "", err
+	_, copyErr := io.Copy(h, f)
+	closeErr := f.Close()
+	if copyErr != nil {
+		return "", copyErr
+	}
+	if closeErr != nil {
+		return "", fmt.Errorf("close source: %w", closeErr)
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func atomicCopy(src, dst string) error {
+func atomicCopy(src, dst string) (err error) {
 	// If it already exists, do nothing (no conflicting copies)
-	if _, err := os.Stat(dst); err == nil {
+	if _, statErr := os.Stat(dst); statErr == nil {
 		return nil
 	}
 
-	srcFile, err := os.Open(src)
+	srcFile, err := os.Open(src) //nolint:gosec // source is an ingest-owned archive path
 	if err != nil {
 		return err
 	}
-	defer srcFile.Close()
+	defer func() {
+		if closeErr := srcFile.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("close source: %w", closeErr)
+		}
+	}()
 
 	dstDir := filepath.Dir(dst)
 	if err := os.MkdirAll(dstDir, 0o700); err != nil {
@@ -602,9 +610,13 @@ func atomicCopy(src, dst string) error {
 	tmpName := tmpFile.Name()
 	defer func() {
 		if tmpFile != nil {
-			tmpFile.Close()
+			if closeErr := tmpFile.Close(); closeErr != nil && err == nil {
+				err = fmt.Errorf("close temporary archive: %w", closeErr)
+			}
 		}
-		os.Remove(tmpName)
+		if removeErr := os.Remove(tmpName); removeErr != nil && !errors.Is(removeErr, os.ErrNotExist) && err == nil {
+			err = fmt.Errorf("remove temporary archive: %w", removeErr)
+		}
 	}()
 
 	if _, err := io.Copy(tmpFile, srcFile); err != nil {

@@ -33,7 +33,7 @@ func TestStressIngest(t *testing.T) {
 	for i := 0; i < 800; i++ {
 		path := filepath.Join(dir, fmt.Sprintf("doc_%d.txt", i))
 		content := fmt.Sprintf("content for unique document %d", i)
-		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 			t.Fatal(err)
 		}
 		docs = append(docs, docInfo{path: path, content: content})
@@ -43,7 +43,7 @@ func TestStressIngest(t *testing.T) {
 	for i := 0; i < 200; i++ {
 		path := filepath.Join(dir, fmt.Sprintf("dup_%d.txt", i))
 		content := fmt.Sprintf("content for unique document %d", i)
-		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 			t.Fatal(err)
 		}
 		docs = append(docs, docInfo{path: path, content: content})

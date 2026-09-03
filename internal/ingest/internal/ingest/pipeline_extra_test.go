@@ -46,11 +46,13 @@ func TestCloneIngestOptions_NilTags(t *testing.T) {
 func TestReprocess_MissingArchivePath(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "db.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 	ctx := context.Background()
 
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.txt", "hash1", "text/plain")
-	s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.txt.md", "", "", nil, "", "")
+	if err := s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.txt.md", "", "", nil, "", ""); err != nil {
+		t.Fatal(err)
+	}
 
 	vault := filepath.Join(dir, "vault")
 	p := &Pipeline{
@@ -67,11 +69,13 @@ func TestReprocess_MissingArchivePath(t *testing.T) {
 func TestReprocess_MissingVaultPath(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "db.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 	ctx := context.Background()
 
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.txt", "hash2", "text/plain")
-	s.SetVaultAndArchivePath(ctx, doc.ID, "", "/archive/doc.txt", "", nil, "", "")
+	if err := s.SetVaultAndArchivePath(ctx, doc.ID, "", "/archive/doc.txt", "", nil, "", ""); err != nil {
+		t.Fatal(err)
+	}
 
 	p := &Pipeline{
 		Store:  s,
@@ -87,7 +91,7 @@ func TestReprocess_MissingVaultPath(t *testing.T) {
 func TestReprocess_NonexistentDocument(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "db.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	p := &Pipeline{
 		Store:  s,
@@ -103,16 +107,22 @@ func TestReprocess_NonexistentDocument(t *testing.T) {
 func TestReprocess_SourceIsDirectory(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "db.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 	ctx := context.Background()
 
 	archiveDir := filepath.Join(dir, "archive")
-	os.MkdirAll(archiveDir, 0o700)
+	if err := os.MkdirAll(archiveDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
 	srcPath := filepath.Join(archiveDir, "doc.pdf")
-	os.WriteFile(srcPath, []byte("%PDF-1.4\n"), 0o600)
+	if err := os.WriteFile(srcPath, []byte("%PDF-1.4\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.pdf", "hash-dir", "application/pdf")
-	s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.pdf.md", archiveDir, "", nil, "", "")
+	if err := s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.pdf.md", archiveDir, "", nil, "", ""); err != nil {
+		t.Fatal(err)
+	}
 
 	p := &Pipeline{
 		Store:  s,
@@ -128,16 +138,22 @@ func TestReprocess_SourceIsDirectory(t *testing.T) {
 func TestReprocess_HashMismatch(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "db.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 	ctx := context.Background()
 
 	archiveDir := filepath.Join(dir, "archive")
-	os.MkdirAll(archiveDir, 0o700)
+	if err := os.MkdirAll(archiveDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
 	srcPath := filepath.Join(archiveDir, "doc.pdf")
-	os.WriteFile(srcPath, []byte("%PDF-1.4\ncontent\n"), 0o600)
+	if err := os.WriteFile(srcPath, []byte("%PDF-1.4\ncontent\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.pdf", "wrong-hash", "application/pdf")
-	s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.pdf.md", srcPath, "", nil, "", "")
+	if err := s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.pdf.md", srcPath, "", nil, "", ""); err != nil {
+		t.Fatal(err)
+	}
 
 	p := &Pipeline{
 		Store:  s,
@@ -153,24 +169,34 @@ func TestReprocess_HashMismatch(t *testing.T) {
 func TestReprocess_AlreadyRunning(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "db.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 	ctx := context.Background()
 
 	archiveDir := filepath.Join(dir, "archive")
-	os.MkdirAll(archiveDir, 0o700)
+	if err := os.MkdirAll(archiveDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
 	srcPath := filepath.Join(archiveDir, "doc.txt")
 	content := []byte("reprocess idempotency test content for hash match")
-	os.WriteFile(srcPath, content, 0o600)
+	if err := os.WriteFile(srcPath, content, 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	hash, _ := hashFile(srcPath)
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.txt", hash, "text/plain")
 
 	vaultDir := filepath.Join(dir, "vault")
-	os.MkdirAll(vaultDir, 0o700)
+	if err := os.MkdirAll(vaultDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
 	notePath := filepath.Join(vaultDir, "doc.txt.md")
-	os.WriteFile(notePath, []byte("---\nsource_path: /tmp/doc.txt\nsha256: "+hash+"\nmime: text/plain\ntags: []\ncategory: \"\"\narchive_path: "+srcPath+"\n---\n\nhello\n"), 0o600)
+	if err := os.WriteFile(notePath, []byte("---\nsource_path: /tmp/doc.txt\nsha256: "+hash+"\nmime: text/plain\ntags: []\ncategory: \"\"\narchive_path: "+srcPath+"\n---\n\nhello\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
-	s.SetVaultAndArchivePath(ctx, doc.ID, notePath, srcPath, "", nil, "", "")
+	if err := s.SetVaultAndArchivePath(ctx, doc.ID, notePath, srcPath, "", nil, "", ""); err != nil {
+		t.Fatal(err)
+	}
 
 	p := &Pipeline{
 		Store:  s,
@@ -197,24 +223,34 @@ func TestReprocess_AlreadyRunning(t *testing.T) {
 func TestReprocess_SuccessfulReprocess(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "db.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 	ctx := context.Background()
 
 	archiveDir := filepath.Join(dir, "archive")
-	os.MkdirAll(archiveDir, 0o700)
+	if err := os.MkdirAll(archiveDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
 	srcPath := filepath.Join(archiveDir, "doc.txt")
 	content := []byte("successful reprocess test content for hash match")
-	os.WriteFile(srcPath, content, 0o600)
+	if err := os.WriteFile(srcPath, content, 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	hash, _ := hashFile(srcPath)
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.txt", hash, "text/plain")
 
 	vaultDir := filepath.Join(dir, "vault")
-	os.MkdirAll(vaultDir, 0o700)
+	if err := os.MkdirAll(vaultDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
 	notePath := filepath.Join(vaultDir, "doc.txt.md")
-	os.WriteFile(notePath, []byte("---\nsource_path: /tmp/doc.txt\nsha256: "+hash+"\nmime: text/plain\ntags: []\ncategory: \"\"\narchive_path: "+srcPath+"\n---\n\nhello\n"), 0o600)
+	if err := os.WriteFile(notePath, []byte("---\nsource_path: /tmp/doc.txt\nsha256: "+hash+"\nmime: text/plain\ntags: []\ncategory: \"\"\narchive_path: "+srcPath+"\n---\n\nhello\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
-	s.SetVaultAndArchivePath(ctx, doc.ID, notePath, srcPath, "", nil, "", "")
+	if err := s.SetVaultAndArchivePath(ctx, doc.ID, notePath, srcPath, "", nil, "", ""); err != nil {
+		t.Fatal(err)
+	}
 
 	p := &Pipeline{
 		Store:  s,
@@ -239,24 +275,34 @@ func TestReprocess_SuccessfulReprocess(t *testing.T) {
 func TestProcessJob_ReprocessJobKind(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "db.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 	ctx := context.Background()
 
 	archiveDir := filepath.Join(dir, "archive")
-	os.MkdirAll(archiveDir, 0o700)
+	if err := os.MkdirAll(archiveDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
 	srcPath := filepath.Join(archiveDir, "doc.txt")
 	content := []byte("processJob reprocess test content for hash match")
-	os.WriteFile(srcPath, content, 0o600)
+	if err := os.WriteFile(srcPath, content, 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	hash, _ := hashFile(srcPath)
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.txt", hash, "text/plain")
 
 	vaultDir := filepath.Join(dir, "vault")
-	os.MkdirAll(vaultDir, 0o700)
+	if err := os.MkdirAll(vaultDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
 	notePath := filepath.Join(vaultDir, "doc.txt.md")
-	os.WriteFile(notePath, []byte("---\nsource_path: /tmp/doc.txt\nsha256: "+hash+"\nmime: text/plain\ntags: []\ncategory: \"\"\narchive_path: "+srcPath+"\n---\n\nhello\n"), 0o600)
+	if err := os.WriteFile(notePath, []byte("---\nsource_path: /tmp/doc.txt\nsha256: "+hash+"\nmime: text/plain\ntags: []\ncategory: \"\"\narchive_path: "+srcPath+"\n---\n\nhello\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
-	s.SetVaultAndArchivePath(ctx, doc.ID, notePath, srcPath, "", nil, "", "")
+	if err := s.SetVaultAndArchivePath(ctx, doc.ID, notePath, srcPath, "", nil, "", ""); err != nil {
+		t.Fatal(err)
+	}
 
 	p := &Pipeline{
 		Store:  s,
@@ -282,11 +328,13 @@ func TestProcessJob_ReprocessJobKind(t *testing.T) {
 func TestProcessJob_ReprocessJobKind_MissingArchive(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "db.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 	ctx := context.Background()
 
 	doc, _, _ := s.CreateOrGet(ctx, "/tmp/doc.txt", "hash-pj2", "text/plain")
-	s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.txt.md", "", "", nil, "", "")
+	if err := s.SetVaultAndArchivePath(ctx, doc.ID, "/vault/doc.txt.md", "", "", nil, "", ""); err != nil {
+		t.Fatal(err)
+	}
 
 	p := &Pipeline{Store: s, Writer: &writer.NoteWriter{Vault: filepath.Join(dir, "vault")}}
 
@@ -302,7 +350,9 @@ func TestProcessJob_ReprocessJobKind_MissingArchive(t *testing.T) {
 func TestExtractText_UnsupportedKind_NilEngine(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "scan.png")
-	os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644)
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	_, err := extractText(context.Background(), path, extract.KindPNG, nil)
 	if err == nil {
@@ -313,7 +363,9 @@ func TestExtractText_UnsupportedKind_NilEngine(t *testing.T) {
 func TestExtractText_UnsupportedKind_WithEngine(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "scan.png")
-	os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o644)
+	if err := os.WriteFile(path, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}, 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	res, err := extractText(context.Background(), path, extract.KindPNG, &fakeEngine{result: &extract.Result{Text: "ocr"}})
 	if err != nil {

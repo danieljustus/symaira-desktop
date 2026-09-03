@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/ai"
@@ -33,6 +34,14 @@ type Service struct {
 	ViewsMgr  *dbviews.Manager
 	History   *history.Store
 	Config    *config.Config
+
+	// retrievalClient is owned by this service instance. It is deliberately
+	// not a package-global active-vault setting: multiple vault services may
+	// coexist in one process without changing each other's index. The client
+	// is opened lazily because most service operations only use the sidecar.
+	retrievalClient    *retrieval.Client
+	retrievalOnce      sync.Once
+	retrievalOpenError error
 }
 
 // New creates a new Service instance.
@@ -61,6 +70,16 @@ func New(vaultRoot string, db *sidecar.DB) *Service {
 // snapshotBefore records a history snapshot of the file at absPath before a
 // mutation. Snapshot failures never block the write itself; they are logged
 // so the user's edit is not lost to a safety-net error.
+func (s *Service) getRetrievalClient() *retrieval.Client {
+	s.retrievalOnce.Do(func() {
+		s.retrievalClient, s.retrievalOpenError = retrieval.OpenForVault(s.VaultRoot)
+		if s.retrievalOpenError != nil {
+			slog.Warn("vault-scoped retrieval unavailable", "vault", s.VaultRoot, "error", s.retrievalOpenError)
+		}
+	})
+	return s.retrievalClient
+}
+
 func (s *Service) snapshotBefore(absPath string) {
 	rel, err := filepath.Rel(s.VaultRoot, absPath)
 	if err != nil {
@@ -80,7 +99,11 @@ func (s *Service) DeleteDocument(path string) error {
 	if err := s.DB.DeleteDocument(path); err != nil {
 		return err
 	}
-	retrieval.Delete(path)
+	if client := s.getRetrievalClient(); client != nil {
+		if err := client.Delete(path); err != nil {
+			slog.Warn("search index delete failed", "path", path, "error", err)
+		}
+	}
 	return nil
 }
 
@@ -245,8 +268,17 @@ func pathWithin(path, root string) bool {
 func (s *Service) searchPlain(query string) ([]SearchResult, error) {
 	sources := s.externalSourceRoots()
 	var seekResults []retrieval.Result
+	client := s.getRetrievalClient()
+	if client == nil {
+		return s.searchSidecarPlain(query)
+	}
 	if len(sources) == 0 {
-		seekResults = retrieval.Search(query)
+		var searchErr error
+		seekResults, searchErr = client.Search(query, retrieval.DefaultLimit)
+		if searchErr != nil {
+			slog.Warn("vault-scoped hybrid search unavailable", "error", searchErr)
+			seekResults = nil
+		}
 	} else {
 		paths := make([]string, 0, len(sources)+1)
 		paths = append(paths, s.VaultRoot)
@@ -254,7 +286,7 @@ func (s *Service) searchPlain(query string) ([]SearchResult, error) {
 			paths = append(paths, source.Path)
 		}
 		var searchErr error
-		seekResults, searchErr = retrieval.SearchInPaths(query, paths, retrieval.DefaultLimit)
+		seekResults, searchErr = client.SearchInPaths(query, paths, retrieval.DefaultLimit)
 		if searchErr != nil {
 			slog.Warn("scoped hybrid search unavailable", "error", searchErr)
 			seekResults = nil

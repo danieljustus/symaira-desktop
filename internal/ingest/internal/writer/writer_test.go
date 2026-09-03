@@ -20,7 +20,7 @@ func TestWriteNote(t *testing.T) {
 	if path != want {
 		t.Fatalf("path = %q, want %q", path, want)
 	}
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func TestWriteNote_PaperlessMeta(t *testing.T) {
 		t.Fatalf("WriteNote: %v", err)
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,7 +116,7 @@ func TestWriteNote_PaperlessTraceabilityFields(t *testing.T) {
 	if err != nil {
 		t.Fatalf("WriteNote: %v", err)
 	}
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +143,7 @@ func TestWriteNote_NoPaperlessMeta_OmitsBlock(t *testing.T) {
 		t.Fatalf("WriteNote: %v", err)
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,22 +217,22 @@ func TestWriteNote_Golden(t *testing.T) {
 				t.Fatalf("WriteNote failed: %v", err)
 			}
 
-			got, err := os.ReadFile(path)
+			got, err := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 			if err != nil {
 				t.Fatalf("failed to read generated note: %v", err)
 			}
 
 			goldenPath := filepath.Join("testdata", tc.name+".golden")
 			if os.Getenv("UPDATE_GOLDEN") == "true" {
-				if err := os.MkdirAll("testdata", 0o755); err != nil {
+				if err := os.MkdirAll("testdata", 0o700); err != nil {
 					t.Fatalf("failed to create testdata dir: %v", err)
 				}
-				if err := os.WriteFile(goldenPath, got, 0o644); err != nil {
+				if err := os.WriteFile(goldenPath, got, 0o600); err != nil { //nolint:gosec // G703: golden path is a test fixture path under the package testdata directory
 					t.Fatalf("failed to write golden file: %v", err)
 				}
 			}
 
-			want, err := os.ReadFile(goldenPath)
+			want, err := os.ReadFile(goldenPath) //nolint:gosec // G304: test path is confined to the test fixture directory
 			if err != nil {
 				t.Fatalf("failed to read golden file (run UPDATE_GOLDEN=true go test ./internal/writer to generate): %v", err)
 			}
@@ -368,7 +368,7 @@ func TestUpdateNoteSidecar(t *testing.T) {
 		t.Fatalf("UpdateNoteSidecar: %v", err)
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatalf("ReadFile: %v", err)
 	}

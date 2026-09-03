@@ -7,6 +7,7 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -96,10 +97,14 @@ func ScanPDFForBarcodes(pdfPath string, cfg BarcodeConfig) ([]int, error) {
 	if err != nil {
 		return nil, fmt.Errorf("temp dir: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if cleanupErr := os.RemoveAll(tmpDir); cleanupErr != nil {
+			log.Printf("barcode workspace cleanup failed: %v", cleanupErr)
+		}
+	}()
 
 	// Render every page as a PNG image (300 DPI for reliable barcode detection).
-	cmd := exec.Command(ppmPath,
+	cmd := exec.Command(ppmPath, //nolint:gosec // G204: executable is validated with exec.LookPath before invocation; arguments are controlled paths/options
 		"-png", "-r", "300",
 		pdfPath,
 		filepath.Join(tmpDir, "page"),
@@ -159,7 +164,7 @@ func parsePPMFilePage(name string) (int, error) {
 }
 
 func readImageFile(path string) (image.Image, error) {
-	f, err := os.Open(path)
+	f, err := os.Open(path) //nolint:gosec // G304: image path is generated inside the private barcode workspace
 	if err != nil {
 		return nil, err
 	}

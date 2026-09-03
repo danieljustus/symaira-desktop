@@ -220,7 +220,7 @@ func findExistingNote(vault, sourcePath, runID string) string {
 		if err != nil || d.IsDir() || !strings.HasSuffix(d.Name(), ".md") {
 			return nil
 		}
-		data, rerr := os.ReadFile(path)
+		data, rerr := os.ReadFile(path) //nolint:gosec // G304: path is derived from the bounded export/vault walk or validated vault root
 		if rerr != nil {
 			return nil
 		}
@@ -235,7 +235,7 @@ func findExistingNote(vault, sourcePath, runID string) string {
 }
 
 func noteExistsWithRunID(vaultPath, runID string) bool {
-	data, err := os.ReadFile(vaultPath)
+	data, err := os.ReadFile(vaultPath) //nolint:gosec // G304: path is derived from the bounded export/vault walk or validated vault root
 	if err != nil {
 		return false
 	}
@@ -277,7 +277,7 @@ func writeNoteWithFrontmatter(vault, vaultPath string, note any, body string) er
 	if err := requireWithinDir(vault, vaultPath); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(vaultPath), 0o700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(vaultPath), 0o700); err != nil { //nolint:gosec // G703: the imported path is checked with requireWithinDir before filesystem access
 		return fmt.Errorf("create vault directory: %w", err)
 	}
 

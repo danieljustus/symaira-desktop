@@ -270,12 +270,17 @@ func findDuplicateContentIDs(docs []paperless.Document, notes map[int][]*writer.
 	return dupes
 }
 
-func fileSHA256(path string) (string, error) {
-	f, err := os.Open(path)
+func fileSHA256(path string) (hash string, err error) {
+	f, err := os.Open(path) //nolint:gosec // path is the caller-selected archive or vault file
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer func() {
+		if closeErr := f.Close(); closeErr != nil && err == nil {
+			hash = ""
+			err = fmt.Errorf("close file: %w", closeErr)
+		}
+	}()
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
 		return "", err
@@ -355,7 +360,7 @@ func scanVaultNotes(vault string) (map[int][]*writer.Note, error) {
 		if d.IsDir() || !strings.HasSuffix(strings.ToLower(d.Name()), ".md") {
 			return nil
 		}
-		data, rerr := os.ReadFile(path)
+		data, rerr := os.ReadFile(path) //nolint:gosec // path comes from the explicitly selected vault root
 		if rerr != nil {
 			return rerr
 		}

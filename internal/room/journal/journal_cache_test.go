@@ -158,7 +158,7 @@ func TestExternalAppendResyncsCache(t *testing.T) {
 		t.Fatalf("marshal external event: %v", err)
 	}
 	segPath := j1.SegmentPath(ownerID.MemberID)
-	f, err := os.OpenFile(segPath, os.O_WRONLY|os.O_APPEND, 0644)
+	f, err := os.OpenFile(segPath, os.O_WRONLY|os.O_APPEND, 0600) //nolint:gosec // segPath is a test fixture under t.TempDir
 	if err != nil {
 		t.Fatalf("open segment: %v", err)
 	}

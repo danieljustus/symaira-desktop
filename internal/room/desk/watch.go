@@ -41,7 +41,9 @@ func WatchStream(ctx context.Context, r io.Reader, handler StreamHandler) error 
 			continue
 		}
 
-		_ = handler(&item)
+		if err := handler(&item); err != nil {
+			return err
+		}
 	}
 	return scanner.Err()
 }
@@ -62,7 +64,7 @@ func WatchDesk(ctx context.Context, vault string, handler StreamHandler) error {
 		default:
 		}
 
-		cmd := exec.CommandContext(ctx, symdeskBin, "events", vault)
+		cmd := exec.CommandContext(ctx, symdeskBin, "events", vault) //nolint:gosec // symdeskBin is resolved with exec.LookPath
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			return err

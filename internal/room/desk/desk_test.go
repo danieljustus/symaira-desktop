@@ -38,7 +38,7 @@ if [ "$1" = "inspect" ]; then
 fi
 exit 1
 `
-	if err := os.WriteFile(fakeSymdesk, []byte(script), 0755); err != nil {
+	if err := os.WriteFile(fakeSymdesk, []byte(script), 0755); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatalf("failed to write fake symdesk script: %v", err)
 	}
 
@@ -70,7 +70,7 @@ sleep 1.2
 echo '{"document_id":"slow"}'
 exit 0
 `
-	if err := os.WriteFile(fakeSymdesk, []byte(script), 0755); err != nil {
+	if err := os.WriteFile(fakeSymdesk, []byte(script), 0755); err != nil { //nolint:gosec // test fixture must be executable
 		t.Fatalf("failed to write fake slow symdesk script: %v", err)
 	}
 

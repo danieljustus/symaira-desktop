@@ -152,7 +152,7 @@ func Run(dir string) (*Report, error) {
 		t := Tool{Name: name, Status: Warn, Remediation: "Install " + name + " and place it on PATH if this integration is needed; otherwise this warning is informational."}
 		if p, e := exec.LookPath(name); e == nil {
 			t.Path = p
-			out, e := exec.Command(p, "version", "--json").Output()
+			out, e := exec.Command(p, "version", "--json").Output() //nolint:gosec // p is resolved from the fixed integration-name list
 			if e == nil {
 				var v map[string]interface{}
 				if json.Unmarshal(out, &v) == nil {

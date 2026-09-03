@@ -91,7 +91,6 @@ func (c *realIMAPClient) FetchEnvelopesUID(uids []imap.UID) ([]*imapMessage, err
 		Envelope: true,
 	}
 	fetchCmd := c.Fetch(uidSet, fetchOptions)
-	defer fetchCmd.Close()
 
 	var results []*imapMessage
 	for {
@@ -131,7 +130,6 @@ func (c *realIMAPClient) FetchUID(uids []imap.UID) ([]*imapMessage, error) {
 		},
 	}
 	fetchCmd := c.Fetch(uidSet, fetchOptions)
-	defer fetchCmd.Close()
 
 	var results []*imapMessage
 	for {
@@ -359,7 +357,11 @@ func (m *MailPoller) pollAccount(ctx context.Context, acc config.IMAPAccount) er
 	if err != nil {
 		return fmt.Errorf("dial tls: %w", err)
 	}
-	defer client.Close()
+	defer func() {
+		if closeErr := client.Close(); closeErr != nil {
+			log.Printf("[MailPoller] IMAP client close failed: %v", closeErr)
+		}
+	}()
 
 	if err := client.Login(acc.Username, pwd); err != nil {
 		return fmt.Errorf("login failed: %w", err)
@@ -551,13 +553,16 @@ func (m *MailPoller) processMessage(ctx context.Context, acc config.IMAPAccount,
 }
 
 func (m *MailPoller) saveStream(path string, r io.Reader) error {
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600) //nolint:gosec // path is constrained to the processing directory
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	_, err = io.Copy(f, r)
-	return err
+	_, copyErr := io.Copy(f, r)
+	closeErr := f.Close()
+	if copyErr != nil {
+		return copyErr
+	}
+	return closeErr
 }
 
 func (m *MailPoller) enqueueFile(ctx context.Context, workPath, msgID, correspondent string) error {

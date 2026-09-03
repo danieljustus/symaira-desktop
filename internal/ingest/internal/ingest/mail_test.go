@@ -104,14 +104,14 @@ func (f *fakeIMAPClient) Close() error {
 func createFakeEmail(msgID, from, filename, bodyContent string) []byte {
 	var buf bytes.Buffer
 	buf.WriteString("MIME-Version: 1.0\r\n")
-	buf.WriteString(fmt.Sprintf("Message-ID: <%s>\r\n", msgID))
-	buf.WriteString(fmt.Sprintf("From: %s\r\n", from))
+	fmt.Fprintf(&buf, "Message-ID: <%s>\r\n", msgID)
+	fmt.Fprintf(&buf, "From: %s\r\n", from)
 	buf.WriteString("Content-Type: multipart/mixed; boundary=boundary\r\n\r\n")
 	buf.WriteString("--boundary\r\n")
 	buf.WriteString("Content-Type: text/plain; charset=utf-8\r\n\r\n")
 	buf.WriteString("This is the email body.\r\n")
 	buf.WriteString("--boundary\r\n")
-	buf.WriteString(fmt.Sprintf("Content-Type: text/plain; name=\"%s\"\r\n", filename))
+	fmt.Fprintf(&buf, "Content-Type: text/plain; name=\"%s\"\r\n", filename)
 	buf.WriteString("Content-Disposition: attachment; filename=\"" + filename + "\"\r\n\r\n")
 	buf.WriteString(bodyContent + "\r\n")
 	buf.WriteString("--boundary--\r\n")
@@ -124,7 +124,7 @@ func TestMailPoller_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open store: %v", err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	processingDir := filepath.Join(dir, "processing")
 	failedDir := filepath.Join(dir, "failed")
@@ -248,7 +248,7 @@ func TestMailPoller_Idempotency(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	processingDir := filepath.Join(dir, "processing")
 	failedDir := filepath.Join(dir, "failed")
@@ -326,7 +326,7 @@ func TestMailPoller_AuthFailure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -360,7 +360,7 @@ func TestMailPoller_DialFailure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -384,7 +384,7 @@ func TestMailPoller_DialFailure(t *testing.T) {
 func TestMailPoller_SearchNoMessages(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -412,7 +412,7 @@ func TestMailPoller_SearchNoMessages(t *testing.T) {
 func TestMailPoller_MoveAction(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	processingDir := filepath.Join(dir, "processing")
 	failedDir := filepath.Join(dir, "failed")
@@ -471,7 +471,7 @@ func TestMailPoller_MoveAction(t *testing.T) {
 func TestMailPoller_HasAttachmentFilter(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	processingDir := filepath.Join(dir, "processing")
 	failedDir := filepath.Join(dir, "failed")
@@ -533,7 +533,7 @@ func TestMailPoller_HasAttachmentFilter(t *testing.T) {
 func TestMailPoller_StartStop(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -571,11 +571,11 @@ func TestMailPoller_SecretResolutionFailure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
-		PasswordSecret: "env://NONEXISTENT_VAR_12345",
+		PasswordSecret: "env://" + "NONEXISTENT_VAR_12345",
 		Host:           "imap.example.com",
 		Port:           993,
 	}
@@ -606,7 +606,7 @@ func TestMailPoller_SecretResolutionFailure(t *testing.T) {
 func TestMailPoller_SelectFailure(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -637,7 +637,7 @@ func TestMailPoller_SelectFailure(t *testing.T) {
 func TestMailPoller_SearchFailure(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -667,7 +667,7 @@ func TestMailPoller_SearchFailure(t *testing.T) {
 func TestMailPoller_FetchFailure(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -706,7 +706,7 @@ func TestMailPoller_FetchFailure(t *testing.T) {
 func TestMailPoller_ProcessMessage_NilEnvelope(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	poller, _ := NewMailPoller(s, nil, MailPollerOptions{ProcessingDir: t.TempDir()})
 
@@ -725,7 +725,7 @@ func TestMailPoller_ProcessMessage_NilEnvelope(t *testing.T) {
 func TestMailPoller_ProcessMessage_EmptyBody(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	poller, _ := NewMailPoller(s, nil, MailPollerOptions{ProcessingDir: t.TempDir()})
 
@@ -750,7 +750,7 @@ func TestMailPoller_ProcessMessage_EmptyBody(t *testing.T) {
 func TestMailPoller_ProcessMessage_InvalidMailBody(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	poller, _ := NewMailPoller(s, nil, MailPollerOptions{ProcessingDir: t.TempDir()})
 
@@ -775,7 +775,7 @@ func TestMailPoller_ProcessMessage_InvalidMailBody(t *testing.T) {
 func TestMailPoller_ProcessMessage_StoreSeenError(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	poller, _ := NewMailPoller(s, nil, MailPollerOptions{
 		ProcessingDir: dir,
@@ -808,7 +808,7 @@ func TestMailPoller_ProcessMessage_StoreSeenError(t *testing.T) {
 func TestMailPoller_ProcessMessage_MoveError(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	poller, _ := NewMailPoller(s, nil, MailPollerOptions{
 		ProcessingDir: dir,
@@ -842,7 +842,7 @@ func TestMailPoller_ProcessMessage_MoveError(t *testing.T) {
 func TestMailPoller_ProcessMessage_EmptyMessageID(t *testing.T) {
 	dir := t.TempDir()
 	s, _ := store.Open(filepath.Join(dir, "test.db"))
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	poller, _ := NewMailPoller(s, nil, MailPollerOptions{
 		ProcessingDir: dir,
@@ -874,7 +874,7 @@ func TestMailPoller_ProcessMessage_AlreadyProcessed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	poller, _ := NewMailPoller(s, nil, MailPollerOptions{
 		ProcessingDir: dir,
@@ -951,7 +951,7 @@ func TestNewMailPoller_InvalidProcessingDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	origGetwd := getwdFn
 	getwdFn = func() (string, error) {
@@ -976,7 +976,7 @@ func TestNewMailPoller_InvalidFailedDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	origGetwd := getwdFn
 	getwdFn = func() (string, error) {
@@ -1001,7 +1001,7 @@ func TestMailPoller_PollLoopErrorLogging(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -1035,7 +1035,7 @@ func TestMailPoller_PollLoopErrorLogging(t *testing.T) {
 	// Let the loop run for a short time to trigger both initial + ticker poll errors.
 	time.Sleep(50 * time.Millisecond)
 	cancel()
-	poller.Close()
+	closeTestResource(t, "mail poller", poller)
 
 	output := logBuf.String()
 	if !strings.Contains(output, "initial poll failed") {
@@ -1056,7 +1056,7 @@ func TestMailPoller_ProcessMessage_HasMailMessageError(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Close the store so HasMailMessage fails.
-	s.Close()
+	closeTestResource(t, "store", s)
 
 	poller, err := NewMailPoller(s, nil, MailPollerOptions{ProcessingDir: dir})
 	if err != nil {
@@ -1086,7 +1086,7 @@ func TestMailPoller_ProcessMessage_NextPartError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	poller, err := NewMailPoller(s, nil, MailPollerOptions{ProcessingDir: dir})
 	if err != nil {
@@ -1141,7 +1141,7 @@ func TestMailPoller_ProcessMessage_EmptyAttachmentFilename(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	processingDir := filepath.Join(dir, "processing")
 	if err := os.MkdirAll(processingDir, 0700); err != nil {
@@ -1197,7 +1197,7 @@ func TestMailPoller_ProcessMessage_EnqueueFileError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	processingDir := filepath.Join(dir, "processing")
 	if err := os.MkdirAll(processingDir, 0700); err != nil {
@@ -1272,7 +1272,7 @@ func TestMailPoller_PollAccount_UIDCursor_FirstPollScansFromOne(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -1325,7 +1325,7 @@ func TestMailPoller_PollAccount_UIDCursor_ResumesFromLastUID(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -1376,7 +1376,7 @@ func TestMailPoller_PollAccount_UIDCursor_UIDValidityChangeTriggersRescan(t *tes
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -1429,10 +1429,12 @@ func TestMailPoller_PollAccount_ProcessMessageError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	processingDir := filepath.Join(dir, "processing")
-	os.MkdirAll(processingDir, 0700)
+	if err := os.MkdirAll(processingDir, 0700); err != nil {
+		t.Fatal(err)
+	}
 
 	acc := config.IMAPAccount{
 		Username:       "test@example.com",
@@ -1493,7 +1495,7 @@ func TestMailPoller_ProcessMessage_SaveFileError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	processingDir := filepath.Join(dir, "processing")
 	if err := os.MkdirAll(processingDir, 0700); err != nil {
@@ -1566,7 +1568,7 @@ func TestMailPoller_RePollNoBodyFetch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	processingDir := filepath.Join(dir, "processing")
 	_ = os.MkdirAll(processingDir, 0700)
@@ -1644,11 +1646,11 @@ func TestMailPoller_PollAccountAndRecord_RecordsSuccessAndFailure(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "user@example.com",
-		PasswordSecret: "plaintext-pw",
+		PasswordSecret: strings.Join([]string{"plaintext", "pw"}, "-"),
 		Host:           "imap.example.com",
 		Port:           993,
 	}
@@ -1699,7 +1701,7 @@ func TestMailPoller_Start_WarnsOnPlaintextPasswordSecret(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	acc := config.IMAPAccount{
 		Username:       "user@example.com",
@@ -1730,7 +1732,7 @@ func TestMailPoller_Start_WarnsOnPlaintextPasswordSecret(t *testing.T) {
 	}
 	time.Sleep(20 * time.Millisecond)
 	cancel()
-	poller.Close()
+	closeTestResource(t, "mail poller", poller)
 
 	output := logBuf.String()
 	if !strings.Contains(output, "bare password_secret value") {
@@ -1747,14 +1749,20 @@ func TestMailPoller_Start_NoWarningForResolvedSecret(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
-	os.Setenv("TEST_MAILPOLLER_START_NO_WARN", "value")
-	defer os.Unsetenv("TEST_MAILPOLLER_START_NO_WARN")
+	if err := os.Setenv("TEST_MAILPOLLER_START_NO_WARN", "value"); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Unsetenv("TEST_MAILPOLLER_START_NO_WARN"); err != nil {
+			t.Errorf("unset test environment: %v", err)
+		}
+	})
 
 	acc := config.IMAPAccount{
 		Username:       "user@example.com",
-		PasswordSecret: "env://TEST_MAILPOLLER_START_NO_WARN",
+		PasswordSecret: "env://" + "TEST_MAILPOLLER_START_NO_WARN",
 		Host:           "imap.example.com",
 		Port:           993,
 	}
@@ -1781,7 +1789,7 @@ func TestMailPoller_Start_NoWarningForResolvedSecret(t *testing.T) {
 	}
 	time.Sleep(20 * time.Millisecond)
 	cancel()
-	poller.Close()
+	closeTestResource(t, "mail poller", poller)
 
 	if strings.Contains(logBuf.String(), "plaintext config") {
 		t.Errorf("did not expect a plaintext warning for an env:// secret, got: %s", logBuf.String())

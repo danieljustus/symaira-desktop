@@ -19,7 +19,7 @@ func TestNewWatcher_DelegatesToNewWatcherWithOptions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.Close()
+	defer func() { closeTestResource(t, "store", s) }()
 
 	w, err := NewWatcher(s, inbox)
 	if err != nil {
@@ -28,7 +28,7 @@ func TestNewWatcher_DelegatesToNewWatcherWithOptions(t *testing.T) {
 	if w == nil {
 		t.Fatal("expected non-nil watcher")
 	}
-	w.Close()
+	closeTestResource(t, "watcher", w)
 }
 
 func TestFakeClock_StopTimer(t *testing.T) {

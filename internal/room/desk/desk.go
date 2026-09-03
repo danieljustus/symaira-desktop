@@ -34,7 +34,7 @@ func InspectPath(ctx context.Context, path string) (*InspectResult, error) {
 	ctxTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctxTimeout, symdeskBin, "inspect", path, "--json")
+	cmd := exec.CommandContext(ctxTimeout, symdeskBin, "inspect", path, "--json") //nolint:gosec // symdeskBin is resolved with exec.LookPath
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrInspectFailed, err)

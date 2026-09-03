@@ -30,7 +30,7 @@ func BenchmarkAppend(b *testing.B) {
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				ev := benchEvent(id, uint64(prefill+i+1))
+				ev := benchEvent(id, uint64(prefill+i+1)) //nolint:gosec // benchmark inputs are fixed non-negative values
 				if err := j.Append(ev); err != nil {
 					b.Fatal(err)
 				}

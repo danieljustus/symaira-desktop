@@ -40,20 +40,20 @@ func ExecuteAdapter(ctx context.Context, roomDir, runID string, id *identity.Ide
 	}
 
 	logDir := filepath.Join(roomDir, ".symroom", "runs", runID)
-	if err := os.MkdirAll(logDir, 0755); err != nil {
+	if err := os.MkdirAll(logDir, 0700); err != nil {
 		return err
 	}
 
 	stdoutPath := filepath.Join(logDir, "stdout.log")
 	stderrPath := filepath.Join(logDir, "stderr.log")
 
-	stdoutFile, err := os.Create(stdoutPath)
+	stdoutFile, err := os.OpenFile(stdoutPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600) //nolint:gosec // stdoutPath is rooted in the room run directory
 	if err != nil {
 		return err
 	}
 	defer func() { _ = stdoutFile.Close() }()
 
-	stderrFile, err := os.Create(stderrPath)
+	stderrFile, err := os.OpenFile(stderrPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600) //nolint:gosec // stderrPath is rooted in the room run directory
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func ExecuteAdapter(ctx context.Context, roomDir, runID string, id *identity.Ide
 
 	promptVal := r.Title
 	if r.PlanFile != "" {
-		if content, err := os.ReadFile(filepath.Join(roomDir, r.PlanFile)); err == nil {
+		if content, err := os.ReadFile(filepath.Join(roomDir, r.PlanFile)); err == nil { //nolint:gosec // PlanFile is resolved relative to the room directory
 			promptVal = string(content)
 		}
 	}
@@ -79,7 +79,7 @@ func ExecuteAdapter(ctx context.Context, roomDir, runID string, id *identity.Ide
 		}
 	}
 
-	cmd := exec.CommandContext(ctx, cmdArgs[0], cmdArgs[1:]...)
+	cmd := exec.CommandContext(ctx, cmdArgs[0], cmdArgs[1:]...) //nolint:gosec // adapter commands are explicit user configuration
 	if adapterCfg.Workdir != "" {
 		cmd.Dir = strings.ReplaceAll(adapterCfg.Workdir, "{room_artifact_root}", roomDir)
 	} else {
@@ -93,16 +93,24 @@ func ExecuteAdapter(ctx context.Context, roomDir, runID string, id *identity.Ide
 	runErr := cmd.Run()
 	duration := time.Since(startTime)
 
-	_ = stdoutFile.Sync()
-	_ = stderrFile.Sync()
+	if err := stdoutFile.Sync(); err != nil {
+		return fmt.Errorf("sync stdout log: %w", err)
+	}
+	if err := stderrFile.Sync(); err != nil {
+		return fmt.Errorf("sync stderr log: %w", err)
+	}
 
 	if runErr != nil {
 		errMsg := fmt.Sprintf("exit error: %v (duration: %v)", runErr, duration)
-		_, _ = Fail(roomDir, runID, errMsg, id)
+		if _, err := Fail(roomDir, runID, errMsg, id); err != nil {
+			return fmt.Errorf("%w (record failure: %v)", runErr, err)
+		}
 		return runErr
 	}
 
 	summary := fmt.Sprintf("Adapter %s completed in %v", adapterName, duration)
-	_, _ = Finish(roomDir, runID, summary, nil, id)
+	if _, err := Finish(roomDir, runID, summary, nil, id); err != nil {
+		return fmt.Errorf("finish run: %w", err)
+	}
 	return nil
 }

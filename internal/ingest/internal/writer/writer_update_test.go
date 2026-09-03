@@ -41,7 +41,7 @@ func TestUpdateNote_UpdatesMachineFieldsPreservesUserFields(t *testing.T) {
 		t.Fatalf("UpdateNote: %v", err)
 	}
 
-	data, err := os.ReadFile(initialPath)
+	data, err := os.ReadFile(initialPath) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func TestUpdateNote_DeleteCorrespondentWhenEmpty(t *testing.T) {
 		t.Fatalf("UpdateNote: %v", err)
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +177,7 @@ func TestWriteNote_WithArchivePath(t *testing.T) {
 		t.Fatalf("WriteNote: %v", err)
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 	if err != nil {
 		t.Fatal(err)
 	}

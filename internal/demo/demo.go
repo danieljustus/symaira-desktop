@@ -641,7 +641,7 @@ func materialize(dir string, generatedDocuments int) error {
 		filepath.Join(absDir, "pdfs"),
 	}
 	for _, d := range dirs {
-		if err := os.MkdirAll(d, 0755); err != nil {
+		if err := os.MkdirAll(d, 0755); err != nil { //nolint:gosec // G301: demo vault directories are intentionally user-readable.
 			return fmt.Errorf("create directory %s: %w", d, err)
 		}
 	}
@@ -649,14 +649,14 @@ func materialize(dir string, generatedDocuments int) error {
 	// Write documents.
 	for _, doc := range documents {
 		mdPath := filepath.Join(absDir, "documents", doc.name+".md")
-		if err := os.WriteFile(mdPath, []byte(doc.md), 0644); err != nil {
+		if err := os.WriteFile(mdPath, []byte(doc.md), 0644); err != nil { //nolint:gosec // G306: demo documents are intentionally user-readable.
 			return fmt.Errorf("write document %s: %w", doc.name, err)
 		}
 
 		// Generate synthetic PDF.
 		pdfData := generatePDF(doc.pdf, extractPDFLines(doc.md))
 		pdfPath := filepath.Join(absDir, "pdfs", doc.name+".pdf")
-		if err := os.WriteFile(pdfPath, pdfData, 0644); err != nil {
+		if err := os.WriteFile(pdfPath, pdfData, 0644); err != nil { //nolint:gosec // G306: demo PDFs are intentionally user-readable.
 			return fmt.Errorf("write pdf %s: %w", doc.name, err)
 		}
 	}
@@ -675,7 +675,7 @@ status: "open"
 
 Deterministic benchmark content for indexing and full-text search. Group %d.
 `, i+1, i+1, i%100)
-		if err := os.WriteFile(filepath.Join(absDir, "documents", name+".md"), []byte(body), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(absDir, "documents", name+".md"), []byte(body), 0644); err != nil { //nolint:gosec // G306: generated demo documents are intentionally user-readable.
 			return fmt.Errorf("write generated document %s: %w", name, err)
 		}
 	}
@@ -683,7 +683,7 @@ Deterministic benchmark content for indexing and full-text search. Group %d.
 	// Write knowledge notes.
 	for _, note := range notes {
 		notePath := filepath.Join(absDir, "notes", note.name+".md")
-		if err := os.WriteFile(notePath, []byte(note.md), 0644); err != nil {
+		if err := os.WriteFile(notePath, []byte(note.md), 0644); err != nil { //nolint:gosec // G306: demo notes are intentionally user-readable.
 			return fmt.Errorf("write note %s: %w", note.name, err)
 		}
 	}
@@ -695,7 +695,7 @@ Deterministic benchmark content for indexing and full-text search. Group %d.
 		return fmt.Errorf("marshal views: %w", err)
 	}
 	viewsPath := filepath.Join(absDir, ".symdesk", "views.json")
-	if err := os.WriteFile(viewsPath, viewsJSON, 0644); err != nil {
+	if err := os.WriteFile(viewsPath, viewsJSON, 0644); err != nil { //nolint:gosec // G306: generated demo metadata is intentionally user-readable.
 		return fmt.Errorf("write views: %w", err)
 	}
 

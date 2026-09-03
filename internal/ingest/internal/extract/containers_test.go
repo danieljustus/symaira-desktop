@@ -312,10 +312,10 @@ func TestDetectOLE_ContainerEdgeBranches(t *testing.T) {
 		path := filepath.Join(dir, "short.bin")
 		head := make([]byte, 40)
 		copy(head, oleSignature)
-		if err := os.WriteFile(path, head, 0o644); err != nil {
+		if err := os.WriteFile(path, head, 0o600); err != nil {
 			t.Fatal(err)
 		}
-		f, err := os.Open(path)
+		f, err := os.Open(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -331,10 +331,10 @@ func TestDetectOLE_ContainerEdgeBranches(t *testing.T) {
 		copy(head, oleSignature)
 		head[30] = 9
 		binary.LittleEndian.PutUint32(head[48:52], 100) // dirStart far past EOF
-		if err := os.WriteFile(path, head, 0o644); err != nil {
+		if err := os.WriteFile(path, head, 0o600); err != nil {
 			t.Fatal(err)
 		}
-		f, err := os.Open(path)
+		f, err := os.Open(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -357,7 +357,7 @@ func TestDetectOLE_ContainerEdgeBranches(t *testing.T) {
 		binary.LittleEndian.PutUint16(dirSector[256+64:256+66], uint16(len(unmapped)*2+2)) //nolint:gosec // G115: test fixture; unmapped is a short constant string
 		writeOLERaw(t, path, 0, dirSector)
 
-		f, err := os.Open(path)
+		f, err := os.Open(path) //nolint:gosec // G304: test path is confined to the test fixture directory
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -393,7 +393,7 @@ func writeOLERaw(t *testing.T, path string, dirStart uint32, dir []byte) {
 	head[30] = 9 // 512-byte sectors: the field value is the exponent (2^9)
 	binary.LittleEndian.PutUint32(head[48:52], dirStart)
 	data := append(head, dir...)
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -420,7 +420,7 @@ func writeOLEFixture(t *testing.T, path, streamName string) {
 	dir[off+66] = 2                                                                // STGTY_STREAM
 
 	data := append(head, dir...)
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o600); err != nil {
 		t.Fatal(err)
 	}
 }

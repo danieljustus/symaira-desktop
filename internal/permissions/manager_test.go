@@ -381,7 +381,7 @@ func TestFilesAreNotInVault(t *testing.T) {
 	}
 
 	// Files are readable JSON.
-	data, err := os.ReadFile(usersPath)
+	data, err := os.ReadFile(usersPath) //nolint:gosec // G304: usersPath is a test fixture under t.TempDir.
 	if err != nil {
 		t.Fatalf("ReadFile: %v", err)
 	}

@@ -165,7 +165,7 @@ func applyEnvOverrides(cfg *Config) {
 func LoadFromPath(path string) (*Config, error) {
 	cfg := DefaultConfig()
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: path is the caller-selected configuration file.
 	if err != nil {
 		if os.IsNotExist(err) {
 			applyEnvOverrides(cfg)
@@ -199,16 +199,20 @@ func MailConfigPath(explicit string) (string, error) {
 	return configkit.DefaultPath("symingest"), nil
 }
 
-func Save(path string, cfg *Config) error {
+func Save(path string, cfg *Config) (err error) {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600) //nolint:gosec // G304: path is the caller-selected configuration file.
 	if err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		if closeErr := f.Close(); err == nil && closeErr != nil {
+			err = fmt.Errorf("failed to close config file: %w", closeErr)
+		}
+	}()
 	if err := toml.NewEncoder(f).Encode(cfg); err != nil {
 		return fmt.Errorf("failed to encode config: %w", err)
 	}

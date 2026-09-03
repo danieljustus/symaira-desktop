@@ -103,7 +103,7 @@ func TestSplitPDFNoSplitPoints(t *testing.T) {
 	srcDir := t.TempDir()
 	outDir := t.TempDir()
 	pdfPath := filepath.Join(srcDir, "minimal.pdf")
-	if err := os.WriteFile(pdfPath, minimalPDF(), 0644); err != nil {
+	if err := os.WriteFile(pdfPath, minimalPDF(), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -127,12 +127,12 @@ func TestSplitPDFWithQPDF(t *testing.T) {
 
 	// Create a 3-page PDF using qpdf.
 	emptyPDF := filepath.Join(srcDir, "empty.pdf")
-	if err := os.WriteFile(emptyPDF, minimalPDF(), 0644); err != nil {
+	if err := os.WriteFile(emptyPDF, minimalPDF(), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	// Concatenate three copies to make a 3-page PDF.
-	cmd := exec.Command("qpdf", "--empty", "--pages",
+	cmd := exec.Command("qpdf", "--empty", "--pages", //nolint:gosec // G204: test command path is an executable created in t.TempDir
 		emptyPDF, "1", emptyPDF, "1", emptyPDF, "1",
 		"--", pdfPath)
 	out, err := cmd.CombinedOutput()
@@ -168,10 +168,14 @@ func TestSplitPDFByBarcode_NoScanner(t *testing.T) {
 	// Isolate $HOME so a real ~/.symaira/bin/symingest can't make this
 	// "no split tools" scenario find one via the managed-runtime tier.
 	t.Setenv("HOME", t.TempDir())
-	defer os.Setenv("PATH", origPath)
+	defer func() {
+		if err := os.Setenv("PATH", origPath); err != nil {
+			t.Errorf("restore PATH: %v", err)
+		}
+	}()
 
 	pdfPath := filepath.Join(tmpDir, "test.pdf")
-	if err := os.WriteFile(pdfPath, minimalPDF(), 0644); err != nil {
+	if err := os.WriteFile(pdfPath, minimalPDF(), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -187,7 +191,7 @@ func TestIngestFileWithBarcodeSplit_NoPDF(t *testing.T) {
 	t.Setenv("PATH", "/usr/bin:/bin")
 	vaultRoot := t.TempDir()
 	src := filepath.Join(t.TempDir(), "doc.txt")
-	if err := os.WriteFile(src, []byte("hello"), 0644); err != nil {
+	if err := os.WriteFile(src, []byte("hello"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -207,7 +211,7 @@ func TestIngestFileWithBarcodeSplit_NoPDF(t *testing.T) {
 func TestIngestFileWithBarcodeSplit_PDF(t *testing.T) {
 	vaultRoot := t.TempDir()
 	src := filepath.Join(t.TempDir(), "scan.pdf")
-	if err := os.WriteFile(src, minimalPDF(), 0644); err != nil {
+	if err := os.WriteFile(src, minimalPDF(), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -218,7 +222,11 @@ func TestIngestFileWithBarcodeSplit_PDF(t *testing.T) {
 	// Isolate $HOME so a real ~/.symaira/bin/symingest can't make this
 	// "no split tools" scenario find one via the managed-runtime tier.
 	t.Setenv("HOME", t.TempDir())
-	defer os.Setenv("PATH", origPath)
+	defer func() {
+		if err := os.Setenv("PATH", origPath); err != nil {
+			t.Errorf("restore PATH: %v", err)
+		}
+	}()
 
 	cfg := DefaultBarcodeConfig()
 	notes, err := IngestFileWithBarcodeSplit(vaultRoot, src, cfg)

@@ -60,7 +60,7 @@ func detectUncached(path string, logf func(format string, args ...any)) (*Magika
 		return nil, nil
 	}
 
-	cmd := exec.Command(magikaPath, "--json", path)
+	cmd := exec.Command(magikaPath, "--json", path) //nolint:gosec // G204: executable is validated with exec.LookPath before invocation; arguments are controlled paths/options
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

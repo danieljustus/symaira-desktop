@@ -4,29 +4,43 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
 var errClientPoolClosed = errors.New("retrieval client pool is closed")
 
-// ClientPool owns retrieval clients for the lifetime of a request-serving
-// process. Clients are keyed by their canonical effective index path, so an
-// explicit shared index is opened only once even when several vaults use it.
-type ClientPool struct {
-	mu      sync.Mutex
-	clients map[string]*Client
-	retired []*Client
-	closed  bool
-	opener  func(string) (*Client, error)
+type clientPoolEntry struct {
+	client  *Client
+	refs    int
+	retired bool
 }
 
-// NewClientPool creates an empty pool. The pool opens clients lazily and must
-// be closed by its owning server.
+// ClientPool owns retrieval clients for one request-serving process. Active
+// clients are keyed by canonical effective index path. Operations borrow a
+// lease; invalidated clients close as soon as their last lease is released.
+type ClientPool struct {
+	mu        sync.Mutex
+	cond      *sync.Cond
+	clients   map[string]*clientPoolEntry
+	retired   map[*clientPoolEntry]struct{}
+	closed    bool
+	closeDone bool
+	closing   int
+	closeErr  error
+	opener    func(string) (*Client, error)
+}
+
+// NewClientPool creates an empty pool. The owning server must call Close after
+// it has stopped accepting requests.
 func NewClientPool() *ClientPool {
-	return &ClientPool{
-		clients: make(map[string]*Client),
+	pool := &ClientPool{
+		clients: make(map[string]*clientPoolEntry),
+		retired: make(map[*clientPoolEntry]struct{}),
 		opener:  OpenForVault,
 	}
+	pool.cond = sync.NewCond(&pool.mu)
+	return pool
 }
 
 // newClientPoolWithOpener is a deterministic test seam for open-count tests.
@@ -36,91 +50,221 @@ func newClientPoolWithOpener(opener func(string) (*Client, error)) *ClientPool {
 	return pool
 }
 
-// Get returns the client for vaultRoot, opening it once when necessary.
-func (p *ClientPool) Get(vaultRoot string) (*Client, error) {
+// Acquire returns the effective client plus an idempotent release function.
+// The release function must be called after the retrieval operation finishes.
+func (p *ClientPool) Acquire(vaultRoot string) (*Client, func(), error) {
 	if p == nil {
-		return nil, errClientPoolClosed
+		return nil, func() {}, errClientPoolClosed
+	}
+	if strings.TrimSpace(vaultRoot) == "" {
+		return nil, func() {}, errors.New("retrieval client pool requires a vault root")
 	}
 	canonicalRoot, err := canonicalPoolPath(vaultRoot)
 	if err != nil {
-		return nil, fmt.Errorf("resolve retrieval vault root: %w", err)
+		return nil, func() {}, fmt.Errorf("resolve retrieval vault root: %w", err)
 	}
-	indexPath, err := canonicalPoolIndexPath(canonicalRoot)
+	requestedKey, err := canonicalPoolIndexPath(canonicalRoot)
 	if err != nil {
-		return nil, err
+		return nil, func() {}, err
 	}
 
 	p.mu.Lock()
-	defer p.mu.Unlock()
+	p.ensureInitializedLocked()
 	if p.closed {
-		return nil, errClientPoolClosed
+		p.mu.Unlock()
+		return nil, func() {}, errClientPoolClosed
 	}
-	if client := p.clients[indexPath]; client != nil {
-		return client, nil
+	if entry := p.clients[requestedKey]; entry != nil {
+		entry.refs++
+		p.mu.Unlock()
+		return entry.client, p.releaseFunc(entry), nil
 	}
+
+	// Opening under the pool mutex deliberately serializes first use. It keeps
+	// concurrent request bursts from deserializing the same index repeatedly.
 	client, err := p.opener(canonicalRoot)
 	if err != nil {
-		return nil, err
+		p.mu.Unlock()
+		return nil, func() {}, err
 	}
-	if client == nil {
-		return nil, errors.New("retrieval client opener returned nil client")
+	if client == nil || strings.TrimSpace(client.indexPath) == "" {
+		p.mu.Unlock()
+		if client != nil {
+			_ = client.Close()
+		}
+		return nil, func() {}, errors.New("retrieval client opener returned an invalid client")
 	}
-	p.clients[indexPath] = client
-	return client, nil
+	actualKey, err := canonicalPoolPath(client.indexPath)
+	if err != nil {
+		p.mu.Unlock()
+		_ = client.Close()
+		return nil, func() {}, fmt.Errorf("resolve opened retrieval index path: %w", err)
+	}
+	if entry := p.clients[actualKey]; entry != nil {
+		entry.refs++
+		p.clients[requestedKey] = entry
+		p.mu.Unlock()
+		_ = client.Close()
+		return entry.client, p.releaseFunc(entry), nil
+	}
+
+	entry := &clientPoolEntry{client: client, refs: 1}
+	p.clients[requestedKey] = entry
+	p.clients[actualKey] = entry
+	p.mu.Unlock()
+	return client, p.releaseFunc(entry), nil
 }
 
-// Invalidate removes client from the active cache without closing it. A
-// caller may still be using the retired handle; Close releases it at server
-// shutdown. The pointer check prevents an older failed request from removing
-// a replacement opened after it.
-func (p *ClientPool) Invalidate(vaultRoot string, client *Client) {
+// Invalidate retires exactly client, regardless of later configuration
+// changes. The handle closes only after all in-flight leases release it.
+func (p *ClientPool) Invalidate(client *Client) {
 	if p == nil || client == nil {
 		return
 	}
-	canonicalRoot, err := canonicalPoolPath(vaultRoot)
-	if err != nil {
-		return
-	}
-	indexPath, err := canonicalPoolIndexPath(canonicalRoot)
-	if err != nil {
-		return
-	}
 	p.mu.Lock()
-	defer p.mu.Unlock()
-	if p.closed || p.clients[indexPath] != client {
+	p.ensureInitializedLocked()
+	if p.closed {
+		p.mu.Unlock()
 		return
 	}
-	delete(p.clients, indexPath)
-	p.retired = append(p.retired, client)
+	var entry *clientPoolEntry
+	for _, candidate := range p.clients {
+		if candidate.client == client {
+			entry = candidate
+			break
+		}
+	}
+	if entry == nil || entry.retired {
+		p.mu.Unlock()
+		return
+	}
+	p.retireLocked(entry)
+	closeNow := p.startCloseIfIdleLocked(entry)
+	p.mu.Unlock()
+	if closeNow {
+		p.finishClose(entry)
+	}
 }
 
-// Close closes active and retired clients exactly once. Retired clients stay
-// open until this point because another request may still hold a pointer after
-// an operation invalidated it.
+// Close prevents new leases, waits for in-flight operations, and closes every
+// active or retired client. Concurrent calls receive the same aggregated error.
 func (p *ClientPool) Close() error {
 	if p == nil {
 		return nil
 	}
 	p.mu.Lock()
+	p.ensureInitializedLocked()
 	if p.closed {
+		for !p.closeDone {
+			p.cond.Wait()
+		}
+		err := p.closeErr
 		p.mu.Unlock()
-		return nil
+		return err
 	}
 	p.closed = true
-	clients := make([]*Client, 0, len(p.clients)+len(p.retired))
-	for _, client := range p.clients {
-		clients = append(clients, client)
+	seen := make(map[*clientPoolEntry]struct{})
+	for _, entry := range p.clients {
+		seen[entry] = struct{}{}
 	}
-	clients = append(clients, p.retired...)
+	for entry := range seen {
+		p.retireLocked(entry)
+	}
 	p.clients = nil
-	p.retired = nil
-	p.mu.Unlock()
 
-	var closeErr error
-	for _, client := range clients {
-		closeErr = errors.Join(closeErr, client.Close())
+	for {
+		var closable []*clientPoolEntry
+		for entry := range p.retired {
+			if p.startCloseIfIdleLocked(entry) {
+				closable = append(closable, entry)
+			}
+		}
+		if len(closable) > 0 {
+			p.mu.Unlock()
+			for _, entry := range closable {
+				p.finishClose(entry)
+			}
+			p.mu.Lock()
+			continue
+		}
+		if len(p.retired) == 0 && p.closing == 0 {
+			p.closeDone = true
+			p.cond.Broadcast()
+			err := p.closeErr
+			p.mu.Unlock()
+			return err
+		}
+		p.cond.Wait()
 	}
-	return closeErr
+}
+
+func (p *ClientPool) releaseFunc(entry *clientPoolEntry) func() {
+	var once sync.Once
+	return func() {
+		once.Do(func() { p.release(entry) })
+	}
+}
+
+func (p *ClientPool) release(entry *clientPoolEntry) {
+	p.mu.Lock()
+	if entry.refs > 0 {
+		entry.refs--
+	}
+	closeNow := p.startCloseIfIdleLocked(entry)
+	p.cond.Broadcast()
+	p.mu.Unlock()
+	if closeNow {
+		p.finishClose(entry)
+	}
+}
+
+func (p *ClientPool) retireLocked(entry *clientPoolEntry) {
+	if entry.retired {
+		return
+	}
+	entry.retired = true
+	for key, active := range p.clients {
+		if active == entry {
+			delete(p.clients, key)
+		}
+	}
+	p.retired[entry] = struct{}{}
+}
+
+func (p *ClientPool) startCloseIfIdleLocked(entry *clientPoolEntry) bool {
+	if !entry.retired || entry.refs != 0 {
+		return false
+	}
+	if _, ok := p.retired[entry]; !ok {
+		return false
+	}
+	delete(p.retired, entry)
+	p.closing++
+	return true
+}
+
+func (p *ClientPool) finishClose(entry *clientPoolEntry) {
+	err := entry.client.Close()
+	p.mu.Lock()
+	p.closeErr = errors.Join(p.closeErr, err)
+	p.closing--
+	p.cond.Broadcast()
+	p.mu.Unlock()
+}
+
+func (p *ClientPool) ensureInitializedLocked() {
+	if p.cond == nil {
+		p.cond = sync.NewCond(&p.mu)
+	}
+	if p.clients == nil && !p.closed {
+		p.clients = make(map[string]*clientPoolEntry)
+	}
+	if p.retired == nil {
+		p.retired = make(map[*clientPoolEntry]struct{})
+	}
+	if p.opener == nil {
+		p.opener = OpenForVault
+	}
 }
 
 func canonicalPoolIndexPath(vaultRoot string) (string, error) {

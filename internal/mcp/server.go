@@ -53,10 +53,6 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 		if err != nil {
 			return nil, nil, err
 		}
-		if _, err := pool.Get(vRoot); err != nil {
-			_ = db.Close()
-			return nil, nil, err
-		}
 		return service.NewWithRetrievalPool(vRoot, db, pool), db, nil
 	}
 

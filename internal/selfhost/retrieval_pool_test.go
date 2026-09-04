@@ -21,11 +21,8 @@ func TestSelfhostReusesRetrievalPoolAndClosesIt(t *testing.T) {
 	httpServer := httptest.NewServer(server.Handler())
 	defer httpServer.Close()
 
-	first, err := server.retrievalPool.Get(server.cfg.VaultRoot)
-	if err != nil {
-		t.Fatalf("initial pool Get: %v", err)
-	}
-	for i := 0; i < 2; i++ {
+	requestNotebooks := func() {
+		t.Helper()
 		request, err := http.NewRequest(http.MethodGet, httpServer.URL+"/api/v1/notebooks", nil)
 		if err != nil {
 			t.Fatal(err)
@@ -37,24 +34,36 @@ func TestSelfhostReusesRetrievalPoolAndClosesIt(t *testing.T) {
 		}
 		_ = response.Body.Close()
 		if response.StatusCode != http.StatusOK {
-			t.Fatalf("notebooks request %d returned %d", i, response.StatusCode)
+			t.Fatalf("notebooks request returned %d", response.StatusCode)
 		}
 	}
-	second, err := server.retrievalPool.Get(server.cfg.VaultRoot)
+
+	requestNotebooks()
+	firstClient, releaseFirst, err := server.retrievalPool.Acquire(server.cfg.VaultRoot)
 	if err != nil {
-		t.Fatalf("second pool Get: %v", err)
+		t.Fatalf("first pool inspection: %v", err)
 	}
-	if first != second {
+	releaseFirst()
+	requestNotebooks()
+	secondClient, releaseSecond, err := server.retrievalPool.Acquire(server.cfg.VaultRoot)
+	if err != nil {
+		t.Fatalf("second pool inspection: %v", err)
+	}
+	releaseSecond()
+	if firstClient != secondClient {
 		t.Fatal("repeated self-host requests did not reuse retrieval client")
 	}
 
+	if err := server.retrievalPool.Close(); err != nil {
+		t.Fatalf("pool Close: %v", err)
+	}
+	// Handler construction remains lazy: endpoints that do not need retrieval
+	// still work when retrieval is unavailable.
+	requestNotebooks()
 	if err := server.Close(); err != nil {
 		t.Fatalf("server Close: %v", err)
 	}
-	if _, err := server.retrievalPool.Get(server.cfg.VaultRoot); err == nil {
-		t.Fatal("server shutdown left retrieval pool open")
-	}
-	if err := first.Delete("missing"); err == nil {
+	if err := firstClient.Delete("missing"); err == nil {
 		t.Fatal("server shutdown did not close pooled retrieval client")
 	}
 }

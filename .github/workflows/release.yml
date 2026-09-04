@@ -118,6 +118,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Select Xcode 26
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
+        with:
+          xcode-version: '26.0'
+
+      - name: Verify Xcode toolchain
+        run: |
+          set -euo pipefail
+          XCODE_VERSION="$(xcodebuild -version)"
+          echo "$XCODE_VERSION"
+          case "$XCODE_VERSION" in
+            Xcode\ 26.*) ;;
+            *)
+              echo "::error::Expected Xcode 26.x, got: $XCODE_VERSION"
+              exit 1
+              ;;
+          esac
+
       - name: Import Developer ID certificate
         env:
           CERTIFICATE_P12: ${{ secrets.CERTIFICATE_P12 }}

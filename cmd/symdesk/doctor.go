@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -33,6 +34,138 @@ var siblingTools = []string{"symmemory", "symvault", "symbrowse"}
 // originals. It is a variable so a doctor test can pin the answer instead of
 // depending on the developer's own symingest configuration.
 var ArchivePathFunc = ingest.ArchivePath
+
+// workspaceToolReport mirrors the gateway's server-check vocabulary while
+// remaining explicitly scoped to the sibling tools this SymDesk workspace can
+// use. The legacy tools, versions and tool_origins maps below stay unchanged;
+// this additive section carries the richer provenance.
+type workspaceToolReport struct {
+	Name                string `json:"name"`
+	Binary              string `json:"binary"`
+	Found               bool   `json:"found"`
+	Path                string `json:"path,omitempty"`
+	Version             string `json:"version,omitempty"`
+	ManagedVersion      string `json:"managed_version,omitempty"`
+	Origin              string `json:"origin,omitempty"`
+	ProbeError          string `json:"probe_error,omitempty"`
+	InstallHint         string `json:"install_hint,omitempty"`
+	ManagedFound        bool   `json:"managed_found"`
+	PathFound           bool   `json:"path_found"`
+	PathVersion         string `json:"path_version,omitempty"`
+	ManagedShadowsNewer bool   `json:"managed_shadows_newer"`
+}
+
+var workspaceToolInstallHints = map[string]string{
+	"symmemory": "brew install danieljustus/tap/symmemory",
+	"symvault":  "brew install danieljustus/tap/symvault",
+	"symbrowse": "brew install danieljustus/tap/symbrowse",
+}
+
+func legacyToolOrigin(origin string) string {
+	switch origin {
+	case "override":
+		return string(compose.OriginSymairaBinEnv)
+	case "managed":
+		return string(compose.OriginManagedRuntime)
+	case "path":
+		return string(compose.OriginPath)
+	default:
+		return "not_found"
+	}
+}
+
+func inspectWorkspaceTools() []workspaceToolReport {
+	reports := make([]workspaceToolReport, 0, len(siblingTools))
+	for _, name := range siblingTools {
+		provenance := compose.InspectTool(name)
+		report := workspaceToolReport{
+			Name:         name,
+			Binary:       name,
+			Found:        provenance.Effective.Found,
+			ManagedFound: provenance.Managed.Found,
+			PathFound:    provenance.PATH.Found,
+			InstallHint:  workspaceToolInstallHints[name],
+		}
+		if provenance.Effective.Found {
+			report.Path = provenance.Effective.Path
+			report.Version = provenance.Effective.Version
+			report.ProbeError = provenance.Effective.ProbeError
+		}
+		if provenance.Managed.Found {
+			report.ManagedVersion = provenance.Managed.Version
+		}
+		if provenance.PATH.Found && provenance.PATH.Path != provenance.Managed.Path {
+			report.PathVersion = provenance.PATH.Version
+		}
+		switch provenance.Origin {
+		case compose.OriginSymairaBinEnv:
+			report.Origin = "override"
+		case compose.OriginManagedRuntime:
+			report.Origin = "managed"
+		case compose.OriginPath:
+			report.Origin = "path"
+		}
+		if report.Origin == "managed" && report.ManagedFound && report.PathVersion != "" {
+			report.ManagedShadowsNewer = toolVersionIsNewer(report.PathVersion, report.ManagedVersion)
+		}
+		reports = append(reports, report)
+	}
+	return reports
+}
+
+// toolVersionIsNewer compares the numeric release components used by the
+// Symaira sibling version commands. Unknown or non-release versions are not
+// ordered, so a doctor report never invents a shadow warning.
+func toolVersionIsNewer(candidate, current string) bool {
+	candidateParts, ok := parseToolVersion(candidate)
+	if !ok {
+		return false
+	}
+	currentParts, ok := parseToolVersion(current)
+	if !ok {
+		return false
+	}
+	for i := 0; i < len(candidateParts) || i < len(currentParts); i++ {
+		var candidatePart, currentPart int
+		if i < len(candidateParts) {
+			candidatePart = candidateParts[i]
+		}
+		if i < len(currentParts) {
+			currentPart = currentParts[i]
+		}
+		if candidatePart != currentPart {
+			return candidatePart > currentPart
+		}
+	}
+	return false
+}
+
+func parseToolVersion(version string) ([]int, bool) {
+	version = strings.TrimSpace(version)
+	version = strings.TrimPrefix(version, "v")
+	if version == "" {
+		return nil, false
+	}
+	if build := strings.IndexByte(version, '+'); build >= 0 {
+		version = version[:build]
+	}
+	if prerelease := strings.IndexByte(version, '-'); prerelease >= 0 {
+		version = version[:prerelease]
+	}
+	parts := strings.Split(version, ".")
+	parsed := make([]int, len(parts))
+	for i, part := range parts {
+		if part == "" {
+			return nil, false
+		}
+		value, err := strconv.Atoi(part)
+		if err != nil || value < 0 {
+			return nil, false
+		}
+		parsed[i] = value
+	}
+	return parsed, true
+}
 
 func newDoctorCmd() *cobra.Command {
 	return &cobra.Command{
@@ -228,23 +361,29 @@ func newDoctorCmd() *cobra.Command {
 			tools := map[string]string{}
 			versions := map[string]string{}
 			origins := map[string]string{}
-			for _, name := range siblingTools {
-				if ok, version := compose.HasTool(name); ok {
-					tools[name] = "ok"
-					versions[name] = version
+			workspaceTools := inspectWorkspaceTools()
+			for _, tool := range workspaceTools {
+				if tool.Found {
+					tools[tool.Name] = "ok"
+					versions[tool.Name] = tool.Version
 				} else {
-					tools[name] = "not_found"
-					versions[name] = ""
+					tools[tool.Name] = "not_found"
+					versions[tool.Name] = ""
 				}
-				if _, origin, err := compose.ResolveWithOrigin(name); err == nil {
-					origins[name] = string(origin)
+				if tool.Origin != "" {
+					// Keep the pre-#800 values exactly as emitted by the
+					// existing tool_origins contract. The additive
+					// workspace_tools section uses the gateway vocabulary
+					// (managed/path/override) instead.
+					origins[tool.Name] = legacyToolOrigin(tool.Origin)
 				} else {
-					origins[name] = "not_found"
+					origins[tool.Name] = "not_found"
 				}
 			}
 			results["tools"] = tools
 			results["versions"] = versions
 			results["tool_origins"] = origins
+			results["workspace_tools"] = workspaceTools
 
 			// The managed runtime directory backs the "symaira_bin_env" and
 			// "managed_runtime" origins above. Its presence (or absence) is
@@ -331,15 +470,21 @@ func newDoctorCmd() *cobra.Command {
 				} else {
 					fmt.Println("conflicts: none")
 				}
-				fmt.Println("tools:")
+				fmt.Println("tools: tools this workspace can use")
 				missingAny := false
+				workspaceByName := make(map[string]workspaceToolReport, len(workspaceTools))
+				for _, tool := range workspaceTools {
+					workspaceByName[tool.Name] = tool
+				}
 				for _, name := range siblingTools {
-					status := tools[name]
-					version := versions[name]
-					if status == "ok" {
-						fmt.Printf("  %s: ok (version %s, from %s)\n", name, version, origins[name])
+					tool := workspaceByName[name]
+					if tool.Found {
+						fmt.Printf("  %s: ok (version %s, from %s)\n", name, tool.Version, tool.Origin)
+						if tool.ManagedShadowsNewer {
+							fmt.Printf("    warning: managed version %s shadows newer PATH version %s\n", tool.ManagedVersion, tool.PathVersion)
+						}
 					} else {
-						fmt.Printf("  %s: not found\n", name)
+						fmt.Printf("  %s: not found (managed: absent, PATH: absent)\n", name)
 						missingAny = true
 					}
 				}

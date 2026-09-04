@@ -1,6 +1,8 @@
 package vault
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -131,6 +133,41 @@ func TestWalk(t *testing.T) {
 
 	if count != 8 {
 		t.Fatalf("expected to find 8 files, found %d", count)
+	}
+}
+
+func TestWalkContextCancellation(t *testing.T) {
+	path, _ := filepath.Abs("../../testdata/vault")
+
+	// Pre-cancelled context halts immediately
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	visited := 0
+	err := WalkContext(ctx, path, func(p string) error {
+		visited++
+		return nil
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context.Canceled, got %v", err)
+	}
+	if visited != 0 {
+		t.Fatalf("expected 0 visited files on pre-cancelled context, got %d", visited)
+	}
+
+	// Context cancelled mid-traversal
+	ctx2, cancel2 := context.WithCancel(context.Background())
+	visited2 := 0
+	err2 := WalkContext(ctx2, path, func(p string) error {
+		visited2++
+		cancel2()
+		return nil
+	})
+	if !errors.Is(err2, context.Canceled) {
+		t.Fatalf("expected context.Canceled mid-traversal, got %v", err2)
+	}
+	if visited2 > 2 {
+		t.Fatalf("expected walk to halt promptly after cancellation, visited %d", visited2)
 	}
 }
 

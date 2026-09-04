@@ -3,6 +3,7 @@ package vault
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -124,11 +125,15 @@ var skipDirNames = map[string]bool{
 	"__pycache__":  true,
 }
 
-// WalkAll iterates over all non-ignored files (both Markdown and non-Markdown)
-// in the vault, respecting ignore rules for hidden directories (e.g. .obsidian,
-// .trash, .git), dependency directories (skipDirNames), and hidden files.
-func WalkAll(vaultRoot string, fn func(path string, d fs.DirEntry) error) error {
+// WalkAllContext iterates over all non-ignored files (both Markdown and
+// non-Markdown) in the vault with context cancellation awareness. If ctx is
+// cancelled or its deadline expires, the walk halts immediately and returns
+// ctx.Err().
+func WalkAllContext(ctx context.Context, vaultRoot string, fn func(path string, d fs.DirEntry) error) error {
 	return filepath.WalkDir(vaultRoot, func(path string, d fs.DirEntry, err error) error {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
 		if err != nil {
 			return err
 		}
@@ -152,14 +157,27 @@ func WalkAll(vaultRoot string, fn func(path string, d fs.DirEntry) error) error 
 	})
 }
 
-// Walk iterates over all Markdown files in the vault, respecting ignore rules.
-func Walk(vaultRoot string, fn func(path string) error) error {
-	return WalkAll(vaultRoot, func(path string, d fs.DirEntry) error {
+// WalkAll iterates over all non-ignored files (both Markdown and non-Markdown)
+// in the vault, respecting ignore rules for hidden directories (e.g. .obsidian,
+// .trash, .git), dependency directories (skipDirNames), and hidden files.
+func WalkAll(vaultRoot string, fn func(path string, d fs.DirEntry) error) error {
+	return WalkAllContext(context.Background(), vaultRoot, fn)
+}
+
+// WalkContext iterates over all Markdown files in the vault with context
+// cancellation awareness.
+func WalkContext(ctx context.Context, vaultRoot string, fn func(path string) error) error {
+	return WalkAllContext(ctx, vaultRoot, func(path string, d fs.DirEntry) error {
 		if filepath.Ext(d.Name()) == ".md" {
 			return fn(path)
 		}
 		return nil
 	})
+}
+
+// Walk iterates over all Markdown files in the vault, respecting ignore rules.
+func Walk(vaultRoot string, fn func(path string) error) error {
+	return WalkContext(context.Background(), vaultRoot, fn)
 }
 
 // IsExcalidrawFile reports whether path has the delegated Excalidraw drawing extension (.excalidraw.md).

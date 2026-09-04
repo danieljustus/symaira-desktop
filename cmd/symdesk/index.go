@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -147,15 +149,79 @@ func newIndexCmd() *cobra.Command {
 // newIndexStatusCmd reports the hybrid index snapshot and whether the
 // embedding backend answers. Without it a degraded retrieval path is
 // invisible: queries still return, just worse (issue #515).
-var indexStatusDocuments bool
-var indexStatusState string
+const defaultIndexStatusTimeout = 10 * time.Second
+
+var (
+	indexStatusDocuments bool
+	indexStatusState     string
+	indexStatusTimeout   time.Duration
+
+	indexStatusRetrievalFunc = defaultIndexStatusRetrieval
+	indexStatusVaultWalkFunc = defaultIndexStatusVaultWalk
+)
+
+func defaultIndexStatusRetrieval(ctx context.Context) (*retrieval.Status, error) {
+	return retrieval.CurrentStatusContext(ctx)
+}
+
+func defaultIndexStatusVaultWalk(ctx context.Context, vaultRoot string, fn func(path string) error) error {
+	return vault.WalkContext(ctx, vaultRoot, fn)
+}
+
+// IndexStatusTimeoutError reports which phase of index status exceeded the deadline (#806).
+type IndexStatusTimeoutError struct {
+	Phase   string
+	Timeout time.Duration
+	Err     error
+}
+
+func (e *IndexStatusTimeoutError) Error() string {
+	return fmt.Sprintf("index status timed out during %s after %v: %v", e.Phase, e.Timeout, e.Err)
+}
+
+func (e *IndexStatusTimeoutError) Unwrap() error {
+	return e.Err
+}
 
 func newIndexStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Report the hybrid search index and embedding backend state",
+		Long: `Report the hybrid search index and embedding backend state.
+
+Status retrieval and active vault counting are bounded by an internal deadline
+(--timeout, default 10s) so cloud-backed or slow filesystems do not block
+callers indefinitely.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			timeout := defaultIndexStatusTimeout
+			if cmd.Flags().Changed("timeout") {
+				timeout = indexStatusTimeout
+			} else if indexStatusTimeout > 0 {
+				timeout = indexStatusTimeout
+			}
+
+			parentCtx := cmd.Context()
+			if parentCtx == nil {
+				parentCtx = context.Background()
+			}
+
+			var ctx context.Context
+			var cancel context.CancelFunc
+			if timeout > 0 {
+				ctx, cancel = context.WithTimeout(parentCtx, timeout)
+				defer cancel()
+			} else {
+				ctx = parentCtx
+			}
+
 			if indexStatusDocuments {
+				if err := ctx.Err(); err != nil {
+					return &IndexStatusTimeoutError{
+						Phase:   "document status listing",
+						Timeout: timeout,
+						Err:     err,
+					}
+				}
 				vRoot, err := vault.ResolveVaultRoot("", cfg)
 				if err != nil {
 					return err
@@ -171,10 +237,23 @@ func newIndexStatusCmd() *cobra.Command {
 				}
 				return outputResult(rows)
 			}
-			status, err := retrieval.CurrentStatus()
+
+			status, err := indexStatusRetrievalFunc(ctx)
 			if err != nil {
+				if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) || ctx.Err() != nil {
+					errToReport := err
+					if errToReport == nil || (!errors.Is(errToReport, context.DeadlineExceeded) && !errors.Is(errToReport, context.Canceled)) {
+						errToReport = ctx.Err()
+					}
+					return &IndexStatusTimeoutError{
+						Phase:   "retrieval status",
+						Timeout: timeout,
+						Err:     errToReport,
+					}
+				}
 				return err
 			}
+
 			// Retrieval currently stores one shared database, while the
 			// sidecar and vault are selected by --vault. Include the active
 			// vault's Markdown count as a comparison figure so consumers can
@@ -185,10 +264,21 @@ func newIndexStatusCmd() *cobra.Command {
 					return resolveErr
 				}
 				vaultCount := 0
-				if walkErr := vault.Walk(vRoot, func(path string) error {
+				if walkErr := indexStatusVaultWalkFunc(ctx, vRoot, func(path string) error {
 					vaultCount++
 					return nil
 				}); walkErr != nil {
+					if errors.Is(walkErr, context.DeadlineExceeded) || errors.Is(walkErr, context.Canceled) || ctx.Err() != nil {
+						errToReport := walkErr
+						if errToReport == nil || (!errors.Is(errToReport, context.DeadlineExceeded) && !errors.Is(errToReport, context.Canceled)) {
+							errToReport = ctx.Err()
+						}
+						return &IndexStatusTimeoutError{
+							Phase:   "vault counting",
+							Timeout: timeout,
+							Err:     errToReport,
+						}
+					}
 					return walkErr
 				}
 				status.VaultDocumentCount = &vaultCount
@@ -198,6 +288,7 @@ func newIndexStatusCmd() *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&indexStatusDocuments, "documents", false, "List per-document index lifecycle states")
 	cmd.Flags().StringVar(&indexStatusState, "state", "", "Filter document states (queued, indexing, indexed, failed, encrypted, unsupported)")
+	cmd.Flags().DurationVar(&indexStatusTimeout, "timeout", defaultIndexStatusTimeout, "Maximum duration to wait for index status and vault counting (0 to disable)")
 	return cmd
 }
 

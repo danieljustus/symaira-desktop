@@ -31,12 +31,6 @@ type indexStatusRequest struct {
 
 type indexStatusPhaseReporter func(phase string)
 
-type indexStatusRunner func(
-	ctx context.Context,
-	req indexStatusRequest,
-	report indexStatusPhaseReporter,
-) ([]byte, error)
-
 var (
 	indexStatusRun           = runIndexStatusChild
 	indexStatusWorkerCmd     = defaultIndexStatusWorkerCmd
@@ -62,7 +56,7 @@ func defaultIndexStatusWorkerCmd(ctx context.Context, req indexStatusRequest) (*
 	if req.JSON {
 		args = append(args, "--json")
 	}
-	cmd := exec.Command(exe, args...)
+	cmd := exec.Command(exe, args...) // #nosec G204 -- exe is os.Executable and args are allowlisted status flags.
 	return cmd, nil
 }
 

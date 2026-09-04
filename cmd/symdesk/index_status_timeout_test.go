@@ -388,7 +388,11 @@ func TestIndexStatusHardDeadlineKillsWorker(t *testing.T) {
 	}
 
 	indexStatusWorkerCmd = func(ctx context.Context, req indexStatusRequest) (*exec.Cmd, error) {
-		cmd := exec.Command(os.Args[0], "-test.run=TestIndexStatusHelperProcess", "--")
+		exe, err := os.Executable()
+		if err != nil {
+			return nil, err
+		}
+		cmd := exec.Command(exe, "-test.run=TestIndexStatusHelperProcess", "--") // #nosec G204 -- os.Executable with static arguments.
 		cmd.Env = append(os.Environ(), "GO_WANT_INDEX_STATUS_HELPER=1")
 		return cmd, nil
 	}
@@ -453,7 +457,11 @@ func TestIndexStatusRepeatedTimeoutsDoNotLeakGoroutines(t *testing.T) {
 	})
 
 	indexStatusWorkerCmd = func(ctx context.Context, req indexStatusRequest) (*exec.Cmd, error) {
-		cmd := exec.Command(os.Args[0], "-test.run=TestIndexStatusHelperProcess", "--")
+		exe, err := os.Executable()
+		if err != nil {
+			return nil, err
+		}
+		cmd := exec.Command(exe, "-test.run=TestIndexStatusHelperProcess", "--") // #nosec G204 -- os.Executable with static arguments.
 		cmd.Env = append(os.Environ(), "GO_WANT_INDEX_STATUS_HELPER=1")
 		return cmd, nil
 	}

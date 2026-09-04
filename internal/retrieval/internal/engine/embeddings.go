@@ -331,7 +331,12 @@ func (eg *EmbeddingsGenerator) embedStatusContext(ctx context.Context, texts []s
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	client := &http.Client{Timeout: eg.Timeout}
+	client := &http.Client{
+		Timeout: eg.Timeout,
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

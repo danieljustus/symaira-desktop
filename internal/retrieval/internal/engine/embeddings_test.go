@@ -312,9 +312,16 @@ func TestRedirectNotFollowed(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error from redirect response")
 	}
+	statusResult, err := eg.GenerateVectorNoRetryWithModelContext(context.Background(), "status redirect probe")
+	if err != nil {
+		t.Fatalf("status probe returned error: %v", err)
+	}
+	if statusResult.Model != LocalHashModelName {
+		t.Fatalf("status probe model = %q, want local fallback", statusResult.Model)
+	}
 
-	if got := atomic.LoadInt32(&redirectorHits); got != 1 {
-		t.Errorf("expected 1 hit on redirector, got %d", got)
+	if got := atomic.LoadInt32(&redirectorHits); got != 2 {
+		t.Errorf("expected 2 hits on redirector, got %d", got)
 	}
 	if got := atomic.LoadInt32(&redirectHits); got != 0 {
 		t.Errorf("expected 0 hits on redirect target (redirect was followed!), got %d", got)

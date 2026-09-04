@@ -46,4 +46,13 @@ func TestHandlePolicyFieldsAreMandatoryAndClosed(t *testing.T) {
 			}
 		})
 	}
+	legacy := strings.ReplaceAll(string(encoded), "sensitivity: internal\n", "")
+	legacy = strings.ReplaceAll(legacy, "retention_rule: default\n", "")
+	parsed, err := ParseHandle("datasets/orders.md", []byte(legacy))
+	if err != nil {
+		t.Fatalf("legacy policy-free handle was not read conservatively: %v", err)
+	}
+	if parsed.Sensitivity != DefaultSensitivity || parsed.RetentionRule != DefaultRetentionRule {
+		t.Fatalf("legacy defaults = %q/%q, want %q/%q", parsed.Sensitivity, parsed.RetentionRule, DefaultSensitivity, DefaultRetentionRule)
+	}
 }

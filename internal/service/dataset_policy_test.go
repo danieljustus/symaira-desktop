@@ -3,6 +3,7 @@ package service
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -61,7 +62,21 @@ func TestDatasetPurgeAfterExplicitRetentionAcceptanceLeavesNoResidue(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
+	otherRel := "notes/keep.md"
+	otherAbs, err := vault.SecurePath(svc.VaultRoot, otherRel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(otherAbs), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(otherAbs, []byte("unrelated checkpoint content"), 0o600); err != nil { //nolint:gosec // test-owned confined path
+		t.Fatal(err)
+	}
 	if _, err := svc.History.CheckpointFile("retention-task", handleRel); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.History.CheckpointFile("retention-task", otherRel); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := svc.History.Trash(rawRel); err != nil {
@@ -71,7 +86,10 @@ func TestDatasetPurgeAfterExplicitRetentionAcceptanceLeavesNoResidue(t *testing.
 		t.Fatal(err)
 	}
 
-	if err := svc.DatasetPurge("orders"); err != nil {
+	if err := svc.DatasetPurge("orders", "wrong-rule"); err == nil {
+		t.Fatal("dataset purge accepted a proposal for the wrong retention rule")
+	}
+	if err := svc.DatasetPurge("orders", dataset.DefaultRetentionRule); err != nil {
 		t.Fatal(err)
 	}
 	for _, rel := range []string{handleRel, rawRel} {
@@ -106,15 +124,15 @@ func TestDatasetPurgeAfterExplicitRetentionAcceptanceLeavesNoResidue(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(checkpoints) != 0 {
-		t.Fatalf("matching checkpoint residue remains: %#v", checkpoints)
+	if len(checkpoints) != 1 || len(checkpoints[0].Files) != 1 || checkpoints[0].Files[0].RelPath != otherRel {
+		t.Fatalf("dataset purge removed unrelated checkpoint state: %#v", checkpoints)
 	}
 	objects, err := os.ReadDir(filepath.Join(svc.VaultRoot, ".symdesk", "history", "objects"))
 	if err != nil && !os.IsNotExist(err) {
 		t.Fatal(err)
 	}
-	if len(objects) != 0 {
-		t.Fatalf("unreferenced history blobs remain: %#v", objects)
+	if len(objects) != 1 {
+		t.Fatalf("history object GC did not preserve only the unrelated blob: %#v", objects)
 	}
 }
 
@@ -134,5 +152,34 @@ func TestGenericSearchExcludesDatasetRowsWhileDatasetQuerySelectsThem(t *testing
 	}
 	if query.ReturnedRows != 1 || query.Rows[0]["amount"] != 12.5 {
 		t.Fatalf("explicit dataset query did not expose selected row: %#v", query)
+	}
+}
+
+func TestDatasetPurgeRejectsSymlinkedRawDirectory(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlink creation requires platform privileges on Windows")
+	}
+	svc := newTestService(t)
+	datasetForPolicyTest(t, svc, dataset.SensitivityRestricted)
+	rawDir := filepath.Join(svc.VaultRoot, "datasets", "orders")
+	if err := os.RemoveAll(rawDir); err != nil {
+		t.Fatal(err)
+	}
+	unrelated := filepath.Join(svc.VaultRoot, "unrelated")
+	if err := os.MkdirAll(unrelated, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	keep := filepath.Join(unrelated, "keep.txt")
+	if err := os.WriteFile(keep, []byte("keep"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(unrelated, rawDir); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.DatasetPurge("orders", dataset.DefaultRetentionRule); err == nil || !strings.Contains(err.Error(), "symlink") {
+		t.Fatalf("symlinked raw directory was not rejected: %v", err)
+	}
+	if data, err := os.ReadFile(keep); err != nil || string(data) != "keep" { //nolint:gosec // test-owned confined path
+		t.Fatalf("unrelated symlink target was modified: %q %v", data, err)
 	}
 }

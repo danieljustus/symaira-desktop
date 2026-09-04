@@ -366,6 +366,13 @@ func ParseHandle(relPath string, data []byte) (*Handle, error) {
 	if fm.Title == "" || fm.Slug == "" {
 		return nil, fmt.Errorf("dataset handle %s is missing title or dataset_id", relPath)
 	}
+	// Contract-v6 handles written before policy enforcement shipped omitted
+	// both fields. Read that exact legacy shape conservatively; a partially
+	// declared or invalid policy still fails instead of being guessed.
+	if fm.Sensitivity == "" && fm.RetentionRule == "" {
+		fm.Sensitivity = DefaultSensitivity
+		fm.RetentionRule = DefaultRetentionRule
+	}
 	if err := ValidateSensitivity(fm.Sensitivity); err != nil {
 		return nil, fmt.Errorf("dataset handle %s: %w", relPath, err)
 	}

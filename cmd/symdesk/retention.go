@@ -64,13 +64,19 @@ func newRetentionEvalCmd() *cobra.Command {
 				// Filter documents by selector
 				var matched []retention.DocMeta
 				for _, d := range docs {
+					documentType := d.DocumentType
+					if d.Type == "dataset" {
+						// Dataset handles use the contract-level type field rather
+						// than document_type; expose it through the existing selector.
+						documentType = d.Type
+					}
 					meta := retention.DocMeta{
 						Path:          d.Path,
 						Title:         d.Title,
 						DocumentDate:  d.DocumentDate,
 						Status:        d.Status,
 						Correspondent: d.Correspondent,
-						DocumentType:  d.DocumentType,
+						DocumentType:  documentType,
 						Person:        d.Person,
 					}
 					if rule.Selector.Matches(meta) {
@@ -203,7 +209,7 @@ func newRetentionAcceptCmd() *cobra.Command {
 					if item.Action != retention.ActionTrash {
 						return fmt.Errorf("dataset retention action for %s must be trash", item.Path)
 					}
-					if err := svc.DatasetPurge(slug); err != nil {
+					if err := svc.DatasetPurge(slug, item.RuleName); err != nil {
 						fmt.Fprintf(os.Stderr, "failed to purge dataset %s: %v\n", slug, err)
 						continue
 					}

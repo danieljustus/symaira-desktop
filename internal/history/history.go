@@ -491,37 +491,69 @@ func (s *Store) PurgePaths(relPaths ...string) error {
 	if err != nil {
 		return err
 	}
-	checkpoints, err := s.ListCheckpoints()
-	if err != nil {
+	checkpointItems, err := fs.ReadDir(root.FS(), checkpointsRelDir())
+	if err != nil && !os.IsNotExist(err) {
 		return err
+	}
+	checkpoints := make([]Checkpoint, 0, len(checkpointItems))
+	for _, item := range checkpointItems {
+		if item.IsDir() || !strings.HasSuffix(item.Name(), ".json") {
+			continue
+		}
+		data, err := root.ReadFile(filepath.Join(checkpointsRelDir(), item.Name()))
+		if err != nil {
+			return err
+		}
+		var cp Checkpoint
+		if err := json.Unmarshal(data, &cp); err != nil {
+			return fmt.Errorf("corrupt checkpoint manifest %q: %w", item.Name(), err)
+		}
+		checkpoints = append(checkpoints, cp)
 	}
 	survivingCheckpoints := make([]Checkpoint, 0, len(checkpoints))
 	for _, cp := range checkpoints {
 		matched := false
+		files := cp.Files[:0]
 		for _, file := range cp.Files {
 			if targets[filepath.ToSlash(file.RelPath)] {
 				matched = true
+				continue
 			}
+			files = append(files, file)
 		}
+		cp.Files = files
+		newFiles := cp.NewFiles[:0]
 		for _, path := range cp.NewFiles {
 			if targets[filepath.ToSlash(path)] {
 				matched = true
+				continue
 			}
+			newFiles = append(newFiles, path)
 		}
+		cp.NewFiles = newFiles
+		skipped := cp.Skipped[:0]
 		for _, path := range cp.Skipped {
 			if targets[filepath.ToSlash(path)] {
 				matched = true
+				continue
 			}
+			skipped = append(skipped, path)
 		}
+		cp.Skipped = skipped
 		if matched {
-			rel, err := checkpointRelPath(cp.TaskID)
-			if err != nil {
+			if len(cp.Files) == 0 && len(cp.NewFiles) == 0 && len(cp.Skipped) == 0 {
+				rel, err := checkpointRelPath(cp.TaskID)
+				if err != nil {
+					return err
+				}
+				if err := root.Remove(rel); err != nil && !os.IsNotExist(err) {
+					return err
+				}
+				continue
+			}
+			if err := s.saveCheckpoint(&cp); err != nil {
 				return err
 			}
-			if err := root.Remove(rel); err != nil && !os.IsNotExist(err) {
-				return err
-			}
-			continue
 		}
 		survivingCheckpoints = append(survivingCheckpoints, cp)
 	}
@@ -542,7 +574,7 @@ func (s *Store) PurgePaths(relPaths ...string) error {
 		}
 		var entries []Entry
 		if err := json.Unmarshal(data, &entries); err != nil {
-			return nil
+			return fmt.Errorf("corrupt history manifest %q: %w", path, err)
 		}
 		for _, entry := range entries {
 			referenced[entry.ID] = true

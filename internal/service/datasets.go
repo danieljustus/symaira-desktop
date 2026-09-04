@@ -41,8 +41,6 @@ type DatasetDescription struct {
 	DatasetSummary
 	Coverage       dataset.Coverage `json:"coverage"`
 	RefreshCommand string           `json:"refresh_command,omitempty"`
-	Sensitivity    string           `json:"sensitivity"`
-	RetentionRule  string           `json:"retention_rule"`
 }
 
 type DatasetAggregate struct {
@@ -167,7 +165,7 @@ func (s *Service) DatasetDescribe(slug string) (*DatasetDescription, error) {
 		rows = count
 	}
 	summary := datasetSummary(*handle, rows)
-	return &DatasetDescription{DatasetSummary: summary, Coverage: handle.Coverage, RefreshCommand: handle.RefreshCommand, Sensitivity: handle.Sensitivity, RetentionRule: handle.RetentionRule}, nil
+	return &DatasetDescription{DatasetSummary: summary, Coverage: handle.Coverage, RefreshCommand: handle.RefreshCommand}, nil
 }
 
 func datasetSummary(handle dataset.Handle, rows int) DatasetSummary {

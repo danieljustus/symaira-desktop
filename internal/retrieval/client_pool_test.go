@@ -132,6 +132,46 @@ func TestClientPoolConcurrentGetOpensOnce(t *testing.T) {
 	}
 }
 
+func BenchmarkClientPoolAcquisition(b *testing.B) {
+	home := b.TempDir()
+	b.Setenv("HOME", home)
+	b.Setenv("XDG_DATA_HOME", b.TempDir())
+	vaultRoot := b.TempDir()
+
+	seed, err := OpenForVault(vaultRoot)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if err := seed.Close(); err != nil {
+		b.Fatal(err)
+	}
+
+	b.Run("per_request_open_close", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			client, err := OpenForVault(vaultRoot)
+			if err != nil {
+				b.Fatal(err)
+			}
+			if err := client.Close(); err != nil {
+				b.Fatal(err)
+			}
+		}
+	})
+	b.Run("pooled_warm_get", func(b *testing.B) {
+		pool := NewClientPool()
+		defer func() { _ = pool.Close() }()
+		if _, err := pool.Get(vaultRoot); err != nil {
+			b.Fatal(err)
+		}
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			if _, err := pool.Get(vaultRoot); err != nil {
+				b.Fatal(err)
+			}
+		}
+	})
+}
+
 func TestClientPoolInvalidateRetiresAndReopens(t *testing.T) {
 	prepareClientPoolTest(t)
 	pool, opens := countedPool(t)

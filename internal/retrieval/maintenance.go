@@ -84,10 +84,14 @@ func RelocateIndex(destination string) error {
 	return RelocateIndexForVault("", destination)
 }
 
-// RelocateIndexForVault snapshots the effective vault index before switching
-// the explicit global IndexPath. A failed snapshot leaves configuration intact.
+// RelocateIndexForVault rejects vault-scoped relocation because IndexPath is a
+// global override and would collapse isolation. Empty vaultRoot preserves the
+// standalone relocation behavior.
 func RelocateIndexForVault(vaultRoot, destination string) error {
-	location, err := IndexLocationForVault(vaultRoot)
+	if strings.TrimSpace(vaultRoot) != "" {
+		return fmt.Errorf("cannot relocate a vault-scoped retrieval index; use backup/restore or run relocate without --vault for a deliberate global index_path override")
+	}
+	location, err := IndexLocationForVault("")
 	if err != nil {
 		return err
 	}

@@ -86,6 +86,9 @@ retrieval SQLite database consistently, including committed WAL contents, run:
 symdesk --vault /path/to/vault index maintenance backup --output retrieval-backup.db
 ```
 
+Vault-scoped `relocate` is intentionally rejected because `index_path` is a
+global override and would make multiple vaults share one retrieval database.
+
 ## Restore walkthrough
 
 1. Install SymDesk on the replacement machine.

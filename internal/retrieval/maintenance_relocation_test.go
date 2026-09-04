@@ -4,11 +4,42 @@ import (
 	"database/sql"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	retrievaldb "github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 )
+
+func TestRelocateIndexForVaultRejectsIsolationCollapse(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
+	vaultA := t.TempDir()
+	vaultB := t.TempDir()
+	pathA, err := IndexLocationForVault(vaultA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pathB, err := IndexLocationForVault(vaultB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pathA == pathB {
+		t.Fatal("distinct vaults resolved to one index before relocation")
+	}
+	err = RelocateIndexForVault(vaultA, filepath.Join(t.TempDir(), "relocated.db"))
+	if err == nil || !strings.Contains(err.Error(), "vault-scoped") {
+		t.Fatalf("RelocateIndexForVault error = %v, want isolation rejection", err)
+	}
+	afterB, err := IndexLocationForVault(vaultB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if afterB != pathB {
+		t.Fatalf("vault B path changed from %q to %q", pathB, afterB)
+	}
+}
 
 func TestRelocateIndexPersistsConfiguredLocation(t *testing.T) {
 	home := t.TempDir()

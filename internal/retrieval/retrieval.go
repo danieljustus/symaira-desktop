@@ -21,10 +21,10 @@ import (
 	"strings"
 	"time"
 
+	desktopconfig "github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/engine"
-	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
 
 // LocationAnchor is re-exported so service and transport consumers do not
@@ -168,14 +168,9 @@ func configuredIndexPath(cfg *config.Config) (string, error) {
 }
 
 // vaultIndexPath returns <SidecarRoot>/<hash>/retrieval.db for vaultRoot,
-// colocated with the sidecar database through the sidecar package's canonical
-// per-vault directory resolver.
+// resolved through the shared internal/config path resolver.
 func vaultIndexPath(vaultRoot string) (string, error) {
-	dir, err := sidecar.VaultDir(vaultRoot)
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(dir, "retrieval.db"), nil
+	return desktopconfig.RetrievalPath(vaultRoot)
 }
 
 // migrateLegacyIndex performs the one-time upgrade from the absorbed

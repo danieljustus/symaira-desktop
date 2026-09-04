@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -11,8 +12,8 @@ import (
 )
 
 // newConfigCmd implements the shared CLI vocabulary `<tool> config` with
-// get | set | path | init (issue #593). It makes the resolved configuration
-// discoverable and editable from the CLI instead of hand-editing files.
+// get | set | path | paths | init (issues #593, #757). It makes the resolved
+// configuration and store paths discoverable and editable from the CLI.
 func newConfigCmd() *cobra.Command {
 	configCmd := &cobra.Command{
 		Use:     "config",
@@ -25,6 +26,37 @@ func newConfigCmd() *cobra.Command {
 		Short: "Print the configuration file path that is actually in effect",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Println(config.GlobalPath())
+			return nil
+		},
+	})
+
+	configCmd.AddCommand(&cobra.Command{
+		Use:   "paths",
+		Short: "Print resolved filesystem paths for absorbed stores and directories",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vRoot := ""
+			if cfg != nil {
+				vRoot = cfg.Vault
+			}
+			sp, err := config.ResolveStorePaths(vRoot)
+			if err != nil {
+				return err
+			}
+			if jsonFlag {
+				b, err := json.MarshalIndent(sp, "", "  ")
+				if err != nil {
+					return err
+				}
+				fmt.Println(string(b))
+				return nil
+			}
+			fmt.Printf("data_dir: %s\n", sp.DataDir)
+			fmt.Printf("config_dir: %s\n", sp.ConfigDir)
+			fmt.Printf("cache_dir: %s\n", sp.CacheDir)
+			fmt.Printf("sidecar: %s\n", sp.Sidecar)
+			fmt.Printf("retrieval: %s\n", sp.Retrieval)
+			fmt.Printf("ingest: %s\n", sp.Ingest)
+			fmt.Printf("contacts: %s\n", sp.Contacts)
 			return nil
 		},
 	})

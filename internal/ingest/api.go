@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	desktopconfig "github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/ingest/internal/extract"
 	ingestengine "github.com/danieljustus/symaira-desktop/internal/ingest/internal/ingest"
@@ -137,18 +138,10 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
-// defaultDataPath mirrors the CLI's XDG data location for the document store
-// and the archive, so an embedding consumer and the binary address the same
-// state rather than two divergent copies.
+// defaultDataPath delegates to the shared internal/config path resolver
+// (one symdesk/ app dir under XDG, with legacy symingest fallbacks).
 func defaultDataPath(name string) (string, error) {
-	if dir := os.Getenv("XDG_DATA_HOME"); dir != "" {
-		return filepath.Join(dir, "symingest", name), nil
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("cannot determine home directory; set %s explicitly: %w", name, err)
-	}
-	return filepath.Join(home, ".local", "share", "symingest", name), nil
+	return desktopconfig.IngestDataPath(name)
 }
 
 // ArchivePath reports where symingest preserves original files, resolved the

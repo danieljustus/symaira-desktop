@@ -22,7 +22,7 @@ The vault directory contains the Markdown notes with YAML frontmatter. This is t
 
 The sidecar index powers search, backlinks, and views. It is derived from the vault.
 
-- **Default path:** `~/Library/Application Support/SymDesk/sidecar`.
+- **Default path:** `~/.local/share/symdesk/vaults/<hash>/sidecar.db` (run `symdesk config paths --json` to inspect).
 - **Backup:** Not strictly required.
 - **Restore:** After restoring the vault, run `symdesk index` to rebuild the sidecar.
 
@@ -40,8 +40,16 @@ symingest keeps the original PDFs/images/EMLs it consumed. These are the raw sou
 
 The database tracks dedup hashes, job history, and archive-to-vault mappings. The queue holds pending ingestion jobs.
 
-- **Default paths:** `~/.local/share/symingest/symingest.db`, `~/.local/share/symingest/queue`.
+- **Default paths:** `~/.local/share/symdesk/symingest.db` (legacy fallback: `~/.local/share/symingest/symingest.db`), `~/.local/share/symingest/queue`.
 - **Backup:** Include the database and queue directory. If you lose them, you can re-run ingestion, but dedup history and job state are lost.
+- **Restore:** Copy back to the same path.
+
+### 4b. symrelate contacts database — PRECIOUS
+
+The contacts database stores contact entities and relationships.
+
+- **Default path:** `~/.local/share/symdesk/symrelate.db` (legacy fallback: `~/.local/share/symrelate/symrelate.db` or `SYMRELATE_DATA_HOME`).
+- **Backup:** Include the database in your backup.
 - **Restore:** Copy back to the same path.
 
 ### 5. symmemory database — PRECIOUS

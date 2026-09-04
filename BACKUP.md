@@ -27,18 +27,68 @@ vault backup or this repository.
 - Native-app build products, caches, and generated project files are not user
   data and do not belong in a vault backup.
 
+## Absorbed store paths
+
+SymDesk consolidates all absorbed store state under a single XDG application
+directory (`$XDG_DATA_HOME/symdesk`, defaulting to `~/.local/share/symdesk`).
+Existing installs with state in legacy per-tool directories continue to work
+via read-only fallbacks.
+
+To enumerate the active paths for backup scripts, run:
+
+```sh
+symdesk config paths --json
+```
+
+Output:
+
+```json
+{
+  "data_dir": "/Users/username/.local/share/symdesk",
+  "config_dir": "/Users/username/.config/symdesk",
+  "cache_dir": "/Users/username/.cache/symdesk",
+  "sidecar": "/Users/username/.local/share/symdesk/vaults/<hash>/sidecar.db",
+  "retrieval": "/Users/username/.local/share/symdesk/vaults/<hash>/retrieval.db",
+  "ingest": "/Users/username/.local/share/symdesk/symingest.db",
+  "contacts": "/Users/username/.local/share/symdesk/symrelate.db"
+}
+```
+
+The resolved paths and their classification:
+
+- **Ingest store** (`ingest`): `~/.local/share/symdesk/symingest.db` (legacy
+  fallback: `~/.local/share/symingest/symingest.db`). Tracks dedup hashes, job
+  history, and original-to-vault mappings. **PRECIOUS** — back this up.
+- **Contacts store** (`contacts`): `~/.local/share/symdesk/symrelate.db` (legacy
+  fallback: `~/.local/share/symrelate/symrelate.db` or `SYMRELATE_DATA_HOME`).
+  Stores contact relationships and entities. **PRECIOUS** — back this up.
+- **Sidecar index** (`sidecar`):
+  `~/.local/share/symdesk/vaults/<hash>/sidecar.db` (or `symdesk/sidecar.db`
+  without a vault). Powers search, backlinks, and metadata. **REBUILDABLE**
+  via `symdesk index`.
+- **Retrieval index** (`retrieval`):
+  `~/.local/share/symdesk/vaults/<hash>/retrieval.db` (or
+  `symdesk/retrieval.db` without a vault; legacy fallback:
+  `~/.local/share/symaira-seek/symseek.db`). Vector and BM25 index.
+  **REBUILDABLE**.
+- **Archive directory**: `<vault>/archive/ingest/` by default (vault-relative,
+  so included in vault backups). When configured outside the vault, falls back
+  to `~/.local/share/symdesk/archive` (legacy fallback:
+  `~/.local/share/symingest/archive`). **PRECIOUS** — back this up.
+
 ## Restore walkthrough
 
-1. Install SymDesk and the required companion tools on the replacement machine.
-2. Restore the vault to its intended location, then restore the symingest
-   original archive and queue to the configured companion-tool locations.
-3. Point `SYMDESK_VAULT` at the restored vault and run `symdesk index`.
-4. Run `symdesk doctor`, open a saved view, and search for a known document to
+1. Install SymDesk on the replacement machine.
+2. Restore the vault to its intended location, including any vault-relative
+   `archive/` originals. If using a shared external archive, restore it to its
+   configured location.
+3. Restore the precious databases (`ingest` and `contacts` paths reported by
+   `symdesk config paths --json`).
+4. Point `SYMDESK_VAULT` at the restored vault and run `symdesk index` to rebuild
+   the sidecar index.
+5. Run `symdesk doctor`, open a saved view, and search for a known document to
    verify that the rebuilt sidecar and vault contents agree.
-5. Restore the symmemory database only when its retained memory is required;
+6. Restore the symmemory database only when its retained memory is required;
    it is separate from the vault and does not affect Markdown-vault recovery.
-
-The current desktop configuration does not expose symingest's archive path or
-the user's backup exclusions, so `symdesk doctor` cannot yet verify that
-relationship safely. Once symingest publishes a stable archive-path contract,
-the doctor check can validate it without guessing.
+The active paths can be verified at any time using `symdesk config paths --json`
+or `symdesk doctor`.

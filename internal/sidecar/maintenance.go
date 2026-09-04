@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"sort"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/config"
 )
 
 const metadataFileName = "metadata.json"
@@ -20,15 +22,7 @@ type sidecarMetadata struct {
 
 // SidecarRoot returns the persistent per-vault sidecar directory.
 func SidecarRoot() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("user home dir: %w", err)
-	}
-	dataRoot := os.Getenv("XDG_DATA_HOME")
-	if dataRoot == "" {
-		dataRoot = filepath.Join(home, ".local", "share")
-	}
-	return filepath.Join(dataRoot, "symdesk", "vaults"), nil
+	return config.SidecarRoot()
 }
 
 func isTemporaryVault(path string) bool {

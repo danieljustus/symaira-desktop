@@ -77,7 +77,22 @@ func (s *Service) ExecuteBaseEmbed(specYAML string) (*BaseEmbedResult, error) {
 		selectedView = &base.Views[0]
 	}
 
-	rows, err := s.ViewsExec(selectedView.ID)
+	rowCap := spec.Limit
+	if rowCap <= 0 {
+		rowCap = spec.Cap
+	}
+	if rowCap <= 0 {
+		rowCap = 10 // default cap
+	}
+
+	var rows []map[string]interface{}
+	var totalRows int
+	if strings.HasPrefix(strings.TrimSpace(selectedView.Source), "dataset:") {
+		rows, totalRows, err = s.executeDatasetViewWithTotal(selectedView, rowCap)
+	} else {
+		rows, err = s.ViewsExec(selectedView.ID)
+		totalRows = len(rows)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("execute view %q: %w", selectedView.ID, err)
 	}
@@ -123,16 +138,7 @@ func (s *Service) ExecuteBaseEmbed(specYAML string) (*BaseEmbedResult, error) {
 		cleanCols = []string{"title"}
 	}
 
-	rowCap := spec.Limit
-	if rowCap <= 0 {
-		rowCap = spec.Cap
-	}
-	if rowCap <= 0 {
-		rowCap = 10 // default cap
-	}
-
-	totalRows := len(rows)
-	capped := false
+	capped := len(rows) < totalRows
 	displayRows := rows
 	if len(rows) > rowCap {
 		displayRows = rows[:rowCap]

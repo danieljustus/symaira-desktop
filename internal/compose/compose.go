@@ -99,12 +99,23 @@ func probeTool(name string) (bool, string) {
 		return false, "not_found"
 	}
 
+	version, err := probeToolAt(path)
+	if err != nil {
+		return true, "unknown"
+	}
+	return true, version
+}
+
+// probeToolAt runs the read-only version probe against an already resolved
+// executable. Keeping this separate lets InspectTool compare the managed and
+// PATH installations without changing HasTool's compatibility behavior.
+func probeToolAt(path string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	out, _, err := runTool(ctx, path, toolOpts{}, "version", "--json")
 	if err != nil {
-		return true, "unknown"
+		return "", err
 	}
 
 	var ver struct {
@@ -112,9 +123,9 @@ func probeTool(name string) (bool, string) {
 		Version       string `json:"version"`
 	}
 	if err := json.Unmarshal(out.Bytes(), &ver); err != nil {
-		return true, "unknown"
+		return "", err
 	}
-	return true, ver.Version
+	return ver.Version, nil
 }
 
 // ListEntities lists all entities stored in symmemory.

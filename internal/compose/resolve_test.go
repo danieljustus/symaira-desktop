@@ -196,3 +196,45 @@ func TestManagedRuntimeDir(t *testing.T) {
 		t.Errorf("expected %q, got %q", want, got)
 	}
 }
+
+func TestInspectToolReportsManagedAndPATHCopies(t *testing.T) {
+	home := isolateEnv(t)
+	managedDir := filepath.Join(home, ".symaira", "bin")
+	if err := os.MkdirAll(managedDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	pathDir := t.TempDir()
+	writeMockTool(t, managedDir, "symmemory", `#!/bin/sh
+printf '%s\n' '{"tool":"symmemory","version":"1.2.0","schema_version":1}'
+`)
+	writeMockTool(t, pathDir, "symmemory", `#!/bin/sh
+printf '%s\n' '{"tool":"symmemory","version":"2.0.0","schema_version":1}'
+`)
+	t.Setenv("PATH", pathDir)
+
+	got := InspectTool("symmemory")
+	if !got.Managed.Found || got.Managed.Version != "1.2.0" {
+		t.Errorf("managed installation = %+v, want found version 1.2.0", got.Managed)
+	}
+	if !got.PATH.Found || got.PATH.Version != "2.0.0" {
+		t.Errorf("PATH installation = %+v, want found version 2.0.0", got.PATH)
+	}
+	if got.Origin != OriginManagedRuntime {
+		t.Errorf("effective origin = %q, want %q", got.Origin, OriginManagedRuntime)
+	}
+	if got.Effective.Path != got.Managed.Path || got.Effective.Version != got.Managed.Version {
+		t.Errorf("effective installation = %+v, want managed installation", got.Effective)
+	}
+}
+
+func TestInspectToolAbsentIsNotAnError(t *testing.T) {
+	isolateEnv(t)
+
+	got := InspectTool("symdoesnotexist")
+	if got.Effective.Found || got.Managed.Found || got.PATH.Found {
+		t.Errorf("absent tool provenance = %+v, want all installations absent", got)
+	}
+	if got.Origin != "" {
+		t.Errorf("absent tool origin = %q, want empty", got.Origin)
+	}
+}

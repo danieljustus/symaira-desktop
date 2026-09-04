@@ -52,6 +52,66 @@ func ManagedRuntimeDirExists() bool {
 	return err == nil && info.IsDir()
 }
 
+// ToolInstallation describes one possible installation of a sibling tool.
+// It is intentionally read-only provenance: callers can report both the
+// managed and PATH copies without changing the resolution order used to run
+// the tool.
+type ToolInstallation struct {
+	Path       string
+	Found      bool
+	Version    string
+	ProbeError string
+}
+
+// ToolProvenance contains the effective tool plus the managed-runtime and
+// PATH candidates that were visible during the same inspection. The fields
+// are deliberately independent: a managed copy can be selected while a
+// different PATH copy is also installed.
+type ToolProvenance struct {
+	Effective ToolInstallation
+	Managed   ToolInstallation
+	PATH      ToolInstallation
+	Origin    ResolveOrigin
+}
+
+// InspectTool reports read-only provenance for a sibling-tool binary. It
+// probes each distinct executable at most once and uses the same version
+// command and timeout as HasTool. Missing tools are represented by Found=false
+// rather than an error so diagnostic callers can inspect all siblings.
+func InspectTool(name string) ToolProvenance {
+	provenance := ToolProvenance{}
+	paths := make(map[string]ToolInstallation)
+	inspect := func(path string) ToolInstallation {
+		if path == "" {
+			return ToolInstallation{}
+		}
+		if installation, ok := paths[path]; ok {
+			return installation
+		}
+		version, err := probeToolAt(path)
+		installation := ToolInstallation{Path: path, Found: true, Version: version}
+		if err != nil {
+			installation.Version = "unknown"
+			installation.ProbeError = err.Error()
+		}
+		paths[path] = installation
+		return installation
+	}
+
+	if dir := ManagedRuntimeDir(); dir != "" {
+		provenance.Managed = inspect(executableIn(dir, name))
+	}
+	if path, err := exec.LookPath(name); err == nil {
+		provenance.PATH = inspect(path)
+	}
+
+	if path, origin, err := ResolveWithOrigin(name); err == nil {
+		provenance.Effective = inspect(path)
+		provenance.Origin = origin
+	}
+	return provenance
+}
+
 // Resolve finds the path to a sibling-tool binary by name, checking in
 // order:
 //

@@ -31,10 +31,16 @@ func findDoctorCmd(t *testing.T) *cobra.Command {
 // returns its parsed JSON output, restoring package-level state afterward.
 func runDoctorCaptured(t *testing.T) map[string]interface{} {
 	t.Helper()
+	return runDoctorCapturedWithPath(t, "/usr/bin:/bin")
+}
+
+func runDoctorCapturedWithPath(t *testing.T, path string) map[string]interface{} {
+	t.Helper()
 
 	origJSON := jsonFlag
 	jsonFlag = true
 	t.Cleanup(func() { jsonFlag = origJSON })
+	t.Setenv("PATH", path)
 
 	r, w, err := os.Pipe()
 	if err != nil {
@@ -288,5 +294,101 @@ func TestCheckArchivePathsInVault(t *testing.T) {
 	}
 	if absoluteCount != 2 {
 		t.Errorf("absoluteCount = %d, want 2", absoluteCount)
+	}
+}
+
+func writeDoctorVersionTool(t *testing.T, dir, name, version string) {
+	t.Helper()
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	script := "#!/bin/sh\nprintf '%s\\n' '{\"tool\":\"" + name + "\",\"version\":\"" + version + "\",\"schema_version\":1}'\n"
+	if err := os.WriteFile(filepath.Join(dir, name), []byte(script), 0o700); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func workspaceToolByName(t *testing.T, results map[string]interface{}, name string) map[string]interface{} {
+	t.Helper()
+	entries, ok := results["workspace_tools"].([]interface{})
+	if !ok {
+		t.Fatalf("expected workspace_tools array, got %#v", results["workspace_tools"])
+	}
+	for _, entry := range entries {
+		tool, ok := entry.(map[string]interface{})
+		if ok && tool["name"] == name {
+			return tool
+		}
+	}
+	t.Fatalf("workspace_tools did not contain %q: %#v", name, entries)
+	return nil
+}
+
+func TestDoctorReportsWorkspaceToolProvenanceAndNewerPATHShadow(t *testing.T) {
+	home := t.TempDir()
+	pathDir := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("SYMAIRA_BIN", "")
+	managedDir := filepath.Join(home, ".symaira", "bin")
+	writeDoctorVersionTool(t, managedDir, "symmemory", "1.2.0")
+	writeDoctorVersionTool(t, pathDir, "symmemory", "2.0.0")
+
+	origCfg := cfg
+	cfg = &config.Config{Vault: t.TempDir(), LLMProvider: "ollama"}
+	t.Cleanup(func() { cfg = origCfg })
+
+	results := runDoctorCapturedWithPath(t, pathDir)
+	tool := workspaceToolByName(t, results, "symmemory")
+	if tool["found"] != true || tool["origin"] != "managed" {
+		t.Errorf("workspace tool effective state = %#v, want found=true origin=managed", tool)
+	}
+	if tool["managed_found"] != true || tool["path_found"] != true {
+		t.Errorf("workspace tool install sources = %#v, want both managed and PATH", tool)
+	}
+	if tool["managed_version"] != "1.2.0" || tool["path_version"] != "2.0.0" {
+		t.Errorf("workspace tool versions = %#v, want managed=1.2.0 PATH=2.0.0", tool)
+	}
+	if tool["managed_shadows_newer"] != true {
+		t.Errorf("workspace tool shadow flag = %#v, want true", tool["managed_shadows_newer"])
+	}
+	legacyOrigins, ok := results["tool_origins"].(map[string]interface{})
+	if !ok || legacyOrigins["symmemory"] != "managed_runtime" {
+		t.Errorf("legacy tool_origins = %#v, want symmemory=managed_runtime", results["tool_origins"])
+	}
+}
+
+func TestDoctorReportsAbsentWorkspaceToolsWithoutFailing(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("SYMAIRA_BIN", "")
+
+	origCfg := cfg
+	cfg = &config.Config{Vault: t.TempDir(), LLMProvider: "ollama"}
+	t.Cleanup(func() { cfg = origCfg })
+
+	results := runDoctorCapturedWithPath(t, t.TempDir())
+	entries, ok := results["workspace_tools"].([]interface{})
+	if !ok || len(entries) != len(siblingTools) {
+		t.Fatalf("workspace_tools = %#v, want %d entries", results["workspace_tools"], len(siblingTools))
+	}
+	for _, name := range siblingTools {
+		tool := workspaceToolByName(t, results, name)
+		if tool["found"] != false || tool["managed_found"] != false || tool["path_found"] != false {
+			t.Errorf("absent %s report = %#v, want all found flags false", name, tool)
+		}
+	}
+	legacyTools, toolsOK := results["tools"].(map[string]interface{})
+	legacyVersions, versionsOK := results["versions"].(map[string]interface{})
+	legacyOrigins, originsOK := results["tool_origins"].(map[string]interface{})
+	if !toolsOK || !versionsOK || !originsOK {
+		t.Fatalf("legacy doctor JSON maps have unexpected shapes: tools=%T versions=%T origins=%T", results["tools"], results["versions"], results["tool_origins"])
+	}
+	for _, name := range siblingTools {
+		if legacyTools[name] != "not_found" || legacyVersions[name] != "" || legacyOrigins[name] != "not_found" {
+			t.Errorf("legacy report for absent %s changed: tools=%#v versions=%#v origins=%#v", name, legacyTools[name], legacyVersions[name], legacyOrigins[name])
+		}
+	}
+	if _, ok := results["managed_runtime"]; !ok {
+		t.Error("legacy doctor JSON is missing key managed_runtime")
 	}
 }

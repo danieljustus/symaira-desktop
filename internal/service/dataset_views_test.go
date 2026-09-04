@@ -44,6 +44,17 @@ func TestViewsExecDatasetUsesTypedQueryAndPageCap(t *testing.T) {
 	if got[0]["amount"] != float64(10024) || got[len(got)-1]["amount"] != float64(9025) {
 		t.Fatalf("dataset sort/filter was not typed: first=%v last=%v", got[0]["amount"], got[len(got)-1]["amount"])
 	}
+	grouped, err := svc.DatasetQuery("orders", DatasetQueryOptions{
+		GroupBy:    "id",
+		Aggregates: []DatasetAggregate{{Function: "count", As: "count"}},
+		Limit:      10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(grouped.Rows) != 10 || grouped.TotalRows != len(rows) || !grouped.Capped {
+		t.Fatalf("grouped dataset query escaped its SQL cap: %#v", grouped)
+	}
 }
 
 func TestViewsExecDatasetNestedGroupComputedAndMissing(t *testing.T) {
@@ -75,6 +86,24 @@ func TestViewsExecDatasetNestedGroupComputedAndMissing(t *testing.T) {
 	}
 	if len(got) != 2 || got[0]["id"] != "1" || got[1]["id"] != "3" || got[0]["label"] != "paid:12.5" {
 		t.Fatalf("unexpected dataset view rows: %#v", got)
+	}
+	pseudo, err := svc.DatasetQuery("orders", DatasetQueryOptions{
+		Columns: []string{"identity", "_key"},
+		Filters: []dbviews.Filter{{Key: "identity", Operator: "contains_any", Value: "1,3"}},
+		Limit:   10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pseudo.Rows) != 2 || pseudo.Rows[0]["identity"] == "" || pseudo.Rows[0]["_key"] == "" {
+		t.Fatalf("pseudo-column/set filter compatibility failed: %#v", pseudo)
+	}
+	projected, err := svc.DatasetQuery("orders", DatasetQueryOptions{Columns: []string{"id"}, Limit: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(projected.Rows) != 1 || len(projected.Rows[0]) != 1 || projected.Rows[0]["id"] == nil {
+		t.Fatalf("dataset column projection leaked unselected values: %#v", projected.Rows)
 	}
 	if err := svc.ViewsMgr.Save(dbviews.View{ID: "missing", Name: "Missing", Source: "dataset:deleted"}); err != nil {
 		t.Fatal(err)

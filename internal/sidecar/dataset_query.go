@@ -183,6 +183,10 @@ func validateDatasetColumns(columns []string, schema map[string]string) error {
 }
 
 func validateDatasetColumn(column string, schema map[string]string) error {
+	switch column {
+	case "identity", "_identity", "_key":
+		return nil
+	}
 	if strings.TrimSpace(column) == "" || schema[column] == "" {
 		if _, ok := schema[column]; !ok {
 			return fmt.Errorf("dataset column %q not found", column)
@@ -208,10 +212,22 @@ func validateDatasetFilterGroup(group DatasetFilterGroup, schema map[string]stri
 func datasetPath(column string) string { return `$."` + strings.ReplaceAll(column, `"`, `\"`) + `"` }
 
 func datasetRaw(column string) (string, []interface{}) {
+	switch column {
+	case "identity", "_identity":
+		return "identity", nil
+	case "_key":
+		return "row_key", nil
+	}
 	return "json_extract(values_json, ?)", []interface{}{datasetPath(column)}
 }
 
 func datasetPresent(column string) (string, []interface{}) {
+	switch column {
+	case "identity", "_identity":
+		return "identity IS NOT NULL", nil
+	case "_key":
+		return "row_key IS NOT NULL", nil
+	}
 	return "json_type(values_json, ?) IS NOT NULL", []interface{}{datasetPath(column)}
 }
 
@@ -304,6 +320,10 @@ func datasetFilterExpression(filter DatasetFilter, schema map[string]string) (st
 	}
 	switch op {
 	case "equals":
+		if value == "" {
+			raw, rawArgs := datasetRaw(filter.Key)
+			return "NOT (" + present + ") OR " + raw + " IS NULL OR CAST(" + raw + " AS TEXT) = ''", append(append(append([]interface{}{}, presentArgs...), rawArgs...), rawArgs...), nil
+		}
 		if strings.EqualFold(typ, "date") || strings.EqualFold(typ, "datetime") {
 			return present + " AND julianday(json_extract(values_json, ?)) = julianday(?)", append(append([]interface{}{}, presentArgs...), []interface{}{datasetPath(filter.Key), value}...), nil
 		}
@@ -312,6 +332,9 @@ func datasetFilterExpression(filter DatasetFilter, schema map[string]string) (st
 		}
 		return present + " AND " + typed + " = LOWER(?)", append(append([]interface{}{}, presentArgs...), append(typedArgs, strings.ToLower(value))...), nil
 	case "not_equals", "is_not", "!=":
+		if strings.EqualFold(typ, "date") || strings.EqualFold(typ, "datetime") {
+			return "(NOT (" + present + ") OR NOT (julianday(json_extract(values_json, ?)) = julianday(?)))", append(append([]interface{}{}, presentArgs...), []interface{}{datasetPath(filter.Key), value}...), nil
+		}
 		if strings.EqualFold(typ, "number") || strings.EqualFold(typ, "integer") || strings.EqualFold(typ, "float") {
 			return "(NOT (" + present + ") OR NOT (" + typed + " = CAST(? AS REAL)))", append(append([]interface{}{}, presentArgs...), append(typedArgs, value)...), nil
 		}
@@ -399,16 +422,20 @@ func splitTrimmed(value, sep string) []string {
 func datasetSetFilter(column, typ, op, value string) (string, []interface{}, error) {
 	items := parseDatasetSet(value)
 	if len(items) == 0 {
+		if op == "not_in" || op == "contains_none" {
+			return "1", nil, nil
+		}
 		return "0", nil, nil
 	}
 	present, presentArgs := datasetPresent(column)
 	raw, rawArgs := datasetRaw(column)
 	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(items)), ",")
 	one := present + " AND (LOWER(CAST(" + raw + " AS TEXT)) IN (" + placeholders + ") OR EXISTS (SELECT 1 FROM json_each(" + raw + ") WHERE LOWER(CAST(value AS TEXT)) IN (" + placeholders + ")))"
-	oneArgs := append(append(append([]interface{}{}, presentArgs...), rawArgs...), rawArgs...)
+	oneArgs := append(append([]interface{}{}, presentArgs...), rawArgs...)
 	for _, item := range items {
 		oneArgs = append(oneArgs, strings.ToLower(item))
 	}
+	oneArgs = append(oneArgs, rawArgs...)
 	for _, item := range items {
 		oneArgs = append(oneArgs, strings.ToLower(item))
 	}
@@ -425,8 +452,9 @@ func datasetSetFilter(column, typ, op, value string) (string, []interface{}, err
 		parts = append(parts, part)
 		args = append(args, presentArgs...)
 		args = append(args, rawArgs...)
+		args = append(args, item)
 		args = append(args, rawArgs...)
-		args = append(args, item, item)
+		args = append(args, item)
 	}
 	return "(" + strings.Join(parts, " AND ") + ")", args, nil
 }
@@ -514,9 +542,8 @@ func (db *DB) queryDatasetAggregate(slug string, opts DatasetQueryOptions, where
 		query += " GROUP BY " + groupExpr + " ORDER BY " + groupExpr + " ASC"
 		args = append(args, groupArgs...)
 		args = append(args, groupArgs...)
-	} else {
-		query += " LIMIT ? OFFSET ?"
 	}
+	query += " LIMIT ? OFFSET ?"
 	args = append(args, limit, offset)
 	rows, err := db.conn.Query(query, args...)
 	if err != nil {

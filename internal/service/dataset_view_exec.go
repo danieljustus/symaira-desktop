@@ -46,15 +46,23 @@ func (s *Service) executeDatasetViewWithTotal(view *dbviews.View, limit int) ([]
 		if row.Identity != "" {
 			values["identity"] = row.Identity
 			values["_identity"] = row.Identity
+			if _, ok := values["_title"]; !ok {
+				values["_title"] = row.Identity
+			}
 		}
-		values["_key"] = row.RowKey
-		values["_path"] = row.SourcePath
-		if _, ok := values["_title"]; !ok {
-			values["_title"] = row.Identity
+		if row.RowKey != "" {
+			values["_key"] = row.RowKey
+		}
+		if row.SourcePath != "" {
+			values["_path"] = row.SourcePath
 		}
 		for colName, computed := range view.Computed {
 			if computed.Formula != "" {
 				values[colName] = s.evaluateFormula(computed.Formula, values)
+			} else if computed.Rollup != "" {
+				// Dataset rows do not participate in the note-link graph. Match
+				// note-view rollup semantics for a row with no linked targets.
+				values[colName] = ""
 			}
 		}
 		results = append(results, values)

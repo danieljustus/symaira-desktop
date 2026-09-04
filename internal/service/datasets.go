@@ -200,6 +200,13 @@ func (s *Service) DatasetQuery(slug string, opts DatasetQueryOptions) (*DatasetQ
 		values["identity"] = row.Identity
 		values["_identity"] = row.Identity
 		values["_key"] = row.RowKey
+		if opts.GroupBy == "" && len(opts.Aggregates) == 0 {
+			selected := make(map[string]interface{}, len(queryOpts.Columns))
+			for _, column := range queryOpts.Columns {
+				selected[column] = values[column]
+			}
+			values = selected
+		}
 		for _, aggregate := range opts.Aggregates {
 			if strings.EqualFold(aggregate.Function, "count") {
 				name := aggregate.As

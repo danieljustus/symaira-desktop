@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-corekit/sqlitekit"
+	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	_ "modernc.org/sqlite"
 )
@@ -180,11 +181,7 @@ type Store interface {
 var _ Store = (*DB)(nil)
 
 func DefaultPath() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("failed to get user home directory: %w", err)
-	}
-	return filepath.Join(home, ".local", "share", "symaira-seek", "symseek.db"), nil
+	return config.RetrievalPath("")
 }
 
 func Open() (*DB, error) {

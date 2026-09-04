@@ -9,9 +9,9 @@ import (
 )
 
 func newIndexMaintenanceCmd() *cobra.Command {
-	cmd := &cobra.Command{Use: "location", Short: "Show the shared retrieval index location", Args: cobra.NoArgs,
+	cmd := &cobra.Command{Use: "location", Short: "Show the effective retrieval index location", Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			path, err := retrieval.IndexLocation()
+			path, err := retrieval.IndexLocationForVault(currentVaultRoot())
 			if err != nil {
 				return err
 			}
@@ -26,7 +26,7 @@ func newIndexMaintenanceCmd() *cobra.Command {
 			if path == "" {
 				return fmt.Errorf("--output is required")
 			}
-			if err := retrieval.BackupIndex(path); err != nil {
+			if err := retrieval.BackupIndexForVault(currentVaultRoot(), path); err != nil {
 				return err
 			}
 			return outputResult(map[string]string{"status": "ok", "backup": path})
@@ -41,7 +41,7 @@ func newIndexMaintenanceCmd() *cobra.Command {
 			if path == "" {
 				return fmt.Errorf("--input is required")
 			}
-			if err := retrieval.RestoreIndex(path); err != nil {
+			if err := retrieval.RestoreIndexForVault(currentVaultRoot(), path); err != nil {
 				return err
 			}
 			return outputResult(map[string]string{"status": "ok", "restored_from": path})
@@ -56,10 +56,10 @@ func newIndexMaintenanceCmd() *cobra.Command {
 			if path == "" {
 				return fmt.Errorf("--output is required")
 			}
-			if err := retrieval.RelocateIndex(path); err != nil {
+			if err := retrieval.RelocateIndexForVault(currentVaultRoot(), path); err != nil {
 				return err
 			}
-			location, err := retrieval.IndexLocation()
+			location, err := retrieval.IndexLocationForVault(currentVaultRoot())
 			if err != nil {
 				return err
 			}
@@ -69,4 +69,11 @@ func newIndexMaintenanceCmd() *cobra.Command {
 	root := &cobra.Command{Use: "maintenance", Short: "Safely back up or restore the derived retrieval index"}
 	root.AddCommand(cmd, backup, restore, relocate)
 	return root
+}
+
+func currentVaultRoot() string {
+	if cfg == nil {
+		return ""
+	}
+	return cfg.Vault
 }

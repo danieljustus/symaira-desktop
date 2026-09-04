@@ -1,22 +1,27 @@
 // Package xdg resolves symrelate's config, data and cache directories
-// following the XDG Base Directory Specification, with explicit overrides
-// so tests never touch a real user profile.
+// by consuming the shared internal/config path resolver, while honoring
+// legacy SYMRELATE_* environment overrides and legacy storage fallbacks.
 package xdg
 
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/danieljustus/symaira-desktop/internal/config"
 )
 
-const appDirName = "symrelate"
+const (
+	appDirName       = config.AppName
+	legacyAppDirName = config.LegacyContactsAppName
+)
 
 // Env override names. Set directly, they take precedence over both the
 // standard XDG_* variables and the platform default — this is what tests
 // use to run against a throwaway directory.
 const (
-	EnvConfigHome = "SYMRELATE_CONFIG_HOME"
-	EnvDataHome   = "SYMRELATE_DATA_HOME"
-	EnvCacheHome  = "SYMRELATE_CACHE_HOME"
+	EnvConfigHome = config.EnvLegacyContactsConfigHome
+	EnvDataHome   = config.EnvLegacyContactsDataHome
+	EnvCacheHome  = config.EnvLegacyContactsCacheHome
 )
 
 // Paths holds the resolved directories for one symrelate invocation.
@@ -24,39 +29,29 @@ type Paths struct {
 	ConfigDir string
 	DataDir   string
 	CacheDir  string
+	dbPath    string
 }
 
-// Resolve computes Paths from the environment, honoring
-// SYMRELATE_*_HOME overrides first, then XDG_*_HOME, then platform
-// defaults ($HOME/.config, $HOME/.local/share, $HOME/.cache).
+// Resolve computes Paths using internal/config, honoring legacy SYMRELATE_*_HOME
+// overrides and preserving legacy symrelate paths as read-only fallbacks.
 func Resolve() (Paths, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		home = "."
-	}
-
-	configBase := firstNonEmpty(os.Getenv(EnvConfigHome), "")
-	if configBase == "" {
-		configBase = joinIfSet(firstNonEmpty(os.Getenv("XDG_CONFIG_HOME"), filepath.Join(home, ".config")), appDirName)
-	}
-	dataBase := firstNonEmpty(os.Getenv(EnvDataHome), "")
-	if dataBase == "" {
-		dataBase = joinIfSet(firstNonEmpty(os.Getenv("XDG_DATA_HOME"), filepath.Join(home, ".local", "share")), appDirName)
-	}
-	cacheBase := firstNonEmpty(os.Getenv(EnvCacheHome), "")
-	if cacheBase == "" {
-		cacheBase = joinIfSet(firstNonEmpty(os.Getenv("XDG_CACHE_HOME"), filepath.Join(home, ".cache")), appDirName)
-	}
-
-	return Paths{ConfigDir: configBase, DataDir: dataBase, CacheDir: cacheBase}, nil
+	bundle := config.ContactsPaths()
+	return Paths{
+		ConfigDir: bundle.ConfigDir,
+		DataDir:   bundle.DataDir,
+		CacheDir:  bundle.CacheDir,
+		dbPath:    bundle.DBPath,
+	}, nil
 }
 
 // EnsureDirs creates all resolved directories (0700 — contact data is
 // sensitive by default).
 func (p Paths) EnsureDirs() error {
 	for _, dir := range []string{p.ConfigDir, p.DataDir, p.CacheDir} {
-		if err := os.MkdirAll(dir, 0o700); err != nil {
-			return err
+		if dir != "" {
+			if err := os.MkdirAll(dir, 0o700); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -64,21 +59,11 @@ func (p Paths) EnsureDirs() error {
 
 // DatabasePath returns the path of the primary SQLite database file.
 func (p Paths) DatabasePath() string {
-	return filepath.Join(p.DataDir, "symrelate.db")
-}
-
-func firstNonEmpty(vals ...string) string {
-	for _, v := range vals {
-		if v != "" {
-			return v
-		}
+	if p.dbPath != "" {
+		return p.dbPath
 	}
-	return ""
-}
-
-func joinIfSet(base, sub string) string {
-	if base == "" {
-		return sub
+	if p.DataDir != "" {
+		return filepath.Join(p.DataDir, "symrelate.db")
 	}
-	return filepath.Join(base, sub)
+	return config.ContactsDBPath()
 }

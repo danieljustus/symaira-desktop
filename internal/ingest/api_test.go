@@ -61,9 +61,23 @@ func TestArchivePath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ArchivePath failed: %v", err)
 	}
-	expected := filepath.Join(dataHome, "symingest", "archive")
+	expected := filepath.Join(dataHome, "symdesk", "archive")
 	if path != expected {
 		t.Errorf("ArchivePath = %q, want %q", path, expected)
+	}
+
+	// Legacy fallback: pre-existing legacy symingest archive is preserved as fallback.
+	legacyDir := filepath.Join(dataHome, "symingest", "archive")
+	if err := os.MkdirAll(legacyDir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	// With no symdesk/archive present, legacy should be used.
+	legacyPath, err := ArchivePath()
+	if err != nil {
+		t.Fatalf("ArchivePath failed: %v", err)
+	}
+	if legacyPath != legacyDir {
+		t.Errorf("ArchivePath = %q, want legacy fallback %q", legacyPath, legacyDir)
 	}
 }
 
@@ -126,9 +140,22 @@ func TestOptionsResolveNoVaultFallsBackToXDG(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolve failed: %v", err)
 	}
-	want := filepath.Join(dataHome, "symingest", "archive")
+	want := filepath.Join(dataHome, "symdesk", "archive")
 	if r.archive != want {
-		t.Errorf("r.archive = %q, want XDG fallback %q", r.archive, want)
+		t.Errorf("r.archive = %q, want XDG default %q", r.archive, want)
+	}
+
+	// When legacy directory exists, it falls back to symingest/archive.
+	legacyArchive := filepath.Join(dataHome, "symingest", "archive")
+	if err := os.MkdirAll(legacyArchive, 0700); err != nil {
+		t.Fatal(err)
+	}
+	rLegacy, err := opts.resolve()
+	if err != nil {
+		t.Fatalf("resolve failed: %v", err)
+	}
+	if rLegacy.archive != legacyArchive {
+		t.Errorf("rLegacy.archive = %q, want legacy fallback %q", rLegacy.archive, legacyArchive)
 	}
 }
 

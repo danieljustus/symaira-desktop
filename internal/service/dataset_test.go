@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
+	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
 func TestDatasetImportIsTypedIdempotentAndRebuildable(t *testing.T) {
@@ -31,7 +32,11 @@ func TestDatasetImportIsTypedIdempotentAndRebuildable(t *testing.T) {
 	if first.Rows != 2 || first.RawPath != "datasets/orders/2026-01-04.csv" || first.HandlePath != "datasets/orders.md" {
 		t.Fatalf("unexpected first import: %#v", first)
 	}
-	if _, err := os.Stat(filepath.Join(vaultRoot, filepath.FromSlash(first.RawPath))); err != nil {
+	rawAbs, err := vault.SecurePath(vaultRoot, first.RawPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(rawAbs); err != nil { //nolint:gosec // path was confined by vault.SecurePath above
 		t.Fatal(err)
 	}
 	if err := db.RefreshIndex(vaultRoot); err != nil {

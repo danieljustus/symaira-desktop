@@ -173,18 +173,24 @@ func vaultIndexPath(vaultRoot string) (string, error) {
 	return desktopconfig.RetrievalPath(vaultRoot)
 }
 
-// migrateLegacyIndex performs the one-time upgrade from the absorbed
-// retrieval store's legacy shared path. It returns an error for a failed move
-// instead of opening a fresh database and silently losing the old index.
+// migrateLegacyIndex seeds the first per-vault index from the active standalone
+// store. A pre-absorption symaira-seek store is moved after a verified copy;
+// the unified symdesk standalone store remains valid for one-shot callers and
+// is copied without deletion.
 func migrateLegacyIndex(newPath string) error {
 	if _, err := os.Stat(newPath); err == nil || !os.IsNotExist(err) {
 		// Already migrated, already has data, or unreadable: leave it alone.
 		return nil
 	}
-	legacyPath, err := desktopconfig.LegacyRetrievalDBPath()
+	legacyPath, err := db.DefaultPath()
 	if err != nil {
 		return err
 	}
+	preAbsorptionPath, err := desktopconfig.LegacyRetrievalDBPath()
+	if err != nil {
+		return err
+	}
+	removeSource := filepath.Clean(legacyPath) == filepath.Clean(preAbsorptionPath)
 	if filepath.Clean(legacyPath) == filepath.Clean(newPath) {
 		return nil
 	}
@@ -201,13 +207,17 @@ func migrateLegacyIndex(newPath string) error {
 	if err := copyIndexFile(legacyPath, newPath); err != nil {
 		return err
 	}
-	if err := os.Remove(legacyPath); err != nil {
-		if cleanupErr := os.Remove(newPath); cleanupErr != nil {
-			return fmt.Errorf("remove migrated legacy retrieval index: %w (remove incomplete destination: %v)", err, cleanupErr)
+	if removeSource {
+		if err := os.Remove(legacyPath); err != nil {
+			if cleanupErr := os.Remove(newPath); cleanupErr != nil {
+				return fmt.Errorf("remove migrated legacy retrieval index: %w (remove incomplete destination: %v)", err, cleanupErr)
+			}
+			return fmt.Errorf("remove migrated legacy retrieval index: %w", err)
 		}
-		return fmt.Errorf("remove migrated legacy retrieval index: %w", err)
+		slog.Info("migrated pre-absorption retrieval index to per-vault location", "legacy_path", legacyPath, "new_path", newPath)
+	} else {
+		slog.Info("seeded per-vault retrieval index from standalone store", "standalone_path", legacyPath, "new_path", newPath)
 	}
-	slog.Info("migrated legacy retrieval index to per-vault location", "legacy_path", legacyPath, "new_path", newPath)
 	return nil
 }
 

@@ -50,7 +50,7 @@ func TestParseFileCapturesStatForIndexFastPath(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "note.md")
 	content := []byte("---\ntitle: Note\n---\nBody")
-	if err := os.WriteFile(path, content, 0644); err != nil {
+	if err := os.WriteFile(path, content, 0600); err != nil {
 		t.Fatal(err)
 	}
 	info, err := os.Stat(path)
@@ -147,14 +147,14 @@ func TestWalkSkipsDependencyDirectories(t *testing.T) {
 		if err := os.MkdirAll(dir, 0755); err != nil { //nolint:gosec // test temp directory
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(filepath.Join(dir, "readme.md"), []byte("# should be skipped"), 0644); err != nil { //nolint:gosec // test temp file
+		if err := os.WriteFile(filepath.Join(dir, "readme.md"), []byte("# should be skipped"), 0600); err != nil { //nolint:gosec // test temp file
 			t.Fatal(err)
 		}
 	}
 
 	// A legitimate vault note at the root must still be visited.
 	wantPath := filepath.Join(root, "note.md")
-	if err := os.WriteFile(wantPath, []byte("# real note"), 0644); err != nil { //nolint:gosec // test temp file
+	if err := os.WriteFile(wantPath, []byte("# real note"), 0600); err != nil { //nolint:gosec // test temp file
 		t.Fatal(err)
 	}
 
@@ -338,7 +338,7 @@ func TestSetFrontmatterKeyReplaceExisting(t *testing.T) {
 	tmpDir := t.TempDir()
 	content := "---\ntitle: \"Test\"\nstatus: \"open\"\ntags:\n  - a\n---\n\nBody here.\n"
 	path := filepath.Join(tmpDir, "test.md")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -346,7 +346,7 @@ func TestSetFrontmatterKeyReplaceExisting(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, _ := os.ReadFile(path)
+	data, _ := os.ReadFile(path) //nolint:gosec // test reads a temporary fixture it created
 	result := string(data)
 	if !strings.Contains(result, "status: \"done\"") {
 		t.Errorf("expected status changed to done, got:\n%s", result)
@@ -374,7 +374,7 @@ func TestSetFrontmatterKeyAddNew(t *testing.T) {
 	tmpDir := t.TempDir()
 	content := "---\ntitle: \"Test\"\ncreated: \"2026-01-01T00:00:00Z\"\n---\n\nBody.\n"
 	path := filepath.Join(tmpDir, "test.md")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -398,7 +398,7 @@ func TestSetFrontmatterKeyNoFrontmatter(t *testing.T) {
 	tmpDir := t.TempDir()
 	content := "# Just a heading\n\nNo frontmatter here.\n"
 	path := filepath.Join(tmpDir, "test.md")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -419,7 +419,7 @@ func TestSetFrontmatterKeyNumericValue(t *testing.T) {
 	tmpDir := t.TempDir()
 	content := "---\ntitle: \"Test\"\nconfidence: 50\n---\n\nBody.\n"
 	path := filepath.Join(tmpDir, "test.md")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -427,7 +427,7 @@ func TestSetFrontmatterKeyNumericValue(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, _ := os.ReadFile(path)
+	data, _ := os.ReadFile(path) //nolint:gosec // test reads a temporary fixture it created
 	result := string(data)
 	if !strings.Contains(result, "confidence: 95") {
 		t.Errorf("expected confidence 95, got:\n%s", result)
@@ -438,7 +438,7 @@ func TestSetFrontmatterValueReplaceStringPreservesOrder(t *testing.T) {
 	tmpDir := t.TempDir()
 	content := "---\ntitle: \"Test\"\nstatus: \"open\"\n# a comment\ntags:\n  - a\n---\n\nBody here.\n"
 	path := filepath.Join(tmpDir, "test.md")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -446,7 +446,7 @@ func TestSetFrontmatterValueReplaceStringPreservesOrder(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, _ := os.ReadFile(path)
+	data, _ := os.ReadFile(path) //nolint:gosec // test reads a temporary fixture it created
 	result := string(data)
 	if !strings.Contains(result, "status: \"done\"") {
 		t.Errorf("expected status changed to done, got:\n%s", result)
@@ -480,7 +480,7 @@ func TestSetFrontmatterValueAddNewPreservesOrder(t *testing.T) {
 	tmpDir := t.TempDir()
 	content := "---\ntitle: \"Test\"\ncreated: \"2026-01-01T00:00:00Z\"\n---\n\nBody.\n"
 	path := filepath.Join(tmpDir, "test.md")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -488,7 +488,7 @@ func TestSetFrontmatterValueAddNewPreservesOrder(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, _ := os.ReadFile(path)
+	data, _ := os.ReadFile(path) //nolint:gosec // test reads a temporary fixture it created
 	result := string(data)
 	if !strings.Contains(result, "due_date: \"2026-12-31\"") {
 		t.Errorf("expected due_date added, got:\n%s", result)
@@ -520,7 +520,7 @@ func TestSetFrontmatterValueTypedValues(t *testing.T) {
 	tmpDir := t.TempDir()
 	content := "---\ntitle: \"Test\"\ncount: 1\nflag: false\ntags: []\n---\n\nBody.\n"
 	path := filepath.Join(tmpDir, "test.md")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -534,7 +534,7 @@ func TestSetFrontmatterValueTypedValues(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, _ := os.ReadFile(path)
+	data, _ := os.ReadFile(path) //nolint:gosec // test reads a temporary fixture it created
 	result := string(data)
 	if !strings.Contains(result, "count: 42") {
 		t.Errorf("expected count 42, got:\n%s", result)
@@ -565,7 +565,7 @@ func TestSetFrontmatterValuePreservesCRLF(t *testing.T) {
 	tmpDir := t.TempDir()
 	content := "---\r\ntitle: \"Test\"\r\nstatus: \"open\"\r\n---\r\n\r\nBody.\r\n"
 	path := filepath.Join(tmpDir, "test.md")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -573,7 +573,7 @@ func TestSetFrontmatterValuePreservesCRLF(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, _ := os.ReadFile(path)
+	data, _ := os.ReadFile(path) //nolint:gosec // test reads a temporary fixture it created
 	if !strings.Contains(string(data), "\r\n") {
 		t.Errorf("expected CRLF to be preserved")
 	}
@@ -596,7 +596,7 @@ func TestSetFrontmatterValueNoFrontmatter(t *testing.T) {
 	tmpDir := t.TempDir()
 	content := "# Just a heading\n\nNo frontmatter here.\n"
 	path := filepath.Join(tmpDir, "test.md")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -620,7 +620,7 @@ func TestDeleteFrontmatterValue(t *testing.T) {
 	tmpDir := t.TempDir()
 	content := "---\ntitle: \"Test\"\nstatus: \"open\"\ntags:\n  - a\n---\n\nBody.\n"
 	path := filepath.Join(tmpDir, "test.md")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -628,7 +628,7 @@ func TestDeleteFrontmatterValue(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, _ := os.ReadFile(path)
+	data, _ := os.ReadFile(path) //nolint:gosec // test reads a temporary fixture it created
 	result := string(data)
 	if strings.Contains(result, "status:") {
 		t.Errorf("expected status removed, got:\n%s", result)
@@ -659,7 +659,7 @@ func TestDeleteFrontmatterValueMissingKey(t *testing.T) {
 	tmpDir := t.TempDir()
 	content := "---\ntitle: \"Test\"\n---\n\nBody.\n"
 	path := filepath.Join(tmpDir, "test.md")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -667,7 +667,7 @@ func TestDeleteFrontmatterValueMissingKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, _ := os.ReadFile(path)
+	data, _ := os.ReadFile(path) //nolint:gosec // test reads a temporary fixture it created
 	result := string(data)
 	if !strings.Contains(result, "title: \"Test\"") {
 		t.Errorf("expected file unchanged, got:\n%s", result)
@@ -708,7 +708,7 @@ func TestResolveVaultRoot_MissingDirectory(t *testing.T) {
 func TestResolveVaultRoot_NonDirectoryPath(t *testing.T) {
 	tmpDir := t.TempDir()
 	filePath := filepath.Join(tmpDir, "not-a-dir.md")
-	if err := os.WriteFile(filePath, []byte("content"), 0644); err != nil {
+	if err := os.WriteFile(filePath, []byte("content"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -739,7 +739,7 @@ func TestResolveVaultRoot_ExplicitFlagPrecedence(t *testing.T) {
 func TestResolveVaultRoot_RelativePathResolvesToAbsolute(t *testing.T) {
 	tmpDir := t.TempDir()
 	marker := filepath.Join(tmpDir, "marker.txt")
-	if err := os.WriteFile(marker, []byte("x"), 0644); err != nil {
+	if err := os.WriteFile(marker, []byte("x"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -747,7 +747,7 @@ func TestResolveVaultRoot_RelativePathResolvesToAbsolute(t *testing.T) {
 	if err := os.Chdir(tmpDir); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chdir(origDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	got, err := ResolveVaultRoot(".", nil)
 	if err != nil {

@@ -19,16 +19,16 @@ func WithASNLock(vaultRoot string, fn func() error) error {
 	}
 
 	lockPath := filepath.Join(lockDir, "asn.lock")
-	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0600)
+	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0600) //nolint:gosec // lockPath is derived from the explicitly selected vault root
 	if err != nil {
 		return fmt.Errorf("open ASN lock: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX); err != nil {
 		return fmt.Errorf("lock ASN allocation: %w", err)
 	}
-	defer syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+	defer func() { _ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN) }()
 
 	return fn()
 }

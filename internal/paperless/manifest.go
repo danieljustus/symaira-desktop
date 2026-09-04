@@ -36,7 +36,7 @@ type ManifestNote struct {
 // ParseManifest reads and parses the manifest.json file from a Paperless-ngx
 // export directory. The file must be a JSON array of document entries.
 func ParseManifest(path string) ([]ManifestEntry, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // path is the caller-selected Paperless manifest
 	if err != nil {
 		return nil, fmt.Errorf("read manifest file: %w", err)
 	}

@@ -101,6 +101,22 @@ func registryTool(name string, getService serviceFactory, cfg *config.Config, al
 	return adaptTool(entry)
 }
 
+func newDatasetListTool(getService serviceFactory) *mcpserver.Tool {
+	return registryTool("desk_dataset_list", getService, nil, false)
+}
+
+func newDatasetDescribeTool(getService serviceFactory) *mcpserver.Tool {
+	return registryTool("desk_dataset_describe", getService, nil, false)
+}
+
+func newDatasetQueryTool(getService serviceFactory) *mcpserver.Tool {
+	return registryTool("desk_dataset_query", getService, nil, false)
+}
+
+func newDatasetSyncTool(getService serviceFactory) *mcpserver.Tool {
+	return registryTool("desk_dataset_sync", getService, nil, true)
+}
+
 // The following constructors are kept as thin compatibility adapters for the
 // existing package-local tests. Production registration uses StartServer's
 // single registry traversal above.

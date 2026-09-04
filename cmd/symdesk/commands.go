@@ -36,6 +36,7 @@ func registerCommands(rootCmd *cobra.Command) {
 		newNotebookCmd(),
 		newVaultCmd(),
 		newAssetCmd(),
+		newDatasetCmd(),
 	)
 
 	addGrouped(rootCmd, groupDocuments,

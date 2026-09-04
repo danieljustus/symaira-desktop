@@ -8,6 +8,7 @@ import (
 )
 
 func TestPaths_FreshInstallUnderXDG(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	dataHome := t.TempDir()
 	configHome := t.TempDir()
 	cacheHome := t.TempDir()
@@ -269,6 +270,7 @@ func TestPaths_LegacyRetrievalFallback(t *testing.T) {
 }
 
 func TestResolveStorePaths(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	dataHome := t.TempDir()
 	configHome := t.TempDir()
 	cacheHome := t.TempDir()

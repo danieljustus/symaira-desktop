@@ -1,6 +1,8 @@
 package db
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -11,6 +13,32 @@ import (
 	"testing"
 	"time"
 )
+
+func TestStatusQueriesHonorCanceledContext(t *testing.T) {
+	database, err := OpenAt(filepath.Join(t.TempDir(), "status.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = database.Close() }()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	checks := []struct {
+		name string
+		run  func() error
+	}{
+		{name: "stats", run: func() error { _, err := database.GetStatsContext(ctx); return err }},
+		{name: "pending", run: func() error { _, err := database.CountPendingChunksContext(ctx); return err }},
+		{name: "spaces", run: func() error { _, err := database.DetectMixedEmbeddingSpacesContext(ctx); return err }},
+	}
+	for _, check := range checks {
+		t.Run(check.name, func(t *testing.T) {
+			if err := check.run(); !errors.Is(err, context.Canceled) {
+				t.Fatalf("error = %v, want context canceled", err)
+			}
+		})
+	}
+}
 
 func TestCosineSimilarity(t *testing.T) {
 	tests := []struct {

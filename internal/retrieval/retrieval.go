@@ -17,6 +17,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -500,23 +501,53 @@ type Status struct {
 	IndexLocation      string `json:"index_location"`
 }
 
-// Status reports the index snapshot plus a live probe of the embedding
-// backend. The probe embeds a fixed short string without retrying, so it
-// costs one request and never blocks an interactive caller for long.
-func (c *Client) Status() (*Status, error) {
-	stats, err := c.db.GetStats()
+type contextStatusEmbedder interface {
+	GenerateVectorNoRetryWithModelContext(context.Context, string) (engine.EmbeddingResult, error)
+}
+
+// StatusContext reports the index snapshot plus a live probe of the embedding
+// backend with context cancellation awareness.
+
+func (c *Client) StatusContext(ctx context.Context) (*Status, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	stats, err := c.db.GetStatsContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	pending, err := c.db.CountPendingChunks()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	pending, err := c.db.CountPendingChunksContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	spaces, err := c.db.DetectMixedEmbeddingSpaces()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	spaces, err := c.db.DetectMixedEmbeddingSpacesContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	probe := c.embedder.GenerateVectorNoRetryWithModel("symdesk retrieval status probe")
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	var probe engine.EmbeddingResult
+	if contextual, ok := c.embedder.(contextStatusEmbedder); ok {
+		probe, err = contextual.GenerateVectorNoRetryWithModelContext(ctx, "symdesk retrieval status probe")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Custom embedders created against the legacy interface remain
+		// supported. Production EmbeddingsGenerator instances use the
+		// cancellation-aware branch above.
+		probe = c.embedder.GenerateVectorNoRetryWithModel("symdesk retrieval status probe")
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	scope := "shared"
 	if c.vaultScoped {
 		scope = "vault"
@@ -536,6 +567,13 @@ func (c *Client) Status() (*Status, error) {
 		status.LastIndexedAt = stats.LastIndexedAt.UTC().Format(time.RFC3339)
 	}
 	return status, nil
+}
+
+// Status reports the index snapshot plus a live probe of the embedding
+// backend. The probe embeds a fixed short string without retrying, so it
+// costs one request and never blocks an interactive caller for long.
+func (c *Client) Status() (*Status, error) {
+	return c.StatusContext(context.Background())
 }
 
 func defaultIndex(source, body string) error {
@@ -565,13 +603,20 @@ func defaultSearch(query string, limit int) ([]Result, error) {
 	return c.Search(query, limit)
 }
 
-func defaultStatus() (*Status, error) {
+func defaultStatusContext(ctx context.Context) (*Status, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	c, err := openActive()
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = c.Close() }()
-	return c.Status()
+	return c.StatusContext(ctx)
+}
+
+func defaultStatus() (*Status, error) {
+	return defaultStatusContext(context.Background())
 }
 
 // The engine seam. These are the single injectable entry points into the
@@ -588,11 +633,13 @@ var (
 	// DefaultCountPendingChunksFunc is the production implementation of
 	// CountPendingChunksFunc; see CountPendingChunks (#663/#680).
 	DefaultCountPendingChunksFunc = defaultCountPendingChunks
+	DefaultStatusContextFunc      = defaultStatusContext
 	IndexFunc                     = DefaultIndexFunc
 	DeleteFunc                    = DefaultDeleteFunc
 	SearchFunc                    = DefaultSearchFunc
 	StatusFunc                    = DefaultStatusFunc
 	CountPendingChunksFunc        = DefaultCountPendingChunksFunc
+	StatusContextFunc             = DefaultStatusContextFunc
 )
 
 // IndexWithMetadata adds or replaces a local document with its parsed vault
@@ -686,5 +733,19 @@ func Search(query string) []Result {
 // a caller asking for the health of retrieval must be told when even that
 // cannot be determined, rather than shown a confident zero.
 func CurrentStatus() (*Status, error) {
-	return StatusFunc()
+	return CurrentStatusContext(context.Background())
+}
+
+// CurrentStatusContext reports the hybrid index snapshot with deadline awareness (#806).
+func CurrentStatusContext(ctx context.Context) (*Status, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if reflect.ValueOf(StatusContextFunc).Pointer() != reflect.ValueOf(DefaultStatusContextFunc).Pointer() {
+		return StatusContextFunc(ctx)
+	}
+	if reflect.ValueOf(StatusFunc).Pointer() != reflect.ValueOf(DefaultStatusFunc).Pointer() {
+		return StatusFunc()
+	}
+	return StatusContextFunc(ctx)
 }

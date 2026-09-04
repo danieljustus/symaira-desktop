@@ -261,6 +261,61 @@ func (eg *EmbeddingsGenerator) GenerateVectorNoRetryWithModel(text string) Embed
 	return eg.generateVectorImpl(text, 0)
 }
 
+// GenerateVectorNoRetryWithModelContext performs the status probe through the
+// shared OpenAI-compatible /v1/embeddings client with ctx. It bypasses the
+// embedding cache entirely so failed health checks do not poison future
+// status probes and every probe verifies the live backend.
+func (eg *EmbeddingsGenerator) GenerateVectorNoRetryWithModelContext(ctx context.Context, text string) (EmbeddingResult, error) {
+	if err := ctx.Err(); err != nil {
+		return EmbeddingResult{}, err
+	}
+
+	hasKnownDim := eg.configDim > 0 || eg.dim > 0
+	expectedDim := eg.effectiveDim()
+	vecs, err := eg.embedStatusContext(ctx, []string{text}, eg.configDim)
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return EmbeddingResult{}, ctxErr
+	}
+	if err == nil && len(vecs) == 1 {
+		vec := vecs[0]
+		if !hasKnownDim {
+			eg.cacheDimOnce(len(vec))
+			return EmbeddingResult{Vector: vec, Model: eg.Model}, nil
+		}
+		eg.cacheDimOnce(len(vec))
+		if len(vec) == expectedDim {
+			return EmbeddingResult{Vector: vec, Model: eg.Model}, nil
+		}
+		fmt.Fprintf(os.Stderr, "engine: embedding dimension mismatch: expected %d, got %d; falling back to local hash vector\n", expectedDim, len(vec))
+	}
+
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return EmbeddingResult{}, err
+	}
+
+	fallback := GenerateLocalHashVector(text, expectedDim)
+	return EmbeddingResult{Vector: fallback, Model: localHashModelName}, nil
+}
+
+func (eg *EmbeddingsGenerator) embedStatusContext(ctx context.Context, texts []string, dim int) ([][]float32, error) {
+	if eg.ollama == nil {
+		return nil, errOllamaUnavailable
+	}
+	var opts []llmkit.EmbedOption
+	if dim > 0 {
+		opts = append(opts, llmkit.WithEmbedDimensions(dim))
+	}
+	embs, err := eg.ollama.Embed(ctx, eg.Model, texts, opts...)
+	if err != nil {
+		return nil, err
+	}
+	vecs := make([][]float32, len(embs))
+	for i, e := range embs {
+		vecs[i] = e.Vector
+	}
+	return vecs, nil
+}
+
 func (eg *EmbeddingsGenerator) generateVectorImpl(text string, maxRetries int) EmbeddingResult {
 	key := hashKey(text)
 

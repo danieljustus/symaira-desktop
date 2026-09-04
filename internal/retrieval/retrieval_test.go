@@ -1,6 +1,7 @@
 package retrieval
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -27,6 +28,19 @@ func TestCurrentStatusPropagatesTheFailure(t *testing.T) {
 	}
 	if status != nil {
 		t.Errorf("CurrentStatus() = %+v, want nil on failure", status)
+	}
+}
+
+func TestCurrentStatusContextCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	status, err := CurrentStatusContext(ctx)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("CurrentStatusContext() error = %v, want context.Canceled", err)
+	}
+	if status != nil {
+		t.Errorf("CurrentStatusContext() = %+v, want nil on cancellation", status)
 	}
 }
 

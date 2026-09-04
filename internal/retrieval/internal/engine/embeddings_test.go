@@ -1,13 +1,52 @@
 package engine
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 )
+
+func TestGenerateVectorNoRetryWithModelContextCancelsBlockedOllama(t *testing.T) {
+	requestStarted := make(chan struct{})
+	releaseHandler := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(requestStarted)
+		<-releaseHandler
+	}))
+	defer server.Close()
+
+	generator := NewEmbeddingsGeneratorWithOllamaConfig(OllamaConfig{
+		URL:        server.URL + "/api/embeddings",
+		Model:      "blocked-model",
+		Timeout:    5 * time.Second,
+		RetryCount: 0,
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	started := time.Now()
+	_, err := generator.GenerateVectorNoRetryWithModelContext(ctx, "status probe")
+	if !errors.Is(err, context.DeadlineExceeded) {
+		close(releaseHandler)
+		t.Fatalf("error = %v, want context deadline exceeded", err)
+	}
+	elapsed := time.Since(started)
+	close(releaseHandler)
+	if elapsed > time.Second {
+		t.Fatalf("context-aware probe took %v, want under 1s", elapsed)
+	}
+	select {
+	case <-requestStarted:
+	default:
+		t.Fatal("status probe never reached the blocked Ollama endpoint")
+	}
+}
 
 func TestNewEmbeddingsGeneratorWithOllamaConfig_AppliesConfig(t *testing.T) {
 	cfg := OllamaConfig{
@@ -274,9 +313,16 @@ func TestRedirectNotFollowed(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error from redirect response")
 	}
+	statusResult, err := eg.GenerateVectorNoRetryWithModelContext(context.Background(), "status redirect probe")
+	if err != nil {
+		t.Fatalf("status probe returned error: %v", err)
+	}
+	if statusResult.Model != LocalHashModelName {
+		t.Fatalf("status probe model = %q, want local fallback", statusResult.Model)
+	}
 
-	if got := atomic.LoadInt32(&redirectorHits); got != 1 {
-		t.Errorf("expected 1 hit on redirector, got %d", got)
+	if got := atomic.LoadInt32(&redirectorHits); got != 2 {
+		t.Errorf("expected 2 hits on redirector, got %d", got)
 	}
 	if got := atomic.LoadInt32(&redirectHits); got != 0 {
 		t.Errorf("expected 0 hits on redirect target (redirect was followed!), got %d", got)
@@ -647,5 +693,97 @@ func TestConfiguredDim_RetriesOn5xx(t *testing.T) {
 	}
 	if got := atomic.LoadInt32(&calls); got != 3 {
 		t.Errorf("expected 3 calls, got %d", got)
+	}
+}
+
+func TestStatusProbeUsesOpenAIEmbeddingsWire(t *testing.T) {
+	var requestedPaths []string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPaths = append(requestedPaths, r.URL.Path)
+		var req struct {
+			Model string   `json:"model"`
+			Input []string `json:"input"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]any{
+				{"embedding": make([]float32, 768)},
+			},
+		})
+	}))
+	defer srv.Close()
+
+	eg := NewEmbeddingsGeneratorWithOllamaConfig(OllamaConfig{
+		URL:   srv.URL + "/api/embeddings",
+		Model: "test-model",
+		Dim:   768,
+	})
+
+	res, err := eg.GenerateVectorNoRetryWithModelContext(context.Background(), "test probe")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Model != "test-model" {
+		t.Errorf("expected model 'test-model', got %q", res.Model)
+	}
+	if len(requestedPaths) != 1 {
+		t.Fatalf("expected 1 request, got %d: %v", len(requestedPaths), requestedPaths)
+	}
+	if requestedPaths[0] != "/v1/embeddings" {
+		t.Errorf("expected path '/v1/embeddings', got %q", requestedPaths[0])
+	}
+	for _, p := range requestedPaths {
+		if strings.Contains(p, "/api/embed") {
+			t.Errorf("unexpected request to /api/embed: %s", p)
+		}
+	}
+}
+
+func TestStatusProbeDoesNotCacheLocalHashFailure(t *testing.T) {
+	var requestCount int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		count := atomic.AddInt32(&requestCount, 1)
+		w.Header().Set("Content-Type", "application/json")
+		if count == 1 {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]any{
+				{"embedding": make([]float32, 768)},
+			},
+		})
+	}))
+	defer srv.Close()
+
+	eg := NewEmbeddingsGeneratorWithOllamaConfig(OllamaConfig{
+		URL:   srv.URL,
+		Model: "test-model",
+		Dim:   768,
+	})
+
+	// First request returns 500 error -> probe falls back to LocalHashModelName
+	res1, err := eg.GenerateVectorNoRetryWithModelContext(context.Background(), "probe text")
+	if err != nil {
+		t.Fatalf("expected fallback result, got error: %v", err)
+	}
+	if res1.Model != LocalHashModelName {
+		t.Errorf("first probe: expected model %q, got %q", LocalHashModelName, res1.Model)
+	}
+
+	// Second request succeeds -> probe reports configured model, proving it was not cached
+	res2, err := eg.GenerateVectorNoRetryWithModelContext(context.Background(), "probe text")
+	if err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+	if res2.Model != "test-model" {
+		t.Errorf("second probe: expected model 'test-model', got %q", res2.Model)
+	}
+
+	// Assert server saw two requests
+	if got := atomic.LoadInt32(&requestCount); got != 2 {
+		t.Errorf("expected server to receive 2 requests, got %d", got)
 	}
 }

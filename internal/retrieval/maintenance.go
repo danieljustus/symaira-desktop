@@ -88,7 +88,7 @@ func RelocateIndex(destination string) error {
 // global override and would collapse isolation. Empty vaultRoot preserves the
 // standalone relocation behavior.
 func RelocateIndexForVault(vaultRoot, destination string) error {
-	if strings.TrimSpace(vaultRoot) != "" {
+	if vaultRoot != "" {
 		return fmt.Errorf("cannot relocate a vault-scoped retrieval index; use backup/restore or run relocate without --vault for a deliberate global index_path override")
 	}
 	location, err := IndexLocationForVault("")

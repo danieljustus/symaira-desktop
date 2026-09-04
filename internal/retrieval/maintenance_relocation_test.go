@@ -28,9 +28,11 @@ func TestRelocateIndexForVaultRejectsIsolationCollapse(t *testing.T) {
 	if pathA == pathB {
 		t.Fatal("distinct vaults resolved to one index before relocation")
 	}
-	err = RelocateIndexForVault(vaultA, filepath.Join(t.TempDir(), "relocated.db"))
-	if err == nil || !strings.Contains(err.Error(), "vault-scoped") {
-		t.Fatalf("RelocateIndexForVault error = %v, want isolation rejection", err)
+	for _, vaultRoot := range []string{vaultA, " "} {
+		err = RelocateIndexForVault(vaultRoot, filepath.Join(t.TempDir(), "relocated.db"))
+		if err == nil || !strings.Contains(err.Error(), "vault-scoped") {
+			t.Errorf("RelocateIndexForVault(%q) error = %v, want isolation rejection", vaultRoot, err)
+		}
 	}
 	afterB, err := IndexLocationForVault(vaultB)
 	if err != nil {

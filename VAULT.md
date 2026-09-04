@@ -1,6 +1,6 @@
 # Symaira Vault Contract
 
-**contract_version: 5**
+**contract_version: 6**
 
 This document specifies the format and constraints of a Symaira Vault. Any application or service interacting with the Vault MUST comply with this contract to ensure interoperability across the ecosystem (e.g., `symaira-desktop`, `symaira-ingest`, `symaira-seek`).
 
@@ -43,16 +43,17 @@ When indexing or resolving tags for a document, frontmatter `tags` are parsed fi
 - `#` markers inside fenced code blocks, inline code spans (`` `...` ``), ATX headings (`# Heading`), wikilink targets/fragments (`[[Note#Heading]]`), markdown link targets (`[text](url#section)`), autolinks (`<https://...#frag>`), and bare URLs (`https://example.com/#frag`) MUST NOT be indexed as tags.
 - Tag management operations (`symdesk tags rename|merge|delete`) update both frontmatter and inline body occurrences in place without normalizing inline tags into frontmatter.
 
-### Document Kind (contract_version 5)
-The `type` field classifies every markdown file in the vault into one of five kinds:
+### Document Kind (contract_version 6)
+The `type` field classifies every markdown file in the vault into one of six kinds:
 
 - `note` (default): A free-form note or journal entry.
 - `document`: An imported or ingested document with structured metadata (e.g. invoices, letters, contracts).
 - `meeting`: A meeting note imported by `symmeet` (see section 8).
 - `notebook`: A named, bounded set of vault sources used to scope AI grounding, retrieval and generated artifacts (see section 10). Added in contract_version 4.
 - `base`: A saved database view or collection of views over vault documents (see section 12). Added in contract_version 5.
+- `dataset`: A Markdown handle for a typed tabular source whose raw files live under `datasets/<slug>/` and whose rows are derived in the sidecar (see section 13). Added in contract_version 6.
 
-**Explicit declaration:** A file with `type: note`, `type: document`, `type: meeting`, `type: notebook`, or `type: base` in its frontmatter is classified accordingly. Meeting-specific fields (section 8) SHOULD be paired with `type: meeting`; notebook-specific fields (section 10) SHOULD be paired with `type: notebook`; base-specific fields (section 12) SHOULD be paired with `type: base`.
+**Explicit declaration:** A file with `type: note`, `type: document`, `type: meeting`, `type: notebook`, `type: base`, or `type: dataset` in its frontmatter is classified accordingly. Meeting-specific fields (section 8) SHOULD be paired with `type: meeting`; notebook-specific fields (section 10) SHOULD be paired with `type: notebook`; base-specific fields (section 12) SHOULD be paired with `type: base`; dataset-specific fields (section 13) MUST be paired with `type: dataset`.
 
 **Inference when absent:** A file with no `type` field is resolved at index time by the following rules (evaluated in order; the first match wins):
 1. If the frontmatter contains any of `source_path`, `mime`, `sha256`, `document_date`, or `asn` → the file is classified as `document`.
@@ -62,7 +63,7 @@ The `type` field classifies every markdown file in the vault into one of five ki
 
 `notebook` is never inferred — a `sources` list alone is not a strong enough signal, since a free-form note can legitimately link related files without being a notebook. A notebook note MUST declare `type: notebook` explicitly.
 
-> **Backwards compatibility:** Contract v3 added the `type` field; contract v4 adds the `notebook` kind; contract v5 adds the `base` kind. Existing vaults work without either — every file without `type` is classified at index time by inference, and a vault with no bases or notebooks behaves exactly as a v1/v2/v3 vault always has. Parsers MUST treat an absent `type` as `note` when no inference triggers.
+> **Backwards compatibility:** Contract v6 adds the `dataset` kind and its handle fields. Existing vaults work without it; dataset rows are always derived from raw files under `datasets/<slug>/` and can be rebuilt after deleting the sidecar. A vault with no datasets behaves exactly as a v1/v2/v3/v4/v5 vault always has.
 
 ### Optional/Integration Fields (e.g., for `symaira-ingest`)
 The contract fully accepts and standardizes the following fields commonly written by `symingest`:
@@ -276,4 +277,17 @@ A base is a named collection of saved views over vault documents (`symdesk views
 
 **Migration from legacy views:** on startup, existing `.symdesk/views.json` definitions are automatically migrated to base notes in `bases/` while leaving the original `.symdesk/views.json` intact.
 
+## 13. Datasets (contract_version 6)
+A dataset is an explicitly imported, typed tabular source. Its handle is an ordinary Markdown note under `datasets/<slug>.md`; dated raw CSV snapshots are ordinary vault assets under `datasets/<slug>/<YYYY-MM-DD>.csv` (with collision suffixes when several arrive on one day).
+
+- `type` (string, `"dataset"`): marks the handle as a dataset. It is never inferred for an ordinary note.
+- `dataset_id` (string): stable slug identifying the dataset handle and its raw-file directory.
+- `source` (string): vault-relative path to the most recently imported raw source file.
+- `schema` (map of objects): one entry per CSV column, using the same property schema as bases (`text`, `number`, `date`, `select`, `checkbox`/`boolean`, or `tags`). Missing types are inferred at import time.
+- `coverage` (object, optional): `from` and `to` values describing the covered range when a date column is present.
+- `provenance` (object): import timestamp, source name, and source SHA-256.
+- `identity_field` (string, optional): a stable source column used to identify and update rows. When absent, row identity is the deterministic canonical hash of column names and values.
+- `refresh_command` and `sensitivity` (strings, optional): producer guidance and the declared sensitivity class.
+
+The sidecar stores typed rows only as derived state. Rebuilding a dataset reads every raw CSV in `datasets/<slug>/`, applies the handle schema, and replaces that dataset's sidecar rows. Repeated or overlapping imports are deduplicated by the explicit identity field or canonical row hash. Raw dataset files are not Markdown and are never added to the note full-text index; the dataset handle itself is indexed as a normal Markdown document.
 

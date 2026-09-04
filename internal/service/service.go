@@ -35,17 +35,41 @@ type Service struct {
 	History   *history.Store
 	Config    *config.Config
 
-	// retrievalClient is owned by this service instance. It is deliberately
-	// not a package-global active-vault setting: multiple vault services may
-	// coexist in one process without changing each other's index. The client
-	// is opened lazily because most service operations only use the sidecar.
+	// retrievalClient is owned by this service instance when it is lazily
+	// opened by New. Server-owned pools and explicitly injected clients are
+	// borrowed and are never closed here.
 	retrievalClient    *retrieval.Client
+	retrievalPool      *retrieval.ClientPool
+	retrievalOwned     bool
+	retrievalMu        sync.Mutex
+	retrievalCond      *sync.Cond
+	retrievalLeases    int
+	retrievalClosed    bool
 	retrievalOnce      sync.Once
 	retrievalOpenError error
+	closeOnce          sync.Once
+	closeError         error
 }
 
-// New creates a new Service instance.
+// New creates a new Service instance with a lazily opened, service-owned
+// retrieval client.
 func New(vaultRoot string, db *sidecar.DB) *Service {
+	return newService(vaultRoot, db, nil, nil)
+}
+
+// NewWithRetrievalClient creates a Service that borrows client. The service
+// never closes the injected client.
+func NewWithRetrievalClient(vaultRoot string, db *sidecar.DB, client *retrieval.Client) *Service {
+	return newService(vaultRoot, db, client, nil)
+}
+
+// NewWithRetrievalPool creates a short-lived Service backed by a server-owned
+// retrieval pool. The service borrows both the pool and its clients.
+func NewWithRetrievalPool(vaultRoot string, db *sidecar.DB, pool *retrieval.ClientPool) *Service {
+	return newService(vaultRoot, db, nil, pool)
+}
+
+func newService(vaultRoot string, db *sidecar.DB, client *retrieval.Client, pool *retrieval.ClientPool) *Service {
 	canonical, err := filepath.EvalSymlinks(vaultRoot)
 	if err != nil {
 		canonical = vaultRoot
@@ -55,29 +79,111 @@ func New(vaultRoot string, db *sidecar.DB) *Service {
 		cfg = config.DefaultConfig()
 	}
 	svc := &Service{
-		VaultRoot: canonical,
-		DB:        db,
-		ViewsMgr:  dbviews.NewManager(canonical),
-		History:   history.NewStore(canonical),
-		Config:    cfg,
+		VaultRoot:       canonical,
+		DB:              db,
+		ViewsMgr:        dbviews.NewManager(canonical),
+		History:         history.NewStore(canonical),
+		Config:          cfg,
+		retrievalClient: client,
+		retrievalPool:   pool,
+		retrievalOwned:  client == nil && pool == nil,
 	}
+	svc.retrievalCond = sync.NewCond(&svc.retrievalMu)
 	svc.ViewsMgr.SetSnapshotFn(func(absPath string) {
 		svc.snapshotBefore(absPath)
 	})
 	return svc
 }
 
+// Close releases only a retrieval client opened by this Service. Borrowed
+// clients and the sidecar database remain owned by their caller.
+func (s *Service) Close() error {
+	if s == nil {
+		return nil
+	}
+	s.closeOnce.Do(func() {
+		s.retrievalMu.Lock()
+		if s.retrievalCond == nil {
+			s.retrievalCond = sync.NewCond(&s.retrievalMu)
+		}
+		s.retrievalClosed = true
+		for s.retrievalLeases > 0 {
+			s.retrievalCond.Wait()
+		}
+		client := s.retrievalClient
+		owned := s.retrievalOwned
+		s.retrievalMu.Unlock()
+		if owned && client != nil {
+			s.closeError = client.Close()
+		}
+	})
+	return s.closeError
+}
+
 // snapshotBefore records a history snapshot of the file at absPath before a
 // mutation. Snapshot failures never block the write itself; they are logged
 // so the user's edit is not lost to a safety-net error.
-func (s *Service) getRetrievalClient() *retrieval.Client {
+func (s *Service) acquireRetrievalClient() (*retrieval.Client, func()) {
+	if s == nil {
+		return nil, func() {}
+	}
+	s.retrievalMu.Lock()
+	if s.retrievalCond == nil {
+		s.retrievalCond = sync.NewCond(&s.retrievalMu)
+	}
+	if s.retrievalClosed {
+		s.retrievalMu.Unlock()
+		return nil, func() {}
+	}
+	s.retrievalLeases++
+	if s.retrievalPool != nil {
+		pool := s.retrievalPool
+		vaultRoot := s.VaultRoot
+		s.retrievalMu.Unlock()
+		client, poolRelease, err := pool.Acquire(vaultRoot)
+		if err != nil {
+			s.releaseRetrievalLease()
+			slog.Warn("vault-scoped retrieval unavailable", "vault", s.VaultRoot, "error", err)
+			return nil, func() {}
+		}
+		var once sync.Once
+		return client, func() {
+			once.Do(func() {
+				poolRelease()
+				s.releaseRetrievalLease()
+			})
+		}
+	}
 	s.retrievalOnce.Do(func() {
+		if s.retrievalClient != nil {
+			return
+		}
 		s.retrievalClient, s.retrievalOpenError = retrieval.OpenForVault(s.VaultRoot)
 		if s.retrievalOpenError != nil {
 			slog.Warn("vault-scoped retrieval unavailable", "vault", s.VaultRoot, "error", s.retrievalOpenError)
 		}
 	})
-	return s.retrievalClient
+	client := s.retrievalClient
+	if client == nil {
+		s.retrievalLeases--
+		s.retrievalCond.Broadcast()
+		s.retrievalMu.Unlock()
+		return nil, func() {}
+	}
+	s.retrievalMu.Unlock()
+	var once sync.Once
+	return client, func() { once.Do(s.releaseRetrievalLease) }
+}
+
+func (s *Service) releaseRetrievalLease() {
+	s.retrievalMu.Lock()
+	if s.retrievalLeases > 0 {
+		s.retrievalLeases--
+	}
+	if s.retrievalCond != nil {
+		s.retrievalCond.Broadcast()
+	}
+	s.retrievalMu.Unlock()
 }
 
 func (s *Service) snapshotBefore(absPath string) {
@@ -99,8 +205,13 @@ func (s *Service) DeleteDocument(path string) error {
 	if err := s.DB.DeleteDocument(path); err != nil {
 		return err
 	}
-	if client := s.getRetrievalClient(); client != nil {
+	client, release := s.acquireRetrievalClient()
+	defer release()
+	if client != nil {
 		if err := client.Delete(path); err != nil {
+			if s.retrievalPool != nil {
+				s.retrievalPool.Invalidate(client)
+			}
 			slog.Warn("search index delete failed", "path", path, "error", err)
 		}
 	}
@@ -268,14 +379,18 @@ func pathWithin(path, root string) bool {
 func (s *Service) searchPlain(query string) ([]SearchResult, error) {
 	sources := s.externalSourceRoots()
 	var seekResults []retrieval.Result
-	client := s.getRetrievalClient()
+	client, release := s.acquireRetrievalClient()
 	if client == nil {
 		return s.searchSidecarPlain(query)
 	}
+	defer release()
 	if len(sources) == 0 {
 		var searchErr error
 		seekResults, searchErr = client.Search(query, retrieval.DefaultLimit)
 		if searchErr != nil {
+			if s.retrievalPool != nil {
+				s.retrievalPool.Invalidate(client)
+			}
 			slog.Warn("vault-scoped hybrid search unavailable", "error", searchErr)
 			seekResults = nil
 		}
@@ -288,6 +403,9 @@ func (s *Service) searchPlain(query string) ([]SearchResult, error) {
 		var searchErr error
 		seekResults, searchErr = client.SearchInPaths(query, paths, retrieval.DefaultLimit)
 		if searchErr != nil {
+			if s.retrievalPool != nil {
+				s.retrievalPool.Invalidate(client)
+			}
 			slog.Warn("scoped hybrid search unavailable", "error", searchErr)
 			seekResults = nil
 		}

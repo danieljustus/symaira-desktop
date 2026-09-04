@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/permissions"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 	"github.com/fsnotify/fsnotify"
@@ -56,20 +57,21 @@ type ServerConfig struct {
 }
 
 type Server struct {
-	cfg          ServerConfig
-	db           *sidecar.DB
-	state        *ServerState
-	jobs         *JobStore
-	perm         *permissions.Manager
-	shares       *ShareStore
-	throttle     *throttle
-	vaultRoot    *os.Root
-	http         *http.Server
-	mux          *http.ServeMux
-	snapshotMu   sync.Mutex
-	snapshotETag string
-	snapshotJSON []byte
-	snapshotGZIP []byte
+	cfg           ServerConfig
+	db            *sidecar.DB
+	state         *ServerState
+	jobs          *JobStore
+	perm          *permissions.Manager
+	retrievalPool *retrieval.ClientPool
+	shares        *ShareStore
+	throttle      *throttle
+	vaultRoot     *os.Root
+	http          *http.Server
+	mux           *http.ServeMux
+	snapshotMu    sync.Mutex
+	snapshotETag  string
+	snapshotJSON  []byte
+	snapshotGZIP  []byte
 	// snapshotDirty tracks whether the vault may have changed since the last
 	// snapshotPayload computation. When a vault watcher is running, a clean
 	// (false) state lets snapshotPayload skip its full stat-every-file walk
@@ -132,6 +134,13 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	retrievalPool := retrieval.NewClientPool()
+	poolReady := false
+	defer func() {
+		if !poolReady {
+			_ = retrievalPool.Close()
+		}
+	}()
 	stateCtx, stateCancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer stateCancel()
 	state, err := OpenServerState(stateCtx, cfg.VaultRoot, cfg.StateDSN)
@@ -153,6 +162,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	}
 	s := &Server{
 		cfg: cfg, db: db, state: state, jobs: jobs, vaultRoot: vaultRoot, mux: http.NewServeMux(), throttle: newThrottle(),
+		retrievalPool:      retrievalPool,
 		perUserCacheBudget: defaultPerUserCacheBudget,
 	}
 	s.snapshotDirty.Store(true)
@@ -246,6 +256,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 		s.watcherDone = make(chan struct{})
 		go s.watchVault()
 	}
+	poolReady = true
 	return s, nil
 }
 
@@ -312,7 +323,7 @@ func (s *Server) Close() error {
 		_ = s.vaultWatcher.Close()
 		<-s.watcherDone
 	}
-	return errors.Join(s.vaultRoot.Close(), s.db.Close(), s.state.Close())
+	return errors.Join(s.vaultRoot.Close(), s.db.Close(), s.state.Close(), s.retrievalPool.Close())
 }
 
 func (s *Server) ListenAndServe() error {

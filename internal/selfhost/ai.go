@@ -64,7 +64,11 @@ func (s *Server) handleAIAsk(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := userFromContext(r)
-	svc := service.New(s.cfg.VaultRoot, s.db)
+	svc, err := s.newService()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "retrieval unavailable: "+err.Error())
+		return
+	}
 	var results []service.SearchResult
 	var scopedPaths []string
 	var retrievalErr error
@@ -194,7 +198,11 @@ func (s *Server) handleAITransform(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), aiAskTimeout)
 	defer cancel()
 
-	svc := service.New(s.cfg.VaultRoot, s.db)
+	svc, err := s.newService()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "retrieval unavailable: "+err.Error())
+		return
+	}
 	chunks := make(chan ai.AskChunk)
 	go ai.Transform(ctx, svc.Config, request.Text, request.Intent, chunks)
 

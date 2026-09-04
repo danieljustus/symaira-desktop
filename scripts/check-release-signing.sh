@@ -32,6 +32,11 @@ fi
 require_fixed "$WORKFLOW" "id-token: write" "GitHub Actions OIDC permission"
 require_fixed "$WORKFLOW" "sigstore/cosign-installer@" "Cosign installation"
 require_fixed "$WORKFLOW" "cosign-release: v2.4.3" "separate signature and certificate support"
+require_fixed "$WORKFLOW" 'codesign --force --sign "$CODESIGN_IDENTITY" --timestamp "$DMG_PATH"' "Developer ID signature on the DMG container"
+require_fixed "$WORKFLOW" 'xcrun stapler validate "$DMG_PATH"' "DMG stapling validation"
+require_fixed "$WORKFLOW" 'spctl --assess --type open --context context:primary-signature' "DMG Gatekeeper assessment"
+require_fixed "$WORKFLOW" 'gh release download "$GITHUB_REF_NAME"' "published DMG redownload"
+require_fixed "$WORKFLOW" 'test "$PUBLISHED_SHA256" = "$DMG_SHA256"' "published-byte digest verification"
 require_fixed "$README" "cosign verify-blob" "consumer verification command"
 require_fixed "$README" "https://token.actions.githubusercontent.com" "OIDC issuer"
 

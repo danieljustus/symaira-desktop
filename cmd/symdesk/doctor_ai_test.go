@@ -303,7 +303,7 @@ func writeDoctorVersionTool(t *testing.T, dir, name, version string) {
 		t.Fatal(err)
 	}
 	script := "#!/bin/sh\nprintf '%s\\n' '{\"tool\":\"" + name + "\",\"version\":\"" + version + "\",\"schema_version\":1}'\n"
-	if err := os.WriteFile(filepath.Join(dir, name), []byte(script), 0o700); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, name), []byte(script), 0o700); err != nil { //nolint:gosec // executable test fixture
 		t.Fatal(err)
 	}
 }

@@ -253,7 +253,7 @@ jobs:
             "dist/Symaira-Desktop-${VERSION}-macos.dmg" \
             "Symaira Desktop"
 
-      - name: Notarize and staple DMG
+      - name: Sign, notarize, staple, and verify DMG
         env:
           NOTARY_API_KEY: ${{ secrets.NOTARY_API_KEY }}
           NOTARY_API_KEY_ID: ${{ secrets.NOTARY_API_KEY_ID }}
@@ -264,6 +264,8 @@ jobs:
           DMG_PATH="dist/Symaira-Desktop-${VERSION}-macos.dmg"
           API_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
           echo -n "$NOTARY_API_KEY" | base64 --decode -o "$API_KEY_PATH"
+          codesign --force --sign "$CODESIGN_IDENTITY" --timestamp "$DMG_PATH"
+          codesign --verify --strict --verbose=2 "$DMG_PATH"
           xcrun notarytool submit "$DMG_PATH" \
             -d "$NOTARY_API_KEY_ID" \
             -i "$NOTARY_API_ISSUER_ID" \
@@ -271,6 +273,11 @@ jobs:
             --wait
           xcrun stapler staple "$DMG_PATH"
           xcrun stapler validate "$DMG_PATH"
+          codesign --verify --strict --verbose=2 "$DMG_PATH"
+          spctl --assess --type open --context context:primary-signature --verbose=4 "$DMG_PATH"
+          DMG_SHA256="$(shasum -a 256 "$DMG_PATH" | cut -d ' ' -f 1)"
+          test -n "$DMG_SHA256"
+          echo "DMG_SHA256=$DMG_SHA256" >> "$GITHUB_ENV"
 
       - name: Upload app artifacts to GitHub Release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
@@ -280,6 +287,25 @@ jobs:
             dist/Symaira-Desktop-*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Redownload and verify published DMG bytes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          NAME="Symaira-Desktop-${VERSION}-macos.dmg"
+          PUBLISHED_DIR="$RUNNER_TEMP/published-dmg"
+          rm -rf "$PUBLISHED_DIR"
+          mkdir -p "$PUBLISHED_DIR"
+          gh release download "$GITHUB_REF_NAME" --pattern "$NAME" --dir "$PUBLISHED_DIR"
+          PUBLISHED_DMG="$PUBLISHED_DIR/$NAME"
+          test -f "$PUBLISHED_DMG"
+          PUBLISHED_SHA256="$(shasum -a 256 "$PUBLISHED_DMG" | cut -d ' ' -f 1)"
+          test "$PUBLISHED_SHA256" = "$DMG_SHA256"
+          codesign --verify --strict --verbose=2 "$PUBLISHED_DMG"
+          xcrun stapler validate "$PUBLISHED_DMG"
+          spctl --assess --type open --context context:primary-signature --verbose=4 "$PUBLISHED_DMG"
 
       - name: Upload app artifacts to workflow
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

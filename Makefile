@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard vuln benchmark-large docker-build clean
+.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -10,7 +10,7 @@ build:
 test:
 	CGO_ENABLED=0 go test -race ./...
 
-lint: fmt-check corekit-guard boundary-guard nested-version-guard
+lint: fmt-check corekit-guard boundary-guard nested-version-guard release-signing-guard
 	go vet ./...
 
 fmt-check:
@@ -28,6 +28,10 @@ boundary-guard:
 # Issue #535: Go version directive and shared dependency versions must stay aligned across root and nested modules.
 nested-version-guard:
 	@./scripts/check-nested-versions.sh
+
+# Release signing/notarization order and published-byte verification contract.
+release-signing-guard:
+	@./scripts/check-release-signing.sh
 
 # Issue #352: macOS app text must use .symairaText(role) instead of inline
 # .font(.caption/.headline/...) literals so Dynamic Type scales.

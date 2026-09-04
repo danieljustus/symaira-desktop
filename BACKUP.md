@@ -34,10 +34,11 @@ directory (`$XDG_DATA_HOME/symdesk`, defaulting to `~/.local/share/symdesk`).
 Existing installs with state in legacy per-tool directories continue to work
 via read-only fallbacks.
 
-To enumerate the active paths for backup scripts, run:
+To enumerate the active paths for backup scripts, pass the vault explicitly (or
+configure it through `SYMDESK_VAULT`) and run:
 
 ```sh
-symdesk config paths --json
+symdesk --vault /path/to/vault config paths --json
 ```
 
 Output:

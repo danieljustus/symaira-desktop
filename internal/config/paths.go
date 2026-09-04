@@ -187,8 +187,11 @@ func fileOrDirExists(path string) bool {
 
 // ContactsDBPath returns the resolved database path for symrelate/contacts.
 func ContactsDBPath() string {
+	if env := strings.TrimSpace(os.Getenv(EnvLegacyContactsDataHome)); env != "" {
+		return filepath.Join(env, "symrelate.db")
+	}
 	primary := filepath.Join(DataDir(), "symrelate.db")
-	legacy := filepath.Join(LegacyContactsDataDir(), "symrelate.db")
+	legacy := filepath.Join(DataHome(), LegacyContactsAppName, "symrelate.db")
 	return resolveWithLegacyFallback(primary, legacy)
 }
 
@@ -235,12 +238,16 @@ func IngestDBPath() (string, error) {
 
 // IngestDataPath resolves a named ingest data artifact (e.g. "symingest.db" or "archive").
 func IngestDataPath(name string) (string, error) {
+	cleanName := filepath.Clean(strings.TrimSpace(name))
+	if cleanName == "." || filepath.IsAbs(cleanName) || cleanName != filepath.Base(cleanName) {
+		return "", fmt.Errorf("ingest data artifact must be a single relative name: %q", name)
+	}
 	dataHome, err := ResolveDataHome()
 	if err != nil {
 		return "", fmt.Errorf("cannot determine home directory; set %s explicitly: %w", name, err)
 	}
-	primary := filepath.Join(dataHome, AppName, name)
-	legacy := filepath.Join(dataHome, LegacyIngestAppName, name)
+	primary := filepath.Join(dataHome, AppName, cleanName)
+	legacy := filepath.Join(dataHome, LegacyIngestAppName, cleanName)
 	return resolveWithLegacyFallback(primary, legacy), nil
 }
 
@@ -292,7 +299,10 @@ func SidecarPath(vaultRoot string) (string, error) {
 func isTemporaryVault(path string) bool {
 	tmp := filepath.Clean(os.TempDir())
 	rel, err := filepath.Rel(tmp, filepath.Clean(path))
-	return err == nil && rel != ".." && len(rel) > 3 && rel[:4] != ".."+string(filepath.Separator)
+	if err != nil {
+		return false
+	}
+	return rel != "." && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 // RetrievalPath returns the retrieval database path.
@@ -315,6 +325,17 @@ func RetrievalPath(vaultRoot string) (string, error) {
 	primaryOldName := filepath.Join(dataHome, AppName, "symseek.db")
 	legacy := filepath.Join(dataHome, LegacyRetrievalAppName, "symseek.db")
 	return resolveWithLegacyFallback(primary, primaryOldName, legacy), nil
+}
+
+// LegacyRetrievalDBPath returns only the pre-absorption symaira-seek path.
+// Migration code uses this instead of RetrievalPath("") so a valid unified
+// standalone symdesk/retrieval.db is never mistaken for disposable legacy data.
+func LegacyRetrievalDBPath() (string, error) {
+	dataHome, err := ResolveDataHome()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dataHome, LegacyRetrievalAppName, "symseek.db"), nil
 }
 
 // ResolveStorePaths resolves the filesystem locations for all absorbed stores.

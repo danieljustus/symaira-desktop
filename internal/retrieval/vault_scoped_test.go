@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	desktopconfig "github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 )
 
@@ -104,7 +105,7 @@ func TestOpenForVaultMigratesLegacyIndexAtomically(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
 
-	legacyPath, err := db.DefaultPath()
+	legacyPath, err := desktopconfig.LegacyRetrievalDBPath()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,5 +153,35 @@ func TestOpenForVaultMigratesLegacyIndexAtomically(t *testing.T) {
 	}
 	if err := second.Close(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestOpenForVaultPreservesUnifiedStandaloneIndex(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
+
+	standalonePath, err := desktopconfig.RetrievalPath("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	standalone, err := db.OpenAt(standalonePath)
+	if err != nil {
+		t.Fatalf("create standalone index: %v", err)
+	}
+	if err := standalone.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	vault := filepath.Join(t.TempDir(), "vault")
+	client, err := OpenForVault(vault)
+	if err != nil {
+		t.Fatalf("OpenForVault: %v", err)
+	}
+	if err := client.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(standalonePath); err != nil {
+		t.Fatalf("unified standalone index was removed: %v", err)
 	}
 }

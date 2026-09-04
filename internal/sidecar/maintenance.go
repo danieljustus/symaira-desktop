@@ -25,12 +25,6 @@ func SidecarRoot() (string, error) {
 	return config.SidecarRoot()
 }
 
-func isTemporaryVault(path string) bool {
-	tmp := filepath.Clean(os.TempDir())
-	rel, err := filepath.Rel(tmp, filepath.Clean(path))
-	return err == nil && rel != ".." && len(rel) > 3 && rel[:4] != ".."+string(filepath.Separator)
-}
-
 func recordSidecarMetadata(dir, vaultPath string) error {
 	payload, err := json.Marshal(sidecarMetadata{VaultPath: vaultPath, LastUsed: time.Now().UTC()})
 	if err != nil {

@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -88,6 +89,42 @@ func TestPaths_DefaultHomeFallback(t *testing.T) {
 	}
 }
 
+func TestSidecarVaultDirDistinguishesTemporaryAndPersistentVaults(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_DATA_HOME", "")
+
+	volumeRoot := filepath.VolumeName(os.TempDir()) + string(filepath.Separator)
+	persistentVault := filepath.Join(volumeRoot, "symdesk-persistent-vault")
+	persistentDir, err := SidecarVaultDir(persistentVault)
+	if err != nil {
+		t.Fatalf("SidecarVaultDir(persistent) error = %v", err)
+	}
+	wantRoot := filepath.Join(home, ".local", "share", AppName, "vaults")
+	if rel, err := filepath.Rel(wantRoot, persistentDir); err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || filepath.IsAbs(rel) {
+		t.Fatalf("persistent vault sidecar = %q, want below %q", persistentDir, wantRoot)
+	}
+
+	temporaryVault := filepath.Join(os.TempDir(), "symdesk-temporary-vault")
+	temporaryDir, err := SidecarVaultDir(temporaryVault)
+	if err != nil {
+		t.Fatalf("SidecarVaultDir(temporary) error = %v", err)
+	}
+	wantTemporaryRoot := filepath.Join(os.TempDir(), AppName, "test-vaults")
+	if rel, err := filepath.Rel(wantTemporaryRoot, temporaryDir); err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || filepath.IsAbs(rel) {
+		t.Fatalf("temporary vault sidecar = %q, want below %q", temporaryDir, wantTemporaryRoot)
+	}
+}
+
+func TestIngestDataPathRejectsTraversal(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	for _, name := range []string{"", ".", "../escape", "nested/file", string(filepath.Separator) + "absolute"} {
+		if _, err := IngestDataPath(name); err == nil {
+			t.Errorf("IngestDataPath(%q) succeeded, want validation error", name)
+		}
+	}
+}
+
 func TestPaths_LegacyIngestFallback(t *testing.T) {
 	dataHome := t.TempDir()
 	t.Setenv("XDG_DATA_HOME", dataHome)
@@ -156,15 +193,24 @@ func TestPaths_LegacyContactsFallback(t *testing.T) {
 		t.Errorf("bundle.DataDir = %q, want legacy dir %q", bundle.DataDir, legacyDir)
 	}
 
-	// When SYMRELATE_DATA_HOME is set explicitly, it overrides
+	// An explicit SYMRELATE_DATA_HOME is authoritative even when the
+	// directory is still empty and a primary database already exists.
+	primaryDir := filepath.Join(dataHome, AppName)
+	if err := os.MkdirAll(primaryDir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(primaryDir, "symrelate.db"), []byte("primary db"), 0600); err != nil {
+		t.Fatal(err)
+	}
 	customDir := t.TempDir()
 	t.Setenv(EnvLegacyContactsDataHome, customDir)
 	customDB := filepath.Join(customDir, "symrelate.db")
-	if err := os.WriteFile(customDB, []byte("custom db"), 0600); err != nil {
-		t.Fatal(err)
-	}
 	if got := ContactsDBPath(); got != customDB {
 		t.Errorf("ContactsDBPath() with SYMRELATE_DATA_HOME = %q, want %q", got, customDB)
+	}
+	bundle = ContactsPaths()
+	if bundle.DataDir != customDir || bundle.DBPath != customDB {
+		t.Errorf("ContactsPaths() override = data %q db %q, want %q and %q", bundle.DataDir, bundle.DBPath, customDir, customDB)
 	}
 }
 

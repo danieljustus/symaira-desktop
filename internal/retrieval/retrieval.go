@@ -181,7 +181,7 @@ func migrateLegacyIndex(newPath string) error {
 		// Already migrated, already has data, or unreadable: leave it alone.
 		return nil
 	}
-	legacyPath, err := db.DefaultPath()
+	legacyPath, err := desktopconfig.LegacyRetrievalDBPath()
 	if err != nil {
 		return err
 	}

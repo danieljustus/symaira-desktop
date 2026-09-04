@@ -1,6 +1,7 @@
 package sidecar
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io/fs"
@@ -76,6 +77,11 @@ func (db *DB) GetIndexStatus(path string) (IndexStatus, bool, error) {
 // ListIndexStatuses lists diagnostics in stable path order. An empty state
 // returns all rows.
 func (db *DB) ListIndexStatuses(state IndexState) ([]IndexStatus, error) {
+	return db.ListIndexStatusesContext(context.Background(), state)
+}
+
+// ListIndexStatusesContext is the cancellation-aware status-path variant.
+func (db *DB) ListIndexStatusesContext(ctx context.Context, state IndexState) ([]IndexStatus, error) {
 	query := `SELECT path, state, reason, updated_at FROM index_lifecycle`
 	args := []interface{}{}
 	if state != "" {
@@ -86,7 +92,7 @@ func (db *DB) ListIndexStatuses(state IndexState) ([]IndexStatus, error) {
 		args = append(args, state)
 	}
 	query += ` ORDER BY path ASC`
-	rows, err := db.conn.Query(query, args...)
+	rows, err := db.conn.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

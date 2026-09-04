@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -522,8 +523,13 @@ func (db *DB) GetChunksForDocument(docPath string) ([]*Chunk, error) {
 // used by the re-embed path (#663/#679) and the doctor check (#663/#680) to
 // report and repair a degraded index.
 func (db *DB) CountPendingChunks() (int, error) {
+	return db.CountPendingChunksContext(context.Background())
+}
+
+// CountPendingChunksContext is the cancellation-aware status-path variant.
+func (db *DB) CountPendingChunksContext(ctx context.Context) (int, error) {
 	var n int
-	if err := db.conn.QueryRow("SELECT COUNT(*) FROM chunks WHERE embedding_pending = 1").Scan(&n); err != nil {
+	if err := db.conn.QueryRowContext(ctx, "SELECT COUNT(*) FROM chunks WHERE embedding_pending = 1").Scan(&n); err != nil {
 		return 0, fmt.Errorf("count pending chunks: %w", err)
 	}
 	return n, nil
@@ -578,23 +584,28 @@ type Stats struct {
 }
 
 func (db *DB) GetStats() (*Stats, error) {
+	return db.GetStatsContext(context.Background())
+}
+
+// GetStatsContext is the cancellation-aware status-path variant.
+func (db *DB) GetStatsContext(ctx context.Context) (*Stats, error) {
 	var s Stats
-	err := db.conn.QueryRow("SELECT COUNT(*) FROM documents").Scan(&s.DocumentCount)
+	err := db.conn.QueryRowContext(ctx, "SELECT COUNT(*) FROM documents").Scan(&s.DocumentCount)
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.conn.QueryRow("SELECT COUNT(*) FROM chunks").Scan(&s.ChunkCount)
+	err = db.conn.QueryRowContext(ctx, "SELECT COUNT(*) FROM chunks").Scan(&s.ChunkCount)
 	if err != nil {
 		return nil, err
 	}
 
 	var pageCount, pageSize int64
-	err = db.conn.QueryRow("PRAGMA page_count").Scan(&pageCount)
+	err = db.conn.QueryRowContext(ctx, "PRAGMA page_count").Scan(&pageCount)
 	if err != nil {
 		return nil, err
 	}
-	err = db.conn.QueryRow("PRAGMA page_size").Scan(&pageSize)
+	err = db.conn.QueryRowContext(ctx, "PRAGMA page_size").Scan(&pageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -606,7 +617,7 @@ func (db *DB) GetStats() (*Stats, error) {
 	// value empty. Parse the stored representation explicitly so a completed
 	// index pass produces a real timestamp in the status response.
 	var rawLastIndexed string
-	if err := db.conn.QueryRow("SELECT MAX(updated_at) FROM documents").Scan(&rawLastIndexed); err == nil && rawLastIndexed != "" {
+	if err := db.conn.QueryRowContext(ctx, "SELECT MAX(updated_at) FROM documents").Scan(&rawLastIndexed); err == nil && rawLastIndexed != "" {
 		// database/sql may persist time.Time using its String form, which
 		// appends a monotonic-clock suffix ("m=+..."). It is not part of
 		// the wall-clock value and must be removed before parsing.
@@ -621,6 +632,9 @@ func (db *DB) GetStats() (*Stats, error) {
 			}
 		}
 	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	return &s, nil
 }
@@ -634,7 +648,13 @@ func (db *DB) GetStats() (*Stats, error) {
 // from issue #663/#678) are excluded: they carry no semantic vector and must
 // not be mistaken for a competing embedding space.
 func (db *DB) DetectMixedEmbeddingSpaces() (map[string]int, error) {
-	rows, err := db.conn.Query(
+	return db.DetectMixedEmbeddingSpacesContext(context.Background())
+}
+
+// DetectMixedEmbeddingSpacesContext is the cancellation-aware status-path variant.
+func (db *DB) DetectMixedEmbeddingSpacesContext(ctx context.Context) (map[string]int, error) {
+	rows, err := db.conn.QueryContext(
+		ctx,
 		"SELECT embedding_dim, embedding_model, COUNT(*) FROM chunks WHERE embedding_pending = 0 GROUP BY embedding_dim, embedding_model",
 	)
 	if err != nil {

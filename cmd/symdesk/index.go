@@ -231,7 +231,7 @@ callers indefinitely.`,
 					return err
 				}
 				defer closeWithWarning("sidecar database", db.Close)
-				rows, err := db.ListIndexStatuses(sidecar.IndexState(indexStatusState))
+				rows, err := db.ListIndexStatusesContext(ctx, sidecar.IndexState(indexStatusState))
 				if err != nil {
 					return err
 				}

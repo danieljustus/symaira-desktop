@@ -481,34 +481,50 @@ type Status struct {
 	IndexLocation      string `json:"index_location"`
 }
 
+type contextStatusEmbedder interface {
+	GenerateVectorNoRetryWithModelContext(context.Context, string) (engine.EmbeddingResult, error)
+}
+
 // StatusContext reports the index snapshot plus a live probe of the embedding
 // backend with context cancellation awareness.
+
 func (c *Client) StatusContext(ctx context.Context) (*Status, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	stats, err := c.db.GetStats()
+	stats, err := c.db.GetStatsContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	pending, err := c.db.CountPendingChunks()
+	pending, err := c.db.CountPendingChunksContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	spaces, err := c.db.DetectMixedEmbeddingSpaces()
+	spaces, err := c.db.DetectMixedEmbeddingSpacesContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	probe := c.embedder.GenerateVectorNoRetryWithModel("symdesk retrieval status probe")
+	var probe engine.EmbeddingResult
+	if contextual, ok := c.embedder.(contextStatusEmbedder); ok {
+		probe, err = contextual.GenerateVectorNoRetryWithModelContext(ctx, "symdesk retrieval status probe")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Custom embedders created against the legacy interface remain
+		// supported. Production EmbeddingsGenerator instances use the
+		// cancellation-aware branch above.
+		probe = c.embedder.GenerateVectorNoRetryWithModel("symdesk retrieval status probe")
+	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}

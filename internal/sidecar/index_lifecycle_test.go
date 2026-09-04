@@ -1,6 +1,8 @@
 package sidecar
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -8,6 +10,15 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
+
+func TestListIndexStatusesContextHonorsCancellation(t *testing.T) {
+	database := setupTestDB(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := database.ListIndexStatusesContext(ctx, ""); !errors.Is(err, context.Canceled) {
+		t.Fatalf("error = %v, want context canceled", err)
+	}
+}
 
 func TestIndexLifecycleStatusAndSearchFilter(t *testing.T) {
 	db := setupTestDB(t)

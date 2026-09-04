@@ -1,13 +1,51 @@
 package engine
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
 	"time"
 )
+
+func TestGenerateVectorNoRetryWithModelContextCancelsBlockedOllama(t *testing.T) {
+	requestStarted := make(chan struct{})
+	releaseHandler := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(requestStarted)
+		<-releaseHandler
+	}))
+	defer server.Close()
+
+	generator := NewEmbeddingsGeneratorWithOllamaConfig(OllamaConfig{
+		URL:        server.URL + "/api/embeddings",
+		Model:      "blocked-model",
+		Timeout:    5 * time.Second,
+		RetryCount: 0,
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	started := time.Now()
+	_, err := generator.GenerateVectorNoRetryWithModelContext(ctx, "status probe")
+	if !errors.Is(err, context.DeadlineExceeded) {
+		close(releaseHandler)
+		t.Fatalf("error = %v, want context deadline exceeded", err)
+	}
+	elapsed := time.Since(started)
+	close(releaseHandler)
+	if elapsed > time.Second {
+		t.Fatalf("context-aware probe took %v, want under 1s", elapsed)
+	}
+	select {
+	case <-requestStarted:
+	default:
+		t.Fatal("status probe never reached the blocked Ollama endpoint")
+	}
+}
 
 func TestNewEmbeddingsGeneratorWithOllamaConfig_AppliesConfig(t *testing.T) {
 	cfg := OllamaConfig{

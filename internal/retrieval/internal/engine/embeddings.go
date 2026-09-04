@@ -1,13 +1,17 @@
 package engine
 
 import (
+	"bytes"
 	"container/list"
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"io"
 	"math"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -259,6 +263,92 @@ func (eg *EmbeddingsGenerator) GenerateVectorNoRetry(text string) []float32 {
 // GenerateVectorNoRetry. It returns the actual model used for the query vector.
 func (eg *EmbeddingsGenerator) GenerateVectorNoRetryWithModel(text string) EmbeddingResult {
 	return eg.generateVectorImpl(text, 0)
+}
+
+// GenerateVectorNoRetryWithModelContext performs the status probe through a
+// request created with ctx. It intentionally bypasses llmkit here because the
+// transport must tear down the in-flight request when the CLI deadline fires.
+func (eg *EmbeddingsGenerator) GenerateVectorNoRetryWithModelContext(ctx context.Context, text string) (EmbeddingResult, error) {
+	if err := ctx.Err(); err != nil {
+		return EmbeddingResult{}, err
+	}
+	key := hashKey(text)
+	eg.cacheMu.Lock()
+	if elem, ok := eg.cache[key]; ok {
+		eg.cacheOrder.MoveToFront(elem)
+		entry := elem.Value.(*cacheEntry)
+		eg.cacheMu.Unlock()
+		return EmbeddingResult{Vector: entry.value, Model: entry.model}, nil
+	}
+	eg.cacheMu.Unlock()
+
+	hasKnownDim := eg.configDim > 0 || eg.dim > 0
+	expectedDim := eg.effectiveDim()
+	vecs, err := eg.embedStatusContext(ctx, []string{text}, eg.configDim)
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return EmbeddingResult{}, ctxErr
+	}
+	if err == nil && len(vecs) == 1 {
+		vec := vecs[0]
+		if !hasKnownDim {
+			eg.cacheDimOnce(len(vec))
+			eg.cachePut(key, vec, eg.Model)
+			return EmbeddingResult{Vector: vec, Model: eg.Model}, nil
+		}
+		eg.cacheDimOnce(len(vec))
+		if len(vec) == expectedDim {
+			eg.cachePut(key, vec, eg.Model)
+			return EmbeddingResult{Vector: vec, Model: eg.Model}, nil
+		}
+		fmt.Fprintf(os.Stderr, "engine: embedding dimension mismatch: expected %d, got %d; falling back to local hash vector\n", expectedDim, len(vec))
+	}
+
+	fallback := GenerateLocalHashVector(text, expectedDim)
+	eg.cachePut(key, fallback, localHashModelName)
+	return EmbeddingResult{Vector: fallback, Model: localHashModelName}, nil
+}
+
+type statusEmbedRequest struct {
+	Model      string   `json:"model"`
+	Input      []string `json:"input"`
+	Dimensions int      `json:"dimensions,omitempty"`
+}
+
+type statusEmbedResponse struct {
+	Embeddings [][]float32 `json:"embeddings"`
+}
+
+func (eg *EmbeddingsGenerator) embedStatusContext(ctx context.Context, texts []string, dim int) ([][]float32, error) {
+	endpoint := strings.TrimSuffix(ollamaBaseURL(eg.OllamaURL), "/") + "/api/embed"
+	body, err := json.Marshal(statusEmbedRequest{Model: eg.Model, Input: texts, Dimensions: dim})
+	if err != nil {
+		return nil, fmt.Errorf("engine: encode status embed request: %w", err)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("engine: build status embed request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{Timeout: eg.Timeout}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode >= http.StatusMultipleChoices {
+		payload, _ := io.ReadAll(io.LimitReader(resp.Body, 4<<10))
+		return nil, fmt.Errorf("ollama status probe returned %d: %s", resp.StatusCode, strings.TrimSpace(string(payload)))
+	}
+	var decoded statusEmbedResponse
+	if err := json.NewDecoder(resp.Body).Decode(&decoded); err != nil {
+		return nil, fmt.Errorf("engine: decode status embed response: %w", err)
+	}
+	if len(decoded.Embeddings) != len(texts) {
+		return nil, fmt.Errorf("engine: expected %d status embeddings, got %d", len(texts), len(decoded.Embeddings))
+	}
+	return decoded.Embeddings, nil
 }
 
 func (eg *EmbeddingsGenerator) generateVectorImpl(text string, maxRetries int) EmbeddingResult {

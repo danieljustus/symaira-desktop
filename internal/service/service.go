@@ -41,6 +41,8 @@ type Service struct {
 	retrievalClient    *retrieval.Client
 	retrievalPool      *retrieval.ClientPool
 	retrievalOwned     bool
+	retrievalMu        sync.Mutex
+	retrievalClosed    bool
 	retrievalOnce      sync.Once
 	retrievalOpenError error
 	closeOnce          sync.Once
@@ -97,6 +99,9 @@ func (s *Service) Close() error {
 		return nil
 	}
 	s.closeOnce.Do(func() {
+		s.retrievalMu.Lock()
+		defer s.retrievalMu.Unlock()
+		s.retrievalClosed = true
 		s.closeError = nil
 		if s.retrievalOwned && s.retrievalClient != nil {
 			s.closeError = s.retrievalClient.Close()
@@ -109,6 +114,11 @@ func (s *Service) Close() error {
 // mutation. Snapshot failures never block the write itself; they are logged
 // so the user's edit is not lost to a safety-net error.
 func (s *Service) getRetrievalClient() *retrieval.Client {
+	s.retrievalMu.Lock()
+	defer s.retrievalMu.Unlock()
+	if s.retrievalClosed {
+		return nil
+	}
 	if s.retrievalPool != nil {
 		client, err := s.retrievalPool.Get(s.VaultRoot)
 		if err != nil {

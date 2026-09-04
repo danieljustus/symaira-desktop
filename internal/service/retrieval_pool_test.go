@@ -40,6 +40,18 @@ func TestNewWithRetrievalClientCloseDoesNotCloseBorrowedClient(t *testing.T) {
 	_ = client.Close()
 }
 
+func TestServiceCloseBeforeRetrievalOpenPreventsLateClient(t *testing.T) {
+	vaultRoot, db := serviceRetrievalTestSetup(t)
+	svc := New(vaultRoot, db)
+	if err := svc.Close(); err != nil {
+		t.Fatalf("Service.Close: %v", err)
+	}
+	if client := svc.getRetrievalClient(); client != nil {
+		_ = client.Close()
+		t.Fatal("closed service opened a late retrieval client")
+	}
+}
+
 func TestServiceCloseClosesOwnedRetrievalClient(t *testing.T) {
 	vaultRoot, db := serviceRetrievalTestSetup(t)
 	svc := New(vaultRoot, db)

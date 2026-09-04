@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"errors"
 
 	"github.com/danieljustus/symaira-corekit/mcpserver"
 
@@ -42,7 +43,6 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 
 	server := mcpserver.New("symdesk", ServerVersion)
 	pool := retrieval.NewClientPool()
-	defer func() { _ = pool.Close() }()
 
 	var getService serviceFactory = func() (*service.Service, *sidecar.DB, error) {
 		vRoot, err := vault.ResolveVaultRoot("", cfg)
@@ -70,7 +70,8 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 		server.RegisterTool(adaptTool(entry))
 	}
 
-	return server.ServeStdio(context.Background())
+	serveErr := server.ServeStdio(context.Background())
+	return errors.Join(serveErr, pool.Close())
 }
 
 // serviceFactory opens a fresh service + sidecar per request; the caller

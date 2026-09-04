@@ -87,6 +87,9 @@ func TestIndexStatusCommandModes(t *testing.T) {
 	originalJSON := jsonFlag
 	jsonFlag = true
 	t.Cleanup(func() { jsonFlag = originalJSON })
+	origRun := indexStatusRun
+	indexStatusRun = runIndexStatusInProcess
+	t.Cleanup(func() { indexStatusRun = origRun })
 
 	documentsCmd := newIndexStatusCmd()
 	if err := documentsCmd.Flags().Set("documents", "true"); err != nil {
@@ -113,6 +116,9 @@ func TestIndexStatusCommandPropagatesVaultAndStatusErrors(t *testing.T) {
 	t.Cleanup(func() { cfg = originalConfig })
 	originalStatus := retrieval.StatusFunc
 	t.Cleanup(func() { retrieval.StatusFunc = originalStatus })
+	origRun := indexStatusRun
+	indexStatusRun = runIndexStatusInProcess
+	t.Cleanup(func() { indexStatusRun = origRun })
 
 	cfg = &config.Config{}
 	documentsCmd := newIndexStatusCmd()

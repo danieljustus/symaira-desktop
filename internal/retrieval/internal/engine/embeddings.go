@@ -1,17 +1,13 @@
 package engine
 
 import (
-	"bytes"
 	"container/list"
 	"context"
 	"crypto/sha256"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"io"
 	"math"
-	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -265,22 +261,14 @@ func (eg *EmbeddingsGenerator) GenerateVectorNoRetryWithModel(text string) Embed
 	return eg.generateVectorImpl(text, 0)
 }
 
-// GenerateVectorNoRetryWithModelContext performs the status probe through a
-// request created with ctx. It intentionally bypasses llmkit here because the
-// transport must tear down the in-flight request when the CLI deadline fires.
+// GenerateVectorNoRetryWithModelContext performs the status probe through the
+// shared OpenAI-compatible /v1/embeddings client with ctx. It bypasses the
+// embedding cache entirely so failed health checks do not poison future
+// status probes and every probe verifies the live backend.
 func (eg *EmbeddingsGenerator) GenerateVectorNoRetryWithModelContext(ctx context.Context, text string) (EmbeddingResult, error) {
 	if err := ctx.Err(); err != nil {
 		return EmbeddingResult{}, err
 	}
-	key := hashKey(text)
-	eg.cacheMu.Lock()
-	if elem, ok := eg.cache[key]; ok {
-		eg.cacheOrder.MoveToFront(elem)
-		entry := elem.Value.(*cacheEntry)
-		eg.cacheMu.Unlock()
-		return EmbeddingResult{Vector: entry.value, Model: entry.model}, nil
-	}
-	eg.cacheMu.Unlock()
 
 	hasKnownDim := eg.configDim > 0 || eg.dim > 0
 	expectedDim := eg.effectiveDim()
@@ -292,68 +280,40 @@ func (eg *EmbeddingsGenerator) GenerateVectorNoRetryWithModelContext(ctx context
 		vec := vecs[0]
 		if !hasKnownDim {
 			eg.cacheDimOnce(len(vec))
-			eg.cachePut(key, vec, eg.Model)
 			return EmbeddingResult{Vector: vec, Model: eg.Model}, nil
 		}
 		eg.cacheDimOnce(len(vec))
 		if len(vec) == expectedDim {
-			eg.cachePut(key, vec, eg.Model)
 			return EmbeddingResult{Vector: vec, Model: eg.Model}, nil
 		}
 		fmt.Fprintf(os.Stderr, "engine: embedding dimension mismatch: expected %d, got %d; falling back to local hash vector\n", expectedDim, len(vec))
 	}
 
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return EmbeddingResult{}, err
+	}
+
 	fallback := GenerateLocalHashVector(text, expectedDim)
-	eg.cachePut(key, fallback, localHashModelName)
 	return EmbeddingResult{Vector: fallback, Model: localHashModelName}, nil
 }
 
-type statusEmbedRequest struct {
-	Model      string   `json:"model"`
-	Input      []string `json:"input"`
-	Dimensions int      `json:"dimensions,omitempty"`
-}
-
-type statusEmbedResponse struct {
-	Embeddings [][]float32 `json:"embeddings"`
-}
-
 func (eg *EmbeddingsGenerator) embedStatusContext(ctx context.Context, texts []string, dim int) ([][]float32, error) {
-	endpoint := strings.TrimSuffix(ollamaBaseURL(eg.OllamaURL), "/") + "/api/embed"
-	body, err := json.Marshal(statusEmbedRequest{Model: eg.Model, Input: texts, Dimensions: dim})
-	if err != nil {
-		return nil, fmt.Errorf("engine: encode status embed request: %w", err)
+	if eg.ollama == nil {
+		return nil, errOllamaUnavailable
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("engine: build status embed request: %w", err)
+	var opts []llmkit.EmbedOption
+	if dim > 0 {
+		opts = append(opts, llmkit.WithEmbedDimensions(dim))
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
-	client := &http.Client{
-		Timeout: eg.Timeout,
-		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-	resp, err := client.Do(req)
+	embs, err := eg.ollama.Embed(ctx, eg.Model, texts, opts...)
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = resp.Body.Close() }()
-	if resp.StatusCode >= http.StatusMultipleChoices {
-		payload, _ := io.ReadAll(io.LimitReader(resp.Body, 4<<10))
-		return nil, fmt.Errorf("ollama status probe returned %d: %s", resp.StatusCode, strings.TrimSpace(string(payload)))
+	vecs := make([][]float32, len(embs))
+	for i, e := range embs {
+		vecs[i] = e.Vector
 	}
-	var decoded statusEmbedResponse
-	if err := json.NewDecoder(resp.Body).Decode(&decoded); err != nil {
-		return nil, fmt.Errorf("engine: decode status embed response: %w", err)
-	}
-	if len(decoded.Embeddings) != len(texts) {
-		return nil, fmt.Errorf("engine: expected %d status embeddings, got %d", len(texts), len(decoded.Embeddings))
-	}
-	return decoded.Embeddings, nil
+	return vecs, nil
 }
 
 func (eg *EmbeddingsGenerator) generateVectorImpl(text string, maxRetries int) EmbeddingResult {

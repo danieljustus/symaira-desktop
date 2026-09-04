@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -14,13 +16,17 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval"
+	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
 
 func TestIndexStatusRetrievalTimeoutReportsPhase(t *testing.T) {
+	origRun := indexStatusRun
+	indexStatusRun = runIndexStatusInProcess
 	origRetrieval := indexStatusRetrievalFunc
 	origWalk := indexStatusVaultWalkFunc
 	origTimeout := indexStatusTimeout
 	t.Cleanup(func() {
+		indexStatusRun = origRun
 		indexStatusRetrievalFunc = origRetrieval
 		indexStatusVaultWalkFunc = origWalk
 		indexStatusTimeout = origTimeout
@@ -60,11 +66,14 @@ func TestIndexStatusVaultCountingTimeoutReportsPhase(t *testing.T) {
 	vaultDir := t.TempDir()
 	origConfig := cfg
 	cfg = &config.Config{Vault: vaultDir}
+	origRun := indexStatusRun
+	indexStatusRun = runIndexStatusInProcess
 	origRetrieval := indexStatusRetrievalFunc
 	origWalk := indexStatusVaultWalkFunc
 	origTimeout := indexStatusTimeout
 	t.Cleanup(func() {
 		cfg = origConfig
+		indexStatusRun = origRun
 		indexStatusRetrievalFunc = origRetrieval
 		indexStatusVaultWalkFunc = origWalk
 		indexStatusTimeout = origTimeout
@@ -113,12 +122,15 @@ func TestIndexStatusPreservesSuccessfulJSONOutput(t *testing.T) {
 	cfg = &config.Config{Vault: vaultDir}
 	origJSON := jsonFlag
 	jsonFlag = true
+	origRun := indexStatusRun
+	indexStatusRun = runIndexStatusInProcess
 	origRetrieval := indexStatusRetrievalFunc
 	origWalk := indexStatusVaultWalkFunc
 	origTimeout := indexStatusTimeout
 	t.Cleanup(func() {
 		cfg = origConfig
 		jsonFlag = origJSON
+		indexStatusRun = origRun
 		indexStatusRetrievalFunc = origRetrieval
 		indexStatusVaultWalkFunc = origWalk
 		indexStatusTimeout = origTimeout
@@ -202,10 +214,13 @@ func TestIndexStatusCommandHelpAndFlag(t *testing.T) {
 }
 
 func TestIndexStatusNoGoroutineLeakOnTimeout(t *testing.T) {
+	origRun := indexStatusRun
+	indexStatusRun = runIndexStatusInProcess
 	origRetrieval := indexStatusRetrievalFunc
 	origWalk := indexStatusVaultWalkFunc
 	origTimeout := indexStatusTimeout
 	t.Cleanup(func() {
+		indexStatusRun = origRun
 		indexStatusRetrievalFunc = origRetrieval
 		indexStatusVaultWalkFunc = origWalk
 		indexStatusTimeout = origTimeout
@@ -239,18 +254,36 @@ func TestIndexStatusNoGoroutineLeakOnTimeout(t *testing.T) {
 }
 
 func TestIndexStatusDocumentsTimeoutReportsPhase(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+	vaultDir := t.TempDir()
+	origConfig := cfg
+	cfg = &config.Config{Vault: vaultDir}
+	origRun := indexStatusRun
+	indexStatusRun = runIndexStatusInProcess
+	origDocs := indexStatusDocumentsFunc
+	origTimeout := indexStatusTimeout
+	t.Cleanup(func() {
+		cfg = origConfig
+		indexStatusRun = origRun
+		indexStatusDocumentsFunc = origDocs
+		indexStatusTimeout = origTimeout
+	})
+
+	indexStatusDocumentsFunc = func(ctx context.Context, db *sidecar.DB, state sidecar.IndexState) ([]sidecar.IndexStatus, error) {
+		<-ctx.Done()
+		return nil, ctx.Err()
+	}
 
 	cmd := newIndexStatusCmd()
-	cmd.SetContext(ctx)
 	if err := cmd.Flags().Set("documents", "true"); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Flags().Set("timeout", "200ms"); err != nil {
 		t.Fatal(err)
 	}
 
 	err := cmd.RunE(cmd, nil)
 	if err == nil {
-		t.Fatal("expected timeout error for documents listing with cancelled context, got nil")
+		t.Fatal("expected timeout error for documents listing, got nil")
 	}
 
 	var timeoutErr *IndexStatusTimeoutError
@@ -258,14 +291,20 @@ func TestIndexStatusDocumentsTimeoutReportsPhase(t *testing.T) {
 		t.Fatalf("expected *IndexStatusTimeoutError, got %T: %v", err, err)
 	}
 	if timeoutErr.Phase != "document status listing" {
-		t.Errorf("expected phase 'document status listing', got '%s'", timeoutErr.Phase)
+		t.Errorf("expected phase 'document status listing', got %q", timeoutErr.Phase)
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("expected errors.Is(err, context.DeadlineExceeded), got %v", err)
 	}
 }
 
 func TestIndexStatusExplicitZeroTimeoutDisablesDeadline(t *testing.T) {
+	origRun := indexStatusRun
+	indexStatusRun = runIndexStatusInProcess
 	origRetrieval := indexStatusRetrievalFunc
 	origTimeout := indexStatusTimeout
 	t.Cleanup(func() {
+		indexStatusRun = origRun
 		indexStatusRetrievalFunc = origRetrieval
 		indexStatusTimeout = origTimeout
 	})
@@ -289,5 +328,150 @@ func TestIndexStatusExplicitZeroTimeoutDisablesDeadline(t *testing.T) {
 	}
 	if !called {
 		t.Fatal("retrieval func was not called")
+	}
+}
+
+func TestIndexStatusRejectsNegativeTimeout(t *testing.T) {
+	runnerCalled := false
+	origRun := indexStatusRun
+	indexStatusRun = func(ctx context.Context, req indexStatusRequest, report indexStatusPhaseReporter) ([]byte, error) {
+		runnerCalled = true
+		return nil, nil
+	}
+	t.Cleanup(func() { indexStatusRun = origRun })
+
+	cmd := newIndexStatusCmd()
+	if err := cmd.Flags().Set("timeout", "-1ms"); err != nil {
+		t.Fatal(err)
+	}
+
+	err := cmd.RunE(cmd, nil)
+	if err == nil {
+		t.Fatal("expected error for negative timeout, got nil")
+	}
+	if !strings.Contains(err.Error(), "non-negative") {
+		t.Errorf("expected error message to mention 'non-negative', got %q", err.Error())
+	}
+	if runnerCalled {
+		t.Error("expected indexStatusRun not to be called when timeout is negative")
+	}
+}
+
+func TestIndexStatusHelperProcess(t *testing.T) {
+	if os.Getenv("GO_WANT_INDEX_STATUS_HELPER") != "1" {
+		return
+	}
+	fmt.Fprintf(os.Stderr, "%sretrieval status\n", phasePrefix)
+	// Block until killed
+	time.Sleep(10 * time.Minute)
+}
+
+func TestIndexStatusHardDeadlineKillsWorker(t *testing.T) {
+	origWorkerCmd := indexStatusWorkerCmd
+	origOnStart := indexStatusOnWorkerStart
+	t.Cleanup(func() {
+		indexStatusWorkerCmd = origWorkerCmd
+		indexStatusOnWorkerStart = origOnStart
+	})
+
+	var childPid int
+	indexStatusOnWorkerStart = func(pid int) {
+		childPid = pid
+	}
+
+	indexStatusWorkerCmd = func(ctx context.Context, req indexStatusRequest) (*exec.Cmd, error) {
+		cmd := exec.Command(os.Args[0], "-test.run=TestIndexStatusHelperProcess", "--")
+		cmd.Env = append(os.Environ(), "GO_WANT_INDEX_STATUS_HELPER=1")
+		return cmd, nil
+	}
+
+	var reportedPhase string
+	report := func(phase string) {
+		reportedPhase = phase
+	}
+
+	timeout := 200 * time.Millisecond
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	start := time.Now()
+	_, err := runIndexStatusChild(ctx, indexStatusRequest{Timeout: timeout}, report)
+	elapsed := time.Since(start)
+
+	if err == nil {
+		t.Fatal("expected timeout error, got nil")
+	}
+	var timeoutErr *IndexStatusTimeoutError
+	if !errors.As(err, &timeoutErr) {
+		t.Fatalf("expected *IndexStatusTimeoutError, got %T: %v", err, err)
+	}
+	if timeoutErr.Phase != "retrieval status" {
+		t.Errorf("expected phase 'retrieval status', got %q", timeoutErr.Phase)
+	}
+	if reportedPhase != "retrieval status" {
+		t.Errorf("expected reported phase 'retrieval status', got %q", reportedPhase)
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("expected errors.Is(err, context.DeadlineExceeded), got %v", err)
+	}
+	if elapsed > 2*time.Second {
+		t.Errorf("took %v, want under 2s (close to deadline %v)", elapsed, timeout)
+	}
+
+	if childPid <= 0 {
+		t.Fatal("expected positive child PID")
+	}
+
+	if !waitForProcessExit(childPid, time.Second) {
+		t.Errorf("child process %d still exists after kill", childPid)
+	}
+}
+
+func waitForProcessExit(pid int, maxWait time.Duration) bool {
+	deadline := time.Now().Add(maxWait)
+	for time.Now().Before(deadline) {
+		if processIsGone(pid) {
+			return true
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	return processIsGone(pid)
+}
+
+func TestIndexStatusRepeatedTimeoutsDoNotLeakGoroutines(t *testing.T) {
+	origWorkerCmd := indexStatusWorkerCmd
+	t.Cleanup(func() {
+		indexStatusWorkerCmd = origWorkerCmd
+	})
+
+	indexStatusWorkerCmd = func(ctx context.Context, req indexStatusRequest) (*exec.Cmd, error) {
+		cmd := exec.Command(os.Args[0], "-test.run=TestIndexStatusHelperProcess", "--")
+		cmd.Env = append(os.Environ(), "GO_WANT_INDEX_STATUS_HELPER=1")
+		return cmd, nil
+	}
+
+	// Warm-up to let runtime goroutines settle
+	ctx0, cancel0 := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	_, _ = runIndexStatusChild(ctx0, indexStatusRequest{Timeout: 100 * time.Millisecond}, nil)
+	cancel0()
+
+	before := runtime.NumGoroutine()
+
+	for i := 0; i < 5; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+		_, err := runIndexStatusChild(ctx, indexStatusRequest{Timeout: 100 * time.Millisecond}, nil)
+		cancel()
+		if err == nil {
+			t.Fatal("expected timeout error, got nil")
+		}
+		var timeoutErr *IndexStatusTimeoutError
+		if !errors.As(err, &timeoutErr) {
+			t.Fatalf("expected *IndexStatusTimeoutError, got %T: %v", err, err)
+		}
+	}
+
+	after := runtime.NumGoroutine()
+	if diff := after - before; diff > 2 {
+		t.Errorf("potential goroutine leak detected: before=%d, after=%d (diff=%d)", before, after, diff)
 	}
 }

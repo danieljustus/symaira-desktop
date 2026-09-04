@@ -155,9 +155,11 @@ var (
 	indexStatusDocuments bool
 	indexStatusState     string
 	indexStatusTimeout   time.Duration
+	indexStatusWorker    bool
 
 	indexStatusRetrievalFunc = defaultIndexStatusRetrieval
 	indexStatusVaultWalkFunc = defaultIndexStatusVaultWalk
+	indexStatusDocumentsFunc = defaultIndexStatusDocuments
 )
 
 func defaultIndexStatusRetrieval(ctx context.Context) (*retrieval.Status, error) {
@@ -166,6 +168,10 @@ func defaultIndexStatusRetrieval(ctx context.Context) (*retrieval.Status, error)
 
 func defaultIndexStatusVaultWalk(ctx context.Context, vaultRoot string, fn func(path string) error) error {
 	return vault.WalkContext(ctx, vaultRoot, fn)
+}
+
+func defaultIndexStatusDocuments(ctx context.Context, db *sidecar.DB, state sidecar.IndexState) ([]sidecar.IndexStatus, error) {
+	return db.ListIndexStatusesContext(ctx, state)
 }
 
 // IndexStatusTimeoutError reports which phase of index status exceeded the deadline (#806).
@@ -200,6 +206,10 @@ callers indefinitely.`,
 				timeout = indexStatusTimeout
 			}
 
+			if timeout < 0 {
+				return fmt.Errorf("--timeout must be non-negative")
+			}
+
 			parentCtx := cmd.Context()
 			if parentCtx == nil {
 				parentCtx = context.Background()
@@ -214,81 +224,72 @@ callers indefinitely.`,
 				ctx = parentCtx
 			}
 
-			if indexStatusDocuments {
-				if err := ctx.Err(); err != nil {
-					return &IndexStatusTimeoutError{
-						Phase:   "document status listing",
-						Timeout: timeout,
-						Err:     err,
-					}
-				}
-				vRoot, err := vault.ResolveVaultRoot("", cfg)
-				if err != nil {
-					return err
-				}
-				db, err := sidecar.OpenForVault(vRoot)
-				if err != nil {
-					return err
-				}
-				defer closeWithWarning("sidecar database", db.Close)
-				rows, err := db.ListIndexStatusesContext(ctx, sidecar.IndexState(indexStatusState))
-				if err != nil {
-					return err
-				}
-				return outputResult(rows)
+			vOverride := vaultFlag
+			if vOverride == "" && cfg != nil {
+				vOverride = cfg.Vault
+			}
+			req := indexStatusRequest{
+				Documents:     indexStatusDocuments,
+				State:         indexStatusState,
+				VaultOverride: vOverride,
+				Timeout:       timeout,
+				JSON:          jsonFlag,
 			}
 
-			status, err := indexStatusRetrievalFunc(ctx)
+			if indexStatusWorker {
+				report := func(phase string) {
+					fmt.Fprintf(os.Stderr, "%s%s\n", phasePrefix, phase)
+				}
+				report("worker startup")
+				out, err := runIndexStatusInProcess(ctx, req, report)
+				if err != nil {
+					var timeoutErr *IndexStatusTimeoutError
+					if errors.As(err, &timeoutErr) {
+						fmt.Fprintf(os.Stderr, "%s%s\n", timeoutPrefix, timeoutErr.Phase)
+					}
+					return err
+				}
+				_, err = cmd.OutOrStdout().Write(out)
+				return err
+			}
+
+			var lastPhase string
+			report := func(phase string) {
+				lastPhase = phase
+			}
+
+			out, err := indexStatusRun(ctx, req, report)
 			if err != nil {
-				if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) || ctx.Err() != nil {
-					errToReport := err
-					if errToReport == nil || (!errors.Is(errToReport, context.DeadlineExceeded) && !errors.Is(errToReport, context.Canceled)) {
-						errToReport = ctx.Err()
+				var timeoutErr *IndexStatusTimeoutError
+				if errors.As(err, &timeoutErr) {
+					return timeoutErr
+				}
+				if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) || (ctx != nil && ctx.Err() != nil) {
+					ctxErr := err
+					if ctx != nil && ctx.Err() != nil {
+						ctxErr = ctx.Err()
+					}
+					if lastPhase == "" {
+						lastPhase = "worker startup"
 					}
 					return &IndexStatusTimeoutError{
-						Phase:   "retrieval status",
+						Phase:   lastPhase,
 						Timeout: timeout,
-						Err:     errToReport,
+						Err:     ctxErr,
 					}
 				}
 				return err
 			}
 
-			// Retrieval currently stores one shared database, while the
-			// sidecar and vault are selected by --vault. Include the active
-			// vault's Markdown count as a comparison figure so consumers can
-			// reconcile the global index count without implying scoping.
-			if cfg != nil && cfg.Vault != "" {
-				vRoot, resolveErr := vault.ResolveVaultRoot("", cfg)
-				if resolveErr != nil {
-					return resolveErr
-				}
-				vaultCount := 0
-				if walkErr := indexStatusVaultWalkFunc(ctx, vRoot, func(path string) error {
-					vaultCount++
-					return nil
-				}); walkErr != nil {
-					if errors.Is(walkErr, context.DeadlineExceeded) || errors.Is(walkErr, context.Canceled) || ctx.Err() != nil {
-						errToReport := walkErr
-						if errToReport == nil || (!errors.Is(errToReport, context.DeadlineExceeded) && !errors.Is(errToReport, context.Canceled)) {
-							errToReport = ctx.Err()
-						}
-						return &IndexStatusTimeoutError{
-							Phase:   "vault counting",
-							Timeout: timeout,
-							Err:     errToReport,
-						}
-					}
-					return walkErr
-				}
-				status.VaultDocumentCount = &vaultCount
-			}
-			return outputResult(status)
+			_, err = cmd.OutOrStdout().Write(out)
+			return err
 		},
 	}
 	cmd.Flags().BoolVar(&indexStatusDocuments, "documents", false, "List per-document index lifecycle states")
 	cmd.Flags().StringVar(&indexStatusState, "state", "", "Filter document states (queued, indexing, indexed, failed, encrypted, unsupported)")
 	cmd.Flags().DurationVar(&indexStatusTimeout, "timeout", defaultIndexStatusTimeout, "Maximum duration to wait for index status and vault counting (0 to disable)")
+	cmd.Flags().BoolVar(&indexStatusWorker, "worker", false, "Internal worker mode")
+	_ = cmd.Flags().MarkHidden("worker")
 	return cmd
 }
 

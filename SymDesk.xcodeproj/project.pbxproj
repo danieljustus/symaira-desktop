@@ -44,6 +44,7 @@
 		2B00DA7BB2B7112DB63A3E17 /* ClassificationRulesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36ACCC6F6DD37EEAD70151F2 /* ClassificationRulesViewModel.swift */; };
 		2BB0DBBD123F594ED26DC97F /* MobileComposerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF3AB907D049AA91605CEE06 /* MobileComposerTests.swift */; };
 		2BC4F88B2DF3C7035A2030A1 /* SymairaTheme in Frameworks */ = {isa = PBXBuildFile; productRef = B65D992D4DD6927D37A99FCD /* SymairaTheme */; };
+		30182046814ABEF3821AC5DA /* ContentSheetsModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D69CFD0FA830A87D9173FD3 /* ContentSheetsModifier.swift */; };
 		30F3B2FD4B8734AF6FFCA25A /* MeetingReviewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2BC2A21B0BFAB4B7F22A054 /* MeetingReviewModelTests.swift */; };
 		339765624B98BAE38ED98952 /* VaultRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA7A55CA87C470A4D58490B /* VaultRegistryTests.swift */; };
 		37A21600DA0FE066A55F6E16 /* MobileInlineAITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3783623ECA779FF8B5A48B8 /* MobileInlineAITests.swift */; };
@@ -54,6 +55,7 @@
 		3D00605BDE73976880F49353 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233223A3C27BEA490CADB82C /* NotificationScheduler.swift */; };
 		3D7FF457BB8F9D51AA0C9F2C /* DeskCoreTagManagement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ECC061F608A1EBD12BD49FA /* DeskCoreTagManagement.swift */; };
 		40406909A4AAF62DD881D295 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23EBE73852F5829E6BB25B82 /* NotificationManager.swift */; };
+		43B3DD60075DA79BF9CD7333 /* VaultEditorPaneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4B91B1FDAE86F0921F94CD /* VaultEditorPaneView.swift */; };
 		43D7F72894ECBE4D6D041244 /* MobileOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A13C8C1820E7FD3D336D83A /* MobileOutbox.swift */; };
 		458C4ED10EE0E0F69A9FF3B7 /* MobileDraftStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB570847E4BA53C453D1BCC8 /* MobileDraftStore.swift */; };
 		45C5391AC1D3FBABE28B94AF /* SymDeskDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB445023E5B108D54E2CADF5 /* SymDeskDesign.swift */; };
@@ -96,6 +98,7 @@
 		74DF8458BEC41A75D6F1604C /* MobileRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C41A2D45CCFD80688933E2FC /* MobileRootView.swift */; };
 		7836BCA57E32D0A10B01DFE6 /* MobileSearchIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F412CD083C6229C36515FB /* MobileSearchIndex.swift */; };
 		78F10DF5899EEA805770D0F3 /* SymDeskVaultWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 709DC395FB99E7C155370B31 /* SymDeskVaultWidget.swift */; };
+		7BCC70DF7BE8854BDD5B1CAF /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAEE44444F590ADF2595172 /* ContentViewModel.swift */; };
 		7C2F07AD46BF233EA001E8EF /* CoreBinaryDiscoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 367F383D52E1C599FC13E8B4 /* CoreBinaryDiscoveryTests.swift */; };
 		7F1E10853CF5FF4E4B200CAB /* MobileShareInboxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236368393EE29942F774E3C7 /* MobileShareInboxTests.swift */; };
 		7F2CAEA437797E13245E960B /* DeskCoreIngestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 066D06F617AADB44570E9D94 /* DeskCoreIngestTests.swift */; };
@@ -125,6 +128,7 @@
 		951042A6C3918F1D3EA4CD32 /* ParticipantConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C3A8CB17DABF0648A84D9C6 /* ParticipantConfirmationView.swift */; };
 		95958AA9ACDAB632B1BAF7F8 /* DocumentCardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA27EFFC69A6E08B2972334 /* DocumentCardTests.swift */; };
 		9A4AD42B789934CD952F8C45 /* HistoryDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F4F5D9C5735B931CCE6C1F /* HistoryDiffTests.swift */; };
+		9AF303C5EC80B5D06C88ADE0 /* ContentViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC135A590A3A3313EF1C62FA /* ContentViewModelTests.swift */; };
 		9CB84C5DEC5DFAA645786C79 /* SymairaCLIRunner in Frameworks */ = {isa = PBXBuildFile; productRef = 440538EBC91381E953CC1697 /* SymairaCLIRunner */; };
 		9E11CD0E6E35F9DCEFD0B3A3 /* DeskCoreRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BEAE732E5A965CF86E19185 /* DeskCoreRules.swift */; };
 		A069D366DE09F194427FA488 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B19FB8752DF2B7914F917FAE /* Assets.xcassets */; };
@@ -141,6 +145,7 @@
 		B0BB83ED23EB9B4B5F55EF19 /* VaultAssets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A3B1306D1D67D45CE845EAF /* VaultAssets.swift */; };
 		B10322DAF0DCCA2C314DEA10 /* DuplicatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D5805210CB482E1EB0394C2 /* DuplicatesView.swift */; };
 		B30A7969A90708A80F8EC725 /* ModelDownloadManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB2FBFCEBE6C63897EFC0E31 /* ModelDownloadManagerTests.swift */; };
+		B47BC351A529F0F2F065C601 /* DoctorReportPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD33952194AA6C43883895C4 /* DoctorReportPopoverView.swift */; };
 		B4BBDCDD200A14353CFF2B9F /* DeskCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F756739286BF26EA17456C99 /* DeskCore.swift */; };
 		B4FA09C83F86BDA20281FBF3 /* MobileQuickOpenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 071FAFEC3F150F72466E8FE8 /* MobileQuickOpenTests.swift */; };
 		B88D845C3B8D9C6FEC6D7006 /* DbViewList.swift in Sources */ = {isa = PBXBuildFile; fileRef = D23C8BFA56B2714D100315DB /* DbViewList.swift */; };
@@ -168,6 +173,8 @@
 		CCD6C165B5907E502AD44496 /* libSymDeskCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF3DE41EB61C376999197AEF /* libSymDeskCore.a */; };
 		CCDBBC249BD9A074D897717E /* DbViewEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20BC6F58C62B4760E83EF56B /* DbViewEditor.swift */; };
 		D0EC53A22588E1A56A3E2F2B /* VaultConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A175D91D3D83560906E78387 /* VaultConfig.swift */; };
+		D1820DF57011B2648EF83E93 /* ContentBannersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A312E427F6A65D215A664D6C /* ContentBannersView.swift */; };
+		D2BAF7F002FAC365C8E42A7D /* NewNoteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A685CFC4D9E611B927B5B27 /* NewNoteSheet.swift */; };
 		D32E9B586B362E4914175291 /* EventWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95355A68097983C9F84AE919 /* EventWatcher.swift */; };
 		D58E03D906EF7F8A3B28865C /* ModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18FF6EF2FED07DD6BA73A315 /* ModelCatalog.swift */; };
 		D5F122B5D1506D4E55970477 /* DuplicateThresholdTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABCA585E8E919CA03416333C /* DuplicateThresholdTests.swift */; };
@@ -192,6 +199,7 @@
 		EF5C88A88E08D73733B06959 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 34DEE4479780C955405A91A7 /* PrivacyInfo.xcprivacy */; };
 		F157E0C3058BA227E6106A58 /* SymairaIngestContract in Frameworks */ = {isa = PBXBuildFile; productRef = 6730086BD27F282EAE58D774 /* SymairaIngestContract */; };
 		F2840BACD70B9D19E69E2AB7 /* MeetingsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701CAD285D8A611C5C6779AD /* MeetingsViewTests.swift */; };
+		F4E8E644AFD6DD21D9DA0B80 /* ContentSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75BD6D16B8B8C79ECE45E31C /* ContentSidebarView.swift */; };
 		F5B499EDD6219B108209CCA9 /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3BFA2FBB44B4769A602B4B /* ModelDownloadManager.swift */; };
 		F71FC307A748372B1DE9E7DA /* DeskCoreNotebooksTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F7D81A91C35F15B74B8A20 /* DeskCoreNotebooksTests.swift */; };
 		F735324626803159388F54EF /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 805FBABA01057AAEA77CCF0D /* DashboardView.swift */; };
@@ -282,6 +290,8 @@
 		0C3A8CB17DABF0648A84D9C6 /* ParticipantConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParticipantConfirmationView.swift; sourceTree = "<group>"; };
 		0CAE9E046D07652DF79A3000 /* SymDeskMobileApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymDeskMobileApp.swift; sourceTree = "<group>"; };
 		0D31AEB4D808A7B5F64134E1 /* UpdateInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateInstaller.swift; sourceTree = "<group>"; };
+		0D69CFD0FA830A87D9173FD3 /* ContentSheetsModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSheetsModifier.swift; sourceTree = "<group>"; };
+		0F4B91B1FDAE86F0921F94CD /* VaultEditorPaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultEditorPaneView.swift; sourceTree = "<group>"; };
 		0F5CBE2CE55A95870F3464BE /* ServerConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConnection.swift; sourceTree = "<group>"; };
 		1307E6EBAC2FAE650F0DC729 /* DeskCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreTests.swift; sourceTree = "<group>"; };
 		15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
@@ -302,6 +312,7 @@
 		24A66FCAE94BEB5D93BE972B /* BlockNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockNode.swift; sourceTree = "<group>"; };
 		271AD84AE42D56DEA05C9642 /* CompanionToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionToolsView.swift; sourceTree = "<group>"; };
 		278FA07C11ECADBCDFD4ED6B /* MeetingKnowledgeReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingKnowledgeReviewView.swift; sourceTree = "<group>"; };
+		2A685CFC4D9E611B927B5B27 /* NewNoteSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewNoteSheet.swift; sourceTree = "<group>"; };
 		2B442ECE47F4FC2E662B8D33 /* DeskTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskTransport.swift; sourceTree = "<group>"; };
 		2DF6BF35774E543626FC09D8 /* MobileInlineAIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileInlineAIView.swift; sourceTree = "<group>"; };
 		2FBA5128D6B234381F73178F /* SymDesk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SymDesk.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -354,6 +365,7 @@
 		748F5E216CEC59B66740A482 /* DeskTransportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskTransportTests.swift; sourceTree = "<group>"; };
 		7508239A9019F2C46A80B902 /* fake-symdesk.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "fake-symdesk.sh"; sourceTree = "<group>"; };
 		75B99A90C8392BE1761530B1 /* NoteFolderTreeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteFolderTreeTests.swift; sourceTree = "<group>"; };
+		75BD6D16B8B8C79ECE45E31C /* ContentSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSidebarView.swift; sourceTree = "<group>"; };
 		76573EF9330F66FBFF530350 /* RetrievalStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetrievalStatusView.swift; sourceTree = "<group>"; };
 		77EFBE961E405D3DD1E993FC /* MobileChatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileChatTests.swift; sourceTree = "<group>"; };
 		78F76334FF1AA665F17F9B0C /* DbViewBoard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DbViewBoard.swift; sourceTree = "<group>"; };
@@ -385,6 +397,7 @@
 		A1E6F584BF386E62EAE36CEC /* DeskCoreTrash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreTrash.swift; sourceTree = "<group>"; };
 		A2BC2A21B0BFAB4B7F22A054 /* MeetingReviewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingReviewModelTests.swift; sourceTree = "<group>"; };
 		A2FC4C3A298D87F74C40AD0D /* DocumentThumbnailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentThumbnailView.swift; sourceTree = "<group>"; };
+		A312E427F6A65D215A664D6C /* ContentBannersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBannersView.swift; sourceTree = "<group>"; };
 		A385C79A5970CEA674B78CB0 /* DeskCoreReOCR.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreReOCR.swift; sourceTree = "<group>"; };
 		A60D1BDE16EFA4EF064577CB /* TranscriptTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptTimelineView.swift; sourceTree = "<group>"; };
 		A68D64871B4AA84AF8340744 /* MobileVaultParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileVaultParserTests.swift; sourceTree = "<group>"; };
@@ -418,6 +431,8 @@
 		CAD6A1DD667A2F7EA1706073 /* SymDeskCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SymDeskCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB2FBFCEBE6C63897EFC0E31 /* ModelDownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManagerTests.swift; sourceTree = "<group>"; };
 		CB445023E5B108D54E2CADF5 /* SymDeskDesign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymDeskDesign.swift; sourceTree = "<group>"; };
+		CC135A590A3A3313EF1C62FA /* ContentViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModelTests.swift; sourceTree = "<group>"; };
+		CD33952194AA6C43883895C4 /* DoctorReportPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoctorReportPopoverView.swift; sourceTree = "<group>"; };
 		CEF1E40E0022872C556A4A02 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		D004D51B133B26F28BBF9DA1 /* MobileScanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileScanTests.swift; sourceTree = "<group>"; };
 		D08CDFA027DFDFE0F07CFBA5 /* MeetingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingModels.swift; sourceTree = "<group>"; };
@@ -447,6 +462,7 @@
 		F756739286BF26EA17456C99 /* DeskCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCore.swift; sourceTree = "<group>"; };
 		FAA7A55CA87C470A4D58490B /* VaultRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultRegistryTests.swift; sourceTree = "<group>"; };
 		FB4B7F3287A383E8C979FE50 /* MeetingReviewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingReviewModel.swift; sourceTree = "<group>"; };
+		FCAEE44444F590ADF2595172 /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
 		FD64170836DF79250BEEF3E8 /* DeskCoreAISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskCoreAISettings.swift; sourceTree = "<group>"; };
 		FF662679454A1D5730ECD171 /* GraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -579,6 +595,7 @@
 			children = (
 				8EBD01F47531831816ECBBC9 /* AsyncActionTracker.swift */,
 				24A66FCAE94BEB5D93BE972B /* BlockNode.swift */,
+				FCAEE44444F590ADF2595172 /* ContentViewModel.swift */,
 				D08CDFA027DFDFE0F07CFBA5 /* MeetingModels.swift */,
 				FB4B7F3287A383E8C979FE50 /* MeetingReviewModel.swift */,
 				51C61A8C8D833F893CA57C53 /* TagEntry.swift */,
@@ -615,6 +632,9 @@
 				F136EF877D776AFD6D2CE697 /* CommandPalette.swift */,
 				271AD84AE42D56DEA05C9642 /* CompanionToolsView.swift */,
 				09191C4770F9BB06CC2C5F40 /* ContactReferencesView.swift */,
+				A312E427F6A65D215A664D6C /* ContentBannersView.swift */,
+				0D69CFD0FA830A87D9173FD3 /* ContentSheetsModifier.swift */,
+				75BD6D16B8B8C79ECE45E31C /* ContentSidebarView.swift */,
 				805FBABA01057AAEA77CCF0D /* DashboardView.swift */,
 				78F76334FF1AA665F17F9B0C /* DbViewBoard.swift */,
 				48223DCBE4FF19264208BCB3 /* DbViewCalendar.swift */,
@@ -624,6 +644,7 @@
 				1EEEC588B327739FBAF693D4 /* DbViewTable.swift */,
 				39D62AD2CAE794AD863C9E92 /* DbViewTimeline.swift */,
 				15ADDCBD65EB529378EF6DC5 /* DiscoverView.swift */,
+				CD33952194AA6C43883895C4 /* DoctorReportPopoverView.swift */,
 				AF74B31CB37D574E3AC69032 /* DocumentGridView.swift */,
 				A2FC4C3A298D87F74C40AD0D /* DocumentThumbnailView.swift */,
 				BB47DE4186F80D337DC11BD3 /* DocumentViewerView.swift */,
@@ -640,6 +661,7 @@
 				95A9CC7BD653D742BBD137CC /* MeetingReviewView.swift */,
 				34D4E18EEA985A7CCFB138B7 /* MeetingsView.swift */,
 				F0E1C1E4B0F6A58788B3C0F5 /* ModelsView.swift */,
+				2A685CFC4D9E611B927B5B27 /* NewNoteSheet.swift */,
 				436C333742B9311361D21717 /* NotebookWorkspaceView.swift */,
 				59762A8D6DF418D30855BEDA /* OnboardingView.swift */,
 				83D9A9D5A06473CC244100C1 /* PaperlessImportView.swift */,
@@ -653,6 +675,7 @@
 				02391589A785587023B6522C /* TagBrowserView.swift */,
 				A60D1BDE16EFA4EF064577CB /* TranscriptTimelineView.swift */,
 				BFCFA06E53EB66006F8169C7 /* TrashView.swift */,
+				0F4B91B1FDAE86F0921F94CD /* VaultEditorPaneView.swift */,
 				059DF1FA89D0D36B34EEA0B7 /* VaultSwitcherView.swift */,
 			);
 			path = UI;
@@ -741,6 +764,7 @@
 			children = (
 				8948F04EC3090C19864630CC /* AsyncActionTrackerTests.swift */,
 				9EE28AFB0BCAAA61ABD97B92 /* AudioOverviewTests.swift */,
+				CC135A590A3A3313EF1C62FA /* ContentViewModelTests.swift */,
 				BFA27EFFC69A6E08B2972334 /* DocumentCardTests.swift */,
 				D2F4F5D9C5735B931CCE6C1F /* HistoryDiffTests.swift */,
 				346FBC22C24AA911360C416A /* MarkdownTextViewTests.swift */,
@@ -1120,6 +1144,7 @@
 			files = (
 				0777864A7A6E975929B7A320 /* AsyncActionTrackerTests.swift in Sources */,
 				148B00ED8E7202BC9877013C /* AudioOverviewTests.swift in Sources */,
+				9AF303C5EC80B5D06C88ADE0 /* ContentViewModelTests.swift in Sources */,
 				95958AA9ACDAB632B1BAF7F8 /* DocumentCardTests.swift in Sources */,
 				9A4AD42B789934CD952F8C45 /* HistoryDiffTests.swift in Sources */,
 				483313DE21B978322F9804AB /* MarkdownTextViewTests.swift in Sources */,
@@ -1242,7 +1267,11 @@
 				D912C5E6E61A8D859E86A1F6 /* CommandPalette.swift in Sources */,
 				0FCF15C93705A7EC381F622E /* CompanionToolsView.swift in Sources */,
 				C0ED47BDFDE42179E6DDC6A8 /* ContactReferencesView.swift in Sources */,
+				D1820DF57011B2648EF83E93 /* ContentBannersView.swift in Sources */,
+				30182046814ABEF3821AC5DA /* ContentSheetsModifier.swift in Sources */,
+				F4E8E644AFD6DD21D9DA0B80 /* ContentSidebarView.swift in Sources */,
 				571C6E466AA0EACEBA689E1F /* ContentView.swift in Sources */,
+				7BCC70DF7BE8854BDD5B1CAF /* ContentViewModel.swift in Sources */,
 				F735324626803159388F54EF /* DashboardView.swift in Sources */,
 				2A9DFE1A981C4FBDB9D49061 /* DbViewBoard.swift in Sources */,
 				274F640915B4D63279459C99 /* DbViewCalendar.swift in Sources */,
@@ -1252,6 +1281,7 @@
 				1F1FA22E3100184255CC3362 /* DbViewTable.swift in Sources */,
 				85DECDD2DC5ADCC88C1E2BBC /* DbViewTimeline.swift in Sources */,
 				894BF25DD7A7DE8807A137E1 /* DiscoverView.swift in Sources */,
+				B47BC351A529F0F2F065C601 /* DoctorReportPopoverView.swift in Sources */,
 				087490E1CC2A424C7AEF4AC1 /* DocumentGridView.swift in Sources */,
 				C7C146956A2FA300951F787D /* DocumentThumbnailView.swift in Sources */,
 				0C92622CE6B3BB5D9C7AEC4C /* DocumentViewerView.swift in Sources */,
@@ -1270,6 +1300,7 @@
 				0E431B578B8CAF857895099F /* MeetingReviewView.swift in Sources */,
 				BC3F2F58982E1AA5456634AF /* MeetingsView.swift in Sources */,
 				81EC8D6E3F1AEC5055591FF9 /* ModelsView.swift in Sources */,
+				D2BAF7F002FAC365C8E42A7D /* NewNoteSheet.swift in Sources */,
 				621C64AD1586132988803861 /* NoteFolderTree.swift in Sources */,
 				5DED4D6730EF5229F41C0241 /* NotebookWorkspaceView.swift in Sources */,
 				1ECCF881DFFB05C3E4DCA223 /* NotificationCenterProviding.swift in Sources */,
@@ -1289,6 +1320,7 @@
 				C8E2BB8E6DEC50C4AF30AEA5 /* TagStore.swift in Sources */,
 				6A91EA1E38A414D990E92D61 /* TranscriptTimelineView.swift in Sources */,
 				C6F1120FFE339799B94C8BF7 /* TrashView.swift in Sources */,
+				43B3DD60075DA79BF9CD7333 /* VaultEditorPaneView.swift in Sources */,
 				A2184394D8796CDCE1EAE341 /* VaultSwitcherView.swift in Sources */,
 				F9D9027836F3132FDD8F6297 /* main.swift in Sources */,
 			);

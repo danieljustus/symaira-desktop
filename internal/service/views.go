@@ -275,6 +275,9 @@ func (s *Service) ViewsExec(id string) ([]map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	if strings.HasPrefix(strings.TrimSpace(view.Source), "dataset:") {
+		return s.executeDatasetView(view, DatasetMaxRowCap)
+	}
 
 	docs, err := s.resolveViewDocuments(view)
 	if err != nil {

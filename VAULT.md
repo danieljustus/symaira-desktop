@@ -234,7 +234,7 @@ A base is a named collection of saved views over vault documents (`symdesk views
   - `id` (string): stable identifier for the view.
   - `name` (string): human-readable view name.
   - `type` (string): view layout type (`table`, `board`, `calendar`, `gallery`, `timeline`, `list`).
-  - `source` (string, optional): document scope (`folder/`, `tag:name`, `notebook:<id>`, or empty for whole vault).
+  - `source` (string, optional): document scope (`folder/`, `tag:name`, `notebook:<id>`, `dataset:<slug>`, or empty for whole vault). Dataset sources resolve typed rows through the derived dataset sidecar store; the Markdown dataset handle remains authoritative. Unknown or deleted dataset slugs fail clearly rather than falling back to note scope.
   - `columns` (array of strings, optional): visible property columns.
   - `filters` (array of objects, optional): filter criteria (`key`, `operator`, `value`). Rich operators include numeric (`>`, `>=`, `<`, `<=`, `gt`, `gte`, `lt`, `lte`), date (`before`, `after`, `on_or_before`, `on_or_after`), set (`in`, `not_in`, `contains_all`, `contains_any`, `contains_none`), and text matching (`equals`, `contains`, `starts_with`, `ends_with`).
   - `filter_group` (object, optional): recursive all/any condition groups.

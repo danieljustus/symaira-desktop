@@ -81,7 +81,10 @@ func (s *Service) DatasetImport(source string, opts DatasetImportOptions) (*Data
 		return nil, fmt.Errorf("dataset slug %q is not filesystem-safe", slug)
 	}
 
-	rawPath, err := dataset.StoreRaw(s.VaultRoot, slug, filepath.Base(source), data, now)
+	// The vault contract names raw snapshots by import date; StoreAsset adds a
+	// collision suffix when several exports for the same dataset arrive that day.
+	rawName := now.UTC().Format(time.DateOnly) + ".csv"
+	rawPath, err := dataset.StoreRaw(s.VaultRoot, slug, rawName, data, now)
 	if err != nil {
 		return nil, fmt.Errorf("store dataset source: %w", err)
 	}

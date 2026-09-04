@@ -278,7 +278,7 @@ A base is a named collection of saved views over vault documents (`symdesk views
 **Migration from legacy views:** on startup, existing `.symdesk/views.json` definitions are automatically migrated to base notes in `bases/` while leaving the original `.symdesk/views.json` intact.
 
 ## 13. Datasets (contract_version 6)
-A dataset is an explicitly imported, typed tabular source. Its handle is an ordinary Markdown note under `datasets/<slug>.md`; the raw CSV source files are ordinary vault assets under `datasets/<slug>/`.
+A dataset is an explicitly imported, typed tabular source. Its handle is an ordinary Markdown note under `datasets/<slug>.md`; dated raw CSV snapshots are ordinary vault assets under `datasets/<slug>/<YYYY-MM-DD>.csv` (with collision suffixes when several arrive on one day).
 
 - `type` (string, `"dataset"`): marks the handle as a dataset. It is never inferred for an ordinary note.
 - `dataset_id` (string): stable slug identifying the dataset handle and its raw-file directory.

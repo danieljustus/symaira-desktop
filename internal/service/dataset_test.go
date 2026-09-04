@@ -28,7 +28,7 @@ func TestDatasetImportIsTypedIdempotentAndRebuildable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if first.Rows != 2 || first.RawPath != "datasets/orders/orders.csv" || first.HandlePath != "datasets/orders.md" {
+	if first.Rows != 2 || first.RawPath != "datasets/orders/2026-01-04.csv" || first.HandlePath != "datasets/orders.md" {
 		t.Fatalf("unexpected first import: %#v", first)
 	}
 	if _, err := os.Stat(filepath.Join(vaultRoot, filepath.FromSlash(first.RawPath))); err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -109,6 +110,38 @@ func TestIndexStatusVaultCountingTimeoutReportsPhase(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "vault counting") {
 		t.Errorf("expected error message to mention 'vault counting', got %q", err.Error())
+	}
+}
+
+func TestIndexStatusPreservesWorkerJSONError(t *testing.T) {
+	origJSON := jsonFlag
+	jsonFlag = true
+	origRun := indexStatusRun
+	payload := []byte("{\"error\":\"specific worker failure\"}\n")
+	indexStatusRun = func(context.Context, indexStatusRequest, indexStatusPhaseReporter) ([]byte, error) {
+		return payload, errors.New("exit status 1")
+	}
+	origTimeout := indexStatusTimeout
+	indexStatusTimeout = defaultIndexStatusTimeout
+	t.Cleanup(func() {
+		jsonFlag = origJSON
+		indexStatusRun = origRun
+		indexStatusTimeout = origTimeout
+	})
+
+	cmd := newIndexStatusCmd()
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	err := cmd.RunE(cmd, nil)
+	if err == nil {
+		t.Fatal("expected worker error")
+	}
+	var reported jsonReportedError
+	if !errors.As(err, &reported) {
+		t.Fatalf("error = %T %v, want jsonReportedError", err, err)
+	}
+	if !bytes.Equal(out.Bytes(), payload) {
+		t.Fatalf("output = %q, want exact worker payload %q", out.Bytes(), payload)
 	}
 }
 

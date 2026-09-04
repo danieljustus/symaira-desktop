@@ -123,9 +123,9 @@ func runIndexStatusChild(
 	if runErr != nil {
 		cleanStderr := extractCleanStderr(stderr.Bytes())
 		if cleanStderr != "" {
-			return nil, errors.New(cleanStderr)
+			return stdout.Bytes(), errors.New(cleanStderr)
 		}
-		return nil, runErr
+		return stdout.Bytes(), runErr
 	}
 
 	return stdout.Bytes(), nil

@@ -261,6 +261,12 @@ callers indefinitely.`,
 
 			out, err := indexStatusRun(ctx, req, report)
 			if err != nil {
+				if req.JSON && len(out) > 0 {
+					if _, writeErr := cmd.OutOrStdout().Write(out); writeErr != nil {
+						return writeErr
+					}
+					return jsonReportedError{err: err}
+				}
 				var timeoutErr *IndexStatusTimeoutError
 				if errors.As(err, &timeoutErr) {
 					return timeoutErr

@@ -905,7 +905,7 @@ func inferType(fm map[string]interface{}) string {
 	if t, ok := fm["type"]; ok {
 		if s, ok := t.(string); ok {
 			switch s {
-			case "note", "document", "meeting", "notebook", "base":
+			case "note", "document", "meeting", "notebook", "base", "dataset":
 				return s
 			}
 		}

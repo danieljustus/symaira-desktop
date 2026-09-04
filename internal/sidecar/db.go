@@ -3,6 +3,7 @@ package sidecar
 import (
 	"database/sql"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -611,6 +612,79 @@ func deleteDocumentRows(tx *sql.Tx, path string) error {
 		return err
 	}
 	return nil
+}
+
+// DatasetRow is one materialized row from a Markdown-vault dataset. ValuesJSON
+// is intentionally stored as JSON so the row can be rebuilt from raw files.
+type DatasetRow struct {
+	DatasetSlug string
+	RowKey      string
+	Identity    string
+	ValuesJSON  string
+	SourcePath  string
+	RowNumber   int
+}
+
+// ReplaceDatasetRows atomically replaces all derived rows for one dataset.
+// Replacing the dataset as one transaction makes identity-field imports update
+// corrected rows while the canonical row hash prevents unchanged overlapping
+// imports from duplicating.
+func (db *DB) ReplaceDatasetRows(datasetSlug string, rows []DatasetRow) error {
+	if strings.TrimSpace(datasetSlug) == "" {
+		return fmt.Errorf("dataset slug is required")
+	}
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+	if _, err := tx.Exec("DELETE FROM dataset_rows WHERE dataset_slug = ?", datasetSlug); err != nil {
+		return err
+	}
+	for _, row := range rows {
+		if row.DatasetSlug == "" {
+			row.DatasetSlug = datasetSlug
+		}
+		if row.DatasetSlug != datasetSlug || row.RowKey == "" {
+			return fmt.Errorf("invalid dataset row identity")
+		}
+		if !json.Valid([]byte(row.ValuesJSON)) {
+			return fmt.Errorf("dataset row %q has invalid values JSON", row.RowKey)
+		}
+		if _, err := tx.Exec(`INSERT INTO dataset_rows(dataset_slug, row_key, identity, values_json, source_path, row_number)
+			VALUES (?, ?, ?, ?, ?, ?)`, row.DatasetSlug, row.RowKey, nullStr(row.Identity), row.ValuesJSON, row.SourcePath, row.RowNumber); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+// DatasetRows returns materialized rows in deterministic key order.
+func (db *DB) DatasetRows(datasetSlug string) ([]DatasetRow, error) {
+	rows, err := db.conn.Query(`SELECT dataset_slug, row_key, COALESCE(identity, ''), values_json, source_path, row_number
+		FROM dataset_rows WHERE dataset_slug = ? ORDER BY row_key`, datasetSlug)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	result := make([]DatasetRow, 0)
+	for rows.Next() {
+		var row DatasetRow
+		if err := rows.Scan(&row.DatasetSlug, &row.RowKey, &row.Identity, &row.ValuesJSON, &row.SourcePath, &row.RowNumber); err != nil {
+			return nil, err
+		}
+		result = append(result, row)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// DeleteDataset removes only derived rows; raw Markdown-vault files remain.
+func (db *DB) DeleteDataset(datasetSlug string) error {
+	_, err := db.conn.Exec("DELETE FROM dataset_rows WHERE dataset_slug = ?", datasetSlug)
+	return err
 }
 
 // Prune removes indexed entries for files that are no longer on disk or that

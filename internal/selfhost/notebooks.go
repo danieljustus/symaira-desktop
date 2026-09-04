@@ -2,8 +2,6 @@ package selfhost
 
 import (
 	"net/http"
-
-	"github.com/danieljustus/symaira-desktop/internal/service"
 )
 
 // This file implements the read-only notebook endpoints (issue #428):
@@ -21,7 +19,11 @@ import (
 // (title, description, id) carries no document content, so it is not
 // permission-filtered — only a notebook's resolved sources are.
 func (s *Server) handleListNotebooks(w http.ResponseWriter, r *http.Request) {
-	svc := service.New(s.cfg.VaultRoot, s.db)
+	svc, err := s.newService()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "retrieval unavailable: "+err.Error())
+		return
+	}
 	list, err := svc.NotebookList()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -55,7 +57,11 @@ func (s *Server) handleGetNotebook(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "notebook id is required")
 		return
 	}
-	svc := service.New(s.cfg.VaultRoot, s.db)
+	svc, err := s.newService()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "retrieval unavailable: "+err.Error())
+		return
+	}
 	nb, err := svc.NotebookGet(id)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "notebook not found: "+err.Error())

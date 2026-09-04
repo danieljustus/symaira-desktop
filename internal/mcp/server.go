@@ -6,6 +6,7 @@ import (
 	"github.com/danieljustus/symaira-corekit/mcpserver"
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/tools"
@@ -40,6 +41,8 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 	}
 
 	server := mcpserver.New("symdesk", ServerVersion)
+	pool := retrieval.NewClientPool()
+	defer func() { _ = pool.Close() }()
 
 	var getService serviceFactory = func() (*service.Service, *sidecar.DB, error) {
 		vRoot, err := vault.ResolveVaultRoot("", cfg)
@@ -50,7 +53,11 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 		if err != nil {
 			return nil, nil, err
 		}
-		return service.New(vRoot, db), db, nil
+		if _, err := pool.Get(vRoot); err != nil {
+			_ = db.Close()
+			return nil, nil, err
+		}
+		return service.NewWithRetrievalPool(vRoot, db, pool), db, nil
 	}
 
 	registry := tools.NewRegistry(tools.RegistryOptions{
@@ -67,8 +74,8 @@ func StartServer(cfg *config.Config, version string, allowWrite bool) error {
 }
 
 // serviceFactory opens a fresh service + sidecar per request; the caller
-// closes the returned DB. It aliases the canonical registry contract so MCP
-// tests and callers retain the existing local type name.
+// closes only the returned sidecar DB. Retrieval clients are borrowed from the
+// server-lifetime pool and are closed by StartServer after ServeStdio returns.
 type serviceFactory = tools.ServiceFactory
 
 func adaptTool(entry tools.Tool) *mcpserver.Tool {

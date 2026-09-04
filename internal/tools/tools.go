@@ -48,7 +48,8 @@ type Tool struct {
 type Definition = Tool
 
 // ServiceFactory opens a fresh service and sidecar for one request. The
-// caller owns and must close the returned database.
+// caller owns and must close the returned sidecar database; retrieval clients
+// may be borrowed from a server-owned pool and are never closed by the caller.
 type ServiceFactory func() (*service.Service, *sidecar.DB, error)
 
 // RegistryOptions supplies runtime dependencies used to construct handlers.

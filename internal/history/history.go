@@ -452,3 +452,125 @@ func createRootTemp(root *os.Root, dir, prefix string) (*os.File, string, error)
 	}
 	return nil, "", fmt.Errorf("create temporary file: too many collisions")
 }
+
+// PurgePaths permanently removes history manifests and checkpoint residue for
+// the supplied vault-relative paths, then garbage-collects unreferenced blobs.
+// It is intentionally explicit; ordinary retention pruning never calls it.
+func (s *Store) PurgePaths(relPaths ...string) error {
+	targets := make(map[string]bool, len(relPaths))
+	for _, relPath := range relPaths {
+		rel, err := cleanRel(relPath)
+		if err != nil {
+			return err
+		}
+		targets[filepath.ToSlash(rel)] = true
+	}
+	root, err := s.openRoot()
+	if err != nil {
+		return err
+	}
+	manifestRoot := filepath.Join(historyRelDir(), "manifest")
+	err = fs.WalkDir(root.FS(), manifestRoot, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			if os.IsNotExist(walkErr) {
+				return nil
+			}
+			return walkErr
+		}
+		if d.IsDir() || !strings.HasSuffix(path, ".json") {
+			return nil
+		}
+		rel := strings.TrimSuffix(strings.TrimPrefix(path, manifestRoot+"/"), ".json")
+		if targets[filepath.ToSlash(rel)] {
+			if err := root.Remove(path); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	checkpoints, err := s.ListCheckpoints()
+	if err != nil {
+		return err
+	}
+	survivingCheckpoints := make([]Checkpoint, 0, len(checkpoints))
+	for _, cp := range checkpoints {
+		matched := false
+		for _, file := range cp.Files {
+			if targets[filepath.ToSlash(file.RelPath)] {
+				matched = true
+			}
+		}
+		for _, path := range cp.NewFiles {
+			if targets[filepath.ToSlash(path)] {
+				matched = true
+			}
+		}
+		for _, path := range cp.Skipped {
+			if targets[filepath.ToSlash(path)] {
+				matched = true
+			}
+		}
+		if matched {
+			rel, err := checkpointRelPath(cp.TaskID)
+			if err != nil {
+				return err
+			}
+			if err := root.Remove(rel); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+			continue
+		}
+		survivingCheckpoints = append(survivingCheckpoints, cp)
+	}
+	referenced := make(map[string]bool)
+	err = fs.WalkDir(root.FS(), manifestRoot, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			if os.IsNotExist(walkErr) {
+				return nil
+			}
+			return walkErr
+		}
+		if d.IsDir() || !strings.HasSuffix(path, ".json") {
+			return nil
+		}
+		data, err := root.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		var entries []Entry
+		if err := json.Unmarshal(data, &entries); err != nil {
+			return nil
+		}
+		for _, entry := range entries {
+			referenced[entry.ID] = true
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	for _, cp := range survivingCheckpoints {
+		for _, file := range cp.Files {
+			referenced[file.Entry.ID] = true
+		}
+	}
+	objects, err := fs.ReadDir(root.FS(), objectsRelDir())
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	for _, object := range objects {
+		if object.IsDir() || referenced[object.Name()] {
+			continue
+		}
+		if err := root.Remove(filepath.Join(objectsRelDir(), object.Name())); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+	return nil
+}

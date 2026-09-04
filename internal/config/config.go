@@ -79,6 +79,11 @@ type Config struct {
 	// (newest wins; 0 = unlimited).
 	ResultsMaxPerTask int `toml:"results_max_per_task" env:"SYMDESK_RESULTS_MAX_PER_TASK"`
 
+	// DatasetExportMaxSensitivity is the highest dataset sensitivity that may
+	// leave the vault through a dataset-backed export. The default internal
+	// denies confidential and restricted rows; raising it is an explicit opt-in.
+	DatasetExportMaxSensitivity string `toml:"dataset_export_max_sensitivity" env:"SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY"`
+
 	// StoragePathTemplate is an optional template that determines where
 	// ingested documents are placed in the vault. See internal/templatepath
 	// for the supported syntax.
@@ -102,6 +107,7 @@ func DefaultConfig() *Config {
 		TrashRetentionDays:          defaultTrashRetentionDays,
 		ResultsMaxAgeDays:           defaultResultsMaxAgeDays,
 		ResultsMaxPerTask:           defaultResultsMaxPerTask,
+		DatasetExportMaxSensitivity: "internal",
 	}
 }
 
@@ -142,6 +148,9 @@ func applyEnvOverrides(cfg *Config) {
 		if v, err := strconv.Atoi(envMaxTokens); err == nil && v > 0 {
 			cfg.MaxTokens = v
 		}
+	}
+	if envSensitivity := os.Getenv("SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY"); envSensitivity != "" {
+		cfg.DatasetExportMaxSensitivity = strings.ToLower(strings.TrimSpace(envSensitivity))
 	}
 	for _, ev := range []struct {
 		name   string
@@ -302,6 +311,13 @@ func (c *Config) Validate() []Finding {
 			Severity: SeverityWarning,
 			Field:    "results_max_per_task",
 			Message:  fmt.Sprintf("results_max_per_task must be >= 0, got %d", c.ResultsMaxPerTask),
+		})
+	}
+	if c.DatasetExportMaxSensitivity != "public" && c.DatasetExportMaxSensitivity != "internal" && c.DatasetExportMaxSensitivity != "confidential" && c.DatasetExportMaxSensitivity != "restricted" {
+		findings = append(findings, Finding{
+			Severity: SeverityWarning,
+			Field:    "dataset_export_max_sensitivity",
+			Message:  fmt.Sprintf("dataset_export_max_sensitivity must be public, internal, confidential, or restricted, got %q", c.DatasetExportMaxSensitivity),
 		})
 	}
 

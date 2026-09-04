@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -198,18 +199,28 @@ func newRetentionAcceptCmd() *cobra.Command {
 					continue
 				}
 
-				switch item.Action {
-				case retention.ActionTrash:
-					_, err := svc.NoteDelete(item.Path)
-					if err != nil {
-						fmt.Fprintf(os.Stderr, "failed to trash %s: %v\n", item.Path, err)
+				if slug, ok := datasetRetentionSlug(item.Path); ok {
+					if item.Action != retention.ActionTrash {
+						return fmt.Errorf("dataset retention action for %s must be trash", item.Path)
+					}
+					if err := svc.DatasetPurge(slug); err != nil {
+						fmt.Fprintf(os.Stderr, "failed to purge dataset %s: %v\n", slug, err)
 						continue
 					}
-				case retention.ActionFlagReview:
-					err := svc.DocStatus(item.Path, "needs_review")
-					if err != nil {
-						fmt.Fprintf(os.Stderr, "failed to flag %s: %v\n", item.Path, err)
-						continue
+				} else {
+					switch item.Action {
+					case retention.ActionTrash:
+						_, err := svc.NoteDelete(item.Path)
+						if err != nil {
+							fmt.Fprintf(os.Stderr, "failed to trash %s: %v\n", item.Path, err)
+							continue
+						}
+					case retention.ActionFlagReview:
+						err := svc.DocStatus(item.Path, "needs_review")
+						if err != nil {
+							fmt.Fprintf(os.Stderr, "failed to flag %s: %v\n", item.Path, err)
+							continue
+						}
 					}
 				}
 
@@ -237,6 +248,18 @@ func newRetentionAcceptCmd() *cobra.Command {
 			})
 		},
 	}
+}
+
+func datasetRetentionSlug(path string) (string, bool) {
+	path = filepath.ToSlash(strings.TrimSpace(path))
+	if !strings.HasPrefix(path, "datasets/") || !strings.HasSuffix(path, ".md") {
+		return "", false
+	}
+	slug := strings.TrimSuffix(strings.TrimPrefix(path, "datasets/"), ".md")
+	if slug == "" || strings.Contains(slug, "/") {
+		return "", false
+	}
+	return slug, true
 }
 
 func newRetentionRejectCmd() *cobra.Command {

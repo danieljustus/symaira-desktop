@@ -207,3 +207,37 @@ func (s *Store) trashEntry(name string) (*TrashEntry, error) {
 	e.Name = name
 	return &e, nil
 }
+
+// PurgeTrashPaths permanently removes trash entries whose original path is in
+// relPaths. This is reserved for an explicitly accepted dataset purge.
+func (s *Store) PurgeTrashPaths(relPaths ...string) (int, error) {
+	targets := make(map[string]bool, len(relPaths))
+	for _, relPath := range relPaths {
+		rel, err := cleanRel(relPath)
+		if err != nil {
+			return 0, err
+		}
+		targets[filepath.ToSlash(rel)] = true
+	}
+	entries, err := s.TrashList()
+	if err != nil {
+		return 0, err
+	}
+	root, err := s.openRoot()
+	if err != nil {
+		return 0, err
+	}
+	removed := 0
+	for _, entry := range entries {
+		if !targets[filepath.ToSlash(entry.OriginalPath)] {
+			continue
+		}
+		for _, name := range []string{entry.Name, entry.Name + trashMetaSuffix} {
+			if err := root.Remove(filepath.Join(trashRelDir(), name)); err != nil && !os.IsNotExist(err) {
+				return removed, err
+			}
+		}
+		removed++
+	}
+	return removed, nil
+}

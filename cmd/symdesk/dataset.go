@@ -93,7 +93,7 @@ func newDatasetCmd() *cobra.Command {
 	queryCmd.Flags().IntVar(&limit, "limit", 0, "maximum rows to return (default and hard maximum are enforced)")
 	datasetCmd.AddCommand(queryCmd)
 
-	var rowsInput, provenanceInput, sourceName, sourceSHA256, importedAt, title, identityField, schemaInput string
+	var rowsInput, provenanceInput, sourceName, sourceSHA256, importedAt, title, identityField, schemaInput, sensitivity, retentionRule string
 	syncCmd := &cobra.Command{
 		Use:   "sync [dataset]",
 		Short: "Sync producer rows with explicit provenance",
@@ -141,7 +141,7 @@ func newDatasetCmd() *cobra.Command {
 					return fmt.Errorf("parse --schema: %w", err)
 				}
 			}
-			res, err := service.New(vRoot, db).DatasetSync(service.DatasetSyncOptions{Slug: args[0], Title: title, IdentityField: identityField, Schema: schema, Provenance: provenance, Rows: rows})
+			res, err := service.New(vRoot, db).DatasetSync(service.DatasetSyncOptions{Slug: args[0], Title: title, IdentityField: identityField, Schema: schema, Sensitivity: sensitivity, RetentionRule: retentionRule, Provenance: provenance, Rows: rows})
 			if err != nil {
 				return err
 			}
@@ -156,6 +156,8 @@ func newDatasetCmd() *cobra.Command {
 	syncCmd.Flags().StringVar(&title, "title", "", "dataset title")
 	syncCmd.Flags().StringVar(&identityField, "identity-field", "", "stable identity column")
 	syncCmd.Flags().StringVar(&schemaInput, "schema", "", "JSON object or path with dbviews property definitions")
+	syncCmd.Flags().StringVar(&sensitivity, "sensitivity", "", "dataset sensitivity: public|internal|confidential|restricted (default restricted)")
+	syncCmd.Flags().StringVar(&retentionRule, "retention-rule", "", "named retention-rule reference (default: default)")
 	_ = syncCmd.MarkFlagRequired("rows")
 	datasetCmd.AddCommand(syncCmd)
 	return datasetCmd

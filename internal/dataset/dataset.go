@@ -25,7 +25,58 @@ import (
 const (
 	Type   = "dataset"
 	RawDir = "datasets"
+
+	DefaultSensitivity   = "restricted"
+	DefaultRetentionRule = "default"
 )
+
+const (
+	SensitivityPublic       = "public"
+	SensitivityInternal     = "internal"
+	SensitivityConfidential = "confidential"
+	SensitivityRestricted   = "restricted"
+)
+
+var validSensitivities = map[string]struct{}{
+	SensitivityPublic: {}, SensitivityInternal: {}, SensitivityConfidential: {}, SensitivityRestricted: {},
+}
+
+// NormalizeSensitivity validates the closed sensitivity vocabulary. Empty input
+// is intentionally defaulted only at service/CLI/MCP boundaries, never while
+// rendering or parsing a persisted handle.
+func NormalizeSensitivity(value string) (string, error) {
+	value = strings.ToLower(strings.TrimSpace(value))
+	if value == "" {
+		return DefaultSensitivity, nil
+	}
+	if _, ok := validSensitivities[value]; !ok {
+		return "", fmt.Errorf("invalid dataset sensitivity %q (valid: public, internal, confidential, restricted)", value)
+	}
+	return value, nil
+}
+
+func ValidateSensitivity(value string) error {
+	if strings.TrimSpace(value) == "" {
+		return errors.New("dataset handle requires sensitivity")
+	}
+	if _, ok := validSensitivities[value]; !ok {
+		return fmt.Errorf("invalid dataset sensitivity %q (valid: public, internal, confidential, restricted)", value)
+	}
+	return nil
+}
+
+func ValidateRetentionRuleReference(value string) error {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return errors.New("dataset handle requires retention_rule")
+	}
+	for _, r := range value {
+		if r == '/' || r == '\\' || r == '\r' || r == '\n' || r == '	' {
+			return fmt.Errorf("invalid dataset retention_rule %q", value)
+		}
+	}
+	return nil
+}
 
 type Coverage struct {
 	From string `json:"from,omitempty" yaml:"from,omitempty"`
@@ -52,7 +103,8 @@ type Handle struct {
 	Provenance     Provenance                        `json:"provenance" yaml:"provenance"`
 	IdentityField  string                            `json:"identity_field,omitempty" yaml:"identity_field,omitempty"`
 	RefreshCommand string                            `json:"refresh_command,omitempty" yaml:"refresh_command,omitempty"`
-	Sensitivity    string                            `json:"sensitivity,omitempty" yaml:"sensitivity,omitempty"`
+	Sensitivity    string                            `json:"sensitivity" yaml:"sensitivity"`
+	RetentionRule  string                            `json:"retention_rule" yaml:"retention_rule"`
 }
 
 type Row struct {
@@ -251,25 +303,30 @@ func (h *Handle) Render() ([]byte, error) {
 	if h.Title == "" || h.Slug == "" || h.Source == "" {
 		return nil, errors.New("dataset handle requires title, slug, and source")
 	}
+	if err := ValidateSensitivity(h.Sensitivity); err != nil {
+		return nil, err
+	}
+	if err := ValidateRetentionRuleReference(h.RetentionRule); err != nil {
+		return nil, err
+	}
 	fm := map[string]interface{}{
-		"type":       Type,
-		"title":      h.Title,
-		"created":    h.Created,
-		"tags":       []string{"dataset"},
-		"dataset_id": h.Slug,
-		"source":     h.Source,
-		"schema":     h.Schema,
-		"coverage":   h.Coverage,
-		"provenance": h.Provenance,
+		"type":           Type,
+		"title":          h.Title,
+		"created":        h.Created,
+		"tags":           []string{"dataset"},
+		"dataset_id":     h.Slug,
+		"source":         h.Source,
+		"schema":         h.Schema,
+		"coverage":       h.Coverage,
+		"provenance":     h.Provenance,
+		"sensitivity":    h.Sensitivity,
+		"retention_rule": h.RetentionRule,
 	}
 	if h.IdentityField != "" {
 		fm["identity_field"] = h.IdentityField
 	}
 	if h.RefreshCommand != "" {
 		fm["refresh_command"] = h.RefreshCommand
-	}
-	if h.Sensitivity != "" {
-		fm["sensitivity"] = h.Sensitivity
 	}
 	encoded, err := yaml.Marshal(fm)
 	if err != nil {
@@ -298,17 +355,24 @@ func ParseHandle(relPath string, data []byte) (*Handle, error) {
 		IdentityField string                            `yaml:"identity_field"`
 		Refresh       string                            `yaml:"refresh_command"`
 		Sensitivity   string                            `yaml:"sensitivity"`
+		RetentionRule string                            `yaml:"retention_rule"`
 	}
 	if err := yaml.Unmarshal(frontmatter(data), &fm); err != nil {
 		return nil, fmt.Errorf("parse dataset handle: %w", err)
 	}
-	if fm.Slug == "" {
-		fm.Slug = strings.TrimSuffix(filepath.Base(relPath), ".md")
-	}
 	if fm.Type != Type || fm.Source == "" {
 		return nil, fmt.Errorf("dataset handle %s is missing type or source", relPath)
 	}
-	return &Handle{Path: relPath, Slug: fm.Slug, Title: fm.Title, Created: fm.Created, Source: fm.Source, Schema: fm.Schema, Coverage: fm.Coverage, Provenance: fm.Provenance, IdentityField: fm.IdentityField, RefreshCommand: fm.Refresh, Sensitivity: fm.Sensitivity}, nil
+	if fm.Title == "" || fm.Slug == "" {
+		return nil, fmt.Errorf("dataset handle %s is missing title or dataset_id", relPath)
+	}
+	if err := ValidateSensitivity(fm.Sensitivity); err != nil {
+		return nil, fmt.Errorf("dataset handle %s: %w", relPath, err)
+	}
+	if err := ValidateRetentionRuleReference(fm.RetentionRule); err != nil {
+		return nil, fmt.Errorf("dataset handle %s: %w", relPath, err)
+	}
+	return &Handle{Path: relPath, Slug: fm.Slug, Title: fm.Title, Created: fm.Created, Source: fm.Source, Schema: fm.Schema, Coverage: fm.Coverage, Provenance: fm.Provenance, IdentityField: fm.IdentityField, RefreshCommand: fm.Refresh, Sensitivity: fm.Sensitivity, RetentionRule: fm.RetentionRule}, nil
 }
 
 func frontmatter(data []byte) []byte {

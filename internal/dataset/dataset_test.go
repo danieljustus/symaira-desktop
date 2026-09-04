@@ -45,7 +45,7 @@ func TestHandleRoundTrip(t *testing.T) {
 		Schema:        map[string]dbviews.PropertyConfig{"amount": {Type: "number", Label: "Amount"}},
 		Coverage:      Coverage{From: "2026-01-01", To: "2026-01-31"},
 		Provenance:    Provenance{ImportedAt: now.Format(time.RFC3339), SourceName: "source.csv", SourceSHA256: "abc"},
-		IdentityField: "id", Sensitivity: "sensitive",
+		IdentityField: "id", Sensitivity: SensitivityConfidential, RetentionRule: "financial-7y",
 	}
 	encoded, err := handle.Render()
 	if err != nil {
@@ -55,7 +55,7 @@ func TestHandleRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if parsed.Slug != handle.Slug || parsed.Source != handle.Source || parsed.Schema["amount"].Type != "number" || parsed.IdentityField != "id" || parsed.Sensitivity != "sensitive" {
+	if parsed.Slug != handle.Slug || parsed.Source != handle.Source || parsed.Schema["amount"].Type != "number" || parsed.IdentityField != "id" || parsed.Sensitivity != SensitivityConfidential || parsed.RetentionRule != "financial-7y" {
 		t.Fatalf("handle did not round-trip: %#v", parsed)
 	}
 }

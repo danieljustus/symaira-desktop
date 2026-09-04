@@ -95,6 +95,9 @@ func (s *Service) Export(relPath, viewID, outputPath, format, profile string) (*
 		if err != nil {
 			return nil, fmt.Errorf("view not found: %w", err)
 		}
+		if err := s.checkDatasetExport(view); err != nil {
+			return nil, err
+		}
 		rows, err := s.ViewsExec(viewID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to evaluate view: %w", err)

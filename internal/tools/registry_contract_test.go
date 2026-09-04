@@ -182,7 +182,7 @@ var toolContracts = []toolContract{
 	{
 		name:        "desk_dataset_sync",
 		description: "Persists producer rows into a Markdown-backed dataset. Every row must have an explicit identity and every sync must include source_name, source_sha256 and imported_at provenance; repeated provenance is idempotent.",
-		schema:      `{"type":"object","properties":{"dataset":{"type":"string"},"title":{"type":"string"},"identity_field":{"type":"string"},"schema":{"type":"object"},"provenance":{"type":"object","properties":{"imported_at":{"type":"string"},"source_name":{"type":"string"},"source_sha256":{"type":"string"}},"required":["imported_at","source_name","source_sha256"],"additionalProperties":false},"rows":{"type":"array","items":{"type":"object","properties":{"identity":{"type":"string"},"values":{"type":"object"}},"required":["identity","values"],"additionalProperties":false}}},"required":["dataset","identity_field","provenance","rows"],"additionalProperties":false}`,
+		schema:      `{"type":"object","properties":{"dataset":{"type":"string"},"title":{"type":"string"},"identity_field":{"type":"string"},"sensitivity":{"type":"string","enum":["public","internal","confidential","restricted"]},"retention_rule":{"type":"string"},"schema":{"type":"object"},"provenance":{"type":"object","properties":{"imported_at":{"type":"string"},"source_name":{"type":"string"},"source_sha256":{"type":"string"}},"required":["imported_at","source_name","source_sha256"],"additionalProperties":false},"rows":{"type":"array","items":{"type":"object","properties":{"identity":{"type":"string"},"values":{"type":"object"}},"required":["identity","values"],"additionalProperties":false}}},"required":["dataset","identity_field","provenance","rows"],"additionalProperties":false}`,
 		readOnly:    false,
 	},
 	{
@@ -265,8 +265,8 @@ var toolContracts = []toolContract{
 	},
 	{
 		name:        "desk_export",
-		description: "Exports a note or view to PDF or HTML. Provide either note or view, not both.",
-		schema:      `{"type":"object","properties":{"note":{"type":"string","description":"vault-relative note path"},"view":{"type":"string","description":"view id"},"output":{"type":"string","description":"output file path"},"format":{"type":"string","enum":["pdf","html"]},"profile":{"type":"string","description":"symprint profile for PDF"}},"oneOf":[{"required":["note"]},{"required":["view"]}]}`,
+		description: "Exports a note or view to PDF, HTML, or CSV. Dataset-backed views are subject to the configured sensitivity gate. Provide either note or view, not both.",
+		schema:      `{"type":"object","properties":{"note":{"type":"string","description":"vault-relative note path"},"view":{"type":"string","description":"view id"},"output":{"type":"string","description":"output file path"},"format":{"type":"string","enum":["pdf","html","csv"]},"profile":{"type":"string","description":"symprint profile for PDF"}},"oneOf":[{"required":["note"]},{"required":["view"]}]}`,
 		readOnly:    false,
 	},
 	{

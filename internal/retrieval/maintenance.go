@@ -101,7 +101,7 @@ func RelocateIndexForVault(vaultRoot, destination string) error {
 	if err := snapshotIndexFile(location, destination); err != nil {
 		return err
 	}
-	cfg, err := config.Load()
+	cfg, err := config.Reload()
 	if err != nil {
 		return err
 	}

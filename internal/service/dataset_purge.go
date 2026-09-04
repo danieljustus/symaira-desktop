@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,19 +23,32 @@ func (s *Service) DatasetPurge(slug, acceptedRule string) error {
 	if slug == "" || slug != filepath.Base(slug) || slug != dbviews.Slugify(slug) {
 		return fmt.Errorf("dataset slug %q is not filesystem-safe", slug)
 	}
-	handleRel := filepath.ToSlash(filepath.Join(dataset.RawDir, slug+".md"))
-	if err := rejectDatasetPurgeSymlinks(s.VaultRoot, handleRel, false); err != nil {
+
+	vaultRoot, err := os.OpenRoot(s.VaultRoot)
+	if err != nil {
+		return fmt.Errorf("open vault root: %w", err)
+	}
+	defer func() { _ = vaultRoot.Close() }()
+	datasetsRoot, err := openVerifiedDatasetDir(vaultRoot, dataset.RawDir)
+	if err != nil {
 		return err
 	}
-	handleAbs := filepath.Join(s.VaultRoot, filepath.FromSlash(handleRel))
-	handleInfo, err := os.Lstat(handleAbs)
+	defer func() { _ = datasetsRoot.Close() }()
+
+	handleName := slug + ".md"
+	handleRel := filepath.ToSlash(filepath.Join(dataset.RawDir, handleName))
+	handleInfo, err := datasetsRoot.Lstat(handleName)
 	if err != nil {
 		return fmt.Errorf("dataset purge %q: %w", slug, err)
 	}
 	if handleInfo.Mode()&os.ModeSymlink != 0 || !handleInfo.Mode().IsRegular() {
 		return fmt.Errorf("dataset handle %s must be a regular file, not a symlink", handleRel)
 	}
-	handle, err := readDatasetHandle(s.VaultRoot, handleRel)
+	handleData, err := datasetsRoot.ReadFile(handleName)
+	if err != nil {
+		return fmt.Errorf("read dataset handle %s: %w", handleRel, err)
+	}
+	handle, err := dataset.ParseHandle(handleRel, handleData)
 	if err != nil {
 		return fmt.Errorf("dataset purge %q: %w", slug, err)
 	}
@@ -45,96 +59,127 @@ func (s *Service) DatasetPurge(slug, acceptedRule string) error {
 	if acceptedRule == "" || handle.RetentionRule != acceptedRule {
 		return fmt.Errorf("dataset %q declares retention rule %q, not accepted rule %q", slug, handle.RetentionRule, acceptedRule)
 	}
-	rawDirRel := filepath.Join(dataset.RawDir, slug)
-	if err := rejectDatasetPurgeSymlinks(s.VaultRoot, rawDirRel, true); err != nil {
-		return err
-	}
-	rawDir := filepath.Join(s.VaultRoot, rawDirRel)
-	rawInfo, err := os.Lstat(rawDir)
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	if err == nil && (rawInfo.Mode()&os.ModeSymlink != 0 || !rawInfo.IsDir()) {
-		return fmt.Errorf("dataset raw path %s must be a directory, not a symlink", rawDirRel)
-	}
-	entries, err := os.ReadDir(rawDir)
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
+
 	paths := []string{handleRel}
 	pathSet := map[string]bool{handleRel: true}
-	if err == nil {
+	var rawRoot *os.Root
+	rawInfo, rawErr := datasetsRoot.Lstat(slug)
+	if rawErr != nil && !os.IsNotExist(rawErr) {
+		return rawErr
+	}
+	if rawErr == nil {
+		if rawInfo.Mode()&os.ModeSymlink != 0 || !rawInfo.IsDir() {
+			return fmt.Errorf("dataset raw path %s/%s must be a directory, not a symlink", dataset.RawDir, slug)
+		}
+		rawRoot, err = openVerifiedDatasetDir(datasetsRoot, slug)
+		if err != nil {
+			return err
+		}
+		defer func(root *os.Root) { _ = root.Close() }(rawRoot)
+		entries, err := fs.ReadDir(rawRoot.FS(), ".")
+		if err != nil {
+			return err
+		}
 		for _, entry := range entries {
-			info, infoErr := entry.Info()
-			if infoErr != nil {
-				return infoErr
+			info, err := rawRoot.Lstat(entry.Name())
+			if err != nil {
+				return err
 			}
 			if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
 				return fmt.Errorf("dataset raw directory contains non-regular entry %q", entry.Name())
 			}
-			rel := filepath.ToSlash(filepath.Join(rawDirRel, entry.Name()))
+			rel := filepath.ToSlash(filepath.Join(dataset.RawDir, slug, entry.Name()))
 			paths = append(paths, rel)
 			pathSet[rel] = true
 		}
 	}
-	// Include raw snapshots that were already moved to trash by an earlier
-	// explicit operation; they are not visible in the raw directory anymore.
+
+	// Include snapshots already moved to trash; they are not visible through
+	// the open raw-directory handle but still contain dataset content.
 	trashEntries, err := s.History.TrashList()
 	if err != nil {
 		return fmt.Errorf("list dataset trash: %w", err)
 	}
+	prefix := filepath.ToSlash(filepath.Join(dataset.RawDir, slug)) + "/"
 	for _, entry := range trashEntries {
 		rel := filepath.ToSlash(entry.OriginalPath)
-		if (rel == handleRel || strings.HasPrefix(rel, filepath.ToSlash(rawDirRel)+"/")) && !pathSet[rel] {
+		if (rel == handleRel || strings.HasPrefix(rel, prefix)) && !pathSet[rel] {
 			paths = append(paths, rel)
 			pathSet[rel] = true
 		}
 	}
+
 	if err := s.History.PurgePaths(paths...); err != nil {
 		return fmt.Errorf("purge dataset history: %w", err)
 	}
 	if _, err := s.History.PurgeTrashPaths(paths...); err != nil {
 		return fmt.Errorf("purge dataset trash: %w", err)
 	}
-	for _, rel := range paths {
-		// Every active path is derived from the validated slug plus a ReadDir
-		// entry name. Remove the lexical path so a symlink can never redirect
-		// deletion to its canonical target.
-		abs := filepath.Join(s.VaultRoot, filepath.FromSlash(rel))
-		if err := os.Remove(abs); err != nil && !os.IsNotExist(err) {
+	if rawRoot != nil {
+		entries, err := fs.ReadDir(rawRoot.FS(), ".")
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			if err := rawRoot.Remove(entry.Name()); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+		}
+		if err := rawRoot.Close(); err != nil {
+			return err
+		}
+		rawRoot = nil
+		currentRaw, err := datasetsRoot.Lstat(slug)
+		if err != nil {
+			return err
+		}
+		if currentRaw.Mode()&os.ModeSymlink != 0 || !os.SameFile(rawInfo, currentRaw) {
+			return fmt.Errorf("dataset raw path %q changed during purge", slug)
+		}
+		if err := datasetsRoot.Remove(slug); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 	}
-	if err := os.Remove(rawDir); err != nil && !os.IsNotExist(err) {
+	currentHandle, err := datasetsRoot.Lstat(handleName)
+	if err != nil {
+		return err
+	}
+	if currentHandle.Mode()&os.ModeSymlink != 0 || !os.SameFile(handleInfo, currentHandle) {
+		return fmt.Errorf("dataset handle %q changed during purge", handleRel)
+	}
+	if err := datasetsRoot.Remove(handleName); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	if err := s.DB.DeleteDataset(slug); err != nil {
 		return fmt.Errorf("delete dataset rows: %w", err)
 	}
+	handleAbs := filepath.Join(s.VaultRoot, filepath.FromSlash(handleRel))
 	if err := s.DeleteDocument(handleAbs); err != nil {
 		return fmt.Errorf("deindex dataset handle: %w", err)
 	}
 	return nil
 }
 
-func rejectDatasetPurgeSymlinks(root, rel string, allowMissingFinal bool) error {
-	parts := strings.Split(filepath.Clean(filepath.FromSlash(rel)), string(filepath.Separator))
-	current := root
-	for i, part := range parts {
-		current = filepath.Join(current, part)
-		info, err := os.Lstat(current)
-		if os.IsNotExist(err) && allowMissingFinal && i == len(parts)-1 {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			return fmt.Errorf("dataset purge path %s contains symlink component %q", rel, part)
-		}
-		if i < len(parts)-1 && !info.IsDir() {
-			return fmt.Errorf("dataset purge path %s has non-directory component %q", rel, part)
-		}
+func openVerifiedDatasetDir(parent *os.Root, name string) (*os.Root, error) {
+	before, err := parent.Lstat(name)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	if before.Mode()&os.ModeSymlink != 0 || !before.IsDir() {
+		return nil, fmt.Errorf("dataset purge path %q must be a directory, not a symlink", name)
+	}
+	child, err := parent.OpenRoot(name)
+	if err != nil {
+		return nil, err
+	}
+	after, err := child.Stat(".")
+	if err != nil {
+		_ = child.Close()
+		return nil, err
+	}
+	if !os.SameFile(before, after) {
+		_ = child.Close()
+		return nil, fmt.Errorf("dataset purge path %q changed during verification", name)
+	}
+	return child, nil
 }

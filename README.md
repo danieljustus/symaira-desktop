@@ -48,6 +48,36 @@ page; the near-term roadmap is in [docs/PLAN.md](docs/PLAN.md).
 
 Download the archive for your platform from the [latest GitHub Release](https://github.com/danieljustus/symaira-desktop/releases/latest), extract it, and place `symdesk` on your `PATH`.
 
+### Verify a GitHub Release
+
+Release archives and `checksums.txt` are signed with keyless Cosign using the
+GitHub Actions OIDC identity. Download the matching `.sig` and `.pem` files
+alongside the archive and checksum manifest, then verify them without a
+long-lived signing key:
+
+```sh
+VERSION=0.11.1
+ARCHIVE="symaira-desktop_${VERSION}_darwin_arm64.tar.gz"
+IDENTITY=https://github.com/danieljustus/symaira-desktop/.github/workflows/release.yml@refs/tags/v.*
+ISSUER=https://token.actions.githubusercontent.com
+
+cosign verify-blob "$ARCHIVE" \
+  --signature "$ARCHIVE.sig" \
+  --certificate "$ARCHIVE.pem" \
+  --certificate-identity-regexp "$IDENTITY" \
+  --certificate-oidc-issuer "$ISSUER"
+cosign verify-blob checksums.txt \
+  --signature checksums.txt.sig \
+  --certificate checksums.txt.pem \
+  --certificate-identity-regexp "$IDENTITY" \
+  --certificate-oidc-issuer "$ISSUER"
+shasum -a 256 -c checksums.txt
+```
+
+Repeat the archive verification command for the `.tar.gz` or `.zip` selected
+for your platform. The signature and certificate files are release assets;
+they are not included inside the archive.
+
 ### CLI from source
 
 ```sh

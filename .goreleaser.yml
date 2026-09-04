@@ -65,6 +65,24 @@ checksum:
   name_template: 'checksums.txt'
   algorithm: sha256
 
+# Keyless Cosign signatures are written beside every release artifact. The
+# release workflow grants GitHub Actions OIDC access; no signing key is stored.
+signs:
+  - cmd: cosign
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - --yes
+      - --output-signature
+      - "${artifact}.sig"
+      - --output-certificate
+      - "${artifact}.pem"
+      - "${artifact}"
+    artifacts: all
+    output: true
+
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 

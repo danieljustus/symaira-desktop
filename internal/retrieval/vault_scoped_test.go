@@ -113,11 +113,11 @@ func TestOpenForVaultMigratesLegacyIndexAtomically(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create legacy index: %v", err)
 	}
-	if err := legacy.Close(); err != nil {
+	if err := legacy.SaveDocument(&db.Document{Path: "legacy.md", Hash: "legacy-hash"}); err != nil {
+		_ = legacy.Close()
 		t.Fatal(err)
 	}
-	legacyInfo, err := os.Stat(legacyPath)
-	if err != nil {
+	if err := legacy.Close(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -132,11 +132,15 @@ func TestOpenForVaultMigratesLegacyIndexAtomically(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stat migrated index: %v", err)
 	}
-	if migratedInfo.Size() != legacyInfo.Size() {
-		t.Fatalf("migrated index size = %d, legacy size = %d", migratedInfo.Size(), legacyInfo.Size())
-	}
 	if migratedInfo.Mode().Perm() != 0o600 {
 		t.Fatalf("migrated index mode = %o, want 600", migratedInfo.Mode().Perm())
+	}
+	stats, err := client.db.GetStats()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stats.DocumentCount != 1 {
+		t.Fatalf("migrated document count = %d, want 1", stats.DocumentCount)
 	}
 	if _, err := os.Stat(legacyPath); !os.IsNotExist(err) {
 		t.Fatalf("legacy index still exists after migration: %v", err)
@@ -153,6 +157,43 @@ func TestOpenForVaultMigratesLegacyIndexAtomically(t *testing.T) {
 	}
 	if err := second.Close(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestOpenForVaultPreservesCorruptLegacyOnMigrationFailure(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "xdg-data"))
+	vaultRoot := t.TempDir()
+	legacyPath, err := desktopconfig.LegacyRetrievalDBPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(legacyPath), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	original := []byte("not a sqlite database")
+	if err := os.WriteFile(legacyPath, original, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if client, err := OpenForVault(vaultRoot); err == nil {
+		_ = client.Close()
+		t.Fatal("OpenForVault succeeded with corrupt legacy source")
+	}
+	got, err := os.ReadFile(legacyPath) //nolint:gosec // test-owned path
+	if err != nil {
+		t.Fatalf("legacy source was removed: %v", err)
+	}
+	if string(got) != string(original) {
+		t.Fatalf("legacy source changed: %q", got)
+	}
+	newPath, err := IndexPathForVault(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(newPath); !os.IsNotExist(err) {
+		t.Fatalf("invalid destination survived failed migration: %v", err)
 	}
 }
 

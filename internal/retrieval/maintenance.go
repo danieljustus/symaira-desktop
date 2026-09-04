@@ -6,38 +6,62 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/danieljustus/symaira-corekit/sqlitekit"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/config"
 )
 
-// IndexLocation returns the actual shared retrieval database path. The path is
-// derived from the same location used by the absorbed retrieval store.
+// IndexLocation returns the effective standalone retrieval database path.
 func IndexLocation() (string, error) {
-	cfg, err := config.Load()
+	return IndexLocationForVault("")
+}
+
+// IndexLocationForVault returns the effective retrieval database path for a
+// vault without opening it. An explicit IndexPath remains authoritative.
+func IndexLocationForVault(vaultRoot string) (string, error) {
+	cfg, err := config.Reload()
 	if err != nil {
 		return "", err
 	}
-	return configuredIndexPath(cfg)
+	if cfg != nil && strings.TrimSpace(cfg.IndexPath) != "" {
+		return configuredIndexPath(cfg)
+	}
+	if strings.TrimSpace(vaultRoot) == "" {
+		return configuredIndexPath(cfg)
+	}
+	return vaultIndexPath(vaultRoot)
 }
 
-// BackupIndex copies the closed retrieval database to destination. It is a
-// file-level backup of the derived index; Markdown remains the source of truth.
+// BackupIndex snapshots the standalone retrieval database to destination.
 func BackupIndex(destination string) error {
-	location, err := IndexLocation()
+	return BackupIndexForVault("", destination)
+}
+
+// BackupIndexForVault creates a consistent SQLite snapshot of the effective
+// vault index, including committed rows still present in its WAL.
+func BackupIndexForVault(vaultRoot, destination string) error {
+	location, err := IndexLocationForVault(vaultRoot)
 	if err != nil {
 		return err
 	}
 	if err := ensureIndexExists(location); err != nil {
 		return err
 	}
-	return copyIndexFile(location, destination)
+	return snapshotIndexFile(location, destination)
 }
 
-// RestoreIndex atomically replaces the derived retrieval database with a
-// validated regular-file backup. The backup is never modified. Callers should
-// ensure no long-lived retrieval client is open while restoring.
+// RestoreIndex atomically replaces the standalone retrieval database with a
+// validated regular-file backup.
 func RestoreIndex(source string) error {
-	location, err := IndexLocation()
+	return RestoreIndexForVault("", source)
+}
+
+// RestoreIndexForVault restores the effective vault index from a snapshot.
+// The backup is never modified. Callers must ensure no long-lived client is
+// open while restoring.
+func RestoreIndexForVault(vaultRoot, source string) error {
+	location, err := IndexLocationForVault(vaultRoot)
 	if err != nil {
 		return err
 	}
@@ -54,12 +78,16 @@ func RestoreIndex(source string) error {
 	return copyIndexFile(source, location)
 }
 
-// RelocateIndex moves the derived retrieval database and persists its new
-// location in the user configuration. The source database is copied before
-// configuration is changed, so a failed copy leaves the current location in
-// effect.
+// RelocateIndex moves the standalone retrieval database and persists its new
+// location in user configuration.
 func RelocateIndex(destination string) error {
-	location, err := IndexLocation()
+	return RelocateIndexForVault("", destination)
+}
+
+// RelocateIndexForVault snapshots the effective vault index before switching
+// the explicit global IndexPath. A failed snapshot leaves configuration intact.
+func RelocateIndexForVault(vaultRoot, destination string) error {
+	location, err := IndexLocationForVault(vaultRoot)
 	if err != nil {
 		return err
 	}
@@ -70,7 +98,7 @@ func RelocateIndex(destination string) error {
 	if err := ensureIndexExists(location); err != nil {
 		return err
 	}
-	if err := copyIndexFile(location, destination); err != nil {
+	if err := snapshotIndexFile(location, destination); err != nil {
 		return err
 	}
 	cfg, err := config.Load()
@@ -91,6 +119,56 @@ func ensureIndexExists(path string) error {
 	}
 	if !info.Mode().IsRegular() {
 		return fmt.Errorf("retrieval index is not a regular file: %s", path)
+	}
+	return nil
+}
+
+func snapshotIndexFile(source, destination string) error {
+	if filepath.Clean(source) == filepath.Clean(destination) {
+		return fmt.Errorf("source and destination are the same index file")
+	}
+	if err := ensureIndexExists(source); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(destination), 0o700); err != nil {
+		return fmt.Errorf("create index directory: %w", err)
+	}
+
+	placeholder, err := os.CreateTemp(filepath.Dir(destination), ".symdesk-snapshot-*.db")
+	if err != nil {
+		return fmt.Errorf("create snapshot path: %w", err)
+	}
+	tmpName := placeholder.Name()
+	if err := placeholder.Close(); err != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("close snapshot placeholder: %w", err)
+	}
+	if err := os.Remove(tmpName); err != nil {
+		return fmt.Errorf("prepare snapshot path: %w", err)
+	}
+	defer func() { _ = os.Remove(tmpName) }()
+
+	conn, err := sqlitekit.Open(source)
+	if err != nil {
+		return fmt.Errorf("open retrieval index for snapshot: %w", err)
+	}
+	quoted := strings.ReplaceAll(tmpName, "'", "''")
+	_, snapshotErr := conn.Exec("VACUUM INTO '" + quoted + "'") // #nosec G202 -- generated path is SQL-quoted above.
+	closeErr := conn.Close()
+	if snapshotErr != nil {
+		return fmt.Errorf("snapshot retrieval index: %w", snapshotErr)
+	}
+	if closeErr != nil {
+		return fmt.Errorf("close retrieval snapshot source: %w", closeErr)
+	}
+	if err := os.Chmod(tmpName, 0o600); err != nil {
+		return fmt.Errorf("protect retrieval snapshot: %w", err)
+	}
+	if err := validateSQLiteHeader(tmpName); err != nil {
+		return err
+	}
+	if err := os.Rename(tmpName, destination); err != nil {
+		return fmt.Errorf("replace retrieval snapshot: %w", err)
 	}
 	return nil
 }

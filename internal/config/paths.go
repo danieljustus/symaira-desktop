@@ -28,13 +28,14 @@ const (
 // StorePaths contains the resolved filesystem locations for every absorbed store
 // as well as the application base directories.
 type StorePaths struct {
-	DataDir   string `json:"data_dir,omitempty"`
-	ConfigDir string `json:"config_dir,omitempty"`
-	CacheDir  string `json:"cache_dir,omitempty"`
-	Sidecar   string `json:"sidecar"`
-	Retrieval string `json:"retrieval"`
-	Ingest    string `json:"ingest"`
-	Contacts  string `json:"contacts"`
+	DataDir       string `json:"data_dir,omitempty"`
+	ConfigDir     string `json:"config_dir,omitempty"`
+	CacheDir      string `json:"cache_dir,omitempty"`
+	Sidecar       string `json:"sidecar"`
+	Retrieval     string `json:"retrieval"`
+	Ingest        string `json:"ingest"`
+	IngestArchive string `json:"ingest_archive"`
+	Contacts      string `json:"contacts"`
 }
 
 // UserHomeDir returns os.UserHomeDir() or wraps any error with "user home dir: ...".
@@ -153,9 +154,15 @@ func LegacyContactsCacheDir() string {
 	return filepath.Join(CacheHome(), LegacyContactsAppName)
 }
 
-// LegacyRetrievalDataDir returns $XDG_DATA_HOME/symaira-seek.
+// LegacyRetrievalDataDir returns the pre-absorption fixed
+// $HOME/.local/share/symaira-seek directory. The standalone implementation
+// did not follow XDG_DATA_HOME, so changing this with XDG would miss upgrades.
 func LegacyRetrievalDataDir() string {
-	return filepath.Join(DataHome(), LegacyRetrievalAppName)
+	home, err := UserHomeDir()
+	if err != nil {
+		return filepath.Join(".", ".local", "share", LegacyRetrievalAppName)
+	}
+	return filepath.Join(home, ".local", "share", LegacyRetrievalAppName)
 }
 
 // LegacyRetrievalConfigDir returns $XDG_CONFIG_HOME/symseek.
@@ -298,6 +305,9 @@ func SidecarPath(vaultRoot string) (string, error) {
 
 func isTemporaryVault(path string) bool {
 	tmp := filepath.Clean(os.TempDir())
+	if resolved, err := filepath.EvalSymlinks(tmp); err == nil {
+		tmp = resolved
+	}
 	rel, err := filepath.Rel(tmp, filepath.Clean(path))
 	if err != nil {
 		return false
@@ -323,7 +333,10 @@ func RetrievalPath(vaultRoot string) (string, error) {
 	}
 	primary := filepath.Join(dataHome, AppName, "retrieval.db")
 	primaryOldName := filepath.Join(dataHome, AppName, "symseek.db")
-	legacy := filepath.Join(dataHome, LegacyRetrievalAppName, "symseek.db")
+	legacy, err := LegacyRetrievalDBPath()
+	if err != nil {
+		return "", err
+	}
 	return resolveWithLegacyFallback(primary, primaryOldName, legacy), nil
 }
 
@@ -331,11 +344,11 @@ func RetrievalPath(vaultRoot string) (string, error) {
 // Migration code uses this instead of RetrievalPath("") so a valid unified
 // standalone symdesk/retrieval.db is never mistaken for disposable legacy data.
 func LegacyRetrievalDBPath() (string, error) {
-	dataHome, err := ResolveDataHome()
+	home, err := UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dataHome, LegacyRetrievalAppName, "symseek.db"), nil
+	return filepath.Join(home, ".local", "share", LegacyRetrievalAppName, "symseek.db"), nil
 }
 
 // ResolveStorePaths resolves the filesystem locations for all absorbed stores.
@@ -352,15 +365,20 @@ func ResolveStorePaths(vaultRoot string) (StorePaths, error) {
 	if err != nil {
 		return StorePaths{}, err
 	}
+	ingestArchive, err := IngestDataPath("archive")
+	if err != nil {
+		return StorePaths{}, err
+	}
 	contactsPath := ContactsDBPath()
 
 	return StorePaths{
-		DataDir:   DataDir(),
-		ConfigDir: ConfigDir(),
-		CacheDir:  CacheDir(),
-		Sidecar:   sidecarPath,
-		Retrieval: retrievalPath,
-		Ingest:    ingestPath,
-		Contacts:  contactsPath,
+		DataDir:       DataDir(),
+		ConfigDir:     ConfigDir(),
+		CacheDir:      CacheDir(),
+		Sidecar:       sidecarPath,
+		Retrieval:     retrievalPath,
+		Ingest:        ingestPath,
+		IngestArchive: ingestArchive,
+		Contacts:      contactsPath,
 	}, nil
 }

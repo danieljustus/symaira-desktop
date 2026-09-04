@@ -144,6 +144,37 @@ func defaultDataPath(name string) (string, error) {
 	return desktopconfig.IngestDataPath(name)
 }
 
+// DataPaths are the effective writable ingest database and archive paths.
+type DataPaths struct {
+	Database string `json:"database"`
+	Archive  string `json:"archive"`
+}
+
+// ResolveDataPaths resolves ingest configuration and environment overrides
+// without opening a store or writing files.
+func ResolveDataPaths(vaultRoot string) (DataPaths, error) {
+	cfg, err := config.Loader.Reload()
+	if err != nil {
+		return DataPaths{}, fmt.Errorf("reload symingest configuration: %w", err)
+	}
+	vaultRoot = firstNonEmpty(vaultRoot, cfg.Vault)
+	archive := cfg.ArchivePath
+	if archive == "" {
+		if vaultRoot != "" {
+			archive = filepath.Join(vaultRoot, "archive", "ingest")
+		} else if archive, err = defaultDataPath("archive"); err != nil {
+			return DataPaths{}, err
+		}
+	}
+	database := cfg.DBPath
+	if database == "" {
+		if database, err = defaultDataPath("symingest.db"); err != nil {
+			return DataPaths{}, err
+		}
+	}
+	return DataPaths{Database: database, Archive: archive}, nil
+}
+
 // ArchivePath reports where symingest preserves original files, resolved the
 // same way the CLI resolves it. The default is inside the configured vault;
 // callers that configure an explicit shared archive receive that path instead.

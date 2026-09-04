@@ -8,6 +8,9 @@ import (
 	"strconv"
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/ingest"
+	"github.com/danieljustus/symaira-desktop/internal/retrieval"
+	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/spf13/cobra"
 )
 
@@ -42,6 +45,20 @@ func newConfigCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			sp.Sidecar, err = sidecar.PathForVault(vRoot)
+			if err != nil {
+				return err
+			}
+			sp.Retrieval, err = retrieval.IndexLocationForVault(vRoot)
+			if err != nil {
+				return err
+			}
+			ingestPaths, err := ingest.ResolveDataPaths(vRoot)
+			if err != nil {
+				return err
+			}
+			sp.Ingest = ingestPaths.Database
+			sp.IngestArchive = ingestPaths.Archive
 			if jsonFlag {
 				b, err := json.MarshalIndent(sp, "", "  ")
 				if err != nil {
@@ -56,6 +73,7 @@ func newConfigCmd() *cobra.Command {
 			fmt.Printf("sidecar: %s\n", sp.Sidecar)
 			fmt.Printf("retrieval: %s\n", sp.Retrieval)
 			fmt.Printf("ingest: %s\n", sp.Ingest)
+			fmt.Printf("ingest_archive: %s\n", sp.IngestArchive)
 			fmt.Printf("contacts: %s\n", sp.Contacts)
 			return nil
 		},

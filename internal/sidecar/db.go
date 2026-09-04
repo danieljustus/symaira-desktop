@@ -28,20 +28,35 @@ func VaultDir(vaultRoot string) (string, error) {
 	return config.SidecarVaultDir(vaultRoot)
 }
 
-// OpenForVault keeps rebuildable indexes isolated per vault. This prevents a
-// configured vault from listing or searching rows indexed for another vault.
-func OpenForVault(vaultRoot string) (*DB, error) {
-	if explicit := os.Getenv("SYMDESK_SIDECAR"); explicit != "" {
-		return Open(explicit)
+// PathForVault returns the effective sidecar path without opening it.
+func PathForVault(vaultRoot string) (string, error) {
+	if explicit := strings.TrimSpace(os.Getenv("SYMDESK_SIDECAR")); explicit != "" {
+		return explicit, nil
+	}
+	if strings.TrimSpace(vaultRoot) == "" {
+		return config.SidecarPath("")
 	}
 	dir, err := VaultDir(vaultRoot)
 	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "sidecar.db"), nil
+}
+
+// OpenForVault keeps rebuildable indexes isolated per vault. This prevents a
+// configured vault from listing or searching rows indexed for another vault.
+func OpenForVault(vaultRoot string) (*DB, error) {
+	explicit := strings.TrimSpace(os.Getenv("SYMDESK_SIDECAR"))
+	path, err := PathForVault(vaultRoot)
+	if err != nil {
 		return nil, err
 	}
-	path := filepath.Join(dir, "sidecar.db")
 	db, err := Open(path)
 	if err != nil {
 		return nil, err
+	}
+	if explicit != "" {
+		return db, nil
 	}
 	canonical, canonicalErr := filepath.Abs(vaultRoot)
 	if canonicalErr != nil {

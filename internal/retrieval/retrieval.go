@@ -204,19 +204,34 @@ func migrateLegacyIndex(newPath string) error {
 	if !info.Mode().IsRegular() {
 		return fmt.Errorf("legacy retrieval index is not a regular file: %s", legacyPath)
 	}
-	if err := copyIndexFile(legacyPath, newPath); err != nil {
+	if err := snapshotIndexFile(legacyPath, newPath); err != nil {
 		return err
 	}
+	validated, err := db.OpenAt(newPath)
+	if err != nil {
+		_ = removeSQLiteArtifacts(newPath)
+		return fmt.Errorf("validate migrated retrieval index: %w", err)
+	}
+	if err := validated.Close(); err != nil {
+		_ = removeSQLiteArtifacts(newPath)
+		return fmt.Errorf("close validated retrieval index: %w", err)
+	}
 	if removeSource {
-		if err := os.Remove(legacyPath); err != nil {
-			if cleanupErr := os.Remove(newPath); cleanupErr != nil {
-				return fmt.Errorf("remove migrated legacy retrieval index: %w (remove incomplete destination: %v)", err, cleanupErr)
-			}
+		if err := removeSQLiteArtifacts(legacyPath); err != nil {
 			return fmt.Errorf("remove migrated legacy retrieval index: %w", err)
 		}
 		slog.Info("migrated pre-absorption retrieval index to per-vault location", "legacy_path", legacyPath, "new_path", newPath)
 	} else {
 		slog.Info("seeded per-vault retrieval index from standalone store", "standalone_path", legacyPath, "new_path", newPath)
+	}
+	return nil
+}
+
+func removeSQLiteArtifacts(path string) error {
+	for _, candidate := range []string{path, path + "-wal", path + "-shm"} {
+		if err := os.Remove(candidate); err != nil && !os.IsNotExist(err) {
+			return err
+		}
 	}
 	return nil
 }

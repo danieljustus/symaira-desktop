@@ -51,6 +51,7 @@ Output:
   "sidecar": "/Users/username/.local/share/symdesk/vaults/<hash>/sidecar.db",
   "retrieval": "/Users/username/.local/share/symdesk/vaults/<hash>/retrieval.db",
   "ingest": "/Users/username/.local/share/symdesk/symingest.db",
+  "ingest_archive": "/path/to/vault/archive/ingest",
   "contacts": "/Users/username/.local/share/symdesk/symrelate.db"
 }
 ```
@@ -72,10 +73,18 @@ The resolved paths and their classification:
   `symdesk/retrieval.db` without a vault; legacy fallback:
   `~/.local/share/symaira-seek/symseek.db`). Vector and BM25 index.
   **REBUILDABLE**.
-- **Archive directory**: `<vault>/archive/ingest/` by default (vault-relative,
+- **Archive directory** (`ingest_archive`): `<vault>/archive/ingest/` by default (vault-relative,
   so included in vault backups). When configured outside the vault, falls back
   to `~/.local/share/symdesk/archive` (legacy fallback:
   `~/.local/share/symingest/archive`). **PRECIOUS** — back this up.
+
+`config paths` reports configured sidecar, retrieval, ingest database, ingest
+archive, and contacts overrides as the effective paths. To snapshot the active
+retrieval SQLite database consistently, including committed WAL contents, run:
+
+```sh
+symdesk --vault /path/to/vault index maintenance backup --output retrieval-backup.db
+```
 
 ## Restore walkthrough
 

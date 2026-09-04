@@ -22,7 +22,7 @@ The vault directory contains the Markdown notes with YAML frontmatter. This is t
 
 The sidecar index powers search, backlinks, and views. It is derived from the vault.
 
-- **Default path:** `~/.local/share/symdesk/vaults/<hash>/sidecar.db` (run `symdesk config paths --json` to inspect).
+- **Default path:** `~/.local/share/symdesk/vaults/<hash>/sidecar.db` (run `symdesk --vault /path/to/vault config paths --json` to inspect effective overrides).
 - **Backup:** Not strictly required.
 - **Restore:** After restoring the vault, run `symdesk index` to rebuild the sidecar.
 
@@ -35,6 +35,16 @@ symingest keeps the original PDFs/images/EMLs it consumed. These are the raw sou
 - **Shared archive:** a deliberately global archive (shared between vaults) is configured by setting `Options.Archive` / `SYMINGEST_ARCHIVE_PATH` to an explicit outside-the-vault directory. In that case the note's `archive_path` is kept absolute because the vault has no way to resolve a relative one.
 - **Backup:** Must be included in your backup. With the default vault-relative layout, a single vault backup covers both notes and archived originals.
 - **Restore:** Copy the archive directory back to the same path. If the path changes, update `SYMINGEST_ARCHIVE_PATH` or the config file.
+
+### 3b. Retrieval index — REBUILDABLE
+
+The per-vault retrieval database is reported as `retrieval` by `config paths`.
+It can be rebuilt, but a consistent SQLite snapshot (including committed WAL
+content) can be created explicitly:
+
+```sh
+symdesk --vault /path/to/vault index maintenance backup --output retrieval-backup.db
+```
 
 ### 4. symingest database and queue — PRECIOUS
 

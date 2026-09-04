@@ -105,7 +105,7 @@ func TestSidecarVaultDirDistinguishesTemporaryAndPersistentVaults(t *testing.T) 
 		t.Fatalf("persistent vault sidecar = %q, want below %q", persistentDir, wantRoot)
 	}
 
-	temporaryVault := filepath.Join(os.TempDir(), "symdesk-temporary-vault")
+	temporaryVault := t.TempDir()
 	temporaryDir, err := SidecarVaultDir(temporaryVault)
 	if err != nil {
 		t.Fatalf("SidecarVaultDir(temporary) error = %v", err)
@@ -215,10 +215,12 @@ func TestPaths_LegacyContactsFallback(t *testing.T) {
 }
 
 func TestPaths_LegacyRetrievalFallback(t *testing.T) {
+	home := t.TempDir()
 	dataHome := t.TempDir()
+	t.Setenv("HOME", home)
 	t.Setenv("XDG_DATA_HOME", dataHome)
 
-	legacyDir := filepath.Join(dataHome, "symaira-seek")
+	legacyDir := filepath.Join(home, ".local", "share", "symaira-seek")
 	if err := os.MkdirAll(legacyDir, 0700); err != nil {
 		t.Fatal(err)
 	}
@@ -298,6 +300,9 @@ func TestResolveStorePaths(t *testing.T) {
 	}
 	if paths.Ingest != filepath.Join(dataHome, "symdesk", "symingest.db") {
 		t.Errorf("Ingest = %q", paths.Ingest)
+	}
+	if paths.IngestArchive != filepath.Join(dataHome, "symdesk", "archive") {
+		t.Errorf("IngestArchive = %q", paths.IngestArchive)
 	}
 	if paths.Contacts != filepath.Join(dataHome, "symdesk", "symrelate.db") {
 		t.Errorf("Contacts = %q", paths.Contacts)

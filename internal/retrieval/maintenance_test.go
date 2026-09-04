@@ -1,10 +1,53 @@
 package retrieval
 
 import (
+	"database/sql"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
+
+	retrievaldb "github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 )
+
+func TestBackupIndexForVaultIncludesCommittedWAL(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
+	vaultRoot := t.TempDir()
+	indexPath, err := IndexPathForVault(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	live, err := retrievaldb.OpenAt(indexPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = live.Close() }()
+	if err := live.SaveDocument(&retrievaldb.Document{Path: "wal-only.md", Hash: "hash", UpdatedAt: time.Now().UTC()}); err != nil {
+		t.Fatal(err)
+	}
+	if info, err := os.Stat(indexPath + "-wal"); err != nil || info.Size() == 0 {
+		t.Fatalf("expected non-empty WAL before snapshot: info=%v err=%v", info, err)
+	}
+
+	backup := filepath.Join(t.TempDir(), "vault-backup.db")
+	if err := BackupIndexForVault(vaultRoot, backup); err != nil {
+		t.Fatalf("BackupIndexForVault: %v", err)
+	}
+	copyDB, err := sql.Open("sqlite", backup)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = copyDB.Close() }()
+	var count int
+	if err := copyDB.QueryRow("SELECT COUNT(*) FROM documents WHERE path = 'wal-only.md'").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("backup document count = %d, want 1", count)
+	}
+}
 
 func TestCopyIndexFileIsAtomicAndPrivate(t *testing.T) {
 	dir := t.TempDir()

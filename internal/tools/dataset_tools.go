@@ -91,12 +91,14 @@ func newDatasetSyncTool(getService ServiceFactory) *Tool {
 	return &Tool{
 		Name:        "desk_dataset_sync",
 		Description: "Persists producer rows into a Markdown-backed dataset. Every row must have an explicit identity and every sync must include source_name, source_sha256 and imported_at provenance; repeated provenance is idempotent.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"dataset":{"type":"string"},"title":{"type":"string"},"identity_field":{"type":"string"},"schema":{"type":"object"},"provenance":{"type":"object","properties":{"imported_at":{"type":"string"},"source_name":{"type":"string"},"source_sha256":{"type":"string"}},"required":["imported_at","source_name","source_sha256"],"additionalProperties":false},"rows":{"type":"array","items":{"type":"object","properties":{"identity":{"type":"string"},"values":{"type":"object"}},"required":["identity","values"],"additionalProperties":false}}},"required":["dataset","identity_field","provenance","rows"],"additionalProperties":false}`),
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"dataset":{"type":"string"},"title":{"type":"string"},"identity_field":{"type":"string"},"sensitivity":{"type":"string","enum":["public","internal","confidential","restricted"]},"retention_rule":{"type":"string"},"schema":{"type":"object"},"provenance":{"type":"object","properties":{"imported_at":{"type":"string"},"source_name":{"type":"string"},"source_sha256":{"type":"string"}},"required":["imported_at","source_name","source_sha256"],"additionalProperties":false},"rows":{"type":"array","items":{"type":"object","properties":{"identity":{"type":"string"},"values":{"type":"object"}},"required":["identity","values"],"additionalProperties":false}}},"required":["dataset","identity_field","provenance","rows"],"additionalProperties":false}`),
 		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
 			var args struct {
 				Dataset       string                            `json:"dataset"`
 				Title         string                            `json:"title"`
 				IdentityField string                            `json:"identity_field"`
+				Sensitivity   string                            `json:"sensitivity"`
+				RetentionRule string                            `json:"retention_rule"`
 				Schema        map[string]dbviews.PropertyConfig `json:"schema"`
 				Provenance    datasetProvenance                 `json:"provenance"`
 				Rows          []service.DatasetSyncRow          `json:"rows"`
@@ -112,7 +114,7 @@ func newDatasetSyncTool(getService ServiceFactory) *Tool {
 				return nil, err
 			}
 			defer func() { _ = db.Close() }()
-			return svc.DatasetSync(service.DatasetSyncOptions{Slug: args.Dataset, Title: args.Title, IdentityField: args.IdentityField, Schema: args.Schema, Provenance: args.Provenance.Provenance(), Rows: args.Rows})
+			return svc.DatasetSync(service.DatasetSyncOptions{Slug: args.Dataset, Title: args.Title, IdentityField: args.IdentityField, Schema: args.Schema, Sensitivity: args.Sensitivity, RetentionRule: args.RetentionRule, Provenance: args.Provenance.Provenance(), Rows: args.Rows})
 		},
 	}
 }

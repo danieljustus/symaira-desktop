@@ -32,6 +32,8 @@ type DatasetSummary struct {
 	Rows          int                               `json:"rows"`
 	Columns       map[string]dbviews.PropertyConfig `json:"columns"`
 	IdentityField string                            `json:"identity_field,omitempty"`
+	Sensitivity   string                            `json:"sensitivity"`
+	RetentionRule string                            `json:"retention_rule"`
 	Provenance    dataset.Provenance                `json:"provenance"`
 }
 
@@ -39,7 +41,6 @@ type DatasetDescription struct {
 	DatasetSummary
 	Coverage       dataset.Coverage `json:"coverage"`
 	RefreshCommand string           `json:"refresh_command,omitempty"`
-	Sensitivity    string           `json:"sensitivity,omitempty"`
 }
 
 type DatasetAggregate struct {
@@ -79,6 +80,8 @@ type DatasetSyncOptions struct {
 	IdentityField string
 	Schema        map[string]dbviews.PropertyConfig
 	Provenance    dataset.Provenance
+	Sensitivity   string
+	RetentionRule string
 	Rows          []DatasetSyncRow
 }
 
@@ -162,11 +165,11 @@ func (s *Service) DatasetDescribe(slug string) (*DatasetDescription, error) {
 		rows = count
 	}
 	summary := datasetSummary(*handle, rows)
-	return &DatasetDescription{DatasetSummary: summary, Coverage: handle.Coverage, RefreshCommand: handle.RefreshCommand, Sensitivity: handle.Sensitivity}, nil
+	return &DatasetDescription{DatasetSummary: summary, Coverage: handle.Coverage, RefreshCommand: handle.RefreshCommand}, nil
 }
 
 func datasetSummary(handle dataset.Handle, rows int) DatasetSummary {
-	return DatasetSummary{Slug: handle.Slug, Title: handle.Title, Path: handle.Path, Source: handle.Source, Rows: rows, Columns: handle.Schema, IdentityField: handle.IdentityField, Provenance: handle.Provenance}
+	return DatasetSummary{Slug: handle.Slug, Title: handle.Title, Path: handle.Path, Source: handle.Source, Rows: rows, Columns: handle.Schema, IdentityField: handle.IdentityField, Sensitivity: handle.Sensitivity, RetentionRule: handle.RetentionRule, Provenance: handle.Provenance}
 }
 
 func (s *Service) DatasetQuery(slug string, opts DatasetQueryOptions) (*DatasetQueryResult, error) {
@@ -316,6 +319,10 @@ func (s *Service) DatasetSync(opts DatasetSyncOptions) (*DatasetSyncResult, erro
 	if s == nil || strings.TrimSpace(s.VaultRoot) == "" || s.DB == nil {
 		return nil, errors.New("dataset sync requires a vault and sidecar")
 	}
+	sensitivity, retentionRule, err := datasetPolicy(opts.Sensitivity, opts.RetentionRule)
+	if err != nil {
+		return nil, err
+	}
 	if strings.TrimSpace(opts.IdentityField) == "" {
 		return nil, errors.New("dataset sync requires an identity field")
 	}
@@ -394,11 +401,10 @@ func (s *Service) DatasetSync(opts DatasetSyncOptions) (*DatasetSyncResult, erro
 	if existing != nil {
 		created = existing.Created
 	}
-	handle := &dataset.Handle{Slug: slug, Title: title, Created: created, Source: rawPath, Schema: schema, Provenance: opts.Provenance, IdentityField: opts.IdentityField}
+	handle := &dataset.Handle{Slug: slug, Title: title, Created: created, Source: rawPath, Schema: schema, Provenance: opts.Provenance, IdentityField: opts.IdentityField, Sensitivity: sensitivity, RetentionRule: retentionRule}
 	if existing != nil {
 		handle.Coverage = existing.Coverage
 		handle.RefreshCommand = existing.RefreshCommand
-		handle.Sensitivity = existing.Sensitivity
 	}
 	encoded, err := handle.Render()
 	if err != nil {

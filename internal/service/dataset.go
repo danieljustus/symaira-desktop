@@ -27,16 +27,19 @@ type DatasetImportOptions struct {
 	Schema         map[string]dbviews.PropertyConfig
 	RefreshCommand string
 	Sensitivity    string
+	RetentionRule  string
 	Now            time.Time
 }
 
 type DatasetImportResult struct {
-	HandlePath   string                            `json:"handle_path"`
-	RawPath      string                            `json:"raw_path"`
-	Slug         string                            `json:"slug"`
-	Rows         int                               `json:"rows"`
-	Columns      map[string]dbviews.PropertyConfig `json:"columns"`
-	SourceSHA256 string                            `json:"source_sha256"`
+	HandlePath    string                            `json:"handle_path"`
+	RawPath       string                            `json:"raw_path"`
+	Slug          string                            `json:"slug"`
+	Rows          int                               `json:"rows"`
+	Columns       map[string]dbviews.PropertyConfig `json:"columns"`
+	SourceSHA256  string                            `json:"source_sha256"`
+	Sensitivity   string                            `json:"sensitivity"`
+	RetentionRule string                            `json:"retention_rule"`
 }
 
 // DatasetImport explicitly stores a CSV as a raw vault asset, writes its
@@ -48,6 +51,10 @@ func (s *Service) DatasetImport(source string, opts DatasetImportOptions) (*Data
 	}
 	if s.DB == nil {
 		return nil, errors.New("dataset import requires a sidecar")
+	}
+	sensitivity, retentionRule, err := datasetPolicy(opts.Sensitivity, opts.RetentionRule)
+	if err != nil {
+		return nil, err
 	}
 	info, err := os.Stat(source)
 	if err != nil {
@@ -101,7 +108,8 @@ func (s *Service) DatasetImport(source string, opts DatasetImportOptions) (*Data
 		Provenance:     dataset.Provenance{ImportedAt: now.Format(time.RFC3339), SourceName: filepath.Base(source), SourceSHA256: sha256Hex(data)},
 		IdentityField:  opts.IdentityField,
 		RefreshCommand: opts.RefreshCommand,
-		Sensitivity:    opts.Sensitivity,
+		Sensitivity:    sensitivity,
+		RetentionRule:  retentionRule,
 	}
 	if existing, readErr := readDatasetHandle(s.VaultRoot, handleRel); readErr == nil {
 		handle.Created = existing.Created
@@ -135,7 +143,7 @@ func (s *Service) DatasetImport(source string, opts DatasetImportOptions) (*Data
 	} else {
 		return nil, fmt.Errorf("parse dataset handle: %w", parseErr)
 	}
-	return &DatasetImportResult{HandlePath: handleRel, RawPath: rawPath, Slug: slug, Rows: uniqueDatasetRowCount(materialized), Columns: schema, SourceSHA256: sha256Hex(data)}, nil
+	return &DatasetImportResult{HandlePath: handleRel, RawPath: rawPath, Slug: slug, Rows: uniqueDatasetRowCount(materialized), Columns: schema, SourceSHA256: sha256Hex(data), Sensitivity: sensitivity, RetentionRule: retentionRule}, nil
 }
 
 // RebuildDatasets recreates every dataset's derived rows from raw vault files.

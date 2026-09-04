@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/danieljustus/symaira-desktop/internal/dataset"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -31,6 +32,9 @@ func TestDatasetImportIsTypedIdempotentAndRebuildable(t *testing.T) {
 	}
 	if first.Rows != 2 || first.RawPath != "datasets/orders/2026-01-04.csv" || first.HandlePath != "datasets/orders.md" {
 		t.Fatalf("unexpected first import: %#v", first)
+	}
+	if first.Sensitivity != dataset.DefaultSensitivity || first.RetentionRule != dataset.DefaultRetentionRule {
+		t.Fatalf("dataset import did not apply conservative policy defaults: %#v", first)
 	}
 	rawAbs, err := vault.SecurePath(vaultRoot, first.RawPath)
 	if err != nil {

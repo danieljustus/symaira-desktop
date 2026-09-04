@@ -9,7 +9,7 @@ import (
 func newExportCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export",
-		Short: "Export a note or view to PDF or HTML",
+		Short: "Export a note or view to PDF, HTML, or CSV",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			vRoot, db, err := initServiceDeps()
 			if err != nil {
@@ -34,7 +34,7 @@ func newExportCmd() *cobra.Command {
 	cmd.Flags().String("note", "", "vault-relative note path")
 	cmd.Flags().String("view", "", "view id")
 	cmd.Flags().String("output", "", "output file path")
-	cmd.Flags().String("format", "pdf", "pdf or html")
+	cmd.Flags().String("format", "pdf", "pdf, html, or csv")
 	cmd.Flags().String("profile", "", "symprint profile for PDF")
 	cmd.MarkFlagsMutuallyExclusive("note", "view")
 	cmd.AddCommand(newExportProfilesCmd())

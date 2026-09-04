@@ -722,8 +722,8 @@ func newVaultHealthTool(getService ServiceFactory) *Tool {
 func newExportTool(getService ServiceFactory) *Tool {
 	return &Tool{
 		Name:        "desk_export",
-		Description: "Exports a note or view to PDF or HTML. Provide either note or view, not both.",
-		InputSchema: json.RawMessage(`{"type":"object","properties":{"note":{"type":"string","description":"vault-relative note path"},"view":{"type":"string","description":"view id"},"output":{"type":"string","description":"output file path"},"format":{"type":"string","enum":["pdf","html"]},"profile":{"type":"string","description":"symprint profile for PDF"}},"oneOf":[{"required":["note"]},{"required":["view"]}]}`),
+		Description: "Exports a note or view to PDF, HTML, or CSV. Dataset-backed views are subject to the configured sensitivity gate. Provide either note or view, not both.",
+		InputSchema: json.RawMessage(`{"type":"object","properties":{"note":{"type":"string","description":"vault-relative note path"},"view":{"type":"string","description":"view id"},"output":{"type":"string","description":"output file path"},"format":{"type":"string","enum":["pdf","html","csv"]},"profile":{"type":"string","description":"symprint profile for PDF"}},"oneOf":[{"required":["note"]},{"required":["view"]}]}`),
 		Handler: func(ctx context.Context, input json.RawMessage) (any, error) {
 			var args struct {
 				Note    string `json:"note"`

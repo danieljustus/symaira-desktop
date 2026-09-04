@@ -66,6 +66,9 @@ func (s *Service) ViewsExportCSV(viewID string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("views export csv: %w", err)
 	}
+	if err := s.checkDatasetExport(view); err != nil {
+		return nil, err
+	}
 
 	rows, err := s.ViewsExec(viewID)
 	if err != nil {

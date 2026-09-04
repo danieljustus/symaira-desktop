@@ -157,9 +157,10 @@ var (
 	indexStatusTimeout   time.Duration
 	indexStatusWorker    bool
 
-	indexStatusRetrievalFunc = defaultIndexStatusRetrieval
-	indexStatusVaultWalkFunc = defaultIndexStatusVaultWalk
-	indexStatusDocumentsFunc = defaultIndexStatusDocuments
+	indexStatusRetrievalFunc   = defaultIndexStatusRetrieval
+	indexStatusVaultWalkFunc   = defaultIndexStatusVaultWalk
+	indexStatusDocumentsFunc   = defaultIndexStatusDocuments
+	indexStatusSidecarOpenFunc = sidecar.OpenForVault
 )
 
 func defaultIndexStatusRetrieval(ctx context.Context) (*retrieval.Status, error) {

@@ -255,16 +255,24 @@ func TestIndexStatusNoGoroutineLeakOnTimeout(t *testing.T) {
 
 func TestIndexStatusDocumentsTimeoutReportsPhase(t *testing.T) {
 	vaultDir := t.TempDir()
+	preopened, err := sidecar.Open(filepath.Join(t.TempDir(), "sidecar.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	origConfig := cfg
 	cfg = &config.Config{Vault: vaultDir}
 	origRun := indexStatusRun
 	indexStatusRun = runIndexStatusInProcess
 	origDocs := indexStatusDocumentsFunc
+	origOpen := indexStatusSidecarOpenFunc
+	indexStatusSidecarOpenFunc = func(string) (*sidecar.DB, error) { return preopened, nil }
 	origTimeout := indexStatusTimeout
 	t.Cleanup(func() {
+		_ = preopened.Close()
 		cfg = origConfig
 		indexStatusRun = origRun
 		indexStatusDocumentsFunc = origDocs
+		indexStatusSidecarOpenFunc = origOpen
 		indexStatusTimeout = origTimeout
 	})
 
@@ -281,7 +289,7 @@ func TestIndexStatusDocumentsTimeoutReportsPhase(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := cmd.RunE(cmd, nil)
+	err = cmd.RunE(cmd, nil)
 	if err == nil {
 		t.Fatal("expected timeout error for documents listing, got nil")
 	}

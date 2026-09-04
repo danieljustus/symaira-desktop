@@ -193,7 +193,7 @@ func runIndexStatusInProcess(
 		}
 
 		report("open sidecar database")
-		db, err := sidecar.OpenForVault(vRoot)
+		db, err := indexStatusSidecarOpenFunc(vRoot)
 		if err != nil {
 			return nil, indexStatusPhaseError(ctx, req.Timeout, "open sidecar database", err)
 		}

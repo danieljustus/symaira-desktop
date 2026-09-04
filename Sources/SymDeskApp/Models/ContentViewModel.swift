@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Combine
 import SymDeskCore
 
 /// Captures the full navigation context for history tracking.
@@ -85,7 +86,7 @@ final class ContentViewModel: ObservableObject {
 
     // MARK: - Mutations & Safety
 
-    @Published var mutationTracker = AsyncActionTracker<String>()
+    let mutationTracker = AsyncActionTracker<String>()
     @Published var ingestFailure: IngestFailure? = nil
 
     /// Note selected via a context menu for the version-history screen.
@@ -120,8 +121,13 @@ final class ContentViewModel: ObservableObject {
     private var saveTask: Task<Void, Never>? = nil
     private var eventRefreshTask: Task<Void, Never>? = nil
     private var keyEventMonitor: Any?
+    private var mutationTrackerCancellable: AnyCancellable?
 
-    init() {}
+    init() {
+        mutationTrackerCancellable = mutationTracker.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }
+    }
 
     isolated deinit {
         saveTask?.cancel()

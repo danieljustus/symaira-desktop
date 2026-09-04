@@ -1,5 +1,6 @@
 import XCTest
 import SwiftUI
+import Combine
 import SymDeskCore
 @testable import SymDesk
 
@@ -27,6 +28,19 @@ final class ContentViewModelTests: XCTestCase {
         XCTAssertFalse(model.isShowingPreview)
         XCTAssertFalse(model.isShowingAIDock)
         XCTAssertFalse(model.isShowingNewNoteSheet)
+    }
+
+    func testMutationTrackerForwardsObjectWillChange() {
+        let model = ContentViewModel()
+        var notifications = 0
+        let cancellable = model.objectWillChange.sink { _ in
+            notifications += 1
+        }
+
+        model.mutationTracker.testMarkInFlight("save:example.md")
+
+        XCTAssertGreaterThan(notifications, 0)
+        withExtendedLifetime(cancellable) {}
     }
 
     func testNavigationAndHistoryStack() {

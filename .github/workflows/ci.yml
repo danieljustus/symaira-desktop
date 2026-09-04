@@ -10,11 +10,6 @@ on:
       - '.github/ISSUE_TEMPLATE/**'
   pull_request:
     branches: [main]
-    paths-ignore:
-      - 'docs/**'
-      - '**.md'
-      - 'LICENSE'
-      - '.github/ISSUE_TEMPLATE/**'
   schedule:
     - cron: '51 5 * * 1'  # weekly Monday 05:51 UTC — full suite incl. macOS + app
 

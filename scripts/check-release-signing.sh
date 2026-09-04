@@ -16,6 +16,19 @@ require_fixed() {
   fi
 }
 
+require_fixed_count() {
+  local file="$1"
+  local pattern="$2"
+  local minimum="$3"
+  local description="$4"
+  local count
+  count="$(grep -Fc -- "$pattern" "$file")"
+  if (( count < minimum )); then
+    printf "missing release-signing contract: %s (found %s, need %s)\n" "$description" "$count" "$minimum" >&2
+    exit 1
+  fi
+}
+
 require_fixed "$GORELEASER_CONFIG" "signs:" "GoReleaser signs artifacts"
 require_fixed "$GORELEASER_CONFIG" "- cmd: cosign" "Cosign signer"
 require_fixed "$GORELEASER_CONFIG" "- --output-signature" "per-artifact .sig output"
@@ -32,6 +45,8 @@ fi
 require_fixed "$WORKFLOW" "id-token: write" "GitHub Actions OIDC permission"
 require_fixed "$WORKFLOW" "sigstore/cosign-installer@" "Cosign installation"
 require_fixed "$WORKFLOW" "cosign-release: v2.4.3" "separate signature and certificate support"
+require_fixed_count "$WORKFLOW" "- name: Select Xcode 26" 2 "Xcode 26 selected for both macOS and iOS release jobs"
+require_fixed_count "$WORKFLOW" "xcode-version: '26.0'" 2 "Xcode 26 version pinned for both Apple release jobs"
 require_fixed "$WORKFLOW" 'codesign --force --sign "$CODESIGN_IDENTITY" --timestamp "$DMG_PATH"' "Developer ID signature on the DMG container"
 require_fixed "$WORKFLOW" 'xcrun stapler validate "$DMG_PATH"' "DMG stapling validation"
 require_fixed "$WORKFLOW" 'spctl --assess --type open --context context:primary-signature' "DMG Gatekeeper assessment"

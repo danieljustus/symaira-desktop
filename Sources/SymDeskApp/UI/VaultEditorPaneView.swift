@@ -116,7 +116,7 @@ struct VaultEditorPaneView: View {
                                 ))
                             })
                         }
-                        
+
                         // Dummy view to attach onChange (since we use if/else for the editor)
                         Color.clear.frame(width: 0, height: 0)
                             .onChange(of: model.noteContent) { _, newValue in

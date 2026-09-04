@@ -10,12 +10,12 @@ struct NewNoteSheet: View {
     /// Called with the refreshed note list and the newly created note so the
     /// caller can refresh its lists and select it immediately (issue #647).
     var onCreated: (([Note], Note?) -> Void)? = nil
-    
+
     @State private var title = ""
     @State private var isCreating = false
     @State private var errorMessage: String?
     @FocusState private var isTitleFocused: Bool
-    
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
@@ -44,7 +44,7 @@ struct NewNoteSheet: View {
             .padding(.vertical, 12)
             .symDeskLiquidGlass(cornerRadius: 14, prominence: .elevated)
             .padding(16)
-            
+
             HStack {
                 if isCreating {
                     ProgressView()
@@ -74,7 +74,7 @@ struct NewNoteSheet: View {
         .frame(width: 440, height: 160)
         .onAppear { isTitleFocused = true }
     }
-    
+
     private func createNote() {
         guard !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         isCreating = true

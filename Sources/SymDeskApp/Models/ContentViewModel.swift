@@ -358,7 +358,7 @@ final class ContentViewModel: ObservableObject {
         if let v = report.vault, v.status != "ok" { issues.append("Vault") }
         if let s = report.sidecar, s.status != "ok" { issues.append("Sidecar") }
         if let c = report.contract, c.status != "ok" { issues.append("Contract") }
-        
+
         let aiProvider = (report.ai?.provider ?? "Ollama").capitalized
         if issues.isEmpty && report.overall == "ok" {
             return "Vault healthy · AI: \(aiProvider)"

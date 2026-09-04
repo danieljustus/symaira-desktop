@@ -474,10 +474,29 @@ func (s *Service) DatasetSync(opts DatasetSyncOptions) (*DatasetSyncResult, erro
 		seen[row.Identity] = true
 	}
 	handleRel := filepath.ToSlash(filepath.Join(dataset.RawDir, slug+".md"))
-	if existing, readErr := readDatasetHandle(s.VaultRoot, handleRel); readErr == nil && existing.Provenance.SourceSHA256 == opts.Provenance.SourceSHA256 && existing.Provenance.SourceName == opts.Provenance.SourceName {
+	var existing *dataset.Handle
+	if current, readErr := readDatasetHandle(s.VaultRoot, handleRel); readErr == nil {
+		existing = current
+	}
+	if existing != nil && existing.Provenance.SourceSHA256 == opts.Provenance.SourceSHA256 && existing.Provenance.SourceName == opts.Provenance.SourceName {
 		rows, rowErr := s.DB.DatasetRows(slug)
 		if rowErr != nil {
 			return nil, rowErr
+		}
+		// A matching handle can survive a deleted/recreated sidecar. Restore
+		// the derived rows instead of treating the empty sidecar as complete.
+		if len(rows) == 0 {
+			materialized, rebuildErr := dataset.ReadRawFiles(s.VaultRoot, slug, existing.Schema, existing.IdentityField)
+			if rebuildErr != nil {
+				return nil, rebuildErr
+			}
+			if rebuildErr := s.replaceDatasetRows(slug, materialized); rebuildErr != nil {
+				return nil, rebuildErr
+			}
+			rows, rowErr = s.DB.DatasetRows(slug)
+			if rowErr != nil {
+				return nil, rowErr
+			}
 		}
 		return &DatasetSyncResult{Slug: slug, Rows: len(rows), ImportedRows: len(opts.Rows), RawPath: existing.Source, HandlePath: handleRel, Idempotent: true}, nil
 	}
@@ -486,20 +505,28 @@ func (s *Service) DatasetSync(opts DatasetSyncOptions) (*DatasetSyncResult, erro
 	if err != nil {
 		return nil, err
 	}
-	rawName := importedAt.UTC().Format(time.DateOnly) + "-" + filepath.Base(opts.Provenance.SourceName)
+	rawName := importedAt.UTC().Format(time.DateOnly) + ".csv"
 	rawPath, err := dataset.StoreRaw(s.VaultRoot, slug, rawName, data, importedAt)
 	if err != nil {
 		return nil, fmt.Errorf("store dataset sync: %w", err)
 	}
 	title := strings.TrimSpace(opts.Title)
+	if title == "" && existing != nil {
+		title = existing.Title
+	}
 	if title == "" {
 		title = slug
 	}
 	created := opts.Provenance.ImportedAt
-	if existing, readErr := readDatasetHandle(s.VaultRoot, handleRel); readErr == nil {
+	if existing != nil {
 		created = existing.Created
 	}
 	handle := &dataset.Handle{Slug: slug, Title: title, Created: created, Source: rawPath, Schema: schema, Provenance: opts.Provenance, IdentityField: opts.IdentityField}
+	if existing != nil {
+		handle.Coverage = existing.Coverage
+		handle.RefreshCommand = existing.RefreshCommand
+		handle.Sensitivity = existing.Sensitivity
+	}
 	encoded, err := handle.Render()
 	if err != nil {
 		return nil, err

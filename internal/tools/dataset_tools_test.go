@@ -30,3 +30,10 @@ func TestDatasetToolHandlersRoundTrip(t *testing.T) {
 		t.Fatalf("unexpected dataset query: %#v", got)
 	}
 }
+
+func TestDatasetQueryToolRejectsRawSQL(t *testing.T) {
+	tool := newDatasetQueryTool(testServiceFactory(t))
+	if _, err := tool.Handler(context.Background(), json.RawMessage(`{"dataset":"orders","sql":"DROP TABLE dataset_rows"}`)); err == nil {
+		t.Fatal("dataset query accepted an unknown raw SQL field")
+	}
+}

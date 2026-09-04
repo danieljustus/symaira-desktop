@@ -76,8 +76,21 @@ func TestDatasetSyncRequiresProvenanceAndIsIdempotent(t *testing.T) {
 	if first.Idempotent || !second.Idempotent || first.Rows != 1 || second.Rows != 1 {
 		t.Fatalf("unexpected sync results: first=%#v second=%#v", first, second)
 	}
+	if first.RawPath != "datasets/events/2026-01-04.csv" {
+		t.Fatalf("raw snapshot path = %q, want dated vault-contract path", first.RawPath)
+	}
 	rows, err := db.DatasetRows("events")
 	if err != nil || len(rows) != 1 {
 		t.Fatalf("sync duplicated rows: %d %v", len(rows), err)
+	}
+	if err := db.DeleteDataset("events"); err != nil {
+		t.Fatal(err)
+	}
+	rebuilt, err := svc.DatasetSync(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !rebuilt.Idempotent || rebuilt.Rows != 1 {
+		t.Fatalf("idempotent sync did not rebuild an empty sidecar: %#v", rebuilt)
 	}
 }

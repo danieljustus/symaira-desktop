@@ -164,25 +164,25 @@ var toolContracts = []toolContract{
 	{
 		name:        "desk_dataset_list",
 		description: "Lists Markdown-backed datasets and their materialized row counts.",
-		schema:      `{"type":"object","properties":{}}`,
+		schema:      `{"type":"object","properties":{},"additionalProperties":false}`,
 		readOnly:    true,
 	},
 	{
 		name:        "desk_dataset_describe",
 		description: "Describes one Markdown-backed dataset, including schema, provenance, coverage and row count.",
-		schema:      `{"type":"object","properties":{"dataset":{"type":"string"}},"required":["dataset"]}`,
+		schema:      `{"type":"object","properties":{"dataset":{"type":"string"}},"required":["dataset"],"additionalProperties":false}`,
 		readOnly:    true,
 	},
 	{
 		name:        "desk_dataset_query",
 		description: "Queries a dataset with selected columns, existing view filter operators, grouping and bounded sum/count/min/max/average aggregates. Raw SQL is not accepted.",
-		schema:      `{"type":"object","properties":{"dataset":{"type":"string"},"columns":{"type":"array","items":{"type":"string"}},"filters":{"type":"array","items":{"type":"object","properties":{"key":{"type":"string"},"operator":{"type":"string"},"value":{"type":"string"}},"required":["key","value"]}},"filter_group":{"type":"object"},"group_by":{"type":"string"},"aggregates":{"type":"array","items":{"type":"object","properties":{"column":{"type":"string"},"function":{"type":"string","enum":["sum","count","min","max","average"]},"as":{"type":"string"}},"required":["function"]}},"limit":{"type":"integer","minimum":1}},"required":["dataset"]}`,
+		schema:      `{"type":"object","properties":{"dataset":{"type":"string"},"columns":{"type":"array","items":{"type":"string"}},"filters":{"type":"array","items":{"type":"object","properties":{"key":{"type":"string"},"operator":{"type":"string"},"value":{"type":"string"}},"required":["key","value"],"additionalProperties":false}},"filter_group":{"type":"object"},"group_by":{"type":"string"},"aggregates":{"type":"array","items":{"type":"object","properties":{"column":{"type":"string"},"function":{"type":"string","enum":["sum","count","min","max","average"]},"as":{"type":"string"}},"required":["function"],"additionalProperties":false}},"limit":{"type":"integer","minimum":1}},"required":["dataset"],"additionalProperties":false}`,
 		readOnly:    true,
 	},
 	{
 		name:        "desk_dataset_sync",
 		description: "Persists producer rows into a Markdown-backed dataset. Every row must have an explicit identity and every sync must include source_name, source_sha256 and imported_at provenance; repeated provenance is idempotent.",
-		schema:      `{"type":"object","properties":{"dataset":{"type":"string"},"title":{"type":"string"},"identity_field":{"type":"string"},"schema":{"type":"object"},"provenance":{"type":"object","properties":{"imported_at":{"type":"string"},"source_name":{"type":"string"},"source_sha256":{"type":"string"}},"required":["imported_at","source_name","source_sha256"]},"rows":{"type":"array","items":{"type":"object","properties":{"identity":{"type":"string"},"values":{"type":"object"}},"required":["identity","values"]}}},"required":["dataset","identity_field","provenance","rows"]}`,
+		schema:      `{"type":"object","properties":{"dataset":{"type":"string"},"title":{"type":"string"},"identity_field":{"type":"string"},"schema":{"type":"object"},"provenance":{"type":"object","properties":{"imported_at":{"type":"string"},"source_name":{"type":"string"},"source_sha256":{"type":"string"}},"required":["imported_at","source_name","source_sha256"],"additionalProperties":false},"rows":{"type":"array","items":{"type":"object","properties":{"identity":{"type":"string"},"values":{"type":"object"}},"required":["identity","values"],"additionalProperties":false}}},"required":["dataset","identity_field","provenance","rows"],"additionalProperties":false}`,
 		readOnly:    false,
 	},
 	{

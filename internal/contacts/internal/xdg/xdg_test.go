@@ -23,6 +23,9 @@ func TestResolve_UsesOverrides(t *testing.T) {
 	if p.CacheDir != "/tmp/cache" {
 		t.Errorf("CacheDir = %q, want /tmp/cache", p.CacheDir)
 	}
+	if got := p.DatabasePath(); got != "/tmp/data/symrelate.db" {
+		t.Errorf("DatabasePath() = %q, want /tmp/data/symrelate.db", got)
+	}
 }
 
 func TestResolve_FallsBackToXDGEnv(t *testing.T) {

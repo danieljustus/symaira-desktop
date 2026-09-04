@@ -1,25 +1,66 @@
 package retrieval
 
 import (
-	"bytes"
+	"database/sql"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
+
+	retrievaldb "github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 )
+
+func TestRelocateIndexForVaultRejectsIsolationCollapse(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
+	vaultA := t.TempDir()
+	vaultB := t.TempDir()
+	pathA, err := IndexLocationForVault(vaultA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pathB, err := IndexLocationForVault(vaultB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pathA == pathB {
+		t.Fatal("distinct vaults resolved to one index before relocation")
+	}
+	for _, vaultRoot := range []string{vaultA, " "} {
+		err = RelocateIndexForVault(vaultRoot, filepath.Join(t.TempDir(), "relocated.db"))
+		if err == nil || !strings.Contains(err.Error(), "vault-scoped") {
+			t.Errorf("RelocateIndexForVault(%q) error = %v, want isolation rejection", vaultRoot, err)
+		}
+	}
+	afterB, err := IndexLocationForVault(vaultB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if afterB != pathB {
+		t.Fatalf("vault B path changed from %q to %q", pathB, afterB)
+	}
+}
 
 func TestRelocateIndexPersistsConfiguredLocation(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, "data"))
 
 	original, err := IndexLocation()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(filepath.Dir(original), 0o700); err != nil {
+	live, err := retrievaldb.OpenAt(original)
+	if err != nil {
 		t.Fatal(err)
 	}
-	contents := append([]byte("SQLite format 3\x00"), []byte("derived-index")...)
-	if err := os.WriteFile(original, contents, 0o600); err != nil {
+	if err := live.SaveDocument(&retrievaldb.Document{Path: "relocated.md", Hash: "hash", UpdatedAt: time.Now().UTC()}); err != nil {
+		_ = live.Close()
+		t.Fatal(err)
+	}
+	if err := live.Close(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -35,12 +76,17 @@ func TestRelocateIndexPersistsConfiguredLocation(t *testing.T) {
 	if gotLocation != destination {
 		t.Fatalf("IndexLocation() = %q, want %q", gotLocation, destination)
 	}
-	got, err := os.ReadFile(destination) //nolint:gosec // G304: destination is a t.TempDir() path built by this test
+	copyDB, err := sql.Open("sqlite", destination)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(got, contents) {
-		t.Fatalf("relocated index contents = %q, want %q", got, contents)
+	defer func() { _ = copyDB.Close() }()
+	var count int
+	if err := copyDB.QueryRow("SELECT COUNT(*) FROM documents WHERE path = 'relocated.md'").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("relocated document count = %d, want 1", count)
 	}
 	if _, err := os.Stat(original); err != nil {
 		t.Fatalf("original index was not preserved: %v", err)

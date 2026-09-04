@@ -1,7 +1,6 @@
 package sidecar
 
 import (
-	"crypto/sha256"
 	"database/sql"
 	"embed"
 	"fmt"
@@ -14,6 +13,7 @@ import (
 	"github.com/danieljustus/symaira-corekit/sqlitekit"
 	_ "modernc.org/sqlite"
 
+	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/contacts"
 	"github.com/danieljustus/symaira-desktop/internal/searchquery"
 	"github.com/danieljustus/symaira-desktop/internal/simhash"
@@ -25,41 +25,38 @@ import (
 // sidecar state. Retrieval and other derived stores use this resolver so all
 // per-vault databases remain colocated without duplicating the hash scheme.
 func VaultDir(vaultRoot string) (string, error) {
-	canonical, err := filepath.Abs(vaultRoot)
-	if err != nil {
-		return "", fmt.Errorf("resolve vault for sidecar: %w", err)
+	return config.SidecarVaultDir(vaultRoot)
+}
+
+// PathForVault returns the effective sidecar path without opening it.
+func PathForVault(vaultRoot string) (string, error) {
+	if explicit := strings.TrimSpace(os.Getenv("SYMDESK_SIDECAR")); explicit != "" {
+		return explicit, nil
 	}
-	if resolved, resolveErr := filepath.EvalSymlinks(canonical); resolveErr == nil {
-		canonical = resolved
+	if strings.TrimSpace(vaultRoot) == "" {
+		return config.SidecarPath("")
 	}
-	root, err := SidecarRoot()
+	dir, err := VaultDir(vaultRoot)
 	if err != nil {
 		return "", err
 	}
-	if isTemporaryVault(canonical) && os.Getenv("XDG_DATA_HOME") == "" {
-		// Test and scratch vaults must not materialize state below the user's
-		// persistent data root, but repeated calls for one vault still need a
-		// stable database during that process.
-		root = filepath.Join(os.TempDir(), "symdesk", "test-vaults")
-	}
-	digest := fmt.Sprintf("%x", sha256.Sum256([]byte(canonical)))
-	return filepath.Join(root, digest[:16]), nil
+	return filepath.Join(dir, "sidecar.db"), nil
 }
 
 // OpenForVault keeps rebuildable indexes isolated per vault. This prevents a
 // configured vault from listing or searching rows indexed for another vault.
 func OpenForVault(vaultRoot string) (*DB, error) {
-	if explicit := os.Getenv("SYMDESK_SIDECAR"); explicit != "" {
-		return Open(explicit)
-	}
-	dir, err := VaultDir(vaultRoot)
+	explicit := strings.TrimSpace(os.Getenv("SYMDESK_SIDECAR"))
+	path, err := PathForVault(vaultRoot)
 	if err != nil {
 		return nil, err
 	}
-	path := filepath.Join(dir, "sidecar.db")
 	db, err := Open(path)
 	if err != nil {
 		return nil, err
+	}
+	if explicit != "" {
+		return db, nil
 	}
 	canonical, canonicalErr := filepath.Abs(vaultRoot)
 	if canonicalErr != nil {
@@ -94,11 +91,11 @@ type DB struct {
 // The default path is ~/.local/share/symdesk/sidecar.db
 func Open(path string) (*DB, error) {
 	if path == "" {
-		home, err := os.UserHomeDir()
+		var err error
+		path, err = config.SidecarPath("")
 		if err != nil {
-			return nil, fmt.Errorf("user home dir: %w", err)
+			return nil, err
 		}
-		path = filepath.Join(home, ".local", "share", "symdesk", "sidecar.db")
 	}
 
 	conn, err := sqlitekit.Open(path)

@@ -21,10 +21,10 @@ import (
 	"strings"
 	"time"
 
+	desktopconfig "github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/db"
 	"github.com/danieljustus/symaira-desktop/internal/retrieval/internal/engine"
-	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
 
 // LocationAnchor is re-exported so service and transport consumers do not
@@ -168,19 +168,15 @@ func configuredIndexPath(cfg *config.Config) (string, error) {
 }
 
 // vaultIndexPath returns <SidecarRoot>/<hash>/retrieval.db for vaultRoot,
-// colocated with the sidecar database through the sidecar package's canonical
-// per-vault directory resolver.
+// resolved through the shared internal/config path resolver.
 func vaultIndexPath(vaultRoot string) (string, error) {
-	dir, err := sidecar.VaultDir(vaultRoot)
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(dir, "retrieval.db"), nil
+	return desktopconfig.RetrievalPath(vaultRoot)
 }
 
-// migrateLegacyIndex performs the one-time upgrade from the absorbed
-// retrieval store's legacy shared path. It returns an error for a failed move
-// instead of opening a fresh database and silently losing the old index.
+// migrateLegacyIndex seeds the first per-vault index from the active standalone
+// store. A pre-absorption symaira-seek store is moved after a verified copy;
+// the unified symdesk standalone store remains valid for one-shot callers and
+// is copied without deletion.
 func migrateLegacyIndex(newPath string) error {
 	if _, err := os.Stat(newPath); err == nil || !os.IsNotExist(err) {
 		// Already migrated, already has data, or unreadable: leave it alone.
@@ -190,6 +186,11 @@ func migrateLegacyIndex(newPath string) error {
 	if err != nil {
 		return err
 	}
+	preAbsorptionPath, err := desktopconfig.LegacyRetrievalDBPath()
+	if err != nil {
+		return err
+	}
+	removeSource := filepath.Clean(legacyPath) == filepath.Clean(preAbsorptionPath)
 	if filepath.Clean(legacyPath) == filepath.Clean(newPath) {
 		return nil
 	}
@@ -203,16 +204,35 @@ func migrateLegacyIndex(newPath string) error {
 	if !info.Mode().IsRegular() {
 		return fmt.Errorf("legacy retrieval index is not a regular file: %s", legacyPath)
 	}
-	if err := copyIndexFile(legacyPath, newPath); err != nil {
+	if err := snapshotIndexFile(legacyPath, newPath); err != nil {
 		return err
 	}
-	if err := os.Remove(legacyPath); err != nil {
-		if cleanupErr := os.Remove(newPath); cleanupErr != nil {
-			return fmt.Errorf("remove migrated legacy retrieval index: %w (remove incomplete destination: %v)", err, cleanupErr)
-		}
-		return fmt.Errorf("remove migrated legacy retrieval index: %w", err)
+	validated, err := db.OpenAt(newPath)
+	if err != nil {
+		_ = removeSQLiteArtifacts(newPath)
+		return fmt.Errorf("validate migrated retrieval index: %w", err)
 	}
-	slog.Info("migrated legacy retrieval index to per-vault location", "legacy_path", legacyPath, "new_path", newPath)
+	if err := validated.Close(); err != nil {
+		_ = removeSQLiteArtifacts(newPath)
+		return fmt.Errorf("close validated retrieval index: %w", err)
+	}
+	if removeSource {
+		if err := removeSQLiteArtifacts(legacyPath); err != nil {
+			return fmt.Errorf("remove migrated legacy retrieval index: %w", err)
+		}
+		slog.Info("migrated pre-absorption retrieval index to per-vault location", "legacy_path", legacyPath, "new_path", newPath)
+	} else {
+		slog.Info("seeded per-vault retrieval index from standalone store", "standalone_path", legacyPath, "new_path", newPath)
+	}
+	return nil
+}
+
+func removeSQLiteArtifacts(path string) error {
+	for _, candidate := range []string{path, path + "-wal", path + "-shm"} {
+		if err := os.Remove(candidate); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
 	return nil
 }
 

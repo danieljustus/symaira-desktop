@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -128,6 +129,82 @@ func (s *Store) TrashList() ([]TrashEntry, error) {
 	return entries, nil
 }
 
+// TrashListStrict returns a complete, validated trash inventory for
+// destructive callers. Unlike TrashList, it fails closed on malformed
+// metadata and verifies that every payload has exactly one matching metadata
+// file (and vice versa).
+func (s *Store) TrashListStrict() ([]TrashEntry, error) {
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
+	items, err := fs.ReadDir(root.FS(), trashRelDir())
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	payloads := make(map[string]bool)
+	metadata := make(map[string]bool)
+	for _, item := range items {
+		if item.IsDir() {
+			return nil, fmt.Errorf("invalid trash inventory: directory %q", item.Name())
+		}
+		if strings.HasSuffix(item.Name(), trashMetaSuffix) {
+			name := strings.TrimSuffix(item.Name(), trashMetaSuffix)
+			if name == "" {
+				return nil, fmt.Errorf("invalid trash metadata name %q", item.Name())
+			}
+			metadata[name] = true
+			continue
+		}
+		payloads[item.Name()] = true
+	}
+	if len(payloads) != len(metadata) {
+		return nil, fmt.Errorf("invalid trash inventory: payload/metadata count mismatch")
+	}
+	for name := range payloads {
+		if !metadata[name] {
+			return nil, fmt.Errorf("invalid trash inventory: payload %q has no metadata", name)
+		}
+	}
+	for name := range metadata {
+		if !payloads[name] {
+			return nil, fmt.Errorf("invalid trash inventory: metadata %q has no payload", name)
+		}
+	}
+
+	entries := make([]TrashEntry, 0, len(payloads))
+	for name := range payloads {
+		data, err := root.ReadFile(filepath.Join(trashRelDir(), name+trashMetaSuffix))
+		if err != nil {
+			return nil, fmt.Errorf("read trash metadata for %q: %w", name, err)
+		}
+		if isJSONNull(data) {
+			return nil, fmt.Errorf("corrupt trash metadata for %q: must be a non-null object", name)
+		}
+		var entry TrashEntry
+		if err := json.Unmarshal(data, &entry); err != nil {
+			return nil, fmt.Errorf("corrupt trash metadata for %q: %w", name, err)
+		}
+		if entry.Name != name {
+			return nil, fmt.Errorf("trash metadata name mismatch: file %q declares %q", name, entry.Name)
+		}
+		rel, err := cleanRel(entry.OriginalPath)
+		if err != nil || filepath.ToSlash(rel) != entry.OriginalPath {
+			return nil, fmt.Errorf("trash metadata path mismatch for %q: %q", name, entry.OriginalPath)
+		}
+		if entry.DeletedAt.IsZero() || entry.Size < 0 {
+			return nil, fmt.Errorf("invalid trash metadata for %q", name)
+		}
+		entries = append(entries, entry)
+	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].DeletedAt.After(entries[j].DeletedAt) })
+	return entries, nil
+}
+
 // TrashRestore moves a trash item back to its original vault path. If the
 // original path is occupied, the restore fails and the trash item is kept.
 func (s *Store) TrashRestore(name string) (*TrashEntry, error) {
@@ -163,7 +240,7 @@ func (s *Store) TrashRestore(name string) (*TrashEntry, error) {
 // TrashPurge permanently removes trash items deleted more than maxAge ago.
 // maxAge <= 0 purges everything. Returns the number of purged items.
 func (s *Store) TrashPurge(maxAge time.Duration) (int, error) {
-	entries, err := s.TrashList()
+	entries, err := s.TrashListStrict()
 	if err != nil {
 		return 0, err
 	}
@@ -219,7 +296,7 @@ func (s *Store) PurgeTrashPaths(relPaths ...string) (int, error) {
 		}
 		targets[filepath.ToSlash(rel)] = true
 	}
-	entries, err := s.TrashList()
+	entries, err := s.TrashListStrict()
 	if err != nil {
 		return 0, err
 	}

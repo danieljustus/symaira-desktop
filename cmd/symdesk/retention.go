@@ -203,6 +203,7 @@ func newRetentionAcceptCmd() *cobra.Command {
 				if item.Status == retention.ProposalItemStatusActionCompleted {
 					if err := retention.AppendHistory(vRoot, retention.HistoryEntry{
 						Timestamp: now.UTC(),
+						ActionID:  retention.StableActionID(p.RunID, i),
 						RuleName:  item.RuleName,
 						Action:    item.Action,
 						Path:      item.Path,
@@ -276,6 +277,7 @@ func newRetentionAcceptCmd() *cobra.Command {
 
 				if err := retention.AppendHistory(vRoot, retention.HistoryEntry{
 					Timestamp: now.UTC(),
+					ActionID:  retention.StableActionID(p.RunID, i),
 					RuleName:  item.RuleName,
 					Action:    item.Action,
 					Path:      item.Path,

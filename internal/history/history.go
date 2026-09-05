@@ -469,96 +469,13 @@ func (s *Store) PurgePaths(relPaths ...string) error {
 	if err != nil {
 		return err
 	}
+
+	// Read and validate every manifest and checkpoint before touching any of
+	// them. Purging recovery metadata is destructive: a broken survivor must
+	// fail closed rather than allowing GC to make the damage permanent.
 	manifestRoot := filepath.Join(historyRelDir(), "manifest")
-	err = fs.WalkDir(root.FS(), manifestRoot, func(path string, d fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			if os.IsNotExist(walkErr) {
-				return nil
-			}
-			return walkErr
-		}
-		if d.IsDir() || !strings.HasSuffix(path, ".json") {
-			return nil
-		}
-		rel := strings.TrimSuffix(strings.TrimPrefix(path, manifestRoot+"/"), ".json")
-		if targets[filepath.ToSlash(rel)] {
-			if err := root.Remove(path); err != nil && !os.IsNotExist(err) {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-	checkpointItems, err := fs.ReadDir(root.FS(), checkpointsRelDir())
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	checkpoints := make([]Checkpoint, 0, len(checkpointItems))
-	for _, item := range checkpointItems {
-		if item.IsDir() || !strings.HasSuffix(item.Name(), ".json") {
-			continue
-		}
-		data, err := root.ReadFile(filepath.Join(checkpointsRelDir(), item.Name()))
-		if err != nil {
-			return err
-		}
-		var cp Checkpoint
-		if err := json.Unmarshal(data, &cp); err != nil {
-			return fmt.Errorf("corrupt checkpoint manifest %q: %w", item.Name(), err)
-		}
-		checkpoints = append(checkpoints, cp)
-	}
-	survivingCheckpoints := make([]Checkpoint, 0, len(checkpoints))
-	for _, cp := range checkpoints {
-		matched := false
-		files := cp.Files[:0]
-		for _, file := range cp.Files {
-			if targets[filepath.ToSlash(file.RelPath)] {
-				matched = true
-				continue
-			}
-			files = append(files, file)
-		}
-		cp.Files = files
-		newFiles := cp.NewFiles[:0]
-		for _, path := range cp.NewFiles {
-			if targets[filepath.ToSlash(path)] {
-				matched = true
-				continue
-			}
-			newFiles = append(newFiles, path)
-		}
-		cp.NewFiles = newFiles
-		skipped := cp.Skipped[:0]
-		for _, path := range cp.Skipped {
-			if targets[filepath.ToSlash(path)] {
-				matched = true
-				continue
-			}
-			skipped = append(skipped, path)
-		}
-		cp.Skipped = skipped
-		if matched {
-			if len(cp.Files) == 0 && len(cp.NewFiles) == 0 && len(cp.Skipped) == 0 {
-				rel, err := checkpointRelPath(cp.TaskID)
-				if err != nil {
-					return err
-				}
-				if err := root.Remove(rel); err != nil && !os.IsNotExist(err) {
-					return err
-				}
-				continue
-			}
-			if err := s.saveCheckpoint(&cp); err != nil {
-				return err
-			}
-		}
-		survivingCheckpoints = append(survivingCheckpoints, cp)
-	}
-	referenced := make(map[string]bool)
-	err = fs.WalkDir(root.FS(), manifestRoot, func(path string, d fs.DirEntry, walkErr error) error {
+	manifests := make([]purgeManifest, 0)
+	walkErr := fs.WalkDir(root.FS(), manifestRoot, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			if os.IsNotExist(walkErr) {
 				return nil
@@ -572,20 +489,130 @@ func (s *Store) PurgePaths(relPaths ...string) error {
 		if err != nil {
 			return err
 		}
-		var entries []Entry
-		if err := json.Unmarshal(data, &entries); err != nil {
-			return fmt.Errorf("corrupt history manifest %q: %w", path, err)
+		entries, err := decodeHistoryManifest(data)
+		if err != nil {
+			return fmt.Errorf("invalid history manifest %q: %w", path, err)
 		}
 		for _, entry := range entries {
-			referenced[entry.ID] = true
+			if err := verifyHistoryEntry(root, entry); err != nil {
+				return fmt.Errorf("invalid history manifest %q: %w", path, err)
+			}
 		}
+		rel := strings.TrimSuffix(strings.TrimPrefix(path, manifestRoot+"/"), ".json")
+		manifests = append(manifests, purgeManifest{
+			path:    path,
+			relPath: filepath.ToSlash(rel),
+			entries: entries,
+		})
 		return nil
 	})
-	if err != nil {
+	if walkErr != nil {
+		return walkErr
+	}
+
+	checkpointItems, err := fs.ReadDir(root.FS(), checkpointsRelDir())
+	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	for _, cp := range survivingCheckpoints {
+	checkpoints := make([]purgeCheckpoint, 0, len(checkpointItems))
+	for _, item := range checkpointItems {
+		if item.IsDir() || !strings.HasSuffix(item.Name(), ".json") {
+			continue
+		}
+		path := filepath.Join(checkpointsRelDir(), item.Name())
+		data, err := root.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		cp, err := decodeCheckpointManifest(data)
+		if err != nil {
+			return fmt.Errorf("invalid checkpoint manifest %q: %w", item.Name(), err)
+		}
+		if expected := strings.TrimSuffix(item.Name(), ".json"); cp.TaskID != expected {
+			return fmt.Errorf("invalid checkpoint manifest %q: task_id %q does not match filename", item.Name(), cp.TaskID)
+		}
 		for _, file := range cp.Files {
+			if err := verifyHistoryEntry(root, file.Entry); err != nil {
+				return fmt.Errorf("invalid checkpoint manifest %q: %w", item.Name(), err)
+			}
+		}
+		checkpoints = append(checkpoints, purgeCheckpoint{path: path, checkpoint: cp})
+	}
+
+	// Compute all post-purge checkpoint states in memory. No checkpoint write
+	// occurs until the complete preflight above has succeeded.
+	survivingCheckpoints := make([]purgeCheckpoint, 0, len(checkpoints))
+	for _, record := range checkpoints {
+		cp := record.checkpoint
+		matched := false
+		files := make([]CheckpointFile, 0, len(cp.Files))
+		for _, file := range cp.Files {
+			if targets[filepath.ToSlash(file.RelPath)] {
+				matched = true
+				continue
+			}
+			files = append(files, file)
+		}
+		cp.Files = files
+		newFiles := make([]string, 0, len(cp.NewFiles))
+		for _, path := range cp.NewFiles {
+			if targets[filepath.ToSlash(path)] {
+				matched = true
+				continue
+			}
+			newFiles = append(newFiles, path)
+		}
+		cp.NewFiles = newFiles
+		skipped := make([]string, 0, len(cp.Skipped))
+		for _, path := range cp.Skipped {
+			if targets[filepath.ToSlash(path)] {
+				matched = true
+				continue
+			}
+			skipped = append(skipped, path)
+		}
+		cp.Skipped = skipped
+		survivingCheckpoints = append(survivingCheckpoints, purgeCheckpoint{
+			path:       record.path,
+			checkpoint: cp,
+			matched:    matched,
+		})
+	}
+
+	// Only now mutate manifests and checkpoint references.
+	for _, manifest := range manifests {
+		if targets[manifest.relPath] {
+			if err := root.Remove(manifest.path); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+		}
+	}
+	for _, record := range survivingCheckpoints {
+		if !record.matched {
+			continue
+		}
+		if len(record.checkpoint.Files) == 0 && len(record.checkpoint.NewFiles) == 0 && len(record.checkpoint.Skipped) == 0 {
+			if err := root.Remove(record.path); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+			continue
+		}
+		if err := s.saveCheckpoint(&record.checkpoint); err != nil {
+			return err
+		}
+	}
+
+	referenced := make(map[string]bool)
+	for _, manifest := range manifests {
+		if targets[manifest.relPath] {
+			continue
+		}
+		for _, entry := range manifest.entries {
+			referenced[entry.ID] = true
+		}
+	}
+	for _, record := range survivingCheckpoints {
+		for _, file := range record.checkpoint.Files {
 			referenced[file.Entry.ID] = true
 		}
 	}
@@ -605,4 +632,103 @@ func (s *Store) PurgePaths(relPaths ...string) error {
 		}
 	}
 	return nil
+}
+
+type purgeManifest struct {
+	path    string
+	relPath string
+	entries []Entry
+}
+
+type purgeCheckpoint struct {
+	path       string
+	checkpoint Checkpoint
+	matched    bool
+}
+
+func decodeHistoryManifest(data []byte) ([]Entry, error) {
+	if isJSONNull(data) {
+		return nil, fmt.Errorf("manifest must be a non-null array")
+	}
+	var entries []Entry
+	if err := json.Unmarshal(data, &entries); err != nil {
+		return nil, err
+	}
+	if entries == nil {
+		return nil, fmt.Errorf("manifest must be a non-null array")
+	}
+	return entries, nil
+}
+
+func decodeCheckpointManifest(data []byte) (Checkpoint, error) {
+	if isJSONNull(data) {
+		return Checkpoint{}, fmt.Errorf("checkpoint must be a non-null object")
+	}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return Checkpoint{}, err
+	}
+	if raw == nil {
+		return Checkpoint{}, fmt.Errorf("checkpoint must be a non-null object")
+	}
+	for _, key := range []string{"files", "new_files", "skipped"} {
+		if value, ok := raw[key]; ok && isJSONNull(value) {
+			return Checkpoint{}, fmt.Errorf("%s must be a non-null array", key)
+		}
+	}
+	var cp Checkpoint
+	if err := json.Unmarshal(data, &cp); err != nil {
+		return Checkpoint{}, err
+	}
+	if cp.TaskID == "" || cp.Timestamp.IsZero() {
+		return Checkpoint{}, fmt.Errorf("task_id and timestamp are required")
+	}
+	if err := validateTaskID(cp.TaskID); err != nil {
+		return Checkpoint{}, err
+	}
+	seen := make(map[string]bool, len(cp.Files)+len(cp.NewFiles)+len(cp.Skipped))
+	for _, file := range cp.Files {
+		rel, err := cleanRel(file.RelPath)
+		if err != nil || filepath.ToSlash(rel) != file.RelPath {
+			return Checkpoint{}, fmt.Errorf("invalid checkpoint file path %q", file.RelPath)
+		}
+		if seen[file.RelPath] {
+			return Checkpoint{}, fmt.Errorf("duplicate checkpoint path %q", file.RelPath)
+		}
+		seen[file.RelPath] = true
+	}
+	for _, paths := range [][]string{cp.NewFiles, cp.Skipped} {
+		for _, path := range paths {
+			rel, err := cleanRel(path)
+			if err != nil || filepath.ToSlash(rel) != path {
+				return Checkpoint{}, fmt.Errorf("invalid checkpoint path %q", path)
+			}
+			if seen[path] {
+				return Checkpoint{}, fmt.Errorf("duplicate checkpoint path %q", path)
+			}
+			seen[path] = true
+		}
+	}
+	return cp, nil
+}
+
+func verifyHistoryEntry(root *os.Root, entry Entry) error {
+	if !isHexID(entry.ID) {
+		return fmt.Errorf("invalid referenced object id %q", entry.ID)
+	}
+	if entry.Timestamp.IsZero() || entry.Size < 0 {
+		return fmt.Errorf("invalid snapshot entry %q", entry.ID)
+	}
+	info, err := root.Lstat(filepath.Join(objectsRelDir(), entry.ID))
+	if err != nil {
+		return fmt.Errorf("referenced object %s is unavailable: %w", entry.ID, err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
+		return fmt.Errorf("referenced object %s is not a regular file", entry.ID)
+	}
+	return nil
+}
+
+func isJSONNull(data []byte) bool {
+	return strings.TrimSpace(string(data)) == "null"
 }

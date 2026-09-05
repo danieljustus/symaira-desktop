@@ -694,6 +694,11 @@ func (s *Server) writeCompletedNote(job *Job, result completionRequest) (string,
 	return rel, nil
 }
 
+func isDatasetBackedPath(rel string) bool {
+	normalized := filepath.ToSlash(strings.TrimSpace(rel))
+	return normalized == "datasets" || strings.HasPrefix(normalized, "datasets/")
+}
+
 func resolveRequestPath(rel string) (string, error) {
 	if rel == "" || strings.ContainsAny(rel, "\\\x00") || !fs.ValidPath(rel) {
 		return "", fmt.Errorf("a vault-relative path is required")

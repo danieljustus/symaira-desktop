@@ -295,6 +295,13 @@ func (s *Server) handleCreateShare(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	if isDatasetBackedPath(rel) {
+		// The authenticated share route accepts paths only, not views or export
+		// payloads. Dataset handles and raw rows are never shareable here; the
+		// service export policy is intentionally fail-closed for these paths.
+		writeError(w, http.StatusForbidden, "dataset-backed content cannot be shared")
+		return
+	}
 	if req.Expiry <= 0 || req.Expiry > 168 {
 		writeError(w, http.StatusBadRequest, "expiry must be between 1 and 168 hours")
 		return
@@ -433,6 +440,12 @@ func (s *Server) handleAccessShare(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusTooManyRequests, "too many share access attempts")
 			return
 		}
+		writeError(w, http.StatusNotFound, "not found")
+		return
+	}
+	if isDatasetBackedPath(link.Path) {
+		// Refuse legacy links too: a link minted before the creation guard, or
+		// one written directly to the share store, must not bypass policy.
 		writeError(w, http.StatusNotFound, "not found")
 		return
 	}

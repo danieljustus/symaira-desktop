@@ -291,3 +291,66 @@ func TestQueryDatasetRejectsMalformedRowAndDatasetRowCountErrors(t *testing.T) {
 		t.Fatal("DatasetRowCount on closed database returned nil error")
 	}
 }
+
+func TestQueryDatasetSetFiltersHandleScalarsAndUnsafeContainers(t *testing.T) {
+	db := setupTestDB(t)
+	slug := "set-values"
+	rows := []DatasetRow{
+		{DatasetSlug: slug, RowKey: "a", ValuesJSON: `{"text":"alpha","number":10,"enabled":true,"tags":["red","blue"]}`},
+		{DatasetSlug: slug, RowKey: "b", ValuesJSON: `{"text":"beta","number":20,"enabled":false,"tags":["green"]}`},
+		{DatasetSlug: slug, RowKey: "c", ValuesJSON: `{"text":null,"number":null,"enabled":null,"tags":null}`},
+		{DatasetSlug: slug, RowKey: "d", ValuesJSON: `{"text":"[malformed","number":"not-a-number","enabled":"not-a-bool","tags":"not-json"}`},
+		{DatasetSlug: slug, RowKey: "e", ValuesJSON: `{"text":null,"enabled":true}`},
+		{DatasetSlug: slug, RowKey: "f", ValuesJSON: `{}`},
+	}
+	if err := db.ReplaceDatasetRows(slug, rows); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.conn.Exec(`INSERT INTO dataset_rows(dataset_slug, row_key, values_json, source_path, row_number) VALUES(?,?,?,?,?)`, slug, "g", "not-json", "source.csv", 7); err != nil {
+		t.Fatal(err)
+	}
+
+	schema := map[string]string{
+		"text":    "text",
+		"number":  "number",
+		"enabled": "bool",
+		"tags":    "text",
+	}
+	tests := []struct {
+		name   string
+		filter DatasetFilter
+		want   string
+	}{
+		{name: "scalar text in", filter: DatasetFilter{Key: "text", Operator: "in", Value: "alpha"}, want: "a"},
+		{name: "scalar text not in", filter: DatasetFilter{Key: "text", Operator: "not_in", Value: "alpha"}, want: "b d f"},
+		{name: "scalar number in", filter: DatasetFilter{Key: "number", Operator: "in", Value: "20"}, want: "b"},
+		{name: "scalar number not in", filter: DatasetFilter{Key: "number", Operator: "not_in", Value: "20"}, want: "a d e f"},
+		{name: "scalar bool in", filter: DatasetFilter{Key: "enabled", Operator: "in", Value: "true"}, want: "a e"},
+		{name: "scalar bool not in", filter: DatasetFilter{Key: "enabled", Operator: "not_in", Value: "true"}, want: "b d f"},
+		{name: "array in", filter: DatasetFilter{Key: "tags", Operator: "in", Value: "red"}, want: "a"},
+		{name: "array not in", filter: DatasetFilter{Key: "tags", Operator: "not_in", Value: "red"}, want: "b d e f"},
+		{name: "array contains any", filter: DatasetFilter{Key: "tags", Operator: "contains_any", Value: "red green"}, want: "a b"},
+		{name: "array contains none", filter: DatasetFilter{Key: "tags", Operator: "contains_none", Value: "red green"}, want: "c d e f"},
+		{name: "array contains all", filter: DatasetFilter{Key: "tags", Operator: "contains_all", Value: "red blue"}, want: "a"},
+		{name: "bound injection value", filter: DatasetFilter{Key: "text", Operator: "in", Value: `alpha'); DROP TABLE dataset_rows;--`}, want: ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := db.QueryDataset(slug, DatasetQueryOptions{Schema: schema, Filters: []DatasetFilter{tt.filter}})
+			if err != nil {
+				t.Fatalf("QueryDataset: %v", err)
+			}
+			got := fmt.Sprint(datasetQueryKeys(result.Rows))
+			want := "[]"
+			if tt.want != "" {
+				want = "[" + tt.want + "]"
+			}
+			if got != want {
+				t.Fatalf("rows = %s, want %s", got, want)
+			}
+		})
+	}
+	if count, err := db.DatasetRowCount(slug); err != nil || count != len(rows)+1 {
+		t.Fatalf("dataset rows after bound value = %d, %v", count, err)
+	}
+}

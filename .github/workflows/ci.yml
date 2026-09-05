@@ -164,10 +164,18 @@ jobs:
             EXPECTED_VERSION="${BASH_REMATCH[1]}"
             echo "Release preparation branch version: ${EXPECTED_VERSION}"
           elif [[ "${GITHUB_REF:-}" == "refs/heads/main" ]]; then
-            COMMIT_SUBJECT=$(git log -1 --format='%s')
-            if [[ "$COMMIT_SUBJECT" =~ [Pp]repare[[:space:]]v?([0-9]+\.[0-9]+\.[0-9]+)[[:space:]]release([[:space:]]metadata)?([[:space:]]|$) ]]; then
-              EXPECTED_VERSION="${BASH_REMATCH[1]}"
-              echo "Release preparation commit version: ${EXPECTED_VERSION}"
+            SOURCE_VERSION=$(grep -A80 '^  SymDesk:' project.yml | grep MARKETING_VERSION | head -1 | sed 's/.*"\(.*\)".*/\1/')
+            if [[ "$TAG" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ && "$SOURCE_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+              IFS=. read -r tag_major tag_minor tag_patch <<< "$TAG"
+              IFS=. read -r src_major src_minor src_patch <<< "$SOURCE_VERSION"
+              if ((
+                (src_major == tag_major && src_minor == tag_minor && src_patch == tag_patch + 1) ||
+                (src_major == tag_major && src_minor == tag_minor + 1 && src_patch == 0) ||
+                (src_major == tag_major + 1 && src_minor == 0 && src_patch == 0)
+              )); then
+                EXPECTED_VERSION="$SOURCE_VERSION"
+                echo "Pending release source version: ${EXPECTED_VERSION}"
+              fi
             fi
           fi
           echo "Current tag version: ${TAG}"

@@ -160,6 +160,13 @@ func (s *Store) TrashListStrict() ([]TrashEntry, error) {
 			metadata[name] = true
 			continue
 		}
+		info, err := root.Lstat(filepath.Join(trashRelDir(), item.Name()))
+		if err != nil {
+			return nil, fmt.Errorf("stat trash payload %q: %w", item.Name(), err)
+		}
+		if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
+			return nil, fmt.Errorf("invalid trash payload %q: not a regular file", item.Name())
+		}
 		payloads[item.Name()] = true
 	}
 	if len(payloads) != len(metadata) {
@@ -198,6 +205,10 @@ func (s *Store) TrashListStrict() ([]TrashEntry, error) {
 		}
 		if entry.DeletedAt.IsZero() || entry.Size < 0 {
 			return nil, fmt.Errorf("invalid trash metadata for %q", name)
+		}
+		payloadInfo, err := root.Lstat(filepath.Join(trashRelDir(), name))
+		if err != nil || payloadInfo.Size() != entry.Size {
+			return nil, fmt.Errorf("trash payload size mismatch for %q", name)
 		}
 		entries = append(entries, entry)
 	}
@@ -283,6 +294,41 @@ func (s *Store) trashEntry(name string) (*TrashEntry, error) {
 	}
 	e.Name = name
 	return &e, nil
+}
+
+// PurgeTrashEntries permanently removes exactly the named trash entries. It
+// validates the complete inventory first and is idempotent when an entry was
+// already removed by an earlier retry.
+func (s *Store) PurgeTrashEntries(wanted []TrashEntry) (int, error) {
+	current, err := s.TrashListStrict()
+	if err != nil {
+		return 0, err
+	}
+	byName := make(map[string]TrashEntry, len(current))
+	for _, entry := range current {
+		byName[entry.Name] = entry
+	}
+	root, err := s.openRoot()
+	if err != nil {
+		return 0, err
+	}
+	removed := 0
+	for _, entry := range wanted {
+		current, ok := byName[entry.Name]
+		if !ok {
+			continue
+		}
+		if current.OriginalPath != entry.OriginalPath {
+			return removed, fmt.Errorf("trash entry %q original path changed", entry.Name)
+		}
+		for _, name := range []string{entry.Name, entry.Name + trashMetaSuffix} {
+			if err := root.Remove(filepath.Join(trashRelDir(), name)); err != nil && !os.IsNotExist(err) {
+				return removed, err
+			}
+		}
+		removed++
+	}
+	return removed, nil
 }
 
 // PurgeTrashPaths permanently removes trash entries whose original path is in

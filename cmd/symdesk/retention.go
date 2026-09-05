@@ -251,7 +251,7 @@ func newRetentionAcceptCmd() *cobra.Command {
 					if item.Action != retention.ActionTrash {
 						actionErr = fmt.Errorf("dataset retention action must be trash, got %q", item.Action)
 					} else {
-						actionErr = svc.DatasetPurge(slug, item.RuleName)
+						actionErr = svc.DatasetPurgeWithFingerprint(slug, item.RuleName, item.Fingerprint)
 					}
 				} else {
 					switch item.Action {

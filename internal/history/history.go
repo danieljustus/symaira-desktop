@@ -453,6 +453,97 @@ func createRootTemp(root *os.Root, dir, prefix string) (*os.File, string, error)
 	return nil, "", fmt.Errorf("create temporary file: too many collisions")
 }
 
+// PreflightPurgePaths validates every history manifest, referenced object, and
+// checkpoint before a destructive purge. It never writes or removes anything.
+func (s *Store) PreflightPurgePaths(relPaths ...string) error {
+	targets := make(map[string]bool, len(relPaths))
+	for _, relPath := range relPaths {
+		rel, err := cleanRel(relPath)
+		if err != nil {
+			return err
+		}
+		targets[filepath.ToSlash(rel)] = true
+	}
+	root, err := s.openRoot()
+	if err != nil {
+		return err
+	}
+	_ = targets
+	return preflightPurgeRoot(root, targets)
+}
+
+func preflightPurgeRoot(root *os.Root, targets map[string]bool) error {
+	manifestRoot := filepath.Join(historyRelDir(), "manifest")
+	if err := fs.WalkDir(root.FS(), manifestRoot, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			if os.IsNotExist(walkErr) {
+				return nil
+			}
+			return walkErr
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(path, ".json") {
+			return fmt.Errorf("invalid history manifest entry %q", path)
+		}
+		data, err := root.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		entries, err := decodeHistoryManifest(data)
+		if err != nil {
+			return fmt.Errorf("invalid history manifest %q: %w", path, err)
+		}
+		for _, entry := range entries {
+			if err := verifyHistoryEntry(root, entry); err != nil {
+				return fmt.Errorf("invalid history manifest %q: %w", path, err)
+			}
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	checkpointItems, err := fs.ReadDir(root.FS(), checkpointsRelDir())
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	for _, item := range checkpointItems {
+		if item.IsDir() || !strings.HasSuffix(item.Name(), ".json") {
+			return fmt.Errorf("invalid checkpoint entry %q", item.Name())
+		}
+		path := filepath.Join(checkpointsRelDir(), item.Name())
+		data, err := root.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		cp, err := decodeCheckpointManifest(data)
+		if err != nil {
+			return fmt.Errorf("invalid checkpoint manifest %q: %w", item.Name(), err)
+		}
+		if expected := strings.TrimSuffix(item.Name(), ".json"); cp.TaskID != expected {
+			return fmt.Errorf("invalid checkpoint manifest %q: task_id %q does not match filename", item.Name(), cp.TaskID)
+		}
+		for _, file := range cp.Files {
+			if err := verifyHistoryEntry(root, file.Entry); err != nil {
+				return fmt.Errorf("invalid checkpoint manifest %q: %w", item.Name(), err)
+			}
+		}
+	}
+
+	objects, err := fs.ReadDir(root.FS(), objectsRelDir())
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	for _, object := range objects {
+		if object.IsDir() || object.Type()&os.ModeSymlink != 0 {
+			return fmt.Errorf("invalid history object %q", object.Name())
+		}
+	}
+	return nil
+}
+
 // PurgePaths permanently removes history manifests and checkpoint residue for
 // the supplied vault-relative paths, then garbage-collects unreferenced blobs.
 // It is intentionally explicit; ordinary retention pruning never calls it.
@@ -725,6 +816,17 @@ func verifyHistoryEntry(root *os.Root, entry Entry) error {
 	}
 	if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
 		return fmt.Errorf("referenced object %s is not a regular file", entry.ID)
+	}
+	data, err := root.ReadFile(filepath.Join(objectsRelDir(), entry.ID))
+	if err != nil {
+		return fmt.Errorf("read referenced object %s: %w", entry.ID, err)
+	}
+	if int64(len(data)) != entry.Size {
+		return fmt.Errorf("referenced object %s size does not match manifest", entry.ID)
+	}
+	sum := sha256.Sum256(data)
+	if hex.EncodeToString(sum[:]) != entry.ID {
+		return fmt.Errorf("referenced object %s content hash does not match id", entry.ID)
 	}
 	return nil
 }

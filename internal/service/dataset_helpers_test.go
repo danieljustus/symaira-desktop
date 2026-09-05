@@ -115,7 +115,7 @@ func TestDatasetListDescribeAndExportValidationErrors(t *testing.T) {
 	}
 }
 
-func TestDatasetListReadsAuthoritativeHandlesAndSkipsMalformedFiles(t *testing.T) {
+func TestDatasetListReadsAuthoritativeHandlesAndSurfacesMalformedFiles(t *testing.T) {
 	svc := newTestService(t)
 	if _, err := svc.DatasetSync(validDatasetSyncOptions()); err != nil {
 		t.Fatal(err)
@@ -125,8 +125,8 @@ func TestDatasetListReadsAuthoritativeHandlesAndSkipsMalformedFiles(t *testing.T
 		t.Fatal(err)
 	}
 	list, err := svc.DatasetsList()
-	if err != nil {
-		t.Fatal(err)
+	if err == nil || !strings.Contains(err.Error(), "datasets/bad.md") || !strings.Contains(err.Error(), "not a dataset handle") {
+		t.Fatalf("malformed dataset diagnostics = %#v, %v", list, err)
 	}
 	if len(list) != 1 || list[0].Slug != "events" || list[0].Rows != 1 {
 		t.Fatalf("authoritative dataset list = %#v", list)

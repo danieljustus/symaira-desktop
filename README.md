@@ -7,7 +7,7 @@
 
 ![Symaira Desktop social preview](docs/assets/social-preview.png)
 
-The composition **shell** of the [Symaira](https://github.com/danieljustus?tab=repositories&q=symaira) ecosystem.
+The local-first Markdown-vault workspace and human-facing shell of the [Symaira](https://github.com/danieljustus?tab=repositories&q=symaira) ecosystem.
 
 A local-first and self-hostable, **agent-native** workspace that unifies documents, notes, knowledge and AI over a single plain-Markdown vault. It is the realization of the "Paperless + Obsidian + Notion AI" dream as *one surface*, deliberately **not** a monolith and without making a proprietary database the source of truth.
 
@@ -56,7 +56,7 @@ alongside the archive and checksum manifest, then verify them without a
 long-lived signing key:
 
 ```sh
-VERSION=0.11.1
+VERSION=0.12.1
 ARCHIVE="symaira-desktop_${VERSION}_darwin_arm64.tar.gz"
 IDENTITY=https://github.com/danieljustus/symaira-desktop/.github/workflows/release.yml@refs/tags/v.*
 ISSUER=https://token.actions.githubusercontent.com
@@ -114,7 +114,7 @@ repository script on a Mac with Xcode 26.x and the required Apple signing
 profiles installed:
 
 ```sh
-IOS_VERSION=0.11.1 \
+IOS_VERSION=0.12.1 \
 IOS_BUILD_NUMBER=1 \
 DEVELOPMENT_TEAM=M4744F3TAA \
 bash scripts/release-ios.sh
@@ -170,7 +170,7 @@ symdesk version --json         # {"tool":"symdesk","version":...,"schema_version
 
 ```text
 $ symdesk version --json
-{"tool":"symdesk","version":"0.11.1","schema_version":1}
+{"tool":"symdesk","version":"0.12.1","schema_version":1}
 ```
 
 ## Development

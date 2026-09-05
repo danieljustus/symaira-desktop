@@ -233,7 +233,7 @@ func newRetentionAcceptCmd() *cobra.Command {
 						continue
 					}
 					if item.RuleName == "" || state.RuleName != item.RuleName {
-						failures = appendRetentionFailure(item, fmt.Sprintf("dataset declares retention rule %q, proposal requires %q", state.RuleName, item.RuleName), failures)
+						failures = appendRetentionFailure(item, fmt.Sprintf("proposal is stale: dataset declares retention rule %q, proposal requires %q", state.RuleName, item.RuleName), failures)
 						continue
 					}
 				}

@@ -92,10 +92,10 @@ func TestDatasetListSurfacesPolicyMigrationWriteFailure(t *testing.T) {
 	svc := newTestService(t)
 	path, original := legacyDatasetHandle(t, svc, "orders", "")
 	dir := filepath.Dir(path)
-	if err := os.Chmod(dir, 0500); err != nil {
+	if err := os.Chmod(dir, 0500); err != nil { //nolint:gosec // test-owned directory permissions simulate a write failure
 		t.Skipf("cannot make migration directory read-only: %v", err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(dir, 0700) })
+	t.Cleanup(func() { _ = os.Chmod(dir, 0700) }) //nolint:gosec // restore test-owned directory permissions
 
 	list, err := svc.DatasetList()
 	if err == nil || !strings.Contains(err.Error(), "datasets/orders.md") || !strings.Contains(err.Error(), "migrat") {

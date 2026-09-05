@@ -13,6 +13,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/retention"
+	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -310,12 +311,16 @@ func TestRetentionAcceptanceDatasetAndOrdinaryPaths(t *testing.T) {
 	output, err := captureCommandStdout(t, func() error {
 		return acceptWrong.RunE(acceptWrong, []string{wrongProposal.RunID})
 	})
-	if err != nil {
-		t.Fatalf("accepting mismatched dataset rule failed: %v", err)
+	_ = output
+	if err == nil || !strings.Contains(err.Error(), "retention rule") {
+		t.Fatalf("mismatched dataset rule error = %v", err)
 	}
-	acceptedWrong := decodeCommandJSON(t, output)
-	if acceptedWrong["acted"] != float64(0) || acceptedWrong["status"] != "accepted" {
-		t.Fatalf("mismatched retention rule was not skipped: %#v", acceptedWrong)
+	failedWrong, loadErr := retention.LoadProposal(vaultRoot, wrongProposal.RunID)
+	if loadErr != nil {
+		t.Fatal(loadErr)
+	}
+	if failedWrong.Status != retention.ProposalStatusFailed || failedWrong.Items[0].Failure == "" {
+		t.Fatalf("mismatched retention rule was not persisted as retryable: %#v", failedWrong)
 	}
 	if _, err := os.Stat(filepath.Join(vaultRoot, "datasets", "wrong.md")); err != nil {
 		t.Fatalf("mismatched-rule dataset was purged: %v", err)
@@ -329,11 +334,22 @@ func TestRetentionAcceptanceDatasetAndOrdinaryPaths(t *testing.T) {
 	}
 
 	syncDatasetForCommandTest(t, vaultRoot, "matching", "matching-rule")
+	stateDB, err := sidecar.OpenForVault(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	matchingState, err := service.New(vaultRoot, stateDB).RetentionState("datasets/matching.md")
+	if closeErr := stateDB.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
 	matchingProposal := retention.Proposal{
 		RunID:   "matching-rule-run",
 		Created: time.Now().UTC(),
 		Status:  "pending",
-		Items:   []retention.ProposalItem{{Path: "datasets/matching.md", Title: "Dataset matching", Action: retention.ActionTrash, RuleName: "matching-rule"}},
+		Items:   []retention.ProposalItem{{Path: "datasets/matching.md", Title: "Dataset matching", Action: retention.ActionTrash, RuleName: "matching-rule", Fingerprint: matchingState.Fingerprint}},
 	}
 	if err := retention.WriteProposal(vaultRoot, matchingProposal); err != nil {
 		t.Fatal(err)
@@ -354,6 +370,24 @@ func TestRetentionAcceptanceDatasetAndOrdinaryPaths(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(vaultRoot, "datasets", "matching")); !os.IsNotExist(err) {
 		t.Fatalf("matching dataset raw directory still exists, stat error = %v", err)
+	}
+	retryMatching := retentionSubcommand(t, "accept")
+	output, err = captureCommandStdout(t, func() error {
+		return retryMatching.RunE(retryMatching, []string{matchingProposal.RunID})
+	})
+	if err != nil {
+		t.Fatalf("retrying accepted proposal failed: %v", err)
+	}
+	retryResult := decodeCommandJSON(t, output)
+	if retryResult["acted"] != float64(0) || retryResult["status"] != retention.ProposalStatusAccepted {
+		t.Fatalf("retry duplicated accepted action: %#v", retryResult)
+	}
+	history, err = retention.LoadHistory(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(history) != 1 || history[0].Path != "datasets/matching.md" {
+		t.Fatalf("retry changed retention history: %#v", history)
 	}
 
 	notePath := filepath.Join(vaultRoot, "ordinary.md")

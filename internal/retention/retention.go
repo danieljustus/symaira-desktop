@@ -55,6 +55,17 @@ const (
 	ActionFlagReview Action = "flag_review"
 )
 
+const (
+	ProposalStatusPending  = "pending"
+	ProposalStatusAccepted = "accepted"
+	ProposalStatusRejected = "rejected"
+	ProposalStatusFailed   = "failed"
+	ProposalStatusPartial  = "partial"
+
+	ProposalItemStatusAccepted        = "accepted"
+	ProposalItemStatusActionCompleted = "action_completed"
+)
+
 var validActions = map[Action]bool{
 	ActionTrash:      true,
 	ActionFlagReview: true,
@@ -71,7 +82,7 @@ type Proposal struct {
 	Created time.Time `json:"created"`
 	// Items lists the documents that matched and would be acted on.
 	Items []ProposalItem `json:"items"`
-	// Status is "pending", "accepted", or "rejected".
+	// Status is pending, accepted, rejected, failed, or partial.
 	Status string `json:"status"`
 }
 
@@ -89,6 +100,12 @@ type ProposalItem struct {
 	Action Action `json:"action"`
 	// RuleName identifies which rule matched this item.
 	RuleName string `json:"rule_name,omitempty"`
+	// Fingerprint binds acceptance to the authoritative state evaluated.
+	Fingerprint string `json:"fingerprint,omitempty"`
+	// Status is accepted after the action and remains pending when retryable.
+	Status string `json:"status,omitempty"`
+	// Failure is the last per-item acceptance failure, if any.
+	Failure string `json:"failure,omitempty"`
 }
 
 // HistoryEntry records an executed retention action.
@@ -164,11 +181,15 @@ func validReferenceField(f string) bool {
 // returns items that have expired. Each item carries a parsed ExpiresAt date.
 func Evaluate(rule Rule, docs []DocMeta, now time.Time) []ProposalItem {
 	var items []ProposalItem
+	field := rule.ReferenceField
+	if field == "" {
+		field = "document_date"
+	}
 	for _, d := range docs {
 		if !rule.Selector.Matches(d) {
 			continue
 		}
-		refDate, ok := d.ReferenceDate(rule.ReferenceField)
+		refDate, ok := d.ReferenceDate(field)
 		if !ok {
 			continue
 		}

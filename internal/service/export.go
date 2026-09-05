@@ -55,6 +55,12 @@ func (s *Service) Export(relPath, viewID, outputPath, format, profile string) (*
 		return nil, fmt.Errorf("unsupported export format %q: use pdf, html, or csv", format)
 	}
 
+	if relPath != "" {
+		if err := s.checkDatasetExportPath(relPath); err != nil {
+			return nil, err
+		}
+	}
+
 	if format == "csv" {
 		if viewID == "" {
 			return nil, fmt.Errorf("csv export is only supported for views (use --view)")

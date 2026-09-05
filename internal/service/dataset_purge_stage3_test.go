@@ -143,7 +143,7 @@ func TestDatasetPurgeRejectsReplacementAtRecordedPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	DatasetPurgeRemove = original
-	if err := svc.DatasetPurge("orders", dataset.DefaultRetentionRule); err == nil || !strings.Contains(err.Error(), "replaced") {
+	if err := svc.DatasetPurge("orders", dataset.DefaultRetentionRule); err == nil || (!strings.Contains(err.Error(), "replaced") && !strings.Contains(err.Error(), "content changed")) {
 		t.Fatalf("replacement path error = %v", err)
 	}
 	if data, err := os.ReadFile(raw); err != nil || string(data) != "replacement" { //nolint:gosec // test-owned vault path

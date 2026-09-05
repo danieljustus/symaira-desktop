@@ -517,28 +517,27 @@ func datasetSetFilter(column, typ, op, value string) (string, []interface{}, err
 	oneArgs = append(oneArgs, setValues...)
 	oneArgs = append(oneArgs, containerArgs...)
 	oneArgs = append(oneArgs, setValues...)
-	if op == "in" {
+	if op == "in" || op == "contains_any" {
 		return one, oneArgs, nil
 	}
 	if op == "not_in" {
 		return datasetSetValid(column) + " AND NOT (" + one + ")", oneArgs, nil
 	}
-	arrayOne := present + " AND " + arrayMatch
-	arrayOneArgs := append([]interface{}{}, presentArgs...)
-	arrayOneArgs = append(arrayOneArgs, containerArgs...)
-	arrayOneArgs = append(arrayOneArgs, setValues...)
-	if op == "contains_any" {
-		return arrayOne, arrayOneArgs, nil
-	}
 	if op == "contains_none" {
+		arrayOne := present + " AND " + arrayMatch
+		arrayOneArgs := append([]interface{}{}, presentArgs...)
+		arrayOneArgs = append(arrayOneArgs, containerArgs...)
+		arrayOneArgs = append(arrayOneArgs, setValues...)
 		return datasetSetValid(column) + " AND NOT (" + arrayOne + ")", arrayOneArgs, nil
 	}
 	parts := make([]string, 0, len(items))
-	args := make([]interface{}, 0, len(items)*(len(presentArgs)+len(containerArgs)+1))
+	args := make([]interface{}, 0, len(items)*(len(presentArgs)+len(rawArgs)+len(containerArgs)+2))
 	for i := range items {
-		part := present + " AND EXISTS (SELECT 1 FROM json_each(" + container + ") WHERE " + datasetSetEqualsExpression("value", typ) + ")"
+		part := present + " AND (" + datasetSetEqualsExpression(raw, typ) + " OR EXISTS (SELECT 1 FROM json_each(" + container + ") WHERE " + datasetSetEqualsExpression("value", typ) + "))"
 		parts = append(parts, part)
 		args = append(args, presentArgs...)
+		args = append(args, rawArgs...)
+		args = append(args, setValues[i])
 		args = append(args, containerArgs...)
 		args = append(args, setValues[i])
 	}

@@ -677,9 +677,10 @@ func TestFetchWithHTTP_LargeResponse(t *testing.T) {
 	largeContent := strings.Repeat("A", 11<<20)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		if _, err := fmt.Fprint(w, largeContent); err != nil {
-			t.Errorf("write response: %v", err)
-		}
+		// fetchWithHTTP intentionally stops reading after its size cap. The
+		// resulting server-side broken pipe/reset is the behavior under test,
+		// not a handler failure.
+		_, _ = fmt.Fprint(w, largeContent)
 	}))
 	defer server.Close()
 

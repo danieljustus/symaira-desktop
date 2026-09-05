@@ -135,40 +135,61 @@ func TestWatcher_NewSubdirectoryIsWatchedRecursively(t *testing.T) {
 	if err := w.Start(ctx); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
-	// Let the event loop goroutine start.
-	time.Sleep(50 * time.Millisecond)
+	waitFor(t, time.Second, func() bool {
+		for _, watched := range w.watcher.WatchList() {
+			if watched == inbox {
+				return true
+			}
+		}
+		return false
+	})
 
 	subdir := filepath.Join(inbox, "incoming")
 	if err := os.MkdirAll(subdir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	// Give fsnotify time to deliver the directory-create event and for
-	// watchDirectoryRecursive to add a watch on the new directory.
-	time.Sleep(100 * time.Millisecond)
+	// Synchronize on the fsnotify registration instead of assuming the event
+	// loop observes the directory within an arbitrary wall-clock sleep.
+	waitFor(t, time.Second, func() bool {
+		for _, watched := range w.watcher.WatchList() {
+			if watched == subdir {
+				return true
+			}
+		}
+		return false
+	})
 
 	nestedPath := filepath.Join(subdir, "nested.txt")
 	if err := os.WriteFile(nestedPath, []byte("nested content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	// Wait for the create event to schedule a debounce timer.
-	time.Sleep(50 * time.Millisecond)
+	// The fake clock must not advance until the create event has installed the
+	// debounce timer; otherwise parallel package load can race this assertion.
+	waitFor(t, time.Second, func() bool {
+		w.mu.Lock()
+		defer w.mu.Unlock()
+		_, pending := w.pending[nestedPath]
+		return pending
+	})
 
-	// Advance past the debounce window using the fake clock.
-	clk.Advance(2 * time.Second)
-
-	jobs, err := s.ListJobs(ctx, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	found := false
-	for _, j := range jobs {
-		if j.SourcePath == nestedPath {
-			found = true
+	var jobs []*store.Job
+	for attempt := 0; attempt < 3; attempt++ {
+		// A create event may be followed by a write event. Depending on which
+		// event established the pending state, checkStability may need one more
+		// deterministic interval to observe an unchanged file.
+		clk.Advance(w.stableFor)
+		var err error
+		jobs, err = s.ListJobs(ctx, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, job := range jobs {
+			if job.SourcePath == nestedPath {
+				return
+			}
 		}
 	}
-	if !found {
-		t.Fatalf("expected a job for %s, got jobs: %+v", nestedPath, jobs)
-	}
+	t.Fatalf("expected a job for %s, got jobs: %+v", nestedPath, jobs)
 }
 
 // checkStability force-enqueues a file that has been pending longer than

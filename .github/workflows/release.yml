@@ -345,7 +345,9 @@ jobs:
     name: Signed iOS TestFlight build
     runs-on: macos-15
     environment: ios-testflight
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    # TestFlight has separate Apple-portal and real-device gates. Stable
+    # desktop tags must not implicitly opt into that independently gated lane.
+    if: github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
     steps:

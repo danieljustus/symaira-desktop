@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
@@ -66,16 +67,39 @@ func ValidateSensitivity(value string) error {
 }
 
 func ValidateRetentionRuleReference(value string) error {
+	for _, r := range value {
+		if unicode.IsControl(r) || unicode.Is(unicode.Cf, r) || r == '/' || r == '\\' {
+			return fmt.Errorf("invalid dataset retention_rule %q: control characters and path separators are not allowed", value)
+		}
+	}
 	value = strings.TrimSpace(value)
 	if value == "" {
 		return errors.New("dataset handle requires retention_rule")
 	}
-	for _, r := range value {
-		if r == '/' || r == '\\' || r == '\r' || r == '\n' || r == '	' {
-			return fmt.Errorf("invalid dataset retention_rule %q", value)
-		}
-	}
 	return nil
+}
+
+// NeedsPolicyMigration reports whether a valid dataset handle omits both policy
+// fields. A handle omitting exactly one field is incomplete, not legacy.
+func NeedsPolicyMigration(data []byte) (bool, error) {
+	encoded := frontmatter(data)
+	if len(encoded) == 0 {
+		return false, errors.New("dataset handle requires frontmatter")
+	}
+	var fields map[string]yaml.Node
+	if err := yaml.Unmarshal(encoded, &fields); err != nil {
+		return false, fmt.Errorf("parse dataset policy metadata: %w", err)
+	}
+	_, hasSensitivity := fields["sensitivity"]
+	_, hasRetentionRule := fields["retention_rule"]
+	if hasSensitivity == hasRetentionRule {
+		return !hasSensitivity, nil
+	}
+	missing := "sensitivity"
+	if hasSensitivity {
+		missing = "retention_rule"
+	}
+	return false, fmt.Errorf("dataset handle policy metadata is incomplete; missing %s", missing)
 }
 
 type Coverage struct {
@@ -369,7 +393,11 @@ func ParseHandle(relPath string, data []byte) (*Handle, error) {
 	// Contract-v6 handles written before policy enforcement shipped omitted
 	// both fields. Read that exact legacy shape conservatively; a partially
 	// declared or invalid policy still fails instead of being guessed.
-	if fm.Sensitivity == "" && fm.RetentionRule == "" {
+	legacyPolicy, err := NeedsPolicyMigration(data)
+	if err != nil {
+		return nil, fmt.Errorf("dataset handle %s: %w", relPath, err)
+	}
+	if legacyPolicy {
 		fm.Sensitivity = DefaultSensitivity
 		fm.RetentionRule = DefaultRetentionRule
 	}

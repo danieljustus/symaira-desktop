@@ -111,21 +111,15 @@ func (s *Service) DatasetList() ([]DatasetSummary, error) {
 		return nil, err
 	}
 	result := make([]DatasetSummary, 0)
+	var diagnostics []error
 	for _, entry := range entries {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".md" {
 			continue
 		}
 		rel := filepath.ToSlash(filepath.Join(dataset.RawDir, entry.Name()))
-		abs, err := vault.SecurePath(s.VaultRoot, rel)
+		handle, err := readDatasetHandleWithMigration(s.VaultRoot, rel)
 		if err != nil {
-			continue
-		}
-		data, err := os.ReadFile(abs) //nolint:gosec // path is confined by SecurePath
-		if err != nil {
-			continue
-		}
-		handle, err := dataset.ParseHandle(rel, data)
-		if err != nil {
+			diagnostics = append(diagnostics, fmt.Errorf("%s: %w", rel, err))
 			continue
 		}
 		rows := 0
@@ -137,7 +131,54 @@ func (s *Service) DatasetList() ([]DatasetSummary, error) {
 		result = append(result, datasetSummary(*handle, rows))
 	}
 	sort.Slice(result, func(i, j int) bool { return strings.ToLower(result[i].Title) < strings.ToLower(result[j].Title) })
+	if len(diagnostics) > 0 {
+		return result, fmt.Errorf("dataset list diagnostics: %w", errors.Join(diagnostics...))
+	}
 	return result, nil
+}
+
+// readDatasetHandleWithMigration reads and, for the exact legacy shape, atomically
+// persists both policy fields without rewriting unrelated Markdown content.
+func readDatasetHandleWithMigration(root, rel string) (*dataset.Handle, error) {
+	path, err := vault.SecurePath(root, rel)
+	if err != nil {
+		return nil, err
+	}
+	data, err := os.ReadFile(path) //nolint:gosec // path is confined by SecurePath
+	if err != nil {
+		return nil, err
+	}
+	handle, err := dataset.ParseHandle(rel, data)
+	if err != nil {
+		return nil, err
+	}
+	legacyPolicy, err := dataset.NeedsPolicyMigration(data)
+	if err != nil {
+		return nil, err
+	}
+	if !legacyPolicy {
+		return handle, nil
+	}
+	if err := vault.BackfillFrontmatter(path, map[string]interface{}{
+		"sensitivity":    dataset.DefaultSensitivity,
+		"retention_rule": dataset.DefaultRetentionRule,
+	}); err != nil {
+		return nil, fmt.Errorf("migrate dataset policy metadata: %w", err)
+	}
+	migrated, err := os.ReadFile(path) //nolint:gosec // path is confined by SecurePath
+	if err != nil {
+		return nil, fmt.Errorf("verify migrated dataset handle: %w", err)
+	}
+	migratedHandle, err := dataset.ParseHandle(rel, migrated)
+	if err != nil {
+		return nil, fmt.Errorf("verify migrated dataset handle: %w", err)
+	}
+	if stillLegacy, err := dataset.NeedsPolicyMigration(migrated); err != nil {
+		return nil, fmt.Errorf("verify migrated dataset policy metadata: %w", err)
+	} else if stillLegacy {
+		return nil, errors.New("migrate dataset policy metadata did not persist both fields")
+	}
+	return migratedHandle, nil
 }
 
 // DatasetsList is the plural compatibility spelling used by some callers.
@@ -152,7 +193,7 @@ func (s *Service) DatasetDescribe(slug string) (*DatasetDescription, error) {
 		return nil, errors.New("dataset slug is required")
 	}
 	rel := filepath.ToSlash(filepath.Join(dataset.RawDir, slug+".md"))
-	handle, err := readDatasetHandle(s.VaultRoot, rel)
+	handle, err := readDatasetHandleWithMigration(s.VaultRoot, rel)
 	if err != nil {
 		return nil, fmt.Errorf("dataset %q not found: %w", slug, err)
 	}

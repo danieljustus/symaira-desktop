@@ -273,6 +273,17 @@ func (s *Store) saveCheckpoint(cp *Checkpoint) error {
 	if err != nil {
 		return err
 	}
+	// Persist arrays as [] rather than null so strict recovery preflight can
+	// distinguish a valid empty list from malformed JSON null.
+	if cp.Files == nil {
+		cp.Files = []CheckpointFile{}
+	}
+	if cp.NewFiles == nil {
+		cp.NewFiles = []string{}
+	}
+	if cp.Skipped == nil {
+		cp.Skipped = []string{}
+	}
 	data, err := json.MarshalIndent(cp, "", "  ")
 	if err != nil {
 		return err

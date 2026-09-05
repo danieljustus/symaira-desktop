@@ -247,3 +247,114 @@ func TestProposalJSON(t *testing.T) {
 		t.Errorf("RunID mismatch after round-trip")
 	}
 }
+
+func TestStableActionHistoryIsIdempotentAndAtomic(t *testing.T) {
+	dir := t.TempDir()
+	entry := HistoryEntry{
+		ActionID:  StableActionID("ret-123", 4),
+		Timestamp: time.Now().UTC(),
+		RuleName:  "old docs",
+		Action:    ActionTrash,
+		Path:      "doc.md",
+		Title:     "Doc",
+	}
+	if err := AppendHistory(dir, entry); err != nil {
+		t.Fatal(err)
+	}
+	if err := AppendHistory(dir, entry); err != nil {
+		t.Fatal(err)
+	}
+	entries, err := LoadHistory(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].ActionID != entry.ActionID {
+		t.Fatalf("idempotent append produced %#v", entries)
+	}
+	data, err := os.ReadFile(HistoryPath(dir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded []HistoryEntry
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("history is not complete JSON after atomic write: %v", err)
+	}
+	if temp, err := filepath.Glob(filepath.Join(ProposalDir(dir), ".symdesk-retention-*.tmp")); err != nil || len(temp) != 0 {
+		t.Fatalf("atomic history write left temp files: %v %v", temp, err)
+	}
+
+	proposal := Proposal{RunID: "ret-123", Status: ProposalStatusPending, Items: []ProposalItem{{Path: "doc.md"}}}
+	if err := WriteProposal(dir, proposal); err != nil {
+		t.Fatal(err)
+	}
+	proposal.Status = ProposalStatusAccepted
+	if err := WriteProposal(dir, proposal); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadProposal(dir, proposal.RunID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Status != ProposalStatusAccepted {
+		t.Fatalf("proposal retry did not replace complete state: %#v", loaded)
+	}
+	data, err = os.ReadFile(filepath.Join(ProposalDir(dir), proposal.RunID+".json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decodedProposal Proposal
+	if err := json.Unmarshal(data, &decodedProposal); err != nil {
+		t.Fatalf("proposal is not complete JSON after atomic write: %v", err)
+	}
+	if temp, err := filepath.Glob(filepath.Join(ProposalDir(dir), ".symdesk-retention-*.tmp")); err != nil || len(temp) != 0 {
+		t.Fatalf("atomic proposal write left temp files: %v %v", temp, err)
+	}
+}
+
+func TestHistoryReadsLegacyEntriesWithoutActionID(t *testing.T) {
+	dir := t.TempDir()
+	legacy := `[ {"timestamp":"2026-01-01T00:00:00Z","rule_name":"legacy","action":"trash","path":"old.md","title":"Old"} ]`
+	if err := os.MkdirAll(ProposalDir(dir), 0750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(HistoryPath(dir), []byte(legacy), 0600); err != nil {
+		t.Fatal(err)
+	}
+	entries, err := LoadHistory(dir)
+	if err != nil || len(entries) != 1 || entries[0].ActionID != "" {
+		t.Fatalf("legacy history unreadable: %#v %v", entries, err)
+	}
+	if err := AppendHistory(dir, HistoryEntry{ActionID: StableActionID("new", 0), Path: "new.md"}); err != nil {
+		t.Fatal(err)
+	}
+	entries, err = LoadHistory(dir)
+	if err != nil || len(entries) != 2 {
+		t.Fatalf("legacy entry was not preserved: %#v %v", entries, err)
+	}
+}
+
+func TestProposalRunIDConfinement(t *testing.T) {
+	dir := t.TempDir()
+	invalid := []string{"", ".", "..", "../outside", `..\\outside`, "nested/name", "nested\\name", "bad\nname", "bad\u0000name", "bad:name", "bad*name", "CON", "com1", "trailing.", "trailing "}
+	for _, runID := range invalid {
+		t.Run(runID, func(t *testing.T) {
+			p := Proposal{RunID: runID, Status: ProposalStatusPending}
+			if err := WriteProposal(dir, p); err == nil {
+				t.Fatalf("WriteProposal accepted unsafe run ID %q", runID)
+			}
+			if _, err := LoadProposal(dir, runID); err == nil {
+				t.Fatalf("LoadProposal accepted unsafe run ID %q", runID)
+			}
+		})
+	}
+	for _, runID := range []string{"ret-123", "existing-2026_09", "über-1"} {
+		p := Proposal{RunID: runID, Status: ProposalStatusPending}
+		if err := WriteProposal(dir, p); err != nil {
+			t.Fatalf("WriteProposal rejected valid run ID %q: %v", runID, err)
+		}
+		loaded, err := LoadProposal(dir, runID)
+		if err != nil || loaded.RunID != runID {
+			t.Fatalf("valid run ID %q did not round trip: %#v %v", runID, loaded, err)
+		}
+	}
+}

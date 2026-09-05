@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
 
 	"gopkg.in/yaml.v3"
 
@@ -55,6 +56,17 @@ const (
 	ActionFlagReview Action = "flag_review"
 )
 
+const (
+	ProposalStatusPending  = "pending"
+	ProposalStatusAccepted = "accepted"
+	ProposalStatusRejected = "rejected"
+	ProposalStatusFailed   = "failed"
+	ProposalStatusPartial  = "partial"
+
+	ProposalItemStatusAccepted        = "accepted"
+	ProposalItemStatusActionCompleted = "action_completed"
+)
+
 var validActions = map[Action]bool{
 	ActionTrash:      true,
 	ActionFlagReview: true,
@@ -71,7 +83,7 @@ type Proposal struct {
 	Created time.Time `json:"created"`
 	// Items lists the documents that matched and would be acted on.
 	Items []ProposalItem `json:"items"`
-	// Status is "pending", "accepted", or "rejected".
+	// Status is pending, accepted, rejected, failed, or partial.
 	Status string `json:"status"`
 }
 
@@ -89,10 +101,19 @@ type ProposalItem struct {
 	Action Action `json:"action"`
 	// RuleName identifies which rule matched this item.
 	RuleName string `json:"rule_name,omitempty"`
+	// Fingerprint binds acceptance to the authoritative state evaluated.
+	Fingerprint string `json:"fingerprint,omitempty"`
+	// Status is accepted after the action and remains pending when retryable.
+	Status string `json:"status,omitempty"`
+	// Failure is the last per-item acceptance failure, if any.
+	Failure string `json:"failure,omitempty"`
 }
 
 // HistoryEntry records an executed retention action.
 type HistoryEntry struct {
+	// ActionID is a stable proposal-run/item identifier. Older history entries
+	// may omit it; new entries use it to make retries idempotent.
+	ActionID string `json:"action_id,omitempty"`
 	// When the action was taken.
 	Timestamp time.Time `json:"timestamp"`
 	// RuleName that triggered the action.
@@ -164,11 +185,15 @@ func validReferenceField(f string) bool {
 // returns items that have expired. Each item carries a parsed ExpiresAt date.
 func Evaluate(rule Rule, docs []DocMeta, now time.Time) []ProposalItem {
 	var items []ProposalItem
+	field := rule.ReferenceField
+	if field == "" {
+		field = "document_date"
+	}
 	for _, d := range docs {
 		if !rule.Selector.Matches(d) {
 			continue
 		}
-		refDate, ok := d.ReferenceDate(rule.ReferenceField)
+		refDate, ok := d.ReferenceDate(field)
 		if !ok {
 			continue
 		}
@@ -266,8 +291,49 @@ func HistoryPath(vaultRoot string) string {
 	return filepath.Join(ProposalDir(vaultRoot), "history.json")
 }
 
-// WriteProposal saves a proposal to disk.
+// ValidateRunID rejects proposal IDs that could escape the retention state directory
+// or be interpreted differently on another supported platform.
+func ValidateRunID(runID string) error {
+	if runID == "" || strings.TrimSpace(runID) == "" {
+		return fmt.Errorf("retention proposal run ID must not be empty")
+	}
+	if runID == "." || runID == ".." || strings.ContainsAny(runID, `/\\`) {
+		return fmt.Errorf("retention proposal run ID %q is not a single safe filename component", runID)
+	}
+	for _, r := range runID {
+		if unicode.IsControl(r) {
+			return fmt.Errorf("retention proposal run ID %q contains a control character", runID)
+		}
+	}
+	if strings.ContainsAny(runID, `<>:"|?*`) || strings.HasSuffix(runID, ".") || strings.HasSuffix(runID, " ") {
+		return fmt.Errorf("retention proposal run ID %q is not platform-safe", runID)
+	}
+	upper := strings.ToUpper(runID)
+	if isWindowsReservedName(upper) {
+		return fmt.Errorf("retention proposal run ID %q is a reserved platform name", runID)
+	}
+	return nil
+}
+
+func isWindowsReservedName(name string) bool {
+	if dot := strings.IndexByte(name, '.'); dot >= 0 {
+		name = name[:dot]
+	}
+	switch name {
+	case "CON", "PRN", "AUX", "NUL":
+		return true
+	}
+	if len(name) == 4 && (strings.HasPrefix(name, "COM") || strings.HasPrefix(name, "LPT")) {
+		return name[3] >= '1' && name[3] <= '9'
+	}
+	return false
+}
+
+// WriteProposal saves a proposal to disk atomically.
 func WriteProposal(vaultRoot string, p Proposal) error {
+	if err := ValidateRunID(p.RunID); err != nil {
+		return err
+	}
 	dir := ProposalDir(vaultRoot)
 	//nolint:gosec // retention state is stored under the selected vault
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -279,11 +345,14 @@ func WriteProposal(vaultRoot string, p Proposal) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0644) //nolint:gosec // retention state is intentionally user-readable
+	return writeFileAtomic(path, data, 0644)
 }
 
 // LoadProposal reads a proposal from disk.
 func LoadProposal(vaultRoot, runID string) (Proposal, error) {
+	if err := ValidateRunID(runID); err != nil {
+		return Proposal{}, err
+	}
 	path := filepath.Join(ProposalDir(vaultRoot), fmt.Sprintf("%s.json", runID))
 	data, err := os.ReadFile(path) //nolint:gosec // retention path is rooted in the explicitly selected vault
 	if err != nil {
@@ -296,23 +365,39 @@ func LoadProposal(vaultRoot, runID string) (Proposal, error) {
 	return p, nil
 }
 
-// AppendHistory adds an entry to the retention history log.
+// StableActionID returns the durable identifier for one proposal item.
+// It is intentionally derived only from the proposal run and item index so a
+// retry cannot create a second history row for the same accepted action.
+func StableActionID(runID string, itemIndex int) string {
+	return fmt.Sprintf("%s:%d", runID, itemIndex)
+}
+
+// AppendHistory adds an entry to the retention history log. Entries carrying
+// an ActionID are idempotent, while entries from the old format remain
+// appendable and readable.
 func AppendHistory(vaultRoot string, entry HistoryEntry) error {
 	path := HistoryPath(vaultRoot)
 	//nolint:gosec // retention state is stored under the selected vault
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	var entries []HistoryEntry
-	if data, err := os.ReadFile(path); err == nil { //nolint:gosec // history path is rooted in the explicitly selected vault
-		_ = json.Unmarshal(data, &entries)
+	entries, err := LoadHistory(vaultRoot)
+	if err != nil {
+		return err
+	}
+	if entry.ActionID != "" {
+		for _, existing := range entries {
+			if existing.ActionID == entry.ActionID {
+				return nil
+			}
+		}
 	}
 	entries = append(entries, entry)
 	data, err := json.MarshalIndent(entries, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0644) //nolint:gosec // retention state is intentionally user-readable
+	return writeFileAtomic(path, data, 0644)
 }
 
 // LoadHistory reads the retention history log.
@@ -325,11 +410,64 @@ func LoadHistory(vaultRoot string) ([]HistoryEntry, error) {
 		}
 		return nil, err
 	}
+	if strings.TrimSpace(string(data)) == "null" {
+		return nil, fmt.Errorf("retention history must be a non-null array")
+	}
 	var entries []HistoryEntry
 	if err := json.Unmarshal(data, &entries); err != nil {
 		return nil, err
 	}
+	if entries == nil {
+		return nil, fmt.Errorf("retention history must be a non-null array")
+	}
 	return entries, nil
+}
+
+// writeFileAtomic writes a complete retention state file beside its target,
+// syncs it, and renames it into place so readers never observe a partial JSON
+// document after an interrupted write.
+func writeFileAtomic(path string, data []byte, perm os.FileMode) error {
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, ".symdesk-retention-*.tmp") //nolint:gosec // dir is rooted in the selected vault
+	if err != nil {
+		return err
+	}
+	tmpName := tmp.Name()
+	cleanup := func() {
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
+	}
+	if _, err := tmp.Write(data); err != nil {
+		cleanup()
+		return err
+	}
+	if err := tmp.Sync(); err != nil {
+		cleanup()
+		return err
+	}
+	if err := tmp.Chmod(perm); err != nil {
+		cleanup()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(tmpName)
+		return err
+	}
+	if err := os.Rename(tmpName, path); err != nil { //nolint:gosec // both paths are in the selected vault state directory
+		_ = os.Remove(tmpName)
+		return err
+	}
+	// Persist the directory entry as well where the platform supports it.
+	dirFile, err := os.Open(dir) //nolint:gosec // dir is rooted in the selected vault
+	if err != nil {
+		return err
+	}
+	err = dirFile.Sync()
+	closeErr := dirFile.Close()
+	if err != nil {
+		return err
+	}
+	return closeErr
 }
 
 // DocMetaFromDocument converts a vault.Document to a DocMeta for evaluation.

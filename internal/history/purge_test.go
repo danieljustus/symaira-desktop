@@ -242,3 +242,164 @@ func TestPurgeTrashPathsRejectsInvalidAndTraversalPaths(t *testing.T) {
 		}
 	}
 }
+
+func TestPurgePathsPreflightLeavesAllRecoveryStateUntouched(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(root string, targetID, keepID string)
+	}{
+		{
+			name: "null target manifest",
+			mutate: func(root, _, _ string) {
+				write(t, root, filepath.Join(".symdesk", "history", "manifest", "target.md.json"), "null")
+			},
+		},
+		{
+			name: "null survivor manifest",
+			mutate: func(root, _, _ string) {
+				write(t, root, filepath.Join(".symdesk", "history", "manifest", "keep.md.json"), "null")
+			},
+		},
+		{
+			name: "missing referenced object",
+			mutate: func(root, _, keepID string) {
+				if err := os.Remove(filepath.Join(root, ".symdesk", "history", "objects", keepID)); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name: "corrupt checkpoint",
+			mutate: func(root, _, _ string) {
+				write(t, root, filepath.Join(".symdesk", "history", "checkpoints", "task.json"), "not json")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, store := newVault(t)
+			write(t, root, "target.md", "target")
+			target, err := store.Snapshot("target.md")
+			if err != nil {
+				t.Fatal(err)
+			}
+			write(t, root, "keep.md", "keep")
+			keep, err := store.Snapshot("keep.md")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := store.CheckpointFile("task", "target.md"); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := store.CheckpointFile("task", "keep.md"); err != nil {
+				t.Fatal(err)
+			}
+
+			manifestTarget := filepath.Join(root, ".symdesk", "history", "manifest", "target.md.json")
+			manifestKeep := filepath.Join(root, ".symdesk", "history", "manifest", "keep.md.json")
+			checkpoint := filepath.Join(root, ".symdesk", "history", "checkpoints", "task.json")
+			tracked := []string{manifestTarget, manifestKeep, checkpoint}
+			tt.mutate(root, target.ID, keep.ID)
+			before := make(map[string][]byte, len(tracked))
+			for _, path := range tracked {
+				data, err := os.ReadFile(path) //nolint:gosec // path is constructed under this test vault
+				if err != nil {
+					t.Fatal(err)
+				}
+				before[path] = data
+			}
+			targetObject := filepath.Join(root, ".symdesk", "history", "objects", target.ID)
+			keepObject := filepath.Join(root, ".symdesk", "history", "objects", keep.ID)
+			_, targetBeforeErr := os.Stat(targetObject)
+			_, keepBeforeErr := os.Stat(keepObject)
+
+			if err := store.PurgePaths("target.md"); err == nil {
+				t.Fatal("expected recovery metadata preflight to fail closed")
+			}
+			for _, path := range tracked {
+				after, err := os.ReadFile(path) //nolint:gosec // path is constructed under this test vault
+				if err != nil {
+					t.Fatalf("preflight removed %s: %v", path, err)
+				}
+				if string(after) != string(before[path]) {
+					t.Fatalf("preflight mutated %s", path)
+				}
+			}
+			if _, err := os.Stat(targetObject); (err == nil) != (targetBeforeErr == nil) {
+				t.Fatalf("target object existence changed: before=%v after=%v", targetBeforeErr, err)
+			}
+			if _, err := os.Stat(keepObject); (err == nil) != (keepBeforeErr == nil) {
+				t.Fatalf("keep object existence changed: before=%v after=%v", keepBeforeErr, err)
+			}
+		})
+	}
+}
+
+func TestTrashListStrictRejectsInvalidInventory(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(root string, entryName string)
+	}{
+		{
+			name: "orphan payload",
+			mutate: func(root, _ string) {
+				write(t, root, filepath.Join(".symdesk", "trash", "orphan.md"), "orphan")
+			},
+		},
+		{
+			name: "orphan metadata",
+			mutate: func(root, _ string) {
+				write(t, root, filepath.Join(".symdesk", "trash", "orphan.md"+trashMetaSuffix), "{}")
+			},
+		},
+		{
+			name: "malformed metadata",
+			mutate: func(root, entryName string) {
+				write(t, root, filepath.Join(".symdesk", "trash", entryName+trashMetaSuffix), "not json")
+			},
+		},
+		{
+			name: "metadata name mismatch",
+			mutate: func(root, entryName string) {
+				path := filepath.Join(root, ".symdesk", "trash", entryName+trashMetaSuffix)
+				data, err := os.ReadFile(path) //nolint:gosec // path is constructed under this test vault
+				if err != nil {
+					t.Fatal(err)
+				}
+				updated := strings.Replace(string(data), `"name": "`+entryName+`"`, `"name": "other.md"`, 1)
+				write(t, root, filepath.Join(".symdesk", "trash", entryName+trashMetaSuffix), updated)
+			},
+		},
+		{
+			name: "metadata path mismatch",
+			mutate: func(root, entryName string) {
+				path := filepath.Join(root, ".symdesk", "trash", entryName+trashMetaSuffix)
+				data, err := os.ReadFile(path) //nolint:gosec // path is constructed under this test vault
+				if err != nil {
+					t.Fatal(err)
+				}
+				updated := strings.Replace(string(data), `"original_path": "doc.md"`, `"original_path": "../outside.md"`, 1)
+				write(t, root, filepath.Join(".symdesk", "trash", entryName+trashMetaSuffix), updated)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, store := newVault(t)
+			write(t, root, "doc.md", "content")
+			entry, err := store.Trash("doc.md")
+			if err != nil {
+				t.Fatal(err)
+			}
+			tt.mutate(root, entry.Name)
+			if _, err := store.TrashListStrict(); err == nil {
+				t.Fatal("expected strict trash inventory to fail closed")
+			}
+			if _, err := os.Stat(filepath.Join(root, ".symdesk", "trash", entry.Name)); err != nil {
+				t.Fatalf("strict inventory must not mutate payload: %v", err)
+			}
+		})
+	}
+}

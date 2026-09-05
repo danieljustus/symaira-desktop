@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -128,6 +129,93 @@ func (s *Store) TrashList() ([]TrashEntry, error) {
 	return entries, nil
 }
 
+// TrashListStrict returns a complete, validated trash inventory for
+// destructive callers. Unlike TrashList, it fails closed on malformed
+// metadata and verifies that every payload has exactly one matching metadata
+// file (and vice versa).
+func (s *Store) TrashListStrict() ([]TrashEntry, error) {
+	root, err := s.openRoot()
+	if err != nil {
+		return nil, err
+	}
+	items, err := fs.ReadDir(root.FS(), trashRelDir())
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	payloads := make(map[string]bool)
+	metadata := make(map[string]bool)
+	for _, item := range items {
+		if item.IsDir() {
+			return nil, fmt.Errorf("invalid trash inventory: directory %q", item.Name())
+		}
+		if strings.HasSuffix(item.Name(), trashMetaSuffix) {
+			name := strings.TrimSuffix(item.Name(), trashMetaSuffix)
+			if name == "" {
+				return nil, fmt.Errorf("invalid trash metadata name %q", item.Name())
+			}
+			metadata[name] = true
+			continue
+		}
+		info, err := root.Lstat(filepath.Join(trashRelDir(), item.Name()))
+		if err != nil {
+			return nil, fmt.Errorf("stat trash payload %q: %w", item.Name(), err)
+		}
+		if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
+			return nil, fmt.Errorf("invalid trash payload %q: not a regular file", item.Name())
+		}
+		payloads[item.Name()] = true
+	}
+	if len(payloads) != len(metadata) {
+		return nil, fmt.Errorf("invalid trash inventory: payload/metadata count mismatch")
+	}
+	for name := range payloads {
+		if !metadata[name] {
+			return nil, fmt.Errorf("invalid trash inventory: payload %q has no metadata", name)
+		}
+	}
+	for name := range metadata {
+		if !payloads[name] {
+			return nil, fmt.Errorf("invalid trash inventory: metadata %q has no payload", name)
+		}
+	}
+
+	entries := make([]TrashEntry, 0, len(payloads))
+	for name := range payloads {
+		data, err := root.ReadFile(filepath.Join(trashRelDir(), name+trashMetaSuffix))
+		if err != nil {
+			return nil, fmt.Errorf("read trash metadata for %q: %w", name, err)
+		}
+		if isJSONNull(data) {
+			return nil, fmt.Errorf("corrupt trash metadata for %q: must be a non-null object", name)
+		}
+		var entry TrashEntry
+		if err := json.Unmarshal(data, &entry); err != nil {
+			return nil, fmt.Errorf("corrupt trash metadata for %q: %w", name, err)
+		}
+		if entry.Name != name {
+			return nil, fmt.Errorf("trash metadata name mismatch: file %q declares %q", name, entry.Name)
+		}
+		rel, err := cleanRel(entry.OriginalPath)
+		if err != nil || filepath.ToSlash(rel) != entry.OriginalPath {
+			return nil, fmt.Errorf("trash metadata path mismatch for %q: %q", name, entry.OriginalPath)
+		}
+		if entry.DeletedAt.IsZero() || entry.Size < 0 {
+			return nil, fmt.Errorf("invalid trash metadata for %q", name)
+		}
+		payloadInfo, err := root.Lstat(filepath.Join(trashRelDir(), name))
+		if err != nil || payloadInfo.Size() != entry.Size {
+			return nil, fmt.Errorf("trash payload size mismatch for %q", name)
+		}
+		entries = append(entries, entry)
+	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].DeletedAt.After(entries[j].DeletedAt) })
+	return entries, nil
+}
+
 // TrashRestore moves a trash item back to its original vault path. If the
 // original path is occupied, the restore fails and the trash item is kept.
 func (s *Store) TrashRestore(name string) (*TrashEntry, error) {
@@ -163,7 +251,7 @@ func (s *Store) TrashRestore(name string) (*TrashEntry, error) {
 // TrashPurge permanently removes trash items deleted more than maxAge ago.
 // maxAge <= 0 purges everything. Returns the number of purged items.
 func (s *Store) TrashPurge(maxAge time.Duration) (int, error) {
-	entries, err := s.TrashList()
+	entries, err := s.TrashListStrict()
 	if err != nil {
 		return 0, err
 	}
@@ -208,6 +296,41 @@ func (s *Store) trashEntry(name string) (*TrashEntry, error) {
 	return &e, nil
 }
 
+// PurgeTrashEntries permanently removes exactly the named trash entries. It
+// validates the complete inventory first and is idempotent when an entry was
+// already removed by an earlier retry.
+func (s *Store) PurgeTrashEntries(wanted []TrashEntry) (int, error) {
+	current, err := s.TrashListStrict()
+	if err != nil {
+		return 0, err
+	}
+	byName := make(map[string]TrashEntry, len(current))
+	for _, entry := range current {
+		byName[entry.Name] = entry
+	}
+	root, err := s.openRoot()
+	if err != nil {
+		return 0, err
+	}
+	removed := 0
+	for _, entry := range wanted {
+		current, ok := byName[entry.Name]
+		if !ok {
+			continue
+		}
+		if current.OriginalPath != entry.OriginalPath {
+			return removed, fmt.Errorf("trash entry %q original path changed", entry.Name)
+		}
+		for _, name := range []string{entry.Name, entry.Name + trashMetaSuffix} {
+			if err := root.Remove(filepath.Join(trashRelDir(), name)); err != nil && !os.IsNotExist(err) {
+				return removed, err
+			}
+		}
+		removed++
+	}
+	return removed, nil
+}
+
 // PurgeTrashPaths permanently removes trash entries whose original path is in
 // relPaths. This is reserved for an explicitly accepted dataset purge.
 func (s *Store) PurgeTrashPaths(relPaths ...string) (int, error) {
@@ -219,7 +342,7 @@ func (s *Store) PurgeTrashPaths(relPaths ...string) (int, error) {
 		}
 		targets[filepath.ToSlash(rel)] = true
 	}
-	entries, err := s.TrashList()
+	entries, err := s.TrashListStrict()
 	if err != nil {
 		return 0, err
 	}

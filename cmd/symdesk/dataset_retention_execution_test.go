@@ -13,6 +13,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/retention"
+	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -310,12 +311,16 @@ func TestRetentionAcceptanceDatasetAndOrdinaryPaths(t *testing.T) {
 	output, err := captureCommandStdout(t, func() error {
 		return acceptWrong.RunE(acceptWrong, []string{wrongProposal.RunID})
 	})
-	if err != nil {
-		t.Fatalf("accepting mismatched dataset rule failed: %v", err)
+	_ = output
+	if err == nil || !strings.Contains(err.Error(), "retention rule") {
+		t.Fatalf("mismatched dataset rule error = %v", err)
 	}
-	acceptedWrong := decodeCommandJSON(t, output)
-	if acceptedWrong["acted"] != float64(0) || acceptedWrong["status"] != "accepted" {
-		t.Fatalf("mismatched retention rule was not skipped: %#v", acceptedWrong)
+	failedWrong, loadErr := retention.LoadProposal(vaultRoot, wrongProposal.RunID)
+	if loadErr != nil {
+		t.Fatal(loadErr)
+	}
+	if failedWrong.Status != retention.ProposalStatusFailed || failedWrong.Items[0].Failure == "" {
+		t.Fatalf("mismatched retention rule was not persisted as retryable: %#v", failedWrong)
 	}
 	if _, err := os.Stat(filepath.Join(vaultRoot, "datasets", "wrong.md")); err != nil {
 		t.Fatalf("mismatched-rule dataset was purged: %v", err)
@@ -329,11 +334,22 @@ func TestRetentionAcceptanceDatasetAndOrdinaryPaths(t *testing.T) {
 	}
 
 	syncDatasetForCommandTest(t, vaultRoot, "matching", "matching-rule")
+	stateDB, err := sidecar.OpenForVault(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	matchingState, err := service.New(vaultRoot, stateDB).RetentionState("datasets/matching.md")
+	if closeErr := stateDB.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
 	matchingProposal := retention.Proposal{
 		RunID:   "matching-rule-run",
 		Created: time.Now().UTC(),
 		Status:  "pending",
-		Items:   []retention.ProposalItem{{Path: "datasets/matching.md", Title: "Dataset matching", Action: retention.ActionTrash, RuleName: "matching-rule"}},
+		Items:   []retention.ProposalItem{{Path: "datasets/matching.md", Title: "Dataset matching", Action: retention.ActionTrash, RuleName: "matching-rule", Fingerprint: matchingState.Fingerprint}},
 	}
 	if err := retention.WriteProposal(vaultRoot, matchingProposal); err != nil {
 		t.Fatal(err)
@@ -354,6 +370,24 @@ func TestRetentionAcceptanceDatasetAndOrdinaryPaths(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(vaultRoot, "datasets", "matching")); !os.IsNotExist(err) {
 		t.Fatalf("matching dataset raw directory still exists, stat error = %v", err)
+	}
+	retryMatching := retentionSubcommand(t, "accept")
+	output, err = captureCommandStdout(t, func() error {
+		return retryMatching.RunE(retryMatching, []string{matchingProposal.RunID})
+	})
+	if err != nil {
+		t.Fatalf("retrying accepted proposal failed: %v", err)
+	}
+	retryResult := decodeCommandJSON(t, output)
+	if retryResult["acted"] != float64(0) || retryResult["status"] != retention.ProposalStatusAccepted {
+		t.Fatalf("retry duplicated accepted action: %#v", retryResult)
+	}
+	history, err = retention.LoadHistory(vaultRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(history) != 1 || history[0].Path != "datasets/matching.md" {
+		t.Fatalf("retry changed retention history: %#v", history)
 	}
 
 	notePath := filepath.Join(vaultRoot, "ordinary.md")
@@ -379,7 +413,7 @@ func TestRetentionAcceptanceDatasetAndOrdinaryPaths(t *testing.T) {
 	}
 
 	rulesPath := filepath.Join(vaultRoot, "retention-rules.yaml")
-	if err := os.WriteFile(rulesPath, []byte("name: skip-dataset\nselector:\n  document_type: dataset\nperiod_days: 1\nreference_field: document_date\naction: trash\n"), 0o600); err != nil {
+	if err := os.WriteFile(rulesPath, []byte("name: skip-dataset\nselector:\n  document_type: dataset\nperiod_days: 1\nreference_field: created\naction: trash\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	evalSkipped := retentionSubcommand(t, "eval")
@@ -397,7 +431,7 @@ func TestRetentionAcceptanceDatasetAndOrdinaryPaths(t *testing.T) {
 		t.Fatalf("wrong retention selector did not skip ordinary document: %#v", evalResult)
 	}
 
-	if err := os.WriteFile(rulesPath, []byte("name: ordinary-review\nselector:\n  status: open\nperiod_days: 1\nreference_field: document_date\naction: flag_review\n"), 0o600); err != nil {
+	if err := os.WriteFile(rulesPath, []byte("name: ordinary-review\nselector:\n  status: open\nperiod_days: 1\nreference_field: created\naction: flag_review\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	evalOrdinary := retentionSubcommand(t, "eval")
@@ -469,5 +503,234 @@ func TestDatasetRetentionSlug(t *testing.T) {
 		if got != test.want || ok != test.ok {
 			t.Errorf("datasetRetentionSlug(%q) = %q, %v; want %q, %v", test.path, got, ok, test.want, test.ok)
 		}
+	}
+
+}
+
+func syncExpiringDatasetForRetentionTest(t *testing.T, vaultRoot, slug, retentionRule string) {
+	t.Helper()
+	originalConfig := cfg
+	cfg = &config.Config{Vault: vaultRoot}
+	t.Cleanup(func() { cfg = originalConfig })
+	originalJSON := jsonFlag
+	jsonFlag = true
+	t.Cleanup(func() { jsonFlag = originalJSON })
+
+	command := datasetSubcommand(t, "sync")
+	for name, value := range map[string]string{
+		"rows":           `[{"identity":"row-1","values":{"id":"row-1","when":"2020-01-01"}}]`,
+		"provenance":     `{"imported_at":"2026-01-01T00:00:00Z","source_name":"` + slug + `.csv","source_sha256":"sha-` + slug + `"}`,
+		"schema":         `{"id":{"type":"text"},"when":{"type":"date"}}`,
+		"identity-field": "id",
+		"retention-rule": retentionRule,
+		"title":          "Dataset " + slug,
+	} {
+		if err := command.Flags().Set(name, value); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := captureCommandStdout(t, func() error { return command.RunE(command, []string{slug}) }); err != nil {
+		t.Fatalf("seed expiring dataset %q: %v", slug, err)
+	}
+}
+
+func TestRetentionEvalBindsDatasetRuleAndFingerprintAndRejectsStaleState(t *testing.T) {
+	vaultRoot := isolatedCommandVault(t)
+	syncExpiringDatasetForRetentionTest(t, vaultRoot, "orders", "dataset-retention")
+	rulesPath := filepath.Join(vaultRoot, "retention-rules.yaml")
+	if err := os.WriteFile(rulesPath, []byte("name: dataset-retention\nselector:\n  document_type: dataset\nperiod_days: 1\nreference_field: created\naction: trash\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eval := retentionSubcommand(t, "eval")
+	if err := eval.Flags().Set("rules", rulesPath); err != nil {
+		t.Fatal(err)
+	}
+	output, err := captureCommandStdout(t, func() error { return eval.RunE(eval, nil) })
+	if err != nil {
+		t.Fatalf("dataset retention eval failed: %v", err)
+	}
+	result := decodeCommandJSON(t, output)
+	if result["item_count"] != float64(1) {
+		t.Fatalf("dataset was not selected by its exact retention rule: %#v", result)
+	}
+	var items []retention.ProposalItem
+	if err := json.Unmarshal([]byte(mustJSONField(t, result, "items")), &items); err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 || items[0].RuleName != "dataset-retention" || items[0].Fingerprint == "" {
+		t.Fatalf("dataset proposal is not bound to rule and fingerprint: %#v", items)
+	}
+	runID := result["run_id"].(string)
+
+	handlePath := filepath.Join(vaultRoot, "datasets", "orders.md")
+	handle, err := os.ReadFile(handlePath) //nolint:gosec // test-owned path under t.TempDir
+	if err != nil {
+		t.Fatal(err)
+	}
+	changedHandle := strings.Replace(string(handle), `retention_rule: dataset-retention`, `retention_rule: other-rule`, 1)
+	if changedHandle == string(handle) {
+		t.Fatal("dataset handle retention rule fixture was not found")
+	}
+	if err := os.WriteFile(handlePath, []byte(changedHandle), 0o600); err != nil { //nolint:gosec // test-owned path under t.TempDir
+		t.Fatal(err)
+	}
+	accept := retentionSubcommand(t, "accept")
+	if _, err := captureCommandStdout(t, func() error { return accept.RunE(accept, []string{runID}) }); err == nil || !strings.Contains(err.Error(), "stale") {
+		t.Fatalf("changed dataset policy did not produce stale failure: %v", err)
+	}
+	failed, err := retention.LoadProposal(vaultRoot, runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if failed.Status != retention.ProposalStatusFailed || failed.Items[0].Failure == "" {
+		t.Fatalf("stale dataset proposal was not persisted as retryable: %#v", failed)
+	}
+	if _, err := os.Stat(handlePath); err != nil {
+		t.Fatalf("stale dataset proposal changed active handle: %v", err)
+	}
+	if history, err := retention.LoadHistory(vaultRoot); err != nil || len(history) != 0 {
+		t.Fatalf("stale dataset proposal wrote history: %#v %v", history, err)
+	}
+
+	if err := os.WriteFile(handlePath, handle, 0o600); err != nil { //nolint:gosec // test-owned path under t.TempDir
+		t.Fatal(err)
+	}
+	rawMatches, err := filepath.Glob(filepath.Join(vaultRoot, "datasets", "orders", "*.csv"))
+	if err != nil || len(rawMatches) != 1 {
+		t.Fatalf("find dataset raw CSV: %v (%v)", rawMatches, err)
+	}
+	rawPath := rawMatches[0]
+	raw, err := os.ReadFile(rawPath) //nolint:gosec // test-owned glob result under t.TempDir
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(rawPath, append(append([]byte(nil), raw...), '\n'), 0o600); err != nil { //nolint:gosec // test-owned path under t.TempDir
+		t.Fatal(err)
+	}
+	accept = retentionSubcommand(t, "accept")
+	if _, err := captureCommandStdout(t, func() error { return accept.RunE(accept, []string{runID}) }); err == nil || !strings.Contains(err.Error(), "stale") {
+		t.Fatalf("changed dataset raw CSV did not produce stale failure: %v", err)
+	}
+	failed, err = retention.LoadProposal(vaultRoot, runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if failed.Status != retention.ProposalStatusFailed || failed.Items[0].Failure == "" {
+		t.Fatalf("raw CSV stale proposal was not retryable: %#v", failed)
+	}
+	if _, err := os.Stat(handlePath); err != nil {
+		t.Fatalf("raw CSV stale proposal changed active handle: %v", err)
+	}
+	if history, err := retention.LoadHistory(vaultRoot); err != nil || len(history) != 0 {
+		t.Fatalf("raw CSV stale proposal wrote history: %#v %v", history, err)
+	}
+}
+
+func TestRetentionAcceptResumesMixedDatasetProposalWithoutDuplicateHistory(t *testing.T) {
+	vaultRoot := isolatedCommandVault(t)
+	for _, slug := range []string{"alpha", "beta"} {
+		syncExpiringDatasetForRetentionTest(t, vaultRoot, slug, "dataset-retention")
+	}
+	rulesPath := filepath.Join(vaultRoot, "retention-rules.yaml")
+	if err := os.WriteFile(rulesPath, []byte("name: dataset-retention\nselector:\n  document_type: dataset\nperiod_days: 1\nreference_field: created\naction: trash\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eval := retentionSubcommand(t, "eval")
+	if err := eval.Flags().Set("rules", rulesPath); err != nil {
+		t.Fatal(err)
+	}
+	output, err := captureCommandStdout(t, func() error { return eval.RunE(eval, nil) })
+	if err != nil {
+		t.Fatalf("mixed dataset retention eval failed: %v", err)
+	}
+	result := decodeCommandJSON(t, output)
+	if result["item_count"] != float64(2) {
+		t.Fatalf("mixed dataset proposal item count = %#v", result)
+	}
+	runID := result["run_id"].(string)
+	betaRaw, err := filepath.Glob(filepath.Join(vaultRoot, "datasets", "beta", "*.csv"))
+	if err != nil || len(betaRaw) != 1 {
+		t.Fatalf("find beta raw CSV: %v (%v)", betaRaw, err)
+	}
+	betaOriginal, err := os.ReadFile(betaRaw[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(betaRaw[0], append(append([]byte(nil), betaOriginal...), '\n'), 0o600); err != nil { //nolint:gosec // test-owned glob result under t.TempDir
+		t.Fatal(err)
+	}
+
+	accept := retentionSubcommand(t, "accept")
+	if _, err := captureCommandStdout(t, func() error { return accept.RunE(accept, []string{runID}) }); err == nil || !strings.Contains(err.Error(), "stale") {
+		t.Fatalf("mixed proposal did not report failed item: %v", err)
+	}
+	partial, err := retention.LoadProposal(vaultRoot, runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if partial.Status != retention.ProposalStatusPartial {
+		t.Fatalf("mixed proposal status = %q, want partial", partial.Status)
+	}
+	accepted, failed := 0, 0
+	for _, item := range partial.Items {
+		switch {
+		case item.Status == retention.ProposalItemStatusAccepted:
+			accepted++
+		case item.Failure != "":
+			failed++
+		}
+	}
+	if accepted != 1 || failed != 1 {
+		t.Fatalf("mixed proposal item states accepted=%d failed=%d: %#v", accepted, failed, partial.Items)
+	}
+	history, err := retention.LoadHistory(vaultRoot)
+	if err != nil || len(history) != 1 {
+		t.Fatalf("mixed proposal history = %#v (%v), want one completed action", history, err)
+	}
+
+	if err := os.WriteFile(betaRaw[0], betaOriginal, 0o600); err != nil { //nolint:gosec // test-owned glob result under t.TempDir
+		t.Fatal(err)
+	}
+	accept = retentionSubcommand(t, "accept")
+	if _, err := captureCommandStdout(t, func() error { return accept.RunE(accept, []string{runID}) }); err != nil {
+		t.Fatalf("retrying restored mixed proposal failed: %v", err)
+	}
+	complete, err := retention.LoadProposal(vaultRoot, runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if complete.Status != retention.ProposalStatusAccepted {
+		t.Fatalf("restored mixed proposal status = %q", complete.Status)
+	}
+	history, err = retention.LoadHistory(vaultRoot)
+	if err != nil || len(history) != 2 {
+		t.Fatalf("restored mixed proposal history = %#v (%v), want two unique actions", history, err)
+	}
+	if history[0].ActionID == "" || history[1].ActionID == "" || history[0].ActionID == history[1].ActionID {
+		t.Fatalf("mixed proposal history action IDs are not unique: %#v", history)
+	}
+}
+
+func TestRetentionCLIRejectsTraversalRunIDsBeforeProposalIO(t *testing.T) {
+	vaultRoot := isolatedCommandVault(t)
+	outside := filepath.Join(vaultRoot, "outside.json")
+	if err := os.WriteFile(outside, []byte(`{"sentinel":true}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, commandName := range []string{"accept", "reject", "diff"} {
+		command := retentionSubcommand(t, commandName)
+		if _, err := captureCommandStdout(t, func() error { return command.RunE(command, []string{"../outside"}) }); err == nil {
+			t.Fatalf("retention %s accepted traversal run ID", commandName)
+		}
+		data, err := os.ReadFile(outside) //nolint:gosec // test-owned path under t.TempDir
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(data) != `{"sentinel":true}` {
+			t.Fatalf("retention %s modified outside proposal state: %q", commandName, data)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(vaultRoot, ".symdesk", "retention")); !os.IsNotExist(err) {
+		t.Fatalf("unsafe CLI run ID created retention state: %v", err)
 	}
 }

@@ -52,43 +52,41 @@ func newRetentionEvalCmd() *cobra.Command {
 				return fmt.Errorf("load rules from %s: %w", rulesFile, err)
 			}
 
-			docs, err := db.DocsList(sidecar.DocsFilter{})
+			svc := service.New(vRoot, db)
+			docs, err := svc.DocsList(sidecar.DocsFilter{})
 			if err != nil {
 				return fmt.Errorf("list documents: %w", err)
 			}
 
 			now := time.Now()
 			var allItems []retention.ProposalItem
+			var stateFailures []string
 
 			for _, rule := range rules {
-				// Filter documents by selector
-				var matched []retention.DocMeta
 				for _, d := range docs {
-					documentType := d.DocumentType
-					if d.Type == "dataset" {
-						// Dataset handles use the contract-level type field rather
-						// than document_type; expose it through the existing selector.
-						documentType = d.Type
+					state, stateErr := svc.RetentionState(d.Path)
+					if stateErr != nil {
+						stateFailures = append(stateFailures, fmt.Sprintf("%s: %v", d.Path, stateErr))
+						continue
 					}
-					meta := retention.DocMeta{
-						Path:          d.Path,
-						Title:         d.Title,
-						DocumentDate:  d.DocumentDate,
-						Status:        d.Status,
-						Correspondent: d.Correspondent,
-						DocumentType:  documentType,
-						Person:        d.Person,
+					// Dataset handles are eligible only for the rule they declare.
+					// This check uses the authoritative handle, not sidecar metadata.
+					if state.Dataset {
+						if rule.Name != state.RuleName {
+							continue
+						}
 					}
-					if rule.Selector.Matches(meta) {
-						matched = append(matched, meta)
+					items := retention.Evaluate(rule, []retention.DocMeta{state.Meta}, now)
+					for i := range items {
+						items[i].RuleName = rule.Name
+						items[i].Fingerprint = state.Fingerprint
 					}
+					allItems = append(allItems, items...)
 				}
+			}
 
-				items := retention.Evaluate(rule, matched, now)
-				for i := range items {
-					items[i].RuleName = rule.Name
-				}
-				allItems = append(allItems, items...)
+			if len(stateFailures) > 0 {
+				return fmt.Errorf("retention evaluation failed closed: %s", strings.Join(stateFailures, "; "))
 			}
 
 			runID := fmt.Sprintf("ret-%d", now.Unix())
@@ -146,7 +144,7 @@ func newRetentionListCmd() *cobra.Command {
 				if err != nil {
 					continue
 				}
-				if p.Status != "pending" {
+				if p.Status != retention.ProposalStatusPending && p.Status != retention.ProposalStatusFailed && p.Status != retention.ProposalStatusPartial {
 					continue
 				}
 				proposals = append(proposals, p)
@@ -188,72 +186,166 @@ func newRetentionAcceptCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if p.Status != "pending" {
+			if p.Status != retention.ProposalStatusPending && p.Status != retention.ProposalStatusFailed && p.Status != retention.ProposalStatusPartial && p.Status != retention.ProposalStatusAccepted {
 				return fmt.Errorf("proposal %s is %s", args[0], p.Status)
 			}
 
 			svc := service.New(vRoot, db)
 			now := time.Now()
-			var acted int
+			acted := 0
+			var failures []string
 
-			for _, item := range p.Items {
-				// Re-verify the document still matches before acting
-				stillMatches := true
-				// (simplified: trust the proposal for now)
-
-				if !stillMatches {
+			for i := range p.Items {
+				item := &p.Items[i]
+				if item.Status == retention.ProposalItemStatusAccepted {
+					continue
+				}
+				if item.Status == retention.ProposalItemStatusActionCompleted {
+					if err := retention.AppendHistory(vRoot, retention.HistoryEntry{
+						Timestamp: now.UTC(),
+						ActionID:  retention.StableActionID(p.RunID, i),
+						RuleName:  item.RuleName,
+						Action:    item.Action,
+						Path:      item.Path,
+						Title:     item.Title,
+					}); err != nil {
+						item.Failure = fmt.Sprintf("history append failed after action: %v", err)
+						failures = append(failures, item.Path+": "+item.Failure)
+						continue
+					}
+					item.Status = retention.ProposalItemStatusAccepted
+					item.Failure = ""
+					p.Status = retentionProposalStatus(p.Items)
+					if err := retention.WriteProposal(vRoot, p); err != nil {
+						return fmt.Errorf("save retention progress for %s: %w", item.Path, err)
+					}
 					continue
 				}
 
-				if slug, ok := datasetRetentionSlug(item.Path); ok {
-					if item.Action != retention.ActionTrash {
-						return fmt.Errorf("dataset retention action for %s must be trash", item.Path)
-					}
-					if err := svc.DatasetPurge(slug, item.RuleName); err != nil {
-						fmt.Fprintf(os.Stderr, "failed to purge dataset %s: %v\n", slug, err)
+				state, stateErr := svc.RetentionState(item.Path)
+				if stateErr != nil {
+					failures = appendRetentionFailure(item, fmt.Sprintf("cannot re-read authoritative state: %v", stateErr), failures)
+					continue
+				}
+				if expectedSlug, isDatasetPath := datasetRetentionSlug(item.Path); isDatasetPath {
+					if !state.Dataset || state.Meta.Path != item.Path || state.Meta.Title == "" || expectedSlug == "" {
+						failures = appendRetentionFailure(item, "dataset handle is missing or changed", failures)
 						continue
+					}
+					if item.RuleName == "" || state.RuleName != item.RuleName {
+						failures = appendRetentionFailure(item, fmt.Sprintf("proposal is stale: dataset declares retention rule %q, proposal requires %q", state.RuleName, item.RuleName), failures)
+						continue
+					}
+				}
+				if item.Fingerprint == "" {
+					failures = appendRetentionFailure(item, "proposal has no fingerprint; re-run retention eval", failures)
+					continue
+				}
+				if state.Fingerprint != item.Fingerprint {
+					failures = appendRetentionFailure(item, "proposal is stale: authoritative fingerprint changed", failures)
+					continue
+				}
+
+				var actionErr error
+				if slug, isDatasetPath := datasetRetentionSlug(item.Path); isDatasetPath {
+					if item.Action != retention.ActionTrash {
+						actionErr = fmt.Errorf("dataset retention action must be trash, got %q", item.Action)
+					} else {
+						actionErr = svc.DatasetPurgeWithFingerprint(slug, item.RuleName, item.Fingerprint)
 					}
 				} else {
 					switch item.Action {
 					case retention.ActionTrash:
-						_, err := svc.NoteDelete(item.Path)
-						if err != nil {
-							fmt.Fprintf(os.Stderr, "failed to trash %s: %v\n", item.Path, err)
-							continue
-						}
+						_, actionErr = svc.NoteDelete(item.Path)
 					case retention.ActionFlagReview:
-						err := svc.DocStatus(item.Path, "needs_review")
-						if err != nil {
-							fmt.Fprintf(os.Stderr, "failed to flag %s: %v\n", item.Path, err)
-							continue
-						}
+						actionErr = svc.DocStatus(item.Path, "needs_review")
+					default:
+						actionErr = fmt.Errorf("unsupported retention action %q", item.Action)
 					}
+				}
+				if actionErr != nil {
+					failures = appendRetentionFailure(item, fmt.Sprintf("action failed: %v", actionErr), failures)
+					continue
+				}
+
+				item.Status = retention.ProposalItemStatusActionCompleted
+				item.Failure = ""
+				p.Status = retentionProposalStatus(p.Items)
+				if err := retention.WriteProposal(vRoot, p); err != nil {
+					return fmt.Errorf("save action progress for %s: %w", item.Path, err)
 				}
 
 				if err := retention.AppendHistory(vRoot, retention.HistoryEntry{
 					Timestamp: now.UTC(),
+					ActionID:  retention.StableActionID(p.RunID, i),
 					RuleName:  item.RuleName,
 					Action:    item.Action,
 					Path:      item.Path,
 					Title:     item.Title,
 				}); err != nil {
-					return fmt.Errorf("append retention history for %s: %w", item.Path, err)
+					item.Failure = fmt.Sprintf("history append failed after action: %v", err)
+					failures = append(failures, item.Path+": "+item.Failure)
+					continue
 				}
+				item.Status = retention.ProposalItemStatusAccepted
+				item.Failure = ""
 				acted++
+				p.Status = retentionProposalStatus(p.Items)
+				if err := retention.WriteProposal(vRoot, p); err != nil {
+					return fmt.Errorf("save retention progress for %s: %w", item.Path, err)
+				}
 			}
 
-			p.Status = "accepted"
+			p.Status = retentionProposalStatus(p.Items)
 			if err := retention.WriteProposal(vRoot, p); err != nil {
-				return fmt.Errorf("save accepted retention proposal: %w", err)
+				return fmt.Errorf("save retention proposal: %w", err)
 			}
-
-			return outputResult(map[string]interface{}{
-				"status": "accepted",
-				"run_id": args[0],
-				"acted":  acted,
-			})
+			result := map[string]interface{}{
+				"status":   p.Status,
+				"run_id":   args[0],
+				"acted":    acted,
+				"failures": failures,
+				"items":    p.Items,
+			}
+			if err := outputResult(result); err != nil {
+				return err
+			}
+			if len(failures) > 0 {
+				return fmt.Errorf("retention acceptance %s: %s", p.Status, strings.Join(failures, "; "))
+			}
+			return nil
 		},
 	}
+}
+
+func appendRetentionFailure(item *retention.ProposalItem, message string, failures []string) []string {
+	item.Status = ""
+	item.Failure = message
+	return append(failures, item.Path+": "+message)
+}
+
+func retentionProposalStatus(items []retention.ProposalItem) string {
+	accepted, failed, pending := 0, 0, 0
+	for _, item := range items {
+		switch {
+		case item.Status == retention.ProposalItemStatusAccepted:
+			accepted++
+		case item.Failure != "":
+			failed++
+		default:
+			pending++
+		}
+	}
+	if failed == 0 && pending == 0 {
+		return retention.ProposalStatusAccepted
+	}
+	if failed == 0 {
+		return retention.ProposalStatusPending
+	}
+	if accepted == 0 {
+		return retention.ProposalStatusFailed
+	}
+	return retention.ProposalStatusPartial
 }
 
 func datasetRetentionSlug(path string) (string, bool) {

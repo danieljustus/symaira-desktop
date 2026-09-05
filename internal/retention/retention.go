@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
 
 	"gopkg.in/yaml.v3"
 
@@ -290,8 +291,49 @@ func HistoryPath(vaultRoot string) string {
 	return filepath.Join(ProposalDir(vaultRoot), "history.json")
 }
 
+// ValidateRunID rejects proposal IDs that could escape the retention state directory
+// or be interpreted differently on another supported platform.
+func ValidateRunID(runID string) error {
+	if runID == "" || strings.TrimSpace(runID) == "" {
+		return fmt.Errorf("retention proposal run ID must not be empty")
+	}
+	if runID == "." || runID == ".." || strings.ContainsAny(runID, `/\\`) {
+		return fmt.Errorf("retention proposal run ID %q is not a single safe filename component", runID)
+	}
+	for _, r := range runID {
+		if unicode.IsControl(r) {
+			return fmt.Errorf("retention proposal run ID %q contains a control character", runID)
+		}
+	}
+	if strings.ContainsAny(runID, `<>:"|?*`) || strings.HasSuffix(runID, ".") || strings.HasSuffix(runID, " ") {
+		return fmt.Errorf("retention proposal run ID %q is not platform-safe", runID)
+	}
+	upper := strings.ToUpper(runID)
+	if isWindowsReservedName(upper) {
+		return fmt.Errorf("retention proposal run ID %q is a reserved platform name", runID)
+	}
+	return nil
+}
+
+func isWindowsReservedName(name string) bool {
+	if dot := strings.IndexByte(name, '.'); dot >= 0 {
+		name = name[:dot]
+	}
+	switch name {
+	case "CON", "PRN", "AUX", "NUL":
+		return true
+	}
+	if len(name) == 4 && (strings.HasPrefix(name, "COM") || strings.HasPrefix(name, "LPT")) {
+		return name[3] >= '1' && name[3] <= '9'
+	}
+	return false
+}
+
 // WriteProposal saves a proposal to disk atomically.
 func WriteProposal(vaultRoot string, p Proposal) error {
+	if err := ValidateRunID(p.RunID); err != nil {
+		return err
+	}
 	dir := ProposalDir(vaultRoot)
 	//nolint:gosec // retention state is stored under the selected vault
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -308,6 +350,9 @@ func WriteProposal(vaultRoot string, p Proposal) error {
 
 // LoadProposal reads a proposal from disk.
 func LoadProposal(vaultRoot, runID string) (Proposal, error) {
+	if err := ValidateRunID(runID); err != nil {
+		return Proposal{}, err
+	}
 	path := filepath.Join(ProposalDir(vaultRoot), fmt.Sprintf("%s.json", runID))
 	data, err := os.ReadFile(path) //nolint:gosec // retention path is rooted in the explicitly selected vault
 	if err != nil {

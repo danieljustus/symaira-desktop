@@ -710,3 +710,27 @@ func TestRetentionAcceptResumesMixedDatasetProposalWithoutDuplicateHistory(t *te
 		t.Fatalf("mixed proposal history action IDs are not unique: %#v", history)
 	}
 }
+
+func TestRetentionCLIRejectsTraversalRunIDsBeforeProposalIO(t *testing.T) {
+	vaultRoot := isolatedCommandVault(t)
+	outside := filepath.Join(vaultRoot, "outside.json")
+	if err := os.WriteFile(outside, []byte(`{"sentinel":true}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, commandName := range []string{"accept", "reject", "diff"} {
+		command := retentionSubcommand(t, commandName)
+		if _, err := captureCommandStdout(t, func() error { return command.RunE(command, []string{"../outside"}) }); err == nil {
+			t.Fatalf("retention %s accepted traversal run ID", commandName)
+		}
+		data, err := os.ReadFile(outside)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(data) != `{"sentinel":true}` {
+			t.Fatalf("retention %s modified outside proposal state: %q", commandName, data)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(vaultRoot, ".symdesk", "retention")); !os.IsNotExist(err) {
+		t.Fatalf("unsafe CLI run ID created retention state: %v", err)
+	}
+}

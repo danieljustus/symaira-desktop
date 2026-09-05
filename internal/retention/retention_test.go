@@ -332,3 +332,29 @@ func TestHistoryReadsLegacyEntriesWithoutActionID(t *testing.T) {
 		t.Fatalf("legacy entry was not preserved: %#v %v", entries, err)
 	}
 }
+
+func TestProposalRunIDConfinement(t *testing.T) {
+	dir := t.TempDir()
+	invalid := []string{"", ".", "..", "../outside", `..\\outside`, "nested/name", "nested\\name", "bad\nname", "bad\u0000name", "bad:name", "bad*name", "CON", "com1", "trailing.", "trailing "}
+	for _, runID := range invalid {
+		t.Run(runID, func(t *testing.T) {
+			p := Proposal{RunID: runID, Status: ProposalStatusPending}
+			if err := WriteProposal(dir, p); err == nil {
+				t.Fatalf("WriteProposal accepted unsafe run ID %q", runID)
+			}
+			if _, err := LoadProposal(dir, runID); err == nil {
+				t.Fatalf("LoadProposal accepted unsafe run ID %q", runID)
+			}
+		})
+	}
+	for _, runID := range []string{"ret-123", "existing-2026_09", "über-1"} {
+		p := Proposal{RunID: runID, Status: ProposalStatusPending}
+		if err := WriteProposal(dir, p); err != nil {
+			t.Fatalf("WriteProposal rejected valid run ID %q: %v", runID, err)
+		}
+		loaded, err := LoadProposal(dir, runID)
+		if err != nil || loaded.RunID != runID {
+			t.Fatalf("valid run ID %q did not round trip: %#v %v", runID, loaded, err)
+		}
+	}
+}

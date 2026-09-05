@@ -419,6 +419,84 @@ func splitTrimmed(value, sep string) []string {
 	return result
 }
 
+func datasetSetRaw(column string) (string, []interface{}) {
+	switch column {
+	case "identity", "_identity":
+		return "identity", nil
+	case "_key":
+		return "row_key", nil
+	}
+	return "CASE WHEN json_valid(values_json) = 1 THEN json_extract(values_json, ?) ELSE NULL END", []interface{}{datasetPath(column)}
+}
+
+func datasetSetPresent(column string) (string, []interface{}) {
+	switch column {
+	case "identity", "_identity":
+		return "identity IS NOT NULL", nil
+	case "_key":
+		return "row_key IS NOT NULL", nil
+	}
+	return "CASE WHEN json_valid(values_json) = 1 THEN json_type(values_json, ?) ELSE NULL END IS NOT NULL", []interface{}{datasetPath(column)}
+}
+
+func datasetSetValid(column string) string {
+	switch column {
+	case "identity", "_identity", "_key":
+		return "1"
+	default:
+		return "json_valid(values_json) = 1"
+	}
+}
+
+func datasetSetContainer(column string) (string, []interface{}) {
+	switch column {
+	case "identity", "_identity", "_key":
+		return "'[]'", nil
+	}
+	path := datasetPath(column)
+	return "CASE WHEN json_valid(values_json) = 1 THEN CASE WHEN json_type(values_json, ?) IN ('array', 'object') THEN json_extract(values_json, ?) ELSE '[]' END ELSE '[]' END", []interface{}{path, path}
+}
+
+func datasetSetItems(typ string, items []string) []interface{} {
+	values := make([]interface{}, 0, len(items))
+	for _, item := range items {
+		if strings.EqualFold(typ, "bool") || strings.EqualFold(typ, "boolean") {
+			switch strings.ToLower(strings.TrimSpace(item)) {
+			case "true", "1":
+				item = "1"
+			case "false", "0":
+				item = "0"
+			}
+		} else if !strings.EqualFold(typ, "number") && !strings.EqualFold(typ, "integer") && !strings.EqualFold(typ, "float") {
+			item = strings.ToLower(item)
+		}
+		values = append(values, item)
+	}
+	return values
+}
+
+func datasetSetInExpression(raw, typ string, count int) string {
+	placeholders := make([]string, count)
+	for i := range placeholders {
+		placeholders[i] = "?"
+		if strings.EqualFold(typ, "number") || strings.EqualFold(typ, "integer") || strings.EqualFold(typ, "float") {
+			placeholders[i] = "CAST(? AS REAL)"
+		}
+	}
+	valueList := strings.Join(placeholders, ",")
+	if strings.EqualFold(typ, "number") || strings.EqualFold(typ, "integer") || strings.EqualFold(typ, "float") {
+		return "CAST(" + raw + " AS REAL) IN (" + valueList + ")"
+	}
+	return "LOWER(CAST(" + raw + " AS TEXT)) IN (" + valueList + ")"
+}
+
+func datasetSetEqualsExpression(valueExpr, typ string) string {
+	if strings.EqualFold(typ, "number") || strings.EqualFold(typ, "integer") || strings.EqualFold(typ, "float") {
+		return "CAST(" + valueExpr + " AS REAL) = CAST(? AS REAL)"
+	}
+	return "LOWER(CAST(" + valueExpr + " AS TEXT)) = LOWER(?)"
+}
+
 func datasetSetFilter(column, typ, op, value string) (string, []interface{}, error) {
 	items := parseDatasetSet(value)
 	if len(items) == 0 {
@@ -427,34 +505,42 @@ func datasetSetFilter(column, typ, op, value string) (string, []interface{}, err
 		}
 		return "0", nil, nil
 	}
-	present, presentArgs := datasetPresent(column)
-	raw, rawArgs := datasetRaw(column)
-	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(items)), ",")
-	one := present + " AND (LOWER(CAST(" + raw + " AS TEXT)) IN (" + placeholders + ") OR EXISTS (SELECT 1 FROM json_each(" + raw + ") WHERE LOWER(CAST(value AS TEXT)) IN (" + placeholders + ")))"
-	oneArgs := append(append([]interface{}{}, presentArgs...), rawArgs...)
-	for _, item := range items {
-		oneArgs = append(oneArgs, strings.ToLower(item))
-	}
+	present, presentArgs := datasetSetPresent(column)
+	raw, rawArgs := datasetSetRaw(column)
+	container, containerArgs := datasetSetContainer(column)
+	setValues := datasetSetItems(typ, items)
+	scalarMatch := datasetSetInExpression(raw, typ, len(items))
+	arrayMatch := "EXISTS (SELECT 1 FROM json_each(" + container + ") WHERE " + datasetSetInExpression("value", typ, len(items)) + ")"
+	one := present + " AND (" + scalarMatch + " OR " + arrayMatch + ")"
+	oneArgs := append([]interface{}{}, presentArgs...)
 	oneArgs = append(oneArgs, rawArgs...)
-	for _, item := range items {
-		oneArgs = append(oneArgs, strings.ToLower(item))
-	}
-	if op == "in" || op == "contains_any" {
+	oneArgs = append(oneArgs, setValues...)
+	oneArgs = append(oneArgs, containerArgs...)
+	oneArgs = append(oneArgs, setValues...)
+	if op == "in" {
 		return one, oneArgs, nil
 	}
-	if op == "not_in" || op == "contains_none" {
-		return "NOT (" + one + ")", oneArgs, nil
+	if op == "not_in" {
+		return datasetSetValid(column) + " AND NOT (" + one + ")", oneArgs, nil
+	}
+	arrayOne := present + " AND " + arrayMatch
+	arrayOneArgs := append([]interface{}{}, presentArgs...)
+	arrayOneArgs = append(arrayOneArgs, containerArgs...)
+	arrayOneArgs = append(arrayOneArgs, setValues...)
+	if op == "contains_any" {
+		return arrayOne, arrayOneArgs, nil
+	}
+	if op == "contains_none" {
+		return datasetSetValid(column) + " AND NOT (" + arrayOne + ")", arrayOneArgs, nil
 	}
 	parts := make([]string, 0, len(items))
-	args := make([]interface{}, 0)
-	for _, item := range items {
-		part := present + " AND (LOWER(CAST(" + raw + " AS TEXT)) = LOWER(?) OR EXISTS (SELECT 1 FROM json_each(" + raw + ") WHERE LOWER(CAST(value AS TEXT)) = LOWER(?)))"
+	args := make([]interface{}, 0, len(items)*(len(presentArgs)+len(containerArgs)+1))
+	for i := range items {
+		part := present + " AND EXISTS (SELECT 1 FROM json_each(" + container + ") WHERE " + datasetSetEqualsExpression("value", typ) + ")"
 		parts = append(parts, part)
 		args = append(args, presentArgs...)
-		args = append(args, rawArgs...)
-		args = append(args, item)
-		args = append(args, rawArgs...)
-		args = append(args, item)
+		args = append(args, containerArgs...)
+		args = append(args, setValues[i])
 	}
 	return "(" + strings.Join(parts, " AND ") + ")", args, nil
 }

@@ -563,7 +563,7 @@ func TestRetentionEvalBindsDatasetRuleAndFingerprintAndRejectsStaleState(t *test
 	runID := result["run_id"].(string)
 
 	handlePath := filepath.Join(vaultRoot, "datasets", "orders.md")
-	handle, err := os.ReadFile(handlePath)
+	handle, err := os.ReadFile(handlePath) //nolint:gosec // test-owned path under t.TempDir
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -571,7 +571,7 @@ func TestRetentionEvalBindsDatasetRuleAndFingerprintAndRejectsStaleState(t *test
 	if changedHandle == string(handle) {
 		t.Fatal("dataset handle retention rule fixture was not found")
 	}
-	if err := os.WriteFile(handlePath, []byte(changedHandle), 0o600); err != nil {
+	if err := os.WriteFile(handlePath, []byte(changedHandle), 0o600); err != nil { //nolint:gosec // test-owned path under t.TempDir
 		t.Fatal(err)
 	}
 	accept := retentionSubcommand(t, "accept")
@@ -592,7 +592,7 @@ func TestRetentionEvalBindsDatasetRuleAndFingerprintAndRejectsStaleState(t *test
 		t.Fatalf("stale dataset proposal wrote history: %#v %v", history, err)
 	}
 
-	if err := os.WriteFile(handlePath, handle, 0o600); err != nil {
+	if err := os.WriteFile(handlePath, handle, 0o600); err != nil { //nolint:gosec // test-owned path under t.TempDir
 		t.Fatal(err)
 	}
 	rawMatches, err := filepath.Glob(filepath.Join(vaultRoot, "datasets", "orders", "*.csv"))
@@ -600,11 +600,11 @@ func TestRetentionEvalBindsDatasetRuleAndFingerprintAndRejectsStaleState(t *test
 		t.Fatalf("find dataset raw CSV: %v (%v)", rawMatches, err)
 	}
 	rawPath := rawMatches[0]
-	raw, err := os.ReadFile(rawPath)
+	raw, err := os.ReadFile(rawPath) //nolint:gosec // test-owned glob result under t.TempDir
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(rawPath, append(append([]byte(nil), raw...), '\n'), 0o600); err != nil {
+	if err := os.WriteFile(rawPath, append(append([]byte(nil), raw...), '\n'), 0o600); err != nil { //nolint:gosec // test-owned path under t.TempDir
 		t.Fatal(err)
 	}
 	accept = retentionSubcommand(t, "accept")
@@ -656,7 +656,7 @@ func TestRetentionAcceptResumesMixedDatasetProposalWithoutDuplicateHistory(t *te
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(betaRaw[0], append(append([]byte(nil), betaOriginal...), '\n'), 0o600); err != nil {
+	if err := os.WriteFile(betaRaw[0], append(append([]byte(nil), betaOriginal...), '\n'), 0o600); err != nil { //nolint:gosec // test-owned glob result under t.TempDir
 		t.Fatal(err)
 	}
 
@@ -688,7 +688,7 @@ func TestRetentionAcceptResumesMixedDatasetProposalWithoutDuplicateHistory(t *te
 		t.Fatalf("mixed proposal history = %#v (%v), want one completed action", history, err)
 	}
 
-	if err := os.WriteFile(betaRaw[0], betaOriginal, 0o600); err != nil {
+	if err := os.WriteFile(betaRaw[0], betaOriginal, 0o600); err != nil { //nolint:gosec // test-owned glob result under t.TempDir
 		t.Fatal(err)
 	}
 	accept = retentionSubcommand(t, "accept")
@@ -722,7 +722,7 @@ func TestRetentionCLIRejectsTraversalRunIDsBeforeProposalIO(t *testing.T) {
 		if _, err := captureCommandStdout(t, func() error { return command.RunE(command, []string{"../outside"}) }); err == nil {
 			t.Fatalf("retention %s accepted traversal run ID", commandName)
 		}
-		data, err := os.ReadFile(outside)
+		data, err := os.ReadFile(outside) //nolint:gosec // test-owned path under t.TempDir
 		if err != nil {
 			t.Fatal(err)
 		}

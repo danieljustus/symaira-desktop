@@ -6,6 +6,7 @@ import (
 
 	"github.com/danieljustus/symaira-desktop/internal/ai"
 	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/dbviews"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
@@ -31,6 +32,20 @@ type AutofillChange struct {
 	Status   string `json:"status"` // pending, applied, skipped, failed
 }
 
+// rejectDatasetBackedView prevents generic view AI operations from treating
+// typed dataset rows as note documents. Keep this guard before any row
+// execution so future generic view AI operations can reuse the same boundary.
+func rejectDatasetBackedView(view *dbviews.View) error {
+	if view == nil {
+		return nil
+	}
+	source := strings.TrimSpace(view.Source)
+	if strings.HasPrefix(source, "dataset:") {
+		return fmt.Errorf("unsupported dataset source %q: generic view AI operations only support note-backed views", source)
+	}
+	return nil
+}
+
 // Autofill fills an empty frontmatter property on all notes that match a view.
 // If property is already present and non-empty, the note is skipped.
 func (s *Service) Autofill(viewID, property, prompt string, dryRun bool) (*AutofillResult, error) {
@@ -42,6 +57,9 @@ func (s *Service) Autofill(viewID, property, prompt string, dryRun bool) (*Autof
 	view, err := s.ViewsGet(viewID)
 	if err != nil {
 		return nil, fmt.Errorf("view not found: %w", err)
+	}
+	if err := rejectDatasetBackedView(view); err != nil {
+		return nil, err
 	}
 
 	rows, err := s.ViewsExec(viewID)

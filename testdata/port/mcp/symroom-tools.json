@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "server_name": "symroom",
+  "server_version": "0.1.0",
+  "instructions": "Use room_* tools to inspect and record the signed room work record. There is no approval-granting tool in this server.",
+  "tools": [
+    {
+      "name": "room_status",
+      "order": 1,
+      "description": "Return room metadata and journal statistics",
+      "input_schema": {
+        "properties": {},
+        "type": "object"
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "room_journal_tail",
+      "order": 2,
+      "description": "Return the merged signed journal tail",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "room_note_post",
+      "order": 3,
+      "description": "Post a signed note to the room journal",
+      "input_schema": {
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "room_artifact_list",
+      "order": 4,
+      "description": "List linked room artifacts",
+      "input_schema": {
+        "properties": {},
+        "type": "object"
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "room_artifact_link",
+      "order": 5,
+      "description": "Link and hash an artifact, recording a signed event",
+      "input_schema": {
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "room_run_request",
+      "order": 6,
+      "description": "Request a run with a signed journal event",
+      "input_schema": {
+        "properties": {
+          "adapter": {
+            "type": "string"
+          },
+          "plan_file": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "type": "object"
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "room_run_wait",
+      "order": 7,
+      "description": "Wait for a run approval decision",
+      "input_schema": {
+        "properties": {
+          "run_id": {
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "type": "object"
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "room_checkpoint_request",
+      "order": 8,
+      "description": "Request a signed human checkpoint",
+      "input_schema": {
+        "properties": {
+          "question": {
+            "type": "string"
+          },
+          "run_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "question"
+        ],
+        "type": "object"
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    }
+  ]
+}

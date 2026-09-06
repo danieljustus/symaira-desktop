@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "auth_middleware",
+      "handler": "handleAIAsk"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "auth_middleware",
+      "handler": "handleAITransform"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "auth_middleware",
+      "handler": "handleCommand"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/files",
+      "auth": "auth_middleware",
+      "handler": "handleGetFile"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/files",
+      "auth": "auth_middleware",
+      "handler": "handlePutFile"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "auth_middleware",
+      "handler": "handleIngest"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/jobs",
+      "auth": "auth_middleware",
+      "handler": "handleJobs"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/jobs/retry",
+      "auth": "auth_middleware",
+      "handler": "handleRetryJob"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notebooks",
+      "auth": "auth_middleware",
+      "handler": "handleListNotebooks"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notebooks/{id}",
+      "auth": "auth_middleware",
+      "handler": "handleGetNotebook"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "auth_middleware",
+      "handler": "handleCreateShare"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/share/{id}",
+      "auth": "auth_middleware",
+      "handler": "handleRevokeShare"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/shares",
+      "auth": "auth_middleware",
+      "handler": "handleListShares"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/snapshot",
+      "auth": "auth_middleware",
+      "handler": "handleSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "auth_middleware",
+      "handler": "handleStatus"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "auth_middleware",
+      "handler": "handleComplete"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "auth_middleware",
+      "handler": "handleFail"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/worker/input",
+      "auth": "auth_middleware",
+      "handler": "handleWorkerInput"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "auth_middleware",
+      "handler": "handleLease"
+    },
+    {
+      "method": "GET",
+      "path": "/healthz",
+      "auth": "none",
+      "handler": "inline"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{token}",
+      "auth": "none",
+      "handler": "handleAccessShare"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+[package]
+name = "symdesk-vault-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+rust-version = "1.98"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "=0.4.10"
+symdesk-vault = { path = "../crates/symdesk-vault" }
+
+[[bin]]
+name = "frontmatter"
+path = "fuzz_targets/frontmatter.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]
+members = ["."]

@@ -502,7 +502,7 @@ final class MobileVaultStore: ObservableObject {
 
     // MARK: - Write API (all capture features route through the outbox)
 
-    /// Creates a new note through the outbox: contract-v2 frontmatter and
+    /// Creates a new note through the outbox: contract-v6-compatible minimal frontmatter and
     /// desktop-conformant file naming are applied here, so every consumer
     /// (composer, share extension, intents) writes the same shape.
     /// `folder` is an optional vault-relative target folder (default: vault

@@ -756,7 +756,7 @@ private struct MobileLibraryView: View {
 
     private var dateRangeMenu: some View {
         Menu {
-            // Quick ranges over the ISO date prefix used by contract-v2.
+            // Quick ranges over the ISO date prefix retained by contract v6.
             Button("This month") { setMonthRange(offset: 0) }
             Button("Last month") { setMonthRange(offset: -1) }
             Button("This year") {

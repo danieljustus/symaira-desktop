@@ -1,0 +1,1481 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "server_name": "symdesk",
+  "server_version": "0.12.2",
+  "tools": [
+    {
+      "name": "desk_status",
+      "order": 1,
+      "description": "Returns the current version and vault path configuration for symdesk.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_ls",
+      "order": 2,
+      "description": "Lists files in the vault.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "dir": {
+            "type": "string"
+          }
+        }
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_search",
+      "order": 3,
+      "description": "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "vault_timeline",
+      "order": 4,
+      "description": "Answers \"what happened on day X\": returns journal activity from the vault (daily NDJSON journal) plus indexed documents whose document date or modification time falls in the given range. Dates are YYYY-MM-DD; from and to default to today.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_props",
+      "order": 5,
+      "description": "Gets properties (frontmatter) for a note.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_backlinks",
+      "order": 6,
+      "description": "Gets backlinks for a note.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_ask",
+      "order": 7,
+      "description": "Asks the AI a question about the vault. Uses a local Ollama instance when configured; otherwise returns the top search results with a note that AI is not configured. The answer is returned as one aggregated text (no streaming). Pass notebook to restrict retrieval and citations to that notebook's sources instead of the whole vault.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "notebook": {
+            "type": "string",
+            "description": "optional: notebook id or path to restrict retrieval and citations to"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_transform",
+      "order": 8,
+      "description": "Transforms the given text with a local AI action. intent is one of summarize, rewrite or continue. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The result is returned as one aggregated text (no streaming).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "intent": {
+            "type": "string",
+            "enum": [
+              "summarize",
+              "rewrite",
+              "continue"
+            ]
+          }
+        },
+        "required": [
+          "text",
+          "intent"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_docs",
+      "order": 9,
+      "description": "Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Returns structured document metadata.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "person": {
+            "type": "string"
+          },
+          "correspondent": {
+            "type": "string"
+          },
+          "year": {
+            "type": "string"
+          },
+          "due_before": {
+            "type": "string"
+          },
+          "min_confidence": {
+            "type": "integer"
+          },
+          "max_confidence": {
+            "type": "integer"
+          }
+        }
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "docs_review",
+      "order": 10,
+      "description": "Returns documents needing review: confidence below threshold or missing document_type/document_date.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "threshold": {
+            "type": "integer"
+          }
+        }
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "docs_similar",
+      "order": 11,
+      "description": "Finds near-duplicate documents using SimHash similarity. Returns documents with similarity \u003e= threshold.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "threshold": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "vault_health",
+      "order": 12,
+      "description": "Scans the Markdown vault for parse errors, missing frontmatter, broken wikilinks and near-duplicate documents, returning a reviewable repair plan without changing files.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "duplicate_threshold": {
+            "type": "integer"
+          }
+        }
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_related",
+      "order": 13,
+      "description": "Gets related entities and notes for a given file path based on composition with symmemory.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_diagram",
+      "order": 14,
+      "description": "Renders the vault link graph as an SVG diagram. Returns the SVG document; use it to embed or display the vault's structure.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "optional diagram title"
+          }
+        }
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_ingest_jobs",
+      "order": 15,
+      "description": "Lists ingestion jobs in the queue from symingest.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_rules_list",
+      "order": 16,
+      "description": "Lists the configured document classification rules. Legacy alias: list_rules.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "meeting_list",
+      "order": 17,
+      "description": "Lists meetings already imported into the vault as reviewed meeting notes.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "meeting_get",
+      "order": 18,
+      "description": "Gets one imported meeting note by its vault-relative path, including the reviewed transcript.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "vault-relative meeting note path"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_read_result",
+      "order": 19,
+      "description": "Reads the full output of an externalized tool result by its handle (returned as \"[Full result externalized to \u003chandle\u003e…]\"). Use this to re-read a result that was summarized because it was large.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string",
+            "description": "the externalized-result handle from the tool output"
+          }
+        },
+        "required": [
+          "handle"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "notebook_list",
+      "order": 20,
+      "description": "Lists all notebooks in the vault. A notebook is a named, bounded set of vault sources used to scope AI grounding, retrieval and generated artifacts.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "notebook_get",
+      "order": 21,
+      "description": "Gets one notebook by id or vault-relative path, including its resolved sources (path, current title, and whether the source file still exists).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "notebook": {
+            "type": "string",
+            "description": "notebook id or path"
+          }
+        },
+        "required": [
+          "notebook"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "notebook_ask",
+      "order": 22,
+      "description": "Asks the AI a question restricted to one notebook's sources: retrieval and citations never leave the notebook's scope. Uses a local Ollama instance when configured; otherwise returns a note that AI is not configured. The answer is returned as one aggregated text (no streaming).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "notebook": {
+            "type": "string",
+            "description": "notebook id or path"
+          },
+          "query": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "notebook",
+          "query"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_dataset_list",
+      "order": 23,
+      "description": "Lists Markdown-backed datasets and their materialized row counts.",
+      "input_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_dataset_describe",
+      "order": 24,
+      "description": "Describes one Markdown-backed dataset, including schema, provenance, coverage and row count.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset"
+        ],
+        "additionalProperties": false
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_dataset_query",
+      "order": 25,
+      "description": "Queries a dataset with selected columns, existing view filter operators, grouping and bounded sum/count/min/max/average aggregates. Raw SQL is not accepted.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "operator": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "filter_group": {
+            "type": "object"
+          },
+          "group_by": {
+            "type": "string"
+          },
+          "aggregates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "column": {
+                  "type": "string"
+                },
+                "function": {
+                  "type": "string",
+                  "enum": [
+                    "sum",
+                    "count",
+                    "min",
+                    "max",
+                    "average"
+                  ]
+                },
+                "as": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "function"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "dataset"
+        ],
+        "additionalProperties": false
+      },
+      "read_only": true,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_dataset_sync",
+      "order": 26,
+      "description": "Persists producer rows into a Markdown-backed dataset. Every row must have an explicit identity and every sync must include source_name, source_sha256 and imported_at provenance; repeated provenance is idempotent.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "identity_field": {
+            "type": "string"
+          },
+          "sensitivity": {
+            "type": "string",
+            "enum": [
+              "public",
+              "internal",
+              "confidential",
+              "restricted"
+            ]
+          },
+          "retention_rule": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "object"
+          },
+          "provenance": {
+            "type": "object",
+            "properties": {
+              "imported_at": {
+                "type": "string"
+              },
+              "source_name": {
+                "type": "string"
+              },
+              "source_sha256": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "imported_at",
+              "source_name",
+              "source_sha256"
+            ],
+            "additionalProperties": false
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "identity": {
+                  "type": "string"
+                },
+                "values": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "identity",
+                "values"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "dataset",
+          "identity_field",
+          "provenance",
+          "rows"
+        ],
+        "additionalProperties": false
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_undo_task",
+      "order": 27,
+      "description": "Rejects an agent run as a unit: restores every file that existed before the task and deletes files the task created. Takes the task id from a prior checkpoint.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "the checkpoint task id to undo"
+          }
+        },
+        "required": [
+          "task_id"
+        ]
+      },
+      "read_only": false,
+      "destructive": true,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_note_new",
+      "order": 28,
+      "description": "Create a new note in the Symaira vault.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the new note"
+          },
+          "content": {
+            "type": "string",
+            "description": "The Markdown body content of the note"
+          },
+          "template": {
+            "type": "string",
+            "description": "Optional template name to use"
+          }
+        },
+        "required": [
+          "title",
+          "content"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_ingest",
+      "order": 29,
+      "description": "Ingests a file into the vault: copies it into inbox/ and creates a corresponding markdown note. Takes an absolute source path, returns the relative path of the new note.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "source_path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_path"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "doc_set_status",
+      "order": 30,
+      "description": "Sets the status of a document (open|paid|submitted|done|needs_review|waiting_for_reply). Updates frontmatter and re-indexes.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "status"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_ingest_retry",
+      "order": 31,
+      "description": "Retries a failed ingestion job by ID.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_ingest_reocr",
+      "order": 32,
+      "description": "Re-runs OCR/extraction for an already-ingested document, either by its registered archived source path or by document ID, and refreshes the existing note in place. Legacy alias: reocr.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "document_id": {
+            "type": "integer",
+            "description": "reprocess by document ID"
+          },
+          "archive_path": {
+            "type": "string",
+            "description": "the registered archived original path"
+          },
+          "source": {
+            "type": "string",
+            "description": "legacy alias for archive_path"
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "document_id"
+            ]
+          },
+          {
+            "required": [
+              "archive_path"
+            ]
+          }
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_rules_add",
+      "order": 33,
+      "description": "Adds a document classification rule. kind must be one of category, tag, correspondent or document_type. Legacy alias: add_rule.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "case-insensitive substring matched against extracted document text"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "category",
+              "tag",
+              "correspondent",
+              "document_type"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "description": "the category, tag, correspondent or document type to assign"
+          }
+        },
+        "required": [
+          "pattern",
+          "kind",
+          "value"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_rules_update",
+      "order": 34,
+      "description": "Updates an existing document classification rule by ID, replacing its pattern, kind and value.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "rule ID"
+          },
+          "pattern": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "category",
+              "tag",
+              "correspondent",
+              "document_type"
+            ]
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "pattern",
+          "kind",
+          "value"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_rules_delete",
+      "order": 35,
+      "description": "Deletes a document classification rule by ID. Legacy alias: delete_rule.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "rule ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "read_only": false,
+      "destructive": true,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_split_pdf",
+      "order": 36,
+      "description": "Splits a PDF into parts after the given pages and writes them into an output directory. at is a comma-separated page spec such as \"2,4\" or \"2-3,6\". Requires the Poppler utilities (pdfinfo, pdfseparate, pdfunite) on PATH. Legacy alias: split_pdf.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string",
+            "description": "input PDF path"
+          },
+          "at": {
+            "type": "string",
+            "description": "split after these pages, e.g. 2,4 or 2-3,6"
+          },
+          "output_dir": {
+            "type": "string",
+            "description": "directory for the generated part PDFs"
+          }
+        },
+        "required": [
+          "input",
+          "at",
+          "output_dir"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_merge_pdf",
+      "order": 37,
+      "description": "Merges two or more PDFs into one output file without modifying the inputs. inputs is an array of PDF paths; output is the destination PDF path. Requires the Poppler utility pdfunite on PATH. Legacy alias: merge_pdf.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "input PDF paths, at least two"
+          },
+          "output": {
+            "type": "string",
+            "description": "destination PDF path"
+          }
+        },
+        "required": [
+          "inputs",
+          "output"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_rotate_pdf",
+      "order": 38,
+      "description": "Rotates pages of a PDF and writes the result to an output path without modifying the input. degrees must be one of -270, -180, -90, 90, 180, 270; pages is an optional comma-separated 1-based page selector (e.g. 1-3,5), empty rotates all pages. Requires qpdf on PATH. Legacy alias: rotate_pdf.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string",
+            "description": "input PDF path"
+          },
+          "output": {
+            "type": "string",
+            "description": "destination PDF path"
+          },
+          "degrees": {
+            "type": "integer",
+            "description": "rotation in degrees: -270, -180, -90, 90, 180 or 270"
+          },
+          "pages": {
+            "type": "string",
+            "description": "optional page selector, e.g. 1-3,5; empty rotates all pages"
+          }
+        },
+        "required": [
+          "input",
+          "output",
+          "degrees"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_clip",
+      "order": 39,
+      "description": "Fetches a URL via symbrowse and saves it as a note in the vault.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_export",
+      "order": 40,
+      "description": "Exports a note or view to PDF, HTML, or CSV. Dataset-backed views are subject to the configured sensitivity gate. Provide either note or view, not both.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "description": "vault-relative note path"
+          },
+          "view": {
+            "type": "string",
+            "description": "view id"
+          },
+          "output": {
+            "type": "string",
+            "description": "output file path"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "pdf",
+              "html",
+              "csv"
+            ]
+          },
+          "profile": {
+            "type": "string",
+            "description": "symprint profile for PDF"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "note"
+            ]
+          },
+          {
+            "required": [
+              "view"
+            ]
+          }
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "notebook_create",
+      "order": 41,
+      "description": "Creates a new notebook: a named, bounded set of vault sources used to scope later AI grounding, retrieval and generated artifacts.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "notebook_add_source",
+      "order": 42,
+      "description": "Adds a vault file to a notebook's source set.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "notebook": {
+            "type": "string",
+            "description": "notebook id or path"
+          },
+          "path": {
+            "type": "string",
+            "description": "vault-relative path of the file to add"
+          }
+        },
+        "required": [
+          "notebook",
+          "path"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "notebook_remove_source",
+      "order": 43,
+      "description": "Removes a vault file from a notebook's source set. The file itself is left untouched.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "notebook": {
+            "type": "string",
+            "description": "notebook id or path"
+          },
+          "path": {
+            "type": "string",
+            "description": "vault-relative path of the file to remove"
+          }
+        },
+        "required": [
+          "notebook",
+          "path"
+        ]
+      },
+      "read_only": false,
+      "destructive": true,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_autofill",
+      "order": 44,
+      "description": "Autofills a frontmatter property on all notes matching a view using the configured AI provider.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "view": {
+            "type": "string",
+            "description": "view id"
+          },
+          "property": {
+            "type": "string",
+            "description": "frontmatter property to fill"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "extra instruction for the AI"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "description": "show changes without writing"
+          }
+        },
+        "required": [
+          "view",
+          "property"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "desk_asset_store",
+      "order": 45,
+      "description": "Stores binary data (base64-encoded or plain text) into the vault assets folder with collision-safe naming and returns the vault-relative path and Markdown link.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "description": "content to store (base64 string or plain text)"
+          },
+          "preferred_name": {
+            "type": "string",
+            "description": "optional preferred filename (e.g. image.png)"
+          },
+          "extension": {
+            "type": "string",
+            "description": "file extension (e.g. png, pdf, svg)"
+          },
+          "is_base64": {
+            "type": "boolean",
+            "description": "true if data is base64 encoded"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "approval_granting": false
+    },
+    {
+      "name": "ingest_file",
+      "order": 46,
+      "description": "Ingests a file into the vault: copies it into inbox/ and creates a corresponding markdown note. Legacy alias for desk_ingest.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "source_path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_path"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "is_alias": true,
+      "approval_granting": false
+    },
+    {
+      "name": "list_jobs",
+      "order": 47,
+      "description": "Lists ingestion jobs in the queue. Legacy alias for desk_ingest_jobs.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "read_only": true,
+      "destructive": false,
+      "is_alias": true,
+      "approval_granting": false
+    },
+    {
+      "name": "retry_job",
+      "order": 48,
+      "description": "Retries a failed ingestion job by ID. Legacy alias for desk_ingest_retry.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "is_alias": true,
+      "approval_granting": false
+    },
+    {
+      "name": "list_documents",
+      "order": 49,
+      "description": "Lists indexed documents with optional filters (status, person, correspondent, type, year, due-before, min/max confidence). Legacy alias for desk_docs.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "person": {
+            "type": "string"
+          },
+          "correspondent": {
+            "type": "string"
+          },
+          "year": {
+            "type": "string"
+          },
+          "due_before": {
+            "type": "string"
+          },
+          "min_confidence": {
+            "type": "integer"
+          },
+          "max_confidence": {
+            "type": "integer"
+          }
+        }
+      },
+      "read_only": true,
+      "destructive": false,
+      "is_alias": true,
+      "approval_granting": false
+    },
+    {
+      "name": "search_documents",
+      "order": 50,
+      "description": "Searches notes with full-text terms plus path:, tag:, type:, status:, filename:, filetype:, created:, modified:, quoted phrases, -negation and /regex/. Filetype accepts comma-separated extensions (for example pdf,epub); dates accept YYYY-MM-DD, YYYY-MM-DD..YYYY-MM-DD and last day/week/month/year. Invalid syntax falls back to plain full-text and returns a hint. Legacy alias for desk_search.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "read_only": true,
+      "destructive": false,
+      "is_alias": true,
+      "approval_granting": false
+    },
+    {
+      "name": "reocr",
+      "order": 51,
+      "description": "Re-runs OCR/extraction for an already-ingested document by document ID or registered archived source path. Legacy alias for desk_ingest_reocr.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "document_id": {
+            "type": "integer",
+            "description": "reprocess by document ID"
+          },
+          "archive_path": {
+            "type": "string",
+            "description": "the registered archived original path"
+          },
+          "source": {
+            "type": "string",
+            "description": "legacy alias for archive_path"
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "document_id"
+            ]
+          },
+          {
+            "required": [
+              "archive_path"
+            ]
+          }
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "is_alias": true,
+      "approval_granting": false
+    },
+    {
+      "name": "list_rules",
+      "order": 52,
+      "description": "Lists the configured document classification rules. Legacy alias for desk_rules_list.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "read_only": true,
+      "destructive": false,
+      "is_alias": true,
+      "approval_granting": false
+    },
+    {
+      "name": "add_rule",
+      "order": 53,
+      "description": "Adds a document classification rule (kind: category|tag|correspondent|document_type). Legacy alias for desk_rules_add.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "case-insensitive substring matched against extracted document text"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "category",
+              "tag",
+              "correspondent",
+              "document_type"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "description": "the category, tag, correspondent or document type to assign"
+          }
+        },
+        "required": [
+          "pattern",
+          "kind",
+          "value"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "is_alias": true,
+      "approval_granting": false
+    },
+    {
+      "name": "delete_rule",
+      "order": 54,
+      "description": "Deletes a document classification rule by ID. Legacy alias for desk_rules_delete.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "rule ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "read_only": false,
+      "destructive": true,
+      "is_alias": true,
+      "approval_granting": false
+    },
+    {
+      "name": "split_pdf",
+      "order": 55,
+      "description": "Splits a PDF into parts after the given pages. Legacy alias for desk_split_pdf.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string",
+            "description": "input PDF path"
+          },
+          "at": {
+            "type": "string",
+            "description": "split after these pages, e.g. 2,4 or 2-3,6"
+          },
+          "output_dir": {
+            "type": "string",
+            "description": "directory for the generated part PDFs"
+          }
+        },
+        "required": [
+          "input",
+          "at",
+          "output_dir"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "is_alias": true,
+      "approval_granting": false
+    },
+    {
+      "name": "merge_pdf",
+      "order": 56,
+      "description": "Merges two or more PDFs into one output file. Legacy alias for desk_merge_pdf.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "input PDF paths, at least two"
+          },
+          "output": {
+            "type": "string",
+            "description": "destination PDF path"
+          }
+        },
+        "required": [
+          "inputs",
+          "output"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "is_alias": true,
+      "approval_granting": false
+    },
+    {
+      "name": "rotate_pdf",
+      "order": 57,
+      "description": "Rotates pages of a PDF and writes the result to an output path. Legacy alias for desk_rotate_pdf.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string",
+            "description": "input PDF path"
+          },
+          "output": {
+            "type": "string",
+            "description": "destination PDF path"
+          },
+          "degrees": {
+            "type": "integer",
+            "description": "rotation in degrees: -270, -180, -90, 90, 180 or 270"
+          },
+          "pages": {
+            "type": "string",
+            "description": "optional page selector, e.g. 1-3,5; empty rotates all pages"
+          }
+        },
+        "required": [
+          "input",
+          "output",
+          "degrees"
+        ]
+      },
+      "read_only": false,
+      "destructive": false,
+      "is_alias": true,
+      "approval_granting": false
+    }
+  ]
+}

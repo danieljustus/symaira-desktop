@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "full-sorted-duplicates-preserved",
+      "path": "notebooks/research.md",
+      "input": "---\ntype: notebook\ntitle: Forschung ✓\ncreated: \"2026-09-06T12:00:00Z\"\ntags:\n    - notebook\nnotebook_id: research\ndescription: Überblick\nsources:\n    - zeta.md\n    - äpfel.md\n    - zeta.md\nquery: tag:研究\n---\n\n# Forschung ✓\n\nÜberblick\n\n## Sources\n\n- [[zeta]] (`zeta.md`)\n- [[äpfel]] (`äpfel.md`)\n- [[zeta]] (`zeta.md`)\n",
+      "ok": true,
+      "output": {
+        "id": "research",
+        "path": "notebooks/research.md",
+        "title": "Forschung ✓",
+        "description": "Überblick",
+        "created": "2026-09-06T12:00:00Z",
+        "sources": [
+          "zeta.md",
+          "zeta.md",
+          "äpfel.md"
+        ],
+        "query": "tag:研究"
+      }
+    },
+    {
+      "name": "minimal",
+      "path": "notebooks/empty.md",
+      "input": "---\ntype: notebook\ntitle: Empty\ncreated: \"2026-09-06\"\ntags:\n    - notebook\nnotebook_id: empty\nsources: []\n---\n\n# Empty\n\n## Sources\n\n_No sources yet._\n",
+      "ok": true,
+      "output": {
+        "id": "empty",
+        "path": "notebooks/empty.md",
+        "title": "Empty",
+        "created": "2026-09-06",
+        "sources": []
+      }
+    },
+    {
+      "name": "legacy-id-fallback",
+      "path": "notebooks/legacy.md",
+      "input": "---\ntype: notebook\ntitle: Legacy\ncreated: 2026-01-01\nsources: []\n---\n",
+      "ok": true,
+      "output": {
+        "id": "legacy",
+        "path": "notebooks/legacy.md",
+        "title": "Legacy",
+        "created": "",
+        "sources": []
+      }
+    },
+    {
+      "name": "mixed-sources",
+      "path": "notebooks/mixed.md",
+      "input": "---\ntype: notebook\ntitle: Mixed\ncreated: 2026-01-01\nsources: [b.md, 7, \"\", a.md]\n---\n",
+      "ok": true,
+      "output": {
+        "id": "mixed",
+        "path": "notebooks/mixed.md",
+        "title": "Mixed",
+        "created": "",
+        "sources": [
+          "a.md",
+          "b.md"
+        ]
+      }
+    },
+    {
+      "name": "not-a-notebook",
+      "path": "notebooks/note.md",
+      "input": "---\ntype: note\ntitle: No\n---\n",
+      "ok": false,
+      "error": "notebooks/note.md is not a notebook note (type=\"note\")"
+    },
+    {
+      "name": "malformed",
+      "path": "notebooks/bad.md",
+      "input": "---\ntype: notebook\nsources: [\n---\n",
+      "ok": false,
+      "error": "invalid frontmatter in notebooks/bad.md: yaml: line 2: did not find expected node content"
+    }
+  ]
+}

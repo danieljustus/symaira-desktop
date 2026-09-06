@@ -1,0 +1,352 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "cases": {
+    "queries": [
+      {
+        "id": "empty",
+        "input": ""
+      },
+      {
+        "id": "plain",
+        "input": "tax invoice",
+        "terms": [
+          {
+            "value": "tax"
+          },
+          {
+            "value": "invoice"
+          }
+        ]
+      },
+      {
+        "id": "combined",
+        "input": "tag:invoice path:finance -status:paid steuer",
+        "filters": [
+          {
+            "field": "tag",
+            "value": "invoice"
+          },
+          {
+            "field": "path",
+            "value": "finance"
+          },
+          {
+            "field": "status",
+            "value": "paid",
+            "negated": true
+          }
+        ],
+        "terms": [
+          {
+            "value": "steuer"
+          }
+        ],
+        "requires_sidecar": true
+      },
+      {
+        "id": "phrase-regex",
+        "input": "\"annual report\" -draft /invoice-[0-9]+/ -/void/",
+        "terms": [
+          {
+            "value": "annual report",
+            "phrase": true
+          },
+          {
+            "value": "draft",
+            "negated": true
+          }
+        ],
+        "regexes": [
+          {
+            "pattern": "invoice-[0-9]+",
+            "probe": "Invoice invoice-2026 draft void annual report",
+            "probe_matches": true
+          },
+          {
+            "pattern": "void",
+            "negated": true,
+            "probe": "Invoice invoice-2026 draft void annual report",
+            "probe_matches": true
+          }
+        ],
+        "requires_sidecar": true
+      },
+      {
+        "id": "formats",
+        "input": "filetype:pdf,epub filename:invoice",
+        "filters": [
+          {
+            "field": "filetype",
+            "value": "pdf,epub"
+          },
+          {
+            "field": "filename",
+            "value": "invoice"
+          }
+        ],
+        "requires_sidecar": true
+      },
+      {
+        "id": "index-alias",
+        "input": "index_status:stale type:document",
+        "filters": [
+          {
+            "field": "index",
+            "value": "stale"
+          },
+          {
+            "field": "type",
+            "value": "document"
+          }
+        ],
+        "requires_sidecar": true
+      },
+      {
+        "id": "relative-date",
+        "input": "modified:last week",
+        "filters": [
+          {
+            "field": "modified",
+            "value": "last week"
+          }
+        ],
+        "requires_sidecar": true
+      },
+      {
+        "id": "date-range",
+        "input": "created:2026-08-01..2026-08-31",
+        "filters": [
+          {
+            "field": "created",
+            "value": "2026-08-01..2026-08-31"
+          }
+        ],
+        "requires_sidecar": true
+      },
+      {
+        "id": "timestamp",
+        "input": "modified:2026-09-06T12:34:56.123456789Z",
+        "filters": [
+          {
+            "field": "modified",
+            "value": "2026-09-06T12:34:56.123456789Z"
+          }
+        ],
+        "requires_sidecar": true
+      },
+      {
+        "id": "escaped-phrase",
+        "input": "\"annual \\\"report\\\"\"",
+        "terms": [
+          {
+            "value": "annual \"report\"",
+            "phrase": true
+          }
+        ],
+        "requires_sidecar": true
+      },
+      {
+        "id": "escaped-regex",
+        "input": "/invoice\\/[0-9]+/",
+        "regexes": [
+          {
+            "pattern": "invoice\\/[0-9]+",
+            "probe": "Invoice invoice-2026 draft void annual report",
+            "probe_matches": false
+          }
+        ],
+        "requires_sidecar": true
+      },
+      {
+        "id": "negation-alone",
+        "input": "-",
+        "error": "negation must be followed by a term",
+        "error_class": "negation"
+      },
+      {
+        "id": "negation-space",
+        "input": "- tax",
+        "error": "negation must be followed by a term",
+        "error_class": "negation"
+      },
+      {
+        "id": "empty-phrase",
+        "input": "\"\"",
+        "error": "empty quoted phrase at offset 0",
+        "error_class": "empty quoted phrase"
+      },
+      {
+        "id": "unterminated-phrase",
+        "input": "\"tax invoice",
+        "error": "unterminated quoted phrase at offset 0",
+        "error_class": "unterminated quoted phrase"
+      },
+      {
+        "id": "empty-regex",
+        "input": "//",
+        "error": "empty regular expression at offset 0",
+        "error_class": "empty regular expression"
+      },
+      {
+        "id": "unterminated-regex",
+        "input": "/invoice",
+        "error": "unterminated regular expression at offset 0",
+        "error_class": "unterminated regular expression"
+      },
+      {
+        "id": "invalid-regex",
+        "input": "/[/",
+        "error": "invalid regular expression: error parsing regexp: missing closing ]: `[`",
+        "error_class": "invalid regular expression"
+      },
+      {
+        "id": "unknown-operator",
+        "input": "owner:daniel",
+        "error": "unknown search operator \"owner:\"",
+        "error_class": "unknown search operator"
+      },
+      {
+        "id": "empty-operator",
+        "input": "tag:",
+        "error": "operator \"tag:\" requires a value",
+        "error_class": "requires a value"
+      },
+      {
+        "id": "invalid-date",
+        "input": "modified:tomorrow",
+        "error": "invalid date \"tomorrow\" (use YYYY-MM-DD or YYYY-MM-DD..YYYY-MM-DD)",
+        "error_class": "invalid date"
+      },
+      {
+        "id": "unknown-colon-term",
+        "input": "https://example.test",
+        "error": "unknown search operator \"https:\"",
+        "error_class": "unknown search operator"
+      }
+    ],
+    "dates": [
+      {
+        "id": "date",
+        "value": "2026-09-06",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "from_unix_nanos": 1788652800000000000,
+        "to_unix_nanos": 1788739199999999999
+      },
+      {
+        "id": "date-range",
+        "value": "2026-08-01..2026-08-31",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "from_unix_nanos": 1785542400000000000,
+        "to_unix_nanos": 1788220799999999999
+      },
+      {
+        "id": "rfc3339",
+        "value": "2026-09-06T10:34:56+02:00",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "from_unix_nanos": 1788683696000000000,
+        "to_unix_nanos": 1788683696000000000
+      },
+      {
+        "id": "rfc3339-nano-range",
+        "value": "2026-09-06T10:00:00.123456789Z..2026-09-06T11:00:00.987654321Z",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "from_unix_nanos": 1788688800123456789,
+        "to_unix_nanos": 1788692400987654321
+      },
+      {
+        "id": "last-day",
+        "value": "last day",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "from_unix_nanos": 1788611696123456789,
+        "to_unix_nanos": 1788698096123456789
+      },
+      {
+        "id": "last-week",
+        "value": "last week",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "from_unix_nanos": 1788093296123456789,
+        "to_unix_nanos": 1788698096123456789
+      },
+      {
+        "id": "last-month",
+        "value": "last month",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "from_unix_nanos": 1786106096123456789,
+        "to_unix_nanos": 1788698096123456789
+      },
+      {
+        "id": "last-year",
+        "value": "last year",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "from_unix_nanos": 1757162096123456789,
+        "to_unix_nanos": 1788698096123456789
+      },
+      {
+        "id": "empty",
+        "value": "",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "error": "date filter requires a value",
+        "validate_error": "invalid date \"\""
+      },
+      {
+        "id": "invalid-relative",
+        "value": "last decade",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "error": "invalid relative date \"last decade\"",
+        "validate_error": "invalid relative date \"last decade\""
+      },
+      {
+        "id": "open-start",
+        "value": "..2026-09-06",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "error": "invalid date range \"..2026-09-06\"",
+        "validate_error": "invalid date range \"..2026-09-06\""
+      },
+      {
+        "id": "open-end",
+        "value": "2026-09-06..",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "error": "invalid date range \"2026-09-06..\"",
+        "validate_error": "invalid date range \"2026-09-06..\""
+      },
+      {
+        "id": "too-many",
+        "value": "2026-01-01..2026-02-01..2026-03-01",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "error": "invalid date range \"2026-01-01..2026-02-01..2026-03-01\"",
+        "validate_error": "invalid date range \"2026-01-01..2026-02-01..2026-03-01\""
+      },
+      {
+        "id": "reverse",
+        "value": "2026-09-07..2026-09-06",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "error": "date range starts after it ends: \"2026-09-07..2026-09-06\"",
+        "validate_error": "date range starts after it ends: \"2026-09-07..2026-09-06\""
+      },
+      {
+        "id": "invalid",
+        "value": "tomorrow",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "error": "invalid date \"tomorrow\" (use YYYY-MM-DD or YYYY-MM-DD..YYYY-MM-DD)",
+        "validate_error": "invalid date \"tomorrow\" (use YYYY-MM-DD or YYYY-MM-DD..YYYY-MM-DD)"
+      },
+      {
+        "id": "comma-valid",
+        "value": "2026-09-01,2026-09-02",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "error": "invalid date \"2026-09-01,2026-09-02\" (use YYYY-MM-DD or YYYY-MM-DD..YYYY-MM-DD)"
+      },
+      {
+        "id": "comma-empty",
+        "value": "2026-09-01,",
+        "reference": "2026-09-06T12:34:56.123456789Z",
+        "error": "invalid date \"2026-09-01,\" (use YYYY-MM-DD or YYYY-MM-DD..YYYY-MM-DD)",
+        "validate_error": "invalid date \"2026-09-01,\""
+      }
+    ]
+  }
+}

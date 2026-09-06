@@ -1,0 +1,16 @@
+[package]
+name = "symdesk-cli"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "symdesk"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+symdesk-core.workspace = true

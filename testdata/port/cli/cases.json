@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "cases": [
+    {
+      "id": "desk-version-text",
+      "binary": "symdesk",
+      "stage": "version",
+      "args": ["version"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "desk-version-json",
+      "binary": "symdesk",
+      "stage": "version",
+      "args": ["version", "--json"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "desk-version-output-yaml",
+      "binary": "symdesk",
+      "stage": "version",
+      "args": ["version", "--output", "yaml"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "desk-version-output-json",
+      "binary": "symdesk",
+      "stage": "version",
+      "args": ["version", "--output", "json"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "desk-version-extra-arg",
+      "binary": "symdesk",
+      "stage": "version",
+      "args": ["version", "extra"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "desk-version-invalid-output",
+      "binary": "symdesk",
+      "stage": "version",
+      "args": ["version", "--output", "badformat"],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": true
+    },
+    {
+      "id": "desk-root-help",
+      "binary": "symdesk",
+      "stage": "full-cli",
+      "args": ["--help"],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": true
+    },
+    {
+      "id": "desk-ls-help",
+      "binary": "symdesk",
+      "stage": "full-cli",
+      "args": ["ls", "--help"],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": true
+    },
+    {
+      "id": "desk-unknown-command",
+      "binary": "symdesk",
+      "stage": "full-cli",
+      "args": ["definitely-not-a-command"],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": true
+    },
+    {
+      "id": "room-version-text",
+      "binary": "symroom",
+      "stage": "version",
+      "args": ["version"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "room-version-json",
+      "binary": "symroom",
+      "stage": "version",
+      "args": ["version", "--json"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "room-help-flag",
+      "binary": "symroom",
+      "stage": "full-cli",
+      "args": ["--help"],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": true
+    },
+    {
+      "id": "room-help-subcommand",
+      "binary": "symroom",
+      "stage": "full-cli",
+      "args": ["help"],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": true
+    },
+    {
+      "id": "room-identity-usage",
+      "binary": "symroom",
+      "stage": "full-cli",
+      "args": ["identity"],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": true
+    },
+    {
+      "id": "room-identity-create-no-name",
+      "binary": "symroom",
+      "stage": "full-cli",
+      "args": ["identity", "create"],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": true
+    },
+    {
+      "id": "room-member-usage",
+      "binary": "symroom",
+      "stage": "full-cli",
+      "args": ["member"],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": true
+    },
+    {
+      "id": "room-unknown-subcommand",
+      "binary": "symroom",
+      "stage": "full-cli",
+      "args": ["nonexistent"],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": true
+    },
+    {
+      "id": "desk-root-version-flag",
+      "binary": "symdesk",
+      "stage": "version",
+      "args": ["--version"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "desk-version-subcommand-version-flag",
+      "binary": "symdesk",
+      "stage": "version",
+      "args": ["version", "--version"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "desk-json-before-version",
+      "binary": "symdesk",
+      "stage": "version",
+      "args": ["--json", "version"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "desk-output-equals-json",
+      "binary": "symdesk",
+      "stage": "version",
+      "args": ["version", "--output=json"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "desk-flag-after-positional",
+      "binary": "symdesk",
+      "stage": "version",
+      "args": ["version", "extra", "--json"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "room-root-version-flag-unsupported",
+      "binary": "symroom",
+      "stage": "version",
+      "args": ["--version"],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": true
+    },
+    {
+      "id": "room-version-subcommand-version-flag",
+      "binary": "symroom",
+      "stage": "version",
+      "args": ["version", "--version"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "room-version-extra-argument",
+      "binary": "symroom",
+      "stage": "version",
+      "args": ["version", "extra"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    },
+    {
+      "id": "room-json-after-positional-remains-text",
+      "binary": "symroom",
+      "stage": "version",
+      "args": ["version", "extra", "--json"],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": true
+    }
+  ]
+}

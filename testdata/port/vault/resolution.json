@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "documents": [
+    {
+      "path": "folder/path-target.md",
+      "title": "Path Title",
+      "aliases": [
+        "Path Alias"
+      ]
+    },
+    {
+      "path": "other/base-target.md",
+      "title": "Different Title"
+    },
+    {
+      "path": "titles/title-file.md",
+      "title": "Human Title"
+    },
+    {
+      "path": "unicode/日本.md",
+      "title": "Überblick",
+      "aliases": [
+        "Résumé"
+      ]
+    },
+    {
+      "path": "aliases/alias-file.md",
+      "title": "Alias Owner",
+      "aliases": [
+        "Alt Name",
+        "Alias.ext"
+      ]
+    },
+    {
+      "path": "sources/path.md",
+      "title": "Source Path",
+      "links": [
+        "folder/path-target"
+      ]
+    },
+    {
+      "path": "sources/path-case-ext.md",
+      "title": "Source Path Case",
+      "links": [
+        "FOLDER/PATH-TARGET.MD"
+      ]
+    },
+    {
+      "path": "sources/base.md",
+      "title": "Source Base",
+      "links": [
+        "base-target"
+      ]
+    },
+    {
+      "path": "sources/title.md",
+      "title": "Source Title",
+      "links": [
+        "Human Title"
+      ]
+    },
+    {
+      "path": "sources/alias.md",
+      "title": "Source Alias",
+      "links": [
+        "alt name"
+      ]
+    },
+    {
+      "path": "sources/alias-extension.md",
+      "title": "Source Alias Extension",
+      "links": [
+        "Alias"
+      ]
+    },
+    {
+      "path": "sources/missing.md",
+      "title": "Source Missing",
+      "links": [
+        "Missing Target"
+      ]
+    },
+    {
+      "path": "sources/unicode.md",
+      "title": "Source Unicode",
+      "links": [
+        "RÉSUMÉ"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "aliases/alias-file.md",
+      "label": "Alias Owner"
+    },
+    {
+      "id": "folder/path-target.md",
+      "label": "Path Title"
+    },
+    {
+      "id": "other/base-target.md",
+      "label": "Different Title"
+    },
+    {
+      "id": "sources/alias-extension.md",
+      "label": "Source Alias Extension"
+    },
+    {
+      "id": "sources/alias.md",
+      "label": "Source Alias"
+    },
+    {
+      "id": "sources/base.md",
+      "label": "Source Base"
+    },
+    {
+      "id": "sources/missing.md",
+      "label": "Source Missing"
+    },
+    {
+      "id": "sources/path-case-ext.md",
+      "label": "Source Path Case"
+    },
+    {
+      "id": "sources/path.md",
+      "label": "Source Path"
+    },
+    {
+      "id": "sources/title.md",
+      "label": "Source Title"
+    },
+    {
+      "id": "sources/unicode.md",
+      "label": "Source Unicode"
+    },
+    {
+      "id": "titles/title-file.md",
+      "label": "Human Title"
+    },
+    {
+      "id": "unicode/日本.md",
+      "label": "Überblick"
+    }
+  ],
+  "edges": [
+    {
+      "source": "sources/alias-extension.md",
+      "target": "sources/alias.md"
+    },
+    {
+      "source": "sources/alias.md",
+      "target": "aliases/alias-file.md"
+    },
+    {
+      "source": "sources/base.md",
+      "target": "other/base-target.md"
+    },
+    {
+      "source": "sources/missing.md",
+      "target": "Missing Target"
+    },
+    {
+      "source": "sources/path-case-ext.md",
+      "target": "folder/path-target.md"
+    },
+    {
+      "source": "sources/path.md",
+      "target": "folder/path-target.md"
+    },
+    {
+      "source": "sources/title.md",
+      "target": "titles/title-file.md"
+    },
+    {
+      "source": "sources/unicode.md",
+      "target": "unicode/日本.md"
+    }
+  ]
+}

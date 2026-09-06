@@ -2,7 +2,7 @@ import CryptoKit
 import Foundation
 import Network
 
-// MARK: - Frontmatter + naming (contract-v2, mirrors desktop `note new`)
+// MARK: - Frontmatter + naming (contract-v6 compatible, mirrors desktop `note new`)
 
 enum MobileNoteWriter {
     /// File name for a new note, matching `Service.NoteNew` on the desktop:
@@ -19,7 +19,7 @@ enum MobileNoteWriter {
         return (cleaned.isEmpty ? "Note" : cleaned) + ".md"
     }
 
-    /// Contract-v2 frontmatter plus body, byte-identical in shape to what
+    /// Minimal contract-v6-compatible frontmatter plus body, byte-identical in shape to what
     /// `note new` writes (`title`, `created`, `tags: []`), so the desktop
     /// parser and `MobileVaultParser.parse` both accept the result.
     static func noteDocument(title: String, body: String, createdAt: Date = Date()) -> String {

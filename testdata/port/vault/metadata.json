@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "vault-document",
+      "document": {
+        "Path": "",
+        "SHA256": "",
+        "Title": "  Rechnung   Müller  ",
+        "Created": "2026-09-06",
+        "Tags": [
+          "invoice",
+          "überfällig"
+        ],
+        "Aliases": [
+          "Bill",
+          "Faktura"
+        ],
+        "Frontmatter": {
+          "confidence": 91,
+          "correspondent": "Müller GmbH",
+          "document_type": "invoice",
+          "empty": "ignored",
+          "meeting_id": "meet-7",
+          "source_path": "inbox/scan.pdf"
+        },
+        "Body": "",
+        "Links": null,
+        "Size": 0,
+        "ModTime": "0001-01-01T00:00:00Z",
+        "DocumentDate": "2026-08-31",
+        "Person": "Alice",
+        "Status": "open",
+        "DueDate": "2026-09-30",
+        "Confidence": 0,
+        "OcrJSONPath": "ocr/42.json",
+        "Simhash": "abc123",
+        "ASN": 42,
+        "Type": "document",
+        "DerivedFrom": "",
+        "Derived": false
+      },
+      "fields": [
+        {
+          "Name": "title",
+          "Value": "  Rechnung   Müller  ",
+          "Weight": 3
+        },
+        {
+          "Name": "tags",
+          "Value": "invoice überfällig",
+          "Weight": 3
+        },
+        {
+          "Name": "aliases",
+          "Value": "Bill Faktura",
+          "Weight": 2
+        },
+        {
+          "Name": "created",
+          "Value": "2026-09-06",
+          "Weight": 1
+        },
+        {
+          "Name": "document_date",
+          "Value": "2026-08-31",
+          "Weight": 1
+        },
+        {
+          "Name": "person",
+          "Value": "Alice",
+          "Weight": 1
+        },
+        {
+          "Name": "status",
+          "Value": "open",
+          "Weight": 1
+        },
+        {
+          "Name": "due_date",
+          "Value": "2026-09-30",
+          "Weight": 1
+        },
+        {
+          "Name": "ocr_json_path",
+          "Value": "ocr/42.json",
+          "Weight": 1
+        },
+        {
+          "Name": "simhash",
+          "Value": "abc123",
+          "Weight": 1
+        },
+        {
+          "Name": "type",
+          "Value": "document",
+          "Weight": 1
+        },
+        {
+          "Name": "asn",
+          "Value": "42",
+          "Weight": 1
+        },
+        {
+          "Name": "document_type",
+          "Value": "invoice",
+          "Weight": 1
+        },
+        {
+          "Name": "correspondent",
+          "Value": "Müller GmbH",
+          "Weight": 1
+        },
+        {
+          "Name": "source_path",
+          "Value": "inbox/scan.pdf",
+          "Weight": 1
+        },
+        {
+          "Name": "meeting_id",
+          "Value": "meet-7",
+          "Weight": 1
+        },
+        {
+          "Name": "confidence",
+          "Value": "91",
+          "Weight": 1
+        }
+      ],
+      "formatted": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Rechnung Müller\ntitle: Rechnung Müller\ntitle: Rechnung Müller\ntags: invoice überfällig\ntags: invoice überfällig\ntags: invoice überfällig\naliases: Bill Faktura\naliases: Bill Faktura\ncreated: 2026-09-06\ndocument_date: 2026-08-31\ndue_date: 2026-09-30\ntype: document\nstatus: open\nperson: Alice\ncorrespondent: Müller GmbH\nasn: 42\nconfidence: 91\ndocument_type: invoice\nmeeting_id: meet-7\nocr_json_path: ocr/42.json\nsimhash: abc123\nsource_path: inbox/scan.pdf\n__SYMDESK_SEARCH_METADATA_END__",
+      "queries": {
+        "\"müller\"": [
+          "title",
+          "correspondent"
+        ],
+        "invoice": [
+          "tags",
+          "document_type"
+        ],
+        "missing": null,
+        "rechnung": [
+          "title"
+        ],
+        "überfällig alice": [
+          "tags",
+          "person"
+        ]
+      },
+      "stripped": "BODY"
+    },
+    {
+      "name": "weight-normalization-and-order",
+      "fields": [
+        {
+          "Name": "zeta",
+          "Value": " many\tspaces ",
+          "Weight": 0
+        },
+        {
+          "Name": "title",
+          "Value": "Title",
+          "Weight": 9
+        },
+        {
+          "Name": "aliases",
+          "Value": "Alias",
+          "Weight": 2
+        },
+        {
+          "Name": "",
+          "Value": "ignored",
+          "Weight": 1
+        },
+        {
+          "Name": "status",
+          "Value": "",
+          "Weight": 1
+        }
+      ],
+      "formatted": "__SYMDESK_SEARCH_METADATA_START__\ntitle: Title\ntitle: Title\ntitle: Title\ntitle: Title\naliases: Alias\naliases: Alias\nzeta: many spaces\n__SYMDESK_SEARCH_METADATA_END__",
+      "queries": {
+        "alias spaces": [
+          "aliases",
+          "zeta"
+        ]
+      },
+      "stripped": "BODY"
+    },
+    {
+      "name": "empty",
+      "formatted": "",
+      "queries": {
+        "x": null
+      },
+      "stripped": "BODY"
+    }
+  ]
+}

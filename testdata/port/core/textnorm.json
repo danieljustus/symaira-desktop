@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "cases": {
+    "dehyphenate": [
+      {
+        "id": "joined",
+        "input": "Die Kranken-\nversicherung zahlt. Der Miet-\nvertrag läuft.",
+        "output": "Die Krankenversicherung zahlt. Der Mietvertrag läuft."
+      },
+      {
+        "id": "many-lines",
+        "input": "Ver-\nsi-\nche-\nrung",
+        "output": "Versicherung"
+      },
+      {
+        "id": "uppercase",
+        "input": "Baden-\nWürttemberg",
+        "output": "Baden-\nWürttemberg"
+      },
+      {
+        "id": "coordinator",
+        "input": "Vor-\nund Nachname",
+        "output": "Vor-\nund Nachname"
+      },
+      {
+        "id": "indented",
+        "input": "Vor-\n und Nachname",
+        "output": "Vor-\n und Nachname"
+      },
+      {
+        "id": "digit",
+        "input": "1-\n2 Punkte",
+        "output": "1-\n2 Punkte"
+      },
+      {
+        "id": "windows-newline",
+        "input": "Kranken-\r\nversicherung",
+        "output": "Kranken-\r\nversicherung"
+      },
+      {
+        "id": "no-newline",
+        "input": "Kranken-versicherung",
+        "output": "Kranken-versicherung"
+      }
+    ],
+    "language": [
+      {
+        "id": "german",
+        "input": "Der Vertrag wurde zwischen den Parteien geschlossen und ist gültig. Die Beiträge für die Krankenversicherung werden monatlich gezahlt. Wir können die Änderung nicht übernehmen, wenn die Frist schon abgelaufen ist.",
+        "language": "deu"
+      },
+      {
+        "id": "english",
+        "input": "The contract was signed between the parties and is valid. The contributions for the insurance are paid monthly and this will not change. We cannot accept the modification when the deadline has already passed.",
+        "language": "eng"
+      },
+      {
+        "id": "short",
+        "input": "kurz",
+        "language": ""
+      },
+      {
+        "id": "ambiguous",
+        "input": "der the und and die is das are und the der is und the der is und the der is",
+        "language": ""
+      },
+      {
+        "id": "umlaut-signal",
+        "input": "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma über größe für",
+        "language": "deu"
+      }
+    ]
+  }
+}

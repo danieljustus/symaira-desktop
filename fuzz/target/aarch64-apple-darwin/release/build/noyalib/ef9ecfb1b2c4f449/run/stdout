@@ -1,0 +1,4 @@
+cargo:rustc-check-cfg=cfg(noyalib_nightly)
+cargo:rustc-check-cfg=cfg(noyalib_coverage)
+cargo:rustc-cfg=noyalib_nightly
+cargo:rerun-if-env-changed=NOYALIB_COVERAGE

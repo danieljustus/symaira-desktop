@@ -1,6 +1,19 @@
 # symdesk — Phasenplan für die Umsetzung
 
 
+> **Nachtrag 2026-09-06 (Go→Rust-Port):** Der Go-Backend-Port ist
+> contract-first gestartet; Oracle-/Differential-Harness (`RUST-001`) und die
+> ersten byte-exakten Rust-Version-Slices (`RUST-002`) sowie die reinen Core-,
+> Query- und Config-Verträge (`RUST-003`) sind grün. `RUST-004` (read-only
+> Vault) läuft.
+> Go bleibt produktiver
+> Referenzstand und ausführbare Oracle-Implementierung. Verbindlich für eine
+> Umsetzung sind [`rust-port/README.md`](./rust-port/README.md), die dortige
+> Contract-Matrix und `work-items.json`. Die Portierung läuft nur nach einem
+> frühen gemessenen Value-Gate weiter; SwiftUI-Clients und Swift-Pakete bleiben
+> außerhalb des Sprachports.
+
+
 > **Nachtrag 2026-08-23 (Repo-Konsolidierung, Schritt 6):** Dieser Plan
 > beschreibt den Stand vor der Konsolidierung. `symseek`, `symprint`,
 > `symrelate`, `symmeet` und `symingest` sind keine Geschwister-Binaries mehr,

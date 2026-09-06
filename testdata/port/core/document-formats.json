@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "cases": {
+    "registry": [
+      {
+        "extension": ".pdf",
+        "kind": "application/pdf",
+        "name": "PDF",
+        "supported": true
+      },
+      {
+        "extension": ".txt",
+        "kind": "text/plain",
+        "name": "plain text",
+        "supported": true
+      },
+      {
+        "extension": ".text",
+        "kind": "text/plain",
+        "name": "plain text",
+        "supported": true
+      },
+      {
+        "extension": ".csv",
+        "kind": "text/csv",
+        "name": "CSV",
+        "supported": true
+      },
+      {
+        "extension": ".md",
+        "kind": "text/markdown",
+        "name": "Markdown",
+        "supported": true
+      },
+      {
+        "extension": ".markdown",
+        "kind": "text/markdown",
+        "name": "Markdown",
+        "supported": true
+      },
+      {
+        "extension": ".html",
+        "kind": "text/html",
+        "name": "HTML",
+        "supported": true
+      },
+      {
+        "extension": ".htm",
+        "kind": "text/html",
+        "name": "HTML",
+        "supported": true
+      },
+      {
+        "extension": ".rtf",
+        "kind": "application/rtf",
+        "name": "RTF",
+        "supported": true
+      },
+      {
+        "extension": ".docx",
+        "kind": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "name": "Office Open XML document",
+        "supported": true
+      },
+      {
+        "extension": ".xlsx",
+        "kind": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "name": "Office Open XML spreadsheet",
+        "supported": true
+      },
+      {
+        "extension": ".pptx",
+        "kind": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "name": "Office Open XML presentation",
+        "supported": true
+      },
+      {
+        "extension": ".odt",
+        "kind": "application/vnd.oasis.opendocument.text",
+        "name": "OpenDocument text",
+        "supported": true
+      },
+      {
+        "extension": ".ods",
+        "kind": "application/vnd.oasis.opendocument.spreadsheet",
+        "name": "OpenDocument spreadsheet",
+        "supported": true
+      },
+      {
+        "extension": ".odp",
+        "kind": "application/vnd.oasis.opendocument.presentation",
+        "name": "OpenDocument presentation",
+        "supported": true
+      },
+      {
+        "extension": ".epub",
+        "kind": "application/epub+zip",
+        "name": "EPUB",
+        "supported": true
+      },
+      {
+        "extension": ".mobi",
+        "kind": "application/x-mobipocket-ebook",
+        "name": "MOBI",
+        "supported": false,
+        "reason": "no bundled MOBI parser; DRM status cannot be determined",
+        "error": "unsupported document format MOBI: no bundled MOBI parser; DRM status cannot be determined"
+      },
+      {
+        "extension": ".azw3",
+        "kind": "application/vnd.amazon.mobi8-ebook",
+        "name": "AZW3",
+        "supported": false,
+        "reason": "no bundled AZW3 parser; DRM status cannot be determined",
+        "error": "unsupported document format AZW3: no bundled AZW3 parser; DRM status cannot be determined"
+      },
+      {
+        "extension": ".pages",
+        "kind": "application/vnd.apple.pages",
+        "name": "iWork Pages",
+        "supported": false,
+        "reason": "iWork bundle parser is not available",
+        "error": "unsupported document format iWork Pages: iWork bundle parser is not available"
+      },
+      {
+        "extension": ".key",
+        "kind": "application/vnd.apple.keynote",
+        "name": "iWork Keynote",
+        "supported": false,
+        "reason": "iWork bundle parser is not available",
+        "error": "unsupported document format iWork Keynote: iWork bundle parser is not available"
+      },
+      {
+        "extension": ".numbers",
+        "kind": "application/vnd.apple.numbers",
+        "name": "iWork Numbers",
+        "supported": false,
+        "reason": "iWork bundle parser is not available",
+        "error": "unsupported document format iWork Numbers: iWork bundle parser is not available"
+      },
+      {
+        "extension": ".doc",
+        "kind": "application/msword",
+        "name": "legacy Word",
+        "supported": false,
+        "reason": "legacy binary Office parser is not available",
+        "error": "unsupported document format legacy Word: legacy binary Office parser is not available"
+      },
+      {
+        "extension": ".xls",
+        "kind": "application/vnd.ms-excel",
+        "name": "legacy Excel",
+        "supported": false,
+        "reason": "legacy binary Office parser is not available",
+        "error": "unsupported document format legacy Excel: legacy binary Office parser is not available"
+      },
+      {
+        "extension": ".ppt",
+        "kind": "application/vnd.ms-powerpoint",
+        "name": "legacy PowerPoint",
+        "supported": false,
+        "reason": "legacy binary Office parser is not available",
+        "error": "unsupported document format legacy PowerPoint: legacy binary Office parser is not available"
+      },
+      {
+        "extension": ".djvu",
+        "kind": "image/vnd.djvu",
+        "name": "DjVu",
+        "supported": false,
+        "reason": "DjVu parser is not available",
+        "error": "unsupported document format DjVu: DjVu parser is not available"
+      },
+      {
+        "extension": ".odg",
+        "kind": "application/vnd.oasis.opendocument.graphics",
+        "name": "OpenDocument drawing",
+        "supported": false,
+        "reason": "OpenDocument drawing parser is not available",
+        "error": "unsupported document format OpenDocument drawing: OpenDocument drawing parser is not available"
+      }
+    ],
+    "supported_extensions": [
+      ".csv",
+      ".docx",
+      ".epub",
+      ".htm",
+      ".html",
+      ".markdown",
+      ".md",
+      ".odp",
+      ".ods",
+      ".odt",
+      ".pdf",
+      ".pptx",
+      ".rtf",
+      ".text",
+      ".txt",
+      ".xlsx"
+    ],
+    "lookups": [
+      {
+        "input": "PDF",
+        "normalized": ".pdf",
+        "kind": "application/pdf",
+        "recognized": true,
+        "supported": true
+      },
+      {
+        "input": " .Md ",
+        "normalized": ".md",
+        "kind": "text/markdown",
+        "recognized": true,
+        "supported": true
+      },
+      {
+        "input": ".markdown",
+        "normalized": ".markdown",
+        "kind": "text/markdown",
+        "recognized": true,
+        "supported": true
+      },
+      {
+        "input": "AZW3",
+        "normalized": ".azw3",
+        "kind": "application/vnd.amazon.mobi8-ebook",
+        "recognized": true,
+        "supported": false
+      },
+      {
+        "input": ".pages",
+        "normalized": ".pages",
+        "kind": "application/vnd.apple.pages",
+        "recognized": true,
+        "supported": false
+      },
+      {
+        "input": "",
+        "normalized": "",
+        "recognized": false,
+        "supported": false
+      },
+      {
+        "input": ".unknown",
+        "normalized": ".unknown",
+        "recognized": false,
+        "supported": false
+      }
+    ],
+    "unknown_error": "unsupported document format \"application/x-unknown\"",
+    "drm_error": "document is DRM-protected"
+  }
+}

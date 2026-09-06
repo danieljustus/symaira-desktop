@@ -5,7 +5,7 @@ import XCTest
 /// Tests for inline-AI actions (#332): desktop-compatible intent values,
 /// selection-aware text surgery, provider fallback, and the accept/undo
 /// write discipline (nothing is written before an explicit accept, and
-/// the contract-v2 frontmatter survives both accept and undo).
+/// the contract-v6-compatible frontmatter survives both accept and undo).
 @MainActor
 final class MobileInlineAITests: XCTestCase {
 
@@ -256,7 +256,7 @@ final class MobileInlineAITests: XCTestCase {
 
     @MainActor
     func testAcceptAndUndoPreserveFrontmatterThroughWriteLayer() async throws {
-        // A contract-v2 note with title, tags, created and document
+        // A contract-v6-compatible note with title, tags, created and document
         // fields. Accepting an inline-AI change — and then undoing it —
         // must leave the full frontmatter unchanged in the persisted file.
         let vaultRoot = FileManager.default.temporaryDirectory

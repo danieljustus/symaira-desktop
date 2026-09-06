@@ -1,0 +1,1343 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "cases": [
+    {
+      "input": {
+        "id": "minimal-v1-mobile",
+        "path": "notes/Mobile.md",
+        "content": "---\ntitle: \"Einkaufsliste\"\ncreated: \"2026-09-06T12:00:00Z\"\ntags: []\n---\n\nMilch und Brot #Familie\n"
+      },
+      "document": {
+        "path": "notes/Mobile.md",
+        "sha256": "caa6075d2991a42678a12653b51ea5474a8cf1a4b5d87f262180f55b79c575ef",
+        "title": "Einkaufsliste",
+        "created": "2026-09-06T12:00:00Z",
+        "tags": [
+          "Familie"
+        ],
+        "frontmatter": {
+          "created": {
+            "type": "string",
+            "value": "2026-09-06T12:00:00Z"
+          },
+          "tags": {
+            "type": "list"
+          },
+          "title": {
+            "type": "string",
+            "value": "Einkaufsliste"
+          }
+        },
+        "body": "\nMilch und Brot #Familie\n",
+        "size": 97,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "no-frontmatter",
+        "path": "notes/No_Frontmatter.md",
+        "content": "Body only with [[Target]].\n"
+      },
+      "document": {
+        "path": "notes/No_Frontmatter.md",
+        "sha256": "40a0ca385043e42139758a665d4390a1a6c0f15ba04c2aa4d61a1739fd2e402f",
+        "title": "No_Frontmatter",
+        "created": "",
+        "frontmatter": {},
+        "body": "Body only with [[Target]].\n",
+        "links": [
+          "Target"
+        ],
+        "size": 27,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "empty-frontmatter",
+        "path": "notes/Empty.md",
+        "content": "---\n---\nBody\n"
+      },
+      "document": {
+        "path": "notes/Empty.md",
+        "sha256": "c41dcac8aa5df6bfdb6305991e84eae971418fa75c1fedf0b39c0879a9d22fe1",
+        "title": "Empty",
+        "created": "",
+        "frontmatter": {},
+        "body": "Body\n",
+        "size": 13,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "unclosed-frontmatter",
+        "path": "notes/Unclosed.md",
+        "content": "Before\n---\ntitle: swallowed\nbody swallowed"
+      },
+      "document": {
+        "path": "notes/Unclosed.md",
+        "sha256": "41968870fe5114828a811975c75891b61a54e2dc766f55a729e4ed01841e68bc",
+        "title": "Unclosed",
+        "created": "",
+        "frontmatter": {},
+        "body": "Before\n",
+        "size": 42,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "late-frontmatter",
+        "path": "notes/Late.md",
+        "content": "Before\n---\ntitle: Late Title\ntags: [late]\n---\nAfter\n"
+      },
+      "document": {
+        "path": "notes/Late.md",
+        "sha256": "54631ca99a35e38db1e9c19ddc0e3f535870c767bf3f5201ba48ce3a2518bcda",
+        "title": "Late Title",
+        "created": "",
+        "tags": [
+          "late"
+        ],
+        "frontmatter": {
+          "tags": {
+            "type": "list",
+            "items": [
+              {
+                "type": "string",
+                "value": "late"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "value": "Late Title"
+          }
+        },
+        "body": "Before\nAfter\n",
+        "size": 52,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "full-v2",
+        "path": "documents/Invoice.md",
+        "content": "---\ntitle: Invoice\ncreated: \"2026-08-01T10:00:00Z\"\ntags: [invoice, Paid]\ndocument_date: \"2026-08-01\"\nperson: Daniel\nstatus: custom-status\ndue_date: \"2026-08-31\"\nconfidence: 91.9\nocr_json_path: OCR/invoice.json\nsimhash: abcdef0123456789\nunknown:\n  enabled: true\n  count: 3\n  values: [one, 2, false]\n---\nInvoice body #paid #Tax [[Customer|Display]] [[Customer#Heading]] ![[scan.pdf]]\n"
+      },
+      "document": {
+        "path": "documents/Invoice.md",
+        "sha256": "f8949c1175f3c602d5cdefa5aeb44466dfe5ba8bdff23ee587e772e7b3537d13",
+        "title": "Invoice",
+        "created": "2026-08-01T10:00:00Z",
+        "tags": [
+          "invoice",
+          "Paid",
+          "Tax"
+        ],
+        "frontmatter": {
+          "confidence": {
+            "type": "float",
+            "value": 91.9
+          },
+          "created": {
+            "type": "string",
+            "value": "2026-08-01T10:00:00Z"
+          },
+          "document_date": {
+            "type": "string",
+            "value": "2026-08-01"
+          },
+          "due_date": {
+            "type": "string",
+            "value": "2026-08-31"
+          },
+          "ocr_json_path": {
+            "type": "string",
+            "value": "OCR/invoice.json"
+          },
+          "person": {
+            "type": "string",
+            "value": "Daniel"
+          },
+          "simhash": {
+            "type": "string",
+            "value": "abcdef0123456789"
+          },
+          "status": {
+            "type": "string",
+            "value": "custom-status"
+          },
+          "tags": {
+            "type": "list",
+            "items": [
+              {
+                "type": "string",
+                "value": "invoice"
+              },
+              {
+                "type": "string",
+                "value": "Paid"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "value": "Invoice"
+          },
+          "unknown": {
+            "type": "map",
+            "map": {
+              "count": {
+                "type": "int",
+                "value": 3
+              },
+              "enabled": {
+                "type": "bool",
+                "value": true
+              },
+              "values": {
+                "type": "list",
+                "items": [
+                  {
+                    "type": "string",
+                    "value": "one"
+                  },
+                  {
+                    "type": "int",
+                    "value": 2
+                  },
+                  {
+                    "type": "bool",
+                    "value": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "body": "Invoice body #paid #Tax [[Customer|Display]] [[Customer#Heading]] ![[scan.pdf]]\n",
+        "links": [
+          "Customer",
+          "scan.pdf"
+        ],
+        "size": 382,
+        "document_date": "2026-08-01",
+        "person": "Daniel",
+        "status": "custom-status",
+        "due_date": "2026-08-31",
+        "confidence": 91,
+        "ocr_json_path": "OCR/invoice.json",
+        "simhash": "abcdef0123456789",
+        "type": "document",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "yaml-coercions",
+        "path": "notes/Coercions.md",
+        "content": "---\ntitle: 123\ncreated: 2026-09-06\ntags: [one, 2, true, one]\naliases: [Alias, 3, false]\ndocument_date: 2026-09-05\nconfidence: 12.75\nderived: \"true\"\nderived_from: false\nnull_value: null\n---\nBody\n"
+      },
+      "document": {
+        "path": "notes/Coercions.md",
+        "sha256": "abbb00892a3101f41b98146cfe6f86da95ec6ef0040a2519531fa10dc4a1bcb7",
+        "title": "Coercions",
+        "created": "",
+        "tags": [
+          "one",
+          "one"
+        ],
+        "aliases": [
+          "Alias"
+        ],
+        "frontmatter": {
+          "aliases": {
+            "type": "list",
+            "items": [
+              {
+                "type": "string",
+                "value": "Alias"
+              },
+              {
+                "type": "int",
+                "value": 3
+              },
+              {
+                "type": "bool",
+                "value": false
+              }
+            ]
+          },
+          "confidence": {
+            "type": "float",
+            "value": 12.75
+          },
+          "created": {
+            "type": "time",
+            "value": "2026-09-06T00:00:00Z"
+          },
+          "derived": {
+            "type": "string",
+            "value": "true"
+          },
+          "derived_from": {
+            "type": "bool",
+            "value": false
+          },
+          "document_date": {
+            "type": "time",
+            "value": "2026-09-05T00:00:00Z"
+          },
+          "null_value": {
+            "type": "null"
+          },
+          "tags": {
+            "type": "list",
+            "items": [
+              {
+                "type": "string",
+                "value": "one"
+              },
+              {
+                "type": "int",
+                "value": 2
+              },
+              {
+                "type": "bool",
+                "value": true
+              },
+              {
+                "type": "string",
+                "value": "one"
+              }
+            ]
+          },
+          "title": {
+            "type": "int",
+            "value": 123
+          }
+        },
+        "body": "Body\n",
+        "size": 194,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 12,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "document",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "scalar-tags-aliases",
+        "path": "notes/Scalar.md",
+        "content": "---\ntitle: Scalar\ntags: One\naliases: Alternative\n---\n#one #Two #two\n"
+      },
+      "document": {
+        "path": "notes/Scalar.md",
+        "sha256": "514c84f14295ca250cd94d1874a9303bb3a5372c80cd571c6999c9c4e844dc3e",
+        "title": "Scalar",
+        "created": "",
+        "tags": [
+          "One",
+          "Two"
+        ],
+        "aliases": [
+          "Alternative"
+        ],
+        "frontmatter": {
+          "aliases": {
+            "type": "string",
+            "value": "Alternative"
+          },
+          "tags": {
+            "type": "string",
+            "value": "One"
+          },
+          "title": {
+            "type": "string",
+            "value": "Scalar"
+          }
+        },
+        "body": "#one #Two #two\n",
+        "size": 68,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "derived-forced",
+        "path": "notes/Derived.md",
+        "content": "---\ntitle: Derived\nderived: false\nderived_from: source.md\n---\nBody\n"
+      },
+      "document": {
+        "path": "notes/Derived.md",
+        "sha256": "ce1dff964d15d6fcae7e1724cf3ad9eac7b933b8f50863522456c96a42dcd1cd",
+        "title": "Derived",
+        "created": "",
+        "frontmatter": {
+          "derived": {
+            "type": "bool",
+            "value": false
+          },
+          "derived_from": {
+            "type": "string",
+            "value": "source.md"
+          },
+          "title": {
+            "type": "string",
+            "value": "Derived"
+          }
+        },
+        "body": "Body\n",
+        "size": 67,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "source.md",
+        "derived": true
+      }
+    },
+    {
+      "input": {
+        "id": "notebook-v4",
+        "path": "notebooks/Research.md",
+        "content": "---\ntitle: Research\ntype: notebook\nnotebook_id: research\nsources: [notes/a.md, documents/b.md]\ndescription: bounded set\n---\nNotebook\n"
+      },
+      "document": {
+        "path": "notebooks/Research.md",
+        "sha256": "338eca153a6ef611b4b65ce4e0a46b3e593f159743f6d685d6b62908addca918",
+        "title": "Research",
+        "created": "",
+        "frontmatter": {
+          "description": {
+            "type": "string",
+            "value": "bounded set"
+          },
+          "notebook_id": {
+            "type": "string",
+            "value": "research"
+          },
+          "sources": {
+            "type": "list",
+            "items": [
+              {
+                "type": "string",
+                "value": "notes/a.md"
+              },
+              {
+                "type": "string",
+                "value": "documents/b.md"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "value": "Research"
+          },
+          "type": {
+            "type": "string",
+            "value": "notebook"
+          }
+        },
+        "body": "Notebook\n",
+        "size": 133,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "notebook",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "base-v5",
+        "path": "bases/Tasks.md",
+        "content": "---\ntitle: Tasks\ntype: base\nbase_id: tasks\naliases: [Task DB, Aufgaben]\nproperties:\n  status:\n    type: select\nviews:\n  - name: Open\n    filter:\n      status: open\n---\n# Tasks #project/tasks\n"
+      },
+      "document": {
+        "path": "bases/Tasks.md",
+        "sha256": "eb4ece65789372b2ff1cd47db3a081bbb041204facba30ac1cca12fdc580e193",
+        "title": "Tasks",
+        "created": "",
+        "tags": [
+          "project/tasks"
+        ],
+        "aliases": [
+          "Task DB",
+          "Aufgaben"
+        ],
+        "frontmatter": {
+          "aliases": {
+            "type": "list",
+            "items": [
+              {
+                "type": "string",
+                "value": "Task DB"
+              },
+              {
+                "type": "string",
+                "value": "Aufgaben"
+              }
+            ]
+          },
+          "base_id": {
+            "type": "string",
+            "value": "tasks"
+          },
+          "properties": {
+            "type": "map",
+            "map": {
+              "status": {
+                "type": "map",
+                "map": {
+                  "type": {
+                    "type": "string",
+                    "value": "select"
+                  }
+                }
+              }
+            }
+          },
+          "title": {
+            "type": "string",
+            "value": "Tasks"
+          },
+          "type": {
+            "type": "string",
+            "value": "base"
+          },
+          "views": {
+            "type": "list",
+            "items": [
+              {
+                "type": "map",
+                "map": {
+                  "filter": {
+                    "type": "map",
+                    "map": {
+                      "status": {
+                        "type": "string",
+                        "value": "open"
+                      }
+                    }
+                  },
+                  "name": {
+                    "type": "string",
+                    "value": "Open"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "body": "# Tasks #project/tasks\n",
+        "size": 191,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "base",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "dataset-v6",
+        "path": "datasets/Finance.md",
+        "content": "---\ntitle: Finance\ntype: dataset\ndataset_id: finance\nidentity_field: id\nsensitivity: confidential\nretention_rule: seven-years\nschema:\n  id: string\n  amount: number\ncoverage:\n  rows: 2\nprovenance:\n  source_name: fixture.csv\n  source_sha256: abc\n---\nDataset handle\n"
+      },
+      "document": {
+        "path": "datasets/Finance.md",
+        "sha256": "a659f36b88ed040b31fc9fd08b4bc85602e641253c0173f2fdabb0bd1325b020",
+        "title": "Finance",
+        "created": "",
+        "frontmatter": {
+          "coverage": {
+            "type": "map",
+            "map": {
+              "rows": {
+                "type": "int",
+                "value": 2
+              }
+            }
+          },
+          "dataset_id": {
+            "type": "string",
+            "value": "finance"
+          },
+          "identity_field": {
+            "type": "string",
+            "value": "id"
+          },
+          "provenance": {
+            "type": "map",
+            "map": {
+              "source_name": {
+                "type": "string",
+                "value": "fixture.csv"
+              },
+              "source_sha256": {
+                "type": "string",
+                "value": "abc"
+              }
+            }
+          },
+          "retention_rule": {
+            "type": "string",
+            "value": "seven-years"
+          },
+          "schema": {
+            "type": "map",
+            "map": {
+              "amount": {
+                "type": "string",
+                "value": "number"
+              },
+              "id": {
+                "type": "string",
+                "value": "string"
+              }
+            }
+          },
+          "sensitivity": {
+            "type": "string",
+            "value": "confidential"
+          },
+          "title": {
+            "type": "string",
+            "value": "Finance"
+          },
+          "type": {
+            "type": "string",
+            "value": "dataset"
+          }
+        },
+        "body": "Dataset handle\n",
+        "size": 263,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "dataset",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "sources-not-inferred",
+        "path": "notes/Sources.md",
+        "content": "---\ntitle: Sources\nsources: [a.md]\n---\nBody\n"
+      },
+      "document": {
+        "path": "notes/Sources.md",
+        "sha256": "d53dd07dfa5451643dbd44490c77a8abc02b1d4274c8dd28d8b4c578b7d1dc86",
+        "title": "Sources",
+        "created": "",
+        "frontmatter": {
+          "sources": {
+            "type": "list",
+            "items": [
+              {
+                "type": "string",
+                "value": "a.md"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "value": "Sources"
+          }
+        },
+        "body": "Body\n",
+        "size": 44,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "unknown-type-document-inference",
+        "path": "notes/Unknown.md",
+        "content": "---\ntitle: Unknown\ntype: future-kind\nsource_path: \"\"\nmeeting_id: meeting\nbase_id: base\n---\nBody\n"
+      },
+      "document": {
+        "path": "notes/Unknown.md",
+        "sha256": "18cfcca6f9aebdcfd176af17c0c0e2a8c1d6eb09f7733368beb70738bc68b12c",
+        "title": "Unknown",
+        "created": "",
+        "frontmatter": {
+          "base_id": {
+            "type": "string",
+            "value": "base"
+          },
+          "meeting_id": {
+            "type": "string",
+            "value": "meeting"
+          },
+          "source_path": {
+            "type": "string",
+            "value": ""
+          },
+          "title": {
+            "type": "string",
+            "value": "Unknown"
+          },
+          "type": {
+            "type": "string",
+            "value": "future-kind"
+          }
+        },
+        "body": "Body\n",
+        "size": 96,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "document",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "meeting-inference",
+        "path": "meetings/Meeting.md",
+        "content": "---\ntitle: Meeting\nmeeting_id: m-1\n---\nBody\n"
+      },
+      "document": {
+        "path": "meetings/Meeting.md",
+        "sha256": "6fc3799bfe3ab2d9e2f8a77d178b794e520d90d596dd2e09f6ede7d4e8c679d3",
+        "title": "Meeting",
+        "created": "",
+        "frontmatter": {
+          "meeting_id": {
+            "type": "string",
+            "value": "m-1"
+          },
+          "title": {
+            "type": "string",
+            "value": "Meeting"
+          }
+        },
+        "body": "Body\n",
+        "size": 44,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "meeting",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "base-inference",
+        "path": "bases/Base.md",
+        "content": "---\ntitle: Base\nbase_id: b-1\n---\nBody\n"
+      },
+      "document": {
+        "path": "bases/Base.md",
+        "sha256": "d2005088a449a3d7f9f7ee32dac09b964b756810e495a448d209a05dd39f5709",
+        "title": "Base",
+        "created": "",
+        "frontmatter": {
+          "base_id": {
+            "type": "string",
+            "value": "b-1"
+          },
+          "title": {
+            "type": "string",
+            "value": "Base"
+          }
+        },
+        "body": "Body\n",
+        "size": 38,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "base",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "all-explicit-types",
+        "path": "notes/Type.md",
+        "content": "---\ntitle: Type\ntype: dataset\n---\nBody\n"
+      },
+      "document": {
+        "path": "notes/Type.md",
+        "sha256": "ad2e31d44fb446139ea068bc65e44f49261048f90bb6b8a78590e920278abe1a",
+        "title": "Type",
+        "created": "",
+        "frontmatter": {
+          "title": {
+            "type": "string",
+            "value": "Type"
+          },
+          "type": {
+            "type": "string",
+            "value": "dataset"
+          }
+        },
+        "body": "Body\n",
+        "size": 39,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "dataset",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "links-code-and-tags",
+        "path": "notes/Links.md",
+        "content": "---\ntitle: Links\ntags: [Front, front]\n---\n[[One]] [[One]] [[one]] [[Two|Display]] [[Three#Heading]] ![[asset.png]] [[]]\n`[[Inline]] #inline`\n```md\n[[Fenced]] #fenced\n```\n# Heading #heading-tag\nURL https://example.test/#fragment and #123 C# #valid/tag//tail #trail-\n"
+      },
+      "document": {
+        "path": "notes/Links.md",
+        "sha256": "a5fbfd0e56a8c1057fd0c5b1960348ed7fe993af7b5b0ed40fe59a93ccaafe81",
+        "title": "Links",
+        "created": "",
+        "tags": [
+          "Front",
+          "front",
+          "heading-tag",
+          "valid/tag",
+          "trail"
+        ],
+        "frontmatter": {
+          "tags": {
+            "type": "list",
+            "items": [
+              {
+                "type": "string",
+                "value": "Front"
+              },
+              {
+                "type": "string",
+                "value": "front"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "value": "Links"
+          }
+        },
+        "body": "[[One]] [[One]] [[one]] [[Two|Display]] [[Three#Heading]] ![[asset.png]] [[]]\n`[[Inline]] #inline`\n```md\n[[Fenced]] #fenced\n```\n# Heading #heading-tag\nURL https://example.test/#fragment and #123 C# #valid/tag//tail #trail-\n",
+        "links": [
+          "One",
+          "one",
+          "Two",
+          "Three",
+          "asset.png"
+        ],
+        "size": 265,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "crlf",
+        "path": "notes/CRLF.md",
+        "content": "---\r\ntitle: CRLF\r\ntags: []\r\n---\r\nBody\r\n"
+      },
+      "document": {
+        "path": "notes/CRLF.md",
+        "sha256": "1dcbe734279f2de6cfb16b4447ca87a7c78eb770aeb649f8bee6765a218600a9",
+        "title": "CRLF",
+        "created": "",
+        "frontmatter": {
+          "tags": {
+            "type": "list"
+          },
+          "title": {
+            "type": "string",
+            "value": "CRLF"
+          }
+        },
+        "body": "Body\r\n",
+        "size": 39,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "no-final-newline",
+        "path": "notes/NoFinal.md",
+        "content": "---\ntitle: No Final\n---\nBody"
+      },
+      "document": {
+        "path": "notes/NoFinal.md",
+        "sha256": "b8253fef3215980af72ae5b686ccc7eccc04888ccd65219187c60db6363bdbc2",
+        "title": "No Final",
+        "created": "",
+        "frontmatter": {
+          "title": {
+            "type": "string",
+            "value": "No Final"
+          }
+        },
+        "body": "Body",
+        "size": 28,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "excalidraw",
+        "path": "drawings/Sketch.excalidraw.md",
+        "content": "---\ntitle: Sketch\ntags: [drawing]\n---\n# Drawing\n[[HiddenLink]] #hidden\n"
+      },
+      "document": {
+        "path": "drawings/Sketch.excalidraw.md",
+        "sha256": "25c1d1be3c9b91b5cf4ccff8924bed3cbfe12681e7758de562c074aba04e2623",
+        "title": "Sketch",
+        "created": "",
+        "tags": [
+          "drawing"
+        ],
+        "frontmatter": {
+          "tags": {
+            "type": "list",
+            "items": [
+              {
+                "type": "string",
+                "value": "drawing"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "value": "Sketch"
+          }
+        },
+        "body": "",
+        "size": 71,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "invalid-yaml",
+        "path": "notes/Bad.md",
+        "content": "---\ntitle: [broken\n---\nBody\n"
+      },
+      "error": "invalid frontmatter in notes/Bad.md: yaml: line 1: did not find expected ',' or ']'",
+      "error_class": "frontmatter"
+    },
+    {
+      "input": {
+        "id": "top-level-sequence",
+        "path": "notes/Sequence.md",
+        "content": "---\n- one\n- two\n---\nBody\n"
+      },
+      "error": "invalid frontmatter in notes/Sequence.md: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!seq into map[string]interface {}",
+      "error_class": "frontmatter"
+    },
+    {
+      "input": {
+        "id": "duplicate-key",
+        "path": "notes/Duplicate.md",
+        "content": "---\ntitle: One\ntitle: Two\n---\nBody\n"
+      },
+      "error": "invalid frontmatter in notes/Duplicate.md: yaml: unmarshal errors:\n  line 2: mapping key \"title\" already defined at line 1",
+      "error_class": "frontmatter"
+    },
+    {
+      "input": {
+        "id": "asn-zero",
+        "path": "notes/ASN0.md",
+        "content": "---\ntitle: ASN\nasn: 0\n---\nBody\n"
+      },
+      "error": "invalid asn in notes/ASN0.md: must be a positive integer",
+      "error_class": "asn"
+    },
+    {
+      "input": {
+        "id": "asn-negative",
+        "path": "notes/ASNNeg.md",
+        "content": "---\ntitle: ASN\nasn: -1\n---\nBody\n"
+      },
+      "error": "invalid asn in notes/ASNNeg.md: must be a positive integer",
+      "error_class": "asn"
+    },
+    {
+      "input": {
+        "id": "asn-string",
+        "path": "notes/ASNString.md",
+        "content": "---\ntitle: ASN\nasn: \"42\"\n---\nBody\n"
+      },
+      "error": "invalid asn in notes/ASNString.md: must be a positive integer",
+      "error_class": "asn"
+    },
+    {
+      "input": {
+        "id": "asn-float",
+        "path": "notes/ASNFloat.md",
+        "content": "---\ntitle: ASN\nasn: 42.5\n---\nBody\n"
+      },
+      "error": "invalid asn in notes/ASNFloat.md: must be a positive integer",
+      "error_class": "asn"
+    },
+    {
+      "input": {
+        "id": "asn-valid",
+        "path": "notes/ASN.md",
+        "content": "---\ntitle: ASN\nasn: 42\n---\nBody\n"
+      },
+      "document": {
+        "path": "notes/ASN.md",
+        "sha256": "1f640a246de1b37a5cef83f6fe119747c8ab76591eac91dd866a86be3ae4512d",
+        "title": "ASN",
+        "created": "",
+        "frontmatter": {
+          "asn": {
+            "type": "int",
+            "value": 42
+          },
+          "title": {
+            "type": "string",
+            "value": "ASN"
+          }
+        },
+        "body": "Body\n",
+        "size": 32,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "asn": 42,
+        "type": "document",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "explicit-note",
+        "path": "types/note.md",
+        "content": "---\ntitle: Type\ntype: note\n---\nBody\n"
+      },
+      "document": {
+        "path": "types/note.md",
+        "sha256": "af5ef439f5b2caf65a2a10a6e368b5c36443a2661a368bca27e5d2ee542b4ee0",
+        "title": "Type",
+        "created": "",
+        "frontmatter": {
+          "title": {
+            "type": "string",
+            "value": "Type"
+          },
+          "type": {
+            "type": "string",
+            "value": "note"
+          }
+        },
+        "body": "Body\n",
+        "size": 36,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "note",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "explicit-document",
+        "path": "types/document.md",
+        "content": "---\ntitle: Type\ntype: document\n---\nBody\n"
+      },
+      "document": {
+        "path": "types/document.md",
+        "sha256": "34db3656cd7e117edf19fc13c999be606e5028e976ea89b1885f1a143f0eb183",
+        "title": "Type",
+        "created": "",
+        "frontmatter": {
+          "title": {
+            "type": "string",
+            "value": "Type"
+          },
+          "type": {
+            "type": "string",
+            "value": "document"
+          }
+        },
+        "body": "Body\n",
+        "size": 40,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "document",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "explicit-meeting",
+        "path": "types/meeting.md",
+        "content": "---\ntitle: Type\ntype: meeting\n---\nBody\n"
+      },
+      "document": {
+        "path": "types/meeting.md",
+        "sha256": "173b946f09fc38c6b5d0b742aee623112277e71a86e345bdd85d4b267eccb573",
+        "title": "Type",
+        "created": "",
+        "frontmatter": {
+          "title": {
+            "type": "string",
+            "value": "Type"
+          },
+          "type": {
+            "type": "string",
+            "value": "meeting"
+          }
+        },
+        "body": "Body\n",
+        "size": 39,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "meeting",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "explicit-notebook",
+        "path": "types/notebook.md",
+        "content": "---\ntitle: Type\ntype: notebook\n---\nBody\n"
+      },
+      "document": {
+        "path": "types/notebook.md",
+        "sha256": "90781c3d7cf5dc90c46b569cbf0f02666ce9e6442bc404be489bbe7efec40217",
+        "title": "Type",
+        "created": "",
+        "frontmatter": {
+          "title": {
+            "type": "string",
+            "value": "Type"
+          },
+          "type": {
+            "type": "string",
+            "value": "notebook"
+          }
+        },
+        "body": "Body\n",
+        "size": 40,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "notebook",
+        "derived_from": "",
+        "derived": false
+      }
+    },
+    {
+      "input": {
+        "id": "explicit-base",
+        "path": "types/base.md",
+        "content": "---\ntitle: Type\ntype: base\n---\nBody\n"
+      },
+      "document": {
+        "path": "types/base.md",
+        "sha256": "4f955b230c73d10effb796225e1b3b734f044642dc04d84dc58c28cb918382da",
+        "title": "Type",
+        "created": "",
+        "frontmatter": {
+          "title": {
+            "type": "string",
+            "value": "Type"
+          },
+          "type": {
+            "type": "string",
+            "value": "base"
+          }
+        },
+        "body": "Body\n",
+        "size": 36,
+        "document_date": "",
+        "person": "",
+        "status": "",
+        "due_date": "",
+        "confidence": 0,
+        "ocr_json_path": "",
+        "simhash": "",
+        "type": "base",
+        "derived_from": "",
+        "derived": false
+      }
+    }
+  ]
+}

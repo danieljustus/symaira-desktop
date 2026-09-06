@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-09-06T12:02:44Z",
+  "classification": "non-representative version-only signal",
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2",
+    "go_toolchain": "go1.26.6"
+  },
+  "candidate": {
+    "rust_toolchain": "rustc 1.98.0",
+    "profile": "release",
+    "workspace_version": "0.0.0",
+    "implemented_scope": [
+      "symdesk version contracts",
+      "symroom version contracts"
+    ]
+  },
+  "binary_size": {
+    "go_combined_bytes": 31270612,
+    "rust_symdesk_bytes": 560320,
+    "rust_symroom_bytes": 339792,
+    "rust_combined_bytes": 900112,
+    "reduction_percent": 97.121540186
+  },
+  "maximum_rss_single_samples": {
+    "go_combined_bytes": 31834112,
+    "rust_symdesk_bytes": 2195456,
+    "rust_symroom_bytes": 1949696,
+    "rust_combined_bytes": 4145152,
+    "reduction_percent": 86.97889861
+  },
+  "paired_round_robin_startup": {
+    "warmup_rounds": 20,
+    "measured_rounds_per_binary": 160,
+    "host_state": "interactive development host with elevated concurrent load; compare paired values only",
+    "go_symdesk": {
+      "min_ms": 12.835584,
+      "average_ms": 31.020132563,
+      "p50_ms": 25.706458,
+      "p95_ms": 62.902333,
+      "p99_ms": 100.603167,
+      "max_ms": 114.960084
+    },
+    "rust_symdesk": {
+      "min_ms": 3.698041,
+      "average_ms": 11.513894306,
+      "p50_ms": 8.185,
+      "p95_ms": 30.287834,
+      "p99_ms": 65.182125,
+      "max_ms": 78.295791
+    },
+    "go_symroom": {
+      "min_ms": 9.618,
+      "average_ms": 26.770561775,
+      "p50_ms": 19.101334,
+      "p95_ms": 82.857625,
+      "p99_ms": 102.0475,
+      "max_ms": 107.758542
+    },
+    "rust_symroom": {
+      "min_ms": 2.953708,
+      "average_ms": 12.056086725,
+      "p50_ms": 8.535125,
+      "p95_ms": 27.872083,
+      "p99_ms": 62.549125,
+      "max_ms": 95.92875
+    }
+  },
+  "differential": {
+    "stage": "version",
+    "cases": 17,
+    "passed": 17,
+    "comparison": "exit code, signal, stdout, stderr, and isolated filesystem manifest"
+  },
+  "quality_gates": {
+    "cargo_fmt": "pass",
+    "cargo_check": "pass",
+    "cargo_clippy_warnings_denied": "pass",
+    "cargo_nextest": "7 passed",
+    "cargo_doctest": "pass",
+    "cargo_hack_each_feature": "pass",
+    "line_coverage_percent": 86.51,
+    "cargo_audit": "pass",
+    "cargo_deny": "pass"
+  },
+  "interpretation": [
+    "The version-only candidate is tiny because it does not contain vault, SQLite, retrieval, ingest, MCP, HTTP, PDF, mail, AI, or room-domain implementations.",
+    "The size and RSS reductions are encouraging signals, not VALUE-001 evidence and not permission to cut over.",
+    "The startup run was paired to reduce host-load bias, but the host was concurrently busy and absolute latency values must not be compared with the earlier baseline distribution.",
+    "VALUE-001 remains blocked until the representative read/index/search/MCP/HTTP slice is implemented and measured."
+  ]
+}

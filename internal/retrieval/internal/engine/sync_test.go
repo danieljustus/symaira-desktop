@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -198,33 +199,46 @@ func TestParallelIndexSkipsUnchangedFiles(t *testing.T) {
 }
 
 // countingEmbedder wraps fakeEmbedder and counts GenerateVectors calls.
+// The counter is guarded because processFilesInParallel invokes the embedder
+// from concurrent goroutines.
 type countingEmbedder struct {
 	dim   int
+	mu    sync.Mutex
 	calls int
 }
 
 func (c *countingEmbedder) GenerateVector(text string) []float32 {
+	c.mu.Lock()
 	c.calls++
+	c.mu.Unlock()
 	return (&fakeEmbedder{dim: c.dim}).GenerateVector(text)
 }
 
 func (c *countingEmbedder) GenerateVectors(texts []string) [][]float32 {
+	c.mu.Lock()
 	c.calls++
+	c.mu.Unlock()
 	return (&fakeEmbedder{dim: c.dim}).GenerateVectors(texts)
 }
 
 func (c *countingEmbedder) GenerateVectorsWithModel(texts []string) []EmbeddingResult {
+	c.mu.Lock()
 	c.calls++
+	c.mu.Unlock()
 	return (&fakeEmbedder{dim: c.dim}).GenerateVectorsWithModel(texts)
 }
 
 func (c *countingEmbedder) GenerateVectorNoRetry(text string) []float32 {
+	c.mu.Lock()
 	c.calls++
+	c.mu.Unlock()
 	return (&fakeEmbedder{dim: c.dim}).GenerateVectorNoRetry(text)
 }
 
 func (c *countingEmbedder) GenerateVectorNoRetryWithModel(text string) EmbeddingResult {
+	c.mu.Lock()
 	c.calls++
+	c.mu.Unlock()
 	return (&fakeEmbedder{dim: c.dim}).GenerateVectorNoRetryWithModel(text)
 }
 

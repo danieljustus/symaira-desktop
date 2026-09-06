@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "execution_policy": {
+    "order": "topological_then_array",
+    "status_values": ["ready", "blocked", "in_progress", "passed", "stopped"],
+    "advance_rule": "Only start a ready item whose dependencies are passed. After passing it, mark direct successors ready only when all their dependencies are passed.",
+    "stop_rule": "Stop on any unexplained parity mismatch, destructive data incompatibility, security regression, or failed VALUE-001/VALUE-002 gate. Keep Go production and do not change thresholds after observing Rust results."
+  },
+  "items": [
+    {
+      "id": "RUST-001",
+      "title": "Freeze Go oracle and neutral differential harness",
+      "status": "passed",
+      "depends_on": [],
+      "contract_rows": ["CLI-002", "ROOMCLI-001", "MCP-002", "MCP-004", "HTTP-001", "DIST-002"],
+      "acceptance": ["make port-fixtures-check", "make differential-go-selftest", "GOTOOLCHAIN=go1.26.6 make test", "make lint", "make build"]
+    },
+    {
+      "id": "RUST-002",
+      "title": "Initialize Rust workspace and exact version slices",
+      "status": "passed",
+      "depends_on": ["RUST-001"],
+      "contract_rows": ["CLI-001", "ROOMCLI-000"],
+      "acceptance": ["cargo fmt --all --check", "cargo clippy --workspace --all-targets --all-features -- -D warnings", "cargo nextest run --workspace --all-features", "cargo test --workspace --doc --all-features", "cargo audit", "cargo deny check"]
+    },
+    {
+      "id": "RUST-003",
+      "title": "Port pure core, config, and search-query contracts",
+      "status": "passed",
+      "depends_on": ["RUST-002"],
+      "contract_rows": ["CORE-001", "CORE-002", "CORE-003", "CFG-000", "CFG-002", "CFG-003", "INDEX-004", "INDEX-007"],
+      "acceptance": ["make core-differential", "cargo nextest run -p symdesk-core", "cargo +nightly miri test -p symdesk-core"]
+    },
+    {
+      "id": "RUST-004",
+      "title": "Port read-only Markdown vault contracts",
+      "status": "in_progress",
+      "depends_on": ["RUST-003"],
+      "contract_rows": ["VAULT-001", "VAULT-002", "VAULT-003", "VAULT-005", "VAULT-007", "VAULT-008", "VAULT-009", "SEC-001"],
+      "acceptance": ["make vault-read-differential", "cargo nextest run -p symdesk-vault", "cargo +nightly fuzz run frontmatter"]
+    },
+    {
+      "id": "RUST-005",
+      "title": "Port minimal sidecar index and search",
+      "status": "blocked",
+      "depends_on": ["RUST-004"],
+      "contract_rows": ["INDEX-001", "INDEX-002", "INDEX-003", "INDEX-006"],
+      "acceptance": ["make sidecar-differential", "cargo nextest run -p symdesk-index", "make benchmark-large"]
+    },
+    {
+      "id": "RUST-006",
+      "title": "Build representative CLI MCP HTTP slice and run early value gate",
+      "status": "blocked",
+      "depends_on": ["RUST-005"],
+      "contract_rows": ["CLI-000", "MCP-000", "HTTP-000", "SEC-003", "VALUE-001"],
+      "acceptance": ["make representative-differential", "make rust-full-gate", "cargo run -p rust-port-valuegate -- --phase early --check"]
+    },
+    {
+      "id": "RUST-007",
+      "title": "Port vault writes history trash conflicts and retention",
+      "status": "blocked",
+      "depends_on": ["RUST-006"],
+      "contract_rows": ["VAULT-004", "VAULT-005", "VAULT-006", "CFG-004", "DATA-001"],
+      "acceptance": ["make vault-write-differential", "cargo nextest run -p symdesk-vault"]
+    },
+    {
+      "id": "RUST-008",
+      "title": "Port full sidecar and retrieval stack",
+      "status": "blocked",
+      "depends_on": ["RUST-006", "RUST-007"],
+      "contract_rows": ["CFG-001", "INDEX-001", "INDEX-002", "INDEX-003", "INDEX-004", "INDEX-005", "INDEX-006"],
+      "acceptance": ["make retrieval-differential", "cargo nextest run -p symdesk-index", "make benchmark-large"]
+    },
+    {
+      "id": "RUST-009",
+      "title": "Port contacts datasets and view projections",
+      "status": "blocked",
+      "depends_on": ["RUST-007", "RUST-008"],
+      "contract_rows": ["DATA-001", "DATA-002", "CONTACT-001", "CONTACT-002"],
+      "acceptance": ["make contacts-dataset-differential", "cargo nextest run -p symdesk-index -p symdesk-vault"]
+    },
+    {
+      "id": "RUST-010",
+      "title": "Port ingest extraction OCR mail and importers",
+      "status": "blocked",
+      "depends_on": ["RUST-007", "RUST-008"],
+      "contract_rows": ["CFG-001", "INGEST-001", "INGEST-002", "INGEST-003", "INGEST-004", "INGEST-005", "INGEST-006", "HTTP-004", "SEC-001", "SEC-003"],
+      "acceptance": ["make ingest-differential", "cargo nextest run -p symdesk-ingest", "cargo +nightly fuzz run mime_input"]
+    },
+    {
+      "id": "RUST-011",
+      "title": "Port PDF archive draw and export",
+      "status": "blocked",
+      "depends_on": ["RUST-007"],
+      "contract_rows": ["RENDER-001", "RENDER-002", "RENDER-003", "SEC-001", "SEC-003"],
+      "acceptance": ["make render-differential", "cargo nextest run -p symdesk-render", "cargo +nightly fuzz run draw_parser"]
+    },
+    {
+      "id": "RUST-012",
+      "title": "Port AI composition recipes and external adapters",
+      "status": "blocked",
+      "depends_on": ["RUST-008"],
+      "contract_rows": ["AI-001", "AI-002", "AI-003", "SEC-002", "SEC-003"],
+      "acceptance": ["make ai-compose-differential", "cargo nextest run -p symdesk-service"]
+    },
+    {
+      "id": "RUST-013",
+      "title": "Complete SymDesk service and all CLI paths",
+      "status": "blocked",
+      "depends_on": ["RUST-009", "RUST-010", "RUST-011", "RUST-012"],
+      "contract_rows": ["CLI-001", "CLI-002", "CLI-003", "CLI-004", "CLI-005", "CLI-006", "CLI-007", "CLI-008", "VAULT-005", "VAULT-006"],
+      "acceptance": ["make cli-differential", "cargo nextest run -p symdesk-cli", "cargo test --workspace --doc --all-features"]
+    },
+    {
+      "id": "RUST-014",
+      "title": "Complete all SymDesk MCP tools aliases and framing",
+      "status": "blocked",
+      "depends_on": ["RUST-013"],
+      "contract_rows": ["MCP-001", "MCP-002", "MCP-003", "MCP-005", "SEC-002", "SEC-003"],
+      "acceptance": ["make mcp-differential", "make mcp-conformance", "cargo nextest run -p symdesk-protocol", "cargo +nightly fuzz run mcp_frame"]
+    },
+    {
+      "id": "RUST-015",
+      "title": "Complete authenticated HTTP PostgreSQL workers and shares",
+      "status": "blocked",
+      "depends_on": ["RUST-010", "RUST-012", "RUST-013"],
+      "contract_rows": ["HTTP-001", "HTTP-002", "HTTP-003", "HTTP-004", "HTTP-005", "HTTP-006", "HTTP-007", "PG-001", "SEC-001", "SEC-002", "SEC-003"],
+      "acceptance": ["make http-differential", "make postgres-integration", "cargo nextest run -p symdesk-protocol"]
+    },
+    {
+      "id": "RUST-016",
+      "title": "Port SymRoom core CLI MCP and signed journal",
+      "status": "blocked",
+      "depends_on": ["RUST-006"],
+      "contract_rows": ["ROOMCLI-001", "ROOMCLI-002", "MCP-004", "MCP-005", "ROOM-001", "ROOM-002", "ROOM-003", "ROOM-004"],
+      "acceptance": ["make symroom-differential", "cargo nextest run -p symroom-core -p symroom-cli", "cargo +nightly fuzz run room_event"]
+    },
+    {
+      "id": "RUST-017",
+      "title": "Run full value gate and ship dual-binary prerelease",
+      "status": "blocked",
+      "depends_on": ["RUST-014", "RUST-015", "RUST-016"],
+      "contract_rows": ["DIST-001", "DIST-002", "DIST-003", "DIST-004", "DIST-005", "DIST-006", "DIST-007", "SWIFT-001", "SWIFT-002", "SWIFT-003", "VALUE-002"],
+      "acceptance": ["make rust-full-gate", "make release-contract", "cargo run -p rust-port-valuegate -- --phase full --check", "published prerelease artifact readback passes"]
+    },
+    {
+      "id": "RUST-018",
+      "title": "Stable Rust cutover with Go fallbacks",
+      "status": "blocked",
+      "depends_on": ["RUST-017"],
+      "contract_rows": ["DIST-001", "DIST-002", "DIST-003", "DIST-004", "DIST-005", "DIST-006", "DIST-007", "SWIFT-001", "SWIFT-002", "SWIFT-003", "VALUE-002"],
+      "acceptance": ["all contract matrix rows PASS", "native installed release smoke green", "Swift macOS and iOS consumer gates green", "published fallback rollback exercise green"]
+    },
+    {
+      "id": "RUST-019",
+      "title": "Remove Go backend after one stable Rust release",
+      "status": "blocked",
+      "depends_on": ["RUST-018"],
+      "contract_rows": [],
+      "acceptance": ["zero tracked backend .go files", "Rust full gate green", "Swift consumer gates green", "immutable final dual-binary rollback release verified"]
+    }
+  ]
+}

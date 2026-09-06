@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-09-06T10:49:16Z",
+  "reference": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2",
+    "go_toolchain": "go1.26.6",
+    "rust_toolchain_available": "rustc 1.98.0",
+    "repository_state": "clean before measurement"
+  },
+  "platform": {
+    "os": "darwin",
+    "os_version": "27.0 (26A5425a)",
+    "arch": "arm64",
+    "machine": "Mac16,8",
+    "logical_cpus": 12,
+    "cpu": "Apple M4 Pro"
+  },
+  "source": {
+    "go_files_total": 749,
+    "go_lines_total": 167922,
+    "production_files": 384,
+    "production_lines": 80034,
+    "test_files": 365,
+    "test_lines": 87888,
+    "test_functions": 2574,
+    "benchmark_functions": 16,
+    "fuzz_targets": 1,
+    "sql_migration_files": 45,
+    "sql_migration_lines": 797,
+    "largest_production_areas": {
+      "internal/ingest": 12738,
+      "internal/retrieval": 9049,
+      "cmd/symdesk": 8107,
+      "internal/service": 8046,
+      "internal/draw": 6412,
+      "internal/contacts": 5361,
+      "internal/room": 3822,
+      "internal/selfhost": 3438,
+      "internal/sidecar": 2881,
+      "internal/ai": 1963,
+      "internal/vault": 1864,
+      "internal/pdf": 1826
+    }
+  },
+  "surface": {
+    "symdesk_command_paths": 206,
+    "symdesk_mcp_tools_total": 57,
+    "symdesk_mcp_tools_read_only": 29,
+    "symdesk_mcp_tools_mutating": 28,
+    "selfhost_http_routes": 21,
+    "symroom_top_level_commands": 16,
+    "symroom_mcp_tools": 8
+  },
+  "commands": {
+    "cold_build": {
+      "command": "GOTOOLCHAIN=go1.26.6 go clean -cache && /usr/bin/time -p env GOTOOLCHAIN=go1.26.6 go build -trimpath -ldflags='-s -w -X main.version=0.12.2' -o /tmp/symdesk-go-oracle ./cmd/symdesk",
+      "wall_seconds": 19.14,
+      "user_seconds": 43.53,
+      "sys_seconds": 9.96,
+      "exit_code": 0
+    },
+    "warm_build": {
+      "command": "/usr/bin/time -p env GOTOOLCHAIN=go1.26.6 go build -trimpath -ldflags='-s -w -X main.version=0.12.2' -o /tmp/symdesk-go-oracle ./cmd/symdesk",
+      "wall_seconds": 0.48,
+      "user_seconds": 0.25,
+      "sys_seconds": 0.43,
+      "exit_code": 0
+    },
+    "race_test_suite": {
+      "command": "GOTOOLCHAIN=go1.26.6 make test",
+      "wall_seconds": 156.66,
+      "user_seconds": 365.59,
+      "sys_seconds": 57.93,
+      "exit_code": 0
+    }
+  },
+  "binaries": {
+    "symdesk": {
+      "path": "/tmp/symdesk-go-oracle",
+      "build_command": "env GOTOOLCHAIN=go1.26.6 go build -trimpath -ldflags='-s -w -X main.version=0.12.2' -o /tmp/symdesk-go-oracle ./cmd/symdesk",
+      "bytes": 23623698,
+      "sha256": "126fb4969ae35e349b186902a219f353e1a0ce0f84dd8d185ae8447eaf92fc22",
+      "version_stdout": "symdesk 0.12.2\n",
+      "max_rss_bytes_single_sample": 20791296,
+      "rss_command": "/usr/bin/time -l /tmp/symdesk-go-oracle version",
+      "startup_version": {
+        "command": "/tmp/symdesk-go-oracle version",
+        "timer": "Python time.perf_counter_ns around subprocess.run with captured stdout/stderr",
+        "warmups": 20,
+        "runs": 120,
+        "min_ms": 9.21275,
+        "average_ms": 10.101295175,
+        "p50_ms": 9.890083,
+        "p95_ms": 11.558084,
+        "p99_ms": 16.212875,
+        "max_ms": 16.747292
+      },
+      "startup_help": {
+        "command": "/tmp/symdesk-go-oracle --help",
+        "timer": "Python time.perf_counter_ns around subprocess.run with captured stdout/stderr",
+        "warmups": 20,
+        "runs": 120,
+        "min_ms": 9.085542,
+        "average_ms": 10.133086792,
+        "p50_ms": 9.796958,
+        "p95_ms": 11.46025,
+        "p99_ms": 17.624875,
+        "max_ms": 22.898917
+      }
+    },
+    "symroom": {
+      "path": "/tmp/symroom-go-oracle",
+      "build_command": "env GOTOOLCHAIN=go1.26.6 go build -trimpath -ldflags='-s -w -X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2' -o /tmp/symroom-go-oracle ./cmd/symroom",
+      "bytes": 7646914,
+      "sha256": "50b80736e0c74b3569eeafc8fc39b4a5ab0af9d7a038a58572cd303df6d344bc",
+      "version_stdout": "symroom 0.12.2\n",
+      "max_rss_bytes_single_sample": 11042816,
+      "rss_command": "/usr/bin/time -l /tmp/symroom-go-oracle version",
+      "startup_version": {
+        "command": "/tmp/symroom-go-oracle version",
+        "timer": "Python time.perf_counter_ns around subprocess.run with captured stdout/stderr",
+        "warmups": 20,
+        "runs": 120,
+        "min_ms": 6.052541,
+        "average_ms": 6.626226383,
+        "p50_ms": 6.515458,
+        "p95_ms": 7.139334,
+        "p99_ms": 8.853041,
+        "max_ms": 12.579666
+      }
+    },
+    "combined_bytes": 31270612
+  },
+  "representative_benchmarks": {
+    "large_vault_index_and_search": {
+      "command": "go test -run '^$' -bench BenchmarkLargeVaultIndexAndSearch -benchtime=1x ./internal/demo",
+      "documents": 10000,
+      "samples": 1,
+      "nanoseconds_per_operation": 4142191000
+    },
+    "large_graph_with_entities": {
+      "command": "go test -run '^$' -bench BenchmarkGraphLargeVaultWithEntities -benchtime=1x ./internal/service",
+      "documents": 10000,
+      "samples": 1,
+      "nanoseconds_per_operation": 651048458
+    }
+  },
+  "measurement_notes": [
+    "Source counts include only tracked repository-owned Go and SQL files; worktrees, vendor trees, generated build output, and Swift are excluded.",
+    "The cold build cleared the Go build cache but retained the module download cache.",
+    "The warm build immediately repeated the same release-style command on the same host.",
+    "RSS values are one /usr/bin/time -l sample per binary and are not a distribution.",
+    "Startup profiles are 120 subprocess samples after 20 warmups on an otherwise interactive development host.",
+    "The two large-vault benchmark values are one benchtime=1x sample and are baselines, not statistical claims.",
+    "Final value-gate comparisons require paired Go/Rust release artifacts, identical fixtures, at least 100 samples for latency/RSS workloads, and the same host state."
+  ],
+  "value_gate": {
+    "minimum_symdesk_binary_or_representative_rss_improvement": 0.2,
+    "maximum_startup_search_http_or_mcp_p95_regression": 0.1,
+    "security_and_contract_parity_required": true,
+    "stop_on_failure": true
+  }
+}

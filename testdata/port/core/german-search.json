@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "cases": [
+    {
+      "id": "invoice",
+      "input": "Die Rechnungen sind geprüft",
+      "tokens": [
+        "rechnung",
+        "gepruft"
+      ],
+      "normalized": "rechnung gepruft",
+      "fts_query": "\"rechnung\"* AND \"gepruft\"*",
+      "trigram_query": "rechnung AND gepruft",
+      "fts_term": "\"rechnung\"* AND \"gepruft\"*",
+      "trigram_term": "rechnung AND gepruft",
+      "phrase_fts_term": "\"rechnung gepruft\"",
+      "phrase_trigram_term": "\"die rechnungen sind gepruft\""
+    },
+    {
+      "id": "duplicates",
+      "input": "Rechnung rechnungen RECHNUNG",
+      "tokens": [
+        "rechn",
+        "rechnung"
+      ],
+      "normalized": "rechn rechnung",
+      "fts_query": "\"rechn\"* AND \"rechnung\"* AND \"rechn\"*",
+      "trigram_query": "rechn AND rechnung",
+      "fts_term": "\"rechn\"* AND \"rechnung\"* AND \"rechn\"*",
+      "trigram_term": "rechn AND rechnung",
+      "phrase_fts_term": "\"rechn rechnung\"",
+      "phrase_trigram_term": "\"rechnung rechnungen rechnung\""
+    },
+    {
+      "id": "umlauts",
+      "input": "größere Überweisungen",
+      "tokens": [
+        "grosser",
+        "uberweisung"
+      ],
+      "normalized": "grosser uberweisung",
+      "fts_query": "\"grosser\"* AND \"uberweisung\"*",
+      "trigram_query": "grosser AND uberweisung",
+      "fts_term": "\"grosser\"* AND \"uberweisung\"*",
+      "trigram_term": "grosser AND uberweisung",
+      "phrase_fts_term": "\"grosser uberweisung\"",
+      "phrase_trigram_term": "\"grossere uberweisungen\""
+    },
+    {
+      "id": "punctuation",
+      "input": "(Krankenversicherung), bezahlt!",
+      "tokens": [
+        "krankenversicher",
+        "bezahlt"
+      ],
+      "normalized": "krankenversicher bezahlt",
+      "fts_query": "\"krankenversicher\"* AND \"bezahlt\"*",
+      "trigram_query": "krankenversicher AND bezahlt",
+      "fts_term": "\"krankenversicher\"* AND \"bezahlt\"*",
+      "trigram_term": "krankenversicher AND bezahlt",
+      "phrase_fts_term": "\"krankenversicher bezahlt\"",
+      "phrase_trigram_term": "\"krankenversicherung bezahlt\""
+    },
+    {
+      "id": "stopwords",
+      "input": "die und der",
+      "tokens": [],
+      "normalized": "",
+      "fts_query": "",
+      "trigram_query": "\"\"",
+      "fts_term": "",
+      "trigram_term": "\"\"",
+      "phrase_fts_term": "",
+      "phrase_trigram_term": "\"die und der\""
+    },
+    {
+      "id": "short-trigram",
+      "input": "AI",
+      "tokens": [
+        "ai"
+      ],
+      "normalized": "ai",
+      "fts_query": "\"ai\"*",
+      "trigram_query": "\"\"",
+      "fts_term": "\"ai\"*",
+      "trigram_term": "\"\"",
+      "phrase_fts_term": "\"ai\"",
+      "phrase_trigram_term": "\"\""
+    },
+    {
+      "id": "compound",
+      "input": "Beitragsbemessungsgrenze",
+      "tokens": [
+        "beitragsbemessungsgrenz"
+      ],
+      "normalized": "beitragsbemessungsgrenz",
+      "fts_query": "\"beitragsbemessungsgrenz\"*",
+      "trigram_query": "beitragsbemessungsgrenz",
+      "fts_term": "\"beitragsbemessungsgrenz\"*",
+      "trigram_term": "beitragsbemessungsgrenz",
+      "phrase_fts_term": "\"beitragsbemessungsgrenz\"",
+      "phrase_trigram_term": "\"beitragsbemessungsgrenze\""
+    },
+    {
+      "id": "phrase",
+      "input": "jährliche Beiträge",
+      "tokens": [
+        "jahrlich",
+        "beitrag"
+      ],
+      "normalized": "jahrlich beitrag",
+      "fts_query": "\"jahrlich\"* AND \"beitrag\"*",
+      "trigram_query": "jahrlich AND beitrag",
+      "fts_term": "\"jahrlich\"* AND \"beitrag\"*",
+      "trigram_term": "jahrlich AND beitrag",
+      "phrase_fts_term": "\"jahrlich beitrag\"",
+      "phrase_trigram_term": "\"jahrliche beitrage\""
+    }
+  ]
+}

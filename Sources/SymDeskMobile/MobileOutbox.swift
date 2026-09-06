@@ -48,7 +48,7 @@ struct MobileOutboxEntry: Identifiable, Codable, Sendable {
     /// Vault-relative target path (notes) or the destination file name
     /// inside the consume folder (uploads in Files mode).
     var path: String
-    /// Full contract-v2 Markdown for note operations.
+    /// Full contract-v6-compatible Markdown for note operations.
     var content: String?
     /// Original bytes for `uploadOriginal`.
     var originalData: Data?

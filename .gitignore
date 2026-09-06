@@ -8,6 +8,9 @@ coverage.*
 # Build artifacts
 /dist/
 /build/
+/target/
+fuzz/artifacts/
+fuzz/corpus/
 
 # Go
 vendor/
@@ -61,3 +64,4 @@ docs/app-test/
 PLANUNG.md
 ARCHITEKTUR.md
 .claude/
+fuzz/target/

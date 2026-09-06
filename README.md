@@ -11,7 +11,7 @@ The local-first Markdown-vault workspace and human-facing shell of the [Symaira]
 
 A local-first and self-hostable, **agent-native** workspace that unifies documents, notes, knowledge and AI over a single plain-Markdown vault. It is the realization of the "Paperless + Obsidian + Notion AI" dream as *one surface*, deliberately **not** a monolith and without making a proprietary database the source of truth.
 
-**Status:** Working MVP — Go core (`symdesk`) with CLI, stdio MCP, SQLite/FTS5 sidecar, vault contract v2 ([VAULT.md](VAULT.md)), authenticated HTTP API, durable document queue, Docker deployment, and distributed Tesseract/Ollama OCR workers. The native macOS app provides a live dashboard, editing, sidebar note creation, full-text search, link graph, saved views, document workflow, ingest, companion tools installer, and previews in local and server-connected modes. The iOS companion provides cached on-device search, document filters, Markdown reading, and native Quick Look previews from either Files/iCloud or a connected server. Not yet complete Paperless-ngx parity — the self-hosted path covers central originals, Markdown, index, upload queue, remote OCR, native clients, IMAP mail ingestion, users/groups/document-level permissions, storage-path templating and retention rules, and expiring share links; a browser admin UI remains future work. For recovery guidance, see [BACKUP.md](BACKUP.md).
+**Status:** Working MVP — Go core (`symdesk`) with CLI, stdio MCP, SQLite/FTS5 sidecar, vault contract v6 ([VAULT.md](VAULT.md)), authenticated HTTP API, durable document queue, Docker deployment, and distributed Tesseract/Ollama OCR workers. The native macOS app provides a live dashboard, editing, sidebar note creation, full-text search, link graph, saved views, document workflow, ingest, companion tools installer, and previews in local and server-connected modes. The iOS companion provides cached on-device search, document filters, Markdown reading, and native Quick Look previews from either Files/iCloud or a connected server. Not yet complete Paperless-ngx parity — the self-hosted path covers central originals, Markdown, index, upload queue, remote OCR, native clients, IMAP mail ingestion, users/groups/document-level permissions, storage-path templating and retention rules, and expiring share links; a browser admin UI remains future work. For recovery guidance, see [BACKUP.md](BACKUP.md).
 
 `symdesk` is a Go core that can run as a **CLI**, **MCP server**, authenticated **self-hosted document server**, or distributed **OCR worker**. Native SwiftUI apps for macOS and iPhone/iPad can either open a local/iCloud vault directly or connect to the self-hosted server as frontends.
 
@@ -190,7 +190,7 @@ xcodegen generate
 xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS'
 ```
 
-## Document workflow (vault contract v2)
+## Document workflow (vault contract v6)
 symdesk docs list --type invoice          # list indexed documents, with filters
 symdesk docs review                       # list documents needing review (low-confidence / missing metadata)
 symdesk docs status <file> paid           # set document status (open|paid|submitted|done|...) (alias: `doc status`)

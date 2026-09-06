@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "production_source_digest": "333251686e6148393341f3dea06543e124a78c6c1c4dc7dcdd474959dfae0e5b",
+  "generator_source_digest": "65280a323014eb7c3ddb124d4f5c6b6a9c068752157d5b2190f9190fddfc7dd0",
+  "surface_counts": {
+    "symdesk_total_commands": 207,
+    "symdesk_non_root_commands": 206,
+    "symroom_subcommands": 16,
+    "symdesk_mcp_tools": 57,
+    "symroom_mcp_tools": 8,
+    "selfhost_http_routes": 21
+  },
+  "fixture_checksums": {
+    "testdata/port/cli/cases.json": "49b669f328b2c951069c662d7cd0401467b59778b5c33962d6ec48f3d1b0d64b",
+    "testdata/port/cli/symdesk-command-tree.json": "68155a72b0faf294a3df50ececd4e5f955d5ca345fd390e433f501390b61bc10",
+    "testdata/port/cli/symroom-parser-grammar.json": "60742041e9448e2aeb40bf59fb7f4805205f8a7ca1f0d057795bda43efc93c6b",
+    "testdata/port/core/config.json": "1a4325cb58a0a62656fd4c746b15dbf280eebf385aa5b39c3455fe8e8aa8baac",
+    "testdata/port/core/document-formats.json": "c71b681184d2846a256e74800ed172feeaef36401324c4ea5f49f193808e64af",
+    "testdata/port/core/german-search.json": "1302b12f04bbff8380b08bac9dd801ba6495fe162eefd45b6a833ad923725795",
+    "testdata/port/core/search-query.json": "80b78b986fb34da93def68f5caf1a89fe69e5603b6bd45d005fba2134b87b77c",
+    "testdata/port/core/simhash.json": "9cb2b7ea4d820c837d779c6c0dabaabeed23a6e8a149d38384e42352f7598b57",
+    "testdata/port/core/textnorm.json": "25b6b4dd1457b1f80ee608f1195de7233c7f17437320154dedbc2671af981355",
+    "testdata/port/http/routes.json": "3b3c43eab70c1e6faafb9cd7470222fdf314c5cd834adb673e5830e343b37b30",
+    "testdata/port/mcp/symdesk-tools.json": "f2fab0a54bbdcd45be84ac5c31aee0d2ff27051556032ddebce29e257e9ca761",
+    "testdata/port/mcp/symroom-tools.json": "3c71aacde181fef4282f831568e9362ed0badc9aeab4f6375c77c95e64a823f6",
+    "testdata/port/vault/filesystem.json": "7ee3837f5add08bd229dec17701f91de56e4e59ad912e8193520120681d7a516",
+    "testdata/port/vault/health-links.json": "95501c79b816d21ae86efa724f280e81572ee5636ae11475d9fb793f54428e1a",
+    "testdata/port/vault/metadata.json": "5de4b8a9471ae002a52156f0176d3053be9d243497a8a4f45d508f8765f9ae02",
+    "testdata/port/vault/mobile-writer.json": "6efb62d62b741a2f069eea7ec0aad94b8f21e8e7038a8f3d17d1a0860407bd2d",
+    "testdata/port/vault/notebook.json": "0b609b187fe3d5e243367c3fc02045863c65fa10bd9a72e5e82c3dbb7cb316a5",
+    "testdata/port/vault/parse.json": "0756da4b837c02a4e40197cc66f206a21c69019302a30161226c95df8c83df5d",
+    "testdata/port/vault/resolution.json": "4f221fde22d1a511500ab98c88e6afda29405c6c8355487b9fb7d6dfbbaf0772",
+    "testdata/port/vault/typed.json": "fa9c11745004dca649590fe760db7cb7ba8d432b7be1b79df25e11344a35651b"
+  }
+}

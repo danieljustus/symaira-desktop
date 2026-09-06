@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "tree": [
+    {
+      "path": "a.md",
+      "content": "a"
+    },
+    {
+      "path": "Upper.MD",
+      "content": "upper"
+    },
+    {
+      "path": "image.png",
+      "content": "png"
+    },
+    {
+      "path": ".hidden.md",
+      "content": "hidden"
+    },
+    {
+      "path": "folder/b.md",
+      "content": "b"
+    },
+    {
+      "path": ".obsidian/x.md",
+      "content": "x"
+    },
+    {
+      "path": "vendor/v.md",
+      "content": "v"
+    },
+    {
+      "path": "node_modules/n.md",
+      "content": "n"
+    },
+    {
+      "path": "build/build.md",
+      "content": "build"
+    },
+    {
+      "path": "dist/dist.md",
+      "content": "dist"
+    },
+    {
+      "path": "venv/venv.md",
+      "content": "venv"
+    },
+    {
+      "path": "__pycache__/cache.md",
+      "content": "cache"
+    },
+    {
+      "path": "real/inside.md",
+      "content": "inside"
+    },
+    {
+      "path": "etc/passwd",
+      "content": "not-system"
+    },
+    {
+      "path": "inside-link.md",
+      "symlink_to": "real/inside.md"
+    },
+    {
+      "path": "outside-link.md",
+      "symlink_to": "\u003cOUTSIDE\u003e/outside.md"
+    },
+    {
+      "path": "dir-link",
+      "symlink_to": "\u003cOUTSIDE\u003e",
+      "directory": true
+    }
+  ],
+  "walk_all": [
+    {
+      "path": "Upper.MD",
+      "type": "file"
+    },
+    {
+      "path": "a.md",
+      "type": "file"
+    },
+    {
+      "path": "dir-link",
+      "type": "symlink",
+      "symlink": "\u003cOUTSIDE\u003e"
+    },
+    {
+      "path": "etc/passwd",
+      "type": "file"
+    },
+    {
+      "path": "folder/b.md",
+      "type": "file"
+    },
+    {
+      "path": "image.png",
+      "type": "file"
+    },
+    {
+      "path": "inside-link.md",
+      "type": "symlink",
+      "symlink": "\u003cROOT\u003e/real/inside.md"
+    },
+    {
+      "path": "outside-link.md",
+      "type": "symlink",
+      "symlink": "\u003cOUTSIDE\u003e/outside.md"
+    },
+    {
+      "path": "real/inside.md",
+      "type": "file"
+    }
+  ],
+  "walk_markdown": [
+    "a.md",
+    "folder/b.md",
+    "inside-link.md",
+    "outside-link.md",
+    "real/inside.md"
+  ],
+  "secure_paths": [
+    {
+      "id": "existing",
+      "input": "folder/b.md",
+      "result": "\u003cROOT\u003e/folder/b.md"
+    },
+    {
+      "id": "missing",
+      "input": "folder/new/note.md",
+      "result": "\u003cROOT\u003e/folder/new/note.md"
+    },
+    {
+      "id": "traversal",
+      "input": "../outside.md",
+      "error_class": "traversal"
+    },
+    {
+      "id": "absolute",
+      "input": "/etc/passwd",
+      "result": "\u003cROOT\u003e/etc/passwd"
+    },
+    {
+      "id": "root",
+      "input": ".",
+      "result": "\u003cROOT\u003e"
+    },
+    {
+      "id": "contained-symlink",
+      "input": "inside-link.md",
+      "result": "\u003cROOT\u003e/real/inside.md"
+    },
+    {
+      "id": "external-symlink",
+      "input": "outside-link.md",
+      "error_class": "symlink_escape"
+    }
+  ]
+}

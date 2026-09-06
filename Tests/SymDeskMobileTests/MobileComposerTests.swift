@@ -92,7 +92,7 @@ final class MobileComposerTests: XCTestCase {
         }
 
         let written = try String(contentsOf: vaultRoot.appendingPathComponent(filename), encoding: .utf8)
-        XCTAssertTrue(written.hasPrefix("---\ntitle: \"Einkaufsliste\"\n"), "contract-v2 frontmatter expected, got: \(written)")
+        XCTAssertTrue(written.hasPrefix("---\ntitle: \"Einkaufsliste\"\n"), "contract-v6-compatible frontmatter expected, got: \(written)")
 
         // The desktop parser contract: frontmatter round-trips losslessly.
         let parsed = try MobileVaultParser.parse(

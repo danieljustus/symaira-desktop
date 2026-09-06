@@ -27,7 +27,8 @@ the app access to an existing vault folder through the system Files picker.
 That security-scoped permission is persisted as a bookmark, and iCloud Drive
 or the selected file provider remains responsible for synchronization.
 
-The mobile scanner reads contract-v2 Markdown directly, ignores hidden
+The mobile scanner reads current contract-v6 Markdown (including older
+backward-compatible shapes) directly, ignores hidden
 directories, coordinates reads with the file provider, and caches parsed notes
 by modification date and size. Search therefore stays on-device. Document
 previews resolve only files inside the granted vault, preferring contract

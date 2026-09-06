@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "base_cases": [
+    {
+      "name": "full",
+      "path": "bases/kunden-uebersicht.md",
+      "input": "---\ntype: base\ntitle: Kunden Übersicht\ncreated: \"2026-09-06T12:00:00Z\"\ntags:\n    - base\n    - geschäft\nbase_id: kunden-uebersicht\ndescription: Unicode ✓\nproperties:\n    status:\n        type: status\n        label: Status\n        options:\n            - Neu\n            - Erledigt\n        default: Neu\nviews:\n    - id: offen\n      name: Offene Fälle\n      type: table\n      computed:\n        summary:\n            formula: title + status\n      filters:\n        - key: status\n          operator: equals\n          value: Neu\n      filter_group:\n        operator: all\n        filters:\n            - key: person\n              operator: contains\n              value: Jörg\n      sorts:\n        - key: created\n          ascending: false\n      columns:\n        - title\n        - status\n      source: tag:kunde\n      template:\n        ref: templates/kunde.md\n        defaults:\n            status: Neu\nfuture_field: preserved\n---\n\n# Kunden Übersicht\n\nUnicode ✓\n\n## Views\n\n- **Offene Fälle** (`table`) · Source: tag:kunde · Filters: status = Neu\n",
+      "ok": true,
+      "output": {
+        "id": "kunden-uebersicht",
+        "path": "bases/kunden-uebersicht.md",
+        "title": "Kunden Übersicht",
+        "description": "Unicode ✓",
+        "created": "2026-09-06T12:00:00Z",
+        "tags": [
+          "base",
+          "geschäft"
+        ],
+        "properties": {
+          "status": {
+            "type": "status",
+            "label": "Status",
+            "options": [
+              "Neu",
+              "Erledigt"
+            ],
+            "default": "Neu"
+          }
+        },
+        "views": [
+          {
+            "id": "offen",
+            "name": "Offene Fälle",
+            "type": "table",
+            "computed": {
+              "summary": {
+                "formula": "title + status"
+              }
+            },
+            "filters": [
+              {
+                "key": "status",
+                "operator": "equals",
+                "value": "Neu"
+              }
+            ],
+            "filter_group": {
+              "operator": "all",
+              "filters": [
+                {
+                  "key": "person",
+                  "operator": "contains",
+                  "value": "Jörg"
+                }
+              ]
+            },
+            "sorts": [
+              {
+                "key": "created",
+                "ascending": false
+              }
+            ],
+            "columns": [
+              "title",
+              "status"
+            ],
+            "source": "tag:kunde",
+            "template": {
+              "ref": "templates/kunde.md",
+              "defaults": {
+                "status": "Neu"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "minimal",
+      "path": "bases/empty.md",
+      "input": "---\ntype: base\ntitle: Empty\ncreated: \"2026-09-06\"\ntags:\n    - base\nbase_id: empty\nviews: []\n---\n\n# Empty\n\n## Views\n\n_No views yet._\n",
+      "ok": true,
+      "output": {
+        "id": "empty",
+        "path": "bases/empty.md",
+        "title": "Empty",
+        "created": "2026-09-06",
+        "tags": [
+          "base"
+        ],
+        "views": []
+      }
+    },
+    {
+      "name": "legacy-id-fallback",
+      "path": "bases/legacy.md",
+      "input": "---\ntype: base\ntitle: Legacy\ncreated: 2026-01-01\nviews: []\n---\n",
+      "ok": true,
+      "output": {
+        "id": "legacy",
+        "path": "bases/legacy.md",
+        "title": "Legacy",
+        "created": "2026-01-01",
+        "views": []
+      }
+    },
+    {
+      "name": "not-a-base",
+      "path": "bases/note.md",
+      "input": "---\ntype: note\ntitle: No\n---\n",
+      "ok": false,
+      "error": "bases/note.md is not a base note (type=\"note\")"
+    },
+    {
+      "name": "malformed-yaml",
+      "path": "bases/bad.md",
+      "input": "---\ntype: base\nbase_id: [\n---\n",
+      "ok": false,
+      "error": "invalid frontmatter in bases/bad.md: yaml: line 2: did not find expected node content"
+    }
+  ],
+  "dataset_cases": [
+    {
+      "name": "full",
+      "path": "datasets/orders.md",
+      "input": "---\ncoverage:\n    from: \"2026-01-01\"\n    to: \"2026-09-06\"\ncreated: \"2026-09-06T12:00:00Z\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"2026-09-06T12:00:00Z\"\n    source_name: orders.csv\n    source_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nrefresh_command: symdesk dataset refresh orders\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: ID\n    status:\n        type: select\n        options:\n            - offen\n            - erledigt\nsensitivity: internal\nsource: datasets/orders/source.csv\ntags:\n    - dataset\ntitle: Bestellungen ✓\ntype: dataset\n---\n\n# Bestellungen ✓\n\nSource: `datasets/orders/source.csv`\n",
+      "ok": true,
+      "output": {
+        "path": "datasets/orders.md",
+        "slug": "orders",
+        "title": "Bestellungen ✓",
+        "created": "2026-09-06T12:00:00Z",
+        "source": "datasets/orders/source.csv",
+        "schema": {
+          "id": {
+            "type": "number",
+            "label": "ID"
+          },
+          "status": {
+            "type": "select",
+            "options": [
+              "offen",
+              "erledigt"
+            ]
+          }
+        },
+        "coverage": {
+          "from": "2026-01-01",
+          "to": "2026-09-06"
+        },
+        "provenance": {
+          "imported_at": "2026-09-06T12:00:00Z",
+          "source_name": "orders.csv",
+          "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "identity_field": "id",
+        "refresh_command": "symdesk dataset refresh orders",
+        "sensitivity": "internal",
+        "retention_rule": "default"
+      }
+    },
+    {
+      "name": "legacy-policy-defaults",
+      "path": "datasets/orders.md",
+      "input": "---\ncoverage:\n    from: \"2026-01-01\"\n    to: \"2026-09-06\"\ncreated: \"2026-09-06T12:00:00Z\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"2026-09-06T12:00:00Z\"\n    source_name: orders.csv\n    source_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nrefresh_command: symdesk dataset refresh orders\nschema:\n    id:\n        type: number\n        label: ID\n    status:\n        type: select\n        options:\n            - offen\n            - erledigt\nsource: datasets/orders/source.csv\ntags:\n    - dataset\ntitle: Bestellungen ✓\ntype: dataset\n---\n\n# Bestellungen ✓\n\nSource: `datasets/orders/source.csv`\n",
+      "ok": true,
+      "output": {
+        "path": "datasets/orders.md",
+        "slug": "orders",
+        "title": "Bestellungen ✓",
+        "created": "2026-09-06T12:00:00Z",
+        "source": "datasets/orders/source.csv",
+        "schema": {
+          "id": {
+            "type": "number",
+            "label": "ID"
+          },
+          "status": {
+            "type": "select",
+            "options": [
+              "offen",
+              "erledigt"
+            ]
+          }
+        },
+        "coverage": {
+          "from": "2026-01-01",
+          "to": "2026-09-06"
+        },
+        "provenance": {
+          "imported_at": "2026-09-06T12:00:00Z",
+          "source_name": "orders.csv",
+          "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "identity_field": "id",
+        "refresh_command": "symdesk dataset refresh orders",
+        "sensitivity": "restricted",
+        "retention_rule": "default"
+      }
+    },
+    {
+      "name": "wrong-type",
+      "path": "datasets/orders.md",
+      "input": "---\ncoverage:\n    from: \"2026-01-01\"\n    to: \"2026-09-06\"\ncreated: \"2026-09-06T12:00:00Z\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"2026-09-06T12:00:00Z\"\n    source_name: orders.csv\n    source_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nrefresh_command: symdesk dataset refresh orders\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: ID\n    status:\n        type: select\n        options:\n            - offen\n            - erledigt\nsensitivity: internal\nsource: datasets/orders/source.csv\ntags:\n    - dataset\ntitle: Bestellungen ✓\ntype: note\n---\n\n# Bestellungen ✓\n\nSource: `datasets/orders/source.csv`\n",
+      "ok": false,
+      "error": "datasets/orders.md is not a dataset handle"
+    },
+    {
+      "name": "missing-source",
+      "path": "datasets/orders.md",
+      "input": "---\ncoverage:\n    from: \"2026-01-01\"\n    to: \"2026-09-06\"\ncreated: \"2026-09-06T12:00:00Z\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"2026-09-06T12:00:00Z\"\n    source_name: orders.csv\n    source_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nrefresh_command: symdesk dataset refresh orders\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: ID\n    status:\n        type: select\n        options:\n            - offen\n            - erledigt\nsensitivity: internal\nsource: \"\"\ntags:\n    - dataset\ntitle: Bestellungen ✓\ntype: dataset\n---\n\n# Bestellungen ✓\n\nSource: `datasets/orders/source.csv`\n",
+      "ok": false,
+      "error": "dataset handle datasets/orders.md is missing type or source"
+    },
+    {
+      "name": "missing-title",
+      "path": "datasets/orders.md",
+      "input": "---\ncoverage:\n    from: \"2026-01-01\"\n    to: \"2026-09-06\"\ncreated: \"2026-09-06T12:00:00Z\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"2026-09-06T12:00:00Z\"\n    source_name: orders.csv\n    source_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nrefresh_command: symdesk dataset refresh orders\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: ID\n    status:\n        type: select\n        options:\n            - offen\n            - erledigt\nsensitivity: internal\nsource: datasets/orders/source.csv\ntags:\n    - dataset\ntitle: \"\"\ntype: dataset\n---\n\n# Bestellungen ✓\n\nSource: `datasets/orders/source.csv`\n",
+      "ok": false,
+      "error": "dataset handle datasets/orders.md is missing title or dataset_id"
+    },
+    {
+      "name": "missing-id",
+      "path": "datasets/orders.md",
+      "input": "---\ncoverage:\n    from: \"2026-01-01\"\n    to: \"2026-09-06\"\ncreated: \"2026-09-06T12:00:00Z\"\ndataset_id: \"\"\nidentity_field: id\nprovenance:\n    imported_at: \"2026-09-06T12:00:00Z\"\n    source_name: orders.csv\n    source_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nrefresh_command: symdesk dataset refresh orders\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: ID\n    status:\n        type: select\n        options:\n            - offen\n            - erledigt\nsensitivity: internal\nsource: datasets/orders/source.csv\ntags:\n    - dataset\ntitle: Bestellungen ✓\ntype: dataset\n---\n\n# Bestellungen ✓\n\nSource: `datasets/orders/source.csv`\n",
+      "ok": false,
+      "error": "dataset handle datasets/orders.md is missing title or dataset_id"
+    },
+    {
+      "name": "partial-policy",
+      "path": "datasets/orders.md",
+      "input": "---\ncoverage:\n    from: \"2026-01-01\"\n    to: \"2026-09-06\"\ncreated: \"2026-09-06T12:00:00Z\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"2026-09-06T12:00:00Z\"\n    source_name: orders.csv\n    source_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nrefresh_command: symdesk dataset refresh orders\nschema:\n    id:\n        type: number\n        label: ID\n    status:\n        type: select\n        options:\n            - offen\n            - erledigt\nsensitivity: internal\nsource: datasets/orders/source.csv\ntags:\n    - dataset\ntitle: Bestellungen ✓\ntype: dataset\n---\n\n# Bestellungen ✓\n\nSource: `datasets/orders/source.csv`\n",
+      "ok": false,
+      "error": "dataset handle datasets/orders.md: dataset handle policy metadata is incomplete; missing retention_rule"
+    },
+    {
+      "name": "invalid-sensitivity",
+      "path": "datasets/orders.md",
+      "input": "---\ncoverage:\n    from: \"2026-01-01\"\n    to: \"2026-09-06\"\ncreated: \"2026-09-06T12:00:00Z\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"2026-09-06T12:00:00Z\"\n    source_name: orders.csv\n    source_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nrefresh_command: symdesk dataset refresh orders\nretention_rule: default\nschema:\n    id:\n        type: number\n        label: ID\n    status:\n        type: select\n        options:\n            - offen\n            - erledigt\nsensitivity: secret\nsource: datasets/orders/source.csv\ntags:\n    - dataset\ntitle: Bestellungen ✓\ntype: dataset\n---\n\n# Bestellungen ✓\n\nSource: `datasets/orders/source.csv`\n",
+      "ok": false,
+      "error": "dataset handle datasets/orders.md: invalid dataset sensitivity \"secret\" (valid: public, internal, confidential, restricted)"
+    },
+    {
+      "name": "invalid-retention",
+      "path": "datasets/orders.md",
+      "input": "---\ncoverage:\n    from: \"2026-01-01\"\n    to: \"2026-09-06\"\ncreated: \"2026-09-06T12:00:00Z\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"2026-09-06T12:00:00Z\"\n    source_name: orders.csv\n    source_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nrefresh_command: symdesk dataset refresh orders\nretention_rule: bad/rule\nschema:\n    id:\n        type: number\n        label: ID\n    status:\n        type: select\n        options:\n            - offen\n            - erledigt\nsensitivity: internal\nsource: datasets/orders/source.csv\ntags:\n    - dataset\ntitle: Bestellungen ✓\ntype: dataset\n---\n\n# Bestellungen ✓\n\nSource: `datasets/orders/source.csv`\n",
+      "ok": false,
+      "error": "dataset handle datasets/orders.md: invalid dataset retention_rule \"bad/rule\": control characters and path separators are not allowed"
+    },
+    {
+      "name": "no-frontmatter",
+      "path": "datasets/orders.md",
+      "input": "not frontmatter\n",
+      "ok": false,
+      "error": "datasets/orders.md is not a dataset handle"
+    }
+  ]
+}

@@ -1,0 +1,665 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "usage_text": "symroom - room management and coordination tool\n\nUsage:\n  symroom \u003csubcommand\u003e [flags] [args]\n\nAvailable Subcommands:\n  init           Initialize a room\n  identity       Manage Ed25519 identities\n  member         Manage room members\n  note           Post a journal note\n  decide         Record a room decision\n  artifact       Manage room artifacts\n  log            Display room journal log\n  verify         Verify journal chains and signatures\n  index          Rebuild or manage derived SQLite index\n  run            Manage room runs\n  checkpoint     Manage run checkpoints\n  watch          Watch symdesk events stream\n  brain-profile  Emit a symbrain profile\n  doctor         Run system and environment checks\n  version        Print version information\n  mcp            Run MCP server mode\n\nUse \"symroom \u003csubcommand\u003e --help\" for more information about a subcommand.\n",
+  "subcommands": [
+    {
+      "name": "init",
+      "description": "Initialize a room",
+      "handler": "runInit",
+      "source": "cmd_init.go",
+      "usage_strings": [
+        "Usage: symroom init \u003cdir\u003e --identity \u003cname\u003e [--name \u003cdisplay_name\u003e]"
+      ],
+      "flags": [
+        {
+          "name": "identity",
+          "type": "string",
+          "usage": "Owner identity name"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "default": "Default Room",
+          "usage": "Room display name"
+        }
+      ]
+    },
+    {
+      "name": "identity",
+      "description": "Manage Ed25519 identities",
+      "handler": "runIdentity",
+      "source": "cmd_identity.go",
+      "usage_strings": [
+        "Usage: symroom identity \u003ccreate|list|show|export\u003e [args]",
+        "Usage: symroom identity create \u003cname\u003e",
+        "Usage: symroom identity export \u003cname\u003e --public",
+        "Usage: symroom identity show \u003cname\u003e"
+      ],
+      "actions": [
+        {
+          "name": "create",
+          "usage_strings": [
+            "Usage: symroom identity create \u003cname\u003e"
+          ]
+        },
+        {
+          "name": "export",
+          "usage_strings": [
+            "Usage: symroom identity export \u003cname\u003e --public"
+          ],
+          "flags": [
+            {
+              "name": "public",
+              "type": "bool",
+              "default": "false",
+              "usage": "Export public key only"
+            }
+          ]
+        },
+        {
+          "name": "list"
+        },
+        {
+          "name": "show",
+          "usage_strings": [
+            "Usage: symroom identity show \u003cname\u003e"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "member",
+      "description": "Manage room members",
+      "handler": "runMember",
+      "source": "cmd_member.go",
+      "usage_strings": [
+        "       symroom member add --pubkey \u003chex\u003e --name \u003cname\u003e [--role \u003crole\u003e] [--kind \u003ckind\u003e] [--identity \u003cname\u003e]",
+        "Usage: symroom member \u003cadd|list|remove|role\u003e [flags] [args]",
+        "Usage: symroom member add [--identity \u003cname\u003e] \u003cname\u003e \u003cpubkey\u003e [--role \u003crole\u003e] [--kind \u003ckind\u003e]",
+        "Usage: symroom member remove [--identity \u003cname\u003e] \u003cmember_id\u003e",
+        "Usage: symroom member role [--identity \u003cname\u003e] \u003cmember_id\u003e \u003crole\u003e"
+      ],
+      "actions": [
+        {
+          "name": "add",
+          "usage_strings": [
+            "       symroom member add --pubkey \u003chex\u003e --name \u003cname\u003e [--role \u003crole\u003e] [--kind \u003ckind\u003e] [--identity \u003cname\u003e]",
+            "Usage: symroom member add [--identity \u003cname\u003e] \u003cname\u003e \u003cpubkey\u003e [--role \u003crole\u003e] [--kind \u003ckind\u003e]"
+          ],
+          "flags": [
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Caller identity name (must be the room owner)"
+            },
+            {
+              "name": "kind",
+              "type": "string",
+              "default": "human",
+              "usage": "Member kind (human|agent)"
+            },
+            {
+              "name": "name",
+              "type": "string",
+              "usage": "Member display name"
+            },
+            {
+              "name": "pubkey",
+              "type": "string",
+              "usage": "Member public key (hex)"
+            },
+            {
+              "name": "role",
+              "type": "string",
+              "default": "member",
+              "usage": "Member role (owner|member|agent|observer)"
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "flags": [
+            {
+              "name": "json",
+              "type": "bool",
+              "default": "false",
+              "usage": "Output members as JSON"
+            }
+          ]
+        },
+        {
+          "name": "remove",
+          "usage_strings": [
+            "Usage: symroom member remove [--identity \u003cname\u003e] \u003cmember_id\u003e"
+          ],
+          "flags": [
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Caller identity name (must be the room owner)"
+            }
+          ]
+        },
+        {
+          "name": "role",
+          "usage_strings": [
+            "Usage: symroom member role [--identity \u003cname\u003e] \u003cmember_id\u003e \u003crole\u003e"
+          ],
+          "flags": [
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Caller identity name (must be the room owner)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "note",
+      "description": "Post a journal note",
+      "handler": "runNote",
+      "source": "cmd_note.go",
+      "usage_strings": [
+        "Usage: symroom note \u003cmessage\u003e [--identity \u003cname\u003e] [--json]"
+      ],
+      "flags": [
+        {
+          "name": "identity",
+          "type": "string",
+          "usage": "Author identity name"
+        },
+        {
+          "name": "json",
+          "type": "bool",
+          "default": "false",
+          "usage": "Output event as JSON"
+        }
+      ]
+    },
+    {
+      "name": "decide",
+      "description": "Record a room decision",
+      "handler": "runDecide",
+      "source": "cmd_decide.go",
+      "usage_strings": [
+        "Usage: symroom decide \u003cdecision\u003e [--refs ref1,ref2] [--identity \u003cname\u003e] [--json]"
+      ],
+      "flags": [
+        {
+          "name": "identity",
+          "type": "string",
+          "usage": "Author identity name"
+        },
+        {
+          "name": "json",
+          "type": "bool",
+          "default": "false",
+          "usage": "Output event as JSON"
+        },
+        {
+          "name": "refs",
+          "type": "string",
+          "usage": "Comma-separated reference IDs"
+        }
+      ]
+    },
+    {
+      "name": "artifact",
+      "description": "Manage room artifacts",
+      "handler": "runArtifact",
+      "source": "cmd_artifact.go",
+      "usage_strings": [
+        "Usage: symroom artifact \u003clink|unlink|list\u003e [flags] [args]",
+        "Usage: symroom artifact link \u003cpath\u003e [--title ...] [--identity \u003cname\u003e]",
+        "Usage: symroom artifact unlink \u003cartifact_id\u003e [--identity \u003cname\u003e]"
+      ],
+      "actions": [
+        {
+          "name": "link",
+          "usage_strings": [
+            "Usage: symroom artifact link \u003cpath\u003e [--title ...] [--identity \u003cname\u003e]"
+          ],
+          "flags": [
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Author identity name"
+            },
+            {
+              "name": "title",
+              "type": "string",
+              "usage": "Artifact title"
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "flags": [
+            {
+              "name": "json",
+              "type": "bool",
+              "default": "false",
+              "usage": "Output artifacts as JSON"
+            }
+          ]
+        },
+        {
+          "name": "unlink",
+          "usage_strings": [
+            "Usage: symroom artifact unlink \u003cartifact_id\u003e [--identity \u003cname\u003e]"
+          ],
+          "flags": [
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Author identity name"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "log",
+      "description": "Display room journal log",
+      "handler": "runLog",
+      "source": "cmd_log.go",
+      "flags": [
+        {
+          "name": "author",
+          "type": "string",
+          "usage": "Filter events by author member ID"
+        },
+        {
+          "name": "json",
+          "type": "bool",
+          "default": "false",
+          "usage": "Output events as NDJSON"
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "usage": "Filter events by kind"
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "default": "0",
+          "usage": "Limit number of events returned"
+        },
+        {
+          "name": "run",
+          "type": "string",
+          "usage": "Filter events by run ID"
+        },
+        {
+          "name": "since",
+          "type": "string",
+          "usage": "Filter events since RFC3339 timestamp"
+        },
+        {
+          "name": "until",
+          "type": "string",
+          "usage": "Filter events until RFC3339 timestamp"
+        }
+      ]
+    },
+    {
+      "name": "verify",
+      "description": "Verify journal chains and signatures",
+      "handler": "runVerify",
+      "source": "cmd_verify.go",
+      "flags": [
+        {
+          "name": "json",
+          "type": "bool",
+          "default": "false",
+          "usage": "Output verification findings as JSON"
+        }
+      ]
+    },
+    {
+      "name": "index",
+      "description": "Rebuild or manage derived SQLite index",
+      "handler": "runIndex",
+      "source": "cmd_index.go",
+      "usage_strings": [
+        "Usage: symroom index rebuild"
+      ],
+      "actions": [
+        {
+          "name": "rebuild",
+          "usage_strings": [
+            "Usage: symroom index rebuild"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "run",
+      "description": "Manage room runs",
+      "handler": "runRun",
+      "source": "cmd_run.go",
+      "usage_strings": [
+        "Usage: symroom run \u003crequest|list|show|start|cancel\u003e [flags] [args]",
+        "Usage: symroom run approve \u003crun_id\u003e [--scope ...] [--ttl 30m] [--identity \u003cname\u003e]",
+        "Usage: symroom run cancel \u003crun_id\u003e [--reason ...] [--identity \u003cname\u003e]",
+        "Usage: symroom run deny \u003crun_id\u003e --reason ... [--identity \u003cname\u003e]",
+        "Usage: symroom run show \u003crun_id\u003e [--json]",
+        "Usage: symroom run start \u003crun_id\u003e [--identity \u003cname\u003e]",
+        "Usage: symroom run wait \u003crun_id\u003e [--timeout 15m] [--json]"
+      ],
+      "actions": [
+        {
+          "name": "approve",
+          "usage_strings": [
+            "Usage: symroom run approve \u003crun_id\u003e [--scope ...] [--ttl 30m] [--identity \u003cname\u003e]"
+          ],
+          "flags": [
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Author identity name"
+            },
+            {
+              "name": "scope",
+              "type": "string",
+              "default": "all",
+              "usage": "Approval scope"
+            },
+            {
+              "name": "ttl",
+              "type": "duration",
+              "default": "30 * time.Minute",
+              "usage": "Approval TTL duration"
+            }
+          ]
+        },
+        {
+          "name": "cancel",
+          "usage_strings": [
+            "Usage: symroom run cancel \u003crun_id\u003e [--reason ...] [--identity \u003cname\u003e]"
+          ],
+          "flags": [
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Author identity name"
+            },
+            {
+              "name": "reason",
+              "type": "string",
+              "usage": "Reason for cancellation"
+            }
+          ]
+        },
+        {
+          "name": "deny",
+          "usage_strings": [
+            "Usage: symroom run deny \u003crun_id\u003e --reason ... [--identity \u003cname\u003e]"
+          ],
+          "flags": [
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Author identity name"
+            },
+            {
+              "name": "reason",
+              "type": "string",
+              "usage": "Reason for denial"
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "flags": [
+            {
+              "name": "json",
+              "type": "bool",
+              "default": "false",
+              "usage": "Output as JSON"
+            },
+            {
+              "name": "pending",
+              "type": "bool",
+              "default": "false",
+              "usage": "Show pending runs only"
+            }
+          ]
+        },
+        {
+          "name": "request",
+          "flags": [
+            {
+              "name": "adapter",
+              "type": "string",
+              "usage": "Adapter name"
+            },
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Author identity name"
+            },
+            {
+              "name": "plan-file",
+              "type": "string",
+              "usage": "Plan file path"
+            },
+            {
+              "name": "title",
+              "type": "string",
+              "usage": "Run title"
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "usage_strings": [
+            "Usage: symroom run show \u003crun_id\u003e [--json]"
+          ],
+          "flags": [
+            {
+              "name": "json",
+              "type": "bool",
+              "default": "false",
+              "usage": "Output as JSON"
+            }
+          ]
+        },
+        {
+          "name": "start",
+          "usage_strings": [
+            "Usage: symroom run start \u003crun_id\u003e [--identity \u003cname\u003e]"
+          ],
+          "flags": [
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Author identity name"
+            }
+          ]
+        },
+        {
+          "name": "wait",
+          "usage_strings": [
+            "Usage: symroom run wait \u003crun_id\u003e [--timeout 15m] [--json]"
+          ],
+          "flags": [
+            {
+              "name": "json",
+              "type": "bool",
+              "default": "false",
+              "usage": "Output as JSON"
+            },
+            {
+              "name": "timeout",
+              "type": "duration",
+              "default": "15 * time.Minute",
+              "usage": "Timeout duration"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "checkpoint",
+      "description": "Manage run checkpoints",
+      "handler": "runCheckpoint",
+      "source": "cmd_checkpoint.go",
+      "usage_strings": [
+        "Usage: symroom checkpoint \u003crequest|resolve\u003e [flags] [args]",
+        "Usage: symroom checkpoint request --run \u003cid\u003e --question \"...\" [--identity \u003cname\u003e]",
+        "Usage: symroom checkpoint resolve \u003ccheckpoint_id\u003e --answer \"...\" [--identity \u003cname\u003e]"
+      ],
+      "actions": [
+        {
+          "name": "request",
+          "usage_strings": [
+            "Usage: symroom checkpoint request --run \u003cid\u003e --question \"...\" [--identity \u003cname\u003e]"
+          ],
+          "flags": [
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Author identity name"
+            },
+            {
+              "name": "question",
+              "type": "string",
+              "usage": "Question string"
+            },
+            {
+              "name": "run",
+              "type": "string",
+              "usage": "Run ID"
+            },
+            {
+              "name": "timeout",
+              "type": "duration",
+              "default": "15 * time.Minute",
+              "usage": "Wait timeout duration"
+            }
+          ]
+        },
+        {
+          "name": "resolve",
+          "usage_strings": [
+            "Usage: symroom checkpoint resolve \u003ccheckpoint_id\u003e --answer \"...\" [--identity \u003cname\u003e]"
+          ],
+          "flags": [
+            {
+              "name": "answer",
+              "type": "string",
+              "usage": "Answer string"
+            },
+            {
+              "name": "identity",
+              "type": "string",
+              "usage": "Author identity name"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "watch",
+      "description": "Watch symdesk events stream",
+      "handler": "runWatch",
+      "source": "cmd_watch.go",
+      "usage_strings": [
+        "Usage: symroom watch --desk \u003cvault\u003e [--identity \u003cname\u003e]"
+      ],
+      "flags": [
+        {
+          "name": "desk",
+          "type": "string",
+          "usage": "Symdesk vault name to watch"
+        },
+        {
+          "name": "identity",
+          "type": "string",
+          "usage": "Author identity name"
+        }
+      ]
+    },
+    {
+      "name": "brain-profile",
+      "description": "Emit a symbrain profile",
+      "handler": "runBrainProfile",
+      "source": "cmd_brainprofile.go",
+      "usage_strings": [
+        "Usage: symroom brain-profile --member \u003cid\u003e [--install]"
+      ],
+      "flags": [
+        {
+          "name": "install",
+          "type": "bool",
+          "default": "false",
+          "usage": "Install profile to symbrain config path"
+        },
+        {
+          "name": "member",
+          "type": "string",
+          "usage": "Member ID for the agent"
+        }
+      ]
+    },
+    {
+      "name": "doctor",
+      "description": "Run system and environment checks",
+      "handler": "runDoctor",
+      "source": "cmd_doctor.go",
+      "flags": [
+        {
+          "name": "json",
+          "type": "bool",
+          "default": "false",
+          "usage": "Emit stable machine-readable JSON"
+        }
+      ]
+    },
+    {
+      "name": "version",
+      "description": "Print version information",
+      "handler": "runVersion",
+      "source": "cmd_version.go",
+      "flags": [
+        {
+          "name": "json",
+          "type": "bool",
+          "default": "false",
+          "usage": "Emit version info in JSON format"
+        }
+      ]
+    },
+    {
+      "name": "mcp",
+      "description": "Run MCP server mode",
+      "handler": "runMcp",
+      "source": "cmd_mcp.go",
+      "flags": [
+        {
+          "name": "artifact-root",
+          "type": "string",
+          "usage": "Artifact root directory"
+        },
+        {
+          "name": "identity",
+          "type": "string",
+          "usage": "Signing identity name"
+        },
+        {
+          "name": "room",
+          "type": "string",
+          "default": ".",
+          "usage": "Room directory"
+        }
+      ]
+    }
+  ]
+}

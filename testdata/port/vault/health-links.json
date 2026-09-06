@@ -1,0 +1,581 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "document-path",
+      "raw": "folder/note.md",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "folder/note.md",
+      "checked": true,
+      "exists": true
+    },
+    {
+      "name": "document-without-extension",
+      "raw": "folder/note",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "folder/note",
+      "checked": true,
+      "exists": true
+    },
+    {
+      "name": "document-title",
+      "raw": "Human Title.md",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "Human Title.md",
+      "checked": true,
+      "exists": false
+    },
+    {
+      "name": "attachment-path",
+      "raw": "assets/PHOTO.PNG",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "assets/PHOTO.PNG",
+      "checked": true,
+      "exists": true
+    },
+    {
+      "name": "attachment-basename",
+      "raw": "other/photo.png",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "other/photo.png",
+      "checked": true,
+      "exists": true
+    },
+    {
+      "name": "attachment-pdf",
+      "raw": "docs/manual.pdf|Manual",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "docs/manual.pdf",
+      "checked": true,
+      "exists": true
+    },
+    {
+      "name": "attachment-unicode",
+      "raw": "other/ÜBERBLICK_日本.PNG",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "other/ÜBERBLICK_日本.PNG",
+      "checked": true,
+      "exists": true
+    },
+    {
+      "name": "alias-exact",
+      "raw": "Alias Name.md",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "Alias Name.md",
+      "checked": true,
+      "exists": true
+    },
+    {
+      "name": "alias-with-extension",
+      "raw": "deep/alias.pdf",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "deep/alias.pdf",
+      "checked": true,
+      "exists": true
+    },
+    {
+      "name": "alias-basename",
+      "raw": "elsewhere/alias.pdf",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "elsewhere/alias.pdf",
+      "checked": true,
+      "exists": true
+    },
+    {
+      "name": "fragment-and-alias",
+      "raw": "folder/note.md#Heading|Label",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "folder/note.md",
+      "checked": true,
+      "exists": true
+    },
+    {
+      "name": "relative-clean",
+      "raw": "./folder/../folder/note.md",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "folder/note.md",
+      "checked": true,
+      "exists": true
+    },
+    {
+      "name": "missing-document",
+      "raw": "folder/missing.md",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "folder/missing.md",
+      "checked": true,
+      "exists": false
+    },
+    {
+      "name": "missing-attachment",
+      "raw": "assets/missing.png",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "assets/missing.png",
+      "checked": true,
+      "exists": false
+    },
+    {
+      "name": "ignored-bare-name",
+      "raw": "Person Name",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "",
+      "checked": false,
+      "exists": false
+    },
+    {
+      "name": "ignored-http",
+      "raw": "https://example.com/a.pdf",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "",
+      "checked": false,
+      "exists": false
+    },
+    {
+      "name": "ignored-mailto",
+      "raw": "mailto:user@example.com",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "",
+      "checked": false,
+      "exists": false
+    },
+    {
+      "name": "ignored-empty-fragment",
+      "raw": "#Heading",
+      "inventory": {
+        "paths": [
+          "folder/note",
+          "folder/note.md",
+          "note",
+          "note.md"
+        ],
+        "titles": [
+          "human title"
+        ],
+        "aliases": [
+          "alias",
+          "alias name",
+          "alias.pdf",
+          "deep/alias.pdf"
+        ],
+        "attachments": [
+          "assets/photo.png",
+          "assets/überblick_日本.png",
+          "docs/manual.pdf",
+          "manual.pdf",
+          "photo.png",
+          "überblick_日本.png"
+        ]
+      },
+      "normalized": "",
+      "checked": false,
+      "exists": false
+    }
+  ]
+}

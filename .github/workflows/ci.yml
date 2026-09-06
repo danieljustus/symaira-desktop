@@ -34,6 +34,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # portgen provenance tests read the pinned oracle revision via git.
+          fetch-depth: 0
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -103,6 +106,110 @@ jobs:
       - name: Module boundary guard
         # Issue #536: packages outside permitted facades must not import absorbed library internals.
         run: ./scripts/check-module-boundaries.sh
+
+  port-contract:
+    name: Rust port contract
+    strategy:
+      matrix:
+        # Keep the PR gate fast; full native contract execution runs on main
+        # and schedule, including platform-specific process-tree cleanup.
+        os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest", "windows-latest"]') }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # portgen provenance checks read the pinned oracle revision via git.
+          fetch-depth: 0
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.26.6"
+
+      - name: Verify frozen Go oracle fixtures and differential harness
+        if: matrix.os != 'windows-latest'
+        run: make port-contract
+
+      - name: Verify frozen oracle and differential harness on Windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force bin | Out-Null
+          go run ./scripts/rust-port/cmd/portgen --check
+          go test -count=1 ./scripts/rust-port/...
+          go build -ldflags "-X main.version=0.12.2" -o bin/symdesk.exe ./cmd/symdesk
+          go build -ldflags "-X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2" -o bin/symroom.exe ./cmd/symroom
+          go run ./scripts/rust-port/cmd/diffharness --allow-same-binary --symdesk-left bin/symdesk.exe --symdesk-right bin/symdesk.exe --symroom-left bin/symroom.exe --symroom-right bin/symroom.exe --cases testdata/port/cli/cases.json
+
+  rust:
+    name: Rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.26.6"
+
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt,llvm-tools-preview
+          rustup toolchain install nightly-2026-09-03 --profile minimal
+
+      - name: Install Rust verification tools
+        uses: taiki-e/install-action@7b8d4719ee4aaa279bdf55df38dacb9ebfe12a6c # v2.87.6
+        with:
+          tool: cargo-nextest@0.9.143,cargo-deny@0.20.2,cargo-audit@0.22.2,cargo-hack@0.6.45,cargo-llvm-cov@0.9.0
+          fallback: none
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked --version 0.13.2
+
+      - name: Run Rust gates and Go-to-Rust version differential
+        run: make rust-gates
+
+      - name: Fuzz frontmatter parser smoke corpus
+        run: make rust-fuzz-smoke
+
+  rust-native:
+    name: Rust native (${{ matrix.os }})
+    if: github.event_name != 'pull_request'
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.26.6"
+
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt
+
+      - name: Check, lint, and test Rust workspace
+        run: |
+          cargo fmt --all --check
+          cargo check --workspace --all-targets --all-features --locked
+          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+          cargo test --workspace --all-features --locked
+          cargo test --workspace --doc --all-features --locked
+
+      - name: Run native macOS version differential
+        if: matrix.os == 'macos-latest'
+        run: make rust-version-contract
+
+      - name: Run native Windows version differential
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force bin/port | Out-Null
+          go build -ldflags "-X main.version=0.12.2" -o bin/port/symdesk-go.exe ./cmd/symdesk
+          go build -ldflags "-X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2" -o bin/port/symroom-go.exe ./cmd/symroom
+          $env:SYMDESK_VERSION = "0.12.2"
+          $env:SYMROOM_VERSION = "0.12.2"
+          cargo build --release --workspace --locked
+          go run ./scripts/rust-port/cmd/diffharness --symdesk-left bin/port/symdesk-go.exe --symdesk-right target/release/symdesk.exe --symroom-left bin/port/symroom-go.exe --symroom-right target/release/symroom.exe --cases testdata/port/cli/cases.json --stage version
 
   govulncheck:
     name: govulncheck

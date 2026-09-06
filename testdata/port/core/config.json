@@ -1,0 +1,418 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "cases": {
+    "defaults": {
+      "vault": "",
+      "inbox": "",
+      "review_threshold": 85,
+      "llm_provider": "ollama",
+      "has_api_key": false,
+      "llm_model": "claude-sonnet-5",
+      "ollama_url": "",
+      "recipe_runner": "",
+      "hermes_session": "",
+      "language": "",
+      "max_tokens": 8192,
+      "agent_max_iterations": 0,
+      "history_max_per_file": 20,
+      "history_max_age_days": 90,
+      "history_checkpoint_max_age_days": 30,
+      "trash_retention_days": 30,
+      "results_max_age_days": 30,
+      "results_max_per_task": 20,
+      "dataset_export_max_sensitivity": "internal",
+      "storage_path_template": ""
+    },
+    "loads": [
+      {
+        "id": "missing-defaults",
+        "missing": true,
+        "config": {
+          "vault": "",
+          "inbox": "",
+          "review_threshold": 85,
+          "llm_provider": "ollama",
+          "has_api_key": false,
+          "llm_model": "claude-sonnet-5",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "",
+          "language": "",
+          "max_tokens": 8192,
+          "agent_max_iterations": 0,
+          "history_max_per_file": 20,
+          "history_max_age_days": 90,
+          "history_checkpoint_max_age_days": 30,
+          "trash_retention_days": 30,
+          "results_max_age_days": 30,
+          "results_max_per_task": 20,
+          "dataset_export_max_sensitivity": "internal",
+          "storage_path_template": ""
+        }
+      },
+      {
+        "id": "toml-values-and-unknown",
+        "toml": "vault = \"/toml/vault\"\nreview_threshold = 70\nllm_provider = \"anthropic\"\nllm_api_key = \"synthetic-fixture-value\"\nmax_tokens = 4096\nunknown_future_key = \"preserved-by-file-but-ignored-by-model\"\n",
+        "config": {
+          "vault": "/toml/vault",
+          "inbox": "",
+          "review_threshold": 70,
+          "llm_provider": "anthropic",
+          "has_api_key": true,
+          "llm_model": "claude-sonnet-5",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "",
+          "language": "",
+          "max_tokens": 4096,
+          "agent_max_iterations": 0,
+          "history_max_per_file": 20,
+          "history_max_age_days": 90,
+          "history_checkpoint_max_age_days": 30,
+          "trash_retention_days": 30,
+          "results_max_age_days": 30,
+          "results_max_per_task": 20,
+          "dataset_export_max_sensitivity": "internal",
+          "storage_path_template": ""
+        }
+      },
+      {
+        "id": "supported-env-overrides",
+        "missing": true,
+        "environment": {
+          "SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY": "  CONFIDENTIAL  ",
+          "SYMDESK_HERMES_SESSION": "fixture-session",
+          "SYMDESK_HISTORY_CHECKPOINT_MAX_AGE_DAYS": "9",
+          "SYMDESK_HISTORY_MAX_AGE_DAYS": "8",
+          "SYMDESK_HISTORY_MAX_PER_FILE": "7",
+          "SYMDESK_INBOX": "/env/inbox",
+          "SYMDESK_LANG": "de",
+          "SYMDESK_LLM_API_KEY": "synthetic-fixture-value",
+          "SYMDESK_LLM_MODEL": "fixture-model",
+          "SYMDESK_LLM_PROVIDER": "openai",
+          "SYMDESK_MAX_TOKENS": "12000",
+          "SYMDESK_RESULTS_MAX_AGE_DAYS": "11",
+          "SYMDESK_RESULTS_MAX_PER_TASK": "12",
+          "SYMDESK_REVIEW_THRESHOLD": "90",
+          "SYMDESK_TRASH_RETENTION_DAYS": "10",
+          "SYMDESK_VAULT": "/env/vault"
+        },
+        "config": {
+          "vault": "/env/vault",
+          "inbox": "/env/inbox",
+          "review_threshold": 90,
+          "llm_provider": "openai",
+          "has_api_key": true,
+          "llm_model": "fixture-model",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "fixture-session",
+          "language": "de",
+          "max_tokens": 12000,
+          "agent_max_iterations": 0,
+          "history_max_per_file": 7,
+          "history_max_age_days": 8,
+          "history_checkpoint_max_age_days": 9,
+          "trash_retention_days": 10,
+          "results_max_age_days": 11,
+          "results_max_per_task": 12,
+          "dataset_export_max_sensitivity": "confidential",
+          "storage_path_template": ""
+        }
+      },
+      {
+        "id": "invalid-env-is-ignored",
+        "missing": true,
+        "environment": {
+          "SYMDESK_HISTORY_MAX_PER_FILE": "-1",
+          "SYMDESK_MAX_TOKENS": "0",
+          "SYMDESK_RESULTS_MAX_PER_TASK": "nope",
+          "SYMDESK_REVIEW_THRESHOLD": "101"
+        },
+        "config": {
+          "vault": "",
+          "inbox": "",
+          "review_threshold": 85,
+          "llm_provider": "ollama",
+          "has_api_key": false,
+          "llm_model": "claude-sonnet-5",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "",
+          "language": "",
+          "max_tokens": 8192,
+          "agent_max_iterations": 0,
+          "history_max_per_file": 20,
+          "history_max_age_days": 90,
+          "history_checkpoint_max_age_days": 30,
+          "trash_retention_days": 30,
+          "results_max_age_days": 30,
+          "results_max_per_task": 20,
+          "dataset_export_max_sensitivity": "internal",
+          "storage_path_template": ""
+        }
+      },
+      {
+        "id": "tagged-but-ignored-env-issue-854",
+        "missing": true,
+        "environment": {
+          "SYMDESK_AGENT_MAX_ITERATIONS": "99",
+          "SYMDESK_OLLAMA_URL": "http://ignored.test",
+          "SYMDESK_RECIPE_RUNNER": "ignored-runner",
+          "SYMDESK_STORAGE_PATH_TEMPLATE": "ignored/{title}"
+        },
+        "config": {
+          "vault": "",
+          "inbox": "",
+          "review_threshold": 85,
+          "llm_provider": "ollama",
+          "has_api_key": false,
+          "llm_model": "claude-sonnet-5",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "",
+          "language": "",
+          "max_tokens": 8192,
+          "agent_max_iterations": 0,
+          "history_max_per_file": 20,
+          "history_max_age_days": 90,
+          "history_checkpoint_max_age_days": 30,
+          "trash_retention_days": 30,
+          "results_max_age_days": 30,
+          "results_max_per_task": 20,
+          "dataset_export_max_sensitivity": "internal",
+          "storage_path_template": ""
+        }
+      },
+      {
+        "id": "malformed-toml",
+        "toml": "{{{{not valid",
+        "error_prefix": "failed to decode config file:"
+      }
+    ],
+    "validation": [
+      {
+        "id": "defaults",
+        "config": {
+          "vault": "",
+          "inbox": "",
+          "review_threshold": 85,
+          "llm_provider": "ollama",
+          "has_api_key": false,
+          "llm_model": "claude-sonnet-5",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "",
+          "language": "",
+          "max_tokens": 8192,
+          "agent_max_iterations": 0,
+          "history_max_per_file": 20,
+          "history_max_age_days": 90,
+          "history_checkpoint_max_age_days": 30,
+          "trash_retention_days": 30,
+          "results_max_age_days": 30,
+          "results_max_per_task": 20,
+          "dataset_export_max_sensitivity": "internal",
+          "storage_path_template": ""
+        },
+        "paths_exist": true,
+        "findings": []
+      },
+      {
+        "id": "ordered-invalid-values",
+        "config": {
+          "vault": "",
+          "inbox": "",
+          "review_threshold": 101,
+          "llm_provider": "cohere",
+          "has_api_key": false,
+          "llm_model": "claude-sonnet-5",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "",
+          "language": "fr",
+          "max_tokens": 0,
+          "agent_max_iterations": 0,
+          "history_max_per_file": -4,
+          "history_max_age_days": -1,
+          "history_checkpoint_max_age_days": -2,
+          "trash_retention_days": -3,
+          "results_max_age_days": -5,
+          "results_max_per_task": -6,
+          "dataset_export_max_sensitivity": "secret",
+          "storage_path_template": ""
+        },
+        "paths_exist": true,
+        "findings": [
+          {
+            "severity": "fatal",
+            "field": "review_threshold",
+            "message": "review_threshold must be 0–100, got 101"
+          },
+          {
+            "severity": "fatal",
+            "field": "max_tokens",
+            "message": "max_tokens must be \u003e 0, got 0"
+          },
+          {
+            "severity": "warning",
+            "field": "history_max_age_days",
+            "message": "history_max_age_days must be \u003e= 0, got -1"
+          },
+          {
+            "severity": "warning",
+            "field": "history_checkpoint_max_age_days",
+            "message": "history_checkpoint_max_age_days must be \u003e= 0, got -2"
+          },
+          {
+            "severity": "warning",
+            "field": "trash_retention_days",
+            "message": "trash_retention_days must be \u003e= 0, got -3"
+          },
+          {
+            "severity": "warning",
+            "field": "history_max_per_file",
+            "message": "history_max_per_file must be \u003e= 0, got -4"
+          },
+          {
+            "severity": "warning",
+            "field": "results_max_age_days",
+            "message": "results_max_age_days must be \u003e= 0, got -5"
+          },
+          {
+            "severity": "warning",
+            "field": "results_max_per_task",
+            "message": "results_max_per_task must be \u003e= 0, got -6"
+          },
+          {
+            "severity": "warning",
+            "field": "dataset_export_max_sensitivity",
+            "message": "dataset_export_max_sensitivity must be public, internal, confidential, or restricted, got \"secret\""
+          },
+          {
+            "severity": "warning",
+            "field": "llm_provider",
+            "message": "unsupported llm_provider \"cohere\" — expected one of: ollama, anthropic, openai, hermes"
+          },
+          {
+            "severity": "warning",
+            "field": "language",
+            "message": "unsupported language \"fr\" — expected en or de"
+          }
+        ]
+      },
+      {
+        "id": "missing-paths",
+        "config": {
+          "vault": "/fixture/missing-vault",
+          "inbox": "/fixture/missing-inbox",
+          "review_threshold": 85,
+          "llm_provider": "ollama",
+          "has_api_key": false,
+          "llm_model": "claude-sonnet-5",
+          "ollama_url": "",
+          "recipe_runner": "",
+          "hermes_session": "",
+          "language": "",
+          "max_tokens": 8192,
+          "agent_max_iterations": 0,
+          "history_max_per_file": 20,
+          "history_max_age_days": 90,
+          "history_checkpoint_max_age_days": 30,
+          "trash_retention_days": 30,
+          "results_max_age_days": 30,
+          "results_max_per_task": 20,
+          "dataset_export_max_sensitivity": "internal",
+          "storage_path_template": ""
+        },
+        "paths_exist": false,
+        "findings": [
+          {
+            "severity": "fatal",
+            "field": "vault",
+            "message": "vault path does not exist: /fixture/missing-vault"
+          },
+          {
+            "severity": "warning",
+            "field": "inbox",
+            "message": "inbox path does not exist: /fixture/missing-inbox"
+          }
+        ]
+      }
+    ],
+    "save": {
+      "config": {
+        "vault": "/saved/vault",
+        "inbox": "/saved/inbox",
+        "review_threshold": 60,
+        "llm_provider": "hermes",
+        "has_api_key": false,
+        "llm_model": "fixture-model",
+        "ollama_url": "",
+        "recipe_runner": "",
+        "hermes_session": "",
+        "language": "de",
+        "max_tokens": 2048,
+        "agent_max_iterations": 0,
+        "history_max_per_file": 20,
+        "history_max_age_days": 90,
+        "history_checkpoint_max_age_days": 30,
+        "trash_retention_days": 30,
+        "results_max_age_days": 30,
+        "results_max_per_task": 20,
+        "dataset_export_max_sensitivity": "internal",
+        "storage_path_template": "documents/{year}/{title}"
+      },
+      "toml": "vault = \"/saved/vault\"\ninbox = \"/saved/inbox\"\nreview_threshold = 60\nllm_provider = \"hermes\"\nllm_api_key = \"\"\nllm_model = \"fixture-model\"\nollama_url = \"\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 2048\nagent_max_iterations = 0\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"documents/{year}/{title}\"\n"
+    },
+    "paths": [
+      {
+        "id": "xdg-absolute",
+        "environment": {
+          "HOME": "/fixture/home",
+          "XDG_CACHE_HOME": "/fixture/cache",
+          "XDG_CONFIG_HOME": "/fixture/config",
+          "XDG_DATA_HOME": "  /fixture/data  "
+        },
+        "data_home": "/fixture/data",
+        "config_home": "/fixture/config",
+        "cache_home": "/fixture/cache",
+        "data_dir": "/fixture/data/symdesk",
+        "config_dir": "/fixture/config/symdesk",
+        "cache_dir": "/fixture/cache/symdesk",
+        "global_path": "/fixture/config/symdesk/config.toml"
+      },
+      {
+        "id": "home-fallback",
+        "environment": {
+          "HOME": "/fixture/home"
+        },
+        "data_home": "/fixture/home/.local/share",
+        "config_home": "/fixture/home/.config",
+        "cache_home": "/fixture/home/.cache",
+        "data_dir": "/fixture/home/.local/share/symdesk",
+        "config_dir": "/fixture/home/.config/symdesk",
+        "cache_dir": "/fixture/home/.cache/symdesk",
+        "global_path": "/fixture/home/.config/symdesk/config.toml"
+      },
+      {
+        "id": "relative-xdg-config",
+        "environment": {
+          "HOME": "/fixture/home",
+          "XDG_CONFIG_HOME": "relative/config"
+        },
+        "data_home": "/fixture/home/.local/share",
+        "config_home": "relative/config",
+        "cache_home": "/fixture/home/.cache",
+        "data_dir": "/fixture/home/.local/share/symdesk",
+        "config_dir": "relative/config/symdesk",
+        "cache_dir": "/fixture/home/.cache/symdesk",
+        "global_path": "/fixture/home/.config/symdesk/config.toml"
+      }
+    ]
+  }
+}

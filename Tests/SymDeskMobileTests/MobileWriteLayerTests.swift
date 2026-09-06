@@ -73,7 +73,7 @@ final class MobileWriteLayerTests: XCTestCase {
         XCTAssertTrue(remaining.isEmpty)
     }
 
-    // MARK: - Frontmatter round-trip (contract-v2)
+    // MARK: - Frontmatter round-trip (contract-v6 compatible)
 
     func testNoteDocumentRoundTripsThroughParser() throws {
         let root = URL(fileURLWithPath: "/tmp/SymDeskMobileVault", isDirectory: true)

@@ -293,7 +293,7 @@ final class MobileInlineAIModel: ObservableObject {
                 replacing: selectedRange
             )
             // The transform runs on the parsed body only; rebuild the
-            // complete contract-v2 file so the frontmatter (title, tags,
+            // complete contract-v6-compatible file so the frontmatter (title, tags,
             // created, document fields) survives the write.
             let fullFile = MobileInlineAIText.replacingBody(in: original, with: merged)
             try await save(fullFile)

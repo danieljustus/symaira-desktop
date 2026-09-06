@@ -42,7 +42,7 @@
     {
       "id": "RUST-005",
       "title": "Port minimal sidecar index and search",
-      "status": "ready",
+      "status": "in_progress",
       "depends_on": ["RUST-004"],
       "contract_rows": ["INDEX-001", "INDEX-002", "INDEX-003", "INDEX-006"],
       "acceptance": ["make sidecar-differential", "cargo nextest run -p symdesk-index", "make benchmark-large"]

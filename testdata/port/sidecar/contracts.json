@@ -1,0 +1,1042 @@
+{
+  "schema_version": 1,
+  "documents": [
+    {
+      "path": "vault/a.md",
+      "markdown": "---\ntitle: Alpha Note\ncreated: \"2026-01-01T10:00:00Z\"\ntags: [alpha, project]\nstatus: open\n---\nAlpha body contains a unique orchard marker.\n",
+      "mtime_ns": 1768478400123456789
+    },
+    {
+      "path": "vault/rechnung.md",
+      "markdown": "---\ntitle: Rechnung Müller\ncreated: \"2026-01-02T10:00:00Z\"\ndocument_date: \"2026-01-02\"\nperson: Jörg\nasn: 42\naliases: [Faktura]\n---\nDie Krankenversicherungsbeiträge und Rechnungen sind überfällig.\n",
+      "mtime_ns": 1768478401123456789
+    },
+    {
+      "path": "vault/link.md",
+      "markdown": "---\ntitle: Link Note\ncreated: \"2026-01-03T10:00:00Z\"\nconfidence: 91\n---\nSee [[Alpha Note]] and the needle phrase.\n",
+      "mtime_ns": 1768478402123456789
+    }
+  ],
+  "updated_input": {
+    "path": "vault/a.md",
+    "markdown": "---\ntitle: Alpha Note Updated\ncreated: \"2026-01-01T10:00:00Z\"\ntags: [alpha, changed]\nstatus: closed\n---\nUpdated body contains a unique vineyard marker.\n",
+    "mtime_ns": 1768478403123456789
+  },
+  "batch_inputs": [
+    {
+      "path": "vault/batch-before.md",
+      "markdown": "---\ntitle: Batch Before\n---\nbefore\n",
+      "mtime_ns": 1768478404123456789
+    },
+    {
+      "path": "vault/batch-invalid.md",
+      "markdown": "---\ntitle: Batch Invalid\n---\ninvalid\n",
+      "mtime_ns": 1768478405123456789
+    },
+    {
+      "path": "vault/batch-after.md",
+      "markdown": "---\ntitle: Batch After\n---\nafter\n",
+      "mtime_ns": 1768478406123456789
+    }
+  ],
+  "pragmas": {
+    "busy_timeout": "5000",
+    "foreign_keys": "1",
+    "integrity_check": "ok",
+    "journal_mode": "wal"
+  },
+  "migrations": [
+    "001_init",
+    "002_doc_metadata",
+    "003_asn",
+    "004_file_stat_cache",
+    "005_type",
+    "006_links_to_path_index",
+    "007_created_at",
+    "008_index_lifecycle",
+    "009_german_norm",
+    "010_german_trigram",
+    "011_dataset_rows"
+  ],
+  "schema": [
+    {
+      "type": "index",
+      "name": "idx_dataset_rows_dataset",
+      "sql": "CREATE INDEX idx_dataset_rows_dataset ON dataset_rows(dataset_slug)"
+    },
+    {
+      "type": "index",
+      "name": "idx_files_asn",
+      "sql": "CREATE INDEX idx_files_asn ON files(asn)"
+    },
+    {
+      "type": "index",
+      "name": "idx_files_confidence",
+      "sql": "CREATE INDEX idx_files_confidence ON files(confidence)"
+    },
+    {
+      "type": "index",
+      "name": "idx_files_created_at",
+      "sql": "CREATE INDEX idx_files_created_at ON files(created_at)"
+    },
+    {
+      "type": "index",
+      "name": "idx_files_document_date",
+      "sql": "CREATE INDEX idx_files_document_date ON files(document_date)"
+    },
+    {
+      "type": "index",
+      "name": "idx_files_due_date",
+      "sql": "CREATE INDEX idx_files_due_date ON files(due_date)"
+    },
+    {
+      "type": "index",
+      "name": "idx_files_person",
+      "sql": "CREATE INDEX idx_files_person ON files(person)"
+    },
+    {
+      "type": "index",
+      "name": "idx_files_status",
+      "sql": "CREATE INDEX idx_files_status ON files(status)"
+    },
+    {
+      "type": "index",
+      "name": "idx_files_type",
+      "sql": "CREATE INDEX idx_files_type ON files(\"type\")"
+    },
+    {
+      "type": "index",
+      "name": "idx_index_lifecycle_state",
+      "sql": "CREATE INDEX idx_index_lifecycle_state ON index_lifecycle(state)"
+    },
+    {
+      "type": "index",
+      "name": "idx_links_to_path",
+      "sql": "CREATE INDEX idx_links_to_path ON links(to_path)"
+    },
+    {
+      "type": "table",
+      "name": "dataset_rows",
+      "sql": "CREATE TABLE dataset_rows (\n    dataset_slug TEXT NOT NULL,\n    row_key TEXT NOT NULL,\n    identity TEXT,\n    values_json TEXT NOT NULL,\n    source_path TEXT NOT NULL,\n    row_number INTEGER NOT NULL,\n    PRIMARY KEY (dataset_slug, row_key)\n)"
+    },
+    {
+      "type": "table",
+      "name": "file_properties",
+      "sql": "CREATE TABLE file_properties (\n    file_id INTEGER NOT NULL,\n    key TEXT NOT NULL,\n    value TEXT,\n    value_type TEXT NOT NULL,\n    PRIMARY KEY (file_id, key),\n    FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE\n)"
+    },
+    {
+      "type": "table",
+      "name": "files",
+      "sql": "CREATE TABLE files (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    path TEXT UNIQUE NOT NULL,\n    sha256 TEXT NOT NULL,\n    title TEXT NOT NULL,\n    modified_at DATETIME NOT NULL,\n    indexed_at DATETIME NOT NULL\n, document_date TEXT, person TEXT, status TEXT, due_date TEXT, confidence INTEGER, ocr_json_path TEXT, simhash TEXT, asn INTEGER CHECK (asn IS NULL OR asn \u003e 0), size INTEGER, mtime_ns INTEGER, \"type\" TEXT NOT NULL DEFAULT 'note', created_at TEXT)"
+    },
+    {
+      "type": "table",
+      "name": "fts_norm",
+      "sql": "CREATE VIRTUAL TABLE fts_norm USING fts5(norm)"
+    },
+    {
+      "type": "table",
+      "name": "fts_norm_config",
+      "sql": "CREATE TABLE 'fts_norm_config'(k PRIMARY KEY, v) WITHOUT ROWID"
+    },
+    {
+      "type": "table",
+      "name": "fts_norm_content",
+      "sql": "CREATE TABLE 'fts_norm_content'(id INTEGER PRIMARY KEY, c0)"
+    },
+    {
+      "type": "table",
+      "name": "fts_norm_data",
+      "sql": "CREATE TABLE 'fts_norm_data'(id INTEGER PRIMARY KEY, block BLOB)"
+    },
+    {
+      "type": "table",
+      "name": "fts_norm_docsize",
+      "sql": "CREATE TABLE 'fts_norm_docsize'(id INTEGER PRIMARY KEY, sz BLOB)"
+    },
+    {
+      "type": "table",
+      "name": "fts_norm_idx",
+      "sql": "CREATE TABLE 'fts_norm_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID"
+    },
+    {
+      "type": "table",
+      "name": "fts_search",
+      "sql": "CREATE VIRTUAL TABLE fts_search USING fts5(\n    title,\n    body\n)"
+    },
+    {
+      "type": "table",
+      "name": "fts_search_config",
+      "sql": "CREATE TABLE 'fts_search_config'(k PRIMARY KEY, v) WITHOUT ROWID"
+    },
+    {
+      "type": "table",
+      "name": "fts_search_content",
+      "sql": "CREATE TABLE 'fts_search_content'(id INTEGER PRIMARY KEY, c0, c1)"
+    },
+    {
+      "type": "table",
+      "name": "fts_search_data",
+      "sql": "CREATE TABLE 'fts_search_data'(id INTEGER PRIMARY KEY, block BLOB)"
+    },
+    {
+      "type": "table",
+      "name": "fts_search_docsize",
+      "sql": "CREATE TABLE 'fts_search_docsize'(id INTEGER PRIMARY KEY, sz BLOB)"
+    },
+    {
+      "type": "table",
+      "name": "fts_search_idx",
+      "sql": "CREATE TABLE 'fts_search_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID"
+    },
+    {
+      "type": "table",
+      "name": "fts_tri",
+      "sql": "CREATE VIRTUAL TABLE fts_tri USING fts5(body, tokenize='trigram remove_diacritics 2')"
+    },
+    {
+      "type": "table",
+      "name": "fts_tri_config",
+      "sql": "CREATE TABLE 'fts_tri_config'(k PRIMARY KEY, v) WITHOUT ROWID"
+    },
+    {
+      "type": "table",
+      "name": "fts_tri_content",
+      "sql": "CREATE TABLE 'fts_tri_content'(id INTEGER PRIMARY KEY, c0)"
+    },
+    {
+      "type": "table",
+      "name": "fts_tri_data",
+      "sql": "CREATE TABLE 'fts_tri_data'(id INTEGER PRIMARY KEY, block BLOB)"
+    },
+    {
+      "type": "table",
+      "name": "fts_tri_docsize",
+      "sql": "CREATE TABLE 'fts_tri_docsize'(id INTEGER PRIMARY KEY, sz BLOB)"
+    },
+    {
+      "type": "table",
+      "name": "fts_tri_idx",
+      "sql": "CREATE TABLE 'fts_tri_idx'(segid, term, pgno, PRIMARY KEY(segid, term)) WITHOUT ROWID"
+    },
+    {
+      "type": "table",
+      "name": "index_lifecycle",
+      "sql": "CREATE TABLE index_lifecycle (\n    path TEXT PRIMARY KEY,\n    state TEXT NOT NULL CHECK (state IN ('queued', 'indexing', 'indexed', 'failed', 'encrypted', 'unsupported')),\n    reason TEXT NOT NULL DEFAULT '',\n    updated_at TEXT NOT NULL\n)"
+    },
+    {
+      "type": "table",
+      "name": "links",
+      "sql": "CREATE TABLE links (\n    from_path TEXT NOT NULL,\n    to_path TEXT NOT NULL,\n    kind TEXT NOT NULL,\n    PRIMARY KEY (from_path, to_path, kind)\n)"
+    },
+    {
+      "type": "table",
+      "name": "schema_migrations",
+      "sql": "CREATE TABLE schema_migrations (\n\t\tversion TEXT PRIMARY KEY,\n\t\tapplied_at DATETIME DEFAULT CURRENT_TIMESTAMP\n\t)"
+    },
+    {
+      "type": "table",
+      "name": "view_presets",
+      "sql": "CREATE TABLE view_presets (\n    id TEXT PRIMARY KEY,\n    name TEXT NOT NULL,\n    filter_json TEXT NOT NULL,\n    sort_json TEXT NOT NULL,\n    columns_json TEXT NOT NULL\n)"
+    }
+  ],
+  "initial": {
+    "files": [
+      {
+        "id": 1,
+        "path": "vault/a.md",
+        "sha256": "4ded12b4156e5fccc098ef06d5259608aaca934c13fe144850164a20f7f87b6d",
+        "title": "Alpha Note",
+        "created_at": "2026-01-01T10:00:00Z",
+        "modified_at": "2026-01-15T12:00:00.123456789Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": "open",
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "ee6bb4bf8741a09c",
+        "asn": null,
+        "size": 139,
+        "mtime_ns": 1768478400123456789
+      },
+      {
+        "id": 2,
+        "path": "vault/rechnung.md",
+        "sha256": "45144bd494181dae0b0d55dcfb72c431db1ad417fedebee8f905dd4d4b77f38a",
+        "title": "Rechnung Müller",
+        "created_at": "2026-01-02T10:00:00Z",
+        "modified_at": "2026-01-15T12:00:01.123456789Z",
+        "type": "document",
+        "document_date": "2026-01-02",
+        "person": "Jörg",
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "cea8a71824506092",
+        "asn": 42,
+        "size": 201,
+        "mtime_ns": 1768478401123456789
+      },
+      {
+        "id": 3,
+        "path": "vault/link.md",
+        "sha256": "b4fc4c1c5c4e25b92f9bfdfef2237e3ee82057e24c05d27e6c2567d280fd2fff",
+        "title": "Link Note",
+        "created_at": "2026-01-03T10:00:00Z",
+        "modified_at": "2026-01-15T12:00:02.123456789Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": 91,
+        "ocr_json_path": null,
+        "simhash": "02bf70194cb3f346",
+        "asn": null,
+        "size": 114,
+        "mtime_ns": 1768478402123456789
+      }
+    ],
+    "properties": [
+      {
+        "file_id": 1,
+        "key": "created",
+        "value": "2026-01-01T10:00:00Z",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "status",
+        "value": "open",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "tags",
+        "value": "[alpha project]",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "title",
+        "value": "Alpha Note",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "aliases",
+        "value": "- Faktura",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "asn",
+        "value": "42",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "created",
+        "value": "2026-01-02T10:00:00Z",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "document_date",
+        "value": "2026-01-02",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "person",
+        "value": "Jörg",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "title",
+        "value": "Rechnung Müller",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "confidence",
+        "value": "91",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "created",
+        "value": "2026-01-03T10:00:00Z",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "title",
+        "value": "Link Note",
+        "value_type": "string"
+      }
+    ],
+    "links": [
+      {
+        "from": "vault/link.md",
+        "to": "Alpha Note",
+        "kind": "wikilink"
+      }
+    ],
+    "fts_search": [
+      {
+        "rowid": 1,
+        "title": "Alpha Note",
+        "body": "Alpha body contains a unique orchard marker.\n"
+      },
+      {
+        "rowid": 2,
+        "title": "Rechnung Müller ASN 42",
+        "body": "Die Krankenversicherungsbeiträge und Rechnungen sind überfällig.\n"
+      },
+      {
+        "rowid": 3,
+        "title": "Link Note",
+        "body": "See [[Alpha Note]] and the needle phrase.\n"
+      }
+    ],
+    "fts_norm": [
+      {
+        "rowid": 1,
+        "norm": "alpha note body contain a uniqu orchard mark"
+      },
+      {
+        "rowid": 2,
+        "norm": "rechn mull asn 42 krankenversicherungsbeitrag rechnung uberfallig"
+      },
+      {
+        "rowid": 3,
+        "norm": "link note see alpha and the needl phras"
+      }
+    ],
+    "fts_tri": [
+      {
+        "rowid": 1,
+        "body": "Alpha body contains a unique orchard marker.\n"
+      },
+      {
+        "rowid": 2,
+        "body": "Die Krankenversicherungsbeiträge und Rechnungen sind überfällig.\n"
+      },
+      {
+        "rowid": 3,
+        "body": "See [[Alpha Note]] and the needle phrase.\n"
+      }
+    ]
+  },
+  "searches": [
+    {
+      "query": "alpha",
+      "scoped": false,
+      "hits": [
+        {
+          "path": "vault/a.md",
+          "title": "Alpha Note",
+          "snippet": "Alpha body contains a unique orchard marker.\n"
+        },
+        {
+          "path": "vault/link.md",
+          "title": "Link Note",
+          "snippet": "See [[Alpha Note]] and the needle phrase.\n"
+        }
+      ]
+    },
+    {
+      "query": "Rechnungen",
+      "scoped": false,
+      "hits": [
+        {
+          "path": "vault/rechnung.md",
+          "title": "Rechnung Müller",
+          "snippet": "Die Krankenversicherungsbeiträge und Rechnungen sind überfällig.\n"
+        }
+      ]
+    },
+    {
+      "query": "versicherungs",
+      "scoped": false,
+      "hits": [
+        {
+          "path": "vault/rechnung.md",
+          "title": "Rechnung Müller",
+          "snippet": ""
+        }
+      ]
+    },
+    {
+      "query": "ASN 42",
+      "scoped": false,
+      "hits": [
+        {
+          "path": "vault/rechnung.md",
+          "title": "Rechnung Müller",
+          "snippet": "Die Krankenversicherungsbeiträge und Rechnungen sind überfällig.\n"
+        }
+      ]
+    },
+    {
+      "query": "needle phrase",
+      "scoped": false,
+      "hits": [
+        {
+          "path": "vault/link.md",
+          "title": "Link Note",
+          "snippet": "See [[Alpha Note]] and the needle phrase.\n"
+        }
+      ]
+    },
+    {
+      "query": "missing",
+      "scoped": false,
+      "hits": []
+    },
+    {
+      "query": "alpha",
+      "scoped": true,
+      "allowed": [
+        "vault/link.md"
+      ],
+      "hits": [
+        {
+          "path": "vault/link.md",
+          "title": "Link Note",
+          "snippet": "See [[Alpha Note]] and the needle phrase.\n"
+        }
+      ]
+    },
+    {
+      "query": "alpha",
+      "scoped": true,
+      "allowed": [
+        "vault/a.md"
+      ],
+      "hits": [
+        {
+          "path": "vault/a.md",
+          "title": "Alpha Note",
+          "snippet": "Alpha body contains a unique orchard marker.\n"
+        }
+      ]
+    },
+    {
+      "query": "alpha",
+      "scoped": true,
+      "hits": []
+    }
+  ],
+  "updated": {
+    "files": [
+      {
+        "id": 1,
+        "path": "vault/a.md",
+        "sha256": "2393dfbd3c7562eced134d09628651432d72af09168fd875c63f141622d3ed22",
+        "title": "Alpha Note Updated",
+        "created_at": "2026-01-01T10:00:00Z",
+        "modified_at": "2026-01-15T12:00:03.123456789Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": "closed",
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "4769de8ca709a190",
+        "asn": null,
+        "size": 152,
+        "mtime_ns": 1768478403123456789
+      },
+      {
+        "id": 2,
+        "path": "vault/rechnung.md",
+        "sha256": "45144bd494181dae0b0d55dcfb72c431db1ad417fedebee8f905dd4d4b77f38a",
+        "title": "Rechnung Müller",
+        "created_at": "2026-01-02T10:00:00Z",
+        "modified_at": "2026-01-15T12:00:01.123456789Z",
+        "type": "document",
+        "document_date": "2026-01-02",
+        "person": "Jörg",
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "cea8a71824506092",
+        "asn": 42,
+        "size": 201,
+        "mtime_ns": 1768478401123456789
+      },
+      {
+        "id": 3,
+        "path": "vault/link.md",
+        "sha256": "b4fc4c1c5c4e25b92f9bfdfef2237e3ee82057e24c05d27e6c2567d280fd2fff",
+        "title": "Link Note",
+        "created_at": "2026-01-03T10:00:00Z",
+        "modified_at": "2026-01-15T12:00:02.123456789Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": 91,
+        "ocr_json_path": null,
+        "simhash": "02bf70194cb3f346",
+        "asn": null,
+        "size": 114,
+        "mtime_ns": 1768478402123456789
+      }
+    ],
+    "properties": [
+      {
+        "file_id": 1,
+        "key": "created",
+        "value": "2026-01-01T10:00:00Z",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "status",
+        "value": "closed",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "tags",
+        "value": "[alpha changed]",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "title",
+        "value": "Alpha Note Updated",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "aliases",
+        "value": "- Faktura",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "asn",
+        "value": "42",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "created",
+        "value": "2026-01-02T10:00:00Z",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "document_date",
+        "value": "2026-01-02",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "person",
+        "value": "Jörg",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "title",
+        "value": "Rechnung Müller",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "confidence",
+        "value": "91",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "created",
+        "value": "2026-01-03T10:00:00Z",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "title",
+        "value": "Link Note",
+        "value_type": "string"
+      }
+    ],
+    "links": [
+      {
+        "from": "vault/link.md",
+        "to": "Alpha Note",
+        "kind": "wikilink"
+      }
+    ],
+    "fts_search": [
+      {
+        "rowid": 1,
+        "title": "Alpha Note Updated",
+        "body": "Updated body contains a unique vineyard marker.\n"
+      },
+      {
+        "rowid": 2,
+        "title": "Rechnung Müller ASN 42",
+        "body": "Die Krankenversicherungsbeiträge und Rechnungen sind überfällig.\n"
+      },
+      {
+        "rowid": 3,
+        "title": "Link Note",
+        "body": "See [[Alpha Note]] and the needle phrase.\n"
+      }
+    ],
+    "fts_norm": [
+      {
+        "rowid": 1,
+        "norm": "alpha note updated body contain a uniqu vineyard mark"
+      },
+      {
+        "rowid": 2,
+        "norm": "rechn mull asn 42 krankenversicherungsbeitrag rechnung uberfallig"
+      },
+      {
+        "rowid": 3,
+        "norm": "link note see alpha and the needl phras"
+      }
+    ],
+    "fts_tri": [
+      {
+        "rowid": 1,
+        "body": "Updated body contains a unique vineyard marker.\n"
+      },
+      {
+        "rowid": 2,
+        "body": "Die Krankenversicherungsbeiträge und Rechnungen sind überfällig.\n"
+      },
+      {
+        "rowid": 3,
+        "body": "See [[Alpha Note]] and the needle phrase.\n"
+      }
+    ]
+  },
+  "deleted": {
+    "files": [
+      {
+        "id": 1,
+        "path": "vault/a.md",
+        "sha256": "2393dfbd3c7562eced134d09628651432d72af09168fd875c63f141622d3ed22",
+        "title": "Alpha Note Updated",
+        "created_at": "2026-01-01T10:00:00Z",
+        "modified_at": "2026-01-15T12:00:03.123456789Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": "closed",
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "4769de8ca709a190",
+        "asn": null,
+        "size": 152,
+        "mtime_ns": 1768478403123456789
+      },
+      {
+        "id": 2,
+        "path": "vault/rechnung.md",
+        "sha256": "45144bd494181dae0b0d55dcfb72c431db1ad417fedebee8f905dd4d4b77f38a",
+        "title": "Rechnung Müller",
+        "created_at": "2026-01-02T10:00:00Z",
+        "modified_at": "2026-01-15T12:00:01.123456789Z",
+        "type": "document",
+        "document_date": "2026-01-02",
+        "person": "Jörg",
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "cea8a71824506092",
+        "asn": 42,
+        "size": 201,
+        "mtime_ns": 1768478401123456789
+      }
+    ],
+    "properties": [
+      {
+        "file_id": 1,
+        "key": "created",
+        "value": "2026-01-01T10:00:00Z",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "status",
+        "value": "closed",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "tags",
+        "value": "[alpha changed]",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "title",
+        "value": "Alpha Note Updated",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "aliases",
+        "value": "- Faktura",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "asn",
+        "value": "42",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "created",
+        "value": "2026-01-02T10:00:00Z",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "document_date",
+        "value": "2026-01-02",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "person",
+        "value": "Jörg",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "title",
+        "value": "Rechnung Müller",
+        "value_type": "string"
+      }
+    ],
+    "links": [],
+    "fts_search": [
+      {
+        "rowid": 1,
+        "title": "Alpha Note Updated",
+        "body": "Updated body contains a unique vineyard marker.\n"
+      },
+      {
+        "rowid": 2,
+        "title": "Rechnung Müller ASN 42",
+        "body": "Die Krankenversicherungsbeiträge und Rechnungen sind überfällig.\n"
+      }
+    ],
+    "fts_norm": [
+      {
+        "rowid": 1,
+        "norm": "alpha note updated body contain a uniqu vineyard mark"
+      },
+      {
+        "rowid": 2,
+        "norm": "rechn mull asn 42 krankenversicherungsbeitrag rechnung uberfallig"
+      }
+    ],
+    "fts_tri": [
+      {
+        "rowid": 1,
+        "body": "Updated body contains a unique vineyard marker.\n"
+      },
+      {
+        "rowid": 2,
+        "body": "Die Krankenversicherungsbeiträge und Rechnungen sind überfällig.\n"
+      }
+    ]
+  },
+  "batch_error": "index vault/batch-invalid.md: invalid document ASN: must be a positive integer",
+  "after_batch_error": {
+    "files": [
+      {
+        "id": 1,
+        "path": "vault/a.md",
+        "sha256": "2393dfbd3c7562eced134d09628651432d72af09168fd875c63f141622d3ed22",
+        "title": "Alpha Note Updated",
+        "created_at": "2026-01-01T10:00:00Z",
+        "modified_at": "2026-01-15T12:00:03.123456789Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": "closed",
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "4769de8ca709a190",
+        "asn": null,
+        "size": 152,
+        "mtime_ns": 1768478403123456789
+      },
+      {
+        "id": 2,
+        "path": "vault/rechnung.md",
+        "sha256": "45144bd494181dae0b0d55dcfb72c431db1ad417fedebee8f905dd4d4b77f38a",
+        "title": "Rechnung Müller",
+        "created_at": "2026-01-02T10:00:00Z",
+        "modified_at": "2026-01-15T12:00:01.123456789Z",
+        "type": "document",
+        "document_date": "2026-01-02",
+        "person": "Jörg",
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "cea8a71824506092",
+        "asn": 42,
+        "size": 201,
+        "mtime_ns": 1768478401123456789
+      },
+      {
+        "id": 4,
+        "path": "vault/batch-before.md",
+        "sha256": "8d9f9527d8b8d4f8d51e8f68caeb6de2d51d270eaabcb4c4f7e0fa7a10f38709",
+        "title": "Batch Before",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:04.123456789Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "d89aa06245afb2be",
+        "asn": null,
+        "size": 35,
+        "mtime_ns": 1768478404123456789
+      }
+    ],
+    "properties": [
+      {
+        "file_id": 1,
+        "key": "created",
+        "value": "2026-01-01T10:00:00Z",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "status",
+        "value": "closed",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "tags",
+        "value": "[alpha changed]",
+        "value_type": "string"
+      },
+      {
+        "file_id": 1,
+        "key": "title",
+        "value": "Alpha Note Updated",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "aliases",
+        "value": "- Faktura",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "asn",
+        "value": "42",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "created",
+        "value": "2026-01-02T10:00:00Z",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "document_date",
+        "value": "2026-01-02",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "person",
+        "value": "Jörg",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "title",
+        "value": "Rechnung Müller",
+        "value_type": "string"
+      },
+      {
+        "file_id": 4,
+        "key": "title",
+        "value": "Batch Before",
+        "value_type": "string"
+      }
+    ],
+    "links": [],
+    "fts_search": [
+      {
+        "rowid": 1,
+        "title": "Alpha Note Updated",
+        "body": "Updated body contains a unique vineyard marker.\n"
+      },
+      {
+        "rowid": 2,
+        "title": "Rechnung Müller ASN 42",
+        "body": "Die Krankenversicherungsbeiträge und Rechnungen sind überfällig.\n"
+      },
+      {
+        "rowid": 4,
+        "title": "Batch Before",
+        "body": "before\n"
+      }
+    ],
+    "fts_norm": [
+      {
+        "rowid": 1,
+        "norm": "alpha note updated body contain a uniqu vineyard mark"
+      },
+      {
+        "rowid": 2,
+        "norm": "rechn mull asn 42 krankenversicherungsbeitrag rechnung uberfallig"
+      },
+      {
+        "rowid": 4,
+        "norm": "batch befor"
+      }
+    ],
+    "fts_tri": [
+      {
+        "rowid": 1,
+        "body": "Updated body contains a unique vineyard marker.\n"
+      },
+      {
+        "rowid": 2,
+        "body": "Die Krankenversicherungsbeiträge und Rechnungen sind überfällig.\n"
+      },
+      {
+        "rowid": 4,
+        "body": "before\n"
+      }
+    ]
+  }
+}

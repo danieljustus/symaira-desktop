@@ -1,0 +1,20 @@
+[package]
+name = "symdesk-index"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+noyalib.workspace = true
+rusqlite.workspace = true
+symdesk-core.workspace = true
+symdesk-vault.workspace = true
+thiserror.workspace = true
+time.workspace = true
+
+[dev-dependencies]
+serde.workspace = true
+serde_json.workspace = true

@@ -99,6 +99,7 @@ func ComputeGeneratorSourceDigest(repoRoot string) (string, error) {
 		"internal/notebook/port_parse_test.go",
 		"internal/retrieval/internal/engine/port_metadata_test.go",
 		"internal/vault/port_mobile_test.go",
+		"internal/sidecar/port_contract_test.go",
 		"Tests/SymDeskMobileTests/MobileRustPortContractTests.swift",
 	}
 	args := []string{"ls-files", "--cached", "--others", "--exclude-standard", "--"}

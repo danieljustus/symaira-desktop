@@ -1,4 +1,12 @@
-use std::collections::HashMap;
+#[cfg(unix)]
+use std::process::Command;
+use std::{
+    collections::HashMap,
+    fs,
+    io::Write,
+    path::Path,
+    time::{Duration, UNIX_EPOCH},
+};
 
 use rusqlite::{Connection, types::ValueRef};
 use serde::Deserialize;
@@ -191,6 +199,363 @@ fn go_sidecar_contract_matches_rust() {
     sidecar.check_integrity().expect("integrity check");
     drop(sidecar);
     let _ = std::fs::remove_dir_all(directory);
+}
+
+#[derive(Deserialize)]
+struct LifecycleFixture {
+    schema_version: u8,
+    oracle: LifecycleOracle,
+    inputs: Vec<LifecycleInput>,
+    initial: Value,
+    fast: Value,
+    stat_only: Value,
+    same_size: Value,
+    derived_transition: Value,
+    missing_after_refresh: Value,
+    after_prune: Value,
+    lifecycle_after_prune: Vec<LifecycleStatus>,
+    prune_removed: usize,
+    fast_indexed_at_same: bool,
+    stat_indexed_at_same: bool,
+    same_size_length: bool,
+    uppercase_ignored: bool,
+}
+
+#[derive(Deserialize)]
+struct LifecycleOracle {
+    commit: String,
+    release: String,
+}
+
+#[derive(Deserialize)]
+struct LifecycleInput {
+    path: String,
+    initial: String,
+    stat_refresh: Option<String>,
+    edit: Option<String>,
+    derived: Option<String>,
+    mtime_ns: i64,
+    refresh_mtime_ns: Option<i64>,
+    edit_mtime_ns: Option<i64>,
+    derived_mtime_ns: Option<i64>,
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+struct LifecycleStatus {
+    path: String,
+    state: String,
+    reason: String,
+    updated_at: String,
+}
+
+#[test]
+fn go_refresh_stat_prune_lifecycle_matches_rust() {
+    let fixture: LifecycleFixture = serde_json::from_str(include_str!(
+        "../../../testdata/port/sidecar/lifecycle.json"
+    ))
+    .expect("decode lifecycle fixture");
+    assert_eq!(fixture.schema_version, 1);
+    assert_eq!(
+        fixture.oracle.commit,
+        "ae86331930fdfa2b128b68ae5af7437091b9949a"
+    );
+    assert_eq!(fixture.oracle.release, "v0.12.2");
+    assert!(fixture.same_size_length);
+    assert!(fixture.uppercase_ignored);
+
+    let root = std::env::temp_dir().join(format!("symdesk-index-lifecycle-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&root);
+    fs::create_dir_all(&root).expect("create vault root");
+    let root = fs::canonicalize(&root).expect("canonicalize vault root");
+    let db_path = root.join("sidecar.db");
+    let mut sidecar = Sidecar::open(&db_path).expect("open sidecar");
+    for input in &fixture.inputs {
+        write_lifecycle_file(&root, &input.path, &input.initial, input.mtime_ns);
+    }
+
+    sidecar.refresh_index(&root).expect("initial refresh");
+    assert_snapshot(&sidecar, &root, &fixture.initial);
+    let note_path = root.join("note.md");
+    let initial_indexed_at = indexed_at(&sidecar, &note_path);
+
+    sidecar.refresh_index(&root).expect("fast refresh");
+    assert_snapshot(&sidecar, &root, &fixture.fast);
+    assert_eq!(initial_indexed_at, indexed_at(&sidecar, &note_path));
+    assert!(fixture.fast_indexed_at_same);
+
+    let stat = fixture
+        .inputs
+        .iter()
+        .find(|input| input.path == "stat.md")
+        .expect("stat input");
+    write_lifecycle_file(
+        &root,
+        &stat.path,
+        stat.stat_refresh.as_deref().expect("stat content"),
+        stat.refresh_mtime_ns.expect("stat mtime"),
+    );
+    let stat_path = root.join("stat.md");
+    let stat_indexed_at = indexed_at(&sidecar, &stat_path);
+    sidecar.refresh_index(&root).expect("stat-only refresh");
+    assert_snapshot(&sidecar, &root, &fixture.stat_only);
+    assert_eq!(stat_indexed_at, indexed_at(&sidecar, &stat_path));
+    assert!(fixture.stat_indexed_at_same);
+
+    let note = fixture
+        .inputs
+        .iter()
+        .find(|input| input.path == "note.md")
+        .expect("note input");
+    write_lifecycle_file(
+        &root,
+        &note.path,
+        note.edit.as_deref().expect("edit content"),
+        note.edit_mtime_ns.expect("edit mtime"),
+    );
+    sidecar.refresh_index(&root).expect("same-size refresh");
+    assert_snapshot(&sidecar, &root, &fixture.same_size);
+
+    let derived = fixture
+        .inputs
+        .iter()
+        .find(|input| input.path == "derived.md")
+        .expect("derived input");
+    write_lifecycle_file(
+        &root,
+        &derived.path,
+        derived.derived.as_deref().expect("derived content"),
+        derived.derived_mtime_ns.expect("derived mtime"),
+    );
+    sidecar
+        .refresh_index(&root)
+        .expect("derived transition refresh");
+    assert_snapshot(&sidecar, &root, &fixture.derived_transition);
+
+    fs::remove_file(root.join("remove.md")).expect("remove source");
+    sidecar
+        .refresh_index(&root)
+        .expect("refresh with missing source");
+    assert_snapshot(&sidecar, &root, &fixture.missing_after_refresh);
+
+    sidecar
+        .connection
+        .execute(
+            "INSERT INTO index_lifecycle(path, state, reason, updated_at) VALUES (?, ?, ?, ?)",
+            rusqlite::params![
+                root.join("stale-status.md").to_string_lossy(),
+                "failed",
+                "missing",
+                "2026-01-15T12:00:00Z"
+            ],
+        )
+        .expect("insert stale status");
+    sidecar
+        .connection
+        .execute(
+            "INSERT INTO index_lifecycle(path, state, reason, updated_at) VALUES (?, ?, ?, ?)",
+            rusqlite::params![
+                note_path.to_string_lossy(),
+                "indexed",
+                "",
+                "2026-01-15T12:00:00Z"
+            ],
+        )
+        .expect("insert kept status");
+    let before_absent_delete = snapshot(&sidecar.connection);
+    sidecar
+        .delete_document(&root.join("never-indexed.md").to_string_lossy())
+        .expect("absent delete");
+    assert_eq!(before_absent_delete, snapshot(&sidecar.connection));
+
+    assert_eq!(sidecar.prune(&root).expect("prune"), fixture.prune_removed);
+    assert_snapshot(&sidecar, &root, &fixture.after_prune);
+    assert_eq!(
+        fixture.lifecycle_after_prune,
+        lifecycle_statuses(&sidecar, &root)
+    );
+    drop(sidecar);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[cfg(unix)]
+#[test]
+fn unchanged_refresh_skips_unreadable_file() {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let uid = Command::new("id")
+        .arg("-u")
+        .output()
+        .expect("query effective uid");
+    if uid.status.success() && uid.stdout == b"0\n" {
+        return;
+    }
+    let root =
+        std::env::temp_dir().join(format!("symdesk-index-unreadable-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&root);
+    fs::create_dir_all(&root).expect("create root");
+    let root = fs::canonicalize(&root).expect("canonicalize root");
+    let path = root.join("note.md");
+    write_lifecycle_file(
+        &root,
+        "note.md",
+        "---\ntitle: Note\n---\nbody\n",
+        1_800_000_000_000_000_000,
+    );
+    let mut sidecar = Sidecar::open(&root.join("sidecar.db")).expect("open sidecar");
+    sidecar.refresh_index(&root).expect("initial refresh");
+    let before = indexed_at(&sidecar, &path);
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o000)).expect("make unreadable");
+    let result = sidecar.refresh_index(&root);
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).expect("restore permissions");
+    result.expect("fast refresh should not read file");
+    assert_eq!(before, indexed_at(&sidecar, &path));
+    drop(sidecar);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn refresh_flushes_queued_documents_before_later_parse_error() {
+    let root = std::env::temp_dir().join(format!(
+        "symdesk-index-refresh-error-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&root);
+    fs::create_dir_all(&root).expect("create root");
+    let root = fs::canonicalize(&root).expect("canonicalize root");
+    write_lifecycle_file(
+        &root,
+        "a-valid.md",
+        "---\ntitle: Valid\n---\nbody\n",
+        1_800_000_000_000_000_000,
+    );
+    write_lifecycle_file(
+        &root,
+        "b-invalid.md",
+        "---\ntitle: [\n---\nbroken\n",
+        1_800_000_001_000_000_000,
+    );
+    let mut sidecar = Sidecar::open(&root.join("sidecar.db")).expect("open sidecar");
+
+    assert!(sidecar.refresh_index(&root).is_err());
+    let indexed: i64 = sidecar
+        .connection
+        .query_row(
+            "SELECT COUNT(*) FROM files WHERE path = ?",
+            [root.join("a-valid.md").to_string_lossy().as_ref()],
+            |row| row.get(0),
+        )
+        .expect("count flushed document");
+    assert_eq!(indexed, 1);
+    drop(sidecar);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[cfg(unix)]
+#[test]
+fn open_preserves_existing_parent_permissions() {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let root = std::env::temp_dir().join(format!(
+        "symdesk-index-existing-parent-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&root);
+    fs::create_dir_all(&root).expect("create parent");
+    fs::set_permissions(&root, fs::Permissions::from_mode(0o750)).expect("set parent mode");
+    let _sidecar = Sidecar::open(&root.join("sidecar.db")).expect("open sidecar");
+    let mode = fs::metadata(&root)
+        .expect("stat parent")
+        .permissions()
+        .mode()
+        & 0o777;
+    assert_eq!(mode, 0o750);
+    drop(_sidecar);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn open_creates_a_usable_parent_on_all_platforms() {
+    let root = std::env::temp_dir().join(format!(
+        "symdesk-index-created-parent-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&root);
+    let _sidecar = Sidecar::open(&root.join("nested").join("sidecar.db")).expect("open sidecar");
+    assert!(root.join("nested").is_dir());
+    drop(_sidecar);
+    let _ = fs::remove_dir_all(root);
+}
+
+fn write_lifecycle_file(root: &Path, relative: &str, content: &str, mtime_ns: i64) {
+    let path = root.join(relative);
+    let mut file = fs::File::create(path).expect("create lifecycle file");
+    file.write_all(content.as_bytes())
+        .expect("write lifecycle file");
+    file.set_modified(UNIX_EPOCH + Duration::from_nanos(mtime_ns as u64))
+        .expect("set lifecycle mtime");
+}
+
+fn assert_snapshot(sidecar: &Sidecar, root: &Path, expected: &Value) {
+    let mut actual = snapshot(&sidecar.connection);
+    normalize_snapshot_paths(&mut actual, root);
+    assert_eq!(&actual, expected);
+}
+
+fn normalize_snapshot_paths(value: &mut Value, root: &Path) {
+    match value {
+        Value::Array(values) => values
+            .iter_mut()
+            .for_each(|value| normalize_snapshot_paths(value, root)),
+        Value::Object(object) => {
+            for (key, value) in object.iter_mut() {
+                if matches!(key.as_str(), "path" | "from" | "to")
+                    && let Value::String(path) = value
+                {
+                    let root_string = root.to_string_lossy();
+                    if let Some(relative) = path.strip_prefix(root_string.as_ref()) {
+                        *path = relative.trim_start_matches('/').to_owned();
+                    }
+                }
+                normalize_snapshot_paths(value, root);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn indexed_at(sidecar: &Sidecar, path: &Path) -> String {
+    sidecar
+        .connection
+        .query_row(
+            "SELECT indexed_at FROM files WHERE path = ?",
+            [path.to_string_lossy().as_ref()],
+            |row| row.get(0),
+        )
+        .expect("indexed_at")
+}
+
+fn lifecycle_statuses(sidecar: &Sidecar, root: &Path) -> Vec<LifecycleStatus> {
+    let mut statement = sidecar
+        .connection
+        .prepare("SELECT path, state, reason, updated_at FROM index_lifecycle ORDER BY path")
+        .expect("prepare lifecycle rows");
+    statement
+        .query_map([], |row| {
+            let path: String = row.get(0)?;
+            Ok(LifecycleStatus {
+                path: path
+                    .strip_prefix(root.to_string_lossy().as_ref())
+                    .unwrap_or(&path)
+                    .trim_start_matches('/')
+                    .to_owned(),
+                state: row.get(1)?,
+                reason: row.get(2)?,
+                updated_at: row.get(3)?,
+            })
+        })
+        .expect("query lifecycle rows")
+        .collect::<Result<Vec<_>, _>>()
+        .expect("collect lifecycle rows")
 }
 
 fn indexed(input: &DocumentInput) -> IndexedDocument {

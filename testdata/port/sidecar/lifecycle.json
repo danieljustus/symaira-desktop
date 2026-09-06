@@ -1,0 +1,1057 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "inputs": [
+    {
+      "path": "note.md",
+      "initial": "---\ntitle: Stable Note\n---\nAAAA\n",
+      "edit": "---\ntitle: Edited Note\n---\nBBBB\n",
+      "mtime_ns": 1768478400000000000,
+      "refresh_mtime_ns": 1768478410000000000,
+      "edit_mtime_ns": 1768478420000000000
+    },
+    {
+      "path": "stat.md",
+      "initial": "---\ntitle: Stat Note\n---\nunchanged\n",
+      "stat_refresh": "---\ntitle: Stat Note\n---\nunchanged\n",
+      "mtime_ns": 1768478401000000000,
+      "refresh_mtime_ns": 1768478411000000000
+    },
+    {
+      "path": "derived.md",
+      "initial": "---\ntitle: Generated\n---\nsource\n",
+      "derived": "---\ntitle: Generated\nderived_from: source.md\n---\ngenerated\n",
+      "mtime_ns": 1768478402000000000,
+      "derived_mtime_ns": 1768478430000000000
+    },
+    {
+      "path": "remove.md",
+      "initial": "---\ntitle: Removed Later\n---\nremove me\n",
+      "mtime_ns": 1768478403000000000
+    },
+    {
+      "path": "UPPER.MD",
+      "initial": "---\ntitle: Ignored Uppercase\n---\nignored\n",
+      "mtime_ns": 1768478404000000000
+    }
+  ],
+  "initial": {
+    "files": [
+      {
+        "id": 1,
+        "path": "derived.md",
+        "sha256": "139edf2d56633158b5e4b7b816ddf18229bdcca46df302089edede394d35a65b",
+        "title": "Generated",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:02Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "76dbdc228f782db8",
+        "asn": null,
+        "size": 32,
+        "mtime_ns": 1768478402000000000
+      },
+      {
+        "id": 2,
+        "path": "note.md",
+        "sha256": "03cab4ed06fca0fbae1350ae2e8d86ba8b01f81a647d7922254571c5ceb8e0ab",
+        "title": "Stable Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:00Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "f5216183ea912259",
+        "asn": null,
+        "size": 32,
+        "mtime_ns": 1768478400000000000
+      },
+      {
+        "id": 3,
+        "path": "remove.md",
+        "sha256": "714e665960788a73da39c2b1b6bcd358bca96374052bab56e39bd0df1bb847d9",
+        "title": "Removed Later",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:03Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "08a81d0320104025",
+        "asn": null,
+        "size": 39,
+        "mtime_ns": 1768478403000000000
+      },
+      {
+        "id": 4,
+        "path": "stat.md",
+        "sha256": "866e1d906803a079c288e0d82663614e80843b4bca2202dd1d568fa246d8edfc",
+        "title": "Stat Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:01Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "53c99f45fd3c7a3e",
+        "asn": null,
+        "size": 35,
+        "mtime_ns": 1768478401000000000
+      }
+    ],
+    "properties": [
+      {
+        "file_id": 1,
+        "key": "title",
+        "value": "Generated",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "title",
+        "value": "Stable Note",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "title",
+        "value": "Removed Later",
+        "value_type": "string"
+      },
+      {
+        "file_id": 4,
+        "key": "title",
+        "value": "Stat Note",
+        "value_type": "string"
+      }
+    ],
+    "links": [],
+    "fts_search": [
+      {
+        "rowid": 1,
+        "title": "Generated",
+        "body": "source\n"
+      },
+      {
+        "rowid": 2,
+        "title": "Stable Note",
+        "body": "AAAA\n"
+      },
+      {
+        "rowid": 3,
+        "title": "Removed Later",
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "title": "Stat Note",
+        "body": "unchanged\n"
+      }
+    ],
+    "fts_norm": [
+      {
+        "rowid": 1,
+        "norm": "generated sourc"
+      },
+      {
+        "rowid": 2,
+        "norm": "stabl note aaaa"
+      },
+      {
+        "rowid": 3,
+        "norm": "removed later remov me"
+      },
+      {
+        "rowid": 4,
+        "norm": "stat note unchanged"
+      }
+    ],
+    "fts_tri": [
+      {
+        "rowid": 1,
+        "body": "source\n"
+      },
+      {
+        "rowid": 2,
+        "body": "AAAA\n"
+      },
+      {
+        "rowid": 3,
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "body": "unchanged\n"
+      }
+    ]
+  },
+  "fast": {
+    "files": [
+      {
+        "id": 1,
+        "path": "derived.md",
+        "sha256": "139edf2d56633158b5e4b7b816ddf18229bdcca46df302089edede394d35a65b",
+        "title": "Generated",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:02Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "76dbdc228f782db8",
+        "asn": null,
+        "size": 32,
+        "mtime_ns": 1768478402000000000
+      },
+      {
+        "id": 2,
+        "path": "note.md",
+        "sha256": "03cab4ed06fca0fbae1350ae2e8d86ba8b01f81a647d7922254571c5ceb8e0ab",
+        "title": "Stable Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:00Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "f5216183ea912259",
+        "asn": null,
+        "size": 32,
+        "mtime_ns": 1768478400000000000
+      },
+      {
+        "id": 3,
+        "path": "remove.md",
+        "sha256": "714e665960788a73da39c2b1b6bcd358bca96374052bab56e39bd0df1bb847d9",
+        "title": "Removed Later",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:03Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "08a81d0320104025",
+        "asn": null,
+        "size": 39,
+        "mtime_ns": 1768478403000000000
+      },
+      {
+        "id": 4,
+        "path": "stat.md",
+        "sha256": "866e1d906803a079c288e0d82663614e80843b4bca2202dd1d568fa246d8edfc",
+        "title": "Stat Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:01Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "53c99f45fd3c7a3e",
+        "asn": null,
+        "size": 35,
+        "mtime_ns": 1768478401000000000
+      }
+    ],
+    "properties": [
+      {
+        "file_id": 1,
+        "key": "title",
+        "value": "Generated",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "title",
+        "value": "Stable Note",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "title",
+        "value": "Removed Later",
+        "value_type": "string"
+      },
+      {
+        "file_id": 4,
+        "key": "title",
+        "value": "Stat Note",
+        "value_type": "string"
+      }
+    ],
+    "links": [],
+    "fts_search": [
+      {
+        "rowid": 1,
+        "title": "Generated",
+        "body": "source\n"
+      },
+      {
+        "rowid": 2,
+        "title": "Stable Note",
+        "body": "AAAA\n"
+      },
+      {
+        "rowid": 3,
+        "title": "Removed Later",
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "title": "Stat Note",
+        "body": "unchanged\n"
+      }
+    ],
+    "fts_norm": [
+      {
+        "rowid": 1,
+        "norm": "generated sourc"
+      },
+      {
+        "rowid": 2,
+        "norm": "stabl note aaaa"
+      },
+      {
+        "rowid": 3,
+        "norm": "removed later remov me"
+      },
+      {
+        "rowid": 4,
+        "norm": "stat note unchanged"
+      }
+    ],
+    "fts_tri": [
+      {
+        "rowid": 1,
+        "body": "source\n"
+      },
+      {
+        "rowid": 2,
+        "body": "AAAA\n"
+      },
+      {
+        "rowid": 3,
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "body": "unchanged\n"
+      }
+    ]
+  },
+  "stat_only": {
+    "files": [
+      {
+        "id": 1,
+        "path": "derived.md",
+        "sha256": "139edf2d56633158b5e4b7b816ddf18229bdcca46df302089edede394d35a65b",
+        "title": "Generated",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:02Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "76dbdc228f782db8",
+        "asn": null,
+        "size": 32,
+        "mtime_ns": 1768478402000000000
+      },
+      {
+        "id": 2,
+        "path": "note.md",
+        "sha256": "03cab4ed06fca0fbae1350ae2e8d86ba8b01f81a647d7922254571c5ceb8e0ab",
+        "title": "Stable Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:00Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "f5216183ea912259",
+        "asn": null,
+        "size": 32,
+        "mtime_ns": 1768478400000000000
+      },
+      {
+        "id": 3,
+        "path": "remove.md",
+        "sha256": "714e665960788a73da39c2b1b6bcd358bca96374052bab56e39bd0df1bb847d9",
+        "title": "Removed Later",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:03Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "08a81d0320104025",
+        "asn": null,
+        "size": 39,
+        "mtime_ns": 1768478403000000000
+      },
+      {
+        "id": 4,
+        "path": "stat.md",
+        "sha256": "866e1d906803a079c288e0d82663614e80843b4bca2202dd1d568fa246d8edfc",
+        "title": "Stat Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:01Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "53c99f45fd3c7a3e",
+        "asn": null,
+        "size": 35,
+        "mtime_ns": 1768478411000000000
+      }
+    ],
+    "properties": [
+      {
+        "file_id": 1,
+        "key": "title",
+        "value": "Generated",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "title",
+        "value": "Stable Note",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "title",
+        "value": "Removed Later",
+        "value_type": "string"
+      },
+      {
+        "file_id": 4,
+        "key": "title",
+        "value": "Stat Note",
+        "value_type": "string"
+      }
+    ],
+    "links": [],
+    "fts_search": [
+      {
+        "rowid": 1,
+        "title": "Generated",
+        "body": "source\n"
+      },
+      {
+        "rowid": 2,
+        "title": "Stable Note",
+        "body": "AAAA\n"
+      },
+      {
+        "rowid": 3,
+        "title": "Removed Later",
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "title": "Stat Note",
+        "body": "unchanged\n"
+      }
+    ],
+    "fts_norm": [
+      {
+        "rowid": 1,
+        "norm": "generated sourc"
+      },
+      {
+        "rowid": 2,
+        "norm": "stabl note aaaa"
+      },
+      {
+        "rowid": 3,
+        "norm": "removed later remov me"
+      },
+      {
+        "rowid": 4,
+        "norm": "stat note unchanged"
+      }
+    ],
+    "fts_tri": [
+      {
+        "rowid": 1,
+        "body": "source\n"
+      },
+      {
+        "rowid": 2,
+        "body": "AAAA\n"
+      },
+      {
+        "rowid": 3,
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "body": "unchanged\n"
+      }
+    ]
+  },
+  "same_size": {
+    "files": [
+      {
+        "id": 1,
+        "path": "derived.md",
+        "sha256": "139edf2d56633158b5e4b7b816ddf18229bdcca46df302089edede394d35a65b",
+        "title": "Generated",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:02Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "76dbdc228f782db8",
+        "asn": null,
+        "size": 32,
+        "mtime_ns": 1768478402000000000
+      },
+      {
+        "id": 2,
+        "path": "note.md",
+        "sha256": "62040e85f83cb8ff2cc9b0c18a2ebdba9b739077a7fda8a496acbd93746be427",
+        "title": "Edited Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:20Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "b366539bb8235725",
+        "asn": null,
+        "size": 32,
+        "mtime_ns": 1768478420000000000
+      },
+      {
+        "id": 3,
+        "path": "remove.md",
+        "sha256": "714e665960788a73da39c2b1b6bcd358bca96374052bab56e39bd0df1bb847d9",
+        "title": "Removed Later",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:03Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "08a81d0320104025",
+        "asn": null,
+        "size": 39,
+        "mtime_ns": 1768478403000000000
+      },
+      {
+        "id": 4,
+        "path": "stat.md",
+        "sha256": "866e1d906803a079c288e0d82663614e80843b4bca2202dd1d568fa246d8edfc",
+        "title": "Stat Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:01Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "53c99f45fd3c7a3e",
+        "asn": null,
+        "size": 35,
+        "mtime_ns": 1768478411000000000
+      }
+    ],
+    "properties": [
+      {
+        "file_id": 1,
+        "key": "title",
+        "value": "Generated",
+        "value_type": "string"
+      },
+      {
+        "file_id": 2,
+        "key": "title",
+        "value": "Edited Note",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "title",
+        "value": "Removed Later",
+        "value_type": "string"
+      },
+      {
+        "file_id": 4,
+        "key": "title",
+        "value": "Stat Note",
+        "value_type": "string"
+      }
+    ],
+    "links": [],
+    "fts_search": [
+      {
+        "rowid": 1,
+        "title": "Generated",
+        "body": "source\n"
+      },
+      {
+        "rowid": 2,
+        "title": "Edited Note",
+        "body": "BBBB\n"
+      },
+      {
+        "rowid": 3,
+        "title": "Removed Later",
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "title": "Stat Note",
+        "body": "unchanged\n"
+      }
+    ],
+    "fts_norm": [
+      {
+        "rowid": 1,
+        "norm": "generated sourc"
+      },
+      {
+        "rowid": 2,
+        "norm": "edited note bbbb"
+      },
+      {
+        "rowid": 3,
+        "norm": "removed later remov me"
+      },
+      {
+        "rowid": 4,
+        "norm": "stat note unchanged"
+      }
+    ],
+    "fts_tri": [
+      {
+        "rowid": 1,
+        "body": "source\n"
+      },
+      {
+        "rowid": 2,
+        "body": "BBBB\n"
+      },
+      {
+        "rowid": 3,
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "body": "unchanged\n"
+      }
+    ]
+  },
+  "derived_transition": {
+    "files": [
+      {
+        "id": 2,
+        "path": "note.md",
+        "sha256": "62040e85f83cb8ff2cc9b0c18a2ebdba9b739077a7fda8a496acbd93746be427",
+        "title": "Edited Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:20Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "b366539bb8235725",
+        "asn": null,
+        "size": 32,
+        "mtime_ns": 1768478420000000000
+      },
+      {
+        "id": 3,
+        "path": "remove.md",
+        "sha256": "714e665960788a73da39c2b1b6bcd358bca96374052bab56e39bd0df1bb847d9",
+        "title": "Removed Later",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:03Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "08a81d0320104025",
+        "asn": null,
+        "size": 39,
+        "mtime_ns": 1768478403000000000
+      },
+      {
+        "id": 4,
+        "path": "stat.md",
+        "sha256": "866e1d906803a079c288e0d82663614e80843b4bca2202dd1d568fa246d8edfc",
+        "title": "Stat Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:01Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "53c99f45fd3c7a3e",
+        "asn": null,
+        "size": 35,
+        "mtime_ns": 1768478411000000000
+      }
+    ],
+    "properties": [
+      {
+        "file_id": 2,
+        "key": "title",
+        "value": "Edited Note",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "title",
+        "value": "Removed Later",
+        "value_type": "string"
+      },
+      {
+        "file_id": 4,
+        "key": "title",
+        "value": "Stat Note",
+        "value_type": "string"
+      }
+    ],
+    "links": [],
+    "fts_search": [
+      {
+        "rowid": 2,
+        "title": "Edited Note",
+        "body": "BBBB\n"
+      },
+      {
+        "rowid": 3,
+        "title": "Removed Later",
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "title": "Stat Note",
+        "body": "unchanged\n"
+      }
+    ],
+    "fts_norm": [
+      {
+        "rowid": 2,
+        "norm": "edited note bbbb"
+      },
+      {
+        "rowid": 3,
+        "norm": "removed later remov me"
+      },
+      {
+        "rowid": 4,
+        "norm": "stat note unchanged"
+      }
+    ],
+    "fts_tri": [
+      {
+        "rowid": 2,
+        "body": "BBBB\n"
+      },
+      {
+        "rowid": 3,
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "body": "unchanged\n"
+      }
+    ]
+  },
+  "missing_after_refresh": {
+    "files": [
+      {
+        "id": 2,
+        "path": "note.md",
+        "sha256": "62040e85f83cb8ff2cc9b0c18a2ebdba9b739077a7fda8a496acbd93746be427",
+        "title": "Edited Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:20Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "b366539bb8235725",
+        "asn": null,
+        "size": 32,
+        "mtime_ns": 1768478420000000000
+      },
+      {
+        "id": 3,
+        "path": "remove.md",
+        "sha256": "714e665960788a73da39c2b1b6bcd358bca96374052bab56e39bd0df1bb847d9",
+        "title": "Removed Later",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:03Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "08a81d0320104025",
+        "asn": null,
+        "size": 39,
+        "mtime_ns": 1768478403000000000
+      },
+      {
+        "id": 4,
+        "path": "stat.md",
+        "sha256": "866e1d906803a079c288e0d82663614e80843b4bca2202dd1d568fa246d8edfc",
+        "title": "Stat Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:01Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "53c99f45fd3c7a3e",
+        "asn": null,
+        "size": 35,
+        "mtime_ns": 1768478411000000000
+      }
+    ],
+    "properties": [
+      {
+        "file_id": 2,
+        "key": "title",
+        "value": "Edited Note",
+        "value_type": "string"
+      },
+      {
+        "file_id": 3,
+        "key": "title",
+        "value": "Removed Later",
+        "value_type": "string"
+      },
+      {
+        "file_id": 4,
+        "key": "title",
+        "value": "Stat Note",
+        "value_type": "string"
+      }
+    ],
+    "links": [],
+    "fts_search": [
+      {
+        "rowid": 2,
+        "title": "Edited Note",
+        "body": "BBBB\n"
+      },
+      {
+        "rowid": 3,
+        "title": "Removed Later",
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "title": "Stat Note",
+        "body": "unchanged\n"
+      }
+    ],
+    "fts_norm": [
+      {
+        "rowid": 2,
+        "norm": "edited note bbbb"
+      },
+      {
+        "rowid": 3,
+        "norm": "removed later remov me"
+      },
+      {
+        "rowid": 4,
+        "norm": "stat note unchanged"
+      }
+    ],
+    "fts_tri": [
+      {
+        "rowid": 2,
+        "body": "BBBB\n"
+      },
+      {
+        "rowid": 3,
+        "body": "remove me\n"
+      },
+      {
+        "rowid": 4,
+        "body": "unchanged\n"
+      }
+    ]
+  },
+  "after_prune": {
+    "files": [
+      {
+        "id": 2,
+        "path": "note.md",
+        "sha256": "62040e85f83cb8ff2cc9b0c18a2ebdba9b739077a7fda8a496acbd93746be427",
+        "title": "Edited Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:20Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "b366539bb8235725",
+        "asn": null,
+        "size": 32,
+        "mtime_ns": 1768478420000000000
+      },
+      {
+        "id": 4,
+        "path": "stat.md",
+        "sha256": "866e1d906803a079c288e0d82663614e80843b4bca2202dd1d568fa246d8edfc",
+        "title": "Stat Note",
+        "created_at": "",
+        "modified_at": "2026-01-15T12:00:01Z",
+        "type": "note",
+        "document_date": null,
+        "person": null,
+        "status": null,
+        "due_date": null,
+        "confidence": null,
+        "ocr_json_path": null,
+        "simhash": "53c99f45fd3c7a3e",
+        "asn": null,
+        "size": 35,
+        "mtime_ns": 1768478411000000000
+      }
+    ],
+    "properties": [
+      {
+        "file_id": 2,
+        "key": "title",
+        "value": "Edited Note",
+        "value_type": "string"
+      },
+      {
+        "file_id": 4,
+        "key": "title",
+        "value": "Stat Note",
+        "value_type": "string"
+      }
+    ],
+    "links": [],
+    "fts_search": [
+      {
+        "rowid": 2,
+        "title": "Edited Note",
+        "body": "BBBB\n"
+      },
+      {
+        "rowid": 4,
+        "title": "Stat Note",
+        "body": "unchanged\n"
+      }
+    ],
+    "fts_norm": [
+      {
+        "rowid": 2,
+        "norm": "edited note bbbb"
+      },
+      {
+        "rowid": 4,
+        "norm": "stat note unchanged"
+      }
+    ],
+    "fts_tri": [
+      {
+        "rowid": 2,
+        "body": "BBBB\n"
+      },
+      {
+        "rowid": 4,
+        "body": "unchanged\n"
+      }
+    ]
+  },
+  "lifecycle_after_prune": [
+    {
+      "path": "note.md",
+      "state": "indexed",
+      "reason": "",
+      "updated_at": "2026-01-15T12:00:00Z"
+    }
+  ],
+  "prune_removed": 2,
+  "fast_indexed_at_same": true,
+  "stat_indexed_at_same": true,
+  "same_size_length": true,
+  "uppercase_ignored": true
+}

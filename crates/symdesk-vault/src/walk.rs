@@ -47,14 +47,47 @@ pub fn walk_all(root: &Path) -> io::Result<Vec<WalkEntry>> {
 ///
 /// Propagates errors from [`walk_all`].
 pub fn walk_markdown(root: &Path) -> io::Result<Vec<PathBuf>> {
-    Ok(walk_all(root)?
-        .into_iter()
-        .filter(|entry| entry.path.extension() == Some(OsStr::new("md")))
-        .map(|entry| entry.path)
-        .collect())
+    let mut output = Vec::new();
+    walk_markdown_with(root, |path| {
+        output.push(path.to_path_buf());
+        Ok(())
+    })?;
+    Ok(output)
+}
+
+/// Visits lowercase `.md` entries as they are discovered.
+///
+/// Unlike [`walk_markdown`], this preserves already-visited entries when a
+/// later directory or callback operation fails. Callers that queue work can
+/// therefore flush that work before returning the error.
+///
+/// # Errors
+///
+/// Propagates directory reads, symlink-target read failures, and callback
+/// errors.
+pub fn walk_markdown_with<F>(root: &Path, mut callback: F) -> io::Result<()>
+where
+    F: FnMut(&Path) -> io::Result<()>,
+{
+    walk_directory_visit(root, root, &mut |entry| {
+        if entry.path.extension() == Some(OsStr::new("md")) {
+            callback(&entry.path)?;
+        }
+        Ok(())
+    })
 }
 
 fn walk_directory(root: &Path, directory: &Path, output: &mut Vec<WalkEntry>) -> io::Result<()> {
+    walk_directory_visit(root, directory, &mut |entry| {
+        output.push(entry);
+        Ok(())
+    })
+}
+
+fn walk_directory_visit<F>(root: &Path, directory: &Path, callback: &mut F) -> io::Result<()>
+where
+    F: FnMut(WalkEntry) -> io::Result<()>,
+{
     let mut entries: Vec<_> = fs::read_dir(directory)?.collect::<Result<_, _>>()?;
     entries.sort_by_key(fs::DirEntry::file_name);
     for entry in entries {
@@ -65,7 +98,7 @@ fn walk_directory(root: &Path, directory: &Path, output: &mut Vec<WalkEntry>) ->
             if name.starts_with('.') || SKIP_DIRECTORIES.contains(&name.as_ref()) {
                 continue;
             }
-            walk_directory(root, &entry.path(), output)?;
+            walk_directory_visit(root, &entry.path(), callback)?;
             continue;
         }
         if name.starts_with('.') {
@@ -83,11 +116,11 @@ fn walk_directory(root: &Path, directory: &Path, output: &mut Vec<WalkEntry>) ->
         } else {
             (WalkEntryType::Other, None)
         };
-        output.push(WalkEntry {
+        callback(WalkEntry {
             path: relative,
             entry_type,
             symlink_target,
-        });
+        })?;
     }
     Ok(())
 }

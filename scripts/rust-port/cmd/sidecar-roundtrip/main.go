@@ -1,0 +1,580 @@
+// sidecar-roundtrip is the executable RUST-005 acceptance gate. It builds
+// each sidecar helper once, then drives both helpers as separate processes so
+// the suite exercises the actual Go↔Rust SQLite file contract.
+package main
+
+import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"time"
+)
+
+type fixture struct {
+	SchemaVersion int                      `json:"schema_version"`
+	Oracle        map[string]string        `json:"oracle"`
+	Source        string                   `json:"source"`
+	Documents     []map[string]interface{} `json:"documents"`
+	RustUpdate    map[string]interface{}   `json:"rust_update"`
+	RustAdded     map[string]interface{}   `json:"rust_added"`
+	GoUpdate      map[string]interface{}   `json:"go_update"`
+	RustSeed      map[string]interface{}   `json:"rust_seed"`
+	GoAdded       map[string]interface{}   `json:"go_added"`
+}
+
+type helperResult struct {
+	Outcome    string          `json:"outcome"`
+	ErrorClass string          `json:"error_class"`
+	Busy       bool            `json:"busy"`
+	ElapsedMS  int64           `json:"elapsed_ms"`
+	Snapshot   json.RawMessage `json:"snapshot"`
+	Hits       json.RawMessage `json:"hits"`
+}
+
+func main() {
+	if err := run(); err != nil {
+		fatal(err)
+	}
+	fmt.Println("sidecar round-trip: PASS")
+}
+
+func run() error {
+	root, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	fixturePath := filepath.Join(root, "testdata", "port", "sidecar", "roundtrip.json")
+	data, err := os.ReadFile(fixturePath)
+	if err != nil {
+		return err
+	}
+	var f fixture
+	if err := json.Unmarshal(data, &f); err != nil {
+		return err
+	}
+	if f.SchemaVersion != 1 || f.Source == "" || f.Oracle["commit"] == "" || f.Oracle["release"] == "" {
+		return errors.New("roundtrip fixture lacks source-bound provenance")
+	}
+
+	work, err := os.MkdirTemp("", "symdesk-sidecar-roundtrip-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(work)
+	goBin := filepath.Join(work, "sidecar-go-helper"+exeSuffix())
+	rustBin := filepath.Join(work, "sidecar-rust-helper"+exeSuffix())
+	if out, err := runCommand(root, "go", "build", "-o", goBin, "./scripts/rust-port/cmd/sidecar-go-helper"); err != nil {
+		return fmt.Errorf("build Go helper: %w\n%s", err, out)
+	}
+	if out, err := runCommand(root, "cargo", "build", "-p", "symdesk-index", "--bin", "sidecar-rust-helper", "--locked"); err != nil {
+		return fmt.Errorf("build Rust helper: %w\n%s", err, out)
+	}
+	builtRust := filepath.Join(root, "target", "debug", "sidecar-rust-helper"+exeSuffix())
+	if _, err := os.Stat(builtRust); err != nil {
+		return fmt.Errorf("Rust helper missing after build: %w", err)
+	}
+	if err := copyFile(rustBin, builtRust); err != nil {
+		return err
+	}
+
+	if err := roundTripA(work, goBin, rustBin, f); err != nil {
+		return fmt.Errorf("round-trip A: %w", err)
+	}
+	if err := roundTripB(work, goBin, rustBin, f); err != nil {
+		return fmt.Errorf("round-trip B: %w", err)
+	}
+	if err := rollbackCases(work, goBin, rustBin, f); err != nil {
+		return fmt.Errorf("rollback: %w", err)
+	}
+	if err := corruptionCases(work, goBin, rustBin, f); err != nil {
+		return fmt.Errorf("corruption: %w", err)
+	}
+	if os.Getenv("SIDECAR_NATIVE") == "1" {
+		if err := readOnlyCases(work, goBin, rustBin, f); err != nil {
+			return fmt.Errorf("read-only: %w", err)
+		}
+		if err := lockCases(work, goBin, rustBin, f); err != nil {
+			return fmt.Errorf("locks: %w", err)
+		}
+	} else if runtime.GOOS == "windows" {
+		fmt.Println("sidecar round-trip: chmod/lock cases delegated to native Windows CI")
+	}
+	return nil
+}
+
+func roundTripA(work, goBin, rustBin string, f fixture) error {
+	db := filepath.Join(work, "A path with spaces ✓", "sidecar.db")
+	if _, err := invoke(goBin, "create", db, map[string]interface{}{"documents": f.Documents}); err != nil {
+		return err
+	}
+	if _, err := invoke(rustBin, "mutate", db, map[string]interface{}{"documents": []interface{}{f.RustUpdate, f.RustAdded}, "delete": []string{"linked.md"}}); err != nil {
+		return err
+	}
+	a, err := snapshot(goBin, db)
+	if err != nil {
+		return err
+	}
+	b, err := snapshot(rustBin, db)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(a, b) {
+		return errors.New("Go reopen snapshot differs from Rust snapshot")
+	}
+	if err := verifyNames(a, []string{"go-seed.md", "nullable.md", "rust-added.md"}); err != nil {
+		return err
+	}
+	for _, query := range []string{"vineyard", "Rust Added", "missing"} {
+		if err := compareSearch(goBin, rustBin, db, query); err != nil {
+			return err
+		}
+	}
+	if err := verifyTimesAndNulls(a); err != nil {
+		return err
+	}
+	if r, err := invoke(goBin, "integrity", db, nil); err != nil || r.Outcome != "ok" {
+		return fmt.Errorf("Go integrity failed: %v", err)
+	}
+	if r, err := invoke(rustBin, "integrity", db, nil); err != nil || r.Outcome != "ok" {
+		return fmt.Errorf("Rust integrity failed: %v", err)
+	}
+	return nil
+}
+
+func roundTripB(work, goBin, rustBin string, f fixture) error {
+	db := filepath.Join(work, "B path with spaces ✓", "sidecar.db")
+	if _, err := invoke(rustBin, "create", db, map[string]interface{}{"documents": []map[string]interface{}{f.RustSeed, f.Documents[1], f.Documents[2]}}); err != nil {
+		return err
+	}
+	if _, err := invoke(goBin, "mutate", db, map[string]interface{}{"documents": []interface{}{f.GoUpdate, f.GoAdded}, "delete": []string{"linked.md"}}); err != nil {
+		return err
+	}
+	a, err := snapshot(goBin, db)
+	if err != nil {
+		return err
+	}
+	b, err := snapshot(rustBin, db)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(a, b) {
+		return errors.New("Rust reopen snapshot differs from Go snapshot")
+	}
+	return compareSearch(goBin, rustBin, db, "Go addition")
+}
+
+func rollbackCases(work, goBin, rustBin string, f fixture) error {
+	for _, origin := range []string{"go", "rust"} {
+		db := filepath.Join(work, "rollback "+origin, "sidecar.db")
+		creator := goBin
+		other := rustBin
+		if origin == "rust" {
+			creator, other = rustBin, goBin
+		}
+		if _, err := invoke(creator, "create", db, map[string]interface{}{"documents": f.Documents}); err != nil {
+			return err
+		}
+		before, err := snapshot(creator, db)
+		if err != nil {
+			return err
+		}
+		bad := map[string]interface{}{"path": "go-seed.md", "markdown": "---\ntitle: Duplicate Link\n---\npartial\n", "mtime_ns": int64(1768478400123456789), "links": []string{"same-target", "same-target"}}
+		for _, helper := range []string{creator, other} {
+			r, err := invoke(helper, "rollback", db, map[string]interface{}{"documents": []interface{}{bad}})
+			if err != nil {
+				return err
+			}
+			if r.Outcome != "error" || r.ErrorClass != "constraint" {
+				return fmt.Errorf("duplicate-link rollback class=%q outcome=%q", r.ErrorClass, r.Outcome)
+			}
+			after, err := snapshot(helper, db)
+			if err != nil {
+				return err
+			}
+			if !bytes.Equal(before, after) {
+				return errors.New("failed rollback left database residue")
+			}
+		}
+	}
+	return nil
+}
+
+func corruptionCases(work, goBin, rustBin string, f fixture) error {
+	source := filepath.Join(work, "corruption-source.db")
+	if _, err := invoke(goBin, "create", source, map[string]interface{}{"documents": f.Documents}); err != nil {
+		return err
+	}
+	original, err := os.ReadFile(source)
+	if err != nil {
+		return err
+	}
+	originalHash := digest(original)
+	for name, mutate := range map[string]func([]byte) []byte{
+		"header": func(b []byte) []byte {
+			out := append([]byte(nil), b...)
+			copy(out[:16], []byte("not-a-sqlite-db!"))
+			return out
+		},
+		"truncated": func(b []byte) []byte { return append([]byte(nil), b[:min(len(b), 100)]...) },
+		"payload": func(b []byte) []byte {
+			out := append([]byte(nil), b...)
+			if len(out) > 4096 {
+				// Flip the b-tree page-type byte on a payload page. The header
+				// remains a valid SQLite file, but integrity_check must reject it.
+				out[4096] ^= 0x01
+			}
+			return out
+		},
+	} {
+		for _, helper := range []string{goBin, rustBin} {
+			path := filepath.Join(work, name+"-"+filepath.Base(helper)+".db")
+			if err := os.WriteFile(path, mutate(original), 0600); err != nil {
+				return err
+			}
+			r, err := invoke(helper, "open-check", path, nil)
+			if err != nil {
+				return err
+			}
+			if r.Outcome == "ok" {
+				r, err = invoke(helper, "integrity", path, nil)
+				if err != nil {
+					return err
+				}
+			}
+			if r.Outcome != "error" || r.ErrorClass != "corrupt" {
+				return fmt.Errorf("%s classified as %q", name, r.ErrorClass)
+			}
+			got, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			if digest(got) != digest(mutate(original)) || digest(original) != originalHash {
+				return errors.New("corruption probe changed original bytes")
+			}
+		}
+	}
+	return nil
+}
+
+func readOnlyCases(work, goBin, rustBin string, f fixture) error {
+	db := filepath.Join(work, "readonly.db")
+	if _, err := invoke(goBin, "create", db, map[string]interface{}{"documents": f.Documents}); err != nil {
+		return err
+	}
+	before, err := snapshot(goBin, db)
+	if err != nil {
+		return err
+	}
+	if err := setReadOnly(db, true); err != nil {
+		return err
+	}
+	defer func() { _ = setReadOnly(db, false) }()
+	for _, helper := range []string{goBin, rustBin} {
+		r, err := invoke(helper, "open-check", db, nil)
+		if err != nil {
+			return err
+		}
+		if r.Outcome == "ok" {
+			m, err := invoke(helper, "writer", db, map[string]interface{}{"documents": []interface{}{f.RustAdded}})
+			if err != nil {
+				return err
+			}
+			if m.Outcome != "error" || m.ErrorClass != "readonly" {
+				return fmt.Errorf("read-only mutation classified %q", m.ErrorClass)
+			}
+		} else if r.ErrorClass != "readonly" {
+			return fmt.Errorf("read-only open classified %q", r.ErrorClass)
+		}
+		after, err := snapshot(goBin, db)
+		if err != nil {
+			return err
+		}
+		if !bytes.Equal(before, after) {
+			return errors.New("read-only database changed")
+		}
+	}
+	vault := filepath.Join(work, "read-only source")
+	if err := os.MkdirAll(vault, 0700); err != nil {
+		return err
+	}
+	src := filepath.Join(vault, "note.md")
+	if err := os.WriteFile(src, []byte("---\ntitle: Source\n---\nold\n"), 0600); err != nil {
+		return err
+	}
+	refresh := map[string]interface{}{"vault": vault}
+	if _, err := invoke(goBin, "refresh", filepath.Join(work, "source.db"), refresh); err != nil {
+		return err
+	}
+	if err := os.WriteFile(src, []byte("---\ntitle: Source\n---\nnew\n"), 0600); err != nil {
+		return err
+	}
+	if err := setReadOnly(src, true); err != nil {
+		return err
+	}
+	defer func() { _ = setReadOnly(src, false) }()
+	infoBefore, _ := os.Stat(src)
+	bytesBefore, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	if _, err := invoke(rustBin, "refresh", filepath.Join(work, "source.db"), refresh); err != nil {
+		return err
+	}
+	infoAfter, _ := os.Stat(src)
+	bytesAfter, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(bytesBefore, bytesAfter) || infoBefore.Size() != infoAfter.Size() || !infoBefore.ModTime().Equal(infoAfter.ModTime()) {
+		return errors.New("read-only source bytes or metadata changed")
+	}
+	return nil
+}
+
+func lockCases(work, goBin, rustBin string, f fixture) error {
+	db := filepath.Join(work, "locks.db")
+	if _, err := invoke(goBin, "create", db, map[string]interface{}{"documents": f.Documents}); err != nil {
+		return err
+	}
+	for _, pair := range [][2]string{{goBin, rustBin}, {rustBin, goBin}} {
+		if err := lockPair(work, db, pair[0], pair[1], f, false); err != nil {
+			return err
+		}
+		if err := lockPair(work, db, pair[0], pair[1], f, true); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func lockPair(work, db, holder, writer string, f fixture, timeout bool) error {
+	d := filepath.Join(work, fmt.Sprintf("lock-%d", time.Now().UnixNano()))
+	ready, goFile, release := d+"-ready", d+"-go", d+"-release"
+	in := map[string]interface{}{"ready": ready, "go": goFile, "hold_ms": 1500}
+	if timeout {
+		in["hold_ms"] = 6000
+		in["release"] = ""
+	} else {
+		in["release"] = release
+	}
+	input, err := writeInput(work, in)
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(holder, "lock-holder", "--db", db, "--input", input)
+	cmd.Stdout = os.Stderr
+	cmd.Stderr = os.Stderr
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	defer func() {
+		if cmd.Process != nil {
+			_ = cmd.Process.Kill()
+		}
+	}()
+	if err := waitPath(ready, 5*time.Second); err != nil {
+		return err
+	}
+	if err := os.WriteFile(goFile, []byte("go\n"), 0600); err != nil {
+		return err
+	}
+	var r helperResult
+	var invokeErr error
+	done := make(chan struct{})
+	go func() {
+		r, invokeErr = invoke(writer, "writer", db, map[string]interface{}{"documents": []interface{}{f.RustAdded}})
+		close(done)
+	}()
+	if !timeout {
+		time.Sleep(800 * time.Millisecond)
+		if err := os.WriteFile(release, []byte("release\n"), 0600); err != nil {
+			return err
+		}
+	}
+	select {
+	case <-done:
+	case <-time.After(8 * time.Second):
+		return errors.New("writer exceeded lock bound")
+	}
+	if invokeErr != nil {
+		return invokeErr
+	}
+	if timeout {
+		if r.Outcome != "error" || !r.Busy || r.ErrorClass != "locked" || r.ElapsedMS < 4500 || r.ElapsedMS > 7500 {
+			return fmt.Errorf("timeout lock result %+v", r)
+		}
+	} else {
+		if r.Outcome != "ok" || r.ElapsedMS < 250 {
+			return fmt.Errorf("early lock result %+v", r)
+		}
+	}
+	if err := cmd.Wait(); err != nil && !timeout {
+		return err
+	}
+	return nil
+}
+
+func invoke(bin, command, db string, payload interface{}) (helperResult, error) {
+	var r helperResult
+	input := ""
+	var err error
+	if payload != nil {
+		input, err = writeInput(os.TempDir(), payload)
+		if err != nil {
+			return r, err
+		}
+		defer os.Remove(input)
+	}
+	args := []string{command, "--db", db}
+	if input != "" {
+		args = append(args, "--input", input)
+	}
+	c := exec.Command(bin, args...)
+	var stdout, stderr bytes.Buffer
+	c.Stdout = &stdout
+	c.Stderr = &stderr
+	err = c.Run()
+	if err != nil {
+		return r, fmt.Errorf("%s %s: %w: %s", filepath.Base(bin), command, err, stderr.String())
+	}
+	lines := strings.Split(strings.TrimSpace(stdout.String()), "\n")
+	if len(lines) == 0 || lines[len(lines)-1] == "" {
+		return r, fmt.Errorf("%s %s emitted no JSON", bin, command)
+	}
+	if err := json.Unmarshal([]byte(lines[len(lines)-1]), &r); err != nil {
+		return r, fmt.Errorf("invalid helper JSON: %w (%s)", err, stdout.String())
+	}
+	return r, nil
+}
+func snapshot(bin, db string) ([]byte, error) {
+	r, err := invoke(bin, "snapshot", db, nil)
+	if err != nil {
+		return nil, err
+	}
+	if r.Outcome != "ok" {
+		return nil, fmt.Errorf("snapshot outcome %q", r.Outcome)
+	}
+	return r.Snapshot, nil
+}
+func compareSearch(a, b, db, q string) error {
+	payload := map[string]interface{}{"query": q}
+	ra, err := invoke(a, "search", db, payload)
+	if err != nil {
+		return err
+	}
+	rb, err := invoke(b, "search", db, payload)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(ra.Hits, rb.Hits) {
+		return fmt.Errorf("search %q differs", q)
+	}
+	return nil
+}
+func verifyNames(raw []byte, want []string) error {
+	var s map[string]interface{}
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return err
+	}
+	files, _ := s["files"].([]interface{})
+	got := map[string]bool{}
+	for _, v := range files {
+		if m, ok := v.(map[string]interface{}); ok {
+			got[m["path"].(string)] = true
+		}
+	}
+	for _, p := range want {
+		if !got[p] {
+			return fmt.Errorf("missing path %s", p)
+		}
+	}
+	return nil
+}
+func verifyTimesAndNulls(raw []byte) error {
+	var s map[string]interface{}
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return err
+	}
+	files := s["files"].([]interface{})
+	for _, v := range files {
+		m := v.(map[string]interface{})
+		if m["path"] == "nullable.md" {
+			for _, k := range []string{"document_date", "person", "status", "due_date", "confidence", "ocr_json_path", "simhash", "asn"} {
+				if m[k] != nil {
+					return fmt.Errorf("nullable %s is not NULL", k)
+				}
+			}
+			if m["created_at"] != "" {
+				return errors.New("empty created_at was not preserved as TEXT")
+			}
+		}
+	}
+	return nil
+}
+func writeInput(dir string, v interface{}) (string, error) {
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return "", err
+	}
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	f, err := os.CreateTemp(dir, "sidecar-op-*.json")
+	if err != nil {
+		return "", err
+	}
+	name := f.Name()
+	if _, err = f.Write(b); err != nil {
+		f.Close()
+		os.Remove(name)
+		return "", err
+	}
+	if err = f.Close(); err != nil {
+		return "", err
+	}
+	return name, nil
+}
+func runCommand(dir, bin string, args ...string) (string, error) {
+	c := exec.Command(bin, args...)
+	c.Dir = dir
+	out, err := c.CombinedOutput()
+	return string(out), err
+}
+func copyFile(dst, src string) error {
+	b, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(dst, b, 0700)
+}
+func digest(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
+func waitPath(path string, d time.Duration) error {
+	end := time.Now().Add(d)
+	for time.Now().Before(end) {
+		if _, err := os.Stat(path); err == nil {
+			return nil
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	return fmt.Errorf("timeout waiting for %s", path)
+}
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+func exeSuffix() string {
+	if runtime.GOOS == "windows" {
+		return ".exe"
+	}
+	return ""
+}
+func fatal(err error) { fmt.Fprintln(os.Stderr, "sidecar round-trip: FAIL:", err); os.Exit(1) }

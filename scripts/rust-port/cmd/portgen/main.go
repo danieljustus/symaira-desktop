@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	defaultOracleCommit  = "ae86331930fdfa2b128b68ae5af7437091b9949a"
+	defaultOracleCommit  = "087b701d406dbddd4ce835bbe9537ba193f3d6c2"
 	defaultOracleRelease = "v0.12.2"
 	provenanceFixture    = "testdata/port/provenance.json"
 )
@@ -42,6 +42,7 @@ var fixturePaths = []string{
 	"testdata/port/vault/mobile-writer.json",
 	"testdata/port/sidecar/contracts.json",
 	"testdata/port/sidecar/lifecycle.json",
+	"testdata/port/sidecar/roundtrip.json",
 }
 
 func main() {

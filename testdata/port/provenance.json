@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "commit": "087b701d406dbddd4ce835bbe9537ba193f3d6c2",
     "release": "v0.12.2"
   },
-  "production_source_digest": "846ba3854e75a198fb9932605be3f46a279ff43ca59791a799078d322b44ecee",
-  "generator_source_digest": "ae7cf15673b2c5a61e6ede01dc5da534c71f9224053ab57daf19fbbdcca6901c",
+  "production_source_digest": "7feb6917f32505f84308e051413a5bbd106395cda0e3aebe3a06053ef389c579",
+  "generator_source_digest": "edfce047b2bc4841acb5e06f1bced4cbef423dcdf0c84bd34e83b625b446fb59",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -36,6 +36,7 @@
     "testdata/port/vault/notebook.json": "0b609b187fe3d5e243367c3fc02045863c65fa10bd9a72e5e82c3dbb7cb316a5",
     "testdata/port/vault/parse.json": "0756da4b837c02a4e40197cc66f206a21c69019302a30161226c95df8c83df5d",
     "testdata/port/vault/resolution.json": "4f221fde22d1a511500ab98c88e6afda29405c6c8355487b9fb7d6dfbbaf0772",
-    "testdata/port/vault/typed.json": "fa9c11745004dca649590fe760db7cb7ba8d432b7be1b79df25e11344a35651b"
+    "testdata/port/vault/typed.json": "fa9c11745004dca649590fe760db7cb7ba8d432b7be1b79df25e11344a35651b",
+    "testdata/port/sidecar/roundtrip.json": "629d5cb9c99256e217306b61013caf1b2e2bf3201643108b5ceec7f6a6fdcab8"
   }
 }

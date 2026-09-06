@@ -195,6 +195,17 @@ jobs:
           cargo test --workspace --all-features --locked
           cargo test --workspace --doc --all-features --locked
 
+      - name: Run native macOS sidecar round-trip and lock suite
+        if: matrix.os == 'macos-latest'
+        run: SIDECAR_NATIVE=1 make sidecar-roundtrip
+
+      - name: Run native Windows sidecar round-trip suite
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $env:SIDECAR_NATIVE = "1"
+          go run ./scripts/rust-port/cmd/sidecar-roundtrip
+
       - name: Run native macOS version differential
         if: matrix.os == 'macos-latest'
         run: make rust-version-contract

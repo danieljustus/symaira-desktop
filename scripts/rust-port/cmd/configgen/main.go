@@ -170,7 +170,7 @@ func buildLoadCases() ([]loadCase, error) {
 			if err != nil {
 				return err
 			}
-			defer os.RemoveAll(dir)
+			defer func() { _ = os.RemoveAll(dir) }()
 			path := filepath.Join(dir, "config.toml")
 			if !spec.Missing {
 				if err := os.WriteFile(path, []byte(spec.TOML), 0o600); err != nil {
@@ -237,11 +237,12 @@ func buildSaveCase() (saveCase, error) {
 	if err != nil {
 		return saveCase{}, err
 	}
-	defer os.RemoveAll(dir)
+	defer func() { _ = os.RemoveAll(dir) }()
 	path := filepath.Join(dir, "nested", "config.toml")
 	if err := config.Save(path, value); err != nil {
 		return saveCase{}, err
 	}
+	//nolint:gosec // path is the just-written temp config file
 	content, err := os.ReadFile(path)
 	return saveCase{Config: safe(value), TOML: string(content)}, err
 }

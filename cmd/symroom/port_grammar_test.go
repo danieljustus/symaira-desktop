@@ -91,6 +91,7 @@ func buildSymRoomGrammar(oracle inventory.Oracle) (inventory.SymRoomGrammarDocum
 	}
 	dir := filepath.Dir(currentFile)
 	fset := token.NewFileSet()
+	//nolint:staticcheck // ParseDir is intentional: single local package, no build tags
 	packages, err := parser.ParseDir(fset, dir, func(info os.FileInfo) bool {
 		return strings.HasSuffix(info.Name(), ".go") && !strings.HasSuffix(info.Name(), "_test.go")
 	}, 0)

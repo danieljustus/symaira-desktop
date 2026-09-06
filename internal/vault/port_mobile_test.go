@@ -9,6 +9,7 @@ import (
 
 func TestMobileWriterFixture(t *testing.T) {
 	fixturePath := filepath.Join("..", "..", "testdata", "port", "vault", "mobile-writer.json")
+	//nolint:gosec // fixturePath is a fixed repo-relative path
 	data, err := os.ReadFile(fixturePath)
 	if err != nil {
 		t.Fatal(err)

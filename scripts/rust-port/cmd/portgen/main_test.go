@@ -36,6 +36,7 @@ func TestProvenanceVerificationPasses(t *testing.T) {
 	}
 
 	provPath := filepath.Join(repoRoot, provenanceFixture)
+	//nolint:gosec // caller-supplied explicit provenance path
 	provData, err := os.ReadFile(provPath)
 	if err != nil {
 		t.Fatal(err)
@@ -131,6 +132,7 @@ func TestProductionSourceDriftDetected(t *testing.T) {
 		}
 	}
 	for _, args := range [][]string{{"init", "-q"}, {"add", "--", "."}} {
+		//nolint:gosec // fixed git arguments in a fixture test
 		cmd := exec.Command("git", args...)
 		cmd.Dir = repoRoot
 		if output, err := cmd.CombinedOutput(); err != nil {

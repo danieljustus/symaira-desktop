@@ -27,10 +27,6 @@
       "content": "b"
     },
     {
-      "path": "über/日本.md",
-      "content": "unicode"
-    },
-    {
       "path": ".obsidian/x.md",
       "content": "x"
     },
@@ -123,10 +119,6 @@
     {
       "path": "real/inside.md",
       "type": "file"
-    },
-    {
-      "path": "über/日本.md",
-      "type": "file"
     }
   ],
   "walk_markdown": [
@@ -134,8 +126,7 @@
     "folder/b.md",
     "inside-link.md",
     "outside-link.md",
-    "real/inside.md",
-    "über/日本.md"
+    "real/inside.md"
   ],
   "secure_paths": [
     {

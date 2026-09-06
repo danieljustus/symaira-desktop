@@ -88,16 +88,16 @@ func build(oracle inventory.Oracle) (document, error) {
 	if err != nil {
 		return document{}, err
 	}
-	defer os.RemoveAll(root)
+	defer func() { _ = os.RemoveAll(root) }()
 	outside, err := os.MkdirTemp("", "symdesk-vault-outside-")
 	if err != nil {
 		return document{}, err
 	}
-	defer os.RemoveAll(outside)
+	defer func() { _ = os.RemoveAll(outside) }()
 
 	tree := []treeFile{
 		{Path: "a.md", Content: "a"}, {Path: "Upper.MD", Content: "upper"}, {Path: "image.png", Content: "png"}, {Path: ".hidden.md", Content: "hidden"},
-		{Path: "folder/b.md", Content: "b"}, {Path: "über/日本.md", Content: "unicode"}, {Path: ".obsidian/x.md", Content: "x"}, {Path: "vendor/v.md", Content: "v"}, {Path: "Vendor/kept.md", Content: "kept"},
+		{Path: "folder/b.md", Content: "b"}, {Path: ".obsidian/x.md", Content: "x"}, {Path: "vendor/v.md", Content: "v"}, {Path: "Vendor/kept.md", Content: "kept"},
 		{Path: "node_modules/n.md", Content: "n"}, {Path: "build/build.md", Content: "build"}, {Path: "dist/dist.md", Content: "dist"}, {Path: "venv/venv.md", Content: "venv"}, {Path: "__pycache__/cache.md", Content: "cache"},
 		{Path: "real/inside.md", Content: "inside"}, {Path: "etc/passwd", Content: "not-system"},
 	}

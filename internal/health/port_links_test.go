@@ -87,6 +87,7 @@ func TestHealthLinkResolutionInventory(t *testing.T) {
 		}
 		return
 	}
+	//nolint:gosec // fixturePath is a fixed repo-relative path
 	current, err := os.ReadFile(fixturePath)
 	if err != nil {
 		t.Fatal(err)

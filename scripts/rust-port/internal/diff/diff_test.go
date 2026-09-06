@@ -145,6 +145,7 @@ func helperProcess() {
 		time.Sleep(30 * time.Second)
 		return
 	case "child":
+		//nolint:gosec // helper subprocess for process-tree tests
 		child := exec.Command(os.Args[0], "-test.run=TestRunAndCompareIdenticalHelper")
 		child.Env = append(os.Environ(), "SYMDESK_PORT_HELPER=1", "PORT_HELPER_MODE=hang")
 		if err := child.Start(); err != nil {
@@ -154,8 +155,10 @@ func helperProcess() {
 		_ = child.Wait()
 		return
 	}
+	//nolint:gosec // helper output path is set by the test itself
 	path := os.Getenv("PORT_OUTPUT")
 	if path != "" {
+		//nolint:gosec // helper output path is set by the test itself
 		_ = os.WriteFile(path, []byte("deterministic\n"), 0o600)
 	}
 	_, _ = os.Stdout.WriteString("ok\n")

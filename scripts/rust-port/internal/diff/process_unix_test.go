@@ -40,7 +40,7 @@ func TestBuildManifestCapturesUnixModesAndTypes(t *testing.T) {
 	if err := os.Mkdir(dir, 0o750); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "entry"), []byte("fixture"), 0o640); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "entry"), []byte("fixture"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Symlink("entry", filepath.Join(dir, "link")); err != nil {
@@ -57,7 +57,7 @@ func TestBuildManifestCapturesUnixModesAndTypes(t *testing.T) {
 	if got := byPath["dir"]; got.Type != "directory" || got.Mode != 0o750 {
 		t.Fatalf("directory manifest = %#v", got)
 	}
-	if got := byPath["dir/entry"]; got.Type != "file" || got.Mode != 0o640 || got.SHA256 == "" {
+	if got := byPath["dir/entry"]; got.Type != "file" || got.Mode != 0o600 || got.SHA256 == "" {
 		t.Fatalf("file manifest = %#v", got)
 	}
 	if got := byPath["dir/link"]; got.Type != "symlink" || got.LinkTarget != "entry" {

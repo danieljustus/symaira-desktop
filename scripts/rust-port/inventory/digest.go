@@ -37,6 +37,7 @@ func ComputeProductionSourceDigest(repoRoot string) (string, error) {
 	hasher := sha256.New()
 	for _, rel := range files {
 		hasher.Write([]byte(rel + "\n"))
+		//nolint:gosec // rel comes from git ls-files within repoRoot
 		content, err := os.ReadFile(filepath.Join(repoRoot, filepath.FromSlash(rel)))
 		if err != nil {
 			return "", fmt.Errorf("open %s: %w", rel, err)
@@ -52,6 +53,7 @@ func ComputeProductionSourceDigest(repoRoot string) (string, error) {
 func ComputeGitRevisionProductionSourceDigest(repoRoot, revision string) (string, error) {
 	args := []string{"ls-tree", "-r", "--name-only", revision, "--", "cmd", "internal"}
 	args = append(args, productionContractFiles()...)
+	//nolint:gosec // fixed git ls-tree arguments for the pinned revision
 	listCommand := exec.Command("git", args...)
 	listCommand.Dir = repoRoot
 	output, err := listCommand.Output()
@@ -69,6 +71,7 @@ func ComputeGitRevisionProductionSourceDigest(repoRoot, revision string) (string
 	hasher := sha256.New()
 	for _, rel := range files {
 		_, _ = io.WriteString(hasher, rel+"\n")
+		//nolint:gosec // fixed git show arguments for the pinned revision
 		show := exec.Command("git", "show", revision+":"+rel)
 		show.Dir = repoRoot
 		content, showErr := show.Output()
@@ -114,6 +117,7 @@ func ComputeGeneratorSourceDigest(repoRoot string) (string, error) {
 			continue
 		}
 		_, _ = io.WriteString(hasher, rel+"\n")
+		//nolint:gosec // rel comes from git ls-files within repoRoot
 		content, readErr := os.ReadFile(filepath.Join(repoRoot, filepath.FromSlash(rel)))
 		if readErr != nil {
 			return "", fmt.Errorf("read generator input %s: %w", rel, readErr)
@@ -137,6 +141,7 @@ func productionContractFiles() []string {
 
 // ComputeFileChecksum computes the SHA-256 hex string of a file.
 func ComputeFileChecksum(path string) (string, error) {
+	//nolint:gosec // caller-supplied explicit path
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err

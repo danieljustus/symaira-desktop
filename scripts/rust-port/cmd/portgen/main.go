@@ -76,6 +76,7 @@ func runGenerate(repoRoot, commit, release string) {
 	}
 
 	for _, target := range packages {
+		//nolint:gosec // fixed generator targets, never derived from fixture output
 		cmd := exec.Command("go", "test", "-count=1", target.pkg, "-run", target.run)
 		cmd.Dir = repoRoot
 		cmd.Env = append(os.Environ(), "PORT_GENERATE=1")
@@ -148,6 +149,7 @@ func runGenerate(repoRoot, commit, release string) {
 func runCheck(repoRoot string) {
 	// 1. Read existing provenance
 	provPath := filepath.Join(repoRoot, provenanceFixture)
+	//nolint:gosec // caller-supplied explicit provenance path
 	provData, err := os.ReadFile(provPath)
 	if err != nil {
 		fatal("read %s: %v (run make port-fixtures-generate)", provenanceFixture, err)
@@ -219,6 +221,7 @@ func runCheck(repoRoot string) {
 	}
 
 	for _, target := range packages {
+		//nolint:gosec // fixed generator targets, never derived from fixture output
 		cmd := exec.Command("go", "test", "-count=1", target.pkg, "-run", target.run)
 		cmd.Dir = repoRoot
 		out, err := cmd.CombinedOutput()

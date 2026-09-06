@@ -243,6 +243,7 @@ func writeOrCheck(path string, value any, check bool) error {
 	}
 	content = append(content, '\n')
 	if check {
+		//nolint:gosec // caller-supplied explicit output path
 		existing, err := os.ReadFile(path)
 		if err != nil {
 			return err

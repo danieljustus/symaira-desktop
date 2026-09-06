@@ -4,8 +4,8 @@
     "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
     "release": "v0.12.2"
   },
-  "production_source_digest": "333251686e6148393341f3dea06543e124a78c6c1c4dc7dcdd474959dfae0e5b",
-  "generator_source_digest": "65280a323014eb7c3ddb124d4f5c6b6a9c068752157d5b2190f9190fddfc7dd0",
+  "production_source_digest": "846ba3854e75a198fb9932605be3f46a279ff43ca59791a799078d322b44ecee",
+  "generator_source_digest": "bfd8da47d25368618dc453aa7684d0192ea6d3b728b8a750c43cd8e5da111aba",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,

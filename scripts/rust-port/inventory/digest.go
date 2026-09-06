@@ -27,7 +27,7 @@ func ComputeProductionSourceDigest(repoRoot string) (string, error) {
 	}
 	var files []string
 	for _, rel := range strings.Split(strings.TrimSpace(string(output)), "\n") {
-		if rel == "" || strings.HasSuffix(rel, "_test.go") {
+		if !isProductionContractInput(rel) {
 			continue
 		}
 		files = append(files, filepath.ToSlash(rel))
@@ -62,7 +62,7 @@ func ComputeGitRevisionProductionSourceDigest(repoRoot, revision string) (string
 	}
 	var files []string
 	for _, rel := range strings.Split(strings.TrimSpace(string(output)), "\n") {
-		if rel == "" || strings.HasSuffix(rel, "_test.go") {
+		if !isProductionContractInput(rel) {
 			continue
 		}
 		files = append(files, filepath.ToSlash(rel))
@@ -125,6 +125,11 @@ func ComputeGeneratorSourceDigest(repoRoot string) (string, error) {
 		_, _ = hasher.Write(content)
 	}
 	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+func isProductionContractInput(path string) bool {
+	path = filepath.ToSlash(path)
+	return path != "" && !strings.HasSuffix(path, "_test.go") && !strings.Contains(path, "/testdata/")
 }
 
 func productionContractFiles() []string {

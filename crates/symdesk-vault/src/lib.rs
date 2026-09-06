@@ -36,7 +36,7 @@ pub use typed::{
     Provenance, Sort, Template, TypedVaultError, View, parse_base, parse_dataset_handle,
     parse_notebook,
 };
-pub use walk::{WalkEntry, WalkEntryType, walk_all, walk_markdown};
+pub use walk::{WalkEntry, WalkEntryType, walk_all, walk_markdown, walk_markdown_with};
 
 #[derive(Clone, Debug)]
 pub struct Document {

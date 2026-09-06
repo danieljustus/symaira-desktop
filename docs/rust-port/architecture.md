@@ -120,9 +120,16 @@ owned by the consuming domain, not a generic service-locator crate.
 | Errors/logging | `thiserror`, `anyhow`, `tracing` | Typed library errors; composition-only anyhow; stderr tracing | Existing public errors/exit codes and redaction remain exact |
 
 Application crates use Rust edition 2024, `rust-version = "1.98"`, a committed
-`Cargo.lock`, resolver 3, and `#![deny(unsafe_code)]`. Dependency versions are
+`Cargo.lock`, resolver 3, and `#![deny(unsafe_code)]`. Dependencies are
 reviewed and locked when the crate is first introduced, not guessed in this
 proposal.
+
+The sidecar lifecycle uses exact-pinned `cap-std = 4.0.3` with default features
+off for capability-scoped vault reads. `symdesk-index` remains `#![deny(unsafe_code)]`;
+the capability boundary is provided by cap-std/cap-primitives and their locked
+platform-specific internals, which are audited as transitive dependencies rather
+than treated as application-owned unsafe code. Their `Apache-2.0 WITH
+LLVM-exception` license is explicitly allowed by `deny.toml`.
 
 ## 7. Contract and differential architecture
 

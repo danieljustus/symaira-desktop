@@ -21,6 +21,7 @@ rusqlite = { version = "=0.40.2", default-features = false, features = ["bundled
 unicode-general-category = "=1.1.0"
 symdesk-core = { path = "crates/symdesk-core", version = "=0.0.0" }
 symdesk-vault = { path = "crates/symdesk-vault", version = "=0.0.0" }
+cap-std = { version = "=4.0.3", default-features = false }
 
 [profile.release]
 codegen-units = 1

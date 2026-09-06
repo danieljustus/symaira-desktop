@@ -112,9 +112,10 @@ vault-read-differential: vault-fixtures-check
 
 sidecar-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarContract
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarLifecycleContract
 
 sidecar-fixtures-check:
-	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarContract
+	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run 'TestPortSidecar(Contract|LifecycleContract)'
 
 sidecar-differential: sidecar-fixtures-check
 	$(CARGO) test -p symdesk-index --all-features --locked

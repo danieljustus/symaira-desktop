@@ -12,6 +12,7 @@ noyalib.workspace = true
 rusqlite.workspace = true
 symdesk-core.workspace = true
 symdesk-vault.workspace = true
+cap-std.workspace = true
 thiserror.workspace = true
 time.workspace = true
 

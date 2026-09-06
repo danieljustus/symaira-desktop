@@ -175,13 +175,6 @@ func (db *DB) Close() error {
 	return db.conn.Close()
 }
 
-// RawConnectionForTesting exposes the already-open connection to the
-// differential helper. It is used only for logical snapshots and explicit
-// lock-holder mechanics; mutations go through the production DB methods.
-func (db *DB) RawConnectionForTesting() *sql.DB {
-	return db.conn
-}
-
 // IsIndexed checks if a file is already indexed with the same SHA256.
 func (db *DB) IsIndexed(path, sha256 string) (bool, error) {
 	var hash string
@@ -492,15 +485,10 @@ func indexDocumentTx(tx *sql.Tx, doc *vault.Document) error {
 		if k == "tags" || k == "aliases" {
 			continue // Handled below to ensure doc.Tags and doc.Aliases are indexed
 		}
-		var val interface{}
-		if v == nil {
-			val = nil
-		} else {
-			val = fmt.Sprintf("%v", v)
-		}
+		valStr := fmt.Sprintf("%v", v)
 		valType := "string" // Basic type inference could go here
 		_, err = tx.Exec(`INSERT INTO file_properties(file_id, key, value, value_type) VALUES (?, ?, ?, ?)`,
-			fileID, k, val, valType)
+			fileID, k, valStr, valType)
 		if err != nil {
 			return err
 		}

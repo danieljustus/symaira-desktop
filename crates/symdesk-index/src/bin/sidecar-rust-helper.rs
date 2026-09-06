@@ -92,7 +92,9 @@ fn run(command: &str, db: &Path, input: Value) -> Result<Value, Box<dyn std::err
         }
         "snapshot" => {
             let sidecar = Sidecar::open(db)?;
-            Ok(json!({"snapshot": snapshot(sidecar.raw_connection_for_testing())?}))
+            drop(sidecar);
+            let connection = open_raw_connection(db)?;
+            Ok(json!({"snapshot": snapshot(&connection)?}))
         }
         "search" => {
             let sidecar = Sidecar::open(db)?;
@@ -106,14 +108,18 @@ fn run(command: &str, db: &Path, input: Value) -> Result<Value, Box<dyn std::err
                 json!({"hits": hits.into_iter().map(|hit| json!({"path":hit.path,"title":hit.title,"snippet":hit.snippet})).collect::<Vec<_>>() }),
             )
         }
-        "create" | "mutate" | "writer" | "refresh" => {
+        "create" | "mutate" | "writer" | "refresh" | "prune" => {
             let mut sidecar = Sidecar::open(db)?;
-            if command == "refresh" {
+            if command == "refresh" || command == "prune" {
                 let vault = input
                     .get("vault")
                     .and_then(Value::as_str)
-                    .ok_or("refresh vault is required")?;
-                sidecar.refresh_index(Path::new(vault))?;
+                    .ok_or("lifecycle vault is required")?;
+                if command == "refresh" {
+                    sidecar.refresh_index(Path::new(vault))?;
+                } else {
+                    sidecar.prune(Path::new(vault))?;
+                }
             } else {
                 let docs = documents(
                     input
@@ -134,9 +140,6 @@ fn run(command: &str, db: &Path, input: Value) -> Result<Value, Box<dyn std::err
                     sidecar.delete_document(path)?;
                 }
             }
-            sidecar
-                .raw_connection_for_testing()
-                .execute_batch("PRAGMA wal_checkpoint(TRUNCATE)")?;
             Ok(json!({}))
         }
         "rollback" => {
@@ -180,9 +183,6 @@ fn writer_retry(db: &Path, input: &Value) -> Result<Value, Box<dyn std::error::E
             {
                 sidecar.delete_document(path)?;
             }
-            sidecar
-                .raw_connection_for_testing()
-                .execute_batch("PRAGMA wal_checkpoint(TRUNCATE)")?;
             Ok(())
         })();
         match attempt {
@@ -213,11 +213,8 @@ fn document(value: &Value) -> Result<IndexedDocument, Box<dyn std::error::Error>
         .and_then(Value::as_str)
         .unwrap_or_default();
     let parsed = symdesk_vault::parse_bytes(path, markdown.as_bytes())?;
-    let mtime = value
-        .get("mtime_ns")
-        .and_then(Value::as_i64)
-        .unwrap_or_default();
-    let mut indexed = IndexedDocument::from_vault(&parsed, Some(mtime))?;
+    let mtime = value.get("mtime_ns").and_then(Value::as_i64);
+    let mut indexed = IndexedDocument::from_vault(&parsed, mtime)?;
     if let Some(links) = value.get("links").and_then(Value::as_array) {
         indexed.links = links
             .iter()
@@ -230,7 +227,8 @@ fn document(value: &Value) -> Result<IndexedDocument, Box<dyn std::error::Error>
 
 fn hold_lock(db: &Path, input: &Value) -> Result<Value, Box<dyn std::error::Error>> {
     let sidecar = Sidecar::open(db)?;
-    let connection = sidecar.raw_connection_for_testing();
+    drop(sidecar);
+    let connection = open_raw_connection(db)?;
     connection.execute_batch("BEGIN IMMEDIATE")?;
     let ready = input
         .get("ready")
@@ -259,7 +257,6 @@ fn hold_lock(db: &Path, input: &Value) -> Result<Value, Box<dyn std::error::Erro
         thread::sleep(Duration::from_millis(10));
     }
     connection.execute_batch("ROLLBACK")?;
-    drop(sidecar);
     Ok(json!({}))
 }
 
@@ -274,8 +271,22 @@ fn wait_file(path: &str, timeout: Duration) -> Result<(), Box<dyn std::error::Er
     Err(format!("handshake timeout waiting for {path}").into())
 }
 
+fn open_raw_connection(db: &Path) -> Result<Connection, rusqlite::Error> {
+    let connection = Connection::open(db)?;
+    connection.busy_timeout(Duration::from_millis(5000))?;
+    connection.pragma_update(None, "foreign_keys", true)?;
+    connection.pragma_update(None, "journal_mode", "WAL")?;
+    Ok(connection)
+}
+
 fn snapshot(connection: &Connection) -> Result<Value, Box<dyn std::error::Error>> {
+    let journal_mode: String = connection.query_row("PRAGMA journal_mode", [], |row| row.get(0))?;
+    let foreign_keys: i64 = connection.query_row("PRAGMA foreign_keys", [], |row| row.get(0))?;
+    let busy_timeout: i64 = connection.query_row("PRAGMA busy_timeout", [], |row| row.get(0))?;
     Ok(json!({
+        "migrations": query(connection, "SELECT version FROM schema_migrations ORDER BY version", |row| Ok(json!({"version":row.get::<_,String>(0)?})))?,
+        "schema": query(connection, "SELECT type,name,COALESCE(sql,'') FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' AND name NOT LIKE 'fts_search_%' AND name NOT LIKE 'fts_norm_%' AND name NOT LIKE 'fts_tri_%' ORDER BY type,name", |row| Ok(json!({"type":row.get::<_,String>(0)?,"name":row.get::<_,String>(1)?,"sql":row.get::<_,String>(2)?})))?,
+        "pragmas": {"journal_mode": journal_mode, "foreign_keys": foreign_keys.to_string(), "busy_timeout": busy_timeout.to_string()},
         "files": query(connection, "SELECT path,sha256,title,created_at,modified_at,\"type\",document_date,person,status,due_date,confidence,ocr_json_path,simhash,asn,size,mtime_ns FROM files ORDER BY path", |row| Ok(json!({"path":row.get::<_,String>(0)?,"sha256":row.get::<_,String>(1)?,"title":row.get::<_,String>(2)?,"created_at":row.get::<_,String>(3)?,"modified_at":row.get::<_,String>(4)?,"type":row.get::<_,String>(5)?,"document_date":row.get::<_,Option<String>>(6)?,"person":row.get::<_,Option<String>>(7)?,"status":row.get::<_,Option<String>>(8)?,"due_date":row.get::<_,Option<String>>(9)?,"confidence":row.get::<_,Option<i64>>(10)?,"ocr_json_path":row.get::<_,Option<String>>(11)?,"simhash":row.get::<_,Option<String>>(12)?,"asn":row.get::<_,Option<i64>>(13)?,"size":row.get::<_,Option<i64>>(14)?,"mtime_ns":row.get::<_,Option<i64>>(15)?})))?,
         "properties": query(connection, "SELECT f.path,p.key,p.value,p.value_type FROM file_properties p JOIN files f ON f.id=p.file_id ORDER BY f.path,p.key", |row| Ok(json!({"path":row.get::<_,String>(0)?,"key":row.get::<_,String>(1)?,"value":row.get::<_,Option<String>>(2)?,"value_type":row.get::<_,String>(3)?})))?,
         "links": query(connection, "SELECT from_path,to_path,kind FROM links ORDER BY from_path,to_path,kind", |row| Ok(json!({"from":row.get::<_,String>(0)?,"to":row.get::<_,String>(1)?,"kind":row.get::<_,String>(2)?})))?,

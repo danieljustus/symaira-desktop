@@ -3,7 +3,7 @@
 //! Minimal SQLite sidecar index compatible with the Go oracle.
 
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeMap,
     fs,
     io::{self, Read},
     path::{Component, Path, PathBuf},
@@ -107,7 +107,6 @@ pub struct IndexedDocument {
     pub size: Option<i64>,
     pub mtime_ns: Option<i64>,
     pub properties: BTreeMap<String, String>,
-    pub null_properties: BTreeSet<String>,
     pub links: Vec<String>,
     pub derived: bool,
 }
@@ -131,12 +130,8 @@ impl IndexedDocument {
                 .map_err(|error| SidecarError::Time(error.to_string()))?
         };
         let mut properties = BTreeMap::new();
-        let mut null_properties = BTreeSet::new();
         for (key, value) in &document.frontmatter {
             if key != "tags" && key != "aliases" {
-                if matches!(value, Value::Null) {
-                    null_properties.insert(key.clone());
-                }
                 properties.insert(key.clone(), go_value(value));
             }
         }
@@ -182,7 +177,6 @@ impl IndexedDocument {
             size: Some(document.size),
             mtime_ns,
             properties,
-            null_properties,
             links: document.links.clone(),
             derived: document.derived || !document.derived_from.is_empty(),
         })
@@ -239,14 +233,6 @@ impl Sidecar {
                 "integrity check failed: {result}"
             )))
         }
-    }
-
-    /// Exposes the already-open connection to the differential-test helper.
-    /// The helper uses it only for logical snapshots and lock-holder mechanics;
-    /// all schema/index mutations continue through `Sidecar` methods.
-    #[doc(hidden)]
-    pub fn raw_connection_for_testing(&self) -> &Connection {
-        &self.connection
     }
 
     /// Indexes one document in its own transaction.
@@ -829,11 +815,6 @@ fn index_document_tx(
         params![file_id, document.body],
     )?;
     for (key, value) in &document.properties {
-        let value = if document.null_properties.contains(key) {
-            None
-        } else {
-            Some(value.as_str())
-        };
         transaction.execute(
             "INSERT INTO file_properties(file_id,key,value,value_type) VALUES (?,?,?,'string')",
             params![file_id, key, value],

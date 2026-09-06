@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/danieljustus/symaira-corekit/sqlitekit"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
@@ -20,7 +21,7 @@ import (
 type documentInput struct {
 	Path     string   `json:"path"`
 	Markdown string   `json:"markdown"`
-	MTimeNS  int64    `json:"mtime_ns"`
+	MTimeNS  *int64   `json:"mtime_ns"`
 	Links    []string `json:"links,omitempty"`
 }
 
@@ -49,6 +50,7 @@ func main() {
 	cmd, dbPath, inputPath := args()
 	input := operationInput{}
 	if inputPath != "" {
+		//nolint:gosec // inputPath is an explicit local harness fixture
 		data, err := os.ReadFile(inputPath)
 		if err != nil {
 			emit(started, err)
@@ -61,7 +63,7 @@ func main() {
 	}
 	var err error
 	switch cmd {
-	case "create", "mutate", "rollback", "snapshot", "search", "refresh", "open-check", "integrity", "writer", "lock-holder":
+	case "create", "mutate", "rollback", "snapshot", "search", "refresh", "prune", "open-check", "integrity", "writer", "lock-holder":
 		err = run(cmd, dbPath, input)
 	default:
 		err = fmt.Errorf("unknown command %q", cmd)
@@ -72,9 +74,16 @@ func main() {
 	}
 	out := result{Outcome: "ok", ElapsedMS: time.Since(started).Milliseconds()}
 	if cmd == "snapshot" || cmd == "create" || cmd == "mutate" || cmd == "rollback" {
-		if db, e := sidecar.Open(dbPath); e == nil {
-			out.Snapshot, _ = snapshot(db.RawConnectionForTesting())
-			_ = db.Close()
+		conn, openErr := sqlitekit.Open(dbPath)
+		if openErr != nil {
+			emit(started, openErr)
+			return
+		}
+		out.Snapshot, err = snapshot(conn)
+		_ = conn.Close()
+		if err != nil {
+			emit(started, err)
+			return
 		}
 	}
 	if cmd == "search" {
@@ -128,7 +137,7 @@ func run(cmd, dbPath string, in operationInput) error {
 		if err != nil {
 			return err
 		}
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		return db.CheckIntegrity()
 	}
 	if cmd == "lock-holder" {
@@ -141,13 +150,19 @@ func run(cmd, dbPath string, in operationInput) error {
 	if err != nil {
 		return err
 	}
-	defer func() { _, _ = db.RawConnectionForTesting().Exec("PRAGMA wal_checkpoint(TRUNCATE)"); _ = db.Close() }()
+	defer func() { _ = db.Close() }()
 	switch cmd {
 	case "refresh":
 		if in.Vault == "" {
 			return errors.New("refresh vault is required")
 		}
 		return db.RefreshIndex(in.Vault)
+	case "prune":
+		if in.Vault == "" {
+			return errors.New("prune vault is required")
+		}
+		_, err := db.Prune(in.Vault)
+		return err
 	case "create":
 		return index(db, in.Documents)
 	case "mutate", "writer":
@@ -180,7 +195,9 @@ func makeDocument(in documentInput) (*vault.Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	doc.ModTime = time.Unix(0, in.MTimeNS).UTC()
+	if in.MTimeNS != nil {
+		doc.ModTime = time.Unix(0, *in.MTimeNS).UTC()
+	}
 	if in.Links != nil {
 		doc.Links = append([]string(nil), in.Links...)
 	}
@@ -213,7 +230,6 @@ func writerRetry(path string, in operationInput) error {
 					}
 				}
 			}
-			_, _ = db.RawConnectionForTesting().Exec("PRAGMA wal_checkpoint(TRUNCATE)")
 			_ = db.Close()
 		}
 		if err == nil {
@@ -232,12 +248,18 @@ func holdLock(path string, in operationInput) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
-	conn := db.RawConnectionForTesting()
+	if err := db.Close(); err != nil {
+		return err
+	}
+	conn, err := sqlitekit.Open(path)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close() }()
 	if _, err := conn.Exec("BEGIN IMMEDIATE"); err != nil {
 		return err
 	}
-	defer conn.Exec("ROLLBACK")
+	defer func() { _, _ = conn.Exec("ROLLBACK") }()
 	if in.Ready != "" {
 		if err := os.WriteFile(in.Ready, []byte("ready\n"), 0600); err != nil {
 			return err
@@ -301,39 +323,87 @@ func printJSON(v interface{}) { b, _ := json.Marshal(v); fmt.Println(string(b)) 
 
 func snapshot(conn *sql.DB) (map[string]interface{}, error) {
 	state := map[string]interface{}{}
-	state["files"], _ = rows(conn, `SELECT path,sha256,title,created_at,modified_at,"type",document_date,person,status,due_date,confidence,ocr_json_path,simhash,asn,size,mtime_ns FROM files ORDER BY path`, func(r *sql.Rows) (map[string]interface{}, error) {
+	migrations, err := rows(conn, `SELECT version FROM schema_migrations ORDER BY version`, func(r *sql.Rows) (map[string]interface{}, error) {
+		var version string
+		if err := r.Scan(&version); err != nil {
+			return nil, err
+		}
+		return map[string]interface{}{"version": version}, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	state["migrations"] = migrations
+	state["schema"], err = rows(conn, `SELECT type,name,COALESCE(sql,'') FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' AND name NOT LIKE 'fts_search_%' AND name NOT LIKE 'fts_norm_%' AND name NOT LIKE 'fts_tri_%' ORDER BY type,name`, func(r *sql.Rows) (map[string]interface{}, error) {
+		var typ, name, sqlText string
+		if err := r.Scan(&typ, &name, &sqlText); err != nil {
+			return nil, err
+		}
+		return map[string]interface{}{"type": typ, "name": name, "sql": sqlText}, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	pragmas := map[string]string{}
+	for _, name := range []string{"journal_mode", "foreign_keys", "busy_timeout"} {
+		var value interface{}
+		if err := conn.QueryRow("PRAGMA " + name).Scan(&value); err != nil {
+			return nil, err
+		}
+		pragmas[name] = fmt.Sprint(value)
+	}
+	state["pragmas"] = pragmas
+	state["files"], err = rows(conn, `SELECT path,sha256,title,created_at,modified_at,"type",document_date,person,status,due_date,confidence,ocr_json_path,simhash,asn,size,mtime_ns FROM files ORDER BY path`, func(r *sql.Rows) (map[string]interface{}, error) {
 		var p, sha, title, created, modified, typ string
 		var date, person, status, due, ocr, simhash sql.NullString
 		var conf, asn, size, mtime sql.NullInt64
 		err := r.Scan(&p, &sha, &title, &created, &modified, &typ, &date, &person, &status, &due, &conf, &ocr, &simhash, &asn, &size, &mtime)
 		return map[string]interface{}{"path": p, "sha256": sha, "title": title, "created_at": created, "modified_at": modified, "type": typ, "document_date": nullableString(date), "person": nullableString(person), "status": nullableString(status), "due_date": nullableString(due), "confidence": nullableInt(conf), "ocr_json_path": nullableString(ocr), "simhash": nullableString(simhash), "asn": nullableInt(asn), "size": nullableInt(size), "mtime_ns": nullableInt(mtime)}, err
 	})
-	state["properties"], _ = rows(conn, `SELECT f.path,p.key,p.value,p.value_type FROM file_properties p JOIN files f ON f.id=p.file_id ORDER BY f.path,p.key`, func(r *sql.Rows) (map[string]interface{}, error) {
+	if err != nil {
+		return nil, err
+	}
+	state["properties"], err = rows(conn, `SELECT f.path,p.key,p.value,p.value_type FROM file_properties p JOIN files f ON f.id=p.file_id ORDER BY f.path,p.key`, func(r *sql.Rows) (map[string]interface{}, error) {
 		var p, k, typ string
 		var v sql.NullString
 		err := r.Scan(&p, &k, &v, &typ)
 		return map[string]interface{}{"path": p, "key": k, "value": nullableString(v), "value_type": typ}, err
 	})
-	state["links"], _ = rows(conn, `SELECT from_path,to_path,kind FROM links ORDER BY from_path,to_path,kind`, func(r *sql.Rows) (map[string]interface{}, error) {
+	if err != nil {
+		return nil, err
+	}
+	state["links"], err = rows(conn, `SELECT from_path,to_path,kind FROM links ORDER BY from_path,to_path,kind`, func(r *sql.Rows) (map[string]interface{}, error) {
 		var f, t, k string
 		err := r.Scan(&f, &t, &k)
 		return map[string]interface{}{"from": f, "to": t, "kind": k}, err
 	})
-	state["fts_search"], _ = rows(conn, `SELECT f.path,x.title,x.body FROM fts_search x JOIN files f ON f.id=x.rowid ORDER BY f.path`, func(r *sql.Rows) (map[string]interface{}, error) {
+	if err != nil {
+		return nil, err
+	}
+	state["fts_search"], err = rows(conn, `SELECT f.path,x.title,x.body FROM fts_search x JOIN files f ON f.id=x.rowid ORDER BY f.path`, func(r *sql.Rows) (map[string]interface{}, error) {
 		var p, t, b string
 		err := r.Scan(&p, &t, &b)
 		return map[string]interface{}{"path": p, "title": t, "body": b}, err
 	})
-	state["fts_norm"], _ = rows(conn, `SELECT f.path,x.norm FROM fts_norm x JOIN files f ON f.id=x.rowid ORDER BY f.path`, func(r *sql.Rows) (map[string]interface{}, error) {
+	if err != nil {
+		return nil, err
+	}
+	state["fts_norm"], err = rows(conn, `SELECT f.path,x.norm FROM fts_norm x JOIN files f ON f.id=x.rowid ORDER BY f.path`, func(r *sql.Rows) (map[string]interface{}, error) {
 		var p, n string
 		err := r.Scan(&p, &n)
 		return map[string]interface{}{"path": p, "norm": n}, err
 	})
-	state["fts_tri"], _ = rows(conn, `SELECT f.path,x.body FROM fts_tri x JOIN files f ON f.id=x.rowid ORDER BY f.path`, func(r *sql.Rows) (map[string]interface{}, error) {
+	if err != nil {
+		return nil, err
+	}
+	state["fts_tri"], err = rows(conn, `SELECT f.path,x.body FROM fts_tri x JOIN files f ON f.id=x.rowid ORDER BY f.path`, func(r *sql.Rows) (map[string]interface{}, error) {
 		var p, b string
 		err := r.Scan(&p, &b)
 		return map[string]interface{}{"path": p, "body": b}, err
 	})
+	if err != nil {
+		return nil, err
+	}
 	return state, nil
 }
 func rows(conn *sql.DB, query string, fn func(*sql.Rows) (map[string]interface{}, error)) ([]map[string]interface{}, error) {
@@ -341,7 +411,7 @@ func rows(conn *sql.DB, query string, fn func(*sql.Rows) (map[string]interface{}
 	if err != nil {
 		return nil, err
 	}
-	defer rs.Close()
+	defer func() { _ = rs.Close() }()
 	out := []map[string]interface{}{}
 	for rs.Next() {
 		v, e := fn(rs)

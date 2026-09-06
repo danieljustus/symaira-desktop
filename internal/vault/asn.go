@@ -36,7 +36,7 @@ func asnFromFrontmatter(path string, frontmatter map[string]interface{}) (*int, 
 	}
 
 	if value == nil {
-		return nil, nil
+		return nil, &ASNValidationError{Path: path, Reason: "must be a positive integer"}
 	}
 
 	rv := reflect.ValueOf(value)

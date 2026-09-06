@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"time"
@@ -52,6 +53,7 @@ func run() error {
 		return err
 	}
 	fixturePath := filepath.Join(root, "testdata", "port", "sidecar", "roundtrip.json")
+	//nolint:gosec // fixturePath is fixed relative to the repository root
 	data, err := os.ReadFile(fixturePath)
 	if err != nil {
 		return err
@@ -68,7 +70,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(work)
+	defer func() { _ = os.RemoveAll(work) }()
 	goBin := filepath.Join(work, "sidecar-go-helper"+exeSuffix())
 	rustBin := filepath.Join(work, "sidecar-rust-helper"+exeSuffix())
 	if out, err := runCommand(root, "go", "build", "-o", goBin, "./scripts/rust-port/cmd/sidecar-go-helper"); err != nil {
@@ -79,7 +81,7 @@ func run() error {
 	}
 	builtRust := filepath.Join(root, "target", "debug", "sidecar-rust-helper"+exeSuffix())
 	if _, err := os.Stat(builtRust); err != nil {
-		return fmt.Errorf("Rust helper missing after build: %w", err)
+		return fmt.Errorf("rust helper missing after build: %w", err)
 	}
 	if err := copyFile(rustBin, builtRust); err != nil {
 		return err
@@ -126,10 +128,10 @@ func roundTripA(work, goBin, rustBin string, f fixture) error {
 	if err != nil {
 		return err
 	}
-	if !bytes.Equal(a, b) {
-		return errors.New("Go reopen snapshot differs from Rust snapshot")
+	if !jsonEquivalent(a, b) {
+		return errors.New("go reopen snapshot differs from Rust snapshot")
 	}
-	if err := verifyNames(a, []string{"go-seed.md", "nullable.md", "rust-added.md"}); err != nil {
+	if err := verifyNames(a, []string{"go-seed.md", "nullable.md", "rust-added.md", "unknown-time.md"}); err != nil {
 		return err
 	}
 	for _, query := range []string{"vineyard", "Rust Added", "missing"} {
@@ -141,10 +143,10 @@ func roundTripA(work, goBin, rustBin string, f fixture) error {
 		return err
 	}
 	if r, err := invoke(goBin, "integrity", db, nil); err != nil || r.Outcome != "ok" {
-		return fmt.Errorf("Go integrity failed: %v", err)
+		return fmt.Errorf("go integrity failed: %v", err)
 	}
 	if r, err := invoke(rustBin, "integrity", db, nil); err != nil || r.Outcome != "ok" {
-		return fmt.Errorf("Rust integrity failed: %v", err)
+		return fmt.Errorf("rust integrity failed: %v", err)
 	}
 	return nil
 }
@@ -165,8 +167,8 @@ func roundTripB(work, goBin, rustBin string, f fixture) error {
 	if err != nil {
 		return err
 	}
-	if !bytes.Equal(a, b) {
-		return errors.New("Rust reopen snapshot differs from Go snapshot")
+	if !jsonEquivalent(a, b) {
+		return errors.New("rust reopen snapshot differs from Go snapshot")
 	}
 	return compareSearch(goBin, rustBin, db, "Go addition")
 }
@@ -199,7 +201,7 @@ func rollbackCases(work, goBin, rustBin string, f fixture) error {
 			if err != nil {
 				return err
 			}
-			if !bytes.Equal(before, after) {
+			if !jsonEquivalent(before, after) {
 				return errors.New("failed rollback left database residue")
 			}
 		}
@@ -212,6 +214,7 @@ func corruptionCases(work, goBin, rustBin string, f fixture) error {
 	if _, err := invoke(goBin, "create", source, map[string]interface{}{"documents": f.Documents}); err != nil {
 		return err
 	}
+	//nolint:gosec // source is the locally created round-trip database
 	original, err := os.ReadFile(source)
 	if err != nil {
 		return err
@@ -252,6 +255,7 @@ func corruptionCases(work, goBin, rustBin string, f fixture) error {
 			if r.Outcome != "error" || r.ErrorClass != "corrupt" {
 				return fmt.Errorf("%s classified as %q", name, r.ErrorClass)
 			}
+			//nolint:gosec // path is a locally created corruption probe
 			got, err := os.ReadFile(path)
 			if err != nil {
 				return err
@@ -297,7 +301,7 @@ func readOnlyCases(work, goBin, rustBin string, f fixture) error {
 		if err != nil {
 			return err
 		}
-		if !bytes.Equal(before, after) {
+		if !jsonEquivalent(before, after) {
 			return errors.New("read-only database changed")
 		}
 	}
@@ -320,21 +324,53 @@ func readOnlyCases(work, goBin, rustBin string, f fixture) error {
 		return err
 	}
 	defer func() { _ = setReadOnly(src, false) }()
-	infoBefore, _ := os.Stat(src)
+	infoBefore, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+	//nolint:gosec // src is a locally created read-only source fixture
 	bytesBefore, err := os.ReadFile(src)
 	if err != nil {
 		return err
 	}
-	if _, err := invoke(rustBin, "refresh", filepath.Join(work, "source.db"), refresh); err != nil {
+	for _, helper := range []string{rustBin, goBin} {
+		if _, err := invoke(helper, "refresh", filepath.Join(work, "source.db"), refresh); err != nil {
+			return err
+		}
+	}
+	infoAfter, err := os.Stat(src)
+	if err != nil {
 		return err
 	}
-	infoAfter, _ := os.Stat(src)
+	//nolint:gosec // src is a locally created read-only source fixture
 	bytesAfter, err := os.ReadFile(src)
 	if err != nil {
 		return err
 	}
 	if !bytes.Equal(bytesBefore, bytesAfter) || infoBefore.Size() != infoAfter.Size() || !infoBefore.ModTime().Equal(infoAfter.ModTime()) {
 		return errors.New("read-only source bytes or metadata changed")
+	}
+
+	stale := map[string]interface{}{"path": "stale-after-refresh.md", "markdown": "---\ntitle: Stale\n---\nstale\n", "mtime_ns": int64(1768478400000000000)}
+	if _, err := invoke(goBin, "mutate", filepath.Join(work, "source.db"), map[string]interface{}{"documents": []interface{}{stale}}); err != nil {
+		return err
+	}
+	beforePrune, err := snapshot(goBin, filepath.Join(work, "source.db"))
+	if err != nil {
+		return err
+	}
+	if _, err := invoke(goBin, "prune", filepath.Join(work, "source.db"), map[string]interface{}{"vault": vault}); err != nil {
+		return err
+	}
+	afterPrune, err := snapshot(rustBin, filepath.Join(work, "source.db"))
+	if err != nil {
+		return err
+	}
+	if jsonEquivalent(beforePrune, afterPrune) {
+		return errors.New("prune did not mutate the sidecar")
+	}
+	if err := verifyAbsent(afterPrune, "stale-after-refresh.md"); err != nil {
+		return err
 	}
 	return nil
 }
@@ -368,6 +404,7 @@ func lockPair(work, db, holder, writer string, f fixture, timeout bool) error {
 	if err != nil {
 		return err
 	}
+	//nolint:gosec // holder is one of the two locally built helper binaries
 	cmd := exec.Command(holder, "lock-holder", "--db", db, "--input", input)
 	cmd.Stdout = os.Stderr
 	cmd.Stderr = os.Stderr
@@ -377,6 +414,7 @@ func lockPair(work, db, holder, writer string, f fixture, timeout bool) error {
 	defer func() {
 		if cmd.Process != nil {
 			_ = cmd.Process.Kill()
+			_ = cmd.Wait()
 		}
 	}()
 	if err := waitPath(ready, 5*time.Second); err != nil {
@@ -430,12 +468,13 @@ func invoke(bin, command, db string, payload interface{}) (helperResult, error) 
 		if err != nil {
 			return r, err
 		}
-		defer os.Remove(input)
+		defer func() { _ = os.Remove(input) }()
 	}
 	args := []string{command, "--db", db}
 	if input != "" {
 		args = append(args, "--input", input)
 	}
+	//nolint:gosec // bin is one of the two locally built helper binaries
 	c := exec.Command(bin, args...)
 	var stdout, stderr bytes.Buffer
 	c.Stdout = &stdout
@@ -473,7 +512,7 @@ func compareSearch(a, b, db, q string) error {
 	if err != nil {
 		return err
 	}
-	if !bytes.Equal(ra.Hits, rb.Hits) {
+	if !jsonEquivalent(ra.Hits, rb.Hits) {
 		return fmt.Errorf("search %q differs", q)
 	}
 	return nil
@@ -497,15 +536,39 @@ func verifyNames(raw []byte, want []string) error {
 	}
 	return nil
 }
+func jsonEquivalent(a, b []byte) bool {
+	var left, right interface{}
+	if json.Unmarshal(a, &left) != nil || json.Unmarshal(b, &right) != nil {
+		return false
+	}
+	return reflect.DeepEqual(left, right)
+}
+
+func verifyAbsent(raw []byte, unwanted string) error {
+	var s map[string]interface{}
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return err
+	}
+	files, _ := s["files"].([]interface{})
+	for _, v := range files {
+		if m, ok := v.(map[string]interface{}); ok && m["path"] == unwanted {
+			return fmt.Errorf("unexpected path %s", unwanted)
+		}
+	}
+	return nil
+}
+
 func verifyTimesAndNulls(raw []byte) error {
 	var s map[string]interface{}
 	if err := json.Unmarshal(raw, &s); err != nil {
 		return err
 	}
 	files := s["files"].([]interface{})
+	foundNullable, foundUnknown := false, false
 	for _, v := range files {
 		m := v.(map[string]interface{})
 		if m["path"] == "nullable.md" {
+			foundNullable = true
 			for _, k := range []string{"document_date", "person", "status", "due_date", "confidence", "ocr_json_path", "simhash", "asn"} {
 				if m[k] != nil {
 					return fmt.Errorf("nullable %s is not NULL", k)
@@ -515,6 +578,15 @@ func verifyTimesAndNulls(raw []byte) error {
 				return errors.New("empty created_at was not preserved as TEXT")
 			}
 		}
+		if m["path"] == "unknown-time.md" {
+			foundUnknown = true
+			if m["mtime_ns"] != nil {
+				return errors.New("unknown mtime was not preserved as NULL")
+			}
+		}
+	}
+	if !foundNullable || !foundUnknown {
+		return errors.New("NULL/time fixture rows are missing")
 	}
 	return nil
 }
@@ -532,8 +604,8 @@ func writeInput(dir string, v interface{}) (string, error) {
 	}
 	name := f.Name()
 	if _, err = f.Write(b); err != nil {
-		f.Close()
-		os.Remove(name)
+		_ = f.Close()
+		_ = os.Remove(name)
 		return "", err
 	}
 	if err = f.Close(); err != nil {
@@ -542,17 +614,23 @@ func writeInput(dir string, v interface{}) (string, error) {
 	return name, nil
 }
 func runCommand(dir, bin string, args ...string) (string, error) {
+	//nolint:gosec // bin is a fixed compiler/tool executable selected by this harness
 	c := exec.Command(bin, args...)
 	c.Dir = dir
 	out, err := c.CombinedOutput()
 	return string(out), err
 }
 func copyFile(dst, src string) error {
+	//nolint:gosec // src is the fixed local Cargo build output
 	b, err := os.ReadFile(src)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(dst, b, 0700)
+	//nolint:gosec // dst is a local temporary helper executable path
+	if err := os.WriteFile(dst, b, 0600); err != nil {
+		return err
+	}
+	return os.Chmod(dst, 0700) //nolint:gosec // helper must be executable
 }
 func digest(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
 func waitPath(path string, d time.Duration) error {

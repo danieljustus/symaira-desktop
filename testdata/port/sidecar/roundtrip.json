@@ -21,13 +21,17 @@
     },
     {
       "path": "nullable.md",
-      "markdown": "---\ntitle: Nullable\ncreated: \"\"\ndocument_date: null\nperson: null\nstatus: null\ndue_date: null\nconfidence: null\nocr_json_path: null\nsimhash: null\nasn: null\nnullable_property: null\n---\n",
+      "markdown": "---\ntitle: Nullable\ncreated: \"\"\ndocument_date: null\nperson: null\nstatus: null\ndue_date: null\nconfidence: null\nocr_json_path: null\nsimhash: null\nnullable_property: null\n---\n",
       "mtime_ns": 0
     },
     {
       "path": "linked.md",
       "markdown": "---\ntitle: Linked\ncreated: \"2026-01-03T00:00:00Z\"\n---\nPoints at [[Go Seed]] and [[Nullable]].\n",
       "mtime_ns": -1
+    },
+    {
+      "path": "unknown-time.md",
+      "markdown": "---\ntitle: Unknown Time\ncreated: \"2026-01-07T00:00:00Z\"\n---\nNo stat cache.\n"
     }
   ],
   "rust_update": {

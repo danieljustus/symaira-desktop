@@ -15,7 +15,10 @@ use serde_json::{Value, json};
 #[cfg(windows)]
 use std::path::PathBuf;
 
-use super::{IndexedDocument, MIGRATIONS, SearchHit, Sidecar, storage_path, strip_verbatim_prefix};
+use super::{
+    IndexedDocument, MIGRATIONS, SearchHit, Sidecar, open_vault_dir, storage_path,
+    strip_verbatim_prefix,
+};
 
 const GO_MIGRATIONS: &[(&str, &str)] = &[
     (
@@ -588,8 +591,9 @@ fn long_path_refresh_uses_verbatim_io_path_and_ordinary_key() {
     let _ = fs::remove_file(&db_path);
     let mut sidecar = Sidecar::open(&db_path).expect("open sidecar");
     let mut batch = Vec::new();
+    let vault_dir = open_vault_dir(&root).expect("open long-path vault capability");
     sidecar
-        .refresh_path(&root, relative, &mut batch)
+        .refresh_path(&vault_dir, &root, relative, &mut batch)
         .expect("refresh long-path document");
     sidecar
         .flush_refresh_batch(&mut batch)
@@ -605,6 +609,146 @@ fn long_path_refresh_uses_verbatim_io_path_and_ordinary_key() {
     drop(sidecar);
     let _ = fs::remove_file(db_path);
     let _ = fs::remove_dir_all(root);
+}
+
+#[cfg(unix)]
+#[test]
+fn refresh_rejects_distinct_non_utf8_names_without_alias_rows() {
+    use std::os::unix::ffi::{OsStrExt as _, OsStringExt as _};
+
+    let base = std::env::temp_dir().join(format!("symdesk-index-non-utf8-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&base);
+    fs::create_dir_all(&base).expect("create non-UTF-8 test root");
+    let root = fs::canonicalize(&base).expect("canonicalize non-UTF-8 test root");
+    let db_path = root.join("sidecar.db");
+    let mut sidecar = Sidecar::open(&db_path).expect("open sidecar");
+    let vault_dir = open_vault_dir(&root).expect("open vault capability");
+    let invalid_root = std::path::PathBuf::from(std::ffi::OsString::from_vec(
+        b"/tmp/symdesk-invalid-\x82".to_vec(),
+    ));
+    assert!(matches!(
+        open_vault_dir(&invalid_root),
+        Err(super::SidecarError::NonUtf8Path {
+            context: "vault root",
+            ..
+        })
+    ));
+
+    for name in [b"note-\x80-a.md".to_vec(), b"note-\x81-b.md".to_vec()] {
+        let path = std::path::PathBuf::from(std::ffi::OsString::from_vec(name.clone()));
+        let mut batch = Vec::new();
+        let error = sidecar
+            .refresh_path(&vault_dir, &root, &path, &mut batch)
+            .expect_err("non-UTF-8 key must be rejected");
+        match error {
+            super::SidecarError::NonUtf8Path {
+                context,
+                path: actual,
+            } => {
+                assert_eq!(context, "relative path");
+                assert_eq!(
+                    actual.file_name().expect("invalid filename").as_bytes(),
+                    name
+                );
+            }
+            other => panic!("unexpected error for invalid filename: {other:?}"),
+        }
+        assert!(batch.is_empty(), "invalid names must not queue a document");
+        let rows: i64 = sidecar
+            .connection
+            .query_row("SELECT COUNT(*) FROM files", [], |row| row.get(0))
+            .expect("count files");
+        assert_eq!(rows, 0, "invalid names must not alias into a row");
+    }
+
+    drop(sidecar);
+    let _ = fs::remove_dir_all(base);
+}
+
+#[cfg(unix)]
+#[test]
+fn refresh_and_prune_never_index_external_marker_during_symlink_replacement() {
+    use std::{
+        sync::{
+            Arc,
+            atomic::{AtomicBool, Ordering},
+        },
+        thread,
+    };
+
+    let base =
+        std::env::temp_dir().join(format!("symdesk-index-symlink-race-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&base);
+    let root = base.join("vault");
+    let outside = base.join("outside");
+    fs::create_dir_all(&root).expect("create race vault");
+    fs::create_dir_all(&outside).expect("create outside directory");
+    let external = outside.join("secret.md");
+    fs::write(
+        &external,
+        "---\ntitle: External\n---\nEXTERNAL_SECRET_MARKER\n",
+    )
+    .expect("write external marker");
+    let note = root.join("note.md");
+    fs::write(&note, "---\ntitle: Internal\n---\ninside\n").expect("write internal document");
+
+    let db_path = base.join("sidecar.db");
+    let mut sidecar = Sidecar::open(&db_path).expect("open sidecar");
+    sidecar.refresh_index(&root).expect("initial refresh");
+    let stop = Arc::new(AtomicBool::new(false));
+    let swap_stop = Arc::clone(&stop);
+    let swap_note = note.clone();
+    let swap_external = external.clone();
+    let swapper = thread::spawn(move || {
+        while !swap_stop.load(Ordering::Relaxed) {
+            let _ = fs::remove_file(&swap_note);
+            let _ = fs::write(&swap_note, "---\ntitle: Internal\n---\ninside\n");
+            let _ = fs::remove_file(&swap_note);
+            let _ = std::os::unix::fs::symlink(&swap_external, &swap_note);
+            thread::yield_now();
+        }
+    });
+
+    let race_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        for iteration in 0..256 {
+            if iteration % 2 == 0 {
+                let _ = sidecar.refresh_index(&root);
+            } else {
+                let _ = sidecar.prune(&root);
+            }
+            let external_rows: i64 = sidecar
+                .connection
+                .query_row(
+                    "SELECT COUNT(*) FROM fts_search WHERE body = ?",
+                    ["EXTERNAL_SECRET_MARKER\n"],
+                    |row| row.get(0),
+                )
+                .expect("query external marker");
+            assert_eq!(
+                external_rows, 0,
+                "external marker was indexed at iteration {iteration}"
+            );
+        }
+    }));
+    stop.store(true, Ordering::Relaxed);
+    swapper.join().expect("join symlink swapper");
+    let _ = fs::remove_file(&note);
+    fs::write(&note, "---\ntitle: Internal\n---\ninside\n").expect("restore internal document");
+    if let Err(payload) = race_result {
+        std::panic::resume_unwind(payload);
+    }
+    let _ = sidecar.refresh_index(&root);
+    let external_rows: i64 = sidecar
+        .connection
+        .query_row(
+            "SELECT COUNT(*) FROM fts_search WHERE body = ?",
+            ["EXTERNAL_SECRET_MARKER\n"],
+            |row| row.get(0),
+        )
+        .expect("query final external marker");
+    assert_eq!(external_rows, 0);
+    drop(sidecar);
+    let _ = fs::remove_dir_all(base);
 }
 
 fn write_lifecycle_file(root: &Path, relative: &str, content: &str, mtime_ns: i64) {

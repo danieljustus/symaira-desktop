@@ -4,11 +4,13 @@
 
 use std::{
     collections::BTreeMap,
-    fs, io,
+    fs,
+    io::{self, Read},
     path::{Component, Path, PathBuf},
     time::{Duration, UNIX_EPOCH},
 };
 
+use cap_std::{ambient_authority, fs::Dir};
 use noyalib::Value;
 use rusqlite::{Connection, OptionalExtension, Transaction, params, params_from_iter};
 use symdesk_vault::Document;
@@ -76,6 +78,11 @@ pub enum SidecarError {
     Path(#[from] symdesk_vault::SecurePathError),
     #[error("{0}")]
     Contract(String),
+    #[error("non-UTF-8 {context}: {path:?}")]
+    NonUtf8Path {
+        context: &'static str,
+        path: PathBuf,
+    },
     #[error("time conversion failed: {0}")]
     Time(String),
 }
@@ -281,6 +288,11 @@ impl Sidecar {
 
     /// Refreshes the index from lowercase-extension Markdown files under `vault_root`.
     ///
+    /// The vault root is opened once as a capability directory. Each file read
+    /// uses a capability-opened handle; its metadata and bytes therefore refer
+    /// to the same filesystem object. Paths containing non-UTF-8 components are
+    /// rejected instead of being lossy-converted into database keys.
+    ///
     /// The size/mtime cache is checked before reading each file. A matching
     /// cache entry is an exact no-read/no-write fast path. When the cache is
     /// stale, an equal SHA-256 updates only the cached stat; changed content
@@ -291,10 +303,12 @@ impl Sidecar {
     /// Returns the first filesystem, parser or SQLite error after flushing
     /// documents already queued before a later walk or parse error.
     pub fn refresh_index(&mut self, vault_root: &Path) -> Result<(), SidecarError> {
+        validate_utf8_path(vault_root, "vault root")?;
+        let vault_dir = open_vault_dir(vault_root)?;
         let mut batch = Vec::with_capacity(MAX_INDEX_BATCH_SIZE);
         let mut callback_error = None;
         let walk_result = symdesk_vault::walk_markdown_with(vault_root, |relative| {
-            let result = self.refresh_path(vault_root, relative, &mut batch);
+            let result = self.refresh_path(&vault_dir, vault_root, relative, &mut batch);
             if let Err(error) = result {
                 callback_error = Some(error);
                 return Err(io::Error::other("refresh index callback failed"));
@@ -311,30 +325,46 @@ impl Sidecar {
 
     fn refresh_path(
         &mut self,
+        vault_dir: &Dir,
         vault_root: &Path,
         relative: &Path,
         batch: &mut Vec<IndexedDocument>,
     ) -> Result<(), SidecarError> {
         let storage_path = storage_path(vault_root, relative)?;
-        let metadata = fs::metadata(&storage_path.io_path)?;
-        let mtime_ns = system_time_unix_nanos(metadata.modified()?)?;
-        let path_string = storage_path.key_path.to_string_lossy().into_owned();
+        let path_string =
+            storage_path
+                .key_path
+                .to_str()
+                .ok_or_else(|| SidecarError::NonUtf8Path {
+                    context: "storage key",
+                    path: storage_path.key_path.clone(),
+                })?;
+        // The fast path needs only capability-scoped metadata; opening the
+        // file is deferred until it must be read so unreadable unchanged files
+        // remain a no-read/no-write success.
+        let metadata = vault_dir.metadata(relative)?;
+        let mtime_ns = system_time_unix_nanos(metadata.modified()?.into_std())?;
         let file_size = i64::try_from(metadata.len()).unwrap_or(i64::MAX);
-        if let Some(cached) = self.stat_cache(&path_string)?
+        if let Some(cached) = self.stat_cache(path_string)?
             && cached.size == file_size
             && cached.mtime_ns == mtime_ns
         {
             return Ok(());
         }
 
-        let bytes = fs::read(&storage_path.io_path)?;
-        let document = symdesk_vault::parse_bytes(&path_string, &bytes)?;
+        // Keep metadata and bytes tied to the same capability-opened handle.
+        let mut file = vault_dir.open(relative)?;
+        let metadata = file.metadata()?;
+        let mtime_ns = system_time_unix_nanos(metadata.modified()?.into_std())?;
+        let mut bytes = Vec::new();
+        file.read_to_end(&mut bytes)?;
+        let document = symdesk_vault::parse_bytes(path_string, &bytes)?;
         if document.derived {
-            return self.delete_document(&path_string);
+            return self.delete_document(path_string);
         }
-        let indexed = self.is_indexed(&path_string, &document.sha256)?;
+        let indexed = self.is_indexed(path_string, &document.sha256)?;
         if indexed {
-            self.set_file_stat(&path_string, document.size, mtime_ns)?;
+            self.set_file_stat(path_string, document.size, mtime_ns)?;
             return Ok(());
         }
 
@@ -406,27 +436,42 @@ impl Sidecar {
     /// Removes indexed documents and lifecycle diagnostics absent from the
     /// vault. It never modifies Markdown sources and is not called by refresh.
     ///
+    /// The root and every discovered entry are capability-opened, and
+    /// non-UTF-8 root, relative, or storage-key paths are rejected explicitly.
+    ///
     /// # Errors
     /// Returns walk or SQLite errors without partially claiming success.
     pub fn prune(&mut self, vault_root: &Path) -> Result<usize, SidecarError> {
+        validate_utf8_path(vault_root, "vault root")?;
+        let vault_dir = open_vault_dir(vault_root)?;
         let markdown = symdesk_vault::walk_markdown(vault_root)?;
         let mut valid_documents = std::collections::BTreeSet::new();
         for relative in markdown {
             let storage_path = storage_path(vault_root, &relative)?;
-            let path_string = storage_path.key_path.to_string_lossy().into_owned();
+            // Open before accepting the key, and parse from that same handle.
+            let mut file = vault_dir.open(&relative)?;
+            let path_string =
+                storage_path
+                    .key_path
+                    .to_str()
+                    .ok_or_else(|| SidecarError::NonUtf8Path {
+                        context: "storage key",
+                        path: storage_path.key_path.clone(),
+                    })?;
+            let mut bytes = Vec::new();
+            file.read_to_end(&mut bytes)?;
             // Go keeps malformed files valid for pruning; only a successfully
             // parsed derived document is intentionally absent from the set.
-            let is_derived = fs::read(&storage_path.io_path)
+            let is_derived = symdesk_vault::parse_bytes(path_string, &bytes)
                 .ok()
-                .and_then(|bytes| symdesk_vault::parse_bytes(&path_string, &bytes).ok())
                 .is_some_and(|document| document.derived);
             if !is_derived {
-                valid_documents.insert(path_string);
+                valid_documents.insert(path_string.to_owned());
             }
         }
 
         let stale_files = self.stale_paths("SELECT path FROM files", &valid_documents)?;
-        let stale_statuses = self.stale_lifecycle_paths(vault_root)?;
+        let stale_statuses = self.stale_lifecycle_paths(&vault_dir, vault_root)?;
         if stale_files.is_empty() && stale_statuses.is_empty() {
             return Ok(0);
         }
@@ -468,13 +513,28 @@ impl Sidecar {
         Ok(stale)
     }
 
-    fn stale_lifecycle_paths(&self, vault_root: &Path) -> Result<Vec<String>, SidecarError> {
+    fn stale_lifecycle_paths(
+        &self,
+        vault_dir: &Dir,
+        vault_root: &Path,
+    ) -> Result<Vec<String>, SidecarError> {
         let entries = symdesk_vault::walk_all(vault_root)?;
-        let valid = entries
-            .into_iter()
-            .map(|entry| storage_path(vault_root, &entry.path))
-            .map(|path| path.map(|path| path.key_path.to_string_lossy().into_owned()))
-            .collect::<Result<std::collections::BTreeSet<_>, _>>()?;
+        let mut valid = std::collections::BTreeSet::new();
+        for entry in entries {
+            let storage_path = storage_path(vault_root, &entry.path)?;
+            // Do not validate a lifecycle row from a path that was only seen
+            // by the ambient directory walker; open the discovered entry via
+            // the root capability first.
+            let _file = vault_dir.open(&entry.path)?;
+            let key = storage_path
+                .key_path
+                .to_str()
+                .ok_or_else(|| SidecarError::NonUtf8Path {
+                    context: "storage key",
+                    path: storage_path.key_path.clone(),
+                })?;
+            valid.insert(key.to_owned());
+        }
         self.stale_paths("SELECT path FROM index_lifecycle", &valid)
     }
 
@@ -540,25 +600,39 @@ struct ValidatedStoragePath {
     key_path: PathBuf,
 }
 
+fn open_vault_dir(vault_root: &Path) -> Result<Dir, SidecarError> {
+    validate_utf8_path(vault_root, "vault root")?;
+    Dir::open_ambient_dir(vault_root, ambient_authority()).map_err(Into::into)
+}
+
+fn validate_utf8_path<'a>(path: &'a Path, context: &'static str) -> Result<&'a str, SidecarError> {
+    path.to_str().ok_or_else(|| SidecarError::NonUtf8Path {
+        context,
+        path: path.to_path_buf(),
+    })
+}
+
 fn storage_path(vault_root: &Path, relative: &Path) -> Result<ValidatedStoragePath, SidecarError> {
-    let io_path = symdesk_vault::secure_path(vault_root, &relative.to_string_lossy())?;
+    let relative_string = validate_utf8_path(relative, "relative path")?;
+    let io_path = symdesk_vault::secure_path(vault_root, relative_string)?;
     // Go filepath.Walk keys are derived from the caller's root, not from a
     // canonicalized root. Keep that spelling, while removing Windows' verbatim
     // prefix so it remains the ordinary storage key expected by the sidecar.
     let key_path = absolute_non_verbatim(vault_root)?.join(relative);
+    validate_utf8_path(&key_path, "storage key")?;
     Ok(ValidatedStoragePath { io_path, key_path })
 }
 
 fn absolute_non_verbatim(path: &Path) -> Result<PathBuf, SidecarError> {
+    validate_utf8_path(path, "vault root")?;
     let absolute = if path.is_absolute() {
         path.to_path_buf()
     } else {
         std::env::current_dir()?.join(path)
     };
     let cleaned = lexical_clean(&absolute);
-    Ok(PathBuf::from(strip_verbatim_prefix(
-        &cleaned.to_string_lossy(),
-    )))
+    let cleaned = validate_utf8_path(&cleaned, "storage key")?;
+    Ok(PathBuf::from(strip_verbatim_prefix(cleaned)))
 }
 
 fn strip_verbatim_prefix(path: &str) -> String {

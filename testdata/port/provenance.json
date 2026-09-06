@@ -5,7 +5,7 @@
     "release": "v0.12.2"
   },
   "production_source_digest": "333251686e6148393341f3dea06543e124a78c6c1c4dc7dcdd474959dfae0e5b",
-  "generator_source_digest": "d88d896f10adf99ff68a454bd8ebe012289bbae40e352449edacc9434af6ca7c",
+  "generator_source_digest": "65280a323014eb7c3ddb124d4f5c6b6a9c068752157d5b2190f9190fddfc7dd0",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -27,7 +27,7 @@
     "testdata/port/http/routes.json": "3b3c43eab70c1e6faafb9cd7470222fdf314c5cd834adb673e5830e343b37b30",
     "testdata/port/mcp/symdesk-tools.json": "f2fab0a54bbdcd45be84ac5c31aee0d2ff27051556032ddebce29e257e9ca761",
     "testdata/port/mcp/symroom-tools.json": "3c71aacde181fef4282f831568e9362ed0badc9aeab4f6375c77c95e64a823f6",
-    "testdata/port/vault/filesystem.json": "8b84e54cbed185ab94044b2a86edcdecdb9592d4ede7b7cd4eb668a0c024fbab",
+    "testdata/port/vault/filesystem.json": "7ee3837f5add08bd229dec17701f91de56e4e59ad912e8193520120681d7a516",
     "testdata/port/vault/health-links.json": "95501c79b816d21ae86efa724f280e81572ee5636ae11475d9fb793f54428e1a",
     "testdata/port/vault/metadata.json": "5de4b8a9471ae002a52156f0176d3053be9d243497a8a4f45d508f8765f9ae02",
     "testdata/port/vault/mobile-writer.json": "6efb62d62b741a2f069eea7ec0aad94b8f21e8e7038a8f3d17d1a0860407bd2d",

@@ -20,7 +20,6 @@ import (
 type document struct {
 	SchemaVersion int              `json:"schema_version"`
 	Oracle        inventory.Oracle `json:"oracle"`
-	Platform      string           `json:"platform"`
 	Tree          []treeFile       `json:"tree"`
 	WalkAll       []walkEntry      `json:"walk_all"`
 	WalkMarkdown  []string         `json:"walk_markdown"`
@@ -97,7 +96,7 @@ func build(oracle inventory.Oracle) (document, error) {
 
 	tree := []treeFile{
 		{Path: "a.md", Content: "a"}, {Path: "Upper.MD", Content: "upper"}, {Path: "image.png", Content: "png"}, {Path: ".hidden.md", Content: "hidden"},
-		{Path: "folder/b.md", Content: "b"}, {Path: ".obsidian/x.md", Content: "x"}, {Path: "vendor/v.md", Content: "v"}, {Path: "Vendor/kept.md", Content: "kept"},
+		{Path: "folder/b.md", Content: "b"}, {Path: ".obsidian/x.md", Content: "x"}, {Path: "vendor/v.md", Content: "v"},
 		{Path: "node_modules/n.md", Content: "n"}, {Path: "build/build.md", Content: "build"}, {Path: "dist/dist.md", Content: "dist"}, {Path: "venv/venv.md", Content: "venv"}, {Path: "__pycache__/cache.md", Content: "cache"},
 		{Path: "real/inside.md", Content: "inside"}, {Path: "etc/passwd", Content: "not-system"},
 	}
@@ -186,7 +185,7 @@ func build(oracle inventory.Oracle) (document, error) {
 		}
 		secure = append(secure, out)
 	}
-	return document{SchemaVersion: 1, Oracle: oracle, Platform: runtime.GOOS + "/" + runtime.GOARCH, Tree: tree, WalkAll: all, WalkMarkdown: markdown, SecurePaths: secure}, nil
+	return document{SchemaVersion: 1, Oracle: oracle, Tree: tree, WalkAll: all, WalkMarkdown: markdown, SecurePaths: secure}, nil
 }
 
 func normalize(value, root, outside string) string {

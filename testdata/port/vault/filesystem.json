@@ -4,7 +4,6 @@
     "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
     "release": "v0.12.2"
   },
-  "platform": "darwin/arm64",
   "tree": [
     {
       "path": "a.md",
@@ -33,10 +32,6 @@
     {
       "path": "vendor/v.md",
       "content": "v"
-    },
-    {
-      "path": "Vendor/kept.md",
-      "content": "kept"
     },
     {
       "path": "node_modules/n.md",

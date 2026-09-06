@@ -64,3 +64,4 @@ docs/app-test/
 PLANUNG.md
 ARCHITEKTUR.md
 .claude/
+fuzz/target/

@@ -114,7 +114,15 @@ The measured Go baseline is in
   `MobileNoteWriter` document is parsed by Swift, Go and Rust. Linux, macOS and
   Windows native CI passed on `main` in run
   [34051534054](https://github.com/danieljustus/symaira-desktop/actions/runs/34051534054).
-  `RUST-005` (minimal sidecar index and search) is now ready.
+  `RUST-005` (minimal sidecar index and search) is in progress. Its first
+  slice adds `symdesk-index` with byte-matched migrations 001–011, WAL,
+  foreign-key and five-second busy settings, typed file/property/link rows,
+  original/German/trigram FTS, snippets/scoping, update/delete semantics and
+  Go-compatible partial-batch failure behavior. A Go-generated fixture freezes
+  36 schema objects, 11 migration versions, logical database snapshots and nine
+  searches. `rusqlite` 0.40.2 is pinned with only `bundled`; the Rust crate has
+  zero unsafe expressions, while the reviewed SQLite wrapper/FFI remains an
+  explicit transitive boundary.
 
 ## Reuse assessment
 

@@ -93,7 +93,7 @@ The measured Go baseline is in
   Configuration fixtures must pin the four tagged-but-currently-ignored
   environment variables tracked in [#854](https://github.com/danieljustus/symaira-desktop/issues/854), not silently fix them in Rust.
   Go remains production.
-- `RUST-004` is in progress: a new `symdesk-vault` crate passes 34
+- `RUST-004` passed: the `symdesk-vault` crate passes 34
   Go-generated `ParseBytes` cases covering contract v1–v6, YAML coercions,
   unknown nested fields, exact SHA-256/size/body bytes, all type inference,
   ASN errors, aliases, tags, wikilinks, CRLF and Excalidraw behavior. Its own
@@ -111,8 +111,10 @@ The measured Go baseline is in
   policy rejection) now pass Go-generated fixtures. The canonical hybrid
   metadata representation, matching/stripping behavior and Unicode paths,
   titles, aliases and attachments are covered as well. An actual deterministic
-  `MobileNoteWriter` document is parsed by Swift, Go and Rust. RUST-004 remains
-  `in_progress` until the Linux/Windows native CI lanes execute these contracts.
+  `MobileNoteWriter` document is parsed by Swift, Go and Rust. Linux, macOS and
+  Windows native CI passed on `main` in run
+  [34051534054](https://github.com/danieljustus/symaira-desktop/actions/runs/34051534054).
+  `RUST-005` (minimal sidecar index and search) is now ready.
 
 ## Reuse assessment
 

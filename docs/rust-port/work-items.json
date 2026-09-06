@@ -34,7 +34,7 @@
     {
       "id": "RUST-004",
       "title": "Port read-only Markdown vault contracts",
-      "status": "in_progress",
+      "status": "passed",
       "depends_on": ["RUST-003"],
       "contract_rows": ["VAULT-001", "VAULT-002", "VAULT-003", "VAULT-005", "VAULT-007", "VAULT-008", "VAULT-009", "SEC-001"],
       "acceptance": ["make vault-read-differential", "cargo nextest run -p symdesk-vault", "cargo +nightly fuzz run frontmatter"]
@@ -42,7 +42,7 @@
     {
       "id": "RUST-005",
       "title": "Port minimal sidecar index and search",
-      "status": "blocked",
+      "status": "ready",
       "depends_on": ["RUST-004"],
       "contract_rows": ["INDEX-001", "INDEX-002", "INDEX-003", "INDEX-006"],
       "acceptance": ["make sidecar-differential", "cargo nextest run -p symdesk-index", "make benchmark-large"]

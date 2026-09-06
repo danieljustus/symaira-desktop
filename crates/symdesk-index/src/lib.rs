@@ -2,12 +2,10 @@
 
 //! Minimal SQLite sidecar index compatible with the Go oracle.
 
-#[cfg(unix)]
-use std::path::PathBuf;
 use std::{
     collections::BTreeMap,
     fs, io,
-    path::Path,
+    path::{Component, Path, PathBuf},
     time::{Duration, UNIX_EPOCH},
 };
 
@@ -317,7 +315,7 @@ impl Sidecar {
         relative: &Path,
         batch: &mut Vec<IndexedDocument>,
     ) -> Result<(), SidecarError> {
-        let path = symdesk_vault::secure_path(vault_root, &relative.to_string_lossy())?;
+        let path = storage_path(vault_root, relative)?;
         let metadata = fs::metadata(&path)?;
         let mtime_ns = system_time_unix_nanos(metadata.modified()?)?;
         let path_string = path.to_string_lossy().into_owned();
@@ -414,7 +412,7 @@ impl Sidecar {
         let markdown = symdesk_vault::walk_markdown(vault_root)?;
         let mut valid_documents = std::collections::BTreeSet::new();
         for relative in markdown {
-            let path = symdesk_vault::secure_path(vault_root, &relative.to_string_lossy())?;
+            let path = storage_path(vault_root, &relative)?;
             let path_string = path.to_string_lossy().into_owned();
             // Go keeps malformed files valid for pruning; only a successfully
             // parsed derived document is intentionally absent from the set.
@@ -474,10 +472,8 @@ impl Sidecar {
         let entries = symdesk_vault::walk_all(vault_root)?;
         let valid = entries
             .into_iter()
-            .map(|entry| {
-                symdesk_vault::secure_path(vault_root, &entry.path.to_string_lossy())
-                    .map(|path| path.to_string_lossy().into_owned())
-            })
+            .map(|entry| storage_path(vault_root, &entry.path))
+            .map(|path| path.map(|path| path.to_string_lossy().into_owned()))
             .collect::<Result<std::collections::BTreeSet<_>, _>>()?;
         self.stale_paths("SELECT path FROM index_lifecycle", &valid)
     }
@@ -534,6 +530,54 @@ impl Sidecar {
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
+}
+
+fn storage_path(vault_root: &Path, relative: &Path) -> Result<PathBuf, SidecarError> {
+    // Validate the walk result against the canonical vault tree, but keep the
+    // ordinary absolute path produced from the caller's root as the DB key.
+    // `secure_path` may return a Windows `\\\\?\\` path or resolve macOS
+    // `/var` through `/private`; neither matches Go filepath.Walk keys.
+    let _ = symdesk_vault::secure_path(vault_root, &relative.to_string_lossy())?;
+    Ok(absolute_non_verbatim(vault_root)?.join(relative))
+}
+
+fn absolute_non_verbatim(path: &Path) -> Result<PathBuf, SidecarError> {
+    let absolute = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()?.join(path)
+    };
+    let cleaned = lexical_clean(&absolute);
+    Ok(PathBuf::from(strip_verbatim_prefix(
+        &cleaned.to_string_lossy(),
+    )))
+}
+
+fn strip_verbatim_prefix(path: &str) -> String {
+    const VERBATIM_PREFIX: &str = r"\\?";
+    const VERBATIM_UNC_PREFIX: &str = r"\\?\UNC";
+    if let Some(rest) = path.strip_prefix(VERBATIM_UNC_PREFIX) {
+        let rest = rest.strip_prefix('\\').unwrap_or(rest);
+        format!("\\\\{rest}")
+    } else if let Some(rest) = path.strip_prefix(VERBATIM_PREFIX) {
+        rest.strip_prefix('\\').unwrap_or(rest).to_owned()
+    } else {
+        path.to_owned()
+    }
+}
+
+fn lexical_clean(path: &Path) -> PathBuf {
+    let mut output = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                let _ = output.pop();
+            }
+            other => output.push(other.as_os_str()),
+        }
+    }
+    output
 }
 
 fn create_parent_dir(parent: &Path) -> io::Result<()> {

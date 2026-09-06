@@ -12,7 +12,7 @@ use rusqlite::{Connection, types::ValueRef};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use super::{IndexedDocument, MIGRATIONS, SearchHit, Sidecar};
+use super::{IndexedDocument, MIGRATIONS, SearchHit, Sidecar, storage_path, strip_verbatim_prefix};
 
 const GO_MIGRATIONS: &[(&str, &str)] = &[
     (
@@ -275,7 +275,7 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
 
     sidecar.refresh_index(&root).expect("initial refresh");
     assert_snapshot(&sidecar, &root, &fixture.initial);
-    let note_path = root.join("note.md");
+    let note_path = storage_path(&root, Path::new("note.md")).expect("note storage path");
     let initial_indexed_at = indexed_at(&sidecar, &note_path);
 
     sidecar.refresh_index(&root).expect("fast refresh");
@@ -294,7 +294,7 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
         stat.stat_refresh.as_deref().expect("stat content"),
         stat.refresh_mtime_ns.expect("stat mtime"),
     );
-    let stat_path = root.join("stat.md");
+    let stat_path = storage_path(&root, Path::new("stat.md")).expect("stat storage path");
     let stat_indexed_at = indexed_at(&sidecar, &stat_path);
     sidecar.refresh_index(&root).expect("stat-only refresh");
     assert_snapshot(&sidecar, &root, &fixture.stat_only);
@@ -342,7 +342,9 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
         .execute(
             "INSERT INTO index_lifecycle(path, state, reason, updated_at) VALUES (?, ?, ?, ?)",
             rusqlite::params![
-                root.join("stale-status.md").to_string_lossy(),
+                storage_path(&root, Path::new("stale-status.md"))
+                    .expect("stale status storage path")
+                    .to_string_lossy(),
                 "failed",
                 "missing",
                 "2026-01-15T12:00:00Z"
@@ -363,7 +365,11 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
         .expect("insert kept status");
     let before_absent_delete = snapshot(&sidecar.connection);
     sidecar
-        .delete_document(&root.join("never-indexed.md").to_string_lossy())
+        .delete_document(
+            &storage_path(&root, Path::new("never-indexed.md"))
+                .expect("absent storage path")
+                .to_string_lossy(),
+        )
         .expect("absent delete");
     assert_eq!(before_absent_delete, snapshot(&sidecar.connection));
 
@@ -375,6 +381,41 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
     );
     drop(sidecar);
     let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn storage_key_normalizes_windows_verbatim_forms_cross_platform() {
+    let root = Path::new(r"C:\vault");
+    let verbatim = r"\\?\C:\vault\nested\note.md";
+    assert_eq!(strip_verbatim_prefix(verbatim), r"C:\vault\nested\note.md");
+    assert_eq!(relative_storage_path(root, verbatim), "nested/note.md");
+    assert_eq!(
+        relative_storage_path(
+            Path::new(r"\\server\share\vault"),
+            r"\\?\UNC\server\share\vault\note.md"
+        ),
+        "note.md"
+    );
+}
+
+#[test]
+fn storage_key_preserves_the_walk_root_instead_of_canonicalizing_it() {
+    let base =
+        std::env::temp_dir().join(format!("symdesk-index-storage-key-{}", std::process::id()));
+    let actual = base.join("actual");
+    let root = base.join("root");
+    let _ = fs::remove_dir_all(&base);
+    fs::create_dir_all(&actual).expect("create actual root");
+    #[cfg(unix)]
+    std::os::unix::fs::symlink(&actual, &root).expect("create root symlink");
+    #[cfg(not(unix))]
+    let root = actual.clone();
+
+    let key = storage_path(&root, Path::new("nested/note.md")).expect("storage key");
+    assert_eq!(key, root.join("nested/note.md"));
+    assert!(!key.to_string_lossy().contains("actual/nested"));
+    assert!(storage_path(&root, Path::new("../escape.md")).is_err());
+    let _ = fs::remove_dir_all(base);
 }
 
 #[cfg(unix)]
@@ -394,7 +435,7 @@ fn unchanged_refresh_skips_unreadable_file() {
     let _ = fs::remove_dir_all(&root);
     fs::create_dir_all(&root).expect("create root");
     let root = fs::canonicalize(&root).expect("canonicalize root");
-    let path = root.join("note.md");
+    let path = storage_path(&root, Path::new("note.md")).expect("note storage path");
     write_lifecycle_file(
         &root,
         "note.md",
@@ -441,7 +482,10 @@ fn refresh_flushes_queued_documents_before_later_parse_error() {
         .connection
         .query_row(
             "SELECT COUNT(*) FROM files WHERE path = ?",
-            [root.join("a-valid.md").to_string_lossy().as_ref()],
+            [storage_path(&root, Path::new("a-valid.md"))
+                .expect("valid storage path")
+                .to_string_lossy()
+                .as_ref()],
             |row| row.get(0),
         )
         .expect("count flushed document");
@@ -511,16 +555,24 @@ fn normalize_snapshot_paths(value: &mut Value, root: &Path) {
                 if matches!(key.as_str(), "path" | "from" | "to")
                     && let Value::String(path) = value
                 {
-                    let root_string = root.to_string_lossy();
-                    if let Some(relative) = path.strip_prefix(root_string.as_ref()) {
-                        *path = relative.trim_start_matches('/').to_owned();
-                    }
+                    *path = relative_storage_path(root, path);
                 }
                 normalize_snapshot_paths(value, root);
             }
         }
         _ => {}
     }
+}
+
+fn relative_storage_path(root: &Path, path: &str) -> String {
+    let root = slash_path(&strip_verbatim_prefix(&root.to_string_lossy()));
+    let path = slash_path(&strip_verbatim_prefix(path));
+    let prefix = format!("{}/", root.trim_end_matches('/'));
+    path.strip_prefix(&prefix).unwrap_or(&path).to_owned()
+}
+
+fn slash_path(path: &str) -> String {
+    path.replace('\\', "/")
 }
 
 fn indexed_at(sidecar: &Sidecar, path: &Path) -> String {
@@ -543,11 +595,7 @@ fn lifecycle_statuses(sidecar: &Sidecar, root: &Path) -> Vec<LifecycleStatus> {
         .query_map([], |row| {
             let path: String = row.get(0)?;
             Ok(LifecycleStatus {
-                path: path
-                    .strip_prefix(root.to_string_lossy().as_ref())
-                    .unwrap_or(&path)
-                    .trim_start_matches('/')
-                    .to_owned(),
+                path: relative_storage_path(root, &path),
                 state: row.get(1)?,
                 reason: row.get(2)?,
                 updated_at: row.get(3)?,

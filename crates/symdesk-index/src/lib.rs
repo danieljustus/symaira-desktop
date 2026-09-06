@@ -315,10 +315,10 @@ impl Sidecar {
         relative: &Path,
         batch: &mut Vec<IndexedDocument>,
     ) -> Result<(), SidecarError> {
-        let path = storage_path(vault_root, relative)?;
-        let metadata = fs::metadata(&path)?;
+        let storage_path = storage_path(vault_root, relative)?;
+        let metadata = fs::metadata(&storage_path.io_path)?;
         let mtime_ns = system_time_unix_nanos(metadata.modified()?)?;
-        let path_string = path.to_string_lossy().into_owned();
+        let path_string = storage_path.key_path.to_string_lossy().into_owned();
         let file_size = i64::try_from(metadata.len()).unwrap_or(i64::MAX);
         if let Some(cached) = self.stat_cache(&path_string)?
             && cached.size == file_size
@@ -327,7 +327,7 @@ impl Sidecar {
             return Ok(());
         }
 
-        let bytes = fs::read(&path)?;
+        let bytes = fs::read(&storage_path.io_path)?;
         let document = symdesk_vault::parse_bytes(&path_string, &bytes)?;
         if document.derived {
             return self.delete_document(&path_string);
@@ -412,11 +412,11 @@ impl Sidecar {
         let markdown = symdesk_vault::walk_markdown(vault_root)?;
         let mut valid_documents = std::collections::BTreeSet::new();
         for relative in markdown {
-            let path = storage_path(vault_root, &relative)?;
-            let path_string = path.to_string_lossy().into_owned();
+            let storage_path = storage_path(vault_root, &relative)?;
+            let path_string = storage_path.key_path.to_string_lossy().into_owned();
             // Go keeps malformed files valid for pruning; only a successfully
             // parsed derived document is intentionally absent from the set.
-            let is_derived = fs::read(&path)
+            let is_derived = fs::read(&storage_path.io_path)
                 .ok()
                 .and_then(|bytes| symdesk_vault::parse_bytes(&path_string, &bytes).ok())
                 .is_some_and(|document| document.derived);
@@ -473,7 +473,7 @@ impl Sidecar {
         let valid = entries
             .into_iter()
             .map(|entry| storage_path(vault_root, &entry.path))
-            .map(|path| path.map(|path| path.to_string_lossy().into_owned()))
+            .map(|path| path.map(|path| path.key_path.to_string_lossy().into_owned()))
             .collect::<Result<std::collections::BTreeSet<_>, _>>()?;
         self.stale_paths("SELECT path FROM index_lifecycle", &valid)
     }
@@ -532,13 +532,21 @@ impl Sidecar {
     }
 }
 
-fn storage_path(vault_root: &Path, relative: &Path) -> Result<PathBuf, SidecarError> {
-    // Validate the walk result against the canonical vault tree, but keep the
-    // ordinary absolute path produced from the caller's root as the DB key.
-    // `secure_path` may return a Windows `\\\\?\\` path or resolve macOS
-    // `/var` through `/private`; neither matches Go filepath.Walk keys.
-    let _ = symdesk_vault::secure_path(vault_root, &relative.to_string_lossy())?;
-    Ok(absolute_non_verbatim(vault_root)?.join(relative))
+#[derive(Debug, Eq, PartialEq)]
+struct ValidatedStoragePath {
+    /// Canonical/verbatim path retained for filesystem operations.
+    io_path: PathBuf,
+    /// Ordinary absolute path used for database keys and logical document paths.
+    key_path: PathBuf,
+}
+
+fn storage_path(vault_root: &Path, relative: &Path) -> Result<ValidatedStoragePath, SidecarError> {
+    let io_path = symdesk_vault::secure_path(vault_root, &relative.to_string_lossy())?;
+    // Go filepath.Walk keys are derived from the caller's root, not from a
+    // canonicalized root. Keep that spelling, while removing Windows' verbatim
+    // prefix so it remains the ordinary storage key expected by the sidecar.
+    let key_path = absolute_non_verbatim(vault_root)?.join(relative);
+    Ok(ValidatedStoragePath { io_path, key_path })
 }
 
 fn absolute_non_verbatim(path: &Path) -> Result<PathBuf, SidecarError> {

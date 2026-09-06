@@ -12,6 +12,9 @@ use rusqlite::{Connection, types::ValueRef};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
+#[cfg(windows)]
+use std::path::PathBuf;
+
 use super::{IndexedDocument, MIGRATIONS, SearchHit, Sidecar, storage_path, strip_verbatim_prefix};
 
 const GO_MIGRATIONS: &[(&str, &str)] = &[
@@ -275,7 +278,9 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
 
     sidecar.refresh_index(&root).expect("initial refresh");
     assert_snapshot(&sidecar, &root, &fixture.initial);
-    let note_path = storage_path(&root, Path::new("note.md")).expect("note storage path");
+    let note_path = storage_path(&root, Path::new("note.md"))
+        .expect("note storage path")
+        .key_path;
     let initial_indexed_at = indexed_at(&sidecar, &note_path);
 
     sidecar.refresh_index(&root).expect("fast refresh");
@@ -294,7 +299,9 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
         stat.stat_refresh.as_deref().expect("stat content"),
         stat.refresh_mtime_ns.expect("stat mtime"),
     );
-    let stat_path = storage_path(&root, Path::new("stat.md")).expect("stat storage path");
+    let stat_path = storage_path(&root, Path::new("stat.md"))
+        .expect("stat storage path")
+        .key_path;
     let stat_indexed_at = indexed_at(&sidecar, &stat_path);
     sidecar.refresh_index(&root).expect("stat-only refresh");
     assert_snapshot(&sidecar, &root, &fixture.stat_only);
@@ -344,6 +351,7 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
             rusqlite::params![
                 storage_path(&root, Path::new("stale-status.md"))
                     .expect("stale status storage path")
+                    .key_path
                     .to_string_lossy(),
                 "failed",
                 "missing",
@@ -368,6 +376,7 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
         .delete_document(
             &storage_path(&root, Path::new("never-indexed.md"))
                 .expect("absent storage path")
+                .key_path
                 .to_string_lossy(),
         )
         .expect("absent delete");
@@ -399,7 +408,7 @@ fn storage_key_normalizes_windows_verbatim_forms_cross_platform() {
 }
 
 #[test]
-fn storage_key_preserves_the_walk_root_instead_of_canonicalizing_it() {
+fn validated_storage_path_separates_io_path_from_storage_key() {
     let base =
         std::env::temp_dir().join(format!("symdesk-index-storage-key-{}", std::process::id()));
     let actual = base.join("actual");
@@ -407,13 +416,22 @@ fn storage_key_preserves_the_walk_root_instead_of_canonicalizing_it() {
     let _ = fs::remove_dir_all(&base);
     fs::create_dir_all(&actual).expect("create actual root");
     #[cfg(unix)]
+    let canonical_actual = fs::canonicalize(&actual).expect("canonicalize actual root");
+    #[cfg(unix)]
     std::os::unix::fs::symlink(&actual, &root).expect("create root symlink");
     #[cfg(not(unix))]
     let root = actual.clone();
 
-    let key = storage_path(&root, Path::new("nested/note.md")).expect("storage key");
-    assert_eq!(key, root.join("nested/note.md"));
-    assert!(!key.to_string_lossy().contains("actual/nested"));
+    let storage = storage_path(&root, Path::new("nested/note.md")).expect("storage path");
+    assert_eq!(storage.key_path, root.join("nested/note.md"));
+    assert!(!storage.key_path.to_string_lossy().contains("actual/nested"));
+    #[cfg(unix)]
+    {
+        assert_eq!(storage.io_path, canonical_actual.join("nested/note.md"));
+        assert_ne!(storage.io_path, storage.key_path);
+    }
+    #[cfg(windows)]
+    assert!(storage.io_path.ends_with(Path::new(r"nested\note.md")));
     assert!(storage_path(&root, Path::new("../escape.md")).is_err());
     let _ = fs::remove_dir_all(base);
 }
@@ -435,7 +453,9 @@ fn unchanged_refresh_skips_unreadable_file() {
     let _ = fs::remove_dir_all(&root);
     fs::create_dir_all(&root).expect("create root");
     let root = fs::canonicalize(&root).expect("canonicalize root");
-    let path = storage_path(&root, Path::new("note.md")).expect("note storage path");
+    let storage = storage_path(&root, Path::new("note.md")).expect("note storage path");
+    let path = storage.key_path;
+    let io_path = storage.io_path;
     write_lifecycle_file(
         &root,
         "note.md",
@@ -445,9 +465,9 @@ fn unchanged_refresh_skips_unreadable_file() {
     let mut sidecar = Sidecar::open(&root.join("sidecar.db")).expect("open sidecar");
     sidecar.refresh_index(&root).expect("initial refresh");
     let before = indexed_at(&sidecar, &path);
-    fs::set_permissions(&path, fs::Permissions::from_mode(0o000)).expect("make unreadable");
+    fs::set_permissions(&io_path, fs::Permissions::from_mode(0o000)).expect("make unreadable");
     let result = sidecar.refresh_index(&root);
-    fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).expect("restore permissions");
+    fs::set_permissions(&io_path, fs::Permissions::from_mode(0o600)).expect("restore permissions");
     result.expect("fast refresh should not read file");
     assert_eq!(before, indexed_at(&sidecar, &path));
     drop(sidecar);
@@ -484,6 +504,7 @@ fn refresh_flushes_queued_documents_before_later_parse_error() {
             "SELECT COUNT(*) FROM files WHERE path = ?",
             [storage_path(&root, Path::new("a-valid.md"))
                 .expect("valid storage path")
+                .key_path
                 .to_string_lossy()
                 .as_ref()],
             |row| row.get(0),
@@ -527,6 +548,62 @@ fn open_creates_a_usable_parent_on_all_platforms() {
     let _sidecar = Sidecar::open(&root.join("nested").join("sidecar.db")).expect("open sidecar");
     assert!(root.join("nested").is_dir());
     drop(_sidecar);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[cfg(windows)]
+#[test]
+fn long_path_refresh_uses_verbatim_io_path_and_ordinary_key() {
+    let ordinary_root =
+        std::env::temp_dir().join(format!("symdesk-index-long-path-{}", std::process::id()));
+    let mut long_root = ordinary_root.clone();
+    for index in 0..16 {
+        long_root = long_root.join(format!("segment-{index:02}-{}", "x".repeat(16)));
+    }
+    let root = PathBuf::from(format!(r"\\?\{}", long_root.display()));
+    let _ = fs::remove_dir_all(&root);
+    if let Err(error) = fs::create_dir_all(&root) {
+        if error.raw_os_error() == Some(206) {
+            eprintln!("skipping long-path regression: Windows long paths are disabled");
+            return;
+        }
+        panic!("create long vault root: {error}");
+    }
+    let relative = Path::new("note.md");
+    let content = b"---\ntitle: Long path\n---\nbody\n";
+    fs::write(root.join(relative), content).expect("write long-path document");
+
+    let storage = storage_path(&root, relative).expect("validated long-path storage");
+    assert_eq!(storage.key_path, long_root.join(relative));
+    assert!(storage.io_path.to_string_lossy().starts_with(r#"\\?\"#));
+    assert_eq!(
+        fs::read(&storage.io_path).expect("read verbatim path"),
+        content
+    );
+
+    let db_path = std::env::temp_dir().join(format!(
+        "symdesk-index-long-path-db-{}.db",
+        std::process::id()
+    ));
+    let _ = fs::remove_file(&db_path);
+    let mut sidecar = Sidecar::open(&db_path).expect("open sidecar");
+    let mut batch = Vec::new();
+    sidecar
+        .refresh_path(&root, relative, &mut batch)
+        .expect("refresh long-path document");
+    sidecar
+        .flush_refresh_batch(&mut batch)
+        .expect("flush long-path document");
+    let key = storage.key_path.to_string_lossy().into_owned();
+    let stored_path: String = sidecar
+        .connection
+        .query_row("SELECT path FROM files WHERE path = ?", [&key], |row| {
+            row.get(0)
+        })
+        .expect("stored ordinary path key");
+    assert_eq!(stored_path, key);
+    drop(sidecar);
+    let _ = fs::remove_file(db_path);
     let _ = fs::remove_dir_all(root);
 }
 

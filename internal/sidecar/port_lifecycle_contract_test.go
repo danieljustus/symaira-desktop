@@ -181,6 +181,7 @@ func TestPortSidecarLifecycleContract(t *testing.T) {
 		}
 		return
 	}
+	//nolint:gosec // fixturePath is fixed relative to the repository
 	current, err := os.ReadFile(fixturePath)
 	if err != nil {
 		t.Fatal(err)

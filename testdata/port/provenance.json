@@ -5,7 +5,7 @@
     "release": "v0.12.2"
   },
   "production_source_digest": "846ba3854e75a198fb9932605be3f46a279ff43ca59791a799078d322b44ecee",
-  "generator_source_digest": "b637be304af3da3e7f52e617e7df16aeac8ad5b837e5bf31748177ba31066af8",
+  "generator_source_digest": "069b149f511b10049021984452601b0465812c3550759ff90ba945b2bbea09dd",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -28,6 +28,7 @@
     "testdata/port/mcp/symdesk-tools.json": "f2fab0a54bbdcd45be84ac5c31aee0d2ff27051556032ddebce29e257e9ca761",
     "testdata/port/mcp/symroom-tools.json": "3c71aacde181fef4282f831568e9362ed0badc9aeab4f6375c77c95e64a823f6",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
+    "testdata/port/sidecar/large-corpus.json": "540f20c08353de3f19bca55650d25f71283cc02e31c520a7ef502406a67c711d",
     "testdata/port/sidecar/lifecycle.json": "d2fcb198ca55376aa496e5233cec65179823eca386947f063b65c109671abe83",
     "testdata/port/sidecar/roundtrip.json": "e871ea5afbfd1ba1cd7e9de76e752542a7b70f1c9847ffaa2e0a49ba5bd3869a",
     "testdata/port/vault/filesystem.json": "7ee3837f5add08bd229dec17701f91de56e4e59ad912e8193520120681d7a516",

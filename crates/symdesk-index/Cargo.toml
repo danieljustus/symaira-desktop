@@ -10,6 +10,7 @@ publish = false
 [dependencies]
 noyalib.workspace = true
 rusqlite.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 symdesk-core.workspace = true
 symdesk-vault.workspace = true

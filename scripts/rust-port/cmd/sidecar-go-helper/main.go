@@ -33,7 +33,37 @@ type operationInput struct {
 	Go        string          `json:"go,omitempty"`
 	Release   string          `json:"release,omitempty"`
 	Vault     string          `json:"vault,omitempty"`
+	Manifest  string          `json:"manifest,omitempty"`
 	HoldMS    int             `json:"hold_ms,omitempty"`
+}
+
+type largeCorpusManifest struct {
+	SchemaVersion int                     `json:"schema_version"`
+	Oracle        map[string]string       `json:"oracle"`
+	DocumentCount int                     `json:"document_count"`
+	PathTemplate  string                  `json:"path_template"`
+	TitleTemplate string                  `json:"title_template"`
+	Created       string                  `json:"created"`
+	MTimeBaseNS   int64                   `json:"mtime_base_ns"`
+	MTimeStepNS   int64                   `json:"mtime_step_ns"`
+	GroupCount    int                     `json:"group_count"`
+	DocumentType  string                  `json:"document_type"`
+	Status        string                  `json:"status"`
+	Special       []largeCorpusSpecial    `json:"special"`
+	SearchCases   []largeCorpusSearchCase `json:"search_cases"`
+}
+
+type largeCorpusSpecial struct {
+	Index            int    `json:"index"`
+	Title            string `json:"title"`
+	Body             string `json:"body"`
+	ExtraFrontmatter string `json:"extra_frontmatter,omitempty"`
+}
+
+type largeCorpusSearchCase struct {
+	Query         string   `json:"query"`
+	ExpectedCount int      `json:"expected_count"`
+	ExpectedPaths []string `json:"expected_paths"`
 }
 
 type result struct {
@@ -63,7 +93,7 @@ func main() {
 	}
 	var err error
 	switch cmd {
-	case "create", "mutate", "rollback", "snapshot", "search", "refresh", "prune", "open-check", "integrity", "writer", "lock-holder":
+	case "create", "mutate", "rollback", "corpus-create", "snapshot", "search", "refresh", "prune", "open-check", "integrity", "writer", "lock-holder":
 		err = run(cmd, dbPath, input)
 	default:
 		err = fmt.Errorf("unknown command %q", cmd)
@@ -73,7 +103,7 @@ func main() {
 		return
 	}
 	out := result{Outcome: "ok", ElapsedMS: time.Since(started).Milliseconds()}
-	if cmd == "snapshot" || cmd == "create" || cmd == "mutate" || cmd == "rollback" {
+	if cmd == "snapshot" || cmd == "create" || cmd == "corpus-create" || cmd == "mutate" || cmd == "rollback" {
 		conn, openErr := sqlitekit.Open(dbPath)
 		if openErr != nil {
 			emit(started, openErr)
@@ -165,6 +195,12 @@ func run(cmd, dbPath string, in operationInput) error {
 		return err
 	case "create":
 		return index(db, in.Documents)
+	case "corpus-create":
+		documents, err := largeCorpusDocuments(in.Manifest)
+		if err != nil {
+			return err
+		}
+		return index(db, documents)
 	case "mutate", "writer":
 		if err := index(db, in.Documents); err != nil {
 			return err
@@ -215,6 +251,50 @@ func index(db *sidecar.DB, inputs []documentInput) error {
 	}
 	return db.IndexDocuments(docs)
 }
+
+func largeCorpusDocuments(path string) ([]documentInput, error) {
+	if path == "" {
+		return nil, errors.New("corpus manifest is required")
+	}
+	//nolint:gosec // the path is supplied by the local differential harness
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var manifest largeCorpusManifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return nil, err
+	}
+	if manifest.SchemaVersion != 1 || manifest.DocumentCount != 10000 || manifest.GroupCount <= 0 {
+		return nil, fmt.Errorf("unsupported large corpus manifest")
+	}
+	special := make(map[int]largeCorpusSpecial, len(manifest.Special))
+	for _, item := range manifest.Special {
+		if item.Index < 1 || item.Index > manifest.DocumentCount {
+			return nil, fmt.Errorf("special corpus index %d is out of range", item.Index)
+		}
+		special[item.Index] = item
+	}
+	documents := make([]documentInput, 0, manifest.DocumentCount)
+	for index := 1; index <= manifest.DocumentCount; index++ {
+		group := (index - 1) % manifest.GroupCount
+		title := fmt.Sprintf(manifest.TitleTemplate, index)
+		body := fmt.Sprintf("Deterministic benchmark content for corpus document %05d. group %03d.", index, group)
+		extra := ""
+		if item, ok := special[index]; ok {
+			title, body, extra = item.Title, item.Body, item.ExtraFrontmatter
+		}
+		markdown := fmt.Sprintf("---\ntitle: %q\ncreated: %q\ntags: [corpus, generated, group-%03d]\ndocument_type: %q\nstatus: %q\n%s---\n\n%s\n", title, manifest.Created, group, manifest.DocumentType, manifest.Status, extra, body)
+		documents = append(documents, documentInput{
+			Path:     fmt.Sprintf(manifest.PathTemplate, index),
+			Markdown: markdown,
+			MTimeNS:  ptrInt64(manifest.MTimeBaseNS + int64(index-1)*manifest.MTimeStepNS),
+		})
+	}
+	return documents, nil
+}
+
+func ptrInt64(value int64) *int64 { return &value }
 
 func writerRetry(path string, in operationInput) error {
 	deadline := time.Now().Add(5 * time.Second)

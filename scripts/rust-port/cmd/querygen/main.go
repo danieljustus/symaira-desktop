@@ -69,8 +69,8 @@ type dateCase struct {
 func main() {
 	output := flag.String("output", "testdata/port/core/search-query.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
-	commit := flag.String("oracle-commit", "ae86331930fdfa2b128b68ae5af7437091b9949a", "Go oracle commit")
-	release := flag.String("oracle-release", "v0.12.2", "Go oracle release")
+	commit := flag.String("oracle-commit", "989189484718d09852ca60e51715bbd473fe6783", "Go oracle commit")
+	release := flag.String("oracle-release", "post-v0.12.2-security-855", "Go oracle release")
 	flag.Parse()
 
 	value := document{

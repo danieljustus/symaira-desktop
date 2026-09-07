@@ -243,7 +243,7 @@ func validateLargeCorpusManifest(manifest largeCorpusFixture, roundTripOracle, p
 	if manifest.PathTemplate != "corpus/%05d.md" || manifest.TitleTemplate != "Corpus document %05d" {
 		return errors.New("large corpus templates differ from the exact supported grammar")
 	}
-	pinnedOracle := map[string]string{"commit": "ae86331930fdfa2b128b68ae5af7437091b9949a", "release": "v0.12.2"}
+	pinnedOracle := map[string]string{"commit": "989189484718d09852ca60e51715bbd473fe6783", "release": "post-v0.12.2-security-855"}
 	if !reflect.DeepEqual(manifest.Oracle, roundTripOracle) || !reflect.DeepEqual(manifest.Oracle, provenanceOracle) || !reflect.DeepEqual(manifest.Oracle, pinnedOracle) {
 		return errors.New("large corpus oracle differs from round-trip, provenance, or pinned oracle")
 	}

@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential sidecar-roundtrip differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates
+.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential sidecar-roundtrip differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates representative-fixtures-generate representative-fixtures-check representative-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -145,6 +145,20 @@ differential-go-selftest:
 		--cases $(PORT_CASES)
 
 port-contract: port-fixtures-check differential-go-selftest sidecar-differential
+
+representative-fixtures-generate:
+	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/representativegen
+
+representative-fixtures-check:
+	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/representativegen --check
+
+representative-differential: representative-fixtures-check
+	@mkdir -p bin/port
+	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
+	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
+	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/diffharness \
+		--symdesk-left bin/port/symdesk-go --symdesk-right target/debug/symdesk \
+		--cases testdata/port/representative/cases.json --stage representative
 
 rust-build:
 	$(CARGO) build --workspace --locked

@@ -3,6 +3,7 @@
 package diff
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 )
@@ -15,6 +16,11 @@ func killProcessTree(cmd *exec.Cmd) error {
 	}
 	if err := exec.Command("taskkill", "/T", "/F", "/PID", fmt.Sprint(cmd.Process.Pid)).Run(); err == nil {
 		return nil
+	} else {
+		killErr := cmd.Process.Kill()
+		if killErr != nil {
+			return errors.Join(fmt.Errorf("taskkill process tree: %w", err), killErr)
+		}
+		return fmt.Errorf("taskkill process tree: %w", err)
 	}
-	return cmd.Process.Kill()
 }

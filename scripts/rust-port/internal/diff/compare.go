@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 // Compare checks the observable contract selected by testCase.
@@ -28,7 +29,47 @@ func Compare(testCase Case, left, right Result) error {
 	if testCase.CompareFiles && !reflect.DeepEqual(left.Files, right.Files) {
 		return fmt.Errorf("filesystem manifest mismatch: left=%s right=%s", digestValue(left.Files), digestValue(right.Files))
 	}
+	if testCase.CompareSidecarLayout {
+		leftLayout, rightLayout := sidecarLayout(left.Files), sidecarLayout(right.Files)
+		if len(leftLayout) == 0 || !reflect.DeepEqual(leftLayout, rightLayout) {
+			return fmt.Errorf("sidecar layout mismatch: left=%s right=%s", digestValue(leftLayout), digestValue(rightLayout))
+		}
+	}
 	return nil
+}
+
+func sidecarLayout(entries []ManifestEntry) []string {
+	layout := make([]string, 0, 1)
+	for _, entry := range entries {
+		if entry.Type != "file" || !strings.HasSuffix(entry.Path, "/sidecar.db") {
+			continue
+		}
+		parts := strings.Split(entry.Path, "/")
+		valid := false
+		for index := 0; index+2 < len(parts); index++ {
+			if parts[index] == "vaults" && isLowerHex16(parts[index+1]) {
+				parts[index+1] = "<vault-hash>"
+				valid = true
+				break
+			}
+		}
+		if valid {
+			layout = append(layout, strings.Join(parts, "/"))
+		}
+	}
+	return layout
+}
+
+func isLowerHex16(value string) bool {
+	if len(value) != 16 {
+		return false
+	}
+	for _, char := range value {
+		if (char < '0' || char > '9') && (char < 'a' || char > 'f') {
+			return false
+		}
+	}
+	return true
 }
 
 func compareStream(name, mode string, left, right []byte, leftRoot, rightRoot string) error {

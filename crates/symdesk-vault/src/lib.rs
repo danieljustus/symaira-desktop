@@ -176,6 +176,15 @@ pub fn is_excalidraw_file(path: &str) -> bool {
     path.to_ascii_lowercase().ends_with(".excalidraw.md")
 }
 
+/// Returns a lowercase SHA-256 digest for a byte string.
+#[must_use]
+pub fn sha256_hex(input: &[u8]) -> String {
+    sha256::digest(input)
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
+}
+
 pub(crate) fn split_frontmatter(input: &[u8]) -> (Vec<u8>, Vec<u8>, bool) {
     let mut frontmatter = Vec::new();
     let mut body = Vec::new();

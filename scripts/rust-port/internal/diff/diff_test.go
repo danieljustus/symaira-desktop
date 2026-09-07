@@ -65,6 +65,24 @@ func TestRunTimesOutAndTerminatesProcess(t *testing.T) {
 	}
 }
 
+func TestRunTimesOutAndTerminatesPrepareProcess(t *testing.T) {
+	caseSpec := Case{
+		ID:          "prepare-timeout",
+		Args:        []string{"-test.run=TestRunAndCompareIdenticalHelper"},
+		PrepareArgs: []string{"-test.run=TestRunAndCompareIdenticalHelper"},
+		Env:         map[string]string{"SYMDESK_PORT_HELPER": "1", "PORT_HELPER_MODE": "hang"},
+		TimeoutMS:   50,
+	}
+	started := time.Now()
+	_, err := Run(os.Args[0], caseSpec)
+	if err == nil || !contains(err.Error(), "prepare process timed out") {
+		t.Fatalf("expected prepare timeout, got %v", err)
+	}
+	if elapsed := time.Since(started); elapsed > 3*time.Second {
+		t.Fatalf("prepare timeout was not bounded: %s", elapsed)
+	}
+}
+
 func TestRunCapturesSideEffectsOutsideWorkspace(t *testing.T) {
 	caseSpec := Case{
 		ID:   "home-side-effect",

@@ -1,5 +1,5 @@
 [package]
-name = "symdesk-cli"
+name = "symdesk-protocol"
 version = "0.0.0"
 edition.workspace = true
 rust-version.workspace = true
@@ -7,15 +7,14 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
-[[bin]]
-name = "symdesk"
-path = "src/main.rs"
-
 [dependencies]
-clap.workspace = true
+cap-std.workspace = true
+axum.workspace = true
+flate2.workspace = true
+httpdate.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-symdesk-core.workspace = true
-symdesk-index.workspace = true
-symdesk-protocol.workspace = true
+symdesk-vault.workspace = true
+time.workspace = true
 tokio.workspace = true
+tower.workspace = true

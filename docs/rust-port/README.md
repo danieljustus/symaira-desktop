@@ -1,7 +1,7 @@
 # Go-to-Rust migration record
 
 > **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006` ready
-> **Go behavior oracle:** commit `e74b16603ac4bca0efb8a015786643a4b4ceeaeb`, release reference `post-v0.12.2-security-880`; VALUE baselines remain pinned to `ae863319` / `v0.12.2`
+> **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; VALUE baselines remain pinned to `ae863319` / `v0.12.2`
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
@@ -65,7 +65,19 @@ The measured Go baseline is in
 - [`implementation-plan.md`](implementation-plan.md) — ordered vertical slices and gates.
 - [`work-items.json`](work-items.json) — machine-readable dependency graph.
 - [`baseline-20260906.json`](baseline-20260906.json) — measured Go reference metrics.
+- [`value001-result.schema.json`](value001-result.schema.json) — schema for measured VALUE-001 artifacts.
 - [`value-signal-version-20260906.json`](value-signal-version-20260906.json) — non-representative first Rust slice measurements.
+
+## Running VALUE-001
+
+`make value-001` builds stripped Go and Rust release-profile `symdesk`
+artifacts, runs the representative CLI/MCP/HTTP differential contracts first,
+then records paired startup, indexed-search, MCP, HTTP, and long-running RSS
+samples. The harness requires at least 100 post-warmup samples per workload,
+uses a synthetic vault and loopback-only dynamic ports, records raw samples,
+and exits non-zero unless contract parity, the 20% binary-size-or-RSS gate, and
+all four p95 latency gates pass. Override `VALUE_OUTPUT` to retain a separate
+artifact; the default is `docs/rust-port/results/value001-latest.json`.
 
 ## Implementation progress
 

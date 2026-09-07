@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	defaultOracleCommit  = "e74b16603ac4bca0efb8a015786643a4b4ceeaeb"
+	defaultOracleCommit  = "745c08e8144971c61133c5d0e5d61c7ce405aad2"
 	defaultOracleRelease = "post-v0.12.2-security-880"
 	provenanceFixture    = "testdata/port/provenance.json"
 )
@@ -33,6 +33,7 @@ var fixturePaths = []string{
 	"testdata/port/mcp/representative.json",
 	"testdata/port/mcp/symroom-tools.json",
 	"testdata/port/http/routes.json",
+	"testdata/port/http/representative.json",
 	"testdata/port/vault/filesystem.json",
 	"testdata/port/vault/parse.json",
 	"testdata/port/vault/resolution.json",

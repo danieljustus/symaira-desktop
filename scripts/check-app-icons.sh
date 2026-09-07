@@ -80,6 +80,12 @@ if actual_iconset != expected_iconset:
 
 with icon_json.open() as f:
     document = json.load(f)
+if "features" in document or any(
+    key in group
+    for group in document.get("groups", [])
+    for key in ("refractivity", "specular-highlight-placement")
+):
+    raise SystemExit("icon.json uses Xcode 27-only features; keep the AppIcon source Xcode 26-compatible")
 serialized = json.dumps(document)
 for image_name in ("signet.png", "S.png"):
     if image_name not in serialized:

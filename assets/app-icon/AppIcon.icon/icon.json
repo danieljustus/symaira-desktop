@@ -1,12 +1,8 @@
 {
-  "features": [
-    "refractivity",
-    "specular-location"
-  ],
   "fill": "automatic",
   "groups": [
     {
-      "name": "Symaira Desktop \u2014 Dokument",
+      "name": "Symaira Desktop — Dokument",
       "layers": [
         {
           "name": "Dokument",
@@ -35,12 +31,6 @@
       ],
       "lighting": "individual",
       "specular": false,
-      "specular-highlight-placement": "inside",
-      "refractivity": {
-        "enabled": false,
-        "strength": 0,
-        "depth": 0
-      },
       "shadow": {
         "kind": "neutral",
         "opacity": 0.16
@@ -51,7 +41,7 @@
       }
     },
     {
-      "name": "Original Symaira S \u2014 hinter Signet freigestellt",
+      "name": "Original Symaira S — hinter Signet freigestellt",
       "layers": [
         {
           "name": "Original Symaira S",
@@ -64,12 +54,6 @@
       ],
       "lighting": "individual",
       "specular": true,
-      "specular-highlight-placement": "inside",
-      "refractivity": {
-        "enabled": true,
-        "strength": 0.15,
-        "depth": 0.24
-      },
       "shadow": {
         "kind": "neutral",
         "opacity": 0.25

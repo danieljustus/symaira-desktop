@@ -37,7 +37,13 @@ type largeCorpusFixture struct {
 	Oracle         map[string]string       `json:"oracle"`
 	DocumentCount  int                     `json:"document_count"`
 	SnapshotSHA256 string                  `json:"snapshot_sha256"`
+	PathTemplate   string                  `json:"path_template"`
+	TitleTemplate  string                  `json:"title_template"`
 	SearchCases    []largeCorpusSearchCase `json:"search_cases"`
+}
+
+type provenanceFixture struct {
+	Oracle map[string]string `json:"oracle"`
 }
 
 type largeCorpusSearchCase struct {
@@ -143,11 +149,18 @@ func largeCorpusCases(root, work, goBin, rustBin string, oracle map[string]strin
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		return err
 	}
-	if manifest.SchemaVersion != 1 || manifest.DocumentCount != 10_000 || manifest.SnapshotSHA256 == "" {
-		return errors.New("large corpus manifest is incomplete or not exactly 10,000 documents")
+	provenancePath := filepath.Join(root, "testdata", "port", "provenance.json")
+	//nolint:gosec // provenancePath is fixed relative to the repository root
+	provenanceData, err := os.ReadFile(provenancePath)
+	if err != nil {
+		return err
 	}
-	if !reflect.DeepEqual(manifest.Oracle, oracle) {
-		return errors.New("large corpus oracle differs from round-trip oracle")
+	var provenance provenanceFixture
+	if err := json.Unmarshal(provenanceData, &provenance); err != nil {
+		return err
+	}
+	if err := validateLargeCorpusManifest(manifest, oracle, provenance.Oracle); err != nil {
+		return err
 	}
 
 	goDB := filepath.Join(work, "10k Go ✓", "sidecar.db")
@@ -218,6 +231,28 @@ func largeCorpusCases(root, work, goBin, rustBin string, oracle map[string]strin
 			} else if !jsonEquivalent(reference, result.Hits) {
 				return fmt.Errorf("%s search %q differs from Go-created Go result", target.name, test.Query)
 			}
+		}
+	}
+	return nil
+}
+
+func validateLargeCorpusManifest(manifest largeCorpusFixture, roundTripOracle, provenanceOracle map[string]string) error {
+	if manifest.SchemaVersion != 1 || manifest.DocumentCount != 10_000 || manifest.SnapshotSHA256 == "" {
+		return errors.New("large corpus manifest is incomplete or not exactly 10,000 documents")
+	}
+	if manifest.PathTemplate != "corpus/%05d.md" || manifest.TitleTemplate != "Corpus document %05d" {
+		return errors.New("large corpus templates differ from the exact supported grammar")
+	}
+	pinnedOracle := map[string]string{"commit": "ae86331930fdfa2b128b68ae5af7437091b9949a", "release": "v0.12.2"}
+	if !reflect.DeepEqual(manifest.Oracle, roundTripOracle) || !reflect.DeepEqual(manifest.Oracle, provenanceOracle) || !reflect.DeepEqual(manifest.Oracle, pinnedOracle) {
+		return errors.New("large corpus oracle differs from round-trip, provenance, or pinned oracle")
+	}
+	if len(manifest.SearchCases) == 0 {
+		return errors.New("large corpus must contain search cases")
+	}
+	for _, test := range manifest.SearchCases {
+		if strings.TrimSpace(test.Query) == "" || test.ExpectedCount < 0 || len(test.ExpectedPaths) != test.ExpectedCount {
+			return fmt.Errorf("invalid complete expectation for search query %q", test.Query)
 		}
 	}
 	return nil

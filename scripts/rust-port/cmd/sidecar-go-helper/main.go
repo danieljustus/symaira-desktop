@@ -265,7 +265,8 @@ func largeCorpusDocuments(path string) ([]documentInput, error) {
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		return nil, err
 	}
-	if manifest.SchemaVersion != 1 || manifest.DocumentCount != 10000 || manifest.GroupCount <= 0 {
+	if manifest.SchemaVersion != 1 || manifest.DocumentCount != 10000 || manifest.GroupCount <= 0 ||
+		manifest.PathTemplate != "corpus/%05d.md" || manifest.TitleTemplate != "Corpus document %05d" {
 		return nil, fmt.Errorf("unsupported large corpus manifest")
 	}
 	special := make(map[int]largeCorpusSpecial, len(manifest.Special))

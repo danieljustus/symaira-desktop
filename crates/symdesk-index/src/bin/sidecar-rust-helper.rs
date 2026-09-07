@@ -246,6 +246,8 @@ fn large_corpus_documents(path: &str) -> Result<Vec<IndexedDocument>, Box<dyn st
     if manifest.schema_version != 1
         || manifest.document_count != 10_000
         || manifest.group_count == 0
+        || manifest.path_template != "corpus/%05d.md"
+        || manifest.title_template != "Corpus document %05d"
     {
         return Err("unsupported large corpus manifest".into());
     }

@@ -62,3 +62,54 @@ func TestVerifySearchResultRequiresExpectedPaths(t *testing.T) {
 		t.Fatal("wrong search path must be rejected")
 	}
 }
+
+func TestValidateLargeCorpusManifestRejectsContractDrift(t *testing.T) {
+	oracle := map[string]string{"commit": "ae86331930fdfa2b128b68ae5af7437091b9949a", "release": "v0.12.2"}
+	valid := largeCorpusFixture{
+		SchemaVersion:  1,
+		Oracle:         oracle,
+		DocumentCount:  10_000,
+		SnapshotSHA256: "digest",
+		PathTemplate:   "corpus/%05d.md",
+		TitleTemplate:  "Corpus document %05d",
+		SearchCases: []largeCorpusSearchCase{{
+			Query:         "marker",
+			ExpectedCount: 1,
+			ExpectedPaths: []string{"corpus/00001.md"},
+		}},
+	}
+	if err := validateLargeCorpusManifest(valid, oracle, oracle); err != nil {
+		t.Fatalf("valid manifest rejected: %v", err)
+	}
+
+	tests := []struct {
+		name   string
+		mutate func(*largeCorpusFixture) (map[string]string, map[string]string)
+	}{
+		{"template", func(value *largeCorpusFixture) (map[string]string, map[string]string) {
+			value.PathTemplate = "corpus/%d.md"
+			return oracle, oracle
+		}},
+		{"provenance", func(_ *largeCorpusFixture) (map[string]string, map[string]string) {
+			return oracle, map[string]string{"commit": "wrong", "release": "v0.12.2"}
+		}},
+		{"empty searches", func(value *largeCorpusFixture) (map[string]string, map[string]string) {
+			value.SearchCases = nil
+			return oracle, oracle
+		}},
+		{"missing expected paths", func(value *largeCorpusFixture) (map[string]string, map[string]string) {
+			value.SearchCases[0].ExpectedPaths = nil
+			return oracle, oracle
+		}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			candidate := valid
+			candidate.SearchCases = append([]largeCorpusSearchCase(nil), valid.SearchCases...)
+			roundTrip, provenance := test.mutate(&candidate)
+			if err := validateLargeCorpusManifest(candidate, roundTrip, provenance); err == nil {
+				t.Fatal("contract drift was accepted")
+			}
+		})
+	}
+}

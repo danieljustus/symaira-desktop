@@ -62,7 +62,28 @@
     {
       "query": "group 042",
       "expected_count": 20,
-      "expected_paths": []
+      "expected_paths": [
+        "corpus/04243.md",
+        "corpus/04200.md",
+        "corpus/04201.md",
+        "corpus/04202.md",
+        "corpus/04203.md",
+        "corpus/04204.md",
+        "corpus/04205.md",
+        "corpus/04206.md",
+        "corpus/04207.md",
+        "corpus/04208.md",
+        "corpus/04209.md",
+        "corpus/04210.md",
+        "corpus/04211.md",
+        "corpus/04212.md",
+        "corpus/04213.md",
+        "corpus/04214.md",
+        "corpus/04215.md",
+        "corpus/04216.md",
+        "corpus/04217.md",
+        "corpus/04218.md"
+      ]
     },
     {
       "query": "never-present-marker",

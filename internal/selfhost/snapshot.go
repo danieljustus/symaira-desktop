@@ -147,6 +147,9 @@ func (s *Server) snapshotPayload() ([]byte, []byte, string, error) {
 	files := make([]snapshotFile, 0)
 	hash := sha256.New()
 	err := vault.Walk(s.cfg.VaultRoot, func(path string) error {
+		if vault.IsExternalSymlink(s.cfg.VaultRoot, path) {
+			return nil
+		}
 		content, info, err := vault.ReadFileInRoot(s.cfg.VaultRoot, path)
 		if err != nil {
 			return err

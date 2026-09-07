@@ -132,6 +132,28 @@ func TestSearchMetadataRepresentationIsCanonical(t *testing.T) {
 	}
 }
 
+func TestIndexMarkdownWithMetadataDoesNotReopenSource(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	store, err := db.Open()
+	if err != nil {
+		t.Fatalf("db.Open: %v", err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+
+	source := filepath.Join(t.TempDir(), "already-removed.md")
+	content := []byte("---\ntitle: Rooted\n---\n\nconfined-byte-marker\n")
+	if _, err := IndexMarkdownWithMetadata(store, &fakeEmbedder{dim: 32}, source, content, SearchMetadata{}); err != nil {
+		t.Fatalf("IndexMarkdownWithMetadata: %v", err)
+	}
+	results, err := SearchHybrid(store, store, &fakeEmbedder{dim: 32}, "confined-byte-marker", 5)
+	if err != nil {
+		t.Fatalf("SearchHybrid: %v", err)
+	}
+	if len(results) == 0 || results[0].Chunk.DocumentPath != source {
+		t.Fatalf("confined bytes were not indexed for source: %#v", results)
+	}
+}
+
 func containsString(values []string, want string) bool {
 	for _, value := range values {
 		if value == want {

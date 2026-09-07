@@ -99,11 +99,7 @@ func (s *Service) DatasetList() ([]DatasetSummary, error) {
 	if s == nil || strings.TrimSpace(s.VaultRoot) == "" {
 		return nil, errors.New("dataset list requires a vault")
 	}
-	dir, err := vault.SecurePath(s.VaultRoot, dataset.RawDir)
-	if err != nil {
-		return nil, err
-	}
-	entries, err := os.ReadDir(dir)
+	entries, err := vault.ReadDirInRoot(s.VaultRoot, dataset.RawDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return []DatasetSummary{}, nil

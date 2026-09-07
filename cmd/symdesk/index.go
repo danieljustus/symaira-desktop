@@ -353,7 +353,7 @@ func indexDirectory(db *sidecar.DB, root string, force bool) (indexed int, skipp
 			return fmt.Errorf("failed to index batch: %w", ferr)
 		}
 		for _, doc := range docs {
-			if rerr := retrieval.IndexWithMetadata(doc.Path, doc.Body, retrieval.SearchMetadataFromVault(doc)); rerr != nil {
+			if rerr := retrieval.IndexMarkdownWithMetadata(doc.Path, doc.Body, retrieval.SearchMetadataFromVault(doc)); rerr != nil {
 				recordIndexStatus(db, doc.Path, sidecar.IndexStateFailed, rerr.Error())
 				fmt.Fprintf(os.Stderr, "Warning: failed to update hybrid index for %s: %v\n", doc.Path, rerr)
 				continue
@@ -365,6 +365,10 @@ func indexDirectory(db *sidecar.DB, root string, force bool) (indexed int, skipp
 	}
 
 	walkErr := vault.Walk(root, func(path string) error {
+		if vault.IsExternalSymlink(root, path) {
+			skipped++
+			return nil
+		}
 		recordIndexStatus(db, path, sidecar.IndexStateIndexing, "")
 		doc, perr := vault.ParseFileInRoot(root, path)
 		if perr != nil {
@@ -436,7 +440,7 @@ func indexOneFile(db *sidecar.DB, vaultRoot, path string, force bool) (bool, err
 		recordIndexStatus(db, path, sidecar.IndexStateFailed, err.Error())
 		return false, fmt.Errorf("failed to index %s: %w", path, err)
 	}
-	if err := retrieval.IndexWithMetadata(doc.Path, doc.Body, retrieval.SearchMetadataFromVault(doc)); err != nil {
+	if err := retrieval.IndexMarkdownWithMetadata(doc.Path, doc.Body, retrieval.SearchMetadataFromVault(doc)); err != nil {
 		recordIndexStatus(db, path, sidecar.IndexStateFailed, err.Error())
 		fmt.Fprintf(os.Stderr, "Warning: failed to update hybrid index for %s: %v\n", doc.Path, err)
 		return true, nil

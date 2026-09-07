@@ -276,6 +276,37 @@ func IndexFileWithMetadata(dbClient db.Store, embedder Embedder, path string, me
 	return doc.Hash, nil
 }
 
+// IndexMarkdownWithMetadata indexes bytes already read through a confined
+// vault root. It preserves metadata, anchors and pending re-embedding without
+// reopening path and reintroducing a validation-to-read race.
+func IndexMarkdownWithMetadata(dbClient db.Store, embedder Embedder, path string, content []byte, metadata SearchMetadata) (string, error) {
+	if len(content) > parser.MaxIndexFileSize {
+		return "", fmt.Errorf("file %s exceeds %d byte limit (%d bytes)", path, parser.MaxIndexFileSize, len(content))
+	}
+	hashBytes := sha256.Sum256(content)
+	currentHash := hex.EncodeToString(hashBytes[:])
+	existing, err := dbClient.GetDocument(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to query document from DB: %w", err)
+	}
+	if existing != nil && existing.Hash == currentHash {
+		pending, pendingErr := dbClient.CountPendingChunksForDocument(path)
+		if pendingErr == nil && pending == 0 {
+			return currentHash, nil
+		}
+	}
+	sections, err := parser.ParseMarkdownSections(content)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse %s: %w", path, err)
+	}
+	chunks := buildChunksFromSections(embedder, path, prependSearchMetadata(sections, metadata))
+	doc := &db.Document{Path: path, Hash: currentHash, UpdatedAt: time.Now()}
+	if err := commitIndex(dbClient, path, chunks, doc, existing, detectSidecarPath(path, string(content))); err != nil {
+		return "", err
+	}
+	return currentHash, nil
+}
+
 // IndexFile indexes a single file by delegating to the shared prepareIndex/commitIndex pipeline.
 func IndexFile(dbClient db.Store, embedder Embedder, path string) (string, error) {
 	chunks, doc, existing, skipped, sidecarPath, err := prepareIndex(dbClient, embedder, path)

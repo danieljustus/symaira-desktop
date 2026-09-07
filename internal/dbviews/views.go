@@ -450,11 +450,7 @@ func (m *Manager) ListBases() ([]*Base, error) {
 }
 
 func (m *Manager) listBasesLocked() ([]*Base, error) {
-	dirAbs, err := vault.SecurePath(m.vaultRoot, Dir)
-	if err != nil {
-		return nil, err
-	}
-	entries, err := os.ReadDir(dirAbs)
+	entries, err := vault.ReadDirInRoot(m.vaultRoot, Dir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return []*Base{}, nil
@@ -468,12 +464,7 @@ func (m *Manager) listBasesLocked() ([]*Base, error) {
 			continue
 		}
 		rel := filepath.Join(Dir, e.Name())
-		absPath, err := vault.SecurePath(m.vaultRoot, rel)
-		if err != nil {
-			continue
-		}
-		// #nosec G304 -- absPath has been confined with vault.SecurePath.
-		data, err := os.ReadFile(absPath)
+		data, _, err := vault.ReadFileInRoot(m.vaultRoot, rel)
 		if err != nil {
 			continue
 		}
@@ -507,12 +498,8 @@ func (m *Manager) GetBase(ref string) (*Base, error) {
 		rel = filepath.Join(Dir, filepath.Base(rel))
 	}
 
-	absPath, err := vault.SecurePath(m.vaultRoot, rel)
-	if err == nil {
-		// #nosec G304 -- absPath has been confined with vault.SecurePath.
-		if data, err := os.ReadFile(absPath); err == nil {
-			return ParseBase(rel, data)
-		}
+	if data, _, err := vault.ReadFileInRoot(m.vaultRoot, rel); err == nil {
+		return ParseBase(rel, data)
 	}
 
 	bases, err := m.listBasesLocked()

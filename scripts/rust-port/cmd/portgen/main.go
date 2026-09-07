@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	defaultOracleCommit  = "ae86331930fdfa2b128b68ae5af7437091b9949a"
-	defaultOracleRelease = "v0.12.2"
+	defaultOracleCommit  = "0c7cf695c881385265c846d5e51fb9be9e1b20f3"
+	defaultOracleRelease = "post-v0.12.2-security-855"
 	provenanceFixture    = "testdata/port/provenance.json"
 )
 

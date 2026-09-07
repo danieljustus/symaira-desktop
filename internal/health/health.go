@@ -4,7 +4,6 @@ package health
 import (
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -59,7 +58,7 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 
 		if filepath.Ext(d.Name()) == ".md" {
 			report.FilesScanned++
-			doc, parseErr := vault.ParseFile(path)
+			doc, parseErr := vault.ParseFileInRoot(vaultRoot, path)
 			if parseErr != nil {
 				report.addFinding("parse_error", "error", rel, parseErr.Error(), "review", "The file could not be parsed safely")
 				return nil
@@ -111,8 +110,8 @@ func Scan(vaultRoot string, db *sidecar.DB, duplicateThreshold int) (Report, err
 					fmt.Sprintf("derived artifact %q source %q does not exist", relSlash, doc.DerivedFrom),
 					"review-derived", "Source document is missing or has been deleted")
 			} else {
-				sourceInfo, sErr := os.Stat(sourcePath)
-				derivedInfo, dErr := os.Stat(doc.Path)
+				sourceInfo, sErr := vault.StatInRoot(vaultRoot, sourcePath)
+				derivedInfo, dErr := vault.StatInRoot(vaultRoot, doc.Path)
 				if sErr == nil && dErr == nil && sourceInfo.ModTime().After(derivedInfo.ModTime()) {
 					report.addFinding("stale_derived_artifact", "warning", relSlash,
 						fmt.Sprintf("derived artifact %q is older than its source %q", relSlash, doc.DerivedFrom),
@@ -252,7 +251,7 @@ func resolveDerivedSource(vaultRoot, docPath, derivedFrom string) (string, bool,
 		}
 		resolved, err := vault.SecurePath(vaultRoot, rel)
 		if err == nil {
-			if info, err := os.Stat(resolved); err == nil && !info.IsDir() {
+			if info, err := vault.StatInRoot(vaultRoot, resolved); err == nil && !info.IsDir() {
 				return resolved, true, nil
 			}
 		}

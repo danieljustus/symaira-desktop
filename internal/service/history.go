@@ -42,7 +42,7 @@ func (s *Service) HistoryRestore(relPath, id string) (*history.Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return entry, fmt.Errorf("restored file but failed to parse for indexing: %w", err)
 	}
@@ -103,7 +103,7 @@ func (s *Service) CheckpointUndo(taskID string) (*history.Checkpoint, error) {
 			continue
 		}
 		if filepath.Ext(absPath) == ".md" {
-			if doc, err := vault.ParseFile(absPath); err == nil {
+			if doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath); err == nil {
 				_ = s.IndexDocument(doc)
 			}
 		}
@@ -163,7 +163,7 @@ func (s *Service) TrashRestore(name string) (*history.TrashEntry, error) {
 		return entry, err
 	}
 	if filepath.Ext(absPath) == ".md" {
-		doc, err := vault.ParseFile(absPath)
+		doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 		if err != nil {
 			return entry, fmt.Errorf("restored file but failed to parse for indexing: %w", err)
 		}

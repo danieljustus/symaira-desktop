@@ -8,6 +8,7 @@ package notebook
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -94,20 +95,6 @@ func notePath(slug string) string {
 	return filepath.Join(Dir, slug+".md")
 }
 
-// canonicalRoot resolves symlinks in vaultRoot so it matches the
-// canonicalized paths vault.SecurePath returns (e.g. macOS /var ->
-// /private/var). Without this, filepath.Rel(vaultRoot, absPath) computes
-// nonsense once SecurePath's returned path and vaultRoot disagree on which
-// form of the path they use. Falls back to the original value if symlink
-// resolution fails (matches Service.New's fallback), so a not-yet-existing
-// root during tests never turns into a hard error here.
-func canonicalRoot(vaultRoot string) string {
-	if resolved, err := filepath.EvalSymlinks(vaultRoot); err == nil {
-		return resolved
-	}
-	return vaultRoot
-}
-
 // New creates a new notebook note at notebooks/<slug>.md and returns it.
 // The slug is derived from title and de-duplicated against existing
 // notebooks by appending "-2", "-3", ... The caller is responsible for
@@ -121,14 +108,13 @@ func NewWithQuery(vaultRoot, title, description, query string) (*Notebook, error
 		return nil, err
 	}
 	nb.Query = strings.TrimSpace(query)
-	if err := write(canonicalRoot(vaultRoot), nb); err != nil {
+	if err := write(vaultRoot, nb); err != nil {
 		return nil, err
 	}
 	return nb, nil
 }
 
 func New(vaultRoot, title, description string) (*Notebook, error) {
-	vaultRoot = canonicalRoot(vaultRoot)
 	title = strings.TrimSpace(title)
 	if title == "" {
 		return nil, ErrTitleRequired
@@ -141,7 +127,7 @@ func New(vaultRoot, title, description string) (*Notebook, error) {
 		if err != nil {
 			return nil, err
 		}
-		if _, statErr := os.Stat(absPath); os.IsNotExist(statErr) {
+		if _, statErr := os.Stat(absPath); os.IsNotExist(statErr) { //nolint:gosec // absPath is confined by SecurePath for write collision detection
 			break
 		}
 		slug = fmt.Sprintf("%s-%d", base, i)
@@ -171,9 +157,9 @@ func Load(vaultRoot, relPath string) (*Notebook, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(absPath) //nolint:gosec // absPath was already validated by vault.SecurePath above
+	data, _, err := vault.ReadFileInRoot(vaultRoot, absPath)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return nil, ErrNotFound
 		}
 		return nil, err
@@ -211,9 +197,9 @@ func List(vaultRoot string) ([]*Notebook, error) {
 	if err != nil {
 		return nil, err
 	}
-	entries, err := os.ReadDir(dirAbs)
+	entries, err := vault.ReadDirInRoot(vaultRoot, dirAbs)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return []*Notebook{}, nil
 		}
 		return nil, err
@@ -245,7 +231,6 @@ func List(vaultRoot string) ([]*Notebook, error) {
 // note. The caller is responsible for re-indexing (see
 // Service.NotebookAddSource).
 func AddSource(vaultRoot string, nb *Notebook, sourcePath string) error {
-	vaultRoot = canonicalRoot(vaultRoot)
 	rel, err := validateSource(vaultRoot, nb, sourcePath)
 	if err != nil {
 		return err
@@ -264,12 +249,11 @@ func AddSource(vaultRoot string, nb *Notebook, sourcePath string) error {
 // the note. It never deletes the referenced file (VAULT.md section 10).
 // Removing a source that is not present is a no-op, not an error.
 func RemoveSource(vaultRoot string, nb *Notebook, sourcePath string) error {
-	vaultRoot = canonicalRoot(vaultRoot)
 	absPath, err := vault.SecurePath(vaultRoot, sourcePath)
 	if err != nil {
 		return err
 	}
-	rel, err := filepath.Rel(vaultRoot, absPath)
+	rel, err := vault.RelativePathInRoot(vaultRoot, absPath)
 	if err != nil {
 		return err
 	}
@@ -303,7 +287,7 @@ func validateSource(vaultRoot string, nb *Notebook, sourcePath string) (string, 
 	if err != nil {
 		return "", fmt.Errorf("invalid source path %q: %w", sourcePath, err)
 	}
-	rel, err := filepath.Rel(vaultRoot, absPath)
+	rel, err := vault.RelativePathInRoot(vaultRoot, absPath)
 	if err != nil {
 		return "", err
 	}
@@ -325,7 +309,7 @@ func (nb *Notebook) ResolveSources(vaultRoot string) ([]SourceRef, error) {
 			refs = append(refs, SourceRef{Path: src, Missing: true})
 			continue
 		}
-		doc, err := vault.ParseFile(absPath)
+		doc, err := vault.ParseFileInRoot(vaultRoot, absPath)
 		if err != nil {
 			refs = append(refs, SourceRef{Path: src, Missing: true})
 			continue

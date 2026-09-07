@@ -441,7 +441,14 @@ func (s *Service) searchPlain(query string) ([]SearchResult, error) {
 				continue
 			}
 		}
-		if info, statErr := os.Stat(resolved); statErr != nil || !info.Mode().IsRegular() {
+		var info os.FileInfo
+		var statErr error
+		if external {
+			info, statErr = os.Stat(resolved)
+		} else {
+			info, statErr = vault.StatInRoot(s.VaultRoot, resolved)
+		}
+		if statErr != nil || !info.Mode().IsRegular() {
 			continue
 		}
 
@@ -561,7 +568,7 @@ func (s *Service) NoteNew(title, content, templateName string) (string, error) {
 	if templateName != "" {
 		tplPath, err := vault.SecurePath(s.VaultRoot, filepath.Join("templates", templateName+".md"))
 		if err == nil {
-			if b, err := os.ReadFile(tplPath); err == nil { //nolint:gosec // tplPath was validated by vault.SecurePath above
+			if b, _, err := vault.ReadFileInRoot(s.VaultRoot, tplPath); err == nil {
 				templateContent = string(b)
 			}
 		}
@@ -602,7 +609,7 @@ func (s *Service) NoteNew(title, content, templateName string) (string, error) {
 	}
 
 	// Index immediately
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return fileName, err
 	}
@@ -638,7 +645,7 @@ func (s *Service) NoteDaily(dateStr string) (string, error) {
 		return "", err
 	}
 
-	if _, err := os.Stat(absPath); err == nil {
+	if _, err := vault.StatInRoot(s.VaultRoot, absPath); err == nil {
 		// Already exists
 		return fileName, nil
 	}
@@ -746,7 +753,7 @@ func (s *Service) NoteClip(url string) (string, error) {
 		return "", fmt.Errorf("failed to write clipped file: %w", err)
 	}
 
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return fileName, err
 	}
@@ -780,7 +787,7 @@ func (s *Service) NoteMove(oldPath, newPath string) error {
 		return err
 	}
 
-	doc, err := vault.ParseFile(absNew)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absNew)
 	if err != nil {
 		return err
 	}
@@ -803,7 +810,7 @@ func (s *Service) PropsEdit(relPath, key, value string) error {
 	}
 
 	// Re-parse and index
-	newDoc, err := vault.ParseFile(absPath)
+	newDoc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return err
 	}
@@ -886,7 +893,7 @@ func (s *Service) Ingest(sourcePath string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err == nil {
 		_ = s.IndexDocument(doc)
 	}
@@ -913,7 +920,7 @@ func (s *Service) Related(file string) (*RelatedData, error) {
 	if err != nil {
 		return nil, err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return nil, err
 	}
@@ -1017,7 +1024,7 @@ func (s *Service) Related(file string) (*RelatedData, error) {
 		}
 
 		// Parse the document to match against the entities
-		otherDoc, err := vault.ParseFile(d.Path)
+		otherDoc, err := vault.ParseFileInRoot(s.VaultRoot, d.Path)
 		if err != nil {
 			continue
 		}

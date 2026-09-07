@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
-    "release": "v0.12.2"
+    "commit": "0c7cf695c881385265c846d5e51fb9be9e1b20f3",
+    "release": "post-v0.12.2-security-855"
   },
   "tree": [
     {
@@ -157,6 +157,23 @@
     {
       "id": "external-symlink",
       "input": "outside-link.md",
+      "error_class": "symlink_escape"
+    }
+  ],
+  "confined_reads": [
+    {
+      "id": "contained-symlink",
+      "input": "inside-link.md",
+      "result": "inside"
+    },
+    {
+      "id": "external-file-symlink",
+      "input": "outside-link.md",
+      "error_class": "symlink_escape"
+    },
+    {
+      "id": "external-directory-symlink",
+      "input": "dir-link/outside.md",
       "error_class": "symlink_escape"
     }
   ]

@@ -194,6 +194,9 @@ func IsCanvasFile(path string) bool {
 // It also stats the file so the returned Document carries the on-disk size
 // and modification time, letting callers cache them for a stat-based skip
 // check on a later refresh.
+//
+// Callers reading a file selected from a vault walk must use ParseFileInRoot;
+// this path-only helper is retained for non-vault or already-confined callers.
 func ParseFile(path string) (*Document, error) {
 	info, err := os.Stat(path)
 	if err != nil {
@@ -417,14 +420,15 @@ func canonicalize(path string) (string, error) {
 	}
 
 	parent := path
-	for {
+	for steps := 0; steps <= len(path); steps++ {
 		if _, err := os.Stat(parent); err == nil { // CodeQL: exclude
 			break
 		}
-		parent = filepath.Dir(parent)
-		if parent == filepath.Dir(parent) {
+		next := filepath.Dir(parent)
+		if next == parent {
 			break
 		}
+		parent = next
 	}
 
 	resolvedParent, err := filepath.EvalSymlinks(parent)

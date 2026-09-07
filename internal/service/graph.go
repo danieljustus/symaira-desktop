@@ -189,7 +189,7 @@ func (s *Service) Graph() (*GraphData, error) {
 			// per entity (O(entities x documents) file I/O).
 			parsedDocs := make([]*vault.Document, 0, len(docs))
 			for _, d := range docs {
-				otherDoc, err := vault.ParseFile(d.Path)
+				otherDoc, err := vault.ParseFileInRoot(s.VaultRoot, d.Path)
 				if err == nil {
 					parsedDocs = append(parsedDocs, otherDoc)
 				}

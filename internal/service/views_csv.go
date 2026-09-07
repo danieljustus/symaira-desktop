@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -293,7 +294,7 @@ func (s *Service) CSVImport(opts CSVImportOptions) (*CSVImportReport, error) {
 		}
 
 		collided := false
-		if _, statErr := os.Stat(absPath); statErr == nil {
+		if _, statErr := vault.StatInRoot(s.VaultRoot, absPath); statErr == nil {
 			collided = true
 			report.CollisionCount++
 
@@ -333,7 +334,7 @@ func (s *Service) CSVImport(opts CSVImportOptions) (*CSVImportReport, error) {
 					if err != nil {
 						break
 					}
-					if _, err := os.Stat(nextAbs); os.IsNotExist(err) {
+					if _, err := vault.StatInRoot(s.VaultRoot, nextAbs); errors.Is(err, fs.ErrNotExist) {
 						absPath = nextAbs
 						break
 					}
@@ -421,7 +422,7 @@ func (s *Service) CSVImport(opts CSVImportOptions) (*CSVImportReport, error) {
 			}
 
 			// Index into sidecar DB
-			doc, parseErr := vault.ParseFile(absPath)
+			doc, parseErr := vault.ParseFileInRoot(s.VaultRoot, absPath)
 			if parseErr == nil && s.DB != nil {
 				_ = s.IndexDocument(doc)
 			}

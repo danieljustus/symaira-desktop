@@ -603,7 +603,7 @@ func checkArchivePathsInVault(vRoot string) ([]map[string]string, int, int, erro
 	}
 
 	walkErr := vault.Walk(vRoot, func(p string) error {
-		doc, err := vault.ParseFile(p)
+		doc, err := vault.ParseFileInRoot(vRoot, p)
 		if err != nil {
 			return nil
 		}
@@ -628,7 +628,7 @@ func checkArchivePathsInVault(vRoot string) ([]map[string]string, int, int, erro
 			return nil
 		}
 		candidate := filepath.Join(vRoot, rel)
-		info, statErr := os.Stat(candidate)
+		info, statErr := vault.StatInRoot(vRoot, candidate)
 		if statErr != nil {
 			recordUnresolved(p, raw, "missing vault-relative archive")
 		} else if info.IsDir() {

@@ -70,7 +70,7 @@ func Import(opts ImportOptions) (*ImportSummary, error) {
 	}
 	existingSources := make(map[string]string) // source_identifier -> note path
 	_ = vault.Walk(opts.VaultRoot, func(p string) error {
-		doc, parseErr := vault.ParseFile(p)
+		doc, parseErr := vault.ParseFileInRoot(opts.VaultRoot, p)
 		if parseErr != nil {
 			return nil
 		}
@@ -189,7 +189,7 @@ func Import(opts ImportOptions) (*ImportSummary, error) {
 
 		// Index if DB is available
 		if opts.DB != nil {
-			doc, parseErr := vault.ParseFile(noteAbsPath)
+			doc, parseErr := vault.ParseFileInRoot(opts.VaultRoot, noteAbsPath)
 			if parseErr == nil {
 				_ = opts.DB.IndexDocument(doc)
 			}

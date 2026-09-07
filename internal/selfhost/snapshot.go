@@ -118,6 +118,7 @@ func gunzipAll(compressed []byte) ([]byte, error) {
 type snapshotFile struct {
 	path       string
 	relative   string
+	content    []byte
 	modifiedAt time.Time
 }
 
@@ -146,7 +147,10 @@ func (s *Server) snapshotPayload() ([]byte, []byte, string, error) {
 	files := make([]snapshotFile, 0)
 	hash := sha256.New()
 	err := vault.Walk(s.cfg.VaultRoot, func(path string) error {
-		info, err := os.Stat(path)
+		if vault.IsExternalSymlink(s.cfg.VaultRoot, path) {
+			return nil
+		}
+		content, info, err := vault.ReadFileInRoot(s.cfg.VaultRoot, path)
 		if err != nil {
 			return err
 		}
@@ -158,7 +162,7 @@ func (s *Server) snapshotPayload() ([]byte, []byte, string, error) {
 			return err
 		}
 		rel = filepath.ToSlash(rel)
-		files = append(files, snapshotFile{path: path, relative: rel, modifiedAt: info.ModTime().UTC()})
+		files = append(files, snapshotFile{path: path, relative: rel, content: content, modifiedAt: info.ModTime().UTC()})
 		_, _ = fmt.Fprintf(hash, "%s\x00%d\x00%d\n", rel, info.Size(), info.ModTime().UnixNano())
 		return nil
 	})
@@ -175,11 +179,7 @@ func (s *Server) snapshotPayload() ([]byte, []byte, string, error) {
 
 	notes := make([]snapshotNote, 0, len(files))
 	for _, file := range files {
-		content, err := os.ReadFile(file.path)
-		if err != nil {
-			return nil, nil, "", err
-		}
-		notes = append(notes, snapshotNote{Path: file.relative, Content: string(content), ModifiedAt: file.modifiedAt})
+		notes = append(notes, snapshotNote{Path: file.relative, Content: string(file.content), ModifiedAt: file.modifiedAt})
 	}
 	plain, err := json.Marshal(map[string]any{"notes": notes, "generated_at": time.Now().UTC()})
 	if err != nil {

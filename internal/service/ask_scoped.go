@@ -166,7 +166,7 @@ func (s *Service) scopedSearchResults(nb *notebook.Notebook, query string) ([]Se
 		if matched[src.relPath] {
 			continue
 		}
-		doc, err := vault.ParseFile(src.absPath)
+		doc, err := vault.ParseFileInRoot(s.VaultRoot, src.absPath)
 		if err != nil {
 			continue
 		}

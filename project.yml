@@ -4,6 +4,9 @@ options:
   deploymentTarget:
     macOS: "14.0"
   xcodeVersion: "26.0"
+  fileTypes:
+    "icon":
+      file: true
   generateEmptyDirectories: false
 
 packages:

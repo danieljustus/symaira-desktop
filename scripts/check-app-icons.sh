@@ -147,6 +147,8 @@ if app_icon_catalogs:
 if set(legacy_catalogs) != {mac_target, ios_target}:
     raise SystemExit("expected exactly one LegacyAppIcon catalog for each root native app")
 project_text = project.read_text()
+if project_text.count("fileTypes:\n    \"icon\":\n      file: true") != 1:
+    raise SystemExit("project.yml must preserve AppIcon.icon as a single wrapper file")
 if project_text.count("- assets/app-icon/AppIcon.icon") != 2:
     raise SystemExit("project.yml must add AppIcon.icon to both root app targets")
 if project_text.count("ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon") != 2:

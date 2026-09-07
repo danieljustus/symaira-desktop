@@ -88,6 +88,9 @@ fn walk_directory_visit<F>(root: &Path, directory: &Path, callback: &mut F) -> i
 where
     F: FnMut(WalkEntry) -> io::Result<()>,
 {
+    // The caller-selected vault root is intentionally readable. Recursion only
+    // uses child directories returned by read_dir, and symlinks are never followed.
+    // lgtm[rust/path-injection]
     let mut entries: Vec<_> = fs::read_dir(directory)?.collect::<Result<_, _>>()?;
     entries.sort_by_key(fs::DirEntry::file_name);
     for entry in entries {

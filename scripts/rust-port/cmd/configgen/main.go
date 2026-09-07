@@ -103,7 +103,7 @@ type pathCase struct {
 func main() {
 	output := flag.String("output", "testdata/port/core/config.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
-	commit := flag.String("oracle-commit", "0c7cf695c881385265c846d5e51fb9be9e1b20f3", "Go oracle commit")
+	commit := flag.String("oracle-commit", "136f01570944af16c4bc447b7eb63d03125aac3f", "Go oracle commit")
 	release := flag.String("oracle-release", "post-v0.12.2-security-855", "Go oracle release")
 	flag.Parse()
 

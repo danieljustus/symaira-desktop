@@ -93,7 +93,7 @@ func TestVaultResolutionInventory(t *testing.T) {
 		}
 		return graph.Edges[i].Source < graph.Edges[j].Source
 	})
-	fixture := resolutionFixture{SchemaVersion: 1, Oracle: inventory.Oracle{Commit: "0c7cf695c881385265c846d5e51fb9be9e1b20f3", Release: "post-v0.12.2-security-855"}, Documents: documents, Nodes: graph.Nodes, Edges: graph.Edges}
+	fixture := resolutionFixture{SchemaVersion: 1, Oracle: inventory.Oracle{Commit: "136f01570944af16c4bc447b7eb63d03125aac3f", Release: "post-v0.12.2-security-855"}, Documents: documents, Nodes: graph.Nodes, Edges: graph.Edges}
 	content, err := json.MarshalIndent(fixture, "", "  ")
 	if err != nil {
 		t.Fatal(err)

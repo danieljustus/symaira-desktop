@@ -362,6 +362,9 @@ jobs:
           test "$api_status" = "200"
           git ls-remote https://github.com/danieljustus/symaira-appkit.git HEAD >/dev/null
         
+      - name: Verify native AppIcon sources
+        run: bash scripts/check-app-icons.sh
+
       - name: Build App
         run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
         
@@ -420,6 +423,9 @@ jobs:
           fi
           echo "Resolved simulator: $UDID"
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Verify native AppIcon sources
+        run: bash scripts/check-app-icons.sh
 
       - name: Build SymDeskMobile
         run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDeskMobile -destination "id=${{ steps.sim.outputs.udid }}" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

@@ -5,7 +5,7 @@
     "release": "v0.12.2"
   },
   "production_source_digest": "846ba3854e75a198fb9932605be3f46a279ff43ca59791a799078d322b44ecee",
-  "generator_source_digest": "9fb1fb97dc0a2ea36b0d6de6580722fd94d638570cddc29dd50e2042070f447a",
+  "generator_source_digest": "1bbb44e2fb4d2e6cb3e419a498b858ee4a23d0725f5c3bcd96a02f5c71d2776a",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -27,7 +27,7 @@
     "testdata/port/http/routes.json": "3b3c43eab70c1e6faafb9cd7470222fdf314c5cd834adb673e5830e343b37b30",
     "testdata/port/mcp/symdesk-tools.json": "f2fab0a54bbdcd45be84ac5c31aee0d2ff27051556032ddebce29e257e9ca761",
     "testdata/port/mcp/symroom-tools.json": "3c71aacde181fef4282f831568e9362ed0badc9aeab4f6375c77c95e64a823f6",
-    "testdata/port/representative/cases.json": "0f8124e7ce9908b545733ef4f2c509e421afd24c063e72c0a09701f46101f2d9",
+    "testdata/port/representative/cases.json": "d87b303e53f1e32d894c51009340ebd2d623c3fc28754d0bee8dbe4603f271e0",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
     "testdata/port/sidecar/large-corpus.json": "cb6ef41e2dda7e1bd56d5e2dbac2ab0bcb8ba68cb746319dd8fe341492017157",
     "testdata/port/sidecar/lifecycle.json": "d2fcb198ca55376aa496e5233cec65179823eca386947f063b65c109671abe83",

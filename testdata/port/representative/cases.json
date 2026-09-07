@@ -229,6 +229,51 @@
       ]
     },
     {
+      "id": "desk-search-fresh-index-empty",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "search",
+        "needle",
+        "--vault",
+        "${WORKSPACE}/vault",
+        "--json"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": false,
+      "setup": [
+        {
+          "path": "vault/alpha.md",
+          "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        },
+        {
+          "path": "vault/nested/beta.md",
+          "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        }
+      ]
+    },
+    {
+      "id": "desk-search-too-many-json",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "search",
+        "--json",
+        "one",
+        "two"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": false
+    },
+    {
       "id": "desk-search-required-json",
       "binary": "symdesk",
       "stage": "representative",

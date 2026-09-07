@@ -208,10 +208,11 @@ pub struct Sidecar {
 /// Returns an error when the vault path, home directory, or digest input cannot
 /// be represented as UTF-8.
 pub fn path_for_vault(vault_root: &Path) -> Result<PathBuf, SidecarError> {
-    if let Ok(explicit) = std::env::var("SYMDESK_SIDECAR")
-        && !explicit.trim().is_empty()
-    {
-        return Ok(PathBuf::from(explicit));
+    if let Ok(explicit) = std::env::var("SYMDESK_SIDECAR") {
+        let explicit = explicit.trim();
+        if !explicit.is_empty() {
+            return Ok(PathBuf::from(explicit));
+        }
     }
     let absolute = if vault_root.is_absolute() {
         vault_root.to_path_buf()
@@ -219,22 +220,41 @@ pub fn path_for_vault(vault_root: &Path) -> Result<PathBuf, SidecarError> {
         std::env::current_dir()?.join(vault_root)
     };
     let canonical = fs::canonicalize(&absolute).unwrap_or_else(|_| lexical_clean(&absolute));
-    let data_home = std::env::var("XDG_DATA_HOME")
+    let explicit_data_home = std::env::var("XDG_DATA_HOME")
         .ok()
-        .filter(|value| !value.trim().is_empty())
+        .map(|value| value.trim().to_owned())
+        .filter(|value| !value.is_empty());
+    let temp_root = std::env::temp_dir();
+    let root = sidecar_storage_root(
+        explicit_data_home.as_deref(),
+        std::env::var_os("HOME").map(PathBuf::from),
+        &canonical,
+        &temp_root,
+    )?;
+    let digest = symdesk_vault::sha256_hex(canonical.to_string_lossy().as_bytes());
+    Ok(root.join(&digest[..16]).join("sidecar.db"))
+}
+
+fn sidecar_storage_root(
+    explicit_data_home: Option<&str>,
+    home: Option<PathBuf>,
+    canonical_vault: &Path,
+    temp_root: &Path,
+) -> Result<PathBuf, SidecarError> {
+    let data_home = explicit_data_home
         .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share")))
+        .or_else(|| home.map(|path| path.join(".local/share")))
         .ok_or_else(|| SidecarError::Contract("cannot determine home directory".to_owned()))?;
     let mut root = data_home.join("symdesk/vaults");
-    let temp_root = std::env::temp_dir();
-    if std::env::var_os("XDG_DATA_HOME").is_none()
-        && canonical.starts_with(&temp_root)
-        && canonical != temp_root
+    let canonical_temp_root =
+        fs::canonicalize(temp_root).unwrap_or_else(|_| temp_root.to_path_buf());
+    if explicit_data_home.is_none()
+        && canonical_vault.starts_with(&canonical_temp_root)
+        && canonical_vault != canonical_temp_root
     {
         root = temp_root.join("symdesk/test-vaults");
     }
-    let digest = symdesk_vault::sha256_hex(canonical.to_string_lossy().as_bytes());
-    Ok(root.join(&digest[..16]).join("sidecar.db"))
+    Ok(root)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

@@ -177,7 +177,12 @@ func runPrepare(command *exec.Cmd, timeout time.Duration) error {
 		case <-waitDone:
 		case <-time.After(2 * time.Second):
 			_ = command.Process.Kill()
-			return errors.New("prepare process did not exit within 2s after timeout")
+			select {
+			case <-waitDone:
+			case <-time.After(2 * time.Second):
+				return errors.New("prepare process did not exit within 2s after final kill")
+			}
+			return errors.New("prepare process required direct kill after tree timeout")
 		}
 		if killErr != nil {
 			return fmt.Errorf("terminate timed-out prepare process tree: %w", killErr)

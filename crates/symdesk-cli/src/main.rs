@@ -65,15 +65,27 @@ fn main() -> ExitCode {
             },
             output_json,
         ),
-        Some(("search", command)) => run_representative(
-            RepresentativeArgs {
-                command: Some("search".to_owned()),
-                query: command.get_one::<String>("query").cloned(),
-                vault: matches.get_one::<String>("vault").cloned(),
-                ..RepresentativeArgs::default()
-            },
-            output_json,
-        ),
+        Some(("search", command)) => {
+            let queries = command
+                .get_many::<String>("query")
+                .map(|values| values.cloned().collect::<Vec<_>>())
+                .unwrap_or_default();
+            if queries.len() > 1 {
+                return emit_error(
+                    format!("accepts at most 1 arg(s), received {}", queries.len()),
+                    output_json,
+                );
+            }
+            run_representative(
+                RepresentativeArgs {
+                    command: Some("search".to_owned()),
+                    query: queries.into_iter().next(),
+                    vault: matches.get_one::<String>("vault").cloned(),
+                    ..RepresentativeArgs::default()
+                },
+                output_json,
+            )
+        }
         _ => ExitCode::SUCCESS,
     }
 }
@@ -92,7 +104,7 @@ fn cli() -> Command {
         .subcommand(Command::new("version").arg(Arg::new("extra").num_args(0..)))
         .subcommand(Command::new("ls").arg(Arg::new("dir").long("dir").num_args(1)))
         .subcommand(
-            Command::new("search").arg(Arg::new("query").required(false).action(ArgAction::Set)),
+            Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
         )
 }
 

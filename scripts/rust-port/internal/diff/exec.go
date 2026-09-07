@@ -3,6 +3,7 @@ package diff
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -60,6 +61,12 @@ func Run(binary string, testCase Case) (Result, error) {
 		if writeErr := os.WriteFile(path, []byte(setup.Content), mode); writeErr != nil {
 			return Result{}, writeErr
 		}
+		if setup.MTimeNS != nil {
+			mtime := time.Unix(0, *setup.MTimeNS)
+			if chtimesErr := os.Chtimes(path, mtime, mtime); chtimesErr != nil {
+				return Result{}, fmt.Errorf("set fixture mtime: %w", chtimesErr)
+			}
+		}
 	}
 
 	replacements := map[string]string{
@@ -81,6 +88,17 @@ func Run(binary string, testCase Case) (Result, error) {
 	command.Env, err = isolatedEnv(home, tmp, runtimeDir, state, testCase.Env, replacements)
 	if err != nil {
 		return Result{}, err
+	}
+	if len(testCase.PrepareArgs) > 0 {
+		prepare := exec.Command(absoluteBinary, replaceAll(testCase.PrepareArgs, replacements)...) // #nosec G204,G702 -- explicit harness operand
+		configureProcessTree(prepare)
+		prepare.Dir = command.Dir
+		prepare.Env = command.Env
+		prepare.Stdout = io.Discard
+		prepare.Stderr = io.Discard
+		if prepareErr := runPrepare(prepare, testCase.timeout()); prepareErr != nil {
+			return Result{}, fmt.Errorf("prepare process: %w", prepareErr)
+		}
 	}
 	command.Stdin = strings.NewReader(replace(testCase.Stdin, replacements))
 	stdout := newLimitedBuffer()
@@ -140,6 +158,37 @@ func Run(binary string, testCase Case) (Result, error) {
 		Files:       files,
 		SandboxRoot: root,
 	}, nil
+}
+
+func runPrepare(command *exec.Cmd, timeout time.Duration) error {
+	if err := command.Start(); err != nil {
+		return err
+	}
+	waitDone := make(chan error, 1)
+	go func() { waitDone <- command.Wait() }()
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case err := <-waitDone:
+		return err
+	case <-timer.C:
+		killErr := killProcessTree(command)
+		select {
+		case <-waitDone:
+		case <-time.After(2 * time.Second):
+			_ = command.Process.Kill()
+			select {
+			case <-waitDone:
+			case <-time.After(2 * time.Second):
+				return errors.New("prepare process did not exit within 2s after final kill")
+			}
+			return errors.New("prepare process required direct kill after tree timeout")
+		}
+		if killErr != nil {
+			return fmt.Errorf("terminate timed-out prepare process tree: %w", killErr)
+		}
+		return errors.New("prepare process timed out")
+	}
 }
 
 func isolatedEnv(home, tmp, runtimeDir, state string, extra map[string]string, replacements map[string]string) ([]string, error) {

@@ -4,7 +4,7 @@ use std::{
     collections::HashMap,
     fs,
     io::Write,
-    path::Path,
+    path::{Path, PathBuf},
     time::{Duration, UNIX_EPOCH},
 };
 
@@ -12,12 +12,9 @@ use rusqlite::{Connection, types::ValueRef};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-#[cfg(windows)]
-use std::path::PathBuf;
-
 use super::{
-    IndexedDocument, MIGRATIONS, SearchHit, Sidecar, open_vault_dir, storage_path,
-    strip_verbatim_prefix,
+    IndexedDocument, MIGRATIONS, SearchHit, Sidecar, open_vault_dir, sidecar_storage_root,
+    storage_path, strip_verbatim_prefix,
 };
 
 const GO_MIGRATIONS: &[(&str, &str)] = &[
@@ -552,6 +549,30 @@ fn open_creates_a_usable_parent_on_all_platforms() {
     assert!(root.join("nested").is_dir());
     drop(_sidecar);
     let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn sidecar_storage_root_matches_go_for_temp_and_xdg_paths() {
+    let temp_root = std::env::temp_dir();
+    let canonical_temp = fs::canonicalize(&temp_root).unwrap_or_else(|_| temp_root.clone());
+    let temporary_vault = canonical_temp.join("vault");
+    let fallback = sidecar_storage_root(
+        None,
+        Some(PathBuf::from("/home/test")),
+        &temporary_vault,
+        &temp_root,
+    )
+    .expect("temporary root");
+    assert_eq!(fallback, temp_root.join("symdesk/test-vaults"));
+
+    let explicit = sidecar_storage_root(
+        Some("/explicit/data"),
+        Some(PathBuf::from("/home/test")),
+        &temporary_vault,
+        &temp_root,
+    )
+    .expect("explicit data root");
+    assert_eq!(explicit, PathBuf::from("/explicit/data/symdesk/vaults"));
 }
 
 #[cfg(windows)]

@@ -1,6 +1,6 @@
 # Go-to-Rust migration record
 
-> **Status:** implementation active; `RUST-001` through `RUST-003` passed
+> **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006` ready
 > **Go oracle:** commit `ae86331930fdfa2b128b68ae5af7437091b9949a`, release `v0.12.2`
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
@@ -114,13 +114,20 @@ The measured Go baseline is in
   `MobileNoteWriter` document is parsed by Swift, Go and Rust. Linux, macOS and
   Windows native CI passed on `main` in run
   [34051534054](https://github.com/danieljustus/symaira-desktop/actions/runs/34051534054).
-  `RUST-005` (minimal sidecar index and search) is in progress. Its first
-  slice adds `symdesk-index` with byte-matched migrations 001–011, WAL,
+  `RUST-005` (minimal sidecar index and search) passed. `symdesk-index`
+  includes byte-matched migrations 001–011, WAL,
   foreign-key and five-second busy settings, typed file/property/link rows,
   original/German/trigram FTS, snippets/scoping, update/delete semantics and
   Go-compatible partial-batch failure behavior. A Go-generated fixture freezes
   36 schema objects, 11 migration versions, logical database snapshots and nine
-  searches. `rusqlite` 0.40.2 is pinned with only `bundled`; the Rust crate has
+  searches. Independent Go/Rust helpers also pass bidirectional database
+  create/mutate/reopen, NULL/nanosecond, corruption, read-only, rollback,
+  native lock and deterministic 10,000-document full-state/search gates.
+  SQL checkout line endings are pinned to LF after reproducing the original
+  Windows CRLF hash failure. Linux, macOS and Windows native CI passed on
+  `main` in run
+  [34102228025](https://github.com/danieljustus/symaira-desktop/actions/runs/34102228025).
+  `rusqlite` 0.40.2 is pinned with only `bundled`; the Rust crate has
   zero unsafe expressions, while the reviewed SQLite wrapper/FFI remains an
   explicit transitive boundary.
 

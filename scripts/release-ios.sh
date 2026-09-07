@@ -120,6 +120,7 @@ validate_archive() {
   require_command plutil
   local app="$1/Products/Applications/SymDesk.app"
   validate_bundle "$app" 'com.symaira.desktop.ios' 'main app'
+  "$ROOT_DIR/scripts/check-app-icons.sh" --bundle "$app" --platform iOS
   [[ -d "$app/PlugIns/SymDeskShare.appex" ]] || { echo "error: Share Extension is not embedded" >&2; exit 1; }
   [[ -d "$app/PlugIns/SymDeskWidget.appex" ]] || { echo "error: Widget is not embedded" >&2; exit 1; }
   validate_bundle "$app/PlugIns/SymDeskShare.appex" 'com.symaira.desktop.ios.share' 'Share Extension'
@@ -159,6 +160,10 @@ validate_export() {
   [[ -z "$VERSION" || "$(plist_value CFBundleShortVersionString "$plist_tmp")" == "$VERSION" ]] || { echo "error: exported app version mismatch" >&2; exit 1; }
   [[ -z "$BUILD_NUMBER" || "$(plist_value CFBundleVersion "$plist_tmp")" == "$BUILD_NUMBER" ]] || { echo "error: exported app build mismatch" >&2; exit 1; }
   rm -f "$plist_tmp"
+  icon_tmp="$(mktemp -d)"
+  unzip -q "$ipa" -d "$icon_tmp"
+  "$ROOT_DIR/scripts/check-app-icons.sh" --bundle "$icon_tmp/Payload/SymDesk.app" --platform iOS
+  rm -rf "$icon_tmp"
   echo "validated exported IPA: $ipa"
 }
 

@@ -24,19 +24,20 @@ type Oracle struct {
 
 // Case defines one isolated process comparison.
 type Case struct {
-	ID           string            `json:"id"`
-	Binary       string            `json:"binary,omitempty"` // "symdesk" (default) or "symroom"
-	Stage        string            `json:"stage,omitempty"`
-	Args         []string          `json:"args,omitempty"`
-	PrepareArgs  []string          `json:"prepare_args,omitempty"`
-	Stdin        string            `json:"stdin,omitempty"`
-	Env          map[string]string `json:"env,omitempty"`
-	WorkingDir   string            `json:"working_dir,omitempty"`
-	TimeoutMS    int               `json:"timeout_ms,omitempty"`
-	StdoutMode   string            `json:"stdout_mode,omitempty"`
-	StderrMode   string            `json:"stderr_mode,omitempty"`
-	CompareFiles bool              `json:"compare_files,omitempty"`
-	Setup        []SetupFile       `json:"setup,omitempty"`
+	ID                   string            `json:"id"`
+	Binary               string            `json:"binary,omitempty"` // "symdesk" (default) or "symroom"
+	Stage                string            `json:"stage,omitempty"`
+	Args                 []string          `json:"args,omitempty"`
+	PrepareArgs          []string          `json:"prepare_args,omitempty"`
+	Stdin                string            `json:"stdin,omitempty"`
+	Env                  map[string]string `json:"env,omitempty"`
+	WorkingDir           string            `json:"working_dir,omitempty"`
+	TimeoutMS            int               `json:"timeout_ms,omitempty"`
+	StdoutMode           string            `json:"stdout_mode,omitempty"`
+	StderrMode           string            `json:"stderr_mode,omitempty"`
+	CompareFiles         bool              `json:"compare_files,omitempty"`
+	CompareSidecarLayout bool              `json:"compare_sidecar_layout,omitempty"`
+	Setup                []SetupFile       `json:"setup,omitempty"`
 }
 
 // SetupFile is created below the isolated workspace before a process starts.

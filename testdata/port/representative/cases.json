@@ -45,6 +45,7 @@
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false,
+      "compare_sidecar_layout": true,
       "setup": [
         {
           "path": "vault/alpha.md",
@@ -74,6 +75,7 @@
       "stdout_mode": "console_text",
       "stderr_mode": "console_text",
       "compare_files": false,
+      "compare_sidecar_layout": true,
       "setup": [
         {
           "path": "vault/alpha.md",
@@ -105,6 +107,7 @@
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false,
+      "compare_sidecar_layout": true,
       "setup": [
         {
           "path": "vault/alpha.md",
@@ -141,6 +144,7 @@
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false,
+      "compare_sidecar_layout": true,
       "setup": [
         {
           "path": "vault/alpha.md",
@@ -177,6 +181,7 @@
       "stdout_mode": "console_text",
       "stderr_mode": "console_text",
       "compare_files": false,
+      "compare_sidecar_layout": true,
       "setup": [
         {
           "path": "vault/alpha.md",
@@ -213,6 +218,7 @@
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false,
+      "compare_sidecar_layout": true,
       "setup": [
         {
           "path": "vault/alpha.md",
@@ -243,6 +249,7 @@
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false,
+      "compare_sidecar_layout": true,
       "setup": [
         {
           "path": "vault/alpha.md",
@@ -271,6 +278,18 @@
       "timeout_ms": 10000,
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
+      "compare_files": false
+    },
+    {
+      "id": "desk-search-required-text",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "search"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
       "compare_files": false
     },
     {

@@ -25,16 +25,17 @@ type oracle struct {
 }
 
 type caseDef struct {
-	ID           string      `json:"id"`
-	Binary       string      `json:"binary"`
-	Stage        string      `json:"stage"`
-	Args         []string    `json:"args"`
-	PrepareArgs  []string    `json:"prepare_args,omitempty"`
-	TimeoutMS    int         `json:"timeout_ms"`
-	StdoutMode   string      `json:"stdout_mode"`
-	StderrMode   string      `json:"stderr_mode"`
-	CompareFiles bool        `json:"compare_files"`
-	Setup        []setupFile `json:"setup,omitempty"`
+	ID                   string      `json:"id"`
+	Binary               string      `json:"binary"`
+	Stage                string      `json:"stage"`
+	Args                 []string    `json:"args"`
+	PrepareArgs          []string    `json:"prepare_args,omitempty"`
+	TimeoutMS            int         `json:"timeout_ms"`
+	StdoutMode           string      `json:"stdout_mode"`
+	StderrMode           string      `json:"stderr_mode"`
+	CompareFiles         bool        `json:"compare_files"`
+	CompareSidecarLayout bool        `json:"compare_sidecar_layout,omitempty"`
+	Setup                []setupFile `json:"setup,omitempty"`
 }
 
 type setupFile struct {
@@ -87,14 +88,15 @@ func generated() suite {
 		Cases: []caseDef{
 			{ID: "version-positional-ls-not-command", Args: []string{"version", "ls"}},
 			{ID: "version-positional-search-not-command", Args: []string{"version", "search"}},
-			{ID: "desk-ls-json", Args: []string{"ls", "--vault", vault, "--json"}, Setup: fixtureFiles()},
-			{ID: "desk-ls-text", Args: []string{"--output=text", "ls", "--vault", vault}, StdoutMode: "console_text", StderrMode: "console_text", Setup: fixtureFiles()},
-			{ID: "desk-ls-dir-json", Args: []string{"ls", "--dir", "nested", "--vault", vault, "--output=json"}, Setup: fixtureFiles()},
-			{ID: "desk-search-json", Args: []string{"search", "needle", "--vault", vault, "--json"}, PrepareArgs: prepare, Setup: fixtureFiles()},
-			{ID: "desk-search-text", Args: []string{"--output=text", "search", "needle", "--vault", vault}, PrepareArgs: prepare, StdoutMode: "console_text", StderrMode: "console_text", Setup: fixtureFiles()},
-			{ID: "desk-search-inherited-output", Args: []string{"--output=json", "search", "needle", "--vault", vault}, PrepareArgs: prepare, Setup: fixtureFiles()},
-			{ID: "desk-search-fresh-index-empty", Args: []string{"search", "needle", "--vault", vault, "--json"}, Setup: fixtureFiles()},
+			{ID: "desk-ls-json", Args: []string{"ls", "--vault", vault, "--json"}, Setup: fixtureFiles(), CompareSidecarLayout: true},
+			{ID: "desk-ls-text", Args: []string{"--output=text", "ls", "--vault", vault}, StdoutMode: "console_text", StderrMode: "console_text", Setup: fixtureFiles(), CompareSidecarLayout: true},
+			{ID: "desk-ls-dir-json", Args: []string{"ls", "--dir", "nested", "--vault", vault, "--output=json"}, Setup: fixtureFiles(), CompareSidecarLayout: true},
+			{ID: "desk-search-json", Args: []string{"search", "needle", "--vault", vault, "--json"}, PrepareArgs: prepare, Setup: fixtureFiles(), CompareSidecarLayout: true},
+			{ID: "desk-search-text", Args: []string{"--output=text", "search", "needle", "--vault", vault}, PrepareArgs: prepare, StdoutMode: "console_text", StderrMode: "console_text", Setup: fixtureFiles(), CompareSidecarLayout: true},
+			{ID: "desk-search-inherited-output", Args: []string{"--output=json", "search", "needle", "--vault", vault}, PrepareArgs: prepare, Setup: fixtureFiles(), CompareSidecarLayout: true},
+			{ID: "desk-search-fresh-index-empty", Args: []string{"search", "needle", "--vault", vault, "--json"}, Setup: fixtureFiles(), CompareSidecarLayout: true},
 			{ID: "desk-search-too-many-json", Args: []string{"search", "--json", "one", "two"}},
+			{ID: "desk-search-required-text", Args: []string{"search"}, StdoutMode: "console_text", StderrMode: "console_text"},
 			{ID: "desk-search-required-json", Args: []string{"search", "--json"}},
 		},
 	}

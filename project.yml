@@ -56,8 +56,9 @@ targets:
     platform: macOS
     sources:
       - Sources/SymDeskApp
-    resources:
-      - assets/app-icon/AppIcon.icon
+      - path: assets/app-icon/AppIcon.icon
+        type: file
+        buildPhase: resources
     dependencies:
       - target: SymDeskCore
       - package: symaira-room-client
@@ -153,8 +154,9 @@ targets:
     platform: iOS
     sources:
       - Sources/SymDeskMobile
-    resources:
-      - assets/app-icon/AppIcon.icon
+      - path: assets/app-icon/AppIcon.icon
+        type: file
+        buildPhase: resources
       - Sources/SymDeskMobile/PrivacyInfo.xcprivacy
     dependencies:
       - package: symaira-appkit

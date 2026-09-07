@@ -149,8 +149,10 @@ if set(legacy_catalogs) != {mac_target, ios_target}:
 project_text = project.read_text()
 if project_text.count("fileTypes:\n    \"icon\":\n      file: true") != 1:
     raise SystemExit("project.yml must preserve AppIcon.icon as a single wrapper file")
-if project_text.count("- assets/app-icon/AppIcon.icon") != 2:
+if project_text.count("assets/app-icon/AppIcon.icon") != 2:
     raise SystemExit("project.yml must add AppIcon.icon to both root app targets")
+if project_text.count("type: file\n        buildPhase: resources") != 2:
+    raise SystemExit("project.yml must add AppIcon.icon as a resource file to both root app targets")
 if project_text.count("ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon") != 2:
     raise SystemExit("project.yml must name AppIcon exactly once for macOS and iOS")
 if (root / "assets/dmg/.VolumeIcon.icns").is_file() and digest(root / "assets/dmg/.VolumeIcon.icns") != digest(icns):

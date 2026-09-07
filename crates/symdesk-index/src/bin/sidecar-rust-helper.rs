@@ -8,8 +8,33 @@ use std::{
 };
 
 use rusqlite::{Connection, Row};
+use serde::Deserialize;
 use serde_json::{Value, json};
 use symdesk_index::{IndexedDocument, Sidecar};
+
+#[derive(Deserialize)]
+struct LargeCorpusManifest {
+    schema_version: u8,
+    document_count: usize,
+    path_template: String,
+    title_template: String,
+    created: String,
+    mtime_base_ns: i64,
+    mtime_step_ns: i64,
+    group_count: usize,
+    document_type: String,
+    status: String,
+    special: Vec<LargeCorpusSpecial>,
+}
+
+#[derive(Deserialize)]
+struct LargeCorpusSpecial {
+    index: usize,
+    title: String,
+    body: String,
+    #[serde(default)]
+    extra_frontmatter: String,
+}
 
 fn main() {
     let started = Instant::now();
@@ -108,7 +133,7 @@ fn run(command: &str, db: &Path, input: Value) -> Result<Value, Box<dyn std::err
                 json!({"hits": hits.into_iter().map(|hit| json!({"path":hit.path,"title":hit.title,"snippet":hit.snippet})).collect::<Vec<_>>() }),
             )
         }
-        "create" | "mutate" | "writer" | "refresh" | "prune" => {
+        "create" | "mutate" | "writer" | "corpus-create" | "refresh" | "prune" => {
             let mut sidecar = Sidecar::open(db)?;
             if command == "refresh" || command == "prune" {
                 let vault = input
@@ -120,6 +145,13 @@ fn run(command: &str, db: &Path, input: Value) -> Result<Value, Box<dyn std::err
                 } else {
                     sidecar.prune(Path::new(vault))?;
                 }
+            } else if command == "corpus-create" {
+                let manifest = input
+                    .get("manifest")
+                    .and_then(Value::as_str)
+                    .ok_or("corpus manifest is required")?;
+                let docs = large_corpus_documents(manifest)?;
+                sidecar.index_documents(&docs)?;
             } else {
                 let docs = documents(
                     input
@@ -140,7 +172,13 @@ fn run(command: &str, db: &Path, input: Value) -> Result<Value, Box<dyn std::err
                     sidecar.delete_document(path)?;
                 }
             }
-            Ok(json!({}))
+            drop(sidecar);
+            if matches!(command, "create" | "mutate" | "corpus-create") {
+                let connection = open_raw_connection(db)?;
+                Ok(json!({"snapshot": snapshot(&connection)?}))
+            } else {
+                Ok(json!({}))
+            }
         }
         "rollback" => {
             let mut sidecar = Sidecar::open(db)?;
@@ -201,6 +239,49 @@ fn writer_retry(db: &Path, input: &Value) -> Result<Value, Box<dyn std::error::E
 
 fn documents(values: &[Value]) -> Result<Vec<IndexedDocument>, Box<dyn std::error::Error>> {
     values.iter().map(document).collect()
+}
+
+fn large_corpus_documents(path: &str) -> Result<Vec<IndexedDocument>, Box<dyn std::error::Error>> {
+    let manifest: LargeCorpusManifest = serde_json::from_slice(&fs::read(path)?)?;
+    if manifest.schema_version != 1
+        || manifest.document_count != 10_000
+        || manifest.group_count == 0
+    {
+        return Err("unsupported large corpus manifest".into());
+    }
+    let mut special = std::collections::HashMap::new();
+    for item in manifest.special {
+        if item.index == 0 || item.index > manifest.document_count {
+            return Err(format!("special corpus index {} is out of range", item.index).into());
+        }
+        special.insert(item.index, item);
+    }
+    let mut documents = Vec::with_capacity(manifest.document_count);
+    for index in 1..=manifest.document_count {
+        let group = (index - 1) % manifest.group_count;
+        let number = format!("{index:05}");
+        let mut title = manifest.title_template.replace("%05d", &number);
+        let mut body = format!(
+            "Deterministic benchmark content for corpus document {index:05}. group {group:03}."
+        );
+        let mut extra = String::new();
+        if let Some(item) = special.get(&index) {
+            title.clone_from(&item.title);
+            body.clone_from(&item.body);
+            extra.clone_from(&item.extra_frontmatter);
+        }
+        let markdown = format!(
+            "---\ntitle: \"{title}\"\ncreated: \"{}\"\ntags: [corpus, generated, group-{group:03}]\ndocument_type: \"{}\"\nstatus: \"{}\"\n{extra}---\n\n{body}\n",
+            manifest.created, manifest.document_type, manifest.status
+        );
+        let path = manifest.path_template.replace("%05d", &number);
+        let parsed = symdesk_vault::parse_bytes(&path, markdown.as_bytes())?;
+        documents.push(IndexedDocument::from_vault(
+            &parsed,
+            Some(manifest.mtime_base_ns + (index as i64 - 1) * manifest.mtime_step_ns),
+        )?);
+    }
+    Ok(documents)
 }
 
 fn document(value: &Value) -> Result<IndexedDocument, Box<dyn std::error::Error>> {

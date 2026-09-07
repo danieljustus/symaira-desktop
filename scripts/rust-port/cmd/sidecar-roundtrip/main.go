@@ -32,6 +32,20 @@ type fixture struct {
 	GoAdded       map[string]interface{}   `json:"go_added"`
 }
 
+type largeCorpusFixture struct {
+	SchemaVersion  int                     `json:"schema_version"`
+	Oracle         map[string]string       `json:"oracle"`
+	DocumentCount  int                     `json:"document_count"`
+	SnapshotSHA256 string                  `json:"snapshot_sha256"`
+	SearchCases    []largeCorpusSearchCase `json:"search_cases"`
+}
+
+type largeCorpusSearchCase struct {
+	Query         string   `json:"query"`
+	ExpectedCount int      `json:"expected_count"`
+	ExpectedPaths []string `json:"expected_paths"`
+}
+
 type helperResult struct {
 	Outcome    string          `json:"outcome"`
 	ErrorClass string          `json:"error_class"`
@@ -96,6 +110,9 @@ func run() error {
 	if err := roundTripB(work, goBin, rustBin, f); err != nil {
 		return fmt.Errorf("round-trip B: %w", err)
 	}
+	if err := largeCorpusCases(root, work, goBin, rustBin, f.Oracle); err != nil {
+		return fmt.Errorf("large corpus: %w", err)
+	}
 	if err := rollbackCases(work, goBin, rustBin, f); err != nil {
 		return fmt.Errorf("rollback: %w", err)
 	}
@@ -111,6 +128,97 @@ func run() error {
 		}
 	} else if runtime.GOOS == "windows" {
 		fmt.Println("sidecar round-trip: chmod/lock cases delegated to native Windows CI")
+	}
+	return nil
+}
+
+func largeCorpusCases(root, work, goBin, rustBin string, oracle map[string]string) error {
+	manifestPath := filepath.Join(root, "testdata", "port", "sidecar", "large-corpus.json")
+	//nolint:gosec // manifestPath is fixed relative to the repository root
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return err
+	}
+	var manifest largeCorpusFixture
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return err
+	}
+	if manifest.SchemaVersion != 1 || manifest.DocumentCount != 10_000 || manifest.SnapshotSHA256 == "" {
+		return errors.New("large corpus manifest is incomplete or not exactly 10,000 documents")
+	}
+	if !reflect.DeepEqual(manifest.Oracle, oracle) {
+		return errors.New("large corpus oracle differs from round-trip oracle")
+	}
+
+	goDB := filepath.Join(work, "10k Go ✓", "sidecar.db")
+	rustDB := filepath.Join(work, "10k Rust ✓", "sidecar.db")
+	payload := map[string]interface{}{"manifest": manifestPath}
+	goCreated, err := invokeWithin(90*time.Second, goBin, "corpus-create", goDB, payload)
+	if err != nil {
+		return fmt.Errorf("go corpus create: %w", err)
+	}
+	rustCreated, err := invokeWithin(90*time.Second, rustBin, "corpus-create", rustDB, payload)
+	if err != nil {
+		return fmt.Errorf("rust corpus create: %w", err)
+	}
+	states := []struct {
+		name string
+		raw  []byte
+	}{
+		{"Go create", goCreated.Snapshot},
+		{"Rust create", rustCreated.Snapshot},
+	}
+	for _, pair := range []struct {
+		name, helper, db string
+	}{
+		{"Rust reopen Go", rustBin, goDB},
+		{"Go reopen Rust", goBin, rustDB},
+	} {
+		raw, err := snapshot(pair.helper, pair.db)
+		if err != nil {
+			return fmt.Errorf("%s: %w", pair.name, err)
+		}
+		states = append(states, struct {
+			name string
+			raw  []byte
+		}{pair.name, raw})
+	}
+	for _, state := range states {
+		digest, err := canonicalJSONDigest(state.raw)
+		if err != nil {
+			return fmt.Errorf("%s snapshot: %w", state.name, err)
+		}
+		if digest != manifest.SnapshotSHA256 {
+			return fmt.Errorf("%s snapshot digest=%s, want %s", state.name, digest, manifest.SnapshotSHA256)
+		}
+		if err := verifyLargeCounts(state.raw, manifest.DocumentCount); err != nil {
+			return fmt.Errorf("%s: %w", state.name, err)
+		}
+	}
+
+	for _, test := range manifest.SearchCases {
+		var reference []byte
+		for _, target := range []struct {
+			name, helper, db string
+		}{
+			{"Go/Go", goBin, goDB},
+			{"Rust/Go", rustBin, goDB},
+			{"Go/Rust", goBin, rustDB},
+			{"Rust/Rust", rustBin, rustDB},
+		} {
+			result, err := invoke(target.helper, "search", target.db, map[string]interface{}{"query": test.Query})
+			if err != nil {
+				return fmt.Errorf("%s search %q: %w", target.name, test.Query, err)
+			}
+			if err := verifySearchResult(result.Hits, test); err != nil {
+				return fmt.Errorf("%s search %q: %w", target.name, test.Query, err)
+			}
+			if reference == nil {
+				reference = result.Hits
+			} else if !jsonEquivalent(reference, result.Hits) {
+				return fmt.Errorf("%s search %q differs from Go-created Go result", target.name, test.Query)
+			}
+		}
 	}
 	return nil
 }
@@ -513,7 +621,11 @@ func lockPair(work, db, holder, writer string, f fixture, timeout bool) error {
 }
 
 func invoke(bin, command, db string, payload interface{}) (helperResult, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	return invokeWithin(30*time.Second, bin, command, db, payload)
+}
+
+func invokeWithin(timeout time.Duration, bin, command, db string, payload interface{}) (helperResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	r, err := invokeResultContext(ctx, bin, command, db, payload)
 	if err != nil {
@@ -596,6 +708,67 @@ func compareSearch(a, b, db, q string) error {
 	}
 	return nil
 }
+func canonicalJSONDigest(raw []byte) (string, error) {
+	var value interface{}
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	if err := decoder.Decode(&value); err != nil {
+		return "", err
+	}
+	canonical, err := json.Marshal(value)
+	if err != nil {
+		return "", err
+	}
+	return digest(canonical), nil
+}
+
+func verifyLargeCounts(raw []byte, documentCount int) error {
+	var state map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &state); err != nil {
+		return err
+	}
+	want := map[string]int{
+		"files":      documentCount,
+		"properties": documentCount*5 + 3,
+		"links":      1,
+		"fts_search": documentCount,
+		"fts_norm":   documentCount,
+		"fts_tri":    documentCount,
+	}
+	for key, expected := range want {
+		var rows []json.RawMessage
+		if err := json.Unmarshal(state[key], &rows); err != nil {
+			return fmt.Errorf("decode %s rows: %w", key, err)
+		}
+		if len(rows) != expected {
+			return fmt.Errorf("%s row count=%d, want %d", key, len(rows), expected)
+		}
+	}
+	return nil
+}
+
+func verifySearchResult(raw []byte, test largeCorpusSearchCase) error {
+	var hits []struct {
+		Path string `json:"path"`
+	}
+	if err := json.Unmarshal(raw, &hits); err != nil {
+		return err
+	}
+	if len(hits) != test.ExpectedCount {
+		return fmt.Errorf("hit count=%d, want %d", len(hits), test.ExpectedCount)
+	}
+	if len(test.ExpectedPaths) > 0 {
+		paths := make([]string, len(hits))
+		for index, hit := range hits {
+			paths[index] = hit.Path
+		}
+		if !reflect.DeepEqual(paths, test.ExpectedPaths) {
+			return fmt.Errorf("hit paths=%v, want %v", paths, test.ExpectedPaths)
+		}
+	}
+	return nil
+}
+
 func verifyNames(raw []byte, want []string) error {
 	var s map[string]interface{}
 	if err := json.Unmarshal(raw, &s); err != nil {

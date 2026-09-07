@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "document_count": 10000,
+  "snapshot_sha256": "e87134fd4961d66728ed37852a65f5d1d255c019c012bb984f3498974c74be00",
+  "path_template": "corpus/%05d.md",
+  "title_template": "Corpus document %05d",
+  "created": "2026-01-01T00:00:00Z",
+  "mtime_base_ns": 1800000000000000000,
+  "mtime_step_ns": 1000000,
+  "group_count": 100,
+  "document_type": "benchmark",
+  "status": "open",
+  "special": [
+    {
+      "index": 1,
+      "title": "Unicode marker — München café 東京",
+      "body": "unicode-marker München café naïve 東京 — deterministic text."
+    },
+    {
+      "index": 2,
+      "title": "Spaces and punctuation — document 00002",
+      "body": "spaces-marker phrase with multiple spaces and punctuation: one, two, three."
+    },
+    {
+      "index": 3,
+      "title": "Numeric marker 9007199254740991",
+      "body": "numeric-marker 9007199254740991 group 002 and value 42."
+    },
+    {
+      "index": 4,
+      "title": "Null property marker",
+      "body": "null-marker deterministic content.",
+      "extra_frontmatter": "nullable: null\npriority: 0\n"
+    },
+    {
+      "index": 5,
+      "title": "Link property marker",
+      "body": "link-marker points to [[Corpus document 00006]] and preserves properties.",
+      "extra_frontmatter": "priority: 7\n"
+    }
+  ],
+  "search_cases": [
+    {
+      "query": "unicode-marker",
+      "expected_count": 1,
+      "expected_paths": ["corpus/00001.md"]
+    },
+    {
+      "query": "spaces-marker",
+      "expected_count": 1,
+      "expected_paths": ["corpus/00002.md"]
+    },
+    {
+      "query": "9007199254740991",
+      "expected_count": 1,
+      "expected_paths": ["corpus/00003.md"]
+    },
+    {
+      "query": "group 042",
+      "expected_count": 20,
+      "expected_paths": []
+    },
+    {
+      "query": "never-present-marker",
+      "expected_count": 0,
+      "expected_paths": []
+    }
+  ]
+}

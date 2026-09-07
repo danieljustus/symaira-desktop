@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -333,7 +334,7 @@ func (s *Service) CSVImport(opts CSVImportOptions) (*CSVImportReport, error) {
 					if err != nil {
 						break
 					}
-					if _, err := vault.StatInRoot(s.VaultRoot, nextAbs); os.IsNotExist(err) {
+					if _, err := vault.StatInRoot(s.VaultRoot, nextAbs); errors.Is(err, fs.ErrNotExist) {
 						absPath = nextAbs
 						break
 					}

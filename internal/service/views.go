@@ -2,8 +2,9 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -257,7 +258,7 @@ func (s *Service) resolveViewDocuments(view *dbviews.View) ([]*vault.Document, e
 	}
 	info, statErr := vault.StatInRoot(s.VaultRoot, absDir)
 	if statErr != nil {
-		if os.IsNotExist(statErr) {
+		if errors.Is(statErr, fs.ErrNotExist) {
 			return nil, fmt.Errorf("view source folder %q does not exist", view.Source)
 		}
 		return nil, fmt.Errorf("view source folder %q: %w", view.Source, statErr)

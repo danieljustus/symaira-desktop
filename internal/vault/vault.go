@@ -420,14 +420,15 @@ func canonicalize(path string) (string, error) {
 	}
 
 	parent := path
-	for {
+	for steps := 0; steps <= len(path); steps++ {
 		if _, err := os.Stat(parent); err == nil { // CodeQL: exclude
 			break
 		}
-		parent = filepath.Dir(parent)
-		if parent == filepath.Dir(parent) {
+		next := filepath.Dir(parent)
+		if next == parent {
 			break
 		}
+		parent = next
 	}
 
 	resolvedParent, err := filepath.EvalSymlinks(parent)

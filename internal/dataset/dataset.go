@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -448,7 +448,7 @@ func ReadRawFiles(vaultRoot, slug string, schema map[string]dbviews.PropertyConf
 	}
 	entries, err := vault.ReadDirInRoot(vaultRoot, dir)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return []Row{}, nil
 		}
 		return nil, err

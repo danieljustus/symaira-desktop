@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -73,7 +74,7 @@ func (s *Service) datasetRetentionState(relPath string, handleData []byte) (*Ret
 		return nil, err
 	}
 	entries, err := vault.ReadDirInRoot(s.VaultRoot, rawDir)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
 	sources := make([]retention.RawSource, 0)

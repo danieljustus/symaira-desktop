@@ -1,6 +1,7 @@
 package vault
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -63,18 +64,52 @@ func (r *Root) relative(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve vault file path: %w", err)
 	}
-	canonicalPath, canonicalErr := canonicalize(absPath)
-	if canonicalErr != nil {
-		canonicalPath = absPath
+	for _, base := range []string{r.path, r.canonical} {
+		rel, relErr := filepath.Rel(base, absPath)
+		if relErr != nil {
+			continue
+		}
+		if validRootRelative(rel) {
+			return rel, nil
+		}
 	}
-	rel, err := filepath.Rel(r.canonical, canonicalPath)
-	if err != nil {
-		return "", fmt.Errorf("relativize vault file path: %w", err)
+	if resolved, resolveErr := canonicalize(absPath); resolveErr == nil {
+		rel, relErr := filepath.Rel(r.canonical, resolved)
+		if relErr == nil && validRootRelative(rel) {
+			return rel, nil
+		}
 	}
-	if rel == ".." || filepath.IsAbs(rel) || len(rel) > 3 && rel[:3] == ".."+string(filepath.Separator) {
-		return "", fmt.Errorf("vault path escapes root: %s", path)
+	return "", fmt.Errorf("vault path escapes root: %s", path)
+}
+
+func validRootRelative(rel string) bool {
+	return rel != ".." && !filepath.IsAbs(rel) && (len(rel) <= 3 || rel[:3] != ".."+string(filepath.Separator))
+}
+
+// RelativePath returns path relative to the opened root while accepting both
+// the lexical root spelling and its canonical alias.
+func (r *Root) RelativePath(path string) (string, error) {
+	return r.relative(path)
+}
+
+func (r *Root) open(path, rel string) (*os.File, error) {
+	file, err := openRootReadFile(r.root, rel)
+	if err == nil || errors.Is(err, fs.ErrNotExist) {
+		return file, err
 	}
-	return rel, nil
+	absPath := path
+	if !filepath.IsAbs(absPath) {
+		absPath = filepath.Join(r.path, absPath)
+	}
+	resolved, resolveErr := filepath.EvalSymlinks(absPath)
+	if resolveErr != nil {
+		return nil, err
+	}
+	resolvedRel, relErr := r.relative(resolved)
+	if relErr != nil {
+		return nil, err
+	}
+	return openRootReadFile(r.root, resolvedRel)
 }
 
 // Stat returns metadata for a path through the confined root.
@@ -83,7 +118,12 @@ func (r *Root) Stat(path string) (fs.FileInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	info, err := r.root.Stat(rel)
+	file, err := r.open(path, rel)
+	if err != nil {
+		return nil, fmt.Errorf("open vault file for stat %s: %w", path, err)
+	}
+	defer func() { _ = file.Close() }()
+	info, err := file.Stat()
 	if err != nil {
 		return nil, fmt.Errorf("stat vault file %s: %w", path, err)
 	}
@@ -111,7 +151,7 @@ func (r *Root) ReadFile(path string) ([]byte, fs.FileInfo, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	file, err := openRootReadFile(r.root, rel)
+	file, err := r.open(path, rel)
 	if err != nil {
 		return nil, nil, fmt.Errorf("open vault file %s: %w", path, err)
 	}
@@ -201,4 +241,14 @@ func ReadFileInRoot(vaultRoot, path string) ([]byte, fs.FileInfo, error) {
 	}
 	defer func() { _ = root.Close() }()
 	return root.ReadFile(path)
+}
+
+// RelativePathInRoot returns path relative to vaultRoot across path aliases.
+func RelativePathInRoot(vaultRoot, path string) (string, error) {
+	root, err := OpenRoot(vaultRoot)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = root.Close() }()
+	return root.RelativePath(path)
 }

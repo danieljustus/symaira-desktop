@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -452,7 +453,7 @@ func (m *Manager) ListBases() ([]*Base, error) {
 func (m *Manager) listBasesLocked() ([]*Base, error) {
 	entries, err := vault.ReadDirInRoot(m.vaultRoot, Dir)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return []*Base{}, nil
 		}
 		return nil, err

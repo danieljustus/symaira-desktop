@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -101,7 +102,7 @@ func (s *Service) DatasetList() ([]DatasetSummary, error) {
 	}
 	entries, err := vault.ReadDirInRoot(s.VaultRoot, dataset.RawDir)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return []DatasetSummary{}, nil
 		}
 		return nil, err

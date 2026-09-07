@@ -4,7 +4,7 @@ VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
 ROOM_LDFLAGS = -X github.com/danieljustus/symaira-desktop/internal/room/version.Version=$(if $(VERSION),$(VERSION),(dev))
 CARGO ?= cargo
-PORT_ORACLE_COMMIT ?= e74b16603ac4bca0efb8a015786643a4b4ceeaeb
+PORT_ORACLE_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 PORT_ORACLE_RELEASE ?= post-v0.12.2-security-880
 PORT_CASES ?= testdata/port/cli/cases.json
 RUST_NIGHTLY ?= nightly-2026-09-03
@@ -169,7 +169,7 @@ http-differential: representative-fixtures-check
 # VALUE-001: fail-closed paired representative Go/Rust benchmark.
 VALUE_SAMPLES ?= 100
 VALUE_WARMUPS ?= 20
-VALUE_GO_COMMIT ?= 136f01570944af16c4bc447b7eb63d03125aac3f
+VALUE_GO_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 VALUE_OUTPUT ?= docs/rust-port/results/value001-latest.json
 value-001:
 	@mkdir -p bin/port "$$(dirname "$(VALUE_OUTPUT)")"

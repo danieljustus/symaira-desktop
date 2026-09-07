@@ -11,7 +11,7 @@ import (
 const httpFixturePath = "testdata/port/http/representative.json"
 
 func generatedHTTP() httpSuite {
-	return httpSuite{SchemaVersion: 1, Oracle: oracle{Commit: "136f01570944af16c4bc447b7eb63d03125aac3f", Release: "post-v0.12.2-security-855"}, Cases: []httpCase{
+	return httpSuite{SchemaVersion: 1, Oracle: oracle{Commit: "745c08e8144971c61133c5d0e5d61c7ce405aad2", Release: "post-v0.12.2-security-855"}, Cases: []httpCase{
 		{ID: "healthz", Method: "GET", Path: "/healthz"},
 		{ID: "status-missing-auth", Method: "GET", Path: "/api/v1/status"},
 		{ID: "status-wrong-auth", Method: "GET", Path: "/api/v1/status", Auth: "wrong"},

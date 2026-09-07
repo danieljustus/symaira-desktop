@@ -306,6 +306,9 @@ fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Valu
                     .map_err(|error| error.to_string())?;
                 files = sidecar.list_files(dir).map_err(|error| error.to_string())?;
             }
+            if files.is_empty() {
+                return Ok(Value::String("null".to_owned()));
+            }
             Ok(Value::String(
                 serde_json::to_string(
                     &files

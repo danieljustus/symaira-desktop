@@ -21,9 +21,11 @@ type oracle struct {
 }
 
 type mcpCase struct {
-	ID      string `json:"id"`
-	Request string `json:"request"`
-	Framed  bool   `json:"framed,omitempty"`
+	ID         string `json:"id"`
+	Request    string `json:"request"`
+	RawInput   string `json:"raw_input,omitempty"`
+	Framed     bool   `json:"framed,omitempty"`
+	EmptyVault bool   `json:"empty_vault,omitempty"`
 }
 
 func main() {
@@ -39,6 +41,7 @@ func main() {
 	content = append(content, '\n')
 	path := filepath.Join(root, "testdata/port/mcp/representative.json")
 	if check {
+		//nolint:gosec // path is the fixed repository fixture path
 		actual, err := os.ReadFile(path)
 		if err != nil {
 			fatal("read fixture: %v", err)
@@ -49,10 +52,10 @@ func main() {
 		fmt.Println("PASS MCP fixture verified: testdata/port/mcp/representative.json")
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil { //nolint:gosec // checked-in repository directory
 		fatal("mkdir: %v", err)
 	}
-	if err := os.WriteFile(path, content, 0o644); err != nil {
+	if err := os.WriteFile(path, content, 0o644); err != nil { //nolint:gosec // checked-in non-secret fixture
 		fatal("write fixture: %v", err)
 	}
 	fmt.Println("PASS generated testdata/port/mcp/representative.json")
@@ -67,12 +70,17 @@ func generated() fixture {
 			{ID: "tools-list-line", Request: `{"jsonrpc":"2.0","id":2,"method":"tools/list"}`},
 			{ID: "status-call", Request: `{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"desk_status","arguments":{}}}`},
 			{ID: "ls-call", Request: `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"desk_ls","arguments":{}}}`},
+			{ID: "ls-empty-call", Request: `{"jsonrpc":"2.0","id":40,"method":"tools/call","params":{"name":"desk_ls","arguments":{}}}`, EmptyVault: true},
 			{ID: "search-call", Request: `{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"desk_search","arguments":{"query":"needle"}}}`},
 			{ID: "missing-search-query", Request: `{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"desk_search","arguments":{}}}`},
 			{ID: "unknown-method", Request: `{"jsonrpc":"2.0","id":7,"method":"unknown"}`},
 			{ID: "notification-silent", Request: `{"jsonrpc":"2.0","method":"unknown"}`},
+			{ID: "cancel-notification-silent", Request: `{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":5}}`},
+			{ID: "clean-eof", Request: ""},
 			{ID: "invalid-request", Request: `[]`},
 			{ID: "malformed-line", Request: `{"jsonrpc":"2.0","id":8,"method":`},
+			{ID: "truncated-frame", RawInput: "Content-Length: 10\r\n\r\n{}"},
+			{ID: "invalid-content-length", RawInput: "Content-Length: nope\r\n\r\n{}"},
 			{ID: "initialize-framed", Request: `{"jsonrpc":"2.0","id":9,"method":"initialize"}`, Framed: true},
 		},
 	}

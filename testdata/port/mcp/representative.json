@@ -22,6 +22,11 @@
       "request": "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"desk_ls\",\"arguments\":{}}}"
     },
     {
+      "id": "ls-empty-call",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":40,\"method\":\"tools/call\",\"params\":{\"name\":\"desk_ls\",\"arguments\":{}}}",
+      "empty_vault": true
+    },
+    {
       "id": "search-call",
       "request": "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":\"desk_search\",\"arguments\":{\"query\":\"needle\"}}}"
     },
@@ -38,12 +43,30 @@
       "request": "{\"jsonrpc\":\"2.0\",\"method\":\"unknown\"}"
     },
     {
+      "id": "cancel-notification-silent",
+      "request": "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/cancelled\",\"params\":{\"requestId\":5}}"
+    },
+    {
+      "id": "clean-eof",
+      "request": ""
+    },
+    {
       "id": "invalid-request",
       "request": "[]"
     },
     {
       "id": "malformed-line",
       "request": "{\"jsonrpc\":\"2.0\",\"id\":8,\"method\":"
+    },
+    {
+      "id": "truncated-frame",
+      "request": "",
+      "raw_input": "Content-Length: 10\r\n\r\n{}"
+    },
+    {
+      "id": "invalid-content-length",
+      "request": "",
+      "raw_input": "Content-Length: nope\r\n\r\n{}"
     },
     {
       "id": "initialize-framed",

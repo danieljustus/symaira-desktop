@@ -3,6 +3,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -12,16 +13,20 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
+	"time"
 )
 
 type fixture struct {
 	Cases []mcpCase `json:"cases"`
 }
 type mcpCase struct {
-	ID      string `json:"id"`
-	Request string `json:"request"`
-	Framed  bool   `json:"framed,omitempty"`
+	ID         string `json:"id"`
+	Request    string `json:"request"`
+	RawInput   string `json:"raw_input,omitempty"`
+	Framed     bool   `json:"framed,omitempty"`
+	EmptyVault bool   `json:"empty_vault,omitempty"`
 }
 
 type processResult struct {
@@ -49,7 +54,7 @@ func main() {
 	if err != nil {
 		fatal("temp root: %v", err)
 	}
-	defer os.RemoveAll(root)
+	defer func() { _ = os.RemoveAll(root) }()
 	if err := os.WriteFile(filepath.Join(root, "alpha.md"), []byte("---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n"), 0o600); err != nil {
 		fatal("fixture file: %v", err)
 	}
@@ -61,18 +66,29 @@ func main() {
 	}
 
 	for _, tc := range suite.Cases {
+		vault := root
+		if tc.EmptyVault {
+			vault = filepath.Join(root, "empty")
+			if err := os.MkdirAll(vault, 0o700); err != nil {
+				fatal("%s empty vault: %v", tc.ID, err)
+			}
+		}
 		if tc.ID == "search-call" {
-			if err := prepare(*left, root, filepath.Join(root, "go.db")); err != nil {
+			if err := prepare(*left, vault, filepath.Join(root, "go.db")); err != nil {
 				fatal("%s prepare Go: %v", tc.ID, err)
 			}
-			if err := prepare(*right, root, filepath.Join(root, "rust.db")); err != nil {
+			if err := prepare(*right, vault, filepath.Join(root, "rust.db")); err != nil {
 				fatal("%s prepare Rust: %v", tc.ID, err)
 			}
 		}
 		goDB := filepath.Join(root, "go.db")
 		rustDB := filepath.Join(root, "rust.db")
-		leftResult := run(*left, root, goDB, tc.Request, tc.Framed)
-		rightResult := run(*right, root, rustDB, tc.Request, tc.Framed)
+		if tc.EmptyVault {
+			goDB = filepath.Join(vault, "go.db")
+			rustDB = filepath.Join(vault, "rust.db")
+		}
+		leftResult := run(*left, vault, goDB, tc)
+		rightResult := run(*right, vault, rustDB, tc)
 		if leftResult.exitCode != rightResult.exitCode {
 			fatal("%s exit mismatch: Go=%d Rust=%d\nGo stderr=%s\nRust stderr=%s", tc.ID, leftResult.exitCode, rightResult.exitCode, leftResult.stderr, rightResult.stderr)
 		}
@@ -95,21 +111,31 @@ func main() {
 }
 
 func prepare(binary, vault, db string) error {
-	result := run(binary, vault, db, `{"jsonrpc":"2.0","id":99,"method":"tools/call","params":{"name":"desk_ls","arguments":{}}}`, false)
+	result := run(binary, vault, db, mcpCase{Request: `{"jsonrpc":"2.0","id":99,"method":"tools/call","params":{"name":"desk_ls","arguments":{}}}`})
 	if result.exitCode != 0 {
 		return fmt.Errorf("exit %d stderr %s", result.exitCode, result.stderr)
 	}
 	return nil
 }
 
-func run(binary, vault, db, request string, framed bool) processResult {
-	input := request
-	if framed {
-		input = fmt.Sprintf("Content-Length: %d\r\n\r\n%s", len([]byte(request)), request)
+func run(binary, vault, db string, testCase mcpCase) processResult {
+	home := filepath.Join(vault, ".harness-home")
+	if err := os.MkdirAll(filepath.Join(home, "tmp"), 0o700); err != nil {
+		return processResult{stderr: []byte(err.Error()), exitCode: -1}
 	}
-	cmd := exec.Command(binary, "mcp")
-	cmd.Stdin = strings.NewReader(input + "\n")
-	cmd.Env = append(os.Environ(), "SYMDESK_VAULT="+vault, "SYMDESK_SIDECAR="+db, "XDG_DATA_HOME="+vault)
+	input := testCase.Request
+	if testCase.RawInput != "" {
+		input = testCase.RawInput
+	} else if testCase.Framed {
+		input = fmt.Sprintf("Content-Length: %d\r\n\r\n%s", len([]byte(testCase.Request)), testCase.Request)
+	} else {
+		input += "\n"
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, binary, "mcp")
+	cmd.Stdin = strings.NewReader(input)
+	cmd.Env = isolatedEnv(vault, db)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -123,7 +149,41 @@ func run(binary, vault, db, request string, framed bool) processResult {
 			code = -1
 		}
 	}
+	if ctx.Err() != nil {
+		code = -1
+		stderr.WriteString("MCP process timed out")
+	}
 	return processResult{stdout: stdout.Bytes(), stderr: stderr.Bytes(), exitCode: code}
+}
+
+func isolatedEnv(vault, db string) []string {
+	home := filepath.Join(vault, ".harness-home")
+	env := []string{
+		"HOME=" + home,
+		"USERPROFILE=" + home,
+		"XDG_CONFIG_HOME=" + filepath.Join(home, ".config"),
+		"XDG_DATA_HOME=" + filepath.Join(home, ".local", "share"),
+		"XDG_CACHE_HOME=" + filepath.Join(home, ".cache"),
+		"TMPDIR=" + filepath.Join(home, "tmp"),
+		"TMP=" + filepath.Join(home, "tmp"),
+		"TEMP=" + filepath.Join(home, "tmp"),
+		"LANG=C",
+		"LC_ALL=C",
+		"TZ=UTC",
+		"TERM=dumb",
+		"NO_COLOR=1",
+		"SYMDESK_VAULT=" + vault,
+		"SYMDESK_SIDECAR=" + db,
+	}
+	for _, key := range []string{"PATH", "SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT"} {
+		if value := os.Getenv(key); value != "" {
+			env = append(env, key+"="+value)
+		}
+	}
+	if runtime.GOOS == "windows" {
+		env = append(env, "SystemDrive="+os.Getenv("SystemDrive"))
+	}
+	return env
 }
 
 func decodeFrames(data []byte, framed bool) ([]any, error) {

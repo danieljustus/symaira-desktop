@@ -64,7 +64,7 @@ func main() {
 func generated() fixture {
 	return fixture{
 		SchemaVersion: 1,
-		Oracle:        oracle{Commit: "ae86331930fdfa2b128b68ae5af7437091b9949a", Release: "v0.12.2"},
+		Oracle:        oracle{Commit: "136f01570944af16c4bc447b7eb63d03125aac3f", Release: "post-v0.12.2-security-855"},
 		Cases: []mcpCase{
 			{ID: "initialize-line", Request: `{"jsonrpc":"2.0","id":1,"method":"initialize"}`},
 			{ID: "tools-list-line", Request: `{"jsonrpc":"2.0","id":2,"method":"tools/list"}`},

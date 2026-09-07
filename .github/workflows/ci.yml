@@ -337,11 +337,20 @@ jobs:
 
 
   app:
-    if: github.event_name != 'pull_request'  # PR gate = lint + Go tests (ubuntu); app build on main/schedule
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      
+
+      - name: Verify Xcode 26 toolchain
+        run: |
+          set -euo pipefail
+          XCODE_VERSION="$(xcodebuild -version | sed -n '1p')"
+          echo "$XCODE_VERSION"
+          case "$XCODE_VERSION" in
+            Xcode\ 26.*|Xcode\ 27.*) ;;
+            *) echo "::error::Expected Xcode 26 or newer, got: $XCODE_VERSION"; exit 1 ;;
+          esac
+
       - name: Install xcodegen
         run: brew install xcodegen
         
@@ -366,10 +375,13 @@ jobs:
         run: bash scripts/check-app-icons.sh
 
       - name: Build App
-        run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS' -derivedDataPath "$RUNNER_TEMP/SymDesk-macos-derived-data" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+      - name: Verify compiled macOS AppIcon
+        run: bash scripts/check-app-icons.sh --bundle "$RUNNER_TEMP/SymDesk-macos-derived-data/Build/Products/Debug/SymDesk.app" --platform macOS
         
       - name: Run App and Core Tests
-        run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS' -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDesk -destination 'platform=macOS' -derivedDataPath "$RUNNER_TEMP/SymDesk-macos-derived-data" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 
       # room/client is a local Swift package embedded by the app (issue #517).
       # The app scheme builds it but does not run its own test target.
@@ -378,9 +390,19 @@ jobs:
 
   app-ios:
     name: iOS app
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Verify Xcode 26 toolchain
+        run: |
+          set -euo pipefail
+          XCODE_VERSION="$(xcodebuild -version | sed -n '1p')"
+          echo "$XCODE_VERSION"
+          case "$XCODE_VERSION" in
+            Xcode\ 26.*|Xcode\ 27.*) ;;
+            *) echo "::error::Expected Xcode 26 or newer, got: $XCODE_VERSION"; exit 1 ;;
+          esac
 
       - name: Install xcodegen
         run: brew install xcodegen
@@ -428,7 +450,10 @@ jobs:
         run: bash scripts/check-app-icons.sh
 
       - name: Build SymDeskMobile
-        run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDeskMobile -destination "id=${{ steps.sim.outputs.udid }}" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild build -project SymDesk.xcodeproj -scheme SymDeskMobile -destination "id=${{ steps.sim.outputs.udid }}" -derivedDataPath "$RUNNER_TEMP/SymDesk-ios-derived-data" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+      - name: Verify compiled iOS AppIcon
+        run: bash scripts/check-app-icons.sh --bundle "$RUNNER_TEMP/SymDesk-ios-derived-data/Build/Products/Debug-iphonesimulator/SymDesk.app" --platform iOS
 
       - name: Run SymDeskMobileTests
-        run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDeskMobile -destination "id=${{ steps.sim.outputs.udid }}" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild test -project SymDesk.xcodeproj -scheme SymDeskMobile -destination "id=${{ steps.sim.outputs.udid }}" -derivedDataPath "$RUNNER_TEMP/SymDesk-ios-derived-data" -configuration Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO

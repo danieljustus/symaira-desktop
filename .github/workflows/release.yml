@@ -198,13 +198,6 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="$CODESIGN_IDENTITY"
 
-      - name: Verify compiled AppIcon in release bundle
-        run: |
-          set -euo pipefail
-          bash scripts/check-app-icons.sh \
-            --bundle "$RUNNER_TEMP/SymDesk.xcarchive/Products/Applications/SymDesk.app" \
-            --platform macOS
-
       - name: Verify app reports the release version
         run: |
           set -euo pipefail

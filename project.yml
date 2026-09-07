@@ -3,7 +3,7 @@ options:
   bundleIdPrefix: com.symaira
   deploymentTarget:
     macOS: "14.0"
-  xcodeVersion: "16.0"
+  xcodeVersion: "26.0"
   generateEmptyDirectories: false
 
 packages:
@@ -53,6 +53,8 @@ targets:
     platform: macOS
     sources:
       - Sources/SymDeskApp
+    resources:
+      - assets/app-icon/AppIcon.icon
     dependencies:
       - target: SymDeskCore
       - package: symaira-room-client
@@ -149,6 +151,7 @@ targets:
     sources:
       - Sources/SymDeskMobile
     resources:
+      - assets/app-icon/AppIcon.icon
       - Sources/SymDeskMobile/PrivacyInfo.xcprivacy
     dependencies:
       - package: symaira-appkit

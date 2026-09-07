@@ -125,6 +125,9 @@ jobs:
         with:
           go-version: "1.26.6"
 
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal
+
       - name: Verify frozen Go oracle fixtures and differential harness
         if: matrix.os != 'windows-latest'
         run: make port-contract
@@ -175,7 +178,7 @@ jobs:
     if: github.event_name != 'pull_request'
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -195,8 +198,8 @@ jobs:
           cargo test --workspace --all-features --locked
           cargo test --workspace --doc --all-features --locked
 
-      - name: Run native macOS sidecar round-trip and lock suite
-        if: matrix.os == 'macos-latest'
+      - name: Run native Unix sidecar round-trip and lock suite
+        if: matrix.os != 'windows-latest'
         run: SIDECAR_NATIVE=1 make sidecar-roundtrip
 
       - name: Run native Windows sidecar round-trip suite

@@ -280,6 +280,8 @@ fn open_raw_connection(db: &Path) -> Result<Connection, rusqlite::Error> {
 }
 
 fn snapshot(connection: &Connection) -> Result<Value, Box<dyn std::error::Error>> {
+    // indexed_at is intentionally excluded: it is an insertion-clock value,
+    // not logical document state shared across independent helper processes.
     let journal_mode: String = connection.query_row("PRAGMA journal_mode", [], |row| row.get(0))?;
     let foreign_keys: i64 = connection.query_row("PRAGMA foreign_keys", [], |row| row.get(0))?;
     let busy_timeout: i64 = connection.query_row("PRAGMA busy_timeout", [], |row| row.get(0))?;

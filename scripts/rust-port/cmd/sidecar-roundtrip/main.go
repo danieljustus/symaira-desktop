@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -59,7 +60,9 @@ func run() error {
 		return err
 	}
 	var f fixture
-	if err := json.Unmarshal(data, &f); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	if err := decoder.Decode(&f); err != nil {
 		return err
 	}
 	if f.SchemaVersion != 1 || f.Source == "" || f.Oracle["commit"] == "" || f.Oracle["release"] == "" {
@@ -117,7 +120,8 @@ func roundTripA(work, goBin, rustBin string, f fixture) error {
 	if _, err := invoke(goBin, "create", db, map[string]interface{}{"documents": f.Documents}); err != nil {
 		return err
 	}
-	if _, err := invoke(rustBin, "mutate", db, map[string]interface{}{"documents": []interface{}{f.RustUpdate, f.RustAdded}, "delete": []string{"linked.md"}}); err != nil {
+	mutation := map[string]interface{}{"documents": []interface{}{f.RustUpdate, f.RustAdded}, "delete": []string{"linked.md"}}
+	if _, err := invoke(rustBin, "mutate", db, mutation); err != nil {
 		return err
 	}
 	a, err := snapshot(goBin, db)
@@ -134,6 +138,15 @@ func roundTripA(work, goBin, rustBin string, f fixture) error {
 	if err := verifyNames(a, []string{"go-seed.md", "nullable.md", "rust-added.md", "unknown-time.md"}); err != nil {
 		return err
 	}
+	if err := verifyAbsent(a, "linked.md"); err != nil {
+		return err
+	}
+	if err := verifyFile(a, "go-seed.md", "Go Seed Rust Updated", int64(1768478400123456790)); err != nil {
+		return err
+	}
+	if err := verifyFile(a, "rust-added.md", "Rust Added", int64(1768478401123456789)); err != nil {
+		return err
+	}
 	for _, query := range []string{"vineyard", "Rust Added", "missing"} {
 		if err := compareSearch(goBin, rustBin, db, query); err != nil {
 			return err
@@ -141,6 +154,16 @@ func roundTripA(work, goBin, rustBin string, f fixture) error {
 	}
 	if err := verifyTimesAndNulls(a); err != nil {
 		return err
+	}
+	if _, err := invoke(rustBin, "mutate", db, mutation); err != nil {
+		return fmt.Errorf("repeat identical Rust mutation: %w", err)
+	}
+	afterNoop, err := snapshot(goBin, db)
+	if err != nil {
+		return err
+	}
+	if !jsonEquivalent(a, afterNoop) {
+		return errors.New("repeated identical Rust mutation changed logical state")
 	}
 	if r, err := invoke(goBin, "integrity", db, nil); err != nil || r.Outcome != "ok" {
 		return fmt.Errorf("go integrity failed: %v", err)
@@ -156,7 +179,8 @@ func roundTripB(work, goBin, rustBin string, f fixture) error {
 	if _, err := invoke(rustBin, "create", db, map[string]interface{}{"documents": []map[string]interface{}{f.RustSeed, f.Documents[1], f.Documents[2]}}); err != nil {
 		return err
 	}
-	if _, err := invoke(goBin, "mutate", db, map[string]interface{}{"documents": []interface{}{f.GoUpdate, f.GoAdded}, "delete": []string{"linked.md"}}); err != nil {
+	mutation := map[string]interface{}{"documents": []interface{}{f.GoUpdate, f.GoAdded}, "delete": []string{"linked.md"}}
+	if _, err := invoke(goBin, "mutate", db, mutation); err != nil {
 		return err
 	}
 	a, err := snapshot(goBin, db)
@@ -170,7 +194,32 @@ func roundTripB(work, goBin, rustBin string, f fixture) error {
 	if !jsonEquivalent(a, b) {
 		return errors.New("rust reopen snapshot differs from Go snapshot")
 	}
-	return compareSearch(goBin, rustBin, db, "Go addition")
+	if err := verifyNames(a, []string{"rust-seed.md", "nullable.md", "go-added.md"}); err != nil {
+		return err
+	}
+	if err := verifyAbsent(a, "linked.md"); err != nil {
+		return err
+	}
+	if err := verifyFile(a, "rust-seed.md", "Rust Seed Go Updated", int64(1768478402123456789)); err != nil {
+		return err
+	}
+	if err := verifyFile(a, "go-added.md", "Go Added", int64(1768478403123456789)); err != nil {
+		return err
+	}
+	if err := compareSearch(goBin, rustBin, db, "Go addition"); err != nil {
+		return err
+	}
+	if _, err := invoke(goBin, "mutate", db, mutation); err != nil {
+		return fmt.Errorf("repeat identical Go mutation: %w", err)
+	}
+	afterNoop, err := snapshot(rustBin, db)
+	if err != nil {
+		return err
+	}
+	if !jsonEquivalent(a, afterNoop) {
+		return errors.New("repeated identical Go mutation changed logical state")
+	}
+	return nil
 }
 
 func rollbackCases(work, goBin, rustBin string, f fixture) error {
@@ -190,7 +239,7 @@ func rollbackCases(work, goBin, rustBin string, f fixture) error {
 		}
 		bad := map[string]interface{}{"path": "go-seed.md", "markdown": "---\ntitle: Duplicate Link\n---\npartial\n", "mtime_ns": int64(1768478400123456789), "links": []string{"same-target", "same-target"}}
 		for _, helper := range []string{creator, other} {
-			r, err := invoke(helper, "rollback", db, map[string]interface{}{"documents": []interface{}{bad}})
+			r, err := invokeResult(helper, "rollback", db, map[string]interface{}{"documents": []interface{}{bad}})
 			if err != nil {
 				return err
 			}
@@ -242,12 +291,12 @@ func corruptionCases(work, goBin, rustBin string, f fixture) error {
 			if err := os.WriteFile(path, mutate(original), 0600); err != nil {
 				return err
 			}
-			r, err := invoke(helper, "open-check", path, nil)
+			r, err := invokeResult(helper, "open-check", path, nil)
 			if err != nil {
 				return err
 			}
 			if r.Outcome == "ok" {
-				r, err = invoke(helper, "integrity", path, nil)
+				r, err = invokeResult(helper, "integrity", path, nil)
 				if err != nil {
 					return err
 				}
@@ -282,12 +331,12 @@ func readOnlyCases(work, goBin, rustBin string, f fixture) error {
 	}
 	defer func() { _ = setReadOnly(db, false) }()
 	for _, helper := range []string{goBin, rustBin} {
-		r, err := invoke(helper, "open-check", db, nil)
+		r, err := invokeResult(helper, "open-check", db, nil)
 		if err != nil {
 			return err
 		}
 		if r.Outcome == "ok" {
-			m, err := invoke(helper, "writer", db, map[string]interface{}{"documents": []interface{}{f.RustAdded}})
+			m, err := invokeResult(helper, "writer", db, map[string]interface{}{"documents": []interface{}{f.RustAdded}})
 			if err != nil {
 				return err
 			}
@@ -426,8 +475,10 @@ func lockPair(work, db, holder, writer string, f fixture, timeout bool) error {
 	var r helperResult
 	var invokeErr error
 	done := make(chan struct{})
+	writerCtx, cancelWriter := context.WithCancel(context.Background())
+	defer cancelWriter()
 	go func() {
-		r, invokeErr = invoke(writer, "writer", db, map[string]interface{}{"documents": []interface{}{f.RustAdded}})
+		r, invokeErr = invokeResultContext(writerCtx, writer, "writer", db, map[string]interface{}{"documents": []interface{}{f.RustAdded}})
 		close(done)
 	}()
 	if !timeout {
@@ -439,6 +490,8 @@ func lockPair(work, db, holder, writer string, f fixture, timeout bool) error {
 	select {
 	case <-done:
 	case <-time.After(8 * time.Second):
+		cancelWriter()
+		<-done
 		return errors.New("writer exceeded lock bound")
 	}
 	if invokeErr != nil {
@@ -460,6 +513,32 @@ func lockPair(work, db, holder, writer string, f fixture, timeout bool) error {
 }
 
 func invoke(bin, command, db string, payload interface{}) (helperResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	r, err := invokeResultContext(ctx, bin, command, db, payload)
+	if err != nil {
+		return r, err
+	}
+	if err := requireSuccess(r); err != nil {
+		return r, fmt.Errorf("%s %s: %w", filepath.Base(bin), command, err)
+	}
+	return r, nil
+}
+
+func requireSuccess(result helperResult) error {
+	if result.Outcome != "ok" {
+		return fmt.Errorf("helper outcome=%q class=%q", result.Outcome, result.ErrorClass)
+	}
+	return nil
+}
+
+func invokeResult(bin, command, db string, payload interface{}) (helperResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	return invokeResultContext(ctx, bin, command, db, payload)
+}
+
+func invokeResultContext(ctx context.Context, bin, command, db string, payload interface{}) (helperResult, error) {
 	var r helperResult
 	input := ""
 	var err error
@@ -475,7 +554,7 @@ func invoke(bin, command, db string, payload interface{}) (helperResult, error) 
 		args = append(args, "--input", input)
 	}
 	//nolint:gosec // bin is one of the two locally built helper binaries
-	c := exec.Command(bin, args...)
+	c := exec.CommandContext(ctx, bin, args...)
 	var stdout, stderr bytes.Buffer
 	c.Stdout = &stdout
 	c.Stderr = &stderr
@@ -522,12 +601,24 @@ func verifyNames(raw []byte, want []string) error {
 	if err := json.Unmarshal(raw, &s); err != nil {
 		return err
 	}
-	files, _ := s["files"].([]interface{})
+	files, ok := s["files"].([]interface{})
+	if !ok {
+		return errors.New("snapshot files are missing or malformed")
+	}
+	if len(files) != len(want) {
+		return fmt.Errorf("snapshot has %d files, want exactly %d", len(files), len(want))
+	}
 	got := map[string]bool{}
 	for _, v := range files {
-		if m, ok := v.(map[string]interface{}); ok {
-			got[m["path"].(string)] = true
+		m, ok := v.(map[string]interface{})
+		if !ok {
+			return errors.New("snapshot file row is malformed")
 		}
+		path, ok := m["path"].(string)
+		if !ok {
+			return errors.New("snapshot file path is malformed")
+		}
+		got[path] = true
 	}
 	for _, p := range want {
 		if !got[p] {
@@ -535,6 +626,35 @@ func verifyNames(raw []byte, want []string) error {
 		}
 	}
 	return nil
+}
+
+func verifyFile(raw []byte, path, title string, mtimeNS int64) error {
+	var s map[string]interface{}
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	if err := decoder.Decode(&s); err != nil {
+		return err
+	}
+	files, ok := s["files"].([]interface{})
+	if !ok {
+		return errors.New("snapshot files are missing or malformed")
+	}
+	for _, value := range files {
+		row, ok := value.(map[string]interface{})
+		if !ok || row["path"] != path {
+			continue
+		}
+		if row["title"] != title {
+			return fmt.Errorf("%s title=%v, want %q", path, row["title"], title)
+		}
+		mtime, ok := row["mtime_ns"].(json.Number)
+		gotMtime, err := mtime.Int64()
+		if !ok || err != nil || gotMtime != mtimeNS {
+			return fmt.Errorf("%s mtime_ns=%v, want %d", path, row["mtime_ns"], mtimeNS)
+		}
+		return nil
+	}
+	return fmt.Errorf("missing expected file %s", path)
 }
 func jsonEquivalent(a, b []byte) bool {
 	var left, right interface{}

@@ -353,6 +353,8 @@ func snapshot(conn *sql.DB) (map[string]interface{}, error) {
 		pragmas[name] = fmt.Sprint(value)
 	}
 	state["pragmas"] = pragmas
+	// indexed_at is intentionally excluded: it is an insertion-clock value, not
+	// logical document state, and differs across independent helper processes.
 	state["files"], err = rows(conn, `SELECT path,sha256,title,created_at,modified_at,"type",document_date,person,status,due_date,confidence,ocr_json_path,simhash,asn,size,mtime_ns FROM files ORDER BY path`, func(r *sql.Rows) (map[string]interface{}, error) {
 		var p, sha, title, created, modified, typ string
 		var date, person, status, due, ocr, simhash sql.NullString

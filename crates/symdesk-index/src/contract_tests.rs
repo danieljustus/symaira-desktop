@@ -260,7 +260,7 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(
         fixture.oracle.commit,
-        "026a886ef3c6b0a50ff86963abb714f34ebc5840"
+        "b8e8a80b506cb247f21b39c39bed904c10829ebf"
     );
     assert_eq!(fixture.oracle.release, "post-v0.12.2-security-855");
     assert!(fixture.same_size_length);

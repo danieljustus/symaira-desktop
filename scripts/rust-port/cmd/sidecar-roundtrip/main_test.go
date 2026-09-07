@@ -64,7 +64,7 @@ func TestVerifySearchResultRequiresExpectedPaths(t *testing.T) {
 }
 
 func TestValidateLargeCorpusManifestRejectsContractDrift(t *testing.T) {
-	oracle := map[string]string{"commit": "026a886ef3c6b0a50ff86963abb714f34ebc5840", "release": "post-v0.12.2-security-855"}
+	oracle := map[string]string{"commit": "b8e8a80b506cb247f21b39c39bed904c10829ebf", "release": "post-v0.12.2-security-855"}
 	valid := largeCorpusFixture{
 		SchemaVersion:  1,
 		Oracle:         oracle,

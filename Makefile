@@ -4,7 +4,7 @@ VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
 ROOM_LDFLAGS = -X github.com/danieljustus/symaira-desktop/internal/room/version.Version=$(if $(VERSION),$(VERSION),(dev))
 CARGO ?= cargo
-PORT_ORACLE_COMMIT ?= 026a886ef3c6b0a50ff86963abb714f34ebc5840
+PORT_ORACLE_COMMIT ?= b8e8a80b506cb247f21b39c39bed904c10829ebf
 PORT_ORACLE_RELEASE ?= post-v0.12.2-security-855
 PORT_CASES ?= testdata/port/cli/cases.json
 RUST_NIGHTLY ?= nightly-2026-09-03

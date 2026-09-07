@@ -15,7 +15,7 @@ const symdeskToolsFixtureRel = "../../testdata/port/mcp/symdesk-tools.json"
 
 func TestSymdeskMCPInventory(t *testing.T) {
 	oracle := inventory.Oracle{
-		Commit:  "026a886ef3c6b0a50ff86963abb714f34ebc5840",
+		Commit:  "b8e8a80b506cb247f21b39c39bed904c10829ebf",
 		Release: "post-v0.12.2-security-855",
 	}
 

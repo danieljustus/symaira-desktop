@@ -93,7 +93,7 @@ func TestPortSidecarLifecycleContract(t *testing.T) {
 	}
 	fixture := portLifecycleFixture{
 		SchemaVersion: 1,
-		Oracle:        portOracle{Commit: "026a886ef3c6b0a50ff86963abb714f34ebc5840", Release: "post-v0.12.2-security-855"},
+		Oracle:        portOracle{Commit: "b8e8a80b506cb247f21b39c39bed904c10829ebf", Release: "post-v0.12.2-security-855"},
 		Inputs:        inputs,
 		Initial:       normalizeLifecycleState(root, portSnapshot(t, db.conn)),
 	}

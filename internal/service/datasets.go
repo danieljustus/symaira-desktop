@@ -144,7 +144,7 @@ func readDatasetHandleWithMigration(root, rel string) (*dataset.Handle, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(path) //nolint:gosec // path is confined by SecurePath
+	data, _, err := vault.ReadFileInRoot(root, path)
 	if err != nil {
 		return nil, err
 	}
@@ -159,13 +159,13 @@ func readDatasetHandleWithMigration(root, rel string) (*dataset.Handle, error) {
 	if !legacyPolicy {
 		return handle, nil
 	}
-	if err := vault.BackfillFrontmatter(path, map[string]interface{}{
+	if err := vault.BackfillFrontmatterInRoot(root, path, map[string]interface{}{
 		"sensitivity":    dataset.DefaultSensitivity,
 		"retention_rule": dataset.DefaultRetentionRule,
 	}); err != nil {
 		return nil, fmt.Errorf("migrate dataset policy metadata: %w", err)
 	}
-	migrated, err := os.ReadFile(path) //nolint:gosec // path is confined by SecurePath
+	migrated, _, err := vault.ReadFileInRoot(root, path)
 	if err != nil {
 		return nil, fmt.Errorf("verify migrated dataset handle: %w", err)
 	}
@@ -468,7 +468,7 @@ func (s *Service) DatasetSync(opts DatasetSyncOptions) (*DatasetSyncResult, erro
 	if err := s.replaceDatasetRows(slug, materialized); err != nil {
 		return nil, err
 	}
-	if doc, parseErr := vault.ParseFile(handleAbs); parseErr == nil {
+	if doc, parseErr := vault.ParseFileInRoot(s.VaultRoot, handleAbs); parseErr == nil {
 		if err := s.DB.IndexDocument(doc); err != nil {
 			return nil, err
 		}

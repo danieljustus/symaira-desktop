@@ -70,7 +70,7 @@ func (s *Service) DocStatus(relPath, status string) error {
 	if err := vault.SetFrontmatterKey(absPath, "status", status); err != nil {
 		return err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (s *Service) DocDue(relPath, date string) error {
 	if err := vault.SetFrontmatterKey(absPath, "due_date", date); err != nil {
 		return err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (s *Service) DocASN(relPath, value string) (int, error) {
 		if err := vault.SetFrontmatterValue(absPath, "asn", assigned); err != nil {
 			return fmt.Errorf("set ASN: %w", err)
 		}
-		doc, err := vault.ParseFile(absPath)
+		doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 		if err != nil {
 			return fmt.Errorf("parse ASN-updated document: %w", err)
 		}
@@ -224,7 +224,7 @@ func (s *Service) mutateTags(relPath string, mutate func([]string) []string) err
 	if err != nil {
 		return err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func (s *Service) mutateTags(relPath string, mutate func([]string) []string) err
 	if err := vault.SetFrontmatterValue(absPath, "tags", tags); err != nil {
 		return err
 	}
-	doc, err = vault.ParseFile(absPath)
+	doc, err = vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return err
 	}
@@ -250,7 +250,7 @@ func (s *Service) setKeyAndReindex(relPath, key, value string) error {
 	if err := vault.SetFrontmatterKey(absPath, key, value); err != nil {
 		return err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return err
 	}
@@ -293,7 +293,7 @@ func (s *Service) SimilarDocs(relPath string, threshold int) ([]sidecar.SimilarR
 	if err != nil {
 		return nil, err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return nil, err
 	}

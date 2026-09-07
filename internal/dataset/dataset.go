@@ -446,7 +446,7 @@ func ReadRawFiles(vaultRoot, slug string, schema map[string]dbviews.PropertyConf
 	if err != nil {
 		return nil, err
 	}
-	entries, err := os.ReadDir(dir)
+	entries, err := vault.ReadDirInRoot(vaultRoot, dir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return []Row{}, nil
@@ -460,7 +460,7 @@ func ReadRawFiles(vaultRoot, slug string, schema map[string]dbviews.PropertyConf
 			continue
 		}
 		path := filepath.Join(dir, entry.Name())
-		data, err := os.ReadFile(path) //nolint:gosec // path is confined by SecurePath above
+		data, _, err := vault.ReadFileInRoot(vaultRoot, path)
 		if err != nil {
 			return nil, err
 		}

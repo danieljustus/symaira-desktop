@@ -100,7 +100,7 @@ func (s *Service) Autofill(viewID, property, prompt string, dryRun bool) (*Autof
 			continue
 		}
 
-		doc, err := vault.ParseFile(path)
+		doc, err := vault.ParseFileInRoot(s.VaultRoot, path)
 		if err != nil {
 			res.Failed++
 			res.Errors = append(res.Errors, map[string]string{"path": relPath, "error": err.Error()})

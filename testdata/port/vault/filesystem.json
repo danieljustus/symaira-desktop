@@ -159,5 +159,22 @@
       "input": "outside-link.md",
       "error_class": "symlink_escape"
     }
+  ],
+  "confined_reads": [
+    {
+      "id": "contained-symlink",
+      "input": "inside-link.md",
+      "result": "inside"
+    },
+    {
+      "id": "external-file-symlink",
+      "input": "outside-link.md",
+      "error_class": "symlink_escape"
+    },
+    {
+      "id": "external-directory-symlink",
+      "input": "dir-link/outside.md",
+      "error_class": "symlink_escape"
+    }
   ]
 }

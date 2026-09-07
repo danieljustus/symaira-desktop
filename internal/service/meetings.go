@@ -100,7 +100,7 @@ func (s *Service) MeetingListDetailed() (*MeetingListResult, error) {
 			rel = path
 		}
 
-		doc, err := vault.ParseFile(path)
+		doc, err := vault.ParseFileInRoot(s.VaultRoot, path)
 		if err != nil {
 			result.Failures = append(result.Failures, MeetingListFailure{
 				Path:    rel,
@@ -143,7 +143,7 @@ func (s *Service) MeetingShow(notePath string) (*vault.Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return nil, err
 	}

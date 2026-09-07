@@ -152,13 +152,13 @@ func (s *Service) walkTags(
 		rel := strings.TrimPrefix(path, s.VaultRoot)
 		rel = strings.TrimPrefix(rel, string(filepath.Separator))
 
-		doc, err := vault.ParseFile(path)
+		doc, err := vault.ParseFileInRoot(s.VaultRoot, path)
 		if err != nil {
 			results = append(results, TagRenameResult{File: rel, Status: "error", Error: err.Error()})
 			return nil // keep walking; one bad file must not abort the batch
 		}
 
-		changed, err := vault.RewriteDocumentTagsAndBody(path, doc, mutateFM, mutateBody)
+		changed, err := vault.RewriteDocumentTagsAndBodyInRoot(s.VaultRoot, path, doc, mutateFM, mutateBody)
 		if err != nil {
 			results = append(results, TagRenameResult{File: rel, Status: "error", Error: err.Error()})
 			return nil
@@ -168,7 +168,7 @@ func (s *Service) walkTags(
 			return nil
 		}
 
-		reparsed, err := vault.ParseFile(path)
+		reparsed, err := vault.ParseFileInRoot(s.VaultRoot, path)
 		if err != nil {
 			results = append(results, TagRenameResult{File: rel, Status: "error", Error: err.Error()})
 			return nil

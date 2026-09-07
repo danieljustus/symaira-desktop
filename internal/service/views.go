@@ -113,7 +113,7 @@ func (s *Service) reindexBase(b *dbviews.Base) error {
 	if err != nil {
 		return err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return fmt.Errorf("wrote base but failed to parse for indexing: %w", err)
 	}
@@ -228,14 +228,14 @@ func (s *Service) resolveViewDocuments(view *dbviews.View) ([]*vault.Document, e
 			if err != nil {
 				continue
 			}
-			info, statErr := os.Stat(absPath)
+			info, statErr := vault.StatInRoot(s.VaultRoot, absPath)
 			if statErr != nil || info.IsDir() {
 				continue
 			}
 			title := ""
 			if docTitle, err := s.DB.GetTitle(absPath); err == nil && docTitle != "" {
 				title = docTitle
-			} else if parsed, err := vault.ParseFile(absPath); err == nil && parsed.Title != "" {
+			} else if parsed, err := vault.ParseFileInRoot(s.VaultRoot, absPath); err == nil && parsed.Title != "" {
 				title = parsed.Title
 			} else {
 				base := filepath.Base(src)
@@ -255,7 +255,7 @@ func (s *Service) resolveViewDocuments(view *dbviews.View) ([]*vault.Document, e
 	if err != nil {
 		return nil, fmt.Errorf("view source folder %q is invalid: %w", view.Source, err)
 	}
-	info, statErr := os.Stat(absDir)
+	info, statErr := vault.StatInRoot(s.VaultRoot, absDir)
 	if statErr != nil {
 		if os.IsNotExist(statErr) {
 			return nil, fmt.Errorf("view source folder %q does not exist", view.Source)

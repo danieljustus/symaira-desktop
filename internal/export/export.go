@@ -3,7 +3,6 @@ package export
 import (
 	"fmt"
 	"html"
-	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -61,7 +60,7 @@ func noteMarkdown(root, relPath string, opts Options) (*vault.Document, string, 
 	if err != nil {
 		return nil, "", err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(root, absPath)
 	if err != nil {
 		return nil, "", err
 	}
@@ -181,8 +180,8 @@ func resolveTransclusions(root, body string, opts Options) (string, error) {
 
 		var replacement string
 		candidate, err := vault.SecurePath(root, ref)
-		if _, statErr := os.Stat(candidate); err == nil && statErr == nil {
-			doc, err := vault.ParseFile(candidate)
+		if _, statErr := vault.StatInRoot(root, candidate); err == nil && statErr == nil {
+			doc, err := vault.ParseFileInRoot(root, candidate)
 			if err != nil {
 				replacement = fmt.Sprintf("*embed error: %v*", err)
 			} else {

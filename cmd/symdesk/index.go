@@ -61,7 +61,14 @@ func newIndexCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				target = abs
+				rel, err := filepath.Rel(vRoot, abs)
+				if err != nil {
+					return err
+				}
+				target, err = vault.SecurePath(vRoot, rel)
+				if err != nil {
+					return err
+				}
 			}
 
 			info, err := os.Stat(target)
@@ -89,7 +96,7 @@ func newIndexCmd() *cobra.Command {
 				// path: batching only pays off for the full/initial index
 				// (#760).
 				var indexed bool
-				indexed, err = indexOneFile(db, target, indexReembed)
+				indexed, err = indexOneFile(db, vRoot, target, indexReembed)
 				if err == nil {
 					if indexed {
 						count++
@@ -359,7 +366,7 @@ func indexDirectory(db *sidecar.DB, root string, force bool) (indexed int, skipp
 
 	walkErr := vault.Walk(root, func(path string) error {
 		recordIndexStatus(db, path, sidecar.IndexStateIndexing, "")
-		doc, perr := vault.ParseFile(path)
+		doc, perr := vault.ParseFileInRoot(root, path)
 		if perr != nil {
 			state := sidecar.IndexStateFailed
 			if errors.Is(perr, documentformat.ErrDRMProtected) {
@@ -402,9 +409,9 @@ func indexDirectory(db *sidecar.DB, root string, force bool) (indexed int, skipp
 	return indexed, skipped, walkErr
 }
 
-func indexOneFile(db *sidecar.DB, path string, force bool) (bool, error) {
+func indexOneFile(db *sidecar.DB, vaultRoot, path string, force bool) (bool, error) {
 	recordIndexStatus(db, path, sidecar.IndexStateIndexing, "")
-	doc, err := vault.ParseFile(path)
+	doc, err := vault.ParseFileInRoot(vaultRoot, path)
 	if err != nil {
 		state := sidecar.IndexStateFailed
 		if errors.Is(err, documentformat.ErrDRMProtected) {

@@ -89,7 +89,7 @@ func (s *Service) reindexNotebook(nb *notebook.Notebook) error {
 	if err != nil {
 		return err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return fmt.Errorf("wrote notebook but failed to parse for indexing: %w", err)
 	}

@@ -19,6 +19,8 @@ struct Fixture {
     walk_all: Vec<ExpectedWalk>,
     walk_markdown: Vec<String>,
     secure_paths: Vec<SecureCase>,
+    #[serde(default)]
+    confined_reads: Vec<SecureCase>,
 }
 
 #[derive(Deserialize)]
@@ -109,6 +111,16 @@ fn walking_and_secure_paths_match_go_fixture() {
             Ok(path) => {
                 assert!(case.error_class.is_empty());
                 assert_eq!(normalize(&path, &root, &outside), case.result);
+            }
+            Err(error) => assert_eq!(secure_error_class(&error), case.error_class),
+        }
+    }
+    for case in fixture.confined_reads {
+        match secure_path(&root, &case.input) {
+            Ok(path) => {
+                assert!(case.error_class.is_empty());
+                let content = fs::read(path).expect("read contained fixture path");
+                assert_eq!(String::from_utf8_lossy(&content), case.result);
             }
             Err(error) => assert_eq!(secure_error_class(&error), case.error_class),
         }

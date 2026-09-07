@@ -141,7 +141,7 @@ func New(vaultRoot, title, description string) (*Notebook, error) {
 		if err != nil {
 			return nil, err
 		}
-		if _, statErr := os.Stat(absPath); os.IsNotExist(statErr) {
+		if _, statErr := vault.StatInRoot(vaultRoot, absPath); os.IsNotExist(statErr) {
 			break
 		}
 		slug = fmt.Sprintf("%s-%d", base, i)
@@ -171,7 +171,7 @@ func Load(vaultRoot, relPath string) (*Notebook, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(absPath) //nolint:gosec // absPath was already validated by vault.SecurePath above
+	data, _, err := vault.ReadFileInRoot(vaultRoot, absPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, ErrNotFound
@@ -211,7 +211,7 @@ func List(vaultRoot string) ([]*Notebook, error) {
 	if err != nil {
 		return nil, err
 	}
-	entries, err := os.ReadDir(dirAbs)
+	entries, err := vault.ReadDirInRoot(vaultRoot, dirAbs)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return []*Notebook{}, nil
@@ -325,7 +325,7 @@ func (nb *Notebook) ResolveSources(vaultRoot string) ([]SourceRef, error) {
 			refs = append(refs, SourceRef{Path: src, Missing: true})
 			continue
 		}
-		doc, err := vault.ParseFile(absPath)
+		doc, err := vault.ParseFileInRoot(vaultRoot, absPath)
 		if err != nil {
 			refs = append(refs, SourceRef{Path: src, Missing: true})
 			continue

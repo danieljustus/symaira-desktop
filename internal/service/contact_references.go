@@ -95,7 +95,7 @@ func (s *Service) ResolveContactReferences(name string) (*ContactReferences, err
 func (s *Service) meetingsReferencing(ids map[string]bool) ([]ContactMeetingRef, error) {
 	found := []ContactMeetingRef{}
 	err := vault.Walk(s.VaultRoot, func(path string) error {
-		doc, err := vault.ParseFile(path)
+		doc, err := vault.ParseFileInRoot(s.VaultRoot, path)
 		if err != nil {
 			// One unparsable note must not fail the whole lookup.
 			return nil

@@ -24,6 +24,7 @@ type document struct {
 	WalkAll       []walkEntry      `json:"walk_all"`
 	WalkMarkdown  []string         `json:"walk_markdown"`
 	SecurePaths   []secureCase     `json:"secure_paths"`
+	ConfinedReads []readCase       `json:"confined_reads,omitempty"`
 }
 
 type treeFile struct {
@@ -40,6 +41,13 @@ type walkEntry struct {
 }
 
 type secureCase struct {
+	ID         string `json:"id"`
+	Input      string `json:"input"`
+	Result     string `json:"result,omitempty"`
+	ErrorClass string `json:"error_class,omitempty"`
+}
+
+type readCase struct {
 	ID         string `json:"id"`
 	Input      string `json:"input"`
 	Result     string `json:"result,omitempty"`
@@ -185,7 +193,24 @@ func build(oracle inventory.Oracle) (document, error) {
 		}
 		secure = append(secure, out)
 	}
-	return document{SchemaVersion: 1, Oracle: oracle, Tree: tree, WalkAll: all, WalkMarkdown: markdown, SecurePaths: secure}, nil
+	reads := make([]readCase, 0)
+	if runtime.GOOS != "windows" {
+		for _, item := range []struct{ id, input string }{
+			{"contained-symlink", "inside-link.md"},
+			{"external-file-symlink", "outside-link.md"},
+			{"external-directory-symlink", "dir-link/outside.md"},
+		} {
+			data, _, err := vault.ReadFileInRoot(root, filepath.Join(root, filepath.FromSlash(item.input)))
+			out := readCase{ID: item.id, Input: item.input}
+			if err != nil {
+				out.ErrorClass = "symlink_escape"
+			} else {
+				out.Result = string(data)
+			}
+			reads = append(reads, out)
+		}
+	}
+	return document{SchemaVersion: 1, Oracle: oracle, Tree: tree, WalkAll: all, WalkMarkdown: markdown, SecurePaths: secure, ConfinedReads: reads}, nil
 }
 
 func normalize(value, root, outside string) string {

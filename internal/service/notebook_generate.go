@@ -127,7 +127,7 @@ func (s *Service) NotebookGenerate(notebookRef, kind string, dryRun bool) (*Note
 func (s *Service) resolveArtifactInstruction(kind string) (string, error) {
 	templatePath, err := vault.SecurePath(s.VaultRoot, filepath.Join("templates", "notebook-"+kind+".md"))
 	if err == nil {
-		if data, readErr := os.ReadFile(templatePath); readErr == nil { //nolint:gosec // templatePath was already validated by vault.SecurePath above
+		if data, _, readErr := vault.ReadFileInRoot(s.VaultRoot, templatePath); readErr == nil {
 			if doc, parseErr := vault.ParseBytes(templatePath, data); parseErr == nil && strings.TrimSpace(doc.Body) != "" {
 				return strings.TrimSpace(doc.Body), nil
 			}
@@ -213,7 +213,7 @@ func (s *Service) writeArtifact(nb *notebook.Notebook, kind, relPath, content st
 		return fmt.Errorf("write artifact: %w", err)
 	}
 
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return fmt.Errorf("wrote artifact but failed to parse for indexing: %w", err)
 	}

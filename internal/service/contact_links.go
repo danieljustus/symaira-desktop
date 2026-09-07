@@ -129,7 +129,7 @@ func (s *Service) loadVaultDocument(notePath string) (*vault.Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	return vault.ParseFile(absPath)
+	return vault.ParseFileInRoot(s.VaultRoot, absPath)
 }
 
 func (s *Service) writeVaultFrontmatter(notePath string, doc *vault.Document) error {
@@ -142,7 +142,7 @@ func (s *Service) writeVaultFrontmatter(notePath string, doc *vault.Document) er
 		return fmt.Errorf("encode frontmatter: %w", err)
 	}
 	content := "---\n" + string(frontmatter) + "---\n" + doc.Body
-	raw, err := os.ReadFile(absPath) //nolint:gosec // absPath was validated by vault.SecurePath
+	raw, _, err := vault.ReadFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return fmt.Errorf("read %s: %w", notePath, err)
 	}
@@ -154,7 +154,7 @@ func (s *Service) writeVaultFrontmatter(notePath string, doc *vault.Document) er
 	if err := os.WriteFile(absPath, []byte(content), 0600); err != nil { //nolint:gosec // absPath was validated above
 		return fmt.Errorf("write %s: %w", notePath, err)
 	}
-	newDoc, err := vault.ParseFile(absPath)
+	newDoc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func (s *Service) writeVaultFrontmatter(notePath string, doc *vault.Document) er
 
 func (s *Service) refreshContactReferences(ref contacts.Ref) error {
 	return vault.Walk(s.VaultRoot, func(path string) error {
-		doc, err := vault.ParseFile(path)
+		doc, err := vault.ParseFileInRoot(s.VaultRoot, path)
 		if err != nil {
 			return nil
 		}
@@ -208,7 +208,7 @@ func refreshContactMaps(value interface{}, ref contacts.Ref) bool {
 
 func (s *Service) collectContactReferences(out *ContactReferences, contactID string, identity *contacts.Ref) error {
 	return vault.Walk(s.VaultRoot, func(path string) error {
-		doc, err := vault.ParseFile(path)
+		doc, err := vault.ParseFileInRoot(s.VaultRoot, path)
 		if err != nil {
 			return nil
 		}

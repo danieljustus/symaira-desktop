@@ -60,7 +60,7 @@ func (s *Service) loadMeetingFrontmatter(notePath string) (*vault.Document, meet
 	if err != nil {
 		return nil, meetingFrontmatter{}, err
 	}
-	doc, err := vault.ParseFile(absPath)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return nil, meetingFrontmatter{}, err
 	}
@@ -94,7 +94,7 @@ func (s *Service) writeMeetingFrontmatter(notePath string, doc *vault.Document, 
 		return fmt.Errorf("failed to encode meeting frontmatter: %w", err)
 	}
 
-	raw, err := os.ReadFile(absPath) //nolint:gosec // absPath was already validated by vault.SecurePath above
+	raw, _, err := vault.ReadFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return fmt.Errorf("failed to re-read %s: %w", notePath, err)
 	}
@@ -109,7 +109,7 @@ func (s *Service) writeMeetingFrontmatter(notePath string, doc *vault.Document, 
 		return fmt.Errorf("failed to write %s: %w", notePath, err)
 	}
 
-	newDoc, err := vault.ParseFile(absPath)
+	newDoc, err := vault.ParseFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return err
 	}

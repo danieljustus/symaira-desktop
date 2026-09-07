@@ -118,14 +118,22 @@ func (r *Root) Stat(path string) (fs.FileInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+	candidate := filepath.Join(r.path, rel)
+	info, err := os.Lstat(candidate)
+	if err != nil {
+		return nil, fmt.Errorf("lstat vault file %s: %w", path, err)
+	}
+	if info.Mode()&os.ModeSymlink == 0 {
+		return info, nil
+	}
 	file, err := r.open(path, rel)
 	if err != nil {
-		return nil, fmt.Errorf("open vault file for stat %s: %w", path, err)
+		return nil, fmt.Errorf("open vault symlink for stat %s: %w", path, err)
 	}
 	defer func() { _ = file.Close() }()
-	info, err := file.Stat()
+	info, err = file.Stat()
 	if err != nil {
-		return nil, fmt.Errorf("stat vault file %s: %w", path, err)
+		return nil, fmt.Errorf("stat vault symlink %s: %w", path, err)
 	}
 	return info, nil
 }

@@ -28,6 +28,18 @@ if [[ -n "$BUNDLE_PATH" && "$PLATFORM" != "macOS" && "$PLATFORM" != "iOS" ]]; th
   exit 2
 fi
 
+xcrun_tool() {
+  local developer_dir="${DEVELOPER_DIR:-}"
+  if [[ -z "$developer_dir" && -d "/Applications/Xcode-beta.app/Contents/Developer" ]]; then
+    developer_dir="/Applications/Xcode-beta.app/Contents/Developer"
+  fi
+  if [[ -n "$developer_dir" ]]; then
+    DEVELOPER_DIR="$developer_dir" xcrun "$@"
+  else
+    xcrun "$@"
+  fi
+}
+
 CANONICAL="$ROOT_DIR/assets/app-icon"
 python3 - "$ROOT_DIR" "$CANONICAL" <<'PY'
 from pathlib import Path
@@ -95,8 +107,7 @@ compile_catalog() {
   output="$(mktemp -d)"
   trap 'rm -rf "$output"' RETURN
   mkdir -p "$output/compiled"
-  DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode-beta.app/Contents/Developer}" \
-    xcrun actool \
+  xcrun_tool actool \
       --compile "$output/compiled" \
       --platform "$platform" \
       --minimum-deployment-target "$deployment" \
@@ -128,8 +139,7 @@ if [[ -n "$BUNDLE_PATH" ]]; then
   test "$icon_name" = AppIcon || { echo "error: bundle CFBundleIconName is '$icon_name', expected AppIcon" >&2; exit 1; }
   asset_info="$(mktemp)"
   trap 'rm -f "$asset_info"' EXIT
-  DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode-beta.app/Contents/Developer}" \
-    xcrun assetutil --info "$assets_car" > "$asset_info"
+  xcrun_tool assetutil --info "$assets_car" > "$asset_info"
   python3 - "$asset_info" <<'PY'
 import json
 import sys

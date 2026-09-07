@@ -57,8 +57,8 @@ type readCase struct {
 func main() {
 	output := flag.String("output", "testdata/port/vault/filesystem.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
-	commit := flag.String("oracle-commit", "136f01570944af16c4bc447b7eb63d03125aac3f", "Go oracle commit")
-	release := flag.String("oracle-release", "post-v0.12.2-security-855", "Go oracle release")
+	commit := flag.String("oracle-commit", "e74b16603ac4bca0efb8a015786643a4b4ceeaeb", "Go oracle commit")
+	release := flag.String("oracle-release", "post-v0.12.2-security-880", "Go oracle release")
 	flag.Parse()
 
 	value, err := build(inventory.Oracle{Commit: *commit, Release: *release})

@@ -27,8 +27,8 @@ const (
 )
 
 var symroomOracle = inventory.Oracle{
-	Commit:  "136f01570944af16c4bc447b7eb63d03125aac3f",
-	Release: "post-v0.12.2-security-855",
+	Commit:  "e74b16603ac4bca0efb8a015786643a4b4ceeaeb",
+	Release: "post-v0.12.2-security-880",
 }
 
 func TestSymRoomParserGrammar(t *testing.T) {

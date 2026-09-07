@@ -77,29 +77,33 @@ func main() {
 		fatal("HTTP fixture is empty")
 	}
 
-	root, err := os.MkdirTemp("", "symdesk-http-diff-")
+	harnessRoot, err := os.MkdirTemp("", "symdesk-http-diff-")
 	if err != nil {
 		fatal("temp root: %v", err)
 	}
-	defer func() { _ = os.RemoveAll(root) }()
-	if err := os.WriteFile(filepath.Join(root, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0o600); err != nil {
+	defer func() { _ = os.RemoveAll(harnessRoot) }()
+	vault := filepath.Join(harnessRoot, "vault")
+	if err := os.Mkdir(vault, 0o700); err != nil {
+		fatal("vault directory: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(vault, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0o600); err != nil {
 		fatal("fixture file: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "outside.md"), []byte("outside"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(harnessRoot, "outside.md"), []byte("outside"), 0o600); err != nil {
 		fatal("fixture file: %v", err)
 	}
-	if err := os.Mkdir(filepath.Join(root, "nested"), 0o700); err != nil {
+	if err := os.Mkdir(filepath.Join(vault, "nested"), 0o700); err != nil {
 		fatal("fixture directory: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "nested/Note.md"), []byte("nested"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(vault, "nested/Note.md"), []byte("nested"), 0o600); err != nil {
 		fatal("fixture file: %v", err)
 	}
-	if err := os.Symlink(filepath.Join(root, "outside.md"), filepath.Join(root, "escape.md")); err != nil {
+	if err := os.Symlink(filepath.Join(harnessRoot, "outside.md"), filepath.Join(vault, "escape.md")); err != nil {
 		fatal("fixture symlink: %v", err)
 	}
 
-	leftServer := startServer(*left, root)
-	rightServer := startServer(*right, root)
+	leftServer := startServer(*left, vault)
+	rightServer := startServer(*right, vault)
 	defer leftServer.stop()
 	defer rightServer.stop()
 	if err := leftServer.ready(); err != nil {
@@ -202,6 +206,8 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 		request.Header.Set("Authorization", "Bearer "+token)
 	case "wrong":
 		request.Header.Set("Authorization", "Bearer 0000000000000000000000000000wrong")
+	case "raw":
+		request.Header.Set("Authorization", token)
 	}
 	client := &http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{DisableCompression: true}}
 	response, err := client.Do(request)
@@ -228,7 +234,7 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 		}
 	}
 	headers := make(map[string]string)
-	for _, name := range []string{"Accept-Ranges", "Allow", "Cache-Control", "Content-Disposition", "Content-Range", "Content-Security-Policy", "Content-Type", "ETag", "Last-Modified", "Referrer-Policy", "WWW-Authenticate", "X-Content-Type-Options"} {
+	for _, name := range []string{"Accept-Ranges", "Allow", "Cache-Control", "Content-Disposition", "Content-Encoding", "Content-Length", "Content-Range", "Content-Security-Policy", "Content-Type", "ETag", "Last-Modified", "Referrer-Policy", "WWW-Authenticate", "X-Content-Type-Options"} {
 		if value := response.Header.Get(name); value != "" {
 			headers[strings.ToLower(name)] = value
 		}

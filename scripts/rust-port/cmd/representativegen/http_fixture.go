@@ -23,6 +23,7 @@ func generatedHTTP() httpSuite {
 		{ID: "healthz", Method: "GET", Path: "/healthz"},
 		{ID: "status-missing-auth", Method: "GET", Path: "/api/v1/status"},
 		{ID: "status-wrong-auth", Method: "GET", Path: "/api/v1/status", Auth: "wrong"},
+		{ID: "status-raw-token-without-bearer", Method: "GET", Path: "/api/v1/status", Auth: "raw"},
 		{ID: "status-authorized", Method: "GET", Path: "/api/v1/status", Auth: "valid"},
 		{ID: "snapshot-plain", Method: "GET", Path: "/api/v1/snapshot", Auth: "valid"},
 		{ID: "snapshot-not-modified", Method: "GET", Path: "/api/v1/snapshot", Auth: "valid", Headers: map[string]string{"If-None-Match": "$LAST_ETAG"}},

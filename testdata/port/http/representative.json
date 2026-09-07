@@ -22,6 +22,12 @@
       "auth": "wrong"
     },
     {
+      "id": "status-raw-token-without-bearer",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "raw"
+    },
+    {
       "id": "status-authorized",
       "method": "GET",
       "path": "/api/v1/status",

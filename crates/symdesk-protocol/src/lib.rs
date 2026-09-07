@@ -32,10 +32,7 @@ use symdesk_vault::walk_markdown;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 const MAX_NOTE_BYTES: u64 = 8 << 20;
-const READ_HEADER_TIMEOUT: Duration = Duration::from_secs(10);
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
-const WRITE_TIMEOUT: Duration = Duration::from_secs(300);
-const IDLE_TIMEOUT: Duration = Duration::from_secs(90);
 
 #[derive(Clone, Debug)]
 pub struct HttpConfig {
@@ -95,9 +92,6 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
         .listen_address
         .parse()
         .map_err(|error| format!("invalid listen address: {error}"))?;
-    // Axum/Hyper bounds header parsing at the transport layer; the adapter
-    // adds the longer body/handler deadlines explicitly here.
-    let _transport_bounds = (READ_HEADER_TIMEOUT, WRITE_TIMEOUT, IDLE_TIMEOUT);
     let listener = tokio::net::TcpListener::bind(address)
         .await
         .map_err(|error| format!("bind HTTP listener: {error}"))?;
@@ -147,7 +141,7 @@ async fn authenticate(
         .headers()
         .get(header::AUTHORIZATION)
         .and_then(|value| value.to_str().ok())
-        .map(|value| value.strip_prefix("Bearer ").unwrap_or(value).trim())
+        .map(|value| value.trim().strip_prefix("Bearer ").unwrap_or(value).trim())
         .unwrap_or_default();
     if !constant_time_equal(provided.as_bytes(), &state.token) {
         let mut response = json_error(StatusCode::UNAUTHORIZED, "authentication required");
@@ -627,9 +621,7 @@ mod tests {
     }
 
     #[test]
-    fn timeout_constants_keep_server_bounds_explicit() {
-        assert!(READ_HEADER_TIMEOUT < READ_TIMEOUT);
-        assert!(READ_TIMEOUT < WRITE_TIMEOUT);
-        assert!(IDLE_TIMEOUT < WRITE_TIMEOUT);
+    fn representative_request_timeout_is_bounded() {
+        assert_eq!(READ_TIMEOUT, Duration::from_secs(120));
     }
 }

@@ -58,6 +58,7 @@ func main() {
 	content = append(content, '\n')
 	path := filepath.Join(root, fixturePath)
 	if *check {
+		//nolint:gosec // path is the fixed repository fixture path
 		actual, readErr := os.ReadFile(path)
 		if readErr != nil {
 			fatal("read %s: %v", fixturePath, readErr)
@@ -68,10 +69,10 @@ func main() {
 		fmt.Printf("PASS representative fixture verified: %s\n", fixturePath)
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil { //nolint:gosec // checked-in repository directory
 		fatal("create fixture directory: %v", err)
 	}
-	if err := os.WriteFile(path, content, 0o644); err != nil {
+	if err := os.WriteFile(path, content, 0o644); err != nil { //nolint:gosec // checked-in non-secret fixture
 		fatal("write fixture: %v", err)
 	}
 	fmt.Printf("PASS generated %s\n", fixturePath)
@@ -84,6 +85,8 @@ func generated() suite {
 		SchemaVersion: 1,
 		Oracle:        oracle{Commit: "ae86331930fdfa2b128b68ae5af7437091b9949a", Release: "v0.12.2"},
 		Cases: []caseDef{
+			{ID: "version-positional-ls-not-command", Args: []string{"version", "ls"}},
+			{ID: "version-positional-search-not-command", Args: []string{"version", "search"}},
 			{ID: "desk-ls-json", Args: []string{"ls", "--vault", vault, "--json"}, Setup: fixtureFiles()},
 			{ID: "desk-ls-text", Args: []string{"--output=text", "ls", "--vault", vault}, StdoutMode: "console_text", StderrMode: "console_text", Setup: fixtureFiles()},
 			{ID: "desk-ls-dir-json", Args: []string{"ls", "--dir", "nested", "--vault", vault, "--output=json"}, Setup: fixtureFiles()},

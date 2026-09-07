@@ -6,6 +6,32 @@
   },
   "cases": [
     {
+      "id": "version-positional-ls-not-command",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "version",
+        "ls"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": false
+    },
+    {
+      "id": "version-positional-search-not-command",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "version",
+        "search"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": false
+    },
+    {
       "id": "desk-ls-json",
       "binary": "symdesk",
       "stage": "representative",

@@ -1,7 +1,6 @@
 package diff
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -91,13 +90,13 @@ func Run(binary string, testCase Case) (Result, error) {
 		return Result{}, err
 	}
 	if len(testCase.PrepareArgs) > 0 {
-		prepare := exec.CommandContext(context.Background(), absoluteBinary, replaceAll(testCase.PrepareArgs, replacements)...)
+		prepare := exec.Command(absoluteBinary, replaceAll(testCase.PrepareArgs, replacements)...) // #nosec G204,G702 -- explicit harness operand
 		configureProcessTree(prepare)
 		prepare.Dir = command.Dir
 		prepare.Env = command.Env
 		prepare.Stdout = io.Discard
 		prepare.Stderr = io.Discard
-		if prepareErr := prepare.Run(); prepareErr != nil {
+		if prepareErr := runPrepare(prepare, testCase.timeout()); prepareErr != nil {
 			return Result{}, fmt.Errorf("prepare process: %w", prepareErr)
 		}
 	}
@@ -159,6 +158,32 @@ func Run(binary string, testCase Case) (Result, error) {
 		Files:       files,
 		SandboxRoot: root,
 	}, nil
+}
+
+func runPrepare(command *exec.Cmd, timeout time.Duration) error {
+	if err := command.Start(); err != nil {
+		return err
+	}
+	waitDone := make(chan error, 1)
+	go func() { waitDone <- command.Wait() }()
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case err := <-waitDone:
+		return err
+	case <-timer.C:
+		killErr := killProcessTree(command)
+		select {
+		case <-waitDone:
+		case <-time.After(2 * time.Second):
+			_ = command.Process.Kill()
+			return errors.New("prepare process did not exit within 2s after timeout")
+		}
+		if killErr != nil {
+			return fmt.Errorf("terminate timed-out prepare process tree: %w", killErr)
+		}
+		return errors.New("prepare process timed out")
+	}
 }
 
 func isolatedEnv(home, tmp, runtimeDir, state string, extra map[string]string, replacements map[string]string) ([]string, error) {

@@ -27,18 +27,6 @@ fn main() -> ExitCode {
         return write_stderr("unknown flag: --version\n", 1);
     }
 
-    if args
-        .iter()
-        .skip(1)
-        .any(|arg| arg == "ls" || arg == "search")
-        && !args
-            .iter()
-            .skip(1)
-            .any(|arg| arg == "--help" || arg == "-h")
-    {
-        return run_representative(&args);
-    }
-
     let matches = match cli().try_get_matches_from(args) {
         Ok(matches) => matches,
         Err(error) => {
@@ -46,10 +34,6 @@ fn main() -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    if matches.subcommand_name() != Some("version") {
-        return ExitCode::SUCCESS;
-    }
-
     let output = matches
         .get_one::<String>("output")
         .map_or("", String::as_str);
@@ -59,15 +43,39 @@ fn main() -> ExitCode {
             1,
         );
     }
-    let rendered = if matches.get_flag("json") || output == "json" {
-        match render_version_json("symdesk", VERSION) {
-            Ok(value) => value,
-            Err(_) => return ExitCode::from(1),
+    let output_json = matches.get_flag("json") || output == "json";
+    match matches.subcommand() {
+        Some(("version", _)) => {
+            let rendered = if output_json {
+                match render_version_json("symdesk", VERSION) {
+                    Ok(value) => value,
+                    Err(_) => return ExitCode::from(1),
+                }
+            } else {
+                render_version_text("symdesk", VERSION)
+            };
+            write_stdout(rendered)
         }
-    } else {
-        render_version_text("symdesk", VERSION)
-    };
-    write_stdout(rendered)
+        Some(("ls", command)) => run_representative(
+            RepresentativeArgs {
+                command: Some("ls".to_owned()),
+                dir: command.get_one::<String>("dir").cloned(),
+                vault: matches.get_one::<String>("vault").cloned(),
+                ..RepresentativeArgs::default()
+            },
+            output_json,
+        ),
+        Some(("search", command)) => run_representative(
+            RepresentativeArgs {
+                command: Some("search".to_owned()),
+                query: command.get_one::<String>("query").cloned(),
+                vault: matches.get_one::<String>("vault").cloned(),
+                ..RepresentativeArgs::default()
+            },
+            output_json,
+        ),
+        _ => ExitCode::SUCCESS,
+    }
 }
 
 fn cli() -> Command {
@@ -82,36 +90,13 @@ fn cli() -> Command {
         .arg(Arg::new("output").long("output").global(true).num_args(1))
         .arg(Arg::new("vault").long("vault").global(true).num_args(1))
         .subcommand(Command::new("version").arg(Arg::new("extra").num_args(0..)))
+        .subcommand(Command::new("ls").arg(Arg::new("dir").long("dir").num_args(1)))
         .subcommand(
-            Command::new("ls")
-                .arg(Arg::new("dir").long("dir").num_args(1))
-                .arg(Arg::new("extra").num_args(0..)),
-        )
-        .subcommand(
-            Command::new("search")
-                .arg(Arg::new("query").num_args(0..1))
-                .arg(Arg::new("extra").num_args(0..)),
+            Command::new("search").arg(Arg::new("query").required(false).action(ArgAction::Set)),
         )
 }
 
-fn run_representative(args: &[OsString]) -> ExitCode {
-    let parsed = match RepresentativeArgs::parse(args) {
-        Ok(value) => value,
-        Err(error) => return emit_error(error, false),
-    };
-    let output_json = parsed
-        .output
-        .as_deref()
-        .map_or(parsed.json, |value| value == "json");
-    if let Some(output) = parsed.output.as_deref()
-        && !matches!(output, "text" | "json" | "yaml")
-    {
-        return write_stderr(
-            &format!("invalid --output value {output:?} (want text|json|yaml)\n"),
-            1,
-        );
-    }
-
+fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode {
     let Some(command) = parsed.command.as_deref() else {
         return emit_error("no command specified".to_owned(), output_json);
     };
@@ -168,59 +153,6 @@ struct RepresentativeArgs {
     query: Option<String>,
     dir: Option<String>,
     vault: Option<String>,
-    output: Option<String>,
-    json: bool,
-}
-
-impl RepresentativeArgs {
-    fn parse(args: &[OsString]) -> Result<Self, String> {
-        let mut parsed = Self::default();
-        let mut index = 1;
-        while index < args.len() {
-            let value = args[index]
-                .to_str()
-                .ok_or_else(|| "arguments must be valid UTF-8".to_owned())?;
-            if value == "--json" {
-                parsed.json = true;
-            } else if value == "--output" || value == "--vault" || value == "--dir" {
-                let next = args
-                    .get(index + 1)
-                    .and_then(|argument| argument.to_str())
-                    .ok_or_else(|| format!("flag {value} requires a value"))?;
-                Self::set_value(&mut parsed, value, next.to_owned())?;
-                index += 1;
-            } else if let Some((name, value)) = value.split_once('=') {
-                if matches!(name, "--output" | "--vault" | "--dir") {
-                    Self::set_value(&mut parsed, name, value.to_owned())?;
-                } else if value.is_empty() && name == "--json" {
-                    parsed.json = true;
-                } else if value.starts_with('-') || name.starts_with('-') {
-                    return Err(format!("unknown flag: {name}"));
-                }
-            } else if value == "ls" || value == "search" {
-                if parsed.command.is_some() {
-                    return Err("multiple commands specified".to_owned());
-                }
-                parsed.command = Some(value.to_owned());
-            } else if value.starts_with('-') {
-                return Err(format!("unknown flag: {value}"));
-            } else if parsed.command.as_deref() == Some("search") && parsed.query.is_none() {
-                parsed.query = Some(value.to_owned());
-            }
-            index += 1;
-        }
-        Ok(parsed)
-    }
-
-    fn set_value(parsed: &mut Self, name: &str, value: String) -> Result<(), String> {
-        match name {
-            "--output" => parsed.output = Some(value),
-            "--vault" => parsed.vault = Some(value),
-            "--dir" => parsed.dir = Some(value),
-            _ => return Err(format!("unknown flag: {name}")),
-        }
-        Ok(())
-    }
 }
 
 fn resolve_vault(flag: Option<&str>) -> Result<PathBuf, String> {

@@ -45,6 +45,20 @@ type setupFile struct {
 	MTimeNS *int64 `json:"mtime_ns,omitempty"`
 }
 
+type httpSuite struct {
+	SchemaVersion int        `json:"schema_version"`
+	Oracle        oracle     `json:"oracle"`
+	Cases         []httpCase `json:"cases"`
+}
+
+type httpCase struct {
+	ID      string            `json:"id"`
+	Method  string            `json:"method"`
+	Path    string            `json:"path"`
+	Auth    string            `json:"auth,omitempty"`
+	Headers map[string]string `json:"headers,omitempty"`
+}
+
 func main() {
 	check := flag.Bool("check", false, "fail when the checked-in fixture differs")
 	flag.Parse()
@@ -59,6 +73,7 @@ func main() {
 	content = append(content, '\n')
 	path := filepath.Join(root, fixturePath)
 	if *check {
+		checkHTTPFixture(root)
 		//nolint:gosec // path is the fixed repository fixture path
 		actual, readErr := os.ReadFile(path)
 		if readErr != nil {
@@ -76,6 +91,7 @@ func main() {
 	if err := os.WriteFile(path, content, 0o644); err != nil { //nolint:gosec // checked-in non-secret fixture
 		fatal("write fixture: %v", err)
 	}
+	writeHTTPFixture(root)
 	fmt.Printf("PASS generated %s\n", fixturePath)
 }
 

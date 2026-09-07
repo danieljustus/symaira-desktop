@@ -1,5 +1,6 @@
 #![deny(unsafe_code)]
 
+mod http;
 mod mcp;
 
 use std::{
@@ -92,7 +93,47 @@ fn main() -> ExitCode {
             Ok(()) => ExitCode::SUCCESS,
             Err(error) => write_stderr(&format!("mcp: {error}\n"), 1),
         },
+        Some(("serve", command)) => run_http_server(
+            command.get_one::<String>("listen").cloned(),
+            command.get_one::<String>("token").cloned(),
+            matches.get_one::<String>("vault").cloned(),
+        ),
         _ => ExitCode::SUCCESS,
+    }
+}
+
+fn run_http_server(
+    listen: Option<String>,
+    token: Option<String>,
+    vault: Option<String>,
+) -> ExitCode {
+    let vault = match resolve_vault(vault.as_deref()) {
+        Ok(path) => path,
+        Err(error) => return write_stderr(&format!("http: {error}\n"), 1),
+    };
+    let token = token
+        .filter(|value| !value.is_empty())
+        .or_else(|| std::env::var("SYMDESK_SERVER_TOKEN").ok())
+        .unwrap_or_default();
+    let config = http::HttpConfig {
+        listen_address: listen
+            .filter(|value| !value.is_empty())
+            .or_else(|| std::env::var("SYMDESK_SERVER_LISTEN").ok())
+            .unwrap_or_else(|| "127.0.0.1:8787".to_owned()),
+        vault_root: vault,
+        token,
+        version: VERSION.to_owned(),
+    };
+    let runtime = match tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+    {
+        Ok(runtime) => runtime,
+        Err(error) => return write_stderr(&format!("http: create runtime: {error}\n"), 1),
+    };
+    match runtime.block_on(http::run(config)) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => write_stderr(&format!("http: {error}\n"), 1),
     }
 }
 
@@ -113,6 +154,11 @@ fn cli() -> Command {
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
         )
         .subcommand(Command::new("mcp"))
+        .subcommand(
+            Command::new("serve")
+                .arg(Arg::new("listen").long("listen").num_args(1))
+                .arg(Arg::new("token").long("token").num_args(1)),
+        )
 }
 
 fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode {

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "989189484718d09852ca60e51715bbd473fe6783",
+    "commit": "026a886ef3c6b0a50ff86963abb714f34ebc5840",
     "release": "post-v0.12.2-security-855"
   },
   "server_name": "symroom",

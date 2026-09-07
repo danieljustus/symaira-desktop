@@ -111,7 +111,7 @@ type germanCase struct {
 func main() {
 	outputDir := flag.String("output-dir", "testdata/port/core", "fixture directory")
 	check := flag.Bool("check", false, "fail if generated fixtures differ")
-	commit := flag.String("oracle-commit", "989189484718d09852ca60e51715bbd473fe6783", "Go oracle commit")
+	commit := flag.String("oracle-commit", "026a886ef3c6b0a50ff86963abb714f34ebc5840", "Go oracle commit")
 	release := flag.String("oracle-release", "post-v0.12.2-security-855", "Go oracle release")
 	flag.Parse()
 	oracle := inventory.Oracle{Commit: *commit, Release: *release}

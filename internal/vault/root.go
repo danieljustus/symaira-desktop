@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 )
 
+const maxRootReadBytes int64 = 64 << 20
+
 // Root confines vault reads to one opened directory tree. os.Root follows
 // symlinks only when their targets remain below the opened root, and keeps the
 // stat and read on the same opened file handle.
@@ -109,7 +111,7 @@ func (r *Root) ReadFile(path string) ([]byte, fs.FileInfo, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	file, err := r.root.Open(rel)
+	file, err := openRootReadFile(r.root, rel)
 	if err != nil {
 		return nil, nil, fmt.Errorf("open vault file %s: %w", path, err)
 	}
@@ -118,9 +120,18 @@ func (r *Root) ReadFile(path string) ([]byte, fs.FileInfo, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("stat vault file %s: %w", path, err)
 	}
-	data, err := io.ReadAll(file)
+	if !info.Mode().IsRegular() {
+		return nil, nil, fmt.Errorf("vault path is not a regular file: %s", path)
+	}
+	if info.Size() > maxRootReadBytes {
+		return nil, nil, fmt.Errorf("vault file exceeds %d byte read limit: %s", maxRootReadBytes, path)
+	}
+	data, err := io.ReadAll(io.LimitReader(file, maxRootReadBytes+1))
 	if err != nil {
 		return nil, nil, fmt.Errorf("read vault file %s: %w", path, err)
+	}
+	if int64(len(data)) > maxRootReadBytes {
+		return nil, nil, fmt.Errorf("vault file exceeds %d byte read limit: %s", maxRootReadBytes, path)
 	}
 	return data, info, nil
 }

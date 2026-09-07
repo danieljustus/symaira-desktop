@@ -5,6 +5,7 @@ package vault
 import (
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 )
 
@@ -57,5 +58,35 @@ func TestConfinedRootRejectsExternalDirectorySymlink(t *testing.T) {
 
 	if _, _, err := ReadFileInRoot(root, filepath.Join(linkDir, "nested.md")); err == nil {
 		t.Fatal("external directory symlink was readable")
+	}
+}
+
+func TestConfinedRootRejectsSpecialAndOversizedFiles(t *testing.T) {
+	root := t.TempDir()
+	fifo := filepath.Join(root, "pipe.md")
+	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := ReadFileInRoot(root, fifo); err == nil {
+		t.Fatal("FIFO was accepted as a vault file")
+	}
+	if _, _, err := ReadFileInRoot(root, root); err == nil {
+		t.Fatal("directory was accepted as a vault file")
+	}
+	large := filepath.Join(root, "large.md")
+	//nolint:gosec // large is a fixed child of t.TempDir
+	file, err := os.Create(large)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := file.Truncate(maxRootReadBytes + 1); err != nil {
+		_ = file.Close()
+		t.Fatal(err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := ReadFileInRoot(root, large); err == nil {
+		t.Fatal("oversized file was accepted")
 	}
 }

@@ -28,6 +28,7 @@ type Case struct {
 	Binary       string            `json:"binary,omitempty"` // "symdesk" (default) or "symroom"
 	Stage        string            `json:"stage,omitempty"`
 	Args         []string          `json:"args,omitempty"`
+	PrepareArgs  []string          `json:"prepare_args,omitempty"`
 	Stdin        string            `json:"stdin,omitempty"`
 	Env          map[string]string `json:"env,omitempty"`
 	WorkingDir   string            `json:"working_dir,omitempty"`
@@ -43,6 +44,7 @@ type SetupFile struct {
 	Path    string `json:"path"`
 	Content string `json:"content,omitempty"`
 	Mode    uint32 `json:"mode,omitempty"`
+	MTimeNS *int64 `json:"mtime_ns,omitempty"`
 }
 
 func (c Case) TargetBinary() string {

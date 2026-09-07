@@ -3,11 +3,15 @@
 use std::{
     ffi::OsString,
     io::{self, Write},
+    path::{Component, Path, PathBuf},
     process::ExitCode,
 };
 
 use clap::{Arg, ArgAction, Command};
+use serde::Serialize;
+use serde_json::json;
 use symdesk_core::{render_version_json, render_version_text};
+use symdesk_index::{ListedDocument, Sidecar, path_for_vault};
 
 const VERSION: &str = match option_env!("SYMDESK_VERSION") {
     Some(version) => version,
@@ -21,6 +25,18 @@ fn main() -> ExitCode {
     }
     if args.iter().skip(2).any(|arg| arg == "--version") {
         return write_stderr("unknown flag: --version\n", 1);
+    }
+
+    if args
+        .iter()
+        .skip(1)
+        .any(|arg| arg == "ls" || arg == "search")
+        && !args
+            .iter()
+            .skip(1)
+            .any(|arg| arg == "--help" || arg == "-h")
+    {
+        return run_representative(&args);
     }
 
     let matches = match cli().try_get_matches_from(args) {
@@ -66,6 +82,310 @@ fn cli() -> Command {
         .arg(Arg::new("output").long("output").global(true).num_args(1))
         .arg(Arg::new("vault").long("vault").global(true).num_args(1))
         .subcommand(Command::new("version").arg(Arg::new("extra").num_args(0..)))
+        .subcommand(
+            Command::new("ls")
+                .arg(Arg::new("dir").long("dir").num_args(1))
+                .arg(Arg::new("extra").num_args(0..)),
+        )
+        .subcommand(
+            Command::new("search")
+                .arg(Arg::new("query").num_args(0..1))
+                .arg(Arg::new("extra").num_args(0..)),
+        )
+}
+
+fn run_representative(args: &[OsString]) -> ExitCode {
+    let parsed = match RepresentativeArgs::parse(args) {
+        Ok(value) => value,
+        Err(error) => return emit_error(error, false),
+    };
+    let output_json = parsed
+        .output
+        .as_deref()
+        .map_or(parsed.json, |value| value == "json");
+    if let Some(output) = parsed.output.as_deref()
+        && !matches!(output, "text" | "json" | "yaml")
+    {
+        return write_stderr(
+            &format!("invalid --output value {output:?} (want text|json|yaml)\n"),
+            1,
+        );
+    }
+
+    let Some(command) = parsed.command.as_deref() else {
+        return emit_error("no command specified".to_owned(), output_json);
+    };
+    if command == "search" && parsed.query.is_none() {
+        return emit_error("search query is required".to_owned(), output_json);
+    }
+    let vault = match resolve_vault(parsed.vault.as_deref()) {
+        Ok(path) => path,
+        Err(error) => return emit_error(error, output_json),
+    };
+    let sidecar_path = match path_for_vault(&vault) {
+        Ok(path) => path,
+        Err(error) => return emit_error(error.to_string(), output_json),
+    };
+    let mut sidecar = match Sidecar::open(&sidecar_path) {
+        Ok(sidecar) => sidecar,
+        Err(error) => return emit_error(error.to_string(), output_json),
+    };
+
+    match command {
+        "ls" => {
+            let mut files = match sidecar.list_files(parsed.dir.as_deref().unwrap_or("")) {
+                Ok(files) => files,
+                Err(error) => return emit_error(error.to_string(), output_json),
+            };
+            if files.is_empty() {
+                if let Err(error) = sidecar.refresh_index(&vault) {
+                    return emit_error(error.to_string(), output_json);
+                }
+                files = match sidecar.list_files(parsed.dir.as_deref().unwrap_or("")) {
+                    Ok(files) => files,
+                    Err(error) => return emit_error(error.to_string(), output_json),
+                };
+            }
+            render_ls(&vault, &files, output_json)
+        }
+        "search" => {
+            let Some(query) = parsed.query.as_deref() else {
+                return emit_error("search query is required".to_owned(), output_json);
+            };
+            let hits = match sidecar.search(query) {
+                Ok(hits) => hits,
+                Err(error) => return emit_error(error.to_string(), output_json),
+            };
+            render_search(&vault, &hits, output_json)
+        }
+        _ => emit_error(format!("unknown command {command:?}"), output_json),
+    }
+}
+
+#[derive(Default)]
+struct RepresentativeArgs {
+    command: Option<String>,
+    query: Option<String>,
+    dir: Option<String>,
+    vault: Option<String>,
+    output: Option<String>,
+    json: bool,
+}
+
+impl RepresentativeArgs {
+    fn parse(args: &[OsString]) -> Result<Self, String> {
+        let mut parsed = Self::default();
+        let mut index = 1;
+        while index < args.len() {
+            let value = args[index]
+                .to_str()
+                .ok_or_else(|| "arguments must be valid UTF-8".to_owned())?;
+            if value == "--json" {
+                parsed.json = true;
+            } else if value == "--output" || value == "--vault" || value == "--dir" {
+                let next = args
+                    .get(index + 1)
+                    .and_then(|argument| argument.to_str())
+                    .ok_or_else(|| format!("flag {value} requires a value"))?;
+                Self::set_value(&mut parsed, value, next.to_owned())?;
+                index += 1;
+            } else if let Some((name, value)) = value.split_once('=') {
+                if matches!(name, "--output" | "--vault" | "--dir") {
+                    Self::set_value(&mut parsed, name, value.to_owned())?;
+                } else if value.is_empty() && name == "--json" {
+                    parsed.json = true;
+                } else if value.starts_with('-') || name.starts_with('-') {
+                    return Err(format!("unknown flag: {name}"));
+                }
+            } else if value == "ls" || value == "search" {
+                if parsed.command.is_some() {
+                    return Err("multiple commands specified".to_owned());
+                }
+                parsed.command = Some(value.to_owned());
+            } else if value.starts_with('-') {
+                return Err(format!("unknown flag: {value}"));
+            } else if parsed.command.as_deref() == Some("search") && parsed.query.is_none() {
+                parsed.query = Some(value.to_owned());
+            }
+            index += 1;
+        }
+        Ok(parsed)
+    }
+
+    fn set_value(parsed: &mut Self, name: &str, value: String) -> Result<(), String> {
+        match name {
+            "--output" => parsed.output = Some(value),
+            "--vault" => parsed.vault = Some(value),
+            "--dir" => parsed.dir = Some(value),
+            _ => return Err(format!("unknown flag: {name}")),
+        }
+        Ok(())
+    }
+}
+
+fn resolve_vault(flag: Option<&str>) -> Result<PathBuf, String> {
+    let raw = flag
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned)
+        .or_else(|| {
+            std::env::var("SYMDESK_VAULT")
+                .ok()
+                .filter(|value| !value.trim().is_empty())
+        })
+        .ok_or_else(|| "vault path not configured (use flag or SYMDESK_VAULT env)".to_owned())?;
+    let path = PathBuf::from(raw);
+    let absolute = if path.is_absolute() {
+        path
+    } else {
+        std::env::current_dir()
+            .map_err(|error| format!("failed to get absolute vault path: {error}"))?
+            .join(path)
+    };
+    let absolute = lexical_clean(&absolute);
+    let metadata = std::fs::metadata(&absolute)
+        .map_err(|error| format!("vault path does not exist: {error}"))?;
+    if !metadata.is_dir() {
+        return Err("vault path is not a directory".to_owned());
+    }
+    Ok(absolute)
+}
+
+fn lexical_clean(path: &Path) -> PathBuf {
+    let mut output = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                let _ = output.pop();
+            }
+            other => output.push(other.as_os_str()),
+        }
+    }
+    output
+}
+
+fn relative_path(root: &Path, path: &str) -> String {
+    let path = Path::new(path);
+    let relative = path
+        .strip_prefix(root)
+        .ok()
+        .map(Path::to_path_buf)
+        .or_else(|| {
+            let canonical_root = std::fs::canonicalize(root).ok()?;
+            let canonical_path = std::fs::canonicalize(path).ok()?;
+            canonical_path
+                .strip_prefix(canonical_root)
+                .ok()
+                .map(Path::to_path_buf)
+        })
+        .map(|value| {
+            value
+                .to_string_lossy()
+                .trim_start_matches(['/', '\\'])
+                .to_owned()
+        });
+    relative
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| path.to_string_lossy().into_owned())
+}
+
+#[derive(Serialize)]
+struct LsJsonEntry {
+    path: String,
+    title: String,
+    #[serde(rename = "type", skip_serializing_if = "String::is_empty")]
+    document_type: String,
+    modified: String,
+}
+
+#[derive(Serialize)]
+struct SearchJsonHit {
+    path: String,
+    title: String,
+    snippet: String,
+    score: i32,
+}
+
+#[derive(Serialize)]
+struct SearchJsonResponse {
+    results: Vec<SearchJsonHit>,
+}
+
+fn render_ls(root: &Path, files: &[ListedDocument], json_output: bool) -> ExitCode {
+    if json_output {
+        if files.is_empty() {
+            return write_stdout("null\n".to_owned());
+        }
+        let entries = files
+            .iter()
+            .map(|file| LsJsonEntry {
+                path: relative_path(root, &file.path),
+                title: file.title.clone(),
+                document_type: file.document_type.clone(),
+                modified: file.modified_at.clone(),
+            })
+            .collect::<Vec<_>>();
+        return write_stdout(format!(
+            "{}\n",
+            serde_json::to_string(&entries).unwrap_or_default()
+        ));
+    }
+    let entries = files
+        .iter()
+        .map(|file| {
+            format!(
+                "{{Path:{} Title:{} Type:{} Modified:{}}}",
+                relative_path(root, &file.path),
+                file.title,
+                file.document_type,
+                file.modified_at
+            )
+        })
+        .collect::<Vec<_>>();
+    write_stdout(format!("[{}]\n", entries.join(" ")))
+}
+
+fn render_search(root: &Path, hits: &[symdesk_index::SearchHit], json_output: bool) -> ExitCode {
+    if json_output {
+        let results = hits
+            .iter()
+            .map(|hit| SearchJsonHit {
+                path: relative_path(root, &hit.path),
+                title: hit.title.clone(),
+                snippet: hit.snippet.clone(),
+                score: 0,
+            })
+            .collect::<Vec<_>>();
+        return write_stdout(format!(
+            "{}\n",
+            serde_json::to_string(&SearchJsonResponse { results }).unwrap_or_default()
+        ));
+    }
+    let results = hits
+        .iter()
+        .map(|hit| {
+            format!(
+                "{{Path:{} Title:{} Snippet:{} Score:0 Anchor:<nil> MetadataMatches:[] SourceType: ReadOnly:false}}",
+                relative_path(root, &hit.path),
+                hit.title,
+                hit.snippet
+            )
+        })
+        .collect::<Vec<_>>();
+    write_stdout(format!("{{Results:[{}] Hint:}}\n", results.join(" ")))
+}
+
+fn emit_error(error: String, json_output: bool) -> ExitCode {
+    if json_output {
+        let result = write_stdout(format!("{}\n", json!({"error": error})));
+        if result == ExitCode::SUCCESS {
+            ExitCode::from(1)
+        } else {
+            result
+        }
+    } else {
+        write_stderr(&format!("{error}\n"), 1)
+    }
 }
 
 fn write_stdout(value: String) -> ExitCode {

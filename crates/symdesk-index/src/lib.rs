@@ -190,8 +190,51 @@ pub struct SearchHit {
     pub snippet: String,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ListedDocument {
+    pub path: String,
+    pub title: String,
+    pub modified_at: String,
+    pub document_type: String,
+}
+
 pub struct Sidecar {
     connection: Connection,
+}
+
+/// Resolves the per-vault sidecar path used by the Go implementation.
+///
+/// # Errors
+/// Returns an error when the vault path, home directory, or digest input cannot
+/// be represented as UTF-8.
+pub fn path_for_vault(vault_root: &Path) -> Result<PathBuf, SidecarError> {
+    if let Ok(explicit) = std::env::var("SYMDESK_SIDECAR")
+        && !explicit.trim().is_empty()
+    {
+        return Ok(PathBuf::from(explicit));
+    }
+    let absolute = if vault_root.is_absolute() {
+        vault_root.to_path_buf()
+    } else {
+        std::env::current_dir()?.join(vault_root)
+    };
+    let canonical = fs::canonicalize(&absolute).unwrap_or_else(|_| lexical_clean(&absolute));
+    let data_home = std::env::var("XDG_DATA_HOME")
+        .ok()
+        .filter(|value| !value.trim().is_empty())
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share")))
+        .ok_or_else(|| SidecarError::Contract("cannot determine home directory".to_owned()))?;
+    let mut root = data_home.join("symdesk/vaults");
+    let temp_root = std::env::temp_dir();
+    if std::env::var_os("XDG_DATA_HOME").is_none()
+        && canonical.starts_with(&temp_root)
+        && canonical != temp_root
+    {
+        root = temp_root.join("symdesk/test-vaults");
+    }
+    let digest = symdesk_vault::sha256_hex(canonical.to_string_lossy().as_bytes());
+    Ok(root.join(&digest[..16]).join("sidecar.db"))
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -536,6 +579,44 @@ impl Sidecar {
             valid.insert(key.to_owned());
         }
         self.stale_paths("SELECT path FROM index_lifecycle", &valid)
+    }
+
+    /// Lists indexed files in path order, optionally restricted to a raw path prefix.
+    ///
+    /// # Errors
+    /// Returns SQLite query errors.
+    pub fn list_files(&self, dir_prefix: &str) -> Result<Vec<ListedDocument>, SidecarError> {
+        let mut sql = String::from(
+            "SELECT path, title, COALESCE(modified_at, ''), COALESCE(\"type\", '') FROM files",
+        );
+        if !dir_prefix.is_empty() {
+            sql.push_str(" WHERE path LIKE ?");
+        }
+        sql.push_str(" ORDER BY path ASC");
+        let mut statement = self.connection.prepare(&sql)?;
+        if dir_prefix.is_empty() {
+            let rows = statement.query_map([], |row| {
+                Ok(ListedDocument {
+                    path: row.get(0)?,
+                    title: row.get(1)?,
+                    modified_at: row.get(2)?,
+                    document_type: row.get(3)?,
+                })
+            })?;
+            return rows
+                .collect::<Result<Vec<_>, rusqlite::Error>>()
+                .map_err(Into::into);
+        }
+        let rows = statement.query_map([format!("{dir_prefix}%")], |row| {
+            Ok(ListedDocument {
+                path: row.get(0)?,
+                title: row.get(1)?,
+                modified_at: row.get(2)?,
+                document_type: row.get(3)?,
+            })
+        })?;
+        rows.collect::<Result<Vec<_>, rusqlite::Error>>()
+            .map_err(Into::into)
     }
 
     ///

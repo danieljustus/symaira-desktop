@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "cases": [
+    {
+      "id": "desk-ls-json",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "ls",
+        "--vault",
+        "${WORKSPACE}/vault",
+        "--json"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": false,
+      "setup": [
+        {
+          "path": "vault/alpha.md",
+          "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        },
+        {
+          "path": "vault/nested/beta.md",
+          "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        }
+      ]
+    },
+    {
+      "id": "desk-ls-text",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "--output=text",
+        "ls",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": false,
+      "setup": [
+        {
+          "path": "vault/alpha.md",
+          "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        },
+        {
+          "path": "vault/nested/beta.md",
+          "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        }
+      ]
+    },
+    {
+      "id": "desk-ls-dir-json",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "ls",
+        "--dir",
+        "nested",
+        "--vault",
+        "${WORKSPACE}/vault",
+        "--output=json"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": false,
+      "setup": [
+        {
+          "path": "vault/alpha.md",
+          "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        },
+        {
+          "path": "vault/nested/beta.md",
+          "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        }
+      ]
+    },
+    {
+      "id": "desk-search-json",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "search",
+        "needle",
+        "--vault",
+        "${WORKSPACE}/vault",
+        "--json"
+      ],
+      "prepare_args": [
+        "ls",
+        "--vault",
+        "${WORKSPACE}/vault",
+        "--json"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": false,
+      "setup": [
+        {
+          "path": "vault/alpha.md",
+          "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        },
+        {
+          "path": "vault/nested/beta.md",
+          "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        }
+      ]
+    },
+    {
+      "id": "desk-search-text",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "--output=text",
+        "search",
+        "needle",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "prepare_args": [
+        "ls",
+        "--vault",
+        "${WORKSPACE}/vault",
+        "--json"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "console_text",
+      "stderr_mode": "console_text",
+      "compare_files": false,
+      "setup": [
+        {
+          "path": "vault/alpha.md",
+          "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        },
+        {
+          "path": "vault/nested/beta.md",
+          "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        }
+      ]
+    },
+    {
+      "id": "desk-search-inherited-output",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "--output=json",
+        "search",
+        "needle",
+        "--vault",
+        "${WORKSPACE}/vault"
+      ],
+      "prepare_args": [
+        "ls",
+        "--vault",
+        "${WORKSPACE}/vault",
+        "--json"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": false,
+      "setup": [
+        {
+          "path": "vault/alpha.md",
+          "content": "---\ntitle: Alpha Note\ncreated: 2026-01-02T03:04:05Z\n---\nneedle alpha body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        },
+        {
+          "path": "vault/nested/beta.md",
+          "content": "---\ntitle: Nested Beta\n---\nneedle beta body\n",
+          "mode": 384,
+          "mtime_ns": 1767323045000000000
+        }
+      ]
+    },
+    {
+      "id": "desk-search-required-json",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "search",
+        "--json"
+      ],
+      "timeout_ms": 10000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": false
+    }
+  ]
+}

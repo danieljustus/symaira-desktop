@@ -1,8 +1,10 @@
 package diff
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -60,6 +62,12 @@ func Run(binary string, testCase Case) (Result, error) {
 		if writeErr := os.WriteFile(path, []byte(setup.Content), mode); writeErr != nil {
 			return Result{}, writeErr
 		}
+		if setup.MTimeNS != nil {
+			mtime := time.Unix(0, *setup.MTimeNS)
+			if chtimesErr := os.Chtimes(path, mtime, mtime); chtimesErr != nil {
+				return Result{}, fmt.Errorf("set fixture mtime: %w", chtimesErr)
+			}
+		}
 	}
 
 	replacements := map[string]string{
@@ -81,6 +89,17 @@ func Run(binary string, testCase Case) (Result, error) {
 	command.Env, err = isolatedEnv(home, tmp, runtimeDir, state, testCase.Env, replacements)
 	if err != nil {
 		return Result{}, err
+	}
+	if len(testCase.PrepareArgs) > 0 {
+		prepare := exec.CommandContext(context.Background(), absoluteBinary, replaceAll(testCase.PrepareArgs, replacements)...)
+		configureProcessTree(prepare)
+		prepare.Dir = command.Dir
+		prepare.Env = command.Env
+		prepare.Stdout = io.Discard
+		prepare.Stderr = io.Discard
+		if prepareErr := prepare.Run(); prepareErr != nil {
+			return Result{}, fmt.Errorf("prepare process: %w", prepareErr)
+		}
 	}
 	command.Stdin = strings.NewReader(replace(testCase.Stdin, replacements))
 	stdout := newLimitedBuffer()

@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+mod mcp;
+
 use std::{
     ffi::OsString,
     io::{self, Write},
@@ -86,6 +88,10 @@ fn main() -> ExitCode {
                 output_json,
             )
         }
+        Some(("mcp", _)) => match mcp::serve(matches.get_one::<String>("vault").cloned()) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => write_stderr(&format!("mcp: {error}\n"), 1),
+        },
         _ => ExitCode::SUCCESS,
     }
 }
@@ -106,6 +112,7 @@ fn cli() -> Command {
         .subcommand(
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
         )
+        .subcommand(Command::new("mcp"))
 }
 
 fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode {

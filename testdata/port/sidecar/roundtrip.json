@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
+    "release": "v0.12.2"
+  },
+  "source": "internal/sidecar + crates/symdesk-index",
+  "roundtrip_a": {
+    "seed": "go",
+    "updated": "Rust updated go-seed, added rust-added, deleted linked"
+  },
+  "roundtrip_b": {
+    "seed": "rust",
+    "updated": "Go updated rust-seed, added go-added, deleted linked"
+  },
+  "documents": [
+    {
+      "path": "go-seed.md",
+      "markdown": "---\ntitle: Go Seed\ncreated: \"2026-01-01T00:00:00Z\"\nstatus: open\ndocument_date: \"2026-01-02\"\nperson: Daniel\ndue_date: \"2026-02-01\"\nconfidence: 91\nocr_json_path: ocr/go.json\nasn: 7\n---\nGo-origin body orchard.\n",
+      "mtime_ns": 1768478400123456789
+    },
+    {
+      "path": "nullable.md",
+      "markdown": "---\ntitle: Nullable\ncreated: \"\"\ndocument_date: null\nperson: null\nstatus: null\ndue_date: null\nconfidence: null\nocr_json_path: null\nsimhash: null\nnullable_property: null\n---\n",
+      "mtime_ns": 0
+    },
+    {
+      "path": "linked.md",
+      "markdown": "---\ntitle: Linked\ncreated: \"2026-01-03T00:00:00Z\"\n---\nPoints at [[Go Seed]] and [[Nullable]].\n",
+      "mtime_ns": -1
+    },
+    {
+      "path": "unknown-time.md",
+      "markdown": "---\ntitle: Unknown Time\ncreated: \"2026-01-07T00:00:00Z\"\n---\nNo stat cache.\n"
+    }
+  ],
+  "rust_update": {
+    "path": "go-seed.md",
+    "markdown": "---\ntitle: Go Seed Rust Updated\ncreated: \"2026-01-01T00:00:00Z\"\nstatus: done\ndocument_date: \"2026-01-02\"\nperson: Daniel\ndue_date: \"2026-02-01\"\nconfidence: 91\nocr_json_path: ocr/go.json\nasn: 7\n---\nRust-origin update vineyard.\n",
+    "mtime_ns": 1768478400123456790
+  },
+  "rust_added": {
+    "path": "rust-added.md",
+    "markdown": "---\ntitle: Rust Added\ncreated: \"2026-01-04T00:00:00Z\"\n---\nRust addition.\n",
+    "mtime_ns": 1768478401123456789
+  },
+  "go_update": {
+    "path": "rust-seed.md",
+    "markdown": "---\ntitle: Rust Seed Go Updated\ncreated: \"2026-01-05T00:00:00Z\"\nstatus: paid\n---\nGo-origin update.\n",
+    "mtime_ns": 1768478402123456789
+  },
+  "rust_seed": {
+    "path": "rust-seed.md",
+    "markdown": "---\ntitle: Rust Seed\ncreated: \"2026-01-05T00:00:00Z\"\nstatus: open\n---\nRust-origin body.\n",
+    "mtime_ns": 1768478402123456789
+  },
+  "go_added": {
+    "path": "go-added.md",
+    "markdown": "---\ntitle: Go Added\ncreated: \"2026-01-06T00:00:00Z\"\n---\nGo addition.\n",
+    "mtime_ns": 1768478403123456789
+  }
+}

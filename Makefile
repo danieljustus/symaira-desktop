@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates
+.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential sidecar-roundtrip differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -118,7 +118,13 @@ sidecar-fixtures-check:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run 'TestPortSidecar(Contract|LifecycleContract)'
 
 sidecar-differential: sidecar-fixtures-check
+	SIDECAR_NATIVE=0 GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 	$(CARGO) test -p symdesk-index --all-features --locked
+
+# Full local/native gate. Lock and permission semantics are deliberately not
+# part of the routine Ubuntu PR lane; native CI invokes this target directly.
+sidecar-roundtrip:
+	SIDECAR_NATIVE=1 GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 
 port-fixtures-generate: core-fixtures-generate vault-fixtures-generate sidecar-fixtures-generate
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/portgen \
@@ -138,7 +144,7 @@ differential-go-selftest:
 		--symroom-left bin/symroom --symroom-right bin/symroom \
 		--cases $(PORT_CASES)
 
-port-contract: port-fixtures-check differential-go-selftest
+port-contract: port-fixtures-check differential-go-selftest sidecar-differential
 
 rust-build:
 	$(CARGO) build --workspace --locked

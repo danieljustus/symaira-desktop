@@ -42,6 +42,7 @@ var fixturePaths = []string{
 	"testdata/port/vault/mobile-writer.json",
 	"testdata/port/sidecar/contracts.json",
 	"testdata/port/sidecar/lifecycle.json",
+	"testdata/port/sidecar/roundtrip.json",
 }
 
 func main() {

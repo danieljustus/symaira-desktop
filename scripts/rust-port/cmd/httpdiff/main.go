@@ -18,6 +18,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -42,22 +43,54 @@ type transcript struct {
 	Body    []byte
 }
 
-type boundedBuffer struct{ data []byte }
+type boundedBuffer struct {
+	mu       sync.Mutex
+	data     []byte
+	overflow bool
+}
 
 func (b *boundedBuffer) Write(data []byte) (int, error) {
 	const limit = 1 << 20
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	if len(b.data) < limit {
 		remaining := limit - len(b.data)
 		if len(data) > remaining {
 			b.data = append(b.data, data[:remaining]...)
+			b.overflow = true
 		} else {
 			b.data = append(b.data, data...)
 		}
+	} else if len(data) > 0 {
+		b.overflow = true
 	}
 	return len(data), nil
 }
 
+func (b *boundedBuffer) snapshot() (string, bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return string(b.data), b.overflow
+}
+
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "FAIL %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func run() (runErr error) {
+	defer func() {
+		if value := recover(); value != nil {
+			panicErr := fmt.Errorf("%v", value)
+			if runErr == nil {
+				runErr = panicErr
+			} else {
+				runErr = errors.Join(runErr, panicErr)
+			}
+		}
+	}()
 	left := flag.String("left", "", "Go oracle binary")
 	right := flag.String("right", "", "Rust candidate binary")
 	fixturePath := flag.String("fixture", "testdata/port/http/representative.json", "fixture path")
@@ -101,11 +134,32 @@ func main() {
 	if err := os.Symlink(filepath.Join(harnessRoot, "outside.md"), filepath.Join(vault, "escape.md")); err != nil {
 		fatal("fixture symlink: %v", err)
 	}
+	if err := os.Symlink("Hello.md", filepath.Join(vault, "internal.md")); err != nil {
+		fatal("fixture internal symlink: %v", err)
+	}
 
 	leftServer := startServer(*left, vault)
+	defer func() {
+		if err := leftServer.stop(); err != nil {
+			cleanupErr := fmt.Errorf("Go cleanup failed: %w", err) //nolint:staticcheck // Go is the implementation label
+			if runErr == nil {
+				runErr = cleanupErr
+			} else {
+				runErr = errors.Join(runErr, cleanupErr)
+			}
+		}
+	}()
 	rightServer := startServer(*right, vault)
-	defer leftServer.stop()
-	defer rightServer.stop()
+	defer func() {
+		if err := rightServer.stop(); err != nil {
+			cleanupErr := fmt.Errorf("Rust cleanup failed: %w", err) //nolint:staticcheck // Rust is the implementation label
+			if runErr == nil {
+				runErr = cleanupErr
+			} else {
+				runErr = errors.Join(runErr, cleanupErr)
+			}
+		}
+	}()
 	if err := leftServer.ready(); err != nil {
 		fatal("Go readiness: %v", err)
 	}
@@ -128,13 +182,8 @@ func main() {
 		leftETag, rightETag = nextLeftETag, nextRightETag
 		fmt.Printf("PASS %s\n", tc.ID)
 	}
-	if err := leftServer.stop(); err != nil {
-		fatal("Go graceful shutdown: %v", err)
-	}
-	if err := rightServer.stop(); err != nil {
-		fatal("Rust graceful shutdown: %v", err)
-	}
-	fmt.Printf("PASS HTTP differential: %d cases; isolated roots, loopback ports, readiness, bounds and shutdown verified\n", len(suite.Cases))
+	fmt.Printf("PASS HTTP differential: %d cases; isolated roots, loopback ports, readiness, harness bounds and shutdown verified\n", len(suite.Cases))
+	return nil
 }
 
 type runningServer struct {
@@ -158,6 +207,7 @@ func startServer(binary, vault string) *runningServer {
 	if err := os.MkdirAll(filepath.Join(home, "tmp"), 0o700); err != nil {
 		fatal("isolation root: %v", err)
 	}
+	//nolint:gosec // absoluteBinary is the explicit Go/Rust harness operand
 	cmd := exec.Command(absoluteBinary, "serve", "--listen", address, "--vault", vault, "--token", token)
 	cmd.Dir = home
 	cmd.Env = isolatedEnv(vault, home)
@@ -183,11 +233,19 @@ func (s *runningServer) ready() error {
 			}
 		}
 		if s.cmd.ProcessState != nil {
-			return fmt.Errorf("process exited: %s; stderr=%s", s.cmd.ProcessState, s.logs.data)
+			logs, overflow := s.logs.snapshot()
+			if overflow {
+				return fmt.Errorf("process exited with more than 1 MiB stderr; stderr=%s", logs)
+			}
+			return fmt.Errorf("process exited: %s; stderr=%s", s.cmd.ProcessState, logs)
 		}
 		time.Sleep(25 * time.Millisecond)
 	}
-	return fmt.Errorf("timed out waiting for %s; stderr=%s", s.base, s.logs.data)
+	logs, overflow := s.logs.snapshot()
+	if overflow {
+		return fmt.Errorf("timed out waiting for %s: stderr exceeded 1 MiB; stderr=%s", s.base, logs)
+	}
+	return fmt.Errorf("timed out waiting for %s; stderr=%s", s.base, logs)
 }
 
 func (s *runningServer) request(tc httpCase, previousETag string) (transcript, string, error) {
@@ -214,23 +272,32 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 	if err != nil {
 		return transcript{}, previousETag, err
 	}
-	defer func() { _ = response.Body.Close() }()
 	body, err := io.ReadAll(io.LimitReader(response.Body, (16<<20)+1))
+	closeErr := response.Body.Close()
 	if err != nil {
 		return transcript{}, previousETag, err
+	}
+	if closeErr != nil {
+		return transcript{}, previousETag, fmt.Errorf("close response body: %w", closeErr)
 	}
 	if len(body) > 16<<20 {
 		return transcript{}, previousETag, fmt.Errorf("response exceeded 16 MiB harness cap")
 	}
-	if response.Header.Get("Content-Encoding") == "gzip" {
+	if response.Header.Get("Content-Encoding") == "gzip" && len(body) > 0 {
 		reader, gzipErr := gzip.NewReader(bytes.NewReader(body))
 		if gzipErr != nil {
 			return transcript{}, previousETag, gzipErr
 		}
 		body, err = io.ReadAll(io.LimitReader(reader, (16<<20)+1))
-		_ = reader.Close()
+		closeErr := reader.Close()
 		if err != nil {
 			return transcript{}, previousETag, err
+		}
+		if closeErr != nil {
+			return transcript{}, previousETag, closeErr
+		}
+		if len(body) > 16<<20 {
+			return transcript{}, previousETag, fmt.Errorf("decompressed response exceeded 16 MiB harness cap")
 		}
 	}
 	headers := make(map[string]string)
@@ -279,6 +346,18 @@ func compare(id string, left, right transcript) error {
 	if left.Status != right.Status {
 		return fmt.Errorf("status mismatch: Go=%d Rust=%d", left.Status, right.Status)
 	}
+	if strings.HasPrefix(id, "snapshot-") {
+		if strings.HasPrefix(id, "snapshot-gzip") || id == "snapshot-head-gzip" {
+			if left.Headers["content-encoding"] != "gzip" || right.Headers["content-encoding"] != "gzip" || left.Headers["content-length"] == "" || right.Headers["content-length"] == "" {
+				return fmt.Errorf("gzip response lacks encoding or length contract")
+			}
+		}
+		// generated_at is intentionally normalized in the body; its
+		// fractional timestamp width can still vary and therefore changes
+		// Content-Length without changing the response contract.
+		left.Headers = cloneWithout(left.Headers, "content-length")
+		right.Headers = cloneWithout(right.Headers, "content-length")
+	}
 	if !reflect.DeepEqual(left.Headers, right.Headers) {
 		return fmt.Errorf("headers mismatch: Go=%v Rust=%v", left.Headers, right.Headers)
 	}
@@ -286,6 +365,16 @@ func compare(id string, left, right transcript) error {
 		return fmt.Errorf("body mismatch: Go=%q Rust=%q", left.Body, right.Body)
 	}
 	return nil
+}
+
+func cloneWithout(headers map[string]string, omitted string) map[string]string {
+	clone := make(map[string]string, len(headers))
+	for key, value := range headers {
+		if key != omitted {
+			clone[key] = value
+		}
+	}
+	return clone
 }
 
 func isolatedEnv(vault, home string) []string {
@@ -309,6 +398,9 @@ func isolatedEnv(vault, home string) []string {
 
 func (s *runningServer) stop() error {
 	if s.cmd == nil || s.cmd.Process == nil || s.cmd.ProcessState != nil {
+		if _, overflow := s.logs.snapshot(); overflow {
+			return fmt.Errorf("process cleanup stderr exceeded 1 MiB")
+		}
 		return nil
 	}
 	if runtime.GOOS == "windows" {
@@ -322,19 +414,29 @@ func (s *runningServer) stop() error {
 	case err := <-wait:
 		if err != nil {
 			var exitErr *exec.ExitError
-			if errors.As(err, &exitErr) && exitErr.ExitCode() == 0 {
-				return nil
+			if !errors.As(err, &exitErr) || (exitErr.ExitCode() != 0 && exitErr.ExitCode() != -1) {
+				logs, overflow := s.logs.snapshot()
+				if overflow {
+					return fmt.Errorf("process cleanup stderr exceeded 1 MiB: %w; stderr=%s", err, logs)
+				}
+				return fmt.Errorf("process cleanup failed: %w; stderr=%s", err, logs)
 			}
+		}
+		if _, overflow := s.logs.snapshot(); overflow {
+			return fmt.Errorf("process cleanup stderr exceeded 1 MiB")
 		}
 		return nil
 	case <-time.After(5 * time.Second):
 		_ = s.cmd.Process.Kill()
 		<-wait
-		return fmt.Errorf("process did not exit within 5 seconds; stderr=%s", s.logs.data)
+		logs, overflow := s.logs.snapshot()
+		if overflow {
+			return fmt.Errorf("process did not exit within 5 seconds; stderr exceeded 1 MiB; stderr=%s", logs)
+		}
+		return fmt.Errorf("process did not exit within 5 seconds; stderr=%s", logs)
 	}
 }
 
 func fatal(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, "FAIL "+format+"\n", args...)
-	os.Exit(1)
+	panic(fmt.Errorf(format, args...))
 }

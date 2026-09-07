@@ -65,7 +65,19 @@ The measured Go baseline is in
 - [`implementation-plan.md`](implementation-plan.md) — ordered vertical slices and gates.
 - [`work-items.json`](work-items.json) — machine-readable dependency graph.
 - [`baseline-20260906.json`](baseline-20260906.json) — measured Go reference metrics.
+- [`value001-result.schema.json`](value001-result.schema.json) — schema for measured VALUE-001 artifacts.
 - [`value-signal-version-20260906.json`](value-signal-version-20260906.json) — non-representative first Rust slice measurements.
+
+## Running VALUE-001
+
+`make value-001` builds stripped Go and Rust release-profile `symdesk`
+artifacts, runs the representative CLI/MCP/HTTP differential contracts first,
+then records paired startup, indexed-search, MCP, HTTP, and long-running RSS
+samples. The harness requires at least 100 post-warmup samples per workload,
+uses a synthetic vault and loopback-only dynamic ports, records raw samples,
+and exits non-zero unless contract parity, the 20% binary-size-or-RSS gate, and
+all four p95 latency gates pass. Override `VALUE_OUTPUT` to retain a separate
+artifact; the default is `docs/rust-port/results/value001-latest.json`.
 
 ## Implementation progress
 

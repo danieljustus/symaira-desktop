@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential sidecar-roundtrip differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates representative-fixtures-generate representative-fixtures-check representative-differential http-differential mcp-fixtures-generate mcp-fixtures-check mcp-differential
+.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential sidecar-roundtrip differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates representative-fixtures-generate representative-fixtures-check representative-differential http-differential mcp-fixtures-generate mcp-fixtures-check mcp-differential value-001
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -165,6 +165,23 @@ http-differential: representative-fixtures-check
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/httpdiff \
 		--left $(PORT_LEFT) --right $(PORT_RIGHT) \
 		--fixture testdata/port/http/representative.json
+
+# VALUE-001: fail-closed paired representative Go/Rust benchmark.
+VALUE_SAMPLES ?= 100
+VALUE_WARMUPS ?= 20
+VALUE_GO_COMMIT ?= 136f01570944af16c4bc447b7eb63d03125aac3f
+VALUE_OUTPUT ?= docs/rust-port/results/value001-latest.json
+value-001:
+	@mkdir -p bin/port "$$(dirname "$(VALUE_OUTPUT)")"
+	SYMDESK_VERSION=0.12.2 cargo build --release -p symdesk-cli --locked
+	python3 scripts/rust-port/value001.py \
+		--root . \
+		--go-source-commit $(VALUE_GO_COMMIT) \
+		--rust-binary target/release/symdesk \
+		--rust-build-command "SYMDESK_VERSION=0.12.2 cargo build --release -p symdesk-cli --locked" \
+		--samples $(VALUE_SAMPLES) \
+		--warmups $(VALUE_WARMUPS) \
+		--output "$(VALUE_OUTPUT)"
 
 mcp-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/mcpgen

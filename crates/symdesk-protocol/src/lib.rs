@@ -9,9 +9,10 @@
 use std::{
     fmt::Write as _,
     fs,
+    io::{self, Read, Seek, SeekFrom},
     net::SocketAddr,
     path::{Component, Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Mutex},
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
@@ -42,13 +43,31 @@ pub struct HttpConfig {
     pub version: String,
 }
 
-#[derive(Clone)]
 struct AppState {
     vault_root: PathBuf,
-    canonical_root: PathBuf,
+    root_dir: Arc<cap_std::fs::Dir>,
     token: Arc<[u8]>,
     version: String,
+    auth_failures: Mutex<AuthThrottle>,
 }
+
+#[derive(Debug, Default)]
+struct AuthThrottle {
+    entries: std::collections::HashMap<String, AuthFailure>,
+}
+
+#[derive(Debug)]
+struct AuthFailure {
+    count: u32,
+    window_start: SystemTime,
+    blocked_until: SystemTime,
+    last_seen: SystemTime,
+}
+
+const AUTH_WINDOW: Duration = Duration::from_secs(10);
+const AUTH_BLOCK: Duration = Duration::from_secs(30);
+const AUTH_MAX: u32 = 5;
+const AUTH_MAX_ENTRIES: usize = 5_000;
 
 #[derive(Debug, Deserialize)]
 struct FileQuery {
@@ -71,8 +90,12 @@ struct SnapshotNote {
 #[derive(Debug)]
 enum PathError {
     Invalid,
-    NotFound,
-    Internal,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum RangeError {
+    Invalid,
+    NoOverlap,
 }
 
 /// Starts the representative HTTP server and waits for SIGINT/SIGTERM.
@@ -98,19 +121,25 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
     let actual = listener
         .local_addr()
         .map_err(|error| format!("read HTTP listener address: {error}"))?;
+    let root_dir = cap_std::fs::Dir::open_ambient_dir(&root, cap_std::ambient_authority())
+        .map_err(|error| format!("open vault root: {error}"))?;
     let state = Arc::new(AppState {
         vault_root: root.clone(),
-        canonical_root: root,
+        root_dir: Arc::new(root_dir),
         token: Arc::from(config.token.into_bytes()),
         version: config.version,
+        auth_failures: Mutex::new(AuthThrottle::default()),
     });
     let app = router(state);
     eprintln!("LISTENING http://{actual}");
 
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await
-        .map_err(|error| format!("HTTP server: {error}"))
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown_signal())
+    .await
+    .map_err(|error| format!("HTTP server: {error}"))
 }
 
 fn router(state: Arc<AppState>) -> Router {
@@ -144,7 +173,27 @@ async fn authenticate(
         .map(|value| value.trim().strip_prefix("Bearer ").unwrap_or(value).trim())
         .unwrap_or_default();
     if !constant_time_equal(provided.as_bytes(), &state.token) {
-        let mut response = json_error(StatusCode::UNAUTHORIZED, "authentication required");
+        let ip = client_ip(&request);
+        let retry_after = state
+            .auth_failures
+            .lock()
+            .ok()
+            .and_then(|mut throttle| throttle.record(&ip));
+        let status = if let Some(retry_after) = retry_after {
+            let mut response = json_error(
+                StatusCode::TOO_MANY_REQUESTS,
+                "too many authentication attempts",
+            );
+            response.headers_mut().insert(
+                header::RETRY_AFTER,
+                HeaderValue::from_str(&retry_after_seconds(retry_after).to_string())
+                    .unwrap_or_else(|_| HeaderValue::from_static("1")),
+            );
+            response
+        } else {
+            json_error(StatusCode::UNAUTHORIZED, "authentication required")
+        };
+        let mut response = status;
         response
             .headers_mut()
             .insert(header::WWW_AUTHENTICATE, HeaderValue::from_static("Bearer"));
@@ -153,8 +202,71 @@ async fn authenticate(
     next.run(request).await
 }
 
+fn client_ip(request: &Request<Body>) -> String {
+    request
+        .extensions()
+        .get::<axum::extract::ConnectInfo<SocketAddr>>()
+        .map(|info| info.0.ip().to_string())
+        .unwrap_or_default()
+}
+
+impl AuthThrottle {
+    fn record(&mut self, ip: &str) -> Option<Duration> {
+        let now = SystemTime::now();
+        self.entries.retain(|_, failure| {
+            now.duration_since(failure.last_seen)
+                .map(|age| age <= Duration::from_secs(600))
+                .unwrap_or(true)
+        });
+        if !self.entries.contains_key(ip)
+            && self.entries.len() >= AUTH_MAX_ENTRIES
+            && let Some(oldest) = self
+                .entries
+                .iter()
+                .min_by_key(|(_, failure)| failure.last_seen)
+                .map(|(key, _)| key.clone())
+        {
+            self.entries.remove(&oldest);
+        }
+        let failure = self.entries.entry(ip.to_owned()).or_insert(AuthFailure {
+            count: 0,
+            window_start: now,
+            blocked_until: UNIX_EPOCH,
+            last_seen: now,
+        });
+        failure.last_seen = now;
+        if failure.blocked_until > now {
+            return Some(
+                failure
+                    .blocked_until
+                    .duration_since(now)
+                    .unwrap_or_default(),
+            );
+        }
+        if now
+            .duration_since(failure.window_start)
+            .map(|age| age > AUTH_WINDOW)
+            .unwrap_or(true)
+        {
+            failure.count = 0;
+            failure.window_start = now;
+        }
+        failure.count = failure.count.saturating_add(1);
+        if failure.count >= AUTH_MAX {
+            failure.blocked_until = now + AUTH_BLOCK;
+            return Some(AUTH_BLOCK);
+        }
+        None
+    }
+}
+
+fn retry_after_seconds(duration: Duration) -> u64 {
+    duration.as_secs() + u64::from(!duration.subsec_nanos().eq(&0))
+}
+
 async fn security_headers(request: Request<Body>, next: Next) -> Response {
     let mut response = next.run(request).await;
+    let is_range_error = response.status() == StatusCode::RANGE_NOT_SATISFIABLE;
     let headers = response.headers_mut();
     headers.insert(
         header::X_CONTENT_TYPE_OPTIONS,
@@ -164,7 +276,11 @@ async fn security_headers(request: Request<Body>, next: Next) -> Response {
         header::REFERRER_POLICY,
         HeaderValue::from_static("no-referrer"),
     );
-    headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    if is_range_error {
+        headers.remove(header::CACHE_CONTROL);
+    } else {
+        headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    }
     headers.insert(
         header::CONTENT_SECURITY_POLICY,
         HeaderValue::from_static("default-src 'none'; frame-ancestors 'none'"),
@@ -243,20 +359,27 @@ async fn handle_snapshot(
         return bytes_response(StatusCode::NOT_MODIFIED, common, Vec::new());
     }
     common.push((header::CONTENT_TYPE, "application/json".to_owned()));
-    if method == Method::HEAD {
-        common.push((header::CONTENT_LENGTH, plain.len().to_string()));
-        return bytes_response(StatusCode::OK, common, Vec::new());
-    }
-    if headers
+    let gzip = headers
         .get(header::ACCEPT_ENCODING)
         .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value.split(',').any(|part| part.trim() == "gzip"))
-    {
+        .is_some_and(|value| value.contains("gzip"));
+    if gzip {
         common.push((header::CONTENT_ENCODING, "gzip".to_owned()));
         common.push((header::CONTENT_LENGTH, compressed.len().to_string()));
-        return bytes_response(StatusCode::OK, common, compressed);
+        return bytes_response(
+            StatusCode::OK,
+            common,
+            if method == Method::HEAD {
+                Vec::new()
+            } else {
+                compressed
+            },
+        );
     }
     common.push((header::CONTENT_LENGTH, plain.len().to_string()));
+    if method == Method::HEAD {
+        return bytes_response(StatusCode::OK, common, Vec::new());
+    }
     bytes_response(StatusCode::OK, common, plain)
 }
 
@@ -273,32 +396,34 @@ async fn handle_file(
             "internal server files are not available through the document API",
         );
     }
-    let path = match confined_path(&state, requested) {
+    let relative = match confined_path(&state, requested) {
         Ok(path) => path,
         Err(PathError::Invalid) => {
             return json_error(StatusCode::BAD_REQUEST, "a vault-relative path is required");
         }
-        Err(PathError::NotFound) => {
-            return json_error(StatusCode::NOT_FOUND, "file not found");
-        }
-        Err(PathError::Internal) => {
-            return json_error(StatusCode::INTERNAL_SERVER_ERROR, "path resolution failed");
-        }
     };
-    let metadata = match fs::metadata(&path) {
+    let mut file = match state.root_dir.open(&relative) {
+        Ok(file) => file,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
+    };
+    let metadata = match file.metadata() {
         Ok(metadata) if metadata.is_file() => metadata,
         _ => return json_error(StatusCode::NOT_FOUND, "file not found"),
     };
-    let bytes = match fs::read(&path) {
-        Ok(bytes) => bytes,
+    let length = metadata.len();
+    let modified = metadata
+        .modified()
+        .map(|value| value.into_std())
+        .unwrap_or(UNIX_EPOCH);
+    let sample = match read_sample(&mut file, length) {
+        Ok(sample) => sample,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
     };
-    let modified = metadata.modified().unwrap_or(UNIX_EPOCH);
     let mut common = vec![
-        (header::CONTENT_TYPE, content_type(&path)),
+        (header::CONTENT_TYPE, content_type(&relative, &sample)),
         (
             header::CONTENT_DISPOSITION,
-            format!("inline; filename=\"{}\"", safe_filename(&path)),
+            format!("inline; filename=\"{}\"", safe_filename(&relative)),
         ),
         (header::ACCEPT_RANGES, "bytes".to_owned()),
         (header::LAST_MODIFIED, fmt_http_date(modified)),
@@ -312,37 +437,89 @@ async fn handle_file(
         return bytes_response(StatusCode::NOT_MODIFIED, common, Vec::new());
     }
 
-    let range = match headers
-        .get(header::RANGE)
-        .and_then(|value| value.to_str().ok())
-        .map(|value| parse_range(value, bytes.len()))
-    {
-        Some(Ok(range)) => Some(range),
-        Some(Err(())) => {
-            common.push((header::CONTENT_RANGE, format!("bytes */{}", bytes.len())));
-            return bytes_response(StatusCode::RANGE_NOT_SATISFIABLE, common, Vec::new());
+    let range = if length == 0 {
+        None
+    } else {
+        match headers
+            .get(header::RANGE)
+            .and_then(|value| value.to_str().ok())
+            .map(|value| parse_range(value, length))
+        {
+            Some(Ok(range)) => Some(range),
+            Some(Err(RangeError::Invalid)) => {
+                return range_error_response(&relative, "invalid range", None);
+            }
+            Some(Err(RangeError::NoOverlap)) => {
+                return range_error_response(
+                    &relative,
+                    "invalid range: failed to overlap",
+                    Some(format!("bytes */{length}")),
+                );
+            }
+            None => None,
         }
-        None => None,
     };
-    let (status, body, content_range) = if let Some((start, end)) = range {
+    let (status, body_length, content_range) = if let Some((start, end)) = range {
         (
             StatusCode::PARTIAL_CONTENT,
-            bytes[start..=end].to_vec(),
-            Some(format!("bytes {start}-{end}/{}", bytes.len())),
+            end - start + 1,
+            Some(format!("bytes {start}-{end}/{length}")),
         )
     } else {
-        (StatusCode::OK, bytes, None)
+        (StatusCode::OK, length, None)
     };
     if let Some(content_range) = content_range {
         common.push((header::CONTENT_RANGE, content_range));
     }
-    common.push((header::CONTENT_LENGTH, body.len().to_string()));
-    let body = if method == Method::HEAD {
-        Vec::new()
-    } else {
-        body
+    common.push((header::CONTENT_LENGTH, body_length.to_string()));
+    if method == Method::HEAD {
+        return bytes_response(status, common, Vec::new());
+    }
+    if body_length > MAX_NOTE_BYTES {
+        return json_error(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "file exceeds the response size limit",
+        );
+    }
+    let start = range.map_or(0, |(start, _)| start);
+    let body = match read_at(&mut file, start, body_length) {
+        Ok(body) => body,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
     };
     bytes_response(status, common, body)
+}
+
+fn range_error_response(path: &Path, message: &str, content_range: Option<String>) -> Response {
+    let body = format!("{message}\n").into_bytes();
+    let mut headers = vec![
+        (
+            header::CONTENT_DISPOSITION,
+            format!("inline; filename=\"{}\"", safe_filename(path)),
+        ),
+        (header::CONTENT_TYPE, "text/plain; charset=utf-8".to_owned()),
+        (header::CONTENT_LENGTH, body.len().to_string()),
+    ];
+    if let Some(content_range) = content_range {
+        headers.push((header::CONTENT_RANGE, content_range));
+    }
+    bytes_response(StatusCode::RANGE_NOT_SATISFIABLE, headers, body)
+}
+
+fn read_sample(file: &mut cap_std::fs::File, length: u64) -> io::Result<Vec<u8>> {
+    file.seek(SeekFrom::Start(0))?;
+    let sample_len = length.min(512) as usize;
+    let mut sample = vec![0; sample_len];
+    file.read_exact(&mut sample)?;
+    Ok(sample)
+}
+
+fn read_at(file: &mut cap_std::fs::File, start: u64, length: u64) -> io::Result<Vec<u8>> {
+    file.seek(SeekFrom::Start(start))?;
+    let length = usize::try_from(length)
+        .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "file is too large"))?;
+    let mut body = vec![0; length];
+    file.read_exact(&mut body)?;
+    Ok(body)
 }
 
 async fn handle_not_found() -> Response {
@@ -357,35 +534,50 @@ fn snapshot_payload(state: &AppState) -> Result<(Vec<u8>, Vec<u8>, String), Stri
     let mut files = Vec::new();
     let mut etag_material = String::new();
     for relative in walk_markdown(&state.vault_root).map_err(|error| error.to_string())? {
-        let relative = relative
+        let relative_string = relative
             .to_str()
             .ok_or_else(|| "vault path is not UTF-8".to_owned())?;
-        let path = state.vault_root.join(relative);
-        let metadata = fs::metadata(&path).map_err(|error| error.to_string())?;
-        if !metadata.is_file() || metadata.len() > MAX_NOTE_BYTES {
-            continue;
-        }
-        let canonical = fs::canonicalize(&path).map_err(|error| error.to_string())?;
-        if !canonical.starts_with(&state.canonical_root) {
-            continue;
-        }
-        let bytes = fs::read(&path).map_err(|error| error.to_string())?;
+        let mut file = match state.root_dir.open(&relative) {
+            Ok(file) => file,
+            // An external symlink, a concurrently removed file, and a file
+            // replaced by an escaping symlink are all intentionally omitted.
+            // The opened capability is the security boundary; no path is read
+            // again after this point.
+            Err(_) => continue,
+        };
+        let metadata = match file.metadata() {
+            Ok(metadata) if metadata.is_file() && metadata.len() <= MAX_NOTE_BYTES => metadata,
+            _ => continue,
+        };
+        let mut bytes =
+            Vec::with_capacity((metadata.len() as usize).min(MAX_NOTE_BYTES as usize + 1));
+        (&mut file)
+            .take(MAX_NOTE_BYTES + 1)
+            .read_to_end(&mut bytes)
+            .map_err(|error| error.to_string())?;
         if bytes.len() as u64 > MAX_NOTE_BYTES {
             continue;
         }
-        let modified = metadata.modified().unwrap_or(UNIX_EPOCH);
+        let modified = metadata
+            .modified()
+            .map(|value| value.into_std())
+            .unwrap_or(UNIX_EPOCH);
         let mtime_ns = unix_nanos(modified);
-        let _ = writeln!(etag_material, "{relative}\0{}\0{mtime_ns}", bytes.len());
+        let _ = writeln!(
+            etag_material,
+            "{relative_string}\0{}\0{mtime_ns}",
+            bytes.len()
+        );
         files.push(SnapshotNote {
-            path: relative.replace('\\', "/"),
+            path: relative_string.replace('\\', "/"),
             content: String::from_utf8_lossy(&bytes).into_owned(),
             modified_at: format_rfc3339(modified),
         });
     }
     let etag = symdesk_vault::sha256_hex(etag_material.as_bytes());
     let snapshot = Snapshot {
-        notes: files,
         generated_at: format_rfc3339(SystemTime::now()),
+        notes: files,
     };
     let mut plain = serde_json::to_vec(&snapshot).map_err(|error| error.to_string())?;
     plain.push(b'\n');
@@ -395,11 +587,15 @@ fn snapshot_payload(state: &AppState) -> Result<(Vec<u8>, Vec<u8>, String), Stri
     Ok((plain, compressed, etag))
 }
 
-fn confined_path(state: &AppState, requested: &str) -> Result<PathBuf, PathError> {
+fn confined_path(_state: &AppState, requested: &str) -> Result<PathBuf, PathError> {
     if requested.is_empty()
         || requested.contains('\0')
         || requested.contains('\\')
         || Path::new(requested).is_absolute()
+        || (requested != "."
+            && requested
+                .split('/')
+                .any(|component| component.is_empty() || component == "." || component == ".."))
     {
         return Err(PathError::Invalid);
     }
@@ -419,93 +615,80 @@ fn confined_path(state: &AppState, requested: &str) -> Result<PathBuf, PathError
     {
         return Err(PathError::Invalid);
     }
-    if contains_symlink(&state.vault_root, relative).map_err(|_| PathError::Internal)? {
-        return Err(PathError::NotFound);
-    }
-    let candidate = state.vault_root.join(relative);
-    let canonical = canonicalize_missing(&candidate).map_err(|_| PathError::Internal)?;
-    if !canonical.starts_with(&state.canonical_root) {
-        return Err(PathError::NotFound);
-    }
-    Ok(candidate)
+    Ok(relative.to_path_buf())
 }
 
-fn contains_symlink(root: &Path, relative: &Path) -> std::io::Result<bool> {
-    let mut current = root.to_path_buf();
-    for component in relative.components() {
-        let Component::Normal(part) = component else {
-            continue;
-        };
-        current.push(part);
-        match fs::symlink_metadata(&current) {
-            Ok(metadata) if metadata.file_type().is_symlink() => return Ok(true),
-            Ok(_) => {}
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
-            Err(error) => return Err(error),
-        }
+fn parse_range(value: &str, length: u64) -> Result<(u64, u64), RangeError> {
+    let value = value.strip_prefix("bytes=").ok_or(RangeError::Invalid)?;
+    if value.contains(',') {
+        return Err(RangeError::Invalid);
     }
-    Ok(false)
-}
-
-fn canonicalize_missing(path: &Path) -> std::io::Result<PathBuf> {
-    if path.exists() {
-        return fs::canonicalize(path);
-    }
-    let mut parent = path.to_path_buf();
-    while !parent.exists() {
-        let Some(next) = parent.parent() else {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                "no parent",
-            ));
-        };
-        if next == parent {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                "no parent",
-            ));
-        }
-        parent = next.to_path_buf();
-    }
-    let canonical_parent = fs::canonicalize(&parent)?;
-    let remainder = path.strip_prefix(&parent).unwrap_or(Path::new(""));
-    Ok(canonical_parent.join(remainder))
-}
-
-fn parse_range(value: &str, length: usize) -> Result<(usize, usize), ()> {
-    let value = value.strip_prefix("bytes=").ok_or(())?;
-    if value.contains(',') || length == 0 {
-        return Err(());
-    }
-    let (start, end) = value.split_once('-').ok_or(())?;
+    let (start, end) = value.split_once('-').ok_or(RangeError::Invalid)?;
     if start.is_empty() {
-        let suffix = end.parse::<usize>().map_err(|_| ())?;
-        if suffix == 0 {
-            return Err(());
+        let suffix = end.parse::<u64>().map_err(|_| RangeError::Invalid)?;
+        if suffix == 0 || length == 0 {
+            return Err(RangeError::Invalid);
         }
         return Ok((length.saturating_sub(suffix), length - 1));
     }
-    let start = start.parse::<usize>().map_err(|_| ())?;
+    let start = start.parse::<u64>().map_err(|_| RangeError::Invalid)?;
     if start >= length {
-        return Err(());
+        return Err(RangeError::NoOverlap);
     }
     let end = if end.is_empty() {
         length - 1
     } else {
-        end.parse::<usize>().map_err(|_| ())?.min(length - 1)
+        end.parse::<u64>()
+            .map_err(|_| RangeError::Invalid)?
+            .min(length - 1)
     };
     if start > end {
-        return Err(());
+        return Err(RangeError::Invalid);
     }
     Ok((start, end))
 }
 
-fn content_type(path: &Path) -> String {
-    if path.extension().and_then(|ext| ext.to_str()) == Some("md") {
-        "text/plain; charset=utf-8".to_owned()
-    } else {
-        "application/octet-stream".to_owned()
+fn content_type(path: &Path, sample: &[u8]) -> String {
+    let extension = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or_default();
+    match extension {
+        "md" => "text/plain; charset=utf-8".to_owned(),
+        "txt" => "text/plain; charset=utf-8".to_owned(),
+        "json" => "application/json".to_owned(),
+        "html" | "htm" => "text/html; charset=utf-8".to_owned(),
+        "css" => "text/css; charset=utf-8".to_owned(),
+        "js" => "text/javascript; charset=utf-8".to_owned(),
+        "xml" => "application/xml".to_owned(),
+        "pdf" => "application/pdf".to_owned(),
+        "png" => "image/png".to_owned(),
+        "jpg" | "jpeg" => "image/jpeg".to_owned(),
+        "gif" => "image/gif".to_owned(),
+        "svg" => "image/svg+xml".to_owned(),
+        _ => detect_content_type(sample),
     }
+}
+
+fn detect_content_type(sample: &[u8]) -> String {
+    if sample.starts_with(&[0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a]) {
+        return "image/png".to_owned();
+    }
+    if sample.starts_with(&[0xff, 0xd8, 0xff]) {
+        return "image/jpeg".to_owned();
+    }
+    if sample.starts_with(b"GIF87a") || sample.starts_with(b"GIF89a") {
+        return "image/gif".to_owned();
+    }
+    if sample.starts_with(b"%PDF-") {
+        return "application/pdf".to_owned();
+    }
+    if sample.iter().all(|byte| {
+        *byte == b'\t' || *byte == b'\n' || *byte == b'\r' || (0x20..=0x7e).contains(byte)
+    }) {
+        return "text/plain; charset=utf-8".to_owned();
+    }
+    "application/octet-stream".to_owned()
 }
 
 fn safe_filename(path: &Path) -> String {
@@ -623,5 +806,169 @@ mod tests {
     #[test]
     fn representative_request_timeout_is_bounded() {
         assert_eq!(READ_TIMEOUT, Duration::from_secs(120));
+    }
+
+    #[test]
+    fn authentication_failures_match_go_threshold_and_block() {
+        let mut throttle = AuthThrottle::default();
+        for _ in 0..4 {
+            assert!(throttle.record("127.0.0.1").is_none());
+        }
+        assert_eq!(throttle.record("127.0.0.1"), Some(AUTH_BLOCK));
+        assert!(throttle.record("127.0.0.1").is_some());
+        assert!(throttle.record("127.0.0.2").is_none());
+        assert_eq!(retry_after_seconds(Duration::from_millis(1_001)), 2);
+        assert_eq!(retry_after_seconds(Duration::from_secs(2)), 2);
+    }
+
+    #[test]
+    fn confined_paths_match_fs_valid_path_rules() {
+        assert!(confined_path(&dummy_state(), ".").is_ok());
+        for invalid in ["a//b", "a/./b", "a/../b", "a/", "/a", ""] {
+            assert!(
+                confined_path(&dummy_state(), invalid).is_err(),
+                "expected invalid path: {invalid:?}"
+            );
+        }
+    }
+
+    fn dummy_state() -> AppState {
+        AppState {
+            vault_root: PathBuf::new(),
+            root_dir: Arc::new(
+                cap_std::fs::Dir::open_ambient_dir(".", cap_std::ambient_authority())
+                    .expect("open current directory"),
+            ),
+            token: Arc::from(Vec::<u8>::new()),
+            version: String::new(),
+            auth_failures: Mutex::new(AuthThrottle::default()),
+        }
+    }
+
+    #[test]
+    fn range_parser_rejects_overflow_without_unbounded_allocation() {
+        assert!(parse_range("bytes=18446744073709551616-", 5).is_err());
+        assert!(parse_range("bytes=-18446744073709551616", 5).is_err());
+        assert_eq!(parse_range("bytes=0-18446744073709551615", 5), Ok((0, 4)));
+    }
+
+    #[test]
+    fn serve_content_mime_fallback_matches_representative_types() {
+        assert_eq!(
+            content_type(Path::new("note.md"), b"plain text"),
+            "text/plain; charset=utf-8"
+        );
+        assert_eq!(
+            content_type(Path::new("data.json"), b"{}"),
+            "application/json"
+        );
+        assert_eq!(
+            content_type(Path::new("asset.bin"), &[0, 1, 2]),
+            "application/octet-stream"
+        );
+        assert_eq!(detect_content_type(&[]), "text/plain; charset=utf-8");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn opened_root_allows_internal_but_rejects_external_symlinks() {
+        use std::os::unix::fs::symlink;
+
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-symlink-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        let outside = root.with_extension("outside");
+        fs::create_dir(&root).expect("create test root");
+        fs::write(root.join("inside.md"), b"inside").expect("write inside");
+        fs::write(&outside, b"outside").expect("write outside");
+        symlink("inside.md", root.join("internal.md")).expect("create internal link");
+        symlink(&outside, root.join("external.md")).expect("create external link");
+
+        let dir = cap_std::fs::Dir::open_ambient_dir(&root, cap_std::ambient_authority())
+            .expect("open test root");
+        let mut internal = dir.open("internal.md").expect("open internal link");
+        let mut content = String::new();
+        internal
+            .read_to_string(&mut content)
+            .expect("read internal link");
+        assert_eq!(content, "inside");
+        assert!(dir.open("external.md").is_err());
+
+        fs::remove_dir_all(&root).expect("remove test root");
+        fs::remove_file(outside).expect("remove outside file");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn opened_root_rejects_external_symlink_replacement_races() {
+        use std::{
+            os::unix::fs::symlink,
+            sync::{
+                Arc,
+                atomic::{AtomicBool, Ordering},
+            },
+            thread,
+        };
+
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-race-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        let outside = root.with_extension("outside");
+        fs::create_dir(&root).expect("create test root");
+        fs::write(root.join("inside.md"), b"inside").expect("write inside");
+        fs::write(&outside, b"outside").expect("write outside");
+        let raced = root.join("raced.md");
+        let replacement = root.join("raced.replacement");
+        symlink("inside.md", &raced).expect("create initial internal link");
+
+        let dir = Arc::new(
+            cap_std::fs::Dir::open_ambient_dir(&root, cap_std::ambient_authority())
+                .expect("open test root"),
+        );
+        let stop = Arc::new(AtomicBool::new(false));
+        let writer_stop = Arc::clone(&stop);
+        let writer_root = root.clone();
+        let writer = thread::spawn(move || {
+            for iteration in 0..20_000 {
+                if writer_stop.load(Ordering::Relaxed) {
+                    break;
+                }
+                let target = if iteration % 2 == 0 {
+                    "inside.md".to_owned()
+                } else {
+                    writer_root
+                        .with_extension("outside")
+                        .to_string_lossy()
+                        .into_owned()
+                };
+                let _ = fs::remove_file(&replacement);
+                symlink(target, &replacement).expect("create replacement link");
+                fs::rename(&replacement, &raced).expect("atomically replace raced link");
+            }
+        });
+
+        let mut disclosed = false;
+        for _ in 0..20_000 {
+            let Ok(mut file) = dir.open("raced.md") else {
+                continue;
+            };
+            let mut content = String::new();
+            file.read_to_string(&mut content).expect("read raced file");
+            if content == "outside" {
+                disclosed = true;
+                break;
+            }
+            assert_eq!(content, "inside");
+        }
+        stop.store(true, Ordering::Relaxed);
+        writer.join().expect("join replacement writer");
+        assert!(!disclosed, "external symlink target was disclosed");
+
+        fs::remove_dir_all(&root).expect("remove test root");
+        fs::remove_file(outside).expect("remove outside file");
     }
 }

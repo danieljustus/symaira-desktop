@@ -927,6 +927,7 @@ name = "symdesk-protocol"
 version = "0.0.0"
 dependencies = [
  "axum",
+ "cap-std",
  "flate2",
  "httpdate",
  "serde",

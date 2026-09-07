@@ -8,6 +8,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+cap-std.workspace = true
 axum.workspace = true
 flate2.workspace = true
 httpdate.workspace = true

@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "ae86331930fdfa2b128b68ae5af7437091b9949a",
-    "release": "v0.12.2"
+    "commit": "136f01570944af16c4bc447b7eb63d03125aac3f",
+    "release": "post-v0.12.2-security-855"
   },
   "cases": [
     {
@@ -34,6 +34,30 @@
       "auth": "valid"
     },
     {
+      "id": "status-wrong-auth-2",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "wrong"
+    },
+    {
+      "id": "status-wrong-auth-3",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "wrong"
+    },
+    {
+      "id": "status-wrong-auth-4",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "wrong"
+    },
+    {
+      "id": "status-wrong-auth-5",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "wrong"
+    },
+    {
       "id": "snapshot-plain",
       "method": "GET",
       "path": "/api/v1/snapshot",
@@ -58,9 +82,33 @@
       }
     },
     {
+      "id": "snapshot-gzip-q0",
+      "method": "GET",
+      "path": "/api/v1/snapshot",
+      "auth": "valid",
+      "headers": {
+        "Accept-Encoding": "br, gzip;q=0"
+      }
+    },
+    {
+      "id": "snapshot-head-gzip",
+      "method": "HEAD",
+      "path": "/api/v1/snapshot",
+      "auth": "valid",
+      "headers": {
+        "Accept-Encoding": "gzip;q=0"
+      }
+    },
+    {
       "id": "file-exact-bytes",
       "method": "GET",
       "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-internal-symlink",
+      "method": "GET",
+      "path": "/api/v1/files?path=internal.md",
       "auth": "valid"
     },
     {
@@ -101,6 +149,27 @@
       "method": "GET",
       "path": "/api/v1/files?path=bad%00.md",
       "auth": "valid"
+    },
+    {
+      "id": "file-invalid-separator",
+      "method": "GET",
+      "path": "/api/v1/files?path=foo//bar.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-dot-segment",
+      "method": "GET",
+      "path": "/api/v1/files?path=foo/./bar.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-range-overflow",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid",
+      "headers": {
+        "Range": "bytes=18446744073709551616-"
+      }
     },
     {
       "id": "file-internal",

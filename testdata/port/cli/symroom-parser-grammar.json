@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "b8e8a80b506cb247f21b39c39bed904c10829ebf",
+    "commit": "0c7cf695c881385265c846d5e51fb9be9e1b20f3",
     "release": "post-v0.12.2-security-855"
   },
   "usage_text": "symroom - room management and coordination tool\n\nUsage:\n  symroom \u003csubcommand\u003e [flags] [args]\n\nAvailable Subcommands:\n  init           Initialize a room\n  identity       Manage Ed25519 identities\n  member         Manage room members\n  note           Post a journal note\n  decide         Record a room decision\n  artifact       Manage room artifacts\n  log            Display room journal log\n  verify         Verify journal chains and signatures\n  index          Rebuild or manage derived SQLite index\n  run            Manage room runs\n  checkpoint     Manage run checkpoints\n  watch          Watch symdesk events stream\n  brain-profile  Emit a symbrain profile\n  doctor         Run system and environment checks\n  version        Print version information\n  mcp            Run MCP server mode\n\nUse \"symroom \u003csubcommand\u003e --help\" for more information about a subcommand.\n",

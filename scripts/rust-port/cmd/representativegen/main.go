@@ -84,7 +84,7 @@ func generated() suite {
 	prepare := []string{"ls", "--vault", vault, "--json"}
 	return suite{
 		SchemaVersion: 1,
-		Oracle:        oracle{Commit: "136f01570944af16c4bc447b7eb63d03125aac3f", Release: "post-v0.12.2-security-855"},
+		Oracle:        oracle{Commit: "e74b16603ac4bca0efb8a015786643a4b4ceeaeb", Release: "post-v0.12.2-security-880"},
 		Cases: []caseDef{
 			{ID: "version-positional-ls-not-command", Args: []string{"version", "ls"}},
 			{ID: "version-positional-search-not-command", Args: []string{"version", "search"}},

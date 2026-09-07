@@ -3,7 +3,7 @@
 `TODO` means the contract is identified but lacks both a language-neutral
 fixture and Rust parity test. `PASS` requires executable CI evidence; prose,
 compilation, or a green unit test in only one language is not parity. The Go
-behavior oracle is commit `136f01570944af16c4bc447b7eb63d03125aac3f` / release reference `post-v0.12.2-security-855`; the immutable VALUE baseline remains `ae863319` / `v0.12.2`.
+behavior oracle is commit `e74b16603ac4bca0efb8a015786643a4b4ceeaeb` / release reference `post-v0.12.2-security-880`; the immutable VALUE baseline remains `ae863319` / `v0.12.2`.
 
 | ID | Seam | Fixture / input | Go oracle | Expected contract | Rust evidence | Platforms | Compare | Status |
 |---|---|---|---|---|---|---|---|---|

@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 )
@@ -194,19 +193,9 @@ func (t *throttle) cleanupLocked() {
 	}
 }
 
-// clientIP extracts the best-guess client IP from an HTTP request. It
-// respects the X-Forwarded-For and X-Real-IP headers for deployments
-// behind a reverse proxy, and falls back to r.RemoteAddr.
+// clientIP extracts the socket peer IP. Forwarding headers are intentionally
+// ignored because callers can spoof them unless a trusted proxy is configured.
 func clientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if idx := strings.IndexByte(xff, ','); idx >= 0 {
-			return strings.TrimSpace(xff[:idx])
-		}
-		return strings.TrimSpace(xff)
-	}
-	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		return strings.TrimSpace(xri)
-	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr

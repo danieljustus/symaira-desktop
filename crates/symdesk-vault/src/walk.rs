@@ -37,7 +37,8 @@ pub struct WalkEntry {
 /// Propagates directory reads and symlink-target read failures.
 pub fn walk_all(root: &Path) -> io::Result<Vec<WalkEntry>> {
     let mut output = Vec::new();
-    walk_directory(root, root, &mut output)?;
+    let root = root.canonicalize()?;
+    walk_directory(&root, &root, &mut output)?;
     Ok(output)
 }
 
@@ -69,7 +70,8 @@ pub fn walk_markdown_with<F>(root: &Path, mut callback: F) -> io::Result<()>
 where
     F: FnMut(&Path) -> io::Result<()>,
 {
-    walk_directory_visit(root, root, &mut |entry| {
+    let root = root.canonicalize()?;
+    walk_directory_visit(&root, &root, &mut |entry| {
         if entry.path.extension() == Some(OsStr::new("md")) {
             callback(&entry.path)?;
         }
@@ -88,10 +90,14 @@ fn walk_directory_visit<F>(root: &Path, directory: &Path, callback: &mut F) -> i
 where
     F: FnMut(WalkEntry) -> io::Result<()>,
 {
-    // The caller-selected vault root is intentionally readable. Recursion only
-    // uses child directories returned by read_dir, and symlinks are never followed.
-    // lgtm[rust/path-injection]
-    let mut entries: Vec<_> = fs::read_dir(directory)?.collect::<Result<_, _>>()?;
+    let directory = directory.canonicalize()?;
+    if !directory.starts_with(root) {
+        return Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "directory resolves outside vault root",
+        ));
+    }
+    let mut entries: Vec<_> = fs::read_dir(&directory)?.collect::<Result<_, _>>()?;
     entries.sort_by_key(fs::DirEntry::file_name);
     for entry in entries {
         let name = entry.file_name();

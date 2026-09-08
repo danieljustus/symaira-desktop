@@ -6,6 +6,12 @@
 //! Axum defaults: authentication, headers, path confinement, snapshots, and
 //! file ranges are all tested at the HTTP boundary.
 
+mod snapshot_cache;
+#[cfg(test)]
+mod snapshot_cache_contracts;
+
+use snapshot_cache::{SnapshotCache, SnapshotPayload};
+
 use std::{
     fmt::Write as _,
     fs,
@@ -45,10 +51,10 @@ pub struct HttpConfig {
 
 struct AppState {
     vault_root: PathBuf,
-    root_dir: Arc<cap_std::fs::Dir>,
     token: Arc<[u8]>,
     version: String,
     auth_failures: Mutex<AuthThrottle>,
+    snapshot_cache: SnapshotCache,
 }
 
 #[derive(Debug, Default)]
@@ -121,14 +127,12 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
     let actual = listener
         .local_addr()
         .map_err(|error| format!("read HTTP listener address: {error}"))?;
-    let root_dir = cap_std::fs::Dir::open_ambient_dir(&root, cap_std::ambient_authority())
-        .map_err(|error| format!("open vault root: {error}"))?;
     let state = Arc::new(AppState {
         vault_root: root.clone(),
-        root_dir: Arc::new(root_dir),
         token: Arc::from(config.token.into_bytes()),
         version: config.version,
         auth_failures: Mutex::new(AuthThrottle::default()),
+        snapshot_cache: SnapshotCache::new(&root),
     });
     let app = router(state);
     eprintln!("LISTENING http://{actual}");
@@ -345,10 +349,18 @@ async fn handle_snapshot(
     headers: HeaderMap,
     method: Method,
 ) -> Response {
-    let (plain, compressed, etag) = match snapshot_payload(&state) {
+    let payload = match state.snapshot_cache.get_or_build(
+        || current_root_identity(&state),
+        || snapshot_payload(&state),
+    ) {
         Ok(value) => value,
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
     };
+    let SnapshotPayload {
+        plain,
+        compressed,
+        etag,
+    } = payload.as_ref();
     let quoted = format!("\"{etag}\"");
     let mut common = vec![(header::ETAG, quoted.clone())];
     if headers
@@ -370,9 +382,9 @@ async fn handle_snapshot(
             StatusCode::OK,
             common,
             if method == Method::HEAD {
-                Vec::new()
+                axum::body::Bytes::new()
             } else {
-                compressed
+                compressed.clone()
             },
         );
     }
@@ -380,7 +392,7 @@ async fn handle_snapshot(
     if method == Method::HEAD {
         return bytes_response(StatusCode::OK, common, Vec::new());
     }
-    bytes_response(StatusCode::OK, common, plain)
+    bytes_response(StatusCode::OK, common, plain.clone())
 }
 
 async fn handle_file(
@@ -402,7 +414,11 @@ async fn handle_file(
             return json_error(StatusCode::BAD_REQUEST, "a vault-relative path is required");
         }
     };
-    let mut file = match state.root_dir.open(&relative) {
+    let root_dir = match open_current_root(&state) {
+        Ok(root_dir) => root_dir,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
+    };
+    let mut file = match root_dir.open(&relative) {
         Ok(file) => file,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
     };
@@ -530,14 +546,47 @@ async fn handle_not_found() -> Response {
     )
 }
 
-fn snapshot_payload(state: &AppState) -> Result<(Vec<u8>, Vec<u8>, String), String> {
+fn open_current_root(state: &AppState) -> Result<cap_std::fs::Dir, String> {
+    cap_std::fs::Dir::open_ambient_dir(&state.vault_root, cap_std::ambient_authority())
+        .map_err(|error| format!("open vault root: {error}"))
+}
+
+fn current_root_identity(state: &AppState) -> Option<String> {
+    let root = open_current_root(state).ok()?;
+    let metadata = root.dir_metadata().ok()?;
+    #[cfg(unix)]
+    {
+        use cap_std::fs::MetadataExt;
+        Some(format!("{}:{}", metadata.dev(), metadata.ino()))
+    }
+    #[cfg(not(unix))]
+    {
+        Some(format!("{metadata:?}"))
+    }
+}
+
+#[cfg(windows)]
+fn normalize_snapshot_path(path: &Path) -> String {
+    path.to_string_lossy().replace('\\', "/")
+}
+
+#[cfg(not(windows))]
+fn normalize_snapshot_path(path: &Path) -> String {
+    path.to_str().unwrap_or_default().to_owned()
+}
+
+fn snapshot_payload(state: &AppState) -> Result<SnapshotPayload, String> {
     let mut files = Vec::new();
     let mut etag_material = String::new();
+    let root_dir = open_current_root(state)?;
     for relative in walk_markdown(&state.vault_root).map_err(|error| error.to_string())? {
-        let relative_string = relative
+        // Preserve the pre-cache adapter's explicit rejection rather than
+        // silently aliasing invalid paths to empty or replacement strings.
+        relative
             .to_str()
             .ok_or_else(|| "vault path is not UTF-8".to_owned())?;
-        let mut file = match state.root_dir.open(&relative) {
+        let logical_path = normalize_snapshot_path(&relative);
+        let mut file = match root_dir.open(&relative) {
             Ok(file) => file,
             // An external symlink, a concurrently removed file, and a file
             // replaced by an escaping symlink are all intentionally omitted.
@@ -563,13 +612,9 @@ fn snapshot_payload(state: &AppState) -> Result<(Vec<u8>, Vec<u8>, String), Stri
             .map(|value| value.into_std())
             .unwrap_or(UNIX_EPOCH);
         let mtime_ns = unix_nanos(modified);
-        let _ = writeln!(
-            etag_material,
-            "{relative_string}\0{}\0{mtime_ns}",
-            bytes.len()
-        );
+        let _ = writeln!(etag_material, "{logical_path}\0{}\0{mtime_ns}", bytes.len());
         files.push(SnapshotNote {
-            path: relative_string.replace('\\', "/"),
+            path: logical_path,
             content: String::from_utf8_lossy(&bytes).into_owned(),
             modified_at: format_rfc3339(modified),
         });
@@ -584,7 +629,11 @@ fn snapshot_payload(state: &AppState) -> Result<(Vec<u8>, Vec<u8>, String), Stri
     let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
     std::io::Write::write_all(&mut encoder, &plain).map_err(|error| error.to_string())?;
     let compressed = encoder.finish().map_err(|error| error.to_string())?;
-    Ok((plain, compressed, etag))
+    Ok(SnapshotPayload {
+        plain: plain.into(),
+        compressed: compressed.into(),
+        etag,
+    })
 }
 
 fn confined_path(_state: &AppState, requested: &str) -> Result<PathBuf, PathError> {
@@ -749,9 +798,9 @@ fn json_error(status: StatusCode, message: &str) -> Response {
 fn bytes_response(
     status: StatusCode,
     headers: Vec<(header::HeaderName, String)>,
-    body: Vec<u8>,
+    body: impl Into<Body>,
 ) -> Response {
-    let mut response = Response::new(Body::from(body));
+    let mut response = Response::new(body.into());
     *response.status_mut() = status;
     for (name, value) in headers {
         if let Ok(value) = HeaderValue::try_from(value) {
@@ -786,6 +835,15 @@ async fn shutdown_signal() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn snapshot_path_normalization_matches_go_to_slash_without_corrupting_unix_names() {
+        let path = Path::new("folder\\literal\\name.md");
+        #[cfg(unix)]
+        assert_eq!(normalize_snapshot_path(path), "folder\\literal\\name.md");
+        #[cfg(windows)]
+        assert_eq!(normalize_snapshot_path(path), "folder/name.md");
+    }
 
     #[test]
     fn constant_time_comparison_checks_length_without_shortcut() {
@@ -835,13 +893,10 @@ mod tests {
     fn dummy_state() -> AppState {
         AppState {
             vault_root: PathBuf::new(),
-            root_dir: Arc::new(
-                cap_std::fs::Dir::open_ambient_dir(".", cap_std::ambient_authority())
-                    .expect("open current directory"),
-            ),
             token: Arc::from(Vec::<u8>::new()),
             version: String::new(),
             auth_failures: Mutex::new(AuthThrottle::default()),
+            snapshot_cache: SnapshotCache::uncached(),
         }
     }
 

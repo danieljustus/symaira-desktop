@@ -12,15 +12,22 @@ struct MimeTypes {
 impl MimeTypes {
     fn insert(&mut self, extension: String, media_type: String) {
         self.lower
-            .insert(extension.to_lowercase(), media_type.clone());
+            .insert(go_lowercase(&extension), media_type.clone());
         self.exact.insert(extension, media_type);
     }
 
     fn get(&self, extension: &str) -> Option<&String> {
         self.exact
             .get(extension)
-            .or_else(|| self.lower.get(&extension.to_lowercase()))
+            .or_else(|| self.lower.get(&go_lowercase(extension)))
     }
+}
+
+fn go_lowercase(value: &str) -> String {
+    value
+        .chars()
+        .map(|character| character.to_lowercase().next().unwrap_or(character))
+        .collect()
 }
 #[cfg(target_os = "linux")]
 use std::{fs, sync::OnceLock};
@@ -140,7 +147,8 @@ fn normalize_media_type(input: &str) -> Option<String> {
         let after_semicolon = remainder.strip_prefix(';')?;
         remainder = after_semicolon.trim_start();
         if remainder.is_empty() {
-            return Some(String::new());
+            // Go's ParseMediaType ignores a final semicolon.
+            break;
         }
         let end = remainder.find(|c: char| c == '=' || c.is_ascii_whitespace() || c == ';')?;
         let name = &remainder[..end];
@@ -194,6 +202,7 @@ fn normalize_media_type(input: &str) -> Option<String> {
         }
         remainder = after;
     }
+    params = decode_parameter_continuations(params);
     // Go preserves the original value unless text/* lacks a non-empty,
     // lower-case charset parameter and therefore invokes FormatMediaType.
     let Some((major, subtype)) = base.split_once('/') else {
@@ -203,6 +212,11 @@ fn normalize_media_type(input: &str) -> Option<String> {
         return Some(input.to_owned());
     }
     if params.is_empty() {
+        if input.contains(';') {
+            // setExtensionType passes the original parameterized value to
+            // FormatMediaType; its media-type token is therefore invalid.
+            return Some(String::new());
+        }
         params.push(("charset".to_owned(), "utf-8".to_owned()));
     } else if params
         .iter()
@@ -235,6 +249,109 @@ fn normalize_media_type(input: &str) -> Option<String> {
     }
     Some(out)
 }
+fn decode_parameter_continuations(params: Vec<(String, String)>) -> Vec<(String, String)> {
+    let mut plain = Vec::new();
+    let mut continuations: Vec<(String, Vec<(String, String)>)> = Vec::new();
+    for (name, value) in params {
+        if let Some((base, _)) = name.split_once('*') {
+            if let Some((_, pieces)) = continuations.iter_mut().find(|(key, _)| key == base) {
+                pieces.push((name, value));
+            } else {
+                continuations.push((base.to_owned(), vec![(name, value)]));
+            }
+        } else {
+            plain.push((name, value));
+        }
+    }
+
+    for (base, pieces) in continuations {
+        let single = format!("{base}*");
+        if let Some((_, value)) = pieces.iter().find(|(name, _)| name == &single) {
+            if let Some((decoded, true)) = percent_decode_2231(value) {
+                set_parameter(&mut plain, base, decoded);
+            }
+            continue;
+        }
+
+        let mut value = String::new();
+        let mut valid = false;
+        for index in 0.. {
+            let simple = format!("{base}*{index}");
+            if let Some((_, piece)) = pieces.iter().find(|(name, _)| name == &simple) {
+                valid = true;
+                value.push_str(piece);
+                continue;
+            }
+            let encoded = format!("{simple}*");
+            let Some((_, piece)) = pieces.iter().find(|(name, _)| name == &encoded) else {
+                break;
+            };
+            valid = true;
+            if index == 0 {
+                if let Some((decoded, true)) = percent_decode_2231(piece) {
+                    value.push_str(&decoded);
+                }
+            } else if let Some((decoded, _)) = percent_decode_2231(piece) {
+                value.push_str(&decoded);
+            }
+        }
+        if valid {
+            set_parameter(&mut plain, base, value);
+        }
+    }
+    plain
+}
+
+fn percent_decode_2231(value: &str) -> Option<(String, bool)> {
+    let (charset, value) = value.split_once('\'')?;
+    let (_, value) = value.split_once('\'')?;
+    let charset = charset.to_ascii_lowercase();
+    if charset != "us-ascii" && charset != "utf-8" {
+        return Some((String::new(), false));
+    }
+    let (decoded, valid) = percent_decode(value);
+    Some((decoded, valid))
+}
+
+fn percent_decode(value: &str) -> (String, bool) {
+    let mut output = String::with_capacity(value.len());
+    let bytes = value.as_bytes();
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] != b'%' {
+            output.push(bytes[index] as char);
+            index += 1;
+            continue;
+        }
+        if index + 2 >= bytes.len()
+            || !bytes[index + 1].is_ascii_hexdigit()
+            || !bytes[index + 2].is_ascii_hexdigit()
+        {
+            return (String::new(), false);
+        }
+        output.push((hex_value(bytes[index + 1]) * 16 + hex_value(bytes[index + 2])) as char);
+        index += 3;
+    }
+    (output, true)
+}
+
+fn hex_value(value: u8) -> u8 {
+    match value {
+        b'0'..=b'9' => value - b'0',
+        b'a'..=b'f' => value - b'a' + 10,
+        b'A'..=b'F' => value - b'A' + 10,
+        _ => 0,
+    }
+}
+
+fn set_parameter(params: &mut Vec<(String, String)>, name: String, value: String) {
+    if let Some((_, existing)) = params.iter_mut().find(|(key, _)| key == &name) {
+        *existing = value;
+    } else {
+        params.push((name, value));
+    }
+}
+
 #[cfg(any(test, target_os = "linux"))]
 fn is_token(value: &str) -> bool {
     !value.is_empty()

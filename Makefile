@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential sidecar-roundtrip differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates representative-fixtures-generate representative-fixtures-check representative-differential http-differential mcp-fixtures-generate mcp-fixtures-check mcp-differential value-001
+.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential sidecar-roundtrip differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates value-001-validate representative-fixtures-generate representative-fixtures-check representative-differential http-differential mcp-fixtures-generate mcp-fixtures-check mcp-differential value-001
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -171,6 +171,13 @@ VALUE_SAMPLES ?= 100
 VALUE_WARMUPS ?= 20
 VALUE_GO_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 VALUE_OUTPUT ?= docs/rust-port/results/value001-latest.json
+VALUE_RETAINED ?= docs/rust-port/results/value001-retained.json
+value-001-validate:
+	python3 scripts/rust-port/validate_value001_retained.py "$(VALUE_RETAINED)"
+	python3 scripts/rust-port/value001_report.py "$(VALUE_RETAINED)"
+	python3 scripts/rust-port/value001_report.py docs/rust-port/results/value001-latest.json
+
+
 value-001:
 	@mkdir -p bin/port "$$(dirname "$(VALUE_OUTPUT)")"
 	SYMDESK_VERSION=0.12.2 cargo build --release -p symdesk-cli --locked

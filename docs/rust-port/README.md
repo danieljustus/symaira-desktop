@@ -66,6 +66,7 @@ The measured Go baseline is in
 - [`work-items.json`](work-items.json) — machine-readable dependency graph.
 - [`baseline-20260906.json`](baseline-20260906.json) — measured Go reference metrics.
 - [`value001-result.schema.json`](value001-result.schema.json) — schema for measured VALUE-001 artifacts.
+- [`results/value001-retained.json`](results/value001-retained.json) and its provenance sidecar — privacy-reviewed derivative of the verified 655d248 capture; validate with `make value-001-validate`.
 - [`value-signal-version-20260906.json`](value-signal-version-20260906.json) — non-representative first Rust slice measurements.
 
 ## Running VALUE-001

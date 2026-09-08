@@ -53,7 +53,7 @@
       "status": "ready",
       "depends_on": ["RUST-005"],
       "contract_rows": ["CLI-000", "MCP-000", "HTTP-000", "SEC-003", "VALUE-001"],
-      "acceptance": ["make representative-differential", "make rust-full-gate", "cargo run -p rust-port-valuegate -- --phase early --check"]
+      "acceptance": ["make representative-differential", "make rust-gates", "make value-001-validate", "python3 scripts/rust-port/test_value001_report.py", "python3 scripts/rust-port/test_validate_value001_retained.py"]
     },
     {
       "id": "RUST-007",

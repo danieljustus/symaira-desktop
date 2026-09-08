@@ -6,7 +6,12 @@ use std::{
     process::ExitCode,
 };
 
+use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
+
+fn process_exit(code: CoreExitCode) -> ExitCode {
+    ExitCode::from(code.as_u8())
+}
 
 const VERSION: &str = match option_env!("SYMROOM_VERSION") {
     Some(version) => version,
@@ -56,7 +61,7 @@ fn main() -> ExitCode {
     let rendered = if json {
         match render_version_json("symroom", VERSION) {
             Ok(value) => value,
-            Err(_) => return ExitCode::from(1),
+            Err(_) => return process_exit(CoreExitCode::Generic),
         }
     } else {
         render_version_text("symroom", VERSION)
@@ -66,14 +71,14 @@ fn main() -> ExitCode {
 
 fn write_stdout(value: String) -> ExitCode {
     if io::stdout().write_all(value.as_bytes()).is_err() {
-        return ExitCode::from(1);
+        return process_exit(CoreExitCode::Generic);
     }
-    ExitCode::SUCCESS
+    process_exit(CoreExitCode::Ok)
 }
 
 fn write_stderr(value: &str, code: u8) -> ExitCode {
     if io::stderr().write_all(value.as_bytes()).is_err() {
-        return ExitCode::from(1);
+        return process_exit(CoreExitCode::Generic);
     }
     ExitCode::from(code)
 }

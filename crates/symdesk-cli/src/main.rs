@@ -13,8 +13,13 @@ use std::{
 use clap::{Arg, ArgAction, Command};
 use serde::Serialize;
 use serde_json::json;
+use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
 use symdesk_index::{ListedDocument, Sidecar, path_for_vault};
+
+fn process_exit(code: CoreExitCode) -> ExitCode {
+    ExitCode::from(code.as_u8())
+}
 
 const VERSION: &str = match option_env!("SYMDESK_VERSION") {
     Some(version) => version,
@@ -27,14 +32,14 @@ fn main() -> ExitCode {
         return write_stdout(format!("symdesk version {VERSION}\n"));
     }
     if args.iter().skip(2).any(|arg| arg == "--version") {
-        return write_stderr("unknown flag: --version\n", 1);
+        return write_stderr("unknown flag: --version\n", CoreExitCode::Generic);
     }
 
     let matches = match cli().try_get_matches_from(args) {
         Ok(matches) => matches,
         Err(error) => {
             let _ = error.print();
-            return ExitCode::from(1);
+            return process_exit(CoreExitCode::Generic);
         }
     };
     let output = matches
@@ -43,7 +48,7 @@ fn main() -> ExitCode {
     if !output.is_empty() && !matches!(output, "text" | "json" | "yaml") {
         return write_stderr(
             &format!("invalid --output value {output:?} (want text|json|yaml)\n"),
-            1,
+            CoreExitCode::Generic,
         );
     }
     let output_json = matches.get_flag("json") || output == "json";
@@ -52,7 +57,7 @@ fn main() -> ExitCode {
             let rendered = if output_json {
                 match render_version_json("symdesk", VERSION) {
                     Ok(value) => value,
-                    Err(_) => return ExitCode::from(1),
+                    Err(_) => return process_exit(CoreExitCode::Generic),
                 }
             } else {
                 render_version_text("symdesk", VERSION)
@@ -90,15 +95,15 @@ fn main() -> ExitCode {
             )
         }
         Some(("mcp", _)) => match mcp::serve(matches.get_one::<String>("vault").cloned()) {
-            Ok(()) => ExitCode::SUCCESS,
-            Err(error) => write_stderr(&format!("mcp: {error}\n"), 1),
+            Ok(()) => process_exit(CoreExitCode::Ok),
+            Err(error) => write_stderr(&format!("mcp: {error}\n"), CoreExitCode::Generic),
         },
         Some(("serve", command)) => run_http_server(
             command.get_one::<String>("listen").cloned(),
             command.get_one::<String>("token").cloned(),
             matches.get_one::<String>("vault").cloned(),
         ),
-        _ => ExitCode::SUCCESS,
+        _ => process_exit(CoreExitCode::Ok),
     }
 }
 
@@ -109,7 +114,7 @@ fn run_http_server(
 ) -> ExitCode {
     let vault = match resolve_vault(vault.as_deref()) {
         Ok(path) => path,
-        Err(error) => return write_stderr(&format!("http: {error}\n"), 1),
+        Err(error) => return write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
     };
     let token = token
         .filter(|value| !value.is_empty())
@@ -129,11 +134,16 @@ fn run_http_server(
         .build()
     {
         Ok(runtime) => runtime,
-        Err(error) => return write_stderr(&format!("http: create runtime: {error}\n"), 1),
+        Err(error) => {
+            return write_stderr(
+                &format!("http: create runtime: {error}\n"),
+                CoreExitCode::Generic,
+            );
+        }
     };
     match runtime.block_on(http::run(config)) {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(error) => write_stderr(&format!("http: {error}\n"), 1),
+        Ok(()) => process_exit(CoreExitCode::Ok),
+        Err(error) => write_stderr(&format!("http: {error}\n"), CoreExitCode::Generic),
     }
 }
 
@@ -375,26 +385,51 @@ fn render_search(root: &Path, hits: &[symdesk_index::SearchHit], json_output: bo
 fn emit_error(error: String, json_output: bool) -> ExitCode {
     if json_output {
         let result = write_stdout(format!("{}\n", json!({"error": error})));
-        if result == ExitCode::SUCCESS {
-            ExitCode::from(1)
+        if result == process_exit(CoreExitCode::Ok) {
+            process_exit(CoreExitCode::Generic)
         } else {
             result
         }
     } else {
-        write_stderr(&format!("{error}\n"), 1)
+        write_stderr(&format!("{error}\n"), CoreExitCode::Generic)
     }
 }
 
 fn write_stdout(value: String) -> ExitCode {
     if io::stdout().write_all(value.as_bytes()).is_err() {
-        return ExitCode::from(1);
+        return process_exit(CoreExitCode::Generic);
     }
-    ExitCode::SUCCESS
+    process_exit(CoreExitCode::Ok)
 }
 
-fn write_stderr(value: &str, code: u8) -> ExitCode {
+fn write_stderr(value: &str, code: CoreExitCode) -> ExitCode {
     if io::stderr().write_all(value.as_bytes()).is_err() {
-        return ExitCode::from(1);
+        return process_exit(CoreExitCode::Generic);
     }
-    ExitCode::from(code)
+    process_exit(code)
+}
+
+#[cfg(test)]
+mod exit_code_tests {
+    use super::CoreExitCode;
+
+    #[test]
+    fn corekit_exit_code_taxonomy_is_pinned() {
+        let codes = [
+            (CoreExitCode::Ok, 0),
+            (CoreExitCode::Generic, 1),
+            (CoreExitCode::NoInput, 2),
+            (CoreExitCode::NoAuth, 3),
+            (CoreExitCode::Forbidden, 4),
+            (CoreExitCode::NotFound, 5),
+            (CoreExitCode::Conflict, 6),
+            (CoreExitCode::Software, 7),
+            (CoreExitCode::Data, 8),
+            (CoreExitCode::Config, 9),
+            (CoreExitCode::Interrupted, 10),
+        ];
+        for (code, expected) in codes {
+            assert_eq!(code.as_u8(), expected);
+        }
+    }
 }

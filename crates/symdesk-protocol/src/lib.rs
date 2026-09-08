@@ -6,6 +6,8 @@
 //! Axum defaults: authentication, headers, path confinement, snapshots, and
 //! file ranges are all tested at the HTTP boundary.
 
+#[cfg(any(test, target_os = "linux"))]
+mod mime;
 mod snapshot_cache;
 #[cfg(test)]
 mod snapshot_cache_contracts;
@@ -731,11 +733,29 @@ fn parse_range(value: &str, length: u64) -> Result<(u64, u64), RangeError> {
 }
 
 fn content_type(path: &Path, sample: &[u8]) -> String {
+    #[cfg(target_os = "linux")]
+    {
+        content_type_with_mime_loader(path, sample, mime::type_by_extension)
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        content_type_with_mime_loader(path, sample, |_| None)
+    }
+}
+
+fn content_type_with_mime_loader(
+    path: &Path,
+    sample: &[u8],
+    mime_loader: impl Fn(&str) -> Option<String>,
+) -> String {
     let extension = path
         .extension()
         .and_then(|ext| ext.to_str())
         .unwrap_or_default();
-    match extension {
+    if let Some(system_type) = mime_loader(&format!(".{extension}")) {
+        return system_type;
+    }
+    match extension.to_ascii_lowercase().as_str() {
         "md" => "text/plain; charset=utf-8".to_owned(),
         "txt" => "text/plain; charset=utf-8".to_owned(),
         "json" => "application/json".to_owned(),
@@ -972,11 +992,27 @@ mod tests {
     }
 
     #[test]
+    fn content_type_preserves_original_extension_for_exact_then_lower_lookup() {
+        let result = content_type_with_mime_loader(Path::new("note.MD"), b"plain text", |ext| {
+            assert_eq!(ext, ".MD");
+            None
+        });
+        assert_eq!(result, "text/plain; charset=utf-8");
+    }
+
+    #[test]
+    fn content_type_uses_injected_mime_loader_before_fallbacks() {
+        let calls = std::sync::Mutex::new(Vec::new());
+        let result = content_type_with_mime_loader(Path::new("note.md"), b"plain text", |ext| {
+            calls.lock().unwrap().push(ext.to_owned());
+            Some("text/markdown; charset=utf-8".to_owned())
+        });
+        assert_eq!(result, "text/markdown; charset=utf-8");
+        assert_eq!(&*calls.lock().unwrap(), &[".md"]);
+    }
+
+    #[test]
     fn serve_content_mime_fallback_matches_representative_types() {
-        assert_eq!(
-            content_type(Path::new("note.md"), b"plain text"),
-            "text/plain; charset=utf-8"
-        );
         assert_eq!(
             content_type(Path::new("data.json"), b"{}"),
             "application/json"

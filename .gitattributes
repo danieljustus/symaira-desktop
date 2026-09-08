@@ -2,6 +2,19 @@
 # identical across Windows, macOS, and Linux checkouts.
 *.sql text eol=lf
 
+# The Go oracle hashes exact source and embedded-asset bytes. Windows Git
+# must not rewrite those bytes; binary assets and raw fixtures stay untouched.
+*.go text eol=lf
+/go.mod text eol=lf
+/go.sum text eol=lf
+/.goreleaser.yml text eol=lf
+/Dockerfile text eol=lf
+/VAULT.md text eol=lf
+/.github/workflows/release.yml text eol=lf
+/home-assistant-addon/symdesk/config.yaml text eol=lf
+/internal/pdf/internal/assets/** text=auto eol=lf
+/testdata/port/** -text
+
 # Generated JSON fixtures and retained evidence are byte-checked on every OS.
 /testdata/port/**/*.json text eol=lf
 /docs/rust-port/results/*.json text eol=lf

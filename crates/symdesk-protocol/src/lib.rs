@@ -930,7 +930,7 @@ mod tests {
         #[cfg(unix)]
         assert_eq!(normalize_snapshot_path(path), "folder\\literal\\name.md");
         #[cfg(windows)]
-        assert_eq!(normalize_snapshot_path(path), "folder/name.md");
+        assert_eq!(normalize_snapshot_path(path), "folder/literal/name.md");
     }
 
     #[test]

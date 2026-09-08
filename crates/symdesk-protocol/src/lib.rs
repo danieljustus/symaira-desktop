@@ -575,6 +575,32 @@ fn normalize_snapshot_path(path: &Path) -> String {
     path.to_str().unwrap_or_default().to_owned()
 }
 
+fn read_snapshot_bytes<R: Read>(reader: R, bytes: &mut Vec<u8>) -> io::Result<usize> {
+    reader.take(MAX_NOTE_BYTES + 1).read_to_end(bytes)
+}
+
+#[cfg(test)]
+#[derive(Default)]
+struct InjectedReadFailure {
+    emitted: bool,
+}
+
+#[cfg(test)]
+impl Read for InjectedReadFailure {
+    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+        if self.emitted {
+            return Err(io::Error::other("injected snapshot read failure"));
+        }
+        if buffer.is_empty() {
+            return Ok(0);
+        }
+        self.emitted = true;
+        let count = buffer.len().min(3);
+        buffer[..count].copy_from_slice(&b"par"[..count]);
+        Ok(count)
+    }
+}
+
 fn snapshot_payload(state: &AppState) -> Result<SnapshotPayload, String> {
     let mut files = Vec::new();
     let mut etag_material = String::new();
@@ -600,10 +626,17 @@ fn snapshot_payload(state: &AppState) -> Result<SnapshotPayload, String> {
         };
         let mut bytes =
             Vec::with_capacity((metadata.len() as usize).min(MAX_NOTE_BYTES as usize + 1));
-        (&mut file)
-            .take(MAX_NOTE_BYTES + 1)
-            .read_to_end(&mut bytes)
-            .map_err(|error| error.to_string())?;
+        #[cfg(test)]
+        let injected_failure = state.snapshot_cache.take_read_failure();
+        #[cfg(test)]
+        let read_result = if injected_failure {
+            read_snapshot_bytes(InjectedReadFailure::default(), &mut bytes)
+        } else {
+            read_snapshot_bytes(&mut file, &mut bytes)
+        };
+        #[cfg(not(test))]
+        let read_result = read_snapshot_bytes(&mut file, &mut bytes);
+        read_result.map_err(|error| error.to_string())?;
         if bytes.len() as u64 > MAX_NOTE_BYTES {
             continue;
         }
@@ -836,6 +869,37 @@ async fn shutdown_signal() {
 mod tests {
     use super::*;
 
+    #[cfg(unix)]
+    struct RaceCleanup {
+        root: PathBuf,
+        outside: PathBuf,
+        stop: Arc<std::sync::atomic::AtomicBool>,
+        writer: Option<std::thread::JoinHandle<()>>,
+    }
+
+    #[cfg(unix)]
+    impl Drop for RaceCleanup {
+        fn drop(&mut self) {
+            self.stop.store(true, std::sync::atomic::Ordering::SeqCst);
+            if let Some(writer) = self.writer.take() {
+                let _ = writer.join();
+            }
+            let _ = fs::remove_dir_all(&self.root);
+            let _ = fs::remove_file(&self.outside);
+        }
+    }
+
+    #[test]
+    fn injected_reader_obeys_empty_and_small_buffers() {
+        let mut reader = InjectedReadFailure::default();
+        let mut empty = [];
+        assert_eq!(reader.read(&mut empty).unwrap(), 0);
+        let mut small = [0; 2];
+        assert_eq!(reader.read(&mut small).unwrap(), 2);
+        assert_eq!(&small, b"pa");
+        assert!(reader.read(&mut [0; 1]).is_err());
+    }
+
     #[test]
     fn snapshot_path_normalization_matches_go_to_slash_without_corrupting_unix_names() {
         let path = Path::new("folder\\literal\\name.md");
@@ -989,7 +1053,7 @@ mod tests {
         let writer_root = root.clone();
         let writer = thread::spawn(move || {
             for iteration in 0..20_000 {
-                if writer_stop.load(Ordering::Relaxed) {
+                if writer_stop.load(Ordering::SeqCst) {
                     break;
                 }
                 let target = if iteration % 2 == 0 {
@@ -1001,29 +1065,35 @@ mod tests {
                         .into_owned()
                 };
                 let _ = fs::remove_file(&replacement);
-                symlink(target, &replacement).expect("create replacement link");
-                fs::rename(&replacement, &raced).expect("atomically replace raced link");
+                if symlink(target, &replacement).is_err() {
+                    continue;
+                }
+                if fs::rename(&replacement, &raced).is_err() {
+                    let _ = fs::remove_file(&replacement);
+                }
             }
         });
+        let mut cleanup = RaceCleanup {
+            root,
+            outside,
+            stop,
+            writer: Some(writer),
+        };
 
-        let mut disclosed = false;
         for _ in 0..20_000 {
             let Ok(mut file) = dir.open("raced.md") else {
                 continue;
             };
-            let mut content = String::new();
-            file.read_to_string(&mut content).expect("read raced file");
-            if content == "outside" {
-                disclosed = true;
-                break;
+            let mut bytes = Vec::new();
+            match file.read_to_end(&mut bytes) {
+                Ok(_) => assert_eq!(bytes, b"inside", "unexpected snapshot bytes"),
+                Err(_) => assert!(
+                    !bytes.starts_with(b"outside"),
+                    "partial read disclosed outside bytes"
+                ),
             }
-            assert_eq!(content, "inside");
         }
-        stop.store(true, Ordering::Relaxed);
-        writer.join().expect("join replacement writer");
-        assert!(!disclosed, "external symlink target was disclosed");
-
-        fs::remove_dir_all(&root).expect("remove test root");
-        fs::remove_file(outside).expect("remove outside file");
+        cleanup.stop.store(true, Ordering::SeqCst);
+        cleanup.writer.take().unwrap().join().unwrap();
     }
 }

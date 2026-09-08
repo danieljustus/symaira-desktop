@@ -150,3 +150,43 @@ fn snapshot_preserves_legal_unix_backslashes_in_path_and_etag_material() {
     assert!(payload.etag.len() == 64);
     assert_eq!(normalize_snapshot_path(Path::new(name)), name);
 }
+
+#[tokio::test]
+async fn snapshot_read_failure_returns_http_500_retains_dirty_cache_and_retries() {
+    let root = TempRoot(std::env::temp_dir().join(format!(
+        "symdesk-snapshot-read-failure-{}-{}",
+        std::process::id(),
+        unix_nanos(SystemTime::now())
+    )));
+    fs::create_dir(&root.0).unwrap();
+    let root_path = fs::canonicalize(&root.0).unwrap();
+    fs::write(root_path.join("note.md"), "complete").unwrap();
+    let state = Arc::new(AppState {
+        vault_root: root_path,
+        token: Arc::from(Vec::<u8>::new()),
+        version: "test".to_owned(),
+        auth_failures: Mutex::new(AuthThrottle::default()),
+        snapshot_cache: SnapshotCache::uncached(),
+    });
+    state.snapshot_cache.set_healthy(true);
+    let old = snapshot(&state);
+    state.snapshot_cache.set_dirty(true);
+    state.snapshot_cache.inject_read_failure();
+    let response = handle_snapshot(State(Arc::clone(&state)), HeaderMap::new(), Method::GET).await;
+    assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    assert!(state.snapshot_cache.is_dirty());
+    let retained = state.snapshot_cache.payload().unwrap();
+    assert!(Arc::ptr_eq(&old, &retained));
+
+    let retried = snapshot(&state);
+    let value: serde_json::Value = serde_json::from_slice(&retried.plain).unwrap();
+    assert_eq!(value["notes"][0]["content"], "complete");
+}
+
+#[test]
+fn production_snapshot_reader_preserves_partial_bytes_on_error() {
+    let mut bytes = Vec::new();
+    let error = read_snapshot_bytes(InjectedReadFailure::default(), &mut bytes).unwrap_err();
+    assert_eq!(bytes, b"par");
+    assert_eq!(error.to_string(), "injected snapshot read failure");
+}

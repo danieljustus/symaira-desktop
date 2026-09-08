@@ -25,6 +25,8 @@ pub(super) struct SnapshotCache {
     root_identity: Mutex<Option<String>>,
     dirty: Arc<AtomicBool>,
     healthy: Arc<AtomicBool>,
+    #[cfg(test)]
+    read_failure: AtomicBool,
     // Retain the watcher until the server drops the cache. Mutex provides Sync
     // for platform backends without exposing the watcher to request handlers.
     _watcher: Mutex<Option<RecommendedWatcher>>,
@@ -37,8 +39,40 @@ impl SnapshotCache {
             root_identity: Mutex::new(None),
             dirty: Arc::new(AtomicBool::new(true)),
             healthy: Arc::new(AtomicBool::new(false)),
+            #[cfg(test)]
+            read_failure: AtomicBool::new(false),
             _watcher: Mutex::new(None),
         }
+    }
+
+    #[cfg(test)]
+    pub(super) fn set_healthy(&self, healthy: bool) {
+        self.healthy.store(healthy, Ordering::SeqCst);
+    }
+
+    #[cfg(test)]
+    pub(super) fn set_dirty(&self, dirty: bool) {
+        self.dirty.store(dirty, Ordering::SeqCst);
+    }
+
+    #[cfg(test)]
+    pub(super) fn is_dirty(&self) -> bool {
+        self.dirty.load(Ordering::SeqCst)
+    }
+
+    #[cfg(test)]
+    pub(super) fn payload(&self) -> Option<Arc<SnapshotPayload>> {
+        self.payload.lock().ok().and_then(|payload| payload.clone())
+    }
+
+    #[cfg(test)]
+    pub(super) fn inject_read_failure(&self) {
+        self.read_failure.store(true, Ordering::SeqCst);
+    }
+
+    #[cfg(test)]
+    pub(super) fn take_read_failure(&self) -> bool {
+        self.read_failure.swap(false, Ordering::SeqCst)
     }
 
     pub fn new(root: &Path) -> Self {

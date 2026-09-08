@@ -1,3 +1,7 @@
 # SQLite persists migration SQL verbatim; keep logical schema snapshots
 # identical across Windows, macOS, and Linux checkouts.
 *.sql text eol=lf
+
+# Generated JSON fixtures and retained evidence are byte-checked on every OS.
+/testdata/port/**/*.json text eol=lf
+/docs/rust-port/results/*.json text eol=lf

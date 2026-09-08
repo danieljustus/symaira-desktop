@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "artifact": "value001-retained.json",
+  "source_class": "real Go/Rust VALUE-001 benchmark capture",
+  "original_artifact": "/tmp/value001-snapshot-655d248-verified.json",
+  "original_sha256": "d35eac7b86d0c00eef68c94388266059cc327e2c9356ea69ac6598e223bc43f5",
+  "redacted_sha256": "bfc4f2274b3d2a2ea8881e014cbb350c243420322c4bd43c5fbf58c260d9988c",
+  "transformations": [
+    "Replaced repository.root with <redacted-repository-path>.",
+    "Replaced binaries.go.path and binaries.rust.path with <redacted-binary-path>.",
+    "Replaced private temporary/repository path prefixes in binary build_command values with redacted placeholders.",
+    "Replaced private temporary/repository path prefixes in index_preparation command values with redacted placeholders.",
+    "Replaced private temporary/repository path prefixes in contracts command values with redacted placeholders.",
+    "Preserved host architecture/OS, deterministic vault.search_token, source revisions, binary digests, metrics, raw arrays, sample counts, and pass/threshold values."
+  ],
+  "source_expected_head": "655d24869bc0e8974087f0b7fb9e4fefd8f9cc18",
+  "trusted_ci_run": "34238241000"
+}

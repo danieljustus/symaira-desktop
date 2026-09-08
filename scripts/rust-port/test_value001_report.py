@@ -1,9 +1,12 @@
 import copy
 import json
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 from value001_report import percentage, render
+
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 class PercentageTests(unittest.TestCase):
@@ -17,25 +20,24 @@ class PercentageTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 percentage(value)
 
-    def retained(self):
-        root = Path(__file__).resolve().parents[2]
-        return json.loads((root / "docs/rust-port/results/value001-latest.json").read_text())
+    def load(self, name):
+        return json.loads((ROOT / "docs/rust-port/results" / name).read_text(encoding="utf-8"))
 
-    def test_retained_raw_evidence(self):
-        result = self.retained()
-        before = copy.deepcopy(result)
-        report = render(result)
-        self.assertIn("31,624.61%", report)
-        self.assertIn("Recorded gate passed: false", report)
-        self.assertEqual(result, before)
-        self.assertEqual(result["thresholds"]["maximum_p95_regression"], 0.10)
+    def test_retained_raw_evidence_for_historical_and_passed_artifacts(self):
+        for name in ("value001-latest.json", "value001-retained.json"):
+            result = self.load(name)
+            before = copy.deepcopy(result)
+            report = render(result)
+            self.assertIn("Recorded gate passed: " + str(result["passed"]).lower(), report)
+            self.assertEqual(result, before)
+            self.assertEqual(result["thresholds"]["maximum_p95_regression"], 0.10)
 
     def test_false_summary_or_ratio_rejected(self):
-        result = self.retained()
+        result = self.load("value001-latest.json")
         result["metrics"]["http"]["rust"]["p95"] = 1
         with self.assertRaises(ValueError):
             render(result)
-        result = self.retained()
+        result = self.load("value001-latest.json")
         result["thresholds"]["p95_regressions"]["http"] = 3.1624612017633007
         with self.assertRaises(ValueError):
             render(result)

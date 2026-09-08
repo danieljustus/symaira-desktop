@@ -34,10 +34,16 @@ def finite_number(value: object, label: str) -> float:
 
 
 def check_summary(summary: dict, label: str) -> None:
+    if not isinstance(summary, dict):
+        fail(f"{label} is not an object")
+    samples = summary.get("samples")
     raw = summary.get("raw")
-    if not isinstance(raw, list) or len(raw) != summary.get("samples"):
+    if not isinstance(samples, int) or isinstance(samples, bool) or samples < value001.MIN_SAMPLES:
+        fail(f"{label} sample count is invalid")
+    if not isinstance(raw, list) or len(raw) != samples:
         fail(f"{label} raw sample count mismatch")
-    values = [finite_number(v, f"{label}.raw") for v in raw]
+    raw_values = cast(list[object], raw)
+    values = [finite_number(v, f"{label}.raw") for v in raw_values]
     if any(v < 0 for v in values):
         fail(f"{label} contains a negative sample")
     n = len(values)
@@ -98,10 +104,27 @@ def main(path: Path) -> int:
             check_summary(pair["go"], f"metrics.{name}.operations.{operation}.go")
             check_summary(pair["rust"], f"metrics.{name}.operations.{operation}.rust")
     thresholds = result["thresholds"]
-    for name in ("startup", "search", "mcp", "http"):
-        actual = result["metrics"][name]["rust"]["p95"] / result["metrics"][name]["go"]["p95"] - 1
-        if thresholds["p95_regressions"].get(name) != actual:
+    required_operations = {
+        "mcp": {"initialize", "tools-list", "desk_status", "desk_ls", "desk_search"},
+        "http": {"healthz", "status", "snapshot", "file-read", "file-range", "file-missing", "file-traversal"},
+    }
+    for name, expected_operations in required_operations.items():
+        actual_operations = result["metrics"][name].get("operations")
+        if not isinstance(actual_operations, dict) or set(actual_operations) != expected_operations:
+            fail(f"{name} required operation set is incomplete")
+    regressions: dict[str, float] = {}
+    try:
+        regressions = value001.latency_regressions(result["metrics"])
+    except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
+        fail(f"latency gate cannot be recomputed: {exc}")
+    recorded = thresholds.get("p95_regressions")
+    if not isinstance(recorded, dict):
+        fail("p95 regression thresholds are missing")
+    for name, actual in regressions.items():
+        if name in recorded and recorded[name] != actual:
             fail(f"threshold ratio for {name} is not recomputed from samples")
+        if actual > 0.10:
+            fail(f"required latency operation {name} exceeds 10% regression")
     if thresholds["contracts_pass"] is not True or thresholds["improvement_pass"] is not True or thresholds["latency_pass"] is not True or result["passed"] is not True:
         fail("retained artifact is not a passing approval")
     for item in result["contracts"]:

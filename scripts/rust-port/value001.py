@@ -688,9 +688,28 @@ def measure_http(
 
 
 def ratio(candidate: float, reference: float) -> float:
-    if reference <= 0:
-        raise HarnessError(f"non-positive reference value {reference}")
+    if not math.isfinite(candidate) or not math.isfinite(reference) or reference <= 0:
+        raise HarnessError(f"invalid latency values candidate={candidate!r} reference={reference!r}")
     return candidate / reference
+
+
+def latency_regressions(metrics: dict[str, Any]) -> dict[str, float]:
+    """Recompute every required latency gate from its retained p95 values."""
+    regressions: dict[str, float] = {}
+    for name in ("startup", "search", "mcp", "http"):
+        metric = metrics.get(name)
+        if not isinstance(metric, dict):
+            raise HarnessError(f"missing latency metric {name}")
+        regressions[name] = ratio(metric["rust"]["p95"], metric["go"]["p95"]) - 1.0
+        if name in {"mcp", "http"}:
+            operations = metric.get("operations")
+            if not isinstance(operations, dict) or not operations:
+                raise HarnessError(f"missing operations for {name}")
+            for operation, pair in operations.items():
+                if not isinstance(operation, str) or not isinstance(pair, dict):
+                    raise HarnessError(f"invalid {name} operation metric")
+                regressions[f"{name}.{operation}"] = ratio(pair["rust"]["p95"], pair["go"]["p95"]) - 1.0
+    return regressions
 
 
 def build_go_oracle(root: Path, commit: str, temp_root: Path) -> tuple[Path, dict[str, Any], Path]:
@@ -744,11 +763,8 @@ def build_result(
     rss_go = metrics["rss"]["go"]["max"]
     rss_rust = metrics["rss"]["rust"]["max"]
     rss_reduction = (rss_go - rss_rust) / rss_go
-    regressions = {
-        name: ratio(metrics[name]["rust"]["p95"], metrics[name]["go"]["p95"]) - 1.0
-        for name in ("startup", "search", "mcp", "http")
-    }
-    latency_pass = all(value <= 0.10 for value in regressions.values())
+    regressions = latency_regressions(metrics)
+    latency_pass = all(math.isfinite(value) and value <= 0.10 for value in regressions.values())
     improvement_pass = size_reduction >= 0.20 or rss_reduction >= 0.20
     contracts_pass = all(item["exit_code"] == 0 for item in contracts)
     thresholds = {
@@ -812,8 +828,11 @@ def validate_sample(value: Any, name: str, unit: str) -> None:
         raise HarnessError(f"{name} sample metadata invalid")
     if len(value["raw"]) != value["samples"] or len(value["pair_order"]) != value["samples"]:
         raise HarnessError(f"{name} raw/order lengths mismatch")
-    if any(not isinstance(item, (int, float)) or item < 0 for item in value["raw"]):
+    if any(not isinstance(item, (int, float)) or isinstance(item, bool) or not math.isfinite(item) or item < 0 for item in value["raw"]):
         raise HarnessError(f"{name} contains invalid raw values")
+    for key in ("min", "mean", "p50", "p95", "p99", "max", "max_observed"):
+        if isinstance(value[key], bool) or not isinstance(value[key], (int, float)) or not math.isfinite(value[key]):
+            raise HarnessError(f"{name}.{key} is not finite")
     if value["max"] != max(value["raw"]) or value["max_observed"] != value["max"]:
         raise HarnessError(f"{name} maximum is not the maximum raw observation")
     if any(order not in {"go-rust", "rust-go"} for order in value["pair_order"]):
@@ -845,6 +864,12 @@ def validate_result(result: dict[str, Any]) -> None:
         validate_sample(metric["rust"], f"metrics.{name}.rust", "milliseconds")
         if not isinstance(metric["operations"], dict) or not metric["operations"]:
             raise HarnessError(f"metrics.{name}.operations is empty")
+        required_operations = {
+            "mcp": {"initialize", "tools-list", "desk_status", "desk_ls", "desk_search"},
+            "http": {"healthz", "status", "snapshot", "file-read", "file-range", "file-missing", "file-traversal"},
+        }[name]
+        if set(metric["operations"]) != required_operations:
+            raise HarnessError(f"metrics.{name}.operations are incomplete")
         for operation, pair in metric["operations"].items():
             if not isinstance(operation, str):
                 raise HarnessError("operation name is not a string")

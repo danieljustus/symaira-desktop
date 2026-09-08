@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 import validate_value001_retained as validator
+import value001
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,11 +28,23 @@ class RetainedValidatorMutationTests(unittest.TestCase):
             with self.assertRaises((ValueError, KeyError)):
                 validator.main(artifact)
 
+    def test_old_failing_evidence_is_not_approved_by_operation_gate(self):
+        result = json.loads((ROOT / "docs/rust-port/results" / "value001-latest.json").read_text(encoding="utf-8"))
+        regressions = value001.latency_regressions(result["metrics"])
+        self.assertGreater(regressions["http.snapshot"], 0.10)
+        self.assertFalse(all(value <= 0.10 for value in regressions.values()))
+
     def test_tampered_raw_sample_rejected(self):
         self.assert_rejected(lambda x: x["metrics"]["search"]["go"]["raw"].__setitem__(0, 999999))
 
     def test_tampered_summary_ratio_rejected(self):
         self.assert_rejected(lambda x: x["thresholds"]["p95_regressions"].__setitem__("http", 0))
+
+    def test_nonfinite_latency_rejected(self):
+        self.assert_rejected(lambda x: x["metrics"]["http"]["operations"]["snapshot"]["rust"].__setitem__("p95", float("nan")))
+
+    def test_missing_required_operation_rejected(self):
+        self.assert_rejected(lambda x: x["metrics"]["http"]["operations"].pop("snapshot"))
 
     def test_source_identity_rejected(self):
         self.assert_rejected(lambda x: x["repository"].__setitem__("head", "0" * 40))

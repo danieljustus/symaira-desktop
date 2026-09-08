@@ -976,6 +976,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
+name = "symaira-core-exit"
+version = "0.0.0"
+source = "git+https://github.com/danieljustus/symaira-corekit?rev=d382b8615ce879bac6f23c7250e13667934e8f93#d382b8615ce879bac6f23c7250e13667934e8f93"
+
+[[package]]
 name = "symaira-core-version"
 version = "0.0.0"
 source = "git+https://github.com/danieljustus/symaira-corekit?rev=d382b8615ce879bac6f23c7250e13667934e8f93#d382b8615ce879bac6f23c7250e13667934e8f93"
@@ -991,6 +996,7 @@ dependencies = [
  "clap",
  "serde",
  "serde_json",
+ "symaira-core-exit",
  "symdesk-core",
  "symdesk-index",
  "symdesk-protocol",
@@ -1056,6 +1062,7 @@ dependencies = [
 name = "symroom-cli"
 version = "0.0.0"
 dependencies = [
+ "symaira-core-exit",
  "symdesk-core",
 ]
 

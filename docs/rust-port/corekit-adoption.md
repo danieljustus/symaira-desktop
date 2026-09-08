@@ -36,3 +36,21 @@ No Go implementation, fallback, Swift bridge, HTTP value gate or migration
 work-item completion status is changed. Subsequent foundation families need
 separate behavior review; CoreKit exit categories must not replace the CLI's
 existing numeric exit behavior by assumption.
+
+## Exit code slice
+
+The audit covered every `ExitCode` return path in `crates/symdesk-cli/src/main.rs`
+and `crates/symroom-cli/src/main.rs`. `symdesk` uses only process codes 0 and 1:
+success paths map to `symaira_core_exit::ExitCode::Ok` (0), and all existing
+error paths map to `ExitCode::Generic` (1). The shared taxonomy is therefore
+used only where its numeric value is identical; output, parser, and error
+behavior remain unchanged.
+
+`symroom` retains its existing literal process code 2 for missing, unknown, or
+invalid subcommands (`crates/symroom-cli/src/main.rs:26`, `:37`, and `:56`).
+That code is `symaira_core_exit::ExitCode::NoInput`, but this slice does not
+reinterpret the established Rust CLI contract, so the call sites remain
+literal 2. Its success and generic I/O/serialization failures adopt CoreKit
+`Ok` (0) and `Generic` (1). CLI integration tests pin representative process
+statuses for both binaries, and a focused unit test pins the complete CoreKit
+0–10 taxonomy.

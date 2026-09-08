@@ -884,6 +884,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
+name = "symaira-core-version"
+version = "0.0.0"
+source = "git+https://github.com/danieljustus/symaira-corekit?rev=d382b8615ce879bac6f23c7250e13667934e8f93#d382b8615ce879bac6f23c7250e13667934e8f93"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "symdesk-cli"
 version = "0.0.0"
 dependencies = [
@@ -903,6 +912,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+ "symaira-core-version",
  "time",
  "toml",
 ]

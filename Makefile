@@ -173,6 +173,8 @@ VALUE_GO_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 VALUE_OUTPUT ?= docs/rust-port/results/value001-latest.json
 VALUE_RETAINED ?= docs/rust-port/results/value001-retained.json
 value-001-validate:
+	python3 scripts/rust-port/validate_value001_resume.py
+	python3 scripts/rust-port/test_validate_value001_resume.py
 	python3 scripts/rust-port/validate_value001_retained.py "$(VALUE_RETAINED)"
 	python3 scripts/rust-port/value001_report.py "$(VALUE_RETAINED)"
 	python3 scripts/rust-port/value001_report.py docs/rust-port/results/value001-latest.json

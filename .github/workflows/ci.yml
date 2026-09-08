@@ -168,7 +168,7 @@ jobs:
         run: cargo install cargo-fuzz --locked --version 0.13.2
 
       - name: Run Rust gates and Go-to-Rust version differential
-        run: make rust-gates
+        run: make rust-gates value-001-validate
 
       - name: Fuzz frontmatter parser smoke corpus
         run: make rust-fuzz-smoke
@@ -201,6 +201,24 @@ jobs:
       - name: Run native Unix sidecar round-trip and lock suite
         if: matrix.os != 'windows-latest'
         run: SIDECAR_NATIVE=1 make sidecar-roundtrip
+
+      - name: Run native Unix representative CLI HTTP and MCP parity
+        if: matrix.os != 'windows-latest'
+        run: make representative-differential mcp-differential
+
+      - name: Run native Windows representative CLI HTTP and MCP parity
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bin/port
+          go run ./scripts/rust-port/cmd/representativegen --check
+          go run ./scripts/rust-port/cmd/mcpgen --check
+          go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go.exe ./cmd/symdesk
+          SYMDESK_VERSION=0.12.2 cargo build -p symdesk-cli --locked
+          go run ./scripts/rust-port/cmd/diffharness --symdesk-left bin/port/symdesk-go.exe --symdesk-right target/debug/symdesk.exe --cases testdata/port/representative/cases.json --stage representative
+          go run ./scripts/rust-port/cmd/httpdiff --left bin/port/symdesk-go.exe --right target/debug/symdesk.exe --fixture testdata/port/http/representative.json
+          go run ./scripts/rust-port/cmd/mcpdiff --left bin/port/symdesk-go.exe --right target/debug/symdesk.exe
 
       - name: Run native Windows sidecar round-trip suite
         if: matrix.os == 'windows-latest'

@@ -1,6 +1,6 @@
 # Go-to-Rust migration record
 
-> **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006` ready
+> **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006` in progress (fresh VALUE-001 passed; native representative differential pending)
 > **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; VALUE baselines remain pinned to `ae863319` / `v0.12.2`
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)

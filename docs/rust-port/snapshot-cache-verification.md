@@ -69,11 +69,40 @@ Independent review approved these exact source hashes:
 - `snapshot_cache.rs`: `0ef5cee7b54ecd97b67be454c32b5f1fd370afd9f7d7aad64ef217e4d233b606`
 - `snapshot_cache_contracts.rs`: `705a7be071281eb7da2bacb6fa03d2324c8f93a18256f664a9caa6b58a12bccd`
 
-Native Linux/Windows CI, full Rust gates, representative differential tests
-and current-revision VALUE-001 reconciliation remain pending. RUST-006 is
-not advanced by this local checkpoint; RUST-007 and its existing unintegrated
-atomic-write/history-generator work remain blocked. Next: pass #889 CI and
-the RUST-006 acceptance commands before recovering RUST-007. Go remains production.
+Full native Linux/macOS/Windows CI and Rust gates passed at `956bd3e` in
+https://github.com/danieljustus/symaira-desktop/actions/runs/34254766964 .
+PR #891 merged as `2cc63601`; comparison with `45f99e8a` found only unrelated
+documentation changes since the tested candidate. Local actual-binary
+differential runs passed 12 CLI, 31 HTTP and 16 MCP cases at `956bd3e`.
+
+The fresh clean-source capture is retained separately as
+`results/value001-resume-956bd3e.json` with a provenance sidecar and executable
+`scripts/rust-port/validate_value001_resume.py`. Raw SHA-256:
+`bb94cefc18f633ae9c894e236019a763a7def57a644db3f2b0004048aa5164d8`;
+privacy-derived SHA-256:
+`85a1f14ad96740b0f3b77b1e44d22db45637c7789b4c0f76087a465d24843a49`.
+Independent recomputation confirmed all 34 distribution summaries, clean
+source identity, four passing contract invocations and unchanged thresholds.
+Repository/temporary path prefixes alone were redacted. No samples, ratios,
+source identities, binary hashes or semantic command arguments were changed.
+The validator's `--raw <private-original>` mode recursively enforces the exact
+nine-field prefix transformation; it passed against the original capture.
+Public CI validates the independently anchored derivative without requiring
+private originals. Seven controls cover capture integrity and transformation.
+The Rust binary was independently rehashed; the runner already removed the Go
+temporary binary, so its recorded digest could not be rehashed afterward.
+
+Fresh regression ratios: startup `-0.42477712791269395`, search
+`-0.7099449936573565`, MCP `-0.5966070792972114`, HTTP
+`-0.028529733734034446`. Binary reduction: `0.8494741315283268`;
+maximum representative RSS reduction: `0.7109144542772862`. VALUE-001 passes.
+
+The existing native workflow did not run representative CLI/HTTP/MCP
+differentials; this change adds them rather than treating version and unit
+tests as full native parity. RUST-006 remains in progress until those native
+steps pass. RUST-007 and its existing unintegrated atomic-write/history-generator
+work remain blocked. Next: verify all new native steps, then unblock the DAG.
+Go remains production.
 
 ### Scope limits
 

@@ -752,7 +752,9 @@ fn content_type_with_mime_loader(
         .extension()
         .and_then(|ext| ext.to_str())
         .unwrap_or_default();
-    if let Some(system_type) = mime_loader(&format!(".{extension}")) {
+    if let Some(system_type) =
+        mime_loader(&format!(".{extension}")).filter(|system_type| !system_type.is_empty())
+    {
         return system_type;
     }
     match extension.to_ascii_lowercase().as_str() {
@@ -998,6 +1000,16 @@ mod tests {
             None
         });
         assert_eq!(result, "text/plain; charset=utf-8");
+    }
+
+    #[test]
+    fn content_type_ignores_empty_mime_loader_result_and_falls_back() {
+        assert_eq!(
+            content_type_with_mime_loader(Path::new("note.md"), b"plain text", |_| {
+                Some(String::new())
+            }),
+            "text/plain; charset=utf-8"
+        );
     }
 
     #[test]

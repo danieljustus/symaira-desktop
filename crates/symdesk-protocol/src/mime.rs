@@ -140,7 +140,7 @@ fn normalize_media_type(input: &str) -> Option<String> {
         let after_semicolon = remainder.strip_prefix(';')?;
         remainder = after_semicolon.trim_start();
         if remainder.is_empty() {
-            return None;
+            return Some(String::new());
         }
         let end = remainder.find(|c: char| c == '=' || c.is_ascii_whitespace() || c == ';')?;
         let name = &remainder[..end];
@@ -199,14 +199,22 @@ fn normalize_media_type(input: &str) -> Option<String> {
     let Some((major, subtype)) = base.split_once('/') else {
         return Some(input.to_owned());
     };
-    if !input.starts_with("text/")
-        || params
-            .iter()
-            .any(|(name, value)| name == "charset" && !value.is_empty())
-    {
+    if !input.starts_with("text/") {
         return Some(input.to_owned());
     }
-    params.push(("charset".to_owned(), "utf-8".to_owned()));
+    if params.is_empty() {
+        params.push(("charset".to_owned(), "utf-8".to_owned()));
+    } else if params
+        .iter()
+        .any(|(name, value)| (name == "charset" && !value.is_empty()) || name == "charset*")
+    {
+        return Some(input.to_owned());
+    } else {
+        // Go's TypeByExtension passes the complete registered value to
+        // FormatMediaType after adding the implicit charset. FormatMediaType
+        // rejects that already-parameterized input and returns "".
+        return Some(String::new());
+    }
     params.sort_by(|a, b| a.0.cmp(&b.0));
     let mut out = format!(
         "{}/{}",
@@ -372,38 +380,20 @@ mod tests {
     fn media_type_parameters_match_go_stdlib_oracle() {
         let cases = [
             ("text/custom", Some("text/custom; charset=utf-8")),
-            (
-                "text/custom; foo=bar",
-                Some("text/custom; charset=utf-8; foo=bar"),
-            ),
+            ("text/custom; foo=bar", Some("")),
             ("text/custom; charset=", None),
             (
                 "text/custom; Charset=US-ASCII",
                 Some("text/custom; Charset=US-ASCII"),
             ),
-            (
-                "text/custom; foo=bar; foo=bar",
-                Some("text/custom; charset=utf-8; foo=bar"),
-            ),
+            ("text/custom; foo=bar; foo=bar", Some("")),
             ("text/custom; foo=bar; foo=baz", None),
-            (
-                "text/custom; foo={}",
-                Some("text/custom; charset=utf-8; foo={}"),
-            ),
+            ("text/custom; foo={}", Some("")),
             ("text/custom; foo", None),
             ("text/custom; =bar", None),
-            (
-                r#"text/custom; foo="\\name""#,
-                Some(r#"text/custom; charset=utf-8; foo="\\name""#),
-            ),
-            (
-                r#"text/custom; foo="a;b""#,
-                Some(r#"text/custom; charset=utf-8; foo="a;b""#),
-            ),
-            (
-                "text/custom; title*=utf-8''caf%C3%A9",
-                Some("text/custom; charset=utf-8; title*=utf-8''caf%C3%A9"),
-            ),
+            (r#"text/custom; foo="\\name""#, Some("")),
+            (r#"text/custom; foo="a;b""#, Some("")),
+            ("text/custom; title*=utf-8''caf%C3%A9", Some("")),
             ("application/custom", Some("application/custom")),
             (
                 "application/custom; foo=bar",
@@ -411,6 +401,21 @@ mod tests {
             ),
             ("application/custom; charset=", None),
             ("foo", Some("foo")),
+            ("text/custom; charset=\"\"", Some("")),
+            ("text/custom;", Some("")),
+            (
+                "text/custom; charset*=utf-8''us-ascii",
+                Some("text/custom; charset*=utf-8''us-ascii"),
+            ),
+            (
+                "text/custom; title*0*=utf-8''caf%C3; title*1*=%A9",
+                Some(""),
+            ),
+            ("text/custom; title*0=hello; title*1=world", Some("")),
+            (
+                "text/custom; title*0*=utf-8''hello%20; title*1*=world",
+                Some(""),
+            ),
         ];
         for (input, expected) in cases {
             assert_eq!(

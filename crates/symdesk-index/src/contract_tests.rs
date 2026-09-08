@@ -412,6 +412,7 @@ fn validated_storage_path_separates_io_path_from_storage_key() {
     let base =
         std::env::temp_dir().join(format!("symdesk-index-storage-key-{}", std::process::id()));
     let actual = base.join("actual");
+    #[cfg(unix)]
     let root = base.join("root");
     let _ = fs::remove_dir_all(&base);
     fs::create_dir_all(&actual).expect("create actual root");
@@ -424,9 +425,9 @@ fn validated_storage_path_separates_io_path_from_storage_key() {
 
     let storage = storage_path(&root, Path::new("nested/note.md")).expect("storage path");
     assert_eq!(storage.key_path, root.join("nested/note.md"));
-    assert!(!storage.key_path.to_string_lossy().contains("actual/nested"));
     #[cfg(unix)]
     {
+        assert!(!storage.key_path.to_string_lossy().contains("actual/nested"));
         assert_eq!(storage.io_path, canonical_actual.join("nested/note.md"));
         assert_ne!(storage.io_path, storage.key_path);
     }

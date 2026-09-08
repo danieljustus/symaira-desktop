@@ -22,3 +22,6 @@ wildcards = "deny"
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# Private CoreKit staging adoption; Cargo.toml and Cargo.lock pin the exact revision.
+allow-git = ["https://github.com/danieljustus/symaira-corekit"]
+required-git-spec = "rev"

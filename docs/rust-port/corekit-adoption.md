@@ -183,3 +183,101 @@ all Rust sources under `crates/` found no `symvault://`, `secretref`, or
 added. The SEC-001 CoreKit contract row remains outside this slice; the
 references currently present in Go/Swift/docs are not Rust dependency call
 sites to adopt.
+
+## MCP slice
+
+**Audit conclusion: adoption deferred.** CoreKit's `symaira-core-mcp` is a
+substantial generic implementation, but it is not an exact wire-compatible
+replacement for Desktop's MCP path. No Cargo dependency or call-site change
+was made. A thin adapter could retain the product tools, but it could not
+safely delegate framing, request validation, response serialization, and error
+mapping without changing observable bytes or ordering.
+
+The Desktop inventory is in `crates/symdesk-cli/src/mcp.rs`:
+
+- `serve`/`serve_io` establish the stdio boundary, resolve `SYMDESK_VAULT`,
+  keep stdout protocol-only, and send diagnostics only through the returned
+  `io::Result` for `main.rs` to print to stderr (`:85-106`,
+  `crates/symdesk-cli/src/main.rs:97-101`). The loop dispatches `tools/call`
+  on worker threads but dispatches all other requests inline and joins workers
+  in submission order (`:111-191`). This ordering and the transport-failure
+  fallback responses are part of the current behavior.
+- `initialize`, `ping`, `tools/list`, and unknown methods have fixed result
+  shapes, protocol version, `symdesk` server name, and method error strings
+  (`:194-235`). Tool order and schemas are literal product data, including
+  `annotations.readOnlyHint` (`:376-397`), and tool results are always the
+  product's text `content` plus `isError` envelope (`:420-443`). Product
+  parsing and sidecar behavior remain in `call_tool` (`:291-355`).
+- Requests accept newline JSON or `Content-Length` framing, enforce a 1 MiB
+  line/body limit, recognize only an exact `Content-Length:` prefix, and turn
+  malformed JSON into `-32700` with a `Parse error: ...` message
+  (`:492-593`). A notification is any object without an `id` and is silently
+  ignored, including unknown methods and `notifications/cancelled`
+  (`:203-206`, `:583-590`). The existing tests pin line/framed output,
+  notification silence, malformed input, oversized lines, and truncated
+  frames (`:630-744`). The implementation has no cancellation token or
+  request-metadata path; a cancellation notification is not connected to an
+  in-flight call.
+
+The CoreKit API and implementation were reviewed at the pinned CoreKit source
+`rust/symaira-core-mcp/src/lib.rs`:
+
+- CoreKit's public seam is `Server::new`, `register_tool`/`register_typed`,
+  `serve_io`/`serve_io_cancellable`, `CancellationToken`, `ToolOutput`, and
+  structured `ToolError` (`:25-218`, `:425-604`). It deliberately adds typed
+  schema normalization/strict argument decoding (`:473-541`), request `_meta`
+  propagation (`:842-871`), a 16-call limiter (`:342-395`), and cooperative
+  cancellation (`:561-604`). Those are not present in Desktop's product
+  adapter and cannot be introduced under an exactness-only adoption.
+- CoreKit distinguishes JSON-RPC invalid requests (`-32600`) from parse errors
+  and rejects missing/non-`2.0` JSON-RPC, invalid IDs, and invalid `params`
+  during framing (`parse_json_request`/`valid_raw_id`). Desktop instead parses
+  any JSON object, defaults a missing method to `""`, treats `[]` as a parse
+  error with `-32700`, and does not validate `jsonrpc`, ID type, or params shape
+  at the framing boundary (`crates/symdesk-cli/src/mcp.rs:557-592`). This is a
+  direct mismatch in the `invalid-request` fixture and in malformed request
+  edge cases.
+- CoreKit preserves raw JSON-RPC IDs with `Box<RawValue>` and emits Go-style
+  JSON escaping through `go_json_bytes` (`:923-1014`, `:1140-1185`), while
+  Desktop parses IDs into `serde_json::Value` and serializes them again
+  (`crates/symdesk-cli/src/mcp.rs:34-49`, `:557-592`, `:467-490`). ID lexical
+  spelling and HTML-sensitive string bytes therefore cannot be delegated while
+  promising byte equality.
+- CoreKit writes tool errors as successful MCP results with structured
+  `_meta["symaira.dev/tool_error"]` data for `ToolError` (`:1070-1132`), and
+  supports `structuredContent`/`_meta` on successful results (`:105-140`).
+  Desktop's `RpcError` has only `code` and `message` (`:41-55`), while product
+  tool failures are flattened to text with `isError: true` and no `_meta` or
+  `structuredContent` (`:279-287`, `:420-443`). This directly conflicts with
+  contract rows CON-007 and MCP-007, whose expected tool-error metadata and
+  omission rules are byte comparisons.
+- CoreKit's transport separates protocol errors from terminal transport errors,
+  supports bounded headers (64 KiB/100 lines), and can return `Cancelled`
+  without joining a blocked reader (`:543-737`, `:1128-1210`). Desktop treats
+  malformed/truncated framed input as a fatal `io::Error` after any pending
+  workers are joined (`crates/symdesk-cli/src/mcp.rs:504-540`, `:126-147`),
+  has no cancellable reader, and uses a different header policy. The two
+  implementations thus differ on stdio edge cases even where ordinary frames
+  look alike.
+
+The CoreKit contract matrix rows reviewed were CON-003, CON-006, CON-007, and
+MCP-001 through MCP-012 in CoreKit's
+`docs/rust-port/contract-matrix.json`. Desktop's frozen oracle is
+`testdata/port/mcp/representative.json`; the differential target is
+`Makefile:193-204` (`mcp-fixtures-check` and `mcp-differential`), and the
+existing Rust MCP unit tests are in `crates/symdesk-cli/src/mcp.rs:630-744`.
+Those fixtures cover initialization/capabilities/serverInfo, tool order and
+schemas, calls and text envelopes, notifications, IDs, malformed/oversized
+input, framed transport, EOF, cancellation notification silence, and stdout
+purity. The matrix additionally requires structured tool results and error
+metadata, which the Desktop slice intentionally does not expose today.
+
+**Future adapter seam:** retain `serve_io`/`read_request`/`write_response` and
+all product dispatch/parser functions as the compatibility boundary. If a
+future CoreKit revision exposes a compatibility mode for Desktop's permissive
+request parser, `Value` ID serialization, header limits, terminal-error
+behavior, and no-`_meta` tool envelope, add focused Go/Rust fixture cases for
+each delegated path before adoption. Do not use `Server::serve_io` directly or
+add the git dependency until every CON/MCP byte/process comparison passes and
+stdout remains protocol-only. No work-item or contract-matrix status was
+changed.

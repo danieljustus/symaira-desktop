@@ -1,6 +1,6 @@
 //! Platform MIME lookup matching Go's `mime.TypeByExtension` Unix initialization.
 
-#[cfg(any(test, target_os = "linux"))]
+#[cfg(any(test, unix, target_os = "windows"))]
 use std::collections::HashMap;
 
 #[derive(Debug, Default)]
@@ -29,12 +29,14 @@ fn go_lowercase(value: &str) -> String {
         .map(|character| character.to_lowercase().next().unwrap_or(character))
         .collect()
 }
-#[cfg(target_os = "linux")]
-use std::{fs, sync::OnceLock};
+#[cfg(unix)]
+use std::fs;
+#[cfg(any(unix, target_os = "windows"))]
+use std::sync::OnceLock;
 
-#[cfg(target_os = "linux")]
+#[cfg(unix)]
 const GLOB_FILES: &[&str] = &["/usr/local/share/mime/globs2", "/usr/share/mime/globs2"];
-#[cfg(target_os = "linux")]
+#[cfg(unix)]
 const TYPE_FILES: &[&str] = &[
     "/etc/mime.types",
     "/etc/apache2/mime.types",
@@ -42,13 +44,13 @@ const TYPE_FILES: &[&str] = &[
     "/etc/httpd/conf/mime.types",
 ];
 
-#[cfg(target_os = "linux")]
+#[cfg(any(unix, target_os = "windows"))]
 pub(super) fn type_by_extension(extension: &str) -> Option<String> {
     static TYPES: OnceLock<MimeTypes> = OnceLock::new();
     TYPES.get_or_init(load_system_types).get(extension).cloned()
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(unix)]
 fn load_system_types() -> MimeTypes {
     let glob = GLOB_FILES
         .iter()
@@ -63,7 +65,15 @@ fn load_system_types() -> MimeTypes {
     )
 }
 
-#[cfg(any(test, target_os = "linux"))]
+#[cfg(target_os = "windows")]
+fn load_system_types() -> MimeTypes {
+    load_registry(
+        load_types(None, &[]),
+        super::native_mime::registry_entries(),
+    )
+}
+
+#[cfg(any(test, unix, target_os = "windows"))]
 fn load_types(glob_contents: Option<&str>, type_contents: &[&str]) -> MimeTypes {
     let mut types = MimeTypes::default();
     for (extension, media_type) in builtin_types() {
@@ -79,7 +89,36 @@ fn load_types(glob_contents: Option<&str>, type_contents: &[&str]) -> MimeTypes 
     types
 }
 
-#[cfg(any(test, target_os = "linux"))]
+#[cfg(any(test, target_os = "windows"))]
+fn load_registry<I>(mut types: MimeTypes, entries: I) -> MimeTypes
+where
+    I: IntoIterator<Item = (String, String)>,
+{
+    for (extension, media_type) in entries {
+        if !valid_registry_extension(&extension) {
+            continue;
+        }
+        // Go's Windows loader ignores only the known .js text/plain mistake.
+        if extension.eq_ignore_ascii_case(".js")
+            && (media_type == "text/plain" || media_type == "text/plain; charset=utf-8")
+        {
+            continue;
+        }
+        let Some(media_type) = normalize_media_type(&media_type).filter(|v| !v.is_empty()) else {
+            continue;
+        };
+        types.insert(extension, media_type);
+    }
+    types
+}
+
+#[cfg(any(test, target_os = "windows"))]
+pub(super) fn valid_registry_extension(extension: &str) -> bool {
+    extension.len() >= 2
+        && extension.starts_with('.')
+        && !extension[1..].contains(['\\', '/', '\0'])
+}
+
 fn parse_globs(contents: &str, types: &mut MimeTypes, is_builtin: fn(&str) -> bool) {
     for line in contents.lines() {
         let fields: Vec<_> = line.split(':').collect();
@@ -107,7 +146,7 @@ fn parse_globs(contents: &str, types: &mut MimeTypes, is_builtin: fn(&str) -> bo
     }
 }
 
-#[cfg(any(test, target_os = "linux"))]
+#[cfg(any(test, unix, target_os = "windows"))]
 fn parse_type_file(contents: &str, types: &mut MimeTypes) {
     for line in contents.lines() {
         let mut fields = line.split_whitespace();
@@ -129,7 +168,7 @@ fn parse_type_file(contents: &str, types: &mut MimeTypes) {
     }
 }
 
-#[cfg(any(test, target_os = "linux"))]
+#[cfg(any(test, unix, target_os = "windows"))]
 fn normalize_media_type(input: &str) -> Option<String> {
     let (raw_base, _) = input.split_once(';').unwrap_or((input, ""));
     let base = raw_base.trim();
@@ -352,7 +391,7 @@ fn set_parameter(params: &mut Vec<(String, String)>, name: String, value: String
     }
 }
 
-#[cfg(any(test, target_os = "linux"))]
+#[cfg(any(test, unix, target_os = "windows"))]
 fn is_token(value: &str) -> bool {
     !value.is_empty()
         && value
@@ -360,7 +399,7 @@ fn is_token(value: &str) -> bool {
             .all(|byte| matches!(byte, 0x21..=0x7e) && !b"()<>@,;:\\\"/[]?= \t".contains(&byte))
 }
 
-#[cfg(any(test, target_os = "linux"))]
+#[cfg(any(test, unix, target_os = "windows"))]
 fn is_tspecial(value: char) -> bool {
     matches!(
         value,
@@ -368,7 +407,7 @@ fn is_tspecial(value: char) -> bool {
     )
 }
 
-#[cfg(any(test, target_os = "linux"))]
+#[cfg(any(test, unix, target_os = "windows"))]
 fn builtin_types() -> HashMap<String, String> {
     [
         (".ai", "application/postscript"),
@@ -450,7 +489,7 @@ fn builtin_types() -> HashMap<String, String> {
     .collect()
 }
 
-#[cfg(any(test, target_os = "linux"))]
+#[cfg(any(test, unix, target_os = "windows"))]
 fn is_builtin_extension(extension: &str) -> bool {
     builtin_types().iter().any(|(known, _)| known == extension)
 }
@@ -541,6 +580,47 @@ mod tests {
                 "input {input:?}"
             );
         }
+    }
+
+    #[test]
+    fn registry_loader_validates_keys_and_only_skips_js_plain_text() {
+        let types = load_registry(
+            load_types(None, &[]),
+            [
+                ("not-an-extension".to_owned(), "text/plain".to_owned()),
+                (".bad/key".to_owned(), "text/plain".to_owned()),
+                (".js".to_owned(), "text/plain".to_owned()),
+                (".JS".to_owned(), "text/javascript".to_owned()),
+                (".custom".to_owned(), "application/x-custom".to_owned()),
+            ],
+        );
+        assert_eq!(
+            types.get(".custom").map(String::as_str),
+            Some("application/x-custom")
+        );
+        assert_eq!(
+            types.get(".JS").map(String::as_str),
+            Some("text/javascript; charset=utf-8")
+        );
+        assert_eq!(
+            types.get(".js").map(String::as_str),
+            Some("text/javascript; charset=utf-8")
+        );
+        assert!(valid_registry_extension(".custom"));
+        assert!(!valid_registry_extension(".bad/key"));
+        assert!(!valid_registry_extension("."));
+    }
+
+    #[test]
+    fn registry_loader_keeps_registry_value_for_non_js_plain_text() {
+        let types = load_registry(
+            load_types(None, &[]),
+            [(".textish".to_owned(), "text/plain".to_owned())],
+        );
+        assert_eq!(
+            types.get(".textish").map(String::as_str),
+            Some("text/plain; charset=utf-8")
+        );
     }
 
     #[test]

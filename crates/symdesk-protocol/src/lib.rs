@@ -6,8 +6,10 @@
 //! Axum defaults: authentication, headers, path confinement, snapshots, and
 //! file ranges are all tested at the HTTP boundary.
 
-#[cfg(any(test, target_os = "linux"))]
+#[cfg(any(test, unix, target_os = "windows"))]
 mod mime;
+#[cfg(target_os = "windows")]
+mod native_mime;
 mod snapshot_cache;
 #[cfg(test)]
 mod snapshot_cache_contracts;
@@ -733,11 +735,11 @@ fn parse_range(value: &str, length: u64) -> Result<(u64, u64), RangeError> {
 }
 
 fn content_type(path: &Path, sample: &[u8]) -> String {
-    #[cfg(target_os = "linux")]
+    #[cfg(any(unix, target_os = "windows"))]
     {
         content_type_with_mime_loader(path, sample, mime::type_by_extension)
     }
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(not(any(unix, target_os = "windows")))]
     {
         content_type_with_mime_loader(path, sample, |_| None)
     }

@@ -15,11 +15,11 @@ func TestTerminateProcessTreeTaskkillFailurePreserved(t *testing.T) {
 	original := taskkillCommand
 	t.Cleanup(func() { taskkillCommand = original })
 	taskkillCommand = func(ctx context.Context, _ string, _ ...string) *exec.Cmd {
-		command := exec.CommandContext(ctx, os.Args[0], "-test.run=TestCleanupHelper")
+		command := exec.CommandContext(ctx, testExecutable(t), "-test.run=TestCleanupHelper") //nolint:gosec // testExecutable resolves the checked test binary; arguments are fixed test-only flags
 		command.Env = append(os.Environ(), "HTTPDIFF_CLEANUP_HELPER=fail")
 		return command
 	}
-	cmd := exec.Command(os.Args[0], "-test.run=TestCleanupHelper")
+	cmd := exec.Command(testExecutable(t), "-test.run=TestCleanupHelper") //nolint:gosec // testExecutable resolves the checked test binary; arguments are fixed test-only flags
 	cmd.Env = append(os.Environ(), "HTTPDIFF_CLEANUP_HELPER=block")
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
@@ -35,11 +35,11 @@ func TestTerminateProcessTreeTaskkillTimeoutIsBounded(t *testing.T) {
 	original := taskkillCommand
 	t.Cleanup(func() { taskkillCommand = original })
 	taskkillCommand = func(ctx context.Context, _ string, _ ...string) *exec.Cmd {
-		command := exec.CommandContext(ctx, os.Args[0], "-test.run=TestCleanupHelper")
+		command := exec.CommandContext(ctx, testExecutable(t), "-test.run=TestCleanupHelper") //nolint:gosec // testExecutable resolves the checked test binary; arguments are fixed test-only flags
 		command.Env = append(os.Environ(), "HTTPDIFF_CLEANUP_HELPER=block")
 		return command
 	}
-	cmd := exec.Command(os.Args[0], "-test.run=TestCleanupHelper")
+	cmd := exec.Command(testExecutable(t), "-test.run=TestCleanupHelper") //nolint:gosec // testExecutable resolves the checked test binary; arguments are fixed test-only flags
 	cmd.Env = append(os.Environ(), "HTTPDIFF_CLEANUP_HELPER=block")
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)

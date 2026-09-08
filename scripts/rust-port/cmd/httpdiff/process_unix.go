@@ -7,10 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
-	"time"
 )
-
-const processTerminationTimeout = 5 * time.Second
 
 func isWindowsProcess() bool { return false }
 

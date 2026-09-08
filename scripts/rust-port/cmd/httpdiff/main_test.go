@@ -8,8 +8,17 @@ import (
 	"time"
 )
 
+func testExecutable(t *testing.T) string {
+	t.Helper()
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return executable
+}
+
 func TestCleanupExitExpectedIntentionalKill(t *testing.T) {
-	cmd := exec.Command(os.Args[0], "-test.run=TestCleanupHelper")
+	cmd := exec.Command(testExecutable(t), "-test.run=TestCleanupHelper") //nolint:gosec // testExecutable resolves the checked test binary; arguments are fixed test-only flags
 	cmd.Env = append(os.Environ(), "HTTPDIFF_CLEANUP_HELPER=block")
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
@@ -24,7 +33,7 @@ func TestCleanupExitExpectedIntentionalKill(t *testing.T) {
 }
 
 func TestCleanupExitExpectedAlreadyExited(t *testing.T) {
-	cmd := exec.Command(os.Args[0], "-test.run=TestCleanupHelper")
+	cmd := exec.Command(testExecutable(t), "-test.run=TestCleanupHelper") //nolint:gosec // testExecutable resolves the checked test binary; arguments are fixed test-only flags
 	cmd.Env = append(os.Environ(), "HTTPDIFF_CLEANUP_HELPER=exit")
 	if err := cmd.Run(); err != nil {
 		t.Fatal(err)
@@ -35,7 +44,7 @@ func TestCleanupExitExpectedAlreadyExited(t *testing.T) {
 }
 
 func TestCleanupExitExpectedUnexpectedFailure(t *testing.T) {
-	cmd := exec.Command(os.Args[0], "-test.run=TestCleanupHelper")
+	cmd := exec.Command(testExecutable(t), "-test.run=TestCleanupHelper") //nolint:gosec // testExecutable resolves the checked test binary; arguments are fixed test-only flags
 	cmd.Env = append(os.Environ(), "HTTPDIFF_CLEANUP_HELPER=fail")
 	err := cmd.Run()
 	if err == nil {
@@ -47,7 +56,7 @@ func TestCleanupExitExpectedUnexpectedFailure(t *testing.T) {
 }
 
 func TestRunningServerStopLifecycle(t *testing.T) {
-	cmd := exec.Command(os.Args[0], "-test.run=TestCleanupHelper")
+	cmd := exec.Command(testExecutable(t), "-test.run=TestCleanupHelper") //nolint:gosec // testExecutable resolves the checked test binary; arguments are fixed test-only flags
 	cmd.Env = append(os.Environ(), "HTTPDIFF_CLEANUP_HELPER=block")
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
@@ -63,7 +72,7 @@ func TestRunningServerStopLifecycle(t *testing.T) {
 }
 
 func TestRunningServerStopAlreadyExitedNonZero(t *testing.T) {
-	cmd := exec.Command(os.Args[0], "-test.run=TestCleanupHelper")
+	cmd := exec.Command(testExecutable(t), "-test.run=TestCleanupHelper") //nolint:gosec // testExecutable resolves the checked test binary; arguments are fixed test-only flags
 	cmd.Env = append(os.Environ(), "HTTPDIFF_CLEANUP_HELPER=fail")
 	if err := cmd.Run(); err == nil {
 		t.Fatal("expected helper failure")

@@ -12,6 +12,7 @@ cap-std.workspace = true
 axum.workspace = true
 flate2.workspace = true
 httpdate.workspace = true
+notify.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 symdesk-vault.workspace = true

@@ -53,6 +53,7 @@
       }
     },
     "thresholds": {
+      "description": "Reduction and regression values are dimensionless ratios, not percentages. Display percentage = ratio * 100; maximum_p95_regression 0.1 means 10%. Stored measurements and gate comparisons retain ratio units.",
       "type": "object", "additionalProperties": false,
       "required": ["minimum_improvement", "maximum_p95_regression", "binary_size_reduction", "representative_rss_reduction_max", "improvement_pass", "p95_regressions", "latency_pass", "contracts_pass", "fail_closed"],
       "properties": {

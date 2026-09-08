@@ -14,6 +14,22 @@ allow = [
   "Unicode-3.0",
 ]
 
+# Reviewed native watcher dependencies; keep exceptions package-scoped.
+[[licenses.exceptions]]
+name = "notify"
+version = "=8.2.0"
+allow = ["CC0-1.0"]
+
+[[licenses.exceptions]]
+name = "inotify"
+version = "=0.11.5"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "inotify-sys"
+version = "=0.1.8"
+allow = ["ISC"]
+
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"

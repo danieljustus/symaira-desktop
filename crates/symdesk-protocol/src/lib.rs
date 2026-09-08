@@ -1088,7 +1088,7 @@ mod tests {
             match file.read_to_end(&mut bytes) {
                 Ok(_) => assert_eq!(bytes, b"inside", "unexpected snapshot bytes"),
                 Err(_) => assert!(
-                    !bytes.starts_with(b"outside"),
+                    bytes.is_empty() || b"inside".starts_with(&bytes),
                     "partial read disclosed outside bytes"
                 ),
             }

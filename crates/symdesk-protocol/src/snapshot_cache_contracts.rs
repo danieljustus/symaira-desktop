@@ -170,6 +170,7 @@ async fn snapshot_read_failure_returns_http_500_retains_dirty_cache_and_retries(
     });
     state.snapshot_cache.set_healthy(true);
     let old = snapshot(&state);
+    fs::write(state.vault_root.join("note.md"), "updated complete").unwrap();
     state.snapshot_cache.set_dirty(true);
     state.snapshot_cache.inject_read_failure();
     let response = handle_snapshot(State(Arc::clone(&state)), HeaderMap::new(), Method::GET).await;
@@ -180,7 +181,11 @@ async fn snapshot_read_failure_returns_http_500_retains_dirty_cache_and_retries(
 
     let retried = snapshot(&state);
     let value: serde_json::Value = serde_json::from_slice(&retried.plain).unwrap();
-    assert_eq!(value["notes"][0]["content"], "complete");
+    assert_eq!(value["notes"].as_array().unwrap().len(), 1);
+    assert_eq!(value["notes"][0]["content"], "updated complete");
+    assert_ne!(old.etag, retried.etag);
+    assert!(!state.snapshot_cache.is_dirty());
+    assert!(Arc::ptr_eq(&retried, &snapshot(&state)));
 }
 
 #[test]

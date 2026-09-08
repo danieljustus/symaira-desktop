@@ -47,6 +47,36 @@ is still exercised by the report helper.
 
 ## Remaining boundaries
 
+### Read-error and race regression checkpoint
+
+Issue #889 tracks the Linux CI race-test failure at `3c81416e`:
+https://github.com/danieljustus/symaira-desktop/actions/runs/34251843055/job/102147904577
+
+The corrected patch is based on `fd43a3be`. Production snapshot reads still
+propagate errors, matching Go `internal/selfhost/snapshot.go`; a transient
+read error must never publish a successful partial snapshot. Deterministic,
+per-cache test injection exercises partial reads, handler HTTP 500, retained
+old payload, dirty state, changed-content retry and subsequent hot reuse.
+The Unix race test checks successful and partial bytes and uses RAII to stop
+and join its mutator. This stress test is probabilistic, not exhaustive proof.
+
+Local macOS verification passed: `cargo fmt --all --check`,
+`cargo test -p symdesk-protocol --all-features --locked` (24 tests), and
+`cargo clippy -p symdesk-protocol --all-targets --all-features --locked -- -D warnings`.
+Independent review approved these exact source hashes:
+
+- `lib.rs`: `75ec955b96f5da6cc6e99e4ead739731b3c5581d59117d25193faa788381210f`
+- `snapshot_cache.rs`: `0ef5cee7b54ecd97b67be454c32b5f1fd370afd9f7d7aad64ef217e4d233b606`
+- `snapshot_cache_contracts.rs`: `705a7be071281eb7da2bacb6fa03d2324c8f93a18256f664a9caa6b58a12bccd`
+
+Native Linux/Windows CI, full Rust gates, representative differential tests
+and current-revision VALUE-001 reconciliation remain pending. RUST-006 is
+not advanced by this local checkpoint; RUST-007 and its existing unintegrated
+atomic-write/history-generator work remain blocked. Next: pass #889 CI and
+the RUST-006 acceptance commands before recovering RUST-007. Go remains production.
+
+### Scope limits
+
 - Early representative parity is not full CLI/MCP/HTTP or product parity.
 - Record an actual Go-oracle invalid-UTF8 filename fixture before changing
   the Rust adapter's pre-existing explicit rejection behavior.

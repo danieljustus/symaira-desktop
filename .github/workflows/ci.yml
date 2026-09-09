@@ -132,6 +132,11 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: make port-contract
 
+      - name: Verify Windows migration failure controls
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: python3 scripts/rust-port/test_native_ci_contract.py
+
       - name: Verify frozen oracle and differential harness on Windows
         if: matrix.os == 'windows-latest'
         shell: bash

@@ -27,8 +27,9 @@ class ResumeEvidenceTests(unittest.TestCase):
         metadata["redacted_sha256"] = hashlib.sha256(self.path.read_bytes()).hexdigest()
         metadata_path.write_text(json.dumps(metadata))
 
-    def test_reviewed_capture_passes(self):
-        validator.validate(self.path)
+    def test_genuine_capture_fails_operation_acceptance(self):
+        with self.assertRaisesRegex(ValueError, "http.file-read, http.file-missing"):
+            validator.validate(self.path)
 
     def test_recursive_derivation_accepts_only_prefix_substitutions(self):
         # Synthetic private prefixes test the transformation, not measurements.

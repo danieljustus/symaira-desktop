@@ -6,6 +6,12 @@ ROOM_LDFLAGS = -X github.com/danieljustus/symaira-desktop/internal/room/version.
 CARGO ?= cargo
 # Keep differential artifacts in the candidate's isolated Cargo target tree.
 RUST_TARGET_DIR ?= $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),target)
+# Command-line make variables are not inherited by recipes. When callers
+# select an isolated Cargo target tree, pass it through to Cargo as well as
+# using it for the differential binary path below.
+ifneq ($(origin CARGO_TARGET_DIR),undefined)
+export CARGO_TARGET_DIR
+endif
 PORT_ORACLE_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 PORT_ORACLE_RELEASE ?= post-v0.12.2-security-880
 PORT_CASES ?= testdata/port/cli/cases.json

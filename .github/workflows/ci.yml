@@ -168,8 +168,8 @@ jobs:
       - name: Install cargo-fuzz
         run: cargo install cargo-fuzz --locked --version 0.13.2
 
-      - name: Run Rust gates and Go-to-Rust version differential
-        run: make rust-gates value-001-validate
+      - name: Run Rust gates, version differential, and historical evidence tests
+        run: make rust-gates value-001-evidence-tests
 
       - name: Fuzz frontmatter parser smoke corpus
         run: make rust-fuzz-smoke

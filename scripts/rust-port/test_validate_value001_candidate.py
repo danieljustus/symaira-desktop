@@ -7,6 +7,7 @@ import json
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 SPEC = importlib.util.spec_from_file_location("candidate_validator", Path(__file__).with_name("validate_value001_candidate.py"))
@@ -14,18 +15,33 @@ assert SPEC and SPEC.loader
 validator = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(validator)
 
-ARTIFACT = Path("/tmp/symdesk-value001-5088972a.json")
-ROOT = Path("/Users/daniel/Dev/Symaira Dev/symaira-desktop/.worktrees/value-operation-gates")
+ROOT = Path(__file__).resolve().parents[2]
+ARTIFACT = ROOT / "docs/rust-port/results/value001-operations-5088972a.json"
 CANDIDATE = "5088972aa7efadfdc7118549354e26d001c1ffad"
 
 
 class CandidateValidatorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if not ARTIFACT.is_file():
-            raise unittest.SkipTest("real VALUE-001 capture is unavailable")
         cls.original = json.loads(ARTIFACT.read_text())
         cls.trusted = hashlib.sha256(ARTIFACT.read_bytes()).hexdigest()
+
+    def setUp(self):
+        # Isolate Git identity for mutation unit tests; live CLI acceptance
+        # is executed separately against the immutable measured checkout.
+        def git_identity(root, *args):
+            if args in [("rev-parse", "HEAD"), ("rev-parse", CANDIDATE)]:
+                return CANDIDATE
+            if args == ("cat-file", "-e", CANDIDATE + "^{commit}"):
+                return ""
+            if args == ("diff", "--binary", "HEAD"):
+                return ""
+            if args == ("status", "--porcelain=v1", "--untracked-files=all"):
+                return ""
+            raise AssertionError(f"unexpected Git call: {args}")
+        self.git_patch = patch.object(validator, "git", side_effect=git_identity)
+        self.git_patch.start()
+        self.addCleanup(self.git_patch.stop)
 
     def check(self, result=None, *, trusted=None, expect=None):
         result = copy.deepcopy(self.original if result is None else result)
@@ -40,8 +56,18 @@ class CandidateValidatorTests(unittest.TestCase):
                     validator.validate(path, CANDIDATE, ROOT, digest)
                 self.assertIn(expect, str(raised.exception))
 
-    def test_real_capture_revalidates_for_exact_current_candidate(self):
+    def test_real_capture_passes_with_matching_git_identity(self):
         validator.validate(ARTIFACT, CANDIDATE, ROOT, self.trusted)
+
+    def test_untracked_source_in_candidate_checkout_is_rejected(self):
+        original_git = validator.git.side_effect
+        def dirty_git(root, *args):
+            if args == ("status", "--porcelain=v1", "--untracked-files=all"):
+                return "?? source.rs"
+            return original_git(root, *args)
+        validator.git.side_effect = dirty_git
+        with self.assertRaisesRegex(validator.ValidationError, "current root is not clean"):
+            validator.validate(ARTIFACT, CANDIDATE, ROOT, self.trusted)
 
     def test_trusted_digest_is_required_and_bound(self):
         with self.assertRaises(validator.ValidationError):

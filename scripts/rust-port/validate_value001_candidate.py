@@ -92,9 +92,9 @@ def validate(path: Path, candidate: str, root: Path, trusted_sha256: str) -> Non
     require(git(root, "cat-file", "-e", f"{candidate}^{{commit}}") == "", "candidate commit does not exist")
     require(git(root, "rev-parse", candidate) == candidate, "candidate commit identity mismatch")
     require(git(root, "rev-parse", "HEAD") == candidate, "current root HEAD is not the explicit candidate")
-    # The capture's recorded status/diff are the historical integrity gate.
-    # The candidate checkout may contain separately retained evidence files;
-    # source applicability is anchored to its immutable HEAD and tracked diff.
+    # Current applicability requires a clean checkout, including untracked
+    # sources. Store new captures outside that checkout during acceptance.
+    require(git(root, "status", "--porcelain=v1", "--untracked-files=all") == "", "current root is not clean")
     require(git(root, "diff", "--binary", "HEAD") == "", "current root tracked diff is not empty")
 
     try:

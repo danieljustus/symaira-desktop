@@ -134,9 +134,10 @@ jobs:
 
       - name: Verify frozen oracle and differential harness on Windows
         if: matrix.os == 'windows-latest'
-        shell: pwsh
+        shell: bash
         run: |
-          New-Item -ItemType Directory -Force bin | Out-Null
+          set -euo pipefail
+          mkdir -p bin
           go run ./scripts/rust-port/cmd/portgen --check
           go test -count=1 ./scripts/rust-port/...
           go build -ldflags "-X main.version=0.12.2" -o bin/symdesk.exe ./cmd/symdesk
@@ -167,8 +168,8 @@ jobs:
       - name: Install cargo-fuzz
         run: cargo install cargo-fuzz --locked --version 0.13.2
 
-      - name: Run Rust gates and Go-to-Rust version differential
-        run: make rust-gates
+      - name: Run Rust gates, version differential, and historical evidence tests
+        run: make rust-gates value-001-evidence-tests
 
       - name: Fuzz frontmatter parser smoke corpus
         run: make rust-fuzz-smoke
@@ -177,6 +178,7 @@ jobs:
     name: Rust native (${{ matrix.os }})
     if: github.event_name != 'pull_request'
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -191,7 +193,10 @@ jobs:
         run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt
 
       - name: Check, lint, and test Rust workspace
+        shell: bash
         run: |
+          set -euo pipefail
+          python3 scripts/rust-port/test_native_ci_contract.py
           cargo fmt --all --check
           cargo check --workspace --all-targets --all-features --locked
           cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
@@ -202,12 +207,30 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: SIDECAR_NATIVE=1 make sidecar-roundtrip
 
+      - name: Run native Unix representative CLI HTTP and MCP parity
+        if: matrix.os != 'windows-latest'
+        run: make representative-differential mcp-differential
+
+      - name: Run native Windows representative CLI HTTP and MCP parity
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bin/port
+          go run ./scripts/rust-port/cmd/representativegen --check
+          go run ./scripts/rust-port/cmd/mcpgen --check
+          go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go.exe ./cmd/symdesk
+          SYMDESK_VERSION=0.12.2 cargo build -p symdesk-cli --locked
+          go run ./scripts/rust-port/cmd/diffharness --symdesk-left bin/port/symdesk-go.exe --symdesk-right target/debug/symdesk.exe --cases testdata/port/representative/cases.json --stage representative
+          go run ./scripts/rust-port/cmd/httpdiff --left bin/port/symdesk-go.exe --right target/debug/symdesk.exe --fixture testdata/port/http/representative.json
+          go run ./scripts/rust-port/cmd/mcpdiff --left bin/port/symdesk-go.exe --right target/debug/symdesk.exe
+
       - name: Run native Windows sidecar round-trip suite
         if: matrix.os == 'windows-latest'
-        shell: pwsh
+        shell: bash
         run: |
-          $env:SIDECAR_NATIVE = "1"
-          go run ./scripts/rust-port/cmd/sidecar-roundtrip
+          set -euo pipefail
+          SIDECAR_NATIVE=1 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 
       - name: Run native macOS version differential
         if: matrix.os == 'macos-latest'
@@ -215,13 +238,14 @@ jobs:
 
       - name: Run native Windows version differential
         if: matrix.os == 'windows-latest'
-        shell: pwsh
+        shell: bash
         run: |
-          New-Item -ItemType Directory -Force bin/port | Out-Null
+          set -euo pipefail
+          mkdir -p bin/port
           go build -ldflags "-X main.version=0.12.2" -o bin/port/symdesk-go.exe ./cmd/symdesk
           go build -ldflags "-X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2" -o bin/port/symroom-go.exe ./cmd/symroom
-          $env:SYMDESK_VERSION = "0.12.2"
-          $env:SYMROOM_VERSION = "0.12.2"
+          export SYMDESK_VERSION="0.12.2"
+          export SYMROOM_VERSION="0.12.2"
           cargo build --release --workspace --locked
           go run ./scripts/rust-port/cmd/diffharness --symdesk-left bin/port/symdesk-go.exe --symdesk-right target/release/symdesk.exe --symroom-left bin/port/symroom-go.exe --symroom-right target/release/symroom.exe --cases testdata/port/cli/cases.json --stage version
 

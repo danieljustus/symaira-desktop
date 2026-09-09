@@ -8,6 +8,8 @@ import json
 import math
 from pathlib import Path
 
+import value001
+
 
 def percentage(regression: float) -> str:
     """Format a dimensionless regression ratio as a display percentage."""
@@ -30,15 +32,17 @@ def verified_p95(summary: dict) -> float:
 
 def render(result: dict) -> str:
     lines = ["Retained measurement: " + result["captured_at"]]
-    for name, recorded_ratio in result["thresholds"]["p95_regressions"].items():
-        pair = result["metrics"][name]
+    recorded = result["thresholds"].get("p95_regressions", {})
+    regressions = value001.latency_regressions(result["metrics"])
+    for name, ratio in regressions.items():
+        if name in recorded and not math.isclose(ratio, recorded[name], rel_tol=1e-12, abs_tol=1e-12):
+            raise ValueError("recorded regression differs from retained samples")
+        metric_name, _, operation = name.partition(".")
+        pair = result["metrics"][metric_name]
+        if operation:
+            pair = pair["operations"][operation]
         go = verified_p95(pair["go"])
         rust = verified_p95(pair["rust"])
-        if go <= 0:
-            raise ValueError("non-positive Go p95")
-        ratio = rust / go - 1
-        if not math.isclose(ratio, recorded_ratio, rel_tol=1e-12, abs_tol=1e-12):
-            raise ValueError("recorded regression differs from retained samples")
         lines.append(f"{name}: Go {go:.6f} ms; Rust {rust:.6f} ms; regression {percentage(ratio)}")
     lines.append("Recorded gate passed: " + str(result["passed"]).lower())
     return "\n".join(lines)

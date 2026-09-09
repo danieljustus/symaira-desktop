@@ -16,10 +16,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -186,6 +184,8 @@ func run() (runErr error) {
 	return nil
 }
 
+const serverStopTimeout = 5 * time.Second
+
 type runningServer struct {
 	cmd  *exec.Cmd
 	base string
@@ -214,6 +214,8 @@ func startServer(binary, vault string) *runningServer {
 	server := &runningServer{cmd: cmd, base: "http://" + address}
 	cmd.Stdout = io.Discard
 	cmd.Stderr = &server.logs
+	// Bound os/exec cleanup if a descendant retains an inherited handle.
+	cmd.WaitDelay = serverStopTimeout
 	if err := cmd.Start(); err != nil {
 		fatal("start %s: %v", binary, err)
 	}
@@ -397,44 +399,66 @@ func isolatedEnv(vault, home string) []string {
 }
 
 func (s *runningServer) stop() error {
-	if s.cmd == nil || s.cmd.Process == nil || s.cmd.ProcessState != nil {
-		if _, overflow := s.logs.snapshot(); overflow {
-			return fmt.Errorf("process cleanup stderr exceeded 1 MiB")
-		}
+	if s.cmd == nil || s.cmd.Process == nil {
 		return nil
 	}
-	if runtime.GOOS == "windows" {
-		_ = s.cmd.Process.Kill()
-	} else if err := s.cmd.Process.Signal(syscall.SIGTERM); err != nil {
-		_ = s.cmd.Process.Kill()
+	if s.cmd.ProcessState != nil {
+		if s.cmd.ProcessState.Success() {
+			return nil
+		}
+		return fmt.Errorf("process cleanup failed: already exited with status %d", s.cmd.ProcessState.ExitCode())
 	}
+	terminateErr := terminateProcessTree(s.cmd)
+	intentionalTermination := terminateErr == nil || errors.Is(terminateErr, os.ErrProcessDone)
+	alreadyExited := errors.Is(terminateErr, os.ErrProcessDone)
 	wait := make(chan error, 1)
 	go func() { wait <- s.cmd.Wait() }()
 	select {
 	case err := <-wait:
-		if err != nil {
-			var exitErr *exec.ExitError
-			if !errors.As(err, &exitErr) || (exitErr.ExitCode() != 0 && exitErr.ExitCode() != -1) {
-				logs, overflow := s.logs.snapshot()
-				if overflow {
-					return fmt.Errorf("process cleanup stderr exceeded 1 MiB: %w; stderr=%s", err, logs)
-				}
-				return fmt.Errorf("process cleanup failed: %w; stderr=%s", err, logs)
+		if err != nil && !cleanupExitExpected(err, intentionalTermination, alreadyExited, isWindowsProcess()) {
+			logs, overflow := s.logs.snapshot()
+			if overflow {
+				return fmt.Errorf("process cleanup stderr exceeded 1 MiB: %w; stderr=%s", err, logs)
 			}
+			return fmt.Errorf("process cleanup failed: %w; stderr=%s", err, logs)
 		}
 		if _, overflow := s.logs.snapshot(); overflow {
 			return fmt.Errorf("process cleanup stderr exceeded 1 MiB")
 		}
-		return nil
-	case <-time.After(5 * time.Second):
-		_ = s.cmd.Process.Kill()
-		<-wait
-		logs, overflow := s.logs.snapshot()
-		if overflow {
-			return fmt.Errorf("process did not exit within 5 seconds; stderr exceeded 1 MiB; stderr=%s", logs)
+		if terminateErr != nil && !errors.Is(terminateErr, os.ErrProcessDone) {
+			return fmt.Errorf("terminate process: %w", terminateErr)
 		}
-		return fmt.Errorf("process did not exit within 5 seconds; stderr=%s", logs)
+		return nil
+	case <-time.After(serverStopTimeout):
+		killErr := s.cmd.Process.Kill()
+		select {
+		case waitErr := <-wait:
+			if killErr != nil && !errors.Is(killErr, os.ErrProcessDone) {
+				return fmt.Errorf("process did not exit within %s: kill: %w", serverStopTimeout, killErr)
+			}
+			if waitErr != nil && !cleanupExitExpected(waitErr, true, false, isWindowsProcess()) {
+				return fmt.Errorf("process cleanup failed after timeout: %w", waitErr)
+			}
+		case <-time.After(serverStopTimeout):
+			return fmt.Errorf("process did not exit within %s after kill", serverStopTimeout)
+		}
+		return fmt.Errorf("process did not exit within %s", serverStopTimeout)
 	}
+}
+
+// cleanupExitExpected accepts only statuses caused by the cleanup action.
+// Windows reports a forcibly terminated process as exit status 1, while Unix
+// reports a signal termination as -1. Other non-zero exits remain failures.
+func cleanupExitExpected(err error, intentionalTermination, alreadyExited, windows bool) bool {
+	if !intentionalTermination || alreadyExited {
+		return false
+	}
+	var exitErr *exec.ExitError
+	if !errors.As(err, &exitErr) {
+		return false
+	}
+	code := exitErr.ExitCode()
+	return code == -1 || (windows && code == 1)
 }
 
 func fatal(format string, args ...any) {

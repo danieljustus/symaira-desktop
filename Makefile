@@ -4,6 +4,14 @@ VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
 ROOM_LDFLAGS = -X github.com/danieljustus/symaira-desktop/internal/room/version.Version=$(if $(VERSION),$(VERSION),(dev))
 CARGO ?= cargo
+# Keep differential artifacts in the candidate's isolated Cargo target tree.
+RUST_TARGET_DIR ?= $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),target)
+# Command-line make variables are not inherited by recipes. When callers
+# select an isolated Cargo target tree, pass it through to Cargo as well as
+# using it for the differential binary path below.
+ifneq ($(origin CARGO_TARGET_DIR),undefined)
+export CARGO_TARGET_DIR
+endif
 PORT_ORACLE_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 PORT_ORACLE_RELEASE ?= post-v0.12.2-security-880
 PORT_CASES ?= testdata/port/cli/cases.json
@@ -157,25 +165,34 @@ representative-differential: representative-fixtures-check
 	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/diffharness \
-		--symdesk-left bin/port/symdesk-go --symdesk-right target/debug/symdesk \
+		--symdesk-left bin/port/symdesk-go --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk" \
 		--cases testdata/port/representative/cases.json --stage representative
-		$(MAKE) http-differential PORT_LEFT=bin/port/symdesk-go PORT_RIGHT=target/debug/symdesk
+		$(MAKE) http-differential PORT_LEFT=bin/port/symdesk-go PORT_RIGHT="$(RUST_TARGET_DIR)/debug/symdesk"
 
 http-differential: representative-fixtures-check
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/httpdiff \
-		--left $(PORT_LEFT) --right $(PORT_RIGHT) \
+		--left "$(PORT_LEFT)" --right "$(PORT_RIGHT)" \
 		--fixture testdata/port/http/representative.json
 
 # VALUE-001: fail-closed paired representative Go/Rust benchmark.
+.PHONY: value-001-evidence-tests value-001-validate
 VALUE_SAMPLES ?= 100
 VALUE_WARMUPS ?= 20
 VALUE_GO_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 VALUE_OUTPUT ?= docs/rust-port/results/value001-latest.json
 VALUE_RETAINED ?= docs/rust-port/results/value001-retained.json
-value-001-validate:
+value-001-evidence-tests:
+	python3 scripts/rust-port/test_validate_value001_resume.py
 	python3 scripts/rust-port/validate_value001_retained.py "$(VALUE_RETAINED)"
 	python3 scripts/rust-port/value001_report.py "$(VALUE_RETAINED)"
 	python3 scripts/rust-port/value001_report.py docs/rust-port/results/value001-latest.json
+	python3 scripts/rust-port/test_validate_value001_candidate.py
+
+# Explicit candidate acceptance; historical evidence tests do not approve HEAD.
+VALUE_CANDIDATE_ROOT ?= .
+value-001-validate:
+	@test -n "$(VALUE_CANDIDATE)" -a -n "$(VALUE_TRUSTED_SHA256)"
+	python3 scripts/rust-port/validate_value001_candidate.py "$(VALUE_OUTPUT)" --candidate "$(VALUE_CANDIDATE)" --root "$(VALUE_CANDIDATE_ROOT)" --trusted-sha256 "$(VALUE_TRUSTED_SHA256)"
 
 
 value-001:
@@ -184,7 +201,7 @@ value-001:
 	python3 scripts/rust-port/value001.py \
 		--root . \
 		--go-source-commit $(VALUE_GO_COMMIT) \
-		--rust-binary target/release/symdesk \
+		--rust-binary "$(RUST_TARGET_DIR)/release/symdesk" \
 		--rust-build-command "SYMDESK_VERSION=0.12.2 cargo build --release -p symdesk-cli --locked" \
 		--samples $(VALUE_SAMPLES) \
 		--warmups $(VALUE_WARMUPS) \
@@ -201,7 +218,7 @@ mcp-differential: mcp-fixtures-check
 	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/mcpdiff \
-		--left bin/port/symdesk-go --right target/debug/symdesk
+		--left bin/port/symdesk-go --right "$(RUST_TARGET_DIR)/debug/symdesk"
 
 rust-build:
 	$(CARGO) build --workspace --locked
@@ -233,8 +250,8 @@ rust-version-contract:
 	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2" -o bin/port/symroom-go ./cmd/symroom
 	SYMDESK_VERSION=0.12.2 SYMROOM_VERSION=0.12.2 $(CARGO) build --release --workspace --locked
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/diffharness \
-		--symdesk-left bin/port/symdesk-go --symdesk-right target/release/symdesk \
-		--symroom-left bin/port/symroom-go --symroom-right target/release/symroom \
+		--symdesk-left bin/port/symdesk-go --symdesk-right "$(RUST_TARGET_DIR)/release/symdesk" \
+		--symroom-left bin/port/symroom-go --symroom-right "$(RUST_TARGET_DIR)/release/symroom" \
 		--cases $(PORT_CASES) --stage version
 
 rust-fuzz-smoke:

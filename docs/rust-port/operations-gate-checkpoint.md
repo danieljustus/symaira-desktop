@@ -14,6 +14,26 @@ The migration remains in progress, not complete. The renewed request authorizes 
 - The old 956bd3e resumption capture is genuine but fails individual file-read/file-missing latency gates. It must remain a negative control, not a required passing approval command.
 - Native run for Rust-equivalent test repair `0159d80013b7cab1654d1fb7cb29e3d40be2324b`: https://github.com/danieljustus/symaira-desktop/actions/runs/34314724745. Latest observed Ubuntu native suite and representative parity pass; Windows workspace and representative parity pass, final sidecar/version checks still pending. This run does not certify subsequent harness changes.
 
+## Revalidating the reviewed capture
+
+Run from this checkout with a separate clean candidate checkout. This verifies
+5088972a, not the newer checkout containing the validator and documentation.
+
+```sh
+git worktree add --detach ../value-508-check 5088972aa7efadfdc7118549354e26d001c1ffad
+PYTHONDONTWRITEBYTECODE=1 make value-001-validate \
+  VALUE_OUTPUT=docs/rust-port/results/value001-operations-5088972a.json \
+  VALUE_CANDIDATE=5088972aa7efadfdc7118549354e26d001c1ffad \
+  VALUE_CANDIDATE_ROOT=../value-508-check \
+  VALUE_TRUSTED_SHA256=70e2c2401f8acb4ea40b5a3e57b108a5cd18ff96be7a6a5823ff6a7e0f66d5ac
+```
+
+If the candidate checkout already exists, verify its HEAD and clean status;
+do not recreate or overwrite it. The raw and derived captures were independently
+compared recursively; only the nine documented private-path fields differ.
+The exact-candidate validator and capture passed independent review at 8c9e83b7.
+Full native run 34314724745 completed successfully on 0159d800.
+
 ## Owned work and next actions
 
 - `fix/value-operation-gates`: integrated per-operation producer/validator changes plus Windows fixture repair; capture files and this checkpoint currently uncommitted.

@@ -167,6 +167,7 @@ http-differential: representative-fixtures-check
 		--fixture testdata/port/http/representative.json
 
 # VALUE-001: fail-closed paired representative Go/Rust benchmark.
+.PHONY: value-001-evidence-tests value-001-validate
 VALUE_SAMPLES ?= 100
 VALUE_WARMUPS ?= 20
 VALUE_GO_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2

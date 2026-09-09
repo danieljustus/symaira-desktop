@@ -41,7 +41,8 @@ The privacy-reviewed durable derivative is
 `docs/rust-port/results/value001-retained.json`; its SHA-256 is
 `bfc4f2274b3d2a2ea8881e014cbb350c243420322c4bd43c5fbf58c260d9988c`.
 The sidecar records the transformation and trusted CI run. Validate it with
-`make value-001-validate`; this does not advance the work-item gate.
+`make value-001-evidence-tests`; this does not advance the work-item gate.
+For exact candidate approval, use the explicit artifact, candidate, checkout and trusted digest in `operations-gate-checkpoint.md`. The historical 956bd3e aggregate PASS is superseded: its individual file-read and file-missing operations exceed the unchanged 10% ceiling.
 The historical failed `results/value001-latest.json` remains byte-exact and
 is still exercised by the report helper.
 

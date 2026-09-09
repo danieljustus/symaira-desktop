@@ -16,7 +16,7 @@ class RetainedValidatorMutationTests(unittest.TestCase):
     def setUp(self):
         self.result = json.loads(RETAINED.read_text(encoding="utf-8"))
 
-    def assert_rejected(self, mutate):
+    def assert_rejected(self, mutate, expected=None):
         candidate = copy.deepcopy(self.result)
         mutate(candidate)
         with tempfile.TemporaryDirectory() as directory:
@@ -25,8 +25,10 @@ class RetainedValidatorMutationTests(unittest.TestCase):
             metadata = json.loads((RETAINED.with_name("value001-retained.metadata.json")).read_text())
             metadata["redacted_sha256"] = __import__("hashlib").sha256(artifact.read_bytes()).hexdigest()
             (Path(directory) / "value001-retained.metadata.json").write_text(json.dumps(metadata))
-            with self.assertRaises((ValueError, KeyError)):
+            with self.assertRaises((ValueError, KeyError)) as raised:
                 validator.main(artifact)
+            if expected is not None:
+                self.assertIn(expected, str(raised.exception))
 
     def test_old_failing_evidence_is_not_approved_by_operation_gate(self):
         result = json.loads((ROOT / "docs/rust-port/results" / "value001-latest.json").read_text(encoding="utf-8"))
@@ -66,6 +68,40 @@ class RetainedValidatorMutationTests(unittest.TestCase):
 
     def test_reviewed_capture_accepted(self):
         self.assertEqual(validator.main(RETAINED), 0)
+
+    def test_each_operation_regression_fails_before_capture_digest_check(self):
+        for category in ("mcp", "http"):
+            for operation in self.result["metrics"][category]["operations"]:
+                with self.subTest(category=category, operation=operation):
+
+                    def mutate(result):
+                        metric = result["metrics"][category]
+                        go = metric["operations"][operation]["go"]
+                        metric["operations"][operation]["rust"] = value001.summary(
+                            [sample * 1.101 for sample in go["raw"]],
+                            go["unit"],
+                            go["warmup_samples"],
+                            go["pair_order"],
+                        )
+                        ratios = value001.latency_regressions(result["metrics"])
+                        result["thresholds"]["p95_regressions"] = ratios
+                        self.assertLessEqual(ratios[category], 0.10)
+                        self.assertEqual(
+                            metric["rust"], self.result["metrics"][category]["rust"]
+                        )
+
+                    self.assert_rejected(
+                        mutate,
+                        f"required latency operation {category}.{operation} exceeds 10% regression",
+                    )
+
+    def test_altered_operation_summary_identity_is_rejected(self):
+        self.assert_rejected(
+            lambda result: result["metrics"]["http"]["operations"]["file-read"][
+                "rust"
+            ].update(p95=0.1),
+            "http.operations.file-read.rust.p95 does not match raw samples",
+        )
 
 
 if __name__ == "__main__":

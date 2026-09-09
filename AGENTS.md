@@ -1,5 +1,9 @@
 # symaira-desktop — Agent Instructions
 
+## Current product contract
+
+[PB-2026-09-09](docs/product-boundaries.md) keeps Desktop the document/knowledge-work product, usable without Brain. Brain owns optional Browse/Operate and the future credential-management UI; Desktop does not absorb them or become a generic launcher. Preserve direct optional web-worker/credential-service access without requiring Brain memory or a gateway profile. Documents remain authoritative here; only explicit provenance-bearing context is promoted to Brain. Existing runtime contracts remain until verified migrations.
+
 Local-first, self-hostable, agent-native workspace over a single plain-Markdown vault. `symdesk` (Go core) runs as CLI, stdio MCP server, authenticated self-hosted HTTP document API, or distributed OCR worker. Native SwiftUI apps for macOS (`SymDeskApp`) and iOS (`SymDeskMobile`) open a local/iCloud vault directly or connect to the self-hosted server.
 
 Identity: **Markdown-vault workspace product, and the human shell of the ecosystem.** The separate hub app thesis was abandoned and `symaira-hub` archived on 2026-08-22 (`docs/repo-konsolidierung.md` §7 in the workspace); this is where a person works, while agents talk to the MCP servers directly. A **server-rendered browser UI** (Go templates + vanilla JS, embedded in the `symdesk` binary) is accepted in principle; see `docs/BROWSER-ACCESS.md`. The HTTP API also serves JSON for native and machine clients.

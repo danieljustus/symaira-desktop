@@ -72,10 +72,24 @@ func BackfillFrontmatterBytes(data []byte, missing map[string]interface{}) ([]by
 // BackfillFrontmatter updates filePath with missing frontmatter fields atomically.
 // If the content is unchanged, no write is performed.
 func BackfillFrontmatter(filePath string, missing map[string]interface{}) error {
-	data, err := os.ReadFile(filePath) //nolint:gosec // filePath is supplied by the vault walk
+	data, err := os.ReadFile(filePath) //nolint:gosec // filePath is explicitly selected by the caller
 	if err != nil {
 		return fmt.Errorf("read file: %w", err)
 	}
+	return backfillFrontmatterData(filePath, data, missing)
+}
+
+// BackfillFrontmatterInRoot reads the walked path through a confined vault
+// root before applying the same atomic write behavior as BackfillFrontmatter.
+func BackfillFrontmatterInRoot(vaultRoot, filePath string, missing map[string]interface{}) error {
+	data, _, err := ReadFileInRoot(vaultRoot, filePath)
+	if err != nil {
+		return fmt.Errorf("read file: %w", err)
+	}
+	return backfillFrontmatterData(filePath, data, missing)
+}
+
+func backfillFrontmatterData(filePath string, data []byte, missing map[string]interface{}) error {
 	newData, err := BackfillFrontmatterBytes(data, missing)
 	if err != nil {
 		return err

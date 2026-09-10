@@ -3,7 +3,7 @@
 `TODO` means the contract is identified but lacks both a language-neutral
 fixture and Rust parity test. `PASS` requires executable CI evidence; prose,
 compilation, or a green unit test in only one language is not parity. The Go
-oracle is commit `ae86331930fdfa2b128b68ae5af7437091b9949a` / release `v0.12.2`.
+behavior oracle is commit `745c08e8144971c61133c5d0e5d61c7ce405aad2` / release reference `post-v0.12.2-security-880`; the immutable VALUE baseline remains `ae863319` / `v0.12.2`.
 
 | ID | Seam | Fixture / input | Go oracle | Expected contract | Rust evidence | Platforms | Compare | Status |
 |---|---|---|---|---|---|---|---|---|
@@ -92,7 +92,7 @@ oracle is commit `ae86331930fdfa2b128b68ae5af7437091b9949a` / release `v0.12.2`.
 | SWIFT-001 | macOS consumer | CLI calls plus long-running events stream | current Go backend + macOS app | decoding, argv placement, NDJSON events and subprocess lifecycle unchanged | xcodebuild integration smoke | macOS | bytes/semantic | TODO |
 | SWIFT-002 | iOS server consumer | authenticated HTTP reads/writes, outbox, share extension and widget | current Go server + iOS app | API decoding, auth, conflicts, retries and extension/widget behavior unchanged | simulator/device server-mode smoke | iOS | semantic | TODO |
 | SWIFT-003 | iOS Files/iCloud consumer | security-scoped local vault without any CLI process | current Swift Files adapter | v2-compatible writes remain valid v6 notes; coordination, conflict copies and offline outbox unchanged | simulator/device Files-mode smoke | iOS | bytes/semantic | TODO |
-| VALUE-001 | Early value gate | representative SymDesk read/index/search/MCP/HTTP slice | measured Go `symdesk` baseline | >=20% SymDesk binary-size or representative RSS gain; <=10% startup/search/HTTP/MCP p95 regressions | paired benchmark JSON | macOS arm64 + CI samples | measured | TODO |
+| VALUE-001 | Early value gate | representative SymDesk read/index/search/MCP/HTTP slice | measured Go `symdesk` baseline | >=20% SymDesk binary-size or maximum observed RSS gain; <=10% p95 regression for every required operation | `results/value001-operations-5088972a.json`; explicit candidate acceptance command in `operations-gate-checkpoint.md` | macOS arm64 measurement at 5088972a; native CI at 0159d800 | measured | Reviewed PASS for measured candidate 5088972a only; historical 956bd3e operation acceptance FAIL; newer revisions require explicit verification |
 | VALUE-002 | Full value gate | complete release candidates | measured Go baseline | early thresholds still pass under full workloads and release assets | paired benchmark JSON | macOS arm64 + native CI | measured | TODO |
 
 ## Rules

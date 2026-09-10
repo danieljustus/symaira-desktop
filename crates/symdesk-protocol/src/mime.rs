@@ -1,0 +1,639 @@
+//! Platform MIME lookup matching Go's `mime.TypeByExtension` Unix initialization.
+
+#[cfg(any(test, unix, target_os = "windows"))]
+use std::collections::HashMap;
+
+#[derive(Debug, Default)]
+struct MimeTypes {
+    exact: HashMap<String, String>,
+    lower: HashMap<String, String>,
+}
+
+impl MimeTypes {
+    fn insert(&mut self, extension: String, media_type: String) {
+        self.lower
+            .insert(go_lowercase(&extension), media_type.clone());
+        self.exact.insert(extension, media_type);
+    }
+
+    fn get(&self, extension: &str) -> Option<&String> {
+        self.exact
+            .get(extension)
+            .or_else(|| self.lower.get(&go_lowercase(extension)))
+    }
+}
+
+fn go_lowercase(value: &str) -> String {
+    value
+        .chars()
+        .map(|character| character.to_lowercase().next().unwrap_or(character))
+        .collect()
+}
+#[cfg(unix)]
+use std::fs;
+#[cfg(any(unix, target_os = "windows"))]
+use std::sync::OnceLock;
+
+#[cfg(unix)]
+const GLOB_FILES: &[&str] = &["/usr/local/share/mime/globs2", "/usr/share/mime/globs2"];
+#[cfg(unix)]
+const TYPE_FILES: &[&str] = &[
+    "/etc/mime.types",
+    "/etc/apache2/mime.types",
+    "/etc/apache/mime.types",
+    "/etc/httpd/conf/mime.types",
+];
+
+#[cfg(any(unix, target_os = "windows"))]
+pub(super) fn type_by_extension(extension: &str) -> Option<String> {
+    static TYPES: OnceLock<MimeTypes> = OnceLock::new();
+    TYPES.get_or_init(load_system_types).get(extension).cloned()
+}
+
+#[cfg(unix)]
+fn load_system_types() -> MimeTypes {
+    let glob = GLOB_FILES
+        .iter()
+        .find_map(|path| fs::read_to_string(path).ok());
+    let type_files = TYPE_FILES
+        .iter()
+        .filter_map(|path| fs::read_to_string(path).ok())
+        .collect::<Vec<_>>();
+    load_types(
+        glob.as_deref(),
+        &type_files.iter().map(String::as_str).collect::<Vec<_>>(),
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn load_system_types() -> MimeTypes {
+    load_registry(
+        load_types(None, &[]),
+        super::native_mime::registry_entries(),
+    )
+}
+
+#[cfg(any(test, unix, target_os = "windows"))]
+fn load_types(glob_contents: Option<&str>, type_contents: &[&str]) -> MimeTypes {
+    let mut types = MimeTypes::default();
+    for (extension, media_type) in builtin_types() {
+        types.insert(extension, media_type);
+    }
+    if let Some(contents) = glob_contents {
+        parse_globs(contents, &mut types, is_builtin_extension);
+    } else {
+        for contents in type_contents {
+            parse_type_file(contents, &mut types);
+        }
+    }
+    types
+}
+
+#[cfg(any(test, target_os = "windows"))]
+fn load_registry<I>(mut types: MimeTypes, entries: I) -> MimeTypes
+where
+    I: IntoIterator<Item = (String, String)>,
+{
+    for (extension, media_type) in entries {
+        if !valid_registry_extension(&extension) {
+            continue;
+        }
+        // Go's Windows loader ignores only the known .js text/plain mistake.
+        if extension.eq_ignore_ascii_case(".js")
+            && (media_type == "text/plain" || media_type == "text/plain; charset=utf-8")
+        {
+            continue;
+        }
+        let Some(media_type) = normalize_media_type(&media_type).filter(|v| !v.is_empty()) else {
+            continue;
+        };
+        types.insert(extension, media_type);
+    }
+    types
+}
+
+#[cfg(any(test, target_os = "windows"))]
+pub(super) fn valid_registry_extension(extension: &str) -> bool {
+    extension.len() >= 2
+        && extension.starts_with('.')
+        && !extension[1..].contains(['\\', '/', '\0'])
+}
+
+fn parse_globs(contents: &str, types: &mut MimeTypes, is_builtin: fn(&str) -> bool) {
+    for line in contents.lines() {
+        let fields: Vec<_> = line.split(':').collect();
+        if fields.len() < 3 || fields[0].is_empty() || fields[2].len() < 3 {
+            continue;
+        }
+        let glob = fields[2];
+        if fields[0].starts_with('#') || !glob.starts_with("*.") {
+            continue;
+        }
+        // Go checks the extension after the required "*." prefix. Checking
+        // the complete glob would reject every valid bare extension because
+        // it necessarily contains the leading '*'.
+        let extension = &glob[1..];
+        if extension.contains(['?', '*', '[']) {
+            continue;
+        }
+        if is_builtin(extension) || types.exact.contains_key(extension) {
+            continue;
+        }
+        let Some(media_type) = normalize_media_type(fields[1]) else {
+            continue;
+        };
+        types.insert(extension.to_owned(), media_type);
+    }
+}
+
+#[cfg(any(test, unix, target_os = "windows"))]
+fn parse_type_file(contents: &str, types: &mut MimeTypes) {
+    for line in contents.lines() {
+        let mut fields = line.split_whitespace();
+        let Some(media_type) = fields.next() else {
+            continue;
+        };
+        if media_type.starts_with('#') {
+            continue;
+        }
+        for extension in fields {
+            if extension.starts_with('#') {
+                break;
+            }
+            let Some(media_type) = normalize_media_type(media_type) else {
+                continue;
+            };
+            types.insert(format!(".{extension}"), media_type);
+        }
+    }
+}
+
+#[cfg(any(test, unix, target_os = "windows"))]
+fn normalize_media_type(input: &str) -> Option<String> {
+    let (raw_base, _) = input.split_once(';').unwrap_or((input, ""));
+    let base = raw_base.trim();
+    if let Some((major, subtype)) = base.split_once('/') {
+        if !is_token(major) || !is_token(subtype) || subtype.contains('/') {
+            return None;
+        }
+    } else if !is_token(base) {
+        return None;
+    }
+    let mut params: Vec<(String, String)> = Vec::new();
+    let mut remainder = &input[raw_base.len()..];
+    while !remainder.trim().is_empty() {
+        remainder = remainder.trim_start();
+        let after_semicolon = remainder.strip_prefix(';')?;
+        remainder = after_semicolon.trim_start();
+        if remainder.is_empty() {
+            // Go's ParseMediaType ignores a final semicolon.
+            break;
+        }
+        let end = remainder.find(|c: char| c == '=' || c.is_ascii_whitespace() || c == ';')?;
+        let name = &remainder[..end];
+        if !is_token(name) {
+            return None;
+        }
+        remainder = remainder[end..].trim_start();
+        remainder = remainder.strip_prefix('=')?.trim_start();
+        let (value, after) = if let Some(value) = remainder.strip_prefix('"') {
+            let mut out = String::new();
+            let mut chars = value.char_indices();
+            let mut end = None;
+            while let Some((index, ch)) = chars.next() {
+                if ch == '"' {
+                    end = Some(index);
+                    break;
+                }
+                if ch == '\\' {
+                    let (_, escaped) = chars.next()?;
+                    if is_tspecial(escaped) {
+                        out.push(escaped);
+                    } else {
+                        out.push('\\');
+                        out.push(escaped);
+                    }
+                } else if ch == '\r' || ch == '\n' {
+                    return None;
+                } else {
+                    out.push(ch);
+                }
+            }
+            let end = end?;
+            (out, &value[end + 1..])
+        } else {
+            let end = remainder
+                .find(|c: char| c.is_ascii_whitespace() || c == ';')
+                .unwrap_or(remainder.len());
+            let value = &remainder[..end];
+            if value.is_empty() || !is_token(value) {
+                return None;
+            }
+            (value.to_owned(), &remainder[end..])
+        };
+        let lname = name.to_ascii_lowercase();
+        if let Some((_, previous)) = params.iter().find(|(n, _)| n == &lname) {
+            if previous != &value {
+                return None;
+            }
+        } else {
+            params.push((lname, value));
+        }
+        remainder = after;
+    }
+    params = decode_parameter_continuations(params);
+    // Go preserves the original value unless text/* lacks a non-empty,
+    // lower-case charset parameter and therefore invokes FormatMediaType.
+    let Some((major, subtype)) = base.split_once('/') else {
+        return Some(input.to_owned());
+    };
+    if !input.starts_with("text/") {
+        return Some(input.to_owned());
+    }
+    if params.is_empty() {
+        if input.contains(';') {
+            // setExtensionType passes the original parameterized value to
+            // FormatMediaType; its media-type token is therefore invalid.
+            return Some(String::new());
+        }
+        params.push(("charset".to_owned(), "utf-8".to_owned()));
+    } else if params
+        .iter()
+        .any(|(name, value)| (name == "charset" && !value.is_empty()) || name == "charset*")
+    {
+        return Some(input.to_owned());
+    } else {
+        // Go's TypeByExtension passes the complete registered value to
+        // FormatMediaType after adding the implicit charset. FormatMediaType
+        // rejects that already-parameterized input and returns "".
+        return Some(String::new());
+    }
+    params.sort_by(|a, b| a.0.cmp(&b.0));
+    let mut out = format!(
+        "{}/{}",
+        major.to_ascii_lowercase(),
+        subtype.to_ascii_lowercase()
+    );
+    for (name, value) in params {
+        out.push_str("; ");
+        out.push_str(&name);
+        out.push('=');
+        if is_token(&value) {
+            out.push_str(&value);
+        } else {
+            out.push('\"');
+            out.push_str(&value.replace('\\', "\\\\").replace('\"', "\\\""));
+            out.push('\"');
+        }
+    }
+    Some(out)
+}
+fn decode_parameter_continuations(params: Vec<(String, String)>) -> Vec<(String, String)> {
+    let mut plain = Vec::new();
+    let mut continuations: Vec<(String, Vec<(String, String)>)> = Vec::new();
+    for (name, value) in params {
+        if let Some((base, _)) = name.split_once('*') {
+            if let Some((_, pieces)) = continuations.iter_mut().find(|(key, _)| key == base) {
+                pieces.push((name, value));
+            } else {
+                continuations.push((base.to_owned(), vec![(name, value)]));
+            }
+        } else {
+            plain.push((name, value));
+        }
+    }
+
+    for (base, pieces) in continuations {
+        let single = format!("{base}*");
+        if let Some((_, value)) = pieces.iter().find(|(name, _)| name == &single) {
+            if let Some((decoded, true)) = percent_decode_2231(value) {
+                set_parameter(&mut plain, base, decoded);
+            }
+            continue;
+        }
+
+        let mut value = String::new();
+        let mut valid = false;
+        for index in 0.. {
+            let simple = format!("{base}*{index}");
+            if let Some((_, piece)) = pieces.iter().find(|(name, _)| name == &simple) {
+                valid = true;
+                value.push_str(piece);
+                continue;
+            }
+            let encoded = format!("{simple}*");
+            let Some((_, piece)) = pieces.iter().find(|(name, _)| name == &encoded) else {
+                break;
+            };
+            valid = true;
+            if index == 0 {
+                if let Some((decoded, true)) = percent_decode_2231(piece) {
+                    value.push_str(&decoded);
+                }
+            } else if let Some((decoded, _)) = percent_decode_2231(piece) {
+                value.push_str(&decoded);
+            }
+        }
+        if valid {
+            set_parameter(&mut plain, base, value);
+        }
+    }
+    plain
+}
+
+fn percent_decode_2231(value: &str) -> Option<(String, bool)> {
+    let (charset, value) = value.split_once('\'')?;
+    let (_, value) = value.split_once('\'')?;
+    let charset = charset.to_ascii_lowercase();
+    if charset != "us-ascii" && charset != "utf-8" {
+        return Some((String::new(), false));
+    }
+    let (decoded, valid) = percent_decode(value);
+    Some((decoded, valid))
+}
+
+fn percent_decode(value: &str) -> (String, bool) {
+    let mut output = String::with_capacity(value.len());
+    let bytes = value.as_bytes();
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] != b'%' {
+            output.push(bytes[index] as char);
+            index += 1;
+            continue;
+        }
+        if index + 2 >= bytes.len()
+            || !bytes[index + 1].is_ascii_hexdigit()
+            || !bytes[index + 2].is_ascii_hexdigit()
+        {
+            return (String::new(), false);
+        }
+        output.push((hex_value(bytes[index + 1]) * 16 + hex_value(bytes[index + 2])) as char);
+        index += 3;
+    }
+    (output, true)
+}
+
+fn hex_value(value: u8) -> u8 {
+    match value {
+        b'0'..=b'9' => value - b'0',
+        b'a'..=b'f' => value - b'a' + 10,
+        b'A'..=b'F' => value - b'A' + 10,
+        _ => 0,
+    }
+}
+
+fn set_parameter(params: &mut Vec<(String, String)>, name: String, value: String) {
+    if let Some((_, existing)) = params.iter_mut().find(|(key, _)| key == &name) {
+        *existing = value;
+    } else {
+        params.push((name, value));
+    }
+}
+
+#[cfg(any(test, unix, target_os = "windows"))]
+fn is_token(value: &str) -> bool {
+    !value.is_empty()
+        && value
+            .bytes()
+            .all(|byte| matches!(byte, 0x21..=0x7e) && !b"()<>@,;:\\\"/[]?= \t".contains(&byte))
+}
+
+#[cfg(any(test, unix, target_os = "windows"))]
+fn is_tspecial(value: char) -> bool {
+    matches!(
+        value,
+        '(' | ')' | '<' | '>' | '@' | ',' | ';' | ':' | '\\' | '"' | '/' | '[' | ']' | '?' | '='
+    )
+}
+
+#[cfg(any(test, unix, target_os = "windows"))]
+fn builtin_types() -> HashMap<String, String> {
+    [
+        (".ai", "application/postscript"),
+        (".apk", "application/vnd.android.package-archive"),
+        (".apng", "image/apng"),
+        (".avif", "image/avif"),
+        (".bin", "application/octet-stream"),
+        (".bmp", "image/bmp"),
+        (".com", "application/octet-stream"),
+        (".css", "text/css; charset=utf-8"),
+        (".csv", "text/csv; charset=utf-8"),
+        (".doc", "application/msword"),
+        (
+            ".docx",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ),
+        (".ehtml", "text/html; charset=utf-8"),
+        (".eml", "message/rfc822"),
+        (".eps", "application/postscript"),
+        (".exe", "application/octet-stream"),
+        (".flac", "audio/flac"),
+        (".gif", "image/gif"),
+        (".gz", "application/gzip"),
+        (".htm", "text/html; charset=utf-8"),
+        (".html", "text/html; charset=utf-8"),
+        (".ico", "image/vnd.microsoft.icon"),
+        (".ics", "text/calendar; charset=utf-8"),
+        (".jfif", "image/jpeg"),
+        (".jpeg", "image/jpeg"),
+        (".jpg", "image/jpeg"),
+        (".js", "text/javascript; charset=utf-8"),
+        (".json", "application/json"),
+        (".m4a", "audio/mp4"),
+        (".mjs", "text/javascript; charset=utf-8"),
+        (".mp3", "audio/mpeg"),
+        (".mp4", "video/mp4"),
+        (".oga", "audio/ogg"),
+        (".ogg", "audio/ogg"),
+        (".ogv", "video/ogg"),
+        (".opus", "audio/ogg"),
+        (".pdf", "application/pdf"),
+        (".pjp", "image/jpeg"),
+        (".pjpeg", "image/jpeg"),
+        (".png", "image/png"),
+        (".ppt", "application/vnd.ms-powerpoint"),
+        (
+            ".pptx",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        ),
+        (".ps", "application/postscript"),
+        (".rdf", "application/rdf+xml"),
+        (".rtf", "application/rtf"),
+        (".shtml", "text/html; charset=utf-8"),
+        (".svg", "image/svg+xml"),
+        (".text", "text/plain; charset=utf-8"),
+        (".tif", "image/tiff"),
+        (".tiff", "image/tiff"),
+        (".txt", "text/plain; charset=utf-8"),
+        (".vtt", "text/vtt; charset=utf-8"),
+        (".wasm", "application/wasm"),
+        (".wav", "audio/wav"),
+        (".webm", "audio/webm"),
+        (".webp", "image/webp"),
+        (".xbl", "text/xml; charset=utf-8"),
+        (".xbm", "image/x-xbitmap"),
+        (".xht", "application/xhtml+xml"),
+        (".xhtml", "application/xhtml+xml"),
+        (".xls", "application/vnd.ms-excel"),
+        (
+            ".xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ),
+        (".xml", "text/xml; charset=utf-8"),
+        (".xsl", "text/xml; charset=utf-8"),
+        (".zip", "application/zip"),
+    ]
+    .into_iter()
+    .map(|(extension, media_type)| (extension.to_owned(), media_type.to_owned()))
+    .collect()
+}
+
+#[cfg(any(test, unix, target_os = "windows"))]
+fn is_builtin_extension(extension: &str) -> bool {
+    builtin_types().iter().any(|(known, _)| known == extension)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn injected_glob_loader_selects_first_entry_and_falls_back_to_type_files() {
+        let glob = "50:application/old:*.md\n40:text/markdown:*.md\n50:application/json:*.json";
+        let types = load_types(Some(glob), &[]);
+        assert_eq!(types.get(".md").unwrap(), "application/old");
+        assert_eq!(types.get(".json").unwrap(), "application/json");
+
+        let types = load_types(None, &["text/markdown md\napplication/custom custom"]);
+        assert_eq!(types.get(".md").unwrap(), "text/markdown; charset=utf-8");
+        assert_eq!(types.get(".custom").unwrap(), "application/custom");
+    }
+
+    #[test]
+    fn injected_globs_do_not_override_builtins_and_type_files_do() {
+        let types = load_types(Some("50:text/other:*.json\n50:text/markdown:*.md"), &[]);
+        assert_eq!(types.get(".json").unwrap(), "application/json");
+        assert_eq!(types.get(".md").unwrap(), "text/markdown; charset=utf-8");
+
+        let types = load_types(None, &["application/custom json"]);
+        assert_eq!(types.get(".json").unwrap(), "application/custom");
+    }
+
+    #[test]
+    fn lookup_prefers_exact_case_then_lowercase_fallback() {
+        let mut types = MimeTypes::default();
+        types.insert(".Md".to_owned(), "application/exact".to_owned());
+        types.insert(".md".to_owned(), "text/lower".to_owned());
+        assert_eq!(
+            types.get(".Md").map(String::as_str),
+            Some("application/exact")
+        );
+        assert_eq!(types.get(".MD").map(String::as_str), Some("text/lower"));
+    }
+
+    #[test]
+    fn media_type_parameters_match_go_stdlib_oracle() {
+        let cases = [
+            ("text/custom", Some("text/custom; charset=utf-8")),
+            ("text/custom; foo=bar", Some("")),
+            ("text/custom; charset=", None),
+            (
+                "text/custom; Charset=US-ASCII",
+                Some("text/custom; Charset=US-ASCII"),
+            ),
+            ("text/custom; foo=bar; foo=bar", Some("")),
+            ("text/custom; foo=bar; foo=baz", None),
+            ("text/custom; foo={}", Some("")),
+            ("text/custom; foo", None),
+            ("text/custom; =bar", None),
+            (r#"text/custom; foo="\\name""#, Some("")),
+            (r#"text/custom; foo="a;b""#, Some("")),
+            ("text/custom; title*=utf-8''caf%C3%A9", Some("")),
+            ("application/custom", Some("application/custom")),
+            (
+                "application/custom; foo=bar",
+                Some("application/custom; foo=bar"),
+            ),
+            ("application/custom; charset=", None),
+            ("foo", Some("foo")),
+            ("text/custom; charset=\"\"", Some("")),
+            ("text/custom;", Some("")),
+            (
+                "text/custom; charset*=utf-8''us-ascii",
+                Some("text/custom; charset*=utf-8''us-ascii"),
+            ),
+            (
+                "text/custom; title*0*=utf-8''caf%C3; title*1*=%A9",
+                Some(""),
+            ),
+            ("text/custom; title*0=hello; title*1=world", Some("")),
+            (
+                "text/custom; title*0*=utf-8''hello%20; title*1*=world",
+                Some(""),
+            ),
+        ];
+        for (input, expected) in cases {
+            assert_eq!(
+                normalize_media_type(input).as_deref(),
+                expected,
+                "input {input:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn registry_loader_validates_keys_and_only_skips_js_plain_text() {
+        let types = load_registry(
+            load_types(None, &[]),
+            [
+                ("not-an-extension".to_owned(), "text/plain".to_owned()),
+                (".bad/key".to_owned(), "text/plain".to_owned()),
+                (".js".to_owned(), "text/plain".to_owned()),
+                (".JS".to_owned(), "text/javascript".to_owned()),
+                (".custom".to_owned(), "application/x-custom".to_owned()),
+            ],
+        );
+        assert_eq!(
+            types.get(".custom").map(String::as_str),
+            Some("application/x-custom")
+        );
+        assert_eq!(
+            types.get(".JS").map(String::as_str),
+            Some("text/javascript; charset=utf-8")
+        );
+        assert_eq!(
+            types.get(".js").map(String::as_str),
+            Some("text/javascript; charset=utf-8")
+        );
+        assert!(valid_registry_extension(".custom"));
+        assert!(!valid_registry_extension(".bad/key"));
+        assert!(!valid_registry_extension("."));
+    }
+
+    #[test]
+    fn registry_loader_keeps_registry_value_for_non_js_plain_text() {
+        let types = load_registry(
+            load_types(None, &[]),
+            [(".textish".to_owned(), "text/plain".to_owned())],
+        );
+        assert_eq!(
+            types.get(".textish").map(String::as_str),
+            Some("text/plain; charset=utf-8")
+        );
+    }
+
+    #[test]
+    fn malformed_and_pattern_globs_are_ignored() {
+        let mut types = MimeTypes::default();
+        for (extension, media_type) in builtin_types() {
+            types.insert(extension, media_type);
+        }
+        parse_globs(
+            "#comment\nnot:a:glob\n50:text/plain:*.[ch]",
+            &mut types,
+            |_| false,
+        );
+        assert!(!types.exact.contains_key("*.[ch]"));
+    }
+}

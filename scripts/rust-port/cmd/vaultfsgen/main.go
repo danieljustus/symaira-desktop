@@ -24,6 +24,7 @@ type document struct {
 	WalkAll       []walkEntry      `json:"walk_all"`
 	WalkMarkdown  []string         `json:"walk_markdown"`
 	SecurePaths   []secureCase     `json:"secure_paths"`
+	ConfinedReads []readCase       `json:"confined_reads,omitempty"`
 }
 
 type treeFile struct {
@@ -46,11 +47,18 @@ type secureCase struct {
 	ErrorClass string `json:"error_class,omitempty"`
 }
 
+type readCase struct {
+	ID         string `json:"id"`
+	Input      string `json:"input"`
+	Result     string `json:"result,omitempty"`
+	ErrorClass string `json:"error_class,omitempty"`
+}
+
 func main() {
 	output := flag.String("output", "testdata/port/vault/filesystem.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
-	commit := flag.String("oracle-commit", "ae86331930fdfa2b128b68ae5af7437091b9949a", "Go oracle commit")
-	release := flag.String("oracle-release", "v0.12.2", "Go oracle release")
+	commit := flag.String("oracle-commit", "745c08e8144971c61133c5d0e5d61c7ce405aad2", "Go oracle commit")
+	release := flag.String("oracle-release", "post-v0.12.2-security-880", "Go oracle release")
 	flag.Parse()
 
 	value, err := build(inventory.Oracle{Commit: *commit, Release: *release})
@@ -185,7 +193,24 @@ func build(oracle inventory.Oracle) (document, error) {
 		}
 		secure = append(secure, out)
 	}
-	return document{SchemaVersion: 1, Oracle: oracle, Tree: tree, WalkAll: all, WalkMarkdown: markdown, SecurePaths: secure}, nil
+	reads := make([]readCase, 0)
+	if runtime.GOOS != "windows" {
+		for _, item := range []struct{ id, input string }{
+			{"contained-symlink", "inside-link.md"},
+			{"external-file-symlink", "outside-link.md"},
+			{"external-directory-symlink", "dir-link/outside.md"},
+		} {
+			data, _, err := vault.ReadFileInRoot(root, filepath.Join(root, filepath.FromSlash(item.input)))
+			out := readCase{ID: item.id, Input: item.input}
+			if err != nil {
+				out.ErrorClass = "symlink_escape"
+			} else {
+				out.Result = string(data)
+			}
+			reads = append(reads, out)
+		}
+	}
+	return document{SchemaVersion: 1, Oracle: oracle, Tree: tree, WalkAll: all, WalkMarkdown: markdown, SecurePaths: secure, ConfinedReads: reads}, nil
 }
 
 func normalize(value, root, outside string) string {

@@ -131,7 +131,8 @@ This is an additive representation change: old index rows remain searchable and 
   - **Folder resolution:** Confined to the vault root; absolute paths and `..` traversal are rejected and fall back safely to `assets`.
   - **Collision-safe naming:** Stored assets use `base.ext`, `base-2.ext`, `base-3.ext`, ... to prevent accidental overwrites.
   - **Base name sanitization:** Path separators (`/`, `\`, `:`), control characters, and newlines in preferred names are replaced with hyphens.
-  - **Atomic writes:** Writes use a temp file and atomic rename so partial writes cannot corrupt the vault.
+  - **Atomic writes:** Stored assets use a temp file and atomic rename so partial writes cannot corrupt the vault.
+- **Read confinement:** Vault walks may report symlink entries for compatibility, and symlinks resolving inside the canonical vault remain readable. Every Go walk-to-parse/index/snapshot read opens files through a rooted `os.Root`; links resolving outside the vault are rejected without exposing target bytes. `SecurePath` continues to allow missing nested leaves for intended write paths. Path-based mutation APIs retain a validation-to-write race window; the rooted read contract does not extend that guarantee to writes.
 
 ## 6. Templates (contract_version 2)
 - Reusable note templates SHOULD be stored in the `templates/` folder at the root of the vault.

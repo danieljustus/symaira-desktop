@@ -121,7 +121,7 @@ func ScanASNs(vaultRoot string) (ASNReport, error) {
 			return fmt.Errorf("make ASN path relative: %w", err)
 		}
 
-		doc, err := ParseFile(path)
+		doc, err := ParseFileInRoot(vaultRoot, path)
 		if err != nil {
 			var asnErr *ASNValidationError
 			if errors.As(err, &asnErr) {

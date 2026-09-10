@@ -337,11 +337,35 @@ func RewriteDocumentTagsAndBody(
 	mutateFM func(fmTags []string) ([]string, bool),
 	mutateBody func(body string) (string, bool),
 ) (bool, error) {
-	data, err := os.ReadFile(filePath) //nolint:gosec // filePath is supplied by the vault walk
+	data, err := os.ReadFile(filePath) //nolint:gosec // filePath is explicitly selected by the caller
 	if err != nil {
 		return false, fmt.Errorf("read file: %w", err)
 	}
+	return rewriteDocumentTagsAndBodyData(filePath, data, doc, mutateFM, mutateBody)
+}
 
+// RewriteDocumentTagsAndBodyInRoot confines the read of a path returned by a
+// vault walk before applying any derived write.
+func RewriteDocumentTagsAndBodyInRoot(
+	vaultRoot, filePath string,
+	doc *Document,
+	mutateFM func(fmTags []string) ([]string, bool),
+	mutateBody func(body string) (string, bool),
+) (bool, error) {
+	data, _, err := ReadFileInRoot(vaultRoot, filePath)
+	if err != nil {
+		return false, fmt.Errorf("read file: %w", err)
+	}
+	return rewriteDocumentTagsAndBodyData(filePath, data, doc, mutateFM, mutateBody)
+}
+
+func rewriteDocumentTagsAndBodyData(
+	filePath string,
+	data []byte,
+	doc *Document,
+	mutateFM func(fmTags []string) ([]string, bool),
+	mutateBody func(body string) (string, bool),
+) (bool, error) {
 	lineEnding := detectLineEnding(data)
 	content := string(data)
 	var lines []string

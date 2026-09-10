@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -37,7 +38,7 @@ func (s *Service) RetentionState(relPath string) (*RetentionState, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(absPath) //nolint:gosec // path is confined by SecurePath
+	data, _, err := vault.ReadFileInRoot(s.VaultRoot, absPath)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +73,8 @@ func (s *Service) datasetRetentionState(relPath string, handleData []byte) (*Ret
 	if err != nil {
 		return nil, err
 	}
-	entries, err := os.ReadDir(rawDir)
-	if err != nil && !os.IsNotExist(err) {
+	entries, err := vault.ReadDirInRoot(s.VaultRoot, rawDir)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
 	sources := make([]retention.RawSource, 0)
@@ -87,7 +88,7 @@ func (s *Service) datasetRetentionState(relPath string, handleData []byte) (*Ret
 			}
 			sourceRel := filepath.ToSlash(filepath.Join(dataset.RawDir, handle.Slug, entry.Name()))
 			sourcePath := filepath.Join(rawDir, entry.Name())
-			sourceData, readErr := os.ReadFile(sourcePath) //nolint:gosec // source is confined by SecurePath
+			sourceData, _, readErr := vault.ReadFileInRoot(s.VaultRoot, sourcePath)
 			if readErr != nil {
 				return nil, readErr
 			}

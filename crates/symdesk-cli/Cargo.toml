@@ -13,4 +13,10 @@ path = "src/main.rs"
 
 [dependencies]
 clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 symdesk-core.workspace = true
+symaira-core-exit.workspace = true
+symdesk-index.workspace = true
+symdesk-protocol.workspace = true
+tokio.workspace = true

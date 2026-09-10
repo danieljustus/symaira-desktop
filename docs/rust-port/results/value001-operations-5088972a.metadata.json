@@ -1,0 +1,18 @@
+{
+  "original_sha256": "05df7ee55f6d3b86e02bb09ec7fd989210702178236b12cf594640d59ba1102f",
+  "redacted_sha256": "70e2c2401f8acb4ea40b5a3e57b108a5cd18ff96be7a6a5823ff6a7e0f66d5ac",
+  "candidate": "5088972aa7efadfdc7118549354e26d001c1ffad",
+  "redacted_json_paths": [
+    "$.repository.root",
+    "$.binaries.go.path",
+    "$.binaries.go.build_command",
+    "$.binaries.rust.path",
+    "$.index_preparation.go.command",
+    "$.index_preparation.rust.command",
+    "$.contracts[1].command",
+    "$.contracts[2].command",
+    "$.contracts[3].command"
+  ],
+  "source": "local macOS paired Go/Rust benchmark; 100 samples, 20 warmups; generated 10000-document surrogate",
+  "acceptance": "measurement passed; independent current-acceptance validation pending"
+}

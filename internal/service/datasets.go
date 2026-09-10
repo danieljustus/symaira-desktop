@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -99,13 +100,9 @@ func (s *Service) DatasetList() ([]DatasetSummary, error) {
 	if s == nil || strings.TrimSpace(s.VaultRoot) == "" {
 		return nil, errors.New("dataset list requires a vault")
 	}
-	dir, err := vault.SecurePath(s.VaultRoot, dataset.RawDir)
+	entries, err := vault.ReadDirInRoot(s.VaultRoot, dataset.RawDir)
 	if err != nil {
-		return nil, err
-	}
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return []DatasetSummary{}, nil
 		}
 		return nil, err
@@ -144,7 +141,7 @@ func readDatasetHandleWithMigration(root, rel string) (*dataset.Handle, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(path) //nolint:gosec // path is confined by SecurePath
+	data, _, err := vault.ReadFileInRoot(root, path)
 	if err != nil {
 		return nil, err
 	}
@@ -159,13 +156,13 @@ func readDatasetHandleWithMigration(root, rel string) (*dataset.Handle, error) {
 	if !legacyPolicy {
 		return handle, nil
 	}
-	if err := vault.BackfillFrontmatter(path, map[string]interface{}{
+	if err := vault.BackfillFrontmatterInRoot(root, path, map[string]interface{}{
 		"sensitivity":    dataset.DefaultSensitivity,
 		"retention_rule": dataset.DefaultRetentionRule,
 	}); err != nil {
 		return nil, fmt.Errorf("migrate dataset policy metadata: %w", err)
 	}
-	migrated, err := os.ReadFile(path) //nolint:gosec // path is confined by SecurePath
+	migrated, _, err := vault.ReadFileInRoot(root, path)
 	if err != nil {
 		return nil, fmt.Errorf("verify migrated dataset handle: %w", err)
 	}
@@ -468,7 +465,7 @@ func (s *Service) DatasetSync(opts DatasetSyncOptions) (*DatasetSyncResult, erro
 	if err := s.replaceDatasetRows(slug, materialized); err != nil {
 		return nil, err
 	}
-	if doc, parseErr := vault.ParseFile(handleAbs); parseErr == nil {
+	if doc, parseErr := vault.ParseFileInRoot(s.VaultRoot, handleAbs); parseErr == nil {
 		if err := s.DB.IndexDocument(doc); err != nil {
 			return nil, err
 		}

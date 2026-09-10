@@ -1,5 +1,4 @@
 #![deny(unsafe_code)]
-#![cfg(windows)]
 
 use std::fs;
 
@@ -19,7 +18,6 @@ fn windows_walk_and_lexical_confinement() {
         ("Upper.MD", "upper"),
         ("folder/b.md", "b"),
         ("Vendor/kept.md", "kept"),
-        ("vendor/skipped.md", "skip"),
         (".hidden.md", "skip"),
         (".obsidian/skipped.md", "skip"),
     ] {
@@ -35,6 +33,23 @@ fn windows_walk_and_lexical_confinement() {
     assert_eq!(all, ["Upper.MD", "Vendor/kept.md", "a.md", "folder/b.md"]);
     let markdown: Vec<_> = walk_markdown(&root)
         .expect("walk markdown")
+        .into_iter()
+        .map(|path| path.to_string_lossy().replace('\\', "/"))
+        .collect();
+    assert_eq!(markdown, ["Vendor/kept.md", "a.md", "folder/b.md"]);
+    // Windows aliases Vendor and vendor. Exercise their distinct spelling
+    // contracts sequentially, not as directories in the same fixture.
+    fs::remove_dir_all(root.join("Vendor")).expect("remove uppercase directory");
+    fs::create_dir(root.join("vendor")).expect("create lowercase directory");
+    fs::write(root.join("vendor/skipped.md"), "skip").expect("write skipped file");
+    let remaining: Vec<_> = walk_all(&root)
+        .expect("walk lowercase exclusion")
+        .into_iter()
+        .map(|entry| entry.path.to_string_lossy().replace('\\', "/"))
+        .collect();
+    assert_eq!(remaining, ["Upper.MD", "a.md", "folder/b.md"]);
+    let markdown: Vec<_> = walk_markdown(&root)
+        .expect("walk lowercase markdown exclusion")
         .into_iter()
         .map(|path| path.to_string_lossy().replace('\\', "/"))
         .collect();

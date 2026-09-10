@@ -95,18 +95,7 @@ func Adopt(opts AdoptOptions) (*AdoptReport, error) {
 		}
 		rel = filepath.ToSlash(rel)
 
-		fileInfo, statErr := os.Stat(p)
-		if statErr != nil {
-			report.Failed++
-			report.Documents = append(report.Documents, AdoptFileResult{
-				Path:   rel,
-				Status: "failed",
-				Error:  statErr.Error(),
-			})
-			continue
-		}
-
-		fileBytes, readErr := os.ReadFile(p) //nolint:gosec // p is produced by vault.Walk under vaultRoot
+		fileBytes, fileInfo, readErr := vault.ReadFileInRoot(vaultRoot, p)
 		if readErr != nil {
 			report.Failed++
 			report.Documents = append(report.Documents, AdoptFileResult{
@@ -202,7 +191,7 @@ func Adopt(opts AdoptOptions) (*AdoptReport, error) {
 			}
 		}
 
-		if writeErr := vault.BackfillFrontmatter(p, missing); writeErr != nil {
+		if writeErr := vault.BackfillFrontmatterInRoot(vaultRoot, p, missing); writeErr != nil {
 			report.Failed++
 			report.Documents = append(report.Documents, AdoptFileResult{
 				Path:   rel,
@@ -214,7 +203,7 @@ func Adopt(opts AdoptOptions) (*AdoptReport, error) {
 
 		// Re-index updated note in sidecar DB if available
 		if opts.DB != nil {
-			newDoc, parseNewErr := vault.ParseFile(p)
+			newDoc, parseNewErr := vault.ParseFileInRoot(vaultRoot, p)
 			if parseNewErr == nil {
 				_ = opts.DB.IndexDocument(newDoc)
 			}

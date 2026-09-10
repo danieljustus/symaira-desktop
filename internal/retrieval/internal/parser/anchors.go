@@ -94,6 +94,15 @@ func parseMarkdownSections(path string) ([]Section, error) {
 	if len(data) > MaxIndexFileSize {
 		return nil, fmt.Errorf("file %s exceeds %d byte limit (%d bytes)", path, MaxIndexFileSize, len(data))
 	}
+	return ParseMarkdownSections(data)
+}
+
+// ParseMarkdownSections parses already-confined Markdown bytes into durable
+// heading/text sections without reopening the source path.
+func ParseMarkdownSections(data []byte) ([]Section, error) {
+	if len(data) > MaxIndexFileSize {
+		return nil, fmt.Errorf("markdown content exceeds %d byte limit (%d bytes)", MaxIndexFileSize, len(data))
+	}
 	text, baseOffset := stripMarkdownFrontmatter(string(data))
 	lines := strings.SplitAfter(text, "\n")
 	type heading struct {

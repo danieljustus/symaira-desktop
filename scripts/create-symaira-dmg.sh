@@ -29,6 +29,8 @@ if [ ! -f "$BACKGROUND_PATH" ]; then
   exit 1
 fi
 
+"$SCRIPT_DIR/check-app-icons.sh" --bundle "$APP_PATH" --platform macOS
+
 OUTPUT_DIR="$(dirname "$DMG_PATH")"
 mkdir -p "$OUTPUT_DIR"
 OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"

@@ -1,5 +1,7 @@
 # Symaira Desktop
 
+> **Accepted product direction — implementation pending:** Desktop remains the independent document and knowledge-work product. Browse/Operate belong to Brain as optional modules, not to Desktop. Direct optional web-worker and credential-service access remains available without a running Brain context/gateway. This accepted target does not change the current CLI or installation instructions below. See [PB-2026-09-09](docs/product-boundaries.md).
+
 [![CI](https://github.com/danieljustus/symaira-desktop/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/danieljustus/symaira-desktop/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/danieljustus/symaira-desktop)](https://github.com/danieljustus/symaira-desktop/releases)
 [![Go version](https://img.shields.io/github/go-mod/go-version/danieljustus/symaira-desktop)](https://go.dev/dl/)

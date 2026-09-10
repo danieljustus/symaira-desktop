@@ -260,8 +260,11 @@ func (db *DB) RefreshIndex(vaultRoot string) error {
 	}
 
 	walkErr := vault.Walk(vaultRoot, func(path string) error {
-		info, err := os.Stat(path)
+		info, err := vault.StatInRoot(vaultRoot, path)
 		if err != nil {
+			if vault.IsExternalSymlink(vaultRoot, path) {
+				return nil
+			}
 			return err
 		}
 
@@ -271,7 +274,7 @@ func (db *DB) RefreshIndex(vaultRoot string) error {
 			return nil
 		}
 
-		doc, err := vault.ParseFile(path)
+		doc, err := vault.ParseFileInRoot(vaultRoot, path)
 		if err != nil {
 			return err
 		}
@@ -699,8 +702,15 @@ func (db *DB) Prune(vaultRoot string) (int, error) {
 	// Build a set of valid paths by walking the vault (respects ignore rules).
 	valid := make(map[string]bool)
 	if err := vault.Walk(vaultRoot, func(path string) error {
-		doc, err := vault.ParseFile(path)
-		if err == nil && doc.IsDerived() {
+		doc, err := vault.ParseFileInRoot(vaultRoot, path)
+		if err != nil {
+			if vault.IsExternalSymlink(vaultRoot, path) {
+				return nil
+			}
+			valid[path] = true
+			return nil
+		}
+		if doc.IsDerived() {
 			return nil
 		}
 		valid[path] = true

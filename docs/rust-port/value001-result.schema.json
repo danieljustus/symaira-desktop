@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://symaira.com/schemas/rust-port/value001-result.schema.json",
+  "title": "VALUE-001 paired Go/Rust benchmark result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "benchmark", "captured_at", "runner", "host", "repository", "toolchains", "binaries", "vault", "index_preparation", "contracts", "metrics", "thresholds", "passed"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "benchmark": {"const": "VALUE-001"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "runner": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "samples", "warmups", "pairing"],
+      "properties": {"path": {"type": "string"}, "samples": {"type": "integer", "minimum": 100}, "warmups": {"type": "integer", "minimum": 1}, "pairing": {"type": "string"}}
+    },
+    "host": {
+      "type": "object", "additionalProperties": false,
+      "required": ["os", "os_version", "arch", "machine", "python"],
+      "properties": {"os": {"type": "string"}, "os_version": {"type": "string"}, "arch": {"type": "string"}, "machine": {"type": "string"}, "python": {"type": "string"}}
+    },
+    "repository": {
+      "type": "object", "additionalProperties": false,
+      "required": ["root", "head", "status", "dirty_allowed", "candidate_diff_sha256", "original_value_baseline_commit", "current_behaviour_oracle_commit"],
+      "properties": {
+        "root": {"type": "string"}, "head": {"type": "string"}, "status": {"type": "string"}, "dirty_allowed": {"const": true},
+        "candidate_diff_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "original_value_baseline_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "current_behaviour_oracle_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "toolchains": {
+      "type": "object", "additionalProperties": false,
+      "required": ["go_oracle", "rustc", "cargo", "python"],
+      "properties": {"go_oracle": {"type": "string"}, "rustc": {"type": "string"}, "cargo": {"type": "string"}, "python": {"type": "string"}}
+    },
+    "binaries": {
+      "type": "object", "additionalProperties": false, "required": ["go", "rust"],
+      "properties": {"go": {"$ref": "#/$defs/binary"}, "rust": {"$ref": "#/$defs/binary"}}
+    },
+    "vault": {
+      "type": "object", "additionalProperties": false,
+      "required": ["documents", "generated_bytes", "search_token", "search_matches", "generation"],
+      "properties": {"documents": {"const": 10000}, "generated_bytes": {"type": "integer", "minimum": 1}, "search_token": {"const": "value001cohort042"}, "search_matches": {"const": 100}, "generation": {"type": "string"}}
+    },
+    "index_preparation": {"type": "object", "additionalProperties": false, "required": ["go", "rust", "vault_justification"], "properties": {"go": {"$ref": "#/$defs/indexPreparation"}, "rust": {"$ref": "#/$defs/indexPreparation"}, "vault_justification": {"type": "string"}}},
+    "contracts": {"type": "array", "minItems": 4, "items": {"$ref": "#/$defs/contract"}},
+    "metrics": {
+      "type": "object", "additionalProperties": false, "required": ["startup", "search", "mcp", "http", "rss"],
+      "properties": {
+        "startup": {"$ref": "#/$defs/pairedMetric"}, "search": {"$ref": "#/$defs/pairedMetric"},
+        "mcp": {"$ref": "#/$defs/operationMetric"}, "http": {"$ref": "#/$defs/operationMetric"}, "rss": {"$ref": "#/$defs/pairedMetric"}
+      }
+    },
+    "thresholds": {
+      "description": "Reduction and regression values are dimensionless ratios, not percentages. Display percentage = ratio * 100; maximum_p95_regression 0.1 means 10%. Stored measurements and gate comparisons retain ratio units.",
+      "type": "object", "additionalProperties": false,
+      "required": ["minimum_improvement", "maximum_p95_regression", "binary_size_reduction", "representative_rss_reduction_max", "improvement_pass", "p95_regressions", "latency_pass", "contracts_pass", "fail_closed"],
+      "properties": {
+        "minimum_improvement": {"const": 0.2}, "maximum_p95_regression": {"const": 0.1}, "binary_size_reduction": {"type": "number"}, "representative_rss_reduction_max": {"type": "number"}, "improvement_pass": {"type": "boolean"}, "p95_regressions": {"type": "object", "additionalProperties": {"type": "number"}}, "latency_pass": {"type": "boolean"}, "contracts_pass": {"type": "boolean"}, "fail_closed": {"const": true}
+      }
+    },
+    "passed": {"type": "boolean"}
+  },
+  "$defs": {
+    "binary": {
+      "type": "object", "additionalProperties": false, "required": ["path", "bytes", "sha256", "source", "build_command"],
+      "properties": {"path": {"type": "string"}, "bytes": {"type": "integer", "minimum": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "source": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "build_command": {"type": "string"}}
+    },
+    "contract": {
+      "type": "object", "additionalProperties": false, "required": ["name", "command", "exit_code", "elapsed_ms", "stdout", "stderr"],
+      "properties": {"name": {"type": "string"}, "command": {"type": "string"}, "exit_code": {"const": 0}, "elapsed_ms": {"type": "number", "minimum": 0}, "stdout": {"type": "string"}, "stderr": {"type": "string"}}
+    },
+    "sampleSummary": {
+      "type": "object", "additionalProperties": false, "required": ["unit", "warmup_samples", "samples", "min", "mean", "p50", "p95", "p99", "max", "raw", "pair_order", "max_observed"],
+      "properties": {
+        "unit": {"type": "string"}, "warmup_samples": {"type": "integer", "minimum": 1}, "samples": {"type": "integer", "minimum": 100},
+        "min": {"type": "number", "minimum": 0}, "mean": {"type": "number", "minimum": 0}, "p50": {"type": "number", "minimum": 0}, "p95": {"type": "number", "minimum": 0}, "p99": {"type": "number", "minimum": 0}, "max": {"type": "number", "minimum": 0}, "raw": {"type": "array", "minItems": 100, "items": {"type": "number", "minimum": 0}}, "pair_order": {"type": "array", "minItems": 100, "items": {"enum": ["go-rust", "rust-go"]}}, "max_observed": {"type": "number", "minimum": 0}
+      }
+    },
+    "pairedMetric": {"type": "object", "additionalProperties": false, "required": ["go", "rust"], "properties": {"go": {"$ref": "#/$defs/sampleSummary"}, "rust": {"$ref": "#/$defs/sampleSummary"}}},
+    "operationMetric": {"type": "object", "additionalProperties": false, "required": ["go", "rust", "operations"], "properties": {"go": {"$ref": "#/$defs/sampleSummary"}, "rust": {"$ref": "#/$defs/sampleSummary"}, "operations": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/pairedMetric"}}}},
+    "indexPreparation": {"type": "object", "additionalProperties": false, "required": ["command", "elapsed_ms", "exit_code", "stdout_semantics", "documents"], "properties": {"command": {"type": "string"}, "elapsed_ms": {"type": "number", "minimum": 0}, "exit_code": {"const": 0}, "stdout_semantics": {"type": "string"}, "documents": {"const": 10000}}}
+  }
+}

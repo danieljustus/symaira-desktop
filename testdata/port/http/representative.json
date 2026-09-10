@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+    "release": "post-v0.12.2-security-855"
+  },
+  "cases": [
+    {
+      "id": "healthz",
+      "method": "GET",
+      "path": "/healthz"
+    },
+    {
+      "id": "status-missing-auth",
+      "method": "GET",
+      "path": "/api/v1/status"
+    },
+    {
+      "id": "status-wrong-auth",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "wrong"
+    },
+    {
+      "id": "status-raw-token-without-bearer",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "raw"
+    },
+    {
+      "id": "status-authorized",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "valid"
+    },
+    {
+      "id": "status-wrong-auth-2",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "wrong"
+    },
+    {
+      "id": "status-wrong-auth-3",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "wrong"
+    },
+    {
+      "id": "status-wrong-auth-4",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "wrong"
+    },
+    {
+      "id": "status-wrong-auth-5",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "wrong"
+    },
+    {
+      "id": "snapshot-plain",
+      "method": "GET",
+      "path": "/api/v1/snapshot",
+      "auth": "valid"
+    },
+    {
+      "id": "snapshot-not-modified",
+      "method": "GET",
+      "path": "/api/v1/snapshot",
+      "auth": "valid",
+      "headers": {
+        "If-None-Match": "$LAST_ETAG"
+      }
+    },
+    {
+      "id": "snapshot-gzip",
+      "method": "GET",
+      "path": "/api/v1/snapshot",
+      "auth": "valid",
+      "headers": {
+        "Accept-Encoding": "gzip"
+      }
+    },
+    {
+      "id": "snapshot-gzip-q0",
+      "method": "GET",
+      "path": "/api/v1/snapshot",
+      "auth": "valid",
+      "headers": {
+        "Accept-Encoding": "br, gzip;q=0"
+      }
+    },
+    {
+      "id": "snapshot-head-gzip",
+      "method": "HEAD",
+      "path": "/api/v1/snapshot",
+      "auth": "valid",
+      "headers": {
+        "Accept-Encoding": "gzip;q=0"
+      }
+    },
+    {
+      "id": "file-exact-bytes",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-internal-symlink",
+      "method": "GET",
+      "path": "/api/v1/files?path=internal.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-range",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid",
+      "headers": {
+        "Range": "bytes=0-4"
+      }
+    },
+    {
+      "id": "file-head",
+      "method": "HEAD",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-traversal",
+      "method": "GET",
+      "path": "/api/v1/files?path=../outside.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-absolute",
+      "method": "GET",
+      "path": "/api/v1/files?path=/etc/passwd",
+      "auth": "valid"
+    },
+    {
+      "id": "file-backslash",
+      "method": "GET",
+      "path": "/api/v1/files?path=escape%5Csecret.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-nul",
+      "method": "GET",
+      "path": "/api/v1/files?path=bad%00.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-invalid-separator",
+      "method": "GET",
+      "path": "/api/v1/files?path=foo//bar.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-dot-segment",
+      "method": "GET",
+      "path": "/api/v1/files?path=foo/./bar.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-range-overflow",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid",
+      "headers": {
+        "Range": "bytes=18446744073709551616-"
+      }
+    },
+    {
+      "id": "file-internal",
+      "method": "GET",
+      "path": "/api/v1/files?path=.symdesk/server/state.db",
+      "auth": "valid"
+    },
+    {
+      "id": "file-symlink",
+      "method": "GET",
+      "path": "/api/v1/files?path=escape.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-missing",
+      "method": "GET",
+      "path": "/api/v1/files?path=missing.md",
+      "auth": "valid"
+    },
+    {
+      "id": "health-method-not-allowed",
+      "method": "POST",
+      "path": "/healthz"
+    },
+    {
+      "id": "unknown-route",
+      "method": "GET",
+      "path": "/not-found"
+    },
+    {
+      "id": "status-head",
+      "method": "HEAD",
+      "path": "/api/v1/status",
+      "auth": "valid"
+    }
+  ]
+}

@@ -136,7 +136,7 @@ func (s *Service) DatasetImport(source string, opts DatasetImportOptions) (*Data
 	if err := s.replaceDatasetRows(slug, materialized); err != nil {
 		return nil, fmt.Errorf("store dataset rows: %w", err)
 	}
-	if doc, parseErr := vault.ParseFile(handleAbs); parseErr == nil {
+	if doc, parseErr := vault.ParseFileInRoot(s.VaultRoot, handleAbs); parseErr == nil {
 		if err := s.DB.IndexDocument(doc); err != nil {
 			return nil, fmt.Errorf("index dataset handle: %w", err)
 		}
@@ -160,7 +160,7 @@ func (s *Service) RebuildDatasets() error {
 		if err != nil {
 			return err
 		}
-		data, err := os.ReadFile(path) //nolint:gosec // path comes from the confined vault walk
+		data, _, err := vault.ReadFileInRoot(s.VaultRoot, path)
 		if err != nil {
 			return err
 		}
@@ -211,7 +211,7 @@ func readDatasetHandle(root, rel string) (*dataset.Handle, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(path) //nolint:gosec // path is confined by SecurePath
+	data, _, err := vault.ReadFileInRoot(root, path)
 	if err != nil {
 		return nil, err
 	}

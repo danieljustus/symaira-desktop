@@ -9,9 +9,26 @@ confidence-threshold = 0.8
 allow = [
   "Apache-2.0",
   "Apache-2.0 WITH LLVM-exception",
+  "BSD-3-Clause",
   "MIT",
   "Unicode-3.0",
 ]
+
+# Reviewed native watcher dependencies; keep exceptions package-scoped.
+[[licenses.exceptions]]
+name = "notify"
+version = "=8.2.0"
+allow = ["CC0-1.0"]
+
+[[licenses.exceptions]]
+name = "inotify"
+version = "=0.11.5"
+allow = ["ISC"]
+
+[[licenses.exceptions]]
+name = "inotify-sys"
+version = "=0.1.8"
+allow = ["ISC"]
 
 [bans]
 multiple-versions = "warn"
@@ -21,3 +38,6 @@ wildcards = "deny"
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# Private CoreKit staging adoption; Cargo.toml and Cargo.lock pin the exact revision.
+allow-git = ["https://github.com/danieljustus/symaira-corekit"]
+required-git-spec = "rev"

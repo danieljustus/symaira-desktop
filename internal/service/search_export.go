@@ -220,7 +220,7 @@ func absoluteOutputPath(outputPath string) (string, error) {
 }
 
 func (s *Service) indexWrittenSearchNote(rel, abs string, content []byte) error {
-	doc, err := vault.ParseFile(abs)
+	doc, err := vault.ParseFileInRoot(s.VaultRoot, abs)
 	if err != nil {
 		return fmt.Errorf("wrote search result note but failed to parse for indexing: %w", err)
 	}

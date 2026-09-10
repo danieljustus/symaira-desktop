@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	defaultOracleCommit  = "ae86331930fdfa2b128b68ae5af7437091b9949a"
-	defaultOracleRelease = "v0.12.2"
+	defaultOracleCommit  = "745c08e8144971c61133c5d0e5d61c7ce405aad2"
+	defaultOracleRelease = "post-v0.12.2-security-880"
 	provenanceFixture    = "testdata/port/provenance.json"
 )
 
@@ -30,8 +30,10 @@ var fixturePaths = []string{
 	"testdata/port/core/simhash.json",
 	"testdata/port/core/textnorm.json",
 	"testdata/port/mcp/symdesk-tools.json",
+	"testdata/port/mcp/representative.json",
 	"testdata/port/mcp/symroom-tools.json",
 	"testdata/port/http/routes.json",
+	"testdata/port/http/representative.json",
 	"testdata/port/vault/filesystem.json",
 	"testdata/port/vault/parse.json",
 	"testdata/port/vault/resolution.json",
@@ -44,6 +46,7 @@ var fixturePaths = []string{
 	"testdata/port/sidecar/lifecycle.json",
 	"testdata/port/sidecar/roundtrip.json",
 	"testdata/port/sidecar/large-corpus.json",
+	"testdata/port/representative/cases.json",
 }
 
 func main() {

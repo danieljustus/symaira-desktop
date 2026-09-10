@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "original_sha256": "bb94cefc18f633ae9c894e236019a763a7def57a644db3f2b0004048aa5164d8",
+  "redacted_sha256": "85a1f14ad96740b0f3b77b1e44d22db45637c7789b4c0f76087a465d24843a49",
+  "source_expected_head": "956bd3e008b3fc08e9e3c01f46a577d2f42b4235",
+  "go_oracle": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+  "trusted_ci_run": "34254766964",
+  "redacted_json_paths": [
+    "$.repository.root",
+    "$.binaries.go.path",
+    "$.binaries.go.build_command",
+    "$.binaries.rust.path",
+    "$.index_preparation.go.command",
+    "$.index_preparation.rust.command",
+    "$.contracts[1].command",
+    "$.contracts[2].command",
+    "$.contracts[3].command"
+  ],
+  "transformation": "Replace repository and temporary-directory prefixes only; preserve all measurements, hashes, source identities and command arguments.",
+  "original_binary_recheck": "Rust binary rehashed independently; Go temporary binary removed by runner after measurement, recorded hash retained."
+}

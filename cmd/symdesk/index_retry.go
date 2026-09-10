@@ -3,12 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-
-	"github.com/spf13/cobra"
 
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 	"github.com/danieljustus/symaira-desktop/internal/vault"
+	"github.com/spf13/cobra"
 )
 
 // newIndexRetryCmd retries only documents recorded as failed by an index pass.
@@ -36,12 +34,12 @@ func newIndexRetryCmd() *cobra.Command {
 			result := map[string]interface{}{"status": "ok", "attempted": len(failed), "succeeded": 0, "failed": 0}
 			failures := make([]map[string]string, 0)
 			for _, item := range failed {
-				if _, statErr := os.Stat(item.Path); statErr != nil {
+				if _, statErr := vault.StatInRoot(vRoot, item.Path); statErr != nil {
 					recordIndexStatus(db, item.Path, sidecar.IndexStateFailed, statErr.Error())
 					failures = append(failures, map[string]string{"path": item.Path, "reason": statErr.Error()})
 					continue
 				}
-				indexed, indexErr := indexOneFile(db, item.Path, true)
+				indexed, indexErr := indexOneFile(db, vRoot, item.Path, true)
 				if indexErr != nil || !indexed {
 					reason := "retry did not update the index"
 					if indexErr != nil {

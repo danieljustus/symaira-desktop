@@ -336,6 +336,13 @@ func (c *Client) IndexWithMetadata(source, body string, metadata SearchMetadata)
 	return engine.IndexStdin(c.db, c.embedder, strings.NewReader(body), source)
 }
 
+// IndexMarkdownWithMetadata indexes already-confined Markdown content without
+// reopening source.
+func (c *Client) IndexMarkdownWithMetadata(source, body string, metadata SearchMetadata) error {
+	_, err := engine.IndexMarkdownWithMetadata(c.db, c.embedder, source, []byte(body), metadata)
+	return err
+}
+
 // Delete removes a document and its chunks from the index. Deleting a
 // document that is not indexed is not an error.
 func (c *Client) Delete(path string) error {
@@ -652,6 +659,16 @@ func IndexWithMetadata(path, body string, metadata SearchMetadata) error {
 	}
 	defer func() { _ = c.Close() }()
 	return c.IndexWithMetadata(path, body, metadata)
+}
+
+// IndexMarkdownWithMetadata indexes confined Markdown content without reopening path.
+func IndexMarkdownWithMetadata(path, body string, metadata SearchMetadata) error {
+	c, err := openActive()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = c.Close() }()
+	return c.IndexMarkdownWithMetadata(path, body, metadata)
 }
 
 // IndexDirectory indexes one external folder using the configured retrieval

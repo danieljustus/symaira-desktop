@@ -64,7 +64,7 @@ func processEvent(path string, ev *DebouncedEvent, w *fsnotify.Watcher, svc *ser
 	if opName != "" && filepath.Ext(path) == ".md" {
 		// Index it
 		if opName != "file_removed" {
-			doc, err := vault.ParseFile(path)
+			doc, err := parseEventFile(svc.VaultRoot, path)
 			if err == nil {
 				_ = svc.IndexDocument(doc)
 				opName = "index_updated" // As requested by plan: index_updated upon re-indexing
@@ -95,6 +95,18 @@ func flushDebounce(debounceMap map[string]*DebouncedEvent, mu *sync.Mutex, w *fs
 			processEvent(path, ev, w, svc, out)
 		}
 	}
+}
+
+func parseEventFile(vaultRoot, path string) (*vault.Document, error) {
+	rel, err := filepath.Rel(vaultRoot, path)
+	if err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && !filepath.IsAbs(rel) {
+		return vault.ParseFileInRoot(vaultRoot, path)
+	}
+	// Tests and explicitly managed non-vault watchers may provide a path
+	// outside the active vault. The confinement contract applies to paths
+	// selected from the vault tree; preserve the legacy behavior for these
+	// independent event sources.
+	return vault.ParseFile(path)
 }
 
 func newEventsCmd() *cobra.Command {

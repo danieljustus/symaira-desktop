@@ -4,7 +4,7 @@ use std::{
     collections::HashMap,
     fs,
     io::Write,
-    path::Path,
+    path::{Path, PathBuf},
     time::{Duration, UNIX_EPOCH},
 };
 
@@ -12,12 +12,9 @@ use rusqlite::{Connection, types::ValueRef};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-#[cfg(windows)]
-use std::path::PathBuf;
-
 use super::{
-    IndexedDocument, MIGRATIONS, SearchHit, Sidecar, open_vault_dir, storage_path,
-    strip_verbatim_prefix,
+    IndexedDocument, MIGRATIONS, SearchHit, Sidecar, open_vault_dir, sidecar_storage_root,
+    storage_path, strip_verbatim_prefix,
 };
 
 const GO_MIGRATIONS: &[(&str, &str)] = &[
@@ -263,9 +260,9 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(
         fixture.oracle.commit,
-        "ae86331930fdfa2b128b68ae5af7437091b9949a"
+        "745c08e8144971c61133c5d0e5d61c7ce405aad2"
     );
-    assert_eq!(fixture.oracle.release, "v0.12.2");
+    assert_eq!(fixture.oracle.release, "post-v0.12.2-security-880");
     assert!(fixture.same_size_length);
     assert!(fixture.uppercase_ignored);
 
@@ -415,6 +412,7 @@ fn validated_storage_path_separates_io_path_from_storage_key() {
     let base =
         std::env::temp_dir().join(format!("symdesk-index-storage-key-{}", std::process::id()));
     let actual = base.join("actual");
+    #[cfg(unix)]
     let root = base.join("root");
     let _ = fs::remove_dir_all(&base);
     fs::create_dir_all(&actual).expect("create actual root");
@@ -427,9 +425,9 @@ fn validated_storage_path_separates_io_path_from_storage_key() {
 
     let storage = storage_path(&root, Path::new("nested/note.md")).expect("storage path");
     assert_eq!(storage.key_path, root.join("nested/note.md"));
-    assert!(!storage.key_path.to_string_lossy().contains("actual/nested"));
     #[cfg(unix)]
     {
+        assert!(!storage.key_path.to_string_lossy().contains("actual/nested"));
         assert_eq!(storage.io_path, canonical_actual.join("nested/note.md"));
         assert_ne!(storage.io_path, storage.key_path);
     }
@@ -552,6 +550,30 @@ fn open_creates_a_usable_parent_on_all_platforms() {
     assert!(root.join("nested").is_dir());
     drop(_sidecar);
     let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn sidecar_storage_root_matches_go_for_temp_and_xdg_paths() {
+    let temp_root = std::env::temp_dir();
+    let canonical_temp = fs::canonicalize(&temp_root).unwrap_or_else(|_| temp_root.clone());
+    let temporary_vault = canonical_temp.join("vault");
+    let fallback = sidecar_storage_root(
+        None,
+        Some(PathBuf::from("/home/test")),
+        &temporary_vault,
+        &temp_root,
+    )
+    .expect("temporary root");
+    assert_eq!(fallback, temp_root.join("symdesk/test-vaults"));
+
+    let explicit = sidecar_storage_root(
+        Some("/explicit/data"),
+        Some(PathBuf::from("/home/test")),
+        &temporary_vault,
+        &temp_root,
+    )
+    .expect("explicit data root");
+    assert_eq!(explicit, PathBuf::from("/explicit/data/symdesk/vaults"));
 }
 
 #[cfg(windows)]

@@ -835,6 +835,16 @@ def validate_sample(value: Any, name: str, unit: str) -> None:
             raise HarnessError(f"{name}.{key} is not finite")
     if value["max"] != max(value["raw"]) or value["max_observed"] != value["max"]:
         raise HarnessError(f"{name} maximum is not the maximum raw observation")
+    expected = {
+        "min": min(value["raw"]),
+        "mean": sum(value["raw"]) / len(value["raw"]),
+        "p50": percentile(value["raw"], 0.50),
+        "p95": percentile(value["raw"], 0.95),
+        "p99": percentile(value["raw"], 0.99),
+    }
+    for key, actual in expected.items():
+        if value[key] != actual:
+            raise HarnessError(f"{name}.{key} does not match raw samples")
     if any(order not in {"go-rust", "rust-go"} for order in value["pair_order"]):
         raise HarnessError(f"{name} contains an invalid pair order")
 

@@ -182,11 +182,10 @@ VALUE_GO_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 VALUE_OUTPUT ?= docs/rust-port/results/value001-latest.json
 VALUE_RETAINED ?= docs/rust-port/results/value001-retained.json
 value-001-evidence-tests:
-	python3 scripts/rust-port/test_validate_value001_resume.py
+	python3 -m unittest discover -s scripts/rust-port -p 'test_*value001*.py' -v
 	python3 scripts/rust-port/validate_value001_retained.py "$(VALUE_RETAINED)"
 	python3 scripts/rust-port/value001_report.py "$(VALUE_RETAINED)"
 	python3 scripts/rust-port/value001_report.py docs/rust-port/results/value001-latest.json
-	python3 scripts/rust-port/test_validate_value001_candidate.py
 
 # Explicit candidate acceptance; historical evidence tests do not approve HEAD.
 VALUE_CANDIDATE_ROOT ?= .

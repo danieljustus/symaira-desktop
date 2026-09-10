@@ -127,6 +127,44 @@ class CandidateValidatorTests(unittest.TestCase):
         self.assertNotEqual(completed.returncode, 0)
         self.assertIn("--candidate", completed.stderr)
 
+    def test_each_operation_regression_fails_with_coherent_summary_and_ratio(self):
+        for category, operations in validator.REQUIRED_OPERATIONS.items():
+            for operation in sorted(operations):
+                with self.subTest(category=category, operation=operation):
+                    mutated = copy.deepcopy(self.original)
+                    metric = mutated["metrics"][category]
+                    go = metric["operations"][operation]["go"]
+                    metric["operations"][operation]["rust"] = (
+                        validator.value001.summary(
+                            [sample * 1.101 for sample in go["raw"]],
+                            go["unit"],
+                            go["warmup_samples"],
+                            go["pair_order"],
+                        )
+                    )
+                    ratios = validator.value001.latency_regressions(mutated["metrics"])
+                    mutated["thresholds"]["p95_regressions"] = ratios
+                    self.assertLessEqual(ratios[category], 0.10)
+                    self.assertEqual(
+                        metric["rust"], self.original["metrics"][category]["rust"]
+                    )
+                    self.check(
+                        mutated,
+                        expect=f"{category}.{operation} exceeds exact 10% regression limit",
+                    )
+
+    def test_altered_operation_summary_identity_is_rejected(self):
+        for category, operation in (("mcp", "desk_status"), ("http", "file-read")):
+            with self.subTest(category=category):
+                mutated = copy.deepcopy(self.original)
+                mutated["metrics"][category]["operations"][operation]["rust"][
+                    "p95"
+                ] *= 0.5
+                self.check(
+                    mutated,
+                    expect=f"{category}.operations.{operation}.rust.p95 does not match raw samples",
+                )
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

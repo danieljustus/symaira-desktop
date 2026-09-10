@@ -926,11 +926,24 @@ mod tests {
 
     #[test]
     fn snapshot_path_normalization_matches_go_to_slash_without_corrupting_unix_names() {
-        let path = Path::new("folder\\literal\\name.md");
-        #[cfg(unix)]
-        assert_eq!(normalize_snapshot_path(path), "folder\\literal\\name.md");
-        #[cfg(windows)]
-        assert_eq!(normalize_snapshot_path(path), "folder/literal/name.md");
+        // Go 1.26.6 filepath.ToSlash replaces each native separator. It does
+        // not clean repeated separators, dot segments, or drop components.
+        for (input, windows) in [
+            ("folder\\literal\\name.md", "folder/literal/name.md"),
+            ("folder\\\\name.md", "folder//name.md"),
+            ("folder\\.\\..\\name.md", "folder/./../name.md"),
+            ("folder/mixed\\name.md", "folder/mixed/name.md"),
+            ("folder//name.md", "folder//name.md"),
+            ("folder\\", "folder/"),
+            ("", ""),
+        ] {
+            let expected = if cfg!(windows) { windows } else { input };
+            assert_eq!(
+                normalize_snapshot_path(Path::new(input)),
+                expected,
+                "{input}"
+            );
+        }
     }
 
     #[test]

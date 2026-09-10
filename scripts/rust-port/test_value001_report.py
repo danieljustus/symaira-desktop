@@ -42,6 +42,38 @@ class PercentageTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             render(result)
 
+    def test_resumption_report_exposes_operations_in_display_percentages(self):
+        result = self.load("value001-resume-956bd3e.json")
+        before = copy.deepcopy(result)
+        report = render(result)
+        self.assertIn(
+            "http: Go 1.212209 ms; Rust 1.177625 ms; regression -2.85%", report
+        )
+        self.assertIn(
+            "http.file-read: Go 1.099875 ms; Rust 1.296834 ms; regression 17.91%",
+            report,
+        )
+        self.assertIn(
+            "http.file-missing: Go 0.711834 ms; Rust 0.801625 ms; regression 12.61%",
+            report,
+        )
+        self.assertIn("Recorded gate passed: true", report)
+        self.assertEqual(result, before)
+
+    def test_altered_operation_summary_identity_is_rejected(self):
+        for category, operation in (("mcp", "desk_status"), ("http", "file-read")):
+            with self.subTest(category=category):
+                result = self.load("value001-resume-956bd3e.json")
+                result["metrics"][category]["operations"][operation]["rust"]["p95"] *= (
+                    0.5
+                )
+                before = copy.deepcopy(result)
+                with self.assertRaisesRegex(
+                    ValueError, "p95 differs from retained raw samples"
+                ):
+                    render(result)
+                self.assertEqual(result, before)
+
 
 if __name__ == "__main__":
     unittest.main()

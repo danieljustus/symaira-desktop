@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+    "commit": "eec687f4f057b51664cf399b4f669955059f1927",
     "release": "post-v0.12.2-security-880"
   },
-  "production_source_digest": "ac77a66c71a0c8a5428bcfece6556c73f486ec855b75e0ab4e32fafd291db877",
-  "generator_source_digest": "d86222e2cf447f8882c151f65161dc38e1d9b3d22dbb8007f9bead45473985e4",
+  "production_source_digest": "03daa94886c9bf80daa2c39e29e3b3c170ff73553282c9e2145a856a5d87be20",
+  "generator_source_digest": "5a5b17e9311d76189d69a903e4bc6b4cb6180fc1d7a038db7aa9a180c898392c",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,

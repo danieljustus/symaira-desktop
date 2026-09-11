@@ -2,8 +2,50 @@ package main
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
+	"reflect"
 	"testing"
 )
+
+func TestCommittedSidecarOracleIdentities(t *testing.T) {
+	root := filepath.Join("..", "..", "..", "..")
+	read := func(path string, value any) {
+		t.Helper()
+		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		if err := json.Unmarshal(data, value); err != nil {
+			t.Fatalf("decode %s: %v", path, err)
+		}
+	}
+	var provenance provenanceFixture
+	read("testdata/port/provenance.json", &provenance)
+	if provenance.Oracle["commit"] == "" || provenance.Oracle["release"] == "" {
+		t.Fatal("testdata/port/provenance.json lacks an oracle identity")
+	}
+	for _, path := range []string{
+		"testdata/port/sidecar/roundtrip.json",
+		"testdata/port/sidecar/large-corpus.json",
+		"testdata/port/sidecar/lifecycle.json",
+	} {
+		t.Run(path, func(t *testing.T) {
+			var metadata provenanceFixture
+			read(path, &metadata)
+			if !reflect.DeepEqual(metadata.Oracle, provenance.Oracle) {
+				t.Fatalf("%s oracle %v differs from testdata/port/provenance.json oracle %v", path, metadata.Oracle, provenance.Oracle)
+			}
+		})
+	}
+	var roundTrip fixture
+	read("testdata/port/sidecar/roundtrip.json", &roundTrip)
+	var manifest largeCorpusFixture
+	read("testdata/port/sidecar/large-corpus.json", &manifest)
+	if err := validateLargeCorpusManifest(manifest, roundTrip.Oracle, provenance.Oracle); err != nil {
+		t.Fatalf("committed testdata/port/sidecar/large-corpus.json rejected by pinned validator: %v", err)
+	}
+}
 
 func TestRequireSuccessRejectsErrorOutcome(t *testing.T) {
 	if err := requireSuccess(helperResult{Outcome: "error", ErrorClass: "readonly"}); err == nil {
@@ -64,7 +106,7 @@ func TestVerifySearchResultRequiresExpectedPaths(t *testing.T) {
 }
 
 func TestValidateLargeCorpusManifestRejectsContractDrift(t *testing.T) {
-	oracle := map[string]string{"commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2", "release": "post-v0.12.2-security-880"}
+	oracle := map[string]string{"commit": "b37ca57258174e2c7f9e321f1418a25c82ce00a6", "release": "post-v0.12.2-security-880"}
 	valid := largeCorpusFixture{
 		SchemaVersion:  1,
 		Oracle:         oracle,

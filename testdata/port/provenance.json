@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "03daa94886c9bf80daa2c39e29e3b3c170ff73553282c9e2145a856a5d87be20",
-  "generator_source_digest": "6d4fdaffdd9fc2c80878acb11f7b22327959d4a004ac9a3dde5c56725f894839",
+  "generator_source_digest": "3da5eab55f3f0244b3ebd541cffa4884dd37d8561109003f00e7829ea4a398c4",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -31,9 +31,9 @@
     "testdata/port/mcp/symroom-tools.json": "30e806bba87f1366727967e2f07a31537d67545d8db49b877abcdbb90d6b3784",
     "testdata/port/representative/cases.json": "50efd0d9c30652a8a2c69fffa8690272b9c1edff5ba8b4d23cf2caa56c6b1c4f",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "93e560c972f8c25bd5cbe8db3f5bc798243fc82e3211b7d9009a0c035386e884",
-    "testdata/port/sidecar/lifecycle.json": "8aeb0509e9c56fa9d05d7948058fab2fa3e6164fc497acbcb21917fc47023330",
-    "testdata/port/sidecar/roundtrip.json": "0f01621f5f343f8049e1a4f7c9699263c32e8fe236226727c563f897f05d4fbf",
+    "testdata/port/sidecar/large-corpus.json": "5058285c2d7dd615285a2e8aa6103a3c085f16006e3f1b5b4f02bf0d5d289759",
+    "testdata/port/sidecar/lifecycle.json": "91504076b8d420735999d5f80d272e9a3aea3c709aabeaf58318f98bd42c2d17",
+    "testdata/port/sidecar/roundtrip.json": "8a7d99b1135ef28ff70e442e9be3372793617a3f890debd549f57c824375298b",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/health-links.json": "95501c79b816d21ae86efa724f280e81572ee5636ae11475d9fb793f54428e1a",
     "testdata/port/vault/metadata.json": "5de4b8a9471ae002a52156f0176d3053be9d243497a8a4f45d508f8765f9ae02",

@@ -108,14 +108,11 @@ jobs:
         run: ./scripts/check-module-boundaries.sh
 
   port-contract:
-    # Advisory parity coverage is retained on main, weekly, and manual suites.
-    if: github.event_name != 'pull_request'
+    # Rust port contract coverage runs on every supported CI event.
     name: Rust port contract
     strategy:
       matrix:
-        # Keep the PR gate fast; full native contract execution runs on main
-        # and schedule, including platform-specific process-tree cleanup.
-        os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest", "windows-latest"]') }}
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -152,8 +149,7 @@ jobs:
           go run ./scripts/rust-port/cmd/diffharness --allow-same-binary --symdesk-left bin/symdesk.exe --symdesk-right bin/symdesk.exe --symroom-left bin/symroom.exe --symroom-right bin/symroom.exe --cases testdata/port/cli/cases.json
 
   rust:
-    # Full Rust gates are advisory; keep the required PR path focused on Go.
-    if: github.event_name != 'pull_request'
+    # Rust workspace gates run on pull requests and full CI suites.
     name: Rust
     runs-on: ubuntu-latest
     steps:
@@ -185,7 +181,6 @@ jobs:
 
   rust-native:
     name: Rust native (${{ matrix.os }})
-    if: github.event_name != 'pull_request'
     strategy:
       fail-fast: false
       matrix:

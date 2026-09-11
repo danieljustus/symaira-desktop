@@ -174,3 +174,60 @@ func TestNoteClipPropagatesSymbrowseFailure(t *testing.T) {
 		t.Errorf("expected error to mention symbrowse failure, got %q", err)
 	}
 }
+
+func TestNoteClipUsesDirectSymbrowseArgvAndReadbackWithoutBrain(t *testing.T) {
+	svc := newTestService(t)
+	dir := t.TempDir()
+	marker := filepath.Join(t.TempDir(), "invocation")
+	url := "https://example.test/articles/direct?session=separate"
+	writeFakeClipper(t, dir, "symbrowse", "#!/bin/sh\nprintf '%s\n' \"$#\" \"$1\" \"$2\" > \""+marker+"\"\nif [ \"$1\" != read ] || [ \"$2\" != \""+url+"\" ]; then exit 9; fi\nprintf '%s\n' '---' 'title: Direct Browse' '---' 'Fetched directly.'\n")
+	withFakeClipperOnPath(t, dir)
+	// Deliberately provide unusable Brain/session settings. The Desktop clip
+	// route must invoke symbrowse directly and never consult them.
+	t.Setenv("SYMDESK_HERMES_SESSION", "unavailable-brain-session")
+	t.Setenv("SYMBRAIN_GATEWAY", "http://127.0.0.1:1")
+	t.Setenv("SYMBRAIN_PROFILE", "missing-profile")
+
+	fileName, err := svc.NoteClip(url)
+	if err != nil {
+		t.Fatalf("NoteClip: %v", err)
+	}
+	invocation, err := os.ReadFile(marker) //nolint:gosec // marker is a test fixture under t.TempDir
+	if err != nil {
+		t.Fatalf("read symbrowse invocation: %v", err)
+	}
+	if got, want := string(invocation), "2\nread\n"+url+"\n"; got != want {
+		t.Fatalf("symbrowse argv = %q, want %q", got, want)
+	}
+	content, err := os.ReadFile(filepath.Join(svc.VaultRoot, fileName)) //nolint:gosec // fileName is returned from the test service
+	if err != nil {
+		t.Fatalf("read clipped note: %v", err)
+	}
+	if !strings.Contains(string(content), "Fetched directly.") {
+		t.Fatalf("direct symbrowse output was not persisted: %s", content)
+	}
+}
+
+func TestNoteClipFailureDoesNotWriteOrIndexANote(t *testing.T) {
+	svc := newTestService(t)
+	dir := t.TempDir()
+	writeFakeClipper(t, dir, "symbrowse", "#!/bin/sh\nprintf '%s\n' 'upstream unavailable' >&2\nexit 23\n")
+	withFakeClipperOnPath(t, dir)
+
+	_, err := svc.NoteClip("https://example.test/unavailable")
+	if err == nil {
+		t.Fatal("expected the direct clipper failure to be returned")
+	}
+	if !strings.Contains(err.Error(), "symbrowse failed") || !strings.Contains(err.Error(), "exit status 23") {
+		t.Fatalf("unexpected direct clipper error: %v", err)
+	}
+	entries, err := os.ReadDir(svc.VaultRoot)
+	if err != nil {
+		t.Fatalf("read vault after failed clip: %v", err)
+	}
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), "Clipped:") {
+			t.Fatalf("failed clip unexpectedly wrote %q", entry.Name())
+		}
+	}
+}

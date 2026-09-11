@@ -111,7 +111,7 @@ func run() error {
 		return fmt.Errorf("decode Cargo metadata: %w", err)
 	}
 	if cargoMetadata.TargetDirectory == "" {
-		return errors.New("Cargo metadata lacks target_directory")
+		return errors.New("cargo metadata lacks target_directory")
 	}
 	if out, err := runCommand(root, "cargo", "build", "--manifest-path", manifestPath, "-p", "symdesk-index", "--bin", "sidecar-rust-helper", "--locked"); err != nil {
 		return fmt.Errorf("build Rust helper: %w\n%s", err, out)

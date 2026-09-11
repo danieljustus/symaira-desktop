@@ -12,6 +12,7 @@ func TestCommittedSidecarOracleIdentities(t *testing.T) {
 	root := filepath.Join("..", "..", "..", "..")
 	read := func(path string, value any) {
 		t.Helper()
+		//nolint:gosec // path is a committed testdata path beneath the repository root
 		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
 		if err != nil {
 			t.Fatalf("read %s: %v", path, err)

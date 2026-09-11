@@ -9,7 +9,7 @@ license = "Apache-2.0"
 repository = "https://github.com/danieljustus/symaira-desktop"
 
 [workspace.dependencies]
-symaira-core-sqlite = { git = "https://github.com/danieljustus/symaira-corekit", rev = "2bf77956a0156c2ccd2d09bc50833d027bc88bbf", version = "=0.0.0" }
+symaira-core-sqlite = { git = "https://github.com/danieljustus/symaira-corekit", rev = "0a3852ca30ef9362f2a321015f0fcb9f345beeb0", version = "=0.0.0" }
 symaira-core-version = { git = "https://github.com/danieljustus/symaira-corekit", rev = "d382b8615ce879bac6f23c7250e13667934e8f93", version = "=0.0.0" }
 symaira-core-exit = { git = "https://github.com/danieljustus/symaira-corekit", rev = "d382b8615ce879bac6f23c7250e13667934e8f93", version = "=0.0.0" }
 clap = { version = "=4.6.6" }

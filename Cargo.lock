@@ -1011,7 +1011,7 @@ source = "git+https://github.com/danieljustus/symaira-corekit?rev=d382b8615ce879
 [[package]]
 name = "symaira-core-fs"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?rev=2bf77956a0156c2ccd2d09bc50833d027bc88bbf#2bf77956a0156c2ccd2d09bc50833d027bc88bbf"
+source = "git+https://github.com/danieljustus/symaira-corekit?rev=0a3852ca30ef9362f2a321015f0fcb9f345beeb0#0a3852ca30ef9362f2a321015f0fcb9f345beeb0"
 dependencies = [
  "cap-primitives",
  "cap-std",
@@ -1025,7 +1025,7 @@ dependencies = [
 [[package]]
 name = "symaira-core-sqlite"
 version = "0.0.0"
-source = "git+https://github.com/danieljustus/symaira-corekit?rev=2bf77956a0156c2ccd2d09bc50833d027bc88bbf#2bf77956a0156c2ccd2d09bc50833d027bc88bbf"
+source = "git+https://github.com/danieljustus/symaira-corekit?rev=0a3852ca30ef9362f2a321015f0fcb9f345beeb0#0a3852ca30ef9362f2a321015f0fcb9f345beeb0"
 dependencies = [
  "rusqlite",
  "symaira-core-fs",

@@ -99,10 +99,24 @@ func run() error {
 	if out, err := runCommand(root, "go", "build", "-o", goBin, "./scripts/rust-port/cmd/sidecar-go-helper"); err != nil {
 		return fmt.Errorf("build Go helper: %w\n%s", err, out)
 	}
-	if out, err := runCommand(root, "cargo", "build", "-p", "symdesk-index", "--bin", "sidecar-rust-helper", "--locked"); err != nil {
+	manifestPath := filepath.Join(root, "Cargo.toml")
+	metadata, err := runCommand(root, "cargo", "metadata", "--manifest-path", manifestPath, "--no-deps", "--format-version", "1")
+	if err != nil {
+		return fmt.Errorf("resolve Rust target directory: %w\n%s", err, metadata)
+	}
+	var cargoMetadata struct {
+		TargetDirectory string `json:"target_directory"`
+	}
+	if err := json.Unmarshal([]byte(metadata), &cargoMetadata); err != nil {
+		return fmt.Errorf("decode Cargo metadata: %w", err)
+	}
+	if cargoMetadata.TargetDirectory == "" {
+		return errors.New("cargo metadata lacks target_directory")
+	}
+	if out, err := runCommand(root, "cargo", "build", "--manifest-path", manifestPath, "-p", "symdesk-index", "--bin", "sidecar-rust-helper", "--locked"); err != nil {
 		return fmt.Errorf("build Rust helper: %w\n%s", err, out)
 	}
-	builtRust := filepath.Join(root, "target", "debug", "sidecar-rust-helper"+exeSuffix())
+	builtRust := filepath.Join(cargoMetadata.TargetDirectory, "debug", "sidecar-rust-helper"+exeSuffix())
 	if _, err := os.Stat(builtRust); err != nil {
 		return fmt.Errorf("rust helper missing after build: %w", err)
 	}
@@ -243,7 +257,7 @@ func validateLargeCorpusManifest(manifest largeCorpusFixture, roundTripOracle, p
 	if manifest.PathTemplate != "corpus/%05d.md" || manifest.TitleTemplate != "Corpus document %05d" {
 		return errors.New("large corpus templates differ from the exact supported grammar")
 	}
-	pinnedOracle := map[string]string{"commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2", "release": "post-v0.12.2-security-880"}
+	pinnedOracle := map[string]string{"commit": "b37ca57258174e2c7f9e321f1418a25c82ce00a6", "release": "post-v0.12.2-security-880"}
 	if !reflect.DeepEqual(manifest.Oracle, roundTripOracle) || !reflect.DeepEqual(manifest.Oracle, provenanceOracle) || !reflect.DeepEqual(manifest.Oracle, pinnedOracle) {
 		return errors.New("large corpus oracle differs from round-trip, provenance, or pinned oracle")
 	}

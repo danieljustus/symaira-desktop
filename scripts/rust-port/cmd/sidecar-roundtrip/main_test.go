@@ -2,11 +2,71 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
+
+func TestRunCommandMetadata(t *testing.T) {
+	bin, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, mode := range []string{"success", "failure", "invalid-json"} {
+		t.Run(mode, func(t *testing.T) {
+			t.Setenv("SIDECAR_TEST_COMMAND", mode)
+			out, err := runCommand(t.TempDir(), bin, "-test.run=^TestRunCommandHelper$")
+			if mode == "failure" {
+				var exitErr *exec.ExitError
+				if !errors.As(err, &exitErr) || exitErr.ExitCode() != 7 {
+					t.Fatalf("expected exit status 7, got %v", err)
+				}
+				if !strings.Contains(err.Error(), "info: syncing channel updates") {
+					t.Fatalf("stderr missing from diagnostics: %v", err)
+				}
+			} else if err != nil {
+				t.Fatal(err)
+			}
+			var metadata struct {
+				TargetDirectory string `json:"target_directory"`
+			}
+			decodeErr := json.Unmarshal([]byte(out), &metadata)
+			if mode == "invalid-json" {
+				if decodeErr == nil {
+					t.Fatal("invalid stdout was accepted as JSON")
+				}
+				return
+			}
+			if decodeErr != nil {
+				t.Fatalf("decode Cargo metadata: %v", decodeErr)
+			}
+			if metadata.TargetDirectory != "/target with spaces" {
+				t.Fatalf("unexpected target directory: %q", metadata.TargetDirectory)
+			}
+		})
+	}
+}
+
+func TestRunCommandHelper(t *testing.T) {
+	mode := os.Getenv("SIDECAR_TEST_COMMAND")
+	if mode == "" {
+		return
+	}
+	fmt.Fprintln(os.Stderr, "info: syncing channel updates")
+	if mode == "invalid-json" {
+		fmt.Println("invalid stdout")
+	}
+	fmt.Println(`{"target_directory":"/target with spaces"}`)
+	if mode == "failure" {
+		os.Exit(7)
+	}
+	os.Exit(0)
+}
 
 func TestCommittedSidecarOracleIdentities(t *testing.T) {
 	root := filepath.Join("..", "..", "..", "..")

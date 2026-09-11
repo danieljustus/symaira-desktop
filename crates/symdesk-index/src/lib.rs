@@ -7,7 +7,7 @@ use std::{
     fs,
     io::{self, Read},
     path::{Component, Path, PathBuf},
-    time::{Duration, UNIX_EPOCH},
+    time::UNIX_EPOCH,
 };
 
 use cap_std::{ambient_authority, fs::Dir};
@@ -272,10 +272,14 @@ impl Sidecar {
         if let Some(parent) = path.parent() {
             create_parent_dir(parent)?;
         }
-        let mut connection = Connection::open(path)?;
-        connection.busy_timeout(Duration::from_millis(5000))?;
-        connection.pragma_update(None, "foreign_keys", true)?;
-        connection.pragma_update(None, "journal_mode", "WAL")?;
+        // Desktop owns parent policy and product migrations. The exact-pinned
+        // policy-only constructor returns only Open errors; unwrap that phase
+        // without changing our public SQLite error variant or its payload.
+        let mut connection =
+            symaira_core_sqlite::open_with_existing_parent(path).map_err(|error| match error {
+                symaira_core_sqlite::Error::Open(source) => SidecarError::Sqlite(source),
+                _ => unreachable!("policy-only constructor returns only Open errors"),
+            })?;
         migrate(&mut connection)?;
         backfill_norm_index(&mut connection)?;
         Ok(Self { connection })
@@ -981,3 +985,6 @@ fn go_value(value: &Value) -> String {
 
 #[cfg(test)]
 mod contract_tests;
+
+#[cfg(test)]
+mod open_tests;

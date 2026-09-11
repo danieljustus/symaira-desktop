@@ -959,7 +959,13 @@ func runCommand(dir, bin string, args ...string) (string, error) {
 	//nolint:gosec // bin is a fixed compiler/tool executable selected by this harness
 	c := exec.Command(bin, args...)
 	c.Dir = dir
-	out, err := c.CombinedOutput()
+	// Keep machine-readable stdout separate from toolchain diagnostics.
+	var stderr bytes.Buffer
+	c.Stderr = &stderr
+	out, err := c.Output()
+	if err != nil {
+		return string(out), fmt.Errorf("%w\nstderr: %s", err, stderr.String())
+	}
 	return string(out), err
 }
 func copyFile(dst, src string) error {

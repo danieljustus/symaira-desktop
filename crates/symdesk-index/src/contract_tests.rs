@@ -13,8 +13,8 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 use super::{
-    IndexedDocument, MIGRATIONS, SearchHit, Sidecar, open_vault_dir, sidecar_storage_root,
-    storage_path, strip_verbatim_prefix,
+    IndexedDocument, MIGRATIONS, SearchHit, Sidecar, create_parent_dir, open_vault_dir,
+    sidecar_storage_root, storage_path, strip_verbatim_prefix,
 };
 
 const GO_MIGRATIONS: &[(&str, &str)] = &[
@@ -771,6 +771,45 @@ fn refresh_and_prune_never_index_external_marker_during_symlink_replacement() {
     assert_eq!(external_rows, 0);
     drop(sidecar);
     let _ = fs::remove_dir_all(base);
+}
+
+#[test]
+fn create_parent_dir_accepts_empty_parent_on_all_platforms() {
+    // `Path::new("sidecar.db").parent()` is `Some("")`, not `None`.
+    // Opening a database in the current directory must therefore not attempt
+    // a failing mkdir of the empty path.
+    create_parent_dir(Path::new("")).expect("empty parent must be a no-op");
+}
+
+#[cfg(unix)]
+#[test]
+fn create_parent_dir_rejects_non_root_symlink_ancestor() {
+    let base = std::env::temp_dir().join(format!(
+        "symdesk-index-sidecar-parent-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&base);
+    fs::create_dir_all(&base).expect("create base");
+
+    let outside = base.join("outside");
+    fs::create_dir_all(&outside).expect("create outside");
+    let link = base.join("untrusted-link");
+    std::os::unix::fs::symlink(&outside, &link).expect("create non-root symlink");
+
+    let error = create_parent_dir(&link.join("must-not-exist"))
+        .expect_err("non-root ancestor symlink must be rejected");
+    assert!(
+        error
+            .to_string()
+            .contains("refusing non-root parent-directory symlink"),
+        "unexpected error: {error}"
+    );
+    assert!(
+        !outside.join("must-not-exist").exists(),
+        "a rejected symlink must not receive a child directory"
+    );
+
+    let _ = fs::remove_dir_all(&base);
 }
 
 fn write_lifecycle_file(root: &Path, relative: &str, content: &str, mtime_ns: i64) {

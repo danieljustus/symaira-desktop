@@ -764,31 +764,77 @@ fn lexical_clean(path: &Path) -> PathBuf {
 }
 
 fn create_parent_dir(parent: &Path) -> io::Result<()> {
-    #[cfg(unix)]
-    let mut missing = Vec::<PathBuf>::new();
+    if parent.as_os_str().is_empty() {
+        return Ok(());
+    }
+
     #[cfg(unix)]
     {
-        let mut current = parent;
-        while !current.exists() {
-            missing.push(current.to_path_buf());
-            let Some(next) = current.parent() else {
-                break;
-            };
-            if next == current {
-                break;
+        use std::os::unix::fs::{DirBuilderExt as _, MetadataExt as _};
+
+        // Match sqlitekit.SafeMkdirAll: normalize to an absolute path and
+        // inspect every existing component before descending. Root-owned
+        // aliases such as /var -> /private/var remain supported; a symlink
+        // owned by an ordinary user is never followed. The restrictive mode
+        // is supplied at mkdir time, so no later chmod can be redirected by a
+        // symlink swap.
+        let absolute = if parent.is_absolute() {
+            parent.to_path_buf()
+        } else {
+            std::env::current_dir()?.join(parent)
+        };
+        let absolute = lexical_clean(&absolute);
+        let mut current = PathBuf::from(std::path::MAIN_SEPARATOR_STR);
+        for component in absolute.components() {
+            match component {
+                Component::RootDir | Component::CurDir => continue,
+                Component::Normal(name) => current.push(name),
+                Component::ParentDir | Component::Prefix(_) => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidInput,
+                        "parent directory is not absolute after normalization",
+                    ));
+                }
             }
-            current = next;
+
+            loop {
+                match fs::symlink_metadata(&current) {
+                    Ok(metadata) if metadata.file_type().is_symlink() => {
+                        if metadata.uid() != 0 {
+                            return Err(io::Error::other(format!(
+                                "refusing non-root parent-directory symlink: {}",
+                                current.display()
+                            )));
+                        }
+                        current = fs::canonicalize(&current)?;
+                        break;
+                    }
+                    Ok(metadata) if metadata.is_dir() => break,
+                    Ok(_) => {
+                        return Err(io::Error::new(
+                            io::ErrorKind::NotADirectory,
+                            format!("parent path is not a directory: {}", current.display()),
+                        ));
+                    }
+                    Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                        match fs::DirBuilder::new().mode(0o700).create(&current) {
+                            Ok(()) => break,
+                            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+                            Err(error) => return Err(error),
+                        }
+                    }
+                    Err(error) => return Err(error),
+                }
+            }
         }
+
+        Ok(())
     }
-    fs::create_dir_all(parent)?;
-    #[cfg(unix)]
+
+    #[cfg(not(unix))]
     {
-        use std::os::unix::fs::PermissionsExt as _;
-        for directory in missing {
-            fs::set_permissions(directory, fs::Permissions::from_mode(0o700))?;
-        }
+        fs::create_dir_all(parent)
     }
-    Ok(())
 }
 
 fn system_time_unix_nanos(value: std::time::SystemTime) -> Result<i64, SidecarError> {

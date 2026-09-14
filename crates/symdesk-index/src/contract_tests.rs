@@ -13,8 +13,8 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 use super::{
-    IndexedDocument, MIGRATIONS, SearchHit, Sidecar, create_parent_dir, open_vault_dir,
-    sidecar_storage_root, storage_path, strip_verbatim_prefix,
+    IndexedDocument, MIGRATIONS, SearchHit, Sidecar, SidecarError, create_parent_dir,
+    open_vault_dir, sidecar_storage_root, storage_path, strip_verbatim_prefix,
 };
 
 const GO_MIGRATIONS: &[(&str, &str)] = &[
@@ -808,6 +808,142 @@ fn create_parent_dir_rejects_non_root_symlink_ancestor() {
         !outside.join("must-not-exist").exists(),
         "a rejected symlink must not receive a child directory"
     );
+
+    let _ = fs::remove_dir_all(&base);
+}
+
+#[test]
+fn sidecar_open_applies_expected_pragmas_and_mode() {
+    let directory =
+        std::env::temp_dir().join(format!("symdesk-index-open-pragmas-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&directory);
+    let db_path = directory.join("nested/dir/sidecar.db");
+
+    let sidecar =
+        Sidecar::open(&db_path).expect("open sidecar via shared open_with_existing_parent");
+    let p = pragmas(&sidecar.connection);
+    assert_eq!(p.get("journal_mode").map(String::as_str), Some("wal"));
+    assert_eq!(p.get("foreign_keys").map(String::as_str), Some("1"));
+    assert_eq!(p.get("busy_timeout").map(String::as_str), Some("5000"));
+    assert_eq!(p.get("integrity_check").map(String::as_str), Some("ok"));
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let parent_metadata = fs::metadata(db_path.parent().expect("parent exists"))
+            .expect("parent directory metadata");
+        assert_eq!(
+            parent_metadata.permissions().mode() & 0o777,
+            0o700,
+            "created parent directory must retain 0700 permissions"
+        );
+    }
+
+    drop(sidecar);
+    let _ = fs::remove_dir_all(&directory);
+}
+
+#[cfg(unix)]
+#[test]
+fn sidecar_open_retains_local_symlink_rejection() {
+    let base = std::env::temp_dir().join(format!(
+        "symdesk-index-sidecar-open-symlink-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_dir_all(&base);
+    fs::create_dir_all(&base).expect("create base");
+
+    let outside = base.join("outside");
+    fs::create_dir_all(&outside).expect("create outside");
+    let link = base.join("untrusted-link");
+    std::os::unix::fs::symlink(&outside, &link).expect("create non-root symlink");
+
+    let target_db = link.join("sub/sidecar.db");
+    let error = Sidecar::open(&target_db)
+        .err()
+        .expect("production Sidecar::open must reject non-root ancestor symlink");
+    assert!(
+        error
+            .to_string()
+            .contains("refusing non-root parent-directory symlink"),
+        "unexpected error: {error}"
+    );
+    assert!(
+        !outside.join("sub").exists(),
+        "a rejected symlink must not receive a child directory"
+    );
+
+    let _ = fs::remove_dir_all(&base);
+}
+
+#[test]
+fn sidecar_open_preserves_original_sqlite_diagnostics() {
+    let base =
+        std::env::temp_dir().join(format!("symdesk-index-sidecar-diag-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&base);
+    fs::create_dir_all(&base).expect("create base");
+
+    let dir_as_db = base.join("not_a_sqlite_file");
+    fs::create_dir_all(&dir_as_db).expect("create directory target");
+
+    let error = Sidecar::open(&dir_as_db)
+        .err()
+        .expect("opening directory as DB must fail");
+    match &error {
+        SidecarError::Sqlite(sqlite_err) => {
+            let direct_err = rusqlite::Connection::open(&dir_as_db)
+                .expect_err("direct rusqlite open on directory must fail");
+            assert_eq!(
+                sqlite_err.sqlite_error_code(),
+                direct_err.sqlite_error_code(),
+                "error code must match direct rusqlite open"
+            );
+            assert_eq!(
+                sqlite_err.sqlite_error().map(|e| e.extended_code),
+                direct_err.sqlite_error().map(|e| e.extended_code),
+                "extended error code must match direct rusqlite open"
+            );
+            assert_eq!(
+                sqlite_err.to_string(),
+                direct_err.to_string(),
+                "error message must match direct rusqlite open"
+            );
+            assert!(
+                !sqlite_err.to_string().is_empty(),
+                "original SQLite diagnostic message must not be empty"
+            );
+        }
+        other => panic!("expected SidecarError::Sqlite from rusqlite, got: {other:?}"),
+    }
+
+    let _ = fs::remove_dir_all(&base);
+}
+
+#[test]
+fn sidecar_open_no_implicit_parent_policy_takeover() {
+    let base =
+        std::env::temp_dir().join(format!("symdesk-index-no-takeover-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&base);
+
+    let missing_parent_db = base.join("nonexistent_parent/sidecar.db");
+    let direct_error = symaira_core_sqlite::open_with_existing_parent(&missing_parent_db)
+        .expect_err("open_with_existing_parent must not create missing parent directory");
+    assert!(
+        matches!(direct_error, symaira_core_sqlite::Error::Open(_)),
+        "direct call must fail with Error::Open because parent does not exist"
+    );
+    assert!(
+        !base.join("nonexistent_parent").exists(),
+        "open_with_existing_parent must not create parent directory"
+    );
+
+    let sidecar =
+        Sidecar::open(&missing_parent_db).expect("Sidecar::open creates parent and succeeds");
+    assert!(
+        base.join("nonexistent_parent").is_dir(),
+        "Sidecar::open must ensure parent directory exists"
+    );
+    drop(sidecar);
 
     let _ = fs::remove_dir_all(&base);
 }

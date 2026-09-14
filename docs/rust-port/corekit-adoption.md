@@ -281,3 +281,53 @@ each delegated path before adoption. Do not use `Server::serve_io` directly or
 add the git dependency until every CON/MCP byte/process comparison passes and
 stdout remains protocol-only. No work-item or contract-matrix status was
 changed.
+
+## SQLite connection-opening slice
+
+The desktop Rust workspace adopts `open_with_existing_parent` from
+`symaira-core-sqlite` for connection-opening, pinned to immutable CoreKit source
+commit `62edd9903983d9369373565cc1e50da3fef43176` (crate version `0.0.0`,
+`publish = false` upstream). The verified implementation commit in
+`symaira-desktop` is `524de84399274c0fb9ea0a9873c3e2e9f78ad3a9`.
+
+This is a narrow diagnostic Git adoption, not a crates.io publication, not full
+RUST-006 or VALUE-001 completion, and not a product cutover.
+
+### Boundary and retained behavior
+
+Only `open_with_existing_parent` is adopted for opening SQLite database
+connections. Desktop explicitly retains:
+- Its local `0700` permission and ancestor directory creation policy for newly
+  missing parent paths before opening.
+- Schema migrations, table creation, and backfill routines.
+- Transaction semantics and query execution models.
+- Original `rusqlite` diagnostic errors and status mappings.
+
+Unrelated source implementations, deferrals, contract register statuses, and
+fixtures remain unchanged.
+
+### Verification and CI evidence
+
+Hermes independently verified the implementation tree subsequently committed as
+`524de84399274c0fb9ea0a9873c3e2e9f78ad3a9` using Go 1.26.6 / Rust 1.98.0:
+- `cargo fmt --all --check`
+- `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`
+- Workspace tests and `make representative-differential`
+
+Full native GitHub Actions CI run `34902569823` at the exact implementation SHA
+succeeded across all three target platforms:
+- Windows: [job/104171714110](https://github.com/danieljustus/symaira-desktop/actions/runs/34902569823/job/104171714110)
+- Linux: [job/104171714197](https://github.com/danieljustus/symaira-desktop/actions/runs/34902569823/job/104171714197)
+- macOS: [job/104171714248](https://github.com/danieljustus/symaira-desktop/actions/runs/34902569823/job/104171714248)
+
+Test coverage details:
+- Three new portable `sidecar_open` tests run and pass across all three
+  operating systems (Windows, Linux, macOS).
+- An additional symlink-policy test is Unix-only; no Windows symlink proof is
+  claimed from it.
+- An independent read-only review found no blockers.
+
+Public logs are accessible via the GitHub Actions job URLs above. Central local
+evidence artifacts are recorded in `consumers-night-desktop-native-<jobid>.log`
+and `consumers-night-desktop-sqlite-patch-20260914T220549.373289Z/run.json`
+(referenced without personal absolute paths).

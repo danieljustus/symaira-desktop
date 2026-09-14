@@ -1,5 +1,6 @@
 import copy
 import json
+import os
 import unittest
 from pathlib import Path
 
@@ -8,10 +9,43 @@ from value001_report import percentage, render
 
 
 ROOT = Path(__file__).resolve().parents[2]
-EVIDENCE = Path("/Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/Repos/docs/intern/rust-resume-evidence")
-RETAINED_REPORTS = (
-    EVIDENCE / "value001-desktop-20260914-aac14a91.json",
-    EVIDENCE / "value001-desktop-20260914-aac14a91-rerun.json",
+
+# The two immutable VALUE-001 measurement reports are workspace evidence, not
+# repository content: they live beside the repository, so a clean checkout --
+# CI included -- legitimately does not have them. Locate them by environment
+# override, then by the workspace layout, and skip rather than fail when they
+# are absent. Hardcoding one machine's absolute path made every checkout
+# without it report a false failure.
+RETAINED_NAMES = (
+    "value001-desktop-20260914-aac14a91.json",
+    "value001-desktop-20260914-aac14a91-rerun.json",
+)
+
+
+def _locate_evidence():
+    """Find the workspace evidence directory, or return where we looked.
+
+    Searched upward rather than at a fixed depth, because this repository is
+    normally checked out inside a worktree (.worktrees/<branch>) and the
+    number of levels to the workspace root differs between layouts.
+    """
+    override = os.environ.get("SYMDESK_VALUE001_EVIDENCE")
+    if override:
+        return Path(override)
+    for parent in [ROOT, *ROOT.parents]:
+        candidate = parent / "docs/intern/rust-resume-evidence"
+        if all((candidate / name).is_file() for name in RETAINED_NAMES):
+            return candidate
+    return ROOT / "docs/intern/rust-resume-evidence"
+
+
+EVIDENCE = _locate_evidence()
+RETAINED_REPORTS = tuple(EVIDENCE / name for name in RETAINED_NAMES)
+RETAINED_AVAILABLE = all(path.is_file() for path in RETAINED_REPORTS)
+REQUIRES_RETAINED = unittest.skipUnless(
+    RETAINED_AVAILABLE,
+    f"retained VALUE-001 reports are not present under {EVIDENCE}; "
+    "set SYMDESK_VALUE001_EVIDENCE to the directory holding them",
 )
 
 
@@ -76,6 +110,7 @@ class PercentageTests(unittest.TestCase):
                     render(result)
                 self.assertEqual(result, before)
 
+    @REQUIRES_RETAINED
     def test_retained_reports_match_explicit_left_fold_and_reject_mean_mutation(self):
         for path in RETAINED_REPORTS:
             with self.subTest(report=path.name):
@@ -99,6 +134,7 @@ class PercentageTests(unittest.TestCase):
                     with self.assertRaisesRegex(value001.HarnessError, "mean does not match raw samples"):
                         value001.validate_result(mutated)
 
+    @REQUIRES_RETAINED
     def test_corrected_second_retained_report_remains_performance_fail(self):
         result = json.loads(RETAINED_REPORTS[1].read_text(encoding="utf-8"))
         before = copy.deepcopy(result)
@@ -196,7 +232,11 @@ class SummationProvenanceTests(unittest.TestCase):
         algorithm has to come from provenance rather than from the interpreter
         that happens to be running the validator.
         """
-        captures = sorted(self.RESULTS.glob("value001-*.json")) + list(RETAINED_REPORTS)
+        # The repository's own captures are always checked; the workspace-level
+        # measurement reports are added only where they are present.
+        captures = sorted(self.RESULTS.glob("value001-*.json"))
+        if RETAINED_AVAILABLE:
+            captures += list(RETAINED_REPORTS)
         checked = 0
         for path in captures:
             document = self.load(path)
@@ -216,8 +256,10 @@ class SummationProvenanceTests(unittest.TestCase):
                     f"{path.name} under {summation}",
                 )
             checked += 1
-        self.assertGreaterEqual(checked, 6, "expected every retained capture")
+        expected = 6 if RETAINED_AVAILABLE else 4
+        self.assertGreaterEqual(checked, expected, "expected every retained capture")
 
+    @REQUIRES_RETAINED
     def test_the_two_immutable_value001_reports_use_the_left_fold(self):
         # They were produced on Python 3.9.6, where sum() was a plain fold.
         for path in RETAINED_REPORTS:
@@ -320,6 +362,7 @@ class PairedLatencyEstimatorTests(unittest.TestCase):
         with self.assertRaises(value001.HarnessError):
             value001.latency_regressions({}, "neumaier")
 
+    @REQUIRES_RETAINED
     def test_the_two_immutable_runs_disagree_unpaired_and_agree_paired(self):
         """The real defect, pinned to the real measurement data.
 
@@ -348,6 +391,7 @@ class PairedLatencyEstimatorTests(unittest.TestCase):
             self.assertLess(value, 0.0)
         self.assertLess(abs(paired[1] - paired[0]), 0.10)
 
+    @REQUIRES_RETAINED
     def test_no_operation_regresses_under_pairing_in_either_run(self):
         for path in RETAINED_REPORTS:
             document = self.load(path)

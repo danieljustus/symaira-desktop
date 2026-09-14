@@ -100,15 +100,15 @@ func run() error {
 		return fmt.Errorf("build Go helper: %w\n%s", err, out)
 	}
 	manifestPath := filepath.Join(root, "Cargo.toml")
-	metadata, err := runCommand(root, "cargo", "metadata", "--manifest-path", manifestPath, "--no-deps", "--format-version", "1")
+	metadata, metadataDiagnostics, err := runCommandStdout(root, "cargo", "metadata", "--manifest-path", manifestPath, "--no-deps", "--format-version", "1")
 	if err != nil {
-		return fmt.Errorf("resolve Rust target directory: %w\n%s", err, metadata)
+		return fmt.Errorf("resolve Rust target directory: %w\n%s", err, metadataDiagnostics)
 	}
 	var cargoMetadata struct {
 		TargetDirectory string `json:"target_directory"`
 	}
 	if err := json.Unmarshal([]byte(metadata), &cargoMetadata); err != nil {
-		return fmt.Errorf("decode Cargo metadata: %w", err)
+		return fmt.Errorf("decode Cargo metadata: %w\ncargo stderr: %s", err, metadataDiagnostics)
 	}
 	if cargoMetadata.TargetDirectory == "" {
 		return errors.New("cargo metadata lacks target_directory")
@@ -967,6 +967,22 @@ func runCommand(dir, bin string, args ...string) (string, error) {
 		return string(out), fmt.Errorf("%w\nstderr: %s", err, stderr.String())
 	}
 	return string(out), err
+}
+
+// runCommandStdout keeps stdout and stderr apart for commands whose output is
+// parsed. CombinedOutput would fold diagnostics into the payload: rustup
+// writes lines such as "info: syncing channel updates" to stderr, and merging
+// them into `cargo metadata` output breaks the JSON with
+// "invalid character 'i' looking for beginning of value".
+func runCommandStdout(dir, bin string, args ...string) (string, string, error) {
+	//nolint:gosec // bin is a fixed compiler/tool executable selected by this harness
+	c := exec.Command(bin, args...)
+	c.Dir = dir
+	var stdout, stderr bytes.Buffer
+	c.Stdout = &stdout
+	c.Stderr = &stderr
+	err := c.Run()
+	return stdout.String(), stderr.String(), err
 }
 func copyFile(dst, src string) error {
 	//nolint:gosec // src is the fixed local Cargo build output

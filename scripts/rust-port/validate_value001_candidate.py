@@ -134,11 +134,13 @@ def validate(path: Path, candidate: str, root: Path, trusted_sha256: str) -> Non
                 check_summary(pair["rust"], f"metrics.{name}.{operation}.rust", "milliseconds", summation)
 
     try:
-        regressions = value001.latency_regressions(metrics)
+        regressions = value001.latency_regressions(
+            metrics, value001.latency_estimator_of(result)
+        )
     except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
         raise ValidationError(f"latency gate cannot be recomputed: {exc}") from exc
     thresholds = result["thresholds"]
-    recorded = thresholds.get("p95_regressions")
+    recorded = value001.recorded_regressions(result)
     require(isinstance(recorded, dict) and set(recorded) == set(regressions), "regression inventory is incomplete")
     for name, actual in regressions.items():
         require(finite(actual, name) == recorded[name], f"threshold ratio for {name} is not recomputed")

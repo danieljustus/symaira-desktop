@@ -782,14 +782,106 @@ def ratio(candidate: float, reference: float) -> float:
     return candidate / reference
 
 
-def latency_regressions(metrics: dict[str, Any]) -> dict[str, float]:
-    """Recompute every required latency gate from its retained p95 values."""
-    regressions: dict[str, float] = {}
+# How a latency regression is estimated from a metric pair.
+#
+# "unpaired_p95" compares the p95 of each side's marginal distribution. The
+# harness, however, collects go and rust as index-aligned PAIRS taken
+# back-to-back within one round, with the within-pair order alternated. Both
+# VALUE-001 measurement runs drift strongly within the run, in opposite
+# directions, so an unpaired p95 over that series largely reports which side's
+# samples landed in the slow phase. On the same immutable candidate it
+# produced -6.73% and +19.53% for http.file-missing.
+#
+# "paired_median_ratio" uses the pairing the design already provides: the
+# median of the per-pair rust/go ratio. Drift cancels because both members of
+# a pair are measured under the same machine state.
+#
+# The estimator is recorded in the report. Pre-declaration (schema 2) reports
+# are immutable and keep being evaluated under the estimator of their era.
+LATENCY_ESTIMATORS = frozenset({"unpaired_p95", "paired_median_ratio"})
+DEFAULT_LATENCY_ESTIMATOR = "paired_median_ratio"
+LEGACY_LATENCY_ESTIMATOR = "unpaired_p95"
+MEDIAN_INTERVAL_CONFIDENCE = 0.95
+
+
+def latency_estimator_of(result: Any) -> str:
+    """Return the latency estimator a report declares, or its era's one."""
+    if not isinstance(result, dict):
+        raise HarnessError("result is not an object")
+    version = result.get("schema_version")
+    declared = (result.get("thresholds") or {}).get("latency_estimator")
+    if version in LEGACY_SCHEMA_VERSIONS:
+        if declared is not None:
+            raise HarnessError(
+                f"schema {version} reports must not declare a latency estimator"
+            )
+        return LEGACY_LATENCY_ESTIMATOR
+    if declared not in LATENCY_ESTIMATORS:
+        raise HarnessError(f"unknown or missing latency estimator: {declared!r}")
+    return str(declared)
+
+
+def recorded_regressions(result: Any) -> dict[str, Any]:
+    """Read the recorded regressions under the key its schema uses."""
+    thresholds = (result or {}).get("thresholds") or {}
+    if result.get("schema_version") in LEGACY_SCHEMA_VERSIONS:
+        return thresholds.get("p95_regressions") or {}
+    return thresholds.get("latency_regressions") or {}
+
+
+def paired_ratios(pair: dict[str, Any], label: str) -> list[float]:
+    """Per-pair rust/go ratios from index-aligned raw samples."""
+    go = pair["go"]["raw"]
+    rust = pair["rust"]["raw"]
+    if len(go) != len(rust):
+        raise HarnessError(f"{label} paired samples are not aligned")
+    if not go:
+        raise HarnessError(f"{label} has no samples")
+    return [ratio(r, g) for g, r in zip(go, rust)]
+
+
+def median(values: list[float]) -> float:
+    ordered = sorted(values)
+    n = len(ordered)
+    middle = n // 2
+    if n % 2:
+        return ordered[middle]
+    return (ordered[middle - 1] + ordered[middle]) / 2.0
+
+
+def median_interval(values: list[float]) -> tuple[float, float]:
+    """Distribution-free confidence interval for the median.
+
+    Uses order statistics under the sign test, so it is exact and
+    deterministic: no resampling, no seed, no extra dependency.
+    """
+    ordered = sorted(values)
+    n = len(ordered)
+    if n < 2:
+        raise HarnessError("a median interval needs at least two samples")
+    target = (1.0 - MEDIAN_INTERVAL_CONFIDENCE) / 2.0
+    total = float(2 ** n)
+    cumulative = 0.0
+    k = 0
+    for i in range(n + 1):
+        term = math.comb(n, i) / total
+        if cumulative + term > target:
+            break
+        cumulative += term
+        k = i + 1
+    lower = min(max(k - 1, 0), n - 1)
+    upper = max(min(n - k, n - 1), 0)
+    return ordered[lower], ordered[upper]
+
+
+def latency_pairs(metrics: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Every gated latency pair, by gate name."""
+    pairs: dict[str, dict[str, Any]] = {}
     for name in ("startup", "search", "mcp", "http"):
         metric = metrics.get(name)
         if not isinstance(metric, dict):
             raise HarnessError(f"missing latency metric {name}")
-        regressions[name] = ratio(metric["rust"]["p95"], metric["go"]["p95"]) - 1.0
+        pairs[name] = metric
         if name in {"mcp", "http"}:
             operations = metric.get("operations")
             if not isinstance(operations, dict) or not operations:
@@ -797,8 +889,30 @@ def latency_regressions(metrics: dict[str, Any]) -> dict[str, float]:
             for operation, pair in operations.items():
                 if not isinstance(operation, str) or not isinstance(pair, dict):
                     raise HarnessError(f"invalid {name} operation metric")
-                regressions[f"{name}.{operation}"] = ratio(pair["rust"]["p95"], pair["go"]["p95"]) - 1.0
+                pairs[f"{name}.{operation}"] = pair
+    return pairs
+
+
+def latency_regressions(metrics: dict[str, Any], estimator: str) -> dict[str, float]:
+    """Recompute every required latency gate under the given estimator."""
+    if estimator not in LATENCY_ESTIMATORS:
+        raise HarnessError(f"unknown latency estimator: {estimator!r}")
+    regressions: dict[str, float] = {}
+    for name, pair in latency_pairs(metrics).items():
+        if estimator == "unpaired_p95":
+            regressions[name] = ratio(pair["rust"]["p95"], pair["go"]["p95"]) - 1.0
+        else:
+            regressions[name] = median(paired_ratios(pair, name)) - 1.0
     return regressions
+
+
+def latency_regression_intervals(metrics: dict[str, Any]) -> dict[str, list[float]]:
+    """Measurement uncertainty for each paired gate, as a median interval."""
+    intervals: dict[str, list[float]] = {}
+    for name, pair in latency_pairs(metrics).items():
+        low, high = median_interval(paired_ratios(pair, name))
+        intervals[name] = [low - 1.0, high - 1.0]
+    return intervals
 
 
 def build_go_oracle(root: Path, commit: str, temp_root: Path) -> tuple[Path, dict[str, Any], Path]:
@@ -846,29 +960,38 @@ def build_result(
     warmups: int,
     index_preparation: dict[str, Any],
     summation: str = DEFAULT_SUMMATION,
+    latency_estimator: str = DEFAULT_LATENCY_ESTIMATOR,
 ) -> dict[str, Any]:
     # The declaration must describe the metrics actually being recorded, not
     # the producer's own preference; a caller replaying pre-declaration
     # metrics has to say so.
     if summation not in SUMMATIONS:
         raise HarnessError(f"unknown summation: {summation!r}")
+    if latency_estimator not in LATENCY_ESTIMATORS:
+        raise HarnessError(f"unknown latency estimator: {latency_estimator!r}")
     go_size = go_binary.stat().st_size
     rust_size = rust_binary.stat().st_size
     size_reduction = (go_size - rust_size) / go_size
     rss_go = metrics["rss"]["go"]["max"]
     rss_rust = metrics["rss"]["rust"]["max"]
     rss_reduction = (rss_go - rss_rust) / rss_go
-    regressions = latency_regressions(metrics)
+    regressions = latency_regressions(metrics, latency_estimator)
     latency_pass = all(math.isfinite(value) and value <= 0.10 for value in regressions.values())
     improvement_pass = size_reduction >= 0.20 or rss_reduction >= 0.20
     contracts_pass = all(item["exit_code"] == 0 for item in contracts)
     thresholds = {
         "minimum_improvement": 0.20,
-        "maximum_p95_regression": 0.10,
+        # Unchanged ceiling; only the estimator below changed.
+        "maximum_latency_regression": 0.10,
+        "latency_estimator": latency_estimator,
         "binary_size_reduction": size_reduction,
         "representative_rss_reduction_max": rss_reduction,
         "improvement_pass": improvement_pass,
-        "p95_regressions": regressions,
+        "latency_regressions": regressions,
+        # Measurement uncertainty is reported, not hidden behind a point
+        # estimate: a distribution-free interval for each paired gate.
+        "latency_regression_intervals": latency_regression_intervals(metrics),
+        "latency_interval_confidence": MEDIAN_INTERVAL_CONFIDENCE,
         "latency_pass": latency_pass,
         "contracts_pass": contracts_pass,
         "fail_closed": True,

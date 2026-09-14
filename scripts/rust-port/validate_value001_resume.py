@@ -105,7 +105,9 @@ def validate(path: Path, raw_path: Path | None = None) -> None:
         compare_derivation(json.loads(original), result)
     # A genuine historical capture is not necessarily a passing approval.
     # Keep provenance checks above, then apply every current operation gate.
-    regressions = value001.latency_regressions(result["metrics"])
+    regressions = value001.latency_regressions(
+        result["metrics"], value001.latency_estimator_of(result)
+    )
     failures = [name for name, regression in regressions.items() if regression > 0.10]
     if failures:
         raise ValueError("required latency operations exceed 10% regression: " + ", ".join(failures))

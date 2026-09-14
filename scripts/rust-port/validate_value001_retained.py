@@ -121,12 +121,14 @@ def main(path: Path) -> int:
             fail(f"{name} required operation set is incomplete")
     regressions: dict[str, float] = {}
     try:
-        regressions = value001.latency_regressions(result["metrics"])
+        regressions = value001.latency_regressions(
+            result["metrics"], value001.latency_estimator_of(result)
+        )
     except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
         fail(f"latency gate cannot be recomputed: {exc}")
-    recorded = thresholds.get("p95_regressions")
-    if not isinstance(recorded, dict):
-        fail("p95 regression thresholds are missing")
+    recorded = value001.recorded_regressions(result)
+    if not isinstance(recorded, dict) or not recorded:
+        fail("latency regression thresholds are missing")
     for name, actual in regressions.items():
         if name in recorded and recorded[name] != actual:
             fail(f"threshold ratio for {name} is not recomputed from samples")

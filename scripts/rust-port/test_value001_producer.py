@@ -87,6 +87,10 @@ class ProducerGateTests(unittest.TestCase):
                 # so the report must declare that capture's summation rather
                 # than the producer's current default.
                 value001.summation_of(self.original),
+                # Replayed metrics are evaluated under the estimator of the
+                # capture they came from, so these gates keep testing what
+                # they were written to test.
+                value001.latency_estimator_of(self.original),
             )
 
     def test_each_required_gate_enforces_unchanged_ceiling(self):
@@ -106,11 +110,11 @@ class ProducerGateTests(unittest.TestCase):
                     result = self.build(metrics)
                     thresholds = result["thresholds"]
                     self.assertEqual(
-                        set(thresholds["p95_regressions"]), set(REQUIRED_GATES)
+                        set(thresholds["latency_regressions"]), set(REQUIRED_GATES)
                     )
-                    self.assertEqual(thresholds["maximum_p95_regression"], 0.10)
+                    self.assertEqual(thresholds["maximum_latency_regression"], 0.10)
                     self.assertAlmostEqual(
-                        thresholds["p95_regressions"][name], factor - 1
+                        thresholds["latency_regressions"][name], factor - 1
                     )
                     self.assertTrue(thresholds["improvement_pass"])
                     self.assertTrue(thresholds["contracts_pass"])
@@ -119,7 +123,7 @@ class ProducerGateTests(unittest.TestCase):
                     if "." in name:
                         category = name.split(".")[0]
                         self.assertLessEqual(
-                            thresholds["p95_regressions"][category], 0.10
+                            thresholds["latency_regressions"][category], 0.10
                         )
                         self.assertEqual(
                             metrics[category]["rust"],
@@ -158,7 +162,7 @@ class ProducerGateTests(unittest.TestCase):
         capture = json.loads((RESULTS / "value001-resume-956bd3e.json").read_text())
         before = copy.deepcopy(capture)
         result = self.build(capture["metrics"])
-        regressions = result["thresholds"]["p95_regressions"]
+        regressions = result["thresholds"]["latency_regressions"]
         self.assertLessEqual(regressions["http"], 0.10)
         self.assertEqual(
             {name for name, ratio in regressions.items() if ratio > 0.10},

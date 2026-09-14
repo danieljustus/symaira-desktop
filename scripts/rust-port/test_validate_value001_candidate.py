@@ -148,8 +148,14 @@ class CandidateValidatorTests(unittest.TestCase):
                             validator.value001.summation_of(mutated),
                         )
                     )
-                    ratios = validator.value001.latency_regressions(mutated["metrics"])
-                    mutated["thresholds"]["p95_regressions"] = ratios
+                    ratios = validator.value001.latency_regressions(
+                        mutated["metrics"], validator.value001.latency_estimator_of(mutated)
+                    )
+                    mutated["thresholds"][
+                        "p95_regressions"
+                        if mutated["schema_version"] in validator.value001.LEGACY_SCHEMA_VERSIONS
+                        else "latency_regressions"
+                    ] = ratios
                     self.assertLessEqual(ratios[category], 0.10)
                     self.assertEqual(
                         metric["rust"], self.original["metrics"][category]["rust"]

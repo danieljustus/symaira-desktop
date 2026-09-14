@@ -107,7 +107,9 @@ class PercentageTests(unittest.TestCase):
         value001.validate_result(result)
         failures = {
             name: regression
-            for name, regression in value001.latency_regressions(result["metrics"]).items()
+            for name, regression in value001.latency_regressions(
+                result["metrics"], value001.latency_estimator_of(result)
+            ).items()
             if regression > 0.10
         }
         self.assertEqual(failures, {"http.file-missing": 0.1953396778916543})
@@ -222,3 +224,137 @@ class SummationProvenanceTests(unittest.TestCase):
             document = self.load(path)
             self.assertEqual(document["host"]["python"], "3.9.6", path.name)
             self.assertEqual(value001.summation_of(document), "left_fold", path.name)
+
+
+class PairedLatencyEstimatorTests(unittest.TestCase):
+    """The gate statistic must use the pairing the harness already collects.
+
+    measure_http runs both servers inside one round, alternating which goes
+    first, so go[i] and rust[i] are taken milliseconds apart under the same
+    machine state. Comparing the two marginal p95 values discards that.
+    """
+
+    def load(self, path):
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    def test_a_constant_slowdown_is_reported_exactly(self):
+        go = [1.0, 2.0, 3.0, 4.0, 10.0]
+        pair = {
+            "go": {"raw": go, "p95": max(go)},
+            "rust": {"raw": [v * 1.25 for v in go], "p95": max(go) * 1.25},
+        }
+        self.assertAlmostEqual(
+            value001.median(value001.paired_ratios(pair, "t")) - 1.0, 0.25
+        )
+
+    def test_pairing_requires_aligned_samples(self):
+        with self.assertRaises(value001.HarnessError):
+            value001.paired_ratios(
+                {"go": {"raw": [1.0, 2.0]}, "rust": {"raw": [1.0]}}, "t"
+            )
+        with self.assertRaises(value001.HarnessError):
+            value001.paired_ratios({"go": {"raw": []}, "rust": {"raw": []}}, "t")
+
+    def test_tail_contamination_defeats_the_unpaired_statistic(self):
+        """Rust is uniformly 10% faster, but three of its rounds got unlucky.
+
+        This is the failure mode the real runs show: the p95 is a single
+        order statistic, so a handful of environment hiccups on one side move
+        it arbitrarily far while the actual per-pair relationship is
+        unchanged. The paired estimator is unaffected by them.
+        """
+        n = 100
+        go = [1.0] * n
+        rust = [0.9] * n
+        # The nearest-rank p95 of 100 samples is index 94, so it takes six
+        # unlucky rounds -- not a majority, not even close -- to move it.
+        for index in range(94, 100):
+            rust[index] = 5.0  # unrelated hiccups, not a Rust regression
+
+        paired = value001.median(
+            value001.paired_ratios(
+                {"go": {"raw": go}, "rust": {"raw": rust}}, "t"
+            )
+        ) - 1.0
+        self.assertAlmostEqual(paired, -0.10)
+
+        go_p95 = value001.percentile(go, 0.95)
+        rust_p95 = value001.percentile(rust, 0.95)
+        unpaired = value001.ratio(rust_p95, go_p95) - 1.0
+        # The unpaired view turns a 10% win into a catastrophic regression.
+        self.assertGreater(unpaired, 1.0)
+        self.assertTrue(paired <= 0.10 < unpaired)
+
+    def test_median_interval_is_deterministic_and_contains_the_median(self):
+        values = [1.0 + n / 100.0 for n in range(100)]
+        first = value001.median_interval(values)
+        self.assertEqual(first, value001.median_interval(list(reversed(values))))
+        low, high = first
+        self.assertLessEqual(low, value001.median(values))
+        self.assertGreaterEqual(high, value001.median(values))
+
+    def test_median_interval_needs_at_least_two_samples(self):
+        with self.assertRaises(value001.HarnessError):
+            value001.median_interval([1.0])
+
+    def test_estimator_must_be_declared_on_current_reports(self):
+        for declared in (None, "p95", ""):
+            with self.assertRaises(value001.HarnessError):
+                value001.latency_estimator_of(
+                    {"schema_version": value001.SCHEMA_VERSION,
+                     "thresholds": {"latency_estimator": declared}}
+                )
+
+    def test_pre_declaration_reports_keep_the_unpaired_estimator(self):
+        self.assertEqual(
+            value001.latency_estimator_of({"schema_version": 2, "thresholds": {}}),
+            "unpaired_p95",
+        )
+        with self.assertRaises(value001.HarnessError):
+            value001.latency_estimator_of(
+                {"schema_version": 2,
+                 "thresholds": {"latency_estimator": "paired_median_ratio"}}
+            )
+
+    def test_unknown_estimator_is_refused(self):
+        with self.assertRaises(value001.HarnessError):
+            value001.latency_regressions({}, "neumaier")
+
+    def test_the_two_immutable_runs_disagree_unpaired_and_agree_paired(self):
+        """The real defect, pinned to the real measurement data.
+
+        The same immutable candidate produced -6.73% and +19.53% for
+        http.file-missing under the unpaired statistic. Under the pairing the
+        harness itself recorded, both runs agree that Rust is faster.
+        """
+        unpaired, paired = [], []
+        for path in RETAINED_REPORTS:
+            document = self.load(path)
+            metrics = document["metrics"]
+            unpaired.append(
+                value001.latency_regressions(metrics, "unpaired_p95")["http.file-missing"]
+            )
+            paired.append(
+                value001.latency_regressions(metrics, "paired_median_ratio")["http.file-missing"]
+            )
+
+        # Unpaired: one run passes the 10% ceiling, the other blows through it.
+        self.assertLess(unpaired[0], 0.10)
+        self.assertGreater(unpaired[1], 0.10)
+        self.assertGreater(abs(unpaired[1] - unpaired[0]), 0.25)
+
+        # Paired: both runs agree, and both say Rust is faster.
+        for value in paired:
+            self.assertLess(value, 0.0)
+        self.assertLess(abs(paired[1] - paired[0]), 0.10)
+
+    def test_no_operation_regresses_under_pairing_in_either_run(self):
+        for path in RETAINED_REPORTS:
+            document = self.load(path)
+            regressions = value001.latency_regressions(
+                document["metrics"], "paired_median_ratio"
+            )
+            worst = max(regressions.items(), key=lambda item: item[1])
+            self.assertLessEqual(
+                worst[1], 0.10, f"{path.name}: {worst[0]} regresses {worst[1]:.2%}"
+            )

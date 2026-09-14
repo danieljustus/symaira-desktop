@@ -32,8 +32,10 @@ def verified_p95(summary: dict) -> float:
 
 def render(result: dict) -> str:
     lines = ["Retained measurement: " + result["captured_at"]]
-    recorded = result["thresholds"].get("p95_regressions", {})
-    regressions = value001.latency_regressions(result["metrics"])
+    recorded = value001.recorded_regressions(result)
+    regressions = value001.latency_regressions(
+        result["metrics"], value001.latency_estimator_of(result)
+    )
     for name, ratio in regressions.items():
         if name in recorded and not math.isclose(ratio, recorded[name], rel_tol=1e-12, abs_tol=1e-12):
             raise ValueError("recorded regression differs from retained samples")

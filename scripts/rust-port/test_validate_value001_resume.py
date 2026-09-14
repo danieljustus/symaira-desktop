@@ -30,7 +30,9 @@ class ResumeEvidenceTests(unittest.TestCase):
 
     def test_genuine_capture_fails_operation_acceptance(self):
         result = json.loads(self.path.read_bytes())
-        regressions = validator.value001.latency_regressions(result["metrics"])
+        regressions = validator.value001.latency_regressions(
+            result["metrics"], validator.value001.latency_estimator_of(result)
+        )
         self.assertLessEqual(regressions["http"], 0.10)
         self.assertEqual(
             {name for name, ratio in regressions.items() if ratio > 0.10},
@@ -72,7 +74,8 @@ class ResumeEvidenceTests(unittest.TestCase):
                             )
                         )
                         ratios = validator.value001.latency_regressions(
-                            result["metrics"]
+                            result["metrics"],
+                            validator.value001.latency_estimator_of(result),
                         )
                         self.assertLessEqual(ratios[category], 0.10)
                         self.assertEqual(

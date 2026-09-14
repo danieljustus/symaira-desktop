@@ -36,7 +36,9 @@ class RetainedValidatorMutationTests(unittest.TestCase):
 
     def test_old_failing_evidence_is_not_approved_by_operation_gate(self):
         result = json.loads((ROOT / "docs/rust-port/results" / "value001-latest.json").read_text(encoding="utf-8"))
-        regressions = value001.latency_regressions(result["metrics"])
+        regressions = value001.latency_regressions(
+            result["metrics"], value001.latency_estimator_of(result)
+        )
         self.assertGreater(regressions["http.snapshot"], 0.10)
         self.assertFalse(all(value <= 0.10 for value in regressions.values()))
 
@@ -88,7 +90,9 @@ class RetainedValidatorMutationTests(unittest.TestCase):
                             go["pair_order"],
                             self.summation,
                         )
-                        ratios = value001.latency_regressions(result["metrics"])
+                        ratios = value001.latency_regressions(
+                            result["metrics"], value001.latency_estimator_of(result)
+                        )
                         result["thresholds"]["p95_regressions"] = ratios
                         self.assertLessEqual(ratios[category], 0.10)
                         self.assertEqual(

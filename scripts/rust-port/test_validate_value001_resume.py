@@ -68,6 +68,7 @@ class ResumeEvidenceTests(unittest.TestCase):
                                 go["unit"],
                                 go["warmup_samples"],
                                 go["pair_order"],
+                                validator.value001.summation_of(result),
                             )
                         )
                         ratios = validator.value001.latency_regressions(

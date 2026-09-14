@@ -29,6 +29,17 @@ STEPS = {
 }
 
 
+
+def write_lf(path, text):
+    """Write `text` with literal LF endings and no platform translation.
+
+    Path.write_text() only accepts `newline` on Python 3.10+, and these stubs
+    are shell and Python sources whose line endings must survive verbatim.
+    """
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(text)
+
+
 def native_step_bodies():
     workflow = (ROOT / ".github/workflows/ci.yml").read_text()
     blocks = re.split(r"^      - name: ", workflow, flags=re.MULTILINE)[1:]
@@ -59,22 +70,22 @@ class NativeStepControl:
         stub_dir = self.root / "stubs"
         stub_dir.mkdir()
         control = stub_dir / "control.py"
-        control.write_text(
+        write_lf(
+            control,
             "import json, os, pathlib, sys\n"
             "log = pathlib.Path(os.environ['NATIVE_CONTROL_LOG'])\n"
             "calls = log.read_text().splitlines() if log.exists() else []\n"
             "with log.open('a') as output:\n"
             "    output.write(json.dumps(sys.argv[1:]) + '\\n')\n"
             "sys.exit(23 if len(calls) + 1 == int(os.environ['NATIVE_CONTROL_FAIL_AT']) else 0)\n",
-            encoding="utf-8", newline="\n",
         )
         for command in ("go", "cargo", "python3"):
             stub = stub_dir / command
-            stub.write_text(
+            write_lf(
+                stub,
                 "#!/usr/bin/env bash\nexec "
                 + shlex.join([Path(sys.executable).as_posix(), control.as_posix(), command])
                 + ' "$@"\n',
-                encoding="utf-8", newline="\n",
             )
             stub.chmod(0o700)
         self.env = dict(os.environ)

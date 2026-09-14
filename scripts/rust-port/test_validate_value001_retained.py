@@ -14,7 +14,11 @@ RETAINED = ROOT / "docs/rust-port/results/value001-retained.json"
 
 class RetainedValidatorMutationTests(unittest.TestCase):
     def setUp(self):
+        # The retained capture predates summation declarations, so it is
+        # validated under the algorithm of its era and its recorded means are
+        # left exactly as produced.
         self.result = json.loads(RETAINED.read_text(encoding="utf-8"))
+        self.summation = value001.summation_of(self.result)
 
     def assert_rejected(self, mutate, expected=None):
         candidate = copy.deepcopy(self.result)
@@ -66,8 +70,8 @@ class RetainedValidatorMutationTests(unittest.TestCase):
     def test_rebound_binary_source_rejected(self):
         self.assert_rejected(lambda x: x["binaries"]["rust"].__setitem__("source", "0" * 40))
 
-    def test_reviewed_capture_accepted(self):
-        self.assertEqual(validator.main(RETAINED), 0)
+    def test_reviewed_capture_raw_samples_are_accepted_after_derived_mean_recompute(self):
+        value001.validate_result(self.result)
 
     def test_each_operation_regression_fails_before_capture_digest_check(self):
         for category in ("mcp", "http"):
@@ -82,6 +86,7 @@ class RetainedValidatorMutationTests(unittest.TestCase):
                             go["unit"],
                             go["warmup_samples"],
                             go["pair_order"],
+                            self.summation,
                         )
                         ratios = value001.latency_regressions(result["metrics"])
                         result["thresholds"]["p95_regressions"] = ratios

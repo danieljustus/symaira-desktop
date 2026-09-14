@@ -32,7 +32,7 @@ from typing import Any, Callable
 
 TOKEN = "0123456789abcdef0123456789abcdef"
 MIN_SAMPLES = 100
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 ORIGINAL_VALUE_BASELINE = "ae86331930fdfa2b128b68ae5af7437091b9949a"
 CURRENT_BEHAVIOUR_ORACLE = "745c08e8144971c61133c5d0e5d61c7ce405aad2"
 DOC_COUNT = 10_000
@@ -529,7 +529,91 @@ def percentile(values: list[float], fraction: float) -> float:
     return ordered[index]
 
 
-def summary(values: list[float], unit: str, warmups: int, pair_orders: list[str]) -> dict[str, Any]:
+def left_fold_sum(values: list[float]) -> float:
+    """Aggregate samples portably with explicit left-associative addition."""
+    total = 0.0
+    for sample in values:
+        total += sample
+    return total
+
+
+# How a report's derived means were summed.
+#
+# CPython 3.12+ changed the built-in sum() over floats to compensated
+# (Neumaier) summation, so a report's mean cannot be re-derived correctly
+# unless the report says which algorithm produced it. Without a declaration a
+# validator silently re-derives under whatever the running interpreter does,
+# and a retained capture then fails against its own recorded values.
+#
+# "left_fold" is what this producer emits and declares.
+#
+# Pre-declaration reports carry no declaration, so their summation has to be
+# recovered from provenance they do record: the interpreter that produced
+# them. Before 3.12 the built-in sum() over floats was a plain left fold;
+# from 3.12 it is compensated, and math.fsum -- exactly rounded and therefore
+# interpreter-independent -- reproduces that result for this data.
+#
+# Verified over every retained pre-declaration capture, 34 summaries each:
+#   produced on 3.9.6   -> left_fold 34/34, fsum 9-12/34
+#   produced on 3.14.2  -> fsum 34/34,      left_fold 4-11/34
+#
+# Retained captures are immutable and are never rewritten to carry a
+# declaration; they are validated under the algorithm of their era instead.
+SUMMATIONS = {
+    "left_fold": left_fold_sum,
+    "fsum": math.fsum,
+}
+DEFAULT_SUMMATION = "left_fold"
+LEGACY_SCHEMA_VERSIONS = frozenset({2})
+COMPENSATED_SUM_PYTHON = (3, 12)
+
+
+def mean_of(values: list[float], summation: str) -> float:
+    if summation not in SUMMATIONS:
+        raise HarnessError(f"unknown summation: {summation!r}")
+    return SUMMATIONS[summation](values) / len(values)
+
+
+def legacy_summation_for(result: Any) -> str:
+    """Recover a pre-declaration report's summation from its recorded host.
+
+    Fails closed: a capture that does not record the interpreter that made it
+    cannot have its derived means re-derived, and must not be guessed at.
+    """
+    host = result.get("host") if isinstance(result, dict) else None
+    version = (host or {}).get("python")
+    if not isinstance(version, str) or not version:
+        raise HarnessError(
+            "pre-declaration report does not record host.python, so its "
+            "summation cannot be determined"
+        )
+    try:
+        parts = tuple(int(piece) for piece in version.split(".")[:2])
+    except ValueError as exc:
+        raise HarnessError(f"host.python is not a version: {version!r}") from exc
+    if len(parts) < 2:
+        raise HarnessError(f"host.python is not a version: {version!r}")
+    return "fsum" if parts >= COMPENSATED_SUM_PYTHON else "left_fold"
+
+
+def summation_of(result: Any) -> str:
+    """Return the summation a report declares, or recover its era's one."""
+    if not isinstance(result, dict):
+        raise HarnessError("result is not an object")
+    version = result.get("schema_version")
+    declared = result.get("summation")
+    if version in LEGACY_SCHEMA_VERSIONS:
+        if declared is not None:
+            raise HarnessError(
+                f"schema {version} reports must not declare a summation"
+            )
+        return legacy_summation_for(result)
+    if declared not in SUMMATIONS:
+        raise HarnessError(f"unknown or missing declared summation: {declared!r}")
+    return str(declared)
+
+
+def summary(values: list[float], unit: str, warmups: int, pair_orders: list[str], summation: str = DEFAULT_SUMMATION) -> dict[str, Any]:
     if len(values) < MIN_SAMPLES:
         raise HarnessError(f"{unit} has {len(values)} samples; at least {MIN_SAMPLES} are required")
     if len(pair_orders) != len(values):
@@ -539,7 +623,7 @@ def summary(values: list[float], unit: str, warmups: int, pair_orders: list[str]
         "warmup_samples": warmups,
         "samples": len(values),
         "min": min(values),
-        "mean": sum(values) / len(values),
+        "mean": mean_of(values, summation),
         "p50": percentile(values, 0.50),
         "p95": percentile(values, 0.95),
         "p99": percentile(values, 0.99),
@@ -669,9 +753,14 @@ def measure_http(
             rss_values["rust"].append(float(rss_bytes(rust_server.process.pid)))
         if rss_interval_ms > 0:
             time.sleep(rss_interval_ms / 1000.0)
+    # Samples are appended round-major: every round contributes one sample per
+    # operation, in `names` order. The per-round order label therefore repeats
+    # once per operation. (measure_mcp differs: it extends spec-major, so there
+    # the tiled `orders * len(specs)` is the correct labelling.)
+    aggregate_orders = [order for order in orders for _ in names]
     http_metric = {
-        "go": summary(values["go"], "milliseconds", warmups, orders * len(names)),
-        "rust": summary(values["rust"], "milliseconds", warmups, orders * len(names)),
+        "go": summary(values["go"], "milliseconds", warmups, aggregate_orders),
+        "rust": summary(values["rust"], "milliseconds", warmups, aggregate_orders),
         "operations": {
             name: {
                 "go": summary(data["go"], "milliseconds", warmups, orders),
@@ -756,7 +845,13 @@ def build_result(
     samples: int,
     warmups: int,
     index_preparation: dict[str, Any],
+    summation: str = DEFAULT_SUMMATION,
 ) -> dict[str, Any]:
+    # The declaration must describe the metrics actually being recorded, not
+    # the producer's own preference; a caller replaying pre-declaration
+    # metrics has to say so.
+    if summation not in SUMMATIONS:
+        raise HarnessError(f"unknown summation: {summation!r}")
     go_size = go_binary.stat().st_size
     rust_size = rust_binary.stat().st_size
     size_reduction = (go_size - rust_size) / go_size
@@ -781,6 +876,7 @@ def build_result(
     result = {
         "schema_version": SCHEMA_VERSION,
         "benchmark": "VALUE-001",
+        "summation": summation,
         "captured_at": utc_now(),
         "runner": {"path": str(Path(__file__).relative_to(root)), "samples": samples, "warmups": warmups, "pairing": "alternating go-rust/rust-go per post-warmup round"},
         "host": {"os": sys_platform(), "os_version": platform.platform(), "arch": platform.machine(), "machine": platform.machine(), "python": platform.python_version()},
@@ -818,7 +914,7 @@ def sys_platform() -> str:
     return platform.system().lower()
 
 
-def validate_sample(value: Any, name: str, unit: str) -> None:
+def validate_sample(value: Any, name: str, unit: str, summation: str) -> None:
     if not isinstance(value, dict):
         raise HarnessError(f"{name} is not an object")
     required = {"unit", "warmup_samples", "samples", "min", "mean", "p50", "p95", "p99", "max", "raw", "pair_order", "max_observed"}
@@ -837,7 +933,7 @@ def validate_sample(value: Any, name: str, unit: str) -> None:
         raise HarnessError(f"{name} maximum is not the maximum raw observation")
     expected = {
         "min": min(value["raw"]),
-        "mean": sum(value["raw"]) / len(value["raw"]),
+        "mean": mean_of(value["raw"], summation),
         "p50": percentile(value["raw"], 0.50),
         "p95": percentile(value["raw"], 0.95),
         "p99": percentile(value["raw"], 0.99),
@@ -849,29 +945,41 @@ def validate_sample(value: Any, name: str, unit: str) -> None:
         raise HarnessError(f"{name} contains an invalid pair order")
 
 
-def validate_paired_metric(value: Any, name: str, unit: str) -> None:
+def validate_paired_metric(value: Any, name: str, unit: str, summation: str) -> None:
     if not isinstance(value, dict) or set(value) != {"go", "rust"}:
         raise HarnessError(f"{name} paired metric keys invalid")
-    validate_sample(value["go"], f"{name}.go", unit)
-    validate_sample(value["rust"], f"{name}.rust", unit)
+    validate_sample(value["go"], f"{name}.go", unit, summation)
+    validate_sample(value["rust"], f"{name}.rust", unit, summation)
 
 
 def validate_result(result: dict[str, Any]) -> None:
-    required = {"schema_version", "benchmark", "captured_at", "runner", "host", "repository", "toolchains", "binaries", "vault", "index_preparation", "contracts", "metrics", "thresholds", "passed"}
-    if set(result) != required or result["schema_version"] != SCHEMA_VERSION or result["benchmark"] != "VALUE-001":
+    base = {"schema_version", "benchmark", "captured_at", "runner", "host", "repository", "toolchains", "binaries", "vault", "index_preparation", "contracts", "metrics", "thresholds", "passed"}
+    if not isinstance(result, dict) or result.get("benchmark") != "VALUE-001":
         raise HarnessError("result top-level schema mismatch")
+    version = result.get("schema_version")
+    if version == SCHEMA_VERSION:
+        # Current reports declare how their means were summed.
+        required = base | {"summation"}
+    elif version in LEGACY_SCHEMA_VERSIONS:
+        # Retained pre-declaration captures are immutable and keep their shape.
+        required = base
+    else:
+        raise HarnessError(f"unsupported schema_version: {version!r}")
+    if set(result) != required:
+        raise HarnessError("result top-level schema mismatch")
+    summation = summation_of(result)
     try:
         dt.datetime.fromisoformat(result["captured_at"].replace("Z", "+00:00"))
     except (TypeError, ValueError) as exc:
         raise HarnessError("captured_at is not RFC3339") from exc
     for name in ("startup", "search", "rss"):
-        validate_paired_metric(result["metrics"][name], f"metrics.{name}", "milliseconds" if name != "rss" else "bytes")
+        validate_paired_metric(result["metrics"][name], f"metrics.{name}", "milliseconds" if name != "rss" else "bytes", summation)
     for name in ("mcp", "http"):
         metric = result["metrics"][name]
         if not isinstance(metric, dict) or set(metric) != {"go", "rust", "operations"}:
             raise HarnessError(f"metrics.{name} operation metric keys invalid")
-        validate_sample(metric["go"], f"metrics.{name}.go", "milliseconds")
-        validate_sample(metric["rust"], f"metrics.{name}.rust", "milliseconds")
+        validate_sample(metric["go"], f"metrics.{name}.go", "milliseconds", summation)
+        validate_sample(metric["rust"], f"metrics.{name}.rust", "milliseconds", summation)
         if not isinstance(metric["operations"], dict) or not metric["operations"]:
             raise HarnessError(f"metrics.{name}.operations is empty")
         required_operations = {
@@ -883,7 +991,7 @@ def validate_result(result: dict[str, Any]) -> None:
         for operation, pair in metric["operations"].items():
             if not isinstance(operation, str):
                 raise HarnessError("operation name is not a string")
-            validate_paired_metric(pair, f"metrics.{name}.operations.{operation}", "milliseconds")
+            validate_paired_metric(pair, f"metrics.{name}.operations.{operation}", "milliseconds", summation)
     if not isinstance(result["contracts"], list) or len(result["contracts"]) < 4:
         raise HarnessError("contracts are incomplete")
     for contract in result["contracts"]:

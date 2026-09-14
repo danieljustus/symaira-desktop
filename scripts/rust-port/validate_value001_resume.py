@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Validate the separately retained, independently reviewed resumption capture."""
+from __future__ import annotations
+
 import argparse
 import hashlib
 import json
@@ -64,12 +66,13 @@ def validate(path: Path, raw_path: Path | None = None) -> None:
     data = path.read_bytes()
     result = json.loads(data)
     value001.validate_result(result)
+    summation = value001.summation_of(result)
     for name, metric in result["metrics"].items():
         for side in ("go", "rust"):
-            check_summary(metric[side], f"{name}.{side}")
+            check_summary(metric[side], f"{name}.{side}", summation)
         for operation, pair in metric.get("operations", {}).items():
             for side in ("go", "rust"):
-                check_summary(pair[side], f"{name}.{operation}.{side}")
+                check_summary(pair[side], f"{name}.{operation}.{side}", summation)
     repo = result["repository"]
     if repo["head"] != EXPECTED_HEAD or repo["status"] or repo["candidate_diff_sha256"] != hashlib.sha256(b"").hexdigest():
         raise ValueError("capture source must be the clean reviewed candidate")

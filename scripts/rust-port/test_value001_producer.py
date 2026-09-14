@@ -38,6 +38,7 @@ def metric_pair(metrics, name):
     return metric["operations"][operation] if operation else metric
 
 
+
 class ProducerGateTests(unittest.TestCase):
     def setUp(self):
         self.original = json.loads(
@@ -82,6 +83,10 @@ class ProducerGateTests(unittest.TestCase):
                 100,
                 20,
                 self.original["index_preparation"],
+                # These metrics are replayed from a pre-declaration capture,
+                # so the report must declare that capture's summation rather
+                # than the producer's current default.
+                value001.summation_of(self.original),
             )
 
     def test_each_required_gate_enforces_unchanged_ceiling(self):
@@ -96,6 +101,7 @@ class ProducerGateTests(unittest.TestCase):
                         go["unit"],
                         go["warmup_samples"],
                         go["pair_order"],
+                        value001.summation_of(self.original),
                     )
                     result = self.build(metrics)
                     thresholds = result["thresholds"]
@@ -165,3 +171,89 @@ class ProducerGateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class AggregatePairOrderTests(unittest.TestCase):
+    """The aggregate http labels must match the round-major sample layout.
+
+    measure_http appends one sample per operation inside each round, so the
+    per-round go-rust/rust-go label repeats once per operation. Tiling the
+    round labels instead keeps the array length correct while mislabelling
+    every sample after the first round.
+    """
+
+    NAMES = [
+        "healthz",
+        "status",
+        "snapshot",
+        "file-read",
+        "file-range",
+        "file-missing",
+        "file-traversal",
+    ]
+
+    def test_http_aggregate_labels_are_repeat_each_not_tiled(self):
+        rounds = 6
+        orders = [
+            "go-rust" if index % 2 == 0 else "rust-go" for index in range(rounds)
+        ]
+        expected = [order for order in orders for _ in self.NAMES]
+        tiled = orders * len(self.NAMES)
+
+        self.assertEqual(len(expected), len(tiled))
+        self.assertNotEqual(expected, tiled)
+        # Round 0 is all one label; tiling alternates immediately.
+        self.assertEqual(expected[: len(self.NAMES)], [orders[0]] * len(self.NAMES))
+        self.assertNotEqual(tiled[: len(self.NAMES)], [orders[0]] * len(self.NAMES))
+
+    def test_measure_http_labels_each_round_sample_with_its_own_order(self):
+        rounds, warmups = 4, 1
+        captured = {}
+
+        def fake_summary(values, unit, warmups_arg, pair_orders):
+            captured.setdefault(unit, []).append((list(values), list(pair_orders)))
+            return {"raw": list(values), "pair_order": list(pair_orders)}
+
+        clock = iter(range(10_000_000, 10_000_000 + 10_000 * 1000, 1000))
+
+        class FakeServer:
+            process = None
+            vault = None
+
+            def request_raw(self, *_args, **_kwargs):
+                return 200, b"", {}
+
+        with patch.object(value001, "summary", fake_summary), patch.object(
+            value001, "validate_http", lambda *a, **k: None
+        ), patch.object(
+            value001, "http_operation",
+            lambda name: {"method": "GET", "path": "/" + name, "auth": None},
+        ), patch.object(
+            value001, "rss_bytes", lambda _pid: 1
+        ), patch.object(
+            value001.time, "perf_counter_ns", lambda: next(clock)
+        ):
+            go, rust = FakeServer(), FakeServer()
+            go.process = rust.process = type("P", (), {"pid": 1})()
+            value001.measure_http(go, rust, {}, {}, warmups, rounds, 0)
+
+        ms = captured["milliseconds"]
+        aggregate_values, aggregate_orders = ms[0]
+        self.assertEqual(len(aggregate_values), rounds * len(self.NAMES))
+        self.assertEqual(len(aggregate_orders), len(aggregate_values))
+        # Each round's seven samples carry that round's single order label.
+        for round_index in range(rounds):
+            start = round_index * len(self.NAMES)
+            window = aggregate_orders[start : start + len(self.NAMES)]
+            self.assertEqual(
+                window,
+                [window[0]] * len(self.NAMES),
+                f"round {round_index} labels are not constant: {window}",
+            )
+        # And consecutive rounds alternate. Recorded rounds start at index
+        # `warmups`, so the first recorded round inherits that parity.
+        firsts = [aggregate_orders[i * len(self.NAMES)] for i in range(rounds)]
+        expected_firsts = [
+            "go-rust" if (warmups + i) % 2 == 0 else "rust-go" for i in range(rounds)
+        ]
+        self.assertEqual(firsts, expected_firsts)

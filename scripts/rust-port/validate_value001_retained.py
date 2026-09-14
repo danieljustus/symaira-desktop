@@ -10,7 +10,7 @@ import math
 import re
 import sys
 from pathlib import Path
-from typing import cast
+from typing import Union, cast
 
 import value001
 
@@ -30,10 +30,16 @@ def fail(message: str) -> None:
 def finite_number(value: object, label: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
         fail(f"{label} is not a finite number")
-    return float(cast(int | float, value))
+    return float(cast(Union[int, float], value))
 
 
-def check_summary(summary: dict, label: str) -> None:
+def check_summary(summary: dict, label: str, summation: str) -> None:
+    """Re-derive a summary under the summation its report declares.
+
+    There is deliberately no default: the algorithm belongs to the document,
+    and guessing it is what let a retained capture fail against its own
+    recorded means in the first place.
+    """
     if not isinstance(summary, dict):
         fail(f"{label} is not an object")
     samples = summary.get("samples")
@@ -49,7 +55,7 @@ def check_summary(summary: dict, label: str) -> None:
     n = len(values)
     ordered = sorted(values)
     expected = {
-        "min": min(values), "mean": sum(values) / n,
+        "min": min(values), "mean": value001.mean_of(values, summation),
         "p50": ordered[math.ceil(n * .50) - 1],
         "p95": ordered[math.ceil(n * .95) - 1],
         "p99": ordered[math.ceil(n * .99) - 1],
@@ -95,14 +101,15 @@ def main(path: Path) -> int:
             fail(f"{label} binary path was not privacy redacted")
         if re.search(r"/Users/|/var/folders/|[A-Za-z]:\\\\Users\\\\", binary["build_command"]):
             fail(f"{label} build command contains a private path")
+    summation = value001.summation_of(result)
     if set(result["metrics"]) != EXPECTED_CATEGORIES:
         fail("metrics categories are incomplete")
     for name, metric in result["metrics"].items():
-        check_summary(metric["go"], f"metrics.{name}.go")
-        check_summary(metric["rust"], f"metrics.{name}.rust")
+        check_summary(metric["go"], f"metrics.{name}.go", summation)
+        check_summary(metric["rust"], f"metrics.{name}.rust", summation)
         for operation, pair in metric.get("operations", {}).items():
-            check_summary(pair["go"], f"metrics.{name}.operations.{operation}.go")
-            check_summary(pair["rust"], f"metrics.{name}.operations.{operation}.rust")
+            check_summary(pair["go"], f"metrics.{name}.operations.{operation}.go", summation)
+            check_summary(pair["rust"], f"metrics.{name}.operations.{operation}.rust", summation)
     thresholds = result["thresholds"]
     required_operations = {
         "mcp": {"initialize", "tools-list", "desk_status", "desk_ls", "desk_search"},

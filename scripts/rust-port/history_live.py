@@ -38,8 +38,13 @@ def run():
         "sources_before": source_manifest(), "commands": [], "passed": False,
     }
     home = Path.home()
-    allowed = {"PATH", "SystemRoot", "SYSTEMROOT", "WINDIR", "windir", "COMSPEC", "ComSpec", "PATHEXT", "SystemDrive", "DEVELOPER_DIR", "SDKROOT"}
-    env = {key: value for key, value in os.environ.items() if key in allowed}
+    allowed = {
+        "PATH", "SystemRoot", "SYSTEMROOT", "WINDIR", "windir", "COMSPEC", "ComSpec",
+        "PATHEXT", "SystemDrive", "DEVELOPER_DIR", "SDKROOT",
+        "ProgramFiles", "ProgramFiles(x86)",
+    }
+    allowed_upper = {key.upper() for key in allowed}
+    env = {key: value for key, value in os.environ.items() if key.upper() in allowed_upper}
     env.update(
         CARGO_HOME=os.environ.get("CARGO_HOME", str(home / ".cargo")),
         RUSTUP_HOME=os.environ.get("RUSTUP_HOME", str(home / ".rustup")),

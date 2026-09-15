@@ -49,7 +49,7 @@ def run():
     )
     try:
         with tempfile.TemporaryDirectory(prefix="history-live-") as private:
-            for key in ("HOME", "USERPROFILE", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME", "TMPDIR", "TMP", "TEMP"):
+            for key in ("HOME", "USERPROFILE", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME", "TMPDIR", "TMP", "TEMP", "GOCACHE"):
                 directory = Path(private) / key
                 directory.mkdir()
                 env[key] = str(directory)

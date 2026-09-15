@@ -18,6 +18,7 @@ class HistoryRunnerControls(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             output = root / "evidence"
+            ambient_gocache = str(root / "ambient-gocache")
             calls = []
 
             def execute(command, **kwargs):
@@ -27,6 +28,13 @@ class HistoryRunnerControls(unittest.TestCase):
                 self.assertNotEqual(kwargs["env"]["HOME"], str(Path.home()))
                 self.assertEqual(kwargs["env"]["SYMDESK_HISTORY_ORACLE"], str(output / "oracle.json"))
                 self.assertGreater(kwargs["timeout"], 0)
+                self.assertIn("GOCACHE", kwargs["env"])
+                gocache = Path(kwargs["env"]["GOCACHE"])
+                self.assertTrue(gocache.exists())
+                self.assertTrue(gocache.is_absolute())
+                self.assertEqual(gocache.parent, Path(kwargs["env"]["HOME"]).parent)
+                self.assertNotEqual(kwargs["env"]["GOCACHE"], kwargs["env"]["HOME"])
+                self.assertNotEqual(kwargs["env"]["GOCACHE"], ambient_gocache)
                 text = {0: version, 1: "rustc 1.98.0 test\n", 3: "test test_history_live_differential_against_go_oracle ... ok\n" if marker else "running 0 tests\n"}.get(index, "")
                 kwargs["stdout"].write(text.encode())
                 kwargs["stderr"].write(b"control stderr\n")
@@ -37,7 +45,7 @@ class HistoryRunnerControls(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 23 if failure == index else 0)
 
             manifests = [{"source": "before"}, {"source": "after" if drift else "before"}]
-            with patch.object(runner, "ROOT", root), patch.object(runner, "OUTPUT", output), patch.object(runner, "source_manifest", side_effect=manifests), patch.object(runner.subprocess, "check_output", return_value="a" * 40), patch.object(runner.subprocess, "run", side_effect=execute):
+            with patch.object(runner, "ROOT", root), patch.object(runner, "OUTPUT", output), patch.object(runner, "source_manifest", side_effect=manifests), patch.object(runner.subprocess, "check_output", return_value="a" * 40), patch.object(runner.subprocess, "run", side_effect=execute), patch.dict(runner.os.environ, {"GOCACHE": ambient_gocache}):
                 if failure == "timeout":
                     with self.assertRaises(subprocess.TimeoutExpired):
                         runner.run()

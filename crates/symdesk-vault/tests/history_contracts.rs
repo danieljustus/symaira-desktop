@@ -1274,24 +1274,96 @@ fn test_oracle_operations_validation_and_negative_controls() {
 
 #[test]
 fn test_resolve_safe_fixture_path_and_traversal_negative_controls() {
+    #[cfg(windows)]
+    let root = Path::new(r"C:\test\vault\root");
+    #[cfg(not(windows))]
     let root = Path::new("/test/vault/root");
 
-    // 1. Negative control: absolute paths rejected before fs access
-    let err = resolve_safe_fixture_path(root, "/etc/passwd")
-        .expect_err("absolute Unix path must be rejected");
-    assert!(
-        err.contains("absolute fixture path rejected"),
-        "expected absolute error, got: {err}"
-    );
+    // 1. Negative control: platform-native absolute paths rejected before fs access
+    #[cfg(not(windows))]
+    {
+        let err = resolve_safe_fixture_path(root, "/etc/passwd")
+            .expect_err("absolute Unix path must be rejected");
+        assert!(
+            err.contains("absolute fixture path rejected"),
+            "expected absolute error, got: {err}"
+        );
 
-    let err = resolve_safe_fixture_path(root, "/abs/evil.md")
-        .expect_err("absolute path must be rejected");
-    assert!(
-        err.contains("absolute fixture path rejected"),
-        "expected absolute error, got: {err}"
-    );
+        let err = resolve_safe_fixture_path(root, "/abs/evil.md")
+            .expect_err("absolute path must be rejected");
+        assert!(
+            err.contains("absolute fixture path rejected"),
+            "expected absolute error, got: {err}"
+        );
+    }
+    #[cfg(windows)]
+    {
+        let err = resolve_safe_fixture_path(root, r"C:\abs\evil.md")
+            .expect_err("absolute Windows drive path with backslash must be rejected");
+        assert!(
+            err.contains("absolute fixture path rejected"),
+            "expected absolute error, got: {err}"
+        );
 
-    // 2. Negative control: traversal escaping root rejected before fs access
+        let err = resolve_safe_fixture_path(root, "C:/abs/evil.md")
+            .expect_err("absolute Windows drive path with forward slash must be rejected");
+        assert!(
+            err.contains("absolute fixture path rejected"),
+            "expected absolute error, got: {err}"
+        );
+
+        let err = resolve_safe_fixture_path(root, r"\\server\share\evil.md")
+            .expect_err("absolute Windows UNC path must be rejected");
+        assert!(
+            err.contains("absolute fixture path rejected"),
+            "expected absolute error, got: {err}"
+        );
+    }
+
+    // 2. Negative control: Windows rooted / drive-relative / prefix paths rejected before fs access
+    #[cfg(windows)]
+    {
+        // Rooted without drive letter (e.g. /etc/passwd or \abs\evil.md)
+        let err = resolve_safe_fixture_path(root, "/etc/passwd")
+            .expect_err("rooted Unix-style path on Windows must be rejected via RootDir component");
+        assert!(
+            err.contains("root or prefix component in fixture path rejected"),
+            "expected root/prefix error, got: {err}"
+        );
+
+        let err = resolve_safe_fixture_path(root, r"\abs\evil.md").expect_err(
+            "rooted backslash path without drive must be rejected via RootDir component",
+        );
+        assert!(
+            err.contains("root or prefix component in fixture path rejected"),
+            "expected root/prefix error, got: {err}"
+        );
+
+        let err = resolve_safe_fixture_path(root, "/abs/evil.md").expect_err(
+            "rooted forward-slash path without drive must be rejected via RootDir component",
+        );
+        assert!(
+            err.contains("root or prefix component in fixture path rejected"),
+            "expected root/prefix error, got: {err}"
+        );
+
+        // Drive-relative without root directory (e.g. C:notes\evil.md or C:evil.md)
+        let err = resolve_safe_fixture_path(root, "C:notes/evil.md")
+            .expect_err("drive-relative path must be rejected via Prefix component");
+        assert!(
+            err.contains("root or prefix component in fixture path rejected"),
+            "expected root/prefix error, got: {err}"
+        );
+
+        let err = resolve_safe_fixture_path(root, r"C:evil.md")
+            .expect_err("drive-relative path must be rejected via Prefix component");
+        assert!(
+            err.contains("root or prefix component in fixture path rejected"),
+            "expected root/prefix error, got: {err}"
+        );
+    }
+
+    // 3. Negative control: traversal escaping root rejected before fs access
     let err = resolve_safe_fixture_path(root, "../outside.md")
         .expect_err("parent traversal must be rejected");
     assert!(
@@ -1306,7 +1378,24 @@ fn test_resolve_safe_fixture_path_and_traversal_negative_controls() {
         "expected traversal error, got: {err}"
     );
 
-    // 3. Negative control: empty and dot paths rejected before fs access
+    #[cfg(windows)]
+    {
+        let err = resolve_safe_fixture_path(root, r"..\outside.md")
+            .expect_err("Windows backslash parent traversal must be rejected");
+        assert!(
+            err.contains("traversal escaping fixture root rejected"),
+            "expected traversal error, got: {err}"
+        );
+
+        let err = resolve_safe_fixture_path(root, r"notes\..\..\evil.md")
+            .expect_err("Windows backslash nested escaping traversal must be rejected");
+        assert!(
+            err.contains("traversal escaping fixture root rejected"),
+            "expected traversal error, got: {err}"
+        );
+    }
+
+    // 4. Negative control: empty and dot paths rejected before fs access
     let err = resolve_safe_fixture_path(root, "").expect_err("empty path must be rejected");
     assert!(
         err.contains("empty fixture path rejected"),
@@ -1320,7 +1409,14 @@ fn test_resolve_safe_fixture_path_and_traversal_negative_controls() {
         "expected root-resolving error, got: {err}"
     );
 
-    // 4. Positive controls: valid fixture paths resolve safely inside root
+    let err = resolve_safe_fixture_path(root, "notes/..")
+        .expect_err("traversal back to root must be rejected");
+    assert!(
+        err.contains("fixture path resolves to empty/root"),
+        "expected root-resolving error, got: {err}"
+    );
+
+    // 5. Positive controls: valid fixture paths resolve safely inside root
     let safe1 = resolve_safe_fixture_path(root, "notes/initial.md").expect("valid relative path");
     assert_eq!(safe1, root.join("notes").join("initial.md"));
 
@@ -1343,6 +1439,13 @@ fn test_resolve_safe_fixture_path_and_traversal_negative_controls() {
             .join("deep")
             .join("doc.md")
     );
+
+    #[cfg(windows)]
+    {
+        let safe4 = resolve_safe_fixture_path(root, r"notes\nested\doc.md")
+            .expect("valid Windows relative path");
+        assert_eq!(safe4, root.join("notes").join("nested").join("doc.md"));
+    }
 }
 
 #[test]

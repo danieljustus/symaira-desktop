@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 import value001
-from value001_report import percentage, render
+from value001_report import percentage, ratio_to_percentage, render
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -53,6 +53,7 @@ class PercentageTests(unittest.TestCase):
     def test_ratio_to_percentage(self):
         for ratio, expected in [(0.10, "10.00%"), (3.0, "300.00%"), (316.24612017633007, "31,624.61%")]:
             with self.subTest(ratio=ratio):
+                self.assertEqual(ratio_to_percentage(ratio), expected)
                 self.assertEqual(percentage(ratio), expected)
 
     def test_nonfinite_and_boolean_rejected(self):
@@ -71,6 +72,17 @@ class PercentageTests(unittest.TestCase):
             self.assertIn("Recorded gate passed: " + str(result["passed"]).lower(), report)
             self.assertEqual(result, before)
             self.assertEqual(result["thresholds"]["maximum_p95_regression"], 0.10)
+
+    def test_retained_latest_http_ratio_is_rendered_as_percentage(self):
+        result = self.load("value001-latest.json")
+        before = copy.deepcopy(result)
+        report = render(result)
+        self.assertIn(
+            "http: Go 1.122667 ms; Rust 356.161750 ms; regression 31,624.61%",
+            report,
+        )
+        self.assertIn("Recorded gate passed: false", report)
+        self.assertEqual(result, before)
 
     def test_false_summary_or_ratio_rejected(self):
         result = self.load("value001-latest.json")

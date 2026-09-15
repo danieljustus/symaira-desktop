@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -334,12 +335,13 @@ func runOracle(oracle Oracle, sourceHashes map[string]string) (Document, error) 
 	}
 	defer func() { _ = os.RemoveAll(vaultRoot) }()
 
+	htmlPath := htmlPathForGOOS(runtime.GOOS)
 	initial := []FileSpec{
 		{Path: "notes/initial.md", Content: "Initial notes content\n"},
 		{Path: "notes/nested/deep/doc.md", Content: "Deeply nested note content\n"},
 		{Path: "binary/data.bin", ContentBase64: base64.StdEncoding.EncodeToString([]byte{0x00, 0xFF, 0xFE, 0x01, 0x80, 0xAA, 0x55, 0x00})},
 		{Path: "unicode/mädchen_übersicht.md", Content: "Unicode file path and content: Grüß Gott 🚀\n"},
-		{Path: "html/<div><script>alert(1)</script>.md", Content: "HTML / injection path test\n"},
+		{Path: htmlPath, Content: "HTML / injection path test\n"},
 	}
 
 	for _, f := range initial {
@@ -541,11 +543,11 @@ func runOracle(oracle Oracle, sourceHashes map[string]string) (Document, error) 
 	recordOp("list", "unicode/mädchen_übersicht.md", "", "", "", func() (any, error) {
 		return store.List("unicode/mädchen_übersicht.md")
 	})
-	recordOp("snapshot", "html/<div><script>alert(1)</script>.md", "", "", "", func() (any, error) {
-		return store.Snapshot("html/<div><script>alert(1)</script>.md")
+	recordOp("snapshot", htmlPath, "", "", "", func() (any, error) {
+		return store.Snapshot(htmlPath)
 	})
-	recordOp("list", "html/<div><script>alert(1)</script>.md", "", "", "", func() (any, error) {
-		return store.List("html/<div><script>alert(1)</script>.md")
+	recordOp("list", htmlPath, "", "", "", func() (any, error) {
+		return store.List(htmlPath)
 	})
 
 	// 27-28. Deeply nested paths
@@ -740,4 +742,11 @@ func classifyError(err error) string {
 func fatal(format string, args ...any) {
 	_, _ = fmt.Fprintf(os.Stderr, "FAIL "+format+"\n", args...)
 	os.Exit(1)
+}
+
+func htmlPathForGOOS(goos string) string {
+	if goos == "windows" {
+		return "html/ampersand&injection.md"
+	}
+	return "html/<div><script>alert(1)</script>.md"
 }

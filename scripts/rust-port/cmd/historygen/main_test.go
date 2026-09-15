@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -201,4 +202,45 @@ func runGit(t *testing.T, dir string, args ...string) []byte {
 		t.Fatalf("git %v failed: %v\n%s", args, err, output)
 	}
 	return output
+}
+
+func TestHTMLPathForGOOS(t *testing.T) {
+	const (
+		unixPath    = "html/<div><script>alert(1)</script>.md"
+		windowsPath = "html/ampersand&injection.md"
+	)
+
+	gotWin := htmlPathForGOOS("windows")
+	if gotWin != windowsPath {
+		t.Fatalf("htmlPathForGOOS(windows) = %q, want %q", gotWin, windowsPath)
+	}
+
+	if !strings.Contains(gotWin, "&") {
+		t.Errorf("expected Windows path %q to contain ampersand (&)", gotWin)
+	}
+
+	const forbiddenPathChars = `<>:"|?*`
+	if strings.ContainsAny(gotWin, forbiddenPathChars) {
+		t.Errorf("Windows path %q contains forbidden characters (%s)", gotWin, forbiddenPathChars)
+	}
+
+	base := filepath.Base(gotWin)
+	const forbiddenFilenameChars = `<>:"/\|?*`
+	if strings.ContainsAny(base, forbiddenFilenameChars) {
+		t.Errorf("Windows filename %q contains forbidden characters (%s)", base, forbiddenFilenameChars)
+	}
+
+	for _, r := range gotWin {
+		if r < 32 {
+			t.Errorf("Windows path %q contains control character %d", gotWin, r)
+		}
+	}
+
+	nonWindows := []string{"linux", "darwin", "freebsd", "openbsd", "netbsd", "dragonfly", "solaris", "aix", "plan9", "js", "wasip1"}
+	for _, goos := range nonWindows {
+		got := htmlPathForGOOS(goos)
+		if got != unixPath {
+			t.Errorf("htmlPathForGOOS(%q) = %q, want %q", goos, got, unixPath)
+		}
+	}
 }

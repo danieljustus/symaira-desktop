@@ -122,6 +122,32 @@ def bash_executable():
 
 
 class NativeCIContracts(unittest.TestCase):
+    def test_rust_historical_evidence_checkout_has_full_history(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        rust_match = re.search(
+            r"(?ms)^  rust:\n(?P<body>.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)",
+            workflow,
+        )
+        if rust_match is None:
+            self.fail("expected rust job")
+        rust_body = rust_match.group("body")
+        checkout_blocks = re.findall(
+            r"(?m)^      - uses: actions/checkout@[^\n]+\n"
+            r"(?P<tail>(?:        [^\n]*\n|[ \t]*\n)*)",
+            rust_body,
+        )
+        self.assertEqual(len(checkout_blocks), 1)
+        with_match = re.search(
+            r"(?m)^        with:\n(?P<options>(?:          [^\n]*\n)*)",
+            checkout_blocks[0],
+        )
+        if with_match is None:
+            self.fail("rust checkout must define with options")
+        self.assertEqual(
+            re.findall(r"^          (fetch-depth: 0)$", with_match.group("options"), re.MULTILINE),
+            ["fetch-depth: 0"],
+        )
+
     def test_native_failures_cannot_be_hidden_by_later_success(self):
         for name, count, body in native_step_bodies():
             with self.subTest(step=name), tempfile.TemporaryDirectory(prefix="native-step-") as temp:

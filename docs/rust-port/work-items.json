@@ -50,15 +50,15 @@
     {
       "id": "RUST-006",
       "title": "Build representative CLI MCP HTTP slice and run early value gate",
-      "status": "in_progress",
+      "status": "passed",
       "depends_on": ["RUST-005"],
       "contract_rows": ["CLI-000", "MCP-000", "HTTP-000", "SEC-003", "VALUE-001"],
-      "acceptance": ["make representative-differential", "make rust-gates", "make value-001-validate", "python3 scripts/rust-port/test_value001_report.py", "python3 scripts/rust-port/test_validate_value001_retained.py"]
+      "acceptance": ["make representative-differential", "make rust-gates", "python3 scripts/rust-port/test_validate_value001_aeab7664.py", "python3 scripts/rust-port/test_value001_report.py", "python3 scripts/rust-port/test_validate_value001_retained.py"]
     },
     {
       "id": "RUST-007",
       "title": "Port vault writes history trash conflicts and retention",
-      "status": "blocked",
+      "status": "ready",
       "depends_on": ["RUST-006"],
       "contract_rows": ["VAULT-004", "VAULT-005", "VAULT-006", "CFG-004", "DATA-001"],
       "acceptance": ["make vault-write-differential", "cargo nextest run -p symdesk-vault"]
@@ -130,7 +130,7 @@
     {
       "id": "RUST-016",
       "title": "Port SymRoom core CLI MCP and signed journal",
-      "status": "blocked",
+      "status": "ready",
       "depends_on": ["RUST-006"],
       "contract_rows": ["ROOMCLI-001", "ROOMCLI-002", "MCP-004", "MCP-005", "ROOM-001", "ROOM-002", "ROOM-003", "ROOM-004"],
       "acceptance": ["make symroom-differential", "cargo nextest run -p symroom-core -p symroom-cli", "cargo +nightly fuzz run room_event"]

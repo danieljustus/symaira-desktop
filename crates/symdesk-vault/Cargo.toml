@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 thiserror.workspace = true
-noyalib.workspace = true
+noyalib = { workspace = true, features = ["lossless-u64"] }
 serde.workspace = true
 unicode-general-category.workspace = true
 

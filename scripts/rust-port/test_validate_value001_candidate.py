@@ -20,6 +20,7 @@ ARTIFACT = ROOT / "docs/rust-port/results/value001-operations-5088972a.json"
 CANDIDATE = "5088972aa7efadfdc7118549354e26d001c1ffad"
 
 
+
 class CandidateValidatorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -57,7 +58,7 @@ class CandidateValidatorTests(unittest.TestCase):
                 self.assertIn(expect, str(raised.exception))
 
     def test_real_capture_passes_with_matching_git_identity(self):
-        validator.validate(ARTIFACT, CANDIDATE, ROOT, self.trusted)
+        self.check()
 
     def test_untracked_source_in_candidate_checkout_is_rejected(self):
         original_git = validator.git.side_effect
@@ -112,10 +113,14 @@ class CandidateValidatorTests(unittest.TestCase):
         mutated = copy.deepcopy(self.original)
         summary = mutated["metrics"]["http"]["operations"]["status"]["rust"]
         summary["raw"] = [value * 2 for value in summary["raw"]]
-        values = sorted(summary["raw"])
+        raw_values = summary["raw"]
+        values = sorted(raw_values)
         n = len(values)
         summary.update({
-            "min": min(values), "mean": sum(values) / n,
+            "min": min(values),
+            "mean": validator.value001.mean_of(
+                raw_values, validator.value001.summation_of(mutated)
+            ),
             "p50": values[(n + 1) // 2 - 1], "p95": values[(n * 95 + 99) // 100 - 1],
             "p99": values[(n * 99 + 99) // 100 - 1], "max": max(values), "max_observed": max(values),
         })
@@ -140,10 +145,17 @@ class CandidateValidatorTests(unittest.TestCase):
                             go["unit"],
                             go["warmup_samples"],
                             go["pair_order"],
+                            validator.value001.summation_of(mutated),
                         )
                     )
-                    ratios = validator.value001.latency_regressions(mutated["metrics"])
-                    mutated["thresholds"]["p95_regressions"] = ratios
+                    ratios = validator.value001.latency_regressions(
+                        mutated["metrics"], validator.value001.latency_estimator_of(mutated)
+                    )
+                    mutated["thresholds"][
+                        "p95_regressions"
+                        if mutated["schema_version"] in validator.value001.LEGACY_SCHEMA_VERSIONS
+                        else "latency_regressions"
+                    ] = ratios
                     self.assertLessEqual(ratios[category], 0.10)
                     self.assertEqual(
                         metric["rust"], self.original["metrics"][category]["rust"]

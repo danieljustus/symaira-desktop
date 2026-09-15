@@ -32,7 +32,7 @@ from typing import Any, Callable
 
 TOKEN = "0123456789abcdef0123456789abcdef"
 MIN_SAMPLES = 100
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 ORIGINAL_VALUE_BASELINE = "ae86331930fdfa2b128b68ae5af7437091b9949a"
 CURRENT_BEHAVIOUR_ORACLE = "745c08e8144971c61133c5d0e5d61c7ce405aad2"
 DOC_COUNT = 10_000
@@ -529,7 +529,91 @@ def percentile(values: list[float], fraction: float) -> float:
     return ordered[index]
 
 
-def summary(values: list[float], unit: str, warmups: int, pair_orders: list[str]) -> dict[str, Any]:
+def left_fold_sum(values: list[float]) -> float:
+    """Aggregate samples portably with explicit left-associative addition."""
+    total = 0.0
+    for sample in values:
+        total += sample
+    return total
+
+
+# How a report's derived means were summed.
+#
+# CPython 3.12+ changed the built-in sum() over floats to compensated
+# (Neumaier) summation, so a report's mean cannot be re-derived correctly
+# unless the report says which algorithm produced it. Without a declaration a
+# validator silently re-derives under whatever the running interpreter does,
+# and a retained capture then fails against its own recorded values.
+#
+# "left_fold" is what this producer emits and declares.
+#
+# Pre-declaration reports carry no declaration, so their summation has to be
+# recovered from provenance they do record: the interpreter that produced
+# them. Before 3.12 the built-in sum() over floats was a plain left fold;
+# from 3.12 it is compensated, and math.fsum -- exactly rounded and therefore
+# interpreter-independent -- reproduces that result for this data.
+#
+# Verified over every retained pre-declaration capture, 34 summaries each:
+#   produced on 3.9.6   -> left_fold 34/34, fsum 9-12/34
+#   produced on 3.14.2  -> fsum 34/34,      left_fold 4-11/34
+#
+# Retained captures are immutable and are never rewritten to carry a
+# declaration; they are validated under the algorithm of their era instead.
+SUMMATIONS = {
+    "left_fold": left_fold_sum,
+    "fsum": math.fsum,
+}
+DEFAULT_SUMMATION = "left_fold"
+LEGACY_SCHEMA_VERSIONS = frozenset({2})
+COMPENSATED_SUM_PYTHON = (3, 12)
+
+
+def mean_of(values: list[float], summation: str) -> float:
+    if summation not in SUMMATIONS:
+        raise HarnessError(f"unknown summation: {summation!r}")
+    return SUMMATIONS[summation](values) / len(values)
+
+
+def legacy_summation_for(result: Any) -> str:
+    """Recover a pre-declaration report's summation from its recorded host.
+
+    Fails closed: a capture that does not record the interpreter that made it
+    cannot have its derived means re-derived, and must not be guessed at.
+    """
+    host = result.get("host") if isinstance(result, dict) else None
+    version = (host or {}).get("python")
+    if not isinstance(version, str) or not version:
+        raise HarnessError(
+            "pre-declaration report does not record host.python, so its "
+            "summation cannot be determined"
+        )
+    try:
+        parts = tuple(int(piece) for piece in version.split(".")[:2])
+    except ValueError as exc:
+        raise HarnessError(f"host.python is not a version: {version!r}") from exc
+    if len(parts) < 2:
+        raise HarnessError(f"host.python is not a version: {version!r}")
+    return "fsum" if parts >= COMPENSATED_SUM_PYTHON else "left_fold"
+
+
+def summation_of(result: Any) -> str:
+    """Return the summation a report declares, or recover its era's one."""
+    if not isinstance(result, dict):
+        raise HarnessError("result is not an object")
+    version = result.get("schema_version")
+    declared = result.get("summation")
+    if version in LEGACY_SCHEMA_VERSIONS:
+        if declared is not None:
+            raise HarnessError(
+                f"schema {version} reports must not declare a summation"
+            )
+        return legacy_summation_for(result)
+    if declared not in SUMMATIONS:
+        raise HarnessError(f"unknown or missing declared summation: {declared!r}")
+    return str(declared)
+
+
+def summary(values: list[float], unit: str, warmups: int, pair_orders: list[str], summation: str = DEFAULT_SUMMATION) -> dict[str, Any]:
     if len(values) < MIN_SAMPLES:
         raise HarnessError(f"{unit} has {len(values)} samples; at least {MIN_SAMPLES} are required")
     if len(pair_orders) != len(values):
@@ -539,7 +623,7 @@ def summary(values: list[float], unit: str, warmups: int, pair_orders: list[str]
         "warmup_samples": warmups,
         "samples": len(values),
         "min": min(values),
-        "mean": sum(values) / len(values),
+        "mean": mean_of(values, summation),
         "p50": percentile(values, 0.50),
         "p95": percentile(values, 0.95),
         "p99": percentile(values, 0.99),
@@ -669,9 +753,14 @@ def measure_http(
             rss_values["rust"].append(float(rss_bytes(rust_server.process.pid)))
         if rss_interval_ms > 0:
             time.sleep(rss_interval_ms / 1000.0)
+    # Samples are appended round-major: every round contributes one sample per
+    # operation, in `names` order. The per-round order label therefore repeats
+    # once per operation. (measure_mcp differs: it extends spec-major, so there
+    # the tiled `orders * len(specs)` is the correct labelling.)
+    aggregate_orders = [order for order in orders for _ in names]
     http_metric = {
-        "go": summary(values["go"], "milliseconds", warmups, orders * len(names)),
-        "rust": summary(values["rust"], "milliseconds", warmups, orders * len(names)),
+        "go": summary(values["go"], "milliseconds", warmups, aggregate_orders),
+        "rust": summary(values["rust"], "milliseconds", warmups, aggregate_orders),
         "operations": {
             name: {
                 "go": summary(data["go"], "milliseconds", warmups, orders),
@@ -693,14 +782,106 @@ def ratio(candidate: float, reference: float) -> float:
     return candidate / reference
 
 
-def latency_regressions(metrics: dict[str, Any]) -> dict[str, float]:
-    """Recompute every required latency gate from its retained p95 values."""
-    regressions: dict[str, float] = {}
+# How a latency regression is estimated from a metric pair.
+#
+# "unpaired_p95" compares the p95 of each side's marginal distribution. The
+# harness, however, collects go and rust as index-aligned PAIRS taken
+# back-to-back within one round, with the within-pair order alternated. Both
+# VALUE-001 measurement runs drift strongly within the run, in opposite
+# directions, so an unpaired p95 over that series largely reports which side's
+# samples landed in the slow phase. On the same immutable candidate it
+# produced -6.73% and +19.53% for http.file-missing.
+#
+# "paired_median_ratio" uses the pairing the design already provides: the
+# median of the per-pair rust/go ratio. Drift cancels because both members of
+# a pair are measured under the same machine state.
+#
+# The estimator is recorded in the report. Pre-declaration (schema 2) reports
+# are immutable and keep being evaluated under the estimator of their era.
+LATENCY_ESTIMATORS = frozenset({"unpaired_p95", "paired_median_ratio"})
+DEFAULT_LATENCY_ESTIMATOR = "paired_median_ratio"
+LEGACY_LATENCY_ESTIMATOR = "unpaired_p95"
+MEDIAN_INTERVAL_CONFIDENCE = 0.95
+
+
+def latency_estimator_of(result: Any) -> str:
+    """Return the latency estimator a report declares, or its era's one."""
+    if not isinstance(result, dict):
+        raise HarnessError("result is not an object")
+    version = result.get("schema_version")
+    declared = (result.get("thresholds") or {}).get("latency_estimator")
+    if version in LEGACY_SCHEMA_VERSIONS:
+        if declared is not None:
+            raise HarnessError(
+                f"schema {version} reports must not declare a latency estimator"
+            )
+        return LEGACY_LATENCY_ESTIMATOR
+    if declared not in LATENCY_ESTIMATORS:
+        raise HarnessError(f"unknown or missing latency estimator: {declared!r}")
+    return str(declared)
+
+
+def recorded_regressions(result: Any) -> dict[str, Any]:
+    """Read the recorded regressions under the key its schema uses."""
+    thresholds = (result or {}).get("thresholds") or {}
+    if result.get("schema_version") in LEGACY_SCHEMA_VERSIONS:
+        return thresholds.get("p95_regressions") or {}
+    return thresholds.get("latency_regressions") or {}
+
+
+def paired_ratios(pair: dict[str, Any], label: str) -> list[float]:
+    """Per-pair rust/go ratios from index-aligned raw samples."""
+    go = pair["go"]["raw"]
+    rust = pair["rust"]["raw"]
+    if len(go) != len(rust):
+        raise HarnessError(f"{label} paired samples are not aligned")
+    if not go:
+        raise HarnessError(f"{label} has no samples")
+    return [ratio(r, g) for g, r in zip(go, rust)]
+
+
+def median(values: list[float]) -> float:
+    ordered = sorted(values)
+    n = len(ordered)
+    middle = n // 2
+    if n % 2:
+        return ordered[middle]
+    return (ordered[middle - 1] + ordered[middle]) / 2.0
+
+
+def median_interval(values: list[float]) -> tuple[float, float]:
+    """Distribution-free confidence interval for the median.
+
+    Uses order statistics under the sign test, so it is exact and
+    deterministic: no resampling, no seed, no extra dependency.
+    """
+    ordered = sorted(values)
+    n = len(ordered)
+    if n < 2:
+        raise HarnessError("a median interval needs at least two samples")
+    target = (1.0 - MEDIAN_INTERVAL_CONFIDENCE) / 2.0
+    total = float(2 ** n)
+    cumulative = 0.0
+    k = 0
+    for i in range(n + 1):
+        term = math.comb(n, i) / total
+        if cumulative + term > target:
+            break
+        cumulative += term
+        k = i + 1
+    lower = min(max(k - 1, 0), n - 1)
+    upper = max(min(n - k, n - 1), 0)
+    return ordered[lower], ordered[upper]
+
+
+def latency_pairs(metrics: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Every gated latency pair, by gate name."""
+    pairs: dict[str, dict[str, Any]] = {}
     for name in ("startup", "search", "mcp", "http"):
         metric = metrics.get(name)
         if not isinstance(metric, dict):
             raise HarnessError(f"missing latency metric {name}")
-        regressions[name] = ratio(metric["rust"]["p95"], metric["go"]["p95"]) - 1.0
+        pairs[name] = metric
         if name in {"mcp", "http"}:
             operations = metric.get("operations")
             if not isinstance(operations, dict) or not operations:
@@ -708,8 +889,30 @@ def latency_regressions(metrics: dict[str, Any]) -> dict[str, float]:
             for operation, pair in operations.items():
                 if not isinstance(operation, str) or not isinstance(pair, dict):
                     raise HarnessError(f"invalid {name} operation metric")
-                regressions[f"{name}.{operation}"] = ratio(pair["rust"]["p95"], pair["go"]["p95"]) - 1.0
+                pairs[f"{name}.{operation}"] = pair
+    return pairs
+
+
+def latency_regressions(metrics: dict[str, Any], estimator: str) -> dict[str, float]:
+    """Recompute every required latency gate under the given estimator."""
+    if estimator not in LATENCY_ESTIMATORS:
+        raise HarnessError(f"unknown latency estimator: {estimator!r}")
+    regressions: dict[str, float] = {}
+    for name, pair in latency_pairs(metrics).items():
+        if estimator == "unpaired_p95":
+            regressions[name] = ratio(pair["rust"]["p95"], pair["go"]["p95"]) - 1.0
+        else:
+            regressions[name] = median(paired_ratios(pair, name)) - 1.0
     return regressions
+
+
+def latency_regression_intervals(metrics: dict[str, Any]) -> dict[str, list[float]]:
+    """Measurement uncertainty for each paired gate, as a median interval."""
+    intervals: dict[str, list[float]] = {}
+    for name, pair in latency_pairs(metrics).items():
+        low, high = median_interval(paired_ratios(pair, name))
+        intervals[name] = [low - 1.0, high - 1.0]
+    return intervals
 
 
 def build_go_oracle(root: Path, commit: str, temp_root: Path) -> tuple[Path, dict[str, Any], Path]:
@@ -756,24 +959,39 @@ def build_result(
     samples: int,
     warmups: int,
     index_preparation: dict[str, Any],
+    summation: str = DEFAULT_SUMMATION,
+    latency_estimator: str = DEFAULT_LATENCY_ESTIMATOR,
 ) -> dict[str, Any]:
+    # The declaration must describe the metrics actually being recorded, not
+    # the producer's own preference; a caller replaying pre-declaration
+    # metrics has to say so.
+    if summation not in SUMMATIONS:
+        raise HarnessError(f"unknown summation: {summation!r}")
+    if latency_estimator not in LATENCY_ESTIMATORS:
+        raise HarnessError(f"unknown latency estimator: {latency_estimator!r}")
     go_size = go_binary.stat().st_size
     rust_size = rust_binary.stat().st_size
     size_reduction = (go_size - rust_size) / go_size
     rss_go = metrics["rss"]["go"]["max"]
     rss_rust = metrics["rss"]["rust"]["max"]
     rss_reduction = (rss_go - rss_rust) / rss_go
-    regressions = latency_regressions(metrics)
+    regressions = latency_regressions(metrics, latency_estimator)
     latency_pass = all(math.isfinite(value) and value <= 0.10 for value in regressions.values())
     improvement_pass = size_reduction >= 0.20 or rss_reduction >= 0.20
     contracts_pass = all(item["exit_code"] == 0 for item in contracts)
     thresholds = {
         "minimum_improvement": 0.20,
-        "maximum_p95_regression": 0.10,
+        # Unchanged ceiling; only the estimator below changed.
+        "maximum_latency_regression": 0.10,
+        "latency_estimator": latency_estimator,
         "binary_size_reduction": size_reduction,
         "representative_rss_reduction_max": rss_reduction,
         "improvement_pass": improvement_pass,
-        "p95_regressions": regressions,
+        "latency_regressions": regressions,
+        # Measurement uncertainty is reported, not hidden behind a point
+        # estimate: a distribution-free interval for each paired gate.
+        "latency_regression_intervals": latency_regression_intervals(metrics),
+        "latency_interval_confidence": MEDIAN_INTERVAL_CONFIDENCE,
         "latency_pass": latency_pass,
         "contracts_pass": contracts_pass,
         "fail_closed": True,
@@ -781,6 +999,7 @@ def build_result(
     result = {
         "schema_version": SCHEMA_VERSION,
         "benchmark": "VALUE-001",
+        "summation": summation,
         "captured_at": utc_now(),
         "runner": {"path": str(Path(__file__).relative_to(root)), "samples": samples, "warmups": warmups, "pairing": "alternating go-rust/rust-go per post-warmup round"},
         "host": {"os": sys_platform(), "os_version": platform.platform(), "arch": platform.machine(), "machine": platform.machine(), "python": platform.python_version()},
@@ -818,7 +1037,7 @@ def sys_platform() -> str:
     return platform.system().lower()
 
 
-def validate_sample(value: Any, name: str, unit: str) -> None:
+def validate_sample(value: Any, name: str, unit: str, summation: str) -> None:
     if not isinstance(value, dict):
         raise HarnessError(f"{name} is not an object")
     required = {"unit", "warmup_samples", "samples", "min", "mean", "p50", "p95", "p99", "max", "raw", "pair_order", "max_observed"}
@@ -837,7 +1056,7 @@ def validate_sample(value: Any, name: str, unit: str) -> None:
         raise HarnessError(f"{name} maximum is not the maximum raw observation")
     expected = {
         "min": min(value["raw"]),
-        "mean": sum(value["raw"]) / len(value["raw"]),
+        "mean": mean_of(value["raw"], summation),
         "p50": percentile(value["raw"], 0.50),
         "p95": percentile(value["raw"], 0.95),
         "p99": percentile(value["raw"], 0.99),
@@ -849,29 +1068,41 @@ def validate_sample(value: Any, name: str, unit: str) -> None:
         raise HarnessError(f"{name} contains an invalid pair order")
 
 
-def validate_paired_metric(value: Any, name: str, unit: str) -> None:
+def validate_paired_metric(value: Any, name: str, unit: str, summation: str) -> None:
     if not isinstance(value, dict) or set(value) != {"go", "rust"}:
         raise HarnessError(f"{name} paired metric keys invalid")
-    validate_sample(value["go"], f"{name}.go", unit)
-    validate_sample(value["rust"], f"{name}.rust", unit)
+    validate_sample(value["go"], f"{name}.go", unit, summation)
+    validate_sample(value["rust"], f"{name}.rust", unit, summation)
 
 
 def validate_result(result: dict[str, Any]) -> None:
-    required = {"schema_version", "benchmark", "captured_at", "runner", "host", "repository", "toolchains", "binaries", "vault", "index_preparation", "contracts", "metrics", "thresholds", "passed"}
-    if set(result) != required or result["schema_version"] != SCHEMA_VERSION or result["benchmark"] != "VALUE-001":
+    base = {"schema_version", "benchmark", "captured_at", "runner", "host", "repository", "toolchains", "binaries", "vault", "index_preparation", "contracts", "metrics", "thresholds", "passed"}
+    if not isinstance(result, dict) or result.get("benchmark") != "VALUE-001":
         raise HarnessError("result top-level schema mismatch")
+    version = result.get("schema_version")
+    if version == SCHEMA_VERSION:
+        # Current reports declare how their means were summed.
+        required = base | {"summation"}
+    elif version in LEGACY_SCHEMA_VERSIONS:
+        # Retained pre-declaration captures are immutable and keep their shape.
+        required = base
+    else:
+        raise HarnessError(f"unsupported schema_version: {version!r}")
+    if set(result) != required:
+        raise HarnessError("result top-level schema mismatch")
+    summation = summation_of(result)
     try:
         dt.datetime.fromisoformat(result["captured_at"].replace("Z", "+00:00"))
     except (TypeError, ValueError) as exc:
         raise HarnessError("captured_at is not RFC3339") from exc
     for name in ("startup", "search", "rss"):
-        validate_paired_metric(result["metrics"][name], f"metrics.{name}", "milliseconds" if name != "rss" else "bytes")
+        validate_paired_metric(result["metrics"][name], f"metrics.{name}", "milliseconds" if name != "rss" else "bytes", summation)
     for name in ("mcp", "http"):
         metric = result["metrics"][name]
         if not isinstance(metric, dict) or set(metric) != {"go", "rust", "operations"}:
             raise HarnessError(f"metrics.{name} operation metric keys invalid")
-        validate_sample(metric["go"], f"metrics.{name}.go", "milliseconds")
-        validate_sample(metric["rust"], f"metrics.{name}.rust", "milliseconds")
+        validate_sample(metric["go"], f"metrics.{name}.go", "milliseconds", summation)
+        validate_sample(metric["rust"], f"metrics.{name}.rust", "milliseconds", summation)
         if not isinstance(metric["operations"], dict) or not metric["operations"]:
             raise HarnessError(f"metrics.{name}.operations is empty")
         required_operations = {
@@ -883,7 +1114,7 @@ def validate_result(result: dict[str, Any]) -> None:
         for operation, pair in metric["operations"].items():
             if not isinstance(operation, str):
                 raise HarnessError("operation name is not a string")
-            validate_paired_metric(pair, f"metrics.{name}.operations.{operation}", "milliseconds")
+            validate_paired_metric(pair, f"metrics.{name}.operations.{operation}", "milliseconds", summation)
     if not isinstance(result["contracts"], list) or len(result["contracts"]) < 4:
         raise HarnessError("contracts are incomplete")
     for contract in result["contracts"]:

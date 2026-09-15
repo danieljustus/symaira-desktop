@@ -312,7 +312,7 @@ func TestClassifyError(t *testing.T) {
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
-			cmd := exec.CommandContext(ctx, executable, "-test.run=^TestClassifyError$/^production_snapshot_rooted_path_rejection$", "-test.v")
+			cmd := exec.CommandContext(ctx, executable, "-test.run=^TestClassifyError$/^production_snapshot_rooted_path_rejection$", "-test.v") // #nosec G204 -- os.Executable returns this test binary; all arguments are fixed.
 			cmd.Env = append(os.Environ(), rootEnv+"="+vaultRoot)
 			output, err := cmd.CombinedOutput()
 			if err != nil {

@@ -145,6 +145,16 @@ def validate(path: Path, candidate: str, root: Path, trusted_sha256: str) -> Non
     for name, actual in regressions.items():
         require(finite(actual, name) == recorded[name], f"threshold ratio for {name} is not recomputed")
         require(actual <= 0.10, f"{name} exceeds exact 10% regression limit")
+    # Keep the unchanged p95 ceiling as a mandatory supplementary gate even
+    # when the report declares the paired estimator. This is intentionally
+    # recomputed from raw samples and is not added to the report schema.
+    try:
+        unpaired_regressions = value001.latency_regressions(metrics, "unpaired_p95")
+    except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
+        raise ValidationError(f"unpaired p95 gate cannot be recomputed: {exc}") from exc
+    for name, actual in unpaired_regressions.items():
+        finite(actual, f"{name} unpaired p95")
+        require(actual <= 0.10, f"{name} exceeds exact 10% unpaired p95 regression limit")
     go_bytes = binaries["go"]["bytes"]
     rust_bytes = binaries["rust"]["bytes"]
     size_reduction = (go_bytes - rust_bytes) / go_bytes

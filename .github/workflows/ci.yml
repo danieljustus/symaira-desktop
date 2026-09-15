@@ -38,6 +38,12 @@ jobs:
           # portgen provenance tests read the pinned oracle revision via git.
           fetch-depth: 0
 
+      # The frontmatter/history source guards clone this checkout and verify a
+      # pre-squash Go revision. Keep that object reachable through a local
+      # branch: FETCH_HEAD alone is not transferred by git clone --no-local.
+      - name: Materialize pinned Go oracle for source guards
+        run: git fetch --no-tags origin +982fe718f2d64629102b4078b1d65a46645c90c5:refs/heads/rust-port-oracle-982fe718f2d64629102b4078b1d65a46645c90c5
+
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ matrix.go-version }}
@@ -123,6 +129,11 @@ jobs:
           # portgen provenance checks read the pinned oracle revision via git.
           fetch-depth: 0
 
+      # The Windows contract runs the clone-based Go source guards below.
+      - name: Materialize pinned Go oracle for source guards
+        shell: bash
+        run: git fetch --no-tags origin +982fe718f2d64629102b4078b1d65a46645c90c5:refs/heads/rust-port-oracle-982fe718f2d64629102b4078b1d65a46645c90c5
+
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "1.26.6"
@@ -200,6 +211,12 @@ jobs:
           # The pinned frontmatter oracle is validated from Git history; the live
           # history oracle checks immutable production Go blobs.
           fetch-depth: 0
+
+      # The source-guard tests clone this checkout, so retain the immutable
+      # pre-squash oracle through a local branch rather than only FETCH_HEAD.
+      - name: Materialize pinned Go oracle for source guards
+        shell: bash
+        run: git fetch --no-tags origin +982fe718f2d64629102b4078b1d65a46645c90c5:refs/heads/rust-port-oracle-982fe718f2d64629102b4078b1d65a46645c90c5
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:

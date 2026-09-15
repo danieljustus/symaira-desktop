@@ -80,6 +80,25 @@ and exits non-zero unless contract parity, the 20% binary-size-or-RSS gate, and
 all four p95 latency gates pass. Override `VALUE_OUTPUT` to retain a separate
 artifact; the default is `docs/rust-port/results/value001-latest.json`.
 
+## VALUE-001 units and display
+
+VALUE-001 stores reductions and relative latency regressions as dimensionless
+ratios, not percentage values. A regression is `candidate / reference - 1`, so
+`0.10` is the unchanged **+10%** latency ceiling and gate comparisons use
+`value <= 0.10` directly. In schema 2 this field is
+`thresholds.p95_regressions`; current reports use
+`thresholds.latency_regressions`. Both retain ratio units.
+
+`python3 scripts/rust-port/value001_report.py <artifact>` uses the
+`ratio_to_percentage` display helper, which multiplies a stored ratio by 100
+without modifying the JSON artifact: `0.10` displays as `10.00%`, `3.0` as
+`300.00%`, and the retained failed artifact's HTTP ratio
+`316.24612017633007` as `31,624.61%`. Timing samples remain in milliseconds and
+RSS samples remain in bytes. The report verifies displayed p95 values against
+the retained raw arrays, but it never runs a benchmark or changes the gate.
+The historical `value001-latest.json` therefore remains `passed: false`; the
+migration stays stopped and Go remains in production.
+
 ## Implementation progress
 
 - `RUST-001` passed: generated fixtures freeze 207 SymDesk command nodes (206

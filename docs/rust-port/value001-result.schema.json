@@ -53,11 +53,11 @@
       }
     },
     "thresholds": {
-      "description": "Reduction and regression values are dimensionless ratios, not percentages. Display percentage = ratio * 100; maximum_p95_regression 0.1 means 10%. Stored measurements and gate comparisons retain ratio units.",
+      "description": "VALUE-001 reduction and regression fields are stored as dimensionless ratios, not percentages. For human-readable output, multiply the stored ratio by 100 (0.10 becomes 10.00% and 3.0 becomes 300.00%). The latency gate compares the stored ratio directly with maximum_p95_regression 0.10; raw timing samples remain in milliseconds and RSS samples remain in bytes.",
       "type": "object", "additionalProperties": false,
       "required": ["minimum_improvement", "maximum_p95_regression", "binary_size_reduction", "representative_rss_reduction_max", "improvement_pass", "p95_regressions", "latency_pass", "contracts_pass", "fail_closed"],
       "properties": {
-        "minimum_improvement": {"const": 0.2}, "maximum_p95_regression": {"const": 0.1}, "binary_size_reduction": {"type": "number"}, "representative_rss_reduction_max": {"type": "number"}, "improvement_pass": {"type": "boolean"}, "p95_regressions": {"type": "object", "additionalProperties": {"type": "number"}}, "latency_pass": {"type": "boolean"}, "contracts_pass": {"type": "boolean"}, "fail_closed": {"const": true}
+        "minimum_improvement": {"description": "Dimensionless improvement ratio; 0.20 represents a 20% improvement.", "const": 0.2}, "maximum_p95_regression": {"description": "Dimensionless latency-regression ratio compared directly by the gate; 0.10 represents the unchanged +10% ceiling.", "const": 0.1}, "binary_size_reduction": {"description": "Dimensionless binary-size reduction ratio; display as this value multiplied by 100.", "type": "number"}, "representative_rss_reduction_max": {"description": "Dimensionless maximum observed RSS reduction ratio; display as this value multiplied by 100. Raw RSS values use bytes.", "type": "number"}, "improvement_pass": {"type": "boolean"}, "p95_regressions": {"description": "Per-gate relative latency regressions in ratio units (candidate/reference minus one); multiply by 100 only for display.", "type": "object", "additionalProperties": {"type": "number"}}, "latency_pass": {"type": "boolean"}, "contracts_pass": {"type": "boolean"}, "fail_closed": {"const": true}
       }
     },
     "passed": {"type": "boolean"}
@@ -74,7 +74,7 @@
     "sampleSummary": {
       "type": "object", "additionalProperties": false, "required": ["unit", "warmup_samples", "samples", "min", "mean", "p50", "p95", "p99", "max", "raw", "pair_order", "max_observed"],
       "properties": {
-        "unit": {"type": "string"}, "warmup_samples": {"type": "integer", "minimum": 1}, "samples": {"type": "integer", "minimum": 100},
+        "unit": {"description": "Unit for raw and summary measurements: milliseconds for latency metrics or bytes for RSS metrics.", "type": "string"}, "warmup_samples": {"type": "integer", "minimum": 1}, "samples": {"type": "integer", "minimum": 100},
         "min": {"type": "number", "minimum": 0}, "mean": {"type": "number", "minimum": 0}, "p50": {"type": "number", "minimum": 0}, "p95": {"type": "number", "minimum": 0}, "p99": {"type": "number", "minimum": 0}, "max": {"type": "number", "minimum": 0}, "raw": {"type": "array", "minItems": 100, "items": {"type": "number", "minimum": 0}}, "pair_order": {"type": "array", "minItems": 100, "items": {"enum": ["go-rust", "rust-go"]}}, "max_observed": {"type": "number", "minimum": 0}
       }
     },

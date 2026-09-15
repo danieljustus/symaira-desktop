@@ -11,11 +11,20 @@ from pathlib import Path
 import value001
 
 
-def percentage(regression: float) -> str:
-    """Format a dimensionless regression ratio as a display percentage."""
-    if isinstance(regression, bool) or not isinstance(regression, (int, float)) or not math.isfinite(regression):
-        raise ValueError("regression must be a finite number")
-    return f"{regression * 100:,.2f}%"
+def ratio_to_percentage(ratio: float) -> str:
+    """Render a stored dimensionless ratio as a human-readable percentage.
+
+    VALUE-001 stores reductions and relative regressions as ratios; a ratio of
+    0.10 is therefore displayed as 10.00%, while the stored value stays 0.10.
+    """
+    if isinstance(ratio, bool) or not isinstance(ratio, (int, float)) or not math.isfinite(ratio):
+        raise ValueError("ratio must be a finite number")
+    return f"{ratio * 100:,.2f}%"
+
+
+def percentage(ratio: float) -> str:
+    """Backward-compatible name for :func:`ratio_to_percentage`."""
+    return ratio_to_percentage(ratio)
 
 
 def verified_p95(summary: dict) -> float:
@@ -36,8 +45,8 @@ def render(result: dict) -> str:
     regressions = value001.latency_regressions(
         result["metrics"], value001.latency_estimator_of(result)
     )
-    for name, ratio in regressions.items():
-        if name in recorded and not math.isclose(ratio, recorded[name], rel_tol=1e-12, abs_tol=1e-12):
+    for name, regression_ratio in regressions.items():
+        if name in recorded and not math.isclose(regression_ratio, recorded[name], rel_tol=1e-12, abs_tol=1e-12):
             raise ValueError("recorded regression differs from retained samples")
         metric_name, _, operation = name.partition(".")
         pair = result["metrics"][metric_name]
@@ -45,7 +54,7 @@ def render(result: dict) -> str:
             pair = pair["operations"][operation]
         go = verified_p95(pair["go"])
         rust = verified_p95(pair["rust"])
-        lines.append(f"{name}: Go {go:.6f} ms; Rust {rust:.6f} ms; regression {percentage(ratio)}")
+        lines.append(f"{name}: Go {go:.6f} ms; Rust {rust:.6f} ms; regression {ratio_to_percentage(regression_ratio)}")
     lines.append("Recorded gate passed: " + str(result["passed"]).lower())
     return "\n".join(lines)
 

@@ -777,6 +777,7 @@ def measure_http(
 
 
 def ratio(candidate: float, reference: float) -> float:
+    """Return the candidate/reference value as a dimensionless ratio."""
     if not math.isfinite(candidate) or not math.isfinite(reference) or reference <= 0:
         raise HarnessError(f"invalid latency values candidate={candidate!r} reference={reference!r}")
     return candidate / reference
@@ -894,7 +895,12 @@ def latency_pairs(metrics: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def latency_regressions(metrics: dict[str, Any], estimator: str) -> dict[str, float]:
-    """Recompute every required latency gate under the given estimator."""
+    """Recompute relative latency changes in stored ratio units.
+
+    Each value is the candidate/reference ratio minus one, so 0.10 means a
+    10% regression. Gate comparisons must use these raw ratios; presentation
+    code is responsible for multiplying them by 100 for display.
+    """
     if estimator not in LATENCY_ESTIMATORS:
         raise HarnessError(f"unknown latency estimator: {estimator!r}")
     regressions: dict[str, float] = {}

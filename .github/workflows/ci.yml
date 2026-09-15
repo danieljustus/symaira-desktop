@@ -108,8 +108,6 @@ jobs:
         run: ./scripts/check-module-boundaries.sh
 
   port-contract:
-    # Advisory parity coverage is retained on main, weekly, and manual suites.
-    if: github.event_name != 'pull_request'
     name: Rust port contract
     strategy:
       matrix:
@@ -122,6 +120,18 @@ jobs:
         with:
           # portgen provenance checks read the pinned oracle revision via git.
           fetch-depth: 0
+
+      - name: Cache Cargo dependencies and build output
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-rust-1.98.0-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-rust-1.98.0-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-rust-1.98.0-
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -152,12 +162,22 @@ jobs:
           go run ./scripts/rust-port/cmd/diffharness --allow-same-binary --symdesk-left bin/symdesk.exe --symdesk-right bin/symdesk.exe --symroom-left bin/symroom.exe --symroom-right bin/symroom.exe --cases testdata/port/cli/cases.json
 
   rust:
-    # Full Rust gates are advisory; keep the required PR path focused on Go.
-    if: github.event_name != 'pull_request'
     name: Rust
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Cache Cargo dependencies and build output
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-rust-1.98.0-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-rust-1.98.0-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-rust-1.98.0-
+
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -193,6 +213,18 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Cache Cargo dependencies and build output
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-rust-1.98.0-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-rust-1.98.0-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-rust-1.98.0-
+
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -370,8 +402,6 @@ jobs:
 
 
   app:
-    # Native macOS acceptance remains on main, weekly, and manual suites.
-    if: github.event_name != 'pull_request'
     runs-on: macos-26
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -424,8 +454,6 @@ jobs:
         run: swift test --package-path room/client
 
   app-ios:
-    # Native iOS acceptance remains on main, weekly, and manual suites.
-    if: github.event_name != 'pull_request'
     name: iOS app
     runs-on: macos-26
     steps:

@@ -99,7 +99,7 @@ func main() {
 	content = append(content, '\n')
 	path := filepath.Join(root, filepath.FromSlash(*output))
 	if *check {
-		existing, err := os.ReadFile(path)
+		existing, err := os.ReadFile(path) // #nosec G304 -- operator-selected fixture path relative to repository root
 		if err != nil {
 			fatal("read fixture: %v", err)
 		}
@@ -372,7 +372,7 @@ func runOperation(root string, spec operation) (writeCase, error) {
 	default:
 		return writeCase{}, fmt.Errorf("unknown operation %q", spec.kind)
 	}
-	output, err := os.ReadFile(path)
+	output, err := os.ReadFile(path) // #nosec G304 -- private temporary case file output generated during fixture execution
 	if err != nil && !errors.Is(err, os.ErrNotExist) && !spec.makeDirectory {
 		return writeCase{}, err
 	}
@@ -497,7 +497,7 @@ func verifyOracle(root, revision string) (map[string]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("read %s from %s: %w", path, revision, err)
 		}
-		current, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+		current, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path))) // #nosec G304 -- reading repository source file verified against pinned Git tree
 		if err != nil {
 			return nil, fmt.Errorf("read current %s: %w", path, err)
 		}
@@ -565,7 +565,7 @@ const gitCommandTimeout = 30 * time.Second
 func gitOutput(root string, args ...string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), gitCommandTimeout)
 	defer cancel()
-	command := exec.CommandContext(ctx, "git", args...)
+	command := exec.CommandContext(ctx, "git", args...) // #nosec G204 -- literal git executable with internal generator argument vectors
 	command.Dir = root
 	output, err := command.Output()
 	if err != nil {

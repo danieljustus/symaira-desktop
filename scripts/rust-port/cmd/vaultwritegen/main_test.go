@@ -26,11 +26,11 @@ func TestVerifyOracleSourceGuard(t *testing.T) {
 			name: "changed source rejected",
 			edit: func(t *testing.T, root string) {
 				path := firstPinnedSource(t, root)
-				content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+				content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path))) // #nosec G304 -- path is checked by firstPinnedSource and root is a disposable test clone
 				if err != nil {
 					t.Fatal(err)
 				}
-				if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(path)), append(content, '\n'), 0o600); err != nil {
+				if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(path)), append(content, '\n'), 0o600); err != nil { // #nosec G703 -- path is verified local within disposable cloned repository
 					t.Fatal(err)
 				}
 			},
@@ -49,7 +49,7 @@ func TestVerifyOracleSourceGuard(t *testing.T) {
 			name: "ignored added source rejected",
 			edit: func(t *testing.T, root string) {
 				ignore := filepath.Join(root, ".gitignore")
-				file, err := os.OpenFile(ignore, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
+				file, err := os.OpenFile(ignore, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600) // #nosec G304 -- target is fixed .gitignore within disposable test clone
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -352,6 +352,9 @@ func firstPinnedSource(t *testing.T, root string) string {
 	if len(paths) == 0 {
 		t.Fatal("pinned revision has no Go sources")
 	}
+	if !filepath.IsLocal(paths[0]) {
+		t.Fatalf("pinned source path %q is not local", paths[0])
+	}
 	return paths[0]
 }
 
@@ -361,7 +364,7 @@ func runGit(t *testing.T, dir string, args ...string) []byte {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), testGitCommandTimeout)
 	defer cancel()
-	command := exec.CommandContext(ctx, "git", args...)
+	command := exec.CommandContext(ctx, "git", args...) // #nosec G204 -- literal git executable with internal test harness argument vectors
 	command.Dir = dir
 	output, err := command.CombinedOutput()
 	if err != nil {

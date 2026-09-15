@@ -118,6 +118,43 @@ fn generated_go_frontmatter_writes_match_exact_bytes_and_side_effects() {
     );
 }
 
+#[test]
+fn declared_mode_metadata_validation() {
+    assert!(is_valid_permission_bits(None));
+    assert!(is_valid_permission_bits(Some(0)));
+    assert!(is_valid_permission_bits(Some(0o640)));
+    assert!(is_valid_permission_bits(Some(0o750)));
+    assert!(is_valid_permission_bits(Some(0o755)));
+    assert!(is_valid_permission_bits(Some(0o777)));
+
+    assert!(!is_valid_permission_bits(Some(0o1000)));
+    assert!(!is_valid_permission_bits(Some(0o100644)));
+    assert!(!is_valid_permission_bits(Some(0x8000)));
+    assert!(!is_valid_permission_bits(Some(u32::MAX)));
+}
+
+#[test]
+#[should_panic(expected = "contains bits outside 0o777")]
+fn declared_mode_metadata_rejects_invalid_bits() {
+    assert_valid_permission_bits(Some(0o100644), "invalid-test-case", "unix_mode_after");
+}
+
+const PERMISSION_MASK: u32 = 0o777;
+
+fn is_valid_permission_bits(mode: Option<u32>) -> bool {
+    match mode {
+        Some(mode) => mode & !PERMISSION_MASK == 0,
+        None => true,
+    }
+}
+
+fn assert_valid_permission_bits(mode: Option<u32>, case_id: &str, field_name: &str) {
+    assert!(
+        is_valid_permission_bits(mode),
+        "{case_id}: declared {field_name} mode {mode:?} contains bits outside 0o777 permission mask"
+    );
+}
+
 fn run_case(case: &Case) -> Vec<String> {
     let root = OwnedTempDir::new(&case.id);
     let path = if case.id == "missing-parent" {
@@ -167,6 +204,9 @@ fn run_case(case: &Case) -> Vec<String> {
             case.id, case.output_base64, actual_output
         ));
     }
+
+    assert_valid_permission_bits(case.unix_mode_before, &case.id, "unix_mode_before");
+    assert_valid_permission_bits(case.unix_mode_after, &case.id, "unix_mode_after");
 
     #[cfg(unix)]
     {

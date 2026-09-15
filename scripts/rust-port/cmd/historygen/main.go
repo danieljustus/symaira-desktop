@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -718,6 +719,13 @@ func entryToDTO(e history.Entry) EntryDTO {
 }
 
 func classifyError(err error) string {
+	if err == nil {
+		return ""
+	}
+	var pathErr *os.PathError
+	if errors.As(err, &pathErr) && pathErr.Err != nil && pathErr.Err.Error() == "path escapes from parent" {
+		return "invalid_path"
+	}
 	msg := err.Error()
 	switch {
 	case strings.HasPrefix(msg, "invalid vault-relative path"):

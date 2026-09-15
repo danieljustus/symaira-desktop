@@ -2,12 +2,16 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/danieljustus/symaira-desktop/internal/history"
 )
 
 func TestVerifyOracleSourceGuard(t *testing.T) {
@@ -243,4 +247,69 @@ func TestHTMLPathForGOOS(t *testing.T) {
 			t.Errorf("htmlPathForGOOS(%q) = %q, want %q", goos, got, unixPath)
 		}
 	}
+}
+
+func TestClassifyError(t *testing.T) {
+	t.Run("wrapped path error positive", func(t *testing.T) {
+		baseErr := &os.PathError{
+			Op:   "openat",
+			Path: `\abs\evil.md`,
+			Err:  errors.New("path escapes from parent"),
+		}
+		if got := classifyError(baseErr); got != "invalid_path" {
+			t.Fatalf("classifyError(baseErr) = %q, want invalid_path", got)
+		}
+
+		wrappedErr := fmt.Errorf("wrapped context: %w", baseErr)
+		if got := classifyError(wrappedErr); got != "invalid_path" {
+			t.Fatalf("classifyError(wrappedErr) = %q, want invalid_path", got)
+		}
+	})
+
+	t.Run("path text merely containing phrase negative control", func(t *testing.T) {
+		pathWithPhraseErr := &os.PathError{
+			Op:   "open",
+			Path: "notes/path escapes from parent.md",
+			Err:  os.ErrNotExist,
+		}
+		if got := classifyError(pathWithPhraseErr); got != "other" {
+			t.Fatalf("classifyError(pathWithPhraseErr) = %q, want other", got)
+		}
+
+		plainTextErr := errors.New("read failed: path escapes from parent in log text")
+		if got := classifyError(plainTextErr); got != "other" {
+			t.Fatalf("classifyError(plainTextErr) = %q, want other", got)
+		}
+	})
+
+	t.Run("unrelated permission error negative control", func(t *testing.T) {
+		permErr := &os.PathError{
+			Op:   "openat",
+			Path: "/abs/evil.md",
+			Err:  os.ErrPermission,
+		}
+		if got := classifyError(permErr); got != "other" {
+			t.Fatalf("classifyError(permErr) = %q, want other", got)
+		}
+
+		wrappedPermErr := fmt.Errorf("permission wrapped: %w", permErr)
+		if got := classifyError(wrappedPermErr); got != "other" {
+			t.Fatalf("classifyError(wrappedPermErr) = %q, want other", got)
+		}
+	})
+
+	t.Run("production snapshot rooted path rejection", func(t *testing.T) {
+		vaultRoot := t.TempDir()
+		store := history.NewStore(vaultRoot)
+		entry, err := store.Snapshot("/abs/evil.md")
+		if err == nil {
+			t.Fatalf("expected store.Snapshot(/abs/evil.md) to fail, got entry: %+v", entry)
+		}
+		if entry != nil {
+			t.Fatalf("expected nil entry on error, got: %+v", entry)
+		}
+		if got := classifyError(err); got != "invalid_path" {
+			t.Fatalf("classifyError(err) = %q, want %q (raw error: %v)", got, "invalid_path", err)
+		}
+	})
 }

@@ -8,9 +8,13 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+cap-std.workspace = true
+getrandom = "=0.4.3"
 thiserror.workspace = true
-noyalib.workspace = true
+noyalib = { workspace = true, features = ["lossless-u64"] }
 serde.workspace = true
+serde_json.workspace = true
+time.workspace = true
 unicode-general-category.workspace = true
 
 [dev-dependencies]

@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential sidecar-roundtrip differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates value-001-validate representative-fixtures-generate representative-fixtures-check representative-differential http-differential mcp-fixtures-generate mcp-fixtures-check mcp-differential value-001
+.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential frontmatter-write-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential sidecar-roundtrip differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates value-001-validate representative-fixtures-generate representative-fixtures-check representative-differential http-differential mcp-fixtures-generate mcp-fixtures-check mcp-differential value-001
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -118,6 +118,10 @@ vault-fixtures-check:
 vault-read-differential: vault-fixtures-check
 	$(CARGO) test -p symdesk-vault --all-features --locked
 
+frontmatter-write-differential:
+	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultwritegen --check
+	$(CARGO) test -p symdesk-vault --test frontmatter_write_contracts --locked
+
 sidecar-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarContract
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarLifecycleContract
@@ -218,6 +222,10 @@ mcp-differential: mcp-fixtures-check
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/mcpdiff \
 		--left bin/port/symdesk-go --right "$(RUST_TARGET_DIR)/debug/symdesk"
+
+.PHONY: history-differential
+history-differential:
+	python3 scripts/rust-port/history_live.py
 
 rust-build:
 	$(CARGO) build --workspace --locked

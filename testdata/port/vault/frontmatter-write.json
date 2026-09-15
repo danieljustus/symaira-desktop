@@ -1,0 +1,1950 @@
+{
+  "schema_version": 2,
+  "oracle": {
+    "commit": "982fe718f2d64629102b4078b1d65a46645c90c5",
+    "release": "unreleased-982fe718"
+  },
+  "source_hashes": {
+    "go.mod": "7a5ca8c06f9e71762c05b7d7b47e74bad9f93bdf8332f0fd3ab16758ccd32bf1",
+    "go.sum": "943bc31c96f838bb7cb8378a0f81f8340ddaa9201b1b2a5247a8b6ae28a054a9",
+    "internal/vault/adopt.go": "bca6c7451d706eb9f3d72c62ff1042d4b0f78acf44b769ee31e50236d00bb96f",
+    "internal/vault/asn.go": "3724de55e70b001a29e770719d8bcc7919bc9f52005019170c1f8bd64c524334",
+    "internal/vault/asn_lock_unix.go": "7219874019353d841785ef18577a9decdf28ac3668c8f5f7f93f0e0e6bc4f2ad",
+    "internal/vault/asn_lock_windows.go": "4617c9469237beab085a40401aaf4fb53043575dca5c7da50f1e945ee6d94ffb",
+    "internal/vault/assets.go": "6aeff6cb57f6aaa134d630cd893c5ea6671ce3f4715acdde5eda396fa5a3a963",
+    "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",
+    "internal/vault/root_open_unix.go": "8e86c3d2d29e701dab7e84fee106d3d7251ea21e7a7dc0e87864d2309ada56ed",
+    "internal/vault/root_open_windows.go": "aafda818b9c0afdcb6b2c3e7aa8f009a2a14bd90492642f14296a2c96c75fd5d",
+    "internal/vault/tags.go": "c533b3a9f254551dea6a079749afbdf41052231f7e2b7ffa002811431169f1d0",
+    "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
+  },
+  "cases": [
+    {
+      "id": "scalar-create",
+      "operation": "set_key",
+      "input_base64": "Qm9keSBvbmx5Cg==",
+      "key": "title",
+      "value": {
+        "kind": "string",
+        "value": "New title"
+      },
+      "output_base64": "LS0tCnRpdGxlOiAiTmV3IHRpdGxlIgotLS0KQm9keSBvbmx5Cg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 416
+    },
+    {
+      "id": "scalar-replace-first-and-preserve-comments",
+      "operation": "set_key",
+      "input_base64": "LS0tCnRpdGxlOiBvbGQKIyBrZWVwIHRoaXMKdGl0bGU6IGxhdGVyCi0tLQpib2R5Cg==",
+      "key": "title",
+      "value": {
+        "kind": "string",
+        "value": "new\"value"
+      },
+      "output_base64": "LS0tCnRpdGxlOiAibmV3XCJ2YWx1ZSIKIyBrZWVwIHRoaXMKdGl0bGU6IGxhdGVyCi0tLQpib2R5Cg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 416
+    },
+    {
+      "id": "scalar-missing-key",
+      "operation": "set_key",
+      "input_base64": "LS0tCmV4aXN0aW5nOiB5ZXMKLS0tCmJvZHkK",
+      "key": "added",
+      "value": {
+        "kind": "string",
+        "value": "42"
+      },
+      "output_base64": "LS0tCmV4aXN0aW5nOiB5ZXMKYWRkZWQ6IDQyCi0tLQpib2R5Cg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 416
+    },
+    {
+      "id": "scalar-crlf",
+      "operation": "set_key",
+      "input_base64": "LS0tDQp0aXRsZTogb2xkDQpjb21tZW50OiBrZWVwDQotLS0NCmJvZHkNCg==",
+      "key": "title",
+      "value": {
+        "kind": "string",
+        "value": "line"
+      },
+      "output_base64": "LS0tDQp0aXRsZTogImxpbmUiCmNvbW1lbnQ6IGtlZXANCi0tLQ0KYm9keQ0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 416
+    },
+    {
+      "id": "scalar-crlf-doubled-trailing-cr",
+      "operation": "set_key",
+      "input_base64": "LS0tDQ0KdGl0bGU6IG9sZA0NCmNvbW1lbnQ6IGtlZXANDQotLS0NDQpib2R5DQ0K",
+      "key": "title",
+      "value": {
+        "kind": "string",
+        "value": "line"
+      },
+      "output_base64": "LS0tDQ0KdGl0bGU6ICJsaW5lIgpjb21tZW50OiBrZWVwDQ0KLS0tDQ0KYm9keQ0NCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 416
+    },
+    {
+      "id": "scalar-malformed-header",
+      "operation": "set_key",
+      "input_base64": "LS0tCnRpdGxlOiBvbGQKYm9keSB3aXRob3V0IGNsb3NpbmcgbWFya2VyCg==",
+      "key": "title",
+      "value": {
+        "kind": "string",
+        "value": "line"
+      },
+      "output_base64": "LS0tCnRpdGxlOiAibGluZSIKLS0tCi0tLQp0aXRsZTogb2xkCmJvZHkgd2l0aG91dCBjbG9zaW5nIG1hcmtlcgo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 416
+    },
+    {
+      "id": "typed-create",
+      "operation": "set_value",
+      "input_base64": "T3BhcXVlIGJvZHkK",
+      "key": "count",
+      "value": {
+        "kind": "i64",
+        "value": "7"
+      },
+      "output_base64": "LS0tCmNvdW50OiA3Ci0tLQpPcGFxdWUgYm9keQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-crlf",
+      "operation": "set_value",
+      "input_base64": "LS0tDQp0aXRsZTogb2xkDQotLS0NCmJvZHkNCg==",
+      "key": "count",
+      "value": {
+        "kind": "i64",
+        "value": "8"
+      },
+      "output_base64": "LS0tDQp0aXRsZTogb2xkDQpjb3VudDogOA0KLS0tDQpib2R5DQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-crlf-doubled-trailing-cr",
+      "operation": "set_value",
+      "input_base64": "LS0tDQ0KdGl0bGU6IG9sZA0NCi0tLQ0NCmJvZHkNDQo=",
+      "key": "count",
+      "value": {
+        "kind": "i64",
+        "value": "9"
+      },
+      "output_base64": "LS0tDQ0KdGl0bGU6IG9sZA0NCmNvdW50OiA5DQotLS0NDQpib2R5DQ0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-mixed-lines",
+      "operation": "set_value",
+      "input_base64": "LS0tCmZpcnN0OiBvbmUNCnNlY29uZDogdHdvCi0tLQpib2R5Cg==",
+      "key": "third",
+      "value": {
+        "kind": "bool",
+        "value": true
+      },
+      "output_base64": "LS0tDQp0aGlyZDogdHJ1ZQ0KLS0tDQotLS0KZmlyc3Q6IG9uZQ0Kc2Vjb25kOiB0d28KLS0tCmJvZHkK",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-opaque-invalid-utf8-body",
+      "operation": "set_value",
+      "input_base64": "LS0tCnRpdGxlOiB4Ci0tLQpvcGFxdWX/Cg==",
+      "key": "status",
+      "value": {
+        "kind": "string",
+        "value": "kept"
+      },
+      "output_base64": "LS0tCnRpdGxlOiB4CnN0YXR1czogImtlcHQiCi0tLQpvcGFxdWX/Cg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-number-float",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "1.25"
+      },
+      "output_base64": "LS0tCnJhdGlvOiAxLjI1Ci0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-number-float-point-one-two-five",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "0.125"
+      },
+      "output_base64": "LS0tCnJhdGlvOiAwLjEyNQotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-number-float-negative-point-one-two-five",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "-0.125"
+      },
+      "output_base64": "LS0tCnJhdGlvOiAtMC4xMjUKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-number-float-small-leading-zeroes",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "0.00125"
+      },
+      "output_base64": "LS0tCnJhdGlvOiAwLjAwMTI1Ci0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-number-float-negative-small-leading-zeroes",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "-0.00125"
+      },
+      "output_base64": "LS0tCnJhdGlvOiAtMC4wMDEyNQotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-number-float64-one",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "1"
+      },
+      "output_base64": "LS0tCnJhdGlvOiAxCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-number-negative-zero",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "-0"
+      },
+      "output_base64": "LS0tCnJhdGlvOiAtMAotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-number-small-exponent",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "1e-07"
+      },
+      "output_base64": "LS0tCnJhdGlvOiAwLjAwMDAwMDEKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-number-large-exponent",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "1e+20"
+      },
+      "output_base64": "LS0tCnJhdGlvOiAxMDAwMDAwMDAwMDAwMDAwMDAwMDAKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-number-uint64-max",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "count",
+      "value": {
+        "kind": "u64",
+        "value": "18446744073709551615"
+      },
+      "output_base64": "LS0tCmNvdW50OiAxODQ0Njc0NDA3MzcwOTU1MTYxNQotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-quote",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "text",
+      "value": {
+        "kind": "string",
+        "value": "a\\b\"c"
+      },
+      "output_base64": "LS0tCnRleHQ6ICJhXGJcImMiCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-array",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "items",
+      "value": {
+        "kind": "sequence",
+        "value": [
+          {
+            "kind": "string",
+            "value": "one"
+          },
+          {
+            "kind": "i64",
+            "value": "2"
+          },
+          {
+            "kind": "bool",
+            "value": false
+          },
+          {
+            "kind": "null"
+          }
+        ]
+      },
+      "output_base64": "LS0tCml0ZW1zOiBbIm9uZSIsIDIsIGZhbHNlLCBudWxsXQotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "first": {
+            "kind": "string",
+            "value": "one"
+          },
+          "number": {
+            "kind": "i64",
+            "value": "2"
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGZpcnN0OiBvbmUKbnVtYmVyOiAyCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-nested-scalars",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "nested": {
+            "kind": "mapping",
+            "value": {
+              "count": {
+                "kind": "i64",
+                "value": "2"
+              },
+              "name": {
+                "kind": "string",
+                "value": "leaf"
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IG5lc3RlZDoKICAgIGNvdW50OiAyCiAgICBuYW1lOiBsZWFmCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-natural-key-order",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "items",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "item1": {
+            "kind": "string",
+            "value": "one"
+          },
+          "item10": {
+            "kind": "string",
+            "value": "ten"
+          },
+          "item2": {
+            "kind": "string",
+            "value": "two"
+          }
+        }
+      },
+      "output_base64": "LS0tCml0ZW1zOiBpdGVtMTogb25lCml0ZW0yOiB0d28KaXRlbTEwOiB0ZW4KLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-legacy-bool-strings",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "labels",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "no": {
+            "kind": "string",
+            "value": "no"
+          },
+          "off": {
+            "kind": "string",
+            "value": "off"
+          },
+          "on": {
+            "kind": "string",
+            "value": "on"
+          },
+          "true": {
+            "kind": "string",
+            "value": "true"
+          },
+          "yes": {
+            "kind": "string",
+            "value": "yes"
+          }
+        }
+      },
+      "output_base64": "LS0tCmxhYmVsczogIm5vIjogIm5vIgoib2ZmIjogIm9mZiIKIm9uIjogIm9uIgoidHJ1ZSI6ICJ0cnVlIgoieWVzIjogInllcyIKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-multiline-string",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "description": {
+            "kind": "string",
+            "value": "line one\nline two"
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGRlc2NyaXB0aW9uOiB8LQogICAgbGluZSBvbmUKICAgIGxpbmUgdHdvCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-sequence-and-mapping",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "items": {
+            "kind": "sequence",
+            "value": [
+              {
+                "kind": "string",
+                "value": "one"
+              },
+              {
+                "kind": "i64",
+                "value": "2"
+              }
+            ]
+          },
+          "nested": {
+            "kind": "mapping",
+            "value": {
+              "enabled": {
+                "kind": "bool",
+                "value": true
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGl0ZW1zOgogICAgLSBvbmUKICAgIC0gMgpuZXN0ZWQ6CiAgICBlbmFibGVkOiB0cnVlCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-quoted-keys",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "key with spaces": {
+            "kind": "string",
+            "value": "spaces"
+          },
+          "key:with-colon": {
+            "kind": "string",
+            "value": "colon"
+          },
+          "true": {
+            "kind": "string",
+            "value": "reserved"
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGtleSB3aXRoIHNwYWNlczogc3BhY2VzCmtleTp3aXRoLWNvbG9uOiBjb2xvbgoidHJ1ZSI6IHJlc2VydmVkCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-null",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "empty",
+      "value": {
+        "kind": "null"
+      },
+      "output_base64": "LS0tCmVtcHR5OiBudWxsCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-root-float-nan",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "NaN"
+      },
+      "output_base64": "LS0tCnJhdGlvOiBOYU4KLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-root-float-positive-infinity",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "+Inf"
+      },
+      "output_base64": "LS0tCnJhdGlvOiArSW5mCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-root-float-negative-infinity",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratio",
+      "value": {
+        "kind": "float64",
+        "value": "-Inf"
+      },
+      "output_base64": "LS0tCnJhdGlvOiAtSW5mCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-nested-floats",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratios",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "huge": {
+            "kind": "float64",
+            "value": "1e+20"
+          },
+          "large": {
+            "kind": "float64",
+            "value": "1e+06"
+          },
+          "negative_zero": {
+            "kind": "float64",
+            "value": "-0"
+          },
+          "one": {
+            "kind": "float64",
+            "value": "1"
+          },
+          "small": {
+            "kind": "float64",
+            "value": "1e-05"
+          }
+        }
+      },
+      "output_base64": "LS0tCnJhdGlvczogaHVnZTogMWUrMjAKbGFyZ2U6IDFlKzA2Cm5lZ2F0aXZlX3plcm86IC0wCm9uZTogMQpzbWFsbDogMWUtMDUKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-nested-leading-zero-floats",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "ratios",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "eighth": {
+            "kind": "float64",
+            "value": "0.125"
+          },
+          "milli_eighth": {
+            "kind": "float64",
+            "value": "0.00125"
+          },
+          "neg_eighth": {
+            "kind": "float64",
+            "value": "-0.125"
+          },
+          "neg_milli_eighth": {
+            "kind": "float64",
+            "value": "-0.00125"
+          }
+        }
+      },
+      "output_base64": "LS0tCnJhdGlvczogZWlnaHRoOiAwLjEyNQptaWxsaV9laWdodGg6IDAuMDAxMjUKbmVnX2VpZ2h0aDogLTAuMTI1Cm5lZ19taWxsaV9laWdodGg6IC0wLjAwMTI1Ci0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-nested-empty-map",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "empty": {
+            "kind": "mapping",
+            "value": {}
+          },
+          "populated": {
+            "kind": "mapping",
+            "value": {
+              "key": {
+                "kind": "string",
+                "value": "value"
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGVtcHR5OiB7fQpwb3B1bGF0ZWQ6CiAgICBrZXk6IHZhbHVlCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-sequence-of-maps",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "items": {
+            "kind": "sequence",
+            "value": [
+              {
+                "kind": "mapping",
+                "value": {
+                  "first": {
+                    "kind": "string",
+                    "value": "one"
+                  },
+                  "second": {
+                    "kind": "string",
+                    "value": "two"
+                  }
+                }
+              },
+              {
+                "kind": "mapping",
+                "value": {
+                  "name": {
+                    "kind": "string",
+                    "value": "second"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGl0ZW1zOgogICAgLSBmaXJzdDogb25lCiAgICAgIHNlY29uZDogdHdvCiAgICAtIG5hbWU6IHNlY29uZAotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-nested-sequences",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "matrix": {
+            "kind": "sequence",
+            "value": [
+              {
+                "kind": "sequence",
+                "value": [
+                  {
+                    "kind": "string",
+                    "value": "a"
+                  },
+                  {
+                    "kind": "string",
+                    "value": "b"
+                  }
+                ]
+              },
+              {
+                "kind": "sequence",
+                "value": [
+                  {
+                    "kind": "string",
+                    "value": "c"
+                  },
+                  {
+                    "kind": "string",
+                    "value": "d"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IG1hdHJpeDoKICAgIC0gLSBhCiAgICAgIC0gYgogICAgLSAtIGMKICAgICAgLSBkCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-blank-line-block-string",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "description": {
+            "kind": "string",
+            "value": "line one\n\nline two\n"
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGRlc2NyaXB0aW9uOiB8CiAgICBsaW5lIG9uZQoKICAgIGxpbmUgdHdvCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-natural-key-counterexamples",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "items",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "digit": {
+            "kind": "string",
+            "value": "digit"
+          },
+          "item02": {
+            "kind": "string",
+            "value": "leading zero"
+          },
+          "item10": {
+            "kind": "string",
+            "value": "ten"
+          },
+          "item2": {
+            "kind": "string",
+            "value": "two"
+          },
+          "é": {
+            "kind": "string",
+            "value": "non-ASCII letter"
+          }
+        }
+      },
+      "output_base64": "LS0tCml0ZW1zOiBkaWdpdDogZGlnaXQKaXRlbTI6IHR3bwppdGVtMDI6IGxlYWRpbmcgemVybwppdGVtMTA6IHRlbgrDqTogbm9uLUFTQ0lJIGxldHRlcgotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-string-rendering-counterexamples",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "labels",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "NO": {
+            "kind": "string",
+            "value": "NO"
+          },
+          "No": {
+            "kind": "string",
+            "value": "No"
+          },
+          "OFF": {
+            "kind": "string",
+            "value": "OFF"
+          },
+          "ON": {
+            "kind": "string",
+            "value": "ON"
+          },
+          "Off": {
+            "kind": "string",
+            "value": "Off"
+          },
+          "On": {
+            "kind": "string",
+            "value": "On"
+          },
+          "YES": {
+            "kind": "string",
+            "value": "YES"
+          },
+          "Yes": {
+            "kind": "string",
+            "value": "Yes"
+          },
+          "backslashes": {
+            "kind": "string",
+            "value": "C:\\tmp\\path"
+          },
+          "base60": {
+            "kind": "string",
+            "value": "1:20"
+          },
+          "newlines": {
+            "kind": "string",
+            "value": "line one\nline two"
+          },
+          "no": {
+            "kind": "string",
+            "value": "no"
+          },
+          "off": {
+            "kind": "string",
+            "value": "off"
+          },
+          "on": {
+            "kind": "string",
+            "value": "on"
+          },
+          "tabs": {
+            "kind": "string",
+            "value": "tab\tvalue"
+          },
+          "trailing_newline": {
+            "kind": "string",
+            "value": "line\n"
+          },
+          "yes": {
+            "kind": "string",
+            "value": "yes"
+          }
+        }
+      },
+      "output_base64": "LS0tCmxhYmVsczogIk5PIjogIk5PIgoiTm8iOiAiTm8iCiJPRkYiOiAiT0ZGIgoiT04iOiAiT04iCiJPZmYiOiAiT2ZmIgoiT24iOiAiT24iCiJZRVMiOiAiWUVTIgoiWWVzIjogIlllcyIKYmFja3NsYXNoZXM6IEM6XHRtcFxwYXRoCmJhc2U2MDogIjE6MjAiCm5ld2xpbmVzOiB8LQogICAgbGluZSBvbmUKICAgIGxpbmUgdHdvCiJubyI6ICJubyIKIm9mZiI6ICJvZmYiCiJvbiI6ICJvbiIKdGFiczogInRhYlx0dmFsdWUiCnRyYWlsaW5nX25ld2xpbmU6IHwKICAgIGxpbmUKInllcyI6ICJ5ZXMiCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-multiline-key",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "line one\nline two": {
+            "kind": "string",
+            "value": "multiline key"
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6ID8gfC0KICAgIGxpbmUgb25lCiAgICBsaW5lIHR3bwo6IG11bHRpbGluZSBrZXkKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-natural-key-multidigit-prefix",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "items",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "a100b": {
+            "kind": "string",
+            "value": "2"
+          },
+          "a12b": {
+            "kind": "string",
+            "value": "1"
+          },
+          "item100": {
+            "kind": "string",
+            "value": "100"
+          },
+          "item19": {
+            "kind": "string",
+            "value": "19"
+          },
+          "item20": {
+            "kind": "string",
+            "value": "20"
+          }
+        }
+      },
+      "output_base64": "LS0tCml0ZW1zOiBhMTJiOiAiMSIKYTEwMGI6ICIyIgppdGVtMTk6ICIxOSIKaXRlbTIwOiAiMjAiCml0ZW0xMDA6ICIxMDAiCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-natural-key-letter-digit-after-digits",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "items",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "item-0": {
+            "kind": "string",
+            "value": "after non-digit number"
+          },
+          "item-a": {
+            "kind": "string",
+            "value": "after non-digit letter"
+          },
+          "item10": {
+            "kind": "string",
+            "value": "digit"
+          },
+          "item1_": {
+            "kind": "string",
+            "value": "symbol"
+          },
+          "item1a": {
+            "kind": "string",
+            "value": "letter"
+          }
+        }
+      },
+      "output_base64": "LS0tCml0ZW1zOiBpdGVtLTA6IGFmdGVyIG5vbi1kaWdpdCBudW1iZXIKaXRlbS1hOiBhZnRlciBub24tZGlnaXQgbGV0dGVyCml0ZW0xYTogbGV0dGVyCml0ZW0xXzogc3ltYm9sCml0ZW0xMDogZGlnaXQKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-natural-key-leading-zeros",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "items",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "item0001": {
+            "kind": "string",
+            "value": "four digits"
+          },
+          "item001": {
+            "kind": "string",
+            "value": "three digits"
+          },
+          "item01": {
+            "kind": "string",
+            "value": "two digits"
+          },
+          "item02": {
+            "kind": "string",
+            "value": "two with two"
+          },
+          "item1": {
+            "kind": "string",
+            "value": "one digit"
+          },
+          "item2": {
+            "kind": "string",
+            "value": "one with two"
+          }
+        }
+      },
+      "output_base64": "LS0tCml0ZW1zOiBpdGVtMTogb25lIGRpZ2l0Cml0ZW0wMTogdHdvIGRpZ2l0cwppdGVtMDAxOiB0aHJlZSBkaWdpdHMKaXRlbTAwMDE6IGZvdXIgZGlnaXRzCml0ZW0yOiBvbmUgd2l0aCB0d28KaXRlbTAyOiB0d28gd2l0aCB0d28KLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-natural-key-unicode-nd-marks",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "items",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "é": {
+            "kind": "string",
+            "value": "combining mark"
+          },
+          "item١": {
+            "kind": "string",
+            "value": "arabic-indic 1"
+          },
+          "item٢": {
+            "kind": "string",
+            "value": "arabic-indic 2"
+          },
+          "item१": {
+            "kind": "string",
+            "value": "devanagari 1"
+          },
+          "item１": {
+            "kind": "string",
+            "value": "fullwidth 1"
+          },
+          "item２": {
+            "kind": "string",
+            "value": "fullwidth 2"
+          }
+        }
+      },
+      "output_base64": "LS0tCml0ZW1zOiBlzIE6IGNvbWJpbmluZyBtYXJrCml0ZW3ZoTogYXJhYmljLWluZGljIDEKaXRlbdmiOiBhcmFiaWMtaW5kaWMgMgppdGVt4KWnOiBkZXZhbmFnYXJpIDEKaXRlbe+8kTogZnVsbHdpZHRoIDEKaXRlbe+8kjogZnVsbHdpZHRoIDIKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-base60-valid-invalid-suffixes",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "labels",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "inv_1_0_underscore": {
+            "kind": "string",
+            "value": "1:0_"
+          },
+          "inv_1_2_5_3": {
+            "kind": "string",
+            "value": "1:2.5:3"
+          },
+          "inv_1_70": {
+            "kind": "string",
+            "value": "1:70"
+          },
+          "v_1_20_dot": {
+            "kind": "string",
+            "value": "1:20."
+          },
+          "v_1_59": {
+            "kind": "string",
+            "value": "1:59"
+          },
+          "v_1_underscore_2": {
+            "kind": "string",
+            "value": "1_:2"
+          }
+        }
+      },
+      "output_base64": "LS0tCmxhYmVsczogaW52XzFfMF91bmRlcnNjb3JlOiAxOjBfCmludl8xXzJfNV8zOiAxOjIuNTozCmludl8xXzcwOiAxOjcwCnZfMV8yMF9kb3Q6ICIxOjIwLiIKdl8xXzU5OiAiMTo1OSIKdl8xX3VuZGVyc2NvcmVfMjogIjFfOjIiCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-string-escape-and-whitespace-corpus",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "corpus",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "bel": {
+            "kind": "string",
+            "value": "bell\u0007sound"
+          },
+          "blank": {
+            "kind": "string",
+            "value": ""
+          },
+          "bs": {
+            "kind": "string",
+            "value": "back\bspace"
+          },
+          "cr": {
+            "kind": "string",
+            "value": "cr\rline"
+          },
+          "esc": {
+            "kind": "string",
+            "value": "esc\u001bcode"
+          },
+          "leading_spaces": {
+            "kind": "string",
+            "value": "  leading"
+          },
+          "multiple_newlines": {
+            "kind": "string",
+            "value": "multi\n\n\nnewlines\n"
+          },
+          "nbsp": {
+            "kind": "string",
+            "value": "non breaking"
+          },
+          "nel": {
+            "kind": "string",
+            "value": "nextline"
+          },
+          "nul": {
+            "kind": "string",
+            "value": "pre\u0000suf"
+          },
+          "tab": {
+            "kind": "string",
+            "value": "tab\tvalue"
+          },
+          "trailing_spaces": {
+            "kind": "string",
+            "value": "trailing  "
+          },
+          "u2028": {
+            "kind": "string",
+            "value": "line\u2028sep"
+          },
+          "u2029": {
+            "kind": "string",
+            "value": "para\u2029sep"
+          }
+        }
+      },
+      "output_base64": "LS0tCmNvcnB1czogYmVsOiAiYmVsbFxhc291bmQiCmJsYW5rOiAiIgpiczogImJhY2tcYnNwYWNlIgpjcjogImNyXHJsaW5lIgplc2M6ICJlc2NcZWNvZGUiCmxlYWRpbmdfc3BhY2VzOiAnICBsZWFkaW5nJwptdWx0aXBsZV9uZXdsaW5lczogfAogICAgbXVsdGkKCgogICAgbmV3bGluZXMKbmJzcDogbm9uwqBicmVha2luZwpuZWw6ICJuZXh0XE5saW5lIgpudWw6ICJwcmVcMHN1ZiIKdGFiOiAidGFiXHR2YWx1ZSIKdHJhaWxpbmdfc3BhY2VzOiAndHJhaWxpbmcgICcKdTIwMjg6ICdsaW5l4oCoICAgIHNlcCcKdTIwMjk6ICdwYXJh4oCpICAgIHNlcCcKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-tab-unicode-whitespace-combinations",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "corpus",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "tab_all_mixed": {
+            "kind": "string",
+            "value": "tab\t \u2028\u2029all"
+          },
+          "tab_ls": {
+            "kind": "string",
+            "value": "tab\t\u2028line"
+          },
+          "tab_ls_ps": {
+            "kind": "string",
+            "value": "tab\t\u2028\u2029mixed"
+          },
+          "tab_nbsp": {
+            "kind": "string",
+            "value": "tab\t nbsp"
+          },
+          "tab_nbsp_ls": {
+            "kind": "string",
+            "value": "tab\t \u2028mixed"
+          },
+          "tab_nbsp_ps": {
+            "kind": "string",
+            "value": "tab\t \u2029mixed"
+          },
+          "tab_ps": {
+            "kind": "string",
+            "value": "tab\t\u2029para"
+          }
+        }
+      },
+      "output_base64": "LS0tCmNvcnB1czogdGFiX2FsbF9taXhlZDogInRhYlx0wqBcTFxQYWxsIgp0YWJfbHM6ICJ0YWJcdFxMbGluZSIKdGFiX2xzX3BzOiAidGFiXHRcTFxQbWl4ZWQiCnRhYl9uYnNwOiAidGFiXHTCoG5ic3AiCnRhYl9uYnNwX2xzOiAidGFiXHTCoFxMbWl4ZWQiCnRhYl9uYnNwX3BzOiAidGFiXHTCoFxQbWl4ZWQiCnRhYl9wczogInRhYlx0XFBwYXJhIgotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-multiline-whitespace-quotes-separators",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "corpus",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "consecutive_ls": {
+            "kind": "string",
+            "value": "one\u2028\u2028two"
+          },
+          "consecutive_ls_ps": {
+            "kind": "string",
+            "value": "one\u2028\u2029two"
+          },
+          "consecutive_ps": {
+            "kind": "string",
+            "value": "one\u2029\u2029two"
+          },
+          "double_quotes": {
+            "kind": "string",
+            "value": "line one \"quoted\"\nline two"
+          },
+          "leading_spaces": {
+            "kind": "string",
+            "value": "  line one\nline two"
+          },
+          "line_trailing_spaces": {
+            "kind": "string",
+            "value": "line one  \nline two"
+          },
+          "newline_ls": {
+            "kind": "string",
+            "value": "one\n\u2028two"
+          },
+          "newline_ps": {
+            "kind": "string",
+            "value": "one\n\u2029two"
+          },
+          "single_and_double_quotes": {
+            "kind": "string",
+            "value": "line 'one'\n\"line two\""
+          },
+          "trailing_spaces": {
+            "kind": "string",
+            "value": "line one\nline two  "
+          }
+        }
+      },
+      "output_base64": "LS0tCmNvcnB1czogY29uc2VjdXRpdmVfbHM6ICdvbmXigKjigKggICAgdHdvJwpjb25zZWN1dGl2ZV9sc19wczogJ29uZeKAqOKAqSAgICB0d28nCmNvbnNlY3V0aXZlX3BzOiAnb25l4oCp4oCpICAgIHR3bycKZG91YmxlX3F1b3RlczogfC0KICAgIGxpbmUgb25lICJxdW90ZWQiCiAgICBsaW5lIHR3bwpsZWFkaW5nX3NwYWNlczogfDQtCiAgICAgIGxpbmUgb25lCiAgICBsaW5lIHR3bwpsaW5lX3RyYWlsaW5nX3NwYWNlczogImxpbmUgb25lICBcbmxpbmUgdHdvIgpuZXdsaW5lX2xzOiB8LQogICAgb25lCuKAqCAgICB0d28KbmV3bGluZV9wczogfC0KICAgIG9uZQrigKkgICAgdHdvCnNpbmdsZV9hbmRfZG91YmxlX3F1b3RlczogfC0KICAgIGxpbmUgJ29uZScKICAgICJsaW5lIHR3byIKdHJhaWxpbmdfc3BhY2VzOiAibGluZSBvbmVcbmxpbmUgdHdvICAiCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-map-nested-sequences-multiline-block-values",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "nested_mapping_leading_space": {
+            "kind": "mapping",
+            "value": {
+              "leading_space_multiline": {
+                "kind": "string",
+                "value": "  line one\nline two"
+              },
+              "normal": {
+                "kind": "string",
+                "value": "value"
+              }
+            }
+          },
+          "sequence_block_strings": {
+            "kind": "sequence",
+            "value": [
+              {
+                "kind": "string",
+                "value": "line one\nline two"
+              },
+              {
+                "kind": "string",
+                "value": "  leading space"
+              },
+              {
+                "kind": "string",
+                "value": "  line one\nline two"
+              }
+            ]
+          },
+          "sequence_with_mapping_multiline_key": {
+            "kind": "sequence",
+            "value": [
+              {
+                "kind": "mapping",
+                "value": {
+                  "line one\nline two": {
+                    "kind": "string",
+                    "value": "multiline key in sequence mapping"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IG5lc3RlZF9tYXBwaW5nX2xlYWRpbmdfc3BhY2U6CiAgICBsZWFkaW5nX3NwYWNlX211bHRpbGluZTogfDQtCiAgICAgICAgICBsaW5lIG9uZQogICAgICAgIGxpbmUgdHdvCiAgICBub3JtYWw6IHZhbHVlCnNlcXVlbmNlX2Jsb2NrX3N0cmluZ3M6CiAgICAtIHwtCiAgICAgIGxpbmUgb25lCiAgICAgIGxpbmUgdHdvCiAgICAtICcgIGxlYWRpbmcgc3BhY2UnCiAgICAtIHw0LQogICAgICAgIGxpbmUgb25lCiAgICAgIGxpbmUgdHdvCnNlcXVlbmNlX3dpdGhfbWFwcGluZ19tdWx0aWxpbmVfa2V5OgogICAgLSA/IHwtCiAgICAgICAgbGluZSBvbmUKICAgICAgICBsaW5lIHR3bwogICAgICA6IG11bHRpbGluZSBrZXkgaW4gc2VxdWVuY2UgbWFwcGluZwotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "delete-present",
+      "operation": "delete_value",
+      "input_base64": "LS0tCnRpdGxlOiByZW1vdmUKa2VlcDogeWVzCi0tLQpib2R5Cg==",
+      "key": "title",
+      "value": {
+        "kind": "null"
+      },
+      "output_base64": "LS0tCmtlZXA6IHllcwotLS0KYm9keQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "delete-absent-inside-frontmatter",
+      "operation": "delete_value",
+      "input_base64": "LS0tCmtlZXA6IHllcwotLS0KYm9keQo=",
+      "key": "missing",
+      "value": {
+        "kind": "null"
+      },
+      "output_base64": "LS0tCmtlZXA6IHllcwotLS0KYm9keQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "delete-without-frontmatter",
+      "operation": "delete_value",
+      "input_base64": "Ym9keSBvbmx5Cg==",
+      "key": "missing",
+      "value": {
+        "kind": "null"
+      },
+      "output_base64": "Ym9keSBvbmx5Cg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 416
+    },
+    {
+      "id": "read-directory",
+      "operation": "set_value",
+      "input_base64": "",
+      "key": "title",
+      "value": {
+        "kind": "string",
+        "value": "directory"
+      },
+      "output_base64": "",
+      "error_class": "filesystem",
+      "unix_mode_before": 488,
+      "unix_mode_after": 488
+    },
+    {
+      "id": "missing-file",
+      "operation": "set_value",
+      "input_base64": "",
+      "key": "title",
+      "value": {
+        "kind": "string",
+        "value": "missing"
+      },
+      "output_base64": "",
+      "error_class": "not_found"
+    },
+    {
+      "id": "missing-parent",
+      "operation": "delete_value",
+      "input_base64": "",
+      "key": "title",
+      "value": {
+        "kind": "null"
+      },
+      "output_base64": "",
+      "error_class": "not_found"
+    },
+    {
+      "id": "typed-systematic-depth1-map-seq-map-first-multiline-key",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "items": {
+                "kind": "sequence",
+                "value": [
+                  {
+                    "kind": "mapping",
+                    "value": {
+                      "line one\nline two": {
+                        "kind": "string",
+                        "value": "scalar value"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGl0ZW1zOgogICAgICAgIC0gPyB8LQogICAgICAgICAgICBsaW5lIG9uZQogICAgICAgICAgICBsaW5lIHR3bwogICAgICAgICAgOiBzY2FsYXIgdmFsdWUKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-systematic-depth1-map-seq-map-normal-then-multiline-key",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "items": {
+                "kind": "sequence",
+                "value": [
+                  {
+                    "kind": "mapping",
+                    "value": {
+                      "first_normal": {
+                        "kind": "string",
+                        "value": "normal value"
+                      },
+                      "second\nmultiline": {
+                        "kind": "string",
+                        "value": "multiline value"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGl0ZW1zOgogICAgICAgIC0gZmlyc3Rfbm9ybWFsOiBub3JtYWwgdmFsdWUKICAgICAgICAgID8gfC0KICAgICAgICAgICAgc2Vjb25kCiAgICAgICAgICAgIG11bHRpbGluZQogICAgICAgICAgOiBtdWx0aWxpbmUgdmFsdWUKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-systematic-depth1-map-seq-map-nested-map-sequence",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "items": {
+                "kind": "sequence",
+                "value": [
+                  {
+                    "kind": "mapping",
+                    "value": {
+                      "nested": {
+                        "kind": "mapping",
+                        "value": {
+                          "inner_list": {
+                            "kind": "sequence",
+                            "value": [
+                              {
+                                "kind": "string",
+                                "value": "elem1"
+                              },
+                              {
+                                "kind": "string",
+                                "value": "elem2"
+                              }
+                            ]
+                          },
+                          "inner_map": {
+                            "kind": "mapping",
+                            "value": {
+                              "leaf": {
+                                "kind": "string",
+                                "value": "value"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGl0ZW1zOgogICAgICAgIC0gbmVzdGVkOgogICAgICAgICAgICBpbm5lcl9saXN0OgogICAgICAgICAgICAgICAgLSBlbGVtMQogICAgICAgICAgICAgICAgLSBlbGVtMgogICAgICAgICAgICBpbm5lcl9tYXA6CiAgICAgICAgICAgICAgICBsZWFmOiB2YWx1ZQotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-systematic-depth1-nested-sequence-block-strings-maps",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "items": {
+                "kind": "sequence",
+                "value": [
+                  {
+                    "kind": "sequence",
+                    "value": [
+                      {
+                        "kind": "string",
+                        "value": "line one\nline two"
+                      },
+                      {
+                        "kind": "mapping",
+                        "value": {
+                          "inner_key": {
+                            "kind": "string",
+                            "value": "inner_value"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGl0ZW1zOgogICAgICAgIC0gLSB8LQogICAgICAgICAgICBsaW5lIG9uZQogICAgICAgICAgICBsaW5lIHR3bwogICAgICAgICAgLSBpbm5lcl9rZXk6IGlubmVyX3ZhbHVlCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-systematic-depth2-map-seq-map-first-multiline-key",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "level2": {
+                "kind": "mapping",
+                "value": {
+                  "items": {
+                    "kind": "sequence",
+                    "value": [
+                      {
+                        "kind": "mapping",
+                        "value": {
+                          "line one\nline two": {
+                            "kind": "string",
+                            "value": "scalar value"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGxldmVsMjoKICAgICAgICBpdGVtczoKICAgICAgICAgICAgLSA/IHwtCiAgICAgICAgICAgICAgICBsaW5lIG9uZQogICAgICAgICAgICAgICAgbGluZSB0d28KICAgICAgICAgICAgICA6IHNjYWxhciB2YWx1ZQotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-systematic-depth2-map-seq-map-normal-then-multiline-key",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "level2": {
+                "kind": "mapping",
+                "value": {
+                  "items": {
+                    "kind": "sequence",
+                    "value": [
+                      {
+                        "kind": "mapping",
+                        "value": {
+                          "first_normal": {
+                            "kind": "string",
+                            "value": "normal value"
+                          },
+                          "second\nmultiline": {
+                            "kind": "string",
+                            "value": "multiline value"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGxldmVsMjoKICAgICAgICBpdGVtczoKICAgICAgICAgICAgLSBmaXJzdF9ub3JtYWw6IG5vcm1hbCB2YWx1ZQogICAgICAgICAgICAgID8gfC0KICAgICAgICAgICAgICAgIHNlY29uZAogICAgICAgICAgICAgICAgbXVsdGlsaW5lCiAgICAgICAgICAgICAgOiBtdWx0aWxpbmUgdmFsdWUKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-systematic-depth2-map-seq-map-nested-map-sequence",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "level2": {
+                "kind": "mapping",
+                "value": {
+                  "items": {
+                    "kind": "sequence",
+                    "value": [
+                      {
+                        "kind": "mapping",
+                        "value": {
+                          "nested": {
+                            "kind": "mapping",
+                            "value": {
+                              "inner_list": {
+                                "kind": "sequence",
+                                "value": [
+                                  {
+                                    "kind": "string",
+                                    "value": "elem1"
+                                  },
+                                  {
+                                    "kind": "string",
+                                    "value": "elem2"
+                                  }
+                                ]
+                              },
+                              "inner_map": {
+                                "kind": "mapping",
+                                "value": {
+                                  "leaf": {
+                                    "kind": "string",
+                                    "value": "value"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGxldmVsMjoKICAgICAgICBpdGVtczoKICAgICAgICAgICAgLSBuZXN0ZWQ6CiAgICAgICAgICAgICAgICBpbm5lcl9saXN0OgogICAgICAgICAgICAgICAgICAgIC0gZWxlbTEKICAgICAgICAgICAgICAgICAgICAtIGVsZW0yCiAgICAgICAgICAgICAgICBpbm5lcl9tYXA6CiAgICAgICAgICAgICAgICAgICAgbGVhZjogdmFsdWUKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-systematic-depth2-nested-sequence-block-strings-maps",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "level2": {
+                "kind": "mapping",
+                "value": {
+                  "items": {
+                    "kind": "sequence",
+                    "value": [
+                      {
+                        "kind": "sequence",
+                        "value": [
+                          {
+                            "kind": "string",
+                            "value": "line one\nline two"
+                          },
+                          {
+                            "kind": "mapping",
+                            "value": {
+                              "inner_key": {
+                                "kind": "string",
+                                "value": "inner_value"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGxldmVsMjoKICAgICAgICBpdGVtczoKICAgICAgICAgICAgLSAtIHwtCiAgICAgICAgICAgICAgICBsaW5lIG9uZQogICAgICAgICAgICAgICAgbGluZSB0d28KICAgICAgICAgICAgICAtIGlubmVyX2tleTogaW5uZXJfdmFsdWUKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-systematic-depth3-map-seq-map-first-multiline-key",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "level2": {
+                "kind": "mapping",
+                "value": {
+                  "level3": {
+                    "kind": "mapping",
+                    "value": {
+                      "items": {
+                        "kind": "sequence",
+                        "value": [
+                          {
+                            "kind": "mapping",
+                            "value": {
+                              "line one\nline two": {
+                                "kind": "string",
+                                "value": "scalar value"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGxldmVsMjoKICAgICAgICBsZXZlbDM6CiAgICAgICAgICAgIGl0ZW1zOgogICAgICAgICAgICAgICAgLSA/IHwtCiAgICAgICAgICAgICAgICAgICAgbGluZSBvbmUKICAgICAgICAgICAgICAgICAgICBsaW5lIHR3bwogICAgICAgICAgICAgICAgICA6IHNjYWxhciB2YWx1ZQotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-systematic-depth3-map-seq-map-normal-then-multiline-key",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "level2": {
+                "kind": "mapping",
+                "value": {
+                  "level3": {
+                    "kind": "mapping",
+                    "value": {
+                      "items": {
+                        "kind": "sequence",
+                        "value": [
+                          {
+                            "kind": "mapping",
+                            "value": {
+                              "first_normal": {
+                                "kind": "string",
+                                "value": "normal value"
+                              },
+                              "second\nmultiline": {
+                                "kind": "string",
+                                "value": "multiline value"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGxldmVsMjoKICAgICAgICBsZXZlbDM6CiAgICAgICAgICAgIGl0ZW1zOgogICAgICAgICAgICAgICAgLSBmaXJzdF9ub3JtYWw6IG5vcm1hbCB2YWx1ZQogICAgICAgICAgICAgICAgICA/IHwtCiAgICAgICAgICAgICAgICAgICAgc2Vjb25kCiAgICAgICAgICAgICAgICAgICAgbXVsdGlsaW5lCiAgICAgICAgICAgICAgICAgIDogbXVsdGlsaW5lIHZhbHVlCi0tLQo=",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-systematic-depth3-map-seq-map-nested-map-sequence",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "level2": {
+                "kind": "mapping",
+                "value": {
+                  "level3": {
+                    "kind": "mapping",
+                    "value": {
+                      "items": {
+                        "kind": "sequence",
+                        "value": [
+                          {
+                            "kind": "mapping",
+                            "value": {
+                              "nested": {
+                                "kind": "mapping",
+                                "value": {
+                                  "inner_list": {
+                                    "kind": "sequence",
+                                    "value": [
+                                      {
+                                        "kind": "string",
+                                        "value": "elem1"
+                                      },
+                                      {
+                                        "kind": "string",
+                                        "value": "elem2"
+                                      }
+                                    ]
+                                  },
+                                  "inner_map": {
+                                    "kind": "mapping",
+                                    "value": {
+                                      "leaf": {
+                                        "kind": "string",
+                                        "value": "value"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGxldmVsMjoKICAgICAgICBsZXZlbDM6CiAgICAgICAgICAgIGl0ZW1zOgogICAgICAgICAgICAgICAgLSBuZXN0ZWQ6CiAgICAgICAgICAgICAgICAgICAgaW5uZXJfbGlzdDoKICAgICAgICAgICAgICAgICAgICAgICAgLSBlbGVtMQogICAgICAgICAgICAgICAgICAgICAgICAtIGVsZW0yCiAgICAgICAgICAgICAgICAgICAgaW5uZXJfbWFwOgogICAgICAgICAgICAgICAgICAgICAgICBsZWFmOiB2YWx1ZQotLS0K",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    },
+    {
+      "id": "typed-systematic-depth3-nested-sequence-block-strings-maps",
+      "operation": "set_value",
+      "input_base64": "LS0tCi0tLQo=",
+      "key": "details",
+      "value": {
+        "kind": "mapping",
+        "value": {
+          "level1": {
+            "kind": "mapping",
+            "value": {
+              "level2": {
+                "kind": "mapping",
+                "value": {
+                  "level3": {
+                    "kind": "mapping",
+                    "value": {
+                      "items": {
+                        "kind": "sequence",
+                        "value": [
+                          {
+                            "kind": "sequence",
+                            "value": [
+                              {
+                                "kind": "string",
+                                "value": "line one\nline two"
+                              },
+                              {
+                                "kind": "mapping",
+                                "value": {
+                                  "inner_key": {
+                                    "kind": "string",
+                                    "value": "inner_value"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "output_base64": "LS0tCmRldGFpbHM6IGxldmVsMToKICAgIGxldmVsMjoKICAgICAgICBsZXZlbDM6CiAgICAgICAgICAgIGl0ZW1zOgogICAgICAgICAgICAgICAgLSAtIHwtCiAgICAgICAgICAgICAgICAgICAgbGluZSBvbmUKICAgICAgICAgICAgICAgICAgICBsaW5lIHR3bwogICAgICAgICAgICAgICAgICAtIGlubmVyX2tleTogaW5uZXJfdmFsdWUKLS0tCg==",
+      "unix_mode_before": 416,
+      "unix_mode_after": 384
+    }
+  ]
+}

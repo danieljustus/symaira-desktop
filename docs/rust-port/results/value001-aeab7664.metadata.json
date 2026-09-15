@@ -1,0 +1,20 @@
+{
+  "original_sha256": "8acdbc8415f4f5ee89d26161913ab31ccdcda87517c9b1cbb10648c7733a14d5",
+  "redacted_sha256": "b34ec7f8fddbadd3d63ccec3cc9416cb9335e40aa9b456f6d81cd1c5be067f31",
+  "source_expected_head": "aeab76640b5e2f1eb935bd3ec2173ed1c608bf06",
+  "go_oracle": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+  "trusted_ci_run": "34904301453",
+  "source_artifact": "consumers-night-desktop-value-aeab7664-001.json",
+  "redacted_json_paths": [
+    "$.binaries.go.build_command",
+    "$.binaries.go.path",
+    "$.binaries.rust.path",
+    "$.contracts[1].command",
+    "$.contracts[2].command",
+    "$.contracts[3].command",
+    "$.index_preparation.go.command",
+    "$.index_preparation.rust.command",
+    "$.repository.root"
+  ],
+  "derivation": "Only repository and temporary-directory prefixes in the existing approved metadata-path inventory; original retained unchanged. No raw samples, identities, hashes, thresholds or verdicts changed."
+}

@@ -46,7 +46,7 @@ def finite(value: Any, label: str) -> float:
     return float(value)
 
 
-def check_summary(summary: Any, label: str, unit: str) -> None:
+def check_summary(summary: Any, label: str, unit: str, summation: str) -> None:
     require(isinstance(summary, dict), f"{label} is not an object")
     required = {"unit", "warmup_samples", "samples", "min", "mean", "p50", "p95", "p99", "max", "raw", "pair_order", "max_observed"}
     require(set(summary) == required, f"{label} keys mismatch")
@@ -60,7 +60,7 @@ def check_summary(summary: Any, label: str, unit: str) -> None:
     require(all(v >= 0 for v in values), f"{label} contains a negative sample")
     ordered = sorted(values)
     expected = {
-        "min": min(values), "mean": sum(values) / samples,
+        "min": min(values), "mean": value001.mean_of(values, summation),
         "p50": ordered[math.ceil(samples * .50) - 1],
         "p95": ordered[math.ceil(samples * .95) - 1],
         "p99": ordered[math.ceil(samples * .99) - 1],
@@ -121,27 +121,40 @@ def validate(path: Path, candidate: str, root: Path, trusted_sha256: str) -> Non
             require(hashlib.sha256(binary_path.read_bytes()).hexdigest() == binary["sha256"], f"{name} binary digest mismatch")
 
     metrics = result["metrics"]
+    summation = value001.summation_of(result)
     require(set(metrics) == REQUIRED_METRICS, "metric categories are incomplete")
     for name, metric in metrics.items():
         unit = "bytes" if name == "rss" else "milliseconds"
-        check_summary(metric["go"], f"metrics.{name}.go", unit)
-        check_summary(metric["rust"], f"metrics.{name}.rust", unit)
+        check_summary(metric["go"], f"metrics.{name}.go", unit, summation)
+        check_summary(metric["rust"], f"metrics.{name}.rust", unit, summation)
         if name in REQUIRED_OPERATIONS:
             require(set(metric["operations"]) == REQUIRED_OPERATIONS[name], f"{name} operation set is incomplete")
             for operation, pair in metric["operations"].items():
-                check_summary(pair["go"], f"metrics.{name}.{operation}.go", "milliseconds")
-                check_summary(pair["rust"], f"metrics.{name}.{operation}.rust", "milliseconds")
+                check_summary(pair["go"], f"metrics.{name}.{operation}.go", "milliseconds", summation)
+                check_summary(pair["rust"], f"metrics.{name}.{operation}.rust", "milliseconds", summation)
 
     try:
-        regressions = value001.latency_regressions(metrics)
+        regressions = value001.latency_regressions(
+            metrics, value001.latency_estimator_of(result)
+        )
     except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
         raise ValidationError(f"latency gate cannot be recomputed: {exc}") from exc
     thresholds = result["thresholds"]
-    recorded = thresholds.get("p95_regressions")
+    recorded = value001.recorded_regressions(result)
     require(isinstance(recorded, dict) and set(recorded) == set(regressions), "regression inventory is incomplete")
     for name, actual in regressions.items():
         require(finite(actual, name) == recorded[name], f"threshold ratio for {name} is not recomputed")
         require(actual <= 0.10, f"{name} exceeds exact 10% regression limit")
+    # Keep the unchanged p95 ceiling as a mandatory supplementary gate even
+    # when the report declares the paired estimator. This is intentionally
+    # recomputed from raw samples and is not added to the report schema.
+    try:
+        unpaired_regressions = value001.latency_regressions(metrics, "unpaired_p95")
+    except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
+        raise ValidationError(f"unpaired p95 gate cannot be recomputed: {exc}") from exc
+    for name, actual in unpaired_regressions.items():
+        finite(actual, f"{name} unpaired p95")
+        require(actual <= 0.10, f"{name} exceeds exact 10% unpaired p95 regression limit")
     go_bytes = binaries["go"]["bytes"]
     rust_bytes = binaries["rust"]["bytes"]
     size_reduction = (go_bytes - rust_bytes) / go_bytes

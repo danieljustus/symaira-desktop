@@ -21,12 +21,24 @@ CONTRACT_FILES = [
     ".github/workflows/release.yml", "home-assistant-addon/symdesk/config.yaml",
 ]
 STEPS = {
+    "Run native history differential": 2,
     "Verify frozen oracle and differential harness on Windows": 5,
-    "Check, lint, and test Rust workspace": 6,
+    "Check, lint, and test Rust workspace": 8,
     "Run native Windows representative CLI HTTP and MCP parity": 7,
     "Run native Windows sidecar round-trip suite": 1,
     "Run native Windows version differential": 4,
 }
+
+
+
+def write_lf(path, text):
+    """Write `text` with literal LF endings and no platform translation.
+
+    Path.write_text() only accepts `newline` on Python 3.10+, and these stubs
+    are shell and Python sources whose line endings must survive verbatim.
+    """
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(text)
 
 
 def native_step_bodies():
@@ -59,22 +71,22 @@ class NativeStepControl:
         stub_dir = self.root / "stubs"
         stub_dir.mkdir()
         control = stub_dir / "control.py"
-        control.write_text(
+        write_lf(
+            control,
             "import json, os, pathlib, sys\n"
             "log = pathlib.Path(os.environ['NATIVE_CONTROL_LOG'])\n"
             "calls = log.read_text().splitlines() if log.exists() else []\n"
             "with log.open('a') as output:\n"
             "    output.write(json.dumps(sys.argv[1:]) + '\\n')\n"
             "sys.exit(23 if len(calls) + 1 == int(os.environ['NATIVE_CONTROL_FAIL_AT']) else 0)\n",
-            encoding="utf-8", newline="\n",
         )
         for command in ("go", "cargo", "python3"):
             stub = stub_dir / command
-            stub.write_text(
+            write_lf(
+                stub,
                 "#!/usr/bin/env bash\nexec "
                 + shlex.join([Path(sys.executable).as_posix(), control.as_posix(), command])
                 + ' "$@"\n',
-                encoding="utf-8", newline="\n",
             )
             stub.chmod(0o700)
         self.env = dict(os.environ)
@@ -111,6 +123,37 @@ def bash_executable():
 
 
 class NativeCIContracts(unittest.TestCase):
+    def test_rust_historical_evidence_checkouts_have_full_history(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        for job in ("rust", "rust-native"):
+            with self.subTest(job=job):
+                job_match = re.search(
+                    rf"(?ms)^  {job}:\n(?P<body>.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)",
+                    workflow,
+                )
+                if job_match is None:
+                    self.fail(f"expected {job} job")
+                checkout_blocks = re.findall(
+                    r"(?m)^      - uses: actions/checkout@[^\n]+\n"
+                    r"(?P<tail>(?:        [^\n]*\n|[ \t]*\n)*)",
+                    job_match.group("body"),
+                )
+                self.assertEqual(len(checkout_blocks), 1)
+                with_match = re.search(
+                    r"(?m)^        with:\n(?P<options>(?:          [^\n]*\n)*)",
+                    checkout_blocks[0],
+                )
+                if with_match is None:
+                    self.fail(f"{job} checkout must define with options")
+                self.assertEqual(
+                    re.findall(
+                        r"^          (fetch-depth: 0)$",
+                        with_match.group("options"),
+                        re.MULTILINE,
+                    ),
+                    ["fetch-depth: 0"],
+                )
+
     def test_native_failures_cannot_be_hidden_by_later_success(self):
         for name, count, body in native_step_bodies():
             with self.subTest(step=name), tempfile.TemporaryDirectory(prefix="native-step-") as temp:

@@ -3,8 +3,10 @@
 //! Read-only contract-v1–v6 Markdown vault parsing.
 
 mod health_links;
+pub mod history;
 mod links;
 mod metadata;
+mod mutations;
 mod paths;
 mod resolver;
 mod sha256;
@@ -23,10 +25,14 @@ use serde as _;
 use serde_json as _;
 
 pub use health_links::{HealthLinkResolver, LinkInventory, normalize_health_link_target};
+pub use history::{HistoryEntry, HistoryError, HistoryStore};
 pub use links::extract_wikilinks;
 pub use metadata::{
     SearchMetadata, SearchMetadataField, format_search_metadata, metadata_matches,
     search_metadata_from_document, strip_search_metadata,
+};
+pub use mutations::{
+    MutationError, delete_frontmatter_value, set_frontmatter_key, set_frontmatter_value,
 };
 pub use paths::{SecurePathError, secure_path};
 pub use resolver::{ResolveDocument, ResolvedEdge, ResolvedNode, Resolver, resolve_graph};

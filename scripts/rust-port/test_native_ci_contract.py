@@ -22,7 +22,7 @@ CONTRACT_FILES = [
 ]
 STEPS = {
     "Verify frozen oracle and differential harness on Windows": 5,
-    "Check, lint, and test Rust workspace": 6,
+    "Check, lint, and test Rust workspace": 8,
     "Run native Windows representative CLI HTTP and MCP parity": 7,
     "Run native Windows sidecar round-trip suite": 1,
     "Run native Windows version differential": 4,
@@ -122,31 +122,36 @@ def bash_executable():
 
 
 class NativeCIContracts(unittest.TestCase):
-    def test_rust_historical_evidence_checkout_has_full_history(self):
+    def test_rust_historical_evidence_checkouts_have_full_history(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
-        rust_match = re.search(
-            r"(?ms)^  rust:\n(?P<body>.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)",
-            workflow,
-        )
-        if rust_match is None:
-            self.fail("expected rust job")
-        rust_body = rust_match.group("body")
-        checkout_blocks = re.findall(
-            r"(?m)^      - uses: actions/checkout@[^\n]+\n"
-            r"(?P<tail>(?:        [^\n]*\n|[ \t]*\n)*)",
-            rust_body,
-        )
-        self.assertEqual(len(checkout_blocks), 1)
-        with_match = re.search(
-            r"(?m)^        with:\n(?P<options>(?:          [^\n]*\n)*)",
-            checkout_blocks[0],
-        )
-        if with_match is None:
-            self.fail("rust checkout must define with options")
-        self.assertEqual(
-            re.findall(r"^          (fetch-depth: 0)$", with_match.group("options"), re.MULTILINE),
-            ["fetch-depth: 0"],
-        )
+        for job in ("rust", "rust-native"):
+            with self.subTest(job=job):
+                job_match = re.search(
+                    rf"(?ms)^  {job}:\n(?P<body>.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)",
+                    workflow,
+                )
+                if job_match is None:
+                    self.fail(f"expected {job} job")
+                checkout_blocks = re.findall(
+                    r"(?m)^      - uses: actions/checkout@[^\n]+\n"
+                    r"(?P<tail>(?:        [^\n]*\n|[ \t]*\n)*)",
+                    job_match.group("body"),
+                )
+                self.assertEqual(len(checkout_blocks), 1)
+                with_match = re.search(
+                    r"(?m)^        with:\n(?P<options>(?:          [^\n]*\n)*)",
+                    checkout_blocks[0],
+                )
+                if with_match is None:
+                    self.fail(f"{job} checkout must define with options")
+                self.assertEqual(
+                    re.findall(
+                        r"^          (fetch-depth: 0)$",
+                        with_match.group("options"),
+                        re.MULTILINE,
+                    ),
+                    ["fetch-depth: 0"],
+                )
 
     def test_native_failures_cannot_be_hidden_by_later_success(self):
         for name, count, body in native_step_bodies():

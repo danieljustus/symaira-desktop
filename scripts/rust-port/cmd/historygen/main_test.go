@@ -299,7 +299,30 @@ func TestClassifyError(t *testing.T) {
 	})
 
 	t.Run("production snapshot rooted path rejection", func(t *testing.T) {
-		vaultRoot := t.TempDir()
+		const rootEnv = "SYMDESK_HISTORY_ROOTED_TEST_ROOT"
+		vaultRoot := os.Getenv(rootEnv)
+		if vaultRoot == "" {
+			// Store retains an os.Root without a public Close method. Run the
+			// assertion in a child so process exit releases its Windows handle
+			// before the parent's temporary-directory cleanup.
+			vaultRoot = t.TempDir()
+			executable, err := os.Executable()
+			if err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			cmd := exec.CommandContext(ctx, executable, "-test.run=^TestClassifyError$/^production_snapshot_rooted_path_rejection$", "-test.v")
+			cmd.Env = append(os.Environ(), rootEnv+"="+vaultRoot)
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				t.Fatalf("rooted-path child: %v\n%s", err, output)
+			}
+			if !strings.Contains(string(output), "--- PASS: TestClassifyError/production_snapshot_rooted_path_rejection") {
+				t.Fatalf("rooted-path child assertion did not execute:\n%s", output)
+			}
+			return
+		}
 		store := history.NewStore(vaultRoot)
 		entry, err := store.Snapshot("/abs/evil.md")
 		if err == nil {

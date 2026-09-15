@@ -21,6 +21,7 @@ CONTRACT_FILES = [
     ".github/workflows/release.yml", "home-assistant-addon/symdesk/config.yaml",
 ]
 STEPS = {
+    "Run native history differential": 2,
     "Verify frozen oracle and differential harness on Windows": 5,
     "Check, lint, and test Rust workspace": 8,
     "Run native Windows representative CLI HTTP and MCP parity": 7,

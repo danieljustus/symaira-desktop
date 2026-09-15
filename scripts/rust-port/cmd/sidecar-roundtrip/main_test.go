@@ -20,14 +20,14 @@ func TestRunCommandMetadata(t *testing.T) {
 	for _, mode := range []string{"success", "failure", "invalid-json"} {
 		t.Run(mode, func(t *testing.T) {
 			t.Setenv("SIDECAR_TEST_COMMAND", mode)
-			out, err := runCommand(t.TempDir(), bin, "-test.run=^TestRunCommandHelper$")
+			out, diagnostics, err := runCommandStdout(t.TempDir(), bin, "-test.run=^TestRunCommandHelper$")
 			if mode == "failure" {
 				var exitErr *exec.ExitError
 				if !errors.As(err, &exitErr) || exitErr.ExitCode() != 7 {
 					t.Fatalf("expected exit status 7, got %v", err)
 				}
-				if !strings.Contains(err.Error(), "info: syncing channel updates") {
-					t.Fatalf("stderr missing from diagnostics: %v", err)
+				if !strings.Contains(diagnostics, "info: syncing channel updates") {
+					t.Fatalf("stderr missing from diagnostics: %q", diagnostics)
 				}
 			} else if err != nil {
 				t.Fatal(err)

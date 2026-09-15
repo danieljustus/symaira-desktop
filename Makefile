@@ -219,6 +219,10 @@ mcp-differential: mcp-fixtures-check
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/mcpdiff \
 		--left bin/port/symdesk-go --right "$(RUST_TARGET_DIR)/debug/symdesk"
 
+.PHONY: history-differential
+history-differential:
+	python3 scripts/rust-port/history_live.py
+
 rust-build:
 	$(CARGO) build --workspace --locked
 

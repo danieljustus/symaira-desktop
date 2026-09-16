@@ -19,8 +19,7 @@ import (
 func ComputeProductionSourceDigest(repoRoot string) (string, error) {
 	args := []string{"ls-files", "--cached", "--others", "--exclude-standard", "--", "cmd", "internal"}
 	args = append(args, productionContractFiles()...)
-	listCommand := exec.Command("git", args...)
-	listCommand.Dir = repoRoot
+	listCommand := inventoryGitCommand(repoRoot, args...)
 	output, err := listCommand.Output()
 	if err != nil {
 		return "", fmt.Errorf("list working-tree production inputs: %w", err)
@@ -53,9 +52,7 @@ func ComputeProductionSourceDigest(repoRoot string) (string, error) {
 func ComputeGitRevisionProductionSourceDigest(repoRoot, revision string) (string, error) {
 	args := []string{"ls-tree", "-r", "--name-only", revision, "--", "cmd", "internal"}
 	args = append(args, productionContractFiles()...)
-	//nolint:gosec // fixed git ls-tree arguments for the pinned revision
-	listCommand := exec.Command("git", args...)
-	listCommand.Dir = repoRoot
+	listCommand := inventoryGitCommand(repoRoot, args...)
 	output, err := listCommand.Output()
 	if err != nil {
 		return "", fmt.Errorf("list production inputs at %s: %w", revision, err)
@@ -71,9 +68,7 @@ func ComputeGitRevisionProductionSourceDigest(repoRoot, revision string) (string
 	hasher := sha256.New()
 	for _, rel := range files {
 		_, _ = io.WriteString(hasher, rel+"\n")
-		//nolint:gosec // fixed git show arguments for the pinned revision
-		show := exec.Command("git", "show", revision+":"+rel)
-		show.Dir = repoRoot
+		show := inventoryGitCommand(repoRoot, "show", revision+":"+rel)
 		content, showErr := show.Output()
 		if showErr != nil {
 			return "", fmt.Errorf("read %s at %s: %w", rel, revision, showErr)
@@ -111,9 +106,7 @@ func ComputeGitRevisionGeneratorSourceDigest(repoRoot, revision string) (string,
 		return "", err
 	}
 	return hashGeneratorDigestInputs(files, func(rel string) ([]byte, error) {
-		//nolint:gosec // revision and rel are validated repository-local provenance inputs.
-		show := exec.Command("git", "show", revision+":"+rel)
-		show.Dir = repoRoot
+		show := inventoryGitCommand(repoRoot, "show", revision+":"+rel)
 		content, showErr := show.Output()
 		if showErr != nil {
 			return nil, fmt.Errorf("read generator input %s at %s: %w", rel, revision, showErr)
@@ -124,7 +117,10 @@ func ComputeGitRevisionGeneratorSourceDigest(repoRoot, revision string) (string,
 
 func generatorSourcePaths() []string {
 	return []string{
+		"go.mod",
+		"go.sum",
 		"Makefile",
+		".gitattributes",
 		"scripts/rust-port",
 		"cmd/symdesk/port_inventory_test.go",
 		"cmd/symroom/port_grammar_test.go",
@@ -148,8 +144,7 @@ func listGeneratorDigestInputs(repoRoot, revision string) ([]string, error) {
 		args = append(args, "ls-tree", "-r", "--name-only", revision, "--")
 	}
 	args = append(args, generatorSourcePaths()...)
-	command := exec.Command("git", args...)
-	command.Dir = repoRoot
+	command := inventoryGitCommand(repoRoot, args...)
 	output, err := command.Output()
 	if err != nil {
 		if revision == "" {
@@ -189,6 +184,31 @@ func hashGeneratorDigestInputs(files []string, read func(string) ([]byte, error)
 		_, _ = hasher.Write(content)
 	}
 	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+func inventoryGitCommand(repoRoot string, args ...string) *exec.Cmd {
+	//nolint:gosec // callers use fixed Git subcommands and repository-derived revision/path inputs.
+	command := exec.Command("git", append([]string{"--no-replace-objects"}, args...)...)
+	command.Dir = repoRoot
+	command.Env = inventoryGitEnvironment(os.Environ())
+	return command
+}
+
+func inventoryGitEnvironment(environment []string) []string {
+	result := make([]string, 0, len(environment)+3)
+	for _, item := range environment {
+		name, _, found := strings.Cut(item, "=")
+		if found && strings.HasPrefix(strings.ToUpper(name), "GIT_") {
+			continue
+		}
+		result = append(result, item)
+	}
+	return append(result,
+		"GIT_ATTR_NOSYSTEM=1",
+		"GIT_CONFIG_GLOBAL="+os.DevNull,
+		"GIT_CONFIG_NOSYSTEM=1",
+		"GIT_TERMINAL_PROMPT=0",
+	)
 }
 
 func isProductionContractInput(path string) bool {

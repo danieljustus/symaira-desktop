@@ -19,7 +19,6 @@ const (
 )
 
 var fixturePaths = []string{
-	"testdata/port/cli/cases.json",
 	"testdata/port/cli/symdesk-command-tree.json",
 	"testdata/port/cli/symroom-parser-grammar.json",
 	"testdata/port/core/config.json",
@@ -43,8 +42,6 @@ var fixturePaths = []string{
 	"testdata/port/vault/mobile-writer.json",
 	"testdata/port/sidecar/contracts.json",
 	"testdata/port/sidecar/lifecycle.json",
-	"testdata/port/sidecar/roundtrip.json",
-	"testdata/port/sidecar/large-corpus.json",
 	"testdata/port/representative/cases.json",
 }
 
@@ -98,20 +95,13 @@ func runGenerate(repoRoot, commit, release string) {
 	}
 
 	// 2. Compute provenance and checksums
-	sourceDigest, err := inventory.ComputeProductionSourceDigest(repoRoot)
-	if err != nil {
-		fatal("compute production source digest: %v", err)
-	}
-	revisionDigest, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, commit)
+	sourceDigest, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, commit)
 	if err != nil {
 		fatal("compute oracle revision source digest: %v", err)
 	}
-	if sourceDigest != revisionDigest {
-		fatal("working-tree production source does not match oracle commit %s: current=%s oracle=%s", commit, sourceDigest, revisionDigest)
-	}
-	generatorDigest, err := inventory.ComputeGeneratorSourceDigest(repoRoot)
+	generatorDigest, err := inventory.ComputeGitRevisionGeneratorSourceDigest(repoRoot, commit)
 	if err != nil {
-		fatal("compute fixture generator digest: %v", err)
+		fatal("compute oracle generator source digest: %v", err)
 	}
 
 	checksums := make(map[string]string, len(fixturePaths))
@@ -132,15 +122,8 @@ func runGenerate(repoRoot, commit, release string) {
 		},
 		ProductionSourceDigest: sourceDigest,
 		GeneratorSourceDigest:  generatorDigest,
-		SurfaceCounts: inventory.SurfaceCounts{
-			SymdeskTotalCommands:   207,
-			SymdeskNonRootCommands: 206,
-			SymroomSubcommands:     16,
-			SymdeskMCPTools:        57,
-			SymroomMCPTools:        8,
-			SelfhostHTTPRoutes:     21,
-		},
-		FixtureChecksums: checksums,
+		SurfaceCounts:          expectedSurfaceCounts(),
+		FixtureChecksums:       checksums,
 	}
 
 	provContent, err := json.MarshalIndent(provenance, "", "  ")

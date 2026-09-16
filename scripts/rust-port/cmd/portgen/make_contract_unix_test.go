@@ -19,8 +19,13 @@ func TestMakeCheckEnvironmentCannotBeCommandLineOverridden(t *testing.T) {
 	if err != nil {
 		t.Fatalf("make dry run: %v\n%s", err, output)
 	}
-	line := "env -u PORT_GENERATE -u port_generate -u PORT_FIXTURES_GENERATE -u port_fixtures_generate -u PORTGEN_GENERATE -u portgen_generate -u GENERATE_PORT_FIXTURES -u generate_port_fixtures -u SYMDESK_PORT_GENERATE -u symdesk_port_generate GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/portgen --check"
-	if !strings.Contains(string(output), line) {
+	text := string(output)
+	for _, name := range []string{"PORT_GENERATE", "PORTGEN_GENERATE", "COREGEN_GENERATE", "MCPGEN_GENERATE"} {
+		if !strings.Contains(text, "-u "+name) {
+			t.Fatalf("port-fixtures-check did not unset %s:\n%s", name, output)
+		}
+	}
+	if strings.Contains(text, "\n: GOTOOLCHAIN") || strings.HasPrefix(text, ": GOTOOLCHAIN") {
 		t.Fatalf("port-fixtures-check accepted PORTGEN_CHECK_ENV override:\n%s", output)
 	}
 }

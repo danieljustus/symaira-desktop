@@ -37,6 +37,22 @@ func TestVerifyProvenanceCommitRequiresDirectOutputOnlyChild(t *testing.T) {
 		}
 	})
 
+	t.Run("rejects a valid side-branch commit", func(t *testing.T) {
+		repoRoot, oracle := newProvenanceCommitRepository(t, nil)
+		mainBranch := portgenGitOutput(t, repoRoot, "branch", "--show-current")
+		portgenGit(t, repoRoot, "checkout", "-q", "-b", "side", oracle)
+		writePortgenTestFile(t, repoRoot, "side-branch.txt", "not the oracle parent\n")
+		portgenGit(t, repoRoot, "add", "--", "side-branch.txt")
+		portgenGit(t, repoRoot, "commit", "-q", "-m", "test: side branch")
+		side := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
+		portgenGit(t, repoRoot, "checkout", "-q", mainBranch)
+
+		err := verifyProvenanceCommit(repoRoot, side)
+		if err == nil || !strings.Contains(err.Error(), "direct parent") {
+			t.Fatalf("verifyProvenanceCommit() error = %v, want direct-parent failure", err)
+		}
+	})
+
 	t.Run("rejects merge commit Q", func(t *testing.T) {
 		repoRoot := newProvenanceBaseRepository(t)
 		oracle := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
@@ -60,8 +76,8 @@ func TestVerifyProvenanceCommitRequiresDirectOutputOnlyChild(t *testing.T) {
 	t.Run("requires provenance file in Q", func(t *testing.T) {
 		repoRoot := newProvenanceBaseRepository(t)
 		oracle := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
-		writePortgenTestFile(t, repoRoot, "testdata/port/cli/cases.json", "{}\n")
-		portgenGit(t, repoRoot, "add", "--", "testdata/port/cli/cases.json")
+		writePortgenTestFile(t, repoRoot, "testdata/port/cli/symdesk-command-tree.json", "{}\n")
+		portgenGit(t, repoRoot, "add", "--", "testdata/port/cli/symdesk-command-tree.json")
 		portgenGit(t, repoRoot, "commit", "-q", "-m", "test: fixture-only Q without provenance")
 
 		err := verifyProvenanceCommit(repoRoot, oracle)
@@ -76,6 +92,7 @@ func TestRunProvenanceCheckAcceptsImmutablePToQ(t *testing.T) {
 	for _, rel := range fixturePaths {
 		writePortgenTestFile(t, repoRoot, rel, "{}\n")
 	}
+	writePortgenTestFile(t, repoRoot, provenanceFixture, "{}\n")
 	portgenGit(t, repoRoot, "add", "--", "testdata/port")
 	portgenGit(t, repoRoot, "commit", "-q", "-m", "test: complete immutable P fixtures")
 	oracle := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
@@ -96,13 +113,14 @@ func TestRunProvenanceCheckAcceptsImmutablePToQ(t *testing.T) {
 		}
 		checksums[rel] = sum
 	}
-	content, err := json.Marshal(inventory.ProvenanceDocument{
+	content, err := json.MarshalIndent(inventory.ProvenanceDocument{
 		SchemaVersion:          1,
 		Oracle:                 inventory.Oracle{Commit: oracle, Release: "test-release"},
 		ProductionSourceDigest: productionDigest,
 		GeneratorSourceDigest:  generatorDigest,
+		SurfaceCounts:          expectedSurfaceCounts(),
 		FixtureChecksums:       checksums,
-	})
+	}, "", "  ")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,9 +128,9 @@ func TestRunProvenanceCheckAcceptsImmutablePToQ(t *testing.T) {
 	portgenGit(t, repoRoot, "add", "--", provenanceFixture)
 	portgenGit(t, repoRoot, "commit", "-q", "-m", "test: provenance-only Q")
 
-	originalTargets := fixtureTestTargets
-	fixtureTestTargets = nil
-	t.Cleanup(func() { fixtureTestTargets = originalTargets })
+	originalRunner := runFixtureCheckTarget
+	runFixtureCheckTarget = func(_ string, _ string, _ []string, _ fixtureCheckTarget) error { return nil }
+	t.Cleanup(func() { runFixtureCheckTarget = originalRunner })
 	if err := runProvenanceCheck(repoRoot); err != nil {
 		t.Fatalf("runProvenanceCheck() error = %v", err)
 	}
@@ -148,9 +166,20 @@ func TestSanitizedCheckEnvironmentRemovesActivationVariablesCaseInsensitively(t 
 		"COREGEN_GENERATE=1",
 		"SYMDESK_PORT_GENERATE=1",
 		"OTHER_PORT_GENERATE=1",
+		"GOFLAGS=-modfile=poison.mod",
+		"GIT_DIR=/poison",
+		"PATH=/poison",
 	})
-	if len(got) != 2 || got[0] != "SAFE=retained" || got[1] != "GOWORK=off" {
-		t.Fatalf("sanitizedCheckEnvironment() = %#v, want SAFE=retained plus pinned GOWORK=off", got)
+	joined := "\n" + strings.Join(got, "\n")
+	for _, forbidden := range []string{"PORT_GENERATE=", "PORTGEN_GENERATE=", "COREGEN_GENERATE=", "GOFLAGS=-modfile", "GIT_DIR=", "PATH=/poison"} {
+		if strings.Contains(joined, "\n"+forbidden) {
+			t.Fatalf("sanitizedCheckEnvironment() retained %q in %#v", forbidden, got)
+		}
+	}
+	for _, required := range []string{"SAFE=retained", "GOWORK=off", "GOENV=off", "GOFLAGS=-mod=readonly", "GOTOOLCHAIN=local", "CGO_ENABLED=0", "PATH="} {
+		if !strings.Contains(joined, "\n"+required) {
+			t.Fatalf("sanitizedCheckEnvironment() omitted %q from %#v", required, got)
+		}
 	}
 }
 

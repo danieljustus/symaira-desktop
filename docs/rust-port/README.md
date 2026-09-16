@@ -1,7 +1,7 @@
 # Go-to-Rust migration record
 
 > **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006`, `RUST-007`, and `RUST-016` are blocked by the current VALUE-001 order-bias gate ([#936](https://github.com/danieljustus/symaira-desktop/issues/936)).
-> **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; portgen provenance instead records the direct functional parent `P` of its derived evidence commit `Q`; VALUE baselines remain pinned to `ae863319` / `v0.12.2`
+> **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; portgen provenance instead records the direct functional parent `P` of its derived evidence commit `Q`. Those are distinct identities by the current contract; their long-term consolidation is tracked in [#934](https://github.com/danieljustus/symaira-desktop/issues/934). VALUE baselines remain pinned to `ae863319` / `v0.12.2`
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
@@ -239,10 +239,11 @@ beside an arbitrary change:
 3. Commit the allowlisted derived fixture paths and
    `testdata/port/provenance.json` as the single-parent child **Q**. The
    provenance oracle SHA must equal **P** exactly.
-4. Run `make port-fixtures-check` at **Q**. The check reads immutable Git bytes,
-   executes package checks from an archive of **Q**, and strips known generation
-   activation variables. Its Make-side environment prefix cannot be replaced by
-   `make PORTGEN_CHECK_ENV=:`.
+4. Run `make port-fixtures-check` at **Q**. The check reads immutable Git blobs,
+   validates regular-file tree entries, runs every manifest-covered generator and
+   package check from a disposable linked worktree at **Q**, and strips ambient
+   generation, Go, Git and PATH overrides. Its Make-side environment prefix cannot
+   be replaced by `make PORTGEN_CHECK_ENV=:`.
 
 Changes to generator controls, including the `Makefile`, change the generator
 digest and therefore require a new reviewed P→Q evidence pair. A source, docs,

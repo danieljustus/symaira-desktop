@@ -4,6 +4,15 @@
 
 The migration remains in progress, not complete. The renewed request authorizes completion of the existing DAG without changing the 10% p95 regression ceiling, deleting Go, or publishing a release. RUST-006 must pass current acceptance and native parity before dependent work is approved.
 
+> **Current-candidate supersession (2026-09-16):** Three fresh full VALUE-001
+> runs at `fbc52d0ca07a9bbca324a342263ad86dd05adf52` produced FAIL/PASS/FAIL.
+> The systematic alternating HTTP-order bias is tracked in
+> [#936](https://github.com/danieljustus/symaira-desktop/issues/936); therefore
+> RUST-006, RUST-007, and RUST-016 are blocked. See
+> [`value001-fbc52d0c-current-gate.md`](value001-fbc52d0c-current-gate.md).
+> The historical evidence below remains archival and does not override this
+> current DAG decision.
+
 ## Evidence
 
 - Measured clean candidate: `5088972aa7efadfdc7118549354e26d001c1ffad` on local macOS.

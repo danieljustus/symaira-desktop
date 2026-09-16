@@ -156,7 +156,14 @@ def validate(
         require(HEX40.fullmatch(binary["source"]) is not None and HEX64.fullmatch(binary["sha256"]) is not None, f"{name} binary identity invalid")
         require(isinstance(binary.get("bytes"), int) and binary["bytes"] > 0, f"{name} binary size invalid")
         binary_path = Path(binary.get("path", ""))
-        if binary_path.exists():
+        if require_order_stratified:
+            try:
+                value001.require_executable_regular(binary_path, f"{name} binary")
+            except value001.HarnessError as exc:
+                raise ValidationError(str(exc)) from exc
+            require(binary_path.stat().st_size == binary["bytes"], f"{name} binary size mismatch")
+            require(hashlib.sha256(binary_path.read_bytes()).hexdigest() == binary["sha256"], f"{name} binary digest mismatch")
+        elif binary_path.exists():
             require(not binary_path.is_symlink() and binary_path.is_file(), f"{name} binary must be a regular file")
             require(hashlib.sha256(binary_path.read_bytes()).hexdigest() == binary["sha256"], f"{name} binary digest mismatch")
 

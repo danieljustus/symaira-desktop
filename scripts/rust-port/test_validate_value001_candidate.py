@@ -109,6 +109,18 @@ class CandidateValidatorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.original = cls.current_candidate_fixture(json.loads(ARTIFACT.read_text()))
+        cls.binary_directory = tempfile.TemporaryDirectory(prefix="value001-candidate-binaries-")
+        cls.addClassCleanup(cls.binary_directory.cleanup)
+        for name, content in (("go", b"g" * 100), ("rust", b"r" * 50)):
+            binary_path = Path(cls.binary_directory.name) / name
+            binary_path.write_bytes(content)
+            binary_path.chmod(0o700)
+            cls.original["binaries"][name].update(
+                path=str(binary_path),
+                bytes=len(content),
+                sha256=hashlib.sha256(content).hexdigest(),
+            )
+        cls.refresh_current_thresholds(cls.original)
         cls.trusted = hashlib.sha256(ARTIFACT.read_bytes()).hexdigest()
 
     def setUp(self):
@@ -285,6 +297,80 @@ class CandidateValidatorTests(unittest.TestCase):
         mutated["binaries"]["rust"]["source"] = "1" * 40
         self.check(mutated, expect="Rust binary source")
 
+    def test_missing_current_binary_is_rejected(self):
+        mutated = copy.deepcopy(self.original)
+        mutated["binaries"]["rust"]["path"] = str(Path(self.binary_directory.name) / "missing")
+        self.check(mutated, expect="rust binary must be an executable regular file")
+
+    def test_dangling_current_binary_symlink_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            link = Path(directory) / "rust-link"
+            link.symlink_to(Path(directory) / "missing")
+            mutated = copy.deepcopy(self.original)
+            mutated["binaries"]["rust"]["path"] = str(link)
+            self.check(mutated, expect="rust binary must be an executable regular file")
+
+    def test_current_binary_directory_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mutated = copy.deepcopy(self.original)
+            mutated["binaries"]["rust"]["path"] = directory
+            self.check(mutated, expect="rust binary must be an executable regular file")
+
+    def test_non_executable_current_binary_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            binary = Path(directory) / "rust"
+            binary.write_bytes(b"rust-candidate-fixture")
+            binary.chmod(0o600)
+            mutated = copy.deepcopy(self.original)
+            mutated["binaries"]["rust"]["path"] = str(binary)
+            self.check(mutated, expect="rust binary must be an executable regular file")
+
+    def test_current_binary_size_mismatch_is_rejected(self):
+        mutated = copy.deepcopy(self.original)
+        mutated["binaries"]["rust"]["bytes"] += 1
+        self.check(mutated, expect="rust binary size mismatch")
+
+    def test_current_binary_digest_mismatch_is_rejected(self):
+        mutated = copy.deepcopy(self.original)
+        mutated["binaries"]["rust"]["sha256"] = "0" * 64
+        self.check(mutated, expect="rust binary digest mismatch")
+
+    def test_current_protocol_counts_are_frozen(self):
+        mutations = [
+            ("runner", "samples", 101, "current runner"),
+            ("runner", "warmups", 21, "current runner"),
+            ("vault", "documents", 9999, "current vault"),
+            ("vault", "search_matches", 99, "current vault"),
+        ]
+        for side in ("go", "rust"):
+            mutations.append((f"index_preparation.{side}", "documents", 9999, f"index_preparation.{side}.documents"))
+        for location, field, value, expected in mutations:
+            with self.subTest(location=location, field=field):
+                mutated = copy.deepcopy(self.original)
+                target = mutated
+                for part in location.split("."):
+                    target = target[part]
+                target[field] = value
+                self.check(mutated, expect=expected)
+
+    def test_current_summary_counts_and_warmups_are_frozen(self):
+        summaries = []
+        for category, metric in self.original["metrics"].items():
+            summaries.append((f"metrics.{category}.go", metric["go"], 100 if category not in {"mcp", "http"} else (500 if category == "mcp" else 700)))
+            summaries.append((f"metrics.{category}.rust", metric["rust"], 100 if category not in {"mcp", "http"} else (500 if category == "mcp" else 700)))
+            for operation, pair in metric.get("operations", {}).items():
+                summaries.append((f"metrics.{category}.operations.{operation}.go", pair["go"], 100))
+                summaries.append((f"metrics.{category}.operations.{operation}.rust", pair["rust"], 100))
+        for label, _summary, expected_samples in summaries:
+            for field, value in (("samples", expected_samples + 1), ("warmup_samples", 21)):
+                with self.subTest(label=label, field=field):
+                    mutated = copy.deepcopy(self.original)
+                    target = mutated["metrics"]
+                    for part in label.split(".")[1:]:
+                        target = target[part]
+                    target[field] = value
+                    self.check(mutated, expect="sample count must be exactly" if field == "samples" else "warmup count must be exactly")
+
     def test_operation_regression_is_recomputed_and_rejected(self):
         mutated = copy.deepcopy(self.original)
         summary = mutated["metrics"]["http"]["operations"]["status"]["rust"]
@@ -415,6 +501,14 @@ class CandidateValidatorTests(unittest.TestCase):
         mutated["metrics"]["http"]["operations"]["healthz"]["go"]["pair_order"][0] = "invalid-order"
         mutated["metrics"]["http"]["operations"]["healthz"]["rust"]["pair_order"][0] = "invalid-order"
         self.check(mutated, expect="invalid pair order")
+
+
+    def test_unbalanced_current_cohorts_are_rejected(self):
+        mutated = copy.deepcopy(self.original)
+        for side in ("go", "rust"):
+            summary = mutated["metrics"]["startup"][side]
+            summary["pair_order"] = ["go-rust"] * summary["samples"]
+        self.check(mutated, expect="pair cohorts are not balanced")
 
 
 if __name__ == "__main__":

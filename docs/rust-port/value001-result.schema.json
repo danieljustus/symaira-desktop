@@ -65,9 +65,129 @@
           "required": ["summation"],
           "properties": {
             "schema_version": {"const": 4},
+            "runner": {"$ref": "#/$defs/currentRunner"},
             "repository": {"$ref": "#/$defs/currentRepository"},
-            "metrics": {"$ref": "#/$defs/positiveMetrics"},
+            "metrics": {"$ref": "#/$defs/currentMetrics"},
+            "vault": {"$ref": "#/$defs/vault"},
+            "index_preparation": {"$ref": "#/$defs/indexPreparation"},
             "thresholds": {"$ref": "#/$defs/thresholds4"}
+          }
+        }
+      ]
+    },
+    "currentRunner": {
+      "allOf": [
+        {"$ref": "#/$defs/runner"},
+        {"type": "object", "properties": {"samples": {"const": 100}, "warmups": {"const": 20}}}
+      ]
+    },
+    "currentMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startup", "search", "mcp", "http", "rss"],
+      "properties": {
+        "startup": {"$ref": "#/$defs/currentPairedMetric"},
+        "search": {"$ref": "#/$defs/currentPairedMetric"},
+        "mcp": {"$ref": "#/$defs/currentMcpOperationMetric"},
+        "http": {"$ref": "#/$defs/currentHttpOperationMetric"},
+        "rss": {"$ref": "#/$defs/currentPairedMetric"}
+      }
+    },
+    "currentPairedMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust"],
+      "properties": {
+        "go": {"$ref": "#/$defs/currentSampleSummary"},
+        "rust": {"$ref": "#/$defs/currentSampleSummary"}
+      }
+    },
+    "currentMcpOperationMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust", "operations"],
+      "properties": {
+        "go": {"$ref": "#/$defs/currentMcpAggregateSummary"},
+        "rust": {"$ref": "#/$defs/currentMcpAggregateSummary"},
+        "operations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["initialize", "tools-list", "desk_status", "desk_ls", "desk_search"],
+          "properties": {
+            "initialize": {"$ref": "#/$defs/currentPairedMetric"},
+            "tools-list": {"$ref": "#/$defs/currentPairedMetric"},
+            "desk_status": {"$ref": "#/$defs/currentPairedMetric"},
+            "desk_ls": {"$ref": "#/$defs/currentPairedMetric"},
+            "desk_search": {"$ref": "#/$defs/currentPairedMetric"}
+          }
+        }
+      }
+    },
+    "currentHttpOperationMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust", "operations"],
+      "properties": {
+        "go": {"$ref": "#/$defs/currentHttpAggregateSummary"},
+        "rust": {"$ref": "#/$defs/currentHttpAggregateSummary"},
+        "operations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["healthz", "status", "snapshot", "file-read", "file-range", "file-missing", "file-traversal"],
+          "properties": {
+            "healthz": {"$ref": "#/$defs/currentPairedMetric"},
+            "status": {"$ref": "#/$defs/currentPairedMetric"},
+            "snapshot": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-read": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-range": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-missing": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-traversal": {"$ref": "#/$defs/currentPairedMetric"}
+          }
+        }
+      }
+    },
+    "currentSampleSummary": {
+      "allOf": [
+        {"$ref": "#/$defs/positiveSampleSummary"},
+        {
+          "type": "object",
+          "properties": {
+            "samples": {"const": 100},
+            "warmup_samples": {"const": 20},
+            "raw": {"type": "array", "minItems": 100, "maxItems": 100},
+            "pair_order": {"type": "array", "minItems": 100, "maxItems": 100}
+          }
+        }
+      ]
+    },
+    "currentAggregateSummary": {
+      "allOf": [
+        {"$ref": "#/$defs/positiveSampleSummary"},
+        {"type": "object", "properties": {"warmup_samples": {"const": 20}}}
+      ]
+    },
+    "currentMcpAggregateSummary": {
+      "allOf": [
+        {"$ref": "#/$defs/currentAggregateSummary"},
+        {
+          "type": "object",
+          "properties": {
+            "samples": {"const": 500},
+            "raw": {"type": "array", "minItems": 500, "maxItems": 500},
+            "pair_order": {"type": "array", "minItems": 500, "maxItems": 500}
+          }
+        }
+      ]
+    },
+    "currentHttpAggregateSummary": {
+      "allOf": [
+        {"$ref": "#/$defs/currentAggregateSummary"},
+        {
+          "type": "object",
+          "properties": {
+            "samples": {"const": 700},
+            "raw": {"type": "array", "minItems": 700, "maxItems": 700},
+            "pair_order": {"type": "array", "minItems": 700, "maxItems": 700}
           }
         }
       ]

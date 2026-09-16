@@ -32,6 +32,8 @@ from typing import Any, Callable
 
 TOKEN = "0123456789abcdef0123456789abcdef"
 MIN_SAMPLES = 100
+CURRENT_SAMPLES = 100
+CURRENT_WARMUPS = 20
 # Schema 2 predates explicit summation/estimator declarations. Schema 3 added
 # those declarations and is immutable historical evidence. Schema 4 is the
 # current order-stratified decision contract; it must never silently accept a
@@ -65,6 +67,40 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def require_executable_regular(path: Path, label: str) -> None:
+    """Require an executable file whose identity can be hashed later."""
+    if path.is_symlink() or not path.is_file() or not os.access(path, os.X_OK):
+        raise HarnessError(f"{label} must be an executable regular file: {path}")
+
+
+def durable_binary_path(output: Path, name: str) -> Path:
+    """Return the local evidence location for a measured binary."""
+    return output.parent / ".value001-binaries" / f"{output.stem}.{name}"
+
+
+def retain_binary(source: Path, destination: Path, label: str) -> Path:
+    """Copy a measured executable before its temporary build root is removed."""
+    require_executable_regular(source, label)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.is_symlink():
+        raise HarnessError(f"{label} evidence path must not be a symlink: {destination}")
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{destination.name}.", suffix=".tmp", dir=destination.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with source.open("rb") as input_stream, os.fdopen(descriptor, "wb") as output_stream:
+            shutil.copyfileobj(input_stream, output_stream)
+            output_stream.flush()
+            os.fsync(output_stream.fileno())
+        os.chmod(temporary, 0o700)
+        os.replace(temporary, destination)
+    finally:
+        temporary.unlink(missing_ok=True)
+    require_executable_regular(destination, label)
+    return destination
 
 
 def is_lower_hex(value: Any, length: int) -> bool:
@@ -1068,6 +1104,11 @@ def latency_order_regression_intervals(metrics: dict[str, Any]) -> dict[str, dic
 
 
 def build_go_oracle(root: Path, commit: str, temp_root: Path) -> tuple[Path, dict[str, Any], Path]:
+    if commit != CURRENT_BEHAVIOUR_ORACLE:
+        raise HarnessError(
+            "VALUE-001 requires --go-source-commit to equal "
+            f"CURRENT_BEHAVIOUR_ORACLE ({CURRENT_BEHAVIOUR_ORACLE})"
+        )
     source = temp_root / "go-oracle-source"
     binary = temp_root / "symdesk-go-oracle"
     added = False
@@ -1130,6 +1171,31 @@ def build_result(
             raise HarnessError("schema 4 requires the order-stratified estimator")
     else:
         raise HarnessError(f"build_result cannot emit schema_version {schema_version!r}")
+    if schema_version == SCHEMA_VERSION:
+        if go_source.get("commit") != CURRENT_BEHAVIOUR_ORACLE:
+            raise HarnessError("current result Go source is not CURRENT_BEHAVIOUR_ORACLE")
+        if samples != CURRENT_SAMPLES or warmups != CURRENT_WARMUPS:
+            raise HarnessError("current result requires exactly 100 samples and 20 warmups")
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("documents") != DOC_COUNT
+            or manifest.get("search_match_count") != 100
+        ):
+            raise HarnessError("current result requires the frozen 10,000-document/100-match vault")
+        if not isinstance(index_preparation, dict):
+            raise HarnessError("current result index preparation is missing")
+        for side in ("go", "rust"):
+            preparation = index_preparation.get(side)
+            if not isinstance(preparation, dict) or preparation.get("documents") != DOC_COUNT:
+                raise HarnessError(
+                    f"current result requires 10,000 index-preparation documents for {side}"
+                )
+        require_executable_regular(go_binary, "Go binary")
+        require_executable_regular(rust_binary, "Rust binary")
+        if go_source.get("binary_bytes") != go_binary.stat().st_size:
+            raise HarnessError("current result Go binary size metadata is not verified")
+        if go_source.get("binary_sha256") != sha256_file(go_binary):
+            raise HarnessError("current result Go binary digest metadata is not verified")
     go_size = go_binary.stat().st_size
     rust_size = rust_binary.stat().st_size
     size_reduction = (go_size - rust_size) / go_size
@@ -1189,7 +1255,7 @@ def build_result(
             "dirty_allowed": True,
             "candidate_diff_sha256": sha256_bytes(git_bytes(root, ["diff", "--binary", "HEAD"])),
             "original_value_baseline_commit": ORIGINAL_VALUE_BASELINE,
-            "current_behaviour_oracle_commit": CURRENT_BEHAVIOUR_ORACLE,
+            "current_behaviour_oracle_commit": go_source["commit"],
         },
         "toolchains": {
             "go_oracle": go_source["go_version"],
@@ -1223,6 +1289,8 @@ def validate_sample(
     summation: str,
     *,
     require_positive: bool,
+    expected_samples: int | None = None,
+    expected_warmups: int | None = None,
 ) -> None:
     if not isinstance(value, dict):
         raise HarnessError(f"{name} is not an object")
@@ -1231,6 +1299,10 @@ def validate_sample(
         raise HarnessError(f"{name} keys mismatch: {set(value)!r}")
     if value["unit"] != unit or value["warmup_samples"] < 1 or value["samples"] < MIN_SAMPLES:
         raise HarnessError(f"{name} sample metadata invalid")
+    if expected_samples is not None and value["samples"] != expected_samples:
+        raise HarnessError(f"{name} sample count must be exactly {expected_samples}")
+    if expected_warmups is not None and value["warmup_samples"] != expected_warmups:
+        raise HarnessError(f"{name} warmup count must be exactly {expected_warmups}")
     if len(value["raw"]) != value["samples"] or len(value["pair_order"]) != value["samples"]:
         raise HarnessError(f"{name} raw/order lengths mismatch")
     if any(
@@ -1259,6 +1331,11 @@ def validate_sample(
             raise HarnessError(f"{name}.{key} does not match raw samples")
     if any(order not in {"go-rust", "rust-go"} for order in value["pair_order"]):
         raise HarnessError(f"{name} contains an invalid pair order")
+    if require_positive:
+        first = value["pair_order"].count("go-rust")
+        second = value["pair_order"].count("rust-go")
+        if first != value["samples"] // 2 or second != value["samples"] // 2:
+            raise HarnessError(f"{name} pair cohorts are not balanced")
 
 
 def validate_paired_metric(
@@ -1268,11 +1345,29 @@ def validate_paired_metric(
     summation: str,
     *,
     require_positive: bool,
+    expected_samples: int | None = None,
+    expected_warmups: int | None = None,
 ) -> None:
     if not isinstance(value, dict) or set(value) != {"go", "rust"}:
         raise HarnessError(f"{name} paired metric keys invalid")
-    validate_sample(value["go"], f"{name}.go", unit, summation, require_positive=require_positive)
-    validate_sample(value["rust"], f"{name}.rust", unit, summation, require_positive=require_positive)
+    validate_sample(
+        value["go"],
+        f"{name}.go",
+        unit,
+        summation,
+        require_positive=require_positive,
+        expected_samples=expected_samples,
+        expected_warmups=expected_warmups,
+    )
+    validate_sample(
+        value["rust"],
+        f"{name}.rust",
+        unit,
+        summation,
+        require_positive=require_positive,
+        expected_samples=expected_samples,
+        expected_warmups=expected_warmups,
+    )
 
 
 def validate_result(result: dict[str, Any]) -> None:
@@ -1315,6 +1410,30 @@ def validate_result(result: dict[str, Any]) -> None:
             or not is_lower_hex(repository["current_behaviour_oracle_commit"], 40)
         ):
             raise HarnessError("schema 4 repository provenance is invalid")
+    if require_positive:
+        runner = result.get("runner")
+        if (
+            not isinstance(runner, dict)
+            or runner.get("samples") != CURRENT_SAMPLES
+            or runner.get("warmups") != CURRENT_WARMUPS
+        ):
+            raise HarnessError("current runner requires exactly 100 samples and 20 warmups")
+        vault = result.get("vault")
+        if (
+            not isinstance(vault, dict)
+            or vault.get("documents") != DOC_COUNT
+            or vault.get("search_matches") != 100
+        ):
+            raise HarnessError("current vault requires exactly 10,000 documents and 100 search matches")
+        index_preparation = result.get("index_preparation")
+        if not isinstance(index_preparation, dict):
+            raise HarnessError("current index preparation is missing")
+        for side in ("go", "rust"):
+            preparation = index_preparation.get(side)
+            if not isinstance(preparation, dict) or preparation.get("documents") != DOC_COUNT:
+                raise HarnessError(
+                    f"current index_preparation.{side}.documents must be exactly 10000"
+                )
     try:
         dt.datetime.fromisoformat(result["captured_at"].replace("Z", "+00:00"))
     except (TypeError, ValueError) as exc:
@@ -1326,17 +1445,28 @@ def validate_result(result: dict[str, Any]) -> None:
             "milliseconds" if name != "rss" else "bytes",
             summation,
             require_positive=require_positive,
+            expected_samples=CURRENT_SAMPLES if require_positive else None,
+            expected_warmups=CURRENT_WARMUPS if require_positive else None,
         )
     for name in ("mcp", "http"):
         metric = result["metrics"][name]
         if not isinstance(metric, dict) or set(metric) != {"go", "rust", "operations"}:
             raise HarnessError(f"metrics.{name} operation metric keys invalid")
+        required_operations = {
+            "mcp": {"initialize", "tools-list", "desk_status", "desk_ls", "desk_search"},
+            "http": {"healthz", "status", "snapshot", "file-read", "file-range", "file-missing", "file-traversal"},
+        }[name]
+        aggregate_samples = (
+            CURRENT_SAMPLES * len(required_operations) if require_positive else None
+        )
         validate_sample(
             metric["go"],
             f"metrics.{name}.go",
             "milliseconds",
             summation,
             require_positive=require_positive,
+            expected_samples=aggregate_samples,
+            expected_warmups=CURRENT_WARMUPS if require_positive else None,
         )
         validate_sample(
             metric["rust"],
@@ -1344,13 +1474,11 @@ def validate_result(result: dict[str, Any]) -> None:
             "milliseconds",
             summation,
             require_positive=require_positive,
+            expected_samples=aggregate_samples,
+            expected_warmups=CURRENT_WARMUPS if require_positive else None,
         )
         if not isinstance(metric["operations"], dict) or not metric["operations"]:
             raise HarnessError(f"metrics.{name}.operations is empty")
-        required_operations = {
-            "mcp": {"initialize", "tools-list", "desk_status", "desk_ls", "desk_search"},
-            "http": {"healthz", "status", "snapshot", "file-read", "file-range", "file-missing", "file-traversal"},
-        }[name]
         if set(metric["operations"]) != required_operations:
             raise HarnessError(f"metrics.{name}.operations are incomplete")
         for operation, pair in metric["operations"].items():
@@ -1362,6 +1490,8 @@ def validate_result(result: dict[str, Any]) -> None:
                 "milliseconds",
                 summation,
                 require_positive=require_positive,
+                expected_samples=CURRENT_SAMPLES if require_positive else None,
+                expected_warmups=CURRENT_WARMUPS if require_positive else None,
             )
     if not isinstance(result["contracts"], list) or len(result["contracts"]) < 4:
         raise HarnessError("contracts are incomplete")
@@ -1551,14 +1681,18 @@ def write_complete_result(output: Path, result: dict[str, Any]) -> None:
 
 def main() -> int:
     args = parse_args()
+    if args.go_source_commit != CURRENT_BEHAVIOUR_ORACLE:
+        raise HarnessError(
+            "--go-source-commit must equal CURRENT_BEHAVIOUR_ORACLE "
+            f"({CURRENT_BEHAVIOUR_ORACLE}) before any build"
+        )
     root = args.root.resolve()
-    rust_binary = args.rust_binary.resolve()
-    if args.samples < MIN_SAMPLES:
-        raise HarnessError(f"--samples must be at least {MIN_SAMPLES}")
-    if args.warmups < 1:
-        raise HarnessError("--warmups must be positive")
-    if not rust_binary.is_file() or not os.access(rust_binary, os.X_OK):
-        raise HarnessError(f"Rust binary is not executable: {rust_binary}")
+    rust_binary = args.rust_binary.expanduser().absolute()
+    if args.samples != CURRENT_SAMPLES:
+        raise HarnessError(f"--samples must equal {CURRENT_SAMPLES} for CURRENT VALUE-001")
+    if args.warmups != CURRENT_WARMUPS:
+        raise HarnessError(f"--warmups must equal {CURRENT_WARMUPS} for CURRENT VALUE-001")
+    require_executable_regular(rust_binary, "Rust binary")
     if shutil.which("ps") is None:
         raise HarnessError("ps is required for long-running RSS measurement")
     if args.output.is_symlink():
@@ -1584,6 +1718,13 @@ def main() -> int:
                     }
                     raise HarnessError("prebuilt Go input is deliberately rejected; VALUE-001 requires a clean oracle build")
                 go_binary, go_source, oracle_source = build_go_oracle(root, args.go_source_commit, temp_root)
+                go_binary = retain_binary(
+                    go_binary,
+                    durable_binary_path(args.output, "go"),
+                    "Go oracle binary",
+                )
+                go_source["binary_sha256"] = sha256_file(go_binary)
+                go_source["binary_bytes"] = go_binary.stat().st_size
                 original_type = git_output(root, ["cat-file", "-t", ORIGINAL_VALUE_BASELINE])
                 if original_type != "commit":
                     raise HarnessError(f"original VALUE baseline is not an immutable commit: {ORIGINAL_VALUE_BASELINE}")

@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "b37ca57258174e2c7f9e321f1418a25c82ce00a6",
+    "commit": "b6caea3fa49142f44d5787f8e33dfd56c14f7e92",
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "03daa94886c9bf80daa2c39e29e3b3c170ff73553282c9e2145a856a5d87be20",
-  "generator_source_digest": "12d35059603d96b6517c4b04100ab2781d6d306b31c5dd98bd663aca10ef6d92",
+  "generator_source_digest": "c45dafd82869a94833c9b18264034d69a183e8a89569f2b92dc8355fad97ae87",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -15,7 +15,6 @@
     "selfhost_http_routes": 21
   },
   "fixture_checksums": {
-    "testdata/port/cli/cases.json": "0ef152268cecdf25ad0978aa9252c3b3c4d52cbf1f2590dc6e669231cddda0f1",
     "testdata/port/cli/symdesk-command-tree.json": "ae4092e18a831f91a91950b9a8f1521f158d0f32540f6151e597f676b7fc92e3",
     "testdata/port/cli/symroom-parser-grammar.json": "41ab739e975e9f9ccadd9a916c85b9641be3ec947192aeed1873c5ee67b8eadb",
     "testdata/port/core/config.json": "f01915e6de1097aac62e77ab94e97bd74bc285d858e6b6c9a732a3d4bc6b6009",
@@ -31,9 +30,9 @@
     "testdata/port/mcp/symroom-tools.json": "30e806bba87f1366727967e2f07a31537d67545d8db49b877abcdbb90d6b3784",
     "testdata/port/representative/cases.json": "329280a98e20cb5fe4d98241ac030fdcf8627b7be7d94ed2893aae708f97a2c8",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "5058285c2d7dd615285a2e8aa6103a3c085f16006e3f1b5b4f02bf0d5d289759",
-    "testdata/port/sidecar/lifecycle.json": "91504076b8d420735999d5f80d272e9a3aea3c709aabeaf58318f98bd42c2d17",
-    "testdata/port/sidecar/roundtrip.json": "8a7d99b1135ef28ff70e442e9be3372793617a3f890debd549f57c824375298b",
+    "testdata/port/sidecar/large-corpus.json": "d8cad8234d7a47c17847246be0604a5e709498fe1de88cc28ad58761e3c2e3a4",
+    "testdata/port/sidecar/lifecycle.json": "7fbc127afbaa80b7dd5fcf503688bda450a208d74765182ea1bc5eeefcb85999",
+    "testdata/port/sidecar/roundtrip.json": "4f86a2b8da5cf4f808d218f14e12a4b2e49e86805ef1cea92ef4daa26af0a587",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/health-links.json": "95501c79b816d21ae86efa724f280e81572ee5636ae11475d9fb793f54428e1a",
     "testdata/port/vault/metadata.json": "5de4b8a9471ae002a52156f0176d3053be9d243497a8a4f45d508f8765f9ae02",

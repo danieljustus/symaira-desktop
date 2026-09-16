@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 import value001
-from value001_report import percentage, ratio_to_percentage, render
+from value001_report import percentage, ratio_to_percentage, render, verified_p95
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -93,6 +93,19 @@ class PercentageTests(unittest.TestCase):
         result["thresholds"]["p95_regressions"]["http"] = 3.1624612017633007
         with self.assertRaises(ValueError):
             render(result)
+
+    def test_schema4_zero_raw_sample_is_not_renderable(self):
+        with self.assertRaisesRegex(ValueError, "invalid raw samples"):
+            verified_p95(
+                {"raw": [0.0, 1.0], "samples": 2, "p95": 1.0},
+                require_positive=True,
+            )
+
+    def test_historical_zero_raw_sample_remains_renderable(self):
+        self.assertEqual(
+            verified_p95({"raw": [0.0, 1.0], "samples": 2, "p95": 1.0}),
+            1.0,
+        )
 
     def test_resumption_report_exposes_operations_in_display_percentages(self):
         result = self.load("value001-resume-956bd3e.json")

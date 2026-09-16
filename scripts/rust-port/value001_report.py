@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Display VALUE-001 p95 regression percentages without changing gate units.
+"""Display VALUE-001 latency-regression percentages without changing gate units.
 
 This reads retained raw evidence; it never runs or approves a benchmark.
 """
@@ -27,11 +27,18 @@ def percentage(ratio: float) -> str:
     return ratio_to_percentage(ratio)
 
 
-def verified_p95(summary: dict) -> float:
+def verified_p95(summary: dict, *, require_positive: bool = False) -> float:
     raw = summary["raw"]
     if not raw or len(raw) != summary["samples"]:
         raise ValueError("raw sample count mismatch")
-    if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0 for v in raw):
+    if any(
+        isinstance(v, bool)
+        or not isinstance(v, (int, float))
+        or not math.isfinite(v)
+        or v < 0
+        or (require_positive and v == 0)
+        for v in raw
+    ):
         raise ValueError("invalid raw samples")
     result = sorted(raw)[math.ceil(len(raw) * 0.95) - 1]
     if result != summary["p95"]:
@@ -41,10 +48,18 @@ def verified_p95(summary: dict) -> float:
 
 def render(result: dict) -> str:
     lines = ["Retained measurement: " + result["captured_at"]]
+    estimator = value001.latency_estimator_of(result)
     recorded = value001.recorded_regressions(result)
     regressions = value001.latency_regressions(
-        result["metrics"], value001.latency_estimator_of(result)
+        result["metrics"], estimator
     )
+    order_regressions = (
+        value001.latency_order_regressions(result["metrics"])
+        if estimator == value001.DEFAULT_LATENCY_ESTIMATOR
+        else None
+    )
+    recorded_by_order = (result.get("thresholds") or {}).get("latency_order_regressions")
+    require_positive = result.get("schema_version") == value001.SCHEMA_VERSION
     for name, regression_ratio in regressions.items():
         if name in recorded and not math.isclose(regression_ratio, recorded[name], rel_tol=1e-12, abs_tol=1e-12):
             raise ValueError("recorded regression differs from retained samples")
@@ -52,9 +67,23 @@ def render(result: dict) -> str:
         pair = result["metrics"][metric_name]
         if operation:
             pair = pair["operations"][operation]
-        go = verified_p95(pair["go"])
-        rust = verified_p95(pair["rust"])
-        lines.append(f"{name}: Go {go:.6f} ms; Rust {rust:.6f} ms; regression {ratio_to_percentage(regression_ratio)}")
+        go = verified_p95(pair["go"], require_positive=require_positive)
+        rust = verified_p95(pair["rust"], require_positive=require_positive)
+        line = f"{name}: Go {go:.6f} ms; Rust {rust:.6f} ms; regression {ratio_to_percentage(regression_ratio)}"
+        if order_regressions is not None:
+            actual_by_order = order_regressions[name]
+            if not isinstance(recorded_by_order, dict) or recorded_by_order.get(name) != actual_by_order:
+                raise ValueError("recorded order-stratified regression differs from retained samples")
+            worst_order = value001.PAIR_ORDERS[0]
+            for order in value001.PAIR_ORDERS[1:]:
+                if actual_by_order[order] > actual_by_order[worst_order]:
+                    worst_order = order
+            cohorts = "; ".join(
+                f"{order} {ratio_to_percentage(actual_by_order[order])}"
+                for order in value001.PAIR_ORDERS
+            )
+            line += f"; worst order {worst_order}; cohorts {cohorts}"
+        lines.append(line)
     lines.append("Recorded gate passed: " + str(result["passed"]).lower())
     return "\n".join(lines)
 

@@ -32,7 +32,13 @@ from typing import Any, Callable
 
 TOKEN = "0123456789abcdef0123456789abcdef"
 MIN_SAMPLES = 100
-SCHEMA_VERSION = 3
+# Schema 2 predates explicit summation/estimator declarations. Schema 3 added
+# those declarations and is immutable historical evidence. Schema 4 is the
+# current order-stratified decision contract; it must never silently accept a
+# schema-3 pooled estimator as a new approval.
+SCHEMA_VERSION = 4
+SCHEMA2_VERSION = 2
+SCHEMA3_VERSION = 3
 ORIGINAL_VALUE_BASELINE = "ae86331930fdfa2b128b68ae5af7437091b9949a"
 CURRENT_BEHAVIOUR_ORACLE = "745c08e8144971c61133c5d0e5d61c7ce405aad2"
 DOC_COUNT = 10_000
@@ -59,6 +65,14 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def is_lower_hex(value: Any, length: int) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == length
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def command_text(command: list[str]) -> str:
@@ -564,7 +578,8 @@ SUMMATIONS = {
     "fsum": math.fsum,
 }
 DEFAULT_SUMMATION = "left_fold"
-LEGACY_SCHEMA_VERSIONS = frozenset({2})
+LEGACY_SCHEMA_VERSIONS = frozenset({SCHEMA2_VERSION})
+DECLARED_SCHEMA_VERSIONS = frozenset({SCHEMA3_VERSION, SCHEMA_VERSION})
 COMPENSATED_SUM_PYTHON = (3, 12)
 
 
@@ -618,6 +633,14 @@ def summary(values: list[float], unit: str, warmups: int, pair_orders: list[str]
         raise HarnessError(f"{unit} has {len(values)} samples; at least {MIN_SAMPLES} are required")
     if len(pair_orders) != len(values):
         raise HarnessError("pair/order sample count does not match raw samples")
+    if any(
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or value <= 0
+        for value in values
+    ):
+        raise HarnessError(f"{unit} contains a non-positive or non-finite sample")
     return {
         "unit": unit,
         "warmup_samples": warmups,
@@ -654,7 +677,21 @@ def measure_process_pair(
         order = (("go", go_binary, go_env, go_args), ("rust", rust_binary, rust_env, rust_args)) if go_first else (("rust", rust_binary, rust_env, rust_args), ("go", go_binary, go_env, go_args))
         for name, binary, env, args in order:
             started = time.perf_counter_ns()
-            completed = subprocess.run([str(binary), *args], input=input_data, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30.0, check=False)
+            try:
+                completed = subprocess.run(
+                    [str(binary), *args],
+                    input=input_data,
+                    env=env,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=30.0,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired as exc:
+                raise HarnessError(
+                    f"{name} {' '.join(args)} timed out after 30.0s"
+                ) from exc
             elapsed = (time.perf_counter_ns() - started) / 1_000_000.0
             if completed.returncode != 0:
                 raise HarnessError(f"{name} {' '.join(args)} failed: {completed.stderr[-1000:]}")
@@ -739,7 +776,17 @@ def measure_http(
             for operation_name in names:
                 operation = http_operation(operation_name)
                 started = time.perf_counter_ns()
-                status, body, headers = server.request_raw(operation["method"], operation["path"], operation["auth"], operation.get("headers"))
+                try:
+                    status, body, headers = server.request_raw(
+                        operation["method"],
+                        operation["path"],
+                        operation["auth"],
+                        operation.get("headers"),
+                    )
+                except (OSError, TimeoutError, urllib.error.URLError) as exc:
+                    raise HarnessError(
+                        f"{name} HTTP {operation_name} request failed or timed out: {exc}"
+                    ) from exc
                 elapsed = (time.perf_counter_ns() - started) / 1_000_000.0
                 validate_http(operation_name, status, body, headers, expected, server.vault)
                 round_values[name].append(elapsed)
@@ -778,7 +825,16 @@ def measure_http(
 
 def ratio(candidate: float, reference: float) -> float:
     """Return the candidate/reference value as a dimensionless ratio."""
-    if not math.isfinite(candidate) or not math.isfinite(reference) or reference <= 0:
+    if (
+        isinstance(candidate, bool)
+        or isinstance(reference, bool)
+        or not isinstance(candidate, (int, float))
+        or not isinstance(reference, (int, float))
+        or not math.isfinite(candidate)
+        or not math.isfinite(reference)
+        or candidate <= 0
+        or reference <= 0
+    ):
         raise HarnessError(f"invalid latency values candidate={candidate!r} reference={reference!r}")
     return candidate / reference
 
@@ -795,14 +851,26 @@ def ratio(candidate: float, reference: float) -> float:
 #
 # "paired_median_ratio" uses the pairing the design already provides: the
 # median of the per-pair rust/go ratio. Drift cancels because both members of
-# a pair are measured under the same machine state.
+# a pair are measured under the same machine state. It remains supported for
+# immutable schema-3 evidence, but it pools the two deliberately alternated
+# within-pair orders and therefore cannot decide a new candidate.
 #
-# The estimator is recorded in the report. Pre-declaration (schema 2) reports
-# are immutable and keep being evaluated under the estimator of their era.
-LATENCY_ESTIMATORS = frozenset({"unpaired_p95", "paired_median_ratio"})
-DEFAULT_LATENCY_ESTIMATOR = "paired_median_ratio"
+# "order_stratified_paired_median_ratio" keeps the same pairwise ratios but
+# computes a median independently for go-rust and rust-go. A new candidate is
+# judged by the worse cohort. This is deliberately conservative: a fast first
+# invocation must not make a slow second invocation disappear at the pooled
+# median boundary.
+#
+# The estimator is recorded in the report. Schema 2 has no declaration,
+# schema 3 is immutable historical evidence, and schema 4 is the first format
+# in which order-stratification is mandatory for a current approval.
+SCHEMA3_LATENCY_ESTIMATORS = frozenset({"unpaired_p95", "paired_median_ratio"})
+DEFAULT_LATENCY_ESTIMATOR = "order_stratified_paired_median_ratio"
+LATENCY_ESTIMATORS = SCHEMA3_LATENCY_ESTIMATORS | {DEFAULT_LATENCY_ESTIMATOR}
 LEGACY_LATENCY_ESTIMATOR = "unpaired_p95"
 MEDIAN_INTERVAL_CONFIDENCE = 0.95
+PAIR_ORDERS = ("go-rust", "rust-go")
+MIN_ORDER_COHORT_SAMPLES = MIN_SAMPLES // len(PAIR_ORDERS)
 
 
 def latency_estimator_of(result: Any) -> str:
@@ -817,9 +885,17 @@ def latency_estimator_of(result: Any) -> str:
                 f"schema {version} reports must not declare a latency estimator"
             )
         return LEGACY_LATENCY_ESTIMATOR
-    if declared not in LATENCY_ESTIMATORS:
-        raise HarnessError(f"unknown or missing latency estimator: {declared!r}")
-    return str(declared)
+    if version == SCHEMA3_VERSION:
+        if declared not in SCHEMA3_LATENCY_ESTIMATORS:
+            raise HarnessError(f"schema 3 has an invalid latency estimator: {declared!r}")
+        return str(declared)
+    if version == SCHEMA_VERSION:
+        if declared != DEFAULT_LATENCY_ESTIMATOR:
+            raise HarnessError(
+                "schema 4 requires the order-stratified latency estimator"
+            )
+        return DEFAULT_LATENCY_ESTIMATOR
+    raise HarnessError(f"unsupported schema_version: {version!r}")
 
 
 def recorded_regressions(result: Any) -> dict[str, Any]:
@@ -839,6 +915,45 @@ def paired_ratios(pair: dict[str, Any], label: str) -> list[float]:
     if not go:
         raise HarnessError(f"{label} has no samples")
     return [ratio(r, g) for g, r in zip(go, rust)]
+
+
+def paired_ratio_cohorts(pair: dict[str, Any], label: str) -> dict[str, list[float]]:
+    """Split aligned Rust/Go pair ratios by their recorded execution order.
+
+    The producer deliberately alternates which implementation runs first.
+    Both sides must therefore carry the same balanced labels. Missing,
+    mismatched, or materially unbalanced labels make an order-stratified gate
+    unverifiable and are rejected rather than silently pooled.
+    """
+    ratios = paired_ratios(pair, label)
+    go_orders = pair["go"].get("pair_order")
+    rust_orders = pair["rust"].get("pair_order")
+    if not isinstance(go_orders, list) or not isinstance(rust_orders, list):
+        raise HarnessError(f"{label} pair order labels are missing")
+    if len(go_orders) != len(ratios) or len(rust_orders) != len(ratios):
+        raise HarnessError(f"{label} pair order labels do not match samples")
+    if go_orders != rust_orders:
+        raise HarnessError(f"{label} pair order labels are not aligned")
+
+    cohorts = {order: [] for order in PAIR_ORDERS}
+    for order, sample in zip(go_orders, ratios):
+        if order not in cohorts:
+            raise HarnessError(f"{label} has an invalid pair order: {order!r}")
+        cohorts[order].append(sample)
+
+    counts = [len(cohorts[order]) for order in PAIR_ORDERS]
+    if min(counts) < MIN_ORDER_COHORT_SAMPLES or max(counts) - min(counts) > 1:
+        raise HarnessError(
+            f"{label} order cohorts are not balanced: "
+            f"go-rust={counts[0]}, rust-go={counts[1]}"
+        )
+    return cohorts
+
+
+def order_stratified_paired_regression(pair: dict[str, Any], label: str) -> float:
+    """Return the worst within-order paired-median regression for one gate."""
+    cohorts = paired_ratio_cohorts(pair, label)
+    return max(median(values) - 1.0 for values in cohorts.values())
 
 
 def median(values: list[float]) -> float:
@@ -907,17 +1022,48 @@ def latency_regressions(metrics: dict[str, Any], estimator: str) -> dict[str, fl
     for name, pair in latency_pairs(metrics).items():
         if estimator == "unpaired_p95":
             regressions[name] = ratio(pair["rust"]["p95"], pair["go"]["p95"]) - 1.0
-        else:
+        elif estimator == "paired_median_ratio":
             regressions[name] = median(paired_ratios(pair, name)) - 1.0
+        else:
+            regressions[name] = order_stratified_paired_regression(pair, name)
+    return regressions
+
+
+def latency_order_regressions(metrics: dict[str, Any]) -> dict[str, dict[str, float]]:
+    """Recompute each gate's paired-median regression by execution order."""
+    regressions: dict[str, dict[str, float]] = {}
+    for name, pair in latency_pairs(metrics).items():
+        cohorts = paired_ratio_cohorts(pair, name)
+        regressions[name] = {
+            order: median(cohorts[order]) - 1.0 for order in PAIR_ORDERS
+        }
     return regressions
 
 
 def latency_regression_intervals(metrics: dict[str, Any]) -> dict[str, list[float]]:
-    """Measurement uncertainty for each paired gate, as a median interval."""
+    """Historical pooled paired-median intervals for schema-3 evidence only."""
     intervals: dict[str, list[float]] = {}
     for name, pair in latency_pairs(metrics).items():
         low, high = median_interval(paired_ratios(pair, name))
         intervals[name] = [low - 1.0, high - 1.0]
+    return intervals
+
+
+def latency_order_regression_intervals(metrics: dict[str, Any]) -> dict[str, dict[str, list[float]]]:
+    """Per-order descriptive median intervals for schema-4 evidence.
+
+    The two cohort intervals deliberately remain separate. Combining them
+    would make a pooled interval look decision-capable again; the schema-4
+    gate is the worst *point* median in ``latency_order_regressions``.
+    """
+    intervals: dict[str, dict[str, list[float]]] = {}
+    for name, pair in latency_pairs(metrics).items():
+        cohorts = paired_ratio_cohorts(pair, name)
+        intervals[name] = {
+            order: [low - 1.0, high - 1.0]
+            for order, values in cohorts.items()
+            for low, high in (median_interval(values),)
+        }
     return intervals
 
 
@@ -967,6 +1113,7 @@ def build_result(
     index_preparation: dict[str, Any],
     summation: str = DEFAULT_SUMMATION,
     latency_estimator: str = DEFAULT_LATENCY_ESTIMATOR,
+    schema_version: int = SCHEMA_VERSION,
 ) -> dict[str, Any]:
     # The declaration must describe the metrics actually being recorded, not
     # the producer's own preference; a caller replaying pre-declaration
@@ -975,6 +1122,14 @@ def build_result(
         raise HarnessError(f"unknown summation: {summation!r}")
     if latency_estimator not in LATENCY_ESTIMATORS:
         raise HarnessError(f"unknown latency estimator: {latency_estimator!r}")
+    if schema_version == SCHEMA3_VERSION:
+        if latency_estimator not in SCHEMA3_LATENCY_ESTIMATORS:
+            raise HarnessError("schema 3 cannot emit the order-stratified estimator")
+    elif schema_version == SCHEMA_VERSION:
+        if latency_estimator != DEFAULT_LATENCY_ESTIMATOR:
+            raise HarnessError("schema 4 requires the order-stratified estimator")
+    else:
+        raise HarnessError(f"build_result cannot emit schema_version {schema_version!r}")
     go_size = go_binary.stat().st_size
     rust_size = rust_binary.stat().st_size
     size_reduction = (go_size - rust_size) / go_size
@@ -982,10 +1137,23 @@ def build_result(
     rss_rust = metrics["rss"]["rust"]["max"]
     rss_reduction = (rss_go - rss_rust) / rss_go
     regressions = latency_regressions(metrics, latency_estimator)
-    latency_pass = all(math.isfinite(value) and value <= 0.10 for value in regressions.values())
+    order_regressions = (
+        latency_order_regressions(metrics)
+        if schema_version == SCHEMA_VERSION
+        else None
+    )
+    # The stratified estimator's scalar is the worst order by construction,
+    # but checking every recorded cohort documents the fail-closed intent and
+    # prevents a malformed future implementation from hiding one cohort.
+    latency_values = (
+        [value for by_order in order_regressions.values() for value in by_order.values()]
+        if order_regressions is not None
+        else list(regressions.values())
+    )
+    latency_pass = all(math.isfinite(value) and value <= 0.10 for value in latency_values)
     improvement_pass = size_reduction >= 0.20 or rss_reduction >= 0.20
     contracts_pass = all(item["exit_code"] == 0 for item in contracts)
-    thresholds = {
+    thresholds: dict[str, Any] = {
         "minimum_improvement": 0.20,
         # Unchanged ceiling; only the estimator below changed.
         "maximum_latency_regression": 0.10,
@@ -994,16 +1162,21 @@ def build_result(
         "representative_rss_reduction_max": rss_reduction,
         "improvement_pass": improvement_pass,
         "latency_regressions": regressions,
-        # Measurement uncertainty is reported, not hidden behind a point
-        # estimate: a distribution-free interval for each paired gate.
-        "latency_regression_intervals": latency_regression_intervals(metrics),
-        "latency_interval_confidence": MEDIAN_INTERVAL_CONFIDENCE,
         "latency_pass": latency_pass,
         "contracts_pass": contracts_pass,
         "fail_closed": True,
     }
+    if schema_version == SCHEMA_VERSION:
+        thresholds["latency_order_regressions"] = order_regressions
+        # Intervals are descriptive only and remain stratified: a pooled
+        # interval would reintroduce the order bias that schema 4 removes.
+        thresholds["latency_order_regression_intervals"] = latency_order_regression_intervals(metrics)
+        thresholds["latency_interval_confidence"] = MEDIAN_INTERVAL_CONFIDENCE
+    else:
+        thresholds["latency_regression_intervals"] = latency_regression_intervals(metrics)
+        thresholds["latency_interval_confidence"] = MEDIAN_INTERVAL_CONFIDENCE
     result = {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": schema_version,
         "benchmark": "VALUE-001",
         "summation": summation,
         "captured_at": utc_now(),
@@ -1043,7 +1216,14 @@ def sys_platform() -> str:
     return platform.system().lower()
 
 
-def validate_sample(value: Any, name: str, unit: str, summation: str) -> None:
+def validate_sample(
+    value: Any,
+    name: str,
+    unit: str,
+    summation: str,
+    *,
+    require_positive: bool,
+) -> None:
     if not isinstance(value, dict):
         raise HarnessError(f"{name} is not an object")
     required = {"unit", "warmup_samples", "samples", "min", "mean", "p50", "p95", "p99", "max", "raw", "pair_order", "max_observed"}
@@ -1053,7 +1233,14 @@ def validate_sample(value: Any, name: str, unit: str, summation: str) -> None:
         raise HarnessError(f"{name} sample metadata invalid")
     if len(value["raw"]) != value["samples"] or len(value["pair_order"]) != value["samples"]:
         raise HarnessError(f"{name} raw/order lengths mismatch")
-    if any(not isinstance(item, (int, float)) or isinstance(item, bool) or not math.isfinite(item) or item < 0 for item in value["raw"]):
+    if any(
+        not isinstance(item, (int, float))
+        or isinstance(item, bool)
+        or not math.isfinite(item)
+        or item < 0
+        or (require_positive and item == 0)
+        for item in value["raw"]
+    ):
         raise HarnessError(f"{name} contains invalid raw values")
     for key in ("min", "mean", "p50", "p95", "p99", "max", "max_observed"):
         if isinstance(value[key], bool) or not isinstance(value[key], (int, float)) or not math.isfinite(value[key]):
@@ -1074,11 +1261,18 @@ def validate_sample(value: Any, name: str, unit: str, summation: str) -> None:
         raise HarnessError(f"{name} contains an invalid pair order")
 
 
-def validate_paired_metric(value: Any, name: str, unit: str, summation: str) -> None:
+def validate_paired_metric(
+    value: Any,
+    name: str,
+    unit: str,
+    summation: str,
+    *,
+    require_positive: bool,
+) -> None:
     if not isinstance(value, dict) or set(value) != {"go", "rust"}:
         raise HarnessError(f"{name} paired metric keys invalid")
-    validate_sample(value["go"], f"{name}.go", unit, summation)
-    validate_sample(value["rust"], f"{name}.rust", unit, summation)
+    validate_sample(value["go"], f"{name}.go", unit, summation, require_positive=require_positive)
+    validate_sample(value["rust"], f"{name}.rust", unit, summation, require_positive=require_positive)
 
 
 def validate_result(result: dict[str, Any]) -> None:
@@ -1086,8 +1280,8 @@ def validate_result(result: dict[str, Any]) -> None:
     if not isinstance(result, dict) or result.get("benchmark") != "VALUE-001":
         raise HarnessError("result top-level schema mismatch")
     version = result.get("schema_version")
-    if version == SCHEMA_VERSION:
-        # Current reports declare how their means were summed.
+    if version in DECLARED_SCHEMA_VERSIONS:
+        # Schema 3 and later declare how their means were summed.
         required = base | {"summation"}
     elif version in LEGACY_SCHEMA_VERSIONS:
         # Retained pre-declaration captures are immutable and keep their shape.
@@ -1097,18 +1291,60 @@ def validate_result(result: dict[str, Any]) -> None:
     if set(result) != required:
         raise HarnessError("result top-level schema mismatch")
     summation = summation_of(result)
+    require_positive = version == SCHEMA_VERSION
+    if require_positive:
+        repository = result.get("repository")
+        expected_repository_keys = {
+            "root",
+            "head",
+            "status",
+            "dirty_allowed",
+            "candidate_diff_sha256",
+            "original_value_baseline_commit",
+            "current_behaviour_oracle_commit",
+        }
+        if (
+            not isinstance(repository, dict)
+            or set(repository) != expected_repository_keys
+            or not isinstance(repository["root"], str)
+            or not isinstance(repository["status"], str)
+            or repository["dirty_allowed"] is not True
+            or not is_lower_hex(repository["head"], 40)
+            or not is_lower_hex(repository["candidate_diff_sha256"], 64)
+            or not is_lower_hex(repository["original_value_baseline_commit"], 40)
+            or not is_lower_hex(repository["current_behaviour_oracle_commit"], 40)
+        ):
+            raise HarnessError("schema 4 repository provenance is invalid")
     try:
         dt.datetime.fromisoformat(result["captured_at"].replace("Z", "+00:00"))
     except (TypeError, ValueError) as exc:
         raise HarnessError("captured_at is not RFC3339") from exc
     for name in ("startup", "search", "rss"):
-        validate_paired_metric(result["metrics"][name], f"metrics.{name}", "milliseconds" if name != "rss" else "bytes", summation)
+        validate_paired_metric(
+            result["metrics"][name],
+            f"metrics.{name}",
+            "milliseconds" if name != "rss" else "bytes",
+            summation,
+            require_positive=require_positive,
+        )
     for name in ("mcp", "http"):
         metric = result["metrics"][name]
         if not isinstance(metric, dict) or set(metric) != {"go", "rust", "operations"}:
             raise HarnessError(f"metrics.{name} operation metric keys invalid")
-        validate_sample(metric["go"], f"metrics.{name}.go", "milliseconds", summation)
-        validate_sample(metric["rust"], f"metrics.{name}.rust", "milliseconds", summation)
+        validate_sample(
+            metric["go"],
+            f"metrics.{name}.go",
+            "milliseconds",
+            summation,
+            require_positive=require_positive,
+        )
+        validate_sample(
+            metric["rust"],
+            f"metrics.{name}.rust",
+            "milliseconds",
+            summation,
+            require_positive=require_positive,
+        )
         if not isinstance(metric["operations"], dict) or not metric["operations"]:
             raise HarnessError(f"metrics.{name}.operations is empty")
         required_operations = {
@@ -1120,12 +1356,83 @@ def validate_result(result: dict[str, Any]) -> None:
         for operation, pair in metric["operations"].items():
             if not isinstance(operation, str):
                 raise HarnessError("operation name is not a string")
-            validate_paired_metric(pair, f"metrics.{name}.operations.{operation}", "milliseconds", summation)
+            validate_paired_metric(
+                pair,
+                f"metrics.{name}.operations.{operation}",
+                "milliseconds",
+                summation,
+                require_positive=require_positive,
+            )
     if not isinstance(result["contracts"], list) or len(result["contracts"]) < 4:
         raise HarnessError("contracts are incomplete")
     for contract in result["contracts"]:
         if set(contract) != {"name", "command", "elapsed_ms", "exit_code", "stdout", "stderr"} or contract["exit_code"] != 0:
             raise HarnessError("contract record is not strict or passing")
+    thresholds = result["thresholds"]
+    if not isinstance(thresholds, dict):
+        raise HarnessError("thresholds are not an object")
+    estimator = latency_estimator_of(result)
+    if version == SCHEMA_VERSION:
+        expected_threshold_keys = {
+            "minimum_improvement", "maximum_latency_regression", "latency_estimator",
+            "binary_size_reduction", "representative_rss_reduction_max",
+            "improvement_pass", "latency_regressions", "latency_order_regressions",
+            "latency_order_regression_intervals", "latency_interval_confidence",
+            "latency_pass", "contracts_pass", "fail_closed",
+        }
+        if set(thresholds) != expected_threshold_keys:
+            raise HarnessError("schema 4 threshold keys mismatch")
+        if thresholds.get("minimum_improvement") != 0.20:
+            raise HarnessError("schema 4 minimum improvement threshold changed")
+        if thresholds.get("maximum_latency_regression") != 0.10:
+            raise HarnessError("schema 4 maximum latency threshold changed")
+        for key in ("binary_size_reduction", "representative_rss_reduction_max"):
+            value = thresholds.get(key)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                raise HarnessError(f"schema 4 {key} is not finite")
+        if not isinstance(thresholds.get("improvement_pass"), bool) or not isinstance(thresholds.get("contracts_pass"), bool):
+            raise HarnessError("schema 4 pass flags are not boolean")
+        if thresholds.get("fail_closed") is not True:
+            raise HarnessError("order-stratified report is not fail closed")
+        expected_order_regressions = latency_order_regressions(result["metrics"])
+        recorded_order_regressions = thresholds.get("latency_order_regressions")
+        if not isinstance(recorded_order_regressions, dict) or set(recorded_order_regressions) != set(expected_order_regressions):
+            raise HarnessError("order-stratified latency regressions are incomplete")
+        for name, expected_by_order in expected_order_regressions.items():
+            actual_by_order = recorded_order_regressions.get(name)
+            if not isinstance(actual_by_order, dict) or set(actual_by_order) != set(PAIR_ORDERS):
+                raise HarnessError(f"{name} order-stratified latency regressions are incomplete")
+            for order, expected in expected_by_order.items():
+                actual = actual_by_order.get(order)
+                if isinstance(actual, bool) or not isinstance(actual, (int, float)) or not math.isfinite(actual) or actual != expected:
+                    raise HarnessError(f"{name}.{order} order-stratified regression is not recomputed")
+        expected_regressions = latency_regressions(result["metrics"], estimator)
+        if thresholds.get("latency_regressions") != expected_regressions:
+            raise HarnessError("order-stratified latency regressions are not recomputed")
+        expected_intervals = latency_order_regression_intervals(result["metrics"])
+        recorded_intervals = thresholds.get("latency_order_regression_intervals")
+        if not isinstance(recorded_intervals, dict) or set(recorded_intervals) != set(expected_intervals):
+            raise HarnessError("order-stratified latency intervals are incomplete")
+        for name, expected_by_order in expected_intervals.items():
+            actual_by_order = recorded_intervals.get(name)
+            if not isinstance(actual_by_order, dict) or set(actual_by_order) != set(PAIR_ORDERS):
+                raise HarnessError(f"{name} order-stratified latency intervals are incomplete")
+            for order, expected_interval in expected_by_order.items():
+                actual_interval = actual_by_order.get(order)
+                if not isinstance(actual_interval, list) or len(actual_interval) != 2:
+                    raise HarnessError(f"{name}.{order} order-stratified interval is invalid")
+                for actual, expected in zip(actual_interval, expected_interval):
+                    if isinstance(actual, bool) or not isinstance(actual, (int, float)) or not math.isfinite(actual) or actual != expected:
+                        raise HarnessError(f"{name}.{order} order-stratified interval is not recomputed")
+        if thresholds.get("latency_interval_confidence") != MEDIAN_INTERVAL_CONFIDENCE:
+            raise HarnessError("order-stratified latency interval confidence mismatch")
+        expected_latency_pass = all(
+            value <= 0.10
+            for by_order in expected_order_regressions.values()
+            for value in by_order.values()
+        )
+        if thresholds.get("latency_pass") is not expected_latency_pass:
+            raise HarnessError("order-stratified latency pass flag is not recomputed")
     if not isinstance(result["passed"], bool):
         raise HarnessError("passed is not boolean")
 
@@ -1152,7 +1459,18 @@ def contract_checks(root: Path, go_binary: Path, rust_binary: Path) -> list[dict
 def prepare_index(binary: Path, home_root: Path, vault: Path, sidecar: Path, expected: dict[str, Any]) -> dict[str, Any]:
     env = benchmark_env(home_root, vault, sidecar)
     started = time.perf_counter()
-    completed = subprocess.run([str(binary), "ls", "--vault", str(vault), "--json"], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=180.0, check=False)
+    try:
+        completed = subprocess.run(
+            [str(binary), "ls", "--vault", str(vault), "--json"],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=180.0,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise HarnessError(f"{binary.name} index preparation timed out after 180.0s") from exc
     elapsed = (time.perf_counter() - started) * 1000.0
     if completed.returncode != 0:
         raise HarnessError(f"{binary.name} index preparation failed: {completed.stderr[-2000:]}")
@@ -1185,6 +1503,52 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def incomplete_marker_path(output: Path) -> Path:
+    return output.with_name(output.name + ".incomplete")
+
+
+def mark_output_incomplete(output: Path) -> Path:
+    """Make a stale output ineligible for approval until this run completes."""
+    marker = incomplete_marker_path(output)
+    payload = (json.dumps({"status": "incomplete", "started_at": utc_now(), "pid": os.getpid()}) + "\n").encode("utf-8")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(marker, flags, 0o600)
+    except FileExistsError as exc:
+        raise HarnessError(
+            f"output has an incomplete-run marker: {marker}; inspect it and choose a fresh output"
+        ) from exc
+    except OSError as exc:
+        raise HarnessError(f"cannot create incomplete-run marker {marker}: {exc}") from exc
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+    except OSError as exc:
+        # Leaving a partial marker is deliberately fail-closed. Do not unlink
+        # a path that an attacker could replace after its exclusive creation.
+        raise HarnessError(f"cannot persist incomplete-run marker {marker}: {exc}") from exc
+    return marker
+
+
+def write_complete_result(output: Path, result: dict[str, Any]) -> None:
+    """Self-validate then atomically replace an output artifact."""
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{output.name}.", suffix=".tmp", dir=output.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            json.dump(result, stream, indent=2)
+            stream.write("\n")
+        reloaded = json.loads(temporary.read_text(encoding="utf-8"))
+        validate_result(reloaded)
+        os.replace(temporary, output)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def main() -> int:
     args = parse_args()
     root = args.root.resolve()
@@ -1197,82 +1561,89 @@ def main() -> int:
         raise HarnessError(f"Rust binary is not executable: {rust_binary}")
     if shutil.which("ps") is None:
         raise HarnessError("ps is required for long-running RSS measurement")
+    if args.output.is_symlink():
+        raise HarnessError(f"output must not be a symlink: {args.output}")
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="symdesk-value001-") as temp_name:
-        temp_root = Path(temp_name)
-        oracle_source: Path | None = None
-        servers: list[RunningServer] = []
-        try:
-            if args.go_binary is not None:
-                go_binary = args.go_binary.resolve()
-                go_source = {
-                    "commit": git_output(root, ["rev-parse", args.go_source_commit]),
-                    "status": "prebuilt input; source build not performed",
-                    "build_command": "external prebuilt input (not accepted for VALUE-001)",
-                    "go_version": tool_version(["go", "version"], root),
-                    "binary_sha256": sha256_file(go_binary),
-                    "binary_bytes": go_binary.stat().st_size,
-                }
-                raise HarnessError("prebuilt Go input is deliberately rejected; VALUE-001 requires a clean oracle build")
-            go_binary, go_source, oracle_source = build_go_oracle(root, args.go_source_commit, temp_root)
-            original_type = git_output(root, ["cat-file", "-t", ORIGINAL_VALUE_BASELINE])
-            if original_type != "commit":
-                raise HarnessError(f"original VALUE baseline is not an immutable commit: {ORIGINAL_VALUE_BASELINE}")
-            contracts = contract_checks(root, go_binary, rust_binary)
-
-            go_home = temp_root / "go-search"
-            rust_home = temp_root / "rust-search"
-            go_vault = go_home / "vault"
-            rust_vault = rust_home / "vault"
-            go_manifest = write_vault(go_vault)
-            rust_manifest = write_vault(rust_vault)
-            expected_go = expected_vault_semantics(go_manifest)
-            expected_rust = expected_vault_semantics(rust_manifest)
-            go_env = benchmark_env(go_home, go_vault, go_home / "sidecar.db")
-            rust_env = benchmark_env(rust_home, rust_vault, rust_home / "sidecar.db")
-            index_preparation = {
-                "go": prepare_index(go_binary, go_home, go_vault, go_home / "sidecar.db", expected_go),
-                "rust": prepare_index(rust_binary, rust_home, rust_vault, rust_home / "sidecar.db", expected_rust),
-                "vault_justification": "10,000 Markdown documents (~1.6 MiB generated body/frontmatter) exercises recursive walk, 50 SQLite batches of 200, FTS/snippet search and realistic path/title metadata while keeping 100-pair measurement bounded.",
-            }
-            startup = measure_process_pair(go_binary, rust_binary, go_env, rust_env, ["version"], ["version"], args.warmups, args.samples, validate_version)
-            search = measure_process_pair(go_binary, rust_binary, go_env, rust_env, ["search", SEARCH_TOKEN, "--vault", str(go_vault), "--json"], ["search", SEARCH_TOKEN, "--vault", str(rust_vault), "--json"], args.warmups, args.samples, lambda out, err: validate_search(out, err, expected_go))
-            mcp = measure_mcp(go_binary, rust_binary, go_env, rust_env, expected_go, go_vault, rust_vault, args.warmups, args.samples)
-
-            go_http_home = temp_root / "go-http"
-            rust_http_home = temp_root / "rust-http"
-            go_http_vault = go_http_home / "vault"
-            rust_http_vault = rust_http_home / "vault"
-            go_http_manifest = write_vault(go_http_vault, include_http_probe=True)
-            rust_http_manifest = write_vault(rust_http_vault, include_http_probe=True)
-            go_http_expected = expected_vault_semantics(go_http_manifest, include_http_probe=True)
-            rust_http_expected = expected_vault_semantics(rust_http_manifest, include_http_probe=True)
-            prepare_index(go_binary, go_http_home, go_http_vault, go_http_home / "sidecar.db", go_http_expected)
-            prepare_index(rust_binary, rust_http_home, rust_http_vault, rust_http_home / "sidecar.db", rust_http_expected)
-            go_server = RunningServer(go_binary, go_http_home, go_http_vault, go_http_home / "sidecar.db")
-            servers.append(go_server)
-            rust_server = RunningServer(rust_binary, rust_http_home, rust_http_vault, rust_http_home / "sidecar.db")
-            servers.append(rust_server)
-            http, rss = measure_http(go_server, rust_server, go_http_expected, rust_http_expected, args.warmups, args.samples, args.rss_interval_ms)
-            metrics = {"startup": startup, "search": search, "mcp": mcp, "http": http, "rss": rss}
-            result = build_result(root, go_binary, rust_binary, go_source, args.rust_build_command, contracts, metrics, go_manifest, args.samples, args.warmups, index_preparation)
-            args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-            reloaded = json.loads(args.output.read_text(encoding="utf-8"))
-            validate_result(reloaded)
-            print(json.dumps({"output": str(args.output), "passed": result["passed"], "thresholds": result["thresholds"]}, indent=2))
-            if not result["passed"]:
-                raise HarnessError("VALUE-001 failed closed; see measured JSON artifact")
-        finally:
-            cleanup_error: BaseException | None = None
+    marker = mark_output_incomplete(args.output)
+    artifact_complete = False
+    try:
+        with tempfile.TemporaryDirectory(prefix="symdesk-value001-") as temp_name:
+            temp_root = Path(temp_name)
+            oracle_source: Path | None = None
+            servers: list[RunningServer] = []
             try:
-                stop_all(servers)
-            except BaseException as exc:
-                cleanup_error = exc
+                if args.go_binary is not None:
+                    go_binary = args.go_binary.resolve()
+                    go_source = {
+                        "commit": git_output(root, ["rev-parse", args.go_source_commit]),
+                        "status": "prebuilt input; source build not performed",
+                        "build_command": "external prebuilt input (not accepted for VALUE-001)",
+                        "go_version": tool_version(["go", "version"], root),
+                        "binary_sha256": sha256_file(go_binary),
+                        "binary_bytes": go_binary.stat().st_size,
+                    }
+                    raise HarnessError("prebuilt Go input is deliberately rejected; VALUE-001 requires a clean oracle build")
+                go_binary, go_source, oracle_source = build_go_oracle(root, args.go_source_commit, temp_root)
+                original_type = git_output(root, ["cat-file", "-t", ORIGINAL_VALUE_BASELINE])
+                if original_type != "commit":
+                    raise HarnessError(f"original VALUE baseline is not an immutable commit: {ORIGINAL_VALUE_BASELINE}")
+                contracts = contract_checks(root, go_binary, rust_binary)
+
+                go_home = temp_root / "go-search"
+                rust_home = temp_root / "rust-search"
+                go_vault = go_home / "vault"
+                rust_vault = rust_home / "vault"
+                go_manifest = write_vault(go_vault)
+                rust_manifest = write_vault(rust_vault)
+                expected_go = expected_vault_semantics(go_manifest)
+                expected_rust = expected_vault_semantics(rust_manifest)
+                go_env = benchmark_env(go_home, go_vault, go_home / "sidecar.db")
+                rust_env = benchmark_env(rust_home, rust_vault, rust_home / "sidecar.db")
+                index_preparation = {
+                    "go": prepare_index(go_binary, go_home, go_vault, go_home / "sidecar.db", expected_go),
+                    "rust": prepare_index(rust_binary, rust_home, rust_vault, rust_home / "sidecar.db", expected_rust),
+                    "vault_justification": "10,000 Markdown documents (~1.6 MiB generated body/frontmatter) exercises recursive walk, 50 SQLite batches of 200, FTS/snippet search and realistic path/title metadata while keeping 100-pair measurement bounded.",
+                }
+                startup = measure_process_pair(go_binary, rust_binary, go_env, rust_env, ["version"], ["version"], args.warmups, args.samples, validate_version)
+                search = measure_process_pair(go_binary, rust_binary, go_env, rust_env, ["search", SEARCH_TOKEN, "--vault", str(go_vault), "--json"], ["search", SEARCH_TOKEN, "--vault", str(rust_vault), "--json"], args.warmups, args.samples, lambda out, err: validate_search(out, err, expected_go))
+                mcp = measure_mcp(go_binary, rust_binary, go_env, rust_env, expected_go, go_vault, rust_vault, args.warmups, args.samples)
+
+                go_http_home = temp_root / "go-http"
+                rust_http_home = temp_root / "rust-http"
+                go_http_vault = go_http_home / "vault"
+                rust_http_vault = rust_http_home / "vault"
+                go_http_manifest = write_vault(go_http_vault, include_http_probe=True)
+                rust_http_manifest = write_vault(rust_http_vault, include_http_probe=True)
+                go_http_expected = expected_vault_semantics(go_http_manifest, include_http_probe=True)
+                rust_http_expected = expected_vault_semantics(rust_http_manifest, include_http_probe=True)
+                prepare_index(go_binary, go_http_home, go_http_vault, go_http_home / "sidecar.db", go_http_expected)
+                prepare_index(rust_binary, rust_http_home, rust_http_vault, rust_http_home / "sidecar.db", rust_http_expected)
+                go_server = RunningServer(go_binary, go_http_home, go_http_vault, go_http_home / "sidecar.db")
+                servers.append(go_server)
+                rust_server = RunningServer(rust_binary, rust_http_home, rust_http_vault, rust_http_home / "sidecar.db")
+                servers.append(rust_server)
+                http, rss = measure_http(go_server, rust_server, go_http_expected, rust_http_expected, args.warmups, args.samples, args.rss_interval_ms)
+                metrics = {"startup": startup, "search": search, "mcp": mcp, "http": http, "rss": rss}
+                result = build_result(root, go_binary, rust_binary, go_source, args.rust_build_command, contracts, metrics, go_manifest, args.samples, args.warmups, index_preparation)
+                write_complete_result(args.output, result)
+                artifact_complete = True
+                print(json.dumps({"output": str(args.output), "passed": result["passed"], "thresholds": result["thresholds"]}, indent=2))
+                if not result["passed"]:
+                    raise HarnessError("VALUE-001 failed closed; see measured JSON artifact")
             finally:
-                if oracle_source is not None:
-                    subprocess.run(["git", "worktree", "remove", "--force", str(oracle_source)], cwd=root, capture_output=True, text=True, check=False)
-            if cleanup_error is not None:
-                raise cleanup_error
+                cleanup_error: BaseException | None = None
+                try:
+                    stop_all(servers)
+                except BaseException as exc:
+                    cleanup_error = exc
+                finally:
+                    if oracle_source is not None:
+                        subprocess.run(["git", "worktree", "remove", "--force", str(oracle_source)], cwd=root, capture_output=True, text=True, check=False)
+                if cleanup_error is not None:
+                    raise cleanup_error
+    finally:
+        if artifact_complete:
+            marker.unlink(missing_ok=True)
     return 0
 
 

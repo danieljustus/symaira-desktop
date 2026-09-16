@@ -91,6 +91,9 @@ class ProducerGateTests(unittest.TestCase):
                 # capture they came from, so these gates keep testing what
                 # they were written to test.
                 value001.latency_estimator_of(self.original),
+                # A historical replay must explicitly retain schema-3
+                # semantics; schema 4 cannot emit the pooled estimator.
+                value001.SCHEMA3_VERSION,
             )
 
     def test_each_required_gate_enforces_unchanged_ceiling(self):

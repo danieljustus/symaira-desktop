@@ -6,6 +6,11 @@ This document records the fail-closed VALUE-001 representative acceptance for th
 
 Acceptance applies strictly to work item **RUST-006** (representative CLI, MCP, and HTTP slice). It does not approve full cutover, mark downstream work items complete, or authorize removal of the Go backend.
 
+> **Historical-status note:** This is immutable acceptance evidence for
+> `aeab7664`, not approval of current HEAD. The fresh `fbc52d0c` gate is
+> blocked by #936, so RUST-007 and RUST-016 are not currently ready. The DAG
+> wording near the end records the status at this historical acceptance point.
+
 ## Measured Commit vs. Documentation Commits
 
 Approval is bound to the exact immutable Git commit `aeab76640b5e2f1eb935bd3ec2173ed1c608bf06`. This retention change alters no production Rust or Go code. Its evidence remains bound to that measured candidate; later production candidates require their own measurements.
@@ -143,7 +148,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/validate_value001_aeab7664.p
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/rust-port -p 'test_*value001*.py' -v
 ```
 
-## DAG Progression
+## Historic DAG progression at the measured commit
 
 Following the passing acceptance of RUST-006:
 - **RUST-006**: Status updated to `passed`.

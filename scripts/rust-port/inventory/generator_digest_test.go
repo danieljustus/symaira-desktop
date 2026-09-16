@@ -1,0 +1,78 @@
+package inventory
+
+import (
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+func TestGeneratorDigestIncludesMakefileAndCanReadImmutableRevision(t *testing.T) {
+	repoRoot := t.TempDir()
+	runGeneratorDigestGit(t, repoRoot, "init", "-q")
+	writeGeneratorDigestFile(t, repoRoot, "Makefile", "port-fixtures-check:\n\t@true\n")
+	writeGeneratorDigestFile(t, repoRoot, "scripts/rust-port/cmd/example.go", "package cmd\n")
+	runGeneratorDigestGit(t, repoRoot, "add", "--", ".")
+	runGeneratorDigestGit(t, repoRoot, "commit", "-q", "-m", "test: generator P")
+	revision := generatorDigestGitOutput(t, repoRoot, "rev-parse", "HEAD")
+
+	immutableBefore, err := ComputeGitRevisionGeneratorSourceDigest(repoRoot, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workingBefore, err := ComputeGeneratorSourceDigest(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if immutableBefore != workingBefore {
+		t.Fatalf("immutable and working generator digests differ before mutation: %s != %s", immutableBefore, workingBefore)
+	}
+
+	writeGeneratorDigestFile(t, repoRoot, "Makefile", "port-fixtures-check:\n\t@false\n")
+	workingAfter, err := ComputeGeneratorSourceDigest(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if workingAfter == workingBefore {
+		t.Fatal("generator digest did not change after Makefile mutation")
+	}
+	immutableAfter, err := ComputeGitRevisionGeneratorSourceDigest(repoRoot, revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if immutableAfter != immutableBefore {
+		t.Fatalf("revision digest changed after working-tree mutation: %s != %s", immutableAfter, immutableBefore)
+	}
+}
+
+func writeGeneratorDigestFile(t *testing.T, repoRoot, rel, content string) {
+	t.Helper()
+	path := filepath.Join(repoRoot, filepath.FromSlash(rel))
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func runGeneratorDigestGit(t *testing.T, repoRoot string, args ...string) {
+	t.Helper()
+	command := exec.Command("git", append([]string{"-c", "user.name=Digest Test", "-c", "user.email=digest-test@example.invalid"}, args...)...)
+	command.Dir = repoRoot
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("git %v: %v\n%s", args, err, output)
+	}
+}
+
+func generatorDigestGitOutput(t *testing.T, repoRoot string, args ...string) string {
+	t.Helper()
+	command := exec.Command("git", args...)
+	command.Dir = repoRoot
+	output, err := command.Output()
+	if err != nil {
+		t.Fatalf("git %v: %v", args, err)
+	}
+	return strings.TrimSpace(string(output))
+}

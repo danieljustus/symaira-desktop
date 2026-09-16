@@ -1,7 +1,7 @@
 # Go-to-Rust migration record
 
 > **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006`, `RUST-007`, and `RUST-016` are blocked by the current VALUE-001 order-bias gate ([#936](https://github.com/danieljustus/symaira-desktop/issues/936)).
-> **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; VALUE baselines remain pinned to `ae863319` / `v0.12.2`
+> **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; portgen provenance instead records the direct functional parent `P` of its derived evidence commit `Q`; VALUE baselines remain pinned to `ae863319` / `v0.12.2`
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
@@ -154,8 +154,11 @@ migration stays stopped and Go remains in production.
   self-test is green. Real differential runs reject identical binaries unless
   that self-test override is passed.
 - Production-source provenance covers Go source, embedded assets and migrations,
-  the vault contract, and release inputs. Fixture checksums and source drift are
-  executable CI gates.
+  the vault contract, and release inputs. A checked provenance commit `Q` must
+  contain only listed `testdata/port` derived outputs, must directly follow its
+  full recorded source commit `P`, and validates fixture/checker digests from
+  immutable Git objects. Fixture checksums and source drift are executable CI
+  gates.
 - `RUST-002` passed: the Rust 1.98 workspace contains only `symdesk-core`,
   `symdesk-cli`, and `symroom-cli`; 17 Go↔Rust version cases pass byte-for-byte,
   together with format, Clippy, nextest, doctest, feature, coverage, audit, deny,
@@ -224,6 +227,27 @@ Reconnaissance supports crate-level reuse, not adoption of another product:
 The correct strategy is a repository-local Cargo workspace plus language-neutral
 fixtures. Copying a third-party vault product would replace one rewrite risk with
 several compatibility risks wearing a trench coat.
+
+## Refreshing port provenance
+
+Port provenance is a two-commit evidence flow, not metadata that may be edited
+beside an arbitrary change:
+
+1. Commit functional source or generator work as clean commit **P**.
+2. Run fixture generation only in a disposable worktree created at **P**; inspect
+   the resulting `testdata/port` diff before transferring it.
+3. Commit the allowlisted derived fixture paths and
+   `testdata/port/provenance.json` as the single-parent child **Q**. The
+   provenance oracle SHA must equal **P** exactly.
+4. Run `make port-fixtures-check` at **Q**. The check reads immutable Git bytes,
+   executes package checks from an archive of **Q**, and strips known generation
+   activation variables. Its Make-side environment prefix cannot be replaced by
+   `make PORTGEN_CHECK_ENV=:`.
+
+Changes to generator controls, including the `Makefile`, change the generator
+digest and therefore require a new reviewed P→Q evidence pair. A source, docs,
+or unrelated file in Q is rejected rather than smuggled through a green fixture
+check.
 
 ## Execution rule
 

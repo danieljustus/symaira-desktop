@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	defaultOracleCommit  = "b37ca57258174e2c7f9e321f1418a25c82ce00a6"
 	defaultOracleRelease = "post-v0.12.2-security-880"
 	provenanceFixture    = "testdata/port/provenance.json"
 )
@@ -51,7 +50,7 @@ var fixturePaths = []string{
 
 func main() {
 	check := flag.Bool("check", false, "fail if any fixture or oracle provenance has drifted")
-	commit := flag.String("oracle-commit", defaultOracleCommit, "Go oracle commit")
+	commit := flag.String("oracle-commit", "", "Go oracle commit (defaults to current HEAD during generation)")
 	release := flag.String("oracle-release", defaultOracleRelease, "Go oracle release")
 	flag.Parse()
 
@@ -69,6 +68,11 @@ func main() {
 }
 
 func runGenerate(repoRoot, commit, release string) {
+	resolvedCommit, err := resolveGenerationOracleCommit(repoRoot, commit)
+	if err != nil {
+		fatal("resolve generation oracle: %v", err)
+	}
+	commit = resolvedCommit
 	fmt.Printf("Generating Go oracle fixtures (oracle %s / %s)...\n", commit, release)
 
 	// 1. Run package-local generators
@@ -154,100 +158,10 @@ func runGenerate(repoRoot, commit, release string) {
 }
 
 func runCheck(repoRoot string) {
-	// 1. Read existing provenance
-	provPath := filepath.Join(repoRoot, provenanceFixture)
-	//nolint:gosec // caller-supplied explicit provenance path
-	provData, err := os.ReadFile(provPath)
-	if err != nil {
-		fatal("read %s: %v (run make port-fixtures-generate)", provenanceFixture, err)
+	if err := runProvenanceCheck(repoRoot); err != nil {
+		fatal("verify fixtures and oracle provenance: %v", err)
 	}
-	var prov inventory.ProvenanceDocument
-	if err := json.Unmarshal(provData, &prov); err != nil {
-		fatal("unmarshal %s: %v", provenanceFixture, err)
-	}
-	if prov.SchemaVersion != 1 {
-		fatal("unsupported schema version %d in %s", prov.SchemaVersion, provenanceFixture)
-	}
-	if prov.Oracle.Commit != defaultOracleCommit || prov.Oracle.Release != defaultOracleRelease {
-		fatal("oracle metadata mismatch: got %s / %s, want %s / %s",
-			prov.Oracle.Commit, prov.Oracle.Release, defaultOracleCommit, defaultOracleRelease)
-	}
-
-	// 2. Verify production source code digest (oracle source drift check)
-	currentDigest, err := inventory.ComputeProductionSourceDigest(repoRoot)
-	if err != nil {
-		fatal("compute production source digest: %v", err)
-	}
-	if currentDigest != prov.ProductionSourceDigest {
-		fatal("production source drift detected: current=%s recorded=%s (production Go oracle code has drifted)",
-			currentDigest, prov.ProductionSourceDigest)
-	}
-	revisionDigest, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, prov.Oracle.Commit)
-	if err != nil {
-		fatal("compute oracle revision source digest: %v", err)
-	}
-	if revisionDigest != prov.ProductionSourceDigest {
-		fatal("recorded source digest is not the bytes at oracle commit %s: revision=%s recorded=%s",
-			prov.Oracle.Commit, revisionDigest, prov.ProductionSourceDigest)
-	}
-	generatorDigest, err := inventory.ComputeGeneratorSourceDigest(repoRoot)
-	if err != nil {
-		fatal("compute fixture generator digest: %v", err)
-	}
-	if generatorDigest != prov.GeneratorSourceDigest {
-		fatal("fixture generator drift detected: current=%s recorded=%s (regenerate deliberately after review)",
-			generatorDigest, prov.GeneratorSourceDigest)
-	}
-
-	// 3. Verify each fixture file checksum
-	for _, rel := range fixturePaths {
-		expectedSum, ok := prov.FixtureChecksums[rel]
-		if !ok {
-			fatal("fixture %s missing from provenance checksums", rel)
-		}
-		path := filepath.Join(repoRoot, rel)
-		sum, err := inventory.ComputeFileChecksum(path)
-		if err != nil {
-			fatal("checksum fixture %s: %v", rel, err)
-		}
-		if sum != expectedSum {
-			fatal("fixture %s checksum mismatch (expected %s, got %s); run make port-fixtures-generate",
-				rel, expectedSum, sum)
-		}
-	}
-
-	// 4. Run package-local tests in check mode to ensure live tree matches fixtures
-	packages := []struct {
-		pkg string
-		run string
-	}{
-		{"./cmd/symdesk", "TestSymdeskCobraInventory"},
-		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory"},
-		{"./internal/tools", "TestSymdeskMCPInventory"},
-		{"./internal/selfhost", "TestSelfhostHTTPInventory"},
-	}
-
-	for _, target := range packages {
-		//nolint:gosec // fixed generator targets, never derived from fixture output
-		cmd := exec.Command("go", "test", "-count=1", target.pkg, "-run", target.run)
-		cmd.Dir = repoRoot
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			fatal("fixture drift in %s (%s): %v\noutput: %s", target.pkg, target.run, err, string(out))
-		}
-	}
-
-	// Verify surface counts
-	fmt.Printf("PASS all fixtures and oracle provenance verified:\n")
-	fmt.Printf("  - SymDesk Cobra commands: %d total (%d non-root)\n",
-		prov.SurfaceCounts.SymdeskTotalCommands, prov.SurfaceCounts.SymdeskNonRootCommands)
-	fmt.Printf("  - SymRoom subcommands: %d\n", prov.SurfaceCounts.SymroomSubcommands)
-	fmt.Printf("  - SymDesk MCP tools: %d\n", prov.SurfaceCounts.SymdeskMCPTools)
-	fmt.Printf("  - SymRoom MCP tools: %d\n", prov.SurfaceCounts.SymroomMCPTools)
-	fmt.Printf("  - Selfhost HTTP routes: %d\n", prov.SurfaceCounts.SelfhostHTTPRoutes)
-	fmt.Printf("  - Oracle provenance: %s (%s)\n", prov.Oracle.Commit, prov.Oracle.Release)
-	fmt.Printf("  - Production source digest: %s\n", prov.ProductionSourceDigest)
-	fmt.Printf("  - Fixture generator digest: %s\n", prov.GeneratorSourceDigest)
+	fmt.Println("PASS all fixtures and oracle provenance verified")
 }
 
 func findRepoRoot() (string, error) {

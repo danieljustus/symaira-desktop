@@ -26,6 +26,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"search metadata", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "TestSearchMetadataInventory"}, []string{"testdata/port/vault/metadata.json"}},
 	{"mobile vault writer", []string{"test", "-count=1", "./internal/vault", "-run", "TestMobileWriterFixture"}, []string{"testdata/port/vault/mobile-writer.json"}},
 	{"sidecar contracts", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecar(Contract|LifecycleContract)"}, []string{"testdata/port/sidecar/contracts.json", "testdata/port/sidecar/lifecycle.json"}},
+	{"sidecar oracle metadata", []string{"test", "-count=1", "./scripts/rust-port/cmd/sidecar-roundtrip", "-run", "TestCommittedSidecarOracleIdentities"}, []string{"testdata/port/sidecar/large-corpus.json", "testdata/port/sidecar/roundtrip.json"}},
 }
 
 var fixtureGeneratorTargets = []fixtureCheckTarget{

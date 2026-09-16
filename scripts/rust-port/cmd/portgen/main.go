@@ -42,6 +42,8 @@ var fixturePaths = []string{
 	"testdata/port/vault/mobile-writer.json",
 	"testdata/port/sidecar/contracts.json",
 	"testdata/port/sidecar/lifecycle.json",
+	"testdata/port/sidecar/large-corpus.json",
+	"testdata/port/sidecar/roundtrip.json",
 	"testdata/port/representative/cases.json",
 }
 
@@ -94,7 +96,11 @@ func runGenerate(repoRoot, commit, release string) {
 		}
 	}
 
-	// 2. Compute provenance and checksums
+	// 2. Refresh sidecar-derived oracle metadata, then compute provenance and checksums.
+	if err := syncSidecarOracleMetadata(repoRoot, commit, release); err != nil {
+		fatal("synchronize sidecar oracle metadata: %v", err)
+	}
+
 	sourceDigest, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, commit)
 	if err != nil {
 		fatal("compute oracle revision source digest: %v", err)

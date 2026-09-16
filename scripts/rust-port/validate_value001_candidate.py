@@ -154,7 +154,7 @@ def validate(
     require(binaries["rust"]["source"] == candidate, "Rust binary source is not --candidate")
     for name, binary in binaries.items():
         require(HEX40.fullmatch(binary["source"]) is not None and HEX64.fullmatch(binary["sha256"]) is not None, f"{name} binary identity invalid")
-        require(isinstance(binary.get("bytes"), int) and binary["bytes"] > 0, f"{name} binary size invalid")
+        require(isinstance(binary.get("bytes"), int) and not isinstance(binary.get("bytes"), bool) and binary["bytes"] > 0, f"{name} binary size invalid")
         binary_path = Path(binary.get("path", ""))
         if require_order_stratified:
             try:

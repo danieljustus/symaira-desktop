@@ -297,6 +297,13 @@ class CandidateValidatorTests(unittest.TestCase):
         mutated["binaries"]["rust"]["source"] = "1" * 40
         self.check(mutated, expect="Rust binary source")
 
+    def test_boolean_binary_sizes_are_rejected_for_current_binaries(self):
+        for name in ("go", "rust"):
+            with self.subTest(binary=name):
+                mutated = copy.deepcopy(self.original)
+                mutated["binaries"][name]["bytes"] = True
+                self.check(mutated, expect="binary size invalid")
+
     def test_missing_current_binary_is_rejected(self):
         mutated = copy.deepcopy(self.original)
         mutated["binaries"]["rust"]["path"] = str(Path(self.binary_directory.name) / "missing")

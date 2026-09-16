@@ -14,6 +14,11 @@ export CARGO_TARGET_DIR
 endif
 PORT_ORACLE_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 PORT_ORACLE_RELEASE ?= post-v0.12.2-security-880
+# The sidecar lifecycle fixture is P-bound provenance evidence, distinct from
+# the historical fixture oracle above. portgen resolves and enforces this same
+# pair during generation and immutable checks.
+PORTGEN_SIDECAR_ORACLE_COMMIT ?= $(shell git rev-parse HEAD)
+PORTGEN_SIDECAR_ORACLE_RELEASE ?= $(PORT_ORACLE_RELEASE)
 PORT_CASES ?= testdata/port/cli/cases.json
 RUST_NIGHTLY ?= nightly-2026-09-03
 FUZZ_RUNS ?= 10000
@@ -22,7 +27,7 @@ FUZZ_RUNS ?= 10000
 # variables. `override` makes an accidental command-line assignment such as
 # `make PORTGEN_CHECK_ENV=:` ineffective; the Go check also strips this set
 # before running package-local fixture tests from its immutable snapshot.
-override PORTGEN_CHECK_ENV := env -u PORT_GENERATE -u port_generate -u PORT_FIXTURES_GENERATE -u port_fixtures_generate -u PORTGEN_GENERATE -u portgen_generate -u GENERATE_PORT_FIXTURES -u generate_port_fixtures -u SYMDESK_PORT_GENERATE -u symdesk_port_generate -u CONFIGGEN_GENERATE -u configgen_generate -u COREGEN_GENERATE -u coregen_generate -u QUERYGEN_GENERATE -u querygen_generate -u VAULTGEN_GENERATE -u vaultgen_generate -u VAULTFSGEN_GENERATE -u vaultfsgen_generate -u TYPEDVAULTGEN_GENERATE -u typedvaultgen_generate -u REPRESENTATIVEGEN_GENERATE -u representativegen_generate -u MCPGEN_GENERATE -u mcpgen_generate
+override PORTGEN_CHECK_ENV := env -u PORT_GENERATE -u port_generate -u PORT_FIXTURES_GENERATE -u port_fixtures_generate -u PORTGEN_GENERATE -u portgen_generate -u GENERATE_PORT_FIXTURES -u generate_port_fixtures -u SYMDESK_PORT_GENERATE -u symdesk_port_generate -u PORTGEN_SIDECAR_ORACLE_COMMIT -u portgen_sidecar_oracle_commit -u PORTGEN_SIDECAR_ORACLE_RELEASE -u portgen_sidecar_oracle_release -u CONFIGGEN_GENERATE -u configgen_generate -u COREGEN_GENERATE -u coregen_generate -u QUERYGEN_GENERATE -u querygen_generate -u VAULTGEN_GENERATE -u vaultgen_generate -u VAULTFSGEN_GENERATE -u vaultfsgen_generate -u TYPEDVAULTGEN_GENERATE -u typedvaultgen_generate -u REPRESENTATIVEGEN_GENERATE -u representativegen_generate -u MCPGEN_GENERATE -u mcpgen_generate
 
 build:
 	@mkdir -p bin
@@ -172,7 +177,7 @@ symroom-differential:
 
 sidecar-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarContract
-	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarLifecycleContract
+	PORTGEN_SIDECAR_ORACLE_COMMIT=$(PORTGEN_SIDECAR_ORACLE_COMMIT) PORTGEN_SIDECAR_ORACLE_RELEASE=$(PORTGEN_SIDECAR_ORACLE_RELEASE) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarLifecycleContract
 
 sidecar-fixtures-check:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run 'TestPortSidecar(Contract|LifecycleContract)'

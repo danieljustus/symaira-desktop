@@ -132,6 +132,8 @@ func generatorSourcePaths() []string {
 		"internal/retrieval/internal/engine/port_metadata_test.go",
 		"internal/vault/port_mobile_test.go",
 		"internal/sidecar/port_contract_test.go",
+		"internal/sidecar/port_lifecycle_contract_test.go",
+		"crates/symdesk-index/src/contract_tests.rs",
 		"Tests/SymDeskMobileTests/MobileRustPortContractTests.swift",
 	}
 }

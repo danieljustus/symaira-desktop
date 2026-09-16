@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -54,6 +56,10 @@ type portLifecycleRow struct {
 }
 
 func TestPortSidecarLifecycleContract(t *testing.T) {
+	oracle, err := portLifecycleOracle()
+	if err != nil {
+		t.Fatal(err)
+	}
 	root := t.TempDir()
 	db, err := Open(filepath.Join(t.TempDir(), "sidecar.db"))
 	if err != nil {
@@ -93,7 +99,7 @@ func TestPortSidecarLifecycleContract(t *testing.T) {
 	}
 	fixture := portLifecycleFixture{
 		SchemaVersion: 1,
-		Oracle:        portOracle{Commit: "b37ca57258174e2c7f9e321f1418a25c82ce00a6", Release: "post-v0.12.2-security-880"},
+		Oracle:        oracle,
 		Inputs:        inputs,
 		Initial:       normalizeLifecycleState(root, portSnapshot(t, db.conn)),
 	}
@@ -189,6 +195,67 @@ func TestPortSidecarLifecycleContract(t *testing.T) {
 	if !bytes.Equal(current, encoded) {
 		t.Fatal("sidecar lifecycle fixture is stale; run make sidecar-fixtures-generate")
 	}
+}
+
+const (
+	portgenSidecarOracleCommitEnv  = "PORTGEN_SIDECAR_ORACLE_COMMIT"
+	portgenSidecarOracleReleaseEnv = "PORTGEN_SIDECAR_ORACLE_RELEASE"
+)
+
+// portLifecycleOracle uses portgen's explicit P identity when the fixture is
+// generated or checked from its immutable snapshot. Direct test invocations
+// fall back to the committed provenance metadata for developer ergonomics.
+func portLifecycleOracle() (portOracle, error) {
+	return resolvePortLifecycleOracle(
+		os.LookupEnv,
+		filepath.Join("..", "..", "testdata", "port", "provenance.json"),
+	)
+}
+
+func resolvePortLifecycleOracle(lookup func(string) (string, bool), provenancePath string) (portOracle, error) {
+	commit, hasCommit := lookup(portgenSidecarOracleCommitEnv)
+	release, hasRelease := lookup(portgenSidecarOracleReleaseEnv)
+	if hasCommit || hasRelease {
+		if !hasCommit || !hasRelease {
+			return portOracle{}, fmt.Errorf("%s and %s must be set together", portgenSidecarOracleCommitEnv, portgenSidecarOracleReleaseEnv)
+		}
+		oracle := portOracle{Commit: commit, Release: release}
+		if err := validatePortLifecycleOracle(oracle); err != nil {
+			return portOracle{}, fmt.Errorf("invalid portgen sidecar oracle: %w", err)
+		}
+		return oracle, nil
+	}
+
+	//nolint:gosec // provenancePath is a fixed committed fixture path.
+	data, err := os.ReadFile(provenancePath)
+	if err != nil {
+		return portOracle{}, fmt.Errorf("read committed port provenance: %w", err)
+	}
+	var provenance struct {
+		Oracle portOracle `json:"oracle"`
+	}
+	if err := json.Unmarshal(data, &provenance); err != nil {
+		return portOracle{}, fmt.Errorf("decode committed port provenance: %w", err)
+	}
+	if err := validatePortLifecycleOracle(provenance.Oracle); err != nil {
+		return portOracle{}, fmt.Errorf("invalid committed port provenance oracle: %w", err)
+	}
+	return provenance.Oracle, nil
+}
+
+func validatePortLifecycleOracle(oracle portOracle) error {
+	if len(oracle.Commit) != 40 {
+		return fmt.Errorf("commit must be a 40-character lowercase SHA")
+	}
+	for _, character := range oracle.Commit {
+		if !strings.ContainsRune("0123456789abcdef", character) {
+			return fmt.Errorf("commit must be a 40-character lowercase SHA")
+		}
+	}
+	if strings.TrimSpace(oracle.Release) == "" {
+		return fmt.Errorf("release must not be empty")
+	}
+	return nil
 }
 
 func writeLifecycleFile(t *testing.T, root, relative, content string, mtimeNS int64) {

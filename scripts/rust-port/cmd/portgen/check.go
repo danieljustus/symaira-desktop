@@ -92,7 +92,7 @@ func runProvenanceCheck(repoRoot string) error {
 		return err
 	}
 	defer cleanup()
-	if err := runFixtureChecks(snapshot); err != nil {
+	if err := runFixtureChecks(snapshot, prov.Oracle); err != nil {
 		return fmt.Errorf("fixture drift in immutable checked source snapshot: %w", err)
 	}
 	if err := verifyCleanWorktree(repoRoot); err != nil {

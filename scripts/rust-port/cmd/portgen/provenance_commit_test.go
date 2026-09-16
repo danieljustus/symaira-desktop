@@ -166,12 +166,14 @@ func TestSanitizedCheckEnvironmentRemovesActivationVariablesCaseInsensitively(t 
 		"COREGEN_GENERATE=1",
 		"SYMDESK_PORT_GENERATE=1",
 		"OTHER_PORT_GENERATE=1",
+		"PORTGEN_SIDECAR_ORACLE_COMMIT=poison",
+		"PORTGEN_SIDECAR_ORACLE_RELEASE=poison",
 		"GOFLAGS=-modfile=poison.mod",
 		"GIT_DIR=/poison",
 		"PATH=/poison",
 	})
 	joined := "\n" + strings.Join(got, "\n")
-	for _, forbidden := range []string{"PORT_GENERATE=", "PORTGEN_GENERATE=", "COREGEN_GENERATE=", "GOFLAGS=-modfile", "GIT_DIR=", "PATH=/poison"} {
+	for _, forbidden := range []string{"PORT_GENERATE=", "PORTGEN_GENERATE=", "COREGEN_GENERATE=", "PORTGEN_SIDECAR_ORACLE_COMMIT=", "PORTGEN_SIDECAR_ORACLE_RELEASE=", "GOFLAGS=-modfile", "GIT_DIR=", "PATH=/poison"} {
 		if strings.Contains(joined, "\n"+forbidden) {
 			t.Fatalf("sanitizedCheckEnvironment() retained %q in %#v", forbidden, got)
 		}
@@ -179,6 +181,43 @@ func TestSanitizedCheckEnvironmentRemovesActivationVariablesCaseInsensitively(t 
 	for _, required := range []string{"SAFE=retained", "GOWORK=off", "GOENV=off", "GOFLAGS=-mod=readonly", "GOTOOLCHAIN=local", "CGO_ENABLED=0", "PATH="} {
 		if !strings.Contains(joined, "\n"+required) {
 			t.Fatalf("sanitizedCheckEnvironment() omitted %q from %#v", required, got)
+		}
+	}
+}
+
+func TestRunFixtureChecksInjectsValidatedSidecarOracle(t *testing.T) {
+	expected := inventory.Oracle{Commit: strings.Repeat("a", 40), Release: "validated-release"}
+	t.Setenv(portgenSidecarOracleCommitEnv, strings.Repeat("b", 40))
+	t.Setenv(portgenSidecarOracleReleaseEnv, "caller-controlled")
+
+	originalRunner := runFixtureCheckTarget
+	t.Cleanup(func() { runFixtureCheckTarget = originalRunner })
+	var captured []string
+	runFixtureCheckTarget = func(_ string, _ string, environment []string, target fixtureCheckTarget) error {
+		if target.sidecarOracle {
+			captured = append([]string(nil), environment...)
+		}
+		return nil
+	}
+
+	if err := runFixtureChecks(t.TempDir(), expected); err != nil {
+		t.Fatalf("runFixtureChecks() error = %v", err)
+	}
+	joined := "\n" + strings.Join(captured, "\n")
+	for _, required := range []string{
+		portgenSidecarOracleCommitEnv + "=" + expected.Commit,
+		portgenSidecarOracleReleaseEnv + "=" + expected.Release,
+	} {
+		if strings.Count(joined, "\n"+required) != 1 {
+			t.Fatalf("sidecar environment = %#v, want exactly one %q", captured, required)
+		}
+	}
+	for _, forbidden := range []string{
+		portgenSidecarOracleCommitEnv + "=" + strings.Repeat("b", 40),
+		portgenSidecarOracleReleaseEnv + "=caller-controlled",
+	} {
+		if strings.Contains(joined, "\n"+forbidden) {
+			t.Fatalf("sidecar environment retained caller input %q: %#v", forbidden, captured)
 		}
 	}
 }
@@ -224,6 +263,8 @@ func newProvenanceBaseRepository(t *testing.T) string {
 	writePortgenTestFile(t, repoRoot, "go.mod", "module example.test/portgen\n\ngo 1.26.6\n")
 	writePortgenTestFile(t, repoRoot, "cmd/tool/main.go", "package main\n")
 	writePortgenTestFile(t, repoRoot, "internal/core/core.go", "package core\n")
+	writePortgenTestFile(t, repoRoot, "internal/sidecar/port_lifecycle_contract_test.go", "package sidecar\n")
+	writePortgenTestFile(t, repoRoot, "crates/symdesk-index/src/contract_tests.rs", "mod contract_tests {}\n")
 	writePortgenTestFile(t, repoRoot, "scripts/rust-port/placeholder.go", "package rustport\n")
 	writePortgenTestFile(t, repoRoot, "Makefile", "all:\n\t@true\n")
 	portgenGit(t, repoRoot, "add", "--", ".")

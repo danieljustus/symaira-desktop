@@ -83,7 +83,15 @@ func TestFixtureCheckRegistryValidatesCurrentTree(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := runFixtureChecks(repoRoot); err != nil {
+	content, err := os.ReadFile(filepath.Join(repoRoot, provenanceFixture))
+	if err != nil {
+		t.Fatal(err)
+	}
+	provenance, err := decodeCanonicalProvenance(content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := runFixtureChecks(repoRoot, provenance.Oracle); err != nil {
 		t.Fatalf("runFixtureChecks() error = %v", err)
 	}
 }

@@ -23,7 +23,7 @@ func TestRewriteSidecarOraclePreservesOtherFixtureBytes(t *testing.T) {
 	}
 }
 
-func TestSyncSidecarOracleMetadataUpdatesAllDerivedFixtures(t *testing.T) {
+func TestSyncSidecarOracleMetadataUpdatesStaticMetadataFixtures(t *testing.T) {
 	repoRoot := t.TempDir()
 	for _, rel := range sidecarOracleFixturePaths {
 		path := filepath.Join(repoRoot, filepath.FromSlash(rel))

@@ -231,6 +231,11 @@ struct LifecycleOracle {
 }
 
 #[derive(Deserialize)]
+struct PortProvenance {
+    oracle: LifecycleOracle,
+}
+
+#[derive(Deserialize)]
 struct LifecycleInput {
     path: String,
     initial: String,
@@ -257,12 +262,12 @@ fn go_refresh_stat_prune_lifecycle_matches_rust() {
         "../../../testdata/port/sidecar/lifecycle.json"
     ))
     .expect("decode lifecycle fixture");
+    let provenance: PortProvenance =
+        serde_json::from_str(include_str!("../../../testdata/port/provenance.json"))
+            .expect("decode port provenance");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(
-        fixture.oracle.commit,
-        "b37ca57258174e2c7f9e321f1418a25c82ce00a6"
-    );
-    assert_eq!(fixture.oracle.release, "post-v0.12.2-security-880");
+    assert_eq!(fixture.oracle.commit, provenance.oracle.commit);
+    assert_eq!(fixture.oracle.release, provenance.oracle.release);
     assert!(fixture.same_size_length);
     assert!(fixture.uppercase_ignored);
 

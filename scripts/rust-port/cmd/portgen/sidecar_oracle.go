@@ -11,7 +11,6 @@ import (
 var sidecarOracleFixturePaths = []string{
 	"testdata/port/sidecar/roundtrip.json",
 	"testdata/port/sidecar/large-corpus.json",
-	"testdata/port/sidecar/lifecycle.json",
 }
 
 var sidecarOraclePattern = regexp.MustCompile(`(?s)("oracle"\s*:\s*\{\s*"commit"\s*:\s*")[^"]+("\s*,\s*"release"\s*:\s*")[^"]+(")`)

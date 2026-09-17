@@ -185,8 +185,9 @@ VALUE_WARMUPS ?= 20
 VALUE_GO_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 VALUE_OUTPUT ?= docs/rust-port/results/value001-latest.json
 VALUE_RETAINED ?= docs/rust-port/results/value001-retained.json
-RESOURCE_STRESS_ROOT ?= /Volumes/SymairaSecureRuntime/symaira-desktop-sec003
-RESOURCE_RUSTUP_HOME ?= /Volumes/SymairaSecureRuntime/runtime-bootstrap/rustup
+# Keep local SEC-003 outputs and the Rust toolchain cache on the attached NVMe.
+RESOURCE_STRESS_ROOT ?= /Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/BuildTargets/symaira-desktop-sec003
+RESOURCE_RUSTUP_HOME ?= /Volumes/1TB_NVMe_SN850X/Dev/caches/rustup
 
 # SEC-003: native black-box resource and cleanup evidence for the representative
 # Go/Rust binaries. Every generated root and language cache is explicit so a

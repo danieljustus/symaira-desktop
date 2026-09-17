@@ -680,7 +680,7 @@ fn snapshot_payload(state: &AppState) -> Result<SnapshotPayload, String> {
             return Err(io::Error::other("vault path is not UTF-8"));
         }
         let logical_path = normalize_snapshot_path(relative);
-        let mut file = match root_dir.open(&relative) {
+        let mut file = match root_dir.open(relative) {
             Ok(file) => file,
             // An external symlink, a concurrently removed file, and a file
             // replaced by an escaping symlink are all intentionally omitted.

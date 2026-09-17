@@ -58,9 +58,11 @@ HTTP_OPERATION_NAMES = (
     "file-missing",
     "file-traversal",
 )
+HTTP_CONTROL_IDLE_SECONDS = 0.005
 HTTP_MEASUREMENT_PAIRING = (
     "rotating HTTP operations; per-operation go-rust/rust-go order by "
-    "round plus original operation index; fresh request per operation"
+    "round plus original operation index; Connection: close per request; "
+    "alternating untimed healthz priming per round; 5ms idle after each HTTP request"
 )
 
 
@@ -443,6 +445,7 @@ class RunningServer:
         headers: dict[str, str] | None = None,
     ) -> tuple[int, bytes, dict[str, str]]:
         request = urllib.request.Request(self.base + path, method=method)
+        request.add_header("Connection", "close")
         if auth == "valid":
             request.add_header("Authorization", f"Bearer {TOKEN}")
         elif auth == "wrong":
@@ -868,6 +871,24 @@ def measure_http(
     per_operation: dict[str, Any] = {}
     per_operation_orders: dict[str, list[str]] = {}
     for index in range(warmups + samples):
+        priming_servers = (
+            (("go", go_server, go_expected), ("rust", rust_server, rust_expected))
+            if index % 2 == 0
+            else (("rust", rust_server, rust_expected), ("go", go_server, go_expected))
+        )
+        for name, server, expected in priming_servers:
+            operation = http_operation("healthz")
+            try:
+                status, body, headers = server.request_raw(
+                    operation["method"],
+                    operation["path"],
+                    operation["auth"],
+                    operation.get("headers"),
+                )
+            except (OSError, TimeoutError, urllib.error.URLError) as exc:
+                raise HarnessError(f"{name} HTTP healthz request failed or timed out: {exc}") from exc
+            validate_http("healthz", status, body, headers, expected, server.vault)
+            time.sleep(HTTP_CONTROL_IDLE_SECONDS)
         for operation_name, order in http_round_schedule(index):
             ordered_servers = (
                 (("go", go_server, go_expected), ("rust", rust_server, rust_expected))
@@ -893,6 +914,7 @@ def measure_http(
                 if index >= warmups:
                     values[name].append(elapsed)
                     per_operation.setdefault(operation_name, {"go": [], "rust": []})[name].append(elapsed)
+                time.sleep(HTTP_CONTROL_IDLE_SECONDS)
             if index >= warmups:
                 aggregate_orders.append(order)
                 aggregate_operation_order.append(operation_name)

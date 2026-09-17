@@ -108,7 +108,7 @@
           "properties": {
             "samples": {"const": 100},
             "warmups": {"const": 20},
-            "pairing": {"const": "rotating HTTP operations; per-operation go-rust/rust-go order by round plus original operation index; fresh request per operation"}
+            "pairing": {"const": "rotating HTTP operations; per-operation go-rust/rust-go order by round plus original operation index; Connection: close per request; alternating untimed healthz priming per round; 5ms idle after each HTTP request"}
           }
         }
       ]

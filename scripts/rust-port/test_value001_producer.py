@@ -5,6 +5,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import value001
@@ -91,7 +92,35 @@ class ProducerGateTests(unittest.TestCase):
                 # capture they came from, so these gates keep testing what
                 # they were written to test.
                 value001.latency_estimator_of(self.original),
+                # A historical replay must explicitly retain schema-3
+                # semantics; schema 4 cannot emit the pooled estimator.
+                value001.SCHEMA3_VERSION,
             )
+
+    def test_alternate_go_source_is_rejected_before_build_or_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "current.json"
+            args = SimpleNamespace(
+                go_binary=None,
+                go_source_commit="0" * 40,
+                root=ROOT,
+                rust_binary=self.rust,
+                rust_build_command="unit-test",
+                output=output,
+                samples=100,
+                warmups=20,
+                rss_interval_ms=0.0,
+            )
+            with patch.object(value001, "parse_args", return_value=args), patch.object(
+                value001, "build_go_oracle"
+            ) as build:
+                with self.assertRaisesRegex(
+                    value001.HarnessError,
+                    "--go-source-commit must equal CURRENT_BEHAVIOUR_ORACLE",
+                ):
+                    value001.main()
+            build.assert_not_called()
+            self.assertFalse(output.exists())
 
     def test_each_required_gate_enforces_unchanged_ceiling(self):
         for name in REQUIRED_GATES:

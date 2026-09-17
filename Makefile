@@ -188,6 +188,7 @@ VALUE_RETAINED ?= docs/rust-port/results/value001-retained.json
 # Keep local SEC-003 outputs and the Rust toolchain cache on the attached NVMe.
 RESOURCE_STRESS_ROOT ?= /Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/BuildTargets/symaira-desktop-sec003
 RESOURCE_RUSTUP_HOME ?= /Volumes/1TB_NVMe_SN850X/Dev/caches/rustup
+RESOURCE_EXE_SUFFIX := $(if $(filter Windows_NT,$(OS)),.exe,)
 
 # SEC-003: native black-box resource and cleanup evidence for the representative
 # Go/Rust binaries. Every generated root and language cache is explicit so a
@@ -196,13 +197,13 @@ resource-stress:
 	@mkdir -p "$(RESOURCE_STRESS_ROOT)/home" "$(RESOURCE_STRESS_ROOT)/tmp"
 	@mkdir -p "$(RESOURCE_STRESS_ROOT)/bin"
 	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" GOCACHE="$(RESOURCE_STRESS_ROOT)/go-cache" GOMODCACHE="$(RESOURCE_STRESS_ROOT)/go-modcache" GOPATH="$(RESOURCE_STRESS_ROOT)/gopath" \
-		go build -ldflags="-X main.version=0.12.2" -o "$(RESOURCE_STRESS_ROOT)/bin/symdesk-go" ./cmd/symdesk
+		go build -ldflags="-X main.version=0.12.2" -o "$(RESOURCE_STRESS_ROOT)/bin/symdesk-go$(RESOURCE_EXE_SUFFIX)" ./cmd/symdesk
 	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" RUSTUP_HOME="$(RESOURCE_RUSTUP_HOME)" CARGO_HOME="$(RESOURCE_STRESS_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RESOURCE_STRESS_ROOT)/cargo-target" \
 		SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" RUSTUP_HOME="$(RESOURCE_RUSTUP_HOME)" CARGO_HOME="$(RESOURCE_STRESS_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RESOURCE_STRESS_ROOT)/cargo-target" \
 		$(CARGO) test -p symdesk-cli --locked oversized_response_is_rejected_before_writing
 	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" RUSTUP_HOME="$(RESOURCE_RUSTUP_HOME)" GOCACHE="$(RESOURCE_STRESS_ROOT)/go-cache" GOMODCACHE="$(RESOURCE_STRESS_ROOT)/go-modcache" GOPATH="$(RESOURCE_STRESS_ROOT)/gopath" CARGO_HOME="$(RESOURCE_STRESS_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RESOURCE_STRESS_ROOT)/cargo-target" \
-		go run ./scripts/rust-port/cmd/resource-stress --go "$(RESOURCE_STRESS_ROOT)/bin/symdesk-go" --rust "$(RESOURCE_STRESS_ROOT)/cargo-target/debug/symdesk" --root "$(RESOURCE_STRESS_ROOT)"
+		go run ./scripts/rust-port/cmd/resource-stress --go "$(RESOURCE_STRESS_ROOT)/bin/symdesk-go$(RESOURCE_EXE_SUFFIX)" --rust "$(RESOURCE_STRESS_ROOT)/cargo-target/debug/symdesk$(RESOURCE_EXE_SUFFIX)" --root "$(RESOURCE_STRESS_ROOT)"
 
 value-001-evidence-tests:
 	python3 -m unittest discover -s scripts/rust-port -p 'test_*value001*.py' -v

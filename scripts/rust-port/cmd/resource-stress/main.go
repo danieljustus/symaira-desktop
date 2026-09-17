@@ -92,7 +92,11 @@ func runMCPStress(name, binary, root string) error {
 		if err != nil {
 			return err
 		}
-		defer os.RemoveAll(testRoot) // #nosec G304 -- test root was created above
+		defer func() {
+			if cleanupErr := os.RemoveAll(testRoot); cleanupErr != nil {
+				fatal("remove MCP stress root: %v", cleanupErr)
+			}
+		}() // #nosec G304 -- test root was created above
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		cmd := exec.CommandContext(ctx, binary, "mcp") // #nosec G204 -- explicit test operand
 		cmd.Env = isolatedEnv(testRoot, filepath.Join(testRoot, "vault"))
@@ -125,7 +129,11 @@ func runMCPPartialCancellation(name, binary, root string) error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(testRoot) // #nosec G304 -- test root was created above
+	defer func() {
+		if cleanupErr := os.RemoveAll(testRoot); cleanupErr != nil {
+			fatal("remove partial-MCP stress root: %v", cleanupErr)
+		}
+	}() // #nosec G304 -- test root was created above
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, binary, "mcp") // #nosec G204 -- explicit test operand
@@ -173,7 +181,11 @@ func runHTTPStress(name, binary, root string) error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(testRoot) // #nosec G304 -- test root was created above
+	defer func() {
+		if cleanupErr := os.RemoveAll(testRoot); cleanupErr != nil {
+			fatal("remove HTTP stress root: %v", cleanupErr)
+		}
+	}() // #nosec G304 -- test root was created above
 	vault := filepath.Join(testRoot, "vault")
 	if err := os.Mkdir(vault, 0o700); err != nil {
 		return err
@@ -181,7 +193,7 @@ func runHTTPStress(name, binary, root string) error {
 	if err := os.WriteFile(filepath.Join(vault, "small.md"), []byte("small note\n"), 0o600); err != nil {
 		return err
 	}
-	large, err := os.OpenFile(filepath.Join(vault, "large.md"), os.O_CREATE|os.O_RDWR, 0o600)
+	large, err := os.OpenFile(filepath.Join(vault, "large.md"), os.O_CREATE|os.O_RDWR, 0o600) // #nosec G304 -- fixed file beneath fresh test vault
 	if err != nil {
 		return err
 	}
@@ -259,7 +271,7 @@ func runHTTPStress(name, binary, root string) error {
 }
 
 func createSparseFile(path string, size int64) error {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600) // #nosec G304 -- fixed caller-generated path beneath fresh test vault
 	if err != nil {
 		return err
 	}
@@ -325,7 +337,7 @@ func (s *runningServer) request(client *http.Client, method, path string, body [
 	if err != nil {
 		return response{}, err
 	}
-	defer result.Body.Close()
+	defer func() { _ = result.Body.Close() }()
 	data, err := io.ReadAll(io.LimitReader(result.Body, maxBodyBytes+1))
 	if err != nil {
 		return response{}, err

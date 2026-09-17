@@ -115,9 +115,11 @@ where
                 if request.method == "tools/call" {
                     let output = Arc::clone(&output);
                     let config = Arc::clone(&config);
-                    calls.push(thread::spawn(move || {
-                        dispatch(&request, mode, &config, &output)
-                    }));
+                    calls.push((
+                        mode,
+                        request.id.clone(),
+                        thread::spawn(move || dispatch(&request, mode, &config, &output)),
+                    ));
                 } else if let Err(error) = dispatch(&request, mode, &config, &output) {
                     terminal_error = Some(error);
                     break;
@@ -157,32 +159,26 @@ where
 }
 
 fn join_calls<W>(
-    calls: &mut Vec<thread::JoinHandle<io::Result<()>>>,
+    calls: &mut Vec<(ResponseMode, Value, thread::JoinHandle<io::Result<()>>)>,
     output: &Arc<Mutex<W>>,
     config: &Arc<ServerConfig>,
 ) where
     W: Write + Send + 'static,
 {
-    for call in calls.drain(..) {
+    for (mode, id, call) in calls.drain(..) {
         match call.join() {
             Ok(Ok(())) => {}
             Ok(Err(error)) => {
                 // The first writer error is surfaced by a best-effort internal
                 // response only when possible; the transport caller still gets
                 // a clean shutdown after all handlers have been reaped.
-                let _ = send_error(
-                    output,
-                    ResponseMode::Line,
-                    Value::Null,
-                    INTERNAL_ERROR,
-                    error.to_string(),
-                );
+                let _ = send_error(output, mode, id, INTERNAL_ERROR, error.to_string());
             }
             Err(_) => {
                 let _ = send_error(
                     output,
-                    ResponseMode::Line,
-                    Value::Null,
+                    mode,
+                    id,
                     INTERNAL_ERROR,
                     format!("Internal error: handler panicked ({})", config.version),
                 );
@@ -473,6 +469,12 @@ where
     W: Write + Send + 'static,
 {
     let data = serde_json::to_vec(&response).map_err(io::Error::other)?;
+    if data.len() > MAX_MESSAGE_BYTES {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("MCP response exceeds {MAX_MESSAGE_BYTES} bytes"),
+        ));
+    }
     let mut writer = output
         .lock()
         .map_err(|_| io::Error::other("MCP output lock poisoned"))?;
@@ -741,5 +743,42 @@ mod tests {
             None::<String>,
         );
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn oversized_response_is_rejected_before_writing() {
+        let response = RpcResponse {
+            jsonrpc: "2.0",
+            id: Value::from(1),
+            result: Some(Value::String("x".repeat(MAX_MESSAGE_BYTES))),
+            error: None,
+        };
+        let output = Arc::new(Mutex::new(Vec::new()));
+        let result = write_response(&output, ResponseMode::Line, response);
+        assert!(result.is_err());
+        assert!(output.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn framed_handler_error_preserves_framing_and_request_id() {
+        let output = Arc::new(Mutex::new(Vec::new()));
+        let config = Arc::new(ServerConfig {
+            version: "test".to_owned(),
+            vault: None,
+        });
+        let mut calls = vec![(
+            ResponseMode::Framed,
+            Value::from(7),
+            thread::spawn(|| -> io::Result<()> { Err(io::Error::other("response exceeds limit")) }),
+        )];
+
+        join_calls(&mut calls, &output, &config);
+
+        let response = String::from_utf8(output.lock().unwrap().clone()).unwrap();
+        assert!(response.starts_with("Content-Length: "));
+        let payload = response.split_once("\r\n\r\n").unwrap().1;
+        let payload: Value = serde_json::from_str(payload).unwrap();
+        assert_eq!(payload["id"], 7);
+        assert_eq!(payload["error"]["code"], INTERNAL_ERROR);
     }
 }

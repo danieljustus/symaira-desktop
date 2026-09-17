@@ -37,13 +37,23 @@ use axum::{
 };
 use flate2::{Compression, write::GzEncoder};
 use httpdate::{fmt_http_date, parse_http_date};
+use hyper::server::conn::http1::Builder as ConnectionBuilder;
+use hyper_util::{
+    rt::{TokioIo, TokioTimer},
+    service::TowerToHyperService,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use symdesk_vault::walk_markdown;
+use symdesk_vault::walk_markdown_with;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
+use tower::{Service as _, ServiceExt as _};
 
 const MAX_NOTE_BYTES: u64 = 8 << 20;
+const MAX_SNAPSHOT_BYTES: u64 = 16 << 20;
+const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
+const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(5);
+const SNAPSHOT_TOO_LARGE: &str = "snapshot exceeds 16 MiB limit";
 
 #[derive(Clone, Debug)]
 pub struct HttpConfig {
@@ -141,13 +151,63 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
     let app = router(state);
     eprintln!("LISTENING http://{actual}");
 
-    axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .with_graceful_shutdown(shutdown_signal())
-    .await
-    .map_err(|error| format!("HTTP server: {error}"))
+    let mut make_service = app.into_make_service_with_connect_info::<SocketAddr>();
+    let mut connection_builder = ConnectionBuilder::new();
+    connection_builder
+        .timer(TokioTimer::new())
+        .header_read_timeout(Some(HTTP_HEADER_READ_TIMEOUT));
+    let connection_builder = connection_builder;
+    let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(());
+    let shutdown = shutdown_signal();
+    tokio::pin!(shutdown);
+    let mut active = tokio::task::JoinSet::new();
+
+    loop {
+        while active.try_join_next().is_some() {}
+        let accepted = tokio::select! {
+            result = listener.accept() => Some(result),
+            _ = &mut shutdown => None,
+        };
+        let Some(accepted) = accepted else {
+            drop(shutdown_tx);
+            while active.join_next().await.is_some() {}
+            break;
+        };
+        let (io, remote_addr) = match accepted {
+            Ok(connection) => connection,
+            Err(error) => {
+                eprintln!("accept HTTP connection failed: {error}");
+                tokio::time::sleep(Duration::from_secs(1)).await;
+                continue;
+            }
+        };
+
+        let io = TokioIo::new(io);
+        let tower_service = make_service
+            .call(remote_addr)
+            .await
+            .unwrap_or_else(|error| match error {})
+            .map_request(|request: hyper::Request<hyper::body::Incoming>| request.map(Body::new));
+        let hyper_service = TowerToHyperService::new(tower_service);
+        let builder = connection_builder.clone();
+        let mut connection_shutdown = shutdown_rx.clone();
+        active.spawn(async move {
+            let connection = builder.serve_connection(io, hyper_service);
+            let mut connection = std::pin::pin!(connection);
+            tokio::select! {
+                result = &mut connection => {
+                    if let Err(error) = result {
+                        eprintln!("HTTP connection failed: {error}");
+                    }
+                }
+                _ = connection_shutdown.changed() => {
+                    connection.as_mut().graceful_shutdown();
+                    let _ = connection.await;
+                }
+            }
+        });
+    }
+    Ok(())
 }
 
 fn router(state: Arc<AppState>) -> Router {
@@ -358,6 +418,9 @@ async fn handle_snapshot(
         || snapshot_payload(&state),
     ) {
         Ok(value) => value,
+        Err(error) if error == SNAPSHOT_TOO_LARGE => {
+            return json_error(StatusCode::PAYLOAD_TOO_LARGE, SNAPSHOT_TOO_LARGE);
+        }
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
     };
     let SnapshotPayload {
@@ -608,26 +671,40 @@ impl Read for InjectedReadFailure {
 fn snapshot_payload(state: &AppState) -> Result<SnapshotPayload, String> {
     let mut files = Vec::new();
     let mut etag_material = String::new();
+    let mut aggregate_note_bytes = 0_u64;
     let root_dir = open_current_root(state)?;
-    for relative in walk_markdown(&state.vault_root).map_err(|error| error.to_string())? {
+    walk_markdown_with(&state.vault_root, |relative| {
         // Preserve the pre-cache adapter's explicit rejection rather than
         // silently aliasing invalid paths to empty or replacement strings.
-        relative
-            .to_str()
-            .ok_or_else(|| "vault path is not UTF-8".to_owned())?;
-        let logical_path = normalize_snapshot_path(&relative);
+        if relative.to_str().is_none() {
+            return Err(io::Error::other("vault path is not UTF-8"));
+        }
+        let logical_path = normalize_snapshot_path(relative);
         let mut file = match root_dir.open(&relative) {
             Ok(file) => file,
             // An external symlink, a concurrently removed file, and a file
             // replaced by an escaping symlink are all intentionally omitted.
             // The opened capability is the security boundary; no path is read
             // again after this point.
-            Err(_) => continue,
+            Err(_) => return Ok(()),
         };
         let metadata = match file.metadata() {
             Ok(metadata) if metadata.is_file() && metadata.len() <= MAX_NOTE_BYTES => metadata,
-            _ => continue,
+            _ => return Ok(()),
         };
+        // Reserve for JSON keys, timestamps, path/ETag material, and separators
+        // before allocating the note content. The serialized snapshot is
+        // checked again below for exact plain and gzip bounds.
+        let note_overhead = SNAPSHOT_NOTE_OVERHEAD_BYTES
+            .checked_add(logical_path.len() as u64)
+            .ok_or_else(|| io::Error::other(SNAPSHOT_TOO_LARGE))?;
+        aggregate_note_bytes = aggregate_note_bytes
+            .checked_add(metadata.len())
+            .and_then(|size| size.checked_add(note_overhead))
+            .ok_or_else(|| io::Error::other(SNAPSHOT_TOO_LARGE))?;
+        if aggregate_note_bytes > MAX_SNAPSHOT_BYTES {
+            return Err(io::Error::other(SNAPSHOT_TOO_LARGE));
+        }
         let mut bytes =
             Vec::with_capacity((metadata.len() as usize).min(MAX_NOTE_BYTES as usize + 1));
         #[cfg(test)]
@@ -640,9 +717,9 @@ fn snapshot_payload(state: &AppState) -> Result<SnapshotPayload, String> {
         };
         #[cfg(not(test))]
         let read_result = read_snapshot_bytes(&mut file, &mut bytes);
-        read_result.map_err(|error| error.to_string())?;
+        read_result?;
         if bytes.len() as u64 > MAX_NOTE_BYTES {
-            continue;
+            return Ok(());
         }
         let modified = metadata
             .modified()
@@ -655,7 +732,9 @@ fn snapshot_payload(state: &AppState) -> Result<SnapshotPayload, String> {
             content: String::from_utf8_lossy(&bytes).into_owned(),
             modified_at: format_rfc3339(modified),
         });
-    }
+        Ok(())
+    })
+    .map_err(|error| error.to_string())?;
     let etag = symdesk_vault::sha256_hex(etag_material.as_bytes());
     let snapshot = Snapshot {
         generated_at: format_rfc3339(SystemTime::now()),
@@ -663,9 +742,15 @@ fn snapshot_payload(state: &AppState) -> Result<SnapshotPayload, String> {
     };
     let mut plain = serde_json::to_vec(&snapshot).map_err(|error| error.to_string())?;
     plain.push(b'\n');
+    if plain.len() as u64 > MAX_SNAPSHOT_BYTES {
+        return Err(SNAPSHOT_TOO_LARGE.to_owned());
+    }
     let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
     std::io::Write::write_all(&mut encoder, &plain).map_err(|error| error.to_string())?;
     let compressed = encoder.finish().map_err(|error| error.to_string())?;
+    if compressed.len() as u64 > MAX_SNAPSHOT_BYTES {
+        return Err(SNAPSHOT_TOO_LARGE.to_owned());
+    }
     Ok(SnapshotPayload {
         plain: plain.into(),
         compressed: compressed.into(),
@@ -965,6 +1050,85 @@ mod tests {
     #[test]
     fn representative_request_timeout_is_bounded() {
         assert_eq!(READ_TIMEOUT, Duration::from_secs(120));
+    }
+
+    #[test]
+    fn aggregate_snapshot_budget_rejects_before_the_next_note_allocation() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-budget-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir(&root).expect("create test root");
+        for name in ["a.md", "b.md"] {
+            let file = fs::File::create(root.join(name)).expect("create note");
+            file.set_len(MAX_NOTE_BYTES).expect("size note");
+        }
+        let state = AppState {
+            vault_root: root.clone(),
+            token: Arc::from(Vec::<u8>::new()),
+            version: String::new(),
+            auth_failures: Mutex::new(AuthThrottle::default()),
+            snapshot_cache: SnapshotCache::uncached(),
+        };
+
+        assert!(matches!(
+            snapshot_payload(&state),
+            Err(error) if error == SNAPSHOT_TOO_LARGE
+        ));
+        fs::remove_dir_all(root).expect("remove test root");
+    }
+
+    #[test]
+    fn aggregate_snapshot_budget_streams_many_small_notes() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-many-notes-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir(&root).expect("create test root");
+        let content = vec![b'x'; 20 * 1024];
+        for index in 0..1_024 {
+            fs::write(root.join(format!("note-{index:04}.md")), &content).expect("write note");
+        }
+        let state = AppState {
+            vault_root: root.clone(),
+            token: Arc::from(Vec::<u8>::new()),
+            version: String::new(),
+            auth_failures: Mutex::new(AuthThrottle::default()),
+            snapshot_cache: SnapshotCache::uncached(),
+        };
+
+        assert!(matches!(
+            snapshot_payload(&state),
+            Err(error) if error == SNAPSHOT_TOO_LARGE
+        ));
+        fs::remove_dir_all(root).expect("remove test root");
+    }
+
+    #[test]
+    fn snapshot_plain_payload_bound_rejects_json_expansion() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-plain-budget-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir(&root).expect("create test root");
+        fs::write(root.join("quoted.md"), vec![b'"'; MAX_NOTE_BYTES as usize])
+            .expect("write quoted note");
+        let state = AppState {
+            vault_root: root.clone(),
+            token: Arc::from(Vec::<u8>::new()),
+            version: String::new(),
+            auth_failures: Mutex::new(AuthThrottle::default()),
+            snapshot_cache: SnapshotCache::uncached(),
+        };
+
+        assert!(matches!(
+            snapshot_payload(&state),
+            Err(error) if error == SNAPSHOT_TOO_LARGE
+        ));
+        fs::remove_dir_all(root).expect("remove test root");
     }
 
     #[test]

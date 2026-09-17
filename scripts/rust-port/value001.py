@@ -47,6 +47,7 @@ CURRENT_BEHAVIOUR_ORACLE = "745c08e8144971c61133c5d0e5d61c7ce405aad2"
 DOC_COUNT = 10_000
 SEARCH_TOKEN = "value001cohort042"
 COHORT = 42
+MCP_LS_DIR = f"cohort-{COHORT:03d}/"
 HTTP_FILE_CONTENT = "---\ntitle: HTTP Probe\ncreated: 2026-01-02T03:04:05Z\n---\nvalue001 http probe\n"
 SCHEMA4_PAIRING = "alternating go-rust/rust-go per post-warmup round"
 HTTP_OPERATION_NAMES = (
@@ -266,8 +267,10 @@ def expected_vault_semantics(manifest: dict[str, Any], include_http_probe: bool 
     paths = list(manifest["expected_paths"])
     # Walk/list output is lexical.  HTTP.md sorts before cohort-*.
     paths.sort()
+    mcp_ls_paths = [path for path in paths if path.startswith(MCP_LS_DIR)]
     return {
         "paths": paths,
+        "mcp_ls_paths": mcp_ls_paths,
         "titles": manifest["expected_titles"],
         "search_paths": sorted(manifest["search_paths"]),
         "search_match_count": manifest["search_match_count"],
@@ -287,15 +290,16 @@ def validate_version(stdout: str, stderr: str) -> None:
         raise HarnessError(f"invalid version contract: stdout={stdout!r} stderr={stderr!r}")
 
 
-def validate_ls(stdout: str, stderr: str, expected: dict[str, Any]) -> None:
+def validate_ls(stdout: str, stderr: str, expected: dict[str, Any], expected_paths: list[str] | None = None) -> None:
     if stderr:
         raise HarnessError(f"unexpected ls stderr: {stderr!r}")
     value = parse_json(stdout, "ls")
     if not isinstance(value, list):
         raise HarnessError(f"ls result is not an array: {type(value).__name__}")
     paths = [item.get("path") for item in value if isinstance(item, dict)]
-    if len(value) != len(expected["paths"]) or paths != expected["paths"]:
-        raise HarnessError(f"ls paths mismatch: got {len(paths)} entries, expected {len(expected['paths'])}")
+    expected_paths = expected["paths"] if expected_paths is None else expected_paths
+    if len(value) != len(expected_paths) or paths != expected_paths:
+        raise HarnessError(f"ls paths mismatch: got {len(paths)} entries, expected {len(expected_paths)}")
     for item in value:
         if not isinstance(item, dict) or set(item) - {"path", "title", "type", "modified"}:
             raise HarnessError(f"invalid ls entry: {item!r}")
@@ -379,7 +383,7 @@ def validate_mcp(stdout: str, stderr: str, label: str, expected: dict[str, Any],
         if status != {"version": "0.12.2", "vault": str(vault), "capabilities": "read_only"}:
             raise HarnessError(f"MCP status semantic mismatch: {status!r}")
     elif label == "desk_ls":
-        validate_ls(text, "", expected)
+        validate_ls(text, "", expected, expected["mcp_ls_paths"])
     elif label == "desk_search":
         validate_search(text, "", expected)
     else:
@@ -772,7 +776,7 @@ def measure_mcp(
         ("initialize", mcp_request("initialize", 1)),
         ("tools-list", mcp_request("tools/list", 2)),
         ("desk_status", mcp_request("tools/call", 3, "desk_status")),
-        ("desk_ls", mcp_request("tools/call", 4, "desk_ls")),
+        ("desk_ls", mcp_request("tools/call", 4, "desk_ls", {"dir": MCP_LS_DIR})),
         ("desk_search", mcp_request("tools/call", 5, "desk_search", {"query": SEARCH_TOKEN})),
     ]
     values = {"go": [], "rust": []}

@@ -81,6 +81,14 @@ uses a synthetic vault and loopback-only dynamic ports, records raw samples,
 and exits non-zero unless contract parity, the 20% binary-size-or-RSS gate, and
 all declared latency gates pass. Override `VALUE_OUTPUT` to retain a separate
 artifact; the default is `docs/rust-port/results/value001-latest.json`.
+The Make targets default all temporary homes, XDG roots, language caches, and
+Python bytecode to the attached NVMe; override `VALUE_RUNTIME_ROOT` only with
+another external build volume.
+
+The timed `desk_ls` MCP call uses the existing `dir: "cohort-042/"` contract
+to return one deterministic 100-document cohort within the SEC-003 1 MiB
+outgoing-response limit. Index preparation, CLI listing, and search still use
+the full 10,000-document vault.
 
 ## VALUE-001 units and display
 

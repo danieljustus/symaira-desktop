@@ -51,3 +51,7 @@ Full native run 34314724745 completed successfully on 0159d800.
 - Issue #897 tracks acceptance defects; issue #895 tracks Windows gates.
 - Independent validator implementation is delegated to `deleg_46f46923`, isolated managed worktree, new candidate-validator/test files only. Verify returned source and tests before integrating; session workers are not durable after session termination.
 - Next: integrate and review exact-candidate acceptance validator; split Make/CI historical evidence checks from current approval; validate fresh capture against its explicit measured commit and trusted digest; re-run affected checks; verify exact-head native results; then reconcile RUST-006 and resume the existing DAG. Do not mark completion based on benchmark JSON alone.
+
+## Schema-4 review rework checkpoint (2026-09-16)
+
+The candidate validator now explicitly rejects boolean `binaries.*.bytes` metadata (Python `bool` is an `int` subclass), with negative coverage for both current Go and Rust binary entries. `PYTHONDONTWRITEBYTECODE=1 make value-001-evidence-tests` passes 150/150; no fresh benchmark or native build was run, and RUST-006 remains blocked pending independent review and the exclusive current measurement.

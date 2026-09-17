@@ -66,6 +66,7 @@ The measured Go baseline is in
 - [`work-items.json`](work-items.json) — machine-readable dependency graph.
 - [`baseline-20260906.json`](baseline-20260906.json) — measured Go reference metrics.
 - [`value001-result.schema.json`](value001-result.schema.json) — schema for measured VALUE-001 artifacts.
+- [`value001-order-bias-repair.md`](value001-order-bias-repair.md) — schema-4/5 order-stratified decision contract and fail-closed boundary.
 - [`value001-fbc52d0c-current-gate.md`](value001-fbc52d0c-current-gate.md) — current-candidate decision; no RUST-006/RUST-007/RUST-016 advancement.
 - [`results/value001-retained.json`](results/value001-retained.json) and its provenance sidecar — historical privacy-reviewed 655d248 capture; check historical evidence with `make value-001-evidence-tests`, not as approval of current HEAD. Exact candidate approval requires the explicit command in [`operations-gate-checkpoint.md`](operations-gate-checkpoint.md).
 - [`value-signal-version-20260906.json`](value-signal-version-20260906.json) — non-representative first Rust slice measurements.
@@ -86,9 +87,20 @@ artifact; the default is `docs/rust-port/results/value001-latest.json`.
 VALUE-001 stores reductions and relative latency regressions as dimensionless
 ratios, not percentage values. A regression is `candidate / reference - 1`, so
 `0.10` is the unchanged **+10%** latency ceiling and gate comparisons use
-`value <= 0.10` directly. In schema 2 this field is
-`thresholds.p95_regressions`; current reports use
-`thresholds.latency_regressions`. Both retain ratio units.
+`value <= 0.10` directly. Schema 2 retains its historical
+`thresholds.p95_regressions`; schema 3 retains its declared pooled estimator
+and provenance. Schema 4 remains historical order-stratified evidence; only
+schema 5 can approve a current candidate. It requires
+`order_stratified_paired_median_ratio`, records each execution-order cohort in
+`thresholds.latency_order_regressions`, and stores the worse cohort as
+`thresholds.latency_regressions` for each gate. Its descriptive median
+intervals remain separate by order under
+`thresholds.latency_order_regression_intervals`; pooled intervals are not a
+schema-5 decision input. Schema 5 also rotates HTTP routes per round and
+alternates Go/Rust independently for each route, so no route is permanently
+first in a server burst. Missing, mismatched, or materially unbalanced
+`go-rust`/`rust-go` labels fail closed. Historical pooled evidence remains
+auditable but cannot approve a new candidate.
 
 `python3 scripts/rust-port/value001_report.py <artifact>` uses the
 `ratio_to_percentage` display helper, which multiplies a stored ratio by 100

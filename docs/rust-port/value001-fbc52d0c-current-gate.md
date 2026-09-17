@@ -38,8 +38,39 @@ The alternating-order cohorts are consistently different:
 The current `paired_median_ratio` pools those two heterogeneous cohorts. With
 an even sample count, the boundary between the two clusters makes the formal
 result flip between PASS and FAIL. This is a systematic order bias, not an
-ignorable outlier. The gate must be repaired fail-closed before a current
-candidate can be accepted; the required work is tracked in #936.
+ignorable outlier.
+
+The #936 repair changes **new candidate approval** to
+`order_stratified_paired_median_ratio`: it computes the paired median for
+`go-rust` and `rust-go` separately, records both values, and gates on the
+worse cohort. Missing, mismatched, or materially unbalanced order labels fail
+closed. Historic reports retain their original declared estimator for audit,
+but cannot approve a fresh candidate. A new full measurement still has to pass
+under that rule before `RUST-006` can change state.
+
+## Repair verification (not a formal approval)
+
+The initial schema-4 repair was checked in the assigned worktree. The focused
+`value-001-evidence-tests` target then passed 139 tests, including the
+order-cohort, strict failure-boundary, schema-compatibility, validator, and
+report cases. The JSON Schema 2020-12 document also validated a schema-4
+fixture.
+
+## Controlled HTTP scheduling correction (2026-09-17)
+
+The initial pairing still scheduled all seven HTTP routes against one server
+before the other, so a route's first-request position was fixed. Schema 5
+rotates the routes every round and alternates Go/Rust per route. The validator
+reconstructs that exact schedule; schema-4 evidence remains readable but cannot
+approve a current candidate.
+
+`PYTHONDONTWRITEBYTECODE=1 make value-001-evidence-tests` passed 153 tests.
+No fresh benchmark or native build was run, so there is no new performance
+result or approval evidence; `RUST-006`, `RUST-007`, and `RUST-016` remain
+blocked. The source-bound validator now requires exact schema-5 evidence, the
+controlled order-stratified schedule, unchanged thresholds, candidate-root
+provenance, and a clean candidate checkout. Historical schema-2/3/4 evidence
+retains its original semantics and cannot be promoted.
 
 The raw host-specific captures are deliberately retained outside the repository.
 This document contains only the reproducible candidate/oracle identities and

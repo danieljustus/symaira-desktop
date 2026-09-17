@@ -1,4 +1,4 @@
-.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential frontmatter-write-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential sidecar-roundtrip differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates value-001-validate representative-fixtures-generate representative-fixtures-check representative-differential http-differential mcp-fixtures-generate mcp-fixtures-check mcp-differential value-001
+.PHONY: build test lint fmt-check font-guard corekit-guard boundary-guard nested-version-guard release-signing-guard vuln benchmark-large docker-build clean port-fixtures-generate port-fixtures-check core-fixtures-generate core-fixtures-check core-differential vault-fixtures-generate vault-fixtures-check vault-read-differential frontmatter-write-differential sidecar-fixtures-generate sidecar-fixtures-check sidecar-differential sidecar-roundtrip differential-go-selftest port-contract rust-build rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract rust-fuzz-smoke rust-gates value-001-validate representative-fixtures-generate representative-fixtures-check representative-differential http-differential mcp-fixtures-generate mcp-fixtures-check mcp-differential resource-stress value-001
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -185,6 +185,24 @@ VALUE_WARMUPS ?= 20
 VALUE_GO_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 VALUE_OUTPUT ?= docs/rust-port/results/value001-latest.json
 VALUE_RETAINED ?= docs/rust-port/results/value001-retained.json
+RESOURCE_STRESS_ROOT ?= /Volumes/SymairaSecureRuntime/symaira-desktop-sec003
+RESOURCE_RUSTUP_HOME ?= /Volumes/SymairaSecureRuntime/runtime-bootstrap/rustup
+
+# SEC-003: native black-box resource and cleanup evidence for the representative
+# Go/Rust binaries. Every generated root and language cache is explicit so a
+# local gate cannot write under the developer's home or MacBook filesystem.
+resource-stress:
+	@mkdir -p "$(RESOURCE_STRESS_ROOT)/home" "$(RESOURCE_STRESS_ROOT)/tmp"
+	@mkdir -p "$(RESOURCE_STRESS_ROOT)/bin"
+	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" GOCACHE="$(RESOURCE_STRESS_ROOT)/go-cache" GOMODCACHE="$(RESOURCE_STRESS_ROOT)/go-modcache" GOPATH="$(RESOURCE_STRESS_ROOT)/gopath" \
+		go build -ldflags="-X main.version=0.12.2" -o "$(RESOURCE_STRESS_ROOT)/bin/symdesk-go" ./cmd/symdesk
+	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" RUSTUP_HOME="$(RESOURCE_RUSTUP_HOME)" CARGO_HOME="$(RESOURCE_STRESS_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RESOURCE_STRESS_ROOT)/cargo-target" \
+		SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
+	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" RUSTUP_HOME="$(RESOURCE_RUSTUP_HOME)" CARGO_HOME="$(RESOURCE_STRESS_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RESOURCE_STRESS_ROOT)/cargo-target" \
+		$(CARGO) test -p symdesk-cli --locked oversized_response_is_rejected_before_writing
+	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" RUSTUP_HOME="$(RESOURCE_RUSTUP_HOME)" GOCACHE="$(RESOURCE_STRESS_ROOT)/go-cache" GOMODCACHE="$(RESOURCE_STRESS_ROOT)/go-modcache" GOPATH="$(RESOURCE_STRESS_ROOT)/gopath" CARGO_HOME="$(RESOURCE_STRESS_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RESOURCE_STRESS_ROOT)/cargo-target" \
+		go run ./scripts/rust-port/cmd/resource-stress --go "$(RESOURCE_STRESS_ROOT)/bin/symdesk-go" --rust "$(RESOURCE_STRESS_ROOT)/cargo-target/debug/symdesk" --root "$(RESOURCE_STRESS_ROOT)"
+
 value-001-evidence-tests:
 	python3 -m unittest discover -s scripts/rust-port -p 'test_*value001*.py' -v
 	python3 scripts/rust-port/validate_value001_retained.py "$(VALUE_RETAINED)"

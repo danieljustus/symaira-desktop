@@ -262,6 +262,10 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: make representative-differential mcp-differential
 
+      - name: Run native Unix SEC-003 resource and cleanup stress
+        if: matrix.os != 'windows-latest'
+        run: RESOURCE_STRESS_ROOT="${RUNNER_TEMP}/symdesk-sec003" RESOURCE_RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" make resource-stress
+
       - name: Run native Windows representative CLI HTTP and MCP parity
         if: matrix.os == 'windows-latest'
         shell: bash
@@ -275,6 +279,11 @@ jobs:
           go run ./scripts/rust-port/cmd/diffharness --symdesk-left bin/port/symdesk-go.exe --symdesk-right target/debug/symdesk.exe --cases testdata/port/representative/cases.json --stage representative
           go run ./scripts/rust-port/cmd/httpdiff --left bin/port/symdesk-go.exe --right target/debug/symdesk.exe --fixture testdata/port/http/representative.json
           go run ./scripts/rust-port/cmd/mcpdiff --left bin/port/symdesk-go.exe --right target/debug/symdesk.exe
+
+      - name: Run native Windows SEC-003 resource and cleanup stress
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: RESOURCE_STRESS_ROOT="${RUNNER_TEMP}/symdesk-sec003" RESOURCE_RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" make resource-stress
 
       - name: Run native Windows sidecar round-trip suite
         if: matrix.os == 'windows-latest'

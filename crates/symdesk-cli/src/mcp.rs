@@ -473,6 +473,12 @@ where
     W: Write + Send + 'static,
 {
     let data = serde_json::to_vec(&response).map_err(io::Error::other)?;
+    if data.len() > MAX_MESSAGE_BYTES {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("MCP response exceeds {MAX_MESSAGE_BYTES} bytes"),
+        ));
+    }
     let mut writer = output
         .lock()
         .map_err(|_| io::Error::other("MCP output lock poisoned"))?;
@@ -741,5 +747,19 @@ mod tests {
             None::<String>,
         );
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn oversized_response_is_rejected_before_writing() {
+        let response = RpcResponse {
+            jsonrpc: "2.0",
+            id: Value::from(1),
+            result: Some(Value::String("x".repeat(MAX_MESSAGE_BYTES))),
+            error: None,
+        };
+        let output = Arc::new(Mutex::new(Vec::new()));
+        let result = write_response(&output, ResponseMode::Line, response);
+        assert!(result.is_err());
+        assert!(output.lock().unwrap().is_empty());
     }
 }

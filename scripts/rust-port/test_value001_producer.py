@@ -202,10 +202,6 @@ class ProducerGateTests(unittest.TestCase):
         self.assertEqual(capture, before)
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
-
-
 class AggregatePairOrderTests(unittest.TestCase):
     """Schema-5 HTTP samples have a fixed, rotated operation/order schedule."""
 
@@ -262,6 +258,8 @@ class AggregatePairOrderTests(unittest.TestCase):
             value001, "rss_bytes", lambda _pid: 1
         ), patch.object(
             value001.time, "perf_counter_ns", lambda: next(clock)
+        ), patch.object(
+            value001.time, "sleep", lambda seconds: events.append(("idle", seconds))
         ):
             go, rust = FakeServer("go"), FakeServer("rust")
             go.process = rust.process = type("P", (), {"pid": 1})()
@@ -269,9 +267,13 @@ class AggregatePairOrderTests(unittest.TestCase):
 
         expected_events = []
         for index in range(warmups + rounds):
+            priming_sides = ("go", "rust") if index % 2 == 0 else ("rust", "go")
+            for side in priming_sides:
+                expected_events.extend(((side, "/healthz"), ("idle", value001.HTTP_CONTROL_IDLE_SECONDS)))
             for operation, order in value001.http_round_schedule(index):
                 sides = ("go", "rust") if order == "go-rust" else ("rust", "go")
-                expected_events.extend((side, "/" + operation) for side in sides)
+                for side in sides:
+                    expected_events.extend(((side, "/" + operation), ("idle", value001.HTTP_CONTROL_IDLE_SECONDS)))
         self.assertEqual(events, expected_events)
         expected_aggregate = value001.expected_http_pair_orders(warmups, rounds)
         self.assertEqual(
@@ -284,3 +286,35 @@ class AggregatePairOrderTests(unittest.TestCase):
             expected = value001.expected_http_operation_orders(name, warmups, rounds)
             self.assertEqual(http["operations"][name]["go"]["pair_order"], expected)
             self.assertEqual(http["operations"][name]["rust"]["pair_order"], expected)
+
+    def test_request_raw_closes_each_connection(self):
+        captured = {}
+
+        class Response:
+            status = 200
+            headers = {}
+
+            def read(self, _limit):
+                return b""
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+        def fake_urlopen(request, timeout):
+            captured["request"] = request
+            self.assertEqual(timeout, 5.0)
+            return Response()
+
+        server = object.__new__(value001.RunningServer)
+        server.base = "http://127.0.0.1:4242"
+        server.binary = SimpleNamespace(name="symdesk")
+        with patch.object(value001.urllib.request, "urlopen", fake_urlopen):
+            server.request_raw("GET", "/healthz", auth="none")
+        self.assertEqual(captured["request"].get_header("Connection"), "close")
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

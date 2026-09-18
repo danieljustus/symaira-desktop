@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import patch
 
 import value001
@@ -317,7 +318,7 @@ class AggregatePairOrderTests(unittest.TestCase):
 
 
 class McpListScopeTests(unittest.TestCase):
-    def test_measure_mcp_scopes_desk_ls_to_the_search_cohort(self):
+    def test_measure_mcp_scopes_desk_ls_to_each_sides_absolute_cohort_directory(self):
         manifest = {
             "expected_paths": [value001.document_path(index) for index in range(value001.DOC_COUNT)],
             "expected_titles": {},
@@ -325,7 +326,7 @@ class McpListScopeTests(unittest.TestCase):
             "search_match_count": 0,
         }
         expected = value001.expected_vault_semantics(manifest)
-        captured: list[str] = []
+        captured: list[Any] = []
         metric = {
             side: {"raw": [1.0] * 100, "pair_order": ["go-rust", "rust-go"] * 50}
             for side in ("go", "rust")
@@ -348,8 +349,11 @@ class McpListScopeTests(unittest.TestCase):
                 100,
             )
 
-        request = json.loads(captured[3])
-        self.assertEqual(request["params"]["arguments"], {"dir": "cohort-042/"})
+        go_request, rust_request = captured[3]
+        # The frozen oracle matches `dir` against absolute indexed paths, so the
+        # bounded cohort request has to name each side's own vault directory.
+        self.assertEqual(json.loads(go_request)["params"]["arguments"], {"dir": "/go-vault/cohort-042"})
+        self.assertEqual(json.loads(rust_request)["params"]["arguments"], {"dir": "/rust-vault/cohort-042"})
         self.assertEqual(len(expected["mcp_ls_paths"]), 100)
         self.assertTrue(all(path.startswith("cohort-042/") for path in expected["mcp_ls_paths"]))
 

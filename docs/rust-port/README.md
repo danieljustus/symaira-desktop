@@ -85,9 +85,11 @@ The Make targets default all temporary homes, XDG roots, language caches, and
 Python bytecode to the attached NVMe; override `VALUE_RUNTIME_ROOT` only with
 another external build volume.
 
-The timed `desk_ls` MCP call uses the existing `dir: "cohort-042/"` contract
-to return one deterministic 100-document cohort within the SEC-003 1 MiB
-outgoing-response limit. Index preparation, CLI listing, and search still use
+The timed `desk_ls` MCP call names each side's own absolute `cohort-042`
+directory (`dir` is matched against the indexed absolute paths), so it returns
+one deterministic 100-document cohort inside the SEC-003 1 MiB
+outgoing-response limit instead of the full listing, which the Rust port
+rejects at that limit. Index preparation, CLI listing, and search still use
 the full 10,000-document vault.
 
 ## VALUE-001 units and display

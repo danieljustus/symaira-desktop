@@ -47,7 +47,7 @@ CURRENT_BEHAVIOUR_ORACLE = "745c08e8144971c61133c5d0e5d61c7ce405aad2"
 DOC_COUNT = 10_000
 SEARCH_TOKEN = "value001cohort042"
 COHORT = 42
-MCP_LS_DIR = f"cohort-{COHORT:03d}/"
+MCP_LS_DIR = f"cohort-{COHORT:03d}"
 HTTP_FILE_CONTENT = "---\ntitle: HTTP Probe\ncreated: 2026-01-02T03:04:05Z\n---\nvalue001 http probe\n"
 SCHEMA4_PAIRING = "alternating go-rust/rust-go per post-warmup round"
 HTTP_OPERATION_NAMES = (
@@ -267,7 +267,7 @@ def expected_vault_semantics(manifest: dict[str, Any], include_http_probe: bool 
     paths = list(manifest["expected_paths"])
     # Walk/list output is lexical.  HTTP.md sorts before cohort-*.
     paths.sort()
-    mcp_ls_paths = [path for path in paths if path.startswith(MCP_LS_DIR)]
+    mcp_ls_paths = [path for path in paths if path.startswith(MCP_LS_DIR + "/")]
     return {
         "paths": paths,
         "mcp_ls_paths": mcp_ls_paths,
@@ -298,8 +298,9 @@ def validate_ls(stdout: str, stderr: str, expected: dict[str, Any], expected_pat
         raise HarnessError(f"ls result is not an array: {type(value).__name__}")
     paths = [item.get("path") for item in value if isinstance(item, dict)]
     expected_paths = expected["paths"] if expected_paths is None else expected_paths
-    if len(value) != len(expected_paths) or paths != expected_paths:
-        raise HarnessError(f"ls paths mismatch: got {len(paths)} entries, expected {len(expected_paths)}")
+    expected_count = len(expected_paths)
+    if len(value) != expected_count or paths != expected_paths:
+        raise HarnessError(f"ls paths mismatch: got {len(paths)} entries, expected {expected_count}")
     for item in value:
         if not isinstance(item, dict) or set(item) - {"path", "title", "type", "modified"}:
             raise HarnessError(f"invalid ls entry: {item!r}")
@@ -726,7 +727,7 @@ def measure_process_pair(
     warmups: int,
     samples: int,
     validator: Callable[[str, str], None] | tuple[Callable[[str, str], None], Callable[[str, str], None]],
-    input_data: str | None = None,
+    input_data: str | tuple[str, str] | None = None,
 ) -> dict[str, Any]:
     values: dict[str, list[float]] = {"go": [], "rust": []}
     orders: list[str] = []
@@ -736,10 +737,14 @@ def measure_process_pair(
         order = (("go", go_binary, go_env, go_args), ("rust", rust_binary, rust_env, rust_args)) if go_first else (("rust", rust_binary, rust_env, rust_args), ("go", go_binary, go_env, go_args))
         for name, binary, env, args in order:
             started = time.perf_counter_ns()
+            if isinstance(input_data, tuple):
+                side_input: str | None = input_data[0 if name == "go" else 1]
+            else:
+                side_input = input_data
             try:
                 completed = subprocess.run(
                     [str(binary), *args],
-                    input=input_data,
+                    input=side_input,
                     env=env,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -776,7 +781,10 @@ def measure_mcp(
         ("initialize", mcp_request("initialize", 1)),
         ("tools-list", mcp_request("tools/list", 2)),
         ("desk_status", mcp_request("tools/call", 3, "desk_status")),
-        ("desk_ls", mcp_request("tools/call", 4, "desk_ls", {"dir": MCP_LS_DIR})),
+        ("desk_ls", (
+            mcp_request("tools/call", 4, "desk_ls", {"dir": str(go_vault / MCP_LS_DIR)}),
+            mcp_request("tools/call", 4, "desk_ls", {"dir": str(rust_vault / MCP_LS_DIR)}),
+        )),
         ("desk_search", mcp_request("tools/call", 5, "desk_search", {"query": SEARCH_TOKEN})),
     ]
     values = {"go": [], "rust": []}

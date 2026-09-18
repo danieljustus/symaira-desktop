@@ -27,7 +27,7 @@ class Aeab7664ValidatorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.temp_dir = tempfile.TemporaryDirectory()
-        cls.candidate_root = Path(cls.temp_dir.name) / "aeab-checkout"
+        cls.candidate_root = Path(cls.temp_dir.name) / f"aeab-checkout-{Path(cls.temp_dir.name).name}"
         try:
             subprocess.run(
                 [

@@ -179,16 +179,22 @@ http-differential: representative-fixtures-check
 		--fixture testdata/port/http/representative.json
 
 # VALUE-001: fail-closed paired representative Go/Rust benchmark.
-.PHONY: value-001-evidence-tests value-001-validate
+.PHONY: value-runtime-dirs value-001-evidence-tests value-001-validate
 VALUE_SAMPLES ?= 100
 VALUE_WARMUPS ?= 20
 VALUE_GO_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 VALUE_OUTPUT ?= docs/rust-port/results/value001-latest.json
 VALUE_RETAINED ?= docs/rust-port/results/value001-retained.json
+VALUE_RUNTIME_ROOT ?= /Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/BuildTargets/symaira-desktop-value001-$(shell git rev-parse --short HEAD)
+VALUE_RUSTUP_HOME ?= /Volumes/1TB_NVMe_SN850X/Dev/caches/rustup
+VALUE_RUNTIME_ENV = HOME="$(VALUE_RUNTIME_ROOT)/home" USERPROFILE="$(VALUE_RUNTIME_ROOT)/home" TMPDIR="$(VALUE_RUNTIME_ROOT)/tmp" TMP="$(VALUE_RUNTIME_ROOT)/tmp" TEMP="$(VALUE_RUNTIME_ROOT)/tmp" XDG_CONFIG_HOME="$(VALUE_RUNTIME_ROOT)/xdg-config" XDG_DATA_HOME="$(VALUE_RUNTIME_ROOT)/xdg-data" XDG_CACHE_HOME="$(VALUE_RUNTIME_ROOT)/xdg-cache" PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX="$(VALUE_RUNTIME_ROOT)/pycache" GOCACHE="$(VALUE_RUNTIME_ROOT)/go-cache" GOMODCACHE="$(VALUE_RUNTIME_ROOT)/go-modcache" GOPATH="$(VALUE_RUNTIME_ROOT)/gopath" RUSTUP_HOME="$(VALUE_RUSTUP_HOME)" CARGO_HOME="$(VALUE_RUNTIME_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RUST_TARGET_DIR)" GOTOOLCHAIN=local
 # Keep local SEC-003 outputs and the Rust toolchain cache on the attached NVMe.
 RESOURCE_STRESS_ROOT ?= /Volumes/1TB_NVMe_SN850X/Dev/Symaira_Dev/BuildTargets/symaira-desktop-sec003
 RESOURCE_RUSTUP_HOME ?= /Volumes/1TB_NVMe_SN850X/Dev/caches/rustup
 RESOURCE_EXE_SUFFIX := $(if $(filter Windows_NT,$(OS)),.exe,)
+
+value-runtime-dirs:
+	@mkdir -p "$(VALUE_RUNTIME_ROOT)/home" "$(VALUE_RUNTIME_ROOT)/tmp" "$(VALUE_RUNTIME_ROOT)/xdg-config" "$(VALUE_RUNTIME_ROOT)/xdg-data" "$(VALUE_RUNTIME_ROOT)/xdg-cache" "$(VALUE_RUNTIME_ROOT)/pycache"
 
 # SEC-003: native black-box resource and cleanup evidence for the representative
 # Go/Rust binaries. Every generated root and language cache is explicit so a
@@ -205,23 +211,23 @@ resource-stress:
 	HOME="$(RESOURCE_STRESS_ROOT)/home" TMPDIR="$(RESOURCE_STRESS_ROOT)/tmp" RUSTUP_HOME="$(RESOURCE_RUSTUP_HOME)" GOCACHE="$(RESOURCE_STRESS_ROOT)/go-cache" GOMODCACHE="$(RESOURCE_STRESS_ROOT)/go-modcache" GOPATH="$(RESOURCE_STRESS_ROOT)/gopath" CARGO_HOME="$(RESOURCE_STRESS_ROOT)/cargo-home" CARGO_TARGET_DIR="$(RESOURCE_STRESS_ROOT)/cargo-target" \
 		go run ./scripts/rust-port/cmd/resource-stress --go "$(RESOURCE_STRESS_ROOT)/bin/symdesk-go$(RESOURCE_EXE_SUFFIX)" --rust "$(RESOURCE_STRESS_ROOT)/cargo-target/debug/symdesk$(RESOURCE_EXE_SUFFIX)" --root "$(RESOURCE_STRESS_ROOT)"
 
-value-001-evidence-tests:
-	python3 -m unittest discover -s scripts/rust-port -p 'test_*value001*.py' -v
-	python3 scripts/rust-port/validate_value001_retained.py "$(VALUE_RETAINED)"
-	python3 scripts/rust-port/value001_report.py "$(VALUE_RETAINED)"
-	python3 scripts/rust-port/value001_report.py docs/rust-port/results/value001-latest.json
+value-001-evidence-tests: value-runtime-dirs
+	$(VALUE_RUNTIME_ENV) python3 -m unittest discover -s scripts/rust-port -p 'test_*value001*.py' -v
+	$(VALUE_RUNTIME_ENV) python3 scripts/rust-port/validate_value001_retained.py "$(VALUE_RETAINED)"
+	$(VALUE_RUNTIME_ENV) python3 scripts/rust-port/value001_report.py "$(VALUE_RETAINED)"
+	$(VALUE_RUNTIME_ENV) python3 scripts/rust-port/value001_report.py docs/rust-port/results/value001-latest.json
 
 # Explicit candidate acceptance; historical evidence tests do not approve HEAD.
 VALUE_CANDIDATE_ROOT ?= .
-value-001-validate:
+value-001-validate: value-runtime-dirs
 	@test -n "$(VALUE_CANDIDATE)" -a -n "$(VALUE_TRUSTED_SHA256)"
-	python3 scripts/rust-port/validate_value001_candidate.py "$(VALUE_OUTPUT)" --candidate "$(VALUE_CANDIDATE)" --root "$(VALUE_CANDIDATE_ROOT)" --trusted-sha256 "$(VALUE_TRUSTED_SHA256)"
+	$(VALUE_RUNTIME_ENV) python3 scripts/rust-port/validate_value001_candidate.py "$(VALUE_OUTPUT)" --candidate "$(VALUE_CANDIDATE)" --root "$(VALUE_CANDIDATE_ROOT)" --trusted-sha256 "$(VALUE_TRUSTED_SHA256)"
 
 
-value-001:
+value-001: value-runtime-dirs
 	@mkdir -p bin/port "$$(dirname "$(VALUE_OUTPUT)")"
-	SYMDESK_VERSION=0.12.2 cargo build --release -p symdesk-cli --locked
-	python3 scripts/rust-port/value001.py \
+	$(VALUE_RUNTIME_ENV) SYMDESK_VERSION=0.12.2 $(CARGO) build --release -p symdesk-cli --locked
+	$(VALUE_RUNTIME_ENV) python3 scripts/rust-port/value001.py \
 		--root . \
 		--go-source-commit $(VALUE_GO_COMMIT) \
 		--rust-binary "$(RUST_TARGET_DIR)/release/symdesk" \

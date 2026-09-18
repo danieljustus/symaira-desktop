@@ -316,5 +316,43 @@ class AggregatePairOrderTests(unittest.TestCase):
         self.assertEqual(captured["request"].get_header("Connection"), "close")
 
 
+class McpListScopeTests(unittest.TestCase):
+    def test_measure_mcp_scopes_desk_ls_to_the_search_cohort(self):
+        manifest = {
+            "expected_paths": [value001.document_path(index) for index in range(value001.DOC_COUNT)],
+            "expected_titles": {},
+            "search_paths": [],
+            "search_match_count": 0,
+        }
+        expected = value001.expected_vault_semantics(manifest)
+        captured: list[str] = []
+        metric = {
+            side: {"raw": [1.0] * 100, "pair_order": ["go-rust", "rust-go"] * 50}
+            for side in ("go", "rust")
+        }
+
+        def measure(*_args, **kwargs):
+            captured.append(kwargs["input_data"])
+            return metric
+
+        with patch.object(value001, "measure_process_pair", measure):
+            value001.measure_mcp(
+                Path("/go"),
+                Path("/rust"),
+                {},
+                {},
+                expected,
+                Path("/go-vault"),
+                Path("/rust-vault"),
+                1,
+                100,
+            )
+
+        request = json.loads(captured[3])
+        self.assertEqual(request["params"]["arguments"], {"dir": "cohort-042/"})
+        self.assertEqual(len(expected["mcp_ls_paths"]), 100)
+        self.assertTrue(all(path.startswith("cohort-042/") for path in expected["mcp_ls_paths"]))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

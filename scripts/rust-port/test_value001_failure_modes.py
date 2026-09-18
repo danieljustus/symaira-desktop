@@ -49,6 +49,28 @@ class MeasurementTimeoutTests(unittest.TestCase):
                     {},
                 )
 
+    def test_index_preparation_mismatch_names_the_side_and_keeps_the_output(self):
+        class Completed:
+            returncode = 0
+            stdout = "null"
+            stderr = ""
+
+        with tempfile.TemporaryDirectory() as temporary, patch.object(
+            value001.subprocess, "run", return_value=Completed()
+        ):
+            root = Path(temporary)
+            with self.assertRaisesRegex(
+                value001.HarnessError,
+                r"synthetic index preparation: ls result is not an array: NoneType; stdout='null'",
+            ):
+                value001.prepare_index(
+                    Path("/synthetic"),
+                    root / "home",
+                    root / "vault",
+                    root / "sidecar.db",
+                    {"paths": [], "titles": {}},
+                )
+
     def test_process_timeout_becomes_a_controlled_harness_error(self):
         with patch.object(
             value001.subprocess,

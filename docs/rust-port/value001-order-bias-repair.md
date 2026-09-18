@@ -73,3 +73,28 @@ VALUE_OUTPUT=/absolute/path/new-result.json make value-001
 A non-zero exit from the second command can be a correct fail-closed benchmark
 result. Inspect the emitted JSON, validate its schema and compare repeated full
 runs before changing RUST-006 status.
+
+## Addendum (2026-09-18) — the decision moved to the order-stratified interval (schema 6)
+
+The repair above recorded both order cohorts and made the *point* estimate per
+cohort the gate. On candidate `ec1006aa` that rule failed a candidate on one
+noisy pair: `http.snapshot.rust-go` = +13.26 % while its 95 % interval was
+[−0.73 %, +23.17 %] (it contains zero), the same operation in the other order
+was −6.49 %, and the round-wise median ratio over all 100 samples was 1.0044.
+Fixed-order control experiments (recorded in #936) showed no positional effect
+once the order is fixed — Rust was ~12–15 % *faster* for `snapshot`, and both
+implementations cache the serialised snapshot bytes — so no product cost existed
+to repair.
+
+Schema 6 (PR #956) therefore keeps the schedule, the estimator, the statistics
+and the +10 % ceiling, and decides on the stratified **interval**: a cohort fails
+only when its interval lower bound exceeds the ceiling, and the run fails when an
+interval is wider than `0.40`, because such a run cannot exclude a regression of
+three times the ceiling. Point estimates stay recorded and recomputation-checked
+but are descriptive for the decision. Schemas 2–5 keep their recorded rule, so
+every earlier capture (including the `fbc52d0c` negative control) remains
+auditable.
+
+First schema-6 acceptance: candidate
+`5c5e98c5aab2df54bb2c47ad51fe3d2d8e71f23b` (see
+`results/value001-5c5e98c5.json` and `operations-gate-checkpoint.md`).

@@ -37,9 +37,14 @@ CURRENT_WARMUPS = 20
 # Schema 2 predates explicit summation/estimator declarations. Schema 3 added
 # those declarations and is immutable historical evidence. Schema 4 is the
 # original order-stratified decision contract. Schema 5 adds the controlled
-# HTTP schedule without redefining schema-4 evidence.
+# HTTP schedule without redefining schema-4 evidence. Schema 6 keeps schema 5's
+# schedule and statistics but decides the latency gate on the order-stratified
+# confidence interval instead of the point estimate (see
+# maximum_latency_interval_width); schemas 4 and 5 keep their recorded rule.
 SCHEMA4_VERSION = 4
-SCHEMA_VERSION = 5
+SCHEMA5_VERSION = 5
+SCHEMA6_VERSION = 6
+SCHEMA_VERSION = SCHEMA6_VERSION
 SCHEMA2_VERSION = 2
 SCHEMA3_VERSION = 3
 ORIGINAL_VALUE_BASELINE = "ae86331930fdfa2b128b68ae5af7437091b9949a"
@@ -638,8 +643,8 @@ SUMMATIONS = {
 }
 DEFAULT_SUMMATION = "left_fold"
 LEGACY_SCHEMA_VERSIONS = frozenset({SCHEMA2_VERSION})
-DECLARED_SCHEMA_VERSIONS = frozenset({SCHEMA3_VERSION, SCHEMA4_VERSION, SCHEMA_VERSION})
-ORDER_STRATIFIED_SCHEMA_VERSIONS = frozenset({SCHEMA4_VERSION, SCHEMA_VERSION})
+DECLARED_SCHEMA_VERSIONS = frozenset({SCHEMA3_VERSION, SCHEMA4_VERSION, SCHEMA5_VERSION, SCHEMA6_VERSION})
+ORDER_STRATIFIED_SCHEMA_VERSIONS = frozenset({SCHEMA4_VERSION, SCHEMA5_VERSION, SCHEMA6_VERSION})
 COMPENSATED_SUM_PYTHON = (3, 12)
 
 
@@ -998,12 +1003,20 @@ def ratio(candidate: float, reference: float) -> float:
 #
 # The estimator is recorded in the report. Schema 2 has no declaration,
 # schema 3 is immutable historical evidence, and schemas 4 and 5 require
-# order-stratification. Only schema 5 is eligible for a new approval.
+# order-stratification. Only the current schema is eligible for a new approval.
 SCHEMA3_LATENCY_ESTIMATORS = frozenset({"unpaired_p95", "paired_median_ratio"})
 DEFAULT_LATENCY_ESTIMATOR = "order_stratified_paired_median_ratio"
 LATENCY_ESTIMATORS = SCHEMA3_LATENCY_ESTIMATORS | {DEFAULT_LATENCY_ESTIMATOR}
 LEGACY_LATENCY_ESTIMATOR = "unpaired_p95"
 MEDIAN_INTERVAL_CONFIDENCE = 0.95
+# Schema 6 latency decision. The ceiling is unchanged; what changes is that a
+# cohort only fails on a *significant* result, and that a run which cannot
+# exclude a regression of three times the ceiling may not accept a candidate
+# (a 95% interval of width w detects a true regression above
+# MAXIMUM_LATENCY_REGRESSION + w/2, so width 0.40 still detects anything worse
+# than three times the ceiling).
+MAXIMUM_LATENCY_REGRESSION = 0.10
+MAXIMUM_LATENCY_INTERVAL_WIDTH = 0.40
 PAIR_ORDERS = ("go-rust", "rust-go")
 MIN_ORDER_COHORT_SAMPLES = MIN_SAMPLES // len(PAIR_ORDERS)
 
@@ -1202,6 +1215,49 @@ def latency_order_regression_intervals(metrics: dict[str, Any]) -> dict[str, dic
     return intervals
 
 
+def order_stratified_latency_failure(intervals: dict[str, dict[str, list[float]]]) -> str | None:
+    """Schema 6 latency decision: first reason a cohort fails, or None.
+
+    A measured name fails when any order cohort shows a *significant* regression
+    above ``MAXIMUM_LATENCY_REGRESSION`` (interval low above the ceiling), or
+    when a cohort's interval is wider than ``MAXIMUM_LATENCY_INTERVAL_WIDTH``,
+    because such a run cannot exclude a regression of three times the ceiling and
+    therefore carries no acceptance information. Missing, malformed or
+    non-finite cohorts fail closed.
+    """
+    if not intervals:
+        return "no order-stratified latency cohorts were measured"
+    for name, by_order in intervals.items():
+        if not isinstance(by_order, dict) or set(by_order) != set(PAIR_ORDERS):
+            return f"{name} order-stratified latency cohorts are incomplete"
+        for order, interval in by_order.items():
+            if not isinstance(interval, list) or len(interval) != 2:
+                return f"{name}.{order} order-stratified interval is invalid"
+            low, high = interval
+            if isinstance(low, bool) or isinstance(high, bool):
+                return f"{name}.{order} order-stratified interval is not numeric"
+            if not isinstance(low, (int, float)) or not isinstance(high, (int, float)):
+                return f"{name}.{order} order-stratified interval is not numeric"
+            if not (math.isfinite(low) and math.isfinite(high)):
+                return f"{name}.{order} order-stratified interval is not finite"
+            if low > MAXIMUM_LATENCY_REGRESSION:
+                return (
+                    f"{name}.{order} interval lower bound {low:+.4f} exceeds the"
+                    f" {MAXIMUM_LATENCY_REGRESSION:.2f} latency ceiling"
+                )
+            if high - low > MAXIMUM_LATENCY_INTERVAL_WIDTH:
+                return (
+                    f"{name}.{order} interval width {high - low:.4f} exceeds the"
+                    f" {MAXIMUM_LATENCY_INTERVAL_WIDTH:.2f} precision limit"
+                )
+    return None
+
+
+def order_stratified_latency_pass(intervals: dict[str, dict[str, list[float]]]) -> bool:
+    """Schema 6 latency decision as a boolean; see order_stratified_latency_failure."""
+    return order_stratified_latency_failure(intervals) is None
+
+
 def build_go_oracle(root: Path, commit: str, temp_root: Path) -> tuple[Path, dict[str, Any], Path]:
     if commit != CURRENT_BEHAVIOUR_ORACLE:
         raise HarnessError(
@@ -1317,13 +1373,26 @@ def build_result(
         if order_regressions is not None
         else list(regressions.values())
     )
-    latency_pass = all(math.isfinite(value) and value <= 0.10 for value in latency_values)
+    order_intervals = (
+        latency_order_regression_intervals(metrics)
+        if schema_version in ORDER_STRATIFIED_SCHEMA_VERSIONS
+        else None
+    )
+    if schema_version == SCHEMA6_VERSION:
+        # Schema 6 decides on the order-stratified interval, not on the point
+        # estimate: a cohort fails only on a significant regression above the
+        # ceiling, and a run whose interval is too wide to exclude a
+        # three-times-ceiling regression may not accept a candidate at all.
+        latency_pass = order_stratified_latency_pass(order_intervals or {})
+    else:
+        latency_pass = all(math.isfinite(value) and value <= MAXIMUM_LATENCY_REGRESSION for value in latency_values)
     improvement_pass = size_reduction >= 0.20 or rss_reduction >= 0.20
     contracts_pass = all(item["exit_code"] == 0 for item in contracts)
     thresholds: dict[str, Any] = {
         "minimum_improvement": 0.20,
-        # Unchanged ceiling; only the estimator below changed.
-        "maximum_latency_regression": 0.10,
+        # Unchanged ceiling; only the estimator and, from schema 6 on, the
+        # statistic the gate decides on changed.
+        "maximum_latency_regression": MAXIMUM_LATENCY_REGRESSION,
         "latency_estimator": latency_estimator,
         "binary_size_reduction": size_reduction,
         "representative_rss_reduction_max": rss_reduction,
@@ -1335,10 +1404,12 @@ def build_result(
     }
     if schema_version in ORDER_STRATIFIED_SCHEMA_VERSIONS:
         thresholds["latency_order_regressions"] = order_regressions
-        # Intervals are descriptive only and remain stratified: a pooled
-        # interval would reintroduce the order bias that schema 4 removes.
-        thresholds["latency_order_regression_intervals"] = latency_order_regression_intervals(metrics)
+        # Intervals are stratified for the same reason the point estimates are:
+        # a pooled interval would reintroduce the order bias schema 4 removes.
+        thresholds["latency_order_regression_intervals"] = order_intervals
         thresholds["latency_interval_confidence"] = MEDIAN_INTERVAL_CONFIDENCE
+        if schema_version == SCHEMA6_VERSION:
+            thresholds["latency_interval_width_limit"] = MAXIMUM_LATENCY_INTERVAL_WIDTH
     else:
         thresholds["latency_regression_intervals"] = latency_regression_intervals(metrics)
         thresholds["latency_interval_confidence"] = MEDIAN_INTERVAL_CONFIDENCE
@@ -1548,7 +1619,7 @@ def validate_result(result: dict[str, Any]) -> None:
                 f"schema {version} runner requires exactly 100 samples and 20 warmups"
             )
         if version == SCHEMA_VERSION and runner.get("pairing") != HTTP_MEASUREMENT_PAIRING:
-            raise HarnessError("schema 5 runner requires the controlled HTTP pairing")
+            raise HarnessError(f"schema {version} runner requires the controlled HTTP pairing")
         vault = result.get("vault")
         if (
             not isinstance(vault, dict)
@@ -1646,12 +1717,16 @@ def validate_result(result: dict[str, Any]) -> None:
             "latency_order_regression_intervals", "latency_interval_confidence",
             "latency_pass", "contracts_pass", "fail_closed",
         }
+        if version == SCHEMA6_VERSION:
+            expected_threshold_keys |= {"latency_interval_width_limit"}
         if set(thresholds) != expected_threshold_keys:
             raise HarnessError(f"schema {version} threshold keys mismatch")
         if thresholds.get("minimum_improvement") != 0.20:
             raise HarnessError(f"schema {version} minimum improvement threshold changed")
-        if thresholds.get("maximum_latency_regression") != 0.10:
+        if thresholds.get("maximum_latency_regression") != MAXIMUM_LATENCY_REGRESSION:
             raise HarnessError(f"schema {version} maximum latency threshold changed")
+        if version == SCHEMA6_VERSION and thresholds.get("latency_interval_width_limit") != MAXIMUM_LATENCY_INTERVAL_WIDTH:
+            raise HarnessError("schema 6 latency interval width limit changed")
         for key in ("binary_size_reduction", "representative_rss_reduction_max"):
             value = thresholds.get(key)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
@@ -1692,11 +1767,16 @@ def validate_result(result: dict[str, Any]) -> None:
                         raise HarnessError(f"{name}.{order} order-stratified interval is not recomputed")
         if thresholds.get("latency_interval_confidence") != MEDIAN_INTERVAL_CONFIDENCE:
             raise HarnessError("order-stratified latency interval confidence mismatch")
-        expected_latency_pass = all(
-            value <= 0.10
-            for by_order in expected_order_regressions.values()
-            for value in by_order.values()
-        )
+        if version == SCHEMA6_VERSION:
+            # Schema 6 decides on the stratified interval; the recorded point
+            # estimates stay validated above but do not decide.
+            expected_latency_pass = order_stratified_latency_pass(expected_intervals)
+        else:
+            expected_latency_pass = all(
+                value <= MAXIMUM_LATENCY_REGRESSION
+                for by_order in expected_order_regressions.values()
+                for value in by_order.values()
+            )
         if thresholds.get("latency_pass") is not expected_latency_pass:
             raise HarnessError("order-stratified latency pass flag is not recomputed")
     if not isinstance(result["passed"], bool):

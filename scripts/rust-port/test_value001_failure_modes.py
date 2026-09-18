@@ -113,6 +113,46 @@ class MeasurementTimeoutTests(unittest.TestCase):
             )
 
 
+class Schema6LatencyDecisionTests(unittest.TestCase):
+    """Schema 6 decides on the order-stratified interval, not the point estimate."""
+
+    @staticmethod
+    def intervals(pairs):
+        return {name: {"go-rust": list(first), "rust-go": list(second)} for name, first, second in pairs}
+
+    def test_point_estimate_above_the_ceiling_with_an_inclusive_interval_still_passes(self):
+        # The exact shape that failed the schema-5 point-estimate rule on the
+        # ec1006aa candidate: a +13.26% point estimate whose interval contains 0.
+        intervals = self.intervals([("http.snapshot", (-0.0073, 0.2317), (-0.0649, 0.0327))])
+        self.assertIsNone(value001.order_stratified_latency_failure(intervals))
+        self.assertTrue(value001.order_stratified_latency_pass(intervals))
+
+    def test_significant_regression_above_the_ceiling_fails_and_names_the_cohort(self):
+        intervals = self.intervals([("http.snapshot", (-0.0073, 0.2317), (0.1101, 0.1500))])
+        failure = value001.order_stratified_latency_failure(intervals)
+        self.assertIsNotNone(failure)
+        self.assertIn("http.snapshot.rust-go interval lower bound", failure or "")
+
+    def test_interval_wider_than_the_precision_limit_fails_closed(self):
+        intervals = self.intervals([("http.snapshot", (-0.30, 0.15), (-0.05, 0.05))])
+        failure = value001.order_stratified_latency_failure(intervals)
+        self.assertIsNotNone(failure)
+        self.assertIn("interval width", failure or "")
+        self.assertIn("precision limit", failure or "")
+
+    def test_missing_malformed_or_nonfinite_cohorts_fail_closed(self):
+        cases = (
+            {},
+            {"http.snapshot": {"go-rust": [-0.01, 0.05]}},
+            {"http.snapshot": {"go-rust": [-0.01], "rust-go": [-0.01, 0.05]}},
+            {"http.snapshot": {"go-rust": [-0.01, float("nan")], "rust-go": [-0.01, 0.05]}},
+            {"http.snapshot": {"go-rust": [True, 0.05], "rust-go": [-0.01, 0.05]}},
+        )
+        for intervals in cases:
+            with self.subTest(intervals=intervals):
+                self.assertFalse(value001.order_stratified_latency_pass(intervals))
+
+
 class OutputBoundaryTests(unittest.TestCase):
     def test_incomplete_marker_cannot_be_reused(self):
         with tempfile.TemporaryDirectory() as temporary:

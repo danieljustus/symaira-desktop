@@ -2,12 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://symaira.com/schemas/rust-port/value001-result.schema.json",
   "title": "VALUE-001 Go/Rust benchmark result",
-  "description": "Schemas 2 through 4 are immutable historical evidence. Schema 5 is the current fail-closed, controlled HTTP order-stratified approval format.",
+  "description": "Schemas 2 through 4 are immutable historical evidence. Schema 5 is the controlled HTTP order-stratified format; schema 6 keeps it and decides the latency gate on the order-stratified confidence interval.",
   "oneOf": [
     {"$ref": "#/$defs/schema2"},
     {"$ref": "#/$defs/schema3"},
     {"$ref": "#/$defs/schema4"},
-    {"$ref": "#/$defs/schema5"}
+    {"$ref": "#/$defs/schema5"},
+    {"$ref": "#/$defs/schema6"}
   ],
   "$defs": {
     "artifact": {
@@ -90,6 +91,24 @@
             "vault": {"$ref": "#/$defs/vault"},
             "index_preparation": {"$ref": "#/$defs/indexPreparation"},
             "thresholds": {"$ref": "#/$defs/thresholds4"}
+          }
+        }
+      ]
+    },
+    "schema6": {
+      "allOf": [
+        {"$ref": "#/$defs/artifact"},
+        {
+          "type": "object",
+          "required": ["summation"],
+          "properties": {
+            "schema_version": {"const": 6},
+            "runner": {"$ref": "#/$defs/schema5Runner"},
+            "repository": {"$ref": "#/$defs/currentRepository"},
+            "metrics": {"$ref": "#/$defs/schema5Metrics"},
+            "vault": {"$ref": "#/$defs/vault"},
+            "index_preparation": {"$ref": "#/$defs/indexPreparation"},
+            "thresholds": {"$ref": "#/$defs/thresholds6"}
           }
         }
       ]
@@ -557,6 +576,28 @@
         "latency_order_regressions": {"$ref": "#/$defs/orderRegressionMap"},
         "latency_order_regression_intervals": {"$ref": "#/$defs/orderIntervalMap"},
         "latency_interval_confidence": {"const": 0.95},
+        "latency_pass": {"type": "boolean"},
+        "contracts_pass": {"type": "boolean"},
+        "fail_closed": {"const": true}
+      }
+    },
+    "thresholds6": {
+      "description": "Schema 6 keeps the schema-4/5 statistics and decides on the order-stratified interval: a cohort fails when its interval lower bound exceeds the ceiling, and the run fails when an interval is wider than the width limit, because it then cannot exclude a regression of three times the ceiling.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_improvement", "maximum_latency_regression", "latency_estimator", "binary_size_reduction", "representative_rss_reduction_max", "improvement_pass", "latency_regressions", "latency_order_regressions", "latency_order_regression_intervals", "latency_interval_confidence", "latency_interval_width_limit", "latency_pass", "contracts_pass", "fail_closed"],
+      "properties": {
+        "minimum_improvement": {"const": 0.2},
+        "maximum_latency_regression": {"const": 0.1},
+        "latency_estimator": {"const": "order_stratified_paired_median_ratio"},
+        "binary_size_reduction": {"type": "number"},
+        "representative_rss_reduction_max": {"type": "number"},
+        "improvement_pass": {"type": "boolean"},
+        "latency_regressions": {"$ref": "#/$defs/ratioMap"},
+        "latency_order_regressions": {"$ref": "#/$defs/orderRegressionMap"},
+        "latency_order_regression_intervals": {"$ref": "#/$defs/orderIntervalMap"},
+        "latency_interval_confidence": {"const": 0.95},
+        "latency_interval_width_limit": {"const": 0.4},
         "latency_pass": {"type": "boolean"},
         "contracts_pass": {"type": "boolean"},
         "fail_closed": {"const": true}

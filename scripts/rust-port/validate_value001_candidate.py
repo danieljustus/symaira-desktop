@@ -129,7 +129,7 @@ def validate(
     if require_order_stratified:
         require(
             result.get("schema_version") == value001.SCHEMA_VERSION,
-            "current candidate requires schema 5 evidence",
+            f"current candidate requires schema {value001.SCHEMA_VERSION} evidence",
         )
         require(
             estimator == value001.DEFAULT_LATENCY_ESTIMATOR,
@@ -210,14 +210,20 @@ def validate(
         )
     except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
         raise ValidationError(f"latency gate cannot be recomputed: {exc}") from exc
+    # Fail closed until the stratified decision below sets it.
+    gate_latency_pass = False
     thresholds = result["thresholds"]
     require(thresholds["minimum_improvement"] == 0.20, "minimum improvement threshold changed")
     require(thresholds["maximum_latency_regression"] == 0.10, "maximum latency threshold changed")
+    if require_order_stratified:
+        require(
+            thresholds.get("latency_interval_width_limit") == value001.MAXIMUM_LATENCY_INTERVAL_WIDTH,
+            "latency interval width limit changed or missing",
+        )
     recorded = value001.recorded_regressions(result)
     require(isinstance(recorded, dict) and set(recorded) == set(regressions), "regression inventory is incomplete")
     for name, actual in regressions.items():
         require(finite(actual, name) == recorded[name], f"threshold ratio for {name} is not recomputed")
-        require(actual <= 0.10, f"{name} exceeds exact 10% regression limit")
     if require_order_stratified:
         try:
             order_regressions = value001.latency_order_regressions(metrics)
@@ -240,13 +246,45 @@ def validate(
                     actual == expected,
                     f"order-stratified regression is not recomputed for {name}.{order}",
                 )
-                require(
-                    actual <= 0.10,
-                    f"{name}.{order} exceeds exact 10% order-stratified regression limit",
+        try:
+            order_intervals = value001.latency_order_regression_intervals(metrics)
+        except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
+            raise ValidationError(f"order-stratified latency intervals cannot be recomputed: {exc}") from exc
+        recorded_intervals = thresholds.get("latency_order_regression_intervals")
+        require(
+            isinstance(recorded_intervals, dict) and set(recorded_intervals) == set(order_intervals),
+            "order-stratified latency interval inventory is incomplete",
+        )
+        for name, expected_by_order in order_intervals.items():
+            actual_by_order = recorded_intervals.get(name)
+            if not isinstance(actual_by_order, dict) or set(actual_by_order) != set(value001.PAIR_ORDERS):
+                raise ValidationError(
+                    f"order-stratified latency interval inventory for {name} is incomplete"
                 )
+            for order, expected_interval in expected_by_order.items():
+                actual_interval = actual_by_order.get(order)
+                require(
+                    isinstance(actual_interval, list) and len(actual_interval) == 2,
+                    f"order-stratified interval for {name}.{order} is invalid",
+                )
+                for actual, expected in zip(actual_interval, expected_interval):
+                    require(
+                        finite(actual, f"{name}.{order} interval") == expected,
+                        f"order-stratified interval is not recomputed for {name}.{order}",
+                    )
+        failure = value001.order_stratified_latency_failure(order_intervals)
+        require(
+            failure is None,
+            failure or "order-stratified interval does not confirm the ceiling or is too wide to decide",
+        )
+        gate_latency_pass = failure is None
     if not require_order_stratified:
         # Historical schema-2/schema-3 evidence remains checked according to
-        # its recorded and independently reviewed gate semantics. Schema 4
+        # its recorded and independently reviewed gate semantics: the pooled
+        # point estimates decide there.
+        for name, actual in regressions.items():
+            require(actual <= 0.10, f"{name} exceeds exact 10% regression limit")
+        # Schema 4
         # must not use a heterogeneous pooled p95 as an extra decision gate:
         # that would reintroduce the order bias this repair removes.
         try:
@@ -266,7 +304,14 @@ def validate(
     require(finite(thresholds.get("representative_rss_reduction_max"), "RSS reduction") == rss_reduction, "RSS reduction is not recomputed")
     improvement_pass = size_reduction >= 0.20 or rss_reduction >= 0.20
     contracts_pass = all(item["exit_code"] == 0 for item in result["contracts"])
-    latency_pass = all(actual <= 0.10 for actual in regressions.values())
+    if require_order_stratified:
+        # The order-stratified interval decides the latency gate (checked above).
+        # The pooled point estimates stay integrity-checked but are descriptive
+        # only: a pooled statistic must not decide over heterogeneous order
+        # cohorts.
+        latency_pass = gate_latency_pass
+    else:
+        latency_pass = all(actual <= 0.10 for actual in regressions.values())
     require(improvement_pass, "neither exact 20% improvement criterion passes")
     require(thresholds.get("contracts_pass") is contracts_pass and thresholds.get("latency_pass") is latency_pass and thresholds.get("improvement_pass") is improvement_pass and result["passed"] is (contracts_pass and latency_pass and improvement_pass), "recorded approval is not passing")
     require(isinstance(result["contracts"], list) and {c.get("name") for c in result["contracts"]} == REQUIRED_CONTRACTS, "required contract inventory is incomplete")

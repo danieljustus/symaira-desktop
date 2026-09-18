@@ -37,10 +37,11 @@ class CandidateValidatorTests(unittest.TestCase):
         thresholds["latency_order_regression_intervals"] = (
             validator.value001.latency_order_regression_intervals(metrics)
         )
-        thresholds["latency_pass"] = all(
-            value <= 0.10
-            for by_order in order_regressions.values()
-            for value in by_order.values()
+        thresholds["latency_interval_width_limit"] = (
+            validator.value001.MAXIMUM_LATENCY_INTERVAL_WIDTH
+        )
+        thresholds["latency_pass"] = validator.value001.order_stratified_latency_pass(
+            thresholds["latency_order_regression_intervals"]
         )
         binaries = result["binaries"]
         thresholds["binary_size_reduction"] = (
@@ -194,7 +195,7 @@ class CandidateValidatorTests(unittest.TestCase):
             path.write_text(json.dumps(legacy))
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
             with self.assertRaisesRegex(
-                validator.ValidationError, "schema 5 evidence"
+                validator.ValidationError, "schema 6 evidence"
             ):
                 validator.validate(
                     path,
@@ -209,12 +210,24 @@ class CandidateValidatorTests(unittest.TestCase):
         schema4["schema_version"] = validator.value001.SCHEMA4_VERSION
         schema4["runner"]["pairing"] = validator.value001.SCHEMA4_PAIRING
         del schema4["metrics"]["http"]["operation_order"]
-        self.check(schema4, expect="schema 5 evidence")
+        # Schema 4 keeps the point-estimate rule and has no interval width limit.
+        del schema4["thresholds"]["latency_interval_width_limit"]
+        schema4["thresholds"]["latency_pass"] = all(
+            value <= 0.10
+            for by_order in schema4["thresholds"]["latency_order_regressions"].values()
+            for value in by_order.values()
+        )
+        schema4["passed"] = bool(
+            schema4["thresholds"]["latency_pass"]
+            and schema4["thresholds"]["improvement_pass"]
+            and schema4["thresholds"]["contracts_pass"]
+        )
+        self.check(schema4, expect="schema 6 evidence")
 
     def test_schema5_requires_the_controlled_http_pairing(self):
         mutated = copy.deepcopy(self.original)
         mutated["runner"]["pairing"] = validator.value001.SCHEMA4_PAIRING
-        self.check(mutated, expect="schema 5 runner requires the controlled HTTP pairing")
+        self.check(mutated, expect="schema 6 runner requires the controlled HTTP pairing")
 
     def test_schema5_rejects_a_same_order_route_swap(self):
         mutated = copy.deepcopy(self.original)
@@ -290,7 +303,7 @@ class CandidateValidatorTests(unittest.TestCase):
 
     def test_schema3_pooled_evidence_cannot_approve_a_current_candidate(self):
         digest = hashlib.sha256(SCHEMA3_ARTIFACT.read_bytes()).hexdigest()
-        with self.assertRaisesRegex(validator.ValidationError, "schema 5 evidence"):
+        with self.assertRaisesRegex(validator.ValidationError, "schema 6 evidence"):
             validator.validate(
                 SCHEMA3_ARTIFACT,
                 CANDIDATE,
@@ -317,7 +330,7 @@ class CandidateValidatorTests(unittest.TestCase):
     def test_schema5_dirty_allowed_must_match_the_published_envelope(self):
         mutated = copy.deepcopy(self.original)
         mutated["repository"]["dirty_allowed"] = False
-        self.check(mutated, expect="schema 5 repository provenance is invalid")
+        self.check(mutated, expect="schema 6 repository provenance is invalid")
 
     def test_false_contract_outcome_is_rejected(self):
         mutated = copy.deepcopy(self.original)
@@ -381,8 +394,8 @@ class CandidateValidatorTests(unittest.TestCase):
 
     def test_current_protocol_counts_are_frozen(self):
         mutations = [
-            ("runner", "samples", 101, "schema 5 runner"),
-            ("runner", "warmups", 21, "schema 5 runner"),
+            ("runner", "samples", 101, "runner requires exactly 100 samples and 20 warmups"),
+            ("runner", "warmups", 21, "runner requires exactly 100 samples and 20 warmups"),
             ("vault", "documents", 9999, "current vault"),
             ("vault", "search_matches", 99, "current vault"),
         ]
@@ -431,7 +444,7 @@ class CandidateValidatorTests(unittest.TestCase):
             "p99": values[(n * 99 + 99) // 100 - 1], "max": max(values), "max_observed": max(values),
         })
         self.refresh_current_thresholds(mutated)
-        self.check(mutated, expect="http.status exceeds exact 10% regression limit")
+        self.check(mutated, expect="http.status.go-rust interval lower bound")
 
     def test_candidate_is_not_silently_defaulted(self):
         command = ["python3", str(Path(__file__).with_name("validate_value001_candidate.py")), str(ARTIFACT), "--root", str(ROOT), "--trusted-sha256", self.trusted]
@@ -465,7 +478,7 @@ class CandidateValidatorTests(unittest.TestCase):
                     )
                     self.check(
                         mutated,
-                        expect=f"{category}.{operation} exceeds exact 10% regression limit",
+                        expect=f"{category}.{operation}.go-rust interval lower bound",
                     )
 
     def test_altered_operation_summary_identity_is_rejected(self):
@@ -537,7 +550,7 @@ class CandidateValidatorTests(unittest.TestCase):
         # But candidate validation must reject it because worst cohort is 1.15 - 1 = +15% > 0.10:
         self.check(
             mutated,
-            expect="http.healthz exceeds exact 10% regression limit",
+            expect="http.healthz.rust-go interval lower bound",
         )
 
     def test_wrong_cohort_label_in_raw_is_rejected(self):

@@ -99,18 +99,29 @@ ratios, not percentage values. A regression is `candidate / reference - 1`, so
 `0.10` is the unchanged **+10%** latency ceiling and gate comparisons use
 `value <= 0.10` directly. Schema 2 retains its historical
 `thresholds.p95_regressions`; schema 3 retains its declared pooled estimator
-and provenance. Schema 4 remains historical order-stratified evidence; only
-schema 5 can approve a current candidate. It requires
-`order_stratified_paired_median_ratio`, records each execution-order cohort in
-`thresholds.latency_order_regressions`, and stores the worse cohort as
-`thresholds.latency_regressions` for each gate. Its descriptive median
-intervals remain separate by order under
-`thresholds.latency_order_regression_intervals`; pooled intervals are not a
-schema-5 decision input. Schema 5 also rotates HTTP routes per round and
+and provenance. Schema 4 remains historical order-stratified evidence; schemas 5
+and 6 are the controlled HTTP order-stratified formats. Both require
+`order_stratified_paired_median_ratio`, record each execution-order cohort in
+`thresholds.latency_order_regressions`, and store the worse cohort as
+`thresholds.latency_regressions` for each gate. The stratified median intervals
+remain separate by order under
+`thresholds.latency_order_regression_intervals`; pooled intervals are never a
+decision input. Schema 5 also rotates HTTP routes per round and
 alternates Go/Rust independently for each route, so no route is permanently
 first in a server burst. Missing, mismatched, or materially unbalanced
 `go-rust`/`rust-go` labels fail closed. Historical pooled evidence remains
 auditable but cannot approve a new candidate.
+
+Only the current schema can approve a candidate. Schema 6 keeps schema 5's
+schedule and statistics but decides the latency gate on the stratified
+**interval** instead of the point estimate: a cohort fails when its interval
+lower bound exceeds `maximum_latency_regression`, so a cohort whose estimate is
+above the ceiling but whose interval still contains it does not decide the gate.
+The same rule fails closed when an interval is wider than
+`latency_interval_width_limit` (`0.40`), because a run that cannot exclude a
+regression of three times the ceiling carries no acceptance information. Point
+estimates stay recorded and validated, but they are descriptive for the
+decision.
 
 `python3 scripts/rust-port/value001_report.py <artifact>` uses the
 `ratio_to_percentage` display helper, which multiplies a stored ratio by 100

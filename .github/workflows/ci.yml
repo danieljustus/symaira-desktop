@@ -192,6 +192,12 @@ jobs:
         run: cargo install cargo-fuzz --locked --version 0.13.2
 
       - name: Run Rust gates, version differential, and historical evidence tests
+        env:
+          # The Makefile default assumes the developer's attached external NVMe
+          # (/Volumes/1TB_NVMe_SN850X/...), which does not exist on hosted
+          # runners; point VALUE-001's runtime root at the runner's own
+          # writable temp dir instead.
+          VALUE_RUNTIME_ROOT: ${{ runner.temp }}/symaira-desktop-value001-ci
         run: make rust-gates value-001-evidence-tests
 
       - name: Fuzz frontmatter parser smoke corpus

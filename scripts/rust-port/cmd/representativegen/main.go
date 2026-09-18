@@ -134,7 +134,14 @@ func (c *caseDef) setDefaults() {
 		c.Stage = "representative"
 	}
 	if c.TimeoutMS == 0 {
-		c.TimeoutMS = 10000
+		// Hang guard, not a performance bound. Every representative case
+		// completes in tens of milliseconds and the timed VALUE-001 contract
+		// (order-stratified medians and the latency rule) lives in the
+		// benchmark, not here. 30s is the bound the same harness already
+		// applies to one timed symdesk invocation, so a transient stall on the
+		// measurement host's external storage is not classified as a parity
+		// divergence. Compare() still fails on any timed-out run.
+		c.TimeoutMS = 30000
 	}
 	if c.StdoutMode == "" {
 		c.StdoutMode = "bytes"

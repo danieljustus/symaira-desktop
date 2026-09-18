@@ -49,6 +49,44 @@ func TestCompareDetectsStreamMismatchWithoutLeakingContent(t *testing.T) {
 	}
 }
 
+func TestCompareRejectsTimedOutRuns(t *testing.T) {
+	hangCase := Case{
+		ID:        "timeout",
+		Args:      []string{"-test.run=TestRunAndCompareIdenticalHelper"},
+		Env:       map[string]string{"SYMDESK_PORT_HELPER": "1", "PORT_HELPER_MODE": "hang"},
+		TimeoutMS: 50,
+	}
+	left, err := Run(os.Args[0], hangCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	right, err := Run(os.Args[0], hangCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !left.TimedOut || !right.TimedOut {
+		t.Fatalf("expected both runs to time out: left=%t right=%t", left.TimedOut, right.TimedOut)
+	}
+	if err := Compare(hangCase, left, right); err == nil || !contains(err.Error(), "both sides timed out") {
+		t.Fatalf("matching timeouts must not pass comparison, got %v", err)
+	}
+
+	completed, err := Run(os.Args[0], Case{
+		ID:   "completed",
+		Args: []string{"-test.run=TestRunAndCompareIdenticalHelper"},
+		Env:  map[string]string{"SYMDESK_PORT_HELPER": "1"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if completed.TimedOut {
+		t.Fatal("expected the completed run not to time out")
+	}
+	if err := Compare(hangCase, left, completed); err == nil || !contains(err.Error(), "timeout mismatch") {
+		t.Fatalf("one-sided timeout must report a mismatch, got %v", err)
+	}
+}
+
 func TestRunTimesOutAndTerminatesProcess(t *testing.T) {
 	caseSpec := Case{
 		ID:        "timeout",

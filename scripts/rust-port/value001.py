@@ -1732,7 +1732,16 @@ def prepare_index(binary: Path, home_root: Path, vault: Path, sidecar: Path, exp
     elapsed = (time.perf_counter() - started) * 1000.0
     if completed.returncode != 0:
         raise HarnessError(f"{binary.name} index preparation failed: {completed.stderr[-2000:]}")
-    validate_ls(completed.stdout, completed.stderr, expected)
+    try:
+        validate_ls(completed.stdout, completed.stderr, expected)
+    except HarnessError as exc:
+        # Name the side and keep the emitted bytes. A failed preparation aborts
+        # the measurement before any sample exists, so without them the abort
+        # cannot be attributed to one implementation afterwards.
+        raise HarnessError(
+            f"{binary.name} index preparation: {exc}; "
+            f"stdout={completed.stdout[:200]!r} stderr={completed.stderr[:200]!r}"
+        ) from exc
     return {"command": command_text([str(binary), "ls", "--vault", str(vault), "--json"]), "elapsed_ms": elapsed, "exit_code": 0, "stdout_semantics": "exact expected path/title set", "documents": len(expected["paths"])}
 
 

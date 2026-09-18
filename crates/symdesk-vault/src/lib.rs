@@ -2,6 +2,7 @@
 
 //! Read-only contract-v1–v6 Markdown vault parsing.
 
+pub mod conflict;
 mod health_links;
 pub mod history;
 mod links;
@@ -24,6 +25,9 @@ use serde as _;
 #[cfg(test)]
 use serde_json as _;
 
+pub use conflict::{
+    CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
+};
 pub use health_links::{HealthLinkResolver, LinkInventory, normalize_health_link_target};
 pub use history::{HistoryEntry, HistoryError, HistoryStore};
 pub use links::extract_wikilinks;

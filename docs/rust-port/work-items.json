@@ -58,7 +58,7 @@
     {
       "id": "RUST-007",
       "title": "Port vault writes history trash conflicts and retention",
-      "status": "ready",
+      "status": "in_progress",
       "depends_on": ["RUST-006"],
       "contract_rows": ["VAULT-004", "VAULT-005", "VAULT-006", "CFG-004", "DATA-001"],
       "acceptance": ["make vault-write-differential", "cargo nextest run -p symdesk-vault"]
@@ -130,7 +130,7 @@
     {
       "id": "RUST-016",
       "title": "Port SymRoom core CLI MCP and signed journal",
-      "status": "ready",
+      "status": "in_progress",
       "depends_on": ["RUST-006"],
       "contract_rows": ["ROOMCLI-001", "ROOMCLI-002", "MCP-004", "MCP-005", "ROOM-001", "ROOM-002", "ROOM-003", "ROOM-004"],
       "acceptance": ["make symroom-differential", "cargo nextest run -p symroom-core -p symroom-cli", "cargo +nightly fuzz run room_event"]

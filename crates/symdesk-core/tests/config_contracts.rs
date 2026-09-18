@@ -1,6 +1,7 @@
 #![deny(unsafe_code)]
 
 use std::collections::BTreeMap;
+use std::fs;
 
 use regex as _;
 use serde::Deserialize;
@@ -150,6 +151,111 @@ fn canonical_toml_bytes_match_go_encoder() {
     let case = fixture().cases.save;
     let actual = config::render_toml(&from_safe(&case.config)).expect("encode config");
     assert_eq!(actual, case.toml);
+}
+
+fn unique_temp_dir(label: &str) -> std::path::PathBuf {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system clock after the epoch")
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!(
+        "symdesk-core-{label}-{}-{nanos}",
+        std::process::id()
+    ));
+    fs::create_dir_all(&dir).expect("create temp dir");
+    dir
+}
+
+#[test]
+fn save_writes_the_go_encoder_bytes_and_creates_missing_parents() {
+    let case = fixture().cases.save;
+    let root = unique_temp_dir("save-bytes");
+    let path = root.join("nested").join("deep").join("config.toml");
+    let result = config::save(path.to_str().expect("utf-8 path"), &from_safe(&case.config));
+    assert!(result.is_ok(), "save failed: {result:?}");
+    let written = fs::read(&path).expect("read back the saved config");
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(
+        written,
+        case.toml.as_bytes(),
+        "saved bytes must equal the Go `config.Save` output"
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn save_applies_the_go_directory_and_file_modes() {
+    use std::os::unix::fs::PermissionsExt;
+    let case = fixture().cases.save;
+    let root = unique_temp_dir("save-modes");
+    let parent = root.join("nested").join("deep");
+    let path = parent.join("config.toml");
+    let result = config::save(path.to_str().expect("utf-8 path"), &from_safe(&case.config));
+    assert!(result.is_ok(), "save failed: {result:?}");
+    let dir_mode = fs::metadata(&parent)
+        .expect("stat parent")
+        .permissions()
+        .mode()
+        & 0o777;
+    let file_mode = fs::metadata(&path).expect("stat file").permissions().mode() & 0o777;
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(
+        dir_mode, 0o700,
+        "Go MkdirAll creates missing parents with 0700"
+    );
+    assert_eq!(file_mode, 0o600, "Go OpenFile creates the file with 0600");
+}
+
+#[cfg(unix)]
+#[test]
+fn save_keeps_existing_directory_and_file_modes() {
+    use std::os::unix::fs::PermissionsExt;
+    let case = fixture().cases.save;
+    let root = unique_temp_dir("save-existing-modes");
+    let path = root.join("config.toml");
+    fs::write(&path, b"stale contents").expect("pre-create the file");
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o644)).expect("chmod file");
+    fs::set_permissions(&root, fs::Permissions::from_mode(0o755)).expect("chmod directory");
+    let result = config::save(path.to_str().expect("utf-8 path"), &from_safe(&case.config));
+    assert!(result.is_ok(), "save failed: {result:?}");
+    let written = fs::read(&path).expect("read back");
+    let file_mode = fs::metadata(&path).expect("stat file").permissions().mode() & 0o777;
+    let dir_mode = fs::metadata(&root).expect("stat dir").permissions().mode() & 0o777;
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(
+        written,
+        case.toml.as_bytes(),
+        "an existing file must be truncated and rewritten"
+    );
+    assert_eq!(file_mode, 0o644, "an existing file keeps its mode");
+    assert_eq!(dir_mode, 0o755, "an existing directory keeps its mode");
+}
+
+#[cfg(unix)]
+#[test]
+fn save_reports_the_go_file_error_prefix_for_an_unwritable_parent() {
+    use std::os::unix::fs::PermissionsExt;
+    let case = fixture().cases.save;
+    let root = unique_temp_dir("save-unwritable");
+    fs::set_permissions(&root, fs::Permissions::from_mode(0o555)).expect("chmod directory");
+    let writable = fs::File::create(root.join("probe")).is_ok();
+    let _ = fs::remove_file(root.join("probe"));
+    let result = config::save(
+        root.join("config.toml").to_str().expect("utf-8 path"),
+        &from_safe(&case.config),
+    );
+    let _ = fs::set_permissions(&root, fs::Permissions::from_mode(0o755));
+    let _ = fs::remove_dir_all(&root);
+    if writable {
+        eprintln!("skipped: this user can write to a 0555 directory");
+        return;
+    }
+    let error = result.expect_err("an unwritable parent must fail");
+    assert!(
+        error.starts_with("failed to create config file: "),
+        "unexpected error: {error}"
+    );
 }
 
 #[test]

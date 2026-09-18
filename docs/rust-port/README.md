@@ -92,6 +92,18 @@ outgoing-response limit instead of the full listing, which the Rust port
 rejects at that limit. Index preparation, CLI listing, and search still use
 the full 10,000-document vault.
 
+### Current acceptance
+
+RUST-006 is accepted for the exact candidate
+`5c5e98c5aab2df54bb2c47ad51fe3d2d8e71f23b`: one fresh schema-6 run (100 samples,
+20 warmups, unchanged oracle `745c08e8…`) passed all four differential
+contracts, the ≥20 % improvement criterion (binary size −84.80 %, representative
+RSS −71.62 %) and the interval latency gate. The published capture is
+[`results/value001-5c5e98c5.json`](results/value001-5c5e98c5.json) with its
+`.metadata.json`; `python3 scripts/rust-port/validate_value001_5c5e98c5.py --raw <private capture>`
+re-proves that it is exactly the reviewed redaction of the private raw capture
+(SHA-256 `40267a5c…`). RUST-007 and RUST-016 are `ready`; Go remains production.
+
 ## VALUE-001 units and display
 
 VALUE-001 stores reductions and relative latency regressions as dimensionless

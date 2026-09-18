@@ -1,5 +1,40 @@
 # Per-operation value gate continuation
 
+## Current acceptance (2026-09-18, schema 6)
+
+RUST-006 is **passed** for the exact candidate
+`5c5e98c5aab2df54bb2c47ad51fe3d2d8e71f23b` (clean worktree) against the unchanged
+Go oracle `745c08e8144971c61133c5d0e5d61c7ce405aad2`.
+
+- One fresh schema-6 run: 100 samples / 20 warmups, generated
+  10,000-document surrogate, every HOME/XDG/TMP/Go/Cargo path on the attached
+  NVMe.
+- Private raw capture SHA-256
+  `40267a5c47cf67579a708e9b0e61425960872d04a1f08796994ef157fd758a63` (kept
+  outside the repository); published redaction `results/value001-5c5e98c5.json`
+  SHA-256 `a67779054c210d88212bf41fd934e4127ed0b5807c8610c1fc70934359619e5d`,
+  with `results/value001-5c5e98c5.metadata.json` recording the nine redaction
+  paths and the trusted CI run `35354149053`.
+- Verdict: contracts pass (all four differential commands exit 0), improvement
+  passes (binary size −84.80 %, representative RSS −71.62 %), latency passes
+  under the schema-6 interval rule.
+- Independent re-derivation: `python3 scripts/rust-port/validate_value001_5c5e98c5.py --raw <private capture>`
+  proves the published file is exactly the reviewed redaction of the raw capture
+  — every other value byte-identical, and no private path in the published file.
+- Decision rule (owner-approved, PR #956): a cohort fails only when its 95 %
+  order-stratified interval lower bound exceeds the +10 % ceiling, and the run
+  fails when an interval is wider than `0.40` (it then cannot exclude a
+  regression of three times the ceiling). The ceiling itself is unchanged; the
+  schema-5 point-estimate rule and every earlier capture stay historical.
+- Fixes that made this run possible: #950 (representative hang guard 10s→30s,
+  any timeout now fails), #951 (index-preparation failures name the side), #953
+  (Makefile quoting for isolated/spaced Cargo paths), #954 (timed MCP list call
+  scoped to each side's own absolute cohort directory), #956 (schema-6 interval
+  rule). Evidence trail and the two earlier aborts: #936, #952, #955.
+
+RUST-007 and RUST-016 become `ready`; later items stay `blocked` until their
+dependencies pass. Go remains production: no release, no cutover, no Go removal.
+
 ## Scope and decision
 
 The migration remains in progress, not complete. The renewed request authorizes completion of the existing DAG without changing the 10% p95 regression ceiling, deleting Go, or publishing a release. RUST-006 must pass current acceptance and native parity before dependent work is approved.

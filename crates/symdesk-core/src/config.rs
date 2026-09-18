@@ -337,6 +337,10 @@ pub fn save(path: &str, config: &Config) -> Result<(), String> {
         Some(dir) if !dir.as_os_str().is_empty() => dir,
         _ => Path::new("."),
     };
+    // Go applies the directory mode only to directories it creates, so the
+    // existence check is captured before `create_dir_all`. On Windows Go ignores
+    // the mode entirely, which is why both this binding and its use are unix-only.
+    #[cfg(unix)]
     let parent_existed = parent.exists();
     fs::create_dir_all(parent)
         .map_err(|error| format!("failed to create config directory: {error}"))?;

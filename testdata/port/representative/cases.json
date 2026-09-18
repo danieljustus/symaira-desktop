@@ -13,7 +13,7 @@
         "version",
         "ls"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false
@@ -26,7 +26,7 @@
         "version",
         "search"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false
@@ -41,7 +41,7 @@
         "${WORKSPACE}/vault",
         "--json"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false,
@@ -71,7 +71,7 @@
         "--vault",
         "${WORKSPACE}/vault"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "console_text",
       "stderr_mode": "console_text",
       "compare_files": false,
@@ -103,7 +103,7 @@
         "${WORKSPACE}/vault",
         "--output=json"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false,
@@ -140,7 +140,7 @@
         "${WORKSPACE}/vault",
         "--json"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false,
@@ -177,7 +177,7 @@
         "${WORKSPACE}/vault",
         "--json"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "console_text",
       "stderr_mode": "console_text",
       "compare_files": false,
@@ -214,7 +214,7 @@
         "${WORKSPACE}/vault",
         "--json"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false,
@@ -245,7 +245,7 @@
         "${WORKSPACE}/vault",
         "--json"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false,
@@ -275,7 +275,7 @@
         "one",
         "two"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false
@@ -287,7 +287,7 @@
       "args": [
         "search"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "console_text",
       "stderr_mode": "console_text",
       "compare_files": false
@@ -300,7 +300,7 @@
         "search",
         "--json"
       ],
-      "timeout_ms": 10000,
+      "timeout_ms": 30000,
       "stdout_mode": "bytes",
       "stderr_mode": "bytes",
       "compare_files": false

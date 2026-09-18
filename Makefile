@@ -152,9 +152,9 @@ differential-go-selftest:
 	GOTOOLCHAIN=go1.26.6 go build -ldflags="$(ROOM_LDFLAGS)" -o bin/symroom ./cmd/symroom
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/diffharness \
 		--allow-same-binary \
-		--symdesk-left bin/symdesk --symdesk-right bin/symdesk \
-		--symroom-left bin/symroom --symroom-right bin/symroom \
-		--cases $(PORT_CASES)
+		--symdesk-left "bin/symdesk" --symdesk-right "bin/symdesk" \
+		--symroom-left "bin/symroom" --symroom-right "bin/symroom" \
+		--cases "$(PORT_CASES)"
 
 port-contract: port-fixtures-check differential-go-selftest sidecar-differential
 
@@ -169,14 +169,14 @@ representative-differential: representative-fixtures-check
 	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/diffharness \
-		--symdesk-left bin/port/symdesk-go --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk" \
-		--cases testdata/port/representative/cases.json --stage representative
-		$(MAKE) http-differential PORT_LEFT=bin/port/symdesk-go PORT_RIGHT="$(RUST_TARGET_DIR)/debug/symdesk"
+		--symdesk-left "bin/port/symdesk-go" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk" \
+		--cases "testdata/port/representative/cases.json" --stage representative
+		$(MAKE) http-differential PORT_LEFT="bin/port/symdesk-go" PORT_RIGHT="$(RUST_TARGET_DIR)/debug/symdesk"
 
 http-differential: representative-fixtures-check
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/httpdiff \
 		--left "$(PORT_LEFT)" --right "$(PORT_RIGHT)" \
-		--fixture testdata/port/http/representative.json
+		--fixture "testdata/port/http/representative.json"
 
 # VALUE-001: fail-closed paired representative Go/Rust benchmark.
 .PHONY: value-runtime-dirs value-001-evidence-tests value-001-validate
@@ -247,7 +247,7 @@ mcp-differential: mcp-fixtures-check
 	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/mcpdiff \
-		--left bin/port/symdesk-go --right "$(RUST_TARGET_DIR)/debug/symdesk"
+		--left "bin/port/symdesk-go" --right "$(RUST_TARGET_DIR)/debug/symdesk"
 
 .PHONY: history-differential
 history-differential:
@@ -283,9 +283,9 @@ rust-version-contract:
 	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2" -o bin/port/symroom-go ./cmd/symroom
 	SYMDESK_VERSION=0.12.2 SYMROOM_VERSION=0.12.2 $(CARGO) build --release --workspace --locked
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/diffharness \
-		--symdesk-left bin/port/symdesk-go --symdesk-right "$(RUST_TARGET_DIR)/release/symdesk" \
-		--symroom-left bin/port/symroom-go --symroom-right "$(RUST_TARGET_DIR)/release/symroom" \
-		--cases $(PORT_CASES) --stage version
+		--symdesk-left "bin/port/symdesk-go" --symdesk-right "$(RUST_TARGET_DIR)/release/symdesk" \
+		--symroom-left "bin/port/symroom-go" --symroom-right "$(RUST_TARGET_DIR)/release/symroom" \
+		--cases "$(PORT_CASES)" --stage version
 
 rust-fuzz-smoke:
 	$(CARGO) +$(RUST_NIGHTLY) fuzz run frontmatter -- -runs=$(FUZZ_RUNS) -max_len=65536

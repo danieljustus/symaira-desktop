@@ -264,6 +264,14 @@ func writeScenarioFile(t *testing.T, root string, spec historyFileSpec, fallback
 // recordHistoryCase runs one operation and records its observable effects.
 func recordHistoryCase(t *testing.T, document historyCase, run func(*scenario) (string, error)) historyCase {
 	t.Helper()
+	if document.Platform == "unix" && runtime.GOOS == "windows" {
+		// Windows does not run this case: it needs Unix permission bits or a Go
+		// path that #962 records as broken there. Nothing executes, so the case
+		// cannot fail the Windows lane, and the comparison drops it on both
+		// sides of the drift check.
+		document.After = []historyFileRecord{}
+		return document
+	}
 	s := newScenario(t, document.Files)
 	result, err := run(s)
 	if err != nil {

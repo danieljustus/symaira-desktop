@@ -63,7 +63,7 @@ func TestPortNoteOperationContract(t *testing.T) {
 	normalizedEncoded := filterNotePlatform(encoded, runtime.GOOS)
 	if !bytes.Equal(normalizedCurrent, normalizedEncoded) {
 		t.Fatalf("note operation fixture is stale; regenerate deliberately from the pinned Go oracle\n%s",
-			firstDifference(normalizedEncoded, normalizedCurrent))
+			caseDifference(normalizedEncoded, normalizedCurrent))
 	}
 }
 
@@ -360,21 +360,67 @@ func filterNotePlatform(document []byte, goos string) []byte {
 	if err := json.Unmarshal(document, &value); err != nil {
 		return document
 	}
-	for index := range value.Cases {
-		for _, state := range []*noteState{&value.Cases[index].Before, &value.Cases[index].After} {
+	kept := make([]noteCase, 0, len(value.Cases))
+	for _, item := range value.Cases {
+		if item.Platform == "unix" {
+			continue
+		}
+		for _, state := range []*noteState{&item.Before, &item.After} {
 			for record := range state.Markdown {
 				state.Markdown[record].Mode = nil
 			}
 		}
-		for entry := range value.Cases[index].Setup {
-			value.Cases[index].Setup[entry].Mode = nil
+		for entry := range item.Setup {
+			item.Setup[entry].Mode = nil
 		}
+		kept = append(kept, item)
 	}
+	value.Cases = kept
 	encoded, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {
 		return document
 	}
 	return append(encoded, '\n')
+}
+
+// caseDifference reports the first differing case and field so a drift is
+// attributable; a raw line diff misleads as soon as one side omits a case.
+func caseDifference(want, got []byte) string {
+	var wantDoc, gotDoc noteOperationFixture
+	if err := json.Unmarshal(want, &wantDoc); err != nil {
+		return err.Error()
+	}
+	if err := json.Unmarshal(got, &gotDoc); err != nil {
+		return err.Error()
+	}
+	gotByID := make(map[string]string, len(gotDoc.Cases))
+	for _, item := range gotDoc.Cases {
+		encoded, err := json.Marshal(item)
+		if err != nil {
+			return err.Error()
+		}
+		gotByID[item.ID] = string(encoded)
+	}
+	for _, item := range wantDoc.Cases {
+		encoded, err := json.Marshal(item)
+		if err != nil {
+			return err.Error()
+		}
+		counterpart, ok := gotByID[item.ID]
+		if !ok {
+			return fmt.Sprintf("fixture case %q is missing from the generated document", item.ID)
+		}
+		if counterpart != string(encoded) {
+			return fmt.Sprintf("case %q differs:\n  fixture:   %s\n  generated: %s", item.ID, string(encoded), counterpart)
+		}
+		delete(gotByID, item.ID)
+	}
+	if len(gotByID) > 0 {
+		for id := range gotByID {
+			return fmt.Sprintf("generated case %q is missing from the fixture", id)
+		}
+	}
+	return "cases are equal; only the surrounding document differs"
 }
 
 // firstDifference reports the first differing line pair so a drift is

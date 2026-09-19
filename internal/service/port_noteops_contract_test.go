@@ -423,19 +423,6 @@ func caseDifference(want, got []byte) string {
 	return "cases are equal; only the surrounding document differs"
 }
 
-// firstDifference reports the first differing line pair so a drift is
-// diagnosable without hand-diffing two large JSON documents.
-func firstDifference(current, generated []byte) string {
-	left := bytes.Split(current, []byte("\n"))
-	right := bytes.Split(generated, []byte("\n"))
-	for index := 0; index < len(left) && index < len(right); index++ {
-		if !bytes.Equal(left[index], right[index]) {
-			return fmt.Sprintf("line %d:\n  fixture:   %s\n  generated: %s", index+1, left[index], right[index])
-		}
-	}
-	return fmt.Sprintf("length mismatch: fixture %d lines, generated %d lines", len(left), len(right))
-}
-
 func noteStateOf(t *testing.T, root string) noteState {
 	t.Helper()
 	state := noteState{Markdown: []noteFile{}}

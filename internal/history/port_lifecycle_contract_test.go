@@ -503,6 +503,7 @@ func historyCaseCheckpointExistingFile(t *testing.T) historyCase {
 		}
 		// The task overwrites the file; a second checkpoint must keep the
 		// pre-task content.
+		//nolint:gosec // case fixture file written with the mode the case declares
 		if err := os.WriteFile(filepath.Join(s.root, "notes", "a.md"), []byte("rewritten\n"), 0o644); err != nil {
 			return "", err
 		}
@@ -559,9 +560,11 @@ func historyCaseCheckpointUndo(t *testing.T) historyCase {
 		if _, err := s.store.CheckpointFile("task-1", "notes/created.md"); err != nil {
 			return "", err
 		}
+		//nolint:gosec // case fixture file written with the mode the case declares
 		if err := os.WriteFile(filepath.Join(s.root, "notes", "a.md"), []byte("rewritten by the task\n"), 0o644); err != nil {
 			return "", err
 		}
+		//nolint:gosec // case fixture file written with the mode the case declares
 		if err := os.WriteFile(filepath.Join(s.root, "notes", "created.md"), []byte("created by the task\n"), 0o644); err != nil {
 			return "", err
 		}
@@ -617,6 +620,7 @@ func historyCaseCheckpointList(t *testing.T) historyCase {
 			return "", err
 		}
 		corrupt := filepath.Join(s.root, checkpointsRelDir(), "broken.json")
+		//nolint:gosec // case fixture file written with the mode the case declares
 		if err := os.WriteFile(corrupt, []byte("{not json"), 0o644); err != nil {
 			return "", err
 		}
@@ -700,6 +704,7 @@ func historyCaseTrashListStrictCorrupt(t *testing.T) historyCase {
 			t.Fatal("lenient listing should still see the corrupt entry")
 		}
 		meta := filepath.Join(s.root, trashRelDir(), entry.Name+trashMetaSuffix)
+		//nolint:gosec // case fixture file written with the mode the case declares
 		if err := os.WriteFile(meta, []byte("{not json"), 0o644); err != nil {
 			return "", err
 		}
@@ -733,6 +738,7 @@ func historyCaseTrashListStrictOrphan(t *testing.T) historyCase {
 			return "", err
 		}
 		orphan := filepath.Join(s.root, trashRelDir(), "orphan.md")
+		//nolint:gosec // case fixture file written with the mode the case declares
 		if err := os.WriteFile(orphan, []byte("orphan\n"), 0o644); err != nil {
 			return "", err
 		}
@@ -781,6 +787,7 @@ func historyCaseTrashRestoreConflict(t *testing.T) historyCase {
 		if err != nil {
 			return "", err
 		}
+		//nolint:gosec // case fixture file written with the mode the case declares
 		if err := os.WriteFile(filepath.Join(s.root, "notes", "a.md"), []byte("replacement\n"), 0o644); err != nil {
 			return "", err
 		}
@@ -896,6 +903,7 @@ func historyCaseTrashPurgeByAge(t *testing.T) historyCase {
 		if err != nil {
 			return "", err
 		}
+		//nolint:gosec // case fixture file written with the mode the case declares
 		if err := os.WriteFile(meta, data, 0o644); err != nil {
 			return "", err
 		}
@@ -927,6 +935,7 @@ func historyCaseTrashPurgeRefusesCorrupt(t *testing.T) historyCase {
 			return "", err
 		}
 		meta := filepath.Join(s.root, trashRelDir(), entry.Name+trashMetaSuffix)
+		//nolint:gosec // case fixture file written with the mode the case declares
 		if err := os.WriteFile(meta, []byte("{}"), 0o644); err != nil {
 			return "", err
 		}

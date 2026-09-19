@@ -194,7 +194,6 @@ impl Scenario {
                 decode_hex(&spec.content_base64)
             };
             fs::write(&target, data).expect("write fixture file");
-            #[cfg(unix)]
             if let Some(mode) = spec.mode {
                 set_mode(&target, mode);
             }
@@ -204,10 +203,16 @@ impl Scenario {
     }
 }
 
+#[cfg(unix)]
 fn set_mode(path: &Path, mode: u32) {
     use std::os::unix::fs::PermissionsExt;
     let _ = fs::set_permissions(path, fs::Permissions::from_mode(mode));
 }
+
+/// Permission bits are a Unix concept; the Go harness records no mode on
+/// Windows and neither does the replay.
+#[cfg(not(unix))]
+fn set_mode(_path: &Path, _mode: u32) {}
 
 /// Returns an always-increasing clock so ordering results are deterministic and
 /// match the Go run's real-time ordering without sleeping.

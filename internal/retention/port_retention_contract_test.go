@@ -77,6 +77,10 @@ type retentionFileVector struct {
 	Error       string   `json:"error,omitempty"`
 	ErrorClass  string   `json:"error_class,omitempty"`
 	Loaded      string   `json:"loaded"`
+	// Platform marks a vector whose Go writer only behaves on Unix; the port
+	// replays it everywhere and the reason is recorded in windows_gap.
+	Platform   string `json:"platform,omitempty"`
+	WindowsGap string `json:"windows_gap,omitempty"`
 }
 
 type retentionActionIDVector struct {
@@ -170,6 +174,7 @@ func buildRetentionFixture(t *testing.T) retentionFixture {
 			"Evaluate keeps an item whose expiry equals 'now' and skips documents without a parsable reference date.",
 			"LoadRules is not covered yet: the YAML multi-document reader needs a Rust YAML parser and belongs to the CLI slice.",
 			"DocMetaFromDocument is not covered yet: it needs the vault document model and belongs to the document slice.",
+			"Vectors marked platform=unix come from a Go writer that fails on Windows (issue #967); the port replays them everywhere, only the Go harness skips them there.",
 		},
 	}
 }
@@ -427,35 +432,46 @@ func retentionProposalVectors(t *testing.T) []retentionFileVector {
 			},
 		},
 	}
-	if err := WriteProposal(root, proposal); err != nil {
-		t.Fatal(err)
+	out := []retentionFileVector{}
+	if runtime.GOOS == "windows" {
+		// The Go writer fsyncs the state directory, which Windows refuses with
+		// "Access is denied"; the vectors keep their Unix mark and are compared
+		// on the other platforms. See the gap note below.
+		t.Log("skipping the Go proposal write vectors: the engine cannot sync a directory on Windows")
+	} else {
+		if err := WriteProposal(root, proposal); err != nil {
+			t.Fatal(err)
+		}
+		written := retentionFileVectorFor(t, root, "write-proposal", "a proposal is written as indented JSON through the atomic writer",
+			[]string{filepath.ToSlash(filepath.Join(ProposalDir(root), "run-20260918.json"))}, "", nil)
+		markUnixOnly(&written)
+		out = append(out, written)
 	}
 
-	out := []retentionFileVector{
-		retentionFileVectorFor(t, root, "write-proposal", "a proposal is written as indented JSON through the atomic writer",
-			[]string{filepath.ToSlash(filepath.Join(ProposalDir(root), "run-20260918.json"))}, "", nil),
+	if runtime.GOOS != "windows" {
+		loaded, loadErr := LoadProposal(root, "run-20260918")
+		if loadErr != nil {
+			t.Fatal(loadErr)
+		}
+		encoded, marshalErr := json.Marshal(loaded)
+		if marshalErr != nil {
+			t.Fatal(marshalErr)
+		}
+		loadedVector := retentionFileVector{
+			ID:          "load-proposal",
+			Description: "loading returns the written proposal",
+			Paths:       []string{},
+			Content:     "",
+			Size:        0,
+			SHA256:      "",
+			Mode:        nil,
+			Loaded:      string(encoded),
+		}
+		markUnixOnly(&loadedVector)
+		out = append(out, loadedVector)
 	}
 
-	loaded, err := LoadProposal(root, "run-20260918")
-	if err != nil {
-		t.Fatal(err)
-	}
-	encoded, err := json.Marshal(loaded)
-	if err != nil {
-		t.Fatal(err)
-	}
-	out = append(out, retentionFileVector{
-		ID:          "load-proposal",
-		Description: "loading returns the written proposal",
-		Paths:       []string{},
-		Content:     "",
-		Size:        0,
-		SHA256:      "",
-		Mode:        nil,
-		Loaded:      string(encoded),
-	})
-
-	_, err = LoadProposal(root, "missing-run")
+	_, err := LoadProposal(root, "missing-run")
 	message, class := retentionError(err)
 	out = append(out, retentionFileVector{
 		ID:          "load-missing-proposal",
@@ -514,22 +530,28 @@ func retentionHistoryVectors(t *testing.T) []retentionFileVector {
 	retry := modern
 	retry.Timestamp = stamp.Add(2 * time.Minute)
 
-	if err := AppendHistory(root, legacy); err != nil {
-		t.Fatal(err)
+	if runtime.GOOS == "windows" {
+		t.Log("skipping the Go append vectors: the engine cannot sync a directory on Windows")
+	} else {
+		if err := AppendHistory(root, legacy); err != nil {
+			t.Fatal(err)
+		}
+		if err := AppendHistory(root, modern); err != nil {
+			t.Fatal(err)
+		}
+		if err := AppendHistory(root, retry); err != nil {
+			t.Fatal(err)
+		}
+		entries, loadErr := LoadHistory(root)
+		if loadErr != nil {
+			t.Fatal(loadErr)
+		}
+		appendVector := retentionFileVectorFor(t, root, "append-and-deduplicate",
+			"a retried action id is not appended twice, the older entry format still appends",
+			[]string{HistoryPath(root)}, retentionJSON(entries), nil)
+		markUnixOnly(&appendVector)
+		out = append(out, appendVector)
 	}
-	if err := AppendHistory(root, modern); err != nil {
-		t.Fatal(err)
-	}
-	if err := AppendHistory(root, retry); err != nil {
-		t.Fatal(err)
-	}
-	entries, err := LoadHistory(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	out = append(out, retentionFileVectorFor(t, root, "append-and-deduplicate",
-		"a retried action id is not appended twice, the older entry format still appends",
-		[]string{HistoryPath(root)}, retentionJSON(entries), nil))
 
 	nullRoot := newRetentionTempDir(t, "symdesk-port-retention-null-")
 	//nolint:gosec // the state directory mirrors what the Go writer creates
@@ -569,6 +591,16 @@ func retentionHistoryVectors(t *testing.T) []retentionFileVector {
 		ErrorClass:  class,
 	})
 	return out
+}
+
+// markUnixOnly records that the vector was produced by a Go path that only
+// works on Unix: `writeFileAtomicRoot` syncs the containing directory, which
+// Windows rejects with "Access is denied" (issue #967). The port itself writes
+// the same bytes on every platform, so the Rust replay still runs these
+// vectors everywhere.
+func markUnixOnly(vector *retentionFileVector) {
+	vector.Platform = "unix"
+	vector.WindowsGap = "Go writeFileAtomicRoot syncs the state directory; Windows refuses the sync (issue #967)"
 }
 
 func retentionActionIDVectors() []retentionActionIDVector {
@@ -723,6 +755,10 @@ func retentionPlatformDocument(document []byte) ([]byte, error) {
 	}
 	parsed.GeneratedOn = ""
 	if runtime.GOOS == "windows" {
+		// Modes do not exist here, and a Unix-only Go writer cannot run at all,
+		// so both sides drop those vectors instead of comparing hollow entries.
+		parsed.Proposals = retentionWithoutUnixOnlyVectors(parsed.Proposals)
+		parsed.History = retentionWithoutUnixOnlyVectors(parsed.History)
 		for _, section := range [][]retentionFileVector{parsed.Proposals, parsed.History} {
 			for i := range section {
 				section[i].Mode = nil
@@ -734,6 +770,17 @@ func retentionPlatformDocument(document []byte) ([]byte, error) {
 		return nil, err
 	}
 	return append(encoded, '\n'), nil
+}
+
+func retentionWithoutUnixOnlyVectors(vectors []retentionFileVector) []retentionFileVector {
+	kept := make([]retentionFileVector, 0, len(vectors))
+	for _, vector := range vectors {
+		if vector.Platform == "unix" {
+			continue
+		}
+		kept = append(kept, vector)
+	}
+	return kept
 }
 
 // retentionVectorDifference attributes a drift to one vector so a stale fixture

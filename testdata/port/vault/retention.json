@@ -1081,7 +1081,9 @@
       "size": 656,
       "sha256": "f38a9f91412a8bdc972e8ea9d55edd543951acce0bbe39915151295d8214e394",
       "mode": 420,
-      "loaded": ""
+      "loaded": "",
+      "platform": "unix",
+      "windows_gap": "Go writeFileAtomicRoot syncs the state directory; Windows refuses the sync (issue #967)"
     },
     {
       "id": "load-proposal",
@@ -1091,7 +1093,9 @@
       "size": 0,
       "sha256": "",
       "mode": null,
-      "loaded": "{\"run_id\":\"run-20260918\",\"rule_name\":\"old-receipts\",\"created\":\"2026-09-18T12:30:45Z\",\"items\":[{\"path\":\"notes/old.md\",\"title\":\"Old\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2025-01-01\",\"action\":\"trash\",\"rule_name\":\"old-receipts\",\"fingerprint\":\"sha256:abc\"},{\"path\":\"notes/old2.md\",\"title\":\"Old 2\",\"reference_date\":\"2024-02-01\",\"expires_at\":\"2025-02-01\",\"action\":\"trash\",\"rule_name\":\"old-receipts\",\"fingerprint\":\"sha256:def\",\"status\":\"accepted\",\"failure\":\"none\"}],\"status\":\"pending\"}"
+      "loaded": "{\"run_id\":\"run-20260918\",\"rule_name\":\"old-receipts\",\"created\":\"2026-09-18T12:30:45Z\",\"items\":[{\"path\":\"notes/old.md\",\"title\":\"Old\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2025-01-01\",\"action\":\"trash\",\"rule_name\":\"old-receipts\",\"fingerprint\":\"sha256:abc\"},{\"path\":\"notes/old2.md\",\"title\":\"Old 2\",\"reference_date\":\"2024-02-01\",\"expires_at\":\"2025-02-01\",\"action\":\"trash\",\"rule_name\":\"old-receipts\",\"fingerprint\":\"sha256:def\",\"status\":\"accepted\",\"failure\":\"none\"}],\"status\":\"pending\"}",
+      "platform": "unix",
+      "windows_gap": "Go writeFileAtomicRoot syncs the state directory; Windows refuses the sync (issue #967)"
     },
     {
       "id": "load-missing-proposal",
@@ -1138,7 +1142,9 @@
       "size": 343,
       "sha256": "fb3738f3ec51c3769c3f90e282bf7aee3fb27e4e3f62a65ebcdac9270dd9ee06",
       "mode": 420,
-      "loaded": "[{\"timestamp\":\"2026-09-18T12:30:45Z\",\"rule_name\":\"legacy\",\"action\":\"trash\",\"path\":\"notes/legacy.md\",\"title\":\"Legacy\"},{\"action_id\":\"run-20260918:0\",\"timestamp\":\"2026-09-18T12:31:45Z\",\"rule_name\":\"old-receipts\",\"action\":\"trash\",\"path\":\"notes/old.md\",\"title\":\"Old\"}]"
+      "loaded": "[{\"timestamp\":\"2026-09-18T12:30:45Z\",\"rule_name\":\"legacy\",\"action\":\"trash\",\"path\":\"notes/legacy.md\",\"title\":\"Legacy\"},{\"action_id\":\"run-20260918:0\",\"timestamp\":\"2026-09-18T12:31:45Z\",\"rule_name\":\"old-receipts\",\"action\":\"trash\",\"path\":\"notes/old.md\",\"title\":\"Old\"}]",
+      "platform": "unix",
+      "windows_gap": "Go writeFileAtomicRoot syncs the state directory; Windows refuses the sync (issue #967)"
     },
     {
       "id": "load-null-history",
@@ -1195,6 +1201,7 @@
     "Proposal and history files are the exact bytes Go writes: two-space indent, no trailing newline.",
     "Evaluate keeps an item whose expiry equals 'now' and skips documents without a parsable reference date.",
     "LoadRules is not covered yet: the YAML multi-document reader needs a Rust YAML parser and belongs to the CLI slice.",
-    "DocMetaFromDocument is not covered yet: it needs the vault document model and belongs to the document slice."
+    "DocMetaFromDocument is not covered yet: it needs the vault document model and belongs to the document slice.",
+    "Vectors marked platform=unix come from a Go writer that fails on Windows (issue #967); the port replays them everywhere, only the Go harness skips them there."
   ]
 }

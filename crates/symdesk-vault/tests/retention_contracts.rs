@@ -104,6 +104,10 @@ struct FileVector {
     error_class: String,
     #[serde(default)]
     loaded: String,
+    #[serde(default)]
+    platform: String,
+    #[serde(default)]
+    windows_gap: String,
 }
 
 #[derive(Deserialize)]
@@ -251,6 +255,27 @@ fn retention_vectors_match_the_go_oracle() {
             vector.id
         );
     }
+
+    // A Windows gap must always be explained, and it never skips the port: the
+    // Go writer is the platform-limited side, not the Rust replay.
+    let gapped: Vec<&FileVector> = fixture
+        .proposals
+        .iter()
+        .chain(fixture.history.iter())
+        .filter(|vector| vector.platform == "unix")
+        .collect();
+    for vector in &gapped {
+        assert!(
+            !vector.windows_gap.is_empty(),
+            "{}: a platform mark needs a reason",
+            vector.id
+        );
+    }
+    assert!(
+        gapped.len() >= 3,
+        "the three Go write vectors should carry the Unix mark, found {}",
+        gapped.len()
+    );
 
     replay_proposals(&fixture);
     replay_history(&fixture);

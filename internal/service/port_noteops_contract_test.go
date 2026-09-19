@@ -259,17 +259,33 @@ func modePointer(mode uint32) *uint32 {
 // vault, so the recorded file set contains only vault content.
 func newIsolatedVault(t *testing.T) (string, *sidecar.DB) {
 	t.Helper()
-	root := t.TempDir()
+	// Self-managed directories instead of t.TempDir(): the history store these
+	// cases drive caches an os.Root that Go never closes, so on Windows the
+	// handle can still be open when t.TempDir's cleanup runs and the removal
+	// would fail a test whose every assertion passed (#964).
+	root := newPortTempDir(t, "symdesk-port-noteops-")
 	if canonical, err := filepath.EvalSymlinks(root); err == nil {
 		root = canonical
 	}
-	dbPath := filepath.Join(t.TempDir(), "sidecar.db")
+	dbPath := filepath.Join(newPortTempDir(t, "symdesk-port-sidecar-"), "sidecar.db")
 	db, err := sidecar.Open(dbPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = db.Close() })
 	return root, db
+}
+
+// newPortTempDir creates a directory the harness removes itself, ignoring a
+// platform that still holds an open handle (see the note above).
+func newPortTempDir(t *testing.T, prefix string) string {
+	t.Helper()
+	dir, err := os.MkdirTemp("", prefix)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(dir) })
+	return dir
 }
 
 func runNoteCase(t *testing.T, spec noteCase) noteCase {

@@ -83,6 +83,14 @@ func objectsRelDir() string {
 	return filepath.Join(historyRelDir(), "objects")
 }
 
+// rootFSPath converts a vault-relative path for os.Root.FS() / io/fs.
+// filepath.Join yields backslashes on Windows, and os.Root's fs.FS view
+// rejects those names (isValidRootFSPath). The vault package already
+// passes filepath.ToSlash into root.FS(); history must do the same.
+func rootFSPath(rel string) string {
+	return filepath.ToSlash(rel)
+}
+
 func manifestRelPath(relPath string) (string, error) {
 	rel, err := cleanRel(relPath)
 	if err != nil {
@@ -309,7 +317,7 @@ func (s *Store) Prune(policy RetentionPolicy) (int, error) {
 		}
 	}
 
-	manifestRelRoot := filepath.Join(historyRelDir(), "manifest")
+	manifestRelRoot := rootFSPath(filepath.Join(historyRelDir(), "manifest"))
 	err = fs.WalkDir(root.FS(), manifestRelRoot, func(relPath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -358,7 +366,7 @@ func (s *Store) Prune(policy RetentionPolicy) (int, error) {
 	}
 
 	// Garbage-collect unreferenced objects.
-	objs, err := fs.ReadDir(root.FS(), objectsRelDir())
+	objs, err := fs.ReadDir(root.FS(), rootFSPath(objectsRelDir()))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return removed, nil
@@ -473,7 +481,7 @@ func (s *Store) PreflightPurgePaths(relPaths ...string) error {
 }
 
 func preflightPurgeRoot(root *os.Root, targets map[string]bool) error {
-	manifestRoot := filepath.Join(historyRelDir(), "manifest")
+	manifestRoot := rootFSPath(filepath.Join(historyRelDir(), "manifest"))
 	if err := fs.WalkDir(root.FS(), manifestRoot, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			if os.IsNotExist(walkErr) {
@@ -505,7 +513,7 @@ func preflightPurgeRoot(root *os.Root, targets map[string]bool) error {
 		return err
 	}
 
-	checkpointItems, err := fs.ReadDir(root.FS(), checkpointsRelDir())
+	checkpointItems, err := fs.ReadDir(root.FS(), rootFSPath(checkpointsRelDir()))
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -532,7 +540,7 @@ func preflightPurgeRoot(root *os.Root, targets map[string]bool) error {
 		}
 	}
 
-	objects, err := fs.ReadDir(root.FS(), objectsRelDir())
+	objects, err := fs.ReadDir(root.FS(), rootFSPath(objectsRelDir()))
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -564,7 +572,7 @@ func (s *Store) PurgePaths(relPaths ...string) error {
 	// Read and validate every manifest and checkpoint before touching any of
 	// them. Purging recovery metadata is destructive: a broken survivor must
 	// fail closed rather than allowing GC to make the damage permanent.
-	manifestRoot := filepath.Join(historyRelDir(), "manifest")
+	manifestRoot := rootFSPath(filepath.Join(historyRelDir(), "manifest"))
 	manifests := make([]purgeManifest, 0)
 	walkErr := fs.WalkDir(root.FS(), manifestRoot, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -601,7 +609,7 @@ func (s *Store) PurgePaths(relPaths ...string) error {
 		return walkErr
 	}
 
-	checkpointItems, err := fs.ReadDir(root.FS(), checkpointsRelDir())
+	checkpointItems, err := fs.ReadDir(root.FS(), rootFSPath(checkpointsRelDir()))
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -707,7 +715,7 @@ func (s *Store) PurgePaths(relPaths ...string) error {
 			referenced[file.Entry.ID] = true
 		}
 	}
-	objects, err := fs.ReadDir(root.FS(), objectsRelDir())
+	objects, err := fs.ReadDir(root.FS(), rootFSPath(objectsRelDir()))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil

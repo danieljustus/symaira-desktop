@@ -61,8 +61,6 @@ func TestPortVaultWriteFilesystemContract(t *testing.T) {
 	}
 }
 
-const writeFilesystemFixtureRel = "testdata/port/vault/filesystem-writes.json"
-
 type writeFilesystemFixture struct {
 	SchemaVersion int                 `json:"schema_version"`
 	Oracle        writeFilesystemAide `json:"oracle"`
@@ -343,6 +341,17 @@ const largePayloadUnit = "symdesk-payload-0123456789\n"
 // writer process.
 const interruptPayloadUnit = "interrupted-payload-0123456789\n"
 
+const (
+	// interruptWriterEnv marks the re-executed test binary as the writer body.
+	interruptWriterEnv = "SYMDESK_PORT_INTERRUPT_WRITER"
+	// interruptTargetName is the file the writer process replaces; it is fixed
+	// so no path has to cross the process boundary.
+	interruptTargetName = "note.md"
+	// interruptReadyName is the marker the writer creates after its first
+	// complete write, so the parent kills it mid-operation, never before.
+	interruptReadyName = ".symdesk-frontmatter-ready.tmp"
+)
+
 type atomicCase struct {
 	id            string
 	path          string
@@ -372,6 +381,7 @@ func runAtomicCase(t *testing.T, spec atomicCase) writeFilesystem {
 		if err := os.MkdirAll(dir, 0o750); err != nil {
 			t.Fatal(err)
 		}
+		//nolint:gosec // the read-only parent directory is the case under test
 		if err := os.Chmod(dir, 0o500); err != nil {
 			t.Fatal(err)
 		}
@@ -441,9 +451,11 @@ func runCrashRecoveryCase(t *testing.T) writeFilesystem {
 	}
 	target := filepath.Join(root, "note.md")
 	old := []byte("---\ntitle: before crash\n---\ncomplete body\n")
+	//nolint:gosec // the case records how the writer treats a 0640 note
 	if err := os.WriteFile(target, old, 0o640); err != nil {
 		t.Fatal(err)
 	}
+	//nolint:gosec // the case records how the writer treats a 0640 note
 	if err := os.Chmod(target, 0o640); err != nil {
 		t.Fatal(err)
 	}
@@ -506,12 +518,14 @@ func runInterruptionCase(t *testing.T) writeFilesystem {
 	if canonical, err := filepath.EvalSymlinks(root); err == nil {
 		root = canonical
 	}
-	target := filepath.Join(root, "note.md")
+	target := filepath.Join(root, interruptTargetName)
 	old := []byte("---\ntitle: before interruption\n---\ncomplete old body\n")
 	data := bytes.Repeat([]byte(interruptPayloadUnit), 40000)
+	//nolint:gosec // the case records how the writer treats a 0640 note
 	if err := os.WriteFile(target, old, 0o640); err != nil {
 		t.Fatal(err)
 	}
+	//nolint:gosec // the case records how the writer treats a 0640 note
 	if err := os.Chmod(target, 0o640); err != nil {
 		t.Fatal(err)
 	}
@@ -531,9 +545,11 @@ func runInterruptionCase(t *testing.T) writeFilesystem {
 		case interruptTorn:
 			invariant.TornTargets++
 		}
+		//nolint:gosec // the interrupted case restores the 0640 pre-write state
 		if err := os.WriteFile(target, old, 0o640); err != nil {
 			t.Fatal(err)
 		}
+		//nolint:gosec // the interrupted case restores the 0640 pre-write state
 		if err := os.Chmod(target, 0o640); err != nil {
 			t.Fatal(err)
 		}
@@ -569,22 +585,16 @@ const (
 
 // interruptWriter starts the helper process, waits until it has completed one
 // full atomic write, kills it, and classifies what the target holds afterwards.
+// The helper works in this directory with fixed names, so no path crosses the
+// process boundary.
 func interruptWriter(t *testing.T, root, target string, old, data []byte) interruptOutcome {
 	t.Helper()
-	ready := filepath.Join(root, tempNamePrefix+"ready"+tempNameSuffix)
-	payload := filepath.Join(root, tempNamePrefix+"payload"+tempNameSuffix)
+	ready := filepath.Join(root, interruptReadyName)
 	_ = os.Remove(ready)
-	if err := os.WriteFile(payload, data, 0o600); err != nil {
-		t.Fatal(err)
-	}
 	//nolint:gosec // re-executing the test binary under the current toolchain
 	command := exec.Command(os.Args[0], "-test.run=^TestPortVaultWriteFilesystemInterruptWriter$", "-test.v")
-	command.Env = append(os.Environ(),
-		"SYMDESK_PORT_INTERRUPT_WRITER=1",
-		"SYMDESK_PORT_INTERRUPT_TARGET="+target,
-		"SYMDESK_PORT_INTERRUPT_READY="+ready,
-		"SYMDESK_PORT_INTERRUPT_PAYLOAD_FILE="+payload,
-	)
+	command.Dir = root
+	command.Env = append(os.Environ(), interruptWriterEnv+"=1")
 	var output bytes.Buffer
 	command.Stdout = &output
 	command.Stderr = &output
@@ -625,26 +635,22 @@ func interruptWriter(t *testing.T, root, target string, old, data []byte) interr
 }
 
 // TestPortVaultWriteFilesystemInterruptWriter is the helper process body. It is
-// inert unless the parent starts it with SYMDESK_PORT_INTERRUPT_WRITER=1.
+// inert unless the parent starts it with SYMDESK_PORT_INTERRUPT_WRITER=1, and it
+// writes a fixed name in its working directory so that no caller-supplied path
+// reaches the atomic writer in this process.
 func TestPortVaultWriteFilesystemInterruptWriter(t *testing.T) {
-	if os.Getenv("SYMDESK_PORT_INTERRUPT_WRITER") != "1" {
+	if os.Getenv(interruptWriterEnv) != "1" {
 		t.Skip("helper process body")
 	}
-	target := os.Getenv("SYMDESK_PORT_INTERRUPT_TARGET")
-	ready := os.Getenv("SYMDESK_PORT_INTERRUPT_READY")
-	//nolint:gosec // payload and paths are supplied by the owning test process
-	data, err := os.ReadFile(os.Getenv("SYMDESK_PORT_INTERRUPT_PAYLOAD_FILE"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	data := bytes.Repeat([]byte(interruptPayloadUnit), 40000)
 	first := true
 	for {
-		if err := writeFileAtomic(target, data); err != nil {
+		if err := writeFileAtomic(interruptTargetName, data); err != nil {
 			t.Fatalf("writer failed: %v", err)
 		}
 		if first {
 			first = false
-			if err := os.WriteFile(ready, []byte("done"), 0o600); err != nil {
+			if err := os.WriteFile(interruptReadyName, []byte("done"), 0o600); err != nil {
 				t.Fatal(err)
 			}
 		}

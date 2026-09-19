@@ -244,6 +244,10 @@ jobs:
           cargo test --workspace --all-features --locked
           cargo test --workspace --doc --all-features --locked
 
+      - name: Run native vault write differential
+        shell: bash
+        run: make vault-write-differential
+
       - name: Run native history differential
         shell: bash
         run: |

@@ -276,9 +276,40 @@ pub enum HistoryError {
     #[error("corrupt history manifest for {0}: {1}")]
     CorruptManifest(String, String),
 
+    /// The trash operation was refused because the target is a directory.
+    #[error("cannot trash a directory: {0}")]
+    TrashDirectory(String),
+
+    /// The trash rename failed and cleaning up the metadata sidecar failed too.
+    #[error("rename failed: {source} (cleanup also failed: {cleanup})")]
+    RenameFailed {
+        /// The failing rename.
+        #[source]
+        source: std::io::Error,
+        /// Cleanup failure text.
+        cleanup: String,
+    },
+
     /// Underlying filesystem I/O error.
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+}
+
+/// Describes one soft-deleted vault file.
+///
+/// The field order and JSON shape are the Go contract
+/// (`internal/history/trash.go`), including the RFC 3339 nano timestamp.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TrashEntry {
+    /// Unique name of the item inside the trash directory.
+    pub name: String,
+    /// Vault-relative path the file was deleted from.
+    pub original_path: String,
+    /// When the file was moved to the trash (UTC).
+    #[serde(with = "rfc3339_nano")]
+    pub deleted_at: OffsetDateTime,
+    /// File size in bytes at deletion time.
+    pub size: i64,
 }
 
 /// Thread-safe clock callback for injecting deterministic timestamps during replay.
@@ -522,6 +553,66 @@ impl HistoryStore {
         self.write_file_atomic_root(&rel_mp, &data, 0o644)
     }
 
+    /// Moves the vault file at `rel_path` into the trash instead of deleting it.
+    ///
+    /// Mirrors `Store.Trash` in `internal/history/trash.go`: a snapshot of the
+    /// final content is taken first (so even a purged item stays recoverable
+    /// until history retention drops it), the file's relative path is flattened
+    /// into a unique trash name, the metadata sidecar is written atomically and
+    /// the file is renamed into the trash directory. A failed rename removes the
+    /// metadata again.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HistoryError::TrashDirectory`] for directories,
+    /// [`HistoryError::InvalidPath`] for unsafe paths, and [`HistoryError::Io`]
+    /// for missing files or filesystem failures.
+    pub fn trash(&self, rel_path: &str) -> Result<TrashEntry, HistoryError> {
+        let rel = clean_rel(rel_path)?;
+        let root = self.open_root()?;
+        let info = root.metadata(Path::new(&rel))?;
+        if info.is_dir() {
+            return Err(HistoryError::TrashDirectory(rel_path.to_owned()));
+        }
+
+        self.snapshot(&rel)?;
+
+        let dir = trash_rel_dir();
+        mkdir_all_0750(root, Path::new(dir)).map_err(HistoryError::Io)?;
+
+        // Flatten the relative path into a unique trash name.
+        let base = rel.replace('/', "__");
+        let mut name = base.clone();
+        let mut counter = 1;
+        while root.metadata(Path::new(&format!("{dir}/{name}"))).is_ok() {
+            name = format!("{base}.{counter}");
+            counter += 1;
+        }
+
+        let entry = TrashEntry {
+            name: name.clone(),
+            original_path: rel.clone(),
+            deleted_at: self.now(),
+            size: i64::try_from(info.len()).unwrap_or(i64::MAX),
+        };
+        let metadata = serde_json::to_vec_pretty(&entry)
+            .map_err(|err| HistoryError::Io(io::Error::other(err)))?;
+        let trash_rel = format!("{dir}/{name}");
+        let meta_rel = format!("{trash_rel}{TRASH_META_SUFFIX}");
+        self.write_file_atomic_root(&meta_rel, &metadata, 0o644)?;
+
+        if let Err(err) = root.rename(Path::new(&rel), root, Path::new(&trash_rel)) {
+            return match root.remove_file(Path::new(&meta_rel)) {
+                Ok(()) => Err(HistoryError::Io(err)),
+                Err(cleanup) => Err(HistoryError::RenameFailed {
+                    source: err,
+                    cleanup: cleanup.to_string(),
+                }),
+            };
+        }
+        Ok(entry)
+    }
+
     /// Atomically writes data to `name` (relative to root) via a temporary file
     /// created alongside it and renamed into place. Every step is confined to `root`.
     fn write_file_atomic_root(
@@ -629,6 +720,15 @@ pub fn random_12_bytes() -> Result<[u8; 12], HistoryError> {
     getrandom::fill(&mut buf).map_err(|err| HistoryError::Io(io::Error::other(err)))?;
     Ok(buf)
 }
+
+/// Relative directory where soft-deleted files are kept.
+#[must_use]
+pub fn trash_rel_dir() -> &'static str {
+    ".symdesk/trash"
+}
+
+/// Suffix of the per-item trash metadata sidecar.
+pub const TRASH_META_SUFFIX: &str = ".trashinfo.json";
 
 /// Relative directory where history artifacts are stored.
 #[must_use]

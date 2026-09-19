@@ -788,6 +788,8 @@ fn classify_rust_error(err: &HistoryError) -> &'static str {
         HistoryError::AmbiguousPrefix { .. } => "ambiguous_prefix",
         HistoryError::NoSnapshot { .. } => "no_snapshot",
         HistoryError::CorruptManifest(..) => "corrupt_manifest",
+        HistoryError::TrashDirectory(..) => "trash_directory",
+        HistoryError::RenameFailed { .. } => "rename_failed",
         HistoryError::Io(..) => "other",
     }
 }

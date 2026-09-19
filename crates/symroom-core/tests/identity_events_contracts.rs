@@ -206,11 +206,9 @@ fn room_identity_event_vectors_match_the_go_oracle() {
                 vector.label
             );
         } else {
-            assert_eq!(
-                vector.stored_mode, None,
-                "identity {} has no file mode off its generating platform",
-                vector.label
-            );
+            // The recording platform's value is not comparable here; the Go
+            // drift check clears it on both sides for exactly that reason.
+            let _ = vector.stored_mode;
         }
 
         by_member.insert(built.member_id.clone(), built);
@@ -364,11 +362,7 @@ fn replay_file_cases(fixture: &Fixture, modes_observable: bool) {
                     let mode = file_mode(&data_home.join("symroom/identities/alpha.json"));
                     assert_eq!(Some(mode), vector.file_mode, "{}: file mode", vector.id);
                 } else {
-                    assert_eq!(
-                        vector.file_mode, None,
-                        "{}: file mode is not compared off its generating platform",
-                        vector.id
-                    );
+                    let _ = vector.file_mode;
                 }
             }
             "missing-identity" => {

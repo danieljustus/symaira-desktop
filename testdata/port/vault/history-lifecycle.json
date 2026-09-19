@@ -194,7 +194,8 @@
       "id": "checkpoint-list",
       "description": "listing returns newest first and skips a corrupt manifest",
       "operation": "list_checkpoints",
-      "platform": "any",
+      "platform": "unix",
+      "windows_gap": "ListCheckpoints reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
       "files": [
         {
           "path": "notes/a.md",
@@ -241,7 +242,8 @@
       "id": "trash-list-empty",
       "description": "a missing trash directory lists as empty, not as an error",
       "operation": "trash_list",
-      "platform": "any",
+      "platform": "unix",
+      "windows_gap": "TrashList reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
       "files": null,
       "call": {},
       "result": "list=0 strict=0",
@@ -251,7 +253,8 @@
       "id": "trash-list-order",
       "description": "trash entries are listed newest deletion first",
       "operation": "trash_list",
-      "platform": "any",
+      "platform": "unix",
+      "windows_gap": "TrashList/TrashListStrict read through os.Root fs.FS, whose path rules reject Windows separators (#962)",
       "files": [
         {
           "path": "notes/a.md",
@@ -316,7 +319,8 @@
       "id": "trash-list-strict-corrupt-metadata",
       "description": "the strict inventory refuses corrupt metadata instead of skipping it",
       "operation": "trash_list_strict",
-      "platform": "any",
+      "platform": "unix",
+      "windows_gap": "TrashListStrict reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
       "files": [
         {
           "path": "notes/a.md",
@@ -356,7 +360,8 @@
       "id": "trash-list-strict-orphan-payload",
       "description": "the strict inventory refuses a payload without metadata",
       "operation": "trash_list_strict",
-      "platform": "any",
+      "platform": "unix",
+      "windows_gap": "TrashListStrict reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
       "files": [
         {
           "path": "notes/a.md",
@@ -482,7 +487,8 @@
       "id": "trash-restore-missing",
       "description": "restoring an unknown item fails without touching the trash",
       "operation": "trash_restore",
-      "platform": "any",
+      "platform": "unix",
+      "windows_gap": "the precondition uses TrashListStrict, which rejects Windows separators (#962)",
       "files": null,
       "call": {
         "name": "does-not-exist.md"
@@ -508,7 +514,8 @@
       "id": "trash-purge-all",
       "description": "a non-positive age purges every entry and leaves the trash empty",
       "operation": "trash_purge",
-      "platform": "any",
+      "platform": "unix",
+      "windows_gap": "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
       "files": [
         {
           "path": "notes/a.md",
@@ -545,7 +552,8 @@
       "id": "trash-purge-by-age",
       "description": "an entry older than the age is purged, a fresher one is kept",
       "operation": "trash_purge",
-      "platform": "any",
+      "platform": "unix",
+      "windows_gap": "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
       "files": [
         {
           "path": "notes/old.md",
@@ -597,7 +605,8 @@
       "id": "trash-purge-refuses-corrupt",
       "description": "purge fails closed on a corrupt inventory and removes nothing",
       "operation": "trash_purge",
-      "platform": "any",
+      "platform": "unix",
+      "windows_gap": "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
       "files": [
         {
           "path": "notes/a.md",

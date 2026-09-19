@@ -82,8 +82,13 @@ type historyCase struct {
 	Description string `json:"description"`
 	// Operation names the ported entry point under test.
 	Operation string `json:"operation"`
-	// Platform is "any" or "unix" (the case needs Unix permission bits).
+	// Platform is "any" or "unix". A Unix-only case either needs Unix
+	// permission bits or exercises a Go path that the os.Root fs.FS rejects on
+	// Windows; WindowsGap records which, so the gap is visible instead of
+	// silently missing.
 	Platform string `json:"platform"`
+	// WindowsGap explains why Windows does not run the case.
+	WindowsGap string `json:"windows_gap,omitempty"`
 	// Files lists the vault files that exist before the operation.
 	Files []historyFileSpec `json:"files"`
 	// Call carries the sanitised operation arguments.
@@ -152,7 +157,7 @@ func buildHistoryLifecycleFixture(t *testing.T) historyLifecycleFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cases := []historyCase{
+	gated := []historyCase{
 		historyCaseCheckpointBegin(t),
 		historyCaseCheckpointIdempotent(t),
 		historyCaseCheckpointExistingFile(t),
@@ -171,6 +176,16 @@ func buildHistoryLifecycleFixture(t *testing.T) historyLifecycleFixture {
 		historyCaseTrashPurgeAll(t),
 		historyCaseTrashPurgeByAge(t),
 		historyCaseTrashPurgeRefusesCorrupt(t),
+	}
+	cases := gated
+	if runtime.GOOS == "windows" {
+		cases = make([]historyCase, 0, len(gated))
+		for _, item := range gated {
+			if item.Platform == "unix" {
+				continue
+			}
+			cases = append(cases, item)
+		}
 	}
 	return historyLifecycleFixture{
 		SchemaVersion: 1,
@@ -605,7 +620,8 @@ func historyCaseCheckpointList(t *testing.T) historyCase {
 		ID:          "checkpoint-list",
 		Description: "listing returns newest first and skips a corrupt manifest",
 		Operation:   "list_checkpoints",
-		Platform:    "any",
+		Platform:    "unix",
+		WindowsGap:  "ListCheckpoints reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
 		Files:       []historyFileSpec{{Path: "notes/a.md", Content: "alpha\n"}},
 		Call:        historyCall{TaskID: "task-1", ExtraTaskID: "task-2"},
 	}
@@ -640,7 +656,8 @@ func historyCaseTrashListEmpty(t *testing.T) historyCase {
 		ID:          "trash-list-empty",
 		Description: "a missing trash directory lists as empty, not as an error",
 		Operation:   "trash_list",
-		Platform:    "any",
+		Platform:    "unix",
+		WindowsGap:  "TrashList reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
 		Call:        historyCall{},
 	}
 	return recordHistoryCase(t, document, func(s *scenario) (string, error) {
@@ -658,7 +675,8 @@ func historyCaseTrashListOrder(t *testing.T) historyCase {
 		ID:          "trash-list-order",
 		Description: "trash entries are listed newest deletion first",
 		Operation:   "trash_list",
-		Platform:    "any",
+		Platform:    "unix",
+		WindowsGap:  "TrashList/TrashListStrict read through os.Root fs.FS, whose path rules reject Windows separators (#962)",
 		Files: []historyFileSpec{
 			{Path: "notes/a.md", Content: "alpha\n"},
 			{Path: "notes/b.md", Content: "bravo\n"},
@@ -691,7 +709,8 @@ func historyCaseTrashListStrictCorrupt(t *testing.T) historyCase {
 		ID:          "trash-list-strict-corrupt-metadata",
 		Description: "the strict inventory refuses corrupt metadata instead of skipping it",
 		Operation:   "trash_list_strict",
-		Platform:    "any",
+		Platform:    "unix",
+		WindowsGap:  "TrashListStrict reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
 		Files:       []historyFileSpec{{Path: "notes/a.md", Content: "alpha\n"}},
 		Call:        historyCall{Path: "notes/a.md"},
 	}
@@ -729,7 +748,8 @@ func historyCaseTrashListStrictOrphan(t *testing.T) historyCase {
 		ID:          "trash-list-strict-orphan-payload",
 		Description: "the strict inventory refuses a payload without metadata",
 		Operation:   "trash_list_strict",
-		Platform:    "any",
+		Platform:    "unix",
+		WindowsGap:  "TrashListStrict reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
 		Files:       []historyFileSpec{{Path: "notes/a.md", Content: "alpha\n"}},
 		Call:        historyCall{Path: "notes/a.md"},
 	}
@@ -806,7 +826,8 @@ func historyCaseTrashRestoreMissing(t *testing.T) historyCase {
 		ID:          "trash-restore-missing",
 		Description: "restoring an unknown item fails without touching the trash",
 		Operation:   "trash_restore",
-		Platform:    "any",
+		Platform:    "unix",
+		WindowsGap:  "the precondition uses TrashListStrict, which rejects Windows separators (#962)",
 		Call:        historyCall{Name: "does-not-exist.md"},
 	}
 	return recordHistoryCase(t, document, func(s *scenario) (string, error) {
@@ -849,7 +870,8 @@ func historyCaseTrashPurgeAll(t *testing.T) historyCase {
 		ID:          "trash-purge-all",
 		Description: "a non-positive age purges every entry and leaves the trash empty",
 		Operation:   "trash_purge",
-		Platform:    "any",
+		Platform:    "unix",
+		WindowsGap:  "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
 		Files: []historyFileSpec{
 			{Path: "notes/a.md", Content: "alpha\n"},
 			{Path: "notes/b.md", Content: "bravo\n"},
@@ -881,7 +903,8 @@ func historyCaseTrashPurgeByAge(t *testing.T) historyCase {
 		ID:          "trash-purge-by-age",
 		Description: "an entry older than the age is purged, a fresher one is kept",
 		Operation:   "trash_purge",
-		Platform:    "any",
+		Platform:    "unix",
+		WindowsGap:  "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
 		Files: []historyFileSpec{
 			{Path: "notes/old.md", Content: "old\n"},
 			{Path: "notes/fresh.md", Content: "fresh\n"},
@@ -925,7 +948,8 @@ func historyCaseTrashPurgeRefusesCorrupt(t *testing.T) historyCase {
 		ID:          "trash-purge-refuses-corrupt",
 		Description: "purge fails closed on a corrupt inventory and removes nothing",
 		Operation:   "trash_purge",
-		Platform:    "any",
+		Platform:    "unix",
+		WindowsGap:  "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
 		Files:       []historyFileSpec{{Path: "notes/a.md", Content: "alpha\n"}},
 		Call:        historyCall{Path: "notes/a.md", MaxAgeSeconds: 0},
 	}

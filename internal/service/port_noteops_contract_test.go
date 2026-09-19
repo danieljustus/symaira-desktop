@@ -59,8 +59,11 @@ func TestPortNoteOperationContract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read fixture: %v (run PORT_GENERATE=1 go test ./internal/service -run TestPortNoteOperationContract)", err)
 	}
-	if !bytes.Equal(filterNotePlatform(current, runtime.GOOS), filterNotePlatform(encoded, runtime.GOOS)) {
-		t.Fatalf("note operation fixture is stale; regenerate deliberately from the pinned Go oracle\n%s", firstDifference(current, encoded))
+	normalizedCurrent := filterNotePlatform(current, runtime.GOOS)
+	normalizedEncoded := filterNotePlatform(encoded, runtime.GOOS)
+	if !bytes.Equal(normalizedCurrent, normalizedEncoded) {
+		t.Fatalf("note operation fixture is stale; regenerate deliberately from the pinned Go oracle\n%s",
+			firstDifference(normalizedEncoded, normalizedCurrent))
 	}
 }
 

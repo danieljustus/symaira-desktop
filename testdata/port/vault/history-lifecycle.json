@@ -1,0 +1,646 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "982fe718f2d64629102b4078b1d65a46645c90c5",
+    "release": "post-v0.12.2-security-880"
+  },
+  "source_hashes": {
+    "internal/history/checkpoint.go": "147f7c08ff4cb00bfaf1271a478dca2631146ef92fb1d54114f7b2a725a31acd",
+    "internal/history/history.go": "f86d38d5983d759a95d80f4a55aad8b7c8af572b0ba4ae4e30702b7a301364d4",
+    "internal/history/trash.go": "a18e604c203c6cee550078fa8b37acef68c9e79a9f07482288a4b59344f01179"
+  },
+  "cases": [
+    {
+      "id": "checkpoint-begin",
+      "description": "begin creates an empty manifest; the timestamp is the only wall-clock stamp",
+      "operation": "begin_checkpoint",
+      "platform": "any",
+      "files": [
+        {
+          "path": "notes/a.md",
+          "content": "alpha\n"
+        }
+      ],
+      "call": {
+        "task_id": "task-1"
+      },
+      "result": "task=task-1 files=[] new=[] skipped=[] partial=false",
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/task-1.json",
+          "mode": 420,
+          "size": 108,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"task-1\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [],\n  \"new_files\": [],\n  \"skipped\": []\n}"
+        },
+        {
+          "path": "notes/a.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "alpha\n"
+        }
+      ]
+    },
+    {
+      "id": "checkpoint-begin-idempotent",
+      "description": "a second begin keeps the first checkpoint and its timestamp",
+      "operation": "begin_checkpoint_twice",
+      "platform": "any",
+      "files": [
+        {
+          "path": "notes/a.md",
+          "content": "alpha\n"
+        }
+      ],
+      "call": {
+        "task_id": "task-1"
+      },
+      "result": "same_timestamp=true same_files=true",
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/task-1.json",
+          "mode": 420,
+          "size": 108,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"task-1\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [],\n  \"new_files\": [],\n  \"skipped\": []\n}"
+        },
+        {
+          "path": "notes/a.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "alpha\n"
+        }
+      ]
+    },
+    {
+      "id": "checkpoint-file-existing",
+      "description": "an existing file is snapshotted before the task's first write and never re-snapshotted",
+      "operation": "checkpoint_file",
+      "platform": "any",
+      "files": [
+        {
+          "path": "notes/a.md",
+          "content": "alpha\n"
+        }
+      ],
+      "call": {
+        "task_id": "task-1",
+        "path": "notes/a.md"
+      },
+      "result": "files=1 new=0 skipped=0 blob=\"alpha\\n\"",
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/task-1.json",
+          "mode": 420,
+          "size": 318,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"task-1\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [\n    {\n      \"rel_path\": \"notes/a.md\",\n      \"entry\": {\n        \"id\": \"b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060\",\n        \"timestamp\": \"{{timestamp}}\",\n        \"size\": 6\n      }\n    }\n  ],\n  \"new_files\": [],\n  \"skipped\": []\n}"
+        },
+        {
+          "path": ".symdesk/history/manifest/notes/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": "notes/a.md",
+          "mode": 420,
+          "size": 10,
+          "sha256": "",
+          "content": "rewritten\n"
+        }
+      ]
+    },
+    {
+      "id": "checkpoint-file-new",
+      "description": "a missing file is recorded as new so undo deletes it",
+      "operation": "checkpoint_file",
+      "platform": "any",
+      "files": null,
+      "call": {
+        "task_id": "task-1",
+        "path": "notes/new.md"
+      },
+      "result": "task=task-1 files=[] new=[notes/new.md] skipped=[] partial=false",
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/task-1.json",
+          "mode": 420,
+          "size": 130,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"task-1\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [],\n  \"new_files\": [\n    \"notes/new.md\"\n  ],\n  \"skipped\": []\n}"
+        }
+      ]
+    },
+    {
+      "id": "checkpoint-undo",
+      "description": "undo restores recorded files and deletes files the task created",
+      "operation": "undo_checkpoint",
+      "platform": "any",
+      "files": [
+        {
+          "path": "notes/a.md",
+          "content": "alpha\n"
+        }
+      ],
+      "call": {
+        "task_id": "task-1",
+        "path": "notes/a.md",
+        "write_content": "rewritten by the task\n",
+        "create_path": "notes/created.md",
+        "create_content": "created by the task\n"
+      },
+      "result": "task=task-1 files=[notes/a.md@b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060] new=[notes/created.md] skipped=[] partial=false",
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/task-1.json",
+          "mode": 420,
+          "size": 344,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"task-1\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [\n    {\n      \"rel_path\": \"notes/a.md\",\n      \"entry\": {\n        \"id\": \"b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060\",\n        \"timestamp\": \"{{timestamp}}\",\n        \"size\": 6\n      }\n    }\n  ],\n  \"new_files\": [\n    \"notes/created.md\"\n  ],\n  \"skipped\": []\n}"
+        },
+        {
+          "path": ".symdesk/history/manifest/notes/a.md.json",
+          "mode": 420,
+          "size": 273,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"af3890f940cb7079ab7599e076464e3ac30d79ab452e188db7c668463752ef87\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 22\n  },\n  {\n    \"id\": \"b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": "notes/a.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "alpha\n"
+        }
+      ]
+    },
+    {
+      "id": "checkpoint-invalid-task-id",
+      "description": "task ids that escape the checkpoints directory are rejected",
+      "operation": "begin_checkpoint",
+      "platform": "any",
+      "files": null,
+      "call": {
+        "task_id": "../escape"
+      },
+      "result": "\"\"=task_id_required \"../escape\"=invalid_task_id \".hidden\"=invalid_task_id \"a/b\"=invalid_task_id \"a:b\"=invalid_task_id \".\"=invalid_task_id \"..\"=invalid_task_id",
+      "after": []
+    },
+    {
+      "id": "checkpoint-list",
+      "description": "listing returns newest first and skips a corrupt manifest",
+      "operation": "list_checkpoints",
+      "platform": "unix",
+      "windows_gap": "ListCheckpoints reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
+      "files": [
+        {
+          "path": "notes/a.md",
+          "content": "alpha\n"
+        }
+      ],
+      "call": {
+        "task_id": "task-1",
+        "extra_task_id": "task-2"
+      },
+      "result": "count=2 first=task-2 second=task-1 newer=true",
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/broken.json",
+          "mode": 420,
+          "size": 9,
+          "sha256": "",
+          "content": "{not json"
+        },
+        {
+          "path": ".symdesk/history/checkpoints/task-1.json",
+          "mode": 420,
+          "size": 108,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"task-1\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [],\n  \"new_files\": [],\n  \"skipped\": []\n}"
+        },
+        {
+          "path": ".symdesk/history/checkpoints/task-2.json",
+          "mode": 420,
+          "size": 108,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"task-2\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [],\n  \"new_files\": [],\n  \"skipped\": []\n}"
+        },
+        {
+          "path": "notes/a.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "alpha\n"
+        }
+      ]
+    },
+    {
+      "id": "trash-list-empty",
+      "description": "a missing trash directory lists as empty, not as an error",
+      "operation": "trash_list",
+      "platform": "unix",
+      "windows_gap": "TrashList reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
+      "files": null,
+      "call": {},
+      "result": "list=0 strict=0",
+      "after": []
+    },
+    {
+      "id": "trash-list-order",
+      "description": "trash entries are listed newest deletion first",
+      "operation": "trash_list",
+      "platform": "unix",
+      "windows_gap": "TrashList/TrashListStrict read through os.Root fs.FS, whose path rules reject Windows separators (#962)",
+      "files": [
+        {
+          "path": "notes/a.md",
+          "content": "alpha\n"
+        },
+        {
+          "path": "notes/b.md",
+          "content": "bravo\n"
+        }
+      ],
+      "call": {
+        "path": "notes/a.md",
+        "extra_trash_path": "notes/b.md"
+      },
+      "result": "count=2 strict=2 first=notes/b.md second=notes/a.md",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/notes/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": ".symdesk/history/manifest/notes/b.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"5da8f23decf397b13f4f55b6fb8a61936238bfe08ed9d901132974f1beccc45c\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/notes__a.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "alpha\n"
+        },
+        {
+          "path": ".symdesk/trash/notes__a.md.trashinfo.json",
+          "mode": 420,
+          "size": 107,
+          "sha256": "",
+          "content": "{\n  \"name\": \"notes__a.md\",\n  \"original_path\": \"notes/a.md\",\n  \"deleted_at\": \"{{deleted_at}}\",\n  \"size\": 6\n}"
+        },
+        {
+          "path": ".symdesk/trash/notes__b.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "bravo\n"
+        },
+        {
+          "path": ".symdesk/trash/notes__b.md.trashinfo.json",
+          "mode": 420,
+          "size": 107,
+          "sha256": "",
+          "content": "{\n  \"name\": \"notes__b.md\",\n  \"original_path\": \"notes/b.md\",\n  \"deleted_at\": \"{{deleted_at}}\",\n  \"size\": 6\n}"
+        }
+      ]
+    },
+    {
+      "id": "trash-list-strict-corrupt-metadata",
+      "description": "the strict inventory refuses corrupt metadata instead of skipping it",
+      "operation": "trash_list_strict",
+      "platform": "unix",
+      "windows_gap": "TrashListStrict reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
+      "files": [
+        {
+          "path": "notes/a.md",
+          "content": "alpha\n"
+        }
+      ],
+      "call": {
+        "path": "notes/a.md"
+      },
+      "error": "corrupt trash metadata for \"notes__a.md\": ",
+      "error_class": "corrupt_trash_metadata",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/notes/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/notes__a.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "alpha\n"
+        },
+        {
+          "path": ".symdesk/trash/notes__a.md.trashinfo.json",
+          "mode": 420,
+          "size": 9,
+          "sha256": "",
+          "content": "{not json"
+        }
+      ]
+    },
+    {
+      "id": "trash-list-strict-orphan-payload",
+      "description": "the strict inventory refuses a payload without metadata",
+      "operation": "trash_list_strict",
+      "platform": "unix",
+      "windows_gap": "TrashListStrict reads through os.Root fs.FS, whose path rules reject Windows separators (#962)",
+      "files": [
+        {
+          "path": "notes/a.md",
+          "content": "alpha\n"
+        }
+      ],
+      "call": {
+        "path": "notes/a.md"
+      },
+      "error": "invalid trash inventory: payload/metadata count mismatch",
+      "error_class": "trash_inventory",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/notes/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/notes__a.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "alpha\n"
+        },
+        {
+          "path": ".symdesk/trash/notes__a.md.trashinfo.json",
+          "mode": 420,
+          "size": 107,
+          "sha256": "",
+          "content": "{\n  \"name\": \"notes__a.md\",\n  \"original_path\": \"notes/a.md\",\n  \"deleted_at\": \"{{deleted_at}}\",\n  \"size\": 6\n}"
+        },
+        {
+          "path": ".symdesk/trash/orphan.md",
+          "mode": 420,
+          "size": 7,
+          "sha256": "",
+          "content": "orphan\n"
+        }
+      ]
+    },
+    {
+      "id": "trash-restore",
+      "description": "restore moves the payload back and removes both trash artifacts",
+      "operation": "trash_restore",
+      "platform": "any",
+      "files": [
+        {
+          "path": "notes/deep/a.md",
+          "content": "alpha\n"
+        }
+      ],
+      "call": {
+        "path": "notes/deep/a.md"
+      },
+      "result": "name=notes__deep__a.md original=notes/deep/a.md size=6",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/notes/deep/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": "notes/deep/a.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "alpha\n"
+        }
+      ]
+    },
+    {
+      "id": "trash-restore-conflict",
+      "description": "restore refuses to overwrite an occupied original path",
+      "operation": "trash_restore",
+      "platform": "any",
+      "files": [
+        {
+          "path": "notes/a.md",
+          "content": "alpha\n"
+        }
+      ],
+      "call": {
+        "path": "notes/a.md"
+      },
+      "error": "cannot restore notes__a.md: notes/a.md already exists",
+      "error_class": "trash_restore_conflict",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/notes/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/notes__a.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "alpha\n"
+        },
+        {
+          "path": ".symdesk/trash/notes__a.md.trashinfo.json",
+          "mode": 420,
+          "size": 107,
+          "sha256": "",
+          "content": "{\n  \"name\": \"notes__a.md\",\n  \"original_path\": \"notes/a.md\",\n  \"deleted_at\": \"{{deleted_at}}\",\n  \"size\": 6\n}"
+        },
+        {
+          "path": "notes/a.md",
+          "mode": 420,
+          "size": 12,
+          "sha256": "",
+          "content": "replacement\n"
+        }
+      ]
+    },
+    {
+      "id": "trash-restore-missing",
+      "description": "restoring an unknown item fails without touching the trash",
+      "operation": "trash_restore",
+      "platform": "unix",
+      "windows_gap": "the precondition uses TrashListStrict, which rejects Windows separators (#962)",
+      "files": null,
+      "call": {
+        "name": "does-not-exist.md"
+      },
+      "error": "trash item \"does-not-exist.md\" not found: ",
+      "error_class": "trash_not_found",
+      "after": []
+    },
+    {
+      "id": "trash-restore-invalid-name",
+      "description": "item names with separators are rejected before any file access",
+      "operation": "trash_restore",
+      "platform": "any",
+      "files": null,
+      "call": {
+        "name": "../escape"
+      },
+      "error": "invalid trash item name: \"../escape\"",
+      "error_class": "invalid_trash_name",
+      "after": []
+    },
+    {
+      "id": "trash-purge-all",
+      "description": "a non-positive age purges every entry and leaves the trash empty",
+      "operation": "trash_purge",
+      "platform": "unix",
+      "windows_gap": "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
+      "files": [
+        {
+          "path": "notes/a.md",
+          "content": "alpha\n"
+        },
+        {
+          "path": "notes/b.md",
+          "content": "bravo\n"
+        }
+      ],
+      "call": {
+        "path": "notes/a.md",
+        "extra_trash_path": "notes/b.md"
+      },
+      "result": "purged=2 remaining=0",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/notes/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": ".symdesk/history/manifest/notes/b.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"5da8f23decf397b13f4f55b6fb8a61936238bfe08ed9d901132974f1beccc45c\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        }
+      ]
+    },
+    {
+      "id": "trash-purge-by-age",
+      "description": "an entry older than the age is purged, a fresher one is kept",
+      "operation": "trash_purge",
+      "platform": "unix",
+      "windows_gap": "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
+      "files": [
+        {
+          "path": "notes/old.md",
+          "content": "old\n"
+        },
+        {
+          "path": "notes/fresh.md",
+          "content": "fresh\n"
+        }
+      ],
+      "call": {
+        "path": "notes/old.md",
+        "max_age_seconds": 3600,
+        "purge_meta_age_seconds": 7200
+      },
+      "result": "purged=1 remaining=1 kept=notes/fresh.md",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/notes/fresh.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"02db0d2659c9d48bc15f81a388594fc0e3cf4c780fdc27ea21e0671afc37de19\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": ".symdesk/history/manifest/notes/old.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"01d09d19c2139a46aebfb577780d123d7396e97201bc7ead210a2ebff8239dee\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 4\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/notes__fresh.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "fresh\n"
+        },
+        {
+          "path": ".symdesk/trash/notes__fresh.md.trashinfo.json",
+          "mode": 420,
+          "size": 115,
+          "sha256": "",
+          "content": "{\n  \"name\": \"notes__fresh.md\",\n  \"original_path\": \"notes/fresh.md\",\n  \"deleted_at\": \"{{deleted_at}}\",\n  \"size\": 6\n}"
+        }
+      ]
+    },
+    {
+      "id": "trash-purge-refuses-corrupt",
+      "description": "purge fails closed on a corrupt inventory and removes nothing",
+      "operation": "trash_purge",
+      "platform": "unix",
+      "windows_gap": "TrashPurge validates through TrashListStrict, which rejects Windows separators (#962)",
+      "files": [
+        {
+          "path": "notes/a.md",
+          "content": "alpha\n"
+        }
+      ],
+      "call": {
+        "path": "notes/a.md"
+      },
+      "error": "trash metadata name mismatch: file \"notes__a.md\" declares \"\"",
+      "error_class": "trash_metadata_mismatch",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/notes/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"b6a98d9ce9a2d9149288fa3df42d377c3e42737afdcdaf714e33c0a100b51060\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/notes__a.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "alpha\n"
+        },
+        {
+          "path": ".symdesk/trash/notes__a.md.trashinfo.json",
+          "mode": 420,
+          "size": 2,
+          "sha256": "",
+          "content": "{}"
+        }
+      ]
+    }
+  ]
+}

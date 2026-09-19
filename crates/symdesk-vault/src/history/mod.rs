@@ -8,6 +8,10 @@
 //! All filesystem access is strictly confined within the vault capability root
 //! using [`cap_std::fs::Dir`].
 
+pub mod checkpoint;
+
+pub use checkpoint::{Checkpoint, CheckpointFile};
+
 use std::{
     fmt::Write as _,
     io,
@@ -276,9 +280,114 @@ pub enum HistoryError {
     #[error("corrupt history manifest for {0}: {1}")]
     CorruptManifest(String, String),
 
+    /// The trash operation was refused because the target is a directory.
+    #[error("cannot trash a directory: {0}")]
+    TrashDirectory(String),
+
+    /// The trash rename failed and cleaning up the metadata sidecar failed too.
+    #[error("rename failed: {source} (cleanup also failed: {cleanup})")]
+    RenameFailed {
+        /// The failing rename.
+        #[source]
+        source: std::io::Error,
+        /// Cleanup failure text.
+        cleanup: String,
+    },
+
+    /// A task id is required for checkpoint operations.
+    #[error("task id is required")]
+    TaskIdRequired,
+
+    /// Checkpoint task id is invalid (separators, leading dot, colon).
+    #[error("invalid task id: {0:?}")]
+    InvalidTaskId(String),
+
+    /// Checkpoint manifest JSON file is corrupt or unparseable.
+    #[error("corrupt checkpoint manifest for {0}: {1}")]
+    CorruptCheckpoint(String, String),
+
+    /// Trash item name is invalid (separators or a bare dot segment).
+    #[error("invalid trash item name: {0:?}")]
+    TrashNameInvalid(String),
+
+    /// Trash item metadata could not be found.
+    #[error("trash item {name:?} not found: {source}")]
+    TrashItemNotFound {
+        /// Requested trash item name.
+        name: String,
+        /// Underlying I/O failure.
+        #[source]
+        source: std::io::Error,
+    },
+
+    /// Trash metadata is corrupt or inconsistent with its payload.
+    #[error("corrupt trash metadata for {0:?}: {1}")]
+    CorruptTrashMetadata(String, String),
+
+    /// A strict trash inventory check rejected the trash directory.
+    #[error("invalid trash inventory: {0}")]
+    TrashInventory(String),
+
+    /// Trash metadata declares a different item name than its file name.
+    #[error("trash metadata name mismatch: file {name:?} declares {declared:?}")]
+    TrashMetadataNameMismatch {
+        /// Trash item name from the file name.
+        name: String,
+        /// Name the metadata declares.
+        declared: String,
+    },
+
+    /// Trash metadata declares an original path that is not a clean vault path.
+    #[error("trash metadata path mismatch for {name:?}: {path:?}")]
+    TrashMetadataPathMismatch {
+        /// Trash item name.
+        name: String,
+        /// Declared original path.
+        path: String,
+    },
+
+    /// Trash metadata is structurally invalid (zero timestamp, negative size).
+    #[error("invalid trash metadata for {0:?}")]
+    TrashMetadataInvalid(String),
+
+    /// Trash payload size does not match the recorded metadata.
+    #[error("trash payload size mismatch for {0:?}")]
+    TrashPayloadSizeMismatch(String),
+
+    /// The trash item cannot be restored because its original path is taken.
+    #[error("cannot restore {name}: {path} already exists")]
+    TrashRestoreConflict {
+        /// Trash item name.
+        name: String,
+        /// Vault-relative original path.
+        path: String,
+    },
+
     /// Underlying filesystem I/O error.
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+}
+
+/// Describes one soft-deleted vault file.
+///
+/// The field order and JSON shape are the Go contract
+/// (`internal/history/trash.go`), including the RFC 3339 nano timestamp.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TrashEntry {
+    /// Unique name of the item inside the trash directory.
+    #[serde(default)]
+    pub name: String,
+    /// Vault-relative path the file was deleted from.
+    #[serde(default)]
+    pub original_path: String,
+    /// When the file was moved to the trash (UTC). Missing fields default to
+    /// the Go zero time so a hand-damaged metadata file is reported as invalid
+    /// metadata instead of a parse error, matching the Go oracle.
+    #[serde(with = "rfc3339_nano", default = "go_zero_time")]
+    pub deleted_at: OffsetDateTime,
+    /// File size in bytes at deletion time.
+    #[serde(default)]
+    pub size: i64,
 }
 
 /// Thread-safe clock callback for injecting deterministic timestamps during replay.
@@ -522,6 +631,318 @@ impl HistoryStore {
         self.write_file_atomic_root(&rel_mp, &data, 0o644)
     }
 
+    /// Moves the vault file at `rel_path` into the trash instead of deleting it.
+    ///
+    /// Mirrors `Store.Trash` in `internal/history/trash.go`: a snapshot of the
+    /// final content is taken first (so even a purged item stays recoverable
+    /// until history retention drops it), the file's relative path is flattened
+    /// into a unique trash name, the metadata sidecar is written atomically and
+    /// the file is renamed into the trash directory. A failed rename removes the
+    /// metadata again.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HistoryError::TrashDirectory`] for directories,
+    /// [`HistoryError::InvalidPath`] for unsafe paths, and [`HistoryError::Io`]
+    /// for missing files or filesystem failures.
+    pub fn trash(&self, rel_path: &str) -> Result<TrashEntry, HistoryError> {
+        let rel = clean_rel(rel_path)?;
+        let root = self.open_root()?;
+        let info = root.metadata(Path::new(&rel))?;
+        if info.is_dir() {
+            return Err(HistoryError::TrashDirectory(rel_path.to_owned()));
+        }
+
+        self.snapshot(&rel)?;
+
+        let dir = trash_rel_dir();
+        mkdir_all_0750(root, Path::new(dir)).map_err(HistoryError::Io)?;
+
+        // Flatten the relative path into a unique trash name.
+        let base = rel.replace('/', "__");
+        let mut name = base.clone();
+        let mut counter = 1;
+        while root.metadata(Path::new(&format!("{dir}/{name}"))).is_ok() {
+            name = format!("{base}.{counter}");
+            counter += 1;
+        }
+
+        let entry = TrashEntry {
+            name: name.clone(),
+            original_path: rel.clone(),
+            deleted_at: self.now(),
+            size: i64::try_from(info.len()).unwrap_or(i64::MAX),
+        };
+        let metadata = serde_json::to_vec_pretty(&entry)
+            .map_err(|err| HistoryError::Io(io::Error::other(err)))?;
+        let trash_rel = format!("{dir}/{name}");
+        let meta_rel = format!("{trash_rel}{TRASH_META_SUFFIX}");
+        self.write_file_atomic_root(&meta_rel, &metadata, 0o644)?;
+
+        if let Err(err) = root.rename(Path::new(&rel), root, Path::new(&trash_rel)) {
+            return match root.remove_file(Path::new(&meta_rel)) {
+                Ok(()) => Err(HistoryError::Io(err)),
+                Err(cleanup) => Err(HistoryError::RenameFailed {
+                    source: err,
+                    cleanup: cleanup.to_string(),
+                }),
+            };
+        }
+        Ok(entry)
+    }
+
+    /// Returns all trash entries, newest deletion first.
+    ///
+    /// Corrupt metadata is skipped rather than failing the listing, matching the
+    /// Go oracle.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error on I/O failure.
+    pub fn trash_list(&self) -> Result<Vec<TrashEntry>, HistoryError> {
+        let root = self.open_root()?;
+        let dir = trash_rel_dir();
+        let entries = match root.read_dir(Path::new(dir)) {
+            Ok(entries) => entries,
+            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
+            Err(err) => return Err(HistoryError::Io(err)),
+        };
+
+        let mut names: Vec<String> = Vec::new();
+        for entry in entries {
+            let entry = entry.map_err(HistoryError::Io)?;
+            let file_type = entry.file_type().map_err(HistoryError::Io)?;
+            if file_type.is_dir() {
+                continue;
+            }
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if name.ends_with(TRASH_META_SUFFIX) {
+                names.push(name);
+            }
+        }
+        names.sort();
+
+        let mut out = Vec::new();
+        for name in names {
+            let data = root
+                .read(Path::new(&format!("{dir}/{name}")))
+                .map_err(HistoryError::Io)?;
+            if let Ok(entry) = serde_json::from_slice::<TrashEntry>(&data) {
+                out.push(entry);
+            }
+        }
+        out.sort_by_key(|entry| std::cmp::Reverse(entry.deleted_at));
+        Ok(out)
+    }
+
+    /// Returns a complete, validated trash inventory for destructive callers.
+    ///
+    /// Unlike [`Self::trash_list`], it fails closed on malformed metadata and
+    /// verifies that every payload has exactly one matching metadata file (and
+    /// vice versa).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HistoryError::TrashInventory`] for any inventory defect.
+    pub fn trash_list_strict(&self) -> Result<Vec<TrashEntry>, HistoryError> {
+        let root = self.open_root()?;
+        let dir = trash_rel_dir();
+        let entries = match root.read_dir(Path::new(dir)) {
+            Ok(entries) => entries,
+            Err(err) if err.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
+            Err(err) => return Err(HistoryError::Io(err)),
+        };
+
+        let mut payloads: Vec<String> = Vec::new();
+        let mut metadata: Vec<String> = Vec::new();
+        for entry in entries {
+            let entry = entry.map_err(HistoryError::Io)?;
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if entry.file_type().map_err(HistoryError::Io)?.is_dir() {
+                return Err(HistoryError::TrashInventory(format!("directory {name:?}")));
+            }
+            if let Some(stripped) = name.strip_suffix(TRASH_META_SUFFIX) {
+                if stripped.is_empty() {
+                    return Err(HistoryError::TrashInventory(format!(
+                        "invalid trash metadata name {name:?}"
+                    )));
+                }
+                metadata.push(stripped.to_owned());
+                continue;
+            }
+            let info = root
+                .symlink_metadata(Path::new(&format!("{dir}/{name}")))
+                .map_err(|err| {
+                    HistoryError::TrashInventory(format!("stat trash payload {name:?}: {err}"))
+                })?;
+            if !info.is_file() {
+                return Err(HistoryError::TrashInventory(format!(
+                    "invalid trash payload {name:?}: not a regular file"
+                )));
+            }
+            payloads.push(name);
+        }
+
+        if payloads.len() != metadata.len() {
+            return Err(HistoryError::TrashInventory(
+                "payload/metadata count mismatch".to_owned(),
+            ));
+        }
+        for name in &payloads {
+            if !metadata.iter().any(|other| other == name) {
+                return Err(HistoryError::TrashInventory(format!(
+                    "payload {name:?} has no metadata"
+                )));
+            }
+        }
+        for name in &metadata {
+            if !payloads.iter().any(|other| other == name) {
+                return Err(HistoryError::TrashInventory(format!(
+                    "metadata {name:?} has no payload"
+                )));
+            }
+        }
+
+        let mut entries = Vec::with_capacity(payloads.len());
+        for name in &payloads {
+            let meta_rel = format!("{dir}/{name}{TRASH_META_SUFFIX}");
+            let data = root
+                .read(Path::new(&meta_rel))
+                .map_err(|err| HistoryError::CorruptTrashMetadata(name.clone(), err.to_string()))?;
+            if serde_json::from_slice::<serde_json::Value>(&data)
+                .map(|value| value.is_null())
+                .unwrap_or(false)
+            {
+                return Err(HistoryError::CorruptTrashMetadata(
+                    name.clone(),
+                    "must be a non-null object".to_owned(),
+                ));
+            }
+            let entry: TrashEntry = serde_json::from_slice(&data)
+                .map_err(|err| HistoryError::CorruptTrashMetadata(name.clone(), err.to_string()))?;
+            if entry.name != *name {
+                return Err(HistoryError::TrashMetadataNameMismatch {
+                    name: name.clone(),
+                    declared: entry.name.clone(),
+                });
+            }
+            let rel = clean_rel(&entry.original_path).unwrap_or_default();
+            if rel != entry.original_path {
+                return Err(HistoryError::TrashMetadataPathMismatch {
+                    name: name.clone(),
+                    path: entry.original_path.clone(),
+                });
+            }
+            if !entry_is_valid(&entry) {
+                return Err(HistoryError::TrashMetadataInvalid(name.clone()));
+            }
+            let payload = root
+                .symlink_metadata(Path::new(&format!("{dir}/{name}")))
+                .map_err(|err| HistoryError::CorruptTrashMetadata(name.clone(), err.to_string()))?;
+            if i64::try_from(payload.len()).unwrap_or(i64::MAX) != entry.size {
+                return Err(HistoryError::TrashPayloadSizeMismatch(name.clone()));
+            }
+            entries.push(entry);
+        }
+        entries.sort_by_key(|entry| std::cmp::Reverse(entry.deleted_at));
+        Ok(entries)
+    }
+
+    /// Moves a trash item back to its original vault path.
+    ///
+    /// If the original path is occupied the restore fails and the trash item is
+    /// kept.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HistoryError::TrashItemNotFound`],
+    /// [`HistoryError::TrashRestoreConflict`] or an I/O failure.
+    pub fn trash_restore(&self, name: &str) -> Result<TrashEntry, HistoryError> {
+        let entry = self.trash_entry(name)?;
+        let rel = clean_rel(&entry.original_path)?;
+        let root = self.open_root()?;
+        if root.metadata(Path::new(&rel)).is_ok() {
+            return Err(HistoryError::TrashRestoreConflict {
+                name: name.to_owned(),
+                path: entry.original_path.clone(),
+            });
+        }
+        let parent = Path::new(&rel)
+            .parent()
+            .filter(|dir| !dir.as_os_str().is_empty());
+        if let Some(dir) = parent {
+            mkdir_all_0750(root, dir).map_err(HistoryError::Io)?;
+        }
+        let source = format!("{}/{name}", trash_rel_dir());
+        root.rename(Path::new(&source), root, Path::new(&rel))
+            .map_err(HistoryError::Io)?;
+        let meta = format!("{source}{TRASH_META_SUFFIX}");
+        match root.remove_file(Path::new(&meta)) {
+            Ok(()) => {}
+            Err(err) if err.kind() == io::ErrorKind::NotFound => {}
+            Err(err) => return Err(HistoryError::Io(err)),
+        }
+        Ok(entry)
+    }
+
+    /// Permanently removes trash items deleted more than `max_age` ago.
+    ///
+    /// A non-positive `max_age` purges everything. Returns the number of purged
+    /// items. The full strict inventory is validated first, so a corrupt trash
+    /// directory refuses the purge instead of dropping data.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the inventory is invalid or on I/O failure.
+    pub fn trash_purge(&self, max_age: time::Duration) -> Result<usize, HistoryError> {
+        let entries = self.trash_list_strict()?;
+        let root = self.open_root()?;
+        let cutoff = self.now() - max_age;
+        let mut purged = 0usize;
+        for entry in entries {
+            if max_age.is_positive() && entry.deleted_at > cutoff {
+                continue;
+            }
+            for name in [
+                format!("{}/{}", trash_rel_dir(), entry.name),
+                format!("{}/{}{}", trash_rel_dir(), entry.name, TRASH_META_SUFFIX),
+            ] {
+                match root.remove_file(Path::new(&name)) {
+                    Ok(()) => {}
+                    Err(err) if err.kind() == io::ErrorKind::NotFound => {}
+                    Err(err) => return Err(HistoryError::Io(err)),
+                }
+            }
+            purged += 1;
+        }
+        Ok(purged)
+    }
+
+    /// Loads one trash entry by its item name.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`HistoryError::TrashNameInvalid`] for a name with separators,
+    /// [`HistoryError::TrashItemNotFound`] when the metadata is missing, and
+    /// [`HistoryError::CorruptTrashMetadata`] when it does not parse.
+    pub fn trash_entry(&self, name: &str) -> Result<TrashEntry, HistoryError> {
+        if name.contains(['/', '\\']) || name == "." || name == ".." {
+            return Err(HistoryError::TrashNameInvalid(name.to_owned()));
+        }
+        let root = self.open_root()?;
+        let meta = format!("{}/{name}{TRASH_META_SUFFIX}", trash_rel_dir());
+        let data =
+            root.read(Path::new(&meta))
+                .map_err(|source| HistoryError::TrashItemNotFound {
+                    name: name.to_owned(),
+                    source,
+                })?;
+        let mut entry: TrashEntry = serde_json::from_slice(&data)
+            .map_err(|err| HistoryError::CorruptTrashMetadata(name.to_owned(), err.to_string()))?;
+        entry.name = name.to_owned();
+        Ok(entry)
+    }
+
     /// Atomically writes data to `name` (relative to root) via a temporary file
     /// created alongside it and renamed into place. Every step is confined to `root`.
     fn write_file_atomic_root(
@@ -629,6 +1050,21 @@ pub fn random_12_bytes() -> Result<[u8; 12], HistoryError> {
     getrandom::fill(&mut buf).map_err(|err| HistoryError::Io(io::Error::other(err)))?;
     Ok(buf)
 }
+
+/// Relative directory where soft-deleted files are kept.
+#[must_use]
+pub fn trash_rel_dir() -> &'static str {
+    ".symdesk/trash"
+}
+
+/// Reports whether a trash entry carries a usable timestamp and size, matching
+/// the Go oracle's `entry.DeletedAt.IsZero() || entry.Size < 0` check.
+fn entry_is_valid(entry: &TrashEntry) -> bool {
+    entry.deleted_at != go_zero_time() && entry.size >= 0
+}
+
+/// Suffix of the per-item trash metadata sidecar.
+pub const TRASH_META_SUFFIX: &str = ".trashinfo.json";
 
 /// Relative directory where history artifacts are stored.
 #[must_use]

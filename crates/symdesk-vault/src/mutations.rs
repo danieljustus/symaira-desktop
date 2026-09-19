@@ -276,7 +276,18 @@ fn write_scalar(path: &Path, data: &[u8]) -> Result<(), MutationError> {
 
 static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
-fn write_atomic(path: &Path, data: &[u8]) -> Result<(), MutationError> {
+/// Atomically replaces `path` with `data`: write a hidden temporary file in the
+/// target directory, fsync it, then rename it over the target. A failed step
+/// removes the temporary file, so a crash can never leave a partial target.
+///
+/// Mirrors Go `writeFileAtomic` (`internal/vault/vault.go:856`).
+///
+/// # Errors
+///
+/// Returns [`MutationError::TempCreate`], [`MutationError::TempWrite`],
+/// [`MutationError::TempSync`] or [`MutationError::TempRename`] for the failing
+/// stage.
+pub fn write_atomic(path: &Path, data: &[u8]) -> Result<(), MutationError> {
     let directory = atomic_directory(path);
     let mut file_and_path: Option<(File, PathBuf)> = None;
     for _ in 0..100 {

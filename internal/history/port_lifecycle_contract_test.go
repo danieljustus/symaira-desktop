@@ -53,7 +53,7 @@ func TestPortHistoryLifecycleContract(t *testing.T) {
 	normalizedEncoded := filterHistoryPlatform(encoded, runtime.GOOS)
 	if !bytes.Equal(normalizedCurrent, normalizedEncoded) {
 		t.Fatalf("history lifecycle fixture is stale; regenerate deliberately from the pinned Go oracle\n%s",
-			historyCaseDifference(normalizedEncoded, normalizedCurrent))
+			historyCaseDifference(normalizedCurrent, normalizedEncoded))
 	}
 }
 
@@ -305,7 +305,7 @@ func historyStateOf(t *testing.T, root string) []historyFileRecord {
 		if info.IsDir() {
 			return nil
 		}
-		if strings.HasPrefix(rel, objectsRelDir()+"/") {
+		if strings.HasPrefix(rel, filepath.ToSlash(objectsRelDir())+"/") {
 			return nil
 		}
 		//nolint:gosec // repository-relative path under the case root
@@ -491,22 +491,6 @@ func historyCaseDifference(want, got []byte) string {
 	}
 	return "cases are equal; only the surrounding document differs"
 }
-
-func firstDifference(want, got []byte) string {
-	wantLines := strings.Split(string(want), "\n")
-	gotLines := strings.Split(string(got), "\n")
-	for index := range wantLines {
-		if index >= len(gotLines) {
-			return fmt.Sprintf("line %d: fixture has no counterpart\n  fixture: %s", index+1, wantLines[index])
-		}
-		if wantLines[index] != gotLines[index] {
-			return fmt.Sprintf("line %d:\n  fixture:   %s\n  generated: %s", index+1, wantLines[index], gotLines[index])
-		}
-	}
-	return fmt.Sprintf("fixture has %d extra lines", len(wantLines)-len(gotLines))
-}
-
-// --- checkpoint cases -------------------------------------------------------
 
 func historyCaseCheckpointBegin(t *testing.T) historyCase {
 	t.Helper()

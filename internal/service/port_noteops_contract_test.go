@@ -63,7 +63,7 @@ func TestPortNoteOperationContract(t *testing.T) {
 	normalizedEncoded := filterNotePlatform(encoded, runtime.GOOS)
 	if !bytes.Equal(normalizedCurrent, normalizedEncoded) {
 		t.Fatalf("note operation fixture is stale; regenerate deliberately from the pinned Go oracle\n%s",
-			caseDifference(normalizedEncoded, normalizedCurrent))
+			caseDifference(normalizedCurrent, normalizedEncoded))
 	}
 }
 

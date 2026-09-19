@@ -1,0 +1,1200 @@
+{
+  "schema_version": 1,
+  "generated_on": "darwin",
+  "oracle": {
+    "commit": "745c08e8b9d1b1a9cbb2e0ba1c1d0d0d5c0f0f7a",
+    "release": "v0.1.0"
+  },
+  "source_hashes": {
+    "internal/retention/retention.go": "1dd40cb43529b1d9aed6fe1699d50e1e9d844abeac31450cd0bdd56276a9a24c"
+  },
+  "proposal_dir": ".symdesk/retention",
+  "history_path": ".symdesk/retention/history.json",
+  "rules": [
+    {
+      "id": "valid-trash",
+      "rule": {
+        "name": "old-receipts",
+        "selector": {},
+        "period": 0,
+        "period_days": 365,
+        "reference_field": "document_date",
+        "action": "trash"
+      },
+      "error": "",
+      "period_days_resolved": 365
+    },
+    {
+      "id": "valid-flag-review",
+      "rule": {
+        "name": "review",
+        "selector": {},
+        "period": 0,
+        "period_days": 30,
+        "reference_field": "created",
+        "action": "flag_review"
+      },
+      "error": "",
+      "period_days_resolved": 30
+    },
+    {
+      "id": "valid-due-date",
+      "rule": {
+        "name": "overdue",
+        "selector": {},
+        "period": 0,
+        "period_days": 1,
+        "reference_field": "due_date",
+        "action": "trash"
+      },
+      "error": "",
+      "period_days_resolved": 1
+    },
+    {
+      "id": "default-reference-field",
+      "rule": {
+        "name": "defaults",
+        "selector": {},
+        "period": 0,
+        "period_days": 7,
+        "reference_field": "",
+        "action": "flag_review"
+      },
+      "error": "",
+      "period_days_resolved": 7
+    },
+    {
+      "id": "missing-name",
+      "rule": {
+        "name": "   ",
+        "selector": {},
+        "period": 0,
+        "period_days": 30,
+        "reference_field": "",
+        "action": "trash"
+      },
+      "error": "rule name is required",
+      "period_days_resolved": 0
+    },
+    {
+      "id": "zero-period",
+      "rule": {
+        "name": "zero",
+        "selector": {},
+        "period": 0,
+        "period_days": 0,
+        "reference_field": "document_date",
+        "action": "trash"
+      },
+      "error": "period_days must be positive",
+      "period_days_resolved": 0
+    },
+    {
+      "id": "negative-period",
+      "rule": {
+        "name": "negative",
+        "selector": {},
+        "period": 0,
+        "period_days": -5,
+        "reference_field": "document_date",
+        "action": "trash"
+      },
+      "error": "period_days must be positive",
+      "period_days_resolved": 0
+    },
+    {
+      "id": "unknown-reference-field",
+      "rule": {
+        "name": "odd",
+        "selector": {},
+        "period": 0,
+        "period_days": 30,
+        "reference_field": "invoice_date",
+        "action": "trash"
+      },
+      "error": "unsupported reference field \"invoice_date\"",
+      "period_days_resolved": 0
+    },
+    {
+      "id": "unknown-action",
+      "rule": {
+        "name": "move",
+        "selector": {},
+        "period": 0,
+        "period_days": 30,
+        "reference_field": "document_date",
+        "action": "move"
+      },
+      "error": "unsupported action \"move\" (valid: trash, flag_review)",
+      "period_days_resolved": 0
+    },
+    {
+      "id": "empty-action",
+      "rule": {
+        "name": "noop",
+        "selector": {},
+        "period": 0,
+        "period_days": 30,
+        "reference_field": "document_date",
+        "action": ""
+      },
+      "error": "unsupported action \"\" (valid: trash, flag_review)",
+      "period_days_resolved": 0
+    }
+  ],
+  "run_ids": [
+    {
+      "id": "valid",
+      "run_id": "run-20260918",
+      "error": ""
+    },
+    {
+      "id": "valid-dots",
+      "run_id": "run.2026.09.18",
+      "error": ""
+    },
+    {
+      "id": "empty",
+      "run_id": "",
+      "error": "retention proposal run ID must not be empty"
+    },
+    {
+      "id": "blank",
+      "run_id": "   ",
+      "error": "retention proposal run ID must not be empty"
+    },
+    {
+      "id": "dot",
+      "run_id": ".",
+      "error": "retention proposal run ID \".\" is not a single safe filename component"
+    },
+    {
+      "id": "dotdot",
+      "run_id": "..",
+      "error": "retention proposal run ID \"..\" is not a single safe filename component"
+    },
+    {
+      "id": "slash",
+      "run_id": "run/child",
+      "error": "retention proposal run ID \"run/child\" is not a single safe filename component"
+    },
+    {
+      "id": "backslash",
+      "run_id": "run\\child",
+      "error": "retention proposal run ID \"run\\\\child\" is not a single safe filename component"
+    },
+    {
+      "id": "control-character",
+      "run_id": "run\u0001id",
+      "error": "retention proposal run ID \"run\\x01id\" contains a control character"
+    },
+    {
+      "id": "windows-forbidden-lt",
+      "run_id": "run\u003cid",
+      "error": "retention proposal run ID \"run\u003cid\" is not platform-safe"
+    },
+    {
+      "id": "windows-forbidden-gt",
+      "run_id": "run\u003eid",
+      "error": "retention proposal run ID \"run\u003eid\" is not platform-safe"
+    },
+    {
+      "id": "windows-forbidden-colon",
+      "run_id": "run:id",
+      "error": "retention proposal run ID \"run:id\" is not platform-safe"
+    },
+    {
+      "id": "windows-forbidden-quote",
+      "run_id": "run\"id",
+      "error": "retention proposal run ID \"run\\\"id\" is not platform-safe"
+    },
+    {
+      "id": "windows-forbidden-pipe",
+      "run_id": "run|id",
+      "error": "retention proposal run ID \"run|id\" is not platform-safe"
+    },
+    {
+      "id": "windows-forbidden-question",
+      "run_id": "run?id",
+      "error": "retention proposal run ID \"run?id\" is not platform-safe"
+    },
+    {
+      "id": "windows-forbidden-star",
+      "run_id": "run*id",
+      "error": "retention proposal run ID \"run*id\" is not platform-safe"
+    },
+    {
+      "id": "trailing-dot",
+      "run_id": "run.",
+      "error": "retention proposal run ID \"run.\" is not platform-safe"
+    },
+    {
+      "id": "trailing-space",
+      "run_id": "run ",
+      "error": "retention proposal run ID \"run \" is not platform-safe"
+    },
+    {
+      "id": "reserved-con",
+      "run_id": "CON",
+      "error": "retention proposal run ID \"CON\" is a reserved platform name"
+    },
+    {
+      "id": "reserved-con-extension",
+      "run_id": "con.json",
+      "error": "retention proposal run ID \"con.json\" is a reserved platform name"
+    },
+    {
+      "id": "reserved-com1",
+      "run_id": "COM1",
+      "error": "retention proposal run ID \"COM1\" is a reserved platform name"
+    },
+    {
+      "id": "reserved-lpt9",
+      "run_id": "LPT9",
+      "error": "retention proposal run ID \"LPT9\" is a reserved platform name"
+    },
+    {
+      "id": "not-reserved-com0",
+      "run_id": "COM0",
+      "error": ""
+    },
+    {
+      "id": "not-reserved-lpt10",
+      "run_id": "LPT10",
+      "error": ""
+    },
+    {
+      "id": "not-reserved-nullish",
+      "run_id": "NULX",
+      "error": ""
+    }
+  ],
+  "matches": [
+    {
+      "id": "empty-selector",
+      "selector": {},
+      "doc": {
+        "Path": "notes/receipt.md",
+        "Title": "Receipt",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "final",
+        "Correspondent": "Acme",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "Finance",
+          "2024"
+        ]
+      },
+      "matched": true
+    },
+    {
+      "id": "document-type-exact",
+      "selector": {
+        "document_type": "invoice"
+      },
+      "doc": {
+        "Path": "notes/receipt.md",
+        "Title": "Receipt",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "final",
+        "Correspondent": "Acme",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "Finance",
+          "2024"
+        ]
+      },
+      "matched": true
+    },
+    {
+      "id": "document-type-case-insensitive",
+      "selector": {
+        "document_type": "INVOICE"
+      },
+      "doc": {
+        "Path": "notes/receipt.md",
+        "Title": "Receipt",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "final",
+        "Correspondent": "Acme",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "Finance",
+          "2024"
+        ]
+      },
+      "matched": true
+    },
+    {
+      "id": "document-type-mismatch",
+      "selector": {
+        "document_type": "receipt"
+      },
+      "doc": {
+        "Path": "notes/receipt.md",
+        "Title": "Receipt",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "final",
+        "Correspondent": "Acme",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "Finance",
+          "2024"
+        ]
+      },
+      "matched": false
+    },
+    {
+      "id": "status-mismatch",
+      "selector": {
+        "status": "draft"
+      },
+      "doc": {
+        "Path": "notes/receipt.md",
+        "Title": "Receipt",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "final",
+        "Correspondent": "Acme",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "Finance",
+          "2024"
+        ]
+      },
+      "matched": false
+    },
+    {
+      "id": "person-match",
+      "selector": {
+        "person": "daniel"
+      },
+      "doc": {
+        "Path": "notes/receipt.md",
+        "Title": "Receipt",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "final",
+        "Correspondent": "Acme",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "Finance",
+          "2024"
+        ]
+      },
+      "matched": true
+    },
+    {
+      "id": "correspondent-match",
+      "selector": {
+        "correspondent": "ACME"
+      },
+      "doc": {
+        "Path": "notes/receipt.md",
+        "Title": "Receipt",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "final",
+        "Correspondent": "Acme",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "Finance",
+          "2024"
+        ]
+      },
+      "matched": true
+    },
+    {
+      "id": "tags-subset",
+      "selector": {
+        "tags": [
+          "finance"
+        ]
+      },
+      "doc": {
+        "Path": "notes/receipt.md",
+        "Title": "Receipt",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "final",
+        "Correspondent": "Acme",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "Finance",
+          "2024"
+        ]
+      },
+      "matched": true
+    },
+    {
+      "id": "tags-all-required",
+      "selector": {
+        "tags": [
+          "finance",
+          "2024"
+        ]
+      },
+      "doc": {
+        "Path": "notes/receipt.md",
+        "Title": "Receipt",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "final",
+        "Correspondent": "Acme",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "Finance",
+          "2024"
+        ]
+      },
+      "matched": true
+    },
+    {
+      "id": "tags-one-missing",
+      "selector": {
+        "tags": [
+          "finance",
+          "2025"
+        ]
+      },
+      "doc": {
+        "Path": "notes/receipt.md",
+        "Title": "Receipt",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "final",
+        "Correspondent": "Acme",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "Finance",
+          "2024"
+        ]
+      },
+      "matched": false
+    },
+    {
+      "id": "empty-document",
+      "selector": {},
+      "doc": {
+        "Path": "notes/empty.md",
+        "Title": "",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      },
+      "matched": true
+    },
+    {
+      "id": "empty-document-with-selector",
+      "selector": {
+        "status": "final"
+      },
+      "doc": {
+        "Path": "notes/empty.md",
+        "Title": "",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      },
+      "matched": false
+    },
+    {
+      "id": "category-is-ignored",
+      "selector": {
+        "category": "anything"
+      },
+      "doc": {
+        "Path": "notes/receipt.md",
+        "Title": "Receipt",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "final",
+        "Correspondent": "Acme",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "Finance",
+          "2024"
+        ]
+      },
+      "matched": true
+    }
+  ],
+  "references": [
+    {
+      "id": "document-date",
+      "doc": {
+        "Path": "",
+        "Title": "",
+        "DocumentDate": "2024-03-04",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      },
+      "field": "document_date",
+      "date": "2024-03-04T00:00:00Z",
+      "ok": true
+    },
+    {
+      "id": "created-rfc3339",
+      "doc": {
+        "Path": "",
+        "Title": "",
+        "DocumentDate": "",
+        "Created": "2024-03-04T05:06:07Z",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      },
+      "field": "created",
+      "date": "2024-03-04T05:06:07Z",
+      "ok": true
+    },
+    {
+      "id": "created-offset",
+      "doc": {
+        "Path": "",
+        "Title": "",
+        "DocumentDate": "",
+        "Created": "2024-03-04T05:06:07+02:00",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      },
+      "field": "created",
+      "date": "2024-03-04T03:06:07Z",
+      "ok": true
+    },
+    {
+      "id": "due-date-date-only",
+      "doc": {
+        "Path": "",
+        "Title": "",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "2024-03-04",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      },
+      "field": "due_date",
+      "date": "2024-03-04T00:00:00Z",
+      "ok": true
+    },
+    {
+      "id": "missing-value",
+      "doc": {
+        "Path": "",
+        "Title": "",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      },
+      "field": "document_date",
+      "date": "",
+      "ok": false
+    },
+    {
+      "id": "unparsable-value",
+      "doc": {
+        "Path": "",
+        "Title": "",
+        "DocumentDate": "04.03.2024",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      },
+      "field": "document_date",
+      "date": "",
+      "ok": false
+    },
+    {
+      "id": "unknown-field",
+      "doc": {
+        "Path": "",
+        "Title": "",
+        "DocumentDate": "2024-03-04",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      },
+      "field": "invoice_date",
+      "date": "",
+      "ok": false
+    },
+    {
+      "id": "date-with-time-not-rfc3339",
+      "doc": {
+        "Path": "",
+        "Title": "",
+        "DocumentDate": "2024-03-04T05:06:07",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      },
+      "field": "document_date",
+      "date": "",
+      "ok": false
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "expired-invoices",
+      "rule": {
+        "name": "old-invoices",
+        "selector": {},
+        "period": 31536000000000000,
+        "period_days": 365,
+        "reference_field": "document_date",
+        "action": "trash"
+      },
+      "docs": [
+        {
+          "Path": "notes/old.md",
+          "Title": "Old",
+          "DocumentDate": "2024-01-01",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": [
+            "finance"
+          ]
+        },
+        {
+          "Path": "notes/fresh.md",
+          "Title": "Fresh",
+          "DocumentDate": "2026-09-01",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": [
+            "finance"
+          ]
+        },
+        {
+          "Path": "notes/undated.md",
+          "Title": "Undated",
+          "DocumentDate": "",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": null
+        },
+        {
+          "Path": "notes/broken.md",
+          "Title": "Broken",
+          "DocumentDate": "not-a-date",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": null
+        },
+        {
+          "Path": "notes/other.md",
+          "Title": "Other",
+          "DocumentDate": "2024-01-01",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "receipt",
+          "Person": "",
+          "Tags": null
+        },
+        {
+          "Path": "notes/exact.md",
+          "Title": "Exact",
+          "DocumentDate": "2025-09-18",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": null
+        }
+      ],
+      "now": "2026-09-18T12:00:00Z",
+      "items": [
+        {
+          "path": "notes/old.md",
+          "title": "Old",
+          "reference_date": "2024-01-01",
+          "expires_at": "2024-12-31",
+          "action": "trash"
+        },
+        {
+          "path": "notes/other.md",
+          "title": "Other",
+          "reference_date": "2024-01-01",
+          "expires_at": "2024-12-31",
+          "action": "trash"
+        },
+        {
+          "path": "notes/exact.md",
+          "title": "Exact",
+          "reference_date": "2025-09-18",
+          "expires_at": "2026-09-18",
+          "action": "trash"
+        }
+      ]
+    },
+    {
+      "id": "selector-narrows",
+      "rule": {
+        "name": "old-invoices",
+        "selector": {
+          "document_type": "receipt"
+        },
+        "period": 31536000000000000,
+        "period_days": 365,
+        "reference_field": "document_date",
+        "action": "trash"
+      },
+      "docs": [
+        {
+          "Path": "notes/old.md",
+          "Title": "Old",
+          "DocumentDate": "2024-01-01",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": [
+            "finance"
+          ]
+        },
+        {
+          "Path": "notes/fresh.md",
+          "Title": "Fresh",
+          "DocumentDate": "2026-09-01",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": [
+            "finance"
+          ]
+        },
+        {
+          "Path": "notes/undated.md",
+          "Title": "Undated",
+          "DocumentDate": "",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": null
+        },
+        {
+          "Path": "notes/broken.md",
+          "Title": "Broken",
+          "DocumentDate": "not-a-date",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": null
+        },
+        {
+          "Path": "notes/other.md",
+          "Title": "Other",
+          "DocumentDate": "2024-01-01",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "receipt",
+          "Person": "",
+          "Tags": null
+        },
+        {
+          "Path": "notes/exact.md",
+          "Title": "Exact",
+          "DocumentDate": "2025-09-18",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": null
+        }
+      ],
+      "now": "2026-09-18T12:00:00Z",
+      "items": [
+        {
+          "path": "notes/other.md",
+          "title": "Other",
+          "reference_date": "2024-01-01",
+          "expires_at": "2024-12-31",
+          "action": "trash"
+        }
+      ]
+    },
+    {
+      "id": "expiry-equals-now",
+      "rule": {
+        "name": "exact",
+        "selector": {},
+        "period": 31536000000000000,
+        "period_days": 365,
+        "reference_field": "document_date",
+        "action": "flag_review"
+      },
+      "docs": [
+        {
+          "Path": "notes/exact.md",
+          "Title": "Exact",
+          "DocumentDate": "2025-09-18",
+          "Created": "",
+          "DueDate": "",
+          "Status": "",
+          "Correspondent": "",
+          "DocumentType": "",
+          "Person": "",
+          "Tags": null
+        }
+      ],
+      "now": "2026-09-18T12:00:00Z",
+      "items": [
+        {
+          "path": "notes/exact.md",
+          "title": "Exact",
+          "reference_date": "2025-09-18",
+          "expires_at": "2026-09-18",
+          "action": "flag_review"
+        }
+      ]
+    },
+    {
+      "id": "default-reference-field",
+      "rule": {
+        "name": "defaults",
+        "selector": {},
+        "period": 2592000000000000,
+        "period_days": 30,
+        "reference_field": "",
+        "action": "flag_review"
+      },
+      "docs": [
+        {
+          "Path": "notes/created.md",
+          "Title": "Created",
+          "DocumentDate": "",
+          "Created": "2026-01-01T00:00:00Z",
+          "DueDate": "",
+          "Status": "",
+          "Correspondent": "",
+          "DocumentType": "",
+          "Person": "",
+          "Tags": null
+        }
+      ],
+      "now": "2026-09-18T12:00:00Z",
+      "items": []
+    },
+    {
+      "id": "no-matches",
+      "rule": {
+        "name": "none",
+        "selector": {},
+        "period": 315360000000000000,
+        "period_days": 3650,
+        "reference_field": "document_date",
+        "action": "trash"
+      },
+      "docs": [
+        {
+          "Path": "notes/old.md",
+          "Title": "Old",
+          "DocumentDate": "2024-01-01",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": [
+            "finance"
+          ]
+        },
+        {
+          "Path": "notes/fresh.md",
+          "Title": "Fresh",
+          "DocumentDate": "2026-09-01",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": [
+            "finance"
+          ]
+        },
+        {
+          "Path": "notes/undated.md",
+          "Title": "Undated",
+          "DocumentDate": "",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": null
+        },
+        {
+          "Path": "notes/broken.md",
+          "Title": "Broken",
+          "DocumentDate": "not-a-date",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": null
+        },
+        {
+          "Path": "notes/other.md",
+          "Title": "Other",
+          "DocumentDate": "2024-01-01",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "receipt",
+          "Person": "",
+          "Tags": null
+        },
+        {
+          "Path": "notes/exact.md",
+          "Title": "Exact",
+          "DocumentDate": "2025-09-18",
+          "Created": "",
+          "DueDate": "",
+          "Status": "final",
+          "Correspondent": "",
+          "DocumentType": "invoice",
+          "Person": "",
+          "Tags": null
+        }
+      ],
+      "now": "2026-09-18T12:00:00Z",
+      "items": []
+    }
+  ],
+  "proposals": [
+    {
+      "id": "write-proposal",
+      "description": "a proposal is written as indented JSON through the atomic writer",
+      "paths": [
+        ".symdesk/retention/run-20260918.json"
+      ],
+      "content": "{\n  \"run_id\": \"run-20260918\",\n  \"rule_name\": \"old-receipts\",\n  \"created\": \"2026-09-18T12:30:45Z\",\n  \"items\": [\n    {\n      \"path\": \"notes/old.md\",\n      \"title\": \"Old\",\n      \"reference_date\": \"2024-01-01\",\n      \"expires_at\": \"2025-01-01\",\n      \"action\": \"trash\",\n      \"rule_name\": \"old-receipts\",\n      \"fingerprint\": \"sha256:abc\"\n    },\n    {\n      \"path\": \"notes/old2.md\",\n      \"title\": \"Old 2\",\n      \"reference_date\": \"2024-02-01\",\n      \"expires_at\": \"2025-02-01\",\n      \"action\": \"trash\",\n      \"rule_name\": \"old-receipts\",\n      \"fingerprint\": \"sha256:def\",\n      \"status\": \"accepted\",\n      \"failure\": \"none\"\n    }\n  ],\n  \"status\": \"pending\"\n}",
+      "size": 656,
+      "sha256": "f38a9f91412a8bdc972e8ea9d55edd543951acce0bbe39915151295d8214e394",
+      "mode": 420,
+      "loaded": ""
+    },
+    {
+      "id": "load-proposal",
+      "description": "loading returns the written proposal",
+      "paths": [],
+      "content": "",
+      "size": 0,
+      "sha256": "",
+      "mode": null,
+      "loaded": "{\"run_id\":\"run-20260918\",\"rule_name\":\"old-receipts\",\"created\":\"2026-09-18T12:30:45Z\",\"items\":[{\"path\":\"notes/old.md\",\"title\":\"Old\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2025-01-01\",\"action\":\"trash\",\"rule_name\":\"old-receipts\",\"fingerprint\":\"sha256:abc\"},{\"path\":\"notes/old2.md\",\"title\":\"Old 2\",\"reference_date\":\"2024-02-01\",\"expires_at\":\"2025-02-01\",\"action\":\"trash\",\"rule_name\":\"old-receipts\",\"fingerprint\":\"sha256:def\",\"status\":\"accepted\",\"failure\":\"none\"}],\"status\":\"pending\"}"
+    },
+    {
+      "id": "load-missing-proposal",
+      "description": "loading an unknown run fails",
+      "paths": [],
+      "content": "",
+      "size": 0,
+      "sha256": "",
+      "mode": null,
+      "error_class": "read_failed",
+      "loaded": ""
+    },
+    {
+      "id": "write-invalid-run-id",
+      "description": "a run id that is not a single safe filename is rejected before writing",
+      "paths": [],
+      "content": "",
+      "size": 0,
+      "sha256": "",
+      "mode": null,
+      "error": "retention proposal run ID \"../escape\" is not a single safe filename component",
+      "error_class": "validation",
+      "loaded": ""
+    }
+  ],
+  "history": [
+    {
+      "id": "load-missing-history",
+      "description": "a vault without a history file reports no entries and no error",
+      "paths": [],
+      "content": "",
+      "size": 0,
+      "sha256": "",
+      "mode": null,
+      "loaded": "null"
+    },
+    {
+      "id": "append-and-deduplicate",
+      "description": "a retried action id is not appended twice, the older entry format still appends",
+      "paths": [
+        ".symdesk/retention/history.json"
+      ],
+      "content": "[\n  {\n    \"timestamp\": \"2026-09-18T12:30:45Z\",\n    \"rule_name\": \"legacy\",\n    \"action\": \"trash\",\n    \"path\": \"notes/legacy.md\",\n    \"title\": \"Legacy\"\n  },\n  {\n    \"action_id\": \"run-20260918:0\",\n    \"timestamp\": \"2026-09-18T12:31:45Z\",\n    \"rule_name\": \"old-receipts\",\n    \"action\": \"trash\",\n    \"path\": \"notes/old.md\",\n    \"title\": \"Old\"\n  }\n]",
+      "size": 343,
+      "sha256": "fb3738f3ec51c3769c3f90e282bf7aee3fb27e4e3f62a65ebcdac9270dd9ee06",
+      "mode": 420,
+      "loaded": "[{\"timestamp\":\"2026-09-18T12:30:45Z\",\"rule_name\":\"legacy\",\"action\":\"trash\",\"path\":\"notes/legacy.md\",\"title\":\"Legacy\"},{\"action_id\":\"run-20260918:0\",\"timestamp\":\"2026-09-18T12:31:45Z\",\"rule_name\":\"old-receipts\",\"action\":\"trash\",\"path\":\"notes/old.md\",\"title\":\"Old\"}]"
+    },
+    {
+      "id": "load-null-history",
+      "description": "a null history document is rejected instead of silently treated as empty",
+      "paths": [],
+      "content": "",
+      "size": 0,
+      "sha256": "",
+      "mode": null,
+      "error": "retention history must be a non-null array",
+      "error_class": "validation",
+      "loaded": ""
+    },
+    {
+      "id": "load-object-history",
+      "description": "an object where the history array belongs is rejected",
+      "paths": [],
+      "content": "",
+      "size": 0,
+      "sha256": "",
+      "mode": null,
+      "error_class": "decode_failed",
+      "loaded": ""
+    }
+  ],
+  "action_ids": [
+    {
+      "id": "first",
+      "run_id": "run-20260918",
+      "item_index": 0,
+      "action_id": "run-20260918:0"
+    },
+    {
+      "id": "second",
+      "run_id": "run-20260918",
+      "item_index": 1,
+      "action_id": "run-20260918:1"
+    },
+    {
+      "id": "large-index",
+      "run_id": "run-20260918",
+      "item_index": 42,
+      "action_id": "run-20260918:42"
+    },
+    {
+      "id": "other-run",
+      "run_id": "run-20260919",
+      "item_index": 0,
+      "action_id": "run-20260919:0"
+    }
+  ],
+  "notes": [
+    "Generated by internal/retention/port_retention_contract_test.go; never hand-edit.",
+    "Proposal and history files are the exact bytes Go writes: two-space indent, no trailing newline.",
+    "Evaluate keeps an item whose expiry equals 'now' and skips documents without a parsable reference date.",
+    "LoadRules is not covered yet: the YAML multi-document reader needs a Rust YAML parser and belongs to the CLI slice.",
+    "DocMetaFromDocument is not covered yet: it needs the vault document model and belongs to the document slice."
+  ]
+}

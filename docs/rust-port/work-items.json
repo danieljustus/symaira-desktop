@@ -61,7 +61,7 @@
       "status": "in_progress",
       "depends_on": ["RUST-006"],
       "contract_rows": ["VAULT-004", "VAULT-005", "VAULT-006", "CFG-004", "DATA-001"],
-      "acceptance": ["make vault-write-differential", "make vault-history-differential", "cargo nextest run -p symdesk-vault"]
+      "acceptance": ["make vault-write-differential", "make vault-history-differential", "make vault-retention-differential", "cargo nextest run -p symdesk-vault"]
     },
     {
       "id": "RUST-008",

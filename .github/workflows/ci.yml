@@ -252,6 +252,10 @@ jobs:
         shell: bash
         run: make vault-history-differential
 
+      - name: Run native room identity differential
+        shell: bash
+        run: make symroom-differential
+
       - name: Run native history differential
         shell: bash
         run: |

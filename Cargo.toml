@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/symdesk-cli", "crates/symdesk-core", "crates/symdesk-index", "crates/symdesk-vault", "crates/symdesk-protocol", "crates/symroom-cli"]
+members = ["crates/symdesk-cli", "crates/symdesk-core", "crates/symdesk-index", "crates/symdesk-vault", "crates/symdesk-protocol", "crates/symroom-cli", "crates/symroom-core"]
 resolver = "3"
 
 [workspace.package]
@@ -26,6 +26,10 @@ symdesk-core = { path = "crates/symdesk-core", version = "=0.0.0" }
 symdesk-vault = { path = "crates/symdesk-vault", version = "=0.0.0" }
 symdesk-index = { path = "crates/symdesk-index", version = "=0.0.0" }
 symdesk-protocol = { path = "crates/symdesk-protocol", version = "=0.0.0" }
+symroom-core = { path = "crates/symroom-core", version = "=0.0.0" }
+ed25519-dalek = { version = "=2.2.0" }
+sha2 = { version = "=0.10.9" }
+hex = { version = "=0.4.3" }
 cap-std = { version = "=4.0.3", default-features = false }
 axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "query", "tokio"] }
 flate2 = "=1.1.2"

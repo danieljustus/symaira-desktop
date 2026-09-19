@@ -1,4 +1,4 @@
-.PHONY: benchmark-large boundary-guard build clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-roundtrip test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-write-differential vault-write-fixtures-generate vuln
+.PHONY: benchmark-large boundary-guard build clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-write-differential vault-write-fixtures-generate vuln
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -144,6 +144,15 @@ vault-history-fixtures-generate:
 vault-history-differential:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run TestPortHistoryLifecycleContract
 	$(CARGO) test -p symdesk-vault --test history_lifecycle_contracts --locked
+
+symroom-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/room -run TestPortRoomIdentityEventContract
+
+# Room identity and signed events against the pinned Go oracle (ROOM-001). The
+# fixture is Go-owned and only regenerated through the target above.
+symroom-differential:
+	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/room -run TestPortRoomIdentityEventContract
+	$(CARGO) test -p symroom-core --test identity_events_contracts --locked
 
 sidecar-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarContract

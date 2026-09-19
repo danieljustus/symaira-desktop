@@ -53,7 +53,7 @@ func TestPortHistoryLifecycleContract(t *testing.T) {
 	normalizedEncoded := filterHistoryPlatform(encoded, runtime.GOOS)
 	if !bytes.Equal(normalizedCurrent, normalizedEncoded) {
 		t.Fatalf("history lifecycle fixture is stale; regenerate deliberately from the pinned Go oracle\n%s",
-			firstDifference(normalizedEncoded, normalizedCurrent))
+			historyCaseDifference(normalizedEncoded, normalizedCurrent))
 	}
 }
 
@@ -450,6 +450,46 @@ func filterHistoryPlatform(document []byte, goos string) []byte {
 		return document
 	}
 	return append(encoded, '\n')
+}
+
+// historyCaseDifference attributes a drift to one case and field; a raw line
+// diff misleads as soon as one side omits or reorders a case.
+func historyCaseDifference(want, got []byte) string {
+	var wantDoc, gotDoc historyLifecycleFixture
+	if err := json.Unmarshal(want, &wantDoc); err != nil {
+		return err.Error()
+	}
+	if err := json.Unmarshal(got, &gotDoc); err != nil {
+		return err.Error()
+	}
+	gotByID := make(map[string]string, len(gotDoc.Cases))
+	for _, item := range gotDoc.Cases {
+		encoded, err := json.Marshal(item)
+		if err != nil {
+			return err.Error()
+		}
+		gotByID[item.ID] = string(encoded)
+	}
+	for _, item := range wantDoc.Cases {
+		encoded, err := json.Marshal(item)
+		if err != nil {
+			return err.Error()
+		}
+		counterpart, ok := gotByID[item.ID]
+		if !ok {
+			return fmt.Sprintf("fixture case %q is missing from the generated document", item.ID)
+		}
+		if counterpart != string(encoded) {
+			return fmt.Sprintf("case %q differs:\n  fixture:   %s\n  generated: %s", item.ID, string(encoded), counterpart)
+		}
+		delete(gotByID, item.ID)
+	}
+	if len(gotByID) > 0 {
+		for id := range gotByID {
+			return fmt.Sprintf("generated case %q is missing from the fixture", id)
+		}
+	}
+	return "cases are equal; only the surrounding document differs"
 }
 
 func firstDifference(want, got []byte) string {

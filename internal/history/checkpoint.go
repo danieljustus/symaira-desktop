@@ -206,7 +206,7 @@ func (s *Store) ListCheckpoints() ([]Checkpoint, error) {
 	if err != nil {
 		return nil, err
 	}
-	items, err := fs.ReadDir(root.FS(), checkpointsRelDir())
+	items, err := fs.ReadDir(root.FS(), rootFSPath(checkpointsRelDir()))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil

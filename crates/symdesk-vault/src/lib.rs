@@ -11,6 +11,7 @@ mod mutations;
 pub mod notes;
 mod paths;
 mod resolver;
+pub mod retention;
 pub mod sha256;
 mod tags;
 mod typed;

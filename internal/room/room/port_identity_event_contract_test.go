@@ -539,21 +539,22 @@ func roomFileCases(t *testing.T, identities map[string]*identity.Identity) []roo
 	return out
 }
 
-// roomPlatformDocument clears the Unix-only file modes off Unix, where the Go
-// oracle cannot observe them. Both sides of the drift check pass through it.
+// roomPlatformDocument prepares both sides of the drift check: the generating
+// platform is metadata, and the Unix-only file modes are cleared where the Go
+// oracle cannot observe them.
 func roomPlatformDocument(document []byte) ([]byte, error) {
-	if runtime.GOOS != "windows" {
-		return document, nil
-	}
 	var parsed roomIdentityEventFixture
 	if err := json.Unmarshal(document, &parsed); err != nil {
 		return nil, err
 	}
-	for i := range parsed.Identities {
-		parsed.Identities[i].StoredMode = nil
-	}
-	for i := range parsed.FileCases {
-		parsed.FileCases[i].FileMode = nil
+	parsed.GeneratedOn = ""
+	if runtime.GOOS == "windows" {
+		for i := range parsed.Identities {
+			parsed.Identities[i].StoredMode = nil
+		}
+		for i := range parsed.FileCases {
+			parsed.FileCases[i].FileMode = nil
+		}
 	}
 	encoded, err := json.MarshalIndent(parsed, "", "  ")
 	if err != nil {

@@ -87,6 +87,7 @@ type roomFileVector struct {
 
 type roomIdentityEventFixture struct {
 	SchemaVersion int                  `json:"schema_version"`
+	GeneratedOn   string               `json:"generated_on"`
 	Oracle        roomOracle           `json:"oracle"`
 	SourceHashes  map[string]string    `json:"source_hashes"`
 	Identities    []roomIdentityVector `json:"identities"`
@@ -127,9 +128,14 @@ func TestPortRoomIdentityEventContract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read %s: %v (run with PORT_GENERATE=1 to create it)", roomFixturePath, err)
 	}
-	if string(current) != string(encoded) {
+	want, wantErr := roomPlatformDocument(current)
+	got, gotErr := roomPlatformDocument(encoded)
+	if wantErr != nil || gotErr != nil {
+		t.Fatalf("normalise fixture for this platform: %v %v", wantErr, gotErr)
+	}
+	if string(want) != string(got) {
 		t.Fatalf("room identity/event fixture is stale; regenerate deliberately from the pinned Go oracle\n%s",
-			roomVectorDifference(t, current, encoded))
+			roomVectorDifference(t, want, got))
 	}
 }
 
@@ -138,6 +144,7 @@ func buildRoomFixture(t *testing.T) roomIdentityEventFixture {
 	identities := roomIdentities(t)
 	return roomIdentityEventFixture{
 		SchemaVersion: roomFixtureSchema,
+		GeneratedOn:   runtime.GOOS,
 		Oracle:        roomOracle{Commit: roomOracleCommit, Release: roomOracleRelease},
 		SourceHashes: map[string]string{
 			"internal/room/identity/identity.go": roomFileSHA256(t, "internal/room/identity/identity.go"),
@@ -154,6 +161,7 @@ func buildRoomFixture(t *testing.T) roomIdentityEventFixture {
 			"json_line is MarshalJSONLine output including the trailing newline.",
 			"stored_file is StoredIdentity marshalled with a two-space indent; stored_mode is null off Unix.",
 			"file_cases exercise Save/List/Load through the XDG data directory and both environment chains.",
+			"generated_on names the platform that observed the file modes; the Go drift check clears them elsewhere.",
 		},
 	}
 }
@@ -529,6 +537,29 @@ func roomFileCases(t *testing.T, identities map[string]*identity.Identity) []roo
 
 	t.Setenv("SYMROOM_IDENTITY_KEY", "")
 	return out
+}
+
+// roomPlatformDocument clears the Unix-only file modes off Unix, where the Go
+// oracle cannot observe them. Both sides of the drift check pass through it.
+func roomPlatformDocument(document []byte) ([]byte, error) {
+	if runtime.GOOS != "windows" {
+		return document, nil
+	}
+	var parsed roomIdentityEventFixture
+	if err := json.Unmarshal(document, &parsed); err != nil {
+		return nil, err
+	}
+	for i := range parsed.Identities {
+		parsed.Identities[i].StoredMode = nil
+	}
+	for i := range parsed.FileCases {
+		parsed.FileCases[i].FileMode = nil
+	}
+	encoded, err := json.MarshalIndent(parsed, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append(encoded, '\n'), nil
 }
 
 func roomErrorMessage(err error) string {

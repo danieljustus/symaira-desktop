@@ -22,6 +22,7 @@ use symroom_core::identity::{self, Identity, StoredIdentity};
 #[derive(Deserialize)]
 struct Fixture {
     schema_version: i64,
+    generated_on: String,
     oracle: Oracle,
     source_hashes: BTreeMap<String, String>,
     identities: Vec<IdentityVector>,
@@ -110,6 +111,14 @@ fn room_identity_event_vectors_match_the_go_oracle() {
     let fixture = load_fixture();
 
     assert_eq!(fixture.schema_version, 1, "fixture schema version");
+    // File modes are only observable on the platform that generated the fixture;
+    // elsewhere the Go drift check clears them on both sides.
+    // Go names the platform "darwin" where Rust says "macos".
+    let goos = match std::env::consts::OS {
+        "macos" => "darwin",
+        other => other,
+    };
+    let modes_observable = fixture.generated_on == goos;
     assert!(
         fixture.oracle.commit.len() >= 40 && !fixture.oracle.release.is_empty(),
         "fixture must name the pinned oracle"
@@ -189,18 +198,20 @@ fn room_identity_event_vectors_match_the_go_oracle() {
             "identity {} stored file digest",
             vector.label
         );
-        #[cfg(unix)]
-        assert!(
-            vector.stored_mode.is_some(),
-            "identity {} records its file mode on Unix",
-            vector.label
-        );
-        #[cfg(not(unix))]
-        assert!(
-            vector.stored_mode.is_none(),
-            "identity {} records no file mode off Unix",
-            vector.label
-        );
+        if modes_observable {
+            assert_eq!(
+                vector.stored_mode,
+                Some(0o600),
+                "identity {} records its file mode",
+                vector.label
+            );
+        } else {
+            assert_eq!(
+                vector.stored_mode, None,
+                "identity {} has no file mode off its generating platform",
+                vector.label
+            );
+        }
 
         by_member.insert(built.member_id.clone(), built);
     }
@@ -304,12 +315,12 @@ fn room_identity_event_vectors_match_the_go_oracle() {
         assert_eq!(message, vector.error, "{}: verification error", vector.id);
     }
 
-    replay_file_cases(&fixture);
+    replay_file_cases(&fixture, modes_observable);
 }
 
 /// The identity file cases run in a private data directory each, so the Go
 /// vectors stay reproducible on any machine.
-fn replay_file_cases(fixture: &Fixture) {
+fn replay_file_cases(fixture: &Fixture, modes_observable: bool) {
     let by_public: BTreeMap<String, &IdentityVector> = fixture
         .identities
         .iter()
@@ -349,17 +360,16 @@ fn replay_file_cases(fixture: &Fixture) {
                     "{}: loaded public key",
                     vector.id
                 );
-                #[cfg(unix)]
-                {
+                if modes_observable {
                     let mode = file_mode(&data_home.join("symroom/identities/alpha.json"));
                     assert_eq!(Some(mode), vector.file_mode, "{}: file mode", vector.id);
+                } else {
+                    assert_eq!(
+                        vector.file_mode, None,
+                        "{}: file mode is not compared off its generating platform",
+                        vector.id
+                    );
                 }
-                #[cfg(not(unix))]
-                assert!(
-                    vector.file_mode.is_none(),
-                    "{}: no file mode off Unix",
-                    vector.id
-                );
             }
             "missing-identity" => {
                 let message = identity::load("does-not-exist")
@@ -454,4 +464,9 @@ fn set_env(key: &str, value: &str) {
 fn file_mode(path: &Path) -> u32 {
     use std::os::unix::fs::PermissionsExt;
     fs::metadata(path).expect("metadata").permissions().mode() & 0o777
+}
+
+#[cfg(not(unix))]
+fn file_mode(_path: &Path) -> u32 {
+    0
 }

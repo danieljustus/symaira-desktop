@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "generated_on": "darwin",
   "oracle": {
     "commit": "745c08e8b9d1b1a9cbb2e0ba1c1d0d0d5c0f0f7a",
     "release": "v0.1.0"
@@ -986,6 +987,7 @@
     "canonical_bytes is the exact JSON the Go engine signs: sorted keys, no whitespace, body verbatim.",
     "json_line is MarshalJSONLine output including the trailing newline.",
     "stored_file is StoredIdentity marshalled with a two-space indent; stored_mode is null off Unix.",
-    "file_cases exercise Save/List/Load through the XDG data directory and both environment chains."
+    "file_cases exercise Save/List/Load through the XDG data directory and both environment chains.",
+    "generated_on names the platform that observed the file modes; the Go drift check clears them elsewhere."
   ]
 }

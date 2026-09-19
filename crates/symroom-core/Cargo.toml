@@ -1,0 +1,16 @@
+[package]
+name = "symroom-core"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+serde.workspace = true
+serde_json = { workspace = true, features = ["preserve_order"] }
+time.workspace = true
+ed25519-dalek.workspace = true
+sha2.workspace = true
+hex.workspace = true

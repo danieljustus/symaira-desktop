@@ -128,7 +128,12 @@ fn generated_go_note_verbs_match_bytes_modes_paths_and_trash_entries() {
         mismatches.extend(replay(case));
         executed += 1;
     }
-    assert!(executed >= 15, "only {executed} cases executed");
+    let runnable = fixture
+        .cases
+        .iter()
+        .filter(|case| case.platform != "unix" || cfg!(unix))
+        .count();
+    assert_eq!(executed, runnable, "fixture cases were skipped");
     assert!(
         mismatches.is_empty(),
         "note operation parity mismatches:\n{}",

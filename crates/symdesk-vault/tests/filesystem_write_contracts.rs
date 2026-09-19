@@ -160,7 +160,15 @@ fn generated_go_atomic_writes_match_bytes_modes_hashes_and_file_sets() {
         mismatches.extend(replay_case(case));
         executed += 1;
     }
-    assert!(executed >= 11, "only {executed} cases executed");
+    // Every case that can run on this platform must run: the fixture pins the
+    // count, and silently skipping cases would turn parity into a no-op.
+    let runnable = fixture
+        .cases
+        .iter()
+        .filter(|case| case.platform != "unix" || cfg!(unix))
+        .filter(|case| case.operation != "kill_writer" || cfg!(unix))
+        .count();
+    assert_eq!(executed, runnable, "fixture cases were skipped");
     assert!(
         mismatches.is_empty(),
         "vault write filesystem parity mismatches:\n{}",

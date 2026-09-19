@@ -248,6 +248,10 @@ jobs:
         shell: bash
         run: make vault-write-differential
 
+      - name: Run native vault history lifecycle differential
+        shell: bash
+        run: make vault-history-differential
+
       - name: Run native history differential
         shell: bash
         run: |

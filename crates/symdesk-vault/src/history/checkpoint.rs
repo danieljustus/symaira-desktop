@@ -14,7 +14,7 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
-use super::{clean_rel, mkdir_all_0750, HistoryEntry, HistoryError, HistoryStore};
+use super::{HistoryEntry, HistoryError, HistoryStore, clean_rel, mkdir_all_0750};
 
 /// Relative directory holding task checkpoint manifests.
 #[must_use]
@@ -251,9 +251,8 @@ impl HistoryStore {
         let rel = checkpoint_rel_path(task_id)?;
         let root = self.open_root()?;
         let data = root.read(Path::new(&rel)).map_err(HistoryError::Io)?;
-        serde_json::from_slice(&data).map_err(|err| {
-            HistoryError::CorruptCheckpoint(task_id.to_owned(), err.to_string())
-        })
+        serde_json::from_slice(&data)
+            .map_err(|err| HistoryError::CorruptCheckpoint(task_id.to_owned(), err.to_string()))
     }
 
     fn save_checkpoint(&self, checkpoint: &Checkpoint) -> Result<(), HistoryError> {

@@ -789,6 +789,18 @@ fn classify_rust_error(err: &HistoryError) -> &'static str {
         HistoryError::NoSnapshot { .. } => "no_snapshot",
         HistoryError::CorruptManifest(..) => "corrupt_manifest",
         HistoryError::TrashDirectory(..) => "trash_directory",
+        HistoryError::TrashNameInvalid(..) => "invalid_trash_name",
+        HistoryError::TrashItemNotFound { .. } => "trash_not_found",
+        HistoryError::CorruptTrashMetadata(..) => "corrupt_trash_metadata",
+        HistoryError::TrashInventory(..) => "trash_inventory",
+        HistoryError::TrashMetadataNameMismatch { .. }
+        | HistoryError::TrashMetadataPathMismatch { .. }
+        | HistoryError::TrashMetadataInvalid(..)
+        | HistoryError::TrashPayloadSizeMismatch(..) => "trash_metadata_mismatch",
+        HistoryError::TrashRestoreConflict { .. } => "trash_restore_conflict",
+        HistoryError::TaskIdRequired => "task_id_required",
+        HistoryError::InvalidTaskId(..) => "invalid_task_id",
+        HistoryError::CorruptCheckpoint(..) => "corrupt_checkpoint",
         HistoryError::RenameFailed { .. } => "rename_failed",
         HistoryError::Io(..) => "other",
     }

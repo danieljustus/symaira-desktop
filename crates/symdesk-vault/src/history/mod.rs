@@ -328,6 +328,32 @@ pub enum HistoryError {
     #[error("invalid trash inventory: {0}")]
     TrashInventory(String),
 
+    /// Trash metadata declares a different item name than its file name.
+    #[error("trash metadata name mismatch: file {name:?} declares {declared:?}")]
+    TrashMetadataNameMismatch {
+        /// Trash item name from the file name.
+        name: String,
+        /// Name the metadata declares.
+        declared: String,
+    },
+
+    /// Trash metadata declares an original path that is not a clean vault path.
+    #[error("trash metadata path mismatch for {name:?}: {path:?}")]
+    TrashMetadataPathMismatch {
+        /// Trash item name.
+        name: String,
+        /// Declared original path.
+        path: String,
+    },
+
+    /// Trash metadata is structurally invalid (zero timestamp, negative size).
+    #[error("invalid trash metadata for {0:?}")]
+    TrashMetadataInvalid(String),
+
+    /// Trash payload size does not match the recorded metadata.
+    #[error("trash payload size mismatch for {0:?}")]
+    TrashPayloadSizeMismatch(String),
+
     /// The trash item cannot be restored because its original path is taken.
     #[error("cannot restore {name}: {path} already exists")]
     TrashRestoreConflict {
@@ -349,13 +375,18 @@ pub enum HistoryError {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TrashEntry {
     /// Unique name of the item inside the trash directory.
+    #[serde(default)]
     pub name: String,
     /// Vault-relative path the file was deleted from.
+    #[serde(default)]
     pub original_path: String,
-    /// When the file was moved to the trash (UTC).
-    #[serde(with = "rfc3339_nano")]
+    /// When the file was moved to the trash (UTC). Missing fields default to
+    /// the Go zero time so a hand-damaged metadata file is reported as invalid
+    /// metadata instead of a parse error, matching the Go oracle.
+    #[serde(with = "rfc3339_nano", default = "go_zero_time")]
     pub deleted_at: OffsetDateTime,
     /// File size in bytes at deletion time.
+    #[serde(default)]
     pub size: i64,
 }
 
@@ -728,9 +759,7 @@ impl HistoryStore {
             let entry = entry.map_err(HistoryError::Io)?;
             let name = entry.file_name().to_string_lossy().into_owned();
             if entry.file_type().map_err(HistoryError::Io)?.is_dir() {
-                return Err(HistoryError::TrashInventory(format!(
-                    "directory {name:?}"
-                )));
+                return Err(HistoryError::TrashInventory(format!("directory {name:?}")));
             }
             if let Some(stripped) = name.strip_suffix(TRASH_META_SUFFIX) {
                 if stripped.is_empty() {
@@ -777,9 +806,9 @@ impl HistoryStore {
         let mut entries = Vec::with_capacity(payloads.len());
         for name in &payloads {
             let meta_rel = format!("{dir}/{name}{TRASH_META_SUFFIX}");
-            let data = root.read(Path::new(&meta_rel)).map_err(|err| {
-                HistoryError::CorruptTrashMetadata(name.clone(), err.to_string())
-            })?;
+            let data = root
+                .read(Path::new(&meta_rel))
+                .map_err(|err| HistoryError::CorruptTrashMetadata(name.clone(), err.to_string()))?;
             if serde_json::from_slice::<serde_json::Value>(&data)
                 .map(|value| value.is_null())
                 .unwrap_or(false)
@@ -789,43 +818,29 @@ impl HistoryStore {
                     "must be a non-null object".to_owned(),
                 ));
             }
-            let entry: TrashEntry = serde_json::from_slice(&data).map_err(|err| {
-                HistoryError::CorruptTrashMetadata(name.clone(), err.to_string())
-            })?;
+            let entry: TrashEntry = serde_json::from_slice(&data)
+                .map_err(|err| HistoryError::CorruptTrashMetadata(name.clone(), err.to_string()))?;
             if entry.name != *name {
-                return Err(HistoryError::CorruptTrashMetadata(
-                    name.clone(),
-                    format!("declares {:?}", entry.name),
-                ));
+                return Err(HistoryError::TrashMetadataNameMismatch {
+                    name: name.clone(),
+                    declared: entry.name.clone(),
+                });
             }
-            let rel = clean_rel(&entry.original_path).map_err(|_| {
-                HistoryError::CorruptTrashMetadata(
-                    name.clone(),
-                    format!("path mismatch: {:?}", entry.original_path),
-                )
-            })?;
+            let rel = clean_rel(&entry.original_path).unwrap_or_default();
             if rel != entry.original_path {
-                return Err(HistoryError::CorruptTrashMetadata(
-                    name.clone(),
-                    format!("path mismatch: {:?}", entry.original_path),
-                ));
+                return Err(HistoryError::TrashMetadataPathMismatch {
+                    name: name.clone(),
+                    path: entry.original_path.clone(),
+                });
             }
-            if entry.size < 0 {
-                return Err(HistoryError::CorruptTrashMetadata(
-                    name.clone(),
-                    "invalid trash metadata".to_owned(),
-                ));
+            if !entry_is_valid(&entry) {
+                return Err(HistoryError::TrashMetadataInvalid(name.clone()));
             }
             let payload = root
                 .symlink_metadata(Path::new(&format!("{dir}/{name}")))
-                .map_err(|err| {
-                    HistoryError::CorruptTrashMetadata(name.clone(), err.to_string())
-                })?;
+                .map_err(|err| HistoryError::CorruptTrashMetadata(name.clone(), err.to_string()))?;
             if i64::try_from(payload.len()).unwrap_or(i64::MAX) != entry.size {
-                return Err(HistoryError::CorruptTrashMetadata(
-                    name.clone(),
-                    "trash payload size mismatch".to_owned(),
-                ));
+                return Err(HistoryError::TrashPayloadSizeMismatch(name.clone()));
             }
             entries.push(entry);
         }
@@ -852,10 +867,11 @@ impl HistoryStore {
                 path: entry.original_path.clone(),
             });
         }
-        if let Some(dir) = Path::new(&rel).parent() {
-            if !dir.as_os_str().is_empty() {
-                mkdir_all_0750(root, dir).map_err(HistoryError::Io)?;
-            }
+        let parent = Path::new(&rel)
+            .parent()
+            .filter(|dir| !dir.as_os_str().is_empty());
+        if let Some(dir) = parent {
+            mkdir_all_0750(root, dir).map_err(HistoryError::Io)?;
         }
         let source = format!("{}/{name}", trash_rel_dir());
         root.rename(Path::new(&source), root, Path::new(&rel))
@@ -915,15 +931,14 @@ impl HistoryStore {
         }
         let root = self.open_root()?;
         let meta = format!("{}/{name}{TRASH_META_SUFFIX}", trash_rel_dir());
-        let data = root.read(Path::new(&meta)).map_err(|source| {
-            HistoryError::TrashItemNotFound {
-                name: name.to_owned(),
-                source,
-            }
-        })?;
-        let mut entry: TrashEntry = serde_json::from_slice(&data).map_err(|err| {
-            HistoryError::CorruptTrashMetadata(name.to_owned(), err.to_string())
-        })?;
+        let data =
+            root.read(Path::new(&meta))
+                .map_err(|source| HistoryError::TrashItemNotFound {
+                    name: name.to_owned(),
+                    source,
+                })?;
+        let mut entry: TrashEntry = serde_json::from_slice(&data)
+            .map_err(|err| HistoryError::CorruptTrashMetadata(name.to_owned(), err.to_string()))?;
         entry.name = name.to_owned();
         Ok(entry)
     }
@@ -1040,6 +1055,12 @@ pub fn random_12_bytes() -> Result<[u8; 12], HistoryError> {
 #[must_use]
 pub fn trash_rel_dir() -> &'static str {
     ".symdesk/trash"
+}
+
+/// Reports whether a trash entry carries a usable timestamp and size, matching
+/// the Go oracle's `entry.DeletedAt.IsZero() || entry.Size < 0` check.
+fn entry_is_valid(entry: &TrashEntry) -> bool {
+    entry.deleted_at != go_zero_time() && entry.size >= 0
 }
 
 /// Suffix of the per-item trash metadata sidecar.

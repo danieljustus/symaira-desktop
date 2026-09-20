@@ -17,29 +17,29 @@ use time::format_description::well_known::Rfc3339;
 const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
     (
         "go.mod",
-        "7a5ca8c06f9e71762c05b7d7b47e74bad9f93bdf8332f0fd3ab16758ccd32bf1",
+        "0383eff632281c046fd5a0a8fb79b3a4d849e213b156846f81ac429e56aeae7c",
     ),
     (
         "go.sum",
-        "943bc31c96f838bb7cb8378a0f81f8340ddaa9201b1b2a5247a8b6ae28a054a9",
+        "f285cfd07f1ec34d6672c46f21426ecb2e78892c3a7abac710e8d6c8c48961b8",
     ),
     (
         "internal/history/checkpoint.go",
-        "147f7c08ff4cb00bfaf1271a478dca2631146ef92fb1d54114f7b2a725a31acd",
+        "4c48610083a143c0a1f135413f514a838326d882a346ae1bc13b9538fce0ef39",
     ),
     (
         "internal/history/history.go",
-        "f86d38d5983d759a95d80f4a55aad8b7c8af572b0ba4ae4e30702b7a301364d4",
+        "4b0caf990744a9469f8f16f2de6bddfee0525106c996c5907ea11f92db5740c2",
     ),
     (
         "internal/history/trash.go",
-        "a18e604c203c6cee550078fa8b37acef68c9e79a9f07482288a4b59344f01179",
+        "e5aad22d1c0b172f1d2134ac6df59616d6cdb44890bb154db92afe839f2c3b89",
     ),
 ];
 
 const EXPECTED_ORACLE_OPERATION_COUNT: usize = 56;
-const EXPECTED_ORACLE_COMMIT: &str = "982fe718f2d64629102b4078b1d65a46645c90c5";
-const EXPECTED_ORACLE_RELEASE: &str = "unreleased-982fe718";
+const EXPECTED_ORACLE_COMMIT: &str = "c4f6e77928849c3626400c45676c05c3cf58f2a1";
+const EXPECTED_ORACLE_RELEASE: &str = "unreleased-c4f6e779";
 
 fn deserialize_option_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
 where

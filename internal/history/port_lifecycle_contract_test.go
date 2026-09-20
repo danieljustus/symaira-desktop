@@ -60,7 +60,7 @@ func TestPortHistoryLifecycleContract(t *testing.T) {
 const historyLifecycleFixtureRel = "../../testdata/port/vault/history-lifecycle.json"
 
 const (
-	historyOracleCommit  = "982fe718f2d64629102b4078b1d65a46645c90c5"
+	historyOracleCommit  = "c4f6e77928849c3626400c45676c05c3cf58f2a1"
 	historyOracleRelease = "post-v0.12.2-security-880"
 )
 

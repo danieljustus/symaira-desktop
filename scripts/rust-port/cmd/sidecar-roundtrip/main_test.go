@@ -104,7 +104,7 @@ func TestCommittedSidecarOracleIdentities(t *testing.T) {
 	var manifest largeCorpusFixture
 	read("testdata/port/sidecar/large-corpus.json", &manifest)
 	if err := validateLargeCorpusManifest(manifest, roundTrip.Oracle, provenance.Oracle); err != nil {
-		t.Fatalf("committed testdata/port/sidecar/large-corpus.json rejected by pinned validator: %v", err)
+		t.Fatalf("committed testdata/port/sidecar/large-corpus.json rejected by provenance validator: %v", err)
 	}
 }
 

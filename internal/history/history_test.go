@@ -1,8 +1,11 @@
 package history
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 )
@@ -267,6 +270,51 @@ func TestTrashRoundtrip(t *testing.T) {
 	list, _ = s.TrashList()
 	if len(list) != 0 {
 		t.Fatal("trash should be empty after restore")
+	}
+}
+
+func TestRootFSPathForHistoryListing(t *testing.T) {
+	if got := rootFSPath(filepath.Join(".symdesk", "trash")); got != ".symdesk/trash" {
+		t.Fatalf("trash rel = %q, want .symdesk/trash", got)
+	}
+	if got := rootFSPath(objectsRelDir()); got != ".symdesk/history/objects" {
+		t.Fatalf("objects rel = %q", got)
+	}
+	if got := rootFSPath(checkpointsRelDir()); got != ".symdesk/history/checkpoints" {
+		t.Fatalf("checkpoints rel = %q", got)
+	}
+	if strings.Contains(rootFSPath(filepath.Join(".symdesk", "history", "manifest")), `\`) {
+		t.Fatal("rootFSPath leaked a backslash")
+	}
+
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, ".symdesk", "trash"), 0750); err != nil { //nolint:gosec
+		t.Fatal(err)
+	}
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = root.Close() })
+
+	raw := filepath.Join(".symdesk", "trash")
+	if runtime.GOOS == "windows" {
+		if _, err := fs.ReadDir(root.FS(), raw); err == nil {
+			t.Fatal("expected Windows os.Root FS to reject a backslash-separated path")
+		}
+	}
+	if _, err := fs.ReadDir(root.FS(), rootFSPath(raw)); err != nil {
+		t.Fatalf("listing via rootFSPath: %v", err)
+	}
+
+	vault, s := newVault(t)
+	write(t, vault, "notes/doc.md", "content")
+	if _, err := s.Trash("notes/doc.md"); err != nil {
+		t.Fatal(err)
+	}
+	list, err := s.TrashList()
+	if err != nil || len(list) != 1 {
+		t.Fatalf("TrashList after trash: %v (%d)", err, len(list))
 	}
 }
 

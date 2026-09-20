@@ -89,9 +89,9 @@ The exact CoreKit rows reviewed were CFG-001 through CFG-007 in
   state. Therefore the nominal defaults < global < project < env order cannot
   be adopted without adding files and changing public behavior.
 - **Environment handling (CFG-004/005):** Desktop applies a fixed, product
-  allowlist, ignores empty values, validates ranges before assignment, and
-  intentionally ignores currently unsupported tagged variables
-  (`config.rs:88-149, 361-376`). CoreKit derives `{PREFIX}_{FIELD}` and nested
+  allowlist, ignores empty values, validates numeric ranges before assignment,
+  and applies all four documented #854 overrides alongside the older fields
+  (`config.rs:88-164, 376-391`). CoreKit derives `{PREFIX}_{FIELD}` and nested
   names from serialized schema fields, parses bool/int/float/array values, and
   returns typed parse errors (`symaira-core-config/src/lib.rs:253-293,
   382-496`). This is a product adapter seam, not an identical generic

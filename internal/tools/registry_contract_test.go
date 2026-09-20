@@ -13,7 +13,6 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
-	"github.com/danieljustus/symaira-desktop/internal/testsupport"
 )
 
 // toolContract is the exact, canonical contract for one registry entry:
@@ -415,14 +414,9 @@ func errorServiceFactory() ServiceFactory {
 
 // restrictPATH hides the symaira companion binaries (symingest, symmeet,
 // symmemory, symprint) so external-tool paths fail deterministically.
-//
-// Clearing PATH alone is not enough: compose.Resolve also searches
-// $SYMAIRA_BIN and the managed runtime directory (~/.symaira/bin) ahead of
-// PATH, so a machine with the managed runtime populated would still resolve
-// and run the real binary here.
 func restrictPATH(t *testing.T) {
 	t.Helper()
-	testsupport.IsolateCompanionBinaries(t, "/usr/bin:/bin")
+	isolateCompanionBinaries(t, "/usr/bin:/bin")
 }
 
 func assertContract(t *testing.T, got Tool, want toolContract, checkReadOnly bool) {

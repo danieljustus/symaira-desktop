@@ -12,7 +12,6 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/config"
 	"github.com/danieljustus/symaira-desktop/internal/service"
 	"github.com/danieljustus/symaira-desktop/internal/sidecar"
-	"github.com/danieljustus/symaira-desktop/internal/testsupport"
 )
 
 func testFactory(t *testing.T) serviceFactory {
@@ -390,10 +389,8 @@ func TestDocsSimilarToolInvalidJSON(t *testing.T) {
 
 func TestClipToolWithoutSymbrowse(t *testing.T) {
 	// PATH alone is not enough: compose.Resolve checks $SYMAIRA_BIN and the
-	// managed runtime directory (~/.symaira/bin) before PATH, so on a machine
-	// with either populated the real symbrowse would answer and this test
-	// would invoke it instead of proving the absence path.
-	testsupport.IsolateCompanionBinaries(t, "")
+	// managed runtime directory (~/.symaira/bin) before PATH.
+	isolateCompanionBinaries(t, "/usr/bin:/bin")
 	tool := newClipTool(testFactory(t))
 
 	in, _ := json.Marshal(map[string]string{"url": "https://example.com"})

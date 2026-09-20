@@ -16,9 +16,7 @@ package testsupport
 import (
 	"context"
 	"errors"
-	"testing"
 
-	"github.com/danieljustus/symaira-desktop/internal/compose"
 	"github.com/danieljustus/symaira-desktop/internal/contacts"
 	"github.com/danieljustus/symaira-desktop/internal/ingest"
 	"github.com/danieljustus/symaira-desktop/internal/pdf"
@@ -28,30 +26,6 @@ import (
 // errIsolated is what every inert ingest seam returns. A test that wants a
 // real answer from one of them overrides that seam itself.
 var errIsolated = errors.New("ingest pipeline is isolated in tests")
-
-// IsolateCompanionBinaries makes every sibling-binary lookup resolve to
-// nothing but the caller's own directory, independent of the host.
-//
-// compose.Resolve searches $SYMAIRA_BIN and the managed-runtime directory
-// (~/.symaira/bin) *before* PATH, so setting PATH alone does not make a
-// companion binary absent: on a developer machine that has the managed
-// runtime populated, an absence assertion fails, and a positive test can even
-// invoke the real installed binary. Both the resolution cache and the
-// environment a Resolve call reads are therefore cleared here.
-//
-// dir is placed on PATH so a caller that wants a double can write one there;
-// pass an empty t.TempDir() when the companion binary must be absent.
-func IsolateCompanionBinaries(t *testing.T, dir string) {
-	t.Helper()
-	t.Setenv("PATH", dir)
-	// $HOME drives the managed-runtime tier; USERPROFILE is its Windows
-	// equivalent, so both are redirected for the same reason.
-	t.Setenv("HOME", t.TempDir())
-	t.Setenv("USERPROFILE", t.TempDir())
-	t.Setenv(compose.SymairaBinEnvVar, "")
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
-}
 
 // IsolateSideEffects points the in-process seams at inert doubles: the
 // hybrid index accepts writes and returns nothing, the contact store reports

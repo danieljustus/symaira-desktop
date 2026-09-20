@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/compose"
+	"github.com/danieljustus/symaira-desktop/internal/testsupport"
 )
 
 func writeMockTool(t *testing.T, dir, name, script string) {
@@ -163,10 +164,11 @@ exit 1
 // verbatim as the Anthropic API key, leaking the vault/item naming to a
 // third party.
 func TestResolveKeySymvaultAbsent(t *testing.T) {
-	dir := t.TempDir()
-	t.Setenv("PATH", dir)
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
+	// PATH alone is not enough: compose.Resolve checks $SYMAIRA_BIN and the
+	// managed runtime directory (~/.symaira/bin) first, so a machine with a
+	// real symvault would make this assertion pass incidentally instead of
+	// proving the absence path.
+	testsupport.IsolateCompanionBinaries(t, t.TempDir())
 
 	key := ResolveKey("op://vault/item/key")
 	if key != "" {
@@ -175,10 +177,7 @@ func TestResolveKeySymvaultAbsent(t *testing.T) {
 }
 
 func TestSourceSymvaultAbsent(t *testing.T) {
-	dir := t.TempDir()
-	t.Setenv("PATH", dir)
-	compose.ResetCache()
-	t.Cleanup(compose.ResetCache)
+	testsupport.IsolateCompanionBinaries(t, t.TempDir())
 
 	src := Source("op://vault/item/key")
 	if src != "symvault (missing)" {

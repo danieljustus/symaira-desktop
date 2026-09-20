@@ -193,7 +193,7 @@ fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode
 
     match command {
         "ls" => {
-            let mut files = match sidecar.list_files(parsed.dir.as_deref().unwrap_or("")) {
+            let mut files = match sidecar.list_files(&vault, parsed.dir.as_deref().unwrap_or("")) {
                 Ok(files) => files,
                 Err(error) => return emit_error(error.to_string(), output_json),
             };
@@ -201,7 +201,7 @@ fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode
                 if let Err(error) = sidecar.refresh_index(&vault) {
                     return emit_error(error.to_string(), output_json);
                 }
-                files = match sidecar.list_files(parsed.dir.as_deref().unwrap_or("")) {
+                files = match sidecar.list_files(&vault, parsed.dir.as_deref().unwrap_or("")) {
                     Ok(files) => files,
                     Err(error) => return emit_error(error.to_string(), output_json),
                 };

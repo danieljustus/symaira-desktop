@@ -471,3 +471,161 @@ func hasFatal(findings []Finding) bool {
 	}
 	return false
 }
+
+func TestIssue854AbsentEnvironmentValuesUseDefaults(t *testing.T) {
+	unsetEnvironment(t,
+		"SYMDESK_OLLAMA_URL",
+		"SYMDESK_RECIPE_RUNNER",
+		"SYMDESK_AGENT_MAX_ITERATIONS",
+		"SYMDESK_STORAGE_PATH_TEMPLATE",
+	)
+
+	cfg, err := LoadFromPath(filepath.Join(t.TempDir(), "missing.toml"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.OllamaURL != "" {
+		t.Errorf("expected empty OllamaURL default, got %q", cfg.OllamaURL)
+	}
+	if cfg.RecipeRunner != "" {
+		t.Errorf("expected empty RecipeRunner default, got %q", cfg.RecipeRunner)
+	}
+	if cfg.AgentMaxIterations != 0 {
+		t.Errorf("expected zero AgentMaxIterations default, got %d", cfg.AgentMaxIterations)
+	}
+	if cfg.StoragePathTemplate != "" {
+		t.Errorf("expected empty StoragePathTemplate default, got %q", cfg.StoragePathTemplate)
+	}
+}
+
+func TestIssue854TOMLValuesAreOverriddenByEnvironment(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.toml")
+	content := `ollama_url = "http://toml.example"
+recipe_runner = "toml-runner"
+agent_max_iterations = 3
+storage_path_template = "toml/{title}"
+`
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("SYMDESK_OLLAMA_URL", "http://env.example")
+	t.Setenv("SYMDESK_RECIPE_RUNNER", "env-runner")
+	t.Setenv("SYMDESK_AGENT_MAX_ITERATIONS", "12")
+	t.Setenv("SYMDESK_STORAGE_PATH_TEMPLATE", "env/{title}")
+
+	cfg, err := LoadFromPath(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.OllamaURL != "http://env.example" {
+		t.Errorf("expected env OllamaURL to override TOML, got %q", cfg.OllamaURL)
+	}
+	if cfg.RecipeRunner != "env-runner" {
+		t.Errorf("expected env RecipeRunner to override TOML, got %q", cfg.RecipeRunner)
+	}
+	if cfg.AgentMaxIterations != 12 {
+		t.Errorf("expected env AgentMaxIterations 12 to override TOML, got %d", cfg.AgentMaxIterations)
+	}
+	if cfg.StoragePathTemplate != "env/{title}" {
+		t.Errorf("expected env StoragePathTemplate to override TOML, got %q", cfg.StoragePathTemplate)
+	}
+}
+
+func TestIssue854InvalidAgentMaxIterationsEnvironmentIsIgnored(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.toml")
+	if err := os.WriteFile(path, []byte("agent_max_iterations = 7\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, test := range []struct {
+		name string
+		raw  string
+	}{
+		{name: "non-numeric", raw: "not-a-number"},
+		{name: "negative", raw: "-1"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("SYMDESK_AGENT_MAX_ITERATIONS", test.raw)
+			cfg, err := LoadFromPath(path)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if cfg.AgentMaxIterations != 7 {
+				t.Errorf("expected invalid env value %q to preserve TOML value 7, got %d", test.raw, cfg.AgentMaxIterations)
+			}
+		})
+	}
+}
+
+func TestIssue854ValidAgentMaxIterationsEnvironmentIsApplied(t *testing.T) {
+	t.Setenv("SYMDESK_AGENT_MAX_ITERATIONS", "12")
+
+	cfg, err := LoadFromPath(filepath.Join(t.TempDir(), "missing.toml"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.AgentMaxIterations != 12 {
+		t.Errorf("expected valid env AgentMaxIterations 12, got %d", cfg.AgentMaxIterations)
+	}
+}
+
+func TestIssue854EmptyEnvironmentValuesDoNotOverrideTOML(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.toml")
+	content := `ollama_url = "http://toml.example"
+recipe_runner = "toml-runner"
+agent_max_iterations = 3
+storage_path_template = "toml/{title}"
+`
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{
+		"SYMDESK_OLLAMA_URL",
+		"SYMDESK_RECIPE_RUNNER",
+		"SYMDESK_AGENT_MAX_ITERATIONS",
+		"SYMDESK_STORAGE_PATH_TEMPLATE",
+	} {
+		t.Setenv(key, "")
+	}
+
+	cfg, err := LoadFromPath(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.OllamaURL != "http://toml.example" ||
+		cfg.RecipeRunner != "toml-runner" ||
+		cfg.AgentMaxIterations != 3 ||
+		cfg.StoragePathTemplate != "toml/{title}" {
+		t.Errorf("expected empty env values to preserve TOML, got ollama_url=%q recipe_runner=%q agent_max_iterations=%d storage_path_template=%q", cfg.OllamaURL, cfg.RecipeRunner, cfg.AgentMaxIterations, cfg.StoragePathTemplate)
+	}
+}
+
+func unsetEnvironment(t *testing.T, keys ...string) {
+	t.Helper()
+	type state struct {
+		value   string
+		present bool
+	}
+	original := make(map[string]state, len(keys))
+	for _, key := range keys {
+		value, present := os.LookupEnv(key)
+		original[key] = state{value: value, present: present}
+		if err := os.Unsetenv(key); err != nil {
+			t.Fatalf("unset %s: %v", key, err)
+		}
+	}
+	t.Cleanup(func() {
+		for key, saved := range original {
+			var err error
+			if saved.present {
+				err = os.Setenv(key, saved.value)
+			} else {
+				err = os.Unsetenv(key)
+			}
+			if err != nil {
+				t.Errorf("restore %s: %v", key, err)
+			}
+		}
+	})
+}

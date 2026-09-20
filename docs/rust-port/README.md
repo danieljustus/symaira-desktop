@@ -168,12 +168,13 @@ migration stays stopped and Go remains in production.
   green for SimHash, document-format policy, OCR dehyphenation/language hints,
   German FTS/trigram normalization, and the complete search-query/date parser
   (22 query and 17 date cases). Unified configuration parity covers defaults,
-  supported and currently ignored environment overrides, ordered validation,
-  base XDG/HOME paths, secret-safe state, unknown TOML keys, malformed input,
-  and byte-exact Go encoder output. The full `symdesk-core` slice passes Miri.
-  Configuration fixtures must pin the four tagged-but-currently-ignored
-  environment variables tracked in [#854](https://github.com/danieljustus/symaira-desktop/issues/854), not silently fix them in Rust.
-  Go remains production.
+  all documented environment overrides (including the four variables from
+  [#854](https://github.com/danieljustus/symaira-desktop/issues/854)), ordered
+  validation, base XDG/HOME paths, secret-safe state, unknown TOML keys,
+  malformed input, and byte-exact Go encoder output. The full `symdesk-core`
+  slice passes Miri. Configuration fixtures are regenerated from the Go loader
+  and pin non-empty string, non-negative numeric, TOML-precedence, invalid, and
+  empty-value behavior. Go remains production.
 - `RUST-004` passed: the `symdesk-vault` crate passes 34
   Go-generated `ParseBytes` cases covering contract v1–v6, YAML coercions,
   unknown nested fields, exact SHA-256/size/body bytes, all type inference,

@@ -85,8 +85,8 @@ impl Config {
         self.llm_api_key.is_configured()
     }
 
-    /// Applies the manual Go environment allowlist. Tagged fields omitted by
-    /// Go remain intentionally ignored until issue #854 changes both oracles.
+    /// Applies the manual Go environment allowlist, including every
+    /// documented `SYMDESK_*` configuration override.
     pub fn apply_environment(&mut self, environment: &BTreeMap<String, String>) {
         apply_string(environment, "SYMDESK_VAULT", &mut self.vault);
         apply_string(environment, "SYMDESK_INBOX", &mut self.inbox);
@@ -100,6 +100,12 @@ impl Config {
             self.llm_api_key = SecretValue(value.to_owned());
         }
         apply_string(environment, "SYMDESK_LLM_MODEL", &mut self.llm_model);
+        apply_string(environment, "SYMDESK_OLLAMA_URL", &mut self.ollama_url);
+        apply_string(
+            environment,
+            "SYMDESK_RECIPE_RUNNER",
+            &mut self.recipe_runner,
+        );
         apply_string(
             environment,
             "SYMDESK_HERMES_SESSION",
@@ -136,6 +142,10 @@ impl Config {
                 "SYMDESK_RESULTS_MAX_PER_TASK",
                 &mut self.results_max_per_task,
             ),
+            (
+                "SYMDESK_AGENT_MAX_ITERATIONS",
+                &mut self.agent_max_iterations,
+            ),
         ] {
             if let Some(value) = parse_integer(environment, key)
                 && value >= 0
@@ -146,6 +156,11 @@ impl Config {
         if let Some(value) = nonempty(environment, "SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY") {
             self.dataset_export_max_sensitivity = value.trim().to_lowercase();
         }
+        apply_string(
+            environment,
+            "SYMDESK_STORAGE_PATH_TEMPLATE",
+            &mut self.storage_path_template,
+        );
     }
 
     #[must_use]

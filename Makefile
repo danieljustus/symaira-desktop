@@ -14,9 +14,20 @@ export CARGO_TARGET_DIR
 endif
 PORT_ORACLE_COMMIT ?= 745c08e8144971c61133c5d0e5d61c7ce405aad2
 PORT_ORACLE_RELEASE ?= post-v0.12.2-security-880
+# The sidecar lifecycle fixture is P-bound provenance evidence, distinct from
+# the historical fixture oracle above. portgen resolves and enforces this same
+# pair during generation and immutable checks.
+PORTGEN_SIDECAR_ORACLE_COMMIT ?= $(shell git rev-parse HEAD)
+PORTGEN_SIDECAR_ORACLE_RELEASE ?= $(PORT_ORACLE_RELEASE)
 PORT_CASES ?= testdata/port/cli/cases.json
 RUST_NIGHTLY ?= nightly-2026-09-03
 FUZZ_RUNS ?= 10000
+
+# Issue #932: check recipes must not inherit fixture-generation activation
+# variables. `override` makes an accidental command-line assignment such as
+# `make PORTGEN_CHECK_ENV=:` ineffective; the Go check also strips this set
+# before running package-local fixture tests from its immutable snapshot.
+override PORTGEN_CHECK_ENV := env -u PORT_GENERATE -u port_generate -u PORT_FIXTURES_GENERATE -u port_fixtures_generate -u PORTGEN_GENERATE -u portgen_generate -u GENERATE_PORT_FIXTURES -u generate_port_fixtures -u SYMDESK_PORT_GENERATE -u symdesk_port_generate -u PORTGEN_SIDECAR_ORACLE_COMMIT -u portgen_sidecar_oracle_commit -u PORTGEN_SIDECAR_ORACLE_RELEASE -u portgen_sidecar_oracle_release -u CONFIGGEN_GENERATE -u configgen_generate -u COREGEN_GENERATE -u coregen_generate -u QUERYGEN_GENERATE -u querygen_generate -u VAULTGEN_GENERATE -u vaultgen_generate -u VAULTFSGEN_GENERATE -u vaultfsgen_generate -u TYPEDVAULTGEN_GENERATE -u typedvaultgen_generate -u REPRESENTATIVEGEN_GENERATE -u representativegen_generate -u MCPGEN_GENERATE -u mcpgen_generate
 
 build:
 	@mkdir -p bin
@@ -84,9 +95,9 @@ core-fixtures-generate:
 		--oracle-release $(PORT_ORACLE_RELEASE)
 
 core-fixtures-check:
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/configgen --check
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/coregen --check
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/querygen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/configgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/coregen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/querygen --check
 
 core-differential: core-fixtures-check
 	$(CARGO) test -p symdesk-core --all-features --locked
@@ -106,20 +117,20 @@ vault-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/vault -run TestMobileWriterFixture
 
 vault-fixtures-check:
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultgen --check
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultfsgen --check
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/typedvaultgen --check
-	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run TestVaultResolutionInventory
-	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/health -run TestHealthLinkResolutionInventory
-	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/notebook -run TestNotebookParseInventory
-	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run TestSearchMetadataInventory
-	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/vault -run TestMobileWriterFixture
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultfsgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/typedvaultgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run TestVaultResolutionInventory
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/health -run TestHealthLinkResolutionInventory
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/notebook -run TestNotebookParseInventory
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run TestSearchMetadataInventory
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/vault -run TestMobileWriterFixture
 
 vault-read-differential: vault-fixtures-check
 	$(CARGO) test -p symdesk-vault --all-features --locked
 
 frontmatter-write-differential:
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultwritegen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultwritegen --check
 	$(CARGO) test -p symdesk-vault --test frontmatter_write_contracts --locked
 
 # VAULT-004 write stack: the Go-owned filesystem harness for atomic writes,
@@ -166,10 +177,10 @@ symroom-differential:
 
 sidecar-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarContract
-	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarLifecycleContract
+	PORTGEN_SIDECAR_ORACLE_COMMIT=$(PORTGEN_SIDECAR_ORACLE_COMMIT) PORTGEN_SIDECAR_ORACLE_RELEASE=$(PORTGEN_SIDECAR_ORACLE_RELEASE) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run TestPortSidecarLifecycleContract
 
 sidecar-fixtures-check:
-	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run 'TestPortSidecar(Contract|LifecycleContract)'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run 'TestPortSidecar(Contract|LifecycleContract)'
 
 sidecar-differential: sidecar-fixtures-check
 	SIDECAR_NATIVE=0 GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/sidecar-roundtrip
@@ -182,11 +193,10 @@ sidecar-roundtrip:
 
 port-fixtures-generate: core-fixtures-generate vault-fixtures-generate sidecar-fixtures-generate
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/portgen \
-		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
 
 port-fixtures-check: core-fixtures-check vault-fixtures-check sidecar-fixtures-check
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/portgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/portgen --check
 
 differential-go-selftest:
 	@mkdir -p bin
@@ -204,7 +214,7 @@ representative-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/representativegen
 
 representative-fixtures-check:
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/representativegen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/representativegen --check
 
 representative-differential: representative-fixtures-check
 	@mkdir -p bin/port
@@ -282,7 +292,7 @@ mcp-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/mcpgen
 
 mcp-fixtures-check:
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/mcpgen --check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/mcpgen --check
 
 mcp-differential: mcp-fixtures-check
 	@mkdir -p bin/port

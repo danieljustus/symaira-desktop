@@ -103,7 +103,7 @@ fn fixture() -> Fixture {
 }
 
 #[test]
-fn defaults_loads_and_ignored_environment_match_go() {
+fn defaults_loads_and_environment_match_go() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
     assert_config(&Config::default(), &fixture.cases.defaults);

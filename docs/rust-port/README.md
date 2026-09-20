@@ -1,7 +1,7 @@
 # Go-to-Rust migration record
 
 > **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006`, `RUST-007`, and `RUST-016` are blocked by the current VALUE-001 order-bias gate ([#936](https://github.com/danieljustus/symaira-desktop/issues/936)).
-> **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; VALUE baselines remain pinned to `ae863319` / `v0.12.2`
+> **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; portgen provenance instead records the revision whose production source the fixtures were generated from, which must be the checked revision or one of its ancestors. Those are distinct identities by the current contract; their long-term consolidation is tracked in [#934](https://github.com/danieljustus/symaira-desktop/issues/934). VALUE baselines remain pinned to `ae863319` / `v0.12.2`
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
@@ -154,8 +154,11 @@ migration stays stopped and Go remains in production.
   self-test is green. Real differential runs reject identical binaries unless
   that self-test override is passed.
 - Production-source provenance covers Go source, embedded assets and migrations,
-  the vault contract, and release inputs. Fixture checksums and source drift are
-  executable CI gates.
+  the vault contract, and release inputs. A checked provenance commit `Q` must
+  contain only listed `testdata/port` derived outputs, must directly follow its
+  full recorded source commit `P`, and validates fixture/checker digests from
+  immutable Git objects. Fixture checksums and source drift are executable CI
+  gates.
 - `RUST-002` passed: the Rust 1.98 workspace contains only `symdesk-core`,
   `symdesk-cli`, and `symroom-cli`; 17 Go↔Rust version cases pass byte-for-byte,
   together with format, Clippy, nextest, doctest, feature, coverage, audit, deny,
@@ -165,12 +168,13 @@ migration stays stopped and Go remains in production.
   green for SimHash, document-format policy, OCR dehyphenation/language hints,
   German FTS/trigram normalization, and the complete search-query/date parser
   (22 query and 17 date cases). Unified configuration parity covers defaults,
-  supported and currently ignored environment overrides, ordered validation,
-  base XDG/HOME paths, secret-safe state, unknown TOML keys, malformed input,
-  and byte-exact Go encoder output. The full `symdesk-core` slice passes Miri.
-  Configuration fixtures must pin the four tagged-but-currently-ignored
-  environment variables tracked in [#854](https://github.com/danieljustus/symaira-desktop/issues/854), not silently fix them in Rust.
-  Go remains production.
+  all documented environment overrides (including the four variables from
+  [#854](https://github.com/danieljustus/symaira-desktop/issues/854)), ordered
+  validation, base XDG/HOME paths, secret-safe state, unknown TOML keys,
+  malformed input, and byte-exact Go encoder output. The full `symdesk-core`
+  slice passes Miri. Configuration fixtures are regenerated from the Go loader
+  and pin non-empty string, non-negative numeric, TOML-precedence, invalid, and
+  empty-value behavior. Go remains production.
 - `RUST-004` passed: the `symdesk-vault` crate passes 34
   Go-generated `ParseBytes` cases covering contract v1–v6, YAML coercions,
   unknown nested fields, exact SHA-256/size/body bytes, all type inference,
@@ -224,6 +228,50 @@ Reconnaissance supports crate-level reuse, not adoption of another product:
 The correct strategy is a repository-local Cargo workspace plus language-neutral
 fixtures. Copying a third-party vault product would replace one rewrite risk with
 several compatibility risks wearing a trench coat.
+
+## Refreshing port provenance
+
+Port provenance is recorded evidence, not metadata that may be edited beside an
+arbitrary change. The recorded revision must be the checked revision or one of
+its ancestors — a direct parent/child pair is *not* required, because this
+repository squash-merges every pull request and the commit that records an
+advance can therefore never be a direct child of the commit whose bytes it
+records.
+
+The procedure after any change to production source, `go.mod`/`go.sum`, the
+release contract, or the fixture generators:
+
+1. Merge the functional change as **P**; `main` is briefly red on the port
+   contract until step 4 lands.
+2. On the updated `main`, run `make port-fixtures-generate` from a clean
+   worktree. Generation resolves the oracle to `HEAD` by default, and the
+   `--oracle-commit` flag accepts an explicit revision only when it is `HEAD`
+   or one of its ancestors.
+3. Inspect the resulting `testdata/port` diff, then commit the allowlisted
+   derived fixture paths and `testdata/port/provenance.json` as **Q**.
+4. Run `make port-fixtures-check` at **Q**. The check reads immutable Git blobs,
+   validates regular-file tree entries, runs every manifest-covered generator and
+   package check from a disposable linked worktree at **Q**, and strips ambient
+   generation, Go, Git and PATH overrides. Its Make-side environment prefix cannot
+   be replaced by `make PORTGEN_CHECK_ENV=:`.
+
+What the check enforces, fail-closed:
+
+- The recorded oracle revision is the checked revision or an ancestor of it; a
+  malformed, unknown, future or side-branch revision is rejected.
+- The recorded production digest equals the bytes at the recorded revision *and*
+  the bytes of the checked tree, so production source cannot drift and fixtures
+  cannot be relabelled.
+- Every fixture in the manifest is compared by checksum against the checked tree,
+  so a fixture edited after the oracle was recorded is rejected regardless of the
+  commit graph.
+- The generator digest is bound to the checked tree, not to the oracle revision:
+  a harness change is reviewed through the regenerated fixtures instead of
+  forcing an oracle advance, which would otherwise be circular.
+
+Changes to the generator Go sources under `scripts/rust-port` and the listed
+port-contract test files change the generator digest and therefore require
+deliberately regenerated and reviewed fixtures.
 
 ## Execution rule
 

@@ -156,10 +156,53 @@ func buildDocument(oracle inventory.Oracle) (document, error) {
 func buildLoadCases() ([]loadCase, error) {
 	specs := []loadCase{
 		{ID: "missing-defaults", Missing: true},
-		{ID: "toml-values-and-unknown", TOML: "vault = \"/toml/vault\"\nreview_threshold = 70\nllm_provider = \"anthropic\"\nllm_api_key = \"synthetic-fixture-value\"\nmax_tokens = 4096\nunknown_future_key = \"preserved-by-file-but-ignored-by-model\"\n"},
-		{ID: "supported-env-overrides", Missing: true, Environment: map[string]string{"SYMDESK_VAULT": "/env/vault", "SYMDESK_INBOX": "/env/inbox", "SYMDESK_REVIEW_THRESHOLD": "90", "SYMDESK_LLM_PROVIDER": "openai", "SYMDESK_LLM_API_KEY": "synthetic-fixture-value", "SYMDESK_LLM_MODEL": "fixture-model", "SYMDESK_HERMES_SESSION": "fixture-session", "SYMDESK_LANG": "de", "SYMDESK_MAX_TOKENS": "12000", "SYMDESK_HISTORY_MAX_PER_FILE": "7", "SYMDESK_HISTORY_MAX_AGE_DAYS": "8", "SYMDESK_HISTORY_CHECKPOINT_MAX_AGE_DAYS": "9", "SYMDESK_TRASH_RETENTION_DAYS": "10", "SYMDESK_RESULTS_MAX_AGE_DAYS": "11", "SYMDESK_RESULTS_MAX_PER_TASK": "12", "SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY": "  CONFIDENTIAL  "}},
+		{ID: "toml-values-and-unknown", TOML: `vault = "/toml/vault"
+review_threshold = 70
+llm_provider = "anthropic"
+max_tokens = 4096
+ollama_url = "http://toml.example"
+recipe_runner = "toml-runner"
+agent_max_iterations = 3
+storage_path_template = "toml/{title}"
+unknown_future_key = "preserved-by-file-but-ignored-by-model"
+`},
+		{ID: "supported-env-overrides", Missing: true, Environment: map[string]string{
+			"SYMDESK_AGENT_MAX_ITERATIONS":            "12",
+			"SYMDESK_DATASET_EXPORT_MAX_SENSITIVITY":  "  CONFIDENTIAL  ",
+			"SYMDESK_HERMES_SESSION":                  "fixture-session",
+			"SYMDESK_HISTORY_CHECKPOINT_MAX_AGE_DAYS": "9",
+			"SYMDESK_HISTORY_MAX_AGE_DAYS":            "8",
+			"SYMDESK_HISTORY_MAX_PER_FILE":            "7",
+			"SYMDESK_INBOX":                           "/env/inbox",
+			"SYMDESK_LANG":                            "de",
+			"SYMDESK_LLM_MODEL":                       "fixture-model",
+			"SYMDESK_LLM_PROVIDER":                    "openai",
+			"SYMDESK_MAX_TOKENS":                      "12000",
+			"SYMDESK_OLLAMA_URL":                      "http://env.example",
+			"SYMDESK_RECIPE_RUNNER":                   "env-runner",
+			"SYMDESK_RESULTS_MAX_AGE_DAYS":            "11",
+			"SYMDESK_RESULTS_MAX_PER_TASK":            "12",
+			"SYMDESK_REVIEW_THRESHOLD":                "90",
+			"SYMDESK_STORAGE_PATH_TEMPLATE":           "env/{title}",
+			"SYMDESK_TRASH_RETENTION_DAYS":            "10",
+			"SYMDESK_VAULT":                           "/env/vault",
+		}},
+		{ID: "invalid-numeric-issue-854", TOML: `agent_max_iterations = 7
+`, Environment: map[string]string{"SYMDESK_AGENT_MAX_ITERATIONS": "not-a-number"}},
+		{ID: "negative-numeric-issue-854", TOML: `agent_max_iterations = 7
+`, Environment: map[string]string{"SYMDESK_AGENT_MAX_ITERATIONS": "-1"}},
+		{ID: "valid-numeric-issue-854", Missing: true, Environment: map[string]string{"SYMDESK_AGENT_MAX_ITERATIONS": "12"}},
+		{ID: "empty-env-values-issue-854", TOML: `ollama_url = "http://toml.example"
+recipe_runner = "toml-runner"
+agent_max_iterations = 3
+storage_path_template = "toml/{title}"
+`, Environment: map[string]string{"SYMDESK_AGENT_MAX_ITERATIONS": "", "SYMDESK_OLLAMA_URL": "", "SYMDESK_RECIPE_RUNNER": "", "SYMDESK_STORAGE_PATH_TEMPLATE": ""}},
 		{ID: "invalid-env-is-ignored", Missing: true, Environment: map[string]string{"SYMDESK_REVIEW_THRESHOLD": "101", "SYMDESK_MAX_TOKENS": "0", "SYMDESK_HISTORY_MAX_PER_FILE": "-1", "SYMDESK_RESULTS_MAX_PER_TASK": "nope"}},
-		{ID: "tagged-but-ignored-env-issue-854", Missing: true, Environment: map[string]string{"SYMDESK_OLLAMA_URL": "http://ignored.test", "SYMDESK_RECIPE_RUNNER": "ignored-runner", "SYMDESK_AGENT_MAX_ITERATIONS": "99", "SYMDESK_STORAGE_PATH_TEMPLATE": "ignored/{title}"}},
+		{ID: "toml-overridden-by-env-issue-854", TOML: `ollama_url = "http://toml.example"
+recipe_runner = "toml-runner"
+agent_max_iterations = 3
+storage_path_template = "toml/{title}"
+`, Environment: map[string]string{"SYMDESK_AGENT_MAX_ITERATIONS": "12", "SYMDESK_OLLAMA_URL": "http://env.example", "SYMDESK_RECIPE_RUNNER": "env-runner", "SYMDESK_STORAGE_PATH_TEMPLATE": "env/{title}"}},
 		{ID: "malformed-toml", TOML: "{{{{not valid", ErrorPrefix: "failed to decode config file:"},
 	}
 	result := make([]loadCase, 0, len(specs))

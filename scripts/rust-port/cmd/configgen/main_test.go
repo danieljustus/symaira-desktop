@@ -2,6 +2,8 @@ package main
 
 import (
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -43,5 +45,55 @@ func TestWithEnvironmentMirrorsHomeNames(t *testing.T) {
 	}
 	if got := os.Getenv("USERPROFILE"); got != "/outer/profile" {
 		t.Fatalf("USERPROFILE after the cases = %q, want the caller's value restored", got)
+	}
+}
+
+// The corpus records canonical fixture paths and applies them to the host, which
+// must resolve them the same way on every leg: configkit falls back to
+// $HOME/.config when XDG_CONFIG_HOME is not absolute, and Windows does not treat
+// "/fixture/config" as absolute. The translation has to leave the canonical
+// values alone wherever the host already uses them.
+func TestHostEnvironmentKeepsCanonicalPathsOnPosixHosts(t *testing.T) {
+	canonical := map[string]string{
+		"HOME":            "/fixture/home",
+		"XDG_DATA_HOME":   "  /fixture/data  ",
+		"XDG_CONFIG_HOME": "relative/config",
+		"WINDOWS_STYLE":   "C:\\fixture\\home",
+	}
+	got := hostEnvironment(canonical)
+	for key, want := range canonical {
+		if got[key] != want {
+			t.Fatalf("hostEnvironment()[%q] = %q, want %q", key, got[key], want)
+		}
+	}
+	if _, ok := got["MISSING"]; ok {
+		t.Fatalf("hostEnvironment() invented a key: %#v", got)
+	}
+	if filepath.Separator != '/' {
+		t.Skip("host separator is not POSIX; the identity expectation does not apply")
+	}
+	if hostPath("/fixture/home") != "/fixture/home" {
+		t.Fatalf("hostPath() changed a canonical path: %q", hostPath("/fixture/home"))
+	}
+	if hostPath("  /fixture/data  ") != "  /fixture/data  " {
+		t.Fatalf("hostPath() dropped the padding a case exercises: %q", hostPath("  /fixture/data  "))
+	}
+	if hostPath("relative/config") != "relative/config" {
+		t.Fatalf("hostPath() rewrote a relative value: %q", hostPath("relative/config"))
+	}
+}
+
+func TestFirstDifferenceNamesTheOffset(t *testing.T) {
+	recorded := []byte(`{"data_home": "/fixture/data"}`)
+	checked := []byte(`{"data_home": "\fixture\data"}`)
+	report := firstDifference(recorded, checked)
+	if !strings.Contains(report, "byte 15") {
+		t.Fatalf("firstDifference() = %q, want the offset of the first differing byte", report)
+	}
+	if !strings.Contains(report, `\fixture\data`) {
+		t.Fatalf("firstDifference() = %q, want the checked window in the report", report)
+	}
+	if !strings.Contains(report, "/fixture/data") {
+		t.Fatalf("firstDifference() = %q, want the recorded window in the report", report)
 	}
 }

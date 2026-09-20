@@ -122,7 +122,7 @@ func main() {
 			fatal("read fixture: %v", err)
 		}
 		if !bytes.Equal(existing, content) {
-			fatal("config fixture drift; regenerate deliberately")
+			fatal("config fixture drift; regenerate deliberately: %s", firstDifference(existing, content))
 		}
 		fmt.Println("PASS config fixture")
 		return
@@ -302,7 +302,7 @@ func buildPathCases() ([]pathCase, error) {
 	result := make([]pathCase, 0, len(specs))
 	for _, spec := range specs {
 		var out pathCase
-		err := withEnvironment(spec.env, func() error {
+		err := withEnvironment(hostEnvironment(spec.env), func() error {
 			dataHome, err := config.ResolveDataHome()
 			if err != nil {
 				return err
@@ -387,6 +387,60 @@ func withEnvironment(values map[string]string, run func() error) error {
 }
 
 func slash(value string) string { return filepath.ToSlash(value) }
+
+// hostEnvironment translates the canonical fixture paths a case pins into the
+// host's path syntax. The corpus records canonical POSIX-style paths, but it
+// also exercises absolute-path handling: configkit.DefaultPath falls back to
+// $HOME/.config when XDG_CONFIG_HOME is not absolute, and Windows does not treat
+// "/fixture/config" as absolute. Applying the canonical values verbatim made the
+// Windows leg resolve a different global path than the POSIX legs and fail with
+// "config fixture drift". On POSIX this is the identity, so the fixture stays
+// byte-identical on every leg.
+func hostEnvironment(values map[string]string) map[string]string {
+	result := make(map[string]string, len(values))
+	for key, value := range values {
+		result[key] = hostPath(value)
+	}
+	return result
+}
+
+// hostPath converts one canonical fixture path, keeping surrounding whitespace
+// so a case can still exercise trimming.
+func hostPath(value string) string {
+	core := strings.TrimSpace(value)
+	if !strings.HasPrefix(core, "/") {
+		return value
+	}
+	converted := filepath.FromSlash(core)
+	if converted == core {
+		return value
+	}
+	return strings.Replace(value, core, converted, 1)
+}
+
+// firstDifference reports where two fixture encodings start to differ, so a
+// platform-specific drift names the offending field instead of only the fact.
+func firstDifference(recorded, checked []byte) string {
+	limit := len(recorded)
+	if len(checked) < limit {
+		limit = len(checked)
+	}
+	at := limit
+	for i := 0; i < limit; i++ {
+		if recorded[i] != checked[i] {
+			at = i
+			break
+		}
+	}
+	window := func(content []byte) string {
+		end := at + 60
+		if end > len(content) {
+			end = len(content)
+		}
+		return string(content[at:end])
+	}
+	return fmt.Sprintf("first difference at byte %d: recorded=%q checked=%q", at, window(recorded), window(checked))
+}
 
 func fatal(format string, args ...any) {
 	_, _ = fmt.Fprintf(os.Stderr, "FAIL "+format+"\n", args...)

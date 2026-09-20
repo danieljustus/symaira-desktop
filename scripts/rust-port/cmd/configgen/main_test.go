@@ -50,15 +50,49 @@ func TestWithEnvironmentMirrorsHomeNames(t *testing.T) {
 
 // The corpus records canonical fixture paths and applies them to the host, which
 // must resolve them the same way on every leg: configkit falls back to
-// $HOME/.config when XDG_CONFIG_HOME is not absolute, and Windows does not treat
-// "/fixture/config" as absolute. The translation has to leave the canonical
-// values alone wherever the host already uses them.
+// $HOME/.config when filepath.IsAbs rejects XDG_CONFIG_HOME, and Windows rejects
+// both "/fixture/config" and "\fixture\config" — only a drive-qualified path
+// counts. Cases are therefore applied in the host's syntax and the results are
+// canonicalized back, so the fixture stays byte-identical everywhere.
+func TestFixturePathTranslationRoundTrips(t *testing.T) {
+	const windowsRoot = `C:\fixture`
+	for _, tc := range []struct{ canonical, host, resolved string }{
+		{canonical: "/fixture/home", host: windowsRoot + `\home`, resolved: windowsRoot + `\home`},
+		{canonical: "  /fixture/data  ", host: "  " + windowsRoot + `\data  `, resolved: windowsRoot + `\data`},
+		{canonical: "/fixture/config", host: windowsRoot + `\config`, resolved: windowsRoot + `\config`},
+	} {
+		if got := hostPathWith(tc.canonical, windowsRoot); got != tc.host {
+			t.Fatalf("hostPathWith(%q, %q) = %q, want %q", tc.canonical, windowsRoot, got, tc.host)
+		}
+		if got := canonicalPathWith(tc.resolved, windowsRoot); got != strings.TrimSpace(tc.canonical) {
+			t.Fatalf("canonicalPathWith(%q, %q) = %q, want %q", tc.resolved, windowsRoot, got, strings.TrimSpace(tc.canonical))
+		}
+	}
+	if got := canonicalPathWith(windowsRoot+`\home\.config\symdesk\config.toml`, windowsRoot); got != "/fixture/home/.config/symdesk/config.toml" {
+		t.Fatalf("canonicalPathWith() = %q, want the canonical global path", got)
+	}
+	for _, value := range []string{"/fixture/home", "  /fixture/data  ", "relative/config"} {
+		if got := hostPathWith(value, fixtureRoot); got != value {
+			t.Fatalf("hostPathWith(%q, %q) = %q, want the value unchanged", value, fixtureRoot, got)
+		}
+		if got := canonicalPathWith(value, fixtureRoot); got != value {
+			t.Fatalf("canonicalPathWith(%q, %q) = %q, want the value unchanged", value, fixtureRoot, got)
+		}
+	}
+	if got := hostPathWith("relative/config", windowsRoot); got != "relative/config" {
+		t.Fatalf("hostPathWith() rewrote a relative value: %q", got)
+	}
+	if got := canonicalPathWith("relative/config", windowsRoot); got != "relative/config" {
+		t.Fatalf("canonicalPathWith() rewrote a relative value: %q", got)
+	}
+}
+
 func TestHostEnvironmentKeepsCanonicalPathsOnPosixHosts(t *testing.T) {
 	canonical := map[string]string{
 		"HOME":            "/fixture/home",
 		"XDG_DATA_HOME":   "  /fixture/data  ",
 		"XDG_CONFIG_HOME": "relative/config",
-		"WINDOWS_STYLE":   "C:\\fixture\\home",
+		"WINDOWS_STYLE":   `C:\fixture\home`,
 	}
 	got := hostEnvironment(canonical)
 	for key, want := range canonical {

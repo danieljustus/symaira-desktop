@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
@@ -315,7 +316,7 @@ func buildPathCases() ([]pathCase, error) {
 			if err != nil {
 				return err
 			}
-			out = pathCase{ID: spec.id, Environment: spec.env, DataHome: slash(dataHome), ConfigHome: slash(configHome), CacheHome: slash(cacheHome), DataDir: slash(config.DataDir()), ConfigDir: slash(config.ConfigDir()), CacheDir: slash(config.CacheDir()), GlobalPath: slash(config.GlobalPath())}
+			out = pathCase{ID: spec.id, Environment: spec.env, DataHome: canonicalPath(dataHome), ConfigHome: canonicalPath(configHome), CacheHome: canonicalPath(cacheHome), DataDir: canonicalPath(config.DataDir()), ConfigDir: canonicalPath(config.ConfigDir()), CacheDir: canonicalPath(config.CacheDir()), GlobalPath: canonicalPath(config.GlobalPath())}
 			return nil
 		})
 		if err != nil {
@@ -386,16 +387,28 @@ func withEnvironment(values map[string]string, run func() error) error {
 	return run()
 }
 
-func slash(value string) string { return filepath.ToSlash(value) }
+// fixtureRoot is the canonical fixture root the corpus records. A host may not
+// treat it as absolute — Windows needs a drive-qualified path, and
+// configkit.DefaultPath only honours XDG_CONFIG_HOME when filepath.IsAbs accepts
+// it — so cases are applied in the host's syntax and every result is
+// canonicalized back. On POSIX both directions are the identity, which keeps the
+// fixture byte-identical on every leg.
+const fixtureRoot = "/fixture"
 
-// hostEnvironment translates the canonical fixture paths a case pins into the
-// host's path syntax. The corpus records canonical POSIX-style paths, but it
-// also exercises absolute-path handling: configkit.DefaultPath falls back to
-// $HOME/.config when XDG_CONFIG_HOME is not absolute, and Windows does not treat
-// "/fixture/config" as absolute. Applying the canonical values verbatim made the
-// Windows leg resolve a different global path than the POSIX legs and fail with
-// "config fixture drift". On POSIX this is the identity, so the fixture stays
-// byte-identical on every leg.
+func hostRoot() string {
+	if runtime.GOOS != "windows" {
+		return fixtureRoot
+	}
+	volume := os.Getenv("SystemDrive")
+	if volume == "" {
+		volume = filepath.VolumeName(os.TempDir())
+	}
+	if volume == "" {
+		volume = "C:"
+	}
+	return volume + `\fixture`
+}
+
 func hostEnvironment(values map[string]string) map[string]string {
 	result := make(map[string]string, len(values))
 	for key, value := range values {
@@ -404,18 +417,35 @@ func hostEnvironment(values map[string]string) map[string]string {
 	return result
 }
 
-// hostPath converts one canonical fixture path, keeping surrounding whitespace
-// so a case can still exercise trimming.
-func hostPath(value string) string {
+// hostPath converts one canonical fixture path to the host's syntax, keeping
+// surrounding whitespace so a case can still exercise trimming.
+func hostPath(value string) string { return hostPathWith(value, hostRoot()) }
+
+func hostPathWith(value, root string) string {
 	core := strings.TrimSpace(value)
-	if !strings.HasPrefix(core, "/") {
+	if root == fixtureRoot || !strings.HasPrefix(core, fixtureRoot) {
 		return value
 	}
-	converted := filepath.FromSlash(core)
-	if converted == core {
-		return value
+	separator := "/"
+	if strings.Contains(root, `\`) {
+		separator = `\`
 	}
-	return strings.Replace(value, core, converted, 1)
+	rest := strings.ReplaceAll(strings.TrimPrefix(core, fixtureRoot), "/", separator)
+	return strings.Replace(value, core, root+rest, 1)
+}
+
+// canonicalPath maps a resolved host path back to the canonical fixture form.
+func canonicalPath(value string) string { return canonicalPathWith(value, hostRoot()) }
+
+// canonicalPathWith maps a resolved host path back to the canonical fixture
+// form: forward slashes, and the fixture root instead of the host's root.
+func canonicalPathWith(value, root string) string {
+	slashed := strings.ReplaceAll(filepath.ToSlash(value), `\`, "/")
+	root = strings.ReplaceAll(root, `\`, "/")
+	if root != fixtureRoot && strings.HasPrefix(slashed, root) {
+		slashed = fixtureRoot + strings.TrimPrefix(slashed, root)
+	}
+	return slashed
 }
 
 // firstDifference reports where two fixture encodings start to differ, so a

@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "source_hashes": {
-    "internal/history/trash.go": "a18e604c203c6cee550078fa8b37acef68c9e79a9f07482288a4b59344f01179",
+    "internal/history/trash.go": "e5aad22d1c0b172f1d2134ac6df59616d6cdb44890bb154db92afe839f2c3b89",
     "internal/service/history.go": "67a37a56fa117e170025183043f340ecae6a0d51f64fb906233b238a1357b6fe",
     "internal/service/service.go": "296574033a6b6516846106624f25e4e3fd35bc91f0f45eea28a3ca6bae1fc0a8"
   },

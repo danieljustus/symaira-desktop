@@ -138,6 +138,12 @@ func applyEnvOverrides(cfg *Config) {
 	if envModel := os.Getenv("SYMDESK_LLM_MODEL"); envModel != "" {
 		cfg.LLMModel = envModel
 	}
+	if envOllamaURL := os.Getenv("SYMDESK_OLLAMA_URL"); envOllamaURL != "" {
+		cfg.OllamaURL = envOllamaURL
+	}
+	if envRecipeRunner := os.Getenv("SYMDESK_RECIPE_RUNNER"); envRecipeRunner != "" {
+		cfg.RecipeRunner = envRecipeRunner
+	}
 	if envSession := os.Getenv("SYMDESK_HERMES_SESSION"); envSession != "" {
 		cfg.HermesSession = envSession
 	}
@@ -156,6 +162,7 @@ func applyEnvOverrides(cfg *Config) {
 		name   string
 		target *int
 	}{
+		{"SYMDESK_AGENT_MAX_ITERATIONS", &cfg.AgentMaxIterations},
 		{"SYMDESK_HISTORY_MAX_PER_FILE", &cfg.HistoryMaxPerFile},
 		{"SYMDESK_HISTORY_MAX_AGE_DAYS", &cfg.HistoryMaxAgeDays},
 		{"SYMDESK_HISTORY_CHECKPOINT_MAX_AGE_DAYS", &cfg.HistoryCheckpointMaxAgeDays},
@@ -168,6 +175,9 @@ func applyEnvOverrides(cfg *Config) {
 				*ev.target = v
 			}
 		}
+	}
+	if envStoragePathTemplate := os.Getenv("SYMDESK_STORAGE_PATH_TEMPLATE"); envStoragePathTemplate != "" {
+		cfg.StoragePathTemplate = envStoragePathTemplate
 	}
 }
 

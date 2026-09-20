@@ -80,6 +80,7 @@ func sanitizedCheckEnvironment(environment []string) []string {
 		result = append(result, item)
 	}
 	return append(result,
+		//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with
 		"PATH="+filepath.Join(runtime.GOROOT(), "bin"),
 		"GIT_ATTR_NOSYSTEM=1",
 		"GIT_CONFIG_GLOBAL="+os.DevNull,
@@ -137,13 +138,14 @@ func validateFixtureCheckCoverage() error {
 }
 
 func trustedGoTool() (string, error) {
+	//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with
 	path := filepath.Join(runtime.GOROOT(), "bin", "go")
 	info, err := os.Stat(path)
 	if err != nil {
 		return "", fmt.Errorf("resolve Go tool bundled with portgen: %w", err)
 	}
 	if info.IsDir() {
-		return "", fmt.Errorf("Go tool path %s is a directory", path)
+		return "", fmt.Errorf("go tool path %s is a directory", path)
 	}
 	return path, nil
 }

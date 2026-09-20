@@ -59,6 +59,7 @@ func writeGeneratorDigestFile(t *testing.T, repoRoot, rel, content string) {
 
 func runGeneratorDigestGit(t *testing.T, repoRoot string, args ...string) {
 	t.Helper()
+	//nolint:gosec // fixed git subcommands in a test fixture
 	command := exec.Command("git", append([]string{"-c", "user.name=Digest Test", "-c", "user.email=digest-test@example.invalid"}, args...)...)
 	command.Dir = repoRoot
 	if output, err := command.CombinedOutput(); err != nil {
@@ -68,6 +69,7 @@ func runGeneratorDigestGit(t *testing.T, repoRoot string, args ...string) {
 
 func generatorDigestGitOutput(t *testing.T, repoRoot string, args ...string) string {
 	t.Helper()
+	//nolint:gosec // fixed git subcommands in a test fixture
 	command := exec.Command("git", args...)
 	command.Dir = repoRoot
 	output, err := command.Output()

@@ -290,6 +290,7 @@ func writePortgenTestFile(t *testing.T, repoRoot, rel, content string) {
 
 func portgenGit(t *testing.T, repoRoot string, args ...string) {
 	t.Helper()
+	//nolint:gosec // fixed git subcommands in a test fixture
 	command := exec.Command("git", append([]string{"-c", "user.name=Portgen Test", "-c", "user.email=portgen-test@example.invalid"}, args...)...)
 	command.Dir = repoRoot
 	if output, err := command.CombinedOutput(); err != nil {
@@ -299,6 +300,7 @@ func portgenGit(t *testing.T, repoRoot string, args ...string) {
 
 func portgenGitOutput(t *testing.T, repoRoot string, args ...string) string {
 	t.Helper()
+	//nolint:gosec // fixed git subcommands in a test fixture
 	command := exec.Command("git", args...)
 	command.Dir = repoRoot
 	output, err := command.Output()

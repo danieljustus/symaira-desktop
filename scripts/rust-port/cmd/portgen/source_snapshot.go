@@ -16,6 +16,7 @@ func createImmutableSourceSnapshot(repoRoot, revision string) (string, func(), e
 	if err != nil {
 		return "", nil, fmt.Errorf("create immutable snapshot directory: %w", err)
 	}
+	//nolint:gosec // 0700 on a private scratch directory is the intended restriction
 	if err := os.Chmod(parent, 0o700); err != nil {
 		_ = os.RemoveAll(parent)
 		return "", nil, fmt.Errorf("protect immutable snapshot directory: %w", err)

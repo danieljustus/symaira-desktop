@@ -28,6 +28,7 @@ func syncSidecarOracleMetadata(repoRoot, commit, release string) error {
 		if !info.Mode().IsRegular() {
 			return fmt.Errorf("%s must be a regular file", rel)
 		}
+		//nolint:gosec // path is a manifest fixture under the repository root
 		data, err := os.ReadFile(path)
 		if err != nil {
 			return fmt.Errorf("read %s: %w", rel, err)
@@ -39,6 +40,7 @@ func syncSidecarOracleMetadata(repoRoot, commit, release string) error {
 		if string(updated) == string(data) {
 			continue
 		}
+		//nolint:gosec // path is a manifest fixture under the repository root
 		if err := os.WriteFile(path, updated, info.Mode().Perm()); err != nil {
 			return fmt.Errorf("write %s: %w", rel, err)
 		}

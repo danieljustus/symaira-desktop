@@ -83,6 +83,7 @@ func TestFixtureCheckRegistryValidatesCurrentTree(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	//nolint:gosec // test fixture path derived from the manifest constant
 	content, err := os.ReadFile(filepath.Join(repoRoot, provenanceFixture))
 	if err != nil {
 		t.Fatal(err)

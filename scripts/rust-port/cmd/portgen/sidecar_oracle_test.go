@@ -30,7 +30,7 @@ func TestSyncSidecarOracleMetadataUpdatesStaticMetadataFixtures(t *testing.T) {
 		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, []byte(`{"oracle":{"commit":"old","release":"old"},"payload":1}`+"\n"), 0o644); err != nil {
+		if err := os.WriteFile(path, []byte(`{"oracle":{"commit":"old","release":"old"},"payload":1}`+"\n"), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -39,6 +39,7 @@ func TestSyncSidecarOracleMetadataUpdatesStaticMetadataFixtures(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, rel := range sidecarOracleFixturePaths {
+		//nolint:gosec // test fixture path derived from the manifest constant
 		data, err := os.ReadFile(filepath.Join(repoRoot, filepath.FromSlash(rel)))
 		if err != nil {
 			t.Fatal(err)

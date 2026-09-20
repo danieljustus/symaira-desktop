@@ -9,6 +9,8 @@ coverage.*
 /dist/
 /build/
 /target/
+# Swift Package Manager build state (generated; must not be tracked)
+.build/
 fuzz/artifacts/
 fuzz/corpus/
 

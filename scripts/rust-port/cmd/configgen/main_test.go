@@ -88,6 +88,9 @@ func TestFixturePathTranslationRoundTrips(t *testing.T) {
 }
 
 func TestHostEnvironmentKeepsCanonicalPathsOnPosixHosts(t *testing.T) {
+	if hostRoot() != fixtureRoot {
+		t.Skip("the host does not use the canonical root, so the identity expectation does not apply")
+	}
 	canonical := map[string]string{
 		"HOME":            "/fixture/home",
 		"XDG_DATA_HOME":   "  /fixture/data  ",

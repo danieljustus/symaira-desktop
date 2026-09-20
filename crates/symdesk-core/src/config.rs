@@ -2,7 +2,7 @@
 
 //! Unified SymDesk configuration semantics frozen from the Go loader.
 
-use std::{collections::BTreeMap, fmt};
+use std::{collections::BTreeMap, fmt, fs, io::Write, path::Path};
 
 use serde::{Deserialize, Serialize};
 
@@ -306,6 +306,66 @@ pub fn load(
 /// Returns the TOML serializer error.
 pub fn render_toml(config: &Config) -> Result<String, String> {
     toml::to_string(config).map_err(|error| format!("failed to encode config: {error}"))
+}
+
+/// Writes the configuration exactly like the Go oracle's `config.Save`
+/// (`internal/config/config.go:211`).
+///
+/// Go semantics, reproduced one for one:
+///
+/// * `os.MkdirAll(filepath.Dir(path), 0700)` — missing parents are created with
+///   mode `0700`, an *existing* directory keeps its mode;
+/// * `os.OpenFile(path, O_CREATE|O_WRONLY|O_TRUNC, 0600)` — the file is created
+///   with mode `0600` only when it does not exist, an existing file keeps its
+///   mode and is truncated;
+/// * the written bytes are exactly [`render_toml`], already proven byte-equal to
+///   the Go encoder by `canonical_toml_bytes_match_go_encoder`;
+/// * every failure carries the Go wrapper prefix: `failed to create config
+///   directory: `, `failed to create config file: `, `failed to encode config: `
+///   or `failed to close config file: `.
+///
+/// One deliberate difference: Go reports the deferred `f.Close()` error, Rust has
+/// no fallible close, so `sync_all()` (fsync) is the closest call that can still
+/// fail after a successful write.
+///
+/// # Errors
+///
+/// Returns the wrapped message described above.
+pub fn save(path: &str, config: &Config) -> Result<(), String> {
+    let target = Path::new(path);
+    let parent = match target.parent() {
+        Some(dir) if !dir.as_os_str().is_empty() => dir,
+        _ => Path::new("."),
+    };
+    // Go applies the directory mode only to directories it creates, so the
+    // existence check is captured before `create_dir_all`. On Windows Go ignores
+    // the mode entirely, which is why both this binding and its use are unix-only.
+    #[cfg(unix)]
+    let parent_existed = parent.exists();
+    fs::create_dir_all(parent)
+        .map_err(|error| format!("failed to create config directory: {error}"))?;
+    #[cfg(unix)]
+    if !parent_existed {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(parent, fs::Permissions::from_mode(0o700))
+            .map_err(|error| format!("failed to create config directory: {error}"))?;
+    }
+    let body = render_toml(config)?;
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options
+        .open(target)
+        .map_err(|error| format!("failed to create config file: {error}"))?;
+    file.write_all(body.as_bytes())
+        .map_err(|error| format!("failed to encode config: {error}"))?;
+    file.sync_all()
+        .map_err(|error| format!("failed to close config file: {error}"))?;
+    Ok(())
 }
 
 #[must_use]

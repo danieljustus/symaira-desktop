@@ -21,12 +21,29 @@ CONTRACT_FILES = [
     ".github/workflows/release.yml", "home-assistant-addon/symdesk/config.yaml",
 ]
 STEPS = {
+    "Run native history differential": 2,
     "Verify frozen oracle and differential harness on Windows": 5,
-    "Check, lint, and test Rust workspace": 6,
+    "Check, lint, and test Rust workspace": 8,
     "Run native Windows representative CLI HTTP and MCP parity": 7,
     "Run native Windows sidecar round-trip suite": 1,
     "Run native Windows version differential": 4,
 }
+ORACLE_SOURCE_FILES = (
+    ROOT / "scripts/rust-port/cmd/historygen/main.go",
+    ROOT / "scripts/rust-port/cmd/vaultwritegen/main.go",
+)
+SOURCE_GUARD_JOBS = ("test", "port-contract", "rust-native")
+
+
+
+def write_lf(path, text):
+    """Write `text` with literal LF endings and no platform translation.
+
+    Path.write_text() only accepts `newline` on Python 3.10+, and these stubs
+    are shell and Python sources whose line endings must survive verbatim.
+    """
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(text)
 
 
 def native_step_bodies():
@@ -50,6 +67,29 @@ def native_step_bodies():
         yield name, count, "\n".join(body)
 
 
+def workflow_job_body(workflow, job):
+    job_match = re.search(
+        rf"(?ms)^  {job}:\n(?P<body>.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)",
+        workflow,
+    )
+    if job_match is None:
+        raise AssertionError(f"expected {job} job")
+    return job_match.group("body")
+
+
+def pinned_source_guard_oracle_commit():
+    commits = set()
+    pattern = re.compile(r'(?m)^\s*(?:const\s+)?defaultOracleCommit\s*=\s*"([0-9a-f]{40})"$')
+    for source in ORACLE_SOURCE_FILES:
+        match = pattern.search(source.read_text())
+        if match is None:
+            raise AssertionError(f"expected pinned oracle commit in {source.relative_to(ROOT)}")
+        commits.add(match.group(1))
+    if len(commits) != 1:
+        raise AssertionError(f"source guards use different oracle commits: {sorted(commits)}")
+    return commits.pop()
+
+
 class NativeStepControl:
     """Run the real step body with test-owned native command substitutes."""
 
@@ -59,22 +99,22 @@ class NativeStepControl:
         stub_dir = self.root / "stubs"
         stub_dir.mkdir()
         control = stub_dir / "control.py"
-        control.write_text(
+        write_lf(
+            control,
             "import json, os, pathlib, sys\n"
             "log = pathlib.Path(os.environ['NATIVE_CONTROL_LOG'])\n"
             "calls = log.read_text().splitlines() if log.exists() else []\n"
             "with log.open('a') as output:\n"
             "    output.write(json.dumps(sys.argv[1:]) + '\\n')\n"
             "sys.exit(23 if len(calls) + 1 == int(os.environ['NATIVE_CONTROL_FAIL_AT']) else 0)\n",
-            encoding="utf-8", newline="\n",
         )
         for command in ("go", "cargo", "python3"):
             stub = stub_dir / command
-            stub.write_text(
+            write_lf(
+                stub,
                 "#!/usr/bin/env bash\nexec "
                 + shlex.join([Path(sys.executable).as_posix(), control.as_posix(), command])
                 + ' "$@"\n',
-                encoding="utf-8", newline="\n",
             )
             stub.chmod(0o700)
         self.env = dict(os.environ)
@@ -111,6 +151,47 @@ def bash_executable():
 
 
 class NativeCIContracts(unittest.TestCase):
+    def test_rust_historical_evidence_checkouts_have_full_history(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        for job in ("test", "port-contract", "rust", "rust-native"):
+            with self.subTest(job=job):
+                job_body = workflow_job_body(workflow, job)
+                checkout_blocks = re.findall(
+                    r"(?m)^      - uses: actions/checkout@[^\n]+\n"
+                    r"(?P<tail>(?:        [^\n]*\n|[ \t]*\n)*)",
+                    job_body,
+                )
+                self.assertEqual(len(checkout_blocks), 1)
+                with_match = re.search(
+                    r"(?m)^        with:\n(?P<options>(?:          [^\n]*\n)*)",
+                    checkout_blocks[0],
+                )
+                if with_match is None:
+                    self.fail(f"{job} checkout must define with options")
+                self.assertEqual(
+                    re.findall(
+                        r"^          (fetch-depth: 0)$",
+                        with_match.group("options"),
+                        re.MULTILINE,
+                    ),
+                    ["fetch-depth: 0"],
+                )
+
+    def test_clone_based_source_guards_materialize_pinned_oracle_branch(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        commit = pinned_source_guard_oracle_commit()
+        expected = (
+            "git fetch --no-tags origin "
+            f"+{commit}:refs/heads/rust-port-oracle-{commit}"
+        )
+        for job in SOURCE_GUARD_JOBS:
+            with self.subTest(job=job):
+                runs = re.findall(
+                    rf"(?m)^        run: ({re.escape(expected)})$",
+                    workflow_job_body(workflow, job),
+                )
+                self.assertEqual(runs, [expected])
+
     def test_native_failures_cannot_be_hidden_by_later_success(self):
         for name, count, body in native_step_bodies():
             with self.subTest(step=name), tempfile.TemporaryDirectory(prefix="native-step-") as temp:

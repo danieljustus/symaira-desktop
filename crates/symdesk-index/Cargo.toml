@@ -14,6 +14,7 @@ serde.workspace = true
 serde_json.workspace = true
 symdesk-core.workspace = true
 symdesk-vault.workspace = true
+symaira-core-sqlite.workspace = true
 cap-std.workspace = true
 thiserror.workspace = true
 time.workspace = true

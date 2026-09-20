@@ -38,6 +38,12 @@ jobs:
           # portgen provenance tests read the pinned oracle revision via git.
           fetch-depth: 0
 
+      # The frontmatter/history source guards clone this checkout and verify a
+      # pre-squash Go revision. Keep that object reachable through a local
+      # branch: FETCH_HEAD alone is not transferred by git clone --no-local.
+      - name: Materialize pinned Go oracle for source guards
+        run: git fetch --no-tags origin +982fe718f2d64629102b4078b1d65a46645c90c5:refs/heads/rust-port-oracle-982fe718f2d64629102b4078b1d65a46645c90c5
+
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ matrix.go-version }}
@@ -123,6 +129,11 @@ jobs:
           # portgen provenance checks read the pinned oracle revision via git.
           fetch-depth: 0
 
+      # The Windows contract runs the clone-based Go source guards below.
+      - name: Materialize pinned Go oracle for source guards
+        shell: bash
+        run: git fetch --no-tags origin +982fe718f2d64629102b4078b1d65a46645c90c5:refs/heads/rust-port-oracle-982fe718f2d64629102b4078b1d65a46645c90c5
+
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "1.26.6"
@@ -158,6 +169,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Historical evidence gates compare immutable prior revisions.
+          fetch-depth: 0
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -178,6 +192,12 @@ jobs:
         run: cargo install cargo-fuzz --locked --version 0.13.2
 
       - name: Run Rust gates, version differential, and historical evidence tests
+        env:
+          # The Makefile default assumes the developer's attached external NVMe
+          # (/Volumes/1TB_NVMe_SN850X/...), which does not exist on hosted
+          # runners; point VALUE-001's runtime root at the runner's own
+          # writable temp dir instead.
+          VALUE_RUNTIME_ROOT: ${{ runner.temp }}/symaira-desktop-value001-ci
         run: make rust-gates value-001-evidence-tests
 
       - name: Fuzz frontmatter parser smoke corpus
@@ -193,6 +213,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # The pinned frontmatter oracle is validated from Git history; the live
+          # history oracle checks immutable production Go blobs.
+          fetch-depth: 0
+
+      # The source-guard tests clone this checkout, so retain the immutable
+      # pre-squash oracle through a local branch rather than only FETCH_HEAD.
+      - name: Materialize pinned Go oracle for source guards
+        shell: bash
+        run: git fetch --no-tags origin +982fe718f2d64629102b4078b1d65a46645c90c5:refs/heads/rust-port-oracle-982fe718f2d64629102b4078b1d65a46645c90c5
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -206,11 +236,45 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/rust-port/test_native_ci_contract.py
+          go run ./scripts/rust-port/cmd/vaultwritegen --check
+          go test -count=1 ./scripts/rust-port/cmd/vaultwritegen
           cargo fmt --all --check
           cargo check --workspace --all-targets --all-features --locked
           cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
           cargo test --workspace --all-features --locked
           cargo test --workspace --doc --all-features --locked
+
+      - name: Run native vault write differential
+        shell: bash
+        run: make vault-write-differential
+
+      - name: Run native vault history lifecycle differential
+        shell: bash
+        run: make vault-history-differential
+
+      - name: Run native retention differential
+        shell: bash
+        run: make vault-retention-differential
+
+      - name: Run native room identity differential
+        shell: bash
+        run: make symroom-differential
+
+      - name: Run native history differential
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/rust-port/test_history_live.py
+          python3 scripts/rust-port/history_live.py
+
+      - name: Retain native history evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: history-${{ matrix.os }}-${{ github.sha }}
+          path: target/history-live/
+          retention-days: 14
+          if-no-files-found: warn
 
       - name: Run native Unix sidecar round-trip and lock suite
         if: matrix.os != 'windows-latest'
@@ -219,6 +283,10 @@ jobs:
       - name: Run native Unix representative CLI HTTP and MCP parity
         if: matrix.os != 'windows-latest'
         run: make representative-differential mcp-differential
+
+      - name: Run native Unix SEC-003 resource and cleanup stress
+        if: matrix.os != 'windows-latest'
+        run: RESOURCE_STRESS_ROOT="${RUNNER_TEMP}/symdesk-sec003" RESOURCE_RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" make resource-stress
 
       - name: Run native Windows representative CLI HTTP and MCP parity
         if: matrix.os == 'windows-latest'
@@ -233,6 +301,11 @@ jobs:
           go run ./scripts/rust-port/cmd/diffharness --symdesk-left bin/port/symdesk-go.exe --symdesk-right target/debug/symdesk.exe --cases testdata/port/representative/cases.json --stage representative
           go run ./scripts/rust-port/cmd/httpdiff --left bin/port/symdesk-go.exe --right target/debug/symdesk.exe --fixture testdata/port/http/representative.json
           go run ./scripts/rust-port/cmd/mcpdiff --left bin/port/symdesk-go.exe --right target/debug/symdesk.exe
+
+      - name: Run native Windows SEC-003 resource and cleanup stress
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: RESOURCE_STRESS_ROOT="${RUNNER_TEMP}/symdesk-sec003" RESOURCE_RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" make resource-stress
 
       - name: Run native Windows sidecar round-trip suite
         if: matrix.os == 'windows-latest'

@@ -15,6 +15,7 @@ from typing import Any
 import value001
 
 ORACLE = "745c08e8144971c61133c5d0e5d61c7ce405aad2"
+ORIGINAL_VALUE_BASELINE = value001.ORIGINAL_VALUE_BASELINE
 EMPTY_SHA256 = hashlib.sha256(b"").hexdigest()
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
@@ -46,7 +47,14 @@ def finite(value: Any, label: str) -> float:
     return float(value)
 
 
-def check_summary(summary: Any, label: str, unit: str) -> None:
+def check_summary(
+    summary: Any,
+    label: str,
+    unit: str,
+    summation: str,
+    *,
+    require_positive: bool,
+) -> None:
     require(isinstance(summary, dict), f"{label} is not an object")
     required = {"unit", "warmup_samples", "samples", "min", "mean", "p50", "p95", "p99", "max", "raw", "pair_order", "max_observed"}
     require(set(summary) == required, f"{label} keys mismatch")
@@ -57,10 +65,13 @@ def check_summary(summary: Any, label: str, unit: str) -> None:
     raw = summary["raw"]
     require(isinstance(raw, list) and len(raw) == samples, f"{label} raw sample count mismatch")
     values = [finite(v, f"{label}.raw") for v in raw]
-    require(all(v >= 0 for v in values), f"{label} contains a negative sample")
+    require(
+        all(v > 0 if require_positive else v >= 0 for v in values),
+        f"{label} contains an invalid sample",
+    )
     ordered = sorted(values)
     expected = {
-        "min": min(values), "mean": sum(values) / samples,
+        "min": min(values), "mean": value001.mean_of(values, summation),
         "p50": ordered[math.ceil(samples * .50) - 1],
         "p95": ordered[math.ceil(samples * .95) - 1],
         "p99": ordered[math.ceil(samples * .99) - 1],
@@ -83,10 +94,22 @@ def regular(path: Path, label: str) -> None:
     require(not path.is_symlink() and path.is_file(), f"{label} must be a regular file")
 
 
-def validate(path: Path, candidate: str, root: Path, trusted_sha256: str) -> None:
+def validate(
+    path: Path,
+    candidate: str,
+    root: Path,
+    trusted_sha256: str,
+    *,
+    require_order_stratified: bool = False,
+) -> None:
     require(HEX40.fullmatch(candidate) is not None, "--candidate must be a literal 40-character lowercase commit")
     require(HEX64.fullmatch(trusted_sha256) is not None, "--trusted-sha256 must be a 64-character lowercase digest")
     regular(path, "artifact")
+    marker = value001.incomplete_marker_path(path)
+    require(
+        not marker.exists() and not marker.is_symlink(),
+        "artifact has an incomplete-run marker",
+    )
     require(hashlib.sha256(path.read_bytes()).hexdigest() == trusted_sha256, "artifact digest differs from trusted SHA256")
     require(root.is_dir() and not root.is_symlink(), "--root must be a real directory")
     require(git(root, "cat-file", "-e", f"{candidate}^{{commit}}") == "", "candidate commit does not exist")
@@ -102,11 +125,28 @@ def validate(path: Path, candidate: str, root: Path, trusted_sha256: str) -> Non
         value001.validate_result(result)
     except (OSError, json.JSONDecodeError, KeyError, TypeError, value001.HarnessError) as exc:
         raise ValidationError(f"invalid VALUE-001 result: {exc}") from exc
+    estimator = value001.latency_estimator_of(result)
+    if require_order_stratified:
+        require(
+            result.get("schema_version") == value001.SCHEMA_VERSION,
+            f"current candidate requires schema {value001.SCHEMA_VERSION} evidence",
+        )
+        require(
+            estimator == value001.DEFAULT_LATENCY_ESTIMATOR,
+            "current candidate requires the order-stratified latency estimator",
+        )
     repo = result["repository"]
+    if require_order_stratified:
+        require(repo["root"] == str(root.resolve()), "recorded repository root is not the candidate root")
     require(repo["head"] == candidate, "recorded source head is not --candidate")
     require(repo["current_behaviour_oracle_commit"] == ORACLE, "current behavior oracle mismatch")
+    if require_order_stratified:
+        require(repo["original_value_baseline_commit"] == ORIGINAL_VALUE_BASELINE, "original VALUE baseline mismatch")
     require(repo["status"] == "" and repo["candidate_diff_sha256"] == EMPTY_SHA256, "historical capture was not clean")
-    require(isinstance(repo.get("dirty_allowed"), bool), "historical dirty_allowed provenance missing")
+    if require_order_stratified:
+        require(repo.get("dirty_allowed") is True, "schema 5 requires dirty_allowed=true")
+    else:
+        require(isinstance(repo.get("dirty_allowed"), bool), "historical dirty_allowed provenance missing")
 
     binaries = result["binaries"]
     require(set(binaries) == {"go", "rust"}, "binary inventory incomplete")
@@ -114,34 +154,146 @@ def validate(path: Path, candidate: str, root: Path, trusted_sha256: str) -> Non
     require(binaries["rust"]["source"] == candidate, "Rust binary source is not --candidate")
     for name, binary in binaries.items():
         require(HEX40.fullmatch(binary["source"]) is not None and HEX64.fullmatch(binary["sha256"]) is not None, f"{name} binary identity invalid")
-        require(isinstance(binary.get("bytes"), int) and binary["bytes"] > 0, f"{name} binary size invalid")
+        require(isinstance(binary.get("bytes"), int) and not isinstance(binary.get("bytes"), bool) and binary["bytes"] > 0, f"{name} binary size invalid")
         binary_path = Path(binary.get("path", ""))
-        if binary_path.exists():
+        if require_order_stratified:
+            try:
+                value001.require_executable_regular(binary_path, f"{name} binary")
+            except value001.HarnessError as exc:
+                raise ValidationError(str(exc)) from exc
+            require(binary_path.stat().st_size == binary["bytes"], f"{name} binary size mismatch")
+            require(hashlib.sha256(binary_path.read_bytes()).hexdigest() == binary["sha256"], f"{name} binary digest mismatch")
+        elif binary_path.exists():
             require(not binary_path.is_symlink() and binary_path.is_file(), f"{name} binary must be a regular file")
             require(hashlib.sha256(binary_path.read_bytes()).hexdigest() == binary["sha256"], f"{name} binary digest mismatch")
 
     metrics = result["metrics"]
+    summation = value001.summation_of(result)
     require(set(metrics) == REQUIRED_METRICS, "metric categories are incomplete")
     for name, metric in metrics.items():
         unit = "bytes" if name == "rss" else "milliseconds"
-        check_summary(metric["go"], f"metrics.{name}.go", unit)
-        check_summary(metric["rust"], f"metrics.{name}.rust", unit)
+        check_summary(
+            metric["go"],
+            f"metrics.{name}.go",
+            unit,
+            summation,
+            require_positive=require_order_stratified,
+        )
+        check_summary(
+            metric["rust"],
+            f"metrics.{name}.rust",
+            unit,
+            summation,
+            require_positive=require_order_stratified,
+        )
         if name in REQUIRED_OPERATIONS:
             require(set(metric["operations"]) == REQUIRED_OPERATIONS[name], f"{name} operation set is incomplete")
             for operation, pair in metric["operations"].items():
-                check_summary(pair["go"], f"metrics.{name}.{operation}.go", "milliseconds")
-                check_summary(pair["rust"], f"metrics.{name}.{operation}.rust", "milliseconds")
+                check_summary(
+                    pair["go"],
+                    f"metrics.{name}.{operation}.go",
+                    "milliseconds",
+                    summation,
+                    require_positive=require_order_stratified,
+                )
+                check_summary(
+                    pair["rust"],
+                    f"metrics.{name}.{operation}.rust",
+                    "milliseconds",
+                    summation,
+                    require_positive=require_order_stratified,
+                )
 
     try:
-        regressions = value001.latency_regressions(metrics)
+        regressions = value001.latency_regressions(
+            metrics, estimator
+        )
     except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
         raise ValidationError(f"latency gate cannot be recomputed: {exc}") from exc
+    # Fail closed until the stratified decision below sets it.
+    gate_latency_pass = False
     thresholds = result["thresholds"]
-    recorded = thresholds.get("p95_regressions")
+    require(thresholds["minimum_improvement"] == 0.20, "minimum improvement threshold changed")
+    require(thresholds["maximum_latency_regression"] == 0.10, "maximum latency threshold changed")
+    if require_order_stratified:
+        require(
+            thresholds.get("latency_interval_width_limit") == value001.MAXIMUM_LATENCY_INTERVAL_WIDTH,
+            "latency interval width limit changed or missing",
+        )
+    recorded = value001.recorded_regressions(result)
     require(isinstance(recorded, dict) and set(recorded) == set(regressions), "regression inventory is incomplete")
     for name, actual in regressions.items():
         require(finite(actual, name) == recorded[name], f"threshold ratio for {name} is not recomputed")
-        require(actual <= 0.10, f"{name} exceeds exact 10% regression limit")
+    if require_order_stratified:
+        try:
+            order_regressions = value001.latency_order_regressions(metrics)
+        except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
+            raise ValidationError(f"order-stratified latency gate cannot be recomputed: {exc}") from exc
+        recorded_by_order = thresholds.get("latency_order_regressions")
+        require(
+            isinstance(recorded_by_order, dict) and set(recorded_by_order) == set(order_regressions),
+            "order-stratified latency regression inventory is incomplete",
+        )
+        for name, expected_by_order in order_regressions.items():
+            actual_by_order = recorded_by_order.get(name)
+            if not isinstance(actual_by_order, dict) or set(actual_by_order) != set(value001.PAIR_ORDERS):
+                raise ValidationError(
+                    f"order-stratified latency regression inventory for {name} is incomplete"
+                )
+            for order, expected in expected_by_order.items():
+                actual = finite(actual_by_order.get(order), f"{name}.{order}")
+                require(
+                    actual == expected,
+                    f"order-stratified regression is not recomputed for {name}.{order}",
+                )
+        try:
+            order_intervals = value001.latency_order_regression_intervals(metrics)
+        except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
+            raise ValidationError(f"order-stratified latency intervals cannot be recomputed: {exc}") from exc
+        recorded_intervals = thresholds.get("latency_order_regression_intervals")
+        require(
+            isinstance(recorded_intervals, dict) and set(recorded_intervals) == set(order_intervals),
+            "order-stratified latency interval inventory is incomplete",
+        )
+        for name, expected_by_order in order_intervals.items():
+            actual_by_order = recorded_intervals.get(name)
+            if not isinstance(actual_by_order, dict) or set(actual_by_order) != set(value001.PAIR_ORDERS):
+                raise ValidationError(
+                    f"order-stratified latency interval inventory for {name} is incomplete"
+                )
+            for order, expected_interval in expected_by_order.items():
+                actual_interval = actual_by_order.get(order)
+                require(
+                    isinstance(actual_interval, list) and len(actual_interval) == 2,
+                    f"order-stratified interval for {name}.{order} is invalid",
+                )
+                for actual, expected in zip(actual_interval, expected_interval):
+                    require(
+                        finite(actual, f"{name}.{order} interval") == expected,
+                        f"order-stratified interval is not recomputed for {name}.{order}",
+                    )
+        failure = value001.order_stratified_latency_failure(order_intervals)
+        require(
+            failure is None,
+            failure or "order-stratified interval does not confirm the ceiling or is too wide to decide",
+        )
+        gate_latency_pass = failure is None
+    if not require_order_stratified:
+        # Historical schema-2/schema-3 evidence remains checked according to
+        # its recorded and independently reviewed gate semantics: the pooled
+        # point estimates decide there.
+        for name, actual in regressions.items():
+            require(actual <= 0.10, f"{name} exceeds exact 10% regression limit")
+        # Schema 4
+        # must not use a heterogeneous pooled p95 as an extra decision gate:
+        # that would reintroduce the order bias this repair removes.
+        try:
+            unpaired_regressions = value001.latency_regressions(metrics, "unpaired_p95")
+        except (KeyError, TypeError, ZeroDivisionError, value001.HarnessError) as exc:
+            raise ValidationError(f"unpaired p95 gate cannot be recomputed: {exc}") from exc
+        for name, actual in unpaired_regressions.items():
+            finite(actual, f"{name} unpaired p95")
+            require(actual <= 0.10, f"{name} exceeds exact 10% unpaired p95 regression limit")
     go_bytes = binaries["go"]["bytes"]
     rust_bytes = binaries["rust"]["bytes"]
     size_reduction = (go_bytes - rust_bytes) / go_bytes
@@ -150,8 +302,18 @@ def validate(path: Path, candidate: str, root: Path, trusted_sha256: str) -> Non
     rss_reduction = (rss_go - rss_rust) / rss_go
     require(finite(thresholds.get("binary_size_reduction"), "binary size reduction") == size_reduction, "binary size reduction is not recomputed")
     require(finite(thresholds.get("representative_rss_reduction_max"), "RSS reduction") == rss_reduction, "RSS reduction is not recomputed")
-    require(size_reduction >= 0.20 or rss_reduction >= 0.20, "neither exact 20% improvement criterion passes")
-    require(thresholds.get("contracts_pass") is True and thresholds.get("latency_pass") is True and thresholds.get("improvement_pass") is True and result["passed"] is True, "recorded approval is not passing")
+    improvement_pass = size_reduction >= 0.20 or rss_reduction >= 0.20
+    contracts_pass = all(item["exit_code"] == 0 for item in result["contracts"])
+    if require_order_stratified:
+        # The order-stratified interval decides the latency gate (checked above).
+        # The pooled point estimates stay integrity-checked but are descriptive
+        # only: a pooled statistic must not decide over heterogeneous order
+        # cohorts.
+        latency_pass = gate_latency_pass
+    else:
+        latency_pass = all(actual <= 0.10 for actual in regressions.values())
+    require(improvement_pass, "neither exact 20% improvement criterion passes")
+    require(thresholds.get("contracts_pass") is contracts_pass and thresholds.get("latency_pass") is latency_pass and thresholds.get("improvement_pass") is improvement_pass and result["passed"] is (contracts_pass and latency_pass and improvement_pass), "recorded approval is not passing")
     require(isinstance(result["contracts"], list) and {c.get("name") for c in result["contracts"]} == REQUIRED_CONTRACTS, "required contract inventory is incomplete")
     for contract in result["contracts"]:
         require(contract["exit_code"] == 0 and contract["stderr"] == "", "contract outcome is not clean exit 0")
@@ -165,7 +327,13 @@ def main() -> int:
     parser.add_argument("--trusted-sha256", required=True, help="independently supplied artifact SHA256")
     args = parser.parse_args()
     try:
-        validate(args.artifact, args.candidate, args.root, args.trusted_sha256)
+        validate(
+            args.artifact,
+            args.candidate,
+            args.root,
+            args.trusted_sha256,
+            require_order_stratified=True,
+        )
     except (ValidationError, OSError) as exc:
         print(f"FAIL {exc}", file=sys.stderr)
         return 1

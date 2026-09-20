@@ -2,12 +2,17 @@
 
 //! Read-only contract-v1–v6 Markdown vault parsing.
 
+pub mod conflict;
 mod health_links;
+pub mod history;
 mod links;
 mod metadata;
+mod mutations;
+pub mod notes;
 mod paths;
 mod resolver;
-mod sha256;
+pub mod retention;
+pub mod sha256;
 mod tags;
 mod typed;
 mod walk;
@@ -22,12 +27,23 @@ use serde as _;
 #[cfg(test)]
 use serde_json as _;
 
+pub use conflict::{
+    CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
+};
 pub use health_links::{HealthLinkResolver, LinkInventory, normalize_health_link_target};
+pub use history::{
+    HistoryEntry, HistoryError, HistoryStore, TRASH_META_SUFFIX, TrashEntry, trash_rel_dir,
+};
 pub use links::extract_wikilinks;
 pub use metadata::{
     SearchMetadata, SearchMetadataField, format_search_metadata, metadata_matches,
     search_metadata_from_document, strip_search_metadata,
 };
+pub use mutations::{
+    MutationError, delete_frontmatter_value, set_frontmatter_key, set_frontmatter_value,
+    write_atomic,
+};
+pub use notes::{NoteError, create_note, move_note, note_document, note_file_name, set_property};
 pub use paths::{SecurePathError, secure_path};
 pub use resolver::{ResolveDocument, ResolvedEdge, ResolvedNode, Resolver, resolve_graph};
 pub use tags::{TagSpan, extract_inline_tags, find_inline_tag_spans};

@@ -1,6 +1,6 @@
 # Go-to-Rust migration record
 
-> **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006` in progress (fresh VALUE-001 passed; native representative differential pending)
+> **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006`, `RUST-007`, and `RUST-016` are blocked by the current VALUE-001 order-bias gate ([#936](https://github.com/danieljustus/symaira-desktop/issues/936)).
 > **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; VALUE baselines remain pinned to `ae863319` / `v0.12.2`
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
@@ -66,6 +66,8 @@ The measured Go baseline is in
 - [`work-items.json`](work-items.json) — machine-readable dependency graph.
 - [`baseline-20260906.json`](baseline-20260906.json) — measured Go reference metrics.
 - [`value001-result.schema.json`](value001-result.schema.json) — schema for measured VALUE-001 artifacts.
+- [`value001-order-bias-repair.md`](value001-order-bias-repair.md) — schema-4/5 order-stratified decision contract and fail-closed boundary.
+- [`value001-fbc52d0c-current-gate.md`](value001-fbc52d0c-current-gate.md) — current-candidate decision; no RUST-006/RUST-007/RUST-016 advancement.
 - [`results/value001-retained.json`](results/value001-retained.json) and its provenance sidecar — historical privacy-reviewed 655d248 capture; check historical evidence with `make value-001-evidence-tests`, not as approval of current HEAD. Exact candidate approval requires the explicit command in [`operations-gate-checkpoint.md`](operations-gate-checkpoint.md).
 - [`value-signal-version-20260906.json`](value-signal-version-20260906.json) — non-representative first Rust slice measurements.
 
@@ -77,8 +79,71 @@ then records paired startup, indexed-search, MCP, HTTP, and long-running RSS
 samples. The harness requires at least 100 post-warmup samples per workload,
 uses a synthetic vault and loopback-only dynamic ports, records raw samples,
 and exits non-zero unless contract parity, the 20% binary-size-or-RSS gate, and
-all four p95 latency gates pass. Override `VALUE_OUTPUT` to retain a separate
+all declared latency gates pass. Override `VALUE_OUTPUT` to retain a separate
 artifact; the default is `docs/rust-port/results/value001-latest.json`.
+The Make targets default all temporary homes, XDG roots, language caches, and
+Python bytecode to the attached NVMe; override `VALUE_RUNTIME_ROOT` only with
+another external build volume.
+
+The timed `desk_ls` MCP call names each side's own absolute `cohort-042`
+directory (`dir` is matched against the indexed absolute paths), so it returns
+one deterministic 100-document cohort inside the SEC-003 1 MiB
+outgoing-response limit instead of the full listing, which the Rust port
+rejects at that limit. Index preparation, CLI listing, and search still use
+the full 10,000-document vault.
+
+### Current acceptance
+
+RUST-006 is accepted for the exact candidate
+`5c5e98c5aab2df54bb2c47ad51fe3d2d8e71f23b`: one fresh schema-6 run (100 samples,
+20 warmups, unchanged oracle `745c08e8…`) passed all four differential
+contracts, the ≥20 % improvement criterion (binary size −84.80 %, representative
+RSS −71.62 %) and the interval latency gate. The published capture is
+[`results/value001-5c5e98c5.json`](results/value001-5c5e98c5.json) with its
+`.metadata.json`; `python3 scripts/rust-port/validate_value001_5c5e98c5.py --raw <private capture>`
+re-proves that it is exactly the reviewed redaction of the private raw capture
+(SHA-256 `40267a5c…`). RUST-007 and RUST-016 are `ready`; Go remains production.
+
+## VALUE-001 units and display
+
+VALUE-001 stores reductions and relative latency regressions as dimensionless
+ratios, not percentage values. A regression is `candidate / reference - 1`, so
+`0.10` is the unchanged **+10%** latency ceiling and gate comparisons use
+`value <= 0.10` directly. Schema 2 retains its historical
+`thresholds.p95_regressions`; schema 3 retains its declared pooled estimator
+and provenance. Schema 4 remains historical order-stratified evidence; schemas 5
+and 6 are the controlled HTTP order-stratified formats. Both require
+`order_stratified_paired_median_ratio`, record each execution-order cohort in
+`thresholds.latency_order_regressions`, and store the worse cohort as
+`thresholds.latency_regressions` for each gate. The stratified median intervals
+remain separate by order under
+`thresholds.latency_order_regression_intervals`; pooled intervals are never a
+decision input. Schema 5 also rotates HTTP routes per round and
+alternates Go/Rust independently for each route, so no route is permanently
+first in a server burst. Missing, mismatched, or materially unbalanced
+`go-rust`/`rust-go` labels fail closed. Historical pooled evidence remains
+auditable but cannot approve a new candidate.
+
+Only the current schema can approve a candidate. Schema 6 keeps schema 5's
+schedule and statistics but decides the latency gate on the stratified
+**interval** instead of the point estimate: a cohort fails when its interval
+lower bound exceeds `maximum_latency_regression`, so a cohort whose estimate is
+above the ceiling but whose interval still contains it does not decide the gate.
+The same rule fails closed when an interval is wider than
+`latency_interval_width_limit` (`0.40`), because a run that cannot exclude a
+regression of three times the ceiling carries no acceptance information. Point
+estimates stay recorded and validated, but they are descriptive for the
+decision.
+
+`python3 scripts/rust-port/value001_report.py <artifact>` uses the
+`ratio_to_percentage` display helper, which multiplies a stored ratio by 100
+without modifying the JSON artifact: `0.10` displays as `10.00%`, `3.0` as
+`300.00%`, and the retained failed artifact's HTTP ratio
+`316.24612017633007` as `31,624.61%`. Timing samples remain in milliseconds and
+RSS samples remain in bytes. The report verifies displayed p95 values against
+the retained raw arrays, but it never runs a benchmark or changes the gate.
+The historical `value001-latest.json` therefore remains `passed: false`; the
+migration stays stopped and Go remains in production.
 
 ## Implementation progress
 

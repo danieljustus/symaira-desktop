@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -13,6 +14,11 @@ import (
 func Compare(testCase Case, left, right Result) error {
 	if left.TimedOut != right.TimedOut {
 		return fmt.Errorf("timeout mismatch: left=%t right=%t", left.TimedOut, right.TimedOut)
+	}
+	if left.TimedOut {
+		// A case whose expected behaviour is completion must never pass by
+		// hanging: two matching kills are not parity evidence.
+		return errors.New("both sides timed out: a timed-out case is not a pass")
 	}
 	if left.ExitCode != right.ExitCode {
 		return fmt.Errorf("exit mismatch: left=%d right=%d", left.ExitCode, right.ExitCode)

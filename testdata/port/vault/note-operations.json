@@ -1,0 +1,551 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+    "release": "post-v0.12.2-security-880"
+  },
+  "source_hashes": {
+    "internal/history/trash.go": "a18e604c203c6cee550078fa8b37acef68c9e79a9f07482288a4b59344f01179",
+    "internal/service/history.go": "67a37a56fa117e170025183043f340ecae6a0d51f64fb906233b238a1357b6fe",
+    "internal/service/service.go": "296574033a6b6516846106624f25e4e3fd35bc91f0f45eea28a3ca6bae1fc0a8"
+  },
+  "cases": [
+    {
+      "id": "note-new-plain",
+      "verb": "new",
+      "subject": "Buy Milk \u0026 Eggs",
+      "setup": null,
+      "title": "Buy Milk \u0026 Eggs",
+      "content": "First line\nSecond line",
+      "vault_mode": 488,
+      "before": {
+        "markdown": []
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "Buy_Milk_\u0026_Eggs.md",
+            "mode": 420,
+            "size": 97,
+            "sha256": "b366c481d77a34c19b6d51f450aa12cdde5d81c2e285a2167a27d56b454a4485",
+            "content": "---\ntitle: \"Buy Milk \u0026 Eggs\"\ncreated: \"{{CREATED}}\"\ntags: []\n---\n\nFirst line\nSecond line"
+          }
+        ]
+      },
+      "error_wrapper": "",
+      "error_class": "",
+      "result": "Buy_Milk_\u0026_Eggs.md",
+      "platform": "any"
+    },
+    {
+      "id": "note-new-existing-file-keeps-mode",
+      "verb": "new",
+      "subject": "Kept Mode",
+      "setup": [
+        {
+          "path": "Kept_Mode.md",
+          "kind": "file",
+          "mode": 416,
+          "content_base64": "LS0tCnRpdGxlOiBvbGRlcgotLS0Kb2xkZXIgYm9keQo="
+        }
+      ],
+      "title": "Kept Mode",
+      "content": "replacement body",
+      "vault_mode": 488,
+      "before": {
+        "markdown": [
+          {
+            "path": "Kept_Mode.md",
+            "mode": 416,
+            "size": 32,
+            "sha256": "14f82c485bb4a91390346cf71b52fa7a7e8a5c797d30ad95c915c4bdc692e46f",
+            "content": "---\ntitle: older\n---\nolder body\n"
+          }
+        ]
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "Kept_Mode.md",
+            "mode": 416,
+            "size": 85,
+            "sha256": "72d2fd7464859e2a6512f4550fe9842994ea36037992a75b491da846fd56393c",
+            "content": "---\ntitle: \"Kept Mode\"\ncreated: \"{{CREATED}}\"\ntags: []\n---\n\nreplacement body"
+          }
+        ]
+      },
+      "error_wrapper": "",
+      "error_class": "",
+      "result": "Kept_Mode.md",
+      "platform": "any"
+    },
+    {
+      "id": "note-new-title-with-path-separator",
+      "verb": "new",
+      "subject": "nested/title",
+      "setup": null,
+      "title": "nested/title",
+      "content": "body",
+      "vault_mode": 488,
+      "before": {
+        "markdown": []
+      },
+      "after": {
+        "markdown": []
+      },
+      "error_wrapper": "failed to write file: ",
+      "error_class": "write_failed",
+      "platform": "any"
+    },
+    {
+      "id": "note-new-read-only-vault",
+      "verb": "new",
+      "subject": "Locked",
+      "setup": null,
+      "title": "Locked",
+      "content": "body",
+      "vault_mode": 320,
+      "before": {
+        "markdown": []
+      },
+      "after": {
+        "markdown": []
+      },
+      "error_wrapper": "failed to write file: ",
+      "error_class": "write_failed",
+      "platform": "unix"
+    },
+    {
+      "id": "props-edit-atomic-replace",
+      "verb": "edit",
+      "subject": "note.md",
+      "setup": [
+        {
+          "path": "note.md",
+          "kind": "file",
+          "mode": 416,
+          "content_base64": "LS0tCnRpdGxlOiBFZGl0YWJsZQpzdGF0dXM6IG9wZW4KLS0tCmJvZHkK"
+        }
+      ],
+      "key": "status",
+      "value": "done",
+      "vault_mode": 488,
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 42,
+            "sha256": "38a59dacd6286b05f2f09b5c3340e580ae0a0be07e520a0214bc58247cfc8c1b",
+            "content": "---\ntitle: Editable\nstatus: open\n---\nbody\n"
+          }
+        ]
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 384,
+            "size": 44,
+            "sha256": "5df1474c1aa67ff6fcee3e82a36825fbc8919a694a6c44e4fc466e5ed95b272e",
+            "content": "---\ntitle: Editable\nstatus: \"done\"\n---\nbody\n"
+          }
+        ]
+      },
+      "error_wrapper": "",
+      "error_class": "",
+      "platform": "any"
+    },
+    {
+      "id": "props-edit-asn-rejected",
+      "verb": "edit",
+      "subject": "note.md",
+      "setup": [
+        {
+          "path": "note.md",
+          "kind": "file",
+          "mode": 416,
+          "content_base64": "LS0tCnRpdGxlOiBFZGl0YWJsZQotLS0KYm9keQo="
+        }
+      ],
+      "key": "asn",
+      "value": "7",
+      "vault_mode": 488,
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 29,
+            "sha256": "9a57877fc22554d53d63ed3d1ae0548b7df7cd3e0db398d973d7c4dc6cb2ef58",
+            "content": "---\ntitle: Editable\n---\nbody\n"
+          }
+        ]
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 29,
+            "sha256": "9a57877fc22554d53d63ed3d1ae0548b7df7cd3e0db398d973d7c4dc6cb2ef58",
+            "content": "---\ntitle: Editable\n---\nbody\n"
+          }
+        ]
+      },
+      "error_wrapper": "use \"symdesk doc asn \u003cfile\u003e \u003cnext|N\u003e\" to assign an ASN safely",
+      "error_class": "asn_guard",
+      "platform": "any"
+    },
+    {
+      "id": "props-edit-missing-file",
+      "verb": "edit",
+      "subject": "missing.md",
+      "setup": null,
+      "key": "status",
+      "value": "done",
+      "vault_mode": 488,
+      "before": {
+        "markdown": []
+      },
+      "after": {
+        "markdown": []
+      },
+      "error_wrapper": "read file: ",
+      "error_class": "not_found",
+      "platform": "any"
+    },
+    {
+      "id": "note-move-same-directory",
+      "verb": "move",
+      "subject": "note.md",
+      "setup": [
+        {
+          "path": "note.md",
+          "kind": "file",
+          "mode": 416,
+          "content_base64": "LS0tCnRpdGxlOiBNb3ZhYmxlCi0tLQpib2R5Cg=="
+        }
+      ],
+      "from": "note.md",
+      "to": "renamed.md",
+      "vault_mode": 488,
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 28,
+            "sha256": "62709daf56a7018087c44ca89600101613a2623fecd5ff2855561b4d0871b928",
+            "content": "---\ntitle: Movable\n---\nbody\n"
+          }
+        ]
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "renamed.md",
+            "mode": 416,
+            "size": 28,
+            "sha256": "62709daf56a7018087c44ca89600101613a2623fecd5ff2855561b4d0871b928",
+            "content": "---\ntitle: Movable\n---\nbody\n"
+          }
+        ]
+      },
+      "error_wrapper": "",
+      "error_class": "",
+      "platform": "any"
+    },
+    {
+      "id": "note-move-into-existing-directory",
+      "verb": "move",
+      "subject": "note.md",
+      "setup": [
+        {
+          "path": "note.md",
+          "kind": "file",
+          "mode": 416,
+          "content_base64": "LS0tCnRpdGxlOiBNb3ZhYmxlCi0tLQpib2R5Cg=="
+        },
+        {
+          "path": "archive",
+          "kind": "directory",
+          "mode": 488
+        }
+      ],
+      "from": "note.md",
+      "to": "archive/note.md",
+      "vault_mode": 488,
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 28,
+            "sha256": "62709daf56a7018087c44ca89600101613a2623fecd5ff2855561b4d0871b928",
+            "content": "---\ntitle: Movable\n---\nbody\n"
+          }
+        ]
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "archive/note.md",
+            "mode": 416,
+            "size": 28,
+            "sha256": "62709daf56a7018087c44ca89600101613a2623fecd5ff2855561b4d0871b928",
+            "content": "---\ntitle: Movable\n---\nbody\n"
+          }
+        ]
+      },
+      "error_wrapper": "",
+      "error_class": "",
+      "platform": "any"
+    },
+    {
+      "id": "note-move-missing-source",
+      "verb": "move",
+      "subject": "missing.md",
+      "setup": null,
+      "from": "missing.md",
+      "to": "renamed.md",
+      "vault_mode": 488,
+      "before": {
+        "markdown": []
+      },
+      "after": {
+        "markdown": []
+      },
+      "error_wrapper": "failed to move file: ",
+      "error_class": "move_failed",
+      "platform": "any"
+    },
+    {
+      "id": "note-move-missing-target-parent",
+      "verb": "move",
+      "subject": "note.md",
+      "setup": [
+        {
+          "path": "note.md",
+          "kind": "file",
+          "mode": 416,
+          "content_base64": "LS0tCnRpdGxlOiBNb3ZhYmxlCi0tLQpib2R5Cg=="
+        }
+      ],
+      "from": "note.md",
+      "to": "archive/note.md",
+      "vault_mode": 488,
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 28,
+            "sha256": "62709daf56a7018087c44ca89600101613a2623fecd5ff2855561b4d0871b928",
+            "content": "---\ntitle: Movable\n---\nbody\n"
+          }
+        ]
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 28,
+            "sha256": "62709daf56a7018087c44ca89600101613a2623fecd5ff2855561b4d0871b928",
+            "content": "---\ntitle: Movable\n---\nbody\n"
+          }
+        ]
+      },
+      "error_wrapper": "failed to move file: ",
+      "error_class": "move_failed",
+      "platform": "any"
+    },
+    {
+      "id": "note-move-onto-existing-file",
+      "verb": "move",
+      "subject": "note.md",
+      "setup": [
+        {
+          "path": "note.md",
+          "kind": "file",
+          "mode": 416,
+          "content_base64": "LS0tCnRpdGxlOiBNb3ZhYmxlCi0tLQptb3ZlIG1lCg=="
+        },
+        {
+          "path": "occupied.md",
+          "kind": "file",
+          "mode": 384,
+          "content_base64": "LS0tCnRpdGxlOiBPY2N1cGllZAotLS0KcmVwbGFjZWQgYnkgdGhlIG1vdmUK"
+        }
+      ],
+      "from": "note.md",
+      "to": "occupied.md",
+      "vault_mode": 488,
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 31,
+            "sha256": "90eb6398305275c24143e4ddd278bf7b6f6013d07638b0f69e1b4ddc8c6d2a9c",
+            "content": "---\ntitle: Movable\n---\nmove me\n"
+          },
+          {
+            "path": "occupied.md",
+            "mode": 384,
+            "size": 45,
+            "sha256": "8ca103fc03b41f3b78101754e50598d78ef8f28b6eef0f0babc145f0e710e547",
+            "content": "---\ntitle: Occupied\n---\nreplaced by the move\n"
+          }
+        ]
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "occupied.md",
+            "mode": 416,
+            "size": 31,
+            "sha256": "90eb6398305275c24143e4ddd278bf7b6f6013d07638b0f69e1b4ddc8c6d2a9c",
+            "content": "---\ntitle: Movable\n---\nmove me\n"
+          }
+        ]
+      },
+      "error_wrapper": "",
+      "error_class": "",
+      "platform": "any"
+    },
+    {
+      "id": "note-move-target-is-directory",
+      "verb": "move",
+      "subject": "note.md",
+      "setup": [
+        {
+          "path": "note.md",
+          "kind": "file",
+          "mode": 416,
+          "content_base64": "LS0tCnRpdGxlOiBNb3ZhYmxlCi0tLQpib2R5Cg=="
+        },
+        {
+          "path": "occupied",
+          "kind": "directory",
+          "mode": 488
+        }
+      ],
+      "from": "note.md",
+      "to": "occupied",
+      "vault_mode": 488,
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 28,
+            "sha256": "62709daf56a7018087c44ca89600101613a2623fecd5ff2855561b4d0871b928",
+            "content": "---\ntitle: Movable\n---\nbody\n"
+          }
+        ]
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 28,
+            "sha256": "62709daf56a7018087c44ca89600101613a2623fecd5ff2855561b4d0871b928",
+            "content": "---\ntitle: Movable\n---\nbody\n"
+          }
+        ]
+      },
+      "error_wrapper": "failed to move file: ",
+      "error_class": "move_failed",
+      "platform": "any"
+    },
+    {
+      "id": "note-delete-moves-to-trash",
+      "verb": "delete",
+      "subject": "folder/note.md",
+      "setup": [
+        {
+          "path": "folder/note.md",
+          "kind": "file",
+          "mode": 416,
+          "content_base64": "LS0tCnRpdGxlOiBUcmFzaGFibGUKLS0tCmJvZHkgdG8gcHJlc2VydmUK"
+        }
+      ],
+      "vault_mode": 488,
+      "before": {
+        "markdown": [
+          {
+            "path": "folder/note.md",
+            "mode": 416,
+            "size": 42,
+            "sha256": "349c4aca196e04a86be2a6976d5df13e92dd3c7b7332f162dbe43d026709b1c3",
+            "content": "---\ntitle: Trashable\n---\nbody to preserve\n"
+          }
+        ]
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": ".symdesk/trash/folder__note.md",
+            "mode": 416,
+            "size": 42,
+            "sha256": "349c4aca196e04a86be2a6976d5df13e92dd3c7b7332f162dbe43d026709b1c3",
+            "content": "---\ntitle: Trashable\n---\nbody to preserve\n"
+          }
+        ]
+      },
+      "error_wrapper": "",
+      "error_class": "",
+      "result": "folder__note.md",
+      "trash": {
+        "name": "folder__note.md",
+        "original_path": "folder/note.md",
+        "size": 42,
+        "content_sha256": "349c4aca196e04a86be2a6976d5df13e92dd3c7b7332f162dbe43d026709b1c3",
+        "metadata_base64": "ewogICJuYW1lIjogImZvbGRlcl9fbm90ZS5tZCIsCiAgIm9yaWdpbmFsX3BhdGgiOiAiZm9sZGVyL25vdGUubWQiLAogICJkZWxldGVkX2F0IjogInt7REVMRVRFRF9BVH19IiwKICAic2l6ZSI6IDQyCn0=",
+        "deleted_at_present": true
+      },
+      "platform": "any"
+    },
+    {
+      "id": "note-delete-missing-file",
+      "verb": "delete",
+      "subject": "missing.md",
+      "setup": null,
+      "vault_mode": 488,
+      "before": {
+        "markdown": []
+      },
+      "after": {
+        "markdown": []
+      },
+      "error_wrapper": "",
+      "error_class": "not_found",
+      "platform": "any"
+    },
+    {
+      "id": "note-delete-directory-rejected",
+      "verb": "delete",
+      "subject": "folder",
+      "setup": [
+        {
+          "path": "folder",
+          "kind": "directory",
+          "mode": 488
+        }
+      ],
+      "vault_mode": 488,
+      "before": {
+        "markdown": []
+      },
+      "after": {
+        "markdown": []
+      },
+      "error_wrapper": "cannot trash a directory: ",
+      "error_class": "trash_directory",
+      "platform": "any"
+    }
+  ]
+}

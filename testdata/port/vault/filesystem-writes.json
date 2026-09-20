@@ -1,0 +1,575 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+    "release": "post-v0.12.2-security-880"
+  },
+  "temp_file_pattern": {
+    "prefix": ".symdesk-frontmatter-",
+    "suffix": ".tmp"
+  },
+  "source_hashes": {
+    "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",
+    "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
+  },
+  "cases": [
+    {
+      "id": "atomic-create-new",
+      "operation": "atomic_write",
+      "platform": "any",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "note.md",
+        "data_base64": "LS0tCnRpdGxlOiBjcmVhdGVkCi0tLQpib2R5Cg==",
+        "data_length": 28
+      },
+      "before": {
+        "markdown": [],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 384,
+            "size": 28,
+            "sha256": "64c5cb45ff7db4bd3392900f50be8a619aa35ba2e71e8b8eeb3df96852168f48",
+            "content_base64": "LS0tCnRpdGxlOiBjcmVhdGVkCi0tLQpib2R5Cg=="
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "error_class": "",
+      "error_prefix": "",
+      "target": {
+        "path": "note.md",
+        "mode": 384,
+        "size": 28,
+        "sha256": "64c5cb45ff7db4bd3392900f50be8a619aa35ba2e71e8b8eeb3df96852168f48",
+        "content_base64": "LS0tCnRpdGxlOiBjcmVhdGVkCi0tLQpib2R5Cg=="
+      },
+      "target_kind": "file",
+      "walk_paths": [
+        "note.md"
+      ]
+    },
+    {
+      "id": "atomic-overwrite-existing",
+      "operation": "atomic_write",
+      "platform": "any",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "note.md",
+        "data_base64": "LS0tCnRpdGxlOiByZXBsYWNlZAotLS0KbmV3IGJvZHkK",
+        "data_length": 33,
+        "existing_mode": 416
+      },
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 33,
+            "sha256": "548e1349ac14d6ef33fc0faa4356fe7c4b9e2b44c587aaa4e78a32c14855cb38",
+            "content_base64": "LS0tCnRpdGxlOiBvcmlnaW5hbAotLS0Kb2xkIGJvZHkK"
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 384,
+            "size": 33,
+            "sha256": "a51a5c280cd2fd05aefd221a6ad93ff413323fb110728bb5992611ecc6759339",
+            "content_base64": "LS0tCnRpdGxlOiByZXBsYWNlZAotLS0KbmV3IGJvZHkK"
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "error_class": "",
+      "error_prefix": "",
+      "target": {
+        "path": "note.md",
+        "mode": 384,
+        "size": 33,
+        "sha256": "a51a5c280cd2fd05aefd221a6ad93ff413323fb110728bb5992611ecc6759339",
+        "content_base64": "LS0tCnRpdGxlOiByZXBsYWNlZAotLS0KbmV3IGJvZHkK"
+      },
+      "target_kind": "file",
+      "walk_paths": [
+        "note.md"
+      ]
+    },
+    {
+      "id": "atomic-overwrite-empty-payload",
+      "operation": "atomic_write",
+      "platform": "any",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "note.md",
+        "existing_mode": 416
+      },
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 33,
+            "sha256": "548e1349ac14d6ef33fc0faa4356fe7c4b9e2b44c587aaa4e78a32c14855cb38",
+            "content_base64": "LS0tCnRpdGxlOiBvcmlnaW5hbAotLS0Kb2xkIGJvZHkK"
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 384,
+            "size": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "error_class": "",
+      "error_prefix": "",
+      "target": {
+        "path": "note.md",
+        "mode": 384,
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "target_kind": "file",
+      "walk_paths": [
+        "note.md"
+      ]
+    },
+    {
+      "id": "atomic-write-invalid-utf8",
+      "operation": "atomic_write",
+      "platform": "any",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "note.md",
+        "data_base64": "LS0tCnRpdGxlOiBvcGFxdWUKLS0tCv/+eAo=",
+        "data_length": 26
+      },
+      "before": {
+        "markdown": [],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 384,
+            "size": 26,
+            "sha256": "d82bb2eba529d607e9a05c0489e5a062d1378666cd27a9913416d4f59faa0975",
+            "content_base64": "LS0tCnRpdGxlOiBvcGFxdWUKLS0tCv/+eAo="
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "error_class": "",
+      "error_prefix": "",
+      "target": {
+        "path": "note.md",
+        "mode": 384,
+        "size": 26,
+        "sha256": "d82bb2eba529d607e9a05c0489e5a062d1378666cd27a9913416d4f59faa0975",
+        "content_base64": "LS0tCnRpdGxlOiBvcGFxdWUKLS0tCv/+eAo="
+      },
+      "target_kind": "file",
+      "walk_paths": [
+        "note.md"
+      ]
+    },
+    {
+      "id": "atomic-write-large-payload",
+      "operation": "atomic_write",
+      "platform": "any",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "note.md",
+        "data_sha256": "8596bceac13437d472568a731540db968c1592179fb561751f289e74eaf4b1dd",
+        "data_length": 70200,
+        "data_repeat": "symdesk-payload-0123456789\n"
+      },
+      "before": {
+        "markdown": [],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 384,
+            "size": 70200,
+            "sha256": "8596bceac13437d472568a731540db968c1592179fb561751f289e74eaf4b1dd"
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "error_class": "",
+      "error_prefix": "",
+      "target": {
+        "path": "note.md",
+        "mode": 384,
+        "size": 70200,
+        "sha256": "8596bceac13437d472568a731540db968c1592179fb561751f289e74eaf4b1dd"
+      },
+      "target_kind": "file",
+      "walk_paths": [
+        "note.md"
+      ]
+    },
+    {
+      "id": "atomic-missing-parent",
+      "operation": "atomic_write",
+      "platform": "any",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "missing/note.md",
+        "data_base64": "LS0tCnRpdGxlOiBub3doZXJlCi0tLQo=",
+        "data_length": 23
+      },
+      "before": {
+        "markdown": [],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "after": {
+        "markdown": [],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "error_class": "create_temp",
+      "error_prefix": "create temp file: ",
+      "target_kind": "file"
+    },
+    {
+      "id": "atomic-target-is-directory",
+      "operation": "atomic_write",
+      "platform": "any",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "note.md",
+        "data_base64": "LS0tCnRpdGxlOiBjYW5ub3QgcmVwbGFjZSBhIGRpcmVjdG9yeQotLS0K",
+        "data_length": 42
+      },
+      "before": {
+        "markdown": [],
+        "other_file_count": 0,
+        "other_dir_count": 1,
+        "temp_leftovers": []
+      },
+      "after": {
+        "markdown": [],
+        "other_file_count": 0,
+        "other_dir_count": 1,
+        "temp_leftovers": []
+      },
+      "error_class": "rename_temp",
+      "error_prefix": "rename temp file: ",
+      "target_kind": "directory"
+    },
+    {
+      "id": "atomic-parent-read-only",
+      "operation": "atomic_write",
+      "platform": "unix",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "locked/note.md",
+        "data_base64": "LS0tCnRpdGxlOiByZWFkIG9ubHkgcGFyZW50Ci0tLQo=",
+        "data_length": 32
+      },
+      "before": {
+        "markdown": [],
+        "other_file_count": 0,
+        "other_dir_count": 1,
+        "temp_leftovers": []
+      },
+      "after": {
+        "markdown": [],
+        "other_file_count": 0,
+        "other_dir_count": 1,
+        "temp_leftovers": []
+      },
+      "error_class": "create_temp",
+      "error_prefix": "create temp file: ",
+      "target_kind": "file"
+    },
+    {
+      "id": "atomic-target-read-only-file",
+      "operation": "atomic_write",
+      "platform": "unix",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "note.md",
+        "data_base64": "LS0tCnRpdGxlOiByZXBsYWNlZCBkZXNwaXRlIHJlYWQtb25seSB0YXJnZXQKLS0tCg==",
+        "data_length": 49,
+        "existing_mode": 256
+      },
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 256,
+            "size": 34,
+            "sha256": "6da56dd8fe0da4a98715e3eac5dd4427bf7e299e1095804423a7e6435c8b16c0",
+            "content_base64": "LS0tCnRpdGxlOiByZWFkIG9ubHkKLS0tCm9sZCBib2R5Cg=="
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 384,
+            "size": 49,
+            "sha256": "bf6b76ab12bcdb857e7c985a163cc391508e2590991b1bb61890cc30085d0762",
+            "content_base64": "LS0tCnRpdGxlOiByZXBsYWNlZCBkZXNwaXRlIHJlYWQtb25seSB0YXJnZXQKLS0tCg=="
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "error_class": "",
+      "error_prefix": "",
+      "target": {
+        "path": "note.md",
+        "mode": 384,
+        "size": 49,
+        "sha256": "bf6b76ab12bcdb857e7c985a163cc391508e2590991b1bb61890cc30085d0762",
+        "content_base64": "LS0tCnRpdGxlOiByZXBsYWNlZCBkZXNwaXRlIHJlYWQtb25seSB0YXJnZXQKLS0tCg=="
+      },
+      "target_kind": "file",
+      "walk_paths": [
+        "note.md"
+      ]
+    },
+    {
+      "id": "atomic-stale-temp-present",
+      "operation": "atomic_write",
+      "platform": "any",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "note.md",
+        "data_base64": "LS0tCnRpdGxlOiB3cml0ZSBiZXNpZGUgYSBzdGFsZSB0ZW1wCi0tLQo=",
+        "data_length": 41
+      },
+      "before": {
+        "markdown": [],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": [
+          ".symdesk-frontmatter-stale.tmp"
+        ]
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 384,
+            "size": 41,
+            "sha256": "a5bc732bf1e545cf92bfdd85a87896c39397aaa2f7e8b7c5fb78aab056c10771",
+            "content_base64": "LS0tCnRpdGxlOiB3cml0ZSBiZXNpZGUgYSBzdGFsZSB0ZW1wCi0tLQo="
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": [
+          ".symdesk-frontmatter-stale.tmp"
+        ]
+      },
+      "error_class": "",
+      "error_prefix": "",
+      "target": {
+        "path": "note.md",
+        "mode": 384,
+        "size": 41,
+        "sha256": "a5bc732bf1e545cf92bfdd85a87896c39397aaa2f7e8b7c5fb78aab056c10771",
+        "content_base64": "LS0tCnRpdGxlOiB3cml0ZSBiZXNpZGUgYSBzdGFsZSB0ZW1wCi0tLQo="
+      },
+      "target_kind": "file",
+      "walk_paths": [
+        "note.md"
+      ]
+    },
+    {
+      "id": "crash-recovery-leftover-temp",
+      "operation": "atomic_write_after_crash",
+      "platform": "any",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "note.md",
+        "data_base64": "LS0tCnRpdGxlOiBhZnRlciBjcmFzaCByZWNvdmVyeQotLS0KcmVjb3ZlcmVkIGJvZHkK"
+      },
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 42,
+            "sha256": "c2b3e8e48e805f477eb7b5f1d39e6f6d1d32d56c1d07f96e322788d91e329ece",
+            "content_base64": "LS0tCnRpdGxlOiBiZWZvcmUgY3Jhc2gKLS0tCmNvbXBsZXRlIGJvZHkK"
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": [
+          ".symdesk-frontmatter-crash.tmp"
+        ]
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 384,
+            "size": 51,
+            "sha256": "a4420fbcbfe50e7f4773991df7201de2cf1f3f3d710eed0f0a239398fc333d33",
+            "content_base64": "LS0tCnRpdGxlOiBhZnRlciBjcmFzaCByZWNvdmVyeQotLS0KcmVjb3ZlcmVkIGJvZHkK"
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": [
+          ".symdesk-frontmatter-crash.tmp"
+        ]
+      },
+      "error_class": "",
+      "error_prefix": "",
+      "target": {
+        "path": "note.md",
+        "mode": 384,
+        "size": 51,
+        "sha256": "a4420fbcbfe50e7f4773991df7201de2cf1f3f3d710eed0f0a239398fc333d33",
+        "content_base64": "LS0tCnRpdGxlOiBhZnRlciBjcmFzaCByZWNvdmVyeQotLS0KcmVjb3ZlcmVkIGJvZHkK"
+      },
+      "target_kind": "file",
+      "parse": {
+        "title": "before crash",
+        "body": "complete body\n",
+        "sha256": "f644df7bcae9621fac0f24c926552f49d4d35cace7ceebc5244b9c85775c3d17",
+        "error": ""
+      },
+      "walk_paths": [
+        "note.md"
+      ]
+    },
+    {
+      "id": "interruption-kill-mid-write",
+      "operation": "kill_writer",
+      "platform": "unix",
+      "setup": {
+        "dir_mode": 488,
+        "entries": null
+      },
+      "args": {
+        "path": "note.md",
+        "data_sha256": "0493799f802da4bff5eeb4718995e75a1b878fbd853c72b6bf904121eec0b5c6",
+        "data_length": 1240000,
+        "data_repeat": "interrupted-payload-0123456789\n"
+      },
+      "before": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 53,
+            "sha256": "d7360dd66f2438156574ba272f6b0db6d8988df6990668ce04d4c0a73b292f25",
+            "content_base64": "LS0tCnRpdGxlOiBiZWZvcmUgaW50ZXJydXB0aW9uCi0tLQpjb21wbGV0ZSBvbGQgYm9keQo="
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "after": {
+        "markdown": [
+          {
+            "path": "note.md",
+            "mode": 416,
+            "size": 53,
+            "sha256": "d7360dd66f2438156574ba272f6b0db6d8988df6990668ce04d4c0a73b292f25",
+            "content_base64": "LS0tCnRpdGxlOiBiZWZvcmUgaW50ZXJydXB0aW9uCi0tLQpjb21wbGV0ZSBvbGQgYm9keQo="
+          }
+        ],
+        "other_file_count": 0,
+        "other_dir_count": 0,
+        "temp_leftovers": []
+      },
+      "error_class": "",
+      "error_prefix": "",
+      "target_kind": "file",
+      "invariant": {
+        "trials": 12,
+        "torn_targets": 0,
+        "statement": "the target is always either the complete previous bytes or the complete new bytes; a killed writer never leaves a partial or truncated target",
+        "completion_check": "the writer signals completion of its first full write before it is killed"
+      }
+    }
+  ]
+}

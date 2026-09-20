@@ -1,85 +1,607 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://symaira.com/schemas/rust-port/value001-result.schema.json",
-  "title": "VALUE-001 paired Go/Rust benchmark result",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["schema_version", "benchmark", "captured_at", "runner", "host", "repository", "toolchains", "binaries", "vault", "index_preparation", "contracts", "metrics", "thresholds", "passed"],
-  "properties": {
-    "schema_version": {"const": 2},
-    "benchmark": {"const": "VALUE-001"},
-    "captured_at": {"type": "string", "format": "date-time"},
+  "title": "VALUE-001 Go/Rust benchmark result",
+  "description": "Schemas 2 through 4 are immutable historical evidence. Schema 5 is the controlled HTTP order-stratified format; schema 6 keeps it and decides the latency gate on the order-stratified confidence interval.",
+  "oneOf": [
+    {"$ref": "#/$defs/schema2"},
+    {"$ref": "#/$defs/schema3"},
+    {"$ref": "#/$defs/schema4"},
+    {"$ref": "#/$defs/schema5"},
+    {"$ref": "#/$defs/schema6"}
+  ],
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "benchmark", "captured_at", "runner", "host", "repository", "toolchains", "binaries", "vault", "index_preparation", "contracts", "metrics", "thresholds", "passed"],
+      "properties": {
+        "schema_version": {"type": "integer"},
+        "benchmark": {"const": "VALUE-001"},
+        "summation": {"enum": ["left_fold", "fsum"]},
+        "captured_at": {"type": "string", "format": "date-time"},
+        "runner": {"$ref": "#/$defs/runner"},
+        "host": {"$ref": "#/$defs/host"},
+        "repository": {"$ref": "#/$defs/repository"},
+        "toolchains": {"$ref": "#/$defs/toolchains"},
+        "binaries": {"$ref": "#/$defs/binaries"},
+        "vault": {"$ref": "#/$defs/vault"},
+        "index_preparation": {"$ref": "#/$defs/indexPreparation"},
+        "contracts": {"type": "array", "minItems": 4, "items": {"$ref": "#/$defs/contract"}},
+        "metrics": {"$ref": "#/$defs/metrics"},
+        "thresholds": {"type": "object"},
+        "passed": {"type": "boolean"}
+      }
+    },
+    "schema2": {
+      "allOf": [
+        {"$ref": "#/$defs/artifact"},
+        {
+          "type": "object",
+          "not": {"required": ["summation"]},
+          "properties": {
+            "schema_version": {"const": 2},
+            "thresholds": {"$ref": "#/$defs/thresholds2"}
+          }
+        }
+      ]
+    },
+    "schema3": {
+      "allOf": [
+        {"$ref": "#/$defs/artifact"},
+        {
+          "type": "object",
+          "required": ["summation"],
+          "properties": {
+            "schema_version": {"const": 3},
+            "thresholds": {"$ref": "#/$defs/thresholds3"}
+          }
+        }
+      ]
+    },
+    "schema4": {
+      "allOf": [
+        {"$ref": "#/$defs/artifact"},
+        {
+          "type": "object",
+          "required": ["summation"],
+          "properties": {
+            "schema_version": {"const": 4},
+            "runner": {"$ref": "#/$defs/schema4Runner"},
+            "repository": {"$ref": "#/$defs/currentRepository"},
+            "metrics": {"$ref": "#/$defs/currentMetrics"},
+            "vault": {"$ref": "#/$defs/vault"},
+            "index_preparation": {"$ref": "#/$defs/indexPreparation"},
+            "thresholds": {"$ref": "#/$defs/thresholds4"}
+          }
+        }
+      ]
+    },
+    "schema5": {
+      "allOf": [
+        {"$ref": "#/$defs/artifact"},
+        {
+          "type": "object",
+          "required": ["summation"],
+          "properties": {
+            "schema_version": {"const": 5},
+            "runner": {"$ref": "#/$defs/schema5Runner"},
+            "repository": {"$ref": "#/$defs/currentRepository"},
+            "metrics": {"$ref": "#/$defs/schema5Metrics"},
+            "vault": {"$ref": "#/$defs/vault"},
+            "index_preparation": {"$ref": "#/$defs/indexPreparation"},
+            "thresholds": {"$ref": "#/$defs/thresholds4"}
+          }
+        }
+      ]
+    },
+    "schema6": {
+      "allOf": [
+        {"$ref": "#/$defs/artifact"},
+        {
+          "type": "object",
+          "required": ["summation"],
+          "properties": {
+            "schema_version": {"const": 6},
+            "runner": {"$ref": "#/$defs/schema5Runner"},
+            "repository": {"$ref": "#/$defs/currentRepository"},
+            "metrics": {"$ref": "#/$defs/schema5Metrics"},
+            "vault": {"$ref": "#/$defs/vault"},
+            "index_preparation": {"$ref": "#/$defs/indexPreparation"},
+            "thresholds": {"$ref": "#/$defs/thresholds6"}
+          }
+        }
+      ]
+    },
+    "schema4Runner": {
+      "allOf": [
+        {"$ref": "#/$defs/runner"},
+        {"type": "object", "properties": {"samples": {"const": 100}, "warmups": {"const": 20}}}
+      ]
+    },
+    "schema5Runner": {
+      "allOf": [
+        {"$ref": "#/$defs/runner"},
+        {
+          "type": "object",
+          "properties": {
+            "samples": {"const": 100},
+            "warmups": {"const": 20},
+            "pairing": {"const": "rotating HTTP operations; per-operation go-rust/rust-go order by round plus original operation index; Connection: close per request; alternating untimed healthz priming per round; 5ms idle after each HTTP request"}
+          }
+        }
+      ]
+    },
+    "currentMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startup", "search", "mcp", "http", "rss"],
+      "properties": {
+        "startup": {"$ref": "#/$defs/currentPairedMetric"},
+        "search": {"$ref": "#/$defs/currentPairedMetric"},
+        "mcp": {"$ref": "#/$defs/currentMcpOperationMetric"},
+        "http": {"$ref": "#/$defs/currentHttpOperationMetric"},
+        "rss": {"$ref": "#/$defs/currentPairedMetric"}
+      }
+    },
+    "schema5Metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startup", "search", "mcp", "http", "rss"],
+      "properties": {
+        "startup": {"$ref": "#/$defs/currentPairedMetric"},
+        "search": {"$ref": "#/$defs/currentPairedMetric"},
+        "mcp": {"$ref": "#/$defs/currentMcpOperationMetric"},
+        "http": {"$ref": "#/$defs/schema5HttpOperationMetric"},
+        "rss": {"$ref": "#/$defs/currentPairedMetric"}
+      }
+    },
+    "currentPairedMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust"],
+      "properties": {
+        "go": {"$ref": "#/$defs/currentSampleSummary"},
+        "rust": {"$ref": "#/$defs/currentSampleSummary"}
+      }
+    },
+    "currentMcpOperationMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust", "operations"],
+      "properties": {
+        "go": {"$ref": "#/$defs/currentMcpAggregateSummary"},
+        "rust": {"$ref": "#/$defs/currentMcpAggregateSummary"},
+        "operations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["initialize", "tools-list", "desk_status", "desk_ls", "desk_search"],
+          "properties": {
+            "initialize": {"$ref": "#/$defs/currentPairedMetric"},
+            "tools-list": {"$ref": "#/$defs/currentPairedMetric"},
+            "desk_status": {"$ref": "#/$defs/currentPairedMetric"},
+            "desk_ls": {"$ref": "#/$defs/currentPairedMetric"},
+            "desk_search": {"$ref": "#/$defs/currentPairedMetric"}
+          }
+        }
+      }
+    },
+    "currentHttpOperationMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust", "operations"],
+      "properties": {
+        "go": {"$ref": "#/$defs/currentHttpAggregateSummary"},
+        "rust": {"$ref": "#/$defs/currentHttpAggregateSummary"},
+        "operations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["healthz", "status", "snapshot", "file-read", "file-range", "file-missing", "file-traversal"],
+          "properties": {
+            "healthz": {"$ref": "#/$defs/currentPairedMetric"},
+            "status": {"$ref": "#/$defs/currentPairedMetric"},
+            "snapshot": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-read": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-range": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-missing": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-traversal": {"$ref": "#/$defs/currentPairedMetric"}
+          }
+        }
+      }
+    },
+    "schema5HttpOperationMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust", "operations", "operation_order"],
+      "properties": {
+        "go": {"$ref": "#/$defs/currentHttpAggregateSummary"},
+        "rust": {"$ref": "#/$defs/currentHttpAggregateSummary"},
+        "operation_order": {
+          "type": "array",
+          "minItems": 700,
+          "maxItems": 700,
+          "items": {"enum": ["healthz", "status", "snapshot", "file-read", "file-range", "file-missing", "file-traversal"]}
+        },
+        "operations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["healthz", "status", "snapshot", "file-read", "file-range", "file-missing", "file-traversal"],
+          "properties": {
+            "healthz": {"$ref": "#/$defs/currentPairedMetric"},
+            "status": {"$ref": "#/$defs/currentPairedMetric"},
+            "snapshot": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-read": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-range": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-missing": {"$ref": "#/$defs/currentPairedMetric"},
+            "file-traversal": {"$ref": "#/$defs/currentPairedMetric"}
+          }
+        }
+      }
+    },
+    "currentSampleSummary": {
+      "allOf": [
+        {"$ref": "#/$defs/positiveSampleSummary"},
+        {
+          "type": "object",
+          "properties": {
+            "samples": {"const": 100},
+            "warmup_samples": {"const": 20},
+            "raw": {"type": "array", "minItems": 100, "maxItems": 100},
+            "pair_order": {"type": "array", "minItems": 100, "maxItems": 100}
+          }
+        }
+      ]
+    },
+    "currentAggregateSummary": {
+      "allOf": [
+        {"$ref": "#/$defs/positiveSampleSummary"},
+        {"type": "object", "properties": {"warmup_samples": {"const": 20}}}
+      ]
+    },
+    "currentMcpAggregateSummary": {
+      "allOf": [
+        {"$ref": "#/$defs/currentAggregateSummary"},
+        {
+          "type": "object",
+          "properties": {
+            "samples": {"const": 500},
+            "raw": {"type": "array", "minItems": 500, "maxItems": 500},
+            "pair_order": {"type": "array", "minItems": 500, "maxItems": 500}
+          }
+        }
+      ]
+    },
+    "currentHttpAggregateSummary": {
+      "allOf": [
+        {"$ref": "#/$defs/currentAggregateSummary"},
+        {
+          "type": "object",
+          "properties": {
+            "samples": {"const": 700},
+            "raw": {"type": "array", "minItems": 700, "maxItems": 700},
+            "pair_order": {"type": "array", "minItems": 700, "maxItems": 700}
+          }
+        }
+      ]
+    },
     "runner": {
-      "type": "object", "additionalProperties": false,
+      "type": "object",
+      "additionalProperties": false,
       "required": ["path", "samples", "warmups", "pairing"],
-      "properties": {"path": {"type": "string"}, "samples": {"type": "integer", "minimum": 100}, "warmups": {"type": "integer", "minimum": 1}, "pairing": {"type": "string"}}
+      "properties": {
+        "path": {"type": "string"},
+        "samples": {"type": "integer", "minimum": 100},
+        "warmups": {"type": "integer", "minimum": 1},
+        "pairing": {"type": "string"}
+      }
     },
     "host": {
-      "type": "object", "additionalProperties": false,
+      "type": "object",
+      "additionalProperties": false,
       "required": ["os", "os_version", "arch", "machine", "python"],
-      "properties": {"os": {"type": "string"}, "os_version": {"type": "string"}, "arch": {"type": "string"}, "machine": {"type": "string"}, "python": {"type": "string"}}
+      "properties": {
+        "os": {"type": "string"},
+        "os_version": {"type": "string"},
+        "arch": {"type": "string"},
+        "machine": {"type": "string"},
+        "python": {"type": "string"}
+      }
     },
     "repository": {
-      "type": "object", "additionalProperties": false,
+      "type": "object",
+      "additionalProperties": false,
       "required": ["root", "head", "status", "dirty_allowed", "candidate_diff_sha256", "original_value_baseline_commit", "current_behaviour_oracle_commit"],
       "properties": {
-        "root": {"type": "string"}, "head": {"type": "string"}, "status": {"type": "string"}, "dirty_allowed": {"const": true},
+        "root": {"type": "string"},
+        "head": {"type": "string"},
+        "status": {"type": "string"},
+        "dirty_allowed": {"const": true},
         "candidate_diff_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "original_value_baseline_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
         "current_behaviour_oracle_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
       }
     },
+    "currentRepository": {
+      "allOf": [
+        {"$ref": "#/$defs/repository"},
+        {
+          "type": "object",
+          "properties": {
+            "head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "dirty_allowed": {"const": true}
+          }
+        }
+      ]
+    },
     "toolchains": {
-      "type": "object", "additionalProperties": false,
+      "type": "object",
+      "additionalProperties": false,
       "required": ["go_oracle", "rustc", "cargo", "python"],
-      "properties": {"go_oracle": {"type": "string"}, "rustc": {"type": "string"}, "cargo": {"type": "string"}, "python": {"type": "string"}}
+      "properties": {
+        "go_oracle": {"type": "string"},
+        "rustc": {"type": "string"},
+        "cargo": {"type": "string"},
+        "python": {"type": "string"}
+      }
     },
     "binaries": {
-      "type": "object", "additionalProperties": false, "required": ["go", "rust"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust"],
       "properties": {"go": {"$ref": "#/$defs/binary"}, "rust": {"$ref": "#/$defs/binary"}}
     },
-    "vault": {
-      "type": "object", "additionalProperties": false,
-      "required": ["documents", "generated_bytes", "search_token", "search_matches", "generation"],
-      "properties": {"documents": {"const": 10000}, "generated_bytes": {"type": "integer", "minimum": 1}, "search_token": {"const": "value001cohort042"}, "search_matches": {"const": 100}, "generation": {"type": "string"}}
-    },
-    "index_preparation": {"type": "object", "additionalProperties": false, "required": ["go", "rust", "vault_justification"], "properties": {"go": {"$ref": "#/$defs/indexPreparation"}, "rust": {"$ref": "#/$defs/indexPreparation"}, "vault_justification": {"type": "string"}}},
-    "contracts": {"type": "array", "minItems": 4, "items": {"$ref": "#/$defs/contract"}},
-    "metrics": {
-      "type": "object", "additionalProperties": false, "required": ["startup", "search", "mcp", "http", "rss"],
-      "properties": {
-        "startup": {"$ref": "#/$defs/pairedMetric"}, "search": {"$ref": "#/$defs/pairedMetric"},
-        "mcp": {"$ref": "#/$defs/operationMetric"}, "http": {"$ref": "#/$defs/operationMetric"}, "rss": {"$ref": "#/$defs/pairedMetric"}
-      }
-    },
-    "thresholds": {
-      "description": "Reduction and regression values are dimensionless ratios, not percentages. Display percentage = ratio * 100; maximum_p95_regression 0.1 means 10%. Stored measurements and gate comparisons retain ratio units.",
-      "type": "object", "additionalProperties": false,
-      "required": ["minimum_improvement", "maximum_p95_regression", "binary_size_reduction", "representative_rss_reduction_max", "improvement_pass", "p95_regressions", "latency_pass", "contracts_pass", "fail_closed"],
-      "properties": {
-        "minimum_improvement": {"const": 0.2}, "maximum_p95_regression": {"const": 0.1}, "binary_size_reduction": {"type": "number"}, "representative_rss_reduction_max": {"type": "number"}, "improvement_pass": {"type": "boolean"}, "p95_regressions": {"type": "object", "additionalProperties": {"type": "number"}}, "latency_pass": {"type": "boolean"}, "contracts_pass": {"type": "boolean"}, "fail_closed": {"const": true}
-      }
-    },
-    "passed": {"type": "boolean"}
-  },
-  "$defs": {
     "binary": {
-      "type": "object", "additionalProperties": false, "required": ["path", "bytes", "sha256", "source", "build_command"],
-      "properties": {"path": {"type": "string"}, "bytes": {"type": "integer", "minimum": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "source": {"type": "string", "pattern": "^[0-9a-f]{40}$"}, "build_command": {"type": "string"}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "source", "build_command"],
+      "properties": {
+        "path": {"type": "string"},
+        "bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "source": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "build_command": {"type": "string"}
+      }
+    },
+    "vault": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["documents", "generated_bytes", "search_token", "search_matches", "generation"],
+      "properties": {
+        "documents": {"const": 10000},
+        "generated_bytes": {"type": "integer", "minimum": 1},
+        "search_token": {"const": "value001cohort042"},
+        "search_matches": {"const": 100},
+        "generation": {"type": "string"}
+      }
+    },
+    "indexPreparation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust", "vault_justification"],
+      "properties": {
+        "go": {"$ref": "#/$defs/indexPreparationSide"},
+        "rust": {"$ref": "#/$defs/indexPreparationSide"},
+        "vault_justification": {"type": "string"}
+      }
+    },
+    "indexPreparationSide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "elapsed_ms", "exit_code", "stdout_semantics", "documents"],
+      "properties": {
+        "command": {"type": "string"},
+        "elapsed_ms": {"type": "number", "minimum": 0},
+        "exit_code": {"const": 0},
+        "stdout_semantics": {"type": "string"},
+        "documents": {"const": 10000}
+      }
     },
     "contract": {
-      "type": "object", "additionalProperties": false, "required": ["name", "command", "exit_code", "elapsed_ms", "stdout", "stderr"],
-      "properties": {"name": {"type": "string"}, "command": {"type": "string"}, "exit_code": {"const": 0}, "elapsed_ms": {"type": "number", "minimum": 0}, "stdout": {"type": "string"}, "stderr": {"type": "string"}}
-    },
-    "sampleSummary": {
-      "type": "object", "additionalProperties": false, "required": ["unit", "warmup_samples", "samples", "min", "mean", "p50", "p95", "p99", "max", "raw", "pair_order", "max_observed"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "command", "exit_code", "elapsed_ms", "stdout", "stderr"],
       "properties": {
-        "unit": {"type": "string"}, "warmup_samples": {"type": "integer", "minimum": 1}, "samples": {"type": "integer", "minimum": 100},
-        "min": {"type": "number", "minimum": 0}, "mean": {"type": "number", "minimum": 0}, "p50": {"type": "number", "minimum": 0}, "p95": {"type": "number", "minimum": 0}, "p99": {"type": "number", "minimum": 0}, "max": {"type": "number", "minimum": 0}, "raw": {"type": "array", "minItems": 100, "items": {"type": "number", "minimum": 0}}, "pair_order": {"type": "array", "minItems": 100, "items": {"enum": ["go-rust", "rust-go"]}}, "max_observed": {"type": "number", "minimum": 0}
+        "name": {"type": "string"},
+        "command": {"type": "string"},
+        "exit_code": {"const": 0},
+        "elapsed_ms": {"type": "number", "minimum": 0},
+        "stdout": {"type": "string"},
+        "stderr": {"type": "string"}
       }
     },
-    "pairedMetric": {"type": "object", "additionalProperties": false, "required": ["go", "rust"], "properties": {"go": {"$ref": "#/$defs/sampleSummary"}, "rust": {"$ref": "#/$defs/sampleSummary"}}},
-    "operationMetric": {"type": "object", "additionalProperties": false, "required": ["go", "rust", "operations"], "properties": {"go": {"$ref": "#/$defs/sampleSummary"}, "rust": {"$ref": "#/$defs/sampleSummary"}, "operations": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/pairedMetric"}}}},
-    "indexPreparation": {"type": "object", "additionalProperties": false, "required": ["command", "elapsed_ms", "exit_code", "stdout_semantics", "documents"], "properties": {"command": {"type": "string"}, "elapsed_ms": {"type": "number", "minimum": 0}, "exit_code": {"const": 0}, "stdout_semantics": {"type": "string"}, "documents": {"const": 10000}}}
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startup", "search", "mcp", "http", "rss"],
+      "properties": {
+        "startup": {"$ref": "#/$defs/pairedMetric"},
+        "search": {"$ref": "#/$defs/pairedMetric"},
+        "mcp": {"$ref": "#/$defs/operationMetric"},
+        "http": {"$ref": "#/$defs/operationMetric"},
+        "rss": {"$ref": "#/$defs/pairedMetric"}
+      }
+    },
+    "pairedMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust"],
+      "properties": {"go": {"$ref": "#/$defs/sampleSummary"}, "rust": {"$ref": "#/$defs/sampleSummary"}}
+    },
+    "operationMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust", "operations"],
+      "properties": {
+        "go": {"$ref": "#/$defs/sampleSummary"},
+        "rust": {"$ref": "#/$defs/sampleSummary"},
+        "operations": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/pairedMetric"}}
+      }
+    },
+    "positiveMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startup", "search", "mcp", "http", "rss"],
+      "properties": {
+        "startup": {"$ref": "#/$defs/positivePairedMetric"},
+        "search": {"$ref": "#/$defs/positivePairedMetric"},
+        "mcp": {"$ref": "#/$defs/positiveOperationMetric"},
+        "http": {"$ref": "#/$defs/positiveOperationMetric"},
+        "rss": {"$ref": "#/$defs/positivePairedMetric"}
+      }
+    },
+    "positivePairedMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust"],
+      "properties": {"go": {"$ref": "#/$defs/positiveSampleSummary"}, "rust": {"$ref": "#/$defs/positiveSampleSummary"}}
+    },
+    "positiveOperationMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["go", "rust", "operations"],
+      "properties": {
+        "go": {"$ref": "#/$defs/positiveSampleSummary"},
+        "rust": {"$ref": "#/$defs/positiveSampleSummary"},
+        "operations": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/positivePairedMetric"}}
+      }
+    },
+    "sampleSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit", "warmup_samples", "samples", "min", "mean", "p50", "p95", "p99", "max", "raw", "pair_order", "max_observed"],
+      "properties": {
+        "unit": {"type": "string"},
+        "warmup_samples": {"type": "integer", "minimum": 1},
+        "samples": {"type": "integer", "minimum": 100},
+        "min": {"type": "number", "minimum": 0},
+        "mean": {"type": "number", "minimum": 0},
+        "p50": {"type": "number", "minimum": 0},
+        "p95": {"type": "number", "minimum": 0},
+        "p99": {"type": "number", "minimum": 0},
+        "max": {"type": "number", "minimum": 0},
+        "raw": {"type": "array", "minItems": 100, "items": {"type": "number", "minimum": 0}},
+        "pair_order": {"type": "array", "minItems": 100, "items": {"enum": ["go-rust", "rust-go"]}},
+        "max_observed": {"type": "number", "minimum": 0}
+      }
+    },
+    "positiveSampleSummary": {
+      "allOf": [
+        {"$ref": "#/$defs/sampleSummary"},
+        {
+          "type": "object",
+          "properties": {
+            "min": {"type": "number", "exclusiveMinimum": 0},
+            "mean": {"type": "number", "exclusiveMinimum": 0},
+            "p50": {"type": "number", "exclusiveMinimum": 0},
+            "p95": {"type": "number", "exclusiveMinimum": 0},
+            "p99": {"type": "number", "exclusiveMinimum": 0},
+            "max": {"type": "number", "exclusiveMinimum": 0},
+            "raw": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}},
+            "max_observed": {"type": "number", "exclusiveMinimum": 0}
+          }
+        }
+      ]
+    },
+    "ratioMap": {"type": "object", "additionalProperties": {"type": "number"}},
+    "intervalMap": {"type": "object", "additionalProperties": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}}},
+    "orderRegressionMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["go-rust", "rust-go"],
+        "properties": {"go-rust": {"type": "number"}, "rust-go": {"type": "number"}}
+      }
+    },
+    "orderIntervalMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["go-rust", "rust-go"],
+        "properties": {
+          "go-rust": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}},
+          "rust-go": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}}
+        }
+      }
+    },
+    "thresholds2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_improvement", "maximum_p95_regression", "binary_size_reduction", "representative_rss_reduction_max", "improvement_pass", "p95_regressions", "latency_pass", "contracts_pass", "fail_closed"],
+      "properties": {
+        "minimum_improvement": {"const": 0.2},
+        "maximum_p95_regression": {"const": 0.1},
+        "binary_size_reduction": {"type": "number"},
+        "representative_rss_reduction_max": {"type": "number"},
+        "improvement_pass": {"type": "boolean"},
+        "p95_regressions": {"$ref": "#/$defs/ratioMap"},
+        "latency_pass": {"type": "boolean"},
+        "contracts_pass": {"type": "boolean"},
+        "fail_closed": {"const": true}
+      }
+    },
+    "thresholds3": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_improvement", "maximum_latency_regression", "latency_estimator", "binary_size_reduction", "representative_rss_reduction_max", "improvement_pass", "latency_regressions", "latency_regression_intervals", "latency_interval_confidence", "latency_pass", "contracts_pass", "fail_closed"],
+      "properties": {
+        "minimum_improvement": {"const": 0.2},
+        "maximum_latency_regression": {"const": 0.1},
+        "latency_estimator": {"enum": ["unpaired_p95", "paired_median_ratio"]},
+        "binary_size_reduction": {"type": "number"},
+        "representative_rss_reduction_max": {"type": "number"},
+        "improvement_pass": {"type": "boolean"},
+        "latency_regressions": {"$ref": "#/$defs/ratioMap"},
+        "latency_regression_intervals": {"$ref": "#/$defs/intervalMap"},
+        "latency_interval_confidence": {"const": 0.95},
+        "latency_pass": {"type": "boolean"},
+        "contracts_pass": {"type": "boolean"},
+        "fail_closed": {"const": true}
+      }
+    },
+    "thresholds4": {
+      "description": "All ratios are dimensionless. The scalar regression is the worse order-specific median; pooled p95 and pooled median intervals are deliberately absent.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_improvement", "maximum_latency_regression", "latency_estimator", "binary_size_reduction", "representative_rss_reduction_max", "improvement_pass", "latency_regressions", "latency_order_regressions", "latency_order_regression_intervals", "latency_interval_confidence", "latency_pass", "contracts_pass", "fail_closed"],
+      "properties": {
+        "minimum_improvement": {"const": 0.2},
+        "maximum_latency_regression": {"const": 0.1},
+        "latency_estimator": {"const": "order_stratified_paired_median_ratio"},
+        "binary_size_reduction": {"type": "number"},
+        "representative_rss_reduction_max": {"type": "number"},
+        "improvement_pass": {"type": "boolean"},
+        "latency_regressions": {"$ref": "#/$defs/ratioMap"},
+        "latency_order_regressions": {"$ref": "#/$defs/orderRegressionMap"},
+        "latency_order_regression_intervals": {"$ref": "#/$defs/orderIntervalMap"},
+        "latency_interval_confidence": {"const": 0.95},
+        "latency_pass": {"type": "boolean"},
+        "contracts_pass": {"type": "boolean"},
+        "fail_closed": {"const": true}
+      }
+    },
+    "thresholds6": {
+      "description": "Schema 6 keeps the schema-4/5 statistics and decides on the order-stratified interval: a cohort fails when its interval lower bound exceeds the ceiling, and the run fails when an interval is wider than the width limit, because it then cannot exclude a regression of three times the ceiling.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_improvement", "maximum_latency_regression", "latency_estimator", "binary_size_reduction", "representative_rss_reduction_max", "improvement_pass", "latency_regressions", "latency_order_regressions", "latency_order_regression_intervals", "latency_interval_confidence", "latency_interval_width_limit", "latency_pass", "contracts_pass", "fail_closed"],
+      "properties": {
+        "minimum_improvement": {"const": 0.2},
+        "maximum_latency_regression": {"const": 0.1},
+        "latency_estimator": {"const": "order_stratified_paired_median_ratio"},
+        "binary_size_reduction": {"type": "number"},
+        "representative_rss_reduction_max": {"type": "number"},
+        "improvement_pass": {"type": "boolean"},
+        "latency_regressions": {"$ref": "#/$defs/ratioMap"},
+        "latency_order_regressions": {"$ref": "#/$defs/orderRegressionMap"},
+        "latency_order_regression_intervals": {"$ref": "#/$defs/orderIntervalMap"},
+        "latency_interval_confidence": {"const": 0.95},
+        "latency_interval_width_limit": {"const": 0.4},
+        "latency_pass": {"type": "boolean"},
+        "contracts_pass": {"type": "boolean"},
+        "fail_closed": {"const": true}
+      }
+    }
   }
 }

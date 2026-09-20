@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "a1d766d1beefcdd398ace4e27e456dbaa38b6349",
+    "commit": "a579cd8550a9b49810aa45bb69507d9ce5d8526c",
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "6c89ca27b5a91e0cf6ceb751b1d6265cf0a71dc99aa67d590348cdf02bf9cb32",
@@ -30,9 +30,9 @@
     "testdata/port/mcp/symroom-tools.json": "30e806bba87f1366727967e2f07a31537d67545d8db49b877abcdbb90d6b3784",
     "testdata/port/representative/cases.json": "329280a98e20cb5fe4d98241ac030fdcf8627b7be7d94ed2893aae708f97a2c8",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "2108aa33cd54afe5b2122ce7c27d19315369b1385e6c08506d323a477d78ee23",
-    "testdata/port/sidecar/lifecycle.json": "83dfe1a9c8361c50008596715d1266ed4dedc403301a64d0bd0b269af131a6c7",
-    "testdata/port/sidecar/roundtrip.json": "0b8bd2ecee7039b2ac2dd4360c33246b80aac4fc8c5ff06bfa275ce38a109e53",
+    "testdata/port/sidecar/large-corpus.json": "8f4b79a9ebbddf9d2448d16ef830c7827ddc6b301c5e9f76b391cef518258db7",
+    "testdata/port/sidecar/lifecycle.json": "2e8d01c391d712091652f9384d058482e8aaa4eb8afbd421e1f67d61aa5b7d5f",
+    "testdata/port/sidecar/roundtrip.json": "6a55836efb4e529caf50a640269f331c6bbce6be18dacd601f1bc24907b6e0cb",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/health-links.json": "95501c79b816d21ae86efa724f280e81572ee5636ae11475d9fb793f54428e1a",
     "testdata/port/vault/metadata.json": "5de4b8a9471ae002a52156f0176d3053be9d243497a8a4f45d508f8765f9ae02",

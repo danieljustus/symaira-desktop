@@ -225,9 +225,40 @@ func (s *Service) Prune() (int, error) {
 	return s.DB.Prune(s.VaultRoot)
 }
 
-// Ls returns a list of files in the vault.
+// listPrefix resolves a caller-supplied directory prefix into the absolute
+// prefix that DB.ListFiles compares against files.path.
+//
+// files.path holds vault-absolute paths (Service.Ls only derives the relative
+// form afterwards), so a vault-relative prefix such as "nested" never matched
+// and callers silently saw an empty listing. The flag is documented as a
+// prefix, so no directory separator is added: a relative prefix now matches
+// exactly what the equivalent absolute prefix always matched.
+func (s *Service) listPrefix(dirPrefix string) string {
+	trimmed := strings.TrimSpace(dirPrefix)
+	if trimmed == "" {
+		return ""
+	}
+	abs := trimmed
+	if !filepath.IsAbs(abs) {
+		abs = filepath.Join(s.VaultRoot, abs)
+	}
+	abs = filepath.Clean(abs)
+	// VaultRoot is canonicalized in newService, so an absolute prefix must be
+	// canonicalized the same way or a symlinked vault path (e.g. /tmp vs
+	// /private/tmp on macOS) would stop matching the stored file paths.
+	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
+		abs = resolved
+	}
+	return abs
+}
+
+// Ls returns a list of files in the vault, optionally restricted to a
+// directory prefix. The prefix accepts the vault-relative form the listing
+// itself emits (e.g. "nested"), the same value with a trailing separator, or a
+// vault-absolute path.
 func (s *Service) Ls(dirPrefix string) ([]FileEntry, error) {
-	docs, err := s.DB.ListFiles(dirPrefix)
+	prefix := s.listPrefix(dirPrefix)
+	docs, err := s.DB.ListFiles(prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -236,11 +267,15 @@ func (s *Service) Ls(dirPrefix string) ([]FileEntry, error) {
 	// DB.RefreshIndex's stat-based fast path also means a later call here
 	// (e.g. after the sidecar was cleared) skips re-reading and re-hashing
 	// any file whose cached size/mtime still match what's on disk.
-	if len(docs) == 0 {
+	//
+	// Only an empty *unfiltered* index proves the sidecar is unpopulated: a
+	// directory prefix that legitimately matches nothing must not trigger a
+	// full re-walk of the vault.
+	if len(docs) == 0 && s.indexUnpopulated(prefix) {
 		if err := s.DB.RefreshIndex(s.VaultRoot); err != nil {
 			return nil, err
 		}
-		docs, err = s.DB.ListFiles(dirPrefix)
+		docs, err = s.DB.ListFiles(prefix)
 		if err != nil {
 			return nil, err
 		}
@@ -260,6 +295,16 @@ func (s *Service) Ls(dirPrefix string) ([]FileEntry, error) {
 		})
 	}
 	return results, nil
+}
+
+// indexUnpopulated reports whether the sidecar holds no documents at all.
+// A non-empty prefix therefore never counts as "unpopulated".
+func (s *Service) indexUnpopulated(prefix string) bool {
+	if prefix == "" {
+		return true
+	}
+	all, err := s.DB.ListFiles("")
+	return err == nil && len(all) == 0
 }
 
 // SearchResult is a single typed search hit emitted by Search and

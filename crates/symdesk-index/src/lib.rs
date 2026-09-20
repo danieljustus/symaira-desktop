@@ -602,20 +602,31 @@ impl Sidecar {
         self.stale_paths("SELECT path FROM index_lifecycle", &valid)
     }
 
-    /// Lists indexed files in path order, optionally restricted to a raw path prefix.
+    /// Lists indexed files in path order, optionally restricted to a prefix.
+    ///
+    /// The stored `files.path` values are absolute, so a caller-supplied
+    /// vault-relative prefix (for example `nested`) is resolved against
+    /// `vault_root` first. Resolving to the same form the absolute prefix
+    /// produces is what the Go oracle does, so both implementations return the
+    /// same rows for `--dir nested` and `--dir <vault>/nested`.
     ///
     /// # Errors
     /// Returns SQLite query errors.
-    pub fn list_files(&self, dir_prefix: &str) -> Result<Vec<ListedDocument>, SidecarError> {
+    pub fn list_files(
+        &self,
+        vault_root: &Path,
+        dir_prefix: &str,
+    ) -> Result<Vec<ListedDocument>, SidecarError> {
+        let resolved = resolve_list_prefix(vault_root, dir_prefix);
         let mut sql = String::from(
             "SELECT path, title, COALESCE(modified_at, ''), COALESCE(\"type\", '') FROM files",
         );
-        if !dir_prefix.is_empty() {
+        if !resolved.is_empty() {
             sql.push_str(" WHERE path LIKE ?");
         }
         sql.push_str(" ORDER BY path ASC");
         let mut statement = self.connection.prepare(&sql)?;
-        if dir_prefix.is_empty() {
+        if resolved.is_empty() {
             let rows = statement.query_map([], |row| {
                 Ok(ListedDocument {
                     path: row.get(0)?,
@@ -628,7 +639,7 @@ impl Sidecar {
                 .collect::<Result<Vec<_>, rusqlite::Error>>()
                 .map_err(Into::into);
         }
-        let rows = statement.query_map([format!("{dir_prefix}%")], |row| {
+        let rows = statement.query_map([format!("{resolved}%")], |row| {
             Ok(ListedDocument {
                 path: row.get(0)?,
                 title: row.get(1)?,
@@ -705,6 +716,38 @@ struct ValidatedStoragePath {
 fn open_vault_dir(vault_root: &Path) -> Result<Dir, SidecarError> {
     validate_utf8_path(vault_root, "vault root")?;
     Dir::open_ambient_dir(vault_root, ambient_authority()).map_err(Into::into)
+}
+
+/// Resolves a caller-supplied directory prefix into the absolute prefix that
+/// `list_files` compares against the stored `files.path` values.
+///
+/// Mirrors the Go oracle's `Service.listPrefix`: a vault-relative prefix is
+/// joined onto the vault root, then cleaned. No canonicalization happens here
+/// because this port stores `files.path` in the caller's root spelling (see
+/// `storage_path`), so the prefix must use that same spelling to match; the
+/// rendered listing is relative either way, so both implementations emit the
+/// same rows for `--dir nested` and `--dir <vault>/nested`.
+///
+/// The flag is documented as a prefix, so no separator is appended: a relative
+/// prefix matches exactly what the equivalent absolute prefix already matched.
+fn resolve_list_prefix(vault_root: &Path, dir_prefix: &str) -> String {
+    let trimmed = dir_prefix.trim();
+    if trimmed.is_empty() {
+        return String::new();
+    }
+    let requested = Path::new(trimmed);
+    let absolute = if requested.is_absolute() {
+        requested.to_path_buf()
+    } else {
+        vault_root.join(requested)
+    };
+    let cleaned = lexical_clean(&absolute);
+    match cleaned.to_str() {
+        Some(value) => strip_verbatim_prefix(value),
+        // A non-UTF-8 prefix can never match a stored UTF-8 path, so it
+        // resolves to a value that matches nothing rather than widening.
+        None => String::new(),
+    }
 }
 
 fn validate_utf8_path<'a>(path: &'a Path, context: &'static str) -> Result<&'a str, SidecarError> {

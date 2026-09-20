@@ -295,12 +295,16 @@ fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Valu
             let args = object_arguments(arguments)?;
             let dir = args.get("dir").and_then(Value::as_str).unwrap_or_default();
             let (vault, mut sidecar) = open_sidecar(config)?;
-            let mut files = sidecar.list_files(dir).map_err(|error| error.to_string())?;
+            let mut files = sidecar
+                .list_files(&vault, dir)
+                .map_err(|error| error.to_string())?;
             if files.is_empty() {
                 sidecar
                     .refresh_index(&vault)
                     .map_err(|error| error.to_string())?;
-                files = sidecar.list_files(dir).map_err(|error| error.to_string())?;
+                files = sidecar
+                    .list_files(&vault, dir)
+                    .map_err(|error| error.to_string())?;
             }
             if files.is_empty() {
                 return Ok(Value::String("null".to_owned()));

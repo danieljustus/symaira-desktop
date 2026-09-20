@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "fac45f22a8610d226cae32ae934ab9a52cbb94b4",
+    "commit": "2b3e3d03dfd9aae6630c4469c1f797a676bc0327",
     "release": "post-v0.12.2-security-880"
   },
-  "production_source_digest": "7948fe7cbe2888c8619a7629b9b9cdf9f3310c8620307a1678018a226b9cfba5",
-  "generator_source_digest": "ee3d3de147e10f0137d60636993ed3d5ab6b1c6193f7a20b4c64f82c9cc0db09",
+  "production_source_digest": "d9ec0e8047da106bd08e2b5c40abab0a536c12318fd715fe1ca89b7739bf13a3",
+  "generator_source_digest": "fd48129da25c76e1efd93874ecb9d018ceff59cd892f8e3fa924853361a4d16a",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -17,7 +17,7 @@
   "fixture_checksums": {
     "testdata/port/cli/symdesk-command-tree.json": "ae4092e18a831f91a91950b9a8f1521f158d0f32540f6151e597f676b7fc92e3",
     "testdata/port/cli/symroom-parser-grammar.json": "41ab739e975e9f9ccadd9a916c85b9641be3ec947192aeed1873c5ee67b8eadb",
-    "testdata/port/core/config.json": "f01915e6de1097aac62e77ab94e97bd74bc285d858e6b6c9a732a3d4bc6b6009",
+    "testdata/port/core/config.json": "a29d32aa43dd35e743daf97659e99cbe81f158446b19245d7c1a64173a9a6486",
     "testdata/port/core/document-formats.json": "55df9494cae41c772af9eaaf45fcce4684d095848b46dff7b3bd71b4e98bc313",
     "testdata/port/core/german-search.json": "d00b659aa7d372d205d6f1a0e81abc3b9974208c63cc29906853f472980f9562",
     "testdata/port/core/search-query.json": "c98c660e12b58aade39098e4e27942a3f14243ca889ac3080e26340ca3e078dd",
@@ -30,9 +30,9 @@
     "testdata/port/mcp/symroom-tools.json": "30e806bba87f1366727967e2f07a31537d67545d8db49b877abcdbb90d6b3784",
     "testdata/port/representative/cases.json": "329280a98e20cb5fe4d98241ac030fdcf8627b7be7d94ed2893aae708f97a2c8",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "b256ae5c9db2f02bd9616dda5523841070ad12b1b9d8fe7adf2241bb59205bb9",
-    "testdata/port/sidecar/lifecycle.json": "e2828779c6eda494e5c0ee4889881533d4d005546739bfa82384b690ae348f22",
-    "testdata/port/sidecar/roundtrip.json": "11d292a22d3dbc425133e8feed84d2baafd222df7148ebb7c9e00d7d4885e061",
+    "testdata/port/sidecar/large-corpus.json": "ff5c48494527e84ecb91ed55b82ae21e2b0cb6492abc2917b6e5b06ce00b3e4f",
+    "testdata/port/sidecar/lifecycle.json": "45fdb594f999c3be7ca1f81102774096844eba88392bd9adc8b3a160131653be",
+    "testdata/port/sidecar/roundtrip.json": "5bfcbbf0c8a6d1bb17b50bac9876e48dec8dcb37610b58e74042f15978697364",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/health-links.json": "95501c79b816d21ae86efa724f280e81572ee5636ae11475d9fb793f54428e1a",
     "testdata/port/vault/metadata.json": "5de4b8a9471ae002a52156f0176d3053be9d243497a8a4f45d508f8765f9ae02",

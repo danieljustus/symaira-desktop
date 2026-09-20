@@ -21,6 +21,7 @@ func TestCorpusWithoutSymlinksMatchesTheFixtureMinusSymlinkCases(t *testing.T) {
 	defer func() { platformSupportsSymlinks = restore }()
 
 	fixturePath := filepath.Join("..", "..", "..", "..", "testdata", "port", "vault", "filesystem.json")
+	//nolint:gosec // the fixture path is fixed and repository-local
 	fixture, err := os.ReadFile(fixturePath)
 	if err != nil {
 		t.Fatalf("read fixture: %v", err)

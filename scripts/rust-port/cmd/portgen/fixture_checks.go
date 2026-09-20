@@ -86,19 +86,26 @@ func sanitizedCheckEnvironment(environment []string) []string {
 		}
 		result = append(result, item)
 	}
-	// POSIX resolves the home directory from HOME, Windows from USERPROFILE, and
-	// the fixture generators resolve it to normalize it into the fixture. A
-	// Windows runner reaches the Go tools through a POSIX shell and can carry
-	// only HOME, which made the configuration corpus fail there with
-	// "user home dir: %userprofile% is not defined". The Makefile's runtime
-	// environment sets both names to the same directory for the same reason.
-	if home == "" && profile != "" {
-		result = append(result, "HOME="+profile)
+	// The fixture generators resolve the home directory only to normalize it
+	// into the fixture, but one has to resolve at all: POSIX reads HOME, Windows
+	// reads USERPROFILE. A runner that reaches the Go tools through a POSIX
+	// shell started with --noprofile carries neither name, which made the
+	// configuration corpus fail with "user home dir: %userprofile% is not
+	// defined". Fill the missing name from the present one and fall back to a
+	// writable scratch directory when both are absent; the Makefile's runtime
+	// environment pins both names to one directory for the same reason.
+	var missing []string
+	switch {
+	case home == "" && profile == "":
+		scratch := filepath.Join(os.TempDir(), "portgen-fixture-home")
+		_ = os.MkdirAll(scratch, 0o700)
+		missing = []string{"HOME=" + scratch, "USERPROFILE=" + scratch}
+	case home == "":
+		missing = []string{"HOME=" + profile}
+	case profile == "":
+		missing = []string{"USERPROFILE=" + home}
 	}
-	if profile == "" && home != "" {
-		result = append(result, "USERPROFILE="+home)
-	}
-	return append(result,
+	return append(append(result, missing...),
 		//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with
 		"PATH="+filepath.Join(runtime.GOROOT(), "bin"),
 		"GIT_ATTR_NOSYSTEM=1",

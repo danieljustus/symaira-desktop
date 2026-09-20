@@ -202,7 +202,6 @@ func TestSanitizedCheckEnvironmentKeepsBothHomeNames(t *testing.T) {
 		{name: "posix-only home gains the Windows name", base: []string{"HOME=/home/runner"}, required: "USERPROFILE=/home/runner"},
 		{name: "windows-only home gains the POSIX name", base: []string{"USERPROFILE=C:\\Users\\runner"}, required: "HOME=C:\\Users\\runner"},
 		{name: "both names present stay untouched", base: []string{"HOME=/home/a", "USERPROFILE=C:\\b"}, required: "HOME=/home/a", unchanged: true},
-		{name: "neither name invents nothing", base: []string{"SAFE=retained"}, required: "SAFE=retained"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got := sanitizedCheckEnvironment(tc.base)
@@ -224,8 +223,28 @@ func TestSanitizedCheckEnvironmentKeepsBothHomeNames(t *testing.T) {
 			}
 		})
 	}
-	if got := sanitizedCheckEnvironment([]string{"SAFE=retained"}); strings.Contains("\n"+strings.Join(got, "\n"), "\nHOME=") {
-		t.Fatalf("sanitizedCheckEnvironment() invented a home directory: %#v", got)
+}
+
+func TestSanitizedCheckEnvironmentFallsBackToScratchHome(t *testing.T) {
+	got := sanitizedCheckEnvironment([]string{"SAFE=retained"})
+	homes := map[string]string{}
+	for _, item := range got {
+		name, value, _ := strings.Cut(item, "=")
+		if name == "HOME" || name == "USERPROFILE" {
+			homes[name] = value
+		}
+	}
+	if len(homes) != 2 {
+		t.Fatalf("sanitizedCheckEnvironment() resolved %d home names without any environment, want both: %#v", len(homes), got)
+	}
+	if homes["HOME"] != homes["USERPROFILE"] {
+		t.Fatalf("sanitizedCheckEnvironment() disagreed on the scratch home: %#v", homes)
+	}
+	if info, err := os.Stat(homes["HOME"]); err != nil || !info.IsDir() {
+		t.Fatalf("sanitizedCheckEnvironment() scratch home %q is not a directory: info=%v err=%v", homes["HOME"], info, err)
+	}
+	if !strings.HasPrefix(homes["HOME"], os.TempDir()) {
+		t.Fatalf("sanitizedCheckEnvironment() scratch home %q is outside the temporary directory", homes["HOME"])
 	}
 }
 

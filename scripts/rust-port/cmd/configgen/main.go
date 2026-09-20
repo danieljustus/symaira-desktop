@@ -367,6 +367,22 @@ func withEnvironment(values map[string]string, run func() error) error {
 			return err
 		}
 	}
+	// POSIX resolves the home directory from HOME and Windows from USERPROFILE,
+	// and every name above was just cleared. A case that pins one of the two has
+	// to pin the other to the same value, or the corpus resolves a different
+	// directory on Windows than on the POSIX legs — which is how the Windows
+	// leg failed with "user home dir: %userprofile% is not defined". The
+	// recorded case environment stays as declared.
+	if home := values["HOME"]; home != "" && values["USERPROFILE"] == "" {
+		if err := os.Setenv("USERPROFILE", home); err != nil {
+			return err
+		}
+	}
+	if profile := values["USERPROFILE"]; profile != "" && values["HOME"] == "" {
+		if err := os.Setenv("HOME", profile); err != nil {
+			return err
+		}
+	}
 	return run()
 }
 

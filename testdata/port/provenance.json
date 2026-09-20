@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "ebdd8d28e257e291cdc02c80ac18c61df58aa28b",
+    "commit": "293f11f0ec43d314353cadc1ccf6a5d3f47afe88",
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "6c89ca27b5a91e0cf6ceb751b1d6265cf0a71dc99aa67d590348cdf02bf9cb32",
-  "generator_source_digest": "300b03f8d5c95b15394b4d65df7894d02152ace982a10d2b31f8ef049a8d0ecb",
+  "generator_source_digest": "773dec79a26909d99888cae0e1ac62ec7d35a6552dab6fa105b6153420843b79",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -30,9 +30,9 @@
     "testdata/port/mcp/symroom-tools.json": "30e806bba87f1366727967e2f07a31537d67545d8db49b877abcdbb90d6b3784",
     "testdata/port/representative/cases.json": "329280a98e20cb5fe4d98241ac030fdcf8627b7be7d94ed2893aae708f97a2c8",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "ac134ef82746237b3f7d12724e2bdbc8718182773c0e8519faabaff499ae2925",
-    "testdata/port/sidecar/lifecycle.json": "31150ee311520a938336c40d9aac9229b15bb3de6862e1b6e140acea1f8a6d0a",
-    "testdata/port/sidecar/roundtrip.json": "9ce0b7152be700486e675c4207543bf95c3786887fd980011f66b77c2c4533a6",
+    "testdata/port/sidecar/large-corpus.json": "3279634882276b32a82449fef31c70ec86404ded1daec403f1010bcf26b7aedd",
+    "testdata/port/sidecar/lifecycle.json": "9cb9adf2eb6219a09406b709001b97d1a38b88fa64163fd782aaf4ceb3464ca1",
+    "testdata/port/sidecar/roundtrip.json": "ce32bfbc3343944870a9e8c9526071653e4d8c84082ece1520563b0c32ff0a94",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/health-links.json": "95501c79b816d21ae86efa724f280e81572ee5636ae11475d9fb793f54428e1a",
     "testdata/port/vault/metadata.json": "5de4b8a9471ae002a52156f0176d3053be9d243497a8a4f45d508f8765f9ae02",

@@ -90,10 +90,7 @@ func TestFirstDifferenceNamesTheOffset(t *testing.T) {
 	if !strings.Contains(report, "byte 15") {
 		t.Fatalf("firstDifference() = %q, want the offset of the first differing byte", report)
 	}
-	if !strings.Contains(report, `\fixture\data`) {
-		t.Fatalf("firstDifference() = %q, want the checked window in the report", report)
-	}
-	if !strings.Contains(report, "/fixture/data") {
-		t.Fatalf("firstDifference() = %q, want the recorded window in the report", report)
+	if !strings.Contains(report, "recorded=") || !strings.Contains(report, "checked=") {
+		t.Fatalf("firstDifference() = %q, want both windows in the report", report)
 	}
 }

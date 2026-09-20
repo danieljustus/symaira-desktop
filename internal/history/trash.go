@@ -97,7 +97,7 @@ func (s *Store) TrashList() ([]TrashEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	items, err := fs.ReadDir(root.FS(), trashRelDir())
+	items, err := fs.ReadDir(root.FS(), rootFSPath(trashRelDir()))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -138,7 +138,7 @@ func (s *Store) TrashListStrict() ([]TrashEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	items, err := fs.ReadDir(root.FS(), trashRelDir())
+	items, err := fs.ReadDir(root.FS(), rootFSPath(trashRelDir()))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil

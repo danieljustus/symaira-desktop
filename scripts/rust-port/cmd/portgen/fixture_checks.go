@@ -70,14 +70,33 @@ var fixtureGenerationEnvironment = map[string]struct{}{
 }
 
 func sanitizedCheckEnvironment(environment []string) []string {
-	result := make([]string, 0, len(environment)+7)
+	result := make([]string, 0, len(environment)+9)
+	home, profile := "", ""
 	for _, item := range environment {
-		name, _, _ := strings.Cut(item, "=")
+		name, value, _ := strings.Cut(item, "=")
 		upper := strings.ToUpper(name)
+		switch upper {
+		case "HOME":
+			home = value
+		case "USERPROFILE":
+			profile = value
+		}
 		if isFixtureGenerationEnvironment(name) || name == portgenSidecarOracleCommitEnv || name == portgenSidecarOracleReleaseEnv || strings.HasPrefix(upper, "GO") || strings.HasPrefix(upper, "GIT") || upper == "PATH" {
 			continue
 		}
 		result = append(result, item)
+	}
+	// POSIX resolves the home directory from HOME, Windows from USERPROFILE, and
+	// the fixture generators resolve it to normalize it into the fixture. A
+	// Windows runner reaches the Go tools through a POSIX shell and can carry
+	// only HOME, which made the configuration corpus fail there with
+	// "user home dir: %userprofile% is not defined". The Makefile's runtime
+	// environment sets both names to the same directory for the same reason.
+	if home == "" && profile != "" {
+		result = append(result, "HOME="+profile)
+	}
+	if profile == "" && home != "" {
+		result = append(result, "USERPROFILE="+home)
 	}
 	return append(result,
 		//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with

@@ -192,6 +192,43 @@ func TestSanitizedCheckEnvironmentRemovesActivationVariablesCaseInsensitively(t 
 	}
 }
 
+func TestSanitizedCheckEnvironmentKeepsBothHomeNames(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		base      []string
+		required  string
+		unchanged bool
+	}{
+		{name: "posix-only home gains the Windows name", base: []string{"HOME=/home/runner"}, required: "USERPROFILE=/home/runner"},
+		{name: "windows-only home gains the POSIX name", base: []string{"USERPROFILE=C:\\Users\\runner"}, required: "HOME=C:\\Users\\runner"},
+		{name: "both names present stay untouched", base: []string{"HOME=/home/a", "USERPROFILE=C:\\b"}, required: "HOME=/home/a", unchanged: true},
+		{name: "neither name invents nothing", base: []string{"SAFE=retained"}, required: "SAFE=retained"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := sanitizedCheckEnvironment(tc.base)
+			joined := "\n" + strings.Join(got, "\n")
+			if !strings.Contains(joined, "\n"+tc.required) {
+				t.Fatalf("sanitizedCheckEnvironment(%#v) omitted %q: %#v", tc.base, tc.required, got)
+			}
+			if tc.unchanged {
+				counts := map[string]int{}
+				for _, item := range got {
+					name, _, _ := strings.Cut(item, "=")
+					counts[strings.ToUpper(name)]++
+				}
+				for _, name := range []string{"HOME", "USERPROFILE"} {
+					if counts[name] != 1 {
+						t.Fatalf("sanitizedCheckEnvironment(%#v) duplicated %s: %#v", tc.base, name, got)
+					}
+				}
+			}
+		})
+	}
+	if got := sanitizedCheckEnvironment([]string{"SAFE=retained"}); strings.Contains("\n"+strings.Join(got, "\n"), "\nHOME=") {
+		t.Fatalf("sanitizedCheckEnvironment() invented a home directory: %#v", got)
+	}
+}
+
 func TestRunFixtureChecksInjectsValidatedSidecarOracle(t *testing.T) {
 	expected := inventory.Oracle{Commit: strings.Repeat("a", 40), Release: "validated-release"}
 	t.Setenv(portgenSidecarOracleCommitEnv, strings.Repeat("b", 40))

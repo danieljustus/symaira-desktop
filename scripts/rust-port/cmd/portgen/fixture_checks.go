@@ -138,8 +138,15 @@ func validateFixtureCheckCoverage() error {
 }
 
 func trustedGoTool() (string, error) {
+	// The bundled tool carries the platform executable suffix; without it the
+	// Windows leg fails with "resolve Go tool bundled with portgen" before a
+	// single fixture is checked.
+	name := "go"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
 	//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with
-	path := filepath.Join(runtime.GOROOT(), "bin", "go")
+	path := filepath.Join(runtime.GOROOT(), "bin", name)
 	info, err := os.Stat(path)
 	if err != nil {
 		return "", fmt.Errorf("resolve Go tool bundled with portgen: %w", err)

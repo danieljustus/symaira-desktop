@@ -72,6 +72,9 @@ func runGenerate(repoRoot, commit, release string) {
 		fatal("resolve generation oracle: %v", err)
 	}
 	commit = resolvedCommit
+	if err := verifyCleanWorktree(repoRoot); err != nil {
+		fatal("generation requires a clean worktree: %v", err)
+	}
 	fmt.Printf("Generating Go oracle fixtures (oracle %s / %s)...\n", commit, release)
 
 	// 1. Run package-local generators
@@ -108,13 +111,24 @@ func runGenerate(repoRoot, commit, release string) {
 		fatal("synchronize sidecar oracle metadata: %v", err)
 	}
 
+	// The recorded oracle must describe the bytes this generation actually read:
+	// a dirty tree or a foreign revision cannot relabel the fixtures. The
+	// generator digest is recorded from the generating tree (HEAD), because the
+	// harness identity is separate from the pinned production revision.
+	worktreeSource, err := inventory.ComputeProductionSourceDigest(repoRoot)
+	if err != nil {
+		fatal("compute working-tree production source digest: %v", err)
+	}
 	sourceDigest, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, commit)
 	if err != nil {
 		fatal("compute oracle revision source digest: %v", err)
 	}
-	generatorDigest, err := inventory.ComputeGitRevisionGeneratorSourceDigest(repoRoot, commit)
+	if worktreeSource != sourceDigest {
+		fatal("working-tree production source does not match oracle commit %s: current=%s oracle=%s", commit, worktreeSource, sourceDigest)
+	}
+	generatorDigest, err := inventory.ComputeGitRevisionGeneratorSourceDigest(repoRoot, "HEAD")
 	if err != nil {
-		fatal("compute oracle generator source digest: %v", err)
+		fatal("compute generating-tree generator source digest: %v", err)
 	}
 
 	checksums := make(map[string]string, len(fixturePaths))

@@ -11,83 +11,76 @@ import (
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
-func TestVerifyProvenanceCommitRequiresDirectOutputOnlyChild(t *testing.T) {
-	t.Run("accepts provenance-only child", func(t *testing.T) {
-		repoRoot, oracle := newProvenanceCommitRepository(t, nil)
-		if err := verifyProvenanceCommit(repoRoot, oracle); err != nil {
-			t.Fatalf("verifyProvenanceCommit() error = %v", err)
+func TestVerifyProvenanceAncestry(t *testing.T) {
+	t.Run("accepts the checked revision itself", func(t *testing.T) {
+		repoRoot := newProvenanceBaseRepository(t)
+		head := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
+		if err := verifyProvenanceAncestry(repoRoot, head); err != nil {
+			t.Fatalf("verifyProvenanceAncestry() error = %v", err)
 		}
 	})
 
-	t.Run("rejects unrelated final-commit content", func(t *testing.T) {
-		repoRoot, oracle := newProvenanceCommitRepository(t, map[string]string{
-			"unreviewed.txt": "this must not be hidden in Q\n",
-		})
-		err := verifyProvenanceCommit(repoRoot, oracle)
-		if err == nil || !strings.Contains(err.Error(), "unexpected path") {
-			t.Fatalf("verifyProvenanceCommit() error = %v, want unexpected-path failure", err)
+	t.Run("accepts an ancestor oracle", func(t *testing.T) {
+		repoRoot := newProvenanceRecordRepository(t)
+		oracle := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD~1")
+		writePortgenTestFile(t, repoRoot, provenanceFixture, "{\"schema_version\": 1}\n")
+		portgenGit(t, repoRoot, "add", "--", provenanceFixture)
+		portgenGit(t, repoRoot, "commit", "-q", "-m", "test: later provenance record")
+		if err := verifyProvenanceAncestry(repoRoot, oracle); err != nil {
+			t.Fatalf("verifyProvenanceAncestry() error = %v", err)
 		}
 	})
 
-	t.Run("rejects wrong oracle parent", func(t *testing.T) {
-		repoRoot, _ := newProvenanceCommitRepository(t, nil)
-		err := verifyProvenanceCommit(repoRoot, strings.Repeat("a", 40))
-		if err == nil || !strings.Contains(err.Error(), "does not equal the direct parent") {
-			t.Fatalf("verifyProvenanceCommit() error = %v, want direct-parent failure", err)
+	t.Run("accepts squash-merge shaped history", func(t *testing.T) {
+		// Regression guard for the shape this repository actually produces: the
+		// functional commit and the provenance commit are squashed into one
+		// commit whose parent is unrelated to the record. Ancestry, not a direct
+		// parent relation, is what the fail-closed digests rely on.
+		repoRoot := newProvenanceRecordRepository(t)
+		oracle := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD~1")
+		writePortgenTestFile(t, repoRoot, "docs/rust-port/README.md", "# squash-merged\n")
+		portgenGit(t, repoRoot, "add", "--", "docs/rust-port/README.md")
+		portgenGit(t, repoRoot, "commit", "-q", "-m", "test: squash-merged change")
+		if err := verifyProvenanceAncestry(repoRoot, oracle); err != nil {
+			t.Fatalf("verifyProvenanceAncestry() error = %v, want squash-merge history accepted", err)
+		}
+	})
+
+	t.Run("rejects a malformed oracle", func(t *testing.T) {
+		repoRoot := newProvenanceRecordRepository(t)
+		err := verifyProvenanceAncestry(repoRoot, "not-a-sha")
+		if err == nil || !strings.Contains(err.Error(), "lowercase full 40-character SHA") {
+			t.Fatalf("verifyProvenanceAncestry() error = %v, want malformed-SHA failure", err)
+		}
+	})
+
+	t.Run("rejects a commit that is not in the checked history", func(t *testing.T) {
+		repoRoot := newProvenanceRecordRepository(t)
+		err := verifyProvenanceAncestry(repoRoot, strings.Repeat("a", 40))
+		if err == nil || !strings.Contains(err.Error(), "neither the checked revision") {
+			t.Fatalf("verifyProvenanceAncestry() error = %v, want non-ancestor failure", err)
 		}
 	})
 
 	t.Run("rejects a valid side-branch commit", func(t *testing.T) {
-		repoRoot, oracle := newProvenanceCommitRepository(t, nil)
+		repoRoot := newProvenanceRecordRepository(t)
 		mainBranch := portgenGitOutput(t, repoRoot, "branch", "--show-current")
-		portgenGit(t, repoRoot, "checkout", "-q", "-b", "side", oracle)
-		writePortgenTestFile(t, repoRoot, "side-branch.txt", "not the oracle parent\n")
+		head := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
+		portgenGit(t, repoRoot, "checkout", "-q", "-b", "side", head)
+		writePortgenTestFile(t, repoRoot, "side-branch.txt", "not an ancestor of the checked revision\n")
 		portgenGit(t, repoRoot, "add", "--", "side-branch.txt")
 		portgenGit(t, repoRoot, "commit", "-q", "-m", "test: side branch")
 		side := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
 		portgenGit(t, repoRoot, "checkout", "-q", mainBranch)
 
-		err := verifyProvenanceCommit(repoRoot, side)
-		if err == nil || !strings.Contains(err.Error(), "direct parent") {
-			t.Fatalf("verifyProvenanceCommit() error = %v, want direct-parent failure", err)
-		}
-	})
-
-	t.Run("rejects merge commit Q", func(t *testing.T) {
-		repoRoot := newProvenanceBaseRepository(t)
-		oracle := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
-		baseBranch := portgenGitOutput(t, repoRoot, "branch", "--show-current")
-		portgenGit(t, repoRoot, "checkout", "-q", "-b", "side")
-		writePortgenTestFile(t, repoRoot, "side.txt", "independent side parent\n")
-		portgenGit(t, repoRoot, "add", "--", "side.txt")
-		portgenGit(t, repoRoot, "commit", "-q", "-m", "test: side parent")
-		portgenGit(t, repoRoot, "checkout", "-q", baseBranch)
-		writePortgenTestFile(t, repoRoot, provenanceFixture, "{}\n")
-		portgenGit(t, repoRoot, "add", "--", provenanceFixture)
-		portgenGit(t, repoRoot, "commit", "-q", "-m", "test: provenance child")
-		portgenGit(t, repoRoot, "merge", "--no-ff", "-m", "test: merge Q", "side")
-
-		err := verifyProvenanceCommit(repoRoot, oracle)
-		if err == nil || !strings.Contains(err.Error(), "exactly one parent") {
-			t.Fatalf("verifyProvenanceCommit() error = %v, want one-parent failure", err)
-		}
-	})
-
-	t.Run("requires provenance file in Q", func(t *testing.T) {
-		repoRoot := newProvenanceBaseRepository(t)
-		oracle := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
-		writePortgenTestFile(t, repoRoot, "testdata/port/cli/symdesk-command-tree.json", "{}\n")
-		portgenGit(t, repoRoot, "add", "--", "testdata/port/cli/symdesk-command-tree.json")
-		portgenGit(t, repoRoot, "commit", "-q", "-m", "test: fixture-only Q without provenance")
-
-		err := verifyProvenanceCommit(repoRoot, oracle)
-		if err == nil || !strings.Contains(err.Error(), "must change") {
-			t.Fatalf("verifyProvenanceCommit() error = %v, want missing-provenance failure", err)
+		err := verifyProvenanceAncestry(repoRoot, side)
+		if err == nil || !strings.Contains(err.Error(), "neither the checked revision") {
+			t.Fatalf("verifyProvenanceAncestry() error = %v, want non-ancestor failure", err)
 		}
 	})
 }
 
-func TestRunProvenanceCheckAcceptsImmutablePToQ(t *testing.T) {
+func TestRunProvenanceCheckAcceptsAncestorOracle(t *testing.T) {
 	repoRoot := newProvenanceBaseRepository(t)
 	for _, rel := range fixturePaths {
 		writePortgenTestFile(t, repoRoot, rel, "{}\n")
@@ -153,8 +146,22 @@ func TestResolveGenerationOracleCommitDefaultsToHEAD(t *testing.T) {
 	writePortgenTestFile(t, repoRoot, "unrelated.txt", "new HEAD\n")
 	portgenGit(t, repoRoot, "add", "--", "unrelated.txt")
 	portgenGit(t, repoRoot, "commit", "-q", "-m", "test: advance head")
-	if _, err := resolveGenerationOracleCommit(repoRoot, want); err == nil {
-		t.Fatal("resolveGenerationOracleCommit() accepted an oracle that is not current HEAD")
+	got, err = resolveGenerationOracleCommit(repoRoot, want)
+	if err != nil {
+		t.Fatalf("resolveGenerationOracleCommit(ancestor) error = %v, want the ancestor accepted", err)
+	}
+	if got != want {
+		t.Fatalf("resolveGenerationOracleCommit(ancestor) = %s, want %s", got, want)
+	}
+
+	portgenGit(t, repoRoot, "checkout", "-q", "-b", "side", "HEAD~1")
+	writePortgenTestFile(t, repoRoot, "side.txt", "independent side commit\n")
+	portgenGit(t, repoRoot, "add", "--", "side.txt")
+	portgenGit(t, repoRoot, "commit", "-q", "-m", "test: side commit")
+	side := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
+	portgenGit(t, repoRoot, "checkout", "-q", "-")
+	if _, err := resolveGenerationOracleCommit(repoRoot, side); err == nil {
+		t.Fatal("resolveGenerationOracleCommit() accepted an oracle outside the checked history")
 	}
 }
 
@@ -243,17 +250,15 @@ func TestImmutableSourceSnapshotExcludesLiveIgnoredInputs(t *testing.T) {
 	}
 }
 
-func newProvenanceCommitRepository(t *testing.T, extra map[string]string) (string, string) {
+// newProvenanceRecordRepository builds a repository whose HEAD records the port
+// fixtures. HEAD~1 is the functional commit the record describes.
+func newProvenanceRecordRepository(t *testing.T) string {
 	t.Helper()
 	repoRoot := newProvenanceBaseRepository(t)
-	oracle := portgenGitOutput(t, repoRoot, "rev-parse", "HEAD")
 	writePortgenTestFile(t, repoRoot, provenanceFixture, "{}\n")
-	for rel, content := range extra {
-		writePortgenTestFile(t, repoRoot, rel, content)
-	}
 	portgenGit(t, repoRoot, "add", "--", ".")
-	portgenGit(t, repoRoot, "commit", "-q", "-m", "test: provenance-only Q")
-	return repoRoot, oracle
+	portgenGit(t, repoRoot, "commit", "-q", "-m", "test: provenance record")
+	return repoRoot
 }
 
 func newProvenanceBaseRepository(t *testing.T) string {

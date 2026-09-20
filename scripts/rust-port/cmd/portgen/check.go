@@ -36,11 +36,8 @@ func runProvenanceCheck(repoRoot string) error {
 	if err := validateProvenanceDocument(prov); err != nil {
 		return fmt.Errorf("validate %s: %w", provenanceFixture, err)
 	}
-	if err := verifyProvenanceCommitAt(repoRoot, head, prov.Oracle.Commit); err != nil {
-		return fmt.Errorf("verify P-to-Q provenance relationship: %w", err)
-	}
-	if err := verifyPortFixtureTreeEntries(repoRoot, prov.Oracle.Commit); err != nil {
-		return fmt.Errorf("verify oracle provenance tree entries: %w", err)
+	if err := verifyProvenanceAncestryAt(repoRoot, head, prov.Oracle.Commit); err != nil {
+		return fmt.Errorf("verify oracle provenance ancestry: %w", err)
 	}
 
 	headProduction, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, head)
@@ -58,19 +55,17 @@ func runProvenanceCheck(repoRoot string) error {
 		return fmt.Errorf("recorded source digest is not the bytes at oracle commit %s: oracle=%s recorded=%s", prov.Oracle.Commit, oracleProduction, prov.ProductionSourceDigest)
 	}
 
+	// The generator digest is bound to the checked tree, not to the oracle
+	// revision: it answers "which harness produced these fixtures", and binding it
+	// to the oracle would make every harness change require an oracle advance.
+	// The fixtures themselves stay bound to the checked tree by checksum below,
+	// and the production source stays bound to the oracle revision above.
 	headGenerator, err := inventory.ComputeGitRevisionGeneratorSourceDigest(repoRoot, head)
 	if err != nil {
 		return fmt.Errorf("compute checked generator source digest: %w", err)
 	}
-	oracleGenerator, err := inventory.ComputeGitRevisionGeneratorSourceDigest(repoRoot, prov.Oracle.Commit)
-	if err != nil {
-		return fmt.Errorf("compute oracle generator source digest: %w", err)
-	}
 	if headGenerator != prov.GeneratorSourceDigest {
-		return fmt.Errorf("fixture generator drift detected: checked=%s recorded=%s", headGenerator, prov.GeneratorSourceDigest)
-	}
-	if oracleGenerator != prov.GeneratorSourceDigest {
-		return fmt.Errorf("recorded generator digest is not the bytes at oracle commit %s: oracle=%s recorded=%s", prov.Oracle.Commit, oracleGenerator, prov.GeneratorSourceDigest)
+		return fmt.Errorf("fixture generator drift detected: checked=%s recorded=%s; regenerate the fixtures deliberately", headGenerator, prov.GeneratorSourceDigest)
 	}
 
 	for _, rel := range fixturePaths {

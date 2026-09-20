@@ -42,7 +42,7 @@ jobs:
       # pre-squash Go revision. Keep that object reachable through a local
       # branch: FETCH_HEAD alone is not transferred by git clone --no-local.
       - name: Materialize pinned Go oracle for source guards
-        run: git fetch --no-tags origin +982fe718f2d64629102b4078b1d65a46645c90c5:refs/heads/rust-port-oracle-982fe718f2d64629102b4078b1d65a46645c90c5
+        run: git fetch --no-tags origin +c4f6e77928849c3626400c45676c05c3cf58f2a1:refs/heads/rust-port-oracle-c4f6e77928849c3626400c45676c05c3cf58f2a1
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -132,7 +132,7 @@ jobs:
       # The Windows contract runs the clone-based Go source guards below.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
-        run: git fetch --no-tags origin +982fe718f2d64629102b4078b1d65a46645c90c5:refs/heads/rust-port-oracle-982fe718f2d64629102b4078b1d65a46645c90c5
+        run: git fetch --no-tags origin +c4f6e77928849c3626400c45676c05c3cf58f2a1:refs/heads/rust-port-oracle-c4f6e77928849c3626400c45676c05c3cf58f2a1
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -222,7 +222,7 @@ jobs:
       # pre-squash oracle through a local branch rather than only FETCH_HEAD.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
-        run: git fetch --no-tags origin +982fe718f2d64629102b4078b1d65a46645c90c5:refs/heads/rust-port-oracle-982fe718f2d64629102b4078b1d65a46645c90c5
+        run: git fetch --no-tags origin +c4f6e77928849c3626400c45676c05c3cf58f2a1:refs/heads/rust-port-oracle-c4f6e77928849c3626400c45676c05c3cf58f2a1
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:

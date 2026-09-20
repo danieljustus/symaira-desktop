@@ -1,12 +1,12 @@
 {
   "schema_version": 2,
   "oracle": {
-    "commit": "982fe718f2d64629102b4078b1d65a46645c90c5",
-    "release": "unreleased-982fe718"
+    "commit": "c4f6e77928849c3626400c45676c05c3cf58f2a1",
+    "release": "unreleased-c4f6e779"
   },
   "source_hashes": {
-    "go.mod": "7a5ca8c06f9e71762c05b7d7b47e74bad9f93bdf8332f0fd3ab16758ccd32bf1",
-    "go.sum": "943bc31c96f838bb7cb8378a0f81f8340ddaa9201b1b2a5247a8b6ae28a054a9",
+    "go.mod": "0383eff632281c046fd5a0a8fb79b3a4d849e213b156846f81ac429e56aeae7c",
+    "go.sum": "f285cfd07f1ec34d6672c46f21426ecb2e78892c3a7abac710e8d6c8c48961b8",
     "internal/vault/adopt.go": "bca6c7451d706eb9f3d72c62ff1042d4b0f78acf44b769ee31e50236d00bb96f",
     "internal/vault/asn.go": "3724de55e70b001a29e770719d8bcc7919bc9f52005019170c1f8bd64c524334",
     "internal/vault/asn_lock_unix.go": "7219874019353d841785ef18577a9decdf28ac3668c8f5f7f93f0e0e6bc4f2ad",

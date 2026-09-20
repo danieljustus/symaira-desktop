@@ -1,7 +1,7 @@
 # Go-to-Rust migration record
 
 > **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006`, `RUST-007`, and `RUST-016` are blocked by the current VALUE-001 order-bias gate ([#936](https://github.com/danieljustus/symaira-desktop/issues/936)).
-> **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; portgen provenance instead records the direct functional parent `P` of its derived evidence commit `Q`. Those are distinct identities by the current contract; their long-term consolidation is tracked in [#934](https://github.com/danieljustus/symaira-desktop/issues/934). VALUE baselines remain pinned to `ae863319` / `v0.12.2`
+> **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; portgen provenance instead records the revision whose production source the fixtures were generated from, which must be the checked revision or one of its ancestors. Those are distinct identities by the current contract; their long-term consolidation is tracked in [#934](https://github.com/danieljustus/symaira-desktop/issues/934). VALUE baselines remain pinned to `ae863319` / `v0.12.2`
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
@@ -230,25 +230,47 @@ several compatibility risks wearing a trench coat.
 
 ## Refreshing port provenance
 
-Port provenance is a two-commit evidence flow, not metadata that may be edited
-beside an arbitrary change:
+Port provenance is recorded evidence, not metadata that may be edited beside an
+arbitrary change. The recorded revision must be the checked revision or one of
+its ancestors — a direct parent/child pair is *not* required, because this
+repository squash-merges every pull request and the commit that records an
+advance can therefore never be a direct child of the commit whose bytes it
+records.
 
-1. Commit functional source or generator work as clean commit **P**.
-2. Run fixture generation only in a disposable worktree created at **P**; inspect
-   the resulting `testdata/port` diff before transferring it.
-3. Commit the allowlisted derived fixture paths and
-   `testdata/port/provenance.json` as the single-parent child **Q**. The
-   provenance oracle SHA must equal **P** exactly.
+The procedure after any change to production source, `go.mod`/`go.sum`, the
+release contract, or the fixture generators:
+
+1. Merge the functional change as **P**; `main` is briefly red on the port
+   contract until step 4 lands.
+2. On the updated `main`, run `make port-fixtures-generate` from a clean
+   worktree. Generation resolves the oracle to `HEAD` by default, and the
+   `--oracle-commit` flag accepts an explicit revision only when it is `HEAD`
+   or one of its ancestors.
+3. Inspect the resulting `testdata/port` diff, then commit the allowlisted
+   derived fixture paths and `testdata/port/provenance.json` as **Q**.
 4. Run `make port-fixtures-check` at **Q**. The check reads immutable Git blobs,
    validates regular-file tree entries, runs every manifest-covered generator and
    package check from a disposable linked worktree at **Q**, and strips ambient
    generation, Go, Git and PATH overrides. Its Make-side environment prefix cannot
    be replaced by `make PORTGEN_CHECK_ENV=:`.
 
-Changes to generator controls, including the `Makefile`, change the generator
-digest and therefore require a new reviewed P→Q evidence pair. A source, docs,
-or unrelated file in Q is rejected rather than smuggled through a green fixture
-check.
+What the check enforces, fail-closed:
+
+- The recorded oracle revision is the checked revision or an ancestor of it; a
+  malformed, unknown, future or side-branch revision is rejected.
+- The recorded production digest equals the bytes at the recorded revision *and*
+  the bytes of the checked tree, so production source cannot drift and fixtures
+  cannot be relabelled.
+- Every fixture in the manifest is compared by checksum against the checked tree,
+  so a fixture edited after the oracle was recorded is rejected regardless of the
+  commit graph.
+- The generator digest is bound to the checked tree, not to the oracle revision:
+  a harness change is reviewed through the regenerated fixtures instead of
+  forcing an oracle advance, which would otherwise be circular.
+
+Changes to the generator Go sources under `scripts/rust-port` and the listed
+port-contract test files change the generator digest and therefore require
+deliberately regenerated and reviewed fixtures.
 
 ## Execution rule
 

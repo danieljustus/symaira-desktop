@@ -10,6 +10,7 @@ import (
 	"github.com/danieljustus/symaira-corekit/mcpserver"
 
 	"github.com/danieljustus/symaira-desktop/internal/config"
+	"github.com/danieljustus/symaira-desktop/internal/testsupport"
 )
 
 func TestNewTransformToolRequiresText(t *testing.T) {
@@ -60,7 +61,7 @@ func TestNewRelatedToolRequiresFile(t *testing.T) {
 }
 
 func TestNewRelatedToolReturnsEmptyWithoutComposition(t *testing.T) {
-	t.Setenv("PATH", "/usr/bin:/bin")
+	testsupport.IsolateCompanionBinaries(t, "")
 	factory := testFactory(t)
 	svc, db, err := factory()
 	if err != nil {
@@ -82,7 +83,7 @@ func TestNewRelatedToolReturnsEmptyWithoutComposition(t *testing.T) {
 }
 
 func TestNewIngestJobsToolWithoutSymingest(t *testing.T) {
-	t.Setenv("PATH", "/usr/bin:/bin")
+	testsupport.IsolateCompanionBinaries(t, "")
 	tool := newIngestJobsTool(testFactory(t))
 
 	if _, err := tool.Handler(context.Background(), json.RawMessage(`{}`)); err == nil {
@@ -91,7 +92,7 @@ func TestNewIngestJobsToolWithoutSymingest(t *testing.T) {
 }
 
 func TestNewIngestRetryToolWithoutSymingest(t *testing.T) {
-	t.Setenv("PATH", "/usr/bin:/bin")
+	testsupport.IsolateCompanionBinaries(t, "")
 	tool := newIngestRetryTool(testFactory(t))
 
 	if _, err := tool.Handler(context.Background(), json.RawMessage(`{"id":"job-1"}`)); err == nil {

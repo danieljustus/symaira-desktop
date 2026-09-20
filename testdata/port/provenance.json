@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "2b3e3d03dfd9aae6630c4469c1f797a676bc0327",
+    "commit": "50bdc779f8e548b79b5426169e40d3aab3180e0e",
     "release": "post-v0.12.2-security-880"
   },
-  "production_source_digest": "d9ec0e8047da106bd08e2b5c40abab0a536c12318fd715fe1ca89b7739bf13a3",
-  "generator_source_digest": "fd48129da25c76e1efd93874ecb9d018ceff59cd892f8e3fa924853361a4d16a",
+  "production_source_digest": "6c89ca27b5a91e0cf6ceb751b1d6265cf0a71dc99aa67d590348cdf02bf9cb32",
+  "generator_source_digest": "3631835419bc2d1db11ead8831201307a88e7485cba8ca68b11346a8f2bf1ff1",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -30,9 +30,9 @@
     "testdata/port/mcp/symroom-tools.json": "30e806bba87f1366727967e2f07a31537d67545d8db49b877abcdbb90d6b3784",
     "testdata/port/representative/cases.json": "329280a98e20cb5fe4d98241ac030fdcf8627b7be7d94ed2893aae708f97a2c8",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "ff5c48494527e84ecb91ed55b82ae21e2b0cb6492abc2917b6e5b06ce00b3e4f",
-    "testdata/port/sidecar/lifecycle.json": "45fdb594f999c3be7ca1f81102774096844eba88392bd9adc8b3a160131653be",
-    "testdata/port/sidecar/roundtrip.json": "5bfcbbf0c8a6d1bb17b50bac9876e48dec8dcb37610b58e74042f15978697364",
+    "testdata/port/sidecar/large-corpus.json": "0d5bda042894be56d510df06c9e205b7aa69392cdfe4613b369eca6973c4b231",
+    "testdata/port/sidecar/lifecycle.json": "6e461a2018a891931f45ade70170e66f8e062affc58e8610f3da3444cc7f25bc",
+    "testdata/port/sidecar/roundtrip.json": "e1225aa9c81b25c9ed8028c1d5cec01311adc771dcb9b06579fcaf93c1b8d425",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/health-links.json": "95501c79b816d21ae86efa724f280e81572ee5636ae11475d9fb793f54428e1a",
     "testdata/port/vault/metadata.json": "5de4b8a9471ae002a52156f0176d3053be9d243497a8a4f45d508f8765f9ae02",

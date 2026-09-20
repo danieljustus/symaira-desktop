@@ -448,28 +448,10 @@ func canonicalPathWith(value, root string) string {
 	return slashed
 }
 
-// firstDifference reports where two fixture encodings start to differ, so a
-// platform-specific drift names the offending field instead of only the fact.
+// firstDifference is the shared reporter; kept as a thin alias so the check
+// sites read the same way in every generator.
 func firstDifference(recorded, checked []byte) string {
-	limit := len(recorded)
-	if len(checked) < limit {
-		limit = len(checked)
-	}
-	at := limit
-	for i := 0; i < limit; i++ {
-		if recorded[i] != checked[i] {
-			at = i
-			break
-		}
-	}
-	window := func(content []byte) string {
-		end := at + 60
-		if end > len(content) {
-			end = len(content)
-		}
-		return string(content[at:end])
-	}
-	return fmt.Sprintf("first difference at byte %d: recorded=%q checked=%q", at, window(recorded), window(checked))
+	return inventory.FirstDifference(recorded, checked)
 }
 
 func fatal(format string, args ...any) {

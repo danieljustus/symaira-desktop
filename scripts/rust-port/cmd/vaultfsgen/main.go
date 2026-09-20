@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 
@@ -54,6 +55,22 @@ type readCase struct {
 	ErrorClass string `json:"error_class,omitempty"`
 }
 
+// platformSupportsSymlinks reports whether the platform can create symlinks
+// without elevated privileges. Windows runners cannot, so the corpus omits the
+// symlink entries there and the check drops them from the POSIX-complete fixture
+// instead of failing every Windows run. It is a variable so the Windows path can
+// be exercised on any host.
+var platformSupportsSymlinks = func() bool { return runtime.GOOS != "windows" }
+
+// symlinkTreePaths and symlinkCaseIDs name the corpus entries that depend on
+// symlink support.
+var symlinkTreePaths = map[string]bool{"inside-link.md": true, "outside-link.md": true, "dir-link": true}
+
+var symlinkCaseIDs = map[string]bool{
+	"contained-symlink": true, "external-symlink": true,
+	"external-file-symlink": true, "external-directory-symlink": true,
+}
+
 func main() {
 	output := flag.String("output", "testdata/port/vault/filesystem.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
@@ -75,8 +92,15 @@ func main() {
 		if err != nil {
 			fatal("read fixture: %v", err)
 		}
-		if !bytes.Equal(existing, content) {
-			fatal("vault filesystem fixture drift; regenerate on %s", runtime.GOOS)
+		expected := existing
+		if !platformSupportsSymlinks() {
+			expected, err = withoutSymlinkCases(existing)
+			if err != nil {
+				fatal("read fixture: %v", err)
+			}
+		}
+		if !bytes.Equal(expected, content) {
+			fatal("vault filesystem fixture drift; regenerate on %s: %s", runtime.GOOS, inventory.FirstDifference(expected, content))
 		}
 		fmt.Println("PASS vault filesystem fixture")
 		return
@@ -88,6 +112,27 @@ func main() {
 		fatal("write fixture: %v", err)
 	}
 	fmt.Printf("PASS vault filesystem fixture generated (%s)\n", runtime.GOOS)
+}
+
+// withoutSymlinkCases removes the corpus entries a platform without symlink
+// support cannot create, so the Windows leg verifies every remaining section
+// instead of failing on entries its filesystem cannot represent. The fixture
+// stays POSIX-complete, and the POSIX legs keep verifying the removed entries.
+func withoutSymlinkCases(content []byte) ([]byte, error) {
+	var value document
+	if err := json.Unmarshal(content, &value); err != nil {
+		return nil, err
+	}
+	value.Tree = slices.DeleteFunc(value.Tree, func(item treeFile) bool { return symlinkTreePaths[item.Path] })
+	value.WalkAll = slices.DeleteFunc(value.WalkAll, func(item walkEntry) bool { return symlinkTreePaths[item.Path] })
+	value.WalkMarkdown = slices.DeleteFunc(value.WalkMarkdown, func(path string) bool { return symlinkTreePaths[path] })
+	value.SecurePaths = slices.DeleteFunc(value.SecurePaths, func(item secureCase) bool { return symlinkCaseIDs[item.ID] })
+	value.ConfinedReads = slices.DeleteFunc(value.ConfinedReads, func(item readCase) bool { return symlinkCaseIDs[item.ID] })
+	encoded, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append(encoded, '\n'), nil
 }
 
 func build(oracle inventory.Oracle) (document, error) {
@@ -121,7 +166,7 @@ func build(oracle inventory.Oracle) (document, error) {
 	if err := os.WriteFile(outsideFile, []byte("outside"), 0o600); err != nil {
 		return document{}, err
 	}
-	if runtime.GOOS != "windows" {
+	if platformSupportsSymlinks() {
 		links := []treeFile{{Path: "inside-link.md", SymlinkTo: "real/inside.md"}, {Path: "outside-link.md", SymlinkTo: "<OUTSIDE>/outside.md"}, {Path: "dir-link", SymlinkTo: "<OUTSIDE>", Directory: true}}
 		for _, item := range links {
 			target := item.SymlinkTo
@@ -172,7 +217,7 @@ func build(oracle inventory.Oracle) (document, error) {
 	sort.Strings(markdown)
 
 	secureInputs := []struct{ id, input string }{{"existing", "folder/b.md"}, {"missing", "folder/new/note.md"}, {"traversal", "../outside.md"}, {"absolute", "/etc/passwd"}, {"root", "."}}
-	if runtime.GOOS != "windows" {
+	if platformSupportsSymlinks() {
 		secureInputs = append(secureInputs, struct{ id, input string }{"contained-symlink", "inside-link.md"}, struct{ id, input string }{"external-symlink", "outside-link.md"})
 	}
 	secure := make([]secureCase, 0, len(secureInputs))
@@ -194,7 +239,7 @@ func build(oracle inventory.Oracle) (document, error) {
 		secure = append(secure, out)
 	}
 	reads := make([]readCase, 0)
-	if runtime.GOOS != "windows" {
+	if platformSupportsSymlinks() {
 		for _, item := range []struct{ id, input string }{
 			{"contained-symlink", "inside-link.md"},
 			{"external-file-symlink", "outside-link.md"},

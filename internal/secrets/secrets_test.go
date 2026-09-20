@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/compose"
-	"github.com/danieljustus/symaira-desktop/internal/testsupport"
 )
 
 func writeMockTool(t *testing.T, dir, name, script string) {
@@ -21,8 +20,24 @@ func withMockPath(t *testing.T, dir string) {
 	t.Helper()
 	old := os.Getenv("PATH")
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+old)
+	// compose.Resolve searches $SYMAIRA_BIN and the managed runtime
+	// directory (~/.symaira/bin) ahead of PATH, so a real companion binary
+	// on the host would shadow this test's mock. Both tiers, plus the
+	// resolution cache, are isolated here.
+	isolateManagedRuntime(t)
 	compose.ResetCache()
 	t.Cleanup(compose.ResetCache)
+}
+
+// isolateManagedRuntime removes the two resolution tiers that sit ahead of
+// PATH — $SYMAIRA_BIN and the managed runtime directory under $HOME — so a
+// test that wants a companion binary absent (or mocked on PATH) is
+// independent of whatever the developer machine has installed.
+func isolateManagedRuntime(t *testing.T) {
+	t.Helper()
+	t.Setenv(compose.SymairaBinEnvVar, "")
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("USERPROFILE", t.TempDir())
 }
 
 func TestResolveKey(t *testing.T) {
@@ -164,11 +179,11 @@ exit 1
 // verbatim as the Anthropic API key, leaking the vault/item naming to a
 // third party.
 func TestResolveKeySymvaultAbsent(t *testing.T) {
-	// PATH alone is not enough: compose.Resolve checks $SYMAIRA_BIN and the
-	// managed runtime directory (~/.symaira/bin) first, so a machine with a
-	// real symvault would make this assertion pass incidentally instead of
-	// proving the absence path.
-	testsupport.IsolateCompanionBinaries(t, t.TempDir())
+	dir := t.TempDir()
+	t.Setenv("PATH", dir)
+	isolateManagedRuntime(t)
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
 
 	key := ResolveKey("op://vault/item/key")
 	if key != "" {
@@ -177,7 +192,11 @@ func TestResolveKeySymvaultAbsent(t *testing.T) {
 }
 
 func TestSourceSymvaultAbsent(t *testing.T) {
-	testsupport.IsolateCompanionBinaries(t, t.TempDir())
+	dir := t.TempDir()
+	t.Setenv("PATH", dir)
+	isolateManagedRuntime(t)
+	compose.ResetCache()
+	t.Cleanup(compose.ResetCache)
 
 	src := Source("op://vault/item/key")
 	if src != "symvault (missing)" {

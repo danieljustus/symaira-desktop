@@ -302,7 +302,11 @@ What the check enforces, fail-closed:
 
 Changes to the generator Go sources under `scripts/rust-port` and the listed
 port-contract test files change the generator digest and therefore require
-deliberately regenerated and reviewed fixtures.
+deliberately regenerated and reviewed fixtures. The digest covers more than the
+harness sources: `go.mod`, `go.sum`, `Makefile` and `.gitattributes` are digest
+inputs too (`scripts/rust-port/inventory/digest.go`), so a change as small as a
+new Make target needs its own **Q** re-freeze — a functional `P` that adds a
+target leaves `main` red on the port contract until that **Q** lands.
 
 ## Execution rule
 

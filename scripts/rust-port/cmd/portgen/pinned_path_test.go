@@ -20,6 +20,7 @@ func TestPinnedCheckPathCanResolveGitForOracleChecks(t *testing.T) {
 		t.Skip("the PATH probe runs through a POSIX shell; the pinned PATH logic is platform-shared")
 	}
 	pinned := pinnedCheckPath()
+	//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with
 	goOnlyPath := filepath.Join(runtime.GOROOT(), "bin")
 	if pinned == goOnlyPath {
 		t.Fatalf("pinned check PATH is the GOROOT-only PATH %q; git is not resolvable for the oracle checks", pinned)

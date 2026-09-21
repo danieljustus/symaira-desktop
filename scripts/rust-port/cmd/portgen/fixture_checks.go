@@ -150,6 +150,7 @@ func isFixtureGenerationEnvironment(name string) bool {
 // with "git: executable file not found in $PATH" instead of checking the
 // fixture. Every other entry stays a pure toolchain PATH.
 func pinnedCheckPath() string {
+	//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with
 	goBinaryPath := filepath.Join(runtime.GOROOT(), "bin")
 	git, err := exec.LookPath("git")
 	if err != nil {

@@ -159,13 +159,15 @@ migration stays stopped and Go remains in production.
   writes) is now covered by its own Go-owned fixture and byte-exact Rust replay
   (`testdata/port/config/config-save.json`, 9 cases; `make config-save-differential`),
   merged as #1005 with the oracle provenance re-frozen on the merge revision in #1007;
-  the target still has to be wired into the native Rust CI job before the row can
-  reach `PASS`. The CLI-level `symdesk retention list` slice is ported and gated by
-  `make retention-cli-differential` (`testdata/port/cli/retention-cases.json`, 6
-  byte-exact cases) as PR #1008; `retention eval/accept/reject/diff/history` stay open
-  because their state is read and mutated through `internal/service`, which is not
-  ported yet — the Rust CLI deliberately omits them instead of approximating them.
-  DATA-001 (dataset sync) also remains open, so the row stays `TODO`.
+  the target was wired into the native Rust CI job in #1012 and verified on
+  Linux/macOS/Windows at `bdb017c7` (Rust native matrix run 35642921769), so the row
+  can now reach `PASS`. The CLI-level `symdesk retention list` slice is ported and gated
+  by `make retention-cli-differential` (`testdata/port/cli/retention-cases.json`, 6
+  byte-exact cases) as #1008, verified on Linux/macOS/Windows in the same native matrix;
+  `retention eval/accept/reject/diff/history` stay open because their state is read and
+  mutated through `internal/service`, which is not ported yet — the Rust CLI deliberately
+  omits them instead of approximating them. DATA-001 (dataset sync) also remains open, so
+  the row stays `TODO`.
 
 - `RUST-001` passed: generated fixtures freeze 207 SymDesk command nodes (206
   non-root, including Cobra's generated help/completion tree), the production-derived SymRoom parser grammar, 57 SymDesk and 8

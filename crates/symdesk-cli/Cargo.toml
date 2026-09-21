@@ -19,4 +19,6 @@ symdesk-core.workspace = true
 symaira-core-exit.workspace = true
 symdesk-index.workspace = true
 symdesk-protocol.workspace = true
+symdesk-vault.workspace = true
+time.workspace = true
 tokio.workspace = true

@@ -61,7 +61,11 @@ struct Expected {
     #[serde(default)]
     error_message_go: Option<String>,
     file_content: String,
+    // Only compared where the platform has Unix permission bits; the fields stay
+    // in the fixture model on every target so the JSON shape is identical.
+    #[cfg_attr(not(unix), allow(dead_code))]
     file_mode: u32,
+    #[cfg_attr(not(unix), allow(dead_code))]
     dir_modes: BTreeMap<String, u32>,
     file_set: Vec<String>,
 }

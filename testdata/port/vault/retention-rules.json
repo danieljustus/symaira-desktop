@@ -1,0 +1,696 @@
+{
+  "schema_version": 1,
+  "generated_on": "darwin",
+  "oracle": {
+    "commit": "745c08e8b9d1b1a9cbb2e0ba1c1d0d0d5c0f0f7a",
+    "release": "v0.1.0"
+  },
+  "source_hashes": {
+    "internal/retention/retention.go": "1dd40cb43529b1d9aed6fe1699d50e1e9d844abeac31450cd0bdd56276a9a24c",
+    "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
+  },
+  "load_rules": [
+    {
+      "id": "valid-multi-rule",
+      "description": "valid multi-rule file",
+      "yaml_content": "name: \"rule1\"\nperiod_days: 30\nreference_field: document_date\naction: trash\nselector:\n  document_type: invoice\n---\nname: \"rule2\"\nperiod_days: 90\nreference_field: created\naction: flag_review\nselector:\n  status: paid\n",
+      "rules": [
+        {
+          "name": "rule1",
+          "selector": {
+            "document_type": "invoice"
+          },
+          "period": 2592000000000000,
+          "period_days": 30,
+          "reference_field": "document_date",
+          "action": "trash"
+        },
+        {
+          "name": "rule2",
+          "selector": {
+            "status": "paid"
+          },
+          "period": 7776000000000000,
+          "period_days": 90,
+          "reference_field": "created",
+          "action": "flag_review"
+        }
+      ]
+    },
+    {
+      "id": "valid-single-rule",
+      "description": "valid single rule",
+      "yaml_content": "name: \"single\"\nperiod_days: 7\nreference_field: due_date\naction: flag_review\n",
+      "rules": [
+        {
+          "name": "single",
+          "selector": {},
+          "period": 604800000000000,
+          "period_days": 7,
+          "reference_field": "due_date",
+          "action": "flag_review"
+        }
+      ]
+    },
+    {
+      "id": "default-reference-field",
+      "description": "default reference field when empty",
+      "yaml_content": "name: \"defaults\"\nperiod_days: 30\naction: trash\n",
+      "rules": [
+        {
+          "name": "defaults",
+          "selector": {},
+          "period": 2592000000000000,
+          "period_days": 30,
+          "reference_field": "",
+          "action": "trash"
+        }
+      ]
+    },
+    {
+      "id": "comment-chunk",
+      "description": "comment chunk is skipped",
+      "yaml_content": "# This is a comment\n---\nname: \"after-comment\"\nperiod_days: 10\naction: trash\n",
+      "rules": [
+        {
+          "name": "after-comment",
+          "selector": {},
+          "period": 864000000000000,
+          "period_days": 10,
+          "reference_field": "",
+          "action": "trash"
+        }
+      ]
+    },
+    {
+      "id": "empty-chunk",
+      "description": "empty chunk is skipped",
+      "yaml_content": "---\nname: \"after-empty\"\nperiod_days: 5\naction: flag_review\n",
+      "rules": [
+        {
+          "name": "after-empty",
+          "selector": {},
+          "period": 432000000000000,
+          "period_days": 5,
+          "reference_field": "",
+          "action": "flag_review"
+        }
+      ]
+    },
+    {
+      "id": "missing-name",
+      "description": "missing rule name fails validation",
+      "yaml_content": "name: \"   \"\nperiod_days: 30\naction: trash\n",
+      "error": "invalid rule \"   \": rule name is required",
+      "error_class": "validation"
+    },
+    {
+      "id": "zero-period",
+      "description": "zero period_days fails validation",
+      "yaml_content": "name: \"zero\"\nperiod_days: 0\naction: trash\n",
+      "error": "invalid rule \"zero\": period_days must be positive",
+      "error_class": "validation"
+    },
+    {
+      "id": "negative-period",
+      "description": "negative period_days fails validation",
+      "yaml_content": "name: \"negative\"\nperiod_days: -5\naction: trash\n",
+      "error": "invalid rule \"negative\": period_days must be positive",
+      "error_class": "validation"
+    },
+    {
+      "id": "invalid-reference-field",
+      "description": "invalid reference_field fails validation",
+      "yaml_content": "name: \"odd\"\nperiod_days: 30\nreference_field: invoice_date\naction: trash\n",
+      "error": "invalid rule \"odd\": unsupported reference field \"invoice_date\"",
+      "error_class": "validation"
+    },
+    {
+      "id": "unknown-yaml-key",
+      "description": "unknown YAML key is ignored",
+      "yaml_content": "name: \"unknown-key\"\nperiod_days: 30\naction: trash\nunknown_field: \"ignored\"\n",
+      "rules": [
+        {
+          "name": "unknown-key",
+          "selector": {},
+          "period": 2592000000000000,
+          "period_days": 30,
+          "reference_field": "",
+          "action": "trash"
+        }
+      ]
+    },
+    {
+      "id": "malformed-yaml",
+      "description": "malformed YAML fails parsing",
+      "yaml_content": "name: \"broken\"\nperiod_days: 30\naction: trash\n  invalid_indent: true\n",
+      "error": "parse retention rule: yaml: line 4: mapping values are not allowed in this context",
+      "error_class": "decode_failed"
+    },
+    {
+      "id": "crlf-endings",
+      "description": "CRLF line endings are handled",
+      "yaml_content": "name: \"crlf\"\r\nperiod_days: 30\r\naction: trash\r\n",
+      "rules": [
+        {
+          "name": "crlf",
+          "selector": {},
+          "period": 2592000000000000,
+          "period_days": 30,
+          "reference_field": "",
+          "action": "trash"
+        }
+      ]
+    },
+    {
+      "id": "empty-file",
+      "description": "empty file returns no rules",
+      "yaml_content": ""
+    },
+    {
+      "id": "rule-order",
+      "description": "rule order is preserved",
+      "yaml_content": "name: \"first\"\nperiod_days: 10\naction: trash\n---\nname: \"second\"\nperiod_days: 20\naction: flag_review\n---\nname: \"third\"\nperiod_days: 30\naction: trash\n",
+      "rules": [
+        {
+          "name": "first",
+          "selector": {},
+          "period": 864000000000000,
+          "period_days": 10,
+          "reference_field": "",
+          "action": "trash"
+        },
+        {
+          "name": "second",
+          "selector": {},
+          "period": 1728000000000000,
+          "period_days": 20,
+          "reference_field": "",
+          "action": "flag_review"
+        },
+        {
+          "name": "third",
+          "selector": {},
+          "period": 2592000000000000,
+          "period_days": 30,
+          "reference_field": "",
+          "action": "trash"
+        }
+      ]
+    },
+    {
+      "id": "file-not-found",
+      "description": "non-existent file returns read error",
+      "yaml_content": "",
+      "error": "open /nonexistent/path/rules.yaml: no such file or directory",
+      "error_class": "read_failed"
+    }
+  ],
+  "doc_meta": [
+    {
+      "id": "string-correspondent-and-doctype",
+      "description": "string correspondent and document_type extracted",
+      "markdown": "---\ntitle: \"Test Doc\"\ncorrespondent: \"Acme Corp\"\ndocument_type: invoice\n---\nBody content\n",
+      "document": {
+        "Path": "test.md",
+        "SHA256": "ecd37d078132f10bf400ebe78e979985258f467575330e7f1f50b229132adca9",
+        "Title": "Test Doc",
+        "Created": "",
+        "Tags": null,
+        "Aliases": null,
+        "Frontmatter": {
+          "correspondent": "Acme Corp",
+          "document_type": "invoice",
+          "title": "Test Doc"
+        },
+        "Body": "Body content\n",
+        "Links": null,
+        "Size": 89,
+        "ModTime": "0001-01-01T00:00:00Z",
+        "DocumentDate": "",
+        "Person": "",
+        "Status": "",
+        "DueDate": "",
+        "Confidence": 0,
+        "OcrJSONPath": "",
+        "Simhash": "",
+        "ASN": null,
+        "Type": "note",
+        "DerivedFrom": "",
+        "Derived": false
+      },
+      "doc_meta": {
+        "Path": "test.md",
+        "Title": "Test Doc",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "Acme Corp",
+        "DocumentType": "invoice",
+        "Person": "",
+        "Tags": null
+      }
+    },
+    {
+      "id": "non-string-correspondent",
+      "description": "non-string correspondent yields empty string",
+      "markdown": "---\ntitle: \"Test Doc\"\ncorrespondent: 123\ndocument_type: invoice\n---\nBody content\n",
+      "document": {
+        "Path": "test.md",
+        "SHA256": "34621751978377e1c67ebdd06174098212e0e5f24aa0a7dfa316a35361cf1f9a",
+        "Title": "Test Doc",
+        "Created": "",
+        "Tags": null,
+        "Aliases": null,
+        "Frontmatter": {
+          "correspondent": 123,
+          "document_type": "invoice",
+          "title": "Test Doc"
+        },
+        "Body": "Body content\n",
+        "Links": null,
+        "Size": 81,
+        "ModTime": "0001-01-01T00:00:00Z",
+        "DocumentDate": "",
+        "Person": "",
+        "Status": "",
+        "DueDate": "",
+        "Confidence": 0,
+        "OcrJSONPath": "",
+        "Simhash": "",
+        "ASN": null,
+        "Type": "note",
+        "DerivedFrom": "",
+        "Derived": false
+      },
+      "doc_meta": {
+        "Path": "test.md",
+        "Title": "Test Doc",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "invoice",
+        "Person": "",
+        "Tags": null
+      }
+    },
+    {
+      "id": "non-string-doctype",
+      "description": "non-string document_type yields empty string",
+      "markdown": "---\ntitle: \"Test Doc\"\ncorrespondent: \"Acme\"\ndocument_type: true\n---\nBody content\n",
+      "document": {
+        "Path": "test.md",
+        "SHA256": "993aba52c16014e75763c29d7282720d5571bc8e51206802bb57d9ae3c824fdd",
+        "Title": "Test Doc",
+        "Created": "",
+        "Tags": null,
+        "Aliases": null,
+        "Frontmatter": {
+          "correspondent": "Acme",
+          "document_type": true,
+          "title": "Test Doc"
+        },
+        "Body": "Body content\n",
+        "Links": null,
+        "Size": 81,
+        "ModTime": "0001-01-01T00:00:00Z",
+        "DocumentDate": "",
+        "Person": "",
+        "Status": "",
+        "DueDate": "",
+        "Confidence": 0,
+        "OcrJSONPath": "",
+        "Simhash": "",
+        "ASN": null,
+        "Type": "note",
+        "DerivedFrom": "",
+        "Derived": false
+      },
+      "doc_meta": {
+        "Path": "test.md",
+        "Title": "Test Doc",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "Acme",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      }
+    },
+    {
+      "id": "missing-correspondent",
+      "description": "missing correspondent key yields empty string",
+      "markdown": "---\ntitle: \"Test Doc\"\ndocument_type: invoice\n---\nBody content\n",
+      "document": {
+        "Path": "test.md",
+        "SHA256": "9ab159496014d7ba3e2ae241343e516807683780c272c202363183bdefea71a3",
+        "Title": "Test Doc",
+        "Created": "",
+        "Tags": null,
+        "Aliases": null,
+        "Frontmatter": {
+          "document_type": "invoice",
+          "title": "Test Doc"
+        },
+        "Body": "Body content\n",
+        "Links": null,
+        "Size": 62,
+        "ModTime": "0001-01-01T00:00:00Z",
+        "DocumentDate": "",
+        "Person": "",
+        "Status": "",
+        "DueDate": "",
+        "Confidence": 0,
+        "OcrJSONPath": "",
+        "Simhash": "",
+        "ASN": null,
+        "Type": "note",
+        "DerivedFrom": "",
+        "Derived": false
+      },
+      "doc_meta": {
+        "Path": "test.md",
+        "Title": "Test Doc",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "invoice",
+        "Person": "",
+        "Tags": null
+      }
+    },
+    {
+      "id": "missing-doctype",
+      "description": "missing document_type key yields empty string",
+      "markdown": "---\ntitle: \"Test Doc\"\ncorrespondent: \"Acme\"\n---\nBody content\n",
+      "document": {
+        "Path": "test.md",
+        "SHA256": "f5d757bdf46559b7541fccffb72ad17f418dcc5ba4d9964d657059147ca14c37",
+        "Title": "Test Doc",
+        "Created": "",
+        "Tags": null,
+        "Aliases": null,
+        "Frontmatter": {
+          "correspondent": "Acme",
+          "title": "Test Doc"
+        },
+        "Body": "Body content\n",
+        "Links": null,
+        "Size": 61,
+        "ModTime": "0001-01-01T00:00:00Z",
+        "DocumentDate": "",
+        "Person": "",
+        "Status": "",
+        "DueDate": "",
+        "Confidence": 0,
+        "OcrJSONPath": "",
+        "Simhash": "",
+        "ASN": null,
+        "Type": "note",
+        "DerivedFrom": "",
+        "Derived": false
+      },
+      "doc_meta": {
+        "Path": "test.md",
+        "Title": "Test Doc",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "Acme",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      }
+    },
+    {
+      "id": "nil-tags",
+      "description": "nil tags becomes empty slice",
+      "markdown": "---\ntitle: \"Test Doc\"\n---\nBody content\n",
+      "document": {
+        "Path": "test.md",
+        "SHA256": "482c17d0c336bbb9f394b16ce88c5b0717ad8eae6e054bb2e5f4253ff4f60849",
+        "Title": "Test Doc",
+        "Created": "",
+        "Tags": null,
+        "Aliases": null,
+        "Frontmatter": {
+          "title": "Test Doc"
+        },
+        "Body": "Body content\n",
+        "Links": null,
+        "Size": 39,
+        "ModTime": "0001-01-01T00:00:00Z",
+        "DocumentDate": "",
+        "Person": "",
+        "Status": "",
+        "DueDate": "",
+        "Confidence": 0,
+        "OcrJSONPath": "",
+        "Simhash": "",
+        "ASN": null,
+        "Type": "note",
+        "DerivedFrom": "",
+        "Derived": false
+      },
+      "doc_meta": {
+        "Path": "test.md",
+        "Title": "Test Doc",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      }
+    },
+    {
+      "id": "empty-tags",
+      "description": "empty tags array becomes empty slice",
+      "markdown": "---\ntitle: \"Test Doc\"\ntags: []\n---\nBody content\n",
+      "document": {
+        "Path": "test.md",
+        "SHA256": "8b40ff3ba3390e8d26e3f545cf07dc13aef9b6f64a6a13dca7af5670a96e6446",
+        "Title": "Test Doc",
+        "Created": "",
+        "Tags": null,
+        "Aliases": null,
+        "Frontmatter": {
+          "tags": [],
+          "title": "Test Doc"
+        },
+        "Body": "Body content\n",
+        "Links": null,
+        "Size": 48,
+        "ModTime": "0001-01-01T00:00:00Z",
+        "DocumentDate": "",
+        "Person": "",
+        "Status": "",
+        "DueDate": "",
+        "Confidence": 0,
+        "OcrJSONPath": "",
+        "Simhash": "",
+        "ASN": null,
+        "Type": "note",
+        "DerivedFrom": "",
+        "Derived": false
+      },
+      "doc_meta": {
+        "Path": "test.md",
+        "Title": "Test Doc",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": null
+      }
+    },
+    {
+      "id": "unicode-title",
+      "description": "unicode title and fields preserved",
+      "markdown": "---\ntitle: \"日本語タイトル\"\ncorrespondent: \"山田太郎\"\ndocument_type: 文書\ntags:\n  - \"タグ1\"\n  - \"tag2\"\n---\nUnicode body\n",
+      "document": {
+        "Path": "test.md",
+        "SHA256": "33984f0cff1f7d562d406194cf61711a89353bf2aadbbe8a5aa06eee8900443b",
+        "Title": "日本語タイトル",
+        "Created": "",
+        "Tags": [
+          "タグ1",
+          "tag2"
+        ],
+        "Aliases": null,
+        "Frontmatter": {
+          "correspondent": "山田太郎",
+          "document_type": "文書",
+          "tags": [
+            "タグ1",
+            "tag2"
+          ],
+          "title": "日本語タイトル"
+        },
+        "Body": "Unicode body\n",
+        "Links": null,
+        "Size": 135,
+        "ModTime": "0001-01-01T00:00:00Z",
+        "DocumentDate": "",
+        "Person": "",
+        "Status": "",
+        "DueDate": "",
+        "Confidence": 0,
+        "OcrJSONPath": "",
+        "Simhash": "",
+        "ASN": null,
+        "Type": "note",
+        "DerivedFrom": "",
+        "Derived": false
+      },
+      "doc_meta": {
+        "Path": "test.md",
+        "Title": "日本語タイトル",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "山田太郎",
+        "DocumentType": "文書",
+        "Person": "",
+        "Tags": [
+          "タグ1",
+          "tag2"
+        ]
+      }
+    },
+    {
+      "id": "mixed-tags",
+      "description": "non-string tag elements are dropped, strings kept",
+      "markdown": "---\ntitle: \"Test Doc\"\ntags: [\"valid\", 123, true, \"also-valid\"]\n---\nBody content\n",
+      "document": {
+        "Path": "test.md",
+        "SHA256": "ed5107ffa5927c2f1c7f129ef6920f8de1095219946e64d1c7e563a0ae24f70b",
+        "Title": "Test Doc",
+        "Created": "",
+        "Tags": [
+          "valid",
+          "also-valid"
+        ],
+        "Aliases": null,
+        "Frontmatter": {
+          "tags": [
+            "valid",
+            123,
+            true,
+            "also-valid"
+          ],
+          "title": "Test Doc"
+        },
+        "Body": "Body content\n",
+        "Links": null,
+        "Size": 80,
+        "ModTime": "0001-01-01T00:00:00Z",
+        "DocumentDate": "",
+        "Person": "",
+        "Status": "",
+        "DueDate": "",
+        "Confidence": 0,
+        "OcrJSONPath": "",
+        "Simhash": "",
+        "ASN": null,
+        "Type": "note",
+        "DerivedFrom": "",
+        "Derived": false
+      },
+      "doc_meta": {
+        "Path": "test.md",
+        "Title": "Test Doc",
+        "DocumentDate": "",
+        "Created": "",
+        "DueDate": "",
+        "Status": "",
+        "Correspondent": "",
+        "DocumentType": "",
+        "Person": "",
+        "Tags": [
+          "valid",
+          "also-valid"
+        ]
+      }
+    },
+    {
+      "id": "all-fields",
+      "description": "all DocMeta fields populated from Document",
+      "markdown": "---\ntitle: \"Full Doc\"\ncreated: \"2024-01-15T10:00:00Z\"\ndocument_date: \"2024-01-15\"\ndue_date: \"2024-02-15\"\nstatus: \"paid\"\nperson: \"Daniel\"\ncorrespondent: \"Acme Corp\"\ndocument_type: invoice\ntags:\n  - \"finance\"\n  - \"2024\"\n---\nFull body\n",
+      "document": {
+        "Path": "test.md",
+        "SHA256": "7f1b769ab29388debbccf97491ecb3cc15d19c4e7e071b22f001ad52bd037883",
+        "Title": "Full Doc",
+        "Created": "2024-01-15T10:00:00Z",
+        "Tags": [
+          "finance",
+          "2024"
+        ],
+        "Aliases": null,
+        "Frontmatter": {
+          "correspondent": "Acme Corp",
+          "created": "2024-01-15T10:00:00Z",
+          "document_date": "2024-01-15",
+          "document_type": "invoice",
+          "due_date": "2024-02-15",
+          "person": "Daniel",
+          "status": "paid",
+          "tags": [
+            "finance",
+            "2024"
+          ],
+          "title": "Full Doc"
+        },
+        "Body": "Full body\n",
+        "Links": null,
+        "Size": 232,
+        "ModTime": "0001-01-01T00:00:00Z",
+        "DocumentDate": "2024-01-15",
+        "Person": "Daniel",
+        "Status": "paid",
+        "DueDate": "2024-02-15",
+        "Confidence": 0,
+        "OcrJSONPath": "",
+        "Simhash": "",
+        "ASN": null,
+        "Type": "document",
+        "DerivedFrom": "",
+        "Derived": false
+      },
+      "doc_meta": {
+        "Path": "test.md",
+        "Title": "Full Doc",
+        "DocumentDate": "2024-01-15",
+        "Created": "2024-01-15T10:00:00Z",
+        "DueDate": "2024-02-15",
+        "Status": "paid",
+        "Correspondent": "Acme Corp",
+        "DocumentType": "invoice",
+        "Person": "Daniel",
+        "Tags": [
+          "finance",
+          "2024"
+        ]
+      }
+    }
+  ],
+  "notes": [
+    "Generated by internal/retention/port_retention_rules_contract_test.go; never hand-edit.",
+    "LoadRules vectors exercise multi-document YAML files with --- separators.",
+    "DocMetaFromDocument vectors use real vault.Document from the Go parser."
+  ]
+}

@@ -156,6 +156,13 @@ vault-history-differential:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run TestPortHistoryLifecycleContract
 	$(CARGO) test -p symdesk-vault --test history_lifecycle_contracts --locked
 
+# VAULT-006 multi-document rules file and document-to-metadata mapping against
+# the pinned Go oracle. The fixture is Go-owned and only regenerated through the
+# target above.
+retention-rules-differential:
+	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retention -run TestPortRetentionRulesContract
+	$(CARGO) test -p symdesk-vault --test retention_rules_contracts --locked
+
 vault-retention-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retention -run TestPortRetentionContract
 

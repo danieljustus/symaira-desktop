@@ -156,8 +156,16 @@ migration stays stopped and Go remains in production.
   oracle provenance re-frozen on main in #1001; the native `Rust native` CI jobs ran
   `make retention-rules-differential` on Linux, macOS and Windows at `e971824f` and the
   `Rust port contract` jobs verified the fixture checksum. CFG-004 (config filesystem
-  writes), DATA-001 (dataset sync) and the CLI-level retention acceptance flow
-  (`symdesk retention eval/list/accept`) remain open, so the row stays `TODO`.
+  writes) is now covered by its own Go-owned fixture and byte-exact Rust replay
+  (`testdata/port/config/config-save.json`, 9 cases; `make config-save-differential`),
+  merged as #1005 with the oracle provenance re-frozen on the merge revision in #1007;
+  the target still has to be wired into the native Rust CI job before the row can
+  reach `PASS`. The CLI-level `symdesk retention list` slice is ported and gated by
+  `make retention-cli-differential` (`testdata/port/cli/retention-cases.json`, 6
+  byte-exact cases) as PR #1008; `retention eval/accept/reject/diff/history` stay open
+  because their state is read and mutated through `internal/service`, which is not
+  ported yet — the Rust CLI deliberately omits them instead of approximating them.
+  DATA-001 (dataset sync) also remains open, so the row stays `TODO`.
 
 - `RUST-001` passed: generated fixtures freeze 207 SymDesk command nodes (206
   non-root, including Cobra's generated help/completion tree), the production-derived SymRoom parser grammar, 57 SymDesk and 8
@@ -224,6 +232,17 @@ migration stays stopped and Go remains in production.
   `rusqlite` 0.40.2 is pinned with only `bundled`; the Rust crate has
   zero unsafe expressions, while the reviewed SQLite wrapper/FFI remains an
   explicit transitive boundary.
+- Unverified WIP — not evidence: `migration/rust-room-journal` (`f015a694`) holds a
+  SymRoom journal draft (Go contract test, fixture, crate change) from a worker whose own
+  replay was not byte-exact and whose Make target called the generator instead of
+  verifying it; the draft is kept as WIP and was not promoted. The writer worktrees
+  `.worktrees/subagent-sa-1-905b9a86` and `../w-rust-room-journal` still hold the two
+  differing `testdata/port/room/journal.json` captures.
+- Next actions for RUST-007: wire `make config-save-differential` and
+  `make retention-cli-differential` into the native Rust CI job so CFG-004 and VAULT-006
+  can leave `TODO`, port the `internal/service` retention-state layer that
+  `retention eval/accept/reject/diff/history` require, and close #1006 so the new CLI
+  cases can compare the filesystem manifest again.
 
 ## Reuse assessment
 

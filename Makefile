@@ -223,6 +223,17 @@ representative-fixtures-generate:
 representative-fixtures-check:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/representativegen --check
 
+# VAULT-006 CLI slice: the Go and Rust `symdesk retention` command trees are run
+# on the same synthetic vault and compared on stdout, stderr, exit code and the
+# written vault files.
+retention-cli-differential:
+	@mkdir -p bin/port
+	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
+	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
+	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/diffharness \
+		--symdesk-left "bin/port/symdesk-go" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk" \
+		--cases "testdata/port/cli/retention-cases.json" --stage retention
+
 representative-differential: representative-fixtures-check
 	@mkdir -p bin/port
 	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk

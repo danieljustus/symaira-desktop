@@ -260,6 +260,14 @@ jobs:
         shell: bash
         run: make retention-rules-differential
 
+      - name: Run native retention CLI differential
+        shell: bash
+        run: make retention-cli-differential
+
+      - name: Run native config-save filesystem differential
+        shell: bash
+        run: make config-save-differential
+
       - name: Run native room identity differential
         shell: bash
         run: make symroom-differential

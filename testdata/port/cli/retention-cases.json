@@ -1,0 +1,214 @@
+{
+ "schema_version": 1,
+ "oracle": {
+  "commit": "2bb529cdc3bcc461bcf4a6af89624fc0418be180",
+  "release": "post-v0.12.2-security-880"
+ },
+ "cases": [
+  {
+   "id": "retention-list-no-proposals",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": [
+    "retention",
+    "list",
+    "--json",
+    "--vault",
+    "${WORKSPACE}"
+   ],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": "doc.md",
+     "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+     "mode": 420
+    }
+   ],
+   "description": "No proposal directory yet; Go reports an empty proposal set and exits 0. Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+  },
+  {
+   "id": "retention-list-pending",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": [
+    "retention",
+    "list",
+    "--json",
+    "--vault",
+    "${WORKSPACE}"
+   ],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-test.json",
+     "content": "{\"run_id\":\"ret-test\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    },
+    {
+     "path": "doc.md",
+     "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+     "mode": 420
+    }
+   ],
+   "description": "Pending proposal is listed in Go struct field order (run_id, rule_name, created, items, status). Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+  },
+  {
+   "id": "retention-list-status-filter",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": [
+    "retention",
+    "list",
+    "--json",
+    "--vault",
+    "${WORKSPACE}"
+   ],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-a.json",
+     "content": "{\"run_id\":\"ret-a\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"accepted\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    },
+    {
+     "path": ".symdesk/retention/ret-b.json",
+     "content": "{\"run_id\":\"ret-b\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"failed\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    },
+    {
+     "path": ".symdesk/retention/ret-c.json",
+     "content": "{\"run_id\":\"ret-c\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"partial\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    },
+    {
+     "path": "doc.md",
+     "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+     "mode": 420
+    }
+   ],
+   "description": "Only pending/failed/partial proposals are listed, in Go's sorted directory order (ret-b, ret-c). Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+  },
+  {
+   "id": "retention-list-skips-undecodable",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": [
+    "retention",
+    "list",
+    "--json",
+    "--vault",
+    "${WORKSPACE}"
+   ],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-broken.json",
+     "content": "{ not json",
+     "mode": 420
+    },
+    {
+     "path": ".symdesk/retention/ret-test.json",
+     "content": "{\"run_id\":\"ret-test\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    },
+    {
+     "path": "doc.md",
+     "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+     "mode": 420
+    }
+   ],
+   "description": "An undecodable proposal file is skipped instead of failing the command. Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+  },
+  {
+   "id": "retention-list-skips-non-proposal-entries",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": [
+    "retention",
+    "list",
+    "--json",
+    "--vault",
+    "${WORKSPACE}"
+   ],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/nested/keep.json",
+     "content": "{\"run_id\":\"nested\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    },
+    {
+     "path": ".symdesk/retention/notes.txt",
+     "content": "not a proposal\n",
+     "mode": 420
+    },
+    {
+     "path": ".symdesk/retention/ret-test.json",
+     "content": "{\"run_id\":\"ret-test\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    },
+    {
+     "path": "doc.md",
+     "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+     "mode": 420
+    }
+   ],
+   "description": "Subdirectories and non-.json files in the proposal directory are ignored. Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+  },
+  {
+   "id": "retention-list-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": [
+    "retention",
+    "list",
+    "--vault",
+    "${WORKSPACE}"
+   ],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-test.json",
+     "content": "{\"run_id\":\"ret-test\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    },
+    {
+     "path": "doc.md",
+     "content": "---\ntitle: Doc\ndocument_date: 2026-01-01\n---\nBody\n",
+     "mode": 420
+    }
+   ],
+   "description": "Human-readable branch uses Go's format strings and the local wall clock of the proposal. Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+  }
+ ]
+}

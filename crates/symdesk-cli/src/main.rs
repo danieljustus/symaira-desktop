@@ -2,6 +2,7 @@
 
 mod http;
 mod mcp;
+mod retention;
 
 use std::{
     ffi::OsString,
@@ -103,6 +104,17 @@ fn main() -> ExitCode {
             command.get_one::<String>("token").cloned(),
             matches.get_one::<String>("vault").cloned(),
         ),
+        Some(("retention", command)) => {
+            let vault_opt = matches.get_one::<String>("vault").cloned();
+            match command.subcommand() {
+                Some(("list", _)) => retention::run_list(vault_opt.as_deref(), output_json),
+                Some((other, _)) => write_stderr(
+                    &format!("unknown retention subcommand: {other}\n"),
+                    CoreExitCode::Generic,
+                ),
+                None => process_exit(CoreExitCode::Ok),
+            }
+        }
         _ => process_exit(CoreExitCode::Ok),
     }
 }
@@ -164,6 +176,7 @@ fn cli() -> Command {
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
         )
         .subcommand(Command::new("mcp"))
+        .subcommand(retention::cli())
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))

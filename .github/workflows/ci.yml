@@ -256,6 +256,10 @@ jobs:
         shell: bash
         run: make vault-retention-differential
 
+      - name: Run native retention rules differential
+        shell: bash
+        run: make retention-rules-differential
+
       - name: Run native room identity differential
         shell: bash
         run: make symroom-differential

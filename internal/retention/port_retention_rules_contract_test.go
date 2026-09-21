@@ -68,6 +68,7 @@ func TestPortRetentionRulesContract(t *testing.T) {
 		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
+		//nolint:gosec // fixture path is derived from the repository root
 		if err := os.WriteFile(path, encoded, 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -75,6 +76,7 @@ func TestPortRetentionRulesContract(t *testing.T) {
 		return
 	}
 
+	//nolint:gosec // fixture path is derived from the repository root
 	current, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read %s: %v (run with PORT_GENERATE=1 to create it)", retentionRulesFixturePath, err)
@@ -229,6 +231,7 @@ action: trash
 func runLoadRulesCase(t *testing.T, id, description, yamlContent string) loadRulesVector {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "rules.yaml")
+	//nolint:gosec // case file written into the test's own temp directory
 	if err := os.WriteFile(path, []byte(yamlContent), 0o644); err != nil {
 		t.Fatal(err)
 	}

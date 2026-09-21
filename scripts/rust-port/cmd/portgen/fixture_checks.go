@@ -33,6 +33,10 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"notebook parser", []string{"test", "-count=1", "./internal/notebook", "-run", "TestNotebookParseInventory"}, []string{"testdata/port/vault/notebook.json"}, false},
 	{"search metadata", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "TestSearchMetadataInventory"}, []string{"testdata/port/vault/metadata.json"}, false},
 	{"mobile vault writer", []string{"test", "-count=1", "./internal/vault", "-run", "TestMobileWriterFixture"}, []string{"testdata/port/vault/mobile-writer.json"}, false},
+	{"vault write filesystem", []string{"test", "-count=1", "./internal/vault", "-run", "TestPortVaultWriteFilesystemContract"}, []string{"testdata/port/vault/filesystem-writes.json"}, false},
+	{"vault note operations", []string{"test", "-count=1", "./internal/service", "-run", "TestPortNoteOperationContract"}, []string{"testdata/port/vault/note-operations.json"}, false},
+	{"vault history lifecycle", []string{"test", "-count=1", "./internal/history", "-run", "TestPortHistoryLifecycleContract"}, []string{"testdata/port/vault/history-lifecycle.json"}, false},
+	{"vault retention corpus", []string{"test", "-count=1", "./internal/retention", "-run", "TestPortRetentionContract"}, []string{"testdata/port/vault/retention.json"}, false},
 	{"sidecar contracts", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarContract"}, []string{"testdata/port/sidecar/contracts.json"}, false},
 	{"sidecar lifecycle", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarLifecycleContract"}, []string{"testdata/port/sidecar/lifecycle.json"}, true},
 	{"sidecar oracle metadata", []string{"test", "-count=1", "./scripts/rust-port/cmd/sidecar-roundtrip", "-run", "TestCommittedSidecarOracleIdentities"}, []string{"testdata/port/sidecar/large-corpus.json", "testdata/port/sidecar/roundtrip.json"}, false},
@@ -44,6 +48,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"search-query corpus", []string{"run", "./scripts/rust-port/cmd/querygen", "--check"}, []string{"testdata/port/core/search-query.json"}, false},
 	{"vault parser corpus", []string{"run", "./scripts/rust-port/cmd/vaultgen", "--check"}, []string{"testdata/port/vault/parse.json"}, false},
 	{"vault filesystem corpus", []string{"run", "./scripts/rust-port/cmd/vaultfsgen", "--check"}, []string{"testdata/port/vault/filesystem.json"}, false},
+	{"vault frontmatter writes", []string{"run", "./scripts/rust-port/cmd/vaultwritegen", "--check"}, []string{"testdata/port/vault/frontmatter-write.json"}, false},
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},
 	{"representative corpus", []string{"run", "./scripts/rust-port/cmd/representativegen", "--check"}, []string{"testdata/port/http/representative.json", "testdata/port/representative/cases.json"}, false},
 	{"MCP corpus", []string{"run", "./scripts/rust-port/cmd/mcpgen", "--check"}, []string{"testdata/port/mcp/representative.json"}, false},
@@ -107,7 +112,7 @@ func sanitizedCheckEnvironment(environment []string) []string {
 	}
 	return append(append(result, missing...),
 		//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with
-		"PATH="+filepath.Join(runtime.GOROOT(), "bin"),
+		"PATH="+pinnedCheckPath(),
 		"GIT_ATTR_NOSYSTEM=1",
 		"GIT_CONFIG_GLOBAL="+os.DevNull,
 		"GIT_CONFIG_NOSYSTEM=1",
@@ -135,6 +140,27 @@ func isFixtureGenerationEnvironment(name string) bool {
 		return true
 	}
 	return strings.HasSuffix(upper, "_GENERATE")
+}
+
+// pinnedCheckPath is the PATH of the sanitized check environment: the GOROOT
+// the harness was built with, plus the directory of a git executable resolved
+// before the ambient PATH is dropped. One registered check target — the
+// frontmatter write generator — resolves the pinned Go revision from
+// immutable Git objects, so a PATH carrying only the Go tool would fail it
+// with "git: executable file not found in $PATH" instead of checking the
+// fixture. Every other entry stays a pure toolchain PATH.
+func pinnedCheckPath() string {
+	//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with
+	goBinaryPath := filepath.Join(runtime.GOROOT(), "bin")
+	git, err := exec.LookPath("git")
+	if err != nil {
+		return goBinaryPath
+	}
+	gitDirectory := filepath.Dir(git)
+	if !filepath.IsAbs(gitDirectory) {
+		return goBinaryPath
+	}
+	return gitDirectory + string(os.PathListSeparator) + goBinaryPath
 }
 
 func validateFixtureCheckCoverage() error {

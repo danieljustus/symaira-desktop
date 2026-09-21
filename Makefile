@@ -6,6 +6,9 @@ ROOM_LDFLAGS = -X github.com/danieljustus/symaira-desktop/internal/room/version.
 CARGO ?= cargo
 # Keep differential artifacts in the candidate's isolated Cargo target tree.
 RUST_TARGET_DIR ?= $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),target)
+# Native differential recipes compare freshly built binaries, so they need the
+# platform's executable suffix rather than a Unix-only path.
+EXE_SUFFIX := $(if $(filter Windows_NT,$(OS)),.exe,)
 # Command-line make variables are not inherited by recipes. When callers
 # select an isolated Cargo target tree, pass it through to Cargo as well as
 # using it for the differential binary path below.
@@ -240,10 +243,10 @@ representative-fixtures-check:
 # written vault files.
 retention-cli-differential:
 	@mkdir -p bin/port
-	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o bin/port/symdesk-go ./cmd/symdesk
+	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/diffharness \
-		--symdesk-left "bin/port/symdesk-go" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk" \
+		--symdesk-left "bin/port/symdesk-go$(EXE_SUFFIX)" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)" \
 		--cases "testdata/port/cli/retention-cases.json" --stage retention
 
 representative-differential: representative-fixtures-check

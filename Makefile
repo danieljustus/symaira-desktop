@@ -102,6 +102,18 @@ core-fixtures-check:
 core-differential: core-fixtures-check
 	$(CARGO) test -p symdesk-core --all-features --locked
 
+# CFG-004 config filesystem writes: the Go-owned fixture records the exact
+# MkdirAll/OpenFile side effects — every created ancestor and its mode, an
+# existing file's truncation, the created file's mode, the resulting file set
+# and the wrapped failure stage — and replays them in Rust. Regenerate the
+# fixture deliberately with `make config-save-fixtures-generate`.
+config-save-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/config -run TestPortConfigSaveContract
+
+config-save-differential:
+	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/config -run TestPortConfigSaveContract
+	$(CARGO) test -p symdesk-core --test config_save_contracts --locked
+
 vault-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultgen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \

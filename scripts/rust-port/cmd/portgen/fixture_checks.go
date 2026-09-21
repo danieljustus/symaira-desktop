@@ -112,7 +112,7 @@ func sanitizedCheckEnvironment(environment []string) []string {
 	}
 	return append(append(result, missing...),
 		//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with
-		"PATH="+filepath.Join(runtime.GOROOT(), "bin"),
+		"PATH="+pinnedCheckPath(),
 		"GIT_ATTR_NOSYSTEM=1",
 		"GIT_CONFIG_GLOBAL="+os.DevNull,
 		"GIT_CONFIG_NOSYSTEM=1",
@@ -140,6 +140,26 @@ func isFixtureGenerationEnvironment(name string) bool {
 		return true
 	}
 	return strings.HasSuffix(upper, "_GENERATE")
+}
+
+// pinnedCheckPath is the PATH of the sanitized check environment: the GOROOT
+// the harness was built with, plus the directory of a git executable resolved
+// before the ambient PATH is dropped. One registered check target — the
+// frontmatter write generator — resolves the pinned Go revision from
+// immutable Git objects, so a PATH carrying only the Go tool would fail it
+// with "git: executable file not found in $PATH" instead of checking the
+// fixture. Every other entry stays a pure toolchain PATH.
+func pinnedCheckPath() string {
+	goBinaryPath := filepath.Join(runtime.GOROOT(), "bin")
+	git, err := exec.LookPath("git")
+	if err != nil {
+		return goBinaryPath
+	}
+	gitDirectory := filepath.Dir(git)
+	if !filepath.IsAbs(gitDirectory) {
+		return goBinaryPath
+	}
+	return gitDirectory + string(os.PathListSeparator) + goBinaryPath
 }
 
 func validateFixtureCheckCoverage() error {

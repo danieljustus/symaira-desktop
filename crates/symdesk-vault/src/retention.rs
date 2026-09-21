@@ -30,17 +30,24 @@ pub const PROPOSAL_ITEM_STATUS_ACCEPTED: &str = "accepted";
 pub const PROPOSAL_ITEM_STATUS_ACTION_COMPLETED: &str = "action_completed";
 
 /// Go: `retention.Rule`. `period` is the Go duration in nanoseconds and is kept
-/// as a field so the wire format matches.
+/// as a field so the wire format matches. Every field defaults when the YAML
+/// document omits it, because Go decodes into a zero-valued struct and only
+/// `Validate` decides whether that is acceptable.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Rule {
+    #[serde(default)]
     pub name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    #[serde(default)]
     pub selector: Selector,
     #[serde(default)]
     pub period: i64,
+    #[serde(default)]
     pub period_days: i64,
+    #[serde(default)]
     pub reference_field: String,
+    #[serde(default)]
     pub action: String,
 }
 
@@ -212,6 +219,67 @@ pub fn validate(rule: &Rule) -> Result<(), RetentionError> {
         )));
     }
     Ok(())
+}
+
+/// Go: `retention.LoadRules`. Reads a multi-document YAML rules file: the file
+/// is split on a `---` line, empty chunks and chunks starting with `#` are
+/// skipped, every remaining chunk is parsed as one rule, validated, and its
+/// `period` is derived from `period_days` in nanoseconds. The chunk handling
+/// mirrors Go instead of a YAML multi-document reader, because Go splits the
+/// bytes before parsing.
+pub fn load_rules(path: &Path) -> Result<Vec<Rule>, RetentionError> {
+    let data = std::fs::read(path).map_err(|_| RetentionError::ReadFailed)?;
+    let content = String::from_utf8_lossy(&data);
+    let mut rules = Vec::new();
+    for chunk in content.split("\n---\n") {
+        let document = chunk.trim();
+        if document.is_empty() || document.starts_with('#') {
+            continue;
+        }
+        let mut rule: Rule = noyalib::from_slice(document.as_bytes())
+            .map_err(|err| RetentionError::Message(format!("parse retention rule: {err}")))?;
+        if let Err(err) = validate(&rule) {
+            // Go wraps a rule failure with the rule's name: `invalid rule "x": …`.
+            return Err(RetentionError::Validation(format!(
+                "invalid rule {}: {err}",
+                go_quote(&rule.name)
+            )));
+        }
+        rule.period = rule.period_days * 24 * 60 * 60 * 1_000_000_000;
+        rules.push(rule);
+    }
+    Ok(rules)
+}
+
+/// Go: `retention.DocMetaFromDocument`. Extracts a DocMeta from a
+/// vault Document, pulling `correspondent` and `document_type` from
+/// frontmatter as strings (non-string values yield "").
+pub fn doc_meta_from_document(doc: &crate::Document) -> DocMeta {
+    DocMeta {
+        path: doc.path.clone(),
+        title: doc.title.clone(),
+        document_date: doc.document_date.clone(),
+        created: doc.created.clone(),
+        due_date: doc.due_date.clone(),
+        status: doc.status.clone(),
+        correspondent: frontmatter_string(&doc.frontmatter, "correspondent"),
+        document_type: frontmatter_string(&doc.frontmatter, "document_type"),
+        person: doc.person.clone(),
+        tags: doc.tags.clone(),
+    }
+}
+
+/// Extract a frontmatter value as a string, returning "" if the key is
+/// absent or the value is not a string — matching Go's
+/// `extractFrontmatterString`.
+fn frontmatter_string(
+    frontmatter: &std::collections::BTreeMap<String, noyalib::Value>,
+    key: &str,
+) -> String {
+    match frontmatter.get(key) {
+        Some(noyalib::Value::String(s)) => s.clone(),
+        _ => String::new(),
+    }
 }
 
 /// Go: `retention.Rule.Period` derived from `period_days`.

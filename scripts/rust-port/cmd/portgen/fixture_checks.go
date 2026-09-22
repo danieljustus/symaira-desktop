@@ -40,6 +40,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"vault retention rules", []string{"test", "-count=1", "./internal/retention", "-run", "TestPortRetentionRulesContract"}, []string{"testdata/port/vault/retention-rules.json"}, false},
 	{"sidecar contracts", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarContract"}, []string{"testdata/port/sidecar/contracts.json"}, false},
 	{"sidecar lifecycle", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarLifecycleContract"}, []string{"testdata/port/sidecar/lifecycle.json"}, true},
+	{"sidecar vault metadata", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarMetadataContract"}, []string{"testdata/port/sidecar/metadata.json"}, false},
 	{"sidecar oracle metadata", []string{"test", "-count=1", "./scripts/rust-port/cmd/sidecar-roundtrip", "-run", "TestCommittedSidecarOracleIdentities"}, []string{"testdata/port/sidecar/large-corpus.json", "testdata/port/sidecar/roundtrip.json"}, false},
 }
 

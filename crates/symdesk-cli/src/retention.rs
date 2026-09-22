@@ -21,7 +21,7 @@ use symdesk_vault::retention::{
     load_proposal, proposal_dir,
 };
 
-use symdesk_index::{Sidecar, path_for_vault};
+use symdesk_index::open_for_vault;
 
 use crate::{emit_error, write_stdout};
 
@@ -48,11 +48,7 @@ pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCod
     // index before the command runs, and closes it afterwards. The handle is
     // unused here, but the filesystem side effect is part of the contract the
     // differential compares.
-    let sidecar_path = match path_for_vault(&vault_root) {
-        Ok(path) => path,
-        Err(error) => return emit_error(error.to_string(), output_json),
-    };
-    let sidecar = match Sidecar::open(&sidecar_path) {
+    let sidecar = match open_for_vault(&vault_root) {
         Ok(sidecar) => sidecar,
         Err(error) => return emit_error(error.to_string(), output_json),
     };

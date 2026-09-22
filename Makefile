@@ -1,4 +1,4 @@
-.PHONY: benchmark-large boundary-guard build clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
+.PHONY: benchmark-large boundary-guard build clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -212,7 +212,7 @@ sidecar-metadata-differential:
 	$(CARGO) test -p symdesk-index --locked --test metadata_contracts
 
 sidecar-fixtures-check:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run 'TestPortSidecar(Contract|LifecycleContract|MetadataContract)'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run 'TestPortSidecar(Contract|LifecycleContract|MetadataContract|MetadataModes)'
 
 sidecar-differential: sidecar-fixtures-check
 	SIDECAR_NATIVE=0 GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/sidecar-roundtrip
@@ -223,7 +223,7 @@ sidecar-differential: sidecar-fixtures-check
 sidecar-roundtrip:
 	SIDECAR_NATIVE=1 GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 
-port-fixtures-generate: core-fixtures-generate vault-fixtures-generate sidecar-fixtures-generate
+port-fixtures-generate: core-fixtures-generate vault-fixtures-generate sidecar-fixtures-generate sidecar-metadata-fixtures-generate
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/portgen \
 		--oracle-release $(PORT_ORACLE_RELEASE)
 
@@ -240,7 +240,7 @@ differential-go-selftest:
 		--symroom-left "bin/symroom" --symroom-right "bin/symroom" \
 		--cases "$(PORT_CASES)"
 
-port-contract: port-fixtures-check differential-go-selftest sidecar-differential
+port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential
 
 representative-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/representativegen

@@ -1,4 +1,4 @@
-.PHONY: benchmark-large boundary-guard build clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
+.PHONY: benchmark-large boundary-guard build clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -188,6 +188,16 @@ vault-retention-differential:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retention -run TestPortRetentionContract
 	$(CARGO) test -p symdesk-vault --test retention_contracts --locked
 
+room-journal-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/room -run TestPortRoomJournalContract
+
+# SymRoom journal append and read-back (ROOM-002): the Go oracle records the
+# per-author chain, the Lamport ceiling and the appended bytes; the Rust replay
+# reproduces them. The fixture is only regenerated through the target above.
+room-journal-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/room -run 'TestPortRoomJournal(Contract|Modes)'
+	$(CARGO) test -p symroom-core --locked --test journal_contracts
+
 symroom-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/room -run TestPortRoomIdentityEventContract
 
@@ -240,7 +250,7 @@ differential-go-selftest:
 		--symroom-left "bin/symroom" --symroom-right "bin/symroom" \
 		--cases "$(PORT_CASES)"
 
-port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential
+port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential room-journal-differential
 
 representative-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/representativegen

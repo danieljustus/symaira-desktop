@@ -1,0 +1,232 @@
+//! Append-only SymRoom journal, ported from Go's `internal/room/room`
+//! (contract row ROOM-002).
+//!
+//! Only the deterministic half is ported here: reading a journal directory back
+//! into a Lamport ceiling and a per-author sequence/hash chain, and appending an
+//! event. The member-state projection of Go's `ReadJournalStats` belongs to the
+//! membership state machine (ROOM-003) and is deliberately absent rather than
+//! approximated.
+//!
+//! Three Go behaviours are easy to "repair" by accident and are therefore
+//! reproduced literally, pinned by `testdata/port/room/journal.json`:
+//!
+//! * `bufio.Scanner` strips a trailing `\r`, so the hashed bytes of a CRLF file
+//!   exclude it.
+//! * `ReadJournalStats` skips undecodable lines, while `GetAuthorStats` counts
+//!   every non-blank line — a corrupt line still advances the sequence.
+//! * `AppendEvent` writes the marshalled line as-is; if the previous file had no
+//!   trailing newline, Go produces a joined physical line and does not insert a
+//!   separator.
+
+use std::{
+    fs,
+    io::Write,
+    path::{Path, PathBuf},
+};
+
+use sha2::{Digest, Sha256};
+
+use crate::event::{Event, EventError};
+
+/// The `prev` value Go reports for an author that has not written yet.
+pub const ZERO_HASH: &str =
+    "sha256:0000000000000000000000000000000000000000000000000000000000000000";
+
+const JOURNAL_DIR: &str = "journal";
+const JOURNAL_SUFFIX: &str = ".jsonl";
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct JournalStats {
+    /// The highest Lamport clock observed across every decodable event.
+    pub max_lamport: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AuthorStats {
+    /// The number of non-blank lines the author has written.
+    pub seq: u64,
+    /// `sha256:` over the last non-blank line, or [`ZERO_HASH`] when empty.
+    pub prev: String,
+}
+
+/// Reads the Lamport ceiling of a room journal.
+///
+/// A missing journal directory, an unreadable file and an undecodable line are
+/// all tolerated exactly as Go tolerates them.
+///
+/// # Errors
+/// Returns the filesystem error when the journal directory exists but cannot be
+/// listed.
+pub fn read_journal_stats(room_dir: &Path) -> Result<JournalStats, std::io::Error> {
+    let journal_dir = room_dir.join(JOURNAL_DIR);
+    let entries = match fs::read_dir(&journal_dir) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(JournalStats::default());
+        }
+        Err(error) => return Err(error),
+    };
+
+    let mut max_lamport = 0_u64;
+    for entry in entries {
+        let entry = entry?;
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if entry.path().is_dir() || !name.ends_with(JOURNAL_SUFFIX) {
+            continue;
+        }
+        let Ok(contents) = fs::read(entry.path()) else {
+            // Go skips a file it cannot open.
+            continue;
+        };
+        for line in scan_lines(&contents) {
+            if is_blank(line) {
+                continue;
+            }
+            let Ok(event) = Event::unmarshal_json_line(line) else {
+                continue;
+            };
+            if event.lamport > max_lamport {
+                max_lamport = event.lamport;
+            }
+        }
+    }
+    Ok(JournalStats { max_lamport })
+}
+
+/// Reads one author's sequence number and previous-line hash.
+///
+/// # Errors
+/// Returns the filesystem error when the author's journal file exists but
+/// cannot be read.
+pub fn author_stats(room_dir: &Path, author: &str) -> Result<AuthorStats, std::io::Error> {
+    let path = author_journal_path(room_dir, author);
+    let contents = match fs::read(&path) {
+        Ok(contents) => contents,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(AuthorStats {
+                seq: 0,
+                prev: ZERO_HASH.to_owned(),
+            });
+        }
+        Err(error) => return Err(error),
+    };
+
+    let mut count = 0_u64;
+    let mut last: Option<&[u8]> = None;
+    for line in scan_lines(&contents) {
+        if is_blank(line) {
+            continue;
+        }
+        count += 1;
+        last = Some(line);
+    }
+
+    match last {
+        None => Ok(AuthorStats {
+            seq: 0,
+            prev: ZERO_HASH.to_owned(),
+        }),
+        Some(line) => {
+            let digest = Sha256::digest(line);
+            Ok(AuthorStats {
+                seq: count,
+                prev: format!("sha256:{}", hex::encode(digest)),
+            })
+        }
+    }
+}
+
+/// Appends a marshalled event to its author's journal file.
+///
+/// # Errors
+/// Returns the marshalling error, or the filesystem error of the directory
+/// creation, open or write.
+pub fn append_event(room_dir: &Path, event: &Event) -> Result<(), JournalError> {
+    let journal_dir = room_dir.join(JOURNAL_DIR);
+    create_journal_dir(&journal_dir)?;
+    let line = event.marshal_json_line()?;
+    let path = journal_dir.join(format!("{}{JOURNAL_SUFFIX}", event.author));
+    let mut file = open_append(&path)?;
+    file.write_all(&line)?;
+    Ok(())
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum JournalError {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Event(#[from] EventError),
+}
+
+fn author_journal_path(room_dir: &Path, author: &str) -> PathBuf {
+    room_dir
+        .join(JOURNAL_DIR)
+        .join(format!("{author}{JOURNAL_SUFFIX}"))
+}
+
+/// Splits like Go's `bufio.ScanLines`: on `\n`, dropping one trailing `\r`,
+/// yielding a final unterminated chunk and nothing after a final newline.
+fn scan_lines(contents: &[u8]) -> Vec<&[u8]> {
+    let mut lines = Vec::new();
+    let mut rest = contents;
+    loop {
+        if rest.is_empty() {
+            return lines;
+        }
+        match rest.iter().position(|byte| *byte == b'\n') {
+            Some(index) => {
+                lines.push(strip_carriage_return(&rest[..index]));
+                rest = &rest[index + 1..];
+            }
+            None => {
+                lines.push(strip_carriage_return(rest));
+                return lines;
+            }
+        }
+    }
+}
+
+fn strip_carriage_return(line: &[u8]) -> &[u8] {
+    match line.last() {
+        Some(b'\r') => &line[..line.len() - 1],
+        _ => line,
+    }
+}
+
+/// Mirrors Go's `strings.TrimSpace(string(line)) == ""`.
+fn is_blank(line: &[u8]) -> bool {
+    String::from_utf8_lossy(line).trim().is_empty()
+}
+
+#[cfg(unix)]
+fn create_journal_dir(path: &Path) -> Result<(), std::io::Error> {
+    use std::os::unix::fs::DirBuilderExt;
+    if path.is_dir() {
+        return Ok(());
+    }
+    fs::DirBuilder::new()
+        .recursive(true)
+        .mode(0o700)
+        .create(path)
+}
+
+#[cfg(not(unix))]
+fn create_journal_dir(path: &Path) -> Result<(), std::io::Error> {
+    fs::create_dir_all(path)
+}
+
+#[cfg(unix)]
+fn open_append(path: &Path) -> Result<fs::File, std::io::Error> {
+    use std::os::unix::fs::OpenOptionsExt;
+    fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .mode(0o600)
+        .open(path)
+}
+
+#[cfg(not(unix))]
+fn open_append(path: &Path) -> Result<fs::File, std::io::Error> {
+    fs::OpenOptions::new().create(true).append(true).open(path)
+}

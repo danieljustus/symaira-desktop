@@ -3,6 +3,7 @@
 //! Read-only contract-v1–v6 Markdown vault parsing.
 
 pub mod conflict;
+pub mod dataset;
 mod health_links;
 pub mod history;
 mod links;

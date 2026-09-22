@@ -221,6 +221,16 @@ sidecar-metadata-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run 'TestPortSidecarMetadata(Contract|Modes)'
 	$(CARGO) test -p symdesk-index --locked --test metadata_contracts
 
+dataset-sync-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run TestPortDatasetSyncContract
+
+# DATA-001 dataset sync: the Go oracle records the sidecar projection Go
+# materialises (row keys, identities, values_json) and the CSV rejections it
+# reports; the Rust replay reproduces both. Verify only - never generate.
+dataset-sync-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run 'TestPortDatasetSync'
+	$(CARGO) test -p symdesk-vault --locked --test dataset_contracts
+
 sidecar-fixtures-check:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/sidecar -run 'TestPortSidecar(Contract|LifecycleContract|MetadataContract|MetadataModes)'
 
@@ -250,7 +260,7 @@ differential-go-selftest:
 		--symroom-left "bin/symroom" --symroom-right "bin/symroom" \
 		--cases "$(PORT_CASES)"
 
-port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential room-journal-differential
+port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential room-journal-differential dataset-sync-differential
 
 representative-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/representativegen

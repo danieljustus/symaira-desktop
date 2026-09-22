@@ -50,6 +50,7 @@ var fixturePaths = []string{
 	"testdata/port/sidecar/lifecycle.json",
 	"testdata/port/sidecar/large-corpus.json",
 	"testdata/port/sidecar/roundtrip.json",
+	"testdata/port/dataset/sync.json",
 	"testdata/port/representative/cases.json",
 }
 

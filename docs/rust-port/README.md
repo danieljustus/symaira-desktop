@@ -240,11 +240,26 @@ migration stays stopped and Go remains in production.
   verifying it; the draft is kept as WIP and was not promoted. The writer worktrees
   `.worktrees/subagent-sa-1-905b9a86` and `../w-rust-room-journal` still hold the two
   differing `testdata/port/room/journal.json` captures.
-- Next actions for RUST-007: wire `make config-save-differential` and
-  `make retention-cli-differential` into the native Rust CI job so CFG-004 and VAULT-006
-  can leave `TODO`, port the `internal/service` retention-state layer that
-  `retention eval/accept/reject/diff/history` require, and close #1006 so the new CLI
-  cases can compare the filesystem manifest again.
+- Done since `b98ca146`: the CI wiring landed in #1012, CFG-004 reached `PASS`, and
+  #1006 is closed on `migration/rust-sidecar-metadata` — `open_for_vault` now writes
+  `vaults/<hash>/metadata.json` byte-identically to Go (13 recorded encoding cases —
+  Go's HTML escaping of `<`/`>`/`&`, U+2028/U+2029 and its trimmed nanosecond layout —
+  plus 3 directory-listing cases, the 0700/0600 POSIX modes and the
+  open/reopen/explicit-override filesystem blocks), `retention list`
+  no longer closes the sidecar Go leaves open, and the sidecar layout gate requires
+  `vaults/<hash>/{sidecar.db,sidecar.db-wal,sidecar.db-shm,metadata.json}` on both sides.
+  Full `compare_files` deliberately stays off: `sidecar.db` carries SQLite state and
+  `metadata.json` a timestamp, so neither can match byte-for-byte across two processes —
+  the layout gate plus the byte-exact `metadata.json` replay are the filesystem evidence.
+- Next actions for RUST-007: port the `internal/service` retention-state layer that
+  `retention eval/accept/reject/diff/history` require, then DATA-001 (dataset sync).
+  When `retention reject/diff/history` are ported they must keep the same open-forever
+  contract as `list` — Go discards the handle in `retention.go:369,392,411` too.
+- Skills loaded this session: `go-to-rust-migration` + `references/worker-dispatch.md`.
+  Note: a second desktop chat worked the same worktrees on 2026-09-22 (commits
+  `0a93593f`, `8c449e7d`, `c5cb9a0a`); `8c449e7d` deliberately keeps the sidecar
+  metadata fixture on the room pattern — outside the portgen manifest, gated only by
+  `make sidecar-metadata-differential`.
 
 ## Reuse assessment
 

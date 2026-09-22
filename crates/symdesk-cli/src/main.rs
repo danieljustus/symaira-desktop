@@ -108,6 +108,30 @@ fn main() -> ExitCode {
             let vault_opt = matches.get_one::<String>("vault").cloned();
             match command.subcommand() {
                 Some(("list", _)) => retention::run_list(vault_opt.as_deref(), output_json),
+                Some(("reject", subcommand)) => retention::run_reject(
+                    vault_opt.as_deref(),
+                    &subcommand
+                        .get_many::<String>("run-id")
+                        .map(|values| values.cloned().collect::<Vec<_>>())
+                        .unwrap_or_default(),
+                    output_json,
+                ),
+                Some(("diff", subcommand)) => retention::run_diff(
+                    vault_opt.as_deref(),
+                    &subcommand
+                        .get_many::<String>("run-id")
+                        .map(|values| values.cloned().collect::<Vec<_>>())
+                        .unwrap_or_default(),
+                    output_json,
+                ),
+                Some(("history", subcommand)) => retention::run_history(
+                    vault_opt.as_deref(),
+                    &subcommand
+                        .get_many::<String>("extra")
+                        .map(|values| values.cloned().collect::<Vec<_>>())
+                        .unwrap_or_default(),
+                    output_json,
+                ),
                 Some((other, _)) => write_stderr(
                     &format!("unknown retention subcommand: {other}\n"),
                     CoreExitCode::Generic,

@@ -1,27 +1,26 @@
 //! Go: `cmd/symdesk/retention.go`.
 //!
-//! Scope: this module ports the `retention list` subcommand. Go's `eval`,
-//! `accept`, `reject`, `diff` and `history` read and mutate authoritative state
-//! through `internal/service` (sidecar index, retention fingerprints and the
-//! trash/purge actions); that service layer is not ported yet, so those
-//! subcommands are deliberately absent here rather than approximated. They stay
-//! open in the port ledger.
-//!
-//! The JSON branch is compared byte-for-byte against the Go binary by
-//! `make retention-cli-differential`; the human-readable branch mirrors Go's
-//! format strings but is not covered by a differential case yet.
+//! This module ports the retention commands that only use the sidecar open and
+//! `symdesk_vault::retention` state APIs: `list`, `reject`, `diff`, and
+//! `history`. `eval` and `accept` remain out of scope because they require the
+//! service mutation layer.
 
-use std::fs;
-
-use clap::{Arg, Command};
-use serde_json::{Value, json};
-
-use symdesk_vault::retention::{
-    PROPOSAL_STATUS_FAILED, PROPOSAL_STATUS_PARTIAL, PROPOSAL_STATUS_PENDING, Proposal,
-    load_proposal, proposal_dir,
+use std::{
+    collections::BTreeMap,
+    fs,
+    path::{Path, PathBuf},
 };
 
+use clap::{Arg, ArgAction, Command};
+use serde::Serialize;
+use serde_json::{Value, json};
+
 use symdesk_index::open_for_vault;
+use symdesk_vault::retention::{
+    PROPOSAL_STATUS_FAILED, PROPOSAL_STATUS_PARTIAL, PROPOSAL_STATUS_PENDING, Proposal,
+    ProposalItem, RetentionError, history_path, load_history, load_proposal, proposal_dir,
+    write_proposal,
+};
 
 use crate::{emit_error, write_stdout};
 
@@ -32,31 +31,32 @@ pub fn cli() -> Command {
         .arg(
             Arg::new("verbose")
                 .long("verbose")
-                .action(clap::ArgAction::SetTrue),
+                .action(ArgAction::SetTrue),
         )
         .subcommand(Command::new("list").about("List documents due to expire"))
+        .subcommand(
+            Command::new("reject")
+                .about("Reject a pending retention proposal")
+                .arg(Arg::new("run-id").num_args(0..).action(ArgAction::Append)),
+        )
+        .subcommand(
+            Command::new("diff")
+                .about("Show the proposed retention actions")
+                .arg(Arg::new("run-id").num_args(0..).action(ArgAction::Append)),
+        )
+        .subcommand(
+            Command::new("history")
+                .about("Show the history of executed retention actions")
+                .arg(Arg::new("extra").num_args(0..).action(ArgAction::Append)),
+        )
 }
 
 /// Go: `newRetentionListCmd`'s `RunE`.
 pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCode {
-    let vault_root = match crate::resolve_vault(vault) {
+    let vault_root = match retention_vault(vault, output_json) {
         Ok(root) => root,
-        Err(error) => return emit_error(error, output_json),
+        Err(exit) => return exit,
     };
-
-    // Go's `newRetentionListCmd` calls `initServiceDeps` as `vRoot, _, err :=`,
-    // discarding the `*sidecar.DB` and never closing it, so SQLite still holds
-    // `sidecar.db-wal` and `sidecar.db-shm` when the process exits. Dropping the
-    // handle here would checkpoint the WAL into `sidecar.db` and unlink both
-    // files — a side effect `retention list` never produces in Go — so the
-    // connection is deliberately kept open until the process ends. The handle is
-    // otherwise unused; opening it is what creates the per-vault index and the
-    // `metadata.json` record the differential compares.
-    let sidecar = match open_for_vault(&vault_root) {
-        Ok(sidecar) => sidecar,
-        Err(error) => return emit_error(error.to_string(), output_json),
-    };
-    std::mem::forget(sidecar);
 
     let dir = proposal_dir(&vault_root);
     let mut entries = match fs::read_dir(&dir) {
@@ -82,7 +82,6 @@ pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCod
         let name = entry.file_name();
         let name = name.to_string_lossy().to_string();
         let path = entry.path();
-        // Go skips directories and anything that is not a `.json` file.
         if path.is_dir() || path.extension().and_then(|ext| ext.to_str()) != Some("json") {
             continue;
         }
@@ -91,7 +90,7 @@ pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCod
         };
         let proposal = match load_proposal(&vault_root, run_id) {
             Ok(proposal) => proposal,
-            // Go: `if err != nil { continue }` — an unreadable proposal is skipped.
+            // Go skips an unreadable or undecodable proposal.
             Err(_) => continue,
         };
         if !matches!(
@@ -103,15 +102,8 @@ pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCod
         proposals.push(proposal);
     }
 
-    // Go never closes this handle; see the `std::mem::forget` above.
-
     if output_json {
-        // Go marshals the `[]retention.Proposal` slice, so the struct field
-        // order decides the byte order of every object.
-        return match serde_json::to_string(&proposals) {
-            Ok(rendered) => write_stdout(format!("{rendered}\n")),
-            Err(error) => emit_error(error.to_string(), true),
-        };
+        return write_go_json(&proposals);
     }
 
     if proposals.is_empty() {
@@ -123,7 +115,7 @@ pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCod
         rendered.push_str(&format!(
             "Proposal {} ({}): {} items pending review\n",
             proposal.run_id,
-            go_local_minutes(proposal.created),
+            go_local_time(proposal.created, false),
             proposal.items.len()
         ));
         for item in &proposal.items {
@@ -136,24 +128,248 @@ pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCod
     write_stdout(rendered)
 }
 
-/// Go: `.Local().Format("2006-01-02 15:04")`. Falls back to UTC when the local
-/// offset cannot be determined.
-fn go_local_minutes(value: time::OffsetDateTime) -> String {
+/// Go: `newRetentionRejectCmd`'s `RunE`.
+pub fn run_reject(
+    vault: Option<&str>,
+    run_ids: &[String],
+    output_json: bool,
+) -> std::process::ExitCode {
+    let run_id = match exact_one(run_ids, output_json) {
+        Ok(run_id) => run_id,
+        Err(exit) => return exit,
+    };
+    let vault_root = match retention_vault(vault, output_json) {
+        Ok(root) => root,
+        Err(exit) => return exit,
+    };
+    let mut proposal = match load_proposal_for_cli(&vault_root, run_id) {
+        Ok(proposal) => proposal,
+        Err(error) => return emit_error(error, output_json),
+    };
+    proposal.status = "rejected".to_owned();
+    if let Err(error) = write_proposal(&vault_root, &proposal) {
+        return emit_error(error.to_string(), output_json);
+    }
+
+    if output_json {
+        let result = BTreeMap::from([("run_id", run_id), ("status", "rejected")]);
+        write_go_json(&result)
+    } else {
+        write_stdout(format!("map[run_id:{run_id} status:rejected]\n"))
+    }
+}
+
+/// Go: `newRetentionDiffCmd`'s `RunE`.
+pub fn run_diff(
+    vault: Option<&str>,
+    run_ids: &[String],
+    output_json: bool,
+) -> std::process::ExitCode {
+    let run_id = match exact_one(run_ids, output_json) {
+        Ok(run_id) => run_id,
+        Err(exit) => return exit,
+    };
+    let vault_root = match retention_vault(vault, output_json) {
+        Ok(root) => root,
+        Err(exit) => return exit,
+    };
+    let proposal = match load_proposal_for_cli(&vault_root, run_id) {
+        Ok(proposal) => proposal,
+        Err(error) => return emit_error(error, output_json),
+    };
+
+    if output_json {
+        return write_go_json(&proposal.items);
+    }
+    write_stdout(render_items(&proposal.items))
+}
+
+/// Go: `newRetentionHistoryCmd`'s `RunE`.
+pub fn run_history(
+    vault: Option<&str>,
+    extra: &[String],
+    output_json: bool,
+) -> std::process::ExitCode {
+    if let Some(extra) = extra.first() {
+        return emit_error(
+            format!("unknown command {extra:?} for \"symdesk retention history\""),
+            output_json,
+        );
+    }
+    let vault_root = match retention_vault(vault, output_json) {
+        Ok(root) => root,
+        Err(exit) => return exit,
+    };
+    let path = history_path(&vault_root);
+    let missing =
+        fs::metadata(&path).is_err_and(|error| error.kind() == std::io::ErrorKind::NotFound);
+    let entries = match load_history(&vault_root) {
+        Ok(entries) => entries,
+        Err(error) => return emit_error(error.to_string(), output_json),
+    };
+
+    if output_json {
+        if missing {
+            return write_stdout("null\n".to_owned());
+        }
+        return write_go_json(&entries);
+    }
+    if entries.is_empty() {
+        return write_stdout("no retention actions recorded\n".to_owned());
+    }
+
+    let mut rendered = String::new();
+    for entry in &entries {
+        rendered.push_str(&format!(
+            "{}  {}  {} → {}\n",
+            go_local_time(entry.timestamp, true),
+            entry.rule_name,
+            entry.path,
+            entry.action
+        ));
+    }
+    write_stdout(rendered)
+}
+
+fn retention_vault(
+    vault: Option<&str>,
+    output_json: bool,
+) -> Result<PathBuf, std::process::ExitCode> {
+    let vault_root = crate::resolve_vault(vault).map_err(|error| emit_error(error, output_json))?;
+    // Go discards these `*sidecar.DB` handles without closing them for list,
+    // reject, diff, and history. Keep the Rust connection alive until process
+    // exit so metadata.json plus sidecar.db-wal/sidecar.db-shm match Go.
+    let sidecar =
+        open_for_vault(&vault_root).map_err(|error| emit_error(error.to_string(), output_json))?;
+    std::mem::forget(sidecar);
+    Ok(vault_root)
+}
+
+fn exact_one(values: &[String], output_json: bool) -> Result<&str, std::process::ExitCode> {
+    if values.len() != 1 {
+        return Err(emit_error(
+            format!("accepts 1 arg(s), received {}", values.len()),
+            output_json,
+        ));
+    }
+    Ok(values[0].as_str())
+}
+
+fn load_proposal_for_cli(vault_root: &Path, run_id: &str) -> Result<Proposal, String> {
+    match load_proposal(vault_root, run_id) {
+        Ok(proposal) => Ok(proposal),
+        Err(RetentionError::ReadFailed) => {
+            let path = proposal_dir(vault_root).join(format!("{run_id}.json"));
+            let message = match fs::read(&path) {
+                Ok(_) => "read failed".to_owned(),
+                Err(error) => format!("open {}: {}", path.display(), go_io_error(&error)),
+            };
+            Err(message)
+        }
+        Err(error) => Err(error.to_string()),
+    }
+}
+
+fn go_io_error(error: &std::io::Error) -> String {
+    match error.kind() {
+        std::io::ErrorKind::NotFound => {
+            if cfg!(windows) {
+                "The system cannot find the file specified.".to_owned()
+            } else {
+                "no such file or directory".to_owned()
+            }
+        }
+        std::io::ErrorKind::PermissionDenied => {
+            if cfg!(windows) {
+                "Access is denied.".to_owned()
+            } else {
+                "permission denied".to_owned()
+            }
+        }
+        _ => {
+            let mut message = error.to_string();
+            if let Some(index) = message.rfind(" (os error ") {
+                message.truncate(index);
+            }
+            if !cfg!(windows) {
+                let mut chars = message.chars();
+                if let Some(first) = chars.next() {
+                    message = first.to_lowercase().collect::<String>() + chars.as_str();
+                }
+            }
+            message
+        }
+    }
+}
+
+fn render_items(items: &[ProposalItem]) -> String {
+    let rendered = items
+        .iter()
+        .map(|item| {
+            format!(
+                "{{Path:{} Title:{} ReferenceDate:{} ExpiresAt:{} Action:{} RuleName:{} Fingerprint:{} Status:{} Failure:{}}}",
+                item.path,
+                item.title,
+                item.reference_date,
+                item.expires_at,
+                item.action,
+                item.rule_name,
+                item.fingerprint,
+                item.status,
+                item.failure
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+    format!("[{rendered}]\n")
+}
+
+/// Go: `.Local().Format("2006-01-02 15:04[:05]")`. Falls back to UTC when the
+/// local offset cannot be determined.
+fn go_local_time(value: time::OffsetDateTime, seconds: bool) -> String {
     let offset = time::UtcOffset::current_local_offset().unwrap_or(time::UtcOffset::UTC);
     let local = value.to_offset(offset);
-    format!(
-        "{:04}-{:02}-{:02} {:02}:{:02}",
-        local.year(),
-        u8::from(local.month()),
-        local.day(),
-        local.hour(),
-        local.minute()
-    )
+    if seconds {
+        format!(
+            "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+            local.year(),
+            u8::from(local.month()),
+            local.day(),
+            local.hour(),
+            local.minute(),
+            local.second()
+        )
+    } else {
+        format!(
+            "{:04}-{:02}-{:02} {:02}:{:02}",
+            local.year(),
+            u8::from(local.month()),
+            local.day(),
+            local.hour(),
+            local.minute()
+        )
+    }
+}
+
+fn write_go_json<T: Serialize>(value: &T) -> std::process::ExitCode {
+    match serde_json::to_string(value) {
+        Ok(rendered) => write_stdout(format!("{}\n", go_escape_json(rendered))),
+        Err(error) => emit_error(error.to_string(), true),
+    }
+}
+
+fn go_escape_json(rendered: String) -> String {
+    rendered
+        .replace('&', "\\u0026")
+        .replace('<', "\\u003c")
+        .replace('>', "\\u003e")
+        .replace('\u{2028}', "\\u2028")
+        .replace('\u{2029}', "\\u2029")
 }
 
 fn output(value: Value, output_json: bool) -> std::process::ExitCode {
     if output_json {
-        write_stdout(format!("{value}\n"))
+        write_go_json(&value)
     } else {
         // Go prints the map with `fmt.Printf("%+v\n", data)`.
         let rendered = match &value {
@@ -181,5 +397,18 @@ fn go_value(value: &Value) -> String {
         ),
         Value::Null => "<nil>".to_owned(),
         other => other.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::go_escape_json;
+
+    #[test]
+    fn go_json_escapes_html_and_line_separators() {
+        assert_eq!(
+            go_escape_json("{\"value\":\"<&>\u{2028}\u{2029}\"}".to_owned()),
+            "{\"value\":\"\\u003c\\u0026\\u003e\\u2028\\u2029\"}"
+        );
     }
 }

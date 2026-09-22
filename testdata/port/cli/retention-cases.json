@@ -215,6 +215,269 @@
    ],
    "description": "Human-readable branch uses Go's format strings and the local wall clock of the proposal. Full filesystem comparison stays off because the sidecar database and the metadata timestamp differ between two processes by construction; the sidecar layout is compared instead, which now requires both `vaults/<hash>/sidecar.db` and `vaults/<hash>/metadata.json` (issue #1006).",
    "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-reject-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-safe.json",
+     "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    }
+   ],
+   "description": "Reject reports the sorted Go map JSON shape and persists the proposal through the shared retention writer; focused Rust tests read the persisted status back because sidecar database bytes are intentionally nondeterministic.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-reject-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject", "ret-safe", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-safe.json",
+     "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[]}",
+     "mode": 420
+    }
+   ],
+   "description": "Reject text output matches fmt's sorted map rendering.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-reject-missing-run-id",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "description": "ExactArgs rejects a missing run ID before service dependencies are opened."
+  },
+  {
+   "id": "retention-reject-unsafe-run-id-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject", "../escape", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "description": "An unsafe path-like run ID fails through the production validator and JSON error envelope.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-diff-safe-missing-run-id-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "diff", "safe-missing", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "console_text",
+   "stderr_mode": "console_text",
+   "compare_files": false,
+   "description": "A platform-safe but absent run ID preserves the Go open-path diagnostic and nonzero exit.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-diff-json-escaping",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "diff", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-safe.json",
+     "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc<&.md\",\"title\":\"Title > &\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test<&\",\"fingerprint\":\"fp\",\"status\":\"action_completed\",\"failure\":\"retry > later\"}]}",
+     "mode": 420
+    }
+   ],
+   "description": "Diff JSON preserves ProposalItem field order, optional fields, and Go HTML escaping.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-diff-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "diff", "ret-safe", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-safe.json",
+     "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    }
+   ],
+   "description": "Diff text matches Go's %+v slice-of-struct rendering, including empty optional fields.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-diff-empty-items-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "diff", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-safe.json",
+     "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[]}",
+     "mode": 420
+    }
+   ],
+   "description": "An explicitly empty proposal item array remains [] rather than null.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-missing-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "description": "A missing history file is Go's nil slice and therefore renders as JSON null.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-missing-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "description": "A missing history file prints the empty human message.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-empty-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention/history.json", "content": "[]", "mode": 420}
+   ],
+   "description": "An existing empty history array remains [] and is distinct from a missing file's null.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-nonempty-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/history.json",
+     "content": "[{\"action_id\":\"ret-safe:0\",\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":\"rule<&\",\"action\":\"trash\",\"path\":\"doc<&.md\",\"title\":\"Title > &\"}]",
+     "mode": 420
+    }
+   ],
+   "description": "History JSON preserves HistoryEntry field order and Go HTML escaping.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-nonempty-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/history.json",
+     "content": "[{\"action_id\":\"ret-safe:0\",\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":\"rule\",\"action\":\"trash\",\"path\":\"doc.md\",\"title\":\"Doc\"}]",
+     "mode": 420
+    }
+   ],
+   "description": "History text uses Go's local-second timestamp and two-space columns; the harness pins TZ=UTC.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-null-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention/history.json", "content": "null", "mode": 420}
+   ],
+   "description": "An explicit JSON null history is malformed state and fails with the shared validation error.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-extra-arg-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "extra", "--json"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "description": "An extra history token is rejected as Cobra's unknown nested command before service dependencies are opened."
   }
  ]
 }

@@ -420,14 +420,14 @@ fn parse_date(value: &str) -> bool {
     if value.as_bytes().get(10) == Some(&b'T') {
         return parse_rfc3339(value);
     }
-    if value.len() == 10 {
-        if let (Some(y), Some(m), Some(d)) = (value.get(0..4), value.get(5..7), value.get(8..10)) {
-            let numeric = [y, m, d]
-                .iter()
-                .all(|part| part.chars().all(|c| c.is_ascii_digit()));
-            if numeric && value.as_bytes()[4] == b'-' && value.as_bytes()[7] == b'-' {
-                return is_valid_calendar_date(y, m, d);
-            }
+    if value.len() == 10
+        && let (Some(y), Some(m), Some(d)) = (value.get(0..4), value.get(5..7), value.get(8..10))
+    {
+        let numeric = [y, m, d]
+            .iter()
+            .all(|part| part.chars().all(|c| c.is_ascii_digit()));
+        if numeric && value.as_bytes()[4] == b'-' && value.as_bytes()[7] == b'-' {
+            return is_valid_calendar_date(y, m, d);
         }
     }
     if value.len() >= 19 && value.as_bytes()[10] == b' ' {

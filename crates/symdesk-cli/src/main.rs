@@ -52,7 +52,11 @@ fn main() -> ExitCode {
             CoreExitCode::Generic,
         );
     }
-    let output_json = matches.get_flag("json") || output == "json";
+    let output_json = match output {
+        "json" => true,
+        "text" | "yaml" => false,
+        _ => matches.get_flag("json"),
+    };
     match matches.subcommand() {
         Some(("version", _)) => {
             let rendered = if output_json {
@@ -417,9 +421,25 @@ fn render_search(root: &Path, hits: &[symdesk_index::SearchHit], json_output: bo
     write_stdout(format!("{{Results:[{}] Hint:}}\n", results.join(" ")))
 }
 
+fn write_go_json<T: Serialize>(value: &T) -> ExitCode {
+    match serde_json::to_string(value) {
+        Ok(rendered) => write_stdout(format!("{}\n", go_escape_json(rendered))),
+        Err(error) => write_stderr(&format!("{error}\n"), CoreExitCode::Generic),
+    }
+}
+
+fn go_escape_json(rendered: String) -> String {
+    rendered
+        .replace('&', "\\u0026")
+        .replace('<', "\\u003c")
+        .replace('>', "\\u003e")
+        .replace('\u{2028}', "\\u2028")
+        .replace('\u{2029}', "\\u2029")
+}
+
 fn emit_error(error: String, json_output: bool) -> ExitCode {
     if json_output {
-        let result = write_stdout(format!("{}\n", json!({"error": error})));
+        let result = write_go_json(&json!({"error": error}));
         if result == process_exit(CoreExitCode::Ok) {
             process_exit(CoreExitCode::Generic)
         } else {

@@ -12,17 +12,15 @@ use std::{
 };
 
 use clap::{Arg, ArgAction, Command};
-use serde::Serialize;
 use serde_json::{Value, json};
 
 use symdesk_index::open_for_vault;
 use symdesk_vault::retention::{
     PROPOSAL_STATUS_FAILED, PROPOSAL_STATUS_PARTIAL, PROPOSAL_STATUS_PENDING, Proposal,
-    ProposalItem, RetentionError, history_path, load_history, load_proposal, proposal_dir,
-    write_proposal,
+    ProposalItem, history_path, load_history, load_proposal, proposal_dir, write_proposal,
 };
 
-use crate::{emit_error, write_stdout};
+use crate::{emit_error, write_go_json, write_stdout};
 
 /// Go: `newRetentionCmd`.
 pub fn cli() -> Command {
@@ -103,6 +101,9 @@ pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCod
     }
 
     if output_json {
+        if proposals.is_empty() {
+            return write_stdout("null\n".to_owned());
+        }
         return write_go_json(&proposals);
     }
 
@@ -256,50 +257,7 @@ fn exact_one(values: &[String], output_json: bool) -> Result<&str, std::process:
 }
 
 fn load_proposal_for_cli(vault_root: &Path, run_id: &str) -> Result<Proposal, String> {
-    match load_proposal(vault_root, run_id) {
-        Ok(proposal) => Ok(proposal),
-        Err(RetentionError::ReadFailed) => {
-            let path = proposal_dir(vault_root).join(format!("{run_id}.json"));
-            let message = match fs::read(&path) {
-                Ok(_) => "read failed".to_owned(),
-                Err(error) => format!("open {}: {}", path.display(), go_io_error(&error)),
-            };
-            Err(message)
-        }
-        Err(error) => Err(error.to_string()),
-    }
-}
-
-fn go_io_error(error: &std::io::Error) -> String {
-    match error.kind() {
-        std::io::ErrorKind::NotFound => {
-            if cfg!(windows) {
-                "The system cannot find the file specified.".to_owned()
-            } else {
-                "no such file or directory".to_owned()
-            }
-        }
-        std::io::ErrorKind::PermissionDenied => {
-            if cfg!(windows) {
-                "Access is denied.".to_owned()
-            } else {
-                "permission denied".to_owned()
-            }
-        }
-        _ => {
-            let mut message = error.to_string();
-            if let Some(index) = message.rfind(" (os error ") {
-                message.truncate(index);
-            }
-            if !cfg!(windows) {
-                let mut chars = message.chars();
-                if let Some(first) = chars.next() {
-                    message = first.to_lowercase().collect::<String>() + chars.as_str();
-                }
-            }
-            message
-        }
-    }
+    load_proposal(vault_root, run_id).map_err(|error| error.to_string())
 }
 
 fn render_items(items: &[ProposalItem]) -> String {
@@ -324,10 +282,10 @@ fn render_items(items: &[ProposalItem]) -> String {
     format!("[{rendered}]\n")
 }
 
-/// Go: `.Local().Format("2006-01-02 15:04[:05]")`. Falls back to UTC when the
-/// local offset cannot be determined.
+/// Go: `.Local().Format("2006-01-02 15:04[:05]")`; resolve the offset at the
+/// event instant so historical daylight-saving transitions match.
 fn go_local_time(value: time::OffsetDateTime, seconds: bool) -> String {
-    let offset = time::UtcOffset::current_local_offset().unwrap_or(time::UtcOffset::UTC);
+    let offset = time::UtcOffset::local_offset_at(value).unwrap_or(time::UtcOffset::UTC);
     let local = value.to_offset(offset);
     if seconds {
         format!(
@@ -349,22 +307,6 @@ fn go_local_time(value: time::OffsetDateTime, seconds: bool) -> String {
             local.minute()
         )
     }
-}
-
-fn write_go_json<T: Serialize>(value: &T) -> std::process::ExitCode {
-    match serde_json::to_string(value) {
-        Ok(rendered) => write_stdout(format!("{}\n", go_escape_json(rendered))),
-        Err(error) => emit_error(error.to_string(), true),
-    }
-}
-
-fn go_escape_json(rendered: String) -> String {
-    rendered
-        .replace('&', "\\u0026")
-        .replace('<', "\\u003c")
-        .replace('>', "\\u003e")
-        .replace('\u{2028}', "\\u2028")
-        .replace('\u{2029}', "\\u2029")
 }
 
 fn output(value: Value, output_json: bool) -> std::process::ExitCode {
@@ -397,18 +339,5 @@ fn go_value(value: &Value) -> String {
         ),
         Value::Null => "<nil>".to_owned(),
         other => other.to_string(),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::go_escape_json;
-
-    #[test]
-    fn go_json_escapes_html_and_line_separators() {
-        assert_eq!(
-            go_escape_json("{\"value\":\"<&>\u{2028}\u{2029}\"}".to_owned()),
-            "{\"value\":\"\\u003c\\u0026\\u003e\\u2028\\u2029\"}"
-        );
     }
 }

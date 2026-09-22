@@ -11,6 +11,8 @@
 //! Rust YAML parser and belongs to the CLI slice, and `DocMetaFromDocument`,
 //! which needs the vault document model and belongs to the document slice.
 
+mod json_decoder;
+
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -139,47 +141,147 @@ where
     Ok(Option::<Vec<T>>::deserialize(deserializer)?.unwrap_or_default())
 }
 
-/// Go: `retention.Proposal`.
+fn de_string_or_null<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Ok(Option::<String>::deserialize(deserializer)?.unwrap_or_default())
+}
+
+fn go_zero_time() -> OffsetDateTime {
+    time::Date::from_ordinal_date(1, 1)
+        .expect("Go zero date is valid")
+        .midnight()
+        .assume_utc()
+}
+
+fn de_time_or_null<'de, D>(deserializer: D) -> Result<OffsetDateTime, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<String>::deserialize(deserializer)?;
+    match value {
+        Some(value) => OffsetDateTime::parse(&value, &Rfc3339).map_err(serde::de::Error::custom),
+        None => Ok(go_zero_time()),
+    }
+}
+
+/// Go: `retention.Proposal`. A nil `Items` slice must remain distinguishable
+/// from an explicitly empty slice because Go serializes them as `null` and `[]`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Proposal {
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub run_id: String,
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub rule_name: String,
-    #[serde(with = "crate::history::rfc3339_nano")]
+    #[serde(
+        default = "go_zero_time",
+        deserialize_with = "de_time_or_null",
+        serialize_with = "crate::history::rfc3339_nano::serialize"
+    )]
     pub created: OffsetDateTime,
-    // Go's nil slice is written as null; an omitted field decodes to nil too.
+    #[serde(default)]
     pub items: Option<Vec<ProposalItem>>,
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub status: String,
 }
 
+impl Default for Proposal {
+    fn default() -> Self {
+        Self {
+            run_id: String::new(),
+            rule_name: String::new(),
+            created: go_zero_time(),
+            items: None,
+            status: String::new(),
+        }
+    }
+}
+
+impl Proposal {
+    /// Returns the proposal items, treating Go's nil slice as empty for callers
+    /// that only need to iterate or count it.
+    #[must_use]
+    pub fn items(&self) -> &[ProposalItem] {
+        self.items.as_deref().unwrap_or_default()
+    }
+}
+
 /// Go: `retention.ProposalItem`.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ProposalItem {
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub path: String,
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub title: String,
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub reference_date: String,
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub expires_at: String,
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub action: String,
-    #[serde(default, skip_serializing_if = "String::is_empty")]
+    #[serde(
+        default,
+        deserialize_with = "de_string_or_null",
+        skip_serializing_if = "String::is_empty"
+    )]
     pub rule_name: String,
-    #[serde(default, skip_serializing_if = "String::is_empty")]
+    #[serde(
+        default,
+        deserialize_with = "de_string_or_null",
+        skip_serializing_if = "String::is_empty"
+    )]
     pub fingerprint: String,
-    #[serde(default, skip_serializing_if = "String::is_empty")]
+    #[serde(
+        default,
+        deserialize_with = "de_string_or_null",
+        skip_serializing_if = "String::is_empty"
+    )]
     pub status: String,
-    #[serde(default, skip_serializing_if = "String::is_empty")]
+    #[serde(
+        default,
+        deserialize_with = "de_string_or_null",
+        skip_serializing_if = "String::is_empty"
+    )]
     pub failure: String,
 }
 
 /// Go: `retention.HistoryEntry`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct HistoryEntry {
-    #[serde(default, skip_serializing_if = "String::is_empty")]
+    #[serde(
+        default,
+        deserialize_with = "de_string_or_null",
+        skip_serializing_if = "String::is_empty"
+    )]
     pub action_id: String,
-    #[serde(with = "crate::history::rfc3339_nano")]
+    #[serde(
+        default = "go_zero_time",
+        deserialize_with = "de_time_or_null",
+        serialize_with = "crate::history::rfc3339_nano::serialize"
+    )]
     pub timestamp: OffsetDateTime,
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub rule_name: String,
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub action: String,
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub path: String,
+    #[serde(default, deserialize_with = "de_string_or_null")]
     pub title: String,
+}
+
+impl Default for HistoryEntry {
+    fn default() -> Self {
+        Self {
+            action_id: String::new(),
+            timestamp: go_zero_time(),
+            rule_name: String::new(),
+            action: String::new(),
+            path: String::new(),
+            title: String::new(),
+        }
+    }
 }
 
 /// Everything that can go wrong. The messages are Go's, verbatim, because the
@@ -188,10 +290,12 @@ pub struct HistoryEntry {
 pub enum RetentionError {
     /// `Validate` or `ValidateRunID` rejected the input.
     Validation(String),
-    /// A state file could not be read.
-    ReadFailed,
-    /// A state file did not decode.
-    DecodeFailed,
+    /// A state file could not be read. The optional message preserves Go's
+    /// concrete `PathError` diagnostic at CLI boundaries.
+    ReadFailed(String),
+    /// A state file did not decode. The optional message preserves Go's
+    /// concrete `encoding/json` diagnostic at CLI boundaries.
+    DecodeFailed(String),
     /// A wrapped filesystem failure, already prefixed like Go.
     Message(String),
 }
@@ -202,8 +306,8 @@ impl RetentionError {
     pub fn class(&self) -> &'static str {
         match self {
             Self::Validation(_) => "validation",
-            Self::ReadFailed => "read_failed",
-            Self::DecodeFailed => "decode_failed",
+            Self::ReadFailed(_) => "read_failed",
+            Self::DecodeFailed(_) => "decode_failed",
             Self::Message(_) => "other",
         }
     }
@@ -213,8 +317,20 @@ impl std::fmt::Display for RetentionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Validation(message) | Self::Message(message) => f.write_str(message),
-            Self::ReadFailed => f.write_str("read failed"),
-            Self::DecodeFailed => f.write_str("decode failed"),
+            Self::ReadFailed(message) => {
+                if message.is_empty() {
+                    f.write_str("read failed")
+                } else {
+                    f.write_str(message)
+                }
+            }
+            Self::DecodeFailed(message) => {
+                if message.is_empty() {
+                    f.write_str("decode failed")
+                } else {
+                    f.write_str(message)
+                }
+            }
         }
     }
 }
@@ -260,7 +376,7 @@ pub fn validate(rule: &Rule) -> Result<(), RetentionError> {
 /// mirrors Go instead of a YAML multi-document reader, because Go splits the
 /// bytes before parsing.
 pub fn load_rules(path: &Path) -> Result<Vec<Rule>, RetentionError> {
-    let data = std::fs::read(path).map_err(|_| RetentionError::ReadFailed)?;
+    let data = std::fs::read(path).map_err(|_| RetentionError::ReadFailed(String::new()))?;
     let content = String::from_utf8_lossy(&data);
     let mut rules = Vec::new();
     for chunk in content.split("\n---\n") {
@@ -509,12 +625,12 @@ pub fn stable_action_id(run_id: &str, item_index: usize) -> String {
 }
 
 /// Go: `retention.WriteProposal` — validated run id, 0755 state directory,
-/// two-space indented JSON written atomically with mode 0644.
+/// two-space indented JSON written atomically with mode 0644. Existing directory
+/// modes are preserved exactly as `os.MkdirAll` preserves them.
 pub fn write_proposal(vault_root: &Path, proposal: &Proposal) -> Result<(), RetentionError> {
     validate_run_id(&proposal.run_id)?;
     let dir = proposal_dir(vault_root);
-    std::fs::create_dir_all(&dir).map_err(|err| RetentionError::Message(err.to_string()))?;
-    restrict_mode(&dir, 0o755);
+    create_dir_all_mode(&dir, 0o755)?;
     let data = serde_json::to_vec_pretty(proposal)
         .map_err(|err| RetentionError::Message(err.to_string()))?;
     write_file_atomic(&dir.join(format!("{}.json", proposal.run_id)), &data, 0o644)
@@ -524,16 +640,16 @@ pub fn write_proposal(vault_root: &Path, proposal: &Proposal) -> Result<(), Rete
 pub fn load_proposal(vault_root: &Path, run_id: &str) -> Result<Proposal, RetentionError> {
     validate_run_id(run_id)?;
     let path = proposal_dir(vault_root).join(format!("{run_id}.json"));
-    let data = std::fs::read(&path).map_err(|_| RetentionError::ReadFailed)?;
-    serde_json::from_slice(&data).map_err(|_| RetentionError::DecodeFailed)
+    let data = std::fs::read(&path)
+        .map_err(|err| RetentionError::ReadFailed(go_path_error("open", &path, &err)))?;
+    json_decoder::decode_proposal(&data).map_err(RetentionError::DecodeFailed)
 }
 
 /// Go: `retention.AppendHistory` — idempotent for entries carrying an action id,
 /// the older format still appends.
 pub fn append_history(vault_root: &Path, entry: &HistoryEntry) -> Result<(), RetentionError> {
     let path = history_path(vault_root);
-    std::fs::create_dir_all(proposal_dir(vault_root))
-        .map_err(|err| RetentionError::Message(err.to_string()))?;
+    create_dir_all_mode(&proposal_dir(vault_root), 0o755)?;
     let mut entries = load_history(vault_root)?;
     if !entry.action_id.is_empty()
         && entries
@@ -555,17 +671,69 @@ pub fn load_history(vault_root: &Path) -> Result<Vec<HistoryEntry>, RetentionErr
     let data = match std::fs::read(&path) {
         Ok(data) => data,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(err) => return Err(RetentionError::Message(err.to_string())),
+        Err(err) => {
+            return Err(RetentionError::ReadFailed(go_path_error(
+                "open", &path, &err,
+            )));
+        }
     };
-    if serde_json::from_slice::<serde_json::Value>(&data)
-        .map(|value| value.is_null())
-        .unwrap_or(false)
-    {
-        return Err(RetentionError::Validation(
+    match json_decoder::decode_history(&data).map_err(RetentionError::DecodeFailed)? {
+        Some(entries) => Ok(entries),
+        None => Err(RetentionError::Validation(
             "retention history must be a non-null array".to_owned(),
-        ));
+        )),
     }
-    serde_json::from_slice(&data).map_err(|_| RetentionError::DecodeFailed)
+}
+
+fn create_dir_all_mode(path: &Path, mode: u32) -> Result<(), RetentionError> {
+    let mut builder = std::fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(mode);
+    }
+    #[cfg(not(unix))]
+    let _ = mode;
+    builder
+        .create(path)
+        .map_err(|error| RetentionError::Message(go_path_error("mkdir", path, &error)))
+}
+
+fn go_path_error(operation: &str, path: &Path, error: &std::io::Error) -> String {
+    format!("{operation} {}: {}", path.display(), go_io_error(error))
+}
+
+fn go_io_error(error: &std::io::Error) -> String {
+    match error.kind() {
+        std::io::ErrorKind::NotFound => {
+            if cfg!(windows) {
+                "The system cannot find the file specified.".to_owned()
+            } else {
+                "no such file or directory".to_owned()
+            }
+        }
+        std::io::ErrorKind::PermissionDenied => {
+            if cfg!(windows) {
+                "Access is denied.".to_owned()
+            } else {
+                "permission denied".to_owned()
+            }
+        }
+        _ => {
+            let mut message = error.to_string();
+            if let Some(index) = message.rfind(" (os error ") {
+                message.truncate(index);
+            }
+            if !cfg!(windows) {
+                let mut chars = message.chars();
+                if let Some(first) = chars.next() {
+                    message = first.to_lowercase().collect::<String>() + chars.as_str();
+                }
+            }
+            message
+        }
+    }
 }
 
 /// Go: `retention.writeFileAtomic` — a complete file beside its target, synced
@@ -607,7 +775,11 @@ fn temp_file_in(dir: &Path) -> Result<(std::fs::File, PathBuf), RetentionError> 
         {
             Ok(file) => return Ok((file, candidate)),
             Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => continue,
-            Err(err) => return Err(RetentionError::Message(err.to_string())),
+            Err(err) => {
+                return Err(RetentionError::Message(go_path_error(
+                    "open", &candidate, &err,
+                )));
+            }
         }
     }
     Err(RetentionError::Message(
@@ -644,6 +816,7 @@ pub fn go_quote(value: &str) -> String {
             other if (other as u32) < 0x20 || other as u32 == 0x7f => {
                 out.push_str(&format!("\\x{:02x}", other as u32));
             }
+            '\u{2028}' | '\u{2029}' => out.push_str(&format!("\\u{:04x}", character as u32)),
             other => out.push(other),
         }
     }

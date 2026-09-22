@@ -2,8 +2,9 @@
 //!
 //! The encoding cases are compared byte-for-byte; the filesystem cases are
 //! structural because a real open records the current instant, which no port
-//! can reproduce. The recorded modes are asserted natively on Unix only, where
-//! Go observes them.
+//! can reproduce. The real filesystem modes are asserted natively on Unix
+//! only, where Go observes them; the mode strings the Go oracle recorded are
+//! asserted on every platform so non-Unix runs exercise the contract too.
 
 use std::{
     fs,
@@ -149,6 +150,17 @@ fn explicit_override_writes_no_metadata_like_go() {
     assert!(!expected.metadata_written);
     assert!(!explicit_dir.join(METADATA_FILE_NAME).exists());
     assert_eq!(temp_leftovers(&explicit_dir), expected.temp_leftovers);
+}
+
+/// The Go oracle records `0700` for the sidecar directory and `0600` for
+/// `metadata.json`. The test below compares those strings against the real
+/// filesystem, which Windows cannot observe — reading them here keeps the
+/// contract exercised (and the struct fields used) on every platform.
+#[test]
+fn fixture_records_go_private_modes() {
+    let fixture = fixture();
+    assert_eq!(fixture.directory_mode, "0700", "sidecar directory mode");
+    assert_eq!(fixture.file_mode, "0600", "metadata file mode");
 }
 
 #[cfg(unix)]

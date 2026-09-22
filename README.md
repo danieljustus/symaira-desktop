@@ -172,7 +172,7 @@ symdesk version --json         # {"tool":"symdesk","version":...,"schema_version
 
 ```text
 $ symdesk version --json
-{"tool":"symdesk","version":"0.12.2","schema_version":1}
+{"tool":"symdesk","version":"0.13.0","schema_version":1}
 ```
 
 ## Development

@@ -133,7 +133,11 @@ func buildRetentionStateFixture(t *testing.T) retentionStateFixture {
 			"internal/retention/retention.go":                        retentionStateSourceHash(t, "internal/retention/retention.go"),
 			"internal/service/dataset_retention.go":                  retentionStateSourceHash(t, "internal/service/dataset_retention.go"),
 			"internal/service/port_retention_state_contract_test.go": retentionStateSourceHash(t, "internal/service/port_retention_state_contract_test.go"),
+			"internal/service/port_retention_state_unix_test.go":     retentionStateSourceHash(t, "internal/service/port_retention_state_unix_test.go"),
+			"internal/service/port_retention_state_windows_test.go":  retentionStateSourceHash(t, "internal/service/port_retention_state_windows_test.go"),
 			"internal/vault/root.go":                                 retentionStateSourceHash(t, "internal/vault/root.go"),
+			"internal/vault/root_open_unix.go":                       retentionStateSourceHash(t, "internal/vault/root_open_unix.go"),
+			"internal/vault/root_open_windows.go":                    retentionStateSourceHash(t, "internal/vault/root_open_windows.go"),
 			"internal/vault/vault.go":                                retentionStateSourceHash(t, "internal/vault/vault.go"),
 		},
 		Cases:     retentionStateCases(t),
@@ -143,6 +147,7 @@ func buildRetentionStateFixture(t *testing.T) retentionStateFixture {
 			"Every case uses a fresh disposable vault root; no operator vault, sidecar, credential store, or network service is accessed.",
 			"Dataset fingerprints include the handle bytes followed by raw CSV path/content pairs sorted by path.",
 			"Mutation vectors re-read production state after changing authoritative bytes and require a different fingerprint.",
+			"Unix FIFO cases record the production Go filesystem diagnostics; the Rust replay preserves its relative-path Display difference as an explicit residual.",
 		},
 	}
 }
@@ -167,6 +172,12 @@ ordinary body
 	dataset := retentionStateDatasetHandle("orders", "Orders", "seven-years")
 	cases := []retentionStateCase{
 		{ID: "ordinary-document", Description: "ordinary Markdown bytes and metadata", Path: "notes/invoice.md", Setup: []retentionStateSetup{{Path: "notes/invoice.md", Kind: "file", Content: document}}},
+		{ID: "ordinary-nonblocking-positive-control", Description: "ordinary files retain their authoritative fingerprint with nonblocking rooted opens", Path: "probe.md", Setup: []retentionStateSetup{{Path: "probe.md", Kind: "file", Content: "---\ntitle: Probe\n---\nbody\n"}}},
+		{ID: "direct-fifo-rejected", Description: "a direct FIFO is rejected without blocking before file-type validation", Path: "pipe.md", Platform: "unix", Setup: []retentionStateSetup{{Path: "pipe.md", Kind: "fifo"}}},
+		{ID: "dataset-raw-fifo-rejected", Description: "a dataset raw CSV FIFO is rejected without blocking before fingerprinting", Path: "datasets/orders.md", Platform: "unix", Setup: []retentionStateSetup{
+			{Path: "datasets/orders.md", Kind: "file", Content: dataset},
+			{Path: "datasets/orders/pipe.csv", Kind: "fifo"},
+		}},
 		{ID: "dataset-sorted-raw-reverse-creation", Description: "dataset handle plus CSVs created in reverse lexical order", Path: "datasets/orders.md", Setup: []retentionStateSetup{
 			{Path: "datasets/orders.md", Kind: "file", Content: dataset},
 			{Path: "datasets/orders/z.csv", Kind: "file", Content: "id,total\n2,20\n"},
@@ -208,10 +219,23 @@ retention_rule: seven-years
 		}
 		cases[index] = runRetentionStateCase(t, cases[index])
 	}
-	if cases[1].State == nil || cases[2].State == nil || cases[1].State.Fingerprint != cases[2].State.Fingerprint {
+	reverse := retentionStateCaseByID(t, cases, "dataset-sorted-raw-reverse-creation")
+	forward := retentionStateCaseByID(t, cases, "dataset-sorted-raw-forward-creation")
+	if reverse.State == nil || forward.State == nil || reverse.State.Fingerprint != forward.State.Fingerprint {
 		t.Fatal("dataset fingerprint changed with directory creation order")
 	}
 	return cases
+}
+
+func retentionStateCaseByID(t *testing.T, cases []retentionStateCase, id string) retentionStateCase {
+	t.Helper()
+	for _, item := range cases {
+		if item.ID == id {
+			return item
+		}
+	}
+	t.Fatalf("missing retention-state case %q", id)
+	return retentionStateCase{}
 }
 
 func retentionStateMutations(t *testing.T) []retentionStateMutation {
@@ -329,6 +353,11 @@ func applyRetentionStateSetup(t *testing.T, root, outside string, entries []rete
 			if err := os.Symlink(target, path); err != nil {
 				t.Fatal(err)
 			}
+		case "fifo":
+			if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+				t.Fatal(err)
+			}
+			retentionStateCreateFIFO(t, path)
 		case "file":
 			if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 				t.Fatal(err)

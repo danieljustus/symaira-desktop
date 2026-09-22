@@ -68,6 +68,7 @@ struct Setup {
     #[serde(default)]
     content: String,
     #[serde(default)]
+    #[cfg_attr(not(unix), allow(dead_code))]
     target: String,
 }
 
@@ -75,7 +76,7 @@ struct Setup {
 fn retention_state_contracts_match_the_go_oracle() {
     let fixture = load_fixture();
     assert_eq!(fixture.schema_version, 1, "fixture schema version");
-    assert_eq!(fixture.cases.len(), 11, "Go state case count");
+    assert_eq!(fixture.cases.len(), 14, "Go state case count");
     assert_eq!(fixture.mutations.len(), 2, "Go mutation case count");
     assert!(
         fixture.oracle.commit.len() == 40 && !fixture.oracle.release.is_empty(),
@@ -96,6 +97,11 @@ fn retention_state_contracts_match_the_go_oracle() {
             "{} needs a description",
             case.id
         );
+        if case.setup.iter().any(|entry| entry.kind == "fifo") {
+            assert_special_file_case_bounded(case);
+            executed += 1;
+            continue;
+        }
         let sandbox = Sandbox::new(&case.id);
         apply_setup(&sandbox, &case.setup);
         match retention_state(&sandbox.root, &case.path) {
@@ -167,6 +173,124 @@ fn retention_state_contracts_match_the_go_oracle() {
     );
 }
 
+#[cfg(unix)]
+fn assert_special_file_case_bounded(case: &Case) {
+    use std::{
+        fs::File,
+        process::{Command, Stdio},
+        thread,
+        time::{Duration, Instant},
+    };
+
+    const CASE_ENV: &str = "SYMDESK_RETENTION_STATE_SPECIAL_FILE_CASE";
+    const READY_ENV: &str = "SYMDESK_RETENTION_STATE_SPECIAL_FILE_READY";
+    let run = Sandbox::new(&format!("bounded-{}", case.id));
+    let ready = run.parent.join("entry.marker");
+    let output_path = run.parent.join("child.log");
+    let output = File::create(&output_path).expect("create special-file child log");
+    let stderr = output.try_clone().expect("clone special-file child log");
+    let mut child = Command::new(std::env::current_exe().expect("current test executable"))
+        .args([
+            "--exact",
+            "retention_state_special_file_child",
+            "--ignored",
+            "--nocapture",
+        ])
+        .env(CASE_ENV, &case.id)
+        .env(READY_ENV, &ready)
+        .stdout(Stdio::from(output))
+        .stderr(Stdio::from(stderr))
+        .spawn()
+        .unwrap_or_else(|error| panic!("{}: spawn bounded child: {error}", case.id));
+
+    let startup_deadline = Instant::now() + Duration::from_secs(5);
+    while !matches!(fs::read(&ready), Ok(marker) if marker == b"ENTRY\n") {
+        if let Some(status) = child
+            .try_wait()
+            .unwrap_or_else(|error| panic!("{}: inspect bounded child: {error}", case.id))
+        {
+            let output = fs::read_to_string(&output_path).unwrap_or_default();
+            panic!(
+                "{}: child exited before ENTRY readiness with {status}:\n{output}",
+                case.id
+            );
+        }
+        if Instant::now() >= startup_deadline {
+            let _ = child.kill();
+            let _ = child.wait();
+            let output = fs::read_to_string(&output_path).unwrap_or_default();
+            panic!(
+                "{}: child never reached ENTRY readiness:\n{output}",
+                case.id
+            );
+        }
+        thread::sleep(Duration::from_millis(5));
+    }
+
+    let completion_deadline = Instant::now() + Duration::from_secs(2);
+    loop {
+        if let Some(status) = child
+            .try_wait()
+            .unwrap_or_else(|error| panic!("{}: inspect bounded child: {error}", case.id))
+        {
+            let output = fs::read_to_string(&output_path).unwrap_or_default();
+            assert!(
+                status.success(),
+                "{}: bounded child failed with {status}:\n{output}",
+                case.id
+            );
+            return;
+        }
+        if Instant::now() >= completion_deadline {
+            let _ = child.kill();
+            let _ = child.wait();
+            let output = fs::read_to_string(&output_path).unwrap_or_default();
+            panic!(
+                "{}: retention_state blocked for two seconds after ENTRY readiness:\n{output}",
+                case.id
+            );
+        }
+        thread::sleep(Duration::from_millis(5));
+    }
+}
+
+#[cfg(not(unix))]
+fn assert_special_file_case_bounded(case: &Case) {
+    panic!(
+        "Unix-only special-file case {} was not platform-filtered",
+        case.id
+    );
+}
+
+#[cfg(unix)]
+#[test]
+#[ignore = "child process body for bounded FIFO retention-state replay"]
+fn retention_state_special_file_child() {
+    const CASE_ENV: &str = "SYMDESK_RETENTION_STATE_SPECIAL_FILE_CASE";
+    const READY_ENV: &str = "SYMDESK_RETENTION_STATE_SPECIAL_FILE_READY";
+    let Ok(case_id) = std::env::var(CASE_ENV) else {
+        return;
+    };
+    let ready = PathBuf::from(std::env::var_os(READY_ENV).expect("special-file readiness path"));
+    let fixture = load_fixture();
+    let case = fixture
+        .cases
+        .iter()
+        .find(|case| case.id == case_id)
+        .unwrap_or_else(|| panic!("missing special-file case {case_id}"));
+    assert!(
+        case.setup.iter().any(|entry| entry.kind == "fifo"),
+        "{case_id} must create a FIFO"
+    );
+    let sandbox = Sandbox::new(&format!("child-{case_id}"));
+    apply_setup(&sandbox, &case.setup);
+    fs::write(&ready, b"ENTRY\n").expect("write special-file readiness");
+    match retention_state(&sandbox.root, &case.path) {
+        Ok(state) => panic!("{case_id} unexpectedly succeeded: {state:?}"),
+        Err(error) => assert_case_error(case, &sandbox, &error),
+    }
+}
+
 fn fixture_path() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/vault/retention-state.json")
 }
@@ -185,7 +309,11 @@ fn assert_source_hashes(fixture: &Fixture) {
         "internal/retention/retention.go",
         "internal/service/dataset_retention.go",
         "internal/service/port_retention_state_contract_test.go",
+        "internal/service/port_retention_state_unix_test.go",
+        "internal/service/port_retention_state_windows_test.go",
         "internal/vault/root.go",
+        "internal/vault/root_open_unix.go",
+        "internal/vault/root_open_windows.go",
         "internal/vault/vault.go",
     ] {
         let expected = fixture
@@ -205,6 +333,27 @@ fn assert_case_error(case: &Case, sandbox: &Sandbox, error: &RetentionStateError
         case.id
     );
     assert_eq!(error.class(), case.error_class, "{} error class", case.id);
+    let display_residual = match case.id.as_str() {
+        "direct-fifo-rejected" => Some((
+            "vault path is not a regular file: {{VAULT}}/pipe.md",
+            "vault path is not a regular file: pipe.md",
+        )),
+        "dataset-raw-fifo-rejected" => Some((
+            "vault path is not a regular file: {{VAULT}}/datasets/orders/pipe.csv",
+            "vault path is not a regular file: datasets/orders/pipe.csv",
+        )),
+        _ => None,
+    };
+    if let Some((go_diagnostic, rust_diagnostic)) = display_residual {
+        assert_eq!(case.error, go_diagnostic, "{} exact Go diagnostic", case.id);
+        assert_eq!(
+            error.to_string(),
+            rust_diagnostic,
+            "{} explicit Rust relative-path Display residual",
+            case.id
+        );
+        return;
+    }
     if !matches!(error.class(), "parse" | "filesystem" | "not_found") {
         assert_eq!(
             sanitise_error(&error.to_string(), sandbox),
@@ -229,10 +378,36 @@ fn apply_setup(sandbox: &Sandbox, entries: &[Setup]) {
                     .expect("create setup file parent");
                 fs::write(&path, entry.content.as_bytes()).expect("write setup file");
             }
+            "fifo" => create_fifo(&path),
             "symlink" => create_symlink(sandbox, entry, &path),
             other => panic!("unknown setup kind {other:?}"),
         }
     }
+}
+
+#[cfg(unix)]
+fn create_fifo(path: &Path) {
+    use std::process::Command;
+
+    fs::create_dir_all(path.parent().expect("setup FIFO parent"))
+        .expect("create setup FIFO parent");
+    let binary = ["/usr/bin/mkfifo", "/bin/mkfifo"]
+        .into_iter()
+        .find(|candidate| Path::new(candidate).is_file())
+        .unwrap_or("mkfifo");
+    let status = Command::new(binary)
+        .arg(path)
+        .status()
+        .unwrap_or_else(|error| panic!("run mkfifo for {}: {error}", path.display()));
+    assert!(status.success(), "mkfifo failed for {}", path.display());
+}
+
+#[cfg(not(unix))]
+fn create_fifo(path: &Path) {
+    panic!(
+        "Unix-only FIFO setup {} was not platform-filtered",
+        path.display()
+    );
 }
 
 #[cfg(unix)]

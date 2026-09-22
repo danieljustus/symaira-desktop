@@ -1,0 +1,376 @@
+{
+  "schema_version": 1,
+  "generated_on": "darwin",
+  "oracle": {
+    "commit": "4c0c246bbab80d105987caf21ca16cbbdda59c89",
+    "release": "RUST-007-authoritative-retention-state"
+  },
+  "source_hashes": {
+    "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
+    "internal/retention/fingerprint.go": "d07bc03938544087e0a62ae5e9b1c6ad803cffb6132ea2f845f0fccf7d0bfa74",
+    "internal/retention/retention.go": "1dd40cb43529b1d9aed6fe1699d50e1e9d844abeac31450cd0bdd56276a9a24c",
+    "internal/service/dataset_retention.go": "ca86878cdbed89df1665fcf6c67804c86f964d5f92833a6f613ea8db880278a0",
+    "internal/service/port_retention_state_contract_test.go": "edf436c9a99c47cf927caa5ffd2b1b9888a7ebbbb0ff5301449350eeb46e4585",
+    "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",
+    "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
+  },
+  "cases": [
+    {
+      "id": "ordinary-document",
+      "description": "ordinary Markdown bytes and metadata",
+      "path": "notes/invoice.md",
+      "setup": [
+        {
+          "path": "notes/invoice.md",
+          "kind": "file",
+          "content": "---\ntitle: Invoice 2024\ncreated: \"2024-01-02T03:04:05Z\"\ndocument_date: \"2024-01-01\"\ndue_date: \"2024-02-01\"\nstatus: paid\nperson: Daniel\ncorrespondent: Acme Corp\ndocument_type: invoice\ntags:\n  - finance\n  - tax\n---\nordinary body\n"
+        }
+      ],
+      "state": {
+        "meta": {
+          "Path": "notes/invoice.md",
+          "Title": "Invoice 2024",
+          "DocumentDate": "2024-01-01",
+          "Created": "2024-01-02T03:04:05Z",
+          "DueDate": "2024-02-01",
+          "Status": "paid",
+          "Correspondent": "Acme Corp",
+          "DocumentType": "invoice",
+          "Person": "Daniel",
+          "Tags": [
+            "finance",
+            "tax"
+          ]
+        },
+        "rule_name": "",
+        "fingerprint": "7f5879780a2dded2fa15f8b0609dd52cb14d70954db280094133d027acd63d7a",
+        "dataset": false
+      },
+      "platform": "any"
+    },
+    {
+      "id": "dataset-sorted-raw-reverse-creation",
+      "description": "dataset handle plus CSVs created in reverse lexical order",
+      "path": "datasets/orders.md",
+      "setup": [
+        {
+          "path": "datasets/orders.md",
+          "kind": "file",
+          "content": "---\ntype: dataset\ntitle: Orders\ncreated: \"2024-01-02T03:04:05Z\"\ndataset_id: orders\nsource: orders.csv\ncoverage:\n  from: \"2024-01-01\"\n  to: \"2024-12-31\"\nprovenance:\n  imported_at: \"2025-01-01T00:00:00Z\"\n  source_name: orders.csv\n  source_sha256: abc123\nsensitivity: restricted\nretention_rule: seven-years\n---\n\n# Orders\n"
+        },
+        {
+          "path": "datasets/orders/z.csv",
+          "kind": "file",
+          "content": "id,total\n2,20\n"
+        },
+        {
+          "path": "datasets/orders/a.csv",
+          "kind": "file",
+          "content": "id,total\n1,10\n"
+        },
+        {
+          "path": "datasets/orders/readme.txt",
+          "kind": "file",
+          "content": "ignored\n"
+        },
+        {
+          "path": "datasets/orders/nested",
+          "kind": "directory"
+        }
+      ],
+      "state": {
+        "meta": {
+          "Path": "datasets/orders.md",
+          "Title": "Orders",
+          "DocumentDate": "2024-12-31",
+          "Created": "2024-01-02T03:04:05Z",
+          "DueDate": "",
+          "Status": "",
+          "Correspondent": "",
+          "DocumentType": "dataset",
+          "Person": "",
+          "Tags": null
+        },
+        "rule_name": "seven-years",
+        "fingerprint": "e6aecae9d6e310323f5299f60c1c08d3c488175bca97a4ad65b8449c7f8b0dfb",
+        "dataset": true
+      },
+      "platform": "any"
+    },
+    {
+      "id": "dataset-sorted-raw-forward-creation",
+      "description": "creation order does not change the sorted raw-source fingerprint",
+      "path": "datasets/orders.md",
+      "setup": [
+        {
+          "path": "datasets/orders.md",
+          "kind": "file",
+          "content": "---\ntype: dataset\ntitle: Orders\ncreated: \"2024-01-02T03:04:05Z\"\ndataset_id: orders\nsource: orders.csv\ncoverage:\n  from: \"2024-01-01\"\n  to: \"2024-12-31\"\nprovenance:\n  imported_at: \"2025-01-01T00:00:00Z\"\n  source_name: orders.csv\n  source_sha256: abc123\nsensitivity: restricted\nretention_rule: seven-years\n---\n\n# Orders\n"
+        },
+        {
+          "path": "datasets/orders/a.csv",
+          "kind": "file",
+          "content": "id,total\n1,10\n"
+        },
+        {
+          "path": "datasets/orders/z.csv",
+          "kind": "file",
+          "content": "id,total\n2,20\n"
+        }
+      ],
+      "state": {
+        "meta": {
+          "Path": "datasets/orders.md",
+          "Title": "Orders",
+          "DocumentDate": "2024-12-31",
+          "Created": "2024-01-02T03:04:05Z",
+          "DueDate": "",
+          "Status": "",
+          "Correspondent": "",
+          "DocumentType": "dataset",
+          "Person": "",
+          "Tags": null
+        },
+        "rule_name": "seven-years",
+        "fingerprint": "e6aecae9d6e310323f5299f60c1c08d3c488175bca97a4ad65b8449c7f8b0dfb",
+        "dataset": true
+      },
+      "platform": "any"
+    },
+    {
+      "id": "empty-path",
+      "description": "empty paths fail before filesystem access",
+      "path": "",
+      "setup": [],
+      "error": "invalid retention path \"\"",
+      "error_class": "invalid_path",
+      "platform": "any"
+    },
+    {
+      "id": "absolute-path",
+      "description": "absolute paths are rejected",
+      "path": "/outside.md",
+      "setup": [],
+      "error": "invalid retention path \"/outside.md\"",
+      "error_class": "invalid_path",
+      "platform": "unix"
+    },
+    {
+      "id": "traversal-path",
+      "description": "parent traversal is denied",
+      "path": "../outside.md",
+      "setup": [],
+      "error": "path traversal denied: ../outside.md is outside vault",
+      "error_class": "unsafe_path",
+      "platform": "any"
+    },
+    {
+      "id": "corrupt-document",
+      "description": "malformed frontmatter fails closed",
+      "path": "broken.md",
+      "setup": [
+        {
+          "path": "broken.md",
+          "kind": "file",
+          "content": "---\ntitle: [\n---\nbody\n"
+        }
+      ],
+      "error": "invalid frontmatter in broken.md: yaml: line 1: did not find expected node content",
+      "error_class": "parse",
+      "platform": "any"
+    },
+    {
+      "id": "corrupt-dataset-handle",
+      "description": "dataset handles missing source fail closed",
+      "path": "datasets/broken.md",
+      "setup": [
+        {
+          "path": "datasets/broken.md",
+          "kind": "file",
+          "content": "---\ntype: dataset\ntitle: Broken\ndataset_id: broken\nsensitivity: restricted\nretention_rule: seven-years\n---\n"
+        }
+      ],
+      "error": "dataset handle datasets/broken.md is missing type or source",
+      "error_class": "dataset_contract",
+      "platform": "any"
+    },
+    {
+      "id": "dataset-handle-path-mismatch",
+      "description": "dataset_id must match the canonical handle path",
+      "path": "datasets/wrong.md",
+      "setup": [
+        {
+          "path": "datasets/wrong.md",
+          "kind": "file",
+          "content": "---\ntype: dataset\ntitle: Orders\ncreated: \"2024-01-02T03:04:05Z\"\ndataset_id: orders\nsource: orders.csv\ncoverage:\n  from: \"2024-01-01\"\n  to: \"2024-12-31\"\nprovenance:\n  imported_at: \"2025-01-01T00:00:00Z\"\n  source_name: orders.csv\n  source_sha256: abc123\nsensitivity: restricted\nretention_rule: seven-years\n---\n\n# Orders\n"
+        }
+      ],
+      "error": "dataset handle path \"datasets/wrong.md\" does not match dataset \"orders\"",
+      "error_class": "dataset_contract",
+      "platform": "any"
+    },
+    {
+      "id": "dataset-raw-symlink",
+      "description": "raw CSV symlinks are never fingerprinted",
+      "path": "datasets/orders.md",
+      "setup": [
+        {
+          "path": "datasets/orders.md",
+          "kind": "file",
+          "content": "---\ntype: dataset\ntitle: Orders\ncreated: \"2024-01-02T03:04:05Z\"\ndataset_id: orders\nsource: orders.csv\ncoverage:\n  from: \"2024-01-01\"\n  to: \"2024-12-31\"\nprovenance:\n  imported_at: \"2025-01-01T00:00:00Z\"\n  source_name: orders.csv\n  source_sha256: abc123\nsensitivity: restricted\nretention_rule: seven-years\n---\n\n# Orders\n"
+        },
+        {
+          "path": "datasets/orders/real.csv",
+          "kind": "file",
+          "content": "id,total\n1,10\n"
+        },
+        {
+          "path": "datasets/orders/link.csv",
+          "kind": "symlink",
+          "target": "real.csv"
+        }
+      ],
+      "error": "dataset raw source orders/link.csv is a symlink",
+      "error_class": "symlink",
+      "platform": "unix"
+    },
+    {
+      "id": "document-symlink-escape",
+      "description": "a document symlink cannot escape the vault root",
+      "path": "escape.md",
+      "setup": [
+        {
+          "path": "escape.md",
+          "kind": "symlink",
+          "target": "{{OUTSIDE_FILE}}"
+        }
+      ],
+      "error": "symlink escape denied: escape.md resolves outside vault",
+      "error_class": "unsafe_path",
+      "platform": "unix"
+    }
+  ],
+  "mutations": [
+    {
+      "id": "ordinary-authoritative-reread",
+      "description": "changing the document bytes changes the authoritative fingerprint",
+      "path": "note.md",
+      "setup": [
+        {
+          "path": "note.md",
+          "kind": "file",
+          "content": "---\ntitle: Before\n---\nbefore\n"
+        }
+      ],
+      "mutation": [
+        {
+          "path": "note.md",
+          "kind": "file",
+          "content": "---\ntitle: After\n---\nafter\n"
+        }
+      ],
+      "before": {
+        "meta": {
+          "Path": "note.md",
+          "Title": "Before",
+          "DocumentDate": "",
+          "Created": "",
+          "DueDate": "",
+          "Status": "",
+          "Correspondent": "",
+          "DocumentType": "",
+          "Person": "",
+          "Tags": null
+        },
+        "rule_name": "",
+        "fingerprint": "9a13d02d2997c4f4267803745eb100fbd929a68522cb1c6fc79ea0b042d89cbd",
+        "dataset": false
+      },
+      "after": {
+        "meta": {
+          "Path": "note.md",
+          "Title": "After",
+          "DocumentDate": "",
+          "Created": "",
+          "DueDate": "",
+          "Status": "",
+          "Correspondent": "",
+          "DocumentType": "",
+          "Person": "",
+          "Tags": null
+        },
+        "rule_name": "",
+        "fingerprint": "e028df5ab04ee08f9a34f8d1d27652e806731495339bc99cebc9b3d43a1172a3",
+        "dataset": false
+      },
+      "changed": true,
+      "platform": "any"
+    },
+    {
+      "id": "dataset-raw-authoritative-reread",
+      "description": "changing one raw CSV changes the dataset fingerprint",
+      "path": "datasets/orders.md",
+      "setup": [
+        {
+          "path": "datasets/orders.md",
+          "kind": "file",
+          "content": "---\ntype: dataset\ntitle: Orders\ncreated: \"2024-01-02T03:04:05Z\"\ndataset_id: orders\nsource: orders.csv\ncoverage:\n  from: \"2024-01-01\"\n  to: \"2024-12-31\"\nprovenance:\n  imported_at: \"2025-01-01T00:00:00Z\"\n  source_name: orders.csv\n  source_sha256: abc123\nsensitivity: restricted\nretention_rule: seven-years\n---\n\n# Orders\n"
+        },
+        {
+          "path": "datasets/orders/a.csv",
+          "kind": "file",
+          "content": "id,total\n1,10\n"
+        }
+      ],
+      "mutation": [
+        {
+          "path": "datasets/orders/a.csv",
+          "kind": "file",
+          "content": "id,total\n1,11\n"
+        }
+      ],
+      "before": {
+        "meta": {
+          "Path": "datasets/orders.md",
+          "Title": "Orders",
+          "DocumentDate": "2024-12-31",
+          "Created": "2024-01-02T03:04:05Z",
+          "DueDate": "",
+          "Status": "",
+          "Correspondent": "",
+          "DocumentType": "dataset",
+          "Person": "",
+          "Tags": null
+        },
+        "rule_name": "seven-years",
+        "fingerprint": "14191e16b4ab15ed5fc6c6393b5b74a747610b4a1786e0f7dac861643816c482",
+        "dataset": true
+      },
+      "after": {
+        "meta": {
+          "Path": "datasets/orders.md",
+          "Title": "Orders",
+          "DocumentDate": "2024-12-31",
+          "Created": "2024-01-02T03:04:05Z",
+          "DueDate": "",
+          "Status": "",
+          "Correspondent": "",
+          "DocumentType": "dataset",
+          "Person": "",
+          "Tags": null
+        },
+        "rule_name": "seven-years",
+        "fingerprint": "25e8da43a51dec999991192911d55784f404a7045cb37dcb0c33657c2fc9b782",
+        "dataset": true
+      },
+      "changed": true,
+      "platform": "any"
+    }
+  ],
+  "notes": [
+    "Generated by internal/service/port_retention_state_contract_test.go through Service.RetentionState; never hand-edit.",
+    "Every case uses a fresh disposable vault root; no operator vault, sidecar, credential store, or network service is accessed.",
+    "Dataset fingerprints include the handle bytes followed by raw CSV path/content pairs sorted by path.",
+    "Mutation vectors re-read production state after changing authoritative bytes and require a different fingerprint."
+  ]
+}

@@ -29,6 +29,37 @@ pub const PROPOSAL_STATUS_PARTIAL: &str = "partial";
 pub const PROPOSAL_ITEM_STATUS_ACCEPTED: &str = "accepted";
 pub const PROPOSAL_ITEM_STATUS_ACTION_COMPLETED: &str = "action_completed";
 
+/// Go: `retention.RawSource`. Paths and bytes are both authoritative inputs.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RawSource {
+    pub path: String,
+    pub data: Vec<u8>,
+}
+
+/// Go: `retention.Fingerprint`. The version marker and every value are encoded
+/// with decimal byte length, a colon, the bytes, and a trailing newline.
+#[must_use]
+pub fn fingerprint(handle: Option<&[u8]>, sources: &[RawSource]) -> String {
+    let mut encoded = Vec::new();
+    encoded.extend_from_slice(b"symdesk-retention-fingerprint-v1\0");
+    append_fingerprint_part(&mut encoded, handle.unwrap_or_default());
+    for source in sources {
+        append_fingerprint_part(&mut encoded, source.path.as_bytes());
+        append_fingerprint_part(&mut encoded, &source.data);
+    }
+    crate::sha256::digest(&encoded)
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
+}
+
+fn append_fingerprint_part(encoded: &mut Vec<u8>, value: &[u8]) {
+    encoded.extend_from_slice(value.len().to_string().as_bytes());
+    encoded.push(b':');
+    encoded.extend_from_slice(value);
+    encoded.push(b'\n');
+}
+
 /// Go: `retention.Rule`. `period` is the Go duration in nanoseconds and is kept
 /// as a field so the wire format matches. Every field defaults when the YAML
 /// document omits it, because Go decodes into a zero-valued struct and only

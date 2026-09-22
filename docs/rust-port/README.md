@@ -166,8 +166,12 @@ migration stays stopped and Go remains in production.
   byte-exact cases) as #1008, verified on Linux/macOS/Windows in the same native matrix;
   `retention eval/accept/reject/diff/history` stay open because their state is read and
   mutated through `internal/service`, which is not ported yet — the Rust CLI deliberately
-  omits them instead of approximating them. DATA-001 (dataset sync) also remains open, so
-  the row stays `TODO`.
+  omits them instead of approximating them. DATA-001 (dataset sync) is now `PARTIAL`: the
+  sidecar projection and every `dataset.ParseCSV` rejection replay byte-exact through
+  `make dataset-sync-differential` (`testdata/port/dataset/sync.json`, 6 import + 6 CSV +
+  5 service-level cases, plus a `portgen` manifest entry so the oracle cannot drift), but
+  the write half - `DatasetImport`'s handle manifest and `StoreRaw`'s same-day collision
+  suffix - is not ported, so the row does not reach `PASS`.
 
 - `RUST-001` passed: generated fixtures freeze 207 SymDesk command nodes (206
   non-root, including Cobra's generated help/completion tree), the production-derived SymRoom parser grammar, 57 SymDesk and 8

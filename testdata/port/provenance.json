@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d2d3c54363d67a4ef79fb1d802da8244eb324a57007402eac6f4ce5201fb0c62",
-  "generator_source_digest": "d43f166610c87daef60ff6ce7147a04feab6626aecec1ae304c2de9b4989c68c",
+  "generator_source_digest": "8694aaec1cf0310d95d773bb90866c1dbb9695dede8222d894f5bc09542f91bb",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -23,6 +23,7 @@
     "testdata/port/core/search-query.json": "c98c660e12b58aade39098e4e27942a3f14243ca889ac3080e26340ca3e078dd",
     "testdata/port/core/simhash.json": "a77de2b55ef0c3df32ac9635ceafbc03442a4d78ecdd4c324feb6e073bdd3567",
     "testdata/port/core/textnorm.json": "654145d8b3f12bca1b352538d8a30613f1e5d664e20bb00851b4f41aad97b9aa",
+    "testdata/port/dataset/sync.json": "2a6d4f18b30357289c95b812bd8d710f3f5bd756f5e41600b270898a1fbde6bb",
     "testdata/port/http/representative.json": "e7091605c01875e5ccaa4a81d8ac3d1cadd219770225dd9e80e8209e91033bdb",
     "testdata/port/http/routes.json": "43c706ede035052e9eb6392eeec84ed67abc48ab108a0c01a3aefd00cef0ecd1",
     "testdata/port/mcp/representative.json": "310f00af96a329f426796deb6084bee0292b74bbfb4ab39772725a0892cc1c57",

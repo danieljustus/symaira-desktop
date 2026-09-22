@@ -255,8 +255,20 @@ migration stays stopped and Go remains in production.
   Full `compare_files` deliberately stays off: `sidecar.db` carries SQLite state and
   `metadata.json` a timestamp, so neither can match byte-for-byte across two processes —
   the layout gate plus the byte-exact `metadata.json` replay are the filesystem evidence.
+- DATA-001 landed as `PARTIAL` on `migration/rust-dataset-sync`: the Go oracle
+  `internal/service/port_dataset_contract_test.go` records 6 `DatasetImport` cases
+  (handle bytes, raw asset, rows read back through `sidecar.DB.DatasetRows`), 6
+  `dataset.ParseCSV` rejections and 5 service-level rejections in
+  `testdata/port/dataset/sync.json`, registered in the portgen manifest so `--check`
+  guards it against drift. Rust reproduces the projection and every CSV rejection
+  byte for byte - Go's HTML-escaped `values_json`, its float formatting, and the
+  *measured* messages `read csv: record on line 2: wrong number of fields` and
+  `row 2 column "amount": invalid number "abc"` - gated by
+  `make dataset-sync-differential`. One flipped byte makes Go fail closed (exit 2)
+  and the Rust replay panic (exit 101); restoring the fixture turns it green again.
 - Next actions for RUST-007: port the `internal/service` retention-state layer that
-  `retention eval/accept/reject/diff/history` require, then DATA-001 (dataset sync).
+  `retention eval/accept/reject/diff/history` require, then finish DATA-001's write half (`DatasetImport`'s handle manifest and
+  `StoreRaw`'s same-day collision suffix).
   When `retention reject/diff/history` are ported they must keep the same open-forever
   contract as `list` — Go discards the handle in `retention.go:369,392,411` too.
 - Skills loaded this session: `go-to-rust-migration` + `references/worker-dispatch.md`.

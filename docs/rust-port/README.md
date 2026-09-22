@@ -256,9 +256,16 @@ migration stays stopped and Go remains in production.
   When `retention reject/diff/history` are ported they must keep the same open-forever
   contract as `list` — Go discards the handle in `retention.go:369,392,411` too.
 - Skills loaded this session: `go-to-rust-migration` + `references/worker-dispatch.md`.
-- Live evidence run: GitHub Actions run `35731356950` on
-  `migration/rust-sidecar-metadata` (manual `workflow_dispatch`, because
-  `Rust port contract` and `Rust native` are `if: event_name != 'pull_request'`).
+- Live evidence runs (manual `workflow_dispatch`, because `Rust port contract`
+  and `Rust native` are `if: event_name != 'pull_request'`): run `35735140018`
+  on `migration/rust-sidecar-metadata` and run `35735143364` on
+  `migration/rust-room-journal-v2` — both `conclusion=success` with every job
+  green, including `Rust port contract` and `Rust native` on Linux, macOS and
+  Windows. These supersede run `35731356950`, which failed on
+  `fields 'directory_mode' and 'file_mode' are never read` (the fields were
+  read only under `#[cfg(unix)]`, so `clippy -D warnings` rejected them on
+  Windows alone) plus one flaky `iOS app` test, now filed as
+  [#1019](https://github.com/danieljustus/symaira-desktop/issues/1019).
   PR: [#1016](https://github.com/danieljustus/symaira-desktop/pull/1016).
   Known pre-existing flake: `internal/compose` `TestInspectToolReportsManagedAndPATHCopies`
   under parallel `-race` load, filed as

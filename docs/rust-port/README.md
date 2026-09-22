@@ -256,6 +256,13 @@ migration stays stopped and Go remains in production.
   When `retention reject/diff/history` are ported they must keep the same open-forever
   contract as `list` — Go discards the handle in `retention.go:369,392,411` too.
 - Skills loaded this session: `go-to-rust-migration` + `references/worker-dispatch.md`.
+- Live evidence run: GitHub Actions run `35731356950` on
+  `migration/rust-sidecar-metadata` (manual `workflow_dispatch`, because
+  `Rust port contract` and `Rust native` are `if: event_name != 'pull_request'`).
+  PR: [#1016](https://github.com/danieljustus/symaira-desktop/pull/1016).
+  Known pre-existing flake: `internal/compose` `TestInspectToolReportsManagedAndPATHCopies`
+  under parallel `-race` load, filed as
+  [#1018](https://github.com/danieljustus/symaira-desktop/issues/1018).
   Note: a second desktop chat worked the same worktrees on 2026-09-22 (commits
   `0a93593f`, `8c449e7d`, `c5cb9a0a`); `8c449e7d` deliberately keeps the sidecar
   metadata fixture on the room pattern — outside the portgen manifest, gated only by

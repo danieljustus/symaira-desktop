@@ -1,0 +1,318 @@
+{
+  "schema_version": 1,
+  "zero_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "directory_mode": "0700",
+  "file_mode": "0600",
+  "stats_cases": [
+    {
+      "name": "missing-journal-directory",
+      "create_dir": false,
+      "author": "mem_550650c922de2f4c",
+      "max_lamport": 0,
+      "author_seq": 0,
+      "author_prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "note": "Go tolerates the absent directory and reports an empty journal."
+    },
+    {
+      "name": "empty-journal-directory",
+      "create_dir": true,
+      "author": "mem_550650c922de2f4c",
+      "max_lamport": 0,
+      "author_seq": 0,
+      "author_prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "name": "single-author-chain",
+      "files": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:28FxYN4yHITII2t7sXT9cGt2gBHr4IJq9Ji1xb76nCvwKOzsh9RGkM5scBkND4FNLELxrAnMj+gny9n+uE8ODg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_2\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:deadbeef\",\"room\":\"room_port_journal\",\"seq\":2,\"sig\":\"ed25519:ZEz1bRvt9DLn0wm4V/Yq/AJSSvs5c1fWgOB72IeWQezHM0hBi1SZVJSnzYA3b2JEQt3XVfv6ibqrStwcX9MACg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        }
+      ],
+      "create_dir": true,
+      "author": "mem_550650c922de2f4c",
+      "max_lamport": 2,
+      "author_seq": 2,
+      "author_prev": "sha256:370cf6bd3b484d8aed1c5743c50c0f09ff6217247a7f207528193cf8696e3357"
+    },
+    {
+      "name": "blank-lines-are-skipped",
+      "files": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"note.posted\",\"lamport\":4,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:lGgkISCKtoCmsoNrY/gBhGPVbeYnop1DU7TN6DCIZ48YGvGl/IZGgBKK6O26mywCfRpagkzYB+1AELaGYNBqAg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n\n   \n\t\n{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_2\",\"kind\":\"note.posted\",\"lamport\":5,\"prev\":\"sha256:deadbeef\",\"room\":\"room_port_journal\",\"seq\":2,\"sig\":\"ed25519:YPrTSWYWUukkmDRtqjPLasJQPEeCE5TW/eZf4brSLrUWt4k4sZlWMPiYP08cQuTzTGAbUfTdzyISq1wJwL/XBw==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n\n\n"
+        }
+      ],
+      "create_dir": true,
+      "author": "mem_550650c922de2f4c",
+      "max_lamport": 5,
+      "author_seq": 2,
+      "author_prev": "sha256:c637fba8ba626e47d3f0578b46e1e8c250abef3edad1a6c2ceeb907d7a4695f2",
+      "note": "Blank and whitespace-only lines count neither for seq nor for the hash."
+    },
+    {
+      "name": "undecodable-lines-are-skipped-for-lamport-but-counted-for-seq",
+      "files": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"note.posted\",\"lamport\":9,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:/AXg4GlOWDX72QTZ2b2BnUmdEhxjr0CFn2lttrYFghU3GntoWc+skm370hOjLJHvGoDzeXQMxdVM2pYiBQBVAg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n{not json}\n{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_2\",\"kind\":\"note.posted\",\"lamport\":3,\"prev\":\"sha256:deadbeef\",\"room\":\"room_port_journal\",\"seq\":2,\"sig\":\"ed25519:DNmEJujKL3VumbTwsZIRwekgUeSEQO3mHJsk9E172ryhnwEDSL/i0hFmsVpYmJ6iZGFZAEv250sbzSHlNcZODA==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        }
+      ],
+      "create_dir": true,
+      "author": "mem_550650c922de2f4c",
+      "max_lamport": 9,
+      "author_seq": 3,
+      "author_prev": "sha256:6e0dca9e947880dbf7e827ad09c9ef691ab569166bd22ce63df80fa28fc7385c",
+      "note": "ReadJournalStats ignores undecodable lines; GetAuthorStats counts every non-blank line."
+    },
+    {
+      "name": "lamport-ceiling-across-authors",
+      "files": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:WvPavx8aJoFRfdSw4sv4bw4EzMWB3Acv0SOVa/Lxj2nvSu51py4PoZNdIEC/aWhjDr4dUmCYgl8vRZnJ0ZEuDw==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        },
+        {
+          "name": "mem_ef7253e185e9a23b.jsonl",
+          "content": "{\"author\":\"mem_ef7253e185e9a23b\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_ef7253e185e9a23b_1\",\"kind\":\"note.posted\",\"lamport\":17,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:BGCkTgjPyCSJPlaeEK7fEs3qXgIJGdkIPZBPyHOAMn+07abws1ltQ+qWCTCBgn4m012lv0JroNpI+D3OUBlxDA==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        }
+      ],
+      "create_dir": true,
+      "author": "mem_550650c922de2f4c",
+      "max_lamport": 17,
+      "author_seq": 1,
+      "author_prev": "sha256:66ac8e5ce8f7133767a1cafa28aaffed42f89b0a065aaee6c30d1780a6b8215e"
+    },
+    {
+      "name": "non-jsonl-files-are-ignored",
+      "files": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:WvPavx8aJoFRfdSw4sv4bw4EzMWB3Acv0SOVa/Lxj2nvSu51py4PoZNdIEC/aWhjDr4dUmCYgl8vRZnJ0ZEuDw==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        },
+        {
+          "name": "notes.txt",
+          "content": "{\"author\":\"mem_ef7253e185e9a23b\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_ef7253e185e9a23b_1\",\"kind\":\"note.posted\",\"lamport\":99,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:76GLMYQzY6ixU+nxGst3irIkSHxOHXeWVtmsb52PnZ6vlIWXYcVPZ1FZvfs2fOfdkVaJ/VJfTQ/M6t/LQlIqAQ==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        },
+        {
+          "name": "mem_ef7253e185e9a23b.jsonl.bak",
+          "content": "{\"author\":\"mem_ef7253e185e9a23b\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_ef7253e185e9a23b_1\",\"kind\":\"note.posted\",\"lamport\":98,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:9ko0KMsd2qiXryh8pkN1sarXahf8Q+0L9+gTPEm812ztliKA+hPVkQPWNGTWlnWYvPPLK8VRfvXiec3nedwRAg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        }
+      ],
+      "create_dir": true,
+      "author": "mem_550650c922de2f4c",
+      "max_lamport": 2,
+      "author_seq": 1,
+      "author_prev": "sha256:66ac8e5ce8f7133767a1cafa28aaffed42f89b0a065aaee6c30d1780a6b8215e"
+    },
+    {
+      "name": "author-without-own-file",
+      "files": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"note.posted\",\"lamport\":6,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:oJCgrg6z/xKo1f6m6AykTbL8GRSMHSj/uHoVX9QxnuvjSbkDIu3sMSR3aw2BXF+B0buDDu6XkiU+O/Y2ffKnDg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        }
+      ],
+      "create_dir": true,
+      "author": "mem_ef7253e185e9a23b",
+      "max_lamport": 6,
+      "author_seq": 0,
+      "author_prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "note": "An author that has never written starts at seq 0 with the zero hash."
+    },
+    {
+      "name": "empty-author-file",
+      "files": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": ""
+        }
+      ],
+      "create_dir": true,
+      "author": "mem_550650c922de2f4c",
+      "max_lamport": 0,
+      "author_seq": 0,
+      "author_prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "name": "author-file-without-trailing-newline",
+      "files": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:28FxYN4yHITII2t7sXT9cGt2gBHr4IJq9Ji1xb76nCvwKOzsh9RGkM5scBkND4FNLELxrAnMj+gny9n+uE8ODg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_2\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:deadbeef\",\"room\":\"room_port_journal\",\"seq\":2,\"sig\":\"ed25519:ZEz1bRvt9DLn0wm4V/Yq/AJSSvs5c1fWgOB72IeWQezHM0hBi1SZVJSnzYA3b2JEQt3XVfv6ibqrStwcX9MACg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}"
+        }
+      ],
+      "create_dir": true,
+      "author": "mem_550650c922de2f4c",
+      "max_lamport": 2,
+      "author_seq": 2,
+      "author_prev": "sha256:370cf6bd3b484d8aed1c5743c50c0f09ff6217247a7f207528193cf8696e3357",
+      "note": "The final line is hashed without its terminator either way."
+    }
+  ],
+  "append_cases": [
+    {
+      "name": "append-to-new-journal",
+      "event": {
+        "v": 1,
+        "id": "ev_mem_550650c922de2f4c_2",
+        "room": "room_port_journal",
+        "author": "mem_550650c922de2f4c",
+        "seq": 2,
+        "prev": "sha256:deadbeef",
+        "lamport": 2,
+        "ts": "2026-01-01T01:04:05.000000042Z",
+        "kind": "note.posted",
+        "body": {
+          "text": "port"
+        },
+        "sig": "ed25519:ZEz1bRvt9DLn0wm4V/Yq/AJSSvs5c1fWgOB72IeWQezHM0hBi1SZVJSnzYA3b2JEQt3XVfv6ibqrStwcX9MACg=="
+      },
+      "file": "mem_550650c922de2f4c.jsonl",
+      "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_2\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:deadbeef\",\"room\":\"room_port_journal\",\"seq\":2,\"sig\":\"ed25519:ZEz1bRvt9DLn0wm4V/Yq/AJSSvs5c1fWgOB72IeWQezHM0hBi1SZVJSnzYA3b2JEQt3XVfv6ibqrStwcX9MACg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n",
+      "entries": [
+        "mem_550650c922de2f4c.jsonl"
+      ]
+    },
+    {
+      "name": "append-to-existing-author-file",
+      "existing": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:28FxYN4yHITII2t7sXT9cGt2gBHr4IJq9Ji1xb76nCvwKOzsh9RGkM5scBkND4FNLELxrAnMj+gny9n+uE8ODg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        }
+      ],
+      "event": {
+        "v": 1,
+        "id": "ev_mem_550650c922de2f4c_2",
+        "room": "room_port_journal",
+        "author": "mem_550650c922de2f4c",
+        "seq": 2,
+        "prev": "sha256:deadbeef",
+        "lamport": 2,
+        "ts": "2026-01-01T01:04:05.000000042Z",
+        "kind": "note.posted",
+        "body": {
+          "text": "port"
+        },
+        "sig": "ed25519:ZEz1bRvt9DLn0wm4V/Yq/AJSSvs5c1fWgOB72IeWQezHM0hBi1SZVJSnzYA3b2JEQt3XVfv6ibqrStwcX9MACg=="
+      },
+      "file": "mem_550650c922de2f4c.jsonl",
+      "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:28FxYN4yHITII2t7sXT9cGt2gBHr4IJq9Ji1xb76nCvwKOzsh9RGkM5scBkND4FNLELxrAnMj+gny9n+uE8ODg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_2\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:deadbeef\",\"room\":\"room_port_journal\",\"seq\":2,\"sig\":\"ed25519:ZEz1bRvt9DLn0wm4V/Yq/AJSSvs5c1fWgOB72IeWQezHM0hBi1SZVJSnzYA3b2JEQt3XVfv6ibqrStwcX9MACg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n",
+      "entries": [
+        "mem_550650c922de2f4c.jsonl"
+      ]
+    },
+    {
+      "name": "append-after-file-without-trailing-newline",
+      "existing": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:28FxYN4yHITII2t7sXT9cGt2gBHr4IJq9Ji1xb76nCvwKOzsh9RGkM5scBkND4FNLELxrAnMj+gny9n+uE8ODg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}"
+        }
+      ],
+      "event": {
+        "v": 1,
+        "id": "ev_mem_550650c922de2f4c_2",
+        "room": "room_port_journal",
+        "author": "mem_550650c922de2f4c",
+        "seq": 2,
+        "prev": "sha256:deadbeef",
+        "lamport": 2,
+        "ts": "2026-01-01T01:04:05.000000042Z",
+        "kind": "note.posted",
+        "body": {
+          "text": "port"
+        },
+        "sig": "ed25519:ZEz1bRvt9DLn0wm4V/Yq/AJSSvs5c1fWgOB72IeWQezHM0hBi1SZVJSnzYA3b2JEQt3XVfv6ibqrStwcX9MACg=="
+      },
+      "file": "mem_550650c922de2f4c.jsonl",
+      "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:28FxYN4yHITII2t7sXT9cGt2gBHr4IJq9Ji1xb76nCvwKOzsh9RGkM5scBkND4FNLELxrAnMj+gny9n+uE8ODg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"port\"},\"id\":\"ev_mem_550650c922de2f4c_2\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:deadbeef\",\"room\":\"room_port_journal\",\"seq\":2,\"sig\":\"ed25519:ZEz1bRvt9DLn0wm4V/Yq/AJSSvs5c1fWgOB72IeWQezHM0hBi1SZVJSnzYA3b2JEQt3XVfv6ibqrStwcX9MACg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n",
+      "entries": [
+        "mem_550650c922de2f4c.jsonl"
+      ]
+    }
+  ],
+  "chain_cases": [
+    {
+      "author": "mem_550650c922de2f4c",
+      "seq": 1,
+      "prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "event": {
+        "v": 1,
+        "id": "ev_mem_550650c922de2f4c_1",
+        "room": "room_port_journal",
+        "author": "mem_550650c922de2f4c",
+        "seq": 1,
+        "prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "lamport": 1,
+        "ts": "2026-01-01T01:04:05.000000042Z",
+        "kind": "note.posted",
+        "body": {
+          "text": "port"
+        },
+        "sig": "ed25519:28FxYN4yHITII2t7sXT9cGt2gBHr4IJq9Ji1xb76nCvwKOzsh9RGkM5scBkND4FNLELxrAnMj+gny9n+uE8ODg=="
+      }
+    },
+    {
+      "author": "mem_550650c922de2f4c",
+      "seq": 2,
+      "prev": "sha256:2baef42e03b646baa1c647a02a06444435ebfbcbd6f089001fd6223d524a6a7c",
+      "event": {
+        "v": 1,
+        "id": "ev_mem_550650c922de2f4c_2",
+        "room": "room_port_journal",
+        "author": "mem_550650c922de2f4c",
+        "seq": 2,
+        "prev": "sha256:2baef42e03b646baa1c647a02a06444435ebfbcbd6f089001fd6223d524a6a7c",
+        "lamport": 2,
+        "ts": "2026-01-01T01:04:05.000000042Z",
+        "kind": "note.posted",
+        "body": {
+          "text": "port"
+        },
+        "sig": "ed25519:8IkzbbxY1PhhyNkhsPDrepNKenWYnJ/m+WryN98GGtSrb6oZrCTOBQrFVf/U19TCixxJmcp1t2ZHO1bWBxE1CQ=="
+      }
+    },
+    {
+      "author": "mem_ef7253e185e9a23b",
+      "seq": 1,
+      "prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "event": {
+        "v": 1,
+        "id": "ev_mem_ef7253e185e9a23b_1",
+        "room": "room_port_journal",
+        "author": "mem_ef7253e185e9a23b",
+        "seq": 1,
+        "prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "lamport": 1,
+        "ts": "2026-01-01T01:04:05.000000042Z",
+        "kind": "note.posted",
+        "body": {
+          "text": "port"
+        },
+        "sig": "ed25519:maNmy4ehMi5loKUx8/w8IAKIjvhZXqfRYsMnLFhW0ea8wXTcrDPqs7Txz7KK7BfJVYv33UjT9/TY1C56f9c9Bg=="
+      }
+    },
+    {
+      "author": "mem_550650c922de2f4c",
+      "seq": 3,
+      "prev": "sha256:d0ea54cb71d7d27deeaef35fd9a173c89b0c9abccc467d7b6d3abfbaa515523b",
+      "event": {
+        "v": 1,
+        "id": "ev_mem_550650c922de2f4c_3",
+        "room": "room_port_journal",
+        "author": "mem_550650c922de2f4c",
+        "seq": 3,
+        "prev": "sha256:d0ea54cb71d7d27deeaef35fd9a173c89b0c9abccc467d7b6d3abfbaa515523b",
+        "lamport": 3,
+        "ts": "2026-01-01T01:04:05.000000042Z",
+        "kind": "note.posted",
+        "body": {
+          "text": "port"
+        },
+        "sig": "ed25519:7zsOKkk8EwqxCJxjpyYVIlKJI1sYdJfa1C19ClXKX5nu4gM6IKHrJ4as7gRnkgWUcfPm2o2P5BHh+bQ/bdRUDQ=="
+      }
+    }
+  ]
+}

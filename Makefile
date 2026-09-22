@@ -188,6 +188,16 @@ vault-retention-differential:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retention -run TestPortRetentionContract
 	$(CARGO) test -p symdesk-vault --test retention_contracts --locked
 
+room-journal-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/room -run TestPortRoomJournalContract
+
+# SymRoom journal append and read-back (ROOM-002): the Go oracle records the
+# per-author chain, the Lamport ceiling and the appended bytes; the Rust replay
+# reproduces them. The fixture is only regenerated through the target above.
+room-journal-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/room -run 'TestPortRoomJournal(Contract|Modes)'
+	$(CARGO) test -p symroom-core --locked --test journal_contracts
+
 symroom-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/room -run TestPortRoomIdentityEventContract
 

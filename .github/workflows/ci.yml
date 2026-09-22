@@ -272,6 +272,10 @@ jobs:
         shell: bash
         run: make symroom-differential
 
+      - name: Run native room journal differential
+        shell: bash
+        run: make room-journal-differential
+
       - name: Run native history differential
         shell: bash
         run: |

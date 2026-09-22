@@ -268,6 +268,13 @@ jobs:
         shell: bash
         run: make config-save-differential
 
+      # The byte fixture and its modes contract are portable: Go skips the
+      # 0700/0600 assertions on Windows and the Rust replay gates them with
+      # #[cfg(unix)], so all three platforms can run the same target.
+      - name: Run native sidecar metadata differential
+        shell: bash
+        run: make sidecar-metadata-differential
+
       - name: Run native room identity differential
         shell: bash
         run: make symroom-differential

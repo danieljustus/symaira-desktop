@@ -29,7 +29,8 @@
      "mode": 420
     }
    ],
-   "description": "No proposal directory yet; Go reports an empty proposal set and exits 0. Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+   "description": "No proposal directory yet; Go reports an empty proposal set and exits 0. Full filesystem comparison stays off because the sidecar database and the metadata timestamp differ between two processes by construction; the sidecar layout is compared instead, which now requires both `vaults/<hash>/sidecar.db` and `vaults/<hash>/metadata.json` (issue #1006).",
+   "compare_sidecar_layout": true
   },
   {
    "id": "retention-list-pending",
@@ -60,7 +61,8 @@
      "mode": 420
     }
    ],
-   "description": "Pending proposal is listed in Go struct field order (run_id, rule_name, created, items, status). Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+   "description": "Pending proposal is listed in Go struct field order (run_id, rule_name, created, items, status). Full filesystem comparison stays off because the sidecar database and the metadata timestamp differ between two processes by construction; the sidecar layout is compared instead, which now requires both `vaults/<hash>/sidecar.db` and `vaults/<hash>/metadata.json` (issue #1006).",
+   "compare_sidecar_layout": true
   },
   {
    "id": "retention-list-status-filter",
@@ -101,7 +103,8 @@
      "mode": 420
     }
    ],
-   "description": "Only pending/failed/partial proposals are listed, in Go's sorted directory order (ret-b, ret-c). Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+   "description": "Only pending/failed/partial proposals are listed, in Go's sorted directory order (ret-b, ret-c). Full filesystem comparison stays off because the sidecar database and the metadata timestamp differ between two processes by construction; the sidecar layout is compared instead, which now requires both `vaults/<hash>/sidecar.db` and `vaults/<hash>/metadata.json` (issue #1006).",
+   "compare_sidecar_layout": true
   },
   {
    "id": "retention-list-skips-undecodable",
@@ -137,7 +140,8 @@
      "mode": 420
     }
    ],
-   "description": "An undecodable proposal file is skipped instead of failing the command. Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+   "description": "An undecodable proposal file is skipped instead of failing the command. Full filesystem comparison stays off because the sidecar database and the metadata timestamp differ between two processes by construction; the sidecar layout is compared instead, which now requires both `vaults/<hash>/sidecar.db` and `vaults/<hash>/metadata.json` (issue #1006).",
+   "compare_sidecar_layout": true
   },
   {
    "id": "retention-list-skips-non-proposal-entries",
@@ -178,7 +182,8 @@
      "mode": 420
     }
    ],
-   "description": "Subdirectories and non-.json files in the proposal directory are ignored. Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+   "description": "Subdirectories and non-.json files in the proposal directory are ignored. Full filesystem comparison stays off because the sidecar database and the metadata timestamp differ between two processes by construction; the sidecar layout is compared instead, which now requires both `vaults/<hash>/sidecar.db` and `vaults/<hash>/metadata.json` (issue #1006).",
+   "compare_sidecar_layout": true
   },
   {
    "id": "retention-list-text",
@@ -208,7 +213,8 @@
      "mode": 420
     }
    ],
-   "description": "Human-readable branch uses Go's format strings and the local wall clock of the proposal. Filesystem comparison is off for this stage: Go's sidecar open also writes vaults/<hash>/metadata.json and keeps the WAL/SHM files, which the Rust index layer does not port yet (also visible for `ls`); the case therefore pins stdout, stderr and the exit code."
+   "description": "Human-readable branch uses Go's format strings and the local wall clock of the proposal. Full filesystem comparison stays off because the sidecar database and the metadata timestamp differ between two processes by construction; the sidecar layout is compared instead, which now requires both `vaults/<hash>/sidecar.db` and `vaults/<hash>/metadata.json` (issue #1006).",
+   "compare_sidecar_layout": true
   }
  ]
 }

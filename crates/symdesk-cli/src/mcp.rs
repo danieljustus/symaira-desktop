@@ -9,7 +9,7 @@ use std::{
 
 use serde::Serialize;
 use serde_json::{Value, json};
-use symdesk_index::{ListedDocument, SearchHit, Sidecar, path_for_vault};
+use symdesk_index::{ListedDocument, SearchHit, Sidecar, open_for_vault};
 
 const PROTOCOL_VERSION: &str = "2024-11-05";
 const MAX_MESSAGE_BYTES: usize = 1 << 20;
@@ -350,8 +350,7 @@ fn object_arguments(arguments: Value) -> Result<serde_json::Map<String, Value>, 
 
 fn open_sidecar(config: &ServerConfig) -> Result<(PathBuf, Sidecar), String> {
     let vault = super::resolve_vault(config.vault.as_deref())?;
-    let sidecar_path = path_for_vault(&vault).map_err(|error| error.to_string())?;
-    let sidecar = Sidecar::open(&sidecar_path).map_err(|error| error.to_string())?;
+    let sidecar = open_for_vault(&vault).map_err(|error| error.to_string())?;
     Ok((vault, sidecar))
 }
 

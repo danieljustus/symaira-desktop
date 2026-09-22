@@ -21,7 +21,7 @@ use symdesk_vault::retention::{
     load_proposal, proposal_dir,
 };
 
-use symdesk_index::{Sidecar, path_for_vault};
+use symdesk_index::open_for_vault;
 
 use crate::{emit_error, write_stdout};
 
@@ -44,18 +44,19 @@ pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCod
         Err(error) => return emit_error(error, output_json),
     };
 
-    // Go's `initServiceDeps` opens (and therefore creates) the vault's sidecar
-    // index before the command runs, and closes it afterwards. The handle is
-    // unused here, but the filesystem side effect is part of the contract the
-    // differential compares.
-    let sidecar_path = match path_for_vault(&vault_root) {
-        Ok(path) => path,
-        Err(error) => return emit_error(error.to_string(), output_json),
-    };
-    let sidecar = match Sidecar::open(&sidecar_path) {
+    // Go's `newRetentionListCmd` calls `initServiceDeps` as `vRoot, _, err :=`,
+    // discarding the `*sidecar.DB` and never closing it, so SQLite still holds
+    // `sidecar.db-wal` and `sidecar.db-shm` when the process exits. Dropping the
+    // handle here would checkpoint the WAL into `sidecar.db` and unlink both
+    // files — a side effect `retention list` never produces in Go — so the
+    // connection is deliberately kept open until the process ends. The handle is
+    // otherwise unused; opening it is what creates the per-vault index and the
+    // `metadata.json` record the differential compares.
+    let sidecar = match open_for_vault(&vault_root) {
         Ok(sidecar) => sidecar,
         Err(error) => return emit_error(error.to_string(), output_json),
     };
+    std::mem::forget(sidecar);
 
     let dir = proposal_dir(&vault_root);
     let mut entries = match fs::read_dir(&dir) {
@@ -102,8 +103,7 @@ pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCod
         proposals.push(proposal);
     }
 
-    // Go closes the handle here; a close failure is only a warning there.
-    drop(sidecar);
+    // Go never closes this handle; see the `std::mem::forget` above.
 
     if output_json {
         // Go marshals the `[]retention.Proposal` slice, so the struct field

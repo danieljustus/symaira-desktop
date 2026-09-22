@@ -160,6 +160,17 @@ fn reproduces_the_recorded_hash_chain() {
     fs::remove_dir_all(&room).ok();
 }
 
+/// The Go oracle records `0700` for the journal directory and `0600` for the
+/// per-author `.jsonl`. The test below compares those strings against the real
+/// filesystem, which Windows cannot observe — reading them here keeps the
+/// contract exercised (and the struct fields used) on every platform.
+#[test]
+fn fixture_records_go_private_modes() {
+    let fixture = fixture();
+    assert_eq!(fixture.directory_mode, "0700", "journal directory mode");
+    assert_eq!(fixture.file_mode, "0600", "journal file mode");
+}
+
 #[cfg(unix)]
 #[test]
 fn creates_the_recorded_posix_modes() {

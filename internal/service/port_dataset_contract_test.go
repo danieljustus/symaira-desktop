@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -93,6 +94,14 @@ type portDatasetFixture struct {
 }
 
 func TestPortDatasetSyncContract(t *testing.T) {
+	// Every recorded handle/raw carries a POSIX mode, and the only way to obtain
+	// one is os.Stat().Perm(), which Windows does not report as 0600/0644. The
+	// sidecar metadata oracle skips for the same reason; the modes themselves are
+	// still verified by the native macOS/Linux runs, and the Rust replay compares
+	// the projection only, which carries no mode.
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX file modes are part of this oracle's records and are not observable on Windows")
+	}
 	got := buildPortDatasetFixture(t)
 	encoded, err := json.MarshalIndent(got, "", "  ")
 	if err != nil {
@@ -101,10 +110,10 @@ func TestPortDatasetSyncContract(t *testing.T) {
 	encoded = append(encoded, '\n')
 
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(portDatasetFixturePath), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(portDatasetFixturePath), 0o700); err != nil {
 			t.Fatalf("create fixture directory: %v", err)
 		}
-		if err := os.WriteFile(portDatasetFixturePath, encoded, 0o644); err != nil {
+		if err := os.WriteFile(portDatasetFixturePath, encoded, 0o600); err != nil {
 			t.Fatalf("write dataset fixture: %v", err)
 		}
 		t.Logf("wrote %s (%d bytes)", portDatasetFixturePath, len(encoded))
@@ -311,7 +320,7 @@ func runPortDatasetCase(t *testing.T, input portDatasetCase) portDatasetCase {
 	if err != nil {
 		t.Fatalf("case %q: handle path: %v", input.Name, err)
 	}
-	handleBytes, err := os.ReadFile(handleAbs)
+	handleBytes, err := os.ReadFile(handleAbs) //nolint:gosec // path comes from vault.SecurePath over the fixture's recorded handle path
 	if err != nil {
 		t.Fatalf("case %q: read handle: %v", input.Name, err)
 	}
@@ -319,7 +328,7 @@ func runPortDatasetCase(t *testing.T, input portDatasetCase) portDatasetCase {
 	if err != nil {
 		t.Fatalf("case %q: raw path: %v", input.Name, err)
 	}
-	rawBytes, err := os.ReadFile(rawAbs)
+	rawBytes, err := os.ReadFile(rawAbs) //nolint:gosec // path comes from vault.SecurePath over the fixture's recorded raw path
 	if err != nil {
 		t.Fatalf("case %q: read raw: %v", input.Name, err)
 	}

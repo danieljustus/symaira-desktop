@@ -186,7 +186,15 @@ fn dataset_retention_state(
 }
 
 fn read_regular(root: &Dir, rel_path: &str) -> Result<Vec<u8>, RetentionStateError> {
-    let mut file = root.open(Path::new(rel_path))?;
+    let mut options = cap_std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use cap_std::fs::OpenOptionsExt;
+        // Match Go's rooted reader: opening a FIFO must not block before fstat.
+        options.custom_flags(libc::O_NONBLOCK);
+    }
+    let mut file = root.open_with(Path::new(rel_path), &options)?;
     let metadata = file.metadata()?;
     if !metadata.is_file() {
         return Err(RetentionStateError::NotRegular(rel_path.to_owned()));

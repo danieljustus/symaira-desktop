@@ -11,6 +11,7 @@ use serde::ser::{SerializeMap, Serializer as _};
 use serde_json::value::RawValue;
 
 use crate::identity::{self, Identity};
+use crate::members::replace_unpaired_surrogates;
 
 /// Go: `event.CurrentVersion`.
 pub const CURRENT_VERSION: i64 = 1;
@@ -141,23 +142,29 @@ impl<'de> serde::Deserialize<'de> for GoEvent {
                     }
                     match folded.as_str() {
                         "v" => set_non_null!(event.v, i64),
-                        "id" => set_non_null!(event.id, String),
-                        "room" => set_non_null!(event.room, String),
-                        "author" => set_non_null!(event.author, String),
                         "seq" => set_non_null!(event.seq, u64),
-                        "prev" => set_non_null!(event.prev, String),
                         "lamport" => set_non_null!(event.lamport, u64),
-                        "ts" => set_non_null!(event.ts, String),
-                        "kind" => set_non_null!(event.kind, String),
                         "body" => event.body = raw,
-                        "sig" => {
-                            if let Some(value) = serde_json::from_str::<Option<String>>(raw.get())
+                        _ => {
+                            // Only decode recognized outer strings lossily, as
+                            // Go does. Never rewrite the line or signed raw body.
+                            let decoded = replace_unpaired_surrogates(raw.get());
+                            let Some(value) = serde_json::from_str::<Option<String>>(&decoded)
                                 .map_err(M::Error::custom)?
-                            {
-                                event.sig = Some(value);
+                            else {
+                                continue; // Go leaves a prior string intact on null.
+                            };
+                            match folded.as_str() {
+                                "id" => event.id = value,
+                                "room" => event.room = value,
+                                "author" => event.author = value,
+                                "prev" => event.prev = value,
+                                "ts" => event.ts = value,
+                                "kind" => event.kind = value,
+                                "sig" => event.sig = Some(value),
+                                _ => unreachable!(),
                             }
                         }
-                        _ => {}
                     }
                 }
                 Ok(GoEvent(event))

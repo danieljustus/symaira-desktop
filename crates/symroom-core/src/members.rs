@@ -192,7 +192,7 @@ fn parse_body(body: &RawValue, kind: &str) -> Result<MemberBody, String> {
     Ok(parsed)
 }
 
-fn replace_unpaired_surrogates(raw: &str) -> Cow<'_, str> {
+pub(crate) fn replace_unpaired_surrogates(raw: &str) -> Cow<'_, str> {
     let bytes = raw.as_bytes();
     let mut positions = Vec::new();
     let mut in_string = false;

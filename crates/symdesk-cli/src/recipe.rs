@@ -8,7 +8,7 @@ use serde::Serialize;
 
 use crate::{emit_error, write_go_json, write_stdout};
 
-#[derive(Serialize, serde::Deserialize)]
+#[derive(Default, Serialize, serde::Deserialize)]
 #[serde(default)]
 struct Recipe {
     version: i64,
@@ -16,18 +16,6 @@ struct Recipe {
     triggers: Vec<String>,
     tools: Vec<String>,
     write_cap: i64,
-}
-
-impl Default for Recipe {
-    fn default() -> Self {
-        Self {
-            version: 0,
-            name: String::new(),
-            triggers: Vec::new(),
-            tools: Vec::new(),
-            write_cap: 0,
-        }
-    }
 }
 
 pub fn cli() -> Command {

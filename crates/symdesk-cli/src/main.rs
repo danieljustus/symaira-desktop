@@ -4,6 +4,7 @@ mod dataset;
 mod http;
 mod index_cli;
 mod mcp;
+mod recipe;
 mod retention;
 
 use std::{
@@ -123,6 +124,7 @@ fn main() -> ExitCode {
             output_json,
             matches.get_flag("json"),
         ),
+        Some(("recipe", command)) => recipe::run(command, output_json),
         Some(("retention", command)) => {
             let vault_opt = matches.get_one::<String>("vault").cloned();
             match command.subcommand() {
@@ -260,6 +262,7 @@ fn cli() -> Command {
         .subcommand(retention::cli())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
+        .subcommand(recipe::cli())
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))

@@ -29,7 +29,7 @@
 .PHONY: room-init-core-fixtures-generate room-init-core-differential
 .PHONY: room-init-cli-fixtures-generate room-init-cli-differential
 .PHONY: room-watch-cli-fixtures-generate room-watch-cli-differential
-.PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential
+.PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential recipe-validate-fixtures-generate recipe-validate-differential
 .PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential
 
@@ -739,3 +739,10 @@ rust-gates: rust-check rust-lint rust-test rust-features rust-coverage rust-secu
 clean:
 	go clean -cache -testcache
 	rm -rf vendor/
+
+recipe-validate-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
+
+recipe-validate-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symdesk -run '^TestPortRecipeValidateCLIContract$$'
+	$(CARGO) test -p symdesk-cli --locked --test recipe_validate

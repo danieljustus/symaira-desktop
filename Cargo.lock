@@ -1286,6 +1286,7 @@ dependencies = [
 name = "symdesk-cli"
 version = "0.0.0"
 dependencies = [
+ "noyalib",
  "cap-std",
  "clap",
  "libc",

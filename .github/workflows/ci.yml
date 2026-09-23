@@ -334,6 +334,10 @@ jobs:
         shell: bash
         run: make room-artifact-identity-cli-differential
 
+      - name: Run native recipe validate CLI differential
+        shell: bash
+        run: make recipe-validate-differential
+
       - name: Run native room watch stream differential
         shell: bash
         run: make room-watch-stream-differential

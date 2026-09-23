@@ -129,6 +129,7 @@ func generatorSourcePaths() []string {
 		"internal/service/port_resolution_test.go",
 		"internal/service/port_dataset_contract_test.go",
 		"internal/service/port_retention_state_contract_test.go",
+		"internal/room/run/port_projection_contract_test.go",
 		"internal/service/port_noteops_contract_test.go",
 		"internal/history/port_lifecycle_contract_test.go",
 		"internal/retention/port_retention_contract_test.go",

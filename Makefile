@@ -490,6 +490,7 @@ rust-version-contract:
 
 rust-fuzz-smoke:
 	$(CARGO) +$(RUST_NIGHTLY) fuzz run frontmatter -- -runs=$(FUZZ_RUNS) -max_len=65536
+	$(CARGO) +$(RUST_NIGHTLY) fuzz run room_event -- -runs=$(FUZZ_RUNS) -max_len=65536
 
 rust-gates: rust-check rust-lint rust-test rust-features rust-coverage rust-security rust-version-contract
 

@@ -200,7 +200,7 @@ jobs:
           VALUE_RUNTIME_ROOT: ${{ runner.temp }}/symaira-desktop-value001-ci
         run: make rust-gates value-001-evidence-tests
 
-      - name: Fuzz frontmatter parser smoke corpus
+      - name: Fuzz frontmatter and room event smoke corpora
         run: make rust-fuzz-smoke
 
   rust-native:

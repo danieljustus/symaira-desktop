@@ -16,6 +16,7 @@
 //! with a live differential instead of vectors.
 
 pub mod artifact;
+pub mod desk_watch;
 pub mod event;
 pub mod identity;
 pub mod index;

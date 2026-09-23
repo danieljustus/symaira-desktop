@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "source_hash": "68b507afe8d50dead25813b9f49b17342f080b14a5a123442717df52d3ba9d10",
+  "cases": [
+    {
+      "name": "mixed-lines",
+      "input": "\n{\"event\":\"file_changed\",\"path\":\"docs/a.md\"}\nnot-json\n{\"event\":\"file_removed\",\"path\":\"\"}\n{\"event\":\"file_added\",\"path\":\"ß.md\",\"extra\":1}\r\n",
+      "events": [
+        {
+          "event": "file_changed",
+          "path": "docs/a.md"
+        },
+        {
+          "event": "file_added",
+          "path": "ß.md"
+        }
+      ]
+    },
+    {
+      "name": "scanner-overflow-keeps-prefix",
+      "input": "{\"event\":\"first\",\"path\":\"a\"}\n",
+      "repeat_bytes": 65536,
+      "events": [
+        {
+          "event": "first",
+          "path": "a"
+        }
+      ],
+      "error": "bufio.Scanner: token too long"
+    },
+    {
+      "name": "handler-error-stops",
+      "input": "{\"event\":\"first\",\"path\":\"a\"}\n{\"event\":\"second\",\"path\":\"b\"}\n",
+      "stop_after": 1,
+      "events": [
+        {
+          "event": "first",
+          "path": "a"
+        }
+      ],
+      "error": "handler stopped"
+    },
+    {
+      "name": "cancel-before-first",
+      "input": "{\"event\":\"first\",\"path\":\"a\"}\n",
+      "cancel": true,
+      "events": [],
+      "error": "context canceled"
+    }
+  ]
+}

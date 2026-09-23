@@ -467,7 +467,9 @@ pub fn verify_chain(room_dir: &Path, author: &str) -> Result<(), VerifyChainErro
 
 // Go bufio.Scanner's default buffer is 64 KiB, including the delimiter.
 // Bound each physical line before allocating it.
-fn read_scanner_line(reader: &mut impl BufRead) -> Result<Option<Vec<u8>>, VerifyChainError> {
+pub(crate) fn read_scanner_line(
+    reader: &mut impl BufRead,
+) -> Result<Option<Vec<u8>>, VerifyChainError> {
     const MAX_TOKEN_BUFFER: usize = 64 * 1024;
     let mut line = Vec::new();
     loop {

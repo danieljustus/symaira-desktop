@@ -318,6 +318,10 @@ jobs:
         shell: bash
         run: make room-artifact-cli-differential
 
+      - name: Run native room watch stream differential
+        shell: bash
+        run: make room-watch-stream-differential
+
       - name: Run native index backup differential
         shell: bash
         run: make index-backup-differential

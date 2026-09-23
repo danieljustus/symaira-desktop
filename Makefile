@@ -23,6 +23,7 @@
 .PHONY: index-restore-fixtures-generate index-restore-differential
 .PHONY: index-relocate-fixtures-generate index-relocate-differential
 .PHONY: room-artifact-cli-fixtures-generate room-artifact-cli-differential
+.PHONY: room-watch-stream-fixtures-generate room-watch-stream-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -352,6 +353,13 @@ room-artifact-cli-fixtures-generate:
 room-artifact-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortArtifactCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test artifact_commands
+
+room-watch-stream-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/desk -run '^TestPortWatchStreamContract$$'
+
+room-watch-stream-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/desk -run '^TestPortWatchStreamContract$$'
+	$(CARGO) test -p symroom-core --locked --test watch_stream_contracts
 
 index-backup-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'

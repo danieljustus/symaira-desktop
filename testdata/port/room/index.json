@@ -1,0 +1,431 @@
+{
+  "schema_version": 1,
+  "source_hash": "fae1d593bd8617f89b2bb945ea243a6c70ffe7e5aade497a89e8b587f200ab89",
+  "rebuild": {
+    "tables": [
+      "decisions",
+      "events",
+      "members",
+      "notes"
+    ],
+    "columns": [
+      {
+        "table": "decisions",
+        "name": "event_id",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 1
+      },
+      {
+        "table": "decisions",
+        "name": "author",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "decisions",
+        "name": "ts",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "decisions",
+        "name": "text",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "decisions",
+        "name": "refs",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "events",
+        "name": "id",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 1
+      },
+      {
+        "table": "events",
+        "name": "room",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "events",
+        "name": "author",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "events",
+        "name": "seq",
+        "type": "INTEGER",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "events",
+        "name": "lamport",
+        "type": "INTEGER",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "events",
+        "name": "ts",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "events",
+        "name": "kind",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "events",
+        "name": "body",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "members",
+        "name": "id",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 1
+      },
+      {
+        "table": "members",
+        "name": "name",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "members",
+        "name": "public_key",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "members",
+        "name": "role",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "members",
+        "name": "kind",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "notes",
+        "name": "event_id",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 1
+      },
+      {
+        "table": "notes",
+        "name": "author",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "notes",
+        "name": "ts",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      },
+      {
+        "table": "notes",
+        "name": "text",
+        "type": "TEXT",
+        "not_null": 0,
+        "primary_key": 0
+      }
+    ],
+    "events": [
+      {
+        "id": "ev_root",
+        "room": "rm_index",
+        "author": "mem_owner",
+        "seq": 1,
+        "lamport": 1,
+        "ts": "2026-09-23T10:00:00.000Z",
+        "kind": "room.created",
+        "body": "{\"name\":\"Oracle room\",\"public_key\":\"4141414141414141414141414141414141414141414141414141414141414141\"}"
+      },
+      {
+        "id": "ev_member",
+        "room": "rm_index",
+        "author": "mem_owner",
+        "seq": 2,
+        "lamport": 2,
+        "ts": "2026-09-23T10:00:01.000Z",
+        "kind": "member.added",
+        "body": "{\"id\":\"mem_guest\",\"name\":\"Guest\",\"public_key\":\"4242424242424242424242424242424242424242424242424242424242424242\",\"role\":\"agent\",\"kind\":\"agent\"}"
+      },
+      {
+        "id": "ev_note_1",
+        "room": "rm_index",
+        "author": "mem_owner",
+        "seq": 3,
+        "lamport": 3,
+        "ts": "2026-09-23T10:00:02.000Z",
+        "kind": "note.posted",
+        "body": "{\"text\":\"café note\"}"
+      },
+      {
+        "id": "ev_decision",
+        "room": "rm_index",
+        "author": "mem_owner",
+        "seq": 4,
+        "lamport": 4,
+        "ts": "2026-09-23T10:00:03.000Z",
+        "kind": "decision.recorded",
+        "body": "{\"text\":\"recorded choice\",\"refs\":[\"ev_note_1\",\"doc_2\"]}"
+      },
+      {
+        "id": "ev_note_2",
+        "room": "rm_index",
+        "author": "mem_owner",
+        "seq": 5,
+        "lamport": 5,
+        "ts": "2026-09-23T10:00:04.000Z",
+        "kind": "note.posted",
+        "body": "{\"text\":\"second note\"}"
+      }
+    ],
+    "members": [
+      {
+        "id": "mem_guest",
+        "name": "Guest",
+        "public_key": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+        "role": "agent",
+        "kind": "agent"
+      },
+      {
+        "id": "mem_owner",
+        "name": "Oracle room",
+        "public_key": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "role": "owner",
+        "kind": "human"
+      }
+    ],
+    "notes": [
+      {
+        "event_id": "ev_note_1",
+        "author": "mem_owner",
+        "ts": "2026-09-23T10:00:02.000Z",
+        "text": "café note"
+      },
+      {
+        "event_id": "ev_note_2",
+        "author": "mem_owner",
+        "ts": "2026-09-23T10:00:04.000Z",
+        "text": "second note"
+      }
+    ],
+    "decisions": [
+      {
+        "event_id": "ev_decision",
+        "author": "mem_owner",
+        "ts": "2026-09-23T10:00:03.000Z",
+        "text": "recorded choice",
+        "refs": "[\"ev_note_1\",\"doc_2\"]"
+      }
+    ]
+  },
+  "corruption": {
+    "error_class": "malformed_event",
+    "error_prefix": "merge all events: read segment broken: unmarshal line:",
+    "snapshot": {
+      "tables": [
+        "decisions",
+        "events",
+        "members",
+        "notes"
+      ],
+      "columns": [
+        {
+          "table": "decisions",
+          "name": "event_id",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 1
+        },
+        {
+          "table": "decisions",
+          "name": "author",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "decisions",
+          "name": "ts",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "decisions",
+          "name": "text",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "decisions",
+          "name": "refs",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "events",
+          "name": "id",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 1
+        },
+        {
+          "table": "events",
+          "name": "room",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "events",
+          "name": "author",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "events",
+          "name": "seq",
+          "type": "INTEGER",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "events",
+          "name": "lamport",
+          "type": "INTEGER",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "events",
+          "name": "ts",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "events",
+          "name": "kind",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "events",
+          "name": "body",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "members",
+          "name": "id",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 1
+        },
+        {
+          "table": "members",
+          "name": "name",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "members",
+          "name": "public_key",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "members",
+          "name": "role",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "members",
+          "name": "kind",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "notes",
+          "name": "event_id",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 1
+        },
+        {
+          "table": "notes",
+          "name": "author",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "notes",
+          "name": "ts",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        },
+        {
+          "table": "notes",
+          "name": "text",
+          "type": "TEXT",
+          "not_null": 0,
+          "primary_key": 0
+        }
+      ],
+      "events": [],
+      "members": [],
+      "notes": [],
+      "decisions": []
+    }
+  }
+}

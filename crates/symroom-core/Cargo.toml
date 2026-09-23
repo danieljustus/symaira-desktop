@@ -16,3 +16,5 @@ getrandom = "=0.4.3"
 sha2.workspace = true
 hex.workspace = true
 thiserror.workspace = true
+rusqlite.workspace = true
+symaira-core-sqlite.workspace = true

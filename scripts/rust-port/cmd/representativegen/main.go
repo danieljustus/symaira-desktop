@@ -52,11 +52,12 @@ type httpSuite struct {
 }
 
 type httpCase struct {
-	ID      string            `json:"id"`
-	Method  string            `json:"method"`
-	Path    string            `json:"path"`
-	Auth    string            `json:"auth,omitempty"`
-	Headers map[string]string `json:"headers,omitempty"`
+	ID             string            `json:"id"`
+	Method         string            `json:"method"`
+	Path           string            `json:"path"`
+	Auth           string            `json:"auth,omitempty"`
+	Headers        map[string]string `json:"headers,omitempty"`
+	EmptyNotebooks bool              `json:"empty_notebooks,omitempty"`
 }
 
 func main() {

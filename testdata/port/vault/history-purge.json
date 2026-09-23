@@ -1,0 +1,370 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "d78e40d4083eefbda54aee53b771d5da6136c905",
+    "release": "post-v0.12.2-security-880"
+  },
+  "source_hashes": {
+    "internal/history/checkpoint.go": "4c48610083a143c0a1f135413f514a838326d882a346ae1bc13b9538fce0ef39",
+    "internal/history/history.go": "4b0caf990744a9469f8f16f2de6bddfee0525106c996c5907ea11f92db5740c2"
+  },
+  "cases": [
+    {
+      "id": "purge-success-filters-checkpoints-and-gc",
+      "description": "purge removes selected manifests and checkpoint references, then collects target-only and orphan blobs while preserving shared history",
+      "operation": "purge_paths",
+      "files": [
+        {
+          "path": "target.md",
+          "content": "target-only"
+        },
+        {
+          "path": "keep.md",
+          "content": "shared"
+        },
+        {
+          "path": "shared.md",
+          "content": "shared"
+        },
+        {
+          "path": "target-skip",
+          "content": "blocks child"
+        }
+      ],
+      "paths": [
+        "target.md",
+        "target-new.md",
+        "target-skip/child.md",
+        "target-only-new.md"
+      ],
+      "result": "target=0 keep=1 checkpoints=1 objects=a4d26868017c0ccffe2efe50944ef4211834660cca834c6e9f86dec6a88246fa",
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/mixed.json",
+          "mode": 420,
+          "size": 314,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"mixed\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [\n    {\n      \"rel_path\": \"keep.md\",\n      \"entry\": {\n        \"id\": \"a4d26868017c0ccffe2efe50944ef4211834660cca834c6e9f86dec6a88246fa\",\n        \"timestamp\": \"{{timestamp}}\",\n        \"size\": 6\n      }\n    }\n  ],\n  \"new_files\": [],\n  \"skipped\": []\n}"
+        },
+        {
+          "path": ".symdesk/history/manifest/keep.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"a4d26868017c0ccffe2efe50944ef4211834660cca834c6e9f86dec6a88246fa\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": ".symdesk/history/manifest/shared.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"a4d26868017c0ccffe2efe50944ef4211834660cca834c6e9f86dec6a88246fa\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": "keep.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "shared"
+        },
+        {
+          "path": "shared.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "shared"
+        },
+        {
+          "path": "target-skip",
+          "mode": 420,
+          "size": 12,
+          "sha256": "",
+          "content": "blocks child"
+        },
+        {
+          "path": "target.md",
+          "mode": 420,
+          "size": 11,
+          "sha256": "",
+          "content": "target-only"
+        }
+      ],
+      "objects": [
+        {
+          "name": "a4d26868017c0ccffe2efe50944ef4211834660cca834c6e9f86dec6a88246fa",
+          "size": 6,
+          "sha256": "a4d26868017c0ccffe2efe50944ef4211834660cca834c6e9f86dec6a88246fa"
+        }
+      ]
+    },
+    {
+      "id": "preflight-valid-inventory-is-read-only",
+      "description": "preflight validates references without removing manifests, checkpoints or objects",
+      "operation": "preflight_purge_paths",
+      "files": [
+        {
+          "path": "target.md",
+          "content": "target"
+        },
+        {
+          "path": "keep.md",
+          "content": "keep"
+        }
+      ],
+      "paths": [
+        "target.md"
+      ],
+      "result": "target=1 keep=1 checkpoints=1 objects=34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c,6ca7ea2feefc88ecb5ed6356ed963f47dc9137f82526fdd25d618ea626d0803f",
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/task.json",
+          "mode": 420,
+          "size": 315,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"task\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [\n    {\n      \"rel_path\": \"target.md\",\n      \"entry\": {\n        \"id\": \"34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c\",\n        \"timestamp\": \"{{timestamp}}\",\n        \"size\": 6\n      }\n    }\n  ],\n  \"new_files\": [],\n  \"skipped\": []\n}"
+        },
+        {
+          "path": ".symdesk/history/manifest/keep.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"6ca7ea2feefc88ecb5ed6356ed963f47dc9137f82526fdd25d618ea626d0803f\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 4\n  }\n]"
+        },
+        {
+          "path": ".symdesk/history/manifest/target.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": "keep.md",
+          "mode": 420,
+          "size": 4,
+          "sha256": "",
+          "content": "keep"
+        },
+        {
+          "path": "target.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "target"
+        }
+      ],
+      "objects": [
+        {
+          "name": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c",
+          "size": 6,
+          "sha256": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c"
+        },
+        {
+          "name": "6ca7ea2feefc88ecb5ed6356ed963f47dc9137f82526fdd25d618ea626d0803f",
+          "size": 4,
+          "sha256": "6ca7ea2feefc88ecb5ed6356ed963f47dc9137f82526fdd25d618ea626d0803f"
+        }
+      ]
+    },
+    {
+      "id": "purge-corrupt-survivor-preserves-target",
+      "description": "a null survivor manifest fails closed before the requested target manifest or blobs are changed",
+      "operation": "purge_paths",
+      "files": [
+        {
+          "path": "target.md",
+          "content": "target"
+        },
+        {
+          "path": "keep.md",
+          "content": "keep"
+        }
+      ],
+      "paths": [
+        "target.md"
+      ],
+      "error": "invalid history manifest \".symdesk/history/manifest/keep.md.json\": manifest must be a non-null array",
+      "error_class": "other",
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/task.json",
+          "mode": 420,
+          "size": 315,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"task\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [\n    {\n      \"rel_path\": \"target.md\",\n      \"entry\": {\n        \"id\": \"34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c\",\n        \"timestamp\": \"{{timestamp}}\",\n        \"size\": 6\n      }\n    }\n  ],\n  \"new_files\": [],\n  \"skipped\": []\n}"
+        },
+        {
+          "path": ".symdesk/history/manifest/keep.md.json",
+          "mode": 420,
+          "size": 4,
+          "sha256": "",
+          "content": "null"
+        },
+        {
+          "path": ".symdesk/history/manifest/target.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": "keep.md",
+          "mode": 420,
+          "size": 4,
+          "sha256": "",
+          "content": "keep"
+        },
+        {
+          "path": "target.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "target"
+        }
+      ],
+      "objects": [
+        {
+          "name": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c",
+          "size": 6,
+          "sha256": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c"
+        },
+        {
+          "name": "6ca7ea2feefc88ecb5ed6356ed963f47dc9137f82526fdd25d618ea626d0803f",
+          "size": 4,
+          "sha256": "6ca7ea2feefc88ecb5ed6356ed963f47dc9137f82526fdd25d618ea626d0803f"
+        }
+      ]
+    },
+    {
+      "id": "purge-corrupt-checkpoint-preserves-target",
+      "description": "a null survivor checkpoint fails closed before the requested target manifest or blobs are changed",
+      "operation": "purge_paths",
+      "files": [
+        {
+          "path": "target.md",
+          "content": "target"
+        },
+        {
+          "path": "keep.md",
+          "content": "keep"
+        }
+      ],
+      "paths": [
+        "target.md"
+      ],
+      "error": "invalid checkpoint manifest \"task.json\": checkpoint must be a non-null object",
+      "error_class": "other",
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/task.json",
+          "mode": 420,
+          "size": 4,
+          "sha256": "",
+          "content": "null"
+        },
+        {
+          "path": ".symdesk/history/manifest/target.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": "keep.md",
+          "mode": 420,
+          "size": 4,
+          "sha256": "",
+          "content": "keep"
+        },
+        {
+          "path": "target.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "target"
+        }
+      ],
+      "objects": [
+        {
+          "name": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c",
+          "size": 6,
+          "sha256": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c"
+        }
+      ]
+    },
+    {
+      "id": "purge-replaced-object-fails-before-mutation",
+      "description": "a referenced content-addressed blob replaced with different bytes fails validation before target mutation",
+      "operation": "purge_paths",
+      "files": [
+        {
+          "path": "target.md",
+          "content": "target"
+        },
+        {
+          "path": "keep.md",
+          "content": "keep"
+        }
+      ],
+      "paths": [
+        "target.md"
+      ],
+      "error": "invalid history manifest \".symdesk/history/manifest/keep.md.json\": referenced object 6ca7ea2feefc88ecb5ed6356ed963f47dc9137f82526fdd25d618ea626d0803f size does not match manifest",
+      "error_class": "other",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/keep.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"6ca7ea2feefc88ecb5ed6356ed963f47dc9137f82526fdd25d618ea626d0803f\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 4\n  }\n]"
+        },
+        {
+          "path": ".symdesk/history/manifest/target.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": "keep.md",
+          "mode": 420,
+          "size": 4,
+          "sha256": "",
+          "content": "keep"
+        },
+        {
+          "path": "target.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "target"
+        }
+      ],
+      "objects": [
+        {
+          "name": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c",
+          "size": 6,
+          "sha256": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c"
+        },
+        {
+          "name": "6ca7ea2feefc88ecb5ed6356ed963f47dc9137f82526fdd25d618ea626d0803f",
+          "size": 8,
+          "sha256": "6c1aa50442a93e42c0eb2907cf4e017cd19547891fa190f3ea473582b0479290"
+        }
+      ]
+    },
+    {
+      "id": "preflight-traversal-target-is-rejected",
+      "description": "preflight rejects traversal paths before opening or changing recovery state",
+      "operation": "preflight_purge_paths",
+      "files": [],
+      "paths": [
+        "../outside.md"
+      ],
+      "error": "invalid vault-relative path: \"../outside.md\"",
+      "error_class": "invalid_path",
+      "after": [],
+      "objects": []
+    }
+  ]
+}

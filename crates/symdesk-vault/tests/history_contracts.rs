@@ -801,6 +801,7 @@ fn classify_rust_error(err: &HistoryError) -> &'static str {
         HistoryError::TaskIdRequired => "task_id_required",
         HistoryError::InvalidTaskId(..) => "invalid_task_id",
         HistoryError::CorruptCheckpoint(..) => "corrupt_checkpoint",
+        HistoryError::Purge(..) => "other",
         HistoryError::RenameFailed { .. } => "rename_failed",
         HistoryError::Io(..) => "other",
     }

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "source_hashes": {
+    "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
+    "internal/room/journal/port_verify_chain_contract_test.go": "2ace44035f7133950078462060fb4da2594723f99b1909d9631c9e1134c767bd",
+    "internal/room/journal/verifier.go": "16c14a87ddbd34b233dd0dec7eaa6b34e1d97d333a5e1038ae31b1ff8cf91414"
+  },
+  "cases": [
+    {
+      "id": "missing",
+      "author": "alice",
+      "file": false,
+      "content": "",
+      "code": "ok",
+      "error": ""
+    },
+    {
+      "id": "empty",
+      "author": "alice",
+      "file": true,
+      "content": "",
+      "code": "ok",
+      "error": ""
+    },
+    {
+      "id": "blank-only",
+      "author": "alice",
+      "file": true,
+      "content": "\r\n \t\n",
+      "code": "ok",
+      "error": ""
+    },
+    {
+      "id": "valid-two",
+      "author": "alice",
+      "file": true,
+      "content": "{\"author\":\"alice\",\"body\":{\"text\":\"signed bytes are not checked here\"},\"id\":\"first\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"r\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"alice\",\"body\":{\"text\":\"signed bytes are not checked here\"},\"id\":\"second\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:82e4f4a787abdb518854115547097e2c33406371730adc53c5a13e1865bdfbeb\",\"room\":\"r\",\"seq\":2,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n",
+      "code": "ok",
+      "error": ""
+    },
+    {
+      "id": "valid-crlf-and-blank",
+      "author": "alice",
+      "file": true,
+      "content": "{\"author\":\"alice\",\"body\":{\"text\":\"signed bytes are not checked here\"},\"id\":\"first\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"r\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\r\n \n{\"author\":\"alice\",\"body\":{\"text\":\"signed bytes are not checked here\"},\"id\":\"second\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:82e4f4a787abdb518854115547097e2c33406371730adc53c5a13e1865bdfbeb\",\"room\":\"r\",\"seq\":2,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}",
+      "code": "ok",
+      "error": ""
+    },
+    {
+      "id": "wrong-seq",
+      "author": "alice",
+      "file": true,
+      "content": "{\"author\":\"alice\",\"body\":{\"text\":\"signed bytes are not checked here\"},\"id\":\"wrong-seq\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"r\",\"seq\":2,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n",
+      "code": "seq_mismatch",
+      "error": "journal sequence number mismatch: author alice expected seq 1, got 2"
+    },
+    {
+      "id": "wrong-prev",
+      "author": "alice",
+      "file": true,
+      "content": "{\"author\":\"alice\",\"body\":{\"text\":\"signed bytes are not checked here\"},\"id\":\"wrong-prev\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"sha256:wrong\",\"room\":\"r\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n",
+      "code": "chain_broken",
+      "error": "journal hash chain broken: author alice seq 1 expected prev sha256:0000000000000000000000000000000000000000000000000000000000000000, got sha256:wrong"
+    },
+    {
+      "id": "seq-before-prev",
+      "author": "alice",
+      "file": true,
+      "content": "{\"author\":\"alice\",\"body\":{\"text\":\"signed bytes are not checked here\"},\"id\":\"both\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:wrong\",\"room\":\"r\",\"seq\":2,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n",
+      "code": "seq_mismatch",
+      "error": "journal sequence number mismatch: author alice expected seq 1, got 2"
+    }
+  ]
+}

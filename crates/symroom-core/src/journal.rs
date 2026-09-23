@@ -165,6 +165,78 @@ pub fn author_stats(room_dir: &Path, author: &str) -> Result<AuthorStats, std::i
     }
 }
 
+/// Go `Journal.VerifyChain`: checks the non-blank lines of one author's
+/// segment in sequence, hashing each stored JSON line without its delimiter.
+/// Signatures and cross-author membership belong to `Journal.Verify`, not here.
+///
+/// # Errors
+/// Returns the first decoding, sequence or previous-hash error, or an I/O error.
+pub fn verify_chain(room_dir: &Path, author: &str) -> Result<(), VerifyChainError> {
+    let contents = match fs::read(author_journal_path(room_dir, author)) {
+        Ok(contents) => contents,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(error.into()),
+    };
+    // Go first reads and decodes the whole segment, then checks its lines.
+    // ponytail: this single file snapshot does not model an external writer
+    // replacing the file between those reads; add a two-read race oracle before
+    // claiming concurrent VerifyChain parity.
+    let lines: Vec<&[u8]> = scan_lines(&contents)
+        .into_iter()
+        .filter(|line| !is_blank(line))
+        .collect();
+    let events: Vec<Event> = lines
+        .iter()
+        .map(|line| Event::unmarshal_json_line(line).map_err(VerifyChainError::Parse))
+        .collect::<Result<_, _>>()?;
+    let mut previous = ZERO_HASH.to_owned();
+    for (index, (line, event)) in lines.iter().zip(events.iter()).enumerate() {
+        let expected = index as u64 + 1;
+        if event.seq != expected {
+            return Err(VerifyChainError::Sequence {
+                author: author.to_owned(),
+                expected,
+                actual: event.seq,
+            });
+        }
+        if event.prev != previous {
+            return Err(VerifyChainError::Previous {
+                author: author.to_owned(),
+                seq: event.seq,
+                expected: previous,
+                actual: event.prev.clone(),
+            });
+        }
+        previous = format!("sha256:{}", hex::encode(Sha256::digest(line)));
+    }
+    Ok(())
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum VerifyChainError {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error("unmarshal line: {0}")]
+    Parse(EventError),
+    #[error(
+        "journal sequence number mismatch: author {author} expected seq {expected}, got {actual}"
+    )]
+    Sequence {
+        author: String,
+        expected: u64,
+        actual: u64,
+    },
+    #[error(
+        "journal hash chain broken: author {author} seq {seq} expected prev {expected}, got {actual}"
+    )]
+    Previous {
+        author: String,
+        seq: u64,
+        expected: String,
+        actual: String,
+    },
+}
+
 /// Appends a marshalled event to its author's journal file.
 ///
 /// # Errors

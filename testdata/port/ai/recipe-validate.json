@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "valid_json",
+      "recipe": "version: 1\nname: daily\ntriggers: [manual, save]\ntools: [desk_search]\nwrite_cap: 2\n",
+      "exit_code": 0,
+      "stdout": "{\"recipe\":{\"version\":1,\"name\":\"daily\",\"triggers\":[\"manual\",\"save\"],\"tools\":[\"desk_search\"],\"write_cap\":2},\"status\":\"valid\"}\n",
+      "stderr": "",
+      "json": true,
+      "exact_stderr": true
+    },
+    {
+      "name": "valid_text",
+      "recipe": "version: 1\nname: daily\ntriggers: [manual, save]\ntools: [desk_search]\nwrite_cap: 2\n",
+      "exit_code": 0,
+      "stdout": "map[recipe:{Version:1 Name:daily Triggers:[manual save] Tools:[desk_search] WriteCap:2} status:valid]\n",
+      "stderr": "",
+      "json": false,
+      "exact_stderr": true
+    },
+    {
+      "name": "unsupported_version",
+      "recipe": "version: 2\nname: daily\ntriggers: [manual]\ntools: [desk_search]\nwrite_cap: 2\n",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "unsupported recipe version 2\n",
+      "json": false,
+      "exact_stderr": true
+    },
+    {
+      "name": "whitespace_name",
+      "recipe": "version: 1\nname: '  '\ntriggers: [manual]\ntools: [desk_search]\nwrite_cap: 2\n",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "recipe name is required\n",
+      "json": false,
+      "exact_stderr": true
+    },
+    {
+      "name": "unknown_trigger",
+      "recipe": "version: 1\nname: daily\ntriggers: [magic]\ntools: [desk_search]\nwrite_cap: 2\n",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "unsupported trigger \"magic\"\n",
+      "json": false,
+      "exact_stderr": true
+    },
+    {
+      "name": "negative_write_cap",
+      "recipe": "version: 1\nname: daily\ntriggers: [manual]\ntools: [desk_search]\nwrite_cap: -1\n",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "write_cap cannot be negative\n",
+      "json": false,
+      "exact_stderr": true
+    },
+    {
+      "name": "empty_tool",
+      "recipe": "version: 1\nname: daily\ntriggers: [manual]\ntools: ['']\nwrite_cap: 2\n",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "tool allow-list cannot include an empty name\n",
+      "json": false,
+      "exact_stderr": true
+    },
+    {
+      "name": "duplicate_tool",
+      "recipe": "version: 1\nname: daily\ntriggers: [manual]\ntools: [desk_search, desk_search]\nwrite_cap: 2\n",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "tool \"desk_search\" is listed more than once\n",
+      "json": false,
+      "exact_stderr": true
+    },
+    {
+      "name": "invalid_yaml",
+      "recipe": "version: [",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "parse recipe: yaml: line 1: did not find expected node content\n",
+      "json": false,
+      "exact_stderr": false
+    },
+    {
+      "name": "missing_file",
+      "recipe": "",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "open \u003crecipe\u003e: no such file or directory\n",
+      "json": false,
+      "exact_stderr": false
+    }
+  ]
+}

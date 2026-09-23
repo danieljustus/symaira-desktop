@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "1b66679ed9f73b8a0beeadefdf12b4c173081aaa",
+    "commit": "667faa8e9236cebb4e5a4c0129158ce48079eb01",
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "3e87658206ecb20ebd42fbb252ae4817dd10f320aef300b9c422c3b5c189af33",
-  "generator_source_digest": "b72cdc050a23d265c2b02ce326967c4ebcffbc475c7377c3b8cd2e5f376aca3b",
+  "generator_source_digest": "aa9380e1785556e0237371ea80612ccd4423fe33c3ae4601bef61e4462fbd6e1",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -15,6 +15,7 @@
     "selfhost_http_routes": 21
   },
   "fixture_checksums": {
+    "testdata/port/ai/recipe-validate.json": "3353919da849ede0ef00042149a06040798356b76d1d1b99371a8a18c3eeb8af",
     "testdata/port/cli/config-vault-selection.json": "3f34038e6dca3532187522853274b69caacba85c08caf026fe34a5c0c3dddc88",
     "testdata/port/cli/index-build-process.json": "a09cd53b3c5ee5dbbb8810c1815936ec19a4d884370242c724f83b90cffcb78e",
     "testdata/port/cli/index-maintenance-process.json": "14d26a169f68dfad537da57979e77781c94b149bf9ce1f2d21d9c03b9badcbd0",
@@ -71,9 +72,9 @@
     "testdata/port/room/watch-cli.json": "d5002d4f5edfe1290368cbb74026f8060dd48c2b2ab4abd2c674f38d8165443a",
     "testdata/port/room/watch-stream.json": "61cf7287a79146471bb62079ff6d9e199fedc19cc230d10e5e33b4a334e68f63",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "aab6655b556e1f1f951eaef3eebccaebacc9c68085d51582a2d0f88a19aad538",
-    "testdata/port/sidecar/lifecycle.json": "714cd172f0bb717c0c0ae9f04a88389f5915827652236e5ca03247295a68ff26",
-    "testdata/port/sidecar/roundtrip.json": "bc7a8fac573fbb4e8dc5c240bb056bc53ce25271aaebe93a82d022ebac7103ad",
+    "testdata/port/sidecar/large-corpus.json": "689687089c5b481690f500e9618a5980a606526386c906aa99fd4b2b82dc841b",
+    "testdata/port/sidecar/lifecycle.json": "67aca236e33b001bd12dce982dc20441097ea07eb3910e351b3d28d6063b35ba",
+    "testdata/port/sidecar/roundtrip.json": "6e271f5e8ecdec240ee77b6890d3b3dd0b01bfdc0245a82f00443656f689bdb9",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/frontmatter-write.json": "ebe54a09bcd15b5811473b086d11637c65df5584221b900a85d4412cd143f5de",

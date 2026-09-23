@@ -73,6 +73,21 @@ fn room_verify_matches_go_findings_and_error_class() {
     }
 }
 
+#[cfg(target_os = "linux")]
+#[test]
+fn verification_rejects_non_utf8_segment_names() {
+    use std::os::unix::ffi::OsStringExt;
+
+    let temp = TempDir::new();
+    let journal_dir = temp.path.join("journal");
+    fs::create_dir(&journal_dir).expect("create journal");
+    let name = std::ffi::OsString::from_vec(b"member_\xff.jsonl".to_vec());
+    fs::write(journal_dir.join(name), b"{}").expect("write segment");
+
+    let error = journal::verify(&temp.path).expect_err("unverifiable segment must fail closed");
+    assert!(format!("{error}").contains("filename is not valid UTF-8"));
+}
+
 struct TempDir {
     path: PathBuf,
 }

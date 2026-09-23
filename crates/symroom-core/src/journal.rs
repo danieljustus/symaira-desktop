@@ -98,7 +98,23 @@ pub fn read_all_segments(
         if entry.file_type()?.is_dir() {
             continue;
         }
-        let name = entry.file_name().to_string_lossy().into_owned();
+        // A lossy name cannot be reopened through `author_journal_path` during
+        // verification. Reject it rather than silently skipping its chain.
+        let name = match entry.file_name().into_string() {
+            Ok(name) => name,
+            Err(name)
+                if Path::new(&name)
+                    .extension()
+                    .is_some_and(|ext| ext == "jsonl") =>
+            {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "journal segment filename is not valid UTF-8",
+                )
+                .into());
+            }
+            Err(_) => continue,
+        };
         let Some(author) = name.strip_suffix(JOURNAL_SUFFIX) else {
             continue;
         };

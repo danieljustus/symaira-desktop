@@ -55,8 +55,10 @@ pub fn approve(
     let expiration = time::OffsetDateTime::now_utc()
         .checked_add(ttl)
         .ok_or_else(|| ApprovalError::Encoding("approval expiry is out of range".into()))?;
-    let format = time::format_description::parse("[year]-[month]-[day]T[hour]:[minute]:[second]Z")
-        .expect("valid fixed RFC3339 format");
+    let format = time::format_description::parse_borrowed::<1>(
+        "[year]-[month]-[day]T[hour]:[minute]:[second]Z",
+    )
+    .expect("valid fixed RFC3339 format");
     let expires_at = expiration
         .format(&format)
         .map_err(|error| ApprovalError::Encoding(error.to_string()))?;

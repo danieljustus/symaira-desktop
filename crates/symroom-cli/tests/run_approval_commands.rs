@@ -118,10 +118,21 @@ fn run_approval_and_denial_match_go_process_and_signed_journal() {
         );
 
         let actual = read_journal_files(&journal, case.dynamic_event, case.dynamic_approval, key);
+        let expected = expected_journal_files(&case.final_journal);
+        for (name, expected_content) in &expected {
+            let actual_content = actual.get(name).expect("journal file exists");
+            assert!(
+                actual_content == expected_content,
+                "journal {} file {name}: actual last line {:?}, expected last line {:?}",
+                case.name,
+                actual_content.lines().last(),
+                expected_content.lines().last(),
+            );
+        }
         assert_eq!(
-            actual,
-            expected_journal_files(&case.final_journal),
-            "journal {}",
+            actual.len(),
+            expected.len(),
+            "journal file count {}",
             case.name
         );
     }
@@ -202,6 +213,11 @@ fn normalize_dynamic_event(content: &str, approval: bool) -> String {
     let Some(suffix) = lines.pop() else {
         return content.to_owned();
     };
+    let original_body = Event::unmarshal_json_line(suffix.as_bytes())
+        .expect("parse appended event")
+        .body
+        .get()
+        .to_owned();
     let mut event: Value = serde_json::from_str(suffix).expect("parse appended event");
     let object = event.as_object_mut().expect("event object");
     object.insert("ts".into(), "<dynamic-clock>".into());
@@ -213,7 +229,12 @@ fn normalize_dynamic_event(content: &str, approval: bool) -> String {
             body.insert("expires_at".into(), "<dynamic-expiry>".into());
         }
     }
-    let normalized = sorted_json(&event);
+    let mut normalized = sorted_json(&event);
+    if !approval {
+        let sorted_body = sorted_json(&event["body"]);
+        normalized = normalized.replacen(&sorted_body, &original_body, 1);
+    }
+    let normalized = normalized.replace('<', "\\u003c").replace('>', "\\u003e");
     lines.push(&normalized);
     format!("{}\n", lines.join("\n"))
 }
@@ -248,7 +269,7 @@ fn verify_dynamic_signature(content: &str, key: &str) {
         identity::identity_from_private_key("fixture", &hex::decode(key).expect("hex key"))
             .expect("fixture identity");
     let line = content.lines().last().expect("dynamic event line");
-    let event = Event::unmarshal_json_line(line).expect("parse signed dynamic event");
+    let event = Event::unmarshal_json_line(line.as_bytes()).expect("parse signed dynamic event");
     event
         .verify_signature(&identity.public_key)
         .expect("verify signed dynamic event");

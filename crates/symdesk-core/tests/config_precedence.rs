@@ -43,7 +43,10 @@ fn fixture() -> Fixture {
 fn four_environment_overrides_match_the_go_loader() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.oracle_commit, "e023816a9db2b3d71514049195886fe1b9766a5a");
+    assert_eq!(
+        fixture.oracle_commit,
+        "e023816a9db2b3d71514049195886fe1b9766a5a"
+    );
     assert_eq!(fixture.cases.len(), 10);
 
     for case in fixture.cases {

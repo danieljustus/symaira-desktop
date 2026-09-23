@@ -37,7 +37,7 @@ pub fn run(args: &[OsString]) -> ExitCode {
 fn approve(args: &[OsString]) -> ExitCode {
     const USAGE: &str =
         "Usage: symroom run approve <run_id> [--scope ...] [--ttl 30m] [--identity <name>]\n";
-    const FLAGS: &str = "Usage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL (default 30m0s)\n";
+    const FLAGS: &str = "Usage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL duration (default 30m0s)\n";
     let parsed = match parse_string_flags("run approve", args, &["identity", "scope", "ttl"], FLAGS)
     {
         Ok(parsed) => parsed,

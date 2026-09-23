@@ -601,11 +601,11 @@ impl Sidecar {
                     return Err(io::Error::other("refresh index callback failed"));
                 }
             };
-            if record_lifecycle {
-                if let Err(error) = self.set_lifecycle_state(key, "indexing", "") {
-                    callback_error = Some(error);
-                    return Err(io::Error::other("refresh index callback failed"));
-                }
+            if record_lifecycle
+                && let Err(error) = self.set_lifecycle_state(key, "indexing", "")
+            {
+                callback_error = Some(error);
+                return Err(io::Error::other("refresh index callback failed"));
             }
             let result = self.refresh_path(&vault_dir, vault_root, relative, &mut batch);
             if let Err(error) = result {
@@ -615,11 +615,11 @@ impl Sidecar {
                 callback_error = Some(error);
                 return Err(io::Error::other("refresh index callback failed"));
             }
-            if record_lifecycle {
-                if let Err(error) = self.set_lifecycle_state(key, "indexed", "") {
-                    callback_error = Some(error);
-                    return Err(io::Error::other("refresh index callback failed"));
-                }
+            if record_lifecycle
+                && let Err(error) = self.set_lifecycle_state(key, "indexed", "")
+            {
+                callback_error = Some(error);
+                return Err(io::Error::other("refresh index callback failed"));
             }
             Ok(())
         });

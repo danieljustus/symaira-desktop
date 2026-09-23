@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+    "release": "post-v0.12.2-security-880"
+  },
+  "cases": [
+    {
+      "request": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "method": "tools/list"
+      },
+      "response": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "tools": [
+            {
+              "description": "Return room metadata and journal statistics",
+              "inputSchema": {
+                "properties": {},
+                "type": "object"
+              },
+              "name": "room_status"
+            },
+            {
+              "description": "Return the merged signed journal tail",
+              "inputSchema": {
+                "properties": {
+                  "limit": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "name": "room_journal_tail"
+            },
+            {
+              "description": "Post a signed note to the room journal",
+              "inputSchema": {
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "text"
+                ],
+                "type": "object"
+              },
+              "name": "room_note_post"
+            },
+            {
+              "description": "List linked room artifacts",
+              "inputSchema": {
+                "properties": {},
+                "type": "object"
+              },
+              "name": "room_artifact_list"
+            },
+            {
+              "description": "Link and hash an artifact, recording a signed event",
+              "inputSchema": {
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "room_artifact_link"
+            },
+            {
+              "description": "Request a run with a signed journal event",
+              "inputSchema": {
+                "properties": {
+                  "adapter": {
+                    "type": "string"
+                  },
+                  "plan_file": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "title"
+                ],
+                "type": "object"
+              },
+              "name": "room_run_request"
+            },
+            {
+              "description": "Wait for a run approval decision",
+              "inputSchema": {
+                "properties": {
+                  "run_id": {
+                    "type": "string"
+                  },
+                  "timeout_seconds": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "run_id"
+                ],
+                "type": "object"
+              },
+              "name": "room_run_wait"
+            },
+            {
+              "description": "Request a signed human checkpoint",
+              "inputSchema": {
+                "properties": {
+                  "question": {
+                    "type": "string"
+                  },
+                  "run_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "run_id",
+                  "question"
+                ],
+                "type": "object"
+              },
+              "name": "room_checkpoint_request"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {
+            "limit": 2
+          },
+          "name": "room_journal_tail"
+        }
+      },
+      "response": {
+        "id": 2,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "null",
+              "type": "text"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "request": {
+        "id": 3,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {},
+          "name": "missing_tool"
+        }
+      },
+      "response": {
+        "error": {
+          "code": -32601,
+          "message": "Unknown tool: missing_tool"
+        },
+        "id": 3,
+        "jsonrpc": "2.0"
+      }
+    }
+  ]
+}

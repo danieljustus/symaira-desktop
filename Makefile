@@ -13,6 +13,7 @@
 .PHONY: room-note-cli-fixtures-generate room-note-cli-differential
 .PHONY: room-merge-read-fixtures-generate room-merge-read-differential history-prune-fixtures-generate history-prune-differential
 .PHONY: room-identity-cli-fixtures-generate room-identity-cli-differential
+.PHONY: room-index-fixtures-generate room-index-differential history-service-fixtures-generate history-service-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -280,12 +281,26 @@ room-merge-read-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/journal -run '^TestPortRoomMergeReadContract$$'
 	$(CARGO) test -p symroom-core --locked --test merge_read_contracts
 
+room-index-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/index -run '^TestPortSymRoomIndexOracle$$'
+
+room-index-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/index -run '^TestPortSymRoomIndexOracle$$'
+	$(CARGO) test -p symroom-core --locked --test index_contracts
+
 history-prune-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'
 
 history-prune-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'
 	$(CARGO) test -p symdesk-vault --locked --test history_prune_contracts
+
+history-service-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortHistoryServiceContract$$'
+
+history-service-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortHistoryServiceContract$$'
+	$(CARGO) test -p symdesk-index --locked --test history_service_contract
 
 history-purge-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPurgeContract$$'

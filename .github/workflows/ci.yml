@@ -290,6 +290,10 @@ jobs:
         shell: bash
         run: make room-merge-read-differential
 
+      - name: Run native room index differential
+        shell: bash
+        run: make room-index-differential
+
       - name: Run native room run projection differential
         shell: bash
         run: make room-run-projection-differential
@@ -344,6 +348,10 @@ jobs:
       - name: Run native history prune differential
         shell: bash
         run: make history-prune-differential
+
+      - name: Run native history service differential
+        shell: bash
+        run: make history-service-differential
 
       - name: Run native selected trash purge differential
         shell: bash

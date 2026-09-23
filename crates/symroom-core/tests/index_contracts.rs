@@ -254,6 +254,12 @@ fn event_json(
 
 fn seed_stale_db(path: &std::path::Path) {
     fs::create_dir_all(path.parent().expect("db parent")).expect("db parent directory");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(path.parent().unwrap(), fs::Permissions::from_mode(0o700))
+            .expect("private db parent");
+    }
     let connection = Connection::open(path).expect("old index");
     connection.execute_batch("CREATE TABLE stale_table (value TEXT); INSERT INTO stale_table VALUES ('stale'); CREATE TABLE events (id TEXT PRIMARY KEY); INSERT INTO events VALUES ('stale');").expect("seed old rows");
 }

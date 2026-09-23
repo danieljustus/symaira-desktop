@@ -1,6 +1,7 @@
 //! Go `internal/room/members` role decisions and journal projection.
 //! This is a projection of already accepted events, not signature validation.
 
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fmt;
 
@@ -177,7 +178,11 @@ impl State {
 }
 
 fn parse_body(body: &RawValue, kind: &str) -> Result<MemberBody, String> {
-    let mut decoder = serde_json::Deserializer::from_str(body.get());
+    // Go's encoding/json replaces lone surrogate escapes with U+FFFD while
+    // decoding strings. Keep the signed RawMessage untouched: this copy is
+    // only for interpreting membership fields after signature verification.
+    let decoded = replace_unpaired_surrogates(body.get());
+    let mut decoder = serde_json::Deserializer::from_str(&decoded);
     let parsed = MemberBodySeed(kind)
         .deserialize(&mut decoder)
         .map_err(|error| format!("unmarshal {kind} body: {error}"))?;
@@ -185,6 +190,56 @@ fn parse_body(body: &RawValue, kind: &str) -> Result<MemberBody, String> {
         .end()
         .map_err(|error| format!("unmarshal {kind} body: {error}"))?;
     Ok(parsed)
+}
+
+fn replace_unpaired_surrogates(raw: &str) -> Cow<'_, str> {
+    let bytes = raw.as_bytes();
+    let mut positions = Vec::new();
+    let mut in_string = false;
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'"' => {
+                in_string = !in_string;
+                i += 1;
+            }
+            b'\\' if in_string => {
+                if bytes.get(i + 1) == Some(&b'u')
+                    && let Some(unit) = bytes.get(i + 2..i + 6).and_then(hex_unit)
+                {
+                    let paired = (0xd800..=0xdbff).contains(&unit)
+                        && bytes.get(i + 6..i + 8) == Some(br"\u")
+                        && bytes
+                            .get(i + 8..i + 12)
+                            .and_then(hex_unit)
+                            .is_some_and(|low| (0xdc00..=0xdfff).contains(&low));
+                    if paired {
+                        i += 12;
+                        continue;
+                    }
+                    if (0xd800..=0xdfff).contains(&unit) {
+                        positions.push(i);
+                    }
+                    i += 6;
+                    continue;
+                }
+                i += 2; // Also skips an escaped backslash before literal `u`.
+            }
+            _ => i += 1,
+        }
+    }
+    if positions.is_empty() {
+        return Cow::Borrowed(raw);
+    }
+    let mut output = bytes.to_vec();
+    for position in positions {
+        output[position..position + 6].copy_from_slice(br"\ufffd");
+    }
+    Cow::Owned(String::from_utf8(output).expect("ASCII replacement preserves UTF-8"))
+}
+
+fn hex_unit(bytes: &[u8]) -> Option<u16> {
+    u16::from_str_radix(std::str::from_utf8(bytes).ok()?, 16).ok()
 }
 
 fn decode_key(text: &str, field: &str) -> Result<String, String> {

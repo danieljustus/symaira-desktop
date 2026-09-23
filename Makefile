@@ -24,6 +24,7 @@
 .PHONY: index-relocate-fixtures-generate index-relocate-differential
 .PHONY: room-artifact-cli-fixtures-generate room-artifact-cli-differential
 .PHONY: room-watch-stream-fixtures-generate room-watch-stream-differential
+.PHONY: room-brain-profile-fixtures-generate room-brain-profile-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -360,6 +361,13 @@ room-watch-stream-fixtures-generate:
 room-watch-stream-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/desk -run '^TestPortWatchStreamContract$$'
 	$(CARGO) test -p symroom-core --locked --test watch_stream_contracts
+
+room-brain-profile-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/brainprofile -run '^TestPortBrainProfileCLIContract$$'
+
+room-brain-profile-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/brainprofile -run '^TestPortBrainProfileCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test brain_profile_commands
 
 index-backup-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'

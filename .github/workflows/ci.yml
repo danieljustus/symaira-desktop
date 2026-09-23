@@ -322,6 +322,10 @@ jobs:
         shell: bash
         run: make room-watch-stream-differential
 
+      - name: Run native room brain profile differential
+        shell: bash
+        run: make room-brain-profile-differential
+
       - name: Run native index backup differential
         shell: bash
         run: make index-backup-differential

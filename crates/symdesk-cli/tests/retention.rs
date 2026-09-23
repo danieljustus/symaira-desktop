@@ -304,8 +304,8 @@ fn accept_retries_action_completed_item_without_reapplying_and_keeps_acted_zero(
 }
 
 #[test]
-fn accept_dataset_purge_fails_closed_without_mutating_the_handle() {
-    let root = TempRoot::new("accept-dataset-blocked");
+fn accept_dataset_purge_removes_handle_and_commits_history() {
+    let root = TempRoot::new("accept-dataset-purge");
     let dataset = root.vault().join("datasets/orders.md");
     fs::create_dir_all(dataset.parent().expect("dataset parent")).expect("create datasets");
     fs::write(
@@ -340,28 +340,21 @@ fn accept_dataset_purge_fails_closed_without_mutating_the_handle() {
     .expect("write proposal");
 
     let output = run(&root, ["retention", "accept", "ret-safe", "--json"]);
-    assert_eq!(output.status.code(), Some(1));
+    assert_eq!(output.status.code(), Some(0), "stdout: {:?}", output.stdout);
     assert!(output.stderr.is_empty());
-    let lines = output
-        .stdout
-        .split(|byte| *byte == b'\n')
-        .collect::<Vec<_>>();
-    let result: serde_json::Value = serde_json::from_slice(lines[0]).expect("decode result");
-    assert_eq!(result["status"], "failed");
-    assert_eq!(result["acted"], 0);
-    assert_eq!(
-        result["items"][0]["failure"],
-        "action failed: dataset purge for \"orders\" is unavailable: Rust has no durable dataset-purge journal and recovery path"
-    );
-    let error: serde_json::Value = serde_json::from_slice(lines[1]).expect("decode error");
-    assert_eq!(
-        error["error"],
-        "retention acceptance failed: datasets/orders.md: action failed: dataset purge for \"orders\" is unavailable: Rust has no durable dataset-purge journal and recovery path"
-    );
+    let result: serde_json::Value = serde_json::from_slice(&output.stdout).expect("decode result");
+    assert_eq!(result["status"], "accepted");
+    assert_eq!(result["acted"], 1);
+    assert!(!dataset.exists());
     assert!(
-        dataset.exists(),
-        "blocked purge must leave the handle intact"
+        !root
+            .vault()
+            .join(".symdesk/dataset-purge/orders.json")
+            .exists()
     );
+    let history = symdesk_vault::retention::load_history(&root.vault()).expect("read history");
+    assert_eq!(history.len(), 1);
+    assert_eq!(history[0].action_id, "ret-safe:0");
 }
 
 #[test]

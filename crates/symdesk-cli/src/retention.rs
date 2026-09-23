@@ -13,7 +13,7 @@ use std::{
 use clap::{Arg, ArgAction, Command};
 use serde::Serialize;
 use serde_json::{Value, json};
-use symdesk_index::{IndexedDocument, Sidecar, open_for_vault};
+use symdesk_index::{DatasetPurgeService, IndexedDocument, Sidecar, open_for_vault};
 use symdesk_vault::retention::{
     ACTION_FLAG_REVIEW, ACTION_TRASH, HistoryEntry, PROPOSAL_ITEM_STATUS_ACCEPTED,
     PROPOSAL_ITEM_STATUS_ACTION_COMPLETED, PROPOSAL_STATUS_ACCEPTED, PROPOSAL_STATUS_FAILED,
@@ -516,9 +516,9 @@ fn apply_retention_action(
                 item.action
             ));
         }
-        return Err(format!(
-            "dataset purge for {slug:?} is unavailable: Rust has no durable dataset-purge journal and recovery path"
-        ));
+        return DatasetPurgeService::new(vault_root, sidecar)
+            .purge(slug, &item.rule_name, &item.fingerprint)
+            .map_err(|error| error.to_string());
     }
 
     let relative = item.path.trim().replace('\\', "/");

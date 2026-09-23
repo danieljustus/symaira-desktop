@@ -7,6 +7,7 @@
 .PHONY: dataset-cli-differential
 .PHONY: history-purge-fixtures-generate history-purge-differential
 .PHONY: history-trash-purge-fixtures-generate history-trash-purge-differential
+.PHONY: room-run-wait-cli-fixtures-generate room-run-wait-cli-differential dataset-purge-fixtures-generate dataset-purge-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -232,6 +233,13 @@ room-run-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/run -run '^TestPortRunCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test run_commands
 
+room-run-wait-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/run -run '^TestPortRunWaitCLIContract$$'
+
+room-run-wait-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/run -run '^TestPortRunWaitCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test run_commands run_wait_matches_go_process_contract
+
 history-purge-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPurgeContract$$'
 
@@ -245,6 +253,13 @@ history-trash-purge-fixtures-generate:
 history-trash-purge-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistorySelectedTrashPurgeContract$$'
 	$(CARGO) test -p symdesk-vault --locked --test history_trash_purge_contracts
+
+dataset-purge-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortDatasetPurgeContract$$'
+
+dataset-purge-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortDatasetPurgeContract$$'
+	$(CARGO) test -p symdesk-index --locked --test dataset_purge_contract
 
 dataset-sync-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortDataset(SyncContract|SyncServiceContract|ImportContract)$$'

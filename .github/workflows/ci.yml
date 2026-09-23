@@ -295,6 +295,10 @@ jobs:
         shell: bash
         run: make room-run-cli-differential
 
+      - name: Run native room run wait CLI differential
+        shell: bash
+        run: make room-run-wait-cli-differential
+
       - name: Run native dataset sync differential
         shell: bash
         run: make dataset-sync-differential
@@ -302,6 +306,10 @@ jobs:
       - name: Run native dataset CLI differential
         shell: bash
         run: make dataset-cli-differential
+
+      - name: Run native dataset purge differential
+        shell: bash
+        run: make dataset-purge-differential
 
       - name: Run native history differential
         shell: bash

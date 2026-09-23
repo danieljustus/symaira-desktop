@@ -17,11 +17,13 @@ use symdesk_vault::Document;
 use thiserror::Error;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
+mod backup;
 mod dataset_purge;
 mod dataset_sync;
 mod history_sync;
 mod metadata;
 
+pub use backup::backup_database;
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
 pub use dataset_sync::{
     DatasetImportOptions, DatasetImportResult, DatasetSyncError, DatasetSyncOptions,
@@ -325,6 +327,18 @@ impl Sidecar {
                 "integrity check failed: {result}"
             )))
         }
+    }
+
+    /// Writes an atomic, WAL-consistent SQLite snapshot of this open sidecar.
+    ///
+    /// # Errors
+    /// Returns an error when the sidecar is closed, in-memory, or the snapshot
+    /// cannot be created, validated, or atomically installed.
+    pub fn backup_to(&self, destination: &Path) -> Result<(), SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        backup_database(&self.connection, destination)
     }
 
     /// Closes the actual SQLite connection. Subsequent dataset operations fail

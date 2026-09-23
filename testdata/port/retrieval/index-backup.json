@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "generated_on": "darwin",
+  "input_rows": [
+    {
+      "id": 1,
+      "body": "WAL-only row"
+    },
+    {
+      "id": 2,
+      "body": "Müller / 東京"
+    }
+  ],
+  "observed_rows": [
+    {
+      "id": 1,
+      "body": "WAL-only row"
+    },
+    {
+      "id": 2,
+      "body": "Müller / 東京"
+    }
+  ],
+  "wal_was_nonempty": true,
+  "header": "SQLite format 3\u0000",
+  "mode": "0600",
+  "directory_mode": "0700",
+  "same_path_error": "source and destination are the same index file",
+  "blocked_parent_error": "create index directory",
+  "replacement_okay": true
+}

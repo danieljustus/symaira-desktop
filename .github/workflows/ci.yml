@@ -314,6 +314,10 @@ jobs:
         shell: bash
         run: make history-purge-differential
 
+      - name: Run native selected trash purge differential
+        shell: bash
+        run: make history-trash-purge-differential
+
       - name: Retain native history evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

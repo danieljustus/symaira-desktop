@@ -314,6 +314,10 @@ jobs:
         shell: bash
         run: make room-log-cli-differential
 
+      - name: Run native room artifact CLI differential
+        shell: bash
+        run: make room-artifact-cli-differential
+
       - name: Run native index backup differential
         shell: bash
         run: make index-backup-differential

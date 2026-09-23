@@ -141,7 +141,7 @@ func TestIndexBackupPortFixture(t *testing.T) {
 	}
 	encoded = append(encoded, '\n')
 	fixturePath := filepath.Join("..", "..", "testdata", "port", "retrieval", "index-backup.json")
-	if os.Getenv("PORT_GENERATE") == "1" || os.Getenv("INDEX_BACKUP_GENERATE") == "1" {
+	if os.Getenv("PORT_GENERATE") == "1" {
 		if err := os.MkdirAll(filepath.Dir(fixturePath), 0o700); err != nil {
 			t.Fatal(err)
 		}

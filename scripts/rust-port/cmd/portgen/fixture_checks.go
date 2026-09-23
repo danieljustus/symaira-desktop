@@ -35,6 +35,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"symroom verify CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortVerifyCLIContract$"}, []string{"testdata/port/room/verify-cli.json"}, false},
 	{"symroom log", []string{"test", "-count=1", "./internal/room/journal", "-run", "^TestPortRoomLogContract$"}, []string{"testdata/port/room/log.json"}, false},
 	{"symroom log CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortLogCLIContract$"}, []string{"testdata/port/room/log-cli.json"}, false},
+	{"symroom artifact CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortArtifactCLIContract$"}, []string{"testdata/port/room/artifact-cli.json"}, false},
 	{"index backup", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexBackupPortFixture$"}, []string{"testdata/port/retrieval/index-backup.json"}, false},
 	{"index restore", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexRestorePortFixture$"}, []string{"testdata/port/retrieval/index-restore.json"}, false},
 	{"index relocation", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexRelocatePortFixture$"}, []string{"testdata/port/retrieval/index-relocate.json"}, false},

@@ -21,6 +21,7 @@ type historyTasksFixture struct {
 
 type historyTasksPortCase struct {
 	Name      string            `json:"name"`
+	JSON      bool              `json:"json"`
 	Manifests map[string]string `json:"manifests"`
 	ExitCode  int               `json:"exit_code"`
 	Stdout    string            `json:"stdout"`
@@ -92,36 +93,50 @@ func observeHistoryTasksCLI(t *testing.T) historyTasksFixture {
 		}},
 	}
 	for _, input := range inputs {
-		caseRoot := filepath.Join(root, input.Name)
-		vault := filepath.Join(caseRoot, "vault")
-		if err := os.MkdirAll(filepath.Join(vault, ".symdesk", "history", "checkpoints"), 0o700); err != nil {
-			t.Fatal(err)
-		}
-		for name, manifest := range input.Manifests {
-			if err := os.WriteFile(filepath.Join(vault, ".symdesk", "history", "checkpoints", name), []byte(manifest), 0o600); err != nil {
+		for _, jsonOutput := range []bool{true, false} {
+			input.JSON = jsonOutput
+			if jsonOutput {
+				input.Name = strings.TrimSuffix(input.Name, "-text")
+				input.Name += "-json"
+			} else {
+				input.Name = strings.TrimSuffix(input.Name, "-json")
+				input.Name += "-text"
+			}
+			caseRoot := filepath.Join(root, input.Name)
+			vault := filepath.Join(caseRoot, "vault")
+			if err := os.MkdirAll(filepath.Join(vault, ".symdesk", "history", "checkpoints"), 0o700); err != nil {
 				t.Fatal(err)
 			}
-		}
-		home := filepath.Join(caseRoot, "home")
-		if err := os.MkdirAll(home, 0o700); err != nil {
-			t.Fatal(err)
-		}
-		cmd := exec.Command(binary, "--json", "--vault", vault, "history", "tasks")
-		cmd.Env = append(os.Environ(), "HOME="+home, "USERPROFILE="+home,
-			"XDG_CONFIG_HOME="+filepath.Join(home, "config"),
-			"XDG_CACHE_HOME="+filepath.Join(home, "cache"),
-			"XDG_DATA_HOME="+filepath.Join(home, "data"))
-		out, err := cmd.Output()
-		input.Stdout = string(out)
-		if err != nil {
-			if exit, ok := err.(*exec.ExitError); ok {
-				input.ExitCode = exit.ExitCode()
-				input.Stderr = strings.TrimSpace(string(exit.Stderr))
-			} else {
-				t.Fatalf("run Go history tasks CLI %s: %v", input.Name, err)
+			for name, manifest := range input.Manifests {
+				if err := os.WriteFile(filepath.Join(vault, ".symdesk", "history", "checkpoints", name), []byte(manifest), 0o600); err != nil {
+					t.Fatal(err)
+				}
 			}
+			home := filepath.Join(caseRoot, "home")
+			if err := os.MkdirAll(home, 0o700); err != nil {
+				t.Fatal(err)
+			}
+			args := []string{"--vault", vault, "history", "tasks"}
+			if jsonOutput {
+				args = append([]string{"--json"}, args...)
+			}
+			cmd := exec.Command(binary, args...)
+			cmd.Env = append(os.Environ(), "TZ=UTC", "HOME="+home, "USERPROFILE="+home,
+				"XDG_CONFIG_HOME="+filepath.Join(home, "config"),
+				"XDG_CACHE_HOME="+filepath.Join(home, "cache"),
+				"XDG_DATA_HOME="+filepath.Join(home, "data"))
+			out, err := cmd.Output()
+			input.Stdout = string(out)
+			if err != nil {
+				if exit, ok := err.(*exec.ExitError); ok {
+					input.ExitCode = exit.ExitCode()
+					input.Stderr = strings.TrimSpace(string(exit.Stderr))
+				} else {
+					t.Fatalf("run Go history tasks CLI %s: %v", input.Name, err)
+				}
+			}
+			fixture.Cases = append(fixture.Cases, input)
 		}
-		fixture.Cases = append(fixture.Cases, input)
 	}
 	return fixture
 }

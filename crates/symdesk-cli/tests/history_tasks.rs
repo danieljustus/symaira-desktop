@@ -16,6 +16,7 @@ struct Fixture {
 #[derive(Deserialize)]
 struct Case {
     name: String,
+    json: bool,
     manifests: BTreeMap<String, String>,
     exit_code: i32,
     stdout: String,
@@ -29,7 +30,7 @@ fn history_tasks_matches_go_process_contract() {
     ))
     .expect("decode Go-owned history tasks fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 3);
+    assert_eq!(fixture.cases.len(), 6);
     let root = std::env::temp_dir().join(format!(
         "symdesk-history-tasks-{}-{}",
         std::process::id(),
@@ -46,8 +47,13 @@ fn history_tasks_matches_go_process_contract() {
         for (name, manifest) in case.manifests {
             fs::write(checkpoints.join(name), manifest).expect("write checkpoint manifest");
         }
-        let output = Command::new(env!("CARGO_BIN_EXE_symdesk"))
-            .args(["--json", "--vault"])
+        let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
+        if case.json {
+            command.arg("--json");
+        }
+        let output = command
+            .env("TZ", "UTC")
+            .args(["--vault"])
             .arg(&vault)
             .args(["history", "tasks"])
             .output()

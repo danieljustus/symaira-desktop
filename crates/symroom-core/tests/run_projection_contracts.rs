@@ -265,10 +265,8 @@ fn encode_runs(runs: &[Run], normalize_checkpoints: bool) -> Vec<String> {
 
 fn encode_run(run: &Run, normalize_checkpoints: bool) -> String {
     let mut run = run.clone();
-    if normalize_checkpoints {
-        if let Some(checkpoints) = &mut run.checkpoints {
-            checkpoints.sort_by(|left, right| left.id.cmp(&right.id));
-        }
+    if normalize_checkpoints && let Some(checkpoints) = &mut run.checkpoints {
+        checkpoints.sort_by(|left, right| left.id.cmp(&right.id));
     }
     serde_json::to_string(&run).expect("run serializes")
 }

@@ -1,11 +1,10 @@
 //! Append-only SymRoom journal, ported from Go's `internal/room/room`
 //! (contract row ROOM-002).
 //!
-//! Only the deterministic half is ported here: reading a journal directory back
-//! into a Lamport ceiling and a per-author sequence/hash chain, and appending an
-//! event. The member-state projection of Go's `ReadJournalStats` belongs to the
-//! membership state machine (ROOM-003) and is deliberately absent rather than
-//! approximated.
+//! Reads journal files into a Lamport ceiling and membership projection, tracks
+//! per-author sequence/hash chains, and appends events. Like Go, the projection
+//! consumes decodable events without authenticating signatures; verification of
+//! the journal is a separate RUST-016 contract.
 //!
 //! Three Go behaviours are easy to "repair" by accident and are therefore
 //! reproduced literally, pinned by `testdata/port/room/journal.json`:
@@ -26,7 +25,10 @@ use std::{
 
 use sha2::{Digest, Sha256};
 
-use crate::event::{Event, EventError};
+use crate::{
+    event::{Event, EventError},
+    members::State,
+};
 
 /// The `prev` value Go reports for an author that has not written yet.
 pub const ZERO_HASH: &str =
@@ -35,10 +37,12 @@ pub const ZERO_HASH: &str =
 const JOURNAL_DIR: &str = "journal";
 const JOURNAL_SUFFIX: &str = ".jsonl";
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct JournalStats {
     /// The highest Lamport clock observed across every decodable event.
     pub max_lamport: u64,
+    /// Membership after replaying the decodable lines in author-file order.
+    pub member_state: State,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -49,7 +53,7 @@ pub struct AuthorStats {
     pub prev: String,
 }
 
-/// Reads the Lamport ceiling of a room journal.
+/// Reads the Lamport ceiling and member state of a room journal.
 ///
 /// A missing journal directory, an unreadable file and an undecodable line are
 /// all tolerated exactly as Go tolerates them.
@@ -67,9 +71,13 @@ pub fn read_journal_stats(room_dir: &Path) -> Result<JournalStats, std::io::Erro
         Err(error) => return Err(error),
     };
 
+    let mut entries: Vec<_> = entries.collect::<Result<_, _>>()?;
+    // Go os.ReadDir returns name-sorted entries; role changes can depend on
+    // whether a room-created event in another author's file was seen first.
+    entries.sort_by_key(|entry| entry.file_name());
     let mut max_lamport = 0_u64;
+    let mut member_state = State::default();
     for entry in entries {
-        let entry = entry?;
         let name = entry.file_name().to_string_lossy().into_owned();
         if entry.path().is_dir() || !name.ends_with(JOURNAL_SUFFIX) {
             continue;
@@ -88,9 +96,13 @@ pub fn read_journal_stats(room_dir: &Path) -> Result<JournalStats, std::io::Erro
             if event.lamport > max_lamport {
                 max_lamport = event.lamport;
             }
+            let _ = member_state.apply_event(&event);
         }
     }
-    Ok(JournalStats { max_lamport })
+    Ok(JournalStats {
+        max_lamport,
+        member_state,
+    })
 }
 
 /// Reads one author's sequence number and previous-line hash.

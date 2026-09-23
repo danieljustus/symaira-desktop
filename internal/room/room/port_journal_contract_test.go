@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ed25519"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -15,14 +16,8 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 )
 
-// portJournalFixture freezes the deterministic half of the SymRoom journal
-// (contract row ROOM-002): how a journal directory is read back into per-author
-// sequence/hash chains and a Lamport ceiling, and what `AppendEvent` writes.
-//
-// Member-state projection (`ReadJournalStats().MemberState`) is deliberately
-// out of scope here: it belongs to the membership state machine of ROOM-003 and
-// has no Rust counterpart yet. The recorded cases therefore pin `max_lamport`,
-// the author chain and the append side effects only.
+// portJournalFixture freezes the deterministic SymRoom journal read-back:
+// sequence/hash chains, Lamport ceiling, membership projection, and append bytes.
 type portJournalFixture struct {
 	SchemaVersion int                   `json:"schema_version"`
 	ZeroHash      string                `json:"zero_hash"`
@@ -38,15 +33,24 @@ type portJournalFile struct {
 	Content string `json:"content"`
 }
 
+type portJournalMember struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	PublicKey string `json:"public_key"`
+	Role      string `json:"role"`
+	Kind      string `json:"kind"`
+}
+
 type portJournalCase struct {
-	Name       string            `json:"name"`
-	Files      []portJournalFile `json:"files,omitempty"`
-	CreateDir  bool              `json:"create_dir"`
-	Author     string            `json:"author"`
-	MaxLamport uint64            `json:"max_lamport"`
-	AuthorSeq  uint64            `json:"author_seq"`
-	AuthorPrev string            `json:"author_prev"`
-	Note       string            `json:"note,omitempty"`
+	Name       string              `json:"name"`
+	Files      []portJournalFile   `json:"files,omitempty"`
+	CreateDir  bool                `json:"create_dir"`
+	Author     string              `json:"author"`
+	MaxLamport uint64              `json:"max_lamport"`
+	AuthorSeq  uint64              `json:"author_seq"`
+	AuthorPrev string              `json:"author_prev"`
+	Members    []portJournalMember `json:"members"`
+	Note       string              `json:"note,omitempty"`
 }
 
 type portJournalAppend struct {
@@ -111,6 +115,27 @@ func portJournalStatsCases(t *testing.T) []portJournalCase {
 	}
 	alice := portJournalIdentityFor(t, "alpha").MemberID
 	bob := portJournalIdentityFor(t, "beta").MemberID
+	owner := portJournalIdentityFor(t, "alpha")
+	guest := portJournalIdentityFor(t, "beta")
+	if owner.MemberID > guest.MemberID {
+		owner, guest = guest, owner
+	}
+	memberLine := func(author string, seq, lamport uint64, kind, body string) string {
+		t.Helper()
+		ev := portJournalEvent(t, author, seq, lamport, portJournalZeroHash)
+		ev.Kind = kind
+		ev.Body = json.RawMessage(body)
+		if err := ev.Sign(portJournalIdentity(t, author)); err != nil {
+			t.Fatal(err)
+		}
+		line, err := ev.MarshalJSONLine()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(line)
+	}
+	rootBody := `{"name":"Room","public_key":"` + hex.EncodeToString(owner.PublicKey) + `"}`
+	guestBody := `{"id":"` + guest.MemberID + `","name":"Guest","public_key":"` + hex.EncodeToString(guest.PublicKey) + `","role":"member","kind":"human"}`
 
 	inputs := []struct {
 		name      string
@@ -207,6 +232,28 @@ func portJournalStatsCases(t *testing.T) []portJournalCase {
 			}},
 			note: "The final line is hashed without its terminator either way.",
 		},
+		{
+			name:      "membership-across-sorted-author-files",
+			createDir: true,
+			author:    owner.MemberID,
+			files: []portJournalFile{
+				{Name: owner.MemberID + ".jsonl", Content: memberLine(owner.MemberID, 1, 1, event.KindRoomCreated, rootBody) +
+					memberLine(owner.MemberID, 2, 2, event.KindMemberAdded, guestBody) +
+					memberLine(owner.MemberID, 3, 3, event.KindMemberRoleChanged, `{"id":"`+guest.MemberID+`","role":"agent"}`)},
+				{Name: guest.MemberID + ".jsonl", Content: memberLine(guest.MemberID, 1, 4, event.KindMemberRemoved, `{"id":"`+owner.MemberID+`"}`) +
+					memberLine(guest.MemberID, 2, 5, event.KindRunApproved, `{}`)},
+			},
+			note: "Go replays sorted author files, ignores rejected owner and approval actions, and still counts their Lamport clocks.",
+		},
+		{
+			name:      "membership-removal-after-undecodable-line",
+			createDir: true,
+			author:    owner.MemberID,
+			files: []portJournalFile{{Name: owner.MemberID + ".jsonl", Content: memberLine(owner.MemberID, 1, 1, event.KindRoomCreated, rootBody) +
+				memberLine(owner.MemberID, 2, 2, event.KindMemberAdded, guestBody) + "{not json}\n" +
+				memberLine(owner.MemberID, 3, 20, event.KindMemberRemoved, `{"id":"`+guest.MemberID+`"}`)}},
+			note: "An undecodable line neither changes the projection nor stops replay of a later removal.",
+		},
 	}
 
 	cases := make([]portJournalCase, 0, len(inputs))
@@ -223,6 +270,28 @@ func portJournalStatsCases(t *testing.T) []portJournalCase {
 		if err != nil {
 			t.Fatalf("%s: %v", input.name, err)
 		}
+		if stats.MemberState == nil {
+			t.Fatalf("%s: Go returned no membership state", input.name)
+		}
+		switch input.name {
+		case "membership-across-sorted-author-files":
+			if len(stats.MemberState.Members) != 2 || stats.MemberState.Members[owner.MemberID] == nil ||
+				stats.MemberState.Members[guest.MemberID] == nil || string(stats.MemberState.Members[guest.MemberID].Role) != "agent" || stats.MaxLamport != 5 {
+				t.Fatalf("%s: member projection or rejected-event Lamport drift: %+v", input.name, stats)
+			}
+		case "membership-removal-after-undecodable-line":
+			if len(stats.MemberState.Members) != 1 || stats.MemberState.Members[owner.MemberID] == nil || stats.MaxLamport != 20 {
+				t.Fatalf("%s: removal after malformed line drift: %+v", input.name, stats)
+			}
+		}
+		memberViews := make([]portJournalMember, 0, len(stats.MemberState.Members))
+		for _, member := range stats.MemberState.Members {
+			memberViews = append(memberViews, portJournalMember{
+				ID: member.ID, Name: member.Name, PublicKey: hex.EncodeToString(member.PublicKey),
+				Role: string(member.Role), Kind: string(member.Kind),
+			})
+		}
+		sort.Slice(memberViews, func(i, j int) bool { return memberViews[i].ID < memberViews[j].ID })
 		cases = append(cases, portJournalCase{
 			Name:       input.name,
 			Files:      input.files,
@@ -231,6 +300,7 @@ func portJournalStatsCases(t *testing.T) []portJournalCase {
 			MaxLamport: stats.MaxLamport,
 			AuthorSeq:  seq,
 			AuthorPrev: prev,
+			Members:    memberViews,
 			Note:       input.note,
 		})
 	}

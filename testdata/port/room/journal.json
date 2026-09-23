@@ -11,6 +11,7 @@
       "max_lamport": 0,
       "author_seq": 0,
       "author_prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "members": [],
       "note": "Go tolerates the absent directory and reports an empty journal."
     },
     {
@@ -19,7 +20,8 @@
       "author": "mem_550650c922de2f4c",
       "max_lamport": 0,
       "author_seq": 0,
-      "author_prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      "author_prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "members": []
     },
     {
       "name": "single-author-chain",
@@ -33,7 +35,8 @@
       "author": "mem_550650c922de2f4c",
       "max_lamport": 2,
       "author_seq": 2,
-      "author_prev": "sha256:370cf6bd3b484d8aed1c5743c50c0f09ff6217247a7f207528193cf8696e3357"
+      "author_prev": "sha256:370cf6bd3b484d8aed1c5743c50c0f09ff6217247a7f207528193cf8696e3357",
+      "members": []
     },
     {
       "name": "blank-lines-are-skipped",
@@ -48,6 +51,7 @@
       "max_lamport": 5,
       "author_seq": 2,
       "author_prev": "sha256:c637fba8ba626e47d3f0578b46e1e8c250abef3edad1a6c2ceeb907d7a4695f2",
+      "members": [],
       "note": "Blank and whitespace-only lines count neither for seq nor for the hash."
     },
     {
@@ -63,6 +67,7 @@
       "max_lamport": 9,
       "author_seq": 3,
       "author_prev": "sha256:6e0dca9e947880dbf7e827ad09c9ef691ab569166bd22ce63df80fa28fc7385c",
+      "members": [],
       "note": "ReadJournalStats ignores undecodable lines; GetAuthorStats counts every non-blank line."
     },
     {
@@ -81,7 +86,8 @@
       "author": "mem_550650c922de2f4c",
       "max_lamport": 17,
       "author_seq": 1,
-      "author_prev": "sha256:66ac8e5ce8f7133767a1cafa28aaffed42f89b0a065aaee6c30d1780a6b8215e"
+      "author_prev": "sha256:66ac8e5ce8f7133767a1cafa28aaffed42f89b0a065aaee6c30d1780a6b8215e",
+      "members": []
     },
     {
       "name": "non-jsonl-files-are-ignored",
@@ -103,7 +109,8 @@
       "author": "mem_550650c922de2f4c",
       "max_lamport": 2,
       "author_seq": 1,
-      "author_prev": "sha256:66ac8e5ce8f7133767a1cafa28aaffed42f89b0a065aaee6c30d1780a6b8215e"
+      "author_prev": "sha256:66ac8e5ce8f7133767a1cafa28aaffed42f89b0a065aaee6c30d1780a6b8215e",
+      "members": []
     },
     {
       "name": "author-without-own-file",
@@ -118,6 +125,7 @@
       "max_lamport": 6,
       "author_seq": 0,
       "author_prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "members": [],
       "note": "An author that has never written starts at seq 0 with the zero hash."
     },
     {
@@ -132,7 +140,8 @@
       "author": "mem_550650c922de2f4c",
       "max_lamport": 0,
       "author_seq": 0,
-      "author_prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      "author_prev": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "members": []
     },
     {
       "name": "author-file-without-trailing-newline",
@@ -147,7 +156,67 @@
       "max_lamport": 2,
       "author_seq": 2,
       "author_prev": "sha256:370cf6bd3b484d8aed1c5743c50c0f09ff6217247a7f207528193cf8696e3357",
+      "members": [],
       "note": "The final line is hashed without its terminator either way."
+    },
+    {
+      "name": "membership-across-sorted-author-files",
+      "files": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"name\":\"Room\",\"public_key\":\"74727824457d76c9cda32f3325d1aa4c3e0d6f4e9178dfda3f41c4425398e515\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:cdMNad0mqKPWG4sV9uXwRWJrQ9eHSL49Fjjr/mmKM5+HtPYc/SriBdY6Asge7PYVKX1voNx8s4NxeyCixAjzCg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"id\":\"mem_ef7253e185e9a23b\",\"name\":\"Guest\",\"public_key\":\"e5d7f092f62b841351cf82b9b497d7d0079b53e35fda10831d7301e9c2a12809\",\"role\":\"member\",\"kind\":\"human\"},\"id\":\"ev_mem_550650c922de2f4c_2\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":2,\"sig\":\"ed25519:MrVge/AUcRp6BSnoHHaCKOG5iFGYbC+a6ncFF2Z7biEwPvmbjmh+HT4mRUpTIFOKflVvwialVwzI44ioPPFvCA==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"id\":\"mem_ef7253e185e9a23b\",\"role\":\"agent\"},\"id\":\"ev_mem_550650c922de2f4c_3\",\"kind\":\"member.role_changed\",\"lamport\":3,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":3,\"sig\":\"ed25519://rXOl4/OcMJ4JIS5Ac1Nf+dvUlJk7t1i6QklYYUp0EWLSe1XZDgySp5gfHpBtOvuRtOtNyA/dcUOnp6RGchAg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        },
+        {
+          "name": "mem_ef7253e185e9a23b.jsonl",
+          "content": "{\"author\":\"mem_ef7253e185e9a23b\",\"body\":{\"id\":\"mem_550650c922de2f4c\"},\"id\":\"ev_mem_ef7253e185e9a23b_1\",\"kind\":\"member.removed\",\"lamport\":4,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:mgdfewrxzN2ovU2bRSjhqGUpbIWkeo17DxdKzYnoTI98axrhbG0nn3MrlsHVUibTBKBBg6xa7VwtNzfu0/6RAg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n{\"author\":\"mem_ef7253e185e9a23b\",\"body\":{},\"id\":\"ev_mem_ef7253e185e9a23b_2\",\"kind\":\"run.approved\",\"lamport\":5,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":2,\"sig\":\"ed25519:bLZKCpsjTEKRKwB5cRtywOvyJcXEbV2pMUWMjJ9n6zFTxZDdw0sz1M6rApsS5V15RX7s3NJG3h/mAlMuE6uWDQ==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        }
+      ],
+      "create_dir": true,
+      "author": "mem_550650c922de2f4c",
+      "max_lamport": 5,
+      "author_seq": 3,
+      "author_prev": "sha256:83bc5f943c8a4c41a5bffc8a4e4c3a73683a06d45f38cf464abf0d527fc1dcbc",
+      "members": [
+        {
+          "id": "mem_550650c922de2f4c",
+          "name": "Room",
+          "public_key": "74727824457d76c9cda32f3325d1aa4c3e0d6f4e9178dfda3f41c4425398e515",
+          "role": "owner",
+          "kind": "human"
+        },
+        {
+          "id": "mem_ef7253e185e9a23b",
+          "name": "Guest",
+          "public_key": "e5d7f092f62b841351cf82b9b497d7d0079b53e35fda10831d7301e9c2a12809",
+          "role": "agent",
+          "kind": "human"
+        }
+      ],
+      "note": "Go replays sorted author files, ignores rejected owner and approval actions, and still counts their Lamport clocks."
+    },
+    {
+      "name": "membership-removal-after-undecodable-line",
+      "files": [
+        {
+          "name": "mem_550650c922de2f4c.jsonl",
+          "content": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"name\":\"Room\",\"public_key\":\"74727824457d76c9cda32f3325d1aa4c3e0d6f4e9178dfda3f41c4425398e515\"},\"id\":\"ev_mem_550650c922de2f4c_1\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":1,\"sig\":\"ed25519:cdMNad0mqKPWG4sV9uXwRWJrQ9eHSL49Fjjr/mmKM5+HtPYc/SriBdY6Asge7PYVKX1voNx8s4NxeyCixAjzCg==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"id\":\"mem_ef7253e185e9a23b\",\"name\":\"Guest\",\"public_key\":\"e5d7f092f62b841351cf82b9b497d7d0079b53e35fda10831d7301e9c2a12809\",\"role\":\"member\",\"kind\":\"human\"},\"id\":\"ev_mem_550650c922de2f4c_2\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":2,\"sig\":\"ed25519:MrVge/AUcRp6BSnoHHaCKOG5iFGYbC+a6ncFF2Z7biEwPvmbjmh+HT4mRUpTIFOKflVvwialVwzI44ioPPFvCA==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n{not json}\n{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"id\":\"mem_ef7253e185e9a23b\"},\"id\":\"ev_mem_550650c922de2f4c_3\",\"kind\":\"member.removed\",\"lamport\":20,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room_port_journal\",\"seq\":3,\"sig\":\"ed25519:qcvOy31mFALm+g7pA0SiIva/8RYlEBKvsFfcrN3VKXWUxTTXxoEQoF5IFVswDYJ+NiSvjGip1m67gMzCpUYCCw==\",\"ts\":\"2026-01-01T01:04:05.000000042Z\",\"v\":1}\n"
+        }
+      ],
+      "create_dir": true,
+      "author": "mem_550650c922de2f4c",
+      "max_lamport": 20,
+      "author_seq": 4,
+      "author_prev": "sha256:1f9ddf2598a27574907f1d3e1d9819b20cb317f2a7904da2749208b3b01ca951",
+      "members": [
+        {
+          "id": "mem_550650c922de2f4c",
+          "name": "Room",
+          "public_key": "74727824457d76c9cda32f3325d1aa4c3e0d6f4e9178dfda3f41c4425398e515",
+          "role": "owner",
+          "kind": "human"
+        }
+      ],
+      "note": "An undecodable line neither changes the projection nor stops replay of a later removal."
     }
   ],
   "append_cases": [

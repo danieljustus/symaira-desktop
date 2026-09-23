@@ -30,7 +30,7 @@ impl Member {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct State {
     pub members: BTreeMap<String, Member>,
 }

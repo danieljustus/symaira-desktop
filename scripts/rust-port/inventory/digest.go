@@ -123,6 +123,7 @@ func generatorSourcePaths() []string {
 		".gitattributes",
 		"scripts/rust-port",
 		"cmd/symdesk/port_inventory_test.go",
+		"cmd/symdesk/history_tasks_port_test.go",
 		"cmd/symroom/port_grammar_test.go",
 		"internal/tools/port_mcp_test.go",
 		"internal/selfhost/port_http_test.go",

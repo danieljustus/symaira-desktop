@@ -1,6 +1,7 @@
 #![deny(unsafe_code)]
 
 mod dataset;
+mod history;
 mod http;
 mod index_cli;
 mod mcp;
@@ -124,6 +125,13 @@ fn main() -> ExitCode {
             output_json,
             matches.get_flag("json"),
         ),
+        Some(("history", command)) => match command.subcommand() {
+            Some(("tasks", _)) => history::run_tasks(
+                matches.get_one::<String>("vault").map(String::as_str),
+                output_json,
+            ),
+            _ => process_exit(CoreExitCode::Ok),
+        },
         Some(("recipe", command)) => recipe::run(command, output_json),
         Some(("retention", command)) => {
             let vault_opt = matches.get_one::<String>("vault").cloned();
@@ -259,6 +267,11 @@ fn cli() -> Command {
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
         )
         .subcommand(Command::new("mcp"))
+        .subcommand(
+            Command::new("history")
+                .subcommand_required(true)
+                .subcommand(Command::new("tasks")),
+        )
         .subcommand(retention::cli())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())

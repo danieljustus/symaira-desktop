@@ -251,6 +251,10 @@ jobs:
         shell: bash
         run: make vault-history-differential
 
+      - name: Run native history tasks CLI differential
+        shell: bash
+        run: make history-tasks-cli-differential
+
       - name: Run native retention differential
         shell: bash
         run: make vault-retention-differential

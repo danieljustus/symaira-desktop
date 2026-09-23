@@ -21,6 +21,7 @@ const (
 var fixturePaths = []string{
 	"testdata/port/cli/symdesk-command-tree.json",
 	"testdata/port/cli/config-vault-selection.json",
+	"testdata/port/cli/history-tasks.json",
 	"testdata/port/cli/symroom-parser-grammar.json",
 	"testdata/port/core/config.json",
 	"testdata/port/core/config-precedence.json",
@@ -136,7 +137,7 @@ func runGenerate(repoRoot, commit, release string) {
 		run string
 	}{
 		{"./internal/config", "^TestPortConfigPrecedenceContract$"},
-		{"./cmd/symdesk", "TestSymdeskCobraInventory|^TestIndex(Maintenance|Build)ProcessPortFixture$|^TestPort(VaultSelection|RecipeValidate)CLIContract$"},
+		{"./cmd/symdesk", "TestSymdeskCobraInventory|^TestIndex(Maintenance|Build)ProcessPortFixture$|^TestPort(VaultSelection|RecipeValidate|HistoryTasks)CLIContract$"},
 		{"./internal/room/journal", "^TestPortRoomVerifyContract$"},
 		{"./internal/room/journal", "^TestPortRoomLogContract$"},
 		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPort(Note|Decide|Identity|Member|Index|Verify|Log|Artifact|ArtifactIdentity|Init|Watch|Doctor|Checkpoint)CLIContract"},

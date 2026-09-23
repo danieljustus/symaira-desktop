@@ -9,8 +9,14 @@ use std::{
 use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
 use serde::{Deserializer, Serialize};
 use serde_json::Value;
+use serde_json::value::RawValue;
+use sha2::{Digest, Sha256};
 
-use crate::{event::Event, journal};
+use crate::{
+    event::{self, Event},
+    identity::Identity,
+    journal,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Run {
@@ -290,6 +296,144 @@ pub fn wait(
         }
         thread::sleep((timeout - elapsed).min(Duration::from_millis(500)));
     }
+}
+
+/// Go: `run.Request` — append a signed `run.requested` event.
+pub fn request(
+    room_dir: &std::path::Path,
+    title: &str,
+    plan_file: &str,
+    adapter: &str,
+    identity: &Identity,
+) -> Result<Event, RunMutationError> {
+    let author = journal::author_stats(room_dir, &identity.member_id)?;
+    let sequence = author.seq.saturating_add(1).max(1);
+    let input = format!("{}:{title}:{sequence}", identity.member_id);
+    let digest = Sha256::digest(input.as_bytes());
+    let run_id = format!("run_{}", hex::encode(digest)[..16].to_owned());
+    let body = go_json(&serde_json::json!({
+        "adapter": adapter,
+        "plan_file": plan_file,
+        "run_id": run_id,
+        "title": title,
+    }))?;
+    let event = append_run_event(
+        room_dir,
+        identity,
+        format!("ev_{}", &run_id[4..]),
+        "run.requested",
+        body,
+    )?;
+    Ok(event)
+}
+
+/// Go: `run.Start` — append `run.started` only for a live approved run.
+pub fn start(
+    room_dir: &std::path::Path,
+    run_id: &str,
+    identity: &Identity,
+) -> Result<Event, RunMutationError> {
+    let run = get(room_dir, run_id)?;
+    if run.state != "approved" {
+        return Err(RunMutationError::InvalidTransition(format!(
+            "cannot start run in state '{}' (must be 'approved')",
+            run.state
+        )));
+    }
+    if let Some(expires_at) = &run.expires_at
+        && let Ok(expiration) =
+            time::OffsetDateTime::parse(expires_at, &time::format_description::well_known::Rfc3339)
+        && time::OffsetDateTime::now_utc() > expiration
+    {
+        return Err(RunMutationError::ApprovalExpired(format!(
+            "approval expired at {expires_at}"
+        )));
+    }
+    let body = go_json(&serde_json::json!({ "run_id": run_id }))?;
+    let event_id = derived_event_id(run_id, "start");
+    append_run_event(room_dir, identity, event_id, "run.started", body)
+}
+
+/// Go: `run.Cancel` — append `run.cancelled` unless the run is terminal.
+pub fn cancel(
+    room_dir: &std::path::Path,
+    run_id: &str,
+    reason: &str,
+    identity: &Identity,
+) -> Result<Event, RunMutationError> {
+    let run = get(room_dir, run_id)?;
+    if matches!(run.state.as_str(), "finished" | "failed" | "cancelled") {
+        return Err(RunMutationError::InvalidTransition(format!(
+            "cannot cancel run in terminal state '{}'",
+            run.state
+        )));
+    }
+    let body = go_json(&serde_json::json!({ "reason": reason, "run_id": run_id }))?;
+    let event_id = derived_event_id(run_id, "cancel");
+    append_run_event(room_dir, identity, event_id, "run.cancelled", body)
+}
+
+fn derived_event_id(run_id: &str, action: &str) -> String {
+    let digest = Sha256::digest(format!("{run_id}{action}").as_bytes());
+    format!("ev_{}", &hex::encode(digest)[..16])
+}
+
+fn append_run_event(
+    room_dir: &std::path::Path,
+    identity: &Identity,
+    id: String,
+    kind: &str,
+    body: String,
+) -> Result<Event, RunMutationError> {
+    let stats = journal::read_journal_stats(room_dir)?;
+    let author = journal::author_stats(room_dir, &identity.member_id)?;
+    let body = RawValue::from_string(body)
+        .map_err(|error| RunMutationError::Encoding(error.to_string()))?;
+    let mut event = Event {
+        v: event::CURRENT_VERSION,
+        id,
+        room: "rm_test".to_owned(),
+        author: identity.member_id.clone(),
+        seq: author.seq.saturating_add(1),
+        prev: author.prev,
+        lamport: stats.max_lamport.saturating_add(1),
+        ts: event::format_timestamp(time::OffsetDateTime::now_utc()),
+        kind: kind.to_owned(),
+        body,
+        sig: None,
+    };
+    event.sign(identity)?;
+    journal::append_event(room_dir, &event)?;
+    Ok(event)
+}
+
+fn go_json(value: &Value) -> Result<String, RunMutationError> {
+    let rendered = serde_json::to_string(value)
+        .map_err(|error| RunMutationError::Encoding(error.to_string()))?;
+    Ok(rendered
+        .replace('&', "\\u0026")
+        .replace('<', "\\u003c")
+        .replace('>', "\\u003e")
+        .replace('\u{2028}', "\\u2028")
+        .replace('\u{2029}', "\\u2029"))
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum RunMutationError {
+    #[error(transparent)]
+    Query(#[from] RunQueryError),
+    #[error(transparent)]
+    Journal(#[from] journal::JournalError),
+    #[error(transparent)]
+    Event(#[from] event::EventError),
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error("invalid run state transition: {0}")]
+    InvalidTransition(String),
+    #[error("run approval has expired: {0}")]
+    ApprovalExpired(String),
+    #[error("canonical encoding: {0}")]
+    Encoding(String),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

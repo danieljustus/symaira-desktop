@@ -7,23 +7,215 @@ use std::{
 };
 
 use symaira_core_exit::ExitCode as CoreExitCode;
-use symroom_core::runs::{self, RunQueryError, RunWaitError};
+use symroom_core::{
+    identity,
+    runs::{self, RunMutationError, RunQueryError, RunWaitError},
+};
 
-const USAGE: &str = "Usage: symroom run <request|list|show|start|cancel> [flags] [args]\n";
+const USAGE: &str = "Usage: symroom run <request|list|show|start|cancel|wait> [flags] [args]\n";
 
 pub fn run(args: &[OsString]) -> ExitCode {
     let Some(action) = args.first() else {
         return stdout(USAGE.to_owned(), CoreExitCode::Ok);
     };
     match action.to_string_lossy().as_ref() {
+        "request" => request(&args[1..]),
         "list" => list(&args[1..]),
         "show" => show(&args[1..]),
         "wait" => wait(&args[1..]),
+        "start" => start(&args[1..]),
+        "cancel" => cancel(&args[1..]),
         action => stderr(
             &format!("Unknown run action: {action}\n"),
             CoreExitCode::NoInput,
         ),
     }
+}
+
+fn request(args: &[OsString]) -> ExitCode {
+    let usage = "Usage of run request:\n  -adapter string\n    \tAdapter name\n  -identity string\n    \tAuthor identity name\n  -plan-file string\n    \tPlan file path\n  -title string\n    \tRun title\n";
+    let parsed = match parse_string_flags(
+        "run request",
+        args,
+        &["adapter", "identity", "plan-file", "title"],
+        usage,
+    ) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let Some(title) = parsed.values.get("title").filter(|title| !title.is_empty()) else {
+        return stderr("Error: --title is required\n", CoreExitCode::NoInput);
+    };
+    let identity_name = match resolve_identity_name(parsed.values.get("identity")) {
+        Ok(name) => name,
+        Err(code) => return code,
+    };
+    let signer = match identity::load(&identity_name) {
+        Ok(identity) => identity,
+        Err(error) => return identity_error(&identity_name, error),
+    };
+    match runs::request(
+        &room_dir(),
+        title,
+        parsed.values.get("plan-file").map_or("", String::as_str),
+        parsed.values.get("adapter").map_or("", String::as_str),
+        &signer,
+    ) {
+        Ok(event) => stdout(format!("{}\n", event.id), CoreExitCode::Ok),
+        Err(error) => stderr(
+            &format!("Error requesting run: {error}\n"),
+            CoreExitCode::Generic,
+        ),
+    }
+}
+
+fn start(args: &[OsString]) -> ExitCode {
+    let usage = "Usage of run start:\n  -identity string\n    \tAuthor identity name\n";
+    let parsed = match parse_string_flags("run start", args, &["identity"], usage) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let Some(run_id) = parsed.positionals.first() else {
+        return stderr(
+            "Usage: symroom run start <run_id> [--identity <name>]\n",
+            CoreExitCode::NoInput,
+        );
+    };
+    let identity_name = match resolve_identity_name(parsed.values.get("identity")) {
+        Ok(name) => name,
+        Err(code) => return code,
+    };
+    let signer = match identity::load(&identity_name) {
+        Ok(identity) => identity,
+        Err(error) => return identity_error(&identity_name, error),
+    };
+    match runs::start(&room_dir(), run_id, &signer) {
+        Ok(event) => stdout(format!("{}\n", event.id), CoreExitCode::Ok),
+        Err(RunMutationError::InvalidTransition(error)) => stderr(
+            &format!("Error: invalid run state transition: {error}\n"),
+            CoreExitCode::NoInput,
+        ),
+        Err(error) => stderr(
+            &format!("Error starting run: {error}\n"),
+            CoreExitCode::Generic,
+        ),
+    }
+}
+
+fn cancel(args: &[OsString]) -> ExitCode {
+    let usage = "Usage of run cancel:\n  -identity string\n    \tAuthor identity name\n  -reason string\n    \tReason for cancellation\n";
+    let parsed = match parse_string_flags("run cancel", args, &["identity", "reason"], usage) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let Some(run_id) = parsed.positionals.first() else {
+        return stderr(
+            "Usage: symroom run cancel <run_id> [--reason ...] [--identity <name>]\n",
+            CoreExitCode::NoInput,
+        );
+    };
+    let identity_name = match resolve_identity_name(parsed.values.get("identity")) {
+        Ok(name) => name,
+        Err(code) => return code,
+    };
+    let signer = match identity::load(&identity_name) {
+        Ok(identity) => identity,
+        Err(error) => return identity_error(&identity_name, error),
+    };
+    match runs::cancel(
+        &room_dir(),
+        run_id,
+        parsed.values.get("reason").map_or("", String::as_str),
+        &signer,
+    ) {
+        Ok(event) => stdout(format!("{}\n", event.id), CoreExitCode::Ok),
+        Err(RunMutationError::InvalidTransition(error)) => stderr(
+            &format!("Error: invalid run state transition: {error}\n"),
+            CoreExitCode::NoInput,
+        ),
+        Err(error) => stderr(
+            &format!("Error cancelling run: {error}\n"),
+            CoreExitCode::Generic,
+        ),
+    }
+}
+
+struct ParsedStringFlags {
+    values: std::collections::BTreeMap<String, String>,
+    positionals: Vec<String>,
+}
+
+fn parse_string_flags(
+    command: &str,
+    args: &[OsString],
+    allowed: &[&str],
+    usage: &str,
+) -> Result<ParsedStringFlags, ExitCode> {
+    let mut parsed = ParsedStringFlags {
+        values: std::collections::BTreeMap::new(),
+        positionals: Vec::new(),
+    };
+    let mut parsing_flags = true;
+    let mut index = 0;
+    while index < args.len() {
+        let argument = args[index].to_string_lossy();
+        if parsing_flags && argument == "--" {
+            parsing_flags = false;
+            index += 1;
+            continue;
+        }
+        if parsing_flags && argument.starts_with('-') {
+            let name_value = argument.trim_start_matches('-');
+            let (name, inline_value) = name_value
+                .split_once('=')
+                .map_or((name_value, None), |(name, value)| (name, Some(value)));
+            if is_help_flag(&argument) {
+                return Err(stderr(usage, CoreExitCode::Ok));
+            }
+            if !allowed.contains(&name) {
+                return Err(stderr(
+                    &format!("flag provided but not defined: -{name}\n{usage}"),
+                    CoreExitCode::NoInput,
+                ));
+            }
+            let value = if let Some(value) = inline_value {
+                value.to_owned()
+            } else if let Some(value) = args.get(index + 1) {
+                index += 1;
+                value.to_string_lossy().into_owned()
+            } else {
+                return Err(stderr(
+                    &format!("flag needs an argument: -{name}\n{usage}"),
+                    CoreExitCode::NoInput,
+                ));
+            };
+            parsed.values.insert(name.to_owned(), value);
+            index += 1;
+        } else {
+            parsing_flags = false;
+            parsed.positionals.push(argument.into_owned());
+            index += 1;
+        }
+    }
+    let _ = command;
+    Ok(parsed)
+}
+
+fn resolve_identity_name(value: Option<&String>) -> Result<String, ExitCode> {
+    match value.filter(|value| !value.is_empty()) {
+        Some(name) => Ok(name.clone()),
+        None => Err(stderr(
+            "Error: --identity is required when default_identity is not configured\n",
+            CoreExitCode::NoInput,
+        )),
+    }
+}
+
+fn identity_error(name: &str, error: symroom_core::identity::IdentityError) -> ExitCode {
+    stderr(
+        &format!("Error loading identity {name}: {error}\n"),
+        CoreExitCode::NotFound,
+    )
 }
 
 fn list(args: &[OsString]) -> ExitCode {

@@ -282,6 +282,10 @@ jobs:
         shell: bash
         run: make sidecar-metadata-differential
 
+      - name: Run native MCP initialize differential
+        shell: bash
+        run: make mcp-initialize-differential
+
       - name: Run native room identity differential
         shell: bash
         run: make symroom-differential

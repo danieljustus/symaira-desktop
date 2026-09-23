@@ -59,6 +59,33 @@ func TestPortHistorySelectedTrashPurgeContract(t *testing.T) {
 	}
 }
 
+// Go's production loop can remove an earlier selected entry before it sees a
+// later stale selector. The Rust migration deliberately prevalidates all
+// selectors to avoid that partial destructive outcome.
+func TestPortHistorySelectedTrashMixedSelectorSafetyDelta(t *testing.T) {
+	s := newScenario(t, []historyFileSpec{{Path: "a.md", Content: "alpha"}, {Path: "b.md", Content: "bravo"}})
+	first, err := s.store.Trash("a.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := s.store.Trash("b.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	stale := *second
+	stale.OriginalPath = "elsewhere.md"
+	removed, err := s.store.PurgeTrashEntries([]TrashEntry{*first, stale})
+	if removed != 1 || err == nil || !strings.Contains(err.Error(), "original path changed") {
+		t.Fatalf("Go mixed-selector behavior: removed=%d err=%v", removed, err)
+	}
+	if _, err := os.Stat(filepath.Join(s.root, trashRelDir(), first.Name)); !os.IsNotExist(err) {
+		t.Fatalf("first entry should be gone: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(s.root, trashRelDir(), second.Name)); err != nil {
+		t.Fatalf("second entry should remain: %v", err)
+	}
+}
+
 func buildSelectedTrashPurgeFixture(t *testing.T) selectedTrashPurgeFixture {
 	t.Helper()
 	hashes := make(map[string]string)

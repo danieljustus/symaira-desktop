@@ -259,7 +259,7 @@ history-trash-purge-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistorySelectedTrashPurgeContract$$'
 
 history-trash-purge-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistorySelectedTrashPurgeContract$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistorySelectedTrash(PurgeContract|MixedSelectorSafetyDelta)$$'
 	$(CARGO) test -p symdesk-vault --locked --test history_trash_purge_contracts
 
 dataset-purge-fixtures-generate:

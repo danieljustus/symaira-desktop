@@ -113,6 +113,34 @@ fn go_selected_trash_purge_contracts_replay() {
     }
 }
 
+#[test]
+fn mixed_stale_selection_rejects_before_any_deletion() {
+    let guard = temp_root("mixed-selector");
+    fs::write(guard.0.join("a.md"), b"alpha").unwrap();
+    fs::write(guard.0.join("b.md"), b"bravo").unwrap();
+    let store = HistoryStore::with_clock(&guard.0, monotonic_clock());
+    let first = store.trash("a.md").unwrap();
+    let second = store.trash("b.md").unwrap();
+    let mut stale = second.clone();
+    stale.original_path = "elsewhere.md".to_owned();
+    assert!(matches!(
+        store.purge_trash_entries(&[first.clone(), stale]),
+        Err(HistoryError::TrashEntryOriginalPathChanged(_))
+    ));
+    assert!(
+        guard
+            .0
+            .join(format!(".symdesk/trash/{}", first.name))
+            .exists()
+    );
+    assert!(
+        guard
+            .0
+            .join(format!(".symdesk/trash/{}", second.name))
+            .exists()
+    );
+}
+
 struct TempVault(PathBuf);
 
 impl Drop for TempVault {

@@ -160,11 +160,17 @@
       "acceptance": [
         "make vault-write-differential",
         "make vault-history-differential",
+        "make history-purge-differential",
+        "make history-trash-purge-differential",
         "make vault-retention-differential",
         "make retention-rules-differential",
+        "make retention-state-differential",
         "cargo nextest run -p symdesk-vault",
         "make config-save-differential",
-        "make retention-cli-differential"
+        "make retention-cli-differential",
+        "make dataset-sync-differential",
+        "make dataset-cli-differential",
+        "make dataset-purge-differential"
       ]
     },
     {

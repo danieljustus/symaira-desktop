@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "source_hash": "3cf6d92103419c8893d13ad36ec42b190d7059dc39620b8ff73607faea8cc5f2",
+  "cases": [
+    {
+      "id": "empty",
+      "segments": {},
+      "ordered": []
+    },
+    {
+      "id": "five-order-keys",
+      "segments": {
+        "a": [
+          {
+            "v": 1,
+            "id": "author-earlier",
+            "room": "",
+            "author": "a",
+            "seq": 1,
+            "prev": "",
+            "lamport": 2,
+            "ts": "2026-09-23T10:00:00.000Z",
+            "kind": "",
+            "body": {}
+          },
+          {
+            "v": 1,
+            "id": "lamport-earlier",
+            "room": "",
+            "author": "a",
+            "seq": 1,
+            "prev": "",
+            "lamport": 1,
+            "ts": "2026-09-23T10:00:00.000Z",
+            "kind": "",
+            "body": {}
+          }
+        ],
+        "z": [
+          {
+            "v": 1,
+            "id": "lamport-later",
+            "room": "",
+            "author": "z",
+            "seq": 1,
+            "prev": "",
+            "lamport": 3,
+            "ts": "2026-09-23T10:00:00.000Z",
+            "kind": "",
+            "body": {}
+          },
+          {
+            "v": 1,
+            "id": "id-z",
+            "room": "",
+            "author": "z",
+            "seq": 2,
+            "prev": "",
+            "lamport": 2,
+            "ts": "2026-09-23T10:00:00.000Z",
+            "kind": "",
+            "body": {}
+          },
+          {
+            "v": 1,
+            "id": "id-a",
+            "room": "",
+            "author": "z",
+            "seq": 2,
+            "prev": "",
+            "lamport": 2,
+            "ts": "2026-09-23T10:00:00.000Z",
+            "kind": "",
+            "body": {}
+          },
+          {
+            "v": 1,
+            "id": "seq-earlier",
+            "room": "",
+            "author": "z",
+            "seq": 1,
+            "prev": "",
+            "lamport": 2,
+            "ts": "2026-09-23T10:00:00.000Z",
+            "kind": "",
+            "body": {}
+          },
+          {
+            "v": 1,
+            "id": "timestamp-earlier",
+            "room": "",
+            "author": "z",
+            "seq": 1,
+            "prev": "",
+            "lamport": 2,
+            "ts": "2026-09-23T09:00:00.000Z",
+            "kind": "",
+            "body": {}
+          }
+        ]
+      },
+      "ordered": [
+        "lamport-earlier",
+        "timestamp-earlier",
+        "author-earlier",
+        "seq-earlier",
+        "id-a",
+        "id-z",
+        "lamport-later"
+      ]
+    },
+    {
+      "id": "stable-identical-keys",
+      "segments": {
+        "a": [
+          {
+            "v": 1,
+            "id": "same",
+            "room": "",
+            "author": "a",
+            "seq": 1,
+            "prev": "",
+            "lamport": 1,
+            "ts": "2026-09-23T10:00:00.000Z",
+            "kind": "",
+            "body": {
+              "position": "first"
+            }
+          },
+          {
+            "v": 1,
+            "id": "same",
+            "room": "",
+            "author": "a",
+            "seq": 1,
+            "prev": "",
+            "lamport": 1,
+            "ts": "2026-09-23T10:00:00.000Z",
+            "kind": "",
+            "body": {
+              "position": "second"
+            }
+          }
+        ]
+      },
+      "ordered": [
+        "same",
+        "same"
+      ],
+      "bodies": [
+        "{\"position\":\"first\"}",
+        "{\"position\":\"second\"}"
+      ]
+    }
+  ]
+}

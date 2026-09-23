@@ -18,6 +18,7 @@
 //!   separator.
 
 use std::{
+    collections::BTreeMap,
     fs,
     io::Write,
     path::{Path, PathBuf},
@@ -51,6 +52,22 @@ pub struct AuthorStats {
     pub seq: u64,
     /// `sha256:` over the last non-blank line, or [`ZERO_HASH`] when empty.
     pub prev: String,
+}
+
+/// Go `journal.Merge`: total-order events from all author segments. A stable
+/// sort retains segment order for events with identical complete sort keys.
+pub fn merge(segments: BTreeMap<String, Vec<Event>>) -> Vec<Event> {
+    let mut events: Vec<Event> = segments.into_values().flatten().collect();
+    events.sort_by(|left, right| {
+        (left.lamport, &left.ts, &left.author, left.seq, &left.id).cmp(&(
+            right.lamport,
+            &right.ts,
+            &right.author,
+            right.seq,
+            &right.id,
+        ))
+    });
+    events
 }
 
 /// Reads the Lamport ceiling and member state of a room journal.

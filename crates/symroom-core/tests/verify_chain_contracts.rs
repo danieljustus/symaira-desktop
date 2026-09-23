@@ -25,6 +25,8 @@ struct Case {
     file: bool,
     content: String,
     #[serde(default)]
+    content_hex: String,
+    #[serde(default)]
     repeat_line: usize,
     code: String,
     error: String,
@@ -39,7 +41,7 @@ fn replays_go_verify_chain_cases() {
     )
     .expect("parse Go verify-chain fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 14, "Go case inventory");
+    assert_eq!(fixture.cases.len(), 15, "Go case inventory");
     assert_eq!(fixture.source_hashes.len(), 4, "Go source inventory");
     for (relative, expected) in &fixture.source_hashes {
         let source = fs::read(repository.join(relative)).expect("read Go source");
@@ -61,13 +63,15 @@ fn replays_go_verify_chain_cases() {
         if case.file {
             fs::create_dir(room.join("journal")).expect("create scratch journal");
             let content = if case.repeat_line > 0 {
-                format!("{}\n", " ".repeat(case.repeat_line))
+                format!("{}\n", " ".repeat(case.repeat_line)).into_bytes()
+            } else if !case.content_hex.is_empty() {
+                hex::decode(&case.content_hex).expect("decode Go segment hex bytes")
             } else {
-                case.content.clone()
+                case.content.as_bytes().to_vec()
             };
             fs::write(
                 room.join("journal").join(format!("{}.jsonl", case.author)),
-                content.as_bytes(),
+                content,
             )
             .expect("write Go segment bytes");
         }
@@ -99,6 +103,7 @@ fn replays_go_verify_chain_cases() {
         "mixed-case-duplicates",
         "unicode-folded-seq",
         "null-after-value",
+        "unknown-field-invalid-utf8",
         "scanner-boundary",
         "scanner-too-long",
     ] {

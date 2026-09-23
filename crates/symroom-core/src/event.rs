@@ -6,7 +6,7 @@
 use std::fmt;
 use std::io;
 
-use serde::de::{Error as _, MapAccess, Visitor};
+use serde::de::{Error as _, IgnoredAny, MapAccess, Visitor};
 use serde::ser::{SerializeMap, Serializer as _};
 use serde_json::value::RawValue;
 
@@ -103,16 +103,6 @@ impl<'de> serde::Deserialize<'de> for GoEvent {
             fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
                 let mut event = empty_go_event();
                 while let Some(key) = map.next_key::<String>()? {
-                    let raw = map.next_value::<Box<RawValue>>()?;
-                    macro_rules! set_non_null {
-                        ($field:expr, $type:ty) => {
-                            if let Some(value) = serde_json::from_str::<Option<$type>>(raw.get())
-                                .map_err(M::Error::custom)?
-                            {
-                                $field = value;
-                            }
-                        };
-                    }
                     // Go encoding/json uses Unicode simple fold. Long s and
                     // Kelvin sign also fold into the ASCII field names.
                     let folded: String = key
@@ -123,6 +113,32 @@ impl<'de> serde::Deserialize<'de> for GoEvent {
                             _ => ch.to_ascii_lowercase(),
                         })
                         .collect();
+                    if !matches!(
+                        folded.as_str(),
+                        "v" | "id"
+                            | "room"
+                            | "author"
+                            | "seq"
+                            | "prev"
+                            | "lamport"
+                            | "ts"
+                            | "kind"
+                            | "body"
+                            | "sig"
+                    ) {
+                        map.next_value::<IgnoredAny>()?;
+                        continue;
+                    }
+                    let raw = map.next_value::<Box<RawValue>>()?;
+                    macro_rules! set_non_null {
+                        ($field:expr, $type:ty) => {
+                            if let Some(value) = serde_json::from_str::<Option<$type>>(raw.get())
+                                .map_err(M::Error::custom)?
+                            {
+                                $field = value;
+                            }
+                        };
+                    }
                     match folded.as_str() {
                         "v" => set_non_null!(event.v, i64),
                         "id" => set_non_null!(event.id, String),

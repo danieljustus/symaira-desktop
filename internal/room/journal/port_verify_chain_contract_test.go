@@ -20,6 +20,7 @@ type verifyChainCase struct {
 	Author     string `json:"author"`
 	File       bool   `json:"file"`
 	Content    string `json:"content"`
+	ContentHex string `json:"content_hex,omitempty"`
 	RepeatLine int    `json:"repeat_line,omitempty"`
 	Code       string `json:"code"`
 	Error      string `json:"error"`
@@ -80,6 +81,7 @@ func TestPortRoomVerifyChainContract(t *testing.T) {
 		{ID: "mixed-case-duplicates", Author: "alice", File: true, Content: `{"SeQ":9,"seq":1,"PREV":"wrong","prev":"` + zeroHash + `"}` + "\n", Code: "ok"},
 		{ID: "unicode-folded-seq", Author: "alice", File: true, Content: `{"\u017feq":1,"prev":"` + zeroHash + `"}` + "\n", Code: "ok"},
 		{ID: "null-after-value", Author: "alice", File: true, Content: `{"seq":1,"seq":null,"prev":"` + zeroHash + `","prev":null}` + "\n", Code: "ok"},
+		{ID: "unknown-field-invalid-utf8", Author: "alice", File: true, ContentHex: hex.EncodeToString([]byte(strings.TrimSuffix(first, "}\n") + ",\"extra\":\"" + string([]byte{0xff}) + "\"}\n")), Code: "ok"},
 		{ID: "scanner-boundary", Author: "alice", File: true, RepeatLine: 65535, Code: "ok"},
 		{ID: "scanner-too-long", Author: "alice", File: true, RepeatLine: 65536, Code: "scanner_error"},
 	}
@@ -91,6 +93,13 @@ func TestPortRoomVerifyChainContract(t *testing.T) {
 				t.Fatal(err)
 			}
 			content := item.Content
+			if item.ContentHex != "" {
+				decoded, err := hex.DecodeString(item.ContentHex)
+				if err != nil {
+					t.Fatal(err)
+				}
+				content = string(decoded)
+			}
 			if item.RepeatLine > 0 {
 				content = strings.Repeat(" ", item.RepeatLine) + "\n"
 			}
@@ -118,7 +127,7 @@ func TestPortRoomVerifyChainContract(t *testing.T) {
 		}
 	}
 	fixture.Cases = cases
-	if len(fixture.Cases) != 14 {
+	if len(fixture.Cases) != 15 {
 		t.Fatal("verify-chain case inventory changed")
 	}
 	data, err := json.MarshalIndent(fixture, "", "  ")

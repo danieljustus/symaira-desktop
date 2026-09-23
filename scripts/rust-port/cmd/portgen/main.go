@@ -46,6 +46,7 @@ var fixturePaths = []string{
 	"testdata/port/vault/note-operations.json",
 	"testdata/port/vault/retention.json",
 	"testdata/port/vault/retention-rules.json",
+	"testdata/port/vault/retention-state.json",
 	"testdata/port/sidecar/contracts.json",
 	"testdata/port/sidecar/lifecycle.json",
 	"testdata/port/sidecar/large-corpus.json",

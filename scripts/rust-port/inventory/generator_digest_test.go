@@ -46,6 +46,47 @@ func TestGeneratorDigestIncludesMakefileAndCanReadImmutableRevision(t *testing.T
 	}
 }
 
+func TestGeneratorDigestIncludesPackageLocalFixtureGenerators(t *testing.T) {
+	for _, relative := range []string{
+		"internal/service/port_dataset_contract_test.go",
+		"internal/service/port_retention_state_contract_test.go",
+		"internal/service/port_noteops_contract_test.go",
+		"internal/vault/port_writefs_contract_test.go",
+		"internal/history/port_lifecycle_contract_test.go",
+		"internal/retention/port_retention_contract_test.go",
+		"internal/retention/port_retention_rules_contract_test.go",
+	} {
+		t.Run(relative, func(t *testing.T) {
+			repoRoot := t.TempDir()
+			runGeneratorDigestGit(t, repoRoot, "init", "-q")
+			writeGeneratorDigestFile(t, repoRoot, "Makefile", "port-fixtures-check:\n\t@true\n")
+			writeGeneratorDigestFile(t, repoRoot, relative, "package service\n// original oracle\n")
+			runGeneratorDigestGit(t, repoRoot, "add", "--", ".")
+			runGeneratorDigestGit(t, repoRoot, "commit", "-q", "-m", "test: fixture generator")
+			revision := generatorDigestGitOutput(t, repoRoot, "rev-parse", "HEAD")
+			before, err := ComputeGitRevisionGeneratorSourceDigest(repoRoot, revision)
+			if err != nil {
+				t.Fatal(err)
+			}
+			writeGeneratorDigestFile(t, repoRoot, relative, "package service\n// mutated oracle\n")
+			after, err := ComputeGeneratorSourceDigest(repoRoot)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if after == before {
+				t.Fatalf("generator-only mutation was not detected: %s", relative)
+			}
+			immutable, err := ComputeGitRevisionGeneratorSourceDigest(repoRoot, revision)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if immutable != before {
+				t.Fatal("working-tree mutation changed immutable generator identity")
+			}
+		})
+	}
+}
+
 func writeGeneratorDigestFile(t *testing.T, repoRoot, rel, content string) {
 	t.Helper()
 	path := filepath.Join(repoRoot, filepath.FromSlash(rel))

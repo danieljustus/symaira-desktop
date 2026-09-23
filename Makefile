@@ -1,5 +1,7 @@
 .PHONY: benchmark-large boundary-guard build clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
 
+.PHONY: retention-state-fixtures-generate retention-state-differential
+
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
 ROOM_LDFLAGS = -X github.com/danieljustus/symaira-desktop/internal/room/version.Version=$(if $(VERSION),$(VERSION),(dev))
@@ -31,6 +33,9 @@ FUZZ_RUNS ?= 10000
 # `make PORTGEN_CHECK_ENV=:` ineffective; the Go check also strips this set
 # before running package-local fixture tests from its immutable snapshot.
 override PORTGEN_CHECK_ENV := env -u PORT_GENERATE -u port_generate -u PORT_FIXTURES_GENERATE -u port_fixtures_generate -u PORTGEN_GENERATE -u portgen_generate -u GENERATE_PORT_FIXTURES -u generate_port_fixtures -u SYMDESK_PORT_GENERATE -u symdesk_port_generate -u PORTGEN_SIDECAR_ORACLE_COMMIT -u portgen_sidecar_oracle_commit -u PORTGEN_SIDECAR_ORACLE_RELEASE -u portgen_sidecar_oracle_release -u CONFIGGEN_GENERATE -u configgen_generate -u COREGEN_GENERATE -u coregen_generate -u QUERYGEN_GENERATE -u querygen_generate -u VAULTGEN_GENERATE -u vaultgen_generate -u VAULTFSGEN_GENERATE -u vaultfsgen_generate -u TYPEDVAULTGEN_GENERATE -u typedvaultgen_generate -u REPRESENTATIVEGEN_GENERATE -u representativegen_generate -u MCPGEN_GENERATE -u mcpgen_generate
+
+# Check mode must read the committed fixture, not a caller-selected substitute.
+override PORTGEN_CHECK_ENV += -u PORT_FIXTURE_PATH -u port_fixture_path
 
 build:
 	@mkdir -p bin
@@ -178,6 +183,15 @@ retention-rules-differential:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retention -run TestPortRetentionRulesContract
 	$(CARGO) test -p symdesk-vault --test retention_rules_contracts --locked
 
+# RUST-007 authoritative Markdown/CSV state and post-mutation rereads.
+# Generation is explicit; acceptance checks never rewrite frozen expectations.
+retention-state-fixtures-generate:
+	$(PORTGEN_CHECK_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortRetentionStateContract$$'
+
+retention-state-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortRetentionStateContract$$' -v
+	$(CARGO) test -p symdesk-vault --test retention_state_contracts --locked
+
 vault-retention-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retention -run TestPortRetentionContract
 
@@ -250,7 +264,7 @@ differential-go-selftest:
 		--symroom-left "bin/symroom" --symroom-right "bin/symroom" \
 		--cases "$(PORT_CASES)"
 
-port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential room-journal-differential
+port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential room-journal-differential retention-state-differential
 
 representative-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/representativegen

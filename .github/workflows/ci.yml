@@ -264,6 +264,10 @@ jobs:
         shell: bash
         run: make retention-cli-differential
 
+      - name: Run native authoritative retention state differential
+        shell: bash
+        run: make retention-state-differential
+
       - name: Run native config-save filesystem differential
         shell: bash
         run: make config-save-differential

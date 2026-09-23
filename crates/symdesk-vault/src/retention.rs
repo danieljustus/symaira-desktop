@@ -146,7 +146,8 @@ pub struct Proposal {
     pub rule_name: String,
     #[serde(with = "crate::history::rfc3339_nano")]
     pub created: OffsetDateTime,
-    pub items: Vec<ProposalItem>,
+    // Go's nil slice is written as null; an omitted field decodes to nil too.
+    pub items: Option<Vec<ProposalItem>>,
     pub status: String,
 }
 

@@ -467,6 +467,40 @@
    "compare_sidecar_layout": true
   },
   {
+   "id": "retention-diff-null-items-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "diff", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"batch\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":null,\"status\":\"pending\"}", "mode": 420}
+   ],
+   "description": "Go eval writes a nil items slice as null when no document matches; diff retains null JSON output.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-reject-omitted-items-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"batch\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\"}", "mode": 420}
+   ],
+   "description": "Go decodes an omitted items field as nil and accepts rejection; the Rust test also checks the persisted null field.",
+   "compare_sidecar_layout": true
+  },
+  {
    "id": "retention-history-extra-arg-json",
    "binary": "symdesk",
    "stage": "retention",

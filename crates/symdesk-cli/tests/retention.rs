@@ -112,6 +112,36 @@ fn reject_persists_and_diff_reads_back_the_proposal() {
 }
 
 #[test]
+fn go_nil_items_survive_rejection_and_render_as_null() {
+    for items_field in [",\"items\":null", ""] {
+        let root = TempRoot::new("nil-items");
+        fs::create_dir_all(root.proposal_dir()).expect("create proposal directory");
+        let path = root.proposal_dir().join("ret-safe.json");
+        fs::write(
+            &path,
+            format!(
+                "{{\"run_id\":\"ret-safe\",\"rule_name\":\"batch\",\"created\":\"2026-01-01T00:00:00Z\"{items_field},\"status\":\"pending\"}}"
+            ),
+        )
+        .expect("write Go proposal");
+
+        let output = run(&root, ["retention", "diff", "ret-safe", "--json"]);
+        assert_ok(&output, b"null\n");
+
+        let output = run(&root, ["retention", "reject", "ret-safe", "--json"]);
+        assert_ok(
+            &output,
+            b"{\"run_id\":\"ret-safe\",\"status\":\"rejected\"}\n",
+        );
+        let persisted: serde_json::Value =
+            serde_json::from_slice(&fs::read(&path).expect("read rejected proposal"))
+                .expect("decode rejected proposal");
+        assert_eq!(persisted["items"], serde_json::Value::Null);
+        assert_eq!(persisted["status"], "rejected");
+    }
+}
+
+#[test]
 fn diff_preserves_go_json_escaping_and_human_struct_layout() {
     let root = TempRoot::new("diff");
     fs::create_dir_all(root.proposal_dir()).expect("create proposal directory");

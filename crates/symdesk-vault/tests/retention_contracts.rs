@@ -319,7 +319,7 @@ fn replay_proposals(fixture: &Fixture) {
             run_id: "../escape".to_owned(),
             rule_name: String::new(),
             created: OffsetDateTime::UNIX_EPOCH,
-            items: Vec::new(),
+            items: Some(Vec::new()),
             status: retention::PROPOSAL_STATUS_PENDING.to_owned(),
         },
     )

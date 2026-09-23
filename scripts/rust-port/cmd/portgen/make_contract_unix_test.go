@@ -20,7 +20,7 @@ func TestMakeCheckEnvironmentCannotBeCommandLineOverridden(t *testing.T) {
 		t.Fatalf("make dry run: %v\n%s", err, output)
 	}
 	text := string(output)
-	for _, name := range []string{"PORT_GENERATE", "PORTGEN_GENERATE", "COREGEN_GENERATE", "MCPGEN_GENERATE"} {
+	for _, name := range []string{"PORT_GENERATE", "PORTGEN_GENERATE", "COREGEN_GENERATE", "MCPGEN_GENERATE", "PORT_FIXTURE_PATH", "port_fixture_path"} {
 		if !strings.Contains(text, "-u "+name) {
 			t.Fatalf("port-fixtures-check did not unset %s:\n%s", name, output)
 		}

@@ -151,6 +151,20 @@ def bash_executable():
 
 
 class NativeCIContracts(unittest.TestCase):
+    def test_retention_state_differential_runs_on_all_native_targets(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        job = workflow_job_body(workflow, "rust-native")
+        self.assertIn("os: [ubuntu-latest, macos-latest, windows-latest]", job)
+        self.assertIn(
+            "      - name: Run native authoritative retention state differential\n"
+            "        shell: bash\n"
+            "        run: make retention-state-differential\n",
+            job,
+        )
+        makefile = (ROOT / "Makefile").read_text()
+        self.assertRegex(makefile, r"(?m)^\.PHONY:.*\bretention-state-differential\b")
+        self.assertRegex(makefile, r"(?m)^port-contract:.*\bretention-state-differential\b")
+
     def test_rust_historical_evidence_checkouts_have_full_history(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         for job in ("test", "port-contract", "rust", "rust-native"):

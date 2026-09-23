@@ -116,9 +116,9 @@ pub fn run_list(vault: Option<&str>, output_json: bool) -> std::process::ExitCod
             "Proposal {} ({}): {} items pending review\n",
             proposal.run_id,
             go_local_time(proposal.created, false),
-            proposal.items.len()
+            proposal.items.as_ref().map_or(0, Vec::len)
         ));
-        for item in &proposal.items {
+        for item in proposal.items.as_deref().unwrap_or(&[]) {
             rendered.push_str(&format!(
                 "  {} — expires {} → {}\n",
                 item.path, item.expires_at, item.action
@@ -181,7 +181,7 @@ pub fn run_diff(
     if output_json {
         return write_go_json(&proposal.items);
     }
-    write_stdout(render_items(&proposal.items))
+    write_stdout(render_items(proposal.items.as_deref().unwrap_or(&[])))
 }
 
 /// Go: `newRetentionHistoryCmd`'s `RunE`.

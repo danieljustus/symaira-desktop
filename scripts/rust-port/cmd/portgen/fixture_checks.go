@@ -38,6 +38,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"vault history lifecycle", []string{"test", "-count=1", "./internal/history", "-run", "TestPortHistoryLifecycleContract"}, []string{"testdata/port/vault/history-lifecycle.json"}, false},
 	{"vault retention corpus", []string{"test", "-count=1", "./internal/retention", "-run", "TestPortRetentionContract"}, []string{"testdata/port/vault/retention.json"}, false},
 	{"vault retention rules", []string{"test", "-count=1", "./internal/retention", "-run", "TestPortRetentionRulesContract"}, []string{"testdata/port/vault/retention-rules.json"}, false},
+	{"authoritative retention state", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortRetentionStateContract$"}, []string{"testdata/port/vault/retention-state.json"}, false},
 	{"sidecar contracts", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarContract"}, []string{"testdata/port/sidecar/contracts.json"}, false},
 	{"sidecar lifecycle", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarLifecycleContract"}, []string{"testdata/port/sidecar/lifecycle.json"}, true},
 	{"sidecar oracle metadata", []string{"test", "-count=1", "./scripts/rust-port/cmd/sidecar-roundtrip", "-run", "TestCommittedSidecarOracleIdentities"}, []string{"testdata/port/sidecar/large-corpus.json", "testdata/port/sidecar/roundtrip.json"}, false},
@@ -87,7 +88,7 @@ func sanitizedCheckEnvironment(environment []string) []string {
 		case "USERPROFILE":
 			profile = value
 		}
-		if isFixtureGenerationEnvironment(name) || name == portgenSidecarOracleCommitEnv || name == portgenSidecarOracleReleaseEnv || strings.HasPrefix(upper, "GO") || strings.HasPrefix(upper, "GIT") || upper == "PATH" {
+		if isFixtureGenerationEnvironment(name) || upper == "PORT_FIXTURE_PATH" || name == portgenSidecarOracleCommitEnv || name == portgenSidecarOracleReleaseEnv || strings.HasPrefix(upper, "GO") || strings.HasPrefix(upper, "GIT") || upper == "PATH" {
 			continue
 		}
 		result = append(result, item)

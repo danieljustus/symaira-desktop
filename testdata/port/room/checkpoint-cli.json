@@ -118,6 +118,45 @@
       ]
     },
     {
+      "name": "request-timeout-fractional",
+      "args": [
+        "checkpoint",
+        "request",
+        "--identity",
+        "owner",
+        "--run",
+        "run_fixture",
+        "--question",
+        "Proceed?",
+        "--timeout=.5ms"
+      ],
+      "actor": "owner",
+      "dynamic_checkpoint": true,
+      "exit_code": 10,
+      "stdout": "",
+      "stderr": "Error: wait timed out for checkpoint \u003ccheckpoint-id\u003e\n",
+      "final_files": [
+        {
+          "name": "journal/mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "request-timeout-invalid",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=bad"
+      ],
+      "actor": "owner",
+      "dynamic_checkpoint": true,
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "invalid value \"bad\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "final_files": []
+    },
+    {
       "name": "request-timeout-project-over-global",
       "args": [
         "checkpoint",

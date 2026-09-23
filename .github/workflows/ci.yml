@@ -346,6 +346,10 @@ jobs:
         shell: bash
         run: make room-doctor-cli-differential
 
+      - name: Run native room checkpoint CLI differential
+        shell: bash
+        run: make room-checkpoint-cli-differential
+
       - name: Run native index backup differential
         shell: bash
         run: make index-backup-differential
@@ -365,6 +369,10 @@ jobs:
       - name: Run native index maintenance CLI differential
         shell: bash
         run: make index-maintenance-cli-differential
+
+      - name: Run native index build CLI differential
+        shell: bash
+        run: make index-build-cli-differential
 
       - name: Run native room run projection differential
         shell: bash

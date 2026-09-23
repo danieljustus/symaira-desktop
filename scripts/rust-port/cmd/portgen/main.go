@@ -74,11 +74,13 @@ var fixturePaths = []string{
 	"testdata/port/room/init-cli.json",
 	"testdata/port/room/watch-cli.json",
 	"testdata/port/room/doctor-cli.json",
+	"testdata/port/room/checkpoint-cli.json",
 	"testdata/port/retrieval/index-backup.json",
 	"testdata/port/retrieval/index-restore.json",
 	"testdata/port/retrieval/index-relocate.json",
 	"testdata/port/retrieval/index-location.json",
 	"testdata/port/cli/index-maintenance-process.json",
+	"testdata/port/cli/index-build-process.json",
 	"testdata/port/room/mcp-parity.json",
 	"testdata/port/room/mcp-artifact.txt",
 	"testdata/port/room/mcp-mutations.json",
@@ -128,10 +130,10 @@ func runGenerate(repoRoot, commit, release string) {
 		pkg string
 		run string
 	}{
-		{"./cmd/symdesk", "TestSymdeskCobraInventory|^TestIndexMaintenanceProcessPortFixture$"},
+		{"./cmd/symdesk", "TestSymdeskCobraInventory|^TestIndex(Maintenance|Build)ProcessPortFixture$"},
 		{"./internal/room/journal", "^TestPortRoomVerifyContract$"},
 		{"./internal/room/journal", "^TestPortRoomLogContract$"},
-		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPort(Note|Decide|Identity|Member|Index|Verify|Log|Artifact|ArtifactIdentity|Init|Watch|Doctor)CLIContract"},
+		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPort(Note|Decide|Identity|Member|Index|Verify|Log|Artifact|ArtifactIdentity|Init|Watch|Doctor|Checkpoint)CLIContract"},
 		{"./internal/room/run", "^TestPortRunProjectionContract$"},
 		{"./internal/room/room", "^TestPortRoomInitContract$"},
 		{"./internal/room/journal", "^TestPortRoomMergeReadContract$"},

@@ -62,11 +62,13 @@ fn request(args: &[OsString]) -> ExitCode {
         );
     }
     let timeout = match parsed.values.get("timeout") {
-        Some(value) => match parse_duration(value) {
+        Some(value) => match crate::run_cli::parse_go_duration(value) {
             Some(duration) => duration,
             None => {
                 return stderr(
-                    &format!("time: invalid duration {value:?}\n"),
+                    &format!(
+                        "invalid value \"{value}\" for flag -timeout: parse error\n{REQUEST_FLAGS}"
+                    ),
                     CoreExitCode::NoInput,
                 );
             }
@@ -311,49 +313,6 @@ fn wait_checkpoint(
         }
         thread::sleep((timeout - elapsed).min(Duration::from_millis(500)));
     }
-}
-
-fn parse_duration(value: &str) -> Option<Duration> {
-    if value.is_empty() {
-        return None;
-    }
-    let mut total = 0.0_f64;
-    let mut rest = value;
-    while !rest.is_empty() {
-        let split = rest
-            .find(|character: char| !character.is_ascii_digit() && character != '.')
-            .unwrap_or(rest.len());
-        if split == 0 {
-            return None;
-        }
-        let number = rest[..split].parse::<f64>().ok()?;
-        rest = &rest[split..];
-        if let Some(unit) = rest.strip_prefix("ns") {
-            total += number / 1_000_000_000.0;
-            rest = unit;
-        } else if let Some(unit) = rest.strip_prefix("us") {
-            total += number / 1_000_000.0;
-            rest = unit;
-        } else if let Some(unit) = rest.strip_prefix("µs") {
-            total += number / 1_000_000.0;
-            rest = unit;
-        } else if let Some(unit) = rest.strip_prefix("ms") {
-            total += number / 1_000.0;
-            rest = unit;
-        } else if let Some(unit) = rest.strip_prefix('s') {
-            total += number;
-            rest = unit;
-        } else if let Some(unit) = rest.strip_prefix('m') {
-            total += number * 60.0;
-            rest = unit;
-        } else if let Some(unit) = rest.strip_prefix('h') {
-            total += number * 3600.0;
-            rest = unit;
-        } else {
-            return None;
-        }
-    }
-    (total.is_finite() && total >= 0.0).then(|| Duration::from_secs_f64(total))
 }
 
 fn load_identity(name: Option<&String>) -> Result<Identity, ExitCode> {

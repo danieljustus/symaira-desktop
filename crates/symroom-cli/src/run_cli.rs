@@ -443,7 +443,7 @@ fn flag_error(message: &str, timeout: bool) -> ExitCode {
     stderr(&format!("{message}{usage}"), CoreExitCode::NoInput)
 }
 
-fn parse_go_duration(input: &str) -> Option<Duration> {
+pub(crate) fn parse_go_duration(input: &str) -> Option<Duration> {
     let (negative, input) = input
         .strip_prefix('-')
         .map_or((false, input), |rest| (true, rest));

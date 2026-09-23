@@ -145,6 +145,8 @@ func makeCheckpointCLIContract(t *testing.T, root string) (checkpointCLIContract
 		{name: "request-unknown-flag", args: []string{"checkpoint", "request", "--bogus"}, actor: "owner"},
 		{name: "request-default-missing", args: []string{"checkpoint", "request", "--run", "run_fixture", "--question", "Proceed?", "--timeout=1ms"}, actor: "owner"},
 		{name: "request-timeout-explicit", args: []string{"checkpoint", "request", "--identity", "owner", "--run", "run_fixture", "--question", "Proceed?", "--timeout=1ms"}, actor: "owner"},
+		{name: "request-timeout-fractional", args: []string{"checkpoint", "request", "--identity", "owner", "--run", "run_fixture", "--question", "Proceed?", "--timeout=.5ms"}, actor: "owner"},
+		{name: "request-timeout-invalid", args: []string{"checkpoint", "request", "--timeout=bad"}, actor: "owner"},
 		{name: "request-timeout-project-over-global", args: []string{"checkpoint", "request", "--run", "run_fixture", "--question", "Proceed?", "--timeout=1ms"}, actor: "owner", globalConfig: "default_identity = \"missing\"\n", projectConfig: "default_identity = \"owner\"\n"},
 		{name: "request-timeout-env-over-global", args: []string{"checkpoint", "request", "--run", "run_fixture", "--question", "Proceed?", "--timeout=1ms"}, actor: "owner", globalConfig: "default_identity = \"missing\"\n", defaultEnv: "owner"},
 		{name: "request-success-global-and-resolve", args: []string{"checkpoint", "request", "--run", "run_fixture", "--question", "Proceed?", "--timeout=3s"}, actor: "owner", globalConfig: "default_identity = \"owner\"\n", requestPair: true},

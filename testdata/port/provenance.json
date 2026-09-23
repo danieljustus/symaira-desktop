@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "231fac08a69087870d5b571b23b3e589ce7b6e77",
+    "commit": "7aaded0501dc21446049d0872fd14d09d01b2352",
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "3e87658206ecb20ebd42fbb252ae4817dd10f320aef300b9c422c3b5c189af33",
@@ -28,7 +28,7 @@
     "testdata/port/core/search-query.json": "c98c660e12b58aade39098e4e27942a3f14243ca889ac3080e26340ca3e078dd",
     "testdata/port/core/simhash.json": "a77de2b55ef0c3df32ac9635ceafbc03442a4d78ecdd4c324feb6e073bdd3567",
     "testdata/port/core/textnorm.json": "654145d8b3f12bca1b352538d8a30613f1e5d664e20bb00851b4f41aad97b9aa",
-    "testdata/port/dataset/cli.json": "65cdf7576ee85c614a0cd9a2f1341b1bdada69b8e5bd421a5096e6c079a5e209",
+    "testdata/port/dataset/cli.json": "dff5d7f12b4f3d508a6c678abfe1b977f31a2c0036bf4b3ee7d42429400c5975",
     "testdata/port/dataset/import.json": "17a2a1a6cffdee2a5927fd7e4a997f157747cf560925a7074014dd99a8de4d44",
     "testdata/port/dataset/purge.json": "957ef56a8f7e3fc33dae9b7fdefcb2261da8fc391bc770624fc7f4881ad40c43",
     "testdata/port/dataset/service-sync.json": "3592236d321bf48cd5775e9902541e005bb10ee44511dc6b6f95b0909bad2c1a",
@@ -72,9 +72,9 @@
     "testdata/port/room/watch-cli.json": "d5002d4f5edfe1290368cbb74026f8060dd48c2b2ab4abd2c674f38d8165443a",
     "testdata/port/room/watch-stream.json": "61cf7287a79146471bb62079ff6d9e199fedc19cc230d10e5e33b4a334e68f63",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "abc5521d7afd66e6595fe83129d7ea7ac72350adec67d62e8012116228f099ac",
-    "testdata/port/sidecar/lifecycle.json": "cdb1d2a35d900ddb970a4cd39e3252c5ee820db1f78ef8ca73b2af210500b67e",
-    "testdata/port/sidecar/roundtrip.json": "573899b97479eaf608a7897170f5a1f3c0d207d2f356e8a2a875db38a8f24868",
+    "testdata/port/sidecar/large-corpus.json": "81f85fe87b1c7eb871dcea749f07a33bc99599b3051e5ef5846e2e3980ea4a53",
+    "testdata/port/sidecar/lifecycle.json": "f987abfd7c3fd65e7d551f9965337d2316b7d201a15d16b611f0fd305baabd6a",
+    "testdata/port/sidecar/roundtrip.json": "fe7765db6bed7111877d3fd14757a06296017f30d16191bf49966ad1fba79c76",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/frontmatter-write.json": "ebe54a09bcd15b5811473b086d11637c65df5584221b900a85d4412cd143f5de",

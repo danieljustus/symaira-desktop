@@ -77,16 +77,24 @@ func TestPortMembershipContract(t *testing.T) {
 		{"observer-promote", event.KindMemberRoleChanged, "owner", `{"id":"observer","role":"member"}`},
 		{"member-approves", event.KindRunApproved, "observer", `{}`},
 		{"non-owner-cannot-remove", event.KindMemberRemoved, "observer", `{"id":"agent"}`},
+		{"agent-role-duplicate-null", event.KindMemberRoleChanged, "owner", `{"id":"agent","role":"agent","Role":null}`},
+		{"agent-still-cannot-approve", event.KindRunApproved, "agent", `{}`},
 		{"remove-agent", event.KindMemberRemoved, "owner", `{"ID":"agent","name":123}`},
 		{"removed-agent-approval", event.KindRunApproved, "agent", `{}`},
 		{"invalid-key-length", event.KindMemberAdded, "owner", `{"id":"bad","public_key":"00"}`},
 		{"null-fields-are-empty", event.KindMemberAdded, "owner", `{"id":"nullish","name":null,"public_key":"` + ownerKey + `","role":null,"kind":null}`},
+		{"null-role-change-body", event.KindMemberRoleChanged, "owner", `null`},
+		{"blank-id-add", event.KindMemberAdded, "owner", `{"id":"","name":"Blank","public_key":"` + ownerKey + `"}`},
+		{"null-removes-blank-id", event.KindMemberRemoved, "owner", `null`},
 		{"unknown-event-noop", event.KindNotePosted, "owner", `{}`},
 	}
 	for _, step := range steps {
 		err := state.ApplyEvent(&event.Event{Kind: step.kind, Author: step.author, Body: json.RawMessage(step.body)})
 		if step.id == "observer-add" && (err != nil || state.Members["observer"] == nil || state.Members["observer"].Role != RoleObserver) {
 			t.Fatal("observer fixture must install an observer before approval checks")
+		}
+		if step.id == "agent-role-duplicate-null" && (err != nil || state.Members["agent"] == nil || state.Members["agent"].Role != RoleAgent) {
+			t.Fatal("duplicate null must not clear agent role")
 		}
 		result := membershipCase{ID: step.id, Kind: step.kind, Author: step.author, Body: json.RawMessage(step.body), Members: []memberView{}}
 		if err != nil {
@@ -117,7 +125,7 @@ func TestPortMembershipContract(t *testing.T) {
 	if string(current) != string(data) {
 		t.Fatal("Go membership fixture drift: regenerate explicitly")
 	}
-	if len(fixture.Permissions) != 25 || len(fixture.Transitions) != 16 {
+	if len(fixture.Permissions) != 25 || len(fixture.Transitions) != 21 {
 		t.Fatal("membership case inventory changed")
 	}
 }

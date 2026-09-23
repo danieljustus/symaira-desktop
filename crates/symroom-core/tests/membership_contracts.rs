@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::value::RawValue;
 use symroom_core::{
     event::Event,
     members::{Member, State},
@@ -28,7 +28,7 @@ struct Transition {
     id: String,
     kind: String,
     author: String,
-    body: Value,
+    body: Box<RawValue>,
     error: String,
     members: Vec<Member>,
 }
@@ -38,7 +38,7 @@ fn go_membership_projection_and_permissions() {
     let fixture: Fixture = serde_json::from_str(GO_FIXTURE).expect("Go-owned membership fixture");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.permissions.len(), 25);
-    assert_eq!(fixture.transitions.len(), 16);
+    assert_eq!(fixture.transitions.len(), 21);
 
     for case in fixture.permissions {
         let member = Member {
@@ -75,8 +75,7 @@ fn go_membership_projection_and_permissions() {
             lamport: 0,
             ts: String::new(),
             kind: case.kind,
-            body: serde_json::value::RawValue::from_string(case.body.to_string())
-                .expect("valid Go event body"),
+            body: case.body,
             sig: None,
         };
         let result = state.apply_event(&event);

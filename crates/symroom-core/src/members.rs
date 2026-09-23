@@ -50,7 +50,7 @@ impl<'de> DeserializeSeed<'de> for MemberBodySeed<'_> {
     type Value = MemberBody;
 
     fn deserialize<D: serde::Deserializer<'de>>(self, decoder: D) -> Result<Self::Value, D::Error> {
-        decoder.deserialize_map(MemberBodyVisitor(self.0))
+        decoder.deserialize_any(MemberBodyVisitor(self.0))
     }
 }
 
@@ -60,7 +60,11 @@ impl<'de> Visitor<'de> for MemberBodyVisitor<'_> {
     type Value = MemberBody;
 
     fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("a membership event body")
+        f.write_str("a membership event body or null")
+    }
+
+    fn visit_unit<E: serde::de::Error>(self) -> Result<Self::Value, E> {
+        Ok(MemberBody::default())
     }
 
     fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
@@ -85,8 +89,10 @@ impl<'de> Visitor<'de> for MemberBodyVisitor<'_> {
                 let _: IgnoredAny = map.next_value()?;
                 continue;
             }
-            let value: Option<String> = map.next_value()?;
-            let value = value.unwrap_or_default();
+            // Go leaves an existing string untouched when a duplicate key is null.
+            let Some(value): Option<String> = map.next_value()? else {
+                continue;
+            };
             match field.as_str() {
                 "id" => body.id = value,
                 "name" => body.name = value,

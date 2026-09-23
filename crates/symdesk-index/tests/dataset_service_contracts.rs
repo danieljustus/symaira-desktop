@@ -745,6 +745,56 @@ fn closed_sidecar_partial_write_matches_go_oracle() {
 }
 
 #[test]
+fn json_unmarshal_large_integer_matches_go_float64_rounding() {
+    let fixture = fixture();
+    let expected = case(&fixture, "json-unmarshal-large-integer-float64-rounding");
+    let mut sandbox = Sandbox::new("large-json-float64");
+    let mut options = base_options(
+        "large-json-float",
+        "Large JSON Float",
+        "2026-08-02T00:00:00Z",
+        "large-json",
+        "large-json-sha",
+    );
+    options.schema = BTreeMap::from([
+        ("id".to_owned(), property("text", "")),
+        ("nested".to_owned(), property("text", "")),
+        ("value".to_owned(), property("text", "")),
+    ]);
+    options.rows = vec![row(
+        "large",
+        json!({"id":"large","value":9007199254740993_u64,"nested":{"value":9007199254740993_u64}}),
+    )];
+    let call = observed_call("json-unmarshal-float64", sandbox.sync(options));
+    let state = capture_state(
+        &sandbox,
+        "after-json-number-sync",
+        "large-json-float",
+        false,
+    );
+    let raw = fs::read_to_string(
+        sandbox
+            .root
+            .join("datasets/large-json-float/2026-08-02.csv"),
+    )
+    .expect("read large-number CSV");
+    assert!(raw.contains("9007199254740992"), "raw CSV: {raw:?}");
+    assert!(!raw.contains("9007199254740993"), "raw CSV: {raw:?}");
+    assert!(
+        raw.contains("\"\"value\"\":9007199254740992"),
+        "raw CSV: {raw:?}"
+    );
+    assert_eq!(
+        observed_case(
+            "json-unmarshal-large-integer-float64-rounding",
+            vec![call],
+            vec![state]
+        ),
+        expected_observations(expected)
+    );
+}
+
+#[test]
 fn declared_and_executed_case_inventories_are_exact() {
     let fixture = fixture();
     let declared = fixture["cases"]
@@ -762,6 +812,7 @@ fn declared_and_executed_case_inventories_are_exact() {
         "representative-validation-order-before-write",
         "nonfinite-number-projection-partial-write",
         "closed-sidecar-partial-write",
+        "json-unmarshal-large-integer-float64-rounding",
     ];
     assert_eq!(declared, executed);
     assert_eq!(
@@ -771,7 +822,7 @@ fn declared_and_executed_case_inventories_are_exact() {
             .iter()
             .map(|case| case["calls"].as_array().expect("calls").len())
             .sum::<usize>(),
-        21
+        22
     );
     assert_eq!(
         fixture["cases"]
@@ -780,7 +831,7 @@ fn declared_and_executed_case_inventories_are_exact() {
             .iter()
             .map(|case| case["states"].as_array().expect("states").len())
             .sum::<usize>(),
-        13
+        14
     );
 }
 

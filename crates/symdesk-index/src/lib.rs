@@ -21,7 +21,8 @@ mod dataset_sync;
 mod metadata;
 
 pub use dataset_sync::{
-    DatasetSyncError, DatasetSyncOptions, DatasetSyncResult, DatasetSyncRow, DatasetSyncService,
+    DatasetImportOptions, DatasetImportResult, DatasetSyncError, DatasetSyncOptions,
+    DatasetSyncResult, DatasetSyncRow, DatasetSyncService,
 };
 pub use metadata::{
     METADATA_FILE_NAME, encode_sidecar_metadata, encode_sidecar_metadata_at, open_for_vault,

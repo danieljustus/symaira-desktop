@@ -171,6 +171,7 @@ func TestPortDatasetSyncServiceContractCaseInventory(t *testing.T) {
 		"representative-validation-order-before-write",
 		"nonfinite-number-projection-partial-write",
 		"closed-sidecar-partial-write",
+		"json-unmarshal-large-integer-float64-rounding",
 	}
 	if len(fixture.Cases) != len(want) {
 		t.Fatalf("fixture case count = %d, want %d", len(fixture.Cases), len(want))
@@ -282,6 +283,7 @@ func portDatasetSyncServiceBuildFixture(t *testing.T) portDatasetSyncServiceFixt
 		portDatasetSyncServiceValidationOrderCase(t, base),
 		portDatasetSyncServiceNonfiniteCase(t, base),
 		portDatasetSyncServiceClosedSidecarCase(t, base),
+		portDatasetSyncServiceLargeJSONFloatCase(t, base),
 	}
 	wantIDs := []string{
 		"first-sync-typed-quoted-unicode",
@@ -292,6 +294,7 @@ func portDatasetSyncServiceBuildFixture(t *testing.T) portDatasetSyncServiceFixt
 		"representative-validation-order-before-write",
 		"nonfinite-number-projection-partial-write",
 		"closed-sidecar-partial-write",
+		"json-unmarshal-large-integer-float64-rounding",
 	}
 	if len(cases) != len(wantIDs) {
 		t.Fatalf("executed %d dataset sync cases, want %d", len(cases), len(wantIDs))
@@ -341,6 +344,35 @@ func portDatasetSyncServiceBuildFixture(t *testing.T) portDatasetSyncServiceFixt
 			"Whole-service regression coverage and CLI/MCP adapter parity remain separate gates; this oracle calls production Service.DatasetSync directly.",
 			"This prerequisite records Go behavior only and does not approve a Rust implementation, production cutover, or Go removal.",
 		},
+	}
+}
+
+func portDatasetSyncServiceLargeJSONFloatCase(t *testing.T, base string) portDatasetSyncServiceCase {
+	t.Helper()
+	sandbox := portDatasetSyncServiceNewSandbox(t, base, "large-json-float64")
+	var request struct {
+		Rows []DatasetSyncRow `json:"rows"`
+	}
+	if err := json.Unmarshal([]byte(`{"rows":[{"identity":"large","values":{"id":"large","value":9007199254740993,"nested":{"value":9007199254740993}}}]}`), &request); err != nil {
+		t.Fatal(err)
+	}
+	if number, ok := request.Rows[0].Values["value"].(float64); !ok || number != 9007199254740992 {
+		t.Fatalf("Go JSON interface number = %#v, want float64 9007199254740992", request.Rows[0].Values["value"])
+	}
+	opts := portDatasetSyncServiceBaseOptions("large-json-float", "Large JSON Float", "2026-08-02T00:00:00Z", "large-json", "large-json-sha")
+	opts.Schema = map[string]dbviews.PropertyConfig{"id": {Type: "text"}, "value": {Type: "text"}, "nested": {Type: "text"}}
+	opts.Rows = request.Rows
+	call := portDatasetSyncServiceInvoke("json-unmarshal-float64", sandbox.Svc, opts, sandbox.Root)
+	state := portDatasetSyncServiceCaptureState(t, sandbox, "after-json-number-sync", opts.Slug, false)
+	raw := portDatasetSyncServiceEntry(t, state.Vault, "datasets/large-json-float/2026-08-02.csv")
+	if !strings.Contains(raw.Content, "9007199254740992") || strings.Contains(raw.Content, "9007199254740993") || !strings.Contains(raw.Content, "\"\"value\"\":9007199254740992") {
+		t.Fatalf("CSV did not preserve Go float64 rounding: %q", raw.Content)
+	}
+	return portDatasetSyncServiceCase{
+		ID:          "json-unmarshal-large-integer-float64-rounding",
+		Description: "JSON decoded into map[string]interface{} rounds 9007199254740993 to float64 9007199254740992 before DatasetSync formats CSV",
+		Calls:       []portDatasetSyncServiceCall{call},
+		States:      []portDatasetSyncServiceState{state},
 	}
 }
 

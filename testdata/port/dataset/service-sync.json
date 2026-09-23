@@ -9,7 +9,7 @@
     "goos": "darwin",
     "goarch": "arm64"
   },
-  "generator_sha256": "a4e3be42ee17cf6cf1414dbd1d0d02325d11a95fbce6c157159d826d66cbe7b9",
+  "generator_sha256": "356ae147e534f8905d0f23f677680da329369ba7d7d1763f3ba589c344fc4a91",
   "source_sha256": {
     "cmd/symdesk/dataset.go": "7a4dc0aa205010acd8eb728256fe4a9c210af1e795a8e22d20c772c7f274dc90",
     "go.mod": "0383eff632281c046fd5a0a8fb79b3a4d849e213b156846f81ac429e56aeae7c",
@@ -1205,6 +1205,100 @@
               "imported_at": "2026-08-01T00:00:00Z",
               "source_name": "closed-feed",
               "source_sha256": "closed-sha"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "json-unmarshal-large-integer-float64-rounding",
+      "description": "JSON decoded into map[string]interface{} rounds 9007199254740993 to float64 9007199254740992 before DatasetSync formats CSV",
+      "calls": [
+        {
+          "label": "json-unmarshal-float64",
+          "result": {
+            "slug": "large-json-float",
+            "rows": 1,
+            "imported_rows": 1,
+            "raw_path": "datasets/large-json-float/2026-08-02.csv",
+            "handle_path": "datasets/large-json-float.md",
+            "idempotent": false
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-json-number-sync",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/large-json-float",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/large-json-float.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 599,
+              "sha256": "04f4021b4e4b8eba5bf7163d69980e35c9aedc18d78c3bbcce63e18dced7458c",
+              "content": "---\ncoverage: {}\ncreated: \"2026-08-02T00:00:00Z\"\ndataset_id: large-json-float\nidentity_field: id\nprovenance:\n    imported_at: \"2026-08-02T00:00:00Z\"\n    source_name: large-json\n    source_sha256: large-json-sha\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    nested:\n        type: text\n        label: nested\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/large-json-float/2026-08-02.csv\ntags:\n    - dataset\ntitle: Large JSON Float\ntype: dataset\n---\n\n# Large JSON Float\n\nSource: `datasets/large-json-float/2026-08-02.csv`\n"
+            },
+            {
+              "path": "datasets/large-json-float/2026-08-02.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 70,
+              "sha256": "4426dbf044386ec882fe26e22d2ac6ee20547f719e23e7ea3f565aa50e7de902",
+              "content": "id,nested,value\nlarge,\"{\"\"value\"\":9007199254740992}\",9007199254740992\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "large-json-float",
+              "row_key": "identity:large",
+              "identity": "large",
+              "values_json": "{\"id\":\"large\",\"nested\":\"{\\\"value\\\":9007199254740992}\",\"value\":\"9007199254740992\"}",
+              "source_path": "datasets/large-json-float/2026-08-02.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/large-json-float.md",
+            "slug": "large-json-float",
+            "title": "Large JSON Float",
+            "created": "2026-08-02T00:00:00Z",
+            "source": "datasets/large-json-float/2026-08-02.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "nested": {
+                "type": "text",
+                "label": "nested"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-08-02T00:00:00Z",
+              "source_name": "large-json",
+              "source_sha256": "large-json-sha"
             },
             "identity_field": "id",
             "sensitivity": "restricted",

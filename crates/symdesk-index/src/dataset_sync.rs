@@ -1,5 +1,6 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
+    fs,
     io::{self, Read as _, Write as _},
     path::{Path, PathBuf},
     sync::atomic::{AtomicU64, Ordering},
@@ -16,7 +17,10 @@ use symdesk_vault::{
     parse_bytes, parse_dataset_handle,
 };
 use thiserror::Error;
-use time::{Date, Duration, Month, OffsetDateTime, PrimitiveDateTime, Time};
+use time::{
+    Date, Duration, Month, OffsetDateTime, PrimitiveDateTime, Time, UtcOffset,
+    format_description::well_known::Rfc3339,
+};
 
 use crate::{IndexedDocument, Sidecar, SidecarError};
 
@@ -55,6 +59,30 @@ pub struct DatasetSyncResult {
     pub idempotent: bool,
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct DatasetImportOptions {
+    pub title: String,
+    pub slug: String,
+    pub identity_field: String,
+    pub schema: BTreeMap<String, PropertyConfig>,
+    pub refresh_command: String,
+    pub sensitivity: String,
+    pub retention_rule: String,
+    pub now: Option<OffsetDateTime>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct DatasetImportResult {
+    pub handle_path: String,
+    pub raw_path: String,
+    pub slug: String,
+    pub rows: usize,
+    pub columns: BTreeMap<String, PropertyConfig>,
+    pub source_sha256: String,
+    pub sensitivity: String,
+    pub retention_rule: String,
+}
+
 #[derive(Debug, Error)]
 pub enum DatasetSyncError {
     #[error("{0}")]
@@ -90,6 +118,164 @@ impl<'a> DatasetSyncService<'a> {
             vault_root,
             sidecar,
         }
+    }
+
+    /// Imports one explicitly selected CSV as an exact-byte raw asset, writes
+    /// its authoritative Markdown handle, then rebuilds the sidecar from every
+    /// raw CSV for the dataset. Repeated imports on one UTC date use the same
+    /// collision-safe suffix sequence as Go's `StoreRaw`.
+    ///
+    /// # Errors
+    /// Returns Go-compatible validation, source I/O, parser, vault, projection,
+    /// or sidecar errors. Raw and Markdown writes remain if later projection
+    /// fails, matching the Go service ordering.
+    pub fn import_csv(
+        &mut self,
+        source: &Path,
+        options: DatasetImportOptions,
+    ) -> Result<DatasetImportResult, DatasetSyncError> {
+        let Some(vault_root) = self.vault_root else {
+            return Err(DatasetSyncError::Contract(
+                "dataset import requires a vault".to_owned(),
+            ));
+        };
+        let Some(sidecar) = self.sidecar.as_deref_mut() else {
+            return Err(DatasetSyncError::Contract(
+                "dataset import requires a sidecar".to_owned(),
+            ));
+        };
+        let (sensitivity, retention_rule) = dataset::normalize_policy(
+            options.sensitivity.as_str(),
+            options.retention_rule.as_str(),
+        )?;
+        let metadata = fs::metadata(source)
+            .map_err(|error| DatasetSyncError::Contract(format!("stat dataset source: {error}")))?;
+        let extension = source
+            .extension()
+            .and_then(|value| value.to_str())
+            .unwrap_or("");
+        if metadata.is_dir() || !extension.eq_ignore_ascii_case("csv") {
+            return Err(DatasetSyncError::Contract(
+                "dataset import supports CSV files only".to_owned(),
+            ));
+        }
+        let bytes = fs::read(source)
+            .map_err(|error| DatasetSyncError::Contract(format!("read dataset source: {error}")))?;
+        let text = String::from_utf8(bytes.clone())
+            .map_err(|error| DatasetSyncError::Contract(format!("read csv: {error}")))?;
+        let declared = options
+            .schema
+            .iter()
+            .map(|(column, property)| {
+                (
+                    column.clone(),
+                    dataset::PropertyConfig {
+                        label: property.label.clone(),
+                        kind: property.r#type.clone(),
+                    },
+                )
+            })
+            .collect();
+        let (rows, inferred) =
+            dataset::parse_csv(&text, &declared, options.identity_field.as_str())?;
+        let schema = inferred
+            .iter()
+            .map(|(column, parsed)| {
+                let mut property = options.schema.get(column).cloned().unwrap_or_default();
+                property.r#type.clone_from(&parsed.kind);
+                property.label.clone_from(&parsed.label);
+                (column.clone(), property)
+            })
+            .collect::<BTreeMap<_, _>>();
+        let now = options.now.unwrap_or_else(OffsetDateTime::now_utc);
+        let source_name = source
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| {
+                DatasetSyncError::Contract("dataset source file name is not UTF-8".to_owned())
+            })?;
+        let title = if options.title.trim().is_empty() {
+            source_name
+                .rsplit_once('.')
+                .map_or(source_name, |(stem, _)| stem)
+                .to_owned()
+        } else {
+            options.title.trim().to_owned()
+        };
+        let slug = if options.slug.trim().is_empty() {
+            slugify(&title)
+        } else {
+            options.slug.trim().to_owned()
+        };
+        if slug != slugify(&slug) {
+            return Err(DatasetSyncError::Contract(format!(
+                "dataset slug {} is not filesystem-safe",
+                go_quote(&slug)
+            )));
+        }
+
+        let root = Dir::open_ambient_dir(vault_root, ambient_authority())?;
+        let date = now.to_offset(UtcOffset::UTC).date();
+        let raw_name = format!("{}.csv", date);
+        let raw_path = store_raw(&root, &slug, &raw_name, &bytes).map_err(|error| {
+            DatasetSyncError::Contract(format!("store dataset source: {error}"))
+        })?;
+        let handle_path = format!("{RAW_DIR}/{slug}.md");
+        let old_handle = read_handle(&root, &handle_path).ok();
+        let created = old_handle
+            .as_ref()
+            .map_or_else(|| format_rfc3339(now), |handle| handle.created.clone());
+        let handle = DatasetHandle {
+            path: handle_path.clone(),
+            slug: slug.clone(),
+            title: title.clone(),
+            created,
+            source: raw_path.clone(),
+            schema,
+            coverage: coverage_for_rows(&rows, &inferred),
+            provenance: Provenance {
+                imported_at: format_rfc3339(now),
+                source_name: source_name.to_owned(),
+                source_sha256: symdesk_vault::sha256_hex(&bytes),
+            },
+            identity_field: options.identity_field,
+            refresh_command: options.refresh_command,
+            sensitivity: sensitivity.clone(),
+            retention_rule: retention_rule.clone(),
+        };
+        let handle_bytes = dataset::render_handle(&handle)?;
+        create_dir_all_0755(&root, Path::new(RAW_DIR)).map_err(|error| {
+            DatasetSyncError::Contract(format!("create dataset handle directory: {error}"))
+        })?;
+        let handle_parent = root.open_dir(RAW_DIR)?;
+        write_atomic(&handle_parent, &format!("{slug}.md"), &handle_bytes).map_err(|error| {
+            DatasetSyncError::Contract(format!("write dataset handle: {error}"))
+        })?;
+
+        let materialized = read_raw_files(&root, &slug, &handle.schema, &handle.identity_field)
+            .map_err(|error| {
+                DatasetSyncError::Contract(format!("rebuild dataset rows: {error}"))
+            })?;
+        let projected = dataset::project_rows(&slug, &materialized, "")?;
+        sidecar
+            .replace_dataset_rows(&slug, &projected)
+            .map_err(|error| DatasetSyncError::Contract(format!("store dataset rows: {error}")))?;
+        let document = parse_bytes(&handle_path, &handle_bytes).map_err(|error| {
+            DatasetSyncError::Contract(format!("parse dataset handle: {error}"))
+        })?;
+        let indexed = IndexedDocument::from_vault(&document, None)?;
+        sidecar.index_document(&indexed)?;
+
+        Ok(DatasetImportResult {
+            handle_path,
+            raw_path,
+            slug,
+            rows: projected.len(),
+            columns: handle.schema,
+            source_sha256: handle.provenance.source_sha256,
+            sensitivity,
+            retention_rule,
+        })
     }
 
     /// Persists producer rows as a native CSV snapshot, writes the authoritative
@@ -246,6 +432,43 @@ impl<'a> DatasetSyncService<'a> {
             handle_path,
             idempotent: false,
         })
+    }
+}
+
+fn format_rfc3339(value: OffsetDateTime) -> String {
+    value
+        .format(&Rfc3339)
+        .expect("valid timestamp formats as RFC3339")
+}
+
+fn coverage_for_rows(
+    rows: &[dataset::Row],
+    schema: &BTreeMap<String, dataset::PropertyConfig>,
+) -> Coverage {
+    let mut date_columns = schema
+        .iter()
+        .filter(|(_, property)| property.kind == "date")
+        .map(|(column, _)| column.as_str())
+        .collect::<Vec<_>>();
+    date_columns.sort_unstable();
+    let mut dates = rows
+        .iter()
+        .flat_map(|row| {
+            date_columns
+                .iter()
+                .filter_map(move |column| match row.values.get(*column) {
+                    Some(dataset::GoValue::Text(value)) if !value.is_empty() => Some(value.clone()),
+                    _ => None,
+                })
+        })
+        .collect::<Vec<_>>();
+    dates.sort();
+    match (dates.first(), dates.last()) {
+        (Some(from), Some(to)) => Coverage {
+            from: from.clone(),
+            to: to.clone(),
+        },
+        _ => Coverage::default(),
     }
 }
 
@@ -486,12 +709,9 @@ fn sync_value_string(value: &Value) -> String {
 }
 
 fn go_fixed_number(value: &serde_json::Number) -> String {
-    if let Some(value) = value.as_i64() {
-        return value.to_string();
-    }
-    if let Some(value) = value.as_u64() {
-        return value.to_string();
-    }
+    // DatasetSync's Go CLI decodes JSON objects into `interface{}`, so every
+    // JSON number becomes float64 before `syncValueString` formats it. Preserve
+    // that observable rounding for integers beyond float64's exact range.
     value
         .as_f64()
         .expect("serde_json numbers are finite")
@@ -538,12 +758,8 @@ fn write_go_json(output: &mut String, value: &Value) {
 }
 
 fn go_json_number(value: &serde_json::Number) -> String {
-    if let Some(value) = value.as_i64() {
-        return value.to_string();
-    }
-    if let Some(value) = value.as_u64() {
-        return value.to_string();
-    }
+    // Values nested in producer objects are marshalled by Go's encoding/json
+    // after interface{} decoding, so their integer tokens also become float64.
     let value = value.as_f64().expect("serde_json numbers are finite");
     if value == 0.0 {
         return if value.is_sign_negative() { "-0" } else { "0" }.to_owned();
@@ -619,6 +835,11 @@ fn store_raw(
     preferred_name: &str,
     bytes: &[u8],
 ) -> Result<String, DatasetSyncError> {
+    if slug.trim().is_empty() {
+        return Err(DatasetSyncError::Contract(
+            "dataset slug is required".to_owned(),
+        ));
+    }
     let directory_path = PathBuf::from(RAW_DIR).join(slug);
     create_dir_all_0755(root, &directory_path)?;
     let directory = root.open_dir(&directory_path)?;

@@ -11,6 +11,7 @@ use symdesk_core::{render_version_json, render_version_text};
 
 mod artifact_cli;
 mod brain_profile_cli;
+mod checkpoint_cli;
 mod decide_cli;
 mod doctor_cli;
 mod identity_cli;
@@ -45,6 +46,9 @@ fn main() -> ExitCode {
     }
     if command == "run" {
         return run_cli::run(&args[2..]);
+    }
+    if command == "checkpoint" {
+        return checkpoint_cli::run(&args[2..]);
     }
     if command == "identity" {
         return identity_cli::run(&args[2..]);

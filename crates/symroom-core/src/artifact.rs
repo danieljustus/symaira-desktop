@@ -12,6 +12,7 @@ use serde_json::value::RawValue;
 use sha2::{Digest, Sha256};
 
 use crate::{
+    desk_watch::EventStreamItem,
     event::{self, Event},
     identity::Identity,
     journal,
@@ -119,6 +120,53 @@ pub fn unlink(
     let digest = Sha256::digest(artifact_id.as_bytes());
     let event_id = format!("ev_{}", &hex::encode(digest)[..16]);
     append_signed_event(room_dir, signer, event_id, "artifact.unlinked", raw_body)
+}
+
+/// Port of Go `artifact.HandleDeskEvent` for the `symdesk events` watcher.
+pub fn handle_desk_event(
+    room_dir: &Path,
+    artifact_root: &Path,
+    item: &EventStreamItem,
+    signer: &Identity,
+) -> Result<(), ArtifactError> {
+    let root = if artifact_root.as_os_str().is_empty() {
+        room_dir
+    } else {
+        artifact_root
+    };
+    let artifacts = list(room_dir)?;
+    let relative = make_relative_path(Path::new(&item.path), root)
+        .unwrap_or_else(|_| PathBuf::from(&item.path));
+    let relative = clean_path(&relative);
+    let Some(target) = artifacts.into_iter().find(|artifact| {
+        artifact.path == relative.to_string_lossy()
+            || clean_path(Path::new(&artifact.path)) == relative
+    }) else {
+        return Ok(());
+    };
+
+    let path = root.join(&target.path);
+    let hash = match hash_file(&path) {
+        Ok(hash) => hash,
+        Err(_) if item.event == "file_removed" => String::new(),
+        Err(_) => return Ok(()),
+    };
+    let body = BTreeMap::from([
+        ("artifact_id", target.id.as_str()),
+        ("event_type", item.event.as_str()),
+        ("path", target.path.as_str()),
+        ("sha256", hash.as_str()),
+    ]);
+    let raw_body = json_body(&body)?;
+    let digest = Sha256::digest(format!("{}{}{}", target.id, hash, item.event).as_bytes());
+    append_signed_event(
+        room_dir,
+        signer,
+        format!("ev_{}", &hex::encode(digest)[..16]),
+        "artifact.changed",
+        raw_body,
+    )?;
+    Ok(())
 }
 
 pub fn list(room_dir: &Path) -> Result<Vec<ArtifactRef>, ArtifactError> {
@@ -247,6 +295,20 @@ fn normalize_absolute(path: PathBuf) -> PathBuf {
         }
     }
     normalized
+}
+
+fn clean_path(path: &Path) -> PathBuf {
+    let mut clean = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                clean.pop();
+            }
+            other => clean.push(other.as_os_str()),
+        }
+    }
+    clean
 }
 
 fn json_body(value: &impl Serialize) -> Result<Box<RawValue>, ArtifactError> {

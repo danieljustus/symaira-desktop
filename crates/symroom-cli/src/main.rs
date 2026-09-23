@@ -20,6 +20,7 @@ mod member_cli;
 mod note_cli;
 mod run_cli;
 mod verify_cli;
+mod watch_cli;
 
 fn process_exit(code: CoreExitCode) -> ExitCode {
     ExitCode::from(code.as_u8())
@@ -72,6 +73,9 @@ fn main() -> ExitCode {
     }
     if command == "mcp" {
         return mcp::run_cli(&args[2..]);
+    }
+    if command == "watch" {
+        return watch_cli::run(&args[2..]);
     }
     if command != "version" {
         return write_stderr(

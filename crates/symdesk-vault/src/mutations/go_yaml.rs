@@ -352,7 +352,11 @@ fn is_yaml_timestamp(s: &str) -> bool {
         && bytes[8..10].iter().all(u8::is_ascii_digit)
 }
 
-fn render_string(value: &str, indent_spaces: usize, _key: bool) -> Result<String, String> {
+pub(super) fn render_string(
+    value: &str,
+    indent_spaces: usize,
+    _key: bool,
+) -> Result<String, String> {
     let has_newline = value.contains('\n');
     let line_breaks = value.chars().any(is_yaml_break);
     let tab_characters = value.contains('\t');

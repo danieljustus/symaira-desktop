@@ -17,8 +17,12 @@ use symdesk_vault::Document;
 use thiserror::Error;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
+mod dataset_sync;
 mod metadata;
 
+pub use dataset_sync::{
+    DatasetSyncError, DatasetSyncOptions, DatasetSyncResult, DatasetSyncRow, DatasetSyncService,
+};
 pub use metadata::{
     METADATA_FILE_NAME, encode_sidecar_metadata, encode_sidecar_metadata_at, open_for_vault,
     record_sidecar_metadata,
@@ -83,6 +87,8 @@ pub enum SidecarError {
     Vault(#[from] symdesk_vault::VaultError),
     #[error(transparent)]
     Path(#[from] symdesk_vault::SecurePathError),
+    #[error("sql: database is closed")]
+    Closed,
     #[error("{0}")]
     Contract(String),
     #[error("non-UTF-8 {context}: {path:?}")]
@@ -205,8 +211,12 @@ pub struct ListedDocument {
     pub document_type: String,
 }
 
+/// One materialized row in the rebuildable dataset sidecar.
+pub type DatasetRow = symdesk_vault::dataset::SidecarRow;
+
 pub struct Sidecar {
     connection: Connection,
+    closed: bool,
 }
 
 /// Resolves the per-vault sidecar path used by the Go implementation.
@@ -286,7 +296,10 @@ impl Sidecar {
             })?;
         migrate(&mut connection)?;
         backfill_norm_index(&mut connection)?;
-        Ok(Self { connection })
+        Ok(Self {
+            connection,
+            closed: false,
+        })
     }
 
     /// Runs SQLite's non-destructive integrity check.
@@ -294,6 +307,9 @@ impl Sidecar {
     /// # Errors
     /// Returns the provider error or a non-`ok` integrity result.
     pub fn check_integrity(&self) -> Result<(), SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
         let result: String = self
             .connection
             .query_row("PRAGMA integrity_check", [], |row| row.get(0))?;
@@ -304,6 +320,134 @@ impl Sidecar {
                 "integrity check failed: {result}"
             )))
         }
+    }
+
+    /// Closes the actual SQLite connection. Subsequent dataset operations fail
+    /// with the same stable closed-database diagnostic as the Go sidecar.
+    ///
+    /// # Errors
+    /// Returns the SQLite close error and restores the original connection when
+    /// SQLite refuses to close it.
+    pub fn close(&mut self) -> Result<(), SidecarError> {
+        if self.closed {
+            return Ok(());
+        }
+        let placeholder = Connection::open_in_memory()?;
+        let connection = std::mem::replace(&mut self.connection, placeholder);
+        match connection.close() {
+            Ok(()) => {
+                self.closed = true;
+                Ok(())
+            }
+            Err((connection, error)) => {
+                self.connection = connection;
+                Err(SidecarError::Sqlite(error))
+            }
+        }
+    }
+
+    /// Atomically replaces every derived row for one dataset.
+    ///
+    /// # Errors
+    /// Returns validation, JSON or SQLite errors and rolls back the transaction.
+    pub fn replace_dataset_rows(
+        &mut self,
+        dataset_slug: &str,
+        rows: &[DatasetRow],
+    ) -> Result<(), SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        if dataset_slug.trim().is_empty() {
+            return Err(SidecarError::Contract(
+                "dataset slug is required".to_owned(),
+            ));
+        }
+        let transaction = self.connection.transaction()?;
+        transaction.execute(
+            "DELETE FROM dataset_rows WHERE dataset_slug = ?",
+            [dataset_slug],
+        )?;
+        for row in rows {
+            let row_slug = if row.dataset_slug.is_empty() {
+                dataset_slug
+            } else {
+                row.dataset_slug.as_str()
+            };
+            if row_slug != dataset_slug || row.row_key.is_empty() {
+                return Err(SidecarError::Contract(
+                    "invalid dataset row identity".to_owned(),
+                ));
+            }
+            if serde_json::from_str::<serde_json::Value>(&row.values_json).is_err() {
+                return Err(SidecarError::Contract(format!(
+                    "dataset row {:?} has invalid values JSON",
+                    row.row_key
+                )));
+            }
+            let row_number = i64::try_from(row.row_number).map_err(|_| {
+                SidecarError::Contract("dataset row number exceeds SQLite integer range".to_owned())
+            })?;
+            transaction.execute(
+                "INSERT INTO dataset_rows(dataset_slug,row_key,identity,values_json,source_path,row_number) VALUES (?,?,?,?,?,?)",
+                params![
+                    row_slug,
+                    row.row_key,
+                    (!row.identity.is_empty()).then_some(row.identity.as_str()),
+                    row.values_json,
+                    row.source_path,
+                    row_number
+                ],
+            )?;
+        }
+        transaction.commit()?;
+        Ok(())
+    }
+
+    /// Returns materialized rows in deterministic key order.
+    ///
+    /// # Errors
+    /// Returns the stable closed-database diagnostic or SQLite query errors.
+    pub fn dataset_rows(&self, dataset_slug: &str) -> Result<Vec<DatasetRow>, SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        let mut statement = self.connection.prepare(
+            "SELECT dataset_slug,row_key,COALESCE(identity,''),values_json,source_path,row_number FROM dataset_rows WHERE dataset_slug = ? ORDER BY row_key",
+        )?;
+        let rows = statement.query_map([dataset_slug], |row| {
+            let row_number: i64 = row.get(5)?;
+            Ok(DatasetRow {
+                dataset_slug: row.get(0)?,
+                row_key: row.get(1)?,
+                identity: row.get(2)?,
+                values_json: row.get(3)?,
+                source_path: row.get(4)?,
+                row_number: usize::try_from(row_number).map_err(|error| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        5,
+                        rusqlite::types::Type::Integer,
+                        Box::new(error),
+                    )
+                })?,
+            })
+        })?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    /// Deletes only the rebuildable rows for one dataset.
+    ///
+    /// # Errors
+    /// Returns the stable closed-database diagnostic or SQLite errors.
+    pub fn delete_dataset(&self, dataset_slug: &str) -> Result<(), SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        self.connection.execute(
+            "DELETE FROM dataset_rows WHERE dataset_slug = ?",
+            [dataset_slug],
+        )?;
+        Ok(())
     }
 
     /// Indexes one document in its own transaction.

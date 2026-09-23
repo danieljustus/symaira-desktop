@@ -3,6 +3,8 @@
 //! Read-only contract-v1–v6 Markdown vault parsing.
 
 pub mod conflict;
+pub mod dataset;
+mod go_string;
 mod health_links;
 pub mod history;
 mod links;
@@ -31,6 +33,7 @@ use serde_json as _;
 pub use conflict::{
     CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
 };
+pub use go_string::{lowercase as go_lowercase, quote as go_quote};
 pub use health_links::{HealthLinkResolver, LinkInventory, normalize_health_link_target};
 pub use history::{
     HistoryEntry, HistoryError, HistoryStore, TRASH_META_SUFFIX, TrashEntry, trash_rel_dir,

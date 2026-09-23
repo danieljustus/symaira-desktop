@@ -1,0 +1,825 @@
+{
+  "schema_version": 2,
+  "cases": [
+    {
+      "name": "typed-import",
+      "source_name": "orders.csv",
+      "csv": "id,date,amount\norder-1,2026-01-02,12.50\norder-2,2026-01-03,8\n",
+      "title": "Orders",
+      "identity_field": "id",
+      "now": "2026-01-04T05:06:07Z",
+      "import_twice": false,
+      "rebuild": false,
+      "result": {
+        "handle_path": "datasets/orders.md",
+        "raw_path": "datasets/orders/2026-01-04.csv",
+        "slug": "orders",
+        "rows": 2,
+        "columns": {
+          "amount": {
+            "type": "number",
+            "label": "amount"
+          },
+          "date": {
+            "type": "date",
+            "label": "date"
+          },
+          "id": {
+            "type": "text",
+            "label": "id"
+          }
+        },
+        "source_sha256": "42b6c8d5d01282da15df7c2d30df4e424a2960a5fbbd0342c746e17b603537ea",
+        "sensitivity": "restricted",
+        "retention_rule": "default"
+      },
+      "handle_bytes": "---\ncoverage:\n    from: \"2026-01-02\"\n    to: \"2026-01-03\"\ncreated: \"2026-01-04T05:06:07Z\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"2026-01-04T05:06:07Z\"\n    source_name: orders.csv\n    source_sha256: 42b6c8d5d01282da15df7c2d30df4e424a2960a5fbbd0342c746e17b603537ea\nretention_rule: default\nschema:\n    amount:\n        type: number\n        label: amount\n    date:\n        type: date\n        label: date\n    id:\n        type: text\n        label: id\nsensitivity: restricted\nsource: datasets/orders/2026-01-04.csv\ntags:\n    - dataset\ntitle: Orders\ntype: dataset\n---\n\n# Orders\n\nSource: `datasets/orders/2026-01-04.csv`\n",
+      "handle": {
+        "path": "datasets/orders.md",
+        "sha256": "0e756214c61528e2d7dd0b402042fba45f43186e74342e134d1fc4a810432911",
+        "mode": "0600"
+      },
+      "raw": {
+        "path": "datasets/orders/2026-01-04.csv",
+        "sha256": "42b6c8d5d01282da15df7c2d30df4e424a2960a5fbbd0342c746e17b603537ea",
+        "mode": "0600"
+      },
+      "sidecar_rows": [
+        {
+          "dataset_slug": "orders",
+          "row_key": "identity:order-1",
+          "identity": "order-1",
+          "values_json": "{\"amount\":12.5,\"date\":\"2026-01-02\",\"id\":\"order-1\"}",
+          "source_path": "datasets/orders/2026-01-04.csv",
+          "row_number": 2
+        },
+        {
+          "dataset_slug": "orders",
+          "row_key": "identity:order-2",
+          "identity": "order-2",
+          "values_json": "{\"amount\":8,\"date\":\"2026-01-03\",\"id\":\"order-2\"}",
+          "source_path": "datasets/orders/2026-01-04.csv",
+          "row_number": 3
+        }
+      ],
+      "sidecar_count": 2
+    },
+    {
+      "name": "second-import-same-day",
+      "source_name": "orders.csv",
+      "csv": "id,date,amount\norder-1,2026-01-02,12.50\norder-2,2026-01-03,8\n",
+      "title": "Orders",
+      "identity_field": "id",
+      "now": "2026-01-04T05:06:07Z",
+      "import_twice": true,
+      "rebuild": false,
+      "result": {
+        "handle_path": "datasets/orders.md",
+        "raw_path": "datasets/orders/2026-01-04.csv",
+        "slug": "orders",
+        "rows": 2,
+        "columns": {
+          "amount": {
+            "type": "number",
+            "label": "amount"
+          },
+          "date": {
+            "type": "date",
+            "label": "date"
+          },
+          "id": {
+            "type": "text",
+            "label": "id"
+          }
+        },
+        "source_sha256": "42b6c8d5d01282da15df7c2d30df4e424a2960a5fbbd0342c746e17b603537ea",
+        "sensitivity": "restricted",
+        "retention_rule": "default"
+      },
+      "second_result": {
+        "handle_path": "datasets/orders.md",
+        "raw_path": "datasets/orders/2026-01-04-2.csv",
+        "slug": "orders",
+        "rows": 2,
+        "columns": {
+          "amount": {
+            "type": "number",
+            "label": "amount"
+          },
+          "date": {
+            "type": "date",
+            "label": "date"
+          },
+          "id": {
+            "type": "text",
+            "label": "id"
+          }
+        },
+        "source_sha256": "42b6c8d5d01282da15df7c2d30df4e424a2960a5fbbd0342c746e17b603537ea",
+        "sensitivity": "restricted",
+        "retention_rule": "default"
+      },
+      "handle_bytes": "---\ncoverage:\n    from: \"2026-01-02\"\n    to: \"2026-01-03\"\ncreated: \"2026-01-04T05:06:07Z\"\ndataset_id: orders\nidentity_field: id\nprovenance:\n    imported_at: \"2026-01-04T05:06:07Z\"\n    source_name: orders.csv\n    source_sha256: 42b6c8d5d01282da15df7c2d30df4e424a2960a5fbbd0342c746e17b603537ea\nretention_rule: default\nschema:\n    amount:\n        type: number\n        label: amount\n    date:\n        type: date\n        label: date\n    id:\n        type: text\n        label: id\nsensitivity: restricted\nsource: datasets/orders/2026-01-04-2.csv\ntags:\n    - dataset\ntitle: Orders\ntype: dataset\n---\n\n# Orders\n\nSource: `datasets/orders/2026-01-04-2.csv`\n",
+      "handle": {
+        "path": "datasets/orders.md",
+        "sha256": "cfc352d8879d353b0859c40f05d95456f651e6789020cb2cc671f92a53d029e5",
+        "mode": "0600"
+      },
+      "raw": {
+        "path": "datasets/orders/2026-01-04.csv",
+        "sha256": "42b6c8d5d01282da15df7c2d30df4e424a2960a5fbbd0342c746e17b603537ea",
+        "mode": "0600"
+      },
+      "sidecar_rows": [
+        {
+          "dataset_slug": "orders",
+          "row_key": "identity:order-1",
+          "identity": "order-1",
+          "values_json": "{\"amount\":12.5,\"date\":\"2026-01-02\",\"id\":\"order-1\"}",
+          "source_path": "datasets/orders/2026-01-04.csv",
+          "row_number": 2
+        },
+        {
+          "dataset_slug": "orders",
+          "row_key": "identity:order-2",
+          "identity": "order-2",
+          "values_json": "{\"amount\":8,\"date\":\"2026-01-03\",\"id\":\"order-2\"}",
+          "source_path": "datasets/orders/2026-01-04.csv",
+          "row_number": 3
+        }
+      ],
+      "sidecar_count": 2
+    },
+    {
+      "name": "duplicate-identity",
+      "source_name": "dups.csv",
+      "csv": "id,amount\nrow-1,5\nrow-1,6\nrow-2,7\n",
+      "title": "Duplicates",
+      "identity_field": "id",
+      "now": "2026-01-04T05:06:07Z",
+      "import_twice": false,
+      "rebuild": false,
+      "result": {
+        "handle_path": "datasets/duplicates.md",
+        "raw_path": "datasets/duplicates/2026-01-04.csv",
+        "slug": "duplicates",
+        "rows": 2,
+        "columns": {
+          "amount": {
+            "type": "number",
+            "label": "amount"
+          },
+          "id": {
+            "type": "text",
+            "label": "id"
+          }
+        },
+        "source_sha256": "b3f4233cce3b5c0d376e21a0188f517176044d2bdf830723fe13f4fa07590a76",
+        "sensitivity": "restricted",
+        "retention_rule": "default"
+      },
+      "handle_bytes": "---\ncoverage: {}\ncreated: \"2026-01-04T05:06:07Z\"\ndataset_id: duplicates\nidentity_field: id\nprovenance:\n    imported_at: \"2026-01-04T05:06:07Z\"\n    source_name: dups.csv\n    source_sha256: b3f4233cce3b5c0d376e21a0188f517176044d2bdf830723fe13f4fa07590a76\nretention_rule: default\nschema:\n    amount:\n        type: number\n        label: amount\n    id:\n        type: text\n        label: id\nsensitivity: restricted\nsource: datasets/duplicates/2026-01-04.csv\ntags:\n    - dataset\ntitle: Duplicates\ntype: dataset\n---\n\n# Duplicates\n\nSource: `datasets/duplicates/2026-01-04.csv`\n",
+      "handle": {
+        "path": "datasets/duplicates.md",
+        "sha256": "101a21e8a7eff4f7c685571ec34b45ea101df13169d4ded569311616379b617f",
+        "mode": "0600"
+      },
+      "raw": {
+        "path": "datasets/duplicates/2026-01-04.csv",
+        "sha256": "b3f4233cce3b5c0d376e21a0188f517176044d2bdf830723fe13f4fa07590a76",
+        "mode": "0600"
+      },
+      "sidecar_rows": [
+        {
+          "dataset_slug": "duplicates",
+          "row_key": "identity:row-1",
+          "identity": "row-1",
+          "values_json": "{\"amount\":6,\"id\":\"row-1\"}",
+          "source_path": "datasets/duplicates/2026-01-04.csv",
+          "row_number": 3
+        },
+        {
+          "dataset_slug": "duplicates",
+          "row_key": "identity:row-2",
+          "identity": "row-2",
+          "values_json": "{\"amount\":7,\"id\":\"row-2\"}",
+          "source_path": "datasets/duplicates/2026-01-04.csv",
+          "row_number": 4
+        }
+      ],
+      "sidecar_count": 2
+    },
+    {
+      "name": "rebuild-equals-import",
+      "source_name": "orders.csv",
+      "csv": "id,date,amount\norder-1,2026-01-02,12.50\norder-2,2026-01-03,8\n",
+      "title": "Rebuildable",
+      "identity_field": "id",
+      "now": "2026-01-04T05:06:07Z",
+      "import_twice": false,
+      "rebuild": true,
+      "result": {
+        "handle_path": "datasets/rebuildable.md",
+        "raw_path": "datasets/rebuildable/2026-01-04.csv",
+        "slug": "rebuildable",
+        "rows": 2,
+        "columns": {
+          "amount": {
+            "type": "number",
+            "label": "amount"
+          },
+          "date": {
+            "type": "date",
+            "label": "date"
+          },
+          "id": {
+            "type": "text",
+            "label": "id"
+          }
+        },
+        "source_sha256": "42b6c8d5d01282da15df7c2d30df4e424a2960a5fbbd0342c746e17b603537ea",
+        "sensitivity": "restricted",
+        "retention_rule": "default"
+      },
+      "handle_bytes": "---\ncoverage:\n    from: \"2026-01-02\"\n    to: \"2026-01-03\"\ncreated: \"2026-01-04T05:06:07Z\"\ndataset_id: rebuildable\nidentity_field: id\nprovenance:\n    imported_at: \"2026-01-04T05:06:07Z\"\n    source_name: orders.csv\n    source_sha256: 42b6c8d5d01282da15df7c2d30df4e424a2960a5fbbd0342c746e17b603537ea\nretention_rule: default\nschema:\n    amount:\n        type: number\n        label: amount\n    date:\n        type: date\n        label: date\n    id:\n        type: text\n        label: id\nsensitivity: restricted\nsource: datasets/rebuildable/2026-01-04.csv\ntags:\n    - dataset\ntitle: Rebuildable\ntype: dataset\n---\n\n# Rebuildable\n\nSource: `datasets/rebuildable/2026-01-04.csv`\n",
+      "handle": {
+        "path": "datasets/rebuildable.md",
+        "sha256": "a9af65ae2d9d1fa0c2e83f84f6b7d57287e3c989f64b1c407f557f84cdcdc37a",
+        "mode": "0600"
+      },
+      "raw": {
+        "path": "datasets/rebuildable/2026-01-04.csv",
+        "sha256": "42b6c8d5d01282da15df7c2d30df4e424a2960a5fbbd0342c746e17b603537ea",
+        "mode": "0600"
+      },
+      "sidecar_rows": [
+        {
+          "dataset_slug": "rebuildable",
+          "row_key": "identity:order-1",
+          "identity": "order-1",
+          "values_json": "{\"amount\":12.5,\"date\":\"2026-01-02\",\"id\":\"order-1\"}",
+          "source_path": "datasets/rebuildable/2026-01-04.csv",
+          "row_number": 2
+        },
+        {
+          "dataset_slug": "rebuildable",
+          "row_key": "identity:order-2",
+          "identity": "order-2",
+          "values_json": "{\"amount\":8,\"date\":\"2026-01-03\",\"id\":\"order-2\"}",
+          "source_path": "datasets/rebuildable/2026-01-04.csv",
+          "row_number": 3
+        }
+      ],
+      "sidecar_count": 2
+    },
+    {
+      "name": "explicit-slug-and-policy",
+      "source_name": "inventory.csv",
+      "csv": "sku,qty\nA-1,3\nA-2,0\n",
+      "title": "Inventory",
+      "slug": "inventory",
+      "identity_field": "sku",
+      "now": "2026-01-04T05:06:07Z",
+      "import_twice": false,
+      "rebuild": true,
+      "result": {
+        "handle_path": "datasets/inventory.md",
+        "raw_path": "datasets/inventory/2026-01-04.csv",
+        "slug": "inventory",
+        "rows": 2,
+        "columns": {
+          "qty": {
+            "type": "number",
+            "label": "qty"
+          },
+          "sku": {
+            "type": "text",
+            "label": "sku"
+          }
+        },
+        "source_sha256": "b58410b5c275168ffa5d0729e4ae4503202a14566aff8ef5cd7c1d143f0b1e69",
+        "sensitivity": "restricted",
+        "retention_rule": "default"
+      },
+      "handle_bytes": "---\ncoverage: {}\ncreated: \"2026-01-04T05:06:07Z\"\ndataset_id: inventory\nidentity_field: sku\nprovenance:\n    imported_at: \"2026-01-04T05:06:07Z\"\n    source_name: inventory.csv\n    source_sha256: b58410b5c275168ffa5d0729e4ae4503202a14566aff8ef5cd7c1d143f0b1e69\nretention_rule: default\nschema:\n    qty:\n        type: number\n        label: qty\n    sku:\n        type: text\n        label: sku\nsensitivity: restricted\nsource: datasets/inventory/2026-01-04.csv\ntags:\n    - dataset\ntitle: Inventory\ntype: dataset\n---\n\n# Inventory\n\nSource: `datasets/inventory/2026-01-04.csv`\n",
+      "handle": {
+        "path": "datasets/inventory.md",
+        "sha256": "5ad5ca853e747a8ee4ec15cbf050c2929fae8f054575cecc59d757fd4b7c3941",
+        "mode": "0600"
+      },
+      "raw": {
+        "path": "datasets/inventory/2026-01-04.csv",
+        "sha256": "b58410b5c275168ffa5d0729e4ae4503202a14566aff8ef5cd7c1d143f0b1e69",
+        "mode": "0600"
+      },
+      "sidecar_rows": [
+        {
+          "dataset_slug": "inventory",
+          "row_key": "identity:A-1",
+          "identity": "A-1",
+          "values_json": "{\"qty\":3,\"sku\":\"A-1\"}",
+          "source_path": "datasets/inventory/2026-01-04.csv",
+          "row_number": 2
+        },
+        {
+          "dataset_slug": "inventory",
+          "row_key": "identity:A-2",
+          "identity": "A-2",
+          "values_json": "{\"qty\":0,\"sku\":\"A-2\"}",
+          "source_path": "datasets/inventory/2026-01-04.csv",
+          "row_number": 3
+        }
+      ],
+      "sidecar_count": 2
+    },
+    {
+      "name": "no-identity-field",
+      "source_name": "events.csv",
+      "csv": "name,value\nalpha,1\nbeta,2\n",
+      "title": "Events",
+      "now": "2026-01-04T05:06:07Z",
+      "import_twice": false,
+      "rebuild": false,
+      "result": {
+        "handle_path": "datasets/events.md",
+        "raw_path": "datasets/events/2026-01-04.csv",
+        "slug": "events",
+        "rows": 2,
+        "columns": {
+          "name": {
+            "type": "text",
+            "label": "name"
+          },
+          "value": {
+            "type": "number",
+            "label": "value"
+          }
+        },
+        "source_sha256": "e7a3929e0913e80f475f937db1615bfa29484299e93ea55d8c87e92770c8078d",
+        "sensitivity": "restricted",
+        "retention_rule": "default"
+      },
+      "handle_bytes": "---\ncoverage: {}\ncreated: \"2026-01-04T05:06:07Z\"\ndataset_id: events\nprovenance:\n    imported_at: \"2026-01-04T05:06:07Z\"\n    source_name: events.csv\n    source_sha256: e7a3929e0913e80f475f937db1615bfa29484299e93ea55d8c87e92770c8078d\nretention_rule: default\nschema:\n    name:\n        type: text\n        label: name\n    value:\n        type: number\n        label: value\nsensitivity: restricted\nsource: datasets/events/2026-01-04.csv\ntags:\n    - dataset\ntitle: Events\ntype: dataset\n---\n\n# Events\n\nSource: `datasets/events/2026-01-04.csv`\n",
+      "handle": {
+        "path": "datasets/events.md",
+        "sha256": "e4e22264a1f417e4f7622893cfe5346e1ffa9c61bc8ac43d64c4c0eba464cfd7",
+        "mode": "0600"
+      },
+      "raw": {
+        "path": "datasets/events/2026-01-04.csv",
+        "sha256": "e7a3929e0913e80f475f937db1615bfa29484299e93ea55d8c87e92770c8078d",
+        "mode": "0600"
+      },
+      "sidecar_rows": [
+        {
+          "dataset_slug": "events",
+          "row_key": "hash:19a941393fe024f14996b7fbbe94891909b508d990c4780e6315ead7ab577e98",
+          "identity": "",
+          "values_json": "{\"name\":\"beta\",\"value\":2}",
+          "source_path": "datasets/events/2026-01-04.csv",
+          "row_number": 3
+        },
+        {
+          "dataset_slug": "events",
+          "row_key": "hash:2203371b7761a386f84f0316dca047dc053fa6489dc5f49a1b98ab801f333539",
+          "identity": "",
+          "values_json": "{\"name\":\"alpha\",\"value\":1}",
+          "source_path": "datasets/events/2026-01-04.csv",
+          "row_number": 2
+        }
+      ],
+      "sidecar_count": 2
+    }
+  ],
+  "csv_cases": [
+    {
+      "name": "unicode-blank-lines-and-quoted-crlf",
+      "csv": "id,note,detail\r\n\r\nu-1,Grüße,\"line one\r\nline two\"\r\n\r\nu-2,東京,plain\r\n",
+      "identity_field": "id",
+      "schema": {
+        "detail": {
+          "type": "text",
+          "label": "detail"
+        },
+        "id": {
+          "type": "text",
+          "label": "id"
+        },
+        "note": {
+          "type": "text",
+          "label": "note"
+        }
+      },
+      "sidecar_rows": [
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:u-1",
+          "identity": "u-1",
+          "values_json": "{\"detail\":\"line one\\nline two\",\"id\":\"u-1\",\"note\":\"Grüße\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 2
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:u-2",
+          "identity": "u-2",
+          "values_json": "{\"detail\":\"plain\",\"id\":\"u-2\",\"note\":\"東京\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 3
+        }
+      ]
+    },
+    {
+      "name": "go-number-literals-and-json-thresholds",
+      "csv": "id,value\nhex,0x1p+2\nunderscore,1_000\nsmall,1e-7\nfixed-edge,1e-6\nlarge-fixed,1e20\nlarge-exp,1e21\nnegative-zero,-0\n",
+      "identity_field": "id",
+      "declared": {
+        "value": {
+          "type": "number"
+        }
+      },
+      "schema": {
+        "id": {
+          "type": "text",
+          "label": "id"
+        },
+        "value": {
+          "type": "number",
+          "label": "value"
+        }
+      },
+      "sidecar_rows": [
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:fixed-edge",
+          "identity": "fixed-edge",
+          "values_json": "{\"id\":\"fixed-edge\",\"value\":0.000001}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 5
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:hex",
+          "identity": "hex",
+          "values_json": "{\"id\":\"hex\",\"value\":4}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 2
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:large-exp",
+          "identity": "large-exp",
+          "values_json": "{\"id\":\"large-exp\",\"value\":1e+21}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 7
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:large-fixed",
+          "identity": "large-fixed",
+          "values_json": "{\"id\":\"large-fixed\",\"value\":100000000000000000000}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 6
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:negative-zero",
+          "identity": "negative-zero",
+          "values_json": "{\"id\":\"negative-zero\",\"value\":-0}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 8
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:small",
+          "identity": "small",
+          "values_json": "{\"id\":\"small\",\"value\":1e-7}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 4
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:underscore",
+          "identity": "underscore",
+          "values_json": "{\"id\":\"underscore\",\"value\":1000}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 3
+        }
+      ]
+    },
+    {
+      "name": "all-go-date-layouts",
+      "csv": "id,when\ndate,2026-01-02\nrfc3339,2026-01-02T15:04:05Z\nseconds,2026-01-02 15:04:05\nminutes,2026-01-02 15:04\n",
+      "identity_field": "id",
+      "declared": {
+        "when": {
+          "type": "date"
+        }
+      },
+      "schema": {
+        "id": {
+          "type": "text",
+          "label": "id"
+        },
+        "when": {
+          "type": "date",
+          "label": "when"
+        }
+      },
+      "sidecar_rows": [
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:date",
+          "identity": "date",
+          "values_json": "{\"id\":\"date\",\"when\":\"2026-01-02\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 2
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:minutes",
+          "identity": "minutes",
+          "values_json": "{\"id\":\"minutes\",\"when\":\"2026-01-02 15:04\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 5
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:rfc3339",
+          "identity": "rfc3339",
+          "values_json": "{\"id\":\"rfc3339\",\"when\":\"2026-01-02T15:04:05Z\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 3
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:seconds",
+          "identity": "seconds",
+          "values_json": "{\"id\":\"seconds\",\"when\":\"2026-01-02 15:04:05\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 4
+        }
+      ]
+    },
+    {
+      "name": "go-boolean-spellings",
+      "csv": "id,enabled\none,1\nt,T\nupper,TRUE\ntitle,True\nzero,0\nf,F\nfalse-upper,FALSE\nfalse-title,False\n",
+      "identity_field": "id",
+      "declared": {
+        "enabled": {
+          "type": "checkbox"
+        }
+      },
+      "schema": {
+        "enabled": {
+          "type": "checkbox",
+          "label": "enabled"
+        },
+        "id": {
+          "type": "text",
+          "label": "id"
+        }
+      },
+      "sidecar_rows": [
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:f",
+          "identity": "f",
+          "values_json": "{\"enabled\":false,\"id\":\"f\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 7
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:false-title",
+          "identity": "false-title",
+          "values_json": "{\"enabled\":false,\"id\":\"false-title\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 9
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:false-upper",
+          "identity": "false-upper",
+          "values_json": "{\"enabled\":false,\"id\":\"false-upper\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 8
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:one",
+          "identity": "one",
+          "values_json": "{\"enabled\":true,\"id\":\"one\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 2
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:t",
+          "identity": "t",
+          "values_json": "{\"enabled\":true,\"id\":\"t\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 3
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:title",
+          "identity": "title",
+          "values_json": "{\"enabled\":true,\"id\":\"title\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 5
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:upper",
+          "identity": "upper",
+          "values_json": "{\"enabled\":true,\"id\":\"upper\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 4
+        },
+        {
+          "dataset_slug": "oracle",
+          "row_key": "identity:zero",
+          "identity": "zero",
+          "values_json": "{\"enabled\":false,\"id\":\"zero\"}",
+          "source_path": "datasets/oracle/source.csv",
+          "row_number": 6
+        }
+      ]
+    }
+  ],
+  "csv_error_cases": [
+    {
+      "name": "csv-is-empty",
+      "csv": "",
+      "error": "csv is empty"
+    },
+    {
+      "name": "empty-column-name",
+      "csv": "id,,amount\n1,2,3\n",
+      "error": "csv column 2 has an empty name"
+    },
+    {
+      "name": "duplicate-column",
+      "csv": "id,ID\n1,2\n",
+      "error": "csv has duplicate column \"ID\""
+    },
+    {
+      "name": "missing-identity-field",
+      "csv": "name\nx\n",
+      "identity_field": "id",
+      "error": "identity field \"id\" is not a CSV column"
+    },
+    {
+      "name": "field-count-mismatch",
+      "csv": "id,amount\n1\n",
+      "error": "read csv: record on line 2: wrong number of fields"
+    },
+    {
+      "name": "physical-line-field-count",
+      "csv": "id,note\r\n\r\n1,\"line one\r\nline two\"\r\n\r\n2\r\n",
+      "error": "read csv: record on line 6: wrong number of fields"
+    },
+    {
+      "name": "unterminated-quoted-field",
+      "csv": "id,note\n1,\"unterminated\n",
+      "error": "read csv: parse error on line 2, column 17: extraneous or missing \" in quoted-field"
+    },
+    {
+      "name": "bare-quote-in-unquoted-field",
+      "csv": "id,note\n1,bad\"quote\n",
+      "error": "read csv: parse error on line 2, column 6: bare \" in non-quoted-field"
+    },
+    {
+      "name": "multiline-quoted-field-error-location",
+      "csv": "id,note\n1,\"line one\nline two\"x\n",
+      "error": "read csv: record on line 2; parse error on line 3, column 9: extraneous or missing \" in quoted-field"
+    },
+    {
+      "name": "invalid-number",
+      "csv": "id,amount\n1,abc\n",
+      "declared_type": "number",
+      "declared_column": "amount",
+      "error": "row 2 column \"amount\": invalid number \"abc\""
+    },
+    {
+      "name": "invalid-boolean",
+      "csv": "id,enabled\n1,perhaps\n",
+      "declared_type": "checkbox",
+      "declared_column": "enabled",
+      "error": "row 2 column \"enabled\": invalid boolean \"perhaps\""
+    },
+    {
+      "name": "invalid-date",
+      "csv": "id,when\n1,2026/01/02\n",
+      "declared_type": "date",
+      "declared_column": "when",
+      "error": "row 2 column \"when\": invalid date \"2026/01/02\""
+    },
+    {
+      "name": "date-trailing-junk",
+      "csv": "id,when\n1,2026-01-02 15:04:05junk\n",
+      "declared_type": "date",
+      "declared_column": "when",
+      "error": "row 2 column \"when\": invalid date \"2026-01-02 15:04:05junk\""
+    },
+    {
+      "name": "date-invalid-offset",
+      "csv": "id,when\n1,2026-01-02T15:04:05+99:99\n",
+      "declared_type": "date",
+      "declared_column": "when",
+      "error": "row 2 column \"when\": invalid date \"2026-01-02T15:04:05+99:99\""
+    },
+    {
+      "name": "date-leap-second",
+      "csv": "id,when\n1,2026-01-02T15:04:60Z\n",
+      "declared_type": "date",
+      "declared_column": "when",
+      "error": "row 2 column \"when\": invalid date \"2026-01-02T15:04:60Z\""
+    },
+    {
+      "name": "date-nonascii-byte-boundary",
+      "csv": "id,when\n1,2026-01-02T1é:04:05Z\n",
+      "declared_type": "date",
+      "declared_column": "when",
+      "error": "row 2 column \"when\": invalid date \"2026-01-02T1é:04:05Z\""
+    }
+  ],
+  "projection_error_cases": [
+    {
+      "name": "nan-is-not-json",
+      "source_name": "nan.csv",
+      "csv": "id,value\nnan,NaN\n",
+      "identity_field": "id",
+      "declared": {
+        "value": {
+          "type": "number"
+        }
+      },
+      "projection_error": "json: unsupported value: NaN",
+      "error": "store dataset rows: json: unsupported value: NaN",
+      "handle": {
+        "path": "datasets/nan.md",
+        "sha256": "224cc695c63b2fc159f4d98b35105874055b46c3a429c88af33727082879088a",
+        "mode": "0600"
+      },
+      "raw": {
+        "path": "datasets/nan/2026-01-04.csv",
+        "sha256": "3b3f1fd7269b09371036e1f05aa0a981de1c5527a7e178d468234402d6f61f9d",
+        "mode": "0600"
+      },
+      "sidecar_count": 0
+    },
+    {
+      "name": "positive-infinity-is-not-json",
+      "source_name": "infinity.csv",
+      "csv": "id,value\ninf,+Inf\n",
+      "identity_field": "id",
+      "declared": {
+        "value": {
+          "type": "number"
+        }
+      },
+      "projection_error": "json: unsupported value: +Inf",
+      "error": "store dataset rows: json: unsupported value: +Inf",
+      "handle": {
+        "path": "datasets/infinity.md",
+        "sha256": "093e60bc0c521c21158f0521a1083a0111608ed88c7fab609882636836993862",
+        "mode": "0600"
+      },
+      "raw": {
+        "path": "datasets/infinity/2026-01-04.csv",
+        "sha256": "cd9d5b1788a34a09614f80a7e63ae303512b4a7b1da64b668e6e1c0238d31920",
+        "mode": "0600"
+      },
+      "sidecar_count": 0
+    }
+  ],
+  "error_cases": [
+    {
+      "name": "missing-vault",
+      "detail": "Service without a vault root",
+      "error": "dataset import requires a vault"
+    },
+    {
+      "name": "missing-sidecar",
+      "detail": "Service without a sidecar handle",
+      "error": "dataset import requires a sidecar"
+    },
+    {
+      "name": "non-csv-source",
+      "detail": "Importing a .txt file",
+      "error": "dataset import supports CSV files only"
+    },
+    {
+      "name": "slug-not-filesystem-safe",
+      "detail": "Explicit slug with a path separator",
+      "error": "dataset slug \"../escape\" is not filesystem-safe"
+    },
+    {
+      "name": "missing-source-file",
+      "detail": "Source path that does not exist",
+      "error": "stat dataset source: stat \u003ctmp\u003e/absent.csv: no such file or directory"
+    }
+  ]
+}

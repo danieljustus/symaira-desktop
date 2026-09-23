@@ -548,15 +548,33 @@ fn slugify(value: &str) -> String {
 }
 
 fn read_optional(root: &Dir, path: &str) -> Result<Option<Vec<u8>>, DatasetPurgeError> {
-    match root.open(Path::new(path)) {
-        Ok(mut f) => {
-            let mut bytes = Vec::new();
-            f.read_to_end(&mut bytes)?;
-            Ok(Some(bytes))
-        }
-        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
-        Err(e) => Err(e.into()),
+    let path = Path::new(path);
+    let before = match root.symlink_metadata(path) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(error.into()),
+    };
+    if !before.is_file() || before.file_type().is_symlink() {
+        return Err(DatasetPurgeError::Contract(
+            "dataset purge journal is not a regular file".into(),
+        ));
     }
+    let mut file = root.open(path)?;
+    let opened = file.metadata()?;
+    if !opened.is_file() || identity(&before) != identity(&opened) {
+        return Err(DatasetPurgeError::Contract(
+            "dataset purge journal is not a regular file".into(),
+        ));
+    }
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)?;
+    let after = root.symlink_metadata(path)?;
+    if !after.is_file() || after.file_type().is_symlink() || identity(&opened) != identity(&after) {
+        return Err(DatasetPurgeError::Contract(
+            "dataset purge journal is not a regular file".into(),
+        ));
+    }
+    Ok(Some(bytes))
 }
 
 fn write_journal(root: &Dir, journal: &Journal) -> Result<(), DatasetPurgeError> {

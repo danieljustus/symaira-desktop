@@ -353,6 +353,136 @@
         "rows": []
       },
       "error": "content changed"
+    },
+    {
+      "id": "symlink-journal-fails-before-mutation",
+      "before": {
+        "files": [
+          {
+            "path": ".symdesk",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/dataset-purge",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/dataset-purge/orders.json",
+            "kind": "symlink",
+            "target": "valid-journal.json"
+          },
+          {
+            "path": ".symdesk/dataset-purge/valid-journal.json",
+            "kind": "file",
+            "size": 573,
+            "sha256": "e00ea8f971fc1efddaee39a36df664d62bab9e179eb2517a856afd340894ad68"
+          },
+          {
+            "path": "bases",
+            "kind": "directory"
+          },
+          {
+            "path": "bases/orders.md",
+            "kind": "file",
+            "size": 298,
+            "sha256": "457722af2ce412e8989ca0b4a7dc6c4913d8691250c56e4e9785be96427da32f",
+            "content": "---\ntype: base\ntitle: Orders\ncreated: \"{{timestamp}}\"\ntags:\n    - base\nbase_id: orders\nviews:\n    - id: orders\n      name: Orders\n      type: table\n      columns:\n        - id\n        - amount\n      source: dataset:orders\n---\n\n# Orders\n\n## Views\n\n- **Orders** (`table`) · Source: `dataset:orders`\n"
+          },
+          {
+            "path": "datasets",
+            "kind": "directory"
+          },
+          {
+            "path": "datasets/orders",
+            "kind": "directory"
+          },
+          {
+            "path": "datasets/orders.md",
+            "kind": "file",
+            "size": 476,
+            "sha256": "4f0c9e4b23f36d42bd7f7dd104773dd584c7ced7c41110f1a81960328904b8bf"
+          },
+          {
+            "path": "datasets/orders/2026-01-04.csv",
+            "kind": "file",
+            "size": 18,
+            "sha256": "22278858788c69af96fd888dfa39cfe4aefbdb12d7a9cf5e93dceaec923c6869"
+          }
+        ],
+        "rows": [
+          {
+            "row_key": "identity:o1",
+            "identity": "o1",
+            "values_json": "{\"amount\":12.5,\"id\":\"o1\"}",
+            "source_path": "datasets/orders/2026-01-04.csv",
+            "row_number": 2
+          }
+        ]
+      },
+      "after": {
+        "files": [
+          {
+            "path": ".symdesk",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/dataset-purge",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/dataset-purge/orders.json",
+            "kind": "symlink",
+            "target": "valid-journal.json"
+          },
+          {
+            "path": ".symdesk/dataset-purge/valid-journal.json",
+            "kind": "file",
+            "size": 573,
+            "sha256": "e00ea8f971fc1efddaee39a36df664d62bab9e179eb2517a856afd340894ad68"
+          },
+          {
+            "path": "bases",
+            "kind": "directory"
+          },
+          {
+            "path": "bases/orders.md",
+            "kind": "file",
+            "size": 298,
+            "sha256": "457722af2ce412e8989ca0b4a7dc6c4913d8691250c56e4e9785be96427da32f",
+            "content": "---\ntype: base\ntitle: Orders\ncreated: \"{{timestamp}}\"\ntags:\n    - base\nbase_id: orders\nviews:\n    - id: orders\n      name: Orders\n      type: table\n      columns:\n        - id\n        - amount\n      source: dataset:orders\n---\n\n# Orders\n\n## Views\n\n- **Orders** (`table`) · Source: `dataset:orders`\n"
+          },
+          {
+            "path": "datasets",
+            "kind": "directory"
+          },
+          {
+            "path": "datasets/orders",
+            "kind": "directory"
+          },
+          {
+            "path": "datasets/orders.md",
+            "kind": "file",
+            "size": 476,
+            "sha256": "4f0c9e4b23f36d42bd7f7dd104773dd584c7ced7c41110f1a81960328904b8bf"
+          },
+          {
+            "path": "datasets/orders/2026-01-04.csv",
+            "kind": "file",
+            "size": 18,
+            "sha256": "22278858788c69af96fd888dfa39cfe4aefbdb12d7a9cf5e93dceaec923c6869"
+          }
+        ],
+        "rows": [
+          {
+            "row_key": "identity:o1",
+            "identity": "o1",
+            "values_json": "{\"amount\":12.5,\"id\":\"o1\"}",
+            "source_path": "datasets/orders/2026-01-04.csv",
+            "row_number": 2
+          }
+        ]
+      },
+      "error": "dataset purge journal is not a regular file"
     }
   ]
 }

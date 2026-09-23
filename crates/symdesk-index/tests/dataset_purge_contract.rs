@@ -176,7 +176,7 @@ fn dataset_purge_matches_go_service_fixture() {
     let recovery_cases = fixture["recovery_cases"]
         .as_array()
         .expect("recovery cases");
-    assert_eq!(recovery_cases.len(), 2);
+    assert_eq!(recovery_cases.len(), 3);
     for case in recovery_cases {
         let id = case["id"].as_str().expect("recovery case id");
         let mut sandbox = Sandbox::new(id);
@@ -257,9 +257,56 @@ fn dataset_purge_matches_go_service_fixture() {
                     "case {id} deleted replacement trash"
                 );
             }
+            "symlink-journal-fails-before-mutation" => {
+                sandbox.db.close().expect("close sidecar for journal setup");
+                let setup_result = DatasetPurgeService::new(&sandbox.root, &mut sandbox.db)
+                    .purge("orders", "default", "");
+                let setup_error = setup_result
+                    .err()
+                    .map(|error| error.to_string())
+                    .unwrap_or_default();
+                assert!(setup_error.contains("closed"), "case {id}: {setup_error:?}");
+
+                let journal_dir = sandbox.root.join(".symdesk/dataset-purge");
+                let journal = journal_dir.join("orders.json");
+                let target = journal_dir.join("valid-journal.json");
+                fs::rename(&journal, &target).expect("move valid journal to symlink target");
+                create_file_symlink(Path::new("valid-journal.json"), &journal)
+                    .expect("create journal symlink");
+                sandbox.db = Sidecar::open(&sandbox.parent.join("sidecar.db"))
+                    .expect("reopen sidecar for symlink test");
+                let before = snapshot(&sandbox);
+                let target_before = fs::read(&target).expect("read valid target journal");
+                let result = DatasetPurgeService::new(&sandbox.root, &mut sandbox.db)
+                    .purge("orders", "default", "");
+                let error = result
+                    .err()
+                    .map(|error| error.to_string())
+                    .unwrap_or_default();
+                let after = snapshot(&sandbox);
+                assert_eq!(error, case["error"].as_str().expect("exact error"));
+                assert_eq!(before, case["before"], "case {id} before mutation");
+                assert_eq!(after, case["after"], "case {id} after mutation");
+                assert_eq!(before, after, "case {id} mutated state");
+                assert_eq!(
+                    fs::read(&target).expect("valid target journal survives"),
+                    target_before,
+                    "case {id} changed journal target"
+                );
+            }
             other => panic!("unknown dataset purge recovery case {other:?}"),
         }
     }
+}
+
+#[cfg(unix)]
+fn create_file_symlink(target: &Path, link: &Path) -> std::io::Result<()> {
+    std::os::unix::fs::symlink(target, link)
+}
+
+#[cfg(windows)]
+fn create_file_symlink(target: &Path, link: &Path) -> std::io::Result<()> {
+    std::os::windows::fs::symlink_file(target, link)
 }
 
 fn snapshot(sandbox: &Sandbox) -> Value {

@@ -52,6 +52,7 @@ type datasetPurgeSnapshot struct {
 type datasetPurgeFile struct {
 	Path    string `json:"path"`
 	Kind    string `json:"kind"`
+	Target  string `json:"target,omitempty"`
 	Size    int64  `json:"size,omitempty"`
 	SHA256  string `json:"sha256,omitempty"`
 	Content string `json:"content,omitempty"`
@@ -217,6 +218,47 @@ func buildDatasetPurgeRecoveryCases(t *testing.T) []datasetPurgeRecoveryFixtureC
 	return []datasetPurgeRecoveryFixtureCase{
 		datasetPurgeCorruptJournalCase(t),
 		datasetPurgeReplacementTrashRetryCase(t),
+		datasetPurgeJournalSymlinkCase(t),
+	}
+}
+
+func datasetPurgeJournalSymlinkCase(t *testing.T) datasetPurgeRecoveryFixtureCase {
+	t.Helper()
+	svc := newTestService(t)
+	datasetForPolicyTest(t, svc, dataset.SensitivityRestricted)
+	if err := svc.DB.Close(); err != nil {
+		t.Fatal(err)
+	}
+	initialErr := svc.DatasetPurge("orders", dataset.DefaultRetentionRule)
+	if initialErr == nil || !strings.Contains(initialErr.Error(), "closed") {
+		t.Fatalf("closed-sidecar journal setup error = %v", initialErr)
+	}
+	journalPath := filepath.Join(svc.VaultRoot, ".symdesk", "dataset-purge", "orders.json")
+	targetPath := filepath.Join(filepath.Dir(journalPath), "valid-journal.json")
+	if err := os.Rename(journalPath, targetPath); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Base(targetPath), journalPath); err != nil {
+		t.Fatal(err)
+	}
+	db, err := sidecar.Open(filepath.Join(svc.VaultRoot, "sidecar.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	resumed := New(svc.VaultRoot, db)
+	before := datasetPurgeSnapshotOf(t, svc.VaultRoot, db)
+	loadErr := resumed.DatasetPurge("orders", dataset.DefaultRetentionRule)
+	after := datasetPurgeSnapshotOf(t, svc.VaultRoot, db)
+	const expected = "dataset purge journal is not a regular file"
+	if loadErr == nil || loadErr.Error() != expected {
+		t.Fatalf("symlink journal error = %v, want %q", loadErr, expected)
+	}
+	return datasetPurgeRecoveryFixtureCase{
+		ID:     "symlink-journal-fails-before-mutation",
+		Error:  expected,
+		Before: before,
+		After:  after,
 	}
 }
 
@@ -304,6 +346,18 @@ func datasetPurgeSnapshotOf(t *testing.T, root string, db *sidecar.DB) datasetPu
 		}
 		if entry.IsDir() {
 			files = append(files, datasetPurgeFile{Path: rel, Kind: "directory"})
+			return nil
+		}
+		info, err := os.Lstat(path)
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			target, err := os.Readlink(path)
+			if err != nil {
+				return err
+			}
+			files = append(files, datasetPurgeFile{Path: rel, Kind: "symlink", Target: filepath.ToSlash(target)})
 			return nil
 		}
 		data, err := os.ReadFile(path) //nolint:gosec // test-owned vault tree

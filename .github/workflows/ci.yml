@@ -299,6 +299,10 @@ jobs:
         shell: bash
         run: make room-run-wait-cli-differential
 
+      - name: Run native room MCP differential
+        shell: bash
+        run: make room-mcp-differential
+
       - name: Run native dataset sync differential
         shell: bash
         run: make dataset-sync-differential

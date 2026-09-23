@@ -13,6 +13,7 @@ use std::{
 use cap_std::{ambient_authority, fs::Dir};
 use noyalib::Value;
 use rusqlite::{Connection, OptionalExtension, Transaction, params, params_from_iter};
+use serde::Deserialize;
 use symdesk_vault::Document;
 use thiserror::Error;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
@@ -225,6 +226,15 @@ pub struct ListedDocument {
 /// One materialized row in the rebuildable dataset sidecar.
 pub type DatasetRow = symdesk_vault::dataset::SidecarRow;
 
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq)]
+pub struct DatasetQueryFilter {
+    pub key: String,
+    #[serde(default)]
+    pub operator: String,
+    #[serde(default)]
+    pub value: String,
+}
+
 pub struct Sidecar {
     connection: Connection,
     closed: bool,
@@ -261,6 +271,130 @@ pub fn path_for_vault(vault_root: &Path) -> Result<PathBuf, SidecarError> {
     )?;
     let digest = symdesk_vault::sha256_hex(canonical.to_string_lossy().as_bytes());
     Ok(root.join(&digest[..16]).join("sidecar.db"))
+}
+
+fn dataset_query_filter_where(
+    filters: &[DatasetQueryFilter],
+    schema: &BTreeMap<String, String>,
+) -> Result<(String, Vec<rusqlite::types::Value>), SidecarError> {
+    let mut expressions = Vec::with_capacity(filters.len());
+    let mut arguments = Vec::new();
+    for filter in filters {
+        let key = filter.key.trim();
+        let pseudo = matches!(key, "identity" | "_identity" | "_key");
+        let typ = if pseudo {
+            "text"
+        } else {
+            schema
+                .get(key)
+                .filter(|value| !value.is_empty())
+                .map(String::as_str)
+                .ok_or_else(|| {
+                    SidecarError::Contract(format!("dataset column {key:?} not found"))
+                })?
+        };
+        let (raw, raw_args) = match key {
+            "identity" | "_identity" => ("identity".to_owned(), Vec::new()),
+            "_key" => ("row_key".to_owned(), Vec::new()),
+            _ => (
+                "json_extract(values_json, ?)".to_owned(),
+                vec![rusqlite::types::Value::Text(dataset_json_path(key))],
+            ),
+        };
+        let (present, present_args) = match key {
+            "identity" | "_identity" => ("identity IS NOT NULL".to_owned(), Vec::new()),
+            "_key" => ("row_key IS NOT NULL".to_owned(), Vec::new()),
+            _ => (
+                "json_type(values_json, ?) IS NOT NULL".to_owned(),
+                vec![rusqlite::types::Value::Text(dataset_json_path(key))],
+            ),
+        };
+        let numeric = ["number", "integer", "float"]
+            .iter()
+            .any(|name| typ.eq_ignore_ascii_case(name));
+        let date = ["date", "datetime"]
+            .iter()
+            .any(|name| typ.eq_ignore_ascii_case(name));
+        let typed = if numeric {
+            format!("CAST({raw} AS REAL)")
+        } else if date {
+            format!("julianday({raw})")
+        } else {
+            format!("LOWER(CAST({raw} AS TEXT))")
+        };
+        let value = filter.value.trim();
+        match filter.operator.trim().to_ascii_lowercase().as_str() {
+            "" | "is" | "=" | "==" | "equals" if value.is_empty() => {
+                expressions.push(format!(
+                    "NOT ({present}) OR {raw} IS NULL OR CAST({raw} AS TEXT) = ''"
+                ));
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+            }
+            "" | "is" | "=" | "==" | "equals" => {
+                if date {
+                    expressions.push(format!("{present} AND julianday({raw}) = julianday(?)"));
+                } else if numeric {
+                    expressions.push(format!("{present} AND {typed} = CAST(? AS REAL)"));
+                } else {
+                    expressions.push(format!("{present} AND {typed} = LOWER(?)"));
+                }
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.push(rusqlite::types::Value::Text(if numeric || date {
+                    value.to_owned()
+                } else {
+                    value.to_lowercase()
+                }));
+            }
+            "not_equals" | "is_not" | "!=" => {
+                if date {
+                    expressions.push(format!(
+                        "(NOT ({present}) OR NOT (julianday({raw}) = julianday(?)))"
+                    ));
+                } else if numeric {
+                    expressions.push(format!(
+                        "(NOT ({present}) OR NOT ({typed} = CAST(? AS REAL)))"
+                    ));
+                } else {
+                    expressions.push(format!("(NOT ({present}) OR NOT ({typed} = LOWER(?)))"));
+                }
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.push(rusqlite::types::Value::Text(if numeric || date {
+                    value.to_owned()
+                } else {
+                    value.to_lowercase()
+                }));
+            }
+            "is_empty" | "empty" => {
+                expressions.push(format!(
+                    "NOT ({present}) OR {raw} IS NULL OR CAST({raw} AS TEXT) = ''"
+                ));
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+            }
+            operator => {
+                return Err(SidecarError::Contract(format!(
+                    "unsupported dataset filter operator {operator:?}"
+                )));
+            }
+        }
+    }
+    Ok((
+        expressions
+            .into_iter()
+            .map(|expression| format!("({expression})"))
+            .collect::<Vec<_>>()
+            .join(" AND "),
+        arguments,
+    ))
+}
+
+fn dataset_json_path(key: &str) -> String {
+    format!(r#"$."{}""#, key.replace('"', r#"\""#))
 }
 
 fn sidecar_storage_root(
@@ -467,35 +601,66 @@ impl Sidecar {
         dataset_slug: &str,
         limit: usize,
     ) -> Result<(usize, Vec<DatasetRow>), SidecarError> {
+        self.dataset_query_page_filtered(dataset_slug, &BTreeMap::new(), &[], limit)
+    }
+
+    /// Returns a bounded, key-ordered page and total matching structured filters.
+    ///
+    /// # Errors
+    /// Returns a contract error for an unknown column or unsupported operator,
+    /// the stable closed-database diagnostic, or SQLite query errors.
+    pub fn dataset_query_page_filtered(
+        &self,
+        dataset_slug: &str,
+        schema: &BTreeMap<String, String>,
+        filters: &[DatasetQueryFilter],
+        limit: usize,
+    ) -> Result<(usize, Vec<DatasetRow>), SidecarError> {
         if self.closed {
             return Err(SidecarError::Closed);
         }
+        let (where_sql, where_args) = dataset_query_filter_where(filters, schema)?;
+        let where_sql = if where_sql.is_empty() {
+            String::new()
+        } else {
+            format!(" AND {where_sql}")
+        };
         let total: i64 = self.connection.query_row(
-            "SELECT COUNT(*) FROM dataset_rows WHERE dataset_slug = ?",
-            [dataset_slug],
+            &format!("SELECT COUNT(*) FROM dataset_rows WHERE dataset_slug = ?{where_sql}"),
+            params_from_iter(
+                std::iter::once(rusqlite::types::Value::Text(dataset_slug.to_owned()))
+                    .chain(where_args.iter().cloned()),
+            ),
             |row| row.get(0),
         )?;
+        let limit = i64::try_from(limit.min(1000)).unwrap_or(i64::MAX);
         let mut statement = self.connection.prepare(
-            "SELECT dataset_slug,row_key,COALESCE(identity,''),values_json,source_path,row_number FROM dataset_rows WHERE dataset_slug = ? ORDER BY row_key LIMIT ?",
+            &format!("SELECT dataset_slug,row_key,COALESCE(identity,''),values_json,source_path,row_number FROM dataset_rows WHERE dataset_slug = ?{where_sql} ORDER BY row_key LIMIT ?"),
         )?;
-        let limit = i64::try_from(limit).unwrap_or(i64::MAX);
-        let rows = statement.query_map(params![dataset_slug, limit], |row| {
-            let row_number: i64 = row.get(5)?;
-            Ok(DatasetRow {
-                dataset_slug: row.get(0)?,
-                row_key: row.get(1)?,
-                identity: row.get(2)?,
-                values_json: row.get(3)?,
-                source_path: row.get(4)?,
-                row_number: usize::try_from(row_number).map_err(|error| {
-                    rusqlite::Error::FromSqlConversionFailure(
-                        5,
-                        rusqlite::types::Type::Integer,
-                        Box::new(error),
-                    )
-                })?,
-            })
-        })?;
+        let rows = statement.query_map(
+            params_from_iter(
+                std::iter::once(rusqlite::types::Value::Text(dataset_slug.to_owned()))
+                    .chain(where_args)
+                    .chain(std::iter::once(rusqlite::types::Value::Integer(limit))),
+            ),
+            |row| {
+                let row_number: i64 = row.get(5)?;
+                Ok(DatasetRow {
+                    dataset_slug: row.get(0)?,
+                    row_key: row.get(1)?,
+                    identity: row.get(2)?,
+                    values_json: row.get(3)?,
+                    source_path: row.get(4)?,
+                    row_number: usize::try_from(row_number).map_err(|error| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            5,
+                            rusqlite::types::Type::Integer,
+                            Box::new(error),
+                        )
+                    })?,
+                })
+            },
+        )?;
         Ok((
             usize::try_from(total).unwrap_or(usize::MAX),
             rows.collect::<Result<_, _>>()?,

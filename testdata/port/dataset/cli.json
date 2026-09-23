@@ -111,6 +111,73 @@
       "setup": [
         {"path": "vault/.seed", "content": "seed\n", "mode": 420}
       ]
+    },
+    {
+      "id": "query-cli-filter-text-case-insensitive-equals",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset", "sync", "orders",
+        "--rows", "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"status\":\"open\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"status\":null}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":40,\"status\":\"\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"status\":\"paid\"}}]",
+        "--provenance", "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field", "id", "--schema", "{\"amount\":{\"type\":\"number\"},\"status\":{\"type\":\"text\"}}",
+        "--json", "--vault", "${WORKSPACE}/vault"
+      ],
+      "args": ["dataset", "query", "orders", "--filters", "[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"OPEN\"}]", "--json", "--vault", "${WORKSPACE}/vault"],
+      "compare_sidecar_layout": true,
+      "setup": [{"path": "vault/.seed", "content": "seed\n", "mode": 420}]
+    },
+    {
+      "id": "query-cli-filter-numeric-coercion",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset", "sync", "orders",
+        "--rows", "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"status\":\"open\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"status\":null}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":40,\"status\":\"\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"status\":\"paid\"}}]",
+        "--provenance", "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field", "id", "--schema", "{\"amount\":{\"type\":\"number\"},\"status\":{\"type\":\"text\"}}",
+        "--json", "--vault", "${WORKSPACE}/vault"
+      ],
+      "args": ["dataset", "query", "orders", "--filters", "[{\"key\":\"amount\",\"operator\":\"equals\",\"value\":\"10.0\"}]", "--json", "--vault", "${WORKSPACE}/vault"],
+      "compare_sidecar_layout": true,
+      "setup": [{"path": "vault/.seed", "content": "seed\n", "mode": 420}]
+    },
+    {
+      "id": "query-cli-filter-not-equals-missing-null",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset", "sync", "orders",
+        "--rows", "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"status\":\"open\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"status\":null}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":40,\"status\":\"\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"status\":\"paid\"}}]",
+        "--provenance", "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field", "id", "--schema", "{\"amount\":{\"type\":\"number\"},\"status\":{\"type\":\"text\"}}",
+        "--json", "--vault", "${WORKSPACE}/vault"
+      ],
+      "args": ["dataset", "query", "orders", "--filters", "[{\"key\":\"status\",\"operator\":\"not_equals\",\"value\":\"open\"}]", "--json", "--vault", "${WORKSPACE}/vault"],
+      "compare_sidecar_layout": true,
+      "setup": [{"path": "vault/.seed", "content": "seed\n", "mode": 420}]
+    },
+    {
+      "id": "query-cli-filter-is-empty-missing-null-empty",
+      "stage": "dataset-cli",
+      "prepare_args": [
+        "dataset", "sync", "orders",
+        "--rows", "[{\"identity\":\"a\",\"values\":{\"id\":\"a\",\"amount\":10,\"status\":\"open\"}},{\"identity\":\"b\",\"values\":{\"id\":\"b\",\"amount\":20,\"status\":null}},{\"identity\":\"c\",\"values\":{\"id\":\"c\",\"amount\":30}},{\"identity\":\"d\",\"values\":{\"id\":\"d\",\"amount\":40,\"status\":\"\"}},{\"identity\":\"e\",\"values\":{\"id\":\"e\",\"amount\":50,\"status\":\"paid\"}}]",
+        "--provenance", "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field", "id", "--schema", "{\"amount\":{\"type\":\"number\"},\"status\":{\"type\":\"text\"}}",
+        "--json", "--vault", "${WORKSPACE}/vault"
+      ],
+      "args": ["dataset", "query", "orders", "--filters", "[{\"key\":\"status\",\"operator\":\"is_empty\",\"value\":\"\"}]", "--json", "--vault", "${WORKSPACE}/vault"],
+      "compare_sidecar_layout": true,
+      "setup": [{"path": "vault/.seed", "content": "seed\n", "mode": 420}]
+    },
+    {
+      "id": "query-cli-filter-unknown-column",
+      "stage": "dataset-cli",
+      "stdout_mode": "ignore",
+      "prepare_args": [
+        "dataset", "sync", "orders", "--rows", "[{\"identity\":\"a\",\"values\":{\"id\":\"a\"}}]",
+        "--provenance", "{\"source_name\":\"fixture\",\"source_sha256\":\"sha\",\"imported_at\":\"2026-04-03T10:00:00Z\"}", "--identity-field", "id", "--json", "--vault", "${WORKSPACE}/vault"
+      ],
+      "args": ["dataset", "query", "orders", "--filters", "[{\"key\":\"absent\",\"operator\":\"equals\",\"value\":\"x\"}]", "--json", "--vault", "${WORKSPACE}/vault"],
+      "setup": [{"path": "vault/.seed", "content": "seed\n", "mode": 420}]
     }
   ]
 }

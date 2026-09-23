@@ -211,6 +211,116 @@ fn query_cli_rejects_unknown_columns_and_missing_datasets() {
 }
 
 #[test]
+fn query_cli_applies_flat_scalar_filters_with_go_null_semantics() {
+    let root = TempRoot::new("query-filters");
+    let seeded = run(
+        &root,
+        [
+            "dataset",
+            "sync",
+            "orders",
+            "--rows",
+            r#"[{"identity":"a","values":{"id":"a","amount":10,"status":"open"}},{"identity":"b","values":{"id":"b","amount":20,"status":null}},{"identity":"c","values":{"id":"c","amount":30}},{"identity":"d","values":{"id":"d","amount":40,"status":""}},{"identity":"e","values":{"id":"e","amount":50,"status":"paid"}}]"#,
+            "--provenance",
+            r#"{"source_name":"fixture","source_sha256":"sha","imported_at":"2026-04-03T10:00:00Z"}"#,
+            "--identity-field",
+            "id",
+            "--schema",
+            r#"{"amount":{"type":"number"},"status":{"type":"text"}}"#,
+            "--json",
+        ],
+    );
+    assert_eq!(seeded.status.code(), Some(0), "stderr: {:?}", seeded.stderr);
+
+    let cases = [
+        (
+            r#"[{"key":"status","operator":"equals","value":"OPEN"}]"#,
+            vec!["a"],
+            1,
+        ),
+        (
+            r#"[{"key":"amount","operator":"equals","value":"10.0"}]"#,
+            vec!["a"],
+            1,
+        ),
+        (
+            r#"[{"key":"status","operator":"not_equals","value":"open"}]"#,
+            vec!["b", "c", "d", "e"],
+            4,
+        ),
+        (
+            r#"[{"key":"status","operator":"is_empty","value":""}]"#,
+            vec!["b", "c", "d"],
+            3,
+        ),
+    ];
+    for (filters, expected_ids, expected_total) in cases {
+        let queried = run(
+            &root,
+            ["dataset", "query", "orders", "--filters", filters, "--json"],
+        );
+        assert_eq!(
+            queried.status.code(),
+            Some(0),
+            "stderr: {:?}",
+            queried.stderr
+        );
+        let output: serde_json::Value =
+            serde_json::from_slice(&queried.stdout).expect("query JSON");
+        assert_eq!(output["total_rows"], expected_total);
+        let ids = output["rows"]
+            .as_array()
+            .expect("rows")
+            .iter()
+            .map(|row| row["id"].as_str().expect("id"))
+            .collect::<Vec<_>>();
+        assert_eq!(ids, expected_ids);
+    }
+
+    let combined = run(
+        &root,
+        [
+            "dataset",
+            "query",
+            "orders",
+            "--filters",
+            r#"[{"key":"status","operator":"is_empty"},{"key":"amount","operator":"not_equals","value":"20"}]"#,
+            "--json",
+        ],
+    );
+    assert_eq!(
+        combined.status.code(),
+        Some(0),
+        "stderr: {:?}",
+        combined.stderr
+    );
+    let output: serde_json::Value = serde_json::from_slice(&combined.stdout).expect("query JSON");
+    assert_eq!(output["total_rows"], 2);
+    let ids = output["rows"]
+        .as_array()
+        .expect("rows")
+        .iter()
+        .map(|row| row["id"].as_str().expect("id"))
+        .collect::<Vec<_>>();
+    assert_eq!(ids, vec!["c", "d"]);
+
+    let unknown = run(
+        &root,
+        [
+            "dataset",
+            "query",
+            "orders",
+            "--filters",
+            r#"[{"key":"absent","operator":"equals","value":"x"}]"#,
+            "--json",
+        ],
+    );
+    assert_ne!(unknown.status.code(), Some(0));
+    let error: serde_json::Value = serde_json::from_slice(&unknown.stdout).expect("JSON error");
+    assert_eq!(error["error"], "dataset column \"absent\" not found");
+}
+
+#[test]
 fn query_cli_caps_large_pages_at_one_thousand_rows() {
     let root = TempRoot::new("query-cap");
     let rows = (0..1001)

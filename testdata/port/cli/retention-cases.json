@@ -1270,6 +1270,23 @@
    "compare_sidecar_layout": true
   },
   {
+   "id": "retention-eval-no-items-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", ".symdesk/rules.yaml", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "json_run_id",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/rules.yaml", "content": "name: empty\nperiod_days: 30\naction: flag_review\n", "mode": 420}
+   ],
+   "description": "An empty evaluation serializes the Go nil items slice as null and stages an empty proposal.",
+   "compare_sidecar_layout": true
+  },
+  {
    "id": "retention-eval-invalid-rule",
    "binary": "symdesk",
    "stage": "retention",

@@ -209,7 +209,7 @@ fn make_valid_room(room: &Path, owner: &identity::Identity, index: &str) {
         lamport: 1,
         ts: "2026-01-02T03:04:05.006Z".to_owned(),
         kind: "room.created".to_owned(),
-        body: RawValue::from_string(body).expect("event body JSON").into(),
+        body: RawValue::from_string(body).expect("event body JSON"),
         sig: None,
     };
     event.sign(owner).expect("sign Go-compatible event");

@@ -29,6 +29,7 @@
 .PHONY: room-init-core-fixtures-generate room-init-core-differential
 .PHONY: room-init-cli-fixtures-generate room-init-cli-differential
 .PHONY: room-watch-cli-fixtures-generate room-watch-cli-differential
+.PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -359,6 +360,13 @@ room-artifact-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortArtifactCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test artifact_commands
 
+room-artifact-identity-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortArtifactIdentityCLIContract$$'
+
+room-artifact-identity-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortArtifactIdentityCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test artifact_identity_commands
+
 room-watch-stream-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/desk -run '^TestPortWatchStreamContract$$'
 
@@ -394,6 +402,13 @@ room-watch-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortWatchCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test watch_commands
 
+room-doctor-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortDoctorCLIContract$$'
+
+room-doctor-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortDoctorCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test doctor_commands
+
 index-backup-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'
 
@@ -421,6 +436,13 @@ index-location-fixtures-generate:
 index-location-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexLocationPortFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test index_location
+
+index-maintenance-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symdesk -run '^TestIndexMaintenanceProcessPortFixture$$'
+
+index-maintenance-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symdesk -run '^TestIndexMaintenanceProcessPortFixture$$'
+	$(CARGO) test -p symdesk-cli --locked --test index_maintenance
 
 history-prune-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'

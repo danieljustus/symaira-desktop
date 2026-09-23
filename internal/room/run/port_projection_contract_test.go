@@ -80,7 +80,7 @@ type runReadErrorFixture struct {
 }
 
 // TestPortRunProjectionContract freezes ProjectRuns and ProjectCheckpoints.
-// Set PORT_GENERATE=1 or ROOM_PROJECTION_GENERATE=1 to deliberately regenerate.
+// Set PORT_GENERATE=1 to deliberately regenerate.
 func TestPortRunProjectionContract(t *testing.T) {
 	fixture := makeRunProjectionFixture(t)
 	data, err := json.MarshalIndent(fixture, "", "  ")
@@ -89,7 +89,7 @@ func TestPortRunProjectionContract(t *testing.T) {
 	}
 	data = append(data, '\n')
 	path := filepath.Join("..", "..", "..", runProjectionFixture)
-	if os.Getenv("ROOM_PROJECTION_GENERATE") == "1" || os.Getenv("PORT_GENERATE") == "1" {
+	if os.Getenv("PORT_GENERATE") == "1" {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
 		}

@@ -12,6 +12,7 @@ use symdesk_core::{render_version_json, render_version_text};
 mod artifact_cli;
 mod brain_profile_cli;
 mod decide_cli;
+mod doctor_cli;
 mod identity_cli;
 mod index_cli;
 mod init_cli;
@@ -80,6 +81,9 @@ fn main() -> ExitCode {
     }
     if command == "watch" {
         return watch_cli::run(&args[2..]);
+    }
+    if command == "doctor" {
+        return doctor_cli::run(&args[2..]);
     }
     if command != "version" {
         return write_stderr(

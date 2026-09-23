@@ -80,7 +80,12 @@ pub fn run(args: &[OsString]) -> ExitCode {
     let report = run_doctor(&room);
     if json {
         let mut output = match serde_json::to_string_pretty(&report) {
-            Ok(output) => output,
+            Ok(output) => output
+                .replace('&', "\\u0026")
+                .replace('<', "\\u003c")
+                .replace('>', "\\u003e")
+                .replace('\u{2028}', "\\u2028")
+                .replace('\u{2029}', "\\u2029"),
             Err(_) => return process_exit(CoreExitCode::Generic),
         };
         output.push('\n');
@@ -512,10 +517,10 @@ fn check_tool(name: &str) -> Tool {
     };
     tool.path = Some(path.display().to_string());
     if let Ok(output) = Command::new(&path).args(["version", "--json"]).output() {
-        if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&output.stdout) {
-            if let Some(version) = value.get("version").and_then(serde_json::Value::as_str) {
-                tool.version = Some(version.to_owned());
-            }
+        if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&output.stdout)
+            && let Some(version) = value.get("version").and_then(serde_json::Value::as_str)
+        {
+            tool.version = Some(version.to_owned());
         }
         if tool.version.as_deref().unwrap_or_default().is_empty() {
             let output = String::from_utf8_lossy(&output.stdout).trim().to_owned();

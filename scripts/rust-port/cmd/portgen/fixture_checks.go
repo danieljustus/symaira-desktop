@@ -36,15 +36,18 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"symroom log", []string{"test", "-count=1", "./internal/room/journal", "-run", "^TestPortRoomLogContract$"}, []string{"testdata/port/room/log.json"}, false},
 	{"symroom log CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortLogCLIContract$"}, []string{"testdata/port/room/log-cli.json"}, false},
 	{"symroom artifact CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortArtifactCLIContract$"}, []string{"testdata/port/room/artifact-cli.json"}, false},
+	{"symroom artifact identity CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortArtifactIdentityCLIContract$"}, []string{"testdata/port/room/artifact-identity-cli.json"}, false},
 	{"symroom watch stream", []string{"test", "-count=1", "./internal/room/desk", "-run", "^TestPortWatchStreamContract$"}, []string{"testdata/port/room/watch-stream.json"}, false},
 	{"symroom brain profile CLI", []string{"test", "-count=1", "./internal/room/brainprofile", "-run", "^TestPortBrainProfileCLIContract$"}, []string{"testdata/port/room/brain-profile-cli.json"}, false},
 	{"symroom init core", []string{"test", "-count=1", "./internal/room/room", "-run", "^TestPortRoomInitContract$"}, []string{"testdata/port/room/init.json"}, false},
 	{"symroom init CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortInitCLIContract$"}, []string{"testdata/port/room/init-cli.json"}, false},
 	{"symroom watch CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortWatchCLIContract$"}, []string{"testdata/port/room/watch-cli.json"}, false},
+	{"symroom doctor CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortDoctorCLIContract$"}, []string{"testdata/port/room/doctor-cli.json"}, false},
 	{"index backup", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexBackupPortFixture$"}, []string{"testdata/port/retrieval/index-backup.json"}, false},
 	{"index restore", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexRestorePortFixture$"}, []string{"testdata/port/retrieval/index-restore.json"}, false},
 	{"index relocation", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexRelocatePortFixture$"}, []string{"testdata/port/retrieval/index-relocate.json"}, false},
 	{"index location", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexLocationPortFixture$"}, []string{"testdata/port/retrieval/index-location.json"}, false},
+	{"index maintenance CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "^TestIndexMaintenanceProcessPortFixture$"}, []string{"testdata/port/cli/index-maintenance-process.json"}, false},
 	{"symdesk MCP", []string{"test", "-count=1", "./internal/tools", "-run", "TestSymdeskMCPInventory"}, []string{"testdata/port/mcp/symdesk-tools.json"}, false},
 	{"self-hosted HTTP routes", []string{"test", "-count=1", "./internal/selfhost", "-run", "TestSelfhostHTTPInventory"}, []string{"testdata/port/http/routes.json"}, false},
 	{"vault resolution", []string{"test", "-count=1", "./internal/service", "-run", "TestVaultResolutionInventory"}, []string{"testdata/port/vault/resolution.json"}, false},
@@ -102,11 +105,12 @@ var runFixtureCheckTarget = func(goTool, repoRoot string, environment []string, 
 }
 
 var fixtureGenerationEnvironment = map[string]struct{}{
-	"GENERATE_PORT_FIXTURES": {},
-	"PORT_FIXTURES_GENERATE": {},
-	"PORTGEN_GENERATE":       {},
-	"PORT_GENERATE":          {},
-	"SYMDESK_PORT_GENERATE":  {},
+	"GENERATE_PORT_FIXTURES":      {},
+	"PORT_FIXTURES_GENERATE":      {},
+	"PORTGEN_GENERATE":            {},
+	"PORT_GENERATE":               {},
+	"SYMDESK_PORT_GENERATE":       {},
+	"PORT_DATASET_IMPORT_FIXTURE": {},
 }
 
 func sanitizedCheckEnvironment(environment []string) []string {

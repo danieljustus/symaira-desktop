@@ -2,6 +2,7 @@
 
 .PHONY: retention-state-fixtures-generate retention-state-differential
 .PHONY: room-run-projection-fixtures-generate room-run-projection-differential
+.PHONY: room-run-cli-fixtures-generate room-run-cli-differential
 .PHONY: dataset-sync-fixtures-generate dataset-sync-differential
 .PHONY: dataset-cli-differential
 
@@ -221,6 +222,13 @@ room-run-projection-fixtures-generate:
 room-run-projection-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/run -run '^TestPortRunProjectionContract$$'
 	$(CARGO) test -p symroom-core --locked --test run_projection_contracts
+
+room-run-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/run -run '^TestPortRunCLIContract$$'
+
+room-run-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/run -run '^TestPortRunCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test run_commands
 
 dataset-sync-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortDataset(SyncContract|SyncServiceContract|ImportContract)$$'

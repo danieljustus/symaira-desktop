@@ -1365,8 +1365,11 @@ dependencies = [
 name = "symroom-cli"
 version = "0.0.0"
 dependencies = [
+ "serde",
+ "serde_json",
  "symaira-core-exit",
  "symdesk-core",
+ "symroom-core",
 ]
 
 [[package]]

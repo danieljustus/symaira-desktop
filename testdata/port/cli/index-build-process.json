@@ -10,6 +10,11 @@
     "stdout": "{\"indexed\":0,\"skipped\":2,\"status\":\"ok\"}\n",
     "stderr": ""
   },
+  "reembed": {
+    "exit_code": 0,
+    "stdout": "Re-embedded 0 document(s) with pending chunks.\nIndex complete. 2 new/updated files, 0 skipped.\n",
+    "stderr": ""
+  },
   "prune": {
     "exit_code": 0,
     "stdout": "{\"indexed\":0,\"pruned\":2,\"skipped\":1,\"status\":\"ok\"}\n",
@@ -40,7 +45,14 @@
     }
   ],
   "lifecycle": {
+    "book.mobi": "unsupported",
+    "draft.DOC": "unsupported",
     "first.md": "indexed"
   },
+  "lifecycle_reasons": {
+    "book.mobi": "no bundled MOBI parser; DRM status cannot be determined",
+    "draft.DOC": "legacy binary Office parser is not available"
+  },
+  "reembed_no_network": true,
   "metadata": true
 }

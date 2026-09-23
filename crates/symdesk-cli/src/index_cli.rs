@@ -174,7 +174,8 @@ fn run_build(
         Err(error) => return super::emit_error(error.to_string(), json_output),
     };
 
-    if command.get_flag("re-embed") {
+    let reembed = command.get_flag("re-embed");
+    if reembed {
         let reembedded = match reembed_pending_documents() {
             Ok(count) => count,
             Err(error) => {
@@ -215,7 +216,7 @@ fn run_build(
         if document.derived {
             continue;
         }
-        if before.get(&key).is_some_and(|sha| sha == &document.sha256) {
+        if !reembed && before.get(&key).is_some_and(|sha| sha == &document.sha256) {
             skipped += 1;
         } else {
             indexed += 1;
@@ -282,7 +283,7 @@ fn reembed_pending_documents() -> Result<usize, String> {
     if !has_chunks {
         return Ok(0);
     }
-    let pending_documents: usize = connection
+    let pending_documents: i64 = connection
         .query_row(
             "SELECT COUNT(DISTINCT document_path) FROM chunks WHERE embedding_pending=1",
             [],

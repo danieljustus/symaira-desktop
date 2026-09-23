@@ -27,5 +27,332 @@
       "raw_history_entries": 0,
       "history_objects": 0
     }
+  ],
+  "recovery_cases": [
+    {
+      "id": "corrupt-history-fails-before-mutation",
+      "before": {
+        "files": [
+          {
+            "path": ".symdesk",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest/datasets",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest/datasets/orders.md.json",
+            "kind": "file",
+            "size": 4,
+            "sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+          },
+          {
+            "path": "bases",
+            "kind": "directory"
+          },
+          {
+            "path": "bases/orders.md",
+            "kind": "file",
+            "size": 298,
+            "sha256": "457722af2ce412e8989ca0b4a7dc6c4913d8691250c56e4e9785be96427da32f",
+            "content": "---\ntype: base\ntitle: Orders\ncreated: \"{{timestamp}}\"\ntags:\n    - base\nbase_id: orders\nviews:\n    - id: orders\n      name: Orders\n      type: table\n      columns:\n        - id\n        - amount\n      source: dataset:orders\n---\n\n# Orders\n\n## Views\n\n- **Orders** (`table`) · Source: `dataset:orders`\n"
+          },
+          {
+            "path": "datasets",
+            "kind": "directory"
+          },
+          {
+            "path": "datasets/orders",
+            "kind": "directory"
+          },
+          {
+            "path": "datasets/orders.md",
+            "kind": "file",
+            "size": 476,
+            "sha256": "4f0c9e4b23f36d42bd7f7dd104773dd584c7ced7c41110f1a81960328904b8bf"
+          },
+          {
+            "path": "datasets/orders/2026-01-04.csv",
+            "kind": "file",
+            "size": 18,
+            "sha256": "22278858788c69af96fd888dfa39cfe4aefbdb12d7a9cf5e93dceaec923c6869"
+          }
+        ],
+        "rows": [
+          {
+            "row_key": "identity:o1",
+            "identity": "o1",
+            "values_json": "{\"amount\":12.5,\"id\":\"o1\"}",
+            "source_path": "datasets/orders/2026-01-04.csv",
+            "row_number": 2
+          }
+        ]
+      },
+      "after": {
+        "files": [
+          {
+            "path": ".symdesk",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest/datasets",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest/datasets/orders.md.json",
+            "kind": "file",
+            "size": 4,
+            "sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+          },
+          {
+            "path": "bases",
+            "kind": "directory"
+          },
+          {
+            "path": "bases/orders.md",
+            "kind": "file",
+            "size": 298,
+            "sha256": "457722af2ce412e8989ca0b4a7dc6c4913d8691250c56e4e9785be96427da32f",
+            "content": "---\ntype: base\ntitle: Orders\ncreated: \"{{timestamp}}\"\ntags:\n    - base\nbase_id: orders\nviews:\n    - id: orders\n      name: Orders\n      type: table\n      columns:\n        - id\n        - amount\n      source: dataset:orders\n---\n\n# Orders\n\n## Views\n\n- **Orders** (`table`) · Source: `dataset:orders`\n"
+          },
+          {
+            "path": "datasets",
+            "kind": "directory"
+          },
+          {
+            "path": "datasets/orders",
+            "kind": "directory"
+          },
+          {
+            "path": "datasets/orders.md",
+            "kind": "file",
+            "size": 476,
+            "sha256": "4f0c9e4b23f36d42bd7f7dd104773dd584c7ced7c41110f1a81960328904b8bf"
+          },
+          {
+            "path": "datasets/orders/2026-01-04.csv",
+            "kind": "file",
+            "size": 18,
+            "sha256": "22278858788c69af96fd888dfa39cfe4aefbdb12d7a9cf5e93dceaec923c6869"
+          }
+        ],
+        "rows": [
+          {
+            "row_key": "identity:o1",
+            "identity": "o1",
+            "values_json": "{\"amount\":12.5,\"id\":\"o1\"}",
+            "source_path": "datasets/orders/2026-01-04.csv",
+            "row_number": 2
+          }
+        ]
+      },
+      "error": "preflight"
+    },
+    {
+      "id": "replacement-trash-retry-fails-closed",
+      "initial_error": "closed",
+      "before": {
+        "files": [
+          {
+            "path": ".symdesk",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/dataset-purge",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/dataset-purge/orders.json",
+            "kind": "file",
+            "size": 696,
+            "sha256": "e4682c25f32cd6169bd24994d1baa143494e91aac09c1948eaf41c5385f4c16e",
+            "content": "{\"accepted_rule\":\"default\",\"fingerprint\":\"{{timestamp}}\",\"last_error\":\"sql: database is closed\",\"paths\":[{\"content_hash\":\"831eb9b005b1379deb0a265dcba71c89253966dacd28e227b194f85b41b1f0b4\",\"identity\":\"{{timestamp}}\",\"kind\":\"file\",\"path\":\"datasets/orders.md\"},{\"content_hash\":\"\",\"identity\":\"{{timestamp}}\",\"kind\":\"dir\",\"path\":\"datasets/orders\"}],\"phase\":\"sidecar\",\"slug\":\"orders\",\"status\":\"failed\",\"trash\":[{\"metadata_hash\":\"{{timestamp}}\",\"metadata_identity\":\"{{timestamp}}\",\"name\":\"datasets__orders__2026-01-04.csv\",\"original_path\":\"datasets/orders/2026-01-04.csv\",\"payload_hash\":\"22278858788c69af96fd888dfa39cfe4aefbdb12d7a9cf5e93dceaec923c6869\",\"payload_identity\":\"{{timestamp}}\"}],\"version\":1}"
+          },
+          {
+            "path": ".symdesk/history",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest/datasets",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest/datasets/orders",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest/datasets/orders/2026-01-04.csv.json",
+            "kind": "file",
+            "size": 113,
+            "sha256": "c802e916277556b666ee299617414e9c6c3b8cbec1f5743c5cdab12a4eb8a700"
+          },
+          {
+            "path": ".symdesk/history/objects",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/objects/22278858788c69af96fd888dfa39cfe4aefbdb12d7a9cf5e93dceaec923c6869",
+            "kind": "file",
+            "size": 18,
+            "sha256": "22278858788c69af96fd888dfa39cfe4aefbdb12d7a9cf5e93dceaec923c6869"
+          },
+          {
+            "path": ".symdesk/trash",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/trash/datasets__orders__2026-01-04.csv",
+            "kind": "file",
+            "size": 19,
+            "sha256": "027c69cb708a66adf2fd7d1fc6e401ecaefb0dddba25cd6c5335741d81a761c0"
+          },
+          {
+            "path": ".symdesk/trash/datasets__orders__2026-01-04.csv.trashinfo.json",
+            "kind": "file",
+            "size": 131,
+            "sha256": "c06702e6edef71da9b1f42ff8062bdbb6166486a70739d51f1e419db84000aa3"
+          },
+          {
+            "path": "bases",
+            "kind": "directory"
+          },
+          {
+            "path": "bases/orders.md",
+            "kind": "file",
+            "size": 298,
+            "sha256": "457722af2ce412e8989ca0b4a7dc6c4913d8691250c56e4e9785be96427da32f",
+            "content": "---\ntype: base\ntitle: Orders\ncreated: \"{{timestamp}}\"\ntags:\n    - base\nbase_id: orders\nviews:\n    - id: orders\n      name: Orders\n      type: table\n      columns:\n        - id\n        - amount\n      source: dataset:orders\n---\n\n# Orders\n\n## Views\n\n- **Orders** (`table`) · Source: `dataset:orders`\n"
+          },
+          {
+            "path": "datasets",
+            "kind": "directory"
+          },
+          {
+            "path": "datasets/orders",
+            "kind": "directory"
+          },
+          {
+            "path": "datasets/orders.md",
+            "kind": "file",
+            "size": 476,
+            "sha256": "4f0c9e4b23f36d42bd7f7dd104773dd584c7ced7c41110f1a81960328904b8bf"
+          }
+        ],
+        "rows": [
+          {
+            "row_key": "identity:o1",
+            "identity": "o1",
+            "values_json": "{\"amount\":12.5,\"id\":\"o1\"}",
+            "source_path": "datasets/orders/2026-01-04.csv",
+            "row_number": 2
+          }
+        ]
+      },
+      "after": {
+        "files": [
+          {
+            "path": ".symdesk",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/dataset-purge",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/dataset-purge/orders.json",
+            "kind": "file",
+            "size": 736,
+            "sha256": "4d12b445136323864db4681d7330ae5c562568bd7800fb6c3027bd0b4b3d1f73",
+            "content": "{\"accepted_rule\":\"default\",\"fingerprint\":\"{{timestamp}}\",\"last_error\":\"dataset trash datasets__orders__2026-01-04.csv content changed\",\"paths\":[{\"content_hash\":\"831eb9b005b1379deb0a265dcba71c89253966dacd28e227b194f85b41b1f0b4\",\"identity\":\"{{timestamp}}\",\"kind\":\"file\",\"path\":\"datasets/orders.md\"},{\"content_hash\":\"\",\"identity\":\"{{timestamp}}\",\"kind\":\"dir\",\"path\":\"datasets/orders\"}],\"phase\":\"recovery\",\"slug\":\"orders\",\"status\":\"failed\",\"trash\":[{\"metadata_hash\":\"{{timestamp}}\",\"metadata_identity\":\"{{timestamp}}\",\"name\":\"datasets__orders__2026-01-04.csv\",\"original_path\":\"datasets/orders/2026-01-04.csv\",\"payload_hash\":\"22278858788c69af96fd888dfa39cfe4aefbdb12d7a9cf5e93dceaec923c6869\",\"payload_identity\":\"{{timestamp}}\"}],\"version\":1}"
+          },
+          {
+            "path": ".symdesk/history",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest/datasets",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest/datasets/orders",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/manifest/datasets/orders/2026-01-04.csv.json",
+            "kind": "file",
+            "size": 113,
+            "sha256": "c802e916277556b666ee299617414e9c6c3b8cbec1f5743c5cdab12a4eb8a700"
+          },
+          {
+            "path": ".symdesk/history/objects",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/history/objects/22278858788c69af96fd888dfa39cfe4aefbdb12d7a9cf5e93dceaec923c6869",
+            "kind": "file",
+            "size": 18,
+            "sha256": "22278858788c69af96fd888dfa39cfe4aefbdb12d7a9cf5e93dceaec923c6869"
+          },
+          {
+            "path": ".symdesk/trash",
+            "kind": "directory"
+          },
+          {
+            "path": ".symdesk/trash/datasets__orders__2026-01-04.csv",
+            "kind": "file",
+            "size": 19,
+            "sha256": "027c69cb708a66adf2fd7d1fc6e401ecaefb0dddba25cd6c5335741d81a761c0"
+          },
+          {
+            "path": ".symdesk/trash/datasets__orders__2026-01-04.csv.trashinfo.json",
+            "kind": "file",
+            "size": 131,
+            "sha256": "c06702e6edef71da9b1f42ff8062bdbb6166486a70739d51f1e419db84000aa3"
+          },
+          {
+            "path": "bases",
+            "kind": "directory"
+          },
+          {
+            "path": "bases/orders.md",
+            "kind": "file",
+            "size": 298,
+            "sha256": "457722af2ce412e8989ca0b4a7dc6c4913d8691250c56e4e9785be96427da32f",
+            "content": "---\ntype: base\ntitle: Orders\ncreated: \"{{timestamp}}\"\ntags:\n    - base\nbase_id: orders\nviews:\n    - id: orders\n      name: Orders\n      type: table\n      columns:\n        - id\n        - amount\n      source: dataset:orders\n---\n\n# Orders\n\n## Views\n\n- **Orders** (`table`) · Source: `dataset:orders`\n"
+          },
+          {
+            "path": "datasets",
+            "kind": "directory"
+          }
+        ],
+        "rows": []
+      },
+      "error": "content changed"
+    }
   ]
 }

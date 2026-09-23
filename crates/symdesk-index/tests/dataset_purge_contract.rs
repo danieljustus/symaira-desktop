@@ -1,7 +1,7 @@
 use std::{
     collections::BTreeMap,
     fs,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::atomic::{AtomicU64, Ordering},
 };
 
@@ -172,4 +172,230 @@ fn dataset_purge_matches_go_service_fixture() {
             );
         }
     }
+
+    let recovery_cases = fixture["recovery_cases"]
+        .as_array()
+        .expect("recovery cases");
+    assert_eq!(recovery_cases.len(), 2);
+    for case in recovery_cases {
+        let id = case["id"].as_str().expect("recovery case id");
+        let mut sandbox = Sandbox::new(id);
+        sandbox.setup();
+        seed_go_view_file(&sandbox, &recovery_cases[0]);
+        match id {
+            "corrupt-history-fails-before-mutation" => {
+                let manifest = sandbox
+                    .root
+                    .join(".symdesk/history/manifest/datasets/orders.md.json");
+                fs::create_dir_all(manifest.parent().expect("manifest parent"))
+                    .expect("create manifest parent");
+                fs::write(&manifest, b"null").expect("write corrupt history manifest");
+                let before = snapshot(&sandbox);
+                let result = DatasetPurgeService::new(&sandbox.root, &mut sandbox.db)
+                    .purge("orders", "default", "");
+                let error = result
+                    .err()
+                    .map(|error| error.to_string())
+                    .unwrap_or_default();
+                let after = snapshot(&sandbox);
+                assert!(
+                    error.contains(case["error"].as_str().expect("error fragment")),
+                    "case {id}: unexpected error {error:?}"
+                );
+                assert_eq!(before, case["before"], "case {id} before mutation");
+                assert_eq!(after, case["after"], "case {id} after mutation");
+                assert_eq!(
+                    before, after,
+                    "case {id} changed state before preflight completed"
+                );
+            }
+            "replacement-trash-retry-fails-closed" => {
+                let raw_rel = "datasets/orders/2026-01-04.csv";
+                let entry = HistoryStore::new(&sandbox.root)
+                    .trash(raw_rel)
+                    .expect("trash dataset raw file");
+                sandbox
+                    .db
+                    .close()
+                    .expect("close sidecar for recovery setup");
+                let first_result = DatasetPurgeService::new(&sandbox.root, &mut sandbox.db)
+                    .purge("orders", "default", "");
+                let first_error = first_result
+                    .err()
+                    .map(|error| error.to_string())
+                    .unwrap_or_default();
+                assert!(
+                    first_error.contains(
+                        case["initial_error"]
+                            .as_str()
+                            .expect("initial error fragment")
+                    ),
+                    "case {id}: initial failure was {first_error:?}"
+                );
+                let trash_path = sandbox.root.join(".symdesk/trash").join(&entry.name);
+                fs::write(&trash_path, b"replacement payload")
+                    .expect("replace trash payload after journal creation");
+                sandbox.db = Sidecar::open(&sandbox.parent.join("sidecar.db"))
+                    .expect("reopen sidecar for recovery retry");
+                let before = snapshot(&sandbox);
+                let retry_result = DatasetPurgeService::new(&sandbox.root, &mut sandbox.db)
+                    .purge("orders", "default", "");
+                let retry_error = retry_result
+                    .err()
+                    .map(|error| error.to_string())
+                    .unwrap_or_default();
+                let after = snapshot(&sandbox);
+                assert!(
+                    retry_error.contains(case["error"].as_str().expect("retry error fragment")),
+                    "case {id}: unexpected retry error {retry_error:?}"
+                );
+                assert_eq!(before, case["before"], "case {id} before retry");
+                assert_eq!(after, case["after"], "case {id} after retry");
+                assert_eq!(
+                    fs::read(&trash_path).expect("replacement trash payload survives"),
+                    b"replacement payload",
+                    "case {id} deleted replacement trash"
+                );
+            }
+            other => panic!("unknown dataset purge recovery case {other:?}"),
+        }
+    }
+}
+
+fn snapshot(sandbox: &Sandbox) -> Value {
+    let mut files = Vec::new();
+    visit_snapshot(sandbox.root.as_path(), sandbox.root.as_path(), &mut files);
+    files.sort_by(|left: &Value, right: &Value| left["path"].as_str().cmp(&right["path"].as_str()));
+    let rows = sandbox
+        .db
+        .dataset_rows("orders")
+        .expect("read dataset rows for snapshot")
+        .into_iter()
+        .map(|row| {
+            json!({
+                "row_key": row.row_key,
+                "identity": row.identity,
+                "values_json": row.values_json,
+                "source_path": row.source_path,
+                "row_number": row.row_number,
+            })
+        })
+        .collect::<Vec<_>>();
+    json!({"files": files, "rows": rows})
+}
+
+fn seed_go_view_file(sandbox: &Sandbox, fixture_case: &Value) {
+    let file = fixture_case["before"]["files"]
+        .as_array()
+        .expect("Go recovery snapshot files")
+        .iter()
+        .find(|file| file["path"] == "bases/orders.md")
+        .expect("Go-owned dataset view file");
+    let content = file["content"].as_str().expect("Go view content");
+    fs::create_dir_all(sandbox.root.join("bases")).expect("create bases directory");
+    fs::write(sandbox.root.join("bases/orders.md"), content).expect("seed Go view file");
+}
+
+fn visit_snapshot(root: &Path, directory: &Path, output: &mut Vec<Value>) {
+    let mut entries = fs::read_dir(directory)
+        .expect("read dataset purge snapshot directory")
+        .map(|entry| entry.expect("read dataset purge snapshot entry"))
+        .collect::<Vec<_>>();
+    entries.sort_by_key(fs::DirEntry::file_name);
+    for entry in entries {
+        let path = entry.path();
+        let relative = path
+            .strip_prefix(root)
+            .expect("snapshot path under vault")
+            .to_string_lossy()
+            .replace('\\', "/");
+        let metadata = fs::symlink_metadata(&path).expect("snapshot metadata");
+        if metadata.is_dir() {
+            output.push(json!({"path": relative, "kind": "directory"}));
+            visit_snapshot(root, &path, output);
+            continue;
+        }
+        if metadata.file_type().is_symlink() {
+            let target = fs::read_link(&path).expect("read snapshot symlink");
+            output.push(json!({
+                "path": relative,
+                "kind": "symlink",
+                "target": target.to_string_lossy().replace('\\', "/"),
+            }));
+            continue;
+        }
+        let mut bytes = fs::read(&path).expect("read snapshot file");
+        let mut journal_content = None;
+        if let Ok(mut value) = serde_json::from_slice::<Value>(&bytes) {
+            normalize_times(&mut value);
+            bytes = serde_json::to_vec(&value).expect("normalize snapshot JSON");
+        } else if let Ok(text) = std::str::from_utf8(&bytes) {
+            bytes = normalize_text_times(text).into_bytes();
+        }
+        if relative == ".symdesk/dataset-purge/orders.json" || relative == "bases/orders.md" {
+            journal_content = Some(String::from_utf8(bytes.clone()).expect("snapshot file UTF-8"));
+        }
+        let mut file = json!({
+            "path": relative,
+            "kind": "file",
+            "size": bytes.len(),
+            "sha256": symdesk_vault::sha256_hex(&bytes),
+        });
+        if let Some(content) = journal_content {
+            file["content"] = Value::String(content);
+        }
+        output.push(file);
+    }
+}
+
+fn normalize_times(value: &mut Value) {
+    match value {
+        Value::Object(map) => {
+            for (key, child) in map.iter_mut() {
+                if matches!(
+                    key.as_str(),
+                    "timestamp"
+                        | "deleted_at"
+                        | "created"
+                        | "imported_at"
+                        | "identity"
+                        | "payload_identity"
+                        | "metadata_identity"
+                        | "fingerprint"
+                        | "metadata_hash"
+                ) {
+                    *child = Value::String("{{timestamp}}".to_owned());
+                } else {
+                    normalize_times(child);
+                }
+            }
+        }
+        Value::Array(values) => {
+            for child in values {
+                normalize_times(child);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn normalize_text_times(text: &str) -> String {
+    let mut output = String::with_capacity(text.len());
+    for line in text.split_inclusive('\n') {
+        let without_newline = line.strip_suffix('\n').unwrap_or(line);
+        let trimmed = without_newline.trim_start();
+        let (key, _) = trimmed.split_once(':').unwrap_or((trimmed, ""));
+        if matches!(key, "created" | "imported_at") {
+            let indent = &without_newline[..without_newline.len() - trimmed.len()];
+            output.push_str(indent);
+            output.push_str(key);
+            output.push_str(": \"{{timestamp}}\"");
+            if line.ends_with('\n') {
+                output.push('\n');
+            }
+        } else {
+            output.push_str(line);
+        }
+    }
+    output
 }

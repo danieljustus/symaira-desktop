@@ -1,20 +1,25 @@
 package service
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/dataset"
+	"github.com/danieljustus/symaira-desktop/internal/sidecar"
 )
 
 const datasetPurgeFixturePath = "../../testdata/port/dataset/purge.json"
 
 type datasetPurgeFixture struct {
-	SchemaVersion int                       `json:"schema_version"`
-	Cases         []datasetPurgeFixtureCase `json:"cases"`
+	SchemaVersion int                               `json:"schema_version"`
+	Cases         []datasetPurgeFixtureCase         `json:"cases"`
+	RecoveryCases []datasetPurgeRecoveryFixtureCase `json:"recovery_cases"`
 }
 
 type datasetPurgeFixtureCase struct {
@@ -29,6 +34,35 @@ type datasetPurgeFixtureCase struct {
 	RawHistory      int      `json:"raw_history_entries"`
 	CheckpointPaths []string `json:"checkpoint_paths,omitempty"`
 	HistoryObjects  int      `json:"history_objects"`
+}
+
+type datasetPurgeRecoveryFixtureCase struct {
+	ID           string               `json:"id"`
+	InitialError string               `json:"initial_error,omitempty"`
+	Before       datasetPurgeSnapshot `json:"before"`
+	After        datasetPurgeSnapshot `json:"after"`
+	Error        string               `json:"error,omitempty"`
+}
+
+type datasetPurgeSnapshot struct {
+	Files []datasetPurgeFile `json:"files"`
+	Rows  []datasetPurgeRow  `json:"rows"`
+}
+
+type datasetPurgeFile struct {
+	Path    string `json:"path"`
+	Kind    string `json:"kind"`
+	Size    int64  `json:"size,omitempty"`
+	SHA256  string `json:"sha256,omitempty"`
+	Content string `json:"content,omitempty"`
+}
+
+type datasetPurgeRow struct {
+	RowKey     string `json:"row_key"`
+	Identity   string `json:"identity"`
+	ValuesJSON string `json:"values_json"`
+	SourcePath string `json:"source_path"`
+	RowNumber  int    `json:"row_number"`
 }
 
 // TestPortDatasetPurgeContract is the Go-owned oracle consumed by the Rust
@@ -132,6 +166,7 @@ func TestPortDatasetPurgeContract(t *testing.T) {
 		}
 		fixture.Cases = append(fixture.Cases, observed)
 	}
+	fixture.RecoveryCases = buildDatasetPurgeRecoveryCases(t)
 
 	encoded, err := json.MarshalIndent(fixture, "", "  ")
 	if err != nil {
@@ -159,6 +194,9 @@ func TestPortDatasetPurgeContract(t *testing.T) {
 	if expected.SchemaVersion != 1 || len(expected.Cases) != len(fixture.Cases) {
 		t.Fatalf("invalid dataset purge fixture header/case count: %#v", expected)
 	}
+	if len(expected.RecoveryCases) != len(fixture.RecoveryCases) {
+		t.Fatalf("invalid dataset purge recovery fixture case count: got %d want %d", len(expected.RecoveryCases), len(fixture.RecoveryCases))
+	}
 	for i := range fixture.Cases {
 		want := expected.Cases[i]
 		got := fixture.Cases[i]
@@ -166,4 +204,185 @@ func TestPortDatasetPurgeContract(t *testing.T) {
 			t.Errorf("case %s: Go outcome %#v, fixture %#v", got.ID, got, want)
 		}
 	}
+	for i := range fixture.RecoveryCases {
+		got, want := fixture.RecoveryCases[i], expected.RecoveryCases[i]
+		if got.ID != want.ID || got.InitialError != want.InitialError || got.Error != want.Error || !equalDatasetPurgeSnapshot(got.Before, want.Before) || !equalDatasetPurgeSnapshot(got.After, want.After) {
+			t.Errorf("recovery case %s: Go outcome %#v, fixture %#v", got.ID, got, want)
+		}
+	}
+}
+
+func buildDatasetPurgeRecoveryCases(t *testing.T) []datasetPurgeRecoveryFixtureCase {
+	t.Helper()
+	return []datasetPurgeRecoveryFixtureCase{
+		datasetPurgeCorruptJournalCase(t),
+		datasetPurgeReplacementTrashRetryCase(t),
+	}
+}
+
+func datasetPurgeCorruptJournalCase(t *testing.T) datasetPurgeRecoveryFixtureCase {
+	t.Helper()
+	svc := newTestService(t)
+	datasetForPolicyTest(t, svc, dataset.SensitivityRestricted)
+	manifest := filepath.Join(svc.VaultRoot, ".symdesk", "history", "manifest", "datasets", "orders.md.json")
+	if err := os.MkdirAll(filepath.Dir(manifest), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifest, []byte("null"), 0o600); err != nil { //nolint:gosec // test-owned vault path
+		t.Fatal(err)
+	}
+	before := datasetPurgeSnapshotOf(t, svc.VaultRoot, svc.DB)
+	err := svc.DatasetPurge("orders", dataset.DefaultRetentionRule)
+	after := datasetPurgeSnapshotOf(t, svc.VaultRoot, svc.DB)
+	if err == nil || !strings.Contains(err.Error(), "preflight") {
+		t.Fatalf("corrupt-journal purge error = %v", err)
+	}
+	return datasetPurgeRecoveryFixtureCase{ID: "corrupt-history-fails-before-mutation", Before: before, After: after, Error: "preflight"}
+}
+
+func datasetPurgeReplacementTrashRetryCase(t *testing.T) datasetPurgeRecoveryFixtureCase {
+	t.Helper()
+	svc := newTestService(t)
+	datasetForPolicyTest(t, svc, dataset.SensitivityRestricted)
+	rawRel := "datasets/orders/2026-01-04.csv"
+	entry, err := svc.History.Trash(rawRel)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.DB.Close(); err != nil {
+		t.Fatal(err)
+	}
+	initialErr := svc.DatasetPurge("orders", dataset.DefaultRetentionRule)
+	if initialErr == nil || !strings.Contains(initialErr.Error(), "closed") {
+		t.Fatalf("closed-sidecar purge error = %v", initialErr)
+	}
+	trashPath := filepath.Join(svc.VaultRoot, ".symdesk", "trash", entry.Name)
+	if err := os.WriteFile(trashPath, []byte("replacement payload"), 0o600); err != nil { //nolint:gosec // test-owned vault path
+		t.Fatal(err)
+	}
+	db, err := sidecar.Open(filepath.Join(svc.VaultRoot, "sidecar.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	resumed := New(svc.VaultRoot, db)
+	before := datasetPurgeSnapshotOf(t, svc.VaultRoot, db)
+	retryErr := resumed.DatasetPurge("orders", dataset.DefaultRetentionRule)
+	after := datasetPurgeSnapshotOf(t, svc.VaultRoot, db)
+	if retryErr == nil || !strings.Contains(retryErr.Error(), "content changed") {
+		t.Fatalf("replacement-trash retry error = %v", retryErr)
+	}
+	if data, err := os.ReadFile(trashPath); err != nil || string(data) != "replacement payload" { //nolint:gosec // test-owned vault path
+		t.Fatalf("replacement trash changed: %q %v", data, err)
+	}
+	return datasetPurgeRecoveryFixtureCase{
+		ID:           "replacement-trash-retry-fails-closed",
+		InitialError: "closed",
+		Before:       before,
+		After:        after,
+		Error:        "content changed",
+	}
+}
+
+func datasetPurgeSnapshotOf(t *testing.T, root string, db *sidecar.DB) datasetPurgeSnapshot {
+	t.Helper()
+	files := make([]datasetPurgeFile, 0)
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if path == root {
+			return nil
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		if rel == "sidecar.db" || rel == "sidecar.db-wal" || rel == "sidecar.db-shm" {
+			return nil
+		}
+		if entry.IsDir() {
+			files = append(files, datasetPurgeFile{Path: rel, Kind: "directory"})
+			return nil
+		}
+		data, err := os.ReadFile(path) //nolint:gosec // test-owned vault tree
+		if err != nil {
+			return err
+		}
+		if json.Valid(data) {
+			var value interface{}
+			if err := json.Unmarshal(data, &value); err != nil {
+				return err
+			}
+			normalizeDatasetPurgeTimes(value)
+			data, err = json.Marshal(value)
+			if err != nil {
+				return err
+			}
+		} else {
+			data = normalizeDatasetPurgeText(data)
+		}
+		hash := sha256.Sum256(data)
+		file := datasetPurgeFile{Path: rel, Kind: "file", Size: int64(len(data)), SHA256: hex.EncodeToString(hash[:])}
+		if rel == ".symdesk/dataset-purge/orders.json" || rel == "bases/orders.md" {
+			file.Content = string(data)
+		}
+		files = append(files, file)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	rows, err := db.DatasetRows("orders")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rowStates := make([]datasetPurgeRow, 0, len(rows))
+	for _, row := range rows {
+		rowStates = append(rowStates, datasetPurgeRow{RowKey: row.RowKey, Identity: row.Identity, ValuesJSON: row.ValuesJSON, SourcePath: row.SourcePath, RowNumber: row.RowNumber})
+	}
+	return datasetPurgeSnapshot{Files: files, Rows: rowStates}
+}
+
+func normalizeDatasetPurgeTimes(value interface{}) {
+	switch current := value.(type) {
+	case map[string]interface{}:
+		for key, child := range current {
+			if key == "timestamp" || key == "deleted_at" || key == "created" || key == "imported_at" || key == "identity" || key == "payload_identity" || key == "metadata_identity" || key == "fingerprint" || key == "metadata_hash" {
+				current[key] = "{{timestamp}}"
+				continue
+			}
+			normalizeDatasetPurgeTimes(child)
+		}
+	case []interface{}:
+		for _, child := range current {
+			normalizeDatasetPurgeTimes(child)
+		}
+	}
+}
+
+func normalizeDatasetPurgeText(data []byte) []byte {
+	lines := strings.SplitAfter(string(data), "\n")
+	for index, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		key, _, found := strings.Cut(trimmed, ":")
+		if !found || (key != "created" && key != "imported_at") {
+			continue
+		}
+		indent := line[:len(line)-len(strings.TrimLeft(line, " \t"))]
+		ending := ""
+		if strings.HasSuffix(line, "\n") {
+			ending = "\n"
+		}
+		lines[index] = indent + key + `: "{{timestamp}}"` + ending
+	}
+	return []byte(strings.Join(lines, ""))
+}
+
+func equalDatasetPurgeSnapshot(left, right datasetPurgeSnapshot) bool {
+	leftBytes, _ := json.Marshal(left)
+	rightBytes, _ := json.Marshal(right)
+	return string(leftBytes) == string(rightBytes)
 }

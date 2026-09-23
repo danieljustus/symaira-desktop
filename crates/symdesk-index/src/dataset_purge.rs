@@ -41,7 +41,7 @@ struct PathRecord {
     path: String,
     kind: String,
     identity: String,
-    #[serde(default, skip_serializing_if = "String::is_empty")]
+    #[serde(default)]
     content_hash: String,
 }
 
@@ -296,7 +296,9 @@ fn preflight(
         .map(|p| p.path.clone())
         .chain(trash.iter().map(|t| t.original_path.clone()))
         .collect();
-    history.preflight_purge_paths(&all)?;
+    history.preflight_purge_paths(&all).map_err(|error| {
+        DatasetPurgeError::Contract(format!("preflight dataset purge history: {error}"))
+    })?;
     Ok(Journal {
         version: 1,
         slug: slug.into(),
@@ -444,10 +446,15 @@ fn validate_trash(root: &Dir, trash: &[TrashRecord]) -> Result<(), DatasetPurgeE
             if !metadata.is_file()
                 || metadata.file_type().is_symlink()
                 || identity(&metadata) != *expected_id
-                || hash(&read_regular(root, &path)?) != *expected_hash
             {
                 return Err(DatasetPurgeError::Contract(format!(
-                    "dataset trash {} changed",
+                    "dataset trash {} was replaced",
+                    t.name
+                )));
+            }
+            if hash(&read_regular(root, &path)?) != *expected_hash {
+                return Err(DatasetPurgeError::Contract(format!(
+                    "dataset trash {} content changed",
                     t.name
                 )));
             }

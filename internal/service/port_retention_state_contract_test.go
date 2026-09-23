@@ -321,11 +321,17 @@ func retentionStateSandbox(t *testing.T) (string, string) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = os.RemoveAll(parent) })
-	root := filepath.Join(parent, "vault")
+	// Match the canonical root used in production filesystem diagnostics, including
+	// macOS TMPDIR aliases such as /var and /private/var.
+	canonical, err := filepath.EvalSymlinks(parent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := filepath.Join(canonical, "vault")
 	if err := os.Mkdir(root, 0o750); err != nil {
 		t.Fatal(err)
 	}
-	outside := filepath.Join(parent, "outside.md")
+	outside := filepath.Join(canonical, "outside.md")
 	if err := os.WriteFile(outside, []byte("outside\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}

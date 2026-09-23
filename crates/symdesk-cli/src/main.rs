@@ -1,5 +1,6 @@
 #![deny(unsafe_code)]
 
+mod dataset;
 mod http;
 mod mcp;
 mod retention;
@@ -108,6 +109,11 @@ fn main() -> ExitCode {
             command.get_one::<String>("token").cloned(),
             matches.get_one::<String>("vault").cloned(),
         ),
+        Some(("dataset", command)) => dataset::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("retention", command)) => {
             let vault_opt = matches.get_one::<String>("vault").cloned();
             match command.subcommand() {
@@ -210,6 +216,7 @@ fn cli() -> Command {
         )
         .subcommand(Command::new("mcp"))
         .subcommand(retention::cli())
+        .subcommand(dataset::cli())
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))

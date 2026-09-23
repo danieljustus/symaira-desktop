@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "9f261399fd8c4c697f330370aa1fb503ec616ae4",
+    "release": "DATA-001 dataset sync CLI"
+  },
+  "cases": [
+    {
+      "id": "sync-cli-inline-provenance-large-integer-json",
+      "stage": "dataset-cli",
+      "args": [
+        "dataset", "sync", "rounded",
+        "--rows", "[{\"identity\":\"one\",\"values\":{\"id\":\"one\",\"amount\":9007199254740993}}]",
+        "--provenance", "{\"source_name\":\"feed\",\"source_sha256\":\"sha-1\",\"imported_at\":\"2026-04-03T10:00:00Z\"}",
+        "--identity-field", "id", "--json", "--vault", "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {"path": "vault/.seed", "content": "seed\n", "mode": 420}
+      ]
+    },
+    {
+      "id": "sync-cli-file-inputs-flag-overrides-text",
+      "stage": "dataset-cli",
+      "args": [
+        "dataset", "sync", "file-ledger",
+        "--rows", "${WORKSPACE}/rows.json",
+        "--provenance", "${WORKSPACE}/provenance.json",
+        "--source-name", "override-feed",
+        "--source-sha256", "override-sha",
+        "--imported-at", "2026-04-05T08:09:10Z",
+        "--title", "File Ledger",
+        "--identity-field", "id",
+        "--schema", "${WORKSPACE}/schema.json",
+        "--sensitivity", "confidential",
+        "--retention-rule", "finance-7y",
+        "--vault", "${WORKSPACE}/vault"
+      ],
+      "compare_sidecar_layout": true,
+      "setup": [
+        {"path": "vault/.seed", "content": "seed\n", "mode": 420},
+        {"path": "rows.json", "content": "[{\"identity\":\"one\",\"values\":{\"id\":\"one\",\"amount\":12.5}}]\n", "mode": 420},
+        {"path": "provenance.json", "content": "{\"source_name\":\"feed\",\"source_sha256\":\"source-sha\",\"imported_at\":\"2026-04-05T08:09:10Z\"}\n", "mode": 420},
+        {"path": "schema.json", "content": "{\"amount\":{\"type\":\"number\",\"label\":\"Amount\"}}\n", "mode": 420}
+      ]
+    }
+  ]
+}

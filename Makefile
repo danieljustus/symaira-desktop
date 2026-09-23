@@ -22,6 +22,7 @@
 .PHONY: room-log-fixtures-generate room-log-differential room-log-cli-fixtures-generate room-log-cli-differential
 .PHONY: index-restore-fixtures-generate index-restore-differential
 .PHONY: index-relocate-fixtures-generate index-relocate-differential
+.PHONY: index-location-fixtures-generate index-location-differential
 .PHONY: room-artifact-cli-fixtures-generate room-artifact-cli-differential
 .PHONY: room-watch-stream-fixtures-generate room-watch-stream-differential
 .PHONY: room-brain-profile-fixtures-generate room-brain-profile-differential
@@ -397,6 +398,13 @@ index-relocate-fixtures-generate:
 index-relocate-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexRelocatePortFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test index_relocate
+
+index-location-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexLocationPortFixture$$'
+
+index-location-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexLocationPortFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test index_location
 
 history-prune-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'

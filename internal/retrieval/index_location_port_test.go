@@ -65,7 +65,7 @@ func TestIndexLocationPortFixture(t *testing.T) {
 		t.Fatal("source file location unavailable")
 	}
 	path := filepath.Join(filepath.Dir(source), "../../testdata/port/retrieval/index-location.json")
-	if os.Getenv("PORT_GENERATE") == "1" || os.Getenv("INDEX_LOCATION_GENERATE") == "1" {
+	if os.Getenv("PORT_GENERATE") == "1" {
 		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}

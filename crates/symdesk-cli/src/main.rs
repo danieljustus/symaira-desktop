@@ -123,6 +123,14 @@ fn main() -> ExitCode {
                     output_json,
                 ),
                 Some(("list", _)) => retention::run_list(vault_opt.as_deref(), output_json),
+                Some(("accept", subcommand)) => retention::run_accept(
+                    vault_opt.as_deref(),
+                    &subcommand
+                        .get_many::<String>("run-id")
+                        .map(|values| values.cloned().collect::<Vec<_>>())
+                        .unwrap_or_default(),
+                    output_json,
+                ),
                 Some(("reject", subcommand)) => retention::run_reject(
                     vault_opt.as_deref(),
                     &subcommand

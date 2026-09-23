@@ -1334,6 +1334,80 @@
    ],
    "description": "An empty explicit rules flag falls back to the default rules path before validation.",
    "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-accept-flag-review",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "accept", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "prepare_args": ["--json", "ls", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": "doc.md", "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n", "mode": 420},
+    {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"rule\",\"fingerprint\":\"166208b59278e68b2692f527a89abf8ad3916467bb065a4c130d70aa5fa08a74\"}],\"status\":\"pending\"}", "mode": 420}
+   ],
+   "description": "A fresh fingerprint authorizes the flag_review action; compare the deterministic result while the timestamped history side effect remains intentionally unbyte-compared.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-accept-stale-fingerprint",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "accept", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "prepare_args": ["--json", "ls", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": "doc.md", "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n", "mode": 420},
+    {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"rule\",\"fingerprint\":\"0000000000000000000000000000000000000000000000000000000000000000\"}],\"status\":\"pending\"}", "mode": 420}
+   ],
+   "description": "A stale proposal fingerprint is rejected before mutation, with Go-matched per-item and process errors.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-accept-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "accept", "ret-safe", "--output", "text", "--vault", "${WORKSPACE}"],
+   "prepare_args": ["--json", "ls", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": "doc.md", "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n", "mode": 420},
+    {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"rule\",\"fingerprint\":\"166208b59278e68b2692f527a89abf8ad3916467bb065a4c130d70aa5fa08a74\"}],\"status\":\"pending\"}", "mode": 420}
+   ],
+   "description": "Human output preserves Go map ordering and ProposalItem struct rendering after a successful action.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-accept-action-completed-recovery",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "accept", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"missing.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"trash\",\"rule_name\":\"rule\",\"status\":\"action_completed\"}],\"status\":\"pending\"}", "mode": 420}
+   ],
+   "description": "Crash-recovery state skips authoritative reread and the action, writes the stable history ID idempotently, and leaves acted at zero.",
+   "compare_sidecar_layout": true
   }
  ]
 }

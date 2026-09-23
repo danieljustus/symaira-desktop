@@ -31,8 +31,8 @@ fn go_run_projection_records_match_byte_for_byte() {
         fixture.oracle_revision,
         "a80da93e3ec02801c73aa5b2318dc06de3efd3fa"
     );
-    assert_eq!(fixture.records.len(), 6, "nonzero projected records");
-    assert_eq!(fixture.events.len(), 19, "fixture exercises all edge paths");
+    assert_eq!(fixture.records.len(), 8, "nonzero projected records");
+    assert_eq!(fixture.events.len(), 21, "fixture exercises all edge paths");
     for source in ["internal/room/run/run.go", "internal/room/event/event.go"] {
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
@@ -75,6 +75,8 @@ fn go_run_projection_records_match_byte_for_byte() {
         "key-order-upper-lower",
         "key-order-lower-upper",
         "key-order-interleaved",
+        "ignored-deep",
+        "ignored-huge-number",
     ] {
         assert!(
             events.iter().any(|event| event.id == id),

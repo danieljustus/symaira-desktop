@@ -3,8 +3,8 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use serde::de::{MapAccess, Visitor};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
+use serde::{Deserializer, Serialize};
 use serde_json::Value;
 
 use crate::event::Event;
@@ -40,10 +40,15 @@ pub struct Run {
 pub fn project_runs(events: &[Event]) -> BTreeMap<String, Run> {
     let mut runs = BTreeMap::new();
     for event in events {
-        let Some(body) = body_object(event.body.get()) else {
+        let kind = match event.kind.as_str() {
+            "run.requested" | "run.approved" | "run.denied" | "run.started" | "run.finished"
+            | "run.failed" | "run.cancelled" => event.kind.as_str(),
+            _ => continue,
+        };
+        let Some(body) = body_object(event.body.get(), kind) else {
             continue;
         };
-        match event.kind.as_str() {
+        match kind {
             "run.requested" => {
                 let (Some(run_id), Some(title), Some(plan_file), Some(adapter)) = (
                     string_field(&body, "run_id"),
@@ -161,40 +166,60 @@ pub fn project_runs(events: &[Event]) -> BTreeMap<String, Run> {
     runs
 }
 
-struct BodyFields(Vec<(String, Value)>);
+struct BodyFieldsSeed<'a>(&'a str);
 
-impl<'de> Deserialize<'de> for BodyFields {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        struct BodyVisitor;
+impl<'de> DeserializeSeed<'de> for BodyFieldsSeed<'_> {
+    type Value = Vec<(String, Value)>;
 
-        impl<'de> Visitor<'de> for BodyVisitor {
-            type Value = BodyFields;
+    fn deserialize<D: Deserializer<'de>>(self, deserializer: D) -> Result<Self::Value, D::Error> {
+        struct BodyVisitor<'a>(&'a str);
+
+        impl<'de> Visitor<'de> for BodyVisitor<'_> {
+            type Value = Vec<(String, Value)>;
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
                 formatter.write_str("a run event object or null")
             }
 
             fn visit_unit<E: serde::de::Error>(self) -> Result<Self::Value, E> {
-                Ok(BodyFields(Vec::new()))
+                Ok(Vec::new())
             }
 
             fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
                 let mut fields = Vec::new();
-                while let Some(field) = map.next_entry()? {
-                    fields.push(field);
+                while let Some(key) = map.next_key::<String>()? {
+                    if field_is_known(self.0, &key) {
+                        fields.push((key, map.next_value()?));
+                    } else {
+                        map.next_value::<IgnoredAny>()?;
+                    }
                 }
-                Ok(BodyFields(fields))
+                Ok(fields)
             }
         }
 
-        deserializer.deserialize_any(BodyVisitor)
+        deserializer.deserialize_any(BodyVisitor(self.0))
     }
 }
 
-fn body_object(raw: &str) -> Option<Vec<(String, Value)>> {
-    serde_json::from_str::<BodyFields>(raw)
-        .ok()
-        .map(|fields| fields.0)
+fn body_object(raw: &str, kind: &str) -> Option<Vec<(String, Value)>> {
+    let mut deserializer = serde_json::Deserializer::from_str(raw);
+    let fields = BodyFieldsSeed(kind).deserialize(&mut deserializer).ok()?;
+    deserializer.end().ok()?;
+    Some(fields)
+}
+
+fn field_is_known(kind: &str, key: &str) -> bool {
+    let names: &[&str] = match kind {
+        "run.requested" => &["run_id", "title", "plan_file", "adapter"],
+        "run.approved" => &["run_id", "approval_id", "scope", "expires_at"],
+        "run.denied" | "run.cancelled" => &["run_id", "reason"],
+        "run.started" => &["run_id"],
+        "run.finished" => &["run_id", "summary", "artifacts"],
+        "run.failed" => &["run_id", "error"],
+        _ => &[],
+    };
+    names.iter().any(|name| key.eq_ignore_ascii_case(name))
 }
 
 fn string_field(fields: &[(String, Value)], name: &str) -> Option<String> {

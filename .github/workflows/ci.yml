@@ -310,6 +310,10 @@ jobs:
           python3 scripts/rust-port/test_history_live.py
           python3 scripts/rust-port/history_live.py
 
+      - name: Run native history purge differential
+        shell: bash
+        run: make history-purge-differential
+
       - name: Retain native history evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

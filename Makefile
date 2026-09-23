@@ -5,6 +5,7 @@
 .PHONY: room-run-cli-fixtures-generate room-run-cli-differential
 .PHONY: dataset-sync-fixtures-generate dataset-sync-differential
 .PHONY: dataset-cli-differential
+.PHONY: history-purge-fixtures-generate history-purge-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -229,6 +230,13 @@ room-run-cli-fixtures-generate:
 room-run-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/run -run '^TestPortRunCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test run_commands
+
+history-purge-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPurgeContract$$'
+
+history-purge-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPurgeContract$$'
+	$(CARGO) test -p symdesk-vault --locked --test history_purge_contracts
 
 dataset-sync-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortDataset(SyncContract|SyncServiceContract|ImportContract)$$'

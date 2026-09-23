@@ -36,6 +36,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"vault write filesystem", []string{"test", "-count=1", "./internal/vault", "-run", "TestPortVaultWriteFilesystemContract"}, []string{"testdata/port/vault/filesystem-writes.json"}, false},
 	{"vault note operations", []string{"test", "-count=1", "./internal/service", "-run", "TestPortNoteOperationContract"}, []string{"testdata/port/vault/note-operations.json"}, false},
 	{"vault history lifecycle", []string{"test", "-count=1", "./internal/history", "-run", "TestPortHistoryLifecycleContract"}, []string{"testdata/port/vault/history-lifecycle.json"}, false},
+	{"vault history purge", []string{"test", "-count=1", "./internal/history", "-run", "^TestPortHistoryPurgeContract$"}, []string{"testdata/port/vault/history-purge.json"}, false},
 	{"vault retention corpus", []string{"test", "-count=1", "./internal/retention", "-run", "TestPortRetentionContract"}, []string{"testdata/port/vault/retention.json"}, false},
 	{"vault retention rules", []string{"test", "-count=1", "./internal/retention", "-run", "TestPortRetentionRulesContract"}, []string{"testdata/port/vault/retention-rules.json"}, false},
 	{"authoritative retention state", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortRetentionStateContract$"}, []string{"testdata/port/vault/retention-state.json"}, false},

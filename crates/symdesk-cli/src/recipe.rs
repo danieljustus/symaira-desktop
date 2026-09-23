@@ -59,7 +59,10 @@ pub fn run(command: &clap::ArgMatches, json_output: bool) -> ExitCode {
         return emit_error(error, json_output);
     }
     if json_output {
-        return write_go_json(&serde_json::json!({"status": "valid", "recipe": recipe}));
+        return write_go_json(&ValidatedRecipe {
+            recipe: &recipe,
+            status: "valid",
+        });
     }
     let triggers = recipe.triggers.join(" ");
     let tools = recipe.tools.join(" ");
@@ -67,6 +70,12 @@ pub fn run(command: &clap::ArgMatches, json_output: bool) -> ExitCode {
         "map[recipe:{{Version:{} Name:{} Triggers:[{}] Tools:[{}] WriteCap:{}}} status:valid]\n",
         recipe.version, recipe.name, triggers, tools, recipe.write_cap
     ))
+}
+
+#[derive(Serialize)]
+struct ValidatedRecipe<'a> {
+    recipe: &'a Recipe,
+    status: &'static str,
 }
 
 fn validate(recipe: &Recipe) -> Result<(), String> {

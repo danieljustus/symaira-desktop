@@ -79,6 +79,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"room MCP", []string{"test", "-count=1", "./internal/room/mcp", "-run", "^TestSymRoomMCPRepresentativeOracle$"}, []string{"testdata/port/room/mcp-parity.json"}, false},
 	{"room MCP mutations", []string{"test", "-count=1", "./internal/room/mcp", "-run", "^TestSymRoomMCPMutationOracle$"}, []string{"testdata/port/room/mcp-artifact.txt", "testdata/port/room/mcp-mutations.json"}, false},
 	{"dataset sync", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract)$"}, []string{"testdata/port/dataset/sync.json", "testdata/port/dataset/service-sync.json", "testdata/port/dataset/import.json"}, false},
+	{"dataset query CLI contract", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetQueryCLIContract$"}, []string{"testdata/port/dataset/cli.json"}, false},
 	{"dataset purge", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetPurgeContract$"}, []string{"testdata/port/dataset/purge.json"}, false},
 	{"sidecar contracts", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarContract"}, []string{"testdata/port/sidecar/contracts.json"}, false},
 	{"sidecar lifecycle", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarLifecycleContract"}, []string{"testdata/port/sidecar/lifecycle.json"}, true},

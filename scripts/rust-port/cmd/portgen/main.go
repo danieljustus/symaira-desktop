@@ -150,7 +150,7 @@ func runGenerate(repoRoot, commit, release string) {
 		{"./internal/room/run", "^TestPortRun(Wait|Mutation)?CLIContract$"},
 		{"./internal/room/mcp", "^TestSymRoomMCP(Representative|Mutation)Oracle$"},
 		{"./internal/history", "^TestPortHistory(PurgeContract|PruneContract|SelectedTrashPurgeContract)$"},
-		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract|PurgeContract)$|^TestPortHistoryServiceContract$"},
+		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract|PurgeContract|QueryCLIContract)$|^TestPortHistoryServiceContract$"},
 		{"./internal/tools", "TestSymdeskMCPInventory"},
 		{"./internal/selfhost", "TestSelfhostHTTPInventory"},
 	}

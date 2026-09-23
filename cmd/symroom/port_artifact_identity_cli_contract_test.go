@@ -65,9 +65,6 @@ type artifactIdentityVector struct {
 // TestPortArtifactIdentityCLIContract freezes default-identity resolution and
 // optional symdesk inspect enrichment through the shipped Go process.
 func TestPortArtifactIdentityCLIContract(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("fixture uses a Unix fake symdesk process")
-	}
 	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatal(err)
@@ -128,6 +125,10 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {
 		return fixture, fmt.Errorf("build Go symroom artifact identity oracle: %w\n%s", err, output)
+	}
+	fakeSymdesk, err := buildArtifactIdentityFakeSymdesk(t)
+	if err != nil {
+		return fixture, err
 	}
 
 	content := "artifact identity source\n"
@@ -209,18 +210,7 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 		}
 		argsFile := filepath.Join(caseDir, "symdesk-args.txt")
 		if vector.symdeskMode != "" {
-			script := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$SYMDESK_ARGS_FILE\"\n"
-			switch vector.symdeskMode {
-			case "success":
-				script += "printf '{\"document_id\":\"doc-fixture-1\",\"vault_name\":\"fixture\",\"valid\":true}\\n'\n"
-			case "exit":
-				script += "printf '{\"document_id\":\"ignored\"}\\n'\nexit 7\n"
-			case "invalid":
-				script += "printf 'not-json\\n'\n"
-			case "hang":
-				script += "exec /bin/sleep 60\n"
-			}
-			if err := os.WriteFile(filepath.Join(pathDir, "symdesk"), []byte(script), 0o755); err != nil {
+			if err := copyArtifactIdentityFakeSymdesk(fakeSymdesk, filepath.Join(pathDir, artifactIdentitySymdeskName())); err != nil {
 				return fixture, err
 			}
 		}
@@ -230,7 +220,7 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 			"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tmp,
 			"TZ=UTC", "LC_ALL=C", "LANG=C", "PATH=" + pathDir,
 			"SYMROOM_ROOM_DIR=.", "SYMROOM_IDENTITY_KEY=" + fixture.IdentityKey,
-			"SYMDESK_ARGS_FILE=" + argsFile,
+			"SYMDESK_ARGS_FILE=" + argsFile, "SYMDESK_MODE=" + vector.symdeskMode,
 		}
 		if vector.defaultEnv != "" {
 			cmd.Env = append(cmd.Env, "SYMROOM_DEFAULT_IDENTITY="+vector.defaultEnv)
@@ -280,4 +270,54 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 		fixture.Cases = append(fixture.Cases, result)
 	}
 	return fixture, nil
+}
+
+func buildArtifactIdentityFakeSymdesk(t *testing.T) (string, error) {
+	t.Helper()
+	source := `package main
+
+import (
+	"fmt"
+	"os"
+	"strings"
+	"time"
+)
+
+func main() {
+	args := os.Args[1:]
+	if err := os.WriteFile(os.Getenv("SYMDESK_ARGS_FILE"), []byte(strings.Join(args, "\n")+"\n"), 0o600); err != nil { panic(err) }
+	switch os.Getenv("SYMDESK_MODE") {
+	case "success": fmt.Println("{\"document_id\":\"doc-fixture-1\",\"vault_name\":\"fixture\",\"valid\":true}")
+	case "exit": fmt.Println("{\"document_id\":\"ignored\"}"); os.Exit(7)
+	case "invalid": fmt.Println("not-json")
+	case "hang": time.Sleep(60 * time.Second)
+	default: panic("unexpected symdesk mode")
+	}
+}
+`
+	sourcePath := filepath.Join(t.TempDir(), "symdesk.go")
+	binaryPath := filepath.Join(t.TempDir(), artifactIdentitySymdeskName())
+	if err := os.WriteFile(sourcePath, []byte(source), 0o600); err != nil {
+		return "", err
+	}
+	build := exec.Command("go", "build", "-o", binaryPath, sourcePath)
+	if output, err := build.CombinedOutput(); err != nil {
+		return "", fmt.Errorf("build fake symdesk process: %w\n%s", err, output)
+	}
+	return binaryPath, nil
+}
+
+func artifactIdentitySymdeskName() string {
+	if runtime.GOOS == "windows" {
+		return "symdesk.exe"
+	}
+	return "symdesk"
+}
+
+func copyArtifactIdentityFakeSymdesk(source, destination string) error {
+	data, err := os.ReadFile(source)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(destination, data, 0o755)
 }

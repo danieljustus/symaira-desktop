@@ -59,9 +59,6 @@ struct Case {
 
 #[test]
 fn artifact_identity_and_symdesk_inspect_match_go_process_contract() {
-    if cfg!(windows) {
-        return;
-    }
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../");
     let bytes = fs::read(root.join("testdata/port/room/artifact-identity-cli.json"))
         .expect("read Go-generated artifact identity fixture");
@@ -104,6 +101,7 @@ fn artifact_identity_and_symdesk_inspect_match_go_process_contract() {
     }
 
     let temp = TempDir::new();
+    let fake_symdesk = build_fake_symdesk(&temp.path);
     for case in &fixture.cases {
         let isolated = temp.path.join(&case.name);
         let room = isolated.join("room");
@@ -136,7 +134,7 @@ fn artifact_identity_and_symdesk_inspect_match_go_process_contract() {
                 .expect("write isolated project config");
         }
         if !case.symdesk_mode.is_empty() {
-            write_fake_symdesk(&path, &case.symdesk_mode);
+            install_fake_symdesk(&fake_symdesk, &path);
         }
 
         let output = run_symroom(
@@ -228,6 +226,7 @@ fn run_symroom(
         .env("PATH", path)
         .env("SYMROOM_ROOM_DIR", ".")
         .env("SYMROOM_IDENTITY_KEY", identity_key)
+        .env("SYMDESK_MODE", &case.symdesk_mode)
         .env(
             "SYMDESK_ARGS_FILE",
             room.parent()
@@ -240,25 +239,52 @@ fn run_symroom(
     command.output().expect("run Rust symroom artifact command")
 }
 
-fn write_fake_symdesk(path: &Path, mode: &str) {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let helper = path.join("symdesk");
-        let response = match mode {
-            "success" => {
-                "printf '{\"document_id\":\"doc-fixture-1\",\"vault_name\":\"fixture\",\"valid\":true}\\n'\n"
-            }
-            "exit" => "printf '{\"document_id\":\"ignored\"}\\n'\nexit 7\n",
-            "invalid" => "printf 'not-json\\n'\n",
-            "hang" => "exec /bin/sleep 60\n",
-            _ => panic!("unexpected symdesk mode {mode}"),
-        };
-        let script =
-            format!("#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$SYMDESK_ARGS_FILE\"\n{response}");
-        fs::write(&helper, script).expect("write fake symdesk");
-        fs::set_permissions(helper, fs::Permissions::from_mode(0o755))
-            .expect("make fake symdesk executable");
+fn build_fake_symdesk(temp: &Path) -> PathBuf {
+    let source = temp.join("fake-symdesk.rs");
+    let binary = temp.join(symdesk_binary_name());
+    fs::write(
+        &source,
+        r##"
+use std::{env, fs, process, thread, time::Duration};
+
+fn main() {
+    let args = env::args().skip(1).collect::<Vec<_>>();
+    let args_path = env::var_os("SYMDESK_ARGS_FILE").expect("SYMDESK_ARGS_FILE");
+    fs::write(args_path, format!("{}\n", args.join("\n"))).expect("record arguments");
+    match env::var("SYMDESK_MODE").as_deref() {
+        Ok("success") => println!(r#"{{"document_id":"doc-fixture-1","vault_name":"fixture","valid":true}}"#),
+        Ok("exit") => { println!(r#"{{"document_id":"ignored"}}"#); process::exit(7); },
+        Ok("invalid") => println!("not-json"),
+        Ok("hang") => thread::sleep(Duration::from_secs(60)),
+        _ => panic!("unexpected symdesk mode"),
+    }
+}
+"##,
+    )
+    .expect("write fake symdesk source");
+    let output = Command::new("rustc")
+        .args(["--edition=2021", "-o"])
+        .arg(&binary)
+        .arg(&source)
+        .output()
+        .expect("compile fake symdesk process");
+    assert!(
+        output.status.success(),
+        "compile fake symdesk: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    binary
+}
+
+fn install_fake_symdesk(binary: &Path, path: &Path) {
+    fs::copy(binary, path.join(symdesk_binary_name())).expect("install fake symdesk");
+}
+
+fn symdesk_binary_name() -> &'static str {
+    if cfg!(windows) {
+        "symdesk.exe"
+    } else {
+        "symdesk"
     }
 }
 

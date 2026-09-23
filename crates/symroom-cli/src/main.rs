@@ -10,6 +10,7 @@ use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
 
 mod artifact_cli;
+mod brain_profile_cli;
 mod decide_cli;
 mod identity_cli;
 mod index_cli;
@@ -65,6 +66,9 @@ fn main() -> ExitCode {
     }
     if command == "artifact" {
         return artifact_cli::run(&args[2..]);
+    }
+    if command == "brain-profile" {
+        return brain_profile_cli::run(&args[2..]);
     }
     if command == "mcp" {
         return mcp::run_cli(&args[2..]);

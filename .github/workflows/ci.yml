@@ -326,6 +326,10 @@ jobs:
         shell: bash
         run: make room-brain-profile-differential
 
+      - name: Run native room init core differential
+        shell: bash
+        run: make room-init-core-differential
+
       - name: Run native index backup differential
         shell: bash
         run: make index-backup-differential

@@ -61,10 +61,10 @@ pub fn init(
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
         Err(error) => return Err(RoomInitError::Io(error.to_string())),
     };
-    if let Some(entries) = entries {
-        if entries.into_iter().next().is_some() {
-            return Err(RoomInitError::NotEmpty);
-        }
+    if let Some(entries) = entries
+        && entries.into_iter().next().is_some()
+    {
+        return Err(RoomInitError::NotEmpty);
     }
     fs::create_dir_all(&dir)
         .map_err(|error| RoomInitError::Io(format!("mkdir room dir: {error}")))?;

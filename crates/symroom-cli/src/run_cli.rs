@@ -204,10 +204,17 @@ fn parse_string_flags(
 fn resolve_identity_name(value: Option<&String>) -> Result<String, ExitCode> {
     match value.filter(|value| !value.is_empty()) {
         Some(name) => Ok(name.clone()),
-        None => Err(stderr(
-            "Error: --identity is required when default_identity is not configured\n",
-            CoreExitCode::NoInput,
-        )),
+        None => match crate::member_cli::default_identity() {
+            Ok(name) if !name.is_empty() => Ok(name),
+            Ok(_) => Err(stderr(
+                "Error: --identity is required when default_identity is not configured\n",
+                CoreExitCode::NoInput,
+            )),
+            Err(error) => Err(stderr(
+                &format!("Error loading configuration: {error}\n"),
+                CoreExitCode::NoInput,
+            )),
+        },
     }
 }
 

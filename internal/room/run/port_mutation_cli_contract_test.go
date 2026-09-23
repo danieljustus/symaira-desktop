@@ -30,6 +30,8 @@ type runMutationCLIContract struct {
 type runMutationCLICase struct {
 	Name              string           `json:"name"`
 	Args              []string         `json:"args"`
+	Config            string           `json:"config,omitempty"`
+	DefaultEnv        string           `json:"default_env,omitempty"`
 	ExitCode          int              `json:"exit_code"`
 	Stdout            string           `json:"stdout"`
 	Stderr            string           `json:"stderr"`
@@ -81,6 +83,7 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 		SourceHashes: map[string]string{
 			"cmd/symroom/main.go":                runCLIFileHash(t, root, "cmd/symroom/main.go"),
 			"cmd/symroom/cmd_run.go":             runCLIFileHash(t, root, "cmd/symroom/cmd_run.go"),
+			"internal/room/config/config.go":     runCLIFileHash(t, root, "internal/room/config/config.go"),
 			"internal/room/run/run.go":           runCLIFileHash(t, root, "internal/room/run/run.go"),
 			"internal/room/journal/journal.go":   runCLIFileHash(t, root, "internal/room/journal/journal.go"),
 			"internal/room/event/event.go":       runCLIFileHash(t, root, "internal/room/event/event.go"),
@@ -96,25 +99,29 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 	temp := t.TempDir()
 	executable := buildRunCLIOracle(t, root)
 	for _, vector := range []struct {
-		name string
-		args []string
+		name       string
+		args       []string
+		config     string
+		defaultEnv string
 	}{
-		{"request-html-body", []string{"run", "request", "--title=Generated <A>&", "--plan-file", "plans/a.md", "--adapter=local", "--identity=oracle"}},
-		{"request-title-with-empty-optional-fields", []string{"run", "request", "-identity", "oracle", "-title", "No optional fields"}},
-		{"request-title-required", []string{"run", "request", "--identity", "oracle"}},
-		{"request-identity-required", []string{"run", "request", "--title", "No identity"}},
-		{"request-string-flag-consumes-dash", []string{"run", "request", "--title", "--identity"}},
-		{"start-approved", []string{"run", "start", "--identity", "oracle", "mut-approved"}},
-		{"start-invalid-transition", []string{"run", "start", "--identity=oracle", "mut-pending"}},
-		{"start-expired-approval", []string{"run", "start", "--identity", "oracle", "mut-expired"}},
-		{"start-not-found", []string{"run", "start", "--identity", "oracle", "mut-missing"}},
-		{"start-usage", []string{"run", "start"}},
-		{"start-identity-after-run-id", []string{"run", "start", "mut-approved", "--identity", "oracle"}},
-		{"cancel-active", []string{"run", "cancel", "--reason", "operator stopped", "--identity", "oracle", "mut-pending"}},
-		{"cancel-empty-reason", []string{"run", "cancel", "--identity=oracle", "mut-approved"}},
-		{"cancel-terminal", []string{"run", "cancel", "--reason=too late", "--identity", "oracle", "mut-finished"}},
-		{"cancel-not-found", []string{"run", "cancel", "--identity", "oracle", "mut-missing"}},
-		{"cancel-usage", []string{"run", "cancel"}},
+		{name: "request-html-body", args: []string{"run", "request", "--title=Generated <A>&", "--plan-file", "plans/a.md", "--adapter=local", "--identity=oracle"}},
+		{name: "request-title-with-empty-optional-fields", args: []string{"run", "request", "-identity", "oracle", "-title", "No optional fields"}},
+		{name: "request-title-required", args: []string{"run", "request", "--identity", "oracle"}},
+		{name: "request-identity-required", args: []string{"run", "request", "--title", "No identity"}},
+		{name: "request-default-env", args: []string{"run", "request", "--title", "Env default"}, defaultEnv: "oracle"},
+		{name: "request-default-config", args: []string{"run", "request", "--title", "Config default"}, config: "default_identity = \"oracle\"\n"},
+		{name: "request-string-flag-consumes-dash", args: []string{"run", "request", "--title", "--identity"}},
+		{name: "start-approved", args: []string{"run", "start", "--identity", "oracle", "mut-approved"}},
+		{name: "start-invalid-transition", args: []string{"run", "start", "--identity=oracle", "mut-pending"}},
+		{name: "start-expired-approval", args: []string{"run", "start", "--identity", "oracle", "mut-expired"}},
+		{name: "start-not-found", args: []string{"run", "start", "--identity", "oracle", "mut-missing"}},
+		{name: "start-usage", args: []string{"run", "start"}},
+		{name: "start-identity-after-run-id", args: []string{"run", "start", "mut-approved", "--identity", "oracle"}},
+		{name: "cancel-active", args: []string{"run", "cancel", "--reason", "operator stopped", "--identity", "oracle", "mut-pending"}},
+		{name: "cancel-empty-reason", args: []string{"run", "cancel", "--identity=oracle", "mut-approved"}},
+		{name: "cancel-terminal", args: []string{"run", "cancel", "--reason=too late", "--identity", "oracle", "mut-finished"}},
+		{name: "cancel-not-found", args: []string{"run", "cancel", "--identity", "oracle", "mut-missing"}},
+		{name: "cancel-usage", args: []string{"run", "cancel"}},
 	} {
 		caseRoom := filepath.Join(temp, vector.name)
 		journalDir := filepath.Join(caseRoom, "journal")
@@ -128,11 +135,21 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 		}
 		caseEnv := filepath.Join(temp, "env-"+vector.name)
 		home, dataHome, tempDir := makeRunCLIEnv(t, caseEnv)
+		if vector.config != "" {
+			configPath := filepath.Join(home, ".config", "symroom", "config.toml")
+			if err := os.MkdirAll(filepath.Dir(configPath), 0o700); err != nil {
+				return runMutationCLIContract{}, err
+			}
+			if err := os.WriteFile(configPath, []byte(vector.config), 0o600); err != nil {
+				return runMutationCLIContract{}, err
+			}
+		}
 		cmd := exec.Command(executable, vector.args...)
 		cmd.Env = []string{
 			"HOME=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
 			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + caseRoom,
 			"SYMROOM_IDENTITY_KEY=" + fixture.IdentityKey,
+			"SYMROOM_DEFAULT_IDENTITY=" + vector.defaultEnv,
 		}
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
@@ -150,7 +167,7 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 			return runMutationCLIContract{}, err
 		}
 		fixture.Cases = append(fixture.Cases, runMutationCLICase{
-			Name: vector.name, Args: vector.args, ExitCode: code,
+			Name: vector.name, Args: vector.args, Config: vector.config, DefaultEnv: vector.defaultEnv, ExitCode: code,
 			Stdout: string(stdout), Stderr: stderr.String(), FinalJournalFiles: finalFiles,
 		})
 	}

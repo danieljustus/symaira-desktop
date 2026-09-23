@@ -8,6 +8,7 @@ use std::{
 };
 
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 
 const ORACLE_REVISION: &str = "97280a946316682fc3ce3d7650597655ff0e46ae";
 const MUTATION_ORACLE_REVISION: &str = "a9f42980e4695e20b2c948d7f17fe67734eff901";
@@ -61,6 +62,10 @@ struct MutationFixture {
 struct MutationCase {
     name: String,
     args: Vec<String>,
+    #[serde(default)]
+    config: String,
+    #[serde(default)]
+    default_env: String,
     exit_code: i32,
     stdout: String,
     stderr: String,
@@ -196,8 +201,16 @@ fn run_request_start_cancel_match_go_process_contract() {
         serde_json::from_slice(&data).expect("parse Go mutation fixture");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.oracle_revision, MUTATION_ORACLE_REVISION);
-    assert_eq!(fixture.source_hashes.len(), 6);
-    assert!(fixture.source_hashes.values().all(|hash| hash.len() == 64));
+    assert_eq!(fixture.source_hashes.len(), 7);
+    for (path, expected) in &fixture.source_hashes {
+        let source = fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../..")
+                .join(path),
+        )
+        .expect("read Go oracle source");
+        assert_eq!(hex::encode(Sha256::digest(source)), *expected, "{path}");
+    }
     assert!(fixture.cases.iter().any(|case| case.stdout.ends_with('\n')));
     assert!(fixture.cases.iter().any(|case| case.exit_code == 2));
     assert!(fixture.cases.iter().any(|case| case.exit_code == 1));
@@ -219,6 +232,12 @@ fn run_request_start_cancel_match_go_process_contract() {
         fs::create_dir_all(&home).expect("create isolated HOME");
         fs::create_dir_all(&data_home).expect("create isolated XDG data home");
         fs::create_dir_all(&temp_dir).expect("create isolated TMPDIR");
+        if !case.config.is_empty() {
+            let config = home.join(".config/symroom/config.toml");
+            fs::create_dir_all(config.parent().expect("config parent"))
+                .expect("create config parent");
+            fs::write(config, &case.config).expect("write default identity config");
+        }
         let output = run_mutation_symroom(
             &case.args,
             &room,
@@ -226,6 +245,7 @@ fn run_request_start_cancel_match_go_process_contract() {
             &data_home,
             &temp_dir,
             &fixture.identity_key,
+            &case.default_env,
         );
         assert_eq!(
             output.status.code(),
@@ -278,6 +298,7 @@ fn run_mutation_symroom(
     data_home: &Path,
     temp: &Path,
     identity_key: &str,
+    default_env: &str,
 ) -> Output {
     let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
     command
@@ -290,7 +311,8 @@ fn run_mutation_symroom(
         .env("LC_ALL", "C")
         .env("LANG", "C")
         .env("SYMROOM_ROOM_DIR", room)
-        .env("SYMROOM_IDENTITY_KEY", identity_key);
+        .env("SYMROOM_IDENTITY_KEY", identity_key)
+        .env("SYMROOM_DEFAULT_IDENTITY", default_env);
     command.output().expect("run Rust symroom mutation CLI")
 }
 

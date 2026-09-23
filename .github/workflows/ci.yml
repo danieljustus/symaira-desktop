@@ -298,6 +298,14 @@ jobs:
         shell: bash
         run: make room-index-cli-differential
 
+      - name: Run native room verification differential
+        shell: bash
+        run: make room-verify-differential
+
+      - name: Run native room verify CLI differential
+        shell: bash
+        run: make room-verify-cli-differential
+
       - name: Run native room run projection differential
         shell: bash
         run: make room-run-projection-differential

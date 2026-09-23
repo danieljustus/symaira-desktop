@@ -15,6 +15,7 @@ mod mcp;
 mod member_cli;
 mod note_cli;
 mod run_cli;
+mod verify_cli;
 
 fn process_exit(code: CoreExitCode) -> ExitCode {
     ExitCode::from(code.as_u8())
@@ -46,6 +47,9 @@ fn main() -> ExitCode {
     }
     if command == "index" {
         return index_cli::run(&args[2..]);
+    }
+    if command == "verify" {
+        return verify_cli::run(&args[2..]);
     }
     if command == "note" {
         return note_cli::run(&args[2..]);

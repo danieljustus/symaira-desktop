@@ -131,6 +131,171 @@ pub enum ReadSegmentsError {
     Parse { author: String, source: EventError },
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct VerificationFinding {
+    pub code: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub author: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub event_id: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub event_ids: Vec<String>,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct VerificationReport {
+    pub valid: bool,
+    pub findings: Vec<VerificationFinding>,
+}
+
+/// Go `Journal.Verify`: first check each author's raw hash chain, then replay
+/// the total-ordered stream to verify signatures and member permissions.
+pub fn verify(room_dir: &Path) -> Result<VerificationReport, ReadSegmentsError> {
+    let segments = read_all_segments(room_dir)?;
+    let mut report = VerificationReport {
+        valid: true,
+        findings: Vec::new(),
+    };
+    let mut state = State::default();
+    for (author, events) in &segments {
+        let path = author_journal_path(room_dir, author);
+        let Ok(contents) = fs::read(&path) else {
+            // Go continues when the segment disappears after ReadAllSegments.
+            continue;
+        };
+        let mut reader = BufReader::new(Cursor::new(contents));
+        let mut lines = Vec::new();
+        loop {
+            match read_scanner_line(&mut reader) {
+                Ok(Some(line)) if !is_blank(&line) => lines.push(line),
+                Ok(Some(_)) => {}
+                Ok(None) => break,
+                Err(error) => {
+                    report.push(
+                        "chain_broken",
+                        author,
+                        "",
+                        Vec::new(),
+                        format!("failed to read segment file for author {author}: {error}"),
+                    );
+                    lines.clear();
+                    break;
+                }
+            }
+        }
+        let mut previous = ZERO_HASH.to_owned();
+        let mut seen = BTreeMap::<u64, String>::new();
+        for (expected, (line, event)) in (1_u64..).zip(lines.iter().zip(events)) {
+            if event.seq != expected {
+                report.push(
+                    "seq_mismatch",
+                    author,
+                    &event.id,
+                    Vec::new(),
+                    format!("expected seq {expected}, got {}", event.seq),
+                );
+            }
+            if event.prev != previous {
+                report.push(
+                    "chain_broken",
+                    author,
+                    &event.id,
+                    Vec::new(),
+                    format!("expected prev {previous}, got {}", event.prev),
+                );
+            }
+            if let Some(existing) = seen.get(&event.seq) {
+                if existing != &event.id {
+                    report.push(
+                        "fork_detected",
+                        author,
+                        "",
+                        vec![existing.clone(), event.id.clone()],
+                        format!(
+                            "fork detected for author {author} at seq {}: events {existing} and {}",
+                            event.seq, event.id
+                        ),
+                    );
+                }
+            } else {
+                seen.insert(event.seq, event.id.clone());
+            }
+            previous = format!("sha256:{}", hex::encode(Sha256::digest(line)));
+        }
+    }
+
+    for event in merge(segments) {
+        if event.kind == "room.created" {
+            if let Err(error) = state.apply_event(&event) {
+                report.push("signature_invalid", "", &event.id, Vec::new(), error);
+            }
+            if let Some(member) = state.members.get(&event.author) {
+                let key = hex::decode(&member.public_key).unwrap_or_default();
+                if let Err(error) = event.verify_signature(&key) {
+                    report.push(
+                        "signature_invalid",
+                        "",
+                        &event.id,
+                        Vec::new(),
+                        format!("signature verification failed: {error}"),
+                    );
+                }
+            }
+            continue;
+        }
+        let Some(member) = state.members.get(&event.author) else {
+            report.push(
+                "unknown_author",
+                &event.author,
+                &event.id,
+                Vec::new(),
+                format!("event signed by unknown author {}", event.author),
+            );
+            continue;
+        };
+        let key = hex::decode(&member.public_key).unwrap_or_default();
+        if let Err(error) = event.verify_signature(&key) {
+            report.push(
+                "signature_invalid",
+                &event.author,
+                &event.id,
+                Vec::new(),
+                format!("signature verification failed: {error}"),
+            );
+        }
+        if let Err(error) = state.apply_event(&event) {
+            let code = if error == "agent role is strictly forbidden from signing approval events" {
+                "agent_approval_forbidden"
+            } else {
+                "unauthorized_owner_action"
+            };
+            report.push(code, &event.author, &event.id, Vec::new(), error);
+        }
+    }
+    Ok(report)
+}
+
+impl VerificationReport {
+    fn push(
+        &mut self,
+        code: &str,
+        author: &str,
+        event_id: &str,
+        event_ids: Vec<String>,
+        message: String,
+    ) {
+        self.valid = false;
+        self.findings.push(VerificationFinding {
+            code: code.to_owned(),
+            author: author.to_owned(),
+            event_id: event_id.to_owned(),
+            event_ids,
+            message,
+        });
+    }
+}
+
 /// Reads the Lamport ceiling and member state of a room journal.
 ///
 /// A missing journal directory, an unreadable file and an undecodable line are

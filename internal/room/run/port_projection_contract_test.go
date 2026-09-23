@@ -6,10 +6,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
@@ -30,8 +32,11 @@ type runProjectionFixtureData struct {
 }
 
 type runJournalFile struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	Name          string `json:"name"`
+	Content       string `json:"content"`
+	RepeatSuffix  string `json:"repeat_suffix,omitempty"`
+	RepeatCount   int    `json:"repeat_count,omitempty"`
+	RepeatNewline bool   `json:"repeat_newline,omitempty"`
 }
 
 type runGetVector struct {
@@ -41,14 +46,37 @@ type runGetVector struct {
 }
 
 type runJournalQueryFixture struct {
-	JournalFiles            []runJournalFile  `json:"journal_files"`
-	Signers                 map[string]string `json:"signers"`
-	MergedEventIDs          []string          `json:"merged_event_ids"`
-	ListAll                 []string          `json:"list_all"`
-	ListPending             []string          `json:"list_pending"`
-	Gets                    []runGetVector    `json:"gets"`
-	CheckpointRecords       []string          `json:"checkpoint_records"`
-	CheckpointNormalization string            `json:"checkpoint_array_normalization"`
+	JournalFiles            []runJournalFile         `json:"journal_files"`
+	Signers                 map[string]string        `json:"signers"`
+	MergedEventIDs          []string                 `json:"merged_event_ids"`
+	ListAll                 []string                 `json:"list_all"`
+	ListPending             []string                 `json:"list_pending"`
+	Gets                    []runGetVector           `json:"gets"`
+	CheckpointRecords       []string                 `json:"checkpoint_records"`
+	CheckpointNormalization string                   `json:"checkpoint_array_normalization"`
+	EqualCreatedAt          runEqualCreatedAtFixture `json:"equal_created_at_list"`
+	ReadErrors              []runReadErrorFixture    `json:"read_errors"`
+}
+
+type runEqualCreatedAtFixture struct {
+	JournalFiles       []runJournalFile  `json:"journal_files"`
+	Signers            map[string]string `json:"signers"`
+	Records            []string          `json:"records_as_multiset"`
+	DistinctOrders     int               `json:"go_distinct_orders_observed"`
+	OrderNormalization string            `json:"order_normalization"`
+}
+
+type runReadErrorFixture struct {
+	Name          string           `json:"name"`
+	JournalFiles  []runJournalFile `json:"journal_files"`
+	JournalIsFile bool             `json:"journal_is_file,omitempty"`
+	ErrorClass    string           `json:"go_error_class"`
+	ErrorCompare  string           `json:"error_comparison"`
+	SegmentAuthor string           `json:"segment_author,omitempty"`
+	GoError       string           `json:"go_error,omitempty"`
+	RunID         string           `json:"run_id,omitempty"`
+	Records       []string         `json:"expected_records,omitempty"`
+	Signer        string           `json:"signer_public_key,omitempty"`
 }
 
 // TestPortRunProjectionContract freezes ProjectRuns and ProjectCheckpoints.
@@ -275,7 +303,209 @@ func makeRunJournalQueryFixture(t *testing.T) runJournalQueryFixture {
 		ListAll: runProjectionRecords(t, all), ListPending: runProjectionRecords(t, pending),
 		Gets: getCases, CheckpointRecords: checkpointRecords,
 		CheckpointNormalization: "sort only each run.checkpoints array by checkpoint id; Go ProjectRuns ranges a map",
+		EqualCreatedAt:          makeEqualCreatedAtListFixture(t),
+		ReadErrors:              makeRunReadErrorFixtures(t),
 	}
+}
+
+func makeEqualCreatedAtListFixture(t *testing.T) runEqualCreatedAtFixture {
+	t.Helper()
+	alpha := runProjectionIdentity("equal-alpha")
+	beta := runProjectionIdentity("equal-beta")
+	identities := map[string]*identity.Identity{alpha.MemberID: alpha, beta.MemberID: beta}
+	events := []*event.Event{
+		projectionEvent("equal-request-a", event.KindRunRequested, `{"run_id":"equal-a","title":"Equal A"}`, alpha.MemberID, "2026-02-02T10:00:00.000Z"),
+		projectionEvent("equal-request-b", event.KindRunRequested, `{"run_id":"equal-b","title":"Equal B"}`, beta.MemberID, "2026-02-02T10:00:00.000Z"),
+	}
+	contents := make(map[string][]byte, len(events))
+	for index, ev := range events {
+		ev.Seq = 1
+		ev.Prev = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+		ev.Lamport = uint64(index + 1)
+		if err := ev.Sign(identities[ev.Author]); err != nil {
+			t.Fatal(err)
+		}
+		line, err := ev.MarshalJSONLine()
+		if err != nil {
+			t.Fatal(err)
+		}
+		contents[ev.Author] = line
+	}
+
+	journalDir := filepath.Join(t.TempDir(), "journal")
+	if err := os.MkdirAll(journalDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	authors := make([]string, 0, len(contents))
+	for author := range contents {
+		authors = append(authors, author)
+	}
+	sort.Strings(authors)
+	files := make([]runJournalFile, 0, len(authors))
+	for _, author := range authors {
+		name := author + ".jsonl"
+		content := contents[author]
+		if err := os.WriteFile(filepath.Join(journalDir, name), content, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		files = append(files, runJournalFile{Name: name, Content: string(content)})
+	}
+
+	roomDir := filepath.Dir(journalDir)
+	orders := make(map[string]struct{})
+	var multiset []string
+	for range 64 {
+		list, err := List(roomDir, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		records := runProjectionRecords(t, list)
+		order, err := json.Marshal(records)
+		if err != nil {
+			t.Fatal(err)
+		}
+		orders[string(order)] = struct{}{}
+		canonical := append([]string(nil), records...)
+		sort.Strings(canonical)
+		if multiset == nil {
+			multiset = canonical
+		} else if !equalStrings(multiset, canonical) {
+			t.Fatalf("Go List changed the equal-created-at record multiset: %v vs %v", multiset, canonical)
+		}
+	}
+	if len(orders) < 2 {
+		t.Fatalf("Go List did not demonstrate equal-CreatedAt map-order nondeterminism in 64 calls")
+	}
+	return runEqualCreatedAtFixture{
+		JournalFiles: files, Signers: map[string]string{
+			alpha.MemberID: hex.EncodeToString(alpha.PublicKey),
+			beta.MemberID:  hex.EncodeToString(beta.PublicKey),
+		},
+		Records: multiset, DistinctOrders: len(orders),
+		OrderNormalization: "sort only the List record array as a semantic multiset; Go map iteration plus equal CreatedAt does not define order",
+	}
+}
+
+func makeRunReadErrorFixtures(t *testing.T) []runReadErrorFixture {
+	t.Helper()
+	const malformedAuthor = "malformed-segment"
+	malformedRoot := t.TempDir()
+	malformedDir := filepath.Join(malformedRoot, "journal")
+	if err := os.MkdirAll(malformedDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	malformedContent := "not-json\n"
+	if err := os.WriteFile(filepath.Join(malformedDir, malformedAuthor+".jsonl"), []byte(malformedContent), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	_, malformedErr := List(malformedRoot, false)
+	if malformedErr == nil {
+		t.Fatal("Go List accepted malformed journal event")
+	}
+	var syntaxErr *json.SyntaxError
+	if !errors.As(malformedErr, &syntaxErr) {
+		t.Fatalf("expected Go malformed-event syntax error, got %T: %v", malformedErr, malformedErr)
+	}
+	if !strings.Contains(malformedErr.Error(), "read segment "+malformedAuthor+": unmarshal line:") {
+		t.Fatalf("malformed event error lost segment context: %v", malformedErr)
+	}
+	if _, getErr := Get(malformedRoot, "missing-run"); getErr == nil {
+		t.Fatal("Go Get accepted malformed journal event")
+	} else if !errors.As(getErr, &syntaxErr) {
+		t.Fatalf("expected Go Get malformed-event syntax error, got %T: %v", getErr, getErr)
+	}
+
+	notDirectoryRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(notDirectoryRoot, "journal"), []byte("not a directory"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	_, notDirectoryErr := List(notDirectoryRoot, false)
+	if !errors.Is(notDirectoryErr, syscall.ENOTDIR) {
+		t.Fatalf("expected Go not-a-directory read error, got %v", notDirectoryErr)
+	}
+	if _, getErr := Get(notDirectoryRoot, "missing-run"); !errors.Is(getErr, syscall.ENOTDIR) {
+		t.Fatalf("expected Go Get not-a-directory read error, got %v", getErr)
+	}
+	return []runReadErrorFixture{
+		{
+			Name: "malformed-event-line", JournalFiles: []runJournalFile{{Name: malformedAuthor + ".jsonl", Content: malformedContent}},
+			ErrorClass: "malformed_event", ErrorCompare: "Go/Rust error class and segment author; parser wording is implementation-specific",
+			SegmentAuthor: malformedAuthor, GoError: malformedErr.Error(),
+		},
+		{
+			Name: "journal-path-is-file", JournalFiles: []runJournalFile{}, JournalIsFile: true, ErrorClass: "not_a_directory",
+			ErrorCompare: "Go syscall error and Rust I/O error kind; message contains a temporary path",
+		},
+		makeScannerOverflowFixture(t),
+	}
+}
+
+func makeScannerOverflowFixture(t *testing.T) runReadErrorFixture {
+	t.Helper()
+	owner := runProjectionIdentity("scanner-overflow")
+	ev := projectionEvent("scanner-prefix-event", event.KindRunRequested, `{"run_id":"scanner-prefix","title":"Scanner prefix"}`, owner.MemberID, "2026-02-03T10:00:00.000Z")
+	ev.Seq = 1
+	ev.Prev = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+	ev.Lamport = 1
+	if err := ev.Sign(owner); err != nil {
+		t.Fatal(err)
+	}
+	line, err := ev.MarshalJSONLine()
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := runJournalFile{
+		Name: owner.MemberID + ".jsonl", Content: string(line),
+		RepeatSuffix: "x", RepeatCount: 70 * 1024, RepeatNewline: true,
+	}
+	root := t.TempDir()
+	journalDir := filepath.Join(root, "journal")
+	if err := os.MkdirAll(journalDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(journalDir, file.Name), file.bytes(), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	list, err := List(root, false)
+	if err != nil {
+		t.Fatalf("Go Scanner should preserve prefix before an oversized token: %v", err)
+	}
+	got, err := Get(root, "scanner-prefix")
+	if err != nil {
+		t.Fatalf("Go Get should preserve prefix before an oversized token: %v", err)
+	}
+	if len(list) != 1 || list[0].ID != got.ID {
+		t.Fatalf("unexpected scanner-prefix projection: list=%+v get=%+v", list, got)
+	}
+	return runReadErrorFixture{
+		Name: "scanner-token-too-long", JournalFiles: []runJournalFile{file},
+		ErrorClass:    "scanner_stops_silently",
+		ErrorCompare:  "surviving prefix records are byte-exact; only the scanner error is suppressed by Go",
+		SegmentAuthor: owner.MemberID,
+		RunID:         "scanner-prefix", Records: []string{runProjectionRecord(t, got)},
+		Signer: hex.EncodeToString(owner.PublicKey),
+	}
+}
+
+func (file runJournalFile) bytes() []byte {
+	content := []byte(file.Content)
+	content = append(content, bytes.Repeat([]byte(file.RepeatSuffix), file.RepeatCount)...)
+	if file.RepeatNewline {
+		content = append(content, '\n')
+	}
+	return content
+}
+
+func equalStrings(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
 }
 
 func runProjectionIdentity(name string) *identity.Identity {

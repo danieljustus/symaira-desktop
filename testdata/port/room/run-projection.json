@@ -830,6 +830,70 @@
       "{\"id\":\"query-chk-a1\",\"run_id\":\"query-a\",\"question\":\"first question\",\"answer\":\"first answer\",\"state\":\"resolved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:03:00.000Z\",\"updated_at\":\"2026-02-01T10:05:00.000Z\"}",
       "{\"id\":\"query-chk-a2\",\"run_id\":\"query-a\",\"question\":\"second question\",\"answer\":\"second answer\",\"state\":\"resolved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:06:00.000Z\",\"updated_at\":\"2026-02-01T10:07:00.000Z\"}"
     ],
-    "checkpoint_array_normalization": "sort only each run.checkpoints array by checkpoint id; Go ProjectRuns ranges a map"
+    "checkpoint_array_normalization": "sort only each run.checkpoints array by checkpoint id; Go ProjectRuns ranges a map",
+    "equal_created_at_list": {
+      "journal_files": [
+        {
+          "name": "mem_ae5ab84e18f06552.jsonl",
+          "content": "{\"author\":\"mem_ae5ab84e18f06552\",\"body\":{\"run_id\":\"equal-a\",\"title\":\"Equal A\"},\"id\":\"equal-request-a\",\"kind\":\"run.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:2G2zDTODoQqHG//qOanRUatEWhIml1QeCEm+vZFAwwzHT+cTlxK30cQTd56sDon+sKo8caM4ziOCmLa50GX3AA==\",\"ts\":\"2026-02-02T10:00:00.000Z\",\"v\":1}\n"
+        },
+        {
+          "name": "mem_e1a6740e2587d7ff.jsonl",
+          "content": "{\"author\":\"mem_e1a6740e2587d7ff\",\"body\":{\"run_id\":\"equal-b\",\"title\":\"Equal B\"},\"id\":\"equal-request-b\",\"kind\":\"run.requested\",\"lamport\":2,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:iyuwa8bGj0hX7BbZ8GseWvHBNbr2RFr+45CdGTqljvL/FQ40iCtrQ2kjXlk4/vAifXSMRuRCH85CBDtiN8s6DQ==\",\"ts\":\"2026-02-02T10:00:00.000Z\",\"v\":1}\n"
+        }
+      ],
+      "signers": {
+        "mem_ae5ab84e18f06552": "e8b2fbee279d032bec2ee2f010b6b27e251b1e491e135b128c2f355db1212706",
+        "mem_e1a6740e2587d7ff": "9b721bc25e3e6c221f364f8de9a8f6d4a5b952700a4df64036de7e9620b63094"
+      },
+      "records_as_multiset": [
+        "{\"id\":\"equal-a\",\"title\":\"Equal A\",\"state\":\"requested\",\"author\":\"mem_ae5ab84e18f06552\",\"created_at\":\"2026-02-02T10:00:00.000Z\",\"updated_at\":\"2026-02-02T10:00:00.000Z\"}",
+        "{\"id\":\"equal-b\",\"title\":\"Equal B\",\"state\":\"requested\",\"author\":\"mem_e1a6740e2587d7ff\",\"created_at\":\"2026-02-02T10:00:00.000Z\",\"updated_at\":\"2026-02-02T10:00:00.000Z\"}"
+      ],
+      "go_distinct_orders_observed": 2,
+      "order_normalization": "sort only the List record array as a semantic multiset; Go map iteration plus equal CreatedAt does not define order"
+    },
+    "read_errors": [
+      {
+        "name": "malformed-event-line",
+        "journal_files": [
+          {
+            "name": "malformed-segment.jsonl",
+            "content": "not-json\n"
+          }
+        ],
+        "go_error_class": "malformed_event",
+        "error_comparison": "Go/Rust error class and segment author; parser wording is implementation-specific",
+        "segment_author": "malformed-segment",
+        "go_error": "read segment malformed-segment: unmarshal line: invalid character 'o' in literal null (expecting 'u')"
+      },
+      {
+        "name": "journal-path-is-file",
+        "journal_files": [],
+        "journal_is_file": true,
+        "go_error_class": "not_a_directory",
+        "error_comparison": "Go syscall error and Rust I/O error kind; message contains a temporary path"
+      },
+      {
+        "name": "scanner-token-too-long",
+        "journal_files": [
+          {
+            "name": "mem_22eafcd17a8fad8e.jsonl",
+            "content": "{\"author\":\"mem_22eafcd17a8fad8e\",\"body\":{\"run_id\":\"scanner-prefix\",\"title\":\"Scanner prefix\"},\"id\":\"scanner-prefix-event\",\"kind\":\"run.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:cbAqwaiVJS3bE3QAIalRrvz1U63RrLDX5bOEWkdfw3fm5y6CiSZH4HbAdpWpOcEjTl/KBm/zlT4q+jQB5cDNCQ==\",\"ts\":\"2026-02-03T10:00:00.000Z\",\"v\":1}\n",
+            "repeat_suffix": "x",
+            "repeat_count": 71680,
+            "repeat_newline": true
+          }
+        ],
+        "go_error_class": "scanner_stops_silently",
+        "error_comparison": "surviving prefix records are byte-exact; only the scanner error is suppressed by Go",
+        "segment_author": "mem_22eafcd17a8fad8e",
+        "run_id": "scanner-prefix",
+        "expected_records": [
+          "{\"id\":\"scanner-prefix\",\"title\":\"Scanner prefix\",\"state\":\"requested\",\"author\":\"mem_22eafcd17a8fad8e\",\"created_at\":\"2026-02-03T10:00:00.000Z\",\"updated_at\":\"2026-02-03T10:00:00.000Z\"}"
+        ],
+        "signer_public_key": "7640e02afe6af315cc11f3379a18252e2b06507f004ee6f89aaeadb9461dcb58"
+      }
+    ]
   }
 }

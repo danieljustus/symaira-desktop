@@ -20,7 +20,7 @@
 use std::{
     collections::BTreeMap,
     fs,
-    io::{BufRead, BufReader, Write},
+    io::{BufRead, BufReader, Cursor, Write},
     path::{Path, PathBuf},
 };
 
@@ -77,7 +77,8 @@ pub fn merge_all(room_dir: &Path) -> Result<Vec<Event>, ReadSegmentsError> {
 }
 
 /// Reads all existing author segments. Blank lines are ignored; an invalid
-/// event aborts the read with its segment name, as Go `ReadSegment` does.
+/// event aborts the read with its segment name. As in Go `ReadSegment`, a
+/// scanner token overflow stops that segment and keeps its decoded prefix.
 pub fn read_all_segments(
     room_dir: &Path,
 ) -> Result<BTreeMap<String, Vec<Event>>, ReadSegmentsError> {
@@ -103,11 +104,14 @@ pub fn read_all_segments(
         };
         let contents = fs::read(entry.path())?;
         let mut events = Vec::new();
-        for line in scan_lines(&contents) {
-            if is_blank(line) {
+        let mut reader = BufReader::new(Cursor::new(contents));
+        // Go ReadSegment uses bufio.Scanner and suppresses Scanner.Err. Keep
+        // already decoded events when a later token exceeds the scanner limit.
+        while let Ok(Some(line)) = read_scanner_line(&mut reader) {
+            if is_blank(&line) {
                 continue;
             }
-            events.push(Event::unmarshal_json_line(line).map_err(|source| {
+            events.push(Event::unmarshal_json_line(&line).map_err(|source| {
                 ReadSegmentsError::Parse {
                     author: author.to_owned(),
                     source,

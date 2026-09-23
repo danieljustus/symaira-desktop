@@ -37,12 +37,49 @@ struct JournalQueries {
     gets: Vec<GetVector>,
     checkpoint_records: Vec<String>,
     checkpoint_array_normalization: String,
+    equal_created_at_list: EqualCreatedAtFixture,
+    read_errors: Vec<ReadErrorFixture>,
+}
+
+#[derive(Deserialize)]
+struct EqualCreatedAtFixture {
+    journal_files: Vec<JournalFile>,
+    signers: BTreeMap<String, String>,
+    records_as_multiset: Vec<String>,
+    go_distinct_orders_observed: usize,
+    order_normalization: String,
+}
+
+#[derive(Deserialize)]
+struct ReadErrorFixture {
+    name: String,
+    journal_files: Vec<JournalFile>,
+    #[serde(default)]
+    journal_is_file: bool,
+    go_error_class: String,
+    error_comparison: String,
+    #[serde(default)]
+    segment_author: String,
+    #[serde(default)]
+    go_error: String,
+    #[serde(default)]
+    run_id: String,
+    #[serde(default)]
+    expected_records: Vec<String>,
+    #[serde(default)]
+    signer_public_key: String,
 }
 
 #[derive(Deserialize)]
 struct JournalFile {
     name: String,
     content: String,
+    #[serde(default)]
+    repeat_suffix: String,
+    #[serde(default)]
+    repeat_count: usize,
+    #[serde(default)]
+    repeat_newline: bool,
 }
 
 #[derive(Deserialize)]
@@ -255,6 +292,160 @@ fn replay_journal_queries(fixture: &JournalQueries) {
         "Go/Rust journal checkpoints"
     );
     fs::remove_dir_all(&root).expect("remove only this test's temporary journal");
+
+    replay_equal_created_at_list(&fixture.equal_created_at_list);
+    for case in &fixture.read_errors {
+        replay_read_error(case);
+    }
+}
+
+fn replay_equal_created_at_list(fixture: &EqualCreatedAtFixture) {
+    assert!(
+        fixture.go_distinct_orders_observed > 1,
+        "Go generator must observe more than one order"
+    );
+    assert_eq!(
+        fixture.order_normalization,
+        "sort only the List record array as a semantic multiset; Go map iteration plus equal CreatedAt does not define order"
+    );
+    static NEXT_TEMP: AtomicU64 = AtomicU64::new(0);
+    let root = std::env::temp_dir().join(format!(
+        "symroom-run-equal-{}-{}",
+        std::process::id(),
+        NEXT_TEMP.fetch_add(1, Ordering::Relaxed)
+    ));
+    let journal_dir = root.join("journal");
+    fs::create_dir_all(&journal_dir).expect("create equal-created-at journal");
+    for file in &fixture.journal_files {
+        fs::write(journal_dir.join(&file.name), file.content.as_bytes())
+            .expect("write equal-created-at segment");
+    }
+    let merged = journal::merge_all(&root).expect("merge equal-created-at fixture");
+    for event in &merged {
+        let public_key = fixture
+            .signers
+            .get(&event.author)
+            .expect("fixture signer for tied event");
+        event
+            .verify_signature(&hex::decode(public_key).expect("signer key hex"))
+            .unwrap_or_else(|error| panic!("Go equal-time signature for {}: {error}", event.id));
+    }
+    let runs = runs::list(&root, false).expect("List equal-created-at Go fixture");
+    assert_eq!(runs.len(), 2, "nonzero tied List rows");
+    assert_eq!(runs[0].created_at, runs[1].created_at, "fixture is tied");
+    let mut actual = encode_runs(&runs, false);
+    actual.sort();
+    assert_eq!(
+        actual, fixture.records_as_multiset,
+        "Go/Rust equal-created-at List semantic multiset"
+    );
+    fs::remove_dir_all(&root).expect("remove only this test's equal-created-at journal");
+}
+
+fn replay_read_error(fixture: &ReadErrorFixture) {
+    assert!(
+        !fixture.go_error_class.is_empty(),
+        "Go error class recorded"
+    );
+    if fixture.go_error_class == "malformed_event" {
+        assert_eq!(
+            fixture.error_comparison,
+            "Go/Rust error class and segment author; parser wording is implementation-specific"
+        );
+        assert!(fixture.go_error.contains("read segment "));
+        assert!(fixture.go_error.contains(": unmarshal line:"));
+    }
+    if fixture.go_error_class == "not_a_directory" {
+        assert_eq!(
+            fixture.error_comparison,
+            "Go syscall error and Rust I/O error kind; message contains a temporary path"
+        );
+    }
+    let root = std::env::temp_dir().join(format!(
+        "symroom-run-error-{}-{}",
+        std::process::id(),
+        fixture.name
+    ));
+    if fixture.journal_is_file {
+        fs::create_dir_all(&root).expect("create room for not-directory case");
+        fs::write(root.join("journal"), b"not a directory")
+            .expect("write non-directory journal path");
+    } else {
+        let journal_dir = root.join("journal");
+        fs::create_dir_all(&journal_dir).expect("create malformed journal directory");
+        for file in &fixture.journal_files {
+            fs::write(journal_dir.join(&file.name), journal_file_bytes(file))
+                .expect("write malformed segment");
+        }
+    }
+
+    if fixture.go_error_class == "scanner_stops_silently" {
+        assert_eq!(
+            fixture.error_comparison,
+            "surviving prefix records are byte-exact; only the scanner error is suppressed by Go"
+        );
+        let merged = journal::merge_all(&root).expect("Go scanner stops at oversized token");
+        assert_eq!(
+            merged.len(),
+            1,
+            "valid event before oversized token survives"
+        );
+        assert_eq!(merged[0].author, fixture.segment_author);
+        merged[0]
+            .verify_signature(&hex::decode(&fixture.signer_public_key).expect("signer key hex"))
+            .expect("prefix event signature");
+        let list = runs::list(&root, false).expect("List keeps valid scanner prefix");
+        assert_eq!(
+            encode_runs(&list, false),
+            fixture.expected_records,
+            "Go/Rust List before scanner overflow"
+        );
+        let run = runs::get(&root, &fixture.run_id).expect("Get keeps valid scanner prefix");
+        assert_eq!(
+            encode_run(&run, false),
+            fixture.expected_records[0],
+            "Go/Rust Get before scanner overflow"
+        );
+        fs::remove_dir_all(&root).expect("remove only this test's scanner-overflow journal");
+        return;
+    }
+
+    assert_run_query_error(runs::list(&root, false), fixture);
+    assert_run_query_error(runs::get(&root, "any-run"), fixture);
+    fs::remove_dir_all(&root).expect("remove only this test's read-error journal");
+}
+
+fn journal_file_bytes(file: &JournalFile) -> Vec<u8> {
+    let mut bytes = file.content.as_bytes().to_vec();
+    for _ in 0..file.repeat_count {
+        bytes.extend_from_slice(file.repeat_suffix.as_bytes());
+    }
+    if file.repeat_newline {
+        bytes.push(b'\n');
+    }
+    bytes
+}
+
+fn assert_run_query_error<T>(result: Result<T, runs::RunQueryError>, fixture: &ReadErrorFixture) {
+    let error = match result {
+        Err(error) => error,
+        Ok(_) => panic!("Go {} fixture must fail closed", fixture.go_error_class),
+    };
+    match (fixture.go_error_class.as_str(), error) {
+        (
+            "malformed_event",
+            runs::RunQueryError::Journal(journal::ReadSegmentsError::Parse { author, .. }),
+        ) => assert_eq!(author, fixture.segment_author, "malformed segment context"),
+        (
+            "not_a_directory",
+            runs::RunQueryError::Journal(journal::ReadSegmentsError::Io(error)),
+        ) => assert_eq!(
+            error.kind(),
+            std::io::ErrorKind::NotADirectory,
+            "journal path error class"
+        ),
+        (class, error) => panic!("unexpected Rust {class} result: {error}"),
+    }
 }
 
 fn encode_runs(runs: &[Run], normalize_checkpoints: bool) -> Vec<String> {

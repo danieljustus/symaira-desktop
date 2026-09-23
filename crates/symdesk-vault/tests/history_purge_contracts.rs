@@ -7,7 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
-use symdesk_vault::history::{HistoryError, HistoryStore};
+use symdesk_vault::history::{Checkpoint, HistoryError, HistoryStore};
 use time::{Duration, OffsetDateTime};
 
 #[derive(Deserialize)]
@@ -96,7 +96,7 @@ fn go_history_purge_contracts_replay() {
             .source_hashes
             .contains_key("internal/history/checkpoint.go")
     );
-    assert_eq!(fixture.cases.len(), 6);
+    assert_eq!(fixture.cases.len(), 7);
 
     for case in fixture.cases {
         let operation = if case.id.starts_with("preflight-") {
@@ -249,6 +249,21 @@ fn execute(scenario: &Scenario, case: &Case) -> Result<String, HistoryError> {
         "preflight-traversal-target-is-rejected" => {
             store.preflight_purge_paths(&case.paths)?;
             Ok("preflight accepted traversal".to_owned())
+        }
+        "purge-invalid-checkpoint-path-has-manifest-prefix" => {
+            store.checkpoint_file("task", "target.md")?;
+            let path = root.join(".symdesk/history/checkpoints/task.json");
+            let mut checkpoint: Checkpoint =
+                serde_json::from_slice(&fs::read(&path).expect("read checkpoint"))
+                    .expect("decode checkpoint");
+            checkpoint.files[0].rel_path = "../escape.md".into();
+            fs::write(
+                &path,
+                serde_json::to_vec_pretty(&checkpoint).expect("encode checkpoint"),
+            )
+            .expect("write invalid checkpoint");
+            store.purge_paths(&case.paths)?;
+            Ok("purge accepted invalid checkpoint path".to_owned())
         }
         other => Err(HistoryError::Io(std::io::Error::other(format!(
             "unknown fixture case {other}"

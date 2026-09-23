@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "e0364e835c03672178db936a2263fba1fb1ec2ab",
+    "release": "post-v0.12.2-security-880"
+  },
+  "source_hashes": {
+    "internal/history/history.go": "4b0caf990744a9469f8f16f2de6bddfee0525106c996c5907ea11f92db5740c2",
+    "internal/history/trash.go": "e5aad22d1c0b172f1d2134ac6df59616d6cdb44890bb154db92afe839f2c3b89"
+  },
+  "cases": [
+    {
+      "id": "selected-purge-keeps-unselected-and-retries-idempotently",
+      "description": "selected entry removal leaves unrelated trash intact and repeating the request after success is a no-op",
+      "files": [
+        {
+          "path": "a.md",
+          "content": "alpha"
+        },
+        {
+          "path": "b.md",
+          "content": "bravo"
+        }
+      ],
+      "result": "first=1 retry=0 remaining=b.md",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 5\n  }\n]"
+        },
+        {
+          "path": ".symdesk/history/manifest/b.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"f144a6907dc4284d1f9fe6a7d9b9ff53c02c1d07ba68f24d413d7ff7f757a782\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 5\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/b.md",
+          "mode": 420,
+          "size": 5,
+          "sha256": "",
+          "content": "bravo"
+        },
+        {
+          "path": ".symdesk/trash/b.md.trashinfo.json",
+          "mode": 420,
+          "size": 94,
+          "sha256": "",
+          "content": "{\n  \"name\": \"b.md\",\n  \"original_path\": \"b.md\",\n  \"deleted_at\": \"{{deleted_at}}\",\n  \"size\": 5\n}"
+        }
+      ]
+    },
+    {
+      "id": "selected-purge-corrupt-unselected-metadata-preserves-all",
+      "description": "a null unselected metadata file fails strict inventory validation before selected entry removal",
+      "files": [
+        {
+          "path": "a.md",
+          "content": "alpha"
+        },
+        {
+          "path": "b.md",
+          "content": "bravo"
+        }
+      ],
+      "error": "corrupt trash metadata for \"b.md\": ",
+      "error_class": "corrupt_trash_metadata",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 5\n  }\n]"
+        },
+        {
+          "path": ".symdesk/history/manifest/b.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"f144a6907dc4284d1f9fe6a7d9b9ff53c02c1d07ba68f24d413d7ff7f757a782\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 5\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/a.md",
+          "mode": 420,
+          "size": 5,
+          "sha256": "",
+          "content": "alpha"
+        },
+        {
+          "path": ".symdesk/trash/a.md.trashinfo.json",
+          "mode": 420,
+          "size": 94,
+          "sha256": "",
+          "content": "{\n  \"name\": \"a.md\",\n  \"original_path\": \"a.md\",\n  \"deleted_at\": \"{{deleted_at}}\",\n  \"size\": 5\n}"
+        },
+        {
+          "path": ".symdesk/trash/b.md",
+          "mode": 420,
+          "size": 5,
+          "sha256": "",
+          "content": "bravo"
+        },
+        {
+          "path": ".symdesk/trash/b.md.trashinfo.json",
+          "mode": 420,
+          "size": 4,
+          "sha256": "",
+          "content": "null"
+        }
+      ]
+    },
+    {
+      "id": "selected-purge-replaced-metadata-path-preserves-all",
+      "description": "valid replacement metadata with a changed original path refuses selected deletion before mutation",
+      "files": [
+        {
+          "path": "a.md",
+          "content": "alpha"
+        }
+      ],
+      "error": "trash entry \"a.md\" original path changed",
+      "error_class": "other",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 5\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/a.md",
+          "mode": 420,
+          "size": 5,
+          "sha256": "",
+          "content": "alpha"
+        },
+        {
+          "path": ".symdesk/trash/a.md.trashinfo.json",
+          "mode": 420,
+          "size": 102,
+          "sha256": "",
+          "content": "{\n  \"name\": \"a.md\",\n  \"original_path\": \"elsewhere.md\",\n  \"deleted_at\": \"{{deleted_at}}\",\n  \"size\": 5\n}"
+        }
+      ]
+    },
+    {
+      "id": "selected-purge-replaced-payload-preserves-all",
+      "description": "a payload whose size no longer matches its metadata fails strict inventory validation before mutation",
+      "files": [
+        {
+          "path": "a.md",
+          "content": "alpha"
+        }
+      ],
+      "error": "trash payload size mismatch for \"a.md\"",
+      "error_class": "trash_metadata_mismatch",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 5\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/a.md",
+          "mode": 420,
+          "size": 19,
+          "sha256": "",
+          "content": "replacement payload"
+        },
+        {
+          "path": ".symdesk/trash/a.md.trashinfo.json",
+          "mode": 420,
+          "size": 94,
+          "sha256": "",
+          "content": "{\n  \"name\": \"a.md\",\n  \"original_path\": \"a.md\",\n  \"deleted_at\": \"{{deleted_at}}\",\n  \"size\": 5\n}"
+        }
+      ]
+    },
+    {
+      "id": "selected-purge-missing-metadata-preserves-all",
+      "description": "a payload missing its metadata makes the strict inventory invalid before selected deletion",
+      "files": [
+        {
+          "path": "a.md",
+          "content": "alpha"
+        }
+      ],
+      "error": "invalid trash inventory: payload/metadata count mismatch",
+      "error_class": "trash_inventory",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 5\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/a.md",
+          "mode": 420,
+          "size": 5,
+          "sha256": "",
+          "content": "alpha"
+        }
+      ]
+    },
+    {
+      "id": "selected-purge-missing-payload-preserves-all",
+      "description": "metadata missing its payload makes the strict inventory invalid before selected deletion",
+      "files": [
+        {
+          "path": "a.md",
+          "content": "alpha"
+        }
+      ],
+      "error": "invalid trash inventory: payload/metadata count mismatch",
+      "error_class": "trash_inventory",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 5\n  }\n]"
+        },
+        {
+          "path": ".symdesk/trash/a.md.trashinfo.json",
+          "mode": 420,
+          "size": 94,
+          "sha256": "",
+          "content": "{\n  \"name\": \"a.md\",\n  \"original_path\": \"a.md\",\n  \"deleted_at\": \"{{deleted_at}}\",\n  \"size\": 5\n}"
+        }
+      ]
+    }
+  ]
+}

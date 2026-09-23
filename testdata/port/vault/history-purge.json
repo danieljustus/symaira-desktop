@@ -365,6 +365,52 @@
       "error_class": "invalid_path",
       "after": [],
       "objects": []
+    },
+    {
+      "id": "purge-invalid-checkpoint-path-has-manifest-prefix",
+      "description": "invalid checkpoint paths retain the checkpoint filename context in errors",
+      "operation": "purge_paths",
+      "files": [
+        {
+          "path": "target.md",
+          "content": "target"
+        }
+      ],
+      "paths": [
+        "target.md"
+      ],
+      "error": "invalid checkpoint manifest \"task.json\": invalid checkpoint file path \"../escape.md\"",
+      "error_class": "other",
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/task.json",
+          "mode": 420,
+          "size": 318,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"task\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [\n    {\n      \"rel_path\": \"../escape.md\",\n      \"entry\": {\n        \"id\": \"34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c\",\n        \"timestamp\": \"{{timestamp}}\",\n        \"size\": 6\n      }\n    }\n  ],\n  \"new_files\": [],\n  \"skipped\": []\n}"
+        },
+        {
+          "path": ".symdesk/history/manifest/target.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": "target.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "target"
+        }
+      ],
+      "objects": [
+        {
+          "name": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c",
+          "size": 6,
+          "sha256": "34a04005bcaf206eec990bd9637d9fdb6725e0a0c0d4aebf003f17f4c956eb5c"
+        }
+      ]
     }
   ]
 }

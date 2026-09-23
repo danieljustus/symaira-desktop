@@ -291,22 +291,32 @@ fn read_checkpoint(root: &Dir, name: &str, path: &str) -> Result<Checkpoint, His
     }
     let mut seen = BTreeSet::new();
     for file in &checkpoint.files {
-        validate_checkpoint_path(&mut seen, &file.rel_path)?;
+        validate_checkpoint_path(&mut seen, &file.rel_path, true).map_err(invalid)?;
     }
     for path in checkpoint.new_files.iter().chain(&checkpoint.skipped) {
-        validate_checkpoint_path(&mut seen, path)?;
+        validate_checkpoint_path(&mut seen, path, false).map_err(invalid)?;
     }
     Ok(checkpoint)
 }
 
-fn validate_checkpoint_path(seen: &mut BTreeSet<String>, path: &str) -> Result<(), HistoryError> {
-    let rel =
-        clean_rel(path).map_err(|_| purge_error(format!("invalid checkpoint path {path:?}")))?;
+fn validate_checkpoint_path(
+    seen: &mut BTreeSet<String>,
+    path: &str,
+    file_entry: bool,
+) -> Result<(), String> {
+    let invalid_path = || {
+        if file_entry {
+            format!("invalid checkpoint file path {path:?}")
+        } else {
+            format!("invalid checkpoint path {path:?}")
+        }
+    };
+    let rel = clean_rel(path).map_err(|_| invalid_path())?;
     if rel.replace('\\', "/") != path {
-        return Err(purge_error(format!("invalid checkpoint path {path:?}")));
+        return Err(invalid_path());
     }
     if !seen.insert(path.to_owned()) {
-        return Err(purge_error(format!("duplicate checkpoint path {path:?}")));
+        return Err(format!("duplicate checkpoint path {path:?}"));
     }
     Ok(())
 }

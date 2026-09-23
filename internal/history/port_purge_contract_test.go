@@ -191,6 +191,33 @@ func buildHistoryPurgeFixture(t *testing.T) historyPurgeFixture {
 			}
 			return "preflight accepted traversal", nil
 		}),
+		recordPurgeCase(t, historyPurgeCase{
+			ID: "purge-invalid-checkpoint-path-has-manifest-prefix", Description: "invalid checkpoint paths retain the checkpoint filename context in errors",
+			Operation: "purge_paths", Paths: []string{"target.md"},
+			Files: []historyFileSpec{{Path: "target.md", Content: "target"}},
+		}, func(s *scenario) (string, error) {
+			if _, err := s.store.CheckpointFile("task", "target.md"); err != nil {
+				return "", err
+			}
+			path := filepath.Join(s.root, checkpointsRelDir(), "task.json")
+			var checkpoint Checkpoint
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return "", err
+			}
+			if err := json.Unmarshal(data, &checkpoint); err != nil {
+				return "", err
+			}
+			checkpoint.Files[0].RelPath = "../escape.md"
+			data, err = json.MarshalIndent(checkpoint, "", "  ")
+			if err != nil {
+				return "", err
+			}
+			if err := os.WriteFile(path, data, 0o644); err != nil {
+				return "", err
+			}
+			return "", s.store.PurgePaths("target.md")
+		}),
 	}
 	return historyPurgeFixture{
 		SchemaVersion: 1,

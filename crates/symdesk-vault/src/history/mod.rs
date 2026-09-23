@@ -10,6 +10,7 @@
 
 pub mod checkpoint;
 mod purge;
+mod trash_purge;
 
 pub use checkpoint::{Checkpoint, CheckpointFile};
 
@@ -310,6 +311,10 @@ pub enum HistoryError {
     /// Invalid recovery metadata or history object inventory during purge.
     #[error("{0}")]
     Purge(String),
+
+    /// A selected trash item's original path no longer matches its metadata.
+    #[error("trash entry {0:?} original path changed")]
+    TrashEntryOriginalPathChanged(String),
 
     /// Trash item name is invalid (separators or a bare dot segment).
     #[error("invalid trash item name: {0:?}")]

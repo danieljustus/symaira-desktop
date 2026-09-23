@@ -9,6 +9,8 @@ use std::{
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
 
+mod run_cli;
+
 fn process_exit(code: CoreExitCode) -> ExitCode {
     ExitCode::from(code.as_u8())
 }
@@ -27,6 +29,9 @@ fn main() -> ExitCode {
     };
     if command == "-h" || command == "--help" || command == "help" {
         return write_stdout(USAGE.to_owned());
+    }
+    if command == "run" {
+        return run_cli::run(&args[2..]);
     }
     if command != "version" {
         return write_stderr(

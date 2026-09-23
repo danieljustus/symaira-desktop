@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "a80da93e3ec02801c73aa5b2318dc06de3efd3fa",
+  "source_hashes": {
+    "cmd/symroom/cmd_run.go": "525d67a0ddc6b24708d5450cc92c272c508077f1be52e106461c06a5a4d401f8",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
+    "internal/room/run/run.go": "458c7148b7de028ed22ed27df22b2187d762da5ddecbbc582763bee4d42fbf85"
+  },
+  "journal_files": [
+    {
+      "name": "mem_0ad01c171371a666.jsonl",
+      "content": "{\"author\":\"mem_0ad01c171371a666\",\"body\":{\"run_id\":\"cli-finished\",\"summary\":\"done\"},\"id\":\"cli-finish\",\"kind\":\"run.finished\",\"lamport\":2,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:CZlb4IiXGj6CV2y1E3UxRkBJCvnvl6fAgz80k5bCf4FXsSqMvDcA0/NHrpIjbbHLCH6a2nnINKScV6o80OwICQ==\",\"ts\":\"2026-03-01T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_0ad01c171371a666\",\"body\":{\"checkpoint_id\":\"cli-checkpoint\",\"answer\":\"approved\"},\"id\":\"cli-checkpoint-resolve\",\"kind\":\"checkpoint.resolved\",\"lamport\":4,\"prev\":\"sha256:8a4f35618128ce31a696b6ebddbdc0bd6a639bac55daa53f81a3bb9b833a3523\",\"room\":\"room-test\",\"seq\":2,\"sig\":\"ed25519:m+vzTnTQfzBAoVWBA8cKi4mEhdmi3qShbDzCzsD/i0Brb3eszQJJ/sgM4TpDsNUZ/ZClv8LlsDY5LW0t6A9KCg==\",\"ts\":\"2026-03-01T10:03:00.000Z\",\"v\":1}\n{\"author\":\"mem_0ad01c171371a666\",\"body\":{\"run_id\":\"cli-pending\",\"approval_id\":\"approval-cli\",\"scope\":\"room\",\"expires_at\":\"2026-03-02T00:00:00Z\"},\"id\":\"cli-approve\",\"kind\":\"run.approved\",\"lamport\":6,\"prev\":\"sha256:373b49d625d880b695e4f53d6ff3e7917d9700dbbea46ce6e3e897812ec94e47\",\"room\":\"room-test\",\"seq\":3,\"sig\":\"ed25519:rGtK+OY/pF0CGm2Fbp9uDDVMUQjKmP0BH+ScHDwR3aXCyJx4P6QO9GKEwhdaI+ZwtYvRg4APpxMACL/c0oTvDg==\",\"ts\":\"2026-03-01T11:01:00.000Z\",\"v\":1}\n"
+    },
+    {
+      "name": "mem_80c6dc03f45a7d41.jsonl",
+      "content": "{\"author\":\"mem_80c6dc03f45a7d41\",\"body\":{\"run_id\":\"cli-finished\",\"title\":\"CLI \\u003cFinished\\u003e\\u0026\",\"plan_file\":\"plans/final.md\",\"adapter\":\"local\"},\"id\":\"cli-request-finished\",\"kind\":\"run.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:PA85NwZKI0NfUVGFf/k/D/uBTQQ6L2FLzyWS5+fedE0NCMxg04C5HoiDF+6iv+MlhX1WkSwkIks3Xdrx42QDBQ==\",\"ts\":\"2026-03-01T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_80c6dc03f45a7d41\",\"body\":{\"checkpoint_id\":\"cli-checkpoint\",\"run_id\":\"cli-finished\",\"question\":\"Review output?\"},\"id\":\"cli-checkpoint-request\",\"kind\":\"checkpoint.requested\",\"lamport\":3,\"prev\":\"sha256:dc9ea87a36935bc0c62999c41c8c0dd9d1f6f84f7344fd3a90a860e7dd22a1ba\",\"room\":\"room-test\",\"seq\":2,\"sig\":\"ed25519:8LKJMAvF3VnfvY0X6UI+qZJpyUB4GWA7MQm9nH76oNQh129rfUy5xJSb8TbcrD3nN6PnpI5t0blWOHqGywAwBQ==\",\"ts\":\"2026-03-01T10:02:00.000Z\",\"v\":1}\n{\"author\":\"mem_80c6dc03f45a7d41\",\"body\":{\"run_id\":\"cli-pending\",\"title\":\"CLI pending\"},\"id\":\"cli-request-pending\",\"kind\":\"run.requested\",\"lamport\":5,\"prev\":\"sha256:7f88b016d88d0e982c4218b98e236ae17871317d05f985572934b8de1795934b\",\"room\":\"room-test\",\"seq\":3,\"sig\":\"ed25519:qwFdogGjRrKg2lBDTDK8yj0mMIv+S2/fkytIZktqnilR7IrGtNPtNiJn+wOAmLMQLpKKCf8ayyrDCzCxM67pAg==\",\"ts\":\"2026-03-01T11:00:00.000Z\",\"v\":1}\n"
+    }
+  ],
+  "cases": [
+    {
+      "name": "list-human",
+      "room": "main",
+      "args": [
+        "run",
+        "list"
+      ],
+      "exit_code": 0,
+      "stdout": "cli-finished\t[finished]\tmem_80c6dc03f45a7d41\tCLI \u003cFinished\u003e\u0026\ncli-pending\t[approved]\tmem_80c6dc03f45a7d41\tCLI pending\n",
+      "stderr": ""
+    },
+    {
+      "name": "list-json",
+      "room": "main",
+      "args": [
+        "run",
+        "list",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"id\": \"cli-finished\",\n    \"title\": \"CLI \\u003cFinished\\u003e\\u0026\",\n    \"plan_file\": \"plans/final.md\",\n    \"adapter\": \"local\",\n    \"state\": \"finished\",\n    \"author\": \"mem_80c6dc03f45a7d41\",\n    \"created_at\": \"2026-03-01T10:00:00.000Z\",\n    \"updated_at\": \"2026-03-01T10:01:00.000Z\",\n    \"summary\": \"done\",\n    \"checkpoints\": [\n      {\n        \"id\": \"cli-checkpoint\",\n        \"run_id\": \"cli-finished\",\n        \"question\": \"Review output?\",\n        \"answer\": \"approved\",\n        \"state\": \"resolved\",\n        \"author\": \"mem_80c6dc03f45a7d41\",\n        \"created_at\": \"2026-03-01T10:02:00.000Z\",\n        \"updated_at\": \"2026-03-01T10:03:00.000Z\"\n      }\n    ]\n  },\n  {\n    \"id\": \"cli-pending\",\n    \"title\": \"CLI pending\",\n    \"state\": \"approved\",\n    \"author\": \"mem_80c6dc03f45a7d41\",\n    \"created_at\": \"2026-03-01T11:00:00.000Z\",\n    \"updated_at\": \"2026-03-01T11:01:00.000Z\",\n    \"approval_id\": \"approval-cli\",\n    \"scope\": \"room\",\n    \"expires_at\": \"2026-03-02T00:00:00Z\"\n  }\n]\n",
+      "stderr": ""
+    },
+    {
+      "name": "list-pending-json",
+      "room": "main",
+      "args": [
+        "run",
+        "list",
+        "--pending",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"id\": \"cli-pending\",\n    \"title\": \"CLI pending\",\n    \"state\": \"approved\",\n    \"author\": \"mem_80c6dc03f45a7d41\",\n    \"created_at\": \"2026-03-01T11:00:00.000Z\",\n    \"updated_at\": \"2026-03-01T11:01:00.000Z\",\n    \"approval_id\": \"approval-cli\",\n    \"scope\": \"room\",\n    \"expires_at\": \"2026-03-02T00:00:00Z\"\n  }\n]\n",
+      "stderr": ""
+    },
+    {
+      "name": "list-json-flag-after-positional",
+      "room": "main",
+      "args": [
+        "run",
+        "list",
+        "ignored",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "cli-finished\t[finished]\tmem_80c6dc03f45a7d41\tCLI \u003cFinished\u003e\u0026\ncli-pending\t[approved]\tmem_80c6dc03f45a7d41\tCLI pending\n",
+      "stderr": ""
+    },
+    {
+      "name": "list-empty-json",
+      "room": "empty",
+      "args": [
+        "run",
+        "list",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "null\n",
+      "stderr": ""
+    },
+    {
+      "name": "show-human",
+      "room": "main",
+      "args": [
+        "run",
+        "show",
+        "cli-finished"
+      ],
+      "exit_code": 0,
+      "stdout": "Run ID:     cli-finished\nTitle:      CLI \u003cFinished\u003e\u0026\nState:      finished\nAuthor:     mem_80c6dc03f45a7d41\nCreated At: 2026-03-01T10:00:00.000Z\nSummary:    done\n",
+      "stderr": ""
+    },
+    {
+      "name": "show-json",
+      "room": "main",
+      "args": [
+        "run",
+        "show",
+        "--json",
+        "cli-finished"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"id\": \"cli-finished\",\n  \"title\": \"CLI \\u003cFinished\\u003e\\u0026\",\n  \"plan_file\": \"plans/final.md\",\n  \"adapter\": \"local\",\n  \"state\": \"finished\",\n  \"author\": \"mem_80c6dc03f45a7d41\",\n  \"created_at\": \"2026-03-01T10:00:00.000Z\",\n  \"updated_at\": \"2026-03-01T10:01:00.000Z\",\n  \"summary\": \"done\",\n  \"checkpoints\": [\n    {\n      \"id\": \"cli-checkpoint\",\n      \"run_id\": \"cli-finished\",\n      \"question\": \"Review output?\",\n      \"answer\": \"approved\",\n      \"state\": \"resolved\",\n      \"author\": \"mem_80c6dc03f45a7d41\",\n      \"created_at\": \"2026-03-01T10:02:00.000Z\",\n      \"updated_at\": \"2026-03-01T10:03:00.000Z\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "show-flag-after-positional",
+      "room": "main",
+      "args": [
+        "run",
+        "show",
+        "cli-finished",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "Run ID:     cli-finished\nTitle:      CLI \u003cFinished\u003e\u0026\nState:      finished\nAuthor:     mem_80c6dc03f45a7d41\nCreated At: 2026-03-01T10:00:00.000Z\nSummary:    done\n",
+      "stderr": ""
+    },
+    {
+      "name": "show-not-found",
+      "room": "main",
+      "args": [
+        "run",
+        "show",
+        "missing"
+      ],
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error: run missing not found\n"
+    },
+    {
+      "name": "show-usage",
+      "room": "main",
+      "args": [
+        "run",
+        "show"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom run show \u003crun_id\u003e [--json]\n"
+    },
+    {
+      "name": "list-unknown-flag",
+      "room": "main",
+      "args": [
+        "run",
+        "list",
+        "--unknown"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -unknown\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n"
+    }
+  ]
+}

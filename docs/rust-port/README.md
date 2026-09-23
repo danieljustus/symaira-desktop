@@ -164,11 +164,18 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   can now reach `PASS`. The CLI-level `symdesk retention list` slice is ported and gated
   by `make retention-cli-differential` (`testdata/port/cli/retention-cases.json`, 6
   byte-exact cases) as #1008, verified on Linux/macOS/Windows in the same native matrix;
-  The current integration branch adds local differential evidence for
-  `retention eval/reject/diff/history` and ordinary-document `accept`, plus
-  dataset sync/import service parity and the `dataset sync` CLI. Dataset purge
-  and final native platform evidence remain open, so VAULT-006 and DATA-001
-  remain `TODO`.
+  The current integration branch adds local Go↔Rust differential evidence for
+  `retention eval/accept/reject/diff/history`, dataset sync/import/purge,
+  and explicit history/trash purge. History policy pruning and native evidence
+  at the exact integrated commit remain open, so VAULT-006 and DATA-001 stay
+  `TODO`.
+
+- `RUST-016` is in progress. Local Go↔Rust gates cover signed identity/events,
+  journal basics, run projection and CLI transitions, the `note` CLI command,
+  MCP framing and all eight declared tools, including signed mutation effects.
+  The Room event fuzzer has a valid seed and passed 1,000 local runs. Remaining
+  CLI families, journal/index behavior and exact native platform evidence keep
+  the item open.
 
 - `RUST-001` passed: generated fixtures freeze 207 SymDesk command nodes (206
   non-root, including Cobra's generated help/completion tree), the production-derived SymRoom parser grammar, 57 SymDesk and 8
@@ -252,10 +259,10 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   Full `compare_files` deliberately stays off: `sidecar.db` carries SQLite state and
   `metadata.json` a timestamp, so neither can match byte-for-byte across two processes —
   the layout gate plus the byte-exact `metadata.json` replay are the filesystem evidence.
-- Next actions for RUST-007: port the `internal/service` retention-state layer that
-  `retention eval/accept/reject/diff/history` require, then DATA-001 (dataset sync).
-  When `retention reject/diff/history` are ported they must keep the same open-forever
-  contract as `list` — Go discards the handle in `retention.go:369,392,411` too.
+- Next actions for RUST-007: finish history policy pruning, re-freeze the
+  integrated fixture provenance, then execute all applicable gates on the
+  required native platforms. The retention CLI keeps Go's open sidecar handle
+  behavior across `list/reject/diff/history`.
 - Skills loaded this session: `go-to-rust-migration` + `references/worker-dispatch.md`.
 - Live evidence runs (manual `workflow_dispatch`, because `Rust port contract`
   and `Rust native` are `if: event_name != 'pull_request'`): run `35735140018`

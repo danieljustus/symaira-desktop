@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "source_hashes": {
+    "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
+    "internal/room/members/members.go": "34821f2480ec054e3002d385d9c8c707cb1087eda8cf0195c7207a0d71a0568e"
+  },
+  "cases": [
+    {
+      "id": "signed-unpaired-surrogate",
+      "line": "{\"author\":\"mem_3e5866f132665ab3\",\"body\":{\"name\":\"Room\",\"public_key\":\"a52418f170b04fe649251bc06d712aa50cba6e8752311a4880bc4641663f7c97\",\"\\ud800\":0},\"id\":\"signed-unpaired-surrogate\",\"kind\":\"room.created\",\"lamport\":0,\"prev\":\"\",\"room\":\"r\",\"seq\":0,\"sig\":\"ed25519:E4eJpnXrV3DLWPu5L4b8+GQ9UKoJCY380iDlPhl4FmmFZl2jkD/SfE1sQWLksmvr5lnqJyoJ9IsKN1yM/TUCDQ==\",\"ts\":\"\",\"v\":1}\n",
+      "canonical": "{\"author\":\"mem_3e5866f132665ab3\",\"body\":{\"name\":\"Room\",\"public_key\":\"a52418f170b04fe649251bc06d712aa50cba6e8752311a4880bc4641663f7c97\",\"\\ud800\":0},\"id\":\"signed-unpaired-surrogate\",\"kind\":\"room.created\",\"lamport\":0,\"prev\":\"\",\"room\":\"r\",\"seq\":0,\"ts\":\"\",\"v\":1}",
+      "verified": true,
+      "members": 1,
+      "name": "Room",
+      "parse_ok": true
+    },
+    {
+      "id": "signed-low-surrogate",
+      "line": "{\"author\":\"mem_3e5866f132665ab3\",\"body\":{\"name\":\"Room\",\"public_key\":\"a52418f170b04fe649251bc06d712aa50cba6e8752311a4880bc4641663f7c97\",\"\\udc00\":0},\"id\":\"signed-low-surrogate\",\"kind\":\"room.created\",\"lamport\":0,\"prev\":\"\",\"room\":\"r\",\"seq\":0,\"sig\":\"ed25519:QUAwyq0eQMXHdHhEoycqUsX+VKfX3s/H04FbA0ebECai4GL77B4bl02SJK+i3N8gFbn+k327mbwIaERFWWcpDQ==\",\"ts\":\"\",\"v\":1}\n",
+      "canonical": "{\"author\":\"mem_3e5866f132665ab3\",\"body\":{\"name\":\"Room\",\"public_key\":\"a52418f170b04fe649251bc06d712aa50cba6e8752311a4880bc4641663f7c97\",\"\\udc00\":0},\"id\":\"signed-low-surrogate\",\"kind\":\"room.created\",\"lamport\":0,\"prev\":\"\",\"room\":\"r\",\"seq\":0,\"ts\":\"\",\"v\":1}",
+      "verified": true,
+      "members": 1,
+      "name": "Room",
+      "parse_ok": true
+    },
+    {
+      "id": "signed-pair",
+      "line": "{\"author\":\"mem_3e5866f132665ab3\",\"body\":{\"name\":\"\\ud83d\\ude00\",\"public_key\":\"a52418f170b04fe649251bc06d712aa50cba6e8752311a4880bc4641663f7c97\"},\"id\":\"signed-pair\",\"kind\":\"room.created\",\"lamport\":0,\"prev\":\"\",\"room\":\"r\",\"seq\":0,\"sig\":\"ed25519:VI3FlMUe670doIGeaaRMNAuqCSNJipF+l98l3PCI/BzIAG/a+wpcWq9a+5WF5w6SyHI7sPjinz9B8mo1oivrBQ==\",\"ts\":\"\",\"v\":1}\n",
+      "canonical": "{\"author\":\"mem_3e5866f132665ab3\",\"body\":{\"name\":\"\\ud83d\\ude00\",\"public_key\":\"a52418f170b04fe649251bc06d712aa50cba6e8752311a4880bc4641663f7c97\"},\"id\":\"signed-pair\",\"kind\":\"room.created\",\"lamport\":0,\"prev\":\"\",\"room\":\"r\",\"seq\":0,\"ts\":\"\",\"v\":1}",
+      "verified": true,
+      "members": 1,
+      "name": "😀",
+      "parse_ok": true
+    },
+    {
+      "id": "signed-unpaired-value",
+      "line": "{\"author\":\"mem_3e5866f132665ab3\",\"body\":{\"name\":\"\\ud800\",\"public_key\":\"a52418f170b04fe649251bc06d712aa50cba6e8752311a4880bc4641663f7c97\"},\"id\":\"signed-unpaired-value\",\"kind\":\"room.created\",\"lamport\":0,\"prev\":\"\",\"room\":\"r\",\"seq\":0,\"sig\":\"ed25519:JUTF/6blXvfWivS/gI3+qHNduLj54GJFYpCa92HNt1+645wyKdur2baR0/B+eQlkgFFw/tcUHlOjqFXuJnVkBg==\",\"ts\":\"\",\"v\":1}\n",
+      "canonical": "{\"author\":\"mem_3e5866f132665ab3\",\"body\":{\"name\":\"\\ud800\",\"public_key\":\"a52418f170b04fe649251bc06d712aa50cba6e8752311a4880bc4641663f7c97\"},\"id\":\"signed-unpaired-value\",\"kind\":\"room.created\",\"lamport\":0,\"prev\":\"\",\"room\":\"r\",\"seq\":0,\"ts\":\"\",\"v\":1}",
+      "verified": true,
+      "members": 1,
+      "name": "�",
+      "parse_ok": true
+    },
+    {
+      "id": "escaped-literal",
+      "line": "{\"author\":\"mem_3e5866f132665ab3\",\"body\":{\"name\":\"\\\\ud800\",\"public_key\":\"a52418f170b04fe649251bc06d712aa50cba6e8752311a4880bc4641663f7c97\"},\"id\":\"escaped-literal\",\"kind\":\"room.created\",\"lamport\":0,\"prev\":\"\",\"room\":\"r\",\"seq\":0,\"sig\":\"ed25519:zXnrfQl2iyuZtDK4xNt1eTLEzUMaldOKo8fWwMNVn0SAKe7VPgOJntHzPlai3jCJEkTI2utuN6LswSE5SCoIBw==\",\"ts\":\"\",\"v\":1}\n",
+      "canonical": "{\"author\":\"mem_3e5866f132665ab3\",\"body\":{\"name\":\"\\\\ud800\",\"public_key\":\"a52418f170b04fe649251bc06d712aa50cba6e8752311a4880bc4641663f7c97\"},\"id\":\"escaped-literal\",\"kind\":\"room.created\",\"lamport\":0,\"prev\":\"\",\"room\":\"r\",\"seq\":0,\"ts\":\"\",\"v\":1}",
+      "verified": true,
+      "members": 1,
+      "name": "\\ud800",
+      "parse_ok": true
+    },
+    {
+      "id": "malformed-escape",
+      "line": "{\"body\":{\"\\ud80x\":0}}",
+      "canonical": "",
+      "verified": false,
+      "members": 0,
+      "name": "",
+      "parse_ok": false
+    }
+  ]
+}

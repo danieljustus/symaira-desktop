@@ -22,6 +22,7 @@ mod dataset_purge;
 mod dataset_sync;
 mod history_sync;
 mod metadata;
+mod retrieval_config;
 
 pub use backup::{backup_database, relocate_database, restore_database};
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
@@ -33,6 +34,9 @@ pub use history_sync::{HistorySyncError, checkpoint_undo, history_restore};
 pub use metadata::{
     METADATA_FILE_NAME, encode_sidecar_metadata, encode_sidecar_metadata_at, open_for_vault,
     record_sidecar_metadata,
+};
+pub use retrieval_config::{
+    index_location_for_vault, relocate_index_for_vault, symseek_config_path,
 };
 
 const MIGRATIONS: &[(&str, &str)] = &[

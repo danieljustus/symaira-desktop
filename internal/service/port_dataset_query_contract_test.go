@@ -39,6 +39,9 @@ func TestPortDatasetQueryCLIContract(t *testing.T) {
 		"query-cli-filter-is-empty-missing-null-empty":  false,
 		"query-cli-filter-unknown-column":               false,
 		"query-cli-nested-group-all-any":                false,
+		"query-cli-filter-is-not-empty-aliases":         false,
+		"query-cli-filter-text-pattern-operators":       false,
+		"query-cli-filter-not-contains-missing-null":    false,
 	}
 	for _, testCase := range fixture.Cases {
 		if _, wanted := wantCases[testCase.ID]; !wanted {
@@ -107,6 +110,14 @@ func TestPortDatasetQueryCLIContract(t *testing.T) {
 		{name: "numeric coercion", filter: dbviews.Filter{Key: "amount", Operator: "equals", Value: "10.0"}, want: []string{"a"}},
 		{name: "not equals includes missing and null after CSV normalization", filter: dbviews.Filter{Key: "status", Operator: "not_equals", Value: "open"}, want: []string{"b", "c", "d", "e"}},
 		{name: "is empty includes missing null and empty", filter: dbviews.Filter{Key: "status", Operator: "is_empty"}, want: []string{"b", "c", "d"}},
+		{name: "is not empty", filter: dbviews.Filter{Key: "status", Operator: "is_not_empty"}, want: []string{"a", "e"}},
+		{name: "not empty alias", filter: dbviews.Filter{Key: "status", Operator: "not_empty"}, want: []string{"a", "e"}},
+		{name: "contains pattern wildcard", filter: dbviews.Filter{Key: "status", Operator: "contains", Value: "p_n"}, want: []string{"a"}},
+		{name: "not contains includes missing null and empty", filter: dbviews.Filter{Key: "status", Operator: "not_contains", Value: "open"}, want: []string{"b", "c", "d", "e"}},
+		{name: "starts with", filter: dbviews.Filter{Key: "status", Operator: "starts_with", Value: "O"}, want: []string{"a"}},
+		{name: "prefix alias", filter: dbviews.Filter{Key: "status", Operator: "prefix", Value: "o"}, want: []string{"a"}},
+		{name: "ends with", filter: dbviews.Filter{Key: "status", Operator: "ends_with", Value: "D"}, want: []string{"e"}},
+		{name: "suffix alias", filter: dbviews.Filter{Key: "status", Operator: "suffix", Value: "id"}, want: []string{"e"}},
 	}
 	for _, testCase := range filterCases {
 		t.Run(testCase.name, func(t *testing.T) {

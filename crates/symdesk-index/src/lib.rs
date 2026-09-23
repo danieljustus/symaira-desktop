@@ -378,6 +378,30 @@ fn dataset_query_filter_where(
                 arguments.extend(raw_args.iter().cloned());
                 arguments.extend(raw_args.iter().cloned());
             }
+            "is_not_empty" | "not_empty" => {
+                expressions.push(format!(
+                    "{present} AND {raw} IS NOT NULL AND CAST({raw} AS TEXT) <> ''"
+                ));
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+            }
+            "contains" | "not_contains" | "starts_with" | "prefix" | "ends_with" | "suffix" => {
+                let pattern = match filter.operator.trim().to_ascii_lowercase().as_str() {
+                    "starts_with" | "prefix" => format!("{value}%"),
+                    "ends_with" | "suffix" => format!("%{value}"),
+                    _ => format!("%{value}%"),
+                };
+                let match_expression = format!("LOWER(CAST({raw} AS TEXT)) LIKE LOWER(?)");
+                if filter.operator.trim().eq_ignore_ascii_case("not_contains") {
+                    expressions.push(format!("NOT ({present} AND {match_expression})"));
+                } else {
+                    expressions.push(format!("{present} AND {match_expression}"));
+                }
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.push(rusqlite::types::Value::Text(pattern));
+            }
             "greater_than" | "gt" | ">" => {
                 if date {
                     expressions.push(format!("{present} AND julianday({raw}) > julianday(?)"));

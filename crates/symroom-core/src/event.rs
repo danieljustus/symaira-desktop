@@ -6,6 +6,7 @@
 use std::fmt;
 use std::io;
 
+use serde::de::{Error as _, IgnoredAny, MapAccess, Visitor};
 use serde::ser::{SerializeMap, Serializer as _};
 use serde_json::value::RawValue;
 
@@ -77,6 +78,109 @@ pub struct Event {
     pub body: Box<RawValue>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sig: Option<String>,
+}
+
+// Decode through the production entrypoint with Go encoding/json's struct
+// defaults, case-insensitive field lookup, and last-key-wins semantics. RawValue
+// retains the body bytes used by signing; a Value map would erase duplicates.
+struct GoEvent(Event);
+
+impl<'de> serde::Deserialize<'de> for GoEvent {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct GoEventVisitor;
+
+        impl<'de> Visitor<'de> for GoEventVisitor {
+            type Value = GoEvent;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a room event object or null")
+            }
+
+            fn visit_unit<E: serde::de::Error>(self) -> Result<Self::Value, E> {
+                Ok(GoEvent(empty_go_event()))
+            }
+
+            fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
+                let mut event = empty_go_event();
+                while let Some(key) = map.next_key::<String>()? {
+                    // Go encoding/json uses Unicode simple fold. Long s and
+                    // Kelvin sign also fold into the ASCII field names.
+                    let folded: String = key
+                        .chars()
+                        .map(|ch| match ch {
+                            '\u{017f}' => 's',
+                            '\u{212a}' => 'k',
+                            _ => ch.to_ascii_lowercase(),
+                        })
+                        .collect();
+                    if !matches!(
+                        folded.as_str(),
+                        "v" | "id"
+                            | "room"
+                            | "author"
+                            | "seq"
+                            | "prev"
+                            | "lamport"
+                            | "ts"
+                            | "kind"
+                            | "body"
+                            | "sig"
+                    ) {
+                        map.next_value::<IgnoredAny>()?;
+                        continue;
+                    }
+                    let raw = map.next_value::<Box<RawValue>>()?;
+                    macro_rules! set_non_null {
+                        ($field:expr, $type:ty) => {
+                            if let Some(value) = serde_json::from_str::<Option<$type>>(raw.get())
+                                .map_err(M::Error::custom)?
+                            {
+                                $field = value;
+                            }
+                        };
+                    }
+                    match folded.as_str() {
+                        "v" => set_non_null!(event.v, i64),
+                        "id" => set_non_null!(event.id, String),
+                        "room" => set_non_null!(event.room, String),
+                        "author" => set_non_null!(event.author, String),
+                        "seq" => set_non_null!(event.seq, u64),
+                        "prev" => set_non_null!(event.prev, String),
+                        "lamport" => set_non_null!(event.lamport, u64),
+                        "ts" => set_non_null!(event.ts, String),
+                        "kind" => set_non_null!(event.kind, String),
+                        "body" => event.body = raw,
+                        "sig" => {
+                            if let Some(value) = serde_json::from_str::<Option<String>>(raw.get())
+                                .map_err(M::Error::custom)?
+                            {
+                                event.sig = Some(value);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                Ok(GoEvent(event))
+            }
+        }
+        deserializer.deserialize_any(GoEventVisitor)
+    }
+}
+
+fn empty_go_event() -> Event {
+    Event {
+        v: 0,
+        id: String::new(),
+        room: String::new(),
+        author: String::new(),
+        seq: 0,
+        prev: String::new(),
+        lamport: 0,
+        ts: String::new(),
+        kind: String::new(),
+        body: serde_json::from_str("null").expect("constant JSON null"),
+        sig: None,
+    }
 }
 
 /// Go: `event.FormatTimestamp` — UTC, millisecond precision, always three
@@ -160,7 +264,9 @@ impl Event {
     /// Go: `event.UnmarshalJSONLine`.
     pub fn unmarshal_json_line(data: &[u8]) -> Result<Self, EventError> {
         check_json_depth(data).map_err(|err| EventError::Message(err.to_string()))?;
-        serde_json::from_slice(data).map_err(|err| EventError::Message(err.to_string()))
+        serde_json::from_slice::<GoEvent>(data)
+            .map(|decoded| decoded.0)
+            .map_err(|err| EventError::Message(err.to_string()))
     }
 }
 

@@ -341,6 +341,23 @@ fn go_json_depth_limit() {
             depth <= 10000,
             "journal body depth {depth}"
         );
+        if depth == 10001 {
+            let want = "json: error calling MarshalJSON for type json.RawMessage: invalid character '[' exceeded max depth";
+            assert_eq!(
+                event::canonical_bytes(&event).unwrap_err().to_string(),
+                want
+            );
+            assert_eq!(event.marshal_json_line().unwrap_err().to_string(), want);
+            let signer = identity::identity_from_private_key(
+                "alpha",
+                &hex::decode(&fixture.identities[0].seed_hex).expect("fixture seed"),
+            )
+            .expect("fixture signer");
+            assert_eq!(
+                event.sign(&signer).unwrap_err().to_string(),
+                format!("canonical encoding: {want}")
+            );
+        }
         let envelope = serde_json::to_vec(&event).expect("serialize test envelope");
         assert_eq!(
             Event::unmarshal_json_line(&envelope).is_ok(),

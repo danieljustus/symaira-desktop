@@ -188,7 +188,15 @@ fn parse_body(body: &RawValue, kind: &str) -> Result<MemberBody, String> {
 }
 
 fn decode_key(text: &str, field: &str) -> Result<String, String> {
-    let bytes = hex::decode(text).map_err(|error| {
+    // Go reports the first invalid byte even when the hex string is odd-length.
+    let decoded = match text.bytes().position(|byte| !byte.is_ascii_hexdigit()) {
+        Some(index) => Err(hex::FromHexError::InvalidHexCharacter {
+            c: char::from(text.as_bytes()[index]),
+            index,
+        }),
+        None => hex::decode(text),
+    };
+    let bytes = decoded.map_err(|error| {
         let detail = match error {
             hex::FromHexError::OddLength => "encoding/hex: odd length hex string".to_owned(),
             hex::FromHexError::InvalidHexCharacter { c, .. } => {

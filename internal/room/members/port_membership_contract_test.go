@@ -83,8 +83,10 @@ func TestPortMembershipContract(t *testing.T) {
 		{"removed-agent-approval", event.KindRunApproved, "agent", `{}`},
 		{"invalid-key-length", event.KindMemberAdded, "owner", `{"id":"bad","public_key":"00"}`},
 		{"invalid-key-odd-hex", event.KindMemberAdded, "owner", `{"id":"bad","public_key":"0"}`},
+		{"invalid-key-odd-nonhex", event.KindMemberAdded, "owner", `{"id":"bad","public_key":"g"}`},
 		{"invalid-key-nonhex", event.KindMemberAdded, "owner", `{"id":"bad","public_key":"gg"}`},
 		{"invalid-root-key-odd-hex", event.KindRoomCreated, "other", `{"public_key":"0"}`},
+		{"invalid-root-key-odd-nonhex", event.KindRoomCreated, "other", `{"public_key":"g"}`},
 		{"null-fields-are-empty", event.KindMemberAdded, "owner", `{"id":"nullish","name":null,"public_key":"` + ownerKey + `","role":null,"kind":null}`},
 		{"null-role-change-body", event.KindMemberRoleChanged, "owner", `null`},
 		{"blank-id-add", event.KindMemberAdded, "owner", `{"id":"","name":"Blank","public_key":"` + ownerKey + `"}`},
@@ -128,7 +130,7 @@ func TestPortMembershipContract(t *testing.T) {
 	if string(current) != string(data) {
 		t.Fatal("Go membership fixture drift: regenerate explicitly")
 	}
-	if len(fixture.Permissions) != 25 || len(fixture.Transitions) != 24 {
+	if len(fixture.Permissions) != 25 || len(fixture.Transitions) != 26 {
 		t.Fatal("membership case inventory changed")
 	}
 }

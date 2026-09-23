@@ -101,8 +101,7 @@ pub fn format_timestamp(stamp: time::OffsetDateTime) -> String {
 /// The raw body retains escape spelling as Go's `json.RawMessage` does;
 /// the outer keys are emitted in sorted order by the shared serializer.
 pub fn canonical_bytes(event: &Event) -> Result<Vec<u8>, EventError> {
-    encode_event(event, None)
-        .map_err(|err| EventError::Message(format!("canonical encoding: {err}")))
+    encode_event(event, None).map_err(|err| EventError::Message(err.to_string()))
 }
 
 impl Event {
@@ -111,7 +110,8 @@ impl Event {
         if self.v == 0 {
             self.v = CURRENT_VERSION;
         }
-        let canonical = canonical_bytes(self)?;
+        let canonical = canonical_bytes(self)
+            .map_err(|err| EventError::Message(format!("canonical encoding: {err}")))?;
         let signature = identity::sign(&signer.private_key, &canonical).ok_or_else(|| {
             EventError::Message("canonical encoding: invalid private key".to_owned())
         })?;
@@ -140,7 +140,8 @@ impl Event {
                 "{INVALID_SIGNATURE}: invalid base64 signature"
             )));
         };
-        let canonical = canonical_bytes(self)?;
+        let canonical = canonical_bytes(self)
+            .map_err(|err| EventError::Message(format!("canonical encoding: {err}")))?;
         if !identity::verify(public_key, &canonical, &signature) {
             return Err(EventError::Signature(INVALID_SIGNATURE.to_owned()));
         }
@@ -165,7 +166,12 @@ impl Event {
 
 /// Serialise Go's sorted map keys while retaining `json.RawMessage` bytes.
 fn encode_event(event: &Event, signature: Option<&str>) -> Result<Vec<u8>, serde_json::Error> {
-    check_json_depth(event.body.get().as_bytes())?;
+    check_json_depth(event.body.get().as_bytes()).map_err(|err| {
+        serde_json::Error::io(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("json: error calling MarshalJSON for type json.RawMessage: {err}"),
+        ))
+    })?;
     // Go's RawMessage marshaler compacts whitespace outside JSON strings while
     // preserving escape spelling. The fixture itself is pretty-printed JSON.
     let body = RawValue::from_string(compact_json(event.body.get()))?;

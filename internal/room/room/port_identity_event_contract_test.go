@@ -112,6 +112,12 @@ func TestPortRoomIdentityEventContract(t *testing.T) {
 		if (canonicalErr == nil) != (depth <= 10000) || (lineErr == nil) != (depth <= 10000) {
 			t.Fatalf("Go RawMessage depth %d: canonical=%v line=%v", depth, canonicalErr, lineErr)
 		}
+		if depth == 10001 {
+			want := "json: error calling MarshalJSON for type json.RawMessage: invalid character '[' exceeded max depth"
+			if canonicalErr.Error() != want || lineErr.Error() != want {
+				t.Fatalf("Go RawMessage depth errors: canonical=%q line=%q want=%q", canonicalErr, lineErr, want)
+			}
+		}
 		line := []byte(`{"v":1,"id":"","room":"","author":"","seq":0,"prev":"","lamport":0,"ts":"","kind":"","body":` + body + `}`)
 		_, parseErr := event.UnmarshalJSONLine(line)
 		if (parseErr == nil) != (depth <= 9999) {

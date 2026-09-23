@@ -278,7 +278,7 @@ func portDatasetImportCapture(t *testing.T, sandbox portDatasetSyncServiceSandbo
 
 func portDatasetImportFixturePath(t *testing.T) string {
 	t.Helper()
-	if override := strings.TrimSpace(os.Getenv("PORT_DATASET_IMPORT_FIXTURE")); override != "" {
+	if override := strings.TrimSpace(os.Getenv("PORT_DATASET_IMPORT_FIXTURE")); override != "" && os.Getenv("PORT_GENERATE") != "1" {
 		return override
 	}
 	_, file, _, ok := runtime.Caller(0)
@@ -286,6 +286,14 @@ func portDatasetImportFixturePath(t *testing.T) string {
 		t.Fatal("resolve dataset import fixture path")
 	}
 	return filepath.Join(filepath.Dir(file), "..", "..", filepath.FromSlash(portDatasetImportFixtureRel))
+}
+
+func TestPortDatasetImportGenerationUsesCanonicalFixturePath(t *testing.T) {
+	t.Setenv("PORT_GENERATE", "1")
+	t.Setenv("PORT_DATASET_IMPORT_FIXTURE", filepath.Join(t.TempDir(), "poison.json"))
+	if got := portDatasetImportFixturePath(t); !strings.HasSuffix(got, filepath.FromSlash(portDatasetImportFixtureRel)) {
+		t.Fatalf("generation path escaped canonical fixture: %s", got)
+	}
 }
 
 func portDatasetImportHash(t *testing.T, relative string) string {

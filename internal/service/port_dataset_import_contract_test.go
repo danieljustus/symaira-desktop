@@ -120,6 +120,32 @@ func TestPortDatasetImportContract(t *testing.T) {
 	}
 }
 
+func TestPortDatasetImportContractCrossPlatformMetadata(t *testing.T) {
+	if os.Getenv("PORT_GENERATE") == "1" || os.Getenv("PORT_DATASET_IMPORT_GENERATE") == "1" {
+		return
+	}
+	var fixture portDatasetImportFixture
+	data, err := os.ReadFile(portDatasetImportFixturePath(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	fixture.GeneratedOn = "linux/amd64"
+	fixture.Oracle.GOOS, fixture.Oracle.GOARCH = "linux", "amd64"
+	data, err = json.Marshal(fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "import.json")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PORT_DATASET_IMPORT_FIXTURE", path)
+	TestPortDatasetImportContract(t)
+}
+
 func portDatasetImportBuildFixture(t *testing.T) portDatasetImportFixture {
 	t.Helper()
 	base, err := os.MkdirTemp("", "symdesk-port-dataset-import-")

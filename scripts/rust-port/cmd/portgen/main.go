@@ -163,6 +163,13 @@ func runGenerate(repoRoot, commit, release string) {
 			fatal("generate %s (%s): %v\noutput: %s", target.pkg, target.run, err, string(out))
 		}
 	}
+	// Keep this independent Go process fixture in the same P/Q generation as
+	// the package-produced MCP and CLI fixtures.
+	cmd := exec.Command("go", "run", "./scripts/rust-port/cmd/mcpgen")
+	cmd.Dir = repoRoot
+	if out, err := cmd.CombinedOutput(); err != nil {
+		fatal("generate MCP initialize fixture: %v\noutput: %s", err, string(out))
+	}
 
 	sidecarOracle := inventory.Oracle{Commit: commit, Release: release}
 	if err := runSidecarLifecycleGenerator(repoRoot, sidecarOracle); err != nil {

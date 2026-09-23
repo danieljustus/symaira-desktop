@@ -82,6 +82,20 @@
       "final_files": []
     },
     {
+      "name": "default-identity-env",
+      "args": [
+        "watch",
+        "--desk",
+        "fixture-vault"
+      ],
+      "default_identity_env": true,
+      "path_mode": "empty",
+      "exit_code": 1,
+      "stdout": "Watching symdesk vault fixture-vault...\n",
+      "stderr": "Watch error: symdesk binary not found\n",
+      "final_files": []
+    },
+    {
       "name": "watch-cancel",
       "args": [
         "watch",

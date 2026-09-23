@@ -309,7 +309,7 @@ fn resolve_identity(name: &str) -> Result<identity::Identity, ExitCode> {
     })
 }
 
-fn default_identity() -> Result<String, String> {
+pub(crate) fn default_identity() -> Result<String, String> {
     let home = home_dir()?;
     let global_path = home.join(".config/symroom/config.toml");
     let mut name = merge_identity_config(&global_path, "global config error", String::new())?;

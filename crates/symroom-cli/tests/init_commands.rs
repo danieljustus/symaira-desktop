@@ -42,6 +42,10 @@ struct Case {
     #[serde(default)]
     identity: String,
     #[serde(default)]
+    default_identity_env: bool,
+    #[serde(default)]
+    global_config: String,
+    #[serde(default)]
     room_dir_env: bool,
     #[serde(default)]
     nonempty: bool,
@@ -74,6 +78,13 @@ fn init_cli_matches_go_flags_files_modes_and_identity_sources() {
     assert_eq!(owner.member_id, fixture.identity_member);
     assert!(fixture.cases.iter().any(|case| case.identity == "env"));
     assert!(fixture.cases.iter().any(|case| case.identity == "file"));
+    assert!(fixture.cases.iter().any(|case| case.default_identity_env));
+    assert!(
+        fixture
+            .cases
+            .iter()
+            .any(|case| !case.global_config.is_empty())
+    );
     assert!(fixture.cases.iter().any(|case| case.nonempty));
     for case in &fixture.cases {
         let work = temp.path.join(&case.name);
@@ -83,6 +94,11 @@ fn init_cli_matches_go_flags_files_modes_and_identity_sources() {
         let temp_dir = work.join("tmp");
         for dir in [&home, &data_home, &config_home, &temp_dir] {
             fs::create_dir_all(dir).expect("create isolated CLI environment");
+        }
+        if !case.global_config.is_empty() {
+            let path = home.join(".config/symroom/config.toml");
+            fs::create_dir_all(path.parent().unwrap()).expect("create global config directory");
+            fs::write(path, &case.global_config).expect("write Go config input");
         }
         let identities = data_home.join("symroom/identities");
         if case.identity == "file" {
@@ -115,6 +131,9 @@ fn init_cli_matches_go_flags_files_modes_and_identity_sources() {
             .env("LANG", "C");
         if case.identity == "env" {
             command.env("SYMROOM_IDENTITY_KEY", &fixture.identity_key);
+        }
+        if case.default_identity_env {
+            command.env("SYMROOM_DEFAULT_IDENTITY", "oracle");
         }
         if case.room_dir_env {
             command.env("SYMROOM_ROOM_DIR", "room");
@@ -151,7 +170,7 @@ fn init_cli_matches_go_flags_files_modes_and_identity_sources() {
             for (name, expected) in &case.modes {
                 assert_eq!(
                     mode(&room.join(name)),
-                    expected,
+                    expected.as_str(),
                     "Go/Rust mode {} {name}",
                     case.name
                 );
@@ -179,10 +198,10 @@ fn init_cli_matches_go_flags_files_modes_and_identity_sources() {
 
 fn normalize_stdout(output: &[u8]) -> Vec<u8> {
     let text = String::from_utf8_lossy(output);
-    if let Some(rest) = text.strip_prefix("Initialized room ") {
-        if let Some((_, tail)) = rest.split_once(" in ") {
-            return format!("Initialized room <room-id> in {tail}").into_bytes();
-        }
+    if let Some(rest) = text.strip_prefix("Initialized room ")
+        && let Some((_, tail)) = rest.split_once(" in ")
+    {
+        return format!("Initialized room <room-id> in {tail}").into_bytes();
     }
     output.to_vec()
 }

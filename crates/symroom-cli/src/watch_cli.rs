@@ -13,6 +13,7 @@ use std::{
     time::Duration,
 };
 
+use crate::member_cli;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symroom_core::{artifact, desk_watch, identity};
 
@@ -33,17 +34,30 @@ pub fn run(args: &[OsString]) -> ExitCode {
     if parsed.desk.is_empty() {
         return stdout(USAGE, CoreExitCode::Ok);
     }
-    if parsed.identity.is_empty() {
+    let identity_name = if parsed.identity.is_empty() {
+        match member_cli::default_identity() {
+            Ok(name) => name,
+            Err(error) => {
+                return stderr(
+                    &format!("Error loading configuration: {error}\n"),
+                    CoreExitCode::NoInput,
+                );
+            }
+        }
+    } else {
+        parsed.identity
+    };
+    if identity_name.is_empty() {
         return stderr(
             "Error: --identity is required when default_identity is not configured\n",
             CoreExitCode::NoInput,
         );
     }
-    let signer = match identity::load(&parsed.identity) {
+    let signer = match identity::load(&identity_name) {
         Ok(identity) => identity,
         Err(error) => {
             return stderr(
-                &format!("Error loading identity {}: {error}\n", parsed.identity),
+                &format!("Error loading identity {identity_name}: {error}\n"),
                 CoreExitCode::NotFound,
             );
         }

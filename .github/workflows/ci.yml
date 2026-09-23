@@ -330,6 +330,14 @@ jobs:
         shell: bash
         run: make room-init-core-differential
 
+      - name: Run native room init CLI differential
+        shell: bash
+        run: make room-init-cli-differential
+
+      - name: Run native room watch CLI differential
+        shell: bash
+        run: make room-watch-cli-differential
+
       - name: Run native index backup differential
         shell: bash
         run: make index-backup-differential

@@ -30,17 +30,18 @@ type watchCLIFile struct {
 }
 
 type watchCLICase struct {
-	Name           string         `json:"name"`
-	Args           []string       `json:"args"`
-	PathMode       string         `json:"path_mode,omitempty"`
-	Files          []watchCLIFile `json:"files,omitempty"`
-	UpdatedFiles   []watchCLIFile `json:"updated_files,omitempty"`
-	InitialJournal []watchCLIFile `json:"initial_journal,omitempty"`
-	ExitCode       int            `json:"exit_code"`
-	Stdout         string         `json:"stdout"`
-	Stderr         string         `json:"stderr"`
-	FinalFiles     []watchCLIFile `json:"final_files"`
-	SymdeskArgs    []string       `json:"symdesk_args,omitempty"`
+	Name               string         `json:"name"`
+	Args               []string       `json:"args"`
+	DefaultIdentityEnv bool           `json:"default_identity_env,omitempty"`
+	PathMode           string         `json:"path_mode,omitempty"`
+	Files              []watchCLIFile `json:"files,omitempty"`
+	UpdatedFiles       []watchCLIFile `json:"updated_files,omitempty"`
+	InitialJournal     []watchCLIFile `json:"initial_journal,omitempty"`
+	ExitCode           int            `json:"exit_code"`
+	Stdout             string         `json:"stdout"`
+	Stderr             string         `json:"stderr"`
+	FinalFiles         []watchCLIFile `json:"final_files"`
+	SymdeskArgs        []string       `json:"symdesk_args,omitempty"`
 }
 
 type watchCLIContract struct {
@@ -53,9 +54,6 @@ type watchCLIContract struct {
 
 // TestPortWatchCLIContract captures the Go watch process and its signed journal effect.
 func TestPortWatchCLIContract(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("watch cancellation fixture uses a Unix fake symdesk process")
-	}
 	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatal(err)
@@ -71,6 +69,9 @@ func TestPortWatchCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, watchCLIContractPath)
 	if os.Getenv("PORT_GENERATE") == "1" {
+		if runtime.GOOS == "windows" {
+			t.Skip("Unix cancellation case is generated on Unix")
+		}
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -83,6 +84,28 @@ func TestPortWatchCLIContract(t *testing.T) {
 	got, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", watchCLIContractPath, err)
+	}
+	if runtime.GOOS == "windows" {
+		var frozen watchCLIContract
+		if err := json.Unmarshal(got, &frozen); err != nil {
+			t.Fatal(err)
+		}
+		portable := frozen.Cases[:0]
+		for _, c := range frozen.Cases {
+			if c.Name != "watch-cancel" {
+				portable = append(portable, c)
+			}
+		}
+		frozen.Cases = portable
+		portableBytes, err := json.MarshalIndent(frozen, "", "  ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		portableBytes = append(portableBytes, '\n')
+		if !bytes.Equal(data, portableBytes) {
+			t.Fatal("Go watch portable fixture is stale")
+		}
+		return
 	}
 	if !bytes.Equal(got, data) {
 		t.Fatal("Go watch CLI fixture is stale; regenerate deliberately with PORT_GENERATE=1")
@@ -115,17 +138,21 @@ func makeWatchCLIContract(t *testing.T, root string) (watchCLIContract, error) {
 		fixture.SourceHashes[rel] = hex.EncodeToString(sum[:])
 	}
 	goBinary := filepath.Join(t.TempDir(), "symroom-go-watch-oracle")
+	if runtime.GOOS == "windows" {
+		goBinary += ".exe"
+	}
 	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom")
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {
 		return fixture, fmt.Errorf("build Go symroom watch oracle: %w\n%s", err, output)
 	}
 	for _, vector := range []struct {
-		name         string
-		args         []string
-		pathMode     string
-		withArtifact bool
-		updates      []watchCLIFile
+		name               string
+		args               []string
+		pathMode           string
+		withArtifact       bool
+		defaultIdentityEnv bool
+		updates            []watchCLIFile
 	}{
 		{name: "usage", args: []string{"watch"}},
 		{name: "unknown-flag", args: []string{"watch", "--bogus"}},
@@ -133,8 +160,12 @@ func makeWatchCLIContract(t *testing.T, root string) (watchCLIContract, error) {
 		{name: "missing-desk", args: []string{"watch", "--identity", "owner"}},
 		{name: "missing-identity", args: []string{"watch", "--desk", "fixture-vault"}},
 		{name: "symdesk-not-found", args: []string{"watch", "--desk", "fixture-vault", "--identity", "owner"}, pathMode: "empty"},
+		{name: "default-identity-env", args: []string{"watch", "--desk", "fixture-vault"}, pathMode: "empty", defaultIdentityEnv: true},
 		{name: "watch-cancel", args: []string{"watch", "--desk", "fixture-vault", "--identity", "owner"}, pathMode: "fake", withArtifact: true, updates: []watchCLIFile{{Name: "report.md", Content: "after\n"}}},
 	} {
+		if runtime.GOOS == "windows" && vector.name == "watch-cancel" {
+			continue
+		}
 		caseDir := filepath.Join(t.TempDir(), vector.name)
 		roomDir := filepath.Join(caseDir, "room")
 		journalDir := filepath.Join(roomDir, "journal")
@@ -191,6 +222,9 @@ func makeWatchCLIContract(t *testing.T, root string) (watchCLIContract, error) {
 			"PATH=" + pathDir, "SYMROOM_ROOM_DIR=" + roomDir, "SYMROOM_IDENTITY_KEY=" + fixture.IdentityKey,
 			"WATCH_ARGS_FILE=" + argsFile, "WATCH_EVENT_PATH=report.md",
 		}
+		if vector.defaultIdentityEnv {
+			cmd.Env = append(cmd.Env, "SYMROOM_DEFAULT_IDENTITY=owner")
+		}
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout, cmd.Stderr = &stdout, &stderr
 		if err := cmd.Start(); err != nil {
@@ -231,7 +265,7 @@ func makeWatchCLIContract(t *testing.T, root string) (watchCLIContract, error) {
 			return fixture, err
 		}
 		result := watchCLICase{
-			Name: vector.name, Args: vector.args, PathMode: vector.pathMode,
+			Name: vector.name, Args: vector.args, PathMode: vector.pathMode, DefaultIdentityEnv: vector.defaultIdentityEnv,
 			Files: files, UpdatedFiles: vector.updates, InitialJournal: initialJournal, ExitCode: code,
 			Stdout: stdout.String(), Stderr: stderr.String(), FinalFiles: finalFiles,
 		}

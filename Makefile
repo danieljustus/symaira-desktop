@@ -27,6 +27,8 @@
 .PHONY: room-watch-stream-fixtures-generate room-watch-stream-differential
 .PHONY: room-brain-profile-fixtures-generate room-brain-profile-differential
 .PHONY: room-init-core-fixtures-generate room-init-core-differential
+.PHONY: room-init-cli-fixtures-generate room-init-cli-differential
+.PHONY: room-watch-cli-fixtures-generate room-watch-cli-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -377,6 +379,20 @@ room-init-core-fixtures-generate:
 room-init-core-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/room -run '^TestPortRoomInitContract$$'
 	$(CARGO) test -p symroom-core --locked --test room_init_contracts
+
+room-init-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortInitCLIContract$$'
+
+room-init-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortInitCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test init_commands
+
+room-watch-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortWatchCLIContract$$'
+
+room-watch-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortWatchCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test watch_commands
 
 index-backup-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'

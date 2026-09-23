@@ -22,3 +22,4 @@ time.workspace = true
 hex.workspace = true
 toml.workspace = true
 tokio.workspace = true
+getrandom = "=0.4.3"

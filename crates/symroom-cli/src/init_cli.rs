@@ -2,14 +2,12 @@
 
 use std::{
     ffi::OsString,
-    fs::File,
-    io::{self, Read, Write},
+    io::{self, Write},
     path::PathBuf,
     process::ExitCode,
-    sync::atomic::{AtomicU64, Ordering},
-    time::{SystemTime, UNIX_EPOCH},
 };
 
+use crate::member_cli;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symroom_core::{identity, room_init};
 
@@ -37,6 +35,12 @@ pub fn run(args: &[OsString]) -> ExitCode {
             let (key, inline) = flag
                 .split_once('=')
                 .map_or((flag, None), |(key, value)| (key, Some(value)));
+            if !matches!(key, "identity" | "name") {
+                return stderr(
+                    &format!("flag provided but not defined: -{key}\n{FLAG_USAGE}"),
+                    CoreExitCode::NoInput,
+                );
+            }
             let value = match inline {
                 Some(value) => value.to_owned(),
                 None => match args.get(index + 1) {
@@ -52,12 +56,7 @@ pub fn run(args: &[OsString]) -> ExitCode {
             match key {
                 "identity" => identity_name = value,
                 "name" => name = value,
-                _ => {
-                    return stderr(
-                        &format!("flag provided but not defined: -{key}\n{FLAG_USAGE}"),
-                        CoreExitCode::NoInput,
-                    );
-                }
+                _ => unreachable!("validated flag name"),
             }
             index += 1;
             continue;
@@ -69,6 +68,17 @@ pub fn run(args: &[OsString]) -> ExitCode {
         index += 1;
     }
 
+    if identity_name.is_empty() {
+        identity_name = match member_cli::default_identity() {
+            Ok(name) => name,
+            Err(error) => {
+                return stderr(
+                    &format!("Error loading configuration: {error}\n"),
+                    CoreExitCode::NoInput,
+                );
+            }
+        };
+    }
     if identity_name.is_empty() {
         if directory.is_none() {
             return stdout(USAGE, CoreExitCode::Ok);
@@ -90,7 +100,15 @@ pub fn run(args: &[OsString]) -> ExitCode {
         }
     };
     let directory = PathBuf::from(&directory);
-    let (room_id, event_id) = generate_ids();
+    let (room_id, event_id) = match generate_ids() {
+        Ok(ids) => ids,
+        Err(error) => {
+            return stderr(
+                &format!("Error initializing room: generate random id: {error}\n"),
+                CoreExitCode::Generic,
+            );
+        }
+    };
     let config = match room_init::init(
         &directory,
         &name,
@@ -118,29 +136,13 @@ pub fn run(args: &[OsString]) -> ExitCode {
     )
 }
 
-fn generate_ids() -> (String, String) {
+fn generate_ids() -> Result<(String, String), getrandom::Error> {
     let mut bytes = [0_u8; 18];
-    if File::open("/dev/urandom")
-        .and_then(|mut random| random.read_exact(&mut bytes))
-        .is_err()
-    {
-        static SEQUENCE: AtomicU64 = AtomicU64::new(0);
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_nanos();
-        let sequence = u128::from(SEQUENCE.fetch_add(1, Ordering::Relaxed));
-        let process = u128::from(std::process::id());
-        for (index, byte) in bytes.iter_mut().enumerate() {
-            *byte = (timestamp.rotate_left((index * 7) as u32)
-                ^ process.rotate_left((index * 11) as u32)
-                ^ sequence.rotate_left((index * 5) as u32)) as u8;
-        }
-    }
-    (
+    getrandom::fill(&mut bytes)?;
+    Ok((
         format!("rm_{}", hex::encode(&bytes[..8])),
         format!("ev_{}", hex::encode(&bytes[8..])),
-    )
+    ))
 }
 
 fn stdout(value: &str, code: CoreExitCode) -> ExitCode {

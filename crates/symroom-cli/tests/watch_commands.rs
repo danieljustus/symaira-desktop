@@ -34,6 +34,8 @@ struct Case {
     name: String,
     args: Vec<String>,
     #[serde(default)]
+    default_identity_env: bool,
+    #[serde(default)]
     path_mode: String,
     #[serde(default)]
     files: Vec<RoomFile>,
@@ -51,9 +53,6 @@ struct Case {
 
 #[test]
 fn watch_cli_matches_go_process_stream_and_signed_journal_effects() {
-    if cfg!(windows) {
-        return;
-    }
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../");
     let data = fs::read(root.join("testdata/port/room/watch-cli.json"))
         .expect("read Go-generated watch fixture");
@@ -91,6 +90,9 @@ fn watch_cli_matches_go_process_stream_and_signed_journal_effects() {
     )
     .expect("derive owner identity");
     for case in &fixture.cases {
+        if cfg!(windows) && case.name == "watch-cancel" {
+            continue;
+        }
         let isolated = temp.path.join(&case.name);
         let room = isolated.join("room");
         let journal = room.join("journal");
@@ -119,11 +121,8 @@ fn watch_cli_matches_go_process_stream_and_signed_journal_effects() {
             let child = command(
                 &case.args,
                 &room,
-                &home,
-                &data,
-                &tmp,
-                &path,
                 &fixture.identity_key,
+                case.default_identity_env,
             )
             .spawn()
             .expect("start Rust watch CLI");
@@ -147,11 +146,8 @@ fn watch_cli_matches_go_process_stream_and_signed_journal_effects() {
             command(
                 &case.args,
                 &room,
-                &home,
-                &data,
-                &tmp,
-                &path,
                 &fixture.identity_key,
+                case.default_identity_env,
             )
             .output()
             .expect("run Rust watch CLI")
@@ -211,16 +207,11 @@ fn watch_cli_matches_go_process_stream_and_signed_journal_effects() {
 fn command(
     args: &[String],
     room: &Path,
-    home: &Path,
-    data: &Path,
-    tmp: &Path,
-    path: &Path,
     identity_key: &str,
+    default_identity_env: bool,
 ) -> Command {
-    let args_file = room
-        .parent()
-        .expect("fixture case directory")
-        .join("symdesk-args.txt");
+    let isolated = room.parent().expect("fixture case directory");
+    let args_file = isolated.join("symdesk-args.txt");
     let event_path = "report.md";
     let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
     command
@@ -229,18 +220,21 @@ fn command(
         .stderr(Stdio::piped())
         .current_dir(room)
         .env_clear()
-        .env("HOME", home)
-        .env("USERPROFILE", home)
-        .env("XDG_DATA_HOME", data)
-        .env("TMPDIR", tmp)
+        .env("HOME", isolated.join("home"))
+        .env("USERPROFILE", isolated.join("home"))
+        .env("XDG_DATA_HOME", isolated.join("data"))
+        .env("TMPDIR", isolated.join("tmp"))
         .env("TZ", "UTC")
         .env("LC_ALL", "C")
         .env("LANG", "C")
-        .env("PATH", path)
+        .env("PATH", isolated.join("path"))
         .env("SYMROOM_ROOM_DIR", room)
         .env("SYMROOM_IDENTITY_KEY", identity_key)
         .env("WATCH_ARGS_FILE", args_file)
         .env("WATCH_EVENT_PATH", event_path);
+    if default_identity_env {
+        command.env("SYMROOM_DEFAULT_IDENTITY", "owner");
+    }
     command
 }
 

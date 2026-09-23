@@ -14,6 +14,7 @@ mod brain_profile_cli;
 mod decide_cli;
 mod identity_cli;
 mod index_cli;
+mod init_cli;
 mod log_cli;
 mod mcp;
 mod member_cli;
@@ -46,6 +47,9 @@ fn main() -> ExitCode {
     }
     if command == "identity" {
         return identity_cli::run(&args[2..]);
+    }
+    if command == "init" {
+        return init_cli::run(&args[2..]);
     }
     if command == "member" {
         return member_cli::run(&args[2..]);

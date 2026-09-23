@@ -44,17 +44,19 @@ type initCLIFile struct {
 }
 
 type initCLICase struct {
-	Name       string            `json:"name"`
-	Args       []string          `json:"args"`
-	Identity   string            `json:"identity,omitempty"`
-	RoomDirEnv bool              `json:"room_dir_env,omitempty"`
-	Nonempty   bool              `json:"nonempty,omitempty"`
-	ExitCode   int               `json:"exit_code"`
-	Stdout     string            `json:"stdout"`
-	Stderr     string            `json:"stderr"`
-	Files      []initCLIFile     `json:"files"`
-	Modes      map[string]string `json:"modes"`
-	Preserved  string            `json:"preserved,omitempty"`
+	Name               string            `json:"name"`
+	Args               []string          `json:"args"`
+	Identity           string            `json:"identity,omitempty"`
+	DefaultIdentityEnv bool              `json:"default_identity_env,omitempty"`
+	GlobalConfig       string            `json:"global_config,omitempty"`
+	RoomDirEnv         bool              `json:"room_dir_env,omitempty"`
+	Nonempty           bool              `json:"nonempty,omitempty"`
+	ExitCode           int               `json:"exit_code"`
+	Stdout             string            `json:"stdout"`
+	Stderr             string            `json:"stderr"`
+	Files              []initCLIFile     `json:"files"`
+	Modes              map[string]string `json:"modes"`
+	Preserved          string            `json:"preserved,omitempty"`
 }
 
 func TestPortInitCLIContract(t *testing.T) {
@@ -122,21 +124,25 @@ func makeInitCLIContract(t *testing.T, root string) (initCLIContract, error) {
 	fixture.IdentityFileContent = string(fileData)
 
 	for _, vector := range []struct {
-		name       string
-		args       []string
-		identity   string
-		roomDirEnv bool
-		nonempty   bool
+		name               string
+		args               []string
+		identity           string
+		roomDirEnv         bool
+		nonempty           bool
+		defaultIdentityEnv bool
+		globalConfig       string
 	}{
-		{"init-env-separated-flags", []string{"init", "--identity", "oracle", "--name", "Env Room", "room"}, "env", false, false},
-		{"init-file-equals-flags", []string{"init", "--identity=oracle", "--name=File Room", "room"}, "file", false, false},
-		{"init-env-current-dir", []string{"init", "--identity", "oracle"}, "env", true, false},
-		{"init-usage", []string{"init"}, "", false, false},
-		{"init-help", []string{"init", "--help"}, "", false, false},
-		{"init-unknown-flag", []string{"init", "--bogus"}, "", false, false},
-		{"init-missing-flag-value", []string{"init", "--identity"}, "", false, false},
-		{"init-missing-identity", []string{"init", "room"}, "", false, false},
-		{"init-nonempty-preserves-file", []string{"init", "--identity", "oracle", "room"}, "env", false, true},
+		{"init-env-separated-flags", []string{"init", "--identity", "oracle", "--name", "Env Room", "room"}, "env", false, false, false, ""},
+		{"init-file-equals-flags", []string{"init", "--identity=oracle", "--name=File Room", "room"}, "file", false, false, false, ""},
+		{"init-env-current-dir", []string{"init", "--identity", "oracle"}, "env", true, false, false, ""},
+		{"init-default-identity-env", []string{"init", "room"}, "file", false, false, true, ""},
+		{"init-default-identity-toml", []string{"init", "room"}, "file", false, false, false, "default_identity = \"oracle\"\n"},
+		{"init-usage", []string{"init"}, "", false, false, false, ""},
+		{"init-help", []string{"init", "--help"}, "", false, false, false, ""},
+		{"init-unknown-flag", []string{"init", "--bogus"}, "", false, false, false, ""},
+		{"init-missing-flag-value", []string{"init", "--identity"}, "", false, false, false, ""},
+		{"init-missing-identity", []string{"init", "room"}, "", false, false, false, ""},
+		{"init-nonempty-preserves-file", []string{"init", "--identity", "oracle", "room"}, "env", false, true, false, ""},
 	} {
 		work := filepath.Join(temp, vector.name)
 		if err := os.MkdirAll(work, 0o700); err != nil {
@@ -162,6 +168,15 @@ func makeInitCLIContract(t *testing.T, root string) (initCLIContract, error) {
 				return initCLIContract{}, err
 			}
 		}
+		if vector.globalConfig != "" {
+			configPath := filepath.Join(home, ".config", "symroom", "config.toml")
+			if err := os.MkdirAll(filepath.Dir(configPath), 0o700); err != nil {
+				return initCLIContract{}, err
+			}
+			if err := os.WriteFile(configPath, []byte(vector.globalConfig), 0o600); err != nil {
+				return initCLIContract{}, err
+			}
+		}
 		cmd := exec.Command(goBinary, vector.args...)
 		cmd.Dir = work
 		cmd.Env = []string{
@@ -171,6 +186,9 @@ func makeInitCLIContract(t *testing.T, root string) (initCLIContract, error) {
 		}
 		if vector.identity == "env" {
 			cmd.Env = append(cmd.Env, "SYMROOM_IDENTITY_KEY="+fixture.IdentityKey)
+		}
+		if vector.defaultIdentityEnv {
+			cmd.Env = append(cmd.Env, "SYMROOM_DEFAULT_IDENTITY=oracle")
 		}
 		if vector.roomDirEnv {
 			cmd.Env = append(cmd.Env, "SYMROOM_ROOM_DIR=room")
@@ -188,6 +206,7 @@ func makeInitCLIContract(t *testing.T, root string) (initCLIContract, error) {
 		}
 		result := initCLICase{
 			Name: vector.name, Args: vector.args, Identity: vector.identity,
+			DefaultIdentityEnv: vector.defaultIdentityEnv, GlobalConfig: vector.globalConfig,
 			RoomDirEnv: vector.roomDirEnv, Nonempty: vector.nonempty,
 			ExitCode: code, Stdout: string(normalizeInitCLIOutput(stdout)), Stderr: stderr.String(),
 			Files: []initCLIFile{}, Modes: map[string]string{},

@@ -315,12 +315,16 @@ fn base64_decode(text: &str) -> Option<Vec<u8>> {
             _ => None,
         }
     };
-    let bytes = text.as_bytes();
+    // Go's StdEncoding ignores CR/LF anywhere in the encoded text.
+    let bytes: Vec<u8> = text
+        .bytes()
+        .filter(|byte| *byte != b'\r' && *byte != b'\n')
+        .collect();
     if !bytes.len().is_multiple_of(4) {
         return None;
     }
     let mut out = Vec::with_capacity(bytes.len() / 4 * 3);
-    for chunk in bytes.chunks(4) {
+    for (chunk_index, chunk) in bytes.chunks(4).enumerate() {
         let mut values = [0u32; 4];
         let mut padding = 0;
         for (index, byte) in chunk.iter().enumerate() {
@@ -336,6 +340,11 @@ fn base64_decode(text: &str) -> Option<Vec<u8>> {
                 return None;
             }
             values[index] = table(*byte)?;
+        }
+        // Padding is only legal in the last quartet; otherwise the same
+        // signature bytes can be written with multiple envelopes.
+        if padding > 0 && chunk_index + 1 != bytes.len() / 4 {
+            return None;
         }
         let triple = (values[0] << 18) | (values[1] << 12) | (values[2] << 6) | values[3];
         out.push((triple >> 16) as u8);

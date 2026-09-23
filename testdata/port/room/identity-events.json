@@ -944,6 +944,48 @@
       "error": "invalid event signature: invalid base64 signature"
     },
     {
+      "id": "padding-before-data",
+      "description": "base64 padding cannot precede more signature data",
+      "event": {
+        "v": 1,
+        "id": "evt_verify_1",
+        "room": "room-verify",
+        "author": "mem_550650c922de2f4c",
+        "seq": 1,
+        "prev": "",
+        "lamport": 1,
+        "ts": "2026-09-18T12:30:45.000Z",
+        "kind": "note.posted",
+        "body": {
+          "note": "verify"
+        },
+        "sig": "ed25519:0w==pwdu//ZRXGAvuSO1Io8TBAmC0Y7eaPaHgsncCWwZ6UaWl2wS/eW+DyxaXVhaBpg+IbrLDFtknRJz3ogyBU0A"
+      },
+      "public_key_hex": "74727824457d76c9cda32f3325d1aa4c3e0d6f4e9178dfda3f41c4425398e515",
+      "error": "invalid event signature: invalid base64 signature"
+    },
+    {
+      "id": "base64-line-breaks",
+      "description": "Go ignores CR/LF within base64 signatures",
+      "event": {
+        "v": 1,
+        "id": "evt_verify_1",
+        "room": "room-verify",
+        "author": "mem_550650c922de2f4c",
+        "seq": 1,
+        "prev": "",
+        "lamport": 1,
+        "ts": "2026-09-18T12:30:45.000Z",
+        "kind": "note.posted",
+        "body": {
+          "note": "verify"
+        },
+        "sig": "ed25519:06cHbv/2UVxg\r\nL7kjtSKPEwQJ\ngtGO3mj2h4LJ3AlsGelGlpdsEv3lvg8sWl1YWgaYPiG6ywxbZJ0Sc96IMgVNAA=="
+      },
+      "public_key_hex": "74727824457d76c9cda32f3325d1aa4c3e0d6f4e9178dfda3f41c4425398e515",
+      "error": ""
+    },
+    {
       "id": "unknown-kind",
       "description": "a correctly signed event with an unknown kind still verifies: signature checking is not kind validation",
       "event": {

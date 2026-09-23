@@ -3,6 +3,7 @@ package room
 import (
 	"crypto/ed25519"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -443,6 +444,26 @@ func roomVerifyCases(t *testing.T, identities map[string]*identity.Identity) []r
 	badBase64 := base()
 	badBase64.Sig = event.SigPrefix + "!!!not-base64!!!"
 	appendCase("invalid-base64", "a non-base64 signature payload is rejected", badBase64, author.PublicKey)
+
+	// Go permits CR/LF in StdEncoding, but rejects data after a padded quartet.
+	validSig := strings.TrimPrefix(base().Sig, event.SigPrefix)
+	sigBytes, err := base64.StdEncoding.DecodeString(validSig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	earlyPadding := base()
+	earlyPadding.Sig = event.SigPrefix + base64.StdEncoding.EncodeToString(sigBytes[:1]) + base64.StdEncoding.EncodeToString(sigBytes[1:])
+	if err := earlyPadding.VerifySignature(author.PublicKey); err == nil {
+		t.Fatal("signature data after early padding must fail")
+	}
+	appendCase("padding-before-data", "base64 padding cannot precede more signature data", earlyPadding, author.PublicKey)
+
+	lineBreaks := base()
+	lineBreaks.Sig = event.SigPrefix + validSig[:12] + "\r\n" + validSig[12:24] + "\n" + validSig[24:]
+	if err := lineBreaks.VerifySignature(author.PublicKey); err != nil {
+		t.Fatalf("base64 CR/LF must preserve a valid signature: %v", err)
+	}
+	appendCase("base64-line-breaks", "Go ignores CR/LF within base64 signatures", lineBreaks, author.PublicKey)
 
 	unknownKind := event.Event{
 		V: event.CurrentVersion, ID: "evt_verify_unknown", Room: "room-verify",

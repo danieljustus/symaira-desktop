@@ -145,6 +145,7 @@ fn room_identity_event_vectors_match_the_go_oracle() {
         + fixture.file_cases.len();
     assert!(runnable > 0, "no vectors to replay");
     assert_eq!(fixture.events.len(), 28, "signed Go event vector inventory");
+    assert_eq!(fixture.verify_cases.len(), 8, "Go signature case inventory");
     for required in ["body-html-unicode", "body-escaped-html"] {
         assert!(
             fixture.events.iter().any(|row| row.id == required),

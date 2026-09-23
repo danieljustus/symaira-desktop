@@ -12,6 +12,7 @@ func TestMCP001InitializeCasesAreGenerated(t *testing.T) {
 		"mcp001-initialize-null-id",
 		"mcp001-ping-string-id",
 		"mcp001-initialize-notification",
+		"mcp001-null-method",
 		"mcp001-invalid-array",
 		"mcp001-invalid-method-type",
 	} {

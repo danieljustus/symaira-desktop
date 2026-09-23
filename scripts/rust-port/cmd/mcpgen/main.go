@@ -70,6 +70,7 @@ func generated() fixture {
 			{ID: "mcp001-initialize-null-id", Request: `{"jsonrpc":"2.0","id":null,"method":"initialize"}`},
 			{ID: "mcp001-ping-string-id", Request: `{"jsonrpc":"2.0","id":"ping","method":"ping"}`},
 			{ID: "mcp001-initialize-notification", Request: `{"jsonrpc":"2.0","method":"initialize"}`},
+			{ID: "mcp001-null-method", Request: `{"jsonrpc":"2.0","id":"null-method","method":null}`},
 			{ID: "mcp001-invalid-array", Request: `[]`},
 			{ID: "mcp001-invalid-method-type", Request: `{"jsonrpc":"2.0","id":"bad","method":false}`},
 			{ID: "initialize-line", Request: `{"jsonrpc":"2.0","id":1,"method":"initialize"}`},

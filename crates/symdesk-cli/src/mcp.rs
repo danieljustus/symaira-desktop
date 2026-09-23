@@ -578,10 +578,20 @@ fn parse_request(data: &[u8], mode: ResponseMode) -> Result<(Request, ResponseMo
     let method = match object.get("method") {
         None => String::new(),
         Some(Value::String(method)) => method.clone(),
-        Some(_) => {
+        Some(Value::Null) => String::new(),
+        Some(value) => {
+            let value_type = match value {
+                Value::Bool(_) => "bool",
+                Value::Number(_) => "number",
+                Value::Array(_) => "array",
+                Value::Object(_) => "object",
+                _ => unreachable!("handled method values above"),
+            };
             return Err(ReadFailure::Parse {
                 mode,
-                message: "json: cannot unmarshal non-string into Go struct field requestAlias.method of type string".to_owned(),
+                message: format!(
+                    "json: cannot unmarshal {value_type} into Go struct field requestAlias.method of type string"
+                ),
             });
         }
     };

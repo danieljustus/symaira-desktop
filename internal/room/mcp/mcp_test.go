@@ -47,6 +47,17 @@ func setupTestEnv(t *testing.T, binPath string) (env []string, roomDir string) {
 	if err != nil {
 		t.Fatalf("create identity: %v\noutput: %s", err, string(out))
 	}
+	stored, err := os.ReadFile(filepath.Join(xdgData, "symroom", "identities", "test-id.json"))
+	if err != nil {
+		t.Fatalf("read test identity: %v", err)
+	}
+	var key struct {
+		PrivateKey string `json:"private_key"`
+	}
+	if err := json.Unmarshal(stored, &key); err != nil || key.PrivateKey == "" {
+		t.Fatalf("decode test identity: %v", err)
+	}
+	env = append(env, "SYMROOM_IDENTITY_KEY="+key.PrivateKey)
 
 	// Initialise a room so the MCP server has a room to serve.
 	initCmd := exec.Command(binPath, "init", "--name", "TestRoom", "--identity", "test-id", roomDir)

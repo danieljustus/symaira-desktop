@@ -1,14 +1,11 @@
 //! Go: `cmd/symdesk/dataset.go` dataset producer/import commands.
 
-use std::{collections::BTreeMap, fs, path::PathBuf, process::ExitCode};
+use std::{collections::BTreeMap, fs, process::ExitCode};
 
 use clap::{Arg, Command};
 use serde::Serialize;
-use symdesk_index::{
-    DatasetImportOptions, DatasetSyncOptions, DatasetSyncRow, DatasetSyncService, open_for_vault,
-};
+use symdesk_index::{DatasetSyncOptions, DatasetSyncRow, DatasetSyncService, open_for_vault};
 use symdesk_vault::{PropertyConfig, Provenance};
-use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 use crate::{emit_error, write_go_json, write_stdout};
 
@@ -38,42 +35,11 @@ pub fn cli() -> Command {
                         .num_args(1),
                 ),
         )
-        .subcommand(
-            Command::new("import")
-                .about("Import a CSV file as a Markdown-backed dataset")
-                .arg(Arg::new("source").required(true))
-                .arg(Arg::new("title").long("title").num_args(1))
-                .arg(Arg::new("slug").long("slug").num_args(1))
-                .arg(
-                    Arg::new("identity-field")
-                        .long("identity-field")
-                        .num_args(1),
-                )
-                .arg(Arg::new("schema").long("schema").num_args(1))
-                .arg(
-                    Arg::new("refresh-command")
-                        .long("refresh-command")
-                        .num_args(1),
-                )
-                .arg(Arg::new("sensitivity").long("sensitivity").num_args(1))
-                .arg(
-                    Arg::new("retention-rule")
-                        .long("retention-rule")
-                        .num_args(1),
-                )
-                .arg(
-                    Arg::new("imported-at")
-                        .long("imported-at")
-                        .num_args(1)
-                        .help("RFC3339 timestamp (defaults to current UTC time)"),
-                ),
-        )
 }
 
 pub fn run(command: &clap::ArgMatches, vault: Option<&str>, json_output: bool) -> ExitCode {
     match command.subcommand() {
         Some(("sync", args)) => run_sync(args, vault, json_output),
-        Some(("import", args)) => run_import(args, vault, json_output),
         Some((other, _)) => emit_error(format!("unknown dataset subcommand: {other}"), json_output),
         None => emit_error("dataset subcommand is required".to_owned(), json_output),
     }
@@ -138,79 +104,6 @@ fn run_sync(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool) -> 
     }
 }
 
-fn run_import(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool) -> ExitCode {
-    let schema = match read_optional_schema(args) {
-        Ok(schema) => schema,
-        Err(error) => return emit_error(error, json_output),
-    };
-    let now = match args.get_one::<String>("imported-at") {
-        Some(value) => match OffsetDateTime::parse(value, &Rfc3339) {
-            Ok(value) => Some(value),
-            Err(error) => {
-                return emit_error(format!("parse --imported-at: {error}"), json_output);
-            }
-        },
-        None => None,
-    };
-    let root = match crate::resolve_vault(vault) {
-        Ok(root) => root,
-        Err(error) => return emit_error(error, json_output),
-    };
-    let mut sidecar = match open_for_vault(&root) {
-        Ok(sidecar) => sidecar,
-        Err(error) => return emit_error(error.to_string(), json_output),
-    };
-    let options = DatasetImportOptions {
-        title: value_or_empty(args, "title"),
-        slug: value_or_empty(args, "slug"),
-        identity_field: value_or_empty(args, "identity-field"),
-        schema,
-        refresh_command: value_or_empty(args, "refresh-command"),
-        sensitivity: value_or_empty(args, "sensitivity"),
-        retention_rule: value_or_empty(args, "retention-rule"),
-        now,
-    };
-    let source = args
-        .get_one::<String>("source")
-        .map(PathBuf::from)
-        .unwrap_or_default();
-    match DatasetSyncService::new(&root, &mut sidecar).import_csv(&source, options) {
-        Ok(result) => {
-            if json_output {
-                write_go_json(&result)
-            } else {
-                let columns = result
-                    .columns
-                    .iter()
-                    .map(|(name, property)| {
-                        format!(
-                            "{name}:{{Type:{} Label:{} Options:{} Description:{} Default:{}}}",
-                            property.r#type,
-                            property.label,
-                            go_slice(&property.options),
-                            property.description,
-                            property.default
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join(" ");
-                write_stdout(format!(
-                    "&{{HandlePath:{} RawPath:{} Slug:{} Rows:{} Columns:map[{}] SourceSHA256:{} Sensitivity:{} RetentionRule:{}}}\n",
-                    result.handle_path,
-                    result.raw_path,
-                    result.slug,
-                    result.rows,
-                    columns,
-                    result.source_sha256,
-                    result.sensitivity,
-                    result.retention_rule
-                ))
-            }
-        }
-        Err(error) => emit_error(error.to_string(), json_output),
-    }
-}
-
 fn read_optional_schema(
     args: &clap::ArgMatches,
 ) -> Result<BTreeMap<String, PropertyConfig>, String> {
@@ -243,14 +136,6 @@ fn set_if_present(target: &mut String, args: &clap::ArgMatches, name: &str) {
 
 fn value_or_empty(args: &clap::ArgMatches, name: &str) -> String {
     args.get_one::<String>(name).cloned().unwrap_or_default()
-}
-
-fn go_slice(values: &[String]) -> String {
-    if values.is_empty() {
-        "[]".to_owned()
-    } else {
-        format!("[{}]", values.join(" "))
-    }
 }
 
 #[derive(Serialize)]

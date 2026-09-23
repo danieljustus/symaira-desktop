@@ -99,6 +99,22 @@ func TestPortDatasetImportContract(t *testing.T) {
 	if err := json.Unmarshal(current, &got); err != nil {
 		t.Fatal(err)
 	}
+	for _, document := range []*interface{}{&got, &want} {
+		root, ok := (*document).(map[string]interface{})
+		if !ok {
+			t.Fatal("dataset import fixture is not an object")
+		}
+		oracle, ok := root["oracle"].(map[string]interface{})
+		if !ok {
+			t.Fatal("dataset import fixture has no oracle object")
+		}
+		goos, osOK := oracle["goos"].(string)
+		goarch, archOK := oracle["goarch"].(string)
+		if !osOK || !archOK || goos == "" || goarch == "" || root["generated_on"] != goos+"/"+goarch {
+			t.Fatal("dataset import fixture has inconsistent platform metadata")
+		}
+		root["generated_on"], oracle["goos"], oracle["goarch"] = "", "", ""
+	}
 	if !reflect.DeepEqual(want, got) {
 		t.Fatal("dataset import fixture differs from the production Go oracle")
 	}

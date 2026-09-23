@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "success",
+      "stale": false,
+      "handle_exists": false,
+      "raw_exists": false,
+      "rows": 0,
+      "journal_exists": false,
+      "dataset_trash": 0,
+      "raw_history_entries": 0,
+      "checkpoint_paths": [
+        "notes/keep.md"
+      ],
+      "history_objects": 1
+    },
+    {
+      "id": "stale-fingerprint",
+      "stale": true,
+      "error": "dataset purge proposal is stale: authoritative fingerprint changed",
+      "handle_exists": true,
+      "raw_exists": true,
+      "rows": 1,
+      "journal_exists": false,
+      "dataset_trash": 0,
+      "raw_history_entries": 0,
+      "history_objects": 0
+    }
+  ]
+}

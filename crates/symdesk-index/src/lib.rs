@@ -17,9 +17,11 @@ use symdesk_vault::Document;
 use thiserror::Error;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
+mod dataset_purge;
 mod dataset_sync;
 mod metadata;
 
+pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
 pub use dataset_sync::{
     DatasetImportOptions, DatasetImportResult, DatasetSyncError, DatasetSyncOptions,
     DatasetSyncResult, DatasetSyncRow, DatasetSyncService,

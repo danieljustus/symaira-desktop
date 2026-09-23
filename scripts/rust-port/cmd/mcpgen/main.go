@@ -21,11 +21,12 @@ type oracle struct {
 }
 
 type mcpCase struct {
-	ID         string `json:"id"`
-	Request    string `json:"request"`
-	RawInput   string `json:"raw_input,omitempty"`
-	Framed     bool   `json:"framed,omitempty"`
-	EmptyVault bool   `json:"empty_vault,omitempty"`
+	ID                 string `json:"id"`
+	Request            string `json:"request"`
+	RawInput           string `json:"raw_input,omitempty"`
+	Framed             bool   `json:"framed,omitempty"`
+	EmptyVault         bool   `json:"empty_vault,omitempty"`
+	InstructionsAbsent bool   `json:"instructions_absent,omitempty"`
 }
 
 func main() {
@@ -66,7 +67,8 @@ func generated() fixture {
 		SchemaVersion: 1,
 		Oracle:        oracle{Commit: "745c08e8144971c61133c5d0e5d61c7ce405aad2", Release: "post-v0.12.2-security-880"},
 		Cases: []mcpCase{
-			{ID: "mcp001-initialize-string-id", Request: `{"jsonrpc":"2.0","id":"init","method":"initialize"}`},
+			// StartServer leaves corekit instructions at its empty default, which Go omits from initialize.
+			{ID: "mcp001-initialize-string-id", Request: `{"jsonrpc":"2.0","id":"init","method":"initialize"}`, InstructionsAbsent: true},
 			{ID: "mcp001-initialize-null-id", Request: `{"jsonrpc":"2.0","id":null,"method":"initialize"}`},
 			{ID: "mcp001-ping-string-id", Request: `{"jsonrpc":"2.0","id":"ping","method":"ping"}`},
 			{ID: "mcp001-initialize-notification", Request: `{"jsonrpc":"2.0","method":"initialize"}`},

@@ -7,7 +7,8 @@
   "cases": [
     {
       "id": "mcp001-initialize-string-id",
-      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"init\",\"method\":\"initialize\"}"
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"init\",\"method\":\"initialize\"}",
+      "instructions_absent": true
     },
     {
       "id": "mcp001-initialize-null-id",

@@ -19,6 +19,8 @@ struct Fixture {
 struct Case {
     id: String,
     request: String,
+    #[serde(default)]
+    instructions_absent: bool,
 }
 
 #[test]
@@ -90,6 +92,13 @@ fn mcp001_initialize_replays_generated_cases() {
                 assert_eq!(response["result"]["protocolVersion"], "2024-11-05");
                 assert_eq!(response["result"]["capabilities"]["tools"], json_object());
                 assert_eq!(response["result"]["serverInfo"]["name"], "symdesk");
+                if case.instructions_absent {
+                    assert!(
+                        response["result"].get("instructions").is_none(),
+                        "{}",
+                        case.id
+                    );
+                }
             }
             "mcp001-ping-string-id" => {
                 let response: Value = serde_json::from_slice(&output.stdout).expect("response");

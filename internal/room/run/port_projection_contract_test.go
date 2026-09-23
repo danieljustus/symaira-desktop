@@ -2,6 +2,7 @@ package run
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -12,17 +13,42 @@ import (
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
+	"github.com/danieljustus/symaira-desktop/internal/room/identity"
+	"github.com/danieljustus/symaira-desktop/internal/room/journal"
 )
 
 const runProjectionFixture = "testdata/port/room/run-projection.json"
 
 type runProjectionFixtureData struct {
-	SchemaVersion     int               `json:"schema_version"`
-	OracleRevision    string            `json:"oracle_revision"`
-	SourceHashes      map[string]string `json:"source_hashes"`
-	Events            []*event.Event    `json:"events"`
-	Records           []string          `json:"records"`
-	CheckpointRecords []string          `json:"checkpoint_records"`
+	SchemaVersion     int                    `json:"schema_version"`
+	OracleRevision    string                 `json:"oracle_revision"`
+	SourceHashes      map[string]string      `json:"source_hashes"`
+	Events            []*event.Event         `json:"events"`
+	Records           []string               `json:"records"`
+	CheckpointRecords []string               `json:"checkpoint_records"`
+	JournalQueries    runJournalQueryFixture `json:"journal_queries"`
+}
+
+type runJournalFile struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
+}
+
+type runGetVector struct {
+	RunID  string `json:"run_id"`
+	Record string `json:"record"`
+	Error  string `json:"error"`
+}
+
+type runJournalQueryFixture struct {
+	JournalFiles            []runJournalFile  `json:"journal_files"`
+	Signers                 map[string]string `json:"signers"`
+	MergedEventIDs          []string          `json:"merged_event_ids"`
+	ListAll                 []string          `json:"list_all"`
+	ListPending             []string          `json:"list_pending"`
+	Gets                    []runGetVector    `json:"gets"`
+	CheckpointRecords       []string          `json:"checkpoint_records"`
+	CheckpointNormalization string            `json:"checkpoint_array_normalization"`
 }
 
 // TestPortRunProjectionContract freezes ProjectRuns and ProjectCheckpoints.
@@ -122,18 +148,165 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 		SchemaVersion:  1,
 		OracleRevision: "a80da93e3ec02801c73aa5b2318dc06de3efd3fa",
 		SourceHashes: map[string]string{
-			"internal/room/run/run.go":        fileSHA256(t, "internal/room/run/run.go"),
-			"internal/room/run/checkpoint.go": fileSHA256(t, "internal/room/run/checkpoint.go"),
-			"internal/room/event/event.go":    fileSHA256(t, "internal/room/event/event.go"),
+			"internal/room/run/run.go":         fileSHA256(t, "internal/room/run/run.go"),
+			"internal/room/run/checkpoint.go":  fileSHA256(t, "internal/room/run/checkpoint.go"),
+			"internal/room/event/event.go":     fileSHA256(t, "internal/room/event/event.go"),
+			"internal/room/journal/journal.go": fileSHA256(t, "internal/room/journal/journal.go"),
+			"internal/room/journal/merge.go":   fileSHA256(t, "internal/room/journal/merge.go"),
 		},
 		Events:            events,
 		Records:           records,
 		CheckpointRecords: checkpointRecords,
+		JournalQueries:    makeRunJournalQueryFixture(t),
 	}
 }
 
 func projectionEvent(id, kind, body, author, ts string) *event.Event {
 	return &event.Event{V: event.CurrentVersion, ID: id, Room: "room-test", Author: author, TS: ts, Kind: kind, Body: json.RawMessage(body)}
+}
+
+func makeRunJournalQueryFixture(t *testing.T) runJournalQueryFixture {
+	t.Helper()
+	alpha := runProjectionIdentity("alpha")
+	beta := runProjectionIdentity("beta")
+	events := []*event.Event{
+		projectionEvent("query-request-a", event.KindRunRequested, `{"run_id":"query-a","title":"Query Alpha"}`, alpha.MemberID, "2026-02-01T10:00:00.000Z"),
+		projectionEvent("query-request-b", event.KindRunRequested, `{"run_id":"query-b","title":"Query Beta"}`, beta.MemberID, "2026-02-01T10:01:00.000Z"),
+		projectionEvent("query-approve-b", event.KindRunApproved, `{"run_id":"query-b","approval_id":"approval-qb","scope":"room"}`, alpha.MemberID, "2026-02-01T10:02:00.000Z"),
+		projectionEvent("query-checkpoint-a1", event.KindCheckpointReq, `{"checkpoint_id":"query-chk-a1","run_id":"query-a","question":"first question"}`, beta.MemberID, "2026-02-01T10:03:00.000Z"),
+		projectionEvent("query-finish-a", event.KindRunFinished, `{"run_id":"query-a","summary":"finished"}`, alpha.MemberID, "2026-02-01T10:04:00.000Z"),
+		projectionEvent("query-resolve-a1", event.KindCheckpointResolved, `{"checkpoint_id":"query-chk-a1","answer":"first answer"}`, alpha.MemberID, "2026-02-01T10:05:00.000Z"),
+		projectionEvent("query-checkpoint-a2", event.KindCheckpointReq, `{"checkpoint_id":"query-chk-a2","run_id":"query-a","question":"second question"}`, beta.MemberID, "2026-02-01T10:06:00.000Z"),
+		projectionEvent("query-resolve-a2", event.KindCheckpointResolved, `{"checkpoint_id":"query-chk-a2","answer":"second answer"}`, alpha.MemberID, "2026-02-01T10:07:00.000Z"),
+	}
+
+	journalDir := filepath.Join(t.TempDir(), "journal")
+	if err := os.MkdirAll(journalDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	identityByAuthor := map[string]*identity.Identity{alpha.MemberID: alpha, beta.MemberID: beta}
+	seqByAuthor := make(map[string]uint64)
+	prevByAuthor := make(map[string]string)
+	contentsByAuthor := make(map[string][]byte)
+	signers := map[string]string{
+		alpha.MemberID: hex.EncodeToString(alpha.PublicKey),
+		beta.MemberID:  hex.EncodeToString(beta.PublicKey),
+	}
+	for index, ev := range events {
+		ev.Seq = seqByAuthor[ev.Author] + 1
+		ev.Prev = prevByAuthor[ev.Author]
+		if ev.Prev == "" {
+			ev.Prev = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+		}
+		ev.Lamport = uint64(index + 1)
+		signer := identityByAuthor[ev.Author]
+		if err := ev.Sign(signer); err != nil {
+			t.Fatal(err)
+		}
+		if err := ev.VerifySignature(signer.PublicKey); err != nil {
+			t.Fatalf("verify signed fixture event %s: %v", ev.ID, err)
+		}
+		line, err := ev.MarshalJSONLine()
+		if err != nil {
+			t.Fatal(err)
+		}
+		contentsByAuthor[ev.Author] = append(contentsByAuthor[ev.Author], line...)
+		prevByAuthor[ev.Author] = journal.ComputeLineHash(bytes.TrimSuffix(line, []byte{'\n'}))
+		seqByAuthor[ev.Author] = ev.Seq
+	}
+
+	authors := make([]string, 0, len(contentsByAuthor))
+	for author := range contentsByAuthor {
+		authors = append(authors, author)
+	}
+	sort.Strings(authors)
+	files := make([]runJournalFile, 0, len(authors))
+	for _, author := range authors {
+		name := author + ".jsonl"
+		content := contentsByAuthor[author]
+		if err := os.WriteFile(filepath.Join(journalDir, name), content, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		files = append(files, runJournalFile{Name: name, Content: string(content)})
+	}
+
+	roomDir := filepath.Dir(journalDir)
+	merged, err := journal.New(journalDir).MergeAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	mergedIDs := make([]string, 0, len(merged))
+	for _, ev := range merged {
+		mergedIDs = append(mergedIDs, ev.ID)
+	}
+	all, err := List(roomDir, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pending, err := List(roomDir, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	getCases := make([]runGetVector, 0, 3)
+	for _, runID := range []string{"query-a", "query-b", "missing-run"} {
+		got, err := Get(roomDir, runID)
+		if err != nil {
+			getCases = append(getCases, runGetVector{RunID: runID, Error: err.Error()})
+			continue
+		}
+		getCases = append(getCases, runGetVector{RunID: runID, Record: runProjectionRecord(t, got)})
+	}
+	checkpoints := ProjectCheckpoints(merged)
+	checkpointIDs := make([]string, 0, len(checkpoints))
+	for id := range checkpoints {
+		checkpointIDs = append(checkpointIDs, id)
+	}
+	sort.Strings(checkpointIDs)
+	checkpointRecords := make([]string, 0, len(checkpointIDs))
+	for _, id := range checkpointIDs {
+		data, err := json.Marshal(checkpoints[id])
+		if err != nil {
+			t.Fatal(err)
+		}
+		checkpointRecords = append(checkpointRecords, string(data))
+	}
+	return runJournalQueryFixture{
+		JournalFiles: files, Signers: signers, MergedEventIDs: mergedIDs,
+		ListAll: runProjectionRecords(t, all), ListPending: runProjectionRecords(t, pending),
+		Gets: getCases, CheckpointRecords: checkpointRecords,
+		CheckpointNormalization: "sort only each run.checkpoints array by checkpoint id; Go ProjectRuns ranges a map",
+	}
+}
+
+func runProjectionIdentity(name string) *identity.Identity {
+	seed := sha256.Sum256([]byte("symroom-run-query-fixture/" + name))
+	private := ed25519.NewKeyFromSeed(seed[:])
+	public := private.Public().(ed25519.PublicKey)
+	return &identity.Identity{
+		Name: name, MemberID: identity.ComputeMemberID(public), PublicKey: public, PrivateKey: private,
+	}
+}
+
+func runProjectionRecords(t *testing.T, records []*Run) []string {
+	t.Helper()
+	encoded := make([]string, 0, len(records))
+	for _, record := range records {
+		encoded = append(encoded, runProjectionRecord(t, record))
+	}
+	return encoded
+}
+
+func runProjectionRecord(t *testing.T, record *Run) string {
+	t.Helper()
+	// List/Get may attach checkpoints in Go map order. Normalize only this field.
+	sort.Slice(record.Checkpoints, func(i, j int) bool {
+		return record.Checkpoints[i].ID < record.Checkpoints[j].ID
+	})
+	data, err := json.Marshal(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
 }
 
 func fileSHA256(t *testing.T, path string) string {

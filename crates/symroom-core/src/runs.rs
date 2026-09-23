@@ -7,7 +7,7 @@ use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
 use serde::{Deserializer, Serialize};
 use serde_json::Value;
 
-use crate::event::Event;
+use crate::{event::Event, journal};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Run {
@@ -242,6 +242,33 @@ pub fn project_runs(events: &[Event]) -> BTreeMap<String, Run> {
         }
     }
     runs
+}
+
+/// Go: `run.List`, including `journal.MergeAll` and the creation-time ordering.
+pub fn list(room_dir: &std::path::Path, pending_only: bool) -> Result<Vec<Run>, RunQueryError> {
+    let events = journal::merge_all(room_dir)?;
+    let mut runs: Vec<_> = project_runs(&events)
+        .into_values()
+        .filter(|run| !pending_only || matches!(run.state.as_str(), "requested" | "approved"))
+        .collect();
+    runs.sort_by(|left, right| left.created_at.cmp(&right.created_at));
+    Ok(runs)
+}
+
+/// Go: `run.Get`, including `journal.MergeAll`.
+pub fn get(room_dir: &std::path::Path, run_id: &str) -> Result<Run, RunQueryError> {
+    let events = journal::merge_all(room_dir)?;
+    project_runs(&events)
+        .remove(run_id)
+        .ok_or(RunQueryError::NotFound)
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum RunQueryError {
+    #[error(transparent)]
+    Journal(#[from] journal::ReadSegmentsError),
+    #[error("run not found")]
+    NotFound,
 }
 
 struct BodyFieldsSeed<'a>(&'a str);

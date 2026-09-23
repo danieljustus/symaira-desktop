@@ -3,6 +3,8 @@
   "oracle_revision": "a80da93e3ec02801c73aa5b2318dc06de3efd3fa",
   "source_hashes": {
     "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
+    "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
+    "internal/room/journal/merge.go": "3cf6d92103419c8893d13ad36ec42b190d7059dc39620b8ff73607faea8cc5f2",
     "internal/room/run/checkpoint.go": "d47456dbab94f5adfff66a8d02685a235b5d88a49c147669902fdf7af92c9d41",
     "internal/room/run/run.go": "458c7148b7de028ed22ed27df22b2187d762da5ddecbbc582763bee4d42fbf85"
   },
@@ -774,5 +776,60 @@
   "checkpoint_records": [
     "{\"id\":\"chk-main\",\"run_id\":\"run-b\",\"question\":\"replacement\",\"answer\":\"final answer\",\"state\":\"resolved\",\"author\":\"author-second\",\"created_at\":\"2026-01-02T09:03:00.000Z\",\"updated_at\":\"2026-01-02T09:04:00.000Z\"}",
     "{\"id\":\"chk-null\",\"run_id\":\"run-c\",\"question\":\"keep question\",\"answer\":\"keep answer\",\"state\":\"resolved\",\"author\":\"author-null\",\"created_at\":\"2026-01-02T09:05:00.000Z\",\"updated_at\":\"2026-01-02T09:06:00.000Z\"}"
-  ]
+  ],
+  "journal_queries": {
+    "journal_files": [
+      {
+        "name": "mem_60b22b9015455836.jsonl",
+        "content": "{\"author\":\"mem_60b22b9015455836\",\"body\":{\"run_id\":\"query-a\",\"title\":\"Query Alpha\"},\"id\":\"query-request-a\",\"kind\":\"run.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:2ulY+YgfbUTok3Tj0+o8mWPGuimXQgodRjFY9Kqt0qEJaXciqNq3L8wDy/RuhZZ+TBnqqN7kfuryzTMhd4t2Bw==\",\"ts\":\"2026-02-01T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"run_id\":\"query-b\",\"approval_id\":\"approval-qb\",\"scope\":\"room\"},\"id\":\"query-approve-b\",\"kind\":\"run.approved\",\"lamport\":3,\"prev\":\"sha256:d202ef55a56d2461f1e86247ccad3c9b74bde6a83bd2cae773d5c333d2b97805\",\"room\":\"room-test\",\"seq\":2,\"sig\":\"ed25519:TztHlxfwWez3kF1Ya6x/AxW19p34/85GFQ4ojgPUEFzkgin1kVzC9SCLN8WX0ND4iCUPeAa6CVtIMixymoMJCg==\",\"ts\":\"2026-02-01T10:02:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"run_id\":\"query-a\",\"summary\":\"finished\"},\"id\":\"query-finish-a\",\"kind\":\"run.finished\",\"lamport\":5,\"prev\":\"sha256:52ff28fda8ee069635cf6d27af0f83b6005b91793e7a70213d0ed6ce2dedfed3\",\"room\":\"room-test\",\"seq\":3,\"sig\":\"ed25519:Vtg6dZFzDGT4oXiV4Rs/zmmk9vh9/88fCpLk3arYZnozyDHt0jqsO/iV20RAAgh9gc3fhJjEVWICutLvKhv9CA==\",\"ts\":\"2026-02-01T10:04:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"checkpoint_id\":\"query-chk-a1\",\"answer\":\"first answer\"},\"id\":\"query-resolve-a1\",\"kind\":\"checkpoint.resolved\",\"lamport\":6,\"prev\":\"sha256:a2a8f9a81881cbace19339e4ab7439514c2d01a83911b45eb556f35514cc3a6f\",\"room\":\"room-test\",\"seq\":4,\"sig\":\"ed25519:6TyN6q8/CFF9qv7Ekf6P9qk88uxbAabd8Mt4m6Ag4Ti2Ol6pHWWEDanLf2HxXyXR1dyYkLpfKUxvTZBxlqTECg==\",\"ts\":\"2026-02-01T10:05:00.000Z\",\"v\":1}\n{\"author\":\"mem_60b22b9015455836\",\"body\":{\"checkpoint_id\":\"query-chk-a2\",\"answer\":\"second answer\"},\"id\":\"query-resolve-a2\",\"kind\":\"checkpoint.resolved\",\"lamport\":8,\"prev\":\"sha256:14e2440f362980f0512446a4dd61c4e5d866e06871554be23a118bea60999476\",\"room\":\"room-test\",\"seq\":5,\"sig\":\"ed25519:WBlfCLwjSxx+LBL7ctMc6IY/ZxUhT2Xvg2I8YszMrRBU2N+XQJ02VjjoyU3RP8mkgILedTWb/vwjj3d4xkz6BA==\",\"ts\":\"2026-02-01T10:07:00.000Z\",\"v\":1}\n"
+      },
+      {
+        "name": "mem_7defb67d0d528436.jsonl",
+        "content": "{\"author\":\"mem_7defb67d0d528436\",\"body\":{\"run_id\":\"query-b\",\"title\":\"Query Beta\"},\"id\":\"query-request-b\",\"kind\":\"run.requested\",\"lamport\":2,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:oVDJybbc+ErnjVHoxwMBmAEMy1OIF8rKhUlKnAmYU7iElLzSUZjEn95zHXGAWlLuSiXMkWhEQUfzWbNSvvGPDA==\",\"ts\":\"2026-02-01T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_7defb67d0d528436\",\"body\":{\"checkpoint_id\":\"query-chk-a1\",\"run_id\":\"query-a\",\"question\":\"first question\"},\"id\":\"query-checkpoint-a1\",\"kind\":\"checkpoint.requested\",\"lamport\":4,\"prev\":\"sha256:abab292daa86006cc0e53da315e92e9dd13a1d2c177844fbfd7e23d8b2121c02\",\"room\":\"room-test\",\"seq\":2,\"sig\":\"ed25519:4Asi7WNSqjPLBdRT2BdHrtYWIPniyDAqgT/qcuwp1sykrP0B6jC0YBz5Ym8hvE5VhhdlUk3QtsbbrUSEdvuVBw==\",\"ts\":\"2026-02-01T10:03:00.000Z\",\"v\":1}\n{\"author\":\"mem_7defb67d0d528436\",\"body\":{\"checkpoint_id\":\"query-chk-a2\",\"run_id\":\"query-a\",\"question\":\"second question\"},\"id\":\"query-checkpoint-a2\",\"kind\":\"checkpoint.requested\",\"lamport\":7,\"prev\":\"sha256:43474c46fd5e5781880fad7ddb1b8bdfafa3a0a299b4d8e072f16f73e4053a9a\",\"room\":\"room-test\",\"seq\":3,\"sig\":\"ed25519:IVGqeaRDLjv4TzmPmTk9lKZVwuEEaWAZU4FXPWJnR79WVogjPP3MqwBbiWqDXmqXoX+d1Fkr9by1Tt8hukkHAA==\",\"ts\":\"2026-02-01T10:06:00.000Z\",\"v\":1}\n"
+      }
+    ],
+    "signers": {
+      "mem_60b22b9015455836": "3c691d15e2f6dfe3bb09da17c5a4ea47938224c3b5267bf15b37eca5b2aca19a",
+      "mem_7defb67d0d528436": "ecb7a67137c8c15fafa18e19a3624fd6c5dcc994293e18cb4b9eaff884351526"
+    },
+    "merged_event_ids": [
+      "query-request-a",
+      "query-request-b",
+      "query-approve-b",
+      "query-checkpoint-a1",
+      "query-finish-a",
+      "query-resolve-a1",
+      "query-checkpoint-a2",
+      "query-resolve-a2"
+    ],
+    "list_all": [
+      "{\"id\":\"query-a\",\"title\":\"Query Alpha\",\"state\":\"finished\",\"author\":\"mem_60b22b9015455836\",\"created_at\":\"2026-02-01T10:00:00.000Z\",\"updated_at\":\"2026-02-01T10:04:00.000Z\",\"summary\":\"finished\",\"checkpoints\":[{\"id\":\"query-chk-a1\",\"run_id\":\"query-a\",\"question\":\"first question\",\"answer\":\"first answer\",\"state\":\"resolved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:03:00.000Z\",\"updated_at\":\"2026-02-01T10:05:00.000Z\"},{\"id\":\"query-chk-a2\",\"run_id\":\"query-a\",\"question\":\"second question\",\"answer\":\"second answer\",\"state\":\"resolved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:06:00.000Z\",\"updated_at\":\"2026-02-01T10:07:00.000Z\"}]}",
+      "{\"id\":\"query-b\",\"title\":\"Query Beta\",\"state\":\"approved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:01:00.000Z\",\"updated_at\":\"2026-02-01T10:02:00.000Z\",\"approval_id\":\"approval-qb\",\"scope\":\"room\"}"
+    ],
+    "list_pending": [
+      "{\"id\":\"query-b\",\"title\":\"Query Beta\",\"state\":\"approved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:01:00.000Z\",\"updated_at\":\"2026-02-01T10:02:00.000Z\",\"approval_id\":\"approval-qb\",\"scope\":\"room\"}"
+    ],
+    "gets": [
+      {
+        "run_id": "query-a",
+        "record": "{\"id\":\"query-a\",\"title\":\"Query Alpha\",\"state\":\"finished\",\"author\":\"mem_60b22b9015455836\",\"created_at\":\"2026-02-01T10:00:00.000Z\",\"updated_at\":\"2026-02-01T10:04:00.000Z\",\"summary\":\"finished\",\"checkpoints\":[{\"id\":\"query-chk-a1\",\"run_id\":\"query-a\",\"question\":\"first question\",\"answer\":\"first answer\",\"state\":\"resolved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:03:00.000Z\",\"updated_at\":\"2026-02-01T10:05:00.000Z\"},{\"id\":\"query-chk-a2\",\"run_id\":\"query-a\",\"question\":\"second question\",\"answer\":\"second answer\",\"state\":\"resolved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:06:00.000Z\",\"updated_at\":\"2026-02-01T10:07:00.000Z\"}]}",
+        "error": ""
+      },
+      {
+        "run_id": "query-b",
+        "record": "{\"id\":\"query-b\",\"title\":\"Query Beta\",\"state\":\"approved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:01:00.000Z\",\"updated_at\":\"2026-02-01T10:02:00.000Z\",\"approval_id\":\"approval-qb\",\"scope\":\"room\"}",
+        "error": ""
+      },
+      {
+        "run_id": "missing-run",
+        "record": "",
+        "error": "run not found"
+      }
+    ],
+    "checkpoint_records": [
+      "{\"id\":\"query-chk-a1\",\"run_id\":\"query-a\",\"question\":\"first question\",\"answer\":\"first answer\",\"state\":\"resolved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:03:00.000Z\",\"updated_at\":\"2026-02-01T10:05:00.000Z\"}",
+      "{\"id\":\"query-chk-a2\",\"run_id\":\"query-a\",\"question\":\"second question\",\"answer\":\"second answer\",\"state\":\"resolved\",\"author\":\"mem_7defb67d0d528436\",\"created_at\":\"2026-02-01T10:06:00.000Z\",\"updated_at\":\"2026-02-01T10:07:00.000Z\"}"
+    ],
+    "checkpoint_array_normalization": "sort only each run.checkpoints array by checkpoint id; Go ProjectRuns ranges a map"
+  }
 }

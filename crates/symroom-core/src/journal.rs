@@ -70,6 +70,63 @@ pub fn merge(segments: BTreeMap<String, Vec<Event>>) -> Vec<Event> {
     events
 }
 
+/// Reads each existing `.jsonl` author segment, then applies Go's total order.
+/// A missing journal directory is an empty journal, matching `MergeAll`.
+pub fn merge_all(room_dir: &Path) -> Result<Vec<Event>, ReadSegmentsError> {
+    Ok(merge(read_all_segments(room_dir)?))
+}
+
+/// Reads all existing author segments. Blank lines are ignored; an invalid
+/// event aborts the read with its segment name, as Go `ReadSegment` does.
+pub fn read_all_segments(
+    room_dir: &Path,
+) -> Result<BTreeMap<String, Vec<Event>>, ReadSegmentsError> {
+    let journal_dir = room_dir.join(JOURNAL_DIR);
+    let entries = match fs::read_dir(&journal_dir) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(BTreeMap::new());
+        }
+        Err(error) => return Err(error.into()),
+    };
+
+    let mut entries = entries.collect::<Result<Vec<_>, _>>()?;
+    entries.sort_by_key(|entry| entry.file_name());
+    let mut segments = BTreeMap::new();
+    for entry in entries {
+        if entry.file_type()?.is_dir() {
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let Some(author) = name.strip_suffix(JOURNAL_SUFFIX) else {
+            continue;
+        };
+        let contents = fs::read(entry.path())?;
+        let mut events = Vec::new();
+        for line in scan_lines(&contents) {
+            if is_blank(line) {
+                continue;
+            }
+            events.push(Event::unmarshal_json_line(line).map_err(|source| {
+                ReadSegmentsError::Parse {
+                    author: author.to_owned(),
+                    source,
+                }
+            })?);
+        }
+        segments.insert(author.to_owned(), events);
+    }
+    Ok(segments)
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ReadSegmentsError {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error("read segment {author}: unmarshal line: {source}")]
+    Parse { author: String, source: EventError },
+}
+
 /// Reads the Lamport ceiling and member state of a room journal.
 ///
 /// A missing journal directory, an unreadable file and an undecodable line are

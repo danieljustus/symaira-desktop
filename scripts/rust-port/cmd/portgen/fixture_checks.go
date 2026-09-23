@@ -40,6 +40,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"vault retention rules", []string{"test", "-count=1", "./internal/retention", "-run", "TestPortRetentionRulesContract"}, []string{"testdata/port/vault/retention-rules.json"}, false},
 	{"authoritative retention state", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortRetentionStateContract$"}, []string{"testdata/port/vault/retention-state.json"}, false},
 	{"room run projection", []string{"test", "-count=1", "./internal/room/run", "-run", "^TestPortRunProjectionContract$"}, []string{"testdata/port/room/run-projection.json"}, false},
+	{"dataset sync", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract)$"}, []string{"testdata/port/dataset/sync.json", "testdata/port/dataset/service-sync.json", "testdata/port/dataset/import.json"}, false},
 	{"sidecar contracts", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarContract"}, []string{"testdata/port/sidecar/contracts.json"}, false},
 	{"sidecar lifecycle", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarLifecycleContract"}, []string{"testdata/port/sidecar/lifecycle.json"}, true},
 	{"sidecar oracle metadata", []string{"test", "-count=1", "./scripts/rust-port/cmd/sidecar-roundtrip", "-run", "TestCommittedSidecarOracleIdentities"}, []string{"testdata/port/sidecar/large-corpus.json", "testdata/port/sidecar/roundtrip.json"}, false},

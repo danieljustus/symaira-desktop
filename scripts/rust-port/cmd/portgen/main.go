@@ -48,6 +48,9 @@ var fixturePaths = []string{
 	"testdata/port/vault/retention-rules.json",
 	"testdata/port/vault/retention-state.json",
 	"testdata/port/room/run-projection.json",
+	"testdata/port/dataset/sync.json",
+	"testdata/port/dataset/service-sync.json",
+	"testdata/port/dataset/import.json",
 	"testdata/port/sidecar/contracts.json",
 	"testdata/port/sidecar/lifecycle.json",
 	"testdata/port/sidecar/large-corpus.json",
@@ -93,6 +96,7 @@ func runGenerate(repoRoot, commit, release string) {
 		{"./cmd/symdesk", "TestSymdeskCobraInventory"},
 		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory"},
 		{"./internal/room/run", "^TestPortRunProjectionContract$"},
+		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract)$"},
 		{"./internal/tools", "TestSymdeskMCPInventory"},
 		{"./internal/selfhost", "TestSelfhostHTTPInventory"},
 	}

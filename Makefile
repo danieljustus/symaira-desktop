@@ -2,6 +2,7 @@
 
 .PHONY: retention-state-fixtures-generate retention-state-differential
 .PHONY: room-run-projection-fixtures-generate room-run-projection-differential
+.PHONY: dataset-sync-fixtures-generate dataset-sync-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -220,6 +221,15 @@ room-run-projection-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/run -run '^TestPortRunProjectionContract$$'
 	$(CARGO) test -p symroom-core --locked --test run_projection_contracts
 
+dataset-sync-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortDataset(SyncContract|SyncServiceContract|ImportContract)$$'
+
+dataset-sync-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortDataset'
+	$(CARGO) test -p symdesk-vault --locked --test dataset_contracts
+	$(CARGO) test -p symdesk-index --locked --test dataset_service_contracts
+	$(CARGO) test -p symdesk-index --locked --test dataset_import_contracts
+
 symroom-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/room -run TestPortRoomIdentityEventContract
 
@@ -272,7 +282,7 @@ differential-go-selftest:
 		--symroom-left "bin/symroom" --symroom-right "bin/symroom" \
 		--cases "$(PORT_CASES)"
 
-port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential room-journal-differential room-run-projection-differential retention-state-differential
+port-contract: port-fixtures-check differential-go-selftest sidecar-differential sidecar-metadata-differential room-journal-differential room-run-projection-differential dataset-sync-differential retention-state-differential
 
 representative-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/representativegen

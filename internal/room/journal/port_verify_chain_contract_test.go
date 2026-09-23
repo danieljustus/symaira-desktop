@@ -16,12 +16,13 @@ import (
 )
 
 type verifyChainCase struct {
-	ID      string `json:"id"`
-	Author  string `json:"author"`
-	File    bool   `json:"file"`
-	Content string `json:"content"`
-	Code    string `json:"code"`
-	Error   string `json:"error"`
+	ID         string `json:"id"`
+	Author     string `json:"author"`
+	File       bool   `json:"file"`
+	Content    string `json:"content"`
+	RepeatLine int    `json:"repeat_line,omitempty"`
+	Code       string `json:"code"`
+	Error      string `json:"error"`
 }
 
 type verifyChainFixture struct {
@@ -38,6 +39,7 @@ func TestPortRoomVerifyChainContract(t *testing.T) {
 	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../.."))
 	fixture := verifyChainFixture{SchemaVersion: 1, SourceHashes: make(map[string]string)}
 	for _, rel := range []string{
+		"internal/room/event/event.go",
 		"internal/room/journal/journal.go",
 		"internal/room/journal/verifier.go",
 		"internal/room/journal/port_verify_chain_contract_test.go",
@@ -74,6 +76,12 @@ func TestPortRoomVerifyChainContract(t *testing.T) {
 		{ID: "wrong-seq", Author: "alice", File: true, Content: line("wrong-seq", 2, zeroHash), Code: "seq_mismatch"},
 		{ID: "wrong-prev", Author: "alice", File: true, Content: line("wrong-prev", 1, "sha256:wrong"), Code: "chain_broken"},
 		{ID: "seq-before-prev", Author: "alice", File: true, Content: line("both", 2, "sha256:wrong"), Code: "seq_mismatch"},
+		{ID: "omitted-fields", Author: "alice", File: true, Content: `{"seq":1,"prev":"` + zeroHash + `"}` + "\n", Code: "ok"},
+		{ID: "mixed-case-duplicates", Author: "alice", File: true, Content: `{"SeQ":9,"seq":1,"PREV":"wrong","prev":"` + zeroHash + `"}` + "\n", Code: "ok"},
+		{ID: "unicode-folded-seq", Author: "alice", File: true, Content: `{"\u017feq":1,"prev":"` + zeroHash + `"}` + "\n", Code: "ok"},
+		{ID: "null-after-value", Author: "alice", File: true, Content: `{"seq":1,"seq":null,"prev":"` + zeroHash + `","prev":null}` + "\n", Code: "ok"},
+		{ID: "scanner-boundary", Author: "alice", File: true, RepeatLine: 65535, Code: "ok"},
+		{ID: "scanner-too-long", Author: "alice", File: true, RepeatLine: 65536, Code: "scanner_error"},
 	}
 	for i := range cases {
 		item := &cases[i]
@@ -82,7 +90,11 @@ func TestPortRoomVerifyChainContract(t *testing.T) {
 			if err := os.MkdirAll(journalDir, 0o700); err != nil {
 				t.Fatal(err)
 			}
-			if err := os.WriteFile(filepath.Join(journalDir, item.Author+".jsonl"), []byte(item.Content), 0o600); err != nil {
+			content := item.Content
+			if item.RepeatLine > 0 {
+				content = strings.Repeat(" ", item.RepeatLine) + "\n"
+			}
+			if err := os.WriteFile(filepath.Join(journalDir, item.Author+".jsonl"), []byte(content), 0o600); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -93,6 +105,8 @@ func TestPortRoomVerifyChainContract(t *testing.T) {
 			observed = "seq_mismatch"
 		case errors.Is(err, ErrChainBroken):
 			observed = "chain_broken"
+		case err != nil && err.Error() == "bufio.Scanner: token too long":
+			observed = "scanner_error"
 		case err != nil:
 			t.Fatalf("%s: unexpected oracle error: %v", item.ID, err)
 		}
@@ -104,7 +118,7 @@ func TestPortRoomVerifyChainContract(t *testing.T) {
 		}
 	}
 	fixture.Cases = cases
-	if len(fixture.Cases) != 8 {
+	if len(fixture.Cases) != 14 {
 		t.Fatal("verify-chain case inventory changed")
 	}
 	data, err := json.MarshalIndent(fixture, "", "  ")

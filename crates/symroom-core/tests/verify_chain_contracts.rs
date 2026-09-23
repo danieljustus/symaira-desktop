@@ -24,6 +24,8 @@ struct Case {
     author: String,
     file: bool,
     content: String,
+    #[serde(default)]
+    repeat_line: usize,
     code: String,
     error: String,
 }
@@ -37,8 +39,8 @@ fn replays_go_verify_chain_cases() {
     )
     .expect("parse Go verify-chain fixture");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 8, "Go case inventory");
-    assert_eq!(fixture.source_hashes.len(), 3, "Go source inventory");
+    assert_eq!(fixture.cases.len(), 14, "Go case inventory");
+    assert_eq!(fixture.source_hashes.len(), 4, "Go source inventory");
     for (relative, expected) in &fixture.source_hashes {
         let source = fs::read(repository.join(relative)).expect("read Go source");
         assert_eq!(hex::encode(Sha256::digest(source)), *expected, "{relative}");
@@ -58,9 +60,14 @@ fn replays_go_verify_chain_cases() {
         fs::create_dir(&room).expect("create scratch room");
         if case.file {
             fs::create_dir(room.join("journal")).expect("create scratch journal");
+            let content = if case.repeat_line > 0 {
+                format!("{}\n", " ".repeat(case.repeat_line))
+            } else {
+                case.content.clone()
+            };
             fs::write(
                 room.join("journal").join(format!("{}.jsonl", case.author)),
-                case.content.as_bytes(),
+                content.as_bytes(),
             )
             .expect("write Go segment bytes");
         }
@@ -71,6 +78,7 @@ fn replays_go_verify_chain_cases() {
                 let code = match error {
                     symroom_core::journal::VerifyChainError::Sequence { .. } => "seq_mismatch",
                     symroom_core::journal::VerifyChainError::Previous { .. } => "chain_broken",
+                    symroom_core::journal::VerifyChainError::ScannerTooLong => "scanner_error",
                     _ => panic!("{}: unexpected error: {error}", case.id),
                 };
                 (code, error.to_string())
@@ -87,6 +95,12 @@ fn replays_go_verify_chain_cases() {
         "wrong-seq",
         "wrong-prev",
         "seq-before-prev",
+        "omitted-fields",
+        "mixed-case-duplicates",
+        "unicode-folded-seq",
+        "null-after-value",
+        "scanner-boundary",
+        "scanner-too-long",
     ] {
         assert!(names.contains(name), "required Go case {name}");
     }

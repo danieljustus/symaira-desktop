@@ -1,8 +1,9 @@
 {
   "schema_version": 1,
   "source_hashes": {
+    "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
     "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
-    "internal/room/journal/port_verify_chain_contract_test.go": "2ace44035f7133950078462060fb4da2594723f99b1909d9631c9e1134c767bd",
+    "internal/room/journal/port_verify_chain_contract_test.go": "f3c63eb4e9050b12ad542b6284ab1d0a2eb8ae26b5290d415ce4624422a6f3dc",
     "internal/room/journal/verifier.go": "16c14a87ddbd34b233dd0dec7eaa6b34e1d97d333a5e1038ae31b1ff8cf91414"
   },
   "cases": [
@@ -69,6 +70,56 @@
       "content": "{\"author\":\"alice\",\"body\":{\"text\":\"signed bytes are not checked here\"},\"id\":\"both\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:wrong\",\"room\":\"r\",\"seq\":2,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n",
       "code": "seq_mismatch",
       "error": "journal sequence number mismatch: author alice expected seq 1, got 2"
+    },
+    {
+      "id": "omitted-fields",
+      "author": "alice",
+      "file": true,
+      "content": "{\"seq\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\"}\n",
+      "code": "ok",
+      "error": ""
+    },
+    {
+      "id": "mixed-case-duplicates",
+      "author": "alice",
+      "file": true,
+      "content": "{\"SeQ\":9,\"seq\":1,\"PREV\":\"wrong\",\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\"}\n",
+      "code": "ok",
+      "error": ""
+    },
+    {
+      "id": "unicode-folded-seq",
+      "author": "alice",
+      "file": true,
+      "content": "{\"\\u017feq\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\"}\n",
+      "code": "ok",
+      "error": ""
+    },
+    {
+      "id": "null-after-value",
+      "author": "alice",
+      "file": true,
+      "content": "{\"seq\":1,\"seq\":null,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"prev\":null}\n",
+      "code": "ok",
+      "error": ""
+    },
+    {
+      "id": "scanner-boundary",
+      "author": "alice",
+      "file": true,
+      "content": "",
+      "repeat_line": 65535,
+      "code": "ok",
+      "error": ""
+    },
+    {
+      "id": "scanner-too-long",
+      "author": "alice",
+      "file": true,
+      "content": "",
+      "repeat_line": 65536,
+      "code": "scanner_error",
+      "error": "bufio.Scanner: token too long"
     }
   ]
 }

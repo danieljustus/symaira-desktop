@@ -20,7 +20,7 @@
 use std::{
     collections::BTreeMap,
     fs,
-    io::Write,
+    io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
 };
 
@@ -172,23 +172,34 @@ pub fn author_stats(room_dir: &Path, author: &str) -> Result<AuthorStats, std::i
 /// # Errors
 /// Returns the first decoding, sequence or previous-hash error, or an I/O error.
 pub fn verify_chain(room_dir: &Path, author: &str) -> Result<(), VerifyChainError> {
-    let contents = match fs::read(author_journal_path(room_dir, author)) {
-        Ok(contents) => contents,
+    let path = author_journal_path(room_dir, author);
+    let file = match fs::File::open(&path) {
+        Ok(file) => file,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
         Err(error) => return Err(error.into()),
     };
-    // Go first reads and decodes the whole segment, then checks its lines.
-    // ponytail: this single file snapshot does not model an external writer
-    // replacing the file between those reads; add a two-read race oracle before
-    // claiming concurrent VerifyChain parity.
-    let lines: Vec<&[u8]> = scan_lines(&contents)
-        .into_iter()
-        .filter(|line| !is_blank(line))
-        .collect();
-    let events: Vec<Event> = lines
-        .iter()
-        .map(|line| Event::unmarshal_json_line(line).map_err(VerifyChainError::Parse))
-        .collect::<Result<_, _>>()?;
+    let mut reader = BufReader::new(file);
+    let mut events = Vec::new();
+    // Go ReadSegment ignores Scanner errors after returning decoded events.
+    while let Ok(Some(line)) = read_scanner_line(&mut reader) {
+        if !is_blank(&line) {
+            events.push(Event::unmarshal_json_line(&line).map_err(VerifyChainError::Parse)?);
+        }
+    }
+    let file = match fs::File::open(&path) {
+        Ok(file) => file,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound && events.is_empty() => {
+            return Ok(());
+        }
+        Err(error) => return Err(error.into()),
+    };
+    let mut reader = BufReader::new(file);
+    let mut lines = Vec::new();
+    while let Some(line) = read_scanner_line(&mut reader)? {
+        if !is_blank(&line) {
+            lines.push(line);
+        }
+    }
     let mut previous = ZERO_HASH.to_owned();
     for (index, (line, event)) in lines.iter().zip(events.iter()).enumerate() {
         let expected = index as u64 + 1;
@@ -212,12 +223,49 @@ pub fn verify_chain(room_dir: &Path, author: &str) -> Result<(), VerifyChainErro
     Ok(())
 }
 
+// Go bufio.Scanner's default buffer is 64 KiB, including the delimiter.
+// Bound each physical line before allocating it.
+fn read_scanner_line(reader: &mut impl BufRead) -> Result<Option<Vec<u8>>, VerifyChainError> {
+    const MAX_TOKEN_BUFFER: usize = 64 * 1024;
+    let mut line = Vec::new();
+    loop {
+        let available = reader.fill_buf()?;
+        if available.is_empty() {
+            if line.is_empty() {
+                return Ok(None);
+            }
+            if line.last() == Some(&b'\r') {
+                line.pop();
+            }
+            return Ok(Some(line));
+        }
+        let newline = available.iter().position(|byte| *byte == b'\n');
+        let length = newline.map_or(available.len(), |index| index + 1);
+        if line.len() + length > MAX_TOKEN_BUFFER
+            || (newline.is_none() && line.len() + length == MAX_TOKEN_BUFFER)
+        {
+            return Err(VerifyChainError::ScannerTooLong);
+        }
+        line.extend_from_slice(&available[..length]);
+        reader.consume(length);
+        if newline.is_some() {
+            line.pop();
+            if line.last() == Some(&b'\r') {
+                line.pop();
+            }
+            return Ok(Some(line));
+        }
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum VerifyChainError {
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error("unmarshal line: {0}")]
     Parse(EventError),
+    #[error("bufio.Scanner: token too long")]
+    ScannerTooLong,
     #[error(
         "journal sequence number mismatch: author {author} expected seq {expected}, got {actual}"
     )]

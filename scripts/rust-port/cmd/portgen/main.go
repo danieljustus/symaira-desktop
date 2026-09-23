@@ -55,6 +55,7 @@ var fixturePaths = []string{
 	"testdata/port/room/run-wait-cli.json",
 	"testdata/port/room/run-mutations-cli.json",
 	"testdata/port/room/note-cli.json",
+	"testdata/port/room/identity-cli.json",
 	"testdata/port/room/merge-read.json",
 	"testdata/port/room/mcp-parity.json",
 	"testdata/port/room/mcp-artifact.txt",
@@ -106,7 +107,7 @@ func runGenerate(repoRoot, commit, release string) {
 		run string
 	}{
 		{"./cmd/symdesk", "TestSymdeskCobraInventory"},
-		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPortNoteCLIContract"},
+		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPort(Note|Identity)CLIContract"},
 		{"./internal/room/run", "^TestPortRunProjectionContract$"},
 		{"./internal/room/journal", "^TestPortRoomMergeReadContract$"},
 		{"./internal/room/run", "^TestPortRun(Wait|Mutation)?CLIContract$"},

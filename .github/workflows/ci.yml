@@ -311,6 +311,10 @@ jobs:
         shell: bash
         run: make room-note-cli-differential
 
+      - name: Run native room identity CLI differential
+        shell: bash
+        run: make room-identity-cli-differential
+
       - name: Run native room MCP differential
         shell: bash
         run: make room-mcp-differential

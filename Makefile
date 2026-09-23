@@ -12,6 +12,7 @@
 .PHONY: room-run-mutations-cli-fixtures-generate room-run-mutations-cli-differential
 .PHONY: room-note-cli-fixtures-generate room-note-cli-differential
 .PHONY: room-merge-read-fixtures-generate room-merge-read-differential history-prune-fixtures-generate history-prune-differential
+.PHONY: room-identity-cli-fixtures-generate room-identity-cli-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -257,6 +258,13 @@ room-note-cli-fixtures-generate:
 room-note-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortNoteCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test note_commands note_cli_matches_go_process_and_journal_contract
+
+room-identity-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortIdentityCLIContract$$'
+
+room-identity-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortIdentityCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test identity_commands identity_cli_matches_go_process_and_key_file_contract
 
 room-mcp-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/mcp -run '^TestSymRoomMCP(Representative|Mutation)Oracle$$'

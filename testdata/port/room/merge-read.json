@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "source_hash": "7ad55de0a7eaa2a95999e66b3ff0b20111d5bf84bd75257eb02121578a313221",
+  "cases": [
+    {
+      "id": "disk-merge-lamport-ties",
+      "files": [
+        {
+          "name": "a.jsonl",
+          "content": "{\"author\":\"z\",\"body\":{\"marker\":\"later\"},\"id\":\"later-lamport\",\"kind\":\"note.posted\",\"lamport\":3,\"prev\":\"\",\"room\":\"\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"z\",\"body\":{\"marker\":\"stable-first\"},\"id\":\"same\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"\",\"room\":\"\",\"seq\":2,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"z\",\"body\":{\"marker\":\"stable-second\"},\"id\":\"same\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"\",\"room\":\"\",\"seq\":2,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"z\",\"body\":{\"marker\":\"id-z\"},\"id\":\"id-z\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"\",\"room\":\"\",\"seq\":2,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"z\",\"body\":{\"marker\":\"seq-earlier\"},\"id\":\"seq-earlier\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"\",\"room\":\"\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n"
+        },
+        {
+          "name": "z.jsonl",
+          "content": "{\"author\":\"z\",\"body\":{\"marker\":\"time-earlier\"},\"id\":\"time-earlier\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"\",\"room\":\"\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T09:00:00.000Z\",\"v\":1}\n{\"author\":\"a\",\"body\":{\"marker\":\"author-earlier\"},\"id\":\"author-earlier\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"\",\"room\":\"\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"z\",\"body\":{\"marker\":\"id-a\"},\"id\":\"id-a\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"\",\"room\":\"\",\"seq\":2,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"z\",\"body\":{\"marker\":\"lamport-first\"},\"id\":\"lamport-first\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"\",\"room\":\"\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n"
+        }
+      ],
+      "ordered_ids": [
+        "lamport-first",
+        "time-earlier",
+        "author-earlier",
+        "seq-earlier",
+        "id-a",
+        "id-z",
+        "same",
+        "same",
+        "later-lamport"
+      ],
+      "ordered_markers": [
+        "lamport-first",
+        "time-earlier",
+        "author-earlier",
+        "seq-earlier",
+        "id-a",
+        "id-z",
+        "stable-first",
+        "stable-second",
+        "later"
+      ]
+    },
+    {
+      "id": "malformed-event-aborts-merge",
+      "files": [
+        {
+          "name": "broken.jsonl",
+          "content": "{\"author\":\"broken\",\"body\":{\"marker\":\"prefix\"},\"id\":\"prefix\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"\",\"room\":\"\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"v\":\n"
+        }
+      ],
+      "ordered_ids": [],
+      "ordered_markers": [],
+      "error_class": "malformed_event",
+      "error_author": "broken"
+    },
+    {
+      "id": "scanner-overflow-keeps-prefix",
+      "files": [
+        {
+          "name": "overflow.jsonl",
+          "content": "{\"author\":\"overflow\",\"body\":{\"marker\":\"prefix\"},\"id\":\"prefix\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"\",\"room\":\"\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n",
+          "repeat_bytes": 65536,
+          "repeat_byte": "x",
+          "repeat_newline": true
+        }
+      ],
+      "ordered_ids": [
+        "prefix"
+      ],
+      "ordered_markers": [
+        "prefix"
+      ]
+    }
+  ]
+}

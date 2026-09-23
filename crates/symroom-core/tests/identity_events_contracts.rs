@@ -14,7 +14,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::value::RawValue;
 use sha2::{Digest, Sha256};
 use symroom_core::event::{self, Event};
 use symroom_core::identity::{self, Identity, StoredIdentity};
@@ -61,7 +61,7 @@ struct MemberIdVector {
 #[derive(Deserialize)]
 struct EventVector {
     id: String,
-    event: Value,
+    event: Box<RawValue>,
     canonical_bytes: String,
     canonical_sha256: String,
     signature: String,
@@ -74,7 +74,7 @@ struct EventVector {
 #[derive(Deserialize)]
 struct VerifyVector {
     id: String,
-    event: Value,
+    event: Box<RawValue>,
     public_key_hex: String,
     error: String,
 }
@@ -144,6 +144,13 @@ fn room_identity_event_vectors_match_the_go_oracle() {
         + fixture.verify_cases.len()
         + fixture.file_cases.len();
     assert!(runnable > 0, "no vectors to replay");
+    assert_eq!(fixture.events.len(), 28, "signed Go event vector inventory");
+    for required in ["body-html-unicode", "body-escaped-html"] {
+        assert!(
+            fixture.events.iter().any(|row| row.id == required),
+            "missing {required}"
+        );
+    }
 
     let mut by_member: BTreeMap<String, Identity> = BTreeMap::new();
     for vector in &fixture.identities {
@@ -227,7 +234,7 @@ fn room_identity_event_vectors_match_the_go_oracle() {
     let mut events_replayed = 0usize;
     for vector in &fixture.events {
         let mut parsed: Event =
-            serde_json::from_value(vector.event.clone()).expect("event parses into the port type");
+            serde_json::from_str(vector.event.get()).expect("event parses into the port type");
         let signer = by_member.get(&parsed.author).unwrap_or_else(|| {
             panic!(
                 "{}: author {} is a fixture identity",
@@ -275,7 +282,8 @@ fn room_identity_event_vectors_match_the_go_oracle() {
             Event::unmarshal_json_line(vector.json_line.as_bytes()).expect("json line parses");
         assert_eq!(round_trip.id, parsed.id, "{}: round trip id", vector.id);
         assert_eq!(
-            round_trip.body, parsed.body,
+            serde_json::from_str::<serde_json::Value>(round_trip.body.get()).unwrap(),
+            serde_json::from_str::<serde_json::Value>(parsed.body.get()).unwrap(),
             "{}: round trip body",
             vector.id
         );
@@ -304,7 +312,7 @@ fn room_identity_event_vectors_match_the_go_oracle() {
 
     for vector in &fixture.verify_cases {
         let parsed: Event =
-            serde_json::from_value(vector.event.clone()).expect("event parses into the port type");
+            serde_json::from_str(vector.event.get()).expect("event parses into the port type");
         let public_key = hex::decode(&vector.public_key_hex).expect("public key hex");
         let message = match parsed.verify_signature(&public_key) {
             Ok(()) => String::new(),

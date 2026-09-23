@@ -75,7 +75,8 @@ fn go_membership_projection_and_permissions() {
             lamport: 0,
             ts: String::new(),
             kind: case.kind,
-            body: case.body,
+            body: serde_json::value::RawValue::from_string(case.body.to_string())
+                .expect("valid Go event body"),
             sig: None,
         };
         let result = state.apply_event(&event);

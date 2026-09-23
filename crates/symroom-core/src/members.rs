@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::value::RawValue;
 
 use crate::event::Event;
 
@@ -123,8 +123,8 @@ impl State {
     }
 }
 
-fn parse_body(body: &Value, kind: &str) -> Result<MemberBody, String> {
-    serde_json::from_value(body.clone()).map_err(|error| format!("unmarshal {kind} body: {error}"))
+fn parse_body(body: &RawValue, kind: &str) -> Result<MemberBody, String> {
+    serde_json::from_str(body.get()).map_err(|error| format!("unmarshal {kind} body: {error}"))
 }
 
 fn decode_key(text: &str, field: &str) -> Result<String, String> {

@@ -284,6 +284,16 @@ func roomEventVectors(t *testing.T, identities map[string]*identity.Identity) []
 			Room: "room-shape", Seq: 5, Lamport: 5, Prev: "sha256:previous", Stamp: stamp, Body: `null`,
 		},
 		{
+			ID: "body-html-unicode", Description: "HTML-sensitive characters and Unicode separators are escaped by Go", Kind: event.KindNotePosted,
+			Room: "room-<>&\u2028\u2029", Seq: 6, Lamport: 6, Stamp: stamp,
+			Body: `{"text":"<>&` + "\u2028\u2029" + `"}`,
+		},
+		{
+			ID: "body-escaped-html", Description: "the original spelling of JSON escapes survives Go RawMessage compaction", Kind: event.KindNotePosted,
+			Room: "room-shape", Seq: 7, Lamport: 7, Stamp: stamp,
+			Body: `{"text":"\u003C\u003e\u0026"}`,
+		},
+		{
 			ID: "no-version", Description: "Sign fills a missing version with the current one", Kind: event.KindNotePosted,
 			Room: "room-version", Seq: 9, Lamport: 9, Stamp: stamp, Body: `{"note":"versionless"}`, OmitVersion: true,
 		},

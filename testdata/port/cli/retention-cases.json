@@ -1228,6 +1228,44 @@
    ],
    "description": "Go serializes its still-nil proposals slice as null when the directory exists but nothing is pending.",
    "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-eval-reviewable-proposal",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", ".symdesk/rules.yaml", "--json", "--vault", "${WORKSPACE}"],
+   "prepare_args": ["ls", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "ignore",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/rules.yaml", "content": "name: expired-open\nselector:\n  document_type: memo\n  status: open\nperiod_days: 30\naction: flag_review\n", "mode": 420},
+    {"path": "expired.md", "content": "---\ntitle: Expired\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: open\n---\nBody\n", "mode": 420},
+    {"path": "fresh.md", "content": "---\ntitle: Fresh\ndocument_date: \"2099-01-01\"\ndocument_type: memo\nstatus: open\n---\nBody\n", "mode": 420},
+    {"path": "paid.md", "content": "---\ntitle: Paid\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: paid\n---\nBody\n", "mode": 420}
+   ],
+   "description": "Both CLIs stage a proposal from the existing index. stdout is ignored because Go run IDs and proposal timestamps are generated from separate wall-clock reads; the Rust CLI test asserts the output and persisted item details.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-eval-invalid-rule",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", ".symdesk/rules.yaml", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/rules.yaml", "content": "name: invalid\nperiod_days: 0\naction: trash\n", "mode": 420}
+   ],
+   "description": "Rule validation errors match Go and leave no staged proposal.",
+   "compare_sidecar_layout": true
   }
  ]
 }

@@ -111,6 +111,11 @@ fn main() -> ExitCode {
         Some(("retention", command)) => {
             let vault_opt = matches.get_one::<String>("vault").cloned();
             match command.subcommand() {
+                Some(("eval", subcommand)) => retention::run_eval(
+                    vault_opt.as_deref(),
+                    subcommand.get_one::<String>("rules").map(String::as_str),
+                    output_json,
+                ),
                 Some(("list", _)) => retention::run_list(vault_opt.as_deref(), output_json),
                 Some(("reject", subcommand)) => retention::run_reject(
                     vault_opt.as_deref(),

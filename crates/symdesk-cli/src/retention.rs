@@ -1,9 +1,8 @@
 //! Go: `cmd/symdesk/retention.go`.
 //!
-//! This module ports the retention commands that only use the sidecar open and
-//! `symdesk_vault::retention` state APIs: `list`, `reject`, `diff`, and
-//! `history`. `eval` and `accept` remain out of scope because they require the
-//! service mutation layer.
+//! Retention evaluation and review commands backed by the sidecar and vault
+//! state APIs. Acceptance remains out of scope because it requires service
+//! mutations.
 
 use std::{
     collections::BTreeMap,
@@ -17,8 +16,11 @@ use serde_json::{Value, json};
 use symdesk_index::open_for_vault;
 use symdesk_vault::retention::{
     PROPOSAL_STATUS_FAILED, PROPOSAL_STATUS_PARTIAL, PROPOSAL_STATUS_PENDING, Proposal,
-    ProposalItem, history_path, load_history, load_proposal, proposal_dir, write_proposal,
+    ProposalItem, evaluate, history_path, load_history, load_proposal, load_rules, proposal_dir,
+    write_proposal,
 };
+use symdesk_vault::retention_state::retention_state;
+use time::OffsetDateTime;
 
 use crate::{emit_error, write_go_json, write_stdout};
 
@@ -30,6 +32,16 @@ pub fn cli() -> Command {
             Arg::new("verbose")
                 .long("verbose")
                 .action(ArgAction::SetTrue),
+        )
+        .subcommand(
+            Command::new("eval")
+                .about("Evaluate retention rules and stage a reviewable proposal")
+                .arg(
+                    Arg::new("rules")
+                        .long("rules")
+                        .num_args(1)
+                        .help("Path to retention rules YAML file (default: <vault>/.symdesk/retention-rules.yaml)"),
+                ),
         )
         .subcommand(Command::new("list").about("List documents due to expire"))
         .subcommand(
@@ -47,6 +59,103 @@ pub fn cli() -> Command {
                 .about("Show the history of executed retention actions")
                 .arg(Arg::new("extra").num_args(0..).action(ArgAction::Append)),
         )
+}
+
+/// Go: `newRetentionEvalCmd`'s `RunE`.
+pub fn run_eval(
+    vault: Option<&str>,
+    rules_path: Option<&str>,
+    output_json: bool,
+) -> std::process::ExitCode {
+    let vault_root = match crate::resolve_vault(vault) {
+        Ok(root) => root,
+        Err(error) => return emit_error(error, output_json),
+    };
+    let sidecar = match open_for_vault(&vault_root) {
+        Ok(sidecar) => sidecar,
+        Err(error) => return emit_error(error.to_string(), output_json),
+    };
+    let rules_file = rules_path
+        .map(PathBuf::from)
+        .unwrap_or_else(|| vault_root.join(".symdesk").join("retention-rules.yaml"));
+    let rules = match load_rules(&rules_file) {
+        Ok(rules) => rules,
+        Err(error) => {
+            return emit_error(
+                format!("load rules from {}: {error}", rules_file.display()),
+                output_json,
+            );
+        }
+    };
+    let docs = match sidecar.list_files(&vault_root, "") {
+        Ok(docs) => docs,
+        Err(error) => return emit_error(format!("list documents: {error}"), output_json),
+    };
+
+    let now = OffsetDateTime::now_utc();
+    let mut all_items = Vec::new();
+    let mut state_failures = Vec::new();
+    for rule in &rules {
+        for doc in &docs {
+            let relative = match Path::new(&doc.path).strip_prefix(&vault_root) {
+                Ok(path) => match path.to_str() {
+                    Some(path) => path.replace('\\', "/"),
+                    None => {
+                        state_failures.push(format!("{}: non-UTF-8 vault path", doc.path));
+                        continue;
+                    }
+                },
+                Err(_) => {
+                    state_failures.push(format!("{}: path is outside vault", doc.path));
+                    continue;
+                }
+            };
+            let state = match retention_state(&vault_root, &relative) {
+                Ok(state) => state,
+                Err(error) => {
+                    state_failures.push(format!("{relative}: {error}"));
+                    continue;
+                }
+            };
+            if state.dataset && rule.name != state.rule_name {
+                continue;
+            }
+            for mut item in evaluate(rule, &[state.meta], now) {
+                item.rule_name.clone_from(&rule.name);
+                item.fingerprint.clone_from(&state.fingerprint);
+                all_items.push(item);
+            }
+        }
+    }
+    if !state_failures.is_empty() {
+        return emit_error(
+            format!(
+                "retention evaluation failed closed: {}",
+                state_failures.join("; ")
+            ),
+            output_json,
+        );
+    }
+
+    let run_id = format!("ret-{}", now.unix_timestamp());
+    let item_count = all_items.len();
+    let proposal = Proposal {
+        run_id: run_id.clone(),
+        rule_name: "batch".to_owned(),
+        created: now.to_offset(time::UtcOffset::UTC),
+        items: (!all_items.is_empty()).then_some(all_items),
+        status: PROPOSAL_STATUS_PENDING.to_owned(),
+    };
+    if let Err(error) = write_proposal(&vault_root, &proposal) {
+        return emit_error(error.to_string(), output_json);
+    }
+    let result = json!({
+        "status": PROPOSAL_STATUS_PENDING,
+        "run_id": run_id,
+        "item_count": item_count,
+        "items": proposal.items,
+    });
+    output(result, output_json)
 }
 
 /// Go: `newRetentionListCmd`'s `RunE`.

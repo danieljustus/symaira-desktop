@@ -254,6 +254,123 @@ fn history_rejects_arguments_and_null_state() {
     );
 }
 
+#[test]
+fn eval_uses_rules_and_authoritative_metadata_to_stage_a_proposal() {
+    let root = TempRoot::new("eval");
+    fs::create_dir_all(root.vault().join(".symdesk")).expect("create rules directory");
+    fs::write(
+        root.vault().join(".symdesk/retention-rules.yaml"),
+        "name: old-open-memos\nselector:\n  document_type: memo\n  status: open\nperiod_days: 30\naction: flag_review\n",
+    )
+    .expect("write rules");
+    fs::write(
+        root.vault().join("expired.md"),
+        "---\ntitle: Expired Memo\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: open\ntags: [finance]\n---\nBody\n",
+    )
+    .expect("write expired document");
+    fs::write(
+        root.vault().join("fresh.md"),
+        "---\ntitle: Fresh Memo\ndocument_date: \"2099-01-01\"\ndocument_type: memo\nstatus: open\n---\nBody\n",
+    )
+    .expect("write fresh document");
+    fs::write(
+        root.vault().join("paid.md"),
+        "---\ntitle: Paid Memo\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: paid\n---\nBody\n",
+    )
+    .expect("write selector-miss document");
+
+    // Go eval reads only the existing sidecar index; `ls` initializes it for
+    // this fresh fixture in both binaries.
+    let prepared = run(&root, ["--json", "ls"]);
+    assert_eq!(
+        prepared.status.code(),
+        Some(0),
+        "stderr: {:?}",
+        prepared.stderr
+    );
+    assert!(
+        String::from_utf8_lossy(&prepared.stdout).contains("expired.md"),
+        "ls output: {:?}",
+        prepared.stdout
+    );
+    let state = symdesk_vault::retention_state::retention_state(&root.vault(), "expired.md")
+        .expect("read authoritative expired metadata");
+    assert_eq!(state.meta.status, "open", "state: {state:?}");
+    assert_eq!(state.meta.document_type, "memo", "state: {state:?}");
+    assert_eq!(state.meta.document_date, "2024-01-01", "state: {state:?}");
+
+    let output = run(&root, ["retention", "eval", "--json"]);
+    assert_eq!(output.status.code(), Some(0), "stderr: {:?}", output.stderr);
+    assert!(output.stderr.is_empty(), "stderr: {:?}", output.stderr);
+    let rendered: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("decode eval output");
+    assert_eq!(rendered["status"], "pending");
+    assert_eq!(rendered["item_count"], 1, "eval output: {rendered}");
+    assert_eq!(rendered["items"][0]["path"], "expired.md");
+    assert_eq!(rendered["items"][0]["title"], "Expired Memo");
+    assert_eq!(rendered["items"][0]["reference_date"], "2024-01-01");
+    assert_eq!(rendered["items"][0]["expires_at"], "2024-01-31");
+    assert_eq!(rendered["items"][0]["action"], "flag_review");
+    assert_eq!(rendered["items"][0]["rule_name"], "old-open-memos");
+    assert_eq!(
+        rendered["items"][0]["fingerprint"].as_str().unwrap().len(),
+        64
+    );
+
+    let run_id = rendered["run_id"].as_str().expect("run id");
+    assert!(run_id.starts_with("ret-"));
+    let proposal: serde_json::Value = serde_json::from_slice(
+        &fs::read(root.proposal_dir().join(format!("{run_id}.json")))
+            .expect("read staged proposal"),
+    )
+    .expect("decode staged proposal");
+    assert_eq!(proposal["run_id"], run_id);
+    assert_eq!(proposal["rule_name"], "batch");
+    assert_eq!(proposal["status"], "pending");
+    assert_eq!(proposal["items"], rendered["items"]);
+}
+
+#[test]
+fn eval_fails_closed_without_staging_when_authoritative_state_is_invalid() {
+    let root = TempRoot::new("eval-fail-closed");
+    fs::create_dir_all(root.vault().join(".symdesk")).expect("create rules directory");
+    fs::write(
+        root.vault().join(".symdesk/retention-rules.yaml"),
+        "name: old-documents\nperiod_days: 30\naction: trash\n",
+    )
+    .expect("write rules");
+    let document = root.vault().join("broken.md");
+    fs::write(
+        &document,
+        "---\ntitle: Valid before indexing\ndocument_date: \"2024-01-01\"\n---\nBody\n",
+    )
+    .expect("write indexable document");
+    let prepared = run(&root, ["ls"]);
+    assert_eq!(
+        prepared.status.code(),
+        Some(0),
+        "stderr: {:?}",
+        prepared.stderr
+    );
+    fs::write(&document, "---\ntitle: [invalid\n---\nBody\n")
+        .expect("break authoritative document");
+
+    let output = run(&root, ["retention", "eval", "--json"]);
+    assert_eq!(output.status.code(), Some(1));
+    let error: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("decode fail-closed error");
+    assert!(
+        error["error"]
+            .as_str()
+            .expect("error message")
+            .starts_with("retention evaluation failed closed: broken.md:")
+    );
+    assert!(
+        !root.proposal_dir().exists(),
+        "a proposal must not be staged"
+    );
+}
+
 fn missing_file_message() -> &'static str {
     if cfg!(windows) {
         "The system cannot find the file specified."

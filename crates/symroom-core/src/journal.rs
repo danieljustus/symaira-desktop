@@ -20,7 +20,7 @@
 use std::{
     collections::BTreeMap,
     fs,
-    io::Write,
+    io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
 };
 
@@ -163,6 +163,126 @@ pub fn author_stats(room_dir: &Path, author: &str) -> Result<AuthorStats, std::i
             })
         }
     }
+}
+
+/// Go `Journal.VerifyChain`: checks the non-blank lines of one author's
+/// segment in sequence, hashing each stored JSON line without its delimiter.
+/// Signatures and cross-author membership belong to `Journal.Verify`, not here.
+///
+/// # Errors
+/// Returns the first decoding, sequence or previous-hash error, or an I/O error.
+pub fn verify_chain(room_dir: &Path, author: &str) -> Result<(), VerifyChainError> {
+    let path = author_journal_path(room_dir, author);
+    let file = match fs::File::open(&path) {
+        Ok(file) => file,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(error.into()),
+    };
+    let mut reader = BufReader::new(file);
+    let mut events = Vec::new();
+    // Go ReadSegment ignores Scanner errors after returning decoded events.
+    while let Ok(Some(line)) = read_scanner_line(&mut reader) {
+        if !is_blank(&line) {
+            events.push(Event::unmarshal_json_line(&line).map_err(VerifyChainError::Parse)?);
+        }
+    }
+    let file = match fs::File::open(&path) {
+        Ok(file) => file,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound && events.is_empty() => {
+            return Ok(());
+        }
+        Err(error) => return Err(error.into()),
+    };
+    let mut reader = BufReader::new(file);
+    let mut lines = Vec::new();
+    while let Some(line) = read_scanner_line(&mut reader)? {
+        if !is_blank(&line) {
+            lines.push(line);
+        }
+    }
+    let mut previous = ZERO_HASH.to_owned();
+    for (index, (line, event)) in lines.iter().zip(events.iter()).enumerate() {
+        let expected = index as u64 + 1;
+        if event.seq != expected {
+            return Err(VerifyChainError::Sequence {
+                author: author.to_owned(),
+                expected,
+                actual: event.seq,
+            });
+        }
+        if event.prev != previous {
+            return Err(VerifyChainError::Previous {
+                author: author.to_owned(),
+                seq: event.seq,
+                expected: previous,
+                actual: event.prev.clone(),
+            });
+        }
+        previous = format!("sha256:{}", hex::encode(Sha256::digest(line)));
+    }
+    Ok(())
+}
+
+// Go bufio.Scanner's default buffer is 64 KiB, including the delimiter.
+// Bound each physical line before allocating it.
+fn read_scanner_line(reader: &mut impl BufRead) -> Result<Option<Vec<u8>>, VerifyChainError> {
+    const MAX_TOKEN_BUFFER: usize = 64 * 1024;
+    let mut line = Vec::new();
+    loop {
+        let available = reader.fill_buf()?;
+        if available.is_empty() {
+            if line.is_empty() {
+                return Ok(None);
+            }
+            if line.last() == Some(&b'\r') {
+                line.pop();
+            }
+            return Ok(Some(line));
+        }
+        let newline = available.iter().position(|byte| *byte == b'\n');
+        let length = newline.map_or(available.len(), |index| index + 1);
+        if line.len() + length > MAX_TOKEN_BUFFER
+            || (newline.is_none() && line.len() + length == MAX_TOKEN_BUFFER)
+        {
+            return Err(VerifyChainError::ScannerTooLong);
+        }
+        line.extend_from_slice(&available[..length]);
+        reader.consume(length);
+        if newline.is_some() {
+            line.pop();
+            if line.last() == Some(&b'\r') {
+                line.pop();
+            }
+            return Ok(Some(line));
+        }
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum VerifyChainError {
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error("unmarshal line: {0}")]
+    Parse(EventError),
+    #[error("bufio.Scanner: token too long")]
+    ScannerTooLong,
+    #[error(
+        "journal sequence number mismatch: author {author} expected seq {expected}, got {actual}"
+    )]
+    Sequence {
+        author: String,
+        expected: u64,
+        actual: u64,
+    },
+    #[error(
+        "journal hash chain broken: author {author} seq {seq} expected prev {expected}, got {actual}"
+    )]
+    Previous {
+        author: String,
+        seq: u64,
+        expected: String,
+        actual: String,
+    },
 }
 
 /// Appends a marshalled event to its author's journal file.

@@ -161,6 +161,7 @@
         "make vault-write-differential",
         "make vault-history-differential",
         "make history-purge-differential",
+        "make history-prune-differential",
         "make history-trash-purge-differential",
         "make vault-retention-differential",
         "make retention-rules-differential",
@@ -378,6 +379,7 @@
       "acceptance": [
         "make symroom-differential",
         "make room-journal-differential",
+        "make room-merge-read-differential",
         "make room-run-projection-differential",
         "make room-run-cli-differential",
         "make room-run-wait-cli-differential",

@@ -11,6 +11,7 @@
 .PHONY: room-mcp-fixtures-generate room-mcp-differential
 .PHONY: room-run-mutations-cli-fixtures-generate room-run-mutations-cli-differential
 .PHONY: room-note-cli-fixtures-generate room-note-cli-differential
+.PHONY: room-merge-read-fixtures-generate room-merge-read-differential history-prune-fixtures-generate history-prune-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -263,6 +264,20 @@ room-mcp-fixtures-generate:
 room-mcp-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/mcp -run '^TestSymRoomMCP(Representative|Mutation)Oracle$$'
 	$(CARGO) test -p symroom-cli --locked --test mcp
+
+room-merge-read-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/journal -run '^TestPortRoomMergeReadContract$$'
+
+room-merge-read-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/journal -run '^TestPortRoomMergeReadContract$$'
+	$(CARGO) test -p symroom-core --locked --test merge_read_contracts
+
+history-prune-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'
+
+history-prune-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'
+	$(CARGO) test -p symdesk-vault --locked --test history_prune_contracts
 
 history-purge-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPurgeContract$$'

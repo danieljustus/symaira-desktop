@@ -166,13 +166,14 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   byte-exact cases) as #1008, verified on Linux/macOS/Windows in the same native matrix;
   The current integration branch adds local Go↔Rust differential evidence for
   `retention eval/accept/reject/diff/history`, dataset sync/import/purge,
-  and explicit history/trash purge. History policy pruning and native evidence
-  at the exact integrated commit remain open, so VAULT-006 and DATA-001 stay
-  `TODO`.
+  explicit history/trash purge, and history policy pruning with checkpoint
+  protection and blob collection. Native evidence at the exact integrated
+  commit remains open, so VAULT-006 and DATA-001 stay `TODO`.
 
 - `RUST-016` is in progress. Local Go↔Rust gates cover signed identity/events,
   journal basics, run projection and CLI transitions, the `note` CLI command,
-  MCP framing and all eight declared tools, including signed mutation effects.
+  journal merge reads, MCP framing and all eight declared tools, including
+  signed mutation effects.
   The Room event fuzzer has a valid seed and passed 1,000 local runs. Remaining
   CLI families, journal/index behavior and exact native platform evidence keep
   the item open.
@@ -259,8 +260,8 @@ The historical `value001-latest.json` remains `passed: false`; the exact
   Full `compare_files` deliberately stays off: `sidecar.db` carries SQLite state and
   `metadata.json` a timestamp, so neither can match byte-for-byte across two processes —
   the layout gate plus the byte-exact `metadata.json` replay are the filesystem evidence.
-- Next actions for RUST-007: finish history policy pruning, re-freeze the
-  integrated fixture provenance, then execute all applicable gates on the
+- Next actions for RUST-007: re-freeze the integrated fixture provenance,
+  then execute all applicable gates on the
   required native platforms. The retention CLI keeps Go's open sidecar handle
   behavior across `list/reject/diff/history`.
 - Skills loaded this session: `go-to-rust-migration` + `references/worker-dispatch.md`.

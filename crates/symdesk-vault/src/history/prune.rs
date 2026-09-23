@@ -8,7 +8,7 @@ use std::{
 };
 
 use cap_std::fs::{Dir, DirEntry};
-use time::{Duration, OffsetDateTime};
+use time::{Date, Duration, OffsetDateTime};
 
 use super::{HistoryError, HistoryStore, objects_rel_dir};
 
@@ -76,14 +76,14 @@ impl HistoryStore {
         let cutoff = (policy.max_age > Duration::ZERO).then(|| {
             self.now()
                 .checked_sub(policy.max_age)
-                .unwrap_or(OffsetDateTime::MIN)
+                .unwrap_or(Date::MIN.midnight().assume_utc())
         });
 
         if policy.max_checkpoint_age > Duration::ZERO {
             let checkpoint_cutoff = self
                 .now()
                 .checked_sub(policy.max_checkpoint_age)
-                .unwrap_or(OffsetDateTime::MIN);
+                .unwrap_or(Date::MIN.midnight().assume_utc());
             let checkpoints = self
                 .list_checkpoints()
                 .map_err(|error| failed(removed, error))?;
@@ -151,7 +151,7 @@ impl HistoryStore {
                 )
             })?;
             if !referenced.contains(&name) {
-                root.remove_file(&PathBuf::from(objects_rel_dir()).join(name))
+                root.remove_file(PathBuf::from(objects_rel_dir()).join(name))
                     .map_err(|error| failed(removed, HistoryError::Io(error)))?;
             }
         }
@@ -197,6 +197,10 @@ fn visit_manifests(
     visit(root, directory, action)
 }
 
+#[expect(
+    clippy::too_many_arguments,
+    reason = "retention state is shared across manifests"
+)]
 fn prune_manifest(
     store: &HistoryStore,
     root: &Dir,

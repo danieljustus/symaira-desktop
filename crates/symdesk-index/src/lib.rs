@@ -541,15 +541,68 @@ impl Sidecar {
     /// Returns the first filesystem, parser or SQLite error after flushing
     /// documents already queued before a later walk or parse error.
     pub fn refresh_index(&mut self, vault_root: &Path) -> Result<(), SidecarError> {
+        self.refresh_index_inner(vault_root, false)
+    }
+
+    /// Refreshes the Markdown index while recording the per-file lifecycle
+    /// states emitted by the Go `symdesk index` command.
+    ///
+    /// # Errors
+    /// Returns the first filesystem, parser or SQLite error after flushing
+    /// documents already queued before a later walk or parse error.
+    pub fn refresh_index_for_cli(&mut self, vault_root: &Path) -> Result<(), SidecarError> {
+        self.refresh_index_inner(vault_root, true)
+    }
+
+    fn refresh_index_inner(
+        &mut self,
+        vault_root: &Path,
+        record_lifecycle: bool,
+    ) -> Result<(), SidecarError> {
         validate_utf8_path(vault_root, "vault root")?;
         let vault_dir = open_vault_dir(vault_root)?;
         let mut batch = Vec::with_capacity(MAX_INDEX_BATCH_SIZE);
         let mut callback_error = None;
         let walk_result = symdesk_vault::walk_markdown_with(vault_root, |relative| {
+            let storage_key = match storage_path(vault_root, relative) {
+                Ok(path) => path.key_path,
+                Err(error) => {
+                    callback_error = Some(error);
+                    return Err(io::Error::other("refresh index callback failed"));
+                }
+            };
+            let key = storage_key
+                .to_str()
+                .ok_or_else(|| SidecarError::NonUtf8Path {
+                    context: "storage key",
+                    path: storage_key.clone(),
+                });
+            let key = match key {
+                Ok(key) => key,
+                Err(error) => {
+                    callback_error = Some(error);
+                    return Err(io::Error::other("refresh index callback failed"));
+                }
+            };
+            if record_lifecycle {
+                if let Err(error) = self.set_lifecycle_state(key, "indexing", "") {
+                    callback_error = Some(error);
+                    return Err(io::Error::other("refresh index callback failed"));
+                }
+            }
             let result = self.refresh_path(&vault_dir, vault_root, relative, &mut batch);
             if let Err(error) = result {
+                if record_lifecycle {
+                    let _ = self.set_lifecycle_state(key, "failed", &error.to_string());
+                }
                 callback_error = Some(error);
                 return Err(io::Error::other("refresh index callback failed"));
+            }
+            if record_lifecycle {
+                if let Err(error) = self.set_lifecycle_state(key, "indexed", "") {
+                    callback_error = Some(error);
+                    return Err(io::Error::other("refresh index callback failed"));
+                }
             }
             Ok(())
         });
@@ -559,6 +612,19 @@ impl Sidecar {
             return Err(error);
         }
         walk_result.map_err(Into::into)
+    }
+
+    fn set_lifecycle_state(
+        &self,
+        path: &str,
+        state: &str,
+        reason: &str,
+    ) -> Result<(), SidecarError> {
+        self.connection.execute(
+            "INSERT INTO index_lifecycle(path, state, reason, updated_at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(path) DO UPDATE SET state=excluded.state, reason=excluded.reason, updated_at=excluded.updated_at",
+            params![path, state, reason, OffsetDateTime::now_utc().format(&Rfc3339).map_err(|error| SidecarError::Time(error.to_string()))?],
+        )?;
+        Ok(())
     }
 
     fn refresh_path(

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "default_first": {
+    "exit_code": 0,
+    "stdout": "{\"indexed\":2,\"skipped\":0,\"status\":\"ok\"}\n",
+    "stderr": ""
+  },
+  "default_again": {
+    "exit_code": 0,
+    "stdout": "{\"indexed\":0,\"skipped\":2,\"status\":\"ok\"}\n",
+    "stderr": ""
+  },
+  "prune": {
+    "exit_code": 0,
+    "stdout": "{\"indexed\":0,\"pruned\":2,\"skipped\":1,\"status\":\"ok\"}\n",
+    "stderr": ""
+  },
+  "explicit": {
+    "exit_code": 0,
+    "stdout": "{\"indexed\":1,\"skipped\":0,\"status\":\"ok\"}\n",
+    "stderr": ""
+  },
+  "missing": {
+    "exit_code": 1,
+    "stdout": "{\"error\":\"vault path does not exist: stat $ROOT/missing: no such file or directory\"}\n",
+    "stderr": ""
+  },
+  "default_files": [
+    {
+      "path": "$ROOT/vault/first.md",
+      "title": "first",
+      "body": "# First\n\nfirst oracle document."
+    }
+  ],
+  "explicit_files": [
+    {
+      "path": "$ROOT/explicit/only.md",
+      "title": "only",
+      "body": "# Explicit\n\nexplicit oracle document."
+    }
+  ],
+  "lifecycle": {
+    "first.md": "indexed"
+  },
+  "metadata": true
+}

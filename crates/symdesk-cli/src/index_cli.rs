@@ -14,36 +14,43 @@ use symdesk_index::{
 };
 
 pub fn cli() -> Command {
-    Command::new("index").subcommand(
-        Command::new("maintenance")
-            .subcommand(Command::new("location"))
-            .subcommand(
-                Command::new("backup").arg(
-                    Arg::new("destination")
-                        .long("index-output")
-                        .hide(true)
-                        .num_args(1)
-                        .value_name("FILE"),
+    Command::new("index")
+        .arg(Arg::new("path").value_name("PATH").num_args(0..=1))
+        .arg(
+            Arg::new("prune")
+                .long("prune")
+                .action(clap::ArgAction::SetTrue),
+        )
+        .subcommand(
+            Command::new("maintenance")
+                .subcommand(Command::new("location"))
+                .subcommand(
+                    Command::new("backup").arg(
+                        Arg::new("destination")
+                            .long("index-output")
+                            .hide(true)
+                            .num_args(1)
+                            .value_name("FILE"),
+                    ),
+                )
+                .subcommand(
+                    Command::new("restore").arg(
+                        Arg::new("source")
+                            .long("input")
+                            .num_args(1)
+                            .value_name("FILE"),
+                    ),
+                )
+                .subcommand(
+                    Command::new("relocate").arg(
+                        Arg::new("destination")
+                            .long("index-output")
+                            .hide(true)
+                            .num_args(1)
+                            .value_name("FILE"),
+                    ),
                 ),
-            )
-            .subcommand(
-                Command::new("restore").arg(
-                    Arg::new("source")
-                        .long("input")
-                        .num_args(1)
-                        .value_name("FILE"),
-                ),
-            )
-            .subcommand(
-                Command::new("relocate").arg(
-                    Arg::new("destination")
-                        .long("index-output")
-                        .hide(true)
-                        .num_args(1)
-                        .value_name("FILE"),
-                ),
-            ),
-    )
+        )
 }
 
 pub fn run(
@@ -53,7 +60,7 @@ pub fn run(
     json_flag: bool,
 ) -> ExitCode {
     let Some(("maintenance", maintenance)) = command.subcommand() else {
-        return super::process_exit(CoreExitCode::Ok);
+        return run_build(command, vault, json_output);
     };
     let environment = std::env::vars().collect::<BTreeMap<_, _>>();
     let cwd = match std::env::current_dir() {
@@ -139,6 +146,129 @@ pub fn run(
         ),
         None => super::process_exit(CoreExitCode::Ok),
     }
+}
+
+fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> ExitCode {
+    let requested = command
+        .get_one::<String>("path")
+        .map(String::as_str)
+        .or(vault);
+    let root = match super::resolve_vault(requested) {
+        Ok(path) => path,
+        Err(error) => {
+            return super::emit_error(index_vault_error(requested, &error), json_output);
+        }
+    };
+    let mut sidecar = match symdesk_index::open_for_vault(&root) {
+        Ok(sidecar) => sidecar,
+        Err(error) => return super::emit_error(error.to_string(), json_output),
+    };
+
+    let before = match indexed_paths(&root) {
+        Ok(paths) => paths,
+        Err(error) => return super::emit_error(error, json_output),
+    };
+    let discovered = match symdesk_vault::walk_markdown(&root) {
+        Ok(paths) => paths,
+        Err(error) => return super::emit_error(error.to_string(), json_output),
+    };
+    let mut indexed = 0usize;
+    let mut skipped = 0usize;
+    for relative in discovered {
+        let path = root.join(&relative);
+        let key = path.to_string_lossy().into_owned();
+        let bytes = match fs::read(&path) {
+            Ok(bytes) => bytes,
+            Err(error) => return super::emit_error(format!("{error}"), json_output),
+        };
+        let document = match symdesk_vault::parse_bytes(&key, &bytes) {
+            Ok(document) => document,
+            Err(error) => return super::emit_error(error.to_string(), json_output),
+        };
+        if document.derived {
+            continue;
+        }
+        if before.get(&key).is_some_and(|sha| sha == &document.sha256) {
+            skipped += 1;
+        } else {
+            indexed += 1;
+        }
+    }
+
+    if let Err(error) = sidecar.refresh_index_for_cli(&root) {
+        return super::emit_error(error.to_string(), json_output);
+    }
+    let pruned = if command.get_flag("prune") {
+        match sidecar.prune(&root) {
+            Ok(count) => Some(count),
+            Err(error) => {
+                return super::emit_error(format!("prune failed: {error}"), json_output);
+            }
+        }
+    } else {
+        None
+    };
+    let mut result = json!({"status":"ok", "indexed":indexed, "skipped":skipped});
+    if let Some(count) = pruned {
+        result["pruned"] = json!(count);
+    }
+    if json_output {
+        let mut rendered = serde_json::to_string(&result).unwrap_or_default();
+        rendered.push('\n');
+        super::write_stdout(rendered)
+    } else {
+        let summary = format!("Index complete. {indexed} new/updated files, {skipped} skipped.\n");
+        let summary = if let Some(count) = pruned {
+            format!("{summary}Prune complete. {count} stale entries removed.\n")
+        } else {
+            summary
+        };
+        super::write_stdout(summary)
+    }
+}
+
+fn index_vault_error(requested: Option<&str>, error: &str) -> String {
+    if !error.contains("No such file or directory") && !error.contains("os error 2") {
+        return error.to_owned();
+    }
+    let raw = requested
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned)
+        .or_else(|| std::env::var("SYMDESK_VAULT").ok())
+        .unwrap_or_default();
+    if raw.is_empty() {
+        return error.to_owned();
+    }
+    let path = PathBuf::from(raw);
+    let absolute = if path.is_absolute() {
+        path
+    } else if let Ok(cwd) = std::env::current_dir() {
+        cwd.join(path)
+    } else {
+        path
+    };
+    format!(
+        "vault path does not exist: stat {}: no such file or directory",
+        super::lexical_clean(&absolute).display()
+    )
+}
+
+fn indexed_paths(root: &Path) -> Result<BTreeMap<String, String>, String> {
+    let path = symdesk_index::path_for_vault(root).map_err(|error| error.to_string())?;
+    if !path.exists() {
+        return Ok(BTreeMap::new());
+    }
+    let connection = Connection::open(path).map_err(|error| error.to_string())?;
+    let mut statement = connection
+        .prepare("SELECT path, sha256 FROM files")
+        .map_err(|error| error.to_string())?;
+    let rows = statement
+        .query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })
+        .map_err(|error| error.to_string())?;
+    rows.collect::<Result<BTreeMap<_, _>, _>>()
+        .map_err(|error| error.to_string())
 }
 
 fn resolve_location(

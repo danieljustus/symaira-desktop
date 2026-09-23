@@ -13,12 +13,21 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/config"
 	"github.com/danieljustus/symaira-desktop/internal/room/identity"
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
+	"github.com/danieljustus/symaira-desktop/internal/room/room"
 	"github.com/danieljustus/symaira-desktop/internal/room/run"
 )
+
+func initAdapterTestRoom(t *testing.T, dir string, owner *identity.Identity) {
+	t.Helper()
+	if _, err := room.Init(dir, "Adapter Test Room", owner); err != nil {
+		t.Fatalf("initialize room: %v", err)
+	}
+}
 
 func TestExecuteAdapterEndToEnd(t *testing.T) {
 	tempDir := t.TempDir()
 	ownerID, _ := identity.Generate("owner")
+	initAdapterTestRoom(t, tempDir, ownerID)
 
 	// 1. Setup config with shell adapter
 	cfg := &config.Config{
@@ -81,6 +90,7 @@ func TestExecuteAdapterEndToEnd(t *testing.T) {
 func TestExecuteAdapterScopeRefused(t *testing.T) {
 	tempDir := t.TempDir()
 	ownerID, _ := identity.Generate("owner")
+	initAdapterTestRoom(t, tempDir, ownerID)
 
 	cfg := &config.Config{
 		Adapters: map[string]config.AdapterConfig{
@@ -116,6 +126,7 @@ func TestExecuteAdapterScopeRefused(t *testing.T) {
 func TestExecuteAdapterNonZeroExitFailsRun(t *testing.T) {
 	tempDir := t.TempDir()
 	ownerID, _ := identity.Generate("owner")
+	initAdapterTestRoom(t, tempDir, ownerID)
 
 	cfg := &config.Config{
 		Adapters: map[string]config.AdapterConfig{

@@ -134,7 +134,7 @@ func runGenerate(repoRoot, commit, release string) {
 		run string
 	}{
 		{"./internal/config", "^TestPortConfigPrecedenceContract$"},
-		{"./cmd/symdesk", "TestSymdeskCobraInventory|^TestIndex(Maintenance|Build)ProcessPortFixture$"},
+		{"./cmd/symdesk", "TestSymdeskCobraInventory|^TestIndex(Maintenance|Build)ProcessPortFixture$|^TestPortVaultSelectionCLIContract$"},
 		{"./internal/room/journal", "^TestPortRoomVerifyContract$"},
 		{"./internal/room/journal", "^TestPortRoomLogContract$"},
 		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPort(Note|Decide|Identity|Member|Index|Verify|Log|Artifact|ArtifactIdentity|Init|Watch|Doctor|Checkpoint)CLIContract"},

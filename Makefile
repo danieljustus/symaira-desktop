@@ -15,6 +15,7 @@
 .PHONY: room-identity-cli-fixtures-generate room-identity-cli-differential
 .PHONY: room-index-fixtures-generate room-index-differential history-service-fixtures-generate history-service-differential
 .PHONY: room-member-cli-fixtures-generate room-member-cli-differential
+.PHONY: room-index-cli-fixtures-generate room-index-cli-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -295,6 +296,13 @@ room-index-fixtures-generate:
 room-index-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/index -run '^TestPortSymRoomIndexOracle$$'
 	$(CARGO) test -p symroom-core --locked --test index_contracts
+
+room-index-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortIndexCLIContract$$'
+
+room-index-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortIndexCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test index_commands
 
 history-prune-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'

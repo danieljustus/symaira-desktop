@@ -294,6 +294,10 @@ jobs:
         shell: bash
         run: make room-index-differential
 
+      - name: Run native room index CLI differential
+        shell: bash
+        run: make room-index-cli-differential
+
       - name: Run native room run projection differential
         shell: bash
         run: make room-run-projection-differential

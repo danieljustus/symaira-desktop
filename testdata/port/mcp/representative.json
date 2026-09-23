@@ -6,6 +6,30 @@
   },
   "cases": [
     {
+      "id": "mcp001-initialize-string-id",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"init\",\"method\":\"initialize\"}"
+    },
+    {
+      "id": "mcp001-initialize-null-id",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"initialize\"}"
+    },
+    {
+      "id": "mcp001-ping-string-id",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"ping\",\"method\":\"ping\"}"
+    },
+    {
+      "id": "mcp001-initialize-notification",
+      "request": "{\"jsonrpc\":\"2.0\",\"method\":\"initialize\"}"
+    },
+    {
+      "id": "mcp001-invalid-array",
+      "request": "[]"
+    },
+    {
+      "id": "mcp001-invalid-method-type",
+      "request": "{\"jsonrpc\":\"2.0\",\"id\":\"bad\",\"method\":false}"
+    },
+    {
       "id": "initialize-line",
       "request": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}"
     },

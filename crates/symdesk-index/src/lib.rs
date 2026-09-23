@@ -19,6 +19,7 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 mod dataset_purge;
 mod dataset_sync;
+mod history_sync;
 mod metadata;
 
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
@@ -26,6 +27,7 @@ pub use dataset_sync::{
     DatasetImportOptions, DatasetImportResult, DatasetSyncError, DatasetSyncOptions,
     DatasetSyncResult, DatasetSyncRow, DatasetSyncService,
 };
+pub use history_sync::{HistorySyncError, checkpoint_undo, history_restore};
 pub use metadata::{
     METADATA_FILE_NAME, encode_sidecar_metadata, encode_sidecar_metadata_at, open_for_vault,
     record_sidecar_metadata,

@@ -1,6 +1,6 @@
 # Go-to-Rust migration record
 
-> **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006`, `RUST-007`, and `RUST-016` are blocked by the current VALUE-001 order-bias gate ([#936](https://github.com/danieljustus/symaira-desktop/issues/936)).
+> **Status:** implementation active; `RUST-001` through `RUST-006` passed; `RUST-007` and `RUST-016` are in progress. VALUE-001 passed for the exact candidate `5c5e98c5`; later commits need their own integrated verification.
 > **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; portgen provenance instead records the revision whose production source the fixtures were generated from, which must be the checked revision or one of its ancestors. Those are distinct identities by the current contract; their long-term consolidation is tracked in [#934](https://github.com/danieljustus/symaira-desktop/issues/934). VALUE baselines remain pinned to `ae863319` / `v0.12.2`
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
@@ -142,8 +142,8 @@ without modifying the JSON artifact: `0.10` displays as `10.00%`, `3.0` as
 `316.24612017633007` as `31,624.61%`. Timing samples remain in milliseconds and
 RSS samples remain in bytes. The report verifies displayed p95 values against
 the retained raw arrays, but it never runs a benchmark or changes the gate.
-The historical `value001-latest.json` therefore remains `passed: false`; the
-migration stays stopped and Go remains in production.
+The historical `value001-latest.json` remains `passed: false`; the exact
+`5c5e98c5` candidate was accepted separately. Go remains in production.
 
 ## Implementation progress
 
@@ -164,10 +164,11 @@ migration stays stopped and Go remains in production.
   can now reach `PASS`. The CLI-level `symdesk retention list` slice is ported and gated
   by `make retention-cli-differential` (`testdata/port/cli/retention-cases.json`, 6
   byte-exact cases) as #1008, verified on Linux/macOS/Windows in the same native matrix;
-  `retention eval/accept/reject/diff/history` stay open because their state is read and
-  mutated through `internal/service`, which is not ported yet — the Rust CLI deliberately
-  omits them instead of approximating them. DATA-001 (dataset sync) also remains open, so
-  the row stays `TODO`.
+  The current integration branch adds local differential evidence for
+  `retention eval/reject/diff/history` and ordinary-document `accept`, plus
+  dataset sync/import service parity and the `dataset sync` CLI. Dataset purge
+  and final native platform evidence remain open, so VAULT-006 and DATA-001
+  remain `TODO`.
 
 - `RUST-001` passed: generated fixtures freeze 207 SymDesk command nodes (206
   non-root, including Cobra's generated help/completion tree), the production-derived SymRoom parser grammar, 57 SymDesk and 8

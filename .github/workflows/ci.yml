@@ -271,6 +271,10 @@ jobs:
         shell: bash
         run: make config-save-differential
 
+      - name: Run native vault config selection differential
+        shell: bash
+        run: make config-vault-selection-differential
+
       - name: Run native config-precedence differential
         shell: bash
         run: make config-precedence-differential

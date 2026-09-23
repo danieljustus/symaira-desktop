@@ -20,6 +20,7 @@ const (
 
 var fixturePaths = []string{
 	"testdata/port/cli/symdesk-command-tree.json",
+	"testdata/port/cli/config-vault-selection.json",
 	"testdata/port/cli/symroom-parser-grammar.json",
 	"testdata/port/core/config.json",
 	"testdata/port/core/config-precedence.json",

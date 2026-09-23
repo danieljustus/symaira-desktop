@@ -7,6 +7,7 @@ mod mcp;
 mod retention;
 
 use std::{
+    collections::BTreeMap,
     ffi::OsString,
     io::{self, Write},
     path::{Component, Path, PathBuf},
@@ -324,15 +325,26 @@ struct RepresentativeArgs {
 }
 
 fn resolve_vault(flag: Option<&str>) -> Result<PathBuf, String> {
+    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let config_path = PathBuf::from(symdesk_core::config::global_path(&environment));
+    let toml_input = match std::fs::read_to_string(config_path) {
+        Ok(input) => Some(input),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+        Err(error) => return Err(format!("failed to read config file: {error}")),
+    };
+    let config = symdesk_core::config::load(toml_input.as_deref(), &environment)?;
     let raw = flag
         .filter(|value| !value.is_empty())
-        .map(str::to_owned)
         .or_else(|| {
-            std::env::var("SYMDESK_VAULT")
-                .ok()
-                .filter(|value| !value.trim().is_empty())
+            environment
+                .get("SYMDESK_VAULT")
+                .map(String::as_str)
+                .filter(|value| !value.is_empty())
         })
-        .ok_or_else(|| "vault path not configured (use flag or SYMDESK_VAULT env)".to_owned())?;
+        .or_else(|| (!config.vault.is_empty()).then_some(config.vault.as_str()))
+        .ok_or_else(|| {
+            "vault path not configured (use --vault, SYMDESK_VAULT env, or config file)".to_owned()
+        })?;
     let path = PathBuf::from(raw);
     let absolute = if path.is_absolute() {
         path

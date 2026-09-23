@@ -31,7 +31,7 @@
 .PHONY: room-watch-cli-fixtures-generate room-watch-cli-differential
 .PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential
 .PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential
-.PHONY: config-precedence-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential
+.PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -157,6 +157,10 @@ config-save-differential:
 config-precedence-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/config -run '^TestPortConfigPrecedenceContract$$'
 	$(CARGO) test -p symdesk-core --test config_precedence --locked
+
+config-vault-selection-differential: port-contract-fixtures-check
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symdesk -run '^TestPortVaultSelectionCLIContract$$'
+	$(CARGO) test -p symdesk-cli --test config_vault_selection --locked
 
 vault-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultgen \

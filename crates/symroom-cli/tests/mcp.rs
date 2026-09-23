@@ -8,6 +8,7 @@ use std::{
 };
 
 use serde_json::{Value, json};
+use sha2::Digest;
 
 fn temporary_room(suffix: &str) -> PathBuf {
     let nonce = std::time::SystemTime::now()
@@ -89,6 +90,94 @@ fn go_mcp_inventory_call_and_error_frames_match() {
         .map(|case| case["response"].clone())
         .collect::<Vec<_>>();
     assert_eq!(actual, expected);
+    let _ = std::fs::remove_dir_all(room);
+}
+
+#[test]
+fn go_mcp_mutation_events_match_and_are_signed() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let fixture: Value = serde_json::from_slice(
+        &std::fs::read(root.join("testdata/port/room/mcp-mutations.json"))
+            .expect("Go mutation oracle fixture"),
+    )
+    .expect("valid mutation fixture");
+    let seed = sha2::Sha256::digest(b"symroom-mcp-mutation-seed");
+    let identity = symroom_core::identity::identity_from_private_key("fixture", seed.as_slice())
+        .expect("fixed fixture identity");
+    let artifact_root = root.join("testdata/port/room");
+    let room = fixture_room("mutations", &[]);
+    let cases = fixture["cases"].as_array().expect("mutation cases");
+    let mut input = Vec::new();
+    for case in cases {
+        let mut request = case["request"].clone();
+        let args = request["params"]["arguments"]
+            .as_object_mut()
+            .expect("tool args");
+        if args.get("path").and_then(Value::as_str) == Some("${ARTIFACT}") {
+            args.insert(
+                "path".to_owned(),
+                json!(artifact_root.join("mcp-artifact.txt").to_string_lossy()),
+            );
+        }
+        let body = serde_json::to_vec(&request).expect("request JSON");
+        input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
+        input.extend_from_slice(&body);
+    }
+    let mut output = Vec::new();
+    mcp::serve_io_with_identity(
+        BufReader::new(Cursor::new(input)),
+        &mut output,
+        &room,
+        &artifact_root,
+        Some(&identity),
+    )
+    .expect("MCP serve");
+    let actual = decode_frames(&output);
+    assert_eq!(actual.len(), cases.len());
+    for (response, case) in actual.iter().zip(cases) {
+        assert_eq!(response["result"]["isError"], false);
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("event text");
+        let mut event: Value = serde_json::from_str(text).expect("event JSON");
+        let raw: symroom_core::event::Event = serde_json::from_str(text).expect("typed event");
+        raw.verify_signature(&identity.public_key)
+            .expect("signature verifies");
+        event.as_object_mut().unwrap().remove("ts");
+        event.as_object_mut().unwrap().remove("sig");
+        event.as_object_mut().unwrap().remove("prev");
+        if event["kind"] == "note.posted" {
+            event["id"] = json!("ev_<generated>");
+        }
+        if event["kind"] == "checkpoint.requested" {
+            event["id"] = json!("ev_<generated>");
+            event["body"]["checkpoint_id"] = json!("chk_<generated>");
+        }
+        let expected = &case["response"];
+        assert_eq!(response["id"], expected["id"]);
+        assert_eq!(response["result"]["isError"], expected["result"]["isError"]);
+        let expected_event: Value = serde_json::from_str(
+            expected["result"]["content"][0]["text"]
+                .as_str()
+                .expect("expected event text"),
+        )
+        .expect("normalized expected event");
+        assert_eq!(event, expected_event);
+    }
+    let journal = std::fs::read_to_string(
+        room.join("journal")
+            .join(format!("{}.jsonl", identity.member_id)),
+    )
+    .expect("mutations persisted");
+    let lines = journal.lines().collect::<Vec<_>>();
+    assert_eq!(lines.len(), 4);
+    for line in lines {
+        let event = symroom_core::event::Event::unmarshal_json_line(line.as_bytes())
+            .expect("journal event parses");
+        event
+            .verify_signature(&identity.public_key)
+            .expect("persisted event signature verifies");
+    }
     let _ = std::fs::remove_dir_all(room);
 }
 

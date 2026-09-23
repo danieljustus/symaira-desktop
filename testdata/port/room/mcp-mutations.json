@@ -1,0 +1,117 @@
+{
+  "cases": [
+    {
+      "request": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {
+            "text": "hello from MCP"
+          },
+          "name": "room_note_post"
+        }
+      },
+      "response": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"text\":\"hello from MCP\"},\"id\":\"ev_\\u003cgenerated\\u003e\",\"kind\":\"note.posted\",\"lamport\":1,\"room\":\"rm_fixture\",\"seq\":1,\"v\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {
+            "path": "${ARTIFACT}",
+            "title": "Fixture artifact"
+          },
+          "name": "room_artifact_link"
+        }
+      },
+      "response": {
+        "id": 2,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"artifact_id\":\"art_9bb27acffad29816\",\"path\":\"mcp-artifact.txt\",\"sha256\":\"d63ab796d70c94c0844495116b024a41c9e03b64eec0bc090601e7c950362c03\",\"symdesk_id\":\"\",\"title\":\"Fixture artifact\"},\"id\":\"ev_9bb27acffad29816\",\"kind\":\"artifact.linked\",\"lamport\":2,\"room\":\"rm_test\",\"seq\":2,\"v\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "request": {
+        "id": 3,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {
+            "adapter": "local",
+            "plan_file": "plan.md",
+            "title": "Fixture run"
+          },
+          "name": "room_run_request"
+        }
+      },
+      "response": {
+        "id": 3,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"adapter\":\"local\",\"plan_file\":\"plan.md\",\"run_id\":\"run_20c8360ec381070a\",\"title\":\"Fixture run\"},\"id\":\"ev_20c8360ec381070a\",\"kind\":\"run.requested\",\"lamport\":3,\"room\":\"rm_test\",\"seq\":3,\"v\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "request": {
+        "id": 4,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {
+            "question": "Continue?",
+            "run_id": "run_fixture"
+          },
+          "name": "room_checkpoint_request"
+        }
+      },
+      "response": {
+        "id": 4,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"author\":\"mem_e29883d4924ab762\",\"body\":{\"checkpoint_id\":\"chk_\\u003cgenerated\\u003e\",\"question\":\"Continue?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cgenerated\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":4,\"room\":\"rm_test\",\"seq\":4,\"v\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": false
+        }
+      }
+    }
+  ],
+  "oracle": {
+    "commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+    "release": "post-v0.12.2-security-880"
+  },
+  "schema_version": 1
+}

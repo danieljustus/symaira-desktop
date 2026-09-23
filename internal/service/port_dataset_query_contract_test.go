@@ -1,6 +1,9 @@
 package service
 
 import (
+	"encoding/json"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/dataset"
@@ -8,6 +11,46 @@ import (
 )
 
 func TestPortDatasetQueryCLIContract(t *testing.T) {
+	fixtureBytes, err := os.ReadFile("../../testdata/port/dataset/cli.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture struct {
+		Cases []struct {
+			ID      string   `json:"id"`
+			Stage   string   `json:"stage"`
+			Args    []string `json:"args"`
+			Prepare []string `json:"prepare_args"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(fixtureBytes, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	wantCases := map[string]bool{
+		"query-cli-projected-key-ordered-first-page": false,
+		"query-cli-default-columns-and-limit":        false,
+		"query-cli-console-output":                   false,
+		"query-cli-unknown-column":                   false,
+		"query-cli-missing-dataset":                  false,
+	}
+	for _, testCase := range fixture.Cases {
+		if _, wanted := wantCases[testCase.ID]; !wanted {
+			continue
+		}
+		if testCase.Stage != "dataset-cli" || !containsArgument(testCase.Args, "query") {
+			t.Fatalf("fixture case %q is not a dataset query process case", testCase.ID)
+		}
+		if len(testCase.Prepare) > 0 && !containsArgument(testCase.Prepare, "sync") {
+			t.Fatalf("fixture case %q does not seed its dataset through the CLI", testCase.ID)
+		}
+		wantCases[testCase.ID] = true
+	}
+	for id, found := range wantCases {
+		if !found {
+			t.Fatalf("dataset query fixture is missing case %q", id)
+		}
+	}
+
 	root := t.TempDir()
 	db, err := sidecar.Open(t.TempDir() + "/sidecar.db")
 	if err != nil {
@@ -45,4 +88,13 @@ func TestPortDatasetQueryCLIContract(t *testing.T) {
 	if _, err := svc.DatasetQuery("missing", DatasetQueryOptions{}); err == nil || err.Error() == "" {
 		t.Fatalf("missing-dataset query error = %v", err)
 	}
+}
+
+func containsArgument(args []string, want string) bool {
+	for _, arg := range args {
+		if arg == want || strings.HasPrefix(arg, want+" ") {
+			return true
+		}
+	}
+	return false
 }

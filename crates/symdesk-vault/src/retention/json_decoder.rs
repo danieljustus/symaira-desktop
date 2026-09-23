@@ -970,7 +970,13 @@ fn parse_rfc3339_parts(value: &str) -> Result<Rfc3339Parts, TimeParseFailure> {
     consume_time_literal(bytes, &mut offset, b'-', "-")?;
     let day = parse_fixed_number(bytes, &mut offset, 2, "02", 1, 31)? as u8;
     consume_time_literal(bytes, &mut offset, b'T', "T")?;
-    let hour = parse_fixed_number(bytes, &mut offset, 2, "15", 0, 23)? as u8;
+    // Go's RFC3339 fallback uses getnum(value, false) for the hour only.
+    let hour_width = if bytes.get(offset + 1).is_some_and(u8::is_ascii_digit) {
+        2
+    } else {
+        1
+    };
+    let hour = parse_fixed_number(bytes, &mut offset, hour_width, "15", 0, 23)? as u8;
     consume_time_literal(bytes, &mut offset, b':', ":")?;
     let minute = parse_fixed_number(bytes, &mut offset, 2, "04", 0, 59)? as u8;
     consume_time_literal(bytes, &mut offset, b':', ":")?;
@@ -1166,6 +1172,45 @@ mod tests {
             ),
         ] {
             assert_eq!(parse_go_rfc3339(value).unwrap_err(), expected);
+        }
+    }
+
+    #[test]
+    fn single_digit_hours_match_go_for_proposals_and_history() {
+        // Confirmed through the Go 1.26.6 retention diff/history commands.
+        for (value, canonical) in [
+            ("2026-01-02T3:04:05Z", "2026-01-02T03:04:05Z"),
+            ("2026-01-02T0:04:05Z", "2026-01-02T00:04:05Z"),
+            ("2026-01-02T3:04:05+01:00", "2026-01-02T03:04:05+01:00"),
+            (
+                "2026-01-02T3:04:05.123456789Z",
+                "2026-01-02T03:04:05.123456789Z",
+            ),
+        ] {
+            let expected = parse_go_rfc3339(canonical).expect("canonical timestamp");
+            let proposal = format!(r#"{{"created":"{value}"}}"#);
+            let history = format!(r#"[{{"timestamp":"{value}"}}]"#);
+            assert_eq!(
+                decode_proposal(proposal.as_bytes()).expect(value).created,
+                expected
+            );
+            assert_eq!(
+                decode_history(history.as_bytes()).expect(value).unwrap()[0].timestamp,
+                expected
+            );
+        }
+        for (value, remainder, layout) in [
+            ("2026-01-02T0x:04:05Z", "x:04:05Z", ":"),
+            ("2026-01-02T3:4:5Z", "4:5Z", "04"),
+            ("2026-01-02T03:04:5Z", "5Z", "05"),
+        ] {
+            let expected = format!(
+                "parsing time \"{value}\" as \"{RFC3339_LAYOUT}\": cannot parse \"{remainder}\" as \"{layout}\""
+            );
+            let proposal = format!(r#"{{"created":"{value}"}}"#);
+            let history = format!(r#"[{{"timestamp":"{value}"}}]"#);
+            assert_eq!(decode_proposal(proposal.as_bytes()).unwrap_err(), expected);
+            assert_eq!(decode_history(history.as_bytes()).unwrap_err(), expected);
         }
     }
 

@@ -82,10 +82,6 @@ fn tools() -> Value {
     ])
 }
 
-pub fn serve_io<R: BufRead, W: Write>(input: R, output: W, room_dir: &Path) -> io::Result<()> {
-    serve_io_with_artifact_root(input, output, room_dir, room_dir)
-}
-
 pub fn serve_io_with_artifact_root<R: BufRead, W: Write>(
     mut input: R,
     mut output: W,

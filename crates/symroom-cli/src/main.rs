@@ -9,6 +9,7 @@ use std::{
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
 
+mod mcp;
 mod run_cli;
 
 fn process_exit(code: CoreExitCode) -> ExitCode {
@@ -32,6 +33,9 @@ fn main() -> ExitCode {
     }
     if command == "run" {
         return run_cli::run(&args[2..]);
+    }
+    if command == "mcp" {
+        return mcp::run_cli(&args[2..]);
     }
     if command != "version" {
         return write_stderr(

@@ -2,8 +2,9 @@
 mod mcp;
 
 use std::{
-    io::{BufReader, Cursor},
+    io::{BufReader, Cursor, Write},
     path::PathBuf,
+    process::{Command, Stdio},
 };
 
 use serde_json::{Value, json};
@@ -75,7 +76,13 @@ fn go_mcp_inventory_call_and_error_frames_match() {
     );
     let room = fixture_room("oracle", &journal_lines);
     let mut output = Vec::new();
-    mcp::serve_io(BufReader::new(Cursor::new(input)), &mut output, &room).expect("MCP serve");
+    mcp::serve_io_with_artifact_root(
+        BufReader::new(Cursor::new(input)),
+        &mut output,
+        &room,
+        &room,
+    )
+    .expect("MCP serve");
     let actual = decode_frames(&output);
     let expected = cases
         .iter()
@@ -116,11 +123,48 @@ fn no_approval_granting_call_is_exposed() {
     );
     let room = temporary_room("deny");
     let mut output = Vec::new();
-    mcp::serve_io(BufReader::new(Cursor::new(input)), &mut output, &room).expect("MCP serve");
+    mcp::serve_io_with_artifact_root(
+        BufReader::new(Cursor::new(input)),
+        &mut output,
+        &room,
+        &room,
+    )
+    .expect("MCP serve");
     let response = decode_frames(&output).remove(0);
     assert_eq!(response["error"]["code"], -32601);
     assert_eq!(response["error"]["message"], "Unknown tool: room_approve");
     let _ = std::fs::remove_dir_all(room);
+}
+
+#[test]
+fn mcp_subcommand_serves_framed_tool_inventory() {
+    let fixture: Value = serde_json::from_slice(
+        &std::fs::read(
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("../../testdata/port/room/mcp-parity.json"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let request = serde_json::to_vec(&fixture["cases"][0]["request"]).unwrap();
+    let mut child = Command::new(env!("CARGO_BIN_EXE_symroom"))
+        .arg("mcp")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    {
+        let mut stdin = child.stdin.take().unwrap();
+        write!(stdin, "Content-Length: {}\r\n\r\n", request.len()).unwrap();
+        stdin.write_all(&request).unwrap();
+    }
+    let output = child.wait_with_output().unwrap();
+    assert!(output.status.success(), "stderr: {:?}", output.stderr);
+    assert_eq!(
+        decode_frames(&output.stdout),
+        vec![fixture["cases"][0]["response"].clone()]
+    );
 }
 
 #[test]

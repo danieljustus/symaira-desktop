@@ -38,6 +38,7 @@ func TestPortDatasetQueryCLIContract(t *testing.T) {
 		"query-cli-filter-not-equals-missing-null":      false,
 		"query-cli-filter-is-empty-missing-null-empty":  false,
 		"query-cli-filter-unknown-column":               false,
+		"query-cli-nested-group-all-any":                false,
 	}
 	for _, testCase := range fixture.Cases {
 		if _, wanted := wantCases[testCase.ID]; !wanted {
@@ -48,6 +49,9 @@ func TestPortDatasetQueryCLIContract(t *testing.T) {
 		}
 		if strings.Contains(testCase.ID, "filter-") && !containsArgument(testCase.Args, "--filters") {
 			t.Fatalf("fixture case %q does not exercise --filters", testCase.ID)
+		}
+		if testCase.ID == "query-cli-nested-group-all-any" && !containsArgument(testCase.Args, "--filter-group") {
+			t.Fatalf("fixture case %q does not exercise --filter-group", testCase.ID)
 		}
 		if len(testCase.Prepare) > 0 && !containsArgument(testCase.Prepare, "sync") {
 			t.Fatalf("fixture case %q does not seed its dataset through the CLI", testCase.ID)
@@ -131,6 +135,27 @@ func TestPortDatasetQueryCLIContract(t *testing.T) {
 	}
 	if combined.TotalRows != 2 || combined.Rows[0]["id"] != "c" || combined.Rows[1]["id"] != "d" {
 		t.Fatalf("combined filters = %#v", combined)
+	}
+	nested, err := svc.DatasetQuery("orders", DatasetQueryOptions{FilterGroup: &dbviews.FilterGroup{
+		Operator: "any",
+		Filters:  []dbviews.Filter{{Key: "status", Operator: "equals", Value: "paid"}},
+		Groups: []dbviews.FilterGroup{{
+			Operator: "all",
+			Filters:  []dbviews.Filter{{Key: "amount", Operator: "greater_than", Value: "20"}},
+			Groups: []dbviews.FilterGroup{{
+				Operator: "any",
+				Filters: []dbviews.Filter{
+					{Key: "status", Operator: "is_empty"},
+					{Key: "status", Operator: "equals", Value: "OPEN"},
+				},
+			}},
+		}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if nested.TotalRows != 3 || nested.Rows[0]["id"] != "c" || nested.Rows[1]["id"] != "d" || nested.Rows[2]["id"] != "e" {
+		t.Fatalf("nested all/any filter group = %#v", nested)
 	}
 	if _, err := svc.DatasetQuery("orders", DatasetQueryOptions{Columns: []string{"absent"}}); err == nil || err.Error() != `dataset column "absent" not found` {
 		t.Fatalf("unknown-column error = %v", err)

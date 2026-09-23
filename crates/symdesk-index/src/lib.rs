@@ -235,6 +235,8 @@ pub struct DatasetQueryFilter {
     pub value: String,
 }
 
+pub use symdesk_vault::FilterGroup as DatasetQueryFilterGroup;
+
 pub struct Sidecar {
     connection: Connection,
     closed: bool,
@@ -616,10 +618,30 @@ impl Sidecar {
         filters: &[DatasetQueryFilter],
         limit: usize,
     ) -> Result<(usize, Vec<DatasetRow>), SidecarError> {
+        self.dataset_query_page_filtered_with_group(dataset_slug, schema, filters, None, limit)
+    }
+
+    /// Returns a bounded page and total matching flat filters and a nested group.
+    pub fn dataset_query_page_filtered_with_group(
+        &self,
+        dataset_slug: &str,
+        schema: &BTreeMap<String, String>,
+        filters: &[DatasetQueryFilter],
+        filter_group: Option<&DatasetQueryFilterGroup>,
+        limit: usize,
+    ) -> Result<(usize, Vec<DatasetRow>), SidecarError> {
         if self.closed {
             return Err(SidecarError::Closed);
         }
-        let (where_sql, where_args) = dataset_query_filter_where(filters, schema)?;
+        let (mut where_sql, mut where_args) = dataset_query_filter_where(filters, schema)?;
+        if let Some(group) = filter_group {
+            let (group_sql, group_args) = dataset_query_filter_group_where(group, schema)?;
+            if !where_sql.is_empty() {
+                where_sql.push_str(" AND ");
+            }
+            where_sql.push_str(&group_sql);
+            where_args.extend(group_args);
+        }
         let where_sql = if where_sql.is_empty() {
             String::new()
         } else {
@@ -1165,6 +1187,38 @@ impl Sidecar {
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
+}
+
+fn dataset_query_filter_group_where(
+    group: &DatasetQueryFilterGroup,
+    schema: &BTreeMap<String, String>,
+) -> Result<(String, Vec<rusqlite::types::Value>), SidecarError> {
+    let mut expressions = Vec::with_capacity(group.filters.len() + group.groups.len());
+    let mut arguments = Vec::new();
+    for filter in &group.filters {
+        let filter = DatasetQueryFilter {
+            key: filter.key.clone(),
+            operator: filter.operator.clone(),
+            value: filter.value.clone(),
+        };
+        let (expression, filter_args) = dataset_query_filter_where(&[filter], schema)?;
+        expressions.push(expression);
+        arguments.extend(filter_args);
+    }
+    for child in &group.groups {
+        let (expression, child_args) = dataset_query_filter_group_where(child, schema)?;
+        expressions.push(expression);
+        arguments.extend(child_args);
+    }
+    if expressions.is_empty() {
+        return Ok(("1".to_owned(), arguments));
+    }
+    let joiner = if group.operator.trim().eq_ignore_ascii_case("any") {
+        " OR "
+    } else {
+        " AND "
+    };
+    Ok((format!("({})", expressions.join(joiner)), arguments))
 }
 
 fn unsupported_index_reason(extension: &str) -> Option<&'static str> {

@@ -7,7 +7,8 @@ use clap::{Arg, Command};
 use serde::Serialize;
 use serde_json::Value;
 use symdesk_index::{
-    DatasetQueryFilter, DatasetSyncOptions, DatasetSyncRow, DatasetSyncService, open_for_vault,
+    DatasetQueryFilter, DatasetQueryFilterGroup, DatasetSyncOptions, DatasetSyncRow,
+    DatasetSyncService, open_for_vault,
 };
 use symdesk_vault::{PropertyConfig, Provenance, parse_dataset_handle};
 
@@ -45,6 +46,7 @@ pub fn cli() -> Command {
                 .arg(Arg::new("dataset").required(true))
                 .arg(Arg::new("columns").long("columns").num_args(1))
                 .arg(Arg::new("filters").long("filters").num_args(1))
+                .arg(Arg::new("filter-group").long("filter-group").num_args(1))
                 .arg(
                     Arg::new("limit")
                         .long("limit")
@@ -136,6 +138,15 @@ fn run_query(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool) ->
         },
         None => Vec::new(),
     };
+    let filter_group = match args.get_one::<String>("filter-group") {
+        Some(input) => match serde_json::from_str::<DatasetQueryFilterGroup>(input) {
+            Ok(group) => Some(group),
+            Err(error) => {
+                return emit_error(format!("parse --filter-group: {error}"), json_output);
+            }
+        },
+        None => None,
+    };
     let schema = handle
         .schema
         .iter()
@@ -150,11 +161,16 @@ fn run_query(args: &clap::ArgMatches, vault: Option<&str>, json_output: bool) ->
             )
         })
         .collect();
-    let (total_rows, source_rows) =
-        match sidecar.dataset_query_page_filtered(&handle.slug, &schema, &filters, limit) {
-            Ok(rows) => rows,
-            Err(error) => return emit_error(error.to_string(), json_output),
-        };
+    let (total_rows, source_rows) = match sidecar.dataset_query_page_filtered_with_group(
+        &handle.slug,
+        &schema,
+        &filters,
+        filter_group.as_ref(),
+        limit,
+    ) {
+        Ok(rows) => rows,
+        Err(error) => return emit_error(error.to_string(), json_output),
+    };
     let mut rows = Vec::with_capacity(source_rows.len());
     for source in source_rows {
         let values: BTreeMap<String, Value> = match serde_json::from_str(&source.values_json) {

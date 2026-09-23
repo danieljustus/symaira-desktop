@@ -366,6 +366,26 @@ fn reject_persists_and_diff_reads_back_the_proposal() {
 }
 
 #[test]
+fn reject_reports_missing_proposals_with_the_go_error_envelope() {
+    let root = TempRoot::new("reject-missing");
+
+    let output = run(&root, ["retention", "reject", "ret-safe", "--json"]);
+    assert_eq!(output.status.code(), Some(1));
+    assert!(output.stderr.is_empty());
+    let error: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("decode missing proposal error");
+    let proposal_path = root.proposal_dir().join("ret-safe.json");
+    assert_eq!(
+        error["error"],
+        format!(
+            "open {}: {}",
+            proposal_path.display(),
+            missing_file_message()
+        )
+    );
+}
+
+#[test]
 fn go_nil_items_survive_rejection_and_render_as_null() {
     for items_field in [",\"items\":null", ""] {
         let root = TempRoot::new("nil-items");

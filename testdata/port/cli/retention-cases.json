@@ -272,6 +272,21 @@
    "description": "ExactArgs rejects a missing run ID before service dependencies are opened."
   },
   {
+   "id": "retention-reject-missing-proposal-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject", "ret-missing", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "console_text",
+   "stderr_mode": "console_text",
+   "compare_files": false,
+   "setup": [],
+   "description": "Reject preserves the loader's Go error envelope and missing-path diagnostic when the run ID is safe but absent.",
+   "compare_sidecar_layout": true
+  },
+  {
    "id": "retention-reject-unsafe-run-id-json",
    "binary": "symdesk",
    "stage": "retention",

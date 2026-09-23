@@ -1,8 +1,7 @@
 //! Go: `cmd/symdesk/retention.go`.
 //!
-//! Retention evaluation and review commands backed by the sidecar and vault
-//! state APIs. Acceptance remains out of scope because it requires service
-//! mutations.
+//! Retention evaluation, proposal review, and history commands backed by the
+//! sidecar and vault state APIs.
 
 use std::{
     collections::BTreeMap,

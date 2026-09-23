@@ -378,6 +378,17 @@ fn dataset_query_filter_where(
                 arguments.extend(raw_args.iter().cloned());
                 arguments.extend(raw_args.iter().cloned());
             }
+            "greater_than" | "gt" | ">" => {
+                if date {
+                    expressions.push(format!("{present} AND julianday({raw}) > julianday(?)"));
+                } else {
+                    let cast = if numeric { "REAL" } else { "TEXT" };
+                    expressions.push(format!("{present} AND {typed} > CAST(? AS {cast})"));
+                }
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.push(rusqlite::types::Value::Text(value.to_owned()));
+            }
             operator => {
                 return Err(SidecarError::Contract(format!(
                     "unsupported dataset filter operator {operator:?}"

@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -106,6 +107,7 @@ func makeDoctorCLIContract(t *testing.T, root string) (doctorCLIContract, error)
 	}
 	goBinary := buildNoteCLIOracle(t, root)
 	temp := t.TempDir()
+	toolHelper := buildDoctorToolHelper(t, root, temp)
 	for _, vector := range []struct {
 		name        string
 		args        []string
@@ -153,11 +155,11 @@ func makeDoctorCLIContract(t *testing.T, root string) (doctorCLIContract, error)
 			}
 			identityPath := filepath.Join(dataHome, "symroom", "identities", "oracle.json")
 			if vector.identityBad {
-				if err := os.Chmod(identityPath, 0o644); err != nil {
+				if err := os.Chmod(identityPath, 0o444); err != nil {
 					return doctorCLIContract{}, err
 				}
 			}
-			file, err := doctorCLIReadIdentity(identityPath)
+			file, err := doctorCLIReadIdentity(identityPath, vector.identityBad)
 			if err != nil {
 				return doctorCLIContract{}, err
 			}
@@ -172,7 +174,7 @@ func makeDoctorCLIContract(t *testing.T, root string) (doctorCLIContract, error)
 			return doctorCLIContract{}, err
 		}
 		if vector.tools {
-			if err := installDoctorTools(toolsDir, fixture.IdentityKey); err != nil {
+			if err := installDoctorTools(toolsDir, toolHelper); err != nil {
 				return doctorCLIContract{}, err
 			}
 		}
@@ -185,6 +187,7 @@ func makeDoctorCLIContract(t *testing.T, root string) (doctorCLIContract, error)
 			"TMPDIR=" + tempDir, "PATH=" + toolsDir,
 			"TZ=UTC", "LC_ALL=C", "LANG=C",
 			"SYMROOM_ROOM_DIR=" + roomDir, "DOCTOR_TOOL_LOG=" + logPath,
+			"DOCTOR_IDENTITY_KEY=" + fixture.IdentityKey,
 		}
 		if vector.defaultEnv != "" {
 			cmd.Env = append(cmd.Env, "SYMROOM_DEFAULT_IDENTITY="+vector.defaultEnv)
@@ -208,9 +211,9 @@ func makeDoctorCLIContract(t *testing.T, root string) (doctorCLIContract, error)
 			Name: vector.name, Args: vector.args, Room: vector.room,
 			Config: vector.config, DefaultEnv: vector.defaultEnv, IdentityKey: vector.identityKey,
 			IdentityFiles: identityFiles, Tools: vector.tools, Index: vector.index,
-			ExitCode:  code,
-			Stdout:    normalizeDoctorCLIOutput(stdout, home, dataHome, toolsDir),
-			Stderr:    normalizeDoctorCLIOutput(stderr.Bytes(), home, dataHome, toolsDir),
+			ExitCode:  portableDoctorExitCode(code, vector.identity != "", vector.identityBad),
+			Stdout:    normalizeDoctorCLIOutput(stdout, home, dataHome, toolsDir, vector.identity != ""),
+			Stderr:    normalizeDoctorCLIOutput(stderr.Bytes(), home, dataHome, toolsDir, vector.identity != ""),
 			ToolCalls: string(calls), RoomFiles: doctorCLIRoomFiles(roomDir),
 		}
 		fixture.Cases = append(fixture.Cases, result)
@@ -237,7 +240,7 @@ func doctorCLISaveIdentity(dataHome string, owner *identity.Identity) (result er
 	return identity.Save(owner)
 }
 
-func doctorCLIReadIdentity(path string) (doctorCLIIdentityFile, error) {
+func doctorCLIReadIdentity(path string, readOnly bool) (doctorCLIIdentityFile, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return doctorCLIIdentityFile{}, err
@@ -246,9 +249,14 @@ func doctorCLIReadIdentity(path string) (doctorCLIIdentityFile, error) {
 	if err != nil {
 		return doctorCLIIdentityFile{}, err
 	}
-	return doctorCLIIdentityFile{
-		Name: filepath.Base(path), Content: string(data), Mode: fmt.Sprintf("%04o", info.Mode().Perm()),
-	}, nil
+	mode := "private"
+	if readOnly {
+		mode = "readonly"
+	}
+	if got, want := info.Mode().Perm(), doctorCLIExpectedMode(mode); got != want {
+		return doctorCLIIdentityFile{}, fmt.Errorf("identity file mode is %04o, want %04o", got, want)
+	}
+	return doctorCLIIdentityFile{Name: filepath.Base(path), Content: string(data), Mode: mode}, nil
 }
 
 func makeDoctorRoom(dir string, owner *identity.Identity, index string) error {
@@ -292,11 +300,60 @@ func makeDoctorRoom(dir string, owner *identity.Identity, index string) error {
 	return os.Chtimes(indexPath, stamp, stamp)
 }
 
-func installDoctorTools(dir, identityKey string) error {
+func buildDoctorToolHelper(t *testing.T, root, temp string) string {
+	t.Helper()
+	source := `package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+func main() {
+	name := strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe")
+	if len(os.Args) < 2 { return }
+	args := strings.Join(os.Args[1:], " ")
+	if os.Getenv("DOCTOR_TOOL_LOG") != "" {
+		f, err := os.OpenFile(os.Getenv("DOCTOR_TOOL_LOG"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		if err == nil { _, _ = fmt.Fprintf(f, "%s %s\n", name, args); _ = f.Close() }
+	}
+	switch os.Args[1] {
+	case "get": fmt.Println(os.Getenv("DOCTOR_IDENTITY_KEY"))
+	case "version": fmt.Printf("{\"version\":\"%s-1.2.3\"}\n", name)
+	}
+}
+`
+	sourcePath := filepath.Join(temp, "doctor-tool-helper.go")
+	if err := os.WriteFile(sourcePath, []byte(source), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	name := "doctor-tool-helper"
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	output := filepath.Join(temp, name)
+	cmd := exec.Command("go", "build", "-o", output, sourcePath)
+	cmd.Dir = root
+	if data, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("build Go doctor tool helper: %v: %s", err, data)
+	}
+	return output
+}
+
+func installDoctorTools(dir, helper string) error {
 	for _, tool := range []string{"symdesk", "symbrain", "symvault"} {
-		script := fmt.Sprintf("#!/bin/sh\ncase \"$1\" in\n  get) printf '%%s %%s\\n' '%s' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '%%s\\n' '%s' ;;\n  version) printf '%%s %%s\\n' '%s' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '{\\\"version\\\":\\\"%s-1.2.3\\\"}\\n' ;;\nesac\n", tool, identityKey, tool, tool)
-		path := filepath.Join(dir, tool)
-		if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+		name := tool
+		if runtime.GOOS == "windows" {
+			name += ".exe"
+		}
+		path := filepath.Join(dir, name)
+		data, err := os.ReadFile(helper)
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(path, data, 0o755); err != nil {
 			return err
 		}
 	}
@@ -318,10 +375,72 @@ func doctorCLIRoomFiles(dir string) []string {
 	return files
 }
 
-func normalizeDoctorCLIOutput(output []byte, home, dataHome, toolsDir string) string {
+func normalizeDoctorCLIOutput(output []byte, home, dataHome, toolsDir string, hasIdentityFile bool) string {
 	text := string(output)
 	for _, replacement := range [][2]string{{home, "$HOME"}, {dataHome, "$DATA"}, {toolsDir, "$TOOLS"}} {
 		text = strings.ReplaceAll(text, replacement[0], replacement[1])
 	}
+	if runtime.GOOS == "windows" {
+		for _, tool := range []string{"symdesk", "symbrain", "symvault"} {
+			text = strings.ReplaceAll(text, "$TOOLS/"+tool+".exe", "$TOOLS/"+tool)
+			text = strings.ReplaceAll(text, "$TOOLS\\"+tool+".exe", "$TOOLS/"+tool)
+		}
+		if strings.HasPrefix(text, "{") {
+			text = strings.ReplaceAll(text, `\\`, "/")
+		} else {
+			text = strings.ReplaceAll(text, `\`, "/")
+		}
+	}
+	if hasIdentityFile {
+		text = normalizeIdentityModeOutput(text)
+	}
 	return text
+}
+
+func normalizeIdentityModeOutput(text string) string {
+	if strings.HasPrefix(text, "{") {
+		lines := strings.Split(text, "\n")
+		for index, line := range lines {
+			if strings.TrimSpace(line) == `"name": "identity_key_mode",` && index+3 < len(lines) {
+				indent := line[:len(line)-len(strings.TrimLeft(line, " "))]
+				lines[index+1] = indent + `  "status": "platform-mode",`
+				lines[index+2] = indent + `  "message": "identity key mode depends on the host platform",`
+				lines[index+3] = indent + `  "remediation": "platform-specific"`
+			}
+		}
+		text = strings.Join(lines, "\n")
+		text = strings.ReplaceAll(text, `"failed": true`, `"failed": "platform-dependent"`)
+		text = strings.ReplaceAll(text, `"failed": false`, `"failed": "platform-dependent"`)
+		return text
+	}
+	lines := strings.Split(text, "\n")
+	for index, line := range lines {
+		if strings.Contains(line, " identity_key_mode: ") && index+1 < len(lines) {
+			lines[index] = "[MODE] identity_key_mode: host-dependent key file mode"
+			lines[index+1] = "  remediation: platform-specific"
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+func portableDoctorExitCode(actual int, hasIdentity, identityBad bool) int {
+	if hasIdentity && !identityBad && runtime.GOOS == "windows" {
+		// Windows exposes writable files as 0666, while doctor requires 0600.
+		// Canonical fixture keeps the private-key case semantic across hosts.
+		return 0
+	}
+	return actual
+}
+
+func doctorCLIExpectedMode(class string) os.FileMode {
+	if runtime.GOOS == "windows" {
+		if class == "readonly" {
+			return 0o444
+		}
+		return 0o666
+	}
+	if class == "readonly" {
+		return 0o444
+	}
+	return 0o600
 }

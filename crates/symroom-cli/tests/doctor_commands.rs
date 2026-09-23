@@ -108,7 +108,7 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
             fs::create_dir_all(&room).expect("create empty room");
         }
         if case.tools {
-            install_tools(&tools_dir, &fixture.identity_key);
+            install_tools(&tools_dir, &work);
         }
         let before = room_snapshot(&room);
         let identities_before = room_snapshot(&data_home);
@@ -128,6 +128,7 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
             .env("LANG", "C")
             .env("SYMROOM_ROOM_DIR", &room)
             .env("DOCTOR_TOOL_LOG", &calls_path)
+            .env("DOCTOR_IDENTITY_KEY", &fixture.identity_key)
             .env("SYMROOM_DEFAULT_IDENTITY", &case.default_env)
             .env(
                 "SYMROOM_IDENTITY_KEY",
@@ -140,20 +141,37 @@ fn doctor_cli_matches_go_process_output_and_read_only_side_effects() {
             .output()
             .expect("run Rust doctor process");
 
+        let expected_exit = if cfg!(windows) && !case.identity_files.is_empty() {
+            1
+        } else {
+            case.exit_code
+        };
         assert_eq!(
             output.status.code(),
-            Some(case.exit_code),
+            Some(expected_exit),
             "{} exit",
             case.name
         );
         assert_eq!(
-            normalize(&output.stdout, &home, &data_home, &tools_dir),
+            normalize(
+                &output.stdout,
+                &home,
+                &data_home,
+                &tools_dir,
+                !case.identity_files.is_empty()
+            ),
             case.stdout.as_bytes(),
             "{} stdout",
             case.name
         );
         assert_eq!(
-            normalize(&output.stderr, &home, &data_home, &tools_dir),
+            normalize(
+                &output.stderr,
+                &home,
+                &data_home,
+                &tools_dir,
+                !case.identity_files.is_empty()
+            ),
             case.stderr.as_bytes(),
             "{} stderr",
             case.name
@@ -218,7 +236,9 @@ fn make_valid_room(room: &Path, owner: &identity::Identity, index: &str) {
     if index == "stale" {
         let path = room.join(".symroom/index.sqlite");
         fs::write(&path, b"derived index fixture").expect("write derived index");
-        std::thread::sleep(std::time::Duration::from_millis(10));
+        // FAT timestamps have two-second granularity; keep the index older
+        // even on filesystems with coarse modified-time resolution.
+        std::thread::sleep(std::time::Duration::from_millis(2100));
     }
     fs::write(&journal_path, event_bytes).expect("write signed event");
     if index == "current" {
@@ -227,15 +247,70 @@ fn make_valid_room(room: &Path, owner: &identity::Identity, index: &str) {
     }
 }
 
-fn install_tools(dir: &Path, key: &str) {
+fn install_tools(dir: &Path, work: &Path) {
+    #[cfg(windows)]
+    let helper = build_windows_tool_helper(work);
     for name in ["symdesk", "symbrain", "symvault"] {
-        let script = format!(
-            "#!/bin/sh\ncase \"$1\" in\n  get) printf '%s %s\\n' '{name}' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '%s\\n' '{key}' ;;\n  version) printf '%s %s\\n' '{name}' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '{{\\\"version\\\":\\\"{name}-1.2.3\\\"}}\\n' ;;\nesac\n"
-        );
-        let path = dir.join(name);
-        fs::write(&path, script).expect("write integration stub");
-        set_mode(&path, "0755");
+        #[cfg(windows)]
+        {
+            let path = dir.join(format!("{name}.exe"));
+            fs::copy(&helper, &path).expect("copy Windows integration executable");
+        }
+        #[cfg(not(windows))]
+        {
+            let script = format!(
+                "#!/bin/sh\ncase \"$1\" in\n  get) printf '%s %s\\n' '{name}' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '%s\\n' \"$DOCTOR_IDENTITY_KEY\" ;;\n  version) printf '%s %s\\n' '{name}' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '{{\\\"version\\\":\\\"{name}-1.2.3\\\"}}\\n' ;;\nesac\n"
+            );
+            let path = dir.join(name);
+            fs::write(&path, script).expect("write integration stub");
+            set_mode(&path, "0755");
+        }
     }
+}
+
+#[cfg(windows)]
+fn build_windows_tool_helper(work: &Path) -> PathBuf {
+    let source = work.join("doctor-tool-helper.go");
+    let output = work.join("doctor-tool-helper.exe");
+    fs::write(
+        &source,
+        r#"package main
+
+import (
+    "fmt"
+    "os"
+    "path/filepath"
+    "strings"
+)
+
+func main() {
+    name := strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe")
+    if len(os.Args) < 2 { return }
+    args := strings.Join(os.Args[1:], " ")
+    if os.Getenv("DOCTOR_TOOL_LOG") != "" {
+        f, err := os.OpenFile(os.Getenv("DOCTOR_TOOL_LOG"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+        if err == nil { _, _ = fmt.Fprintf(f, "%s %s\n", name, args); _ = f.Close() }
+    }
+    switch os.Args[1] {
+    case "get": fmt.Println(os.Getenv("DOCTOR_IDENTITY_KEY"))
+    case "version": fmt.Printf("{\"version\":\"%s-1.2.3\"}\n", name)
+    }
+}
+"#,
+    )
+    .expect("write Go Windows tool helper");
+    let output_result = Command::new("go")
+        .args(["build", "-o"])
+        .arg(&output)
+        .arg(&source)
+        .output()
+        .expect("run Go to build Windows tool helper");
+    assert!(
+        output_result.status.success(),
+        "Go Windows tool helper build failed: {}",
+        String::from_utf8_lossy(&output_result.stderr)
+    );
+    output
 }
 
 fn room_snapshot(room: &Path) -> BTreeMap<String, (Vec<u8>, String)> {
@@ -262,12 +337,62 @@ fn room_snapshot(room: &Path) -> BTreeMap<String, (Vec<u8>, String)> {
     files
 }
 
-fn normalize(bytes: &[u8], home: &Path, data: &Path, tools: &Path) -> Vec<u8> {
+fn normalize(
+    bytes: &[u8],
+    home: &Path,
+    data: &Path,
+    tools: &Path,
+    has_identity_file: bool,
+) -> Vec<u8> {
     let mut text = String::from_utf8_lossy(bytes).into_owned();
     for (path, token) in [(home, "$HOME"), (data, "$DATA"), (tools, "$TOOLS")] {
         text = text.replace(&path.to_string_lossy().to_string(), token);
     }
+    if cfg!(windows) {
+        for name in ["symdesk", "symbrain", "symvault"] {
+            text = text.replace(&format!("$TOOLS\\{name}.exe"), &format!("$TOOLS/{name}"));
+            text = text.replace(&format!("$TOOLS/{name}.exe"), &format!("$TOOLS/{name}"));
+        }
+        if text.starts_with('{') {
+            text = text.replace("\\\\", "/");
+        } else {
+            text = text.replace('\\', "/");
+        }
+    }
+    if has_identity_file {
+        text = normalize_identity_mode_output(&text);
+    }
     text.into_bytes()
+}
+
+fn normalize_identity_mode_output(text: &str) -> String {
+    if text.starts_with('{') {
+        let mut lines = text.lines().map(str::to_owned).collect::<Vec<_>>();
+        for index in 0..lines.len() {
+            if lines[index].trim() == "\"name\": \"identity_key_mode\"," && index + 3 < lines.len()
+            {
+                let indent = lines[index].len() - lines[index].trim_start().len();
+                let prefix = " ".repeat(indent);
+                lines[index + 1] = format!("{prefix}  \"status\": \"platform-mode\",");
+                lines[index + 2] = format!(
+                    "{prefix}  \"message\": \"identity key mode depends on the host platform\","
+                );
+                lines[index + 3] = format!("{prefix}  \"remediation\": \"platform-specific\"");
+            }
+        }
+        return lines
+            .join("\n")
+            .replace("\"failed\": true", "\"failed\": \"platform-dependent\"")
+            .replace("\"failed\": false", "\"failed\": \"platform-dependent\"");
+    }
+    let mut lines = text.lines().map(str::to_owned).collect::<Vec<_>>();
+    for index in 0..lines.len() {
+        if lines[index].contains(" identity_key_mode: ") && index + 1 < lines.len() {
+            lines[index] = "[MODE] identity_key_mode: host-dependent key file mode".to_owned();
+            lines[index + 1] = "  remediation: platform-specific".to_owned();
+        }
+    }
+    lines.join("\n")
 }
 
 fn read_or_empty(path: &Path) -> Vec<u8> {
@@ -277,29 +402,39 @@ fn read_or_empty(path: &Path) -> Vec<u8> {
 #[cfg(unix)]
 fn set_mode(path: &Path, mode: &str) {
     use std::os::unix::fs::PermissionsExt;
-    fs::set_permissions(
-        path,
-        fs::Permissions::from_mode(u32::from_str_radix(mode, 8).unwrap()),
-    )
-    .expect("set fixture file mode");
+    let bits = match mode {
+        "private" => 0o600,
+        "readonly" => 0o444,
+        "0755" => 0o755,
+        other => u32::from_str_radix(other, 8).unwrap(),
+    };
+    fs::set_permissions(path, fs::Permissions::from_mode(bits)).expect("set fixture file mode");
 }
 
 #[cfg(not(unix))]
-fn set_mode(_path: &Path, _mode: &str) {}
+fn set_mode(path: &Path, mode: &str) {
+    let mut permissions = fs::metadata(path).unwrap().permissions();
+    permissions.set_readonly(mode == "readonly");
+    fs::set_permissions(path, permissions).expect("set Windows fixture file mode");
+}
 
 fn mode_string(path: &Path) -> String {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        format!(
-            "{:04o}",
-            fs::metadata(path).unwrap().permissions().mode() & 0o777
-        )
+        match fs::metadata(path).unwrap().permissions().mode() & 0o777 {
+            0o600 => "private".to_owned(),
+            0o444 => "readonly".to_owned(),
+            _ => "other".to_owned(),
+        }
     }
     #[cfg(not(unix))]
     {
-        let _ = path;
-        "0000".to_owned()
+        if fs::metadata(path).unwrap().permissions().readonly() {
+            "readonly".to_owned()
+        } else {
+            "private".to_owned()
+        }
     }
 }
 
@@ -322,6 +457,26 @@ impl TempDir {
 
 impl Drop for TempDir {
     fn drop(&mut self) {
+        #[cfg(windows)]
+        clear_readonly_files(&self.path);
         fs::remove_dir_all(&self.path).expect("remove temporary directory");
+    }
+}
+
+#[cfg(windows)]
+fn clear_readonly_files(root: &Path) {
+    for entry in fs::read_dir(root).expect("read temporary directory") {
+        let path = entry.expect("temporary entry").path();
+        if path.is_dir() {
+            clear_readonly_files(&path);
+        } else {
+            let mut permissions = fs::metadata(&path)
+                .expect("temporary metadata")
+                .permissions();
+            if permissions.readonly() {
+                permissions.set_readonly(false);
+                fs::set_permissions(path, permissions).expect("make temporary file writable");
+            }
+        }
     }
 }

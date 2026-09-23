@@ -318,6 +318,10 @@ jobs:
         shell: bash
         run: make index-backup-differential
 
+      - name: Run native index restore differential
+        shell: bash
+        run: make index-restore-differential
+
       - name: Run native room run projection differential
         shell: bash
         run: make room-run-projection-differential

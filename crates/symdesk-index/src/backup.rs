@@ -1,5 +1,6 @@
 use std::{
     fs::{self, DirBuilder, File, OpenOptions},
+    io,
     path::{Component, Path, PathBuf},
     sync::atomic::{AtomicU64, Ordering},
 };
@@ -49,6 +50,54 @@ pub fn backup_database(connection: &Connection, destination: &Path) -> Result<()
         .map_err(|error| SidecarError::Contract(format!("prepare snapshot path: {error}")))?;
 
     let result = backup_at(connection, &temporary, destination);
+    if result.is_err() {
+        let _ = fs::remove_file(&temporary);
+    }
+    result
+}
+
+/// Validates and atomically restores a SQLite backup without modifying it.
+/// Callers close long-lived destination connections before replacement.
+pub fn restore_database(source: &Path, destination: &Path) -> Result<(), SidecarError> {
+    let info = fs::metadata(source)
+        .map_err(|error| SidecarError::Contract(format!("stat index backup: {error}")))?;
+    if !info.is_file() {
+        return Err(SidecarError::Contract(format!(
+            "index backup is not a regular file: {}",
+            source.display()
+        )));
+    }
+    validate_sqlite_header(source)?;
+    if clean_path(source) == clean_path(destination) {
+        return Err(SidecarError::Contract(
+            "source and destination are the same index file".to_owned(),
+        ));
+    }
+    let parent = destination
+        .parent()
+        .filter(|path| !path.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    create_private_dir_all(parent)
+        .map_err(|error| SidecarError::Contract(format!("create index directory: {error}")))?;
+    let mut input = File::open(source)
+        .map_err(|error| SidecarError::Contract(format!("open index file: {error}")))?;
+    let (temporary, mut output) = create_private_temp(parent)?;
+    let result = (|| {
+        let copied = io::copy(&mut input, &mut output)
+            .map_err(|error| SidecarError::Contract(format!("copy index file: {error}")))?;
+        if copied != info.len() {
+            return Err(SidecarError::Contract(format!(
+                "copy index file: copied {copied} bytes, want {}",
+                info.len()
+            )));
+        }
+        output
+            .sync_all()
+            .map_err(|error| SidecarError::Contract(format!("sync index file: {error}")))?;
+        drop(output);
+        fs::rename(&temporary, destination)
+            .map_err(|error| SidecarError::Contract(format!("replace retrieval index: {error}")))
+    })();
     if result.is_err() {
         let _ = fs::remove_file(&temporary);
     }

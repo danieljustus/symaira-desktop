@@ -20,6 +20,7 @@
 .PHONY: index-backup-fixtures-generate index-backup-differential
 .PHONY: room-decide-cli-fixtures-generate room-decide-cli-differential
 .PHONY: room-log-fixtures-generate room-log-differential room-log-cli-fixtures-generate room-log-cli-differential
+.PHONY: index-restore-fixtures-generate index-restore-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -349,6 +350,13 @@ index-backup-fixtures-generate:
 index-backup-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test index_backup
+
+index-restore-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexRestorePortFixture$$'
+
+index-restore-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexRestorePortFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test index_restore
 
 history-prune-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'

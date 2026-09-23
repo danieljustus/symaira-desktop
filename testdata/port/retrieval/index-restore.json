@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "source_hashes": {
+    "internal/retrieval/internal/config/config.go": "8ea6483a677e6773de3a20de97a7e86ee6c33b1f24068907a4e82b7f9e06bd7d",
+    "internal/retrieval/maintenance.go": "4093ed1f269d20110176c62b527a6990d178b91b35ab573b7f2babf42300c3bb"
+  },
+  "restored_rows": [
+    {
+      "id": 1,
+      "body": "restored row"
+    }
+  ],
+  "header": "SQLite format 3\u0000",
+  "mode": "0600",
+  "directory_mode": "0700",
+  "source_unchanged": true,
+  "same_path_error": "source and destination are the same index file",
+  "invalid_prefix": "read index backup header",
+  "directory_prefix": "index backup is not a regular file",
+  "missing_prefix": "stat index backup"
+}

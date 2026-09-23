@@ -256,6 +256,30 @@
       ]
     },
     {
+      "name": "add-config-adapters-rejected",
+      "args": [
+        "member",
+        "add",
+        "--pubkey",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "--name",
+        "blocked"
+      ],
+      "actor": "owner",
+      "global_config": "default_identity = \"owner\"\n[adapters.deploy]\ncommand = [\"echo\"]\n",
+      "default_identity_env": "owner",
+      "config_error": true,
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error loading configuration: global config error: failed to apply \u003cconfig-path\u003e: field \"adapters\": map fields are not supported from config\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
       "name": "add-default-identity-missing",
       "args": [
         "member",

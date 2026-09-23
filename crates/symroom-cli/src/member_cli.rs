@@ -351,6 +351,12 @@ fn merge_identity_config(
     };
     let config: toml::Value = toml::from_str(&contents)
         .map_err(|error| format!("{source}: failed to parse {}: {error}", path.display()))?;
+    if config.get("adapters").is_some() {
+        return Err(format!(
+            "{source}: failed to apply {}: field \"adapters\": map fields are not supported from config",
+            path.display()
+        ));
+    }
     match config.get("default_identity") {
         None => Ok(current),
         Some(toml::Value::String(value)) if value.is_empty() => Ok(current),

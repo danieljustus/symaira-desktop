@@ -49,6 +49,8 @@ struct Case {
     project_config: String,
     #[serde(default)]
     default_identity_env: String,
+    #[serde(default)]
+    config_error: bool,
     exit_code: i32,
     stdout: String,
     stderr: String,
@@ -172,12 +174,21 @@ fn member_cli_matches_go_process_and_journal_contract() {
             "stdout case {}",
             case.name
         );
-        assert_eq!(
-            output.stderr,
-            case.stderr.as_bytes(),
-            "stderr case {}",
-            case.name
-        );
+        let stderr = if case.config_error {
+            String::from_utf8(output.stderr)
+                .expect("configuration error stderr is UTF-8")
+                .replace(
+                    &home
+                        .join(".config/symroom/config.toml")
+                        .display()
+                        .to_string(),
+                    "<config-path>",
+                )
+                .into_bytes()
+        } else {
+            output.stderr
+        };
+        assert_eq!(stderr, case.stderr.as_bytes(), "stderr case {}", case.name);
         let actual = read_journal(&journal, case.dynamic_event);
         let expected = case
             .final_files

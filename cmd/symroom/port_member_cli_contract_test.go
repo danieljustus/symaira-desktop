@@ -48,6 +48,7 @@ type memberCLICase struct {
 	GlobalConfig       string          `json:"global_config,omitempty"`
 	ProjectConfig      string          `json:"project_config,omitempty"`
 	DefaultIdentityEnv string          `json:"default_identity_env,omitempty"`
+	ConfigError        bool            `json:"config_error,omitempty"`
 	ExitCode           int             `json:"exit_code"`
 	Stdout             string          `json:"stdout"`
 	Stderr             string          `json:"stderr"`
@@ -64,6 +65,7 @@ type memberCLIVector struct {
 	globalConfig       string
 	projectConfig      string
 	defaultIdentityEnv string
+	configError        bool
 }
 
 // TestPortMemberCLIContract records the shipped Go process result and journal
@@ -160,6 +162,7 @@ func makeMemberCLIContract(t *testing.T, root string) (memberCLIContract, error)
 		{name: "add-default-identity-toml", args: []string{"member", "add", "--pubkey", addKey, "--name", "default-toml"}, actor: "owner", dynamicEvent: true, identityFile: true, globalConfig: "default_identity = \"owner\"\n"},
 		{name: "add-default-identity-project-over-global", args: []string{"member", "add", "--pubkey", addKey, "--name", "project-default"}, actor: "owner", dynamicEvent: true, identityFile: true, globalConfig: "default_identity = \"stranger\"\n", projectConfig: "default_identity = \"owner\"\n"},
 		{name: "add-default-identity-env-over-toml", args: []string{"member", "add", "--pubkey", addKey, "--name", "env-overrides"}, actor: "owner", dynamicEvent: true, identityFile: true, globalConfig: "default_identity = \"stranger\"\n", defaultIdentityEnv: "owner"},
+		{name: "add-config-adapters-rejected", args: []string{"member", "add", "--pubkey", addKey, "--name", "blocked"}, actor: "owner", globalConfig: "default_identity = \"owner\"\n[adapters.deploy]\ncommand = [\"echo\"]\n", defaultIdentityEnv: "owner", configError: true},
 		{name: "add-default-identity-missing", args: []string{"member", "add", "--pubkey", addKey, "--name", "no-default"}, actor: "owner"},
 		{name: "add-usage", args: []string{"member", "add"}, actor: "owner"},
 		{name: "add-invalid-hex", args: []string{"member", "add", "--identity", "owner", "--pubkey", "zz", "--name", "bad"}, actor: "owner"},
@@ -270,11 +273,15 @@ func makeMemberCLIContract(t *testing.T, root string) (memberCLIContract, error)
 		if vector.dynamicEvent {
 			output = normalizeMemberEventID(output)
 		}
+		stderrText := stderr.String()
+		if vector.configError {
+			stderrText = strings.ReplaceAll(stderrText, filepath.Join(home, ".config", "symroom", "config.toml"), "<config-path>")
+		}
 		fixture.Cases = append(fixture.Cases, memberCLICase{
 			Name: vector.name, Args: vector.args, Actor: vector.actor, EmptyRoom: vector.emptyRoom,
 			DynamicEvent: vector.dynamicEvent, IdentityFile: vector.identityFile,
-			GlobalConfig: vector.globalConfig, ProjectConfig: vector.projectConfig, DefaultIdentityEnv: vector.defaultIdentityEnv,
-			ExitCode: code, Stdout: output, Stderr: stderr.String(), FinalFiles: finalFiles,
+			GlobalConfig: vector.globalConfig, ProjectConfig: vector.projectConfig, DefaultIdentityEnv: vector.defaultIdentityEnv, ConfigError: vector.configError,
+			ExitCode: code, Stdout: output, Stderr: stderrText, FinalFiles: finalFiles,
 		})
 	}
 	return fixture, nil

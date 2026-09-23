@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "4c8ad666ed087623f0034484a0afb84dca4b0e69",
+    "commit": "1d303fea76b4c00d4ef01cca5a54429d70df92d0",
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "3e87658206ecb20ebd42fbb252ae4817dd10f320aef300b9c422c3b5c189af33",
-  "generator_source_digest": "55200933e81507e04be38505821f16bdeecf6d717f22155790d065747594a718",
+  "generator_source_digest": "eb352ab3be66aa27967179a9c0a70eafefcebe5003c899fd231376df4abadcd4",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -19,6 +19,7 @@
     "testdata/port/cli/index-maintenance-process.json": "14d26a169f68dfad537da57979e77781c94b149bf9ce1f2d21d9c03b9badcbd0",
     "testdata/port/cli/symdesk-command-tree.json": "ae4092e18a831f91a91950b9a8f1521f158d0f32540f6151e597f676b7fc92e3",
     "testdata/port/cli/symroom-parser-grammar.json": "41ab739e975e9f9ccadd9a916c85b9641be3ec947192aeed1873c5ee67b8eadb",
+    "testdata/port/core/config-precedence.json": "70259ab69d2614d55810f9826f43c6e334d8ba3a353bbba8c027b3937aa1dc50",
     "testdata/port/core/config.json": "a29d32aa43dd35e743daf97659e99cbe81f158446b19245d7c1a64173a9a6486",
     "testdata/port/core/document-formats.json": "55df9494cae41c772af9eaaf45fcce4684d095848b46dff7b3bd71b4e98bc313",
     "testdata/port/core/german-search.json": "d00b659aa7d372d205d6f1a0e81abc3b9974208c63cc29906853f472980f9562",
@@ -58,6 +59,7 @@
     "testdata/port/room/member-cli.json": "a5e714ee186fd4d04c154f6b7d96d93745e7f008b7fc292532f80c97530068ea",
     "testdata/port/room/merge-read.json": "df592ce62348b6a4995724eab99938a9f64a008acf1a775f7ef6f1a801fdf478",
     "testdata/port/room/note-cli.json": "39f4a3c9cac809191dfa7d57bf4febd74dea6ec235857c9597c418c4e1807f30",
+    "testdata/port/room/run-approval-cli.json": "1fa6c2fde587b3c1a82bdf9c04c368938255ccc7847af5eac19b6b8871551ffd",
     "testdata/port/room/run-cli.json": "ab25d7e909356b0194f65a0d14c3c2687fe43a14303d4775fe782e0dcb68ab45",
     "testdata/port/room/run-mutations-cli.json": "9f2aad8732d8e4d71728b0da22053da3ea651d830754dc2683064011a62badf9",
     "testdata/port/room/run-projection.json": "577bcc0a21856c5394b92a97a36f7dc13a0f5383309b4b99f9a1aa405d02c891",
@@ -67,9 +69,9 @@
     "testdata/port/room/watch-cli.json": "d5002d4f5edfe1290368cbb74026f8060dd48c2b2ab4abd2c674f38d8165443a",
     "testdata/port/room/watch-stream.json": "61cf7287a79146471bb62079ff6d9e199fedc19cc230d10e5e33b4a334e68f63",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "65a225152e1352534d1deacfbf5b67845ef05108451d512f7a3465319df0f582",
-    "testdata/port/sidecar/lifecycle.json": "edd26fe6117bccf4392f411191b5d0db8694978f2ecd2a306165641c13853dd3",
-    "testdata/port/sidecar/roundtrip.json": "46fcfaffcb81b2529d8990e088a647290dc4fb34e78df007b871d84ae507cec5",
+    "testdata/port/sidecar/large-corpus.json": "327cb1eabc3bc1024b206fffe5ffc1960c13223af22dd32e0f1c92cb151d857f",
+    "testdata/port/sidecar/lifecycle.json": "bfce4fd0159ad111319687f5d4a082d4e040f1b6ed74afadc0e46637b83d5b8b",
+    "testdata/port/sidecar/roundtrip.json": "b4355fa38e30f3bad21430cbb6285b286eb61b9dace4bdf3ef522e6d6a3c8ee1",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/frontmatter-write.json": "ebe54a09bcd15b5811473b086d11637c65df5584221b900a85d4412cd143f5de",

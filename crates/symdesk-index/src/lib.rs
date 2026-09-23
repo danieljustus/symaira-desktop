@@ -458,6 +458,50 @@ impl Sidecar {
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
     }
 
+    /// Returns one key-ordered page of dataset rows and the uncapped total.
+    ///
+    /// # Errors
+    /// Returns the stable closed-database diagnostic or SQLite query errors.
+    pub fn dataset_query_page(
+        &self,
+        dataset_slug: &str,
+        limit: usize,
+    ) -> Result<(usize, Vec<DatasetRow>), SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        let total: i64 = self.connection.query_row(
+            "SELECT COUNT(*) FROM dataset_rows WHERE dataset_slug = ?",
+            [dataset_slug],
+            |row| row.get(0),
+        )?;
+        let mut statement = self.connection.prepare(
+            "SELECT dataset_slug,row_key,COALESCE(identity,''),values_json,source_path,row_number FROM dataset_rows WHERE dataset_slug = ? ORDER BY row_key LIMIT ?",
+        )?;
+        let limit = i64::try_from(limit).unwrap_or(i64::MAX);
+        let rows = statement.query_map(params![dataset_slug, limit], |row| {
+            let row_number: i64 = row.get(5)?;
+            Ok(DatasetRow {
+                dataset_slug: row.get(0)?,
+                row_key: row.get(1)?,
+                identity: row.get(2)?,
+                values_json: row.get(3)?,
+                source_path: row.get(4)?,
+                row_number: usize::try_from(row_number).map_err(|error| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        5,
+                        rusqlite::types::Type::Integer,
+                        Box::new(error),
+                    )
+                })?,
+            })
+        })?;
+        Ok((
+            usize::try_from(total).unwrap_or(usize::MAX),
+            rows.collect::<Result<_, _>>()?,
+        ))
+    }
+
     /// Deletes only the rebuildable rows for one dataset.
     ///
     /// # Errors

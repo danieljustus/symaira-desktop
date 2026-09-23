@@ -115,3 +115,141 @@ fn sync_cli_preserves_go_float64_rounding_and_reuses_provenance() {
         b"amount,id\n9007199254740992,one\n"
     );
 }
+
+#[test]
+fn query_cli_projects_identity_keys_and_caps_the_default_ordered_page() {
+    let root = TempRoot::new("query-page");
+    let seeded = run(
+        &root,
+        [
+            "dataset",
+            "sync",
+            "orders",
+            "--rows",
+            r#"[{"identity":"b","values":{"id":"b","amount":2}},{"identity":"a","values":{"id":"a","amount":1}}]"#,
+            "--provenance",
+            r#"{"source_name":"fixture","source_sha256":"sha","imported_at":"2026-04-03T10:00:00Z"}"#,
+            "--identity-field",
+            "id",
+            "--json",
+        ],
+    );
+    assert_eq!(seeded.status.code(), Some(0), "stderr: {:?}", seeded.stderr);
+
+    let queried = run(
+        &root,
+        [
+            "dataset",
+            "query",
+            "orders",
+            "--columns",
+            "_key,identity,id",
+            "--limit",
+            "1",
+            "--json",
+        ],
+    );
+    assert_eq!(
+        queried.status.code(),
+        Some(0),
+        "stderr: {:?}",
+        queried.stderr
+    );
+    assert_eq!(queried.stdout, b"{\"dataset\":\"orders\",\"columns\":[\"_key\",\"identity\",\"id\"],\"rows\":[{\"_key\":\"identity:a\",\"id\":\"a\",\"identity\":\"a\"}],\"total_rows\":2,\"returned_rows\":1,\"limit\":1,\"capped\":true}\n");
+    let default_page = run(&root, ["dataset", "query", "orders", "--json"]);
+    assert_eq!(
+        default_page.status.code(),
+        Some(0),
+        "stderr: {:?}",
+        default_page.stderr
+    );
+    assert_eq!(default_page.stdout, b"{\"dataset\":\"orders\",\"columns\":[\"amount\",\"id\"],\"rows\":[{\"amount\":1,\"id\":\"a\"},{\"amount\":2,\"id\":\"b\"}],\"total_rows\":2,\"returned_rows\":2,\"limit\":10,\"capped\":false}\n");
+}
+
+#[test]
+fn query_cli_rejects_unknown_columns_and_missing_datasets() {
+    let root = TempRoot::new("query-invalid");
+    let seeded = run(
+        &root,
+        [
+            "dataset",
+            "sync",
+            "orders",
+            "--rows",
+            r#"[{"identity":"a","values":{"id":"a"}}]"#,
+            "--provenance",
+            r#"{"source_name":"fixture","source_sha256":"sha","imported_at":"2026-04-03T10:00:00Z"}"#,
+            "--identity-field",
+            "id",
+            "--json",
+        ],
+    );
+    assert_eq!(seeded.status.code(), Some(0), "stderr: {:?}", seeded.stderr);
+    let unknown = run(
+        &root,
+        [
+            "dataset",
+            "query",
+            "orders",
+            "--columns",
+            "absent",
+            "--json",
+        ],
+    );
+    assert_ne!(unknown.status.code(), Some(0));
+    let unknown_error: serde_json::Value =
+        serde_json::from_slice(&unknown.stdout).expect("JSON error");
+    assert_eq!(
+        unknown_error["error"],
+        "dataset column \"absent\" not found"
+    );
+    let missing = run(&root, ["dataset", "query", "missing", "--json"]);
+    assert_ne!(missing.status.code(), Some(0));
+    let missing_error: serde_json::Value =
+        serde_json::from_slice(&missing.stdout).expect("JSON error");
+    assert_eq!(missing_error["error"], "dataset \"missing\" not found");
+}
+
+#[test]
+fn query_cli_caps_large_pages_at_one_thousand_rows() {
+    let root = TempRoot::new("query-cap");
+    let rows = (0..1001)
+        .map(|index| {
+            format!(r#"{{"identity":"row-{index:04}","values":{{"id":"row-{index:04}"}}}}"#)
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    let row_input = format!("[{rows}]");
+    let seeded = run(
+        &root,
+        [
+            "dataset",
+            "sync",
+            "orders",
+            "--rows",
+            &row_input,
+            "--provenance",
+            r#"{"source_name":"fixture","source_sha256":"sha","imported_at":"2026-04-03T10:00:00Z"}"#,
+            "--identity-field",
+            "id",
+            "--json",
+        ],
+    );
+    assert_eq!(seeded.status.code(), Some(0), "stderr: {:?}", seeded.stderr);
+    let queried = run(
+        &root,
+        ["dataset", "query", "orders", "--limit", "5000", "--json"],
+    );
+    assert_eq!(
+        queried.status.code(),
+        Some(0),
+        "stderr: {:?}",
+        queried.stderr
+    );
+    let result: serde_json::Value = serde_json::from_slice(&queried.stdout).expect("JSON result");
+    assert_eq!(result["limit"], 1000);
+    assert_eq!(result["total_rows"], 1001);
+    assert_eq!(result["returned_rows"], 1000);
+    assert_eq!(result["capped"], true);
+    assert_eq!(result["rows"].as_array().map(Vec::len), Some(1000));
+}

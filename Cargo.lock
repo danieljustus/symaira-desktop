@@ -1286,7 +1286,9 @@ dependencies = [
 name = "symdesk-cli"
 version = "0.0.0"
 dependencies = [
+ "cap-std",
  "clap",
+ "libc",
  "rusqlite",
  "serde",
  "serde_json",

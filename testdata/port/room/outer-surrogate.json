@@ -5,7 +5,7 @@
     "internal/room/identity/identity.go": "b5ac62c045e84390e1bd99f53b20e404586e8a4499e74bfe95473300ec2e284b",
     "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
     "internal/room/room/port_identity_event_contract_test.go": "b8eb1f9500fc79819517f64c20fe128bbe049b3f65bb4baa47daa5f0f0e73efb",
-    "internal/room/room/port_outer_surrogate_contract_test.go": "aca6f8ef42f441c92a8c292ec79bc5e0b903a4a4861a93e9a6befda7c300297e"
+    "internal/room/room/port_outer_surrogate_contract_test.go": "ea5a07eab1aa941a7a9365e0bdc9ed13014ad224c98fa8663fc79d93bd2eb0e2"
   },
   "public_key": "fa0385aa84b36f4a6dfc83ef156cf6a6ffc6b641cf86914e424703660e16dcdc",
   "cases": [
@@ -764,9 +764,9 @@
     {
       "id": "normalized-unknown-key-breaks-chain",
       "author": "mem_5088a8e294d2e3aa",
-      "content": "{\"v\":1,\"id\":\"base\",\"room\":\"r\",\"author\":\"mem_5088a8e294d2e3aa\",\"seq\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"lamport\":2,\"ts\":\"2026-09-23T00:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{ \"raw\":\"\\ud800\", \"\\ufffd\":0, \"raw\":\"\\udc00\", \"pair\":\"\\ud83d\\ude00\", \"literal\":\"\\\\ud800\" },\"id\":\"\\ud800\",\"\\udc00\":0,\"sig\":\"ed25519:HyXYoEl+DJv+w7VXxXcp135K3ZTB4KlRmUjH392Ptc+hDOxTUyeKJemnW0S/aN0z3nUMTZi9f9PXUp1v5rv5Dg==\"}\n{\"author\":\"mem_5088a8e294d2e3aa\",\"body\":{\"raw\":\"\\ud800\",\"\\udc00\":0,\"raw\":\"\\udc00\",\"pair\":\"\\ud83d\\ude00\",\"literal\":\"\\\\ud800\"},\"id\":\"next\",\"kind\":\"note.posted\",\"lamport\":0,\"prev\":\"sha256:6214da614f42962ed662cda5a0b20a009c8d17675fd4cfe18cc4b587ad831043\",\"room\":\"r\",\"seq\":2,\"sig\":\"ed25519:13iQs3ZDBE8ib/9O4PzfZ4C/JxIxlgOhCqCdgsYZuW7FPriTTaq7Tqqk/2yVzaRiegYNWfxfIlhXncM6OXqdAA==\",\"ts\":\"\",\"v\":1}\n",
+      "content": "{\"v\":1,\"id\":\"base\",\"room\":\"r\",\"author\":\"mem_5088a8e294d2e3aa\",\"seq\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"lamport\":2,\"ts\":\"2026-09-23T00:00:00.000Z\",\"kind\":\"note.posted\",\"body\":{ \"raw\":\"\\ud800\", \"\\udc00\":0, \"raw\":\"\\udc00\", \"pair\":\"\\ud83d\\ude00\", \"literal\":\"\\\\ud800\" },\"id\":\"\\ud800\",\"\\ufffd\":0,\"sig\":\"ed25519:HyXYoEl+DJv+w7VXxXcp135K3ZTB4KlRmUjH392Ptc+hDOxTUyeKJemnW0S/aN0z3nUMTZi9f9PXUp1v5rv5Dg==\"}\n{\"author\":\"mem_5088a8e294d2e3aa\",\"body\":{\"raw\":\"\\ud800\",\"\\udc00\":0,\"raw\":\"\\udc00\",\"pair\":\"\\ud83d\\ude00\",\"literal\":\"\\\\ud800\"},\"id\":\"next\",\"kind\":\"note.posted\",\"lamport\":0,\"prev\":\"sha256:6214da614f42962ed662cda5a0b20a009c8d17675fd4cfe18cc4b587ad831043\",\"room\":\"r\",\"seq\":2,\"sig\":\"ed25519:13iQs3ZDBE8ib/9O4PzfZ4C/JxIxlgOhCqCdgsYZuW7FPriTTaq7Tqqk/2yVzaRiegYNWfxfIlhXncM6OXqdAA==\",\"ts\":\"\",\"v\":1}\n",
       "code": "chain_broken",
-      "error": "journal hash chain broken: author mem_5088a8e294d2e3aa seq 2 expected prev sha256:ecf18827c21e107db9ffcb41a0cfdb20b27fd7d5ee6040bc0a7b0d23c9652014, got sha256:6214da614f42962ed662cda5a0b20a009c8d17675fd4cfe18cc4b587ad831043"
+      "error": "journal hash chain broken: author mem_5088a8e294d2e3aa seq 2 expected prev sha256:9385bd5a36536756e7c86a587a9fbd21d699e53cdb0d169682bf52729a89a3b2, got sha256:6214da614f42962ed662cda5a0b20a009c8d17675fd4cfe18cc4b587ad831043"
     }
   ]
 }

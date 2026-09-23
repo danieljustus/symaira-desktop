@@ -179,9 +179,34 @@ func TestPortRoomOuterSurrogateContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	changedUnknown := strings.Replace(firstUnknown, `"\udc00":0`, `"\ufffd":0`, 1)
+	changedUnknown := strings.Replace(firstUnknown, `"id":"\ud800","\udc00":0`, `"id":"\ud800","\ufffd":0`, 1)
 	if changedUnknown == firstUnknown {
 		t.Fatal("unknown-key chain mutation did not alter the original line")
+	}
+	unknownEvent, err := event.UnmarshalJSONLine([]byte(firstUnknown))
+	if err != nil {
+		t.Fatal(err)
+	}
+	changedEvent, err := event.UnmarshalJSONLine([]byte(changedUnknown))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := unknownEvent.VerifySignature(public); err != nil {
+		t.Fatalf("unknown-key original signature: %v", err)
+	}
+	if err := changedEvent.VerifySignature(public); err != nil {
+		t.Fatalf("unknown-key mutation changed signed data: %v", err)
+	}
+	firstCanonical, err := event.CanonicalBytes(unknownEvent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	changedCanonical, err := event.CanonicalBytes(changedEvent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(firstCanonical) != string(changedCanonical) || string(unknownEvent.Body) != string(changedEvent.Body) {
+		t.Fatal("unknown-key mutation changed canonical bytes or raw body")
 	}
 	chainCases = append(chainCases,
 		outerSurrogateChainVector{ID: "raw-unknown-key-chain", Author: signer.MemberID, Content: firstUnknown + string(secondUnknown)},

@@ -166,6 +166,18 @@ fn accept_flag_review_mutates_frontmatter_and_index_and_records_history() {
     let history = symdesk_vault::retention::load_history(&root.vault()).expect("read history");
     assert_eq!(history.len(), 1);
     assert_eq!(history[0].action_id, "ret-safe:0");
+    let journal_dir = root.vault().join(".symdesk/journal");
+    let day = fs::read_dir(journal_dir)
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap()
+        .path();
+    let event: serde_json::Value = serde_json::from_slice(&fs::read(day).unwrap()).unwrap();
+    assert_eq!(event["event"], "status_changed");
+    assert_eq!(event["path"], "doc.md");
+    assert_eq!(event["title"], "Retention Doc");
+    assert_eq!(event["details"], "status set to needs_review");
 }
 
 #[test]
@@ -188,6 +200,18 @@ fn accept_trash_moves_document_and_removes_it_from_index() {
     assert_eq!(history.len(), 1);
     assert_eq!(history[0].action_id, "ret-safe:0");
     assert!(root.vault().join(".symdesk/trash").exists());
+    let journal_dir = root.vault().join(".symdesk/journal");
+    let day = fs::read_dir(journal_dir)
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap()
+        .path();
+    let event: serde_json::Value = serde_json::from_slice(&fs::read(day).unwrap()).unwrap();
+    assert_eq!(event["event"], "file_removed");
+    assert_eq!(event["path"], "doc.md");
+    assert_eq!(event["title"], "doc.md");
+    assert_eq!(event["details"], "moved to trash");
 }
 
 #[test]

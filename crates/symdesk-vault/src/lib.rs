@@ -2,6 +2,7 @@
 
 //! Read-only contract-v1–v6 Markdown vault parsing.
 
+pub mod activity_journal;
 pub mod conflict;
 pub mod dataset;
 mod go_string;

@@ -22,7 +22,9 @@ use symdesk_vault::retention::{
     stable_action_id, write_proposal,
 };
 use symdesk_vault::retention_state::retention_state;
-use symdesk_vault::{HistoryStore, parse_bytes, secure_path, set_frontmatter_key};
+use symdesk_vault::{
+    HistoryStore, activity_journal::append_activity, parse_bytes, secure_path, set_frontmatter_key,
+};
 use time::OffsetDateTime;
 
 use crate::{emit_error, write_go_json, write_stdout};
@@ -523,7 +525,7 @@ fn apply_retention_action(
     let absolute = secure_path(vault_root, &relative).map_err(|error| error.to_string())?;
     match item.action.as_str() {
         ACTION_TRASH => {
-            history
+            let entry = history
                 .trash(&relative)
                 .map_err(|error| error.to_string())?;
             let key_path = vault_root.join(Path::new(&relative));
@@ -532,7 +534,15 @@ fn apply_retention_action(
                 .ok_or_else(|| format!("non-UTF-8 vault path: {key_path:?}"))?;
             sidecar
                 .delete_document(key)
-                .map_err(|error| format!("moved to trash but failed to deindex: {error}"))
+                .map_err(|error| format!("moved to trash but failed to deindex: {error}"))?;
+            let _ = append_activity(
+                vault_root,
+                "file_removed",
+                &relative,
+                &entry.name,
+                "moved to trash",
+            );
+            Ok(())
         }
         ACTION_FLAG_REVIEW => {
             // Go treats a failed pre-mutation snapshot as a warning, not as a
@@ -553,7 +563,15 @@ fn apply_retention_action(
                 .map_err(|error| error.to_string())?;
             sidecar
                 .index_document(&indexed)
-                .map_err(|error| error.to_string())
+                .map_err(|error| error.to_string())?;
+            let _ = append_activity(
+                vault_root,
+                "status_changed",
+                &relative,
+                &document.title,
+                "status set to needs_review",
+            );
+            Ok(())
         }
         action => Err(format!("unsupported retention action {:?}", action)),
     }

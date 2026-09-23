@@ -269,6 +269,10 @@ fn top_level_yaml_timestamps(input: &[u8]) -> BTreeMap<String, String> {
         }
         if is_iso_date(value) {
             result.insert(key.trim().to_owned(), format!("{value}T00:00:00Z"));
+        } else if time::OffsetDateTime::parse(value, &time::format_description::well_known::Rfc3339)
+            .is_ok()
+        {
+            result.insert(key.trim().to_owned(), value.to_owned());
         }
     }
     result

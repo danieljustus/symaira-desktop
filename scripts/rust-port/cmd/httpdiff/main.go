@@ -383,7 +383,7 @@ func compare(id string, left, right transcript) error {
 		right.Headers = cloneWithout(right.Headers, "content-length")
 	}
 	if !reflect.DeepEqual(left.Headers, right.Headers) {
-		return fmt.Errorf("headers mismatch: Go=%v Rust=%v", left.Headers, right.Headers)
+		return fmt.Errorf("headers mismatch: Go=%v Rust=%v; bodies Go=%q Rust=%q", left.Headers, right.Headers, left.Body, right.Body)
 	}
 	if !reflect.DeepEqual(left.Body, right.Body) {
 		return fmt.Errorf("body mismatch: Go=%q Rust=%q", left.Body, right.Body)

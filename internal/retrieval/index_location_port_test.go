@@ -83,6 +83,22 @@ func TestIndexLocationPortFixture(t *testing.T) {
 	}
 }
 
+func TestConfiguredIndexPathClampsAtFilesystemRoot(t *testing.T) {
+	root := string(filepath.Separator)
+	if volume := filepath.VolumeName(os.TempDir()); volume != "" {
+		root = volume + string(filepath.Separator)
+	}
+	path := root + strings.Repeat(".."+string(filepath.Separator), 3) + filepath.Join("tmp", "index.db")
+	actual, err := configuredIndexPath(&config.Config{IndexPath: path})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(root, "tmp", "index.db")
+	if actual != want {
+		t.Fatalf("configuredIndexPath(%q) = %q, want root-clamped %q", path, actual, want)
+	}
+}
+
 func makeIndexLocationCases() []indexLocationCase {
 	baseEnv := func() map[string]string {
 		return map[string]string{
@@ -98,6 +114,9 @@ func makeIndexLocationCases() []indexLocationCase {
 	vault := "$ROOT/cwd/vault"
 	return []indexLocationCase{
 		{ID: "standalone-default", Environment: baseEnv()},
+		{ID: "trimmed-xdg-data-home", Environment: map[string]string{
+			"HOME": "$ROOT/home", "USERPROFILE": "$ROOT/home", "XDG_DATA_HOME": " $ROOT/data ", "TMPDIR": "$ROOT/tmp", "TMP": "$ROOT/tmp", "TEMP": "$ROOT/tmp",
+		}},
 		{ID: "standalone-symseek-before-legacy", Environment: baseEnv(), SeedFiles: map[string]string{
 			"$ROOT/data/symdesk/symseek.db":                   "old primary",
 			"$ROOT/home/.local/share/symaira-seek/symseek.db": "legacy",

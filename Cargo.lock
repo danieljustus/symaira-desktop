@@ -1287,6 +1287,7 @@ name = "symdesk-cli"
 version = "0.0.0"
 dependencies = [
  "clap",
+ "rusqlite",
  "serde",
  "serde_json",
  "symaira-core-exit",

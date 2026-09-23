@@ -271,7 +271,7 @@ fn vault_retrieval_path(
     let mut root = data_home(environment)?.join("symdesk/vaults");
     let canonical_temp =
         fs::canonicalize(temp_root).unwrap_or_else(|_| absolute_clean(temp_root, cwd));
-    if nonempty_environment(environment, "XDG_DATA_HOME").is_none()
+    if trimmed_environment(environment, "XDG_DATA_HOME").is_none()
         && canonical.starts_with(&canonical_temp)
         && canonical != canonical_temp
     {
@@ -283,7 +283,7 @@ fn vault_retrieval_path(
 }
 
 fn data_home(environment: &BTreeMap<String, String>) -> Result<PathBuf, SidecarError> {
-    if let Some(value) = nonempty_environment(environment, "XDG_DATA_HOME") {
+    if let Some(value) = trimmed_environment(environment, "XDG_DATA_HOME") {
         return Ok(PathBuf::from(value));
     }
     let home = user_home(environment).ok_or_else(|| {
@@ -298,6 +298,16 @@ fn user_home(environment: &BTreeMap<String, String>) -> Option<&str> {
     #[cfg(not(windows))]
     let key = "HOME";
     nonempty_environment(environment, key)
+}
+
+fn trimmed_environment<'a>(
+    environment: &'a BTreeMap<String, String>,
+    key: &str,
+) -> Option<&'a str> {
+    environment
+        .get(key)
+        .map(|value| value.trim())
+        .filter(|value| !value.is_empty())
 }
 
 fn nonempty_environment<'a>(
@@ -324,13 +334,35 @@ fn lexical_clean(path: &Path) -> PathBuf {
     for component in path.components() {
         match component {
             Component::CurDir => {}
-            Component::ParentDir => {
-                if !cleaned.pop() {
+            Component::ParentDir => match cleaned.components().next_back() {
+                Some(Component::Normal(_)) => {
+                    cleaned.pop();
+                }
+                Some(Component::ParentDir) if !cleaned.has_root() => {
                     cleaned.push(component.as_os_str());
                 }
-            }
+                None if !cleaned.has_root() => {
+                    cleaned.push(component.as_os_str());
+                }
+                _ => {}
+            },
             other => cleaned.push(other.as_os_str()),
         }
     }
     cleaned
+}
+
+#[cfg(test)]
+mod tests {
+    use super::lexical_clean;
+    use std::path::{Path, PathBuf};
+
+    #[cfg(unix)]
+    #[test]
+    fn absolute_parent_segments_clamp_at_filesystem_root() {
+        assert_eq!(
+            lexical_clean(Path::new("/../../var/../tmp/index.db")),
+            PathBuf::from("/tmp/index.db")
+        );
+    }
 }

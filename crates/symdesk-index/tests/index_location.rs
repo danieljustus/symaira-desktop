@@ -87,7 +87,7 @@ fn fixture() -> Fixture {
 fn location_and_config_paths_replay_go_fixture() {
     let fixture = fixture();
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 10);
+    assert_eq!(fixture.cases.len(), 11);
     for case in &fixture.cases {
         let root = TestDir::new();
         let (cwd, _home, temp_root, environment) = prepare_case(&root.0, case);

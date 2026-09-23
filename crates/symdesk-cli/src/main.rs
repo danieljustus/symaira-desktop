@@ -2,6 +2,7 @@
 
 mod dataset;
 mod http;
+mod index_cli;
 mod mcp;
 mod retention;
 
@@ -29,13 +30,14 @@ const VERSION: &str = match option_env!("SYMDESK_VERSION") {
 };
 
 fn main() -> ExitCode {
-    let args: Vec<OsString> = std::env::args_os().collect();
+    let mut args: Vec<OsString> = std::env::args_os().collect();
     if args.get(1).is_some_and(|arg| arg == "--version") {
         return write_stdout(format!("symdesk version {VERSION}\n"));
     }
     if args.iter().skip(2).any(|arg| arg == "--version") {
         return write_stderr("unknown flag: --version\n", CoreExitCode::Generic);
     }
+    rewrite_index_output_flag(&mut args);
 
     let matches = match cli().try_get_matches_from(args) {
         Ok(matches) => matches,
@@ -114,6 +116,12 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
         ),
+        Some(("index", command)) => index_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            matches.get_flag("json"),
+        ),
         Some(("retention", command)) => {
             let vault_opt = matches.get_one::<String>("vault").cloned();
             match command.subcommand() {
@@ -163,6 +171,31 @@ fn main() -> ExitCode {
             }
         }
         _ => process_exit(CoreExitCode::Ok),
+    }
+}
+
+fn rewrite_index_output_flag(args: &mut [OsString]) {
+    let Some(index) = args.iter().position(|arg| arg == "index") else {
+        return;
+    };
+    if args.get(index + 1).is_none_or(|arg| arg != "maintenance") {
+        return;
+    }
+    let Some(operation) = args.get(index + 2) else {
+        return;
+    };
+    if operation != "backup" && operation != "relocate" {
+        return;
+    }
+    for argument in args.iter_mut().skip(index + 3) {
+        if argument == "--output" {
+            *argument = OsString::from("--index-output");
+        } else if let Some(value) = argument
+            .to_str()
+            .and_then(|value| value.strip_prefix("--output="))
+        {
+            *argument = OsString::from(format!("--index-output={value}"));
+        }
     }
 }
 
@@ -225,6 +258,7 @@ fn cli() -> Command {
         .subcommand(Command::new("mcp"))
         .subcommand(retention::cli())
         .subcommand(dataset::cli())
+        .subcommand(index_cli::cli())
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))

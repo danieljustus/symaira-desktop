@@ -22,3 +22,4 @@ symdesk-protocol.workspace = true
 symdesk-vault.workspace = true
 time.workspace = true
 tokio.workspace = true
+rusqlite.workspace = true

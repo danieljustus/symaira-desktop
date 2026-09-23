@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "a80da93e3ec02801c73aa5b2318dc06de3efd3fa",
+  "source_hashes": {
+    "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
+    "internal/room/run/run.go": "458c7148b7de028ed22ed27df22b2187d762da5ddecbbc582763bee4d42fbf85"
+  },
+  "events": [
+    {
+      "v": 1,
+      "id": "request-a",
+      "room": "room-test",
+      "author": "author-a",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T03:04:05.000Z",
+      "kind": "run.requested",
+      "body": {
+        "run_id": "run-a",
+        "title": "Alpha",
+        "plan_file": "plans/a.md",
+        "adapter": "local"
+      }
+    },
+    {
+      "v": 1,
+      "id": "approve-a",
+      "room": "room-test",
+      "author": "reviewer",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T03:05:00.000Z",
+      "kind": "run.approved",
+      "body": {
+        "run_id": "run-a",
+        "approval_id": "approval-a",
+        "scope": "workspace",
+        "expires_at": "2026-01-03T00:00:00Z"
+      }
+    },
+    {
+      "v": 1,
+      "id": "start-a",
+      "room": "room-test",
+      "author": "worker-a",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T03:06:00.000Z",
+      "kind": "run.started",
+      "body": {
+        "run_id": "run-a"
+      }
+    },
+    {
+      "v": 1,
+      "id": "finish-a",
+      "room": "room-test",
+      "author": "worker-a",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T03:07:00.000Z",
+      "kind": "run.finished",
+      "body": {
+        "run_id": "run-a",
+        "summary": "done",
+        "artifacts": [
+          "out/a.txt",
+          "out/b.txt"
+        ]
+      }
+    },
+    {
+      "v": 1,
+      "id": "request-b",
+      "room": "room-test",
+      "author": "author-b",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T04:00:00.000Z",
+      "kind": "run.requested",
+      "body": {
+        "run_id": "run-b",
+        "title": "Beta"
+      }
+    },
+    {
+      "v": 1,
+      "id": "deny-b",
+      "room": "room-test",
+      "author": "reviewer",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T04:01:00.000Z",
+      "kind": "run.denied",
+      "body": {
+        "run_id": "run-b",
+        "reason": "outside scope"
+      }
+    },
+    {
+      "v": 1,
+      "id": "request-c",
+      "room": "room-test",
+      "author": "author-c",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T05:00:00.000Z",
+      "kind": "run.requested",
+      "body": {
+        "run_id": "run-c",
+        "title": "Gamma",
+        "adapter": "remote"
+      }
+    },
+    {
+      "v": 1,
+      "id": "start-c",
+      "room": "room-test",
+      "author": "worker-c",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T05:01:00.000Z",
+      "kind": "run.started",
+      "body": {
+        "run_id": "run-c"
+      }
+    },
+    {
+      "v": 1,
+      "id": "fail-c",
+      "room": "room-test",
+      "author": "worker-c",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T05:02:00.000Z",
+      "kind": "run.failed",
+      "body": {
+        "run_id": "run-c",
+        "error": "worker exited 7"
+      }
+    },
+    {
+      "v": 1,
+      "id": "request-d",
+      "room": "room-test",
+      "author": "author-d",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T06:00:00.000Z",
+      "kind": "run.requested",
+      "body": {
+        "run_id": "run-d",
+        "title": "Delta"
+      }
+    },
+    {
+      "v": 1,
+      "id": "cancel-d",
+      "room": "room-test",
+      "author": "author-d",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T06:01:00.000Z",
+      "kind": "run.cancelled",
+      "body": {
+        "run_id": "run-d",
+        "reason": "superseded"
+      }
+    },
+    {
+      "v": 1,
+      "id": "malformed",
+      "room": "room-test",
+      "author": "reviewer",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T07:00:00.000Z",
+      "kind": "run.approved",
+      "body": []
+    },
+    {
+      "v": 1,
+      "id": "empty-request",
+      "room": "room-test",
+      "author": "author",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T07:01:00.000Z",
+      "kind": "run.requested",
+      "body": {
+        "run_id": "",
+        "title": "ignored"
+      }
+    },
+    {
+      "v": 1,
+      "id": "unknown",
+      "room": "room-test",
+      "author": "worker-a",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T07:02:00.000Z",
+      "kind": "run.retried",
+      "body": {
+        "run_id": "run-a"
+      }
+    },
+    {
+      "v": 1,
+      "id": "unmatched",
+      "room": "room-test",
+      "author": "worker-x",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T07:03:00.000Z",
+      "kind": "run.started",
+      "body": {
+        "run_id": "missing-run"
+      }
+    },
+    {
+      "v": 1,
+      "id": "bad-request",
+      "room": "room-test",
+      "author": "author",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T07:04:00.000Z",
+      "kind": "run.requested",
+      "body": []
+    }
+  ],
+  "records": [
+    "{\"id\":\"run-a\",\"title\":\"Alpha\",\"plan_file\":\"plans/a.md\",\"adapter\":\"local\",\"state\":\"finished\",\"author\":\"author-a\",\"created_at\":\"2026-01-02T03:04:05.000Z\",\"updated_at\":\"2026-01-02T03:07:00.000Z\",\"approval_id\":\"approval-a\",\"scope\":\"workspace\",\"expires_at\":\"2026-01-03T00:00:00Z\",\"summary\":\"done\",\"artifacts\":[\"out/a.txt\",\"out/b.txt\"]}",
+    "{\"id\":\"run-b\",\"title\":\"Beta\",\"state\":\"denied\",\"author\":\"author-b\",\"created_at\":\"2026-01-02T04:00:00.000Z\",\"updated_at\":\"2026-01-02T04:01:00.000Z\",\"error\":\"outside scope\"}",
+    "{\"id\":\"run-c\",\"title\":\"Gamma\",\"adapter\":\"remote\",\"state\":\"failed\",\"author\":\"author-c\",\"created_at\":\"2026-01-02T05:00:00.000Z\",\"updated_at\":\"2026-01-02T05:02:00.000Z\",\"error\":\"worker exited 7\"}",
+    "{\"id\":\"run-d\",\"title\":\"Delta\",\"state\":\"cancelled\",\"author\":\"author-d\",\"created_at\":\"2026-01-02T06:00:00.000Z\",\"updated_at\":\"2026-01-02T06:01:00.000Z\",\"error\":\"superseded\"}"
+  ]
+}

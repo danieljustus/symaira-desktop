@@ -2,8 +2,9 @@
 //! This is a projection of already accepted events, not signature validation.
 
 use std::collections::BTreeMap;
+use std::fmt;
 
-use serde::Deserialize;
+use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
 use serde_json::value::RawValue;
 
 use crate::event::Event;
@@ -34,23 +35,69 @@ pub struct State {
     pub members: BTreeMap<String, Member>,
 }
 
-#[derive(Default, Deserialize)]
-#[serde(default)]
+#[derive(Default)]
 struct MemberBody {
-    #[serde(deserialize_with = "null_as_empty")]
     id: String,
-    #[serde(deserialize_with = "null_as_empty")]
     name: String,
-    #[serde(deserialize_with = "null_as_empty")]
     public_key: String,
-    #[serde(deserialize_with = "null_as_empty")]
     role: String,
-    #[serde(deserialize_with = "null_as_empty")]
     kind: String,
 }
 
-fn null_as_empty<'de, D: serde::Deserializer<'de>>(decoder: D) -> Result<String, D::Error> {
-    Ok(Option::<String>::deserialize(decoder)?.unwrap_or_default())
+struct MemberBodySeed<'a>(&'a str);
+
+impl<'de> DeserializeSeed<'de> for MemberBodySeed<'_> {
+    type Value = MemberBody;
+
+    fn deserialize<D: serde::Deserializer<'de>>(self, decoder: D) -> Result<Self::Value, D::Error> {
+        decoder.deserialize_map(MemberBodyVisitor(self.0))
+    }
+}
+
+struct MemberBodyVisitor<'a>(&'a str);
+
+impl<'de> Visitor<'de> for MemberBodyVisitor<'_> {
+    type Value = MemberBody;
+
+    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("a membership event body")
+    }
+
+    fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
+        let mut body = MemberBody::default();
+        while let Some(key) = map.next_key::<String>()? {
+            // Go folds JSON struct field names and the last matching key wins,
+            // even when its casing differs from an earlier key.
+            let field = key.to_lowercase();
+            let relevant = match self.0 {
+                "room.created" => matches!(field.as_str(), "name" | "public_key"),
+                "member.added" => {
+                    matches!(
+                        field.as_str(),
+                        "id" | "name" | "public_key" | "role" | "kind"
+                    )
+                }
+                "member.removed" => field == "id",
+                "member.role_changed" => matches!(field.as_str(), "id" | "role"),
+                _ => false,
+            };
+            if !relevant {
+                let _: IgnoredAny = map.next_value()?;
+                continue;
+            }
+            let value: Option<String> = map.next_value()?;
+            let value = value.unwrap_or_default();
+            match field.as_str() {
+                "id" => body.id = value,
+                "name" => body.name = value,
+                "public_key" => body.public_key = value,
+                "role" => body.role = value,
+                "kind" => body.kind = value,
+                _ => unreachable!(),
+            }
+        }
+        Ok(body)
+    }
 }
 
 impl State {
@@ -58,7 +105,7 @@ impl State {
     pub fn apply_event(&mut self, event: &Event) -> Result<(), String> {
         match event.kind.as_str() {
             "room.created" => {
-                let body: MemberBody = parse_body(&event.body, "room.created")?;
+                let body = parse_body(&event.body, "room.created")?;
                 let public_key = decode_key(&body.public_key, "root")?;
                 self.members.insert(
                     event.author.clone(),
@@ -79,7 +126,7 @@ impl State {
                 {
                     return Err("only room owners can perform member management".into());
                 }
-                let body: MemberBody = parse_body(&event.body, &event.kind)?;
+                let body = parse_body(&event.body, &event.kind)?;
                 match event.kind.as_str() {
                     "member.added" => {
                         let public_key = decode_key(&body.public_key, "member")?;
@@ -124,7 +171,14 @@ impl State {
 }
 
 fn parse_body(body: &RawValue, kind: &str) -> Result<MemberBody, String> {
-    serde_json::from_str(body.get()).map_err(|error| format!("unmarshal {kind} body: {error}"))
+    let mut decoder = serde_json::Deserializer::from_str(body.get());
+    let parsed = MemberBodySeed(kind)
+        .deserialize(&mut decoder)
+        .map_err(|error| format!("unmarshal {kind} body: {error}"))?;
+    decoder
+        .end()
+        .map_err(|error| format!("unmarshal {kind} body: {error}"))?;
+    Ok(parsed)
 }
 
 fn decode_key(text: &str, field: &str) -> Result<String, String> {

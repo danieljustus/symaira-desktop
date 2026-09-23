@@ -64,19 +64,20 @@ func TestPortMembershipContract(t *testing.T) {
 	state := NewState()
 	ownerKey := "0000000000000000000000000000000000000000000000000000000000000000"
 	agentKey := "1111111111111111111111111111111111111111111111111111111111111111"
-	observerKey := "2222222222222222222222222222222222222222222222222222222222"
+	observerKey := "2222222222222222222222222222222222222222222222222222222222222222"
 	steps := []struct{ id, kind, author, body string }{
 		{"owner-create", event.KindRoomCreated, "owner", `{"name":"Room","public_key":"` + ownerKey + `"}`},
-		{"agent-add", event.KindMemberAdded, "owner", `{"id":"agent","name":"Bot","public_key":"` + agentKey + `","role":"agent","kind":"agent"}`},
+		{"agent-add", event.KindMemberAdded, "owner", `{"id":"agent","name":"Bot","public_key":"` + agentKey + `","role":"member","Role":"agent","kind":"agent"}`},
 		{"agent-cannot-add", event.KindMemberAdded, "agent", `{"id":"intruder","public_key":"` + observerKey + `"}`},
 		{"agent-cannot-approve", event.KindRunApproved, "agent", `{}`},
 		{"unknown-cannot-approve", event.KindCheckpointResolved, "absent", `{}`},
 		{"observer-add", event.KindMemberAdded, "owner", `{"id":"observer","name":"Observer","public_key":"` + observerKey + `","role":"observer","kind":"human"}`},
 		{"observer-cannot-resolve", event.KindCheckpointResolved, "observer", `{}`},
+		{"observer-cannot-approve", event.KindRunApproved, "observer", `{}`},
 		{"observer-promote", event.KindMemberRoleChanged, "owner", `{"id":"observer","role":"member"}`},
 		{"member-approves", event.KindRunApproved, "observer", `{}`},
 		{"non-owner-cannot-remove", event.KindMemberRemoved, "observer", `{"id":"agent"}`},
-		{"remove-agent", event.KindMemberRemoved, "owner", `{"id":"agent"}`},
+		{"remove-agent", event.KindMemberRemoved, "owner", `{"ID":"agent","name":123}`},
 		{"removed-agent-approval", event.KindRunApproved, "agent", `{}`},
 		{"invalid-key-length", event.KindMemberAdded, "owner", `{"id":"bad","public_key":"00"}`},
 		{"null-fields-are-empty", event.KindMemberAdded, "owner", `{"id":"nullish","name":null,"public_key":"` + ownerKey + `","role":null,"kind":null}`},
@@ -84,6 +85,9 @@ func TestPortMembershipContract(t *testing.T) {
 	}
 	for _, step := range steps {
 		err := state.ApplyEvent(&event.Event{Kind: step.kind, Author: step.author, Body: json.RawMessage(step.body)})
+		if step.id == "observer-add" && (err != nil || state.Members["observer"] == nil || state.Members["observer"].Role != RoleObserver) {
+			t.Fatal("observer fixture must install an observer before approval checks")
+		}
 		result := membershipCase{ID: step.id, Kind: step.kind, Author: step.author, Body: json.RawMessage(step.body), Members: []memberView{}}
 		if err != nil {
 			result.Error = err.Error()
@@ -113,7 +117,7 @@ func TestPortMembershipContract(t *testing.T) {
 	if string(current) != string(data) {
 		t.Fatal("Go membership fixture drift: regenerate explicitly")
 	}
-	if len(fixture.Permissions) != 25 || len(fixture.Transitions) != 15 {
+	if len(fixture.Permissions) != 25 || len(fixture.Transitions) != 16 {
 		t.Fatal("membership case inventory changed")
 	}
 }

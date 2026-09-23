@@ -2,7 +2,7 @@
   "schema_version": 1,
   "source_hashes": {
     "internal/room/members/members.go": "34821f2480ec054e3002d385d9c8c707cb1087eda8cf0195c7207a0d71a0568e",
-    "internal/room/members/port_membership_contract_test.go": "2ee08bcfab85df8ba66acb0223993b874d83ff3c83045a9816aacf4d8aff9a83"
+    "internal/room/members/port_membership_contract_test.go": "df376f1af85edffb3ce4929922f2bd6131cbc0e1e47f94d8f2f5ff1031114e07"
   },
   "permissions": [
     {
@@ -159,7 +159,8 @@
         "id": "agent",
         "name": "Bot",
         "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
-        "role": "agent",
+        "role": "member",
+        "Role": "agent",
         "kind": "agent"
       },
       "error": "",
@@ -186,7 +187,7 @@
       "author": "agent",
       "body": {
         "id": "intruder",
-        "public_key": "2222222222222222222222222222222222222222222222222222222222"
+        "public_key": "2222222222222222222222222222222222222222222222222222222222222222"
       },
       "error": "only room owners can perform member management",
       "members": [
@@ -259,11 +260,11 @@
       "body": {
         "id": "observer",
         "name": "Observer",
-        "public_key": "2222222222222222222222222222222222222222222222222222222222",
+        "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
         "role": "observer",
         "kind": "human"
       },
-      "error": "invalid member pubkey: %!w(\u003cnil\u003e)",
+      "error": "",
       "members": [
         {
           "id": "agent",
@@ -271,6 +272,13 @@
           "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
           "role": "agent",
           "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "observer",
+          "kind": "human"
         },
         {
           "id": "owner",
@@ -286,7 +294,7 @@
       "kind": "checkpoint.resolved",
       "author": "observer",
       "body": {},
-      "error": "member not found",
+      "error": "observer role has read-only access",
       "members": [
         {
           "id": "agent",
@@ -294,6 +302,43 @@
           "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
           "role": "agent",
           "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "observer",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "observer-cannot-approve",
+      "kind": "run.approved",
+      "author": "observer",
+      "body": {},
+      "error": "observer role has read-only access",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "observer",
+          "kind": "human"
         },
         {
           "id": "owner",
@@ -322,6 +367,13 @@
           "kind": "agent"
         },
         {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
           "id": "owner",
           "name": "Room",
           "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -335,7 +387,7 @@
       "kind": "run.approved",
       "author": "observer",
       "body": {},
-      "error": "member not found",
+      "error": "",
       "members": [
         {
           "id": "agent",
@@ -343,6 +395,13 @@
           "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
           "role": "agent",
           "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
         },
         {
           "id": "owner",
@@ -370,6 +429,13 @@
           "kind": "agent"
         },
         {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
           "id": "owner",
           "name": "Room",
           "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -383,10 +449,18 @@
       "kind": "member.removed",
       "author": "owner",
       "body": {
-        "id": "agent"
+        "ID": "agent",
+        "name": 123
       },
       "error": "",
       "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
         {
           "id": "owner",
           "name": "Room",
@@ -403,6 +477,13 @@
       "body": {},
       "error": "member not found",
       "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
         {
           "id": "owner",
           "name": "Room",
@@ -422,6 +503,13 @@
       },
       "error": "invalid member pubkey: %!w(\u003cnil\u003e)",
       "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
         {
           "id": "owner",
           "name": "Room",
@@ -452,6 +540,13 @@
           "kind": ""
         },
         {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
           "id": "owner",
           "name": "Room",
           "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -473,6 +568,13 @@
           "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
           "role": "",
           "kind": ""
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
         },
         {
           "id": "owner",

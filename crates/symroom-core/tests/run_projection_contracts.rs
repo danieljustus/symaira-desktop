@@ -21,6 +21,7 @@ struct Fixture {
     source_hashes: BTreeMap<String, String>,
     events: Vec<Box<RawValue>>,
     records: Vec<String>,
+    checkpoint_records: Vec<String>,
 }
 
 #[test]
@@ -32,8 +33,13 @@ fn go_run_projection_records_match_byte_for_byte() {
         "a80da93e3ec02801c73aa5b2318dc06de3efd3fa"
     );
     assert_eq!(fixture.records.len(), 8, "nonzero projected records");
-    assert_eq!(fixture.events.len(), 21, "fixture exercises all edge paths");
-    for source in ["internal/room/run/run.go", "internal/room/event/event.go"] {
+    assert_eq!(fixture.events.len(), 32, "fixture exercises all edge paths");
+    assert_eq!(fixture.checkpoint_records.len(), 2);
+    for source in [
+        "internal/room/run/run.go",
+        "internal/room/run/checkpoint.go",
+        "internal/room/event/event.go",
+    ] {
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
             .join(source);
@@ -63,6 +69,8 @@ fn go_run_projection_records_match_byte_for_byte() {
         "run.failed",
         "run.cancelled",
         "run.retried",
+        "checkpoint.requested",
+        "checkpoint.resolved",
     ] {
         assert!(kinds.contains(kind), "fixture is missing event kind {kind}");
     }
@@ -77,6 +85,17 @@ fn go_run_projection_records_match_byte_for_byte() {
         "key-order-interleaved",
         "ignored-deep",
         "ignored-huge-number",
+        "checkpoint-orphan-resolve",
+        "checkpoint-first-request",
+        "checkpoint-first-resolve",
+        "checkpoint-repeat-request",
+        "checkpoint-final-resolve",
+        "checkpoint-null-request",
+        "checkpoint-null-resolve",
+        "checkpoint-unmatched-resolve",
+        "checkpoint-bad-request",
+        "checkpoint-bad-resolve",
+        "checkpoint-empty-request",
     ] {
         assert!(
             events.iter().any(|event| event.id == id),
@@ -84,6 +103,20 @@ fn go_run_projection_records_match_byte_for_byte() {
         );
     }
     assert!(matches_go_records(&events, &fixture.records));
+    let checkpoints = runs::project_checkpoints(&events);
+    let actual_checkpoints = checkpoints
+        .values()
+        .map(|checkpoint| serde_json::to_vec(checkpoint).expect("checkpoint serializes"))
+        .collect::<Vec<_>>();
+    let expected_checkpoints = fixture
+        .checkpoint_records
+        .iter()
+        .map(String::as_bytes)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        actual_checkpoints, expected_checkpoints,
+        "Go/Rust checkpoint records"
+    );
 
     // Negative control: changing the final, case-insensitive run_id value must
     // make the same byte comparator reject the projection.

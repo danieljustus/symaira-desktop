@@ -17,15 +17,16 @@ import (
 const runProjectionFixture = "testdata/port/room/run-projection.json"
 
 type runProjectionFixtureData struct {
-	SchemaVersion  int               `json:"schema_version"`
-	OracleRevision string            `json:"oracle_revision"`
-	SourceHashes   map[string]string `json:"source_hashes"`
-	Events         []*event.Event    `json:"events"`
-	Records        []string          `json:"records"`
+	SchemaVersion     int               `json:"schema_version"`
+	OracleRevision    string            `json:"oracle_revision"`
+	SourceHashes      map[string]string `json:"source_hashes"`
+	Events            []*event.Event    `json:"events"`
+	Records           []string          `json:"records"`
+	CheckpointRecords []string          `json:"checkpoint_records"`
 }
 
-// TestPortRunProjectionContract freezes the pure ProjectRuns output.
-// Set ROOM_PROJECTION_GENERATE=1 only when deliberately regenerating the Go oracle.
+// TestPortRunProjectionContract freezes ProjectRuns and ProjectCheckpoints.
+// Set PORT_GENERATE=1 or ROOM_PROJECTION_GENERATE=1 to deliberately regenerate.
 func TestPortRunProjectionContract(t *testing.T) {
 	fixture := makeRunProjectionFixture(t)
 	data, err := json.MarshalIndent(fixture, "", "  ")
@@ -46,10 +47,10 @@ func TestPortRunProjectionContract(t *testing.T) {
 	}
 	got, err := os.ReadFile(path)
 	if err != nil {
-		t.Fatalf("read %s: %v (set ROOM_PROJECTION_GENERATE=1 to create it)", runProjectionFixture, err)
+		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", runProjectionFixture, err)
 	}
 	if !bytes.Equal(got, data) {
-		t.Fatalf("Go run projection fixture is stale; regenerate deliberately with ROOM_PROJECTION_GENERATE=1")
+		t.Fatalf("Go room projection fixture is stale; regenerate deliberately with PORT_GENERATE=1")
 	}
 }
 
@@ -77,6 +78,17 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 		projectionEvent("key-order-interleaved", event.KindRunRequested, `{"run_id":"run-a","RUN_ID":"run-b","run_id":"run-c","title":"interleaved duplicates"}`, "author", "2026-01-02T08:02:00.000Z"),
 		projectionEvent("ignored-deep", event.KindRunRequested, `{"run_id":"run-ignored-deep","title":"unknown deep value","extra":`+strings.Repeat("[", 130)+`0`+strings.Repeat("]", 130)+`}`, "author", "2026-01-02T08:03:00.000Z"),
 		projectionEvent("ignored-huge-number", event.KindRunRequested, `{"run_id":"run-ignored-huge","title":"unknown huge number","extra":1e100000}`, "author", "2026-01-02T08:04:00.000Z"),
+		projectionEvent("checkpoint-orphan-resolve", event.KindCheckpointResolved, `{"checkpoint_id":"chk-later","answer":"too early"}`, "reviewer", "2026-01-02T09:00:00.000Z"),
+		projectionEvent("checkpoint-first-request", event.KindCheckpointReq, `{"checkpoint_id":"chk-main","run_id":"run-b","question":"initial"}`, "author-first", "2026-01-02T09:01:00.000Z"),
+		projectionEvent("checkpoint-first-resolve", event.KindCheckpointResolved, `{"checkpoint_id":"chk-main","answer":"discarded by request"}`, "reviewer", "2026-01-02T09:02:00.000Z"),
+		projectionEvent("checkpoint-repeat-request", event.KindCheckpointReq, `{"checkpoint_id":"chk-main","run_id":"run-b","question":"replacement"}`, "author-second", "2026-01-02T09:03:00.000Z"),
+		projectionEvent("checkpoint-final-resolve", event.KindCheckpointResolved, `{"checkpoint_id":"chk-main","answer":"intermediate","answer":"final answer"}`, "reviewer", "2026-01-02T09:04:00.000Z"),
+		projectionEvent("checkpoint-null-request", event.KindCheckpointReq, `{"checkpoint_id":"chk-null","run_id":"run-c","question":"keep question","question":null}`, "author-null", "2026-01-02T09:05:00.000Z"),
+		projectionEvent("checkpoint-null-resolve", event.KindCheckpointResolved, `{"checkpoint_id":"chk-null","answer":"keep answer","answer":null}`, "reviewer", "2026-01-02T09:06:00.000Z"),
+		projectionEvent("checkpoint-unmatched-resolve", event.KindCheckpointResolved, `{"checkpoint_id":"chk-missing","answer":"ignored"}`, "reviewer", "2026-01-02T09:07:00.000Z"),
+		projectionEvent("checkpoint-bad-request", event.KindCheckpointReq, `{"checkpoint_id":7,"run_id":"run-a","question":"ignored"}`, "author", "2026-01-02T09:08:00.000Z"),
+		projectionEvent("checkpoint-bad-resolve", event.KindCheckpointResolved, `{"checkpoint_id":"chk-main","answer":7}`, "reviewer", "2026-01-02T09:09:00.000Z"),
+		projectionEvent("checkpoint-empty-request", event.KindCheckpointReq, `{"checkpoint_id":"","run_id":"run-a","question":"ignored"}`, "author", "2026-01-02T09:10:00.000Z"),
 	}
 	projected := ProjectRuns(events)
 	ids := make([]string, 0, len(projected))
@@ -92,15 +104,31 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 		}
 		records = append(records, string(record))
 	}
+	projectedCheckpoints := ProjectCheckpoints(events)
+	checkpointIDs := make([]string, 0, len(projectedCheckpoints))
+	for id := range projectedCheckpoints {
+		checkpointIDs = append(checkpointIDs, id)
+	}
+	sort.Strings(checkpointIDs)
+	checkpointRecords := make([]string, 0, len(checkpointIDs))
+	for _, id := range checkpointIDs {
+		record, err := json.Marshal(projectedCheckpoints[id])
+		if err != nil {
+			t.Fatal(err)
+		}
+		checkpointRecords = append(checkpointRecords, string(record))
+	}
 	return runProjectionFixtureData{
 		SchemaVersion:  1,
 		OracleRevision: "a80da93e3ec02801c73aa5b2318dc06de3efd3fa",
 		SourceHashes: map[string]string{
-			"internal/room/run/run.go":     fileSHA256(t, "internal/room/run/run.go"),
-			"internal/room/event/event.go": fileSHA256(t, "internal/room/event/event.go"),
+			"internal/room/run/run.go":        fileSHA256(t, "internal/room/run/run.go"),
+			"internal/room/run/checkpoint.go": fileSHA256(t, "internal/room/run/checkpoint.go"),
+			"internal/room/event/event.go":    fileSHA256(t, "internal/room/event/event.go"),
 		},
-		Events:  events,
-		Records: records,
+		Events:            events,
+		Records:           records,
+		CheckpointRecords: checkpointRecords,
 	}
 }
 

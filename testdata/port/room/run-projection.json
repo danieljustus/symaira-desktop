@@ -3,6 +3,7 @@
   "oracle_revision": "a80da93e3ec02801c73aa5b2318dc06de3efd3fa",
   "source_hashes": {
     "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
+    "internal/room/run/checkpoint.go": "d47456dbab94f5adfff66a8d02685a235b5d88a49c147669902fdf7af92c9d41",
     "internal/room/run/run.go": "458c7148b7de028ed22ed27df22b2187d762da5ddecbbc582763bee4d42fbf85"
   },
   "events": [
@@ -585,16 +586,193 @@
         "title": "unknown huge number",
         "extra": 1e100000
       }
+    },
+    {
+      "v": 1,
+      "id": "checkpoint-orphan-resolve",
+      "room": "room-test",
+      "author": "reviewer",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T09:00:00.000Z",
+      "kind": "checkpoint.resolved",
+      "body": {
+        "checkpoint_id": "chk-later",
+        "answer": "too early"
+      }
+    },
+    {
+      "v": 1,
+      "id": "checkpoint-first-request",
+      "room": "room-test",
+      "author": "author-first",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T09:01:00.000Z",
+      "kind": "checkpoint.requested",
+      "body": {
+        "checkpoint_id": "chk-main",
+        "run_id": "run-b",
+        "question": "initial"
+      }
+    },
+    {
+      "v": 1,
+      "id": "checkpoint-first-resolve",
+      "room": "room-test",
+      "author": "reviewer",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T09:02:00.000Z",
+      "kind": "checkpoint.resolved",
+      "body": {
+        "checkpoint_id": "chk-main",
+        "answer": "discarded by request"
+      }
+    },
+    {
+      "v": 1,
+      "id": "checkpoint-repeat-request",
+      "room": "room-test",
+      "author": "author-second",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T09:03:00.000Z",
+      "kind": "checkpoint.requested",
+      "body": {
+        "checkpoint_id": "chk-main",
+        "run_id": "run-b",
+        "question": "replacement"
+      }
+    },
+    {
+      "v": 1,
+      "id": "checkpoint-final-resolve",
+      "room": "room-test",
+      "author": "reviewer",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T09:04:00.000Z",
+      "kind": "checkpoint.resolved",
+      "body": {
+        "checkpoint_id": "chk-main",
+        "answer": "intermediate",
+        "answer": "final answer"
+      }
+    },
+    {
+      "v": 1,
+      "id": "checkpoint-null-request",
+      "room": "room-test",
+      "author": "author-null",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T09:05:00.000Z",
+      "kind": "checkpoint.requested",
+      "body": {
+        "checkpoint_id": "chk-null",
+        "run_id": "run-c",
+        "question": "keep question",
+        "question": null
+      }
+    },
+    {
+      "v": 1,
+      "id": "checkpoint-null-resolve",
+      "room": "room-test",
+      "author": "reviewer",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T09:06:00.000Z",
+      "kind": "checkpoint.resolved",
+      "body": {
+        "checkpoint_id": "chk-null",
+        "answer": "keep answer",
+        "answer": null
+      }
+    },
+    {
+      "v": 1,
+      "id": "checkpoint-unmatched-resolve",
+      "room": "room-test",
+      "author": "reviewer",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T09:07:00.000Z",
+      "kind": "checkpoint.resolved",
+      "body": {
+        "checkpoint_id": "chk-missing",
+        "answer": "ignored"
+      }
+    },
+    {
+      "v": 1,
+      "id": "checkpoint-bad-request",
+      "room": "room-test",
+      "author": "author",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T09:08:00.000Z",
+      "kind": "checkpoint.requested",
+      "body": {
+        "checkpoint_id": 7,
+        "run_id": "run-a",
+        "question": "ignored"
+      }
+    },
+    {
+      "v": 1,
+      "id": "checkpoint-bad-resolve",
+      "room": "room-test",
+      "author": "reviewer",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T09:09:00.000Z",
+      "kind": "checkpoint.resolved",
+      "body": {
+        "checkpoint_id": "chk-main",
+        "answer": 7
+      }
+    },
+    {
+      "v": 1,
+      "id": "checkpoint-empty-request",
+      "room": "room-test",
+      "author": "author",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T09:10:00.000Z",
+      "kind": "checkpoint.requested",
+      "body": {
+        "checkpoint_id": "",
+        "run_id": "run-a",
+        "question": "ignored"
+      }
     }
   ],
   "records": [
     "{\"id\":\"run-a\",\"title\":\"Alpha\",\"plan_file\":\"plans/a.md\",\"adapter\":\"local\",\"state\":\"finished\",\"author\":\"author-a\",\"created_at\":\"2026-01-02T03:04:05.000Z\",\"updated_at\":\"2026-01-02T03:07:00.000Z\",\"approval_id\":\"approval-a\",\"scope\":\"workspace\",\"expires_at\":\"2026-01-03T00:00:00Z\",\"summary\":\"done\",\"artifacts\":[\"out/a.txt\",\"out/b.txt\"]}",
-    "{\"id\":\"run-b\",\"title\":\"Beta\",\"state\":\"denied\",\"author\":\"author-b\",\"created_at\":\"2026-01-02T04:00:00.000Z\",\"updated_at\":\"2026-01-02T04:01:00.000Z\",\"error\":\"outside scope\"}",
-    "{\"id\":\"run-c\",\"title\":\"interleaved duplicates\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T08:02:00.000Z\",\"updated_at\":\"2026-01-02T08:02:00.000Z\"}",
+    "{\"id\":\"run-b\",\"title\":\"Beta\",\"state\":\"denied\",\"author\":\"author-b\",\"created_at\":\"2026-01-02T04:00:00.000Z\",\"updated_at\":\"2026-01-02T04:01:00.000Z\",\"error\":\"outside scope\",\"checkpoints\":[{\"id\":\"chk-main\",\"run_id\":\"run-b\",\"question\":\"replacement\",\"answer\":\"final answer\",\"state\":\"resolved\",\"author\":\"author-second\",\"created_at\":\"2026-01-02T09:03:00.000Z\",\"updated_at\":\"2026-01-02T09:04:00.000Z\"}]}",
+    "{\"id\":\"run-c\",\"title\":\"interleaved duplicates\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T08:02:00.000Z\",\"updated_at\":\"2026-01-02T08:02:00.000Z\",\"checkpoints\":[{\"id\":\"chk-null\",\"run_id\":\"run-c\",\"question\":\"keep question\",\"answer\":\"keep answer\",\"state\":\"resolved\",\"author\":\"author-null\",\"created_at\":\"2026-01-02T09:05:00.000Z\",\"updated_at\":\"2026-01-02T09:06:00.000Z\"}]}",
     "{\"id\":\"run-d\",\"title\":\"Delta\",\"state\":\"cancelled\",\"author\":\"author-d\",\"created_at\":\"2026-01-02T06:00:00.000Z\",\"updated_at\":\"2026-01-02T06:01:00.000Z\",\"error\":\"superseded\"}",
     "{\"id\":\"run-ignored-deep\",\"title\":\"unknown deep value\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T08:03:00.000Z\",\"updated_at\":\"2026-01-02T08:03:00.000Z\"}",
     "{\"id\":\"run-ignored-huge\",\"title\":\"unknown huge number\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T08:04:00.000Z\",\"updated_at\":\"2026-01-02T08:04:00.000Z\"}",
     "{\"id\":\"run-key-order-one\",\"title\":\"upper then lower\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T08:00:00.000Z\",\"updated_at\":\"2026-01-02T08:00:00.000Z\"}",
     "{\"id\":\"run-key-order-two\",\"title\":\"lower then upper\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T08:01:00.000Z\",\"updated_at\":\"2026-01-02T08:01:00.000Z\"}"
+  ],
+  "checkpoint_records": [
+    "{\"id\":\"chk-main\",\"run_id\":\"run-b\",\"question\":\"replacement\",\"answer\":\"final answer\",\"state\":\"resolved\",\"author\":\"author-second\",\"created_at\":\"2026-01-02T09:03:00.000Z\",\"updated_at\":\"2026-01-02T09:04:00.000Z\"}",
+    "{\"id\":\"chk-null\",\"run_id\":\"run-c\",\"question\":\"keep question\",\"answer\":\"keep answer\",\"state\":\"resolved\",\"author\":\"author-null\",\"created_at\":\"2026-01-02T09:05:00.000Z\",\"updated_at\":\"2026-01-02T09:06:00.000Z\"}"
   ]
 }

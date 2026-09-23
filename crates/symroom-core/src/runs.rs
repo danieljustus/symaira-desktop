@@ -33,6 +33,76 @@ pub struct Run {
     pub error: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub artifacts: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub checkpoints: Option<Vec<Checkpoint>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Checkpoint {
+    pub id: String,
+    pub run_id: String,
+    pub question: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub answer: Option<String>,
+    pub state: String,
+    pub author: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+/// Go: `run.ProjectCheckpoints`.
+pub fn project_checkpoints(events: &[Event]) -> BTreeMap<String, Checkpoint> {
+    let mut checkpoints = BTreeMap::new();
+    for event in events {
+        let kind = match event.kind.as_str() {
+            "checkpoint.requested" | "checkpoint.resolved" => event.kind.as_str(),
+            _ => continue,
+        };
+        let Some(body) = body_object(event.body.get(), kind) else {
+            continue;
+        };
+        match kind {
+            "checkpoint.requested" => {
+                let (Some(id), Some(run_id), Some(question)) = (
+                    string_field(&body, "checkpoint_id"),
+                    string_field(&body, "run_id"),
+                    string_field(&body, "question"),
+                ) else {
+                    continue;
+                };
+                if !id.is_empty() {
+                    checkpoints.insert(
+                        id.clone(),
+                        Checkpoint {
+                            id,
+                            run_id,
+                            question,
+                            answer: None,
+                            state: "requested".into(),
+                            author: event.author.clone(),
+                            created_at: event.ts.clone(),
+                            updated_at: event.ts.clone(),
+                        },
+                    );
+                }
+            }
+            "checkpoint.resolved" => {
+                let (Some(id), Some(answer)) = (
+                    string_field(&body, "checkpoint_id"),
+                    string_field(&body, "answer"),
+                ) else {
+                    continue;
+                };
+                if let Some(checkpoint) = checkpoints.get_mut(&id) {
+                    checkpoint.state = "resolved".into();
+                    checkpoint.answer = nonempty(answer);
+                    checkpoint.updated_at.clone_from(&event.ts);
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+    checkpoints
 }
 
 /// Applies only the seven `run.*` event kinds; checkpoint projection stays in
@@ -78,6 +148,7 @@ pub fn project_runs(events: &[Event]) -> BTreeMap<String, Run> {
                         summary: None,
                         error: None,
                         artifacts: None,
+                        checkpoints: None,
                     },
                 );
             }
@@ -163,6 +234,13 @@ pub fn project_runs(events: &[Event]) -> BTreeMap<String, Run> {
             _ => {}
         }
     }
+    for checkpoint in project_checkpoints(events).values() {
+        if let Some(run) = runs.get_mut(&checkpoint.run_id) {
+            run.checkpoints
+                .get_or_insert_with(Vec::new)
+                .push(checkpoint.clone());
+        }
+    }
     runs
 }
 
@@ -217,6 +295,8 @@ fn field_is_known(kind: &str, key: &str) -> bool {
         "run.started" => &["run_id"],
         "run.finished" => &["run_id", "summary", "artifacts"],
         "run.failed" => &["run_id", "error"],
+        "checkpoint.requested" => &["checkpoint_id", "run_id", "question"],
+        "checkpoint.resolved" => &["checkpoint_id", "answer"],
         _ => &[],
     };
     names.iter().any(|name| key.eq_ignore_ascii_case(name))

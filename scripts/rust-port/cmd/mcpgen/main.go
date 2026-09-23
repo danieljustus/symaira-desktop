@@ -66,6 +66,12 @@ func generated() fixture {
 		SchemaVersion: 1,
 		Oracle:        oracle{Commit: "745c08e8144971c61133c5d0e5d61c7ce405aad2", Release: "post-v0.12.2-security-880"},
 		Cases: []mcpCase{
+			{ID: "mcp001-initialize-string-id", Request: `{"jsonrpc":"2.0","id":"init","method":"initialize"}`},
+			{ID: "mcp001-initialize-null-id", Request: `{"jsonrpc":"2.0","id":null,"method":"initialize"}`},
+			{ID: "mcp001-ping-string-id", Request: `{"jsonrpc":"2.0","id":"ping","method":"ping"}`},
+			{ID: "mcp001-initialize-notification", Request: `{"jsonrpc":"2.0","method":"initialize"}`},
+			{ID: "mcp001-invalid-array", Request: `[]`},
+			{ID: "mcp001-invalid-method-type", Request: `{"jsonrpc":"2.0","id":"bad","method":false}`},
 			{ID: "initialize-line", Request: `{"jsonrpc":"2.0","id":1,"method":"initialize"}`},
 			{ID: "tools-list-line", Request: `{"jsonrpc":"2.0","id":2,"method":"tools/list"}`},
 			{ID: "status-call", Request: `{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"desk_status","arguments":{}}}`},

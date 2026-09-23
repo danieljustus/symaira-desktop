@@ -38,6 +38,7 @@ func main() {
 	left := flag.String("left", "", "Go oracle binary")
 	right := flag.String("right", "", "Rust binary")
 	fixturePath := flag.String("fixture", "testdata/port/mcp/representative.json", "fixture path")
+	casePrefix := flag.String("case-prefix", "", "run only fixture cases with this ID prefix")
 	flag.Parse()
 	if *left == "" || *right == "" {
 		fatal("--left and --right are required")
@@ -65,7 +66,12 @@ func main() {
 		fatal("fixture file: %v", err)
 	}
 
+	runCount := 0
 	for _, tc := range suite.Cases {
+		if *casePrefix != "" && !strings.HasPrefix(tc.ID, *casePrefix) {
+			continue
+		}
+		runCount++
 		vault := root
 		if tc.EmptyVault {
 			vault = filepath.Join(root, "empty")
@@ -107,7 +113,10 @@ func main() {
 		}
 		fmt.Printf("PASS %s (%d response(s))\n", tc.ID, len(leftFrames))
 	}
-	fmt.Printf("PASS MCP differential: %d cases\n", len(suite.Cases))
+	if runCount == 0 {
+		fatal("no MCP fixture cases match prefix %q", *casePrefix)
+	}
+	fmt.Printf("PASS MCP differential: %d cases\n", runCount)
 }
 
 func prepare(binary, vault, db string) error {

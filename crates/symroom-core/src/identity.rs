@@ -5,6 +5,8 @@
 
 use std::fmt;
 use std::fs;
+#[cfg(unix)]
+use std::io::Read;
 use std::path::PathBuf;
 
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
@@ -118,6 +120,29 @@ pub fn identity_from_private_key(name: &str, private_key: &[u8]) -> Option<Ident
         public_key,
         private_key,
     })
+}
+
+/// Generate an identity with the operating system CSPRNG.
+///
+/// Go: `identity.Generate`. This uses the platform random device available on
+/// Unix; non-Unix targets return an error until the workspace has a portable
+/// direct RNG dependency.
+pub fn generate(name: &str) -> Result<Identity, IdentityError> {
+    #[cfg(unix)]
+    {
+        let mut seed = [0_u8; SEED_SIZE];
+        fs::File::open("/dev/urandom")
+            .and_then(|mut random| random.read_exact(&mut seed))
+            .map_err(|error| IdentityError::Message(format!("generate ed25519 key: {error}")))?;
+        return identity_from_private_key(name, &seed).ok_or(IdentityError::InvalidKey);
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = name;
+        Err(IdentityError::Message(
+            "generate ed25519 key: secure random source unavailable".to_owned(),
+        ))
+    }
 }
 
 /// Go: `identity.Sign`.

@@ -1,0 +1,388 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "439d04347bb2881495bff3acc52a43dc7bff6d39",
+  "source_hashes": {
+    "cmd/symroom/cmd_identity.go": "ae3db2a804bdd6d2d526eeef6c1a12b00b47a6656eddaac7ce79f7b372a39433",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/identity/identity.go": "b5ac62c045e84390e1bd99f53b20e404586e8a4499e74bfe95473300ec2e284b"
+  },
+  "seed_files": [
+    {
+      "name": "alpha.json",
+      "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+    },
+    {
+      "name": "oracle.json",
+      "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+    }
+  ],
+  "cases": [
+    {
+      "name": "identity-usage",
+      "args": [
+        "identity"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom identity \u003ccreate|list|show|export\u003e [args]\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "identity-unknown",
+      "args": [
+        "identity",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown identity action: bogus\n",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "create-usage",
+      "args": [
+        "identity",
+        "create"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom identity create \u003cname\u003e\n",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "create-success",
+      "args": [
+        "identity",
+        "create",
+        "fresh"
+      ],
+      "empty_store": true,
+      "dynamic_keys": true,
+      "exit_code": 0,
+      "stdout": "Created identity fresh (\u003cmember_id\u003e)\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "fresh.json",
+          "content": "{\n  \"name\": \"fresh\",\n  \"member_id\": \"\\u003cmember_id\\u003e\",\n  \"public_key\": \"\\u003cpublic_key\\u003e\",\n  \"private_key\": \"\\u003cprivate_key\\u003e\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "list-sorted",
+      "args": [
+        "identity",
+        "list"
+      ],
+      "list_extras": true,
+      "exit_code": 0,
+      "stdout": "alpha\noracle\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "list-empty",
+      "args": [
+        "identity",
+        "list"
+      ],
+      "empty_store": true,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "final_files": []
+    },
+    {
+      "name": "show-valid",
+      "args": [
+        "identity",
+        "show",
+        "oracle"
+      ],
+      "exit_code": 0,
+      "stdout": "Name: oracle\nMember ID: mem_a052c89b0c9b5322\nPublic Key: 4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-usage",
+      "args": [
+        "identity",
+        "show"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom identity show \u003cname\u003e\n",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "show-missing",
+      "args": [
+        "identity",
+        "show",
+        "missing"
+      ],
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: identity not found\n",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "export-public",
+      "args": [
+        "identity",
+        "export",
+        "--public",
+        "oracle"
+      ],
+      "exit_code": 0,
+      "stdout": "4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "export-public-equals",
+      "args": [
+        "identity",
+        "export",
+        "--public=TRUE",
+        "oracle"
+      ],
+      "exit_code": 0,
+      "stdout": "4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "export-private",
+      "args": [
+        "identity",
+        "export",
+        "oracle"
+      ],
+      "exit_code": 4,
+      "stdout": "",
+      "stderr": "Exporting private key is forbidden for security\n",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "export-flag-after-name",
+      "args": [
+        "identity",
+        "export",
+        "oracle",
+        "--public"
+      ],
+      "exit_code": 4,
+      "stdout": "",
+      "stderr": "Exporting private key is forbidden for security\n",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "export-usage",
+      "args": [
+        "identity",
+        "export"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom identity export \u003cname\u003e --public\n",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "export-missing",
+      "args": [
+        "identity",
+        "export",
+        "--public",
+        "missing"
+      ],
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error loading identity: identity not found\n",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "export-bad-bool",
+      "args": [
+        "identity",
+        "export",
+        "--public=maybe",
+        "oracle"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "invalid boolean value \"maybe\" for -public: parse error\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "export-unknown-flag",
+      "args": [
+        "identity",
+        "export",
+        "--bogus",
+        "oracle"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of identity export:\n  -public\n    \tExport public key only\n",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "export-help",
+      "args": [
+        "identity",
+        "export",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of identity export:\n  -public\n    \tExport public key only\n",
+      "final_files": [
+        {
+          "name": "alpha.json",
+          "content": "{\n  \"name\": \"alpha\",\n  \"member_id\": \"mem_6616e10d4829230a\",\n  \"public_key\": \"6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\",\n  \"private_key\": \"859eed69efec018fd031522b74fe5990758e7798a95fac4a2620f2c38cb5aaca6256aea80f4ecf411b75aeb3c223b284ce21a34fa3aa36b70e612e13cb705f1d\"\n}"
+        },
+        {
+          "name": "oracle.json",
+          "content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_a052c89b0c9b5322\",\n  \"public_key\": \"4358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\",\n  \"private_key\": \"08c472902739e3c1021301029102f95e92b762a489cab74e4d522a0f1bc84c434358d8b3a5fb57a2c428b5f2113bc064f32c9d9b172823c3146db3368bf7c027\"\n}"
+        }
+      ]
+    }
+  ]
+}

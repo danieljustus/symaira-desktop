@@ -9,7 +9,7 @@ use std::{
 
 use serde::Deserialize;
 
-const ORACLE_REVISION: &str = "a80da93e3ec02801c73aa5b2318dc06de3efd3fa";
+const ORACLE_REVISION: &str = "97280a946316682fc3ce3d7650597655ff0e46ae";
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -34,6 +34,15 @@ struct Case {
     exit_code: i32,
     stdout: String,
     stderr: String,
+}
+
+#[derive(Deserialize)]
+struct WaitFixture {
+    schema_version: u32,
+    oracle_revision: String,
+    source_hashes: std::collections::BTreeMap<String, String>,
+    journal_files: Vec<JournalFile>,
+    cases: Vec<Case>,
 }
 
 #[test]
@@ -96,6 +105,66 @@ fn run_list_and_show_match_go_process_contract() {
     }
 }
 
+#[test]
+fn run_wait_matches_go_process_contract() {
+    let fixture_path =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../testdata/port/room/run-wait-cli.json");
+    let data = fs::read(&fixture_path).expect("read Go-generated run wait fixture");
+    let fixture: WaitFixture = serde_json::from_slice(&data).expect("parse Go wait fixture");
+    assert_eq!(fixture.schema_version, 1);
+    assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
+    assert_eq!(fixture.source_hashes.len(), 5);
+    assert!(fixture.source_hashes.values().all(|hash| hash.len() == 64));
+    assert!(fixture.cases.iter().any(|case| case.exit_code == 4));
+    assert!(fixture.cases.iter().any(|case| case.exit_code == 10));
+
+    let temp = TempDir::new();
+    let main_room = temp.path.join("main");
+    let journal = main_room.join("journal");
+    fs::create_dir_all(&journal).expect("create wait fixture journal");
+    for file in &fixture.journal_files {
+        fs::write(journal.join(&file.name), file.content.as_bytes())
+            .expect("write Go-signed wait fixture segment");
+    }
+    let bad_room = temp.path.join("bad-journal");
+    fs::create_dir(&bad_room).expect("create bad-journal room");
+    fs::write(bad_room.join("journal"), b"not a directory").expect("write bad-journal marker");
+
+    for case in &fixture.cases {
+        let room = match case.room.as_str() {
+            "main" => &main_room,
+            "bad-journal" => &bad_room,
+            other => panic!("unknown wait fixture room {other}"),
+        };
+        let isolated = temp.path.join(format!("wait-env-{}", case.name));
+        let home = isolated.join("home");
+        let data_home = isolated.join("data");
+        let temp_dir = isolated.join("tmp");
+        fs::create_dir_all(&home).expect("create isolated HOME");
+        fs::create_dir_all(&data_home).expect("create isolated XDG data home");
+        fs::create_dir_all(&temp_dir).expect("create isolated TMPDIR");
+        let output = run_symroom(&case.args, room, &home, &data_home, &temp_dir);
+        assert_eq!(
+            output.status.code(),
+            Some(case.exit_code),
+            "case {}",
+            case.name
+        );
+        assert_eq!(
+            output.stdout,
+            case.stdout.as_bytes(),
+            "stdout case {}",
+            case.name
+        );
+        assert_eq!(
+            output.stderr,
+            case.stderr.as_bytes(),
+            "stderr case {}",
+            case.name
+        );
+    }
+}
+
 fn run_symroom(args: &[String], room: &Path, home: &Path, data_home: &Path, temp: &Path) -> Output {
     let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
     command
@@ -104,6 +173,9 @@ fn run_symroom(args: &[String], room: &Path, home: &Path, data_home: &Path, temp
         .env("HOME", home)
         .env("XDG_DATA_HOME", data_home)
         .env("TMPDIR", temp)
+        .env("TZ", "UTC")
+        .env("LC_ALL", "C")
+        .env("LANG", "C")
         .env("SYMROOM_ROOM_DIR", room);
     command.output().expect("run Rust symroom CLI")
 }

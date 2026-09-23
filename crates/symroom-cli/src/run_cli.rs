@@ -3,10 +3,11 @@ use std::{
     io::{self, Write},
     path::PathBuf,
     process::ExitCode,
+    time::Duration,
 };
 
 use symaira_core_exit::ExitCode as CoreExitCode;
-use symroom_core::runs::{self, RunQueryError};
+use symroom_core::runs::{self, RunQueryError, RunWaitError};
 
 const USAGE: &str = "Usage: symroom run <request|list|show|start|cancel> [flags] [args]\n";
 
@@ -17,6 +18,7 @@ pub fn run(args: &[OsString]) -> ExitCode {
     match action.to_string_lossy().as_ref() {
         "list" => list(&args[1..]),
         "show" => show(&args[1..]),
+        "wait" => wait(&args[1..]),
         action => stderr(
             &format!("Unknown run action: {action}\n"),
             CoreExitCode::NoInput,
@@ -36,10 +38,17 @@ fn list(args: &[OsString]) -> ExitCode {
         }
         if parsing_flags && value.starts_with('-') {
             match flag_value(&value, "pending") {
-                Some(value) => pending = value,
+                Some(Ok(value)) => pending = value,
+                Some(Err(invalid)) => {
+                    return invalid_bool("run list", "pending", invalid, true, false);
+                }
                 None => match flag_value(&value, "json") {
-                    Some(value) => json = value,
-                    None => return unknown_flag("run list", &value, true),
+                    Some(Ok(value)) => json = value,
+                    Some(Err(invalid)) => {
+                        return invalid_bool("run list", "json", invalid, true, false);
+                    }
+                    None if is_help_flag(&value) => return flag_help("run list", true, false),
+                    None => return unknown_flag("run list", &value, true, false),
                 },
             }
         } else {
@@ -90,8 +99,12 @@ fn show(args: &[OsString]) -> ExitCode {
         }
         if parsing_flags && value.starts_with('-') {
             match flag_value(&value, "json") {
-                Some(value) => json = value,
-                None => return unknown_flag("run show", &value, false),
+                Some(Ok(value)) => json = value,
+                Some(Err(invalid)) => {
+                    return invalid_bool("run show", "json", invalid, false, false);
+                }
+                None if is_help_flag(&value) => return flag_help("run show", false, false),
+                None => return unknown_flag("run show", &value, false, false),
             }
         } else {
             parsing_flags = false;
@@ -139,29 +152,214 @@ fn show(args: &[OsString]) -> ExitCode {
     stdout(output, CoreExitCode::Ok)
 }
 
-fn flag_value(argument: &str, name: &str) -> Option<bool> {
-    let trimmed = argument.trim_start_matches('-');
-    if trimmed == name {
-        return Some(true);
+fn wait(args: &[OsString]) -> ExitCode {
+    let mut timeout = Duration::from_secs(15 * 60);
+    let mut json = false;
+    let mut positional = Vec::new();
+    let mut parsing_flags = true;
+    let mut index = 0;
+    while index < args.len() {
+        let value = args[index].to_string_lossy();
+        if parsing_flags && value == "--" {
+            parsing_flags = false;
+            index += 1;
+            continue;
+        }
+        if parsing_flags && value.starts_with('-') {
+            let flag = value.trim_start_matches('-');
+            if flag == "timeout" {
+                let Some(argument) = args.get(index + 1) else {
+                    return flag_error("flag needs an argument: -timeout\n", true);
+                };
+                let duration = argument.to_string_lossy();
+                timeout = match parse_go_duration(&duration) {
+                    Some(timeout) => timeout,
+                    None => return invalid_duration(&duration),
+                };
+                index += 2;
+                continue;
+            }
+            if let Some(duration) = flag.strip_prefix("timeout=") {
+                timeout = match parse_go_duration(duration) {
+                    Some(timeout) => timeout,
+                    None => return invalid_duration(duration),
+                };
+                index += 1;
+                continue;
+            }
+            match flag_value(&value, "json") {
+                Some(Ok(value)) => json = value,
+                Some(Err(invalid)) => {
+                    return invalid_bool("run wait", "json", invalid, false, true);
+                }
+                None if is_help_flag(&value) => {
+                    return flag_help("run wait", false, true);
+                }
+                None => return unknown_flag("run wait", &value, false, true),
+            }
+            index += 1;
+        } else {
+            parsing_flags = false;
+            positional.push(value.into_owned());
+            index += 1;
+        }
     }
-    trimmed
-        .strip_prefix(&format!("{name}="))
-        .and_then(|value| match value {
-            "true" => Some(true),
-            "false" => Some(false),
-            _ => None,
-        })
+    let Some(run_id) = positional.first() else {
+        return stderr(
+            "Usage: symroom run wait <run_id> [--timeout 15m] [--json]\n",
+            CoreExitCode::NoInput,
+        );
+    };
+    match runs::wait(&room_dir(), run_id, timeout) {
+        Ok(record) if json => match pretty_go_json(&record) {
+            Ok(rendered) => stdout(format!("{rendered}\n"), CoreExitCode::Ok),
+            Err(_) => process_exit(CoreExitCode::Generic),
+        },
+        Ok(record) => stdout(
+            format!(
+                "Run {} approved [{}]\n",
+                record.id,
+                record.scope.as_deref().unwrap_or("")
+            ),
+            CoreExitCode::Ok,
+        ),
+        Err(RunWaitError::Timeout) => stderr(
+            &format!("Error: wait timed out for run {run_id}\n"),
+            CoreExitCode::Interrupted,
+        ),
+        Err(RunWaitError::Denied | RunWaitError::Cancelled) => stderr(
+            &format!("Error: run {run_id} was denied\n"),
+            CoreExitCode::Forbidden,
+        ),
+    }
 }
 
-fn unknown_flag(command: &str, argument: &str, pending_flag: bool) -> ExitCode {
-    let name = argument.trim_start_matches('-');
-    let mut usage = format!(
-        "flag provided but not defined: -{name}\nUsage of {command}:\n  -json\n    \tOutput as JSON\n"
-    );
-    if pending_flag {
+fn invalid_duration(value: &str) -> ExitCode {
+    let message = format!("invalid value \"{value}\" for flag -timeout: parse error\n");
+    flag_error(&message, true)
+}
+
+fn flag_error(message: &str, timeout: bool) -> ExitCode {
+    let usage = flag_usage("run wait", false, timeout);
+    stderr(&format!("{message}{usage}"), CoreExitCode::NoInput)
+}
+
+fn parse_go_duration(input: &str) -> Option<Duration> {
+    let (negative, input) = input
+        .strip_prefix('-')
+        .map_or((false, input), |rest| (true, rest));
+    let input = input.strip_prefix('+').unwrap_or(input);
+    if input == "0" {
+        return Some(Duration::ZERO);
+    }
+    if input.is_empty() {
+        return None;
+    }
+    let mut rest = input;
+    let mut total_nanos = 0_u128;
+    while !rest.is_empty() {
+        let count = rest
+            .bytes()
+            .take_while(|b| b.is_ascii_digit() || *b == b'.')
+            .count();
+        if count == 0 {
+            return None;
+        }
+        let amount = &rest[..count];
+        rest = &rest[count..];
+        let (unit, scale) = [
+            ("ns", 1_u128),
+            ("us", 1_000),
+            ("µs", 1_000),
+            ("μs", 1_000),
+            ("ms", 1_000_000),
+            ("s", 1_000_000_000),
+            ("m", 60_000_000_000),
+            ("h", 3_600_000_000_000),
+        ]
+        .into_iter()
+        .find(|(unit, _)| rest.starts_with(unit))?;
+        let (whole, fraction) = amount
+            .split_once('.')
+            .map_or((amount, ""), |(whole, fraction)| (whole, fraction));
+        if whole.is_empty() && fraction.is_empty()
+            || !whole.bytes().all(|byte| byte.is_ascii_digit())
+            || !fraction.bytes().all(|byte| byte.is_ascii_digit())
+        {
+            return None;
+        }
+        let whole = if whole.is_empty() {
+            0
+        } else {
+            whole.parse::<u128>().ok()?
+        };
+        total_nanos = total_nanos.checked_add(whole.checked_mul(scale)?)?;
+        let fractional_digits = fraction.len().min(19);
+        if fractional_digits > 0 {
+            let numerator = fraction[..fractional_digits].parse::<u128>().ok()?;
+            let denominator = 10_u128.checked_pow(fractional_digits as u32)?;
+            total_nanos = total_nanos.checked_add(numerator.checked_mul(scale)? / denominator)?;
+        }
+        rest = &rest[unit.len()..];
+    }
+    let maximum = i64::MAX as u128 + u128::from(negative);
+    if total_nanos > maximum {
+        return None;
+    }
+    Some(if negative || total_nanos == 0 {
+        Duration::ZERO
+    } else {
+        Duration::from_nanos(total_nanos as u64)
+    })
+}
+
+fn flag_value<'a>(argument: &'a str, name: &str) -> Option<Result<bool, &'a str>> {
+    let trimmed = argument.trim_start_matches('-');
+    if trimmed == name {
+        return Some(Ok(true));
+    }
+    let value = trimmed.strip_prefix(&format!("{name}="))?;
+    Some(match value {
+        "1" | "t" | "T" | "TRUE" | "True" | "true" => Ok(true),
+        "0" | "f" | "F" | "FALSE" | "False" | "false" => Ok(false),
+        _ => Err(value),
+    })
+}
+
+fn is_help_flag(argument: &str) -> bool {
+    matches!(argument.trim_start_matches('-'), "h" | "help")
+}
+
+fn flag_help(command: &str, pending: bool, timeout: bool) -> ExitCode {
+    stderr(&flag_usage(command, pending, timeout), CoreExitCode::Ok)
+}
+
+fn flag_usage(command: &str, pending: bool, timeout: bool) -> String {
+    let mut usage = format!("Usage of {command}:\n  -json\n    \tOutput as JSON\n");
+    if pending {
         usage.push_str("  -pending\n    \tShow pending runs only\n");
     }
-    stderr(&usage, CoreExitCode::NoInput)
+    if timeout {
+        usage.push_str("  -timeout duration\n    \tTimeout duration (default 15m0s)\n");
+    }
+    usage
+}
+
+fn invalid_bool(command: &str, name: &str, value: &str, pending: bool, timeout: bool) -> ExitCode {
+    let usage = flag_usage(command, pending, timeout);
+    stderr(
+        &format!("invalid boolean value \"{value}\" for -{name}: parse error\n{usage}"),
+        CoreExitCode::NoInput,
+    )
+}
+
+fn unknown_flag(command: &str, argument: &str, pending_flag: bool, timeout: bool) -> ExitCode {
+    let name = argument.trim_start_matches('-');
+    let usage = flag_usage(command, pending_flag, timeout);
+    stderr(
+        &format!("flag provided but not defined: -{name}\n{usage}"),
+        CoreExitCode::NoInput,
+    )
 }
 
 fn pretty_go_json(value: &impl serde::Serialize) -> Result<String, serde_json::Error> {

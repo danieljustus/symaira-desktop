@@ -105,7 +105,7 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 	}
 
 	fixture := runCLIContract{
-		SchemaVersion: 1, OracleRevision: "a80da93e3ec02801c73aa5b2318dc06de3efd3fa",
+		SchemaVersion: 1, OracleRevision: "97280a946316682fc3ce3d7650597655ff0e46ae",
 		SourceHashes: map[string]string{
 			"cmd/symroom/main.go":              runCLIFileHash(t, root, "cmd/symroom/main.go"),
 			"cmd/symroom/cmd_run.go":           runCLIFileHash(t, root, "cmd/symroom/cmd_run.go"),
@@ -120,12 +120,7 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 	sortRunJournalFiles(fixture.JournalFiles)
 
 	temp := t.TempDir()
-	executable := filepath.Join(temp, "symroom-go")
-	build := exec.Command("go", "build", "-o", executable, "./cmd/symroom")
-	build.Dir = root
-	if output, err := build.CombinedOutput(); err != nil {
-		return runCLIContract{}, fmt.Errorf("build Go symroom oracle: %w\n%s", err, output)
-	}
+	executable := buildRunCLIOracle(t, root)
 	mainRoom := filepath.Join(temp, "main")
 	journalDir := filepath.Join(mainRoom, "journal")
 	if err := os.MkdirAll(journalDir, 0o700); err != nil {
@@ -145,17 +140,35 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 		{"list-human", "main", []string{"run", "list"}},
 		{"list-json", "main", []string{"run", "list", "--json"}},
 		{"list-pending-json", "main", []string{"run", "list", "--pending", "--json"}},
+		{"list-json-bool-one", "main", []string{"run", "list", "-json=1"}},
+		{"list-json-bool-uppercase-false", "main", []string{"run", "list", "--json=FALSE"}},
+		{"list-pending-bool-alias", "main", []string{"run", "list", "-pending=T", "-json=t"}},
+		{"list-pending-bool-false", "main", []string{"run", "list", "-pending=f", "-json=true"}},
 		{"list-json-flag-after-positional", "main", []string{"run", "list", "ignored", "--json"}},
+		{"list-terminator", "main", []string{"run", "list", "--", "--json"}},
+		{"list-help", "main", []string{"run", "list", "-h"}},
+		{"list-invalid-bool", "main", []string{"run", "list", "--json=maybe"}},
 		{"list-empty-json", "empty", []string{"run", "list", "--json"}},
 		{"show-human", "main", []string{"run", "show", "cli-finished"}},
 		{"show-json", "main", []string{"run", "show", "--json", "cli-finished"}},
+		{"show-json-bool-true", "main", []string{"run", "show", "-json=TRUE", "cli-finished"}},
+		{"show-json-bool-zero", "main", []string{"run", "show", "--json=0", "cli-finished"}},
+		{"show-json-bool-false-alias", "main", []string{"run", "show", "-json=F", "cli-finished"}},
+		{"show-invalid-bool", "main", []string{"run", "show", "-json=maybe", "cli-finished"}},
 		{"show-flag-after-positional", "main", []string{"run", "show", "cli-finished", "--json"}},
+		{"show-terminator", "main", []string{"run", "show", "--", "cli-finished", "--json"}},
+		{"show-help", "main", []string{"run", "show", "--help"}},
 		{"show-not-found", "main", []string{"run", "show", "missing"}},
 		{"show-usage", "main", []string{"run", "show"}},
 		{"list-unknown-flag", "main", []string{"run", "list", "--unknown"}},
 	} {
 		cmd := exec.Command(executable, vector.args...)
-		cmd.Env = append(os.Environ(), "SYMROOM_ROOM_DIR="+rooms[vector.room])
+		caseEnv := filepath.Join(temp, "env-"+vector.name)
+		home, dataHome, tempDir := makeRunCLIEnv(t, caseEnv)
+		cmd.Env = []string{
+			"HOME=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
+			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + rooms[vector.room],
+		}
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
 		output, err := cmd.Output()
@@ -173,6 +186,30 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 		})
 	}
 	return fixture, nil
+}
+
+func makeRunCLIEnv(t *testing.T, root string) (home, dataHome, tempDir string) {
+	t.Helper()
+	home = filepath.Join(root, "home")
+	dataHome = filepath.Join(root, "data")
+	tempDir = filepath.Join(root, "tmp")
+	for _, path := range []string{home, dataHome, tempDir} {
+		if err := os.MkdirAll(path, 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return home, dataHome, tempDir
+}
+
+func buildRunCLIOracle(t *testing.T, root string) string {
+	t.Helper()
+	executable := filepath.Join(t.TempDir(), "symroom-go")
+	build := exec.Command("go", "build", "-o", executable, "./cmd/symroom")
+	build.Dir = root
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build Go symroom oracle: %v\n%s", err, output)
+	}
+	return executable
 }
 
 func runCLIRoot(t *testing.T) string {

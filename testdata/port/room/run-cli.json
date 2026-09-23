@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "oracle_revision": "a80da93e3ec02801c73aa5b2318dc06de3efd3fa",
+  "oracle_revision": "97280a946316682fc3ce3d7650597655ff0e46ae",
   "source_hashes": {
     "cmd/symroom/cmd_run.go": "525d67a0ddc6b24708d5450cc92c272c508077f1be52e106461c06a5a4d401f8",
     "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
@@ -55,6 +55,56 @@
       "stderr": ""
     },
     {
+      "name": "list-json-bool-one",
+      "room": "main",
+      "args": [
+        "run",
+        "list",
+        "-json=1"
+      ],
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"id\": \"cli-finished\",\n    \"title\": \"CLI \\u003cFinished\\u003e\\u0026\",\n    \"plan_file\": \"plans/final.md\",\n    \"adapter\": \"local\",\n    \"state\": \"finished\",\n    \"author\": \"mem_80c6dc03f45a7d41\",\n    \"created_at\": \"2026-03-01T10:00:00.000Z\",\n    \"updated_at\": \"2026-03-01T10:01:00.000Z\",\n    \"summary\": \"done\",\n    \"checkpoints\": [\n      {\n        \"id\": \"cli-checkpoint\",\n        \"run_id\": \"cli-finished\",\n        \"question\": \"Review output?\",\n        \"answer\": \"approved\",\n        \"state\": \"resolved\",\n        \"author\": \"mem_80c6dc03f45a7d41\",\n        \"created_at\": \"2026-03-01T10:02:00.000Z\",\n        \"updated_at\": \"2026-03-01T10:03:00.000Z\"\n      }\n    ]\n  },\n  {\n    \"id\": \"cli-pending\",\n    \"title\": \"CLI pending\",\n    \"state\": \"approved\",\n    \"author\": \"mem_80c6dc03f45a7d41\",\n    \"created_at\": \"2026-03-01T11:00:00.000Z\",\n    \"updated_at\": \"2026-03-01T11:01:00.000Z\",\n    \"approval_id\": \"approval-cli\",\n    \"scope\": \"room\",\n    \"expires_at\": \"2026-03-02T00:00:00Z\"\n  }\n]\n",
+      "stderr": ""
+    },
+    {
+      "name": "list-json-bool-uppercase-false",
+      "room": "main",
+      "args": [
+        "run",
+        "list",
+        "--json=FALSE"
+      ],
+      "exit_code": 0,
+      "stdout": "cli-finished\t[finished]\tmem_80c6dc03f45a7d41\tCLI \u003cFinished\u003e\u0026\ncli-pending\t[approved]\tmem_80c6dc03f45a7d41\tCLI pending\n",
+      "stderr": ""
+    },
+    {
+      "name": "list-pending-bool-alias",
+      "room": "main",
+      "args": [
+        "run",
+        "list",
+        "-pending=T",
+        "-json=t"
+      ],
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"id\": \"cli-pending\",\n    \"title\": \"CLI pending\",\n    \"state\": \"approved\",\n    \"author\": \"mem_80c6dc03f45a7d41\",\n    \"created_at\": \"2026-03-01T11:00:00.000Z\",\n    \"updated_at\": \"2026-03-01T11:01:00.000Z\",\n    \"approval_id\": \"approval-cli\",\n    \"scope\": \"room\",\n    \"expires_at\": \"2026-03-02T00:00:00Z\"\n  }\n]\n",
+      "stderr": ""
+    },
+    {
+      "name": "list-pending-bool-false",
+      "room": "main",
+      "args": [
+        "run",
+        "list",
+        "-pending=f",
+        "-json=true"
+      ],
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"id\": \"cli-finished\",\n    \"title\": \"CLI \\u003cFinished\\u003e\\u0026\",\n    \"plan_file\": \"plans/final.md\",\n    \"adapter\": \"local\",\n    \"state\": \"finished\",\n    \"author\": \"mem_80c6dc03f45a7d41\",\n    \"created_at\": \"2026-03-01T10:00:00.000Z\",\n    \"updated_at\": \"2026-03-01T10:01:00.000Z\",\n    \"summary\": \"done\",\n    \"checkpoints\": [\n      {\n        \"id\": \"cli-checkpoint\",\n        \"run_id\": \"cli-finished\",\n        \"question\": \"Review output?\",\n        \"answer\": \"approved\",\n        \"state\": \"resolved\",\n        \"author\": \"mem_80c6dc03f45a7d41\",\n        \"created_at\": \"2026-03-01T10:02:00.000Z\",\n        \"updated_at\": \"2026-03-01T10:03:00.000Z\"\n      }\n    ]\n  },\n  {\n    \"id\": \"cli-pending\",\n    \"title\": \"CLI pending\",\n    \"state\": \"approved\",\n    \"author\": \"mem_80c6dc03f45a7d41\",\n    \"created_at\": \"2026-03-01T11:00:00.000Z\",\n    \"updated_at\": \"2026-03-01T11:01:00.000Z\",\n    \"approval_id\": \"approval-cli\",\n    \"scope\": \"room\",\n    \"expires_at\": \"2026-03-02T00:00:00Z\"\n  }\n]\n",
+      "stderr": ""
+    },
+    {
       "name": "list-json-flag-after-positional",
       "room": "main",
       "args": [
@@ -66,6 +116,43 @@
       "exit_code": 0,
       "stdout": "cli-finished\t[finished]\tmem_80c6dc03f45a7d41\tCLI \u003cFinished\u003e\u0026\ncli-pending\t[approved]\tmem_80c6dc03f45a7d41\tCLI pending\n",
       "stderr": ""
+    },
+    {
+      "name": "list-terminator",
+      "room": "main",
+      "args": [
+        "run",
+        "list",
+        "--",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "cli-finished\t[finished]\tmem_80c6dc03f45a7d41\tCLI \u003cFinished\u003e\u0026\ncli-pending\t[approved]\tmem_80c6dc03f45a7d41\tCLI pending\n",
+      "stderr": ""
+    },
+    {
+      "name": "list-help",
+      "room": "main",
+      "args": [
+        "run",
+        "list",
+        "-h"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n"
+    },
+    {
+      "name": "list-invalid-bool",
+      "room": "main",
+      "args": [
+        "run",
+        "list",
+        "--json=maybe"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "invalid boolean value \"maybe\" for -json: parse error\nUsage of run list:\n  -json\n    \tOutput as JSON\n  -pending\n    \tShow pending runs only\n"
     },
     {
       "name": "list-empty-json",
@@ -105,6 +192,58 @@
       "stderr": ""
     },
     {
+      "name": "show-json-bool-true",
+      "room": "main",
+      "args": [
+        "run",
+        "show",
+        "-json=TRUE",
+        "cli-finished"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"id\": \"cli-finished\",\n  \"title\": \"CLI \\u003cFinished\\u003e\\u0026\",\n  \"plan_file\": \"plans/final.md\",\n  \"adapter\": \"local\",\n  \"state\": \"finished\",\n  \"author\": \"mem_80c6dc03f45a7d41\",\n  \"created_at\": \"2026-03-01T10:00:00.000Z\",\n  \"updated_at\": \"2026-03-01T10:01:00.000Z\",\n  \"summary\": \"done\",\n  \"checkpoints\": [\n    {\n      \"id\": \"cli-checkpoint\",\n      \"run_id\": \"cli-finished\",\n      \"question\": \"Review output?\",\n      \"answer\": \"approved\",\n      \"state\": \"resolved\",\n      \"author\": \"mem_80c6dc03f45a7d41\",\n      \"created_at\": \"2026-03-01T10:02:00.000Z\",\n      \"updated_at\": \"2026-03-01T10:03:00.000Z\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "show-json-bool-zero",
+      "room": "main",
+      "args": [
+        "run",
+        "show",
+        "--json=0",
+        "cli-finished"
+      ],
+      "exit_code": 0,
+      "stdout": "Run ID:     cli-finished\nTitle:      CLI \u003cFinished\u003e\u0026\nState:      finished\nAuthor:     mem_80c6dc03f45a7d41\nCreated At: 2026-03-01T10:00:00.000Z\nSummary:    done\n",
+      "stderr": ""
+    },
+    {
+      "name": "show-json-bool-false-alias",
+      "room": "main",
+      "args": [
+        "run",
+        "show",
+        "-json=F",
+        "cli-finished"
+      ],
+      "exit_code": 0,
+      "stdout": "Run ID:     cli-finished\nTitle:      CLI \u003cFinished\u003e\u0026\nState:      finished\nAuthor:     mem_80c6dc03f45a7d41\nCreated At: 2026-03-01T10:00:00.000Z\nSummary:    done\n",
+      "stderr": ""
+    },
+    {
+      "name": "show-invalid-bool",
+      "room": "main",
+      "args": [
+        "run",
+        "show",
+        "-json=maybe",
+        "cli-finished"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "invalid boolean value \"maybe\" for -json: parse error\nUsage of run show:\n  -json\n    \tOutput as JSON\n"
+    },
+    {
       "name": "show-flag-after-positional",
       "room": "main",
       "args": [
@@ -116,6 +255,32 @@
       "exit_code": 0,
       "stdout": "Run ID:     cli-finished\nTitle:      CLI \u003cFinished\u003e\u0026\nState:      finished\nAuthor:     mem_80c6dc03f45a7d41\nCreated At: 2026-03-01T10:00:00.000Z\nSummary:    done\n",
       "stderr": ""
+    },
+    {
+      "name": "show-terminator",
+      "room": "main",
+      "args": [
+        "run",
+        "show",
+        "--",
+        "cli-finished",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "Run ID:     cli-finished\nTitle:      CLI \u003cFinished\u003e\u0026\nState:      finished\nAuthor:     mem_80c6dc03f45a7d41\nCreated At: 2026-03-01T10:00:00.000Z\nSummary:    done\n",
+      "stderr": ""
+    },
+    {
+      "name": "show-help",
+      "room": "main",
+      "args": [
+        "run",
+        "show",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of run show:\n  -json\n    \tOutput as JSON\n"
     },
     {
       "name": "show-not-found",

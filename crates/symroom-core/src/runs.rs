@@ -1,7 +1,10 @@
 //! Pure run-event projection from `internal/room/run.ProjectRuns`.
 
 use std::collections::BTreeMap;
-use std::fmt;
+use std::{
+    fmt, thread,
+    time::{Duration, Instant},
+};
 
 use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
 use serde::{Deserializer, Serialize};
@@ -261,6 +264,39 @@ pub fn get(room_dir: &std::path::Path, run_id: &str) -> Result<Run, RunQueryErro
     project_runs(&events)
         .remove(run_id)
         .ok_or(RunQueryError::NotFound)
+}
+
+/// Go: `run.Wait`. Read and replay the journal immediately, then poll every
+/// 500ms until approval, denial/cancellation, or the timeout. Journal read
+/// errors are ignored while waiting, matching Go's `Wait` loop.
+pub fn wait(
+    room_dir: &std::path::Path,
+    run_id: &str,
+    timeout: Duration,
+) -> Result<Run, RunWaitError> {
+    let started = Instant::now();
+    loop {
+        if let Ok(run) = get(room_dir, run_id) {
+            match run.state.as_str() {
+                "approved" => return Ok(run),
+                "denied" => return Err(RunWaitError::Denied),
+                "cancelled" => return Err(RunWaitError::Cancelled),
+                _ => {}
+            }
+        }
+        let elapsed = started.elapsed();
+        if elapsed >= timeout {
+            return Err(RunWaitError::Timeout);
+        }
+        thread::sleep((timeout - elapsed).min(Duration::from_millis(500)));
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RunWaitError {
+    Timeout,
+    Denied,
+    Cancelled,
 }
 
 #[derive(Debug, thiserror::Error)]

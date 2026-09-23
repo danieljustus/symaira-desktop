@@ -1266,6 +1266,21 @@
    ],
    "description": "Rule validation errors match Go and leave no staged proposal.",
    "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-eval-missing-rule-file",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", ".symdesk/missing.yaml", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [],
+   "description": "The missing rules file reports Go's path-specific OS error.",
+   "compare_sidecar_layout": true
   }
  ]
 }

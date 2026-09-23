@@ -376,7 +376,8 @@ pub fn validate(rule: &Rule) -> Result<(), RetentionError> {
 /// mirrors Go instead of a YAML multi-document reader, because Go splits the
 /// bytes before parsing.
 pub fn load_rules(path: &Path) -> Result<Vec<Rule>, RetentionError> {
-    let data = std::fs::read(path).map_err(|_| RetentionError::ReadFailed(String::new()))?;
+    let data = std::fs::read(path)
+        .map_err(|error| RetentionError::ReadFailed(go_path_error("open", path, &error)))?;
     let content = String::from_utf8_lossy(&data);
     let mut rules = Vec::new();
     for chunk in content.split("\n---\n") {

@@ -21,6 +21,11 @@ pub fn cli() -> Command {
                 .long("prune")
                 .action(clap::ArgAction::SetTrue),
         )
+        .arg(
+            Arg::new("re-embed")
+                .long("re-embed")
+                .action(clap::ArgAction::SetTrue),
+        )
         .subcommand(
             Command::new("maintenance")
                 .subcommand(Command::new("location"))
@@ -60,7 +65,7 @@ pub fn run(
     json_flag: bool,
 ) -> ExitCode {
     let Some(("maintenance", maintenance)) = command.subcommand() else {
-        return run_build(command, vault, json_output);
+        return run_build(command, vault, json_output, json_flag);
     };
     let environment = std::env::vars().collect::<BTreeMap<_, _>>();
     let cwd = match std::env::current_dir() {
@@ -148,7 +153,12 @@ pub fn run(
     }
 }
 
-fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> ExitCode {
+fn run_build(
+    command: &ArgMatches,
+    vault: Option<&str>,
+    json_output: bool,
+    json_flag: bool,
+) -> ExitCode {
     let requested = command
         .get_one::<String>("path")
         .map(String::as_str)
@@ -163,6 +173,23 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
         Ok(sidecar) => sidecar,
         Err(error) => return super::emit_error(error.to_string(), json_output),
     };
+
+    if command.get_flag("re-embed") {
+        let reembedded = match reembed_pending_documents() {
+            Ok(count) => count,
+            Err(error) => {
+                return super::emit_error(format!("re-embed failed: {error}"), json_output);
+            }
+        };
+        if !json_flag {
+            let code = super::write_stdout(format!(
+                "Re-embedded {reembedded} document(s) with pending chunks.\n"
+            ));
+            if code != super::process_exit(CoreExitCode::Ok) {
+                return code;
+            }
+        }
+    }
 
     let before = match indexed_paths(&root) {
         Ok(paths) => paths,
@@ -225,6 +252,49 @@ fn run_build(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Ex
         };
         super::write_stdout(summary)
     }
+}
+
+fn reembed_pending_documents() -> Result<usize, String> {
+    // Preserve the exact, provider-free no-pending path. Rebuilding pending
+    // chunks needs the Go retrieval parser/chunker and embedding engine, which
+    // this Rust workspace does not expose yet; fail visibly rather than
+    // claiming that pending vectors were repaired.
+    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let cwd = std::env::current_dir().map_err(|error| error.to_string())?;
+    let temp_root = std::env::temp_dir();
+    let path = index_location_for_vault("", &environment, &cwd, &temp_root)
+        .map_err(|error| error.to_string())?;
+    if !path.exists() {
+        return Ok(0);
+    }
+    let connection = Connection::open_with_flags(
+        &path,
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
+    )
+    .map_err(|error| error.to_string())?;
+    let has_chunks: bool = connection
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='chunks')",
+            [],
+            |row| row.get(0),
+        )
+        .map_err(|error| error.to_string())?;
+    if !has_chunks {
+        return Ok(0);
+    }
+    let pending_documents: usize = connection
+        .query_row(
+            "SELECT COUNT(DISTINCT document_path) FROM chunks WHERE embedding_pending=1",
+            [],
+            |row| row.get(0),
+        )
+        .map_err(|error| error.to_string())?;
+    if pending_documents == 0 {
+        return Ok(0);
+    }
+    Err(format!(
+        "{pending_documents} document(s) have pending chunks, but the Rust retrieval embedding engine is not available"
+    ))
 }
 
 fn index_vault_error(requested: Option<&str>, error: &str) -> String {

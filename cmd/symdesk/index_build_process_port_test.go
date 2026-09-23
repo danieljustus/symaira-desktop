@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/danieljustus/symaira-corekit/sqlitekit"
@@ -31,16 +32,19 @@ type indexBuildProcessFile struct {
 }
 
 type indexBuildProcessFixture struct {
-	SchemaVersion int                     `json:"schema_version"`
-	DefaultFirst  indexBuildProcessResult `json:"default_first"`
-	DefaultAgain  indexBuildProcessResult `json:"default_again"`
-	Prune         indexBuildProcessResult `json:"prune"`
-	Explicit      indexBuildProcessResult `json:"explicit"`
-	Missing       indexBuildProcessResult `json:"missing"`
-	DefaultFiles  []indexBuildProcessFile `json:"default_files"`
-	ExplicitFiles []indexBuildProcessFile `json:"explicit_files"`
-	Lifecycle     map[string]string       `json:"lifecycle"`
-	Metadata      bool                    `json:"metadata"`
+	SchemaVersion    int                     `json:"schema_version"`
+	DefaultFirst     indexBuildProcessResult `json:"default_first"`
+	DefaultAgain     indexBuildProcessResult `json:"default_again"`
+	Reembed          indexBuildProcessResult `json:"reembed"`
+	Prune            indexBuildProcessResult `json:"prune"`
+	Explicit         indexBuildProcessResult `json:"explicit"`
+	Missing          indexBuildProcessResult `json:"missing"`
+	DefaultFiles     []indexBuildProcessFile `json:"default_files"`
+	ExplicitFiles    []indexBuildProcessFile `json:"explicit_files"`
+	Lifecycle        map[string]string       `json:"lifecycle"`
+	LifecycleReasons map[string]string       `json:"lifecycle_reasons"`
+	ReembedNoNetwork bool                    `json:"reembed_no_network"`
+	Metadata         bool                    `json:"metadata"`
 }
 
 func TestIndexBuildProcessPortFixture(t *testing.T) {
@@ -97,7 +101,15 @@ func observeIndexBuildProcess(t *testing.T) indexBuildProcessFixture {
 	if err := os.WriteFile(filepath.Join(explicit, "only.md"), []byte("# Explicit\n\nexplicit oracle document."), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.WriteFile(filepath.Join(vault, "draft.DOC"), []byte("legacy office document"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(vault, "book.mobi"), []byte("ebook document"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var embeddingRequests atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		embeddingRequests.Add(1)
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{"embedding": make([]float32, 8)}}})
 	}))
@@ -154,6 +166,9 @@ func observeIndexBuildProcess(t *testing.T) indexBuildProcessFixture {
 	fixture := indexBuildProcessFixture{SchemaVersion: 1}
 	fixture.DefaultFirst = run("--json", "--vault", vault, "index")
 	fixture.DefaultAgain = run("--json", "--vault", vault, "index")
+	requestsBeforeReembed := embeddingRequests.Load()
+	fixture.Reembed = run("--vault", vault, "index", "--re-embed")
+	fixture.ReembedNoNetwork = embeddingRequests.Load() == requestsBeforeReembed
 	if err := os.Remove(filepath.Join(vault, "nested", "second.md")); err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +182,7 @@ func observeIndexBuildProcess(t *testing.T) indexBuildProcessFixture {
 			files[index].Path = normalizeProcessOutput(files[index].Path, root)
 		}
 	}
-	fixture.Lifecycle = readIndexBuildLifecycle(t, vault)
+	fixture.Lifecycle, fixture.LifecycleReasons = readIndexBuildLifecycle(t, vault)
 	_, err = os.Stat(filepath.Join(filepath.Dir(sidecarPathForFixture(t, vault)), "metadata.json"))
 	fixture.Metadata = err == nil
 	return fixture
@@ -209,28 +224,33 @@ func readIndexBuildFiles(t *testing.T, vault string) []indexBuildProcessFile {
 	return files
 }
 
-func readIndexBuildLifecycle(t *testing.T, vault string) map[string]string {
+func readIndexBuildLifecycle(t *testing.T, vault string) (map[string]string, map[string]string) {
 	t.Helper()
 	db, err := sqlitekit.Open(sidecarPathForFixture(t, vault))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	rows, err := db.Query("SELECT path,state FROM index_lifecycle ORDER BY path")
+	rows, err := db.Query("SELECT path,state,reason FROM index_lifecycle ORDER BY path")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer rows.Close()
 	states := map[string]string{}
+	reasons := map[string]string{}
 	for rows.Next() {
-		var path, state string
-		if err := rows.Scan(&path, &state); err != nil {
+		var path, state, reason string
+		if err := rows.Scan(&path, &state, &reason); err != nil {
 			t.Fatal(err)
 		}
-		states[filepath.Base(path)] = state
+		name := filepath.Base(path)
+		states[name] = state
+		if reason != "" {
+			reasons[name] = reason
+		}
 	}
 	if err := rows.Err(); err != nil {
 		t.Fatal(err)
 	}
-	return states
+	return states, reasons
 }

@@ -30,12 +30,15 @@ struct Fixture {
     schema_version: u32,
     default_first: ProcessResult,
     default_again: ProcessResult,
+    reembed: ProcessResult,
+    reembed_no_network: bool,
     prune: ProcessResult,
     explicit: ProcessResult,
     missing: ProcessResult,
     default_files: Vec<IndexedFile>,
     explicit_files: Vec<IndexedFile>,
     lifecycle: BTreeMap<String, String>,
+    lifecycle_reasons: BTreeMap<String, String>,
     metadata: bool,
 }
 
@@ -133,6 +136,23 @@ fn index_build_cli_replays_go_process_fixture() {
         "# Explicit\n\nexplicit oracle document.",
     )
     .expect("explicit note");
+    fs::write(root.path("vault/draft.DOC"), "legacy office document").expect("legacy document");
+    fs::write(root.path("vault/book.mobi"), "ebook document").expect("ebook document");
+
+    let config_directory = root.path("home/.config/symseek");
+    fs::create_dir_all(&config_directory).expect("create isolated symseek config directory");
+    fs::write(
+        config_directory.join("config.toml"),
+        format!(
+            "index_path = {:?}\n",
+            root.path("data/retrieval.db").to_string_lossy()
+        ),
+    )
+    .expect("configure isolated standalone retrieval database");
+    let retrieval = Connection::open(root.path("data/retrieval.db")).expect("create retrieval db");
+    retrieval
+        .execute_batch("CREATE TABLE chunks (document_path TEXT NOT NULL, embedding_pending INTEGER NOT NULL DEFAULT 0);")
+        .expect("create no-pending retrieval schema");
 
     let default_vault = root.path("vault").to_string_lossy().into_owned();
     let explicit_vault = root.path("explicit").to_string_lossy().into_owned();
@@ -144,6 +164,14 @@ fn index_build_cli_replays_go_process_fixture() {
     assert_eq!(
         run(&root, &["--json", "--vault", &default_vault, "index"]),
         fixture.default_again
+    );
+    assert_eq!(
+        run(&root, &["--vault", &default_vault, "index", "--re-embed"]),
+        fixture.reembed
+    );
+    assert!(
+        fixture.reembed_no_network,
+        "Go no-pending re-embed made no local fake-provider request"
     );
     fs::remove_file(root.path("vault/nested/second.md")).expect("remove stale indexed note");
     assert_eq!(
@@ -177,6 +205,8 @@ fn index_build_cli_replays_go_process_fixture() {
     assert_eq!(default_files, fixture.default_files);
     let lifecycle = read_lifecycle(&default_db);
     assert_eq!(lifecycle, fixture.lifecycle);
+    let lifecycle_reasons = read_lifecycle_reasons(&default_db);
+    assert_eq!(lifecycle_reasons, fixture.lifecycle_reasons);
     let explicit_db =
         Connection::open(fixture_sidecar_path(&root, "explicit")).expect("open explicit sidecar");
     assert_eq!(read_files(&explicit_db, &root.0), fixture.explicit_files);
@@ -237,6 +267,29 @@ fn read_lifecycle(connection: &Connection) -> BTreeMap<String, String> {
         .map(|row| {
             let (path, state) = row.expect("lifecycle row");
             (path, state)
+        })
+        .collect()
+}
+
+fn read_lifecycle_reasons(connection: &Connection) -> BTreeMap<String, String> {
+    let mut statement = connection
+        .prepare("SELECT path,reason FROM index_lifecycle WHERE reason <> '' ORDER BY path")
+        .expect("prepare lifecycle reasons query");
+    statement
+        .query_map([], |row| {
+            Ok((
+                Path::new(&row.get::<_, String>(0)?)
+                    .file_name()
+                    .expect("filename")
+                    .to_string_lossy()
+                    .into_owned(),
+                row.get(1)?,
+            ))
+        })
+        .expect("query lifecycle reasons")
+        .map(|row| {
+            let (path, reason) = row.expect("lifecycle reason row");
+            (path, reason)
         })
         .collect()
 }

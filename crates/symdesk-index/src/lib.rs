@@ -560,6 +560,23 @@ impl Sidecar {
         record_lifecycle: bool,
     ) -> Result<(), SidecarError> {
         validate_utf8_path(vault_root, "vault root")?;
+        if record_lifecycle {
+            for entry in symdesk_vault::walk_all(vault_root)? {
+                let Some(extension) = entry.path.extension().and_then(|value| value.to_str())
+                else {
+                    continue;
+                };
+                let Some(reason) = unsupported_index_reason(extension) else {
+                    continue;
+                };
+                let key = storage_path(vault_root, &entry.path)?.key_path;
+                let key = key.to_str().ok_or_else(|| SidecarError::NonUtf8Path {
+                    context: "storage key",
+                    path: key.clone(),
+                })?;
+                self.set_lifecycle_state(key, "unsupported", reason)?;
+            }
+        }
         let vault_dir = open_vault_dir(vault_root)?;
         let mut batch = Vec::with_capacity(MAX_INDEX_BATCH_SIZE);
         let mut callback_error = None;
@@ -942,6 +959,20 @@ impl Sidecar {
             })
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+}
+
+fn unsupported_index_reason(extension: &str) -> Option<&'static str> {
+    match extension.to_ascii_lowercase().as_str() {
+        "mobi" => Some("no bundled MOBI parser; DRM status cannot be determined"),
+        "azw3" => Some("no bundled AZW3 parser; DRM status cannot be determined"),
+        "pages" | "key" | "numbers" => Some("iWork bundle parser is not available"),
+        "doc" => Some("legacy binary Office parser is not available"),
+        "xls" => Some("legacy binary Office parser is not available"),
+        "ppt" => Some("legacy binary Office parser is not available"),
+        "djvu" => Some("DjVu parser is not available"),
+        "odg" => Some("OpenDocument drawing parser is not available"),
+        _ => None,
     }
 }
 

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "files": {
+    ".gitignore": ".symroom/\n",
+    ".symroom/local.toml": "identity = \"room-init\"\nartifact_root = \"\"\n",
+    "journal/mem_3c96259d2ea8db68.jsonl": "{\"author\":\"mem_3c96259d2ea8db68\",\"body\":{\"name\":\"Parity Room\",\"public_key\":\"844ad2953795d466a309ed099714a260b2afa796015d29a7a299b87325aab023\"},\"id\":\"ev_0123456789abcdef0123\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_0123456789abcdef\",\"seq\":1,\"sig\":\"ed25519:YuU5gY+8yvJQ573j3khPSz4zqkZfWwNrKGbLbVUpfT/xB6ldpUx4pfZ8+OekEYk/QfuVOsSBuo2OQDebcKbeDA==\",\"ts\":\"2026-01-02T03:04:05.006Z\",\"v\":1}\n",
+    "room.toml": "schema_version = 1\nid = \"rm_0123456789abcdef\"\ncreated = \"2026-01-02T03:04:05.006Z\"\nroot_pubkey = \"ed25519:844ad2953795d466a309ed099714a260b2afa796015d29a7a299b87325aab023\"\nroot_event = \"ev_0123456789abcdef0123\"\n"
+  },
+  "modes": {
+    ".gitignore": "0644",
+    ".symroom": "0755",
+    ".symroom/local.toml": "0644",
+    "journal": "0755",
+    "journal/mem_3c96259d2ea8db68.jsonl": "0644",
+    "room.toml": "0644"
+  },
+  "nonempty_error": "room directory is not empty",
+  "preserved": "preserve me"
+}

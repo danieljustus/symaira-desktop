@@ -24,3 +24,4 @@ pub mod journal;
 pub mod log;
 pub mod members;
 pub mod runs;
+pub mod room_init;

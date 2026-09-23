@@ -99,11 +99,12 @@ func TestPortRoomSurrogateContract(t *testing.T) {
 	encoded = append(encoded, '\n')
 	path := filepath.Join(roomRepoRoot(t), surrogateFixturePath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return
 	}
+	//nolint:gosec // path is the fixed fixture name under the test source's repository root.
 	current, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

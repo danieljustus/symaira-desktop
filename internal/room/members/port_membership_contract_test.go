@@ -49,6 +49,7 @@ func TestPortMembershipContract(t *testing.T) {
 	root := filepath.Clean(filepath.Join(filepath.Dir(membershipSourcePath(t)), "../../.."))
 	fixture := membershipContract{SchemaVersion: 1, SourceHashes: map[string]string{}}
 	for _, rel := range []string{"internal/room/members/members.go", "internal/room/members/port_membership_contract_test.go"} {
+		//nolint:gosec // rel comes only from the two fixed repository source paths above.
 		data, err := os.ReadFile(filepath.Join(root, rel))
 		if err != nil {
 			t.Fatal(err)
@@ -118,7 +119,7 @@ func TestPortMembershipContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, membershipFixture)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return

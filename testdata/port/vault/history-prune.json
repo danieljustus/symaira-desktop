@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "c4f6e77928849c3626400c45676c05c3cf58f2a1",
+    "release": "post-v0.12.2-security-880"
+  },
+  "source_hashes": {
+    "internal/history/checkpoint.go": "4c48610083a143c0a1f135413f514a838326d882a346ae1bc13b9538fce0ef39",
+    "internal/history/history.go": "4b0caf990744a9469f8f16f2de6bddfee0525106c996c5907ea11f92db5740c2"
+  },
+  "cases": [
+    {
+      "id": "max-per-file-keeps-newest-and-collects-old-blobs",
+      "description": "max-per-file keeps the two newest snapshots and GC removes only the dropped snapshot blobs",
+      "files": [],
+      "steps": [
+        {
+          "operation": "write",
+          "path": "a.md",
+          "content": "v1"
+        },
+        {
+          "operation": "snapshot",
+          "path": "a.md"
+        },
+        {
+          "operation": "write",
+          "path": "a.md",
+          "content": "v2"
+        },
+        {
+          "operation": "snapshot",
+          "path": "a.md"
+        },
+        {
+          "operation": "write",
+          "path": "a.md",
+          "content": "v3"
+        },
+        {
+          "operation": "snapshot",
+          "path": "a.md"
+        },
+        {
+          "operation": "write",
+          "path": "a.md",
+          "content": "v4"
+        },
+        {
+          "operation": "snapshot",
+          "path": "a.md"
+        }
+      ],
+      "policy": {
+        "max_per_file": 2,
+        "max_age_seconds": 0,
+        "max_checkpoint_age_seconds": 0
+      },
+      "removed": 2,
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/a.md.json",
+          "mode": 420,
+          "size": 272,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"8e38a1ea5c681c8e9a08f1af465f1f07d33d931de8f71af45ecbe957751c9a86\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 2\n  },\n  {\n    \"id\": \"e0d2747b9ab7abb6eb65e0373fa1b428a28bd6d8a2380106dcc080f58005ee14\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 2\n  }\n]"
+        },
+        {
+          "path": "a.md",
+          "mode": 420,
+          "size": 2,
+          "sha256": "",
+          "content": "v4"
+        }
+      ],
+      "objects": [
+        {
+          "name": "8e38a1ea5c681c8e9a08f1af465f1f07d33d931de8f71af45ecbe957751c9a86",
+          "size": 2,
+          "sha256": "8e38a1ea5c681c8e9a08f1af465f1f07d33d931de8f71af45ecbe957751c9a86"
+        },
+        {
+          "name": "e0d2747b9ab7abb6eb65e0373fa1b428a28bd6d8a2380106dcc080f58005ee14",
+          "size": 2,
+          "sha256": "e0d2747b9ab7abb6eb65e0373fa1b428a28bd6d8a2380106dcc080f58005ee14"
+        }
+      ]
+    },
+    {
+      "id": "max-age-drops-old-but-always-keeps-newest",
+      "description": "age pruning drops an old non-newest entry but keeps the newest entry even when it is also older than the cutoff",
+      "files": [],
+      "steps": [
+        {
+          "operation": "write",
+          "path": "a.md",
+          "content": "old"
+        },
+        {
+          "operation": "snapshot",
+          "path": "a.md"
+        },
+        {
+          "operation": "age_snapshot",
+          "path": "a.md",
+          "age_seconds": 172800
+        },
+        {
+          "operation": "write",
+          "path": "a.md",
+          "content": "new"
+        },
+        {
+          "operation": "snapshot",
+          "path": "a.md"
+        },
+        {
+          "operation": "age_snapshot",
+          "path": "a.md",
+          "age_seconds": 172800
+        }
+      ],
+      "policy": {
+        "max_per_file": 0,
+        "max_age_seconds": 3600,
+        "max_checkpoint_age_seconds": 0
+      },
+      "removed": 1,
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 3\n  }\n]"
+        },
+        {
+          "path": "a.md",
+          "mode": 420,
+          "size": 3,
+          "sha256": "",
+          "content": "new"
+        }
+      ],
+      "objects": [
+        {
+          "name": "11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437",
+          "size": 3,
+          "sha256": "11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437"
+        }
+      ]
+    },
+    {
+      "id": "checkpoint-age-protection-and-gc",
+      "description": "an aged checkpoint loses its old blob protection while a fresh checkpoint retains its blob after max-per-file pruning",
+      "files": [],
+      "steps": [
+        {
+          "operation": "write",
+          "path": "old.md",
+          "content": "old-v1"
+        },
+        {
+          "operation": "snapshot",
+          "path": "old.md"
+        },
+        {
+          "operation": "checkpoint",
+          "path": "old.md",
+          "task_id": "aged"
+        },
+        {
+          "operation": "age_checkpoint",
+          "task_id": "aged",
+          "age_seconds": 172800
+        },
+        {
+          "operation": "write",
+          "path": "old.md",
+          "content": "old-v2"
+        },
+        {
+          "operation": "snapshot",
+          "path": "old.md"
+        },
+        {
+          "operation": "write",
+          "path": "fresh.md",
+          "content": "fresh-v1"
+        },
+        {
+          "operation": "snapshot",
+          "path": "fresh.md"
+        },
+        {
+          "operation": "checkpoint",
+          "path": "fresh.md",
+          "task_id": "fresh"
+        },
+        {
+          "operation": "write",
+          "path": "fresh.md",
+          "content": "fresh-v2"
+        },
+        {
+          "operation": "snapshot",
+          "path": "fresh.md"
+        }
+      ],
+      "policy": {
+        "max_per_file": 1,
+        "max_age_seconds": 0,
+        "max_checkpoint_age_seconds": 86400
+      },
+      "removed": 3,
+      "after": [
+        {
+          "path": ".symdesk/history/checkpoints/fresh.json",
+          "mode": 420,
+          "size": 315,
+          "sha256": "",
+          "content": "{\n  \"task_id\": \"fresh\",\n  \"timestamp\": \"{{timestamp}}\",\n  \"files\": [\n    {\n      \"rel_path\": \"fresh.md\",\n      \"entry\": {\n        \"id\": \"f6b1e364645d93dac803c30efe745a416e57f22ba7b015ca3355f3f47fc65d09\",\n        \"timestamp\": \"{{timestamp}}\",\n        \"size\": 8\n      }\n    }\n  ],\n  \"new_files\": [],\n  \"skipped\": []\n}"
+        },
+        {
+          "path": ".symdesk/history/manifest/fresh.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"a124e684493b099b184f54b5396ac78c2c2700e0e4bc3fbd183943e361ab1fe8\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 8\n  }\n]"
+        },
+        {
+          "path": ".symdesk/history/manifest/old.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"c0c4e93e2205407fc0aa3ea9dd79fa966c8b0f2622c806c22a8d2b36a65194e8\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 6\n  }\n]"
+        },
+        {
+          "path": "fresh.md",
+          "mode": 420,
+          "size": 8,
+          "sha256": "",
+          "content": "fresh-v2"
+        },
+        {
+          "path": "old.md",
+          "mode": 420,
+          "size": 6,
+          "sha256": "",
+          "content": "old-v2"
+        }
+      ],
+      "objects": [
+        {
+          "name": "a124e684493b099b184f54b5396ac78c2c2700e0e4bc3fbd183943e361ab1fe8",
+          "size": 8,
+          "sha256": "a124e684493b099b184f54b5396ac78c2c2700e0e4bc3fbd183943e361ab1fe8"
+        },
+        {
+          "name": "c0c4e93e2205407fc0aa3ea9dd79fa966c8b0f2622c806c22a8d2b36a65194e8",
+          "size": 6,
+          "sha256": "c0c4e93e2205407fc0aa3ea9dd79fa966c8b0f2622c806c22a8d2b36a65194e8"
+        },
+        {
+          "name": "f6b1e364645d93dac803c30efe745a416e57f22ba7b015ca3355f3f47fc65d09",
+          "size": 8,
+          "sha256": "f6b1e364645d93dac803c30efe745a416e57f22ba7b015ca3355f3f47fc65d09"
+        }
+      ]
+    },
+    {
+      "id": "later-corrupt-manifest-preserves-prior-prunes-and-skips-gc",
+      "description": "a corrupt later manifest returns the earlier removal count, keeps the earlier rewrite, and prevents the final object GC",
+      "files": [],
+      "steps": [
+        {
+          "operation": "write",
+          "path": "a.md",
+          "content": "a-v1"
+        },
+        {
+          "operation": "snapshot",
+          "path": "a.md"
+        },
+        {
+          "operation": "write",
+          "path": "a.md",
+          "content": "a-v2"
+        },
+        {
+          "operation": "snapshot",
+          "path": "a.md"
+        },
+        {
+          "operation": "write",
+          "path": "z.md",
+          "content": "z"
+        },
+        {
+          "operation": "snapshot",
+          "path": "z.md"
+        },
+        {
+          "operation": "corrupt_manifest",
+          "path": "z.md",
+          "content": "{}"
+        }
+      ],
+      "policy": {
+        "max_per_file": 1,
+        "max_age_seconds": 0,
+        "max_checkpoint_age_seconds": 0
+      },
+      "removed": 1,
+      "error": "corrupt history manifest for z.md: ",
+      "error_class": "corrupt_manifest",
+      "after": [
+        {
+          "path": ".symdesk/history/manifest/a.md.json",
+          "mode": 420,
+          "size": 137,
+          "sha256": "",
+          "content": "[\n  {\n    \"id\": \"f292eebbc44c10674f999a7410572df760d8471f77f4d969bc8f99534e236384\",\n    \"timestamp\": \"{{timestamp}}\",\n    \"size\": 4\n  }\n]"
+        },
+        {
+          "path": ".symdesk/history/manifest/z.md.json",
+          "mode": 420,
+          "size": 2,
+          "sha256": "",
+          "content": "{}"
+        },
+        {
+          "path": "a.md",
+          "mode": 420,
+          "size": 4,
+          "sha256": "",
+          "content": "a-v2"
+        },
+        {
+          "path": "z.md",
+          "mode": 420,
+          "size": 1,
+          "sha256": "",
+          "content": "z"
+        }
+      ],
+      "objects": [
+        {
+          "name": "0e4bf60cb794e62ff58c6411c1395a64ec1bc031a6039bd1898adde6749e32e3",
+          "size": 4,
+          "sha256": "0e4bf60cb794e62ff58c6411c1395a64ec1bc031a6039bd1898adde6749e32e3"
+        },
+        {
+          "name": "594e519ae499312b29433b7dd8a97ff068defcba9755b6d5d00e84c524d67b06",
+          "size": 1,
+          "sha256": "594e519ae499312b29433b7dd8a97ff068defcba9755b6d5d00e84c524d67b06"
+        },
+        {
+          "name": "f292eebbc44c10674f999a7410572df760d8471f77f4d969bc8f99534e236384",
+          "size": 4,
+          "sha256": "f292eebbc44c10674f999a7410572df760d8471f77f4d969bc8f99534e236384"
+        }
+      ]
+    }
+  ]
+}

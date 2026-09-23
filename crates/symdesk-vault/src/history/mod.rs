@@ -9,10 +9,12 @@
 //! using [`cap_std::fs::Dir`].
 
 pub mod checkpoint;
+mod prune;
 mod purge;
 mod trash_purge;
 
 pub use checkpoint::{Checkpoint, CheckpointFile};
+pub use prune::{HistoryPruneError, HistoryRetentionPolicy};
 
 use std::{
     fmt::Write as _,

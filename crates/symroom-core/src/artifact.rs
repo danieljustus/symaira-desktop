@@ -74,6 +74,7 @@ pub fn link(
     room_dir: &Path,
     file_path: &Path,
     title: &str,
+    symdesk_id: &str,
     signer: &Identity,
 ) -> Result<Event, ArtifactError> {
     let rel = make_relative_path(file_path, room_dir)?;
@@ -95,7 +96,7 @@ pub fn link(
         artifact_id: &artifact_id,
         path: &rel_text,
         sha256: &hash,
-        symdesk_id: "",
+        symdesk_id,
         title: &title,
     };
     let raw_body = json_body(&body)?;
@@ -108,6 +109,14 @@ pub fn link(
         raw_body,
     )?;
     Ok(event)
+}
+
+/// Return the path passed to `symdesk inspect` for an artifact link.
+pub fn link_inspect_path(room_dir: &Path, file_path: &Path) -> Result<PathBuf, ArtifactError> {
+    let relative = make_relative_path(file_path, room_dir)?;
+    let path = clean_path(&room_dir.join(relative));
+    hash_file(&path).map_err(|error| ArtifactError::Message(format!("compute sha256: {error}")))?;
+    Ok(path)
 }
 
 pub fn unlink(

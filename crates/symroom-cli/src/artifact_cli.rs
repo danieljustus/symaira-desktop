@@ -2,9 +2,12 @@
 
 use std::{
     ffi::OsString,
-    io::{self, Write},
+    io::{self, Read, Write},
     path::PathBuf,
-    process::ExitCode,
+    process::{Command, ExitCode, Stdio},
+    sync::mpsc,
+    thread,
+    time::{Duration, Instant},
 };
 
 use symaira_core_exit::ExitCode as CoreExitCode;
@@ -46,10 +49,27 @@ fn link(args: &[OsString]) -> ExitCode {
         Ok(signer) => signer,
         Err(code) => return code,
     };
+    let inspect_path = match artifact::link_inspect_path(&room_dir(), &PathBuf::from(path)) {
+        Ok(path) => path,
+        Err(artifact::ArtifactError::OutsideRoot) => {
+            return stderr(
+                "Error: path is outside artifact root\n",
+                CoreExitCode::NoInput,
+            );
+        }
+        Err(error) => {
+            return stderr(
+                &format!("Error linking artifact: {error}\n"),
+                CoreExitCode::Generic,
+            );
+        }
+    };
+    let symdesk_id = inspect_symdesk(&inspect_path);
     match artifact::link(
         &room_dir(),
         &PathBuf::from(path),
         parsed.values.get("title").map_or("", String::as_str),
+        &symdesk_id,
         &signer,
     ) {
         Ok(event) => stdout(&format!("{}\n", event.id), CoreExitCode::Ok),
@@ -207,11 +227,29 @@ fn parse_flags(
 }
 
 fn load_identity(name: Option<&String>) -> Result<identity::Identity, ExitCode> {
-    let Some(name) = name.filter(|name| !name.is_empty()) else {
-        return Err(stderr(
-            "Error: --identity is required when default_identity is not configured\n",
-            CoreExitCode::NoInput,
-        ));
+    let explicit = name.filter(|name| !name.is_empty());
+    let owned_name;
+    let name = if let Some(name) = explicit {
+        name.as_str()
+    } else {
+        match default_identity() {
+            Ok(name) => {
+                owned_name = name;
+                if owned_name.is_empty() {
+                    return Err(stderr(
+                        "Error: --identity is required when default_identity is not configured\n",
+                        CoreExitCode::NoInput,
+                    ));
+                }
+                owned_name.as_str()
+            }
+            Err(error) => {
+                return Err(stderr(
+                    &format!("Error loading configuration: {error}\n"),
+                    CoreExitCode::NoInput,
+                ));
+            }
+        }
     };
     identity::load(name).map_err(|error| {
         stderr(
@@ -219,6 +257,131 @@ fn load_identity(name: Option<&String>) -> Result<identity::Identity, ExitCode> 
             CoreExitCode::NotFound,
         )
     })
+}
+
+fn default_identity() -> Result<String, String> {
+    let home = home_dir()?;
+    let mut name = merge_identity_config(
+        &home.join(".config/symroom/config.toml"),
+        "global config error",
+        String::new(),
+    )?;
+    if let Ok(cwd) = std::env::current_dir() {
+        name = merge_identity_config(&cwd.join(".symroom.toml"), "project config error", name)?;
+    }
+    if let Ok(value) = std::env::var("SYMROOM_DEFAULT_IDENTITY")
+        && !value.is_empty()
+    {
+        name = value;
+    }
+    Ok(name)
+}
+
+fn home_dir() -> Result<PathBuf, String> {
+    #[cfg(windows)]
+    let home = std::env::var_os("USERPROFILE");
+    #[cfg(not(windows))]
+    let home = std::env::var_os("HOME");
+    home.filter(|path| !path.is_empty())
+        .map(PathBuf::from)
+        .ok_or_else(|| "cannot determine home directory".to_owned())
+}
+
+fn merge_identity_config(
+    path: &std::path::Path,
+    source: &str,
+    current: String,
+) -> Result<String, String> {
+    let contents = match std::fs::read_to_string(path) {
+        Ok(contents) => contents,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(current),
+        Err(error) => {
+            return Err(format!(
+                "{source}: failed to parse {}: {error}",
+                path.display()
+            ));
+        }
+    };
+    let config: toml::Value = toml::from_str(&contents)
+        .map_err(|error| format!("{source}: failed to parse {}: {error}", path.display()))?;
+    if config.get("adapters").is_some() {
+        return Err(format!(
+            "{source}: failed to apply {}: field \"adapters\": map fields are not supported from config",
+            path.display()
+        ));
+    }
+    match config.get("default_identity") {
+        None => Ok(current),
+        Some(toml::Value::String(value)) if value.is_empty() => Ok(current),
+        Some(toml::Value::String(value)) => Ok(value.clone()),
+        Some(value) => Err(format!(
+            "{source}: failed to apply {}: field default_identity: expected string, got {}",
+            path.display(),
+            match value {
+                toml::Value::Integer(_) => "int64",
+                toml::Value::Float(_) => "float64",
+                toml::Value::Boolean(_) => "bool",
+                toml::Value::Datetime(_) => "time.Time",
+                toml::Value::Array(_) => "[]interface {}",
+                toml::Value::Table(_) => "map[string]interface {}",
+                toml::Value::String(_) => unreachable!(),
+            }
+        )),
+    }
+}
+
+fn inspect_symdesk(path: &std::path::Path) -> String {
+    let mut child = match Command::new("symdesk")
+        .arg("inspect")
+        .arg(path)
+        .arg("--json")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        Ok(child) => child,
+        Err(_) => return String::new(),
+    };
+    let Some(mut stdout) = child.stdout.take() else {
+        let _ = child.kill();
+        let _ = child.wait();
+        return String::new();
+    };
+    let (send, receive) = mpsc::channel();
+    thread::spawn(move || {
+        let mut output = Vec::new();
+        let _ = stdout.read_to_end(&mut output);
+        let _ = send.send(output);
+    });
+    let deadline = Instant::now() + Duration::from_secs(1);
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                if !status.success() {
+                    return String::new();
+                }
+                let Ok(output) = receive.recv_timeout(Duration::from_millis(100)) else {
+                    return String::new();
+                };
+                return serde_json::from_slice::<InspectResult>(&output)
+                    .ok()
+                    .map_or_else(String::new, |result| result.document_id);
+            }
+            Ok(None) if Instant::now() < deadline => thread::sleep(Duration::from_millis(10)),
+            Ok(None) | Err(_) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                let _ = receive.recv_timeout(Duration::from_millis(100));
+                return String::new();
+            }
+        }
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct InspectResult {
+    #[serde(default)]
+    document_id: String,
 }
 
 fn room_dir() -> PathBuf {

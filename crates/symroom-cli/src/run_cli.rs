@@ -8,11 +8,11 @@ use std::{
 
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symroom_core::{
-    identity,
+    approval, identity,
     runs::{self, RunMutationError, RunQueryError, RunWaitError},
 };
 
-const USAGE: &str = "Usage: symroom run <request|list|show|start|cancel|wait> [flags] [args]\n";
+const USAGE: &str = "Usage: symroom run <request|list|show|start|cancel> [flags] [args]\n";
 
 pub fn run(args: &[OsString]) -> ExitCode {
     let Some(action) = args.first() else {
@@ -25,11 +25,156 @@ pub fn run(args: &[OsString]) -> ExitCode {
         "wait" => wait(&args[1..]),
         "start" => start(&args[1..]),
         "cancel" => cancel(&args[1..]),
+        "approve" => approve(&args[1..]),
+        "deny" => deny(&args[1..]),
         action => stderr(
             &format!("Unknown run action: {action}\n"),
             CoreExitCode::NoInput,
         ),
     }
+}
+
+fn approve(args: &[OsString]) -> ExitCode {
+    const USAGE: &str =
+        "Usage: symroom run approve <run_id> [--scope ...] [--ttl 30m] [--identity <name>]\n";
+    const FLAGS: &str = "Usage of run approve:\n  -identity string\n    \tAuthor identity name\n  -scope string\n    \tApproval scope (default \"all\")\n  -ttl duration\n    \tApproval TTL (default 30m0s)\n";
+    let parsed = match parse_string_flags("run approve", args, &["identity", "scope", "ttl"], FLAGS)
+    {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let Some(run_id) = parsed.positionals.first() else {
+        return stderr(USAGE, CoreExitCode::NoInput);
+    };
+    let identity_name = match resolve_identity_name(parsed.values.get("identity")) {
+        Ok(name) => name,
+        Err(code) => return code,
+    };
+    let signer = match identity::load(&identity_name) {
+        Ok(identity) => identity,
+        Err(error) => return identity_error(&identity_name, error),
+    };
+    let ttl = match parsed.values.get("ttl") {
+        Some(value) => match parse_signed_duration(value) {
+            Some(ttl) => ttl,
+            None => {
+                return stderr(
+                    &format!("invalid value \"{value}\" for flag -ttl: parse error\n{FLAGS}"),
+                    CoreExitCode::NoInput,
+                );
+            }
+        },
+        None => time::Duration::minutes(30),
+    };
+    let ttl = if ttl.is_zero() {
+        configured_approval_ttl().unwrap_or_else(|| time::Duration::minutes(30))
+    } else {
+        ttl
+    };
+    match approval::approve(
+        &room_dir(),
+        run_id,
+        parsed.values.get("scope").map_or("all", String::as_str),
+        ttl,
+        &signer,
+    ) {
+        Ok(event) => stdout(format!("{}\n", event.id), CoreExitCode::Ok),
+        Err(approval::ApprovalError::AgentForbidden) => stderr(
+            "Error: agent identity is forbidden from approving runs\n",
+            CoreExitCode::NoInput,
+        ),
+        Err(error) => stderr(
+            &format!("Error approving run: {error}\n"),
+            CoreExitCode::Generic,
+        ),
+    }
+}
+
+fn deny(args: &[OsString]) -> ExitCode {
+    const USAGE: &str = "Usage: symroom run deny <run_id> --reason ... [--identity <name>]\n";
+    let parsed = match parse_string_flags(
+        "run deny",
+        args,
+        &["identity", "reason"],
+        "Usage of run deny:\n  -identity string\n    \tAuthor identity name\n  -reason string\n    \tReason for denial\n",
+    ) {
+        Ok(parsed) => parsed,
+        Err(code) => return code,
+    };
+    let Some(run_id) = parsed.positionals.first() else {
+        return stderr(USAGE, CoreExitCode::NoInput);
+    };
+    let Some(reason) = parsed
+        .values
+        .get("reason")
+        .filter(|reason| !reason.is_empty())
+    else {
+        return stderr(USAGE, CoreExitCode::NoInput);
+    };
+    let identity_name = match resolve_identity_name(parsed.values.get("identity")) {
+        Ok(name) => name,
+        Err(code) => return code,
+    };
+    let signer = match identity::load(&identity_name) {
+        Ok(identity) => identity,
+        Err(error) => return identity_error(&identity_name, error),
+    };
+    match approval::deny(&room_dir(), run_id, reason, &signer) {
+        Ok(event) => stdout(format!("{}\n", event.id), CoreExitCode::Ok),
+        Err(error) => stderr(
+            &format!("Error denying run: {error}\n"),
+            CoreExitCode::Generic,
+        ),
+    }
+}
+
+fn parse_signed_duration(input: &str) -> Option<time::Duration> {
+    let negative = input.starts_with('-');
+    let positive = if negative {
+        &input[1..]
+    } else {
+        input.strip_prefix('+').unwrap_or(input)
+    };
+    let duration = parse_go_duration(positive)?;
+    let nanos = i128::try_from(duration.as_nanos()).ok()?;
+    let nanos = if negative {
+        nanos.checked_neg()?
+    } else {
+        nanos
+    };
+    Some(time::Duration::nanoseconds(i64::try_from(nanos).ok()?))
+}
+
+fn configured_approval_ttl() -> Option<time::Duration> {
+    let mut value = None;
+    let home = std::env::var_os("HOME").map(PathBuf::from)?;
+    for path in [
+        home.join(".config/symroom/config.toml"),
+        std::env::current_dir().ok()?.join(".symroom.toml"),
+    ] {
+        let Ok(contents) = std::fs::read_to_string(path) else {
+            continue;
+        };
+        let Ok(config) = toml::from_str::<toml::Value>(&contents) else {
+            continue;
+        };
+        if let Some(ttl) = config
+            .get("approval")
+            .and_then(|approval| approval.get("default_ttl"))
+            .and_then(toml::Value::as_str)
+        {
+            value = Some(ttl.to_owned());
+        }
+    }
+    if let Ok(ttl) = std::env::var("SYMROOM_APPROVAL_DEFAULT_TTL")
+        && !ttl.is_empty()
+    {
+        value = Some(ttl);
+    }
+    value
+        .as_deref()
+        .and_then(parse_signed_duration)
+        .filter(|duration| !duration.is_zero())
 }
 
 fn request(args: &[OsString]) -> ExitCode {

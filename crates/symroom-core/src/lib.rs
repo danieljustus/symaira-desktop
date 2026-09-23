@@ -15,6 +15,7 @@
 //! than a signed-bytes contract; add them when ROOMCLI-002 lands and drive them
 //! with a live differential instead of vectors.
 
+pub mod approval;
 pub mod artifact;
 pub mod desk_watch;
 pub mod event;

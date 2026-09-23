@@ -52,7 +52,7 @@ fn go_outer_surrogate_event_boundary() {
     ))
     .expect("Go-owned outer surrogate fixture parses");
     assert_eq!(fixture.schema_version, 1);
-    assert_eq!(fixture.cases.len(), 37, "nonempty, complete oracle corpus");
+    assert_eq!(fixture.cases.len(), 45, "nonempty, complete oracle corpus");
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     assert_eq!(fixture.source_hashes.len(), 5);
     for source in [
@@ -122,11 +122,11 @@ fn go_outer_surrogate_event_boundary() {
             invalid_signature += 1;
         }
     }
-    assert_eq!((verified, invalid_signature, rejected), (24, 6, 7));
+    assert_eq!((verified, invalid_signature, rejected), (30, 6, 9));
     println!(
-        "37 Go vectors: {verified} verified, {invalid_signature} invalid signatures, {rejected} rejected inputs"
+        "45 Go vectors: {verified} verified, {invalid_signature} invalid signatures, {rejected} rejected inputs"
     );
-    assert_eq!(fixture.chain_cases.len(), 2, "Go journal case inventory");
+    assert_eq!(fixture.chain_cases.len(), 4, "Go journal case inventory");
     for case in fixture.chain_cases {
         let stamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)

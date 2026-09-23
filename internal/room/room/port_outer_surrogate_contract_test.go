@@ -80,6 +80,14 @@ func TestPortRoomOuterSurrogateContract(t *testing.T) {
 		shape{"wrong-type-last", `"id":"\ud800","id":false`, false, true},
 		shape{"malformed-body", `"id":"\ud800","body":{"raw":"\ud80x"}`, false, true},
 		shape{"numeric-surrogate", `"seq":"\ud800"`, false, true},
+		shape{"unknown-key-high", `"\ud800":0`, true, false},
+		shape{"unknown-key-low", `"\udc00":0`, true, false},
+		shape{"unknown-key-pair", `"\ud83d\ude00":0`, true, false},
+		shape{"unknown-key-literal", `"\\ud800":0`, true, false},
+		shape{"unknown-key-quote", `"a\"\ud800":0`, true, false},
+		shape{"recognized-key-escape", `"i\u0064":"last"`, true, false},
+		shape{"unknown-key-malformed-hex", `"\ud80x":0`, false, true},
+		shape{"unknown-key-malformed-pair", `"\ud800\udc0x":0`, false, true},
 	)
 	var vectors []outerSurrogateVector
 	for _, shape := range shapes {
@@ -122,8 +130,8 @@ func TestPortRoomOuterSurrogateContract(t *testing.T) {
 		t.Fatal("body mutation did not invalidate the Go signature")
 	}
 	vectors = append(vectors, negative)
-	if len(vectors) != 37 {
-		t.Fatalf("expected 37 executed vectors, got %d", len(vectors))
+	if len(vectors) != 45 {
+		t.Fatalf("expected 45 executed vectors, got %d", len(vectors))
 	}
 	zeroHash := "sha256:" + strings.Repeat("0", 64)
 	firstUnsigned := strings.Replace(prefix, `"prev":"p"`, `"prev":"`+zeroHash+`"`, 1) + `"id":"\ud800"}` + "\n"
@@ -157,6 +165,28 @@ func TestPortRoomOuterSurrogateContract(t *testing.T) {
 		{ID: "raw-surrogate-chain", Author: signer.MemberID, Content: firstLine + string(secondLine)},
 		{ID: "normalized-raw-line-breaks-chain", Author: signer.MemberID, Content: changedFirst + string(secondLine)},
 	}
+	// Unknown top-level keys are decoded by Go but not part of signed bytes.
+	// Their original spelling still participates in the journal's raw-line hash.
+	firstUnknown := strings.Replace(firstLine, `"id":"\ud800"`, `"id":"\ud800","\udc00":0`, 1)
+	if firstUnknown == firstLine {
+		t.Fatal("unknown-key chain case did not change the first line")
+	}
+	second.Prev = journal.ComputeLineHash([]byte(strings.TrimSuffix(firstUnknown, "\n")))
+	if err := second.Sign(signer); err != nil {
+		t.Fatal(err)
+	}
+	secondUnknown, err := second.MarshalJSONLine()
+	if err != nil {
+		t.Fatal(err)
+	}
+	changedUnknown := strings.Replace(firstUnknown, `"\udc00":0`, `"\ufffd":0`, 1)
+	if changedUnknown == firstUnknown {
+		t.Fatal("unknown-key chain mutation did not alter the original line")
+	}
+	chainCases = append(chainCases,
+		outerSurrogateChainVector{ID: "raw-unknown-key-chain", Author: signer.MemberID, Content: firstUnknown + string(secondUnknown)},
+		outerSurrogateChainVector{ID: "normalized-unknown-key-breaks-chain", Author: signer.MemberID, Content: changedUnknown + string(secondUnknown)},
+	)
 	for i := range chainCases {
 		item := &chainCases[i]
 		segmentDir := t.TempDir()
@@ -173,7 +203,8 @@ func TestPortRoomOuterSurrogateContract(t *testing.T) {
 			item.Error = err.Error()
 		}
 	}
-	if chainCases[0].Code != "ok" || chainCases[1].Code != "chain_broken" {
+	if chainCases[0].Code != "ok" || chainCases[1].Code != "chain_broken" ||
+		chainCases[2].Code != "ok" || chainCases[3].Code != "chain_broken" {
 		t.Fatalf("Go journal did not distinguish raw and normalized lines: %+v", chainCases)
 	}
 	fixture := struct {

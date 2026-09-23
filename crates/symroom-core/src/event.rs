@@ -103,7 +103,12 @@ impl<'de> serde::Deserialize<'de> for GoEvent {
 
             fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
                 let mut event = empty_go_event();
-                while let Some(key) = map.next_key::<String>()? {
+                while let Some(raw_key) = map.next_key::<Box<RawValue>>()? {
+                    // Go replaces lone surrogates in field names too. Decode
+                    // only this key token; signed body and journal bytes stay raw.
+                    let decoded_key = replace_unpaired_surrogates(raw_key.get());
+                    let key: String =
+                        serde_json::from_str(&decoded_key).map_err(M::Error::custom)?;
                     // Go encoding/json uses Unicode simple fold. Long s and
                     // Kelvin sign also fold into the ASCII field names.
                     let folded: String = key

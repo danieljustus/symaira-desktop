@@ -71,6 +71,8 @@ func makeRunProjectionFixture(t *testing.T) runProjectionFixtureData {
 		projectionEvent("unknown", "run.retried", `{"run_id":"run-a"}`, "worker-a", "2026-01-02T07:02:00.000Z"),
 		projectionEvent("unmatched", event.KindRunStarted, `{"run_id":"missing-run"}`, "worker-x", "2026-01-02T07:03:00.000Z"),
 		projectionEvent("bad-request", event.KindRunRequested, `[]`, "author", "2026-01-02T07:04:00.000Z"),
+		projectionEvent("key-order-upper-lower", event.KindRunRequested, `{"RUN_ID":"ignored-upper","run_id":"run-key-order-one","title":"upper then lower"}`, "author", "2026-01-02T08:00:00.000Z"),
+		projectionEvent("key-order-lower-upper", event.KindRunRequested, `{"run_id":"ignored-lower","RUN_ID":"run-key-order-two","title":"lower then upper"}`, "author", "2026-01-02T08:01:00.000Z"),
 	}
 	projected := ProjectRuns(events)
 	ids := make([]string, 0, len(projected))

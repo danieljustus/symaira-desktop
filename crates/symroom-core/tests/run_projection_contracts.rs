@@ -31,8 +31,8 @@ fn go_run_projection_records_match_byte_for_byte() {
         fixture.oracle_revision,
         "a80da93e3ec02801c73aa5b2318dc06de3efd3fa"
     );
-    assert_eq!(fixture.records.len(), 4, "nonzero projected records");
-    assert_eq!(fixture.events.len(), 16, "fixture exercises all edge paths");
+    assert_eq!(fixture.records.len(), 6, "nonzero projected records");
+    assert_eq!(fixture.events.len(), 18, "fixture exercises all edge paths");
     for source in ["internal/room/run/run.go", "internal/room/event/event.go"] {
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
@@ -72,26 +72,40 @@ fn go_run_projection_records_match_byte_for_byte() {
         "unknown",
         "unmatched",
         "bad-request",
+        "key-order-upper-lower",
+        "key-order-lower-upper",
     ] {
         assert!(
             events.iter().any(|event| event.id == id),
             "fixture is missing edge case {id}"
         );
     }
-    let projected: BTreeMap<String, Run> = runs::project_runs(&events);
-    assert_eq!(
-        projected.len(),
-        fixture.records.len(),
-        "projected run count"
-    );
+    assert!(matches_go_records(&events, &fixture.records));
+
+    // Negative control: changing the final, case-insensitive run_id value must
+    // make the same byte comparator reject the projection.
+    let mut changed = events.clone();
+    let event = changed
+        .iter_mut()
+        .find(|event| event.id == "key-order-upper-lower")
+        .expect("negative-control event");
+    event.body = RawValue::from_string(
+        r#"{"RUN_ID":"ignored-upper","run_id":"negative-control-id","title":"upper then lower"}"#
+            .into(),
+    )
+    .expect("valid negative-control body");
+    assert!(!matches_go_records(&changed, &fixture.records));
+}
+
+fn matches_go_records(events: &[Event], records: &[String]) -> bool {
+    let projected: BTreeMap<String, Run> = runs::project_runs(events);
+    if projected.len() != records.len() {
+        return false;
+    }
     let actual = projected
         .values()
         .map(|run| serde_json::to_vec(run).expect("run serializes"))
         .collect::<Vec<_>>();
-    let expected = fixture
-        .records
-        .iter()
-        .map(String::as_bytes)
-        .collect::<Vec<_>>();
-    assert_eq!(actual, expected, "serialized Go/Rust projection records");
+    let expected = records.iter().map(String::as_bytes).collect::<Vec<_>>();
+    actual.iter().map(Vec::as_slice).eq(expected)
 }

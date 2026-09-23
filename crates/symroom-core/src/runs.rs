@@ -170,7 +170,8 @@ fn body_object(raw: &str) -> Option<Map<String, Value>> {
 fn string_field(map: &Map<String, Value>, name: &str) -> Option<String> {
     match map
         .iter()
-        .find(|(key, _)| key.eq_ignore_ascii_case(name))
+        .filter(|(key, _)| key.eq_ignore_ascii_case(name))
+        .last()
         .map(|(_, value)| value)
     {
         None | Some(Value::Null) => Some(String::new()),
@@ -182,7 +183,8 @@ fn string_field(map: &Map<String, Value>, name: &str) -> Option<String> {
 fn string_array_field(map: &Map<String, Value>, name: &str) -> Option<Option<Vec<String>>> {
     match map
         .iter()
-        .find(|(key, _)| key.eq_ignore_ascii_case(name))
+        .filter(|(key, _)| key.eq_ignore_ascii_case(name))
+        .last()
         .map(|(_, value)| value)
     {
         None | Some(Value::Null) => Some(None),

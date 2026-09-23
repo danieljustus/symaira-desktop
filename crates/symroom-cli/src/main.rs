@@ -11,6 +11,7 @@ use symdesk_core::{render_version_json, render_version_text};
 
 mod identity_cli;
 mod mcp;
+mod member_cli;
 mod note_cli;
 mod run_cli;
 
@@ -38,6 +39,9 @@ fn main() -> ExitCode {
     }
     if command == "identity" {
         return identity_cli::run(&args[2..]);
+    }
+    if command == "member" {
+        return member_cli::run(&args[2..]);
     }
     if command == "note" {
         return note_cli::run(&args[2..]);

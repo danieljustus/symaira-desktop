@@ -1,0 +1,569 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "b96219bcd39ce85e017626feade557979aefd7c6",
+  "source_hashes": {
+    "cmd/symroom/cmd_member.go": "8a747400b58bd3d06f61adef3da731cc848db225bdce935aacba9318c744c8de",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/members/members.go": "34821f2480ec054e3002d385d9c8c707cb1087eda8cf0195c7207a0d71a0568e",
+    "internal/room/room/members.go": "f9123f6c6989c9d41a0f24d44c822d8a89d8d53ff75bb0957197f91e13cb0e05"
+  },
+  "owner_key": "c491591d4827f34aa9319ec13266d6b7d4ca99cf5dd162edfbdeb701770dc86c",
+  "stranger_key": "e051c88ecf7942b361829bde7786f971a1b07bc58b6609a874638d4f4bd776f9",
+  "add_public_key": "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+  "room_toml": "schema_version = 1\nid = \"rm_member_fixture\"\ncreated = \"2026-09-23T10:00:00.000Z\"\n",
+  "initial_files": [
+    {
+      "name": "mem_e9d73120efe8a89f.jsonl",
+      "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+    }
+  ],
+  "cases": [
+    {
+      "name": "member-usage",
+      "args": [
+        "member"
+      ],
+      "actor": "owner",
+      "exit_code": 0,
+      "stdout": "Usage: symroom member \u003cadd|list|remove|role\u003e [flags] [args]\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "member-help",
+      "args": [
+        "member",
+        "--help"
+      ],
+      "actor": "owner",
+      "exit_code": 0,
+      "stdout": "Usage: symroom member \u003cadd|list|remove|role\u003e [flags] [args]\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "member-unknown-show",
+      "args": [
+        "member",
+        "show",
+        "bob"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown member action: show\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-flag-form",
+      "args": [
+        "member",
+        "add",
+        "--identity",
+        "owner",
+        "--pubkey",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "--name",
+        "added",
+        "--role",
+        "agent",
+        "--kind",
+        "agent"
+      ],
+      "actor": "owner",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "Member added: added (mem_6cbd02663ddbea84, role: agent, kind: agent, event: \u003cevent-id\u003e)\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_6cbd02663ddbea84\",\"kind\":\"agent\",\"name\":\"added\",\"public_key\":\"e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039\",\"role\":\"agent\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"member.added\",\"lamport\":3,\"prev\":\"sha256:8dc14fda32938b31cc1562f6829c6e2bd3566e609f48b9b0ec4257a955971f8b\",\"room\":\"rm_member_fixture\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-positional-form",
+      "args": [
+        "member",
+        "add",
+        "--identity=owner",
+        "positional",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039"
+      ],
+      "actor": "owner",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "Member added: positional (mem_6cbd02663ddbea84, role: member, kind: human, event: \u003cevent-id\u003e)\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_6cbd02663ddbea84\",\"kind\":\"human\",\"name\":\"positional\",\"public_key\":\"e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039\",\"role\":\"member\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"member.added\",\"lamport\":3,\"prev\":\"sha256:8dc14fda32938b31cc1562f6829c6e2bd3566e609f48b9b0ec4257a955971f8b\",\"room\":\"rm_member_fixture\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-positional-overrides-flags",
+      "args": [
+        "member",
+        "add",
+        "--identity",
+        "owner",
+        "--name",
+        "flag-name",
+        "--pubkey",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "positional",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "--role",
+        "agent"
+      ],
+      "actor": "owner",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "Member added: positional (mem_6cbd02663ddbea84, role: member, kind: human, event: \u003cevent-id\u003e)\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_6cbd02663ddbea84\",\"kind\":\"human\",\"name\":\"positional\",\"public_key\":\"e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039\",\"role\":\"member\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"member.added\",\"lamport\":3,\"prev\":\"sha256:8dc14fda32938b31cc1562f6829c6e2bd3566e609f48b9b0ec4257a955971f8b\",\"room\":\"rm_member_fixture\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-usage",
+      "args": [
+        "member",
+        "add"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom member add [--identity \u003cname\u003e] \u003cname\u003e \u003cpubkey\u003e [--role \u003crole\u003e] [--kind \u003ckind\u003e]\n       symroom member add --pubkey \u003chex\u003e --name \u003cname\u003e [--role \u003crole\u003e] [--kind \u003ckind\u003e] [--identity \u003cname\u003e]\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-invalid-hex",
+      "args": [
+        "member",
+        "add",
+        "--identity",
+        "owner",
+        "--pubkey",
+        "zz",
+        "--name",
+        "bad"
+      ],
+      "actor": "owner",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error: invalid member public key hex: encoding/hex: invalid byte: U+007A 'z'\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-invalid-key-length",
+      "args": [
+        "member",
+        "add",
+        "--identity",
+        "owner",
+        "--pubkey",
+        "abcd",
+        "--name",
+        "bad"
+      ],
+      "actor": "owner",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error: invalid member public key: expected 32 bytes, got 2\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-invalid-role",
+      "args": [
+        "member",
+        "add",
+        "--identity",
+        "owner",
+        "--pubkey",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "--name",
+        "bad",
+        "--role",
+        "admin"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: invalid member role (valid: owner|member|agent|observer)\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-invalid-kind",
+      "args": [
+        "member",
+        "add",
+        "--identity",
+        "owner",
+        "--pubkey",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "--name",
+        "bad",
+        "--kind",
+        "cyborg"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: invalid member kind (valid: human|agent)\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-unauthorized",
+      "args": [
+        "member",
+        "add",
+        "--identity",
+        "stranger",
+        "--pubkey",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "--name",
+        "bad"
+      ],
+      "actor": "stranger",
+      "exit_code": 4,
+      "stdout": "",
+      "stderr": "Error: only room owners can perform member management\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-help",
+      "args": [
+        "member",
+        "add",
+        "--help"
+      ],
+      "actor": "owner",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of member add:\n  -identity string\n    \tCaller identity name (must be the room owner)\n  -kind string\n    \tMember kind (human|agent) (default \"human\")\n  -name string\n    \tMember display name\n  -pubkey string\n    \tMember public key (hex)\n  -role string\n    \tMember role (owner|member|agent|observer) (default \"member\")\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "list-human",
+      "args": [
+        "member",
+        "list"
+      ],
+      "actor": "owner",
+      "exit_code": 0,
+      "stdout": "ID                    NAME            ROLE    KIND\nmem_9b550c4bbfcd41e7  bob             member  human\nmem_e9d73120efe8a89f  Member Fixture  owner   human\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "list-json",
+      "args": [
+        "member",
+        "list",
+        "--json=TRUE"
+      ],
+      "actor": "owner",
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"id\": \"mem_9b550c4bbfcd41e7\",\n    \"name\": \"bob\",\n    \"role\": \"member\",\n    \"kind\": \"human\"\n  },\n  {\n    \"id\": \"mem_e9d73120efe8a89f\",\n    \"name\": \"Member Fixture\",\n    \"role\": \"owner\",\n    \"kind\": \"human\"\n  }\n]\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "list-empty",
+      "args": [
+        "member",
+        "list",
+        "--json"
+      ],
+      "actor": "owner",
+      "empty_room": true,
+      "exit_code": 0,
+      "stdout": "[]\n",
+      "stderr": "",
+      "final_files": []
+    },
+    {
+      "name": "list-invalid-bool",
+      "args": [
+        "member",
+        "list",
+        "--json=maybe"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "invalid boolean value \"maybe\" for -json: parse error\nUsage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "list-help",
+      "args": [
+        "member",
+        "list",
+        "--help"
+      ],
+      "actor": "owner",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of member list:\n  -json\n    \tOutput members as JSON\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "remove-success",
+      "args": [
+        "member",
+        "remove",
+        "--identity",
+        "owner",
+        "mem_9b550c4bbfcd41e7"
+      ],
+      "actor": "owner",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "Member removed: mem_9b550c4bbfcd41e7 (event: \u003cevent-id\u003e)\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"member.removed\",\"lamport\":3,\"prev\":\"sha256:8dc14fda32938b31cc1562f6829c6e2bd3566e609f48b9b0ec4257a955971f8b\",\"room\":\"rm_member_fixture\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "remove-usage",
+      "args": [
+        "member",
+        "remove"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom member remove [--identity \u003cname\u003e] \u003cmember_id\u003e\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "remove-missing",
+      "args": [
+        "member",
+        "remove",
+        "--identity",
+        "owner",
+        "mem_missing"
+      ],
+      "actor": "owner",
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error: member not found\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "remove-unauthorized",
+      "args": [
+        "member",
+        "remove",
+        "--identity",
+        "stranger",
+        "mem_9b550c4bbfcd41e7"
+      ],
+      "actor": "stranger",
+      "exit_code": 4,
+      "stdout": "",
+      "stderr": "Error: only room owners can perform member management\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "role-success",
+      "args": [
+        "member",
+        "role",
+        "--identity",
+        "owner",
+        "mem_9b550c4bbfcd41e7",
+        "observer"
+      ],
+      "actor": "owner",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "Updated role for mem_9b550c4bbfcd41e7 to observer (event: \u003cevent-id\u003e)\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"role\":\"observer\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"member.role_changed\",\"lamport\":3,\"prev\":\"sha256:8dc14fda32938b31cc1562f6829c6e2bd3566e609f48b9b0ec4257a955971f8b\",\"room\":\"rm_member_fixture\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "role-usage",
+      "args": [
+        "member",
+        "role"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom member role [--identity \u003cname\u003e] \u003cmember_id\u003e \u003crole\u003e\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "role-invalid",
+      "args": [
+        "member",
+        "role",
+        "--identity",
+        "owner",
+        "mem_9b550c4bbfcd41e7",
+        "admin"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: invalid member role (valid: owner|member|agent|observer)\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "role-missing-member",
+      "args": [
+        "member",
+        "role",
+        "--identity",
+        "owner",
+        "mem_missing",
+        "member"
+      ],
+      "actor": "owner",
+      "exit_code": 5,
+      "stdout": "",
+      "stderr": "Error: member not found\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "role-unauthorized",
+      "args": [
+        "member",
+        "role",
+        "--identity",
+        "stranger",
+        "mem_9b550c4bbfcd41e7",
+        "member"
+      ],
+      "actor": "stranger",
+      "exit_code": 4,
+      "stdout": "",
+      "stderr": "Error: only room owners can perform member management\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    }
+  ]
+}

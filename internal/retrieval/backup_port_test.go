@@ -21,7 +21,6 @@ type backupPortRow struct {
 
 type backupPortFixture struct {
 	SchemaVersion   int             `json:"schema_version"`
-	GeneratedOn     string          `json:"generated_on"`
 	InputRows       []backupPortRow `json:"input_rows"`
 	ObservedRows    []backupPortRow `json:"observed_rows"`
 	WALWasNonempty  bool            `json:"wal_was_nonempty"`
@@ -35,7 +34,9 @@ type backupPortFixture struct {
 
 func TestIndexBackupPortFixture(t *testing.T) {
 	input := []backupPortRow{{ID: 1, Body: "WAL-only row"}, {ID: 2, Body: "Müller / 東京"}}
-	fixture := backupPortFixture{SchemaVersion: 1, GeneratedOn: runtime.GOOS, InputRows: input}
+	// POSIX mode expectations are observed below on Unix. Windows has no POSIX
+	// mode contract, so retain these values only to keep the shared fixture stable.
+	fixture := backupPortFixture{SchemaVersion: 1, InputRows: input, Mode: "0600", DirectoryMode: "0700"}
 	root := t.TempDir()
 	source := filepath.Join(root, "source.db")
 	db, err := sqlitekit.Open(source)

@@ -306,6 +306,10 @@ jobs:
         shell: bash
         run: make room-verify-cli-differential
 
+      - name: Run native index backup differential
+        shell: bash
+        run: make index-backup-differential
+
       - name: Run native room run projection differential
         shell: bash
         run: make room-run-projection-differential

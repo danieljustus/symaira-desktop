@@ -21,6 +21,24 @@ fn temporary_room(suffix: &str) -> PathBuf {
     room
 }
 
+fn fixture_room(suffix: &str, journal_lines: &[String]) -> PathBuf {
+    let room = temporary_room(suffix);
+    std::fs::write(
+        room.join("room.toml"),
+        "schema_version = 1\nid = \"rm_fixture\"\ncreated = \"2026-09-01T00:00:00Z\"\nroot_pubkey = \"ed25519:fixture\"\nroot_event = \"ev_fixture\"\n",
+    )
+    .expect("room config");
+    std::fs::write(room.join("known.txt"), b"artifact-content").expect("artifact file");
+    let journal = room.join("journal");
+    std::fs::create_dir_all(&journal).expect("journal directory");
+    std::fs::write(
+        journal.join("member_fixture.jsonl"),
+        format!("{}\n", journal_lines.join("\n")),
+    )
+    .expect("journal fixture");
+    room
+}
+
 #[test]
 fn go_mcp_inventory_call_and_error_frames_match() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
@@ -44,7 +62,18 @@ fn go_mcp_inventory_call_and_error_frames_match() {
         input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
         input.extend_from_slice(&body);
     }
-    let room = temporary_room("oracle");
+    let journal_lines = fixture["journal_lines"]
+        .as_array()
+        .expect("signed Go journal lines")
+        .iter()
+        .map(|line| line.as_str().expect("journal line").to_owned())
+        .collect::<Vec<_>>();
+    assert!(
+        journal_lines
+            .iter()
+            .all(|line| line.contains("\"sig\":\"ed25519:"))
+    );
+    let room = fixture_room("oracle", &journal_lines);
     let mut output = Vec::new();
     mcp::serve_io(BufReader::new(Cursor::new(input)), &mut output, &room).expect("MCP serve");
     let actual = decode_frames(&output);
@@ -92,4 +121,10 @@ fn no_approval_granting_call_is_exposed() {
     assert_eq!(response["error"]["code"], -32601);
     assert_eq!(response["error"]["message"], "Unknown tool: room_approve");
     let _ = std::fs::remove_dir_all(room);
+}
+
+#[test]
+fn mcp_cli_help_exits_successfully() {
+    let args = [std::ffi::OsString::from("--help")];
+    let _ = mcp::run_cli(&args);
 }

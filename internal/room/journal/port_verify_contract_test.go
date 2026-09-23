@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
@@ -74,6 +75,23 @@ func TestPortRoomVerifyContract(t *testing.T) {
 	unauthorized := verifyFixtureEvent(t, member, "ev_bad_member", 1, zeroHash, 3, event.KindMemberAdded, memberBody(unknown, "member", "human"))
 	forkA := verifyFixtureEvent(t, owner, "ev_fork_a", 2, rootPrev, 2, event.KindNotePosted, []byte(`{"text":"a"}`))
 	forkB := verifyFixtureEvent(t, owner, "ev_fork_b", 2, rootPrev, 3, event.KindNotePosted, []byte(`{"text":"b"}`))
+	shortBody, _ := json.Marshal(map[string]string{"name": "", "public_key": hex.EncodeToString(owner.PublicKey)})
+	shortEvent := verifyFixtureEvent(t, owner, "ev_max_token", 1, zeroHash, 1, event.KindRoomCreated, shortBody)
+	padding := 65537 - len(verifyFixtureLine(t, shortEvent))
+	if padding <= 0 {
+		t.Fatal("max-token fixture base line is too long")
+	}
+	largeBody, _ := json.Marshal(map[string]string{"name": strings.Repeat("x", padding), "public_key": hex.EncodeToString(owner.PublicKey)})
+	largeEvent := verifyFixtureEvent(t, owner, "ev_max_token", 1, zeroHash, 1, event.KindRoomCreated, largeBody)
+	largeLine := verifyFixtureLine(t, largeEvent)
+	if len(largeLine) != 65537 {
+		t.Fatalf("large journal line length %d, want 65537 including newline", len(largeLine))
+	}
+	lastAcceptedBody, _ := json.Marshal(map[string]string{"name": strings.Repeat("x", padding-1), "public_key": hex.EncodeToString(owner.PublicKey)})
+	lastAccepted := verifyFixtureLine(t, verifyFixtureEvent(t, owner, "ev_max_token", 1, zeroHash, 1, event.KindRoomCreated, lastAcceptedBody))
+	if len(lastAccepted) != 65536 {
+		t.Fatalf("last accepted line length %d, want 65536 including newline", len(lastAccepted))
+	}
 	contract.Cases = []verifyCase{
 		{Name: "empty", Files: map[string]string{}},
 		{Name: "valid", Files: map[string]string{owner.MemberID + ".jsonl": rootLine + noteLine + runLine}},
@@ -85,6 +103,8 @@ func TestPortRoomVerifyContract(t *testing.T) {
 		{Name: "unauthorized-member", Files: map[string]string{owner.MemberID + ".jsonl": rootLine + verifyFixtureLine(t, addMember), member.MemberID + ".jsonl": verifyFixtureLine(t, unauthorized)}},
 		{Name: "fork", Files: map[string]string{owner.MemberID + ".jsonl": rootLine + verifyFixtureLine(t, forkA) + verifyFixtureLine(t, forkB)}},
 		{Name: "malformed", Files: map[string]string{owner.MemberID + ".jsonl": rootLine + "{\"v\":\n"}},
+		{Name: "max-token-eof", Files: map[string]string{owner.MemberID + ".jsonl": largeLine[:len(largeLine)-1]}},
+		{Name: "last-accepted-token-eof", Files: map[string]string{owner.MemberID + ".jsonl": lastAccepted[:len(lastAccepted)-1]}},
 	}
 	for i := range contract.Cases {
 		row := &contract.Cases[i]

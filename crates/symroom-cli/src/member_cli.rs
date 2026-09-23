@@ -282,18 +282,93 @@ fn parse_bool(value: &str) -> Option<bool> {
 }
 
 fn resolve_identity(name: &str) -> Result<identity::Identity, ExitCode> {
-    if name.is_empty() {
-        return Err(stderr(
-            "Error: --identity is required when default_identity is not configured\n",
-            CoreExitCode::NoInput,
-        ));
-    }
-    identity::load(name).map_err(|error| {
+    let name = if name.is_empty() {
+        match default_identity() {
+            Ok(name) if !name.is_empty() => name,
+            Ok(_) => {
+                return Err(stderr(
+                    "Error: --identity is required when default_identity is not configured\n",
+                    CoreExitCode::NoInput,
+                ));
+            }
+            Err(error) => {
+                return Err(stderr(
+                    &format!("Error loading configuration: {error}\n"),
+                    CoreExitCode::NoInput,
+                ));
+            }
+        }
+    } else {
+        name.to_owned()
+    };
+    identity::load(&name).map_err(|error| {
         stderr(
             &format!("Error loading identity {name}: {error}\n"),
             CoreExitCode::NotFound,
         )
     })
+}
+
+fn default_identity() -> Result<String, String> {
+    let home = home_dir()?;
+    let global_path = home.join(".config/symroom/config.toml");
+    let mut name = merge_identity_config(&global_path, "global config error", String::new())?;
+    if let Ok(cwd) = std::env::current_dir() {
+        name = merge_identity_config(&cwd.join(".symroom.toml"), "project config error", name)?;
+    }
+    if let Ok(value) = std::env::var("SYMROOM_DEFAULT_IDENTITY")
+        && !value.is_empty()
+    {
+        name = value;
+    }
+    Ok(name)
+}
+
+fn home_dir() -> Result<PathBuf, String> {
+    #[cfg(windows)]
+    let home = std::env::var_os("USERPROFILE");
+    #[cfg(not(windows))]
+    let home = std::env::var_os("HOME");
+    home.filter(|path| !path.is_empty())
+        .map(PathBuf::from)
+        .ok_or_else(|| "cannot determine home directory".to_owned())
+}
+
+fn merge_identity_config(
+    path: &std::path::Path,
+    source: &str,
+    current: String,
+) -> Result<String, String> {
+    let contents = match std::fs::read_to_string(path) {
+        Ok(contents) => contents,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(current),
+        Err(error) => {
+            return Err(format!(
+                "{source}: failed to parse {}: {error}",
+                path.display()
+            ));
+        }
+    };
+    let config: toml::Value = toml::from_str(&contents)
+        .map_err(|error| format!("{source}: failed to parse {}: {error}", path.display()))?;
+    match config.get("default_identity") {
+        None => Ok(current),
+        Some(toml::Value::String(value)) if value.is_empty() => Ok(current),
+        Some(toml::Value::String(value)) => Ok(value.clone()),
+        Some(value) => Err(format!(
+            "{source}: failed to apply {}: field default_identity: expected string, got {}",
+            path.display(),
+            match value {
+                toml::Value::Integer(_) => "int64",
+                toml::Value::Float(_) => "float64",
+                toml::Value::Boolean(_) => "bool",
+                toml::Value::Datetime(_) => "time.Time",
+                toml::Value::Array(_) => "[]interface {}",
+                toml::Value::Table(_) => "map[string]interface {}",
+                toml::Value::String(_) => unreachable!(),
+            }
+        )),
+    }
 }
 
 fn member_error(error: members::MemberMutationError) -> ExitCode {

@@ -26,6 +26,7 @@ type memberCLIContract struct {
 	SourceHashes   map[string]string `json:"source_hashes"`
 	OwnerKey       string            `json:"owner_key"`
 	StrangerKey    string            `json:"stranger_key"`
+	IdentityFiles  []memberCLIFile   `json:"identity_files"`
 	AddPublicKey   string            `json:"add_public_key"`
 	RoomTOML       string            `json:"room_toml"`
 	InitialFiles   []memberCLIFile   `json:"initial_files"`
@@ -38,23 +39,31 @@ type memberCLIFile struct {
 }
 
 type memberCLICase struct {
-	Name         string          `json:"name"`
-	Args         []string        `json:"args"`
-	Actor        string          `json:"actor"`
-	EmptyRoom    bool            `json:"empty_room,omitempty"`
-	DynamicEvent bool            `json:"dynamic_event,omitempty"`
-	ExitCode     int             `json:"exit_code"`
-	Stdout       string          `json:"stdout"`
-	Stderr       string          `json:"stderr"`
-	FinalFiles   []memberCLIFile `json:"final_files"`
+	Name               string          `json:"name"`
+	Args               []string        `json:"args"`
+	Actor              string          `json:"actor"`
+	EmptyRoom          bool            `json:"empty_room,omitempty"`
+	DynamicEvent       bool            `json:"dynamic_event,omitempty"`
+	IdentityFile       bool            `json:"identity_file,omitempty"`
+	GlobalConfig       string          `json:"global_config,omitempty"`
+	ProjectConfig      string          `json:"project_config,omitempty"`
+	DefaultIdentityEnv string          `json:"default_identity_env,omitempty"`
+	ExitCode           int             `json:"exit_code"`
+	Stdout             string          `json:"stdout"`
+	Stderr             string          `json:"stderr"`
+	FinalFiles         []memberCLIFile `json:"final_files"`
 }
 
 type memberCLIVector struct {
-	name         string
-	args         []string
-	actor        string
-	emptyRoom    bool
-	dynamicEvent bool
+	name               string
+	args               []string
+	actor              string
+	emptyRoom          bool
+	dynamicEvent       bool
+	identityFile       bool
+	globalConfig       string
+	projectConfig      string
+	defaultIdentityEnv string
 }
 
 // TestPortMemberCLIContract records the shipped Go process result and journal
@@ -104,11 +113,25 @@ func makeMemberCLIContract(t *testing.T, root string) (memberCLIContract, error)
 		Name: "owner", MemberID: identity.ComputeMemberID(ownerPrivate.Public().(ed25519.PublicKey)),
 		PublicKey: ownerPrivate.Public().(ed25519.PublicKey), PrivateKey: ownerPrivate,
 	}
+	strangerPrivate := ed25519.NewKeyFromSeed(strangerSeed[:])
+	stranger := &identity.Identity{
+		Name: "stranger", MemberID: identity.ComputeMemberID(strangerPrivate.Public().(ed25519.PublicKey)),
+		PublicKey: strangerPrivate.Public().(ed25519.PublicKey), PrivateKey: strangerPrivate,
+	}
+	ownerIdentityFile, err := memberCLIIdentityFile(owner)
+	if err != nil {
+		return memberCLIContract{}, err
+	}
+	strangerIdentityFile, err := memberCLIIdentityFile(stranger)
+	if err != nil {
+		return memberCLIContract{}, err
+	}
 	fixture := memberCLIContract{
 		SchemaVersion:  1,
 		OracleRevision: "b96219bcd39ce85e017626feade557979aefd7c6",
 		OwnerKey:       hex.EncodeToString(ownerSeed[:]),
 		StrangerKey:    hex.EncodeToString(strangerSeed[:]),
+		IdentityFiles:  []memberCLIFile{{Name: "owner.json", Content: ownerIdentityFile}, {Name: "stranger.json", Content: strangerIdentityFile}},
 		AddPublicKey:   hex.EncodeToString(addPrivate.Public().(ed25519.PublicKey)),
 		RoomTOML:       "schema_version = 1\nid = \"rm_member_fixture\"\ncreated = \"2026-09-23T10:00:00.000Z\"\n",
 		SourceHashes: map[string]string{
@@ -116,6 +139,7 @@ func makeMemberCLIContract(t *testing.T, root string) (memberCLIContract, error)
 			"cmd/symroom/cmd_member.go":        memberCLIFileHash(t, root, "cmd/symroom/cmd_member.go"),
 			"internal/room/room/members.go":    memberCLIFileHash(t, root, "internal/room/room/members.go"),
 			"internal/room/members/members.go": memberCLIFileHash(t, root, "internal/room/members/members.go"),
+			"internal/room/config/config.go":   memberCLIFileHash(t, root, "internal/room/config/config.go"),
 		},
 	}
 	fixture.InitialFiles = makeMemberJournal(t, owner, bobPrivate.Public().(ed25519.PublicKey))
@@ -132,6 +156,11 @@ func makeMemberCLIContract(t *testing.T, root string) (memberCLIContract, error)
 		{name: "add-flag-form", args: []string{"member", "add", "--identity", "owner", "--pubkey", addKey, "--name", "added", "--role", "agent", "--kind", "agent"}, actor: "owner", dynamicEvent: true},
 		{name: "add-positional-form", args: []string{"member", "add", "--identity=owner", "positional", addKey}, actor: "owner", dynamicEvent: true},
 		{name: "add-positional-overrides-flags", args: []string{"member", "add", "--identity", "owner", "--name", "flag-name", "--pubkey", addKey, "positional", addKey, "--role", "agent"}, actor: "owner", dynamicEvent: true},
+		{name: "add-default-identity-env", args: []string{"member", "add", "--pubkey", addKey, "--name", "default-env"}, actor: "owner", dynamicEvent: true, identityFile: true, defaultIdentityEnv: "owner"},
+		{name: "add-default-identity-toml", args: []string{"member", "add", "--pubkey", addKey, "--name", "default-toml"}, actor: "owner", dynamicEvent: true, identityFile: true, globalConfig: "default_identity = \"owner\"\n"},
+		{name: "add-default-identity-project-over-global", args: []string{"member", "add", "--pubkey", addKey, "--name", "project-default"}, actor: "owner", dynamicEvent: true, identityFile: true, globalConfig: "default_identity = \"stranger\"\n", projectConfig: "default_identity = \"owner\"\n"},
+		{name: "add-default-identity-env-over-toml", args: []string{"member", "add", "--pubkey", addKey, "--name", "env-overrides"}, actor: "owner", dynamicEvent: true, identityFile: true, globalConfig: "default_identity = \"stranger\"\n", defaultIdentityEnv: "owner"},
+		{name: "add-default-identity-missing", args: []string{"member", "add", "--pubkey", addKey, "--name", "no-default"}, actor: "owner"},
 		{name: "add-usage", args: []string{"member", "add"}, actor: "owner"},
 		{name: "add-invalid-hex", args: []string{"member", "add", "--identity", "owner", "--pubkey", "zz", "--name", "bad"}, actor: "owner"},
 		{name: "add-invalid-key-length", args: []string{"member", "add", "--identity", "owner", "--pubkey", "abcd", "--name", "bad"}, actor: "owner"},
@@ -181,6 +210,31 @@ func makeMemberCLIContract(t *testing.T, root string) (memberCLIContract, error)
 				return memberCLIContract{}, err
 			}
 		}
+		if vector.globalConfig != "" {
+			configDir := filepath.Join(home, ".config", "symroom")
+			if err := os.MkdirAll(configDir, 0o700); err != nil {
+				return memberCLIContract{}, err
+			}
+			if err := os.WriteFile(filepath.Join(configDir, "config.toml"), []byte(vector.globalConfig), 0o600); err != nil {
+				return memberCLIContract{}, err
+			}
+		}
+		if vector.projectConfig != "" {
+			if err := os.WriteFile(filepath.Join(roomDir, ".symroom.toml"), []byte(vector.projectConfig), 0o600); err != nil {
+				return memberCLIContract{}, err
+			}
+		}
+		if vector.identityFile {
+			identityDir := filepath.Join(dataHome, "symroom", "identities")
+			if err := os.MkdirAll(identityDir, 0o700); err != nil {
+				return memberCLIContract{}, err
+			}
+			for _, file := range fixture.IdentityFiles {
+				if err := os.WriteFile(filepath.Join(identityDir, file.Name), []byte(file.Content), 0o600); err != nil {
+					return memberCLIContract{}, err
+				}
+			}
+		}
 		key := fixture.OwnerKey
 		if vector.actor == "stranger" {
 			key = fixture.StrangerKey
@@ -188,9 +242,14 @@ func makeMemberCLIContract(t *testing.T, root string) (memberCLIContract, error)
 		cmd := exec.Command(goBinary, vector.args...)
 		cmd.Dir = roomDir
 		cmd.Env = []string{
-			"HOME=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tmp,
-			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + roomDir,
-			"SYMROOM_IDENTITY_KEY=" + key,
+			"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tmp,
+			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + roomDir, "PATH=" + tmp,
+		}
+		if !vector.identityFile {
+			cmd.Env = append(cmd.Env, "SYMROOM_IDENTITY_KEY="+key)
+		}
+		if vector.defaultIdentityEnv != "" {
+			cmd.Env = append(cmd.Env, "SYMROOM_DEFAULT_IDENTITY="+vector.defaultIdentityEnv)
 		}
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
@@ -213,10 +272,21 @@ func makeMemberCLIContract(t *testing.T, root string) (memberCLIContract, error)
 		}
 		fixture.Cases = append(fixture.Cases, memberCLICase{
 			Name: vector.name, Args: vector.args, Actor: vector.actor, EmptyRoom: vector.emptyRoom,
-			DynamicEvent: vector.dynamicEvent, ExitCode: code, Stdout: output, Stderr: stderr.String(), FinalFiles: finalFiles,
+			DynamicEvent: vector.dynamicEvent, IdentityFile: vector.identityFile,
+			GlobalConfig: vector.globalConfig, ProjectConfig: vector.projectConfig, DefaultIdentityEnv: vector.defaultIdentityEnv,
+			ExitCode: code, Stdout: output, Stderr: stderr.String(), FinalFiles: finalFiles,
 		})
 	}
 	return fixture, nil
+}
+
+func memberCLIIdentityFile(id *identity.Identity) (string, error) {
+	stored := identity.StoredIdentity{
+		Name: id.Name, MemberID: id.MemberID,
+		PublicKey: hex.EncodeToString(id.PublicKey), PrivateKey: hex.EncodeToString(id.PrivateKey),
+	}
+	data, err := json.MarshalIndent(stored, "", "  ")
+	return string(data), err
 }
 
 func makeMemberJournal(t *testing.T, owner *identity.Identity, memberPublic ed25519.PublicKey) []memberCLIFile {

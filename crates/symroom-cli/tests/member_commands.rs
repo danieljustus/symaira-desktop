@@ -8,6 +8,7 @@ use std::{
 };
 
 use serde::Deserialize;
+use sha2::Digest;
 
 const ORACLE_REVISION: &str = "b96219bcd39ce85e017626feade557979aefd7c6";
 
@@ -18,6 +19,7 @@ struct Fixture {
     source_hashes: std::collections::BTreeMap<String, String>,
     owner_key: String,
     stranger_key: String,
+    identity_files: Vec<JournalFile>,
     add_public_key: String,
     room_toml: String,
     initial_files: Vec<JournalFile>,
@@ -39,6 +41,14 @@ struct Case {
     empty_room: bool,
     #[serde(default)]
     dynamic_event: bool,
+    #[serde(default)]
+    identity_file: bool,
+    #[serde(default)]
+    global_config: String,
+    #[serde(default)]
+    project_config: String,
+    #[serde(default)]
+    default_identity_env: String,
     exit_code: i32,
     stdout: String,
     stderr: String,
@@ -53,8 +63,26 @@ fn member_cli_matches_go_process_and_journal_contract() {
     let fixture: Fixture = serde_json::from_slice(&data).expect("parse member fixture");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.oracle_revision, ORACLE_REVISION);
-    assert_eq!(fixture.source_hashes.len(), 4);
+    assert_eq!(fixture.source_hashes.len(), 5);
     assert!(fixture.source_hashes.values().all(|hash| hash.len() == 64));
+    for source in [
+        "cmd/symroom/main.go",
+        "cmd/symroom/cmd_member.go",
+        "internal/room/room/members.go",
+        "internal/room/members/members.go",
+        "internal/room/config/config.go",
+    ] {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../")
+            .join(source);
+        let bytes =
+            fs::read(&path).unwrap_or_else(|error| panic!("read {}: {error}", path.display()));
+        assert_eq!(
+            fixture.source_hashes.get(source),
+            Some(&hex::encode(sha2::Sha256::digest(bytes))),
+            "Go oracle source hash {source}"
+        );
+    }
     assert!(fixture.cases.iter().any(|case| case.dynamic_event));
     assert!(fixture.cases.iter().any(|case| case.empty_room));
     assert!(fixture.cases.iter().any(|case| case.exit_code == 0));
@@ -95,12 +123,43 @@ fn member_cli_matches_go_process_and_journal_contract() {
         fs::create_dir_all(&home).expect("create isolated HOME");
         fs::create_dir_all(&data_home).expect("create isolated XDG data home");
         fs::create_dir_all(&tmp).expect("create isolated TMPDIR");
-        let identity_key = if case.actor == "stranger" {
-            &fixture.stranger_key
+        if !case.global_config.is_empty() {
+            let config_dir = home.join(".config/symroom");
+            fs::create_dir_all(&config_dir).expect("create global config directory");
+            fs::write(
+                config_dir.join("config.toml"),
+                case.global_config.as_bytes(),
+            )
+            .expect("write global config");
+        }
+        if !case.project_config.is_empty() {
+            fs::write(room.join(".symroom.toml"), case.project_config.as_bytes())
+                .expect("write project config");
+        }
+        if case.identity_file {
+            let identity_dir = data_home.join("symroom/identities");
+            fs::create_dir_all(&identity_dir).expect("create fixture identity directory");
+            for file in &fixture.identity_files {
+                fs::write(identity_dir.join(&file.name), file.content.as_bytes())
+                    .expect("write fixture identity");
+            }
+        }
+        let identity_key = if case.identity_file {
+            None
+        } else if case.actor == "stranger" {
+            Some(fixture.stranger_key.as_str())
         } else {
-            &fixture.owner_key
+            Some(fixture.owner_key.as_str())
         };
-        let output = run_symroom(&case.args, &room, &home, &data_home, &tmp, identity_key);
+        let output = run_symroom(
+            &case.args,
+            &room,
+            &home,
+            &data_home,
+            &tmp,
+            identity_key,
+            (!case.default_identity_env.is_empty()).then_some(case.default_identity_env.as_str()),
+        );
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
@@ -147,20 +206,28 @@ fn run_symroom(
     home: &Path,
     data_home: &Path,
     tmp: &Path,
-    identity_key: &str,
+    identity_key: Option<&str>,
+    default_identity: Option<&str>,
 ) -> Output {
     let mut command = Command::new(env!("CARGO_BIN_EXE_symroom"));
     command
         .args(args)
+        .current_dir(room)
         .env_clear()
         .env("HOME", home)
+        .env("USERPROFILE", home)
         .env("XDG_DATA_HOME", data_home)
         .env("TMPDIR", tmp)
         .env("TZ", "UTC")
         .env("LC_ALL", "C")
         .env("LANG", "C")
-        .env("SYMROOM_ROOM_DIR", room)
-        .env("SYMROOM_IDENTITY_KEY", identity_key);
+        .env("SYMROOM_ROOM_DIR", room);
+    if let Some(identity_key) = identity_key {
+        command.env("SYMROOM_IDENTITY_KEY", identity_key);
+    }
+    if let Some(default_identity) = default_identity {
+        command.env("SYMROOM_DEFAULT_IDENTITY", default_identity);
+    }
     command.output().expect("run Rust symroom member CLI")
 }
 

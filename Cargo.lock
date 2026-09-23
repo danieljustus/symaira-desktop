@@ -1373,6 +1373,7 @@ dependencies = [
  "symdesk-core",
  "symroom-core",
  "time",
+ "toml",
 ]
 
 [[package]]

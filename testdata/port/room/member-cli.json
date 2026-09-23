@@ -4,11 +4,22 @@
   "source_hashes": {
     "cmd/symroom/cmd_member.go": "8a747400b58bd3d06f61adef3da731cc848db225bdce935aacba9318c744c8de",
     "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/config/config.go": "417eb5fd3c5062491c8b9fc62f92407f59267b3c783c06a5dc2791ef9f09fa15",
     "internal/room/members/members.go": "34821f2480ec054e3002d385d9c8c707cb1087eda8cf0195c7207a0d71a0568e",
     "internal/room/room/members.go": "f9123f6c6989c9d41a0f24d44c822d8a89d8d53ff75bb0957197f91e13cb0e05"
   },
   "owner_key": "c491591d4827f34aa9319ec13266d6b7d4ca99cf5dd162edfbdeb701770dc86c",
   "stranger_key": "e051c88ecf7942b361829bde7786f971a1b07bc58b6609a874638d4f4bd776f9",
+  "identity_files": [
+    {
+      "name": "owner.json",
+      "content": "{\n  \"name\": \"owner\",\n  \"member_id\": \"mem_e9d73120efe8a89f\",\n  \"public_key\": \"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\",\n  \"private_key\": \"c491591d4827f34aa9319ec13266d6b7d4ca99cf5dd162edfbdeb701770dc86c3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"\n}"
+    },
+    {
+      "name": "stranger.json",
+      "content": "{\n  \"name\": \"stranger\",\n  \"member_id\": \"mem_7210157edfb79862\",\n  \"public_key\": \"5cc6284cdb97b1ac132033e191c6dc64834184ecddcadcb79671ef3896291c0d\",\n  \"private_key\": \"e051c88ecf7942b361829bde7786f971a1b07bc58b6609a874638d4f4bd776f95cc6284cdb97b1ac132033e191c6dc64834184ecddcadcb79671ef3896291c0d\"\n}"
+    }
+  ],
   "add_public_key": "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
   "room_toml": "schema_version = 1\nid = \"rm_member_fixture\"\ncreated = \"2026-09-23T10:00:00.000Z\"\n",
   "initial_files": [
@@ -143,6 +154,125 @@
         {
           "name": "mem_e9d73120efe8a89f.jsonl",
           "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_6cbd02663ddbea84\",\"kind\":\"human\",\"name\":\"positional\",\"public_key\":\"e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039\",\"role\":\"member\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"member.added\",\"lamport\":3,\"prev\":\"sha256:8dc14fda32938b31cc1562f6829c6e2bd3566e609f48b9b0ec4257a955971f8b\",\"room\":\"rm_member_fixture\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-default-identity-env",
+      "args": [
+        "member",
+        "add",
+        "--pubkey",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "--name",
+        "default-env"
+      ],
+      "actor": "owner",
+      "dynamic_event": true,
+      "identity_file": true,
+      "default_identity_env": "owner",
+      "exit_code": 0,
+      "stdout": "Member added: default-env (mem_6cbd02663ddbea84, role: member, kind: human, event: \u003cevent-id\u003e)\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_6cbd02663ddbea84\",\"kind\":\"human\",\"name\":\"default-env\",\"public_key\":\"e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039\",\"role\":\"member\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"member.added\",\"lamport\":3,\"prev\":\"sha256:8dc14fda32938b31cc1562f6829c6e2bd3566e609f48b9b0ec4257a955971f8b\",\"room\":\"rm_member_fixture\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-default-identity-toml",
+      "args": [
+        "member",
+        "add",
+        "--pubkey",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "--name",
+        "default-toml"
+      ],
+      "actor": "owner",
+      "dynamic_event": true,
+      "identity_file": true,
+      "global_config": "default_identity = \"owner\"\n",
+      "exit_code": 0,
+      "stdout": "Member added: default-toml (mem_6cbd02663ddbea84, role: member, kind: human, event: \u003cevent-id\u003e)\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_6cbd02663ddbea84\",\"kind\":\"human\",\"name\":\"default-toml\",\"public_key\":\"e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039\",\"role\":\"member\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"member.added\",\"lamport\":3,\"prev\":\"sha256:8dc14fda32938b31cc1562f6829c6e2bd3566e609f48b9b0ec4257a955971f8b\",\"room\":\"rm_member_fixture\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-default-identity-project-over-global",
+      "args": [
+        "member",
+        "add",
+        "--pubkey",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "--name",
+        "project-default"
+      ],
+      "actor": "owner",
+      "dynamic_event": true,
+      "identity_file": true,
+      "global_config": "default_identity = \"stranger\"\n",
+      "project_config": "default_identity = \"owner\"\n",
+      "exit_code": 0,
+      "stdout": "Member added: project-default (mem_6cbd02663ddbea84, role: member, kind: human, event: \u003cevent-id\u003e)\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_6cbd02663ddbea84\",\"kind\":\"human\",\"name\":\"project-default\",\"public_key\":\"e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039\",\"role\":\"member\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"member.added\",\"lamport\":3,\"prev\":\"sha256:8dc14fda32938b31cc1562f6829c6e2bd3566e609f48b9b0ec4257a955971f8b\",\"room\":\"rm_member_fixture\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-default-identity-env-over-toml",
+      "args": [
+        "member",
+        "add",
+        "--pubkey",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "--name",
+        "env-overrides"
+      ],
+      "actor": "owner",
+      "dynamic_event": true,
+      "identity_file": true,
+      "global_config": "default_identity = \"stranger\"\n",
+      "default_identity_env": "owner",
+      "exit_code": 0,
+      "stdout": "Member added: env-overrides (mem_6cbd02663ddbea84, role: member, kind: human, event: \u003cevent-id\u003e)\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_6cbd02663ddbea84\",\"kind\":\"human\",\"name\":\"env-overrides\",\"public_key\":\"e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039\",\"role\":\"member\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"member.added\",\"lamport\":3,\"prev\":\"sha256:8dc14fda32938b31cc1562f6829c6e2bd3566e609f48b9b0ec4257a955971f8b\",\"room\":\"rm_member_fixture\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "add-default-identity-missing",
+      "args": [
+        "member",
+        "add",
+        "--pubkey",
+        "e1e22ee3ff1e1690dae4e5c12d532538bd7e33e59098f9a836b01f1ecd10f039",
+        "--name",
+        "no-default"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --identity is required when default_identity is not configured\n",
+      "final_files": [
+        {
+          "name": "mem_e9d73120efe8a89f.jsonl",
+          "content": "{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"name\":\"Member Fixture\",\"public_key\":\"3b7df261ac259780bbfeb8bab4a19b00a4e676710ac27a96f4736981675facbe\"},\"id\":\"member-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_member_fixture\",\"seq\":1,\"sig\":\"ed25519:pf+PjvmPRpxqbfrSK42zsOIcOVhDL5Gh30oRk367uo9tO+TOw96rILnDvWkUHL1mzkLIoxgVaPI/03awryWbDQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_e9d73120efe8a89f\",\"body\":{\"id\":\"mem_9b550c4bbfcd41e7\",\"kind\":\"human\",\"name\":\"bob\",\"public_key\":\"b42a85df85bae7e96ebe2354aa8de292e55bac9c38e162ae0ee71ec364939be5\",\"role\":\"member\"},\"id\":\"member-fixture-bob-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1410f589eefb35dd3226014634071aaccf7af218e067a9b8f750face5ee780ce\",\"room\":\"rm_member_fixture\",\"seq\":2,\"sig\":\"ed25519:flHINyq+MI9oP1j84SkLI7/nZI9eUgD2K04vSCoz+d2XbXlj/9jrDpHBBnPp+Q9Y9cuqXRgx7KsrzBPjatCgCg==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
         }
       ]
     },

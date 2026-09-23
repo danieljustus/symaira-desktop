@@ -378,6 +378,11 @@
       "acceptance": [
         "make symroom-differential",
         "make room-journal-differential",
+        "make room-run-projection-differential",
+        "make room-run-cli-differential",
+        "make room-run-wait-cli-differential",
+        "make room-run-mutations-cli-differential",
+        "make room-mcp-differential",
         "cargo nextest run -p symroom-core -p symroom-cli",
         "cargo +nightly fuzz run room_event"
       ]

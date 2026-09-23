@@ -44,6 +44,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"room run projection", []string{"test", "-count=1", "./internal/room/run", "-run", "^TestPortRunProjectionContract$"}, []string{"testdata/port/room/run-projection.json"}, false},
 	{"room run CLI", []string{"test", "-count=1", "./internal/room/run", "-run", "^TestPortRunCLIContract$"}, []string{"testdata/port/room/run-cli.json"}, false},
 	{"room run wait CLI", []string{"test", "-count=1", "./internal/room/run", "-run", "^TestPortRunWaitCLIContract$"}, []string{"testdata/port/room/run-wait-cli.json"}, false},
+	{"room run mutation CLI", []string{"test", "-count=1", "./internal/room/run", "-run", "^TestPortRunMutationCLIContract$"}, []string{"testdata/port/room/run-mutations-cli.json"}, false},
 	{"room MCP", []string{"test", "-count=1", "./internal/room/mcp", "-run", "^TestSymRoomMCPRepresentativeOracle$"}, []string{"testdata/port/room/mcp-parity.json"}, false},
 	{"dataset sync", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract)$"}, []string{"testdata/port/dataset/sync.json", "testdata/port/dataset/service-sync.json", "testdata/port/dataset/import.json"}, false},
 	{"dataset purge", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetPurgeContract$"}, []string{"testdata/port/dataset/purge.json"}, false},

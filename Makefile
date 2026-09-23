@@ -9,6 +9,7 @@
 .PHONY: history-trash-purge-fixtures-generate history-trash-purge-differential
 .PHONY: room-run-wait-cli-fixtures-generate room-run-wait-cli-differential dataset-purge-fixtures-generate dataset-purge-differential
 .PHONY: room-mcp-fixtures-generate room-mcp-differential
+.PHONY: room-run-mutations-cli-fixtures-generate room-run-mutations-cli-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -240,6 +241,13 @@ room-run-wait-cli-fixtures-generate:
 room-run-wait-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/run -run '^TestPortRunWaitCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test run_commands run_wait_matches_go_process_contract
+
+room-run-mutations-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/run -run '^TestPortRunMutationCLIContract$$'
+
+room-run-mutations-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/run -run '^TestPortRunMutationCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test run_commands run_request_start_cancel_match_go_process_contract
 
 room-mcp-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/mcp -run '^TestSymRoomMCPRepresentativeOracle$$'

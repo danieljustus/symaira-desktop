@@ -9,6 +9,7 @@ use std::{
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
 
+mod decide_cli;
 mod identity_cli;
 mod index_cli;
 mod mcp;
@@ -50,6 +51,9 @@ fn main() -> ExitCode {
     }
     if command == "verify" {
         return verify_cli::run(&args[2..]);
+    }
+    if command == "decide" {
+        return decide_cli::run(&args[2..]);
     }
     if command == "note" {
         return note_cli::run(&args[2..]);

@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "b68f7bccb1e636a0b2c1e1093e5473c3709683b3",
+  "source_hashes": {
+    "cmd/symroom/cmd_decide.go": "547a61bcd41e81ce72168d4f03487ce5754d9c20f185e0fa65f939a17941ea3e",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc",
+    "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
+    "internal/room/members/members.go": "34821f2480ec054e3002d385d9c8c707cb1087eda8cf0195c7207a0d71a0568e",
+    "internal/room/room/journal_append.go": "83055869dfa95128d1eb5a01061b77f9424249abcacecf6b0b1c98365b1cbfa3"
+  },
+  "identity_key": "923706ce9d1b3d6eb2a1065bb501e1eca97df1ef690746c731667ecde4ae1c04",
+  "identity_member": "mem_53fd23bed84da4e4",
+  "room_toml": "id = \"rm_decide_fixture\"\ncreated = \"2026-09-23T10:00:00.000Z\"\n",
+  "journal_files": [
+    {
+      "name": "mem_53fd23bed84da4e4.jsonl",
+      "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n"
+    }
+  ],
+  "observer_journal_files": [
+    {
+      "name": "mem_53fd23bed84da4e4.jsonl",
+      "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"id\":\"mem_53fd23bed84da4e4\",\"role\":\"observer\"},\"id\":\"decide-fixture-observer\",\"kind\":\"member.role_changed\",\"lamport\":2,\"prev\":\"sha256:a9acb6ff26771e54d09309f08961214e2cc81869efd8dfe7c7b381fb36af7bf2\",\"room\":\"rm_decide_fixture\",\"seq\":2,\"sig\":\"ed25519:yzSfEr9XLDGNMAicH1pUhnDzTK1H5/vyO1QEplxaC+5TS4BB32CK/QH18XpOdHiotRYundtx6g7YE7zrlLOMAw==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+    }
+  ],
+  "cases": [
+    {
+      "name": "decide-text",
+      "args": [
+        "decide",
+        "-identity",
+        "oracle",
+        "-refs",
+        "ref-a,ref-b",
+        "Choose B"
+      ],
+      "mutates": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_journal_files": [
+        {
+          "name": "mem_53fd23bed84da4e4.jsonl",
+          "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"refs\":[\"ref-a\",\"ref-b\"],\"text\":\"Choose B\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"decision.recorded\",\"lamport\":2,\"prev\":\"sha256:a9acb6ff26771e54d09309f08961214e2cc81869efd8dfe7c7b381fb36af7bf2\",\"room\":\"rm_decide_fixture\",\"seq\":2,\"sig\":\"\\u003csignature-of-dynamic-event\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "decide-json-html",
+      "args": [
+        "decide",
+        "--identity=oracle",
+        "--refs=ref-a,,ref-c",
+        "--json=TRUE",
+        "Choose \u003cA\u003e\u0026"
+      ],
+      "mutates": true,
+      "json_output": true,
+      "exit_code": 0,
+      "stdout": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"refs\":[\"ref-a\",\"\",\"ref-c\"],\"text\":\"Choose \\u003cA\\u003e\\u0026\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"decision.recorded\",\"lamport\":2,\"prev\":\"sha256:a9acb6ff26771e54d09309f08961214e2cc81869efd8dfe7c7b381fb36af7bf2\",\"room\":\"rm_decide_fixture\",\"seq\":2,\"sig\":\"\\u003csignature-of-dynamic-event\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n",
+      "stderr": "",
+      "final_journal_files": [
+        {
+          "name": "mem_53fd23bed84da4e4.jsonl",
+          "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"refs\":[\"ref-a\",\"\",\"ref-c\"],\"text\":\"Choose \\u003cA\\u003e\\u0026\"},\"id\":\"\\u003cevent-id\\u003e\",\"kind\":\"decision.recorded\",\"lamport\":2,\"prev\":\"sha256:a9acb6ff26771e54d09309f08961214e2cc81869efd8dfe7c7b381fb36af7bf2\",\"room\":\"rm_decide_fixture\",\"seq\":2,\"sig\":\"\\u003csignature-of-dynamic-event\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "decide-trailing-flags-ignored",
+      "args": [
+        "decide",
+        "Choice",
+        "--json=true",
+        "--identity",
+        "oracle"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --identity is required when default_identity is not configured\n",
+      "final_journal_files": [
+        {
+          "name": "mem_53fd23bed84da4e4.jsonl",
+          "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "decide-usage",
+      "args": [
+        "decide"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom decide \u003cdecision\u003e [--refs ref1,ref2] [--identity \u003cname\u003e] [--json]\n",
+      "stderr": "",
+      "final_journal_files": [
+        {
+          "name": "mem_53fd23bed84da4e4.jsonl",
+          "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "decide-invalid-bool",
+      "args": [
+        "decide",
+        "--json=maybe",
+        "Choice",
+        "--identity",
+        "oracle"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "invalid boolean value \"maybe\" for -json: parse error\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "final_journal_files": [
+        {
+          "name": "mem_53fd23bed84da4e4.jsonl",
+          "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "decide-unknown-flag",
+      "args": [
+        "decide",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "final_journal_files": [
+        {
+          "name": "mem_53fd23bed84da4e4.jsonl",
+          "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "decide-missing-identity-value",
+      "args": [
+        "decide",
+        "--identity"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag needs an argument: -identity\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "final_journal_files": [
+        {
+          "name": "mem_53fd23bed84da4e4.jsonl",
+          "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "decide-missing-refs-value",
+      "args": [
+        "decide",
+        "--refs"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag needs an argument: -refs\nUsage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "final_journal_files": [
+        {
+          "name": "mem_53fd23bed84da4e4.jsonl",
+          "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "decide-help",
+      "args": [
+        "decide",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of decide:\n  -identity string\n    \tAuthor identity name\n  -json\n    \tOutput event as JSON\n  -refs string\n    \tComma-separated reference IDs\n",
+      "final_journal_files": [
+        {
+          "name": "mem_53fd23bed84da4e4.jsonl",
+          "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "decide-observer",
+      "args": [
+        "decide",
+        "--identity",
+        "oracle",
+        "--refs",
+        "issue-1",
+        "Cannot choose"
+      ],
+      "observer": true,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error: observer role has read-only access\n",
+      "final_journal_files": [
+        {
+          "name": "mem_53fd23bed84da4e4.jsonl",
+          "content": "{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"name\":\"Decide Fixture\",\"public_key\":\"700a79063e36b721c093600b6a616fd81380bd46a277a6f0819dad1c79c1588a\"},\"id\":\"decide-fixture-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_decide_fixture\",\"seq\":1,\"sig\":\"ed25519:Cf1fPyt0tkfXBmI+gcIwFIJTr+3ky/FovyIBe2BGNQCRx4jVsUgvWVtES7xqsBzv/3OqPVdDC5nLGCXckL4sAQ==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_53fd23bed84da4e4\",\"body\":{\"id\":\"mem_53fd23bed84da4e4\",\"role\":\"observer\"},\"id\":\"decide-fixture-observer\",\"kind\":\"member.role_changed\",\"lamport\":2,\"prev\":\"sha256:a9acb6ff26771e54d09309f08961214e2cc81869efd8dfe7c7b381fb36af7bf2\",\"room\":\"rm_decide_fixture\",\"seq\":2,\"sig\":\"ed25519:yzSfEr9XLDGNMAicH1pUhnDzTK1H5/vyO1QEplxaC+5TS4BB32CK/QH18XpOdHiotRYundtx6g7YE7zrlLOMAw==\",\"ts\":\"2026-09-23T10:01:00.000Z\",\"v\":1}\n"
+        }
+      ]
+    }
+  ]
+}

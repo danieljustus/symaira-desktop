@@ -190,7 +190,7 @@ func TestIndexRelocatePortFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 	encoded = append(encoded, '\n')
-	if os.Getenv("PORT_GENERATE") == "1" || os.Getenv("INDEX_RELOCATE_GENERATE") == "1" {
+	if os.Getenv("PORT_GENERATE") == "1" {
 		if err := os.MkdirAll(filepath.Dir(fixturePath), 0o700); err != nil {
 			t.Fatal(err)
 		}

@@ -322,6 +322,10 @@ jobs:
         shell: bash
         run: make index-restore-differential
 
+      - name: Run native index relocate differential
+        shell: bash
+        run: make index-relocate-differential
+
       - name: Run native room run projection differential
         shell: bash
         run: make room-run-projection-differential

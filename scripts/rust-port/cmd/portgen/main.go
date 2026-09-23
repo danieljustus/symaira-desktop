@@ -132,10 +132,12 @@ func runGenerate(repoRoot, commit, release string) {
 		pkg string
 		run string
 	}{
+		{"./internal/config", "^TestPortConfigPrecedenceContract$"},
 		{"./cmd/symdesk", "TestSymdeskCobraInventory|^TestIndex(Maintenance|Build)ProcessPortFixture$"},
 		{"./internal/room/journal", "^TestPortRoomVerifyContract$"},
 		{"./internal/room/journal", "^TestPortRoomLogContract$"},
 		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPort(Note|Decide|Identity|Member|Index|Verify|Log|Artifact|ArtifactIdentity|Init|Watch|Doctor|Checkpoint)CLIContract"},
+		{"./cmd/symroom", "^TestPortRunApprovalCLIContract$"},
 		{"./internal/room/run", "^TestPortRunProjectionContract$"},
 		{"./internal/room/room", "^TestPortRoomInitContract$"},
 		{"./internal/room/journal", "^TestPortRoomMergeReadContract$"},

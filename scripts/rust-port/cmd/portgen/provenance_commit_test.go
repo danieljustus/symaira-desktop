@@ -179,6 +179,7 @@ func TestSanitizedCheckEnvironmentRemovesActivationVariablesCaseInsensitively(t 
 		"PORTGEN_SIDECAR_ORACLE_COMMIT=poison",
 		"PORTGEN_SIDECAR_ORACLE_RELEASE=poison",
 		"GOFLAGS=-modfile=poison.mod",
+		"GOCACHE=/safe/build-cache",
 		"GIT_DIR=/poison",
 		"PATH=/poison",
 	})
@@ -188,7 +189,7 @@ func TestSanitizedCheckEnvironmentRemovesActivationVariablesCaseInsensitively(t 
 			t.Fatalf("sanitizedCheckEnvironment() retained %q in %#v", forbidden, got)
 		}
 	}
-	for _, required := range []string{"SAFE=retained", "GOWORK=off", "GOENV=off", "GOFLAGS=-mod=readonly", "GOTOOLCHAIN=local", "CGO_ENABLED=0", "PATH="} {
+	for _, required := range []string{"SAFE=retained", "GOCACHE=/safe/build-cache", "GOWORK=off", "GOENV=off", "GOFLAGS=-mod=readonly", "GOTOOLCHAIN=local", "CGO_ENABLED=0", "PATH="} {
 		if !strings.Contains(joined, "\n"+required) {
 			t.Fatalf("sanitizedCheckEnvironment() omitted %q from %#v", required, got)
 		}

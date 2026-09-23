@@ -129,7 +129,7 @@ func sanitizedCheckEnvironment(environment []string) []string {
 		case "USERPROFILE":
 			profile = value
 		}
-		if isFixtureGenerationEnvironment(name) || upper == "PORT_FIXTURE_PATH" || name == portgenSidecarOracleCommitEnv || name == portgenSidecarOracleReleaseEnv || strings.HasPrefix(upper, "GO") || strings.HasPrefix(upper, "GIT") || upper == "PATH" {
+		if isFixtureGenerationEnvironment(name) || upper == "PORT_FIXTURE_PATH" || name == portgenSidecarOracleCommitEnv || name == portgenSidecarOracleReleaseEnv || (strings.HasPrefix(upper, "GO") && upper != "GOCACHE") || strings.HasPrefix(upper, "GIT") || upper == "PATH" {
 			continue
 		}
 		result = append(result, item)

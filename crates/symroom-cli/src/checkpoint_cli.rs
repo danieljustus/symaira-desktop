@@ -53,14 +53,6 @@ fn request(args: &[OsString]) -> ExitCode {
         Ok(parsed) => parsed,
         Err(code) => return code,
     };
-    let run_id = parsed.values.get("run").map_or("", String::as_str);
-    let question = parsed.values.get("question").map_or("", String::as_str);
-    if run_id.is_empty() || question.is_empty() {
-        return stderr(
-            "Usage: symroom checkpoint request --run <id> --question \"...\" [--identity <name>]\n",
-            CoreExitCode::NoInput,
-        );
-    }
     let timeout = match parsed.values.get("timeout") {
         Some(value) => match crate::run_cli::parse_go_duration(value) {
             Some(duration) => duration,
@@ -75,6 +67,14 @@ fn request(args: &[OsString]) -> ExitCode {
         },
         None => Duration::from_secs(15 * 60),
     };
+    let run_id = parsed.values.get("run").map_or("", String::as_str);
+    let question = parsed.values.get("question").map_or("", String::as_str);
+    if run_id.is_empty() || question.is_empty() {
+        return stderr(
+            "Usage: symroom checkpoint request --run <id> --question \"...\" [--identity <name>]\n",
+            CoreExitCode::NoInput,
+        );
+    }
     let signer = match load_identity(parsed.values.get("identity")) {
         Ok(identity) => identity,
         Err(code) => return code,

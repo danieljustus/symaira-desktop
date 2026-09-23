@@ -250,6 +250,8 @@ fn make_valid_room(room: &Path, owner: &identity::Identity, index: &str) {
 fn install_tools(dir: &Path, work: &Path) {
     #[cfg(windows)]
     let helper = build_windows_tool_helper(work);
+    #[cfg(not(windows))]
+    let _ = work;
     for name in ["symdesk", "symbrain", "symvault"] {
         #[cfg(windows)]
         {
@@ -366,6 +368,7 @@ fn normalize(
 }
 
 fn normalize_identity_mode_output(text: &str) -> String {
+    let trailing_newline = text.ends_with('\n');
     if text.starts_with('{') {
         let mut lines = text.lines().map(str::to_owned).collect::<Vec<_>>();
         for index in 0..lines.len() {
@@ -380,10 +383,14 @@ fn normalize_identity_mode_output(text: &str) -> String {
                 lines[index + 3] = format!("{prefix}  \"remediation\": \"platform-specific\"");
             }
         }
-        return lines
+        let mut output = lines
             .join("\n")
             .replace("\"failed\": true", "\"failed\": \"platform-dependent\"")
             .replace("\"failed\": false", "\"failed\": \"platform-dependent\"");
+        if trailing_newline {
+            output.push('\n');
+        }
+        return output;
     }
     let mut lines = text.lines().map(str::to_owned).collect::<Vec<_>>();
     for index in 0..lines.len() {
@@ -392,7 +399,11 @@ fn normalize_identity_mode_output(text: &str) -> String {
             lines[index + 1] = "  remediation: platform-specific".to_owned();
         }
     }
-    lines.join("\n")
+    let mut output = lines.join("\n");
+    if trailing_newline {
+        output.push('\n');
+    }
+    output
 }
 
 fn read_or_empty(path: &Path) -> Vec<u8> {

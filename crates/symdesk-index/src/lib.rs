@@ -23,7 +23,7 @@ mod dataset_sync;
 mod history_sync;
 mod metadata;
 
-pub use backup::{backup_database, restore_database};
+pub use backup::{backup_database, relocate_database, restore_database};
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
 pub use dataset_sync::{
     DatasetImportOptions, DatasetImportResult, DatasetSyncError, DatasetSyncOptions,

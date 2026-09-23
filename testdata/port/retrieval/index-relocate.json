@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "input_rows": [
+    {
+      "id": 1,
+      "body": "committed WAL row"
+    },
+    {
+      "id": 2,
+      "body": "Müller / 東京"
+    }
+  ],
+  "source_rows_after": [
+    {
+      "id": 1,
+      "body": "committed WAL row"
+    },
+    {
+      "id": 2,
+      "body": "Müller / 東京"
+    }
+  ],
+  "relocated_rows": [
+    {
+      "id": 1,
+      "body": "committed WAL row"
+    },
+    {
+      "id": 2,
+      "body": "Müller / 東京"
+    }
+  ],
+  "wal_was_nonempty": true,
+  "persisted_index_path": "$ROOT/relocated/retrieval.db",
+  "header": "SQLite format 3\u0000",
+  "mode": "0600",
+  "destination_replaced": true,
+  "same_path_error": "source and destination are the same index file",
+  "rename_conflict_error": "replace retrieval snapshot",
+  "conflict_marker_unchanged": true,
+  "blocked_parent_error": "create index directory",
+  "blocked_marker_unchanged": true
+}

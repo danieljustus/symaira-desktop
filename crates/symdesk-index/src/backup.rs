@@ -23,7 +23,7 @@ pub fn backup_database(connection: &Connection, destination: &Path) -> Result<()
         .path()
         .ok_or_else(|| SidecarError::Contract("cannot snapshot an in-memory sidecar".to_owned()))?;
     let source = Path::new(source);
-    if clean_path(source) == clean_path(destination) {
+    if same_file_path(source, destination) {
         return Err(SidecarError::Contract(
             "source and destination are the same index file".to_owned(),
         ));
@@ -56,6 +56,27 @@ pub fn backup_database(connection: &Connection, destination: &Path) -> Result<()
     result
 }
 
+/// Creates a WAL-consistent relocation snapshot and returns its absolute path.
+/// The source remains intact; callers persist the returned path only after
+/// this operation succeeds.
+pub fn relocate_database(
+    connection: &Connection,
+    destination: &Path,
+) -> Result<PathBuf, SidecarError> {
+    let destination = if destination.is_absolute() {
+        destination.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .map_err(|error| {
+                SidecarError::Contract(format!("absolute index relocation path: {error}"))
+            })?
+            .join(destination)
+    };
+    let destination = clean_path(&destination);
+    backup_database(connection, &destination)?;
+    Ok(destination)
+}
+
 /// Validates and atomically restores a SQLite backup without modifying it.
 /// Callers close long-lived destination connections before replacement.
 pub fn restore_database(source: &Path, destination: &Path) -> Result<(), SidecarError> {
@@ -68,7 +89,7 @@ pub fn restore_database(source: &Path, destination: &Path) -> Result<(), Sidecar
         )));
     }
     validate_sqlite_header(source)?;
-    if clean_path(source) == clean_path(destination) {
+    if same_file_path(source, destination) {
         return Err(SidecarError::Contract(
             "source and destination are the same index file".to_owned(),
         ));
@@ -188,6 +209,16 @@ fn clean_path(path: &Path) -> PathBuf {
     } else {
         cleaned
     }
+}
+
+fn same_file_path(source: &Path, destination: &Path) -> bool {
+    let source = clean_path(source);
+    let destination = clean_path(destination);
+    source == destination
+        || matches!(
+            (fs::canonicalize(&source), fs::canonicalize(&destination)),
+            (Ok(source), Ok(destination)) if source == destination
+        )
 }
 
 #[cfg(unix)]

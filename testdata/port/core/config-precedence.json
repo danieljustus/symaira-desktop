@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "oracle_commit": "e023816a9db2b3d71514049195886fe1b9766a5a",
+  "source_hashes": {
+    "internal/config/config.go": "0a16504c6d866efa6804555fa14de5daa0475b7e04bc6168c621590748463fb3"
+  },
+  "cases": [
+    {
+      "id": "missing-defaults",
+      "missing": true,
+      "config": {
+        "ollama_url": "",
+        "recipe_runner": "",
+        "agent_max_iterations": 0,
+        "storage_path_template": ""
+      }
+    },
+    {
+      "id": "toml-values",
+      "toml": "ollama_url = \"http://toml.example\"\nrecipe_runner = \"toml-runner\"\nagent_max_iterations = 7\nstorage_path_template = \"toml/{title}\"\n",
+      "config": {
+        "ollama_url": "http://toml.example",
+        "recipe_runner": "toml-runner",
+        "agent_max_iterations": 7,
+        "storage_path_template": "toml/{title}"
+      }
+    },
+    {
+      "id": "environment-overrides-toml",
+      "toml": "ollama_url = \"http://toml.example\"\nrecipe_runner = \"toml-runner\"\nagent_max_iterations = 7\nstorage_path_template = \"toml/{title}\"\n",
+      "environment": {
+        "SYMDESK_AGENT_MAX_ITERATIONS": "12",
+        "SYMDESK_OLLAMA_URL": "http://env.example",
+        "SYMDESK_RECIPE_RUNNER": "env-runner",
+        "SYMDESK_STORAGE_PATH_TEMPLATE": "env/{title}"
+      },
+      "config": {
+        "ollama_url": "http://env.example",
+        "recipe_runner": "env-runner",
+        "agent_max_iterations": 12,
+        "storage_path_template": "env/{title}"
+      }
+    },
+    {
+      "id": "empty-environment-preserves-toml",
+      "toml": "ollama_url = \"http://toml.example\"\nrecipe_runner = \"toml-runner\"\nagent_max_iterations = 7\nstorage_path_template = \"toml/{title}\"\n",
+      "environment": {
+        "SYMDESK_AGENT_MAX_ITERATIONS": "",
+        "SYMDESK_OLLAMA_URL": "",
+        "SYMDESK_RECIPE_RUNNER": "",
+        "SYMDESK_STORAGE_PATH_TEMPLATE": ""
+      },
+      "config": {
+        "ollama_url": "http://toml.example",
+        "recipe_runner": "toml-runner",
+        "agent_max_iterations": 7,
+        "storage_path_template": "toml/{title}"
+      }
+    },
+    {
+      "id": "invalid-number-preserves-toml",
+      "toml": "ollama_url = \"http://toml.example\"\nrecipe_runner = \"toml-runner\"\nagent_max_iterations = 7\nstorage_path_template = \"toml/{title}\"\n",
+      "environment": {
+        "SYMDESK_AGENT_MAX_ITERATIONS": "not-a-number"
+      },
+      "config": {
+        "ollama_url": "http://toml.example",
+        "recipe_runner": "toml-runner",
+        "agent_max_iterations": 7,
+        "storage_path_template": "toml/{title}"
+      }
+    },
+    {
+      "id": "negative-number-preserves-toml",
+      "toml": "ollama_url = \"http://toml.example\"\nrecipe_runner = \"toml-runner\"\nagent_max_iterations = 7\nstorage_path_template = \"toml/{title}\"\n",
+      "environment": {
+        "SYMDESK_AGENT_MAX_ITERATIONS": "-1"
+      },
+      "config": {
+        "ollama_url": "http://toml.example",
+        "recipe_runner": "toml-runner",
+        "agent_max_iterations": 7,
+        "storage_path_template": "toml/{title}"
+      }
+    },
+    {
+      "id": "invalid-number-preserves-default",
+      "missing": true,
+      "environment": {
+        "SYMDESK_AGENT_MAX_ITERATIONS": "many"
+      },
+      "config": {
+        "ollama_url": "",
+        "recipe_runner": "",
+        "agent_max_iterations": 0,
+        "storage_path_template": ""
+      }
+    },
+    {
+      "id": "valid-plus-number-overrides-default",
+      "missing": true,
+      "environment": {
+        "SYMDESK_AGENT_MAX_ITERATIONS": "+12"
+      },
+      "config": {
+        "ollama_url": "",
+        "recipe_runner": "",
+        "agent_max_iterations": 12,
+        "storage_path_template": ""
+      }
+    },
+    {
+      "id": "valid-zero-overrides-toml",
+      "toml": "ollama_url = \"http://toml.example\"\nrecipe_runner = \"toml-runner\"\nagent_max_iterations = 7\nstorage_path_template = \"toml/{title}\"\n",
+      "environment": {
+        "SYMDESK_AGENT_MAX_ITERATIONS": "0"
+      },
+      "config": {
+        "ollama_url": "http://toml.example",
+        "recipe_runner": "toml-runner",
+        "agent_max_iterations": 0,
+        "storage_path_template": "toml/{title}"
+      }
+    },
+    {
+      "id": "whitespace-is-nonempty",
+      "toml": "ollama_url = \"http://toml.example\"\nrecipe_runner = \"toml-runner\"\nagent_max_iterations = 7\nstorage_path_template = \"toml/{title}\"\n",
+      "environment": {
+        "SYMDESK_OLLAMA_URL": " ",
+        "SYMDESK_RECIPE_RUNNER": "\t",
+        "SYMDESK_STORAGE_PATH_TEMPLATE": " "
+      },
+      "config": {
+        "ollama_url": " ",
+        "recipe_runner": "\t",
+        "agent_max_iterations": 7,
+        "storage_path_template": " "
+      }
+    }
+  ]
+}

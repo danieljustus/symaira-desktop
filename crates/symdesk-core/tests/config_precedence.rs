@@ -33,7 +33,7 @@ struct Expected {
 
 fn fixture() -> Fixture {
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../..")
+        .join("../..")
         .join("testdata/port/core/config-precedence.json");
     let data = std::fs::read_to_string(path).expect("read Go-owned config precedence fixture");
     serde_json::from_str(&data).expect("decode Go-owned config precedence fixture")

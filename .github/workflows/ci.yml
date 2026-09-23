@@ -295,6 +295,10 @@ jobs:
         shell: bash
         run: make dataset-sync-differential
 
+      - name: Run native dataset CLI differential
+        shell: bash
+        run: make dataset-cli-differential
+
       - name: Run native history differential
         shell: bash
         run: |

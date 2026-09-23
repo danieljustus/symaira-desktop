@@ -3,6 +3,7 @@
 .PHONY: retention-state-fixtures-generate retention-state-differential
 .PHONY: room-run-projection-fixtures-generate room-run-projection-differential
 .PHONY: dataset-sync-fixtures-generate dataset-sync-differential
+.PHONY: dataset-cli-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -229,6 +230,14 @@ dataset-sync-differential:
 	$(CARGO) test -p symdesk-vault --locked --test dataset_contracts
 	$(CARGO) test -p symdesk-index --locked --test dataset_service_contracts
 	$(CARGO) test -p symdesk-index --locked --test dataset_import_contracts
+
+dataset-cli-differential:
+	@mkdir -p bin/port
+	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
+	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
+	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/diffharness \
+		--symdesk-left "bin/port/symdesk-go$(EXE_SUFFIX)" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)" \
+		--cases "testdata/port/dataset/cli.json" --stage dataset-cli
 
 symroom-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/room -run TestPortRoomIdentityEventContract

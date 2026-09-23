@@ -7,6 +7,8 @@ const (
 	comparisonModeBytes       = "bytes"
 	comparisonModeConsoleText = "console_text"
 	comparisonModeIgnore      = "ignore"
+	comparisonModeJSONRunID   = "json_run_id"
+	comparisonModeTextRunID   = "text_run_id"
 )
 
 // Suite is a language-neutral collection of black-box command cases.

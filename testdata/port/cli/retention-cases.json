@@ -1238,7 +1238,7 @@
    "env": {},
    "working_dir": ".",
    "timeout_ms": 10000,
-   "stdout_mode": "ignore",
+   "stdout_mode": "json_run_id",
    "stderr_mode": "bytes",
    "compare_files": false,
    "setup": [
@@ -1247,7 +1247,26 @@
     {"path": "fresh.md", "content": "---\ntitle: Fresh\ndocument_date: \"2099-01-01\"\ndocument_type: memo\nstatus: open\n---\nBody\n", "mode": 420},
     {"path": "paid.md", "content": "---\ntitle: Paid\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: paid\n---\nBody\n", "mode": 420}
    ],
-   "description": "Both CLIs stage a proposal from the existing index. stdout is ignored because Go run IDs and proposal timestamps are generated from separate wall-clock reads; the Rust CLI test asserts the output and persisted item details.",
+   "description": "Both CLIs stage a proposal from the existing index; only the clock-derived run ID is normalized, while every other stdout byte is compared. The Rust CLI test asserts the persisted proposal details.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-eval-reviewable-proposal-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", ".symdesk/rules.yaml", "--vault", "${WORKSPACE}"],
+   "prepare_args": ["ls", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "text_run_id",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/rules.yaml", "content": "name: expired-open\nselector:\n  document_type: memo\n  status: open\nperiod_days: 30\naction: flag_review\n", "mode": 420},
+    {"path": "expired.md", "content": "---\ntitle: Expired\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: open\n---\nBody\n", "mode": 420}
+   ],
+   "description": "Human output matches byte-for-byte except the clock-derived run ID; item struct field order remains visible.",
    "compare_sidecar_layout": true
   },
   {
@@ -1280,6 +1299,23 @@
    "compare_files": false,
    "setup": [],
    "description": "The missing rules file reports Go's path-specific OS error.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-eval-empty-rules-uses-default",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", "", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "console_text",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention-rules.yaml", "content": "name: invalid-default\nperiod_days: 0\naction: trash\n", "mode": 420}
+   ],
+   "description": "An empty explicit rules flag falls back to the default rules path before validation.",
    "compare_sidecar_layout": true
   }
  ]

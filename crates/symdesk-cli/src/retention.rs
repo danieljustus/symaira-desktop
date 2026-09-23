@@ -11,6 +11,7 @@ use std::{
 };
 
 use clap::{Arg, ArgAction, Command};
+use serde::Serialize;
 use serde_json::{Value, json};
 
 use symdesk_index::open_for_vault;
@@ -76,6 +77,7 @@ pub fn run_eval(
         Err(error) => return emit_error(error.to_string(), output_json),
     };
     let rules_file = rules_path
+        .filter(|path| !path.is_empty())
         .map(PathBuf::from)
         .unwrap_or_else(|| vault_root.join(".symdesk").join("retention-rules.yaml"));
     let rules = match load_rules(&rules_file) {
@@ -149,13 +151,25 @@ pub fn run_eval(
     if let Err(error) = write_proposal(&vault_root, &proposal) {
         return emit_error(error.to_string(), output_json);
     }
-    let result = json!({
-        "status": PROPOSAL_STATUS_PENDING,
-        "run_id": run_id,
-        "item_count": item_count,
-        "items": proposal.items,
-    });
-    output(result, output_json)
+    if output_json {
+        #[derive(Serialize)]
+        struct EvalOutput<'a> {
+            item_count: usize,
+            items: &'a Option<Vec<ProposalItem>>,
+            run_id: &'a str,
+            status: &'a str,
+        }
+        return write_go_json(&EvalOutput {
+            item_count,
+            items: &proposal.items,
+            run_id: &run_id,
+            status: PROPOSAL_STATUS_PENDING,
+        });
+    }
+    write_stdout(format!(
+        "map[item_count:{item_count} items:{} run_id:{run_id} status:pending]\n",
+        render_items(proposal.items.as_deref().unwrap_or(&[])).trim_end()
+    ))
 }
 
 /// Go: `newRetentionListCmd`'s `RunE`.

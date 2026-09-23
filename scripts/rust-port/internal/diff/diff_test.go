@@ -148,6 +148,29 @@ func TestConsoleComparisonNormalizesRootsAndCRLF(t *testing.T) {
 	}
 }
 
+func TestRetentionEvalComparisonNormalizesOnlyRunID(t *testing.T) {
+	caseSpec := Case{StdoutMode: "json_run_id"}
+	left := Result{Stdout: []byte(`{"items":[{"path":"a.md"}],"run_id":"ret-100","status":"pending"}` + "\n")}
+	right := Result{Stdout: []byte(`{"items":[{"path":"a.md"}],"run_id":"ret-101","status":"pending"}` + "\n")}
+	if err := Compare(caseSpec, left, right); err != nil {
+		t.Fatal(err)
+	}
+	right.Stdout = []byte(`{"items":[{"path":"b.md"}],"run_id":"ret-101","status":"pending"}` + "\n")
+	if err := Compare(caseSpec, left, right); err == nil {
+		t.Fatal("non-clock proposal fields must remain byte-exact")
+	}
+	caseSpec.StdoutMode = "text_run_id"
+	left.Stdout = []byte("map[item_count:1 items:[{Path:a.md}] run_id:ret-100 status:pending]\n")
+	right.Stdout = []byte("map[item_count:1 items:[{Path:a.md}] run_id:ret-101 status:pending]\n")
+	if err := Compare(caseSpec, left, right); err != nil {
+		t.Fatal(err)
+	}
+	right.Stdout = []byte("map[item_count:1 items:[{Path:b.md}] run_id:ret-101 status:pending]\n")
+	if err := Compare(caseSpec, left, right); err == nil {
+		t.Fatal("human item fields must remain byte-exact")
+	}
+}
+
 func TestBuildManifestIsDeterministicAndDetectsContent(t *testing.T) {
 	root := t.TempDir()
 	if err := os.Mkdir(filepath.Join(root, "dir"), 0o700); err != nil {

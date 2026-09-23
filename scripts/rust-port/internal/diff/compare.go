@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -96,6 +99,26 @@ func compareStream(name, mode string, left, right []byte, leftRoot, rightRoot st
 	case comparisonModeConsoleText:
 		left = normalizeConsole(left, leftRoot)
 		right = normalizeConsole(right, rightRoot)
+	case comparisonModeJSONRunID:
+		var err error
+		left, err = normalizeJSONRunID(left)
+		if err != nil {
+			return fmt.Errorf("left %s: %w", name, err)
+		}
+		right, err = normalizeJSONRunID(right)
+		if err != nil {
+			return fmt.Errorf("right %s: %w", name, err)
+		}
+	case comparisonModeTextRunID:
+		var err error
+		left, err = normalizeTextRunID(left)
+		if err != nil {
+			return fmt.Errorf("left %s: %w", name, err)
+		}
+		right, err = normalizeTextRunID(right)
+		if err != nil {
+			return fmt.Errorf("right %s: %w", name, err)
+		}
 	default:
 		return fmt.Errorf("unsupported %s comparison mode %q", name, mode)
 	}
@@ -104,6 +127,36 @@ func compareStream(name, mode string, left, right []byte, leftRoot, rightRoot st
 			name, len(left), digestBytes(left), len(right), digestBytes(right))
 	}
 	return nil
+}
+
+func normalizeJSONRunID(value []byte) ([]byte, error) {
+	var output struct {
+		RunID string `json:"run_id"`
+	}
+	if err := json.Unmarshal(value, &output); err != nil {
+		return nil, errors.New("invalid JSON output")
+	}
+	seconds, ok := strings.CutPrefix(output.RunID, "ret-")
+	if !ok || seconds == "" {
+		return nil, errors.New("missing retention run ID")
+	}
+	if _, err := strconv.ParseInt(seconds, 10, 64); err != nil {
+		return nil, errors.New("invalid retention run ID")
+	}
+	needle := []byte(`"run_id":"` + output.RunID + `"`)
+	if bytes.Count(value, needle) != 1 {
+		return nil, errors.New("ambiguous retention run ID field")
+	}
+	return bytes.Replace(value, needle, []byte(`"run_id":"ret-<clock>"`), 1), nil
+}
+
+var textRunID = regexp.MustCompile(`run_id:ret-[0-9]+`)
+
+func normalizeTextRunID(value []byte) ([]byte, error) {
+	if len(textRunID.FindAll(value, 2)) != 1 {
+		return nil, errors.New("missing or ambiguous retention run ID")
+	}
+	return textRunID.ReplaceAll(value, []byte("run_id:ret-<clock>")), nil
 }
 
 func normalizeConsole(value []byte, sandboxRoot string) []byte {

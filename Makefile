@@ -18,6 +18,7 @@
 .PHONY: room-index-cli-fixtures-generate room-index-cli-differential
 .PHONY: room-verify-fixtures-generate room-verify-differential room-verify-cli-fixtures-generate room-verify-cli-differential
 .PHONY: index-backup-fixtures-generate index-backup-differential
+.PHONY: room-decide-cli-fixtures-generate room-decide-cli-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -263,6 +264,13 @@ room-note-cli-fixtures-generate:
 room-note-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortNoteCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test note_commands note_cli_matches_go_process_and_journal_contract
+
+room-decide-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortDecideCLIContract$$'
+
+room-decide-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortDecideCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test decide_commands
 
 room-identity-cli-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortIdentityCLIContract$$'

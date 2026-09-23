@@ -330,6 +330,10 @@ jobs:
         shell: bash
         run: make room-note-cli-differential
 
+      - name: Run native room decide CLI differential
+        shell: bash
+        run: make room-decide-cli-differential
+
       - name: Run native room identity CLI differential
         shell: bash
         run: make room-identity-cli-differential

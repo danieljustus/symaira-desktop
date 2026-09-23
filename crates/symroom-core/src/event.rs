@@ -211,6 +211,11 @@ pub fn format_timestamp(stamp: time::OffsetDateTime) -> String {
     )
 }
 
+/// Current UTC clock in the journal's Go-compatible millisecond format.
+pub fn current_timestamp() -> String {
+    format_timestamp(time::OffsetDateTime::now_utc())
+}
+
 /// Go: `event.CanonicalBytes` — the exact JSON that is signed, keys in Go's
 /// sorted order: `author, body, id, kind, lamport, prev, room, seq, ts, v`.
 ///

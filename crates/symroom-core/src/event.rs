@@ -4,6 +4,7 @@
 //! the JSON line format. Port of `internal/room/event`.
 
 use std::fmt;
+use std::io;
 
 use serde::ser::{SerializeMap, Serializer as _};
 use serde_json::value::RawValue;
@@ -157,12 +158,14 @@ impl Event {
 
     /// Go: `event.UnmarshalJSONLine`.
     pub fn unmarshal_json_line(data: &[u8]) -> Result<Self, EventError> {
+        check_json_depth(data).map_err(|err| EventError::Message(err.to_string()))?;
         serde_json::from_slice(data).map_err(|err| EventError::Message(err.to_string()))
     }
 }
 
 /// Serialise Go's sorted map keys while retaining `json.RawMessage` bytes.
 fn encode_event(event: &Event, signature: Option<&str>) -> Result<Vec<u8>, serde_json::Error> {
+    check_json_depth(event.body.get().as_bytes())?;
     // Go's RawMessage marshaler compacts whitespace outside JSON strings while
     // preserving escape spelling. The fixture itself is pretty-printed JSON.
     let body = RawValue::from_string(compact_json(event.body.get()))?;
@@ -184,6 +187,41 @@ fn encode_event(event: &Event, signature: Option<&str>) -> Result<Vec<u8>, serde
     map.serialize_entry("v", &event.v)?;
     map.end()?;
     Ok(escape_go_json(output))
+}
+
+/// Go's JSON validator rejects nesting beyond 10,000 containers. RawValue's
+/// skip parser does not enforce that limit; count only delimiters outside strings.
+fn check_json_depth(data: &[u8]) -> Result<(), serde_json::Error> {
+    let mut depth: usize = 0;
+    let mut in_string = false;
+    let mut escaped = false;
+    for &byte in data {
+        if in_string {
+            if escaped {
+                escaped = false;
+            } else if byte == b'\\' {
+                escaped = true;
+            } else if byte == b'"' {
+                in_string = false;
+            }
+            continue;
+        }
+        match byte {
+            b'"' => in_string = true,
+            b'[' | b'{' => {
+                depth += 1;
+                if depth > 10_000 {
+                    return Err(serde_json::Error::io(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        format!("invalid character '{}' exceeded max depth", byte as char),
+                    )));
+                }
+            }
+            b']' | b'}' => depth = depth.saturating_sub(1),
+            _ => {}
+        }
+    }
+    Ok(())
 }
 
 fn compact_json(raw: &str) -> String {

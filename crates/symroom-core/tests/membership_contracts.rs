@@ -38,7 +38,7 @@ fn go_membership_projection_and_permissions() {
     let fixture: Fixture = serde_json::from_str(GO_FIXTURE).expect("Go-owned membership fixture");
     assert_eq!(fixture.schema_version, 1);
     assert_eq!(fixture.permissions.len(), 25);
-    assert_eq!(fixture.transitions.len(), 21);
+    assert_eq!(fixture.transitions.len(), 24);
 
     for case in fixture.permissions {
         let member = Member {

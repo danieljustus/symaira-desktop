@@ -324,6 +324,37 @@ fn room_identity_event_vectors_match_the_go_oracle() {
     replay_file_cases(&fixture, modes_observable);
 }
 
+#[test]
+fn go_json_depth_limit() {
+    let fixture = load_fixture();
+    let mut event: Event = serde_json::from_str(fixture.events[0].event.get()).expect("Go event");
+    for depth in [9999, 10000, 10001] {
+        let body = format!("{}0{}", "[".repeat(depth), "]".repeat(depth));
+        event.body = RawValue::from_string(body).expect("raw nested JSON");
+        assert_eq!(
+            event::canonical_bytes(&event).is_ok(),
+            depth <= 10000,
+            "canonical body depth {depth}"
+        );
+        assert_eq!(
+            event.marshal_json_line().is_ok(),
+            depth <= 10000,
+            "journal body depth {depth}"
+        );
+        let envelope = serde_json::to_vec(&event).expect("serialize test envelope");
+        assert_eq!(
+            Event::unmarshal_json_line(&envelope).is_ok(),
+            depth <= 9999,
+            "event envelope depth {depth}"
+        );
+    }
+    event.body = RawValue::from_string(format!("\"{}\"", "\\\"[".repeat(10001)))
+        .expect("escaped quote and brackets in a JSON string");
+    assert!(event::canonical_bytes(&event).is_ok());
+    let line = event.marshal_json_line().expect("string body encodes");
+    assert!(Event::unmarshal_json_line(&line).is_ok());
+}
+
 /// The identity file cases run in a private data directory each, so the Go
 /// vectors stay reproducible on any machine.
 fn replay_file_cases(fixture: &Fixture, modes_observable: bool) {

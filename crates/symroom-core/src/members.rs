@@ -188,7 +188,20 @@ fn parse_body(body: &RawValue, kind: &str) -> Result<MemberBody, String> {
 }
 
 fn decode_key(text: &str, field: &str) -> Result<String, String> {
-    let bytes = hex::decode(text).map_err(|error| format!("invalid {field} pubkey: {error}"))?;
+    let bytes = hex::decode(text).map_err(|error| {
+        let detail = match error {
+            hex::FromHexError::OddLength => "encoding/hex: odd length hex string".to_owned(),
+            hex::FromHexError::InvalidHexCharacter { c, .. } => {
+                if c.is_control() || c == '\u{ad}' {
+                    format!("encoding/hex: invalid byte: U+{:04X}", c as u32)
+                } else {
+                    format!("encoding/hex: invalid byte: U+{:04X} '{c}'", c as u32)
+                }
+            }
+            hex::FromHexError::InvalidStringLength => error.to_string(),
+        };
+        format!("invalid {field} pubkey: {detail}")
+    })?;
     if bytes.len() != 32 {
         return Err(format!("invalid {field} pubkey: %!w(<nil>)"));
     }

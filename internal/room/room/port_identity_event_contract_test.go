@@ -104,6 +104,24 @@ type roomOracle struct {
 }
 
 func TestPortRoomIdentityEventContract(t *testing.T) {
+	for _, depth := range []int{9999, 10000, 10001} {
+		body := strings.Repeat("[", depth) + "0" + strings.Repeat("]", depth)
+		value := &event.Event{Body: json.RawMessage(body)}
+		_, canonicalErr := event.CanonicalBytes(value)
+		_, lineErr := value.MarshalJSONLine()
+		if (canonicalErr == nil) != (depth <= 10000) || (lineErr == nil) != (depth <= 10000) {
+			t.Fatalf("Go RawMessage depth %d: canonical=%v line=%v", depth, canonicalErr, lineErr)
+		}
+		line := []byte(`{"v":1,"id":"","room":"","author":"","seq":0,"prev":"","lamport":0,"ts":"","kind":"","body":` + body + `}`)
+		_, parseErr := event.UnmarshalJSONLine(line)
+		if (parseErr == nil) != (depth <= 9999) {
+			t.Fatalf("Go event envelope depth %d: parse=%v", depth, parseErr)
+		}
+	}
+	quoted := []byte(`{"v":1,"body":"` + strings.Repeat(`\"[`, 10001) + `"}`)
+	if _, err := event.UnmarshalJSONLine(quoted); err != nil {
+		t.Fatalf("brackets inside escaped JSON string do not count toward depth: %v", err)
+	}
 	fixture := buildRoomFixture(t)
 	encoded, err := json.MarshalIndent(fixture, "", "  ")
 	if err != nil {

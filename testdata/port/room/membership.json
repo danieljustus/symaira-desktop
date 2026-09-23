@@ -2,7 +2,7 @@
   "schema_version": 1,
   "source_hashes": {
     "internal/room/members/members.go": "34821f2480ec054e3002d385d9c8c707cb1087eda8cf0195c7207a0d71a0568e",
-    "internal/room/members/port_membership_contract_test.go": "2aecaf12b90853b6ee8110f3c9efdffcb0eab7ca5ac831cb53b8111fac860bf5"
+    "internal/room/members/port_membership_contract_test.go": "0b2a96251a281efbbd9ba281c3d3891bea9f8d1a345a43a62c0aaaf4f7422715"
   },
   "permissions": [
     {
@@ -566,6 +566,83 @@
         "public_key": "00"
       },
       "error": "invalid member pubkey: %!w(\u003cnil\u003e)",
+      "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "invalid-key-odd-hex",
+      "kind": "member.added",
+      "author": "owner",
+      "body": {
+        "id": "bad",
+        "public_key": "0"
+      },
+      "error": "invalid member pubkey: encoding/hex: odd length hex string",
+      "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "invalid-key-nonhex",
+      "kind": "member.added",
+      "author": "owner",
+      "body": {
+        "id": "bad",
+        "public_key": "gg"
+      },
+      "error": "invalid member pubkey: encoding/hex: invalid byte: U+0067 'g'",
+      "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "invalid-root-key-odd-hex",
+      "kind": "room.created",
+      "author": "other",
+      "body": {
+        "public_key": "0"
+      },
+      "error": "invalid root pubkey: encoding/hex: odd length hex string",
       "members": [
         {
           "id": "observer",

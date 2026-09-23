@@ -154,7 +154,7 @@ fn normalize_stdout(output: &[u8], json_output: bool) -> Vec<u8> {
         return go_json(&event)
             .into_bytes()
             .into_iter()
-            .chain([b'\n'])
+            .chain(*b"\n")
             .collect();
     }
     normalize_event_id(output)

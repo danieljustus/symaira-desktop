@@ -77,11 +77,12 @@ fn go_mcp_inventory_call_and_error_frames_match() {
     );
     let room = fixture_room("oracle", &journal_lines);
     let mut output = Vec::new();
-    mcp::serve_io_with_artifact_root(
+    mcp::serve_io_with_identity(
         BufReader::new(Cursor::new(input)),
         &mut output,
         &room,
         &room,
+        None,
     )
     .expect("MCP serve");
     let actual = decode_frames(&output);
@@ -212,11 +213,12 @@ fn no_approval_granting_call_is_exposed() {
     );
     let room = temporary_room("deny");
     let mut output = Vec::new();
-    mcp::serve_io_with_artifact_root(
+    mcp::serve_io_with_identity(
         BufReader::new(Cursor::new(input)),
         &mut output,
         &room,
         &room,
+        None,
     )
     .expect("MCP serve");
     let response = decode_frames(&output).remove(0);

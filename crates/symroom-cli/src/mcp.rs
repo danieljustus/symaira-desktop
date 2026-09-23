@@ -100,15 +100,6 @@ fn tools() -> Value {
     ])
 }
 
-pub fn serve_io_with_artifact_root<R: BufRead, W: Write>(
-    input: R,
-    output: W,
-    room_dir: &Path,
-    artifact_root: &Path,
-) -> io::Result<()> {
-    serve_io_with_identity(input, output, room_dir, artifact_root, None)
-}
-
 pub fn serve_io_with_identity<R: BufRead, W: Write>(
     mut input: R,
     mut output: W,
@@ -426,6 +417,10 @@ fn mutate_checkpoint(
     )
 }
 
+#[expect(
+    clippy::too_many_arguments,
+    reason = "Go event fields are explicit at each tool"
+)]
 fn append_signed(
     room_dir: &Path,
     identity: &symroom_core::identity::Identity,

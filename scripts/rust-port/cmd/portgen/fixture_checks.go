@@ -26,6 +26,7 @@ type fixtureCheckTarget struct {
 var fixtureTestTargets = []fixtureCheckTarget{
 	{"symdesk CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "TestSymdeskCobraInventory"}, []string{"testdata/port/cli/symdesk-command-tree.json"}, false},
 	{"symroom CLI and MCP", []string{"test", "-count=1", "./cmd/symroom", "-run", "TestSymRoomParserGrammar|TestSymRoomMCPInventory"}, []string{"testdata/port/cli/symroom-parser-grammar.json", "testdata/port/mcp/symroom-tools.json"}, false},
+	{"symroom note CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortNoteCLIContract$"}, []string{"testdata/port/room/note-cli.json"}, false},
 	{"symdesk MCP", []string{"test", "-count=1", "./internal/tools", "-run", "TestSymdeskMCPInventory"}, []string{"testdata/port/mcp/symdesk-tools.json"}, false},
 	{"self-hosted HTTP routes", []string{"test", "-count=1", "./internal/selfhost", "-run", "TestSelfhostHTTPInventory"}, []string{"testdata/port/http/routes.json"}, false},
 	{"vault resolution", []string{"test", "-count=1", "./internal/service", "-run", "TestVaultResolutionInventory"}, []string{"testdata/port/vault/resolution.json"}, false},
@@ -46,6 +47,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"room run wait CLI", []string{"test", "-count=1", "./internal/room/run", "-run", "^TestPortRunWaitCLIContract$"}, []string{"testdata/port/room/run-wait-cli.json"}, false},
 	{"room run mutation CLI", []string{"test", "-count=1", "./internal/room/run", "-run", "^TestPortRunMutationCLIContract$"}, []string{"testdata/port/room/run-mutations-cli.json"}, false},
 	{"room MCP", []string{"test", "-count=1", "./internal/room/mcp", "-run", "^TestSymRoomMCPRepresentativeOracle$"}, []string{"testdata/port/room/mcp-parity.json"}, false},
+	{"room MCP mutations", []string{"test", "-count=1", "./internal/room/mcp", "-run", "^TestSymRoomMCPMutationOracle$"}, []string{"testdata/port/room/mcp-artifact.txt", "testdata/port/room/mcp-mutations.json"}, false},
 	{"dataset sync", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract)$"}, []string{"testdata/port/dataset/sync.json", "testdata/port/dataset/service-sync.json", "testdata/port/dataset/import.json"}, false},
 	{"dataset purge", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetPurgeContract$"}, []string{"testdata/port/dataset/purge.json"}, false},
 	{"sidecar contracts", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarContract"}, []string{"testdata/port/sidecar/contracts.json"}, false},

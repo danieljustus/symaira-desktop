@@ -53,7 +53,10 @@ var fixturePaths = []string{
 	"testdata/port/room/run-cli.json",
 	"testdata/port/room/run-wait-cli.json",
 	"testdata/port/room/run-mutations-cli.json",
+	"testdata/port/room/note-cli.json",
 	"testdata/port/room/mcp-parity.json",
+	"testdata/port/room/mcp-artifact.txt",
+	"testdata/port/room/mcp-mutations.json",
 	"testdata/port/dataset/sync.json",
 	"testdata/port/dataset/service-sync.json",
 	"testdata/port/dataset/import.json",
@@ -101,10 +104,10 @@ func runGenerate(repoRoot, commit, release string) {
 		run string
 	}{
 		{"./cmd/symdesk", "TestSymdeskCobraInventory"},
-		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory"},
+		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPortNoteCLIContract"},
 		{"./internal/room/run", "^TestPortRunProjectionContract$"},
 		{"./internal/room/run", "^TestPortRun(Wait|Mutation)?CLIContract$"},
-		{"./internal/room/mcp", "^TestSymRoomMCPRepresentativeOracle$"},
+		{"./internal/room/mcp", "^TestSymRoomMCP(Representative|Mutation)Oracle$"},
 		{"./internal/history", "^TestPortHistory(PurgeContract|SelectedTrashPurgeContract)$"},
 		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract|PurgeContract)$"},
 		{"./internal/tools", "TestSymdeskMCPInventory"},

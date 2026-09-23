@@ -50,7 +50,7 @@ func TestPortRunCLIContract(t *testing.T) {
 	}
 	data = append(data, '\n')
 	path := filepath.Join(root, runCLIContractFixture)
-	if os.Getenv("PORT_GENERATE") == "1" || os.Getenv("ROOM_CLI_GENERATE") == "1" {
+	if os.Getenv("PORT_GENERATE") == "1" {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
 		}

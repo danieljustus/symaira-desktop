@@ -79,7 +79,7 @@ func TestPortDatasetImportContract(t *testing.T) {
 	}
 	encoded = append(encoded, '\n')
 	path := portDatasetImportFixturePath(t)
-	if os.Getenv("PORT_DATASET_IMPORT_GENERATE") == "1" || os.Getenv("PORT_GENERATE") == "1" {
+	if os.Getenv("PORT_GENERATE") == "1" {
 		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
@@ -121,7 +121,7 @@ func TestPortDatasetImportContract(t *testing.T) {
 }
 
 func TestPortDatasetImportContractCrossPlatformMetadata(t *testing.T) {
-	if os.Getenv("PORT_GENERATE") == "1" || os.Getenv("PORT_DATASET_IMPORT_GENERATE") == "1" {
+	if os.Getenv("PORT_GENERATE") == "1" {
 		return
 	}
 	var fixture portDatasetImportFixture

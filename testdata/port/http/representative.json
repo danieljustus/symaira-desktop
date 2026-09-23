@@ -204,6 +204,30 @@
       "method": "HEAD",
       "path": "/api/v1/status",
       "auth": "valid"
+    },
+    {
+      "id": "notebooks-missing-auth",
+      "method": "GET",
+      "path": "/api/v1/notebooks"
+    },
+    {
+      "id": "notebooks-wrong-auth",
+      "method": "GET",
+      "path": "/api/v1/notebooks",
+      "auth": "wrong"
+    },
+    {
+      "id": "notebooks-list",
+      "method": "GET",
+      "path": "/api/v1/notebooks",
+      "auth": "valid"
+    },
+    {
+      "id": "notebooks-empty",
+      "method": "GET",
+      "path": "/api/v1/notebooks",
+      "auth": "valid",
+      "empty_notebooks": true
     }
   ]
 }

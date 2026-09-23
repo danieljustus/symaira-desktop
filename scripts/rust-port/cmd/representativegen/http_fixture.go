@@ -43,6 +43,10 @@ func generatedHTTP() httpSuite {
 		{ID: "health-method-not-allowed", Method: "POST", Path: "/healthz"},
 		{ID: "unknown-route", Method: "GET", Path: "/not-found"},
 		{ID: "status-head", Method: "HEAD", Path: "/api/v1/status", Auth: "valid"},
+		{ID: "notebooks-missing-auth", Method: "GET", Path: "/api/v1/notebooks"},
+		{ID: "notebooks-wrong-auth", Method: "GET", Path: "/api/v1/notebooks", Auth: "wrong"},
+		{ID: "notebooks-list", Method: "GET", Path: "/api/v1/notebooks", Auth: "valid"},
+		{ID: "notebooks-empty", Method: "GET", Path: "/api/v1/notebooks", Auth: "valid", EmptyNotebooks: true},
 	}}
 }
 

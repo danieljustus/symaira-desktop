@@ -375,6 +375,9 @@ fn visit_snapshot(root: &Path, directory: &Path, output: &mut Vec<Value>) {
         let mut journal_content = None;
         if let Ok(mut value) = serde_json::from_slice::<Value>(&bytes) {
             normalize_times(&mut value);
+            // Go json.Marshal sorts map keys even when another workspace crate
+            // enables serde_json's preserve_order feature for this test binary.
+            value.sort_all_objects();
             bytes = serde_json::to_vec(&value).expect("normalize snapshot JSON");
         } else if let Ok(text) = std::str::from_utf8(&bytes) {
             bytes = normalize_text_times(text).into_bytes();

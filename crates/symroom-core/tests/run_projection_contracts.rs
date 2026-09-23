@@ -32,7 +32,7 @@ fn go_run_projection_records_match_byte_for_byte() {
         "a80da93e3ec02801c73aa5b2318dc06de3efd3fa"
     );
     assert_eq!(fixture.records.len(), 6, "nonzero projected records");
-    assert_eq!(fixture.events.len(), 18, "fixture exercises all edge paths");
+    assert_eq!(fixture.events.len(), 19, "fixture exercises all edge paths");
     for source in ["internal/room/run/run.go", "internal/room/event/event.go"] {
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
@@ -74,6 +74,7 @@ fn go_run_projection_records_match_byte_for_byte() {
         "bad-request",
         "key-order-upper-lower",
         "key-order-lower-upper",
+        "key-order-interleaved",
     ] {
         assert!(
             events.iter().any(|event| event.id == id),
@@ -87,11 +88,10 @@ fn go_run_projection_records_match_byte_for_byte() {
     let mut changed = events.clone();
     let event = changed
         .iter_mut()
-        .find(|event| event.id == "key-order-upper-lower")
+        .find(|event| event.id == "key-order-interleaved")
         .expect("negative-control event");
     event.body = RawValue::from_string(
-        r#"{"RUN_ID":"ignored-upper","run_id":"negative-control-id","title":"upper then lower"}"#
-            .into(),
+        r#"{"run_id":"run-a","RUN_ID":"run-b","run_id":"negative-control-id","title":"interleaved duplicates"}"#.into(),
     )
     .expect("valid negative-control body");
     assert!(!matches_go_records(&changed, &fixture.records));

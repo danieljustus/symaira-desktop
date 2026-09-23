@@ -1,9 +1,11 @@
 //! Pure run-event projection from `internal/room/run.ProjectRuns`.
 
 use std::collections::BTreeMap;
+use std::fmt;
 
-use serde::Serialize;
-use serde_json::{Map, Value};
+use serde::de::{MapAccess, Visitor};
+use serde::{Deserialize, Deserializer, Serialize};
+use serde_json::Value;
 
 use crate::event::Event;
 
@@ -159,42 +161,77 @@ pub fn project_runs(events: &[Event]) -> BTreeMap<String, Run> {
     runs
 }
 
-fn body_object(raw: &str) -> Option<Map<String, Value>> {
-    match serde_json::from_str::<Value>(raw).ok()? {
-        Value::Object(map) => Some(map),
-        Value::Null => Some(Map::new()),
-        _ => None,
+struct BodyFields(Vec<(String, Value)>);
+
+impl<'de> Deserialize<'de> for BodyFields {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct BodyVisitor;
+
+        impl<'de> Visitor<'de> for BodyVisitor {
+            type Value = BodyFields;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a run event object or null")
+            }
+
+            fn visit_unit<E: serde::de::Error>(self) -> Result<Self::Value, E> {
+                Ok(BodyFields(Vec::new()))
+            }
+
+            fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
+                let mut fields = Vec::new();
+                while let Some(field) = map.next_entry()? {
+                    fields.push(field);
+                }
+                Ok(BodyFields(fields))
+            }
+        }
+
+        deserializer.deserialize_any(BodyVisitor)
     }
 }
 
-fn string_field(map: &Map<String, Value>, name: &str) -> Option<String> {
-    match map
-        .iter()
-        .filter(|(key, _)| key.eq_ignore_ascii_case(name))
-        .last()
-        .map(|(_, value)| value)
-    {
-        None | Some(Value::Null) => Some(String::new()),
-        Some(Value::String(value)) => Some(value.clone()),
-        _ => None,
-    }
+fn body_object(raw: &str) -> Option<Vec<(String, Value)>> {
+    serde_json::from_str::<BodyFields>(raw)
+        .ok()
+        .map(|fields| fields.0)
 }
 
-fn string_array_field(map: &Map<String, Value>, name: &str) -> Option<Option<Vec<String>>> {
-    match map
+fn string_field(fields: &[(String, Value)], name: &str) -> Option<String> {
+    let mut result = String::new();
+    for (_, value) in fields
         .iter()
         .filter(|(key, _)| key.eq_ignore_ascii_case(name))
-        .last()
-        .map(|(_, value)| value)
     {
-        None | Some(Value::Null) => Some(None),
-        Some(Value::Array(values)) => values
-            .iter()
-            .map(|value| value.as_str().map(str::to_owned))
-            .collect::<Option<Vec<_>>>()
-            .map(Some),
-        _ => None,
+        match value {
+            Value::Null => {}
+            Value::String(value) => result.clone_from(value),
+            _ => return None,
+        }
     }
+    Some(result)
+}
+
+fn string_array_field(fields: &[(String, Value)], name: &str) -> Option<Option<Vec<String>>> {
+    let mut result = None;
+    for (_, value) in fields
+        .iter()
+        .filter(|(key, _)| key.eq_ignore_ascii_case(name))
+    {
+        match value {
+            Value::Null => result = None,
+            Value::Array(values) => {
+                result = Some(
+                    values
+                        .iter()
+                        .map(|value| value.as_str().map(str::to_owned))
+                        .collect::<Option<Vec<_>>>()?,
+                );
+            }
+            _ => return None,
+        }
+    }
+    Some(result)
 }
 
 fn nonempty(value: String) -> Option<String> {

@@ -276,12 +276,29 @@
         "RUN_ID": "run-key-order-two",
         "title": "lower then upper"
       }
+    },
+    {
+      "v": 1,
+      "id": "key-order-interleaved",
+      "room": "room-test",
+      "author": "author",
+      "seq": 0,
+      "prev": "",
+      "lamport": 0,
+      "ts": "2026-01-02T08:02:00.000Z",
+      "kind": "run.requested",
+      "body": {
+        "run_id": "run-a",
+        "RUN_ID": "run-b",
+        "run_id": "run-c",
+        "title": "interleaved duplicates"
+      }
     }
   ],
   "records": [
     "{\"id\":\"run-a\",\"title\":\"Alpha\",\"plan_file\":\"plans/a.md\",\"adapter\":\"local\",\"state\":\"finished\",\"author\":\"author-a\",\"created_at\":\"2026-01-02T03:04:05.000Z\",\"updated_at\":\"2026-01-02T03:07:00.000Z\",\"approval_id\":\"approval-a\",\"scope\":\"workspace\",\"expires_at\":\"2026-01-03T00:00:00Z\",\"summary\":\"done\",\"artifacts\":[\"out/a.txt\",\"out/b.txt\"]}",
     "{\"id\":\"run-b\",\"title\":\"Beta\",\"state\":\"denied\",\"author\":\"author-b\",\"created_at\":\"2026-01-02T04:00:00.000Z\",\"updated_at\":\"2026-01-02T04:01:00.000Z\",\"error\":\"outside scope\"}",
-    "{\"id\":\"run-c\",\"title\":\"Gamma\",\"adapter\":\"remote\",\"state\":\"failed\",\"author\":\"author-c\",\"created_at\":\"2026-01-02T05:00:00.000Z\",\"updated_at\":\"2026-01-02T05:02:00.000Z\",\"error\":\"worker exited 7\"}",
+    "{\"id\":\"run-c\",\"title\":\"interleaved duplicates\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T08:02:00.000Z\",\"updated_at\":\"2026-01-02T08:02:00.000Z\"}",
     "{\"id\":\"run-d\",\"title\":\"Delta\",\"state\":\"cancelled\",\"author\":\"author-d\",\"created_at\":\"2026-01-02T06:00:00.000Z\",\"updated_at\":\"2026-01-02T06:01:00.000Z\",\"error\":\"superseded\"}",
     "{\"id\":\"run-key-order-one\",\"title\":\"upper then lower\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T08:00:00.000Z\",\"updated_at\":\"2026-01-02T08:00:00.000Z\"}",
     "{\"id\":\"run-key-order-two\",\"title\":\"lower then upper\",\"state\":\"requested\",\"author\":\"author\",\"created_at\":\"2026-01-02T08:01:00.000Z\",\"updated_at\":\"2026-01-02T08:01:00.000Z\"}"

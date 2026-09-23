@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "8e11384470ea86b15d1d60f21442a3e0c7287d53",
+  "source_hashes": {
+    "cmd/symroom/cmd_init.go": "4d08484d1a0b87469d749fd7a5831fb883b1e9901a88bd0abfa3bcdfce506213",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/identity/identity.go": "b5ac62c045e84390e1bd99f53b20e404586e8a4499e74bfe95473300ec2e284b",
+    "internal/room/room/room.go": "a58118a0a94c051b54d81ca1c4ae110cc15b48797f735fa420839ed0cfa7b113"
+  },
+  "identity_key": "e711e137b808f5bf2edc6b057f6747ce7dbbb6c7decae4e592a399dc26f9c995",
+  "identity_member": "mem_7beab8563c399a77",
+  "identity_file_name": "oracle.json",
+  "identity_file_content": "{\n  \"name\": \"oracle\",\n  \"member_id\": \"mem_7beab8563c399a77\",\n  \"public_key\": \"b8a85fee1e15de6254f3a549eefc991bb51c1d0aaa737d0ec5ea4a863012fff2\",\n  \"private_key\": \"e711e137b808f5bf2edc6b057f6747ce7dbbb6c7decae4e592a399dc26f9c995b8a85fee1e15de6254f3a549eefc991bb51c1d0aaa737d0ec5ea4a863012fff2\"\n}",
+  "cases": [
+    {
+      "name": "init-env-separated-flags",
+      "args": [
+        "init",
+        "--identity",
+        "oracle",
+        "--name",
+        "Env Room",
+        "room"
+      ],
+      "identity": "env",
+      "exit_code": 0,
+      "stdout": "Initialized room \u003croom-id\u003e in room (owner: oracle)\n",
+      "stderr": "",
+      "files": [
+        {
+          "name": ".gitignore",
+          "content": ".symroom/\n"
+        },
+        {
+          "name": ".symroom/local.toml",
+          "content": "identity = \"oracle\"\nartifact_root = \"\"\n"
+        },
+        {
+          "name": "journal/mem_7beab8563c399a77.jsonl",
+          "content": "{\"author\":\"mem_7beab8563c399a77\",\"body\":{\"name\":\"Env Room\",\"public_key\":\"b8a85fee1e15de6254f3a549eefc991bb51c1d0aaa737d0ec5ea4a863012fff2\"},\"id\":\"ev_0123456789abcdef0123\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_0123456789abcdef\",\"seq\":1,\"sig\":\"ed25519:uiDBdFnDX206nLRNuR5gSwmFcuXuWIAqdl+r+oVnYB2QHxtDQJl0nI51aDGYRwDVjijaHQdedliKEwg/Ha/eBw==\",\"ts\":\"2026-01-02T03:04:05.006Z\",\"v\":1}\n"
+        },
+        {
+          "name": "room.toml",
+          "content": "schema_version = 1\nid = \"rm_0123456789abcdef\"\ncreated = \"2026-01-02T03:04:05.006Z\"\nroot_pubkey = \"ed25519:b8a85fee1e15de6254f3a549eefc991bb51c1d0aaa737d0ec5ea4a863012fff2\"\nroot_event = \"ev_0123456789abcdef0123\"\n"
+        }
+      ],
+      "modes": {
+        ".gitignore": "0644",
+        ".symroom": "0755",
+        ".symroom/local.toml": "0644",
+        "journal": "0755",
+        "journal/mem_7beab8563c399a77.jsonl": "0644",
+        "room.toml": "0644"
+      }
+    },
+    {
+      "name": "init-file-equals-flags",
+      "args": [
+        "init",
+        "--identity=oracle",
+        "--name=File Room",
+        "room"
+      ],
+      "identity": "file",
+      "exit_code": 0,
+      "stdout": "Initialized room \u003croom-id\u003e in room (owner: oracle)\n",
+      "stderr": "",
+      "files": [
+        {
+          "name": ".gitignore",
+          "content": ".symroom/\n"
+        },
+        {
+          "name": ".symroom/local.toml",
+          "content": "identity = \"oracle\"\nartifact_root = \"\"\n"
+        },
+        {
+          "name": "journal/mem_7beab8563c399a77.jsonl",
+          "content": "{\"author\":\"mem_7beab8563c399a77\",\"body\":{\"name\":\"File Room\",\"public_key\":\"b8a85fee1e15de6254f3a549eefc991bb51c1d0aaa737d0ec5ea4a863012fff2\"},\"id\":\"ev_0123456789abcdef0123\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_0123456789abcdef\",\"seq\":1,\"sig\":\"ed25519:EoP7cVvxFXmfsNq23hJ2qroE8Cfsl9YH+JoYsOInb2dD7Z5d+vpfddDwLvNcdXt0AS2/BHuxtDsw/HTuoPVVCQ==\",\"ts\":\"2026-01-02T03:04:05.006Z\",\"v\":1}\n"
+        },
+        {
+          "name": "room.toml",
+          "content": "schema_version = 1\nid = \"rm_0123456789abcdef\"\ncreated = \"2026-01-02T03:04:05.006Z\"\nroot_pubkey = \"ed25519:b8a85fee1e15de6254f3a549eefc991bb51c1d0aaa737d0ec5ea4a863012fff2\"\nroot_event = \"ev_0123456789abcdef0123\"\n"
+        }
+      ],
+      "modes": {
+        ".gitignore": "0644",
+        ".symroom": "0755",
+        ".symroom/local.toml": "0644",
+        "journal": "0755",
+        "journal/mem_7beab8563c399a77.jsonl": "0644",
+        "room.toml": "0644"
+      }
+    },
+    {
+      "name": "init-env-current-dir",
+      "args": [
+        "init",
+        "--identity",
+        "oracle"
+      ],
+      "identity": "env",
+      "room_dir_env": true,
+      "exit_code": 0,
+      "stdout": "Initialized room \u003croom-id\u003e in room (owner: oracle)\n",
+      "stderr": "",
+      "files": [
+        {
+          "name": ".gitignore",
+          "content": ".symroom/\n"
+        },
+        {
+          "name": ".symroom/local.toml",
+          "content": "identity = \"oracle\"\nartifact_root = \"\"\n"
+        },
+        {
+          "name": "journal/mem_7beab8563c399a77.jsonl",
+          "content": "{\"author\":\"mem_7beab8563c399a77\",\"body\":{\"name\":\"Default Room\",\"public_key\":\"b8a85fee1e15de6254f3a549eefc991bb51c1d0aaa737d0ec5ea4a863012fff2\"},\"id\":\"ev_0123456789abcdef0123\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_0123456789abcdef\",\"seq\":1,\"sig\":\"ed25519:PAhJnpOce2kPObQF+6DtMlOpRsy+Yaje2S/EcT5HAk2b13F3fZ+4Nop55ihbEdMiq/2Dj39b5DoAgYN4NFHaAA==\",\"ts\":\"2026-01-02T03:04:05.006Z\",\"v\":1}\n"
+        },
+        {
+          "name": "room.toml",
+          "content": "schema_version = 1\nid = \"rm_0123456789abcdef\"\ncreated = \"2026-01-02T03:04:05.006Z\"\nroot_pubkey = \"ed25519:b8a85fee1e15de6254f3a549eefc991bb51c1d0aaa737d0ec5ea4a863012fff2\"\nroot_event = \"ev_0123456789abcdef0123\"\n"
+        }
+      ],
+      "modes": {
+        ".gitignore": "0644",
+        ".symroom": "0755",
+        ".symroom/local.toml": "0644",
+        "journal": "0755",
+        "journal/mem_7beab8563c399a77.jsonl": "0644",
+        "room.toml": "0644"
+      }
+    },
+    {
+      "name": "init-usage",
+      "args": [
+        "init"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom init \u003cdir\u003e --identity \u003cname\u003e [--name \u003cdisplay_name\u003e]\n",
+      "stderr": "",
+      "files": [],
+      "modes": {}
+    },
+    {
+      "name": "init-help",
+      "args": [
+        "init",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of init:\n  -identity string\n    \tOwner identity name\n  -name string\n    \tRoom display name (default \"Default Room\")\n",
+      "files": [],
+      "modes": {}
+    },
+    {
+      "name": "init-unknown-flag",
+      "args": [
+        "init",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of init:\n  -identity string\n    \tOwner identity name\n  -name string\n    \tRoom display name (default \"Default Room\")\n",
+      "files": [],
+      "modes": {}
+    },
+    {
+      "name": "init-missing-flag-value",
+      "args": [
+        "init",
+        "--identity"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag needs an argument: -identity\nUsage of init:\n  -identity string\n    \tOwner identity name\n  -name string\n    \tRoom display name (default \"Default Room\")\n",
+      "files": [],
+      "modes": {}
+    },
+    {
+      "name": "init-missing-identity",
+      "args": [
+        "init",
+        "room"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --identity is required when default_identity is not configured\n",
+      "files": [],
+      "modes": {}
+    },
+    {
+      "name": "init-nonempty-preserves-file",
+      "args": [
+        "init",
+        "--identity",
+        "oracle",
+        "room"
+      ],
+      "identity": "env",
+      "nonempty": true,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error initializing room: room directory is not empty\n",
+      "files": [],
+      "modes": {},
+      "preserved": "preserve me"
+    }
+  ]
+}

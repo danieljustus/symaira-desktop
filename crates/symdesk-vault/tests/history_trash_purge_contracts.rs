@@ -262,12 +262,12 @@ fn state_of(root: &Path) -> Vec<FileRecord> {
                 sha256: sha256_hex(&data),
                 content: String::new(),
             };
-            if let Ok(text) = String::from_utf8(data) {
-                if !text.contains('\u{fffd}') {
-                    record.content = normalise_text(&text);
-                    record.sha256.clear();
-                    record.size = i64::try_from(record.content.len()).unwrap_or(i64::MAX);
-                }
+            if let Ok(text) = String::from_utf8(data)
+                && !text.contains('\u{fffd}')
+            {
+                record.content = normalise_text(&text);
+                record.sha256.clear();
+                record.size = i64::try_from(record.content.len()).unwrap_or(i64::MAX);
             }
             records.push(record);
         }
@@ -345,10 +345,10 @@ fn error_class(error: &HistoryError) -> String {
 
 fn error_text(error: &HistoryError) -> String {
     let text = error.to_string();
-    if let HistoryError::CorruptTrashMetadata(_, _) = error {
-        if let Some(index) = text.find(": ") {
-            return text[..index + 2].to_owned();
-        }
+    if let HistoryError::CorruptTrashMetadata(_, _) = error
+        && let Some(index) = text.find(": ")
+    {
+        return text[..index + 2].to_owned();
     }
     text
 }

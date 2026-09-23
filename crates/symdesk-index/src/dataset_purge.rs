@@ -158,13 +158,22 @@ impl<'a> DatasetPurgeService<'a> {
                     .collect();
                 validate_trash(root, &journal.trash)?;
                 store.purge_paths(&paths)?;
+                let current_trash = store.trash_list_strict()?;
+                let mut wanted = Vec::with_capacity(journal.trash.len());
                 for record in &journal.trash {
-                    remove_file_idempotent(root, &format!("{TRASH_DIR}/{}", record.name))?;
-                    remove_file_idempotent(
-                        root,
-                        &format!("{TRASH_DIR}/{}{}", record.name, TRASH_META_SUFFIX),
-                    )?;
+                    if let Some(entry) =
+                        current_trash.iter().find(|entry| entry.name == record.name)
+                    {
+                        if entry.original_path != record.original_path {
+                            return Err(DatasetPurgeError::Contract(format!(
+                                "trash entry {:?} original path changed",
+                                record.name
+                            )));
+                        }
+                        wanted.push(entry.clone());
+                    }
                 }
+                store.purge_trash_entries(&wanted)?;
                 journal.phase = "complete".into();
                 journal.status = "completed".into();
                 journal.last_error.clear();
@@ -654,6 +663,57 @@ mod tests {
             b"replacement"
         );
         assert!(!sandbox.root.join("datasets/orders.md").exists());
+        assert!(
+            sandbox
+                .root
+                .join(".symdesk/dataset-purge/orders.json")
+                .exists()
+        );
+    }
+
+    #[test]
+    fn replaced_trash_payload_survives_purge_retry() {
+        let mut sandbox = Sandbox::new();
+        sandbox.setup();
+        let raw = sandbox.root.join("datasets/orders/2026-01-04.csv");
+        let raw_bytes = fs::read(&raw).expect("read original raw source");
+        let history = symdesk_vault::HistoryStore::new(&sandbox.root);
+        let entry = history
+            .trash("datasets/orders/2026-01-04.csv")
+            .expect("trash raw source");
+        fs::write(&raw, &raw_bytes).expect("restore active source copy");
+        let state =
+            symdesk_vault::retention_state::retention_state(&sandbox.root, "datasets/orders.md")
+                .expect("retention state");
+        let root = Dir::open_ambient_dir(&sandbox.root, ambient_authority()).expect("root cap");
+        let journal = preflight(
+            &sandbox.root,
+            &root,
+            "orders",
+            "default",
+            &state.fingerprint,
+        )
+        .expect("preflight plan");
+        write_journal(&root, &journal).expect("persist plan");
+        sandbox.db.close().expect("close sidecar");
+        assert!(
+            DatasetPurgeService::new(&sandbox.root, &mut sandbox.db)
+                .purge("orders", "default", &state.fingerprint)
+                .is_err()
+        );
+
+        let payload = sandbox.root.join(".symdesk/trash").join(&entry.name);
+        fs::write(&payload, b"replacement trash bytes").expect("replace trash payload bytes");
+        sandbox.db = Sidecar::open(&sandbox.parent.join("sidecar.db")).expect("reopen sidecar");
+        assert!(
+            DatasetPurgeService::new(&sandbox.root, &mut sandbox.db)
+                .purge("orders", "default", &state.fingerprint)
+                .is_err()
+        );
+        assert_eq!(
+            fs::read(payload).expect("read retained replacement trash"),
+            b"replacement trash bytes"
+        );
         assert!(
             sandbox
                 .root

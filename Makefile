@@ -158,7 +158,7 @@ config-precedence-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/config -run '^TestPortConfigPrecedenceContract$$'
 	$(CARGO) test -p symdesk-core --test config_precedence --locked
 
-config-vault-selection-differential: port-contract-fixtures-check
+config-vault-selection-differential: port-fixtures-check
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symdesk -run '^TestPortVaultSelectionCLIContract$$'
 	$(CARGO) test -p symdesk-cli --test config_vault_selection --locked
 

@@ -31,6 +31,7 @@
 .PHONY: room-watch-cli-fixtures-generate room-watch-cli-differential
 .PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential
 .PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential
+.PHONY: config-precedence-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -151,6 +152,11 @@ config-save-fixtures-generate:
 config-save-differential:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/config -run TestPortConfigSaveContract
 	$(CARGO) test -p symdesk-core --test config_save_contracts --locked
+
+# CFG-002 config precedence: replay the frozen Go loader results in Rust.
+config-precedence-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/config -run '^TestPortConfigPrecedenceContract$$'
+	$(CARGO) test -p symdesk-core --test config_precedence --locked
 
 vault-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultgen \
@@ -458,6 +464,13 @@ index-build-cli-fixtures-generate:
 index-build-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$$'
 	$(CARGO) test -p symdesk-cli --locked --test index_build
+
+room-run-approval-cli-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'
+
+room-run-approval-cli-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortRunApprovalCLIContract$$'
+	$(CARGO) test -p symroom-cli --locked --test run_approval_commands
 
 history-prune-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run '^TestPortHistoryPruneContract$$'

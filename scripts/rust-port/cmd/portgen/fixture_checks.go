@@ -24,6 +24,7 @@ type fixtureCheckTarget struct {
 }
 
 var fixtureTestTargets = []fixtureCheckTarget{
+	{"config precedence", []string{"test", "-count=1", "./internal/config", "-run", "^TestPortConfigPrecedenceContract$"}, []string{"testdata/port/core/config-precedence.json"}, false},
 	{"symdesk CLI", []string{"test", "-count=1", "./cmd/symdesk", "-run", "TestSymdeskCobraInventory"}, []string{"testdata/port/cli/symdesk-command-tree.json"}, false},
 	{"symroom CLI and MCP", []string{"test", "-count=1", "./cmd/symroom", "-run", "TestSymRoomParserGrammar|TestSymRoomMCPInventory"}, []string{"testdata/port/cli/symroom-parser-grammar.json", "testdata/port/mcp/symroom-tools.json"}, false},
 	{"symroom note CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortNoteCLIContract$"}, []string{"testdata/port/room/note-cli.json"}, false},
@@ -44,6 +45,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"symroom watch CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortWatchCLIContract$"}, []string{"testdata/port/room/watch-cli.json"}, false},
 	{"symroom doctor CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortDoctorCLIContract$"}, []string{"testdata/port/room/doctor-cli.json"}, false},
 	{"symroom checkpoint CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortCheckpointCLIContract$"}, []string{"testdata/port/room/checkpoint-cli.json"}, false},
+	{"symroom run approval CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortRunApprovalCLIContract$"}, []string{"testdata/port/room/run-approval-cli.json"}, false},
 	{"index backup", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexBackupPortFixture$"}, []string{"testdata/port/retrieval/index-backup.json"}, false},
 	{"index restore", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexRestorePortFixture$"}, []string{"testdata/port/retrieval/index-restore.json"}, false},
 	{"index relocation", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexRelocatePortFixture$"}, []string{"testdata/port/retrieval/index-relocate.json"}, false},

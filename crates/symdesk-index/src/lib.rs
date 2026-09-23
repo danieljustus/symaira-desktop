@@ -601,9 +601,7 @@ impl Sidecar {
                     return Err(io::Error::other("refresh index callback failed"));
                 }
             };
-            if record_lifecycle
-                && let Err(error) = self.set_lifecycle_state(key, "indexing", "")
-            {
+            if record_lifecycle && let Err(error) = self.set_lifecycle_state(key, "indexing", "") {
                 callback_error = Some(error);
                 return Err(io::Error::other("refresh index callback failed"));
             }
@@ -615,9 +613,7 @@ impl Sidecar {
                 callback_error = Some(error);
                 return Err(io::Error::other("refresh index callback failed"));
             }
-            if record_lifecycle
-                && let Err(error) = self.set_lifecycle_state(key, "indexed", "")
-            {
+            if record_lifecycle && let Err(error) = self.set_lifecycle_state(key, "indexed", "") {
                 callback_error = Some(error);
                 return Err(io::Error::other("refresh index callback failed"));
             }

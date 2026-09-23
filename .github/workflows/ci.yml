@@ -271,6 +271,10 @@ jobs:
         shell: bash
         run: make config-save-differential
 
+      - name: Run native config-precedence differential
+        shell: bash
+        run: make config-precedence-differential
+
       # The byte fixture and its modes contract are portable: Go skips the
       # 0700/0600 assertions on Windows and the Rust replay gates them with
       # #[cfg(unix)], so all three platforms can run the same target.
@@ -349,6 +353,10 @@ jobs:
       - name: Run native room checkpoint CLI differential
         shell: bash
         run: make room-checkpoint-cli-differential
+
+      - name: Run native room run approval CLI differential
+        shell: bash
+        run: make room-run-approval-cli-differential
 
       - name: Run native index backup differential
         shell: bash

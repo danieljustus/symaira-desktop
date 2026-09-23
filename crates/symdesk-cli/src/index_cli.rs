@@ -236,9 +236,13 @@ fn run_build(
     } else {
         None
     };
-    let mut result = json!({"status":"ok", "indexed":indexed, "skipped":skipped});
+    let mut result = BTreeMap::from([
+        ("indexed", json!(indexed)),
+        ("skipped", json!(skipped)),
+        ("status", json!("ok")),
+    ]);
     if let Some(count) = pruned {
-        result["pruned"] = json!(count);
+        result.insert("pruned", json!(count));
     }
     if json_output {
         let mut rendered = serde_json::to_string(&result).unwrap_or_default();
@@ -367,16 +371,17 @@ fn backup_index(source: &Path, destination: &Path) -> Result<(), String> {
 }
 
 fn emit_result(result: serde_json::Value, json_output: bool) -> ExitCode {
+    let object = result.as_object().expect("command result is an object");
+    let sorted = object.iter().collect::<BTreeMap<_, _>>();
     if json_output {
-        let mut rendered = match serde_json::to_string(&result) {
+        let mut rendered = match serde_json::to_string(&sorted) {
             Ok(value) => value,
             Err(error) => return super::emit_error(error.to_string(), true),
         };
         rendered.push('\n');
         super::write_stdout(rendered)
     } else {
-        let object = result.as_object().expect("command result is an object");
-        let fields = object
+        let fields = sorted
             .iter()
             .map(|(key, value)| format!("{key}:{}", value.as_str().unwrap_or("")))
             .collect::<Vec<_>>()

@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "source_hashes": {
+    "cmd/symroom/cmd_log.go": "7c570fb10bb722a79c9bc654fd2bfa0ae2717c66d638fa9d5c4ddfedf0eed951",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/journal/log.go": "c9d05adc7e98a9585449fefae5c710b5350797eaa760282c8d1c47614cd47d11"
+  },
+  "cases": [
+    {
+      "name": "empty",
+      "journal_case": "empty",
+      "args": [
+        "log"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr_prefix": ""
+    },
+    {
+      "name": "valid-human",
+      "journal_case": "valid",
+      "args": [
+        "log"
+      ],
+      "exit_code": 0,
+      "stdout": "[2026-09-23T10:00:00.000Z] mem_566efce80236d225 (room.created): Verify Room\n[2026-09-23T10:00:00.000Z] mem_566efce80236d225 (note.posted): hello\n[2026-09-23T10:00:00.000Z] mem_566efce80236d225 (run.requested): run body\n",
+      "stderr_prefix": ""
+    },
+    {
+      "name": "valid-json-kind",
+      "journal_case": "valid",
+      "args": [
+        "log",
+        "--json",
+        "--kind",
+        "note.posted"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"author\":\"mem_566efce80236d225\",\"body\":{\"text\":\"hello\"},\"id\":\"ev_note\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:11897f3ea69652224ab9faf14f8084f425ce804ace72f16b09a3ee8e8c6dc87c\",\"room\":\"rm_verify\",\"seq\":2,\"sig\":\"ed25519:Cn/gKC2NkW/rX+M4/BGzyvT7kKzrsjnw2vARW1PpFKRsnjLNkpJDs+BiAQe23g0caiEUhz0pBnty8dUFhssfCw==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n",
+      "stderr_prefix": ""
+    },
+    {
+      "name": "run-limit",
+      "journal_case": "valid",
+      "args": [
+        "log",
+        "--run=run_1",
+        "--limit=1"
+      ],
+      "exit_code": 0,
+      "stdout": "[2026-09-23T10:00:00.000Z] mem_566efce80236d225 (run.requested): run body\n",
+      "stderr_prefix": ""
+    },
+    {
+      "name": "since-until",
+      "journal_case": "valid",
+      "args": [
+        "log",
+        "--since",
+        "2026-09-23T10:00:00.000Z",
+        "--until",
+        "2026-09-23T10:00:00.000Z"
+      ],
+      "exit_code": 0,
+      "stdout": "[2026-09-23T10:00:00.000Z] mem_566efce80236d225 (room.created): Verify Room\n[2026-09-23T10:00:00.000Z] mem_566efce80236d225 (note.posted): hello\n[2026-09-23T10:00:00.000Z] mem_566efce80236d225 (run.requested): run body\n",
+      "stderr_prefix": ""
+    },
+    {
+      "name": "tampered-warning",
+      "journal_case": "tampered-signature",
+      "args": [
+        "log"
+      ],
+      "exit_code": 0,
+      "stdout": "[2026-09-23T10:00:00.000Z] mem_566efce80236d225 (room.created): Verify Room\n",
+      "stderr_prefix": "Warning: 1 invalid event(s) omitted from log. Run 'symroom verify' for details.\n"
+    },
+    {
+      "name": "unknown-author-kept",
+      "journal_case": "unknown-author",
+      "args": [
+        "log",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"author\":\"mem_566efce80236d225\",\"body\":{\"name\":\"Verify Room\",\"public_key\":\"550a81d072d44e4464327c19b358dd437174ee6b407df33d90db416ef7dc6d57\"},\"id\":\"ev_root\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_verify\",\"seq\":1,\"sig\":\"ed25519:A1IjRXgzPPayEdzrMJADVUVrn9rP1d9dZHoTp1UcErnLd8/KHCEi6uqhiqmm/MIZOVGRgVK7ds5JsLOOwmPFBA==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_77ca2514fea12e12\",\"body\":{\"text\":\"unknown\"},\"id\":\"ev_unknown\",\"kind\":\"note.posted\",\"lamport\":2,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_verify\",\"seq\":1,\"sig\":\"ed25519:RWiYW99PvTTY9JlG10ApOdHmxVR/VlbpnILd32aHjdlnWHVKfUDTYX3dOoJQBtRXyj74nTTZrv7JnC2PPwAGDA==\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n",
+      "stderr_prefix": ""
+    },
+    {
+      "name": "malformed",
+      "journal_case": "malformed",
+      "args": [
+        "log"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr_prefix": "Error querying log: verify error: read all segments: read segment mem_566efce80236d225: unmarshal line:"
+    },
+    {
+      "name": "help",
+      "journal_case": "valid",
+      "args": [
+        "log",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr_prefix": "Usage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n"
+    },
+    {
+      "name": "bad-flag",
+      "journal_case": "valid",
+      "args": [
+        "log",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr_prefix": "flag provided but not defined: -bogus\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n"
+    },
+    {
+      "name": "bad-limit",
+      "journal_case": "valid",
+      "args": [
+        "log",
+        "--limit=bad"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr_prefix": "invalid value \"bad\" for flag -limit: parse error\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n"
+    },
+    {
+      "name": "missing-limit",
+      "journal_case": "valid",
+      "args": [
+        "log",
+        "--limit"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr_prefix": "flag needs an argument: -limit\nUsage of log:\n  -author string\n    \tFilter events by author member ID\n  -json\n    \tOutput events as NDJSON\n  -kind string\n    \tFilter events by kind\n  -limit int\n    \tLimit number of events returned\n  -run string\n    \tFilter events by run ID\n  -since string\n    \tFilter events since RFC3339 timestamp\n  -until string\n    \tFilter events until RFC3339 timestamp\n"
+    },
+    {
+      "name": "positional-stops-flags",
+      "journal_case": "valid",
+      "args": [
+        "log",
+        "extra",
+        "--kind",
+        "note.posted"
+      ],
+      "exit_code": 0,
+      "stdout": "[2026-09-23T10:00:00.000Z] mem_566efce80236d225 (room.created): Verify Room\n[2026-09-23T10:00:00.000Z] mem_566efce80236d225 (note.posted): hello\n[2026-09-23T10:00:00.000Z] mem_566efce80236d225 (run.requested): run body\n",
+      "stderr_prefix": ""
+    }
+  ]
+}

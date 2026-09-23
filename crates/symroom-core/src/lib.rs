@@ -19,5 +19,6 @@ pub mod event;
 pub mod identity;
 pub mod index;
 pub mod journal;
+pub mod log;
 pub mod members;
 pub mod runs;

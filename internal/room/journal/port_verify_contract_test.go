@@ -52,6 +52,8 @@ func TestPortRoomVerifyContract(t *testing.T) {
 	rootLine := verifyFixtureLine(t, rootEvent)
 	note := verifyFixtureEvent(t, owner, "ev_note", 2, ComputeLineHash(bytes.TrimSuffix([]byte(rootLine), []byte("\n"))), 2, event.KindNotePosted, []byte(`{"text":"hello"}`))
 	noteLine := verifyFixtureLine(t, note)
+	runEvent := verifyFixtureEvent(t, owner, "ev_run", 3, ComputeLineHash(bytes.TrimSuffix([]byte(noteLine), []byte("\n"))), 3, event.KindRunRequested, []byte(`{"run_id":"run_1","text":"run body"}`))
+	runLine := verifyFixtureLine(t, runEvent)
 	invalid := *note
 	invalid.Body = json.RawMessage(`{"text":"tampered"}`)
 	invalidLine := verifyFixtureLine(t, &invalid)
@@ -74,7 +76,7 @@ func TestPortRoomVerifyContract(t *testing.T) {
 	forkB := verifyFixtureEvent(t, owner, "ev_fork_b", 2, rootPrev, 3, event.KindNotePosted, []byte(`{"text":"b"}`))
 	contract.Cases = []verifyCase{
 		{Name: "empty", Files: map[string]string{}},
-		{Name: "valid", Files: map[string]string{owner.MemberID + ".jsonl": rootLine + noteLine}},
+		{Name: "valid", Files: map[string]string{owner.MemberID + ".jsonl": rootLine + noteLine + runLine}},
 		{Name: "tampered-signature", Files: map[string]string{owner.MemberID + ".jsonl": rootLine + invalidLine}},
 		{Name: "wrong-sequence", Files: map[string]string{owner.MemberID + ".jsonl": rootLine + verifyFixtureLine(t, wrongSeq)}},
 		{Name: "wrong-prev", Files: map[string]string{owner.MemberID + ".jsonl": rootLine + verifyFixtureLine(t, wrongPrev)}},

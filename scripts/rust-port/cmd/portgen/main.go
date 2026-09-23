@@ -64,6 +64,8 @@ var fixturePaths = []string{
 	"testdata/port/room/index-cli.json",
 	"testdata/port/room/verify.json",
 	"testdata/port/room/verify-cli.json",
+	"testdata/port/room/log.json",
+	"testdata/port/room/log-cli.json",
 	"testdata/port/retrieval/index-backup.json",
 	"testdata/port/room/mcp-parity.json",
 	"testdata/port/room/mcp-artifact.txt",
@@ -115,9 +117,11 @@ func runGenerate(repoRoot, commit, release string) {
 		run string
 	}{
 		{"./cmd/symdesk", "TestSymdeskCobraInventory"},
-		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPort(Note|Decide|Identity|Member|Index|Verify)CLIContract"},
+		{"./internal/room/journal", "^TestPortRoomVerifyContract$"},
+		{"./internal/room/journal", "^TestPortRoomLogContract$"},
+		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPort(Note|Decide|Identity|Member|Index|Verify|Log)CLIContract"},
 		{"./internal/room/run", "^TestPortRunProjectionContract$"},
-		{"./internal/room/journal", "^TestPortRoom(MergeRead|Verify)Contract$"},
+		{"./internal/room/journal", "^TestPortRoomMergeReadContract$"},
 		{"./internal/room/index", "^TestPortSymRoomIndexOracle$"},
 		{"./internal/retrieval", "^TestIndexBackupPortFixture$"},
 		{"./internal/room/run", "^TestPortRun(Wait|Mutation)?CLIContract$"},

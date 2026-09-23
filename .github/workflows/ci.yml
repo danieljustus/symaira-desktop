@@ -306,6 +306,14 @@ jobs:
         shell: bash
         run: make room-verify-cli-differential
 
+      - name: Run native room log differential
+        shell: bash
+        run: make room-log-differential
+
+      - name: Run native room log CLI differential
+        shell: bash
+        run: make room-log-cli-differential
+
       - name: Run native index backup differential
         shell: bash
         run: make index-backup-differential

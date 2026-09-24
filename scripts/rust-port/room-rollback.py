@@ -8,6 +8,7 @@ import os
 import platform
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import tempfile
 import sys
@@ -35,6 +36,107 @@ def sha256(path):
         for block in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def build_environment(temp, rustc):
+    home = temp / "build-home"
+    data = temp / "build-data"
+    config = temp / "build-config"
+    cache = temp / "build-cache"
+    cargo_home = temp / "cargo-home"
+    paths = (home, data, config, cache, cargo_home)
+    for path in paths:
+        path.mkdir(parents=True, exist_ok=True)
+
+    if os.name == "nt":
+        system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+        path_entries = [system_root / "System32", system_root]
+    elif platform.system() == "Darwin":
+        path_entries = [Path("/usr/bin"), Path("/bin"), Path("/usr/sbin"), Path("/sbin")]
+    else:
+        path_entries = [Path("/usr/bin"), Path("/bin"), Path("/usr/sbin"), Path("/sbin")]
+
+    env = {
+        "HOME": str(home),
+        "USERPROFILE": str(home),
+        "XDG_DATA_HOME": str(data),
+        "XDG_CONFIG_HOME": str(config),
+        "XDG_CACHE_HOME": str(cache),
+        "TMPDIR": str(temp / "build-tmp"),
+        "TEMP": str(temp / "build-tmp"),
+        "TMP": str(temp / "build-tmp"),
+        "PATH": os.pathsep.join(str(path) for path in path_entries),
+        "CARGO_HOME": str(cargo_home),
+        "CARGO_TARGET_DIR": str(temp / "cargo-target"),
+        "RUSTC": str(rustc),
+        "RUSTUP_HOME": os.environ.get("RUSTUP_HOME", str(Path.home() / ".rustup")),
+        "GOCACHE": str(temp / "go-cache"),
+        "GOMODCACHE": str(temp / "go-mod-cache"),
+        "GOPATH": str(temp / "go-path"),
+        "GOTMPDIR": str(temp / "go-tmp"),
+        "GOENV": "off",
+        "GOTOOLCHAIN": "local",
+        "CGO_ENABLED": "0",
+        "GOSUMDB": "sum.golang.org",
+        "TZ": "UTC",
+    }
+    for name in ("build-tmp", "go-cache", "go-mod-cache", "go-path", "go-tmp"):
+        (temp / name).mkdir(parents=True, exist_ok=True)
+    return env
+
+
+def cleanup_worktrees(root, paths, env):
+    listed = subprocess.run(
+        ["git", "worktree", "list", "--porcelain"], cwd=root, env=env,
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    if listed.returncode:
+        return [f"cannot inspect worktrees: {listed.stderr.strip()}"]
+    registered = {
+        Path(line.removeprefix("worktree ")).resolve()
+        for line in listed.stdout.splitlines() if line.startswith("worktree ")
+    }
+    failures = []
+    for path in paths:
+        resolved = path.resolve()
+        if resolved not in registered:
+            if path.exists():
+                failures.append(f"unregistered worktree path preserved: {path}")
+            continue
+        status = subprocess.run(
+            ["git", "-C", str(path), "status", "--porcelain", "--ignored", "--untracked-files=all"],
+            cwd=root, env=env, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        if status.returncode:
+            failures.append(f"cannot inspect worktree {path}: {status.stderr.strip()}")
+            continue
+        if status.stdout:
+            failures.append(f"modified worktree preserved: {path}")
+            continue
+        removed = subprocess.run(
+            ["git", "worktree", "remove", str(path)], cwd=root, env=env,
+            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        if removed.returncode:
+            failures.append(f"could not remove clean worktree {path}: {removed.stderr.strip()}")
+    return failures
+
+
+def remove_temp_tree(path):
+    def make_writable_and_retry(function, failed_path, _error):
+        failed = Path(failed_path)
+        for candidate in (failed.parent, failed):
+            try:
+                mode = os.lstat(candidate).st_mode
+            except FileNotFoundError:
+                continue
+            if stat.S_ISLNK(mode):
+                continue
+            os.chmod(candidate, mode | stat.S_IWUSR, follow_symlinks=False)
+        function(failed_path)
+
+    shutil.rmtree(path, onerror=make_writable_and_retry)
 
 
 def invoke(binary, args, work, room, identity, label, expected_code=0):
@@ -91,113 +193,136 @@ def main():
             "rust": {"ref": options.rust_ref, "commit": rust_revision},
             "go_fallback": {"ref": options.go_ref, "commit": go_revision},
         },
+        "cleanup": {"status": "pending"},
         "steps": [],
     }
 
-    with tempfile.TemporaryDirectory(prefix="symroom-rollback-") as temporary:
-        temp = Path(temporary)
-        rust_tree, go_tree = temp / "rust-source", temp / "go-source"
-        run(["git", "worktree", "add", "--detach", rust_tree, rust_revision], cwd=root)
-        run(["git", "worktree", "add", "--detach", go_tree, go_revision], cwd=root)
+    cargo = shutil.which("cargo")
+    rustc = shutil.which("rustc")
+    go = shutil.which("go")
+    if not cargo or not rustc or not go:
+        raise RuntimeError("cargo, rustc, and go must be available on the host PATH")
+    temp = Path(tempfile.mkdtemp(prefix="symroom-rollback-"))
+    rust_tree, go_tree = temp / "rust-source", temp / "go-source"
+    build_env = build_environment(temp, rustc)
+    failure = None
+    try:
+        run(["git", "worktree", "add", "--detach", rust_tree, rust_revision], cwd=root, env=build_env)
+        run(["git", "worktree", "add", "--detach", go_tree, go_revision], cwd=root, env=build_env)
+        rust_bin, go_bin = temp / "symroom-rust", temp / "symroom-go"
+        suffix = ".exe" if os.name == "nt" else ""
+        rust_bin = rust_bin.with_suffix(suffix) if suffix else rust_bin
+        go_bin = go_bin.with_suffix(suffix) if suffix else go_bin
+        run([cargo, "build", "--locked", "--release", "-p", "symroom-cli",
+             "--manifest-path", rust_tree / "Cargo.toml"], cwd=rust_tree, env=build_env)
+        rust_output = temp / "cargo-target" / "release" / f"symroom{suffix}"
+        shutil.copy2(rust_output, rust_bin)
+        report["toolchain"] = {
+            "go": run([go, "version"], cwd=go_tree, env=build_env).stdout.strip(),
+            "rustc": run([rustc, "--version"], cwd=rust_tree, env=build_env).stdout.strip(),
+            "cargo": run([cargo, "--version"], cwd=rust_tree, env=build_env).stdout.strip(),
+        }
+        run([go, "build", "-trimpath", "-buildvcs=false", "-o", go_bin, "./cmd/symroom"],
+            cwd=go_tree, env=build_env)
+        report["binaries"] = {
+            "rust": {"sha256": sha256(rust_bin)},
+            "go_fallback": {
+                "sha256": sha256(go_bin),
+                "provenance": "local build from the selected Go source revision; not a public release artifact",
+            },
+        }
+        room, work = temp / "room", temp / "runtime"
+
+        # Rust creates the identity and signed room state in isolated HOME/XDG paths.
+        report["steps"].append(invoke(rust_bin, ["identity", "create", "rollback"],
+                                      work, room, None, "rust creates identity"))
+        identity_file = work / "data/symroom/identities/rollback.json"
+        identity_data = json.loads(identity_file.read_text())
+        key = identity_data["private_key"]
+        report["steps"].append(invoke(rust_bin, ["init", str(room), "--identity", "rollback"],
+                                      work, room, key, "rust initializes room"))
+        report["steps"].append(invoke(rust_bin, ["note", "--identity", "rollback", "written by Rust"],
+                                      work, room, key, "rust writes signed note"))
+
+        # The older Go binary must verify and read Rust's event before mutating the same copy.
+        go_verify = invoke(go_bin, ["verify"], work, room, key, "older Go verifies Rust journal")
+        report["steps"].append(go_verify)
+        go_log = invoke(go_bin, ["log"], work, room, key, "older Go reads Rust journal")
+        report["steps"].append(go_log)
+        if "written by Rust" not in go_log["stdout"]:
+            raise RuntimeError("older Go fallback did not read the Rust-authored note")
+
+        tampered = temp / "tampered-room"
+        shutil.copytree(room, tampered)
+        segment = next((tampered / "journal").glob("*.jsonl"))
+        lines = segment.read_text().splitlines()
+        event = json.loads(lines[-1])
+        event["body"]["text"] = "tampered note body"
+        lines[-1] = json.dumps(event, separators=(",", ":"))
+        segment.write_text("\n".join(lines) + "\n")
+        tamper_result = invoke(
+            go_bin, ["verify"], work, tampered, key,
+            "older Go rejects tampered signature", expected_code=1,
+        )
+        report["steps"].append(tamper_result)
+        if "signature verification failed" not in tamper_result["stdout"]:
+            raise RuntimeError("older Go did not reject the tampered signed body")
+
+        report["steps"].append(invoke(go_bin, ["note", "--identity", "rollback", "written by Go fallback"],
+                                      work, room, key, "older Go appends signed note"))
+
+        rust_verify = invoke(rust_bin, ["verify"], work, room, key,
+                             "Rust verifies mixed-version journal")
+        report["steps"].append(rust_verify)
+        rust_log = invoke(rust_bin, ["log"], work, room, key,
+                          "Rust reads mixed-version journal")
+        report["steps"].append(rust_log)
+        if "written by Rust" not in rust_log["stdout"] or "written by Go fallback" not in rust_log["stdout"]:
+            raise RuntimeError("Rust did not read both signed notes after Go rollback")
+
+        journal = room / "journal"
+        report["room"] = {
+            "journal_files": {
+                path.name: sha256(path) for path in sorted(journal.glob("*.jsonl"))
+            },
+            "journal_sha256": sha256_bytes(b"".join(
+                path.read_bytes() for path in sorted(journal.glob("*.jsonl"))
+            )),
+        }
+    except BaseException as error:
+        failure = error
+    cleanup_failures = cleanup_worktrees(root, [rust_tree, go_tree], build_env)
+    cleanup_error = None
+    if cleanup_failures:
+        report["cleanup"] = {
+            "status": "FAIL",
+            "workspace": str(temp),
+            "details": cleanup_failures,
+        }
+        cleanup_error = "temporary workspace preserved at " + str(temp) + ": " + "; ".join(cleanup_failures)
+    else:
         try:
-            rust_bin, go_bin = temp / "symroom-rust", temp / "symroom-go"
-            rust_env = os.environ.copy()
-            rust_env["CARGO_TARGET_DIR"] = str(temp / "cargo-target")
-            rust_env["CARGO_HOME"] = str(temp / "cargo-home")
-            run(["cargo", "build", "--locked", "--release", "-p", "symroom-cli",
-                 "--manifest-path", rust_tree / "Cargo.toml"], cwd=rust_tree, env=rust_env)
-            shutil.copy2(temp / "cargo-target/release/symroom", rust_bin)
-            go_env = os.environ.copy()
-            go_env.update({
-                "CGO_ENABLED": "0",
-                "GOCACHE": str(temp / "go-cache"),
-                "GOMODCACHE": str(temp / "go-mod-cache"),
-                "GOPATH": str(temp / "go-path"),
-                "GOTMPDIR": str(temp / "go-tmp"),
-                "HOME": str(temp / "build-home"),
-            })
-            for name in ("go-cache", "go-mod-cache", "go-path", "go-tmp", "build-home"):
-                (temp / name).mkdir()
-            report["toolchain"] = {
-                "go": run(["go", "version"], cwd=go_tree, env=go_env).stdout.strip(),
-                "rustc": run(["rustc", "--version"], cwd=rust_tree).stdout.strip(),
-                "cargo": run(["cargo", "--version"], cwd=rust_tree).stdout.strip(),
+            remove_temp_tree(temp)
+            report["cleanup"] = {"status": "PASS", "workspace_removed": True}
+        except OSError as error:
+            report["cleanup"] = {
+                "status": "FAIL",
+                "workspace": str(temp) if temp.exists() else None,
+                "details": [str(error)],
             }
-            run(["go", "build", "-trimpath", "-o", go_bin, "./cmd/symroom"],
-                cwd=go_tree, env=go_env)
-            report["binaries"] = {
-                "rust": {"sha256": sha256(rust_bin)},
-                "go_fallback": {
-                    "sha256": sha256(go_bin),
-                    "provenance": "local build from the selected Go source revision; not a public release artifact",
-                },
-            }
-            room, work = temp / "room", temp / "runtime"
+            cleanup_error = f"could not remove temporary workspace {temp}: {error}"
 
-            # Rust creates the identity and signed room state in isolated HOME/XDG paths.
-            report["steps"].append(invoke(rust_bin, ["identity", "create", "rollback"],
-                                          work, room, None, "rust creates identity"))
-            identity_file = work / "data/symroom/identities/rollback.json"
-            identity_data = json.loads(identity_file.read_text())
-            key = identity_data["private_key"]
-            report["steps"].append(invoke(rust_bin, ["init", str(room), "--identity", "rollback"],
-                                          work, room, key, "rust initializes room"))
-            report["steps"].append(invoke(rust_bin, ["note", "--identity", "rollback", "written by Rust"],
-                                          work, room, key, "rust writes signed note"))
-
-            # The older Go binary must verify and read Rust's event before mutating the same copy.
-            go_verify = invoke(go_bin, ["verify"], work, room, key, "older Go verifies Rust journal")
-            report["steps"].append(go_verify)
-            go_log = invoke(go_bin, ["log"], work, room, key, "older Go reads Rust journal")
-            report["steps"].append(go_log)
-            if "written by Rust" not in go_log["stdout"]:
-                raise RuntimeError("older Go fallback did not read the Rust-authored note")
-
-            tampered = temp / "tampered-room"
-            shutil.copytree(room, tampered)
-            segment = next((tampered / "journal").glob("*.jsonl"))
-            lines = segment.read_text().splitlines()
-            event = json.loads(lines[-1])
-            event["body"]["text"] = "tampered note body"
-            lines[-1] = json.dumps(event, separators=(",", ":"))
-            segment.write_text("\n".join(lines) + "\n")
-            tamper_result = invoke(
-                go_bin, ["verify"], work, tampered, key,
-                "older Go rejects tampered signature", expected_code=1,
-            )
-            report["steps"].append(tamper_result)
-            if "signature verification failed" not in tamper_result["stdout"]:
-                raise RuntimeError("older Go did not reject the tampered signed body")
-
-            report["steps"].append(invoke(go_bin, ["note", "--identity", "rollback", "written by Go fallback"],
-                                          work, room, key, "older Go appends signed note"))
-
-            rust_verify = invoke(rust_bin, ["verify"], work, room, key,
-                                 "Rust verifies mixed-version journal")
-            report["steps"].append(rust_verify)
-            rust_log = invoke(rust_bin, ["log"], work, room, key,
-                              "Rust reads mixed-version journal")
-            report["steps"].append(rust_log)
-            if "written by Rust" not in rust_log["stdout"] or "written by Go fallback" not in rust_log["stdout"]:
-                raise RuntimeError("Rust did not read both signed notes after Go rollback")
-
-            journal = room / "journal"
-            report["room"] = {
-                "journal_files": {
-                    path.name: sha256(path) for path in sorted(journal.glob("*.jsonl"))
-                },
-                "journal_sha256": sha256_bytes(b"".join(
-                    path.read_bytes() for path in sorted(journal.glob("*.jsonl"))
-                )),
-            }
-        finally:
-            run(["git", "worktree", "remove", "--force", rust_tree], cwd=root)
-            run(["git", "worktree", "remove", "--force", go_tree], cwd=root)
-
+    report["test_result"] = "PASS" if failure is None else "FAIL"
+    report["result"] = "PASS" if failure is None and cleanup_error is None else "FAIL"
+    if failure:
+        report["failure"] = str(failure)
     encoded = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if options.report:
         options.report.write_text(encoded)
     print(encoded, end="")
+    if failure or cleanup_error:
+        message = "; ".join(part for part in (str(failure) if failure else None, cleanup_error) if part)
+        raise RuntimeError(message)
 
 
 def sha256_bytes(value):

@@ -80,14 +80,16 @@ def build_environment(temp, rustc):
         "GOSUMDB": "sum.golang.org",
         "TZ": "UTC",
     }
+    if os.name == "nt":
+        env["SystemRoot"] = str(system_root)
     for name in ("build-tmp", "go-cache", "go-mod-cache", "go-path", "go-tmp"):
         (temp / name).mkdir(parents=True, exist_ok=True)
     return env
 
 
-def cleanup_worktrees(root, paths, env):
+def cleanup_worktrees(root, paths, env, git):
     listed = subprocess.run(
-        ["git", "worktree", "list", "--porcelain"], cwd=root, env=env,
+        [git, "worktree", "list", "--porcelain"], cwd=root, env=env,
         text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
     )
     if listed.returncode:
@@ -104,7 +106,7 @@ def cleanup_worktrees(root, paths, env):
                 failures.append(f"unregistered worktree path preserved: {path}")
             continue
         status = subprocess.run(
-            ["git", "-C", str(path), "status", "--porcelain", "--ignored", "--untracked-files=all"],
+            [git, "-C", str(path), "status", "--porcelain", "--ignored", "--untracked-files=all"],
             cwd=root, env=env, text=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
@@ -115,7 +117,7 @@ def cleanup_worktrees(root, paths, env):
             failures.append(f"modified worktree preserved: {path}")
             continue
         removed = subprocess.run(
-            ["git", "worktree", "remove", str(path)], cwd=root, env=env,
+            [git, "worktree", "remove", str(path)], cwd=root, env=env,
             text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
         if removed.returncode:
@@ -200,15 +202,16 @@ def main():
     cargo = shutil.which("cargo")
     rustc = shutil.which("rustc")
     go = shutil.which("go")
-    if not cargo or not rustc or not go:
-        raise RuntimeError("cargo, rustc, and go must be available on the host PATH")
+    git = shutil.which("git")
+    if not cargo or not rustc or not go or not git:
+        raise RuntimeError("cargo, rustc, go, and git must be available on the host PATH")
     temp = Path(tempfile.mkdtemp(prefix="symroom-rollback-"))
     rust_tree, go_tree = temp / "rust-source", temp / "go-source"
     build_env = build_environment(temp, rustc)
     failure = None
     try:
-        run(["git", "worktree", "add", "--detach", rust_tree, rust_revision], cwd=root, env=build_env)
-        run(["git", "worktree", "add", "--detach", go_tree, go_revision], cwd=root, env=build_env)
+        run([git, "worktree", "add", "--detach", rust_tree, rust_revision], cwd=root, env=build_env)
+        run([git, "worktree", "add", "--detach", go_tree, go_revision], cwd=root, env=build_env)
         rust_bin, go_bin = temp / "symroom-rust", temp / "symroom-go"
         suffix = ".exe" if os.name == "nt" else ""
         rust_bin = rust_bin.with_suffix(suffix) if suffix else rust_bin
@@ -291,7 +294,7 @@ def main():
         }
     except BaseException as error:
         failure = error
-    cleanup_failures = cleanup_worktrees(root, [rust_tree, go_tree], build_env)
+    cleanup_failures = cleanup_worktrees(root, [rust_tree, go_tree], build_env, git)
     cleanup_error = None
     if cleanup_failures:
         report["cleanup"] = {

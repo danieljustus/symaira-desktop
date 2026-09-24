@@ -84,6 +84,26 @@ func TestPortInitCLIContract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", initCLIFixturePath, err)
 	}
+	if runtime.GOOS == "windows" {
+		var frozen initCLIContract
+		if err := json.Unmarshal(got, &frozen); err != nil {
+			t.Fatal(err)
+		}
+		for i := range frozen.Cases {
+			for path := range frozen.Cases[i].Modes {
+				frozen.Cases[i].Modes[path] = "platform"
+			}
+		}
+		portable, err := json.MarshalIndent(frozen, "", "  ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		portable = append(portable, '\n')
+		if !bytes.Equal(data, portable) {
+			t.Fatal("Go init CLI portable fixture is stale")
+		}
+		return
+	}
 	if !bytes.Equal(got, data) {
 		t.Fatal("Go init CLI fixture is stale; regenerate deliberately with PORT_GENERATE=1")
 	}

@@ -281,19 +281,14 @@ fn permission_bits(metadata: &fs::Metadata) -> u32 {
     metadata.permissions().mode() & 0o777
 }
 
-#[cfg(not(unix))]
-fn permission_bits(_metadata: &fs::Metadata) -> u32 {
-    0
+#[cfg(unix)]
+fn permission_string(metadata: &fs::Metadata) -> String {
+    format!("0{:03o}", permission_bits(metadata))
 }
 
-fn permission_string(metadata: &fs::Metadata) -> String {
-    #[cfg(windows)]
-    {
-        let _ = metadata;
-        return String::new();
-    }
-    #[cfg(not(windows))]
-    format!("0{:03o}", permission_bits(metadata))
+#[cfg(not(unix))]
+fn permission_string(_metadata: &fs::Metadata) -> String {
+    String::new()
 }
 
 fn mode_string(metadata: &fs::Metadata) -> String {

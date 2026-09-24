@@ -330,6 +330,8 @@ fn query_cli_caps_large_pages_at_one_thousand_rows() {
         .collect::<Vec<_>>()
         .join(",");
     let row_input = format!("[{rows}]");
+    let rows_path = root.0.join("rows.json");
+    fs::write(&rows_path, row_input).expect("write large rows fixture");
     let seeded = run(
         &root,
         [
@@ -337,7 +339,7 @@ fn query_cli_caps_large_pages_at_one_thousand_rows() {
             "sync",
             "orders",
             "--rows",
-            &row_input,
+            rows_path.to_str().expect("UTF-8 rows path"),
             "--provenance",
             r#"{"source_name":"fixture","source_sha256":"sha","imported_at":"2026-04-03T10:00:00Z"}"#,
             "--identity-field",

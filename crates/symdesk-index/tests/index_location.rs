@@ -3,6 +3,7 @@ use std::{
     fs,
     io::Read,
     path::{Path, PathBuf},
+    sync::atomic::{AtomicU64, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -53,6 +54,7 @@ struct Fixture {
 }
 
 struct TestDir(PathBuf);
+static NEXT_TEST_DIR: AtomicU64 = AtomicU64::new(0);
 
 impl TestDir {
     fn new() -> Self {
@@ -61,8 +63,9 @@ impl TestDir {
             .expect("clock before Unix epoch")
             .as_nanos();
         let path = std::env::temp_dir().join(format!(
-            "symdesk-index-location-{}-{nonce}",
-            std::process::id()
+            "symdesk-index-location-{}-{nonce}-{}",
+            std::process::id(),
+            NEXT_TEST_DIR.fetch_add(1, Ordering::Relaxed)
         ));
         fs::create_dir(&path).expect("create isolated fixture directory");
         Self(path)

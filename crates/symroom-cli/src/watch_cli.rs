@@ -4,7 +4,7 @@ use std::{
     ffi::OsString,
     io::{self, BufReader, Write},
     path::{Path, PathBuf},
-    process::{Command, ExitCode, Stdio},
+    process::{ExitCode, Stdio},
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -95,7 +95,7 @@ async fn watch(vault: &str, signer: identity::Identity) -> ExitCode {
 
     let mut backoff = Duration::from_millis(100);
     loop {
-        let mut child = match Command::new("symdesk")
+        let mut child = match crate::symdesk_command()
             .args(["events", vault])
             .stdout(Stdio::piped())
             .stderr(Stdio::null())

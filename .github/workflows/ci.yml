@@ -39,10 +39,10 @@ jobs:
           fetch-depth: 0
 
       # The frontmatter/history source guards clone this checkout and verify a
-      # pre-squash Go revision. Keep that object reachable through a local
+      # pinned Go revision. Keep that object reachable through a local
       # branch: FETCH_HEAD alone is not transferred by git clone --no-local.
       - name: Materialize pinned Go oracle for source guards
-        run: git fetch --no-tags origin +c4f6e77928849c3626400c45676c05c3cf58f2a1:refs/heads/rust-port-oracle-c4f6e77928849c3626400c45676c05c3cf58f2a1
+        run: git fetch --no-tags origin +ee25af59fa810f2cac9f6d66a911bb1eb42d247f:refs/heads/rust-port-oracle-ee25af59fa810f2cac9f6d66a911bb1eb42d247f
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -132,7 +132,7 @@ jobs:
       # The Windows contract runs the clone-based Go source guards below.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
-        run: git fetch --no-tags origin +c4f6e77928849c3626400c45676c05c3cf58f2a1:refs/heads/rust-port-oracle-c4f6e77928849c3626400c45676c05c3cf58f2a1
+        run: git fetch --no-tags origin +ee25af59fa810f2cac9f6d66a911bb1eb42d247f:refs/heads/rust-port-oracle-ee25af59fa810f2cac9f6d66a911bb1eb42d247f
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -219,10 +219,10 @@ jobs:
           fetch-depth: 0
 
       # The source-guard tests clone this checkout, so retain the immutable
-      # pre-squash oracle through a local branch rather than only FETCH_HEAD.
+      # pinned oracle through a local branch rather than only FETCH_HEAD.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
-        run: git fetch --no-tags origin +c4f6e77928849c3626400c45676c05c3cf58f2a1:refs/heads/rust-port-oracle-c4f6e77928849c3626400c45676c05c3cf58f2a1
+        run: git fetch --no-tags origin +ee25af59fa810f2cac9f6d66a911bb1eb42d247f:refs/heads/rust-port-oracle-ee25af59fa810f2cac9f6d66a911bb1eb42d247f
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:

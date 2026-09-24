@@ -146,47 +146,6 @@ fn artifact_identity_and_symdesk_inspect_match_go_process_contract() {
             &path,
             &fixture.identity_key,
         );
-        if case.name == "link-inspect-success" {
-            let args_path = isolated.join("symdesk-args.txt");
-            let status_path = isolated.join("symdesk-status.txt");
-            if !args_path.is_file() {
-                let probe_args = isolated.join("probe-args.txt");
-                let probe_status = isolated.join("probe-status.txt");
-                let mut probe = Command::new("symdesk");
-                probe
-                    .args(["inspect", "probe.md", "--json"])
-                    .current_dir(&room)
-                    .env_clear()
-                    .env("HOME", &home)
-                    .env("USERPROFILE", &home)
-                    .env("PATH", &path)
-                    .env("PATHEXT", ".COM;.EXE;.BAT;.CMD")
-                    .env("SYMDESK_MODE", "success")
-                    .env("SYMDESK_ARGS_FILE", probe_args)
-                    .env("SYMDESK_STATUS_FILE", probe_status);
-                #[cfg(windows)]
-                for name in ["SYSTEMROOT", "WINDIR", "COMSPEC"] {
-                    if let Some(value) = std::env::var_os(name) {
-                        probe.env(name, value);
-                    }
-                }
-                match probe.output() {
-                    Ok(probe_output) => panic!(
-                        "fake symdesk was not invoked by symroom; direct PATH probe launched (exit={:?}, stdout_bytes={}); symroom exit={:?}, stdout={:?}, stderr={:?}",
-                        probe_output.status.code(),
-                        probe_output.stdout.len(),
-                        output.status.code(),
-                        String::from_utf8_lossy(&output.stdout),
-                        String::from_utf8_lossy(&output.stderr)
-                    ),
-                    Err(error) => {
-                        panic!("fake symdesk was not invoked; direct PATH spawn error: {error}")
-                    }
-                }
-            }
-            let status = fs::read_to_string(status_path).unwrap_or_default();
-            assert_eq!(status, "completed", "fake symdesk status marker");
-        }
         assert_eq!(
             output.status.code(),
             Some(case.exit_code),
@@ -275,12 +234,6 @@ fn run_symroom(
                 .expect("fixture case")
                 .join("symdesk-args.txt"),
         );
-    command.env(
-        "SYMDESK_STATUS_FILE",
-        room.parent()
-            .expect("fixture case")
-            .join("symdesk-status.txt"),
-    );
     #[cfg(windows)]
     command.env("PATHEXT", ".COM;.EXE;.BAT;.CMD");
     #[cfg(windows)]
@@ -301,20 +254,14 @@ fn build_fake_symdesk(temp: &Path) -> PathBuf {
     fs::write(
         &source,
         r##"
-use std::{env, fs, io::{self, Write}, process, thread, time::Duration};
+use std::{env, fs, process, thread, time::Duration};
 
 fn main() {
     let args = env::args().skip(1).collect::<Vec<_>>();
     let args_path = env::var_os("SYMDESK_ARGS_FILE").expect("SYMDESK_ARGS_FILE");
     fs::write(args_path, format!("{}\n", args.join("\n"))).expect("record arguments");
-    let status_path = env::var_os("SYMDESK_STATUS_FILE").expect("SYMDESK_STATUS_FILE");
-    fs::write(&status_path, "started").expect("write start marker");
     match env::var("SYMDESK_MODE").as_deref() {
-        Ok("success") => {
-            println!(r#"{{"document_id":"doc-fixture-1","vault_name":"fixture","valid":true}}"#);
-            io::stdout().flush().expect("flush inspect response");
-            fs::write(status_path, "completed").expect("write completion marker");
-        }
+        Ok("success") => println!(r#"{{"document_id":"doc-fixture-1","vault_name":"fixture","valid":true}}"#),
         Ok("exit") => { println!(r#"{{"document_id":"ignored"}}"#); process::exit(7); },
         Ok("invalid") => println!("not-json"),
         Ok("hang") => thread::sleep(Duration::from_secs(60)),

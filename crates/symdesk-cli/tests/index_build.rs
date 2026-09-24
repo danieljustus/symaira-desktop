@@ -125,6 +125,10 @@ fn normalizes_json_escaped_windows_root() {
         normalize(r#"{"error":"stat C:\\temp\\fixture\\missing"}"#, root),
         r#"{"error":"stat $ROOT/missing"}"#
     );
+    assert_eq!(
+        normalize(r"C:\temp\fixture\vault\first.md", root).replace('\\', "/"),
+        "$ROOT/vault/first.md"
+    );
 }
 
 #[test]
@@ -254,7 +258,7 @@ fn read_files(connection: &Connection, root: &Path) -> Vec<IndexedFile> {
         .expect("query files")
         .map(|row| {
             let mut file = row.expect("file row");
-            file.path = normalize(&file.path, root);
+            file.path = normalize(&file.path, root).replace('\\', "/");
             file
         })
         .collect()

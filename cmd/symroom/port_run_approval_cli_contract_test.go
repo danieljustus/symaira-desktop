@@ -195,7 +195,7 @@ func makeRunApprovalCLIContract(t *testing.T, root string) (runApprovalCLIContra
 		}
 		cmd := exec.Command(executable, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Env = []string{
-			"HOME=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
+			"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
 			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + roomDir,
 			"SYMROOM_IDENTITY_KEY=" + fixture.IdentityKeys[vector.actor],
 			"SYMROOM_DEFAULT_IDENTITY=" + vector.defaultEnv,

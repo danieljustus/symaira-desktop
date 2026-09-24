@@ -148,7 +148,7 @@ func makeDecideCLIContract(t *testing.T, root string) (decideCLIContract, error)
 		}
 		cmd := exec.Command(goBinary, vector.argv...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Env = []string{
-			"HOME=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
+			"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
 			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + roomDir,
 			"SYMROOM_IDENTITY_KEY=" + fixture.IdentityKey,
 		}

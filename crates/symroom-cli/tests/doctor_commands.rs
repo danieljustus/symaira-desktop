@@ -261,7 +261,7 @@ fn install_tools(dir: &Path, work: &Path) {
         #[cfg(not(windows))]
         {
             let script = format!(
-                "#!/bin/sh\ncase \"$1\" in\n  get) printf '%s %s\\n' '{name}' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '%s\\n' \"$DOCTOR_IDENTITY_KEY\" ;;\n  version) printf '%s %s\\n' '{name}' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '{{\\\"version\\\":\\\"{name}-1.2.3\\\"}}\\n' ;;\nesac\n"
+                "#!/bin/sh\ncase \"$1\" in\n  get) printf '%s %s\\n' '{name}' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '%s\\n' \"$DOCTOR_IDENTITY_KEY\" ;;\n  version) printf '%s %s\\n' '{name}' \"$*\" >> \"$DOCTOR_TOOL_LOG\"; printf '%s\\n' '{{\"version\":\"{name}-1.2.3\"}}' ;;\nesac\n"
             );
             let path = dir.join(name);
             fs::write(&path, script).expect("write integration stub");

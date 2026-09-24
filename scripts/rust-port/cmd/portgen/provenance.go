@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 var fullGitCommit = regexp.MustCompile(`^[0-9a-f]{40}$`)
@@ -209,7 +211,7 @@ func gitOutput(repoRoot string, args ...string) ([]byte, error) {
 }
 
 func gitCommand(repoRoot string, args ...string) (*exec.Cmd, func(), error) {
-	configPath, cleanup, err := privateGitConfig()
+	configPath, cleanup, err := inventory.PrivateGitConfig()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -220,19 +222,6 @@ func gitCommand(repoRoot string, args ...string) (*exec.Cmd, func(), error) {
 	command.Dir = repoRoot
 	command.Env = sanitizedGitEnvironment(os.Environ(), configPath)
 	return command, cleanup, nil
-}
-
-func privateGitConfig() (string, func(), error) {
-	dir, err := os.MkdirTemp("", "portgen-git-config-")
-	if err != nil {
-		return "", nil, fmt.Errorf("create private Git config directory: %w", err)
-	}
-	configPath := filepath.Join(dir, "config")
-	if err := os.WriteFile(configPath, nil, 0o600); err != nil {
-		_ = os.RemoveAll(dir)
-		return "", nil, fmt.Errorf("create empty private Git config: %w", err)
-	}
-	return configPath, func() { _ = os.RemoveAll(dir) }, nil
 }
 
 func sanitizedGitEnvironment(environment []string, configPath string) []string {

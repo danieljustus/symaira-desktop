@@ -257,7 +257,7 @@ func trustedGoTool() (string, error) {
 }
 
 func runSidecarLifecycleGenerator(repoRoot string, oracle inventory.Oracle) error {
-	configPath, cleanup, err := privateGitConfig()
+	configPath, cleanup, err := inventory.PrivateGitConfig()
 	if err != nil {
 		return err
 	}
@@ -288,7 +288,7 @@ func runFixtureChecks(repoRoot string, sidecarOracle inventory.Oracle) error {
 	if err != nil {
 		return err
 	}
-	configPath, cleanup, err := privateGitConfig()
+	configPath, cleanup, err := inventory.PrivateGitConfig()
 	if err != nil {
 		return err
 	}

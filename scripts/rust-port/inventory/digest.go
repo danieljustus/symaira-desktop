@@ -19,8 +19,7 @@ import (
 func ComputeProductionSourceDigest(repoRoot string) (string, error) {
 	args := []string{"ls-files", "--cached", "--others", "--exclude-standard", "--", "cmd", "internal"}
 	args = append(args, productionContractFiles()...)
-	listCommand := inventoryGitCommand(repoRoot, args...)
-	output, err := listCommand.Output()
+	output, err := inventoryGitOutput(repoRoot, args...)
 	if err != nil {
 		return "", fmt.Errorf("list working-tree production inputs: %w", err)
 	}
@@ -52,8 +51,7 @@ func ComputeProductionSourceDigest(repoRoot string) (string, error) {
 func ComputeGitRevisionProductionSourceDigest(repoRoot, revision string) (string, error) {
 	args := []string{"ls-tree", "-r", "--name-only", revision, "--", "cmd", "internal"}
 	args = append(args, productionContractFiles()...)
-	listCommand := inventoryGitCommand(repoRoot, args...)
-	output, err := listCommand.Output()
+	output, err := inventoryGitOutput(repoRoot, args...)
 	if err != nil {
 		return "", fmt.Errorf("list production inputs at %s: %w", revision, err)
 	}
@@ -68,8 +66,7 @@ func ComputeGitRevisionProductionSourceDigest(repoRoot, revision string) (string
 	hasher := sha256.New()
 	for _, rel := range files {
 		_, _ = io.WriteString(hasher, rel+"\n")
-		show := inventoryGitCommand(repoRoot, "show", revision+":"+rel)
-		content, showErr := show.Output()
+		content, showErr := inventoryGitOutput(repoRoot, "show", revision+":"+rel)
 		if showErr != nil {
 			return "", fmt.Errorf("read %s at %s: %w", rel, revision, showErr)
 		}
@@ -106,8 +103,7 @@ func ComputeGitRevisionGeneratorSourceDigest(repoRoot, revision string) (string,
 		return "", err
 	}
 	return hashGeneratorDigestInputs(files, func(rel string) ([]byte, error) {
-		show := inventoryGitCommand(repoRoot, "show", revision+":"+rel)
-		content, showErr := show.Output()
+		content, showErr := inventoryGitOutput(repoRoot, "show", revision+":"+rel)
 		if showErr != nil {
 			return nil, fmt.Errorf("read generator input %s at %s: %w", rel, revision, showErr)
 		}
@@ -157,8 +153,7 @@ func listGeneratorDigestInputs(repoRoot, revision string) ([]string, error) {
 		args = append(args, "ls-tree", "-r", "--name-only", revision, "--")
 	}
 	args = append(args, generatorSourcePaths()...)
-	command := inventoryGitCommand(repoRoot, args...)
-	output, err := command.Output()
+	output, err := inventoryGitOutput(repoRoot, args...)
 	if err != nil {
 		if revision == "" {
 			return nil, fmt.Errorf("list fixture generator inputs: %w", err)
@@ -199,15 +194,39 @@ func hashGeneratorDigestInputs(files []string, read func(string) ([]byte, error)
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-func inventoryGitCommand(repoRoot string, args ...string) *exec.Cmd {
+func inventoryGitOutput(repoRoot string, args ...string) ([]byte, error) {
+	configPath, cleanup, err := PrivateGitConfig()
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup()
 	//nolint:gosec // callers use fixed Git subcommands and repository-derived revision/path inputs.
-	command := exec.Command("git", append([]string{"--no-replace-objects"}, args...)...)
+	command := exec.Command("git", append([]string{"-c", "safe.directory=" + filepath.ToSlash(repoRoot), "--no-replace-objects"}, args...)...)
 	command.Dir = repoRoot
-	command.Env = inventoryGitEnvironment(os.Environ())
-	return command
+	command.Env = inventoryGitEnvironment(os.Environ(), configPath)
+	output, err := command.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, strings.TrimSpace(string(output)))
+	}
+	return output, nil
 }
 
-func inventoryGitEnvironment(environment []string) []string {
+// PrivateGitConfig returns a real empty config file: os.DevNull (NUL) is not
+// accepted as GIT_CONFIG_GLOBAL by native Git for Windows.
+func PrivateGitConfig() (string, func(), error) {
+	dir, err := os.MkdirTemp("", "portgen-git-config-")
+	if err != nil {
+		return "", nil, fmt.Errorf("create private Git config directory: %w", err)
+	}
+	configPath := filepath.Join(dir, "config")
+	if err := os.WriteFile(configPath, nil, 0o600); err != nil {
+		_ = os.RemoveAll(dir)
+		return "", nil, fmt.Errorf("create empty private Git config: %w", err)
+	}
+	return configPath, func() { _ = os.RemoveAll(dir) }, nil
+}
+
+func inventoryGitEnvironment(environment []string, configPath string) []string {
 	result := make([]string, 0, len(environment)+3)
 	for _, item := range environment {
 		name, _, found := strings.Cut(item, "=")
@@ -218,7 +237,7 @@ func inventoryGitEnvironment(environment []string) []string {
 	}
 	return append(result,
 		"GIT_ATTR_NOSYSTEM=1",
-		"GIT_CONFIG_GLOBAL="+os.DevNull,
+		"GIT_CONFIG_GLOBAL="+configPath,
 		"GIT_CONFIG_NOSYSTEM=1",
 		"GIT_TERMINAL_PROMPT=0",
 	)

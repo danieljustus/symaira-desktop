@@ -8,6 +8,23 @@ import (
 	"testing"
 )
 
+func TestInventoryGitOutputTrustsOnlyCheckout(t *testing.T) {
+	repoRoot := t.TempDir()
+	runGeneratorDigestGit(t, repoRoot, "init", "-q")
+	globalConfig := filepath.Join(t.TempDir(), "global.gitconfig")
+	if err := os.WriteFile(globalConfig, []byte("[safe]\n	directory = *\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GIT_CONFIG_GLOBAL", globalConfig)
+	output, err := inventoryGitOutput(repoRoot, "config", "--get-all", "safe.directory")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := strings.TrimSpace(string(output)), filepath.ToSlash(repoRoot); got != want {
+		t.Fatalf("unexpected trusted directories: got %q, want %q", got, want)
+	}
+}
+
 func TestGeneratorDigestIncludesMakefileAndCanReadImmutableRevision(t *testing.T) {
 	repoRoot := t.TempDir()
 	runGeneratorDigestGit(t, repoRoot, "init", "-q")

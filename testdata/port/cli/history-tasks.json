@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "empty-json",
+      "json": true,
+      "manifests": {},
+      "exit_code": 0,
+      "stdout": "null\n",
+      "stderr": ""
+    },
+    {
+      "name": "empty-text",
+      "json": false,
+      "manifests": {},
+      "exit_code": 0,
+      "stdout": "no task checkpoints\n",
+      "stderr": ""
+    },
+    {
+      "name": "newest-first-json",
+      "json": true,
+      "manifests": {
+        "newer.json": "{\"task_id\":\"newer\",\"timestamp\":\"2025-01-01T00:00:00Z\",\"files\":[],\"new_files\":[\"new.md\"],\"skipped\":[]}",
+        "older.json": "{\"task_id\":\"older\",\"timestamp\":\"2024-01-01T00:00:00Z\",\"files\":[],\"new_files\":[],\"skipped\":[]}"
+      },
+      "exit_code": 0,
+      "stdout": "[{\"task_id\":\"newer\",\"timestamp\":\"2025-01-01T00:00:00Z\",\"files\":[],\"new_files\":[\"new.md\"],\"skipped\":[]},{\"task_id\":\"older\",\"timestamp\":\"2024-01-01T00:00:00Z\",\"files\":[],\"new_files\":[],\"skipped\":[]}]\n",
+      "stderr": ""
+    },
+    {
+      "name": "newest-first-text",
+      "json": false,
+      "manifests": {
+        "newer.json": "{\"task_id\":\"newer\",\"timestamp\":\"2025-01-01T00:00:00Z\",\"files\":[],\"new_files\":[\"new.md\"],\"skipped\":[]}",
+        "older.json": "{\"task_id\":\"older\",\"timestamp\":\"2024-01-01T00:00:00Z\",\"files\":[],\"new_files\":[],\"skipped\":[]}"
+      },
+      "exit_code": 0,
+      "stdout": "newer  2025-01-01 00:00:00  0 files, 1 new\nolder  2024-01-01 00:00:00  0 files, 0 new\n",
+      "stderr": ""
+    },
+    {
+      "name": "partial-json",
+      "json": true,
+      "manifests": {
+        "partial.json": "{\"task_id\":\"partial\",\"timestamp\":\"2025-02-03T04:05:06Z\",\"files\":[],\"new_files\":[],\"skipped\":[\"blocked.md\"]}"
+      },
+      "exit_code": 0,
+      "stdout": "[{\"task_id\":\"partial\",\"timestamp\":\"2025-02-03T04:05:06Z\",\"files\":[],\"new_files\":[],\"skipped\":[\"blocked.md\"]}]\n",
+      "stderr": ""
+    },
+    {
+      "name": "partial-text",
+      "json": false,
+      "manifests": {
+        "partial.json": "{\"task_id\":\"partial\",\"timestamp\":\"2025-02-03T04:05:06Z\",\"files\":[],\"new_files\":[],\"skipped\":[\"blocked.md\"]}"
+      },
+      "exit_code": 0,
+      "stdout": "partial  2025-02-03 04:05:06  0 files, 0 new (partial)\n",
+      "stderr": ""
+    }
+  ]
+}

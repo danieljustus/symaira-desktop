@@ -323,13 +323,32 @@ pub fn render_toml(config: &Config) -> Result<String, String> {
     toml::to_string(config).map_err(|error| format!("failed to encode config: {error}"))
 }
 
+/// Every directory below `directory` that does not exist yet, ordered from the
+/// outermost to the innermost, mirroring the directories `os.MkdirAll` creates.
+#[cfg(unix)]
+fn missing_ancestors(directory: &Path) -> Vec<&Path> {
+    let mut missing = Vec::new();
+    let mut current = directory;
+    while !current.exists() {
+        match current.parent() {
+            Some(parent) if !parent.as_os_str().is_empty() => {
+                missing.push(current);
+                current = parent;
+            }
+            _ => break,
+        }
+    }
+    missing.reverse();
+    missing
+}
+
 /// Writes the configuration exactly like the Go oracle's `config.Save`
 /// (`internal/config/config.go:211`).
 ///
 /// Go semantics, reproduced one for one:
 ///
-/// * `os.MkdirAll(filepath.Dir(path), 0700)` — missing parents are created with
-///   mode `0700`, an *existing* directory keeps its mode;
+/// * `os.MkdirAll(filepath.Dir(path), 0700)` — *every* missing ancestor is
+///   created with mode `0700`, an existing directory keeps its mode;
 /// * `os.OpenFile(path, O_CREATE|O_WRONLY|O_TRUNC, 0600)` — the file is created
 ///   with mode `0600` only when it does not exist, an existing file keeps its
 ///   mode and is truncated;
@@ -352,17 +371,18 @@ pub fn save(path: &str, config: &Config) -> Result<(), String> {
         Some(dir) if !dir.as_os_str().is_empty() => dir,
         _ => Path::new("."),
     };
-    // Go applies the directory mode only to directories it creates, so the
-    // existence check is captured before `create_dir_all`. On Windows Go ignores
-    // the mode entirely, which is why both this binding and its use are unix-only.
+    // Go applies the directory mode to every directory it creates, so the set
+    // of missing ancestors is captured before `create_dir_all`. On Windows Go
+    // ignores the mode entirely, which is why both the binding and its use are
+    // unix-only.
     #[cfg(unix)]
-    let parent_existed = parent.exists();
+    let created: Vec<&Path> = missing_ancestors(parent);
     fs::create_dir_all(parent)
         .map_err(|error| format!("failed to create config directory: {error}"))?;
     #[cfg(unix)]
-    if !parent_existed {
+    for directory in created {
         use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(parent, fs::Permissions::from_mode(0o700))
+        fs::set_permissions(directory, fs::Permissions::from_mode(0o700))
             .map_err(|error| format!("failed to create config directory: {error}"))?;
     }
     let body = render_toml(config)?;

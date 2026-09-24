@@ -14,7 +14,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::value::RawValue;
 use sha2::{Digest, Sha256};
 use symroom_core::event::{self, Event};
 use symroom_core::identity::{self, Identity, StoredIdentity};
@@ -61,7 +61,7 @@ struct MemberIdVector {
 #[derive(Deserialize)]
 struct EventVector {
     id: String,
-    event: Value,
+    event: Box<RawValue>,
     canonical_bytes: String,
     canonical_sha256: String,
     signature: String,
@@ -74,7 +74,7 @@ struct EventVector {
 #[derive(Deserialize)]
 struct VerifyVector {
     id: String,
-    event: Value,
+    event: Box<RawValue>,
     public_key_hex: String,
     error: String,
 }
@@ -144,6 +144,14 @@ fn room_identity_event_vectors_match_the_go_oracle() {
         + fixture.verify_cases.len()
         + fixture.file_cases.len();
     assert!(runnable > 0, "no vectors to replay");
+    assert_eq!(fixture.events.len(), 28, "signed Go event vector inventory");
+    assert_eq!(fixture.verify_cases.len(), 8, "Go signature case inventory");
+    for required in ["body-html-unicode", "body-escaped-html"] {
+        assert!(
+            fixture.events.iter().any(|row| row.id == required),
+            "missing {required}"
+        );
+    }
 
     let mut by_member: BTreeMap<String, Identity> = BTreeMap::new();
     for vector in &fixture.identities {
@@ -227,7 +235,7 @@ fn room_identity_event_vectors_match_the_go_oracle() {
     let mut events_replayed = 0usize;
     for vector in &fixture.events {
         let mut parsed: Event =
-            serde_json::from_value(vector.event.clone()).expect("event parses into the port type");
+            serde_json::from_str(vector.event.get()).expect("event parses into the port type");
         let signer = by_member.get(&parsed.author).unwrap_or_else(|| {
             panic!(
                 "{}: author {} is a fixture identity",
@@ -275,7 +283,8 @@ fn room_identity_event_vectors_match_the_go_oracle() {
             Event::unmarshal_json_line(vector.json_line.as_bytes()).expect("json line parses");
         assert_eq!(round_trip.id, parsed.id, "{}: round trip id", vector.id);
         assert_eq!(
-            round_trip.body, parsed.body,
+            serde_json::from_str::<serde_json::Value>(round_trip.body.get()).unwrap(),
+            serde_json::from_str::<serde_json::Value>(parsed.body.get()).unwrap(),
             "{}: round trip body",
             vector.id
         );
@@ -304,7 +313,7 @@ fn room_identity_event_vectors_match_the_go_oracle() {
 
     for vector in &fixture.verify_cases {
         let parsed: Event =
-            serde_json::from_value(vector.event.clone()).expect("event parses into the port type");
+            serde_json::from_str(vector.event.get()).expect("event parses into the port type");
         let public_key = hex::decode(&vector.public_key_hex).expect("public key hex");
         let message = match parsed.verify_signature(&public_key) {
             Ok(()) => String::new(),
@@ -314,6 +323,54 @@ fn room_identity_event_vectors_match_the_go_oracle() {
     }
 
     replay_file_cases(&fixture, modes_observable);
+}
+
+#[test]
+fn go_json_depth_limit() {
+    let fixture = load_fixture();
+    let mut event: Event = serde_json::from_str(fixture.events[0].event.get()).expect("Go event");
+    for depth in [9999, 10000, 10001] {
+        let body = format!("{}0{}", "[".repeat(depth), "]".repeat(depth));
+        event.body = RawValue::from_string(body).expect("raw nested JSON");
+        assert_eq!(
+            event::canonical_bytes(&event).is_ok(),
+            depth <= 10000,
+            "canonical body depth {depth}"
+        );
+        assert_eq!(
+            event.marshal_json_line().is_ok(),
+            depth <= 10000,
+            "journal body depth {depth}"
+        );
+        if depth == 10001 {
+            let want = "json: error calling MarshalJSON for type json.RawMessage: invalid character '[' exceeded max depth";
+            assert_eq!(
+                event::canonical_bytes(&event).unwrap_err().to_string(),
+                want
+            );
+            assert_eq!(event.marshal_json_line().unwrap_err().to_string(), want);
+            let signer = identity::identity_from_private_key(
+                "alpha",
+                &hex::decode(&fixture.identities[0].seed_hex).expect("fixture seed"),
+            )
+            .expect("fixture signer");
+            assert_eq!(
+                event.sign(&signer).unwrap_err().to_string(),
+                format!("canonical encoding: {want}")
+            );
+        }
+        let envelope = serde_json::to_vec(&event).expect("serialize test envelope");
+        assert_eq!(
+            Event::unmarshal_json_line(&envelope).is_ok(),
+            depth <= 9999,
+            "event envelope depth {depth}"
+        );
+    }
+    event.body = RawValue::from_string(format!("\"{}\"", "\\\"[".repeat(10001)))
+        .expect("escaped quote and brackets in a JSON string");
+    assert!(event::canonical_bytes(&event).is_ok());
+    let line = event.marshal_json_line().expect("string body encodes");
+    assert!(Event::unmarshal_json_line(&line).is_ok());
 }
 
 /// The identity file cases run in a private data directory each, so the Go

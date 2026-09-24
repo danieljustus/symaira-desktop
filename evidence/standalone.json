@@ -1,0 +1,12 @@
+{
+  "tag": "v0.17.0",
+  "commit": "0c2c7769ac6074264e1c02fcdf903188b4f3fa08",
+  "artifact": "evidence/artifact/symdesk",
+  "artifact_sha256": "1c68fdb26f8cb45f57ecd5314a72f3c784bbbb21f1184e52b4e6c5aabfc67432",
+  "observed": {
+    "command": "env -i PATH=/usr/bin:/bin HOME=/var/folders/7v/7bpq0fjn44lflpxdylsx8qs40000gn/T/ev-home-standalone-hgsvqmfm ./evidence/artifact/symdesk version",
+    "exit_code": 0,
+    "stdout": "symdesk 0.12.3-0.20260922144040-e66c417f91fb\n",
+    "stderr": ""
+  }
+}

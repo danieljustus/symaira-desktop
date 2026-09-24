@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "metadata_file_name": "metadata.json",
+  "temp_pattern": ".metadata-*.tmp",
+  "directory_mode": "0700",
+  "file_mode": "0600",
+  "key_order": [
+    "vault_path",
+    "last_used"
+  ],
+  "encoding_cases": [
+    {
+      "name": "whole-second",
+      "vault_path": "/vaults/plain",
+      "unix_sec": 1767229445,
+      "nanos": 0,
+      "encoded": "{\"vault_path\":\"/vaults/plain\",\"last_used\":\"2026-01-01T01:04:05Z\"}"
+    },
+    {
+      "name": "half-second",
+      "vault_path": "/vaults/plain",
+      "unix_sec": 1767229445,
+      "nanos": 500000000,
+      "encoded": "{\"vault_path\":\"/vaults/plain\",\"last_used\":\"2026-01-01T01:04:05.5Z\"}"
+    },
+    {
+      "name": "two-digit-fraction",
+      "vault_path": "/vaults/plain",
+      "unix_sec": 1767229445,
+      "nanos": 120000000,
+      "encoded": "{\"vault_path\":\"/vaults/plain\",\"last_used\":\"2026-01-01T01:04:05.12Z\"}"
+    },
+    {
+      "name": "full-nanoseconds",
+      "vault_path": "/vaults/plain",
+      "unix_sec": 1767229445,
+      "nanos": 123456789,
+      "encoded": "{\"vault_path\":\"/vaults/plain\",\"last_used\":\"2026-01-01T01:04:05.123456789Z\"}"
+    },
+    {
+      "name": "single-nanosecond",
+      "vault_path": "/vaults/plain",
+      "unix_sec": 1767229445,
+      "nanos": 1,
+      "encoded": "{\"vault_path\":\"/vaults/plain\",\"last_used\":\"2026-01-01T01:04:05.000000001Z\"}"
+    },
+    {
+      "name": "trailing-zero-nanoseconds",
+      "vault_path": "/vaults/plain",
+      "unix_sec": 1767229445,
+      "nanos": 123456780,
+      "encoded": "{\"vault_path\":\"/vaults/plain\",\"last_used\":\"2026-01-01T01:04:05.12345678Z\"}"
+    },
+    {
+      "name": "unicode-path",
+      "vault_path": "/vaults/Ünïcøde/Ordner mit Leerzeichen",
+      "unix_sec": 1767229445,
+      "nanos": 42,
+      "encoded": "{\"vault_path\":\"/vaults/Ünïcøde/Ordner mit Leerzeichen\",\"last_used\":\"2026-01-01T01:04:05.000000042Z\"}"
+    },
+    {
+      "name": "escaped-path",
+      "vault_path": "/vaults/quote\"back\\slash",
+      "unix_sec": 1767229445,
+      "nanos": 42,
+      "encoded": "{\"vault_path\":\"/vaults/quote\\\"back\\\\slash\",\"last_used\":\"2026-01-01T01:04:05.000000042Z\"}"
+    },
+    {
+      "name": "html-escaped-path",
+      "vault_path": "/vaults/\u003ctag\u003e\u0026amp",
+      "unix_sec": 1767229445,
+      "nanos": 42,
+      "encoded": "{\"vault_path\":\"/vaults/\\u003ctag\\u003e\\u0026amp\",\"last_used\":\"2026-01-01T01:04:05.000000042Z\"}"
+    },
+    {
+      "name": "line-separator-path",
+      "vault_path": "/vaults/line\u2028sep\u2029arator",
+      "unix_sec": 1767229445,
+      "nanos": 42,
+      "encoded": "{\"vault_path\":\"/vaults/line\\u2028sep\\u2029arator\",\"last_used\":\"2026-01-01T01:04:05.000000042Z\"}"
+    },
+    {
+      "name": "control-character-path",
+      "vault_path": "/vaults/tab\tnewline\n",
+      "unix_sec": 1767229445,
+      "nanos": 42,
+      "encoded": "{\"vault_path\":\"/vaults/tab\\tnewline\\n\",\"last_used\":\"2026-01-01T01:04:05.000000042Z\"}"
+    },
+    {
+      "name": "epoch",
+      "vault_path": "/vaults/plain",
+      "unix_sec": 0,
+      "nanos": 0,
+      "encoded": "{\"vault_path\":\"/vaults/plain\",\"last_used\":\"1970-01-01T00:00:00Z\"}"
+    },
+    {
+      "name": "windows-style-path",
+      "vault_path": "C:\\Users\\daniel\\vault",
+      "unix_sec": 1767229445,
+      "nanos": 7,
+      "encoded": "{\"vault_path\":\"C:\\\\Users\\\\daniel\\\\vault\",\"last_used\":\"2026-01-01T01:04:05.000000007Z\"}"
+    }
+  ],
+  "open_for_vault": {
+    "name": "open_for_vault",
+    "entries": [
+      "metadata.json",
+      "sidecar.db"
+    ],
+    "metadata_written": true,
+    "vault_path_is_canonical": true,
+    "last_used_is_utc": true,
+    "temp_leftovers": 0,
+    "last_used_advances": false
+  },
+  "reopen": {
+    "name": "reopen",
+    "entries": [
+      "metadata.json",
+      "sidecar.db"
+    ],
+    "metadata_written": true,
+    "vault_path_is_canonical": true,
+    "last_used_is_utc": true,
+    "temp_leftovers": 0,
+    "last_used_advances": true
+  },
+  "explicit_override": {
+    "name": "explicit_override",
+    "entries": [
+      "explicit.db"
+    ],
+    "metadata_written": false,
+    "vault_path_is_canonical": false,
+    "last_used_is_utc": false,
+    "temp_leftovers": 0,
+    "last_used_advances": false
+  },
+  "listing": [
+    {
+      "directory": "live",
+      "vault_path": "\u003cLIVE_VAULT\u003e",
+      "metadata": true,
+      "orphan": false
+    },
+    {
+      "directory": "orphan",
+      "vault_path": "\u003cMISSING_VAULT\u003e",
+      "metadata": true,
+      "orphan": true
+    },
+    {
+      "directory": "unidentified",
+      "vault_path": "",
+      "metadata": false,
+      "orphan": false
+    }
+  ]
+}

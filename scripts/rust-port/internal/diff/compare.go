@@ -47,7 +47,17 @@ func Compare(testCase Case, left, right Result) error {
 func sidecarLayout(entries []ManifestEntry) []string {
 	layout := make([]string, 0, 1)
 	for _, entry := range entries {
-		if entry.Type != "file" || !strings.HasSuffix(entry.Path, "/sidecar.db") {
+		// A per-vault sidecar directory holds the database, the write-ahead
+		// log and shared-memory files SQLite leaves while the connection is
+		// open, and the metadata record Go writes on open (issue #1006). All
+		// of them belong to the layout; their contents carry a timestamp and
+		// SQLite state and can therefore never be compared byte-for-byte
+		// across two processes.
+		if entry.Type != "file" ||
+			(!strings.HasSuffix(entry.Path, "/sidecar.db") &&
+				!strings.HasSuffix(entry.Path, "/sidecar.db-wal") &&
+				!strings.HasSuffix(entry.Path, "/sidecar.db-shm") &&
+				!strings.HasSuffix(entry.Path, "/metadata.json")) {
 			continue
 		}
 		parts := strings.Split(entry.Path, "/")

@@ -2,6 +2,7 @@
 
 mod http;
 mod mcp;
+mod retention;
 
 use std::{
     ffi::OsString,
@@ -15,7 +16,7 @@ use serde::Serialize;
 use serde_json::json;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
-use symdesk_index::{ListedDocument, Sidecar, path_for_vault};
+use symdesk_index::{ListedDocument, open_for_vault};
 
 fn process_exit(code: CoreExitCode) -> ExitCode {
     ExitCode::from(code.as_u8())
@@ -103,6 +104,17 @@ fn main() -> ExitCode {
             command.get_one::<String>("token").cloned(),
             matches.get_one::<String>("vault").cloned(),
         ),
+        Some(("retention", command)) => {
+            let vault_opt = matches.get_one::<String>("vault").cloned();
+            match command.subcommand() {
+                Some(("list", _)) => retention::run_list(vault_opt.as_deref(), output_json),
+                Some((other, _)) => write_stderr(
+                    &format!("unknown retention subcommand: {other}\n"),
+                    CoreExitCode::Generic,
+                ),
+                None => process_exit(CoreExitCode::Ok),
+            }
+        }
         _ => process_exit(CoreExitCode::Ok),
     }
 }
@@ -164,6 +176,7 @@ fn cli() -> Command {
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
         )
         .subcommand(Command::new("mcp"))
+        .subcommand(retention::cli())
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))
@@ -182,11 +195,9 @@ fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode
         Ok(path) => path,
         Err(error) => return emit_error(error, output_json),
     };
-    let sidecar_path = match path_for_vault(&vault) {
-        Ok(path) => path,
-        Err(error) => return emit_error(error.to_string(), output_json),
-    };
-    let mut sidecar = match Sidecar::open(&sidecar_path) {
+    // Go's command path opens the vault sidecar through `sidecar.OpenForVault`,
+    // which also records `metadata.json` next to the database (issue #1006).
+    let mut sidecar = match open_for_vault(&vault) {
         Ok(sidecar) => sidecar,
         Err(error) => return emit_error(error.to_string(), output_json),
     };

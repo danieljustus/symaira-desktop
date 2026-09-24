@@ -156,8 +156,18 @@ migration stays stopped and Go remains in production.
   oracle provenance re-frozen on main in #1001; the native `Rust native` CI jobs ran
   `make retention-rules-differential` on Linux, macOS and Windows at `e971824f` and the
   `Rust port contract` jobs verified the fixture checksum. CFG-004 (config filesystem
-  writes), DATA-001 (dataset sync) and the CLI-level retention acceptance flow
-  (`symdesk retention eval/list/accept`) remain open, so the row stays `TODO`.
+  writes) is now covered by its own Go-owned fixture and byte-exact Rust replay
+  (`testdata/port/config/config-save.json`, 9 cases; `make config-save-differential`),
+  merged as #1005 with the oracle provenance re-frozen on the merge revision in #1007;
+  the target was wired into the native Rust CI job in #1012 and verified on
+  Linux/macOS/Windows at `bdb017c7` (Rust native matrix run 35642921769), so the row
+  can now reach `PASS`. The CLI-level `symdesk retention list` slice is ported and gated
+  by `make retention-cli-differential` (`testdata/port/cli/retention-cases.json`, 6
+  byte-exact cases) as #1008, verified on Linux/macOS/Windows in the same native matrix;
+  `retention eval/accept/reject/diff/history` stay open because their state is read and
+  mutated through `internal/service`, which is not ported yet — the Rust CLI deliberately
+  omits them instead of approximating them. DATA-001 (dataset sync) also remains open, so
+  the row stays `TODO`.
 
 - `RUST-001` passed: generated fixtures freeze 207 SymDesk command nodes (206
   non-root, including Cobra's generated help/completion tree), the production-derived SymRoom parser grammar, 57 SymDesk and 8
@@ -224,6 +234,46 @@ migration stays stopped and Go remains in production.
   `rusqlite` 0.40.2 is pinned with only `bundled`; the Rust crate has
   zero unsafe expressions, while the reviewed SQLite wrapper/FFI remains an
   explicit transitive boundary.
+- Unverified WIP — not evidence: `migration/rust-room-journal` (`f015a694`) holds a
+  SymRoom journal draft (Go contract test, fixture, crate change) from a worker whose own
+  replay was not byte-exact and whose Make target called the generator instead of
+  verifying it; the draft is kept as WIP and was not promoted. The writer worktrees
+  `.worktrees/subagent-sa-1-905b9a86` and `../w-rust-room-journal` still hold the two
+  differing `testdata/port/room/journal.json` captures.
+- Done since `b98ca146`: the CI wiring landed in #1012, CFG-004 reached `PASS`, and
+  #1006 is closed on `migration/rust-sidecar-metadata` — `open_for_vault` now writes
+  `vaults/<hash>/metadata.json` byte-identically to Go (13 recorded encoding cases —
+  Go's HTML escaping of `<`/`>`/`&`, U+2028/U+2029 and its trimmed nanosecond layout —
+  plus 3 directory-listing cases, the 0700/0600 POSIX modes and the
+  open/reopen/explicit-override filesystem blocks), `retention list`
+  no longer closes the sidecar Go leaves open, and the sidecar layout gate requires
+  `vaults/<hash>/{sidecar.db,sidecar.db-wal,sidecar.db-shm,metadata.json}` on both sides.
+  Full `compare_files` deliberately stays off: `sidecar.db` carries SQLite state and
+  `metadata.json` a timestamp, so neither can match byte-for-byte across two processes —
+  the layout gate plus the byte-exact `metadata.json` replay are the filesystem evidence.
+- Next actions for RUST-007: port the `internal/service` retention-state layer that
+  `retention eval/accept/reject/diff/history` require, then DATA-001 (dataset sync).
+  When `retention reject/diff/history` are ported they must keep the same open-forever
+  contract as `list` — Go discards the handle in `retention.go:369,392,411` too.
+- Skills loaded this session: `go-to-rust-migration` + `references/worker-dispatch.md`.
+- Live evidence runs (manual `workflow_dispatch`, because `Rust port contract`
+  and `Rust native` are `if: event_name != 'pull_request'`): run `35735140018`
+  on `migration/rust-sidecar-metadata` and run `35735143364` on
+  `migration/rust-room-journal-v2` — both `conclusion=success` with every job
+  green, including `Rust port contract` and `Rust native` on Linux, macOS and
+  Windows. These supersede run `35731356950`, which failed on
+  `fields 'directory_mode' and 'file_mode' are never read` (the fields were
+  read only under `#[cfg(unix)]`, so `clippy -D warnings` rejected them on
+  Windows alone) plus one flaky `iOS app` test, now filed as
+  [#1019](https://github.com/danieljustus/symaira-desktop/issues/1019).
+  PR: [#1016](https://github.com/danieljustus/symaira-desktop/pull/1016).
+  Known pre-existing flake: `internal/compose` `TestInspectToolReportsManagedAndPATHCopies`
+  under parallel `-race` load, filed as
+  [#1018](https://github.com/danieljustus/symaira-desktop/issues/1018).
+  Note: a second desktop chat worked the same worktrees on 2026-09-22 (commits
+  `0a93593f`, `8c449e7d`, `c5cb9a0a`); `8c449e7d` deliberately keeps the sidecar
+  metadata fixture on the room pattern — outside the portgen manifest, gated only by
+  `make sidecar-metadata-differential`.
 
 ## Reuse assessment
 
@@ -283,7 +333,11 @@ What the check enforces, fail-closed:
 
 Changes to the generator Go sources under `scripts/rust-port` and the listed
 port-contract test files change the generator digest and therefore require
-deliberately regenerated and reviewed fixtures.
+deliberately regenerated and reviewed fixtures. The digest covers more than the
+harness sources: `go.mod`, `go.sum`, `Makefile` and `.gitattributes` are digest
+inputs too (`scripts/rust-port/inventory/digest.go`), so a change as small as a
+new Make target needs its own **Q** re-freeze — a functional `P` that adds a
+target leaves `main` red on the port contract until that **Q** lands.
 
 ## Execution rule
 

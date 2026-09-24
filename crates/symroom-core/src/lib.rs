@@ -17,3 +17,5 @@
 
 pub mod event;
 pub mod identity;
+pub mod journal;
+pub mod members;

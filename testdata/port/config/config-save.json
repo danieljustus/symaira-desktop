@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+    "release": "post-v0.12.2-security-880"
+  },
+  "source_hashes": {
+    "internal/config/config.go": "0a16504c6d866efa6804555fa14de5daa0475b7e04bc6168c621590748463fb3"
+  },
+  "cases": [
+    {
+      "id": "new-parent-new-file",
+      "description": "missing parent chain is created and the file is created",
+      "platform": "all",
+      "setup": {
+        "dirs": [],
+        "file": null
+      },
+      "path": "nested/deep/config.toml",
+      "expected": {
+        "outcome": "ok",
+        "file_content": "vault = \"/vault\"\ninbox = \"inbox\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"http://127.0.0.1:11434\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 5\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"{{year}}/{{title}}\"\n",
+        "file_mode": 384,
+        "dir_modes": {
+          "nested": 448,
+          "nested/deep": 448
+        },
+        "file_set": [
+          "nested/deep/config.toml"
+        ]
+      }
+    },
+    {
+      "id": "existing-parent-keeps-mode",
+      "description": "an existing parent directory keeps its mode",
+      "platform": "all",
+      "setup": {
+        "dirs": [
+          {
+            "path": "parent",
+            "mode": 493
+          }
+        ],
+        "file": null
+      },
+      "path": "parent/config.toml",
+      "expected": {
+        "outcome": "ok",
+        "file_content": "vault = \"/vault\"\ninbox = \"inbox\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"http://127.0.0.1:11434\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 5\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"{{year}}/{{title}}\"\n",
+        "file_mode": 384,
+        "dir_modes": {
+          "parent": 493
+        },
+        "file_set": [
+          "parent/config.toml"
+        ]
+      }
+    },
+    {
+      "id": "existing-file-truncated-keeps-mode",
+      "description": "an existing file keeps its mode and is truncated",
+      "platform": "all",
+      "setup": {
+        "dirs": [
+          {
+            "path": "parent",
+            "mode": 493
+          }
+        ],
+        "file": {
+          "path": "parent/config.toml",
+          "content": "# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n# stale line\n",
+          "mode": 420
+        }
+      },
+      "path": "parent/config.toml",
+      "expected": {
+        "outcome": "ok",
+        "file_content": "vault = \"/vault\"\ninbox = \"inbox\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"http://127.0.0.1:11434\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 5\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"{{year}}/{{title}}\"\n",
+        "file_mode": 420,
+        "dir_modes": {
+          "parent": 493
+        },
+        "file_set": [
+          "parent/config.toml"
+        ]
+      }
+    },
+    {
+      "id": "target-is-directory",
+      "description": "the target path already is a directory",
+      "platform": "all",
+      "setup": {
+        "dirs": [
+          {
+            "path": "config.toml",
+            "mode": 493
+          }
+        ],
+        "file": null
+      },
+      "path": "config.toml",
+      "expected": {
+        "outcome": "error",
+        "error_stage": "create_file",
+        "error_prefix": "failed to create config file:",
+        "error_message_go": "failed to create config file: open \u003csandbox\u003e/config.toml: is a directory",
+        "file_content": "",
+        "file_mode": 0,
+        "dir_modes": {
+          "config.toml": 493
+        },
+        "file_set": []
+      }
+    },
+    {
+      "id": "parent-is-regular-file",
+      "description": "a parent path component is a regular file",
+      "platform": "all",
+      "setup": {
+        "dirs": [],
+        "file": {
+          "path": "nested",
+          "content": "not a directory\n",
+          "mode": 420
+        }
+      },
+      "path": "nested/config.toml",
+      "expected": {
+        "outcome": "error",
+        "error_stage": "create_directory",
+        "error_prefix": "failed to create config directory:",
+        "error_message_go": "failed to create config directory: mkdir \u003csandbox\u003e/nested: not a directory",
+        "file_content": "",
+        "file_mode": 0,
+        "dir_modes": {},
+        "file_set": [
+          "nested"
+        ]
+      }
+    },
+    {
+      "id": "read-only-parent",
+      "description": "an unwritable parent directory rejects the created file",
+      "platform": "unix",
+      "setup": {
+        "dirs": [
+          {
+            "path": "ro",
+            "mode": 320
+          }
+        ],
+        "file": null
+      },
+      "path": "ro/config.toml",
+      "expected": {
+        "outcome": "error",
+        "error_stage": "create_file",
+        "error_prefix": "failed to create config file:",
+        "error_message_go": "failed to create config file: open \u003csandbox\u003e/ro/config.toml: permission denied",
+        "file_content": "",
+        "file_mode": 0,
+        "dir_modes": {
+          "ro": 320
+        },
+        "file_set": []
+      }
+    },
+    {
+      "id": "deep-missing-chain",
+      "description": "every missing ancestor is created by the save",
+      "platform": "all",
+      "setup": {
+        "dirs": [],
+        "file": null
+      },
+      "path": "a/b/c/config.toml",
+      "expected": {
+        "outcome": "ok",
+        "file_content": "vault = \"/vault\"\ninbox = \"inbox\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"http://127.0.0.1:11434\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 5\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"{{year}}/{{title}}\"\n",
+        "file_mode": 384,
+        "dir_modes": {
+          "a": 448,
+          "a/b": 448,
+          "a/b/c": 448
+        },
+        "file_set": [
+          "a/b/c/config.toml"
+        ]
+      }
+    },
+    {
+      "id": "root-level-file",
+      "description": "a file directly below the sandbox root",
+      "platform": "all",
+      "setup": {
+        "dirs": [],
+        "file": null
+      },
+      "path": "config.toml",
+      "expected": {
+        "outcome": "ok",
+        "file_content": "vault = \"/vault\"\ninbox = \"inbox\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"http://127.0.0.1:11434\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 5\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"{{year}}/{{title}}\"\n",
+        "file_mode": 384,
+        "dir_modes": {},
+        "file_set": [
+          "config.toml"
+        ]
+      }
+    },
+    {
+      "id": "sibling-directories-untouched",
+      "description": "an unrelated sibling directory is left alone",
+      "platform": "all",
+      "setup": {
+        "dirs": [
+          {
+            "path": "other",
+            "mode": 493
+          }
+        ],
+        "file": null
+      },
+      "path": "new/config.toml",
+      "expected": {
+        "outcome": "ok",
+        "file_content": "vault = \"/vault\"\ninbox = \"inbox\"\nreview_threshold = 85\nllm_provider = \"ollama\"\nllm_api_key = \"\"\nllm_model = \"claude-sonnet-5\"\nollama_url = \"http://127.0.0.1:11434\"\nrecipe_runner = \"\"\nhermes_session = \"\"\nlanguage = \"de\"\nmax_tokens = 8192\nagent_max_iterations = 5\nhistory_max_per_file = 20\nhistory_max_age_days = 90\nhistory_checkpoint_max_age_days = 30\ntrash_retention_days = 30\nresults_max_age_days = 30\nresults_max_per_task = 20\ndataset_export_max_sensitivity = \"internal\"\nstorage_path_template = \"{{year}}/{{title}}\"\n",
+        "file_mode": 384,
+        "dir_modes": {
+          "new": 448,
+          "other": 493
+        },
+        "file_set": [
+          "new/config.toml"
+        ]
+      }
+    }
+  ]
+}

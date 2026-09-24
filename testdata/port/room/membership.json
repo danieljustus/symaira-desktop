@@ -1,0 +1,882 @@
+{
+  "schema_version": 1,
+  "source_hashes": {
+    "internal/room/members/members.go": "34821f2480ec054e3002d385d9c8c707cb1087eda8cf0195c7207a0d71a0568e",
+    "internal/room/members/port_membership_contract_test.go": "01d5846bc95140d4869e08bbbd9a86080976e48ec5fae2e50106fc7757a715b7"
+  },
+  "permissions": [
+    {
+      "role": "owner",
+      "action": "manage_members",
+      "allowed": true
+    },
+    {
+      "role": "owner",
+      "action": "approve",
+      "allowed": true
+    },
+    {
+      "role": "owner",
+      "action": "post_link",
+      "allowed": true
+    },
+    {
+      "role": "owner",
+      "action": "request_run",
+      "allowed": true
+    },
+    {
+      "role": "owner",
+      "action": "unknown",
+      "allowed": true
+    },
+    {
+      "role": "member",
+      "action": "manage_members",
+      "allowed": false
+    },
+    {
+      "role": "member",
+      "action": "approve",
+      "allowed": true
+    },
+    {
+      "role": "member",
+      "action": "post_link",
+      "allowed": true
+    },
+    {
+      "role": "member",
+      "action": "request_run",
+      "allowed": true
+    },
+    {
+      "role": "member",
+      "action": "unknown",
+      "allowed": false
+    },
+    {
+      "role": "agent",
+      "action": "manage_members",
+      "allowed": false
+    },
+    {
+      "role": "agent",
+      "action": "approve",
+      "allowed": false
+    },
+    {
+      "role": "agent",
+      "action": "post_link",
+      "allowed": true
+    },
+    {
+      "role": "agent",
+      "action": "request_run",
+      "allowed": true
+    },
+    {
+      "role": "agent",
+      "action": "unknown",
+      "allowed": false
+    },
+    {
+      "role": "observer",
+      "action": "manage_members",
+      "allowed": false
+    },
+    {
+      "role": "observer",
+      "action": "approve",
+      "allowed": false
+    },
+    {
+      "role": "observer",
+      "action": "post_link",
+      "allowed": false
+    },
+    {
+      "role": "observer",
+      "action": "request_run",
+      "allowed": false
+    },
+    {
+      "role": "observer",
+      "action": "unknown",
+      "allowed": false
+    },
+    {
+      "role": "unknown",
+      "action": "manage_members",
+      "allowed": false
+    },
+    {
+      "role": "unknown",
+      "action": "approve",
+      "allowed": false
+    },
+    {
+      "role": "unknown",
+      "action": "post_link",
+      "allowed": false
+    },
+    {
+      "role": "unknown",
+      "action": "request_run",
+      "allowed": false
+    },
+    {
+      "role": "unknown",
+      "action": "unknown",
+      "allowed": false
+    }
+  ],
+  "transitions": [
+    {
+      "id": "owner-create",
+      "kind": "room.created",
+      "author": "owner",
+      "body": {
+        "name": "Room",
+        "public_key": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "error": "",
+      "members": [
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "agent-add",
+      "kind": "member.added",
+      "author": "owner",
+      "body": {
+        "id": "agent",
+        "name": "Bot",
+        "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "role": "member",
+        "Role": "agent",
+        "kind": "agent"
+      },
+      "error": "",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "agent-cannot-add",
+      "kind": "member.added",
+      "author": "agent",
+      "body": {
+        "id": "intruder",
+        "public_key": "2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "error": "only room owners can perform member management",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "agent-cannot-approve",
+      "kind": "run.approved",
+      "author": "agent",
+      "body": {},
+      "error": "agent role is strictly forbidden from signing approval events",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "unknown-cannot-approve",
+      "kind": "checkpoint.resolved",
+      "author": "absent",
+      "body": {},
+      "error": "member not found",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "observer-add",
+      "kind": "member.added",
+      "author": "owner",
+      "body": {
+        "id": "observer",
+        "name": "Observer",
+        "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+        "role": "observer",
+        "kind": "human"
+      },
+      "error": "",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "observer",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "observer-cannot-resolve",
+      "kind": "checkpoint.resolved",
+      "author": "observer",
+      "body": {},
+      "error": "observer role has read-only access",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "observer",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "observer-cannot-approve",
+      "kind": "run.approved",
+      "author": "observer",
+      "body": {},
+      "error": "observer role has read-only access",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "observer",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "observer-promote",
+      "kind": "member.role_changed",
+      "author": "owner",
+      "body": {
+        "id": "observer",
+        "role": "member"
+      },
+      "error": "",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "member-approves",
+      "kind": "run.approved",
+      "author": "observer",
+      "body": {},
+      "error": "",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "non-owner-cannot-remove",
+      "kind": "member.removed",
+      "author": "observer",
+      "body": {
+        "id": "agent"
+      },
+      "error": "only room owners can perform member management",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "agent-role-duplicate-null",
+      "kind": "member.role_changed",
+      "author": "owner",
+      "body": {
+        "id": "agent",
+        "role": "agent",
+        "Role": null
+      },
+      "error": "",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "agent-still-cannot-approve",
+      "kind": "run.approved",
+      "author": "agent",
+      "body": {},
+      "error": "agent role is strictly forbidden from signing approval events",
+      "members": [
+        {
+          "id": "agent",
+          "name": "Bot",
+          "public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+          "role": "agent",
+          "kind": "agent"
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "remove-agent",
+      "kind": "member.removed",
+      "author": "owner",
+      "body": {
+        "ID": "agent",
+        "name": 123
+      },
+      "error": "",
+      "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "removed-agent-approval",
+      "kind": "run.approved",
+      "author": "agent",
+      "body": {},
+      "error": "member not found",
+      "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "invalid-key-length",
+      "kind": "member.added",
+      "author": "owner",
+      "body": {
+        "id": "bad",
+        "public_key": "00"
+      },
+      "error": "invalid member pubkey: %!w(\u003cnil\u003e)",
+      "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "invalid-key-odd-hex",
+      "kind": "member.added",
+      "author": "owner",
+      "body": {
+        "id": "bad",
+        "public_key": "0"
+      },
+      "error": "invalid member pubkey: encoding/hex: odd length hex string",
+      "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "invalid-key-odd-nonhex",
+      "kind": "member.added",
+      "author": "owner",
+      "body": {
+        "id": "bad",
+        "public_key": "g"
+      },
+      "error": "invalid member pubkey: encoding/hex: invalid byte: U+0067 'g'",
+      "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "invalid-key-nonhex",
+      "kind": "member.added",
+      "author": "owner",
+      "body": {
+        "id": "bad",
+        "public_key": "gg"
+      },
+      "error": "invalid member pubkey: encoding/hex: invalid byte: U+0067 'g'",
+      "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "invalid-root-key-odd-hex",
+      "kind": "room.created",
+      "author": "other",
+      "body": {
+        "public_key": "0"
+      },
+      "error": "invalid root pubkey: encoding/hex: odd length hex string",
+      "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "invalid-root-key-odd-nonhex",
+      "kind": "room.created",
+      "author": "other",
+      "body": {
+        "public_key": "g"
+      },
+      "error": "invalid root pubkey: encoding/hex: invalid byte: U+0067 'g'",
+      "members": [
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "null-fields-are-empty",
+      "kind": "member.added",
+      "author": "owner",
+      "body": {
+        "id": "nullish",
+        "name": null,
+        "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+        "role": null,
+        "kind": null
+      },
+      "error": "",
+      "members": [
+        {
+          "id": "nullish",
+          "name": "",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "",
+          "kind": ""
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "null-role-change-body",
+      "kind": "member.role_changed",
+      "author": "owner",
+      "body": null,
+      "error": "",
+      "members": [
+        {
+          "id": "nullish",
+          "name": "",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "",
+          "kind": ""
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "blank-id-add",
+      "kind": "member.added",
+      "author": "owner",
+      "body": {
+        "id": "",
+        "name": "Blank",
+        "public_key": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "error": "",
+      "members": [
+        {
+          "id": "",
+          "name": "Blank",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "",
+          "kind": ""
+        },
+        {
+          "id": "nullish",
+          "name": "",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "",
+          "kind": ""
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "null-removes-blank-id",
+      "kind": "member.removed",
+      "author": "owner",
+      "body": null,
+      "error": "",
+      "members": [
+        {
+          "id": "nullish",
+          "name": "",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "",
+          "kind": ""
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "unknown-event-noop",
+      "kind": "note.posted",
+      "author": "owner",
+      "body": {},
+      "error": "",
+      "members": [
+        {
+          "id": "nullish",
+          "name": "",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "",
+          "kind": ""
+        },
+        {
+          "id": "observer",
+          "name": "Observer",
+          "public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+          "role": "member",
+          "kind": "human"
+        },
+        {
+          "id": "owner",
+          "name": "Room",
+          "public_key": "0000000000000000000000000000000000000000000000000000000000000000",
+          "role": "owner",
+          "kind": "human"
+        }
+      ]
+    }
+  ]
+}

@@ -4,10 +4,14 @@
 //! the JSON line format. Port of `internal/room/event`.
 
 use std::fmt;
+use std::io;
 
-use serde_json::{Map, Value};
+use serde::de::{Error as _, IgnoredAny, MapAccess, Visitor};
+use serde::ser::{SerializeMap, Serializer as _};
+use serde_json::value::RawValue;
 
 use crate::identity::{self, Identity};
+use crate::members::replace_unpaired_surrogates;
 
 /// Go: `event.CurrentVersion`.
 pub const CURRENT_VERSION: i64 = 1;
@@ -59,8 +63,8 @@ impl fmt::Display for EventError {
 
 impl std::error::Error for EventError {}
 
-/// Go: `event.Event`. The body is kept as parsed JSON so the canonical encoder
-/// can re-emit it verbatim.
+/// Go: `event.Event`. The raw body preserves Go's `json.RawMessage` escape
+/// spelling when signing and writing journal lines.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Event {
     pub v: i64,
@@ -72,9 +76,123 @@ pub struct Event {
     pub lamport: u64,
     pub ts: String,
     pub kind: String,
-    pub body: Value,
+    pub body: Box<RawValue>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sig: Option<String>,
+}
+
+// Decode through the production entrypoint with Go encoding/json's struct
+// defaults, case-insensitive field lookup, and last-key-wins semantics. RawValue
+// retains the body bytes used by signing; a Value map would erase duplicates.
+struct GoEvent(Event);
+
+impl<'de> serde::Deserialize<'de> for GoEvent {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct GoEventVisitor;
+
+        impl<'de> Visitor<'de> for GoEventVisitor {
+            type Value = GoEvent;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a room event object or null")
+            }
+
+            fn visit_unit<E: serde::de::Error>(self) -> Result<Self::Value, E> {
+                Ok(GoEvent(empty_go_event()))
+            }
+
+            fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
+                let mut event = empty_go_event();
+                while let Some(raw_key) = map.next_key::<Box<RawValue>>()? {
+                    // Go replaces lone surrogates in field names too. Decode
+                    // only this key token; signed body and journal bytes stay raw.
+                    let decoded_key = replace_unpaired_surrogates(raw_key.get());
+                    let key: String =
+                        serde_json::from_str(&decoded_key).map_err(M::Error::custom)?;
+                    // Go encoding/json uses Unicode simple fold. Long s and
+                    // Kelvin sign also fold into the ASCII field names.
+                    let folded: String = key
+                        .chars()
+                        .map(|ch| match ch {
+                            '\u{017f}' => 's',
+                            '\u{212a}' => 'k',
+                            _ => ch.to_ascii_lowercase(),
+                        })
+                        .collect();
+                    if !matches!(
+                        folded.as_str(),
+                        "v" | "id"
+                            | "room"
+                            | "author"
+                            | "seq"
+                            | "prev"
+                            | "lamport"
+                            | "ts"
+                            | "kind"
+                            | "body"
+                            | "sig"
+                    ) {
+                        map.next_value::<IgnoredAny>()?;
+                        continue;
+                    }
+                    let raw = map.next_value::<Box<RawValue>>()?;
+                    macro_rules! set_non_null {
+                        ($field:expr, $type:ty) => {
+                            if let Some(value) = serde_json::from_str::<Option<$type>>(raw.get())
+                                .map_err(M::Error::custom)?
+                            {
+                                $field = value;
+                            }
+                        };
+                    }
+                    match folded.as_str() {
+                        "v" => set_non_null!(event.v, i64),
+                        "seq" => set_non_null!(event.seq, u64),
+                        "lamport" => set_non_null!(event.lamport, u64),
+                        "body" => event.body = raw,
+                        _ => {
+                            // Only decode recognized outer strings lossily, as
+                            // Go does. Never rewrite the line or signed raw body.
+                            let decoded = replace_unpaired_surrogates(raw.get());
+                            let Some(value) = serde_json::from_str::<Option<String>>(&decoded)
+                                .map_err(M::Error::custom)?
+                            else {
+                                continue; // Go leaves a prior string intact on null.
+                            };
+                            match folded.as_str() {
+                                "id" => event.id = value,
+                                "room" => event.room = value,
+                                "author" => event.author = value,
+                                "prev" => event.prev = value,
+                                "ts" => event.ts = value,
+                                "kind" => event.kind = value,
+                                "sig" => event.sig = Some(value),
+                                _ => unreachable!(),
+                            }
+                        }
+                    }
+                }
+                Ok(GoEvent(event))
+            }
+        }
+        deserializer.deserialize_any(GoEventVisitor)
+    }
+}
+
+fn empty_go_event() -> Event {
+    Event {
+        v: 0,
+        id: String::new(),
+        room: String::new(),
+        author: String::new(),
+        seq: 0,
+        prev: String::new(),
+        lamport: 0,
+        ts: String::new(),
+        kind: String::new(),
+        body: serde_json::from_str("null").expect("constant JSON null"),
+        sig: None,
+    }
 }
 
 /// Go: `event.FormatTimestamp` — UTC, millisecond precision, always three
@@ -96,18 +214,10 @@ pub fn format_timestamp(stamp: time::OffsetDateTime) -> String {
 /// Go: `event.CanonicalBytes` — the exact JSON that is signed, keys in Go's
 /// sorted order: `author, body, id, kind, lamport, prev, room, seq, ts, v`.
 ///
-/// `serde_json` is built with `preserve_order` so the body keeps the key order
-/// it was parsed with, exactly like Go's `json.RawMessage` does; the outer keys
-/// are therefore inserted in sorted order by hand and must stay that way.
-///
-/// ponytail: Go's encoder rewrites `<`, `>` and `&` inside string values to
-/// `\u003c` and friends; the port keeps the bytes it was given. Extend this with
-/// Go's HTML escaping when a room, id or body may carry those characters
-/// (nothing in the current event kinds does).
+/// The raw body retains escape spelling as Go's `json.RawMessage` does;
+/// the outer keys are emitted in sorted order by the shared serializer.
 pub fn canonical_bytes(event: &Event) -> Result<Vec<u8>, EventError> {
-    let map = canonical_map(event, None);
-    serde_json::to_vec(&Value::Object(map))
-        .map_err(|err| EventError::Message(format!("canonical encoding: {err}")))
+    encode_event(event, None).map_err(|err| EventError::Message(err.to_string()))
 }
 
 impl Event {
@@ -116,7 +226,8 @@ impl Event {
         if self.v == 0 {
             self.v = CURRENT_VERSION;
         }
-        let canonical = canonical_bytes(self)?;
+        let canonical = canonical_bytes(self)
+            .map_err(|err| EventError::Message(format!("canonical encoding: {err}")))?;
         let signature = identity::sign(&signer.private_key, &canonical).ok_or_else(|| {
             EventError::Message("canonical encoding: invalid private key".to_owned())
         })?;
@@ -145,7 +256,8 @@ impl Event {
                 "{INVALID_SIGNATURE}: invalid base64 signature"
             )));
         };
-        let canonical = canonical_bytes(self)?;
+        let canonical = canonical_bytes(self)
+            .map_err(|err| EventError::Message(format!("canonical encoding: {err}")))?;
         if !identity::verify(public_key, &canonical, &signature) {
             return Err(EventError::Signature(INVALID_SIGNATURE.to_owned()));
         }
@@ -155,8 +267,7 @@ impl Event {
     /// Go: `(*Event).MarshalJSONLine` — one JSON object with the signature, keys
     /// sorted the same way, terminated by a newline.
     pub fn marshal_json_line(&self) -> Result<Vec<u8>, EventError> {
-        let map = canonical_map(self, Some(self.sig.clone().unwrap_or_default()));
-        let mut data = serde_json::to_vec(&Value::Object(map))
+        let mut data = encode_event(self, Some(self.sig.as_deref().unwrap_or_default()))
             .map_err(|err| EventError::Message(err.to_string()))?;
         data.push(b'\n');
         Ok(data)
@@ -164,29 +275,126 @@ impl Event {
 
     /// Go: `event.UnmarshalJSONLine`.
     pub fn unmarshal_json_line(data: &[u8]) -> Result<Self, EventError> {
-        serde_json::from_slice(data).map_err(|err| EventError::Message(err.to_string()))
+        check_json_depth(data).map_err(|err| EventError::Message(err.to_string()))?;
+        serde_json::from_slice::<GoEvent>(data)
+            .map(|decoded| decoded.0)
+            .map_err(|err| EventError::Message(err.to_string()))
     }
 }
 
-/// Go's `encoding/json` emits struct fields in declaration order for the event
-/// itself, but the canonical and line encodings are built from a map and are
-/// therefore sorted. `preserve_order` keeps that order explicit here.
-fn canonical_map(event: &Event, signature: Option<String>) -> Map<String, Value> {
-    let mut map = Map::new();
-    map.insert("author".to_owned(), Value::from(event.author.clone()));
-    map.insert("body".to_owned(), event.body.clone());
-    map.insert("id".to_owned(), Value::from(event.id.clone()));
-    map.insert("kind".to_owned(), Value::from(event.kind.clone()));
-    map.insert("lamport".to_owned(), Value::from(event.lamport));
-    map.insert("prev".to_owned(), Value::from(event.prev.clone()));
-    map.insert("room".to_owned(), Value::from(event.room.clone()));
-    map.insert("seq".to_owned(), Value::from(event.seq));
+/// Serialise Go's sorted map keys while retaining `json.RawMessage` bytes.
+fn encode_event(event: &Event, signature: Option<&str>) -> Result<Vec<u8>, serde_json::Error> {
+    check_json_depth(event.body.get().as_bytes()).map_err(|err| {
+        serde_json::Error::io(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("json: error calling MarshalJSON for type json.RawMessage: {err}"),
+        ))
+    })?;
+    // Go's RawMessage marshaler compacts whitespace outside JSON strings while
+    // preserving escape spelling. The fixture itself is pretty-printed JSON.
+    let body = RawValue::from_string(compact_json(event.body.get()))?;
+    let mut output = Vec::new();
+    let mut serializer = serde_json::Serializer::new(&mut output);
+    let mut map = serializer.serialize_map(Some(if signature.is_some() { 11 } else { 10 }))?;
+    map.serialize_entry("author", &event.author)?;
+    map.serialize_entry("body", &body)?;
+    map.serialize_entry("id", &event.id)?;
+    map.serialize_entry("kind", &event.kind)?;
+    map.serialize_entry("lamport", &event.lamport)?;
+    map.serialize_entry("prev", &event.prev)?;
+    map.serialize_entry("room", &event.room)?;
+    map.serialize_entry("seq", &event.seq)?;
     if let Some(signature) = signature {
-        map.insert("sig".to_owned(), Value::from(signature));
+        map.serialize_entry("sig", signature)?;
     }
-    map.insert("ts".to_owned(), Value::from(event.ts.clone()));
-    map.insert("v".to_owned(), Value::from(event.v));
-    map
+    map.serialize_entry("ts", &event.ts)?;
+    map.serialize_entry("v", &event.v)?;
+    map.end()?;
+    Ok(escape_go_json(output))
+}
+
+/// Go's JSON validator rejects nesting beyond 10,000 containers. RawValue's
+/// skip parser does not enforce that limit; count only delimiters outside strings.
+fn check_json_depth(data: &[u8]) -> Result<(), serde_json::Error> {
+    let mut depth: usize = 0;
+    let mut in_string = false;
+    let mut escaped = false;
+    for &byte in data {
+        if in_string {
+            if escaped {
+                escaped = false;
+            } else if byte == b'\\' {
+                escaped = true;
+            } else if byte == b'"' {
+                in_string = false;
+            }
+            continue;
+        }
+        match byte {
+            b'"' => in_string = true,
+            b'[' | b'{' => {
+                depth += 1;
+                if depth > 10_000 {
+                    return Err(serde_json::Error::io(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        format!("invalid character '{}' exceeded max depth", byte as char),
+                    )));
+                }
+            }
+            b']' | b'}' => depth = depth.saturating_sub(1),
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
+fn compact_json(raw: &str) -> String {
+    let mut compact = String::with_capacity(raw.len());
+    let mut in_string = false;
+    let mut escaped = false;
+    for ch in raw.chars() {
+        if in_string {
+            compact.push(ch);
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == '"' {
+                in_string = false;
+            }
+        } else if ch == '"' {
+            in_string = true;
+            compact.push(ch);
+        } else if !matches!(ch, ' ' | '\n' | '\r' | '\t') {
+            compact.push(ch);
+        }
+    }
+    compact
+}
+
+/// Go `encoding/json` escapes HTML-sensitive bytes and Unicode line separators
+/// even in a raw JSON body. These sequences only appear inside JSON strings.
+fn escape_go_json(data: Vec<u8>) -> Vec<u8> {
+    let mut escaped = Vec::with_capacity(data.len());
+    let mut i = 0;
+    while i < data.len() {
+        let replacement: Option<&[u8]> = match data[i] {
+            b'<' => Some(br"\u003c"),
+            b'>' => Some(br"\u003e"),
+            b'&' => Some(br"\u0026"),
+            0xe2 if data.get(i..i + 3) == Some(&[0xe2, 0x80, 0xa8]) => Some(br"\u2028"),
+            0xe2 if data.get(i..i + 3) == Some(&[0xe2, 0x80, 0xa9]) => Some(br"\u2029"),
+            _ => None,
+        };
+        if let Some(replacement) = replacement {
+            escaped.extend_from_slice(replacement);
+            i += if data[i] == 0xe2 { 3 } else { 1 };
+        } else {
+            escaped.push(data[i]);
+            i += 1;
+        }
+    }
+    escaped
 }
 
 /// The standard base64 alphabet with padding, matching Go's `base64.StdEncoding`.
@@ -225,12 +433,16 @@ fn base64_decode(text: &str) -> Option<Vec<u8>> {
             _ => None,
         }
     };
-    let bytes = text.as_bytes();
+    // Go's StdEncoding ignores CR/LF anywhere in the encoded text.
+    let bytes: Vec<u8> = text
+        .bytes()
+        .filter(|byte| *byte != b'\r' && *byte != b'\n')
+        .collect();
     if !bytes.len().is_multiple_of(4) {
         return None;
     }
     let mut out = Vec::with_capacity(bytes.len() / 4 * 3);
-    for chunk in bytes.chunks(4) {
+    for (chunk_index, chunk) in bytes.chunks(4).enumerate() {
         let mut values = [0u32; 4];
         let mut padding = 0;
         for (index, byte) in chunk.iter().enumerate() {
@@ -246,6 +458,11 @@ fn base64_decode(text: &str) -> Option<Vec<u8>> {
                 return None;
             }
             values[index] = table(*byte)?;
+        }
+        // Padding is only legal in the last quartet; otherwise the same
+        // signature bytes can be written with multiple envelopes.
+        if padding > 0 && chunk_index + 1 != bytes.len() / 4 {
+            return None;
         }
         let triple = (values[0] << 18) | (values[1] << 12) | (values[2] << 6) | values[3];
         out.push((triple >> 16) as u8);

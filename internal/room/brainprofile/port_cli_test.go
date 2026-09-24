@@ -74,8 +74,74 @@ func TestPortBrainProfileCLIContract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", brainProfileCLIFixture, err)
 	}
+	if runtime.GOOS == "windows" {
+		fixture = normalizeBrainProfileWindows(t, fixture, got)
+		data, err = json.MarshalIndent(fixture, "", "  ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		data = append(data, '\n')
+	}
 	if !bytes.Equal(got, data) {
 		t.Fatal("Go brain-profile CLI fixture is stale; regenerate deliberately with PORT_GENERATE=1")
+	}
+}
+
+func normalizeBrainProfileWindows(t *testing.T, observed brainProfileCLIContract, expectedJSON []byte) brainProfileCLIContract {
+	t.Helper()
+	var recorded brainProfileCLIContract
+	if err := json.Unmarshal(expectedJSON, &recorded); err != nil {
+		t.Fatalf("decode %s: %v", brainProfileCLIFixture, err)
+	}
+	if len(observed.Cases) != len(recorded.Cases) {
+		t.Fatalf("brain-profile CLI case count differs: got %d, want %d", len(observed.Cases), len(recorded.Cases))
+	}
+	for i := range observed.Cases {
+		actual, expected := &observed.Cases[i], recorded.Cases[i]
+		if len(actual.FinalFiles) != len(expected.FinalFiles) {
+			t.Fatalf("brain-profile CLI %s file count differs: got %d, want %d", actual.Name, len(actual.FinalFiles), len(expected.FinalFiles))
+		}
+		// Windows mode bits do not express the Unix permissions captured
+		// in the fixture; the Rust replay checks them only on Unix.
+		actual.DirMode = expected.DirMode
+		for j := range actual.FinalFiles {
+			actual.FinalFiles[j].Mode = expected.FinalFiles[j].Mode
+		}
+		// Only the installed-profile message contains a native path.
+		if strings.Contains(actual.Stdout, "<HOME>") {
+			actual.Stdout = strings.ReplaceAll(actual.Stdout, `\`, "/")
+		}
+	}
+	return observed
+}
+
+func TestNormalizeBrainProfileWindows(t *testing.T) {
+	want := brainProfileCLIContract{Cases: []brainProfileCLICase{{
+		Name: "install-no-symbrain", Stdout: "Profile written to <HOME>/.config/profile.toml\n",
+		DirMode: 0o700, FinalFiles: []brainProfileCLIFile{{Path: "profile.toml", Content: "profile", Mode: 0o600}},
+	}}}
+	encoded, err := json.Marshal(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	observed := brainProfileCLIContract{Cases: []brainProfileCLICase{{
+		Name: "install-no-symbrain", Stdout: "Profile written to <HOME>\\.config\\profile.toml\n",
+		DirMode: 0o777, FinalFiles: []brainProfileCLIFile{{Path: "profile.toml", Content: "profile", Mode: 0o666}},
+	}}}
+	got, err := json.Marshal(normalizeBrainProfileWindows(t, observed, encoded))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, encoded) {
+		t.Fatal("Windows normalization did not preserve portable profile behavior")
+	}
+	observed.Cases[0].FinalFiles[0].Content = "changed"
+	got, err = json.Marshal(normalizeBrainProfileWindows(t, observed, encoded))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(got, encoded) {
+		t.Fatal("Windows normalization hid a profile-content difference")
 	}
 }
 

@@ -191,10 +191,14 @@ fn write_fake_symbrain(path: &Path, fail: bool) {
 }
 
 fn normalize_home(output: &[u8], home: &Path) -> Vec<u8> {
-    String::from_utf8(output.to_vec())
+    let normalized = String::from_utf8(output.to_vec())
         .expect("symroom output is UTF-8")
-        .replace(&home.to_string_lossy().to_string(), "<HOME>")
-        .into_bytes()
+        .replace(&home.to_string_lossy().to_string(), "<HOME>");
+    if cfg!(windows) && normalized.contains("<HOME>") {
+        normalized.replace('\\', "/").into_bytes()
+    } else {
+        normalized.into_bytes()
+    }
 }
 
 fn read_profile_files(dir: &Path) -> Vec<(String, String)> {

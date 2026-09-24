@@ -505,7 +505,9 @@ fn identity(meta: &cap_std::fs::Metadata) -> String {
             meta.len(),
             meta.modified()
                 .ok()
-                .and_then(|v| v.duration_since(std::time::UNIX_EPOCH).ok())
+                .and_then(|v| v
+                    .duration_since(cap_std::time::SystemClock::UNIX_EPOCH)
+                    .ok())
                 .map_or(0, |v| v.as_nanos()),
             meta.is_dir()
         )

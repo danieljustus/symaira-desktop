@@ -173,6 +173,7 @@ fn run_symroom(
         .env("HOME", home)
         .env("USERPROFILE", home)
         .env("TMPDIR", tmp)
+        .env("LLVM_PROFILE_FILE", tmp.join("symroom-%p.profraw"))
         .env("TZ", "UTC")
         .env("LC_ALL", "C")
         .env("LANG", "C")

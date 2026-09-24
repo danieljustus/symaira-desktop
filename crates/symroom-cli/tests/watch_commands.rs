@@ -224,6 +224,7 @@ fn command(
         .env("USERPROFILE", isolated.join("home"))
         .env("XDG_DATA_HOME", isolated.join("data"))
         .env("TMPDIR", isolated.join("tmp"))
+        .env("LLVM_PROFILE_FILE", isolated.join("tmp/symroom-%p.profraw"))
         .env("TZ", "UTC")
         .env("LC_ALL", "C")
         .env("LANG", "C")

@@ -220,6 +220,7 @@ fn run_symroom(
         .env("USERPROFILE", home)
         .env("XDG_DATA_HOME", data_home)
         .env("TMPDIR", tmp)
+        .env("LLVM_PROFILE_FILE", tmp.join("symroom-%p.profraw"))
         .env("TZ", "UTC")
         .env("LC_ALL", "C")
         .env("LANG", "C")

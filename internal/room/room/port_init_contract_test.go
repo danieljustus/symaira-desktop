@@ -121,9 +121,74 @@ func TestPortRoomInitContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(current, encoded) {
+	want, err := normalizeRoomInitFixture(current, runtime.GOOS == "windows")
+	if err != nil {
+		t.Fatalf("normalize committed room init fixture: %v", err)
+	}
+	got, err := normalizeRoomInitFixture(encoded, runtime.GOOS == "windows")
+	if err != nil {
+		t.Fatalf("normalize generated room init fixture: %v", err)
+	}
+	if !bytes.Equal(want, got) {
 		t.Fatal("room init fixture is stale; regenerate from the Go oracle")
 	}
+}
+
+func TestNormalizeRoomInitFixtureIgnoresUnixModesOnlyOnWindows(t *testing.T) {
+	committed := []byte("{\n  \"schema_version\": 1,\n  \"files\": {\n    \"room.toml\": \"schema_version = 1\\n\"\n  },\n  \"modes\": {\n    \"room.toml\": \"0644\"\n  },\n  \"nonempty_error\": \"room directory is not empty\",\n  \"preserved\": \"preserve me\",\n  \"future_contract\": {\n    \"value\": \"frozen\"\n  }\n}\n")
+	generated := []byte("{\n  \"schema_version\": 1,\n  \"files\": {\n    \"room.toml\": \"schema_version = 1\\n\"\n  },\n  \"modes\": {\n    \"room.toml\": \"platform\"\n  },\n  \"nonempty_error\": \"room directory is not empty\",\n  \"preserved\": \"preserve me\",\n  \"future_contract\": {\n    \"value\": \"frozen\"\n  }\n}\n")
+
+	want, err := normalizeRoomInitFixture(committed, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := normalizeRoomInitFixture(generated, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(want, got) {
+		t.Fatal("Windows comparison should ignore only the unobservable POSIX modes")
+	}
+	windowsWant := want
+
+	want, err = normalizeRoomInitFixture(committed, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err = normalizeRoomInitFixture(generated, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(want, got) {
+		t.Fatal("Unix comparison must retain the recorded POSIX modes")
+	}
+
+	generated = bytes.Replace(generated, []byte("frozen"), []byte("changed"), 1)
+	got, err = normalizeRoomInitFixture(generated, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(windowsWant, got) {
+		t.Fatal("Windows comparison must continue checking non-mode fixture data")
+	}
+}
+
+func normalizeRoomInitFixture(data []byte, windows bool) ([]byte, error) {
+	if !windows {
+		return data, nil
+	}
+	var fixture map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fixture); err != nil {
+		return nil, err
+	}
+	// Windows cannot observe the POSIX permission bits recorded by the fixture.
+	// Keep every other field, including fields unknown to this test version.
+	delete(fixture, "modes")
+	encoded, err := json.MarshalIndent(fixture, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append(encoded, '\n'), nil
 }
 
 func roomInitIdentity(t *testing.T) *identity.Identity {

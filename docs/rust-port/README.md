@@ -5,6 +5,21 @@
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
 
+## Local handoff — 2026-09-24
+
+- Integration source and Go-owned fixtures: `bb47a830` on
+  `codex/rust-migration-integration`. `history tasks` now replays six Go process
+  cases, including empty JSON `null`, ordering, text output and partial status.
+- At that revision, `go test ./...` (CGO disabled), `make lint`,
+  `cargo test --workspace --locked`, strict all-feature/all-target Clippy,
+  `make history-tasks-cli-differential` and `portgen --check` passed locally on
+  macOS. The Rust suite contains explicitly ignored tests; these passes do not
+  replace their separate gates.
+- This is a local handoff, not migration acceptance: `contract-matrix.md` still
+  has TODO rows and the exact integrated Linux/Windows native evidence is
+  absent. Go remains the production implementation. No push, publication,
+  cutover or Go removal occurred.
+
 ## Decision
 
 Symaira Desktop will be evaluated for an in-place, contract-first Rust migration.

@@ -92,7 +92,7 @@ func TestPortIndexCLIContract(t *testing.T) {
 		if err := os.Chdir(cwd); err != nil {
 			t.Fatal(err)
 		}
-		vector.Stdout = stdout.String()
+		vector.Stdout = filepath.ToSlash(stdout.String())
 		vector.StderrPrefix = stderr.String()
 		if vector.Corrupt {
 			const prefix = "Error rebuilding index: merge all events: read segment mem_cli: unmarshal line:"

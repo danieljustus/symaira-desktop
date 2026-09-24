@@ -250,16 +250,33 @@ fn strings<const N: usize>(values: [&str; N]) -> [&OsStr; N] {
 fn normalize_output(output: Output, root: &Path) -> ProcessResult {
     let stdout = String::from_utf8(output.stdout).expect("UTF-8 CLI stdout");
     let stderr = String::from_utf8(output.stderr).expect("UTF-8 CLI stderr");
-    let normalize = |value: String| {
-        value
-            .replace(&root.to_string_lossy().to_string(), "$ROOT")
-            .replace('\\', "/")
-    };
     ProcessResult {
         exit_code: output.status.code().unwrap_or(-1),
-        stdout: normalize(stdout),
-        stderr: normalize(stderr),
+        stdout: normalize_path_output(stdout, root),
+        stderr: normalize_path_output(stderr, root),
     }
+}
+
+fn normalize_path_output(value: String, root: &Path) -> String {
+    let root = root.to_string_lossy();
+    value
+        .replace(&root.replace('\\', r"\\"), "$ROOT")
+        .replace(root.as_ref(), "$ROOT")
+        .replace(r"\\", "/")
+        .replace('\\', "/")
+}
+
+#[test]
+fn normalizes_json_escaped_windows_index_path() {
+    let root = Path::new(r"C:\Users\runner\Temp\fixture");
+    assert_eq!(
+        normalize_path_output(
+            r#"{"index_location":"C:\\Users\\runner\\Temp\\fixture\\data\\retrieval.db"}"#
+                .to_owned(),
+            root,
+        ),
+        r#"{"index_location":"$ROOT/data/retrieval.db"}"#
+    );
 }
 
 fn read_rows(path: &Path) -> Vec<Row> {

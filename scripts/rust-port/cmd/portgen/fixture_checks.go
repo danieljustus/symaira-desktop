@@ -121,7 +121,7 @@ var fixtureGenerationEnvironment = map[string]struct{}{
 	"PORT_DATASET_IMPORT_FIXTURE": {},
 }
 
-func sanitizedCheckEnvironment(environment []string) []string {
+func sanitizedCheckEnvironment(environment []string, configPath string) []string {
 	result := make([]string, 0, len(environment)+9)
 	home, profile := "", ""
 	for _, item := range environment {
@@ -161,7 +161,7 @@ func sanitizedCheckEnvironment(environment []string) []string {
 		//nolint:staticcheck // the harness deliberately uses the GOROOT it was built with
 		"PATH="+pinnedCheckPath(),
 		"GIT_ATTR_NOSYSTEM=1",
-		"GIT_CONFIG_GLOBAL="+os.DevNull,
+		"GIT_CONFIG_GLOBAL="+configPath,
 		"GIT_CONFIG_NOSYSTEM=1",
 		"GIT_NO_REPLACE_OBJECTS=1",
 		"GIT_TERMINAL_PROMPT=0",
@@ -173,8 +173,8 @@ func sanitizedCheckEnvironment(environment []string) []string {
 	)
 }
 
-func sidecarOracleEnvironment(environment []string, oracle inventory.Oracle) []string {
-	result := append([]string(nil), sanitizedCheckEnvironment(environment)...)
+func sidecarOracleEnvironment(environment []string, oracle inventory.Oracle, configPath string) []string {
+	result := append([]string(nil), sanitizedCheckEnvironment(environment, configPath)...)
 	return append(result,
 		portgenSidecarOracleCommitEnv+"="+oracle.Commit,
 		portgenSidecarOracleReleaseEnv+"="+oracle.Release,
@@ -257,6 +257,11 @@ func trustedGoTool() (string, error) {
 }
 
 func runSidecarLifecycleGenerator(repoRoot string, oracle inventory.Oracle) error {
+	configPath, cleanup, err := privateGitConfig()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 	goTool, err := trustedGoTool()
 	if err != nil {
 		return err
@@ -271,7 +276,7 @@ func runSidecarLifecycleGenerator(repoRoot string, oracle inventory.Oracle) erro
 	if target.name == "" {
 		return fmt.Errorf("sidecar lifecycle generator target is not registered")
 	}
-	environment := append(sidecarOracleEnvironment(os.Environ(), oracle), "PORT_GENERATE=1")
+	environment := append(sidecarOracleEnvironment(os.Environ(), oracle, configPath), "PORT_GENERATE=1")
 	return runFixtureCheckTarget(goTool, repoRoot, environment, target)
 }
 
@@ -283,12 +288,17 @@ func runFixtureChecks(repoRoot string, sidecarOracle inventory.Oracle) error {
 	if err != nil {
 		return err
 	}
-	environment := sanitizedCheckEnvironment(os.Environ())
+	configPath, cleanup, err := privateGitConfig()
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+	environment := sanitizedCheckEnvironment(os.Environ(), configPath)
 	targets := append(append([]fixtureCheckTarget(nil), fixtureTestTargets...), fixtureGeneratorTargets...)
 	for _, target := range targets {
 		targetEnvironment := environment
 		if target.sidecarOracle {
-			targetEnvironment = sidecarOracleEnvironment(os.Environ(), sidecarOracle)
+			targetEnvironment = sidecarOracleEnvironment(os.Environ(), sidecarOracle, configPath)
 		}
 		if err := runFixtureCheckTarget(goTool, repoRoot, targetEnvironment, target); err != nil {
 			return err

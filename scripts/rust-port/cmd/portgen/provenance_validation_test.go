@@ -17,7 +17,12 @@ func TestSanitizedGitCommandTrustsOnlyItsCheckout(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("GIT_CONFIG_GLOBAL", global)
-	output, err := gitCommand(repoRoot, "config", "--get-all", "safe.directory").Output()
+	command, cleanup, err := gitCommand(repoRoot, "config", "--get-all", "safe.directory")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanup()
+	output, err := command.Output()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -182,7 +182,7 @@ func TestSanitizedCheckEnvironmentRemovesActivationVariablesCaseInsensitively(t 
 		"GOCACHE=/safe/build-cache",
 		"GIT_DIR=/poison",
 		"PATH=/poison",
-	})
+	}, filepath.Join(t.TempDir(), "empty-gitconfig"))
 	joined := "\n" + strings.Join(got, "\n")
 	for _, forbidden := range []string{"PORT_GENERATE=", "PORTGEN_GENERATE=", "COREGEN_GENERATE=", "PORT_DATASET_IMPORT_FIXTURE=", "PORT_FIXTURE_PATH=", "port_fixture_path=", "PORTGEN_SIDECAR_ORACLE_COMMIT=", "PORTGEN_SIDECAR_ORACLE_RELEASE=", "GOFLAGS=-modfile", "GIT_DIR=", "PATH=/poison"} {
 		if strings.Contains(joined, "\n"+forbidden) {
@@ -208,7 +208,7 @@ func TestSanitizedCheckEnvironmentKeepsBothHomeNames(t *testing.T) {
 		{name: "both names present stay untouched", base: []string{"HOME=/home/a", "USERPROFILE=C:\\b"}, required: "HOME=/home/a", unchanged: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got := sanitizedCheckEnvironment(tc.base)
+			got := sanitizedCheckEnvironment(tc.base, filepath.Join(t.TempDir(), "empty-gitconfig"))
 			joined := "\n" + strings.Join(got, "\n")
 			if !strings.Contains(joined, "\n"+tc.required) {
 				t.Fatalf("sanitizedCheckEnvironment(%#v) omitted %q: %#v", tc.base, tc.required, got)
@@ -230,7 +230,7 @@ func TestSanitizedCheckEnvironmentKeepsBothHomeNames(t *testing.T) {
 }
 
 func TestSanitizedCheckEnvironmentFallsBackToScratchHome(t *testing.T) {
-	got := sanitizedCheckEnvironment([]string{"SAFE=retained"})
+	got := sanitizedCheckEnvironment([]string{"SAFE=retained"}, filepath.Join(t.TempDir(), "empty-gitconfig"))
 	homes := map[string]string{}
 	for _, item := range got {
 		name, value, _ := strings.Cut(item, "=")

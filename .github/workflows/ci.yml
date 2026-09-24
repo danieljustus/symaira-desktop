@@ -39,10 +39,10 @@ jobs:
           fetch-depth: 0
 
       # The frontmatter/history source guards clone this checkout and verify a
-      # pre-squash Go revision. Keep that object reachable through a local
+      # pinned Go source revision. Keep that object reachable through a local
       # branch: FETCH_HEAD alone is not transferred by git clone --no-local.
       - name: Materialize pinned Go oracle for source guards
-        run: git fetch --no-tags origin +6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1:refs/heads/rust-port-oracle-6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1
+        run: git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -131,7 +131,7 @@ jobs:
       # The Windows contract runs the clone-based Go source guards below.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
-        run: git fetch --no-tags origin +6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1:refs/heads/rust-port-oracle-6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1
+        run: git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -217,11 +217,11 @@ jobs:
           # history oracle checks immutable production Go blobs.
           fetch-depth: 0
 
-      # The source-guard tests clone this checkout, so retain the immutable
-      # pre-squash oracle through a local branch rather than only FETCH_HEAD.
+      # The source-guard tests clone this checkout, so retain the pinned Go
+      # source revision through a local branch rather than only FETCH_HEAD.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
-        run: git fetch --no-tags origin +6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1:refs/heads/rust-port-oracle-6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1
+        run: git fetch --no-tags origin +38891d35eb8ceb6c348eca9a78b3fb2873677e3d:refs/heads/rust-port-oracle-38891d35eb8ceb6c348eca9a78b3fb2873677e3d
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:

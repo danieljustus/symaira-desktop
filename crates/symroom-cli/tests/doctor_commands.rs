@@ -347,18 +347,24 @@ fn normalize(
     has_identity_file: bool,
 ) -> Vec<u8> {
     let mut text = String::from_utf8_lossy(bytes).into_owned();
+    let json = text.starts_with('{');
     for (path, token) in [(home, "$HOME"), (data, "$DATA"), (tools, "$TOOLS")] {
-        text = text.replace(&path.to_string_lossy().to_string(), token);
+        let path = path.to_string_lossy();
+        let path = if cfg!(windows) && json {
+            path.replace('\\', "\\\\")
+        } else {
+            path.into_owned()
+        };
+        text = text.replace(&path, token);
     }
     if cfg!(windows) {
-        for name in ["symdesk", "symbrain", "symvault"] {
-            text = text.replace(&format!("$TOOLS\\{name}.exe"), &format!("$TOOLS/{name}"));
-            text = text.replace(&format!("$TOOLS/{name}.exe"), &format!("$TOOLS/{name}"));
-        }
-        if text.starts_with('{') {
+        if json {
             text = text.replace("\\\\", "/");
         } else {
             text = text.replace('\\', "/");
+        }
+        for name in ["symdesk", "symbrain", "symvault"] {
+            text = text.replace(&format!("$TOOLS/{name}.exe"), &format!("$TOOLS/{name}"));
         }
     }
     if has_identity_file {

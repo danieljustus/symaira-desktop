@@ -302,6 +302,14 @@ jobs:
         shell: bash
         run: make room-journal-differential
 
+      - name: Run native SymRoom rollback handoff
+        shell: bash
+        env:
+          SYMROOM_ROLLBACK_REPORT: ${{ runner.temp }}/symroom-rollback-${{ matrix.os }}.json
+        run: |
+          set -euo pipefail
+          python3 scripts/rust-port/room-rollback.py --go-ref v0.12.2 --rust-ref HEAD --report "$SYMROOM_ROLLBACK_REPORT" >/dev/null
+
       - name: Run native room merge read differential
         shell: bash
         run: make room-merge-read-differential

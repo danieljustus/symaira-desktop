@@ -24,6 +24,7 @@ STEPS = {
     "Run native history differential": 2,
     "Verify frozen oracle and differential harness on Windows": 5,
     "Check, lint, and test Rust workspace": 8,
+    "Run native SymRoom rollback handoff": 1,
     "Run native Windows representative CLI HTTP and MCP parity": 7,
     "Run native Windows sidecar round-trip suite": 1,
     "Run native Windows version differential": 4,
@@ -120,6 +121,7 @@ class NativeStepControl:
         self.env = dict(os.environ)
         self.env["PATH"] = str(stub_dir) + os.pathsep + self.env["PATH"]
         self.env["NATIVE_CONTROL_LOG"] = str(self.log)
+        self.env["SYMROOM_ROLLBACK_REPORT"] = str(self.root / "symroom-rollback.json")
 
     def run(self, body, fail_at=0):
         self.log.unlink(missing_ok=True)
@@ -151,6 +153,32 @@ def bash_executable():
 
 
 class NativeCIContracts(unittest.TestCase):
+    def test_symroom_rollback_handoff_runs_on_native_matrix_without_logging_report(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        job = workflow_job_body(workflow, "rust-native")
+        step = re.search(
+            r"(?ms)^      - name: Run native SymRoom rollback handoff\n"
+            r"(?P<body>.*?)(?=^      - name:|\Z)",
+            job,
+        )
+        self.assertIsNotNone(step)
+        body = step.group("body")
+        self.assertIn(
+            "SYMROOM_ROLLBACK_REPORT: ${{ runner.temp }}/symroom-rollback-${{ matrix.os }}.json",
+            body,
+        )
+        self.assertIn(
+            'python3 scripts/rust-port/room-rollback.py --go-ref v0.12.2 '
+            '--rust-ref HEAD --report "$SYMROOM_ROLLBACK_REPORT" >/dev/null',
+            body,
+        )
+        harness = (ROOT / "scripts/rust-port/room-rollback.py").read_text()
+        safety_check = harness.index("if sensitive_key and sensitive_key in json.dumps(report):")
+        suppression = harness.index('raise RuntimeError("source-bound report contains identity private key; report suppressed")')
+        report_output = harness.index('encoded = json.dumps(report, indent=2, sort_keys=True)')
+        self.assertLess(safety_check, suppression)
+        self.assertLess(suppression, report_output)
+
     def test_retention_state_differential_runs_on_all_native_targets(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         expected_native_os = (

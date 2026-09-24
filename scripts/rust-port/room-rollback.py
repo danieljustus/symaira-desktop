@@ -48,13 +48,13 @@ def build_environment(temp, rustc):
     for path in paths:
         path.mkdir(parents=True, exist_ok=True)
 
+    # Native compilers and linkers are installed on the runner and may live
+    # outside fixed system directories. Keep PATH for tool discovery, while
+    # clearing HOME and the credential/user-state environment.
+    path_entries = [os.environ.get("PATH", "")]
     if os.name == "nt":
         system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
-        path_entries = [system_root / "System32", system_root]
-    elif platform.system() == "Darwin":
-        path_entries = [Path("/usr/bin"), Path("/bin"), Path("/usr/sbin"), Path("/sbin")]
-    else:
-        path_entries = [Path("/usr/bin"), Path("/bin"), Path("/usr/sbin"), Path("/sbin")]
+        path_entries.extend((system_root / "System32", system_root))
 
     env = {
         "HOME": str(home),
@@ -82,6 +82,7 @@ def build_environment(temp, rustc):
     }
     if os.name == "nt":
         env["SystemRoot"] = str(system_root)
+        env["WINDIR"] = str(system_root)
     for name in ("build-tmp", "go-cache", "go-mod-cache", "go-path", "go-tmp"):
         (temp / name).mkdir(parents=True, exist_ok=True)
     return env
@@ -209,6 +210,7 @@ def main():
     rust_tree, go_tree = temp / "rust-source", temp / "go-source"
     build_env = build_environment(temp, rustc)
     failure = None
+    sensitive_key = None
     try:
         run([git, "worktree", "add", "--detach", rust_tree, rust_revision], cwd=root, env=build_env)
         run([git, "worktree", "add", "--detach", go_tree, go_revision], cwd=root, env=build_env)
@@ -241,7 +243,8 @@ def main():
                                       work, room, None, "rust creates identity"))
         identity_file = work / "data/symroom/identities/rollback.json"
         identity_data = json.loads(identity_file.read_text())
-        key = identity_data["private_key"]
+        sensitive_key = identity_data["private_key"]
+        key = sensitive_key
         report["steps"].append(invoke(rust_bin, ["init", str(room), "--identity", "rollback"],
                                       work, room, key, "rust initializes room"))
         report["steps"].append(invoke(rust_bin, ["note", "--identity", "rollback", "written by Rust"],
@@ -315,6 +318,8 @@ def main():
             }
             cleanup_error = f"could not remove temporary workspace {temp}: {error}"
 
+    if sensitive_key and sensitive_key in json.dumps(report):
+        raise RuntimeError("source-bound report contains identity private key; report suppressed")
     report["test_result"] = "PASS" if failure is None else "FAIL"
     report["result"] = "PASS" if failure is None and cleanup_error is None else "FAIL"
     if failure:

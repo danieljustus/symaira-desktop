@@ -17,8 +17,9 @@ results, and resulting journal hashes. The Go fallback is built locally from
 the selected older source revision; it is not a public release artifact.
 
 The builds use a cleared environment with temporary `HOME`, XDG directories,
-and language caches, plus a restricted system `PATH`. They read the installed
-Rust toolchain under `RUSTUP_HOME`; they do not change installed tools. The
+and language caches. They retain the host `PATH` so installed compiler and
+linker tools can be found, and read the installed Rust toolchain under
+`RUSTUP_HOME`; they do not change installed tools. The
 harness does not run an installed SymRoom executable or open existing rooms,
 vaults, identity stores, or user-managed data. Build dependencies may be fetched
 into the temporary caches.

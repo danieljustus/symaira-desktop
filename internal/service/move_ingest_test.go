@@ -61,7 +61,9 @@ func newTestService(t *testing.T) *Service {
 	// Prevent accidental calls to the real symseek binary on PATH during tests.
 	withDisabledTool(t, "symseek")
 
-	return New(vaultPath, db)
+	svc := New(vaultPath, db)
+	t.Cleanup(func() { _ = svc.Close() })
+	return svc
 }
 
 func TestNoteMoveRemovesStaleIndexEntry(t *testing.T) {

@@ -132,7 +132,9 @@ func observeHistoryTasksCLI(t *testing.T) historyTasksFixture {
 				// Go's Windows Local zone comes from the system, not TZ. Check the
 				// local rendering before normalizing the cross-platform oracle.
 				for _, manifest := range input.Manifests {
-					var checkpoint struct{ Timestamp time.Time `json:"timestamp"` }
+					var checkpoint struct {
+						Timestamp time.Time `json:"timestamp"`
+					}
 					if err := json.Unmarshal([]byte(manifest), &checkpoint); err != nil {
 						t.Fatal(err)
 					}

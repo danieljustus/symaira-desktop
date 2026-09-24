@@ -51,7 +51,13 @@ func withMockTool(t *testing.T, name, path string) {
 
 func newTestService(t *testing.T) *Service {
 	t.Helper()
-	vaultPath := t.TempDir()
+	// The frozen Go history Store retains os.Root on Windows (#964), so
+	// t.TempDir's strict cleanup would fail after successful assertions.
+	vaultPath, err := os.MkdirTemp("", "symdesk-service-test-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(vaultPath) })
 	db, err := sidecar.Open(filepath.Join(vaultPath, "sidecar.db"))
 	if err != nil {
 		t.Fatal(err)

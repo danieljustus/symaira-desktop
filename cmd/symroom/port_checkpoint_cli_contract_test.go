@@ -129,7 +129,7 @@ func makeCheckpointCLIContract(t *testing.T, root string) (checkpointCLIContract
 		sum := sha256.Sum256(data)
 		fixture.SourceHashes[source] = hex.EncodeToString(sum[:])
 	}
-	goBinary := filepath.Join(t.TempDir(), "symroom-go-checkpoint-oracle")
+	goBinary := oracleExecutablePath(t, "symroom-go-checkpoint-oracle")
 	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom") //nolint:gosec // fixed Go build command for the test oracle
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {

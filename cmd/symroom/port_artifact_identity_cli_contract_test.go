@@ -120,7 +120,7 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 		sum := sha256.Sum256(data)
 		fixture.SourceHashes[source] = hex.EncodeToString(sum[:])
 	}
-	goBinary := filepath.Join(t.TempDir(), "symroom-go-artifact-identity-oracle")
+	goBinary := oracleExecutablePath(t, "symroom-go-artifact-identity-oracle")
 	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom") //nolint:gosec // fixed Go build command for the test oracle
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {

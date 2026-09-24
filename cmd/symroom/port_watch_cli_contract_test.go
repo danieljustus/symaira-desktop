@@ -137,10 +137,7 @@ func makeWatchCLIContract(t *testing.T, root string) (watchCLIContract, error) {
 		sum := sha256.Sum256(data)
 		fixture.SourceHashes[rel] = hex.EncodeToString(sum[:])
 	}
-	goBinary := filepath.Join(t.TempDir(), "symroom-go-watch-oracle")
-	if runtime.GOOS == "windows" {
-		goBinary += ".exe"
-	}
+	goBinary := oracleExecutablePath(t, "symroom-go-watch-oracle")
 	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {

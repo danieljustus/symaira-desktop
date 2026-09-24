@@ -204,6 +204,9 @@ func makeRunCLIEnv(t *testing.T, root string) (home, dataHome, tempDir string) {
 func buildRunCLIOracle(t *testing.T, root string) string {
 	t.Helper()
 	executable := filepath.Join(t.TempDir(), "symroom-go")
+	if runtime.GOOS == "windows" {
+		executable += ".exe"
+	}
 	build := exec.Command("go", "build", "-o", executable, "./cmd/symroom") //nolint:gosec // fixed Go build command for a temporary test helper
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {

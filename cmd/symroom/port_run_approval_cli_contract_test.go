@@ -158,7 +158,7 @@ func makeRunApprovalCLIContract(t *testing.T, root string) (runApprovalCLIContra
 		{name: "deny-already-denied", args: []string{"run", "deny", "--identity", "owner", "--reason", "again", "approval-denied"}, actor: "owner"},
 	}
 
-	executable := filepath.Join(t.TempDir(), "symroom-go-approval-oracle")
+	executable := oracleExecutablePath(t, "symroom-go-approval-oracle")
 	build := exec.Command("go", "build", "-o", executable, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {

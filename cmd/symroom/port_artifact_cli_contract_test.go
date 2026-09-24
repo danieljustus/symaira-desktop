@@ -104,7 +104,7 @@ func makeArtifactCLIContract(t *testing.T, root string) (artifactCLIContract, er
 			"internal/room/artifact/artifact.go": artifactCLIFileHash(t, root, "internal/room/artifact/artifact.go"),
 		},
 	}
-	goBinary := filepath.Join(t.TempDir(), "symroom-go-artifact-oracle")
+	goBinary := oracleExecutablePath(t, "symroom-go-artifact-oracle")
 	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {

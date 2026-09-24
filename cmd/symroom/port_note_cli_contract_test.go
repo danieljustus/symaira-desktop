@@ -284,7 +284,7 @@ func readNoteJournal(t *testing.T, dir, author string, normalizeLast bool) ([]no
 
 func buildNoteCLIOracle(t *testing.T, root string) string {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "symroom-go")
+	path := oracleExecutablePath(t, "symroom-go")
 	cmd := exec.Command("go", "build", "-o", path, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	cmd.Dir = root
 	if output, err := cmd.CombinedOutput(); err != nil {

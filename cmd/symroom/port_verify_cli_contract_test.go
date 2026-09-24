@@ -61,10 +61,7 @@ func TestPortVerifyCLIContract(t *testing.T) {
 	for _, row := range journalFixture.Cases {
 		journalCases[row.Name] = row.Files
 	}
-	goBinary := filepath.Join(t.TempDir(), "symroom-go")
-	if runtime.GOOS == "windows" {
-		goBinary += ".exe"
-	}
+	goBinary := oracleExecutablePath(t, "symroom-go")
 	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {

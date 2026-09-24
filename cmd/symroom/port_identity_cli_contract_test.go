@@ -232,7 +232,7 @@ func readIdentityCLIFileSnapshot(dir string, normalizeKeys bool) ([]identityCLIF
 
 func buildIdentityCLIOracle(t *testing.T, root string) string {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "symroom-go-identity-oracle")
+	path := oracleExecutablePath(t, "symroom-go-identity-oracle")
 	cmd := exec.Command("go", "build", "-o", path, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	cmd.Dir = root
 	if output, err := cmd.CombinedOutput(); err != nil {

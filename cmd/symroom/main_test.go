@@ -14,7 +14,7 @@ import (
 
 func buildBinary(t *testing.T) string {
 	t.Helper()
-	binPath := filepath.Join(t.TempDir(), "symroom")
+	binPath := oracleExecutablePath(t, "symroom")
 	cmd := exec.Command("go", "build", "-o", binPath, ".") //nolint:gosec // fixed Go test build command; output is t.TempDir
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to build test binary: %v, output: %s", err, string(out))

@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
-  "generator_source_digest": "eef9e1578aba2e8d9e68f65b6f27ed69c0b25c126c0ea98a6ced8b6e42314366",
+  "generator_source_digest": "ede1ca1fa8b938433fef2064a37fd5e8665cf19ab2a131e487eef157d4158913",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -30,9 +30,9 @@
     "testdata/port/core/simhash.json": "a77de2b55ef0c3df32ac9635ceafbc03442a4d78ecdd4c324feb6e073bdd3567",
     "testdata/port/core/textnorm.json": "654145d8b3f12bca1b352538d8a30613f1e5d664e20bb00851b4f41aad97b9aa",
     "testdata/port/dataset/cli.json": "dff5d7f12b4f3d508a6c678abfe1b977f31a2c0036bf4b3ee7d42429400c5975",
-    "testdata/port/dataset/import.json": "7975ffe3e447f15de6c15acae0d1ca69c9e3e9945d4284f46bcb9f419603d2fc",
-    "testdata/port/dataset/purge.json": "957ef56a8f7e3fc33dae9b7fdefcb2261da8fc391bc770624fc7f4881ad40c43",
-    "testdata/port/dataset/service-sync.json": "41f1da66bdcd6e600322e1e6a3c1c13e1d91948f23c1e94b18d63920c20b3b4d",
+    "testdata/port/dataset/import.json": "f398ffd1578cbe61ae8f0859748efe0f99a3afa25a4e9256d2af1671c2596de3",
+    "testdata/port/dataset/purge.json": "ce3ece0a99f4afa304f813d1d564570ddc35fcdeb68b63ecc971c666cda780b3",
+    "testdata/port/dataset/service-sync.json": "0e31bd399dc3c272b8ea7d9ade7ade6087955f9ca2b0bf30848b7a538af6f0e0",
     "testdata/port/dataset/sync.json": "1a013639437445cfd0ef961dca18fd304eabcb8ef749120edccceb01166fa5f3",
     "testdata/port/http/representative.json": "8c9f780391486ac8a72d65a6f52177b068d8cacff707721fb4a3e900512eee37",
     "testdata/port/http/routes.json": "43c706ede035052e9eb6392eeec84ed67abc48ab108a0c01a3aefd00cef0ecd1",

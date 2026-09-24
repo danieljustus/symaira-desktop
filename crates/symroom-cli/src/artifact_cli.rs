@@ -4,7 +4,7 @@ use std::{
     ffi::OsString,
     io::{self, Read, Write},
     path::PathBuf,
-    process::{Command, ExitCode, Stdio},
+    process::{ExitCode, Stdio},
     sync::mpsc,
     thread,
     time::{Duration, Instant},
@@ -331,7 +331,7 @@ fn merge_identity_config(
 }
 
 fn inspect_symdesk(path: &std::path::Path) -> String {
-    let mut child = match Command::new("symdesk")
+    let mut child = match crate::symdesk_command()
         .arg("inspect")
         .arg(path)
         .arg("--json")

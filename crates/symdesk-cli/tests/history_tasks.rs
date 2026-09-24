@@ -41,9 +41,12 @@ fn history_tasks_matches_go_process_contract() {
     ));
     fs::create_dir(&root).expect("make isolated test directory");
     for case in fixture.cases {
-        let vault = root.join(&case.name).join("vault");
+        let case_root = root.join(&case.name);
+        let vault = case_root.join("vault");
+        let home = case_root.join("home");
         let checkpoints = vault.join(".symdesk/history/checkpoints");
         fs::create_dir_all(&checkpoints).expect("make checkpoint directory");
+        fs::create_dir_all(&home).expect("make isolated home directory");
         for (name, manifest) in case.manifests {
             fs::write(checkpoints.join(name), manifest).expect("write checkpoint manifest");
         }
@@ -53,6 +56,11 @@ fn history_tasks_matches_go_process_contract() {
         }
         let output = command
             .env("TZ", "UTC")
+            .env("HOME", &home)
+            .env("USERPROFILE", &home)
+            .env("XDG_CONFIG_HOME", home.join("config"))
+            .env("XDG_CACHE_HOME", home.join("cache"))
+            .env("XDG_DATA_HOME", home.join("data"))
             .args(["--vault"])
             .arg(&vault)
             .args(["history", "tasks"])

@@ -38,7 +38,7 @@ const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
 ];
 
 const EXPECTED_ORACLE_OPERATION_COUNT: usize = 56;
-const EXPECTED_ORACLE_COMMIT: &str = "6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1";
+const EXPECTED_ORACLE_COMMIT: &str = "38891d35eb8ceb6c348eca9a78b3fb2873677e3d";
 const EXPECTED_ORACLE_RELEASE: &str = "post-v0.13.0-dependency-refresh";
 
 fn deserialize_option_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>

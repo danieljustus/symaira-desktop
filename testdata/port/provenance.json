@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
-  "generator_source_digest": "a81f21524a5f4c011b4db26fc7ea875a56549a04f0d52c46759d7708954d45ff",
+  "generator_source_digest": "03d71381152d41a166e0c05bc836a0fc29147976596865309e141a2124aa2b64",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -80,8 +80,8 @@
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/frontmatter-write.json": "77035d2ee374f5ff35c1fb4a35480fde93644fa825ffff3c024f4d05af0cd7f7",
     "testdata/port/vault/health-links.json": "95501c79b816d21ae86efa724f280e81572ee5636ae11475d9fb793f54428e1a",
-    "testdata/port/vault/history-lifecycle.json": "2714568ae92e8754b03707654389c3b8558527f919a28a3bff76624252ae72f4",
-    "testdata/port/vault/history-prune.json": "d5d5a54eda288a8933ec313bb3ce1e84ae08f4261e5efb11c196cd00e0478b49",
+    "testdata/port/vault/history-lifecycle.json": "bdec3364f005b55fe06a1ed6317f33b418340dfa00db97a08bb0ad463e1f900a",
+    "testdata/port/vault/history-prune.json": "868bc364689b12547ef108305e9f6b2f2c928bd86b6aa7064fe00154c890c72c",
     "testdata/port/vault/history-purge.json": "46a8b9a19b6ac2d35036aa3fec6410ce7ad9db4915c303de9d0127d48af9f660",
     "testdata/port/vault/history-service.json": "a0ac512e7d58548eb4cc5ede8519bde476fc7efc16fd9650c3087be2f3a5b04c",
     "testdata/port/vault/history-trash-purge.json": "a99ea10f1be26dfe44050e7745800c0ea9028586b1ba7dd52486c4de1efbd00e",

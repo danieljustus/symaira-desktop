@@ -176,7 +176,9 @@ fn artifact_identity_and_symdesk_inspect_match_go_process_contract() {
                         output.status.code(),
                         output.stdout.len()
                     ),
-                    Err(error) => panic!("fake symdesk was not invoked; direct PATH spawn error: {error}"),
+                    Err(error) => {
+                        panic!("fake symdesk was not invoked; direct PATH spawn error: {error}")
+                    }
                 }
             }
             let status = fs::read_to_string(status_path).unwrap_or_default();

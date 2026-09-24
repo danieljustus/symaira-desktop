@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
-  "generator_source_digest": "c4995a2b07eaf7d14ba96733a073ab9f47ace70205a03296b6e84ce9a8dc2b4c",
+  "generator_source_digest": "112e700a8ed2b14771cf1b49091bd1b87474473ca0e428e7cb9ebe7be2b3bb88",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -78,7 +78,7 @@
     "testdata/port/sidecar/roundtrip.json": "08b3a8e1de3607ba7d8a3869aa979481be94950cb01d83262f6a1dae74570ec7",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
-    "testdata/port/vault/frontmatter-write.json": "ebe54a09bcd15b5811473b086d11637c65df5584221b900a85d4412cd143f5de",
+    "testdata/port/vault/frontmatter-write.json": "77035d2ee374f5ff35c1fb4a35480fde93644fa825ffff3c024f4d05af0cd7f7",
     "testdata/port/vault/health-links.json": "95501c79b816d21ae86efa724f280e81572ee5636ae11475d9fb793f54428e1a",
     "testdata/port/vault/history-lifecycle.json": "2714568ae92e8754b03707654389c3b8558527f919a28a3bff76624252ae72f4",
     "testdata/port/vault/history-prune.json": "d5d5a54eda288a8933ec313bb3ce1e84ae08f4261e5efb11c196cd00e0478b49",

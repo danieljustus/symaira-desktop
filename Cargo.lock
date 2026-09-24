@@ -1286,10 +1286,10 @@ dependencies = [
 name = "symdesk-cli"
 version = "0.0.0"
 dependencies = [
- "noyalib",
  "cap-std",
  "clap",
  "libc",
+ "noyalib",
  "rusqlite",
  "serde",
  "serde_json",
@@ -1318,6 +1318,7 @@ dependencies = [
 name = "symdesk-index"
 version = "0.0.0"
 dependencies = [
+ "cap-primitives",
  "cap-std",
  "noyalib",
  "rusqlite",

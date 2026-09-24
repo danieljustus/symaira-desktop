@@ -502,8 +502,12 @@ fn identity(meta: &cap_std::fs::Metadata) -> String {
     {
         #[cfg(windows)]
         {
+            use cap_primitives::fs::metadata::_WindowsByHandle;
             use cap_std::fs::MetadataExt;
-            if let (Some(volume), Some(index)) = (meta.volume_serial_number(), meta.file_index()) {
+            if let (Some(volume), Some(index)) = (
+                _WindowsByHandle::volume_serial_number(meta),
+                _WindowsByHandle::file_index(meta),
+            ) {
                 return format!("{volume}:{index}");
             }
             // Child removals change a directory's size/write time, not its creation time.

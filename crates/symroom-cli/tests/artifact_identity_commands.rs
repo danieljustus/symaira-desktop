@@ -171,10 +171,13 @@ fn artifact_identity_and_symdesk_inspect_match_go_process_contract() {
                     }
                 }
                 match probe.output() {
-                    Ok(output) => panic!(
-                        "fake symdesk was not invoked by symroom; direct PATH probe launched (exit={:?}, stdout_bytes={})",
+                    Ok(probe_output) => panic!(
+                        "fake symdesk was not invoked by symroom; direct PATH probe launched (exit={:?}, stdout_bytes={}); symroom exit={:?}, stdout={:?}, stderr={:?}",
+                        probe_output.status.code(),
+                        probe_output.stdout.len(),
                         output.status.code(),
-                        output.stdout.len()
+                        String::from_utf8_lossy(&output.stdout),
+                        String::from_utf8_lossy(&output.stderr)
                     ),
                     Err(error) => {
                         panic!("fake symdesk was not invoked; direct PATH spawn error: {error}")

@@ -2,9 +2,9 @@ use std::process::ExitCode;
 
 use symdesk_index::open_for_vault;
 use symdesk_vault::HistoryStore;
-use time::{UtcOffset, format_description};
+use time::format_description;
 
-use crate::{emit_error, resolve_vault, write_go_json, write_stdout};
+use crate::{emit_error, local_offset_at, resolve_vault, write_go_json, write_stdout};
 
 pub fn run_tasks(vault: Option<&str>, output_json: bool) -> ExitCode {
     let vault_root = match resolve_vault(vault) {
@@ -31,11 +31,9 @@ pub fn run_tasks(vault: Option<&str>, output_json: bool) -> ExitCode {
             let rendered = checkpoints
                 .iter()
                 .map(|checkpoint| {
-                    let offset =
-                        UtcOffset::local_offset_at(checkpoint.timestamp).unwrap_or(UtcOffset::UTC);
                     let timestamp = checkpoint
                         .timestamp
-                        .to_offset(offset)
+                        .to_offset(local_offset_at(checkpoint.timestamp))
                         .format(&format)
                         .unwrap_or_default();
                     format!(

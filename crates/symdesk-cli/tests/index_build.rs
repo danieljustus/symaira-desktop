@@ -112,7 +112,19 @@ fn result(output: Output, root: &Path) -> ProcessResult {
 }
 
 fn normalize(text: &str, root: &Path) -> String {
-    text.replace(&root.to_string_lossy().to_string(), "$ROOT")
+    let root = root.to_string_lossy();
+    text.replace(&format!("{}\\\\", root.replace('\\', "\\\\")), "$ROOT/")
+        .replace(&format!("{}\\", root), "$ROOT/")
+        .replace(root.as_ref(), "$ROOT")
+}
+
+#[test]
+fn normalizes_json_escaped_windows_root() {
+    let root = Path::new(r"C:\temp\fixture");
+    assert_eq!(
+        normalize(r#"{"error":"stat C:\\temp\\fixture\\missing"}"#, root),
+        r#"{"error":"stat $ROOT/missing"}"#
+    );
 }
 
 #[test]

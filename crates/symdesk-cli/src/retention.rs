@@ -27,7 +27,7 @@ use symdesk_vault::{
 };
 use time::OffsetDateTime;
 
-use crate::{emit_error, write_go_json, write_stdout};
+use crate::{emit_error, local_offset_at, write_go_json, write_stdout};
 
 /// Go: `newRetentionCmd`.
 pub fn cli() -> Command {
@@ -782,8 +782,7 @@ fn render_items(items: &[ProposalItem]) -> String {
 /// Go: `.Local().Format("2006-01-02 15:04[:05]")`; resolve the offset at the
 /// event instant so historical daylight-saving transitions match.
 fn go_local_time(value: time::OffsetDateTime, seconds: bool) -> String {
-    let offset = time::UtcOffset::local_offset_at(value).unwrap_or(time::UtcOffset::UTC);
-    let local = value.to_offset(offset);
+    let local = value.to_offset(local_offset_at(value));
     if seconds {
         format!(
             "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",

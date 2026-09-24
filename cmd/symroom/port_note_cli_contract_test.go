@@ -79,7 +79,49 @@ func TestPortNoteCLIContract(t *testing.T) {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", noteCLIContractPath, err)
 	}
 	if !bytes.Equal(got, data) {
-		t.Fatalf("Go note CLI fixture is stale; regenerate deliberately with PORT_GENERATE=1")
+		t.Fatalf("Go note CLI fixture is stale (first differing field: %s); regenerate deliberately with PORT_GENERATE=1", noteCLIContractDifference(got, data))
+	}
+}
+
+func noteCLIContractDifference(got, want []byte) string {
+	var stored, current map[string]json.RawMessage
+	if json.Unmarshal(got, &stored) != nil || json.Unmarshal(want, &current) != nil {
+		return "invalid JSON"
+	}
+	keys := make([]string, 0, len(current))
+	for key := range current {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		if bytes.Equal(stored[key], current[key]) {
+			continue
+		}
+		if key == "cases" {
+			var oldCases, newCases []map[string]json.RawMessage
+			if json.Unmarshal(stored[key], &oldCases) == nil && json.Unmarshal(current[key], &newCases) == nil {
+				for i, newCase := range newCases {
+					if i >= len(oldCases) {
+						break
+					}
+					for field, value := range newCase {
+						if !bytes.Equal(oldCases[i][field], value) {
+							return fmt.Sprintf("cases[%d].%s", i, field)
+						}
+					}
+				}
+			}
+		}
+		return key
+	}
+	return "JSON formatting"
+}
+
+func TestNoteCLIContractDifference(t *testing.T) {
+	got := []byte(`{"cases":[{"stdout":"old"}]}`)
+	want := []byte(`{"cases":[{"stdout":"new"}]}`)
+	if actual := noteCLIContractDifference(got, want); actual != "cases[0].stdout" {
+		t.Fatalf("differing field: %s", actual)
 	}
 }
 

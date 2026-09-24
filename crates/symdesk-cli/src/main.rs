@@ -27,6 +27,15 @@ fn process_exit(code: CoreExitCode) -> ExitCode {
     ExitCode::from(code.as_u8())
 }
 
+fn local_offset_at(value: time::OffsetDateTime) -> time::UtcOffset {
+    // Go honors TZ=UTC on Windows; the time crate's Windows local offset does not.
+    // ponytail: Other TZ overrides need a timezone database if required for parity.
+    if std::env::var("TZ").ok().as_deref() == Some("UTC") {
+        return time::UtcOffset::UTC;
+    }
+    time::UtcOffset::local_offset_at(value).unwrap_or(time::UtcOffset::UTC)
+}
+
 const VERSION: &str = match option_env!("SYMDESK_VERSION") {
     Some(version) => version,
     None => "devel",

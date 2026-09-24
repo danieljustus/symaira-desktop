@@ -498,23 +498,13 @@ fn identity(meta: &cap_std::fs::Metadata) -> String {
         use cap_std::fs::MetadataExt;
         format!("{}:{}", meta.dev(), meta.ino())
     }
-    #[cfg(not(unix))]
+    #[cfg(windows)]
     {
-        #[cfg(windows)]
-        {
-            use cap_primitives::fs::metadata::_WindowsByHandle;
-            use cap_std::fs::MetadataExt;
-            if let (Some(volume), Some(index)) = (
-                _WindowsByHandle::volume_serial_number(meta),
-                _WindowsByHandle::file_index(meta),
-            ) {
-                return format!("{volume}:{index}");
-            }
-            // Child removals change a directory's size/write time, not its creation time.
-            if meta.is_dir() {
-                return format!("dir:{}", meta.creation_time());
-            }
-        }
+        use cap_fs_ext::MetadataExt;
+        format!("{}:{}", meta.dev(), meta.ino())
+    }
+    #[cfg(all(not(unix), not(windows)))]
+    {
         format!(
             "{}:{}:{}",
             meta.len(),

@@ -2,18 +2,18 @@
   "schema_version": 1,
   "generated_on": "darwin/arm64",
   "oracle": {
-    "commit": "f7a6a9d375e24f5a1aa47f9d01f43b852c41aa3e",
+    "commit": "6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1",
     "release": "DATA-001-service-dataset-sync-prerequisite",
     "module_go": "1.26.6",
     "toolchain": "go1.26.6",
     "goos": "darwin",
     "goarch": "arm64"
   },
-  "generator_sha256": "356ae147e534f8905d0f23f677680da329369ba7d7d1763f3ba589c344fc4a91",
+  "generator_sha256": "62f5778e96b88f801036b5141e4b23b78f38355ee3bd0032f0f004da3846b4ca",
   "source_sha256": {
     "cmd/symdesk/dataset.go": "7a4dc0aa205010acd8eb728256fe4a9c210af1e795a8e22d20c772c7f274dc90",
-    "go.mod": "0383eff632281c046fd5a0a8fb79b3a4d849e213b156846f81ac429e56aeae7c",
-    "go.sum": "f285cfd07f1ec34d6672c46f21426ecb2e78892c3a7abac710e8d6c8c48961b8",
+    "go.mod": "f19913015a034363277f87b2f38fd92ee3c6c5601abdb4be7697052904eca563",
+    "go.sum": "f71b1874c73f3b8472d1a9abe153bf2f140f031fd25700985fdf26f4a5a48807",
     "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
     "internal/service/dataset.go": "ff0873a2a19800c058e7738da44981e527b2a6110c4cfab68551aea3a8335e3d",
     "internal/service/dataset_additional_test.go": "6ca20045616742b92aaaa4adf6d7eebf9842190a85d7a80e0d3d7b874fb7107a",

@@ -264,7 +264,7 @@ fn main() {
     )
     .expect("write fake symdesk source");
     let output = Command::new("rustc")
-        .args(["--edition=2021", "-o"])
+        .args(["--edition=2021", "-C", "opt-level=2", "-o"])
         .arg(&binary)
         .arg(&source)
         .output()

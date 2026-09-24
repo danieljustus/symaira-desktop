@@ -246,6 +246,9 @@ func regularIndexFile(t *testing.T, path string) bool {
 }
 
 func normalizeProcessOutput(value, root string) string {
+	if resolved, err := filepath.EvalSymlinks(root); err == nil {
+		value = strings.ReplaceAll(value, resolved, "$ROOT")
+	}
 	value = strings.ReplaceAll(value, root, "$ROOT")
 	value = filepath.ToSlash(value)
 	if strings.HasPrefix(value, "map[") && strings.HasSuffix(value, "]\n") {

@@ -500,6 +500,12 @@ fn identity(meta: &cap_std::fs::Metadata) -> String {
     }
     #[cfg(not(unix))]
     {
+        #[cfg(windows)]
+        if meta.is_dir() {
+            use cap_std::fs::MetadataExt;
+            // Child removals change a directory's size/write time, not its creation time.
+            return format!("dir:{}", meta.creation_time());
+        }
         format!(
             "{}:{}:{}",
             meta.len(),
@@ -650,6 +656,20 @@ mod tests {
     use super::{DatasetPurgeService, preflight, write_journal};
 
     static COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    #[test]
+    fn directory_identity_survives_child_removal() {
+        let sandbox = Sandbox::new();
+        let directory = sandbox.root.join("datasets");
+        fs::create_dir(&directory).expect("create dataset directory");
+        let child = directory.join("row.csv");
+        fs::write(&child, b"row").expect("write child");
+        let root = Dir::open_ambient_dir(&sandbox.root, ambient_authority()).expect("open vault");
+        let before = super::identity(&root.symlink_metadata("datasets").expect("before"));
+        fs::remove_file(child).expect("remove child");
+        let after = super::identity(&root.symlink_metadata("datasets").expect("after"));
+        assert_eq!(before, after);
+    }
 
     #[test]
     fn replacement_after_journal_is_never_removed_on_retry() {

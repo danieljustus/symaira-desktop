@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 const historyTasksFixturePath = "../../testdata/port/cli/history-tasks.json"
@@ -127,6 +128,22 @@ func observeHistoryTasksCLI(t *testing.T) historyTasksFixture {
 				"XDG_DATA_HOME="+filepath.Join(home, "data"))
 			out, err := cmd.Output()
 			input.Stdout = string(out)
+			if runtime.GOOS == "windows" && !jsonOutput {
+				// Go's Windows Local zone comes from the system, not TZ. Check the
+				// local rendering before normalizing the cross-platform oracle.
+				for _, manifest := range input.Manifests {
+					var checkpoint struct{ Timestamp time.Time `json:"timestamp"` }
+					if err := json.Unmarshal([]byte(manifest), &checkpoint); err != nil {
+						t.Fatal(err)
+					}
+					const layout = "2006-01-02 15:04:05"
+					local := checkpoint.Timestamp.Local().Format(layout)
+					if !strings.Contains(input.Stdout, local) {
+						t.Fatalf("history tasks %s did not render local timestamp %s", input.Name, local)
+					}
+					input.Stdout = strings.ReplaceAll(input.Stdout, local, checkpoint.Timestamp.UTC().Format(layout))
+				}
+			}
 			if err != nil {
 				if exit, ok := err.(*exec.ExitError); ok {
 					input.ExitCode = exit.ExitCode()

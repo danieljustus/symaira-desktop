@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -50,7 +51,7 @@ type indexBuildProcessFixture struct {
 }
 
 func TestIndexBuildProcessPortFixture(t *testing.T) {
-	fixture := observeIndexBuildProcess(t)
+	fixture, root := observeIndexBuildProcess(t)
 	encoded, err := json.MarshalIndent(fixture, "", "  ")
 	if err != nil {
 		t.Fatal(err)
@@ -75,7 +76,7 @@ func TestIndexBuildProcessPortFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(current, encoded) {
-		t.Fatal("index build fixture is stale; regenerate explicitly with PORT_GENERATE=1 go test ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$'")
+		t.Fatalf("index build fixture is stale; first differing lines (frozen vs observed):\n%s\nregenerate explicitly with PORT_GENERATE=1 go test ./cmd/symdesk -run '^TestIndexBuildProcessPortFixture$'", indexBuildFixtureDiff(current, encoded, root))
 	}
 }
 
@@ -97,7 +98,7 @@ func TestIndexBuildProcessConfigQuotesWindowsPaths(t *testing.T) {
 	}
 }
 
-func observeIndexBuildProcess(t *testing.T) indexBuildProcessFixture {
+func observeIndexBuildProcess(t *testing.T) (indexBuildProcessFixture, string) {
 	t.Helper()
 	root := t.TempDir()
 	home, cwd, dataHome, tempRoot := filepath.Join(root, "home"), filepath.Join(root, "cwd"), filepath.Join(root, "data"), filepath.Join(root, "tmp")
@@ -205,7 +206,51 @@ func observeIndexBuildProcess(t *testing.T) indexBuildProcessFixture {
 	fixture.Lifecycle, fixture.LifecycleReasons = readIndexBuildLifecycle(t, vault)
 	_, err = os.Stat(filepath.Join(filepath.Dir(sidecarPathForFixture(t, vault)), "metadata.json"))
 	fixture.Metadata = err == nil
-	return fixture
+	return fixture, root
+}
+
+func indexBuildFixtureDiff(frozen, observed []byte, root string) string {
+	scrubRoot := func(value []byte) string {
+		text := string(value)
+		roots := []string{root}
+		if resolved, err := filepath.EvalSymlinks(root); err == nil && resolved != root {
+			roots = append(roots, resolved)
+		}
+		for _, candidate := range roots {
+			text = strings.ReplaceAll(text, strings.ReplaceAll(candidate, `\`, `\\`), "$ROOT")
+			text = strings.ReplaceAll(text, candidate, "$ROOT")
+		}
+		return text
+	}
+	frozenLines := strings.Split(scrubRoot(frozen), "\n")
+	observedLines := strings.Split(scrubRoot(observed), "\n")
+	limit := max(len(frozenLines), len(observedLines))
+	var differences []string
+	for index := 0; index < limit; index++ {
+		frozenLine, observedLine := "<end>", "<end>"
+		if index < len(frozenLines) {
+			frozenLine = frozenLines[index]
+		}
+		if index < len(observedLines) {
+			observedLine = observedLines[index]
+		}
+		if frozenLine != observedLine {
+			differences = append(differences, fmt.Sprintf("line %d frozen: %q\n      observed: %q", index+1, frozenLine, observedLine))
+		}
+	}
+	return strings.Join(differences, "\n")
+}
+
+func TestIndexBuildFixtureDiffScrubsWindowsRoots(t *testing.T) {
+	const root = `C:\Users\runner\Temp\fixture`
+	diff := indexBuildFixtureDiff(
+		[]byte(`{"path":"$ROOT/a"}`),
+		[]byte(`{"path":"C:\\Users\\runner\\Temp\\fixture\\a"}`),
+		root,
+	)
+	if strings.Contains(diff, root) || !strings.Contains(diff, "$ROOT") || !strings.Contains(diff, "observed:") {
+		t.Fatalf("fixture diagnostic did not safely identify the difference: %q", diff)
+	}
 }
 
 func sidecarPathForFixture(t *testing.T, vault string) string {

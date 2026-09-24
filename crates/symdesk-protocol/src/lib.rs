@@ -14,7 +14,7 @@ mod snapshot_cache;
 #[cfg(test)]
 mod snapshot_cache_contracts;
 
-use snapshot_cache::{SnapshotCache, SnapshotPayload};
+use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 
 use std::{
     fmt::Write as _,
@@ -685,17 +685,29 @@ fn open_current_root(state: &AppState) -> Result<cap_std::fs::Dir, String> {
         .map_err(|error| format!("open vault root: {error}"))
 }
 
-fn current_root_identity(state: &AppState) -> Option<String> {
-    let root = open_current_root(state).ok()?;
-    let metadata = root.dir_metadata().ok()?;
+fn current_root_identity(state: &AppState) -> Option<RootIdentity> {
     #[cfg(unix)]
     {
+        let root = open_current_root(state).ok()?;
+        let metadata = root.dir_metadata().ok()?;
         use cap_std::fs::MetadataExt;
-        Some(format!("{}:{}", metadata.dev(), metadata.ino()))
+        Some(RootIdentity::Stable(format!(
+            "{}:{}",
+            metadata.dev(),
+            metadata.ino()
+        )))
     }
-    #[cfg(not(unix))]
+    #[cfg(windows)]
     {
-        Some(format!("{metadata:?}"))
+        Some(RootIdentity::Windows(
+            same_file::Handle::from_path(&state.vault_root).ok()?,
+        ))
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        let root = open_current_root(state).ok()?;
+        let metadata = root.dir_metadata().ok()?;
+        Some(RootIdentity::Stable(format!("{metadata:?}")))
     }
 }
 

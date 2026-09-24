@@ -152,7 +152,13 @@ fn go_history_prune_contracts_replay() {
                 );
             }
         }
-        assert_eq!(state_of(scenario.path()), case.after, "{} files", case.id);
+        let mut expected = case.after.clone();
+        if !cfg!(unix) {
+            for file in &mut expected {
+                file.mode = None;
+            }
+        }
+        assert_eq!(state_of(scenario.path()), expected, "{} files", case.id);
         assert_eq!(
             objects_of(&scenario.path().join(".symdesk/history/objects")),
             case.objects,

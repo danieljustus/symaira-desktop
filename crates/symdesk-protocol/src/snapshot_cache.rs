@@ -22,7 +22,7 @@ pub(super) struct SnapshotPayload {
 
 pub(super) struct SnapshotCache {
     payload: Mutex<Option<Arc<SnapshotPayload>>>,
-    root_identity: Mutex<Option<String>>,
+    root_identity: Mutex<Option<RootIdentity>>,
     dirty: Arc<AtomicBool>,
     healthy: Arc<AtomicBool>,
     #[cfg(test)]
@@ -30,6 +30,24 @@ pub(super) struct SnapshotCache {
     // Retain the watcher until the server drops the cache. Mutex provides Sync
     // for platform backends without exposing the watcher to request handlers.
     _watcher: Mutex<Option<RecommendedWatcher>>,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub(super) enum RootIdentity {
+    #[cfg(not(windows))]
+    Stable(String),
+    #[cfg(windows)]
+    // Keep the Windows identity handle open while start/end IDs are compared.
+    Windows(same_file::Handle),
+    #[cfg(test)]
+    Test(String),
+}
+
+#[cfg(test)]
+impl RootIdentity {
+    fn test(value: &str) -> Self {
+        Self::Test(value.to_owned())
+    }
 }
 
 impl SnapshotCache {
@@ -119,7 +137,7 @@ impl SnapshotCache {
 
     pub fn get_or_build(
         &self,
-        current: impl Fn() -> Option<String>,
+        current: impl Fn() -> Option<RootIdentity>,
         build: impl FnOnce() -> Result<SnapshotPayload, String>,
     ) -> Result<Arc<SnapshotPayload>, String> {
         // Serialize cold builds, rather than allocating one entire vault per
@@ -136,9 +154,13 @@ impl SnapshotCache {
             .root_identity
             .lock()
             .ok()
-            .and_then(|identity| identity.clone())
-            .zip(current_identity.clone())
-            .is_some_and(|(cached, current)| cached == current);
+            .and_then(|identity| {
+                identity
+                    .as_ref()
+                    .zip(current_identity.as_ref())
+                    .map(|(cached, current)| cached == current)
+            })
+            .unwrap_or(false);
         if cached.is_some() && !identity_matches {
             // Identity changes can precede or bypass root watcher delivery.
             // The watcher is still attached to the old root: never trust it
@@ -212,13 +234,13 @@ mod tests {
         let cache = SnapshotCache::uncached();
         cache.healthy.store(true, Ordering::SeqCst);
         cache
-            .get_or_build(|| Some("old".to_owned()), || Ok(payload("old")))
+            .get_or_build(|| Some(RootIdentity::test("old")), || Ok(payload("old")))
             .unwrap();
         cache
-            .get_or_build(|| Some("new".to_owned()), || Ok(payload("new")))
+            .get_or_build(|| Some(RootIdentity::test("new")), || Ok(payload("new")))
             .unwrap();
         let next = cache
-            .get_or_build(|| Some("new".to_owned()), || Ok(payload("edited")))
+            .get_or_build(|| Some(RootIdentity::test("new")), || Ok(payload("edited")))
             .unwrap();
         assert_eq!(next.etag, "edited");
     }
@@ -229,7 +251,7 @@ mod tests {
         let cache = SnapshotCache::uncached();
         cache.healthy.store(true, Ordering::SeqCst);
         cache
-            .get_or_build(|| Some("root".to_owned()), || Ok(payload("old")))
+            .get_or_build(|| Some(RootIdentity::test("root")), || Ok(payload("old")))
             .unwrap();
         let barrier = Barrier::new(2);
         let checks = AtomicUsize::new(0);
@@ -246,7 +268,7 @@ mod tests {
                             barrier.wait();
                             barrier.wait();
                         }
-                        Some("root".to_owned())
+                        Some(RootIdentity::test("root"))
                     },
                     || Ok(payload("new")),
                 )
@@ -260,10 +282,13 @@ mod tests {
         let cache = SnapshotCache::uncached();
         cache.healthy.store(true, Ordering::SeqCst);
         let first = cache
-            .get_or_build(|| Some("test".to_owned()), || Ok(payload("first")))
+            .get_or_build(|| Some(RootIdentity::test("test")), || Ok(payload("first")))
             .unwrap();
         let second = cache
-            .get_or_build(|| Some("test".to_owned()), || panic!("unexpected rebuild"))
+            .get_or_build(
+                || Some(RootIdentity::test("test")),
+                || panic!("unexpected rebuild"),
+            )
             .unwrap();
         assert!(Arc::ptr_eq(&first, &second));
     }
@@ -274,7 +299,7 @@ mod tests {
         cache.healthy.store(true, Ordering::SeqCst);
         cache
             .get_or_build(
-                || Some("test".to_owned()),
+                || Some(RootIdentity::test("test")),
                 || {
                     cache.dirty.store(true, Ordering::SeqCst);
                     Ok(payload("first"))
@@ -284,13 +309,13 @@ mod tests {
         assert!(
             cache
                 .get_or_build(
-                    || Some("test".to_owned()),
+                    || Some(RootIdentity::test("test")),
                     || Err("injected failure".to_owned())
                 )
                 .is_err()
         );
         let next = cache
-            .get_or_build(|| Some("test".to_owned()), || Ok(payload("next")))
+            .get_or_build(|| Some(RootIdentity::test("test")), || Ok(payload("next")))
             .unwrap();
         assert_eq!(next.etag, "next");
     }
@@ -299,11 +324,14 @@ mod tests {
     fn missing_or_failed_watcher_never_trusts_a_clean_cache() {
         let cache = SnapshotCache::uncached();
         cache
-            .get_or_build(|| Some("test".to_owned()), || Ok(payload("first")))
+            .get_or_build(|| Some(RootIdentity::test("test")), || Ok(payload("first")))
             .unwrap();
         assert_eq!(
             cache
-                .get_or_build(|| Some("test".to_owned()), || Ok(payload("second")))
+                .get_or_build(
+                    || Some(RootIdentity::test("test")),
+                    || Ok(payload("second"))
+                )
                 .unwrap()
                 .etag,
             "second"
@@ -312,7 +340,7 @@ mod tests {
         cache.healthy.store(false, Ordering::SeqCst);
         assert_eq!(
             cache
-                .get_or_build(|| Some("test".to_owned()), || Ok(payload("third")))
+                .get_or_build(|| Some(RootIdentity::test("test")), || Ok(payload("third")))
                 .unwrap()
                 .etag,
             "third"
@@ -326,7 +354,7 @@ mod tests {
         let mut large = payload("large");
         large.plain = Bytes::from(vec![0; MAX_CACHE_BYTES + 1]);
         cache
-            .get_or_build(|| Some("test".to_owned()), || Ok(large))
+            .get_or_build(|| Some(RootIdentity::test("test")), || Ok(large))
             .unwrap();
         assert!(cache.payload.lock().unwrap().is_none());
     }
@@ -335,11 +363,11 @@ mod tests {
     fn unchanged_etag_preserves_generated_payload_after_invalidation() {
         let cache = SnapshotCache::uncached();
         let first = cache
-            .get_or_build(|| Some("test".to_owned()), || Ok(payload("same")))
+            .get_or_build(|| Some(RootIdentity::test("test")), || Ok(payload("same")))
             .unwrap();
         let second = cache
             .get_or_build(
-                || Some("test".to_owned()),
+                || Some(RootIdentity::test("test")),
                 || {
                     let mut next = payload("same");
                     next.plain = Bytes::from_static(b"different generation time");

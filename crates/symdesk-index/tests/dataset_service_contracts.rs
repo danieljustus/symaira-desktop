@@ -51,7 +51,25 @@ impl Drop for Sandbox {
 }
 
 fn fixture() -> Value {
-    serde_json::from_str(FIXTURE).expect("parse Go oracle fixture")
+    let fixture: Value = serde_json::from_str(FIXTURE).expect("parse Go oracle fixture");
+    #[cfg(not(unix))]
+    {
+        let mut fixture = fixture;
+        for case in fixture["cases"].as_array_mut().expect("cases") {
+            for state in case["states"].as_array_mut().expect("states") {
+                for entry in state["vault"].as_array_mut().expect("vault entries") {
+                    // Go's fixture checker blanks POSIX modes on Windows, where they have no equivalent.
+                    entry["mode"] = Value::String(String::new());
+                    entry["perm"] = Value::String(String::new());
+                }
+            }
+        }
+        fixture
+    }
+    #[cfg(unix)]
+    {
+        fixture
+    }
 }
 
 fn case<'a>(fixture: &'a Value, id: &str) -> &'a Value {
@@ -281,13 +299,14 @@ fn permission_bits(metadata: &fs::Metadata) -> u32 {
     metadata.permissions().mode() & 0o777
 }
 
-#[cfg(not(unix))]
-fn permission_bits(_metadata: &fs::Metadata) -> u32 {
-    0
-}
-
+#[cfg(unix)]
 fn permission_string(metadata: &fs::Metadata) -> String {
     format!("0{:03o}", permission_bits(metadata))
+}
+
+#[cfg(not(unix))]
+fn permission_string(_metadata: &fs::Metadata) -> String {
+    String::new()
 }
 
 fn mode_string(metadata: &fs::Metadata) -> String {
@@ -306,7 +325,7 @@ fn mode_string(metadata: &fs::Metadata) -> String {
     #[cfg(not(unix))]
     {
         let _ = metadata;
-        "----------".to_owned()
+        String::new()
     }
 }
 

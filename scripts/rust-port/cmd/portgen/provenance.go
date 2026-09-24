@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -134,7 +135,7 @@ func isPortDerivedOutput(rel string) bool {
 // to prove that the caller's tracked content is the committed content.
 func verifyCleanWorktree(repoRoot string) error {
 	command := gitCommand(repoRoot, "diff", "--quiet", "--no-ext-diff", "--ignore-cr-at-eol", "HEAD", "--")
-	err := command.Run()
+	output, err := command.CombinedOutput()
 	if err == nil {
 		return nil
 	}
@@ -142,7 +143,7 @@ func verifyCleanWorktree(repoRoot string) error {
 	if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
 		return fmt.Errorf("checked provenance requires a worktree matching the checked revision")
 	}
-	return fmt.Errorf("inspect worktree cleanliness: %w", err)
+	return fmt.Errorf("inspect worktree cleanliness: %w: %s", err, strings.TrimSpace(string(output)))
 }
 
 type gitTreeEntry struct {
@@ -197,7 +198,9 @@ func gitOutput(repoRoot string, args ...string) ([]byte, error) {
 
 func gitCommand(repoRoot string, args ...string) *exec.Cmd {
 	//nolint:gosec // every caller uses fixed Git subcommands and repository-derived revisions.
-	command := exec.Command("git", append([]string{"--no-replace-objects"}, args...)...)
+	// The sanitized environment omits Actions' global safe.directory setting.
+	// Trust only this checkout, never a user-wide wildcard.
+	command := exec.Command("git", append([]string{"-c", "safe.directory=" + filepath.ToSlash(repoRoot), "--no-replace-objects"}, args...)...)
 	command.Dir = repoRoot
 	command.Env = sanitizedGitEnvironment(os.Environ())
 	return command

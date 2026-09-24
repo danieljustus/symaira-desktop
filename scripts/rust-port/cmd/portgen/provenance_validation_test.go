@@ -10,6 +10,25 @@ import (
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
+func TestSanitizedGitCommandTrustsOnlyItsCheckout(t *testing.T) {
+	repoRoot := newProvenanceBaseRepository(t)
+	global := filepath.Join(t.TempDir(), "global-gitconfig")
+	if err := os.WriteFile(global, []byte("[safe]\n\tdirectory = *\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GIT_CONFIG_GLOBAL", global)
+	output, err := gitCommand(repoRoot, "config", "--get-all", "safe.directory").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := filepath.ToSlash(repoRoot) + "\n"; string(output) != want {
+		t.Fatalf("safe.directory = %q, want only %q", output, want)
+	}
+	if err := verifyCleanWorktree(repoRoot); err != nil {
+		t.Fatalf("verifyCleanWorktree() error = %v", err)
+	}
+}
+
 func TestFixtureCheckRegistryCoversProvenanceManifest(t *testing.T) {
 	if err := validateFixtureCheckCoverage(); err != nil {
 		t.Fatalf("validateFixtureCheckCoverage() error = %v", err)

@@ -149,10 +149,36 @@ fn artifact_identity_and_symdesk_inspect_match_go_process_contract() {
         if case.name == "link-inspect-success" {
             let args_path = isolated.join("symdesk-args.txt");
             let status_path = isolated.join("symdesk-status.txt");
-            assert!(
-                args_path.is_file(),
-                "fake symdesk was not invoked (no args marker)"
-            );
+            if !args_path.is_file() {
+                let probe_args = isolated.join("probe-args.txt");
+                let probe_status = isolated.join("probe-status.txt");
+                let mut probe = Command::new("symdesk");
+                probe
+                    .args(["inspect", "probe.md", "--json"])
+                    .current_dir(&room)
+                    .env_clear()
+                    .env("HOME", &home)
+                    .env("USERPROFILE", &home)
+                    .env("PATH", &path)
+                    .env("PATHEXT", ".COM;.EXE;.BAT;.CMD")
+                    .env("SYMDESK_MODE", "success")
+                    .env("SYMDESK_ARGS_FILE", probe_args)
+                    .env("SYMDESK_STATUS_FILE", probe_status);
+                #[cfg(windows)]
+                for name in ["SYSTEMROOT", "WINDIR", "COMSPEC"] {
+                    if let Some(value) = std::env::var_os(name) {
+                        probe.env(name, value);
+                    }
+                }
+                match probe.output() {
+                    Ok(output) => panic!(
+                        "fake symdesk was not invoked by symroom; direct PATH probe launched (exit={:?}, stdout_bytes={})",
+                        output.status.code(),
+                        output.stdout.len()
+                    ),
+                    Err(error) => panic!("fake symdesk was not invoked; direct PATH spawn error: {error}"),
+                }
+            }
             let status = fs::read_to_string(status_path).unwrap_or_default();
             assert_eq!(status, "completed", "fake symdesk status marker");
         }

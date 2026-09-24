@@ -16,13 +16,18 @@ pub fn run_tasks(vault: Option<&str>, output_json: bool) -> ExitCode {
         Err(error) => return emit_error(error.to_string(), output_json),
     };
     let result = match HistoryStore::new(&vault_root).list_checkpoints() {
+        Ok(checkpoints) if output_json && checkpoints.is_empty() => {
+            write_stdout("null\n".to_owned())
+        }
         Ok(checkpoints) if output_json => write_go_json(&checkpoints),
         Ok(checkpoints) if checkpoints.is_empty() => {
             write_stdout("no task checkpoints\n".to_owned())
         }
         Ok(checkpoints) => {
-            let format = format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]")
-                .expect("static checkpoint timestamp format");
+            let format = format_description::parse_borrowed::<2>(
+                "[year]-[month]-[day] [hour]:[minute]:[second]",
+            )
+            .expect("static checkpoint timestamp format");
             let rendered = checkpoints
                 .iter()
                 .map(|checkpoint| {

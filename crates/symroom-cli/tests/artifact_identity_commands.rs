@@ -236,6 +236,12 @@ fn run_symroom(
         );
     #[cfg(windows)]
     command.env("PATHEXT", ".COM;.EXE;.BAT;.CMD");
+    #[cfg(windows)]
+    for name in ["SYSTEMROOT", "WINDIR", "COMSPEC"] {
+        if let Some(value) = std::env::var_os(name) {
+            command.env(name, value);
+        }
+    }
     if !case.default_identity_env.is_empty() {
         command.env("SYMROOM_DEFAULT_IDENTITY", &case.default_identity_env);
     }

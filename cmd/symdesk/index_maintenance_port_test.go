@@ -250,6 +250,8 @@ func normalizeProcessOutput(value, root string) string {
 		value = strings.ReplaceAll(value, resolved, "$ROOT")
 	}
 	value = strings.ReplaceAll(value, root, "$ROOT")
+	value = strings.ReplaceAll(value, strings.ReplaceAll(root, `\`, `\\`), "$ROOT")
+	value = strings.ReplaceAll(value, `\\`, "/")
 	value = filepath.ToSlash(value)
 	if strings.HasPrefix(value, "map[") && strings.HasSuffix(value, "]\n") {
 		fields := strings.Fields(strings.TrimSuffix(strings.TrimPrefix(value, "map["), "]\n"))
@@ -257,6 +259,15 @@ func normalizeProcessOutput(value, root string) string {
 		return "map[" + strings.Join(fields, " ") + "]\n"
 	}
 	return value
+}
+
+func TestNormalizeProcessOutputWindowsJSONPath(t *testing.T) {
+	const root = `C:\Users\runner\Temp\fixture`
+	got := normalizeProcessOutput(`{"index_location":"C:\\Users\\runner\\Temp\\fixture\\data\\retrieval.db"}`+"\n", root)
+	want := `{"index_location":"$ROOT/data/retrieval.db"}` + "\n"
+	if got != want {
+		t.Fatalf("normalizeProcessOutput() = %q, want %q", got, want)
+	}
 }
 
 func strconvQuote(value string) string {

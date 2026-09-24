@@ -245,15 +245,8 @@ fn dataset_purge_matches_go_service_fixture() {
                     .map(|error| error.to_string())
                     .unwrap_or_default();
                 let after = snapshot(&sandbox);
-                // Windows' fallback file identity includes size/mtime, so a
-                // rewritten trash payload fails at identity before its hash.
-                // Both errors must leave the replacement and journal intact.
-                let windows_replaced = cfg!(windows)
-                    && retry_error == format!("dataset trash {} was replaced", entry.name);
                 assert!(
-                    windows_replaced
-                        || retry_error
-                            .contains(case["error"].as_str().expect("retry error fragment")),
+                    retry_error.contains(case["error"].as_str().expect("retry error fragment")),
                     "case {id}: unexpected retry error {retry_error:?}"
                 );
                 assert_eq!(before, case["before"], "case {id} before retry");

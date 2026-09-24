@@ -501,10 +501,17 @@ fn identity(meta: &cap_std::fs::Metadata) -> String {
     #[cfg(not(unix))]
     {
         #[cfg(windows)]
-        if meta.is_dir() {
+        {
             use cap_std::fs::MetadataExt;
+            if let (Some(volume), Some(index)) =
+                (meta.volume_serial_number(), meta.file_index())
+            {
+                return format!("{volume}:{index}");
+            }
             // Child removals change a directory's size/write time, not its creation time.
-            return format!("dir:{}", meta.creation_time());
+            if meta.is_dir() {
+                return format!("dir:{}", meta.creation_time());
+            }
         }
         format!(
             "{}:{}:{}",
@@ -668,6 +675,19 @@ mod tests {
         let before = super::identity(&root.symlink_metadata("datasets").expect("before"));
         fs::remove_file(child).expect("remove child");
         let after = super::identity(&root.symlink_metadata("datasets").expect("after"));
+        assert_eq!(before, after);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn file_identity_survives_content_rewrite() {
+        let sandbox = Sandbox::new();
+        let path = sandbox.root.join("payload");
+        fs::write(&path, b"original").expect("write payload");
+        let root = Dir::open_ambient_dir(&sandbox.root, ambient_authority()).expect("open vault");
+        let before = super::identity(&root.symlink_metadata("payload").expect("before"));
+        fs::write(&path, b"replacement payload").expect("rewrite payload");
+        let after = super::identity(&root.symlink_metadata("payload").expect("after"));
         assert_eq!(before, after);
     }
 

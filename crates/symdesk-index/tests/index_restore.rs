@@ -17,7 +17,9 @@ struct Fixture {
     source_hashes: BTreeMap<String, String>,
     restored_rows: Vec<Row>,
     header: String,
+    #[cfg_attr(not(unix), allow(dead_code))]
     mode: String,
+    #[cfg_attr(not(unix), allow(dead_code))]
     directory_mode: String,
     source_unchanged: bool,
     same_path_error: String,

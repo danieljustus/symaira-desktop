@@ -305,6 +305,7 @@ fn mode_string(metadata: &fs::Metadata) -> String {
     }
     #[cfg(not(unix))]
     {
+        let _ = metadata;
         "----------".to_owned()
     }
 }

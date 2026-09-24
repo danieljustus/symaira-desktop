@@ -38,6 +38,7 @@ struct Case {
     stdout: String,
     stderr: String,
     final_files: Vec<ExpectedFile>,
+    #[cfg_attr(not(unix), allow(dead_code))]
     #[serde(default)]
     dir_mode: u32,
 }
@@ -46,6 +47,7 @@ struct Case {
 struct ExpectedFile {
     path: String,
     content: String,
+    #[cfg_attr(not(unix), allow(dead_code))]
     mode: u32,
 }
 
@@ -106,6 +108,7 @@ fn brain_profile_cli_matches_go_process_output_and_install_files() {
             fs::write(journal.join(&file.path), file.content.as_bytes())
                 .expect("write Go-generated journal event");
         }
+        #[cfg(unix)]
         if case.path_mode == "helper" || case.path_mode == "helper-fails" {
             write_fake_symbrain(&path_dir, case.path_mode == "helper-fails");
         }
@@ -173,20 +176,18 @@ fn run_symroom(args: &[String], home: &Path, room: &Path, path: &Path, temp: &Pa
         .expect("run Rust symroom brain-profile CLI")
 }
 
+#[cfg(unix)]
 fn write_fake_symbrain(path: &Path, fail: bool) {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let script = if fail {
-            "#!/bin/sh\n/bin/cat >/dev/null\nexit 1\n"
-        } else {
-            "#!/bin/sh\nprintf 'called %s %s %s\\n' \"$1\" \"$2\" \"$3\"\n/bin/cat\n"
-        };
-        let executable = path.join("symbrain");
-        fs::write(&executable, script).expect("write fake symbrain");
-        fs::set_permissions(executable, fs::Permissions::from_mode(0o755))
-            .expect("make fake symbrain executable");
-    }
+    use std::os::unix::fs::PermissionsExt;
+    let script = if fail {
+        "#!/bin/sh\n/bin/cat >/dev/null\nexit 1\n"
+    } else {
+        "#!/bin/sh\nprintf 'called %s %s %s\\n' \"$1\" \"$2\" \"$3\"\n/bin/cat\n"
+    };
+    let executable = path.join("symbrain");
+    fs::write(&executable, script).expect("write fake symbrain");
+    fs::set_permissions(executable, fs::Permissions::from_mode(0o755))
+        .expect("make fake symbrain executable");
 }
 
 fn normalize_home(output: &[u8], home: &Path) -> Vec<u8> {

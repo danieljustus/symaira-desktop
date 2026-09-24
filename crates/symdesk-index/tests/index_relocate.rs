@@ -18,6 +18,7 @@ struct Fixture {
     wal_was_nonempty: bool,
     persisted_index_path: String,
     header: String,
+    #[cfg_attr(not(unix), allow(dead_code))]
     mode: Option<String>,
     destination_replaced: bool,
     same_path_error: String,

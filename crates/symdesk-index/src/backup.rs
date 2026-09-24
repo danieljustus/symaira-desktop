@@ -250,6 +250,10 @@ fn set_private_mode(file: &File) -> std::io::Result<()> {
 }
 
 #[cfg(not(unix))]
+#[expect(
+    clippy::permissions_set_readonly_false,
+    reason = "Windows clears only the read-only attribute"
+)]
 fn set_private_mode(file: &File) -> std::io::Result<()> {
     let mut permissions = file.metadata()?.permissions();
     permissions.set_readonly(false);

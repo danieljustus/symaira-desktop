@@ -15,7 +15,9 @@ struct Fixture {
     observed_rows: Vec<Row>,
     wal_was_nonempty: bool,
     header: String,
+    #[cfg_attr(not(unix), allow(dead_code))]
     mode: Option<String>,
+    #[cfg_attr(not(unix), allow(dead_code))]
     directory_mode: Option<String>,
     same_path_error: String,
     blocked_parent_error: String,

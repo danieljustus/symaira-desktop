@@ -240,6 +240,8 @@ fn command(
 }
 
 fn write_fake_symdesk(path: &Path) {
+    #[cfg(not(unix))]
+    let _ = path;
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;

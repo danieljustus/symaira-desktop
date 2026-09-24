@@ -354,7 +354,9 @@ fn lexical_clean(path: &Path) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
     use super::lexical_clean;
+    #[cfg(unix)]
     use std::path::{Path, PathBuf};
 
     #[cfg(unix)]

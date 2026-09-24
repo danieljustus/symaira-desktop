@@ -475,6 +475,10 @@ impl Drop for TempDir {
 }
 
 #[cfg(windows)]
+#[expect(
+    clippy::permissions_set_readonly_false,
+    reason = "Windows test cleanup clears only the read-only attribute"
+)]
 fn clear_readonly_files(root: &Path) {
     for entry in fs::read_dir(root).expect("read temporary directory") {
         let path = entry.expect("temporary entry").path();

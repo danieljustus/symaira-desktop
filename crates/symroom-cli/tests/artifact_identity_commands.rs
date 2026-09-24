@@ -234,6 +234,8 @@ fn run_symroom(
                 .expect("fixture case")
                 .join("symdesk-args.txt"),
         );
+    #[cfg(windows)]
+    command.env("PATHEXT", ".COM;.EXE;.BAT;.CMD");
     if !case.default_identity_env.is_empty() {
         command.env("SYMROOM_DEFAULT_IDENTITY", &case.default_identity_env);
     }
@@ -264,7 +266,7 @@ fn main() {
     )
     .expect("write fake symdesk source");
     let output = Command::new("rustc")
-        .args(["--edition=2021", "-C", "opt-level=2", "-o"])
+        .args(["--edition=2021", "-o"])
         .arg(&binary)
         .arg(&source)
         .output()

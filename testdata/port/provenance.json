@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "d73687c7c9f417375a7adb161ad30f7fbb79e78f",
+    "commit": "ee25af59fa810f2cac9f6d66a911bb1eb42d247f",
     "release": "post-v0.12.2-security-880"
   },
-  "production_source_digest": "3e87658206ecb20ebd42fbb252ae4817dd10f320aef300b9c422c3b5c189af33",
-  "generator_source_digest": "d43f166610c87daef60ff6ce7147a04feab6626aecec1ae304c2de9b4989c68c",
+  "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
+  "generator_source_digest": "a07ddc0f70762a9f5cfc4dacb48fab23880ac302293a4e630b88732d7b6a4400",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -30,9 +30,9 @@
     "testdata/port/mcp/symroom-tools.json": "30e806bba87f1366727967e2f07a31537d67545d8db49b877abcdbb90d6b3784",
     "testdata/port/representative/cases.json": "329280a98e20cb5fe4d98241ac030fdcf8627b7be7d94ed2893aae708f97a2c8",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "eb69803111c62ddec73ae1c6cf2607310c15ba725cd86ac392053077166e2ac3",
-    "testdata/port/sidecar/lifecycle.json": "0958a4c8a43848f38445138a3f65f5971f382591458bae8e8e0f66a703051cc2",
-    "testdata/port/sidecar/roundtrip.json": "6c9e8e7838b1cf1221f2a0582cd12e31c78a45aad91feecf4ba9de9a291a4474",
+    "testdata/port/sidecar/large-corpus.json": "40473e1551a26d7e1a896245ea8efbd178beccda7c6a3cc58d5b40e8069b12eb",
+    "testdata/port/sidecar/lifecycle.json": "834b16aef534e4a38c1b5cc51ecfd0cec76d28de4f3753f0a891a6ca6abe7108",
+    "testdata/port/sidecar/roundtrip.json": "73fd22228f196e071a0bfd130951b2806d0aa6e2ee47bfb18dd2ab5157ae6c76",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/frontmatter-write.json": "ebe54a09bcd15b5811473b086d11637c65df5584221b900a85d4412cd143f5de",

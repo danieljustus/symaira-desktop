@@ -95,7 +95,7 @@ fn location_and_config_paths_replay_go_fixture() {
         let root = TestDir::new();
         let (cwd, _home, temp_root, environment) = prepare_case(&root.0, case);
         let vault_root = expand_string(&case.vault_root, &root.0, &temp_root);
-        if !vault_root.is_empty() {
+        if !vault_root.trim().is_empty() {
             fs::create_dir_all(&vault_root).expect("create vault root");
         }
         let result = index_location_for_vault(&vault_root, &environment, &cwd, &temp_root);

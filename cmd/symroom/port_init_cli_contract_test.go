@@ -84,9 +84,88 @@ func TestPortInitCLIContract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", initCLIFixturePath, err)
 	}
+	if runtime.GOOS == "windows" {
+		expected, err := normalizeInitCLIWindowsModes(got)
+		if err != nil {
+			t.Fatal(err)
+		}
+		observed, err := normalizeInitCLIWindowsModes(data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(observed, expected) {
+			t.Fatal("Go init CLI portable fixture is stale")
+		}
+		return
+	}
 	if !bytes.Equal(got, data) {
 		t.Fatal("Go init CLI fixture is stale; regenerate deliberately with PORT_GENERATE=1")
 	}
+}
+
+func TestNormalizeInitCLIWindowsModesPreservesUnknownFields(t *testing.T) {
+	fixture := []byte(`{"future":"kept","cases":[{"name":"init","modes":{"room":"0755"},"future_case":{"value":1}}]}`)
+	got, err := normalizeInitCLIWindowsModes(fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	drifted, err := normalizeInitCLIWindowsModes([]byte(`{"future":"kept","cases":[{"name":"init","modes":{"room":"0755"},"future_case":{"value":2}}]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(got, drifted) {
+		t.Fatal("unknown fixture field drift was normalized away")
+	}
+	if !bytes.Contains(got, []byte(`"future": "kept"`)) || !bytes.Contains(got, []byte(`"future_case"`)) || !bytes.Contains(got, []byte(`"room": "platform"`)) {
+		t.Fatalf("normalized fixture lost unknown fields or retained POSIX mode: %s", got)
+	}
+}
+
+func normalizeInitCLIWindowsModes(data []byte) ([]byte, error) {
+	var fixture map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fixture); err != nil {
+		return nil, err
+	}
+	var cases []json.RawMessage
+	if err := json.Unmarshal(fixture["cases"], &cases); err != nil {
+		return nil, fmt.Errorf("decode fixture cases: %w", err)
+	}
+	for i, rawCase := range cases {
+		var item map[string]json.RawMessage
+		if err := json.Unmarshal(rawCase, &item); err != nil {
+			return nil, fmt.Errorf("decode fixture case %d: %w", i, err)
+		}
+		var modes map[string]json.RawMessage
+		if err := json.Unmarshal(item["modes"], &modes); err != nil {
+			return nil, fmt.Errorf("decode fixture case %d modes: %w", i, err)
+		}
+		for path, rawMode := range modes {
+			var mode string
+			if err := json.Unmarshal(rawMode, &mode); err != nil {
+				return nil, fmt.Errorf("decode fixture case %d mode %q: %w", i, path, err)
+			}
+			modes[path] = json.RawMessage(`"platform"`)
+		}
+		encodedModes, err := json.Marshal(modes)
+		if err != nil {
+			return nil, err
+		}
+		item["modes"] = encodedModes
+		cases[i], err = json.Marshal(item)
+		if err != nil {
+			return nil, err
+		}
+	}
+	encodedCases, err := json.Marshal(cases)
+	if err != nil {
+		return nil, err
+	}
+	fixture["cases"] = encodedCases
+	encoded, err := json.MarshalIndent(fixture, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append(encoded, '\n'), nil
 }
 
 func makeInitCLIContract(t *testing.T, root string) (initCLIContract, error) {

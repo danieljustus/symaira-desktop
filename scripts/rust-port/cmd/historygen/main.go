@@ -24,8 +24,8 @@ import (
 )
 
 const (
-	defaultOracleCommit  = "c4f6e77928849c3626400c45676c05c3cf58f2a1"
-	defaultOracleRelease = "unreleased-c4f6e779"
+	defaultOracleCommit  = "ee25af59fa810f2cac9f6d66a911bb1eb42d247f"
+	defaultOracleRelease = "unreleased-ee25af59"
 )
 
 type Document struct {

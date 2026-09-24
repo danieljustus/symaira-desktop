@@ -17,11 +17,11 @@ use time::format_description::well_known::Rfc3339;
 const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
     (
         "go.mod",
-        "0383eff632281c046fd5a0a8fb79b3a4d849e213b156846f81ac429e56aeae7c",
+        "f19913015a034363277f87b2f38fd92ee3c6c5601abdb4be7697052904eca563",
     ),
     (
         "go.sum",
-        "f285cfd07f1ec34d6672c46f21426ecb2e78892c3a7abac710e8d6c8c48961b8",
+        "f71b1874c73f3b8472d1a9abe153bf2f140f031fd25700985fdf26f4a5a48807",
     ),
     (
         "internal/history/checkpoint.go",
@@ -38,8 +38,8 @@ const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
 ];
 
 const EXPECTED_ORACLE_OPERATION_COUNT: usize = 56;
-const EXPECTED_ORACLE_COMMIT: &str = "c4f6e77928849c3626400c45676c05c3cf58f2a1";
-const EXPECTED_ORACLE_RELEASE: &str = "unreleased-c4f6e779";
+const EXPECTED_ORACLE_COMMIT: &str = "ee25af59fa810f2cac9f6d66a911bb1eb42d247f";
+const EXPECTED_ORACLE_RELEASE: &str = "unreleased-ee25af59";
 
 fn deserialize_option_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
 where

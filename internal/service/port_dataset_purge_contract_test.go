@@ -42,6 +42,7 @@ type datasetPurgeRecoveryFixtureCase struct {
 	Before       datasetPurgeSnapshot `json:"before"`
 	After        datasetPurgeSnapshot `json:"after"`
 	Error        string               `json:"error,omitempty"`
+	WindowsError string               `json:"windows_error,omitempty"`
 }
 
 type datasetPurgeSnapshot struct {
@@ -323,6 +324,7 @@ func datasetPurgeReplacementTrashRetryCase(t *testing.T) datasetPurgeRecoveryFix
 		Before:       before,
 		After:        after,
 		Error:        "content changed",
+		WindowsError: "was replaced",
 	}
 }
 

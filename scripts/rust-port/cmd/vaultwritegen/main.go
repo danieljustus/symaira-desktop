@@ -27,7 +27,7 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/vault"
 )
 
-const defaultOracleCommit = "6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1"
+const defaultOracleCommit = "38891d35eb8ceb6c348eca9a78b3fb2873677e3d"
 
 type fixture struct {
 	SchemaVersion int               `json:"schema_version"`

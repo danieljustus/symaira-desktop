@@ -2,12 +2,12 @@
   "schema_version": 1,
   "generated_on": "darwin/arm64",
   "oracle": {
-    "commit": "6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1",
+    "commit": "38891d35eb8ceb6c348eca9a78b3fb2873677e3d",
     "toolchain": "go1.26.6",
     "goos": "darwin",
     "goarch": "arm64"
   },
-  "generator_sha256": "68e1d0b61eb9fd2a5b9fab3d7dfe9d86e4d9646f9389b19bffcbcbe6406b17ef",
+  "generator_sha256": "e01b8cb07fed200e34372d08bd2c084fdb0e3e52eae67f03076ad775bd0dc4dc",
   "source_sha256": {
     "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
     "internal/dbviews/views.go": "0c36a4a9f6a79aa271bc4a6009b126693ae79139958065e17362230af5d401aa",

@@ -248,16 +248,23 @@ fn dataset_purge_matches_go_service_fixture() {
                 // Windows' fallback file identity includes size/mtime, so a
                 // rewritten trash payload fails at identity before its hash.
                 // Both errors must leave the replacement and journal intact.
-                let windows_replaced = cfg!(windows)
-                    && retry_error == format!("dataset trash {} was replaced", entry.name);
+                let expected_retry_error = if cfg!(windows) {
+                    case["windows_error"]
+                        .as_str()
+                        .expect("Windows retry error fragment")
+                } else {
+                    case["error"].as_str().expect("retry error fragment")
+                };
                 assert!(
-                    windows_replaced
-                        || retry_error
-                            .contains(case["error"].as_str().expect("retry error fragment")),
-                    "case {id}: unexpected retry error {retry_error:?}"
+                    retry_error.contains(expected_retry_error),
+                    "case {id}: expected retry error containing {expected_retry_error:?}, got {retry_error:?}"
                 );
                 assert_eq!(before, case["before"], "case {id} before retry");
-                assert_eq!(after, case["after"], "case {id} after retry");
+                let expected_after = snapshot_with_windows_error(
+                    case["after"].clone(),
+                    cfg!(windows).then_some(expected_retry_error),
+                );
+                assert_eq!(after, expected_after, "case {id} after retry");
                 assert_eq!(
                     fs::read(&trash_path).expect("replacement trash payload survives"),
                     b"replacement payload",
@@ -304,6 +311,61 @@ fn dataset_purge_matches_go_service_fixture() {
             other => panic!("unknown dataset purge recovery case {other:?}"),
         }
     }
+}
+
+#[test]
+fn dataset_purge_windows_retry_snapshot_uses_platform_specific_error() {
+    let fixture: Value = serde_json::from_str(FIXTURE).expect("Go fixture JSON");
+    let case = fixture["recovery_cases"]
+        .as_array()
+        .expect("recovery cases")
+        .iter()
+        .find(|case| case["id"] == "replacement-trash-retry-fails-closed")
+        .expect("replacement retry case");
+    let expected = case["windows_error"]
+        .as_str()
+        .expect("Windows retry error fragment");
+    let snapshot = snapshot_with_windows_error(case["after"].clone(), Some(expected));
+    let journal = snapshot["files"]
+        .as_array()
+        .expect("snapshot files")
+        .iter()
+        .find(|file| file["path"] == ".symdesk/dataset-purge/orders.json")
+        .expect("purge journal file");
+    let contents: Value =
+        serde_json::from_str(journal["content"].as_str().expect("journal content"))
+            .expect("journal JSON");
+    assert!(contents["last_error"].as_str().unwrap().ends_with(expected));
+    let encoded = journal["content"].as_str().unwrap();
+    assert_eq!(journal["size"], encoded.len());
+    assert_eq!(
+        journal["sha256"],
+        symdesk_vault::sha256_hex(encoded.as_bytes())
+    );
+}
+
+fn snapshot_with_windows_error(mut snapshot: Value, error: Option<&str>) -> Value {
+    let Some(error) = error else {
+        return snapshot;
+    };
+    let journal = snapshot["files"]
+        .as_array_mut()
+        .expect("snapshot files")
+        .iter_mut()
+        .find(|file| file["path"] == ".symdesk/dataset-purge/orders.json")
+        .expect("purge journal file");
+    let mut content: Value =
+        serde_json::from_str(journal["content"].as_str().expect("journal content"))
+            .expect("journal JSON");
+    let file_name = content["trash"][0]["name"]
+        .as_str()
+        .expect("trash file name");
+    content["last_error"] = json!(format!("dataset trash {file_name} {error}"));
+    let encoded = serde_json::to_string(&content).expect("serialize expected journal");
+    journal["size"] = json!(encoded.len());
+    journal["sha256"] = json!(symdesk_vault::sha256_hex(encoded.as_bytes()));
+    journal["content"] = json!(encoded);
+    snapshot
 }
 
 #[cfg(unix)]

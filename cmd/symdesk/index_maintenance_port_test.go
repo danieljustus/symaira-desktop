@@ -66,7 +66,7 @@ func TestIndexMaintenanceProcessPortFixture(t *testing.T) {
 		}
 		return
 	}
-	current, err := os.ReadFile(path)
+	current, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func observeIndexMaintenanceProcess(t *testing.T) indexMaintenanceProcessFixture
 	if err != nil {
 		t.Fatalf("resolve Go module cache: %v", err)
 	}
-	build := exec.Command("go", "build", "-o", binary, ".")
+	build := exec.Command("go", "build", "-o", binary, ".") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Dir = "."
 	build.Env = append(os.Environ(),
 		"HOME="+currentUser.HomeDir,
@@ -159,7 +159,7 @@ func observeIndexMaintenanceProcess(t *testing.T) indexMaintenanceProcessFixture
 		"NO_COLOR=1",
 	}
 	run := func(args ...string) indexMaintenanceProcessResult {
-		command := exec.Command(binary, args...)
+		command := exec.Command(binary, args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		command.Dir = cwd
 		command.Env = environment
 		output, err := command.Output()

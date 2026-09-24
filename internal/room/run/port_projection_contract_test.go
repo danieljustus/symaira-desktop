@@ -90,16 +90,16 @@ func TestPortRunProjectionContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join("..", "..", "..", runProjectionFixture)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", runProjectionFixture)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", runProjectionFixture, err)
 	}
@@ -541,7 +541,7 @@ func runProjectionRecord(t *testing.T, record *Run) string {
 
 func fileSHA256(t *testing.T, path string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("..", "..", "..", path))
+	data, err := os.ReadFile(filepath.Join("..", "..", "..", path)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}

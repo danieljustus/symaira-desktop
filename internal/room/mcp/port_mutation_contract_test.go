@@ -92,7 +92,7 @@ func TestSymRoomMCPMutationOracle(t *testing.T) {
 		cases = append(cases, map[string]any{"request": fixtureRequests[i], "response": response})
 	}
 	doc["cases"] = cases
-	journalBytes, err := os.ReadFile(filepath.Join(roomDir, "journal", id.MemberID+".jsonl"))
+	journalBytes, err := os.ReadFile(filepath.Join(roomDir, "journal", id.MemberID+".jsonl")) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}

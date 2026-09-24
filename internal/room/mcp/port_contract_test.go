@@ -87,7 +87,7 @@ func TestSymRoomMCPRepresentativeOracle(t *testing.T) {
 		JournalLines  []string         `json:"journal_lines"`
 		Cases         []map[string]any `json:"cases"`
 	}{SchemaVersion: 1, Oracle: inventory.Oracle{Commit: "745c08e8144971c61133c5d0e5d61c7ce405aad2", Release: "post-v0.12.2-security-880"}}
-	journalBytes, err := os.ReadFile(filepath.Join(journalDir, id.MemberID+".jsonl"))
+	journalBytes, err := os.ReadFile(filepath.Join(journalDir, id.MemberID+".jsonl")) //nolint:gosec // deterministic identity under t.TempDir
 	if err != nil {
 		t.Fatal(err)
 	}

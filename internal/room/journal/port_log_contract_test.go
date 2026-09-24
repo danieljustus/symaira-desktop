@@ -36,7 +36,7 @@ func TestPortRoomLogContract(t *testing.T) {
 	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../../.."))
 	fixture := logContract{SchemaVersion: 1, SourceHashes: map[string]string{}}
 	for _, rel := range []string{"internal/room/journal/log.go", "internal/room/journal/verifier.go", "internal/room/journal/merge.go"} {
-		data, err := os.ReadFile(filepath.Join(root, rel))
+		data, err := os.ReadFile(filepath.Join(root, rel)) //nolint:gosec // rel comes from the fixed oracle source list above
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -108,7 +108,7 @@ func TestPortRoomLogContract(t *testing.T) {
 	encoded = append(encoded, '\n')
 	path := filepath.Join(root, "testdata/port/room/log.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		return

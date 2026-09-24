@@ -50,7 +50,7 @@ func TestPortRecipeValidateCLIContract(t *testing.T) {
 		}
 		return
 	}
-	current, err := os.ReadFile(path)
+	current, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func observeRecipeValidateCLI(t *testing.T) recipeValidateFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	build := exec.Command("go", "build", "-o", binary, ".")
+	build := exec.Command("go", "build", "-o", binary, ".") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Env = append(os.Environ(), "GOMODCACHE="+string(bytes.TrimSpace(moduleCache)), "GOTMPDIR="+root)
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build Go CLI: %v\n%s", err, out)
@@ -110,7 +110,7 @@ func observeRecipeValidateCLI(t *testing.T) recipeValidateFixture {
 		if input.name == "valid_json" {
 			args = append([]string{"--json"}, args...)
 		}
-		cmd := exec.Command(binary, args...)
+		cmd := exec.Command(binary, args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Env = append(os.Environ(), "HOME="+home, "XDG_CONFIG_HOME="+filepath.Join(home, "config"), "XDG_CACHE_HOME="+filepath.Join(home, "cache"), "XDG_DATA_HOME="+filepath.Join(home, "data"))
 		out, err := cmd.Output()
 		caseResult := recipeValidateCase{Name: input.name, Recipe: input.yaml, Stdout: string(out), JSON: input.name == "valid_json", ExactStderr: input.name != "invalid_yaml" && input.name != "missing_file"}

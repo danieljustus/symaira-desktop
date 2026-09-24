@@ -80,7 +80,7 @@ func cfgPrecedenceRepoRoot(t *testing.T) string {
 
 func cfgPrecedenceHash(t *testing.T, root, rel string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(root, rel))
+	data, err := os.ReadFile(filepath.Join(root, rel)) //nolint:gosec // rel is a fixed repository fixture path
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,16 +135,16 @@ func TestPortConfigPrecedenceContract(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := os.MkdirAll(filepath.Dir(fixturePath), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(fixturePath), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(fixturePath, append(encoded, '\n'), 0o644); err != nil {
+		if err := os.WriteFile(fixturePath, append(encoded, '\n'), 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return
 	}
 
-	data, err := os.ReadFile(fixturePath)
+	data, err := os.ReadFile(fixturePath) //nolint:gosec // fixturePath is the fixed repository fixture path
 	if err != nil {
 		t.Fatalf("read Go-owned fixture %s (generate with PORT_GENERATE=1): %v", cfgPrecedenceFixturePath, err)
 	}

@@ -61,16 +61,16 @@ func TestPortBrainProfileCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, brainProfileCLIFixture)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", brainProfileCLIFixture)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // path is the fixed repository fixture path
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", brainProfileCLIFixture, err)
 	}
@@ -93,7 +93,7 @@ func makeBrainProfileCLIContract(t *testing.T, root string) (brainProfileCLICont
 		SourceHashes:   map[string]string{},
 	}
 	for _, rel := range []string{"cmd/symroom/main.go", "cmd/symroom/cmd_brainprofile.go", "internal/room/brainprofile/brainprofile.go"} {
-		data, err := os.ReadFile(filepath.Join(root, rel))
+		data, err := os.ReadFile(filepath.Join(root, rel)) //nolint:gosec // rel is a fixed repository source path
 		if err != nil {
 			return brainProfileCLIContract{}, err
 		}
@@ -124,7 +124,7 @@ func makeBrainProfileCLIContract(t *testing.T, root string) (brainProfileCLICont
 	if runtime.GOOS == "windows" {
 		helperBinary += ".exe"
 	}
-	build := exec.Command("go", "build", "-o", helperBinary, helperSource)
+	build := exec.Command("go", "build", "-o", helperBinary, helperSource) //nolint:gosec // fixed Go build command for a temporary test helper
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {
 		return brainProfileCLIContract{}, fmt.Errorf("build fake symbrain: %w\n%s", err, output)
@@ -147,31 +147,31 @@ func makeBrainProfileCLIContract(t *testing.T, root string) (brainProfileCLICont
 		home := filepath.Join(caseDir, "home")
 		roomDir := filepath.Join(caseDir, "room")
 		journalDir := filepath.Join(roomDir, "journal")
-		if err := os.MkdirAll(journalDir, 0o755); err != nil {
+		if err := os.MkdirAll(journalDir, 0o700); err != nil {
 			return brainProfileCLIContract{}, err
 		}
-		if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte(fixture.RoomTOML), 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(roomDir, "room.toml"), []byte(fixture.RoomTOML), 0o600); err != nil {
 			return brainProfileCLIContract{}, err
 		}
 		for _, file := range fixture.JournalFiles {
-			if err := os.WriteFile(filepath.Join(journalDir, file.Path), []byte(file.Content), 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(journalDir, file.Path), []byte(file.Content), 0o600); err != nil {
 				return brainProfileCLIContract{}, err
 			}
 		}
-		if err := os.MkdirAll(home, 0o755); err != nil {
+		if err := os.MkdirAll(home, 0o700); err != nil {
 			return brainProfileCLIContract{}, err
 		}
 		path := ""
 		switch vector.pathMode {
 		case "empty":
 			path = filepath.Join(caseDir, "empty-path")
-			if err := os.Mkdir(path, 0o755); err != nil {
+			if err := os.Mkdir(path, 0o700); err != nil {
 				return brainProfileCLIContract{}, err
 			}
 		case "helper", "helper-fails":
 			path = binPath
 		}
-		cmd := exec.Command(goBinary, vector.args...)
+		cmd := exec.Command(goBinary, vector.args...) //nolint:gosec // goBinary is the test-built helper and args are fixed vectors
 		cmd.Env = []string{"HOME=" + home, "USERPROFILE=" + home, "PATH=" + path, "SYMROOM_ROOM_DIR=" + roomDir, "TZ=UTC", "LC_ALL=C", "LANG=C"}
 		if vector.pathMode == "helper-fails" {
 			cmd.Env = append(cmd.Env, "FAKE_SYMBRAIN_FAIL=1")
@@ -201,7 +201,7 @@ func makeBrainProfileCLIContract(t *testing.T, root string) (brainProfileCLICont
 					continue
 				}
 				path := filepath.Join(profileDir, entry.Name())
-				data, err := os.ReadFile(path)
+				data, err := os.ReadFile(path) //nolint:gosec // path is a test fixture beneath t.TempDir
 				if err != nil {
 					return brainProfileCLIContract{}, err
 				}
@@ -232,7 +232,7 @@ func buildBrainProfileCLIOracle(t *testing.T, root string) string {
 	if runtime.GOOS == "windows" {
 		path += ".exe"
 	}
-	cmd := exec.Command("go", "build", "-o", path, "./cmd/symroom")
+	cmd := exec.Command("go", "build", "-o", path, "./cmd/symroom") //nolint:gosec // fixed Go build command for the test oracle
 	cmd.Dir = root
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("build Go symroom oracle: %v\n%s", err, output)

@@ -68,7 +68,7 @@ func TestIndexBuildProcessPortFixture(t *testing.T) {
 		}
 		return
 	}
-	current, err := os.ReadFile(path)
+	current, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,14 +140,14 @@ func observeIndexBuildProcess(t *testing.T) indexBuildProcessFixture {
 	if err != nil {
 		t.Fatalf("resolve Go module cache: %v", err)
 	}
-	build := exec.Command("go", "build", "-o", binary, ".")
+	build := exec.Command("go", "build", "-o", binary, ".") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Env = append(os.Environ(), "HOME="+currentUser.HomeDir, "GOMODCACHE="+strings.TrimSpace(string(moduleCache)), "GOTMPDIR="+filepath.Join(root, "go-build"))
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build Go CLI process fixture: %v\n%s", err, output)
 	}
 	environment := []string{"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempRoot, "TMP=" + tempRoot, "TEMP=" + tempRoot, "LANG=C", "LC_ALL=C", "TZ=UTC", "TERM=dumb", "NO_COLOR=1"}
 	run := func(args ...string) indexBuildProcessResult {
-		command := exec.Command(binary, args...)
+		command := exec.Command(binary, args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		command.Dir = cwd
 		command.Env = environment
 		output, err := command.Output()
@@ -204,12 +204,20 @@ func readIndexBuildFiles(t *testing.T, vault string) []indexBuildProcessFile {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("close index database: %v", err)
+		}
+	})
 	rows, err := db.Query("SELECT files.path,files.title,fts_search.body FROM files JOIN fts_search ON fts_search.rowid=files.id ORDER BY files.path")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer rows.Close()
+	t.Cleanup(func() {
+		if err := rows.Close(); err != nil {
+			t.Errorf("close index rows: %v", err)
+		}
+	})
 	var files []indexBuildProcessFile
 	for rows.Next() {
 		var file indexBuildProcessFile
@@ -230,12 +238,20 @@ func readIndexBuildLifecycle(t *testing.T, vault string) (map[string]string, map
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("close lifecycle database: %v", err)
+		}
+	})
 	rows, err := db.Query("SELECT path,state,reason FROM index_lifecycle ORDER BY path")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer rows.Close()
+	t.Cleanup(func() {
+		if err := rows.Close(); err != nil {
+			t.Errorf("close lifecycle rows: %v", err)
+		}
+	})
 	states := map[string]string{}
 	reasons := map[string]string{}
 	for rows.Next() {

@@ -79,16 +79,16 @@ func TestPortRunApprovalCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, runApprovalCLIContractPath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", runApprovalCLIContractPath)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", runApprovalCLIContractPath, err)
 	}
@@ -122,7 +122,7 @@ func makeRunApprovalCLIContract(t *testing.T, root string) (runApprovalCLIContra
 		"internal/room/config/config.go", "internal/room/event/event.go", "internal/room/identity/identity.go",
 		"internal/room/journal/journal.go", "internal/room/members/members.go", "internal/room/run/run.go",
 	} {
-		data, err := os.ReadFile(filepath.Join(root, source))
+		data, err := os.ReadFile(filepath.Join(root, source)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return fixture, err
 		}
@@ -159,7 +159,7 @@ func makeRunApprovalCLIContract(t *testing.T, root string) (runApprovalCLIContra
 	}
 
 	executable := filepath.Join(t.TempDir(), "symroom-go-approval-oracle")
-	build := exec.Command("go", "build", "-o", executable, "./cmd/symroom")
+	build := exec.Command("go", "build", "-o", executable, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {
 		return fixture, fmt.Errorf("build Go symroom approval oracle: %w\n%s", err, output)
@@ -193,7 +193,7 @@ func makeRunApprovalCLIContract(t *testing.T, root string) (runApprovalCLIContra
 				return fixture, err
 			}
 		}
-		cmd := exec.Command(executable, vector.args...)
+		cmd := exec.Command(executable, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Env = []string{
 			"HOME=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
 			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + roomDir,
@@ -308,7 +308,7 @@ func readRunApprovalCLIJournal(dir, actor string, dynamic, approval bool) ([]run
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".jsonl" {
 			continue
 		}
-		content, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		content, err := os.ReadFile(filepath.Join(dir, entry.Name())) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return nil, err
 		}

@@ -100,7 +100,7 @@ func TestPortDatasetPurgeContract(t *testing.T) {
 			if _, err := svc.History.Trash(rawRel); err != nil {
 				t.Fatal(err)
 			}
-			if err := os.WriteFile(rawAbs, rawBytes, 0o600); err != nil {
+			if err := os.WriteFile(rawAbs, rawBytes, 0o600); err != nil { //nolint:gosec // rawAbs is a test path rooted in the temporary vault
 				t.Fatal(err)
 			}
 		}

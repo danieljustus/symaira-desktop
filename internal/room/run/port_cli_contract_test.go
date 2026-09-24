@@ -51,16 +51,16 @@ func TestPortRunCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, runCLIContractFixture)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", runCLIContractFixture)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", runCLIContractFixture, err)
 	}
@@ -162,7 +162,7 @@ func makeRunCLIContract(t *testing.T, root string) (runCLIContract, error) {
 		{"show-usage", "main", []string{"run", "show"}},
 		{"list-unknown-flag", "main", []string{"run", "list", "--unknown"}},
 	} {
-		cmd := exec.Command(executable, vector.args...)
+		cmd := exec.Command(executable, vector.args...) //nolint:gosec // executable is the test-built symroom and vectors are fixed
 		caseEnv := filepath.Join(temp, "env-"+vector.name)
 		home, dataHome, tempDir := makeRunCLIEnv(t, caseEnv)
 		cmd.Env = []string{
@@ -204,7 +204,7 @@ func makeRunCLIEnv(t *testing.T, root string) (home, dataHome, tempDir string) {
 func buildRunCLIOracle(t *testing.T, root string) string {
 	t.Helper()
 	executable := filepath.Join(t.TempDir(), "symroom-go")
-	build := exec.Command("go", "build", "-o", executable, "./cmd/symroom")
+	build := exec.Command("go", "build", "-o", executable, "./cmd/symroom") //nolint:gosec // fixed Go build command for a temporary test helper
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build Go symroom oracle: %v\n%s", err, output)
@@ -227,7 +227,7 @@ func runCLIRoot(t *testing.T) string {
 
 func runCLIFileHash(t *testing.T, root, path string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(root, path))
+	data, err := os.ReadFile(filepath.Join(root, path)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -14,8 +14,6 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/event"
 )
 
-const mergeReadFixturePath = "../../../testdata/port/room/merge-read.json"
-
 type mergeReadFile struct {
 	Name          string `json:"name"`
 	Content       string `json:"content"`
@@ -135,7 +133,7 @@ func TestPortRoomMergeReadContract(t *testing.T) {
 	encoded = append(encoded, '\n')
 	path := filepath.Join(root, "testdata/port/room/merge-read.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		return

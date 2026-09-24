@@ -44,7 +44,7 @@ func TestPortIndexCLIContract(t *testing.T) {
 	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../.."))
 	fixture := indexCLIContract{SchemaVersion: 1, SourceHashes: make(map[string]string)}
 	for _, rel := range []string{"cmd/symroom/main.go", "cmd/symroom/cmd_index.go", "internal/room/index/index.go"} {
-		data, err := os.ReadFile(filepath.Join(root, rel))
+		data, err := os.ReadFile(filepath.Join(root, rel)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -136,7 +136,7 @@ func TestPortIndexCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, indexCLIContractPath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		return

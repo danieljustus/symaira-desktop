@@ -57,16 +57,16 @@ func TestPortDecideCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, decideCLIContractPath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", decideCLIContractPath)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", decideCLIContractPath, err)
 	}
@@ -146,7 +146,7 @@ func makeDecideCLIContract(t *testing.T, root string) (decideCLIContract, error)
 				return decideCLIContract{}, err
 			}
 		}
-		cmd := exec.Command(goBinary, vector.argv...)
+		cmd := exec.Command(goBinary, vector.argv...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Env = []string{
 			"HOME=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
 			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + roomDir,

@@ -72,16 +72,16 @@ func TestPortWatchCLIContract(t *testing.T) {
 		if runtime.GOOS == "windows" {
 			t.Skip("Unix cancellation case is generated on Unix")
 		}
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", watchCLIContractPath)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", watchCLIContractPath, err)
 	}
@@ -130,7 +130,7 @@ func makeWatchCLIContract(t *testing.T, root string) (watchCLIContract, error) {
 		"cmd/symroom/main.go", "cmd/symroom/cmd_watch.go", "internal/room/desk/watch.go",
 		"internal/room/artifact/artifact.go", "internal/room/event/event.go",
 	} {
-		data, err := os.ReadFile(filepath.Join(root, rel))
+		data, err := os.ReadFile(filepath.Join(root, rel)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return fixture, err
 		}
@@ -141,7 +141,7 @@ func makeWatchCLIContract(t *testing.T, root string) (watchCLIContract, error) {
 	if runtime.GOOS == "windows" {
 		goBinary += ".exe"
 	}
-	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom")
+	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {
 		return fixture, fmt.Errorf("build Go symroom watch oracle: %w\n%s", err, output)
@@ -211,11 +211,11 @@ func makeWatchCLIContract(t *testing.T, root string) (watchCLIContract, error) {
 		argsFile := filepath.Join(caseDir, "symdesk-args.txt")
 		if vector.pathMode == "fake" {
 			script := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$WATCH_ARGS_FILE\"\nprintf '{\"event\":\"file_changed\",\"path\":\"%s\"}\\n' \"$WATCH_EVENT_PATH\"\nexec /bin/sleep 60\n"
-			if err := os.WriteFile(filepath.Join(pathDir, "symdesk"), []byte(script), 0o755); err != nil {
+			if err := os.WriteFile(filepath.Join(pathDir, "symdesk"), []byte(script), 0o755); err != nil { //nolint:gosec // test helper must be executable
 				return fixture, err
 			}
 		}
-		cmd := exec.Command(goBinary, vector.args...)
+		cmd := exec.Command(goBinary, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Dir = roomDir
 		cmd.Env = []string{
 			"HOME=" + home, "USERPROFILE=" + home, "TMPDIR=" + tmp, "TZ=UTC", "LC_ALL=C", "LANG=C",
@@ -270,7 +270,7 @@ func makeWatchCLIContract(t *testing.T, root string) (watchCLIContract, error) {
 			Stdout: stdout.String(), Stderr: stderr.String(), FinalFiles: finalFiles,
 		}
 		if vector.pathMode == "fake" {
-			data, err := os.ReadFile(argsFile)
+			data, err := os.ReadFile(argsFile) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 			if err != nil {
 				return fixture, err
 			}
@@ -285,7 +285,7 @@ func waitForAppendedJournal(t *testing.T, path string, lines int, timeout time.D
 	t.Helper()
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		data, err := os.ReadFile(path)
+		data, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err == nil && bytes.Count(data, []byte{'\n'}) >= lines {
 			return true
 		}
@@ -311,7 +311,7 @@ func watchCLIReadFiles(root string, normalizeJournal bool) ([]watchCLIFile, erro
 		if entry.IsDir() {
 			return nil
 		}
-		data, err := os.ReadFile(path)
+		data, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return err
 		}
@@ -355,7 +355,7 @@ func normalizeWatchJournal(data []byte) ([]byte, error) {
 }
 
 func freezeWatchInitialEvent(path string, owner *identity.Identity) error {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		return err
 	}
@@ -372,5 +372,5 @@ func freezeWatchInitialEvent(path string, owner *identity.Identity) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, line, 0o600)
+	return os.WriteFile(path, line, 0o600) //nolint:gosec // path is a test fixture beneath the temporary room root
 }

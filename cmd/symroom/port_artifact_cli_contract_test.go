@@ -71,16 +71,16 @@ func TestPortArtifactCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, artifactCLIContractPath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", artifactCLIContractPath)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", artifactCLIContractPath, err)
 	}
@@ -105,7 +105,7 @@ func makeArtifactCLIContract(t *testing.T, root string) (artifactCLIContract, er
 		},
 	}
 	goBinary := filepath.Join(t.TempDir(), "symroom-go-artifact-oracle")
-	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom")
+	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {
 		return fixture, fmt.Errorf("build Go symroom artifact oracle: %w\n%s", err, output)
@@ -184,7 +184,7 @@ func makeArtifactCLIContract(t *testing.T, root string) (artifactCLIContract, er
 				return fixture, err
 			}
 		}
-		cmd := exec.Command(goBinary, args...)
+		cmd := exec.Command(goBinary, args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Dir = roomDir
 		cmd.Env = []string{"HOME=" + home, "USERPROFILE=" + home, "TMPDIR=" + tmp, "TZ=UTC", "LC_ALL=C", "LANG=C", "PATH=" + tmp, "SYMROOM_ROOM_DIR=.", "SYMROOM_IDENTITY_KEY=" + fixture.IdentityKey}
 		var stderr bytes.Buffer
@@ -233,7 +233,7 @@ func artifactCLIReadFiles(root string) ([]artifactCLIFile, error) {
 		if entry.IsDir() {
 			return nil
 		}
-		data, err := os.ReadFile(path)
+		data, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return err
 		}
@@ -285,7 +285,7 @@ func normalizeArtifactEventID(output string) string {
 
 func artifactCLIFileHash(t *testing.T, root, path string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(root, path))
+	data, err := os.ReadFile(filepath.Join(root, path)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}

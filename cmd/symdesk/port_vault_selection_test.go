@@ -43,15 +43,15 @@ func TestPortVaultSelectionCLIContract(t *testing.T) {
 	}
 	path := filepath.Join(filepath.Dir(source), "../../", vaultSelectionFixture)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		return
 	}
-	current, err := os.ReadFile(path)
+	current, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func observeVaultSelection(t *testing.T) vaultSelectionFixtureData {
 		}
 		args = append(args, "ls", "--json")
 		commandArgs := append([]string{"-test.run=^TestVaultSelectionHelper$", "--"}, args...)
-		command := exec.Command(os.Args[0], commandArgs...)
+		command := exec.Command(os.Args[0], commandArgs...) //nolint:gosec // reruns this test binary with fixed test arguments
 		command.Env = cleanVaultSelectionEnv(os.Environ())
 		command.Env = append(command.Env,
 			"SYMDESK_PORT_VAULT_HOME="+home,

@@ -48,16 +48,16 @@ func TestPortRunWaitCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, runWaitCLIContractFixture)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", runWaitCLIContractFixture)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", runWaitCLIContractFixture, err)
 	}
@@ -163,7 +163,7 @@ func makeRunWaitCLIContract(t *testing.T, root string) (runWaitCLIContract, erro
 		{"wait-help", "main", []string{"run", "wait", "-h"}},
 		{"unknown-flag", "main", []string{"run", "wait", "--unknown"}},
 	} {
-		cmd := exec.Command(executable, vector.args...)
+		cmd := exec.Command(executable, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		caseEnv := filepath.Join(temp, "env-"+vector.name)
 		home, dataHome, tempDir := makeRunCLIEnv(t, caseEnv)
 		cmd.Env = []string{

@@ -37,7 +37,7 @@ func TestPortVerifyCLIContract(t *testing.T) {
 	root := filepath.Clean(filepath.Join(filepath.Dir(source), "../.."))
 	fixture := verifyCLIContract{SchemaVersion: 1, SourceHashes: map[string]string{}}
 	for _, rel := range []string{"cmd/symroom/main.go", "cmd/symroom/cmd_verify.go", "internal/room/journal/verifier.go"} {
-		data, err := os.ReadFile(filepath.Join(root, rel))
+		data, err := os.ReadFile(filepath.Join(root, rel)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -65,7 +65,7 @@ func TestPortVerifyCLIContract(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		goBinary += ".exe"
 	}
-	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom")
+	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build Go symroom: %v\n%s", err, output)
@@ -96,7 +96,7 @@ func TestPortVerifyCLIContract(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		cmd := exec.Command(goBinary, vector.Args...)
+		cmd := exec.Command(goBinary, vector.Args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Env = append(os.Environ(), "SYMROOM_ROOM_DIR="+room)
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout, cmd.Stderr = &stdout, &stderr
@@ -126,7 +126,7 @@ func TestPortVerifyCLIContract(t *testing.T) {
 	encoded = append(encoded, '\n')
 	path := filepath.Join(root, "testdata/port/room/verify-cli.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		return

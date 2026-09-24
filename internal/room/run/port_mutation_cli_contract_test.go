@@ -53,16 +53,16 @@ func TestPortRunMutationCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, runMutationCLIContractFixture)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", runMutationCLIContractFixture)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", runMutationCLIContractFixture, err)
 	}
@@ -144,7 +144,7 @@ func makeRunMutationCLIContract(t *testing.T, root string) (runMutationCLIContra
 				return runMutationCLIContract{}, err
 			}
 		}
-		cmd := exec.Command(executable, vector.args...)
+		cmd := exec.Command(executable, vector.args...) //nolint:gosec // executable is the test-built symroom and vectors are fixed
 		cmd.Env = []string{
 			"HOME=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
 			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + caseRoom,
@@ -217,7 +217,7 @@ func readRunMutationJournal(t *testing.T, dir, dynamicAuthor string) ([]runJourn
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".jsonl" {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		data, err := os.ReadFile(filepath.Join(dir, entry.Name())) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return nil, err
 		}

@@ -74,7 +74,7 @@ func TestIndexLocationPortFixture(t *testing.T) {
 		}
 		return
 	}
-	current, err := os.ReadFile(path)
+	current, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}

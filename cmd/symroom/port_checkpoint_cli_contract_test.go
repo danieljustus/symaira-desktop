@@ -64,7 +64,6 @@ type checkpointCLIVector struct {
 	projectConfig string
 	defaultEnv    string
 	initial       string
-	resolve       bool
 	requestPair   bool
 }
 
@@ -86,16 +85,16 @@ func TestPortCheckpointCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, checkpointCLIContractPath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", checkpointCLIContractPath)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", checkpointCLIContractPath, err)
 	}
@@ -123,7 +122,7 @@ func makeCheckpointCLIContract(t *testing.T, root string) (checkpointCLIContract
 		"internal/room/config/config.go", "internal/room/identity/identity.go", "internal/room/journal/journal.go",
 		"internal/room/members/members.go",
 	} {
-		data, err := os.ReadFile(filepath.Join(root, source))
+		data, err := os.ReadFile(filepath.Join(root, source)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return fixture, err
 		}
@@ -131,7 +130,7 @@ func makeCheckpointCLIContract(t *testing.T, root string) (checkpointCLIContract
 		fixture.SourceHashes[source] = hex.EncodeToString(sum[:])
 	}
 	goBinary := filepath.Join(t.TempDir(), "symroom-go-checkpoint-oracle")
-	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom")
+	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom") //nolint:gosec // fixed Go build command for the test oracle
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {
 		return fixture, fmt.Errorf("build Go symroom checkpoint oracle: %w\n%s", err, output)
@@ -205,7 +204,7 @@ func makeCheckpointCLIContract(t *testing.T, root string) (checkpointCLIContract
 		result := checkpointCLICase{Name: vector.name, Args: args, Actor: vector.actor, GlobalConfig: vector.globalConfig, ProjectConfig: vector.projectConfig, DefaultIdentityEnv: vector.defaultEnv, InitialJournal: initial}
 		var stdout, stderr bytes.Buffer
 		if vector.requestPair {
-			requestCmd := exec.Command(goBinary, args...)
+			requestCmd := exec.Command(goBinary, args...) //nolint:gosec // goBinary is the test-built oracle and args are fixed vectors
 			requestCmd.Dir, requestCmd.Env, requestCmd.Stdout, requestCmd.Stderr = roomDir, baseEnv, &stdout, &stderr
 			if err := requestCmd.Start(); err != nil {
 				return fixture, err
@@ -217,7 +216,7 @@ func makeCheckpointCLIContract(t *testing.T, root string) (checkpointCLIContract
 				return fixture, err
 			}
 			resolveArgs := []string{"checkpoint", "resolve", "--answer", "Approved", checkpointID}
-			resolver := exec.Command(goBinary, resolveArgs...)
+			resolver := exec.Command(goBinary, resolveArgs...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 			resolver.Dir, resolver.Env = roomDir, baseEnv
 			var resolverOut, resolverErr bytes.Buffer
 			resolver.Stdout, resolver.Stderr = &resolverOut, &resolverErr
@@ -239,7 +238,7 @@ func makeCheckpointCLIContract(t *testing.T, root string) (checkpointCLIContract
 			result.Stderr = normalizeCheckpointID(stderr.String(), checkpointID)
 			result.DynamicEvent = true
 		} else {
-			cmd := exec.Command(goBinary, args...)
+			cmd := exec.Command(goBinary, args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 			cmd.Dir, cmd.Env = roomDir, baseEnv
 			cmd.Stdout, cmd.Stderr = &stdout, &stderr
 			runErr := cmd.Run()
@@ -331,7 +330,7 @@ func latestRequestedCheckpoint(roomDir string) (string, error) {
 		return "", err
 	}
 	for _, path := range files {
-		data, err := os.ReadFile(path)
+		data, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			continue
 		}
@@ -380,7 +379,7 @@ func checkpointCLIReadFiles(root string) ([]checkpointCLIFile, error) {
 		if entry.IsDir() {
 			return nil
 		}
-		data, err := os.ReadFile(path)
+		data, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return err
 		}
@@ -419,7 +418,7 @@ func checkpointCLIReadFilesRaw(root string) ([]checkpointCLIFile, error) {
 		if entry.IsDir() {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(root, entry.Name()))
+		data, err := os.ReadFile(filepath.Join(root, entry.Name())) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return nil, err
 		}

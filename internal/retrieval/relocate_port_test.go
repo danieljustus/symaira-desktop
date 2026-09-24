@@ -113,7 +113,7 @@ func TestIndexRelocatePortFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(destination)
+	data, err := os.ReadFile(destination) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,7 +150,7 @@ func TestIndexRelocatePortFixture(t *testing.T) {
 	} else {
 		fixture.RenameConflictError = strings.SplitN(err.Error(), ":", 2)[0]
 	}
-	afterConflict, err := os.ReadFile(filepath.Join(conflict, "marker"))
+	afterConflict, err := os.ReadFile(filepath.Join(conflict, "marker")) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +168,7 @@ func TestIndexRelocatePortFixture(t *testing.T) {
 	} else {
 		fixture.BlockedParentError = strings.SplitN(err.Error(), ":", 2)[0]
 	}
-	afterMarker, err := os.ReadFile(blockedParent)
+	afterMarker, err := os.ReadFile(blockedParent) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +199,7 @@ func TestIndexRelocatePortFixture(t *testing.T) {
 		}
 		return
 	}
-	current, err := os.ReadFile(fixturePath)
+	current, err := os.ReadFile(fixturePath) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}

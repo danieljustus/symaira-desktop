@@ -41,7 +41,7 @@ func TestIndexRestorePortFixture(t *testing.T) {
 		Mode: "0600", DirectoryMode: "0700",
 	}
 	for _, rel := range []string{"internal/retrieval/maintenance.go", "internal/retrieval/internal/config/config.go"} {
-		data, err := os.ReadFile(filepath.Join(root, rel))
+		data, err := os.ReadFile(filepath.Join(root, rel)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -75,14 +75,14 @@ func TestIndexRestorePortFixture(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	before, err := os.ReadFile(backup)
+	before, err := os.ReadFile(backup) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := RestoreIndexForVault(vault, backup); err != nil {
 		t.Fatal(err)
 	}
-	after, err := os.ReadFile(backup)
+	after, err := os.ReadFile(backup) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func TestIndexRestorePortFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	content, err := os.ReadFile(destination)
+	content, err := os.ReadFile(destination) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestIndexRestorePortFixture(t *testing.T) {
 	encoded = append(encoded, '\n')
 	path := filepath.Join(root, "testdata/port/retrieval/index-restore.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		return

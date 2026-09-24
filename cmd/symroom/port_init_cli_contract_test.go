@@ -72,15 +72,15 @@ func TestPortInitCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, initCLIFixturePath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", initCLIFixturePath, err)
 	}
@@ -117,7 +117,7 @@ func makeInitCLIContract(t *testing.T, root string) (initCLIContract, error) {
 	if err := saveInitCLIIdentityFile(fileHome, owner); err != nil {
 		return initCLIContract{}, err
 	}
-	fileData, err := os.ReadFile(filepath.Join(fileHome, "symroom", "identities", fixture.IdentityFileName))
+	fileData, err := os.ReadFile(filepath.Join(fileHome, "symroom", "identities", fixture.IdentityFileName)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		return initCLIContract{}, err
 	}
@@ -150,7 +150,7 @@ func makeInitCLIContract(t *testing.T, root string) (initCLIContract, error) {
 		}
 		roomPath := filepath.Join(work, "room")
 		if vector.nonempty {
-			if err := os.MkdirAll(roomPath, 0o755); err != nil {
+			if err := os.MkdirAll(roomPath, 0o700); err != nil {
 				return initCLIContract{}, err
 			}
 			if err := os.WriteFile(filepath.Join(roomPath, "keep"), []byte("preserve me"), 0o600); err != nil {
@@ -177,7 +177,7 @@ func makeInitCLIContract(t *testing.T, root string) (initCLIContract, error) {
 				return initCLIContract{}, err
 			}
 		}
-		cmd := exec.Command(goBinary, vector.args...)
+		cmd := exec.Command(goBinary, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Dir = work
 		cmd.Env = []string{
 			"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome,
@@ -212,7 +212,7 @@ func makeInitCLIContract(t *testing.T, root string) (initCLIContract, error) {
 			Files: []initCLIFile{}, Modes: map[string]string{},
 		}
 		if vector.nonempty {
-			preserved, err := os.ReadFile(filepath.Join(roomPath, "keep"))
+			preserved, err := os.ReadFile(filepath.Join(roomPath, "keep")) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 			if err != nil {
 				return initCLIContract{}, err
 			}
@@ -258,7 +258,7 @@ func normalizeInitCLIOutput(output []byte) []byte {
 func normalizeGoInitRoom(t *testing.T, dir string, owner *identity.Identity) error {
 	t.Helper()
 	journalPath := filepath.Join(dir, "journal", owner.MemberID+".jsonl")
-	line, err := os.ReadFile(journalPath)
+	line, err := os.ReadFile(journalPath) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		return err
 	}
@@ -274,7 +274,7 @@ func normalizeGoInitRoom(t *testing.T, dir string, owner *identity.Identity) err
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(journalPath, line, 0o644); err != nil {
+	if err := os.WriteFile(journalPath, line, 0o600); err != nil { //nolint:gosec // journalPath is a test fixture beneath the temporary room root
 		return err
 	}
 	roomPath := filepath.Join(dir, "room.toml")
@@ -287,7 +287,7 @@ func normalizeGoInitRoom(t *testing.T, dir string, owner *identity.Identity) err
 	if err := toml.NewEncoder(&encoded).Encode(&config); err != nil {
 		return err
 	}
-	return os.WriteFile(roomPath, encoded.Bytes(), 0o644)
+	return os.WriteFile(roomPath, encoded.Bytes(), 0o600)
 }
 
 func readInitCLIFiles(dir string) ([]initCLIFile, map[string]string, error) {
@@ -321,7 +321,7 @@ func readInitCLIFiles(dir string) ([]initCLIFile, map[string]string, error) {
 	}
 	sort.Strings(paths)
 	for _, rel := range paths {
-		data, err := os.ReadFile(filepath.Join(dir, rel))
+		data, err := os.ReadFile(filepath.Join(dir, rel)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return nil, nil, err
 		}

@@ -84,16 +84,16 @@ func TestPortMemberCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, memberCLIContractPath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", memberCLIContractPath)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", memberCLIContractPath, err)
 	}
@@ -242,7 +242,7 @@ func makeMemberCLIContract(t *testing.T, root string) (memberCLIContract, error)
 		if vector.actor == "stranger" {
 			key = fixture.StrangerKey
 		}
-		cmd := exec.Command(goBinary, vector.args...)
+		cmd := exec.Command(goBinary, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Dir = roomDir
 		cmd.Env = []string{
 			"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tmp,
@@ -292,7 +292,7 @@ func memberCLIIdentityFile(id *identity.Identity) (string, error) {
 		Name: id.Name, MemberID: id.MemberID,
 		PublicKey: hex.EncodeToString(id.PublicKey), PrivateKey: hex.EncodeToString(id.PrivateKey),
 	}
-	data, err := json.MarshalIndent(stored, "", "  ")
+	data, err := json.MarshalIndent(stored, "", "  ") //nolint:gosec // test fixture serializes deterministic synthetic private keys
 	return string(data), err
 }
 
@@ -346,7 +346,7 @@ func readMemberCLIFiles(dir string, normalizeLast bool) ([]memberCLIFile, error)
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".jsonl") {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		data, err := os.ReadFile(filepath.Join(dir, entry.Name())) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return nil, err
 		}
@@ -384,7 +384,7 @@ func normalizeMemberEventID(output string) string {
 func buildMemberCLIOracle(t *testing.T, root string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "symroom-go-member-oracle")
-	cmd := exec.Command("go", "build", "-o", path, "./cmd/symroom")
+	cmd := exec.Command("go", "build", "-o", path, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	cmd.Dir = root
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("build Go symroom member oracle: %v\n%s", err, output)
@@ -403,7 +403,7 @@ func memberCLIRoot(t *testing.T) string {
 
 func memberCLIFileHash(t *testing.T, root, path string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(root, path))
+	data, err := os.ReadFile(filepath.Join(root, path)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}

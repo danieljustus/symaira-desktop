@@ -91,7 +91,7 @@ func TestIndexBackupPortFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	header, err := os.ReadFile(destination)
+	header, err := os.ReadFile(destination) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -65,16 +65,16 @@ func TestPortNoteCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, noteCLIContractPath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", noteCLIContractPath)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", noteCLIContractPath, err)
 	}
@@ -152,7 +152,7 @@ func makeNoteCLIContract(t *testing.T, root string) (noteCLIContract, error) {
 				return noteCLIContract{}, err
 			}
 		}
-		cmd := exec.Command(goBinary, vector.args...)
+		cmd := exec.Command(goBinary, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Env = []string{
 			"HOME=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tempDir,
 			"TZ=UTC", "LC_ALL=C", "LANG=C", "SYMROOM_ROOM_DIR=" + roomDir,
@@ -265,7 +265,7 @@ func readNoteJournal(t *testing.T, dir, author string, normalizeLast bool) ([]no
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".jsonl" {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		data, err := os.ReadFile(filepath.Join(dir, entry.Name())) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return nil, err
 		}
@@ -285,7 +285,7 @@ func readNoteJournal(t *testing.T, dir, author string, normalizeLast bool) ([]no
 func buildNoteCLIOracle(t *testing.T, root string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "symroom-go")
-	cmd := exec.Command("go", "build", "-o", path, "./cmd/symroom")
+	cmd := exec.Command("go", "build", "-o", path, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	cmd.Dir = root
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("build Go symroom oracle: %v\n%s", err, output)
@@ -308,7 +308,7 @@ func noteCLIRoot(t *testing.T) string {
 
 func noteCLIFileHash(t *testing.T, root, path string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(root, path))
+	data, err := os.ReadFile(filepath.Join(root, path)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}

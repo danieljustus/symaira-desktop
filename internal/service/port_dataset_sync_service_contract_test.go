@@ -115,7 +115,7 @@ func TestPortDatasetSyncServiceContract(t *testing.T) {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 		defer cancel()
-		cmd := exec.CommandContext(ctx, "/bin/sh", "-c", `umask 022; exec "$@"`, "dataset-sync-oracle", executable, "-test.run=^TestPortDatasetSyncServiceContract$", "-test.v", "-test.timeout=30s")
+		cmd := exec.CommandContext(ctx, "/bin/sh", "-c", `umask 022; exec "$@"`, "dataset-sync-oracle", executable, "-test.run=^TestPortDatasetSyncServiceContract$", "-test.v", "-test.timeout=30s") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Env = append(os.Environ(), child+"=1")
 		cmd.WaitDelay = 5 * time.Second
 		output, err := cmd.CombinedOutput()
@@ -869,7 +869,7 @@ func portDatasetSyncServiceSourceHash(t *testing.T, relative string) string {
 	if relative != "internal/service/port_dataset_sync_service_contract_test.go" {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		cmd := exec.CommandContext(ctx, "git", "-C", portDatasetSyncServiceRepoRoot(t), "show", portDatasetSyncServiceOracleCommit+":"+relative)
+		cmd := exec.CommandContext(ctx, "git", "-C", portDatasetSyncServiceRepoRoot(t), "show", portDatasetSyncServiceOracleCommit+":"+relative) //nolint:gosec // fixed git command reads the pinned oracle source
 		cmd.WaitDelay = time.Second
 		pinned, err := cmd.Output()
 		if err != nil {

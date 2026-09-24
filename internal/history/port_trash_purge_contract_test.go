@@ -134,7 +134,7 @@ func buildSelectedTrashPurgeFixture(t *testing.T) selectedTrashPurgeFixture {
 			if err != nil {
 				return "", err
 			}
-			if err := os.WriteFile(filepath.Join(s.root, trashRelDir(), other.Name+trashMetaSuffix), []byte("null"), 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(s.root, trashRelDir(), other.Name+trashMetaSuffix), []byte("null"), 0o600); err != nil {
 				return "", err
 			}
 			_, err = s.store.PurgeTrashEntries([]TrashEntry{*selected})
@@ -155,7 +155,7 @@ func buildSelectedTrashPurgeFixture(t *testing.T) selectedTrashPurgeFixture {
 			if err != nil {
 				return "", err
 			}
-			if err := os.WriteFile(filepath.Join(s.root, trashRelDir(), selected.Name+trashMetaSuffix), data, 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(s.root, trashRelDir(), selected.Name+trashMetaSuffix), data, 0o600); err != nil {
 				return "", err
 			}
 			_, err = s.store.PurgeTrashEntries([]TrashEntry{*selected})
@@ -170,7 +170,7 @@ func buildSelectedTrashPurgeFixture(t *testing.T) selectedTrashPurgeFixture {
 			if err != nil {
 				return "", err
 			}
-			if err := os.WriteFile(filepath.Join(s.root, trashRelDir(), selected.Name), []byte("replacement payload"), 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(s.root, trashRelDir(), selected.Name), []byte("replacement payload"), 0o600); err != nil {
 				return "", err
 			}
 			_, err = s.store.PurgeTrashEntries([]TrashEntry{*selected})

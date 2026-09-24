@@ -83,12 +83,12 @@ func TestPortDatasetImportContract(t *testing.T) {
 		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		return
 	}
-	current, err := os.ReadFile(path)
+	current, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read dataset import fixture: %v", err)
 	}
@@ -244,7 +244,7 @@ func portDatasetImportCapture(t *testing.T, sandbox portDatasetSyncServiceSandbo
 		if entry.IsDir() {
 			item.Kind = "directory"
 		} else {
-			data, err := os.ReadFile(path)
+			data, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 			if err != nil {
 				return err
 			}
@@ -303,13 +303,13 @@ func portDatasetImportHash(t *testing.T, relative string) string {
 		t.Fatal("resolve dataset import oracle root")
 	}
 	root := filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
-	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(relative)))
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(relative))) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
 	sum := sha256.Sum256(data)
 	if relative != "internal/service/port_dataset_import_contract_test.go" {
-		pinned, err := exec.Command("git", "-C", root, "show", portDatasetImportOracleCommit+":"+relative).Output()
+		pinned, err := exec.Command("git", "-C", root, "show", portDatasetImportOracleCommit+":"+relative).Output() //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		if err != nil {
 			t.Fatalf("read pinned oracle source %s: %v", relative, err)
 		}

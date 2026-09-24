@@ -41,15 +41,15 @@ func TestPortHistoryTasksCLIContract(t *testing.T) {
 	}
 	path := filepath.Join(filepath.Dir(source), historyTasksFixturePath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		return
 	}
-	current, err := os.ReadFile(path)
+	current, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +75,7 @@ func observeHistoryTasksCLI(t *testing.T) historyTasksFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	build := exec.Command("go", "build", "-o", binary, ".")
+	build := exec.Command("go", "build", "-o", binary, ".") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	build.Env = append(os.Environ(), "GOMODCACHE="+string(bytes.TrimSpace(moduleCache)), "GOTMPDIR="+root)
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build Go CLI: %v\n%s", err, out)
@@ -120,7 +120,7 @@ func observeHistoryTasksCLI(t *testing.T) historyTasksFixture {
 			if jsonOutput {
 				args = append([]string{"--json"}, args...)
 			}
-			cmd := exec.Command(binary, args...)
+			cmd := exec.Command(binary, args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 			cmd.Env = append(os.Environ(), "TZ=UTC", "HOME="+home, "USERPROFILE="+home,
 				"XDG_CONFIG_HOME="+filepath.Join(home, "config"),
 				"XDG_CACHE_HOME="+filepath.Join(home, "cache"),

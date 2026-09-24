@@ -16,8 +16,6 @@ import (
 	"github.com/danieljustus/symaira-desktop/internal/room/journal"
 )
 
-const roomIndexFixturePath = "../../../testdata/port/room/index.json"
-
 type indexColumn struct {
 	Table      string `json:"table"`
 	Name       string `json:"name"`
@@ -107,7 +105,7 @@ func TestPortSymRoomIndexOracle(t *testing.T) {
 		{V: 1, ID: "ev_decision", Room: "rm_index", Author: owner, Seq: 4, Lamport: 4, TS: "2026-09-23T10:00:03.000Z", Kind: event.KindDecisionRecorded, Body: json.RawMessage(`{"text":"recorded choice","refs":["ev_note_1","doc_2"]}`)},
 		{V: 1, ID: "ev_note_2", Room: "rm_index", Author: owner, Seq: 5, Lamport: 5, TS: "2026-09-23T10:00:04.000Z", Kind: event.KindNotePosted, Body: json.RawMessage(`{"text":"second note"}`)},
 	}
-	segment, err := os.OpenFile(filepath.Join(journalDir, owner+".jsonl"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+	segment, err := os.OpenFile(filepath.Join(journalDir, owner+".jsonl"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) //nolint:gosec // journalDir is the test's temporary room directory
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,7 +162,7 @@ func TestPortSymRoomIndexOracle(t *testing.T) {
 	encoded = append(encoded, '\n')
 	path := filepath.Join(root, "testdata/port/room/index.json")
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.WriteFile(path, encoded, 0o644); err != nil {
+		if err := os.WriteFile(path, encoded, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		return
@@ -212,7 +210,11 @@ func snapshotIndex(t *testing.T, dbPath string) indexSnapshot {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("close index database: %v", err)
+		}
+	})
 	out := indexSnapshot{Tables: []string{}, Columns: []indexColumn{}, Events: []indexEvent{}, Members: []indexMember{}, Notes: []indexNote{}, Decisions: []indexDecision{}}
 	tables, err := db.Query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
 	if err != nil {

@@ -39,7 +39,7 @@ func TestPortRoomInitContract(t *testing.T) {
 	// Init's random identifiers and wall clock are the only variable inputs.
 	// Replace them with fixed contract values and re-sign the resulting event.
 	journalPath := filepath.Join(dir, "journal", id.MemberID+".jsonl")
-	line, err := os.ReadFile(journalPath)
+	line, err := os.ReadFile(journalPath) //nolint:gosec // journalPath is constructed beneath the test's temporary room
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +55,7 @@ func TestPortRoomInitContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(journalPath, line, 0o644); err != nil {
+	if err := os.WriteFile(journalPath, line, 0o600); err != nil { //nolint:gosec // journalPath is a test fixture beneath the temporary room root
 		t.Fatal(err)
 	}
 	roomConfig := &RoomConfig{SchemaVersion: 1, ID: roomInitID, Created: roomInitTimestamp, RootPubkey: "ed25519:" + hex.EncodeToString(id.PublicKey), RootEvent: roomInitEventID}
@@ -63,7 +63,7 @@ func TestPortRoomInitContract(t *testing.T) {
 	if err := toml.NewEncoder(&roomTOML).Encode(roomConfig); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "room.toml"), roomTOML.Bytes(), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "room.toml"), roomTOML.Bytes(), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	localConfig := LocalConfig{Identity: id.Name}
@@ -71,7 +71,7 @@ func TestPortRoomInitContract(t *testing.T) {
 	if err := toml.NewEncoder(&localTOML).Encode(localConfig); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, ".symroom", "local.toml"), localTOML.Bytes(), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, ".symroom", "local.toml"), localTOML.Bytes(), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -81,7 +81,7 @@ func TestPortRoomInitContract(t *testing.T) {
 			".gitignore":                        readRoomInitFile(t, dir, ".gitignore"),
 			".symroom/local.toml":               readRoomInitFile(t, dir, ".symroom/local.toml"),
 			"journal/" + id.MemberID + ".jsonl": string(line),
-			"room.toml":                         string(roomTOML.Bytes()),
+			"room.toml":                         roomTOML.String(),
 		},
 		Modes: map[string]string{
 			".gitignore":                        roomInitMode(t, dir, ".gitignore"),
@@ -93,7 +93,7 @@ func TestPortRoomInitContract(t *testing.T) {
 		},
 	}
 	nonempty := filepath.Join(t.TempDir(), "room")
-	if err := os.MkdirAll(nonempty, 0o755); err != nil {
+	if err := os.MkdirAll(nonempty, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(nonempty, "keep"), []byte("preserve me"), 0o600); err != nil {
@@ -136,7 +136,7 @@ func roomInitIdentity(t *testing.T) *identity.Identity {
 
 func readRoomInitFile(t *testing.T, dir, name string) string {
 	t.Helper()
-	b, err := os.ReadFile(filepath.Join(dir, name))
+	b, err := os.ReadFile(filepath.Join(dir, name)) //nolint:gosec // name is a fixed room-init fixture path
 	if err != nil {
 		t.Fatal(err)
 	}

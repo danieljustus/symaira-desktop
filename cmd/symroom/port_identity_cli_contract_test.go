@@ -68,16 +68,16 @@ func TestPortIdentityCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, identityCLIContractPath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", identityCLIContractPath)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", identityCLIContractPath, err)
 	}
@@ -105,7 +105,7 @@ func makeIdentityCLIContract(t *testing.T, root string) (identityCLIContract, er
 			Name: seedName, MemberID: identity.ComputeMemberID(publicKey),
 			PublicKey: hex.EncodeToString(publicKey), PrivateKey: hex.EncodeToString(privateKey),
 		}
-		encoded, err := json.MarshalIndent(stored, "", "  ")
+		encoded, err := json.MarshalIndent(stored, "", "  ") //nolint:gosec // test fixture serializes deterministic synthetic private keys
 		if err != nil {
 			return identityCLIContract{}, err
 		}
@@ -161,7 +161,7 @@ func makeIdentityCLIContract(t *testing.T, root string) (identityCLIContract, er
 				return identityCLIContract{}, err
 			}
 		}
-		cmd := exec.Command(goBinary, vector.args...)
+		cmd := exec.Command(goBinary, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Env = []string{"HOME=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tmp, "TZ=UTC", "LC_ALL=C", "LANG=C"}
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
@@ -206,7 +206,7 @@ func readIdentityCLIFileSnapshot(dir string, normalizeKeys bool) ([]identityCLIF
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		data, err := os.ReadFile(filepath.Join(dir, entry.Name())) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return nil, err
 		}
@@ -218,7 +218,7 @@ func readIdentityCLIFileSnapshot(dir string, normalizeKeys bool) ([]identityCLIF
 			stored.MemberID = "<member_id>"
 			stored.PublicKey = "<public_key>"
 			stored.PrivateKey = "<private_key>"
-			normalized, err := json.MarshalIndent(stored, "", "  ")
+			normalized, err := json.MarshalIndent(stored, "", "  ") //nolint:gosec // test fixture serializes deterministic synthetic private keys
 			if err != nil {
 				return nil, err
 			}
@@ -233,7 +233,7 @@ func readIdentityCLIFileSnapshot(dir string, normalizeKeys bool) ([]identityCLIF
 func buildIdentityCLIOracle(t *testing.T, root string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "symroom-go-identity-oracle")
-	cmd := exec.Command("go", "build", "-o", path, "./cmd/symroom")
+	cmd := exec.Command("go", "build", "-o", path, "./cmd/symroom") //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	cmd.Dir = root
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("build Go symroom identity oracle: %v\n%s", err, output)
@@ -252,7 +252,7 @@ func identityCLIRoot(t *testing.T) string {
 
 func identityCLIFileHash(t *testing.T, root, path string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(root, path))
+	data, err := os.ReadFile(filepath.Join(root, path)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatal(err)
 	}

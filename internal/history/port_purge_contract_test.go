@@ -144,7 +144,7 @@ func buildHistoryPurgeFixture(t *testing.T) historyPurgeFixture {
 			if _, err := s.store.CheckpointFile("task", "target.md"); err != nil {
 				return "", err
 			}
-			if err := os.WriteFile(filepath.Join(s.root, ".symdesk/history/manifest/keep.md.json"), []byte("null"), 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(s.root, ".symdesk/history/manifest/keep.md.json"), []byte("null"), 0o600); err != nil {
 				return "", err
 			}
 			return "", s.store.PurgePaths("target.md")
@@ -160,7 +160,7 @@ func buildHistoryPurgeFixture(t *testing.T) historyPurgeFixture {
 			if _, err := s.store.CheckpointFile("task", "target.md"); err != nil {
 				return "", err
 			}
-			if err := os.WriteFile(filepath.Join(s.root, ".symdesk/history/checkpoints/task.json"), []byte("null"), 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(s.root, ".symdesk/history/checkpoints/task.json"), []byte("null"), 0o600); err != nil {
 				return "", err
 			}
 			return "", s.store.PurgePaths("target.md")
@@ -177,7 +177,7 @@ func buildHistoryPurgeFixture(t *testing.T) historyPurgeFixture {
 			if err != nil {
 				return "", err
 			}
-			if err := os.WriteFile(filepath.Join(s.store.objectsDir(), keep.ID), []byte("replaced"), 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(s.store.objectsDir(), keep.ID), []byte("replaced"), 0o600); err != nil {
 				return "", err
 			}
 			return "", s.store.PurgePaths("target.md")
@@ -201,7 +201,7 @@ func buildHistoryPurgeFixture(t *testing.T) historyPurgeFixture {
 			}
 			path := filepath.Join(s.root, checkpointsRelDir(), "task.json")
 			var checkpoint Checkpoint
-			data, err := os.ReadFile(path)
+			data, err := os.ReadFile(path) //nolint:gosec // path is constructed beneath the test's temporary vault
 			if err != nil {
 				return "", err
 			}
@@ -213,7 +213,7 @@ func buildHistoryPurgeFixture(t *testing.T) historyPurgeFixture {
 			if err != nil {
 				return "", err
 			}
-			if err := os.WriteFile(path, data, 0o644); err != nil {
+			if err := os.WriteFile(path, data, 0o600); err != nil {
 				return "", err
 			}
 			return "", s.store.PurgePaths("target.md")
@@ -279,7 +279,7 @@ func purgeObjects(t *testing.T, directory string) []purgeObjectRecord {
 		if entry.IsDir() {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(directory, entry.Name()))
+		data, err := os.ReadFile(filepath.Join(directory, entry.Name())) //nolint:gosec // entry is read from the test's temporary object directory
 		if err != nil {
 			t.Fatal(err)
 		}

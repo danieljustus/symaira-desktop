@@ -168,7 +168,7 @@ func runHistoryPruneSteps(t *testing.T, s *scenario, document *historyPruneCase)
 		switch step.Operation {
 		case "write":
 			path := filepath.Join(s.root, filepath.FromSlash(step.Path))
-			if err := os.WriteFile(path, []byte(step.Content), 0o644); err != nil {
+			if err := os.WriteFile(path, []byte(step.Content), 0o644); err != nil { //nolint:gosec // fixture models the source file mode under test
 				return err
 			}
 		case "snapshot":
@@ -205,7 +205,7 @@ func runHistoryPruneSteps(t *testing.T, s *scenario, document *historyPruneCase)
 			if err != nil {
 				return err
 			}
-			if err := os.WriteFile(filepath.Join(s.root, path), []byte(step.Content), 0o644); err != nil {
+			if err := os.WriteFile(filepath.Join(s.root, path), []byte(step.Content), 0o644); err != nil { //nolint:gosec // fixture models the corrupt manifest mode under test
 				return err
 			}
 		default:

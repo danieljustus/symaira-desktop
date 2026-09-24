@@ -80,16 +80,16 @@ func TestPortArtifactIdentityCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, artifactIdentityContractPath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		t.Logf("wrote %s", artifactIdentityContractPath)
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", artifactIdentityContractPath, err)
 	}
@@ -113,7 +113,7 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 		"cmd/symroom/main.go", "cmd/symroom/cmd_artifact.go", "internal/room/artifact/artifact.go",
 		"internal/room/desk/desk.go", "internal/room/config/config.go",
 	} {
-		data, err := os.ReadFile(filepath.Join(root, source))
+		data, err := os.ReadFile(filepath.Join(root, source)) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return fixture, err
 		}
@@ -121,7 +121,7 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 		fixture.SourceHashes[source] = hex.EncodeToString(sum[:])
 	}
 	goBinary := filepath.Join(t.TempDir(), "symroom-go-artifact-identity-oracle")
-	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom")
+	build := exec.Command("go", "build", "-o", goBinary, "./cmd/symroom") //nolint:gosec // fixed Go build command for the test oracle
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {
 		return fixture, fmt.Errorf("build Go symroom artifact identity oracle: %w\n%s", err, output)
@@ -168,7 +168,7 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 			}
 			initialJournal = make([]artifactIdentityFile, 0, len(initial))
 			for _, file := range initial {
-				initialJournal = append(initialJournal, artifactIdentityFile{Name: file.Name, Content: file.Content})
+				initialJournal = append(initialJournal, artifactIdentityFile(file))
 			}
 			if err := os.MkdirAll(journalDir, 0o700); err != nil {
 				return fixture, err
@@ -214,7 +214,7 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 				return fixture, err
 			}
 		}
-		cmd := exec.Command(goBinary, args...)
+		cmd := exec.Command(goBinary, args...) //nolint:gosec // goBinary is the test-built helper and args are fixed vectors
 		cmd.Dir = roomDir
 		cmd.Env = []string{
 			"HOME=" + home, "USERPROFILE=" + home, "XDG_DATA_HOME=" + dataHome, "TMPDIR=" + tmp,
@@ -242,7 +242,7 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 		}
 		finalIdentityFiles := make([]artifactIdentityFile, 0, len(finalFiles))
 		for _, file := range finalFiles {
-			finalIdentityFiles = append(finalIdentityFiles, artifactIdentityFile{Name: file.Name, Content: file.Content})
+			finalIdentityFiles = append(finalIdentityFiles, artifactIdentityFile(file))
 		}
 		stderrText := stderr.String()
 		if vector.configError {
@@ -261,7 +261,7 @@ func makeArtifactIdentityContract(t *testing.T, root string) (artifactIdentityCo
 			ConfigError:  vector.configError, ExitCode: code, Stdout: output, Stderr: stderrText, FinalFiles: finalIdentityFiles,
 		}
 		if vector.symdeskMode != "" {
-			data, err := os.ReadFile(argsFile)
+			data, err := os.ReadFile(argsFile) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 			if err != nil {
 				return fixture, err
 			}
@@ -300,7 +300,7 @@ func main() {
 	if err := os.WriteFile(sourcePath, []byte(source), 0o600); err != nil {
 		return "", err
 	}
-	build := exec.Command("go", "build", "-o", binaryPath, sourcePath)
+	build := exec.Command("go", "build", "-o", binaryPath, sourcePath) //nolint:gosec // fixed Go build command for a temporary test helper
 	if output, err := build.CombinedOutput(); err != nil {
 		return "", fmt.Errorf("build fake symdesk process: %w\n%s", err, output)
 	}
@@ -315,9 +315,9 @@ func artifactIdentitySymdeskName() string {
 }
 
 func copyArtifactIdentityFakeSymdesk(source, destination string) error {
-	data, err := os.ReadFile(source)
+	data, err := os.ReadFile(source) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(destination, data, 0o755)
+	return os.WriteFile(destination, data, 0o755) //nolint:gosec // test helper must be executable
 }

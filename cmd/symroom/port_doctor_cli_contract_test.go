@@ -68,15 +68,15 @@ func TestPortDoctorCLIContract(t *testing.T) {
 	data = append(data, '\n')
 	path := filepath.Join(root, doctorCLIFixturePath)
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
+		if err := os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec // generated contract fixture is intentionally world-readable
 			t.Fatal(err)
 		}
 		return
 	}
-	got, err := os.ReadFile(path)
+	got, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		t.Fatalf("read %s: %v (set PORT_GENERATE=1 to create it)", doctorCLIFixturePath, err)
 	}
@@ -155,7 +155,7 @@ func makeDoctorCLIContract(t *testing.T, root string) (doctorCLIContract, error)
 			}
 			identityPath := filepath.Join(dataHome, "symroom", "identities", "oracle.json")
 			if vector.identityBad {
-				if err := os.Chmod(identityPath, 0o444); err != nil {
+				if err := os.Chmod(identityPath, 0o444); err != nil { //nolint:gosec // deliberately creates the read-only case under test
 					return doctorCLIContract{}, err
 				}
 			}
@@ -179,7 +179,7 @@ func makeDoctorCLIContract(t *testing.T, root string) (doctorCLIContract, error)
 			}
 		}
 		logPath := filepath.Join(work, "tool-calls")
-		cmd := exec.Command(goBinary, vector.args...)
+		cmd := exec.Command(goBinary, vector.args...) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 		cmd.Dir = work
 		cmd.Env = []string{
 			"HOME=" + home, "USERPROFILE=" + home,
@@ -206,7 +206,7 @@ func makeDoctorCLIContract(t *testing.T, root string) (doctorCLIContract, error)
 				return doctorCLIContract{}, fmt.Errorf("run Go doctor case %s: %w", vector.name, runErr)
 			}
 		}
-		calls, _ := os.ReadFile(logPath)
+		calls, _ := os.ReadFile(logPath) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		result := doctorCLICase{
 			Name: vector.name, Args: vector.args, Room: vector.room,
 			Config: vector.config, DefaultEnv: vector.defaultEnv, IdentityKey: vector.identityKey,
@@ -241,7 +241,7 @@ func doctorCLISaveIdentity(dataHome string, owner *identity.Identity) (result er
 }
 
 func doctorCLIReadIdentity(path string, readOnly bool) (doctorCLIIdentityFile, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 	if err != nil {
 		return doctorCLIIdentityFile{}, err
 	}
@@ -260,13 +260,13 @@ func doctorCLIReadIdentity(path string, readOnly bool) (doctorCLIIdentityFile, e
 }
 
 func makeDoctorRoom(dir string, owner *identity.Identity, index string) error {
-	if err := os.MkdirAll(filepath.Join(dir, ".symroom"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, ".symroom"), 0o700); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Join(dir, "journal"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, "journal"), 0o700); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(dir, "room.toml"), []byte("id = \"rm_doctor_fixture\"\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "room.toml"), []byte("id = \"rm_doctor_fixture\"\n"), 0o600); err != nil {
 		return err
 	}
 	ev := &event.Event{
@@ -283,7 +283,7 @@ func makeDoctorRoom(dir string, owner *identity.Identity, index string) error {
 		return err
 	}
 	journalPath := filepath.Join(dir, "journal", owner.MemberID+".jsonl")
-	if err := os.WriteFile(journalPath, line, 0o644); err != nil {
+	if err := os.WriteFile(journalPath, line, 0o600); err != nil {
 		return err
 	}
 	if index == "" {
@@ -334,7 +334,7 @@ func main() {
 		name += ".exe"
 	}
 	output := filepath.Join(temp, name)
-	cmd := exec.Command("go", "build", "-o", output, sourcePath)
+	cmd := exec.Command("go", "build", "-o", output, sourcePath) //nolint:gosec // test-only command uses a fixed helper and controlled arguments
 	cmd.Dir = root
 	if data, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("build Go doctor tool helper: %v: %s", err, data)
@@ -349,11 +349,11 @@ func installDoctorTools(dir, helper string) error {
 			name += ".exe"
 		}
 		path := filepath.Join(dir, name)
-		data, err := os.ReadFile(helper)
+		data, err := os.ReadFile(helper) //nolint:gosec // test-only path is constrained by fixed or temporary fixture inputs
 		if err != nil {
 			return err
 		}
-		if err := os.WriteFile(path, data, 0o755); err != nil {
+		if err := os.WriteFile(path, data, 0o755); err != nil { //nolint:gosec // test helper must be executable
 			return err
 		}
 	}

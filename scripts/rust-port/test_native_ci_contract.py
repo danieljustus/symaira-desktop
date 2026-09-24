@@ -4,6 +4,7 @@ Uses Git's real autocrlf checkout filter; this is not native Windows execution.
 No working-tree source or index is modified, and all copies are test-owned.
 """
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -173,11 +174,25 @@ class NativeCIContracts(unittest.TestCase):
             body,
         )
         harness = (ROOT / "scripts/rust-port/room-rollback.py").read_text()
-        safety_check = harness.index("if sensitive_key and sensitive_key in json.dumps(report):")
-        suppression = harness.index('raise RuntimeError("source-bound report contains identity private key; report suppressed")')
+        safety_check = harness.rindex("ensure_report_safe(report, sensitive_key, failure, cleanup_error)")
         report_output = harness.index('encoded = json.dumps(report, indent=2, sort_keys=True)')
-        self.assertLess(safety_check, suppression)
-        self.assertLess(suppression, report_output)
+        failure_field = harness.index('report["failure"] = str(failure)')
+        self.assertLess(failure_field, safety_check)
+        self.assertLess(safety_check, report_output)
+
+    def test_rollback_report_suppresses_private_key_in_failure_and_cleanup_errors(self):
+        script = ROOT / "scripts/rust-port/room-rollback.py"
+        spec = importlib.util.spec_from_file_location("room_rollback", script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        ensure_report_safe = module.ensure_report_safe
+        key = "private-key-sentinel"
+        with self.assertRaisesRegex(RuntimeError, "report suppressed"):
+            ensure_report_safe({"failure": "command output " + key}, key, None, None)
+        with self.assertRaisesRegex(RuntimeError, "report suppressed"):
+            ensure_report_safe({}, key, RuntimeError("failure output " + key), None)
+        with self.assertRaisesRegex(RuntimeError, "report suppressed"):
+            ensure_report_safe({}, key, None, "cleanup details " + key)
 
     def test_retention_state_differential_runs_on_all_native_targets(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()

@@ -38,6 +38,15 @@ def sha256(path):
     return digest.hexdigest()
 
 
+def ensure_report_safe(report, sensitive_key, failure, cleanup_error):
+    report_text = json.dumps(report)
+    error_text = "; ".join(
+        part for part in (str(failure) if failure else None, cleanup_error) if part
+    )
+    if sensitive_key and (sensitive_key in report_text or sensitive_key in error_text):
+        raise RuntimeError("source-bound report contains identity private key; report suppressed")
+
+
 def build_environment(temp, rustc):
     home = temp / "build-home"
     data = temp / "build-data"
@@ -318,12 +327,11 @@ def main():
             }
             cleanup_error = f"could not remove temporary workspace {temp}: {error}"
 
-    if sensitive_key and sensitive_key in json.dumps(report):
-        raise RuntimeError("source-bound report contains identity private key; report suppressed")
     report["test_result"] = "PASS" if failure is None else "FAIL"
     report["result"] = "PASS" if failure is None and cleanup_error is None else "FAIL"
     if failure:
         report["failure"] = str(failure)
+    ensure_report_safe(report, sensitive_key, failure, cleanup_error)
     encoded = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if options.report:
         options.report.write_text(encoded)

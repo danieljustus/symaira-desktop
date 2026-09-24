@@ -11,10 +11,18 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "=0.4.10"
 symdesk-vault = { path = "../crates/symdesk-vault" }
+symroom-core = { path = "../crates/symroom-core" }
 
 [[bin]]
 name = "frontmatter"
 path = "fuzz_targets/frontmatter.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "room_event"
+path = "fuzz_targets/room_event.rs"
 test = false
 doc = false
 bench = false

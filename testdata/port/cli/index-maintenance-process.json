@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "location": {
+    "exit_code": 0,
+    "stdout": "{\"index_location\":\"$ROOT/data/retrieval.db\"}\n",
+    "stderr": ""
+  },
+  "location_text": {
+    "exit_code": 0,
+    "stdout": "map[index_location:$ROOT/data/retrieval.db]\n",
+    "stderr": ""
+  },
+  "backup": {
+    "exit_code": 0,
+    "stdout": "map[backup:$ROOT/backup.db status:ok]\n",
+    "stderr": ""
+  },
+  "backup_rows": [
+    {
+      "id": 1,
+      "body": "committed only to WAL"
+    }
+  ],
+  "restore": {
+    "exit_code": 0,
+    "stdout": "{\"restored_from\":\"$ROOT/backup.db\",\"status\":\"ok\"}\n",
+    "stderr": ""
+  },
+  "source_rows_after_restore": [
+    {
+      "id": 1,
+      "body": "committed only to WAL"
+    }
+  ],
+  "relocate": {
+    "exit_code": 0,
+    "stdout": "map[index_location:$ROOT/relocated/retrieval.db status:ok]\n",
+    "stderr": ""
+  },
+  "location_after_relocate": {
+    "exit_code": 0,
+    "stdout": "{\"index_location\":\"$ROOT/relocated/retrieval.db\"}\n",
+    "stderr": ""
+  },
+  "source_rows_after_relocate": [
+    {
+      "id": 1,
+      "body": "committed only to WAL"
+    }
+  ],
+  "relocated_rows": [
+    {
+      "id": 1,
+      "body": "committed only to WAL"
+    }
+  ],
+  "vault_relocate_rejected": {
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "cannot relocate a vault-scoped retrieval index; use backup/restore or run relocate without --vault for a deliberate global index_path override\n"
+  },
+  "backup_missing_output": {
+    "exit_code": 1,
+    "stdout": "{\"error\":\"--output is required\"}\n",
+    "stderr": ""
+  },
+  "source_preserved_after_relocation": true,
+  "destination_replaced": true
+}

@@ -215,6 +215,1214 @@
    ],
    "description": "Human-readable branch uses Go's format strings and the local wall clock of the proposal. Full filesystem comparison stays off because the sidecar database and the metadata timestamp differ between two processes by construction; the sidecar layout is compared instead, which now requires both `vaults/<hash>/sidecar.db` and `vaults/<hash>/metadata.json` (issue #1006).",
    "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-reject-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-safe.json",
+     "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    }
+   ],
+   "description": "Reject reports the sorted Go map JSON shape and persists the proposal through the shared retention writer; focused Rust tests read the persisted status back because sidecar database bytes are intentionally nondeterministic.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-reject-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject", "ret-safe", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-safe.json",
+     "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[]}",
+     "mode": 420
+    }
+   ],
+   "description": "Reject text output matches fmt's sorted map rendering.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-reject-missing-run-id",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "description": "ExactArgs rejects a missing run ID before service dependencies are opened."
+  },
+  {
+   "id": "retention-reject-missing-proposal-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject", "ret-missing", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "console_text",
+   "stderr_mode": "console_text",
+   "compare_files": false,
+   "setup": [],
+   "description": "Reject preserves the loader's Go error envelope and missing-path diagnostic when the run ID is safe but absent.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-reject-unsafe-run-id-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject", "../escape", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "description": "An unsafe path-like run ID fails through the production validator and JSON error envelope.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-diff-safe-missing-run-id-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "diff", "safe-missing", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "console_text",
+   "stderr_mode": "console_text",
+   "compare_files": false,
+   "description": "A platform-safe but absent run ID preserves the Go open-path diagnostic and nonzero exit.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-diff-json-escaping",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "diff", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-safe.json",
+     "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc<&.md\",\"title\":\"Title > &\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test<&\",\"fingerprint\":\"fp\",\"status\":\"action_completed\",\"failure\":\"retry > later\"}]}",
+     "mode": 420
+    }
+   ],
+   "description": "Diff JSON preserves ProposalItem field order, optional fields, and Go HTML escaping.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-diff-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "diff", "ret-safe", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-safe.json",
+     "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Doc\",\"reference_date\":\"2026-01-01\",\"expires_at\":\"2026-01-02\",\"action\":\"trash\",\"rule_name\":\"test\"}]}",
+     "mode": 420
+    }
+   ],
+   "description": "Diff text matches Go's %+v slice-of-struct rendering, including empty optional fields.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-diff-empty-items-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "diff", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/ret-safe.json",
+     "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\",\"items\":[]}",
+     "mode": 420
+    }
+   ],
+   "description": "An explicitly empty proposal item array remains [] rather than null.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-missing-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "description": "A missing history file is Go's nil slice and therefore renders as JSON null.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-missing-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "description": "A missing history file prints the empty human message.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-empty-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention/history.json", "content": "[]", "mode": 420}
+   ],
+   "description": "An existing empty history array remains [] and is distinct from a missing file's null.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-nonempty-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/history.json",
+     "content": "[{\"action_id\":\"ret-safe:0\",\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":\"rule<&\",\"action\":\"trash\",\"path\":\"doc<&.md\",\"title\":\"Title > &\"}]",
+     "mode": 420
+    }
+   ],
+   "description": "History JSON preserves HistoryEntry field order and Go HTML escaping.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-nonempty-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {
+     "path": ".symdesk/retention/history.json",
+     "content": "[{\"action_id\":\"ret-safe:0\",\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":\"rule\",\"action\":\"trash\",\"path\":\"doc.md\",\"title\":\"Doc\"}]",
+     "mode": 420
+    }
+   ],
+   "description": "History text uses Go's local-second timestamp and two-space columns; the harness pins TZ=UTC.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-null-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention/history.json", "content": "null", "mode": 420}
+   ],
+   "description": "An explicit JSON null history is malformed state and fails with the shared validation error.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-history-extra-arg-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "history", "extra", "--json"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "description": "An extra history token is rejected as Cobra's unknown nested command before service dependencies are opened."
+  },
+ {
+  "id": "retention-diff-missing-items-json",
+  "binary": "symdesk",
+  "stage": "retention",
+  "args": [
+   "retention",
+   "diff",
+   "ret-safe",
+   "--json",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "setup": [
+   {
+    "path": ".symdesk/retention/ret-safe.json",
+    "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\"}",
+    "mode": 420
+   }
+  ],
+  "description": "Omitted proposal items retain Go nil-slice JSON output (null).",
+  "compare_sidecar_layout": true
+ },
+ {
+  "id": "retention-diff-null-items-json",
+  "binary": "symdesk",
+  "stage": "retention",
+  "args": [
+   "retention",
+   "diff",
+   "ret-safe",
+   "--json",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "setup": [
+   {
+    "path": ".symdesk/retention/ret-safe.json",
+    "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\",\"items\":null}",
+    "mode": 420
+   }
+  ],
+  "description": "Explicit null proposal items remain distinct from an empty array.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "id": "retention-diff-top-level-null-json",
+  "binary": "symdesk",
+  "stage": "retention",
+  "args": [
+   "retention",
+   "diff",
+   "ret-safe",
+   "--json",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "setup": [
+   {
+    "path": ".symdesk/retention/ret-safe.json",
+    "content": "null",
+    "mode": 420
+   }
+  ],
+  "description": "A top-level null proposal decodes to Go zero values and diff emits null items.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "id": "retention-diff-item-zero-strings-json",
+  "binary": "symdesk",
+  "stage": "retention",
+  "args": [
+   "retention",
+   "diff",
+   "ret-safe",
+   "--json",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "setup": [
+   {
+    "path": ".symdesk/retention/ret-safe.json",
+    "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\",\"items\":[{\"title\":null,\"reference_date\":\"2025-01-01\",\"expires_at\":\"2026-01-01\",\"action\":\"trash\",\"rule_name\":null}]}",
+    "mode": 420
+   }
+  ],
+  "description": "Omitted and null proposal item strings decode to Go zero strings.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "id": "retention-diff-duplicate-null-last-wins-json",
+  "binary": "symdesk",
+  "stage": "retention",
+  "args": [
+   "retention",
+   "diff",
+   "ret-safe",
+   "--json",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "setup": [
+   {
+    "path": ".symdesk/retention/ret-safe.json",
+    "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"rule_name\":null,\"created\":\"2026-01-02T03:04:05Z\",\"items\":[],\"items\":null,\"status\":\"pending\"}",
+    "mode": 420
+   }
+  ],
+  "description": "Go duplicate object keys use the last null value.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "id": "retention-output-text-overrides-json-before",
+  "binary": "symdesk",
+  "stage": "retention",
+  "args": [
+   "--output",
+   "text",
+   "--json",
+   "retention",
+   "diff",
+   "ret-safe",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "setup": [
+   {
+    "path": ".symdesk/retention/ret-safe.json",
+    "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\",\"items\":[{\"path\":\"note.md\",\"title\":\"Note\",\"reference_date\":\"2025-01-01\",\"expires_at\":\"2026-01-01\",\"action\":\"trash\"}]}",
+    "mode": 420
+   }
+  ],
+  "description": "Explicit nonempty --output text overrides --json before the subcommand.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "id": "retention-output-text-overrides-json-after",
+  "binary": "symdesk",
+  "stage": "retention",
+  "args": [
+   "retention",
+   "diff",
+   "ret-safe",
+   "--json",
+   "--output",
+   "text",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "setup": [
+   {
+    "path": ".symdesk/retention/ret-safe.json",
+    "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\",\"items\":[{\"path\":\"note.md\",\"title\":\"Note\",\"reference_date\":\"2025-01-01\",\"expires_at\":\"2026-01-01\",\"action\":\"trash\"}]}",
+    "mode": 420
+   }
+  ],
+  "description": "Explicit nonempty --output text overrides --json after the subcommand.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "id": "retention-diff-malformed-eof-json",
+  "binary": "symdesk",
+  "stage": "retention",
+  "args": [
+   "retention",
+   "diff",
+   "ret-safe",
+   "--json",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "setup": [
+   {
+    "path": ".symdesk/retention/ret-safe.json",
+    "content": "{",
+    "mode": 420
+   }
+  ],
+  "description": "Malformed proposal EOF preserves the concrete Go JSON diagnostic.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "id": "retention-diff-malformed-key-json",
+  "binary": "symdesk",
+  "stage": "retention",
+  "args": [
+   "retention",
+   "diff",
+   "ret-safe",
+   "--json",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "setup": [
+   {
+    "path": ".symdesk/retention/ret-safe.json",
+    "content": "{ not json",
+    "mode": 420
+   }
+  ],
+  "description": "Malformed proposal object keys preserve the concrete Go JSON diagnostic.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "id": "retention-error-json-escaping",
+  "binary": "symdesk",
+  "stage": "retention",
+  "args": [
+   "retention",
+   "diff",
+   "bad<  ",
+   "--json",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "setup": [
+   {
+    "path": ".symdesk/retention/ret-safe.json",
+    "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"status\":\"pending\",\"items\":[{\"path\":\"note.md\",\"title\":\"Note\",\"reference_date\":\"2025-01-01\",\"expires_at\":\"2026-01-01\",\"action\":\"trash\"}]}",
+    "mode": 420
+   }
+  ],
+  "description": "JSON error envelopes use Go HTML and U+2028/U+2029 escaping.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "id": "retention-history-null-strings-json",
+  "binary": "symdesk",
+  "stage": "retention",
+  "args": [
+   "retention",
+   "history",
+   "--json",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "setup": [
+   {
+    "path": ".symdesk/retention/history.json",
+    "content": "[{\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":null,\"action\":null,\"path\":null,\"title\":null}]",
+    "mode": 420
+   }
+  ],
+  "description": "Null history entry strings decode to Go zero strings.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "binary": "symdesk",
+  "stage": "retention",
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "id": "retention-diff-malformed-type-json",
+  "args": [
+   "retention",
+   "diff",
+   "ret-safe",
+   "--json",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "setup": [
+   {
+    "path": ".symdesk/retention/ret-safe.json",
+    "content": "{\"run_id\":1}",
+    "mode": 420
+   }
+  ],
+  "description": "Wrong proposal field types preserve Go's concrete json.UnmarshalTypeError diagnostic.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "binary": "symdesk",
+  "stage": "retention",
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "id": "retention-history-malformed-eof-json",
+  "args": [
+   "retention",
+   "history",
+   "--json",
+   "--vault",
+   "${WORKSPACE}"
+  ],
+  "setup": [
+   {
+    "path": ".symdesk/retention/history.json",
+    "content": "{",
+    "mode": 420
+   }
+  ],
+  "description": "Malformed history EOF preserves the concrete Go JSON diagnostic.",
+  "compare_sidecar_layout": true
+ },
+ {
+  "binary": "symdesk",
+  "stage": "retention",
+  "env": {},
+  "working_dir": ".",
+  "timeout_ms": 10000,
+  "stdout_mode": "bytes",
+  "stderr_mode": "bytes",
+  "compare_files": false,
+  "id": "retention-output-text-version-caller",
+  "args": [
+   "--json",
+   "version",
+   "--output",
+   "text"
+  ],
+  "description": "The shared explicit --output text precedence also applies outside retention subcommands."
+ },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-duplicate-run-id-bad-then-good",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "diff",
+    "probe"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/probe.json",
+     "content": "{\"run_id\":1,\"run_id\":\"probe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"items\":[],\"status\":\"pending\"}",
+     "mode": 420
+    }
+   ],
+   "description": "The first duplicate run_id type error is retained even when a later duplicate is valid."
+  },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-duplicate-run-id-bad-then-good-reject",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "reject",
+    "probe"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/probe.json",
+     "content": "{\"run_id\":1,\"run_id\":\"probe\",\"rule_name\":\"test\",\"created\":\"2026-01-02T03:04:05Z\",\"items\":[],\"status\":\"pending\"}",
+     "mode": 420
+    }
+   ],
+   "description": "Reject fails without rewriting state when an earlier duplicate run_id has the wrong type."
+  },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-duplicate-items-bad-then-empty",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "diff",
+    "probe"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/probe.json",
+     "content": "{\"run_id\":\"probe\",\"created\":\"2026-01-02T03:04:05Z\",\"items\":{},\"items\":[],\"status\":\"pending\"}",
+     "mode": 420
+    }
+   ],
+   "description": "The first duplicate items type error is retained even when a later duplicate is an empty array."
+  },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-duplicate-items-bad-then-empty-reject",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "reject",
+    "probe"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/probe.json",
+     "content": "{\"run_id\":\"probe\",\"created\":\"2026-01-02T03:04:05Z\",\"items\":{},\"items\":[],\"status\":\"pending\"}",
+     "mode": 420
+    }
+   ],
+   "description": "Reject fails without rewriting state when an earlier duplicate items value has the wrong type."
+  },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-duplicate-item-path-bad-then-good",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "diff",
+    "probe"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/probe.json",
+     "content": "{\"run_id\":\"probe\",\"created\":\"2026-01-02T03:04:05Z\",\"items\":[{\"path\":1,\"path\":\"note.md\",\"action\":\"trash\"}],\"status\":\"pending\"}",
+     "mode": 420
+    }
+   ],
+   "description": "Nested proposal items retain the first duplicate path type error."
+  },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-duplicate-history-rule-bad-then-good",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "history"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/history.json",
+     "content": "[{\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":1,\"rule_name\":\"ok\",\"action\":\"trash\",\"path\":\"note.md\",\"title\":\"Note\"}]",
+     "mode": 420
+    }
+   ],
+   "description": "History entries retain the first duplicate rule_name type error."
+  },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-duplicate-history-timestamp-bad-then-good",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "history"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/history.json",
+     "content": "[{\"timestamp\":1,\"timestamp\":\"2026-01-02T03:04:05Z\",\"rule_name\":\"ok\",\"action\":\"trash\",\"path\":\"note.md\",\"title\":\"Note\"}]",
+     "mode": 420
+    }
+   ],
+   "description": "time.Time rejects the first non-string duplicate timestamp immediately."
+  },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-malformed-value-token",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "diff",
+    "probe"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/probe.json",
+     "content": "{\"run_id\":truX}",
+     "mode": 420
+    }
+   ],
+   "description": "Malformed literals use Go encoding/json scanner diagnostics."
+  },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-malformed-trailing-comma",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "diff",
+    "probe"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/probe.json",
+     "content": "{\"run_id\":\"probe\",}",
+     "mode": 420
+    }
+   ],
+   "description": "Trailing object commas use Go encoding/json scanner diagnostics."
+  },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-malformed-array-trailing-comma",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "history"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/history.json",
+     "content": "[{\"timestamp\":\"2026-01-02T03:04:05Z\"},]",
+     "mode": 420
+    }
+   ],
+   "description": "Trailing array commas use Go encoding/json scanner diagnostics."
+  },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-invalid-created-timestamp",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "diff",
+    "probe"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/probe.json",
+     "content": "{\"run_id\":\"probe\",\"created\":\"not-a-time\",\"items\":[]}",
+     "mode": 420
+    }
+   ],
+   "description": "Proposal timestamp parse failures preserve Go time.Parse diagnostics."
+  },
+  {
+   "binary": "symdesk",
+   "stage": "retention",
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "compare_sidecar_layout": true,
+   "id": "retention-regression-invalid-history-timestamp",
+   "args": [
+    "--vault",
+    "${WORKSPACE}",
+    "--json",
+    "retention",
+    "history"
+   ],
+   "setup": [
+    {
+     "path": ".symdesk/retention/history.json",
+     "content": "[{\"timestamp\":\"not-a-time\",\"rule_name\":\"ok\",\"action\":\"trash\",\"path\":\"note.md\",\"title\":\"Note\"}]",
+     "mode": 420
+    }
+   ],
+   "description": "History timestamp parse failures preserve Go time.Parse diagnostics."
+  },
+  {
+   "id": "retention-reject-omitted-items-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"batch\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\"}", "mode": 420}
+   ],
+   "description": "Go decodes an omitted items field as nil and accepts rejection; the Rust test also checks the persisted null field.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-list-existing-dir-no-pending-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "list", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention/ret-done.json", "content": "{\"run_id\":\"ret-done\",\"rule_name\":\"batch\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[],\"status\":\"accepted\"}", "mode": 420}
+   ],
+   "description": "Go serializes its still-nil proposals slice as null when the directory exists but nothing is pending.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-eval-reviewable-proposal",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", ".symdesk/rules.yaml", "--json", "--vault", "${WORKSPACE}"],
+   "prepare_args": ["ls", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "json_run_id",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/rules.yaml", "content": "name: expired-open\nselector:\n  document_type: memo\n  status: open\nperiod_days: 30\naction: flag_review\n", "mode": 420},
+    {"path": "expired.md", "content": "---\ntitle: Expired\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: open\n---\nBody\n", "mode": 420},
+    {"path": "fresh.md", "content": "---\ntitle: Fresh\ndocument_date: \"2099-01-01\"\ndocument_type: memo\nstatus: open\n---\nBody\n", "mode": 420},
+    {"path": "paid.md", "content": "---\ntitle: Paid\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: paid\n---\nBody\n", "mode": 420}
+   ],
+   "description": "Both CLIs stage a proposal from the existing index; only the clock-derived run ID is normalized, while every other stdout byte is compared. The Rust CLI test asserts the persisted proposal details.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-eval-reviewable-proposal-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", ".symdesk/rules.yaml", "--vault", "${WORKSPACE}"],
+   "prepare_args": ["ls", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "text_run_id",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/rules.yaml", "content": "name: expired-open\nselector:\n  document_type: memo\n  status: open\nperiod_days: 30\naction: flag_review\n", "mode": 420},
+    {"path": "expired.md", "content": "---\ntitle: Expired\ndocument_date: \"2024-01-01\"\ndocument_type: memo\nstatus: open\n---\nBody\n", "mode": 420}
+   ],
+   "description": "Human output matches byte-for-byte except the clock-derived run ID; item struct field order remains visible.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-eval-no-items-json",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", ".symdesk/rules.yaml", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "json_run_id",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/rules.yaml", "content": "name: empty\nperiod_days: 30\naction: flag_review\n", "mode": 420}
+   ],
+   "description": "An empty evaluation serializes the Go nil items slice as null and stages an empty proposal.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-eval-invalid-rule",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", ".symdesk/rules.yaml", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/rules.yaml", "content": "name: invalid\nperiod_days: 0\naction: trash\n", "mode": 420}
+   ],
+   "description": "Rule validation errors match Go and leave no staged proposal.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-eval-missing-rule-file",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", ".symdesk/missing.yaml", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [],
+   "description": "The missing rules file reports Go's path-specific OS error.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-eval-empty-rules-uses-default",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "eval", "--rules", "", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "console_text",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention-rules.yaml", "content": "name: invalid-default\nperiod_days: 0\naction: trash\n", "mode": 420}
+   ],
+   "description": "An empty explicit rules flag falls back to the default rules path before validation.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-accept-flag-review",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "accept", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "prepare_args": ["--json", "ls", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": "doc.md", "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n", "mode": 420},
+    {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"rule\",\"fingerprint\":\"166208b59278e68b2692f527a89abf8ad3916467bb065a4c130d70aa5fa08a74\"}],\"status\":\"pending\"}", "mode": 420}
+   ],
+   "description": "A fresh fingerprint authorizes the flag_review action; compare the deterministic result while the timestamped history side effect remains intentionally unbyte-compared.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-accept-stale-fingerprint",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "accept", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "prepare_args": ["--json", "ls", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": "doc.md", "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n", "mode": 420},
+    {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"rule\",\"fingerprint\":\"0000000000000000000000000000000000000000000000000000000000000000\"}],\"status\":\"pending\"}", "mode": 420}
+   ],
+   "description": "A stale proposal fingerprint is rejected before mutation, with Go-matched per-item and process errors.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-accept-text",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "accept", "ret-safe", "--output", "text", "--vault", "${WORKSPACE}"],
+   "prepare_args": ["--json", "ls", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": "doc.md", "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n", "mode": 420},
+    {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"doc.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"flag_review\",\"rule_name\":\"rule\",\"fingerprint\":\"166208b59278e68b2692f527a89abf8ad3916467bb065a4c130d70aa5fa08a74\"}],\"status\":\"pending\"}", "mode": 420}
+   ],
+   "description": "Human output preserves Go map ordering and ProposalItem struct rendering after a successful action.",
+   "compare_sidecar_layout": true
+  },
+  {
+   "id": "retention-accept-action-completed-recovery",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "accept", "ret-safe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [
+    {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"missing.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"trash\",\"rule_name\":\"rule\",\"status\":\"action_completed\"}],\"status\":\"pending\"}", "mode": 420}
+   ],
+   "description": "Crash-recovery state skips authoritative reread and the action, writes the stable history ID idempotently, and leaves acted at zero.",
+   "compare_sidecar_layout": true
   }
  ]
 }

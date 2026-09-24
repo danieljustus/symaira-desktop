@@ -12,6 +12,9 @@ serde.workspace = true
 serde_json = { workspace = true, features = ["preserve_order", "raw_value"] }
 time.workspace = true
 ed25519-dalek.workspace = true
+getrandom = "=0.4.3"
 sha2.workspace = true
 hex.workspace = true
 thiserror.workspace = true
+rusqlite.workspace = true
+symaira-core-sqlite.workspace = true

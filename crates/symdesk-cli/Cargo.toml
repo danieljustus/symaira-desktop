@@ -12,7 +12,9 @@ name = "symdesk"
 path = "src/main.rs"
 
 [dependencies]
+cap-std.workspace = true
 clap.workspace = true
+libc = "=0.2.189"
 serde.workspace = true
 serde_json.workspace = true
 symdesk-core.workspace = true
@@ -22,3 +24,5 @@ symdesk-protocol.workspace = true
 symdesk-vault.workspace = true
 time.workspace = true
 tokio.workspace = true
+rusqlite.workspace = true
+noyalib.workspace = true

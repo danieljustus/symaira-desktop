@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "oracle": {
-    "commit": "ee25af59fa810f2cac9f6d66a911bb1eb42d247f",
-    "release": "unreleased-ee25af59"
+    "commit": "6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1",
+    "release": "post-v0.13.0-dependency-refresh"
   },
   "source_hashes": {
     "go.mod": "f19913015a034363277f87b2f38fd92ee3c6c5601abdb4be7697052904eca563",

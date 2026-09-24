@@ -175,6 +175,15 @@ fn quote_yaml(value: &str) -> String {
     format!("\"{}\"", value.replace('"', "\\\""))
 }
 
+pub(crate) fn render_go_yaml_string(
+    value: &str,
+    indent_spaces: usize,
+    key: bool,
+) -> Result<String, MutationError> {
+    go_yaml::render_string(value, indent_spaces, key)
+        .map_err(|detail| MutationError::Marshal { detail })
+}
+
 fn yaml_value_string(value: &Value) -> Result<String, MutationError> {
     match value {
         Value::String(value) => Ok(quote_yaml(value)),

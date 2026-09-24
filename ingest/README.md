@@ -32,7 +32,7 @@ Drop a scanned PDF, image, or text-like export into a folder → get a searchabl
 
 ## Status
 
-**Beta** (pre-1.0 SemVer). The CLI + MCP pipeline is stable and covered by CI on every commit; flags and output formats may still evolve between minor releases. Paperless-ngx replacement readiness is tracked in [`docs/plans/symingest-completion-roadmap.md`](docs/plans/symingest-completion-roadmap.md).
+**Historical standalone status:** Beta (pre-1.0 SemVer). The standalone CLI and its roadmap are no longer maintained in this directory; use the root `symdesk` commands and CI instead.
 
 ## Install
 

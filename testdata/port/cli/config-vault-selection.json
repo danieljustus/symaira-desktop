@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "oracle_commit": "e023816a9db2b3d71514049195886fe1b9766a5a",
+  "cases": [
+    {
+      "id": "toml-vault-alone",
+      "selected": "toml"
+    },
+    {
+      "id": "environment-over-toml",
+      "env": "env",
+      "selected": "env"
+    },
+    {
+      "id": "flag-over-environment-and-toml",
+      "flag": "flag",
+      "env": "env",
+      "selected": "flag"
+    },
+    {
+      "id": "empty-flag-falls-back-to-environment",
+      "empty_flag": true,
+      "env": "env",
+      "selected": "env"
+    }
+  ]
+}

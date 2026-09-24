@@ -9,8 +9,12 @@
 //! using [`cap_std::fs::Dir`].
 
 pub mod checkpoint;
+mod prune;
+mod purge;
+mod trash_purge;
 
 pub use checkpoint::{Checkpoint, CheckpointFile};
+pub use prune::{HistoryPruneError, HistoryRetentionPolicy};
 
 use std::{
     fmt::Write as _,
@@ -305,6 +309,14 @@ pub enum HistoryError {
     /// Checkpoint manifest JSON file is corrupt or unparseable.
     #[error("corrupt checkpoint manifest for {0}: {1}")]
     CorruptCheckpoint(String, String),
+
+    /// Invalid recovery metadata or history object inventory during purge.
+    #[error("{0}")]
+    Purge(String),
+
+    /// A selected trash item's original path no longer matches its metadata.
+    #[error("trash entry {0:?} original path changed")]
+    TrashEntryOriginalPathChanged(String),
 
     /// Trash item name is invalid (separators or a bare dot segment).
     #[error("invalid trash item name: {0:?}")]

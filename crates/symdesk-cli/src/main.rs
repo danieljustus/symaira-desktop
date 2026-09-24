@@ -1,10 +1,15 @@
 #![deny(unsafe_code)]
 
+mod dataset;
+mod history;
 mod http;
+mod index_cli;
 mod mcp;
+mod recipe;
 mod retention;
 
 use std::{
+    collections::BTreeMap,
     ffi::OsString,
     io::{self, Write},
     path::{Component, Path, PathBuf},
@@ -22,19 +27,29 @@ fn process_exit(code: CoreExitCode) -> ExitCode {
     ExitCode::from(code.as_u8())
 }
 
+fn local_offset_at(value: time::OffsetDateTime) -> time::UtcOffset {
+    // Go honors TZ=UTC on Windows; the time crate's Windows local offset does not.
+    // ponytail: Other TZ overrides need a timezone database if required for parity.
+    if std::env::var("TZ").ok().as_deref() == Some("UTC") {
+        return time::UtcOffset::UTC;
+    }
+    time::UtcOffset::local_offset_at(value).unwrap_or(time::UtcOffset::UTC)
+}
+
 const VERSION: &str = match option_env!("SYMDESK_VERSION") {
     Some(version) => version,
     None => "devel",
 };
 
 fn main() -> ExitCode {
-    let args: Vec<OsString> = std::env::args_os().collect();
+    let mut args: Vec<OsString> = std::env::args_os().collect();
     if args.get(1).is_some_and(|arg| arg == "--version") {
         return write_stdout(format!("symdesk version {VERSION}\n"));
     }
     if args.iter().skip(2).any(|arg| arg == "--version") {
         return write_stderr("unknown flag: --version\n", CoreExitCode::Generic);
     }
+    rewrite_index_output_flag(&mut args);
 
     let matches = match cli().try_get_matches_from(args) {
         Ok(matches) => matches,
@@ -52,7 +67,11 @@ fn main() -> ExitCode {
             CoreExitCode::Generic,
         );
     }
-    let output_json = matches.get_flag("json") || output == "json";
+    let output_json = match output {
+        "json" => true,
+        "text" | "yaml" => false,
+        _ => matches.get_flag("json"),
+    };
     match matches.subcommand() {
         Some(("version", _)) => {
             let rendered = if output_json {
@@ -104,10 +123,66 @@ fn main() -> ExitCode {
             command.get_one::<String>("token").cloned(),
             matches.get_one::<String>("vault").cloned(),
         ),
+        Some(("dataset", command)) => dataset::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
+        Some(("index", command)) => index_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+            matches.get_flag("json"),
+        ),
+        Some(("history", command)) => match command.subcommand() {
+            Some(("tasks", _)) => history::run_tasks(
+                matches.get_one::<String>("vault").map(String::as_str),
+                output_json,
+            ),
+            _ => process_exit(CoreExitCode::Ok),
+        },
+        Some(("recipe", command)) => recipe::run(command, output_json),
         Some(("retention", command)) => {
             let vault_opt = matches.get_one::<String>("vault").cloned();
             match command.subcommand() {
+                Some(("eval", subcommand)) => retention::run_eval(
+                    vault_opt.as_deref(),
+                    subcommand.get_one::<String>("rules").map(String::as_str),
+                    output_json,
+                ),
                 Some(("list", _)) => retention::run_list(vault_opt.as_deref(), output_json),
+                Some(("accept", subcommand)) => retention::run_accept(
+                    vault_opt.as_deref(),
+                    &subcommand
+                        .get_many::<String>("run-id")
+                        .map(|values| values.cloned().collect::<Vec<_>>())
+                        .unwrap_or_default(),
+                    output_json,
+                ),
+                Some(("reject", subcommand)) => retention::run_reject(
+                    vault_opt.as_deref(),
+                    &subcommand
+                        .get_many::<String>("run-id")
+                        .map(|values| values.cloned().collect::<Vec<_>>())
+                        .unwrap_or_default(),
+                    output_json,
+                ),
+                Some(("diff", subcommand)) => retention::run_diff(
+                    vault_opt.as_deref(),
+                    &subcommand
+                        .get_many::<String>("run-id")
+                        .map(|values| values.cloned().collect::<Vec<_>>())
+                        .unwrap_or_default(),
+                    output_json,
+                ),
+                Some(("history", subcommand)) => retention::run_history(
+                    vault_opt.as_deref(),
+                    &subcommand
+                        .get_many::<String>("extra")
+                        .map(|values| values.cloned().collect::<Vec<_>>())
+                        .unwrap_or_default(),
+                    output_json,
+                ),
                 Some((other, _)) => write_stderr(
                     &format!("unknown retention subcommand: {other}\n"),
                     CoreExitCode::Generic,
@@ -116,6 +191,31 @@ fn main() -> ExitCode {
             }
         }
         _ => process_exit(CoreExitCode::Ok),
+    }
+}
+
+fn rewrite_index_output_flag(args: &mut [OsString]) {
+    let Some(index) = args.iter().position(|arg| arg == "index") else {
+        return;
+    };
+    if args.get(index + 1).is_none_or(|arg| arg != "maintenance") {
+        return;
+    }
+    let Some(operation) = args.get(index + 2) else {
+        return;
+    };
+    if operation != "backup" && operation != "relocate" {
+        return;
+    }
+    for argument in args.iter_mut().skip(index + 3) {
+        if argument == "--output" {
+            *argument = OsString::from("--index-output");
+        } else if let Some(value) = argument
+            .to_str()
+            .and_then(|value| value.strip_prefix("--output="))
+        {
+            *argument = OsString::from(format!("--index-output={value}"));
+        }
     }
 }
 
@@ -176,7 +276,15 @@ fn cli() -> Command {
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
         )
         .subcommand(Command::new("mcp"))
+        .subcommand(
+            Command::new("history")
+                .subcommand_required(true)
+                .subcommand(Command::new("tasks")),
+        )
         .subcommand(retention::cli())
+        .subcommand(dataset::cli())
+        .subcommand(index_cli::cli())
+        .subcommand(recipe::cli())
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))
@@ -242,15 +350,26 @@ struct RepresentativeArgs {
 }
 
 fn resolve_vault(flag: Option<&str>) -> Result<PathBuf, String> {
+    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let config_path = PathBuf::from(symdesk_core::config::global_path(&environment));
+    let toml_input = match std::fs::read_to_string(config_path) {
+        Ok(input) => Some(input),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+        Err(error) => return Err(format!("failed to read config file: {error}")),
+    };
+    let config = symdesk_core::config::load(toml_input.as_deref(), &environment)?;
     let raw = flag
         .filter(|value| !value.is_empty())
-        .map(str::to_owned)
         .or_else(|| {
-            std::env::var("SYMDESK_VAULT")
-                .ok()
-                .filter(|value| !value.trim().is_empty())
+            environment
+                .get("SYMDESK_VAULT")
+                .map(String::as_str)
+                .filter(|value| !value.is_empty())
         })
-        .ok_or_else(|| "vault path not configured (use flag or SYMDESK_VAULT env)".to_owned())?;
+        .or_else(|| (!config.vault.is_empty()).then_some(config.vault.as_str()))
+        .ok_or_else(|| {
+            "vault path not configured (use --vault, SYMDESK_VAULT env, or config file)".to_owned()
+        })?;
     let path = PathBuf::from(raw);
     let absolute = if path.is_absolute() {
         path
@@ -393,9 +512,25 @@ fn render_search(root: &Path, hits: &[symdesk_index::SearchHit], json_output: bo
     write_stdout(format!("{{Results:[{}] Hint:}}\n", results.join(" ")))
 }
 
+fn write_go_json<T: Serialize>(value: &T) -> ExitCode {
+    match serde_json::to_string(value) {
+        Ok(rendered) => write_stdout(format!("{}\n", go_escape_json(rendered))),
+        Err(error) => write_stderr(&format!("{error}\n"), CoreExitCode::Generic),
+    }
+}
+
+fn go_escape_json(rendered: String) -> String {
+    rendered
+        .replace('&', "\\u0026")
+        .replace('<', "\\u003c")
+        .replace('>', "\\u003e")
+        .replace('\u{2028}', "\\u2028")
+        .replace('\u{2029}', "\\u2029")
+}
+
 fn emit_error(error: String, json_output: bool) -> ExitCode {
     if json_output {
-        let result = write_stdout(format!("{}\n", json!({"error": error})));
+        let result = write_go_json(&json!({"error": error}));
         if result == process_exit(CoreExitCode::Ok) {
             process_exit(CoreExitCode::Generic)
         } else {

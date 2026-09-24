@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
 )
 
 var fullGitCommit = regexp.MustCompile(`^[0-9a-f]{40}$`)
@@ -53,8 +56,12 @@ func verifyProvenanceAncestryAt(repoRoot, head, oracleCommit string) error {
 }
 
 func isAncestorOf(repoRoot, ancestor, descendant string) (bool, error) {
-	command := gitCommand(repoRoot, "merge-base", "--is-ancestor", ancestor, descendant)
-	err := command.Run()
+	command, cleanup, err := gitCommand(repoRoot, "merge-base", "--is-ancestor", ancestor, descendant)
+	if err != nil {
+		return false, err
+	}
+	defer cleanup()
+	err = command.Run()
 	if err == nil {
 		return true, nil
 	}
@@ -133,8 +140,12 @@ func isPortDerivedOutput(rel string) bool {
 // package checks run in a disposable snapshot worktree — so the guard only has
 // to prove that the caller's tracked content is the committed content.
 func verifyCleanWorktree(repoRoot string) error {
-	command := gitCommand(repoRoot, "diff", "--quiet", "--no-ext-diff", "--ignore-cr-at-eol", "HEAD", "--")
-	err := command.Run()
+	command, cleanup, err := gitCommand(repoRoot, "diff", "--quiet", "--no-ext-diff", "--ignore-cr-at-eol", "HEAD", "--")
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+	output, err := command.CombinedOutput()
 	if err == nil {
 		return nil
 	}
@@ -142,7 +153,7 @@ func verifyCleanWorktree(repoRoot string) error {
 	if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
 		return fmt.Errorf("checked provenance requires a worktree matching the checked revision")
 	}
-	return fmt.Errorf("inspect worktree cleanliness: %w", err)
+	return fmt.Errorf("inspect worktree cleanliness: %w: %s", err, strings.TrimSpace(string(output)))
 }
 
 type gitTreeEntry struct {
@@ -187,7 +198,11 @@ func gitTreeEntryAt(repoRoot, revision, rel string) (gitTreeEntry, error) {
 }
 
 func gitOutput(repoRoot string, args ...string) ([]byte, error) {
-	command := gitCommand(repoRoot, args...)
+	command, cleanup, err := gitCommand(repoRoot, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup()
 	output, err := command.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("git %s: %w: %s", strings.Join(args, " "), err, strings.TrimSpace(string(output)))
@@ -195,15 +210,21 @@ func gitOutput(repoRoot string, args ...string) ([]byte, error) {
 	return output, nil
 }
 
-func gitCommand(repoRoot string, args ...string) *exec.Cmd {
+func gitCommand(repoRoot string, args ...string) (*exec.Cmd, func(), error) {
+	configPath, cleanup, err := inventory.PrivateGitConfig()
+	if err != nil {
+		return nil, nil, err
+	}
 	//nolint:gosec // every caller uses fixed Git subcommands and repository-derived revisions.
-	command := exec.Command("git", append([]string{"--no-replace-objects"}, args...)...)
+	// The sanitized environment omits Actions' global safe.directory setting.
+	// Trust only this checkout, never a user-wide wildcard.
+	command := exec.Command("git", append([]string{"-c", "safe.directory=" + filepath.ToSlash(repoRoot), "--no-replace-objects"}, args...)...)
 	command.Dir = repoRoot
-	command.Env = sanitizedGitEnvironment(os.Environ())
-	return command
+	command.Env = sanitizedGitEnvironment(os.Environ(), configPath)
+	return command, cleanup, nil
 }
 
-func sanitizedGitEnvironment(environment []string) []string {
+func sanitizedGitEnvironment(environment []string, configPath string) []string {
 	result := make([]string, 0, len(environment)+3)
 	for _, item := range environment {
 		name, _, _ := strings.Cut(item, "=")
@@ -214,7 +235,7 @@ func sanitizedGitEnvironment(environment []string) []string {
 	}
 	return append(result,
 		"GIT_CONFIG_NOSYSTEM=1",
-		"GIT_CONFIG_GLOBAL="+os.DevNull,
+		"GIT_CONFIG_GLOBAL="+configPath,
 		"GIT_TERMINAL_PROMPT=0",
 	)
 }

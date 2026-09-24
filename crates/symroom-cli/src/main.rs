@@ -9,6 +9,22 @@ use std::{
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
 
+mod artifact_cli;
+mod brain_profile_cli;
+mod checkpoint_cli;
+mod decide_cli;
+mod doctor_cli;
+mod identity_cli;
+mod index_cli;
+mod init_cli;
+mod log_cli;
+mod mcp;
+mod member_cli;
+mod note_cli;
+mod run_cli;
+mod verify_cli;
+mod watch_cli;
+
 fn process_exit(code: CoreExitCode) -> ExitCode {
     ExitCode::from(code.as_u8())
 }
@@ -27,6 +43,51 @@ fn main() -> ExitCode {
     };
     if command == "-h" || command == "--help" || command == "help" {
         return write_stdout(USAGE.to_owned());
+    }
+    if command == "run" {
+        return run_cli::run(&args[2..]);
+    }
+    if command == "checkpoint" {
+        return checkpoint_cli::run(&args[2..]);
+    }
+    if command == "identity" {
+        return identity_cli::run(&args[2..]);
+    }
+    if command == "init" {
+        return init_cli::run(&args[2..]);
+    }
+    if command == "member" {
+        return member_cli::run(&args[2..]);
+    }
+    if command == "index" {
+        return index_cli::run(&args[2..]);
+    }
+    if command == "verify" {
+        return verify_cli::run(&args[2..]);
+    }
+    if command == "log" {
+        return log_cli::run(&args[2..]);
+    }
+    if command == "decide" {
+        return decide_cli::run(&args[2..]);
+    }
+    if command == "note" {
+        return note_cli::run(&args[2..]);
+    }
+    if command == "artifact" {
+        return artifact_cli::run(&args[2..]);
+    }
+    if command == "brain-profile" {
+        return brain_profile_cli::run(&args[2..]);
+    }
+    if command == "mcp" {
+        return mcp::run_cli(&args[2..]);
+    }
+    if command == "watch" {
+        return watch_cli::run(&args[2..]);
+    }
+    if command == "doctor" {
+        return doctor_cli::run(&args[2..]);
     }
     if command != "version" {
         return write_stderr(

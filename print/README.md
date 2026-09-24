@@ -9,7 +9,7 @@
 > Zeit als eigenes Repo und gelten nicht mehr.
 
 [![CI](https://github.com/danieljustus/symaira-print/actions/workflows/ci.yml/badge.svg)](https://github.com/danieljustus/symaira-print/actions/workflows/ci.yml)
-[![License](https://img.shields.io/github/license/danieljustus/symaira-print)](LICENSE)
+[![License](https://img.shields.io/github/license/danieljustus/symaira-print)](../LICENSE)
 [![Go](https://img.shields.io/github/go-mod/go-version/danieljustus/symaira-print)](go.mod)
 [![Release](https://img.shields.io/github/v/release/danieljustus/symaira-print)](https://github.com/danieljustus/symaira-print/releases/latest)
 

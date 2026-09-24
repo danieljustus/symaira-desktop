@@ -1,0 +1,406 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "def48b15ff6a9392ce4de3a824a0eec530557e8a",
+  "normalization": "normalize dynamic timestamps/signatures, generated checkpoint/event ids, and prev hashes that depend on a generated request event",
+  "source_hashes": {
+    "cmd/symroom/cmd_checkpoint.go": "9cd7bb1f8817b9eb22e5f908e9ec8d066b5d0596dd5acb188a43d66b68ce1cd4",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/config/config.go": "417eb5fd3c5062491c8b9fc62f92407f59267b3c783c06a5dc2791ef9f09fa15",
+    "internal/room/identity/identity.go": "b5ac62c045e84390e1bd99f53b20e404586e8a4499e74bfe95473300ec2e284b",
+    "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
+    "internal/room/members/members.go": "34821f2480ec054e3002d385d9c8c707cb1087eda8cf0195c7207a0d71a0568e",
+    "internal/room/run/checkpoint.go": "d47456dbab94f5adfff66a8d02685a235b5d88a49c147669902fdf7af92c9d41"
+  },
+  "identity_key": "20ce63cf5dd1f1718934974ca0b39d9e4adcc455bb50e9541e82707018824adf",
+  "agent_key": "bdd7761e8a44dd8d09db3959e2f947700f2b16a8b5584249bb348cc0436569e8",
+  "cases": [
+    {
+      "name": "usage",
+      "args": [
+        "checkpoint"
+      ],
+      "actor": "owner",
+      "exit_code": 0,
+      "stdout": "Usage: symroom checkpoint \u003crequest|resolve\u003e [flags] [args]\n",
+      "stderr": "",
+      "final_files": []
+    },
+    {
+      "name": "unknown-action",
+      "args": [
+        "checkpoint",
+        "bogus"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown checkpoint action: bogus\n",
+      "final_files": []
+    },
+    {
+      "name": "request-usage",
+      "args": [
+        "checkpoint",
+        "request"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom checkpoint request --run \u003cid\u003e --question \"...\" [--identity \u003cname\u003e]\n",
+      "final_files": []
+    },
+    {
+      "name": "request-help",
+      "args": [
+        "checkpoint",
+        "request",
+        "--help"
+      ],
+      "actor": "owner",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "final_files": []
+    },
+    {
+      "name": "request-unknown-flag",
+      "args": [
+        "checkpoint",
+        "request",
+        "--bogus"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "final_files": []
+    },
+    {
+      "name": "request-default-missing",
+      "args": [
+        "checkpoint",
+        "request",
+        "--run",
+        "run_fixture",
+        "--question",
+        "Proceed?",
+        "--timeout=1ms"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --identity is required when default_identity is not configured\n",
+      "final_files": []
+    },
+    {
+      "name": "request-timeout-explicit",
+      "args": [
+        "checkpoint",
+        "request",
+        "--identity",
+        "owner",
+        "--run",
+        "run_fixture",
+        "--question",
+        "Proceed?",
+        "--timeout=1ms"
+      ],
+      "actor": "owner",
+      "dynamic_checkpoint": true,
+      "exit_code": 10,
+      "stdout": "",
+      "stderr": "Error: wait timed out for checkpoint \u003ccheckpoint-id\u003e\n",
+      "final_files": [
+        {
+          "name": "journal/mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "request-timeout-fractional",
+      "args": [
+        "checkpoint",
+        "request",
+        "--identity",
+        "owner",
+        "--run",
+        "run_fixture",
+        "--question",
+        "Proceed?",
+        "--timeout=.5ms"
+      ],
+      "actor": "owner",
+      "dynamic_checkpoint": true,
+      "exit_code": 10,
+      "stdout": "",
+      "stderr": "Error: wait timed out for checkpoint \u003ccheckpoint-id\u003e\n",
+      "final_files": [
+        {
+          "name": "journal/mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "request-timeout-invalid",
+      "args": [
+        "checkpoint",
+        "request",
+        "--timeout=bad"
+      ],
+      "actor": "owner",
+      "dynamic_checkpoint": true,
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "invalid value \"bad\" for flag -timeout: parse error\nUsage of checkpoint request:\n  -identity string\n    \tAuthor identity name\n  -question string\n    \tQuestion string\n  -run string\n    \tRun ID\n  -timeout duration\n    \tWait timeout duration (default 15m0s)\n",
+      "final_files": []
+    },
+    {
+      "name": "request-timeout-project-over-global",
+      "args": [
+        "checkpoint",
+        "request",
+        "--run",
+        "run_fixture",
+        "--question",
+        "Proceed?",
+        "--timeout=1ms"
+      ],
+      "actor": "owner",
+      "global_config": "default_identity = \"missing\"\n",
+      "project_config": "default_identity = \"owner\"\n",
+      "dynamic_checkpoint": true,
+      "exit_code": 10,
+      "stdout": "",
+      "stderr": "Error: wait timed out for checkpoint \u003ccheckpoint-id\u003e\n",
+      "final_files": [
+        {
+          "name": ".symroom.toml",
+          "content": "default_identity = \"owner\"\n"
+        },
+        {
+          "name": "journal/mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "request-timeout-env-over-global",
+      "args": [
+        "checkpoint",
+        "request",
+        "--run",
+        "run_fixture",
+        "--question",
+        "Proceed?",
+        "--timeout=1ms"
+      ],
+      "actor": "owner",
+      "global_config": "default_identity = \"missing\"\n",
+      "default_identity_env": "owner",
+      "dynamic_checkpoint": true,
+      "exit_code": 10,
+      "stdout": "",
+      "stderr": "Error: wait timed out for checkpoint \u003ccheckpoint-id\u003e\n",
+      "final_files": [
+        {
+          "name": "journal/mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "request-success-global-and-resolve",
+      "args": [
+        "checkpoint",
+        "request",
+        "--run",
+        "run_fixture",
+        "--question",
+        "Proceed?",
+        "--timeout=3s"
+      ],
+      "actor": "owner",
+      "global_config": "default_identity = \"owner\"\n",
+      "resolve_args": [
+        "checkpoint",
+        "resolve",
+        "--answer",
+        "Approved",
+        "\u003ccheckpoint-id\u003e"
+      ],
+      "resolver_stdout": "\u003cevent-id\u003e\n",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "Approved\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Approved\",\"checkpoint_id\":\"\\u003ccheckpoint-id\\u003e\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"\\u003cdynamic-prev\\u003e\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "resolve-usage",
+      "args": [
+        "checkpoint",
+        "resolve"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom checkpoint resolve \u003ccheckpoint_id\u003e --answer \"...\" [--identity \u003cname\u003e]\n",
+      "final_files": []
+    },
+    {
+      "name": "resolve-no-answer",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "chk_existing"
+      ],
+      "actor": "owner",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom checkpoint resolve \u003ccheckpoint_id\u003e --answer \"...\" [--identity \u003cname\u003e]\n",
+      "final_files": []
+    },
+    {
+      "name": "resolve-success-explicit",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--identity",
+        "owner",
+        "--answer",
+        "Approved",
+        "chk_existing"
+      ],
+      "actor": "owner",
+      "initial_journal": [
+        {
+          "name": "mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"ed25519:3v+4Wtuif6VXQm6LLKrjjCFIMLj0BycAyKHAzyC+HkxCXq0IhHe7ouxkRgeowLXNeWmFyTioTeqirBgYIF3QBw==\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n"
+        }
+      ],
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Approved\",\"checkpoint_id\":\"chk_existing\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"sha256:31c19b598a5ebad09da141be71fbcee4ea9e741b7ccf24c0ceaca10c33e4b350\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "resolve-success-default-project",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--answer",
+        "Approved",
+        "chk_existing"
+      ],
+      "actor": "owner",
+      "global_config": "default_identity = \"missing\"\n",
+      "project_config": "default_identity = \"owner\"\n",
+      "initial_journal": [
+        {
+          "name": "mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"ed25519:3v+4Wtuif6VXQm6LLKrjjCFIMLj0BycAyKHAzyC+HkxCXq0IhHe7ouxkRgeowLXNeWmFyTioTeqirBgYIF3QBw==\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n"
+        }
+      ],
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": ".symroom.toml",
+          "content": "default_identity = \"owner\"\n"
+        },
+        {
+          "name": "journal/mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Approved\",\"checkpoint_id\":\"chk_existing\"},\"id\":\"ev_\\u003cevent-id\\u003e\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"sha256:31c19b598a5ebad09da141be71fbcee4ea9e741b7ccf24c0ceaca10c33e4b350\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "resolve-not-found",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--identity",
+        "owner",
+        "--answer",
+        "No",
+        "chk_missing"
+      ],
+      "actor": "owner",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error resolving checkpoint: checkpoint not found\n",
+      "final_files": []
+    },
+    {
+      "name": "resolve-already-resolved",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--identity",
+        "owner",
+        "--answer",
+        "Again",
+        "chk_existing"
+      ],
+      "actor": "owner",
+      "initial_journal": [
+        {
+          "name": "mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"ed25519:3v+4Wtuif6VXQm6LLKrjjCFIMLj0BycAyKHAzyC+HkxCXq0IhHe7ouxkRgeowLXNeWmFyTioTeqirBgYIF3QBw==\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Already done\",\"checkpoint_id\":\"chk_existing\"},\"id\":\"event-checkpoint-resolved\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"sha256:31c19b598a5ebad09da141be71fbcee4ea9e741b7ccf24c0ceaca10c33e4b350\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"ed25519:iRDoRwssYKPBfUBwSvkZ7+hMvjFI50G35XC0JY01SDFBc5uN4J0TfRvkmEJCsAK2rsyOoYB1eb0U0wWGQTrPDA==\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n"
+        }
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error resolving checkpoint: member not found\n",
+      "final_files": [
+        {
+          "name": "journal/mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"answer\":\"Already done\",\"checkpoint_id\":\"chk_existing\"},\"id\":\"event-checkpoint-resolved\",\"kind\":\"checkpoint.resolved\",\"lamport\":2,\"prev\":\"sha256:31c19b598a5ebad09da141be71fbcee4ea9e741b7ccf24c0ceaca10c33e4b350\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    },
+    {
+      "name": "resolve-agent-forbidden",
+      "args": [
+        "checkpoint",
+        "resolve",
+        "--identity",
+        "agent",
+        "--answer",
+        "No",
+        "chk_existing"
+      ],
+      "actor": "agent",
+      "initial_journal": [
+        {
+          "name": "mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"name\":\"Fixture\",\"public_key\":\"2cbb097991644a68a8a9aae504de9bdeb2e2b754e0676de52641d3830be3f115\"},\"id\":\"event-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"ed25519:2MQ5uY+O0IidJdanONjL6jjaDwRXYQizAWSJp+W+0RFgj8ihmuk8hLkiSs31P/8OLL1h0WJZjzthFpZhW9PTAQ==\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"id\":\"mem_685ce7fe5f38f22c\",\"kind\":\"agent\",\"name\":\"Agent\",\"public_key\":\"327c98399ce9c1de56dd16d8e8264fdaee8a399182669cd07725ed1cbc6216c7\",\"role\":\"agent\"},\"id\":\"event-agent-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1e6023da3b8ec9ce67082e07aef186c2ff1e0f4aac8c82369b67c53b14415cb2\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"ed25519:FjENEBqEdm1ClKAps8gfvr9IB1tYS3iv2k7tf/K/Mwyt72RPQ/R7a5cshDT3mUDiCZ7JZZNKOAtXabyV9wQvAQ==\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":3,\"prev\":\"sha256:6c42ecb8bad8956e90f8fa347615d23ad52bc04d69ce5eb3fd8f7b1796e0e14b\",\"room\":\"rm_test\",\"seq\":3,\"sig\":\"ed25519:gcfQxsNBolCJ/Jdl9W80KB6M21fHaSBoSBybw728w1HfnqQjfx0lbcMrBAuOXO9QezJIIBWRTl8+Dx1PMxvPDQ==\",\"ts\":\"2026-09-23T12:00:00.000Z\",\"v\":1}\n"
+        }
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: agent identity is forbidden from resolving checkpoints\n",
+      "final_files": [
+        {
+          "name": "journal/mem_19659a12900b9c14.jsonl",
+          "content": "{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"name\":\"Fixture\",\"public_key\":\"2cbb097991644a68a8a9aae504de9bdeb2e2b754e0676de52641d3830be3f115\"},\"id\":\"event-room-created\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"id\":\"mem_685ce7fe5f38f22c\",\"kind\":\"agent\",\"name\":\"Agent\",\"public_key\":\"327c98399ce9c1de56dd16d8e8264fdaee8a399182669cd07725ed1cbc6216c7\",\"role\":\"agent\"},\"id\":\"event-agent-added\",\"kind\":\"member.added\",\"lamport\":2,\"prev\":\"sha256:1e6023da3b8ec9ce67082e07aef186c2ff1e0f4aac8c82369b67c53b14415cb2\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_19659a12900b9c14\",\"body\":{\"checkpoint_id\":\"chk_existing\",\"question\":\"Proceed?\",\"run_id\":\"run_fixture\"},\"id\":\"event-checkpoint-requested\",\"kind\":\"checkpoint.requested\",\"lamport\":3,\"prev\":\"sha256:6c42ecb8bad8956e90f8fa347615d23ad52bc04d69ce5eb3fd8f7b1796e0e14b\",\"room\":\"rm_test\",\"seq\":3,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    }
+  ]
+}

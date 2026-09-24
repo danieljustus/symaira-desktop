@@ -1,0 +1,394 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "e4773d8ebbabbc7ae66a6bae1ae2548cc26545c9",
+  "source_hashes": {
+    "cmd/symroom/cmd_artifact.go": "79405799847b23475088b8f63cfa363b37764443f02daac82d53596239c4becf",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/artifact/artifact.go": "b0f4f52df50c7b07bfe058926e813082399fdaac58a8901ac1204de50419afc5",
+    "internal/room/config/config.go": "417eb5fd3c5062491c8b9fc62f92407f59267b3c783c06a5dc2791ef9f09fa15",
+    "internal/room/desk/desk.go": "63e4a7646077887861e751b2ef2412bed244f7ede5ddbd34aeb7027868f2848a"
+  },
+  "identity_key": "c5d08e614a1932f7c9562ad08e310fb056e40aba034279d38d2aebc2c9947d63",
+  "cases": [
+    {
+      "name": "link-default-global",
+      "args": [
+        "artifact",
+        "link",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "global_config": "default_identity = \"owner\"\n",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-default-project-over-global",
+      "args": [
+        "artifact",
+        "link",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "global_config": "default_identity = \"missing\"\n",
+      "project_config": "default_identity = \"owner\"\n",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": ".symroom.toml",
+          "content": "default_identity = \"owner\"\n"
+        },
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-default-env-over-global",
+      "args": [
+        "artifact",
+        "link",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "global_config": "default_identity = \"missing\"\n",
+      "default_identity_env": "owner",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-explicit-identity-over-invalid-config",
+      "args": [
+        "artifact",
+        "link",
+        "--identity",
+        "owner",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "global_config": "[adapters.deploy]\ncommand = [\"echo\"]\n",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    },
+    {
+      "name": "unlink-default-project",
+      "args": [
+        "artifact",
+        "unlink",
+        "art_af0e5b304b6fab00"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "initial_journal": [
+        {
+          "name": "mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ],
+      "project_config": "default_identity = \"owner\"\n",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": ".symroom.toml",
+          "content": "default_identity = \"owner\"\n"
+        },
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\"},\"id\":\"ev_8a2e2034c80e8e40\",\"kind\":\"artifact.unlinked\",\"lamport\":2,\"prev\":\"sha256:71576de0d53a37077bbb5991250590a6c7f1f3daf6c4cb9eb1a22ca3976d558f\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-default-missing",
+      "args": [
+        "artifact",
+        "link",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --identity is required when default_identity is not configured\n",
+      "final_files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-default-invalid-config",
+      "args": [
+        "artifact",
+        "link",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "global_config": "[adapters.deploy]\ncommand = [\"echo\"]\n",
+      "config_error": true,
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error loading configuration: global config error: failed to apply \u003cconfig-path\u003e: field \"adapters\": map fields are not supported from config\n",
+      "final_files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-inspect-success",
+      "args": [
+        "artifact",
+        "link",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "global_config": "default_identity = \"owner\"\n",
+      "symdesk_mode": "success",
+      "symdesk_args": [
+        "inspect",
+        "report.md",
+        "--json"
+      ],
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"doc-fixture-1\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-inspect-nonzero-fallback",
+      "args": [
+        "artifact",
+        "link",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "global_config": "default_identity = \"owner\"\n",
+      "symdesk_mode": "exit",
+      "symdesk_args": [
+        "inspect",
+        "report.md",
+        "--json"
+      ],
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-inspect-invalid-json-fallback",
+      "args": [
+        "artifact",
+        "link",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "global_config": "default_identity = \"owner\"\n",
+      "symdesk_mode": "invalid",
+      "symdesk_args": [
+        "inspect",
+        "report.md",
+        "--json"
+      ],
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-inspect-timeout-fallback",
+      "args": [
+        "artifact",
+        "link",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "global_config": "default_identity = \"owner\"\n",
+      "symdesk_mode": "hang",
+      "symdesk_args": [
+        "inspect",
+        "report.md",
+        "--json"
+      ],
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-inspect-missing-fallback",
+      "args": [
+        "artifact",
+        "link",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ],
+      "global_config": "default_identity = \"owner\"\n",
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_af0e5b304b6fab00\",\"path\":\"report.md\",\"sha256\":\"13183ac7b68a5df4a0f6bea617a15afdbe4e1c2db50e8ab144a3832cf63afec3\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_af0e5b304b6fab00\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact identity source\n"
+        }
+      ]
+    }
+  ]
+}

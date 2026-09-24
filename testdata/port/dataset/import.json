@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "generated_on": "darwin/arm64",
+  "oracle": {
+    "commit": "6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1",
+    "toolchain": "go1.26.6",
+    "goos": "darwin",
+    "goarch": "arm64"
+  },
+  "generator_sha256": "68e1d0b61eb9fd2a5b9fab3d7dfe9d86e4d9646f9389b19bffcbcbe6406b17ef",
+  "source_sha256": {
+    "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
+    "internal/dbviews/views.go": "0c36a4a9f6a79aa271bc4a6009b126693ae79139958065e17362230af5d401aa",
+    "internal/service/dataset.go": "ff0873a2a19800c058e7738da44981e527b2a6110c4cfab68551aea3a8335e3d",
+    "internal/service/dataset_policy.go": "90c291d84a0cf3ba0017aa9855a5a7a8951800ec2118c0a2fdd80aed50ad690e",
+    "internal/service/datasets.go": "a7322f2cbbaa12e90b644266b002e2b2996a62f103b25f26b098ddb663cd5c4e",
+    "internal/sidecar/db.go": "aaa740a6d3c42e2724b2ce76495b5841bce6641e947028d0aa12647d182ba11d",
+    "internal/vault/assets.go": "6aeff6cb57f6aaa134d630cd893c5ea6671ce3f4715acdde5eda396fa5a3a963",
+    "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",
+    "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
+  },
+  "cases": [
+    {
+      "id": "same-day-source-import-collision-and-manifest-projection",
+      "calls": [
+        {
+          "label": "first-import",
+          "result": {
+            "handle_path": "datasets/ledger.md",
+            "raw_path": "datasets/ledger/2026-02-03.csv",
+            "slug": "ledger",
+            "rows": 1,
+            "columns": {
+              "amount": {
+                "type": "number",
+                "label": "Amount",
+                "description": "Ledger amount",
+                "default": "0"
+              },
+              "id": {
+                "type": "text",
+                "label": "Identifier"
+              },
+              "when": {
+                "type": "date",
+                "label": "When"
+              }
+            },
+            "source_sha256": "2d1ba412c8ed097381340ea89854a18cc52e98d28730547d991413817f582dba",
+            "sensitivity": "confidential",
+            "retention_rule": "finance-7y"
+          }
+        },
+        {
+          "label": "same-day-collision",
+          "result": {
+            "handle_path": "datasets/ledger.md",
+            "raw_path": "datasets/ledger/2026-02-03-2.csv",
+            "slug": "ledger",
+            "rows": 2,
+            "columns": {
+              "amount": {
+                "type": "number",
+                "label": "Amount",
+                "description": "Ledger amount",
+                "default": "0"
+              },
+              "id": {
+                "type": "text",
+                "label": "Identifier"
+              },
+              "when": {
+                "type": "date",
+                "label": "When"
+              }
+            },
+            "source_sha256": "d78746f3fc766c6e66865984d3b01b841054975c9ebfbe4402d496064bc2cc7a",
+            "sensitivity": "confidential",
+            "retention_rule": "finance-7y"
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-first-import",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/ledger",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/ledger.md",
+              "kind": "file",
+              "size": 731,
+              "sha256": "400e82a33eb101ab42332280a1d2a84604b05d42e6797a0fd896f72f6617f46a",
+              "content": "---\ncoverage:\n    from: \"2026-01-04\"\n    to: \"2026-01-04\"\ncreated: \"2026-02-03T04:05:06Z\"\ndataset_id: ledger\nidentity_field: id\nprovenance:\n    imported_at: \"2026-02-03T04:05:06Z\"\n    source_name: first-feed.CSV\n    source_sha256: 2d1ba412c8ed097381340ea89854a18cc52e98d28730547d991413817f582dba\nretention_rule: finance-7y\nschema:\n    amount:\n        type: number\n        label: Amount\n        description: Ledger amount\n        default: \"0\"\n    id:\n        type: text\n        label: Identifier\n    when:\n        type: date\n        label: When\nsensitivity: confidential\nsource: datasets/ledger/2026-02-03.csv\ntags:\n    - dataset\ntitle: Imported Ledger\ntype: dataset\n---\n\n# Imported Ledger\n\nSource: `datasets/ledger/2026-02-03.csv`\n"
+            },
+            {
+              "path": "datasets/ledger/2026-02-03.csv",
+              "kind": "file",
+              "size": 37,
+              "sha256": "2d1ba412c8ed097381340ea89854a18cc52e98d28730547d991413817f582dba",
+              "content": "id,amount,when\nalpha,1.25,2026-01-04\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "ledger",
+              "row_key": "identity:alpha",
+              "identity": "alpha",
+              "values_json": "{\"amount\":1.25,\"id\":\"alpha\",\"when\":\"2026-01-04\"}",
+              "source_path": "datasets/ledger/2026-02-03.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/ledger.md",
+            "slug": "ledger",
+            "title": "Imported Ledger",
+            "created": "2026-02-03T04:05:06Z",
+            "source": "datasets/ledger/2026-02-03.csv",
+            "schema": {
+              "amount": {
+                "type": "number",
+                "label": "Amount",
+                "description": "Ledger amount",
+                "default": "0"
+              },
+              "id": {
+                "type": "text",
+                "label": "Identifier"
+              },
+              "when": {
+                "type": "date",
+                "label": "When"
+              }
+            },
+            "coverage": {
+              "from": "2026-01-04",
+              "to": "2026-01-04"
+            },
+            "provenance": {
+              "imported_at": "2026-02-03T04:05:06Z",
+              "source_name": "first-feed.CSV",
+              "source_sha256": "2d1ba412c8ed097381340ea89854a18cc52e98d28730547d991413817f582dba"
+            },
+            "identity_field": "id",
+            "sensitivity": "confidential",
+            "retention_rule": "finance-7y"
+          }
+        },
+        {
+          "label": "after-collision-import",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/ledger",
+              "kind": "directory"
+            },
+            {
+              "path": "datasets/ledger.md",
+              "kind": "file",
+              "size": 736,
+              "sha256": "4ad25529464db5cfb253d410aa881c579b804b08cd43b2fd4a8ae1433c4ac0d2",
+              "content": "---\ncoverage:\n    from: \"2026-02-06\"\n    to: \"2026-02-06\"\ncreated: \"2026-02-03T04:05:06Z\"\ndataset_id: ledger\nidentity_field: id\nprovenance:\n    imported_at: \"2026-02-03T04:05:06Z\"\n    source_name: second-feed.csv\n    source_sha256: d78746f3fc766c6e66865984d3b01b841054975c9ebfbe4402d496064bc2cc7a\nretention_rule: finance-7y\nschema:\n    amount:\n        type: number\n        label: Amount\n        description: Ledger amount\n        default: \"0\"\n    id:\n        type: text\n        label: Identifier\n    when:\n        type: date\n        label: When\nsensitivity: confidential\nsource: datasets/ledger/2026-02-03-2.csv\ntags:\n    - dataset\ntitle: Imported Ledger\ntype: dataset\n---\n\n# Imported Ledger\n\nSource: `datasets/ledger/2026-02-03-2.csv`\n"
+            },
+            {
+              "path": "datasets/ledger/2026-02-03-2.csv",
+              "kind": "file",
+              "size": 36,
+              "sha256": "d78746f3fc766c6e66865984d3b01b841054975c9ebfbe4402d496064bc2cc7a",
+              "content": "id,amount,when\nbeta,2.50,2026-02-06\n"
+            },
+            {
+              "path": "datasets/ledger/2026-02-03.csv",
+              "kind": "file",
+              "size": 37,
+              "sha256": "2d1ba412c8ed097381340ea89854a18cc52e98d28730547d991413817f582dba",
+              "content": "id,amount,when\nalpha,1.25,2026-01-04\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "ledger",
+              "row_key": "identity:alpha",
+              "identity": "alpha",
+              "values_json": "{\"amount\":1.25,\"id\":\"alpha\",\"when\":\"2026-01-04\"}",
+              "source_path": "datasets/ledger/2026-02-03.csv",
+              "row_number": 2
+            },
+            {
+              "dataset_slug": "ledger",
+              "row_key": "identity:beta",
+              "identity": "beta",
+              "values_json": "{\"amount\":2.5,\"id\":\"beta\",\"when\":\"2026-02-06\"}",
+              "source_path": "datasets/ledger/2026-02-03-2.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/ledger.md",
+            "slug": "ledger",
+            "title": "Imported Ledger",
+            "created": "2026-02-03T04:05:06Z",
+            "source": "datasets/ledger/2026-02-03-2.csv",
+            "schema": {
+              "amount": {
+                "type": "number",
+                "label": "Amount",
+                "description": "Ledger amount",
+                "default": "0"
+              },
+              "id": {
+                "type": "text",
+                "label": "Identifier"
+              },
+              "when": {
+                "type": "date",
+                "label": "When"
+              }
+            },
+            "coverage": {
+              "from": "2026-02-06",
+              "to": "2026-02-06"
+            },
+            "provenance": {
+              "imported_at": "2026-02-03T04:05:06Z",
+              "source_name": "second-feed.csv",
+              "source_sha256": "d78746f3fc766c6e66865984d3b01b841054975c9ebfbe4402d496064bc2cc7a"
+            },
+            "identity_field": "id",
+            "sensitivity": "confidential",
+            "retention_rule": "finance-7y"
+          }
+        }
+      ]
+    }
+  ]
+}

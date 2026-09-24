@@ -4,8 +4,7 @@
 //! resolution chains. Port of `internal/room/identity`.
 
 use std::fmt;
-use std::fs;
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use sha2::{Digest, Sha256};
@@ -118,6 +117,16 @@ pub fn identity_from_private_key(name: &str, private_key: &[u8]) -> Option<Ident
         public_key,
         private_key,
     })
+}
+
+/// Generate an identity with the operating system CSPRNG.
+///
+/// Go: `identity.Generate`. `getrandom` delegates to the platform CSPRNG.
+pub fn generate(name: &str) -> Result<Identity, IdentityError> {
+    let mut seed = [0_u8; SEED_SIZE];
+    getrandom::fill(&mut seed)
+        .map_err(|error| IdentityError::Message(format!("generate ed25519 key: {error}")))?;
+    identity_from_private_key(name, &seed).ok_or(IdentityError::InvalidKey)
 }
 
 /// Go: `identity.Sign`.

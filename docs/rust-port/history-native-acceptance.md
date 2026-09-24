@@ -41,6 +41,11 @@ source hash inventory was independently compared with `git show` bytes. No Go
 production or Rust history implementation changed in this acceptance branch
 relative to the supplied `24b789d5da48d454ec92971996ea5fd6cd83aee3` base.
 
+The historical acceptance pin and hashes above remain scoped to that run.
+The later integration branch re-pins the current oracle to
+`6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1` after the Go dependency
+refresh; it must obtain its own native evidence rather than inherit these hashes.
+
 ## Native defects repaired without weakening guards
 
 1. `34939911801`: Windows had no Go cache location in the isolated environment.

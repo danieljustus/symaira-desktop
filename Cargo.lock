@@ -1286,7 +1286,11 @@ dependencies = [
 name = "symdesk-cli"
 version = "0.0.0"
 dependencies = [
+ "noyalib",
+ "cap-std",
  "clap",
+ "libc",
+ "rusqlite",
  "serde",
  "serde_json",
  "symaira-core-exit",
@@ -1324,6 +1328,7 @@ dependencies = [
  "symdesk-vault",
  "thiserror",
  "time",
+ "toml",
 ]
 
 [[package]]
@@ -1352,6 +1357,7 @@ version = "0.0.0"
 dependencies = [
  "cap-std",
  "getrandom 0.4.3",
+ "libc",
  "noyalib",
  "serde",
  "serde_json",
@@ -1364,8 +1370,17 @@ dependencies = [
 name = "symroom-cli"
 version = "0.0.0"
 dependencies = [
+ "getrandom 0.4.3",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
  "symaira-core-exit",
  "symdesk-core",
+ "symroom-core",
+ "time",
+ "tokio",
+ "toml",
 ]
 
 [[package]]
@@ -1373,10 +1388,13 @@ name = "symroom-core"
 version = "0.0.0"
 dependencies = [
  "ed25519-dalek",
+ "getrandom 0.4.3",
  "hex",
+ "rusqlite",
  "serde",
  "serde_json",
  "sha2",
+ "symaira-core-sqlite",
  "thiserror",
  "time",
 ]

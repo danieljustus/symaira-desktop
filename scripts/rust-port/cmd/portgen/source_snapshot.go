@@ -23,13 +23,21 @@ func createImmutableSourceSnapshot(repoRoot, revision string) (string, func(), e
 	}
 	snapshotRoot := filepath.Join(parent, "source")
 	cleanup := func() {
-		command := gitCommand(repoRoot, "worktree", "remove", "--force", snapshotRoot)
-		_ = command.Run()
+		command, done, err := gitCommand(repoRoot, "worktree", "remove", "--force", snapshotRoot)
+		if err == nil {
+			_ = command.Run()
+			done()
+		}
 		_ = os.RemoveAll(parent)
 	}
 
-	command := gitCommand(repoRoot, "worktree", "add", "--detach", snapshotRoot, revision)
+	command, done, err := gitCommand(repoRoot, "worktree", "add", "--detach", snapshotRoot, revision)
+	if err != nil {
+		cleanup()
+		return "", nil, err
+	}
 	output, err := command.CombinedOutput()
+	done()
 	if err != nil {
 		cleanup()
 		return "", nil, fmt.Errorf("create immutable source worktree: %w: %s", err, strings.TrimSpace(string(output)))

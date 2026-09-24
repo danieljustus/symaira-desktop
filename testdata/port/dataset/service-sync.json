@@ -1,0 +1,1318 @@
+{
+  "schema_version": 1,
+  "generated_on": "darwin/arm64",
+  "oracle": {
+    "commit": "6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1",
+    "release": "DATA-001-service-dataset-sync-prerequisite",
+    "module_go": "1.26.6",
+    "toolchain": "go1.26.6",
+    "goos": "darwin",
+    "goarch": "arm64"
+  },
+  "generator_sha256": "7101409c154f06b6ad6f0115c68622083de4af83ba5461aeed4e07a6b8bb8675",
+  "source_sha256": {
+    "cmd/symdesk/dataset.go": "7a4dc0aa205010acd8eb728256fe4a9c210af1e795a8e22d20c772c7f274dc90",
+    "go.mod": "f19913015a034363277f87b2f38fd92ee3c6c5601abdb4be7697052904eca563",
+    "go.sum": "f71b1874c73f3b8472d1a9abe153bf2f140f031fd25700985fdf26f4a5a48807",
+    "internal/dataset/dataset.go": "a096bd13d8f0dcb04f03fa0ca227c427cf86c69149a62ba9cbee97fd30c22ce7",
+    "internal/service/dataset.go": "ff0873a2a19800c058e7738da44981e527b2a6110c4cfab68551aea3a8335e3d",
+    "internal/service/dataset_additional_test.go": "6ca20045616742b92aaaa4adf6d7eebf9842190a85d7a80e0d3d7b874fb7107a",
+    "internal/service/dataset_policy.go": "90c291d84a0cf3ba0017aa9855a5a7a8951800ec2118c0a2fdd80aed50ad690e",
+    "internal/service/datasets.go": "a7322f2cbbaa12e90b644266b002e2b2996a62f103b25f26b098ddb663cd5c4e",
+    "internal/service/datasets_test.go": "512a0db61132929cc9aec0a4252003dce36005c7c674ca05ed464b89c808783e",
+    "internal/sidecar/db.go": "aaa740a6d3c42e2724b2ce76495b5841bce6641e947028d0aa12647d182ba11d",
+    "internal/tools/dataset_tools.go": "57a64499db04504ef3e78a4bfe1310420904a9124426ed01664601817aaa0b7a",
+    "internal/vault/assets.go": "6aeff6cb57f6aaa134d630cd893c5ea6671ce3f4715acdde5eda396fa5a3a963",
+    "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",
+    "internal/vault/vault.go": "183024eba2cf4fd96e5a4cc7527bff0a23553bca2cfaa3cd69b5f6cec3989599"
+  },
+  "cases": [
+    {
+      "id": "first-sync-typed-quoted-unicode",
+      "description": "first successful sync persists sorted CSV columns, typed rows, quoting, Unicode, policy metadata, raw bytes and Markdown handle bytes",
+      "calls": [
+        {
+          "label": "first",
+          "result": {
+            "slug": "unicode-ledger",
+            "rows": 2,
+            "imported_rows": 2,
+            "raw_path": "datasets/unicode-ledger/2026-03-01.csv",
+            "handle_path": "datasets/unicode-ledger.md",
+            "idempotent": false
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-first",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/unicode-ledger",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/unicode-ledger.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 776,
+              "sha256": "05010bc4c72177b23cce8609dbaf73780aa50725fd300bace5e43560f5bef4a2",
+              "content": "---\ncoverage: {}\ncreated: \"2026-03-01T10:11:12+02:00\"\ndataset_id: unicode-ledger\nidentity_field: id\nprovenance:\n    imported_at: \"2026-03-01T10:11:12+02:00\"\n    source_name: typed-feed.csv\n    source_sha256: typed-sha-001\nretention_rule: finance-7y\nschema:\n    active:\n        type: checkbox\n        label: Active\n    amount:\n        type: number\n        label: Amount\n    id:\n        type: text\n        label: Identifier\n    note:\n        type: text\n        label: Note\n    payload:\n        type: text\n        label: Payload\n    when:\n        type: date\n        label: When\nsensitivity: confidential\nsource: datasets/unicode-ledger/2026-03-01.csv\ntags:\n    - dataset\ntitle: Unicode Ledger\ntype: dataset\n---\n\n# Unicode Ledger\n\nSource: `datasets/unicode-ledger/2026-03-01.csv`\n"
+            },
+            {
+              "path": "datasets/unicode-ledger/2026-03-01.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 160,
+              "sha256": "d5c254564cc91560e587ae59bddbb5fd91f39ca46a2354404662b7d0dc5cf21e",
+              "content": "active,amount,id,note,payload,when\ntrue,12.5,u-α,\"Café, \"\"quoted\"\"\nline二\",\"[\"\"x\"\",\"\"雪\"\"]\",2026-02-28\nfalse,7,u-β,emoji 🚀,\"{\"\"k\"\":\"\"値\"\"}\",2026-03-01\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "unicode-ledger",
+              "row_key": "identity:u-α",
+              "identity": "u-α",
+              "values_json": "{\"active\":true,\"amount\":12.5,\"id\":\"u-α\",\"note\":\"Café, \\\"quoted\\\"\\nline二\",\"payload\":\"[\\\"x\\\",\\\"雪\\\"]\",\"when\":\"2026-02-28\"}",
+              "source_path": "datasets/unicode-ledger/2026-03-01.csv",
+              "row_number": 2
+            },
+            {
+              "dataset_slug": "unicode-ledger",
+              "row_key": "identity:u-β",
+              "identity": "u-β",
+              "values_json": "{\"active\":false,\"amount\":7,\"id\":\"u-β\",\"note\":\"emoji 🚀\",\"payload\":\"{\\\"k\\\":\\\"値\\\"}\",\"when\":\"2026-03-01\"}",
+              "source_path": "datasets/unicode-ledger/2026-03-01.csv",
+              "row_number": 3
+            }
+          ],
+          "handle": {
+            "path": "datasets/unicode-ledger.md",
+            "slug": "unicode-ledger",
+            "title": "Unicode Ledger",
+            "created": "2026-03-01T10:11:12+02:00",
+            "source": "datasets/unicode-ledger/2026-03-01.csv",
+            "schema": {
+              "active": {
+                "type": "checkbox",
+                "label": "Active"
+              },
+              "amount": {
+                "type": "number",
+                "label": "Amount"
+              },
+              "id": {
+                "type": "text",
+                "label": "Identifier"
+              },
+              "note": {
+                "type": "text",
+                "label": "Note"
+              },
+              "payload": {
+                "type": "text",
+                "label": "Payload"
+              },
+              "when": {
+                "type": "date",
+                "label": "When"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-03-01T10:11:12+02:00",
+              "source_name": "typed-feed.csv",
+              "source_sha256": "typed-sha-001"
+            },
+            "identity_field": "id",
+            "sensitivity": "confidential",
+            "retention_rule": "finance-7y"
+          }
+        }
+      ]
+    },
+    {
+      "id": "repeated-provenance-idempotent-no-rewrite",
+      "description": "same source_name and source_sha256 ignores otherwise-valid changed rows and preserves authoritative file bytes, fixed mtimes, handle metadata and sidecar rows",
+      "calls": [
+        {
+          "label": "first",
+          "result": {
+            "slug": "idempotent",
+            "rows": 1,
+            "imported_rows": 1,
+            "raw_path": "datasets/idempotent/2026-03-02.csv",
+            "handle_path": "datasets/idempotent.md",
+            "idempotent": false
+          }
+        },
+        {
+          "label": "same-source-and-sha-with-changed-valid-input",
+          "result": {
+            "slug": "idempotent",
+            "rows": 1,
+            "imported_rows": 1,
+            "raw_path": "datasets/idempotent/2026-03-02.csv",
+            "handle_path": "datasets/idempotent.md",
+            "idempotent": true
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "before-repeat",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/idempotent",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/idempotent.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 513,
+              "sha256": "386621460dbc9f2cf1a3edebcc97c9d30fc321020f1849214ade72572774155c",
+              "content": "---\ncoverage: {}\ncreated: \"2026-03-02T01:02:03Z\"\ndataset_id: idempotent\nidentity_field: id\nprovenance:\n    imported_at: \"2026-03-02T01:02:03Z\"\n    source_name: stable-feed\n    source_sha256: stable-sha\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/idempotent/2026-03-02.csv\ntags:\n    - dataset\ntitle: Idempotent\ntype: dataset\n---\n\n# Idempotent\n\nSource: `datasets/idempotent/2026-03-02.csv`\n",
+              "modified_at": "2020-01-02T03:04:05Z"
+            },
+            {
+              "path": "datasets/idempotent/2026-03-02.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 32,
+              "sha256": "7170d8a7ab3f2916f8d48dcf5bf0eaa0ed830314e89e17fc31952a952fe249aa",
+              "content": "id,value\noriginal,authoritative\n",
+              "modified_at": "2020-01-02T03:04:05Z"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "idempotent",
+              "row_key": "identity:original",
+              "identity": "original",
+              "values_json": "{\"id\":\"original\",\"value\":\"authoritative\"}",
+              "source_path": "datasets/idempotent/2026-03-02.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/idempotent.md",
+            "slug": "idempotent",
+            "title": "Idempotent",
+            "created": "2026-03-02T01:02:03Z",
+            "source": "datasets/idempotent/2026-03-02.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-03-02T01:02:03Z",
+              "source_name": "stable-feed",
+              "source_sha256": "stable-sha"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        },
+        {
+          "label": "after-repeat",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/idempotent",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/idempotent.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 513,
+              "sha256": "386621460dbc9f2cf1a3edebcc97c9d30fc321020f1849214ade72572774155c",
+              "content": "---\ncoverage: {}\ncreated: \"2026-03-02T01:02:03Z\"\ndataset_id: idempotent\nidentity_field: id\nprovenance:\n    imported_at: \"2026-03-02T01:02:03Z\"\n    source_name: stable-feed\n    source_sha256: stable-sha\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/idempotent/2026-03-02.csv\ntags:\n    - dataset\ntitle: Idempotent\ntype: dataset\n---\n\n# Idempotent\n\nSource: `datasets/idempotent/2026-03-02.csv`\n",
+              "modified_at": "2020-01-02T03:04:05Z"
+            },
+            {
+              "path": "datasets/idempotent/2026-03-02.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 32,
+              "sha256": "7170d8a7ab3f2916f8d48dcf5bf0eaa0ed830314e89e17fc31952a952fe249aa",
+              "content": "id,value\noriginal,authoritative\n",
+              "modified_at": "2020-01-02T03:04:05Z"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "idempotent",
+              "row_key": "identity:original",
+              "identity": "original",
+              "values_json": "{\"id\":\"original\",\"value\":\"authoritative\"}",
+              "source_path": "datasets/idempotent/2026-03-02.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/idempotent.md",
+            "slug": "idempotent",
+            "title": "Idempotent",
+            "created": "2026-03-02T01:02:03Z",
+            "source": "datasets/idempotent/2026-03-02.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-03-02T01:02:03Z",
+              "source_name": "stable-feed",
+              "source_sha256": "stable-sha"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "matching-handle-empty-sidecar-rebuild",
+      "description": "matching provenance with an empty derived sidecar rebuilds rows from existing raw CSV files and still reports idempotent",
+      "calls": [
+        {
+          "label": "first",
+          "result": {
+            "slug": "rebuild",
+            "rows": 2,
+            "imported_rows": 2,
+            "raw_path": "datasets/rebuild/2026-03-03.csv",
+            "handle_path": "datasets/rebuild.md",
+            "idempotent": false
+          }
+        },
+        {
+          "label": "matching-handle-rebuild",
+          "result": {
+            "slug": "rebuild",
+            "rows": 2,
+            "imported_rows": 1,
+            "raw_path": "datasets/rebuild/2026-03-03.csv",
+            "handle_path": "datasets/rebuild.md",
+            "idempotent": true
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "matching-handle-empty-sidecar",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/rebuild",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/rebuild.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 500,
+              "sha256": "bd1b9d3766f00eb148bcf111db56e0fbafc34a6092132be0b522507ab71f65ec",
+              "content": "---\ncoverage: {}\ncreated: \"2026-03-03T03:03:03Z\"\ndataset_id: rebuild\nidentity_field: id\nprovenance:\n    imported_at: \"2026-03-03T03:03:03Z\"\n    source_name: rebuild-feed\n    source_sha256: rebuild-sha\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/rebuild/2026-03-03.csv\ntags:\n    - dataset\ntitle: Rebuild\ntype: dataset\n---\n\n# Rebuild\n\nSource: `datasets/rebuild/2026-03-03.csv`\n"
+            },
+            {
+              "path": "datasets/rebuild/2026-03-03.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 33,
+              "sha256": "af7c31bfa9e37de745734dee8133a0d1aff0b3faee3d70b08d4995761029a8eb",
+              "content": "id,value\none,raw-one\ntwo,raw-two\n"
+            }
+          ],
+          "rows": [],
+          "handle": {
+            "path": "datasets/rebuild.md",
+            "slug": "rebuild",
+            "title": "Rebuild",
+            "created": "2026-03-03T03:03:03Z",
+            "source": "datasets/rebuild/2026-03-03.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-03-03T03:03:03Z",
+              "source_name": "rebuild-feed",
+              "source_sha256": "rebuild-sha"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        },
+        {
+          "label": "after-rebuild",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/rebuild",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/rebuild.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 500,
+              "sha256": "bd1b9d3766f00eb148bcf111db56e0fbafc34a6092132be0b522507ab71f65ec",
+              "content": "---\ncoverage: {}\ncreated: \"2026-03-03T03:03:03Z\"\ndataset_id: rebuild\nidentity_field: id\nprovenance:\n    imported_at: \"2026-03-03T03:03:03Z\"\n    source_name: rebuild-feed\n    source_sha256: rebuild-sha\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/rebuild/2026-03-03.csv\ntags:\n    - dataset\ntitle: Rebuild\ntype: dataset\n---\n\n# Rebuild\n\nSource: `datasets/rebuild/2026-03-03.csv`\n"
+            },
+            {
+              "path": "datasets/rebuild/2026-03-03.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 33,
+              "sha256": "af7c31bfa9e37de745734dee8133a0d1aff0b3faee3d70b08d4995761029a8eb",
+              "content": "id,value\none,raw-one\ntwo,raw-two\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "rebuild",
+              "row_key": "identity:one",
+              "identity": "one",
+              "values_json": "{\"id\":\"one\",\"value\":\"raw-one\"}",
+              "source_path": "datasets/rebuild/2026-03-03.csv",
+              "row_number": 2
+            },
+            {
+              "dataset_slug": "rebuild",
+              "row_key": "identity:two",
+              "identity": "two",
+              "values_json": "{\"id\":\"two\",\"value\":\"raw-two\"}",
+              "source_path": "datasets/rebuild/2026-03-03.csv",
+              "row_number": 3
+            }
+          ],
+          "handle": {
+            "path": "datasets/rebuild.md",
+            "slug": "rebuild",
+            "title": "Rebuild",
+            "created": "2026-03-03T03:03:03Z",
+            "source": "datasets/rebuild/2026-03-03.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-03-03T03:03:03Z",
+              "source_name": "rebuild-feed",
+              "source_sha256": "rebuild-sha"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "same-day-later-refresh-duplicate-ordering",
+      "description": "same-day refresh uses a collision suffix; later-date refresh adds another raw file; duplicate identities materialize from the last lexically read raw file and sidecar rows remain key-ordered",
+      "calls": [
+        {
+          "label": "first",
+          "result": {
+            "slug": "refresh",
+            "rows": 2,
+            "imported_rows": 2,
+            "raw_path": "datasets/refresh/2026-04-01.csv",
+            "handle_path": "datasets/refresh.md",
+            "idempotent": false
+          }
+        },
+        {
+          "label": "same-day-refresh",
+          "result": {
+            "slug": "refresh",
+            "rows": 3,
+            "imported_rows": 2,
+            "raw_path": "datasets/refresh/2026-04-01-2.csv",
+            "handle_path": "datasets/refresh.md",
+            "idempotent": false
+          }
+        },
+        {
+          "label": "later-date-refresh",
+          "result": {
+            "slug": "refresh",
+            "rows": 4,
+            "imported_rows": 2,
+            "raw_path": "datasets/refresh/2026-04-02.csv",
+            "handle_path": "datasets/refresh.md",
+            "idempotent": false
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-first",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/refresh",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/refresh.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 502,
+              "sha256": "cf0f1d0d3ec660cadfa6b778e0c5ad04cc36ccf8e552cc05a296ed15d2532860",
+              "content": "---\ncoverage: {}\ncreated: \"2026-04-01T08:00:00Z\"\ndataset_id: refresh\nidentity_field: id\nprovenance:\n    imported_at: \"2026-04-01T08:00:00Z\"\n    source_name: refresh-feed\n    source_sha256: refresh-sha-1\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/refresh/2026-04-01.csv\ntags:\n    - dataset\ntitle: Refresh\ntype: dataset\n---\n\n# Refresh\n\nSource: `datasets/refresh/2026-04-01.csv`\n"
+            },
+            {
+              "path": "datasets/refresh/2026-04-01.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 32,
+              "sha256": "4a7f42fe72e5f6198021e12a40cc4c03bb94b798a0af123a8929cf9eb9bfd2bd",
+              "content": "id,value\nshared,first\nb,first-b\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "refresh",
+              "row_key": "identity:b",
+              "identity": "b",
+              "values_json": "{\"id\":\"b\",\"value\":\"first-b\"}",
+              "source_path": "datasets/refresh/2026-04-01.csv",
+              "row_number": 3
+            },
+            {
+              "dataset_slug": "refresh",
+              "row_key": "identity:shared",
+              "identity": "shared",
+              "values_json": "{\"id\":\"shared\",\"value\":\"first\"}",
+              "source_path": "datasets/refresh/2026-04-01.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/refresh.md",
+            "slug": "refresh",
+            "title": "Refresh",
+            "created": "2026-04-01T08:00:00Z",
+            "source": "datasets/refresh/2026-04-01.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-04-01T08:00:00Z",
+              "source_name": "refresh-feed",
+              "source_sha256": "refresh-sha-1"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        },
+        {
+          "label": "after-same-day",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/refresh",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/refresh.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 511,
+              "sha256": "3bdc16e5822d3c50f414b8fbaa826fcf71d7852bd3436a85fde387bdf7fac82b",
+              "content": "---\ncoverage: {}\ncreated: \"2026-04-01T08:00:00Z\"\ndataset_id: refresh\nidentity_field: id\nprovenance:\n    imported_at: \"2026-04-01T17:00:00-04:00\"\n    source_name: refresh-feed\n    source_sha256: refresh-sha-2\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/refresh/2026-04-01-2.csv\ntags:\n    - dataset\ntitle: Refresh\ntype: dataset\n---\n\n# Refresh\n\nSource: `datasets/refresh/2026-04-01-2.csv`\n"
+            },
+            {
+              "path": "datasets/refresh/2026-04-01-2.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 43,
+              "sha256": "ca373355fbe9a13105fe32826fec11336e8aaa3e51bb2e46e35b57af230e3fd3",
+              "content": "id,value\na,same-day-a\nshared,same-day-wins\n"
+            },
+            {
+              "path": "datasets/refresh/2026-04-01.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 32,
+              "sha256": "4a7f42fe72e5f6198021e12a40cc4c03bb94b798a0af123a8929cf9eb9bfd2bd",
+              "content": "id,value\nshared,first\nb,first-b\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "refresh",
+              "row_key": "identity:a",
+              "identity": "a",
+              "values_json": "{\"id\":\"a\",\"value\":\"same-day-a\"}",
+              "source_path": "datasets/refresh/2026-04-01-2.csv",
+              "row_number": 2
+            },
+            {
+              "dataset_slug": "refresh",
+              "row_key": "identity:b",
+              "identity": "b",
+              "values_json": "{\"id\":\"b\",\"value\":\"first-b\"}",
+              "source_path": "datasets/refresh/2026-04-01.csv",
+              "row_number": 3
+            },
+            {
+              "dataset_slug": "refresh",
+              "row_key": "identity:shared",
+              "identity": "shared",
+              "values_json": "{\"id\":\"shared\",\"value\":\"first\"}",
+              "source_path": "datasets/refresh/2026-04-01.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/refresh.md",
+            "slug": "refresh",
+            "title": "Refresh",
+            "created": "2026-04-01T08:00:00Z",
+            "source": "datasets/refresh/2026-04-01-2.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-04-01T17:00:00-04:00",
+              "source_name": "refresh-feed",
+              "source_sha256": "refresh-sha-2"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        },
+        {
+          "label": "after-later-date",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/refresh",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/refresh.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 502,
+              "sha256": "34fad8ecddee902d65597418e660846adcd9b7ce0182b04d810b089abcd23bba",
+              "content": "---\ncoverage: {}\ncreated: \"2026-04-01T08:00:00Z\"\ndataset_id: refresh\nidentity_field: id\nprovenance:\n    imported_at: \"2026-04-02T00:00:01Z\"\n    source_name: refresh-feed\n    source_sha256: refresh-sha-3\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/refresh/2026-04-02.csv\ntags:\n    - dataset\ntitle: Refresh\ntype: dataset\n---\n\n# Refresh\n\nSource: `datasets/refresh/2026-04-02.csv`\n"
+            },
+            {
+              "path": "datasets/refresh/2026-04-01-2.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 43,
+              "sha256": "ca373355fbe9a13105fe32826fec11336e8aaa3e51bb2e46e35b57af230e3fd3",
+              "content": "id,value\na,same-day-a\nshared,same-day-wins\n"
+            },
+            {
+              "path": "datasets/refresh/2026-04-01.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 32,
+              "sha256": "4a7f42fe72e5f6198021e12a40cc4c03bb94b798a0af123a8929cf9eb9bfd2bd",
+              "content": "id,value\nshared,first\nb,first-b\n"
+            },
+            {
+              "path": "datasets/refresh/2026-04-02.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 37,
+              "sha256": "da8dc0111855fe2163ec5d57913ab27c737d269de153fc7c81e2d79ae5014559",
+              "content": "id,value\nshared,later-wins\nc,later-c\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "refresh",
+              "row_key": "identity:a",
+              "identity": "a",
+              "values_json": "{\"id\":\"a\",\"value\":\"same-day-a\"}",
+              "source_path": "datasets/refresh/2026-04-01-2.csv",
+              "row_number": 2
+            },
+            {
+              "dataset_slug": "refresh",
+              "row_key": "identity:b",
+              "identity": "b",
+              "values_json": "{\"id\":\"b\",\"value\":\"first-b\"}",
+              "source_path": "datasets/refresh/2026-04-01.csv",
+              "row_number": 3
+            },
+            {
+              "dataset_slug": "refresh",
+              "row_key": "identity:c",
+              "identity": "c",
+              "values_json": "{\"id\":\"c\",\"value\":\"later-c\"}",
+              "source_path": "datasets/refresh/2026-04-02.csv",
+              "row_number": 3
+            },
+            {
+              "dataset_slug": "refresh",
+              "row_key": "identity:shared",
+              "identity": "shared",
+              "values_json": "{\"id\":\"shared\",\"value\":\"later-wins\"}",
+              "source_path": "datasets/refresh/2026-04-02.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/refresh.md",
+            "slug": "refresh",
+            "title": "Refresh",
+            "created": "2026-04-01T08:00:00Z",
+            "source": "datasets/refresh/2026-04-02.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-04-02T00:00:01Z",
+              "source_name": "refresh-feed",
+              "source_sha256": "refresh-sha-3"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blank-title-preserves-existing-metadata",
+      "description": "a refresh with a blank title preserves existing title, created timestamp, coverage and refresh command while updating source and provenance",
+      "calls": [
+        {
+          "label": "first",
+          "result": {
+            "slug": "metadata",
+            "rows": 1,
+            "imported_rows": 1,
+            "raw_path": "datasets/metadata/2026-05-01.csv",
+            "handle_path": "datasets/metadata.md",
+            "idempotent": false
+          }
+        },
+        {
+          "label": "blank-title-refresh",
+          "result": {
+            "slug": "metadata",
+            "rows": 2,
+            "imported_rows": 1,
+            "raw_path": "datasets/metadata/2026-05-02.csv",
+            "handle_path": "datasets/metadata.md",
+            "idempotent": false
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "seeded-existing-metadata",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/metadata",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/metadata.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 612,
+              "sha256": "e361bea4d0c5672b0f7a316d6ab3bbcbc93caa813d76bf9e9910aa502ca76e58",
+              "content": "---\ncoverage:\n    from: \"2024-01-01\"\n    to: \"2024-12-31\"\ncreated: \"2024-12-31T23:59:58Z\"\ndataset_id: metadata\nidentity_field: id\nprovenance:\n    imported_at: \"2026-05-01T00:00:00Z\"\n    source_name: metadata-feed\n    source_sha256: metadata-sha-1\nrefresh_command: symdesk dataset refresh metadata\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/metadata/2026-05-01.csv\ntags:\n    - dataset\ntitle: Original Title\ntype: dataset\n---\n\n# Original Title\n\nSource: `datasets/metadata/2026-05-01.csv`\n"
+            },
+            {
+              "path": "datasets/metadata/2026-05-01.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 21,
+              "sha256": "c2d7c218feb282ad043267fa6a65321efeb2ca959021a32e0ea5d6941931b6d4",
+              "content": "id,value\nfirst,first\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "metadata",
+              "row_key": "identity:first",
+              "identity": "first",
+              "values_json": "{\"id\":\"first\",\"value\":\"first\"}",
+              "source_path": "datasets/metadata/2026-05-01.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/metadata.md",
+            "slug": "metadata",
+            "title": "Original Title",
+            "created": "2024-12-31T23:59:58Z",
+            "source": "datasets/metadata/2026-05-01.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {
+              "from": "2024-01-01",
+              "to": "2024-12-31"
+            },
+            "provenance": {
+              "imported_at": "2026-05-01T00:00:00Z",
+              "source_name": "metadata-feed",
+              "source_sha256": "metadata-sha-1"
+            },
+            "identity_field": "id",
+            "refresh_command": "symdesk dataset refresh metadata",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        },
+        {
+          "label": "after-blank-title-refresh",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/metadata",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/metadata.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 612,
+              "sha256": "d6d9b5fcca68431779f45299725bef88b647116ed71ae44dba8ad62232547d6d",
+              "content": "---\ncoverage:\n    from: \"2024-01-01\"\n    to: \"2024-12-31\"\ncreated: \"2024-12-31T23:59:58Z\"\ndataset_id: metadata\nidentity_field: id\nprovenance:\n    imported_at: \"2026-05-02T00:00:00Z\"\n    source_name: metadata-feed\n    source_sha256: metadata-sha-2\nrefresh_command: symdesk dataset refresh metadata\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/metadata/2026-05-02.csv\ntags:\n    - dataset\ntitle: Original Title\ntype: dataset\n---\n\n# Original Title\n\nSource: `datasets/metadata/2026-05-02.csv`\n"
+            },
+            {
+              "path": "datasets/metadata/2026-05-01.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 21,
+              "sha256": "c2d7c218feb282ad043267fa6a65321efeb2ca959021a32e0ea5d6941931b6d4",
+              "content": "id,value\nfirst,first\n"
+            },
+            {
+              "path": "datasets/metadata/2026-05-02.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 23,
+              "sha256": "aab7578cf0f2c6370b9a396c180fceab6fc5d62dc031e1898815a435a2152ecd",
+              "content": "id,value\nsecond,second\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "metadata",
+              "row_key": "identity:first",
+              "identity": "first",
+              "values_json": "{\"id\":\"first\",\"value\":\"first\"}",
+              "source_path": "datasets/metadata/2026-05-01.csv",
+              "row_number": 2
+            },
+            {
+              "dataset_slug": "metadata",
+              "row_key": "identity:second",
+              "identity": "second",
+              "values_json": "{\"id\":\"second\",\"value\":\"second\"}",
+              "source_path": "datasets/metadata/2026-05-02.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/metadata.md",
+            "slug": "metadata",
+            "title": "Original Title",
+            "created": "2024-12-31T23:59:58Z",
+            "source": "datasets/metadata/2026-05-02.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {
+              "from": "2024-01-01",
+              "to": "2024-12-31"
+            },
+            "provenance": {
+              "imported_at": "2026-05-02T00:00:00Z",
+              "source_name": "metadata-feed",
+              "source_sha256": "metadata-sha-2"
+            },
+            "identity_field": "id",
+            "refresh_command": "symdesk dataset refresh metadata",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "representative-validation-order-before-write",
+      "description": "representative invalid requests pin dependency, policy, identity, provenance, timestamp, slug, row-count and per-row identity ordering before any vault write",
+      "calls": [
+        {
+          "label": "nil-service-dependencies-first",
+          "error": "dataset sync requires a vault and sidecar"
+        },
+        {
+          "label": "invalid-policy-before-identity-and-provenance",
+          "error": "invalid dataset sensitivity \"secret\" (valid: public, internal, confidential, restricted)"
+        },
+        {
+          "label": "identity-before-provenance",
+          "error": "dataset sync requires an identity field"
+        },
+        {
+          "label": "provenance-before-timestamp-and-slug",
+          "error": "dataset sync requires explicit provenance: source_name, source_sha256, imported_at"
+        },
+        {
+          "label": "timestamp-before-slug-and-rows",
+          "error": "invalid imported_at: parsing time \"not-a-time\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"not-a-time\" as \"2006\""
+        },
+        {
+          "label": "slug-before-rows",
+          "error": "dataset slug \"Bad Slug\" is not filesystem-safe"
+        },
+        {
+          "label": "rows-before-row-identity",
+          "error": "dataset sync requires at least one row"
+        },
+        {
+          "label": "blank-identity-before-later-duplicate",
+          "error": "dataset sync requires an identity for every row"
+        },
+        {
+          "label": "duplicate-identity-after-valid-identities",
+          "error": "duplicate dataset row identity \"dup\""
+        }
+      ],
+      "states": [
+        {
+          "label": "after-invalid-calls",
+          "vault": [],
+          "rows": [],
+          "handle_error": "open vault file {{VAULT}}/datasets/validation.md: openat datasets/validation.md: no such file or directory"
+        }
+      ]
+    },
+    {
+      "id": "nonfinite-number-projection-partial-write",
+      "description": "JSON-representable string NaN passes CSV number parsing, then sidecar JSON projection fails after the real raw CSV and Markdown handle have been written",
+      "calls": [
+        {
+          "label": "declared-number-string-nan",
+          "error": "json: unsupported value: NaN"
+        }
+      ],
+      "states": [
+        {
+          "label": "after-projection-failure",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/nonfinite",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/nonfinite.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 518,
+              "sha256": "242f550c7335d8e0e70a9d387be953bb5467e2d523ddcdf9753b566e17245518",
+              "content": "---\ncoverage: {}\ncreated: \"2026-07-01T00:00:00Z\"\ndataset_id: nonfinite\nidentity_field: id\nprovenance:\n    imported_at: \"2026-07-01T00:00:00Z\"\n    source_name: nonfinite-feed\n    source_sha256: nonfinite-sha\nretention_rule: default\nschema:\n    amount:\n        type: number\n        label: amount\n    id:\n        type: text\n        label: id\nsensitivity: restricted\nsource: datasets/nonfinite/2026-07-01.csv\ntags:\n    - dataset\ntitle: Nonfinite\ntype: dataset\n---\n\n# Nonfinite\n\nSource: `datasets/nonfinite/2026-07-01.csv`\n"
+            },
+            {
+              "path": "datasets/nonfinite/2026-07-01.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 22,
+              "sha256": "56697886e79e79939552573a1cfb9483e6cdce0d2a28a1703b7d26353fd8d887",
+              "content": "amount,id\nNaN,nan-row\n"
+            }
+          ],
+          "rows": [],
+          "handle": {
+            "path": "datasets/nonfinite.md",
+            "slug": "nonfinite",
+            "title": "Nonfinite",
+            "created": "2026-07-01T00:00:00Z",
+            "source": "datasets/nonfinite/2026-07-01.csv",
+            "schema": {
+              "amount": {
+                "type": "number",
+                "label": "amount"
+              },
+              "id": {
+                "type": "text",
+                "label": "id"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-07-01T00:00:00Z",
+              "source_name": "nonfinite-feed",
+              "source_sha256": "nonfinite-sha"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "closed-sidecar-partial-write",
+      "description": "a deterministically closed real sidecar fails row replacement after the raw CSV and Markdown handle have been persisted",
+      "calls": [
+        {
+          "label": "closed-sidecar",
+          "error": "sql: database is closed"
+        }
+      ],
+      "states": [
+        {
+          "label": "after-closed-sidecar-failure",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/closed-sidecar",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/closed-sidecar.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 533,
+              "sha256": "ac981176a7fb8b610231ac20fd69fa9113a165943724083fb42208cb23977087",
+              "content": "---\ncoverage: {}\ncreated: \"2026-08-01T00:00:00Z\"\ndataset_id: closed-sidecar\nidentity_field: id\nprovenance:\n    imported_at: \"2026-08-01T00:00:00Z\"\n    source_name: closed-feed\n    source_sha256: closed-sha\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/closed-sidecar/2026-08-01.csv\ntags:\n    - dataset\ntitle: Closed Sidecar\ntype: dataset\n---\n\n# Closed Sidecar\n\nSource: `datasets/closed-sidecar/2026-08-01.csv`\n"
+            },
+            {
+              "path": "datasets/closed-sidecar/2026-08-01.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 39,
+              "sha256": "3fa11a18de16c78c807d6ff1f3eb36bd8e7e2070658b9bb44c4dc1778aac3e11",
+              "content": "id,value\none,written-before-db-failure\n"
+            }
+          ],
+          "rows": [],
+          "rows_error": "sql: database is closed",
+          "handle": {
+            "path": "datasets/closed-sidecar.md",
+            "slug": "closed-sidecar",
+            "title": "Closed Sidecar",
+            "created": "2026-08-01T00:00:00Z",
+            "source": "datasets/closed-sidecar/2026-08-01.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-08-01T00:00:00Z",
+              "source_name": "closed-feed",
+              "source_sha256": "closed-sha"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    },
+    {
+      "id": "json-unmarshal-large-integer-float64-rounding",
+      "description": "JSON decoded into map[string]interface{} rounds 9007199254740993 to float64 9007199254740992 before DatasetSync formats CSV",
+      "calls": [
+        {
+          "label": "json-unmarshal-float64",
+          "result": {
+            "slug": "large-json-float",
+            "rows": 1,
+            "imported_rows": 1,
+            "raw_path": "datasets/large-json-float/2026-08-02.csv",
+            "handle_path": "datasets/large-json-float.md",
+            "idempotent": false
+          }
+        }
+      ],
+      "states": [
+        {
+          "label": "after-json-number-sync",
+          "vault": [
+            {
+              "path": "datasets",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/large-json-float",
+              "kind": "directory",
+              "mode": "drwxr-xr-x",
+              "perm": "0755"
+            },
+            {
+              "path": "datasets/large-json-float.md",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 599,
+              "sha256": "04f4021b4e4b8eba5bf7163d69980e35c9aedc18d78c3bbcce63e18dced7458c",
+              "content": "---\ncoverage: {}\ncreated: \"2026-08-02T00:00:00Z\"\ndataset_id: large-json-float\nidentity_field: id\nprovenance:\n    imported_at: \"2026-08-02T00:00:00Z\"\n    source_name: large-json\n    source_sha256: large-json-sha\nretention_rule: default\nschema:\n    id:\n        type: text\n        label: id\n    nested:\n        type: text\n        label: nested\n    value:\n        type: text\n        label: value\nsensitivity: restricted\nsource: datasets/large-json-float/2026-08-02.csv\ntags:\n    - dataset\ntitle: Large JSON Float\ntype: dataset\n---\n\n# Large JSON Float\n\nSource: `datasets/large-json-float/2026-08-02.csv`\n"
+            },
+            {
+              "path": "datasets/large-json-float/2026-08-02.csv",
+              "kind": "file",
+              "mode": "-rw-------",
+              "perm": "0600",
+              "size": 70,
+              "sha256": "4426dbf044386ec882fe26e22d2ac6ee20547f719e23e7ea3f565aa50e7de902",
+              "content": "id,nested,value\nlarge,\"{\"\"value\"\":9007199254740992}\",9007199254740992\n"
+            }
+          ],
+          "rows": [
+            {
+              "dataset_slug": "large-json-float",
+              "row_key": "identity:large",
+              "identity": "large",
+              "values_json": "{\"id\":\"large\",\"nested\":\"{\\\"value\\\":9007199254740992}\",\"value\":\"9007199254740992\"}",
+              "source_path": "datasets/large-json-float/2026-08-02.csv",
+              "row_number": 2
+            }
+          ],
+          "handle": {
+            "path": "datasets/large-json-float.md",
+            "slug": "large-json-float",
+            "title": "Large JSON Float",
+            "created": "2026-08-02T00:00:00Z",
+            "source": "datasets/large-json-float/2026-08-02.csv",
+            "schema": {
+              "id": {
+                "type": "text",
+                "label": "id"
+              },
+              "nested": {
+                "type": "text",
+                "label": "nested"
+              },
+              "value": {
+                "type": "text",
+                "label": "value"
+              }
+            },
+            "coverage": {},
+            "provenance": {
+              "imported_at": "2026-08-02T00:00:00Z",
+              "source_name": "large-json",
+              "source_sha256": "large-json-sha"
+            },
+            "identity_field": "id",
+            "sensitivity": "restricted",
+            "retention_rule": "default"
+          }
+        }
+      ]
+    }
+  ],
+  "residuals": [
+    "Resource-bound, concurrent DatasetSync calls are not covered by this bounded sequential oracle.",
+    "Unix captures execute with umask 0022 in an isolated child; they do not certify other creation masks or concurrent filesystem writers.",
+    "Native Windows and Linux execution remains required; this fixture was generated on the recorded host and normalises only platform identity plus unavailable Windows permission bits.",
+    "Whole-service regression coverage and CLI/MCP adapter parity remain separate gates; this oracle calls production Service.DatasetSync directly.",
+    "This prerequisite records Go behavior only and does not approve a Rust implementation, production cutover, or Go removal."
+  ]
+}

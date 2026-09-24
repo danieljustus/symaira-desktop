@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "source_hashes": {
+    "cmd/symroom/cmd_verify.go": "741ba93b1ecaf140c7219066506bf09735a004ea80ab60fea4cc0acc7c8828d0",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/journal/verifier.go": "16c14a87ddbd34b233dd0dec7eaa6b34e1d97d333a5e1038ae31b1ff8cf91414"
+  },
+  "cases": [
+    {
+      "name": "empty",
+      "journal_case": "empty",
+      "args": [
+        "verify"
+      ],
+      "exit_code": 0,
+      "stdout": "Journal verification PASSED: zero findings\n",
+      "stderr_prefix": ""
+    },
+    {
+      "name": "valid-text",
+      "journal_case": "valid",
+      "args": [
+        "verify"
+      ],
+      "exit_code": 0,
+      "stdout": "Journal verification PASSED: zero findings\n",
+      "stderr_prefix": ""
+    },
+    {
+      "name": "valid-json",
+      "journal_case": "valid",
+      "args": [
+        "verify",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"valid\": true,\n  \"findings\": []\n}\n",
+      "stderr_prefix": ""
+    },
+    {
+      "name": "tampered-text",
+      "journal_case": "tampered-signature",
+      "args": [
+        "verify"
+      ],
+      "exit_code": 1,
+      "stdout": "Journal verification FAILED: 1 finding(s):\n  - [signature_invalid] signature verification failed: invalid event signature (event: ev_note, author: mem_566efce80236d225)\n",
+      "stderr_prefix": ""
+    },
+    {
+      "name": "agent-json",
+      "journal_case": "agent-approval",
+      "args": [
+        "verify",
+        "--json=true"
+      ],
+      "exit_code": 1,
+      "stdout": "{\n  \"valid\": false,\n  \"findings\": [\n    {\n      \"code\": \"agent_approval_forbidden\",\n      \"author\": \"mem_33b3d41bff3bcd03\",\n      \"event_id\": \"ev_agent_approve\",\n      \"message\": \"agent role is strictly forbidden from signing approval events\"\n    }\n  ]\n}\n",
+      "stderr_prefix": ""
+    },
+    {
+      "name": "malformed",
+      "journal_case": "malformed",
+      "args": [
+        "verify"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr_prefix": "Error verifying journal: read all segments: read segment mem_566efce80236d225: unmarshal line:"
+    },
+    {
+      "name": "help",
+      "journal_case": "valid",
+      "args": [
+        "verify",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr_prefix": "Usage of verify:\n  -json\n    \tOutput verification findings as JSON\n"
+    },
+    {
+      "name": "bad-flag",
+      "journal_case": "valid",
+      "args": [
+        "verify",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr_prefix": "flag provided but not defined: -bogus\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n"
+    },
+    {
+      "name": "bad-bool",
+      "journal_case": "valid",
+      "args": [
+        "verify",
+        "--json=maybe"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr_prefix": "invalid boolean value \"maybe\" for -json: parse error\nUsage of verify:\n  -json\n    \tOutput verification findings as JSON\n"
+    },
+    {
+      "name": "positional-stops-flags",
+      "journal_case": "valid",
+      "args": [
+        "verify",
+        "extra",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "Journal verification PASSED: zero findings\n",
+      "stderr_prefix": ""
+    }
+  ]
+}

@@ -39,10 +39,10 @@ jobs:
           fetch-depth: 0
 
       # The frontmatter/history source guards clone this checkout and verify a
-      # pinned Go revision. Keep that object reachable through a local
+      # pre-squash Go revision. Keep that object reachable through a local
       # branch: FETCH_HEAD alone is not transferred by git clone --no-local.
       - name: Materialize pinned Go oracle for source guards
-        run: git fetch --no-tags origin +ee25af59fa810f2cac9f6d66a911bb1eb42d247f:refs/heads/rust-port-oracle-ee25af59fa810f2cac9f6d66a911bb1eb42d247f
+        run: git fetch --no-tags origin +6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1:refs/heads/rust-port-oracle-6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -119,9 +119,8 @@ jobs:
     name: Rust port contract
     strategy:
       matrix:
-        # Keep the PR gate fast; full native contract execution runs on main
-        # and schedule, including platform-specific process-tree cleanup.
-        os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest", "windows-latest"]') }}
+        # Exercise the portable source and oracle contracts on every native runner.
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest, windows-11-arm]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -132,7 +131,7 @@ jobs:
       # The Windows contract runs the clone-based Go source guards below.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
-        run: git fetch --no-tags origin +ee25af59fa810f2cac9f6d66a911bb1eb42d247f:refs/heads/rust-port-oracle-ee25af59fa810f2cac9f6d66a911bb1eb42d247f
+        run: git fetch --no-tags origin +6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1:refs/heads/rust-port-oracle-6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -142,16 +141,16 @@ jobs:
         run: rustup toolchain install 1.98.0 --profile minimal
 
       - name: Verify frozen Go oracle fixtures and differential harness
-        if: matrix.os != 'windows-latest'
+        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         run: make port-contract
 
       - name: Verify Windows migration failure controls
-        if: matrix.os == 'windows-latest'
+        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         shell: bash
         run: python3 scripts/rust-port/test_native_ci_contract.py
 
       - name: Verify frozen oracle and differential harness on Windows
-        if: matrix.os == 'windows-latest'
+        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         shell: bash
         run: |
           set -euo pipefail
@@ -200,7 +199,7 @@ jobs:
           VALUE_RUNTIME_ROOT: ${{ runner.temp }}/symaira-desktop-value001-ci
         run: make rust-gates value-001-evidence-tests
 
-      - name: Fuzz frontmatter parser smoke corpus
+      - name: Fuzz frontmatter and room event smoke corpora
         run: make rust-fuzz-smoke
 
   rust-native:
@@ -209,7 +208,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest, windows-11-arm]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -219,10 +218,10 @@ jobs:
           fetch-depth: 0
 
       # The source-guard tests clone this checkout, so retain the immutable
-      # pinned oracle through a local branch rather than only FETCH_HEAD.
+      # pre-squash oracle through a local branch rather than only FETCH_HEAD.
       - name: Materialize pinned Go oracle for source guards
         shell: bash
-        run: git fetch --no-tags origin +ee25af59fa810f2cac9f6d66a911bb1eb42d247f:refs/heads/rust-port-oracle-ee25af59fa810f2cac9f6d66a911bb1eb42d247f
+        run: git fetch --no-tags origin +6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1:refs/heads/rust-port-oracle-6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -252,6 +251,10 @@ jobs:
         shell: bash
         run: make vault-history-differential
 
+      - name: Run native history tasks CLI differential
+        shell: bash
+        run: make history-tasks-cli-differential
+
       - name: Run native retention differential
         shell: bash
         run: make vault-retention-differential
@@ -264,9 +267,21 @@ jobs:
         shell: bash
         run: make retention-cli-differential
 
+      - name: Run native authoritative retention state differential
+        shell: bash
+        run: make retention-state-differential
+
       - name: Run native config-save filesystem differential
         shell: bash
         run: make config-save-differential
+
+      - name: Run native vault config selection differential
+        shell: bash
+        run: make config-vault-selection-differential
+
+      - name: Run native config-precedence differential
+        shell: bash
+        run: make config-precedence-differential
 
       # The byte fixture and its modes contract are portable: Go skips the
       # 0700/0600 assertions on Windows and the Rust replay gates them with
@@ -274,6 +289,10 @@ jobs:
       - name: Run native sidecar metadata differential
         shell: bash
         run: make sidecar-metadata-differential
+
+      - name: Run native MCP initialize differential
+        shell: bash
+        run: make mcp-initialize-differential
 
       - name: Run native room identity differential
         shell: bash
@@ -283,12 +302,172 @@ jobs:
         shell: bash
         run: make room-journal-differential
 
+      - name: Run native room merge read differential
+        shell: bash
+        run: make room-merge-read-differential
+
+      - name: Run native room index differential
+        shell: bash
+        run: make room-index-differential
+
+      - name: Run native room index CLI differential
+        shell: bash
+        run: make room-index-cli-differential
+
+      - name: Run native room verification differential
+        shell: bash
+        run: make room-verify-differential
+
+      - name: Run native room verify CLI differential
+        shell: bash
+        run: make room-verify-cli-differential
+
+      - name: Run native room log differential
+        shell: bash
+        run: make room-log-differential
+
+      - name: Run native room log CLI differential
+        shell: bash
+        run: make room-log-cli-differential
+
+      - name: Run native room artifact CLI differential
+        shell: bash
+        run: make room-artifact-cli-differential
+
+      - name: Run native room artifact identity CLI differential
+        shell: bash
+        run: make room-artifact-identity-cli-differential
+
+      - name: Run native recipe validate CLI differential
+        shell: bash
+        run: make recipe-validate-differential
+
+      - name: Run native room watch stream differential
+        shell: bash
+        run: make room-watch-stream-differential
+
+      - name: Run native room brain profile differential
+        shell: bash
+        run: make room-brain-profile-differential
+
+      - name: Run native room init core differential
+        shell: bash
+        run: make room-init-core-differential
+
+      - name: Run native room init CLI differential
+        shell: bash
+        run: make room-init-cli-differential
+
+      - name: Run native room watch CLI differential
+        shell: bash
+        run: make room-watch-cli-differential
+
+      - name: Run native room doctor CLI differential
+        shell: bash
+        run: make room-doctor-cli-differential
+
+      - name: Run native room checkpoint CLI differential
+        shell: bash
+        run: make room-checkpoint-cli-differential
+
+      - name: Run native room run approval CLI differential
+        shell: bash
+        run: make room-run-approval-cli-differential
+
+      - name: Run native index backup differential
+        shell: bash
+        run: make index-backup-differential
+
+      - name: Run native index restore differential
+        shell: bash
+        run: make index-restore-differential
+
+      - name: Run native index relocate differential
+        shell: bash
+        run: make index-relocate-differential
+
+      - name: Run native index location differential
+        shell: bash
+        run: make index-location-differential
+
+      - name: Run native index maintenance CLI differential
+        shell: bash
+        run: make index-maintenance-cli-differential
+
+      - name: Run native index build CLI differential
+        shell: bash
+        run: make index-build-cli-differential
+
+      - name: Run native room run projection differential
+        shell: bash
+        run: make room-run-projection-differential
+
+      - name: Run native room run CLI differential
+        shell: bash
+        run: make room-run-cli-differential
+
+      - name: Run native room run wait CLI differential
+        shell: bash
+        run: make room-run-wait-cli-differential
+
+      - name: Run native room run mutation CLI differential
+        shell: bash
+        run: make room-run-mutations-cli-differential
+
+      - name: Run native room note CLI differential
+        shell: bash
+        run: make room-note-cli-differential
+
+      - name: Run native room decide CLI differential
+        shell: bash
+        run: make room-decide-cli-differential
+
+      - name: Run native room identity CLI differential
+        shell: bash
+        run: make room-identity-cli-differential
+
+      - name: Run native room member CLI differential
+        shell: bash
+        run: make room-member-cli-differential
+
+      - name: Run native room MCP differential
+        shell: bash
+        run: make room-mcp-differential
+
+      - name: Run native dataset sync differential
+        shell: bash
+        run: make dataset-sync-differential
+
+      - name: Run native dataset CLI differential
+        shell: bash
+        run: make dataset-cli-differential
+
+      - name: Run native dataset purge differential
+        shell: bash
+        run: make dataset-purge-differential
+
       - name: Run native history differential
         shell: bash
         run: |
           set -euo pipefail
           python3 scripts/rust-port/test_history_live.py
           python3 scripts/rust-port/history_live.py
+
+      - name: Run native history purge differential
+        shell: bash
+        run: make history-purge-differential
+
+      - name: Run native history prune differential
+        shell: bash
+        run: make history-prune-differential
+
+      - name: Run native history service differential
+        shell: bash
+        run: make history-service-differential
+
+      - name: Run native selected trash purge differential
+        shell: bash
+        run: make history-trash-purge-differential
 
       - name: Retain native history evidence
         if: always()
@@ -300,19 +479,19 @@ jobs:
           if-no-files-found: warn
 
       - name: Run native Unix sidecar round-trip and lock suite
-        if: matrix.os != 'windows-latest'
+        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         run: SIDECAR_NATIVE=1 make sidecar-roundtrip
 
       - name: Run native Unix representative CLI HTTP and MCP parity
-        if: matrix.os != 'windows-latest'
+        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         run: make representative-differential mcp-differential
 
       - name: Run native Unix SEC-003 resource and cleanup stress
-        if: matrix.os != 'windows-latest'
+        if: ${{ !contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         run: RESOURCE_STRESS_ROOT="${RUNNER_TEMP}/symdesk-sec003" RESOURCE_RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" make resource-stress
 
       - name: Run native Windows representative CLI HTTP and MCP parity
-        if: matrix.os == 'windows-latest'
+        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         shell: bash
         run: |
           set -euo pipefail
@@ -326,23 +505,23 @@ jobs:
           go run ./scripts/rust-port/cmd/mcpdiff --left bin/port/symdesk-go.exe --right target/debug/symdesk.exe
 
       - name: Run native Windows SEC-003 resource and cleanup stress
-        if: matrix.os == 'windows-latest'
+        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         shell: bash
         run: RESOURCE_STRESS_ROOT="${RUNNER_TEMP}/symdesk-sec003" RESOURCE_RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" make resource-stress
 
       - name: Run native Windows sidecar round-trip suite
-        if: matrix.os == 'windows-latest'
+        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         shell: bash
         run: |
           set -euo pipefail
           SIDECAR_NATIVE=1 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 
       - name: Run native macOS version differential
-        if: matrix.os == 'macos-latest'
+        if: ${{ contains(fromJSON('["macos-latest", "macos-15-intel"]'), matrix.os) }}
         run: make rust-version-contract
 
       - name: Run native Windows version differential
-        if: matrix.os == 'windows-latest'
+        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
         shell: bash
         run: |
           set -euo pipefail

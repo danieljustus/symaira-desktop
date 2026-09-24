@@ -173,19 +173,23 @@ func TestSanitizedCheckEnvironmentRemovesActivationVariablesCaseInsensitively(t 
 		"COREGEN_GENERATE=1",
 		"SYMDESK_PORT_GENERATE=1",
 		"OTHER_PORT_GENERATE=1",
+		"PORT_DATASET_IMPORT_FIXTURE=/poison",
+		"PORT_FIXTURE_PATH=/poison",
+		"port_fixture_path=/poison-lower",
 		"PORTGEN_SIDECAR_ORACLE_COMMIT=poison",
 		"PORTGEN_SIDECAR_ORACLE_RELEASE=poison",
 		"GOFLAGS=-modfile=poison.mod",
+		"GOCACHE=/safe/build-cache",
 		"GIT_DIR=/poison",
 		"PATH=/poison",
-	})
+	}, filepath.Join(t.TempDir(), "empty-gitconfig"))
 	joined := "\n" + strings.Join(got, "\n")
-	for _, forbidden := range []string{"PORT_GENERATE=", "PORTGEN_GENERATE=", "COREGEN_GENERATE=", "PORTGEN_SIDECAR_ORACLE_COMMIT=", "PORTGEN_SIDECAR_ORACLE_RELEASE=", "GOFLAGS=-modfile", "GIT_DIR=", "PATH=/poison"} {
+	for _, forbidden := range []string{"PORT_GENERATE=", "PORTGEN_GENERATE=", "COREGEN_GENERATE=", "PORT_DATASET_IMPORT_FIXTURE=", "PORT_FIXTURE_PATH=", "port_fixture_path=", "PORTGEN_SIDECAR_ORACLE_COMMIT=", "PORTGEN_SIDECAR_ORACLE_RELEASE=", "GOFLAGS=-modfile", "GIT_DIR=", "PATH=/poison"} {
 		if strings.Contains(joined, "\n"+forbidden) {
 			t.Fatalf("sanitizedCheckEnvironment() retained %q in %#v", forbidden, got)
 		}
 	}
-	for _, required := range []string{"SAFE=retained", "GOWORK=off", "GOENV=off", "GOFLAGS=-mod=readonly", "GOTOOLCHAIN=local", "CGO_ENABLED=0", "PATH="} {
+	for _, required := range []string{"SAFE=retained", "GOCACHE=/safe/build-cache", "GOWORK=off", "GOENV=off", "GOFLAGS=-mod=readonly", "GOTOOLCHAIN=local", "CGO_ENABLED=0", "PATH="} {
 		if !strings.Contains(joined, "\n"+required) {
 			t.Fatalf("sanitizedCheckEnvironment() omitted %q from %#v", required, got)
 		}
@@ -204,7 +208,7 @@ func TestSanitizedCheckEnvironmentKeepsBothHomeNames(t *testing.T) {
 		{name: "both names present stay untouched", base: []string{"HOME=/home/a", "USERPROFILE=C:\\b"}, required: "HOME=/home/a", unchanged: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got := sanitizedCheckEnvironment(tc.base)
+			got := sanitizedCheckEnvironment(tc.base, filepath.Join(t.TempDir(), "empty-gitconfig"))
 			joined := "\n" + strings.Join(got, "\n")
 			if !strings.Contains(joined, "\n"+tc.required) {
 				t.Fatalf("sanitizedCheckEnvironment(%#v) omitted %q: %#v", tc.base, tc.required, got)
@@ -226,7 +230,7 @@ func TestSanitizedCheckEnvironmentKeepsBothHomeNames(t *testing.T) {
 }
 
 func TestSanitizedCheckEnvironmentFallsBackToScratchHome(t *testing.T) {
-	got := sanitizedCheckEnvironment([]string{"SAFE=retained"})
+	got := sanitizedCheckEnvironment([]string{"SAFE=retained"}, filepath.Join(t.TempDir(), "empty-gitconfig"))
 	homes := map[string]string{}
 	for _, item := range got {
 		name, value, _ := strings.Cut(item, "=")

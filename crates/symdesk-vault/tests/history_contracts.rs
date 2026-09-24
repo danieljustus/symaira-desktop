@@ -38,8 +38,8 @@ const PINNED_SOURCE_HASHES: &[(&str, &str)] = &[
 ];
 
 const EXPECTED_ORACLE_OPERATION_COUNT: usize = 56;
-const EXPECTED_ORACLE_COMMIT: &str = "ee25af59fa810f2cac9f6d66a911bb1eb42d247f";
-const EXPECTED_ORACLE_RELEASE: &str = "unreleased-ee25af59";
+const EXPECTED_ORACLE_COMMIT: &str = "6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1";
+const EXPECTED_ORACLE_RELEASE: &str = "post-v0.13.0-dependency-refresh";
 
 fn deserialize_option_option<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
 where
@@ -801,6 +801,8 @@ fn classify_rust_error(err: &HistoryError) -> &'static str {
         HistoryError::TaskIdRequired => "task_id_required",
         HistoryError::InvalidTaskId(..) => "invalid_task_id",
         HistoryError::CorruptCheckpoint(..) => "corrupt_checkpoint",
+        HistoryError::Purge(..) => "other",
+        HistoryError::TrashEntryOriginalPathChanged(..) => "other",
         HistoryError::RenameFailed { .. } => "rename_failed",
         HistoryError::Io(..) => "other",
     }

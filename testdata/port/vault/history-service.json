@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "oracle_commit": "0dea61627cb9746633c2c7b669f7684d395f29f7",
+  "source_hashes": {
+    "internal/history/checkpoint.go": "4c48610083a143c0a1f135413f514a838326d882a346ae1bc13b9538fce0ef39",
+    "internal/history/history.go": "4b0caf990744a9469f8f16f2de6bddfee0525106c996c5907ea11f92db5740c2",
+    "internal/service/history.go": "67a37a56fa117e170025183043f340ecae6a0d51f64fb906233b238a1357b6fe"
+  },
+  "restore": {
+    "snapshot_id": "e86232a4431a591852c24f60a3b7a01852063036b7523df5ef116f8f5406a962",
+    "content": "---\ntitle: Restored\n---\noriginalneedle\n",
+    "original_hits": 1,
+    "changed_hits": 0,
+    "activity": true
+  },
+  "malformed_restore": {
+    "snapshot_id": "c05193642aef583a7817c62c4e5f93ab9a07f9f10878ac482a4b7a6e390f4d49",
+    "content": "---\ntitle: [broken\n---\nmalformedneedle\n",
+    "original_hits": 0,
+    "changed_hits": 1,
+    "error_prefix": "restored file but failed to parse for indexing: "
+  },
+  "undo": {
+    "content": "---\ntitle: Checkpoint\n---\ncheckpointoriginal\n",
+    "original_hits": 1,
+    "changed_hits": 0,
+    "new_file_gone": true
+  }
+}

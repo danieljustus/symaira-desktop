@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "97280a946316682fc3ce3d7650597655ff0e46ae",
+  "source_hashes": {
+    "cmd/symroom/cmd_run.go": "525d67a0ddc6b24708d5450cc92c272c508077f1be52e106461c06a5a4d401f8",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/journal/journal.go": "c7e94bc9543c545ac37ac290c4dbed5d6d767aaaf19c3ea8c86f354523b5d9a5",
+    "internal/room/run/run.go": "458c7148b7de028ed22ed27df22b2187d762da5ddecbbc582763bee4d42fbf85",
+    "internal/room/run/wait.go": "a3296dd538d35dd0cd2e2809ac2a084663fd35d9cbc23c18846697178c4c44d7"
+  },
+  "journal_files": [
+    {
+      "name": "mem_89715fefd3110165.jsonl",
+      "content": "{\"author\":\"mem_89715fefd3110165\",\"body\":{\"run_id\":\"wait-approved\",\"title\":\"Wait approved\"},\"id\":\"wait-request-approved\",\"kind\":\"run.requested\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:rqRawyceJiPA2ZFxIZG3z5vIYQhxsHxUi5UCu8wQh28HU4R9ttn3AbvotgqdqM58od8hr57yhND74mgCpztnCw==\",\"ts\":\"2026-04-01T10:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_89715fefd3110165\",\"body\":{\"run_id\":\"wait-denied\",\"title\":\"Wait denied\"},\"id\":\"wait-request-denied\",\"kind\":\"run.requested\",\"lamport\":3,\"prev\":\"sha256:de65f810d141773c7766b7528f8d7ac11d001ef599a3b3b64567f226ad83381d\",\"room\":\"room-test\",\"seq\":2,\"sig\":\"ed25519:7Sv9llv/MJvdpWIOVv/WQSq9cJ7aAXGzdPb7M5h71h2QwROXvape9isI4qm43ocUWYxbwZerOY22KU3hqqwpBw==\",\"ts\":\"2026-04-01T10:01:00.000Z\",\"v\":1}\n{\"author\":\"mem_89715fefd3110165\",\"body\":{\"run_id\":\"wait-cancelled\",\"title\":\"Wait cancelled\"},\"id\":\"wait-request-cancelled\",\"kind\":\"run.requested\",\"lamport\":5,\"prev\":\"sha256:34e8370c4d00751cafc50b85b66dc9da3ce51feda9d176fcaedb418af8a41340\",\"room\":\"room-test\",\"seq\":3,\"sig\":\"ed25519:OM9xKdEWaZ38VcFmAepCE1WvMxvpYf4DMMUYXEX59A+CWjgrOSUpjFqhEVlSE+NDfbfe8FWbeM0WuyWu8H/uCg==\",\"ts\":\"2026-04-01T10:02:00.000Z\",\"v\":1}\n{\"author\":\"mem_89715fefd3110165\",\"body\":{\"run_id\":\"wait-pending\",\"title\":\"Wait pending\"},\"id\":\"wait-request-pending\",\"kind\":\"run.requested\",\"lamport\":7,\"prev\":\"sha256:e2727482a8806e20a74c69c826de64e0eb9aa2d9dab0222f0ab6f6bea60e3c6e\",\"room\":\"room-test\",\"seq\":4,\"sig\":\"ed25519:5V+frtRnDRoLxHxn2lSb4h2/53+ab7NEBE0jv/n+rQ89uOQ6zi4y5T09PUr/heOldhjpdK8e7XqSGDIKeu1kBA==\",\"ts\":\"2026-04-01T10:03:00.000Z\",\"v\":1}\n"
+    },
+    {
+      "name": "mem_cfbd00436ebfac35.jsonl",
+      "content": "{\"author\":\"mem_cfbd00436ebfac35\",\"body\":{\"run_id\":\"wait-approved\",\"approval_id\":\"wait-approval\",\"scope\":\"room\",\"expires_at\":\"2026-04-02T10:00:00Z\"},\"id\":\"wait-approve\",\"kind\":\"run.approved\",\"lamport\":2,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"room-test\",\"seq\":1,\"sig\":\"ed25519:FhpabjMh+xUperlfe5Dp79oKn3tsWiwAQl7Hc1zem8mYgAlveFVfW9rW8BHxzYxr2UF93rU3U5im8GOkM5wzDg==\",\"ts\":\"2026-04-01T10:00:01.000Z\",\"v\":1}\n{\"author\":\"mem_cfbd00436ebfac35\",\"body\":{\"run_id\":\"wait-denied\",\"reason\":\"outside policy\"},\"id\":\"wait-deny\",\"kind\":\"run.denied\",\"lamport\":4,\"prev\":\"sha256:3409dd92ddd58a59ac97102da57c1fbafbd82df110d646ab77e555bd108d28ba\",\"room\":\"room-test\",\"seq\":2,\"sig\":\"ed25519:9tDeVrv4O6J1STiPbGx/m6ypXly2Q/2bwSN6ReXbv4Q+aP5fwCMajRFr0B6QQaMGUMNdPCXOAX+bhsz0OfjCCg==\",\"ts\":\"2026-04-01T10:01:01.000Z\",\"v\":1}\n{\"author\":\"mem_cfbd00436ebfac35\",\"body\":{\"run_id\":\"wait-cancelled\",\"reason\":\"no longer needed\"},\"id\":\"wait-cancel\",\"kind\":\"run.cancelled\",\"lamport\":6,\"prev\":\"sha256:842ae608ec3cb221a190d9036518d7ca82c03c5d9809013b79937c68bbcea8ac\",\"room\":\"room-test\",\"seq\":3,\"sig\":\"ed25519:qagMg5XYhc4G/xVMphI6XLcuwbfhgz+SqE1PTgTeIOV9NQ8l4Pns5v/ZDkKNWxrQNrvTXoXKqPa/R5cvaBYHAg==\",\"ts\":\"2026-04-01T10:02:01.000Z\",\"v\":1}\n"
+    }
+  ],
+  "cases": [
+    {
+      "name": "approved-human",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "wait-approved"
+      ],
+      "exit_code": 0,
+      "stdout": "Run wait-approved approved [room]\n",
+      "stderr": ""
+    },
+    {
+      "name": "approved-json",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "--json",
+        "wait-approved"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"id\": \"wait-approved\",\n  \"title\": \"Wait approved\",\n  \"state\": \"approved\",\n  \"author\": \"mem_89715fefd3110165\",\n  \"created_at\": \"2026-04-01T10:00:00.000Z\",\n  \"updated_at\": \"2026-04-01T10:00:01.000Z\",\n  \"approval_id\": \"wait-approval\",\n  \"scope\": \"room\",\n  \"expires_at\": \"2026-04-02T10:00:00Z\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "approved-json-one",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "-json=1",
+        "wait-approved"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"id\": \"wait-approved\",\n  \"title\": \"Wait approved\",\n  \"state\": \"approved\",\n  \"author\": \"mem_89715fefd3110165\",\n  \"created_at\": \"2026-04-01T10:00:00.000Z\",\n  \"updated_at\": \"2026-04-01T10:00:01.000Z\",\n  \"approval_id\": \"wait-approval\",\n  \"scope\": \"room\",\n  \"expires_at\": \"2026-04-02T10:00:00Z\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "approved-json-false-alias",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "-json=f",
+        "wait-approved"
+      ],
+      "exit_code": 0,
+      "stdout": "Run wait-approved approved [room]\n",
+      "stderr": ""
+    },
+    {
+      "name": "approved-before-immediate-timeout",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=0s",
+        "wait-approved"
+      ],
+      "exit_code": 0,
+      "stdout": "Run wait-approved approved [room]\n",
+      "stderr": ""
+    },
+    {
+      "name": "approved-flags-after-positional",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "wait-approved",
+        "--timeout=0s",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "Run wait-approved approved [room]\n",
+      "stderr": ""
+    },
+    {
+      "name": "denied",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "wait-denied"
+      ],
+      "exit_code": 4,
+      "stdout": "",
+      "stderr": "Error: run wait-denied was denied\n"
+    },
+    {
+      "name": "cancelled",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "wait-cancelled"
+      ],
+      "exit_code": 4,
+      "stdout": "",
+      "stderr": "Error: run wait-cancelled was denied\n"
+    },
+    {
+      "name": "pending-timeout-equals",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=0s",
+        "wait-pending"
+      ],
+      "exit_code": 10,
+      "stdout": "",
+      "stderr": "Error: wait timed out for run wait-pending\n"
+    },
+    {
+      "name": "pending-timeout-fractional",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=0.000001s",
+        "wait-pending"
+      ],
+      "exit_code": 10,
+      "stdout": "",
+      "stderr": "Error: wait timed out for run wait-pending\n"
+    },
+    {
+      "name": "missing-timeout-separated",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "-timeout",
+        "0s",
+        "missing-run"
+      ],
+      "exit_code": 10,
+      "stdout": "",
+      "stderr": "Error: wait timed out for run missing-run\n"
+    },
+    {
+      "name": "bad-journal-timeout",
+      "room": "bad-journal",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=0s",
+        "missing-run"
+      ],
+      "exit_code": 10,
+      "stdout": "",
+      "stderr": "Error: wait timed out for run missing-run\n"
+    },
+    {
+      "name": "negative-timeout",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "-timeout=-1ms",
+        "wait-pending"
+      ],
+      "exit_code": 10,
+      "stdout": "",
+      "stderr": "Error: wait timed out for run wait-pending\n"
+    },
+    {
+      "name": "missing-run-id",
+      "room": "main",
+      "args": [
+        "run",
+        "wait"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom run wait \u003crun_id\u003e [--timeout 15m] [--json]\n"
+    },
+    {
+      "name": "invalid-timeout",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "--timeout=bad",
+        "wait-pending"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "invalid value \"bad\" for flag -timeout: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n"
+    },
+    {
+      "name": "invalid-json-bool",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "--json=maybe",
+        "wait-approved"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "invalid boolean value \"maybe\" for -json: parse error\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n"
+    },
+    {
+      "name": "missing-timeout-value",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "--timeout"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag needs an argument: -timeout\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n"
+    },
+    {
+      "name": "wait-help",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "-h"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n"
+    },
+    {
+      "name": "unknown-flag",
+      "room": "main",
+      "args": [
+        "run",
+        "wait",
+        "--unknown"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -unknown\nUsage of run wait:\n  -json\n    \tOutput as JSON\n  -timeout duration\n    \tTimeout duration (default 15m0s)\n"
+    }
+  ]
+}

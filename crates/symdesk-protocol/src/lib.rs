@@ -44,7 +44,7 @@ use hyper_util::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use symdesk_vault::walk_markdown_with;
+use symdesk_vault::{Notebook, parse_notebook, walk_markdown_with};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tower::{Service as _, ServiceExt as _};
 
@@ -215,6 +215,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/status", get(handle_status))
         .route("/api/v1/snapshot", get(handle_snapshot))
         .route("/api/v1/files", get(handle_file))
+        .route("/api/v1/notebooks", get(handle_notebooks))
         .layer(middleware::from_fn_with_state(
             Arc::clone(&state),
             authenticate,
@@ -405,6 +406,72 @@ async fn handle_status(State(state): State<Arc<AppState>>) -> Response {
             "status": "ok",
             "version": state.version,
         }),
+    )
+}
+
+async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
+    let notebooks_dir = state.vault_root.join("notebooks");
+    let canonical_dir = match fs::canonicalize(&notebooks_dir) {
+        Ok(path) if path.starts_with(&state.vault_root) => path,
+        Ok(_) => {
+            return json_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "notebook directory escapes vault",
+            );
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return bytes_response(
+                StatusCode::OK,
+                vec![
+                    (header::CONTENT_TYPE, "application/json".to_owned()),
+                    (header::CONTENT_LENGTH, "3".to_owned()),
+                ],
+                b"[]\n".as_slice(),
+            );
+        }
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    let entries = match fs::read_dir(&canonical_dir) {
+        Ok(entries) => entries,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    let mut notebooks: Vec<Notebook> = Vec::new();
+    for entry in entries {
+        let Ok(entry) = entry else { continue };
+        let path = entry.path();
+        if path.extension().and_then(|extension| extension.to_str()) != Some("md") {
+            continue;
+        }
+        let Ok(canonical_path) = fs::canonicalize(&path) else {
+            continue;
+        };
+        if !canonical_path.starts_with(&state.vault_root) {
+            continue;
+        }
+        let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+            continue;
+        };
+        let relative = format!("notebooks/{name}");
+        let Ok(contents) = fs::read(canonical_path) else {
+            continue;
+        };
+        if let Ok(notebook) = parse_notebook(&relative, &contents) {
+            notebooks.push(notebook);
+        }
+    }
+    notebooks.sort_by_key(|notebook| notebook.title.to_lowercase());
+    let mut body = match serde_json::to_vec(&notebooks) {
+        Ok(body) => body,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    body.push(b'\n');
+    bytes_response(
+        StatusCode::OK,
+        vec![
+            (header::CONTENT_TYPE, "application/json".to_owned()),
+            (header::CONTENT_LENGTH, body.len().to_string()),
+        ],
+        body,
     )
 }
 

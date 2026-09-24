@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
+    "release": "post-v0.12.2-security-880"
+  },
+  "journal_lines": [
+    "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"artifact_id\":\"art_fixture\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"title\":\"Known\"},\"id\":\"ev_fixture\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_fixture\",\"seq\":1,\"sig\":\"ed25519:4POGOLP1hfJy/puzCkVyholOoW/x6tXy8XX91Ut3wj4MLoLffvYln/HBEo/wKxemVt88dktJc4qXTF4tGZURCg==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+    "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_fixture\",\"title\":\"Fixture\"},\"id\":\"ev_run_request\",\"kind\":\"run.requested\",\"lamport\":2,\"prev\":\"sha256:3eca991b8a0f82ab19bd1bd2881aa028d204a2ae2df8596bc4b5dbb3d3998ee9\",\"room\":\"rm_fixture\",\"seq\":2,\"sig\":\"ed25519:izXYxV3m8UTfdt5Obd7KsKGtcilN8QLrOsTbdhgRk2oFrVy1pjg1yYn8JEiRyOjSAdvhk/N6uM35NjaP/cN8DA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}",
+    "{\"author\":\"mem_2b5731693654b5d3\",\"body\":{\"run_id\":\"run_fixture\",\"reason\":\"outside policy\"},\"id\":\"ev_run_denied\",\"kind\":\"run.denied\",\"lamport\":3,\"prev\":\"sha256:ca89feb38b4a21ea03f8ce21c6ea8af888d05be5b87c7103475d8ea4b605bcf7\",\"room\":\"rm_fixture\",\"seq\":3,\"sig\":\"ed25519:xj3iM7f7VUkd7jMd9e/IgRHmXw1EeyJUEnjBS70k+hMyAa6vEb+GbaQgdmQApruwKPERD7EFnz2Ad5QyJgovDA==\",\"ts\":\"2026-09-01T00:00:00.000Z\",\"v\":1}"
+  ],
+  "cases": [
+    {
+      "request": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "method": "tools/list"
+      },
+      "response": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": {
+          "tools": [
+            {
+              "description": "Return room metadata and journal statistics",
+              "inputSchema": {
+                "properties": {},
+                "type": "object"
+              },
+              "name": "room_status"
+            },
+            {
+              "description": "Return the merged signed journal tail",
+              "inputSchema": {
+                "properties": {
+                  "limit": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "name": "room_journal_tail"
+            },
+            {
+              "description": "Post a signed note to the room journal",
+              "inputSchema": {
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "text"
+                ],
+                "type": "object"
+              },
+              "name": "room_note_post"
+            },
+            {
+              "description": "List linked room artifacts",
+              "inputSchema": {
+                "properties": {},
+                "type": "object"
+              },
+              "name": "room_artifact_list"
+            },
+            {
+              "description": "Link and hash an artifact, recording a signed event",
+              "inputSchema": {
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              },
+              "name": "room_artifact_link"
+            },
+            {
+              "description": "Request a run with a signed journal event",
+              "inputSchema": {
+                "properties": {
+                  "adapter": {
+                    "type": "string"
+                  },
+                  "plan_file": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "title"
+                ],
+                "type": "object"
+              },
+              "name": "room_run_request"
+            },
+            {
+              "description": "Wait for a run approval decision",
+              "inputSchema": {
+                "properties": {
+                  "run_id": {
+                    "type": "string"
+                  },
+                  "timeout_seconds": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "run_id"
+                ],
+                "type": "object"
+              },
+              "name": "room_run_wait"
+            },
+            {
+              "description": "Request a signed human checkpoint",
+              "inputSchema": {
+                "properties": {
+                  "question": {
+                    "type": "string"
+                  },
+                  "run_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "run_id",
+                  "question"
+                ],
+                "type": "object"
+              },
+              "name": "room_checkpoint_request"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {
+            "limit": 2
+          },
+          "name": "room_journal_tail"
+        }
+      },
+      "response": {
+        "id": 2,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "[{\"v\":1,\"id\":\"ev_run_request\",\"room\":\"rm_fixture\",\"author\":\"mem_2b5731693654b5d3\",\"seq\":2,\"prev\":\"sha256:3eca991b8a0f82ab19bd1bd2881aa028d204a2ae2df8596bc4b5dbb3d3998ee9\",\"lamport\":2,\"ts\":\"2026-09-01T00:00:00.000Z\",\"kind\":\"run.requested\",\"body\":{\"run_id\":\"run_fixture\",\"title\":\"Fixture\"},\"sig\":\"ed25519:izXYxV3m8UTfdt5Obd7KsKGtcilN8QLrOsTbdhgRk2oFrVy1pjg1yYn8JEiRyOjSAdvhk/N6uM35NjaP/cN8DA==\"},{\"v\":1,\"id\":\"ev_run_denied\",\"room\":\"rm_fixture\",\"author\":\"mem_2b5731693654b5d3\",\"seq\":3,\"prev\":\"sha256:ca89feb38b4a21ea03f8ce21c6ea8af888d05be5b87c7103475d8ea4b605bcf7\",\"lamport\":3,\"ts\":\"2026-09-01T00:00:00.000Z\",\"kind\":\"run.denied\",\"body\":{\"run_id\":\"run_fixture\",\"reason\":\"outside policy\"},\"sig\":\"ed25519:xj3iM7f7VUkd7jMd9e/IgRHmXw1EeyJUEnjBS70k+hMyAa6vEb+GbaQgdmQApruwKPERD7EFnz2Ad5QyJgovDA==\"}]",
+              "type": "text"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "request": {
+        "id": 3,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {},
+          "name": "missing_tool"
+        }
+      },
+      "response": {
+        "error": {
+          "code": -32601,
+          "message": "Unknown tool: missing_tool"
+        },
+        "id": 3,
+        "jsonrpc": "2.0"
+      }
+    },
+    {
+      "request": {
+        "id": 4,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {},
+          "name": "room_status"
+        }
+      },
+      "response": {
+        "id": 4,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"max_lamport\":3,\"room\":{\"schema_version\":0,\"id\":\"rm_fixture\",\"created\":\"2026-09-01T00:00:00Z\",\"root_pubkey\":\"ed25519:fixture\",\"root_event\":\"ev_fixture\"}}",
+              "type": "text"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "request": {
+        "id": 5,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {},
+          "name": "room_artifact_list"
+        }
+      },
+      "response": {
+        "id": 5,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "[{\"id\":\"art_fixture\",\"path\":\"known.txt\",\"sha256\":\"e7ba55ec4b1cbb1e2a7f7c8a959e545f4db0230bf1e0a84396990601a1cd63ed\",\"title\":\"Known\",\"status\":\"ok\"}]",
+              "type": "text"
+            }
+          ],
+          "isError": false
+        }
+      }
+    },
+    {
+      "request": {
+        "id": 6,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {
+            "run_id": "run_fixture",
+            "timeout_seconds": 0.02
+          },
+          "name": "room_run_wait"
+        }
+      },
+      "response": {
+        "id": 6,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "run was denied: outside policy",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "id": 7,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "arguments": {
+            "run_id": "run_missing",
+            "timeout_seconds": 0.02
+          },
+          "name": "room_run_wait"
+        }
+      },
+      "response": {
+        "id": 7,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "wait timed out before approval decision",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    }
+  ]
+}

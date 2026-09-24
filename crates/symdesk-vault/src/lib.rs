@@ -2,7 +2,10 @@
 
 //! Read-only contract-v1–v6 Markdown vault parsing.
 
+pub mod activity_journal;
 pub mod conflict;
+pub mod dataset;
+mod go_string;
 mod health_links;
 pub mod history;
 mod links;
@@ -12,6 +15,7 @@ pub mod notes;
 mod paths;
 mod resolver;
 pub mod retention;
+pub mod retention_state;
 pub mod sha256;
 mod tags;
 mod typed;
@@ -30,6 +34,7 @@ use serde_json as _;
 pub use conflict::{
     CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
 };
+pub use go_string::{lowercase as go_lowercase, quote as go_quote};
 pub use health_links::{HealthLinkResolver, LinkInventory, normalize_health_link_target};
 pub use history::{
     HistoryEntry, HistoryError, HistoryStore, TRASH_META_SUFFIX, TrashEntry, trash_rel_dir,
@@ -264,6 +269,10 @@ fn top_level_yaml_timestamps(input: &[u8]) -> BTreeMap<String, String> {
         }
         if is_iso_date(value) {
             result.insert(key.trim().to_owned(), format!("{value}T00:00:00Z"));
+        } else if time::OffsetDateTime::parse(value, &time::format_description::well_known::Rfc3339)
+            .is_ok()
+        {
+            result.insert(key.trim().to_owned(), value.to_owned());
         }
     }
     result

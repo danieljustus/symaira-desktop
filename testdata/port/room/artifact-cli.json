@@ -1,0 +1,371 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "32a4f9739fedb8aadbe282f59f5e7d4d60956b92",
+  "source_hashes": {
+    "cmd/symroom/cmd_artifact.go": "79405799847b23475088b8f63cfa363b37764443f02daac82d53596239c4becf",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/artifact/artifact.go": "b0f4f52df50c7b07bfe058926e813082399fdaac58a8901ac1204de50419afc5"
+  },
+  "identity_key": "c5d08e614a1932f7c9562ad08e310fb056e40aba034279d38d2aebc2c9947d63",
+  "cases": [
+    {
+      "name": "usage",
+      "args": [
+        "artifact"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom artifact \u003clink|unlink|list\u003e [flags] [args]\n",
+      "stderr": "",
+      "final_files": []
+    },
+    {
+      "name": "unknown-action",
+      "args": [
+        "artifact",
+        "bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown artifact action: bogus\n",
+      "final_files": []
+    },
+    {
+      "name": "action-help-is-unknown",
+      "args": [
+        "artifact",
+        "--help"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Unknown artifact action: --help\n",
+      "final_files": []
+    },
+    {
+      "name": "link-usage",
+      "args": [
+        "artifact",
+        "link"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom artifact link \u003cpath\u003e [--title ...] [--identity \u003cname\u003e]\n",
+      "final_files": []
+    },
+    {
+      "name": "link-help",
+      "args": [
+        "artifact",
+        "link",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of artifact link:\n  -identity string\n    \tAuthor identity name\n  -title string\n    \tArtifact title\n",
+      "final_files": []
+    },
+    {
+      "name": "link-unknown-flag",
+      "args": [
+        "artifact",
+        "link",
+        "--identity",
+        "owner",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of artifact link:\n  -identity string\n    \tAuthor identity name\n  -title string\n    \tArtifact title\n",
+      "final_files": []
+    },
+    {
+      "name": "link-success-title-and-identity",
+      "args": [
+        "artifact",
+        "link",
+        "--identity",
+        "owner",
+        "--title",
+        "Quarterly report",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact source\n"
+        }
+      ],
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-default-title",
+      "args": [
+        "artifact",
+        "link",
+        "--identity",
+        "owner",
+        "report.md"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact source\n"
+        }
+      ],
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"report.md\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact source\n"
+        }
+      ]
+    },
+    {
+      "name": "link-outside-root",
+      "args": [
+        "artifact",
+        "link",
+        "--identity",
+        "owner",
+        "../outside.md"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: path is outside artifact root\n",
+      "final_files": []
+    },
+    {
+      "name": "unlink-usage",
+      "args": [
+        "artifact",
+        "unlink"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom artifact unlink \u003cartifact_id\u003e [--identity \u003cname\u003e]\n",
+      "final_files": []
+    },
+    {
+      "name": "unlink-success",
+      "args": [
+        "artifact",
+        "unlink",
+        "--identity",
+        "owner",
+        "art_685d4e65908d3c4a"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact source\n"
+        }
+      ],
+      "initial_journal": [
+        {
+          "name": "mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ],
+      "dynamic_event": true,
+      "exit_code": 0,
+      "stdout": "\u003cevent-id\u003e\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\"},\"id\":\"ev_0b1511fa60d9d289\",\"kind\":\"artifact.unlinked\",\"lamport\":2,\"prev\":\"sha256:148f37a976534e94f3a7590d28bd32382f325782d6f1771564008c43c605aeee\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact source\n"
+        }
+      ]
+    },
+    {
+      "name": "list-empty-human",
+      "args": [
+        "artifact",
+        "list"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "final_files": []
+    },
+    {
+      "name": "list-empty-json",
+      "args": [
+        "artifact",
+        "list",
+        "--json"
+      ],
+      "exit_code": 0,
+      "stdout": "null\n",
+      "stderr": "",
+      "final_files": []
+    },
+    {
+      "name": "list-help",
+      "args": [
+        "artifact",
+        "list",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "final_files": []
+    },
+    {
+      "name": "list-invalid-bool",
+      "args": [
+        "artifact",
+        "list",
+        "--json=maybe"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "invalid boolean value \"maybe\" for -json: parse error\nUsage of artifact list:\n  -json\n    \tOutput artifacts as JSON\n",
+      "final_files": []
+    },
+    {
+      "name": "list-ok-human",
+      "args": [
+        "artifact",
+        "list"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact source\n"
+        }
+      ],
+      "initial_journal": [
+        {
+          "name": "mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "art_685d4e65908d3c4a\treport.md\t[ok]\tQuarterly report\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact source\n"
+        }
+      ]
+    },
+    {
+      "name": "list-ok-json",
+      "args": [
+        "artifact",
+        "list",
+        "--json=true"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "artifact source\n"
+        }
+      ],
+      "initial_journal": [
+        {
+          "name": "mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"id\": \"art_685d4e65908d3c4a\",\n    \"path\": \"report.md\",\n    \"sha256\": \"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\n    \"title\": \"Quarterly report\",\n    \"status\": \"ok\"\n  }\n]\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "artifact source\n"
+        }
+      ]
+    },
+    {
+      "name": "list-modified",
+      "args": [
+        "artifact",
+        "list"
+      ],
+      "files": [
+        {
+          "name": "report.md",
+          "content": "changed\n"
+        }
+      ],
+      "initial_journal": [
+        {
+          "name": "mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "art_685d4e65908d3c4a\treport.md\t[modified]\tQuarterly report\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "changed\n"
+        }
+      ]
+    },
+    {
+      "name": "list-missing",
+      "args": [
+        "artifact",
+        "list",
+        "--json"
+      ],
+      "initial_journal": [
+        {
+          "name": "mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"id\": \"art_685d4e65908d3c4a\",\n    \"path\": \"report.md\",\n    \"sha256\": \"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\n    \"title\": \"Quarterly report\",\n    \"status\": \"missing\"\n  }\n]\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_42255b0c60e3c594.jsonl",
+          "content": "{\"author\":\"mem_42255b0c60e3c594\",\"body\":{\"artifact_id\":\"art_685d4e65908d3c4a\",\"path\":\"report.md\",\"sha256\":\"f8c8dcb13ad1abed7c0e2ffd9c49b80911de6420cfe99fd3db3785d445b6cf1a\",\"symdesk_id\":\"\",\"title\":\"Quarterly report\"},\"id\":\"ev_685d4e65908d3c4a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        }
+      ]
+    }
+  ]
+}

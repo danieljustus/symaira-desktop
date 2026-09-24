@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "07eb8d9fefcc9e150302558ea0613d49e6dfc201",
+  "source_hashes": {
+    "cmd/symroom/cmd_brainprofile.go": "26d0a7728eea4fa3eda3e10381ca41541ef81992af5fa6b0db0a469ff3136a78",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/brainprofile/brainprofile.go": "b68d10dd06eb572b5e0299b8fcdce9e3ed89f7d17a6b4499a7ae9f9a6bdab65f"
+  },
+  "member_id": "mem_1779618d09c00ce6",
+  "room_toml": "id = \"rm_brain_profile_fixture\"\ncreated = \"2026-09-23T00:00:00.000Z\"\n",
+  "journal_files": [
+    {
+      "path": "mem_1779618d09c00ce6.jsonl",
+      "content": "{\"author\":\"mem_1779618d09c00ce6\",\"body\":{\"name\":\"Project Alpha\",\"public_key\":\"957e326db11cac51c51df50320667a56bb1e081688d49b87c739f561bd45bbef\"},\"id\":\"ev_brainprofile_fixture\",\"kind\":\"room.created\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_brain_profile_fixture\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T00:00:00.000Z\",\"v\":1}\n"
+    }
+  ],
+  "cases": [
+    {
+      "name": "usage",
+      "args": [
+        "brain-profile"
+      ],
+      "path_mode": "empty",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Usage: symroom brain-profile --member \u003cid\u003e [--install]\n",
+      "final_files": []
+    },
+    {
+      "name": "unknown-flag",
+      "args": [
+        "brain-profile",
+        "--bogus"
+      ],
+      "path_mode": "empty",
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of brain-profile:\n  -install\n    \tInstall profile to symbrain config path\n  -member string\n    \tMember ID for the agent\n",
+      "final_files": []
+    },
+    {
+      "name": "missing-member",
+      "args": [
+        "brain-profile",
+        "--member",
+        "mem_missing"
+      ],
+      "path_mode": "empty",
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error generating brain profile: member mem_missing not found in room\n",
+      "final_files": []
+    },
+    {
+      "name": "render",
+      "args": [
+        "brain-profile",
+        "--member",
+        "mem_1779618d09c00ce6"
+      ],
+      "path_mode": "empty",
+      "exit_code": 0,
+      "stdout": "[profile]\nname = \"room-project-alpha\"\nmember_id = \"mem_1779618d09c00ce6\"\nrole = \"owner\"\n\n[permissions]\napprove_runs = false\nresolve_checkpoints = false\nread_journal = true\nwrite_notes = true\n\n# To install run:\n# symbrain install --harness \u003charness\u003e --profile room-project-alpha\n",
+      "stderr": "",
+      "final_files": []
+    },
+    {
+      "name": "install-no-symbrain",
+      "args": [
+        "brain-profile",
+        "--member",
+        "mem_1779618d09c00ce6",
+        "--install"
+      ],
+      "path_mode": "empty",
+      "exit_code": 0,
+      "stdout": "symbrain is not installed on PATH. Profile written to \u003cHOME\u003e/.config/symbrain/profiles/room-project-alpha.toml\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "path": "room-project-alpha.toml",
+          "content": "[profile]\nname = \"room-project-alpha\"\nmember_id = \"mem_1779618d09c00ce6\"\nrole = \"owner\"\n\n[permissions]\napprove_runs = false\nresolve_checkpoints = false\nread_journal = true\nwrite_notes = true\n",
+          "mode": 384
+        }
+      ],
+      "dir_mode": 448
+    },
+    {
+      "name": "install-symbrain",
+      "args": [
+        "brain-profile",
+        "--member",
+        "mem_1779618d09c00ce6",
+        "--install"
+      ],
+      "path_mode": "helper",
+      "exit_code": 0,
+      "stdout": "called profile add room-project-alpha\n[profile]\nname = \"room-project-alpha\"\nmember_id = \"mem_1779618d09c00ce6\"\nrole = \"owner\"\n\n[permissions]\napprove_runs = false\nresolve_checkpoints = false\nread_journal = true\nwrite_notes = true\n\n",
+      "stderr": "",
+      "final_files": []
+    },
+    {
+      "name": "install-fallback",
+      "args": [
+        "brain-profile",
+        "--member",
+        "mem_1779618d09c00ce6",
+        "--install"
+      ],
+      "path_mode": "helper-fails",
+      "exit_code": 0,
+      "stdout": "Profile written to \u003cHOME\u003e/.config/symbrain/profiles/room-project-alpha.toml\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "path": "room-project-alpha.toml",
+          "content": "[profile]\nname = \"room-project-alpha\"\nmember_id = \"mem_1779618d09c00ce6\"\nrole = \"owner\"\n\n[permissions]\napprove_runs = false\nresolve_checkpoints = false\nread_journal = true\nwrite_notes = true\n",
+          "mode": 384
+        }
+      ],
+      "dir_mode": 448
+    }
+  ]
+}

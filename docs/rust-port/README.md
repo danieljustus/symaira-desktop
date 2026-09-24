@@ -1,9 +1,24 @@
 # Go-to-Rust migration record
 
-> **Status:** implementation active; `RUST-001` through `RUST-005` passed; `RUST-006`, `RUST-007`, and `RUST-016` are blocked by the current VALUE-001 order-bias gate ([#936](https://github.com/danieljustus/symaira-desktop/issues/936)).
+> **Status:** implementation active; `RUST-001` through `RUST-006` passed; `RUST-007` and `RUST-016` are in progress. VALUE-001 passed for the exact candidate `5c5e98c5`; later commits need their own integrated verification.
 > **Go behavior oracle:** commit `745c08e8144971c61133c5d0e5d61c7ce405aad2`, release reference `post-v0.12.2-security-880`; portgen provenance instead records the revision whose production source the fixtures were generated from, which must be the checked revision or one of its ancestors. Those are distinct identities by the current contract; their long-term consolidation is tracked in [#934](https://github.com/danieljustus/symaira-desktop/issues/934). VALUE baselines remain pinned to `ae863319` / `v0.12.2`
 > **Scope:** the Go `symdesk` and `symroom` backends; SwiftUI clients and Swift packages stay Swift
 > **Tracking:** [#852](https://github.com/danieljustus/symaira-desktop/issues/852)
+
+## Local handoff — 2026-09-24
+
+- Integration source and Go-owned fixtures: `bb47a830` on
+  `codex/rust-migration-integration`. `history tasks` now replays six Go process
+  cases, including empty JSON `null`, ordering, text output and partial status.
+- At that revision, `go test ./...` (CGO disabled), `make lint`,
+  `cargo test --workspace --locked`, strict all-feature/all-target Clippy,
+  `make history-tasks-cli-differential` and `portgen --check` passed locally on
+  macOS. The Rust suite contains explicitly ignored tests; these passes do not
+  replace their separate gates.
+- This is a local handoff, not migration acceptance: `contract-matrix.md` still
+  has TODO rows and the exact integrated Linux/Windows native evidence is
+  absent. Go remains the production implementation. No push, publication,
+  cutover or Go removal occurred.
 
 ## Decision
 
@@ -142,8 +157,8 @@ without modifying the JSON artifact: `0.10` displays as `10.00%`, `3.0` as
 `316.24612017633007` as `31,624.61%`. Timing samples remain in milliseconds and
 RSS samples remain in bytes. The report verifies displayed p95 values against
 the retained raw arrays, but it never runs a benchmark or changes the gate.
-The historical `value001-latest.json` therefore remains `passed: false`; the
-migration stays stopped and Go remains in production.
+The historical `value001-latest.json` remains `passed: false`; the exact
+`5c5e98c5` candidate was accepted separately. Go remains in production.
 
 ## Implementation progress
 
@@ -164,10 +179,19 @@ migration stays stopped and Go remains in production.
   can now reach `PASS`. The CLI-level `symdesk retention list` slice is ported and gated
   by `make retention-cli-differential` (`testdata/port/cli/retention-cases.json`, 6
   byte-exact cases) as #1008, verified on Linux/macOS/Windows in the same native matrix;
-  `retention eval/accept/reject/diff/history` stay open because their state is read and
-  mutated through `internal/service`, which is not ported yet — the Rust CLI deliberately
-  omits them instead of approximating them. DATA-001 (dataset sync) also remains open, so
-  the row stays `TODO`.
+  The current integration branch adds local Go↔Rust differential evidence for
+  `retention eval/accept/reject/diff/history`, dataset sync/import/purge,
+  explicit history/trash purge, and history policy pruning with checkpoint
+  protection and blob collection. Native evidence at the exact integrated
+  commit remains open, so VAULT-006 and DATA-001 stay `TODO`.
+
+- `RUST-016` is in progress. Local Go↔Rust gates cover signed identity/events,
+  journal basics, run projection and CLI transitions, the `note` CLI command,
+  journal merge reads, MCP framing and all eight declared tools, including
+  signed mutation effects.
+  The Room event fuzzer has a valid seed and passed 1,000 local runs. Remaining
+  CLI families, journal/index behavior and exact native platform evidence keep
+  the item open.
 
 - `RUST-001` passed: generated fixtures freeze 207 SymDesk command nodes (206
   non-root, including Cobra's generated help/completion tree), the production-derived SymRoom parser grammar, 57 SymDesk and 8
@@ -251,10 +275,10 @@ migration stays stopped and Go remains in production.
   Full `compare_files` deliberately stays off: `sidecar.db` carries SQLite state and
   `metadata.json` a timestamp, so neither can match byte-for-byte across two processes —
   the layout gate plus the byte-exact `metadata.json` replay are the filesystem evidence.
-- Next actions for RUST-007: port the `internal/service` retention-state layer that
-  `retention eval/accept/reject/diff/history` require, then DATA-001 (dataset sync).
-  When `retention reject/diff/history` are ported they must keep the same open-forever
-  contract as `list` — Go discards the handle in `retention.go:369,392,411` too.
+- Next actions for RUST-007: re-freeze the integrated fixture provenance,
+  then execute all applicable gates on the
+  required native platforms. The retention CLI keeps Go's open sidecar handle
+  behavior across `list/reject/diff/history`.
 - Skills loaded this session: `go-to-rust-migration` + `references/worker-dispatch.md`.
 - Live evidence runs (manual `workflow_dispatch`, because `Rust port contract`
   and `Rust native` are `if: event_name != 'pull_request'`): run `35735140018`

@@ -22,11 +22,12 @@ type fixture struct {
 	Cases []mcpCase `json:"cases"`
 }
 type mcpCase struct {
-	ID         string `json:"id"`
-	Request    string `json:"request"`
-	RawInput   string `json:"raw_input,omitempty"`
-	Framed     bool   `json:"framed,omitempty"`
-	EmptyVault bool   `json:"empty_vault,omitempty"`
+	ID                 string `json:"id"`
+	Request            string `json:"request"`
+	RawInput           string `json:"raw_input,omitempty"`
+	Framed             bool   `json:"framed,omitempty"`
+	EmptyVault         bool   `json:"empty_vault,omitempty"`
+	InstructionsAbsent bool   `json:"instructions_absent,omitempty"`
 }
 
 type processResult struct {
@@ -38,6 +39,7 @@ func main() {
 	left := flag.String("left", "", "Go oracle binary")
 	right := flag.String("right", "", "Rust binary")
 	fixturePath := flag.String("fixture", "testdata/port/mcp/representative.json", "fixture path")
+	casePrefix := flag.String("case-prefix", "", "run only fixture cases with this ID prefix")
 	flag.Parse()
 	if *left == "" || *right == "" {
 		fatal("--left and --right are required")
@@ -65,7 +67,12 @@ func main() {
 		fatal("fixture file: %v", err)
 	}
 
+	runCount := 0
 	for _, tc := range suite.Cases {
+		if *casePrefix != "" && !strings.HasPrefix(tc.ID, *casePrefix) {
+			continue
+		}
+		runCount++
 		vault := root
 		if tc.EmptyVault {
 			vault = filepath.Join(root, "empty")
@@ -102,12 +109,41 @@ func main() {
 		}
 		leftFrames = normalize(tc.ID, leftFrames)
 		rightFrames = normalize(tc.ID, rightFrames)
+		if tc.InstructionsAbsent {
+			if err := checkInstructionsAbsent(leftFrames); err != nil {
+				fatal("%s Go %v", tc.ID, err)
+			}
+			if err := checkInstructionsAbsent(rightFrames); err != nil {
+				fatal("%s Rust %v", tc.ID, err)
+			}
+		}
 		if !reflect.DeepEqual(leftFrames, rightFrames) {
 			fatal("%s response mismatch\nGo: %s\nRust: %s", tc.ID, compact(leftFrames), compact(rightFrames))
 		}
 		fmt.Printf("PASS %s (%d response(s))\n", tc.ID, len(leftFrames))
 	}
-	fmt.Printf("PASS MCP differential: %d cases\n", len(suite.Cases))
+	if runCount == 0 {
+		fatal("no MCP fixture cases match prefix %q", *casePrefix)
+	}
+	fmt.Printf("PASS MCP differential: %d cases\n", runCount)
+}
+
+func checkInstructionsAbsent(frames []any) error {
+	if len(frames) != 1 {
+		return fmt.Errorf("expected one initialize response, got %d", len(frames))
+	}
+	frame, ok := frames[0].(map[string]any)
+	if !ok {
+		return fmt.Errorf("response frame has type %T", frames[0])
+	}
+	result, ok := frame["result"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("initialize result has type %T", frame["result"])
+	}
+	if _, ok := result["instructions"]; ok {
+		return fmt.Errorf("initialize result unexpectedly has instructions field")
+	}
+	return nil
 }
 
 func prepare(binary, vault, db string) error {

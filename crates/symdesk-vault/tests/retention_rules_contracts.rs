@@ -177,7 +177,7 @@ fn retention_rules_negative_controls_stay_negative() {
 
     // The fixture's own validation cases must keep matching Go verbatim.
     assert_eq!(
-        RetentionError::ReadFailed.class(),
+        RetentionError::ReadFailed(String::new()).class(),
         "read_failed",
         "the error class labels are part of the replay contract"
     );

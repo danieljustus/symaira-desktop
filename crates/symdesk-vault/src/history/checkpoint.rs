@@ -98,7 +98,7 @@ pub fn validate_task_id(task_id: &str) -> Result<(), HistoryError> {
     Ok(())
 }
 
-fn checkpoint_rel_path(task_id: &str) -> Result<String, HistoryError> {
+pub(super) fn checkpoint_rel_path(task_id: &str) -> Result<String, HistoryError> {
     validate_task_id(task_id)?;
     Ok(format!("{}/{task_id}.json", checkpoints_rel_dir()))
 }

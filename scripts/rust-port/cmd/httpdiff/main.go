@@ -28,11 +28,12 @@ type fixture struct {
 }
 
 type httpCase struct {
-	ID      string            `json:"id"`
-	Method  string            `json:"method"`
-	Path    string            `json:"path"`
-	Auth    string            `json:"auth,omitempty"`
-	Headers map[string]string `json:"headers,omitempty"`
+	ID             string            `json:"id"`
+	Method         string            `json:"method"`
+	Path           string            `json:"path"`
+	Auth           string            `json:"auth,omitempty"`
+	Headers        map[string]string `json:"headers,omitempty"`
+	EmptyNotebooks bool              `json:"empty_notebooks,omitempty"`
 }
 
 type transcript struct {
@@ -117,6 +118,19 @@ func run() (runErr error) {
 	if err := os.Mkdir(vault, 0o700); err != nil {
 		fatal("vault directory: %v", err)
 	}
+	notebooks := filepath.Join(vault, "notebooks")
+	if err := os.Mkdir(notebooks, 0o700); err != nil {
+		fatal("notebooks directory: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(notebooks, "research.md"), []byte("---\ntype: notebook\ntitle: Research\ncreated: 2026-01-02T03:04:05Z\nnotebook_id: research\ndescription: Research notes\nsources:\n  - Hello.md\n---\n"), 0o600); err != nil {
+		fatal("notebook fixture: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(notebooks, "archive.md"), []byte("---\ntype: notebook\ntitle: Archive\ncreated: 2026-01-03T04:05:06Z\nnotebook_id: archive\nsources: []\n---\n"), 0o600); err != nil {
+		fatal("notebook fixture: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(notebooks, "ignored.md"), []byte("---\ntype: note\ntitle: Not a notebook\n---\n"), 0o600); err != nil {
+		fatal("invalid notebook fixture: %v", err)
+	}
 	if err := os.WriteFile(filepath.Join(vault, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0o600); err != nil {
 		fatal("fixture file: %v", err)
 	}
@@ -166,6 +180,14 @@ func run() (runErr error) {
 	}
 	leftETag, rightETag := "", ""
 	for _, tc := range suite.Cases {
+		if tc.EmptyNotebooks {
+			if err := os.RemoveAll(notebooks); err != nil {
+				fatal("clear notebook fixture: %v", err)
+			}
+			if err := os.Mkdir(notebooks, 0o700); err != nil {
+				fatal("empty notebook directory: %v", err)
+			}
+		}
 		leftResult, nextLeftETag, err := leftServer.request(tc, leftETag)
 		if err != nil {
 			fatal("%s Go request: %v", tc.ID, err)
@@ -361,7 +383,7 @@ func compare(id string, left, right transcript) error {
 		right.Headers = cloneWithout(right.Headers, "content-length")
 	}
 	if !reflect.DeepEqual(left.Headers, right.Headers) {
-		return fmt.Errorf("headers mismatch: Go=%v Rust=%v", left.Headers, right.Headers)
+		return fmt.Errorf("headers mismatch: Go=%v Rust=%v; bodies Go=%q Rust=%q", left.Headers, right.Headers, left.Body, right.Body)
 	}
 	if !reflect.DeepEqual(left.Body, right.Body) {
 		return fmt.Errorf("body mismatch: Go=%q Rust=%q", left.Body, right.Body)

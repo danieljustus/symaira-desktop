@@ -1,0 +1,443 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "standalone-default",
+      "environment": {
+        "HOME": "$ROOT/home",
+        "TEMP": "$ROOT/tmp",
+        "TMP": "$ROOT/tmp",
+        "TMPDIR": "$ROOT/tmp",
+        "USERPROFILE": "$ROOT/home",
+        "XDG_CONFIG_HOME": "$ROOT/elsewhere-config",
+        "XDG_DATA_HOME": "$ROOT/data"
+      },
+      "vault_root": "",
+      "expected_path": "$ROOT/data/symdesk/retrieval.db",
+      "config_after": {
+        "embedding_dim": 768,
+        "expand_model": "",
+        "expand_query": false,
+        "expand_timeout_seconds": 120,
+        "index_cooldown_seconds": 5,
+        "index_path": "",
+        "model": "qwen3-embedding:0.6b",
+        "ollama_url": "http://localhost:11434/api/embeddings",
+        "rerank_model": "",
+        "rerank_query": false,
+        "rerank_timeout_seconds": 120,
+        "retry_backoff_ms": 500,
+        "retry_count": 2,
+        "timeout_seconds": 120,
+        "vector_backend": "sqlite",
+        "vector_exact_rerank": true,
+        "vector_quant_bits": 4,
+        "vector_quantization": "off",
+        "vector_quantized_shortlist": 200
+      }
+    },
+    {
+      "id": "trimmed-xdg-data-home",
+      "environment": {
+        "HOME": "$ROOT/home",
+        "TEMP": "$ROOT/tmp",
+        "TMP": "$ROOT/tmp",
+        "TMPDIR": "$ROOT/tmp",
+        "USERPROFILE": "$ROOT/home",
+        "XDG_DATA_HOME": " $ROOT/data "
+      },
+      "vault_root": "",
+      "expected_path": "$ROOT/data/symdesk/retrieval.db",
+      "config_after": {
+        "embedding_dim": 768,
+        "expand_model": "",
+        "expand_query": false,
+        "expand_timeout_seconds": 120,
+        "index_cooldown_seconds": 5,
+        "index_path": "",
+        "model": "qwen3-embedding:0.6b",
+        "ollama_url": "http://localhost:11434/api/embeddings",
+        "rerank_model": "",
+        "rerank_query": false,
+        "rerank_timeout_seconds": 120,
+        "retry_backoff_ms": 500,
+        "retry_count": 2,
+        "timeout_seconds": 120,
+        "vector_backend": "sqlite",
+        "vector_exact_rerank": true,
+        "vector_quant_bits": 4,
+        "vector_quantization": "off",
+        "vector_quantized_shortlist": 200
+      }
+    },
+    {
+      "id": "standalone-symseek-before-legacy",
+      "environment": {
+        "HOME": "$ROOT/home",
+        "TEMP": "$ROOT/tmp",
+        "TMP": "$ROOT/tmp",
+        "TMPDIR": "$ROOT/tmp",
+        "USERPROFILE": "$ROOT/home",
+        "XDG_CONFIG_HOME": "$ROOT/elsewhere-config",
+        "XDG_DATA_HOME": "$ROOT/data"
+      },
+      "vault_root": "",
+      "seed_files": {
+        "$ROOT/data/symdesk/symseek.db": "old primary",
+        "$ROOT/home/.local/share/symaira-seek/symseek.db": "legacy"
+      },
+      "expected_path": "$ROOT/data/symdesk/symseek.db",
+      "config_after": {
+        "embedding_dim": 768,
+        "expand_model": "",
+        "expand_query": false,
+        "expand_timeout_seconds": 120,
+        "index_cooldown_seconds": 5,
+        "index_path": "",
+        "model": "qwen3-embedding:0.6b",
+        "ollama_url": "http://localhost:11434/api/embeddings",
+        "rerank_model": "",
+        "rerank_query": false,
+        "rerank_timeout_seconds": 120,
+        "retry_backoff_ms": 500,
+        "retry_count": 2,
+        "timeout_seconds": 120,
+        "vector_backend": "sqlite",
+        "vector_exact_rerank": true,
+        "vector_quant_bits": 4,
+        "vector_quantization": "off",
+        "vector_quantized_shortlist": 200
+      }
+    },
+    {
+      "id": "standalone-primary-wins",
+      "environment": {
+        "HOME": "$ROOT/home",
+        "TEMP": "$ROOT/tmp",
+        "TMP": "$ROOT/tmp",
+        "TMPDIR": "$ROOT/tmp",
+        "USERPROFILE": "$ROOT/home",
+        "XDG_CONFIG_HOME": "$ROOT/elsewhere-config",
+        "XDG_DATA_HOME": "$ROOT/data"
+      },
+      "vault_root": "",
+      "seed_files": {
+        "$ROOT/data/symdesk/retrieval.db": "primary",
+        "$ROOT/data/symdesk/symseek.db": "old primary",
+        "$ROOT/home/.local/share/symaira-seek/symseek.db": "legacy"
+      },
+      "expected_path": "$ROOT/data/symdesk/retrieval.db",
+      "config_after": {
+        "embedding_dim": 768,
+        "expand_model": "",
+        "expand_query": false,
+        "expand_timeout_seconds": 120,
+        "index_cooldown_seconds": 5,
+        "index_path": "",
+        "model": "qwen3-embedding:0.6b",
+        "ollama_url": "http://localhost:11434/api/embeddings",
+        "rerank_model": "",
+        "rerank_query": false,
+        "rerank_timeout_seconds": 120,
+        "retry_backoff_ms": 500,
+        "retry_count": 2,
+        "timeout_seconds": 120,
+        "vector_backend": "sqlite",
+        "vector_exact_rerank": true,
+        "vector_quant_bits": 4,
+        "vector_quantization": "off",
+        "vector_quantized_shortlist": 200
+      }
+    },
+    {
+      "id": "vault-data-home",
+      "environment": {
+        "HOME": "$ROOT/home",
+        "TEMP": "$ROOT/tmp",
+        "TMP": "$ROOT/tmp",
+        "TMPDIR": "$ROOT/tmp",
+        "USERPROFILE": "$ROOT/home",
+        "XDG_CONFIG_HOME": "$ROOT/elsewhere-config",
+        "XDG_DATA_HOME": "$ROOT/data"
+      },
+      "vault_root": "$ROOT/cwd/vault",
+      "expected_path": "$ROOT/data/symdesk/vaults/$VAULT_HASH/retrieval.db",
+      "config_after": {
+        "embedding_dim": 768,
+        "expand_model": "",
+        "expand_query": false,
+        "expand_timeout_seconds": 120,
+        "index_cooldown_seconds": 5,
+        "index_path": "",
+        "model": "qwen3-embedding:0.6b",
+        "ollama_url": "http://localhost:11434/api/embeddings",
+        "rerank_model": "",
+        "rerank_query": false,
+        "rerank_timeout_seconds": 120,
+        "retry_backoff_ms": 500,
+        "retry_count": 2,
+        "timeout_seconds": 120,
+        "vector_backend": "sqlite",
+        "vector_exact_rerank": true,
+        "vector_quant_bits": 4,
+        "vector_quantization": "off",
+        "vector_quantized_shortlist": 200
+      }
+    },
+    {
+      "id": "vault-temp-data-home",
+      "environment": {
+        "HOME": "$ROOT/home",
+        "TEMP": "$ROOT/tmp",
+        "TMP": "$ROOT/tmp",
+        "TMPDIR": "$ROOT/tmp",
+        "USERPROFILE": "$ROOT/home",
+        "XDG_DATA_HOME": ""
+      },
+      "vault_root": "$TMPDIR/vault",
+      "expected_path": "$ROOT/tmp/symdesk/test-vaults/$VAULT_HASH/retrieval.db",
+      "config_after": {
+        "embedding_dim": 768,
+        "expand_model": "",
+        "expand_query": false,
+        "expand_timeout_seconds": 120,
+        "index_cooldown_seconds": 5,
+        "index_path": "",
+        "model": "qwen3-embedding:0.6b",
+        "ollama_url": "http://localhost:11434/api/embeddings",
+        "rerank_model": "",
+        "rerank_query": false,
+        "rerank_timeout_seconds": 120,
+        "retry_backoff_ms": 500,
+        "retry_count": 2,
+        "timeout_seconds": 120,
+        "vector_backend": "sqlite",
+        "vector_exact_rerank": true,
+        "vector_quant_bits": 4,
+        "vector_quantization": "off",
+        "vector_quantized_shortlist": 200
+      }
+    },
+    {
+      "id": "configured-relative-over-vault",
+      "environment": {
+        "HOME": "$ROOT/home",
+        "TEMP": "$ROOT/tmp",
+        "TMP": "$ROOT/tmp",
+        "TMPDIR": "$ROOT/tmp",
+        "USERPROFILE": "$ROOT/home",
+        "XDG_CONFIG_HOME": "$ROOT/elsewhere-config",
+        "XDG_DATA_HOME": "$ROOT/data"
+      },
+      "vault_root": "$ROOT/cwd/vault",
+      "config_toml": "index_path = \"custom/nested/../override.db\"\nmodel = \"pinned-model\"\n",
+      "seed_files": {
+        "$ROOT/elsewhere-config/symseek/config.toml": "index_path = \"wrong.db\"\n"
+      },
+      "expected_path": "$ROOT/cwd/custom/override.db",
+      "config_after": {
+        "embedding_dim": 768,
+        "expand_model": "",
+        "expand_query": false,
+        "expand_timeout_seconds": 120,
+        "index_cooldown_seconds": 5,
+        "index_path": "custom/override.db",
+        "model": "pinned-model",
+        "ollama_url": "http://localhost:11434/api/embeddings",
+        "rerank_model": "",
+        "rerank_query": false,
+        "rerank_timeout_seconds": 120,
+        "retry_backoff_ms": 500,
+        "retry_count": 2,
+        "timeout_seconds": 120,
+        "vector_backend": "sqlite",
+        "vector_exact_rerank": true,
+        "vector_quant_bits": 4,
+        "vector_quantization": "off",
+        "vector_quantized_shortlist": 200
+      }
+    },
+    {
+      "id": "whitespace-override-falls-back",
+      "environment": {
+        "HOME": "$ROOT/home",
+        "TEMP": "$ROOT/tmp",
+        "TMP": "$ROOT/tmp",
+        "TMPDIR": "$ROOT/tmp",
+        "USERPROFILE": "$ROOT/home",
+        "XDG_CONFIG_HOME": "$ROOT/elsewhere-config",
+        "XDG_DATA_HOME": "$ROOT/data"
+      },
+      "vault_root": "",
+      "config_toml": "index_path = \"  \"\n",
+      "expected_path": "$ROOT/data/symdesk/retrieval.db",
+      "config_after": {
+        "embedding_dim": 768,
+        "expand_model": "",
+        "expand_query": false,
+        "expand_timeout_seconds": 120,
+        "index_cooldown_seconds": 5,
+        "index_path": "  ",
+        "model": "qwen3-embedding:0.6b",
+        "ollama_url": "http://localhost:11434/api/embeddings",
+        "rerank_model": "",
+        "rerank_query": false,
+        "rerank_timeout_seconds": 120,
+        "retry_backoff_ms": 500,
+        "retry_count": 2,
+        "timeout_seconds": 120,
+        "vector_backend": "sqlite",
+        "vector_exact_rerank": true,
+        "vector_quant_bits": 4,
+        "vector_quantization": "off",
+        "vector_quantized_shortlist": 200
+      }
+    },
+    {
+      "id": "whitespace-vault-is-standalone",
+      "environment": {
+        "HOME": "$ROOT/home",
+        "TEMP": "$ROOT/tmp",
+        "TMP": "$ROOT/tmp",
+        "TMPDIR": "$ROOT/tmp",
+        "USERPROFILE": "$ROOT/home",
+        "XDG_CONFIG_HOME": "$ROOT/elsewhere-config",
+        "XDG_DATA_HOME": "$ROOT/data"
+      },
+      "vault_root": "   ",
+      "expected_path": "$ROOT/data/symdesk/retrieval.db",
+      "config_after": {
+        "embedding_dim": 768,
+        "expand_model": "",
+        "expand_query": false,
+        "expand_timeout_seconds": 120,
+        "index_cooldown_seconds": 5,
+        "index_path": "",
+        "model": "qwen3-embedding:0.6b",
+        "ollama_url": "http://localhost:11434/api/embeddings",
+        "rerank_model": "",
+        "rerank_query": false,
+        "rerank_timeout_seconds": 120,
+        "retry_backoff_ms": 500,
+        "retry_count": 2,
+        "timeout_seconds": 120,
+        "vector_backend": "sqlite",
+        "vector_exact_rerank": true,
+        "vector_quant_bits": 4,
+        "vector_quantization": "off",
+        "vector_quantized_shortlist": 200
+      }
+    },
+    {
+      "id": "legacy-json-migration",
+      "environment": {
+        "HOME": "$ROOT/home",
+        "TEMP": "$ROOT/tmp",
+        "TMP": "$ROOT/tmp",
+        "TMPDIR": "$ROOT/tmp",
+        "USERPROFILE": "$ROOT/home",
+        "XDG_CONFIG_HOME": "$ROOT/elsewhere-config",
+        "XDG_DATA_HOME": "$ROOT/data"
+      },
+      "vault_root": "",
+      "legacy_json": "{\"model\":\"migrated-model\",\"embedding_dim\":512,\"vector_quantization\":\"turbo-prod\"}",
+      "expected_path": "$ROOT/data/symdesk/retrieval.db",
+      "config_after": {
+        "embedding_dim": 512,
+        "expand_model": "",
+        "expand_query": false,
+        "expand_timeout_seconds": 0,
+        "index_cooldown_seconds": 0,
+        "index_path": "",
+        "model": "migrated-model",
+        "ollama_url": "",
+        "rerank_model": "",
+        "rerank_query": false,
+        "rerank_timeout_seconds": 0,
+        "retry_backoff_ms": 0,
+        "retry_count": 0,
+        "timeout_seconds": 0,
+        "vector_backend": "",
+        "vector_exact_rerank": false,
+        "vector_quant_bits": 0,
+        "vector_quantization": "turbo-prod",
+        "vector_quantized_shortlist": 0
+      },
+      "migrated_json_config": true
+    },
+    {
+      "id": "invalid-toml",
+      "environment": {
+        "HOME": "$ROOT/home",
+        "TEMP": "$ROOT/tmp",
+        "TMP": "$ROOT/tmp",
+        "TMPDIR": "$ROOT/tmp",
+        "USERPROFILE": "$ROOT/home",
+        "XDG_CONFIG_HOME": "$ROOT/elsewhere-config",
+        "XDG_DATA_HOME": "$ROOT/data"
+      },
+      "vault_root": "",
+      "config_toml": "index_path = [1]\n",
+      "error_prefix": "failed to decode config file"
+    }
+  ],
+  "relocation": {
+    "input_rows": [
+      {
+        "id": 1,
+        "body": "preserve WAL and source"
+      },
+      {
+        "id": 2,
+        "body": "Müller / 東京"
+      }
+    ],
+    "source_rows_after": [
+      {
+        "id": 1,
+        "body": "preserve WAL and source"
+      },
+      {
+        "id": 2,
+        "body": "Müller / 東京"
+      }
+    ],
+    "relocated_rows": [
+      {
+        "id": 1,
+        "body": "preserve WAL and source"
+      },
+      {
+        "id": 2,
+        "body": "Müller / 東京"
+      }
+    ],
+    "relocated_path": "$ROOT/cwd/relocated/retrieval.db",
+    "config_after": {
+      "embedding_dim": 512,
+      "expand_model": "expand-model",
+      "expand_query": true,
+      "expand_timeout_seconds": 120,
+      "index_cooldown_seconds": 5,
+      "index_path": "$ROOT/cwd/relocated/retrieval.db",
+      "model": "preserve-model",
+      "ollama_url": "http://localhost:11434/api/embeddings",
+      "rerank_model": "rerank-model",
+      "rerank_query": true,
+      "rerank_timeout_seconds": 120,
+      "retry_backoff_ms": 500,
+      "retry_count": 4,
+      "timeout_seconds": 120,
+      "vector_backend": "sqlite",
+      "vector_exact_rerank": false,
+      "vector_quant_bits": 3,
+      "vector_quantization": "turbo-prod",
+      "vector_quantized_shortlist": 200
+    },
+    "source_preserved": true,
+    "destination_replaced": true,
+    "vault_relocation_error": "cannot relocate a vault-scoped retrieval index; use backup/restore or run relocate without --vault for a deliberate global index_path override",
+    "config_unchanged_after_reject": true,
+    "rejected_destination_absent": true
+  }
+}

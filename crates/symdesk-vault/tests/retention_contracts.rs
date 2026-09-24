@@ -319,7 +319,7 @@ fn replay_proposals(fixture: &Fixture) {
             run_id: "../escape".to_owned(),
             rule_name: String::new(),
             created: OffsetDateTime::UNIX_EPOCH,
-            items: Vec::new(),
+            items: Some(Vec::new()),
             status: retention::PROPOSAL_STATUS_PENDING.to_owned(),
         },
     )
@@ -408,6 +408,272 @@ fn replay_history(fixture: &Fixture) {
     let _ = fs::remove_dir_all(&root);
     let _ = fs::remove_dir_all(&null_root);
     let _ = fs::remove_dir_all(&object_root);
+}
+
+#[test]
+fn proposal_decoder_preserves_go_zero_values_and_nil_slices() {
+    let root = temp_dir("sd-retention-json-shapes-");
+    fs::create_dir_all(retention::proposal_dir(&root)).expect("state dir");
+
+    fs::write(
+        retention::proposal_dir(&root).join("missing.json"),
+        r#"{"run_id":"missing","created":null,"status":"pending"}"#,
+    )
+    .expect("write missing-items proposal");
+    let missing = retention::load_proposal(&root, "missing").expect("missing items load");
+    assert!(missing.items.is_none(), "omitted items are Go's nil slice");
+    assert_eq!(
+        symdesk_vault::history::format_rfc3339_nano_utc(missing.created),
+        "0001-01-01T00:00:00Z"
+    );
+
+    fs::write(
+        retention::proposal_dir(&root).join("empty.json"),
+        r#"{"run_id":"empty","items":[],"status":"pending"}"#,
+    )
+    .expect("write empty-items proposal");
+    let empty = retention::load_proposal(&root, "empty").expect("empty items load");
+    assert_eq!(empty.items, Some(Vec::new()));
+
+    fs::write(
+        retention::proposal_dir(&root).join("duplicate.json"),
+        r#"{"run_id":"duplicate","rule_name":"old","rule_name":null,"created":"2026-01-02T03:04:05Z","created":null,"items":[],"items":null}"#,
+    )
+    .expect("write duplicate proposal");
+    let duplicate = retention::load_proposal(&root, "duplicate").expect("duplicate keys load");
+    assert_eq!(
+        duplicate.rule_name, "old",
+        "Go ignores null when decoding into an existing string field"
+    );
+    assert_eq!(
+        symdesk_vault::history::format_rfc3339_nano_utc(duplicate.created),
+        "2026-01-02T03:04:05Z",
+        "time.Time.UnmarshalJSON also ignores duplicate null"
+    );
+    assert!(
+        duplicate.items.is_none(),
+        "last duplicate null clears a slice"
+    );
+
+    fs::write(
+        retention::proposal_dir(&root).join("folded.json"),
+        r#"{"RUN_ID":"upper","Run_Id":"mixed","ſtatus":"pending","items":[]}"#,
+    )
+    .expect("write folded-field proposal");
+    let folded = retention::load_proposal(&root, "folded").expect("folded fields load");
+    assert_eq!(folded.run_id, "mixed", "last folded duplicate wins");
+    assert_eq!(
+        folded.status, "pending",
+        "Go Unicode field folding matches long s"
+    );
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn proposal_decoder_preserves_go_json_diagnostics() {
+    let root = temp_dir("sd-retention-json-errors-");
+    fs::create_dir_all(retention::proposal_dir(&root)).expect("state dir");
+    for (run_id, data, expected) in [
+        ("eof", "{", "unexpected end of JSON input"),
+        (
+            "key",
+            "{ not json",
+            "invalid character 'n' looking for beginning of object key string",
+        ),
+        (
+            "type",
+            r#"{"run_id":1}"#,
+            "json: cannot unmarshal number into Go struct field Proposal.run_id of type string",
+        ),
+    ] {
+        fs::write(
+            retention::proposal_dir(&root).join(format!("{run_id}.json")),
+            data,
+        )
+        .expect("write malformed proposal");
+        let error = retention::load_proposal(&root, run_id).expect_err("proposal must fail");
+        assert_eq!(error.class(), "decode_failed", "{run_id}: error class");
+        assert_eq!(error.to_string(), expected, "{run_id}: diagnostic");
+    }
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
+fn retention_json_decoder_preserves_go_order_and_diagnostics() {
+    let root = temp_dir("sd-retention-ordered-json-");
+    fs::create_dir_all(retention::proposal_dir(&root)).expect("state dir");
+
+    for (run_id, data, expected) in [
+        (
+            "duplicate-run-id",
+            r#"{"run_id":1,"run_id":"duplicate-run-id","created":"2026-01-02T03:04:05Z","items":[],"status":"pending"}"#,
+            "json: cannot unmarshal number into Go struct field Proposal.run_id of type string",
+        ),
+        (
+            "duplicate-items",
+            r#"{"run_id":"duplicate-items","items":{},"items":[]}"#,
+            "json: cannot unmarshal object into Go struct field Proposal.items of type []retention.ProposalItem",
+        ),
+        (
+            "duplicate-item-path",
+            r#"{"run_id":"duplicate-item-path","items":[{"path":1,"path":"note.md","action":"trash"}]}"#,
+            "json: cannot unmarshal number into Go struct field ProposalItem.items.path of type string",
+        ),
+        (
+            "items-first",
+            r#"{"items":{},"run_id":1}"#,
+            "json: cannot unmarshal object into Go struct field Proposal.items of type []retention.ProposalItem",
+        ),
+        (
+            "run-id-first",
+            r#"{"run_id":1,"items":{}}"#,
+            "json: cannot unmarshal number into Go struct field Proposal.run_id of type string",
+        ),
+        (
+            "syntax-before-type",
+            r#"{"run_id":1,}"#,
+            "invalid character '}' looking for beginning of object key string",
+        ),
+        (
+            "malformed-token",
+            r#"{"run_id":truX}"#,
+            "invalid character 'X' in literal true (expecting 'e')",
+        ),
+        (
+            "invalid-created",
+            r#"{"run_id":"invalid-created","created":"not-a-time","items":[]}"#,
+            "parsing time \"not-a-time\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"not-a-time\" as \"2006\"",
+        ),
+        (
+            "type-before-invalid-created",
+            r#"{"run_id":1,"created":"not-a-time","items":[]}"#,
+            "parsing time \"not-a-time\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"not-a-time\" as \"2006\"",
+        ),
+        (
+            "type-before-nonstring-created",
+            r#"{"run_id":1,"created":2,"items":[]}"#,
+            "Time.UnmarshalJSON: input is not a JSON string",
+        ),
+        (
+            "first-ordinary-type-error",
+            r#"{"status":1,"run_id":2,"items":[]}"#,
+            "json: cannot unmarshal number into Go struct field Proposal.status of type string",
+        ),
+    ] {
+        fs::write(
+            retention::proposal_dir(&root).join(format!("{run_id}.json")),
+            data,
+        )
+        .expect("write proposal case");
+        let error = retention::load_proposal(&root, run_id).expect_err("proposal must fail");
+        assert_eq!(error.class(), "decode_failed", "{run_id}: error class");
+        assert_eq!(error.to_string(), expected, "{run_id}: diagnostic");
+    }
+
+    for (data, expected) in [
+        (
+            r#"[{"timestamp":"2026-01-02T03:04:05Z","rule_name":1,"rule_name":"ok","action":"trash","path":"note.md","title":"Note"}]"#,
+            "json: cannot unmarshal number into Go struct field HistoryEntry.rule_name of type string",
+        ),
+        (
+            r#"[{"timestamp":1,"timestamp":"2026-01-02T03:04:05Z"}]"#,
+            "Time.UnmarshalJSON: input is not a JSON string",
+        ),
+        (
+            r#"[{"timestamp":"2026-01-02T03:04:05Z"},]"#,
+            "invalid character ']' looking for beginning of value",
+        ),
+        (
+            r#"[{"timestamp":"not-a-time"}]"#,
+            "parsing time \"not-a-time\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"not-a-time\" as \"2006\"",
+        ),
+        (
+            r#"[{"rule_name":1,"timestamp":"not-a-time"}]"#,
+            "parsing time \"not-a-time\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"not-a-time\" as \"2006\"",
+        ),
+    ] {
+        fs::write(retention::history_path(&root), data).expect("write history case");
+        let error = retention::load_history(&root).expect_err("history must fail");
+        assert_eq!(error.class(), "decode_failed");
+        assert_eq!(error.to_string(), expected);
+    }
+
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[cfg(unix)]
+#[test]
+fn write_proposal_preserves_existing_retention_directory_mode() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let root = temp_dir("sd-retention-existing-mode-");
+    let dir = retention::proposal_dir(&root);
+    fs::create_dir_all(&dir).expect("state dir");
+    fs::set_permissions(&dir, fs::Permissions::from_mode(0o700)).expect("set private mode");
+    let proposal = Proposal {
+        run_id: "mode".to_owned(),
+        rule_name: "rule".to_owned(),
+        created: OffsetDateTime::UNIX_EPOCH,
+        items: Some(Vec::new()),
+        status: retention::PROPOSAL_STATUS_PENDING.to_owned(),
+    };
+    retention::write_proposal(&root, &proposal).expect("write proposal");
+    assert_eq!(file_mode(&dir), Some(0o700));
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[cfg(unix)]
+#[test]
+fn write_proposal_new_directory_modes_follow_go_mkdirall() {
+    use std::process::Command;
+
+    const CHILD: &str = "SYMDESK_RETENTION_MODE_CHILD";
+    const ROOT: &str = "SYMDESK_RETENTION_MODE_ROOT";
+    if std::env::var_os(CHILD).is_some() {
+        let root = PathBuf::from(std::env::var_os(ROOT).expect("child root"));
+        let proposal = Proposal {
+            run_id: "mode".to_owned(),
+            rule_name: "rule".to_owned(),
+            created: OffsetDateTime::UNIX_EPOCH,
+            items: Some(Vec::new()),
+            status: retention::PROPOSAL_STATUS_PENDING.to_owned(),
+        };
+        retention::write_proposal(&root.join("one").join("vault"), &proposal)
+            .expect("child writes proposal");
+        return;
+    }
+
+    for (umask, expected) in [("000", 0o755), ("077", 0o700)] {
+        let root = temp_dir(&format!("sd-retention-umask-{umask}-"));
+        let executable = std::env::current_exe().expect("current test executable");
+        let status = Command::new("/bin/sh")
+            .args([
+                "-c",
+                "umask \"$CHILD_UMASK\"; exec \"$CHILD_EXE\" --exact write_proposal_new_directory_modes_follow_go_mkdirall --nocapture",
+            ])
+            .env("CHILD_UMASK", umask)
+            .env("CHILD_EXE", &executable)
+            .env(CHILD, "1")
+            .env(ROOT, &root)
+            .status()
+            .expect("run mode child");
+        assert!(status.success(), "child failed for umask {umask}");
+        for relative in [
+            Path::new("one"),
+            Path::new("one/vault"),
+            Path::new("one/vault/.symdesk"),
+            Path::new("one/vault/.symdesk/retention"),
+        ] {
+            assert_eq!(
+                file_mode(&root.join(relative)),
+                Some(expected),
+                "{} under umask {umask}",
+                relative.display()
+            );
+        }
+        let _ = fs::remove_dir_all(&root);
+    }
 }
 
 fn compare_file(path: &Path, vector: &FileVector, modes: bool, label: &str) {

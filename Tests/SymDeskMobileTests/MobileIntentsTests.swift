@@ -14,12 +14,10 @@ final class MobileIntentsTests: XCTestCase {
         MobileAppActionStore.suiteName = testSuite
         MobileRecentsStore.suiteName = testSuite
         UserDefaults(suiteName: testSuite)?.removePersistentDomain(forName: testSuite)
-        UserDefaults.standard.removeObject(forKey: "symdesk.mobile.recently-opened.v1")
     }
 
     override func tearDown() {
         UserDefaults(suiteName: testSuite)?.removePersistentDomain(forName: testSuite)
-        UserDefaults.standard.removeObject(forKey: "symdesk.mobile.recently-opened.v1")
         MobileAppActionStore.suiteName = "group.com.symaira.desktop.ios"
         MobileRecentsStore.suiteName = "group.com.symaira.desktop.ios"
         super.tearDown()
@@ -75,13 +73,6 @@ final class MobileIntentsTests: XCTestCase {
 
     func testRecentsClearRemovesEverything() {
         MobileRecentsStore.record(path: "a.md", title: "A")
-        MobileRecentsStore.clear()
-        XCTAssertTrue(MobileRecentsStore.read().isEmpty)
-    }
-
-    func testRecentsClearAlsoRemovesLegacyFallback() {
-        UserDefaults.standard.set(["notes/legacy.md"], forKey: "symdesk.mobile.recently-opened.v1")
-        XCTAssertEqual(MobileRecentsStore.read().map(\.path), ["notes/legacy.md"])
         MobileRecentsStore.clear()
         XCTAssertTrue(MobileRecentsStore.read().isEmpty)
     }

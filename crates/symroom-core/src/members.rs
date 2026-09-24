@@ -3,12 +3,16 @@
 
 use std::borrow::Cow;
 use std::collections::BTreeMap;
-use std::fmt;
+use std::{fmt, path::Path};
 
 use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
 use serde_json::value::RawValue;
 
-use crate::event::Event;
+use crate::{
+    event::{self, Event},
+    identity::Identity,
+    journal,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Member {
@@ -269,4 +273,230 @@ fn decode_key(text: &str, field: &str) -> Result<String, String> {
         return Err(format!("invalid {field} pubkey: %!w(<nil>)"));
     }
     Ok(hex::encode(bytes))
+}
+
+/// Go `room.AddMember`: validate the request, authorize the caller, then append
+/// one owner-signed `member.added` event.
+pub fn add_member(
+    room_dir: &Path,
+    name: &str,
+    public_key_hex: &str,
+    role: &str,
+    kind: &str,
+    signer: &Identity,
+) -> Result<Event, MemberMutationError> {
+    let public_key = hex::decode(public_key_hex).map_err(|error| {
+        MemberMutationError::InvalidPublicKeyHex(go_hex_error(error, public_key_hex))
+    })?;
+    if public_key.len() != 32 {
+        return Err(MemberMutationError::InvalidPublicKeyLength(
+            public_key.len(),
+        ));
+    }
+    if !valid_role(role) {
+        return Err(MemberMutationError::InvalidRole);
+    }
+    if !valid_kind(kind) {
+        return Err(MemberMutationError::InvalidKind);
+    }
+
+    let stats = journal::read_journal_stats(room_dir)?;
+    require_owner(&stats, signer)?;
+    let mut body = BTreeMap::new();
+    body.insert("id", crate::identity::compute_member_id(&public_key));
+    body.insert("name", name.to_owned());
+    body.insert("public_key", public_key_hex.to_owned());
+    body.insert("role", role.to_owned());
+    body.insert("kind", kind.to_owned());
+    let body = go_json(&body)?;
+    append_member_event(room_dir, signer, &stats, "member.added", body)
+}
+
+/// Go `room.RemoveMember`: require an owner and an existing target, then append
+/// `member.removed`.
+pub fn remove_member(
+    room_dir: &Path,
+    member_id: &str,
+    signer: &Identity,
+) -> Result<Event, MemberMutationError> {
+    let stats = journal::read_journal_stats(room_dir)?;
+    require_owner(&stats, signer)?;
+    if !stats.member_state.members.contains_key(member_id) {
+        return Err(MemberMutationError::NotFound);
+    }
+    let body = go_json(&BTreeMap::from([("id", member_id)]))?;
+    append_member_event(room_dir, signer, &stats, "member.removed", body)
+}
+
+/// Go `room.SetMemberRole`: validate role before owner and target checks, then
+/// append `member.role_changed`.
+pub fn set_member_role(
+    room_dir: &Path,
+    member_id: &str,
+    role: &str,
+    signer: &Identity,
+) -> Result<Event, MemberMutationError> {
+    if !valid_role(role) {
+        return Err(MemberMutationError::InvalidRole);
+    }
+    let stats = journal::read_journal_stats(room_dir)?;
+    require_owner(&stats, signer)?;
+    if !stats.member_state.members.contains_key(member_id) {
+        return Err(MemberMutationError::NotFound);
+    }
+    let body = go_json(&BTreeMap::from([("id", member_id), ("role", role)]))?;
+    append_member_event(room_dir, signer, &stats, "member.role_changed", body)
+}
+
+/// Go `room.ListMembers` projection.
+pub fn list_members(room_dir: &Path) -> Result<State, std::io::Error> {
+    Ok(journal::read_journal_stats(room_dir)?.member_state)
+}
+
+fn require_owner(
+    stats: &journal::JournalStats,
+    signer: &Identity,
+) -> Result<(), MemberMutationError> {
+    if stats
+        .member_state
+        .members
+        .get(&signer.member_id)
+        .is_none_or(|member| member.role != "owner")
+    {
+        return Err(MemberMutationError::Unauthorized);
+    }
+    Ok(())
+}
+
+fn append_member_event(
+    room_dir: &Path,
+    signer: &Identity,
+    stats: &journal::JournalStats,
+    kind: &str,
+    body: String,
+) -> Result<Event, MemberMutationError> {
+    let room_config = std::fs::read_to_string(room_dir.join("room.toml"))
+        .map_err(|error| MemberMutationError::Message(format!("read room.toml: {error}")))?;
+    let room_id = room_config
+        .lines()
+        .find_map(|line| {
+            let (key, value) = line.split_once('=')?;
+            (key.trim() == "id").then(|| value.trim().trim_matches('"').to_owned())
+        })
+        .unwrap_or_default();
+    let author = journal::author_stats(room_dir, &signer.member_id)?;
+    let mut event_id = [0_u8; 10];
+    getrandom::fill(&mut event_id)
+        .map_err(|error| MemberMutationError::Message(format!("generate event id: {error}")))?;
+    let event_id = format!("ev_{}", hex::encode(event_id));
+    let body = RawValue::from_string(body)
+        .map_err(|error| MemberMutationError::Message(format!("marshal {kind} body: {error}")))?;
+    let mut event = Event {
+        v: event::CURRENT_VERSION,
+        id: event_id,
+        room: room_id,
+        author: signer.member_id.clone(),
+        seq: author.seq.saturating_add(1),
+        prev: author.prev,
+        lamport: stats.max_lamport.saturating_add(1),
+        ts: event::current_timestamp(),
+        kind: kind.to_owned(),
+        body,
+        sig: None,
+    };
+    event.sign(signer)?;
+    journal::append_event(room_dir, &event)?;
+    Ok(event)
+}
+
+fn valid_role(role: &str) -> bool {
+    matches!(role, "owner" | "member" | "agent" | "observer")
+}
+
+fn valid_kind(kind: &str) -> bool {
+    matches!(kind, "human" | "agent")
+}
+
+fn go_json(value: &impl serde::Serialize) -> Result<String, MemberMutationError> {
+    let rendered = serde_json::to_string(value)
+        .map_err(|error| MemberMutationError::Message(error.to_string()))?;
+    Ok(rendered
+        .replace('&', "\\u0026")
+        .replace('<', "\\u003c")
+        .replace('>', "\\u003e")
+        .replace('\u{2028}', "\\u2028")
+        .replace('\u{2029}', "\\u2029"))
+}
+
+fn go_hex_error(error: hex::FromHexError, text: &str) -> String {
+    match error {
+        hex::FromHexError::OddLength => "encoding/hex: odd length hex string".to_owned(),
+        hex::FromHexError::InvalidHexCharacter { c, index } => {
+            let is_control = text.as_bytes().get(index).is_some_and(u8::is_ascii_control);
+            if is_control || c == '\u{00ad}' {
+                format!("encoding/hex: invalid byte: U+{:04X}", c as u32)
+            } else {
+                format!("encoding/hex: invalid byte: U+{:04X} '{c}'", c as u32)
+            }
+        }
+        hex::FromHexError::InvalidStringLength => "encoding/hex: invalid string length".to_owned(),
+    }
+}
+
+#[derive(Debug)]
+pub enum MemberMutationError {
+    InvalidPublicKeyHex(String),
+    InvalidPublicKeyLength(usize),
+    InvalidRole,
+    InvalidKind,
+    Unauthorized,
+    NotFound,
+    Io(std::io::Error),
+    Journal(journal::JournalError),
+    Event(crate::event::EventError),
+    Message(String),
+}
+
+impl fmt::Display for MemberMutationError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidPublicKeyHex(detail) => {
+                write!(formatter, "invalid member public key hex: {detail}")
+            }
+            Self::InvalidPublicKeyLength(length) => write!(
+                formatter,
+                "invalid member public key: expected 32 bytes, got {length}"
+            ),
+            Self::InvalidRole => formatter.write_str("invalid member role"),
+            Self::InvalidKind => formatter.write_str("invalid member kind"),
+            Self::Unauthorized => {
+                formatter.write_str("only room owners can perform member management")
+            }
+            Self::NotFound => formatter.write_str("member not found"),
+            Self::Io(error) => error.fmt(formatter),
+            Self::Journal(error) => error.fmt(formatter),
+            Self::Event(error) => error.fmt(formatter),
+            Self::Message(message) => formatter.write_str(message),
+        }
+    }
+}
+
+impl std::error::Error for MemberMutationError {}
+
+impl From<std::io::Error> for MemberMutationError {
+    fn from(error: std::io::Error) -> Self {
+        Self::Io(error)
+    }
+}
+
+impl From<journal::JournalError> for MemberMutationError {
+    fn from(error: journal::JournalError) -> Self {
+        Self::Journal(error)
+    }
+}
+
+impl From<crate::event::EventError> for MemberMutationError {
+    fn from(error: crate::event::EventError) -> Self {
+        Self::Event(error)
+    }
 }

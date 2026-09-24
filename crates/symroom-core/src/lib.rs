@@ -15,7 +15,14 @@
 //! than a signed-bytes contract; add them when ROOMCLI-002 lands and drive them
 //! with a live differential instead of vectors.
 
+pub mod approval;
+pub mod artifact;
+pub mod desk_watch;
 pub mod event;
 pub mod identity;
+pub mod index;
 pub mod journal;
+pub mod log;
 pub mod members;
+pub mod room_init;
+pub mod runs;

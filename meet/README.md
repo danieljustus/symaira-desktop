@@ -13,7 +13,7 @@
 > integration is done.
 
 [![CI](https://github.com/danieljustus/symaira-meet/actions/workflows/ci.yml/badge.svg)](https://github.com/danieljustus/symaira-meet/actions/workflows/ci.yml)
-[![License](https://img.shields.io/github/license/danieljustus/symaira-meet)](LICENSE)
+[![License](https://img.shields.io/github/license/danieljustus/symaira-meet)](../LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/danieljustus/symaira-meet)](https://github.com/danieljustus/symaira-meet/releases/latest)
 
 ![Symaira Meet social preview](docs/assets/social-preview.png)

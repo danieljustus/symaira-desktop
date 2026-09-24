@@ -160,11 +160,18 @@
       "acceptance": [
         "make vault-write-differential",
         "make vault-history-differential",
+        "make history-purge-differential",
+        "make history-prune-differential",
+        "make history-trash-purge-differential",
         "make vault-retention-differential",
         "make retention-rules-differential",
+        "make retention-state-differential",
         "cargo nextest run -p symdesk-vault",
         "make config-save-differential",
-        "make retention-cli-differential"
+        "make retention-cli-differential",
+        "make dataset-sync-differential",
+        "make dataset-cli-differential",
+        "make dataset-purge-differential"
       ]
     },
     {
@@ -372,6 +379,14 @@
       "acceptance": [
         "make symroom-differential",
         "make room-journal-differential",
+        "make room-merge-read-differential",
+        "make room-run-projection-differential",
+        "make room-run-cli-differential",
+        "make room-run-wait-cli-differential",
+        "make room-run-mutations-cli-differential",
+        "make room-note-cli-differential",
+        "make room-identity-cli-differential",
+        "make room-mcp-differential",
         "cargo nextest run -p symroom-core -p symroom-cli",
         "cargo +nightly fuzz run room_event"
       ]

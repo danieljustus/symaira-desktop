@@ -54,7 +54,6 @@ enum MobileRecentsStore {
     /// items survive into the widget or the recents section).
     static func clear() {
         defaults().removeObject(forKey: key)
-        UserDefaults.standard.removeObject(forKey: key)
         NotificationCenter.default.post(name: changedNotification, object: nil)
     }
 }

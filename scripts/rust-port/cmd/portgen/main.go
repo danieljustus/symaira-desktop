@@ -20,8 +20,11 @@ const (
 
 var fixturePaths = []string{
 	"testdata/port/cli/symdesk-command-tree.json",
+	"testdata/port/cli/config-vault-selection.json",
+	"testdata/port/cli/history-tasks.json",
 	"testdata/port/cli/symroom-parser-grammar.json",
 	"testdata/port/core/config.json",
+	"testdata/port/core/config-precedence.json",
 	"testdata/port/core/document-formats.json",
 	"testdata/port/core/german-search.json",
 	"testdata/port/core/search-query.json",
@@ -43,9 +46,54 @@ var fixturePaths = []string{
 	"testdata/port/vault/filesystem-writes.json",
 	"testdata/port/vault/frontmatter-write.json",
 	"testdata/port/vault/history-lifecycle.json",
+	"testdata/port/vault/history-purge.json",
+	"testdata/port/vault/history-prune.json",
+	"testdata/port/vault/history-service.json",
+	"testdata/port/vault/history-trash-purge.json",
 	"testdata/port/vault/note-operations.json",
 	"testdata/port/vault/retention.json",
 	"testdata/port/vault/retention-rules.json",
+	"testdata/port/vault/retention-state.json",
+	"testdata/port/room/run-projection.json",
+	"testdata/port/room/run-cli.json",
+	"testdata/port/room/run-wait-cli.json",
+	"testdata/port/room/run-mutations-cli.json",
+	"testdata/port/room/note-cli.json",
+	"testdata/port/room/decide-cli.json",
+	"testdata/port/room/identity-cli.json",
+	"testdata/port/room/member-cli.json",
+	"testdata/port/room/merge-read.json",
+	"testdata/port/room/index.json",
+	"testdata/port/room/index-cli.json",
+	"testdata/port/room/verify.json",
+	"testdata/port/room/verify-cli.json",
+	"testdata/port/room/log.json",
+	"testdata/port/room/log-cli.json",
+	"testdata/port/room/artifact-cli.json",
+	"testdata/port/room/artifact-identity-cli.json",
+	"testdata/port/room/watch-stream.json",
+	"testdata/port/room/brain-profile-cli.json",
+	"testdata/port/room/init.json",
+	"testdata/port/room/init-cli.json",
+	"testdata/port/room/watch-cli.json",
+	"testdata/port/room/doctor-cli.json",
+	"testdata/port/room/checkpoint-cli.json",
+	"testdata/port/room/run-approval-cli.json",
+	"testdata/port/retrieval/index-backup.json",
+	"testdata/port/retrieval/index-restore.json",
+	"testdata/port/retrieval/index-relocate.json",
+	"testdata/port/retrieval/index-location.json",
+	"testdata/port/cli/index-maintenance-process.json",
+	"testdata/port/cli/index-build-process.json",
+	"testdata/port/ai/recipe-validate.json",
+	"testdata/port/room/mcp-parity.json",
+	"testdata/port/room/mcp-artifact.txt",
+	"testdata/port/room/mcp-mutations.json",
+	"testdata/port/dataset/sync.json",
+	"testdata/port/dataset/service-sync.json",
+	"testdata/port/dataset/import.json",
+	"testdata/port/dataset/purge.json",
+	"testdata/port/dataset/cli.json",
 	"testdata/port/sidecar/contracts.json",
 	"testdata/port/sidecar/lifecycle.json",
 	"testdata/port/sidecar/large-corpus.json",
@@ -88,8 +136,23 @@ func runGenerate(repoRoot, commit, release string) {
 		pkg string
 		run string
 	}{
-		{"./cmd/symdesk", "TestSymdeskCobraInventory"},
-		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory"},
+		{"./internal/config", "^TestPortConfigPrecedenceContract$"},
+		{"./cmd/symdesk", "TestSymdeskCobraInventory|^TestIndex(Maintenance|Build)ProcessPortFixture$|^TestPort(VaultSelection|RecipeValidate|HistoryTasks)CLIContract$"},
+		{"./internal/room/journal", "^TestPortRoomVerifyContract$"},
+		{"./internal/room/journal", "^TestPortRoomLogContract$"},
+		{"./cmd/symroom", "TestSymRoomParserGrammar|TestSymRoomMCPInventory|TestPort(Note|Decide|Identity|Member|Index|Verify|Log|Artifact|ArtifactIdentity|Init|Watch|Doctor|Checkpoint)CLIContract"},
+		{"./cmd/symroom", "^TestPortRunApprovalCLIContract$"},
+		{"./internal/room/run", "^TestPortRunProjectionContract$"},
+		{"./internal/room/room", "^TestPortRoomInitContract$"},
+		{"./internal/room/journal", "^TestPortRoomMergeReadContract$"},
+		{"./internal/room/desk", "^TestPortWatchStreamContract$"},
+		{"./internal/room/brainprofile", "^TestPortBrainProfileCLIContract$"},
+		{"./internal/room/index", "^TestPortSymRoomIndexOracle$"},
+		{"./internal/retrieval", "^TestIndex(Backup|Restore|Relocate|Location)PortFixture$"},
+		{"./internal/room/run", "^TestPortRun(Wait|Mutation)?CLIContract$"},
+		{"./internal/room/mcp", "^TestSymRoomMCP(Representative|Mutation)Oracle$"},
+		{"./internal/history", "^TestPortHistory(PurgeContract|PruneContract|SelectedTrashPurgeContract)$"},
+		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract|PurgeContract|QueryCLIContract)$|^TestPortHistoryServiceContract$"},
 		{"./internal/tools", "TestSymdeskMCPInventory"},
 		{"./internal/selfhost", "TestSelfhostHTTPInventory"},
 	}
@@ -103,6 +166,13 @@ func runGenerate(repoRoot, commit, release string) {
 		if err != nil {
 			fatal("generate %s (%s): %v\noutput: %s", target.pkg, target.run, err, string(out))
 		}
+	}
+	// Keep this independent Go process fixture in the same P/Q generation as
+	// the package-produced MCP and CLI fixtures.
+	cmd := exec.Command("go", "run", "./scripts/rust-port/cmd/mcpgen")
+	cmd.Dir = repoRoot
+	if out, err := cmd.CombinedOutput(); err != nil {
+		fatal("generate MCP initialize fixture: %v\noutput: %s", err, string(out))
 	}
 
 	sidecarOracle := inventory.Oracle{Commit: commit, Release: release}

@@ -13,15 +13,31 @@ use std::{
 use cap_std::{ambient_authority, fs::Dir};
 use noyalib::Value;
 use rusqlite::{Connection, OptionalExtension, Transaction, params, params_from_iter};
+use serde::Deserialize;
 use symdesk_vault::Document;
 use thiserror::Error;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
+mod backup;
+mod dataset_purge;
+mod dataset_sync;
+mod history_sync;
 mod metadata;
+mod retrieval_config;
 
+pub use backup::{backup_database, relocate_database, restore_database};
+pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
+pub use dataset_sync::{
+    DatasetImportOptions, DatasetImportResult, DatasetSyncError, DatasetSyncOptions,
+    DatasetSyncResult, DatasetSyncRow, DatasetSyncService,
+};
+pub use history_sync::{HistorySyncError, checkpoint_undo, history_restore};
 pub use metadata::{
     METADATA_FILE_NAME, encode_sidecar_metadata, encode_sidecar_metadata_at, open_for_vault,
     record_sidecar_metadata,
+};
+pub use retrieval_config::{
+    index_location_for_vault, relocate_index_for_vault, symseek_config_path,
 };
 
 const MIGRATIONS: &[(&str, &str)] = &[
@@ -83,6 +99,8 @@ pub enum SidecarError {
     Vault(#[from] symdesk_vault::VaultError),
     #[error(transparent)]
     Path(#[from] symdesk_vault::SecurePathError),
+    #[error("sql: database is closed")]
+    Closed,
     #[error("{0}")]
     Contract(String),
     #[error("non-UTF-8 {context}: {path:?}")]
@@ -205,8 +223,23 @@ pub struct ListedDocument {
     pub document_type: String,
 }
 
+/// One materialized row in the rebuildable dataset sidecar.
+pub type DatasetRow = symdesk_vault::dataset::SidecarRow;
+
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq)]
+pub struct DatasetQueryFilter {
+    pub key: String,
+    #[serde(default)]
+    pub operator: String,
+    #[serde(default)]
+    pub value: String,
+}
+
+pub use symdesk_vault::FilterGroup as DatasetQueryFilterGroup;
+
 pub struct Sidecar {
     connection: Connection,
+    closed: bool,
 }
 
 /// Resolves the per-vault sidecar path used by the Go implementation.
@@ -240,6 +273,165 @@ pub fn path_for_vault(vault_root: &Path) -> Result<PathBuf, SidecarError> {
     )?;
     let digest = symdesk_vault::sha256_hex(canonical.to_string_lossy().as_bytes());
     Ok(root.join(&digest[..16]).join("sidecar.db"))
+}
+
+fn dataset_query_filter_where(
+    filters: &[DatasetQueryFilter],
+    schema: &BTreeMap<String, String>,
+) -> Result<(String, Vec<rusqlite::types::Value>), SidecarError> {
+    let mut expressions = Vec::with_capacity(filters.len());
+    let mut arguments = Vec::new();
+    for filter in filters {
+        let key = filter.key.trim();
+        let pseudo = matches!(key, "identity" | "_identity" | "_key");
+        let typ = if pseudo {
+            "text"
+        } else {
+            schema
+                .get(key)
+                .filter(|value| !value.is_empty())
+                .map(String::as_str)
+                .ok_or_else(|| {
+                    SidecarError::Contract(format!("dataset column {key:?} not found"))
+                })?
+        };
+        let (raw, raw_args) = match key {
+            "identity" | "_identity" => ("identity".to_owned(), Vec::new()),
+            "_key" => ("row_key".to_owned(), Vec::new()),
+            _ => (
+                "json_extract(values_json, ?)".to_owned(),
+                vec![rusqlite::types::Value::Text(dataset_json_path(key))],
+            ),
+        };
+        let (present, present_args) = match key {
+            "identity" | "_identity" => ("identity IS NOT NULL".to_owned(), Vec::new()),
+            "_key" => ("row_key IS NOT NULL".to_owned(), Vec::new()),
+            _ => (
+                "json_type(values_json, ?) IS NOT NULL".to_owned(),
+                vec![rusqlite::types::Value::Text(dataset_json_path(key))],
+            ),
+        };
+        let numeric = ["number", "integer", "float"]
+            .iter()
+            .any(|name| typ.eq_ignore_ascii_case(name));
+        let date = ["date", "datetime"]
+            .iter()
+            .any(|name| typ.eq_ignore_ascii_case(name));
+        let typed = if numeric {
+            format!("CAST({raw} AS REAL)")
+        } else if date {
+            format!("julianday({raw})")
+        } else {
+            format!("LOWER(CAST({raw} AS TEXT))")
+        };
+        let value = filter.value.trim();
+        match filter.operator.trim().to_ascii_lowercase().as_str() {
+            "" | "is" | "=" | "==" | "equals" if value.is_empty() => {
+                expressions.push(format!(
+                    "NOT ({present}) OR {raw} IS NULL OR CAST({raw} AS TEXT) = ''"
+                ));
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+            }
+            "" | "is" | "=" | "==" | "equals" => {
+                if date {
+                    expressions.push(format!("{present} AND julianday({raw}) = julianday(?)"));
+                } else if numeric {
+                    expressions.push(format!("{present} AND {typed} = CAST(? AS REAL)"));
+                } else {
+                    expressions.push(format!("{present} AND {typed} = LOWER(?)"));
+                }
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.push(rusqlite::types::Value::Text(if numeric || date {
+                    value.to_owned()
+                } else {
+                    value.to_lowercase()
+                }));
+            }
+            "not_equals" | "is_not" | "!=" => {
+                if date {
+                    expressions.push(format!(
+                        "(NOT ({present}) OR NOT (julianday({raw}) = julianday(?)))"
+                    ));
+                } else if numeric {
+                    expressions.push(format!(
+                        "(NOT ({present}) OR NOT ({typed} = CAST(? AS REAL)))"
+                    ));
+                } else {
+                    expressions.push(format!("(NOT ({present}) OR NOT ({typed} = LOWER(?)))"));
+                }
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.push(rusqlite::types::Value::Text(if numeric || date {
+                    value.to_owned()
+                } else {
+                    value.to_lowercase()
+                }));
+            }
+            "is_empty" | "empty" => {
+                expressions.push(format!(
+                    "NOT ({present}) OR {raw} IS NULL OR CAST({raw} AS TEXT) = ''"
+                ));
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+            }
+            "is_not_empty" | "not_empty" => {
+                expressions.push(format!(
+                    "{present} AND {raw} IS NOT NULL AND CAST({raw} AS TEXT) <> ''"
+                ));
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+            }
+            "contains" | "not_contains" | "starts_with" | "prefix" | "ends_with" | "suffix" => {
+                let pattern = match filter.operator.trim().to_ascii_lowercase().as_str() {
+                    "starts_with" | "prefix" => format!("{value}%"),
+                    "ends_with" | "suffix" => format!("%{value}"),
+                    _ => format!("%{value}%"),
+                };
+                let match_expression = format!("LOWER(CAST({raw} AS TEXT)) LIKE LOWER(?)");
+                if filter.operator.trim().eq_ignore_ascii_case("not_contains") {
+                    expressions.push(format!("NOT ({present} AND {match_expression})"));
+                } else {
+                    expressions.push(format!("{present} AND {match_expression}"));
+                }
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.push(rusqlite::types::Value::Text(pattern));
+            }
+            "greater_than" | "gt" | ">" => {
+                if date {
+                    expressions.push(format!("{present} AND julianday({raw}) > julianday(?)"));
+                } else {
+                    let cast = if numeric { "REAL" } else { "TEXT" };
+                    expressions.push(format!("{present} AND {typed} > CAST(? AS {cast})"));
+                }
+                arguments.extend(present_args.iter().cloned());
+                arguments.extend(raw_args.iter().cloned());
+                arguments.push(rusqlite::types::Value::Text(value.to_owned()));
+            }
+            operator => {
+                return Err(SidecarError::Contract(format!(
+                    "unsupported dataset filter operator {operator:?}"
+                )));
+            }
+        }
+    }
+    Ok((
+        expressions
+            .into_iter()
+            .map(|expression| format!("({expression})"))
+            .collect::<Vec<_>>()
+            .join(" AND "),
+        arguments,
+    ))
+}
+
+fn dataset_json_path(key: &str) -> String {
+    format!(r#"$."{}""#, key.replace('"', r#"\""#))
 }
 
 fn sidecar_storage_root(
@@ -286,7 +478,10 @@ impl Sidecar {
             })?;
         migrate(&mut connection)?;
         backfill_norm_index(&mut connection)?;
-        Ok(Self { connection })
+        Ok(Self {
+            connection,
+            closed: false,
+        })
     }
 
     /// Runs SQLite's non-destructive integrity check.
@@ -294,6 +489,9 @@ impl Sidecar {
     /// # Errors
     /// Returns the provider error or a non-`ok` integrity result.
     pub fn check_integrity(&self) -> Result<(), SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
         let result: String = self
             .connection
             .query_row("PRAGMA integrity_check", [], |row| row.get(0))?;
@@ -304,6 +502,241 @@ impl Sidecar {
                 "integrity check failed: {result}"
             )))
         }
+    }
+
+    /// Writes an atomic, WAL-consistent SQLite snapshot of this open sidecar.
+    ///
+    /// # Errors
+    /// Returns an error when the sidecar is closed, in-memory, or the snapshot
+    /// cannot be created, validated, or atomically installed.
+    pub fn backup_to(&self, destination: &Path) -> Result<(), SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        backup_database(&self.connection, destination)
+    }
+
+    /// Closes the actual SQLite connection. Subsequent dataset operations fail
+    /// with the same stable closed-database diagnostic as the Go sidecar.
+    ///
+    /// # Errors
+    /// Returns the SQLite close error and restores the original connection when
+    /// SQLite refuses to close it.
+    pub fn close(&mut self) -> Result<(), SidecarError> {
+        if self.closed {
+            return Ok(());
+        }
+        let placeholder = Connection::open_in_memory()?;
+        let connection = std::mem::replace(&mut self.connection, placeholder);
+        match connection.close() {
+            Ok(()) => {
+                self.closed = true;
+                Ok(())
+            }
+            Err((connection, error)) => {
+                self.connection = connection;
+                Err(SidecarError::Sqlite(error))
+            }
+        }
+    }
+
+    /// Atomically replaces every derived row for one dataset.
+    ///
+    /// # Errors
+    /// Returns validation, JSON or SQLite errors and rolls back the transaction.
+    pub fn replace_dataset_rows(
+        &mut self,
+        dataset_slug: &str,
+        rows: &[DatasetRow],
+    ) -> Result<(), SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        if dataset_slug.trim().is_empty() {
+            return Err(SidecarError::Contract(
+                "dataset slug is required".to_owned(),
+            ));
+        }
+        let transaction = self.connection.transaction()?;
+        transaction.execute(
+            "DELETE FROM dataset_rows WHERE dataset_slug = ?",
+            [dataset_slug],
+        )?;
+        for row in rows {
+            let row_slug = if row.dataset_slug.is_empty() {
+                dataset_slug
+            } else {
+                row.dataset_slug.as_str()
+            };
+            if row_slug != dataset_slug || row.row_key.is_empty() {
+                return Err(SidecarError::Contract(
+                    "invalid dataset row identity".to_owned(),
+                ));
+            }
+            if serde_json::from_str::<serde_json::Value>(&row.values_json).is_err() {
+                return Err(SidecarError::Contract(format!(
+                    "dataset row {:?} has invalid values JSON",
+                    row.row_key
+                )));
+            }
+            let row_number = i64::try_from(row.row_number).map_err(|_| {
+                SidecarError::Contract("dataset row number exceeds SQLite integer range".to_owned())
+            })?;
+            transaction.execute(
+                "INSERT INTO dataset_rows(dataset_slug,row_key,identity,values_json,source_path,row_number) VALUES (?,?,?,?,?,?)",
+                params![
+                    row_slug,
+                    row.row_key,
+                    (!row.identity.is_empty()).then_some(row.identity.as_str()),
+                    row.values_json,
+                    row.source_path,
+                    row_number
+                ],
+            )?;
+        }
+        transaction.commit()?;
+        Ok(())
+    }
+
+    /// Returns materialized rows in deterministic key order.
+    ///
+    /// # Errors
+    /// Returns the stable closed-database diagnostic or SQLite query errors.
+    pub fn dataset_rows(&self, dataset_slug: &str) -> Result<Vec<DatasetRow>, SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        let mut statement = self.connection.prepare(
+            "SELECT dataset_slug,row_key,COALESCE(identity,''),values_json,source_path,row_number FROM dataset_rows WHERE dataset_slug = ? ORDER BY row_key",
+        )?;
+        let rows = statement.query_map([dataset_slug], |row| {
+            let row_number: i64 = row.get(5)?;
+            Ok(DatasetRow {
+                dataset_slug: row.get(0)?,
+                row_key: row.get(1)?,
+                identity: row.get(2)?,
+                values_json: row.get(3)?,
+                source_path: row.get(4)?,
+                row_number: usize::try_from(row_number).map_err(|error| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        5,
+                        rusqlite::types::Type::Integer,
+                        Box::new(error),
+                    )
+                })?,
+            })
+        })?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    /// Returns one key-ordered page of dataset rows and the uncapped total.
+    ///
+    /// # Errors
+    /// Returns the stable closed-database diagnostic or SQLite query errors.
+    pub fn dataset_query_page(
+        &self,
+        dataset_slug: &str,
+        limit: usize,
+    ) -> Result<(usize, Vec<DatasetRow>), SidecarError> {
+        self.dataset_query_page_filtered(dataset_slug, &BTreeMap::new(), &[], limit)
+    }
+
+    /// Returns a bounded, key-ordered page and total matching structured filters.
+    ///
+    /// # Errors
+    /// Returns a contract error for an unknown column or unsupported operator,
+    /// the stable closed-database diagnostic, or SQLite query errors.
+    pub fn dataset_query_page_filtered(
+        &self,
+        dataset_slug: &str,
+        schema: &BTreeMap<String, String>,
+        filters: &[DatasetQueryFilter],
+        limit: usize,
+    ) -> Result<(usize, Vec<DatasetRow>), SidecarError> {
+        self.dataset_query_page_filtered_with_group(dataset_slug, schema, filters, None, limit)
+    }
+
+    /// Returns a bounded page and total matching flat filters and a nested group.
+    pub fn dataset_query_page_filtered_with_group(
+        &self,
+        dataset_slug: &str,
+        schema: &BTreeMap<String, String>,
+        filters: &[DatasetQueryFilter],
+        filter_group: Option<&DatasetQueryFilterGroup>,
+        limit: usize,
+    ) -> Result<(usize, Vec<DatasetRow>), SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        let (mut where_sql, mut where_args) = dataset_query_filter_where(filters, schema)?;
+        if let Some(group) = filter_group {
+            let (group_sql, group_args) = dataset_query_filter_group_where(group, schema)?;
+            if !where_sql.is_empty() {
+                where_sql.push_str(" AND ");
+            }
+            where_sql.push_str(&group_sql);
+            where_args.extend(group_args);
+        }
+        let where_sql = if where_sql.is_empty() {
+            String::new()
+        } else {
+            format!(" AND {where_sql}")
+        };
+        let total: i64 = self.connection.query_row(
+            &format!("SELECT COUNT(*) FROM dataset_rows WHERE dataset_slug = ?{where_sql}"),
+            params_from_iter(
+                std::iter::once(rusqlite::types::Value::Text(dataset_slug.to_owned()))
+                    .chain(where_args.iter().cloned()),
+            ),
+            |row| row.get(0),
+        )?;
+        let limit = i64::try_from(limit.min(1000)).unwrap_or(i64::MAX);
+        let mut statement = self.connection.prepare(
+            &format!("SELECT dataset_slug,row_key,COALESCE(identity,''),values_json,source_path,row_number FROM dataset_rows WHERE dataset_slug = ?{where_sql} ORDER BY row_key LIMIT ?"),
+        )?;
+        let rows = statement.query_map(
+            params_from_iter(
+                std::iter::once(rusqlite::types::Value::Text(dataset_slug.to_owned()))
+                    .chain(where_args)
+                    .chain(std::iter::once(rusqlite::types::Value::Integer(limit))),
+            ),
+            |row| {
+                let row_number: i64 = row.get(5)?;
+                Ok(DatasetRow {
+                    dataset_slug: row.get(0)?,
+                    row_key: row.get(1)?,
+                    identity: row.get(2)?,
+                    values_json: row.get(3)?,
+                    source_path: row.get(4)?,
+                    row_number: usize::try_from(row_number).map_err(|error| {
+                        rusqlite::Error::FromSqlConversionFailure(
+                            5,
+                            rusqlite::types::Type::Integer,
+                            Box::new(error),
+                        )
+                    })?,
+                })
+            },
+        )?;
+        Ok((
+            usize::try_from(total).unwrap_or(usize::MAX),
+            rows.collect::<Result<_, _>>()?,
+        ))
+    }
+
+    /// Deletes only the rebuildable rows for one dataset.
+    ///
+    /// # Errors
+    /// Returns the stable closed-database diagnostic or SQLite errors.
+    pub fn delete_dataset(&self, dataset_slug: &str) -> Result<(), SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        self.connection.execute(
+            "DELETE FROM dataset_rows WHERE dataset_slug = ?",
+            [dataset_slug],
+        )?;
+        Ok(())
     }
 
     /// Indexes one document in its own transaction.
@@ -374,13 +807,79 @@ impl Sidecar {
     /// Returns the first filesystem, parser or SQLite error after flushing
     /// documents already queued before a later walk or parse error.
     pub fn refresh_index(&mut self, vault_root: &Path) -> Result<(), SidecarError> {
+        self.refresh_index_inner(vault_root, false)
+    }
+
+    /// Refreshes the Markdown index while recording the per-file lifecycle
+    /// states emitted by the Go `symdesk index` command.
+    ///
+    /// # Errors
+    /// Returns the first filesystem, parser or SQLite error after flushing
+    /// documents already queued before a later walk or parse error.
+    pub fn refresh_index_for_cli(&mut self, vault_root: &Path) -> Result<(), SidecarError> {
+        self.refresh_index_inner(vault_root, true)
+    }
+
+    fn refresh_index_inner(
+        &mut self,
+        vault_root: &Path,
+        record_lifecycle: bool,
+    ) -> Result<(), SidecarError> {
         validate_utf8_path(vault_root, "vault root")?;
+        if record_lifecycle {
+            for entry in symdesk_vault::walk_all(vault_root)? {
+                let Some(extension) = entry.path.extension().and_then(|value| value.to_str())
+                else {
+                    continue;
+                };
+                let Some(reason) = unsupported_index_reason(extension) else {
+                    continue;
+                };
+                let key = storage_path(vault_root, &entry.path)?.key_path;
+                let key = key.to_str().ok_or_else(|| SidecarError::NonUtf8Path {
+                    context: "storage key",
+                    path: key.clone(),
+                })?;
+                self.set_lifecycle_state(key, "unsupported", reason)?;
+            }
+        }
         let vault_dir = open_vault_dir(vault_root)?;
         let mut batch = Vec::with_capacity(MAX_INDEX_BATCH_SIZE);
         let mut callback_error = None;
         let walk_result = symdesk_vault::walk_markdown_with(vault_root, |relative| {
+            let storage_key = match storage_path(vault_root, relative) {
+                Ok(path) => path.key_path,
+                Err(error) => {
+                    callback_error = Some(error);
+                    return Err(io::Error::other("refresh index callback failed"));
+                }
+            };
+            let key = storage_key
+                .to_str()
+                .ok_or_else(|| SidecarError::NonUtf8Path {
+                    context: "storage key",
+                    path: storage_key.clone(),
+                });
+            let key = match key {
+                Ok(key) => key,
+                Err(error) => {
+                    callback_error = Some(error);
+                    return Err(io::Error::other("refresh index callback failed"));
+                }
+            };
+            if record_lifecycle && let Err(error) = self.set_lifecycle_state(key, "indexing", "") {
+                callback_error = Some(error);
+                return Err(io::Error::other("refresh index callback failed"));
+            }
             let result = self.refresh_path(&vault_dir, vault_root, relative, &mut batch);
             if let Err(error) = result {
+                if record_lifecycle {
+                    let _ = self.set_lifecycle_state(key, "failed", &error.to_string());
+                }
+                callback_error = Some(error);
+                return Err(io::Error::other("refresh index callback failed"));
+            }
+            if record_lifecycle && let Err(error) = self.set_lifecycle_state(key, "indexed", "") {
                 callback_error = Some(error);
                 return Err(io::Error::other("refresh index callback failed"));
             }
@@ -392,6 +891,19 @@ impl Sidecar {
             return Err(error);
         }
         walk_result.map_err(Into::into)
+    }
+
+    fn set_lifecycle_state(
+        &self,
+        path: &str,
+        state: &str,
+        reason: &str,
+    ) -> Result<(), SidecarError> {
+        self.connection.execute(
+            "INSERT INTO index_lifecycle(path, state, reason, updated_at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(path) DO UPDATE SET state=excluded.state, reason=excluded.reason, updated_at=excluded.updated_at",
+            params![path, state, reason, OffsetDateTime::now_utc().format(&Rfc3339).map_err(|error| SidecarError::Time(error.to_string()))?],
+        )?;
+        Ok(())
     }
 
     fn refresh_path(
@@ -709,6 +1221,52 @@ impl Sidecar {
             })
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+}
+
+fn dataset_query_filter_group_where(
+    group: &DatasetQueryFilterGroup,
+    schema: &BTreeMap<String, String>,
+) -> Result<(String, Vec<rusqlite::types::Value>), SidecarError> {
+    let mut expressions = Vec::with_capacity(group.filters.len() + group.groups.len());
+    let mut arguments = Vec::new();
+    for filter in &group.filters {
+        let filter = DatasetQueryFilter {
+            key: filter.key.clone(),
+            operator: filter.operator.clone(),
+            value: filter.value.clone(),
+        };
+        let (expression, filter_args) = dataset_query_filter_where(&[filter], schema)?;
+        expressions.push(expression);
+        arguments.extend(filter_args);
+    }
+    for child in &group.groups {
+        let (expression, child_args) = dataset_query_filter_group_where(child, schema)?;
+        expressions.push(expression);
+        arguments.extend(child_args);
+    }
+    if expressions.is_empty() {
+        return Ok(("1".to_owned(), arguments));
+    }
+    let joiner = if group.operator.trim().eq_ignore_ascii_case("any") {
+        " OR "
+    } else {
+        " AND "
+    };
+    Ok((format!("({})", expressions.join(joiner)), arguments))
+}
+
+fn unsupported_index_reason(extension: &str) -> Option<&'static str> {
+    match extension.to_ascii_lowercase().as_str() {
+        "mobi" => Some("no bundled MOBI parser; DRM status cannot be determined"),
+        "azw3" => Some("no bundled AZW3 parser; DRM status cannot be determined"),
+        "pages" | "key" | "numbers" => Some("iWork bundle parser is not available"),
+        "doc" => Some("legacy binary Office parser is not available"),
+        "xls" => Some("legacy binary Office parser is not available"),
+        "ppt" => Some("legacy binary Office parser is not available"),
+        "djvu" => Some("DjVu parser is not available"),
+        "odg" => Some("OpenDocument drawing parser is not available"),
+        _ => None,
     }
 }
 

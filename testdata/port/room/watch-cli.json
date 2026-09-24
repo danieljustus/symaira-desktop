@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "oracle_revision": "138746d3ac4df97dd230ecd0fd67f762dd55f499",
+  "source_hashes": {
+    "cmd/symroom/cmd_watch.go": "f13d62bb0f7e8ec2ebbfcac8b6f5bdd9d98c205f68e776fc09dd26580efd6859",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/artifact/artifact.go": "b0f4f52df50c7b07bfe058926e813082399fdaac58a8901ac1204de50419afc5",
+    "internal/room/desk/watch.go": "68b507afe8d50dead25813b9f49b17342f080b14a5a123442717df52d3ba9d10",
+    "internal/room/event/event.go": "3230b16843470d7a092766966c0400877831490d1452070be8d5d2e581fe3dfc"
+  },
+  "identity_key": "9441b44dc74160cd09e9963a23f38ceaa05e126881fda0826d519df6843c941b",
+  "cases": [
+    {
+      "name": "usage",
+      "args": [
+        "watch"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom watch --desk \u003cvault\u003e [--identity \u003cname\u003e]\n",
+      "stderr": "",
+      "final_files": []
+    },
+    {
+      "name": "unknown-flag",
+      "args": [
+        "watch",
+        "--bogus"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "flag provided but not defined: -bogus\nUsage of watch:\n  -desk string\n    \tSymdesk vault name to watch\n  -identity string\n    \tAuthor identity name\n",
+      "final_files": []
+    },
+    {
+      "name": "flag-help",
+      "args": [
+        "watch",
+        "--help"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "Usage of watch:\n  -desk string\n    \tSymdesk vault name to watch\n  -identity string\n    \tAuthor identity name\n",
+      "final_files": []
+    },
+    {
+      "name": "missing-desk",
+      "args": [
+        "watch",
+        "--identity",
+        "owner"
+      ],
+      "exit_code": 0,
+      "stdout": "Usage: symroom watch --desk \u003cvault\u003e [--identity \u003cname\u003e]\n",
+      "stderr": "",
+      "final_files": []
+    },
+    {
+      "name": "missing-identity",
+      "args": [
+        "watch",
+        "--desk",
+        "fixture-vault"
+      ],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Error: --identity is required when default_identity is not configured\n",
+      "final_files": []
+    },
+    {
+      "name": "symdesk-not-found",
+      "args": [
+        "watch",
+        "--desk",
+        "fixture-vault",
+        "--identity",
+        "owner"
+      ],
+      "path_mode": "empty",
+      "exit_code": 1,
+      "stdout": "Watching symdesk vault fixture-vault...\n",
+      "stderr": "Watch error: symdesk binary not found\n",
+      "final_files": []
+    },
+    {
+      "name": "default-identity-env",
+      "args": [
+        "watch",
+        "--desk",
+        "fixture-vault"
+      ],
+      "default_identity_env": true,
+      "path_mode": "empty",
+      "exit_code": 1,
+      "stdout": "Watching symdesk vault fixture-vault...\n",
+      "stderr": "Watch error: symdesk binary not found\n",
+      "final_files": []
+    },
+    {
+      "name": "watch-cancel",
+      "args": [
+        "watch",
+        "--desk",
+        "fixture-vault",
+        "--identity",
+        "owner"
+      ],
+      "path_mode": "fake",
+      "files": [
+        {
+          "name": "report.md",
+          "content": "before\n"
+        }
+      ],
+      "updated_files": [
+        {
+          "name": "report.md",
+          "content": "after\n"
+        }
+      ],
+      "initial_journal": [
+        {
+          "name": "mem_8c9bdf85732416da.jsonl",
+          "content": "{\"author\":\"mem_8c9bdf85732416da\",\"body\":{\"artifact_id\":\"art_bd3493a6be76ba1a\",\"path\":\"report.md\",\"sha256\":\"9160d4be34c8695bd172a76c7c7966587ea5a4d991ad22c87b2b91af54aa9ebb\",\"symdesk_id\":\"\",\"title\":\"Watch fixture\"},\"id\":\"ev_bd3493a6be76ba1a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"ed25519:+DIVuAUxx9ISCFkS1aBjfJu6odrndpyeo8u8Bufq8Q9hFl/FS1wEWV8Yz3wMdcpgt+hRdJL31sCYJaF3qvInCg==\",\"ts\":\"2026-09-23T00:00:00.000Z\",\"v\":1}\n"
+        }
+      ],
+      "exit_code": 0,
+      "stdout": "Watching symdesk vault fixture-vault...\n",
+      "stderr": "",
+      "final_files": [
+        {
+          "name": "journal/mem_8c9bdf85732416da.jsonl",
+          "content": "{\"author\":\"mem_8c9bdf85732416da\",\"body\":{\"artifact_id\":\"art_bd3493a6be76ba1a\",\"path\":\"report.md\",\"sha256\":\"9160d4be34c8695bd172a76c7c7966587ea5a4d991ad22c87b2b91af54aa9ebb\",\"symdesk_id\":\"\",\"title\":\"Watch fixture\"},\"id\":\"ev_bd3493a6be76ba1a\",\"kind\":\"artifact.linked\",\"lamport\":1,\"prev\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"room\":\"rm_test\",\"seq\":1,\"sig\":\"ed25519:+DIVuAUxx9ISCFkS1aBjfJu6odrndpyeo8u8Bufq8Q9hFl/FS1wEWV8Yz3wMdcpgt+hRdJL31sCYJaF3qvInCg==\",\"ts\":\"2026-09-23T00:00:00.000Z\",\"v\":1}\n{\"author\":\"mem_8c9bdf85732416da\",\"body\":{\"artifact_id\":\"art_bd3493a6be76ba1a\",\"event_type\":\"file_changed\",\"path\":\"report.md\",\"sha256\":\"7b9a72466d3960eb2aacccfc848939453490db0678bd4725def3f789b891c919\"},\"id\":\"ev_bb6d8f23853a5b8c\",\"kind\":\"artifact.changed\",\"lamport\":2,\"prev\":\"sha256:b4bac9edb5f13eabbc8adb7cde36cd51425a77adf8f8f8d4bbff4b5cd66188d5\",\"room\":\"rm_test\",\"seq\":2,\"sig\":\"\\u003csignature\\u003e\",\"ts\":\"\\u003cdynamic-clock\\u003e\",\"v\":1}\n"
+        },
+        {
+          "name": "report.md",
+          "content": "after\n"
+        }
+      ],
+      "symdesk_args": [
+        "events",
+        "fixture-vault"
+      ]
+    }
+  ]
+}

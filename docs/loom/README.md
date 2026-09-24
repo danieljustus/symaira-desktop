@@ -5,6 +5,8 @@
 > the product and brand layer of the former
 > [`danieljustus/symaira-loom`](https://github.com/danieljustus/symaira-loom)
 > repository, now archived — its full history remains there.
+> The room implementation now lives in this repository under `internal/room`;
+> the references to the former standalone repository below are historical.
 
 ![Symaira Loom social preview](assets/social-preview.png)
 
@@ -64,4 +66,4 @@ der Raumschicht steht in `../symaira-room/docs/PLAN.md`.
 
 ## License
 
-Licensed under the [Apache License, Version 2.0](LICENSE).
+Licensed under the [Apache License, Version 2.0](../../LICENSE).

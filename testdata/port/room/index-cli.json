@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "source_hashes": {
+    "cmd/symroom/cmd_index.go": "3ed658d515284bc6d7473156e8db311366e3d5edbc23e405ae92235a18085494",
+    "cmd/symroom/main.go": "2885c7003e812c604cf54e14091619770a93ba41a54789db7a351423fce2f939",
+    "internal/room/index/index.go": "7d90f4e3cd1f475a6d16ec1c2480fe615d645ae5e965d8eb7f3e67fbdc6b0637"
+  },
+  "journal_line": "{\"author\":\"mem_cli\",\"body\":{\"text\":\"from another room\"},\"id\":\"ev_cli_note\",\"kind\":\"note.posted\",\"lamport\":1,\"prev\":\"\",\"room\":\"rm_cli\",\"seq\":1,\"sig\":\"\",\"ts\":\"2026-09-23T10:00:00.000Z\",\"v\":1}\n",
+  "cases": [
+    {
+      "name": "usage",
+      "args": [
+        "symroom",
+        "index"
+      ],
+      "room_override": false,
+      "exit_code": 0,
+      "stdout": "Usage: symroom index rebuild\n",
+      "stderr_prefix": "",
+      "db_exists": false,
+      "event_ids": null
+    },
+    {
+      "name": "unknown",
+      "args": [
+        "symroom",
+        "index",
+        "other"
+      ],
+      "room_override": false,
+      "exit_code": 0,
+      "stdout": "Usage: symroom index rebuild\n",
+      "stderr_prefix": "",
+      "db_exists": false,
+      "event_ids": null
+    },
+    {
+      "name": "rebuild-relative-db",
+      "args": [
+        "symroom",
+        "index",
+        "rebuild",
+        "ignored"
+      ],
+      "room_override": true,
+      "exit_code": 0,
+      "stdout": "Rebuilt derived index at .symroom/index.sqlite\n",
+      "stderr_prefix": "",
+      "db_exists": true,
+      "event_ids": [
+        "ev_cli_note"
+      ]
+    },
+    {
+      "name": "corrupt-journal",
+      "args": [
+        "symroom",
+        "index",
+        "rebuild"
+      ],
+      "room_override": true,
+      "corrupt": true,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr_prefix": "Error rebuilding index: merge all events: read segment mem_cli: unmarshal line:",
+      "db_exists": true,
+      "event_ids": null
+    }
+  ]
+}

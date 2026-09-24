@@ -32,8 +32,17 @@ func Approve(roomDir, runID, scopeStr string, ttl time.Duration, id *identity.Id
 		}
 	}
 	m, exists := state.Members[id.MemberID]
-	if exists && m.Role == members.RoleAgent {
+	if !exists {
+		return nil, members.ErrMemberNotFound
+	}
+	if m.Role == members.RoleAgent {
 		return nil, ErrAgentApprovalForbidden
+	}
+	if !m.CanPerform(members.ActionApprove) {
+		if m.Role == members.RoleObserver {
+			return nil, members.ErrObserverForbidden
+		}
+		return nil, members.ErrInvalidRole
 	}
 
 	r, err := run.Get(roomDir, runID)

@@ -756,6 +756,60 @@
       "kind_known": true
     },
     {
+      "id": "body-html-unicode",
+      "kind": "note.posted",
+      "description": "HTML-sensitive characters and Unicode separators are escaped by Go",
+      "event": {
+        "v": 1,
+        "id": "evt_room-\u003c\u003e\u0026\u2028\u2029_6",
+        "room": "room-\u003c\u003e\u0026\u2028\u2029",
+        "author": "mem_550650c922de2f4c",
+        "seq": 6,
+        "prev": "",
+        "lamport": 6,
+        "ts": "2026-09-18T12:30:45.000Z",
+        "kind": "note.posted",
+        "body": {
+          "text": "\u003c\u003e\u0026\u2028\u2029"
+        },
+        "sig": "ed25519:IFAhI2Dex3pPxn7BKf5iM+wRwiwr6NOewl10hR2OL0uuQuYsj1JrBVmoP4wxOSgHeLCzjO3jLsIGRmUEL0nXCw=="
+      },
+      "canonical_bytes": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"\\u003c\\u003e\\u0026\\u2028\\u2029\"},\"id\":\"evt_room-\\u003c\\u003e\\u0026\\u2028\\u2029_6\",\"kind\":\"note.posted\",\"lamport\":6,\"prev\":\"\",\"room\":\"room-\\u003c\\u003e\\u0026\\u2028\\u2029\",\"seq\":6,\"ts\":\"2026-09-18T12:30:45.000Z\",\"v\":1}",
+      "canonical_sha256": "ef256569b5663e02e3fd3d48a94951effefad090c9ead3a4470176b344c589e0",
+      "signature": "ed25519:IFAhI2Dex3pPxn7BKf5iM+wRwiwr6NOewl10hR2OL0uuQuYsj1JrBVmoP4wxOSgHeLCzjO3jLsIGRmUEL0nXCw==",
+      "json_line": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"\\u003c\\u003e\\u0026\\u2028\\u2029\"},\"id\":\"evt_room-\\u003c\\u003e\\u0026\\u2028\\u2029_6\",\"kind\":\"note.posted\",\"lamport\":6,\"prev\":\"\",\"room\":\"room-\\u003c\\u003e\\u0026\\u2028\\u2029\",\"seq\":6,\"sig\":\"ed25519:IFAhI2Dex3pPxn7BKf5iM+wRwiwr6NOewl10hR2OL0uuQuYsj1JrBVmoP4wxOSgHeLCzjO3jLsIGRmUEL0nXCw==\",\"ts\":\"2026-09-18T12:30:45.000Z\",\"v\":1}\n",
+      "line_sha256": "70d4e55b6ccb3349a103b6ab7f08b4a64c7a58576d123350a5717b772e77a1d0",
+      "verified": true,
+      "kind_known": true
+    },
+    {
+      "id": "body-escaped-html",
+      "kind": "note.posted",
+      "description": "the original spelling of JSON escapes survives Go RawMessage compaction",
+      "event": {
+        "v": 1,
+        "id": "evt_room-shape_7",
+        "room": "room-shape",
+        "author": "mem_550650c922de2f4c",
+        "seq": 7,
+        "prev": "",
+        "lamport": 7,
+        "ts": "2026-09-18T12:30:45.000Z",
+        "kind": "note.posted",
+        "body": {
+          "text": "\u003C\u003e\u0026"
+        },
+        "sig": "ed25519:kSnTLRDwJK1Qq6gSaZxFrr8Gw2bzmLmdE9YSMx9e7gP3MksDgYg+I1HeqT2PCrlDFHrxKTu0LBxyzcumjvYBCg=="
+      },
+      "canonical_bytes": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"\\u003C\\u003e\\u0026\"},\"id\":\"evt_room-shape_7\",\"kind\":\"note.posted\",\"lamport\":7,\"prev\":\"\",\"room\":\"room-shape\",\"seq\":7,\"ts\":\"2026-09-18T12:30:45.000Z\",\"v\":1}",
+      "canonical_sha256": "30181392c0e5a1dd4f9574d49e8df3cfd5d62338358c8888865b40ab3e6037de",
+      "signature": "ed25519:kSnTLRDwJK1Qq6gSaZxFrr8Gw2bzmLmdE9YSMx9e7gP3MksDgYg+I1HeqT2PCrlDFHrxKTu0LBxyzcumjvYBCg==",
+      "json_line": "{\"author\":\"mem_550650c922de2f4c\",\"body\":{\"text\":\"\\u003C\\u003e\\u0026\"},\"id\":\"evt_room-shape_7\",\"kind\":\"note.posted\",\"lamport\":7,\"prev\":\"\",\"room\":\"room-shape\",\"seq\":7,\"sig\":\"ed25519:kSnTLRDwJK1Qq6gSaZxFrr8Gw2bzmLmdE9YSMx9e7gP3MksDgYg+I1HeqT2PCrlDFHrxKTu0LBxyzcumjvYBCg==\",\"ts\":\"2026-09-18T12:30:45.000Z\",\"v\":1}\n",
+      "line_sha256": "04a91d66e50f9781239b07192ed157fc18b2301aaebb909feb625cbd8a4feba3",
+      "verified": true,
+      "kind_known": true
+    },
+    {
       "id": "no-version",
       "kind": "note.posted",
       "description": "Sign fills a missing version with the current one",
@@ -888,6 +942,48 @@
       },
       "public_key_hex": "74727824457d76c9cda32f3325d1aa4c3e0d6f4e9178dfda3f41c4425398e515",
       "error": "invalid event signature: invalid base64 signature"
+    },
+    {
+      "id": "padding-before-data",
+      "description": "base64 padding cannot precede more signature data",
+      "event": {
+        "v": 1,
+        "id": "evt_verify_1",
+        "room": "room-verify",
+        "author": "mem_550650c922de2f4c",
+        "seq": 1,
+        "prev": "",
+        "lamport": 1,
+        "ts": "2026-09-18T12:30:45.000Z",
+        "kind": "note.posted",
+        "body": {
+          "note": "verify"
+        },
+        "sig": "ed25519:0w==pwdu//ZRXGAvuSO1Io8TBAmC0Y7eaPaHgsncCWwZ6UaWl2wS/eW+DyxaXVhaBpg+IbrLDFtknRJz3ogyBU0A"
+      },
+      "public_key_hex": "74727824457d76c9cda32f3325d1aa4c3e0d6f4e9178dfda3f41c4425398e515",
+      "error": "invalid event signature: invalid base64 signature"
+    },
+    {
+      "id": "base64-line-breaks",
+      "description": "Go ignores CR/LF within base64 signatures",
+      "event": {
+        "v": 1,
+        "id": "evt_verify_1",
+        "room": "room-verify",
+        "author": "mem_550650c922de2f4c",
+        "seq": 1,
+        "prev": "",
+        "lamport": 1,
+        "ts": "2026-09-18T12:30:45.000Z",
+        "kind": "note.posted",
+        "body": {
+          "note": "verify"
+        },
+        "sig": "ed25519:06cHbv/2UVxg\r\nL7kjtSKPEwQJ\ngtGO3mj2h4LJ3AlsGelGlpdsEv3lvg8sWl1YWgaYPiG6ywxbZJ0Sc96IMgVNAA=="
+      },
+      "public_key_hex": "74727824457d76c9cda32f3325d1aa4c3e0d6f4e9178dfda3f41c4425398e515",
+      "error": ""
     },
     {
       "id": "unknown-kind",

@@ -14,6 +14,7 @@ use serde::Deserialize;
 use symroom_core::{
     event::Event,
     journal::{ZERO_HASH, append_event, author_stats, read_journal_stats},
+    members::Member,
 };
 
 #[derive(Deserialize)]
@@ -40,6 +41,7 @@ struct StatsCase {
     create_dir: bool,
     author: String,
     max_lamport: u64,
+    members: Vec<Member>,
     author_seq: u64,
     author_prev: String,
 }
@@ -91,7 +93,13 @@ fn materialise(room: &Path, files: &[JournalFile]) {
 fn replays_every_recorded_stats_case() {
     let fixture = fixture();
     assert_eq!(fixture.zero_hash, ZERO_HASH);
-    assert!(fixture.stats_cases.len() >= 10, "fixture lost coverage");
+    assert_eq!(fixture.stats_cases.len(), 12, "Go journal case inventory");
+    for required in [
+        "membership-across-sorted-author-files",
+        "membership-removal-after-undecodable-line",
+    ] {
+        assert!(fixture.stats_cases.iter().any(|case| case.name == required));
+    }
     for case in &fixture.stats_cases {
         let room = scratch(&case.name);
         if case.create_dir {
@@ -101,6 +109,17 @@ fn replays_every_recorded_stats_case() {
         assert_eq!(
             stats.max_lamport, case.max_lamport,
             "lamport in {}",
+            case.name
+        );
+        assert_eq!(
+            stats
+                .member_state
+                .members
+                .values()
+                .cloned()
+                .collect::<Vec<_>>(),
+            case.members,
+            "member state in {}",
             case.name
         );
         let author = author_stats(&room, &case.author).expect("author stats");

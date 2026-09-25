@@ -61,7 +61,10 @@ pub fn new_notebook_with_query(
         } else {
             format!("{base}-{suffix}")
         };
-        let path = format!("notebooks/{slug}.md");
+        let path = Path::new("notebooks")
+            .join(format!("{slug}.md"))
+            .to_string_lossy()
+            .into_owned();
         let file = secure_path(root, &path)?;
         if fs::metadata(&file).is_ok() {
             suffix += 1;

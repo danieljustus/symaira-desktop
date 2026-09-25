@@ -248,6 +248,7 @@ func buildCreation(caseData creation) (result creation, resultErr error) {
 		return creation{}, fmt.Errorf("go notebook creation timestamp missing or duplicated")
 	}
 	caseData.Output = nb
+	caseData.Output.Path = filepath.ToSlash(nb.Path)
 	caseData.Markdown = strings.Replace(string(written), nb.Created, "2026-01-02T03:04:05Z", 1)
 	caseData.Output.Created = "2026-01-02T03:04:05Z"
 	caseData.UnixMode = 0600

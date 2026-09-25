@@ -141,10 +141,9 @@ fn notebook_creation_matches_go() {
             .to_owned();
         let mut expected = case.output;
         expected["created"] = serde_json::Value::String(got.created.clone());
-        assert_eq!(
-            serde_json::to_value(&got).expect("serialize notebook"),
-            expected
-        );
+        let mut actual = serde_json::to_value(&got).expect("serialize notebook");
+        actual["path"] = serde_json::Value::String(got.path.replace('\\', "/"));
+        assert_eq!(actual, expected);
         assert!(
             time::OffsetDateTime::parse(
                 &got.created,

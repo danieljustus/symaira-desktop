@@ -60,13 +60,13 @@ pub struct View {
     pub date_property: String,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub computed: BTreeMap<String, ComputedColumn>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub filters: Vec<Filter>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub filter_group: Option<FilterGroup>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub sorts: Vec<Sort>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub columns: Vec<String>,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub source: String,

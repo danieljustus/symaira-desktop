@@ -197,6 +197,7 @@
       "acceptance": [
         "make retrieval-chunks-differential",
         "make retrieval-bm25-differential",
+        "make retrieval-embedding-state-differential",
         "make retrieval-differential",
         "cargo nextest run -p symdesk-index",
         "make benchmark-large"

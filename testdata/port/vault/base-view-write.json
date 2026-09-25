@@ -1,5 +1,243 @@
 {
   "schema_version": 1,
   "oracle": "internal/dbviews.Manager file APIs",
-  "steps": []
+  "steps": [
+    {
+      "operation": "save_base",
+      "base": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "properties": {
+          "status": {
+            "type": "select",
+            "options": [
+              "open",
+              "paid"
+            ]
+          }
+        },
+        "views": [
+          {
+            "id": "all",
+            "name": "All invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "output": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "properties": {
+          "status": {
+            "type": "select",
+            "options": [
+              "open",
+              "paid"
+            ]
+          }
+        },
+        "views": [
+          {
+            "id": "all",
+            "name": "All invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nproperties:\n    status:\n        type: select\n        options:\n            - open\n            - paid\nviews:\n    - id: all\n      name: All invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **All invoices** (`table`) · Source: tag:invoice\n",
+      "exists": true,
+      "unix_mode": 384
+    },
+    {
+      "operation": "save_view",
+      "view": {
+        "id": "all",
+        "name": "Open invoices",
+        "type": "table",
+        "filters": [
+          {
+            "key": "status",
+            "operator": "equals",
+            "value": "open"
+          }
+        ],
+        "sorts": [],
+        "columns": [
+          "title"
+        ],
+        "source": "tag:invoice"
+      },
+      "output": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "properties": {
+          "status": {
+            "type": "select",
+            "options": [
+              "open",
+              "paid"
+            ]
+          }
+        },
+        "views": [
+          {
+            "id": "all",
+            "name": "Open invoices",
+            "type": "table",
+            "filters": [
+              {
+                "key": "status",
+                "operator": "equals",
+                "value": "open"
+              }
+            ],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nproperties:\n    status:\n        type: select\n        options:\n            - open\n            - paid\nviews:\n    - id: all\n      name: Open invoices\n      type: table\n      filters:\n        - key: status\n          operator: equals\n          value: open\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **Open invoices** (`table`) · Source: tag:invoice · Filters: status = open\n",
+      "exists": true,
+      "unix_mode": 384
+    },
+    {
+      "operation": "save_view",
+      "view": {
+        "id": "paid",
+        "name": "Paid invoices",
+        "type": "table",
+        "filters": [],
+        "sorts": [],
+        "columns": [
+          "title"
+        ],
+        "source": "tag:invoice"
+      },
+      "output": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "properties": {
+          "status": {
+            "type": "select",
+            "options": [
+              "open",
+              "paid"
+            ]
+          }
+        },
+        "views": [
+          {
+            "id": "all",
+            "name": "Open invoices",
+            "type": "table",
+            "filters": [
+              {
+                "key": "status",
+                "operator": "equals",
+                "value": "open"
+              }
+            ],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          },
+          {
+            "id": "paid",
+            "name": "Paid invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nproperties:\n    status:\n        type: select\n        options:\n            - open\n            - paid\nviews:\n    - id: all\n      name: Open invoices\n      type: table\n      filters:\n        - key: status\n          operator: equals\n          value: open\n      columns:\n        - title\n      source: tag:invoice\n    - id: paid\n      name: Paid invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **Open invoices** (`table`) · Source: tag:invoice · Filters: status = open\n- **Paid invoices** (`table`) · Source: tag:invoice\n",
+      "exists": true,
+      "unix_mode": 384
+    },
+    {
+      "operation": "delete_view",
+      "reference": "all",
+      "output": {
+        "id": "invoices",
+        "path": "bases/invoices.md",
+        "title": "Invoices",
+        "created": "2026-01-02T03:04:05Z",
+        "tags": [
+          "base"
+        ],
+        "properties": {
+          "status": {
+            "type": "select",
+            "options": [
+              "open",
+              "paid"
+            ]
+          }
+        },
+        "views": [
+          {
+            "id": "paid",
+            "name": "Paid invoices",
+            "type": "table",
+            "filters": [],
+            "sorts": [],
+            "columns": [
+              "title"
+            ],
+            "source": "tag:invoice"
+          }
+        ]
+      },
+      "markdown": "---\ntype: base\ntitle: Invoices\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n    - base\nbase_id: invoices\nproperties:\n    status:\n        type: select\n        options:\n            - open\n            - paid\nviews:\n    - id: paid\n      name: Paid invoices\n      type: table\n      columns:\n        - title\n      source: tag:invoice\n---\n\n# Invoices\n\n## Views\n\n- **Paid invoices** (`table`) · Source: tag:invoice\n",
+      "exists": true,
+      "unix_mode": 384
+    },
+    {
+      "operation": "delete_base",
+      "reference": "invoices",
+      "exists": false,
+      "unix_mode": 0
+    }
+  ]
 }

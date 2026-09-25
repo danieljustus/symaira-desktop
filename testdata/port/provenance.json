@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
-  "generator_source_digest": "afa608fc49a9444974ea9f7b4b2b58145569e8797c89edaac6828c40dda17286",
+  "generator_source_digest": "0ef4f7ad034a712c38d929cf5f6d1d14edd7fa5a62146ec77f61ebe2e4efdc72",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -77,6 +77,7 @@
     "testdata/port/sidecar/large-corpus.json": "e9d290afac9349e386760bb4ba80b5c4a98180db2cd58f8a953f6e906d7996ba",
     "testdata/port/sidecar/lifecycle.json": "4232f9c2375ef272269b59efa7d568b551ff1fe0ad22fc6545db6a9d8ed8685c",
     "testdata/port/sidecar/roundtrip.json": "4fb245689b56322a908a141dad21daccbd952ab9d02ef93524fa2ba62fa66aa6",
+    "testdata/port/vault/base-view-write.json": "b0ea3462822ceaf60d2571748a92cc927b3d7ed9fe100b54eb14ce2e5744ee49",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/frontmatter-write.json": "43795aad046e1d8f9d86617ad3acbc736e055ed088ff05b3bd1d6b47d6fc97a6",
@@ -89,6 +90,7 @@
     "testdata/port/vault/metadata.json": "5de4b8a9471ae002a52156f0176d3053be9d243497a8a4f45d508f8765f9ae02",
     "testdata/port/vault/mobile-writer.json": "6efb62d62b741a2f069eea7ec0aad94b8f21e8e7038a8f3d17d1a0860407bd2d",
     "testdata/port/vault/note-operations.json": "654c8d3d65d0bf784d5169b344d9415ef83e6b305e4415c54e3d1d0d70cc3d36",
+    "testdata/port/vault/notebook-write.json": "9ccad6c5258f2b25afccd06c0e2788fbfab441e02ed12ef6e2934f7d4252fc45",
     "testdata/port/vault/notebook.json": "0b609b187fe3d5e243367c3fc02045863c65fa10bd9a72e5e82c3dbb7cb316a5",
     "testdata/port/vault/parse.json": "f68eabd7039ccc706c9559886fd6a9fde343f31b69261f70be3737676be3c704",
     "testdata/port/vault/resolution.json": "b0565ec79b0e4c793a408cccf89a3dc4d387e3d1b2f7e1fb3b11ea2048f9d2b4",

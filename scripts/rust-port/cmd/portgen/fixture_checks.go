@@ -96,6 +96,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"vault filesystem corpus", []string{"run", "./scripts/rust-port/cmd/vaultfsgen", "--check"}, []string{"testdata/port/vault/filesystem.json"}, false},
 	{"vault frontmatter writes", []string{"run", "./scripts/rust-port/cmd/vaultwritegen", "--check"}, []string{"testdata/port/vault/frontmatter-write.json"}, false},
 	{"notebook source writes", []string{"run", "./scripts/rust-port/cmd/notebookwritegen", "--check"}, []string{"testdata/port/vault/notebook-write.json"}, false},
+	{"base and view writes", []string{"run", "./scripts/rust-port/cmd/baseviewwritegen", "--check"}, []string{"testdata/port/vault/base-view-write.json"}, false},
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},
 	{"representative corpus", []string{"run", "./scripts/rust-port/cmd/representativegen", "--check"}, []string{"testdata/port/http/representative.json", "testdata/port/representative/cases.json"}, false},
 	{"MCP corpus", []string{"run", "./scripts/rust-port/cmd/mcpgen", "--check"}, []string{"testdata/port/mcp/representative.json"}, false},

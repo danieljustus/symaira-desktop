@@ -42,6 +42,7 @@ var fixturePaths = []string{
 	"testdata/port/vault/typed.json",
 	"testdata/port/vault/notebook.json",
 	"testdata/port/vault/notebook-write.json",
+	"testdata/port/vault/base-view-write.json",
 	"testdata/port/vault/metadata.json",
 	"testdata/port/vault/mobile-writer.json",
 	"testdata/port/vault/filesystem-writes.json",
@@ -180,6 +181,11 @@ func runGenerate(repoRoot, commit, release string) {
 	cmd.Dir = repoRoot
 	if out, err := cmd.CombinedOutput(); err != nil {
 		fatal("generate notebook write fixture: %v\noutput: %s", err, string(out))
+	}
+	cmd = exec.Command("go", "run", "./scripts/rust-port/cmd/baseviewwritegen")
+	cmd.Dir = repoRoot
+	if out, err := cmd.CombinedOutput(); err != nil {
+		fatal("generate base/view write fixture: %v\noutput: %s", err, string(out))
 	}
 
 	sidecarOracle := inventory.Oracle{Commit: commit, Release: release}

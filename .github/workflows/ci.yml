@@ -252,6 +252,10 @@ jobs:
         shell: bash
         run: make notebook-write-differential
 
+      - name: Run native base and view write differential
+        shell: bash
+        run: make base-view-write-differential
+
       - name: Run native vault history lifecycle differential
         shell: bash
         run: make vault-history-differential

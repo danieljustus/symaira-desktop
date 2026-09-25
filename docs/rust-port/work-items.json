@@ -160,6 +160,7 @@
       "acceptance": [
         "make vault-write-differential",
         "make notebook-write-differential",
+        "make base-view-write-differential",
         "make vault-history-differential",
         "make history-purge-differential",
         "make history-prune-differential",

@@ -169,7 +169,16 @@ fn render_sequence(items: &[Value], depth: usize) -> Result<Vec<String>, String>
                     continue;
                 }
                 let mut entries: Vec<_> = mapping.iter().collect();
-                entries.sort_by(|(left, _), (right, _)| natural_cmp(left, right));
+                if let Some(field_order) = struct_field_order(mapping) {
+                    entries.sort_by_key(|(key, _)| {
+                        field_order
+                            .iter()
+                            .position(|field| *field == key.as_str())
+                            .unwrap_or(usize::MAX)
+                    });
+                } else {
+                    entries.sort_by(|(left, _), (right, _)| natural_cmp(left, right));
+                }
 
                 let (first_key, first_val) = entries[0];
                 if first_key.contains('\n') {

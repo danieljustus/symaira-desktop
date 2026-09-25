@@ -37,8 +37,8 @@ type testCase struct {
 func main() {
 	output := flag.String("output", "testdata/port/render/json-ir.json", "fixture path")
 	check := flag.Bool("check", false, "fail if fixture differs")
-	commit := flag.String("oracle-commit", "91f09a2515fcbbeac9a059375668a7545d77e4e7", "Go oracle commit")
-	release := flag.String("oracle-release", "render-ir-oracle", "Go oracle release")
+	commit := flag.String("oracle-commit", "38891d35eb8ceb6c348eca9a78b3fb2873677e3d", "Go oracle commit")
+	release := flag.String("oracle-release", "post-v0.12.2-security-880", "Go oracle release")
 	flag.Parse()
 
 	result := fixture{SchemaVersion: 1, Oracle: oracle{Commit: *commit, Release: *release}}

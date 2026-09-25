@@ -418,7 +418,10 @@ fn render_base(base: &Base) -> Result<String, BaseWriteError> {
         for view in views {
             if let noyalib::Value::Mapping(view) = view {
                 for key in ["filters", "sorts", "columns"] {
-                    if matches!(view.get(key), Some(noyalib::Value::Sequence(items)) if items.is_empty()) {
+                    if matches!(
+                        view.get(key),
+                        Some(noyalib::Value::Sequence(items)) if items.is_empty()
+                    ) {
                         view.remove(key);
                     }
                 }

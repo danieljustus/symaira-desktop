@@ -709,7 +709,11 @@ fn go_io_error(error: &std::io::Error) -> String {
     match error.kind() {
         std::io::ErrorKind::NotFound => {
             if cfg!(windows) {
-                "The system cannot find the file specified.".to_owned()
+                if error.raw_os_error() == Some(3) {
+                    "The system cannot find the path specified.".to_owned()
+                } else {
+                    "The system cannot find the file specified.".to_owned()
+                }
             } else {
                 "no such file or directory".to_owned()
             }

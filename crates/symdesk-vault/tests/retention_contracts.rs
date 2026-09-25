@@ -317,6 +317,19 @@ fn replay_proposals(fixture: &Fixture) {
         "load-missing-proposal: no portable message"
     );
 
+    #[cfg(windows)]
+    {
+        let absent = temp_dir("symdesk-port-retention-absent-parent-");
+        let error = retention::load_proposal(&absent, "missing-run").expect_err("missing parent");
+        assert!(
+            error
+                .to_string()
+                .ends_with("The system cannot find the path specified."),
+            "{error}"
+        );
+        fs::remove_dir_all(absent).expect("remove empty vault");
+    }
+
     let invalid = vector_by_id(&fixture.proposals, "write-invalid-run-id");
     let error = retention::write_proposal(
         &root,

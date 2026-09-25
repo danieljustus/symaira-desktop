@@ -194,6 +194,7 @@
         "INDEX-006"
       ],
       "acceptance": [
+        "make retrieval-chunks-differential",
         "make retrieval-differential",
         "cargo nextest run -p symdesk-index",
         "make benchmark-large"

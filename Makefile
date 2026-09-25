@@ -34,6 +34,7 @@
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
 .PHONY: notebook-write-differential
 .PHONY: base-view-write-differential
+.PHONY: retrieval-chunks-fixtures-generate retrieval-chunks-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -440,6 +441,13 @@ room-checkpoint-cli-fixtures-generate:
 room-checkpoint-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortCheckpointCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test checkpoint_commands
+
+retrieval-chunks-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalChunksFixture$$'
+
+retrieval-chunks-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalChunksFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_chunks
 
 index-backup-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'

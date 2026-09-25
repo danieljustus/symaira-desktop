@@ -400,6 +400,10 @@ jobs:
         shell: bash
         run: make room-run-approval-cli-differential
 
+      - name: Run native retrieval chunk differential
+        shell: bash
+        run: make retrieval-chunks-differential
+
       - name: Run native index backup differential
         shell: bash
         run: make index-backup-differential

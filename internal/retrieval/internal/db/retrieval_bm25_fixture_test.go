@@ -56,7 +56,7 @@ func TestRetrievalBM25Fixture(t *testing.T) {
 	}
 	encoded = append(encoded, '\n')
 	path := filepath.Join("../../../../testdata/port/retrieval/retrieval-bm25.json")
-	if os.Getenv("UPDATE_RETRIEVAL_BM25_FIXTURE") == "1" {
+	if os.Getenv("PORT_GENERATE") == "1" {
 		if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
 			t.Fatal(err)
 		}
@@ -67,9 +67,6 @@ func TestRetrievalBM25Fixture(t *testing.T) {
 	}
 	// #nosec G304 -- the fixture path is fixed relative to this test package.
 	got, err := os.ReadFile(path)
-	if os.IsNotExist(err) {
-		t.Skip("fixture not generated; run with UPDATE_RETRIEVAL_BM25_FIXTURE=1")
-	}
 	if err != nil {
 		t.Fatal(err)
 	}

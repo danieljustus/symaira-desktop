@@ -173,7 +173,8 @@
         "make retention-cli-differential",
         "make dataset-sync-differential",
         "make dataset-cli-differential",
-        "make dataset-purge-differential"
+        "make dataset-purge-differential",
+        "python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD"
       ]
     },
     {
@@ -195,6 +196,7 @@
       ],
       "acceptance": [
         "make retrieval-chunks-differential",
+        "make retrieval-bm25-differential",
         "make retrieval-differential",
         "cargo nextest run -p symdesk-index",
         "make benchmark-large"
@@ -390,6 +392,7 @@
         "make room-note-cli-differential",
         "make room-identity-cli-differential",
         "make room-mcp-differential",
+        "python3 scripts/rust-port/room-rollback.py --go-ref v0.12.2 --rust-ref HEAD",
         "cargo nextest run -p symroom-core -p symroom-cli",
         "cargo +nightly fuzz run room_event"
       ]

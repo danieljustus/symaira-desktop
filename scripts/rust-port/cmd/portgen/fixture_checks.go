@@ -49,6 +49,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"symroom checkpoint CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortCheckpointCLIContract$"}, []string{"testdata/port/room/checkpoint-cli.json"}, false},
 	{"symroom run approval CLI", []string{"test", "-count=1", "./cmd/symroom", "-run", "^TestPortRunApprovalCLIContract$"}, []string{"testdata/port/room/run-approval-cli.json"}, false},
 	{"retrieval chunks", []string{"test", "-count=1", "./internal/retrieval/internal/engine", "-run", "^TestRetrievalChunksFixture$"}, []string{"testdata/port/retrieval/retrieval-chunks.json"}, false},
+	{"retrieval BM25", []string{"test", "-count=1", "./internal/retrieval/internal/db", "-run", "^TestRetrievalBM25Fixture$"}, []string{"testdata/port/retrieval/retrieval-bm25.json"}, false},
 	{"index backup", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexBackupPortFixture$"}, []string{"testdata/port/retrieval/index-backup.json"}, false},
 	{"index restore", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexRestorePortFixture$"}, []string{"testdata/port/retrieval/index-restore.json"}, false},
 	{"index relocation", []string{"test", "-count=1", "./internal/retrieval", "-run", "^TestIndexRelocatePortFixture$"}, []string{"testdata/port/retrieval/index-relocate.json"}, false},

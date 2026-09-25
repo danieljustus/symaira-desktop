@@ -35,6 +35,7 @@
 .PHONY: notebook-write-differential
 .PHONY: base-view-write-differential
 .PHONY: retrieval-chunks-fixtures-generate retrieval-chunks-differential
+.PHONY: retrieval-bm25-fixtures-generate retrieval-bm25-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -327,7 +328,7 @@ room-mcp-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/mcp -run '^TestSymRoomMCP(Representative|Mutation)Oracle$$'
 
 room-mcp-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/mcp -run '^TestSymRoomMCP(Representative|Mutation)Oracle$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/mcp -run '^Test(SymRoomMCP(Representative|Mutation)Oracle|StdioStreamHygiene)$$'
 	$(CARGO) test -p symroom-cli --locked --test mcp
 
 room-merge-read-fixtures-generate:
@@ -448,6 +449,13 @@ retrieval-chunks-fixtures-generate:
 retrieval-chunks-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalChunksFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_chunks
+
+retrieval-bm25-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalBM25Fixture$$'
+
+retrieval-bm25-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalBM25Fixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_bm25
 
 index-backup-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'

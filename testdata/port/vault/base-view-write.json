@@ -239,5 +239,204 @@
       "exists": false,
       "unix_mode": 0
     }
+  ],
+  "migration_cases": [
+    {
+      "id": "grouping-and-existing-view-id",
+      "legacy_json": "[\n  {\"id\":\"already-present\",\"name\":\"Already present\",\"source\":\"invoices/\"},\n  {\"id\":\"legacy-invoice-open\",\"name\":\"Open invoices\",\"source\":\"invoices/\",\"filters\":[{\"key\":\"status\",\"operator\":\"equals\",\"value\":\"open\"}]},\n  {\"id\":\"legacy-invoice-paid\",\"name\":\"Paid invoices\",\"source\":\"invoices/\"},\n  {\"id\":\"legacy-tag\",\"name\":\"Tagged invoices\",\"source\":\"tag:invoice\"},\n  {\"id\":\"legacy-notebook\",\"name\":\"Research\",\"source\":\"notebook:research\"},\n  {\"id\":\"legacy-all\",\"name\":\"All Notes\"}\n]",
+      "existing_bases": [
+        {
+          "id": "existing",
+          "path": "bases/existing.md",
+          "title": "Existing",
+          "created": "2026-01-02T03:04:05Z",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "already-present",
+              "name": "Old invoice view",
+              "filters": [],
+              "sorts": [],
+              "columns": [],
+              "source": "invoices/"
+            }
+          ]
+        }
+      ],
+      "expected_bases": [
+        {
+          "id": "all-notes",
+          "path": "bases/all-notes.md",
+          "title": "All Notes",
+          "created": "",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "legacy-all",
+              "name": "All Notes",
+              "filters": [],
+              "sorts": [],
+              "columns": []
+            }
+          ]
+        },
+        {
+          "id": "existing",
+          "path": "bases/existing.md",
+          "title": "Existing",
+          "created": "",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "already-present",
+              "name": "Old invoice view",
+              "filters": [],
+              "sorts": [],
+              "columns": [],
+              "source": "invoices/"
+            }
+          ]
+        },
+        {
+          "id": "tag-invoice",
+          "path": "bases/tag-invoice.md",
+          "title": "Invoice",
+          "created": "",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "legacy-tag",
+              "name": "Tagged invoices",
+              "filters": [],
+              "sorts": [],
+              "columns": [],
+              "source": "tag:invoice"
+            }
+          ]
+        },
+        {
+          "id": "invoices",
+          "path": "bases/invoices.md",
+          "title": "Invoices",
+          "created": "",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "legacy-invoice-open",
+              "name": "Open invoices",
+              "filters": [
+                {
+                  "key": "status",
+                  "operator": "equals",
+                  "value": "open"
+                }
+              ],
+              "sorts": [],
+              "columns": [],
+              "source": "invoices/"
+            },
+            {
+              "id": "legacy-invoice-paid",
+              "name": "Paid invoices",
+              "filters": [],
+              "sorts": [],
+              "columns": [],
+              "source": "invoices/"
+            }
+          ]
+        },
+        {
+          "id": "notebook-research",
+          "path": "bases/notebook-research.md",
+          "title": "Research",
+          "created": "",
+          "tags": [
+            "base"
+          ],
+          "views": [
+            {
+              "id": "legacy-notebook",
+              "name": "Research",
+              "filters": [],
+              "sorts": [],
+              "columns": [],
+              "source": "notebook:research"
+            }
+          ]
+        }
+      ],
+      "expected_created": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "legacy_exists": true,
+      "legacy_preserved": true,
+      "legacy_mode": 384,
+      "symdesk_mode": 448,
+      "bases_dir_exists": true,
+      "bases_dir_mode": 488,
+      "base_modes": [
+        384,
+        384,
+        384,
+        384,
+        384
+      ]
+    },
+    {
+      "id": "malformed-json",
+      "legacy_json": "[{not-json",
+      "existing_bases": [],
+      "expected_bases": [],
+      "expected_created": [],
+      "legacy_exists": true,
+      "legacy_preserved": true,
+      "legacy_mode": 384,
+      "symdesk_mode": 448,
+      "bases_dir_exists": false,
+      "bases_dir_mode": 0,
+      "base_modes": []
+    },
+    {
+      "id": "empty-json-array",
+      "legacy_json": "[]",
+      "existing_bases": [],
+      "expected_bases": [],
+      "expected_created": [],
+      "legacy_exists": true,
+      "legacy_preserved": true,
+      "legacy_mode": 384,
+      "symdesk_mode": 448,
+      "bases_dir_exists": false,
+      "bases_dir_mode": 0,
+      "base_modes": []
+    },
+    {
+      "id": "empty-file",
+      "legacy_json": "",
+      "existing_bases": [],
+      "expected_bases": [],
+      "expected_created": [],
+      "legacy_exists": true,
+      "legacy_preserved": true,
+      "legacy_mode": 384,
+      "symdesk_mode": 448,
+      "bases_dir_exists": false,
+      "bases_dir_mode": 0,
+      "base_modes": []
+    }
   ]
 }

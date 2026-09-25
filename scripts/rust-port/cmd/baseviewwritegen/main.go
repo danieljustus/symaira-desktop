@@ -180,12 +180,12 @@ func buildMigrationCases() ([]migrationCase, error) {
 	return cases, nil
 }
 
-func captureMigrationCase(c migrationCase) (migrationCase, error) {
+func captureMigrationCase(c migrationCase) (result migrationCase, err error) {
 	root, err := os.MkdirTemp("", "base-view-migration-oracle-")
 	if err != nil {
 		return migrationCase{}, err
 	}
-	defer os.RemoveAll(root) //nolint:errcheck // temporary oracle root
+	defer func() { err = errors.Join(err, os.RemoveAll(root)) }()
 	manager := dbviews.NewManager(root)
 	for i := range c.ExistingBases {
 		if err := manager.SaveBase(&c.ExistingBases[i]); err != nil {
@@ -205,10 +205,7 @@ func captureMigrationCase(c migrationCase) (migrationCase, error) {
 		return migrationCase{}, err
 	}
 	manager = dbviews.NewManager(root)
-	if err := manager.Delete("migration-probe"); !errors.Is(err, dbviews.ErrNotFound) {
-		return migrationCase{}, fmt.Errorf("delete migration probe: got %v", err)
-	}
-	intact, err := os.ReadFile(legacyPath)
+	intact, err := os.ReadFile(legacyPath) //nolint:gosec // fixed legacy file under a fresh temporary oracle root.
 	if err != nil {
 		return migrationCase{}, err
 	}
@@ -218,12 +215,18 @@ func captureMigrationCase(c migrationCase) (migrationCase, error) {
 	if err != nil {
 		return migrationCase{}, err
 	}
-	c.LegacyMode = uint32(legacyInfo.Mode().Perm())
+	if runtime.GOOS != "windows" && legacyInfo.Mode().Perm() != 0600 {
+		return migrationCase{}, fmt.Errorf("legacy mode = %#o, want 0600", legacyInfo.Mode().Perm())
+	}
+	c.LegacyMode = 0600
 	symdeskInfo, err := os.Stat(legacyDir)
 	if err != nil {
 		return migrationCase{}, err
 	}
-	c.SymdeskMode = uint32(symdeskInfo.Mode().Perm())
+	if runtime.GOOS != "windows" && symdeskInfo.Mode().Perm() != 0700 {
+		return migrationCase{}, fmt.Errorf("legacy directory mode = %#o, want 0700", symdeskInfo.Mode().Perm())
+	}
+	c.SymdeskMode = 0700
 	bases, err := manager.ListBases()
 	if err != nil {
 		return migrationCase{}, err
@@ -237,7 +240,10 @@ func captureMigrationCase(c migrationCase) (migrationCase, error) {
 	basesDir := filepath.Join(root, dbviews.Dir)
 	if info, err := os.Stat(basesDir); err == nil {
 		c.BasesDirExists = true
-		c.BasesDirMode = uint32(info.Mode().Perm())
+		if runtime.GOOS != "windows" && info.Mode().Perm() != 0750 {
+			return migrationCase{}, fmt.Errorf("bases directory mode = %#o, want 0750", info.Mode().Perm())
+		}
+		c.BasesDirMode = 0750
 	} else if !os.IsNotExist(err) {
 		return migrationCase{}, err
 	}
@@ -254,8 +260,23 @@ func captureMigrationCase(c migrationCase) (migrationCase, error) {
 			if err != nil {
 				return migrationCase{}, err
 			}
-			c.BaseModes = append(c.BaseModes, uint32(info.Mode().Perm()))
+			if runtime.GOOS != "windows" && info.Mode().Perm() != 0600 {
+				return migrationCase{}, fmt.Errorf("base file mode = %#o, want 0600", info.Mode().Perm())
+			}
+			c.BaseModes = append(c.BaseModes, 0600)
 		}
+	}
+	if c.ExistingBases == nil {
+		c.ExistingBases = []dbviews.Base{}
+	}
+	if c.ExpectedBases == nil {
+		c.ExpectedBases = []dbviews.Base{}
+	}
+	if c.ExpectedCreated == nil {
+		c.ExpectedCreated = []bool{}
+	}
+	if c.BaseModes == nil {
+		c.BaseModes = []uint32{}
 	}
 	return c, nil
 }

@@ -404,6 +404,10 @@ jobs:
         shell: bash
         run: make retrieval-chunks-differential
 
+      - name: Run native retrieval BM25 differential
+        shell: bash
+        run: make retrieval-bm25-differential
+
       - name: Run native index backup differential
         shell: bash
         run: make index-backup-differential

@@ -89,6 +89,13 @@ pub struct RetrievalSearchChunk {
     pub hash: String,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct RetrievalEmbeddingSpaceCount {
+    pub space: String,
+    pub count: i64,
+}
+
 /// Isolated provider-free retrieval storage using the Go database's schema.
 pub struct RetrievalDb {
     connection: Connection,
@@ -234,6 +241,54 @@ impl RetrievalDb {
         )?;
         let rows = statement.query_map([document_path], read_stored_chunk)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    pub fn count_pending_chunks(&self) -> Result<i64, SidecarError> {
+        self.connection
+            .query_row(
+                "SELECT COUNT(*) FROM chunks WHERE embedding_pending = 1",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(Into::into)
+    }
+
+    pub fn count_pending_chunks_for_document(
+        &self,
+        document_path: &str,
+    ) -> Result<i64, SidecarError> {
+        self.connection
+            .query_row(
+                "SELECT COUNT(*) FROM chunks WHERE document_path = ?1 AND embedding_pending = 1",
+                [document_path],
+                |row| row.get(0),
+            )
+            .map_err(Into::into)
+    }
+
+    pub fn detect_mixed_embedding_spaces(
+        &self,
+    ) -> Result<Vec<RetrievalEmbeddingSpaceCount>, SidecarError> {
+        let mut statement = self.connection.prepare(
+            "SELECT embedding_dim, embedding_model, COUNT(*) FROM chunks
+             WHERE embedding_pending = 0 GROUP BY embedding_dim, embedding_model",
+        )?;
+        let rows = statement.query_map([], |row| {
+            let dim: Option<i64> = row.get(0)?;
+            let model: Option<String> = row.get(1)?;
+            let count: i64 = row.get(2)?;
+            let dim = dim.map_or_else(|| "unknown".to_owned(), |value| value.to_string());
+            let model = model
+                .filter(|value| !value.is_empty())
+                .unwrap_or_else(|| "unknown".to_owned());
+            Ok(RetrievalEmbeddingSpaceCount {
+                space: format!("{dim}/{model}"),
+                count,
+            })
+        })?;
+        let mut spaces = rows.collect::<Result<Vec<_>, _>>()?;
+        spaces.sort_by(|left, right| left.space.cmp(&right.space));
+        Ok(spaces)
     }
 
     pub fn search_bm25(

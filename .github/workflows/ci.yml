@@ -172,7 +172,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
         with:
           name: dataset-purge-${{ matrix.os }}-${{ github.sha }}
-          path: testdata/port/dataset/purge.json
+          path: testdata/port/dataset/purge-windows.json
           retention-days: 1
 
   rust:

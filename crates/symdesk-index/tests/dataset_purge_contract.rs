@@ -12,6 +12,9 @@ use symdesk_index::{
 use symdesk_vault::{HistoryStore, Provenance, retention_state::retention_state};
 
 static COUNTER: AtomicU64 = AtomicU64::new(0);
+#[cfg(windows)]
+const FIXTURE: &str = include_str!("../../../testdata/port/dataset/purge-windows.json");
+#[cfg(not(windows))]
 const FIXTURE: &str = include_str!("../../../testdata/port/dataset/purge.json");
 
 struct Sandbox {

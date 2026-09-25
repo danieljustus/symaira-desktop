@@ -225,6 +225,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "setup": [
@@ -246,6 +247,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "setup": [
@@ -941,6 +943,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "compare_sidecar_layout": true,
@@ -997,6 +1000,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "compare_sidecar_layout": true,
@@ -1219,6 +1223,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "setup": [
@@ -1254,6 +1259,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "json_run_id",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "setup": [
@@ -1275,6 +1281,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "text_run_id",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "setup": [
@@ -1293,6 +1300,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "json_run_id",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "setup": [
@@ -1360,6 +1368,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "setup": [
@@ -1379,6 +1388,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "setup": [
@@ -1398,6 +1408,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "setup": [
@@ -1416,6 +1427,7 @@
    "working_dir": ".",
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
+   "windows_stdout_mode": "console_text",
    "stderr_mode": "bytes",
    "compare_files": false,
    "setup": [

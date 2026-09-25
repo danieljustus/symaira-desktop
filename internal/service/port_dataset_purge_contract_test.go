@@ -17,6 +17,13 @@ import (
 
 const datasetPurgeFixturePath = "../../testdata/port/dataset/purge.json"
 
+func datasetPurgePlatformFixturePath() string {
+	if runtime.GOOS == "windows" {
+		return "../../testdata/port/dataset/purge-windows.json"
+	}
+	return datasetPurgeFixturePath
+}
+
 type datasetPurgeFixture struct {
 	SchemaVersion int                               `json:"schema_version"`
 	Cases         []datasetPurgeFixtureCase         `json:"cases"`
@@ -177,7 +184,7 @@ func TestPortDatasetPurgeContract(t *testing.T) {
 	}
 	encoded = append(encoded, '\n')
 	if os.Getenv("PORT_GENERATE") == "1" {
-		path := filepath.Clean(datasetPurgeFixturePath)
+		path := filepath.Clean(datasetPurgePlatformFixturePath())
 		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
@@ -186,7 +193,7 @@ func TestPortDatasetPurgeContract(t *testing.T) {
 		}
 		return
 	}
-	current, err := os.ReadFile(datasetPurgeFixturePath) //nolint:gosec // fixed contract fixture
+	current, err := os.ReadFile(datasetPurgePlatformFixturePath()) //nolint:gosec // fixed contract fixture
 	if err != nil {
 		t.Fatalf("read dataset purge fixture: %v (run PORT_GENERATE=1 to create it)", err)
 	}

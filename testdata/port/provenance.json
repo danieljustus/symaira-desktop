@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
-  "generator_source_digest": "e204cf8d2b30e2b3db0a63cd74739f4296ea225e08feaa0e26bfb0c91e7bc2aa",
+  "generator_source_digest": "2f3287452bdbb36268ea2453eb5bc53b9ac7d0e31dac05ff9036bd752f79c131",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -31,6 +31,7 @@
     "testdata/port/core/textnorm.json": "654145d8b3f12bca1b352538d8a30613f1e5d664e20bb00851b4f41aad97b9aa",
     "testdata/port/dataset/cli.json": "dff5d7f12b4f3d508a6c678abfe1b977f31a2c0036bf4b3ee7d42429400c5975",
     "testdata/port/dataset/import.json": "f398ffd1578cbe61ae8f0859748efe0f99a3afa25a4e9256d2af1671c2596de3",
+    "testdata/port/dataset/purge-windows.json": "da816e5c5c445e6615ff37ff4dc91e1c01b9ad37685b517878a74cc8c9b551c6",
     "testdata/port/dataset/purge.json": "ce3ece0a99f4afa304f813d1d564570ddc35fcdeb68b63ecc971c666cda780b3",
     "testdata/port/dataset/service-sync.json": "8980265444d45296049fd008d28326148d6d69756209aa3a7d87b1e872480200",
     "testdata/port/dataset/sync.json": "1a013639437445cfd0ef961dca18fd304eabcb8ef749120edccceb01166fa5f3",

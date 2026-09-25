@@ -93,6 +93,7 @@ var fixturePaths = []string{
 	"testdata/port/dataset/service-sync.json",
 	"testdata/port/dataset/import.json",
 	"testdata/port/dataset/purge.json",
+	"testdata/port/dataset/purge-windows.json",
 	"testdata/port/dataset/cli.json",
 	"testdata/port/sidecar/contracts.json",
 	"testdata/port/sidecar/lifecycle.json",

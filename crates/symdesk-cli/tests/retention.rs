@@ -539,13 +539,26 @@ fn history_distinguishes_missing_empty_and_nonempty_logs() {
     );
 
     let output = run(&root, ["retention", "history"]);
+    #[cfg(not(windows))]
+    let expected_time = "2026-01-02 03:04:05".to_owned();
+    #[cfg(windows)]
+    let expected_time = {
+        let utc = time::OffsetDateTime::parse(
+            "2026-01-02T03:04:05Z",
+            &time::format_description::well_known::Rfc3339,
+        )
+        .expect("history timestamp");
+        let local =
+            utc.to_offset(time::UtcOffset::local_offset_at(utc).unwrap_or(time::UtcOffset::UTC));
+        let format = time::format_description::parse_borrowed::<2>(
+            "[year]-[month]-[day] [hour]:[minute]:[second]",
+        )
+        .expect("history timestamp format");
+        local.format(&format).expect("local history timestamp")
+    };
     assert_ok(
         &output,
-        format!(
-            "2026-01-02 03:04:05  rule<{}  doc<&.md → trash\n",
-            '\u{2028}'
-        )
-        .as_bytes(),
+        format!("{expected_time}  rule<{}  doc<&.md → trash\n", '\u{2028}').as_bytes(),
     );
 }
 

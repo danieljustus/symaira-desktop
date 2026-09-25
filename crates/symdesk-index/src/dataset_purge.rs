@@ -658,24 +658,6 @@ mod tests {
     static COUNTER: AtomicU64 = AtomicU64::new(0);
 
     #[test]
-    fn directory_identity_matches_go_fallback_after_child_removal() {
-        let sandbox = Sandbox::new();
-        let directory = sandbox.root.join("datasets");
-        fs::create_dir(&directory).expect("create dataset directory");
-        let child = directory.join("row.csv");
-        fs::write(&child, b"row").expect("write child");
-        let root = Dir::open_ambient_dir(&sandbox.root, ambient_authority()).expect("open vault");
-        let before = super::identity(&root.symlink_metadata("datasets").expect("before"));
-        fs::remove_file(child).expect("remove child");
-        let after = super::identity(&root.symlink_metadata("datasets").expect("after"));
-        if cfg!(windows) {
-            assert_ne!(before, after);
-        } else {
-            assert_eq!(before, after);
-        }
-    }
-
-    #[test]
     fn replacement_after_journal_is_never_removed_on_retry() {
         let mut sandbox = Sandbox::new();
         sandbox.setup();

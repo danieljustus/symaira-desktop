@@ -34,16 +34,36 @@ def run(binary, vault, args, label, env):
     return result.stdout
 
 
-def dataset_identities(output):
+def dataset_rows(output):
     try:
         document = json.loads(output)
         rows = document["rows"]
-        identities = {row["identity"] for row in rows}
+        projection = {
+            row["identity"]: {"event_id": row["event_id"], "amount": row["amount"]}
+            for row in rows
+        }
     except (json.JSONDecodeError, KeyError, TypeError) as error:
         raise RuntimeError(f"dataset query returned an invalid result: {error}") from error
-    if len(identities) != len(rows):
+    if not isinstance(rows, list) or len(projection) != len(rows):
         raise RuntimeError("dataset query returned duplicate identities")
-    return identities
+    if any(identity != values["event_id"] for identity, values in projection.items()):
+        raise RuntimeError("dataset query returned a mismatched event identity")
+    return projection
+
+
+def dataset_handle(output, expected_rows, expected_source):
+    try:
+        document = json.loads(output)
+        fields = (
+            document["slug"], document["path"], document["rows"],
+            document["identity_field"], document["provenance"]["source_name"],
+            document["provenance"]["source_sha256"],
+        )
+    except (json.JSONDecodeError, KeyError, TypeError) as error:
+        raise RuntimeError(f"dataset describe returned an invalid result: {error}") from error
+    want = ("rollback", "datasets/rollback.md", expected_rows, "event_id", expected_source, f"{expected_source}-v1")
+    if fields != want:
+        raise RuntimeError(f"dataset handle fields {fields!r}, want {want!r}")
 
 
 def source_revision(root, ref):
@@ -214,9 +234,11 @@ def main():
             "--provenance", '{"source_name":"rust-seed","source_sha256":"rust-seed-v1","imported_at":"2026-01-01T00:00:00Z"}',
         ], "Rust seed write", runtime_env)
         report["steps"].append({"name": "Rust seed write", "result": "PASS"})
-        go_seed = dataset_identities(run(go_binary, vault, query, "historical Go reads Rust dataset", runtime_env))
-        if go_seed != {"rust-seed"}:
-            raise RuntimeError(f"historical Go saw identities {sorted(go_seed)}, want ['rust-seed']")
+        go_seed = dataset_rows(run(go_binary, vault, query, "historical Go reads Rust dataset", runtime_env))
+        if go_seed != {"rust-seed": {"event_id": "rust-seed", "amount": 1}}:
+            raise RuntimeError(f"historical Go saw rows {go_seed!r}, want the Rust seed row")
+        dataset_handle(run(go_binary, vault, ["dataset", "describe", "rollback"],
+                           "historical Go reads Rust handle", runtime_env), 1, "rust-seed")
         report["steps"].append({"name": "historical Go reads Rust dataset", "result": "PASS"})
 
         run(go_binary, vault, [
@@ -226,6 +248,14 @@ def main():
             "--imported-at", "2026-01-02T00:00:00Z",
         ], "historical Go mutation", runtime_env)
         report["steps"].append({"name": "historical Go mutation", "result": "PASS"})
+        go_rows = dataset_rows(run(go_binary, vault, query, "historical Go reads mixed dataset", runtime_env))
+        want_go = {"rust-seed": {"event_id": "rust-seed", "amount": 1},
+                   "go-write": {"event_id": "go-write", "amount": 2}}
+        if go_rows != want_go:
+            raise RuntimeError(f"historical Go saw rows {go_rows!r}, want {want_go!r}")
+        dataset_handle(run(go_binary, vault, ["dataset", "describe", "rollback"],
+                           "historical Go reads updated handle", runtime_env), 2, "go-write")
+        report["steps"].append({"name": "historical Go reads updated rows and handle", "result": "PASS"})
 
         run(rust_binary, vault, [
             "dataset", "sync", "rollback", "--identity-field", "event_id",
@@ -233,10 +263,12 @@ def main():
             "--provenance", '{"source_name":"rust-return","source_sha256":"rust-return-v1","imported_at":"2026-01-03T00:00:00Z"}',
         ], "Rust reopen and mutation", runtime_env)
         report["steps"].append({"name": "Rust reopens and mutates Go dataset", "result": "PASS"})
-        got = dataset_identities(run(rust_binary, vault, query, "Rust reads mixed-version dataset", runtime_env))
-        want = {"rust-seed", "go-write", "rust-return"}
+        got = dataset_rows(run(rust_binary, vault, query, "Rust reads mixed-version dataset", runtime_env))
+        want = {**want_go, "rust-return": {"event_id": "rust-return", "amount": 3}}
         if got != want:
-            raise RuntimeError(f"Rust saw identities {sorted(got)}, want {sorted(want)}")
+            raise RuntimeError(f"Rust saw rows {got!r}, want {want!r}")
+        dataset_handle(run(rust_binary, vault, ["dataset", "describe", "rollback"],
+                           "Rust reads final handle", runtime_env), 3, "rust-return")
         report["steps"].append({"name": "Rust reads mixed-version dataset", "result": "PASS", "rows": len(got)})
         report["result"] = "PASS"
     except BaseException as error:

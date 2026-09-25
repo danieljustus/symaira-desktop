@@ -12,18 +12,28 @@ SPEC.loader.exec_module(dataset_rollback)
 
 
 class DatasetRollbackTests(unittest.TestCase):
-    def test_dataset_identities_reads_query_rows(self):
+    def test_dataset_rows_reads_full_query_projection(self):
         self.assertEqual(
-            dataset_rollback.dataset_identities(
-                '{"dataset":"rollback","rows":[{"identity":"rust-seed"},{"identity":"go-write"}]}'
+            dataset_rollback.dataset_rows(
+                '{"dataset":"rollback","rows":[{"identity":"rust-seed","event_id":"rust-seed","amount":1},{"identity":"go-write","event_id":"go-write","amount":2}]}'
             ),
-            {"rust-seed", "go-write"},
+            {"rust-seed": {"event_id": "rust-seed", "amount": 1},
+             "go-write": {"event_id": "go-write", "amount": 2}},
         )
 
-    def test_dataset_identities_rejects_invalid_results(self):
-        for output in ('{', '{"rows":[{}]}', '{"rows":null}'):
+    def test_dataset_rows_rejects_invalid_results(self):
+        for output in ('{', '{"rows":[{}]}', '{"rows":null}',
+                       '{"rows":[{"identity":"one","event_id":"different","amount":1}]}'):
             with self.subTest(output=output), self.assertRaises(RuntimeError):
-                dataset_rollback.dataset_identities(output)
+                dataset_rollback.dataset_rows(output)
+
+    def test_dataset_handle_checks_persisted_fields(self):
+        document = ('{"slug":"rollback","path":"datasets/rollback.md","rows":2,'
+                    '"identity_field":"event_id","provenance":'
+                    '{"source_name":"go-write","source_sha256":"go-write-v1"}}')
+        dataset_rollback.dataset_handle(document, 2, "go-write")
+        with self.assertRaisesRegex(RuntimeError, "dataset handle fields"):
+            dataset_rollback.dataset_handle(document, 3, "go-write")
 
     def test_source_bound_report_requires_source_and_binary_sha256(self):
         report = {

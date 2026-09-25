@@ -409,11 +409,22 @@ fn render_base(base: &Base) -> Result<String, BaseWriteError> {
     };
     let serialized = noyalib::to_value(&frontmatter)
         .map_err(|error| BaseWriteError::Serialize(error.to_string()))?;
-    let noyalib::Value::Mapping(fields) = serialized else {
+    let noyalib::Value::Mapping(mut fields) = serialized else {
         return Err(BaseWriteError::Serialize(
             "base frontmatter is not a mapping".to_owned(),
         ));
     };
+    if let Some(noyalib::Value::Sequence(views)) = fields.get_mut("views") {
+        for view in views {
+            if let noyalib::Value::Mapping(view) = view {
+                for key in ["filters", "sorts", "columns"] {
+                    if matches!(view.get(key), Some(noyalib::Value::Sequence(items)) if items.is_empty()) {
+                        view.remove(key);
+                    }
+                }
+            }
+        }
+    }
     const FIELD_ORDER: &[&str] = &[
         "type",
         "title",

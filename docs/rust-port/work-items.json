@@ -219,6 +219,7 @@
       ],
       "acceptance": [
         "make contacts-dataset-differential",
+        "make dataset-aggregate-differential",
         "cargo nextest run -p symdesk-index -p symdesk-vault"
       ]
     },

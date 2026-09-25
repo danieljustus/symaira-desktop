@@ -38,6 +38,7 @@
 .PHONY: retrieval-bm25-fixtures-generate retrieval-bm25-differential
 .PHONY: retrieval-embedding-state-fixtures-generate retrieval-embedding-state-differential
 .PHONY: render-ir-fixtures-generate render-ir-differential
+.PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -472,6 +473,13 @@ render-ir-fixtures-generate:
 render-ir-differential:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/renderirgen --check
 	$(CARGO) test -p symdesk-render --locked
+
+dataset-aggregate-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'
+
+dataset-aggregate-differential:
+	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'
+	$(CARGO) test -p symdesk-index --locked --test dataset_aggregate_contract
 
 index-backup-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'

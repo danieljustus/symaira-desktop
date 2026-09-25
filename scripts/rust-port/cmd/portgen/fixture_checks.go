@@ -100,6 +100,7 @@ var fixtureGeneratorTargets = []fixtureCheckTarget{
 	{"notebook source writes", []string{"run", "./scripts/rust-port/cmd/notebookwritegen", "--check"}, []string{"testdata/port/vault/notebook-write.json"}, false},
 	{"base and view writes", []string{"run", "./scripts/rust-port/cmd/baseviewwritegen", "--check"}, []string{"testdata/port/vault/base-view-write.json"}, false},
 	{"retrieval embedding state", []string{"test", "-count=1", "./internal/retrieval/internal/db", "-run", "^TestRetrievalEmbeddingStateFixture$"}, []string{"testdata/port/retrieval/embedding-state.json"}, false},
+	{"dataset aggregate", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetQueryAggregateContract$"}, []string{"testdata/port/dataset/query-aggregate.json"}, false},
 	{"render JSON IR", []string{"run", "./scripts/rust-port/cmd/renderirgen", "--check"}, []string{"testdata/port/render/json-ir.json"}, false},
 	{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen", "--check"}, []string{"testdata/port/vault/typed.json"}, false},
 	{"representative corpus", []string{"run", "./scripts/rust-port/cmd/representativegen", "--check"}, []string{"testdata/port/http/representative.json", "testdata/port/representative/cases.json"}, false},

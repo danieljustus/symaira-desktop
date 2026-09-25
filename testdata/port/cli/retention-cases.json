@@ -226,7 +226,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "setup": [
     {
@@ -248,7 +248,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "setup": [
     {
@@ -944,7 +944,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "compare_sidecar_layout": true,
    "id": "retention-regression-duplicate-items-bad-then-empty",
@@ -1001,7 +1001,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "compare_sidecar_layout": true,
    "id": "retention-regression-duplicate-item-path-bad-then-good",
@@ -1224,7 +1224,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "setup": [
     {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"batch\",\"created\":\"2026-01-01T00:00:00Z\",\"status\":\"pending\"}", "mode": 420}
@@ -1260,7 +1260,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "json_run_id",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "setup": [
     {"path": ".symdesk/rules.yaml", "content": "name: expired-open\nselector:\n  document_type: memo\n  status: open\nperiod_days: 30\naction: flag_review\n", "mode": 420},
@@ -1282,7 +1282,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "text_run_id",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "setup": [
     {"path": ".symdesk/rules.yaml", "content": "name: expired-open\nselector:\n  document_type: memo\n  status: open\nperiod_days: 30\naction: flag_review\n", "mode": 420},
@@ -1301,7 +1301,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "json_run_id",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "setup": [
     {"path": ".symdesk/rules.yaml", "content": "name: empty\nperiod_days: 30\naction: flag_review\n", "mode": 420}
@@ -1369,7 +1369,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "setup": [
     {"path": "doc.md", "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n", "mode": 420},
@@ -1389,7 +1389,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "setup": [
     {"path": "doc.md", "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n", "mode": 420},
@@ -1409,7 +1409,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "setup": [
     {"path": "doc.md", "content": "---\ntitle: Retention Doc\ndocument_date: \"2024-01-01\"\nstatus: open\n---\nBody\n", "mode": 420},
@@ -1428,7 +1428,7 @@
    "timeout_ms": 10000,
    "stdout_mode": "bytes",
    "windows_stdout_mode": "console_text",
-   "stderr_mode": "bytes",
+   "stderr_mode": "console_text",
    "compare_files": false,
    "setup": [
     {"path": ".symdesk/retention/ret-safe.json", "content": "{\"run_id\":\"ret-safe\",\"rule_name\":\"rule\",\"created\":\"2026-01-01T00:00:00Z\",\"items\":[{\"path\":\"missing.md\",\"title\":\"Retention Doc\",\"reference_date\":\"2024-01-01\",\"expires_at\":\"2024-01-31\",\"action\":\"trash\",\"rule_name\":\"rule\",\"status\":\"action_completed\"}],\"status\":\"pending\"}", "mode": 420}

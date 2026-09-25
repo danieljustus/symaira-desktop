@@ -226,15 +226,11 @@ def main():
         if os.name == "nt":
             # Git for Windows rejects the frozen tag's Notion test fixture filenames.
             archive = temp / "go-source.tar"
-            run([git, "archive", "--format=tar", "--output", archive, go_revision], cwd=root, env=build_env)
+            run([git, "archive", "--format=tar", "--output", archive, go_revision, ".",
+                 ":(exclude)internal/ingest/internal/notionimport/testdata/fixture/**"], cwd=root, env=build_env)
             go_tree.mkdir()
             with tarfile.open(archive) as source:
-                source.extractall(
-                    go_tree,
-                    members=(member for member in source if not member.name.startswith(
-                        "internal/ingest/internal/notionimport/testdata/fixture/")),
-                    filter="data",
-                )
+                source.extractall(go_tree, filter="data")
         else:
             run([git, "worktree", "add", "--detach", go_tree, go_revision], cwd=root, env=build_env)
         rust_bin, go_bin = temp / "symroom-rust", temp / "symroom-go"

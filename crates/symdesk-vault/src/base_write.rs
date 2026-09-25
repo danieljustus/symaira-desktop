@@ -412,9 +412,7 @@ fn render_base(base: &Base) -> Result<String, BaseWriteError> {
     };
     let frontmatter = noyalib::to_string_with_config(
         &frontmatter,
-        &noyalib::SerializerConfig::new()
-            .indent(4)
-            .compact_list_indent(true),
+        &noyalib::SerializerConfig::new().indent(4),
     )
     .map_err(|error| BaseWriteError::Serialize(error.to_string()))?;
     let created = crate::mutations::render_go_yaml_string(&base.created, 4, false)

@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
+	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/notebook"
 )
@@ -223,6 +225,9 @@ func buildCreation(caseData creation) (result creation, resultErr error) {
 	if err != nil {
 		return creation{}, err
 	}
+	if _, err := time.Parse(time.RFC3339, nb.Created); err != nil {
+		return creation{}, fmt.Errorf("invalid Go creation time: %w", err)
+	}
 	path := filepath.Join(vaultRoot, filepath.FromSlash(nb.Path))
 	written, err := os.ReadFile(path) // #nosec G304 -- notebook path is returned by the Go production API inside a fresh vault root.
 	if err != nil {
@@ -236,10 +241,17 @@ func buildCreation(caseData creation) (result creation, resultErr error) {
 	if err != nil {
 		return creation{}, err
 	}
+	if runtime.GOOS != "windows" && (info.Mode().Perm() != 0600 || dirInfo.Mode().Perm() != 0750) {
+		return creation{}, fmt.Errorf("Go notebook modes: file %#o, directory %#o", info.Mode().Perm(), dirInfo.Mode().Perm())
+	}
+	if strings.Count(string(written), nb.Created) != 1 {
+		return creation{}, fmt.Errorf("Go notebook creation timestamp missing or duplicated")
+	}
 	caseData.Output = nb
-	caseData.Markdown = string(written)
-	caseData.UnixMode = uint32(info.Mode().Perm())
-	caseData.NotebookDirMode = uint32(dirInfo.Mode().Perm())
+	caseData.Markdown = strings.Replace(string(written), nb.Created, "2026-01-02T03:04:05Z", 1)
+	caseData.Output.Created = "2026-01-02T03:04:05Z"
+	caseData.UnixMode = 0600
+	caseData.NotebookDirMode = 0750
 	return caseData, nil
 }
 
@@ -262,9 +274,12 @@ func buildRejected() (result []rejected, resultErr error) {
 	if pathErr == nil {
 		return nil, fmt.Errorf("missing vault root unexpectedly succeeded")
 	}
+	if !strings.HasPrefix(pathErr.Error(), "cannot resolve vault root:") {
+		return nil, fmt.Errorf("unexpected missing vault root error: %w", pathErr)
+	}
 	return []rejected{
 		{Name: "empty_title", Operation: "new", Title: "  ", Error: titleErr.Error()},
-		{Name: "missing_vault_root", Operation: "new", Title: "Valid", Root: "missing", Error: pathErr.Error()},
+		{Name: "missing_vault_root", Operation: "new", Title: "Valid", Root: "missing", Error: "cannot resolve vault root"},
 	}, nil
 }
 

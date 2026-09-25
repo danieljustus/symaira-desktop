@@ -317,7 +317,10 @@ fn create_dir_all_0750(path: &Path) -> Result<(), std::io::Error> {
     if let Some(parent) = path.parent() {
         create_dir_all_0750(parent)?;
     }
+    #[cfg(unix)]
     let mut builder = fs::DirBuilder::new();
+    #[cfg(not(unix))]
+    let builder = fs::DirBuilder::new();
     #[cfg(unix)]
     {
         use std::os::unix::fs::DirBuilderExt;

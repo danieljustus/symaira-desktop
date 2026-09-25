@@ -4,6 +4,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -68,12 +69,12 @@ func main() {
 	fmt.Printf("PASS base/view write fixture generated (%d steps)\n", len(generated.Steps))
 }
 
-func build() (fixture, error) {
+func build() (result fixture, err error) {
 	root, err := os.MkdirTemp("", "base-view-write-oracle-")
 	if err != nil {
 		return fixture{}, err
 	}
-	defer os.RemoveAll(root)
+	defer func() { err = errors.Join(err, os.RemoveAll(root)) }()
 	manager := dbviews.NewManager(root)
 	base := &dbviews.Base{
 		ID: "invoices", Path: "bases/invoices.md", Title: "Invoices",

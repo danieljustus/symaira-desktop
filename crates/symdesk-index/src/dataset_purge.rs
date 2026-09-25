@@ -404,9 +404,15 @@ fn remove_recorded(root: &Dir, record: &PathRecord) -> Result<(), DatasetPurgeEr
             "dir" => metadata.is_dir(),
             _ => false,
         };
-    if !valid_type || identity(&metadata) != record.identity {
+    if !valid_type {
         return Err(DatasetPurgeError::Contract(format!(
-            "purge path {} was replaced or changed type",
+            "purge path {} changed type",
+            record.path
+        )));
+    }
+    if identity(&metadata) != record.identity {
+        return Err(DatasetPurgeError::Contract(format!(
+            "purge path {} was replaced",
             record.path
         )));
     }
@@ -500,12 +506,6 @@ fn identity(meta: &cap_std::fs::Metadata) -> String {
     }
     #[cfg(not(unix))]
     {
-        #[cfg(windows)]
-        if meta.is_dir() {
-            use cap_std::fs::MetadataExt;
-            // Child removals change a directory's size/write time, not its creation time.
-            return format!("dir:{}", meta.creation_time());
-        }
         format!(
             "{}:{}:{}",
             meta.len(),
@@ -658,7 +658,7 @@ mod tests {
     static COUNTER: AtomicU64 = AtomicU64::new(0);
 
     #[test]
-    fn directory_identity_survives_child_removal() {
+    fn directory_identity_matches_go_fallback_after_child_removal() {
         let sandbox = Sandbox::new();
         let directory = sandbox.root.join("datasets");
         fs::create_dir(&directory).expect("create dataset directory");
@@ -668,7 +668,11 @@ mod tests {
         let before = super::identity(&root.symlink_metadata("datasets").expect("before"));
         fs::remove_file(child).expect("remove child");
         let after = super::identity(&root.symlink_metadata("datasets").expect("after"));
-        assert_eq!(before, after);
+        if cfg!(windows) {
+            assert_ne!(before, after);
+        } else {
+            assert_eq!(before, after);
+        }
     }
 
     #[test]

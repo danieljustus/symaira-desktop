@@ -72,7 +72,10 @@ fn history_tasks_matches_go_process_contract() {
             "{} exit",
             case.name
         );
+        #[cfg(windows)]
         let mut stdout = String::from_utf8(output.stdout).expect("UTF-8 stdout");
+        #[cfg(not(windows))]
+        let stdout = String::from_utf8(output.stdout).expect("UTF-8 stdout");
         #[cfg(windows)]
         if !case.json {
             let format = time::format_description::parse_borrowed::<2>(

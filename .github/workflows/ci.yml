@@ -162,19 +162,6 @@ jobs:
           go build -ldflags "-X github.com/danieljustus/symaira-desktop/internal/room/version.Version=0.12.2" -o bin/symroom.exe ./cmd/symroom
           go run ./scripts/rust-port/cmd/diffharness --allow-same-binary --symdesk-left bin/symdesk.exe --symdesk-right bin/symdesk.exe --symroom-left bin/symroom.exe --symroom-right bin/symroom.exe --cases testdata/port/cli/cases.json
 
-      - name: Capture Windows dataset purge oracle after fixture failure
-        if: ${{ failure() && contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        shell: bash
-        run: PORT_GENERATE=1 go test -count=1 ./internal/service -run '^TestPortDatasetPurgeContract$'
-
-      - name: Retain Windows dataset purge oracle for diagnosis
-        if: ${{ failure() && contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.6.2
-        with:
-          name: dataset-purge-${{ matrix.os }}-${{ github.sha }}
-          path: testdata/port/dataset/purge-windows.json
-          retention-days: 1
-
   rust:
     # Full Rust gates are advisory; keep the required PR path focused on Go.
     if: github.event_name != 'pull_request'

@@ -316,6 +316,13 @@ fn replay_proposals(fixture: &Fixture) {
         missing.error, "",
         "load-missing-proposal: no portable message"
     );
+    #[cfg(windows)]
+    assert!(
+        error
+            .to_string()
+            .ends_with("The system cannot find the file specified."),
+        "{error}"
+    );
 
     #[cfg(windows)]
     {

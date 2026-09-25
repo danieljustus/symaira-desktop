@@ -421,7 +421,7 @@ fn reject_reports_missing_proposals_with_the_go_error_envelope() {
         format!(
             "open {}: {}",
             proposal_path.display(),
-            missing_file_message()
+            missing_path_message()
         )
     );
 }
@@ -510,7 +510,7 @@ fn reject_and_diff_match_go_argument_and_run_id_errors() {
 
     let output = run(&root, ["retention", "diff", "safe-missing"]);
     let path = root.proposal_dir().join("safe-missing.json");
-    let expected = format!("open {}: {}\n", path.display(), missing_file_message());
+    let expected = format!("open {}: {}\n", path.display(), missing_path_message());
     assert_error(&output, b"", expected.as_bytes());
 }
 
@@ -701,9 +701,9 @@ fn eval_fails_closed_without_staging_when_authoritative_state_is_invalid() {
     );
 }
 
-fn missing_file_message() -> &'static str {
+fn missing_path_message() -> &'static str {
     if cfg!(windows) {
-        "The system cannot find the file specified."
+        "The system cannot find the path specified."
     } else {
         "no such file or directory"
     }

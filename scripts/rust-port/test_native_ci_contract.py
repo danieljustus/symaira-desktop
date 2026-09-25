@@ -26,6 +26,7 @@ STEPS = {
     "Verify frozen oracle and differential harness on Windows": 5,
     "Check, lint, and test Rust workspace": 8,
     "Run native SymRoom rollback handoff": 1,
+    "Run native dataset rollback handoff": 2,
     "Run native Windows representative CLI HTTP and MCP parity": 7,
     "Run native Windows sidecar round-trip suite": 1,
     "Run native Windows version differential": 4,
@@ -123,6 +124,7 @@ class NativeStepControl:
         self.env["PATH"] = str(stub_dir) + os.pathsep + self.env["PATH"]
         self.env["NATIVE_CONTROL_LOG"] = str(self.log)
         self.env["SYMROOM_ROLLBACK_REPORT"] = str(self.root / "symroom-rollback.json")
+        self.env["DATASET_ROLLBACK_REPORT"] = str(self.root / "dataset-rollback.json")
 
     def run(self, body, fail_at=0):
         self.log.unlink(missing_ok=True)

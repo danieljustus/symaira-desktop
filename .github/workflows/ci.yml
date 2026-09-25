@@ -311,6 +311,15 @@ jobs:
           set -euo pipefail
           python3 scripts/rust-port/room-rollback.py --go-ref v0.12.2 --rust-ref HEAD --report "$SYMROOM_ROLLBACK_REPORT" >/dev/null
 
+      - name: Run native dataset rollback handoff
+        shell: bash
+        env:
+          DATASET_ROLLBACK_REPORT: ${{ runner.temp }}/dataset-rollback-${{ matrix.os }}.json
+        run: |
+          set -euo pipefail
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/test_dataset_rollback.py
+          PYTHONDONTWRITEBYTECODE=1 python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD --report "$DATASET_ROLLBACK_REPORT" >/dev/null
+
       - name: Run native room merge read differential
         shell: bash
         run: make room-merge-read-differential

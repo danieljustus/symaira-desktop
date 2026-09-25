@@ -305,6 +305,7 @@ fn run_mutation_symroom(
         .args(args)
         .env_clear()
         .env("HOME", home)
+        .env("USERPROFILE", home)
         .env("XDG_DATA_HOME", data_home)
         .env("TMPDIR", temp)
         .env("TZ", "UTC")

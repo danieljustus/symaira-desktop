@@ -6,7 +6,12 @@ use std::{
     io::{self, BufRead, Write},
     path::{Path, PathBuf},
     process::ExitCode,
-    sync::atomic::{AtomicU64, Ordering},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicU64, Ordering},
+        mpsc,
+    },
+    thread,
     time::Duration,
 };
 
@@ -16,6 +21,7 @@ use sha2::{Digest, Sha256};
 
 const INSTRUCTIONS: &str = "Use room_* tools to inspect and record the signed room work record. There is no approval-granting tool in this server.";
 const MCP_USAGE: &str = "Usage of mcp:\n  -artifact-root string\n    \tArtifact root directory\n  -identity string\n    \tSigning identity name\n  -room string\n    \tRoom directory (default \".\")\n";
+const MCP_WORKERS: usize = 4;
 
 pub fn run_cli(args: &[OsString]) -> ExitCode {
     let mut room = PathBuf::from(".");
@@ -74,7 +80,7 @@ pub fn run_cli(args: &[OsString]) -> ExitCode {
     };
     match serve_io_with_identity(
         stdin.lock(),
-        stdout.lock(),
+        stdout,
         &room,
         &artifact_root,
         identity.as_ref(),
@@ -100,48 +106,94 @@ fn tools() -> Value {
     ])
 }
 
-pub fn serve_io_with_identity<R: BufRead, W: Write>(
+pub fn serve_io_with_identity<R: BufRead, W: Write + Send>(
     mut input: R,
-    mut output: W,
+    output: W,
     room_dir: &Path,
     artifact_root: &Path,
     identity: Option<&symroom_core::identity::Identity>,
 ) -> io::Result<()> {
-    loop {
-        let Some(body) = read_frame(&mut input)? else {
-            return Ok(());
-        };
-        let request: Value = match serde_json::from_slice(&body) {
-            Ok(value) => value,
-            Err(error) => {
-                write_response(
-                    &mut output,
-                    json!({"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":format!("Parse error: {error}")}}),
-                )?;
+    let output = Arc::new(Mutex::new(output));
+    let (tasks, receiver) = mpsc::channel::<(Value, Value)>();
+    let receiver = Arc::new(Mutex::new(receiver));
+    let (errors, worker_errors) = mpsc::channel();
+
+    thread::scope(|scope| {
+        for _ in 0..MCP_WORKERS {
+            let receiver = Arc::clone(&receiver);
+            let output = Arc::clone(&output);
+            let errors = errors.clone();
+            scope.spawn(move || {
+                loop {
+                    let task = receiver.lock().expect("MCP task receiver poisoned").recv();
+                    let Ok((request, id)) = task else {
+                        break;
+                    };
+                    let response = call(&request, id, room_dir, artifact_root, identity);
+                    let result = output
+                        .lock()
+                        .map_err(|_| io::Error::other("MCP output lock poisoned"))
+                        .and_then(|mut output| write_response(&mut output, response));
+                    if let Err(error) = result {
+                        let _ = errors.send(error);
+                    }
+                }
+            });
+        }
+        drop(errors);
+
+        loop {
+            if let Ok(error) = worker_errors.try_recv() {
+                return Err(error);
+            }
+            let Some(body) = read_frame(&mut input)? else {
+                drop(tasks);
+                return worker_errors.recv().map_or(Ok(()), Err);
+            };
+            let request: Value = match serde_json::from_slice(&body) {
+                Ok(value) => value,
+                Err(error) => {
+                    write_shared_response(
+                        &output,
+                        json!({"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":format!("Parse error: {error}")}}),
+                    )?;
+                    continue;
+                }
+            };
+            if request.get("id").is_none() {
                 continue;
             }
-        };
-        if request.get("id").is_none() {
-            continue;
+            let id = request["id"].clone();
+            let method = request
+                .get("method")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            if method == "tools/call" {
+                tasks
+                    .send((request, id))
+                    .map_err(|_| io::Error::other("MCP workers stopped"))?;
+                continue;
+            }
+            let response = match method {
+                "initialize" => {
+                    json!({"jsonrpc":"2.0","id":id,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"symroom","version":"0.1.0"},"instructions":INSTRUCTIONS}})
+                }
+                "ping" => json!({"jsonrpc":"2.0","id":id,"result":{}}),
+                "tools/list" => json!({"jsonrpc":"2.0","id":id,"result":{"tools":tools()}}),
+                method => {
+                    json!({"jsonrpc":"2.0","id":id,"error":{"code":-32601,"message":format!("Method not found: {method}")}})
+                }
+            };
+            write_shared_response(&output, response)?;
         }
-        let id = request["id"].clone();
-        let response = match request
-            .get("method")
-            .and_then(Value::as_str)
-            .unwrap_or_default()
-        {
-            "initialize" => {
-                json!({"jsonrpc":"2.0","id":id,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"symroom","version":"0.1.0"},"instructions":INSTRUCTIONS}})
-            }
-            "ping" => json!({"jsonrpc":"2.0","id":id,"result":{}}),
-            "tools/list" => json!({"jsonrpc":"2.0","id":id,"result":{"tools":tools()}}),
-            "tools/call" => call(&request, id, room_dir, artifact_root, identity),
-            method => {
-                json!({"jsonrpc":"2.0","id":id,"error":{"code":-32601,"message":format!("Method not found: {method}")}})
-            }
-        };
-        write_response(&mut output, response)?;
-    }
+    })
+}
+
+fn write_shared_response<W: Write>(output: &Mutex<W>, response: Value) -> io::Result<()> {
+    let mut output = output
+        .lock()
+        .map_err(|_| io::Error::other("MCP output lock poisoned"))?;
+    write_response(&mut output, response)
 }
 
 fn call(

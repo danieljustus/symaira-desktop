@@ -261,10 +261,16 @@ fn mcp_subcommand_serves_framed_tool_inventory() {
 #[test]
 fn stdio_malformed_oversized_interleaved_and_eof_frames_are_clean() {
     let room = temporary_room("stdio-hygiene");
-    let ping = json!({"jsonrpc":"2.0","id":2,"method":"ping"});
-    let list = json!({"jsonrpc":"2.0","id":3,"method":"tools/list"});
+    let wait = json!({
+        "jsonrpc":"2.0",
+        "id":2,
+        "method":"tools/call",
+        "params":{"name":"room_run_wait","arguments":{"run_id":"run_missing","timeout_seconds":1}}
+    });
+    let ping = json!({"jsonrpc":"2.0","id":3,"method":"ping"});
+    let list = json!({"jsonrpc":"2.0","id":4,"method":"tools/list"});
     let mut input = b"Content-Length: 5\r\n\r\n{bad}".to_vec();
-    for request in [ping, list] {
+    for request in [wait, ping, list] {
         let body = serde_json::to_vec(&request).expect("request JSON");
         input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
         input.extend_from_slice(&body);
@@ -280,11 +286,16 @@ fn stdio_malformed_oversized_interleaved_and_eof_frames_are_clean() {
     )
     .expect("malformed request is reported and stream continues through EOF");
     let frames = decode_frames(&output);
-    assert_eq!(frames.len(), 3);
+    assert_eq!(frames.len(), 4);
     assert_eq!(frames[0]["id"], Value::Null);
     assert_eq!(frames[0]["error"]["code"], -32700);
-    assert_eq!(frames[1]["id"], 2);
-    assert_eq!(frames[2]["id"], 3);
+    assert_eq!(
+        frames[1..]
+            .iter()
+            .map(|response| response["id"].as_i64().unwrap())
+            .collect::<Vec<_>>(),
+        [3, 4, 2]
+    );
     assert!(
         String::from_utf8(output)
             .unwrap()

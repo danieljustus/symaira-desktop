@@ -246,7 +246,7 @@ fn base_and_view_file_writes_match_go() {
                     .expect("parse migrated base")
             })
             .collect::<Vec<_>>();
-        actual.sort_by(|left, right| left.title.to_lowercase().cmp(&right.title.to_lowercase()));
+        actual.sort_by_key(|base| base.title.to_lowercase());
         for (base, has_created) in actual.iter_mut().zip(&case.expected_created) {
             assert!(
                 !base.created.is_empty() == *has_created,

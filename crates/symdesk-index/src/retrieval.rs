@@ -454,12 +454,13 @@ fn encode_embedding(values: &[f32]) -> Vec<u8> {
 }
 
 fn decode_embedding(bytes: &[u8]) -> Vec<f32> {
-    if bytes.len() % 4 != 0 {
+    let (chunks, remainder) = bytes.as_chunks::<4>();
+    if !remainder.is_empty() {
         return Vec::new();
     }
-    bytes
-        .chunks_exact(4)
-        .map(|value| f32::from_le_bytes(value.try_into().expect("four-byte float")))
+    chunks
+        .iter()
+        .map(|value| f32::from_le_bytes(*value))
         .collect()
 }
 
@@ -686,10 +687,10 @@ fn sha1(input: &[u8]) -> [u8; 20] {
         0x10325476u32,
         0xc3d2e1f0u32,
     );
-    for block in message.chunks_exact(64) {
+    for block in message.as_chunks::<64>().0 {
         let mut words = [0u32; 80];
-        for (i, bytes) in block.chunks_exact(4).enumerate() {
-            words[i] = u32::from_be_bytes(bytes.try_into().expect("four-byte word"));
+        for (i, bytes) in block.as_chunks::<4>().0.iter().enumerate() {
+            words[i] = u32::from_be_bytes(*bytes);
         }
         for i in 16..80 {
             words[i] = (words[i - 3] ^ words[i - 8] ^ words[i - 14] ^ words[i - 16]).rotate_left(1);
@@ -717,7 +718,12 @@ fn sha1(input: &[u8]) -> [u8; 20] {
         h4 = h4.wrapping_add(e);
     }
     let mut output = [0; 20];
-    for (chunk, word) in output.chunks_exact_mut(4).zip([h0, h1, h2, h3, h4]) {
+    for (chunk, word) in output
+        .as_chunks_mut::<4>()
+        .0
+        .iter_mut()
+        .zip([h0, h1, h2, h3, h4])
+    {
         chunk.copy_from_slice(&word.to_be_bytes());
     }
     output

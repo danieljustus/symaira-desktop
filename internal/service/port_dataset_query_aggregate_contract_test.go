@@ -82,7 +82,7 @@ func buildPortDatasetQueryAggregateFixture(t *testing.T) (portDatasetQueryAggreg
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	svc := New(root, db)
 	if _, err := svc.DatasetSync(DatasetSyncOptions{
 		Slug: "orders", Title: "Orders", IdentityField: "id",

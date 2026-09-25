@@ -199,18 +199,19 @@ func buildSnapshotCases() ([]snapshotCase, error) {
 		var base *dbviews.Base
 		var view *dbviews.View
 		reference := "all"
-		if operation == "create_base" {
+		switch operation {
+		case "create_base":
 			created := initial
 			base = &created
-		} else if operation == "save_base" {
+		case "save_base":
 			updated := initial
 			updated.Title = "Invoices Updated"
 			base = &updated
-		} else if operation == "save_view" {
+		case "save_view":
 			updated := initial.Views[0]
 			updated.Name = "Open invoices"
 			view = &updated
-		} else if operation == "delete_base" {
+		case "delete_base":
 			reference = "invoices"
 		}
 		caseResult := snapshotCase{ID: operation, Operation: operation, ExistingBase: func() *dbviews.Base {

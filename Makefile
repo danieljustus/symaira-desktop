@@ -37,6 +37,7 @@
 .PHONY: retrieval-chunks-fixtures-generate retrieval-chunks-differential
 .PHONY: retrieval-bm25-fixtures-generate retrieval-bm25-differential
 .PHONY: retrieval-embedding-state-fixtures-generate retrieval-embedding-state-differential
+.PHONY: retrieval-vector-fixtures-generate retrieval-vector-differential
 .PHONY: render-ir-fixtures-generate render-ir-differential
 .PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
@@ -466,6 +467,13 @@ retrieval-embedding-state-fixtures-generate:
 retrieval-embedding-state-differential:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_embedding_state
+
+retrieval-vector-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
+
+retrieval-vector-differential:
+	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_vector
 
 render-ir-fixtures-generate:
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/renderirgen

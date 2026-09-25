@@ -412,6 +412,10 @@ jobs:
         shell: bash
         run: make retrieval-embedding-state-differential
 
+      - name: Run native retrieval vector fallback differential
+        shell: bash
+        run: make retrieval-vector-differential
+
       - name: Run native render JSON IR differential
         shell: bash
         run: make render-ir-differential

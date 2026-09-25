@@ -25,6 +25,7 @@ struct Step {
     source: String,
     output: Value,
     markdown: String,
+    #[cfg_attr(not(unix), allow(dead_code))]
     unix_mode: u32,
 }
 
@@ -38,7 +39,9 @@ struct Creation {
     existing: Option<Vec<String>>,
     output: Value,
     markdown: String,
+    #[cfg_attr(not(unix), allow(dead_code))]
     unix_mode: u32,
+    #[cfg_attr(not(unix), allow(dead_code))]
     notebooks_dir_mode: u32,
 }
 

@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -33,6 +34,7 @@ type step struct {
 
 func main() {
 	output := flag.String("output", "testdata/port/vault/notebook-write.json", "fixture output path")
+	check := flag.Bool("check", false, "compare fixture without writing")
 	flag.Parse()
 	root, err := repoRoot()
 	if err != nil {
@@ -48,6 +50,17 @@ func main() {
 	}
 	data = append(data, '\n')
 	path := filepath.Join(root, filepath.FromSlash(*output))
+	if *check {
+		current, err := os.ReadFile(path)
+		if err != nil {
+			fatal("read fixture: %v", err)
+		}
+		if !bytes.Equal(current, data) {
+			fatal("notebook write fixture drift; regenerate from Go production API")
+		}
+		fmt.Printf("PASS notebook write fixture (%d steps)\n", len(value.Steps))
+		return
+	}
 	if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
 		fatal("create fixture directory: %v", err)
 	}
@@ -101,12 +114,15 @@ func build(root string) (fixture, error) {
 		if err != nil {
 			return fixture{}, err
 		}
+		if runtime.GOOS != "windows" && info.Mode().Perm() != 0600 {
+			return fixture{}, fmt.Errorf("notebook file mode = %#o, want 0600", info.Mode().Perm())
+		}
 		steps = append(steps, step{
 			Operation: op.name,
 			Source:    op.source,
 			Output:    after,
 			Markdown:  string(written),
-			UnixMode:  uint32(info.Mode().Perm()),
+			UnixMode:  0600,
 		})
 	}
 	goSource, err := os.ReadFile(filepath.Join(root, "internal/notebook/notebook.go"))

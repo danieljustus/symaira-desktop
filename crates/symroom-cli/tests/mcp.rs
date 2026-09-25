@@ -328,6 +328,62 @@ fn stdio_malformed_oversized_interleaved_and_eof_frames_are_clean() {
 }
 
 #[test]
+fn room_status_is_not_queued_behind_four_run_waits() {
+    let room = fixture_room("parallel-status", &[]);
+    let mut input = Vec::new();
+    for id in 1..=4 {
+        let request = json!({
+            "jsonrpc":"2.0",
+            "id":id,
+            "method":"tools/call",
+            "params":{"name":"room_run_wait","arguments":{"run_id":format!("run_missing_{id}"),"timeout_seconds":1}}
+        });
+        let body = serde_json::to_vec(&request).expect("wait request JSON");
+        input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
+        input.extend_from_slice(&body);
+    }
+    let status = json!({
+        "jsonrpc":"2.0",
+        "id":5,
+        "method":"tools/call",
+        "params":{"name":"room_status","arguments":{}}
+    });
+    let body = serde_json::to_vec(&status).expect("status request JSON");
+    input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
+    input.extend_from_slice(&body);
+
+    let mut output = Vec::new();
+    mcp::serve_io_with_identity(
+        BufReader::new(Cursor::new(input)),
+        &mut output,
+        &room,
+        &room,
+        None,
+    )
+    .expect("MCP serve");
+    let responses = decode_frames(&output);
+    assert_eq!(responses.len(), 5);
+    assert_eq!(responses[0]["id"], 5, "status should finish before waits");
+    assert_eq!(responses[0]["result"]["isError"], false);
+    assert!(
+        responses[1..]
+            .iter()
+            .all(|response| response["result"]["isError"] == true)
+    );
+    let waiter_ids = responses[1..]
+        .iter()
+        .map(|response| response["id"].as_i64().expect("response id"))
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(
+        waiter_ids,
+        [1, 2, 3, 4]
+            .into_iter()
+            .collect::<std::collections::BTreeSet<_>>()
+    );
+    let _ = std::fs::remove_dir_all(room);
+}
+
+#[test]
 fn mcp_cli_help_exits_successfully() {
     let args = [std::ffi::OsString::from("--help")];
     let _ = mcp::run_cli(&args);

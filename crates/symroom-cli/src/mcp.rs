@@ -12,7 +12,7 @@ use std::{
         mpsc,
     },
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use serde::Serialize;
@@ -21,7 +21,6 @@ use sha2::{Digest, Sha256};
 
 const INSTRUCTIONS: &str = "Use room_* tools to inspect and record the signed room work record. There is no approval-granting tool in this server.";
 const MCP_USAGE: &str = "Usage of mcp:\n  -artifact-root string\n    \tArtifact root directory\n  -identity string\n    \tSigning identity name\n  -room string\n    \tRoom directory (default \".\")\n";
-const MCP_WORKERS: usize = 4;
 
 pub fn run_cli(args: &[OsString]) -> ExitCode {
     let mut room = PathBuf::from(".");
@@ -114,40 +113,16 @@ pub fn serve_io_with_identity<R: BufRead, W: Write + Send>(
     identity: Option<&symroom_core::identity::Identity>,
 ) -> io::Result<()> {
     let output = Arc::new(Mutex::new(output));
-    let (tasks, receiver) = mpsc::channel::<(Value, Value)>();
-    let receiver = Arc::new(Mutex::new(receiver));
     let (errors, worker_errors) = mpsc::channel();
+    let mut errors = Some(errors);
 
     thread::scope(|scope| {
-        for _ in 0..MCP_WORKERS {
-            let receiver = Arc::clone(&receiver);
-            let output = Arc::clone(&output);
-            let errors = errors.clone();
-            scope.spawn(move || {
-                loop {
-                    let task = receiver.lock().expect("MCP task receiver poisoned").recv();
-                    let Ok((request, id)) = task else {
-                        break;
-                    };
-                    let response = call(&request, id, room_dir, artifact_root, identity);
-                    let result = output
-                        .lock()
-                        .map_err(|_| io::Error::other("MCP output lock poisoned"))
-                        .and_then(|mut output| write_response(&mut *output, response));
-                    if let Err(error) = result {
-                        let _ = errors.send(error);
-                    }
-                }
-            });
-        }
-        drop(errors);
-
         loop {
             if let Ok(error) = worker_errors.try_recv() {
                 return Err(error);
             }
             let Some(body) = read_frame(&mut input)? else {
-                drop(tasks);
+                drop(errors.take());
                 return worker_errors.recv().map_or(Ok(()), Err);
             };
             let request: Value = match serde_json::from_slice(&body) {
@@ -163,15 +138,26 @@ pub fn serve_io_with_identity<R: BufRead, W: Write + Send>(
             if request.get("id").is_none() {
                 continue;
             }
+            let received_at = Instant::now();
             let id = request["id"].clone();
             let method = request
                 .get("method")
                 .and_then(Value::as_str)
                 .unwrap_or_default();
             if method == "tools/call" {
-                tasks
-                    .send((request, id))
-                    .map_err(|_| io::Error::other("MCP workers stopped"))?;
+                let output = Arc::clone(&output);
+                let errors = errors.as_ref().expect("error sender available").clone();
+                scope.spawn(move || {
+                    let response =
+                        call(&request, id, room_dir, artifact_root, identity, received_at);
+                    let result = output
+                        .lock()
+                        .map_err(|_| io::Error::other("MCP output lock poisoned"))
+                        .and_then(|mut output| write_response(&mut *output, response));
+                    if let Err(error) = result {
+                        let _ = errors.send(error);
+                    }
+                });
                 continue;
             }
             let response = match method {
@@ -202,6 +188,7 @@ fn call(
     room_dir: &Path,
     artifact_root: &Path,
     identity: Option<&symroom_core::identity::Identity>,
+    received_at: Instant,
 ) -> Value {
     let params = &request["params"];
     let Some(params) = params.as_object() else {
@@ -266,7 +253,11 @@ fn call(
             .filter(|seconds| *seconds > 0.0 && seconds.is_finite())
             .and_then(|seconds| Duration::try_from_secs_f64(seconds).ok())
             .unwrap_or(Duration::from_secs(30));
-        return match symroom_core::runs::wait(room_dir, run_id, timeout) {
+        return match symroom_core::runs::wait(
+            room_dir,
+            run_id,
+            timeout.saturating_sub(received_at.elapsed()),
+        ) {
             Ok(run) => tool_result(id, serde_json::to_string(&run).expect("run serializes")),
             Err(symroom_core::runs::RunWaitError::Timeout) => {
                 tool_error(id, "wait timed out before approval decision".to_owned())

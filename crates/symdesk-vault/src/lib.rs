@@ -33,7 +33,10 @@ use serde as _;
 #[cfg(test)]
 use serde_json as _;
 
-pub use base_write::{BaseWriteError, delete_base, delete_view, save_base, save_view};
+pub use base_write::{
+    BaseWriteError, delete_base, delete_base_with_snapshot, delete_view, delete_view_with_snapshot,
+    save_base, save_base_with_snapshot, save_view, save_view_with_snapshot,
+};
 pub use conflict::{
     CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
 };

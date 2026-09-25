@@ -53,10 +53,24 @@ struct BaseFrontmatter<'a> {
 /// Writes a base note, applying the Go manager's ID, path, timestamp, and tag defaults.
 pub fn save_base(vault_root: impl AsRef<Path>, base: &mut Base) -> Result<(), BaseWriteError> {
     migrate_legacy_views(vault_root.as_ref());
-    write_base(vault_root.as_ref(), base)
+    write_base(vault_root.as_ref(), base, None)
 }
 
-fn write_base(root: &Path, base: &mut Base) -> Result<(), BaseWriteError> {
+/// Writes a base and calls `snapshot_fn` with its absolute path before writing.
+pub fn save_base_with_snapshot(
+    vault_root: impl AsRef<Path>,
+    base: &mut Base,
+    mut snapshot_fn: impl FnMut(&Path),
+) -> Result<(), BaseWriteError> {
+    migrate_legacy_views(vault_root.as_ref());
+    write_base(vault_root.as_ref(), base, Some(&mut snapshot_fn))
+}
+
+fn write_base(
+    root: &Path,
+    base: &mut Base,
+    mut snapshot_fn: Option<&mut dyn FnMut(&Path)>,
+) -> Result<(), BaseWriteError> {
     if base.id.is_empty() {
         base.id = slugify(&base.title);
     }
@@ -75,6 +89,9 @@ fn write_base(root: &Path, base: &mut Base) -> Result<(), BaseWriteError> {
     }
 
     let path = secure_path(root, &base.path)?;
+    if let Some(snapshot_fn) = snapshot_fn.as_mut() {
+        snapshot_fn(&path);
+    }
     create_dir_all_0750(path.parent().ok_or_else(|| {
         BaseWriteError::Serialize("base path has no parent directory".to_owned())
     })?)?;
@@ -87,16 +104,57 @@ fn write_base(root: &Path, base: &mut Base) -> Result<(), BaseWriteError> {
 pub fn delete_base(vault_root: impl AsRef<Path>, reference: &str) -> Result<(), BaseWriteError> {
     let root = vault_root.as_ref();
     migrate_legacy_views(root);
+    delete_base_inner(root, reference, None)
+}
+
+/// Removes a base and calls `snapshot_fn` with its absolute path before deletion.
+pub fn delete_base_with_snapshot(
+    vault_root: impl AsRef<Path>,
+    reference: &str,
+    mut snapshot_fn: impl FnMut(&Path),
+) -> Result<(), BaseWriteError> {
+    let root = vault_root.as_ref();
+    migrate_legacy_views(root);
+    delete_base_inner(root, reference, Some(&mut snapshot_fn))
+}
+
+fn delete_base_inner(
+    root: &Path,
+    reference: &str,
+    mut snapshot_fn: Option<&mut dyn FnMut(&Path)>,
+) -> Result<(), BaseWriteError> {
     let base = get_base(root, reference)?;
     let path = secure_path(root, &base.path)?;
+    if let Some(snapshot_fn) = snapshot_fn.as_mut() {
+        snapshot_fn(&path);
+    }
     fs::remove_file(path)?;
     Ok(())
 }
 
 /// Saves a view into its existing base or creates a base for it.
-pub fn save_view(vault_root: impl AsRef<Path>, mut view: View) -> Result<(), BaseWriteError> {
+pub fn save_view(vault_root: impl AsRef<Path>, view: View) -> Result<(), BaseWriteError> {
     let root = vault_root.as_ref();
     migrate_legacy_views(root);
+    save_view_inner(root, view, None)
+}
+
+/// Saves a view and calls `snapshot_fn` before rewriting its base.
+pub fn save_view_with_snapshot(
+    vault_root: impl AsRef<Path>,
+    view: View,
+    mut snapshot_fn: impl FnMut(&Path),
+) -> Result<(), BaseWriteError> {
+    let root = vault_root.as_ref();
+    migrate_legacy_views(root);
+    save_view_inner(root, view, Some(&mut snapshot_fn))
+}
+
+fn save_view_inner(
+    root: &Path,
+    mut view: View,
+    snapshot_fn: Option<&mut dyn FnMut(&Path)>,
+) -> Result<(), BaseWriteError> {
     let mut bases = list_bases(root)?;
     if view.id.is_empty() {
         let count: usize = bases.iter().map(|base| base.views.len()).sum();
@@ -113,7 +171,7 @@ pub fn save_view(vault_root: impl AsRef<Path>, mut view: View) -> Result<(), Bas
             .position(|existing| existing.id == view.id)
         {
             base.views[index] = view;
-            return save_base(root, &mut base);
+            return write_base(root, &mut base, snapshot_fn);
         }
     }
     if !view.source.is_empty() {
@@ -123,7 +181,7 @@ pub fn save_view(vault_root: impl AsRef<Path>, mut view: View) -> Result<(), Bas
                 || (!base.views.is_empty() && base.views[0].source == view.source)
             {
                 base.views.push(view);
-                return save_base(root, &mut base);
+                return write_base(root, &mut base, snapshot_fn);
             }
         }
     }
@@ -151,17 +209,36 @@ pub fn save_view(vault_root: impl AsRef<Path>, mut view: View) -> Result<(), Bas
         views: vec![view],
         extras: Default::default(),
     };
-    save_base(root, &mut base)
+    write_base(root, &mut base, snapshot_fn)
 }
 
 /// Removes a view from the first matching base and rewrites that base note.
 pub fn delete_view(vault_root: impl AsRef<Path>, view_id: &str) -> Result<(), BaseWriteError> {
     let root = vault_root.as_ref();
     migrate_legacy_views(root);
+    delete_view_inner(root, view_id, None)
+}
+
+/// Deletes a view and calls `snapshot_fn` before rewriting its base.
+pub fn delete_view_with_snapshot(
+    vault_root: impl AsRef<Path>,
+    view_id: &str,
+    mut snapshot_fn: impl FnMut(&Path),
+) -> Result<(), BaseWriteError> {
+    let root = vault_root.as_ref();
+    migrate_legacy_views(root);
+    delete_view_inner(root, view_id, Some(&mut snapshot_fn))
+}
+
+fn delete_view_inner(
+    root: &Path,
+    view_id: &str,
+    snapshot_fn: Option<&mut dyn FnMut(&Path)>,
+) -> Result<(), BaseWriteError> {
     for mut base in list_bases(root)? {
         if let Some(index) = base.views.iter().position(|view| view.id == view_id) {
             base.views.remove(index);
-            return save_base(root, &mut base);
+            return write_base(root, &mut base, snapshot_fn);
         }
     }
     Err(BaseWriteError::ViewNotFound)
@@ -293,7 +370,7 @@ fn migrate_legacy_views(root: &Path) {
             views,
             extras: Default::default(),
         };
-        let _ = write_base(root, &mut base);
+        let _ = write_base(root, &mut base, None);
     }
 }
 

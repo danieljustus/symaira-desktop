@@ -4,13 +4,39 @@ use std::{fs, path::PathBuf};
 
 use serde::Deserialize;
 use serde_json::Value;
-use symdesk_vault::{Base, View, delete_base, delete_view, parse_base, save_base, save_view};
+use symdesk_vault::{
+    Base, View, delete_base, delete_base_with_snapshot, delete_view, delete_view_with_snapshot,
+    parse_base, save_base, save_base_with_snapshot, save_view, save_view_with_snapshot,
+};
 
 #[derive(Deserialize)]
 struct Fixture {
     schema_version: u8,
     steps: Vec<Step>,
     migration_cases: Vec<MigrationCase>,
+    snapshot_cases: Vec<SnapshotCase>,
+}
+
+#[derive(Deserialize)]
+struct SnapshotEvent {
+    path: String,
+    exists: bool,
+    markdown: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct SnapshotCase {
+    id: String,
+    operation: String,
+    existing_base: Option<Base>,
+    base: Option<Base>,
+    view: Option<View>,
+    reference: Option<String>,
+    events: Vec<String>,
+    snapshots: Vec<SnapshotEvent>,
+    exists: bool,
+    markdown: Option<String>,
+    error: bool,
 }
 
 #[derive(Deserialize)]
@@ -244,6 +270,87 @@ fn base_and_view_file_writes_match_go() {
         #[cfg(unix)]
         assert_eq!(actual_modes, case.base_modes, "case {} base modes", case.id);
         fs::remove_dir_all(root).expect("remove test vault");
+    }
+
+    assert_eq!(fixture.snapshot_cases.len(), 6);
+    for case in fixture.snapshot_cases {
+        let root = temp_vault();
+        if let Some(mut base) = case.existing_base {
+            save_base(&root, &mut base).expect("seed snapshot case base");
+        }
+        let mut events = Vec::new();
+        let mut snapshots = Vec::new();
+        let mut snapshot_fn = |path: &std::path::Path| {
+            events.push("snapshot".to_owned());
+            let relative = path
+                .strip_prefix(&root)
+                .expect("snapshot path under vault root");
+            let relative = relative.to_string_lossy().replace('\\', "/");
+            let (exists, markdown) = match fs::read_to_string(path) {
+                Ok(markdown) => (true, Some(markdown)),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => (false, None),
+                Err(error) => panic!("read pre-write snapshot: {error}"),
+            };
+            snapshots.push((relative, exists, markdown));
+        };
+        let result = match case.operation.as_str() {
+            "create_base" | "save_base" => save_base_with_snapshot(
+                &root,
+                &mut case.base.expect("base snapshot input"),
+                &mut snapshot_fn,
+            ),
+            "save_view" => save_view_with_snapshot(
+                &root,
+                case.view.expect("view snapshot input"),
+                &mut snapshot_fn,
+            ),
+            "delete_view" => delete_view_with_snapshot(
+                &root,
+                case.reference.as_deref().expect("view snapshot reference"),
+                &mut snapshot_fn,
+            ),
+            "delete_base" => delete_base_with_snapshot(
+                &root,
+                case.reference.as_deref().expect("base snapshot reference"),
+                &mut snapshot_fn,
+            ),
+            "missing_delete_view" => delete_view_with_snapshot(&root, "missing", &mut snapshot_fn),
+            other => panic!("unknown snapshot operation {other}"),
+        };
+        events.push("operation".to_owned());
+        assert_eq!(result.is_err(), case.error, "case {} error", case.id);
+        assert_eq!(events, case.events, "case {} event order", case.id);
+        assert_eq!(
+            snapshots.len(),
+            case.snapshots.len(),
+            "case {} snapshots",
+            case.id
+        );
+        for (actual, expected) in snapshots.iter().zip(&case.snapshots) {
+            assert_eq!(actual.0, expected.path, "case {} callback path", case.id);
+            assert_eq!(
+                actual.1, expected.exists,
+                "case {} pre-write exists",
+                case.id
+            );
+            assert_eq!(
+                actual.2.as_deref(),
+                expected.markdown.as_deref(),
+                "case {} pre-write bytes",
+                case.id
+            );
+        }
+        let path = root.join("bases/invoices.md");
+        assert_eq!(path.exists(), case.exists, "case {} final exists", case.id);
+        if case.exists {
+            assert_eq!(
+                fs::read_to_string(path).expect("read final snapshot case base"),
+                case.markdown.expect("Go final Markdown"),
+                "case {} final Markdown",
+                case.id
+            );
+        }
+        fs::remove_dir_all(root).expect("remove snapshot test vault");
     }
 }
 

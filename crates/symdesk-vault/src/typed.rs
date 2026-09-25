@@ -88,20 +88,23 @@ pub struct PropertyConfig {
     pub default: String,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Base {
     pub id: String,
     pub path: String,
     pub title: String,
+    #[serde(default)]
     #[serde(skip_serializing_if = "String::is_empty")]
     pub description: String,
     pub created: String,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub properties: BTreeMap<String, PropertyConfig>,
     pub views: Vec<View>,
-    #[serde(skip_serializing)]
+    #[serde(skip, default)]
     pub extras: BTreeMap<String, Value>,
 }
 
@@ -224,7 +227,7 @@ pub enum TypedVaultError {
     },
 }
 
-/// Parses the read-only base-note contract.
+/// Parses the base-note contract.
 ///
 /// # Errors
 /// Returns a parser or base identity error.

@@ -3,6 +3,7 @@
 //! Read-only contract-v1–v6 Markdown vault parsing.
 
 pub mod activity_journal;
+mod base_write;
 pub mod conflict;
 pub mod dataset;
 mod go_string;
@@ -32,6 +33,7 @@ use serde as _;
 #[cfg(test)]
 use serde_json as _;
 
+pub use base_write::{BaseWriteError, delete_base, delete_view, save_base, save_view};
 pub use conflict::{
     CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
 };

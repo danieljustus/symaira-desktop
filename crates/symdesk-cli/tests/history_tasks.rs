@@ -75,9 +75,10 @@ fn history_tasks_matches_go_process_contract() {
         let mut stdout = String::from_utf8(output.stdout).expect("UTF-8 stdout");
         #[cfg(windows)]
         if !case.json {
-            let format =
-                time::format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]")
-                    .expect("timestamp format");
+            let format = time::format_description::parse_borrowed::<2>(
+                "[year]-[month]-[day] [hour]:[minute]:[second]",
+            )
+            .expect("timestamp format");
             for manifest in case.manifests.values() {
                 let value: serde_json::Value = serde_json::from_str(manifest).expect("checkpoint");
                 let utc = time::OffsetDateTime::parse(

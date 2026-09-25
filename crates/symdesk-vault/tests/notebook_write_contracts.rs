@@ -35,6 +35,12 @@ fn notebook_source_writes_match_go() {
     let path = root.join(&fixture.path);
     fs::create_dir_all(path.parent().expect("notebook parent")).expect("create notebook directory");
     fs::write(&path, fixture.initial).expect("write notebook fixture");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600))
+            .expect("set Go fixture file mode");
+    }
 
     for step in fixture.steps {
         let got = match step.operation.as_str() {

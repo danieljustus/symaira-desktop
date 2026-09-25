@@ -14,6 +14,7 @@ use crate::{Base, MutationError, TypedVaultError, View, parse_base, secure_path}
 
 const BASES_DIR: &str = "bases";
 const LEGACY_VIEWS: &str = ".symdesk/views.json";
+const CREATED_PLACEHOLDER: &str = "__SYMDESK_BASE_CREATED__";
 
 #[derive(Debug, Error)]
 pub enum BaseWriteError {
@@ -399,7 +400,9 @@ fn render_base(base: &Base) -> Result<String, BaseWriteError> {
     let frontmatter = BaseFrontmatter {
         kind: "base",
         title: &base.title,
-        created: &base.created,
+        // noyalib follows YAML 1.2 and leaves timestamps plain; Go's YAML
+        // serializer quotes timestamp-shaped strings to preserve their type.
+        created: CREATED_PLACEHOLDER,
         tags: &tags,
         base_id: &base.id,
         description: &base.description,
@@ -414,6 +417,16 @@ fn render_base(base: &Base) -> Result<String, BaseWriteError> {
             .compact_list_indent(true),
     )
     .map_err(|error| BaseWriteError::Serialize(error.to_string()))?;
+    let created = crate::mutations::render_go_yaml_string(&base.created, 4, false)
+        .map_err(|error| BaseWriteError::Serialize(error.to_string()))?;
+    let mut frontmatter = frontmatter.replacen(
+        &format!("created: {CREATED_PLACEHOLDER}"),
+        &format!("created: {created}"),
+        1,
+    );
+    if !frontmatter.ends_with('\n') {
+        frontmatter.push('\n');
+    }
     let mut body = format!("# {}\n\n", base.title);
     if !base.description.is_empty() {
         body.push_str(&format!("{}\n\n", base.description));

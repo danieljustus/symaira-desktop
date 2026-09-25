@@ -48,10 +48,14 @@ struct MigrationCase {
     expected_created: Vec<bool>,
     legacy_exists: bool,
     legacy_preserved: bool,
+    #[cfg(unix)]
     legacy_mode: u32,
+    #[cfg(unix)]
     symdesk_mode: u32,
     bases_dir_exists: bool,
+    #[cfg(unix)]
     bases_dir_mode: u32,
+    #[cfg(unix)]
     base_modes: Vec<u32>,
 }
 
@@ -64,6 +68,7 @@ struct Step {
     output: Option<Value>,
     markdown: Option<String>,
     exists: bool,
+    #[cfg(unix)]
     unix_mode: u32,
 }
 
@@ -219,22 +224,16 @@ fn base_and_view_file_writes_match_go() {
             .filter(|path| path.extension().and_then(|value| value.to_str()) == Some("md"))
             .collect::<Vec<_>>();
         actual_bases.sort();
+        #[cfg(unix)]
         let actual_modes = actual_bases
             .iter()
             .map(|path| {
-                #[cfg(unix)]
-                {
-                    use std::os::unix::fs::PermissionsExt;
-                    fs::metadata(path)
-                        .expect("base metadata")
-                        .permissions()
-                        .mode()
-                        & 0o777
-                }
-                #[cfg(not(unix))]
-                {
-                    0
-                }
+                use std::os::unix::fs::PermissionsExt;
+                fs::metadata(path)
+                    .expect("base metadata")
+                    .permissions()
+                    .mode()
+                    & 0o777
             })
             .collect::<Vec<_>>();
         let mut actual = actual_bases

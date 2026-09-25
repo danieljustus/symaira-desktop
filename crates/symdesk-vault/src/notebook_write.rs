@@ -5,6 +5,7 @@ use std::{
     io::Write as _,
     path::Path,
 };
+use time::OffsetDateTime;
 
 use thiserror::Error;
 
@@ -22,8 +23,122 @@ pub enum NotebookWriteError {
     Contract(#[from] TypedVaultError),
     #[error("source path is required")]
     EmptySource,
+    #[error("title is required")]
+    TitleRequired,
+    #[error("write notebook: {0}")]
+    Write(std::io::Error),
     #[error("a notebook cannot be a source of itself")]
     SourceIsSelf,
+}
+
+/// Creates a notebook note at `notebooks/<slug>.md`.
+pub fn new_notebook(
+    vault_root: impl AsRef<Path>,
+    title: &str,
+    description: &str,
+) -> Result<Notebook, NotebookWriteError> {
+    new_notebook_with_query(vault_root, title, description, "")
+}
+
+/// Creates a notebook note and stores the originating search query as metadata.
+pub fn new_notebook_with_query(
+    vault_root: impl AsRef<Path>,
+    title: &str,
+    description: &str,
+    query: &str,
+) -> Result<Notebook, NotebookWriteError> {
+    let title = title.trim();
+    if title.is_empty() {
+        return Err(NotebookWriteError::TitleRequired);
+    }
+
+    let root = vault_root.as_ref();
+    let base = notebook_slug(title);
+    let mut suffix = 1;
+    loop {
+        let slug = if suffix == 1 {
+            base.clone()
+        } else {
+            format!("{base}-{suffix}")
+        };
+        let path = format!("notebooks/{slug}.md");
+        let file = secure_path(root, &path)?;
+        if fs::metadata(&file).is_ok() {
+            suffix += 1;
+            continue;
+        }
+
+        let notebook = Notebook {
+            id: slug,
+            path,
+            title: title.to_owned(),
+            description: description.to_owned(),
+            created: crate::notes::format_rfc3339(OffsetDateTime::now_utc()),
+            sources: Vec::new(),
+            query: query.trim().to_owned(),
+        };
+        let output = render_notebook(&notebook)?;
+        create_dir_all_0750(file.parent().expect("notebook path has a parent"))
+            .map_err(NotebookWriteError::Write)?;
+        let mut options = OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        match options.open(&file) {
+            Ok(mut handle) => {
+                handle
+                    .write_all(&output)
+                    .map_err(NotebookWriteError::Write)?;
+                return Ok(notebook);
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => suffix += 1,
+            Err(error) => return Err(NotebookWriteError::Write(error)),
+        }
+    }
+}
+
+fn notebook_slug(title: &str) -> String {
+    let mut slug = String::new();
+    let mut separator = false;
+    for character in title.chars().flat_map(char::to_lowercase) {
+        if character.is_ascii_lowercase() || character.is_ascii_digit() {
+            if separator && !slug.is_empty() {
+                slug.push('-');
+            }
+            slug.push(character);
+            separator = false;
+        } else {
+            separator = true;
+        }
+    }
+    if slug.is_empty() {
+        "notebook".to_owned()
+    } else {
+        slug
+    }
+}
+
+fn create_dir_all_0750(path: &Path) -> Result<(), std::io::Error> {
+    if path.is_dir() {
+        return Ok(());
+    }
+    if let Some(parent) = path.parent() {
+        create_dir_all_0750(parent)?;
+    }
+    let mut builder = fs::DirBuilder::new();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o750);
+    }
+    match builder.create(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists && path.is_dir() => Ok(()),
+        Err(error) => Err(error),
+    }
 }
 
 /// Adds a source to a notebook note, keeping sources sorted and unique.

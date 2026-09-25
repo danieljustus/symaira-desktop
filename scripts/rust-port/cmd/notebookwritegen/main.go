@@ -16,12 +16,14 @@ import (
 )
 
 type fixture struct {
-	SchemaVersion int    `json:"schema_version"`
-	Oracle        string `json:"oracle"`
-	SourceSHA256  string `json:"source_sha256"`
-	Path          string `json:"path"`
-	Initial       string `json:"initial"`
-	Steps         []step `json:"steps"`
+	SchemaVersion int        `json:"schema_version"`
+	Oracle        string     `json:"oracle"`
+	SourceSHA256  string     `json:"source_sha256"`
+	Path          string     `json:"path"`
+	Initial       string     `json:"initial"`
+	Steps         []step     `json:"steps"`
+	Creations     []creation `json:"creations"`
+	Rejected      []rejected `json:"rejected"`
 }
 
 type step struct {
@@ -30,6 +32,27 @@ type step struct {
 	Output    *notebook.Notebook `json:"output"`
 	Markdown  string             `json:"markdown"`
 	UnixMode  uint32             `json:"unix_mode"`
+}
+
+type creation struct {
+	Name            string             `json:"name"`
+	Operation       string             `json:"operation"`
+	Title           string             `json:"title"`
+	Description     string             `json:"description"`
+	Query           string             `json:"query,omitempty"`
+	Existing        []string           `json:"existing,omitempty"`
+	Output          *notebook.Notebook `json:"output"`
+	Markdown        string             `json:"markdown"`
+	UnixMode        uint32             `json:"unix_mode"`
+	NotebookDirMode uint32             `json:"notebooks_dir_mode"`
+}
+
+type rejected struct {
+	Name      string `json:"name"`
+	Operation string `json:"operation"`
+	Title     string `json:"title,omitempty"`
+	Root      string `json:"root,omitempty"`
+	Error     string `json:"error"`
 }
 
 func main() {
@@ -51,7 +74,7 @@ func main() {
 	data = append(data, '\n')
 	path := filepath.Join(root, filepath.FromSlash(*output))
 	if *check {
-		current, err := os.ReadFile(path)
+		current, err := os.ReadFile(path) // #nosec G304 -- path is the explicit fixture output selected by this command.
 		if err != nil {
 			fatal("read fixture: %v", err)
 		}
@@ -70,19 +93,23 @@ func main() {
 	fmt.Printf("PASS notebook write fixture (%d steps)\n", len(value.Steps))
 }
 
-func build(root string) (fixture, error) {
+func build(root string) (result fixture, resultErr error) {
 	const rel = "notebooks/research.md"
 	const initial = "---\ntype: notebook\ntitle: Research\ncreated: \"2026-01-02T03:04:05Z\"\ntags:\n  - notebook\nnotebook_id: research\ndescription: Keep me\nsources:\n  - z.md\nquery: source query\ncustom: keep me\n---\n\n# Original body\n"
 	vaultRoot, err := os.MkdirTemp("", "notebook-write-oracle-")
 	if err != nil {
 		return fixture{}, err
 	}
-	defer os.RemoveAll(vaultRoot)
+	defer func() {
+		if err := os.RemoveAll(vaultRoot); err != nil && resultErr == nil {
+			resultErr = err
+		}
+	}()
 	path := filepath.Join(vaultRoot, filepath.FromSlash(rel))
 	if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
 		return fixture{}, err
 	}
-	if err := os.WriteFile(path, []byte(initial), 0600); err != nil {
+	if err := os.WriteFile(path, []byte(initial), 0600); err != nil { // #nosec G304 -- path is under the fresh temporary vault root.
 		return fixture{}, err
 	}
 	steps := []step{}
@@ -106,7 +133,7 @@ func build(root string) (fixture, error) {
 		if err != nil {
 			return fixture{}, err
 		}
-		written, err := os.ReadFile(path)
+		written, err := os.ReadFile(path) // #nosec G304 -- path is under the fresh temporary vault root.
 		if err != nil {
 			return fixture{}, err
 		}
@@ -125,18 +152,119 @@ func build(root string) (fixture, error) {
 			UnixMode:  0600,
 		})
 	}
-	goSource, err := os.ReadFile(filepath.Join(root, "internal/notebook/notebook.go"))
+	goSource, err := os.ReadFile(filepath.Join(root, "internal/notebook/notebook.go")) // #nosec G304 -- root comes from this compiled generator's repository location.
 	if err != nil {
 		return fixture{}, err
 	}
 	digest := sha256.Sum256(goSource)
+	creations, err := buildCreations()
+	if err != nil {
+		return fixture{}, err
+	}
+	rejectedCases, err := buildRejected()
+	if err != nil {
+		return fixture{}, err
+	}
 	return fixture{
-		SchemaVersion: 1,
+		SchemaVersion: 2,
 		Oracle:        "internal/notebook (Go production API)",
 		SourceSHA256:  hex.EncodeToString(digest[:]),
 		Path:          rel,
 		Initial:       initial,
 		Steps:         steps,
+		Creations:     creations,
+		Rejected:      rejectedCases,
+	}, nil
+}
+
+func buildCreations() ([]creation, error) {
+	specs := []creation{
+		{Name: "trimmed_title", Operation: "new", Title: "  Research  ", Description: "Keep me"},
+		{Name: "slug_collisions", Operation: "new", Title: "Research", Existing: []string{"research.md", "research-2.md"}},
+		{Name: "punctuation_slug", Operation: "new", Title: "!!!"},
+		{Name: "query_trimmed", Operation: "new_with_query", Title: "Query Results", Description: "Promoted from search", Query: "  source query \n"},
+	}
+	for index := range specs {
+		caseData, err := buildCreation(specs[index])
+		if err != nil {
+			return nil, fmt.Errorf("creation %s: %w", specs[index].Name, err)
+		}
+		specs[index] = caseData
+	}
+	return specs, nil
+}
+
+func buildCreation(caseData creation) (result creation, resultErr error) {
+	vaultRoot, err := os.MkdirTemp("", "notebook-create-oracle-")
+	if err != nil {
+		return creation{}, err
+	}
+	defer func() {
+		if err := os.RemoveAll(vaultRoot); err != nil && resultErr == nil {
+			resultErr = err
+		}
+	}()
+	if len(caseData.Existing) != 0 {
+		if err := os.MkdirAll(filepath.Join(vaultRoot, "notebooks"), 0750); err != nil {
+			return creation{}, err
+		}
+		for _, name := range caseData.Existing {
+			if err := os.WriteFile(filepath.Join(vaultRoot, "notebooks", name), []byte("occupied"), 0600); err != nil { // #nosec G304 -- fixture names are fixed by this generator.
+				return creation{}, err
+			}
+		}
+	}
+	var nb *notebook.Notebook
+	if caseData.Operation == "new_with_query" {
+		nb, err = notebook.NewWithQuery(vaultRoot, caseData.Title, caseData.Description, caseData.Query)
+	} else {
+		nb, err = notebook.New(vaultRoot, caseData.Title, caseData.Description)
+	}
+	if err != nil {
+		return creation{}, err
+	}
+	path := filepath.Join(vaultRoot, filepath.FromSlash(nb.Path))
+	written, err := os.ReadFile(path) // #nosec G304 -- notebook path is returned by the Go production API inside a fresh vault root.
+	if err != nil {
+		return creation{}, err
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return creation{}, err
+	}
+	dirInfo, err := os.Stat(filepath.Join(vaultRoot, "notebooks"))
+	if err != nil {
+		return creation{}, err
+	}
+	caseData.Output = nb
+	caseData.Markdown = string(written)
+	caseData.UnixMode = uint32(info.Mode().Perm())
+	caseData.NotebookDirMode = uint32(dirInfo.Mode().Perm())
+	return caseData, nil
+}
+
+func buildRejected() (result []rejected, resultErr error) {
+	root, err := os.MkdirTemp("", "notebook-create-invalid-")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := os.RemoveAll(root); err != nil && resultErr == nil {
+			resultErr = err
+		}
+	}()
+	_, titleErr := notebook.New(root, "  ", "")
+	if titleErr == nil {
+		return nil, fmt.Errorf("empty notebook title unexpectedly succeeded")
+	}
+	missingRoot := filepath.Join(root, "missing")
+	_, pathErr := notebook.New(missingRoot, "Valid", "")
+	if pathErr == nil {
+		return nil, fmt.Errorf("missing vault root unexpectedly succeeded")
+	}
+	return []rejected{
+		{Name: "empty_title", Operation: "new", Title: "  ", Error: titleErr.Error()},
+		{Name: "missing_vault_root", Operation: "new", Title: "Valid", Root: "missing", Error: pathErr.Error()},
 	}, nil
 }
 

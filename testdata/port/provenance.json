@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
-  "generator_source_digest": "abc2565a54d06452af398d26818b2c717cf7e3566b419c54d18ac5360e1cf672",
+  "generator_source_digest": "6b5b60e5926f11c231ec10dee11b095241e6ea46c10f04a5c3ffa8fafee28767",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -45,6 +45,7 @@
     "testdata/port/retrieval/index-location.json": "d5f19175e5eb2fd8ed738ef84172740ea31bb3b1fc7a359b2ae9f513fe01a510",
     "testdata/port/retrieval/index-relocate.json": "32cafeb1dcce8b43cb49549429b18fa0430920488c083670353c200949105434",
     "testdata/port/retrieval/index-restore.json": "a773d3ea7d584b7b70b8977033f03a48995acb3dc2404c41a16dabe6fa56c6a2",
+    "testdata/port/retrieval/retrieval-bm25.json": "a36d55696b59a2cc415d880e3b15b8aad8388c28b8f2f388901de0f4aaa43850",
     "testdata/port/retrieval/retrieval-chunks.json": "3f2c88931efd0b532cacc737f9b1aa30d8f5234e477396312e5601ec3e6b3917",
     "testdata/port/room/artifact-cli.json": "a1c78b492ac49997ae29bc53380d9ec1135e54be07e11dccd2f8801a98da1264",
     "testdata/port/room/artifact-identity-cli.json": "808d0a38ce7f9cea829b2bd18627c1615c6c9f6aaa9f39a7138d235cf9bb868f",
@@ -78,7 +79,7 @@
     "testdata/port/sidecar/large-corpus.json": "e9d290afac9349e386760bb4ba80b5c4a98180db2cd58f8a953f6e906d7996ba",
     "testdata/port/sidecar/lifecycle.json": "4232f9c2375ef272269b59efa7d568b551ff1fe0ad22fc6545db6a9d8ed8685c",
     "testdata/port/sidecar/roundtrip.json": "4fb245689b56322a908a141dad21daccbd952ab9d02ef93524fa2ba62fa66aa6",
-    "testdata/port/vault/base-view-write.json": "b0ea3462822ceaf60d2571748a92cc927b3d7ed9fe100b54eb14ce2e5744ee49",
+    "testdata/port/vault/base-view-write.json": "1976e2e2d142b4b8b404f5ea7b35b4b08c1ed6c39f43e1dc6c45d71f6ad64818",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/frontmatter-write.json": "43795aad046e1d8f9d86617ad3acbc736e055ed088ff05b3bd1d6b47d6fc97a6",

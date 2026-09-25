@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -312,7 +313,11 @@ func datasetPurgeReplacementTrashRetryCase(t *testing.T) datasetPurgeRecoveryFix
 	before := datasetPurgeSnapshotOf(t, svc.VaultRoot, db)
 	retryErr := resumed.DatasetPurge("orders", dataset.DefaultRetentionRule)
 	after := datasetPurgeSnapshotOf(t, svc.VaultRoot, db)
-	if retryErr == nil || !strings.Contains(retryErr.Error(), "content changed") {
+	wantError := "content changed"
+	if runtime.GOOS == "windows" {
+		wantError = "was replaced"
+	}
+	if retryErr == nil || !strings.Contains(retryErr.Error(), wantError) {
 		t.Fatalf("replacement-trash retry error = %v", retryErr)
 	}
 	if data, err := os.ReadFile(trashPath); err != nil || string(data) != "replacement payload" { //nolint:gosec // test-owned vault path

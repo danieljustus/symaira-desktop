@@ -755,6 +755,9 @@ fn write_file_atomic(path: &Path, data: &[u8], perm: u32) -> Result<(), Retentio
         let _ = std::fs::remove_file(&tmp_path);
         return Err(RetentionError::Message(err.to_string()));
     }
+    std::fs::File::open(dir)
+        .and_then(|file| file.sync_all())
+        .map_err(|error| RetentionError::Message(go_path_error("sync", dir, &error)))?;
     Ok(())
 }
 

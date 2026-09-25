@@ -47,7 +47,7 @@ fn history_tasks_matches_go_process_contract() {
         let checkpoints = vault.join(".symdesk/history/checkpoints");
         fs::create_dir_all(&checkpoints).expect("make checkpoint directory");
         fs::create_dir_all(&home).expect("make isolated home directory");
-        for (name, manifest) in case.manifests {
+        for (name, manifest) in &case.manifests {
             fs::write(checkpoints.join(name), manifest).expect("write checkpoint manifest");
         }
         let mut command = Command::new(env!("CARGO_BIN_EXE_symdesk"));
@@ -72,12 +72,32 @@ fn history_tasks_matches_go_process_contract() {
             "{} exit",
             case.name
         );
-        assert_eq!(
-            String::from_utf8_lossy(&output.stdout),
-            case.stdout,
-            "{} stdout",
-            case.name
-        );
+        let mut stdout = String::from_utf8(output.stdout).expect("UTF-8 stdout");
+        #[cfg(windows)]
+        if !case.json {
+            let format =
+                time::format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]")
+                    .expect("timestamp format");
+            for manifest in case.manifests.values() {
+                let value: serde_json::Value = serde_json::from_str(manifest).expect("checkpoint");
+                let utc = time::OffsetDateTime::parse(
+                    value["timestamp"].as_str().expect("timestamp"),
+                    &time::format_description::well_known::Rfc3339,
+                )
+                .expect("UTC timestamp");
+                let local = utc.to_offset(
+                    time::UtcOffset::local_offset_at(utc).unwrap_or(time::UtcOffset::UTC),
+                );
+                let local_text = local.format(&format).expect("local timestamp");
+                assert!(
+                    stdout.contains(&local_text),
+                    "{} local timestamp",
+                    case.name
+                );
+                stdout = stdout.replace(&local_text, &utc.format(&format).expect("UTC timestamp"));
+            }
+        }
+        assert_eq!(stdout, case.stdout, "{} stdout", case.name);
         assert_eq!(
             String::from_utf8_lossy(&output.stderr),
             case.stderr,

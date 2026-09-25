@@ -288,7 +288,12 @@ fn replay_proposals(fixture: &Fixture) {
     let write_vector = vector_by_id(&fixture.proposals, "write-proposal");
     let proposal: Proposal =
         serde_json::from_str(&write_vector.content).expect("the recorded proposal parses");
-    retention::write_proposal(&root, &proposal).expect("write proposal");
+    let write = retention::write_proposal(&root, &proposal);
+    if cfg!(windows) {
+        assert!(write.unwrap_err().to_string().starts_with("sync "));
+    } else {
+        write.expect("write proposal");
+    }
     let written = root.join(&write_vector.paths[0]);
     compare_file(&written, write_vector, modes, "write-proposal");
 
@@ -367,8 +372,17 @@ fn replay_history(fixture: &Fixture) {
         !modern.action_id.is_empty(),
         "the second entry carries an action id"
     );
-    retention::append_history(&root, &legacy).expect("append legacy");
-    retention::append_history(&root, &modern).expect("append modern");
+    for (label, entry) in [("legacy", &legacy), ("modern", &modern)] {
+        let write = retention::append_history(&root, entry);
+        if cfg!(windows) {
+            assert!(
+                write.unwrap_err().to_string().starts_with("sync "),
+                "{label}"
+            );
+        } else {
+            write.unwrap_or_else(|error| panic!("append {label}: {error}"));
+        }
+    }
     let mut retry = modern.clone();
     retry.timestamp = modern.timestamp + time::Duration::minutes(1);
     retention::append_history(&root, &retry).expect("append retry");

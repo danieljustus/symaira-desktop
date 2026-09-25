@@ -133,7 +133,7 @@ pub fn serve_io_with_identity<R: BufRead, W: Write + Send>(
                     let result = output
                         .lock()
                         .map_err(|_| io::Error::other("MCP output lock poisoned"))
-                        .and_then(|mut output| write_response(&mut output, response));
+                        .and_then(|mut output| write_response(&mut *output, response));
                     if let Err(error) = result {
                         let _ = errors.send(error);
                     }
@@ -193,7 +193,7 @@ fn write_shared_response<W: Write>(output: &Mutex<W>, response: Value) -> io::Re
     let mut output = output
         .lock()
         .map_err(|_| io::Error::other("MCP output lock poisoned"))?;
-    write_response(&mut output, response)
+    write_response(&mut *output, response)
 }
 
 fn call(

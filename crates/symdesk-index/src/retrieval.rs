@@ -508,7 +508,7 @@ fn split_spans(text: &[u8], base: usize, first_separator: usize) -> Vec<Span> {
     let mut final_spans = Vec::new();
     let mut current = Vec::new();
     let mut chunk_start = 0;
-    for (i, (part_start, part_end)) in parts.iter().copied().enumerate() {
+    for (part_start, part_end) in parts.iter().copied() {
         let part = &text[part_start..part_end];
         if part.len() > CHUNK_SIZE {
             if !current.is_empty() {

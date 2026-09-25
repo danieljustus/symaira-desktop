@@ -264,6 +264,7 @@
       ],
       "acceptance": [
         "make render-differential",
+        "make render-ir-differential",
         "cargo nextest run -p symdesk-render",
         "cargo +nightly fuzz run draw_parser"
       ]

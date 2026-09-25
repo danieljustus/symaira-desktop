@@ -100,6 +100,9 @@ func corpus() []corpusCase {
 }
 
 func field(err *parse.ParseError) string {
+	if err.Stage == "parse" {
+		return ""
+	}
 	if err.Stage != "schema" {
 		return err.Detail
 	}

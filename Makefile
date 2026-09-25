@@ -37,6 +37,7 @@
 .PHONY: retrieval-chunks-fixtures-generate retrieval-chunks-differential
 .PHONY: retrieval-bm25-fixtures-generate retrieval-bm25-differential
 .PHONY: retrieval-embedding-state-fixtures-generate retrieval-embedding-state-differential
+.PHONY: render-ir-fixtures-generate render-ir-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -459,11 +460,18 @@ retrieval-bm25-differential:
 	$(CARGO) test -p symdesk-index --locked --test retrieval_bm25
 
 retrieval-embedding-state-fixtures-generate:
-	GOTOOLCHAIN=go1.26.6 go run ./internal/retrieval/internal/db/cmd/retrievalstategen
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
 
 retrieval-embedding-state-differential:
-	GOTOOLCHAIN=go1.26.6 go run ./internal/retrieval/internal/db/cmd/retrievalstategen --check
+	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_embedding_state
+
+render-ir-fixtures-generate:
+	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/renderirgen
+
+render-ir-differential:
+	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/renderirgen --check
+	$(CARGO) test -p symdesk-render --locked
 
 index-backup-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'

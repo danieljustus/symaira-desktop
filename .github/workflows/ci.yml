@@ -412,6 +412,10 @@ jobs:
         shell: bash
         run: make retrieval-embedding-state-differential
 
+      - name: Run native render JSON IR differential
+        shell: bash
+        run: make render-ir-differential
+
       - name: Run native index backup differential
         shell: bash
         run: make index-backup-differential

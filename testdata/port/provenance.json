@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
-  "generator_source_digest": "78bb36f9957e0ca44d10f8a2320b65903a0f9842f1f10c6998d622f61389365a",
+  "generator_source_digest": "39a0f0c673ef27eb109e8338ff69575458125e0dfe0e3a77b8ac5dc5b7169864",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -32,7 +32,7 @@
     "testdata/port/dataset/cli.json": "dff5d7f12b4f3d508a6c678abfe1b977f31a2c0036bf4b3ee7d42429400c5975",
     "testdata/port/dataset/import.json": "f398ffd1578cbe61ae8f0859748efe0f99a3afa25a4e9256d2af1671c2596de3",
     "testdata/port/dataset/purge.json": "ce3ece0a99f4afa304f813d1d564570ddc35fcdeb68b63ecc971c666cda780b3",
-    "testdata/port/dataset/service-sync.json": "7e20d53e197ddeb17daa65f0a0f82e2e3c0c820d650766956c0f70bd7042b8d0",
+    "testdata/port/dataset/service-sync.json": "8980265444d45296049fd008d28326148d6d69756209aa3a7d87b1e872480200",
     "testdata/port/dataset/sync.json": "1a013639437445cfd0ef961dca18fd304eabcb8ef749120edccceb01166fa5f3",
     "testdata/port/http/representative.json": "8c9f780391486ac8a72d65a6f52177b068d8cacff707721fb4a3e900512eee37",
     "testdata/port/http/routes.json": "43c706ede035052e9eb6392eeec84ed67abc48ab108a0c01a3aefd00cef0ecd1",

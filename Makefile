@@ -601,7 +601,7 @@ retention-cli-differential:
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/diffharness \
 		--symdesk-left "bin/port/symdesk-go$(EXE_SUFFIX)" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)" \
-		--cases "testdata/port/cli/retention-cases.json" --stage retention
+		--cases "testdata/port/cli/retention-cases.json" --stage retention --show-mismatch-output
 
 representative-differential: representative-fixtures-check
 	@mkdir -p bin/port

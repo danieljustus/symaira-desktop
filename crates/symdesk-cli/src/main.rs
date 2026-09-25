@@ -28,8 +28,8 @@ fn process_exit(code: CoreExitCode) -> ExitCode {
 }
 
 fn local_offset_at(value: time::OffsetDateTime) -> time::UtcOffset {
-    // Go honors TZ=UTC on Windows; the time crate's Windows local offset does not.
-    // ponytail: Other TZ overrides need a timezone database if required for parity.
+    // Go uses the host timezone on Windows even when TZ=UTC is set.
+    #[cfg(not(windows))]
     if std::env::var("TZ").ok().as_deref() == Some("UTC") {
         return time::UtcOffset::UTC;
     }

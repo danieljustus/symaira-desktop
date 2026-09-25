@@ -11,6 +11,7 @@ pub mod history;
 mod links;
 mod metadata;
 mod mutations;
+mod notebook_write;
 pub mod notes;
 mod paths;
 mod resolver;
@@ -48,6 +49,7 @@ pub use mutations::{
     MutationError, delete_frontmatter_value, set_frontmatter_key, set_frontmatter_value,
     write_atomic,
 };
+pub use notebook_write::{NotebookWriteError, add_notebook_source, remove_notebook_source};
 pub use notes::{NoteError, create_note, move_note, note_document, note_file_name, set_property};
 pub use paths::{SecurePathError, secure_path};
 pub use resolver::{ResolveDocument, ResolvedEdge, ResolvedNode, Resolver, resolve_graph};

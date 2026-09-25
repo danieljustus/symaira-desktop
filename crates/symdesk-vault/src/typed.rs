@@ -264,7 +264,7 @@ pub fn parse_base(path: &str, input: &[u8]) -> Result<Base, TypedVaultError> {
     })
 }
 
-/// Parses a read-only notebook note and preserves the Go source ordering rules.
+/// Parses a notebook note and preserves the Go source ordering rules.
 ///
 /// # Errors
 /// Returns a parser or notebook identity error.

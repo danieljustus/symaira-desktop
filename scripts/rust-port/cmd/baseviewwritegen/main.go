@@ -15,9 +15,10 @@ import (
 )
 
 type fixture struct {
-	SchemaVersion int    `json:"schema_version"`
-	Oracle        string `json:"oracle"`
-	Steps         []step `json:"steps"`
+	SchemaVersion  int             `json:"schema_version"`
+	Oracle         string          `json:"oracle"`
+	Steps          []step          `json:"steps"`
+	MigrationCases []migrationCase `json:"migration_cases"`
 }
 
 type step struct {
@@ -29,6 +30,21 @@ type step struct {
 	Markdown  string        `json:"markdown,omitempty"`
 	Exists    bool          `json:"exists"`
 	UnixMode  uint32        `json:"unix_mode"`
+}
+
+type migrationCase struct {
+	ID              string         `json:"id"`
+	LegacyJSON      string         `json:"legacy_json"`
+	ExistingBases   []dbviews.Base `json:"existing_bases"`
+	ExpectedBases   []dbviews.Base `json:"expected_bases"`
+	ExpectedCreated []bool         `json:"expected_created"`
+	LegacyExists    bool           `json:"legacy_exists"`
+	LegacyPreserved bool           `json:"legacy_preserved"`
+	LegacyMode      uint32         `json:"legacy_mode"`
+	SymdeskMode     uint32         `json:"symdesk_mode"`
+	BasesDirExists  bool           `json:"bases_dir_exists"`
+	BasesDirMode    uint32         `json:"bases_dir_mode"`
+	BaseModes       []uint32       `json:"base_modes"`
 }
 
 func main() {
@@ -129,7 +145,119 @@ func build() (result fixture, err error) {
 		return fixture{}, err
 	}
 	steps = append(steps, step)
-	return fixture{SchemaVersion: 1, Oracle: "internal/dbviews.Manager file APIs", Steps: steps}, nil
+	migrationCases, err := buildMigrationCases()
+	if err != nil {
+		return fixture{}, err
+	}
+	return fixture{SchemaVersion: 1, Oracle: "internal/dbviews.Manager file APIs", Steps: steps, MigrationCases: migrationCases}, nil
+}
+
+func buildMigrationCases() ([]migrationCase, error) {
+	grouping := `[
+  {"id":"already-present","name":"Already present","source":"invoices/"},
+  {"id":"legacy-invoice-open","name":"Open invoices","source":"invoices/","filters":[{"key":"status","operator":"equals","value":"open"}]},
+  {"id":"legacy-invoice-paid","name":"Paid invoices","source":"invoices/"},
+  {"id":"legacy-tag","name":"Tagged invoices","source":"tag:invoice"},
+  {"id":"legacy-notebook","name":"Research","source":"notebook:research"},
+  {"id":"legacy-all","name":"All Notes"}
+]`
+	cases := []migrationCase{
+		{ID: "grouping-and-existing-view-id", LegacyJSON: grouping, ExistingBases: []dbviews.Base{{
+			ID: "existing", Path: "bases/existing.md", Title: "Existing", Created: "2026-01-02T03:04:05Z", Tags: []string{"base"},
+			Views: []dbviews.View{{ID: "already-present", Name: "Old invoice view", Source: "invoices/", Filters: []dbviews.Filter{}, Sorts: []dbviews.Sort{}, Columns: []string{}}},
+		}}},
+		{ID: "malformed-json", LegacyJSON: `[{not-json`},
+		{ID: "empty-json-array", LegacyJSON: `[]`},
+		{ID: "empty-file", LegacyJSON: ""},
+	}
+	for i := range cases {
+		captured, err := captureMigrationCase(cases[i])
+		if err != nil {
+			return nil, err
+		}
+		cases[i] = captured
+	}
+	return cases, nil
+}
+
+func captureMigrationCase(c migrationCase) (migrationCase, error) {
+	root, err := os.MkdirTemp("", "base-view-migration-oracle-")
+	if err != nil {
+		return migrationCase{}, err
+	}
+	defer os.RemoveAll(root) //nolint:errcheck // temporary oracle root
+	manager := dbviews.NewManager(root)
+	for i := range c.ExistingBases {
+		if err := manager.SaveBase(&c.ExistingBases[i]); err != nil {
+			return migrationCase{}, err
+		}
+	}
+	legacyDir := filepath.Join(root, ".symdesk")
+	if err := os.MkdirAll(legacyDir, 0700); err != nil {
+		return migrationCase{}, err
+	}
+	legacyPath := filepath.Join(legacyDir, "views.json")
+	legacyBytes := []byte(c.LegacyJSON)
+	if err := os.WriteFile(legacyPath, legacyBytes, 0600); err != nil {
+		return migrationCase{}, err
+	}
+	if err := os.Chmod(legacyPath, 0600); err != nil {
+		return migrationCase{}, err
+	}
+	manager = dbviews.NewManager(root)
+	if err := manager.Delete("migration-probe"); !errors.Is(err, dbviews.ErrNotFound) {
+		return migrationCase{}, fmt.Errorf("delete migration probe: got %v", err)
+	}
+	intact, err := os.ReadFile(legacyPath)
+	if err != nil {
+		return migrationCase{}, err
+	}
+	c.LegacyExists = true
+	c.LegacyPreserved = bytes.Equal(intact, legacyBytes)
+	legacyInfo, err := os.Stat(legacyPath)
+	if err != nil {
+		return migrationCase{}, err
+	}
+	c.LegacyMode = uint32(legacyInfo.Mode().Perm())
+	symdeskInfo, err := os.Stat(legacyDir)
+	if err != nil {
+		return migrationCase{}, err
+	}
+	c.SymdeskMode = uint32(symdeskInfo.Mode().Perm())
+	bases, err := manager.ListBases()
+	if err != nil {
+		return migrationCase{}, err
+	}
+	for i := range bases {
+		c.ExpectedCreated = append(c.ExpectedCreated, bases[i].Created != "")
+		bases[i].Created = ""
+		bases[i].Path = filepath.ToSlash(bases[i].Path)
+		c.ExpectedBases = append(c.ExpectedBases, *bases[i])
+	}
+	basesDir := filepath.Join(root, dbviews.Dir)
+	if info, err := os.Stat(basesDir); err == nil {
+		c.BasesDirExists = true
+		c.BasesDirMode = uint32(info.Mode().Perm())
+	} else if !os.IsNotExist(err) {
+		return migrationCase{}, err
+	}
+	if c.BasesDirExists {
+		entries, err := os.ReadDir(basesDir)
+		if err != nil {
+			return migrationCase{}, err
+		}
+		for _, entry := range entries {
+			if entry.IsDir() || filepath.Ext(entry.Name()) != ".md" {
+				continue
+			}
+			info, err := entry.Info()
+			if err != nil {
+				return migrationCase{}, err
+			}
+			c.BaseModes = append(c.BaseModes, uint32(info.Mode().Perm()))
+		}
+	}
+	return c, nil
 }
 
 func capture(root, operation string, base *dbviews.Base, view *dbviews.View, reference string) (step, error) {

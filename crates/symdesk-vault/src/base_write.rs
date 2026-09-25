@@ -1,6 +1,10 @@
 #![deny(unsafe_code)]
 
-use std::{fs, path::Path};
+use std::{
+    collections::{BTreeMap, HashSet},
+    fs,
+    path::Path,
+};
 
 use serde::Serialize;
 use thiserror::Error;
@@ -9,6 +13,7 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use crate::{Base, MutationError, TypedVaultError, View, parse_base, secure_path};
 
 const BASES_DIR: &str = "bases";
+const LEGACY_VIEWS: &str = ".symdesk/views.json";
 
 #[derive(Debug, Error)]
 pub enum BaseWriteError {
@@ -47,6 +52,11 @@ struct BaseFrontmatter<'a> {
 
 /// Writes a base note, applying the Go manager's ID, path, timestamp, and tag defaults.
 pub fn save_base(vault_root: impl AsRef<Path>, base: &mut Base) -> Result<(), BaseWriteError> {
+    migrate_legacy_views(vault_root.as_ref());
+    write_base(vault_root.as_ref(), base)
+}
+
+fn write_base(root: &Path, base: &mut Base) -> Result<(), BaseWriteError> {
     if base.id.is_empty() {
         base.id = slugify(&base.title);
     }
@@ -64,7 +74,7 @@ pub fn save_base(vault_root: impl AsRef<Path>, base: &mut Base) -> Result<(), Ba
         base.tags.push("base".to_owned());
     }
 
-    let path = secure_path(vault_root.as_ref(), &base.path)?;
+    let path = secure_path(root, &base.path)?;
     create_dir_all_0750(path.parent().ok_or_else(|| {
         BaseWriteError::Serialize("base path has no parent directory".to_owned())
     })?)?;
@@ -76,6 +86,7 @@ pub fn save_base(vault_root: impl AsRef<Path>, base: &mut Base) -> Result<(), Ba
 /// Resolves a base by vault-relative path, ID, or title and removes its file.
 pub fn delete_base(vault_root: impl AsRef<Path>, reference: &str) -> Result<(), BaseWriteError> {
     let root = vault_root.as_ref();
+    migrate_legacy_views(root);
     let base = get_base(root, reference)?;
     let path = secure_path(root, &base.path)?;
     fs::remove_file(path)?;
@@ -85,6 +96,7 @@ pub fn delete_base(vault_root: impl AsRef<Path>, reference: &str) -> Result<(), 
 /// Saves a view into its existing base or creates a base for it.
 pub fn save_view(vault_root: impl AsRef<Path>, mut view: View) -> Result<(), BaseWriteError> {
     let root = vault_root.as_ref();
+    migrate_legacy_views(root);
     let mut bases = list_bases(root)?;
     if view.id.is_empty() {
         let count: usize = bases.iter().map(|base| base.views.len()).sum();
@@ -145,6 +157,7 @@ pub fn save_view(vault_root: impl AsRef<Path>, mut view: View) -> Result<(), Bas
 /// Removes a view from the first matching base and rewrites that base note.
 pub fn delete_view(vault_root: impl AsRef<Path>, view_id: &str) -> Result<(), BaseWriteError> {
     let root = vault_root.as_ref();
+    migrate_legacy_views(root);
     for mut base in list_bases(root)? {
         if let Some(index) = base.views.iter().position(|view| view.id == view_id) {
             base.views.remove(index);
@@ -214,6 +227,89 @@ fn list_bases(root: &Path) -> Result<Vec<Base>, BaseWriteError> {
     }
     bases.sort_by_key(|base| base.title.to_lowercase());
     Ok(bases)
+}
+
+fn migrate_legacy_views(root: &Path) {
+    let Ok(path) = secure_path(root, LEGACY_VIEWS) else {
+        return;
+    };
+    let Ok(data) = fs::read(path) else {
+        return;
+    };
+    let Ok(views) = serde_json::from_slice::<Vec<View>>(&data) else {
+        return;
+    };
+    if views.is_empty() {
+        return;
+    }
+
+    let existing_ids: HashSet<String> = list_bases(root)
+        .unwrap_or_default()
+        .into_iter()
+        .flat_map(|base| base.views.into_iter().map(|view| view.id))
+        .collect();
+    let mut groups: BTreeMap<String, (String, Vec<View>)> = BTreeMap::new();
+    for view in views {
+        if existing_ids.contains(&view.id) {
+            continue;
+        }
+        let (slug, title) = if view.source.is_empty() {
+            (slugify(&view.name), view.name.clone())
+        } else {
+            let slug = slugify(&view.source);
+            let title = view.source.strip_suffix('/').unwrap_or(&view.source);
+            let title = title.strip_prefix("tag:").unwrap_or(title);
+            let title = title
+                .strip_prefix("notebook:")
+                .unwrap_or(title)
+                .replace('-', " ");
+            (slug, title_case(&title))
+        };
+        let title = if title.is_empty() {
+            "Saved Views"
+        } else {
+            &title
+        };
+        groups
+            .entry(slug)
+            .or_insert_with(|| (title.to_owned(), Vec::new()))
+            .1
+            .push(view);
+    }
+
+    for (slug, (title, views)) in groups {
+        let now = OffsetDateTime::now_utc();
+        let mut base = Base {
+            id: slug.clone(),
+            path: format!("{BASES_DIR}/{slug}.md"),
+            title,
+            description: String::new(),
+            created: OffsetDateTime::from_unix_timestamp(now.unix_timestamp())
+                .unwrap_or(now)
+                .format(&Rfc3339)
+                .unwrap_or_default(),
+            tags: vec!["base".to_owned()],
+            properties: Default::default(),
+            views,
+            extras: Default::default(),
+        };
+        let _ = write_base(root, &mut base);
+    }
+}
+
+fn title_case(value: &str) -> String {
+    let mut output = String::with_capacity(value.len());
+    let mut start_word = true;
+    for character in value.chars() {
+        if start_word && character.is_alphanumeric() {
+            output.extend(character.to_uppercase());
+            start_word = false;
+        } else {
+            output.push(character);
+            start_word = !character.is_alphanumeric();
+        }
+    }
+    output
 }
 
 fn render_base(base: &Base) -> Result<String, BaseWriteError> {

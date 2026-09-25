@@ -423,7 +423,7 @@ impl RetrievalDb {
             } else {
                 0.0
             };
-            let result_embedding = if query_norm > 0.0 && norm > 0.0 {
+            let result_embedding = if !path_prefix.is_empty() && query_norm > 0.0 && norm > 0.0 {
                 None
             } else {
                 Some(embedding)

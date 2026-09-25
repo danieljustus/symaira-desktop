@@ -221,11 +221,7 @@ func buildSnapshotCases() ([]snapshotCase, error) {
 			return &copy
 		}(), Base: base, View: view, Reference: reference, Events: []string{}, Snapshots: []snapshotEvent{}}
 		manager.SetSnapshotFn(func(absPath string) {
-			rel, err := filepath.Rel(root, absPath)
-			if err != nil {
-				return
-			}
-			event := snapshotEvent{Path: filepath.ToSlash(rel)}
+			event := snapshotEvent{Path: filepath.ToSlash(filepath.Join("bases", filepath.Base(absPath)))}
 			data, err := os.ReadFile(absPath) //nolint:gosec // callback path came from the manager under a fresh temporary root.
 			if err == nil {
 				event.Exists = true

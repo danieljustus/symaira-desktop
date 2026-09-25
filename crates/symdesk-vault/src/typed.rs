@@ -240,7 +240,10 @@ pub fn parse_base(path: &str, input: &[u8]) -> Result<Base, TypedVaultError> {
             "{path} is not a base note (type={note_type:?})"
         )));
     }
-    let frontmatter: BaseFrontmatter = decode_frontmatter(input, "parse base frontmatter")?;
+    let mut frontmatter: BaseFrontmatter = decode_frontmatter(input, "parse base frontmatter")?;
+    frontmatter
+        .extras
+        .retain(|key, _| !matches!(key.as_str(), "type" | "tags"));
     let id = if frontmatter.base_id.is_empty() {
         file_stem_markdown(path)
     } else {

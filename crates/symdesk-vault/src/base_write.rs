@@ -14,7 +14,6 @@ use crate::{Base, MutationError, TypedVaultError, View, parse_base, secure_path}
 
 const BASES_DIR: &str = "bases";
 const LEGACY_VIEWS: &str = ".symdesk/views.json";
-const CREATED_PLACEHOLDER: &str = "__SYMDESK_BASE_CREATED__";
 
 #[derive(Debug, Error)]
 pub enum BaseWriteError {
@@ -400,9 +399,7 @@ fn render_base(base: &Base) -> Result<String, BaseWriteError> {
     let frontmatter = BaseFrontmatter {
         kind: "base",
         title: &base.title,
-        // noyalib follows YAML 1.2 and leaves timestamps plain; Go's YAML
-        // serializer quotes timestamp-shaped strings to preserve their type.
-        created: CREATED_PLACEHOLDER,
+        created: &base.created,
         tags: &tags,
         base_id: &base.id,
         description: &base.description,
@@ -410,18 +407,49 @@ fn render_base(base: &Base) -> Result<String, BaseWriteError> {
         views,
         extras: &base.extras,
     };
-    let frontmatter = noyalib::to_string_with_config(
-        &frontmatter,
-        &noyalib::SerializerConfig::new().indent(4),
-    )
-    .map_err(|error| BaseWriteError::Serialize(error.to_string()))?;
-    let created = crate::mutations::render_go_yaml_string(&base.created, 4, false)
+    let serialized = noyalib::to_value(&frontmatter)
         .map_err(|error| BaseWriteError::Serialize(error.to_string()))?;
-    let mut frontmatter = frontmatter.replacen(
-        &format!("created: {CREATED_PLACEHOLDER}"),
-        &format!("created: {created}"),
-        1,
-    );
+    let noyalib::Value::Mapping(fields) = serialized else {
+        return Err(BaseWriteError::Serialize(
+            "base frontmatter is not a mapping".to_owned(),
+        ));
+    };
+    const FIELD_ORDER: &[&str] = &[
+        "type",
+        "title",
+        "created",
+        "tags",
+        "base_id",
+        "description",
+        "properties",
+        "views",
+    ];
+    let mut rendered = String::new();
+    for key in FIELD_ORDER {
+        if let Some(value) = fields.get(key) {
+            let mut field = noyalib::Mapping::new();
+            field.insert((*key).to_owned(), value.clone());
+            rendered.push_str(
+                &crate::mutations::render_go_yaml_mapping(&field)
+                    .map_err(|error| BaseWriteError::Serialize(error.to_string()))?,
+            );
+            rendered.push('\n');
+        }
+    }
+    let mut extras = noyalib::Mapping::new();
+    for (key, value) in fields.iter() {
+        if !FIELD_ORDER.contains(&key.as_str()) {
+            extras.insert(key.clone(), value.clone());
+        }
+    }
+    if !extras.is_empty() {
+        rendered.push_str(
+            &crate::mutations::render_go_yaml_mapping(&extras)
+                .map_err(|error| BaseWriteError::Serialize(error.to_string()))?,
+        );
+        rendered.push('\n');
+    }
+    let mut frontmatter = rendered;
     if !frontmatter.ends_with('\n') {
         frontmatter.push('\n');
     }

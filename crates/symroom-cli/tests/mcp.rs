@@ -259,6 +259,64 @@ fn mcp_subcommand_serves_framed_tool_inventory() {
 }
 
 #[test]
+fn stdio_malformed_oversized_interleaved_and_eof_frames_are_clean() {
+    let room = temporary_room("stdio-hygiene");
+    let ping = json!({"jsonrpc":"2.0","id":2,"method":"ping"});
+    let list = json!({"jsonrpc":"2.0","id":3,"method":"tools/list"});
+    let mut input = b"Content-Length: 5\r\n\r\n{bad}".to_vec();
+    for request in [ping, list] {
+        let body = serde_json::to_vec(&request).expect("request JSON");
+        input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
+        input.extend_from_slice(&body);
+    }
+
+    let mut output = Vec::new();
+    mcp::serve_io_with_identity(
+        BufReader::new(Cursor::new(input)),
+        &mut output,
+        &room,
+        &room,
+        None,
+    )
+    .expect("malformed request is reported and stream continues through EOF");
+    let frames = decode_frames(&output);
+    assert_eq!(frames.len(), 3);
+    assert_eq!(frames[0]["id"], Value::Null);
+    assert_eq!(frames[0]["error"]["code"], -32700);
+    assert_eq!(frames[1]["id"], 2);
+    assert_eq!(frames[2]["id"], 3);
+    assert!(
+        String::from_utf8(output)
+            .unwrap()
+            .starts_with("Content-Length: ")
+    );
+
+    let mut output = Vec::new();
+    let error = mcp::serve_io_with_identity(
+        BufReader::new(Cursor::new(b"Content-Length: 1048577\r\n\r\n")),
+        &mut output,
+        &room,
+        &room,
+        None,
+    )
+    .expect_err("oversized frame rejected");
+    assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+    assert!(output.is_empty(), "oversized input must not leak to stdout");
+
+    let mut output = Vec::new();
+    mcp::serve_io_with_identity(
+        BufReader::new(Cursor::new(Vec::<u8>::new())),
+        &mut output,
+        &room,
+        &room,
+        None,
+    )
+    .expect("empty EOF shuts down cleanly");
+    assert!(output.is_empty(), "EOF must not write to stdout");
+    let _ = std::fs::remove_dir_all(room);
+}
+
+#[test]
 fn mcp_cli_help_exits_successfully() {
     let args = [std::ffi::OsString::from("--help")];
     let _ = mcp::run_cli(&args);

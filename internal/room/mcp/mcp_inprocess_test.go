@@ -270,6 +270,64 @@ func TestRunWaitHandlerInProcess(t *testing.T) {
 	}
 }
 
+func TestStdioStreamHygiene(t *testing.T) {
+	_, owner, roomDir := newInProcessServer(t)
+	server := NewServer(roomDir, owner, roomDir)
+
+	var input bytes.Buffer
+	input.WriteString("Content-Length: 5\r\n\r\n{bad}")
+	input.Write(framedRequest(t, 2, "tools/call", map[string]any{
+		"name": "room_run_wait", "arguments": map[string]any{"run_id": "run_missing", "timeout_seconds": 1},
+	}))
+	input.Write(framedRequest(t, 3, "ping", nil))
+	input.Write(framedRequest(t, 4, "tools/list", nil))
+	var output bytes.Buffer
+	if err := server.ServeIO(context.Background(), &input, &output); err != nil {
+		t.Fatalf("ServeIO through clean EOF: %v", err)
+	}
+	if got := splitFrames(output.Bytes()); len(got) != 4 {
+		t.Fatalf("stdout frames = %d, want parse error plus three responses", len(got))
+	} else {
+		var parseError, ping, list, wait jsonRPCResponse
+		_ = json.Unmarshal([]byte(got[0]), &parseError)
+		_ = json.Unmarshal([]byte(got[1]), &ping)
+		_ = json.Unmarshal([]byte(got[2]), &list)
+		_ = json.Unmarshal([]byte(got[3]), &wait)
+		if len(parseError.Error) == 0 || string(ping.ID) != "3" || string(list.ID) != "4" || string(wait.ID) != "2" {
+			t.Fatalf("malformed/interleaved response ids or error unexpected: %s", output.String())
+		}
+	}
+	validateStdoutClean(t, output.Bytes(), "malformed and interleaved stream")
+
+	output.Reset()
+	err := server.ServeIO(context.Background(), strings.NewReader("Content-Length: 1048577\r\n\r\n"), &output)
+	if err == nil || output.Len() != 0 {
+		t.Fatalf("oversized frame: err=%v stdout=%q, want error and empty stdout", err, output.Bytes())
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	time.AfterFunc(20*time.Millisecond, cancel)
+	input.Reset()
+	input.Write(framedRequest(t, 4, "tools/call", map[string]any{
+		"name": "room_run_wait", "arguments": map[string]any{"run_id": "run_missing", "timeout_seconds": 30},
+	}))
+	output.Reset()
+	err = server.ServeIO(ctx, &input, &output)
+	if err != context.Canceled {
+		t.Fatalf("cancelled ServeIO err = %v, want context.Canceled", err)
+	}
+	frames := splitFrames(output.Bytes())
+	if len(frames) != 1 {
+		t.Fatalf("cancelled stream stdout frames = %d, want one framed tool response", len(frames))
+	}
+	var response jsonRPCResponse
+	if err := json.Unmarshal([]byte(frames[0]), &response); err != nil || string(response.ID) != "4" {
+		t.Fatalf("cancelled stream response = %s (decode %v), want request id 4", frames[0], err)
+	}
+	validateStdoutClean(t, output.Bytes(), "cancelled stream")
+	cancel()
+}
+
 func TestCheckpointRequestHandlerInProcess(t *testing.T) {
 	s, owner, _ := newInProcessServer(t)
 

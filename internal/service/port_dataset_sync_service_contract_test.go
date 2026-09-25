@@ -958,7 +958,12 @@ func portDatasetSyncServiceCompare(recorded, generated []byte, goos string) erro
 		return fmt.Errorf("normalise generated fixture: %w", err)
 	}
 	if !bytes.Equal(want, got) {
-		return fmt.Errorf("dataset service sync fixture is stale; regenerate deliberately from the pinned Go oracle")
+		index := 0
+		for index < len(want) && index < len(got) && want[index] == got[index] {
+			index++
+		}
+		start := max(0, index-60)
+		return fmt.Errorf("dataset service sync fixture is stale at byte %d; recorded %q, generated %q", index, want[start:min(len(want), index+120)], got[start:min(len(got), index+120)])
 	}
 	return nil
 }

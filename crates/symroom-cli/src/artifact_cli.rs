@@ -331,7 +331,10 @@ fn merge_identity_config(
 }
 
 fn inspect_symdesk(path: &std::path::Path) -> String {
-    let mut child = match crate::symdesk_command()
+    let Some(symdesk_path) = crate::doctor_cli::look_path("symdesk") else {
+        return String::new();
+    };
+    let mut child = match crate::symdesk_command(&symdesk_path)
         .arg("inspect")
         .arg(path)
         .arg("--json")

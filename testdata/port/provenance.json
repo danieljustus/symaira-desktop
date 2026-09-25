@@ -5,7 +5,7 @@
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
-  "generator_source_digest": "8520b5a07c58a68ae8ece145768d66dca1c7fcdb6295297c45b579570ac8862a",
+  "generator_source_digest": "c7851746254ef810d715b5cfc6c9f21ccb2c37a088768a4570b9750543be922c",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -50,6 +50,7 @@
     "testdata/port/retrieval/index-restore.json": "a773d3ea7d584b7b70b8977033f03a48995acb3dc2404c41a16dabe6fa56c6a2",
     "testdata/port/retrieval/retrieval-bm25.json": "a36d55696b59a2cc415d880e3b15b8aad8388c28b8f2f388901de0f4aaa43850",
     "testdata/port/retrieval/retrieval-chunks.json": "3f2c88931efd0b532cacc737f9b1aa30d8f5234e477396312e5601ec3e6b3917",
+    "testdata/port/retrieval/retrieval-vector.json": "996aadb47df7461b8446120710731a17a34f27a8d844c69175de20c8c179af1c",
     "testdata/port/room/artifact-cli.json": "a1c78b492ac49997ae29bc53380d9ec1135e54be07e11dccd2f8801a98da1264",
     "testdata/port/room/artifact-identity-cli.json": "808d0a38ce7f9cea829b2bd18627c1615c6c9f6aaa9f39a7138d235cf9bb868f",
     "testdata/port/room/brain-profile-cli.json": "af1aaf7be44b55fecc5796e1e1c1bb9c4b117266df57c72adf66440fe81e8689",

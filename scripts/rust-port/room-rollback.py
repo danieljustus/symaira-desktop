@@ -10,6 +10,7 @@ from pathlib import Path
 import shutil
 import stat
 import subprocess
+import tarfile
 import tempfile
 import sys
 
@@ -223,11 +224,17 @@ def main():
     try:
         run([git, "worktree", "add", "--detach", rust_tree, rust_revision], cwd=root, env=build_env)
         if os.name == "nt":
-            # The frozen Go tag has Notion test fixtures with Windows-invalid '<' and '>' names.
-            run([git, "worktree", "add", "--no-checkout", "--detach", go_tree, go_revision], cwd=root, env=build_env)
-            run([git, "-C", go_tree, "sparse-checkout", "set", "--no-cone", "/*",
-                 "!/internal/ingest/internal/notionimport/testdata/fixture/**"], cwd=root, env=build_env)
-            run([git, "-C", go_tree, "checkout", "--detach", go_revision], cwd=root, env=build_env)
+            # Git for Windows rejects the frozen tag's Notion test fixture filenames.
+            archive = temp / "go-source.tar"
+            run([git, "archive", "--format=tar", "--output", archive, go_revision], cwd=root, env=build_env)
+            go_tree.mkdir()
+            with tarfile.open(archive) as source:
+                source.extractall(
+                    go_tree,
+                    members=(member for member in source if not member.name.startswith(
+                        "internal/ingest/internal/notionimport/testdata/fixture/")),
+                    filter="data",
+                )
         else:
             run([git, "worktree", "add", "--detach", go_tree, go_revision], cwd=root, env=build_env)
         rust_bin, go_bin = temp / "symroom-rust", temp / "symroom-go"
@@ -313,7 +320,7 @@ def main():
         }
     except BaseException as error:
         failure = error
-    cleanup_failures = cleanup_worktrees(root, [rust_tree, go_tree], build_env, git)
+    cleanup_failures = cleanup_worktrees(root, [rust_tree] if os.name == "nt" else [rust_tree, go_tree], build_env, git)
     cleanup_error = None
     if cleanup_failures:
         report["cleanup"] = {

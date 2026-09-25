@@ -85,11 +85,13 @@ fn go_mcp_inventory_call_and_error_frames_match() {
         None,
     )
     .expect("MCP serve");
-    let actual = decode_frames(&output);
-    let expected = cases
+    let mut actual = decode_frames(&output);
+    let mut expected = cases
         .iter()
         .map(|case| case["response"].clone())
         .collect::<Vec<_>>();
+    actual.sort_by_key(|frame| frame["id"].as_u64().expect("numeric request ID"));
+    expected.sort_by_key(|frame| frame["id"].as_u64().expect("numeric oracle ID"));
     assert_eq!(actual, expected);
     let _ = std::fs::remove_dir_all(room);
 }
@@ -108,8 +110,9 @@ fn go_mcp_mutation_events_match_and_are_signed() {
     let artifact_root = root.join("testdata/port/room");
     let room = fixture_room("mutations", &[]);
     let cases = fixture["cases"].as_array().expect("mutation cases");
-    let mut input = Vec::new();
+    let mut actual = Vec::new();
     for case in cases {
+        let mut input = Vec::new();
         let mut request = case["request"].clone();
         let args = request["params"]["arguments"]
             .as_object_mut()
@@ -123,17 +126,17 @@ fn go_mcp_mutation_events_match_and_are_signed() {
         let body = serde_json::to_vec(&request).expect("request JSON");
         input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
         input.extend_from_slice(&body);
+        let mut output = Vec::new();
+        mcp::serve_io_with_identity(
+            BufReader::new(Cursor::new(input)),
+            &mut output,
+            &room,
+            &artifact_root,
+            Some(&identity),
+        )
+        .expect("MCP serve");
+        actual.extend(decode_frames(&output));
     }
-    let mut output = Vec::new();
-    mcp::serve_io_with_identity(
-        BufReader::new(Cursor::new(input)),
-        &mut output,
-        &room,
-        &artifact_root,
-        Some(&identity),
-    )
-    .expect("MCP serve");
-    let actual = decode_frames(&output);
     assert_eq!(actual.len(), cases.len());
     for (response, case) in actual.iter().zip(cases) {
         assert_eq!(response["result"]["isError"], false);

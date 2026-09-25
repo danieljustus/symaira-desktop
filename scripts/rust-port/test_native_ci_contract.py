@@ -194,6 +194,31 @@ class NativeCIContracts(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "report suppressed"):
             ensure_report_safe({}, key, None, "cleanup details " + key)
 
+    def test_rollback_blob_extraction_uses_exact_tree_and_exclusions(self):
+        script = ROOT / "scripts/rust-port/room-rollback.py"
+        spec = importlib.util.spec_from_file_location("room_rollback", script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory(prefix="room-blob-test-") as temp:
+            repo = Path(temp) / "repo"
+            repo.mkdir()
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            (repo / "go.mod").write_bytes(b"module example.test/rollback\n")
+            (repo / "skip").mkdir()
+            (repo / "skip" / "fixture.txt").write_bytes(b"excluded")
+            (repo / "cmd").mkdir()
+            (repo / "cmd" / "binary.dat").write_bytes(b"\0\xff\n")
+            subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+            tree = subprocess.run(
+                ["git", "write-tree"], cwd=repo, check=True,
+                capture_output=True, text=True,
+            ).stdout.strip()
+            output = Path(temp) / "source"
+            module.extract_git_blobs(repo, tree, output, os.environ.copy(), "git", ("skip/",))
+            self.assertEqual((output / "go.mod").read_bytes(), b"module example.test/rollback\n")
+            self.assertEqual((output / "cmd" / "binary.dat").read_bytes(), b"\0\xff\n")
+            self.assertFalse((output / "skip").exists())
+
     def test_retention_state_differential_runs_on_all_native_targets(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         expected_native_os = (

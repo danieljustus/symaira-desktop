@@ -10,7 +10,6 @@ from pathlib import Path
 import shutil
 import stat
 import subprocess
-import tarfile
 import tempfile
 import sys
 
@@ -152,6 +151,68 @@ def remove_temp_tree(path):
     shutil.rmtree(path, onerror=make_writable_and_retry)
 
 
+def extract_git_blobs(root, revision, destination, env, git, excluded_prefixes=()):
+    """Materialize regular blobs without asking Git for Windows to unpack invalid names."""
+    tree = subprocess.run(
+        [git, "ls-tree", "-r", "-z", revision], cwd=root, env=env,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    if tree.returncode:
+        raise RuntimeError(f"git ls-tree exited {tree.returncode}: {tree.stderr.decode(errors='replace')}")
+    entries = []
+    for entry in tree.stdout.split(b"\0"):
+        if not entry:
+            continue
+        meta, path_bytes = entry.split(b"\t", 1)
+        mode, kind, object_id = meta.split(b" ")
+        path = path_bytes.decode("utf-8")
+        parts = path.split("/")
+        if path.startswith("/") or any(part in ("", ".", "..") for part in parts):
+            raise RuntimeError(f"unsafe Git tree path: {path!r}")
+        if any(path.startswith(prefix) for prefix in excluded_prefixes):
+            continue
+        if kind != b"blob" or mode not in (b"100644", b"100755"):
+            continue
+        entries.append((path, object_id, mode))
+
+    destination.mkdir(parents=True)
+    process = subprocess.Popen(
+        [git, "cat-file", "--batch"], cwd=root, env=env,
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    try:
+        for path, object_id, mode in entries:
+            process.stdin.write(object_id + b"\n")
+            process.stdin.flush()
+            header = process.stdout.readline().split()
+            if len(header) != 3 or header[0] != object_id or header[1] != b"blob":
+                raise RuntimeError(f"unexpected Git blob header for {path!r}: {header!r}")
+            remaining = int(header[2])
+            target = destination.joinpath(*path.split("/"))
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with target.open("wb") as output:
+                while remaining:
+                    block = process.stdout.read(min(remaining, 1024 * 1024))
+                    if not block:
+                        raise RuntimeError(f"truncated Git blob for {path!r}")
+                    output.write(block)
+                    remaining -= len(block)
+            if process.stdout.read(1) != b"\n":
+                raise RuntimeError(f"missing Git blob delimiter for {path!r}")
+            if mode == b"100755":
+                target.chmod(target.stat().st_mode | stat.S_IXUSR)
+        process.stdin.close()
+        if process.wait() != 0:
+            raise RuntimeError(f"git cat-file failed: {process.stderr.read().decode(errors='replace')}")
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait()
+        process.stdin.close()
+        process.stdout.close()
+        process.stderr.close()
+
+
 def invoke(binary, args, work, room, identity, label, expected_code=0):
     env = {
         "HOME": str(work / "home"),
@@ -225,12 +286,8 @@ def main():
         run([git, "worktree", "add", "--detach", rust_tree, rust_revision], cwd=root, env=build_env)
         if os.name == "nt":
             # Git for Windows rejects the frozen tag's Notion test fixture filenames.
-            archive = temp / "go-source.tar"
-            run([git, "archive", "--format=tar", "--output", archive, go_revision, ".",
-                 ":(exclude)internal/ingest/internal/notionimport/testdata/fixture/**"], cwd=root, env=build_env)
-            go_tree.mkdir()
-            with tarfile.open(archive) as source:
-                source.extractall(go_tree, filter="data")
+            extract_git_blobs(root, go_revision, go_tree, build_env, git,
+                              ("internal/ingest/internal/notionimport/testdata/fixture/",))
         else:
             run([git, "worktree", "add", "--detach", go_tree, go_revision], cwd=root, env=build_env)
         rust_bin, go_bin = temp / "symroom-rust", temp / "symroom-go"

@@ -32,6 +32,7 @@
 .PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential recipe-validate-fixtures-generate recipe-validate-differential
 .PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
+.PHONY: notebook-write-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -206,6 +207,10 @@ vault-write-differential:
 	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run TestPortNoteOperationContract
 	$(CARGO) test -p symdesk-vault --test filesystem_write_contracts --locked
 	$(CARGO) test -p symdesk-vault --test note_operations_contracts --locked
+
+notebook-write-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/notebookwritegen --check
+	$(CARGO) test -p symdesk-vault --test notebook_write_contracts --locked
 
 vault-history-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run TestPortHistoryLifecycleContract

@@ -222,7 +222,14 @@ def main():
     sensitive_key = None
     try:
         run([git, "worktree", "add", "--detach", rust_tree, rust_revision], cwd=root, env=build_env)
-        run([git, "worktree", "add", "--detach", go_tree, go_revision], cwd=root, env=build_env)
+        if os.name == "nt":
+            # The frozen Go tag has Notion test fixtures with Windows-invalid '<' and '>' names.
+            run([git, "worktree", "add", "--no-checkout", "--detach", go_tree, go_revision], cwd=root, env=build_env)
+            run([git, "-C", go_tree, "sparse-checkout", "set", "--no-cone", "/*",
+                 "!/internal/ingest/internal/notionimport/testdata/fixture/**"], cwd=root, env=build_env)
+            run([git, "-C", go_tree, "checkout", "--detach", go_revision], cwd=root, env=build_env)
+        else:
+            run([git, "worktree", "add", "--detach", go_tree, go_revision], cwd=root, env=build_env)
         rust_bin, go_bin = temp / "symroom-rust", temp / "symroom-go"
         suffix = ".exe" if os.name == "nt" else ""
         rust_bin = rust_bin.with_suffix(suffix) if suffix else rust_bin

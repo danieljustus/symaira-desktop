@@ -23,8 +23,8 @@ mod dataset_purge;
 mod dataset_sync;
 mod history_sync;
 mod metadata;
-mod retrieval_config;
 mod retrieval;
+mod retrieval_config;
 
 pub use backup::{backup_database, relocate_database, restore_database};
 pub use dataset_purge::{DatasetPurgeError, DatasetPurgeService};
@@ -37,10 +37,13 @@ pub use metadata::{
     METADATA_FILE_NAME, encode_sidecar_metadata, encode_sidecar_metadata_at, open_for_vault,
     record_sidecar_metadata,
 };
+pub use retrieval::{
+    RetrievalAnchor, RetrievalChunk, RetrievalDb, RetrievalDocument, RetrievalSearchChunk,
+    RetrievalSearchResult, RetrievalSection, StoredRetrievalChunk, materialize_chunks,
+};
 pub use retrieval_config::{
     index_location_for_vault, relocate_index_for_vault, symseek_config_path,
 };
-pub use retrieval::{RetrievalAnchor, RetrievalChunk, RetrievalSection, materialize_chunks};
 
 const MIGRATIONS: &[(&str, &str)] = &[
     ("001_init", include_str!("../migrations/001_init.sql")),

@@ -162,6 +162,7 @@ func normalizeTextRunID(value []byte) ([]byte, error) {
 func normalizeConsole(value []byte, sandboxRoot string) []byte {
 	value = bytes.ReplaceAll(value, []byte("\r\n"), []byte("\n"))
 	if sandboxRoot != "" {
+		value = bytes.ReplaceAll(value, []byte(strings.ReplaceAll(sandboxRoot, `\`, `\\`)), []byte("<SANDBOX>"))
 		value = bytes.ReplaceAll(value, []byte(sandboxRoot), []byte("<SANDBOX>"))
 	}
 	return value

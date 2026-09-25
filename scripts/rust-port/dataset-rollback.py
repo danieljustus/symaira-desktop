@@ -247,9 +247,15 @@ def main():
         if cleanup:
             report["cleanup"] = {"result": "FAIL", "workspace": str(temp), "details": cleanup}
             failure = failure or RuntimeError("temporary source cleanup failed")
+            report["result"] = "FAIL"
         else:
-            report["cleanup"] = {"result": "PASS"}
-            room_rollback.remove_temp_tree(temp)
+            try:
+                room_rollback.remove_temp_tree(temp)
+                report["cleanup"] = {"result": "PASS"}
+            except OSError as error:
+                report["cleanup"] = {"result": "FAIL", "workspace": str(temp), "details": [str(error)]}
+                failure = failure or error
+                report["result"] = "FAIL"
 
     encoded = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if report["result"] == "PASS":

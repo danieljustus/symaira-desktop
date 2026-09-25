@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "chunks": [
+    {
+      "id": 1,
+      "uuid": "vector-a",
+      "document_path": "/vault/alpha/a.md",
+      "chunk_index": 0,
+      "content": "alpha direction",
+      "embedding": [
+        3,
+        4
+      ],
+      "hash": "hash-a",
+      "norm": 5,
+      "dim": 2,
+      "embedding_model": "fixture-model",
+      "embedding_pending": false
+    },
+    {
+      "id": 2,
+      "uuid": "vector-b",
+      "document_path": "/vault/beta/b.md",
+      "chunk_index": 0,
+      "content": "beta direction",
+      "embedding": [
+        4,
+        3
+      ],
+      "hash": "hash-b",
+      "norm": 5,
+      "dim": 2,
+      "embedding_model": "fixture-model",
+      "embedding_pending": false
+    },
+    {
+      "id": 3,
+      "uuid": "vector-c",
+      "document_path": "/vault/alpha/c.md",
+      "chunk_index": 0,
+      "content": "alpha orthogonal",
+      "embedding": [
+        0,
+        1
+      ],
+      "hash": "hash-c",
+      "norm": 1,
+      "dim": 2,
+      "embedding_model": "fixture-model",
+      "embedding_pending": false
+    },
+    {
+      "id": 4,
+      "uuid": "vector-d",
+      "document_path": "/vault/beta/d.md",
+      "chunk_index": 0,
+      "content": "beta opposite",
+      "embedding": [
+        -1,
+        0
+      ],
+      "hash": "hash-d",
+      "norm": 1,
+      "dim": 2,
+      "embedding_model": "fixture-model",
+      "embedding_pending": false
+    }
+  ],
+  "searches": [
+    {
+      "query": [
+        1,
+        0
+      ],
+      "path_prefix": "",
+      "limit": 4,
+      "results": [
+        {
+          "vector_rank": 1,
+          "cosine_score": 0.8,
+          "chunk": {
+            "id": 2,
+            "uuid": "vector-b",
+            "document_path": "/vault/beta/b.md",
+            "chunk_index": 0,
+            "content": "beta direction",
+            "embedding": null,
+            "hash": "hash-b"
+          }
+        },
+        {
+          "vector_rank": 2,
+          "cosine_score": 0.6,
+          "chunk": {
+            "id": 1,
+            "uuid": "vector-a",
+            "document_path": "/vault/alpha/a.md",
+            "chunk_index": 0,
+            "content": "alpha direction",
+            "embedding": null,
+            "hash": "hash-a"
+          }
+        },
+        {
+          "vector_rank": 3,
+          "cosine_score": 0,
+          "chunk": {
+            "id": 3,
+            "uuid": "vector-c",
+            "document_path": "/vault/alpha/c.md",
+            "chunk_index": 0,
+            "content": "alpha orthogonal",
+            "embedding": null,
+            "hash": "hash-c"
+          }
+        },
+        {
+          "vector_rank": 4,
+          "cosine_score": -1,
+          "chunk": {
+            "id": 4,
+            "uuid": "vector-d",
+            "document_path": "/vault/beta/d.md",
+            "chunk_index": 0,
+            "content": "beta opposite",
+            "embedding": null,
+            "hash": "hash-d"
+          }
+        }
+      ]
+    },
+    {
+      "query": [
+        1,
+        0
+      ],
+      "path_prefix": "/vault/alpha/",
+      "limit": 2,
+      "results": [
+        {
+          "vector_rank": 1,
+          "cosine_score": 0.6,
+          "chunk": {
+            "id": 1,
+            "uuid": "vector-a",
+            "document_path": "/vault/alpha/a.md",
+            "chunk_index": 0,
+            "content": "alpha direction",
+            "embedding": null,
+            "hash": "hash-a"
+          }
+        },
+        {
+          "vector_rank": 2,
+          "cosine_score": 0,
+          "chunk": {
+            "id": 3,
+            "uuid": "vector-c",
+            "document_path": "/vault/alpha/c.md",
+            "chunk_index": 0,
+            "content": "alpha orthogonal",
+            "embedding": null,
+            "hash": "hash-c"
+          }
+        }
+      ]
+    }
+  ]
+}

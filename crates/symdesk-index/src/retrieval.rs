@@ -79,6 +79,26 @@ pub struct RetrievalSearchResult {
 
 #[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
+pub struct RetrievalVectorSearchResult {
+    pub chunk: RetrievalVectorSearchChunk,
+    pub vector_rank: usize,
+    pub cosine_score: f32,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub struct RetrievalVectorSearchChunk {
+    pub id: i64,
+    pub uuid: String,
+    pub document_path: String,
+    pub chunk_index: i64,
+    pub content: String,
+    pub embedding: Option<Vec<f32>>,
+    pub hash: String,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub struct RetrievalSearchChunk {
     pub id: i64,
     pub uuid: String,
@@ -355,6 +375,82 @@ impl RetrievalDb {
                 bm25_rank: rank,
             });
             rank += 1;
+        }
+        Ok(results)
+    }
+
+    pub fn search_vector(
+        &self,
+        query: &[f32],
+        limit: i64,
+    ) -> Result<Vec<RetrievalVectorSearchResult>, SidecarError> {
+        self.search_vector_with_path(query, "", limit)
+    }
+
+    /// Scores every stored chunk by cosine similarity, matching the Go
+    /// database fallback when its Hamming shortlist covers the scanned rows.
+    pub fn search_vector_with_path(
+        &self,
+        query: &[f32],
+        path_prefix: &str,
+        limit: i64,
+    ) -> Result<Vec<RetrievalVectorSearchResult>, SidecarError> {
+        if limit <= 0 {
+            return Ok(Vec::new());
+        }
+
+        let mut statement = self.connection.prepare(
+            "SELECT id, uuid, document_path, chunk_index, content, embedding, hash, norm
+             FROM chunks WHERE (?1 = '' OR document_path LIKE ?1 || '%')",
+        )?;
+        let mut rows = statement.query([path_prefix])?;
+        let query_norm = embedding_norm(query);
+        let mut results = Vec::new();
+        while let Some(row) = rows.next()? {
+            let embedding = decode_embedding(&row.get::<_, Vec<u8>>(5)?);
+            let norm: f32 = row.get(7)?;
+            let dot = query
+                .iter()
+                .zip(&embedding)
+                .map(|(left, right)| f64::from(*left * *right))
+                .sum::<f64>();
+            let score = if query.len() == embedding.len()
+                && !query.is_empty()
+                && query_norm > 0.0
+                && norm > 0.0
+            {
+                (dot / (f64::from(query_norm) * f64::from(norm))) as f32
+            } else {
+                0.0
+            };
+            let result_embedding = if query_norm > 0.0 && norm > 0.0 {
+                None
+            } else {
+                Some(embedding)
+            };
+            results.push(RetrievalVectorSearchResult {
+                chunk: RetrievalVectorSearchChunk {
+                    id: row.get(0)?,
+                    uuid: row.get(1)?,
+                    document_path: row.get(2)?,
+                    chunk_index: row.get(3)?,
+                    content: row.get(4)?,
+                    embedding: result_embedding,
+                    hash: row.get(6)?,
+                },
+                vector_rank: 0,
+                cosine_score: score,
+            });
+        }
+        results.sort_by(|left, right| {
+            right
+                .cosine_score
+                .partial_cmp(&left.cosine_score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        results.truncate(limit as usize);
+        for (index, result) in results.iter_mut().enumerate() {
+            result.vector_rank = index + 1;
         }
         Ok(results)
     }

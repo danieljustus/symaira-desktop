@@ -39,8 +39,8 @@ pub use metadata::{
 };
 pub use retrieval::{
     RetrievalAnchor, RetrievalChunk, RetrievalDb, RetrievalDocument, RetrievalEmbeddingSpaceCount,
-    RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, StoredRetrievalChunk,
-    materialize_chunks,
+    RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, RetrievalVectorSearchChunk,
+    RetrievalVectorSearchResult, StoredRetrievalChunk, materialize_chunks,
 };
 pub use retrieval_config::{
     index_location_for_vault, relocate_index_for_vault, symseek_config_path,

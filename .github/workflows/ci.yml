@@ -118,6 +118,7 @@ jobs:
     if: github.event_name != 'pull_request'
     name: Rust port contract
     strategy:
+      fail-fast: false
       matrix:
         # Exercise the portable source and oracle contracts on every native runner.
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest, windows-11-arm]

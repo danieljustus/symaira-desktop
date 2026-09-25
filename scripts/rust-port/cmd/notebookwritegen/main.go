@@ -242,10 +242,10 @@ func buildCreation(caseData creation) (result creation, resultErr error) {
 		return creation{}, err
 	}
 	if runtime.GOOS != "windows" && (info.Mode().Perm() != 0600 || dirInfo.Mode().Perm() != 0750) {
-		return creation{}, fmt.Errorf("Go notebook modes: file %#o, directory %#o", info.Mode().Perm(), dirInfo.Mode().Perm())
+		return creation{}, fmt.Errorf("go notebook modes: file %#o, directory %#o", info.Mode().Perm(), dirInfo.Mode().Perm())
 	}
 	if strings.Count(string(written), nb.Created) != 1 {
-		return creation{}, fmt.Errorf("Go notebook creation timestamp missing or duplicated")
+		return creation{}, fmt.Errorf("go notebook creation timestamp missing or duplicated")
 	}
 	caseData.Output = nb
 	caseData.Markdown = strings.Replace(string(written), nb.Created, "2026-01-02T03:04:05Z", 1)

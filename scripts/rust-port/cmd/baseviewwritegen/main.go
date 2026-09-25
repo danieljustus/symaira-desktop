@@ -50,7 +50,7 @@ func main() {
 	data = append(data, '\n')
 	path := filepath.Join(root, filepath.FromSlash(*output))
 	if *check {
-		current, err := os.ReadFile(path)
+		current, err := os.ReadFile(path) //nolint:gosec // explicit fixture output path selected by this command.
 		if err != nil {
 			fatal("read fixture: %v", err)
 		}
@@ -134,7 +134,7 @@ func build() (result fixture, err error) {
 
 func capture(root, operation string, base *dbviews.Base, view *dbviews.View, reference string) (step, error) {
 	path := "bases/invoices.md"
-	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path))) //nolint:gosec // fixed path under a fresh temporary oracle root.
 	if operation == "delete_base" {
 		if !os.IsNotExist(err) {
 			return step{}, fmt.Errorf("deleted base still exists or read failed: %v", err)

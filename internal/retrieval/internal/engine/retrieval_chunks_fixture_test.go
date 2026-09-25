@@ -81,15 +81,15 @@ func TestRetrievalChunksFixture(t *testing.T) {
 	}
 	content = append(content, '\n')
 	if os.Getenv("PORT_GENERATE") == "1" {
-		if err := os.MkdirAll(filepath.Dir(fixturePath), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(fixturePath), 0o750); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(fixturePath, content, 0o644); err != nil {
+		if err := os.WriteFile(fixturePath, content, 0o600); err != nil {
 			t.Fatal(err)
 		}
 		return
 	}
-	current, err := os.ReadFile(fixturePath)
+	current, err := os.ReadFile(fixturePath) //nolint:gosec // fixed repository fixture path.
 	if err != nil {
 		t.Fatal(err)
 	}

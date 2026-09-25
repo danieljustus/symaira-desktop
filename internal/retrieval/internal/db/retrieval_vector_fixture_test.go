@@ -64,7 +64,7 @@ func TestRetrievalVectorFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(got, encoded) {
-		t.Fatalf("Go retrieval vector oracle changed; regenerate %s with:\n%s", path, encoded)
+		t.Fatalf("Go retrieval vector oracle changed; regenerate %s", path)
 	}
 }
 

@@ -84,7 +84,10 @@
             "document_path": "/vault/beta/b.md",
             "chunk_index": 0,
             "content": "beta direction",
-            "embedding": null,
+            "embedding": [
+              4,
+              3
+            ],
             "hash": "hash-b"
           }
         },
@@ -97,7 +100,10 @@
             "document_path": "/vault/alpha/a.md",
             "chunk_index": 0,
             "content": "alpha direction",
-            "embedding": null,
+            "embedding": [
+              3,
+              4
+            ],
             "hash": "hash-a"
           }
         },
@@ -110,7 +116,10 @@
             "document_path": "/vault/alpha/c.md",
             "chunk_index": 0,
             "content": "alpha orthogonal",
-            "embedding": null,
+            "embedding": [
+              0,
+              1
+            ],
             "hash": "hash-c"
           }
         },
@@ -123,7 +132,10 @@
             "document_path": "/vault/beta/d.md",
             "chunk_index": 0,
             "content": "beta opposite",
-            "embedding": null,
+            "embedding": [
+              -1,
+              0
+            ],
             "hash": "hash-d"
           }
         }

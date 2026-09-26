@@ -54,6 +54,7 @@ use tower::{Service as _, ServiceExt as _};
 
 const MAX_NOTE_BYTES: u64 = 8 << 20;
 const MAX_SNAPSHOT_BYTES: u64 = 16 << 20;
+const MAX_NOTEBOOK_FILE_BYTES: u64 = 64 << 20;
 const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
 const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(5);
@@ -441,6 +442,10 @@ async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
         Ok(entries) => entries,
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
     };
+    let root_dir = match open_current_root(&state) {
+        Ok(root_dir) => root_dir,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+    };
     let mut notebooks: Vec<Notebook> = Vec::new();
     for entry in entries {
         let Ok(entry) = entry else { continue };
@@ -458,7 +463,7 @@ async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
             continue;
         };
         let relative = format!("notebooks/{name}");
-        let Ok(contents) = fs::read(canonical_path) else {
+        let Ok(contents) = read_root_file(&root_dir, Path::new(&relative)) else {
             continue;
         };
         if let Ok(notebook) = parse_notebook(&relative, &contents) {
@@ -524,12 +529,22 @@ async fn handle_notebook(
         };
         relative = format!("notebooks/{}", name.to_string_lossy());
     }
-    let notebook_path = match secure_path(&state.vault_root, &relative) {
-        Ok(path) => path,
+    let root_dir = match open_current_root(&state) {
+        Ok(root_dir) => root_dir,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
     };
-    let contents = match fs::read(notebook_path) {
+    match secure_path(&state.vault_root, &relative) {
+        Ok(_) => {}
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
+    }
+    let contents = match read_root_file(&root_dir, Path::new(&relative)) {
         Ok(contents) => contents,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return json_error(
+                StatusCode::NOT_FOUND,
+                "notebook not found: notebook not found",
+            );
+        }
         Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
     };
     let notebook = match parse_notebook(&relative, &contents) {
@@ -541,10 +556,11 @@ async fn handle_notebook(
         .sources
         .iter()
         .map(|path| {
-            let source = secure_path(&state.vault_root, path)
-                .ok()
-                .and_then(|resolved| fs::read(resolved).ok())
-                .and_then(|bytes| parse_bytes(path, &bytes).ok());
+            let source = secure_path(&state.vault_root, path).ok().and_then(|_| {
+                read_root_file(&root_dir, Path::new(path))
+                    .ok()
+                    .and_then(|bytes| parse_bytes(path, &bytes).ok())
+            });
             let missing = source.is_none();
             NotebookSource {
                 path: path.clone(),
@@ -910,6 +926,40 @@ async fn handle_not_found() -> Response {
 fn open_current_root(state: &AppState) -> Result<cap_std::fs::Dir, String> {
     cap_std::fs::Dir::open_ambient_dir(&state.vault_root, cap_std::ambient_authority())
         .map_err(|error| format!("open vault root: {error}"))
+}
+
+fn read_root_file(root: &cap_std::fs::Dir, relative: &Path) -> io::Result<Vec<u8>> {
+    let mut options = cap_std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use cap_std::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NONBLOCK);
+    }
+    let file = root.open_with(relative, &options)?;
+    let metadata = file.metadata()?;
+    if !metadata.is_file() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "vault path is not a regular file",
+        ));
+    }
+    if metadata.len() > MAX_NOTEBOOK_FILE_BYTES {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "vault file exceeds 64 MiB read limit",
+        ));
+    }
+    let mut contents = Vec::with_capacity(metadata.len() as usize);
+    file.take(MAX_NOTEBOOK_FILE_BYTES + 1)
+        .read_to_end(&mut contents)?;
+    if contents.len() as u64 > MAX_NOTEBOOK_FILE_BYTES {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "vault file exceeds 64 MiB read limit",
+        ));
+    }
+    Ok(contents)
 }
 
 fn current_root_identity(state: &AppState) -> Option<RootIdentity> {
@@ -1549,6 +1599,51 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        assert_eq!(
+            to_bytes(response.into_body(), 1 << 20).await.unwrap(),
+            br#"{"error":"notebook not found: notebook not found"}
+"#
+            .as_slice()
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn notebook_file_reader_rejects_symlink_escape() {
+        use std::os::unix::fs::symlink;
+
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-notebook-link-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        let outside = root.with_extension("outside");
+        fs::create_dir(&root).unwrap();
+        fs::write(&outside, b"outside sentinel").unwrap();
+        symlink(&outside, root.join("linked.md")).unwrap();
+        let root_dir =
+            cap_std::fs::Dir::open_ambient_dir(&root, cap_std::ambient_authority()).unwrap();
+        assert!(read_root_file(&root_dir, Path::new("linked.md")).is_err());
+        assert_eq!(fs::read(&outside).unwrap(), b"outside sentinel");
+        fs::remove_dir_all(&root).unwrap();
+        fs::remove_file(outside).unwrap();
+    }
+
+    #[test]
+    fn notebook_file_reader_rejects_files_over_limit_before_reading() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-notebook-large-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir(&root).unwrap();
+        let file = fs::File::create(root.join("large.md")).unwrap();
+        file.set_len(MAX_NOTEBOOK_FILE_BYTES + 1).unwrap();
+        drop(file);
+        let root_dir =
+            cap_std::fs::Dir::open_ambient_dir(&root, cap_std::ambient_authority()).unwrap();
+        assert!(read_root_file(&root_dir, Path::new("large.md")).is_err());
         fs::remove_dir_all(root).unwrap();
     }
 

@@ -500,6 +500,27 @@ fn proposal_decoder_preserves_go_json_diagnostics() {
 }
 
 #[test]
+fn retention_run_id_diagnostics_use_go_quote_for_controls_and_unicode() {
+    for (run_id, expected) in [
+        (
+            "bad\u{7}",
+            r#"retention proposal run ID "bad\a" contains a control character"#,
+        ),
+        (
+            "bad\u{200b}<",
+            r#"retention proposal run ID "bad\u200b<" is not platform-safe"#,
+        ),
+        (
+            "bad\u{e0001}<",
+            r#"retention proposal run ID "bad\U000e0001<" is not platform-safe"#,
+        ),
+    ] {
+        let error = retention::validate_run_id(run_id).expect_err("unsafe ID must fail");
+        assert_eq!(error.to_string(), expected);
+    }
+}
+
+#[test]
 fn retention_json_decoder_preserves_go_order_and_diagnostics() {
     let root = temp_dir("sd-retention-ordered-json-");
     fs::create_dir_all(retention::proposal_dir(&root)).expect("state dir");

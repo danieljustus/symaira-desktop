@@ -51,7 +51,11 @@ pub fn run(command: &ArgMatches, vault: Option<&str>, json_output: bool) -> Exit
         Some(("list", _)) => match registry.list() {
             Ok(sources) => {
                 if json_output {
-                    super::write_go_json(&sources)
+                    if sources.is_empty() {
+                        super::write_stdout("null\n".to_owned())
+                    } else {
+                        super::write_go_json(&sources)
+                    }
                 } else {
                     super::write_stdout(format!(
                         "{}\n",

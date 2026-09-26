@@ -40,6 +40,7 @@ type httpCase struct {
 	Body           string            `json:"body,omitempty"`
 	BodyRepeat     int               `json:"body_repeat,omitempty"`
 	EmptyNotebooks bool              `json:"empty_notebooks,omitempty"`
+	PopulateJobs   bool              `json:"populate_jobs,omitempty"`
 }
 
 type transcript struct {
@@ -152,6 +153,13 @@ func run() (runErr error) {
 	}
 	leftETag, rightETag := "", ""
 	for _, tc := range suite.Cases {
+		if tc.PopulateJobs {
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := populateJobs(vault); err != nil {
+					fatal("populate job fixture: %v", err)
+				}
+			}
+		}
 		if tc.EmptyNotebooks {
 			for _, vault := range []string{leftVault, rightVault} {
 				notebooks := filepath.Join(vault, "notebooks")
@@ -234,6 +242,22 @@ func createFixtureVault(root string) string {
 		fatal("fixture internal symlink: %v", err)
 	}
 	return vault
+}
+
+func populateJobs(vault string) error {
+	dir := filepath.Join(vault, ".symdesk", "server", "jobs")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+	for _, job := range []struct{ id, body string }{
+		{"00000000000000000000000000000001", `{"id":"00000000000000000000000000000001","schema_version":1,"status":"pending","source_path":"inbox/a.png","original_name":"a.png","capability":"ocr","created_at":"2026-01-02T03:04:05Z","updated_at":"2026-01-02T03:04:05Z"}`},
+		{"00000000000000000000000000000002", `{"id":"00000000000000000000000000000002","schema_version":1,"status":"completed","source_path":"inbox/b.png","original_name":"b.png","capability":"ocr","created_at":"2026-01-03T03:04:05Z","updated_at":"2026-01-03T04:05:06Z"}`},
+	} {
+		if err := os.WriteFile(filepath.Join(dir, job.id+".json"), []byte(job.body), 0o600); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func assertIndexedWrite(vault, relative, body string) error {

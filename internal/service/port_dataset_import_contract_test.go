@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -43,8 +45,26 @@ type portDatasetImportOracle struct {
 
 type portDatasetImportCase struct {
 	ID     string                   `json:"id"`
+	Inputs []portDatasetImportInput `json:"inputs"`
 	Calls  []portDatasetImportCall  `json:"calls"`
 	States []portDatasetImportState `json:"states"`
+}
+
+type portDatasetImportInput struct {
+	SourceName string                   `json:"source_name"`
+	CSV        string                   `json:"csv"`
+	Options    portDatasetImportOptions `json:"options"`
+}
+
+type portDatasetImportOptions struct {
+	Title          string                            `json:"title"`
+	Slug           string                            `json:"slug"`
+	IdentityField  string                            `json:"identity_field"`
+	Schema         map[string]dbviews.PropertyConfig `json:"schema"`
+	RefreshCommand string                            `json:"refresh_command"`
+	Sensitivity    string                            `json:"sensitivity"`
+	RetentionRule  string                            `json:"retention_rule"`
+	Now            string                            `json:"now"`
 }
 
 type portDatasetImportCall struct {
@@ -171,20 +191,18 @@ func portDatasetImportBuildFixture(t *testing.T) portDatasetImportFixture {
 		t.Fatal(err)
 	}
 	now := time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC)
-	options := func() DatasetImportOptions {
-		return DatasetImportOptions{
-			Title: "Imported Ledger", Slug: "ledger", IdentityField: "id",
-			Schema: map[string]dbviews.PropertyConfig{
-				"amount": {Type: "number", Label: "Amount", Description: "Ledger amount", Default: "0"},
-				"id":     {Type: "text", Label: "Identifier"},
-				"when":   {Type: "date", Label: "When"},
-			},
-			Sensitivity: "confidential", RetentionRule: "finance-7y", Now: now,
-		}
+	options := portDatasetImportOptions{
+		Title: "Imported Ledger", Slug: "ledger", IdentityField: "id",
+		Schema: map[string]dbviews.PropertyConfig{
+			"amount": {Type: "number", Label: "Amount", Description: "Ledger amount", Default: "0"},
+			"id":     {Type: "text", Label: "Identifier"},
+			"when":   {Type: "date", Label: "When"},
+		},
+		Sensitivity: "confidential", RetentionRule: "finance-7y", Now: now.Format(time.RFC3339),
 	}
-	first := portDatasetImportInvoke("first-import", sandbox.Svc, firstPath, options(), sandbox.Root)
+	first := portDatasetImportInvoke("first-import", sandbox.Svc, firstPath, options.toServiceOptions(), sandbox.Root)
 	firstState := portDatasetImportCapture(t, sandbox, "after-first-import", "ledger")
-	second := portDatasetImportInvoke("same-day-collision", sandbox.Svc, secondPath, options(), sandbox.Root)
+	second := portDatasetImportInvoke("same-day-collision", sandbox.Svc, secondPath, options.toServiceOptions(), sandbox.Root)
 	secondState := portDatasetImportCapture(t, sandbox, "after-collision-import", "ledger")
 	if first.Result == nil || second.Result == nil || first.Result.RawPath != "datasets/ledger/2026-02-03.csv" || second.Result.RawPath != "datasets/ledger/2026-02-03-2.csv" {
 		t.Fatalf("unexpected StoreRaw collision paths: %#v %#v", first, second)
@@ -205,12 +223,83 @@ func portDatasetImportBuildFixture(t *testing.T) portDatasetImportFixture {
 			"internal/vault/root.go":             portDatasetImportHash(t, "internal/vault/root.go"),
 			"internal/vault/vault.go":            portDatasetImportHash(t, "internal/vault/vault.go"),
 		},
-		Cases: []portDatasetImportCase{{
-			ID:     "same-day-source-import-collision-and-manifest-projection",
-			Calls:  []portDatasetImportCall{first, second},
-			States: []portDatasetImportState{firstState, secondState},
-		}},
+		Cases: []portDatasetImportCase{
+			{
+				ID: "same-day-source-import-collision-and-manifest-projection",
+				Inputs: []portDatasetImportInput{
+					{SourceName: "first-feed.CSV", CSV: string(firstBytes), Options: options},
+					{SourceName: "second-feed.csv", CSV: string(secondBytes), Options: options},
+				},
+				Calls: []portDatasetImportCall{first, second}, States: []portDatasetImportState{firstState, secondState},
+			},
+			portDatasetImportBuildCase(t, base, "unicode-dates-and-json-number-boundaries", []portDatasetImportInput{{
+				SourceName: "unicode-feed.csv",
+				CSV:        "identität, città, iso_date, rfc_date, seconds_date, minutes_date, small, large, signed_zero\nÅ-1, München, 2026-04-05, 2026-04-05T06:07:08+02:00, 2026-04-05 06:07:08, 2026-04-05 06:07, 1e-7, 1e20, -0\n",
+				Options: portDatasetImportOptions{
+					Title: "Unicode Dates", Slug: "unicode-dates", IdentityField: "identität",
+					Sensitivity: "internal", RetentionRule: "default", Now: now.Format(time.RFC3339),
+				},
+			}}),
+			portDatasetImportBuildCase(t, base, "explicit-nonfinite-number-fails-during-json-projection", []portDatasetImportInput{{
+				SourceName: "nonfinite.csv", CSV: "value\nNaN\n",
+				Options: portDatasetImportOptions{
+					Title: "Nonfinite", Slug: "nonfinite",
+					Schema:      map[string]dbviews.PropertyConfig{"value": {Type: "number"}},
+					Sensitivity: "restricted", RetentionRule: "default", Now: now.Format(time.RFC3339),
+				},
+			}}),
+			portDatasetImportBuildCase(t, base, "malformed-csv-is-rejected-before-persistence", []portDatasetImportInput{{
+				SourceName: "malformed.csv", CSV: "id,name\nalpha,\"unterminated\n",
+				Options: portDatasetImportOptions{Title: "Malformed", Slug: "malformed", Sensitivity: "restricted", RetentionRule: "default", Now: now.Format(time.RFC3339)},
+			}}),
+			portDatasetImportBuildCase(t, base, "csv-width-error-is-rejected-before-persistence", []portDatasetImportInput{{
+				SourceName: "width.csv", CSV: "id,value\na,1,extra\n",
+				Options: portDatasetImportOptions{Title: "Width", Slug: "width", Sensitivity: "restricted", RetentionRule: "default", Now: now.Format(time.RFC3339)},
+			}}),
+			portDatasetImportBuildCase(t, base, "invalid-number-error-is-rejected-before-persistence", []portDatasetImportInput{{
+				SourceName: "number.csv", CSV: "value\nnot-a-number\n",
+				Options: portDatasetImportOptions{Title: "Number", Slug: "number", Schema: map[string]dbviews.PropertyConfig{"value": {Type: "number"}}, Sensitivity: "restricted", RetentionRule: "default", Now: now.Format(time.RFC3339)},
+			}}),
+			portDatasetImportBuildCase(t, base, "invalid-date-error-is-rejected-before-persistence", []portDatasetImportInput{{
+				SourceName: "date.csv", CSV: "value\n2026-13-99\n",
+				Options: portDatasetImportOptions{Title: "Date", Slug: "date", Schema: map[string]dbviews.PropertyConfig{"value": {Type: "date"}}, Sensitivity: "restricted", RetentionRule: "default", Now: now.Format(time.RFC3339)},
+			}}),
+			portDatasetImportBuildCase(t, base, "missing-identity-field-error-is-rejected-before-persistence", []portDatasetImportInput{{
+				SourceName: "identity.csv", CSV: "id,value\na,1\n",
+				Options: portDatasetImportOptions{Title: "Identity", Slug: "identity", IdentityField: "missing", Sensitivity: "restricted", RetentionRule: "default", Now: now.Format(time.RFC3339)},
+			}}),
+		},
 	}
+}
+
+func (options portDatasetImportOptions) toServiceOptions() DatasetImportOptions {
+	now, _ := time.Parse(time.RFC3339, options.Now)
+	return DatasetImportOptions{
+		Title: options.Title, Slug: options.Slug, IdentityField: options.IdentityField,
+		Schema: options.Schema, RefreshCommand: options.RefreshCommand,
+		Sensitivity: options.Sensitivity, RetentionRule: options.RetentionRule, Now: now,
+	}
+}
+
+func portDatasetImportBuildCase(t *testing.T, base, id string, inputs []portDatasetImportInput) portDatasetImportCase {
+	t.Helper()
+	caseRoot := filepath.Join(base, "case-"+id)
+	sandbox := portDatasetSyncServiceNewSandbox(t, caseRoot, "import")
+	sourceDir := filepath.Join(caseRoot, "sources")
+	if err := os.MkdirAll(sourceDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	result := portDatasetImportCase{ID: id, Inputs: inputs}
+	for index, input := range inputs {
+		source := filepath.Join(sourceDir, input.SourceName)
+		if err := os.WriteFile(source, []byte(input.CSV), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		label := fmt.Sprintf("%s-%d", id, index+1)
+		result.Calls = append(result.Calls, portDatasetImportInvoke(label, sandbox.Svc, source, input.Options.toServiceOptions(), sandbox.Root))
+		result.States = append(result.States, portDatasetImportCapture(t, sandbox, "after-"+label, input.Options.Slug))
+	}
+	return result
 }
 
 func portDatasetImportInvoke(label string, svc *Service, source string, options DatasetImportOptions, root string) portDatasetImportCall {
@@ -269,10 +358,11 @@ func portDatasetImportCapture(t *testing.T, sandbox portDatasetSyncServiceSandbo
 		state.Rows = append(state.Rows, portDatasetSyncServiceRow{DatasetSlug: row.DatasetSlug, RowKey: row.RowKey, Identity: row.Identity, ValuesJSON: row.ValuesJSON, SourcePath: filepath.ToSlash(row.SourcePath), RowNumber: row.RowNumber})
 	}
 	handle, err := readDatasetHandle(sandbox.Root, filepath.ToSlash(filepath.Join(dataset.RawDir, slug+".md")))
-	if err != nil {
+	if err == nil {
+		state.Handle = handle
+	} else if !errors.Is(err, os.ErrNotExist) {
 		t.Fatal(err)
 	}
-	state.Handle = handle
 	return state
 }
 

@@ -253,7 +253,8 @@ impl<'a> DatasetSyncService<'a> {
             .map_err(|error| {
                 DatasetSyncError::Contract(format!("rebuild dataset rows: {error}"))
             })?;
-        let projected = dataset::project_rows(&slug, &materialized, "")?;
+        let projected = dataset::project_rows(&slug, &materialized, "")
+            .map_err(|error| DatasetSyncError::Contract(format!("store dataset rows: {error}")))?;
         sidecar
             .replace_dataset_rows(&slug, &projected)
             .map_err(|error| DatasetSyncError::Contract(format!("store dataset rows: {error}")))?;
@@ -450,10 +451,10 @@ fn coverage_for_rows(
     date_columns.sort_unstable();
     let mut dates = rows
         .iter()
-        .flat_map(|row| {
+        .filter_map(|row| {
             date_columns
                 .iter()
-                .filter_map(move |column| match row.values.get(*column) {
+                .find_map(|column| match row.values.get(*column) {
                     Some(dataset::GoValue::Text(value)) if !value.is_empty() => Some(value.clone()),
                     _ => None,
                 })

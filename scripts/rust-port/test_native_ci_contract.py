@@ -206,6 +206,14 @@ class NativeCIContracts(unittest.TestCase):
         self.assertEqual(module.select_msvc_linker(paths), paths.splitlines()[1])
         self.assertTrue(module.is_git_posix_bin(r"C:\Program Files\Git\usr\bin"))
         self.assertFalse(module.is_git_posix_bin(r"C:\Program Files\Git\cmd"))
+        with tempfile.TemporaryDirectory() as root:
+            linker = Path(root) / "VC/Tools/MSVC/14.0/bin/HostARM64/arm64/link.exe"
+            linker.parent.mkdir(parents=True)
+            linker.touch()
+            self.assertEqual(
+                module.msvc_linker_from_installation(root, "arm64", "HostARM64"),
+                str(linker),
+            )
 
     def test_rollback_blob_extraction_uses_exact_tree_and_exclusions(self):
         script = ROOT / "scripts/rust-port/room-rollback.py"

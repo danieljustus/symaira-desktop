@@ -489,6 +489,82 @@
       "method": "DELETE",
       "path": "/api/v1/share/share-old",
       "auth": "valid"
+    },
+    {
+      "id": "share-create-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-wrong-auth",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "wrong",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-invalid-json",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{not-json"
+    },
+    {
+      "id": "share-create-missing-path",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"expiry\":24}"
+    },
+    {
+      "id": "share-create-traversal",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"../outside.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-internal",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\".symdesk/server/shares.json\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-dataset",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"datasets/raw.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-expiry-zero",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":0}"
+    },
+    {
+      "id": "share-create-expiry-high",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":169}"
+    },
+    {
+      "id": "share-create-missing-document",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"missing.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-valid",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "valid",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":24}"
     }
   ]
 }

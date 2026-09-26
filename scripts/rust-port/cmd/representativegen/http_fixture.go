@@ -88,6 +88,17 @@ func generatedHTTP() httpSuite {
 		{ID: "share-revoke-already", Method: "DELETE", Path: "/api/v1/share/share-revoked", Auth: "valid"},
 		{ID: "share-revoke-valid", Method: "DELETE", Path: "/api/v1/share/share-old", Auth: "valid"},
 		{ID: "share-revoke-repeat", Method: "DELETE", Path: "/api/v1/share/share-old", Auth: "valid"},
+		{ID: "share-create-missing-auth", Method: "POST", Path: "/api/v1/share", Body: `{"path":"Hello.md","expiry":24}`},
+		{ID: "share-create-wrong-auth", Method: "POST", Path: "/api/v1/share", Auth: "wrong", Body: `{"path":"Hello.md","expiry":24}`},
+		{ID: "share-create-invalid-json", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: "{not-json"},
+		{ID: "share-create-missing-path", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: `{"expiry":24}`},
+		{ID: "share-create-traversal", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: `{"path":"../outside.md","expiry":24}`},
+		{ID: "share-create-internal", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: `{"path":".symdesk/server/shares.json","expiry":24}`},
+		{ID: "share-create-dataset", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: `{"path":"datasets/raw.md","expiry":24}`},
+		{ID: "share-create-expiry-zero", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: `{"path":"Hello.md","expiry":0}`},
+		{ID: "share-create-expiry-high", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: `{"path":"Hello.md","expiry":169}`},
+		{ID: "share-create-missing-document", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: `{"path":"missing.md","expiry":24}`},
+		{ID: "share-create-valid", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: `{"path":"Hello.md","expiry":24}`},
 	}}
 }
 

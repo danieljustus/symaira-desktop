@@ -220,6 +220,19 @@ func run() (runErr error) {
 				fatal("%s persisted share stores differ", tc.ID)
 			}
 		}
+		if tc.ID == "share-create-valid" {
+			leftStore, err := assertedCreatedShare(leftVault, leftResult.Body)
+			if err != nil {
+				fatal("%s Go persistence: %v", tc.ID, err)
+			}
+			rightStore, err := assertedCreatedShare(rightVault, rightResult.Body)
+			if err != nil {
+				fatal("%s Rust persistence: %v", tc.ID, err)
+			}
+			if !reflect.DeepEqual(leftStore, rightStore) {
+				fatal("%s persisted share stores differ", tc.ID)
+			}
+		}
 		if tc.ID == "jobs-retry-failed" {
 			leftJob, err := retriedJobFile(leftVault)
 			if err != nil {
@@ -373,6 +386,87 @@ func assertedRevokedShare(vault string) ([]map[string]any, error) {
 		return nil, fmt.Errorf("revocation time is not current RFC3339: %q", revoked)
 	}
 	links[0]["revoked_at"] = "<dynamic>"
+	return links, nil
+}
+
+type createdShare struct {
+	ID        string `json:"id"`
+	Token     string `json:"token"`
+	Path      string `json:"path"`
+	CreatedAt string `json:"created_at"`
+	ExpiresAt string `json:"expires_at"`
+	URL       string `json:"url"`
+}
+
+func parseCreatedShare(body []byte) (createdShare, error) {
+	var share createdShare
+	if err := json.Unmarshal(body, &share); err != nil {
+		return share, err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(body, &fields); err != nil || len(fields) != 6 {
+		return share, fmt.Errorf("unexpected share response fields")
+	}
+	if len(share.ID) != 24 || len(share.Token) != 64 || share.Path != "Hello.md" || share.URL != "/s/"+share.Token {
+		return share, fmt.Errorf("invalid share response: %q", body)
+	}
+	if _, err := hex.DecodeString(share.ID); err != nil {
+		return share, err
+	}
+	if _, err := hex.DecodeString(share.Token); err != nil {
+		return share, err
+	}
+	created, err := time.Parse(time.RFC3339Nano, share.CreatedAt)
+	if err != nil || time.Since(created) > time.Minute || time.Until(created) > time.Minute {
+		return share, fmt.Errorf("invalid share created_at %q", share.CreatedAt)
+	}
+	expires, err := time.Parse(time.RFC3339Nano, share.ExpiresAt)
+	if err != nil || expires.Sub(created) != 24*time.Hour {
+		return share, fmt.Errorf("invalid share expires_at %q", share.ExpiresAt)
+	}
+	return share, nil
+}
+
+func normalizeCreatedShare(body []byte) ([]byte, error) {
+	if _, err := parseCreatedShare(body); err != nil {
+		return nil, err
+	}
+	return []byte(`{"id":"<dynamic>","token":"<dynamic>","path":"Hello.md","created_at":"<dynamic>","expires_at":"<dynamic>","url":"/s/<dynamic>"}`), nil
+}
+
+func assertedCreatedShare(vault string, response []byte) ([]map[string]any, error) {
+	share, err := parseCreatedShare(response)
+	if err != nil {
+		return nil, err
+	}
+	path := shareFixturePath(vault)
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
+		return nil, fmt.Errorf("share store mode = %o, want 600", info.Mode().Perm())
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var links []map[string]any
+	if err := json.Unmarshal(data, &links); err != nil {
+		return nil, err
+	}
+	if len(links) != 4 {
+		return nil, fmt.Errorf("share store count = %d, want 4", len(links))
+	}
+	link := links[3]
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte(share.Token)))
+	if link["id"] != share.ID || link["path"] != share.Path || link["created_by"] != "admin" || link["created_at"] != share.CreatedAt || link["expires_at"] != share.ExpiresAt || link["token_hash"] != hash || link["token"] != nil || link["expired"] != nil {
+		return nil, fmt.Errorf("share store has unexpected created link")
+	}
+	links[0]["revoked_at"] = "<dynamic>"
+	for _, field := range []string{"id", "created_at", "expires_at", "token_hash"} {
+		link[field] = "<dynamic>"
+	}
 	return links, nil
 }
 
@@ -784,6 +878,22 @@ func compare(id string, left, right transcript) error {
 		right.Body, err = normalizeIngestJob(right.Body)
 		if err != nil {
 			return fmt.Errorf("Rust ingest response: %w", err)
+		}
+		left.Headers = cloneWithout(left.Headers, "content-length")
+		right.Headers = cloneWithout(right.Headers, "content-length")
+	}
+	if id == "share-create-valid" {
+		if left.Status != http.StatusCreated {
+			return fmt.Errorf("share create status = %d, want 201", left.Status)
+		}
+		var err error
+		left.Body, err = normalizeCreatedShare(left.Body)
+		if err != nil {
+			return fmt.Errorf("Go share create response: %w", err)
+		}
+		right.Body, err = normalizeCreatedShare(right.Body)
+		if err != nil {
+			return fmt.Errorf("Rust share create response: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")

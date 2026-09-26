@@ -91,7 +91,7 @@ func TestIndexRelocatePortFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fixture.PersistedIndexPath = strings.Replace(destination, root, "$ROOT", 1)
+	fixture.PersistedIndexPath = filepath.ToSlash(strings.Replace(destination, root, "$ROOT", 1))
 	if cfg.IndexPath != destination {
 		t.Fatalf("persisted index_path = %q, want %q", cfg.IndexPath, destination)
 	}

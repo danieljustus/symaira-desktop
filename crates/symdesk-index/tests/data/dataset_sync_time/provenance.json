@@ -1,0 +1,11 @@
+{
+  "oracle_revision": "ea2e2d46143cd1f3ce38bc42543cb9fd87951339",
+  "oracle_production_path": "internal/service/datasets.go",
+  "oracle_production_sha256": "a7322f2cbbaa12e90b644266b002e2b2996a62f103b25f26b098ddb663cd5c4e",
+  "go_toolchain": "go1.26.6 darwin/arm64",
+  "time_probe_sha256": "cecf138b0543883f53d71a039603ef31c614ff864921bf7557aa0837ada6b29f",
+  "time_raw_jsonl_sha256": "2589194433f83e7de2b57fc933aa4e82146fc3677b80ae6cf408dc0b58c50254",
+  "time_observations_sha256": "e73fb28d3081e561657bb6b93a0da7d396dd0ad3d4ee27eb79ab6baadc5e05a4",
+  "time_boundary_case_count": 21,
+  "jsonl_framing": "LF bytes"
+}

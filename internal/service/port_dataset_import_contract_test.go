@@ -21,7 +21,7 @@ import (
 
 const (
 	portDatasetImportFixtureRel   = "testdata/port/dataset/import.json"
-	portDatasetImportOracleCommit = "6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1"
+	portDatasetImportOracleCommit = "38891d35eb8ceb6c348eca9a78b3fb2873677e3d"
 	portDatasetImportGoVersion    = "go1.26.6"
 )
 

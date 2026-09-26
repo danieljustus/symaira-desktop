@@ -146,7 +146,7 @@ func observeIndexLocationCase(t *testing.T, c *indexLocationCase) {
 	root := t.TempDir()
 	setupIndexFixtureCase(t, root, c.Environment, c.ConfigTOML, c.LegacyJSON, c.SeedFiles)
 	vaultRoot := expandFixturePath(c.VaultRoot, root)
-	if vaultRoot != "" {
+	if strings.TrimSpace(vaultRoot) != "" {
 		if err := os.MkdirAll(vaultRoot, 0o700); err != nil {
 			t.Fatal(err)
 		}

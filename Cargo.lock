@@ -1342,6 +1342,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "notify",
+ "same-file",
  "serde",
  "serde_json",
  "symdesk-vault",

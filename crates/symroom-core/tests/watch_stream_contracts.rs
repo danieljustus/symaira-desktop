@@ -18,6 +18,8 @@ struct Case {
     name: String,
     input: String,
     #[serde(default)]
+    input_hex: String,
+    #[serde(default)]
     repeat_bytes: usize,
     #[serde(default)]
     stop_after: usize,
@@ -43,7 +45,11 @@ fn watch_stream_replays_go_scanner_and_handler_contract() {
         ))
     );
     for case in fixture.cases {
-        let mut input = case.input.into_bytes();
+        let mut input = if case.input_hex.is_empty() {
+            case.input.into_bytes()
+        } else {
+            hex::decode(&case.input_hex).expect("decode raw Go fixture input")
+        };
         if case.repeat_bytes > 0 {
             input.extend(std::iter::repeat_n(b'x', case.repeat_bytes));
             input.push(b'\n');

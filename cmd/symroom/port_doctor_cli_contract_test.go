@@ -376,16 +376,29 @@ func doctorCLIRoomFiles(dir string) []string {
 }
 
 func normalizeDoctorCLIOutput(output []byte, home, dataHome, toolsDir string, hasIdentityFile bool) string {
+	return normalizeDoctorCLIOutputForOS(output, home, dataHome, toolsDir, hasIdentityFile, runtime.GOOS)
+}
+
+func normalizeDoctorCLIOutputForOS(output []byte, home, dataHome, toolsDir string, hasIdentityFile bool, goos string) string {
 	text := string(output)
+	jsonOutput := goos == "windows" && strings.HasPrefix(text, "{")
 	for _, replacement := range [][2]string{{home, "$HOME"}, {dataHome, "$DATA"}, {toolsDir, "$TOOLS"}} {
-		text = strings.ReplaceAll(text, replacement[0], replacement[1])
-	}
-	if runtime.GOOS == "windows" {
-		for _, tool := range []string{"symdesk", "symbrain", "symvault"} {
-			text = strings.ReplaceAll(text, "$TOOLS/"+tool+".exe", "$TOOLS/"+tool)
-			text = strings.ReplaceAll(text, "$TOOLS\\"+tool+".exe", "$TOOLS/"+tool)
+		path := replacement[0]
+		if jsonOutput {
+			path = strings.ReplaceAll(path, `\`, `\\`)
 		}
-		if strings.HasPrefix(text, "{") {
+		text = strings.ReplaceAll(text, path, replacement[1])
+	}
+	if goos == "windows" {
+		for _, tool := range []string{"symdesk", "symbrain", "symvault"} {
+			windowsPath := "$TOOLS\\" + tool + ".exe"
+			if jsonOutput {
+				windowsPath = strings.ReplaceAll(windowsPath, `\`, `\\`)
+			}
+			text = strings.ReplaceAll(text, windowsPath, "$TOOLS/"+tool)
+			text = strings.ReplaceAll(text, "$TOOLS/"+tool+".exe", "$TOOLS/"+tool)
+		}
+		if jsonOutput {
 			text = strings.ReplaceAll(text, `\\`, "/")
 		} else {
 			text = strings.ReplaceAll(text, `\`, "/")
@@ -395,6 +408,26 @@ func normalizeDoctorCLIOutput(output []byte, home, dataHome, toolsDir string, ha
 		text = normalizeIdentityModeOutput(text)
 	}
 	return text
+}
+
+func TestNormalizeDoctorCLIWindowsJSONPaths(t *testing.T) {
+	home := `C:\Users\runner\Temp\symroom\home`
+	dataHome := `C:\Users\runner\Temp\symroom\data`
+	toolsDir := `C:\Users\runner\Temp\symroom\tools`
+	output, err := json.MarshalIndent(map[string]string{
+		"config_error": "failed to apply " + home + `\.config\symroom\config.toml`,
+		"tool_path":    toolsDir + `\symdesk.exe`,
+	}, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := normalizeDoctorCLIOutputForOS(output, home, dataHome, toolsDir, false, "windows")
+	if !strings.Contains(got, `$HOME/.config/symroom/config.toml`) || !strings.Contains(got, `$TOOLS/symdesk`) {
+		t.Fatalf("Windows JSON paths were not normalized: %s", got)
+	}
+	if strings.Contains(got, `C:\Users\`) || strings.Contains(got, ".exe") {
+		t.Fatalf("Windows temp path or executable suffix remains: %s", got)
+	}
 }
 
 func normalizeIdentityModeOutput(text string) string {

@@ -184,6 +184,7 @@ func runGenerate(repoRoot, commit, release string) {
 	}
 	// Keep this independent Go process fixture in the same P/Q generation as
 	// the package-produced MCP and CLI fixtures.
+	//nolint:gosec // trustedGoTool selects the executable; the generator path is fixed
 	cmd := exec.Command(goTool, "run", "./scripts/rust-port/cmd/mcpgen")
 	cmd.Dir = repoRoot
 	cmd.Env = generationEnv

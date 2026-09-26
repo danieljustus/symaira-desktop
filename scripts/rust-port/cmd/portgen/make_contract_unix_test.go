@@ -43,7 +43,7 @@ func TestMakeGenerationEnvironmentCannotBeCommandLineOverridden(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	makefile, err := os.ReadFile(filepath.Join(repoRoot, "Makefile"))
+	makefile, err := os.ReadFile(filepath.Join(repoRoot, "Makefile")) //nolint:gosec // repository root and fixed Makefile name
 	if err != nil {
 		t.Fatal(err)
 	}

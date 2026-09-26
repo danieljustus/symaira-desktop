@@ -290,6 +290,35 @@
       "auth": "valid"
     },
     {
+      "id": "notebook-get-missing-auth",
+      "method": "GET",
+      "path": "/api/v1/notebooks/research"
+    },
+    {
+      "id": "notebook-get-wrong-auth",
+      "method": "GET",
+      "path": "/api/v1/notebooks/research",
+      "auth": "wrong"
+    },
+    {
+      "id": "notebook-get-research",
+      "method": "GET",
+      "path": "/api/v1/notebooks/research",
+      "auth": "valid"
+    },
+    {
+      "id": "notebook-get-mixed-sources",
+      "method": "GET",
+      "path": "/api/v1/notebooks/mixed",
+      "auth": "valid"
+    },
+    {
+      "id": "notebook-get-unknown",
+      "method": "GET",
+      "path": "/api/v1/notebooks/does-not-exist",
+      "auth": "valid"
+    },
+    {
       "id": "notebooks-empty",
       "method": "GET",
       "path": "/api/v1/notebooks",

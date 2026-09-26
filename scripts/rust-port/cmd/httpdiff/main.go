@@ -205,6 +205,7 @@ func createFixtureVault(root string) string {
 	files := map[string]string{
 		"notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: 2026-01-02T03:04:05Z\nnotebook_id: research\ndescription: Research notes\nsources:\n  - Hello.md\n---\n",
 		"notebooks/archive.md":  "---\ntype: notebook\ntitle: Archive\ncreated: 2026-01-03T04:05:06Z\nnotebook_id: archive\nsources: []\n---\n",
+		"notebooks/mixed.md":    "---\ntype: notebook\ntitle: Mixed\ncreated: 2026-01-04T05:06:07Z\nnotebook_id: mixed\nsources:\n  - Hello.md\n  - missing.md\n  - escape.md\n  - ../outside.md\n---\n",
 		"notebooks/ignored.md":  "---\ntype: note\ntitle: Not a notebook\n---\n",
 		"Hello.md":              "---\ntitle: Hello\n---\nBody",
 		"nested/Note.md":        "nested",

@@ -18,6 +18,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -182,6 +183,19 @@ func run() (runErr error) {
 		if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
 		}
+		if tc.ID == "jobs-retry-failed" {
+			leftJob, err := retriedJobFile(leftVault)
+			if err != nil {
+				fatal("%s Go persistence: %v", tc.ID, err)
+			}
+			rightJob, err := retriedJobFile(rightVault)
+			if err != nil {
+				fatal("%s Rust persistence: %v", tc.ID, err)
+			}
+			if !bytes.Equal(leftJob, rightJob) {
+				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
+			}
+		}
 		if tc.ID == "file-put-symlink-parent" {
 			for _, root := range []string{filepath.Dir(leftVault), filepath.Dir(rightVault)} {
 				if _, err := os.Stat(filepath.Join(root, "new.md")); !errors.Is(err, os.ErrNotExist) {
@@ -252,12 +266,54 @@ func populateJobs(vault string) error {
 	for _, job := range []struct{ id, body string }{
 		{"00000000000000000000000000000001", `{"id":"00000000000000000000000000000001","schema_version":1,"status":"pending","source_path":"inbox/a.png","original_name":"a.png","capability":"ocr","created_at":"2026-01-02T03:04:05Z","updated_at":"2026-01-02T03:04:05Z"}`},
 		{"00000000000000000000000000000002", `{"id":"00000000000000000000000000000002","schema_version":1,"status":"completed","source_path":"inbox/b.png","original_name":"b.png","capability":"ocr","created_at":"2026-01-03T03:04:05Z","updated_at":"2026-01-03T04:05:06Z"}`},
+		{"00000000000000000000000000000003", `{"id":"00000000000000000000000000000003","schema_version":1,"status":"failed","source_path":"inbox/c.png","original_name":"c.png","capability":"ocr","worker_id":"worker-a","error":"temporary failure","lease_until":"2026-01-04T04:05:06Z","created_at":"2026-01-04T03:04:05Z","updated_at":"2026-01-04T04:05:06Z"}`},
 	} {
 		if err := os.WriteFile(filepath.Join(dir, job.id+".json"), []byte(job.body), 0o600); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func retriedJobFile(vault string) ([]byte, error) {
+	path := filepath.Join(vault, ".symdesk", "server", "jobs", "00000000000000000000000000000003.json")
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
+		return nil, fmt.Errorf("job mode = %o, want 600", info.Mode().Perm())
+	}
+	body, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var job map[string]any
+	if err := json.Unmarshal(body, &job); err != nil {
+		return nil, err
+	}
+	if job["status"] != "pending" || job["worker_id"] != nil || job["lease_until"] != nil || job["error"] != nil {
+		return nil, fmt.Errorf("retry left wrong state: %q", body)
+	}
+	return normalizeJobRetryTime(body)
+}
+
+func normalizeJobRetryTime(body []byte) ([]byte, error) {
+	var job struct {
+		UpdatedAt string `json:"updated_at"`
+	}
+	if err := json.Unmarshal(body, &job); err != nil {
+		return nil, err
+	}
+	updated, err := time.Parse(time.RFC3339Nano, job.UpdatedAt)
+	if err != nil || time.Since(updated) > time.Minute || time.Until(updated) > time.Minute {
+		return nil, fmt.Errorf("retry timestamp is not current RFC3339: %q", job.UpdatedAt)
+	}
+	marker := []byte(`"` + job.UpdatedAt + `"`)
+	if bytes.Count(body, marker) != 1 {
+		return nil, fmt.Errorf("retry timestamp field is not unique")
+	}
+	return bytes.Replace(body, marker, []byte(`"<dynamic>"`), 1), nil
 }
 
 func assertIndexedWrite(vault, relative, body string) error {
@@ -479,6 +535,19 @@ func compare(id string, left, right transcript) error {
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
 		return compareHeaders(left.Headers, right.Headers)
+	}
+	if id == "jobs-retry-failed" {
+		var err error
+		left.Body, err = normalizeJobRetryTime(left.Body)
+		if err != nil {
+			return fmt.Errorf("Go retry response: %w", err)
+		}
+		right.Body, err = normalizeJobRetryTime(right.Body)
+		if err != nil {
+			return fmt.Errorf("Rust retry response: %w", err)
+		}
+		left.Headers = cloneWithout(left.Headers, "content-length")
+		right.Headers = cloneWithout(right.Headers, "content-length")
 	}
 	if strings.HasPrefix(id, "snapshot-") {
 		if strings.HasPrefix(id, "snapshot-gzip") || id == "snapshot-head-gzip" {

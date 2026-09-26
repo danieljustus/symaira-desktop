@@ -155,6 +155,7 @@ func runGenerate(repoRoot, commit, release string) {
 		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract|PurgeContract|QueryCLIContract)$|^TestPortHistoryServiceContract$"},
 		{"./internal/tools", "TestSymdeskMCPInventory"},
 		{"./internal/selfhost", "TestSelfhostHTTPInventory"},
+		{"./internal/sidecar", "^TestPortSidecar(Contract|MetadataContract)$"},
 	}
 
 	for _, target := range packages {

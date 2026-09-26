@@ -567,7 +567,7 @@ sidecar-differential: sidecar-fixtures-check
 sidecar-roundtrip:
 	SIDECAR_NATIVE=1 GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 
-port-fixtures-generate: core-fixtures-generate vault-fixtures-generate sidecar-fixtures-generate sidecar-metadata-fixtures-generate
+port-fixtures-generate: core-fixtures-generate vault-fixtures-generate
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/portgen \
 		--oracle-release $(PORT_ORACLE_RELEASE)
 

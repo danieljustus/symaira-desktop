@@ -60,6 +60,10 @@ jobs:
       - name: Test
         run: go test -race -count=1 ./...
 
+      - name: Native Linux retention runner controls
+        if: matrix.os == 'ubuntu-latest'
+        run: make retention-review-regressions-test
+
       - name: Coverage gate
         if: matrix.os == 'ubuntu-latest'
         # Floor set to the measured baseline (issue #488: 73.6%) minus a small

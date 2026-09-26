@@ -207,6 +207,19 @@ func run() (runErr error) {
 				}
 			}
 		}
+		if tc.ID == "share-revoke-valid" {
+			leftStore, err := assertedRevokedShare(leftVault)
+			if err != nil {
+				fatal("%s Go persistence: %v", tc.ID, err)
+			}
+			rightStore, err := assertedRevokedShare(rightVault)
+			if err != nil {
+				fatal("%s Rust persistence: %v", tc.ID, err)
+			}
+			if !reflect.DeepEqual(leftStore, rightStore) {
+				fatal("%s persisted share stores differ", tc.ID)
+			}
+		}
 		if tc.ID == "jobs-retry-failed" {
 			leftJob, err := retriedJobFile(leftVault)
 			if err != nil {
@@ -332,6 +345,35 @@ func assertSharesUnchanged(vault string) error {
 		return fmt.Errorf("share store changed during listing")
 	}
 	return nil
+}
+
+func assertedRevokedShare(vault string) ([]map[string]any, error) {
+	path := shareFixturePath(vault)
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
+		return nil, fmt.Errorf("share store mode = %o, want 600", info.Mode().Perm())
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var links []map[string]any
+	if err := json.Unmarshal(data, &links); err != nil {
+		return nil, err
+	}
+	if len(links) != 3 || links[0]["id"] != "share-old" || links[0]["expired"] != true || links[0]["token_hash"] != "fixture-hash-old" {
+		return nil, fmt.Errorf("unexpected revoked share state")
+	}
+	revoked, _ := links[0]["revoked_at"].(string)
+	when, err := time.Parse(time.RFC3339Nano, revoked)
+	if err != nil || time.Since(when) > time.Minute || time.Until(when) > time.Minute {
+		return nil, fmt.Errorf("revocation time is not current RFC3339: %q", revoked)
+	}
+	links[0]["revoked_at"] = "<dynamic>"
+	return links, nil
 }
 
 func retriedJobFile(vault string) ([]byte, error) {

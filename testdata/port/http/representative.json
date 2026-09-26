@@ -454,6 +454,41 @@
       "path": "/api/v1/shares",
       "auth": "valid",
       "populate_shares": true
+    },
+    {
+      "id": "share-revoke-missing-auth",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old"
+    },
+    {
+      "id": "share-revoke-wrong-auth",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old",
+      "auth": "wrong"
+    },
+    {
+      "id": "share-revoke-unknown",
+      "method": "DELETE",
+      "path": "/api/v1/share/does-not-exist",
+      "auth": "valid"
+    },
+    {
+      "id": "share-revoke-already",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-revoked",
+      "auth": "valid"
+    },
+    {
+      "id": "share-revoke-valid",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old",
+      "auth": "valid"
+    },
+    {
+      "id": "share-revoke-repeat",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old",
+      "auth": "valid"
     }
   ]
 }

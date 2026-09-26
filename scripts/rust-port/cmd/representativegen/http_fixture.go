@@ -82,6 +82,12 @@ func generatedHTTP() httpSuite {
 		{ID: "shares-wrong-auth", Method: "GET", Path: "/api/v1/shares", Auth: "wrong"},
 		{ID: "shares-empty", Method: "GET", Path: "/api/v1/shares", Auth: "valid"},
 		{ID: "shares-populated", Method: "GET", Path: "/api/v1/shares", Auth: "valid", PopulateShares: true},
+		{ID: "share-revoke-missing-auth", Method: "DELETE", Path: "/api/v1/share/share-old"},
+		{ID: "share-revoke-wrong-auth", Method: "DELETE", Path: "/api/v1/share/share-old", Auth: "wrong"},
+		{ID: "share-revoke-unknown", Method: "DELETE", Path: "/api/v1/share/does-not-exist", Auth: "valid"},
+		{ID: "share-revoke-already", Method: "DELETE", Path: "/api/v1/share/share-revoked", Auth: "valid"},
+		{ID: "share-revoke-valid", Method: "DELETE", Path: "/api/v1/share/share-old", Auth: "valid"},
+		{ID: "share-revoke-repeat", Method: "DELETE", Path: "/api/v1/share/share-old", Auth: "valid"},
 	}}
 }
 

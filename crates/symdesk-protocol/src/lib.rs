@@ -79,6 +79,7 @@ struct AppState {
     auth_failures: Mutex<AuthThrottle>,
     snapshot_cache: SnapshotCache,
     job_retry: Mutex<()>,
+    share_write: Mutex<()>,
 }
 
 #[derive(Debug, Default)]
@@ -211,6 +212,7 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root),
         job_retry: Mutex::new(()),
+        share_write: Mutex::new(()),
     });
     let app = router(state);
     eprintln!("LISTENING http://{actual}");
@@ -288,6 +290,10 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/notebooks", get(handle_notebooks))
         .route("/api/v1/notebooks/{id}", get(handle_notebook))
         .route("/api/v1/shares", get(handle_shares))
+        .route(
+            "/api/v1/share/{id}",
+            axum::routing::delete(handle_revoke_share),
+        )
         .layer(middleware::from_fn_with_state(
             Arc::clone(&state),
             authenticate,
@@ -493,7 +499,7 @@ struct ShareLink {
     created_at: String,
     #[serde(default = "go_zero_time")]
     expires_at: String,
-    #[serde(default, skip_deserializing)]
+    #[serde(default)]
     token_hash: String,
     #[serde(default, skip_serializing_if = "is_false")]
     expired: bool,
@@ -506,14 +512,22 @@ async fn handle_shares(State(state): State<Arc<AppState>>) -> Response {
         Ok(root) => root,
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
     };
+    let mut links = match read_shares(&root) {
+        Ok(links) => links,
+        Err(()) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares"),
+    };
+    for link in &mut links {
+        link.token_hash.clear();
+    }
+    links.reverse();
+    json_response(StatusCode::OK, links)
+}
+
+fn read_shares(root: &cap_std::fs::Dir) -> Result<Vec<ShareLink>, ()> {
     let shares_dir = match root.open_dir(".symdesk/server") {
         Ok(directory) => directory,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            return json_response(StatusCode::OK, Vec::<ShareLink>::new());
-        }
-        Err(_) => {
-            return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares");
-        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(_) => return Err(()),
     };
     let mut options = cap_std::fs::OpenOptions::new();
     options.read(true);
@@ -524,16 +538,12 @@ async fn handle_shares(State(state): State<Arc<AppState>>) -> Response {
     }
     let file = match shares_dir.open_with("shares.json", &options) {
         Ok(file) => file,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            return json_response(StatusCode::OK, Vec::<ShareLink>::new());
-        }
-        Err(_) => {
-            return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares");
-        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(_) => return Err(()),
     };
     let metadata = match file.metadata() {
         Ok(metadata) if metadata.is_file() && metadata.len() <= MAX_SHARE_STORE_BYTES => metadata,
-        _ => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares"),
+        _ => return Err(()),
     };
     let mut bytes = Vec::with_capacity(metadata.len() as usize);
     if file
@@ -542,14 +552,72 @@ async fn handle_shares(State(state): State<Arc<AppState>>) -> Response {
         .is_err()
         || bytes.len() as u64 > MAX_SHARE_STORE_BYTES
     {
-        return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares");
+        return Err(());
     }
-    let mut links: Vec<ShareLink> = match serde_json::from_slice(&bytes) {
-        Ok(links) => links,
-        Err(_) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares"),
+    serde_json::from_slice::<Vec<ShareLink>>(&bytes).map_err(|_| ())
+}
+
+async fn handle_revoke_share(
+    State(state): State<Arc<AppState>>,
+    AxumPath(id): AxumPath<String>,
+) -> Response {
+    let _guard = match state.share_write.lock() {
+        Ok(guard) => guard,
+        Err(_) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to revoke share"),
     };
-    links.reverse();
-    json_response(StatusCode::OK, links)
+    let root = match open_current_root(&state) {
+        Ok(root) => root,
+        Err(_) => {
+            return json_error(
+                StatusCode::NOT_FOUND,
+                "share link not found or already revoked",
+            );
+        }
+    };
+    let mut links = match read_shares(&root) {
+        Ok(links) => links,
+        Err(()) => {
+            return json_error(
+                StatusCode::NOT_FOUND,
+                "share link not found or already revoked",
+            );
+        }
+    };
+    let Some(link) = links.iter_mut().find(|link| link.id == id && !link.expired) else {
+        return json_error(
+            StatusCode::NOT_FOUND,
+            "share link not found or already revoked",
+        );
+    };
+    link.expired = true;
+    link.revoked_at = Some(
+        OffsetDateTime::now_utc()
+            .format(&Rfc3339)
+            .unwrap_or_else(|_| go_zero_time()),
+    );
+    let data = match serde_json::to_vec_pretty(&links) {
+        Ok(data) => data,
+        Err(_) => {
+            return json_error(
+                StatusCode::NOT_FOUND,
+                "share link not found or already revoked",
+            );
+        }
+    };
+    if write_atomic_root(
+        &root,
+        Path::new(".symdesk/server/shares.json"),
+        &data,
+        0o600,
+    )
+    .is_err()
+    {
+        return json_error(
+            StatusCode::NOT_FOUND,
+            "share link not found or already revoked",
+        );
+    }
+    json_response(StatusCode::OK, serde_json::json!({"status":"revoked"}))
 }
 
 async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
@@ -2605,6 +2673,7 @@ mod tests {
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
             job_retry: Mutex::new(()),
+            share_write: Mutex::new(()),
         }
     }
 
@@ -2670,6 +2739,7 @@ mod tests {
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
             job_retry: Mutex::new(()),
+            share_write: Mutex::new(()),
         };
 
         assert!(matches!(
@@ -2698,6 +2768,7 @@ mod tests {
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
             job_retry: Mutex::new(()),
+            share_write: Mutex::new(()),
         };
 
         assert!(matches!(
@@ -2724,6 +2795,7 @@ mod tests {
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
             job_retry: Mutex::new(()),
+            share_write: Mutex::new(()),
         };
 
         assert!(matches!(
@@ -2765,6 +2837,7 @@ mod tests {
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
             job_retry: Mutex::new(()),
+            share_write: Mutex::new(()),
         }
     }
 

@@ -55,6 +55,7 @@ fn native_snapshot_cache_reflects_external_vault_lifecycle() {
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root_path),
         job_retry: Mutex::new(()),
+        share_write: Mutex::new(()),
     };
     let first = await_notes(&state, &[("note.md", "first")]);
     let repeat = snapshot(&state);
@@ -111,6 +112,7 @@ fn warm_cache_reopens_replaced_root_and_file_reads_use_new_root() {
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root_path),
         job_retry: Mutex::new(()),
+        share_write: Mutex::new(()),
     };
     let first = await_notes(&state, &[("note.md", "old")]);
 
@@ -148,6 +150,7 @@ fn snapshot_preserves_legal_unix_backslashes_in_path_and_etag_material() {
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root_path),
         job_retry: Mutex::new(()),
+        share_write: Mutex::new(()),
     };
     let payload = await_notes(&state, &[(name, "content")]);
     assert!(payload.etag.len() == 64);
@@ -171,6 +174,7 @@ async fn snapshot_read_failure_returns_http_500_retains_dirty_cache_and_retries(
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::uncached(),
         job_retry: Mutex::new(()),
+        share_write: Mutex::new(()),
     });
     state.snapshot_cache.set_healthy(true);
     let old = snapshot(&state);

@@ -10,13 +10,13 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 )
 
 type watchStreamCase struct {
 	Name        string            `json:"name"`
 	Input       string            `json:"input"`
+	InputHex    string            `json:"input_hex,omitempty"`
 	RepeatBytes int               `json:"repeat_bytes,omitempty"`
 	StopAfter   int               `json:"stop_after,omitempty"`
 	Cancel      bool              `json:"cancel,omitempty"`
@@ -46,19 +46,27 @@ func TestPortWatchStreamContract(t *testing.T) {
 		{Name: "scanner-overflow-keeps-prefix", Input: "{\"event\":\"first\",\"path\":\"a\"}\n", RepeatBytes: 65536},
 		{Name: "handler-error-stops", Input: "{\"event\":\"first\",\"path\":\"a\"}\n{\"event\":\"second\",\"path\":\"b\"}\n", StopAfter: 1},
 		{Name: "cancel-before-first", Input: "{\"event\":\"first\",\"path\":\"a\"}\n", Cancel: true},
+		{Name: "invalid-utf8-in-path", InputHex: hex.EncodeToString([]byte("{\"event\":\"file_added\",\"path\":\"bad\xff.md\"}\n"))},
 	}}
 	for i := range fixture.Cases {
 		row := &fixture.Cases[i]
-		input := row.Input + strings.Repeat("x", row.RepeatBytes)
+		input := []byte(row.Input)
+		if row.InputHex != "" {
+			input, err = hex.DecodeString(row.InputHex)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		input = append(input, bytes.Repeat([]byte("x"), row.RepeatBytes)...)
 		if row.RepeatBytes > 0 {
-			input += "\n"
+			input = append(input, '\n')
 		}
 		ctx, cancel := context.WithCancel(context.Background())
 		if row.Cancel {
 			cancel()
 		}
 		row.Events = []EventStreamItem{}
-		err := WatchStream(ctx, strings.NewReader(input), func(item *EventStreamItem) error {
+		err := WatchStream(ctx, bytes.NewReader(input), func(item *EventStreamItem) error {
 			row.Events = append(row.Events, *item)
 			if row.StopAfter > 0 && len(row.Events) == row.StopAfter {
 				return errors.New("handler stopped")

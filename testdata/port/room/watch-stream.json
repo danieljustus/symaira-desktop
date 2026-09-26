@@ -46,6 +46,17 @@
       "cancel": true,
       "events": [],
       "error": "context canceled"
+    },
+    {
+      "name": "invalid-utf8-in-path",
+      "input": "",
+      "input_hex": "7b226576656e74223a2266696c655f6164646564222c2270617468223a22626164ff2e6d64227d0a",
+      "events": [
+        {
+          "event": "file_added",
+          "path": "bad�.md"
+        }
+      ]
     }
   ]
 }

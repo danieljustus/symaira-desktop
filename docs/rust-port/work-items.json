@@ -385,6 +385,7 @@
         "make room-run-wait-cli-differential",
         "make room-run-mutations-cli-differential",
         "make room-note-cli-differential",
+        "make room-watch-stream-differential",
         "make room-identity-cli-differential",
         "make room-mcp-differential",
         "cargo nextest run -p symroom-core -p symroom-cli",

@@ -31,7 +31,12 @@ pub fn watch_stream(
         if line.is_empty() {
             continue;
         }
-        let Ok(item) = serde_json::from_slice::<EventStreamItem>(&line) else {
+        // encoding/json replaces invalid UTF-8 inside strings with U+FFFD.
+        let item = match std::str::from_utf8(&line) {
+            Ok(line) => serde_json::from_str::<EventStreamItem>(line),
+            Err(_) => serde_json::from_str::<EventStreamItem>(&String::from_utf8_lossy(&line)),
+        };
+        let Ok(item) = item else {
             continue;
         };
         if item.path.is_empty() {

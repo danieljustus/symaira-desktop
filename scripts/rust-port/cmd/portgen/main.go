@@ -95,6 +95,7 @@ var fixturePaths = []string{
 	"testdata/port/dataset/purge.json",
 	"testdata/port/dataset/cli.json",
 	"testdata/port/sidecar/contracts.json",
+	"testdata/port/sidecar/metadata.json",
 	"testdata/port/sidecar/lifecycle.json",
 	"testdata/port/sidecar/large-corpus.json",
 	"testdata/port/sidecar/roundtrip.json",
@@ -129,6 +130,19 @@ func runGenerate(repoRoot, commit, release string) {
 	if err := verifyCleanWorktree(repoRoot); err != nil {
 		fatal("generation requires a clean worktree: %v", err)
 	}
+	if err := verifyNoUntrackedGeneratorInputs(repoRoot); err != nil {
+		fatal("generation source guard: %v", err)
+	}
+	configPath, cleanup, err := inventory.PrivateGitConfig()
+	if err != nil {
+		fatal("prepare generation Git config: %v", err)
+	}
+	defer cleanup()
+	goTool, err := trustedGoTool()
+	if err != nil {
+		fatal("resolve generation Go tool: %v", err)
+	}
+	generationEnv := sanitizedCheckEnvironment(os.Environ(), configPath)
 	fmt.Printf("Generating Go oracle fixtures (oracle %s / %s)...\n", commit, release)
 
 	// 1. Run package-local generators
@@ -155,13 +169,14 @@ func runGenerate(repoRoot, commit, release string) {
 		{"./internal/service", "^TestPortDataset(SyncContract|SyncServiceContract|ImportContract|PurgeContract|QueryCLIContract)$|^TestPortHistoryServiceContract$"},
 		{"./internal/tools", "TestSymdeskMCPInventory"},
 		{"./internal/selfhost", "TestSelfhostHTTPInventory"},
+		{"./internal/sidecar", "^TestPortSidecar(Contract|MetadataContract)$"},
 	}
 
 	for _, target := range packages {
 		//nolint:gosec // fixed generator targets, never derived from fixture output
-		cmd := exec.Command("go", "test", "-count=1", target.pkg, "-run", target.run)
+		cmd := exec.Command(goTool, "test", "-count=1", target.pkg, "-run", target.run)
 		cmd.Dir = repoRoot
-		cmd.Env = append(os.Environ(), "PORT_GENERATE=1")
+		cmd.Env = append(generationEnv, "PORT_GENERATE=1")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			fatal("generate %s (%s): %v\noutput: %s", target.pkg, target.run, err, string(out))
@@ -169,8 +184,10 @@ func runGenerate(repoRoot, commit, release string) {
 	}
 	// Keep this independent Go process fixture in the same P/Q generation as
 	// the package-produced MCP and CLI fixtures.
-	cmd := exec.Command("go", "run", "./scripts/rust-port/cmd/mcpgen")
+	//nolint:gosec // trustedGoTool selects the executable; the generator path is fixed
+	cmd := exec.Command(goTool, "run", "./scripts/rust-port/cmd/mcpgen")
 	cmd.Dir = repoRoot
+	cmd.Env = generationEnv
 	if out, err := cmd.CombinedOutput(); err != nil {
 		fatal("generate MCP initialize fixture: %v\noutput: %s", err, string(out))
 	}

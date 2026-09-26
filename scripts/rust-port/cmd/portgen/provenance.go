@@ -129,16 +129,14 @@ func isPortDerivedOutput(rel string) bool {
 	return false
 }
 
-// verifyCleanWorktree requires the checked-out tracked content to match the
-// checked revision.
+// verifyCleanWorktree requires tracked content to match the checked revision.
 //
 // Line-ending-only differences are ignored: Windows runners check out with
 // core.autocrlf=true, so every text file would otherwise look modified and the
 // port contract would fail there for a reason that has nothing to do with the
 // verified bytes. Nothing that is verified is read from the worktree — the
 // fixtures and provenance come from Git blobs at the checked revision and the
-// package checks run in a disposable snapshot worktree — so the guard only has
-// to prove that the caller's tracked content is the committed content.
+// package checks run in a disposable snapshot worktree.
 func verifyCleanWorktree(repoRoot string) error {
 	command, cleanup, err := gitCommand(repoRoot, "diff", "--quiet", "--no-ext-diff", "--ignore-cr-at-eol", "HEAD", "--")
 	if err != nil {
@@ -154,6 +152,26 @@ func verifyCleanWorktree(repoRoot string) error {
 		return fmt.Errorf("checked provenance requires a worktree matching the checked revision")
 	}
 	return fmt.Errorf("inspect worktree cleanliness: %w: %s", err, strings.TrimSpace(string(output)))
+}
+
+// Generation executes Go packages in the caller's worktree. Untracked and
+// ignored files in those packages can change the oracle without changing HEAD.
+func verifyNoUntrackedGeneratorInputs(repoRoot string) error {
+	for _, ignored := range []bool{false, true} {
+		args := []string{"ls-files", "--others", "--exclude-standard", "-z"}
+		if ignored {
+			args = append(args, "--ignored")
+		}
+		args = append(args, "--", "cmd", "internal", "scripts/rust-port", "vendor", "go.work", "go.work.sum")
+		files, err := gitOutput(repoRoot, args...)
+		if err != nil {
+			return fmt.Errorf("inspect untracked generator inputs: %w", err)
+		}
+		if len(files) != 0 {
+			return fmt.Errorf("generation requires no untracked or ignored Go inputs in cmd, internal, scripts/rust-port, vendor, or go.work")
+		}
+	}
+	return nil
 }
 
 type gitTreeEntry struct {

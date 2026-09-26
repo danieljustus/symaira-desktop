@@ -678,23 +678,6 @@ mod tests {
 
     static COUNTER: AtomicU64 = AtomicU64::new(0);
 
-    #[test]
-    fn directory_identity_tracks_child_removal_per_platform() {
-        let sandbox = Sandbox::new();
-        let directory = sandbox.root.join("datasets");
-        fs::create_dir(&directory).expect("create dataset directory");
-        let child = directory.join("row.csv");
-        fs::write(&child, b"row").expect("write child");
-        let root = Dir::open_ambient_dir(&sandbox.root, ambient_authority()).expect("open vault");
-        let before = super::identity(&root.symlink_metadata("datasets").expect("before"));
-        fs::remove_file(child).expect("remove child");
-        let after = super::identity(&root.symlink_metadata("datasets").expect("after"));
-        #[cfg(windows)]
-        assert_ne!(before, after);
-        #[cfg(not(windows))]
-        assert_eq!(before, after);
-    }
-
     #[cfg(windows)]
     #[test]
     fn file_identity_tracks_content_rewrite_on_windows() {

@@ -10,7 +10,7 @@
     "internal/retention/fingerprint.go": "d07bc03938544087e0a62ae5e9b1c6ad803cffb6132ea2f845f0fccf7d0bfa74",
     "internal/retention/retention.go": "1dd40cb43529b1d9aed6fe1699d50e1e9d844abeac31450cd0bdd56276a9a24c",
     "internal/service/dataset_retention.go": "ca86878cdbed89df1665fcf6c67804c86f964d5f92833a6f613ea8db880278a0",
-    "internal/service/port_retention_state_contract_test.go": "4f23c4693543f0ce351ce79c515e14c2718c7d8274995509ef5238e63859beca",
+    "internal/service/port_retention_state_contract_test.go": "0eed1181b93362f92de361a74cb210723882d5f6c36946b1439430389651133e",
     "internal/service/port_retention_state_unix_test.go": "722e434cac74c4e9a8530658719db27e66d170525667f602b354a5bea39f8876",
     "internal/service/port_retention_state_windows_test.go": "1e5628f35ebbf310bf54403fff42d26302338c44cca7a031050a7e908d4c364d",
     "internal/vault/root.go": "c51c58ea8ba96c1d4488beddf1ad0f483b7b4831c4d04f4f9f40538a51aedc80",

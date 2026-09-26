@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -19,6 +21,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	_ "modernc.org/sqlite"
 )
 
 const token = "0123456789abcdef0123456789abcdef"
@@ -33,6 +37,8 @@ type httpCase struct {
 	Path           string            `json:"path"`
 	Auth           string            `json:"auth,omitempty"`
 	Headers        map[string]string `json:"headers,omitempty"`
+	Body           string            `json:"body,omitempty"`
+	BodyRepeat     int               `json:"body_repeat,omitempty"`
 	EmptyNotebooks bool              `json:"empty_notebooks,omitempty"`
 }
 
@@ -114,43 +120,9 @@ func run() (runErr error) {
 		fatal("temp root: %v", err)
 	}
 	defer func() { _ = os.RemoveAll(harnessRoot) }()
-	vault := filepath.Join(harnessRoot, "vault")
-	if err := os.Mkdir(vault, 0o700); err != nil {
-		fatal("vault directory: %v", err)
-	}
-	notebooks := filepath.Join(vault, "notebooks")
-	if err := os.Mkdir(notebooks, 0o700); err != nil {
-		fatal("notebooks directory: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(notebooks, "research.md"), []byte("---\ntype: notebook\ntitle: Research\ncreated: 2026-01-02T03:04:05Z\nnotebook_id: research\ndescription: Research notes\nsources:\n  - Hello.md\n---\n"), 0o600); err != nil {
-		fatal("notebook fixture: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(notebooks, "archive.md"), []byte("---\ntype: notebook\ntitle: Archive\ncreated: 2026-01-03T04:05:06Z\nnotebook_id: archive\nsources: []\n---\n"), 0o600); err != nil {
-		fatal("notebook fixture: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(notebooks, "ignored.md"), []byte("---\ntype: note\ntitle: Not a notebook\n---\n"), 0o600); err != nil {
-		fatal("invalid notebook fixture: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(vault, "Hello.md"), []byte("---\ntitle: Hello\n---\nBody"), 0o600); err != nil {
-		fatal("fixture file: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(harnessRoot, "outside.md"), []byte("outside"), 0o600); err != nil {
-		fatal("fixture file: %v", err)
-	}
-	if err := os.Mkdir(filepath.Join(vault, "nested"), 0o700); err != nil {
-		fatal("fixture directory: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(vault, "nested/Note.md"), []byte("nested"), 0o600); err != nil {
-		fatal("fixture file: %v", err)
-	}
-	if err := os.Symlink(filepath.Join(harnessRoot, "outside.md"), filepath.Join(vault, "escape.md")); err != nil {
-		fatal("fixture symlink: %v", err)
-	}
-	if err := os.Symlink("Hello.md", filepath.Join(vault, "internal.md")); err != nil {
-		fatal("fixture internal symlink: %v", err)
-	}
-
-	leftServer := startServer(*left, vault)
+	leftVault := createFixtureVault(filepath.Join(harnessRoot, "go"))
+	rightVault := createFixtureVault(filepath.Join(harnessRoot, "rust"))
+	leftServer := startServer(*left, leftVault)
 	defer func() {
 		if err := leftServer.stop(); err != nil {
 			cleanupErr := fmt.Errorf("Go cleanup failed: %w", err) //nolint:staticcheck // Go is the implementation label
@@ -161,7 +133,7 @@ func run() (runErr error) {
 			}
 		}
 	}()
-	rightServer := startServer(*right, vault)
+	rightServer := startServer(*right, rightVault)
 	defer func() {
 		if err := rightServer.stop(); err != nil {
 			cleanupErr := fmt.Errorf("Rust cleanup failed: %w", err) //nolint:staticcheck // Rust is the implementation label
@@ -181,11 +153,14 @@ func run() (runErr error) {
 	leftETag, rightETag := "", ""
 	for _, tc := range suite.Cases {
 		if tc.EmptyNotebooks {
-			if err := os.RemoveAll(notebooks); err != nil {
-				fatal("clear notebook fixture: %v", err)
-			}
-			if err := os.Mkdir(notebooks, 0o700); err != nil {
-				fatal("empty notebook directory: %v", err)
+			for _, vault := range []string{leftVault, rightVault} {
+				notebooks := filepath.Join(vault, "notebooks")
+				if err := os.RemoveAll(notebooks); err != nil {
+					fatal("clear notebook fixture: %v", err)
+				}
+				if err := os.Mkdir(notebooks, 0o700); err != nil {
+					fatal("empty notebook directory: %v", err)
+				}
 			}
 		}
 		leftResult, nextLeftETag, err := leftServer.request(tc, leftETag)
@@ -199,10 +174,99 @@ func run() (runErr error) {
 		if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
 		}
+		if tc.ID == "file-put-symlink-parent" {
+			for _, root := range []string{filepath.Dir(leftVault), filepath.Dir(rightVault)} {
+				if _, err := os.Stat(filepath.Join(root, "new.md")); !errors.Is(err, os.ErrNotExist) {
+					fatal("%s wrote outside vault %s: %v", tc.ID, root, err)
+				}
+			}
+		}
+		if tc.ID == "file-put-create" || tc.ID == "file-put-update" {
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := assertIndexedWrite(vault, "nested/Created.md", tc.Body); err != nil {
+					fatal("%s side effect: %v", tc.ID, err)
+				}
+			}
+		}
 		leftETag, rightETag = nextLeftETag, nextRightETag
 		fmt.Printf("PASS %s\n", tc.ID)
 	}
 	fmt.Printf("PASS HTTP differential: %d cases; isolated roots, loopback ports, readiness, harness bounds and shutdown verified\n", len(suite.Cases))
+	return nil
+}
+
+func createFixtureVault(root string) string {
+	vault := filepath.Join(root, "vault")
+	for _, dir := range []string{vault, filepath.Join(vault, "notebooks"), filepath.Join(vault, "nested")} {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			fatal("fixture directory: %v", err)
+		}
+	}
+	files := map[string]string{
+		"notebooks/research.md": "---\ntype: notebook\ntitle: Research\ncreated: 2026-01-02T03:04:05Z\nnotebook_id: research\ndescription: Research notes\nsources:\n  - Hello.md\n---\n",
+		"notebooks/archive.md":  "---\ntype: notebook\ntitle: Archive\ncreated: 2026-01-03T04:05:06Z\nnotebook_id: archive\nsources: []\n---\n",
+		"notebooks/ignored.md":  "---\ntype: note\ntitle: Not a notebook\n---\n",
+		"Hello.md":              "---\ntitle: Hello\n---\nBody",
+		"nested/Note.md":        "nested",
+	}
+	modified := time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)
+	for name, body := range files {
+		path := filepath.Join(vault, name)
+		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+			fatal("fixture file: %v", err)
+		}
+		if err := os.Chtimes(path, modified, modified); err != nil {
+			fatal("fixture timestamp: %v", err)
+		}
+	}
+	outside := filepath.Join(root, "outside.md")
+	if err := os.WriteFile(outside, []byte("outside"), 0o600); err != nil {
+		fatal("outside fixture: %v", err)
+	}
+	if err := os.Symlink(outside, filepath.Join(vault, "escape.md")); err != nil {
+		fatal("fixture symlink: %v", err)
+	}
+	if err := os.Symlink(root, filepath.Join(vault, "escape-dir")); err != nil {
+		fatal("fixture parent symlink: %v", err)
+	}
+	if err := os.Symlink("Hello.md", filepath.Join(vault, "internal.md")); err != nil {
+		fatal("fixture internal symlink: %v", err)
+	}
+	return vault
+}
+
+func assertIndexedWrite(vault, relative, body string) error {
+	canonical, err := filepath.EvalSymlinks(vault)
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(canonical, relative)
+	actual, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	if string(actual) != body {
+		return fmt.Errorf("%s has unexpected bytes", path)
+	}
+	checksum := fmt.Sprintf("%x", sha256.Sum256(actual))
+	dbPath := filepath.Join(vault, ".symdesk", "server", "sidecar.db")
+	if _, err := os.Stat(dbPath); err != nil {
+		return err
+	}
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = db.Close() }()
+	var indexed string
+	if err := db.QueryRow("SELECT sha256 FROM files WHERE path = ?", path).Scan(&indexed); err != nil {
+		var storedPath string
+		_ = db.QueryRow("SELECT path FROM files LIMIT 1").Scan(&storedPath)
+		return fmt.Errorf("query index path %q (first stored path %q): %w", path, storedPath, err)
+	}
+	if indexed != checksum {
+		return fmt.Errorf("%s index hash = %s, want %s", path, indexed, checksum)
+	}
 	return nil
 }
 
@@ -273,7 +337,14 @@ func (s *runningServer) ready() error {
 }
 
 func (s *runningServer) request(tc httpCase, previousETag string) (transcript, string, error) {
-	request, err := http.NewRequestWithContext(context.Background(), tc.Method, s.base+tc.Path, nil)
+	if tc.BodyRepeat < 0 || tc.BodyRepeat > (8<<20)+1 {
+		return transcript{}, previousETag, fmt.Errorf("fixture body_repeat exceeds 8 MiB + 1 bound")
+	}
+	requestBody := tc.Body
+	if tc.BodyRepeat > 0 {
+		requestBody = strings.Repeat("a", tc.BodyRepeat)
+	}
+	request, err := http.NewRequestWithContext(context.Background(), tc.Method, s.base+tc.Path, strings.NewReader(requestBody))
 	if err != nil {
 		return transcript{}, previousETag, err
 	}
@@ -370,6 +441,20 @@ func compare(id string, left, right transcript) error {
 	if left.Status != right.Status {
 		return fmt.Errorf("status mismatch: Go=%d Rust=%d", left.Status, right.Status)
 	}
+	if id == "file-put-symlink-parent" {
+		if left.Status != http.StatusInternalServerError {
+			return fmt.Errorf("symlink parent was not rejected: status=%d", left.Status)
+		}
+		for _, response := range []transcript{left, right} {
+			var body map[string]string
+			if err := json.Unmarshal(response.Body, &body); err != nil || body["error"] == "" {
+				return fmt.Errorf("symlink parent lacked JSON error: %q", response.Body)
+			}
+		}
+		left.Headers = cloneWithout(left.Headers, "content-length")
+		right.Headers = cloneWithout(right.Headers, "content-length")
+		return compareHeaders(left.Headers, right.Headers)
+	}
 	if strings.HasPrefix(id, "snapshot-") {
 		if strings.HasPrefix(id, "snapshot-gzip") || id == "snapshot-head-gzip" {
 			if left.Headers["content-encoding"] != "gzip" || right.Headers["content-encoding"] != "gzip" || left.Headers["content-length"] == "" || right.Headers["content-length"] == "" {
@@ -382,11 +467,18 @@ func compare(id string, left, right transcript) error {
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
 	}
-	if !reflect.DeepEqual(left.Headers, right.Headers) {
-		return fmt.Errorf("headers mismatch: Go=%v Rust=%v; bodies Go=%q Rust=%q", left.Headers, right.Headers, left.Body, right.Body)
+	if err := compareHeaders(left.Headers, right.Headers); err != nil {
+		return fmt.Errorf("%w; bodies Go=%q Rust=%q", err, left.Body, right.Body)
 	}
 	if !reflect.DeepEqual(left.Body, right.Body) {
 		return fmt.Errorf("body mismatch: Go=%q Rust=%q", left.Body, right.Body)
+	}
+	return nil
+}
+
+func compareHeaders(left, right map[string]string) error {
+	if !reflect.DeepEqual(left, right) {
+		return fmt.Errorf("headers mismatch: Go=%v Rust=%v", left, right)
 	}
 	return nil
 }

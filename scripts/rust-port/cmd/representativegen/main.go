@@ -57,6 +57,8 @@ type httpCase struct {
 	Path           string            `json:"path"`
 	Auth           string            `json:"auth,omitempty"`
 	Headers        map[string]string `json:"headers,omitempty"`
+	Body           string            `json:"body,omitempty"`
+	BodyRepeat     int               `json:"body_repeat,omitempty"`
 	EmptyNotebooks bool              `json:"empty_notebooks,omitempty"`
 }
 

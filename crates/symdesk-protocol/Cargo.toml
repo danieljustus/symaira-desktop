@@ -17,6 +17,7 @@ httpdate.workspace = true
 notify.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+symdesk-index.workspace = true
 symdesk-vault.workspace = true
 time.workspace = true
 tokio.workspace = true

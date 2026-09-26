@@ -53,6 +53,18 @@ def select_msvc_linker(where_output):
                  and path.casefold().endswith("\\link.exe")), None)
 
 
+def msvc_linker_from_installation(installation, target, host):
+    if not installation:
+        return None
+    tools = Path(installation) / "VC" / "Tools" / "MSVC"
+    for version in sorted(tools.glob("*"), reverse=True):
+        for host_name in (host, "Hostx64", "HostARM64"):
+            linker = version / "bin" / host_name / target / "link.exe"
+            if linker.is_file():
+                return str(linker)
+    return None
+
+
 def is_git_posix_bin(path):
     return path.replace("/", "\\").casefold().endswith("\\git\\usr\\bin")
 
@@ -109,9 +121,22 @@ def build_environment(temp, rustc):
         linker_paths = subprocess.run(["where.exe", "link.exe"], text=True,
                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         linker = select_msvc_linker(linker_paths.stdout)
+        target = "arm64" if platform.machine().casefold() in ("arm64", "aarch64") else "x64"
+        vswhere = shutil.which("vswhere.exe") or str(
+            Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"))
+            / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+        )
+        if not linker and Path(vswhere).is_file():
+            installation = subprocess.run(
+                [vswhere, "-latest", "-products", "*", "-property", "installationPath"],
+                text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            )
+            host = "HostARM64" if target == "arm64" else "Hostx64"
+            linker = msvc_linker_from_installation(installation.stdout.strip(), target, host)
         if linker and Path(linker).is_file():
-            target = "AARCH64" if platform.machine().casefold() in ("arm64", "aarch64") else "X86_64"
-            env[f"CARGO_TARGET_{target}_PC_WINDOWS_MSVC_LINKER"] = linker
+            triple_arch = "AARCH64" if target == "arm64" else "X86_64"
+            env[f"CARGO_TARGET_{triple_arch}_PC_WINDOWS_MSVC_LINKER"] = linker
+            env["PATH"] = os.pathsep.join((str(Path(linker).parent), env["PATH"]))
         # MSVC discovery and its library search paths are part of the native
         # toolchain environment. Dropping them lets Git's GNU link.exe win.
         for name in (

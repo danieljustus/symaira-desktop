@@ -19,6 +19,8 @@ use serde::{Deserialize, Serialize};
 use time::format_description::well_known::Rfc3339;
 use time::{Duration, OffsetDateTime};
 
+use crate::go_string::quote as go_quote;
+
 pub const ACTION_TRASH: &str = "trash";
 pub const ACTION_FLAG_REVIEW: &str = "flag_review";
 
@@ -797,30 +799,4 @@ fn restrict_mode(path: &Path, mode: u32) {
 #[cfg(not(unix))]
 fn restrict_mode(_path: &Path, _mode: u32) {
     // Windows carries no Unix permission bits.
-}
-
-/// Go's `%q` for the strings the retention messages quote: double quotes,
-/// backslashes, the common escapes and `\xNN` for other control characters.
-///
-/// ponytail: Go also escapes non-printable Unicode as `\u…`, which the vectors
-/// do not exercise.
-pub fn go_quote(value: &str) -> String {
-    let mut out = String::with_capacity(value.len() + 2);
-    out.push('"');
-    for character in value.chars() {
-        match character {
-            '"' => out.push_str("\\\""),
-            '\\' => out.push_str("\\\\"),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            other if (other as u32) < 0x20 || other as u32 == 0x7f => {
-                out.push_str(&format!("\\x{:02x}", other as u32));
-            }
-            '\u{2028}' | '\u{2029}' => out.push_str(&format!("\\u{:04x}", character as u32)),
-            other => out.push(other),
-        }
-    }
-    out.push('"');
-    out
 }

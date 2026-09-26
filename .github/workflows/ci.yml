@@ -272,6 +272,18 @@ jobs:
         shell: bash
         run: make retention-cli-differential
 
+      - name: Run native retention CLI raw-state regressions
+        shell: bash
+        run: |
+          suffix=""
+          if [[ "${RUNNER_OS}" == "Windows" ]]; then suffix=".exe"; fi
+          target_dir="$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')"
+          python3 scripts/retention_cli_regressions.py \
+            --go-binary "bin/port/symdesk-go${suffix}" \
+            --rust-binary "${target_dir}/debug/symdesk${suffix}" \
+            --repo-root "${PWD}" \
+            --output "bin/port/retention-cli-regressions.json"
+
       - name: Run native authoritative retention state differential
         shell: bash
         run: make retention-state-differential

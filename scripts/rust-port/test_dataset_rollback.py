@@ -70,11 +70,11 @@ class DatasetRollbackTests(unittest.TestCase):
             dataset_rollback.validate_report(report)
 
     def test_sha256_reports_the_actual_binary_or_source_bytes(self):
-        with tempfile.NamedTemporaryFile() as artifact:
-            artifact.write(b"source or binary bytes")
-            artifact.flush()
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = Path(directory) / "artifact"
+            artifact.write_bytes(b"source or binary bytes")
             self.assertEqual(
-                dataset_rollback.sha256(Path(artifact.name)),
+                dataset_rollback.sha256(artifact),
                 hashlib.sha256(b"source or binary bytes").hexdigest(),
             )
 

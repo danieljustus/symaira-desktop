@@ -55,6 +55,7 @@ use tower::{Service as _, ServiceExt as _};
 const MAX_NOTE_BYTES: u64 = 8 << 20;
 const MAX_SNAPSHOT_BYTES: u64 = 16 << 20;
 const MAX_NOTEBOOK_FILE_BYTES: u64 = 64 << 20;
+const MAX_SHARE_STORE_BYTES: u64 = 16 << 20;
 const MAX_UPLOAD_BYTES: u64 = 100 << 20;
 const MAX_MULTIPART_REQUEST_BYTES: usize = (100 << 20) + (1 << 20);
 const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
@@ -286,6 +287,7 @@ fn router(state: Arc<AppState>) -> Router {
         )
         .route("/api/v1/notebooks", get(handle_notebooks))
         .route("/api/v1/notebooks/{id}", get(handle_notebook))
+        .route("/api/v1/shares", get(handle_shares))
         .layer(middleware::from_fn_with_state(
             Arc::clone(&state),
             authenticate,
@@ -477,6 +479,77 @@ async fn handle_status(State(state): State<Arc<AppState>>) -> Response {
             "version": state.version,
         }),
     )
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct ShareLink {
+    #[serde(default)]
+    id: String,
+    #[serde(default)]
+    path: String,
+    #[serde(default)]
+    created_by: String,
+    #[serde(default = "go_zero_time")]
+    created_at: String,
+    #[serde(default = "go_zero_time")]
+    expires_at: String,
+    #[serde(default, skip_deserializing)]
+    token_hash: String,
+    #[serde(default, skip_serializing_if = "is_false")]
+    expired: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    revoked_at: Option<String>,
+}
+
+async fn handle_shares(State(state): State<Arc<AppState>>) -> Response {
+    let root = match open_current_root(&state) {
+        Ok(root) => root,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+    };
+    let shares_dir = match root.open_dir(".symdesk/server") {
+        Ok(directory) => directory,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return json_response(StatusCode::OK, Vec::<ShareLink>::new());
+        }
+        Err(_) => {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares");
+        }
+    };
+    let mut options = cap_std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use cap_std::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NONBLOCK | libc::O_NOFOLLOW);
+    }
+    let file = match shares_dir.open_with("shares.json", &options) {
+        Ok(file) => file,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return json_response(StatusCode::OK, Vec::<ShareLink>::new());
+        }
+        Err(_) => {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares");
+        }
+    };
+    let metadata = match file.metadata() {
+        Ok(metadata) if metadata.is_file() && metadata.len() <= MAX_SHARE_STORE_BYTES => metadata,
+        _ => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares"),
+    };
+    let mut bytes = Vec::with_capacity(metadata.len() as usize);
+    if file
+        .take(MAX_SHARE_STORE_BYTES + 1)
+        .read_to_end(&mut bytes)
+        .is_err()
+        || bytes.len() as u64 > MAX_SHARE_STORE_BYTES
+    {
+        return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares");
+    }
+    let mut links: Vec<ShareLink> = match serde_json::from_slice(&bytes) {
+        Ok(links) => links,
+        Err(_) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares"),
+    };
+    links.reverse();
+    json_response(StatusCode::OK, links)
 }
 
 async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
@@ -1825,6 +1898,93 @@ async fn shutdown_signal() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn get_shares_requires_admin_token_and_omits_secrets() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-shares-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        let server_dir = root.join(".symdesk/server");
+        fs::create_dir_all(&server_dir).unwrap();
+        fs::write(
+            server_dir.join("shares.json"),
+            br#"[
+                {"id":"old","path":"notes/old.md","created_by":"admin","created_at":"2026-01-01T00:00:00Z","expires_at":"2026-01-02T00:00:00Z","token_hash":"old-hash"},
+                {"id":"new","path":"notes/new.md","created_by":"admin","created_at":"2026-01-03T00:00:00Z","expires_at":"2026-01-04T00:00:00Z","token_hash":"secret-hash","token":"secret-token","expired":true,"revoked_at":"2026-01-03T12:00:00Z"}
+            ]"#,
+        )
+        .unwrap();
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+        let denied = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/shares")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(denied.status(), StatusCode::UNAUTHORIZED);
+
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/shares")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = to_bytes(response.into_body(), 1 << 20).await.unwrap();
+        let shares: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(shares[0]["id"], "new");
+        assert_eq!(shares[0]["expired"], true);
+        assert_eq!(shares[1]["id"], "old");
+        assert_eq!(shares[0]["token_hash"], "");
+        assert!(shares[0].get("token").is_none());
+        assert!(shares[1].get("expired").is_none());
+
+        fs::write(
+            server_dir.join("shares.json"),
+            vec![b' '; MAX_SHARE_STORE_BYTES as usize + 1],
+        )
+        .unwrap();
+        let too_large = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/shares")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(too_large.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            to_bytes(too_large.into_body(), 1 << 20)
+                .await
+                .unwrap()
+                .as_ref(),
+            &br#"{"error":"failed to list shares"}
+"#[..]
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[tokio::test]
     async fn ingest_requires_auth_and_persists_confined_upload_and_private_job() {

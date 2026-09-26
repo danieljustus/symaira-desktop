@@ -738,7 +738,7 @@ func TestRetentionCLIRejectsTraversalRunIDsBeforeProposalIO(t *testing.T) {
 func TestRetentionCLIRejectsMismatchedStoredRunID(t *testing.T) {
 	vaultRoot := isolatedCommandVault(t)
 	dir := retention.ProposalDir(vaultRoot)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	original := []byte(`{"run_id":"stored","status":"pending"}`)
@@ -752,7 +752,7 @@ func TestRetentionCLIRejectsMismatchedStoredRunID(t *testing.T) {
 		if output != "" || err == nil || err.Error() != `retention proposal run ID "stored" does not match requested "probe"` {
 			t.Fatalf("retention %s: output %q, error %v", name, output, err)
 		}
-		data, err := os.ReadFile(requested)
+		data, err := os.ReadFile(requested) //nolint:gosec // test-owned path under t.TempDir
 		if err != nil || string(data) != string(original) {
 			t.Fatalf("retention %s changed requested proposal: %q, %v", name, data, err)
 		}

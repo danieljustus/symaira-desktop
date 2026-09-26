@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/symdesk-cli", "crates/symdesk-core", "crates/symdesk-index", "crates/symdesk-vault", "crates/symdesk-protocol", "crates/symroom-cli", "crates/symroom-core"]
+members = ["crates/symdesk-cli", "crates/symdesk-core", "crates/symdesk-index", "crates/symdesk-vault", "crates/symdesk-protocol", "crates/symroom-cli", "crates/symroom-core", "crates/symdesk-render"]
 resolver = "3"
 
 [workspace.package]

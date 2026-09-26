@@ -60,13 +60,13 @@ pub struct View {
     pub date_property: String,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub computed: BTreeMap<String, ComputedColumn>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub filters: Vec<Filter>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub filter_group: Option<FilterGroup>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub sorts: Vec<Sort>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub columns: Vec<String>,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub source: String,
@@ -88,20 +88,23 @@ pub struct PropertyConfig {
     pub default: String,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Base {
     pub id: String,
     pub path: String,
     pub title: String,
+    #[serde(default)]
     #[serde(skip_serializing_if = "String::is_empty")]
     pub description: String,
     pub created: String,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub properties: BTreeMap<String, PropertyConfig>,
     pub views: Vec<View>,
-    #[serde(skip_serializing)]
+    #[serde(skip, default)]
     pub extras: BTreeMap<String, Value>,
 }
 
@@ -224,7 +227,7 @@ pub enum TypedVaultError {
     },
 }
 
-/// Parses the read-only base-note contract.
+/// Parses the base-note contract.
 ///
 /// # Errors
 /// Returns a parser or base identity error.
@@ -237,7 +240,10 @@ pub fn parse_base(path: &str, input: &[u8]) -> Result<Base, TypedVaultError> {
             "{path} is not a base note (type={note_type:?})"
         )));
     }
-    let frontmatter: BaseFrontmatter = decode_frontmatter(input, "parse base frontmatter")?;
+    let mut frontmatter: BaseFrontmatter = decode_frontmatter(input, "parse base frontmatter")?;
+    frontmatter
+        .extras
+        .retain(|key, _| !matches!(key.as_str(), "type" | "tags"));
     let id = if frontmatter.base_id.is_empty() {
         file_stem_markdown(path)
     } else {
@@ -264,7 +270,7 @@ pub fn parse_base(path: &str, input: &[u8]) -> Result<Base, TypedVaultError> {
     })
 }
 
-/// Parses a read-only notebook note and preserves the Go source ordering rules.
+/// Parses a notebook note and preserves the Go source ordering rules.
 ///
 /// # Errors
 /// Returns a parser or notebook identity error.

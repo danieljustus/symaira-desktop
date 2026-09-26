@@ -238,7 +238,9 @@ fn index_build_cli_replays_go_process_fixture() {
 
 fn fixture_sidecar_path(root: &TempRoot, vault: &str) -> std::path::PathBuf {
     let canonical = fs::canonicalize(root.path(vault)).expect("canonical fixture vault");
-    let digest = symdesk_vault::sha256_hex(canonical.to_string_lossy().as_bytes());
+    let canonical = canonical.to_string_lossy();
+    let canonical = canonical.strip_prefix(r"\\?\").unwrap_or(&canonical);
+    let digest = symdesk_vault::sha256_hex(canonical.as_bytes());
     root.path("data")
         .join("symdesk/vaults")
         .join(&digest[..16])

@@ -29,6 +29,14 @@ fn process_exit(code: CoreExitCode) -> ExitCode {
     ExitCode::from(code.as_u8())
 }
 
+fn symdesk_command(path: &std::path::Path) -> std::process::Command {
+    let mut command = std::process::Command::new(path);
+    if let Some(path) = std::env::var_os("PATH") {
+        command.env("PATH", path);
+    }
+    command
+}
+
 const VERSION: &str = match option_env!("SYMROOM_VERSION") {
     Some(version) => version,
     None => "dev",

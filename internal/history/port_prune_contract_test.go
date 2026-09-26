@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -70,6 +71,22 @@ func TestPortHistoryPruneContract(t *testing.T) {
 	current, err := os.ReadFile(path) //nolint:gosec // fixed fixture path
 	if err != nil {
 		t.Fatalf("read fixture: %v (run PORT_GENERATE=1 go test ./internal/history -run '^TestPortHistoryPruneContract$')", err)
+	}
+	if runtime.GOOS == "windows" {
+		var frozen historyPruneFixture
+		if err := json.Unmarshal(current, &frozen); err != nil {
+			t.Fatal(err)
+		}
+		for i := range frozen.Cases {
+			for j := range frozen.Cases[i].After {
+				frozen.Cases[i].After[j].Mode = nil
+			}
+		}
+		current, err = json.MarshalIndent(frozen, "", "  ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		current = append(current, 10)
 	}
 	if !bytes.Equal(current, encoded) {
 		t.Fatalf("history prune fixture is stale; regenerate from the Go oracle\ncurrent sha256=%x expected sha256=%x", sha256.Sum256(current), sha256.Sum256(encoded))

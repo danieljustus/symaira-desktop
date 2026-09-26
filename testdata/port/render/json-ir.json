@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "oracle": {
+    "commit": "38891d35eb8ceb6c348eca9a78b3fb2873677e3d",
+    "release": "post-v0.12.2-security-880"
+  },
+  "cases": [
+    {
+      "id": "valid-graph",
+      "input": "{\"kind\":\"graph\",\"direction\":\"LR\",\"title\":\"Services\",\"width\":800,\"height\":400,\"nodes\":[{\"id\":\"api\",\"label\":\"API\",\"shape\":\"round\",\"width\":120,\"height\":48,\"style\":{\"fill\":\"#fff\",\"stroke\":\"#333\",\"stroke_width\":2,\"text_color\":\"#111\",\"opacity\":0.9,\"dash_array\":\"2 2\"}},{\"id\":\"db\",\"label\":\"Store\",\"shape\":\"cylinder\"}],\"edges\":[{\"from\":\"api\",\"to\":\"db\",\"label\":\"writes\",\"style\":\"dashed\",\"arrow\":\"single\",\"color\":\"#666\"}],\"groups\":[{\"id\":\"backend\",\"label\":\"Backend\",\"members\":[\"api\",\"db\"],\"style\":{\"fill\":\"#eee\",\"stroke\":\"#ccc\",\"stroke_width\":1}}]}",
+      "accepted": true,
+      "field": "",
+      "diagram": {
+        "kind": "graph",
+        "title": "Services",
+        "direction": "LR",
+        "width": 800,
+        "height": 400,
+        "nodes": [
+          {
+            "id": "api",
+            "label": "API",
+            "shape": "round",
+            "style": {
+              "fill": "#fff",
+              "stroke": "#333",
+              "stroke_width": 2,
+              "text_color": "#111",
+              "opacity": 0.9,
+              "dash_array": "2 2"
+            },
+            "width": 120,
+            "height": 48
+          },
+          {
+            "id": "db",
+            "label": "Store",
+            "shape": "cylinder",
+            "style": {}
+          }
+        ],
+        "edges": [
+          {
+            "from": "api",
+            "to": "db",
+            "label": "writes",
+            "style": "dashed",
+            "arrow": "single",
+            "color": "#666"
+          }
+        ],
+        "groups": [
+          {
+            "id": "backend",
+            "label": "Backend",
+            "members": [
+              "api",
+              "db"
+            ],
+            "style": {
+              "fill": "#eee",
+              "stroke": "#ccc",
+              "stroke_width": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "valid-chart",
+      "input": "{\"kind\":\"chart\",\"chart\":{\"type\":\"bar\",\"title\":\"Usage\",\"legend\":true,\"series\":[{\"name\":\"Requests\",\"color\":\"blue\",\"data\":[{\"label\":\"Jan\",\"y\":12},{\"x\":2,\"y\":18,\"label\":\"Feb\",\"color\":\"green\"}]}],\"x_axis\":{\"title\":\"Month\",\"labels\":[\"Jan\",\"Feb\"],\"min\":0,\"max\":2},\"y_axis\":{\"title\":\"Count\",\"min\":0}}}",
+      "accepted": true,
+      "field": "",
+      "diagram": {
+        "kind": "chart",
+        "chart": {
+          "type": "bar",
+          "title": "Usage",
+          "series": [
+            {
+              "name": "Requests",
+              "data": [
+                {
+                  "y": 12,
+                  "label": "Jan"
+                },
+                {
+                  "x": 2,
+                  "y": 18,
+                  "label": "Feb",
+                  "color": "green"
+                }
+              ],
+              "color": "blue"
+            }
+          ],
+          "x_axis": {
+            "title": "Month",
+            "labels": [
+              "Jan",
+              "Feb"
+            ],
+            "min": 0,
+            "max": 2
+          },
+          "y_axis": {
+            "title": "Count",
+            "min": 0
+          },
+          "legend": true
+        }
+      }
+    },
+    {
+      "id": "empty",
+      "input": "",
+      "accepted": false,
+      "stage": "parse",
+      "field": ""
+    },
+    {
+      "id": "malformed",
+      "input": "{\"kind\":\"graph\",}",
+      "accepted": false,
+      "stage": "parse",
+      "field": ""
+    },
+    {
+      "id": "unknown-top-level",
+      "input": "{\"kind\":\"graph\",\"unsupported\":true}",
+      "accepted": false,
+      "stage": "schema",
+      "field": "unsupported"
+    },
+    {
+      "id": "unknown-nested-style",
+      "input": "{\"kind\":\"graph\",\"nodes\":[{\"id\":\"a\",\"style\":{\"glow\":true}}]}",
+      "accepted": false,
+      "stage": "schema",
+      "field": "glow"
+    },
+    {
+      "id": "invalid-kind",
+      "input": "{\"kind\":\"unknown\"}",
+      "accepted": false,
+      "stage": "contract",
+      "field": "kind"
+    },
+    {
+      "id": "duplicate-id",
+      "input": "{\"kind\":\"graph\",\"nodes\":[{\"id\":\"a\"},{\"id\":\"a\"}]}",
+      "accepted": false,
+      "stage": "contract",
+      "field": "nodes[1].id"
+    },
+    {
+      "id": "dangling-edge",
+      "input": "{\"kind\":\"graph\",\"nodes\":[{\"id\":\"a\"}],\"edges\":[{\"from\":\"a\",\"to\":\"missing\"}]}",
+      "accepted": false,
+      "stage": "contract",
+      "field": "edges[0].to"
+    },
+    {
+      "id": "negative-dimension",
+      "input": "{\"kind\":\"graph\",\"nodes\":[{\"id\":\"a\",\"width\":-1}]}",
+      "accepted": false,
+      "stage": "contract",
+      "field": "nodes[0]"
+    }
+  ]
+}

@@ -86,6 +86,7 @@ fn assert_error(output: &Output, stdout: &[u8], stderr: &[u8]) {
     assert_eq!(output.stderr, stderr);
 }
 
+#[cfg(unix)]
 fn stage_accept_proposal(root: &TempRoot, path: &str, action: &str, status: &str) -> String {
     let file = root.vault().join(path);
     if let Some(parent) = file.parent() {
@@ -124,6 +125,7 @@ fn stage_accept_proposal(root: &TempRoot, path: &str, action: &str, status: &str
     fingerprint
 }
 
+#[cfg(unix)]
 fn prepare_index(root: &TempRoot) {
     let prepared = run(root, ["--json", "ls"]);
     assert_eq!(
@@ -139,6 +141,7 @@ fn prepare_index(root: &TempRoot) {
     );
 }
 
+#[cfg(unix)]
 #[test]
 fn accept_flag_review_mutates_frontmatter_and_index_and_records_history() {
     let root = TempRoot::new("accept-flag-review");
@@ -180,6 +183,7 @@ fn accept_flag_review_mutates_frontmatter_and_index_and_records_history() {
     assert_eq!(event["details"], "status set to needs_review");
 }
 
+#[cfg(unix)]
 #[test]
 fn accept_trash_moves_document_and_removes_it_from_index() {
     let root = TempRoot::new("accept-trash");
@@ -214,6 +218,7 @@ fn accept_trash_moves_document_and_removes_it_from_index() {
     assert_eq!(event["details"], "moved to trash");
 }
 
+#[cfg(unix)]
 #[test]
 fn accept_rejects_stale_fingerprint_without_mutating_document() {
     let root = TempRoot::new("accept-stale");
@@ -253,6 +258,7 @@ fn accept_rejects_stale_fingerprint_without_mutating_document() {
     assert_eq!(document.status, "open");
 }
 
+#[cfg(unix)]
 #[test]
 fn accept_retries_action_completed_item_without_reapplying_and_keeps_acted_zero() {
     let root = TempRoot::new("accept-retry");
@@ -303,6 +309,7 @@ fn accept_retries_action_completed_item_without_reapplying_and_keeps_acted_zero(
     assert_eq!(rendered["items"][0]["status"], "accepted");
 }
 
+#[cfg(unix)]
 #[test]
 fn accept_dataset_purge_removes_handle_and_commits_history() {
     let root = TempRoot::new("accept-dataset-purge");
@@ -357,6 +364,7 @@ fn accept_dataset_purge_removes_handle_and_commits_history() {
     assert_eq!(history[0].action_id, "ret-safe:0");
 }
 
+#[cfg(unix)]
 #[test]
 fn reject_persists_and_diff_reads_back_the_proposal() {
     let root = TempRoot::new("reject");
@@ -382,6 +390,22 @@ fn reject_persists_and_diff_reads_back_the_proposal() {
     );
 }
 
+#[cfg(windows)]
+#[test]
+fn reject_reports_directory_sync_error_after_persisting() {
+    let root = TempRoot::new("reject-windows");
+    let proposal_path = write_proposal(&root);
+    let output = run(&root, ["retention", "reject", "ret-safe", "--json"]);
+    assert_eq!(output.status.code(), Some(1));
+    let error: serde_json::Value = serde_json::from_slice(&output.stdout).expect("error JSON");
+    assert!(error["error"].as_str().unwrap_or("").starts_with("sync "));
+    let persisted: serde_json::Value = serde_json::from_slice(
+        &fs::read(proposal_path).expect("rejected proposal persisted before sync error"),
+    )
+    .expect("persisted proposal JSON");
+    assert_eq!(persisted["status"], "rejected");
+}
+
 #[test]
 fn reject_reports_missing_proposals_with_the_go_error_envelope() {
     let root = TempRoot::new("reject-missing");
@@ -397,11 +421,12 @@ fn reject_reports_missing_proposals_with_the_go_error_envelope() {
         format!(
             "open {}: {}",
             proposal_path.display(),
-            missing_file_message()
+            missing_path_message()
         )
     );
 }
 
+#[cfg(unix)]
 #[test]
 fn go_nil_items_survive_rejection_and_render_as_null() {
     for items_field in [",\"items\":null", ""] {
@@ -485,7 +510,7 @@ fn reject_and_diff_match_go_argument_and_run_id_errors() {
 
     let output = run(&root, ["retention", "diff", "safe-missing"]);
     let path = root.proposal_dir().join("safe-missing.json");
-    let expected = format!("open {}: {}\n", path.display(), missing_file_message());
+    let expected = format!("open {}: {}\n", path.display(), missing_path_message());
     assert_error(&output, b"", expected.as_bytes());
 }
 
@@ -514,13 +539,26 @@ fn history_distinguishes_missing_empty_and_nonempty_logs() {
     );
 
     let output = run(&root, ["retention", "history"]);
+    #[cfg(not(windows))]
+    let expected_time = "2026-01-02 03:04:05".to_owned();
+    #[cfg(windows)]
+    let expected_time = {
+        let utc = time::OffsetDateTime::parse(
+            "2026-01-02T03:04:05Z",
+            &time::format_description::well_known::Rfc3339,
+        )
+        .expect("history timestamp");
+        let local =
+            utc.to_offset(time::UtcOffset::local_offset_at(utc).unwrap_or(time::UtcOffset::UTC));
+        let format = time::format_description::parse_borrowed::<2>(
+            "[year]-[month]-[day] [hour]:[minute]:[second]",
+        )
+        .expect("history timestamp format");
+        local.format(&format).expect("local history timestamp")
+    };
     assert_ok(
         &output,
-        format!(
-            "2026-01-02 03:04:05  rule<{}  doc<&.md → trash\n",
-            '\u{2028}'
-        )
-        .as_bytes(),
+        format!("{expected_time}  rule<{}  doc<&.md → trash\n", '\u{2028}').as_bytes(),
     );
 }
 
@@ -545,6 +583,7 @@ fn history_rejects_arguments_and_null_state() {
     );
 }
 
+#[cfg(unix)]
 #[test]
 fn eval_uses_rules_and_authoritative_metadata_to_stage_a_proposal() {
     let root = TempRoot::new("eval");
@@ -662,9 +701,9 @@ fn eval_fails_closed_without_staging_when_authoritative_state_is_invalid() {
     );
 }
 
-fn missing_file_message() -> &'static str {
+fn missing_path_message() -> &'static str {
     if cfg!(windows) {
-        "The system cannot find the file specified."
+        "The system cannot find the path specified."
     } else {
         "no such file or directory"
     }

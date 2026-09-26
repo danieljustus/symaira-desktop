@@ -3,6 +3,7 @@
 //! Read-only contract-v1–v6 Markdown vault parsing.
 
 pub mod activity_journal;
+mod base_write;
 pub mod conflict;
 pub mod dataset;
 mod go_string;
@@ -11,6 +12,7 @@ pub mod history;
 mod links;
 mod metadata;
 mod mutations;
+mod notebook_write;
 pub mod notes;
 mod paths;
 mod resolver;
@@ -31,6 +33,10 @@ use serde as _;
 #[cfg(test)]
 use serde_json as _;
 
+pub use base_write::{
+    BaseWriteError, delete_base, delete_base_with_snapshot, delete_view, delete_view_with_snapshot,
+    save_base, save_base_with_snapshot, save_view, save_view_with_snapshot,
+};
 pub use conflict::{
     CONFLICT_COPY_SUFFIX, SYNC_CONFLICT_MARKER, derive_original_path, is_sync_conflict_base_name,
 };
@@ -47,6 +53,10 @@ pub use metadata::{
 pub use mutations::{
     MutationError, delete_frontmatter_value, set_frontmatter_key, set_frontmatter_value,
     write_atomic,
+};
+pub use notebook_write::{
+    NotebookWriteError, add_notebook_source, new_notebook, new_notebook_with_query,
+    remove_notebook_source,
 };
 pub use notes::{NoteError, create_note, move_note, note_document, note_file_name, set_property};
 pub use paths::{SecurePathError, secure_path};

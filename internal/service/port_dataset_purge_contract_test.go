@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -15,6 +16,13 @@ import (
 )
 
 const datasetPurgeFixturePath = "../../testdata/port/dataset/purge.json"
+
+func datasetPurgePlatformFixturePath() string {
+	if runtime.GOOS == "windows" {
+		return "../../testdata/port/dataset/purge-windows.json"
+	}
+	return datasetPurgeFixturePath
+}
 
 type datasetPurgeFixture struct {
 	SchemaVersion int                               `json:"schema_version"`
@@ -175,7 +183,7 @@ func TestPortDatasetPurgeContract(t *testing.T) {
 	}
 	encoded = append(encoded, '\n')
 	if os.Getenv("PORT_GENERATE") == "1" {
-		path := filepath.Clean(datasetPurgeFixturePath)
+		path := filepath.Clean(datasetPurgePlatformFixturePath())
 		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			t.Fatal(err)
 		}
@@ -184,7 +192,7 @@ func TestPortDatasetPurgeContract(t *testing.T) {
 		}
 		return
 	}
-	current, err := os.ReadFile(datasetPurgeFixturePath) //nolint:gosec // fixed contract fixture
+	current, err := os.ReadFile(datasetPurgePlatformFixturePath()) //nolint:gosec // fixed contract fixture
 	if err != nil {
 		t.Fatalf("read dataset purge fixture: %v (run PORT_GENERATE=1 to create it)", err)
 	}
@@ -311,7 +319,11 @@ func datasetPurgeReplacementTrashRetryCase(t *testing.T) datasetPurgeRecoveryFix
 	before := datasetPurgeSnapshotOf(t, svc.VaultRoot, db)
 	retryErr := resumed.DatasetPurge("orders", dataset.DefaultRetentionRule)
 	after := datasetPurgeSnapshotOf(t, svc.VaultRoot, db)
-	if retryErr == nil || !strings.Contains(retryErr.Error(), "content changed") {
+	wantError := "content changed"
+	if runtime.GOOS == "windows" {
+		wantError = "was replaced"
+	}
+	if retryErr == nil || !strings.Contains(retryErr.Error(), wantError) {
 		t.Fatalf("replacement-trash retry error = %v", retryErr)
 	}
 	if data, err := os.ReadFile(trashPath); err != nil || string(data) != "replacement payload" { //nolint:gosec // test-owned vault path

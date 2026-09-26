@@ -159,6 +159,8 @@
       ],
       "acceptance": [
         "make vault-write-differential",
+        "make notebook-write-differential",
+        "make base-view-write-differential",
         "make vault-history-differential",
         "make history-purge-differential",
         "make history-prune-differential",
@@ -171,7 +173,8 @@
         "make retention-cli-differential",
         "make dataset-sync-differential",
         "make dataset-cli-differential",
-        "make dataset-purge-differential"
+        "make dataset-purge-differential",
+        "python3 scripts/rust-port/dataset-rollback.py --go-ref v0.12.2 --rust-ref HEAD"
       ]
     },
     {
@@ -192,6 +195,10 @@
         "INDEX-006"
       ],
       "acceptance": [
+        "make retrieval-chunks-differential",
+        "make retrieval-bm25-differential",
+        "make retrieval-embedding-state-differential",
+        "make retrieval-vector-differential",
         "make retrieval-differential",
         "cargo nextest run -p symdesk-index",
         "make benchmark-large"
@@ -213,6 +220,7 @@
       ],
       "acceptance": [
         "make contacts-dataset-differential",
+        "make dataset-aggregate-differential",
         "cargo nextest run -p symdesk-index -p symdesk-vault"
       ]
     },
@@ -258,6 +266,7 @@
       ],
       "acceptance": [
         "make render-differential",
+        "make render-ir-differential",
         "cargo nextest run -p symdesk-render",
         "cargo +nightly fuzz run draw_parser"
       ]
@@ -391,6 +400,7 @@
         "make room-watch-cli-differential",
         "make room-identity-cli-differential",
         "make room-mcp-differential",
+        "python3 scripts/rust-port/room-rollback.py --go-ref v0.12.2 --rust-ref HEAD",
         "cargo nextest run -p symroom-core -p symroom-cli",
         "cargo +nightly fuzz run room_event"
       ]

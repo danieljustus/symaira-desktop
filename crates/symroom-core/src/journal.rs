@@ -38,6 +38,12 @@ pub const ZERO_HASH: &str =
 const JOURNAL_DIR: &str = "journal";
 const JOURNAL_SUFFIX: &str = ".jsonl";
 
+fn missing_journal(error: &std::io::Error) -> bool {
+    // Go os.IsNotExist treats Windows ERROR_DIRECTORY as a missing journal.
+    error.kind() == std::io::ErrorKind::NotFound
+        || cfg!(windows) && error.raw_os_error() == Some(267)
+}
+
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct JournalStats {
     /// The highest Lamport clock observed across every decodable event.
@@ -85,7 +91,7 @@ pub fn read_all_segments(
     let journal_dir = room_dir.join(JOURNAL_DIR);
     let entries = match fs::read_dir(&journal_dir) {
         Ok(entries) => entries,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+        Err(error) if missing_journal(&error) => {
             return Ok(BTreeMap::new());
         }
         Err(error) => return Err(error.into()),
@@ -324,7 +330,7 @@ pub fn read_journal_stats(room_dir: &Path) -> Result<JournalStats, std::io::Erro
     let journal_dir = room_dir.join(JOURNAL_DIR);
     let entries = match fs::read_dir(&journal_dir) {
         Ok(entries) => entries,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+        Err(error) if missing_journal(&error) => {
             return Ok(JournalStats::default());
         }
         Err(error) => return Err(error),

@@ -85,11 +85,13 @@ fn go_mcp_inventory_call_and_error_frames_match() {
         None,
     )
     .expect("MCP serve");
-    let actual = decode_frames(&output);
-    let expected = cases
+    let mut actual = decode_frames(&output);
+    let mut expected = cases
         .iter()
         .map(|case| case["response"].clone())
         .collect::<Vec<_>>();
+    actual.sort_by_key(|frame| frame["id"].as_u64().expect("numeric request ID"));
+    expected.sort_by_key(|frame| frame["id"].as_u64().expect("numeric oracle ID"));
     assert_eq!(actual, expected);
     let _ = std::fs::remove_dir_all(room);
 }
@@ -108,8 +110,9 @@ fn go_mcp_mutation_events_match_and_are_signed() {
     let artifact_root = root.join("testdata/port/room");
     let room = fixture_room("mutations", &[]);
     let cases = fixture["cases"].as_array().expect("mutation cases");
-    let mut input = Vec::new();
+    let mut actual = Vec::new();
     for case in cases {
+        let mut input = Vec::new();
         let mut request = case["request"].clone();
         let args = request["params"]["arguments"]
             .as_object_mut()
@@ -123,17 +126,17 @@ fn go_mcp_mutation_events_match_and_are_signed() {
         let body = serde_json::to_vec(&request).expect("request JSON");
         input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
         input.extend_from_slice(&body);
+        let mut output = Vec::new();
+        mcp::serve_io_with_identity(
+            BufReader::new(Cursor::new(input)),
+            &mut output,
+            &room,
+            &artifact_root,
+            Some(&identity),
+        )
+        .expect("MCP serve");
+        actual.extend(decode_frames(&output));
     }
-    let mut output = Vec::new();
-    mcp::serve_io_with_identity(
-        BufReader::new(Cursor::new(input)),
-        &mut output,
-        &room,
-        &artifact_root,
-        Some(&identity),
-    )
-    .expect("MCP serve");
-    let actual = decode_frames(&output);
     assert_eq!(actual.len(), cases.len());
     for (response, case) in actual.iter().zip(cases) {
         assert_eq!(response["result"]["isError"], false);
@@ -256,6 +259,131 @@ fn mcp_subcommand_serves_framed_tool_inventory() {
         decode_frames(&output.stdout),
         vec![fixture["cases"][0]["response"].clone()]
     );
+}
+
+#[test]
+fn stdio_malformed_oversized_interleaved_and_eof_frames_are_clean() {
+    let room = temporary_room("stdio-hygiene");
+    let wait = json!({
+        "jsonrpc":"2.0",
+        "id":2,
+        "method":"tools/call",
+        "params":{"name":"room_run_wait","arguments":{"run_id":"run_missing","timeout_seconds":1}}
+    });
+    let ping = json!({"jsonrpc":"2.0","id":3,"method":"ping"});
+    let list = json!({"jsonrpc":"2.0","id":4,"method":"tools/list"});
+    let mut input = b"Content-Length: 5\r\n\r\n{bad}".to_vec();
+    for request in [wait, ping, list] {
+        let body = serde_json::to_vec(&request).expect("request JSON");
+        input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
+        input.extend_from_slice(&body);
+    }
+
+    let mut output = Vec::new();
+    mcp::serve_io_with_identity(
+        BufReader::new(Cursor::new(input)),
+        &mut output,
+        &room,
+        &room,
+        None,
+    )
+    .expect("malformed request is reported and stream continues through EOF");
+    let frames = decode_frames(&output);
+    assert_eq!(frames.len(), 4);
+    assert_eq!(frames[0]["id"], Value::Null);
+    assert_eq!(frames[0]["error"]["code"], -32700);
+    assert_eq!(
+        frames[1..]
+            .iter()
+            .map(|response| response["id"].as_i64().unwrap())
+            .collect::<Vec<_>>(),
+        [3, 4, 2]
+    );
+    assert!(
+        String::from_utf8(output)
+            .unwrap()
+            .starts_with("Content-Length: ")
+    );
+
+    let mut output = Vec::new();
+    let error = mcp::serve_io_with_identity(
+        BufReader::new(Cursor::new(b"Content-Length: 1048577\r\n\r\n")),
+        &mut output,
+        &room,
+        &room,
+        None,
+    )
+    .expect_err("oversized frame rejected");
+    assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+    assert!(output.is_empty(), "oversized input must not leak to stdout");
+
+    let mut output = Vec::new();
+    mcp::serve_io_with_identity(
+        BufReader::new(Cursor::new(Vec::<u8>::new())),
+        &mut output,
+        &room,
+        &room,
+        None,
+    )
+    .expect("empty EOF shuts down cleanly");
+    assert!(output.is_empty(), "EOF must not write to stdout");
+    let _ = std::fs::remove_dir_all(room);
+}
+
+#[test]
+fn room_status_is_not_queued_behind_four_run_waits() {
+    let room = fixture_room("parallel-status", &[]);
+    let mut input = Vec::new();
+    for id in 1..=4 {
+        let request = json!({
+            "jsonrpc":"2.0",
+            "id":id,
+            "method":"tools/call",
+            "params":{"name":"room_run_wait","arguments":{"run_id":format!("run_missing_{id}"),"timeout_seconds":1}}
+        });
+        let body = serde_json::to_vec(&request).expect("wait request JSON");
+        input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
+        input.extend_from_slice(&body);
+    }
+    let status = json!({
+        "jsonrpc":"2.0",
+        "id":5,
+        "method":"tools/call",
+        "params":{"name":"room_status","arguments":{}}
+    });
+    let body = serde_json::to_vec(&status).expect("status request JSON");
+    input.extend_from_slice(format!("Content-Length: {}\r\n\r\n", body.len()).as_bytes());
+    input.extend_from_slice(&body);
+
+    let mut output = Vec::new();
+    mcp::serve_io_with_identity(
+        BufReader::new(Cursor::new(input)),
+        &mut output,
+        &room,
+        &room,
+        None,
+    )
+    .expect("MCP serve");
+    let responses = decode_frames(&output);
+    assert_eq!(responses.len(), 5);
+    assert_eq!(responses[0]["id"], 5, "status should finish before waits");
+    assert_eq!(responses[0]["result"]["isError"], false);
+    assert!(
+        responses[1..]
+            .iter()
+            .all(|response| response["result"]["isError"] == true)
+    );
+    let waiter_ids = responses[1..]
+        .iter()
+        .map(|response| response["id"].as_i64().expect("response id"))
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(
+        waiter_ids,
+        [1, 2, 3, 4]
+            .into_iter()
+            .collect::<std::collections::BTreeSet<_>>()
+    );
+    let _ = std::fs::remove_dir_all(room);
 }
 
 #[test]

@@ -6,8 +6,13 @@ use std::{
     io::{self, BufRead, Write},
     path::{Path, PathBuf},
     process::ExitCode,
-    sync::atomic::{AtomicU64, Ordering},
-    time::Duration,
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicU64, Ordering},
+        mpsc,
+    },
+    thread,
+    time::{Duration, Instant},
 };
 
 use serde::Serialize;
@@ -74,7 +79,7 @@ pub fn run_cli(args: &[OsString]) -> ExitCode {
     };
     match serve_io_with_identity(
         stdin.lock(),
-        stdout.lock(),
+        stdout,
         &room,
         &artifact_root,
         identity.as_ref(),
@@ -100,48 +105,81 @@ fn tools() -> Value {
     ])
 }
 
-pub fn serve_io_with_identity<R: BufRead, W: Write>(
+pub fn serve_io_with_identity<R: BufRead, W: Write + Send>(
     mut input: R,
-    mut output: W,
+    output: W,
     room_dir: &Path,
     artifact_root: &Path,
     identity: Option<&symroom_core::identity::Identity>,
 ) -> io::Result<()> {
-    loop {
-        let Some(body) = read_frame(&mut input)? else {
-            return Ok(());
-        };
-        let request: Value = match serde_json::from_slice(&body) {
-            Ok(value) => value,
-            Err(error) => {
-                write_response(
-                    &mut output,
-                    json!({"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":format!("Parse error: {error}")}}),
-                )?;
+    let output = Arc::new(Mutex::new(output));
+    let (errors, worker_errors) = mpsc::channel();
+    let mut errors = Some(errors);
+
+    thread::scope(|scope| {
+        loop {
+            if let Ok(error) = worker_errors.try_recv() {
+                return Err(error);
+            }
+            let Some(body) = read_frame(&mut input)? else {
+                drop(errors.take());
+                return worker_errors.recv().map_or(Ok(()), Err);
+            };
+            let request: Value = match serde_json::from_slice(&body) {
+                Ok(value) => value,
+                Err(error) => {
+                    write_shared_response(
+                        &output,
+                        json!({"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":format!("Parse error: {error}")}}),
+                    )?;
+                    continue;
+                }
+            };
+            if request.get("id").is_none() {
                 continue;
             }
-        };
-        if request.get("id").is_none() {
-            continue;
+            let received_at = Instant::now();
+            let id = request["id"].clone();
+            let method = request
+                .get("method")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            if method == "tools/call" {
+                let output = Arc::clone(&output);
+                let errors = errors.as_ref().expect("error sender available").clone();
+                scope.spawn(move || {
+                    let response =
+                        call(&request, id, room_dir, artifact_root, identity, received_at);
+                    let result = output
+                        .lock()
+                        .map_err(|_| io::Error::other("MCP output lock poisoned"))
+                        .and_then(|mut output| write_response(&mut *output, response));
+                    if let Err(error) = result {
+                        let _ = errors.send(error);
+                    }
+                });
+                continue;
+            }
+            let response = match method {
+                "initialize" => {
+                    json!({"jsonrpc":"2.0","id":id,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"symroom","version":"0.1.0"},"instructions":INSTRUCTIONS}})
+                }
+                "ping" => json!({"jsonrpc":"2.0","id":id,"result":{}}),
+                "tools/list" => json!({"jsonrpc":"2.0","id":id,"result":{"tools":tools()}}),
+                method => {
+                    json!({"jsonrpc":"2.0","id":id,"error":{"code":-32601,"message":format!("Method not found: {method}")}})
+                }
+            };
+            write_shared_response(&output, response)?;
         }
-        let id = request["id"].clone();
-        let response = match request
-            .get("method")
-            .and_then(Value::as_str)
-            .unwrap_or_default()
-        {
-            "initialize" => {
-                json!({"jsonrpc":"2.0","id":id,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"symroom","version":"0.1.0"},"instructions":INSTRUCTIONS}})
-            }
-            "ping" => json!({"jsonrpc":"2.0","id":id,"result":{}}),
-            "tools/list" => json!({"jsonrpc":"2.0","id":id,"result":{"tools":tools()}}),
-            "tools/call" => call(&request, id, room_dir, artifact_root, identity),
-            method => {
-                json!({"jsonrpc":"2.0","id":id,"error":{"code":-32601,"message":format!("Method not found: {method}")}})
-            }
-        };
-        write_response(&mut output, response)?;
-    }
+    })
+}
+
+fn write_shared_response<W: Write>(output: &Mutex<W>, response: Value) -> io::Result<()> {
+    let mut output = output
+        .lock()
+        .map_err(|_| io::Error::other("MCP output lock poisoned"))?;
+    write_response(&mut *output, response)
 }
 
 fn call(
@@ -150,6 +188,7 @@ fn call(
     room_dir: &Path,
     artifact_root: &Path,
     identity: Option<&symroom_core::identity::Identity>,
+    received_at: Instant,
 ) -> Value {
     let params = &request["params"];
     let Some(params) = params.as_object() else {
@@ -214,7 +253,11 @@ fn call(
             .filter(|seconds| *seconds > 0.0 && seconds.is_finite())
             .and_then(|seconds| Duration::try_from_secs_f64(seconds).ok())
             .unwrap_or(Duration::from_secs(30));
-        return match symroom_core::runs::wait(room_dir, run_id, timeout) {
+        return match symroom_core::runs::wait(
+            room_dir,
+            run_id,
+            timeout.saturating_sub(received_at.elapsed()),
+        ) {
             Ok(run) => tool_result(id, serde_json::to_string(&run).expect("run serializes")),
             Err(symroom_core::runs::RunWaitError::Timeout) => {
                 tool_error(id, "wait timed out before approval decision".to_owned())

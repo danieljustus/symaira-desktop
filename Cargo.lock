@@ -1366,6 +1366,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "symdesk-render"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "symdesk-vault"
 version = "0.0.0"
 dependencies = [

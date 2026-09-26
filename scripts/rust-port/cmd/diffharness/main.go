@@ -18,6 +18,7 @@ func main() {
 	symroomLeft := flag.String("symroom-left", "", "path to reference symroom binary")
 	symroomRight := flag.String("symroom-right", "", "path to candidate symroom binary")
 	allowSameBinary := flag.Bool("allow-same-binary", false, "allow identical left/right binaries for the explicit Go harness self-test")
+	showMismatchOutput := flag.Bool("show-mismatch-output", false, "print compared process streams on mismatch for synthetic fixtures")
 	casesPath := flag.String("cases", "testdata/port/cli/cases.json", "path to the case suite")
 	stage := flag.String("stage", "", "run only cases assigned to this migration stage")
 	flag.Parse()
@@ -98,6 +99,9 @@ func main() {
 			fatal("%s right run: %v", testCase.ID, err)
 		}
 		if err := portdiff.Compare(testCase, leftResult, rightResult); err != nil {
+			if *showMismatchOutput {
+				_, _ = fmt.Fprintf(os.Stderr, "Go stdout=%q\nGo stderr=%q\nRust stdout=%q\nRust stderr=%q\n", leftResult.Stdout, leftResult.Stderr, rightResult.Stdout, rightResult.Stderr)
+			}
 			fatal("%s: %v", testCase.ID, err)
 		}
 		fmt.Printf("PASS %s\n", testCase.ID)

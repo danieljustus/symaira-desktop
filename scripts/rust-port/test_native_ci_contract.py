@@ -26,6 +26,7 @@ STEPS = {
     "Verify frozen oracle and differential harness on Windows": 5,
     "Check, lint, and test Rust workspace": 8,
     "Run native SymRoom rollback handoff": 1,
+    "Run native dataset rollback handoff": 2,
     "Run native Windows representative CLI HTTP and MCP parity": 7,
     "Run native Windows sidecar round-trip suite": 1,
     "Run native Windows version differential": 4,
@@ -123,6 +124,7 @@ class NativeStepControl:
         self.env["PATH"] = str(stub_dir) + os.pathsep + self.env["PATH"]
         self.env["NATIVE_CONTROL_LOG"] = str(self.log)
         self.env["SYMROOM_ROLLBACK_REPORT"] = str(self.root / "symroom-rollback.json")
+        self.env["DATASET_ROLLBACK_REPORT"] = str(self.root / "dataset-rollback.json")
 
     def run(self, body, fail_at=0):
         self.log.unlink(missing_ok=True)
@@ -193,6 +195,54 @@ class NativeCIContracts(unittest.TestCase):
             ensure_report_safe({}, key, RuntimeError("failure output " + key), None)
         with self.assertRaisesRegex(RuntimeError, "report suppressed"):
             ensure_report_safe({}, key, None, "cleanup details " + key)
+
+    def test_rollback_selects_msvc_linker_after_git_link(self):
+        script = ROOT / "scripts/rust-port/room-rollback.py"
+        spec = importlib.util.spec_from_file_location("room_rollback", script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        paths = (r"C:\Program Files\Git\usr\bin\link.exe" + "\n"
+                 + r"C:\Program Files\Microsoft Visual Studio\VC\Tools\MSVC\14.0\bin\Hostx64\x64\link.exe")
+        self.assertEqual(module.select_msvc_linker(paths), paths.splitlines()[1])
+        self.assertTrue(module.is_git_posix_bin(r"C:\Program Files\Git\usr\bin"))
+        self.assertFalse(module.is_git_posix_bin(r"C:\Program Files\Git\cmd"))
+        with tempfile.TemporaryDirectory() as root:
+            linker = Path(root) / "VC/Tools/MSVC/14.0/bin/HostARM64/arm64/link.exe"
+            linker.parent.mkdir(parents=True)
+            linker.touch()
+            self.assertEqual(
+                module.msvc_linker_from_installation(root, "arm64", "HostARM64"),
+                str(linker),
+            )
+        self.assertEqual(
+            module.parse_msvc_library_environment("LIB=C:\\sdk;C:\\vc\nTOKEN=secret\n"),
+            {"LIB": "C:\\sdk;C:\\vc"},
+        )
+
+    def test_rollback_blob_extraction_uses_exact_tree_and_exclusions(self):
+        script = ROOT / "scripts/rust-port/room-rollback.py"
+        spec = importlib.util.spec_from_file_location("room_rollback", script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory(prefix="room-blob-test-") as temp:
+            repo = Path(temp) / "repo"
+            repo.mkdir()
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            (repo / "go.mod").write_bytes(b"module example.test/rollback\n")
+            (repo / "skip").mkdir()
+            (repo / "skip" / "fixture.txt").write_bytes(b"excluded")
+            (repo / "cmd").mkdir()
+            (repo / "cmd" / "binary.dat").write_bytes(b"\0\xff\n")
+            subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+            tree = subprocess.run(
+                ["git", "write-tree"], cwd=repo, check=True,
+                capture_output=True, text=True,
+            ).stdout.strip()
+            output = Path(temp) / "source"
+            module.extract_git_blobs(repo, tree, output, os.environ.copy(), "git", ("skip/",))
+            self.assertEqual((output / "go.mod").read_bytes(), b"module example.test/rollback\n")
+            self.assertEqual((output / "cmd" / "binary.dat").read_bytes(), b"\0\xff\n")
+            self.assertFalse((output / "skip").exists())
 
     def test_retention_state_differential_runs_on_all_native_targets(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()

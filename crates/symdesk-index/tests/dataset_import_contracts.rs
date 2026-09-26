@@ -37,37 +37,44 @@ impl Sandbox {
         }
     }
 
-    fn import(&mut self, source: &Path, handle: &Value) -> Result<Value, String> {
-        let schema: BTreeMap<String, PropertyConfig> =
-            serde_json::from_value(handle["schema"].clone()).expect("handle schema");
+    fn import(&mut self, source: &Path, input_options: &Value) -> Result<Value, String> {
+        let schema: BTreeMap<String, PropertyConfig> = input_options
+            .get("schema")
+            .filter(|schema| !schema.is_null())
+            .map(|schema| serde_json::from_value(schema.clone()).expect("input schema"))
+            .unwrap_or_default();
         let options = DatasetImportOptions {
-            title: handle["title"].as_str().expect("handle title").to_owned(),
-            slug: handle["slug"].as_str().expect("handle slug").to_owned(),
-            identity_field: handle["identity_field"]
-                .as_str()
-                .expect("identity field")
-                .to_owned(),
-            schema,
-            refresh_command: handle["refresh_command"]
+            title: input_options["title"]
                 .as_str()
                 .unwrap_or_default()
                 .to_owned(),
-            sensitivity: handle["sensitivity"]
+            slug: input_options["slug"]
                 .as_str()
-                .expect("handle sensitivity")
+                .unwrap_or_default()
                 .to_owned(),
-            retention_rule: handle["retention_rule"]
+            identity_field: input_options["identity_field"]
                 .as_str()
-                .expect("handle retention rule")
+                .unwrap_or_default()
+                .to_owned(),
+            schema,
+            refresh_command: input_options["refresh_command"]
+                .as_str()
+                .unwrap_or_default()
+                .to_owned(),
+            sensitivity: input_options["sensitivity"]
+                .as_str()
+                .unwrap_or_default()
+                .to_owned(),
+            retention_rule: input_options["retention_rule"]
+                .as_str()
+                .unwrap_or_default()
                 .to_owned(),
             now: Some(
                 OffsetDateTime::parse(
-                    handle["provenance"]["imported_at"]
-                        .as_str()
-                        .expect("handle import time"),
+                    input_options["now"].as_str().expect("input import time"),
                     &Rfc3339,
                 )
-                .expect("fixture import time"),
+                .expect("fixture input time"),
             ),
         };
         DatasetSyncService::new(&self.root, &mut self.sidecar)
@@ -85,15 +92,6 @@ impl Drop for Sandbox {
 
 fn fixture() -> Value {
     serde_json::from_str(FIXTURE).expect("parse Go-owned dataset import fixture")
-}
-
-fn file_entry<'a>(state: &'a Value, path: &str) -> &'a Value {
-    state["vault"]
-        .as_array()
-        .expect("vault manifest")
-        .iter()
-        .find(|entry| entry["path"] == path)
-        .unwrap_or_else(|| panic!("missing Go fixture vault entry {path}"))
 }
 
 fn actual_state(sandbox: &Sandbox, label: &str, slug: &str) -> Value {
@@ -146,57 +144,74 @@ fn actual_state(sandbox: &Sandbox, label: &str, slug: &str) -> Value {
             })
         })
         .collect::<Vec<_>>();
+    let mut state = json!({"label": label, "vault": vault, "rows": rows});
     let handle_path = format!("datasets/{slug}.md");
-    let handle_bytes = fs::read(sandbox.root.join(&handle_path)).expect("read Markdown handle");
-    let handle = parse_dataset_handle(&handle_path, &handle_bytes).expect("parse Markdown handle");
-    json!({"label": label, "vault": vault, "rows": rows, "handle": handle})
+    match fs::read(sandbox.root.join(&handle_path)) {
+        Ok(handle_bytes) => {
+            let handle =
+                parse_dataset_handle(&handle_path, &handle_bytes).expect("parse Markdown handle");
+            state["handle"] = json!(handle);
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => panic!("read Markdown handle: {error}"),
+    }
+    state
 }
 
 #[test]
-fn source_import_and_same_day_collision_match_go_oracle() {
+fn source_import_cases_match_go_oracle() {
     let fixture = fixture();
     let cases = fixture["cases"].as_array().expect("cases");
-    assert_eq!(cases.len(), 1, "case inventory changed");
-    assert_eq!(
-        cases[0]["id"],
-        "same-day-source-import-collision-and-manifest-projection"
-    );
-    let calls = cases[0]["calls"].as_array().expect("calls");
-    let states = cases[0]["states"].as_array().expect("states");
-    assert_eq!(calls.len(), 2);
-    assert_eq!(states.len(), 2);
+    for case in cases {
+        let calls = case["calls"].as_array().expect("calls");
+        let states = case["states"].as_array().expect("states");
+        let inputs = case["inputs"].as_array().expect("inputs");
+        assert_eq!(inputs.len(), calls.len(), "{} input/call count", case["id"]);
+        assert_eq!(
+            inputs.len(),
+            states.len(),
+            "{} input/state count",
+            case["id"]
+        );
 
-    let mut sandbox = Sandbox::new();
-    let inputs = [
-        ("first-feed.CSV", "datasets/ledger/2026-02-03.csv"),
-        ("second-feed.csv", "datasets/ledger/2026-02-03-2.csv"),
-    ];
-    for (index, (source_name, raw_path)) in inputs.iter().enumerate() {
-        let expected_state = &states[index];
-        let expected_handle = &expected_state["handle"];
-        let source = sandbox.parent.join(source_name);
-        fs::write(
-            &source,
-            file_entry(expected_state, raw_path)["content"]
-                .as_str()
-                .expect("raw source bytes"),
-        )
-        .expect("write selected source CSV");
-        let result = sandbox.import(&source, expected_handle);
-        assert_eq!(
-            result,
-            Ok(calls[index]["result"].clone()),
-            "DatasetImport result {index}"
-        );
-        assert_eq!(
-            actual_state(
-                &sandbox,
-                expected_state["label"].as_str().unwrap(),
-                "ledger"
-            ),
-            *expected_state,
-            "persisted state after import {index}"
-        );
+        let mut sandbox = Sandbox::new();
+        for (index, input) in inputs.iter().enumerate() {
+            let expected_state = &states[index];
+            let source = sandbox
+                .parent
+                .join(input["source_name"].as_str().expect("source name"));
+            fs::write(
+                &source,
+                input["csv"].as_str().expect("CSV input").as_bytes(),
+            )
+            .expect("write selected source CSV");
+            let result = sandbox.import(&source, &input["options"]);
+            if let Some(expected_result) = calls[index].get("result") {
+                assert_eq!(
+                    result,
+                    Ok(expected_result.clone()),
+                    "{} call {index}",
+                    case["id"]
+                );
+            } else {
+                assert_eq!(
+                    result,
+                    Err(calls[index]["error"].as_str().expect("Go error").to_owned()),
+                    "{} call {index}",
+                    case["id"]
+                );
+            }
+            assert_eq!(
+                actual_state(
+                    &sandbox,
+                    expected_state["label"].as_str().unwrap(),
+                    input["options"]["slug"].as_str().unwrap(),
+                ),
+                *expected_state,
+                "{} persisted state after import {index}",
+                case["id"]
+            );
+        }
     }
 }
 

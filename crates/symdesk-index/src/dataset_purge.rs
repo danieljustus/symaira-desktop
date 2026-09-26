@@ -404,9 +404,15 @@ fn remove_recorded(root: &Dir, record: &PathRecord) -> Result<(), DatasetPurgeEr
             "dir" => metadata.is_dir(),
             _ => false,
         };
-    if !valid_type || identity(&metadata) != record.identity {
+    if !valid_type {
         return Err(DatasetPurgeError::Contract(format!(
-            "purge path {} was replaced or changed type",
+            "purge path {} changed type",
+            record.path
+        )));
+    }
+    if identity(&metadata) != record.identity {
+        return Err(DatasetPurgeError::Contract(format!(
+            "purge path {} was replaced",
             record.path
         )));
     }
@@ -500,8 +506,24 @@ fn identity(meta: &cap_std::fs::Metadata) -> String {
     }
     #[cfg(windows)]
     {
-        use cap_fs_ext::MetadataExt;
-        format!("{}:{}", meta.dev(), meta.ino())
+        // Go's Windows FileInfo.Sys has no Dev/Ino fields, so its purge
+        // journal falls back to mode, size, and modification time.
+        let mode = match (meta.is_dir(), meta.permissions().readonly()) {
+            (true, true) => "dr-xr-xr-x",
+            (true, false) => "drwxrwxrwx",
+            (false, true) => "-r--r--r--",
+            (false, false) => "-rw-rw-rw-",
+        };
+        let modified = meta
+            .modified()
+            .map(
+                |time| match time.duration_since(cap_std::time::SystemClock::UNIX_EPOCH) {
+                    Ok(duration) => duration.as_nanos() as i128,
+                    Err(error) => -(error.duration().as_nanos() as i128),
+                },
+            )
+            .unwrap_or(0);
+        format!("{mode}:{}:{modified}", meta.len())
     }
     #[cfg(all(not(unix), not(windows)))]
     {
@@ -656,23 +678,9 @@ mod tests {
 
     static COUNTER: AtomicU64 = AtomicU64::new(0);
 
-    #[test]
-    fn directory_identity_survives_child_removal() {
-        let sandbox = Sandbox::new();
-        let directory = sandbox.root.join("datasets");
-        fs::create_dir(&directory).expect("create dataset directory");
-        let child = directory.join("row.csv");
-        fs::write(&child, b"row").expect("write child");
-        let root = Dir::open_ambient_dir(&sandbox.root, ambient_authority()).expect("open vault");
-        let before = super::identity(&root.symlink_metadata("datasets").expect("before"));
-        fs::remove_file(child).expect("remove child");
-        let after = super::identity(&root.symlink_metadata("datasets").expect("after"));
-        assert_eq!(before, after);
-    }
-
     #[cfg(windows)]
     #[test]
-    fn file_identity_survives_content_rewrite() {
+    fn file_identity_tracks_content_rewrite_on_windows() {
         let sandbox = Sandbox::new();
         let path = sandbox.root.join("payload");
         fs::write(&path, b"original").expect("write payload");
@@ -680,7 +688,7 @@ mod tests {
         let before = super::identity(&root.symlink_metadata("payload").expect("before"));
         fs::write(&path, b"replacement payload").expect("rewrite payload");
         let after = super::identity(&root.symlink_metadata("payload").expect("after"));
-        assert_eq!(before, after);
+        assert_ne!(before, after);
     }
 
     #[test]

@@ -32,6 +32,14 @@
 .PHONY: room-artifact-identity-cli-fixtures-generate room-artifact-identity-cli-differential room-doctor-cli-fixtures-generate room-doctor-cli-differential index-maintenance-cli-fixtures-generate index-maintenance-cli-differential recipe-validate-fixtures-generate recipe-validate-differential
 .PHONY: room-checkpoint-cli-fixtures-generate room-checkpoint-cli-differential index-build-cli-fixtures-generate index-build-cli-differential
 .PHONY: config-precedence-differential config-vault-selection-differential room-run-approval-cli-fixtures-generate room-run-approval-cli-differential history-tasks-cli-differential
+.PHONY: notebook-write-differential
+.PHONY: base-view-write-differential
+.PHONY: retrieval-chunks-fixtures-generate retrieval-chunks-differential
+.PHONY: retrieval-bm25-fixtures-generate retrieval-bm25-differential
+.PHONY: retrieval-embedding-state-fixtures-generate retrieval-embedding-state-differential
+.PHONY: retrieval-vector-fixtures-generate retrieval-vector-differential
+.PHONY: render-ir-fixtures-generate render-ir-differential
+.PHONY: dataset-aggregate-fixtures-generate dataset-aggregate-differential
 
 VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
 LDFLAGS = -X main.version=$(if $(VERSION),$(VERSION),(devel))
@@ -207,6 +215,14 @@ vault-write-differential:
 	$(CARGO) test -p symdesk-vault --test filesystem_write_contracts --locked
 	$(CARGO) test -p symdesk-vault --test note_operations_contracts --locked
 
+notebook-write-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/notebookwritegen --check
+	$(CARGO) test -p symdesk-vault --test notebook_write_contracts --locked
+
+base-view-write-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/baseviewwritegen --check
+	$(CARGO) test -p symdesk-vault --test base_view_write_contracts --locked
+
 vault-history-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/history -run TestPortHistoryLifecycleContract
 
@@ -316,7 +332,7 @@ room-mcp-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/mcp -run '^TestSymRoomMCP(Representative|Mutation)Oracle$$'
 
 room-mcp-differential:
-	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/mcp -run '^TestSymRoomMCP(Representative|Mutation)Oracle$$'
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/room/mcp -run '^Test(SymRoomMCP(Representative|Mutation)Oracle|StdioStreamHygiene)$$'
 	$(CARGO) test -p symroom-cli --locked --test mcp
 
 room-merge-read-fixtures-generate:
@@ -430,6 +446,48 @@ room-checkpoint-cli-fixtures-generate:
 room-checkpoint-cli-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./cmd/symroom -run '^TestPortCheckpointCLIContract$$'
 	$(CARGO) test -p symroom-cli --locked --test checkpoint_commands
+
+retrieval-chunks-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalChunksFixture$$'
+
+retrieval-chunks-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run '^TestRetrievalChunksFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_chunks
+
+retrieval-bm25-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalBM25Fixture$$'
+
+retrieval-bm25-differential:
+	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalBM25Fixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_bm25
+
+retrieval-embedding-state-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
+
+retrieval-embedding-state-differential:
+	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_embedding_state
+
+retrieval-vector-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
+
+retrieval-vector-differential:
+	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalVectorFixture$$'
+	$(CARGO) test -p symdesk-index --locked --test retrieval_vector
+
+render-ir-fixtures-generate:
+	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/renderirgen
+
+render-ir-differential:
+	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/renderirgen --check
+	$(CARGO) test -p symdesk-render --locked
+
+dataset-aggregate-fixtures-generate:
+	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'
+
+dataset-aggregate-differential:
+	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run '^TestPortDatasetQueryAggregateContract$$'
+	$(CARGO) test -p symdesk-index --locked --test dataset_aggregate_contract
 
 index-backup-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval -run '^TestIndexBackupPortFixture$$'
@@ -567,7 +625,7 @@ sidecar-differential: sidecar-fixtures-check
 sidecar-roundtrip:
 	SIDECAR_NATIVE=1 GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 
-port-fixtures-generate: core-fixtures-generate vault-fixtures-generate sidecar-fixtures-generate sidecar-metadata-fixtures-generate
+port-fixtures-generate: core-fixtures-generate vault-fixtures-generate sidecar-metadata-fixtures-generate
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/portgen \
 		--oracle-release $(PORT_ORACLE_RELEASE)
 
@@ -601,7 +659,7 @@ retention-cli-differential:
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/diffharness \
 		--symdesk-left "bin/port/symdesk-go$(EXE_SUFFIX)" --symdesk-right "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)" \
-		--cases "testdata/port/cli/retention-cases.json" --stage retention
+		--cases "testdata/port/cli/retention-cases.json" --stage retention --show-mismatch-output
 
 representative-differential: representative-fixtures-check
 	@mkdir -p bin/port

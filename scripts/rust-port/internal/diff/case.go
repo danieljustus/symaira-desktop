@@ -1,7 +1,10 @@
 // Package diff runs language-neutral binary contract comparisons in isolated sandboxes.
 package diff
 
-import "time"
+import (
+	"runtime"
+	"time"
+)
 
 const (
 	comparisonModeBytes       = "bytes"
@@ -36,6 +39,7 @@ type Case struct {
 	WorkingDir           string            `json:"working_dir,omitempty"`
 	TimeoutMS            int               `json:"timeout_ms,omitempty"`
 	StdoutMode           string            `json:"stdout_mode,omitempty"`
+	WindowsStdoutMode    string            `json:"windows_stdout_mode,omitempty"`
 	StderrMode           string            `json:"stderr_mode,omitempty"`
 	CompareFiles         bool              `json:"compare_files,omitempty"`
 	CompareSidecarLayout bool              `json:"compare_sidecar_layout,omitempty"`
@@ -65,6 +69,9 @@ func (c Case) timeout() time.Duration {
 }
 
 func (c Case) stdoutComparisonMode() string {
+	if runtime.GOOS == "windows" && c.WindowsStdoutMode != "" {
+		return c.WindowsStdoutMode
+	}
 	if c.StdoutMode == "" {
 		return comparisonModeBytes
 	}

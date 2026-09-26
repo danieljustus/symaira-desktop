@@ -4,7 +4,7 @@
 //! resolution chains. Port of `internal/room/identity`.
 
 use std::fmt;
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, process::Command};
 
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use sha2::{Digest, Sha256};
@@ -191,13 +191,41 @@ pub fn save(identity: &Identity) -> Result<(), IdentityError> {
     Ok(())
 }
 
-/// Go: `identity.Load` chains 1 (environment) and 4 (file). See the crate note
-/// about the `symvault` and Keychain chains.
+/// Go: `identity.Load` — environment, optional `symvault`, optional macOS
+/// Keychain, then the identity file. Provider lookups are runtime-only so
+/// standalone consumers do not need either provider installed.
 pub fn load(name: &str) -> Result<Identity, IdentityError> {
     if let Ok(raw) = std::env::var("SYMROOM_IDENTITY_KEY")
         && let Ok(bytes) = hex::decode(raw.trim())
         && matches!(bytes.len(), SEED_SIZE | PRIVATE_KEY_SIZE)
         && let Some(identity) = identity_from_private_key(name, &bytes)
+    {
+        return Ok(identity);
+    }
+
+    let vault_key = format!("symroom/identities/{name}");
+    if let Ok(output) = Command::new("symvault")
+        .args(["get", vault_key.as_str()])
+        .output()
+        && output.status.success()
+        && let Some(identity) = identity_from_provider_output(name, &output.stdout)
+    {
+        return Ok(identity);
+    }
+
+    #[cfg(target_os = "macos")]
+    if let Ok(output) = Command::new("security")
+        .args([
+            "find-generic-password",
+            "-s",
+            "symroom-identity",
+            "-a",
+            name,
+            "-w",
+        ])
+        .output()
+        && output.status.success()
+        && let Some(identity) = identity_from_provider_output(name, &output.stdout)
     {
         return Ok(identity);
     }
@@ -229,6 +257,14 @@ pub fn load(name: &str) -> Result<Identity, IdentityError> {
         public_key,
         private_key,
     })
+}
+
+fn identity_from_provider_output(name: &str, output: &[u8]) -> Option<Identity> {
+    let value = std::str::from_utf8(output).ok()?.trim();
+    let bytes = hex::decode(value).ok()?;
+    (bytes.len() == PRIVATE_KEY_SIZE)
+        .then(|| identity_from_private_key(name, &bytes))
+        .flatten()
 }
 
 /// Go: `identity.List` — every `*.json` in the identities directory, in the

@@ -23,6 +23,7 @@ mod dataset_purge;
 mod dataset_sync;
 mod history_sync;
 mod metadata;
+mod retrieval;
 mod retrieval_config;
 
 pub use backup::{backup_database, relocate_database, restore_database};
@@ -35,6 +36,11 @@ pub use history_sync::{HistorySyncError, checkpoint_undo, history_restore};
 pub use metadata::{
     METADATA_FILE_NAME, encode_sidecar_metadata, encode_sidecar_metadata_at, open_for_vault,
     record_sidecar_metadata,
+};
+pub use retrieval::{
+    RetrievalAnchor, RetrievalChunk, RetrievalDb, RetrievalDocument, RetrievalEmbeddingSpaceCount,
+    RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, RetrievalVectorSearchChunk,
+    RetrievalVectorSearchResult, StoredRetrievalChunk, materialize_chunks,
 };
 pub use retrieval_config::{
     index_location_for_vault, relocate_index_for_vault, symseek_config_path,
@@ -237,6 +243,20 @@ pub struct DatasetQueryFilter {
 
 pub use symdesk_vault::FilterGroup as DatasetQueryFilterGroup;
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct DatasetGroupCountRow {
+    pub group_value: serde_json::Value,
+    pub count: i64,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct DatasetGroupCountResult {
+    pub rows: Vec<DatasetGroupCountRow>,
+    pub total_groups: usize,
+    pub limit: usize,
+    pub capped: bool,
+}
+
 pub struct Sidecar {
     connection: Connection,
     closed: bool,
@@ -260,6 +280,7 @@ pub fn path_for_vault(vault_root: &Path) -> Result<PathBuf, SidecarError> {
         std::env::current_dir()?.join(vault_root)
     };
     let canonical = fs::canonicalize(&absolute).unwrap_or_else(|_| lexical_clean(&absolute));
+    let canonical = absolute_non_verbatim(&canonical)?;
     let explicit_data_home = std::env::var("XDG_DATA_HOME")
         .ok()
         .map(|value| value.trim().to_owned())
@@ -432,6 +453,20 @@ fn dataset_query_filter_where(
 
 fn dataset_json_path(key: &str) -> String {
     format!(r#"$."{}""#, key.replace('"', r#"\""#))
+}
+
+fn dataset_sql_value_to_json(value: rusqlite::types::Value) -> serde_json::Value {
+    match value {
+        rusqlite::types::Value::Null => serde_json::Value::Null,
+        rusqlite::types::Value::Integer(value) => serde_json::json!(value),
+        rusqlite::types::Value::Real(value) => serde_json::Number::from_f64(value)
+            .map(serde_json::Value::Number)
+            .unwrap_or(serde_json::Value::Null),
+        rusqlite::types::Value::Text(value) => serde_json::Value::String(value),
+        rusqlite::types::Value::Blob(value) => {
+            serde_json::Value::String(String::from_utf8_lossy(&value).into_owned())
+        }
+    }
 }
 
 fn sidecar_storage_root(
@@ -627,6 +662,76 @@ impl Sidecar {
             })
         })?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    }
+
+    /// Returns an ordered, capped grouped row count projection.
+    ///
+    /// # Errors
+    /// Returns a contract error for an empty dataset or group column, the stable
+    /// closed-database diagnostic, or SQLite query errors.
+    pub fn dataset_group_count(
+        &self,
+        dataset_slug: &str,
+        group_by: &str,
+        limit: usize,
+    ) -> Result<DatasetGroupCountResult, SidecarError> {
+        if self.closed {
+            return Err(SidecarError::Closed);
+        }
+        if dataset_slug.trim().is_empty() {
+            return Err(SidecarError::Contract(
+                "dataset slug is required".to_owned(),
+            ));
+        }
+        if group_by.trim().is_empty() {
+            return Err(SidecarError::Contract(
+                "dataset group column is required".to_owned(),
+            ));
+        }
+        let path = dataset_json_path(group_by);
+        let expression = "json_extract(values_json, ?)";
+        let total: i64 = self.connection.query_row(
+            &format!(
+                "SELECT COUNT(*) FROM (SELECT {expression} FROM dataset_rows WHERE dataset_slug = ? GROUP BY {expression})"
+            ),
+            params![path, dataset_slug, path],
+            |row| row.get(0),
+        )?;
+        let limit = if limit == 0 { 10 } else { limit.min(1000) };
+        let mut statement = self.connection.prepare(&format!(
+            "SELECT {expression}, COUNT(*) FROM dataset_rows WHERE dataset_slug = ? GROUP BY {expression} ORDER BY {expression} ASC LIMIT ?"
+        ))?;
+        let groups = statement.query_map(
+            params![
+                path,
+                dataset_slug,
+                path,
+                path,
+                i64::try_from(limit).unwrap_or(1000)
+            ],
+            |row| {
+                Ok((
+                    row.get::<_, rusqlite::types::Value>(0)?,
+                    row.get::<_, i64>(1)?,
+                ))
+            },
+        )?;
+        let mut rows = Vec::with_capacity(limit.min(usize::try_from(total).unwrap_or(usize::MAX)));
+        for group in groups {
+            let (value, count) = group?;
+            rows.push(DatasetGroupCountRow {
+                group_value: dataset_sql_value_to_json(value),
+                count,
+            });
+        }
+        let total_groups = usize::try_from(total).unwrap_or(usize::MAX);
+        let capped = rows.len() < total_groups;
+        Ok(DatasetGroupCountResult {
+            rows,
+            total_groups,
+            limit,
+            capped,
+        })
     }
 
     /// Returns one key-ordered page of dataset rows and the uncapped total.

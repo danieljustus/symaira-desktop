@@ -51,7 +51,13 @@ func withMockTool(t *testing.T, name, path string) {
 
 func newTestService(t *testing.T) *Service {
 	t.Helper()
-	vaultPath := t.TempDir()
+	// The frozen Go history Store retains os.Root on Windows (#964), so
+	// t.TempDir's strict cleanup would fail after successful assertions.
+	vaultPath, err := os.MkdirTemp("", "symdesk-service-test-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(vaultPath) })
 	db, err := sidecar.Open(filepath.Join(vaultPath, "sidecar.db"))
 	if err != nil {
 		t.Fatal(err)
@@ -61,7 +67,9 @@ func newTestService(t *testing.T) *Service {
 	// Prevent accidental calls to the real symseek binary on PATH during tests.
 	withDisabledTool(t, "symseek")
 
-	return New(vaultPath, db)
+	svc := New(vaultPath, db)
+	t.Cleanup(func() { _ = svc.Close() })
+	return svc
 }
 
 func TestNoteMoveRemovesStaleIndexEntry(t *testing.T) {

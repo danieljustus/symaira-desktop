@@ -192,6 +192,7 @@ impl SnapshotCache {
             // The oracle preserves generated_at and compressed bytes if the
             // metadata ETag is unchanged, even after a spurious watcher event.
             if let Some(previous) = cached.as_ref()
+                && identity_matches
                 && previous.etag == built.etag
             {
                 if let Ok(mut identity) = self.root_identity.lock() {
@@ -236,9 +237,17 @@ mod tests {
         cache
             .get_or_build(|| Some(RootIdentity::test("old")), || Ok(payload("old")))
             .unwrap();
-        cache
-            .get_or_build(|| Some(RootIdentity::test("new")), || Ok(payload("new")))
+        let replacement = cache
+            .get_or_build(
+                || Some(RootIdentity::test("new")),
+                || {
+                    let mut rebuilt = payload("old");
+                    rebuilt.plain = Bytes::from_static(b"replacement");
+                    Ok(rebuilt)
+                },
+            )
             .unwrap();
+        assert_eq!(replacement.plain.as_ref(), b"replacement");
         let next = cache
             .get_or_build(|| Some(RootIdentity::test("new")), || Ok(payload("edited")))
             .unwrap();

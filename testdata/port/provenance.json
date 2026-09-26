@@ -71,7 +71,7 @@
     "testdata/port/room/verify-cli.json": "b311a01bda1d47e3c877896ec6d9f7809aad17b7981d955f2072708a61adb652",
     "testdata/port/room/verify.json": "ce4c6ad493283a44f0423314ca3c121df3c163c43d2e966a71f30ab26103a6d7",
     "testdata/port/room/watch-cli.json": "d5002d4f5edfe1290368cbb74026f8060dd48c2b2ab4abd2c674f38d8165443a",
-    "testdata/port/room/watch-stream.json": "081e554db57580f1f8f09727a0f8249ebd6b52d12cd1ab436566a8b18bec6604",
+    "testdata/port/room/watch-stream.json": "40b874f762dd7edc68ef6914630211b3aa90b8d695f811ce1feed985bcb6c198",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
     "testdata/port/sidecar/large-corpus.json": "344f935614dacb6c779f685bd0e7dccdae00cb9a256c5ae1bf21a6ab157a4361",
     "testdata/port/sidecar/lifecycle.json": "13d0ad95ee42552157e94bb53f148b79dc08745196b20372bd54e72a5e67bf49",

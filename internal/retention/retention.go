@@ -362,6 +362,9 @@ func LoadProposal(vaultRoot, runID string) (Proposal, error) {
 	if err := json.Unmarshal(data, &p); err != nil {
 		return Proposal{}, err
 	}
+	if p.RunID != runID {
+		return Proposal{}, fmt.Errorf("retention proposal run ID %q does not match requested %q", p.RunID, runID)
+	}
 	return p, nil
 }
 

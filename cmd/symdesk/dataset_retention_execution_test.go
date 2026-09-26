@@ -734,3 +734,35 @@ func TestRetentionCLIRejectsTraversalRunIDsBeforeProposalIO(t *testing.T) {
 		t.Fatalf("unsafe CLI run ID created retention state: %v", err)
 	}
 }
+
+func TestRetentionCLIRejectsMismatchedStoredRunID(t *testing.T) {
+	vaultRoot := isolatedCommandVault(t)
+	dir := retention.ProposalDir(vaultRoot)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	original := []byte(`{"run_id":"stored","status":"pending"}`)
+	requested := filepath.Join(dir, "probe.json")
+	if err := os.WriteFile(requested, original, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"reject", "diff", "accept"} {
+		command := retentionSubcommand(t, name)
+		output, err := captureCommandStdout(t, func() error { return command.RunE(command, []string{"probe"}) })
+		if output != "" || err == nil || err.Error() != `retention proposal run ID "stored" does not match requested "probe"` {
+			t.Fatalf("retention %s: output %q, error %v", name, output, err)
+		}
+		data, err := os.ReadFile(requested)
+		if err != nil || string(data) != string(original) {
+			t.Fatalf("retention %s changed requested proposal: %q, %v", name, data, err)
+		}
+		if _, err := os.Stat(filepath.Join(dir, "stored.json")); !os.IsNotExist(err) {
+			t.Fatalf("retention %s created stored proposal: %v", name, err)
+		}
+	}
+	command := retentionSubcommand(t, "list")
+	output, err := captureCommandStdout(t, func() error { return command.RunE(command, nil) })
+	if err != nil || strings.Contains(output, "stored") || strings.Contains(output, "probe") {
+		t.Fatalf("retention list exposed mismatched proposal: %q, %v", output, err)
+	}
+}

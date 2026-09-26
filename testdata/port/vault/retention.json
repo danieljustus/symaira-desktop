@@ -6,7 +6,7 @@
     "release": "v0.1.0"
   },
   "source_hashes": {
-    "internal/retention/retention.go": "1dd40cb43529b1d9aed6fe1699d50e1e9d844abeac31450cd0bdd56276a9a24c"
+    "internal/retention/retention.go": "97078902c21b47976777f61c844f778e82e5715085d8d5be56ac9eb4aad7506c"
   },
   "proposal_dir": ".symdesk/retention",
   "history_path": ".symdesk/retention/history.json",

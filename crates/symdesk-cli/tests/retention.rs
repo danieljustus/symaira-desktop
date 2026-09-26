@@ -403,6 +403,30 @@ fn reject_reports_missing_proposals_with_the_go_error_envelope() {
 }
 
 #[test]
+fn mismatched_stored_run_id_cannot_change_a_different_proposal() {
+    let root = TempRoot::new("mismatched-run-id");
+    fs::create_dir_all(root.proposal_dir()).expect("create proposal directory");
+    let requested = root.proposal_dir().join("probe.json");
+    let original = b"{\"run_id\":\"stored\",\"status\":\"pending\"}";
+    fs::write(&requested, original).expect("write mismatched proposal");
+    for command in ["reject", "diff", "accept"] {
+        let output = run(&root, ["retention", command, "probe", "--json"]);
+        assert_error(
+            &output,
+            b"{\"error\":\"retention proposal run ID \\\"stored\\\" does not match requested \\\"probe\\\"\"}\n",
+            b"",
+        );
+        assert_eq!(
+            fs::read(&requested).expect("read requested proposal"),
+            original
+        );
+        assert!(!root.proposal_dir().join("stored.json").exists());
+    }
+    let output = run(&root, ["retention", "list", "--json"]);
+    assert_ok(&output, b"null\n");
+}
+
+#[test]
 fn go_nil_items_survive_rejection_and_render_as_null() {
     for items_field in [",\"items\":null", ""] {
         let root = TempRoot::new("nil-items");

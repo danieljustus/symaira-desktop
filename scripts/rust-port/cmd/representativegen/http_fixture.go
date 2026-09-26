@@ -78,6 +78,10 @@ func generatedHTTP() httpSuite {
 		{ID: "ingest-invalid-multipart", Method: "POST", Path: "/api/v1/ingest", Auth: "valid", Headers: map[string]string{"Content-Type": "multipart/form-data; boundary=broken"}, Body: "not multipart"},
 		{ID: "ingest-missing-file", Method: "POST", Path: "/api/v1/ingest", Auth: "valid", Headers: map[string]string{"Content-Type": "multipart/form-data; boundary=empty"}, Body: "--empty--\r\n"},
 		{ID: "ingest-valid", Method: "POST", Path: "/api/v1/ingest", Auth: "valid", MultipartFile: "report.pdf", Body: "%PDF-1.7\nfixture\n"},
+		{ID: "shares-missing-auth", Method: "GET", Path: "/api/v1/shares"},
+		{ID: "shares-wrong-auth", Method: "GET", Path: "/api/v1/shares", Auth: "wrong"},
+		{ID: "shares-empty", Method: "GET", Path: "/api/v1/shares", Auth: "valid"},
+		{ID: "shares-populated", Method: "GET", Path: "/api/v1/shares", Auth: "valid", PopulateShares: true},
 	}}
 }
 

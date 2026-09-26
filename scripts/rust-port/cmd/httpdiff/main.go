@@ -45,6 +45,7 @@ type httpCase struct {
 	MultipartFile  string            `json:"multipart_file,omitempty"`
 	EmptyNotebooks bool              `json:"empty_notebooks,omitempty"`
 	PopulateJobs   bool              `json:"populate_jobs,omitempty"`
+	PopulateShares bool              `json:"populate_shares,omitempty"`
 }
 
 type transcript struct {
@@ -157,6 +158,13 @@ func run() (runErr error) {
 	}
 	leftETag, rightETag := "", ""
 	for _, tc := range suite.Cases {
+		if tc.PopulateShares {
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := populateShares(vault); err != nil {
+					fatal("populate share fixture: %v", err)
+				}
+			}
+		}
 		if tc.PopulateJobs {
 			for _, vault := range []string{leftVault, rightVault} {
 				if err := populateJobs(vault); err != nil {
@@ -185,6 +193,19 @@ func run() (runErr error) {
 		}
 		if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
+		}
+		if tc.ID == "shares-populated" {
+			for _, item := range []struct {
+				name, vault string
+				body        []byte
+			}{{"Go", leftVault, leftResult.Body}, {"Rust", rightVault, rightResult.Body}} {
+				if bytes.Contains(item.body, []byte("fixture-hash")) || bytes.Contains(item.body, []byte(`"token":`)) {
+					fatal("%s %s leaked a share token or hash", tc.ID, item.name)
+				}
+				if err := assertSharesUnchanged(item.vault); err != nil {
+					fatal("%s %s persistence: %v", tc.ID, item.name, err)
+				}
+			}
 		}
 		if tc.ID == "jobs-retry-failed" {
 			leftJob, err := retriedJobFile(leftVault)
@@ -284,6 +305,31 @@ func populateJobs(vault string) error {
 		if err := os.WriteFile(filepath.Join(dir, job.id+".json"), []byte(job.body), 0o600); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+const shareFixture = `[{"id":"share-old","path":"Hello.md","created_by":"alice","created_at":"2026-01-02T03:04:05Z","expires_at":"2099-01-02T03:04:05Z","token_hash":"fixture-hash-old"},{"id":"share-expired","path":"nested/Note.md","created_by":"bob","created_at":"2026-01-03T03:04:05Z","expires_at":"2026-01-04T03:04:05Z","token_hash":"fixture-hash-expired"},{"id":"share-revoked","path":"Hello.md","created_by":"alice","created_at":"2026-01-04T03:04:05Z","expires_at":"2099-01-04T03:04:05Z","token_hash":"fixture-hash-revoked","expired":true,"revoked_at":"2026-01-05T03:04:05Z"}]`
+
+func shareFixturePath(vault string) string {
+	return filepath.Join(vault, ".symdesk", "server", "shares.json")
+}
+
+func populateShares(vault string) error {
+	path := shareFixturePath(vault)
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(shareFixture), 0o600)
+}
+
+func assertSharesUnchanged(vault string) error {
+	actual, err := os.ReadFile(shareFixturePath(vault))
+	if err != nil {
+		return err
+	}
+	if string(actual) != shareFixture {
+		return fmt.Errorf("share store changed during listing")
 	}
 	return nil
 }

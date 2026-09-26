@@ -53,6 +53,10 @@ def select_msvc_linker(where_output):
                  and path.casefold().endswith("\\link.exe")), None)
 
 
+def is_git_posix_bin(path):
+    return path.replace("/", "\\").casefold().endswith("\\git\\usr\\bin")
+
+
 def build_environment(temp, rustc):
     home = temp / "build-home"
     data = temp / "build-data"
@@ -66,8 +70,12 @@ def build_environment(temp, rustc):
     # Native compilers and linkers are installed on the runner and may live
     # outside fixed system directories. Keep PATH for tool discovery, while
     # clearing HOME and the credential/user-state environment.
-    path_entries = [os.environ.get("PATH", "")]
+    path_entries = os.environ.get("PATH", "").split(os.pathsep)
     if os.name == "nt":
+        # Git Bash ships a GNU link.exe. Rust can discover the MSVC linker
+        # through the installed toolchain, but only if that GNU binary is
+        # absent from the isolated build PATH.
+        path_entries = [path for path in path_entries if not is_git_posix_bin(path)]
         system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
         path_entries.extend((system_root / "System32", system_root))
 
@@ -101,10 +109,9 @@ def build_environment(temp, rustc):
         linker_paths = subprocess.run(["where.exe", "link.exe"], text=True,
                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         linker = select_msvc_linker(linker_paths.stdout)
-        if not linker or not Path(linker).is_file():
-            raise RuntimeError("MSVC link.exe is unavailable for isolated Rust build")
-        target = "AARCH64" if platform.machine().casefold() in ("arm64", "aarch64") else "X86_64"
-        env[f"CARGO_TARGET_{target}_PC_WINDOWS_MSVC_LINKER"] = linker
+        if linker and Path(linker).is_file():
+            target = "AARCH64" if platform.machine().casefold() in ("arm64", "aarch64") else "X86_64"
+            env[f"CARGO_TARGET_{target}_PC_WINDOWS_MSVC_LINKER"] = linker
         # MSVC discovery and its library search paths are part of the native
         # toolchain environment. Dropping them lets Git's GNU link.exe win.
         for name in (

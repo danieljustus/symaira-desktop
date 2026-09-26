@@ -204,6 +204,8 @@ class NativeCIContracts(unittest.TestCase):
         paths = (r"C:\Program Files\Git\usr\bin\link.exe" + "\n"
                  + r"C:\Program Files\Microsoft Visual Studio\VC\Tools\MSVC\14.0\bin\Hostx64\x64\link.exe")
         self.assertEqual(module.select_msvc_linker(paths), paths.splitlines()[1])
+        self.assertTrue(module.is_git_posix_bin(r"C:\Program Files\Git\usr\bin"))
+        self.assertFalse(module.is_git_posix_bin(r"C:\Program Files\Git\cmd"))
 
     def test_rollback_blob_extraction_uses_exact_tree_and_exclusions(self):
         script = ROOT / "scripts/rust-port/room-rollback.py"

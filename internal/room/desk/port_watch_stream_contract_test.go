@@ -47,6 +47,9 @@ func TestPortWatchStreamContract(t *testing.T) {
 		{Name: "handler-error-stops", Input: "{\"event\":\"first\",\"path\":\"a\"}\n{\"event\":\"second\",\"path\":\"b\"}\n", StopAfter: 1},
 		{Name: "cancel-before-first", Input: "{\"event\":\"first\",\"path\":\"a\"}\n", Cancel: true},
 		{Name: "invalid-utf8-in-path", InputHex: hex.EncodeToString([]byte("{\"event\":\"file_added\",\"path\":\"bad\xff.md\"}\n"))},
+		{Name: "unpaired-surrogate-in-path", Input: "{\"event\":\"file_added\",\"path\":\"bad\\ud800.md\"}\n"},
+		{Name: "paired-surrogates-in-path", Input: "{\"event\":\"file_added\",\"path\":\"astral-\\ud83d\\ude00.md\"}\n"},
+		{Name: "escaped-surrogate-text-in-path", Input: "{\"event\":\"file_added\",\"path\":\"literal\\\\uD800.md\"}\n"},
 	}}
 	for i := range fixture.Cases {
 		row := &fixture.Cases[i]

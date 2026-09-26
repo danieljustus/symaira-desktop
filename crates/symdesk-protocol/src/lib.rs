@@ -75,6 +75,7 @@ struct AppState {
     version: String,
     auth_failures: Mutex<AuthThrottle>,
     snapshot_cache: SnapshotCache,
+    job_retry: Mutex<()>,
 }
 
 #[derive(Debug, Default)]
@@ -104,6 +105,11 @@ struct FileQuery {
 struct JobQuery {
     limit: Option<String>,
     offset: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct JobRetryQuery {
+    id: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -201,6 +207,7 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
         version: config.version,
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root),
+        job_retry: Mutex::new(()),
     });
     let app = router(state);
     eprintln!("LISTENING http://{actual}");
@@ -270,6 +277,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/snapshot", get(handle_snapshot))
         .route("/api/v1/files", get(handle_file).put(handle_put_file))
         .route("/api/v1/jobs", get(handle_jobs))
+        .route("/api/v1/jobs/retry", axum::routing::post(handle_retry_job))
         .route("/api/v1/notebooks", get(handle_notebooks))
         .route("/api/v1/notebooks/{id}", get(handle_notebook))
         .layer(middleware::from_fn_with_state(
@@ -587,6 +595,102 @@ async fn handle_jobs(
             offset,
         },
     )
+}
+
+async fn handle_retry_job(
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<JobRetryQuery>,
+) -> Response {
+    let _guard = match state.job_retry.lock() {
+        Ok(guard) => guard,
+        Err(_) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "job retry lock failed"),
+    };
+    let Some(id) = query.id.as_deref().filter(|id| valid_job_id(id)) else {
+        return json_error(StatusCode::CONFLICT, "invalid job id");
+    };
+    let root = match open_current_root(&state) {
+        Ok(root) => root,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    let jobs = match root.open_dir(".symdesk/server/jobs") {
+        Ok(jobs) => jobs,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return json_error(StatusCode::CONFLICT, "job not found");
+        }
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    let relative = PathBuf::from(format!("{id}.json"));
+    let mut options = cap_std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use cap_std::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NONBLOCK);
+    }
+    let file = match jobs.open_with(&relative, &options) {
+        Ok(file) => file,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return json_error(StatusCode::CONFLICT, "job not found");
+        }
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    let metadata = match file.metadata() {
+        Ok(metadata) if metadata.is_file() && metadata.len() <= 1 << 20 => metadata,
+        Ok(metadata) if metadata.len() > 1 << 20 => {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, "job file exceeds 1 MiB");
+        }
+        Ok(_) => {
+            return json_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "job file is not a regular file",
+            );
+        }
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    let mut bytes = Vec::with_capacity(metadata.len() as usize);
+    if let Err(error) = file.take((1 << 20) + 1).read_to_end(&mut bytes) {
+        return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+    }
+    if bytes.len() > 1 << 20 {
+        return json_error(StatusCode::INTERNAL_SERVER_ERROR, "job file exceeds 1 MiB");
+    }
+    let mut job: JobRecord = match serde_json::from_slice(&bytes) {
+        Ok(job) => job,
+        Err(error) => {
+            return json_error(StatusCode::CONFLICT, &format!("decode job {id}: {error}"));
+        }
+    };
+    if OffsetDateTime::parse(&job.created_at, &Rfc3339).is_err()
+        || OffsetDateTime::parse(&job.updated_at, &Rfc3339).is_err()
+        || job
+            .lease_until
+            .as_deref()
+            .is_some_and(|value| OffsetDateTime::parse(value, &Rfc3339).is_err())
+    {
+        return json_error(StatusCode::CONFLICT, "invalid job timestamp");
+    }
+    if job.status != "failed" {
+        return json_error(StatusCode::CONFLICT, "only failed jobs can be retried");
+    }
+    job.status = "pending".to_owned();
+    job.worker_id.clear();
+    job.lease_until = None;
+    job.error.clear();
+    job.updated_at = OffsetDateTime::now_utc()
+        .format(&Rfc3339)
+        .unwrap_or_else(|_| go_zero_time());
+    let data = match serde_json::to_vec_pretty(&job) {
+        Ok(data) => data,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    if let Err(error) = write_atomic_root(&jobs, &relative, &data, 0o600) {
+        return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+    }
+    json_response(StatusCode::OK, job)
+}
+
+fn valid_job_id(id: &str) -> bool {
+    id.len() == 32 && id.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 fn read_jobs(state: &AppState) -> Result<Vec<JobRecord>, String> {
@@ -972,7 +1076,7 @@ async fn handle_put_file(
     {
         return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
     }
-    if let Err(error) = write_atomic_root(&root, &relative, &data) {
+    if let Err(error) = write_atomic_root(&root, &relative, &data, 0o644) {
         return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
     }
     let file_path = state.vault_root.join(&relative);
@@ -1026,7 +1130,14 @@ fn create_parent_directories(root: &cap_std::fs::Dir, path: &Path) -> io::Result
     root.create_dir_with(path, &builder)
 }
 
-fn write_atomic_root(root: &cap_std::fs::Dir, path: &Path, data: &[u8]) -> io::Result<()> {
+fn write_atomic_root(
+    root: &cap_std::fs::Dir,
+    path: &Path,
+    data: &[u8],
+    mode: u32,
+) -> io::Result<()> {
+    #[cfg(not(unix))]
+    let _ = mode;
     let parent = path
         .parent()
         .filter(|parent| !parent.as_os_str().is_empty());
@@ -1039,7 +1150,7 @@ fn write_atomic_root(root: &cap_std::fs::Dir, path: &Path, data: &[u8]) -> io::R
         #[cfg(unix)]
         {
             use cap_std::fs::OpenOptionsExt;
-            options.mode(0o644);
+            options.mode(mode);
         }
         let mut file = match root.open_with(&temporary, &options) {
             Ok(file) => file,
@@ -1608,6 +1719,72 @@ mod tests {
     }
 
     #[cfg(unix)]
+    #[tokio::test]
+    async fn retry_job_resets_failed_state_and_persists_private_file() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-retry-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        let jobs = root.join(".symdesk/server/jobs");
+        fs::create_dir_all(&jobs).unwrap();
+        let id = "00000000000000000000000000000001";
+        let path = jobs.join(format!("{id}.json"));
+        fs::write(
+            &path,
+            format!(
+                "{{\"id\":\"{id}\",\"schema_version\":1,\"status\":\"failed\",\"source_path\":\"inbox/a.pdf\",\"original_name\":\"a.pdf\",\"capability\":\"ocr\",\"worker_id\":\"worker-1\",\"error\":\"broken\",\"created_at\":\"2026-01-02T03:04:05Z\",\"updated_at\":\"2026-01-02T03:04:05Z\",\"lease_until\":\"2026-01-02T03:05:05Z\"}}"
+            ),
+        )
+        .unwrap();
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method(Method::POST)
+                    .uri(format!("/api/v1/jobs/retry?id={id}"))
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let response_job: serde_json::Value =
+            serde_json::from_slice(&to_bytes(response.into_body(), 1 << 20).await.unwrap())
+                .unwrap();
+        assert_eq!(response_job["status"], "pending");
+        assert!(response_job["worker_id"].is_null());
+        assert!(response_job["error"].is_null());
+        assert!(response_job["lease_until"].is_null());
+        assert!(
+            OffsetDateTime::parse(response_job["updated_at"].as_str().unwrap(), &Rfc3339).unwrap()
+                > OffsetDateTime::parse("2026-01-02T03:04:05Z", &Rfc3339).unwrap()
+        );
+
+        let persisted_bytes = fs::read(&path).unwrap();
+        assert_ne!(persisted_bytes.last(), Some(&b'\n'));
+        let persisted: JobRecord = serde_json::from_slice(&persisted_bytes).unwrap();
+        assert_eq!(persisted.status, "pending");
+        assert!(persisted.worker_id.is_empty());
+        assert!(persisted.error.is_empty());
+        assert!(persisted.lease_until.is_none());
+        assert_eq!(
+            fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
     struct RaceCleanup {
         root: PathBuf,
         outside: PathBuf,
@@ -1927,6 +2104,7 @@ mod tests {
             version: String::new(),
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
+            job_retry: Mutex::new(()),
         }
     }
 
@@ -1991,6 +2169,7 @@ mod tests {
             version: String::new(),
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
+            job_retry: Mutex::new(()),
         };
 
         assert!(matches!(
@@ -2018,6 +2197,7 @@ mod tests {
             version: String::new(),
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
+            job_retry: Mutex::new(()),
         };
 
         assert!(matches!(
@@ -2043,6 +2223,7 @@ mod tests {
             version: String::new(),
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
+            job_retry: Mutex::new(()),
         };
 
         assert!(matches!(
@@ -2083,6 +2264,7 @@ mod tests {
             version: String::new(),
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
+            job_retry: Mutex::new(()),
         }
     }
 

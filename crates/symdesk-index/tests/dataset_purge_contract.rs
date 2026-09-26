@@ -299,6 +299,7 @@ fn dataset_purge_matches_go_service_fixture() {
     }
 }
 
+
 #[cfg(unix)]
 fn create_file_symlink(target: &Path, link: &Path) -> std::io::Result<()> {
     std::os::unix::fs::symlink(target, link)

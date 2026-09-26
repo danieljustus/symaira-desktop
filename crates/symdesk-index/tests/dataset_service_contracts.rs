@@ -8,10 +8,14 @@ use std::{
 
 use serde_json::{Value, json};
 use symdesk_index::{DatasetSyncOptions, DatasetSyncRow, DatasetSyncService, Sidecar};
-use symdesk_vault::{PropertyConfig, Provenance, parse_dataset_handle};
+use symdesk_vault::{PropertyConfig, Provenance, parse_dataset_handle, sha256_hex};
 
 static COUNTER: AtomicU64 = AtomicU64::new(0);
 const FIXTURE: &str = include_str!("../../../testdata/port/dataset/service-sync.json");
+const TIME_OBSERVATIONS: &str = include_str!("data/dataset_sync_time/go_time_observations.json");
+const TIME_PROVENANCE: &str = include_str!("data/dataset_sync_time/provenance.json");
+const TIME_PROBE_SOURCE: &[u8] = include_bytes!("data/dataset_sync_time/go_time_probe.go");
+const TIME_PROBE_JSONL: &[u8] = include_bytes!("data/dataset_sync_time/go_time_probe.jsonl");
 
 struct Sandbox {
     root: PathBuf,
@@ -51,7 +55,25 @@ impl Drop for Sandbox {
 }
 
 fn fixture() -> Value {
-    serde_json::from_str(FIXTURE).expect("parse Go oracle fixture")
+    let fixture: Value = serde_json::from_str(FIXTURE).expect("parse Go oracle fixture");
+    #[cfg(not(unix))]
+    {
+        let mut fixture = fixture;
+        for case in fixture["cases"].as_array_mut().expect("cases") {
+            for state in case["states"].as_array_mut().expect("states") {
+                for entry in state["vault"].as_array_mut().expect("vault entries") {
+                    // Go's fixture checker blanks POSIX modes on Windows, where they have no equivalent.
+                    entry["mode"] = Value::String(String::new());
+                    entry["perm"] = Value::String(String::new());
+                }
+            }
+        }
+        fixture
+    }
+    #[cfg(unix)]
+    {
+        fixture
+    }
 }
 
 fn case<'a>(fixture: &'a Value, id: &str) -> &'a Value {
@@ -281,13 +303,14 @@ fn permission_bits(metadata: &fs::Metadata) -> u32 {
     metadata.permissions().mode() & 0o777
 }
 
-#[cfg(not(unix))]
-fn permission_bits(_metadata: &fs::Metadata) -> u32 {
-    0
-}
-
+#[cfg(unix)]
 fn permission_string(metadata: &fs::Metadata) -> String {
     format!("0{:03o}", permission_bits(metadata))
+}
+
+#[cfg(not(unix))]
+fn permission_string(_metadata: &fs::Metadata) -> String {
+    String::new()
 }
 
 fn mode_string(metadata: &fs::Metadata) -> String {
@@ -306,7 +329,7 @@ fn mode_string(metadata: &fs::Metadata) -> String {
     #[cfg(not(unix))]
     {
         let _ = metadata;
-        "----------".to_owned()
+        String::new()
     }
 }
 
@@ -888,4 +911,73 @@ fn fixture_mutations_fail_actual_replay_without_rewriting_fixture() {
         FIXTURE.as_bytes(),
         include_bytes!("../../../testdata/port/dataset/service-sync.json")
     );
+}
+
+#[test]
+fn go_time_parse_boundaries_match_through_public_dataset_sync() {
+    let provenance: Value = serde_json::from_str(TIME_PROVENANCE).expect("time provenance");
+    assert_eq!(
+        provenance["oracle_revision"],
+        "ea2e2d46143cd1f3ce38bc42543cb9fd87951339"
+    );
+    assert_eq!(
+        provenance["oracle_production_sha256"],
+        "a7322f2cbbaa12e90b644266b002e2b2996a62f103b25f26b098ddb663cd5c4e"
+    );
+    assert_eq!(
+        sha256_hex(TIME_PROBE_SOURCE),
+        provenance["time_probe_sha256"]
+            .as_str()
+            .expect("probe digest")
+    );
+    assert_eq!(
+        sha256_hex(TIME_PROBE_JSONL),
+        provenance["time_raw_jsonl_sha256"]
+            .as_str()
+            .expect("raw time digest")
+    );
+    assert_eq!(
+        sha256_hex(TIME_OBSERVATIONS.as_bytes()),
+        provenance["time_observations_sha256"]
+            .as_str()
+            .expect("time observation digest")
+    );
+
+    let observations: Vec<Value> =
+        serde_json::from_str(TIME_OBSERVATIONS).expect("Go time observations");
+    assert_eq!(
+        observations.len(),
+        provenance["time_boundary_case_count"]
+            .as_u64()
+            .expect("time case count") as usize
+    );
+    assert_eq!(observations.len(), 21);
+    for (index, observation) in observations.into_iter().enumerate() {
+        let value = observation["value"].as_str().expect("time value");
+        let id = format!("time-boundary-{index}");
+        let mut options = base_options(&id, &id, value, "time-probe", "time-probe-sha");
+        options.rows = vec![row("row", json!({"value":"cell"}))];
+        let mut sandbox = Sandbox::new(&id);
+        match observation.get("error").and_then(Value::as_str) {
+            Some(expected) => {
+                let error = sandbox.sync(options).expect_err("Go-rejected timestamp");
+                assert_eq!(error, format!("invalid imported_at: {expected}"));
+                assert_eq!(
+                    fs::read_dir(&sandbox.root)
+                        .expect("read rejected-case vault")
+                        .count(),
+                    0,
+                    "rejected timestamp must not write vault files: {value:?}"
+                );
+            }
+            None => {
+                let expected_date = observation["utc_date"].as_str().expect("Go UTC date");
+                let result = sandbox.sync(options).expect("Go-accepted timestamp");
+                assert_eq!(
+                    result["raw_path"],
+                    format!("datasets/{id}/{expected_date}.csv")
+                );
+            }
+        }
+    }
 }

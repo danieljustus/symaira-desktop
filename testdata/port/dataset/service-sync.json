@@ -2,14 +2,14 @@
   "schema_version": 1,
   "generated_on": "darwin/arm64",
   "oracle": {
-    "commit": "6a91639f4f6ef8201cf4cbe7eed6ccc77a3874f1",
+    "commit": "38891d35eb8ceb6c348eca9a78b3fb2873677e3d",
     "release": "DATA-001-service-dataset-sync-prerequisite",
     "module_go": "1.26.6",
     "toolchain": "go1.26.6",
     "goos": "darwin",
     "goarch": "arm64"
   },
-  "generator_sha256": "7101409c154f06b6ad6f0115c68622083de4af83ba5461aeed4e07a6b8bb8675",
+  "generator_sha256": "0c1dfa0c31b0407aca9b2d976019a5fa48e95b2dffb94799eb91d3e5c9c68079",
   "source_sha256": {
     "cmd/symdesk/dataset.go": "7a4dc0aa205010acd8eb728256fe4a9c210af1e795a8e22d20c772c7f274dc90",
     "go.mod": "f19913015a034363277f87b2f38fd92ee3c6c5601abdb4be7697052904eca563",

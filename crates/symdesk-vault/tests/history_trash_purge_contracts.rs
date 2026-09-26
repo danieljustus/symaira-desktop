@@ -108,7 +108,13 @@ fn go_selected_trash_purge_contracts_replay() {
                 );
             }
         }
-        assert_eq!(state_of(scenario.path()), case.after, "{} files", case.id);
+        let mut expected = case.after.clone();
+        if !cfg!(unix) {
+            for file in &mut expected {
+                file.mode = None;
+            }
+        }
+        assert_eq!(state_of(scenario.path()), expected, "{} files", case.id);
         assert!(!case.description.is_empty());
     }
 }

@@ -1,0 +1,21 @@
+{"value":"2026-09-20T01:02:03,123Z","utc_date":"2026-09-20"}
+{"value":"2026-09-20T01:02:03.123Z","utc_date":"2026-09-20"}
+{"value":"2026-09-20T1:02:03Z","utc_date":"2026-09-20"}
+{"value":"2026-09-20T01:02:03+23:59","utc_date":"2026-09-19"}
+{"value":"2026-09-20T01:02:03+24:00","utc_date":"2026-09-19"}
+{"value":"2026-09-20T01:02:03+25:00","error":"parsing time \"2026-09-20T01:02:03+25:00\": time zone offset hour out of range"}
+{"value":"2026-09-20T01:02:03+00:59","utc_date":"2026-09-20"}
+{"value":"2026-09-20T01:02:03+00:60","utc_date":"2026-09-20"}
+{"value":"2026-09-20T01:02:03+00:61","error":"parsing time \"2026-09-20T01:02:03+00:61\": time zone offset minute out of range"}
+{"value":"2026-09-20T01:02:03z","error":"parsing time \"2026-09-20T01:02:03z\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"z\" as \"Z07:00\""}
+{"value":"2026-09-20","error":"parsing time \"2026-09-20\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"\" as \"T\""}
+{"value":"2026-09-20T24:00:00Z","error":"parsing time \"2026-09-20T24:00:00Z\": hour out of range"}
+{"value":"2026-09-20T23:60:00Z","error":"parsing time \"2026-09-20T23:60:00Z\": minute out of range"}
+{"value":"2026-09-20T23:59:60Z","error":"parsing time \"2026-09-20T23:59:60Z\": second out of range"}
+{"value":"2026-02-29T01:02:03Z","error":"parsing time \"2026-02-29T01:02:03Z\": day out of range"}
+{"value":"2024-02-29T01:02:03Z","utc_date":"2024-02-29"}
+{"value":"0000-01-01T00:00:00+00:01","utc_date":"-0001-12-31"}
+{"value":"9999-12-31T23:59:59-24:00","utc_date":"10000-01-01"}
+{"value":"2026-09-20T01:02:03+","error":"parsing time \"2026-09-20T01:02:03+\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"+\" as \"Z07:00\""}
+{"value":"2026-09-20T01:02:03Ztrailing","error":"parsing time \"2026-09-20T01:02:03Ztrailing\": extra text: \"trailing\""}
+{"value":"2026-09-20T01:02:03Zé","error":"parsing time \"2026-09-20T01:02:03Z\\xc3\\xa9\": extra text: \"\\xc3\\xa9\""}

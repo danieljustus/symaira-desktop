@@ -620,7 +620,7 @@ fn long_path_refresh_uses_verbatim_io_path_and_ordinary_key() {
     let mut batch = Vec::new();
     let vault_dir = open_vault_dir(&root).expect("open long-path vault capability");
     sidecar
-        .refresh_path(&vault_dir, &root, relative, &mut batch)
+        .refresh_path(&vault_dir, &root, relative, None, false, &mut batch)
         .expect("refresh long-path document");
     sidecar
         .flush_refresh_batch(&mut batch)
@@ -665,7 +665,7 @@ fn refresh_rejects_distinct_non_utf8_names_without_alias_rows() {
         let path = std::path::PathBuf::from(std::ffi::OsString::from_vec(name.clone()));
         let mut batch = Vec::new();
         let error = sidecar
-            .refresh_path(&vault_dir, &root, &path, &mut batch)
+            .refresh_path(&vault_dir, &root, &path, None, false, &mut batch)
             .expect_err("non-UTF-8 key must be rejected");
         match error {
             super::SidecarError::NonUtf8Path {

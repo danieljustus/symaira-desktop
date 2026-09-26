@@ -7,6 +7,7 @@ mod index_cli;
 mod mcp;
 mod recipe;
 mod retention;
+mod source_cli;
 
 use std::{
     collections::BTreeMap,
@@ -21,7 +22,7 @@ use serde::Serialize;
 use serde_json::json;
 use symaira_core_exit::ExitCode as CoreExitCode;
 use symdesk_core::{render_version_json, render_version_text};
-use symdesk_index::{ListedDocument, open_for_vault};
+use symdesk_index::{ListedDocument, SearchSource, SourceRegistry, open_for_vault};
 
 fn process_exit(code: CoreExitCode) -> ExitCode {
     ExitCode::from(code.as_u8())
@@ -133,6 +134,11 @@ fn main() -> ExitCode {
             matches.get_one::<String>("vault").map(String::as_str),
             output_json,
             matches.get_flag("json"),
+        ),
+        Some(("sources", command)) => source_cli::run(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
         ),
         Some(("history", command)) => match command.subcommand() {
             Some(("tasks", _)) => history::run_tasks(
@@ -284,6 +290,7 @@ fn cli() -> Command {
         .subcommand(retention::cli())
         .subcommand(dataset::cli())
         .subcommand(index_cli::cli())
+        .subcommand(source_cli::cli())
         .subcommand(recipe::cli())
         .subcommand(
             Command::new("serve")
@@ -331,11 +338,15 @@ fn run_representative(parsed: RepresentativeArgs, output_json: bool) -> ExitCode
             let Some(query) = parsed.query.as_deref() else {
                 return emit_error("search query is required".to_owned(), output_json);
             };
-            let hits = match sidecar.search(query) {
+            let hits = match sidecar.search_with_sources(&vault, query) {
                 Ok(hits) => hits,
                 Err(error) => return emit_error(error.to_string(), output_json),
             };
-            render_search(&vault, &hits, output_json)
+            let sources = match SourceRegistry::open(&vault).and_then(|registry| registry.list()) {
+                Ok(sources) => sources,
+                Err(error) => return emit_error(error.to_string(), output_json),
+            };
+            render_search(&vault, &hits, &sources, output_json)
         }
         _ => emit_error(format!("unknown command {command:?}"), output_json),
     }
@@ -441,6 +452,14 @@ struct SearchJsonHit {
     title: String,
     snippet: String,
     score: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    source_type: Option<&'static str>,
+    #[serde(skip_serializing_if = "is_false")]
+    read_only: bool,
+}
+
+fn is_false(value: &bool) -> bool {
+    !value
 }
 
 #[derive(Serialize)]
@@ -482,15 +501,30 @@ fn render_ls(root: &Path, files: &[ListedDocument], json_output: bool) -> ExitCo
     write_stdout(format!("[{}]\n", entries.join(" ")))
 }
 
-fn render_search(root: &Path, hits: &[symdesk_index::SearchHit], json_output: bool) -> ExitCode {
+fn render_search(
+    root: &Path,
+    hits: &[symdesk_index::SearchHit],
+    sources: &[SearchSource],
+    json_output: bool,
+) -> ExitCode {
+    let is_external = |path: &str| {
+        let path = Path::new(path);
+        sources.iter().any(|source| path.starts_with(&source.path))
+    };
     if json_output {
         let results = hits
             .iter()
             .map(|hit| SearchJsonHit {
-                path: relative_path(root, &hit.path),
+                path: if is_external(&hit.path) {
+                    hit.path.clone()
+                } else {
+                    relative_path(root, &hit.path)
+                },
                 title: hit.title.clone(),
                 snippet: hit.snippet.clone(),
                 score: 0,
+                source_type: is_external(&hit.path).then_some("external"),
+                read_only: is_external(&hit.path),
             })
             .collect::<Vec<_>>();
         return write_stdout(format!(
@@ -502,10 +536,16 @@ fn render_search(root: &Path, hits: &[symdesk_index::SearchHit], json_output: bo
         .iter()
         .map(|hit| {
             format!(
-                "{{Path:{} Title:{} Snippet:{} Score:0 Anchor:<nil> MetadataMatches:[] SourceType: ReadOnly:false}}",
-                relative_path(root, &hit.path),
+                "{{Path:{} Title:{} Snippet:{} Score:0 Anchor:<nil> MetadataMatches:[] SourceType:{} ReadOnly:{}}}",
+                if is_external(&hit.path) {
+                    hit.path.clone()
+                } else {
+                    relative_path(root, &hit.path)
+                },
                 hit.title,
-                hit.snippet
+                hit.snippet,
+                if is_external(&hit.path) { "external" } else { "" },
+                is_external(&hit.path)
             )
         })
         .collect::<Vec<_>>();

@@ -9,7 +9,9 @@ use std::{
 
 use serde::Serialize;
 use serde_json::{Value, json};
-use symdesk_index::{ListedDocument, SearchHit, Sidecar, open_for_vault};
+use symdesk_index::{
+    ListedDocument, SearchHit, SearchSource, Sidecar, SourceRegistry, open_for_vault,
+};
 
 const PROTOCOL_VERSION: &str = "2024-11-05";
 const MAX_MESSAGE_BYTES: usize = 1 << 20;
@@ -69,6 +71,14 @@ struct McpSearchEntry {
     title: String,
     snippet: String,
     score: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    source_type: Option<&'static str>,
+    #[serde(skip_serializing_if = "is_false")]
+    read_only: bool,
+}
+
+fn is_false(value: &bool) -> bool {
+    !value
 }
 
 #[derive(Serialize)]
@@ -329,10 +339,18 @@ fn call_tool(name: &str, arguments: Value, config: &ServerConfig) -> Result<Valu
                 return Err("query is required".to_owned());
             }
             let (vault, sidecar) = open_sidecar(config)?;
-            let hits = sidecar.search(query).map_err(|error| error.to_string())?;
+            let hits = sidecar
+                .search_with_sources(&vault, query)
+                .map_err(|error| error.to_string())?;
+            let sources = SourceRegistry::open(&vault)
+                .and_then(|registry| registry.list())
+                .map_err(|error| error.to_string())?;
             Ok(Value::String(
                 serde_json::to_string(&McpSearchResponse {
-                    results: hits.iter().map(|hit| search_entry(&vault, hit)).collect(),
+                    results: hits
+                        .iter()
+                        .map(|hit| search_entry(&vault, hit, &sources))
+                        .collect(),
                 })
                 .map_err(|error| error.to_string())?,
             ))
@@ -363,12 +381,25 @@ fn list_entry(root: &std::path::Path, file: &ListedDocument) -> McpLsEntry {
     }
 }
 
-fn search_entry(root: &std::path::Path, hit: &SearchHit) -> McpSearchEntry {
+fn search_entry(
+    root: &std::path::Path,
+    hit: &SearchHit,
+    sources: &[SearchSource],
+) -> McpSearchEntry {
+    let external = sources
+        .iter()
+        .any(|source| std::path::Path::new(&hit.path).starts_with(&source.path));
     McpSearchEntry {
-        path: super::relative_path(root, &hit.path),
+        path: if external {
+            hit.path.clone()
+        } else {
+            super::relative_path(root, &hit.path)
+        },
         title: hit.title.clone(),
         snippet: hit.snippet.clone(),
         score: 0,
+        source_type: external.then_some("external"),
+        read_only: external,
     }
 }
 

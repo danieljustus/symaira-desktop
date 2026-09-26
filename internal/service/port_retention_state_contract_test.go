@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -9,10 +10,12 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/danieljustus/symaira-desktop/internal/retention"
 )
@@ -272,6 +275,69 @@ func runRetentionStateCase(t *testing.T, spec retentionStateCase) retentionState
 	if spec.Platform == "unix" && runtime.GOOS == "windows" {
 		return spec
 	}
+	if hasRetentionStateFIFO(spec.Setup) && runtime.GOOS != "windows" && os.Getenv(retentionStateOracleCaseEnv) == "" {
+		return runRetentionStateCaseBounded(t, spec)
+	}
+	return runRetentionStateCaseInline(t, spec)
+}
+
+const (
+	retentionStateOracleCaseEnv   = "SYMDESK_RETENTION_STATE_ORACLE_CASE"
+	retentionStateOracleOutputEnv = "SYMDESK_RETENTION_STATE_ORACLE_OUTPUT"
+)
+
+func hasRetentionStateFIFO(setup []retentionStateSetup) bool {
+	for _, entry := range setup {
+		if entry.Kind == "fifo" {
+			return true
+		}
+	}
+	return false
+}
+
+func runRetentionStateCaseBounded(t *testing.T, spec retentionStateCase) retentionStateCase {
+	t.Helper()
+	parent, err := os.MkdirTemp("", "symdesk-port-retention-oracle-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(parent) })
+	outputPath := filepath.Join(parent, "result.json")
+	encoded, err := json.Marshal(spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestRetentionStateOracleCaseHelper$")
+	for _, variable := range os.Environ() {
+		if !strings.HasPrefix(variable, retentionStateOracleCaseEnv+"=") && !strings.HasPrefix(variable, retentionStateOracleOutputEnv+"=") {
+			cmd.Env = append(cmd.Env, variable)
+		}
+	}
+	cmd.Env = append(cmd.Env, retentionStateOracleCaseEnv+"="+string(encoded), retentionStateOracleOutputEnv+"="+outputPath)
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	cmd.Stderr = &output
+	if err := cmd.Run(); err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			t.Fatalf("%s: Go Service.RetentionState exceeded 3s FIFO deadline; child output: %s", spec.ID, output.String())
+		}
+		t.Fatalf("%s: Go retention oracle child failed: %v\n%s", spec.ID, err, output.String())
+	}
+	result, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("%s: read bounded Go retention oracle result: %v", spec.ID, err)
+	}
+	var observed retentionStateCase
+	if err := json.Unmarshal(result, &observed); err != nil {
+		t.Fatalf("%s: decode bounded Go retention oracle result: %v", spec.ID, err)
+	}
+	return observed
+}
+
+func runRetentionStateCaseInline(t *testing.T, spec retentionStateCase) retentionStateCase {
+	t.Helper()
 	root, outside := retentionStateSandbox(t)
 	applyRetentionStateSetup(t, root, outside, spec.Setup)
 	state, err := (&Service{VaultRoot: root}).RetentionState(spec.Path)
@@ -282,6 +348,25 @@ func runRetentionStateCase(t *testing.T, spec retentionStateCase) retentionState
 	}
 	spec.State = observeRetentionState(state)
 	return spec
+}
+
+func TestRetentionStateOracleCaseHelper(t *testing.T) {
+	encoded := os.Getenv(retentionStateOracleCaseEnv)
+	if encoded == "" {
+		return
+	}
+	var spec retentionStateCase
+	if err := json.Unmarshal([]byte(encoded), &spec); err != nil {
+		t.Fatal(err)
+	}
+	observed := runRetentionStateCaseInline(t, spec)
+	result, err := json.Marshal(observed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(os.Getenv(retentionStateOracleOutputEnv), result, 0o600); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func runRetentionStateMutation(t *testing.T, spec retentionStateMutation) retentionStateMutation {

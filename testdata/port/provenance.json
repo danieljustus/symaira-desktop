@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "6240800e8542b87e016687de44a0b0406c0924cb",
+    "commit": "2786d92a932e4821798ad937ae0a215a8c4dc559",
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
-  "generator_source_digest": "5940597bdfec2491c57bb8520a7dbc03454806491ef849ab2a5e176bb8d5270c",
+  "generator_source_digest": "7b52424a8fea060b35620ba778a2ac61817c61167cfbc14519b9c4d17d70faa2",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -73,10 +73,10 @@
     "testdata/port/room/watch-cli.json": "d5002d4f5edfe1290368cbb74026f8060dd48c2b2ab4abd2c674f38d8165443a",
     "testdata/port/room/watch-stream.json": "40b874f762dd7edc68ef6914630211b3aa90b8d695f811ce1feed985bcb6c198",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "097ed74cf53193fbce56e28eca66fe0e971c726fc7c1631509ee08704d55f421",
-    "testdata/port/sidecar/lifecycle.json": "c14eb0086c22af6bc2daf1e7d6a4488173d00e87b9c7323667fc6d1f6e215914",
+    "testdata/port/sidecar/large-corpus.json": "19a9ce7745a2424551f80b8e4119b4a74c476c7c43252b09f59e9fcf65ef1985",
+    "testdata/port/sidecar/lifecycle.json": "b5c454dc55fe31d1ed75f26e84d40eaf94171ff6f32b2c227a43e98cf91b088e",
     "testdata/port/sidecar/metadata.json": "319b08ad672a9955eace69d1d07df7674889bde2599dea369edf15c3d26ea400",
-    "testdata/port/sidecar/roundtrip.json": "ae85e040688bcee3d778e55b8699e9c516856e69294a1601eba7d58fd96728fc",
+    "testdata/port/sidecar/roundtrip.json": "c5ff94d48ca9358984c4fa6da04b03a8ba9b1d7afb90a7da4609f2882e12e727",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/frontmatter-write.json": "43795aad046e1d8f9d86617ad3acbc736e055ed088ff05b3bd1d6b47d6fc97a6",

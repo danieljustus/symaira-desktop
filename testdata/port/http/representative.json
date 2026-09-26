@@ -190,6 +190,73 @@
       "auth": "valid"
     },
     {
+      "id": "file-put-missing-auth",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Created.md",
+      "body": "# Created\n"
+    },
+    {
+      "id": "file-put-bad-extension",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Created.txt",
+      "auth": "valid",
+      "body": "plain"
+    },
+    {
+      "id": "file-put-internal",
+      "method": "PUT",
+      "path": "/api/v1/files?path=.symdesk/server/secret.md",
+      "auth": "valid",
+      "body": "secret"
+    },
+    {
+      "id": "file-put-traversal",
+      "method": "PUT",
+      "path": "/api/v1/files?path=../outside.md",
+      "auth": "valid",
+      "body": "outside"
+    },
+    {
+      "id": "file-put-symlink-parent",
+      "method": "PUT",
+      "path": "/api/v1/files?path=escape-dir/new.md",
+      "auth": "valid",
+      "body": "outside"
+    },
+    {
+      "id": "file-put-create",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Created.md",
+      "auth": "valid",
+      "body": "# Created\n\nfirst state\n"
+    },
+    {
+      "id": "file-put-read-created",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Created.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-put-update",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Created.md",
+      "auth": "valid",
+      "body": "# Created\n\nsecond state\n"
+    },
+    {
+      "id": "file-put-read-updated",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Created.md",
+      "auth": "valid"
+    },
+    {
+      "id": "file-put-over-limit",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/TooBig.md",
+      "auth": "valid",
+      "body_repeat": 8388609
+    },
+    {
       "id": "health-method-not-allowed",
       "method": "POST",
       "path": "/healthz"

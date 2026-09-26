@@ -19,16 +19,19 @@ use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 use std::{
     fmt::Write as _,
     fs,
-    io::{self, Read, Seek, SeekFrom},
+    io::{self, Read, Seek, SeekFrom, Write},
     net::SocketAddr,
     path::{Component, Path, PathBuf},
-    sync::{Arc, Mutex},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicU64, Ordering},
+    },
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 use axum::{
     Router,
-    body::Body,
+    body::{Body, to_bytes},
     extract::{Query, State},
     http::{HeaderMap, HeaderValue, Method, Request, StatusCode, header},
     middleware::{self, Next},
@@ -54,6 +57,7 @@ const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
 const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(5);
 const SNAPSHOT_TOO_LARGE: &str = "snapshot exceeds 16 MiB limit";
+static PUT_TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Clone, Debug)]
 pub struct HttpConfig {
@@ -214,7 +218,7 @@ fn router(state: Arc<AppState>) -> Router {
     let protected = Router::new()
         .route("/api/v1/status", get(handle_status))
         .route("/api/v1/snapshot", get(handle_snapshot))
-        .route("/api/v1/files", get(handle_file))
+        .route("/api/v1/files", get(handle_file).put(handle_put_file))
         .route("/api/v1/notebooks", get(handle_notebooks))
         .layer(middleware::from_fn_with_state(
             Arc::clone(&state),
@@ -637,6 +641,103 @@ async fn handle_file(
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
     };
     bytes_response(status, common, body)
+}
+
+async fn handle_put_file(
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<FileQuery>,
+    body: Body,
+) -> Response {
+    let requested = query.path.as_deref().unwrap_or_default();
+    let relative = match confined_path(&state, requested) {
+        Ok(path) if extension_is_markdown(&path) => path,
+        _ => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                "only vault-relative Markdown files can be updated",
+            );
+        }
+    };
+    let data = match to_bytes(body, MAX_NOTE_BYTES as usize + 1).await {
+        Ok(data) if data.len() as u64 <= MAX_NOTE_BYTES => data,
+        Ok(_) => {
+            return json_error(StatusCode::PAYLOAD_TOO_LARGE, "request body exceeds limit");
+        }
+        Err(error) => return json_error(StatusCode::PAYLOAD_TOO_LARGE, &error.to_string()),
+    };
+    let root = match open_current_root(&state) {
+        Ok(root) => root,
+        Err(error) => {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
+        }
+    };
+    if let Some(parent) = relative
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        && let Err(error) = create_parent_directories(&root, parent)
+    {
+        return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+    }
+    if let Err(error) = write_atomic_root(&root, &relative, &data) {
+        return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+    }
+    json_response(StatusCode::OK, json!({"status": "updated"}))
+}
+
+fn extension_is_markdown(path: &Path) -> bool {
+    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+    name.rsplit_once('.')
+        .is_some_and(|(_, extension)| extension.eq_ignore_ascii_case("md"))
+}
+
+fn create_parent_directories(root: &cap_std::fs::Dir, path: &Path) -> io::Result<()> {
+    let mut builder = cap_std::fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    {
+        use cap_std::fs::DirBuilderExt;
+        builder.mode(0o750);
+    }
+    root.create_dir_with(path, &builder)
+}
+
+fn write_atomic_root(root: &cap_std::fs::Dir, path: &Path, data: &[u8]) -> io::Result<()> {
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty());
+    for _ in 0..100 {
+        let counter = PUT_TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let name = format!(".symdesk-http-put-{}-{counter}.tmp", std::process::id());
+        let temporary = parent.map_or_else(|| PathBuf::from(&name), |parent| parent.join(&name));
+        let mut options = cap_std::fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use cap_std::fs::OpenOptionsExt;
+            options.mode(0o644);
+        }
+        let mut file = match root.open_with(&temporary, &options) {
+            Ok(file) => file,
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error),
+        };
+        let result = (|| {
+            file.write_all(data)?;
+            file.sync_all()?;
+            drop(file);
+            root.rename(&temporary, root, path)
+        })();
+        if result.is_err() {
+            let _ = root.remove_file(&temporary);
+        }
+        return result;
+    }
+    Err(io::Error::new(
+        io::ErrorKind::AlreadyExists,
+        "create temporary file: too many collisions",
+    ))
 }
 
 fn range_error_response(path: &Path, message: &str, content_range: Option<String>) -> Response {
@@ -1086,6 +1187,118 @@ mod tests {
         assert_eq!(reader.read(&mut small).unwrap(), 2);
         assert_eq!(&small, b"pa");
         assert!(reader.read(&mut [0; 1]).is_err());
+    }
+
+    #[tokio::test]
+    async fn put_file_requires_auth_and_writes_bounded_markdown_atomically() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-put-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir(&root).expect("create test root");
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+
+        let unauthorized = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::PUT)
+                    .uri("/api/v1/files?path=notes/new.md")
+                    .body(Body::from("note"))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(unauthorized.status(), StatusCode::UNAUTHORIZED);
+
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::PUT)
+                    .uri("/api/v1/files?path=notes/new.MD")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::from("note"))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(fs::read(root.join("notes/new.MD")).unwrap(), b"note");
+
+        let oversized = app
+            .oneshot(
+                Request::builder()
+                    .method(Method::PUT)
+                    .uri("/api/v1/files?path=notes/too-big.md")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::from(vec![b'x'; MAX_NOTE_BYTES as usize + 1]))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(oversized.status(), StatusCode::PAYLOAD_TOO_LARGE);
+        assert!(!root.join("notes/too-big.md").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn put_file_cannot_escape_through_a_parent_symlink() {
+        use std::os::unix::fs::symlink;
+
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-put-link-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        let outside = root.with_extension("outside");
+        fs::create_dir(&root).expect("create test root");
+        fs::create_dir(&outside).expect("create outside dir");
+        fs::write(outside.join("sentinel.md"), b"outside").unwrap();
+        symlink(&outside, root.join("linked")).unwrap();
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method(Method::PUT)
+                    .uri("/api/v1/files?path=linked/sentinel.md")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::from("changed"))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(fs::read(outside.join("sentinel.md")).unwrap(), b"outside");
+        fs::remove_dir_all(root).unwrap();
+        fs::remove_dir_all(outside).unwrap();
+    }
+
+    fn test_state(root: &Path, token: &str) -> AppState {
+        AppState {
+            vault_root: root.to_path_buf(),
+            token: Arc::from(token.as_bytes()),
+            version: String::new(),
+            auth_failures: Mutex::new(AuthThrottle::default()),
+            snapshot_cache: SnapshotCache::uncached(),
+        }
     }
 
     #[test]

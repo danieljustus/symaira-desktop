@@ -4,10 +4,11 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/danieljustus/symaira-desktop/scripts/rust-port/inventory"
@@ -106,6 +107,8 @@ func main() {
 	check := flag.Bool("check", false, "fail if any fixture or oracle provenance has drifted")
 	commit := flag.String("oracle-commit", "", "Go oracle commit (defaults to current HEAD during generation)")
 	release := flag.String("oracle-release", defaultOracleRelease, "Go oracle release")
+	fixtureOracleCommit := flag.String("fixture-oracle-commit", "", "oracle commit for core and vault fixture corpora (defaults to --oracle-commit)")
+	applyArtifact := flag.String("apply-artifact", "", "validate and apply a generated patch in a disposable worktree, then print its commit")
 	flag.Parse()
 
 	repoRoot, err := findRepoRoot()
@@ -114,36 +117,135 @@ func main() {
 	}
 
 	if *check {
+		if *applyArtifact != "" {
+			fatal("--check and --apply-artifact cannot be used together")
+		}
 		runCheck(repoRoot)
 		return
 	}
 
-	runGenerate(repoRoot, *commit, *release)
+	if *applyArtifact != "" {
+		if err := applyArtifactCommit(repoRoot, *applyArtifact); err != nil {
+			fatal("apply fixture artifact: %v", err)
+		}
+		return
+	}
+	if err := generateArtifact(repoRoot, *commit, *release, *fixtureOracleCommit, os.Stdout); err != nil {
+		fatal("generate fixture artifact: %v", err)
+	}
 }
 
 func runGenerate(repoRoot, commit, release string) {
+	if err := generateArtifact(repoRoot, commit, release, "", os.Stdout); err != nil {
+		fatal("generate fixture artifact: %v", err)
+	}
+}
+
+func generateArtifact(repoRoot, commit, release, fixtureOracleCommit string, output io.Writer) error {
 	resolvedCommit, err := resolveGenerationOracleCommit(repoRoot, commit)
 	if err != nil {
-		fatal("resolve generation oracle: %v", err)
+		return fmt.Errorf("resolve generation oracle: %w", err)
 	}
 	commit = resolvedCommit
+	if fixtureOracleCommit == "" {
+		fixtureOracleCommit = commit
+	}
+	fixtureOracleCommit, err = resolveGenerationOracleCommit(repoRoot, fixtureOracleCommit)
+	if err != nil {
+		return fmt.Errorf("resolve core/vault fixture oracle: %w", err)
+	}
 	if err := verifyCleanWorktree(repoRoot); err != nil {
-		fatal("generation requires a clean worktree: %v", err)
+		return fmt.Errorf("generation requires a clean worktree: %w", err)
 	}
 	if err := verifyNoUntrackedGeneratorInputs(repoRoot); err != nil {
-		fatal("generation source guard: %v", err)
+		return fmt.Errorf("generation source guard: %w", err)
 	}
+	base, err := resolveGitCommit(repoRoot, "HEAD")
+	if err != nil {
+		return fmt.Errorf("resolve patch base: %w", err)
+	}
+	if err := verifyCallerSnapshot(repoRoot, base); err != nil {
+		return err
+	}
+	snapshot, cleanup, err := createImmutableSourceSnapshot(repoRoot, base)
+	if err != nil {
+		return fmt.Errorf("create private generation worktree: %w", err)
+	}
+	defer cleanup()
 	configPath, cleanup, err := inventory.PrivateGitConfig()
 	if err != nil {
-		fatal("prepare generation Git config: %v", err)
+		return fmt.Errorf("prepare generation Git config: %w", err)
 	}
 	defer cleanup()
 	goTool, err := trustedGoTool()
 	if err != nil {
-		fatal("resolve generation Go tool: %v", err)
+		return fmt.Errorf("resolve generation Go tool: %w", err)
 	}
 	generationEnv := sanitizedCheckEnvironment(os.Environ(), configPath)
-	fmt.Printf("Generating Go oracle fixtures (oracle %s / %s)...\n", commit, release)
+	fmt.Fprintf(os.Stderr, "Generating Go oracle fixtures in a disposable worktree (base %s, oracle %s / %s)...\n", base, commit, release)
+	if err := validateFixtureDestinations(snapshot); err != nil {
+		return fmt.Errorf("validate private generation destinations: %w", err)
+	}
+	if err := runCompleteFixtureGeneration(goTool, snapshot, generationEnv, inventory.Oracle{Commit: commit, Release: release}, fixtureOracleCommit); err != nil {
+		return err
+	}
+	if err := validateFixtureDestinations(snapshot); err != nil {
+		return fmt.Errorf("validate generated fixture destinations: %w", err)
+	}
+	if err := commitFixtureOutputs(snapshot, base); err != nil && !errors.Is(err, errNoFixtureChanges) {
+		return err
+	}
+	if err := runProvenanceCheck(snapshot); err != nil {
+		return fmt.Errorf("validate generated P/Q in private worktree: %w", err)
+	}
+	patch, err := createPatchArtifact(snapshot, base)
+	if err != nil {
+		return err
+	}
+	if err := verifyCallerSnapshot(repoRoot, base); err != nil {
+		return err
+	}
+	if _, err := output.Write(patch); err != nil {
+		return fmt.Errorf("write reviewable patch artifact: %w", err)
+	}
+	return nil
+}
+
+func runCompleteFixtureGeneration(goTool, repoRoot string, generationEnv []string, oracle inventory.Oracle, fixtureOracleCommit string) error {
+	// These generator commands are the former core-fixtures-generate and
+	// vault-fixtures-generate Make prerequisites. They run in the private
+	// worktree so the top-level flow has one write boundary.
+	commands := []struct {
+		name string
+		args []string
+	}{
+		{"configuration corpus", []string{"run", "./scripts/rust-port/cmd/configgen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
+		{"core corpus", []string{"run", "./scripts/rust-port/cmd/coregen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
+		{"search-query corpus", []string{"run", "./scripts/rust-port/cmd/querygen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
+		{"vault parser corpus", []string{"run", "./scripts/rust-port/cmd/vaultgen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
+		{"vault filesystem corpus", []string{"run", "./scripts/rust-port/cmd/vaultfsgen", "--oracle-commit", fixtureOracleCommit, "--oracle-release", oracle.Release}},
+		{"typed vault corpus", []string{"run", "./scripts/rust-port/cmd/typedvaultgen"}},
+	}
+	for _, target := range commands {
+		if err := runGeneratorCommand(goTool, repoRoot, generationEnv, target.name, target.args...); err != nil {
+			return err
+		}
+	}
+	vaultTargets := []struct {
+		pkg string
+		run string
+	}{
+		{"./internal/service", "^TestVaultResolutionInventory$"},
+		{"./internal/health", "^TestHealthLinkResolutionInventory$"},
+		{"./internal/notebook", "^TestNotebookParseInventory$"},
+		{"./internal/retrieval/internal/engine", "^TestSearchMetadataInventory$"},
+		{"./internal/vault", "^TestMobileWriterFixture$"},
+	}
+	for _, target := range vaultTargets {
+		if err := runGeneratorCommand(goTool, repoRoot, generationEnvWithActivation(generationEnv), target.pkg+" "+target.run, "test", "-count=1", target.pkg, "-run", target.run); err != nil {
+			return err
+		}
+	}
 
 	// 1. Run package-local generators
 	packages := []struct {
@@ -174,34 +276,28 @@ func runGenerate(repoRoot, commit, release string) {
 
 	for _, target := range packages {
 		//nolint:gosec // fixed generator targets, never derived from fixture output
-		cmd := exec.Command(goTool, "test", "-count=1", target.pkg, "-run", target.run)
-		cmd.Dir = repoRoot
-		cmd.Env = append(generationEnv, "PORT_GENERATE=1")
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			fatal("generate %s (%s): %v\noutput: %s", target.pkg, target.run, err, string(out))
+		if err := runGeneratorCommand(goTool, repoRoot, generationEnvWithActivation(generationEnv), target.pkg+" "+target.run, "test", "-count=1", target.pkg, "-run", target.run); err != nil {
+			return err
 		}
 	}
 	// Keep this independent Go process fixture in the same P/Q generation as
 	// the package-produced MCP and CLI fixtures.
 	//nolint:gosec // trustedGoTool selects the executable; the generator path is fixed
-	cmd := exec.Command(goTool, "run", "./scripts/rust-port/cmd/mcpgen")
-	cmd.Dir = repoRoot
-	cmd.Env = generationEnv
-	if out, err := cmd.CombinedOutput(); err != nil {
-		fatal("generate MCP initialize fixture: %v\noutput: %s", err, string(out))
+	if err := runGeneratorCommand(goTool, repoRoot, generationEnv, "MCP initialize fixture", "run", "./scripts/rust-port/cmd/mcpgen"); err != nil {
+		return err
 	}
 
-	sidecarOracle := inventory.Oracle{Commit: commit, Release: release}
+	commit, release := oracle.Commit, oracle.Release
+	sidecarOracle := oracle
 	if err := runSidecarLifecycleGenerator(repoRoot, sidecarOracle); err != nil {
-		fatal("generate sidecar lifecycle fixture: %v", err)
+		return fmt.Errorf("generate sidecar lifecycle fixture: %w", err)
 	}
 
 	// 2. Refresh the two byte-sensitive sidecar metadata fixtures, then compute
 	// provenance and checksums. The lifecycle fixture above is generated by its
 	// own executable source contract rather than rewritten post hoc.
 	if err := syncSidecarOracleMetadata(repoRoot, commit, release); err != nil {
-		fatal("synchronize sidecar oracle metadata: %v", err)
+		return fmt.Errorf("synchronize sidecar oracle metadata: %w", err)
 	}
 
 	// The recorded oracle must describe the bytes this generation actually read:
@@ -210,18 +306,18 @@ func runGenerate(repoRoot, commit, release string) {
 	// harness identity is separate from the pinned production revision.
 	worktreeSource, err := inventory.ComputeProductionSourceDigest(repoRoot)
 	if err != nil {
-		fatal("compute working-tree production source digest: %v", err)
+		return fmt.Errorf("compute working-tree production source digest: %w", err)
 	}
 	sourceDigest, err := inventory.ComputeGitRevisionProductionSourceDigest(repoRoot, commit)
 	if err != nil {
-		fatal("compute oracle revision source digest: %v", err)
+		return fmt.Errorf("compute oracle revision source digest: %w", err)
 	}
 	if worktreeSource != sourceDigest {
-		fatal("working-tree production source does not match oracle commit %s: current=%s oracle=%s", commit, worktreeSource, sourceDigest)
+		return fmt.Errorf("working-tree production source does not match oracle commit %s: current=%s oracle=%s", commit, worktreeSource, sourceDigest)
 	}
 	generatorDigest, err := inventory.ComputeGitRevisionGeneratorSourceDigest(repoRoot, "HEAD")
 	if err != nil {
-		fatal("compute generating-tree generator source digest: %v", err)
+		return fmt.Errorf("compute generating-tree generator source digest: %w", err)
 	}
 
 	checksums := make(map[string]string, len(fixturePaths))
@@ -229,7 +325,7 @@ func runGenerate(repoRoot, commit, release string) {
 		path := filepath.Join(repoRoot, rel)
 		sum, err := inventory.ComputeFileChecksum(path)
 		if err != nil {
-			fatal("checksum %s: %v", rel, err)
+			return fmt.Errorf("checksum %s: %w", rel, err)
 		}
 		checksums[rel] = sum
 	}
@@ -245,16 +341,15 @@ func runGenerate(repoRoot, commit, release string) {
 
 	provContent, err := json.MarshalIndent(provenance, "", "  ")
 	if err != nil {
-		fatal("marshal provenance: %v", err)
+		return fmt.Errorf("marshal provenance: %w", err)
 	}
 	provContent = append(provContent, '\n')
 
 	provPath := filepath.Join(repoRoot, provenanceFixture)
 	if err := os.WriteFile(provPath, provContent, 0o600); err != nil {
-		fatal("write provenance: %v", err)
+		return fmt.Errorf("write provenance in disposable worktree: %w", err)
 	}
-
-	fmt.Printf("PASS generated all fixtures and provenance at %s\n", provenanceFixture)
+	return nil
 }
 
 func runCheck(repoRoot string) {

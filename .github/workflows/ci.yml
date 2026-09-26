@@ -417,6 +417,10 @@ jobs:
         shell: bash
         run: make source-differential
 
+      - name: Run native recursive source watch differential
+        shell: bash
+        run: make source-watch-differential
+
       - name: Run native retrieval embedding-state differential
         shell: bash
         run: make retrieval-embedding-state-differential

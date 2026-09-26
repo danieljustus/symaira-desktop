@@ -2,6 +2,7 @@
 
 .PHONY: retention-state-fixtures-generate retention-state-differential
 .PHONY: source-differential
+.PHONY: source-watch-differential
 .PHONY: room-run-projection-fixtures-generate room-run-projection-differential
 .PHONY: room-run-cli-fixtures-generate room-run-cli-differential
 .PHONY: dataset-sync-fixtures-generate dataset-sync-differential
@@ -467,6 +468,12 @@ source-differential:
 	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
 	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
 	python3 scripts/rust-port/source-differential.py "bin/port/symdesk-go$(EXE_SUFFIX)" "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)"
+
+source-watch-differential:
+	@mkdir -p bin/port
+	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
+	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
+	python3 scripts/rust-port/source-differential.py --watch "bin/port/symdesk-go$(EXE_SUFFIX)" "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)"
 
 retrieval-embedding-state-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'

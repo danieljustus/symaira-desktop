@@ -117,6 +117,41 @@ fn sync_cli_preserves_go_float64_rounding_and_reuses_provenance() {
 }
 
 #[test]
+fn describe_cli_reads_the_handle_and_sidecar_count() {
+    let root = TempRoot::new("describe");
+    let seeded = run(
+        &root,
+        [
+            "dataset",
+            "sync",
+            "orders",
+            "--rows",
+            r#"[{"identity":"one","values":{"id":"one","amount":1}}]"#,
+            "--provenance",
+            r#"{"source_name":"feed","source_sha256":"sha-1","imported_at":"2026-04-03T10:00:00Z"}"#,
+            "--identity-field",
+            "id",
+            "--json",
+        ],
+    );
+    assert_eq!(seeded.status.code(), Some(0), "stderr: {:?}", seeded.stderr);
+    let described = run(&root, ["dataset", "describe", "orders", "--json"]);
+    assert_eq!(
+        described.status.code(),
+        Some(0),
+        "stderr: {:?}",
+        described.stderr
+    );
+    let value: serde_json::Value =
+        serde_json::from_slice(&described.stdout).expect("JSON description");
+    assert_eq!(value["slug"], "orders");
+    assert_eq!(value["path"], "datasets/orders.md");
+    assert_eq!(value["rows"], 1);
+    assert_eq!(value["identity_field"], "id");
+    assert_eq!(value["provenance"]["source_name"], "feed");
+}
+
+#[test]
 fn query_cli_projects_identity_keys_and_caps_the_default_ordered_page() {
     let root = TempRoot::new("query-page");
     let seeded = run(

@@ -363,5 +363,5 @@ fn temp_vault() -> PathBuf {
             .as_nanos()
     ));
     fs::create_dir_all(&path).expect("create temporary vault");
-    path
+    fs::canonicalize(path).expect("canonicalize temporary vault")
 }

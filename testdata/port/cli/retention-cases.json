@@ -259,6 +259,21 @@
    "compare_sidecar_layout": true
   },
   {
+   "id": "retention-reject-mismatched-stored-run-id",
+   "binary": "symdesk",
+   "stage": "retention",
+   "args": ["retention", "reject", "probe", "--json", "--vault", "${WORKSPACE}"],
+   "env": {},
+   "working_dir": ".",
+   "timeout_ms": 10000,
+   "stdout_mode": "bytes",
+   "stderr_mode": "bytes",
+   "compare_files": false,
+   "setup": [{"path": ".symdesk/retention/probe.json", "content": "{\"run_id\":\"stored\",\"status\":\"pending\"}", "mode": 420}],
+   "description": "The requested proposal must fail before a writer can create stored.json; focused CLI tests assert both paths' bytes.",
+   "compare_sidecar_layout": true
+  },
+  {
    "id": "retention-reject-missing-run-id",
    "binary": "symdesk",
    "stage": "retention",

@@ -456,11 +456,11 @@ fn proposal_decoder_preserves_go_zero_values_and_nil_slices() {
     );
 
     fs::write(
-        retention::proposal_dir(&root).join("folded.json"),
+        retention::proposal_dir(&root).join("mixed.json"),
         r#"{"RUN_ID":"upper","Run_Id":"mixed","ſtatus":"pending","items":[]}"#,
     )
     .expect("write folded-field proposal");
-    let folded = retention::load_proposal(&root, "folded").expect("folded fields load");
+    let folded = retention::load_proposal(&root, "mixed").expect("folded fields load");
     assert_eq!(folded.run_id, "mixed", "last folded duplicate wins");
     assert_eq!(
         folded.status, "pending",

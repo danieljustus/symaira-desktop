@@ -59,6 +59,7 @@ type httpCase struct {
 	Headers        map[string]string `json:"headers,omitempty"`
 	Body           string            `json:"body,omitempty"`
 	BodyRepeat     int               `json:"body_repeat,omitempty"`
+	MultipartFile  string            `json:"multipart_file,omitempty"`
 	EmptyNotebooks bool              `json:"empty_notebooks,omitempty"`
 	PopulateJobs   bool              `json:"populate_jobs,omitempty"`
 }

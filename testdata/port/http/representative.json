@@ -400,15 +400,17 @@
       "id": "ingest-missing-auth",
       "method": "POST",
       "path": "/api/v1/ingest",
-      "multipart_file": "report.pdf",
-      "body": "%PDF-1.7\nfixture\n"
+      "body": "%PDF-1.7\nfixture\n",
+      "multipart_file": "report.pdf"
     },
     {
       "id": "ingest-invalid-multipart",
       "method": "POST",
       "path": "/api/v1/ingest",
       "auth": "valid",
-      "headers": {"Content-Type": "multipart/form-data; boundary=broken"},
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=broken"
+      },
       "body": "not multipart"
     },
     {
@@ -416,7 +418,9 @@
       "method": "POST",
       "path": "/api/v1/ingest",
       "auth": "valid",
-      "headers": {"Content-Type": "multipart/form-data; boundary=empty"},
+      "headers": {
+        "Content-Type": "multipart/form-data; boundary=empty"
+      },
       "body": "--empty--\r\n"
     },
     {
@@ -424,8 +428,8 @@
       "method": "POST",
       "path": "/api/v1/ingest",
       "auth": "valid",
-      "multipart_file": "report.pdf",
-      "body": "%PDF-1.7\nfixture\n"
+      "body": "%PDF-1.7\nfixture\n",
+      "multipart_file": "report.pdf"
     }
   ]
 }

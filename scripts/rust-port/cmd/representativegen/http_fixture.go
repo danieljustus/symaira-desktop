@@ -74,6 +74,10 @@ func generatedHTTP() httpSuite {
 		{ID: "jobs-retry-missing-auth", Method: "POST", Path: "/api/v1/jobs/retry?id=00000000000000000000000000000003"},
 		{ID: "jobs-retry-nonfailed", Method: "POST", Path: "/api/v1/jobs/retry?id=00000000000000000000000000000001", Auth: "valid"},
 		{ID: "jobs-retry-failed", Method: "POST", Path: "/api/v1/jobs/retry?id=00000000000000000000000000000003", Auth: "valid"},
+		{ID: "ingest-missing-auth", Method: "POST", Path: "/api/v1/ingest", MultipartFile: "report.pdf", Body: "%PDF-1.7\nfixture\n"},
+		{ID: "ingest-invalid-multipart", Method: "POST", Path: "/api/v1/ingest", Auth: "valid", Headers: map[string]string{"Content-Type": "multipart/form-data; boundary=broken"}, Body: "not multipart"},
+		{ID: "ingest-missing-file", Method: "POST", Path: "/api/v1/ingest", Auth: "valid", Headers: map[string]string{"Content-Type": "multipart/form-data; boundary=empty"}, Body: "--empty--\r\n"},
+		{ID: "ingest-valid", Method: "POST", Path: "/api/v1/ingest", Auth: "valid", MultipartFile: "report.pdf", Body: "%PDF-1.7\nfixture\n"},
 	}}
 }
 

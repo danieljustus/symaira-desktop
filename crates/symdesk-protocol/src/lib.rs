@@ -1136,6 +1136,8 @@ fn write_atomic_root(
     data: &[u8],
     mode: u32,
 ) -> io::Result<()> {
+    #[cfg(not(unix))]
+    let _ = mode;
     let parent = path
         .parent()
         .filter(|parent| !parent.as_os_str().is_empty());

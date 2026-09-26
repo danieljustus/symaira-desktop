@@ -32,7 +32,7 @@ use std::{
 use axum::{
     Router,
     body::{Body, to_bytes},
-    extract::{Query, State},
+    extract::{Path as AxumPath, Query, State},
     http::{HeaderMap, HeaderValue, Method, Request, StatusCode, header},
     middleware::{self, Next},
     response::Response,
@@ -48,7 +48,7 @@ use hyper_util::{
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use symdesk_index::{IndexedDocument, Sidecar};
-use symdesk_vault::{Notebook, parse_bytes, parse_notebook, walk_markdown_with};
+use symdesk_vault::{Notebook, parse_bytes, parse_notebook, secure_path, walk_markdown_with};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tower::{Service as _, ServiceExt as _};
 
@@ -221,6 +221,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/snapshot", get(handle_snapshot))
         .route("/api/v1/files", get(handle_file).put(handle_put_file))
         .route("/api/v1/notebooks", get(handle_notebooks))
+        .route("/api/v1/notebooks/{id}", get(handle_notebook))
         .layer(middleware::from_fn_with_state(
             Arc::clone(&state),
             authenticate,
@@ -477,6 +478,93 @@ async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
             (header::CONTENT_LENGTH, body.len().to_string()),
         ],
         body,
+    )
+}
+
+#[derive(Serialize)]
+struct NotebookResponse {
+    id: String,
+    path: String,
+    title: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    description: String,
+    created: String,
+    sources: Vec<NotebookSource>,
+}
+
+#[derive(Serialize)]
+struct NotebookSource {
+    path: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    title: String,
+    #[serde(skip_serializing_if = "is_false")]
+    missing: bool,
+}
+
+fn is_false(value: &bool) -> bool {
+    !value
+}
+
+async fn handle_notebook(
+    State(state): State<Arc<AppState>>,
+    AxumPath(id): AxumPath<String>,
+) -> Response {
+    let reference = id.trim();
+    if reference.is_empty() {
+        return json_error(StatusCode::BAD_REQUEST, "notebook id is required");
+    }
+
+    let mut relative = reference.to_owned();
+    if !relative.ends_with(".md") {
+        relative.push_str(".md");
+    }
+    if !relative.starts_with("notebooks/") {
+        let Some(name) = Path::new(&relative).file_name() else {
+            return json_error(StatusCode::NOT_FOUND, "notebook not found");
+        };
+        relative = format!("notebooks/{}", name.to_string_lossy());
+    }
+    let notebook_path = match secure_path(&state.vault_root, &relative) {
+        Ok(path) => path,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
+    };
+    let contents = match fs::read(notebook_path) {
+        Ok(contents) => contents,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
+    };
+    let notebook = match parse_notebook(&relative, &contents) {
+        Ok(notebook) => notebook,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
+    };
+
+    let sources = notebook
+        .sources
+        .iter()
+        .map(|path| {
+            let source = secure_path(&state.vault_root, path)
+                .ok()
+                .and_then(|resolved| fs::read(resolved).ok())
+                .and_then(|bytes| parse_bytes(path, &bytes).ok());
+            let missing = source.is_none();
+            NotebookSource {
+                path: path.clone(),
+                title: source.map_or_else(String::new, |document| document.title),
+                missing,
+            }
+        })
+        .collect();
+
+    json_response(
+        StatusCode::OK,
+        serde_json::to_value(NotebookResponse {
+            id: notebook.id,
+            path: notebook.path,
+            title: notebook.title,
+            description: notebook.description,
+            created: notebook.created,
+            sources,
+        })
+        .unwrap_or_else(|_| json!({"error":"serialization failed"})),
     )
 }
 
@@ -1365,6 +1453,87 @@ mod tests {
             fs::read(root.join("notes/persisted.md")).unwrap(),
             b"persisted indexedfailuretoken"
         );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn get_notebook_resolves_titles_and_marks_unavailable_sources_missing() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-notebook-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir_all(root.join("notebooks")).unwrap();
+        fs::create_dir_all(root.join("notes")).unwrap();
+        fs::write(
+            root.join("notebooks/research.md"),
+            "---\ntype: notebook\ntitle: Research\ncreated: 2026-01-02\nnotebook_id: research\nsources: [notes/hello.md, notes/missing.md, ../outside.md]\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("notes/hello.md"),
+            "---\ntitle: Hello\ncreated: 2026-01-01\n---\nprivate source content\n",
+        )
+        .unwrap();
+        let outside = root.with_extension("outside.md");
+        fs::write(&outside, "outside sentinel").unwrap();
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/notebooks/research")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = to_bytes(response.into_body(), 1 << 20).await.unwrap();
+        let value: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(value["id"], "research");
+        assert_eq!(value["sources"][0]["path"], "../outside.md");
+        assert_eq!(value["sources"][0]["missing"], true);
+        assert_eq!(value["sources"][1]["title"], "Hello");
+        assert!(value["sources"][1].get("missing").is_none());
+        assert_eq!(value["sources"][2]["missing"], true);
+        assert!(!String::from_utf8_lossy(&body).contains("private source content"));
+        fs::remove_dir_all(&root).unwrap();
+        fs::remove_file(outside).unwrap();
+    }
+
+    #[tokio::test]
+    async fn get_notebook_returns_not_found_for_unknown_id() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-notebook-missing-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir(&root).unwrap();
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/notebooks/missing")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
         fs::remove_dir_all(root).unwrap();
     }
 

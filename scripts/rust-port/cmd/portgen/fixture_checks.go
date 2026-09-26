@@ -84,6 +84,7 @@ var fixtureTestTargets = []fixtureCheckTarget{
 	{"dataset query CLI contract", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetQueryCLIContract$"}, []string{"testdata/port/dataset/cli.json"}, false},
 	{"dataset purge", []string{"test", "-count=1", "./internal/service", "-run", "^TestPortDatasetPurgeContract$"}, []string{"testdata/port/dataset/purge.json"}, false},
 	{"sidecar contracts", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarContract"}, []string{"testdata/port/sidecar/contracts.json"}, false},
+	{"sidecar metadata", []string{"test", "-count=1", "./internal/sidecar", "-run", "^TestPortSidecarMetadataContract$"}, []string{"testdata/port/sidecar/metadata.json"}, false},
 	{"sidecar lifecycle", []string{"test", "-count=1", "./internal/sidecar", "-run", "TestPortSidecarLifecycleContract"}, []string{"testdata/port/sidecar/lifecycle.json"}, true},
 	{"sidecar oracle metadata", []string{"test", "-count=1", "./scripts/rust-port/cmd/sidecar-roundtrip", "-run", "TestCommittedSidecarOracleIdentities"}, []string{"testdata/port/sidecar/large-corpus.json", "testdata/port/sidecar/roundtrip.json"}, false},
 }

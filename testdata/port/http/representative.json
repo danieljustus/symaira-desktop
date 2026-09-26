@@ -395,6 +395,37 @@
       "method": "POST",
       "path": "/api/v1/jobs/retry?id=00000000000000000000000000000003",
       "auth": "valid"
+    },
+    {
+      "id": "ingest-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "multipart_file": "report.pdf",
+      "body": "%PDF-1.7\nfixture\n"
+    },
+    {
+      "id": "ingest-invalid-multipart",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {"Content-Type": "multipart/form-data; boundary=broken"},
+      "body": "not multipart"
+    },
+    {
+      "id": "ingest-missing-file",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "headers": {"Content-Type": "multipart/form-data; boundary=empty"},
+      "body": "--empty--\r\n"
+    },
+    {
+      "id": "ingest-valid",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "valid",
+      "multipart_file": "report.pdf",
+      "body": "%PDF-1.7\nfixture\n"
     }
   ]
 }

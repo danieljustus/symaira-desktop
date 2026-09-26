@@ -7,11 +7,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"os"
@@ -40,6 +42,7 @@ type httpCase struct {
 	Headers        map[string]string `json:"headers,omitempty"`
 	Body           string            `json:"body,omitempty"`
 	BodyRepeat     int               `json:"body_repeat,omitempty"`
+	MultipartFile  string            `json:"multipart_file,omitempty"`
 	EmptyNotebooks bool              `json:"empty_notebooks,omitempty"`
 	PopulateJobs   bool              `json:"populate_jobs,omitempty"`
 }
@@ -196,6 +199,16 @@ func run() (runErr error) {
 				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
 			}
 		}
+		if tc.ID == "ingest-valid" {
+			for _, item := range []struct {
+				name, vault string
+				response    transcript
+			}{{"Go", leftVault, leftResult}, {"Rust", rightVault, rightResult}} {
+				if err := assertIngestWrite(item.vault, item.response.Body, tc.Body); err != nil {
+					fatal("%s %s persistence: %v", tc.ID, item.name, err)
+				}
+			}
+		}
 		if tc.ID == "file-put-symlink-parent" {
 			for _, root := range []string{filepath.Dir(leftVault), filepath.Dir(rightVault)} {
 				if _, err := os.Stat(filepath.Join(root, "new.md")); !errors.Is(err, os.ErrNotExist) {
@@ -296,6 +309,106 @@ func retriedJobFile(vault string) ([]byte, error) {
 		return nil, fmt.Errorf("retry left wrong state: %q", body)
 	}
 	return normalizeJobRetryTime(body)
+}
+
+func normalizeIngestJob(body []byte) ([]byte, error) {
+	var job map[string]any
+	if err := json.Unmarshal(body, &job); err != nil {
+		return nil, err
+	}
+	id, _ := job["id"].(string)
+	if len(id) != 32 {
+		return nil, fmt.Errorf("invalid job id %q", id)
+	}
+	if _, err := hex.DecodeString(id); err != nil {
+		return nil, fmt.Errorf("invalid job id %q", id)
+	}
+	source, _ := job["source_path"].(string)
+	parts := strings.Split(source, "/")
+	if len(parts) != 4 || parts[0] != "archive" || len(parts[1]) != 4 || len(parts[2]) != 2 {
+		return nil, fmt.Errorf("invalid archive path %q", source)
+	}
+	month := time.Now().UTC().Format("2006/01")
+	previousMinute := time.Now().UTC().Add(-time.Minute).Format("2006/01")
+	if period := parts[1] + "/" + parts[2]; period != month && period != previousMinute {
+		return nil, fmt.Errorf("archive month is not current: %q", source)
+	}
+	uploadID, filename, ok := strings.Cut(parts[3], "-")
+	if !ok || len(uploadID) != 32 || filename != "report.pdf" {
+		return nil, fmt.Errorf("invalid archive filename %q", source)
+	}
+	if _, err := hex.DecodeString(uploadID); err != nil {
+		return nil, fmt.Errorf("invalid upload id %q", uploadID)
+	}
+	if job["schema_version"] != float64(1) || job["status"] != "pending" || job["original_name"] != "report.pdf" || job["content_type"] != "application/octet-stream" || job["capability"] != "ocr" {
+		return nil, fmt.Errorf("wrong ingested job state: %q", body)
+	}
+	for _, field := range []string{"created_at", "updated_at"} {
+		value, _ := job[field].(string)
+		parsed, err := time.Parse(time.RFC3339Nano, value)
+		if err != nil || time.Since(parsed) > time.Minute || time.Until(parsed) > time.Minute {
+			return nil, fmt.Errorf("invalid %s %q", field, value)
+		}
+	}
+	if job["created_at"] != job["updated_at"] {
+		return nil, fmt.Errorf("ingest timestamps differ")
+	}
+	job["id"] = "<job-id>"
+	job["source_path"] = "archive/<month>/<upload-id>-report.pdf"
+	job["created_at"] = "<dynamic>"
+	job["updated_at"] = "<dynamic>"
+	return json.Marshal(job)
+}
+
+func assertIngestWrite(vault string, response []byte, body string) error {
+	var job struct {
+		ID         string `json:"id"`
+		SourcePath string `json:"source_path"`
+	}
+	if err := json.Unmarshal(response, &job); err != nil {
+		return err
+	}
+	if !filepath.IsLocal(job.SourcePath) || !strings.HasPrefix(job.SourcePath, "archive/") {
+		return fmt.Errorf("unsafe archive path %q", job.SourcePath)
+	}
+	uploadPath := filepath.Join(vault, filepath.FromSlash(job.SourcePath))
+	uploadInfo, err := os.Stat(uploadPath)
+	if err != nil {
+		return err
+	}
+	if runtime.GOOS != "windows" && uploadInfo.Mode().Perm() != 0o640 {
+		return fmt.Errorf("upload mode = %o, want 640", uploadInfo.Mode().Perm())
+	}
+	content, err := os.ReadFile(uploadPath)
+	if err != nil {
+		return err
+	}
+	if string(content) != body {
+		return fmt.Errorf("archived bytes differ")
+	}
+	jobPath := filepath.Join(vault, ".symdesk", "server", "jobs", job.ID+".json")
+	jobInfo, err := os.Stat(jobPath)
+	if err != nil {
+		return err
+	}
+	if runtime.GOOS != "windows" && jobInfo.Mode().Perm() != 0o600 {
+		return fmt.Errorf("job mode = %o, want 600", jobInfo.Mode().Perm())
+	}
+	persisted, err := os.ReadFile(jobPath)
+	if err != nil {
+		return err
+	}
+	var responseJob, persistedJob map[string]any
+	if err := json.Unmarshal(response, &responseJob); err != nil {
+		return err
+	}
+	if err := json.Unmarshal(persisted, &persistedJob); err != nil {
+		return err
+	}
+	if !reflect.DeepEqual(responseJob, persistedJob) {
+		return fmt.Errorf("response and persisted job differ")
+	}
+	return nil
 }
 
 func normalizeJobRetryTime(body []byte) ([]byte, error) {
@@ -425,7 +538,26 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 	if tc.BodyRepeat > 0 {
 		requestBody = strings.Repeat("a", tc.BodyRepeat)
 	}
-	request, err := http.NewRequestWithContext(context.Background(), tc.Method, s.base+tc.Path, strings.NewReader(requestBody))
+	var requestReader io.Reader = strings.NewReader(requestBody)
+	if tc.MultipartFile != "" {
+		var encoded bytes.Buffer
+		writer := multipart.NewWriter(&encoded)
+		if err := writer.SetBoundary("symdesk-http-diff"); err != nil {
+			return transcript{}, previousETag, err
+		}
+		file, err := writer.CreateFormFile("file", tc.MultipartFile)
+		if err != nil {
+			return transcript{}, previousETag, err
+		}
+		if _, err := io.WriteString(file, requestBody); err != nil {
+			return transcript{}, previousETag, err
+		}
+		if err := writer.Close(); err != nil {
+			return transcript{}, previousETag, err
+		}
+		requestReader = &encoded
+	}
+	request, err := http.NewRequestWithContext(context.Background(), tc.Method, s.base+tc.Path, requestReader)
 	if err != nil {
 		return transcript{}, previousETag, err
 	}
@@ -434,6 +566,9 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 			value = previousETag
 		}
 		request.Header.Set(key, value)
+	}
+	if tc.MultipartFile != "" {
+		request.Header.Set("Content-Type", "multipart/form-data; boundary=symdesk-http-diff")
 	}
 	switch tc.Auth {
 	case "valid":
@@ -545,6 +680,22 @@ func compare(id string, left, right transcript) error {
 		right.Body, err = normalizeJobRetryTime(right.Body)
 		if err != nil {
 			return fmt.Errorf("Rust retry response: %w", err)
+		}
+		left.Headers = cloneWithout(left.Headers, "content-length")
+		right.Headers = cloneWithout(right.Headers, "content-length")
+	}
+	if id == "ingest-valid" {
+		if left.Status != http.StatusAccepted {
+			return fmt.Errorf("ingest status = %d, want 202", left.Status)
+		}
+		var err error
+		left.Body, err = normalizeIngestJob(left.Body)
+		if err != nil {
+			return fmt.Errorf("Go ingest response: %w", err)
+		}
+		right.Body, err = normalizeIngestJob(right.Body)
+		if err != nil {
+			return fmt.Errorf("Rust ingest response: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")

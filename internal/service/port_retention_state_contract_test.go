@@ -309,7 +309,7 @@ func runRetentionStateCaseBounded(t *testing.T, spec retentionStateCase) retenti
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestRetentionStateOracleCaseHelper$")
+	cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestRetentionStateOracleCaseHelper$") // #nosec G204,G702 -- current test binary and helper selector are fixed.
 	for _, variable := range os.Environ() {
 		if !strings.HasPrefix(variable, retentionStateOracleCaseEnv+"=") && !strings.HasPrefix(variable, retentionStateOracleOutputEnv+"=") {
 			cmd.Env = append(cmd.Env, variable)
@@ -325,7 +325,7 @@ func runRetentionStateCaseBounded(t *testing.T, spec retentionStateCase) retenti
 		}
 		t.Fatalf("%s: Go retention oracle child failed: %v\n%s", spec.ID, err, output.String())
 	}
-	result, err := os.ReadFile(outputPath)
+	result, err := os.ReadFile(outputPath) // #nosec G304 -- outputPath is inside the private directory from os.MkdirTemp.
 	if err != nil {
 		t.Fatalf("%s: read bounded Go retention oracle result: %v", spec.ID, err)
 	}
@@ -364,7 +364,7 @@ func TestRetentionStateOracleCaseHelper(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(os.Getenv(retentionStateOracleOutputEnv), result, 0o600); err != nil {
+	if err := os.WriteFile(os.Getenv(retentionStateOracleOutputEnv), result, 0o600); err != nil { // #nosec G703,G304 -- parent supplies its private os.MkdirTemp result path.
 		t.Fatal(err)
 	}
 }

@@ -92,6 +92,15 @@ def build_environment(temp, rustc):
     if os.name == "nt":
         env["SystemRoot"] = str(system_root)
         env["WINDIR"] = str(system_root)
+        # MSVC discovery and its library search paths are part of the native
+        # toolchain environment. Dropping them lets Git's GNU link.exe win.
+        for name in (
+            "INCLUDE", "LIB", "LIBPATH", "VCINSTALLDIR", "VCToolsInstallDir",
+            "WindowsSdkDir", "WindowsSDKVersion", "UniversalCRTSdkDir",
+            "VSCMD_ARG_HOST_ARCH", "VSCMD_ARG_TGT_ARCH",
+        ):
+            if value := os.environ.get(name):
+                env[name] = value
     for name in ("build-tmp", "go-cache", "go-mod-cache", "go-path", "go-tmp"):
         (temp / name).mkdir(parents=True, exist_ok=True)
     return env
@@ -145,7 +154,10 @@ def remove_temp_tree(path):
                 continue
             if stat.S_ISLNK(mode):
                 continue
-            os.chmod(candidate, mode | stat.S_IWUSR, follow_symlinks=False)
+            if os.name == "nt":
+                os.chmod(candidate, mode | stat.S_IWUSR)
+            else:
+                os.chmod(candidate, mode | stat.S_IWUSR, follow_symlinks=False)
         function(failed_path)
 
     shutil.rmtree(path, onerror=make_writable_and_retry)

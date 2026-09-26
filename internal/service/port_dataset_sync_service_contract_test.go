@@ -831,7 +831,7 @@ func portDatasetSyncServiceSanitise(message, root string) string {
 		}
 	}
 	if runtime.GOOS == "windows" {
-		message = strings.ReplaceAll(message, `\`, "/")
+		message = strings.ReplaceAll(message, `{{VAULT}}\`, "{{VAULT}}/")
 		message = strings.ReplaceAll(message, "The system cannot find the path specified.", "no such file or directory")
 	}
 	return message

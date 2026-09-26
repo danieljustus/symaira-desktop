@@ -3,7 +3,7 @@
 //! Minimal SQLite sidecar index compatible with the Go oracle.
 
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, HashSet},
     fs,
     io::{self, Read},
     path::{Component, Path, PathBuf},
@@ -40,7 +40,8 @@ pub use metadata::{
 pub use retrieval::{
     RetrievalAnchor, RetrievalChunk, RetrievalDb, RetrievalDocument, RetrievalEmbeddingSpaceCount,
     RetrievalSearchChunk, RetrievalSearchResult, RetrievalSection, RetrievalVectorSearchChunk,
-    RetrievalVectorSearchResult, StoredRetrievalChunk, materialize_chunks,
+    RetrievalVectorSearchResult, SearchSource, SourceRegistry, StoredRetrievalChunk,
+    materialize_chunks,
 };
 pub use retrieval_config::{
     index_location_for_vault, relocate_index_for_vault, symseek_config_path,
@@ -895,6 +896,64 @@ impl Sidecar {
         Ok(())
     }
 
+    /// Indexes Markdown files from a canonical external source root in place.
+    pub fn refresh_external_source(&mut self, source_root: &Path) -> Result<(), SidecarError> {
+        let root = fs::canonicalize(source_root)?;
+        if !root.is_dir() {
+            return Err(SidecarError::Contract(
+                "source path is not a directory".to_owned(),
+            ));
+        }
+        validate_utf8_path(&root, "external source root")?;
+        let source_dir = open_vault_dir(&root)?;
+        let mut batch = Vec::with_capacity(MAX_INDEX_BATCH_SIZE);
+        let mut found = HashSet::new();
+        for entry in symdesk_vault::walk_all(&root)? {
+            if entry.entry_type != symdesk_vault::WalkEntryType::File {
+                continue;
+            }
+            let relative = entry.path;
+            let key = absolute_non_verbatim(&root)?.join(&relative);
+            found.insert(validate_utf8_path(&key, "external source storage key")?.to_owned());
+            if relative.extension().and_then(|value| value.to_str()) != Some("md") {
+                continue;
+            }
+            let result = self.refresh_path(&source_dir, &root, &relative, &mut batch);
+            result?;
+        }
+        self.flush_refresh_batch(&mut batch)?;
+        let indexed: Vec<String> = {
+            let mut statement = self.connection.prepare("SELECT path FROM files")?;
+            let rows = statement.query_map([], |row| row.get(0))?;
+            rows.collect::<Result<_, _>>()?
+        };
+        for path in indexed {
+            if Path::new(&path).starts_with(&root) && !found.contains(&path) {
+                self.delete_document(&path)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Deletes only index rows rooted under an external source.
+    pub fn remove_external_source(&mut self, source_root: &Path) -> Result<usize, SidecarError> {
+        let root = fs::canonicalize(source_root).unwrap_or_else(|_| source_root.to_path_buf());
+        let paths: Vec<String> = {
+            let mut statement = self.connection.prepare("SELECT path FROM files")?;
+            let rows = statement.query_map([], |row| row.get(0))?;
+            rows.collect::<Result<_, _>>()?
+        };
+        let paths = paths
+            .into_iter()
+            .filter(|path| Path::new(path).starts_with(&root))
+            .collect::<Vec<_>>();
+        let removed = paths.len();
+        for path in paths {
+            self.delete_document(&path)?;
+        }
+        Ok(removed)
+    }
+
     /// Refreshes the index from lowercase-extension Markdown files under `vault_root`.
     ///
     /// The vault root is opened once as a capability directory. Each file read
@@ -1279,7 +1338,7 @@ impl Sidecar {
     /// # Errors
     /// Returns SQLite syntax/provider errors.
     pub fn search(&self, query: &str) -> Result<Vec<SearchHit>, SidecarError> {
-        self.search_impl(query, None)
+        self.search_impl(query, None, None)
     }
 
     /// Executes basic FTS inside an exact path allowlist. An empty scope never widens.
@@ -1294,13 +1353,43 @@ impl Sidecar {
         if allowed_paths.is_empty() {
             return Ok(Vec::new());
         }
-        self.search_impl(query, Some(allowed_paths))
+        self.search_impl(query, Some(allowed_paths), None)
+    }
+
+    /// Executes basic FTS only within the supplied filesystem roots.
+    pub fn search_in_roots(
+        &self,
+        query: &str,
+        roots: &[String],
+    ) -> Result<Vec<SearchHit>, SidecarError> {
+        if roots.is_empty() {
+            return Ok(Vec::new());
+        }
+        self.search_impl(query, None, Some(roots))
+    }
+
+    /// Searches the active vault and its registered external roots.
+    pub fn search_with_sources(
+        &self,
+        vault_root: &Path,
+        query: &str,
+    ) -> Result<Vec<SearchHit>, SidecarError> {
+        let vault = fs::canonicalize(vault_root)?;
+        let registry = SourceRegistry::open(&vault)?;
+        let lexical_vault = absolute_non_verbatim(vault_root)?;
+        let mut roots = vec![lexical_vault.to_string_lossy().into_owned()];
+        if vault != lexical_vault {
+            roots.push(vault.to_string_lossy().into_owned());
+        }
+        roots.extend(registry.list()?.into_iter().map(|source| source.path));
+        self.search_in_roots(query, &roots)
     }
 
     fn search_impl(
         &self,
         raw_query: &str,
         allowed_paths: Option<&[String]>,
+        allowed_roots: Option<&[String]>,
     ) -> Result<Vec<SearchHit>, SidecarError> {
         let query = symdesk_core::german::fts_query(raw_query);
         if query.is_empty() {
@@ -1315,6 +1404,30 @@ impl Sidecar {
             sql.push_str(&vec!["?"; paths.len()].join(","));
             sql.push(')');
             arguments.extend(paths.iter().cloned());
+        }
+        if let Some(roots) = allowed_roots {
+            sql.push_str(if allowed_paths.is_some() {
+                " AND ("
+            } else {
+                " WHERE ("
+            });
+            for (index, root) in roots.iter().enumerate() {
+                if index != 0 {
+                    sql.push_str(" OR ");
+                }
+                sql.push_str("f.path = ? OR substr(f.path, 1, length(?)) = ?");
+                let root_with_separator = format!(
+                    "{}{}",
+                    root.trim_end_matches(['/', '\\']),
+                    std::path::MAIN_SEPARATOR
+                );
+                arguments.extend([
+                    root.clone(),
+                    root_with_separator.clone(),
+                    root_with_separator,
+                ]);
+            }
+            sql.push(')');
         }
         sql.push_str(" ORDER BY sm.rank IS NULL, sm.rank LIMIT 20");
         let mut statement = self.connection.prepare(&sql)?;
@@ -1741,3 +1854,141 @@ fn go_value(value: &Value) -> String {
 
 #[cfg(test)]
 mod contract_tests;
+
+#[cfg(test)]
+mod source_tests {
+    use std::{fs, path::PathBuf, time::SystemTime};
+
+    use super::{SearchSource, Sidecar, SourceRegistry};
+
+    fn temp_dir(label: &str) -> PathBuf {
+        let stamp = SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "symdesk-sources-{label}-{}-{stamp}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&path).expect("create temp dir");
+        path
+    }
+
+    #[test]
+    fn registry_canonicalizes_idempotently_and_reopens() {
+        let vault = temp_dir("vault");
+        let parent = temp_dir("parent");
+        let source_path = parent.join("source");
+        fs::create_dir(&source_path).expect("source dir");
+        let alias = parent.join("alias");
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(&source_path, &alias).expect("source symlink");
+
+        let registry = SourceRegistry::open(&vault).expect("registry");
+        let first = registry.add(&source_path).expect("add canonical");
+        #[cfg(unix)]
+        assert_eq!(registry.add(&alias).expect("add alias"), first);
+        assert_eq!(registry.list().expect("list"), vec![first.clone()]);
+        let reopened = SourceRegistry::open(&vault).expect("reopen");
+        assert_eq!(reopened.list().expect("reopened list"), vec![first]);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = fs::metadata(vault.join(".symdesk/search-sources.json"))
+                .expect("registry stat")
+                .permissions()
+                .mode();
+            assert_eq!(mode & 0o777, 0o600);
+        }
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(parent);
+    }
+
+    #[test]
+    fn registry_rejects_vault_subtrees_and_remove_preserves_external_files() {
+        let vault = temp_dir("boundary");
+        let inside = vault.join("nested");
+        fs::create_dir(&inside).expect("nested dir");
+        let registry = SourceRegistry::open(&vault).expect("registry");
+        assert!(
+            registry
+                .add(&inside)
+                .expect_err("inside vault rejected")
+                .to_string()
+                .contains("outside the vault")
+        );
+
+        #[cfg(unix)]
+        {
+            let symlink_target = temp_dir("symlink-target");
+            let vault_link = vault.join("external-alias");
+            std::os::unix::fs::symlink(&symlink_target, &vault_link).expect("vault source symlink");
+            assert!(registry.add(&vault_link).is_err());
+            let outside_alias = symlink_target.join("inside-alias");
+            std::os::unix::fs::symlink(&inside, &outside_alias).expect("alias to vault subtree");
+            assert!(registry.add(&outside_alias).is_err());
+            let _ = fs::remove_dir_all(symlink_target);
+        }
+
+        let external = temp_dir("remove");
+        let marker = external.join("keep.md");
+        fs::write(&marker, "keep me").expect("marker");
+        let source = registry.add(&external).expect("add");
+        assert_eq!(registry.remove(&source.id).expect("remove"), source);
+        assert_eq!(
+            fs::read_to_string(marker).expect("external file survives"),
+            "keep me"
+        );
+        assert!(registry.list().expect("list after remove").is_empty());
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(external);
+    }
+
+    #[test]
+    fn search_indexes_registered_external_markdown_and_excludes_unregistered_roots() {
+        let vault = temp_dir("search-vault");
+        let registered = temp_dir("registered");
+        let unregistered = temp_dir("unregistered");
+        let needle = "external-source-search-needle";
+        fs::write(vault.join("vault.md"), needle).expect("vault note");
+        fs::write(registered.join("registered.md"), needle).expect("registered note");
+        fs::write(unregistered.join("unregistered.md"), needle).expect("unregistered note");
+        let registry = SourceRegistry::open(&vault).expect("registry");
+        let source: SearchSource = registry.add(&registered).expect("register source");
+        let mut sidecar = Sidecar::open(&vault.join(".symdesk/test-sidecar.db")).expect("sidecar");
+        sidecar
+            .refresh_external_source(&registered)
+            .expect("index registered");
+        sidecar
+            .refresh_external_source(&unregistered)
+            .expect("index other root");
+        sidecar.refresh_index(&vault).expect("index vault");
+        let hits = sidecar
+            .search_with_sources(&vault, needle)
+            .expect("scoped search");
+        assert_eq!(hits.len(), 2);
+        assert!(hits.iter().any(|hit| {
+            hit.path
+                == PathBuf::from(&source.path)
+                    .join("registered.md")
+                    .to_string_lossy()
+        }));
+        assert!(hits.iter().any(|hit| hit.path.ends_with("/vault.md")));
+        fs::remove_file(PathBuf::from(&source.path).join("registered.md"))
+            .expect("remove registered note");
+        sidecar
+            .refresh_external_source(&registered)
+            .expect("prune removed external note");
+        assert_eq!(
+            sidecar
+                .search_with_sources(&vault, needle)
+                .expect("search after refresh")
+                .len(),
+            1
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(registered);
+        let _ = fs::remove_dir_all(unregistered);
+    }
+}

@@ -1,8 +1,14 @@
 //! Go-compatible materialization of parser sections into retrieval chunks.
 
-use std::{fs::OpenOptions, path::Path};
+use std::{
+    fs::{self, OpenOptions},
+    io::Write,
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
 
 use rusqlite::{Connection, params};
+use serde::Deserialize;
 
 use crate::SidecarError;
 
@@ -114,6 +120,213 @@ pub struct RetrievalSearchChunk {
 pub struct RetrievalEmbeddingSpaceCount {
     pub space: String,
     pub count: i64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+pub struct SearchSource {
+    pub id: String,
+    pub path: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+struct SourceRegistryFile {
+    version: u32,
+    #[serde(default, deserialize_with = "deserialize_sources")]
+    sources: Vec<SearchSource>,
+}
+
+fn deserialize_sources<'de, D>(deserializer: D) -> Result<Vec<SearchSource>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Ok(Option::<Vec<SearchSource>>::deserialize(deserializer)?.unwrap_or_default())
+}
+
+/// Per-vault list of canonical, read-only external search roots.
+pub struct SourceRegistry {
+    vault_root: PathBuf,
+    vault_input: PathBuf,
+    path: PathBuf,
+    lock: Mutex<()>,
+}
+
+impl SourceRegistry {
+    pub fn open(vault_root: &Path) -> Result<Self, SidecarError> {
+        let root = fs::canonicalize(vault_root)?;
+        if !root.is_dir() {
+            return Err(SidecarError::Contract(
+                "vault root is not a directory".to_owned(),
+            ));
+        }
+        Ok(Self {
+            path: root.join(".symdesk/search-sources.json"),
+            vault_root: root,
+            vault_input: absolute_source_input(vault_root)?,
+            lock: Mutex::new(()),
+        })
+    }
+
+    pub fn add(&self, source_path: &Path) -> Result<SearchSource, SidecarError> {
+        let input = absolute_source_input(source_path)?;
+        if input == self.vault_input || input.starts_with(&self.vault_input) {
+            return Err(SidecarError::Contract(
+                "external source must be outside the vault".to_owned(),
+            ));
+        }
+        if let Some(parent) = input.parent()
+            && let Ok(parent) = fs::canonicalize(parent)
+            && parent.starts_with(&self.vault_root)
+        {
+            return Err(SidecarError::Contract(
+                "external source must be outside the vault".to_owned(),
+            ));
+        }
+        let source = fs::canonicalize(source_path)?;
+        if !source.is_dir() {
+            return Err(SidecarError::Contract(
+                "source path is not a directory".to_owned(),
+            ));
+        }
+        if source.starts_with(&self.vault_root) {
+            return Err(SidecarError::Contract(
+                "external source must be outside the vault".to_owned(),
+            ));
+        }
+        let path = source
+            .to_str()
+            .ok_or_else(|| SidecarError::NonUtf8Path {
+                context: "external source",
+                path: source.clone(),
+            })?
+            .to_owned();
+        let candidate = SearchSource {
+            id: format!("folder-{}", symdesk_vault::sha256_hex(path.as_bytes())),
+            path,
+        };
+        let _guard = self
+            .lock
+            .lock()
+            .map_err(|_| SidecarError::Contract("source registry lock poisoned".to_owned()))?;
+        let mut state = self.load()?;
+        if let Some(existing) = state
+            .sources
+            .iter()
+            .find(|item| item.id == candidate.id || item.path == candidate.path)
+        {
+            return Ok(existing.clone());
+        }
+        state.sources.push(candidate.clone());
+        self.save(&state)?;
+        Ok(candidate)
+    }
+
+    pub fn list(&self) -> Result<Vec<SearchSource>, SidecarError> {
+        let _guard = self
+            .lock
+            .lock()
+            .map_err(|_| SidecarError::Contract("source registry lock poisoned".to_owned()))?;
+        Ok(self.load()?.sources)
+    }
+
+    pub fn remove(&self, id_or_path: &str) -> Result<SearchSource, SidecarError> {
+        let _guard = self
+            .lock
+            .lock()
+            .map_err(|_| SidecarError::Contract("source registry lock poisoned".to_owned()))?;
+        let mut state = self.load()?;
+        let Some(index) = state
+            .sources
+            .iter()
+            .position(|item| item.id == id_or_path || item.path == id_or_path)
+        else {
+            return Err(SidecarError::Contract(format!(
+                "external source {id_or_path:?} not registered"
+            )));
+        };
+        let removed = state.sources.remove(index);
+        self.save(&state)?;
+        Ok(removed)
+    }
+
+    fn load(&self) -> Result<SourceRegistryFile, SidecarError> {
+        let bytes = match fs::read(&self.path) {
+            Ok(bytes) => bytes,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                return Ok(SourceRegistryFile {
+                    version: 1,
+                    sources: Vec::new(),
+                });
+            }
+            Err(error) => return Err(error.into()),
+        };
+        let state: SourceRegistryFile = serde_json::from_slice(&bytes)
+            .map_err(|error| SidecarError::Contract(format!("parse source registry: {error}")))?;
+        if state.version != 1 {
+            return Err(SidecarError::Contract(format!(
+                "unsupported source registry version: {}",
+                state.version
+            )));
+        }
+        Ok(state)
+    }
+
+    fn save(&self, state: &SourceRegistryFile) -> Result<(), SidecarError> {
+        let parent = self.path.parent().expect("registry path has parent");
+        if !parent.exists() {
+            match fs::create_dir(parent) {
+                Ok(()) => {
+                    #[cfg(unix)]
+                    {
+                        use std::os::unix::fs::PermissionsExt;
+                        fs::set_permissions(parent, fs::Permissions::from_mode(0o700))?;
+                    }
+                }
+                Err(error)
+                    if error.kind() == std::io::ErrorKind::AlreadyExists && parent.is_dir() => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        let mut bytes = serde_json::to_vec_pretty(state)
+            .map_err(|error| SidecarError::Contract(format!("encode source registry: {error}")))?;
+        bytes.push(b'\n');
+        let temporary = parent.join(format!(
+            ".search-sources-{}-{}.tmp",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_err(|error| SidecarError::Contract(error.to_string()))?
+                .as_nanos()
+        ));
+        let mut options = OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut file = options.open(&temporary)?;
+        let result = (|| {
+            file.write_all(&bytes)?;
+            file.sync_all()?;
+            drop(file);
+            fs::rename(&temporary, &self.path)?;
+            Ok::<_, std::io::Error>(())
+        })();
+        if result.is_err() {
+            let _ = fs::remove_file(&temporary);
+        }
+        result?;
+        Ok(())
+    }
+}
+
+fn absolute_source_input(path: &Path) -> Result<PathBuf, SidecarError> {
+    let absolute = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()?.join(path)
+    };
+    Ok(super::lexical_clean(&absolute))
 }
 
 /// Isolated provider-free retrieval storage using the Go database's schema.

@@ -31,7 +31,7 @@ ed25519-dalek = { version = "=2.2.0" }
 sha2 = { version = "=0.10.9" }
 hex = { version = "=0.4.3" }
 cap-std = { version = "=4.0.3", default-features = false }
-axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "query", "tokio"] }
+axum = { version = "=0.8.9", default-features = false, features = ["http1", "json", "multipart", "query", "tokio"] }
 flate2 = "=1.1.2"
 httpdate = "=1.0.3"
 notify = "=8.2.0"

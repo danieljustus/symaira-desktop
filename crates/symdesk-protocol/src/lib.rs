@@ -32,11 +32,11 @@ use std::{
 use axum::{
     Router,
     body::{Body, to_bytes},
-    extract::{Path as AxumPath, Query, State},
+    extract::{DefaultBodyLimit, Multipart, Path as AxumPath, Query, State},
     http::{HeaderMap, HeaderValue, Method, Request, StatusCode, header},
     middleware::{self, Next},
     response::Response,
-    routing::get,
+    routing::{get, post},
 };
 use flate2::{Compression, write::GzEncoder};
 use httpdate::{fmt_http_date, parse_http_date};
@@ -55,6 +55,8 @@ use tower::{Service as _, ServiceExt as _};
 const MAX_NOTE_BYTES: u64 = 8 << 20;
 const MAX_SNAPSHOT_BYTES: u64 = 16 << 20;
 const MAX_NOTEBOOK_FILE_BYTES: u64 = 64 << 20;
+const MAX_UPLOAD_BYTES: u64 = 100 << 20;
+const MAX_MULTIPART_REQUEST_BYTES: usize = (100 << 20) + (1 << 20);
 const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
 const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(5);
@@ -278,6 +280,10 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/files", get(handle_file).put(handle_put_file))
         .route("/api/v1/jobs", get(handle_jobs))
         .route("/api/v1/jobs/retry", axum::routing::post(handle_retry_job))
+        .route(
+            "/api/v1/ingest",
+            post(handle_ingest).layer(DefaultBodyLimit::max(MAX_MULTIPART_REQUEST_BYTES)),
+        )
         .route("/api/v1/notebooks", get(handle_notebooks))
         .route("/api/v1/notebooks/{id}", get(handle_notebook))
         .layer(middleware::from_fn_with_state(
@@ -595,6 +601,200 @@ async fn handle_jobs(
             offset,
         },
     )
+}
+
+async fn handle_ingest(
+    State(state): State<Arc<AppState>>,
+    multipart: Result<Multipart, axum::extract::multipart::MultipartRejection>,
+) -> Response {
+    let mut multipart = match multipart {
+        Ok(multipart) => multipart,
+        Err(_) => {
+            return json_error(
+                StatusCode::PAYLOAD_TOO_LARGE,
+                "upload exceeds 100 MiB or is invalid",
+            );
+        }
+    };
+    let root = match open_current_root(&state) {
+        Ok(root) => root,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+    };
+    let mut upload: Option<(PathBuf, PathBuf, String, String)> = None;
+    loop {
+        let mut field = match multipart.next_field().await {
+            Ok(Some(field)) => field,
+            Ok(None) => break,
+            Err(_error) => {
+                if let Some((temporary, _, _, _)) = &upload {
+                    let _ = root.remove_file(temporary);
+                }
+                return json_error(
+                    StatusCode::PAYLOAD_TOO_LARGE,
+                    "upload exceeds 100 MiB or is invalid",
+                );
+            }
+        };
+        if upload.is_some() || field.name() != Some("file") {
+            continue;
+        }
+        let Some(original_name) = field.file_name().map(str::to_owned) else {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                "multipart field 'file' is required",
+            );
+        };
+        let name = safe_upload_filename(&original_name);
+        let content_type = field
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .map(str::to_owned)
+            .unwrap_or_default();
+        let archive_id = match new_job_id() {
+            Ok(id) => id,
+            Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+        };
+        let now = OffsetDateTime::now_utc();
+        let relative = PathBuf::from(format!(
+            "archive/{:04}/{:02}/{archive_id}-{name}",
+            now.year(),
+            u8::from(now.month())
+        ));
+        if confined_path(&state, relative.to_str().unwrap_or_default()).is_err() {
+            return json_error(StatusCode::BAD_REQUEST, "invalid upload path");
+        }
+        let parent = relative.parent().expect("archive path has a parent");
+        if let Err(error) = create_parent_directories(&root, parent) {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+        }
+        let temporary = parent.join(format!(".upload-{archive_id}.tmp"));
+        let mut options = cap_std::fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use cap_std::fs::OpenOptionsExt;
+            options.mode(0o640);
+        }
+        let mut file = match root.open_with(&temporary, &options) {
+            Ok(file) => file,
+            Err(error) => {
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+            }
+        };
+        let mut size = 0_u64;
+        loop {
+            let chunk = match field.chunk().await {
+                Ok(Some(chunk)) => chunk,
+                Ok(None) => break,
+                Err(_error) => {
+                    drop(file);
+                    let _ = root.remove_file(&temporary);
+                    return json_error(
+                        StatusCode::PAYLOAD_TOO_LARGE,
+                        "upload exceeds 100 MiB or is invalid",
+                    );
+                }
+            };
+            size = size.saturating_add(chunk.len() as u64);
+            if size > MAX_UPLOAD_BYTES {
+                drop(file);
+                let _ = root.remove_file(&temporary);
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, "upload exceeds 100 MiB");
+            }
+            if let Err(error) = file.write_all(&chunk) {
+                drop(file);
+                let _ = root.remove_file(&temporary);
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+            }
+        }
+        if let Err(error) = file.sync_all() {
+            drop(file);
+            let _ = root.remove_file(&temporary);
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+        }
+        drop(file);
+        upload = Some((temporary, relative, name, content_type));
+    }
+    let Some((temporary, relative, name, content_type)) = upload else {
+        return json_error(
+            StatusCode::BAD_REQUEST,
+            "multipart field 'file' is required",
+        );
+    };
+    if let Err(error) = root.rename(&temporary, &root, &relative) {
+        let _ = root.remove_file(&temporary);
+        return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+    }
+    let id = match new_job_id() {
+        Ok(id) => id,
+        Err(error) => {
+            let _ = root.remove_file(&relative);
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
+        }
+    };
+    let job_dir = Path::new(".symdesk/server/jobs");
+    let mut builder = cap_std::fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    {
+        use cap_std::fs::DirBuilderExt;
+        builder.mode(0o700);
+    }
+    if let Err(error) = root.create_dir_with(job_dir, &builder) {
+        let _ = root.remove_file(&relative);
+        return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+    }
+    let timestamp = format_rfc3339(SystemTime::now());
+    let job = JobRecord {
+        id: id.clone(),
+        schema_version: 1,
+        status: "pending".to_owned(),
+        source_path: relative.to_string_lossy().replace('\\', "/"),
+        original_name: name,
+        content_type,
+        capability: "ocr".to_owned(),
+        worker_id: String::new(),
+        engine: String::new(),
+        model: String::new(),
+        note_path: String::new(),
+        error: String::new(),
+        created_at: timestamp.clone(),
+        updated_at: timestamp,
+        lease_until: None,
+    };
+    let job_path = job_dir.join(format!("{id}.json"));
+    let data = match serde_json::to_vec_pretty(&job) {
+        Ok(data) => data,
+        Err(error) => {
+            let _ = root.remove_file(&relative);
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+        }
+    };
+    if let Err(error) = write_atomic_root(&root, &job_path, &data, 0o600) {
+        let _ = root.remove_file(&relative);
+        return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+    }
+    json_response(StatusCode::ACCEPTED, job)
+}
+
+fn new_job_id() -> Result<String, String> {
+    let mut bytes = [0_u8; 16];
+    getrandom::fill(&mut bytes).map_err(|error| format!("create job id: {error}"))?;
+    let mut id = String::with_capacity(32);
+    for byte in bytes {
+        let _ = write!(id, "{byte:02x}");
+    }
+    Ok(id)
+}
+
+fn safe_upload_filename(name: &str) -> String {
+    let name = name.rsplit(['/', '\\']).next().unwrap_or_default().trim();
+    if name.is_empty() || name == "." {
+        "document.bin".to_owned()
+    } else {
+        name.to_owned()
+    }
 }
 
 async fn handle_retry_job(
@@ -1625,6 +1825,146 @@ async fn shutdown_signal() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn ingest_requires_auth_and_persists_confined_upload_and_private_job() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-ingest-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir(&root).unwrap();
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+        let boundary = "symdesk-ingest-test-boundary";
+        let body = format!(
+            "--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"../invoice.pdf\"\r\nContent-Type: application/pdf\r\n\r\npdf bytes\r\n--{boundary}--\r\n"
+        );
+        let request = |authorized: bool| {
+            let mut builder = Request::builder()
+                .method(Method::POST)
+                .uri("/api/v1/ingest")
+                .header(
+                    header::CONTENT_TYPE,
+                    format!("multipart/form-data; boundary={boundary}"),
+                );
+            if authorized {
+                builder = builder.header(
+                    header::AUTHORIZATION,
+                    "Bearer a sufficiently long test token",
+                );
+            }
+            builder.body(Body::from(body.clone())).unwrap()
+        };
+        let denied = app.clone().oneshot(request(false)).await.unwrap();
+        assert_eq!(denied.status(), StatusCode::UNAUTHORIZED);
+        assert!(!root.join("archive").exists());
+
+        let malformed = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::POST)
+                    .uri("/api/v1/ingest")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .header(
+                        header::CONTENT_TYPE,
+                        format!("multipart/form-data; boundary={boundary}"),
+                    )
+                    .body(Body::from(format!(
+                        "--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"bad.pdf\"\r\n\r\nbroken"
+                    )))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(malformed.status(), StatusCode::PAYLOAD_TOO_LARGE);
+        assert_eq!(
+            to_bytes(malformed.into_body(), 1 << 20)
+                .await
+                .unwrap()
+                .as_ref(),
+            &br#"{"error":"upload exceeds 100 MiB or is invalid"}
+"#[..]
+        );
+
+        let missing_file_boundary = "symdesk-ingest-missing-file";
+        let missing_file = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::POST)
+                    .uri("/api/v1/ingest")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .header(
+                        header::CONTENT_TYPE,
+                        format!("multipart/form-data; boundary={missing_file_boundary}"),
+                    )
+                    .body(Body::from(format!(
+                        "--{missing_file_boundary}\r\nContent-Disposition: form-data; name=\"other\"\r\n\r\nvalue\r\n--{missing_file_boundary}--\r\n"
+                    )))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(missing_file.status(), StatusCode::BAD_REQUEST);
+
+        let response = app.oneshot(request(true)).await.unwrap();
+        assert_eq!(response.status(), StatusCode::ACCEPTED);
+        let job: serde_json::Value =
+            serde_json::from_slice(&to_bytes(response.into_body(), 1 << 20).await.unwrap())
+                .unwrap();
+        assert_eq!(job["status"], "pending");
+        assert_eq!(job["original_name"], "invoice.pdf");
+        assert_eq!(job["content_type"], "application/pdf");
+        let source = job["source_path"].as_str().unwrap();
+        assert!(source.starts_with("archive/"));
+        assert!(source.ends_with("-invoice.pdf"));
+        let archive_id = Path::new(source)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .split_once('-')
+            .unwrap()
+            .0;
+        assert_ne!(archive_id, job["id"].as_str().unwrap());
+        assert_eq!(fs::read(root.join(source)).unwrap(), b"pdf bytes");
+        let job_path = root
+            .join(".symdesk/server/jobs")
+            .join(format!("{}.json", job["id"].as_str().unwrap()));
+        assert_eq!(
+            serde_json::from_slice::<JobRecord>(&fs::read(&job_path).unwrap())
+                .unwrap()
+                .status,
+            "pending"
+        );
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                fs::metadata(root.join(source))
+                    .unwrap()
+                    .permissions()
+                    .mode()
+                    & 0o777,
+                0o640
+            );
+            assert_eq!(
+                fs::metadata(job_path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+        fs::remove_dir_all(&root).unwrap();
+    }
 
     #[tokio::test]
     async fn get_jobs_requires_auth_and_returns_newest_first_pages() {

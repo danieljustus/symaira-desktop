@@ -14,6 +14,7 @@ flate2.workspace = true
 hyper.workspace = true
 hyper-util.workspace = true
 httpdate.workspace = true
+getrandom = "=0.4.3"
 notify.workspace = true
 serde.workspace = true
 serde_json.workspace = true

@@ -62,6 +62,15 @@ func generatedHTTP() httpSuite {
 		{ID: "notebook-get-mixed-sources", Method: "GET", Path: "/api/v1/notebooks/mixed", Auth: "valid"},
 		{ID: "notebook-get-unknown", Method: "GET", Path: "/api/v1/notebooks/does-not-exist", Auth: "valid"},
 		{ID: "notebooks-empty", Method: "GET", Path: "/api/v1/notebooks", Auth: "valid", EmptyNotebooks: true},
+		{ID: "jobs-missing-auth", Method: "GET", Path: "/api/v1/jobs"},
+		{ID: "jobs-wrong-auth", Method: "GET", Path: "/api/v1/jobs", Auth: "wrong"},
+		{ID: "jobs-empty", Method: "GET", Path: "/api/v1/jobs", Auth: "valid"},
+		{ID: "jobs-populated", Method: "GET", Path: "/api/v1/jobs", Auth: "valid", PopulateJobs: true},
+		{ID: "jobs-first-page", Method: "GET", Path: "/api/v1/jobs?limit=1", Auth: "valid"},
+		{ID: "jobs-second-page", Method: "GET", Path: "/api/v1/jobs?limit=1&offset=1", Auth: "valid"},
+		{ID: "jobs-beyond-end", Method: "GET", Path: "/api/v1/jobs?offset=3", Auth: "valid"},
+		{ID: "jobs-invalid-limit", Method: "GET", Path: "/api/v1/jobs?limit=0", Auth: "valid"},
+		{ID: "jobs-invalid-offset", Method: "GET", Path: "/api/v1/jobs?offset=-1", Auth: "valid"},
 	}}
 }
 

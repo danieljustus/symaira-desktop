@@ -358,7 +358,7 @@
     {
       "id": "jobs-second-page",
       "method": "GET",
-      "path": "/api/v1/jobs?limit=1&offset=1",
+      "path": "/api/v1/jobs?limit=1\u0026offset=1",
       "auth": "valid"
     },
     {

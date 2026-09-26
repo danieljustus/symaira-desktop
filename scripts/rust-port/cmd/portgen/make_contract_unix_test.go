@@ -29,3 +29,22 @@ func TestMakeCheckEnvironmentCannotBeCommandLineOverridden(t *testing.T) {
 		t.Fatalf("port-fixtures-check accepted PORTGEN_CHECK_ENV override:\n%s", output)
 	}
 }
+
+func TestMakeGenerationEnvironmentCannotBeCommandLineOverridden(t *testing.T) {
+	repoRoot, err := findRepoRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := exec.Command("make", "-n", "PORTGEN_GENERATE_GO_ENV=:", "port-fixtures-generate")
+	command.Dir = repoRoot
+	output, err := command.CombinedOutput()
+	if err != nil {
+		t.Fatalf("make dry run: %v\n%s", err, output)
+	}
+	for _, line := range strings.Split(string(output), "\n") {
+		if (strings.Contains(line, " go run ") || strings.Contains(line, " go test ")) &&
+			!strings.HasPrefix(line, "env GOWORK=off GOENV=off GOFLAGS=-mod=readonly ") {
+			t.Fatalf("generator retained ambient Go configuration: %s", line)
+		}
+	}
+}

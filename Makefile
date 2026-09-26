@@ -122,14 +122,16 @@ benchmark-large:
 docker-build:
 	docker build -t symaira-desktop:dev .
 
+override PORTGEN_GENERATE_GO_ENV := env GOWORK=off GOENV=off GOFLAGS=-mod=readonly
+
 core-fixtures-generate:
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/configgen \
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/configgen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/coregen \
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/coregen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/querygen \
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/querygen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
 
@@ -163,18 +165,18 @@ config-vault-selection-differential: port-fixtures-check
 	$(CARGO) test -p symdesk-cli --test config_vault_selection --locked
 
 vault-fixtures-generate:
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultgen \
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultgen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultfsgen \
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultfsgen \
 		--oracle-commit $(PORT_ORACLE_COMMIT) \
 		--oracle-release $(PORT_ORACLE_RELEASE)
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/typedvaultgen
-	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run TestVaultResolutionInventory
-	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/health -run TestHealthLinkResolutionInventory
-	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/notebook -run TestNotebookParseInventory
-	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run TestSearchMetadataInventory
-	GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/vault -run TestMobileWriterFixture
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/typedvaultgen
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/service -run TestVaultResolutionInventory
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/health -run TestHealthLinkResolutionInventory
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/notebook -run TestNotebookParseInventory
+	$(PORTGEN_GENERATE_GO_ENV) PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/engine -run TestSearchMetadataInventory
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/vault -run TestMobileWriterFixture
 
 vault-fixtures-check:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/vaultgen --check
@@ -568,7 +570,7 @@ sidecar-roundtrip:
 	SIDECAR_NATIVE=1 GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/sidecar-roundtrip
 
 port-fixtures-generate: core-fixtures-generate vault-fixtures-generate
-	GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/portgen \
+	$(PORTGEN_GENERATE_GO_ENV) GOTOOLCHAIN=go1.26.6 go run ./scripts/rust-port/cmd/portgen \
 		--oracle-release $(PORT_ORACLE_RELEASE)
 
 port-fixtures-check: core-fixtures-check vault-fixtures-check sidecar-fixtures-check

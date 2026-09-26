@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "829d814e60d69ae32c13af79108695f2f3266f36",
+    "commit": "d7b365480321bb138905c28fff9ed20a0a15a47a",
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
-  "generator_source_digest": "867f6550a5fc6d3a03e40cc9727e47f4978d06f80d94ee1e8e3354b5e3fd1f1e",
+  "generator_source_digest": "b8d9a6de1e8886044146b028d23143231225c5fbce5d749b7a610d26639ea99c",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -73,9 +73,10 @@
     "testdata/port/room/watch-cli.json": "d5002d4f5edfe1290368cbb74026f8060dd48c2b2ab4abd2c674f38d8165443a",
     "testdata/port/room/watch-stream.json": "40b874f762dd7edc68ef6914630211b3aa90b8d695f811ce1feed985bcb6c198",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "76f00b811a647e71f2889a391f6fd747dcfdc7d40a002aa9e0167e44002d3bb8",
-    "testdata/port/sidecar/lifecycle.json": "a8b62e89b0d0a85213c5639f386a9391ac991519559267a568c2b1d481f227ef",
-    "testdata/port/sidecar/roundtrip.json": "eff6c6afa0ef8506160f329e5c90581962f15349cb1e77f4c74cf1d27f0eb1dd",
+    "testdata/port/sidecar/large-corpus.json": "e9e48de8ef169bcb1e8711ff11b177abe63c1d869114976fd266a937c3aa53e0",
+    "testdata/port/sidecar/lifecycle.json": "6aa101f6b9094b5fcbfa9e6da4f6a2f5b186e6987e008561600573d200d41497",
+    "testdata/port/sidecar/metadata.json": "319b08ad672a9955eace69d1d07df7674889bde2599dea369edf15c3d26ea400",
+    "testdata/port/sidecar/roundtrip.json": "2a52d431c2ab7e2d2a8d93f52f284483b2e479c6db963b13ddbe60e31e26a81a",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
     "testdata/port/vault/frontmatter-write.json": "43795aad046e1d8f9d86617ad3acbc736e055ed088ff05b3bd1d6b47d6fc97a6",

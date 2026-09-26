@@ -1,6 +1,7 @@
 .PHONY: benchmark-large boundary-guard build clean core-differential core-fixtures-check core-fixtures-generate corekit-guard differential-go-selftest docker-build fmt-check font-guard frontmatter-write-differential http-differential lint mcp-differential mcp-fixtures-check mcp-fixtures-generate nested-version-guard port-contract port-fixtures-check port-fixtures-generate release-signing-guard representative-differential representative-fixtures-check representative-fixtures-generate resource-stress rust-build rust-check rust-coverage rust-features rust-fuzz-smoke rust-gates rust-lint rust-security rust-test rust-version-contract room-journal-differential room-journal-fixtures-generate sidecar-differential sidecar-fixtures-check sidecar-fixtures-generate sidecar-metadata-differential sidecar-metadata-fixtures-generate sidecar-roundtrip symroom-differential symroom-fixtures-generate test value-001 value-001-validate vault-fixtures-check vault-fixtures-generate vault-history-differential vault-history-fixtures-generate vault-read-differential vault-retention-differential vault-retention-fixtures-generate vault-write-differential vault-write-fixtures-generate vuln
 
 .PHONY: retention-state-fixtures-generate retention-state-differential
+.PHONY: source-differential
 .PHONY: room-run-projection-fixtures-generate room-run-projection-differential
 .PHONY: room-run-cli-fixtures-generate room-run-cli-differential
 .PHONY: dataset-sync-fixtures-generate dataset-sync-differential
@@ -460,6 +461,12 @@ retrieval-bm25-fixtures-generate:
 retrieval-bm25-differential:
 	$(PORTGEN_CHECK_ENV) GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalBM25Fixture$$'
 	$(CARGO) test -p symdesk-index --locked --test retrieval_bm25
+
+source-differential:
+	@mkdir -p bin/port
+	GOTOOLCHAIN=go1.26.6 go build -ldflags="-X main.version=0.12.2" -o "bin/port/symdesk-go$(EXE_SUFFIX)" ./cmd/symdesk
+	SYMDESK_VERSION=0.12.2 $(CARGO) build -p symdesk-cli --locked
+	python3 scripts/rust-port/source-differential.py "bin/port/symdesk-go$(EXE_SUFFIX)" "$(RUST_TARGET_DIR)/debug/symdesk$(EXE_SUFFIX)"
 
 retrieval-embedding-state-fixtures-generate:
 	PORT_GENERATE=1 GOTOOLCHAIN=go1.26.6 go test -count=1 ./internal/retrieval/internal/db -run '^TestRetrievalEmbeddingStateFixture$$'

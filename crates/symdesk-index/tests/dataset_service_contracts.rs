@@ -8,10 +8,14 @@ use std::{
 
 use serde_json::{Value, json};
 use symdesk_index::{DatasetSyncOptions, DatasetSyncRow, DatasetSyncService, Sidecar};
-use symdesk_vault::{PropertyConfig, Provenance, parse_dataset_handle};
+use symdesk_vault::{PropertyConfig, Provenance, parse_dataset_handle, sha256_hex};
 
 static COUNTER: AtomicU64 = AtomicU64::new(0);
 const FIXTURE: &str = include_str!("../../../testdata/port/dataset/service-sync.json");
+const TIME_OBSERVATIONS: &str = include_str!("data/dataset_sync_time/go_time_observations.json");
+const TIME_PROVENANCE: &str = include_str!("data/dataset_sync_time/provenance.json");
+const TIME_PROBE_SOURCE: &[u8] = include_bytes!("data/dataset_sync_time/go_time_probe.go");
+const TIME_PROBE_JSONL: &[u8] = include_bytes!("data/dataset_sync_time/go_time_probe.jsonl");
 
 struct Sandbox {
     root: PathBuf,
@@ -341,7 +345,46 @@ fn observed_case(id: &str, calls: Vec<Value>, states: Vec<Value>) -> Value {
 }
 
 fn expected_observations(case: &Value) -> Value {
-    json!({"id": case["id"], "calls": case["calls"], "states": case["states"]})
+    let mut expected = json!({"id": case["id"], "calls": case["calls"], "states": case["states"]});
+    for state in expected["states"].as_array_mut().expect("states") {
+        normalize_windows_permissions(state);
+    }
+    expected
+}
+
+fn normalize_windows_permissions(state: &mut Value) {
+    #[cfg(windows)]
+    for entry in state["vault"].as_array_mut().expect("vault") {
+        for field in ["mode", "perm"] {
+            assert!(entry[field].is_string(), "missing fixture {field}");
+            entry[field] = Value::String(String::new());
+        }
+    }
+    #[cfg(not(windows))]
+    let _ = state;
+}
+
+#[test]
+fn windows_permission_normalization_preserves_other_vault_fields() {
+    let original =
+        json!({"vault":[{"mode":"-rw-------","perm":"0600","content":"payload","sha256":"hash"}]});
+    let mut normalized = original.clone();
+    normalize_windows_permissions(&mut normalized);
+    #[cfg(windows)]
+    {
+        assert_eq!(normalized["vault"][0]["mode"], "");
+        assert_eq!(normalized["vault"][0]["perm"], "");
+        assert_eq!(
+            normalized["vault"][0]["content"],
+            original["vault"][0]["content"]
+        );
+        assert_eq!(
+            normalized["vault"][0]["sha256"],
+            original["vault"][0]["sha256"]
+        );
+    }
+    #[cfg(not(windows))]
+    assert_eq!(normalized, original);
 }
 
 #[test]
@@ -491,9 +534,11 @@ fn repeated_provenance_is_idempotent_and_does_not_rewrite() {
         &sandbox.root,
         "datasets/idempotent.md",
     );
+    let mut expected_state = expected["states"][1].clone();
+    normalize_windows_permissions(&mut expected_state);
     assert_eq!(
         capture_state(&sandbox, "after-repeat", "idempotent", true),
-        expected["states"][1]
+        expected_state
     );
 }
 
@@ -907,4 +952,73 @@ fn fixture_mutations_fail_actual_replay_without_rewriting_fixture() {
         FIXTURE.as_bytes(),
         include_bytes!("../../../testdata/port/dataset/service-sync.json")
     );
+}
+
+#[test]
+fn go_time_parse_boundaries_match_through_public_dataset_sync() {
+    let provenance: Value = serde_json::from_str(TIME_PROVENANCE).expect("time provenance");
+    assert_eq!(
+        provenance["oracle_revision"],
+        "ea2e2d46143cd1f3ce38bc42543cb9fd87951339"
+    );
+    assert_eq!(
+        provenance["oracle_production_sha256"],
+        "a7322f2cbbaa12e90b644266b002e2b2996a62f103b25f26b098ddb663cd5c4e"
+    );
+    assert_eq!(
+        sha256_hex(TIME_PROBE_SOURCE),
+        provenance["time_probe_sha256"]
+            .as_str()
+            .expect("probe digest")
+    );
+    assert_eq!(
+        sha256_hex(TIME_PROBE_JSONL),
+        provenance["time_raw_jsonl_sha256"]
+            .as_str()
+            .expect("raw time digest")
+    );
+    assert_eq!(
+        sha256_hex(TIME_OBSERVATIONS.as_bytes()),
+        provenance["time_observations_sha256"]
+            .as_str()
+            .expect("time observation digest")
+    );
+
+    let observations: Vec<Value> =
+        serde_json::from_str(TIME_OBSERVATIONS).expect("Go time observations");
+    assert_eq!(
+        observations.len(),
+        provenance["time_boundary_case_count"]
+            .as_u64()
+            .expect("time case count") as usize
+    );
+    assert_eq!(observations.len(), 21);
+    for (index, observation) in observations.into_iter().enumerate() {
+        let value = observation["value"].as_str().expect("time value");
+        let id = format!("time-boundary-{index}");
+        let mut options = base_options(&id, &id, value, "time-probe", "time-probe-sha");
+        options.rows = vec![row("row", json!({"value":"cell"}))];
+        let mut sandbox = Sandbox::new(&id);
+        match observation.get("error").and_then(Value::as_str) {
+            Some(expected) => {
+                let error = sandbox.sync(options).expect_err("Go-rejected timestamp");
+                assert_eq!(error, format!("invalid imported_at: {expected}"));
+                assert_eq!(
+                    fs::read_dir(&sandbox.root)
+                        .expect("read rejected-case vault")
+                        .count(),
+                    0,
+                    "rejected timestamp must not write vault files: {value:?}"
+                );
+            }
+            None => {
+                let expected_date = observation["utc_date"].as_str().expect("Go UTC date");
+                let result = sandbox.sync(options).expect("Go-accepted timestamp");
+                assert_eq!(
+                    result["raw_path"],
+                    format!("datasets/{id}/{expected_date}.csv")
+                );
+            }
+        }
+    }
 }

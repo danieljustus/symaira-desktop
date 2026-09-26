@@ -17,10 +17,7 @@ use symdesk_vault::{
     parse_bytes, parse_dataset_handle,
 };
 use thiserror::Error;
-use time::{
-    Date, Duration, Month, OffsetDateTime, PrimitiveDateTime, Time, UtcOffset,
-    format_description::well_known::Rfc3339,
-};
+use time::{OffsetDateTime, UtcOffset, format_description::well_known::Rfc3339};
 
 use crate::{IndexedDocument, Sidecar, SidecarError};
 
@@ -376,7 +373,7 @@ impl<'a> DatasetSyncService<'a> {
         }
 
         let (csv, schema) = sync_csv(&options.rows, &options.identity_field, &options.schema)?;
-        let raw_name = format!("{}.csv", imported_at.date());
+        let raw_name = format!("{imported_at}.csv");
         let raw_path = store_raw(&root, &slug, &raw_name, &csv)?;
 
         let mut title = options.title.trim().to_owned();
@@ -472,23 +469,30 @@ fn coverage_for_rows(
     }
 }
 
-fn parse_imported_at(value: &str) -> Result<OffsetDateTime, DatasetSyncError> {
+fn parse_imported_at(value: &str) -> Result<String, DatasetSyncError> {
     parse_go_rfc3339(value)
         .map_err(|detail| DatasetSyncError::Contract(format!("invalid imported_at: {detail}")))
 }
 
-fn parse_go_rfc3339(value: &str) -> Result<OffsetDateTime, String> {
+fn parse_go_rfc3339(value: &str) -> Result<String, String> {
     let bytes = value.as_bytes();
     let cannot_parse = |value_element: &str, layout_element: &str| {
         format!(
             "parsing time {} as \"2006-01-02T15:04:05Z07:00\": cannot parse {} as {}",
-            go_quote(value),
-            go_quote(value_element),
-            go_quote(layout_element)
+            time_quote(value),
+            time_quote(value_element),
+            time_quote(layout_element)
         )
     };
     let range_error =
-        |field: &str| format!("parsing time {}: {field} out of range", go_quote(value));
+        |field: &str| format!("parsing time {}: {field} out of range", time_quote(value));
+    let extra_text = |text: &str| {
+        format!(
+            "parsing time {}: extra text: {}",
+            time_quote(value),
+            time_quote(text)
+        )
+    };
 
     if bytes.len() < 10 {
         return Err(cannot_parse(value, "2006"));
@@ -502,10 +506,14 @@ fn parse_go_rfc3339(value: &str) -> Result<OffsetDateTime, String> {
         return Err(cannot_parse(&value[7..], "-"));
     }
     let day = parse_fixed_decimal(bytes, 8, 2).ok_or_else(|| cannot_parse(&value[8..], "02"))?;
-    let month = Month::try_from(u8::try_from(month).map_err(|_| range_error("month"))?)
-        .map_err(|_| range_error("month"))?;
-    let date = Date::from_calendar_date(year, month, u8::try_from(day).unwrap_or(u8::MAX))
-        .map_err(|_| range_error("day"))?;
+    if !(1..=12).contains(&month) {
+        return Err(range_error("month"));
+    }
+    let month = u8::try_from(month).expect("month range checked");
+    if day < 1 || day > i32::from(days_in_month(year, month)) {
+        return Err(range_error("day"));
+    }
+    let day = u8::try_from(day).expect("day range checked");
 
     if bytes.len() == 10 {
         return Err(cannot_parse("", "T"));
@@ -545,36 +553,28 @@ fn parse_go_rfc3339(value: &str) -> Result<OffsetDateTime, String> {
     }
     index += 2;
 
-    let mut nanosecond = 0u32;
     if matches!(bytes.get(index), Some(b'.' | b','))
         && bytes.get(index + 1).is_some_and(u8::is_ascii_digit)
     {
         index += 1;
-        let fraction_start = index;
         while bytes.get(index).is_some_and(u8::is_ascii_digit) {
             index += 1;
-        }
-        let kept = (index - fraction_start).min(9);
-        for &digit in &bytes[fraction_start..fraction_start + kept] {
-            nanosecond = nanosecond * 10 + u32::from(digit - b'0');
-        }
-        for _ in kept..9 {
-            nanosecond *= 10;
         }
     }
 
     let zone = &value[index..];
-    let offset_minutes = if zone == "Z" {
-        0i64
-    } else if zone.len() == 6
-        && matches!(zone.as_bytes()[0], b'+' | b'-')
-        && zone.as_bytes()[3] == b':'
-        && zone.as_bytes()[1..3].iter().all(u8::is_ascii_digit)
-        && zone.as_bytes()[4..6].iter().all(u8::is_ascii_digit)
-    {
-        let zone_hour = parse_decimal(&zone.as_bytes()[1..3]).expect("zone hour digits checked");
-        let zone_minute =
-            parse_decimal(&zone.as_bytes()[4..6]).expect("zone minute digits checked");
+    let (offset_minutes, zone_bytes) = if zone.starts_with('Z') {
+        (0i64, 1usize)
+    } else if matches!(zone.as_bytes().first(), Some(b'+' | b'-')) {
+        let Some(zone_hour) = parse_fixed_decimal(zone.as_bytes(), 1, 2) else {
+            return Err(cannot_parse(zone, "Z07:00"));
+        };
+        if zone.as_bytes().get(3) != Some(&b':') {
+            return Err(cannot_parse(zone, "Z07:00"));
+        }
+        let Some(zone_minute) = parse_fixed_decimal(zone.as_bytes(), 4, 2) else {
+            return Err(cannot_parse(zone, "Z07:00"));
+        };
         if zone_hour > 24 {
             return Err(range_error("time zone offset hour"));
         }
@@ -582,23 +582,98 @@ fn parse_go_rfc3339(value: &str) -> Result<OffsetDateTime, String> {
             return Err(range_error("time zone offset minute"));
         }
         let total = i64::from(zone_hour * 60 + zone_minute);
-        if zone.as_bytes()[0] == b'-' {
+        let offset = if zone.as_bytes()[0] == b'-' {
             -total
         } else {
             total
-        }
+        };
+        (offset, 6usize)
     } else {
         return Err(cannot_parse(zone, "Z07:00"));
     };
 
-    let time = Time::from_hms_nano(
-        u8::try_from(hour).expect("validated hour"),
-        u8::try_from(minute).expect("validated minute"),
-        u8::try_from(second).expect("validated second"),
-        nanosecond,
-    )
-    .expect("validated RFC3339 clock");
-    Ok(PrimitiveDateTime::new(date, time).assume_utc() - Duration::minutes(offset_minutes))
+    if zone_bytes < zone.len() {
+        return Err(extra_text(&zone[zone_bytes..]));
+    }
+
+    // Preserve Go's valid year carry beyond time::Date's representable range.
+    let local_minute = i64::from(hour * 60 + minute) - offset_minutes;
+    let day_delta = local_minute.div_euclid(24 * 60);
+    let (utc_year, utc_month, utc_day) = add_calendar_days(year, month, day, day_delta);
+    Ok(format_go_date(utc_year, utc_month, utc_day))
+}
+
+fn days_in_month(year: i32, month: u8) -> u8 {
+    match month {
+        2 if year.rem_euclid(4) == 0
+            && (year.rem_euclid(100) != 0 || year.rem_euclid(400) == 0) =>
+        {
+            29
+        }
+        2 => 28,
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
+    }
+}
+
+fn add_calendar_days(mut year: i32, mut month: u8, mut day: u8, delta: i64) -> (i32, u8, u8) {
+    if delta < 0 {
+        for _ in 0..delta.unsigned_abs() {
+            if day > 1 {
+                day -= 1;
+            } else if month > 1 {
+                month -= 1;
+                day = days_in_month(year, month);
+            } else {
+                year -= 1;
+                month = 12;
+                day = 31;
+            }
+        }
+    } else {
+        for _ in 0..delta as u64 {
+            if day < days_in_month(year, month) {
+                day += 1;
+            } else if month < 12 {
+                month += 1;
+                day = 1;
+            } else {
+                year += 1;
+                month = 1;
+                day = 1;
+            }
+        }
+    }
+    (year, month, day)
+}
+
+fn format_go_date(year: i32, month: u8, day: u8) -> String {
+    let year = if year < 0 {
+        format!("-{:04}", year.unsigned_abs())
+    } else {
+        format!("{year:04}")
+    };
+    format!("{year}-{month:02}-{day:02}")
+}
+
+fn time_quote(value: &str) -> String {
+    let mut quoted = String::with_capacity(value.len() + 2);
+    quoted.push('"');
+    for byte in value.bytes() {
+        match byte {
+            0x00..=0x1f | 0x80..=0xff => {
+                use std::fmt::Write as _;
+                write!(quoted, "\\x{byte:02x}").expect("String writes cannot fail");
+            }
+            b'"' | b'\\' => {
+                quoted.push('\\');
+                quoted.push(char::from(byte));
+            }
+            _ => quoted.push(char::from(byte)),
+        }
+    }
+    quoted.push('"');
+    quoted
 }
 
 fn parse_fixed_decimal(bytes: &[u8], start: usize, length: usize) -> Option<i32> {

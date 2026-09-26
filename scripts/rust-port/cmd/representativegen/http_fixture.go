@@ -71,6 +71,9 @@ func generatedHTTP() httpSuite {
 		{ID: "jobs-beyond-end", Method: "GET", Path: "/api/v1/jobs?offset=3", Auth: "valid"},
 		{ID: "jobs-invalid-limit", Method: "GET", Path: "/api/v1/jobs?limit=0", Auth: "valid"},
 		{ID: "jobs-invalid-offset", Method: "GET", Path: "/api/v1/jobs?offset=-1", Auth: "valid"},
+		{ID: "jobs-retry-missing-auth", Method: "POST", Path: "/api/v1/jobs/retry?id=00000000000000000000000000000003"},
+		{ID: "jobs-retry-nonfailed", Method: "POST", Path: "/api/v1/jobs/retry?id=00000000000000000000000000000001", Auth: "valid"},
+		{ID: "jobs-retry-failed", Method: "POST", Path: "/api/v1/jobs/retry?id=00000000000000000000000000000003", Auth: "valid"},
 	}}
 }
 

@@ -162,13 +162,13 @@ func verifyNoUntrackedGeneratorInputs(repoRoot string) error {
 		if ignored {
 			args = append(args, "--ignored")
 		}
-		args = append(args, "--", "cmd", "internal", "scripts/rust-port")
+		args = append(args, "--", "cmd", "internal", "scripts/rust-port", "vendor", "go.work", "go.work.sum")
 		files, err := gitOutput(repoRoot, args...)
 		if err != nil {
 			return fmt.Errorf("inspect untracked generator inputs: %w", err)
 		}
 		if len(files) != 0 {
-			return fmt.Errorf("generation requires no untracked or ignored files in cmd, internal, or scripts/rust-port")
+			return fmt.Errorf("generation requires no untracked or ignored Go inputs in cmd, internal, scripts/rust-port, vendor, or go.work")
 		}
 	}
 	return nil

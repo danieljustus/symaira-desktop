@@ -53,6 +53,13 @@ func TestSanitizedGitCommandTrustsOnlyItsCheckout(t *testing.T) {
 	if err := verifyNoUntrackedGeneratorInputs(repoRoot); err == nil {
 		t.Fatal("generation accepted an ignored Go generator")
 	}
+	if err := os.Remove(filepath.Join(repoRoot, "internal/core/ignored_test.go")); err != nil {
+		t.Fatal(err)
+	}
+	writePortgenTestFile(t, repoRoot, "go.work", "go 1.26.6\n")
+	if err := verifyNoUntrackedGeneratorInputs(repoRoot); err == nil {
+		t.Fatal("generation accepted an untracked workspace override")
+	}
 }
 
 func TestFixtureCheckRegistryCoversProvenanceManifest(t *testing.T) {

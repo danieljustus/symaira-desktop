@@ -290,6 +290,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/notebooks", get(handle_notebooks))
         .route("/api/v1/notebooks/{id}", get(handle_notebook))
         .route("/api/v1/shares", get(handle_shares))
+        .route("/api/v1/share", post(handle_create_share))
         .route(
             "/api/v1/share/{id}",
             axum::routing::delete(handle_revoke_share),
@@ -505,6 +506,174 @@ struct ShareLink {
     expired: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     revoked_at: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CreateShareRequest {
+    #[serde(default)]
+    path: String,
+    #[serde(default)]
+    expiry: i64,
+}
+
+#[derive(Serialize)]
+struct CreateShareResponse {
+    id: String,
+    token: String,
+    path: String,
+    created_at: String,
+    expires_at: String,
+    url: String,
+}
+
+async fn handle_create_share(
+    State(state): State<Arc<AppState>>,
+    request: Request<Body>,
+) -> Response {
+    let body = match to_bytes(request.into_body(), MAX_SHARE_STORE_BYTES as usize).await {
+        Ok(body) => body,
+        Err(_) => return json_error(StatusCode::BAD_REQUEST, "invalid request body"),
+    };
+    let request = match serde_json::from_slice::<CreateShareRequest>(&body) {
+        Ok(request) => request,
+        Err(_) => return json_error(StatusCode::BAD_REQUEST, "invalid request body"),
+    };
+    if request.path.is_empty() {
+        return json_error(StatusCode::BAD_REQUEST, "path is required");
+    }
+    if request.path == ".symdesk" || request.path.starts_with(".symdesk/") {
+        return json_error(
+            StatusCode::BAD_REQUEST,
+            "internal server files are not available through the document API",
+        );
+    }
+    let relative = match confined_path(&state, &request.path) {
+        Ok(path) => path,
+        Err(_) => return json_error(StatusCode::BAD_REQUEST, "a vault-relative path is required"),
+    };
+    let normalized = request.path.trim();
+    if normalized == "datasets" || normalized.starts_with("datasets/") {
+        return json_error(
+            StatusCode::FORBIDDEN,
+            "dataset-backed content cannot be shared",
+        );
+    }
+    if !(1..=168).contains(&request.expiry) {
+        return json_error(
+            StatusCode::BAD_REQUEST,
+            "expiry must be between 1 and 168 hours",
+        );
+    }
+
+    let root = match open_current_root(&state) {
+        Ok(root) => root,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "document not found"),
+    };
+    let mut options = cap_std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use cap_std::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NONBLOCK);
+    }
+    let file = match root.open_with(&relative, &options) {
+        Ok(file) => file,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "document not found"),
+    };
+    if !file.metadata().is_ok_and(|metadata| metadata.is_file()) {
+        return json_error(StatusCode::NOT_FOUND, "document not found");
+    }
+
+    let _guard = match state.share_write.lock() {
+        Ok(guard) => guard,
+        Err(_) => {
+            return json_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to create share link",
+            );
+        }
+    };
+    if create_parent_directories(&root, Path::new(".symdesk/server")).is_err() {
+        return json_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "failed to create share link",
+        );
+    }
+    let mut links = match read_shares(&root) {
+        Ok(links) => links,
+        Err(()) => {
+            return json_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to create share link",
+            );
+        }
+    };
+    let mut id_bytes = [0_u8; 12];
+    let mut token_bytes = [0_u8; 32];
+    if getrandom::fill(&mut id_bytes).is_err() || getrandom::fill(&mut token_bytes).is_err() {
+        return json_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "failed to create share link",
+        );
+    }
+    let id = lowercase_hex(&id_bytes);
+    let token = lowercase_hex(&token_bytes);
+    let now = OffsetDateTime::now_utc();
+    let created_at = now.format(&Rfc3339).unwrap_or_else(|_| go_zero_time());
+    let expires_at = (now + time::Duration::hours(request.expiry))
+        .format(&Rfc3339)
+        .unwrap_or_else(|_| go_zero_time());
+    links.push(ShareLink {
+        id: id.clone(),
+        path: relative.to_string_lossy().into_owned(),
+        created_by: "admin".to_owned(),
+        created_at: created_at.clone(),
+        expires_at: expires_at.clone(),
+        token_hash: symdesk_vault::sha256_hex(token.as_bytes()),
+        expired: false,
+        revoked_at: None,
+    });
+    let data = match serde_json::to_vec_pretty(&links) {
+        Ok(data) => data,
+        Err(_) => {
+            return json_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to create share link",
+            );
+        }
+    };
+    if write_atomic_root(
+        &root,
+        Path::new(".symdesk/server/shares.json"),
+        &data,
+        0o600,
+    )
+    .is_err()
+    {
+        return json_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "failed to create share link",
+        );
+    }
+    json_response(
+        StatusCode::CREATED,
+        CreateShareResponse {
+            id,
+            token: token.clone(),
+            path: relative.to_string_lossy().into_owned(),
+            created_at,
+            expires_at,
+            url: format!("/s/{token}"),
+        },
+    )
+}
+
+fn lowercase_hex(bytes: &[u8]) -> String {
+    let mut hex = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        let _ = write!(hex, "{byte:02x}");
+    }
+    hex
 }
 
 async fn handle_shares(State(state): State<Arc<AppState>>) -> Response {
@@ -1966,6 +2135,107 @@ async fn shutdown_signal() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn create_share_matches_admin_contract_and_persists_only_token_hash() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-create-share-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir_all(root.join("notes")).unwrap();
+        fs::write(root.join("notes/readme.md"), "shareable").unwrap();
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+        let request = |body: &[u8], authenticated: bool| {
+            let mut builder = Request::builder().method(Method::POST).uri("/api/v1/share");
+            if authenticated {
+                builder = builder.header(
+                    header::AUTHORIZATION,
+                    "Bearer a sufficiently long test token",
+                );
+            }
+            builder.body(Body::from(body.to_vec())).unwrap()
+        };
+
+        assert_eq!(
+            app.clone()
+                .oneshot(request(br#"{"path":"notes/readme.md","expiry":1}"#, false))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::UNAUTHORIZED
+        );
+        for (body, status) in [
+            (b"{".as_slice(), StatusCode::BAD_REQUEST),
+            (br#"{"expiry":1}"#.as_slice(), StatusCode::BAD_REQUEST),
+            (
+                br#"{"path":"../secret.md","expiry":1}"#.as_slice(),
+                StatusCode::BAD_REQUEST,
+            ),
+            (
+                br#"{"path":".symdesk/server/shares.json","expiry":1}"#.as_slice(),
+                StatusCode::BAD_REQUEST,
+            ),
+            (
+                br#"{"path":"datasets/private.md","expiry":0}"#.as_slice(),
+                StatusCode::FORBIDDEN,
+            ),
+            (
+                br#"{"path":"notes/readme.md","expiry":0}"#.as_slice(),
+                StatusCode::BAD_REQUEST,
+            ),
+            (
+                br#"{"path":"notes/missing.md","expiry":1}"#.as_slice(),
+                StatusCode::NOT_FOUND,
+            ),
+        ] {
+            let response = app.clone().oneshot(request(body, true)).await.unwrap();
+            assert_eq!(
+                response.status(),
+                status,
+                "body: {}",
+                String::from_utf8_lossy(body)
+            );
+        }
+
+        let response = app
+            .oneshot(request(br#"{"path":"notes/readme.md","expiry":1}"#, true))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::CREATED);
+        let response: serde_json::Value =
+            serde_json::from_slice(&to_bytes(response.into_body(), 1 << 20).await.unwrap())
+                .unwrap();
+        let id = response["id"].as_str().unwrap();
+        let token = response["token"].as_str().unwrap();
+        assert_eq!(id.len(), 24);
+        assert_eq!(token.len(), 64);
+        assert_eq!(response["path"], "notes/readme.md");
+        assert_eq!(response["url"], format!("/s/{token}"));
+
+        let stored = fs::read(root.join(".symdesk/server/shares.json")).unwrap();
+        let shares: serde_json::Value = serde_json::from_slice(&stored).unwrap();
+        assert_eq!(shares[0]["id"], id);
+        assert_eq!(shares[0]["created_by"], "admin");
+        assert_eq!(
+            shares[0]["token_hash"],
+            symdesk_vault::sha256_hex(token.as_bytes())
+        );
+        assert!(String::from_utf8(stored).unwrap().find(token).is_none());
+        #[cfg(unix)]
+        assert_eq!(
+            std::os::unix::fs::PermissionsExt::mode(
+                &fs::metadata(root.join(".symdesk/server/shares.json"))
+                    .unwrap()
+                    .permissions(),
+            ) & 0o777,
+            0o600
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[tokio::test]
     async fn get_shares_requires_admin_token_and_omits_secrets() {

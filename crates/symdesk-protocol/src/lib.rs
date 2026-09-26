@@ -100,6 +100,54 @@ struct FileQuery {
     path: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+struct JobQuery {
+    limit: Option<String>,
+    offset: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct JobRecord {
+    #[serde(default)]
+    id: String,
+    #[serde(default)]
+    schema_version: i64,
+    #[serde(default)]
+    status: String,
+    #[serde(default)]
+    source_path: String,
+    #[serde(default)]
+    original_name: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    content_type: String,
+    #[serde(default)]
+    capability: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    worker_id: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    engine: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    model: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    note_path: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    error: String,
+    #[serde(default = "go_zero_time")]
+    created_at: String,
+    #[serde(default = "go_zero_time")]
+    updated_at: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    lease_until: Option<String>,
+}
+
+#[derive(Serialize)]
+struct JobPage {
+    jobs: Vec<JobRecord>,
+    total: usize,
+    limit: usize,
+    offset: usize,
+}
+
 #[derive(Debug, Serialize)]
 struct Snapshot {
     generated_at: String,
@@ -221,6 +269,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/status", get(handle_status))
         .route("/api/v1/snapshot", get(handle_snapshot))
         .route("/api/v1/files", get(handle_file).put(handle_put_file))
+        .route("/api/v1/jobs", get(handle_jobs))
         .route("/api/v1/notebooks", get(handle_notebooks))
         .route("/api/v1/notebooks/{id}", get(handle_notebook))
         .layer(middleware::from_fn_with_state(
@@ -484,6 +533,138 @@ async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
         ],
         body,
     )
+}
+
+async fn handle_jobs(
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<JobQuery>,
+) -> Response {
+    let paged = query.limit.is_some() || query.offset.is_some();
+    let limit = match query.limit.as_deref().filter(|value| !value.is_empty()) {
+        Some(value) => match value.parse::<i64>() {
+            Ok(value) if value > 0 => value as usize,
+            _ => return json_error(StatusCode::BAD_REQUEST, "limit must be a positive integer"),
+        },
+        None => 100,
+    };
+    let offset = match query.offset.as_deref().filter(|value| !value.is_empty()) {
+        Some(value) => match value.parse::<i64>() {
+            Ok(value) if value >= 0 => value as usize,
+            _ => {
+                return json_error(
+                    StatusCode::BAD_REQUEST,
+                    "offset must be a non-negative integer",
+                );
+            }
+        },
+        None => 0,
+    };
+    let mut jobs = match read_jobs(&state) {
+        Ok(jobs) => jobs,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+    };
+    jobs.sort_by(|left, right| {
+        let left = OffsetDateTime::parse(&left.created_at, &Rfc3339);
+        let right = OffsetDateTime::parse(&right.created_at, &Rfc3339);
+        match (left, right) {
+            (Ok(left), Ok(right)) => right.cmp(&left),
+            _ => std::cmp::Ordering::Equal,
+        }
+    });
+    let total = jobs.len();
+    let start = offset.min(total);
+    if !paged {
+        jobs.truncate(limit);
+        return json_response(StatusCode::OK, jobs);
+    }
+    let end = start.saturating_add(limit).min(total);
+    json_response(
+        StatusCode::OK,
+        JobPage {
+            jobs: jobs.drain(start..end).collect(),
+            total,
+            limit,
+            offset,
+        },
+    )
+}
+
+fn read_jobs(state: &AppState) -> Result<Vec<JobRecord>, String> {
+    let root = open_current_root(state).map_err(|error| error.to_string())?;
+    let directory = match root.open_dir(".symdesk/server/jobs") {
+        Ok(directory) => directory,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => return Err(format!("read job store: {error}")),
+    };
+    let entries = directory
+        .read_dir(".")
+        .map_err(|error| format!("read job store: {error}"))?;
+    let mut names = Vec::new();
+    for entry in entries {
+        let entry = entry.map_err(|error| format!("read job store: {error}"))?;
+        if entry
+            .file_type()
+            .map_err(|error| error.to_string())?
+            .is_dir()
+        {
+            continue;
+        }
+        let name = entry.file_name();
+        let Some(name) = name.to_str() else { continue };
+        if !name.ends_with(".json") {
+            continue;
+        }
+        let id = &name[..name.len() - ".json".len()];
+        if id.len() != 32 || !id.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+            return Err("invalid job id".to_owned());
+        }
+        names.push(name.to_owned());
+    }
+    // Go's os.ReadDir sorts names. Keep that order when creation timestamps tie.
+    names.sort();
+    let mut jobs = Vec::with_capacity(names.len());
+    for name in names {
+        let mut options = cap_std::fs::OpenOptions::new();
+        options.read(true);
+        #[cfg(unix)]
+        {
+            use cap_std::fs::OpenOptionsExt;
+            options.custom_flags(libc::O_NONBLOCK);
+        }
+        let file = directory
+            .open_with(&name, &options)
+            .map_err(|error| format!("{error}"))?;
+        let metadata = file.metadata().map_err(|error| error.to_string())?;
+        if !metadata.is_file() {
+            return Err("job file is not a regular file".to_owned());
+        }
+        if metadata.len() > 1 << 20 {
+            return Err("job file exceeds 1 MiB".to_owned());
+        }
+        let mut bytes = Vec::with_capacity(metadata.len() as usize);
+        file.take((1 << 20) + 1)
+            .read_to_end(&mut bytes)
+            .map_err(|error| error.to_string())?;
+        if bytes.len() > 1 << 20 {
+            return Err("job file exceeds 1 MiB".to_owned());
+        }
+        let job: JobRecord = serde_json::from_slice(&bytes)
+            .map_err(|error| format!("decode job {}: {error}", &name[..name.len() - 5]))?;
+        OffsetDateTime::parse(&job.created_at, &Rfc3339)
+            .map_err(|error| format!("decode job created_at: {error}"))?;
+        OffsetDateTime::parse(&job.updated_at, &Rfc3339)
+            .map_err(|error| format!("decode job updated_at: {error}"))?;
+        if let Some(lease_until) = job.lease_until.as_deref() {
+            OffsetDateTime::parse(lease_until, &Rfc3339)
+                .map_err(|error| format!("decode job lease_until: {error}"))?;
+        }
+        jobs.push(job);
+    }
+    Ok(jobs)
+}
+
+fn go_zero_time() -> String {
+    "0001-01-01T00:00:00Z".to_owned()
 }
 
 #[derive(Serialize)]
@@ -1275,7 +1456,7 @@ fn constant_time_equal(left: &[u8], right: &[u8]) -> bool {
     difference == 0
 }
 
-fn json_response(status: StatusCode, value: serde_json::Value) -> Response {
+fn json_response(status: StatusCode, value: impl Serialize) -> Response {
     let mut body = serde_json::to_vec(&value)
         .unwrap_or_else(|_| b"{\"error\":\"serialization failed\"}".to_vec());
     body.push(b'\n');
@@ -1333,6 +1514,98 @@ async fn shutdown_signal() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn get_jobs_requires_auth_and_returns_newest_first_pages() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-jobs-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        let jobs = root.join(".symdesk/server/jobs");
+        fs::create_dir_all(&jobs).unwrap();
+        fs::write(
+            jobs.join("00000000000000000000000000000001.json"),
+            r#"{"id":"00000000000000000000000000000001","schema_version":1,"status":"pending","source_path":"inbox/one.pdf","original_name":"one.pdf","capability":"ocr","created_at":"2026-01-02T03:04:05Z","updated_at":"2026-01-02T03:04:05Z"}"#,
+        )
+        .unwrap();
+        fs::write(
+            jobs.join("00000000000000000000000000000002.json"),
+            r#"{"id":"00000000000000000000000000000002","schema_version":1,"status":"completed","source_path":"inbox/two.pdf","original_name":"two.pdf","capability":"ocr","created_at":"2026-01-03T03:04:05Z","updated_at":"2026-01-03T03:04:05Z"}"#,
+        )
+        .unwrap();
+        for index in 3..=101 {
+            let id = format!("{index:032x}");
+            fs::write(
+                jobs.join(format!("{id}.json")),
+                format!(
+                    "{{\"id\":\"{id}\",\"schema_version\":1,\"status\":\"pending\",\"source_path\":\"old.pdf\",\"original_name\":\"old.pdf\",\"capability\":\"ocr\",\"created_at\":\"2025-01-01T00:00:00Z\",\"updated_at\":\"2025-01-01T00:00:00Z\"}}"
+                ),
+            )
+            .unwrap();
+        }
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+        let unauthorized = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/jobs")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(unauthorized.status(), StatusCode::UNAUTHORIZED);
+        let unpaged = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/jobs")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(unpaged.status(), StatusCode::OK);
+        let unpaged_body = to_bytes(unpaged.into_body(), 1 << 20).await.unwrap();
+        let unpaged_jobs: serde_json::Value = serde_json::from_slice(&unpaged_body).unwrap();
+        assert_eq!(unpaged_jobs.as_array().unwrap().len(), 100);
+        assert_eq!(unpaged_jobs[0]["status"], "completed");
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/jobs?limit=1&offset=1")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
+        let expected = concat!(
+            "{\"jobs\":[{\"id\":\"00000000000000000000000000000001\",\"schema_version\":1,",
+            "\"status\":\"pending\",\"source_path\":\"inbox/one.pdf\",",
+            "\"original_name\":\"one.pdf\",\"capability\":\"ocr\",",
+            "\"created_at\":\"2026-01-02T03:04:05Z\",",
+            "\"updated_at\":\"2026-01-02T03:04:05Z\"}],\"total\":101,\"limit\":1,\"offset\":1}\n"
+        );
+        assert_eq!(
+            to_bytes(response.into_body(), 1 << 20).await.unwrap(),
+            expected.as_bytes()
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[cfg(unix)]
     struct RaceCleanup {

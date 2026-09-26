@@ -14,6 +14,7 @@ import (
 )
 
 func TestVerifyOracleSourceGuard(t *testing.T) {
+	clone := clonePinnedRepo(t)
 	tests := []struct {
 		name     string
 		revision string
@@ -83,7 +84,8 @@ func TestVerifyOracleSourceGuard(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root := clonePinnedRepo(t)
+			root := filepath.Join(t.TempDir(), "repo")
+			runGit(t, clone, "worktree", "add", "--detach", root, defaultOracleCommit)
 			revision := test.revision
 			if revision == "" {
 				revision = defaultOracleCommit
@@ -337,7 +339,9 @@ func clonePinnedRepo(t *testing.T) string {
 		t.Fatal(err)
 	}
 	root := filepath.Join(t.TempDir(), "repo")
-	runGit(t, filepath.Dir(root), "clone", "--no-local", source, root)
+	// Share the local object store for this disposable test clone; each case
+	// gets its own worktree, so mutations cannot affect a sibling case.
+	runGit(t, filepath.Dir(root), "clone", "--shared", source, root)
 	runGit(t, root, "checkout", "--detach", defaultOracleCommit)
 	return root
 }

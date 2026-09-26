@@ -56,6 +56,11 @@ func generatedHTTP() httpSuite {
 		{ID: "notebooks-missing-auth", Method: "GET", Path: "/api/v1/notebooks"},
 		{ID: "notebooks-wrong-auth", Method: "GET", Path: "/api/v1/notebooks", Auth: "wrong"},
 		{ID: "notebooks-list", Method: "GET", Path: "/api/v1/notebooks", Auth: "valid"},
+		{ID: "notebook-get-missing-auth", Method: "GET", Path: "/api/v1/notebooks/research"},
+		{ID: "notebook-get-wrong-auth", Method: "GET", Path: "/api/v1/notebooks/research", Auth: "wrong"},
+		{ID: "notebook-get-research", Method: "GET", Path: "/api/v1/notebooks/research", Auth: "valid"},
+		{ID: "notebook-get-mixed-sources", Method: "GET", Path: "/api/v1/notebooks/mixed", Auth: "valid"},
+		{ID: "notebook-get-unknown", Method: "GET", Path: "/api/v1/notebooks/does-not-exist", Auth: "valid"},
 		{ID: "notebooks-empty", Method: "GET", Path: "/api/v1/notebooks", Auth: "valid", EmptyNotebooks: true},
 	}}
 }

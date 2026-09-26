@@ -32,7 +32,7 @@ use std::{
 use axum::{
     Router,
     body::{Body, to_bytes},
-    extract::{Query, State},
+    extract::{Path as AxumPath, Query, State},
     http::{HeaderMap, HeaderValue, Method, Request, StatusCode, header},
     middleware::{self, Next},
     response::Response,
@@ -48,12 +48,13 @@ use hyper_util::{
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use symdesk_index::{IndexedDocument, Sidecar};
-use symdesk_vault::{Notebook, parse_bytes, parse_notebook, walk_markdown_with};
+use symdesk_vault::{Notebook, parse_bytes, parse_notebook, secure_path, walk_markdown_with};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tower::{Service as _, ServiceExt as _};
 
 const MAX_NOTE_BYTES: u64 = 8 << 20;
 const MAX_SNAPSHOT_BYTES: u64 = 16 << 20;
+const MAX_NOTEBOOK_FILE_BYTES: u64 = 64 << 20;
 const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
 const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(5);
@@ -221,6 +222,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/snapshot", get(handle_snapshot))
         .route("/api/v1/files", get(handle_file).put(handle_put_file))
         .route("/api/v1/notebooks", get(handle_notebooks))
+        .route("/api/v1/notebooks/{id}", get(handle_notebook))
         .layer(middleware::from_fn_with_state(
             Arc::clone(&state),
             authenticate,
@@ -440,6 +442,10 @@ async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
         Ok(entries) => entries,
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
     };
+    let root_dir = match open_current_root(&state) {
+        Ok(root_dir) => root_dir,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+    };
     let mut notebooks: Vec<Notebook> = Vec::new();
     for entry in entries {
         let Ok(entry) = entry else { continue };
@@ -457,7 +463,7 @@ async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
             continue;
         };
         let relative = format!("notebooks/{name}");
-        let Ok(contents) = fs::read(canonical_path) else {
+        let Ok(contents) = read_root_file(&root_dir, Path::new(&relative)) else {
             continue;
         };
         if let Ok(notebook) = parse_notebook(&relative, &contents) {
@@ -466,6 +472,112 @@ async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
     }
     notebooks.sort_by_key(|notebook| notebook.title.to_lowercase());
     let mut body = match serde_json::to_vec(&notebooks) {
+        Ok(body) => body,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    body.push(b'\n');
+    bytes_response(
+        StatusCode::OK,
+        vec![
+            (header::CONTENT_TYPE, "application/json".to_owned()),
+            (header::CONTENT_LENGTH, body.len().to_string()),
+        ],
+        body,
+    )
+}
+
+#[derive(Serialize)]
+struct NotebookResponse {
+    id: String,
+    path: String,
+    title: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    description: String,
+    created: String,
+    sources: Vec<NotebookSource>,
+}
+
+#[derive(Serialize)]
+struct NotebookSource {
+    path: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    title: String,
+    #[serde(skip_serializing_if = "is_false")]
+    missing: bool,
+}
+
+fn is_false(value: &bool) -> bool {
+    !value
+}
+
+async fn handle_notebook(
+    State(state): State<Arc<AppState>>,
+    AxumPath(id): AxumPath<String>,
+) -> Response {
+    let reference = id.trim();
+    if reference.is_empty() {
+        return json_error(StatusCode::BAD_REQUEST, "notebook id is required");
+    }
+
+    let mut relative = reference.to_owned();
+    if !relative.ends_with(".md") {
+        relative.push_str(".md");
+    }
+    if !relative.starts_with("notebooks/") {
+        let Some(name) = Path::new(&relative).file_name() else {
+            return json_error(StatusCode::NOT_FOUND, "notebook not found");
+        };
+        relative = format!("notebooks/{}", name.to_string_lossy());
+    }
+    let root_dir = match open_current_root(&state) {
+        Ok(root_dir) => root_dir,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
+    };
+    match secure_path(&state.vault_root, &relative) {
+        Ok(_) => {}
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
+    }
+    let contents = match read_root_file(&root_dir, Path::new(&relative)) {
+        Ok(contents) => contents,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return json_error(
+                StatusCode::NOT_FOUND,
+                "notebook not found: notebook not found",
+            );
+        }
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
+    };
+    let notebook = match parse_notebook(&relative, &contents) {
+        Ok(notebook) => notebook,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
+    };
+
+    let sources = notebook
+        .sources
+        .iter()
+        .map(|path| {
+            let source = secure_path(&state.vault_root, path).ok().and_then(|_| {
+                read_root_file(&root_dir, Path::new(path))
+                    .ok()
+                    .and_then(|bytes| parse_bytes(path, &bytes).ok())
+            });
+            let missing = source.is_none();
+            NotebookSource {
+                path: path.clone(),
+                title: source.map_or_else(String::new, |document| document.title),
+                missing,
+            }
+        })
+        .collect();
+
+    let mut body = match serde_json::to_vec(&NotebookResponse {
+        id: notebook.id,
+        path: notebook.path,
+        title: notebook.title,
+        description: notebook.description,
+        created: notebook.created,
+        sources,
+    }) {
         Ok(body) => body,
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
     };
@@ -814,6 +926,40 @@ async fn handle_not_found() -> Response {
 fn open_current_root(state: &AppState) -> Result<cap_std::fs::Dir, String> {
     cap_std::fs::Dir::open_ambient_dir(&state.vault_root, cap_std::ambient_authority())
         .map_err(|error| format!("open vault root: {error}"))
+}
+
+fn read_root_file(root: &cap_std::fs::Dir, relative: &Path) -> io::Result<Vec<u8>> {
+    let mut options = cap_std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use cap_std::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NONBLOCK);
+    }
+    let file = root.open_with(relative, &options)?;
+    let metadata = file.metadata()?;
+    if !metadata.is_file() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "vault path is not a regular file",
+        ));
+    }
+    if metadata.len() > MAX_NOTEBOOK_FILE_BYTES {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "vault file exceeds 64 MiB read limit",
+        ));
+    }
+    let mut contents = Vec::with_capacity(metadata.len() as usize);
+    file.take(MAX_NOTEBOOK_FILE_BYTES + 1)
+        .read_to_end(&mut contents)?;
+    if contents.len() as u64 > MAX_NOTEBOOK_FILE_BYTES {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "vault file exceeds 64 MiB read limit",
+        ));
+    }
+    Ok(contents)
 }
 
 fn current_root_identity(state: &AppState) -> Option<RootIdentity> {
@@ -1365,6 +1511,139 @@ mod tests {
             fs::read(root.join("notes/persisted.md")).unwrap(),
             b"persisted indexedfailuretoken"
         );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn get_notebook_resolves_titles_and_marks_unavailable_sources_missing() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-notebook-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir_all(root.join("notebooks")).unwrap();
+        fs::create_dir_all(root.join("notes")).unwrap();
+        fs::write(
+            root.join("notebooks/research.md"),
+            "---\ntype: notebook\ntitle: Research\ncreated: 2026-01-02\nnotebook_id: research\nsources: [notes/hello.md, notes/missing.md, ../outside.md]\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("notes/hello.md"),
+            "---\ntitle: Hello\ncreated: 2026-01-01\n---\nprivate source content\n",
+        )
+        .unwrap();
+        let outside = root.with_extension("outside.md");
+        fs::write(&outside, "outside sentinel").unwrap();
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/notebooks/research")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = to_bytes(response.into_body(), 1 << 20).await.unwrap();
+        let body_text = String::from_utf8_lossy(&body);
+        assert!(
+            body_text.starts_with(
+                r#"{"id":"research","path":"notebooks/research.md","title":"Research","created":"","sources":[{"path":"../outside.md"#
+            ),
+            "unexpected notebook JSON order: {body_text}"
+        );
+        let value: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(value["id"], "research");
+        assert_eq!(value["sources"][0]["path"], "../outside.md");
+        assert_eq!(value["sources"][0]["missing"], true);
+        assert_eq!(value["sources"][1]["title"], "Hello");
+        assert!(value["sources"][1].get("missing").is_none());
+        assert_eq!(value["sources"][2]["missing"], true);
+        assert!(!body_text.contains("private source content"));
+        fs::remove_dir_all(&root).unwrap();
+        fs::remove_file(outside).unwrap();
+    }
+
+    #[tokio::test]
+    async fn get_notebook_returns_not_found_for_unknown_id() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-notebook-missing-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir(&root).unwrap();
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/notebooks/missing")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        assert_eq!(
+            to_bytes(response.into_body(), 1 << 20).await.unwrap(),
+            br#"{"error":"notebook not found: notebook not found"}
+"#
+            .as_slice()
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn notebook_file_reader_rejects_symlink_escape() {
+        use std::os::unix::fs::symlink;
+
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-notebook-link-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        let outside = root.with_extension("outside");
+        fs::create_dir(&root).unwrap();
+        fs::write(&outside, b"outside sentinel").unwrap();
+        symlink(&outside, root.join("linked.md")).unwrap();
+        let root_dir =
+            cap_std::fs::Dir::open_ambient_dir(&root, cap_std::ambient_authority()).unwrap();
+        assert!(read_root_file(&root_dir, Path::new("linked.md")).is_err());
+        assert_eq!(fs::read(&outside).unwrap(), b"outside sentinel");
+        fs::remove_dir_all(&root).unwrap();
+        fs::remove_file(outside).unwrap();
+    }
+
+    #[test]
+    fn notebook_file_reader_rejects_files_over_limit_before_reading() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-notebook-large-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir(&root).unwrap();
+        let file = fs::File::create(root.join("large.md")).unwrap();
+        file.set_len(MAX_NOTEBOOK_FILE_BYTES + 1).unwrap();
+        drop(file);
+        let root_dir =
+            cap_std::fs::Dir::open_ambient_dir(&root, cap_std::ambient_authority()).unwrap();
+        assert!(read_root_file(&root_dir, Path::new("large.md")).is_err());
         fs::remove_dir_all(root).unwrap();
     }
 

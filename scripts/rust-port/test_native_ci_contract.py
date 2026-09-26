@@ -196,6 +196,15 @@ class NativeCIContracts(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "report suppressed"):
             ensure_report_safe({}, key, None, "cleanup details " + key)
 
+    def test_rollback_selects_msvc_linker_after_git_link(self):
+        script = ROOT / "scripts/rust-port/room-rollback.py"
+        spec = importlib.util.spec_from_file_location("room_rollback", script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        paths = (r"C:\Program Files\Git\usr\bin\link.exe" + "\n"
+                 + r"C:\Program Files\Microsoft Visual Studio\VC\Tools\MSVC\14.0\bin\Hostx64\x64\link.exe")
+        self.assertEqual(module.select_msvc_linker(paths), paths.splitlines()[1])
+
     def test_rollback_blob_extraction_uses_exact_tree_and_exclusions(self):
         script = ROOT / "scripts/rust-port/room-rollback.py"
         spec = importlib.util.spec_from_file_location("room_rollback", script)

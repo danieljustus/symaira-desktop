@@ -47,6 +47,12 @@ def ensure_report_safe(report, sensitive_key, failure, cleanup_error):
         raise RuntimeError("source-bound report contains identity private key; report suppressed")
 
 
+def select_msvc_linker(where_output):
+    return next((path.strip() for path in where_output.splitlines()
+                 if "\\vc\\tools\\msvc\\" in path.casefold()
+                 and path.casefold().endswith("\\link.exe")), None)
+
+
 def build_environment(temp, rustc):
     home = temp / "build-home"
     data = temp / "build-data"
@@ -92,6 +98,13 @@ def build_environment(temp, rustc):
     if os.name == "nt":
         env["SystemRoot"] = str(system_root)
         env["WINDIR"] = str(system_root)
+        linker_paths = subprocess.run(["where.exe", "link.exe"], text=True,
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        linker = select_msvc_linker(linker_paths.stdout)
+        if not linker or not Path(linker).is_file():
+            raise RuntimeError("MSVC link.exe is unavailable for isolated Rust build")
+        target = "AARCH64" if platform.machine().casefold() in ("arm64", "aarch64") else "X86_64"
+        env[f"CARGO_TARGET_{target}_PC_WINDOWS_MSVC_LINKER"] = linker
         # MSVC discovery and its library search paths are part of the native
         # toolchain environment. Dropping them lets Git's GNU link.exe win.
         for name in (

@@ -378,6 +378,23 @@
       "method": "GET",
       "path": "/api/v1/jobs?offset=-1",
       "auth": "valid"
+    },
+    {
+      "id": "jobs-retry-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/jobs/retry?id=00000000000000000000000000000003"
+    },
+    {
+      "id": "jobs-retry-nonfailed",
+      "method": "POST",
+      "path": "/api/v1/jobs/retry?id=00000000000000000000000000000001",
+      "auth": "valid"
+    },
+    {
+      "id": "jobs-retry-failed",
+      "method": "POST",
+      "path": "/api/v1/jobs/retry?id=00000000000000000000000000000003",
+      "auth": "valid"
     }
   ]
 }

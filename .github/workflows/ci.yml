@@ -231,6 +231,11 @@ jobs:
       - name: Install pinned Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt
 
+      - name: Replay dataset service contract on Windows
+        if: ${{ contains(fromJSON('["windows-latest", "windows-11-arm"]'), matrix.os) }}
+        shell: bash
+        run: cargo test -p symdesk-index --test dataset_service_contracts --locked
+
       - name: Check, lint, and test Rust workspace
         shell: bash
         run: |

@@ -95,6 +95,8 @@ fn open_for_vault_records_metadata_like_go() {
         first_recorded.vault_path,
         canonical(&vault).to_string_lossy()
     );
+    #[cfg(windows)]
+    assert!(!first_recorded.vault_path.starts_with(r"\\?\"));
     assert!(expected.last_used_is_utc);
     assert!(
         first_recorded.last_used.ends_with('Z'),
@@ -275,7 +277,12 @@ fn scratch_root(label: &str) -> PathBuf {
 }
 
 fn canonical(path: &Path) -> PathBuf {
-    fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+    let resolved = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+    #[cfg(windows)]
+    if let Some(ordinary) = resolved.to_string_lossy().strip_prefix(r"\\?\") {
+        return PathBuf::from(ordinary);
+    }
+    resolved
 }
 
 /// Runs `body` with the isolated data root, so no test touches the operator's

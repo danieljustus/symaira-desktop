@@ -236,7 +236,13 @@ def main():
         report["steps"].append({"name": "Rust seed write", "result": "PASS"})
         go_seed = dataset_rows(run(go_binary, vault, query, "historical Go reads Rust dataset", runtime_env))
         if go_seed != {"rust-seed": {"event_id": "rust-seed", "amount": 1}}:
-            raise RuntimeError(f"historical Go saw rows {go_seed!r}, want the Rust seed row")
+            rust_seed = dataset_rows(run(rust_binary, vault, query, "Rust reads seeded dataset", runtime_env))
+            dataset_path = vault / "datasets" / "rollback.md"
+            dataset_text = dataset_path.read_text(errors="replace") if dataset_path.exists() else "<missing>"
+            raise RuntimeError(
+                f"historical Go saw rows {go_seed!r}, want the Rust seed row; "
+                f"Rust saw {rust_seed!r}; dataset file: {dataset_text!r}"
+            )
         dataset_handle(run(go_binary, vault, ["dataset", "describe", "rollback"],
                            "historical Go reads Rust handle", runtime_env), 1, "rust-seed")
         report["steps"].append({"name": "historical Go reads Rust dataset", "result": "PASS"})

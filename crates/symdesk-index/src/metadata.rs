@@ -53,7 +53,7 @@ fn canonical_vault_path(vault_root: &Path) -> Result<PathBuf, SidecarError> {
     } else {
         std::env::current_dir()?.join(vault_root)
     };
-    Ok(fs::canonicalize(&absolute).unwrap_or(absolute))
+    crate::absolute_non_verbatim(&fs::canonicalize(&absolute).unwrap_or(absolute))
 }
 
 /// Writes `metadata.json` atomically with Go's directory and file modes.

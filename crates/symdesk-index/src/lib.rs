@@ -280,6 +280,7 @@ pub fn path_for_vault(vault_root: &Path) -> Result<PathBuf, SidecarError> {
         std::env::current_dir()?.join(vault_root)
     };
     let canonical = fs::canonicalize(&absolute).unwrap_or_else(|_| lexical_clean(&absolute));
+    let canonical = absolute_non_verbatim(&canonical)?;
     let explicit_data_home = std::env::var("XDG_DATA_HOME")
         .ok()
         .map(|value| value.trim().to_owned())

@@ -18,3 +18,5 @@
 # Generated JSON fixtures and retained evidence are byte-checked on every OS.
 /testdata/port/**/*.json text eol=lf
 /docs/rust-port/results/*.json text eol=lf
+/crates/symdesk-index/tests/data/dataset_sync_time/*.json text eol=lf
+/crates/symdesk-index/tests/data/dataset_sync_time/*.jsonl text eol=lf

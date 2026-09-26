@@ -3,7 +3,10 @@
 package main
 
 import (
+	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -40,16 +43,48 @@ func TestMakeGenerationEnvironmentCannotBeCommandLineOverridden(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	command := exec.Command("make", "-n", "PORTGEN_GENERATE_GO_ENV=:", "port-fixtures-generate")
+	makefile, err := os.ReadFile(filepath.Join(repoRoot, "Makefile"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	targetPattern := regexp.MustCompile(`(?m)^([A-Za-z0-9_.-]+-fixtures-generate):`)
+	matches := targetPattern.FindAllStringSubmatch(string(makefile), -1)
+	if len(matches) == 0 {
+		t.Fatal("Makefile has no fixture-generation targets")
+	}
+	args := []string{"-n", "PORTGEN_GENERATE_GO_ENV=:"}
+	for _, match := range matches {
+		args = append(args, match[1])
+	}
+	command := exec.Command("make", args...)
 	command.Dir = repoRoot
+	command.Env = make([]string, 0, len(os.Environ())+3)
+	for _, entry := range os.Environ() {
+		if strings.HasPrefix(entry, "GOWORK=") || strings.HasPrefix(entry, "GOFLAGS=") || strings.HasPrefix(entry, "GOENV=") {
+			continue
+		}
+		command.Env = append(command.Env, entry)
+	}
+	command.Env = append(command.Env,
+		"GOWORK=/tmp/poisoned-go.work",
+		"GOFLAGS=-overlay=/tmp/poisoned-go-overlay.json",
+		"GOENV=/tmp/poisoned-go.env",
+	)
 	output, err := command.CombinedOutput()
 	if err != nil {
 		t.Fatalf("make dry run: %v\n%s", err, output)
 	}
+	goCommands := 0
+	goCommandPattern := regexp.MustCompile(`\bgo (run|test)\b`)
 	for _, line := range strings.Split(string(output), "\n") {
-		if (strings.Contains(line, " go run ") || strings.Contains(line, " go test ")) &&
-			!strings.HasPrefix(line, "env GOWORK=off GOENV=off GOFLAGS=-mod=readonly ") {
-			t.Fatalf("generator retained ambient Go configuration: %s", line)
+		if goCommandPattern.MatchString(line) {
+			goCommands++
+			if !strings.HasPrefix(line, "env GOWORK=off GOENV=off GOFLAGS=-mod=readonly ") {
+				t.Fatalf("fixture generator retained ambient Go configuration: %s", line)
+			}
 		}
+	}
+	if goCommands == 0 {
+		t.Fatal("fixture-generation targets emitted no Go commands")
 	}
 }

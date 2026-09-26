@@ -352,8 +352,7 @@
         ],
         "rows": []
       },
-      "error": "content changed",
-      "windows_error": "was replaced"
+      "error": "content changed"
     },
     {
       "id": "symlink-journal-fails-before-mutation",

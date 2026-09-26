@@ -86,6 +86,7 @@ const MIGRATIONS: &[(&str, &str)] = &[
 ];
 
 const MAX_INDEX_BATCH_SIZE: usize = 200;
+const MAX_EXTERNAL_TEXT_FILE_SIZE: u64 = 10 << 20;
 const FTS_MATCH_JOIN: &str = r#" JOIN (
     SELECT rowid, MAX(rank) AS rank, MAX(snip) AS snip, MAX(body) AS body FROM (
         SELECT rowid, rank, snippet(fts_search, 1, '', '', '...', 64) AS snip, body FROM fts_search WHERE fts_search MATCH ?
@@ -896,7 +897,7 @@ impl Sidecar {
         Ok(())
     }
 
-    /// Indexes Markdown files from a canonical external source root in place.
+    /// Indexes Markdown and bounded raw-text files from a canonical source root.
     pub fn refresh_external_source(&mut self, source_root: &Path) -> Result<(), SidecarError> {
         let root = fs::canonicalize(source_root)?;
         if !root.is_dir() {
@@ -914,12 +915,25 @@ impl Sidecar {
             }
             let relative = entry.path;
             let key = absolute_non_verbatim(&root)?.join(&relative);
-            found.insert(validate_utf8_path(&key, "external source storage key")?.to_owned());
-            if relative.extension().and_then(|value| value.to_str()) != Some("md") {
+            let raw_text = is_external_raw_text(&relative);
+            if raw_text && source_dir.metadata(&relative)?.len() > MAX_EXTERNAL_TEXT_FILE_SIZE {
                 continue;
             }
-            let result = self.refresh_path(&source_dir, &root, &relative, &mut batch);
-            result?;
+            found.insert(validate_utf8_path(&key, "external source storage key")?.to_owned());
+            if raw_text {
+                self.refresh_path(
+                    &source_dir,
+                    &root,
+                    &relative,
+                    Some(MAX_EXTERNAL_TEXT_FILE_SIZE),
+                    true,
+                    &mut batch,
+                )?;
+            } else if relative.extension().and_then(|value| value.to_str()) == Some("md") {
+                self.refresh_path(&source_dir, &root, &relative, None, false, &mut batch)?;
+            } else {
+                continue;
+            }
         }
         self.flush_refresh_batch(&mut batch)?;
         let indexed: Vec<String> = {
@@ -1035,7 +1049,8 @@ impl Sidecar {
                 callback_error = Some(error);
                 return Err(io::Error::other("refresh index callback failed"));
             }
-            let result = self.refresh_path(&vault_dir, vault_root, relative, &mut batch);
+            let result =
+                self.refresh_path(&vault_dir, vault_root, relative, None, false, &mut batch);
             if let Err(error) = result {
                 if record_lifecycle {
                     let _ = self.set_lifecycle_state(key, "failed", &error.to_string());
@@ -1075,6 +1090,8 @@ impl Sidecar {
         vault_dir: &Dir,
         vault_root: &Path,
         relative: &Path,
+        max_file_size: Option<u64>,
+        raw_text: bool,
         batch: &mut Vec<IndexedDocument>,
     ) -> Result<(), SidecarError> {
         let storage_path = storage_path(vault_root, relative)?;
@@ -1090,6 +1107,9 @@ impl Sidecar {
         // file is deferred until it must be read so unreadable unchanged files
         // remain a no-read/no-write success.
         let metadata = vault_dir.metadata(relative)?;
+        if max_file_size.is_some_and(|limit| metadata.len() > limit) {
+            return self.delete_document(path_string);
+        }
         let mtime_ns = system_time_unix_nanos(metadata.modified()?.into_std())?;
         let file_size = i64::try_from(metadata.len()).unwrap_or(i64::MAX);
         if let Some(cached) = self.stat_cache(path_string)?
@@ -1102,10 +1122,24 @@ impl Sidecar {
         // Keep metadata and bytes tied to the same capability-opened handle.
         let mut file = vault_dir.open(relative)?;
         let metadata = file.metadata()?;
+        if max_file_size.is_some_and(|limit| metadata.len() > limit) {
+            return self.delete_document(path_string);
+        }
         let mtime_ns = system_time_unix_nanos(metadata.modified()?.into_std())?;
         let mut bytes = Vec::new();
-        file.read_to_end(&mut bytes)?;
-        let document = symdesk_vault::parse_bytes(path_string, &bytes)?;
+        if let Some(limit) = max_file_size {
+            file.take(limit + 1).read_to_end(&mut bytes)?;
+            if bytes.len() as u64 > limit {
+                return self.delete_document(path_string);
+            }
+        } else {
+            file.read_to_end(&mut bytes)?;
+        }
+        let document = if raw_text {
+            external_raw_text_document(path_string, &bytes)
+        } else {
+            symdesk_vault::parse_bytes(path_string, &bytes)?
+        };
         if document.derived {
             return self.delete_document(path_string);
         }
@@ -1488,6 +1522,48 @@ fn unsupported_index_reason(extension: &str) -> Option<&'static str> {
     }
 }
 
+fn is_external_raw_text(path: &Path) -> bool {
+    path.extension()
+        .and_then(|value| value.to_str())
+        .is_some_and(|extension| {
+            matches!(
+                extension.to_ascii_lowercase().as_str(),
+                "txt" | "text" | "go" | "py" | "js" | "ts" | "json" | "yaml" | "yml" | "sh" | "css"
+            )
+        })
+}
+
+fn external_raw_text_document(path: &str, bytes: &[u8]) -> Document {
+    Document {
+        path: path.to_owned(),
+        sha256: symdesk_vault::sha256_hex(bytes),
+        title: Path::new(path)
+            .file_stem()
+            .and_then(|value| value.to_str())
+            .unwrap_or(path)
+            .to_owned(),
+        created: String::new(),
+        tags: Vec::new(),
+        aliases: Vec::new(),
+        frontmatter: BTreeMap::new(),
+        yaml_timestamps: BTreeMap::new(),
+        body: String::from_utf8_lossy(bytes).into_owned(),
+        links: Vec::new(),
+        size: i64::try_from(bytes.len()).unwrap_or(i64::MAX),
+        document_date: String::new(),
+        person: String::new(),
+        status: String::new(),
+        due_date: String::new(),
+        confidence: 0,
+        ocr_json_path: String::new(),
+        simhash: String::new(),
+        asn: None,
+        document_type: String::new(),
+        derived_from: String::new(),
+        derived: false,
+    }
+}
+
 #[derive(Debug, Eq, PartialEq)]
 struct ValidatedStoragePath {
     /// Canonical/verbatim path retained for filesystem operations.
@@ -1857,9 +1933,13 @@ mod contract_tests;
 
 #[cfg(test)]
 mod source_tests {
-    use std::{fs, path::PathBuf, time::SystemTime};
+    use std::{
+        fs,
+        path::{Path, PathBuf},
+        time::SystemTime,
+    };
 
-    use super::{SearchSource, Sidecar, SourceRegistry};
+    use super::{MAX_EXTERNAL_TEXT_FILE_SIZE, SearchSource, Sidecar, SourceRegistry};
 
     fn temp_dir(label: &str) -> PathBuf {
         let stamp = SystemTime::now()
@@ -1990,5 +2070,151 @@ mod source_tests {
         let _ = fs::remove_dir_all(vault);
         let _ = fs::remove_dir_all(registered);
         let _ = fs::remove_dir_all(unregistered);
+    }
+
+    #[test]
+    fn external_txt_and_go_sources_add_search_refresh_and_remove_in_place() {
+        let vault = temp_dir("raw-text-vault");
+        let source_root = temp_dir("raw-text-source");
+        let txt_path = source_root.join("text-fixture.txt");
+        let go_path = source_root.join("code-fixture.go");
+        fs::write(
+            &txt_path,
+            "---\ntitle: parsed markdown title\n---\nplaintextoldmarker",
+        )
+        .expect("write txt source");
+        fs::write(&go_path, "package sample\nconst oldgomarker = true\n").expect("write go source");
+
+        let registry = SourceRegistry::open(&vault).expect("registry");
+        let source = registry.add(&source_root).expect("register source");
+        let mut sidecar = Sidecar::open(&vault.join(".symdesk/test-sidecar.db")).expect("sidecar");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("index raw text files");
+
+        let txt_hits = sidecar
+            .search_with_sources(&vault, "plaintextoldmarker")
+            .expect("search txt");
+        assert_eq!(txt_hits.len(), 1);
+        assert_eq!(txt_hits[0].title, "text-fixture");
+        assert_eq!(
+            txt_hits[0].path,
+            PathBuf::from(&source.path)
+                .join("text-fixture.txt")
+                .to_string_lossy()
+        );
+        let go_hits = sidecar
+            .search_with_sources(&vault, "oldgomarker")
+            .expect("search go");
+        assert_eq!(go_hits.len(), 1);
+        assert_eq!(go_hits[0].title, "code-fixture");
+        assert_eq!(
+            go_hits[0].path,
+            PathBuf::from(&source.path)
+                .join("code-fixture.go")
+                .to_string_lossy()
+        );
+
+        fs::write(&txt_path, "plain text now has plaintextnewmarker").expect("refresh txt source");
+        fs::write(&go_path, "package sample\nconst newgomarker = true\n")
+            .expect("refresh go source");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("refresh raw text files");
+        assert!(
+            sidecar
+                .search_with_sources(&vault, "plaintextoldmarker")
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(
+            sidecar
+                .search_with_sources(&vault, "plaintextnewmarker")
+                .unwrap()
+                .len(),
+            1
+        );
+        assert!(
+            sidecar
+                .search_with_sources(&vault, "oldgomarker")
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(
+            sidecar
+                .search_with_sources(&vault, "newgomarker")
+                .unwrap()
+                .len(),
+            1
+        );
+
+        assert_eq!(
+            sidecar
+                .remove_external_source(Path::new(&source.path))
+                .expect("remove indexed source"),
+            2
+        );
+        assert!(
+            sidecar
+                .search_with_sources(&vault, "plaintextnewmarker")
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(
+            fs::read_to_string(&txt_path).unwrap(),
+            "plain text now has plaintextnewmarker"
+        );
+        assert_eq!(
+            fs::read_to_string(&go_path).unwrap(),
+            "package sample\nconst newgomarker = true\n"
+        );
+        assert_eq!(
+            registry.remove(&source.id).expect("unregister source"),
+            source
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(source_root);
+    }
+
+    #[test]
+    fn oversized_external_raw_text_is_skipped_and_pruned() {
+        let vault = temp_dir("raw-limit-vault");
+        let source_root = temp_dir("raw-limit-source");
+        let text_path = source_root.join("oversized.text");
+        fs::write(&text_path, "limitmarker").expect("write small source");
+        SourceRegistry::open(&vault)
+            .expect("registry")
+            .add(&source_root)
+            .expect("register source");
+        let mut sidecar = Sidecar::open(&vault.join(".symdesk/test-sidecar.db")).expect("sidecar");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("index small source");
+        assert_eq!(
+            sidecar
+                .search_with_sources(&vault, "limitmarker")
+                .unwrap()
+                .len(),
+            1
+        );
+
+        fs::write(
+            &text_path,
+            vec![b'x'; usize::try_from(MAX_EXTERNAL_TEXT_FILE_SIZE + 1).unwrap()],
+        )
+        .expect("grow beyond Go's 10 MiB limit");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("skip oversized source");
+        assert!(
+            sidecar
+                .search_with_sources(&vault, "limitmarker")
+                .unwrap()
+                .is_empty()
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(source_root);
     }
 }

@@ -67,6 +67,7 @@ override PORTGEN_CHECK_ENV := env -u PORT_GENERATE -u port_generate -u PORT_FIXT
 
 # Check mode must read the committed fixture, not a caller-selected substitute.
 override PORTGEN_CHECK_ENV += -u PORT_FIXTURE_PATH -u port_fixture_path -u PORT_DATASET_IMPORT_FIXTURE -u port_dataset_import_fixture
+override PORTGEN_CHECK_ENV += GOWORK=off GOENV=off GOFLAGS=-mod=readonly
 
 build:
 	@mkdir -p bin

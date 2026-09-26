@@ -25,6 +25,11 @@ func TestMakeCheckEnvironmentCannotBeCommandLineOverridden(t *testing.T) {
 			t.Fatalf("port-fixtures-check did not unset %s:\n%s", name, output)
 		}
 	}
+	for _, setting := range []string{"GOWORK=off", "GOENV=off", "GOFLAGS=-mod=readonly"} {
+		if !strings.Contains(text, setting) {
+			t.Fatalf("port-fixtures-check did not pin %s:\n%s", setting, output)
+		}
+	}
 	if strings.Contains(text, "\n: GOTOOLCHAIN") || strings.HasPrefix(text, ": GOTOOLCHAIN") {
 		t.Fatalf("port-fixtures-check accepted PORTGEN_CHECK_ENV override:\n%s", output)
 	}

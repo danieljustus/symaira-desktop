@@ -554,17 +554,25 @@ async fn handle_notebook(
         })
         .collect();
 
-    json_response(
+    let mut body = match serde_json::to_vec(&NotebookResponse {
+        id: notebook.id,
+        path: notebook.path,
+        title: notebook.title,
+        description: notebook.description,
+        created: notebook.created,
+        sources,
+    }) {
+        Ok(body) => body,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    body.push(b'\n');
+    bytes_response(
         StatusCode::OK,
-        serde_json::to_value(NotebookResponse {
-            id: notebook.id,
-            path: notebook.path,
-            title: notebook.title,
-            description: notebook.description,
-            created: notebook.created,
-            sources,
-        })
-        .unwrap_or_else(|_| json!({"error":"serialization failed"})),
+        vec![
+            (header::CONTENT_TYPE, "application/json".to_owned()),
+            (header::CONTENT_LENGTH, body.len().to_string()),
+        ],
+        body,
     )
 }
 
@@ -1496,6 +1504,13 @@ mod tests {
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
         let body = to_bytes(response.into_body(), 1 << 20).await.unwrap();
+        let body_text = String::from_utf8_lossy(&body);
+        assert!(
+            body_text.starts_with(
+                r#"{"id":"research","path":"notebooks/research.md","title":"Research","created":"","sources":[{"path":"../outside.md"#
+            ),
+            "unexpected notebook JSON order: {body_text}"
+        );
         let value: serde_json::Value = serde_json::from_slice(&body).unwrap();
         assert_eq!(value["id"], "research");
         assert_eq!(value["sources"][0]["path"], "../outside.md");
@@ -1503,7 +1518,7 @@ mod tests {
         assert_eq!(value["sources"][1]["title"], "Hello");
         assert!(value["sources"][1].get("missing").is_none());
         assert_eq!(value["sources"][2]["missing"], true);
-        assert!(!String::from_utf8_lossy(&body).contains("private source content"));
+        assert!(!body_text.contains("private source content"));
         fs::remove_dir_all(&root).unwrap();
         fs::remove_file(outside).unwrap();
     }

@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "edeb9342650d9eaa189656be748c2115d2858854",
+    "commit": "0d3e1e4bb1c26639703f4eee6529892b92caef3f",
     "release": "post-v0.12.2-security-880"
   },
   "production_source_digest": "d29d51c7a07fed79692c1f3ff39e308f20c6a061b988ae0dbe8bdec79bfe1d72",
-  "generator_source_digest": "c588ef3ad90a1e887a0d7c3ea4f945e33a2dac59e66093f59c2c13435810497c",
+  "generator_source_digest": "bc158287f6c11328ab1fe059f0cada4745b312d14413a9efc16f9471394abb80",
   "surface_counts": {
     "symdesk_total_commands": 207,
     "symdesk_non_root_commands": 206,
@@ -80,9 +80,9 @@
     "testdata/port/room/watch-cli.json": "d5002d4f5edfe1290368cbb74026f8060dd48c2b2ab4abd2c674f38d8165443a",
     "testdata/port/room/watch-stream.json": "40b874f762dd7edc68ef6914630211b3aa90b8d695f811ce1feed985bcb6c198",
     "testdata/port/sidecar/contracts.json": "1d2df15dff5a97a2f26b0c1b102484e67f1fe1dc2e8b6b4f4cb62bcf4d776250",
-    "testdata/port/sidecar/large-corpus.json": "ca8c3cd6a1ebf11e09dc76cc66b70195fae142ef52eed0d5f72472eb72f43c8a",
-    "testdata/port/sidecar/lifecycle.json": "33f4b16ac8346c13d581eca566014d801122f006758c6eca7f74399859014116",
-    "testdata/port/sidecar/roundtrip.json": "0d28ac79dc7e1357e13a8725d0be603718855b50a8fec000aaa987ed46d93548",
+    "testdata/port/sidecar/large-corpus.json": "c9c83468ca4b61e61c6284507ffb14e094147d2f06afe9325d84887defbf7ad2",
+    "testdata/port/sidecar/lifecycle.json": "74e3adf58d59ad82370f54fac8605d148da606aedbd06de99bb4668d7791689e",
+    "testdata/port/sidecar/roundtrip.json": "23520a2756b7518bec97e0d5aa2a4b133454ef124dd5e4ff5fc47badc1227542",
     "testdata/port/vault/base-view-write.json": "15ab195e2e6693c7286abcede276e58290e0c08b79a226baea26a16f881bc967",
     "testdata/port/vault/filesystem-writes.json": "a8cb59807f94eb28a2869562868d5f01ed7fed24d3b493b0dd60c4826a40d25a",
     "testdata/port/vault/filesystem.json": "930a9786634b6aa872f5a04c6247fa076f0574a0eab31369f044e9276dac25c6",
@@ -101,7 +101,7 @@
     "testdata/port/vault/parse.json": "f68eabd7039ccc706c9559886fd6a9fde343f31b69261f70be3737676be3c704",
     "testdata/port/vault/resolution.json": "b0565ec79b0e4c793a408cccf89a3dc4d387e3d1b2f7e1fb3b11ea2048f9d2b4",
     "testdata/port/vault/retention-rules.json": "163c9320095680f7cb8897387993ccd7ecf04962b914e4b0d8987730d7cfa9a5",
-    "testdata/port/vault/retention-state.json": "a29b9dcad6ab40b061b55e4c3867ac994a8c834e244f1909fb5b5d28199764d7",
+    "testdata/port/vault/retention-state.json": "2cbd8c4c43d87fbcc704f01cbfd24be356da26ca9a9e47168908d12c803cc159",
     "testdata/port/vault/retention.json": "af7b5d6e667c82085f83665546c873ecb904eb2e5d7eb329aa561849e7f724a4",
     "testdata/port/vault/typed.json": "fa9c11745004dca649590fe760db7cb7ba8d432b7be1b79df25e11344a35651b"
   }

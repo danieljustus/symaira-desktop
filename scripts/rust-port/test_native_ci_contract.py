@@ -214,6 +214,10 @@ class NativeCIContracts(unittest.TestCase):
                 module.msvc_linker_from_installation(root, "arm64", "HostARM64"),
                 str(linker),
             )
+        self.assertEqual(
+            module.parse_msvc_library_environment("LIB=C:\\sdk;C:\\vc\nTOKEN=secret\n"),
+            {"LIB": "C:\\sdk;C:\\vc"},
+        )
 
     def test_rollback_blob_extraction_uses_exact_tree_and_exclusions(self):
         script = ROOT / "scripts/rust-port/room-rollback.py"

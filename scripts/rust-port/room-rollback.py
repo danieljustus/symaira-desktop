@@ -65,6 +65,35 @@ def msvc_linker_from_installation(installation, target, host):
     return None
 
 
+def parse_msvc_library_environment(output):
+    allowed = {"LIB", "LIBPATH", "INCLUDE", "VCToolsInstallDir", "WindowsSdkDir",
+               "WindowsSDKVersion", "UniversalCRTSdkDir"}
+    return {name: value for line in output.splitlines()
+            for name, separator, value in [line.partition("=")]
+            if separator and name in allowed}
+
+
+def msvc_library_environment(installation, target, temp, system_root):
+    if not installation:
+        return {}
+    dev_cmd = Path(installation) / "Common7" / "Tools" / "VsDevCmd.bat"
+    if not dev_cmd.is_file():
+        return {}
+    arch = "arm64" if target == "arm64" else "amd64"
+    batch = temp / "msvc-env.cmd"
+    batch.write_text(
+        f'@echo off\ncall "{dev_cmd}" -no_logo -arch={arch} -host_arch={arch} >nul\n'
+        'if errorlevel 1 exit /b 1\nset\n', encoding="utf-8",
+    )
+    result = subprocess.run(
+        [str(system_root / "System32" / "cmd.exe"), "/d", "/c", str(batch)],
+        cwd=temp, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    if result.returncode:
+        return {}
+    return parse_msvc_library_environment(result.stdout)
+
+
 def is_git_posix_bin(path):
     return path.replace("/", "\\").casefold().endswith("\\git\\usr\\bin")
 
@@ -126,17 +155,21 @@ def build_environment(temp, rustc):
             Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"))
             / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
         )
-        if not linker and Path(vswhere).is_file():
+        installation = ""
+        if Path(vswhere).is_file():
             installation = subprocess.run(
                 [vswhere, "-latest", "-products", "*", "-property", "installationPath"],
                 text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            )
+            ).stdout.strip()
+        if not linker:
             host = "HostARM64" if target == "arm64" else "Hostx64"
-            linker = msvc_linker_from_installation(installation.stdout.strip(), target, host)
+            linker = msvc_linker_from_installation(installation, target, host)
         if linker and Path(linker).is_file():
             triple_arch = "AARCH64" if target == "arm64" else "X86_64"
             env[f"CARGO_TARGET_{triple_arch}_PC_WINDOWS_MSVC_LINKER"] = linker
             env["PATH"] = os.pathsep.join((str(Path(linker).parent), env["PATH"]))
+            if not os.environ.get("LIB"):
+                env.update(msvc_library_environment(installation, target, temp, system_root))
         # MSVC discovery and its library search paths are part of the native
         # toolchain environment. Dropping them lets Git's GNU link.exe win.
         for name in (

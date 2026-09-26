@@ -1359,6 +1359,7 @@ dependencies = [
  "same-file",
  "serde",
  "serde_json",
+ "symdesk-index",
  "symdesk-vault",
  "time",
  "tokio",

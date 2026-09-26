@@ -47,7 +47,8 @@ use hyper_util::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use symdesk_vault::{Notebook, parse_notebook, walk_markdown_with};
+use symdesk_index::{IndexedDocument, Sidecar};
+use symdesk_vault::{Notebook, parse_bytes, parse_notebook, walk_markdown_with};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tower::{Service as _, ServiceExt as _};
 
@@ -681,6 +682,35 @@ async fn handle_put_file(
     if let Err(error) = write_atomic_root(&root, &relative, &data) {
         return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
     }
+    let file_path = state.vault_root.join(&relative);
+    let Some(file_key) = file_path.to_str() else {
+        return json_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "document path is not valid UTF-8",
+        );
+    };
+    if let Ok(document) = parse_bytes(file_key, &data) {
+        let indexed = match IndexedDocument::from_vault(&document, None) {
+            Ok(indexed) => indexed,
+            Err(error) => {
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+            }
+        };
+        let sidecar_path = state
+            .vault_root
+            .join(".symdesk")
+            .join("server")
+            .join("sidecar.db");
+        let mut sidecar = match Sidecar::open(&sidecar_path) {
+            Ok(sidecar) => sidecar,
+            Err(error) => {
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+            }
+        };
+        if let Err(error) = sidecar.index_document(&indexed) {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+        }
+    }
     json_response(StatusCode::OK, json!({"status": "updated"}))
 }
 
@@ -1225,13 +1255,24 @@ mod tests {
                         header::AUTHORIZATION,
                         "Bearer a sufficiently long test token",
                     )
-                    .body(Body::from("note"))
+                    .body(Body::from("note putneedleunique"))
                     .unwrap(),
             )
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!(fs::read(root.join("notes/new.MD")).unwrap(), b"note");
+        assert_eq!(
+            fs::read(root.join("notes/new.MD")).unwrap(),
+            b"note putneedleunique"
+        );
+        let sidecar = Sidecar::open(&root.join(".symdesk/server/sidecar.db"))
+            .expect("open self-hosted index");
+        let hits = sidecar.search("putneedleunique").expect("search index");
+        assert!(
+            hits.iter()
+                .any(|hit| { hit.path == root.join("notes/new.MD").to_string_lossy() })
+        );
+        drop(sidecar);
 
         let oversized = app
             .oneshot(
@@ -1289,6 +1330,42 @@ mod tests {
         assert_eq!(fs::read(outside.join("sentinel.md")).unwrap(), b"outside");
         fs::remove_dir_all(root).unwrap();
         fs::remove_dir_all(outside).unwrap();
+    }
+
+    #[tokio::test]
+    async fn put_file_keeps_written_file_when_sidecar_indexing_fails() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-put-index-failure-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir_all(root.join(".symdesk")).expect("create internal dir");
+        fs::write(root.join(".symdesk/server"), b"blocks sidecar directory")
+            .expect("block sidecar dir");
+        let app = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )));
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method(Method::PUT)
+                    .uri("/api/v1/files?path=notes/persisted.md")
+                    .header(
+                        header::AUTHORIZATION,
+                        "Bearer a sufficiently long test token",
+                    )
+                    .body(Body::from("persisted indexedfailuretoken"))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            fs::read(root.join("notes/persisted.md")).unwrap(),
+            b"persisted indexedfailuretoken"
+        );
+        fs::remove_dir_all(root).unwrap();
     }
 
     fn test_state(root: &Path, token: &str) -> AppState {

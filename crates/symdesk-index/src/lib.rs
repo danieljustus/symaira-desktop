@@ -7,10 +7,15 @@ use std::{
     fs,
     io::{self, Read},
     path::{Component, Path, PathBuf},
-    time::UNIX_EPOCH,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::{self, RecvTimeoutError},
+    },
+    time::{Duration, Instant, UNIX_EPOCH},
 };
 
 use cap_std::{ambient_authority, fs::Dir};
+use notify::{EventKind, RecursiveMode, Watcher};
 use noyalib::Value;
 use rusqlite::{Connection, OptionalExtension, Transaction, params, params_from_iter};
 use serde::Deserialize;
@@ -947,6 +952,97 @@ impl Sidecar {
             }
         }
         Ok(())
+    }
+
+    /// Indexes a registered external source, then keeps it current until stopped.
+    ///
+    /// Watcher setup and initial indexing errors are returned. Later event and
+    /// refresh errors are reported to stderr while watching continues.
+    pub fn watch_external_source(
+        &mut self,
+        source_root: &Path,
+        stop: &AtomicBool,
+    ) -> Result<(), SidecarError> {
+        let root = fs::canonicalize(source_root)?;
+        if !root.is_dir() {
+            return Err(SidecarError::Contract(
+                "source path is not a directory".to_owned(),
+            ));
+        }
+        validate_utf8_path(&root, "external source root")?;
+        let (sender, receiver) = mpsc::channel();
+        let mut watcher = notify::recommended_watcher(move |event| {
+            let _ = sender.send(event);
+        })
+        .map_err(|error| {
+            SidecarError::Contract(format!("failed to create file watcher: {error}"))
+        })?;
+        watcher
+            .watch(&root, RecursiveMode::Recursive)
+            .map_err(|error| {
+                SidecarError::Contract(format!("failed to setup watchers: {error}"))
+            })?;
+
+        eprintln!("Performing initial sync for: {}", root.display());
+        self.refresh_external_source(&root)
+            .map_err(|error| SidecarError::Contract(format!("initial sync failed: {error}")))?;
+        let indexed_paths: Vec<String> = {
+            let mut statement = self.connection.prepare("SELECT path FROM files")?;
+            let rows = statement.query_map([], |row| row.get(0))?;
+            rows.collect::<Result<_, _>>()?
+        };
+        let file_count = indexed_paths
+            .iter()
+            .filter(|path| Path::new(path).starts_with(&root))
+            .count();
+        eprintln!("Watching {file_count} files in {}", root.display());
+
+        let debounce = Duration::from_millis(500);
+        let poll_interval = Duration::from_millis(100);
+        let mut deadline = None;
+        loop {
+            if stop.load(Ordering::SeqCst) {
+                return Ok(());
+            }
+            let timeout = deadline
+                .map(|at: Instant| {
+                    at.saturating_duration_since(Instant::now())
+                        .min(poll_interval)
+                })
+                .unwrap_or(poll_interval);
+            match receiver.recv_timeout(timeout) {
+                Ok(Ok(event)) => {
+                    if matches!(
+                        event.kind,
+                        EventKind::Create(_) | EventKind::Modify(_) | EventKind::Remove(_)
+                    ) {
+                        deadline = Some(Instant::now() + debounce);
+                    }
+                }
+                Ok(Err(error)) => eprintln!("Watcher error: {error}"),
+                Err(RecvTimeoutError::Timeout) => {
+                    if deadline.is_some_and(|at| Instant::now() >= at) {
+                        deadline = None;
+                        if let Err(error) = self.refresh_external_source(&root) {
+                            if fs::metadata(&root).is_err_and(|source_error| {
+                                source_error.kind() == io::ErrorKind::NotFound
+                            }) {
+                                if let Err(prune_error) = self.remove_external_source(&root) {
+                                    eprintln!("Incremental re-index error: {prune_error}");
+                                }
+                            } else {
+                                eprintln!("Incremental re-index error: {error}");
+                            }
+                        }
+                    }
+                }
+                Err(RecvTimeoutError::Disconnected) => {
+                    return Err(SidecarError::Contract(
+                        "watcher event channel closed".to_owned(),
+                    ));
+                }
+            }
+        }
     }
 
     /// Deletes only index rows rooted under an external source.
@@ -1936,7 +2032,12 @@ mod source_tests {
     use std::{
         fs,
         path::{Path, PathBuf},
-        time::SystemTime,
+        sync::{
+            Arc,
+            atomic::{AtomicBool, Ordering},
+        },
+        thread,
+        time::{Duration, Instant, SystemTime},
     };
 
     use super::{MAX_EXTERNAL_TEXT_FILE_SIZE, SearchSource, Sidecar, SourceRegistry};
@@ -2216,5 +2317,79 @@ mod source_tests {
 
         let _ = fs::remove_dir_all(vault);
         let _ = fs::remove_dir_all(source_root);
+    }
+
+    #[test]
+    fn external_source_watch_syncs_nested_create_modify_delete_and_stops() {
+        let vault = temp_dir("source-watch-vault");
+        let source_root = temp_dir("source-watch-root");
+        let nested = source_root.join("nested");
+        fs::create_dir_all(&nested).expect("create initial nested directory");
+        let existing = nested.join("existing.md");
+        fs::write(&existing, "initialwatchmarker").expect("write existing source");
+        SourceRegistry::open(&vault)
+            .expect("registry")
+            .add(&source_root)
+            .expect("register source");
+        let database = vault.join(".symdesk/watch-sidecar.db");
+        let observer = Sidecar::open(&database).expect("observer sidecar");
+        let stop = Arc::new(AtomicBool::new(false));
+        let worker_stop = Arc::clone(&stop);
+        let worker_root = source_root.clone();
+        let worker_database = database.clone();
+        let worker = thread::spawn(move || {
+            Sidecar::open(&worker_database)
+                .expect("watch sidecar")
+                .watch_external_source(&worker_root, &worker_stop)
+        });
+
+        fn wait_for_query(sidecar: &Sidecar, vault: &Path, query: &str, found: bool) {
+            let deadline = Instant::now() + Duration::from_secs(8);
+            while Instant::now() < deadline {
+                let actual = !sidecar
+                    .search_with_sources(vault, query)
+                    .expect("watch search")
+                    .is_empty();
+                if actual == found {
+                    return;
+                }
+                thread::sleep(Duration::from_millis(40));
+            }
+            assert_eq!(
+                !sidecar
+                    .search_with_sources(vault, query)
+                    .expect("final watch search")
+                    .is_empty(),
+                found,
+                "query state did not settle for {query:?}"
+            );
+        }
+
+        wait_for_query(&observer, &vault, "initialwatchmarker", true);
+        fs::write(&existing, "modifiedwatchmarker with a different size")
+            .expect("modify existing source");
+        wait_for_query(&observer, &vault, "initialwatchmarker", false);
+        wait_for_query(&observer, &vault, "modifiedwatchmarker", true);
+
+        let new_dir = source_root.join("new-nested").join("deeper");
+        fs::create_dir_all(&new_dir).expect("create watched nested directories");
+        let created = new_dir.join("created.md");
+        fs::write(&created, "createdwatchmarker").expect("create nested source");
+        wait_for_query(&observer, &vault, "createdwatchmarker", true);
+        fs::remove_file(&created).expect("delete nested source");
+        wait_for_query(&observer, &vault, "createdwatchmarker", false);
+
+        let root_deleted = source_root.join("root-deleted.md");
+        fs::write(&root_deleted, "rootdeletedwatchmarker").expect("write root-delete source");
+        wait_for_query(&observer, &vault, "rootdeletedwatchmarker", true);
+        fs::remove_dir_all(&source_root).expect("delete watched source root");
+        wait_for_query(&observer, &vault, "rootdeletedwatchmarker", false);
+
+        stop.store(true, Ordering::SeqCst);
+        worker
+            .join()
+            .expect("watch worker thread")
+            .expect("watch stops cleanly");
+        let _ = fs::remove_dir_all(vault);
     }
 }

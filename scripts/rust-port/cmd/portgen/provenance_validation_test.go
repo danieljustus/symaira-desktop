@@ -32,6 +32,12 @@ func TestSanitizedGitCommandTrustsOnlyItsCheckout(t *testing.T) {
 	if err := verifyCleanWorktree(repoRoot); err != nil {
 		t.Fatalf("verifyCleanWorktree() error = %v", err)
 	}
+	if err := os.WriteFile(filepath.Join(repoRoot, "untracked_generator_test.go"), []byte("package fixture\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := verifyCleanWorktree(repoRoot); err == nil {
+		t.Fatal("verifyCleanWorktree() accepted an untracked Go generator")
+	}
 }
 
 func TestFixtureCheckRegistryCoversProvenanceManifest(t *testing.T) {

@@ -130,6 +130,9 @@ func runGenerate(repoRoot, commit, release string) {
 	if err := verifyCleanWorktree(repoRoot); err != nil {
 		fatal("generation requires a clean worktree: %v", err)
 	}
+	if err := verifyNoUntrackedGeneratorInputs(repoRoot); err != nil {
+		fatal("generation source guard: %v", err)
+	}
 	fmt.Printf("Generating Go oracle fixtures (oracle %s / %s)...\n", commit, release)
 
 	// 1. Run package-local generators

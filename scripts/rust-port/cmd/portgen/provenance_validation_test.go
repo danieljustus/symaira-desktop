@@ -32,11 +32,26 @@ func TestSanitizedGitCommandTrustsOnlyItsCheckout(t *testing.T) {
 	if err := verifyCleanWorktree(repoRoot); err != nil {
 		t.Fatalf("verifyCleanWorktree() error = %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(repoRoot, "untracked_generator_test.go"), []byte("package fixture\n"), 0o600); err != nil {
+	if err := verifyNoUntrackedGeneratorInputs(repoRoot); err != nil {
+		t.Fatalf("verifyNoUntrackedGeneratorInputs() error = %v", err)
+	}
+	writePortgenTestFile(t, repoRoot, "scratch.txt", "unrelated\n")
+	if err := verifyCleanWorktree(repoRoot); err != nil {
+		t.Fatalf("verifyCleanWorktree() rejected unrelated scratch: %v", err)
+	}
+	writePortgenTestFile(t, repoRoot, "internal/core/untracked_test.go", "package core\n")
+	if err := verifyNoUntrackedGeneratorInputs(repoRoot); err == nil {
+		t.Fatal("generation accepted an untracked Go generator")
+	}
+	if err := os.Remove(filepath.Join(repoRoot, "internal/core/untracked_test.go")); err != nil {
 		t.Fatal(err)
 	}
-	if err := verifyCleanWorktree(repoRoot); err == nil {
-		t.Fatal("verifyCleanWorktree() accepted an untracked Go generator")
+	if err := os.WriteFile(filepath.Join(repoRoot, ".git/info/exclude"), []byte("ignored_test.go\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	writePortgenTestFile(t, repoRoot, "internal/core/ignored_test.go", "package core\n")
+	if err := verifyNoUntrackedGeneratorInputs(repoRoot); err == nil {
+		t.Fatal("generation accepted an ignored Go generator")
 	}
 }
 

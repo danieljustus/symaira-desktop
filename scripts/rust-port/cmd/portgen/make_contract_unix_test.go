@@ -88,3 +88,35 @@ func TestMakeGenerationEnvironmentCannotBeCommandLineOverridden(t *testing.T) {
 		t.Fatal("fixture-generation targets emitted no Go commands")
 	}
 }
+
+func TestMakePortFixtureGenerationUsesArtifactFlow(t *testing.T) {
+	repoRoot, err := findRepoRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	generate := exec.Command("make", "-n", "port-fixtures-generate")
+	generate.Dir = repoRoot
+	generated, err := generate.CombinedOutput()
+	if err != nil {
+		t.Fatalf("make dry run generation: %v\n%s", err, generated)
+	}
+	text := string(generated)
+	if strings.Count(text, "./scripts/rust-port/cmd/portgen") != 1 {
+		t.Fatalf("port-fixtures-generate must invoke only the isolated portgen flow:\n%s", text)
+	}
+	for _, direct := range []string{"cmd/configgen", "cmd/coregen", "cmd/querygen", "cmd/vaultgen", "cmd/vaultfsgen", "cmd/typedvaultgen"} {
+		if strings.Contains(text, direct) {
+			t.Fatalf("port-fixtures-generate still invokes in-place prerequisite %s:\n%s", direct, text)
+		}
+	}
+
+	apply := exec.Command("make", "-n", "PORT_FIXTURES_ARTIFACT=reviewed.patch", "port-fixtures-apply")
+	apply.Dir = repoRoot
+	applied, err := apply.CombinedOutput()
+	if err != nil {
+		t.Fatalf("make dry run apply: %v\n%s", err, applied)
+	}
+	if !strings.Contains(string(applied), `--apply-artifact "reviewed.patch"`) {
+		t.Fatalf("port-fixtures-apply did not pass the explicit reviewed artifact:\n%s", applied)
+	}
+}

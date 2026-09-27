@@ -347,6 +347,54 @@
       "body": "{\"arguments\":[\"ask\",\"hello\"]}"
     },
     {
+      "id": "ai-transform-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "body": "{\"text\":\"short input\"}"
+    },
+    {
+      "id": "ai-transform-empty-text",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"  \\n \"}"
+    },
+    {
+      "id": "ai-transform-null-strings",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":null,\"intent\":null}"
+    },
+    {
+      "id": "ai-transform-no-provider",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"short input\"}"
+    },
+    {
+      "id": "ai-transform-trailing-json",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"short input\"}{\"ignored\":true}"
+    },
+    {
+      "id": "ai-transform-named-user-no-provider",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "named",
+      "body": "{\"text\":\"short input\",\"intent\":\"rewrite\"}",
+      "populate_named_user": true
+    },
+    {
+      "id": "ai-transform-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid"
+    },
+    {
       "id": "command-admin-invalid-subcommand",
       "method": "POST",
       "path": "/api/v1/command",

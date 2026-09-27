@@ -17,6 +17,7 @@ mod snapshot_cache_contracts;
 use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 
 use std::{
+    collections::BTreeMap,
     ffi::{OsStr, OsString},
     fmt::Write as _,
     fs,
@@ -71,6 +72,7 @@ const MAX_WORKER_LEASE_BODY_BYTES: usize = 64 << 10;
 const MAX_WORKER_FAIL_BODY_BYTES: usize = 256 << 10;
 const MAX_WORKER_COMPLETE_BODY_BYTES: usize = 24 << 20;
 const MAX_COMMAND_BODY_BYTES: usize = (2 << 20) + 1;
+const MAX_AI_TRANSFORM_BODY_BYTES: usize = 256 << 10;
 const MAX_COMMAND_OUTPUT_BYTES: usize = 32 << 20;
 const MAX_COMMAND_STDERR_BYTES: usize = 1 << 20;
 const MAX_UPLOAD_BYTES: u64 = 100 << 20;
@@ -182,6 +184,7 @@ struct AuthThrottle {
 struct AuthFailure {
     auth: FailureBucket,
     share: FailureBucket,
+    ai: FailureBucket,
     last_seen: SystemTime,
 }
 
@@ -198,6 +201,9 @@ const AUTH_MAX: u32 = 5;
 const SHARE_WINDOW: Duration = Duration::from_secs(30);
 const SHARE_BLOCK: Duration = Duration::from_secs(60);
 const SHARE_MAX: u32 = 3;
+const AI_WINDOW: Duration = Duration::from_secs(30);
+const AI_BLOCK: Duration = Duration::from_secs(60);
+const AI_MAX: u32 = 12;
 const AUTH_MAX_ENTRIES: usize = 5_000;
 
 #[derive(Debug, Deserialize)]
@@ -439,6 +445,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/jobs", get(handle_jobs))
         .route("/api/v1/jobs/retry", axum::routing::post(handle_retry_job))
         .route("/api/v1/command", post(handle_command_validation))
+        .route("/api/v1/ai/transform", post(handle_ai_transform))
         .route("/api/v1/worker/input", get(handle_worker_input))
         .route(
             "/api/v1/worker/fail",
@@ -573,6 +580,9 @@ fn named_user_route_allowed(role: &AuthRole, method: &Method, path: &str) -> boo
     {
         return true;
     }
+    if path == "/api/v1/ai/transform" && method == Method::POST {
+        return true;
+    }
     if read_method
         && (path == "/api/v1/snapshot"
             || path == "/api/v1/notebooks"
@@ -610,6 +620,137 @@ fn route_requires_admin(method: &Method, path: &str) -> bool {
 struct RemoteCommandRequest {
     arguments: Option<Vec<String>>,
     stdin: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AiTransformRequest {
+    #[serde(default, deserialize_with = "deserialize_null_string")]
+    text: String,
+    #[serde(default, deserialize_with = "deserialize_null_string")]
+    intent: String,
+}
+
+async fn handle_ai_transform(
+    State(state): State<Arc<AppState>>,
+    request: Request<Body>,
+) -> Response {
+    if let Some(response) = ai_rate_limit_response(&state, &request) {
+        return response;
+    }
+    let body = match read_capped_body(
+        request.into_body(),
+        MAX_AI_TRANSFORM_BODY_BYTES.saturating_add(1),
+    )
+    .await
+    {
+        Ok(body) => body,
+        Err(error) => {
+            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+        }
+    };
+    let mut input: AiTransformRequest = match decode_first_json_value(&body) {
+        Ok(input) => input,
+        Err(error) => {
+            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+        }
+    };
+    input.text = input.text.trim().to_owned();
+    input.intent = input.intent.trim().to_owned();
+    if input.text.is_empty() {
+        return json_error(StatusCode::BAD_REQUEST, "text is required");
+    }
+    if input.intent.is_empty() {
+        input.intent = "summarize".to_owned();
+    }
+
+    let config = match load_ai_transform_config() {
+        Ok(config) => config,
+        Err(error) => {
+            return json_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                &format!("retrieval unavailable: {error}"),
+            );
+        }
+    };
+    if !ai_transform_has_no_provider(&config) {
+        return json_error(
+            StatusCode::NOT_IMPLEMENTED,
+            "configured AI provider streaming is not implemented",
+        );
+    }
+
+    // The provider-free transform CLI path emits one JSON chunk. Adapt it to
+    // the public HTTP AIEvent envelope without starting configured providers.
+    let response =
+        execute_remote_command(&state, &["transform".to_owned(), input.intent], &input.text).await;
+    if response.status() != StatusCode::OK {
+        return response;
+    }
+    let output = match to_bytes(response.into_body(), MAX_COMMAND_OUTPUT_BYTES).await {
+        Ok(output) => output,
+        Err(error) => {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+        }
+    };
+    let chunk: serde_json::Value = match serde_json::from_slice(&output) {
+        Ok(chunk) => chunk,
+        Err(error) => {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+        }
+    };
+    let Some(text) = chunk.get("chunk").and_then(serde_json::Value::as_str) else {
+        return json_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "transform returned no chunk",
+        );
+    };
+    let mut answer = match serde_json::to_vec(&json!({"type": "answer", "text": text})) {
+        Ok(body) => body,
+        Err(error) => {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+        }
+    };
+    answer.push(b'\n');
+    let (sender, receiver) = mpsc::channel(2);
+    if sender.send(Ok(Bytes::from(answer))).await.is_err()
+        || sender
+            .send(Ok(Bytes::from_static(b"{\"type\":\"done\"}\n")))
+            .await
+            .is_err()
+    {
+        return json_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "failed to build transform stream",
+        );
+    }
+    drop(sender);
+    let mut response = Response::new(Body::from_stream(CommandBodyStream(receiver)));
+    *response.status_mut() = StatusCode::OK;
+    response.headers_mut().insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("application/x-ndjson"),
+    );
+    response
+}
+
+fn load_ai_transform_config() -> Result<symdesk_core::config::Config, String> {
+    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let path = PathBuf::from(symdesk_core::config::global_path(&environment));
+    let input = match fs::read_to_string(path) {
+        Ok(input) => Some(input),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => None,
+        Err(error) => return Err(format!("failed to read config file: {error}")),
+    };
+    symdesk_core::config::load(input.as_deref(), &environment)
+}
+
+fn ai_transform_has_no_provider(config: &symdesk_core::config::Config) -> bool {
+    match config.llm_provider.as_str() {
+        "" | "ollama" => config.ollama_url.is_empty(),
+        "anthropic" => !config.has_api_key(),
+        _ => false,
+    }
 }
 
 async fn handle_command_validation(
@@ -1172,16 +1313,40 @@ fn client_ip(request: &Request<Body>) -> String {
         .unwrap_or_default()
 }
 
+fn ai_rate_limit_response(state: &AppState, request: &Request<Body>) -> Option<Response> {
+    let retry_after = state
+        .auth_failures
+        .lock()
+        .ok()
+        .and_then(|mut throttle| throttle.record_ai(&client_ip(request)));
+    retry_after.map(|retry_after| {
+        let mut response = json_error(
+            StatusCode::TOO_MANY_REQUESTS,
+            "too many AI requests — try again shortly",
+        );
+        response.headers_mut().insert(
+            header::RETRY_AFTER,
+            HeaderValue::from_str(&retry_after_seconds(retry_after).to_string())
+                .unwrap_or_else(|_| HeaderValue::from_static("1")),
+        );
+        response
+    })
+}
+
 impl AuthThrottle {
     fn record(&mut self, ip: &str) -> Option<Duration> {
-        self.record_bucket(ip, false)
+        self.record_bucket(ip, false, false)
     }
 
     fn record_share(&mut self, ip: &str) -> Option<Duration> {
-        self.record_bucket(ip, true)
+        self.record_bucket(ip, true, false)
     }
 
-    fn record_bucket(&mut self, ip: &str, share: bool) -> Option<Duration> {
+    fn record_ai(&mut self, ip: &str) -> Option<Duration> {
+        self.record_bucket(ip, false, true)
+    }
+
+    fn record_bucket(&mut self, ip: &str, share: bool, ai: bool) -> Option<Duration> {
         let now = SystemTime::now();
         self.entries.retain(|_, failure| {
             now.duration_since(failure.last_seen)
@@ -1204,16 +1369,21 @@ impl AuthThrottle {
             .or_insert_with(|| AuthFailure {
                 auth: FailureBucket::default(),
                 share: FailureBucket::default(),
+                ai: FailureBucket::default(),
                 last_seen: now,
             });
         failure.last_seen = now;
         let (window, max, block) = if share {
             (SHARE_WINDOW, SHARE_MAX, SHARE_BLOCK)
+        } else if ai {
+            (AI_WINDOW, AI_MAX, AI_BLOCK)
         } else {
             (AUTH_WINDOW, AUTH_MAX, AUTH_BLOCK)
         };
         let bucket = if share {
             &mut failure.share
+        } else if ai {
+            &mut failure.ai
         } else {
             &mut failure.auth
         };
@@ -1304,7 +1474,8 @@ async fn normalize_method_not_allowed(request: Request<Body>, next: Next) -> Res
             | "/api/v1/command"
             | "/api/v1/worker/lease"
             | "/api/v1/worker/complete"
-            | "/api/v1/worker/fail" => "POST",
+            | "/api/v1/worker/fail"
+            | "/api/v1/ai/transform" => "POST",
             path if path.starts_with("/api/v1/share/") => "DELETE",
             _ => "GET, HEAD",
         };
@@ -5040,6 +5211,56 @@ mod tests {
         assert!(throttle.record_share("127.0.0.1").is_none());
         assert_eq!(throttle.record_share("127.0.0.1"), Some(SHARE_BLOCK));
         assert!(throttle.record("127.0.0.1").is_some());
+    }
+
+    #[test]
+    fn ai_requests_use_a_separate_go_sized_bucket() {
+        let mut throttle = AuthThrottle::default();
+        for _ in 0..AUTH_MAX {
+            throttle.record("127.0.0.1");
+        }
+        for _ in 0..AI_MAX - 1 {
+            assert!(throttle.record_ai("127.0.0.1").is_none());
+        }
+        assert_eq!(throttle.record_ai("127.0.0.1"), Some(AI_BLOCK));
+        assert!(throttle.record_ai("127.0.0.1").is_some());
+        assert_eq!(throttle.record_ai("127.0.0.2"), None);
+    }
+
+    #[test]
+    fn transform_fallback_only_runs_without_a_configured_provider() {
+        let default = symdesk_core::config::Config::default();
+        assert!(ai_transform_has_no_provider(&default));
+
+        let mut ollama = default.clone();
+        ollama.ollama_url = "http://127.0.0.1:11434".to_owned();
+        assert!(!ai_transform_has_no_provider(&ollama));
+
+        let anthropic_without_key = symdesk_core::config::load(
+            None,
+            &BTreeMap::from([(
+                String::from("SYMDESK_LLM_PROVIDER"),
+                String::from("anthropic"),
+            )]),
+        )
+        .expect("load unconfigured Anthropic provider");
+        assert!(ai_transform_has_no_provider(&anthropic_without_key));
+
+        let anthropic_with_key = symdesk_core::config::load(
+            None,
+            &BTreeMap::from([
+                (
+                    String::from("SYMDESK_LLM_PROVIDER"),
+                    String::from("anthropic"),
+                ),
+                (
+                    String::from("SYMDESK_LLM_API_KEY"),
+                    String::from("test-key"),
+                ),
+            ]),
+        )
+        .expect("load configured Anthropic provider");
+        assert!(!ai_transform_has_no_provider(&anthropic_with_key));
     }
 
     #[test]

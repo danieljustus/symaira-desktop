@@ -1430,6 +1430,7 @@ dependencies = [
  "same-file",
  "serde",
  "serde_json",
+ "symdesk-core",
  "symdesk-index",
  "symdesk-vault",
  "time",

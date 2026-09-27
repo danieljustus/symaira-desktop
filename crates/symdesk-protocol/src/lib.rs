@@ -6337,10 +6337,11 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
         let body = to_bytes(response.into_body(), 1 << 20).await.unwrap();
         let body_text = String::from_utf8_lossy(&body);
+        let expected_path = format!("notebooks{}research.md", std::path::MAIN_SEPARATOR);
         assert!(
-            body_text.starts_with(
-                r#"{"id":"research","path":"notebooks/research.md","title":"Research","created":"","sources":[{"path":"../outside.md"#
-            ),
+            body_text.starts_with(&format!(
+                r#"{{"id":"research","path":"{expected_path}","title":"Research","created":"","sources":[{{"path":"../outside.md"#
+            )),
             "unexpected notebook JSON order: {body_text}"
         );
         let value: serde_json::Value = serde_json::from_slice(&body).unwrap();

@@ -78,6 +78,7 @@ type httpCase struct {
 	ProviderAskExpectedSource   bool              `json:"provider_ask_expected_source,omitempty"`
 	ProviderAskNotebookBoundary bool              `json:"provider_ask_notebook_boundary,omitempty"`
 	ProviderDisconnect          bool              `json:"provider_disconnect,omitempty"`
+	DisconnectAfterEvents       int               `json:"disconnect_after_events,omitempty"`
 	ProviderFailure             bool              `json:"provider_failure,omitempty"`
 	ProviderOversized           bool              `json:"provider_oversized,omitempty"`
 }

@@ -73,6 +73,7 @@ func generatedHTTP() httpSuite {
 		{ID: "ai-question-local-ollama-empty-results", Method: "POST", Path: "/api/v1/ai/ask", Auth: "valid", Body: `{"query":"provider ask question"}`, ProviderAskOllama: true},
 		{ID: "ai-question-local-ollama-worker-denied-source-not-forwarded", Method: "POST", Path: "/api/v1/ai/ask", Auth: "worker", Body: `{"query":"Hello"}`, ProviderAskOllama: true, PopulateWorkerACL: true},
 		{ID: "ai-question-local-ollama-with-citation", Method: "POST", Path: "/api/v1/ai/ask", Auth: "valid", Body: `{"query":"Body"}`, ProviderAskOllama: true, ProviderAskExpectedSource: true},
+		{ID: "ai-question-local-ollama-disconnect", Method: "POST", Path: "/api/v1/ai/ask", Auth: "valid", Body: `{"query":"disconnect provider input"}`, ProviderAskOllama: true, ProviderDisconnect: true, DisconnectAfterEvents: 4},
 		{ID: "ai-question-local-ollama-notebook-501", Method: "POST", Path: "/api/v1/ai/ask", Auth: "valid", Body: `{"query":"Body","notebook":"research"}`, ProviderAskNotebookBoundary: true},
 		{ID: "ai-transform-openai-provider-falls-back-to-local-ollama", Method: "POST", Path: "/api/v1/ai/transform", Auth: "valid", Body: `{"text":"short provider input"}`, ProviderOpenAIFallback: true},
 		{ID: "ai-transform-trailing-json", Method: "POST", Path: "/api/v1/ai/transform", Auth: "valid", Body: `{"text":"short input"}{"ignored":true}`},

@@ -67,6 +67,7 @@ type httpCase struct {
 	ProviderAskExpectedSource   bool              `json:"provider_ask_expected_source,omitempty"`
 	ProviderAskNotebookBoundary bool              `json:"provider_ask_notebook_boundary,omitempty"`
 	ProviderDisconnect          bool              `json:"provider_disconnect,omitempty"`
+	DisconnectAfterEvents       int               `json:"disconnect_after_events,omitempty"`
 	ProviderFailure             bool              `json:"provider_failure,omitempty"`
 	ProviderOversized           bool              `json:"provider_oversized,omitempty"`
 }
@@ -384,8 +385,10 @@ func run() (runErr error) {
 			}
 		}
 		if tc.ProviderDisconnect {
-			if err := provider.assertRequests(2, "disconnect provider input"); err != nil {
-				fatal("%s fake-provider request: %v", tc.ID, err)
+			if !tc.ProviderAskOllama {
+				if err := provider.assertRequests(2, "disconnect provider input"); err != nil {
+					fatal("%s fake-provider request: %v", tc.ID, err)
+				}
 			}
 			if err := provider.assertCancellations(2); err != nil {
 				fatal("%s fake-provider cancellation: %v", tc.ID, err)
@@ -1684,6 +1687,9 @@ func (f *fakeOllama) assertCancellations(count int) error {
 }
 
 func (s *runningServer) requestDisconnect(tc httpCase) (transcript, error) {
+	if tc.DisconnectAfterEvents < 0 || tc.DisconnectAfterEvents > 32 {
+		return transcript{}, fmt.Errorf("fixture disconnect_after_events exceeds 32-event safety bound")
+	}
 	request, err := http.NewRequest(tc.Method, s.base+tc.Path, strings.NewReader(tc.Body))
 	if err != nil {
 		return transcript{}, err
@@ -1696,11 +1702,21 @@ func (s *runningServer) requestDisconnect(tc httpCase) (transcript, error) {
 	if err != nil {
 		return transcript{}, err
 	}
-	line, err := bufio.NewReader(io.LimitReader(response.Body, 1<<20)).ReadBytes('\n')
-	closeErr := response.Body.Close()
-	if err != nil {
-		return transcript{}, fmt.Errorf("read first stream event: %w", err)
+	eventCount := tc.DisconnectAfterEvents
+	if eventCount <= 0 {
+		eventCount = 1
 	}
+	reader := bufio.NewReader(io.LimitReader(response.Body, 1<<20))
+	var stream bytes.Buffer
+	for eventIndex := range eventCount {
+		line, readErr := reader.ReadBytes('\n')
+		if readErr != nil {
+			_ = response.Body.Close()
+			return transcript{}, fmt.Errorf("read stream event %d: %w", eventIndex+1, readErr)
+		}
+		_, _ = stream.Write(line)
+	}
+	closeErr := response.Body.Close()
 	if closeErr != nil {
 		return transcript{}, fmt.Errorf("close disconnected response: %w", closeErr)
 	}
@@ -1708,7 +1724,7 @@ func (s *runningServer) requestDisconnect(tc httpCase) (transcript, error) {
 	if value := response.Header.Get("Content-Type"); value != "" {
 		headers["content-type"] = value
 	}
-	return transcript{Status: response.StatusCode, Headers: headers, Body: normalizeBody(line)}, nil
+	return transcript{Status: response.StatusCode, Headers: headers, Body: normalizeBody(stream.Bytes())}, nil
 }
 
 func startServer(binary, vault string) *runningServer {

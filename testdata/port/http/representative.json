@@ -432,6 +432,16 @@
       "provider_ask_expected_source": true
     },
     {
+      "id": "ai-question-local-ollama-disconnect",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"disconnect provider input\"}",
+      "provider_ask_ollama": true,
+      "provider_disconnect": true,
+      "disconnect_after_events": 4
+    },
+    {
       "id": "ai-question-local-ollama-notebook-501",
       "method": "POST",
       "path": "/api/v1/ai/ask",

@@ -765,7 +765,7 @@ func completedWorkerJob(vault string, response []byte) ([]byte, error) {
 		return nil, err
 	}
 	for _, job := range []map[string]any{responseJob, persistedJob} {
-		if job["id"] != "00000000000000000000000000000004" || job["status"] != "completed" || job["worker_id"] != "worker-1" || job["engine"] != "ollama" || job["model"] != "gemma3" || job["note_path"] != "inbox/c-00000000.md" || job["lease_until"] != nil || job["error"] != nil {
+		if job["id"] != "00000000000000000000000000000004" || job["status"] != "completed" || job["worker_id"] != "worker-1" || job["engine"] != "yes" || job["model"] != "123" || job["note_path"] != "inbox/c-00000000.md" || job["lease_until"] != nil || job["error"] != nil {
 			return nil, fmt.Errorf("wrong worker completion state: %q", response)
 		}
 		updatedText, ok := job["updated_at"].(string)
@@ -826,7 +826,7 @@ func completedNote(vault string, response []byte) ([]byte, error) {
 	if err != nil || time.Since(createdAt) > 5*time.Minute || time.Until(createdAt) > 5*time.Minute {
 		return nil, fmt.Errorf("created is not a current timestamp: %v", created)
 	}
-	if frontmatter["title"] != "c" || frontmatter["archive_path"] != "inbox/c.png" || frontmatter["confidence"] != 0 || frontmatter["ocr_engine"] != "ollama" || frontmatter["ocr_model"] != "gemma3" || frontmatter["status"] != "needs_review" {
+	if frontmatter["title"] != "c" || frontmatter["archive_path"] != "inbox/c.png" || frontmatter["confidence"] != 0 || frontmatter["ocr_engine"] != "yes" || frontmatter["ocr_model"] != "123" || frontmatter["status"] != "needs_review" {
 		return nil, fmt.Errorf("unexpected note frontmatter: %v", frontmatter)
 	}
 	frontmatter["created"] = "<dynamic>"
@@ -838,11 +838,20 @@ func completedNote(vault string, response []byte) ([]byte, error) {
 	if err := assertIndexedWrite(vault, job.NotePath, string(note)); err != nil {
 		return nil, err
 	}
-	metadata, err := json.Marshal(frontmatter)
-	if err != nil {
-		return nil, err
+	// Compare the generated YAML bytes too: parsed equality would miss scalar
+	// quoting differences (for example, Go quotes the strings "yes" and "123").
+	lines := bytes.Split(note, []byte("\n"))
+	createdLines := 0
+	for index, line := range lines {
+		if bytes.HasPrefix(line, []byte("created: ")) {
+			lines[index] = []byte(`created: "<dynamic>"`)
+			createdLines++
+		}
 	}
-	return append(metadata, body...), nil
+	if createdLines != 1 {
+		return nil, fmt.Errorf("expected one created scalar, found %d", createdLines)
+	}
+	return bytes.Join(lines, []byte("\n")), nil
 }
 
 func normalizeIngestJob(body []byte) ([]byte, error) {

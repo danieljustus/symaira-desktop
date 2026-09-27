@@ -1446,43 +1446,71 @@ fn write_completed_note(
 }
 
 fn yaml_scalar(value: &str) -> String {
-    let plain = !value.is_empty()
-        && !value.trim().is_empty()
-        && value.trim() == value
-        && !value.chars().any(|character| {
-            character.is_control()
-                || matches!(
-                    character,
-                    ':' | '#'
-                        | '['
-                        | ']'
-                        | '{'
-                        | '}'
-                        | ','
-                        | '&'
-                        | '*'
-                        | '!'
-                        | '|'
-                        | '>'
-                        | '\''
-                        | '"'
-                        | '%'
-                        | '@'
-                        | '`'
-                )
-        })
-        && !matches!(
-            value,
-            "null" | "Null" | "NULL" | "~" | "true" | "True" | "TRUE" | "false" | "False" | "FALSE"
-        )
+    if value.is_empty() {
+        return "\"\"".to_owned();
+    }
+    if value.contains('\n')
         && !value
             .chars()
-            .all(|character| character.is_ascii_digit() || character == '.' || character == '-');
-    if plain {
-        value.to_owned()
-    } else {
-        serde_json::to_string(value).unwrap_or_else(|_| "\"\"".to_owned())
+            .any(|character| character.is_control() && character != '\n')
+    {
+        let trailing_newlines = value
+            .chars()
+            .rev()
+            .take_while(|character| *character == '\n')
+            .count();
+        let body = value.trim_end_matches('\n');
+        let chomping = match trailing_newlines {
+            0 => "-",
+            1 => "",
+            _ => "+",
+        };
+        let mut scalar = format!("|{chomping}\n");
+        for line in body.split('\n') {
+            scalar.push_str("    ");
+            scalar.push_str(line);
+            scalar.push('\n');
+        }
+        return scalar;
     }
+    if yaml_single_quoted(value) {
+        return format!("'{}'", value.replace('\'', "''"));
+    }
+    if value.chars().any(char::is_control) || yaml_resolves_to_non_string(value) {
+        return serde_json::to_string(value).unwrap_or_else(|_| "\"\"".to_owned());
+    }
+    value.to_owned()
+}
+
+fn yaml_single_quoted(value: &str) -> bool {
+    value.trim() != value
+        || value == "-"
+        || value == "..."
+        || value == "---"
+        || value.starts_with('#')
+        || value.contains(": ")
+        || value.contains(" #")
+}
+
+fn yaml_resolves_to_non_string(value: &str) -> bool {
+    let lowercase = value.to_ascii_lowercase();
+    if matches!(
+        lowercase.as_str(),
+        "null" | "~" | "true" | "false" | "yes" | "no" | "on" | "off"
+    ) || matches!(lowercase.as_str(), ".inf" | "+.inf" | "-.inf" | ".nan")
+    {
+        return true;
+    }
+    if value.parse::<i64>().is_ok() || value.parse::<f64>().is_ok() {
+        return true;
+    }
+    let bytes = value.as_bytes();
+    bytes.len() >= 10
+        && bytes[0..4].iter().all(u8::is_ascii_digit)
+        && bytes[4] == b'-'
+        && bytes[5..7].iter().all(u8::is_ascii_digit)
+        && bytes[7] == b'-'
+        && bytes[8..10].iter().all(u8::is_ascii_digit)
 }
 
 fn decode_first_json_value<T>(bytes: &[u8]) -> Result<T, serde_json::Error>
@@ -2851,6 +2879,22 @@ async fn shutdown_signal() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn completion_yaml_scalars_match_go_yaml_v3_style_choices() {
+        for (value, expected) in [
+            ("yes", "\"yes\""),
+            ("on", "\"on\""),
+            ("2026-01-02", "\"2026-01-02\""),
+            ("123", "\"123\""),
+            ("a: b", "'a: b'"),
+            ("x #y", "'x #y'"),
+            (" leading", "' leading'"),
+            ("é", "é"),
+        ] {
+            assert_eq!(yaml_scalar(value), expected, "scalar {value:?}");
+        }
+    }
 
     #[tokio::test]
     async fn create_share_matches_admin_contract_and_persists_only_token_hash() {

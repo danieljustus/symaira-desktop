@@ -585,7 +585,7 @@
       "method": "POST",
       "path": "/api/v1/worker/complete",
       "auth": "valid",
-      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"  Invoice total: 42 EUR  \",\"engine\":\"ollama\",\"model\":\"gemma3\"}",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"  Invoice total: 42 EUR  \",\"engine\":\"yes\",\"model\":\"123\"}",
       "populate_worker_job": true
     },
     {

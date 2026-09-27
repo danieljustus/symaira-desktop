@@ -664,45 +664,14 @@ async fn handle_ai_transform(
         input.intent = "summarize".to_owned();
     }
 
-    let config = match load_ai_transform_config() {
-        Ok(config) => config,
-        Err(error) => {
-            return json_error(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                &format!("retrieval unavailable: {error}"),
-            );
-        }
-    };
-    if !ai_transform_has_no_provider(&config) {
+    // Go's service constructor falls back to DefaultConfig when config.Load
+    // fails. Resolve once here, then render the fallback directly so a child
+    // process cannot reload a changed provider config after this safety check.
+    let config = ai_transform_config_or_default(load_ai_transform_config());
+    let Some(text) = ai_transform_fallback_text(&config) else {
         return json_error(
             StatusCode::NOT_IMPLEMENTED,
             "configured AI provider streaming is not implemented",
-        );
-    }
-
-    // The provider-free transform CLI path emits one JSON chunk. Adapt it to
-    // the public HTTP AIEvent envelope without starting configured providers.
-    let response =
-        execute_remote_command(&state, &["transform".to_owned(), input.intent], &input.text).await;
-    if response.status() != StatusCode::OK {
-        return response;
-    }
-    let output = match to_bytes(response.into_body(), MAX_COMMAND_OUTPUT_BYTES).await {
-        Ok(output) => output,
-        Err(error) => {
-            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
-        }
-    };
-    let chunk: serde_json::Value = match serde_json::from_slice(&output) {
-        Ok(chunk) => chunk,
-        Err(error) => {
-            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
-        }
-    };
-    let Some(text) = chunk.get("chunk").and_then(serde_json::Value::as_str) else {
-        return json_error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "transform returned no chunk",
         );
     };
     let mut answer = match serde_json::to_vec(&json!({"type": "answer", "text": text})) {
@@ -745,11 +714,21 @@ fn load_ai_transform_config() -> Result<symdesk_core::config::Config, String> {
     symdesk_core::config::load(input.as_deref(), &environment)
 }
 
-fn ai_transform_has_no_provider(config: &symdesk_core::config::Config) -> bool {
+fn ai_transform_config_or_default(
+    config: Result<symdesk_core::config::Config, String>,
+) -> symdesk_core::config::Config {
+    config.unwrap_or_default()
+}
+
+fn ai_transform_fallback_text(config: &symdesk_core::config::Config) -> Option<&'static str> {
     match config.llm_provider.as_str() {
-        "" | "ollama" => config.ollama_url.is_empty(),
-        "anthropic" => !config.has_api_key(),
-        _ => false,
+        "" | "ollama" if config.ollama_url.is_empty() => Some(
+            "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n",
+        ),
+        "anthropic" if !config.has_api_key() => Some(
+            "⚠️ **AI feature not configured.**\n\nAnthropic API key could not be resolved (missing secret via symvault or environment variable).\n",
+        ),
+        _ => None,
     }
 }
 
@@ -5230,11 +5209,16 @@ mod tests {
     #[test]
     fn transform_fallback_only_runs_without_a_configured_provider() {
         let default = symdesk_core::config::Config::default();
-        assert!(ai_transform_has_no_provider(&default));
+        assert_eq!(
+            ai_transform_fallback_text(&default),
+            Some(
+                "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n"
+            )
+        );
 
         let mut ollama = default.clone();
         ollama.ollama_url = "http://127.0.0.1:11434".to_owned();
-        assert!(!ai_transform_has_no_provider(&ollama));
+        assert_eq!(ai_transform_fallback_text(&ollama), None);
 
         let anthropic_without_key = symdesk_core::config::load(
             None,
@@ -5244,7 +5228,12 @@ mod tests {
             )]),
         )
         .expect("load unconfigured Anthropic provider");
-        assert!(ai_transform_has_no_provider(&anthropic_without_key));
+        assert_eq!(
+            ai_transform_fallback_text(&anthropic_without_key),
+            Some(
+                "⚠️ **AI feature not configured.**\n\nAnthropic API key could not be resolved (missing secret via symvault or environment variable).\n"
+            )
+        );
 
         let anthropic_with_key = symdesk_core::config::load(
             None,
@@ -5260,7 +5249,27 @@ mod tests {
             ]),
         )
         .expect("load configured Anthropic provider");
-        assert!(!ai_transform_has_no_provider(&anthropic_with_key));
+        assert_eq!(ai_transform_fallback_text(&anthropic_with_key), None);
+
+        let env_overrides_file = symdesk_core::config::load(
+            Some("llm_provider = \"anthropic\"\nllm_api_key = \"file-key\"\n"),
+            &BTreeMap::from([(String::from("SYMDESK_LLM_PROVIDER"), String::from("ollama"))]),
+        )
+        .expect("load config with environment override");
+        assert_eq!(
+            ai_transform_fallback_text(&env_overrides_file),
+            Some(
+                "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n"
+            ),
+            "environment provider must take precedence over TOML"
+        );
+
+        let failed_load = ai_transform_config_or_default(Err("invalid TOML".to_owned()));
+        assert_eq!(
+            ai_transform_fallback_text(&failed_load),
+            ai_transform_fallback_text(&default),
+            "Go's service constructor uses DefaultConfig when config.Load fails"
+        );
     }
 
     #[test]

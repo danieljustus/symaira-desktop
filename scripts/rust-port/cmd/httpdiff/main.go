@@ -375,7 +375,7 @@ func run() (runErr error) {
 				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
 			}
 		}
-		if tc.ID == "worker-fail-valid" || tc.ID == "worker-fail-retry" {
+		if tc.ID == "worker-fail-valid" || tc.ID == "worker-fail-retry" || tc.ID == "worker-fail-named-worker" {
 			retry := tc.ID == "worker-fail-retry"
 			leftJob, err := failedWorkerJob(leftVault, leftResult.Body, retry)
 			if err != nil {
@@ -397,7 +397,7 @@ func run() (runErr error) {
 				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
 			}
 		}
-		if tc.ID == "worker-lease-valid" || tc.ID == "worker-lease-expired-reclaim" {
+		if tc.ID == "worker-lease-valid" || tc.ID == "worker-lease-expired-reclaim" || tc.ID == "worker-lease-named-worker" {
 			jobID := "00000000000000000000000000000001"
 			if tc.ID == "worker-lease-expired-reclaim" {
 				jobID = "00000000000000000000000000000005"
@@ -422,7 +422,7 @@ func run() (runErr error) {
 				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
 			}
 		}
-		if tc.ID == "worker-complete-valid" {
+		if tc.ID == "worker-complete-valid" || tc.ID == "worker-complete-named-worker" {
 			leftJob, err := completedWorkerJob(leftVault, leftResult.Body)
 			if err != nil {
 				fatal("%s Go persistence: %v", tc.ID, err)
@@ -1555,7 +1555,7 @@ func compare(id string, left, right transcript) error {
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
 	}
-	if id == "worker-fail-valid" || id == "worker-fail-retry" {
+	if id == "worker-fail-valid" || id == "worker-fail-retry" || id == "worker-fail-named-worker" {
 		var err error
 		left.Body, err = normalizeJobUpdatedAt(left.Body)
 		if err != nil {
@@ -1568,7 +1568,7 @@ func compare(id string, left, right transcript) error {
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
 	}
-	if id == "worker-lease-valid" || id == "worker-lease-expired-reclaim" {
+	if id == "worker-lease-valid" || id == "worker-lease-expired-reclaim" || id == "worker-lease-named-worker" {
 		var err error
 		left.Body, err = normalizeJobLeaseTimes(left.Body)
 		if err != nil {
@@ -1592,7 +1592,7 @@ func compare(id string, left, right transcript) error {
 		right.Headers = cloneWithout(right.Headers, "content-length")
 		return compareHeaders(left.Headers, right.Headers)
 	}
-	if id == "worker-complete-valid" {
+	if id == "worker-complete-valid" || id == "worker-complete-named-worker" {
 		var err error
 		left.Body, err = normalizeJobUpdatedAt(left.Body)
 		if err != nil {

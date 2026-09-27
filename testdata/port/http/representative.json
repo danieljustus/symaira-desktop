@@ -208,6 +208,13 @@
       "auth": "named"
     },
     {
+      "id": "jobs-named-worker-forbidden",
+      "method": "GET",
+      "path": "/api/v1/jobs",
+      "auth": "named-worker",
+      "populate_named_user": true
+    },
+    {
       "id": "file-put-worker-group",
       "method": "PUT",
       "path": "/api/v1/files?path=nested/Note.md",
@@ -622,6 +629,14 @@
       "populate_jobs": true
     },
     {
+      "id": "worker-input-named-worker",
+      "method": "GET",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
+      "auth": "named-worker",
+      "populate_jobs": true,
+      "populate_named_user": true
+    },
+    {
       "id": "worker-input-head-range",
       "method": "HEAD",
       "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
@@ -673,6 +688,15 @@
       "auth": "valid",
       "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}",
       "populate_jobs": true
+    },
+    {
+      "id": "worker-lease-named-worker",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "named-worker",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}",
+      "populate_jobs": true,
+      "populate_named_user": true
     },
     {
       "id": "worker-lease-expired-reclaim",
@@ -749,6 +773,15 @@
       "populate_worker_job": true
     },
     {
+      "id": "worker-complete-named-worker",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "named-worker",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"  Invoice total: 42 EUR  \",\"engine\":\"yes\",\"model\":\"123\"}",
+      "populate_worker_job": true,
+      "populate_named_user": true
+    },
+    {
       "id": "worker-fail-missing-auth",
       "method": "POST",
       "path": "/api/v1/worker/fail",
@@ -777,6 +810,15 @@
       "auth": "valid",
       "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"error\":\"  scan failed \\n\",\"retry\":false}",
       "populate_worker_job": true
+    },
+    {
+      "id": "worker-fail-named-worker",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "named-worker",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"error\":\"  scan failed \\n\",\"retry\":false}",
+      "populate_worker_job": true,
+      "populate_named_user": true
     },
     {
       "id": "worker-fail-retry",

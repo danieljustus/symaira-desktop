@@ -3310,6 +3310,46 @@ mod tests {
     }
 
     #[test]
+    fn named_worker_role_is_limited_to_worker_routes() {
+        let worker = AuthRole::User {
+            name: "worker-user".to_owned(),
+            roles: vec!["worker".to_owned()],
+        };
+        for (method, path) in [
+            (Method::POST, "/api/v1/worker/lease"),
+            (Method::GET, "/api/v1/worker/input"),
+            (Method::POST, "/api/v1/worker/complete"),
+            (Method::POST, "/api/v1/worker/fail"),
+        ] {
+            assert!(
+                named_user_route_allowed(&worker, &method, path),
+                "{method} {path}"
+            );
+        }
+        assert!(!named_user_route_allowed(
+            &worker,
+            &Method::GET,
+            "/api/v1/jobs"
+        ));
+        assert!(route_requires_admin(&Method::GET, "/api/v1/jobs"));
+        assert!(!named_user_route_allowed(
+            &worker,
+            &Method::POST,
+            "/api/v1/command"
+        ));
+
+        let user = AuthRole::User {
+            name: "alice".to_owned(),
+            roles: vec!["user".to_owned()],
+        };
+        assert!(!named_user_route_allowed(
+            &user,
+            &Method::POST,
+            "/api/v1/worker/lease"
+        ));
+    }
+
+    #[test]
     fn completion_yaml_scalars_match_go_yaml_v3_style_choices() {
         for (value, expected) in [
             ("yes", "\"yes\""),

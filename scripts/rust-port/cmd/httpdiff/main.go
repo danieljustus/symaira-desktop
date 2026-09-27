@@ -41,30 +41,31 @@ type fixture struct {
 }
 
 type httpCase struct {
-	ID                   string            `json:"id"`
-	Method               string            `json:"method"`
-	Path                 string            `json:"path"`
-	Auth                 string            `json:"auth,omitempty"`
-	Headers              map[string]string `json:"headers,omitempty"`
-	Body                 string            `json:"body,omitempty"`
-	BodyRepeat           int               `json:"body_repeat,omitempty"`
-	HeaderDelayMS        int               `json:"header_delay_ms,omitempty"`
-	HeaderPaddingBytes   int               `json:"header_padding_bytes,omitempty"`
-	HeaderRepeatCount    int               `json:"header_repeat_count,omitempty"`
-	MultipartFile        string            `json:"multipart_file,omitempty"`
-	EmptyNotebooks       bool              `json:"empty_notebooks,omitempty"`
-	PopulateJobs         bool              `json:"populate_jobs,omitempty"`
-	PopulateWorkerJob    bool              `json:"populate_worker_job,omitempty"`
-	PopulateExpiredJob   bool              `json:"populate_expired_job,omitempty"`
-	PopulateShares       bool              `json:"populate_shares,omitempty"`
-	PopulateShareAccess  bool              `json:"populate_share_access,omitempty"`
-	PopulateWorkerACL    bool              `json:"populate_worker_acl,omitempty"`
-	PopulateNamedUser    bool              `json:"populate_named_user,omitempty"`
-	RemoveSymlinkEscapes bool              `json:"remove_symlink_escapes,omitempty"`
-	ProviderOllama       bool              `json:"provider_ollama,omitempty"`
-	ProviderDisconnect   bool              `json:"provider_disconnect,omitempty"`
-	ProviderFailure      bool              `json:"provider_failure,omitempty"`
-	ProviderOversized    bool              `json:"provider_oversized,omitempty"`
+	ID                     string            `json:"id"`
+	Method                 string            `json:"method"`
+	Path                   string            `json:"path"`
+	Auth                   string            `json:"auth,omitempty"`
+	Headers                map[string]string `json:"headers,omitempty"`
+	Body                   string            `json:"body,omitempty"`
+	BodyRepeat             int               `json:"body_repeat,omitempty"`
+	HeaderDelayMS          int               `json:"header_delay_ms,omitempty"`
+	HeaderPaddingBytes     int               `json:"header_padding_bytes,omitempty"`
+	HeaderRepeatCount      int               `json:"header_repeat_count,omitempty"`
+	MultipartFile          string            `json:"multipart_file,omitempty"`
+	EmptyNotebooks         bool              `json:"empty_notebooks,omitempty"`
+	PopulateJobs           bool              `json:"populate_jobs,omitempty"`
+	PopulateWorkerJob      bool              `json:"populate_worker_job,omitempty"`
+	PopulateExpiredJob     bool              `json:"populate_expired_job,omitempty"`
+	PopulateShares         bool              `json:"populate_shares,omitempty"`
+	PopulateShareAccess    bool              `json:"populate_share_access,omitempty"`
+	PopulateWorkerACL      bool              `json:"populate_worker_acl,omitempty"`
+	PopulateNamedUser      bool              `json:"populate_named_user,omitempty"`
+	RemoveSymlinkEscapes   bool              `json:"remove_symlink_escapes,omitempty"`
+	ProviderOllama         bool              `json:"provider_ollama,omitempty"`
+	ProviderOpenAIFallback bool              `json:"provider_openai_fallback,omitempty"`
+	ProviderDisconnect     bool              `json:"provider_disconnect,omitempty"`
+	ProviderFailure        bool              `json:"provider_failure,omitempty"`
+	ProviderOversized      bool              `json:"provider_oversized,omitempty"`
 }
 
 type transcript struct {
@@ -178,6 +179,7 @@ func run() (runErr error) {
 		fatal("Rust readiness: %v", err)
 	}
 	var leftProviderServer, rightProviderServer *runningServer
+	activeProvider := ""
 	defer func() {
 		if leftProviderServer != nil {
 			if err := leftProviderServer.stop(); err != nil {
@@ -201,7 +203,7 @@ func run() (runErr error) {
 	leftETag, rightETag := "", ""
 	providerCasesRemaining := 0
 	for _, testCase := range suite.Cases {
-		if testCase.ProviderOllama || testCase.ProviderDisconnect || testCase.ProviderFailure || testCase.ProviderOversized {
+		if testCase.ProviderOllama || testCase.ProviderOpenAIFallback || testCase.ProviderDisconnect || testCase.ProviderFailure || testCase.ProviderOversized {
 			providerCasesRemaining++
 		}
 	}
@@ -276,10 +278,23 @@ func run() (runErr error) {
 			}
 		}
 		leftCurrent, rightCurrent := leftServer, rightServer
-		if tc.ProviderOllama || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
+		if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
+			providerMode := "ollama"
+			if tc.ProviderOpenAIFallback {
+				providerMode = "openai"
+			}
+			if leftProviderServer != nil && activeProvider != providerMode {
+				if err := leftProviderServer.stop(); err != nil {
+					fatal("Go provider cleanup before mode switch: %v", err)
+				}
+				if err := rightProviderServer.stop(); err != nil {
+					fatal("Rust provider cleanup before mode switch: %v", err)
+				}
+				leftProviderServer, rightProviderServer = nil, nil
+			}
 			if leftProviderServer == nil {
 				providerEnv := map[string]string{
-					"SYMDESK_LLM_PROVIDER": "ollama", "SYMDESK_OLLAMA_URL": provider.url,
+					"SYMDESK_LLM_PROVIDER": providerMode, "SYMDESK_OLLAMA_URL": provider.url,
 					"SYMDESK_OLLAMA_MODEL": "fixture-model",
 				}
 				leftProviderServer = startServerWithEnv(*left, leftVault, providerEnv)
@@ -290,6 +305,7 @@ func run() (runErr error) {
 				if err := rightProviderServer.ready(); err != nil {
 					fatal("Rust provider readiness: %v", err)
 				}
+				activeProvider = providerMode
 			}
 			leftCurrent, rightCurrent = leftProviderServer, rightProviderServer
 		}
@@ -314,12 +330,12 @@ func run() (runErr error) {
 		if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
 		}
-		if tc.ProviderOllama {
+		if tc.ProviderOllama || tc.ProviderOpenAIFallback {
 			if err := provider.assertRequests(2, "short provider input"); err != nil {
 				fatal("%s fake-provider request: %v", tc.ID, err)
 			}
 		}
-		if tc.ProviderOllama || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
+		if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
 			providerCasesRemaining--
 			if providerCasesRemaining == 0 {
 				if err := leftProviderServer.stop(); err != nil {
@@ -1752,7 +1768,7 @@ func (s *runningServer) request(tc httpCase, previousETag string, provider *fake
 		return transcript{}, previousETag, err
 	}
 	var body []byte
-	if tc.ProviderOllama {
+	if tc.ProviderOllama || tc.ProviderOpenAIFallback {
 		reader := bufio.NewReader(response.Body)
 		first, readErr := reader.ReadBytes('\n')
 		if readErr != nil {

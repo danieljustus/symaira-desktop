@@ -52,30 +52,31 @@ type httpSuite struct {
 }
 
 type httpCase struct {
-	ID                   string            `json:"id"`
-	Method               string            `json:"method"`
-	Path                 string            `json:"path"`
-	Auth                 string            `json:"auth,omitempty"`
-	Headers              map[string]string `json:"headers,omitempty"`
-	Body                 string            `json:"body,omitempty"`
-	BodyRepeat           int               `json:"body_repeat,omitempty"`
-	HeaderDelayMS        int               `json:"header_delay_ms,omitempty"`
-	HeaderPaddingBytes   int               `json:"header_padding_bytes,omitempty"`
-	HeaderRepeatCount    int               `json:"header_repeat_count,omitempty"`
-	MultipartFile        string            `json:"multipart_file,omitempty"`
-	EmptyNotebooks       bool              `json:"empty_notebooks,omitempty"`
-	PopulateJobs         bool              `json:"populate_jobs,omitempty"`
-	PopulateWorkerJob    bool              `json:"populate_worker_job,omitempty"`
-	PopulateExpiredJob   bool              `json:"populate_expired_job,omitempty"`
-	PopulateShares       bool              `json:"populate_shares,omitempty"`
-	PopulateShareAccess  bool              `json:"populate_share_access,omitempty"`
-	PopulateWorkerACL    bool              `json:"populate_worker_acl,omitempty"`
-	PopulateNamedUser    bool              `json:"populate_named_user,omitempty"`
-	RemoveSymlinkEscapes bool              `json:"remove_symlink_escapes,omitempty"`
-	ProviderOllama       bool              `json:"provider_ollama,omitempty"`
-	ProviderDisconnect   bool              `json:"provider_disconnect,omitempty"`
-	ProviderFailure      bool              `json:"provider_failure,omitempty"`
-	ProviderOversized    bool              `json:"provider_oversized,omitempty"`
+	ID                     string            `json:"id"`
+	Method                 string            `json:"method"`
+	Path                   string            `json:"path"`
+	Auth                   string            `json:"auth,omitempty"`
+	Headers                map[string]string `json:"headers,omitempty"`
+	Body                   string            `json:"body,omitempty"`
+	BodyRepeat             int               `json:"body_repeat,omitempty"`
+	HeaderDelayMS          int               `json:"header_delay_ms,omitempty"`
+	HeaderPaddingBytes     int               `json:"header_padding_bytes,omitempty"`
+	HeaderRepeatCount      int               `json:"header_repeat_count,omitempty"`
+	MultipartFile          string            `json:"multipart_file,omitempty"`
+	EmptyNotebooks         bool              `json:"empty_notebooks,omitempty"`
+	PopulateJobs           bool              `json:"populate_jobs,omitempty"`
+	PopulateWorkerJob      bool              `json:"populate_worker_job,omitempty"`
+	PopulateExpiredJob     bool              `json:"populate_expired_job,omitempty"`
+	PopulateShares         bool              `json:"populate_shares,omitempty"`
+	PopulateShareAccess    bool              `json:"populate_share_access,omitempty"`
+	PopulateWorkerACL      bool              `json:"populate_worker_acl,omitempty"`
+	PopulateNamedUser      bool              `json:"populate_named_user,omitempty"`
+	RemoveSymlinkEscapes   bool              `json:"remove_symlink_escapes,omitempty"`
+	ProviderOllama         bool              `json:"provider_ollama,omitempty"`
+	ProviderOpenAIFallback bool              `json:"provider_openai_fallback,omitempty"`
+	ProviderDisconnect     bool              `json:"provider_disconnect,omitempty"`
+	ProviderFailure        bool              `json:"provider_failure,omitempty"`
+	ProviderOversized      bool              `json:"provider_oversized,omitempty"`
 }
 
 func main() {

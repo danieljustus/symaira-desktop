@@ -382,6 +382,14 @@
       "provider_ollama": true
     },
     {
+      "id": "ai-transform-openai-provider-falls-back-to-local-ollama",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"short provider input\"}",
+      "provider_openai_fallback": true
+    },
+    {
       "id": "ai-transform-local-ollama-error",
       "method": "POST",
       "path": "/api/v1/ai/transform",

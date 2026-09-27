@@ -726,15 +726,19 @@ async fn handle_ai_transform(
     let fallback = ai_transform_fallback_text(&config);
     let configured_ollama = if fallback.is_none() {
         match (&*config.llm_provider, config.ollama_url.as_str()) {
-            ("" | "ollama", url) if !url.is_empty() => match local_ollama_endpoint(url) {
-                Some(endpoint) => Some(endpoint),
-                None => {
-                    return json_error(
-                        StatusCode::NOT_IMPLEMENTED,
-                        "configured AI provider endpoint is outside the supported loopback HTTP subset",
-                    );
+            // Go's streamLLM has dedicated Hermes and Anthropic branches; all
+            // other valid providers (including "openai") fall back to Ollama.
+            ("" | "ollama" | "openai", url) if !url.is_empty() => {
+                match local_ollama_endpoint(url) {
+                    Some(endpoint) => Some(endpoint),
+                    None => {
+                        return json_error(
+                            StatusCode::NOT_IMPLEMENTED,
+                            "configured AI provider endpoint is outside the supported loopback HTTP subset",
+                        );
+                    }
                 }
-            },
+            }
             _ => {
                 return json_error(
                     StatusCode::NOT_IMPLEMENTED,

@@ -79,6 +79,7 @@ const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
 const COMMAND_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(10);
+const HTTP_MAX_HEADER_BYTES: usize = 1 << 20;
 const SNAPSHOT_TOO_LARGE: &str = "snapshot exceeds 16 MiB limit";
 static PUT_TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -362,7 +363,8 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
     let mut connection_builder = ConnectionBuilder::new();
     connection_builder
         .timer(TokioTimer::new())
-        .header_read_timeout(Some(HTTP_HEADER_READ_TIMEOUT));
+        .header_read_timeout(Some(HTTP_HEADER_READ_TIMEOUT))
+        .max_buf_size(HTTP_MAX_HEADER_BYTES);
     let connection_builder = connection_builder;
     let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(());
     let shutdown = shutdown_signal();

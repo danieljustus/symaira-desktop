@@ -14,6 +14,7 @@ func generatedHTTP() httpSuite {
 	return httpSuite{SchemaVersion: 1, Oracle: oracle{Commit: "8fc4b67fcd84468f91ede73774ca6adf3e1fec99", Release: "post-v0.12.2-security-880+share-token-8fc4b67f"}, Cases: []httpCase{
 		{ID: "healthz", Method: "GET", Path: "/healthz"},
 		{ID: "healthz-slow-header", Method: "GET", Path: "/healthz", HeaderDelayMS: 6000},
+		{ID: "healthz-large-header", Method: "GET", Path: "/healthz", HeaderPaddingBytes: 512 << 10},
 		{ID: "status-missing-auth", Method: "GET", Path: "/api/v1/status"},
 		{ID: "status-wrong-auth", Method: "GET", Path: "/api/v1/status", Auth: "wrong"},
 		{ID: "status-raw-token-without-bearer", Method: "GET", Path: "/api/v1/status", Auth: "raw"},

@@ -60,6 +60,7 @@ type httpCase struct {
 	Body                 string            `json:"body,omitempty"`
 	BodyRepeat           int               `json:"body_repeat,omitempty"`
 	HeaderDelayMS        int               `json:"header_delay_ms,omitempty"`
+	HeaderPaddingBytes   int               `json:"header_padding_bytes,omitempty"`
 	MultipartFile        string            `json:"multipart_file,omitempty"`
 	EmptyNotebooks       bool              `json:"empty_notebooks,omitempty"`
 	PopulateJobs         bool              `json:"populate_jobs,omitempty"`

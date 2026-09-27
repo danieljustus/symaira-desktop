@@ -48,6 +48,7 @@ type httpCase struct {
 	Body                 string            `json:"body,omitempty"`
 	BodyRepeat           int               `json:"body_repeat,omitempty"`
 	HeaderDelayMS        int               `json:"header_delay_ms,omitempty"`
+	HeaderPaddingBytes   int               `json:"header_padding_bytes,omitempty"`
 	MultipartFile        string            `json:"multipart_file,omitempty"`
 	EmptyNotebooks       bool              `json:"empty_notebooks,omitempty"`
 	PopulateJobs         bool              `json:"populate_jobs,omitempty"`
@@ -250,13 +251,13 @@ func run() (runErr error) {
 		if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
 		}
-		if tc.ID == "healthz-slow-header" {
+		if tc.ID == "healthz-slow-header" || tc.ID == "healthz-large-header" {
 			for _, item := range []struct {
 				name     string
 				response transcript
 			}{{"Go", leftResult}, {"Rust", rightResult}} {
 				if item.response.Status != http.StatusOK || !bytes.Equal(item.response.Body, []byte(`{"status":"ok"}`)) {
-					fatal("%s %s did not accept the completed header: status=%d body=%q", tc.ID, item.name, item.response.Status, item.response.Body)
+					fatal("%s %s did not accept the request header: status=%d body=%q", tc.ID, item.name, item.response.Status, item.response.Body)
 				}
 			}
 		}
@@ -1480,6 +1481,12 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 			value = previousETag
 		}
 		request.Header.Set(key, value)
+	}
+	if tc.HeaderPaddingBytes < 0 || tc.HeaderPaddingBytes > 900<<10 {
+		return transcript{}, previousETag, fmt.Errorf("fixture header_padding_bytes exceeds 900 KiB safety bound")
+	}
+	if tc.HeaderPaddingBytes > 0 {
+		request.Header.Set("X-Port-Padding", strings.Repeat("a", tc.HeaderPaddingBytes))
 	}
 	if tc.MultipartFile != "" {
 		request.Header.Set("Content-Type", "multipart/form-data; boundary=symdesk-http-diff")

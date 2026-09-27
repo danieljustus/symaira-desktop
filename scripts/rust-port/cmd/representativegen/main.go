@@ -125,6 +125,8 @@ func generated() suite {
 			{ID: "desk-search-fresh-index-empty", Args: []string{"search", "needle", "--vault", vault, "--json"}, Setup: fixtureFiles(), CompareSidecarLayout: true},
 			{ID: "transform-no-provider-json", Args: []string{"--json", "transform", "summarize", "--text", "short input"}},
 			{ID: "transform-empty-text-json", Args: []string{"--json", "transform", "summarize", "--text", "   "}},
+			{ID: "ask-no-provider-json", Args: []string{"--json", "ask", "needle", "--vault", vault}, PrepareArgs: prepare, Setup: fixtureFiles()},
+			{ID: "ask-no-provider-no-results-json", Args: []string{"--json", "ask", "missing", "--vault", vault}, PrepareArgs: prepare, Setup: fixtureFiles()},
 			{ID: "desk-search-too-many-json", Args: []string{"search", "--json", "one", "two"}},
 			{ID: "desk-search-required-text", Args: []string{"search"}, StdoutMode: "console_text", StderrMode: "console_text"},
 			{ID: "desk-search-required-json", Args: []string{"search", "--json"}},

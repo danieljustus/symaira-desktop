@@ -1100,6 +1100,7 @@ impl Sidecar {
         record_lifecycle: bool,
     ) -> Result<(), SidecarError> {
         validate_utf8_path(vault_root, "vault root")?;
+        let canonical_root = fs::canonicalize(vault_root)?;
         if record_lifecycle {
             for entry in symdesk_vault::walk_all(vault_root)? {
                 let Some(extension) = entry.path.extension().and_then(|value| value.to_str())
@@ -1121,6 +1122,15 @@ impl Sidecar {
         let mut batch = Vec::with_capacity(MAX_INDEX_BATCH_SIZE);
         let mut callback_error = None;
         let walk_result = symdesk_vault::walk_markdown_with(vault_root, |relative| {
+            let candidate = vault_root.join(relative);
+            if fs::symlink_metadata(&candidate)?.file_type().is_symlink()
+                && fs::canonicalize(&candidate)
+                    .map_or(true, |target| !target.starts_with(&canonical_root))
+            {
+                // Go's RefreshIndex skips links that cannot be opened through
+                // the vault root, while keeping contained symlinks indexable.
+                return Ok(());
+            }
             let storage_key = match storage_path(vault_root, relative) {
                 Ok(path) => path.key_path,
                 Err(error) => {
@@ -2053,6 +2063,37 @@ mod source_tests {
         ));
         fs::create_dir_all(&path).expect("create temp dir");
         path
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn refresh_index_skips_external_and_broken_symlinks_but_keeps_contained_links() {
+        use std::os::unix::fs::symlink;
+
+        let vault = temp_dir("symlink-refresh-vault");
+        let outside = temp_dir("symlink-refresh-outside");
+        let marker = "symlink-refresh-unique-marker";
+        fs::write(vault.join("inside.md"), marker).expect("write in-vault note");
+        fs::write(outside.join("secret.md"), marker).expect("write outside note");
+        symlink("inside.md", vault.join("contained.md")).expect("contained symlink");
+        symlink(outside.join("secret.md"), vault.join("escape.md")).expect("external symlink");
+        symlink("missing.md", vault.join("broken.md")).expect("broken symlink");
+
+        let mut sidecar = Sidecar::open(&vault.join(".symdesk/sidecar.db")).expect("sidecar");
+        sidecar
+            .refresh_index(&vault)
+            .expect("refresh skips uncontained links");
+        let hits = sidecar.search(marker).expect("search indexed content");
+        assert_eq!(
+            hits.iter().map(|hit| hit.path.as_str()).collect::<Vec<_>>(),
+            vec![
+                vault.join("contained.md").to_str().expect("UTF-8 path"),
+                vault.join("inside.md").to_str().expect("UTF-8 path"),
+            ]
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(outside);
     }
 
     #[test]

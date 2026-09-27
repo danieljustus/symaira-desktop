@@ -49,6 +49,7 @@ fn replays_go_retrieval_storage_and_bm25_contract() {
         std::process::id()
     ));
     let database = RetrievalDb::open_at(&path).expect("open isolated retrieval database");
+    assert_eq!(database.count_chunks().expect("count empty index"), 0);
     for document in &fixture.documents {
         database
             .save_document(document)
@@ -57,6 +58,10 @@ fn replays_go_retrieval_storage_and_bm25_contract() {
     database
         .save_chunks(&fixture.chunks)
         .expect("save provider-free chunks");
+    assert_eq!(
+        database.count_chunks().expect("count indexed chunks"),
+        fixture.chunks.len() as i64
+    );
 
     let migrations: Vec<String> = {
         let connection = rusqlite::Connection::open(&path).expect("open migration view");

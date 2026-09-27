@@ -57,6 +57,7 @@ func generatedHTTP() httpSuite {
 		{ID: "command-admin-controlled-path", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["ls","--vault=/tmp/other-vault"]}`},
 		{ID: "command-admin-stream-controlled-path", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["ask","--vault=/tmp/other-vault"]}`},
 		{ID: "command-admin-stream-transform", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["transform","summarize","--text","short input"]}`},
+		{ID: "command-admin-stream-ask-no-provider", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["ask","hello"]}`},
 		{ID: "command-admin-invalid-subcommand", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["note","not-real"]}`},
 		{ID: "command-admin-trailing-data", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["not-real"]}{"ignored":true}`},
 		{ID: "command-admin-over-limit-prefix", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["not-real"]}`, BodyRepeat: (2 << 20) - len(`{"arguments":["not-real"]}`) + 1},

@@ -486,6 +486,12 @@ impl RetrievalDb {
             .map_err(Into::into)
     }
 
+    pub fn count_chunks(&self) -> Result<i64, SidecarError> {
+        self.connection
+            .query_row("SELECT COUNT(*) FROM chunks", [], |row| row.get(0))
+            .map_err(Into::into)
+    }
+
     pub fn count_pending_chunks_for_document(
         &self,
         document_path: &str,

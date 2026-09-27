@@ -121,6 +121,11 @@ fn main() -> ExitCode {
             Err(error) => write_stderr(&format!("mcp: {error}\n"), CoreExitCode::Generic),
         },
         Some(("transform", command)) => ai_cli::run_transform(command, output_json),
+        Some(("ask", command)) => ai_cli::run_ask(
+            command,
+            matches.get_one::<String>("vault").map(String::as_str),
+            output_json,
+        ),
         Some(("serve", command)) => run_http_server(
             command.get_one::<String>("listen").cloned(),
             command.get_one::<String>("token").cloned(),
@@ -291,6 +296,7 @@ fn cli() -> Command {
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
         )
         .subcommand(ai_cli::transform_cli())
+        .subcommand(ai_cli::ask_cli())
         .subcommand(Command::new("mcp"))
         .subcommand(
             Command::new("history")

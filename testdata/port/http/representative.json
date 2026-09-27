@@ -316,6 +316,13 @@
       "body": "{\"arguments\":[\"transform\",\"summarize\",\"--text\",\"short input\"]}"
     },
     {
+      "id": "command-admin-stream-ask-no-provider",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"ask\",\"hello\"]}"
+    },
+    {
       "id": "command-admin-invalid-subcommand",
       "method": "POST",
       "path": "/api/v1/command",

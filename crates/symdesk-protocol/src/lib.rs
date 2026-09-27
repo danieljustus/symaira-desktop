@@ -332,6 +332,7 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
         return Err("vault root is not a directory".to_owned());
     }
     validate_tokens(&config.token, config.worker_token.as_deref())?;
+    refresh_server_index(&root)?;
     let address: SocketAddr = config
         .listen_address
         .parse()
@@ -414,6 +415,16 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
         });
     }
     Ok(())
+}
+
+fn refresh_server_index(vault_root: &Path) -> Result<(), String> {
+    let directory = vault_root.join(".symdesk/server");
+    let path = directory.join("sidecar.db");
+    let mut sidecar = symdesk_index::Sidecar::open(&path)
+        .map_err(|error| format!("open server sidecar: {error}"))?;
+    sidecar
+        .refresh_index(vault_root)
+        .map_err(|error| format!("index vault: {error}"))
 }
 
 fn router(state: Arc<AppState>) -> Router {

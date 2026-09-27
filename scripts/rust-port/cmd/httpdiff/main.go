@@ -31,6 +31,7 @@ import (
 
 const token = "0123456789abcdef0123456789abcdef"
 const workerToken = "fedcba9876543210fedcba9876543210"
+const namedUserToken = "test-named-user-token-for-http-differential"
 
 type fixture struct {
 	Cases []httpCase `json:"cases"`
@@ -52,6 +53,7 @@ type httpCase struct {
 	PopulateShares      bool              `json:"populate_shares,omitempty"`
 	PopulateShareAccess bool              `json:"populate_share_access,omitempty"`
 	PopulateWorkerACL   bool              `json:"populate_worker_acl,omitempty"`
+	PopulateNamedUser   bool              `json:"populate_named_user,omitempty"`
 }
 
 type transcript struct {
@@ -182,6 +184,13 @@ func run() (runErr error) {
 			for _, vault := range []string{leftVault, rightVault} {
 				if err := populateWorkerACL(vault); err != nil {
 					fatal("populate worker ACL fixture: %v", err)
+				}
+			}
+		}
+		if tc.PopulateNamedUser {
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := populateNamedUser(vault); err != nil {
+					fatal("populate named user fixture: %v", err)
 				}
 			}
 		}
@@ -411,6 +420,13 @@ func run() (runErr error) {
 				}
 			}
 		}
+		if tc.ID == "file-put-named-user" {
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := assertIndexedWrite(vault, "nested/Named.md", tc.Body); err != nil {
+					fatal("%s side effect: %v", tc.ID, err)
+				}
+			}
+		}
 		leftETag, rightETag = nextLeftETag, nextRightETag
 		fmt.Printf("PASS %s\n", tc.ID)
 	}
@@ -431,6 +447,27 @@ func populateWorkerACL(vault string) error {
 	return os.WriteFile(filepath.Join(config, "groups.json"), []byte(groups), 0o600)
 }
 
+func populateNamedUser(vault string) error {
+	config := filepath.Join(vault, ".symdesk")
+	if err := os.MkdirAll(config, 0o700); err != nil {
+		return err
+	}
+	hash := sha256.Sum256([]byte(namedUserToken))
+	users, err := json.Marshal([]map[string]any{{
+		"name":       "alice",
+		"token_hash": hex.EncodeToString(hash[:]),
+		"roles":      []string{"user"},
+	}})
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(config, "users.json"), users, 0o600); err != nil {
+		return err
+	}
+	const permissions = `[{"path":"Hello.md","owner":"admin","read_users":["admin"],"write_users":["admin"]},{"path":"nested/Named.md","owner":"admin","read_users":["alice"],"write_users":["alice"]}]`
+	return os.WriteFile(filepath.Join(config, "permissions.json"), []byte(permissions), 0o600)
+}
+
 func createFixtureVault(root string) string {
 	vault := filepath.Join(root, "vault")
 	for _, dir := range []string{vault, filepath.Join(vault, "notebooks"), filepath.Join(vault, "nested"), filepath.Join(vault, "inbox")} {
@@ -445,6 +482,7 @@ func createFixtureVault(root string) string {
 		"notebooks/ignored.md":  "---\ntype: note\ntitle: Not a notebook\n---\n",
 		"Hello.md":              "---\ntitle: Hello\n---\nBody",
 		"nested/Note.md":        "nested",
+		"nested/Named.md":       "named user initial",
 		"inbox/c.png":           "worker input bytes",
 	}
 	modified := time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)
@@ -1230,6 +1268,10 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 		request.Header.Set("Authorization", "Bearer "+token)
 	case "worker":
 		request.Header.Set("Authorization", "Bearer "+workerToken)
+	case "named":
+		request.Header.Set("Authorization", "Bearer "+namedUserToken)
+	case "named-wrong":
+		request.Header.Set("Authorization", "Bearer "+namedUserToken+"-wrong")
 	case "wrong":
 		request.Header.Set("Authorization", "Bearer 0000000000000000000000000000wrong")
 	case "raw":

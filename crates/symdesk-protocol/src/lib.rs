@@ -91,10 +91,45 @@ struct AppState {
     share_write: Mutex<()>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 enum AuthRole {
     Admin,
     Worker,
+    User { name: String, roles: Vec<String> },
+}
+
+impl AuthRole {
+    fn is_admin(&self) -> bool {
+        matches!(self, Self::Admin)
+            || matches!(self, Self::User { roles, .. } if roles.iter().any(|role| role == "admin"))
+    }
+
+    fn is_worker(&self) -> bool {
+        matches!(self, Self::Worker)
+            || matches!(self, Self::User { roles, .. } if roles.iter().any(|role| role == "worker"))
+    }
+
+    fn is_named_user(&self) -> bool {
+        matches!(self, Self::User { .. })
+    }
+
+    fn name(&self) -> Option<&str> {
+        match self {
+            Self::Admin => Some("admin"),
+            Self::Worker => Some("worker"),
+            Self::User { name, .. } => Some(name),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct StoredUser {
+    #[serde(default)]
+    name: String,
+    #[serde(default)]
+    token_hash: String,
+    #[serde(default)]
+    roles: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -422,15 +457,20 @@ async fn authenticate(
         .and_then(|value| value.to_str().ok())
         .map(|value| value.trim().strip_prefix("Bearer ").unwrap_or(value).trim())
         .unwrap_or_default();
-    let role = if constant_time_equal(provided.as_bytes(), &state.token) {
-        AuthRole::Admin
-    } else if state
-        .worker_token
-        .as_deref()
-        .is_some_and(|token| constant_time_equal(provided.as_bytes(), token))
-    {
-        AuthRole::Worker
-    } else {
+    let role = authenticate_named_user(&state, provided).or_else(|| {
+        if constant_time_equal(provided.as_bytes(), &state.token) {
+            Some(AuthRole::Admin)
+        } else if state
+            .worker_token
+            .as_deref()
+            .is_some_and(|token| constant_time_equal(provided.as_bytes(), token))
+        {
+            Some(AuthRole::Worker)
+        } else {
+            None
+        }
+    });
+    let Some(role) = role else {
         let ip = client_ip(&request);
         let retry_after = state
             .auth_failures
@@ -457,11 +497,53 @@ async fn authenticate(
             .insert(header::WWW_AUTHENTICATE, HeaderValue::from_static("Bearer"));
         return response;
     };
-    if role == AuthRole::Worker && route_requires_admin(request.method(), request.uri().path()) {
+    if !role.is_admin() && route_requires_admin(request.method(), request.uri().path()) {
+        return json_error(StatusCode::FORBIDDEN, "admin role required");
+    }
+    if role.is_named_user()
+        && !role.is_admin()
+        && !named_user_route_allowed(&role, request.method(), request.uri().path())
+    {
         return json_error(StatusCode::FORBIDDEN, "admin role required");
     }
     request.extensions_mut().insert(role);
     next.run(request).await
+}
+
+fn authenticate_named_user(state: &AppState, provided: &str) -> Option<AuthRole> {
+    if provided.is_empty() {
+        return None;
+    }
+    let root = open_current_root(state).ok()?;
+    let users = read_acl_file::<StoredUser>(&root, ".symdesk/users.json").ok()?;
+    let target = symdesk_vault::sha256_hex(provided.as_bytes());
+    let mut matched = None;
+    for user in users {
+        let equal = constant_time_equal(user.token_hash.as_bytes(), target.as_bytes());
+        if equal && matched.is_none() {
+            matched = Some(AuthRole::User {
+                name: user.name,
+                roles: user.roles,
+            });
+        }
+    }
+    matched
+}
+
+fn named_user_route_allowed(role: &AuthRole, method: &Method, path: &str) -> bool {
+    if path == "/api/v1/status" && (method == Method::GET || method == Method::HEAD) {
+        return true;
+    }
+    if path == "/api/v1/files"
+        && (method == Method::GET || method == Method::HEAD || method == Method::PUT)
+    {
+        return true;
+    }
+    role.is_worker()
+        && ((path == "/api/v1/worker/lease" && method == Method::POST)
+            || (path == "/api/v1/worker/input" && method == Method::GET)
+            || (path == "/api/v1/worker/complete" && method == Method::POST)
+            || (path == "/api/v1/worker/fail" && method == Method::POST))
 }
 
 fn route_requires_admin(method: &Method, path: &str) -> bool {
@@ -470,19 +552,15 @@ fn route_requires_admin(method: &Method, path: &str) -> bool {
         || (path == "/api/v1/ingest" && method == Method::POST)
 }
 
-// The Go server maps its separate legacy worker credential to the synthetic
-// user "worker" and applies the vault's document ACLs to files, snapshots,
-// and notebook sources. Keep the same narrow ACL projection here; absent ACL
-// files mean authenticated documents are public, as in Go.
-fn worker_can_read(state: &AppState, path: &str) -> bool {
-    worker_can_access(state, path, false)
-}
-
-fn worker_can_write(state: &AppState, path: &str) -> bool {
-    worker_can_access(state, path, true)
-}
-
-fn worker_can_read_many(state: &AppState, paths: &[String]) -> std::collections::HashSet<String> {
+// Apply Go's per-user document ACLs to authenticated non-admin principals,
+// including the synthetic legacy "worker" account. A missing ACL is the Go
+// public default; malformed configured policy fails closed as required by the
+// repository security contract.
+fn acl_can_read_many(
+    state: &AppState,
+    username: &str,
+    paths: &[String],
+) -> std::collections::HashSet<String> {
     let Ok(root) = open_current_root(state) else {
         return std::collections::HashSet::new();
     };
@@ -494,24 +572,24 @@ fn worker_can_read_many(state: &AppState, paths: &[String]) -> std::collections:
         read_acl_file::<PermissionGroup>(&root, ".symdesk/groups.json").unwrap_or_default();
     paths
         .iter()
-        .filter(|path| acl_allows(&rules, &groups, path, false))
+        .filter(|path| acl_allows(&rules, &groups, username, path, false))
         .cloned()
         .collect()
 }
 
-fn worker_can_access(state: &AppState, path: &str, write: bool) -> bool {
+fn acl_can_access(state: &AppState, username: &str, path: &str, write: bool) -> bool {
     let Ok(root) = open_current_root(state) else {
         return false;
     };
     let rules = read_acl_file::<DocumentRule>(&root, ".symdesk/permissions.json");
     let Ok(rules) = rules else {
         // A present but unreadable or malformed ACL is configured policy and
-        // must fail closed for the worker credential.
+        // must fail closed for every non-admin principal.
         return false;
     };
     let groups =
         read_acl_file::<PermissionGroup>(&root, ".symdesk/groups.json").unwrap_or_default();
-    acl_allows(&rules, &groups, path, write)
+    acl_allows(&rules, &groups, username, path, write)
 }
 
 fn read_acl_file<T: for<'de> Deserialize<'de>>(
@@ -531,7 +609,13 @@ fn read_acl_file<T: for<'de> Deserialize<'de>>(
     serde_json::from_slice(&bytes).map_err(|_| ())
 }
 
-fn acl_allows(rules: &[DocumentRule], groups: &[PermissionGroup], path: &str, write: bool) -> bool {
+fn acl_allows(
+    rules: &[DocumentRule],
+    groups: &[PermissionGroup],
+    username: &str,
+    path: &str,
+    write: bool,
+) -> bool {
     let rule = rules
         .iter()
         .find(|rule| rule.path == path)
@@ -539,7 +623,7 @@ fn acl_allows(rules: &[DocumentRule], groups: &[PermissionGroup], path: &str, wr
     let Some(rule) = rule else {
         return true;
     };
-    if rule.owner == "worker" {
+    if rule.owner == username {
         return true;
     }
     let (users, group_names) = if write {
@@ -547,10 +631,10 @@ fn acl_allows(rules: &[DocumentRule], groups: &[PermissionGroup], path: &str, wr
     } else {
         (&rule.read_users, &rule.read_groups)
     };
-    users.iter().any(|user| user == "worker")
+    users.iter().any(|user| user == username)
         || group_names.iter().any(|name| {
             groups.iter().any(|group| {
-                group.name == *name && group.members.iter().any(|member| member == "worker")
+                group.name == *name && group.members.iter().any(|member| member == username)
             })
         })
 }
@@ -2188,10 +2272,11 @@ async fn handle_notebook(
     };
 
     let source_paths = notebook.sources.clone();
-    let allowed = if role == AuthRole::Worker {
-        Some(worker_can_read_many(&state, &source_paths))
-    } else {
+    let allowed = if role.is_admin() {
         None
+    } else {
+        role.name()
+            .map(|name| acl_can_read_many(&state, name, &source_paths))
     };
     let sources = notebook
         .sources
@@ -2254,15 +2339,17 @@ async fn handle_snapshot(
         }
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
     };
-    let worker_payload = if role == AuthRole::Worker {
-        match worker_snapshot_payload(&state, &payload) {
+    let filtered_payload = if role.is_admin() {
+        None
+    } else if let Some(username) = role.name() {
+        match filtered_snapshot_payload(&state, &payload, username) {
             Ok(payload) => Some(payload),
             Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
         }
     } else {
         None
     };
-    let payload = worker_payload.as_ref().unwrap_or(payload.as_ref());
+    let payload = filtered_payload.as_ref().unwrap_or(payload.as_ref());
     let SnapshotPayload {
         plain,
         compressed,
@@ -2302,9 +2389,10 @@ async fn handle_snapshot(
     bytes_response(StatusCode::OK, common, plain.clone())
 }
 
-fn worker_snapshot_payload(
+fn filtered_snapshot_payload(
     state: &AppState,
     payload: &SnapshotPayload,
+    username: &str,
 ) -> Result<SnapshotPayload, String> {
     let mut snapshot: Snapshot = serde_json::from_slice(&payload.plain)
         .map_err(|error| format!("invalid cached snapshot: {error}"))?;
@@ -2313,7 +2401,7 @@ fn worker_snapshot_payload(
         .iter()
         .map(|note| note.path.clone())
         .collect::<Vec<_>>();
-    let allowed = worker_can_read_many(state, &paths);
+    let allowed = acl_can_read_many(state, username, &paths);
     snapshot.notes.retain(|note| allowed.contains(&note.path));
     let mut plain = serde_json::to_vec(&WorkerSnapshot {
         notes: snapshot.notes,
@@ -2335,7 +2423,7 @@ fn worker_snapshot_payload(
     Ok(SnapshotPayload {
         plain: plain.into(),
         compressed: compressed.into(),
-        etag: format!("{}:worker", payload.etag),
+        etag: format!("{}:{username}", payload.etag),
     })
 }
 
@@ -2359,7 +2447,11 @@ async fn handle_file(
             return json_error(StatusCode::BAD_REQUEST, "a vault-relative path is required");
         }
     };
-    if role == AuthRole::Worker && !worker_can_read(&state, &normalize_snapshot_path(&relative)) {
+    if !role.is_admin()
+        && role.name().is_some_and(|username| {
+            !acl_can_access(&state, username, &normalize_snapshot_path(&relative), false)
+        })
+    {
         return json_error(StatusCode::FORBIDDEN, "access denied");
     }
     serve_vault_file(&state, &relative, &headers, method)
@@ -2500,7 +2592,11 @@ async fn handle_put_file(
             );
         }
     };
-    if role == AuthRole::Worker && !worker_can_write(&state, &normalize_snapshot_path(&relative)) {
+    if !role.is_admin()
+        && role.name().is_some_and(|username| {
+            !acl_can_access(&state, username, &normalize_snapshot_path(&relative), true)
+        })
+    {
         return json_error(StatusCode::FORBIDDEN, "access denied");
     }
     let data = match to_bytes(body, MAX_NOTE_BYTES as usize + 1).await {
@@ -3131,21 +3227,50 @@ mod tests {
         ));
         fs::create_dir_all(&root).unwrap();
         let state = test_state(&root, "test token");
-        assert!(worker_can_read(&state, "note.md"));
-        assert!(worker_can_write(&state, "note.md"));
-        assert!(worker_can_read_many(&state, &["note.md".to_owned()]).contains("note.md"));
+        assert!(acl_can_access(&state, "worker", "note.md", false));
+        assert!(acl_can_access(&state, "worker", "note.md", true));
+        assert!(acl_can_read_many(&state, "worker", &["note.md".to_owned()]).contains("note.md"));
 
         fs::create_dir_all(root.join(".symdesk")).unwrap();
         fs::write(root.join(".symdesk/permissions.json"), b"[{").unwrap();
-        assert!(!worker_can_read(&state, "note.md"));
-        assert!(!worker_can_write(&state, "note.md"));
-        assert!(worker_can_read_many(&state, &["note.md".to_owned()]).is_empty());
+        assert!(!acl_can_access(&state, "worker", "note.md", false));
+        assert!(!acl_can_access(&state, "worker", "note.md", true));
+        assert!(acl_can_read_many(&state, "worker", &["note.md".to_owned()]).is_empty());
 
         let missing_root = root.join("missing");
         let unavailable = test_state(&missing_root, "test token");
-        assert!(!worker_can_read(&unavailable, "note.md"));
-        assert!(!worker_can_write(&unavailable, "note.md"));
-        assert!(worker_can_read_many(&unavailable, &["note.md".to_owned()]).is_empty());
+        assert!(!acl_can_access(&unavailable, "worker", "note.md", false));
+        assert!(!acl_can_access(&unavailable, "worker", "note.md", true));
+        assert!(acl_can_read_many(&unavailable, "worker", &["note.md".to_owned()]).is_empty());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn named_user_authentication_matches_stored_sha256_token_hash() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-named-auth-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir_all(root.join(".symdesk")).unwrap();
+        let token = "named fixture token";
+        let hash = symdesk_vault::sha256_hex(token.as_bytes());
+        fs::write(
+            root.join(".symdesk/users.json"),
+            format!(r#"[{{"name":"alice","token_hash":"{hash}","roles":["user"]}}]"#),
+        )
+        .unwrap();
+        let state = test_state(&root, "admin fixture token");
+
+        assert_eq!(
+            authenticate_named_user(&state, token),
+            Some(AuthRole::User {
+                name: "alice".to_owned(),
+                roles: vec!["user".to_owned()],
+            })
+        );
+        assert_eq!(authenticate_named_user(&state, "wrong token"), None);
+        assert_eq!(authenticate_named_user(&state, ""), None);
         fs::remove_dir_all(root).unwrap();
     }
 

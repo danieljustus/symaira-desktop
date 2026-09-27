@@ -151,6 +151,44 @@
       "body": "# authorized worker update\n"
     },
     {
+      "id": "file-get-named-user-denied",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "named",
+      "populate_named_user": true
+    },
+    {
+      "id": "file-get-named-user-allowed",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named"
+    },
+    {
+      "id": "file-get-named-user-wrong-token",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named-wrong"
+    },
+    {
+      "id": "file-put-named-user",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named",
+      "body": "# authorized named user update\n"
+    },
+    {
+      "id": "file-get-named-user-updated",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named"
+    },
+    {
+      "id": "jobs-named-user-forbidden",
+      "method": "GET",
+      "path": "/api/v1/jobs",
+      "auth": "named"
+    },
+    {
       "id": "file-exact-bytes",
       "method": "GET",
       "path": "/api/v1/files?path=Hello.md",

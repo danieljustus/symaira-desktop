@@ -67,6 +67,7 @@ type httpCase struct {
 	PopulateShares      bool              `json:"populate_shares,omitempty"`
 	PopulateShareAccess bool              `json:"populate_share_access,omitempty"`
 	PopulateWorkerACL   bool              `json:"populate_worker_acl,omitempty"`
+	PopulateNamedUser   bool              `json:"populate_named_user,omitempty"`
 }
 
 func main() {

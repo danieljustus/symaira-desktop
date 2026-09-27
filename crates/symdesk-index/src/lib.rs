@@ -911,6 +911,9 @@ impl Sidecar {
             ));
         }
         validate_utf8_path(&root, "external source root")?;
+        // Database keys deliberately omit Windows' verbatim prefix, so all
+        // comparisons against persisted paths must use the same root spelling.
+        let key_root = absolute_non_verbatim(&root)?;
         let source_dir = open_vault_dir(&root)?;
         let mut batch = Vec::with_capacity(MAX_INDEX_BATCH_SIZE);
         let mut found = HashSet::new();
@@ -919,7 +922,7 @@ impl Sidecar {
                 continue;
             }
             let relative = entry.path;
-            let key = absolute_non_verbatim(&root)?.join(&relative);
+            let key = key_root.join(&relative);
             let raw_text = is_external_raw_text(&relative);
             if raw_text && source_dir.metadata(&relative)?.len() > MAX_EXTERNAL_TEXT_FILE_SIZE {
                 continue;
@@ -949,7 +952,7 @@ impl Sidecar {
             rows.collect::<Result<_, _>>()?
         };
         for path in indexed {
-            if Path::new(&path).starts_with(&root) && !found.contains(&path) {
+            if Path::new(&path).starts_with(&key_root) && !found.contains(&path) {
                 self.delete_document(&path)?;
             }
         }
@@ -972,6 +975,7 @@ impl Sidecar {
             ));
         }
         validate_utf8_path(&root, "external source root")?;
+        let key_root = absolute_non_verbatim(&root)?;
         let (sender, receiver) = mpsc::channel();
         let mut watcher = notify::recommended_watcher(move |event| {
             let _ = sender.send(event);
@@ -995,7 +999,7 @@ impl Sidecar {
         };
         let file_count = indexed_paths
             .iter()
-            .filter(|path| Path::new(path).starts_with(&root))
+            .filter(|path| Path::new(path).starts_with(&key_root))
             .count();
         eprintln!("Watching {file_count} files in {}", root.display());
 
@@ -1050,6 +1054,7 @@ impl Sidecar {
     /// Deletes only index rows rooted under an external source.
     pub fn remove_external_source(&mut self, source_root: &Path) -> Result<usize, SidecarError> {
         let root = fs::canonicalize(source_root).unwrap_or_else(|_| source_root.to_path_buf());
+        let key_root = absolute_non_verbatim(&root)?;
         let paths: Vec<String> = {
             let mut statement = self.connection.prepare("SELECT path FROM files")?;
             let rows = statement.query_map([], |row| row.get(0))?;
@@ -1057,7 +1062,7 @@ impl Sidecar {
         };
         let paths = paths
             .into_iter()
-            .filter(|path| Path::new(path).starts_with(&root))
+            .filter(|path| Path::new(path).starts_with(&key_root))
             .collect::<Vec<_>>();
         let removed = paths.len();
         for path in paths {
@@ -2052,6 +2057,8 @@ mod source_tests {
         time::{Duration, Instant, SystemTime},
     };
 
+    #[cfg(windows)]
+    use super::absolute_non_verbatim;
     use super::{
         IndexedDocument, MAX_EXTERNAL_TEXT_FILE_SIZE, SearchSource, Sidecar, SourceRegistry,
     };
@@ -2067,6 +2074,16 @@ mod source_tests {
         ));
         fs::create_dir_all(&path).expect("create temp dir");
         path
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn external_source_root_matches_unprefixed_storage_keys() {
+        let verbatim = Path::new(r"\\?\C:\sources\external");
+        let key_root = absolute_non_verbatim(verbatim).expect("normalize storage root");
+        let stored_path = Path::new(r"C:\sources\external\nested\note.md");
+
+        assert!(stored_path.starts_with(&key_root));
     }
 
     #[cfg(unix)]

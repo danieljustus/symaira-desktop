@@ -87,6 +87,7 @@ const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
 const COMMAND_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 const AI_PROVIDER_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+const HTTP_WRITE_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 const AI_PROVIDER_MAX_LINE_BYTES: usize = 4 << 20;
 const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(10);
 const HTTP_MAX_HEADER_BYTES: usize = 1 << 20;
@@ -672,6 +673,12 @@ struct AiCitationWarning {
     line: Option<usize>,
 }
 
+#[derive(Debug)]
+enum AiBodyReadError {
+    Invalid(String),
+    Timeout,
+}
+
 #[derive(Serialize)]
 struct AiAskEvent<'a> {
     #[serde(rename = "type")]
@@ -703,15 +710,18 @@ async fn handle_ai_transform(
     if let Some(response) = ai_rate_limit_response(&state, &request) {
         return response;
     }
-    let body = match read_capped_body(
+    let body = match read_ai_request_body(
         request.into_body(),
         MAX_AI_TRANSFORM_BODY_BYTES.saturating_add(1),
     )
     .await
     {
         Ok(body) => body,
-        Err(error) => {
+        Err(AiBodyReadError::Invalid(error)) => {
             return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+        }
+        Err(AiBodyReadError::Timeout) => {
+            return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out");
         }
     };
     let mut input: AiTransformRequest = match decode_first_json_value(&body) {
@@ -1119,10 +1129,13 @@ async fn handle_ai_ask(
     if let Some(response) = ai_rate_limit_response(&state, &request) {
         return response;
     }
-    let body = match read_capped_body(request.into_body(), MAX_AI_ASK_BODY_BYTES).await {
+    let body = match read_ai_request_body(request.into_body(), MAX_AI_ASK_BODY_BYTES).await {
         Ok(body) => body,
-        Err(error) => {
+        Err(AiBodyReadError::Invalid(error)) => {
             return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+        }
+        Err(AiBodyReadError::Timeout) => {
+            return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out");
         }
     };
     let mut input: AiAskRequest = match decode_first_json_value(&body) {
@@ -1585,6 +1598,22 @@ fn push_ai_ask_event(events: &mut Vec<Bytes>, event: AiAskEvent<'_>) -> Result<(
 
 fn ai_ask_provider_is_unconfigured(config: &symdesk_core::config::Config) -> bool {
     matches!(config.llm_provider.as_str(), "" | "ollama" | "openai") && config.ollama_url.is_empty()
+}
+
+async fn read_ai_request_body(body: Body, limit: usize) -> Result<Vec<u8>, AiBodyReadError> {
+    read_ai_request_body_with_timeout(body, limit, READ_TIMEOUT).await
+}
+
+async fn read_ai_request_body_with_timeout(
+    body: Body,
+    limit: usize,
+    timeout: Duration,
+) -> Result<Vec<u8>, AiBodyReadError> {
+    match tokio::time::timeout(timeout, read_capped_body(body, limit)).await {
+        Ok(Ok(body)) => Ok(body),
+        Ok(Err(error)) => Err(AiBodyReadError::Invalid(error)),
+        Err(_) => Err(AiBodyReadError::Timeout),
+    }
 }
 
 fn check_citation_warnings(content: &str, read_paths: &[String]) -> Vec<AiCitationWarning> {
@@ -2696,13 +2725,25 @@ async fn normalize_method_not_allowed(request: Request<Body>, next: Next) -> Res
 }
 
 async fn request_timeout(request: Request<Body>, next: Next) -> Response {
-    if request.method() == Method::POST && request.uri().path() == "/api/v1/command" {
+    let Some(timeout) = request_timeout_for(request.method(), request.uri().path()) else {
         return next.run(request).await;
-    }
-    match tokio::time::timeout(READ_TIMEOUT, next.run(request)).await {
+    };
+    match tokio::time::timeout(timeout, next.run(request)).await {
         Ok(response) => response,
         Err(_) => json_error(StatusCode::REQUEST_TIMEOUT, "request timed out"),
     }
+}
+
+fn request_timeout_for(method: &Method, path: &str) -> Option<Duration> {
+    if *method == Method::POST && path == "/api/v1/command" {
+        return None;
+    }
+    if *method == Method::POST && matches!(path, "/api/v1/ai/ask" | "/api/v1/ai/transform") {
+        // Go's HTTP server permits five minutes for the response write. Keep
+        // the body read bounded separately by READ_TIMEOUT in each AI handler.
+        return Some(HTTP_WRITE_TIMEOUT);
+    }
+    Some(READ_TIMEOUT)
 }
 
 async fn handle_health(method: Method) -> Response {
@@ -6342,8 +6383,44 @@ mod tests {
     }
 
     #[test]
-    fn representative_request_timeout_is_bounded() {
+    fn request_timeouts_match_go_server_read_and_write_envelopes() {
         assert_eq!(READ_TIMEOUT, Duration::from_secs(120));
+        assert_eq!(HTTP_HEADER_READ_TIMEOUT, Duration::from_secs(10));
+        assert_eq!(HTTP_WRITE_TIMEOUT, Duration::from_secs(5 * 60));
+        assert_eq!(
+            request_timeout_for(&Method::POST, "/api/v1/ai/ask"),
+            Some(HTTP_WRITE_TIMEOUT)
+        );
+        assert_eq!(
+            request_timeout_for(&Method::POST, "/api/v1/ai/transform"),
+            Some(HTTP_WRITE_TIMEOUT)
+        );
+        assert_eq!(
+            request_timeout_for(&Method::GET, "/api/v1/ai/ask"),
+            Some(READ_TIMEOUT)
+        );
+        assert_eq!(request_timeout_for(&Method::POST, "/api/v1/command"), None);
+    }
+
+    #[tokio::test]
+    async fn ai_request_body_timeout_returns_bounded_408() {
+        struct PendingBody;
+        impl futures_core::Stream for PendingBody {
+            type Item = Result<Bytes, io::Error>;
+
+            fn poll_next(
+                self: std::pin::Pin<&mut Self>,
+                _context: &mut std::task::Context<'_>,
+            ) -> std::task::Poll<Option<Self::Item>> {
+                std::task::Poll::Pending
+            }
+        }
+
+        let body = Body::from_stream(PendingBody);
+        let error = read_ai_request_body_with_timeout(body, 32, Duration::from_millis(1))
+            .await
+            .expect_err("pending request body must time out");
+        assert!(matches!(error, AiBodyReadError::Timeout));
     }
 
     #[test]

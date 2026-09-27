@@ -1299,6 +1299,13 @@ async fn normalize_method_not_allowed(request: Request<Body>, next: Next) -> Res
         let allow = match path.as_str() {
             "/api/v1/files" => "GET, HEAD, PUT",
             "/api/v1/share" => "POST",
+            "/api/v1/ingest"
+            | "/api/v1/jobs/retry"
+            | "/api/v1/command"
+            | "/api/v1/worker/lease"
+            | "/api/v1/worker/complete"
+            | "/api/v1/worker/fail" => "POST",
+            path if path.starts_with("/api/v1/share/") => "DELETE",
             _ => "GET, HEAD",
         };
         response

@@ -299,6 +299,12 @@
       "body": "{\"arguments\":[]}"
     },
     {
+      "id": "command-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/command",
+      "auth": "valid"
+    },
+    {
       "id": "command-admin-null-arguments",
       "method": "POST",
       "path": "/api/v1/command",
@@ -747,6 +753,12 @@
       "auth": "worker"
     },
     {
+      "id": "jobs-retry-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/jobs/retry",
+      "auth": "valid"
+    },
+    {
       "id": "jobs-retry-nonfailed",
       "method": "POST",
       "path": "/api/v1/jobs/retry?id=00000000000000000000000000000001",
@@ -805,6 +817,12 @@
       "method": "POST",
       "path": "/api/v1/worker/lease",
       "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}"
+    },
+    {
+      "id": "worker-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid"
     },
     {
       "id": "worker-lease-invalid-json",
@@ -990,6 +1008,12 @@
       "multipart_file": "report.pdf"
     },
     {
+      "id": "ingest-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/ingest",
+      "auth": "valid"
+    },
+    {
       "id": "ingest-worker-token",
       "method": "POST",
       "path": "/api/v1/ingest",
@@ -1109,6 +1133,12 @@
       "id": "share-method-not-allowed",
       "method": "GET",
       "path": "/api/v1/share",
+      "auth": "valid"
+    },
+    {
+      "id": "share-item-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/share/does-not-exist",
       "auth": "valid"
     },
     {

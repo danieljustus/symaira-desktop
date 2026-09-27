@@ -46,6 +46,7 @@ type httpCase struct {
 	EmptyNotebooks      bool              `json:"empty_notebooks,omitempty"`
 	PopulateJobs        bool              `json:"populate_jobs,omitempty"`
 	PopulateWorkerJob   bool              `json:"populate_worker_job,omitempty"`
+	PopulateExpiredJob  bool              `json:"populate_expired_job,omitempty"`
 	PopulateShares      bool              `json:"populate_shares,omitempty"`
 	PopulateShareAccess bool              `json:"populate_share_access,omitempty"`
 }
@@ -188,6 +189,13 @@ func run() (runErr error) {
 				}
 			}
 		}
+		if tc.PopulateExpiredJob {
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := populateExpiredJob(vault); err != nil {
+					fatal("populate expired worker job: %v", err)
+				}
+			}
+		}
 		if tc.EmptyNotebooks {
 			for _, vault := range []string{leftVault, rightVault} {
 				notebooks := filepath.Join(vault, "notebooks")
@@ -279,6 +287,31 @@ func run() (runErr error) {
 			rightJob, err = normalizeJobUpdatedAt(rightJob)
 			if err != nil {
 				fatal("%s Rust timestamp: %v", tc.ID, err)
+			}
+			if !bytes.Equal(leftJob, rightJob) {
+				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
+			}
+		}
+		if tc.ID == "worker-lease-valid" || tc.ID == "worker-lease-expired-reclaim" {
+			jobID := "00000000000000000000000000000001"
+			if tc.ID == "worker-lease-expired-reclaim" {
+				jobID = "00000000000000000000000000000005"
+			}
+			leftJob, err := leasedWorkerJob(leftVault, leftResult.Body, jobID)
+			if err != nil {
+				fatal("%s Go persistence: %v", tc.ID, err)
+			}
+			rightJob, err := leasedWorkerJob(rightVault, rightResult.Body, jobID)
+			if err != nil {
+				fatal("%s Rust persistence: %v", tc.ID, err)
+			}
+			leftJob, err = normalizeJobLeaseTimes(leftJob)
+			if err != nil {
+				fatal("%s Go timestamps: %v", tc.ID, err)
+			}
+			rightJob, err = normalizeJobLeaseTimes(rightJob)
+			if err != nil {
+				fatal("%s Rust timestamps: %v", tc.ID, err)
 			}
 			if !bytes.Equal(leftJob, rightJob) {
 				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
@@ -381,6 +414,16 @@ func populateWorkerJob(vault string) error {
 	}
 	const id = "00000000000000000000000000000004"
 	const body = `{"id":"00000000000000000000000000000004","schema_version":1,"status":"processing","source_path":"inbox/c.png","original_name":"c.png","capability":"ocr","worker_id":"worker-1","lease_until":"2099-01-02T03:04:05Z","created_at":"2026-01-05T03:04:05Z","updated_at":"2026-01-05T03:04:05Z"}`
+	return os.WriteFile(filepath.Join(dir, id+".json"), []byte(body), 0o600)
+}
+
+func populateExpiredJob(vault string) error {
+	dir := filepath.Join(vault, ".symdesk", "server", "jobs")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+	const id = "00000000000000000000000000000005"
+	const body = `{"id":"00000000000000000000000000000005","schema_version":1,"status":"processing","source_path":"inbox/expired.png","original_name":"expired.png","capability":"ocr","worker_id":"worker-old","error":"stale failure","lease_until":"2000-01-02T03:04:05Z","created_at":"2026-01-01T03:04:05Z","updated_at":"2026-01-01T03:04:05Z"}`
 	return os.WriteFile(filepath.Join(dir, id+".json"), []byte(body), 0o600)
 }
 
@@ -626,6 +669,56 @@ func failedWorkerJob(vault string, response []byte, retry bool) ([]byte, error) 
 	return persisted, nil
 }
 
+func leasedWorkerJob(vault string, response []byte, jobID string) ([]byte, error) {
+	path := filepath.Join(vault, ".symdesk", "server", "jobs", jobID+".json")
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
+		return nil, fmt.Errorf("job mode = %o, want 600", info.Mode().Perm())
+	}
+	persisted, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var responseJob, persistedJob map[string]any
+	if err := json.Unmarshal(response, &responseJob); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(persisted, &persistedJob); err != nil {
+		return nil, err
+	}
+	for _, job := range []map[string]any{responseJob, persistedJob} {
+		if job["id"] != jobID || job["status"] != "processing" || job["worker_id"] != "worker-lease" || job["capability"] != "ocr" {
+			return nil, fmt.Errorf("wrong worker lease state: %q", response)
+		}
+		if jobID == "00000000000000000000000000000005" && job["error"] != nil {
+			return nil, fmt.Errorf("expired worker error was not cleared")
+		}
+		updatedText, ok := job["updated_at"].(string)
+		if !ok {
+			return nil, fmt.Errorf("updated_at is not a string: %v", job["updated_at"])
+		}
+		updated, err := time.Parse(time.RFC3339Nano, updatedText)
+		if err != nil || time.Since(updated) > time.Minute || time.Until(updated) > time.Minute {
+			return nil, fmt.Errorf("updated_at is not current RFC3339: %v", job["updated_at"])
+		}
+		leaseUntilText, ok := job["lease_until"].(string)
+		if !ok {
+			return nil, fmt.Errorf("lease_until is not a string: %v", job["lease_until"])
+		}
+		leaseUntil, err := time.Parse(time.RFC3339Nano, leaseUntilText)
+		if err != nil || time.Until(leaseUntil) < 14*time.Minute || time.Until(leaseUntil) > 16*time.Minute {
+			return nil, fmt.Errorf("lease_until is not 15 minutes ahead: %v", job["lease_until"])
+		}
+	}
+	if !reflect.DeepEqual(responseJob, persistedJob) {
+		return nil, fmt.Errorf("response and persisted worker job differ")
+	}
+	return persisted, nil
+}
+
 func normalizeIngestJob(body []byte) ([]byte, error) {
 	var job map[string]any
 	if err := json.Unmarshal(body, &job); err != nil {
@@ -742,6 +835,32 @@ func normalizeJobUpdatedAt(body []byte) ([]byte, error) {
 		return nil, fmt.Errorf("job timestamp field is not unique")
 	}
 	return bytes.Replace(body, marker, []byte(`"<dynamic>"`), 1), nil
+}
+
+func normalizeJobLeaseTimes(body []byte) ([]byte, error) {
+	var job struct {
+		UpdatedAt  string `json:"updated_at"`
+		LeaseUntil string `json:"lease_until"`
+	}
+	if err := json.Unmarshal(body, &job); err != nil {
+		return nil, err
+	}
+	updated, err := time.Parse(time.RFC3339Nano, job.UpdatedAt)
+	if err != nil || time.Since(updated) > time.Minute || time.Until(updated) > time.Minute {
+		return nil, fmt.Errorf("job updated_at is not current RFC3339: %q", job.UpdatedAt)
+	}
+	leaseUntil, err := time.Parse(time.RFC3339Nano, job.LeaseUntil)
+	if err != nil || time.Until(leaseUntil) < 14*time.Minute || time.Until(leaseUntil) > 16*time.Minute {
+		return nil, fmt.Errorf("job lease_until is not 15 minutes ahead: %q", job.LeaseUntil)
+	}
+	for _, value := range []string{job.UpdatedAt, job.LeaseUntil} {
+		marker := []byte(`"` + value + `"`)
+		if bytes.Count(body, marker) != 1 {
+			return nil, fmt.Errorf("job timestamp field is not unique")
+		}
+		body = bytes.Replace(body, marker, []byte(`"<dynamic>"`), 1)
+	}
+	return body, nil
 }
 
 func assertIndexedWrite(vault, relative, body string) error {
@@ -1008,6 +1127,19 @@ func compare(id string, left, right transcript) error {
 		right.Body, err = normalizeJobUpdatedAt(right.Body)
 		if err != nil {
 			return fmt.Errorf("Rust worker fail response: %w", err)
+		}
+		left.Headers = cloneWithout(left.Headers, "content-length")
+		right.Headers = cloneWithout(right.Headers, "content-length")
+	}
+	if id == "worker-lease-valid" || id == "worker-lease-expired-reclaim" {
+		var err error
+		left.Body, err = normalizeJobLeaseTimes(left.Body)
+		if err != nil {
+			return fmt.Errorf("Go worker lease response: %w", err)
+		}
+		right.Body, err = normalizeJobLeaseTimes(right.Body)
+		if err != nil {
+			return fmt.Errorf("Rust worker lease response: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")

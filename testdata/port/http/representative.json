@@ -377,6 +377,13 @@
       "auth": "wrong"
     },
     {
+      "id": "worker-lease-no-jobs",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}"
+    },
+    {
       "id": "jobs-empty",
       "method": "GET",
       "path": "/api/v1/jobs",
@@ -463,6 +470,57 @@
         "Range": "bytes=0-5"
       },
       "populate_jobs": true
+    },
+    {
+      "id": "worker-lease-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}"
+    },
+    {
+      "id": "worker-lease-invalid-json",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{"
+    },
+    {
+      "id": "worker-lease-missing-worker",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{\"capabilities\":[\"ocr\"]}"
+    },
+    {
+      "id": "worker-lease-oversized",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body_repeat": 65537
+    },
+    {
+      "id": "worker-lease-no-capability",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"pdf\"]}",
+      "populate_jobs": true
+    },
+    {
+      "id": "worker-lease-valid",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}",
+      "populate_jobs": true
+    },
+    {
+      "id": "worker-lease-expired-reclaim",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}",
+      "populate_expired_job": true
     },
     {
       "id": "worker-fail-missing-auth",

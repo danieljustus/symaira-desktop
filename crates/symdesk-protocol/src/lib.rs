@@ -58,6 +58,7 @@ const MAX_NOTE_BYTES: u64 = 8 << 20;
 const MAX_SNAPSHOT_BYTES: u64 = 16 << 20;
 const MAX_NOTEBOOK_FILE_BYTES: u64 = 64 << 20;
 const MAX_SHARE_STORE_BYTES: u64 = 16 << 20;
+const MAX_WORKER_LEASE_BODY_BYTES: usize = 64 << 10;
 const MAX_WORKER_FAIL_BODY_BYTES: usize = 256 << 10;
 const MAX_UPLOAD_BYTES: u64 = 100 << 20;
 const MAX_MULTIPART_REQUEST_BYTES: usize = (100 << 20) + (1 << 20);
@@ -140,6 +141,13 @@ struct WorkerFailRequest {
     error: String,
     #[serde(default)]
     retry: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct WorkerLeaseRequest {
+    worker_id: Option<String>,
+    capabilities: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -313,6 +321,10 @@ fn router(state: Arc<AppState>) -> Router {
         .route(
             "/api/v1/worker/fail",
             axum::routing::post(handle_worker_fail),
+        )
+        .route(
+            "/api/v1/worker/lease",
+            axum::routing::post(handle_worker_lease),
         )
         .route(
             "/api/v1/ingest",
@@ -1153,6 +1165,112 @@ async fn handle_worker_fail(
         return json_error(StatusCode::CONFLICT, &error.to_string());
     }
     json_response(StatusCode::OK, job)
+}
+
+async fn handle_worker_lease(
+    State(state): State<Arc<AppState>>,
+    request: Request<Body>,
+) -> Response {
+    let body = match to_bytes(
+        request.into_body(),
+        MAX_WORKER_LEASE_BODY_BYTES.saturating_add(1),
+    )
+    .await
+    {
+        Ok(body) if body.len() <= MAX_WORKER_LEASE_BODY_BYTES => body,
+        _ => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                "worker_id and capabilities are required",
+            );
+        }
+    };
+    let request: WorkerLeaseRequest = match serde_json::from_slice(&body) {
+        Ok(request) => request,
+        Err(_) => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                "worker_id and capabilities are required",
+            );
+        }
+    };
+    let worker_id = request.worker_id.unwrap_or_default();
+    if worker_id.trim().is_empty() {
+        return json_error(
+            StatusCode::BAD_REQUEST,
+            "worker_id and capabilities are required",
+        );
+    }
+    let capabilities = request.capabilities.unwrap_or_default();
+    if !capabilities.iter().any(|capability| capability == "ocr") {
+        return bytes_response(StatusCode::NO_CONTENT, Vec::new(), Vec::new());
+    }
+    let _guard = match state.job_retry.lock() {
+        Ok(guard) => guard,
+        Err(_) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "job retry lock failed"),
+    };
+    let mut jobs = match read_jobs(&state) {
+        Ok(jobs) => jobs,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+    };
+    jobs.sort_by(|left, right| {
+        let left = OffsetDateTime::parse(&left.created_at, &Rfc3339).ok();
+        let right = OffsetDateTime::parse(&right.created_at, &Rfc3339).ok();
+        left.cmp(&right)
+    });
+    let now = OffsetDateTime::now_utc();
+    let lease_until = (now + time::Duration::minutes(15))
+        .format(&Rfc3339)
+        .unwrap_or_else(|_| go_zero_time());
+    let updated_at = now.format(&Rfc3339).unwrap_or_else(|_| go_zero_time());
+    for mut job in jobs {
+        if job.status == "processing"
+            && job
+                .lease_until
+                .as_deref()
+                .and_then(|value| OffsetDateTime::parse(value, &Rfc3339).ok())
+                .is_some_and(|until| until < now)
+        {
+            job.status = "pending".to_owned();
+            job.worker_id.clear();
+            job.lease_until = None;
+            job.error.clear();
+        }
+        if job.status != "pending" || job.capability != "ocr" {
+            continue;
+        }
+        if !valid_job_id(&job.id) {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, "invalid job id");
+        }
+        job.status = "processing".to_owned();
+        job.worker_id = worker_id;
+        job.lease_until = Some(lease_until);
+        job.updated_at = updated_at;
+        let root = match open_current_root(&state) {
+            Ok(root) => root,
+            Err(error) => {
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+            }
+        };
+        let directory = match root.open_dir(".symdesk/server/jobs") {
+            Ok(directory) => directory,
+            Err(error) => {
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+            }
+        };
+        let path = PathBuf::from(format!("{}.json", job.id));
+        let data = match serde_json::to_vec_pretty(&job) {
+            Ok(data) => data,
+            Err(error) => {
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+            }
+        };
+        if let Err(error) = write_atomic_root(&directory, &path, &data, 0o600) {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+        }
+        return json_response(StatusCode::OK, job);
+    }
+    bytes_response(StatusCode::NO_CONTENT, Vec::new(), Vec::new())
 }
 
 async fn handle_ingest(

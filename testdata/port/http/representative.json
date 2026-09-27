@@ -163,6 +163,36 @@
       "auth": "named"
     },
     {
+      "id": "file-get-named-user-range",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named",
+      "headers": {
+        "Range": "bytes=0-5"
+      },
+      "populate_named_user": true
+    },
+    {
+      "id": "file-get-named-user-not-modified",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Named.md",
+      "auth": "named",
+      "headers": {
+        "If-Modified-Since": "Fri, 02 Jan 2026 03:04:05 GMT"
+      },
+      "populate_named_user": true
+    },
+    {
+      "id": "file-get-named-user-denied-not-modified",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "named",
+      "headers": {
+        "If-Modified-Since": "Fri, 02 Jan 2026 03:04:05 GMT"
+      },
+      "populate_named_user": true
+    },
+    {
       "id": "file-get-named-user-wrong-token",
       "method": "GET",
       "path": "/api/v1/files?path=nested/Named.md",

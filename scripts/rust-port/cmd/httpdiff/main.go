@@ -238,6 +238,28 @@ func run() (runErr error) {
 		if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
 		}
+		if tc.ID == "file-get-named-user-not-modified" || tc.ID == "file-get-named-user-denied-not-modified" || tc.ID == "file-get-named-user-range" {
+			wantStatus := http.StatusPartialContent
+			if tc.ID == "file-get-named-user-not-modified" {
+				wantStatus = http.StatusNotModified
+			} else if tc.ID == "file-get-named-user-denied-not-modified" {
+				wantStatus = http.StatusForbidden
+			}
+			for _, item := range []struct {
+				name     string
+				response transcript
+			}{{"Go", leftResult}, {"Rust", rightResult}} {
+				if item.response.Status != wantStatus {
+					fatal("%s %s status = %d, want %d", tc.ID, item.name, item.response.Status, wantStatus)
+				}
+				if wantStatus == http.StatusNotModified && len(item.response.Body) != 0 {
+					fatal("%s %s returned a body for 304", tc.ID, item.name)
+				}
+				if tc.ID == "file-get-named-user-denied-not-modified" && !bytes.Contains(item.response.Body, []byte("access denied")) {
+					fatal("%s %s omitted the ACL denial", tc.ID, item.name)
+				}
+			}
+		}
 		if tc.ID == "snapshot-named-user-filter" {
 			for _, item := range []struct {
 				name string

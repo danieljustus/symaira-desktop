@@ -460,6 +460,36 @@
       "populate_worker_acl": true
     },
     {
+      "id": "ai-ask-notebook-scoped-sources",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\",\"notebook\":\"mixed\"}"
+    },
+    {
+      "id": "ai-ask-notebook-unmatched-fallback",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"conceptual-question-no-match\",\"notebook\":\"mixed\"}"
+    },
+    {
+      "id": "ai-ask-notebook-worker-acl",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"Body\",\"notebook\":\"mixed\"}",
+      "populate_worker_acl": true
+    },
+    {
+      "id": "ai-ask-notebook-worker-acl-fallback",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"conceptual-question-no-match\",\"notebook\":\"mixed\"}",
+      "populate_worker_acl": true
+    },
+    {
       "id": "ai-ask-method-not-allowed",
       "method": "GET",
       "path": "/api/v1/ai/ask",

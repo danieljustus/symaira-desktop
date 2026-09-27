@@ -637,6 +637,13 @@ struct AiTransformRequest {
     intent: String,
 }
 
+#[derive(Serialize)]
+struct AiTransformAnswer<'a> {
+    #[serde(rename = "type")]
+    event_type: &'static str,
+    text: &'a str,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct AiAskRequest {
@@ -659,11 +666,13 @@ struct AiAskEvent<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     snippet: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    score: Option<f64>,
+    score: Option<serde_json::Number>,
     #[serde(skip_serializing_if = "Option::is_none")]
     tool_name: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     status: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    read_paths: Option<&'a [String]>,
 }
 
 async fn handle_ai_transform(
@@ -709,7 +718,10 @@ async fn handle_ai_transform(
             "configured AI provider streaming is not implemented",
         );
     };
-    let mut answer = match serde_json::to_vec(&json!({"type": "answer", "text": text})) {
+    let mut answer = match serde_json::to_vec(&AiTransformAnswer {
+        event_type: "answer",
+        text,
+    }) {
         Ok(body) => body,
         Err(error) => {
             return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
@@ -771,14 +783,8 @@ async fn handle_ai_ask(
     }
 
     // This route implements only Go's sidecar fallback. Keep unsupported
-    // provider, hybrid, and notebook cases explicit instead of implying the
-    // full Ask contract or emitting incomplete citations/ranking.
-    if !input.notebook.is_empty() {
-        return json_error(
-            StatusCode::NOT_IMPLEMENTED,
-            "notebook-scoped ask is not implemented",
-        );
-    }
+    // provider and hybrid cases explicit instead of implying the full Ask
+    // contract or emitting incomplete citations/ranking.
     let config = ai_transform_config_or_default(load_ai_transform_config());
     if !ai_ask_provider_is_unconfigured(&config) {
         return json_error(
@@ -811,31 +817,138 @@ async fn handle_ai_ask(
             );
         }
     };
-    let hits = match sidecar.search(&input.query) {
-        Ok(hits) => hits,
-        Err(error) => {
+    let mut documents: Vec<(String, String, String, f64)> = Vec::new();
+    let mut scoped_paths: Option<Vec<String>> = None;
+    if input.notebook.is_empty() {
+        let hits = match sidecar.search(&input.query) {
+            Ok(hits) => hits,
+            Err(error) => {
+                return json_error(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    &format!("retrieval failed: {error}"),
+                );
+            }
+        };
+        for hit in hits {
+            let relative = match Path::new(&hit.path).strip_prefix(&state.vault_root) {
+                Ok(relative) if !relative.as_os_str().is_empty() => relative,
+                // A stale index row outside the vault must never become context.
+                _ => continue,
+            };
+            let Some(path) = relative.to_str().map(str::to_owned) else {
+                continue;
+            };
+            documents.push((path, hit.title, hit.snippet, 0.0));
+        }
+    } else {
+        let mut notebook_path = input.notebook.clone();
+        if !notebook_path.ends_with(".md") {
+            notebook_path.push_str(".md");
+        }
+        if !notebook_path.starts_with("notebooks/") {
+            let Some(name) = Path::new(&notebook_path).file_name() else {
+                return json_error(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "retrieval failed: notebook not found",
+                );
+            };
+            notebook_path = format!("notebooks/{}", name.to_string_lossy());
+        }
+        let root_dir = match open_current_root(&state) {
+            Ok(root_dir) => root_dir,
+            Err(error) => {
+                return json_error(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    &format!("retrieval failed: {error}"),
+                );
+            }
+        };
+        if secure_path(&state.vault_root, &notebook_path).is_err() {
             return json_error(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                &format!("retrieval failed: {error}"),
+                "retrieval failed: notebook not found",
             );
         }
-    };
-    let mut documents = Vec::with_capacity(MAX_AI_CONTEXT_DOCS);
-    for hit in hits {
-        let relative = match Path::new(&hit.path).strip_prefix(&state.vault_root) {
-            Ok(relative) if !relative.as_os_str().is_empty() => relative,
-            // A stale index row outside the vault must never become context.
-            _ => continue,
+        let notebook_bytes = match read_root_file(&root_dir, Path::new(&notebook_path)) {
+            Ok(contents) => contents,
+            Err(_) => {
+                return json_error(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "retrieval failed: notebook not found",
+                );
+            }
         };
-        let Some(path) = relative.to_str().map(str::to_owned) else {
-            continue;
+        let notebook = match parse_notebook(&notebook_path, &notebook_bytes) {
+            Ok(notebook) => notebook,
+            Err(error) => {
+                return json_error(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    &format!("retrieval failed: {error}"),
+                );
+            }
         };
-        documents.push((path, hit.title, hit.snippet));
+
+        let mut sources = Vec::with_capacity(notebook.sources.len());
+        let mut absolute_paths = Vec::with_capacity(notebook.sources.len());
+        for path in notebook.sources {
+            let Ok(absolute) = secure_path(&state.vault_root, &path) else {
+                continue;
+            };
+            let Ok(contents) = read_root_file(&root_dir, Path::new(&path)) else {
+                continue;
+            };
+            let Ok(document) = parse_bytes(&path, &contents) else {
+                continue;
+            };
+            let Some(absolute_path) = absolute.to_str().map(str::to_owned) else {
+                continue;
+            };
+            absolute_paths.push(absolute_path);
+            sources.push((path, document.title, document.body));
+        }
+        let in_scope = sources
+            .iter()
+            .map(|(path, _, _)| path.clone())
+            .collect::<Vec<_>>();
+        let hits = match sidecar.search_scoped(&input.query, &absolute_paths) {
+            Ok(hits) => hits,
+            Err(error) => {
+                return json_error(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    &format!("retrieval failed: {error}"),
+                );
+            }
+        };
+        let mut matched = std::collections::HashSet::with_capacity(hits.len());
+        for hit in hits {
+            let Ok(relative) = Path::new(&hit.path).strip_prefix(&state.vault_root) else {
+                continue;
+            };
+            let Some(path) = relative.to_str().map(str::to_owned) else {
+                continue;
+            };
+            if sources.iter().any(|(source, _, _)| *source == path) {
+                matched.insert(path.clone());
+                documents.push((path, hit.title, hit.snippet, 1.0));
+            }
+        }
+        for (path, title, body) in sources {
+            if matched.contains(&path) {
+                continue;
+            }
+            let excerpt = if body.len() > 1500 {
+                String::from_utf8_lossy(&body.as_bytes()[..1500]).into_owned()
+            } else {
+                body
+            };
+            documents.push((path, title, excerpt, 0.0));
+        }
+        scoped_paths = Some(in_scope);
     }
 
     let paths = documents
         .iter()
-        .map(|(path, _, _)| path.clone())
+        .map(|(path, _, _, _)| path.clone())
         .collect::<Vec<_>>();
     let allowed = if role.is_admin() {
         paths.iter().cloned().collect()
@@ -846,8 +959,14 @@ async fn handle_ai_ask(
     };
     // Retain ranked order while filtering. Denied documents cannot appear as
     // citations or fallback links.
-    documents.retain(|(path, _, _)| allowed.contains(path));
+    documents.retain(|(path, _, _, _)| allowed.contains(path));
     documents.truncate(MAX_AI_CONTEXT_DOCS);
+    let read_paths = scoped_paths.map(|paths| {
+        paths
+            .into_iter()
+            .filter(|path| allowed.contains(path))
+            .collect::<Vec<_>>()
+    });
 
     let mut events = Vec::with_capacity(12 + documents.len());
     for (tool_name, status) in [("search", "running"), ("search", "done")] {
@@ -862,12 +981,13 @@ async fn handle_ai_ask(
                 score: None,
                 tool_name: Some(tool_name),
                 status: Some(status),
+                read_paths: None,
             },
         ) {
             return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
         }
     }
-    for (path, title, snippet) in &documents {
+    for (path, title, snippet, score) in &documents {
         if let Err(error) = push_ai_ask_event(
             &mut events,
             AiAskEvent {
@@ -876,9 +996,10 @@ async fn handle_ai_ask(
                 path: Some(path),
                 title: Some(title),
                 snippet: Some(snippet),
-                score: None, // Go's sidecar fallback score is zero and omitted.
+                score: (*score != 0.0).then(|| serde_json::Number::from(1)),
                 tool_name: None,
                 status: None,
+                read_paths: None,
             },
         ) {
             return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
@@ -906,12 +1027,13 @@ async fn handle_ai_ask(
                 score: None,
                 tool_name,
                 status,
+                read_paths: None,
             },
         ) {
             return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
         }
     }
-    for (path, _, _) in documents.iter().take(3) {
+    for (path, _, _, _) in documents.iter().take(3) {
         let answer = format!("- [[{path}]]\n");
         if let Err(error) = push_ai_ask_event(
             &mut events,
@@ -924,6 +1046,7 @@ async fn handle_ai_ask(
                 score: None,
                 tool_name: None,
                 status: None,
+                read_paths: None,
             },
         ) {
             return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
@@ -932,6 +1055,7 @@ async fn handle_ai_ask(
     for (event_type, tool_name, status) in
         [("tool", Some("llm"), Some("done")), ("done", None, None)]
     {
+        let is_done = event_type == "done";
         if let Err(error) = push_ai_ask_event(
             &mut events,
             AiAskEvent {
@@ -943,6 +1067,11 @@ async fn handle_ai_ask(
                 score: None,
                 tool_name,
                 status,
+                read_paths: if is_done {
+                    read_paths.as_deref().filter(|paths| !paths.is_empty())
+                } else {
+                    None
+                },
             },
         ) {
             return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
@@ -5614,6 +5743,7 @@ mod tests {
                 score: None,
                 tool_name: None,
                 status: None,
+                read_paths: None,
             },
         )
         .unwrap();

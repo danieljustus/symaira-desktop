@@ -5422,9 +5422,13 @@ mod tests {
             !env.iter()
                 .any(|(key, _)| { key == "SYMDESK_SERVER_TOKEN" || key == "SYMDESK_WORKER_TOKEN" })
         );
-        assert!(env.iter().any(|(key, value)| {
-            key == "SYMDESK_SIDECAR" && value == "/vault/root/.symdesk/server/sidecar.db"
-        }));
+        let expected_sidecar = Path::new("/vault/root")
+            .join(".symdesk/server/sidecar.db")
+            .into_os_string();
+        assert!(
+            env.iter()
+                .any(|(key, value)| { key == "SYMDESK_SIDECAR" && value == &expected_sidecar })
+        );
     }
 
     #[test]
@@ -6418,6 +6422,7 @@ mod tests {
         let root_dir =
             cap_std::fs::Dir::open_ambient_dir(&root, cap_std::ambient_authority()).unwrap();
         assert!(read_root_file(&root_dir, Path::new("large.md")).is_err());
+        drop(root_dir);
         fs::remove_dir_all(root).unwrap();
     }
 

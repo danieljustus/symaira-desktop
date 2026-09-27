@@ -302,6 +302,13 @@
       "body": "{\"arguments\":[\"ls\",\"--vault=/tmp/other-vault\"]}"
     },
     {
+      "id": "command-admin-stream-controlled-path",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"ask\",\"--vault=/tmp/other-vault\"]}"
+    },
+    {
       "id": "command-admin-invalid-subcommand",
       "method": "POST",
       "path": "/api/v1/command",

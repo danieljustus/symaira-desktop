@@ -36,7 +36,7 @@ use std::{
 
 use axum::{
     Router,
-    body::{Body, to_bytes},
+    body::{Body, Bytes, to_bytes},
     extract::{DefaultBodyLimit, Extension, Multipart, Path as AxumPath, Query, State},
     http::{HeaderMap, HeaderValue, Method, Request, StatusCode, header},
     middleware::{self, Next},
@@ -57,8 +57,9 @@ use symdesk_index::{IndexedDocument, Sidecar};
 use symdesk_vault::{Notebook, parse_bytes, parse_notebook, secure_path, walk_markdown_with};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use tokio::{
-    io::{AsyncRead, AsyncReadExt, AsyncWriteExt},
+    io::{AsyncBufRead, AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWriteExt},
     process::Command as TokioCommand,
+    sync::mpsc,
 };
 use tower::{Service as _, ServiceExt as _};
 
@@ -623,12 +624,193 @@ async fn handle_command_validation(
         arguments.first().map(String::as_str),
         Some("ask" | "transform")
     ) {
-        return json_error(
-            StatusCode::NOT_IMPLEMENTED,
-            "streaming command execution is not implemented",
-        );
+        return stream_remote_command(&state, &arguments, &stdin).await;
     }
     execute_remote_command(&state, &arguments, &stdin).await
+}
+
+struct CommandBodyStream(mpsc::Receiver<Result<Bytes, io::Error>>);
+
+impl Stream for CommandBodyStream {
+    type Item = Result<Bytes, io::Error>;
+
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        self.0.poll_recv(context)
+    }
+}
+
+async fn stream_remote_command(state: &AppState, arguments: &[String], stdin: &str) -> Response {
+    let executable = match std::env::current_exe() {
+        Ok(executable) => executable,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    let mut args = arguments.to_vec();
+    if !args.iter().any(|argument| argument == "--json") {
+        args.push("--json".to_owned());
+    }
+    args.push("--vault".to_owned());
+    args.push(state.vault_root.to_string_lossy().into_owned());
+    let mut command = TokioCommand::new(executable);
+    command
+        .args(args)
+        .env_clear()
+        .envs(filtered_subprocess_env(
+            std::env::vars_os(),
+            &state.vault_root,
+        ))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(true);
+    let mut child = match command.spawn() {
+        Ok(child) => child,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    let (Some(stdout), Some(stderr), stdin_pipe) =
+        (child.stdout.take(), child.stderr.take(), child.stdin.take())
+    else {
+        let _ = child.kill().await;
+        return json_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "failed to capture command streams",
+        );
+    };
+
+    let (sender, receiver) = mpsc::channel(1);
+    let stdin = stdin.as_bytes().to_vec();
+    tokio::spawn(async move {
+        let stderr_task = tokio::spawn(read_command_pipe(stderr, MAX_COMMAND_STDERR_BYTES));
+        let stdin_task = tokio::spawn(async move { write_command_stdin(stdin_pipe, &stdin).await });
+        let relay = relay_command_ndjson(stdout, &sender, &mut child, MAX_COMMAND_OUTPUT_BYTES);
+        let relay_result = tokio::time::timeout(COMMAND_TIMEOUT, relay).await;
+        match relay_result {
+            Ok(Ok(Some(status))) => {
+                let stderr = stderr_task
+                    .await
+                    .ok()
+                    .and_then(Result::ok)
+                    .map(|(bytes, _)| bytes)
+                    .unwrap_or_default();
+                let stdin_result = stdin_task.await.ok().and_then(Result::ok);
+                let message = if !status.success() {
+                    let text = String::from_utf8_lossy(&stderr).trim().to_owned();
+                    if text.is_empty() {
+                        status
+                            .code()
+                            .map(|code| format!("exit status {code}"))
+                            .unwrap_or_else(|| "signal: killed".to_owned())
+                    } else {
+                        text
+                    }
+                } else if stdin_result.is_none() {
+                    "failed to write command input".to_owned()
+                } else {
+                    String::new()
+                };
+                if !message.is_empty() {
+                    let _ = send_command_error(&sender, &message).await;
+                }
+            }
+            Ok(Ok(None)) => {}
+            Ok(Err(error)) => {
+                let _ = child.kill().await;
+                let _ = child.wait().await;
+                let _ = send_command_error(&sender, &error.to_string()).await;
+            }
+            Err(_) => {
+                let _ = child.kill().await;
+                let _ = child.wait().await;
+                let _ = send_command_error(&sender, "signal: killed").await;
+            }
+        }
+    });
+    let mut response = Response::new(Body::from_stream(CommandBodyStream(receiver)));
+    *response.status_mut() = StatusCode::OK;
+    response.headers_mut().insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("application/x-ndjson"),
+    );
+    response
+}
+
+async fn relay_command_ndjson<R: AsyncRead + Unpin>(
+    stdout: R,
+    sender: &mpsc::Sender<Result<Bytes, io::Error>>,
+    child: &mut tokio::process::Child,
+    output_limit: usize,
+) -> io::Result<Option<std::process::ExitStatus>> {
+    let mut reader = tokio::io::BufReader::new(stdout);
+    let mut written = 0_usize;
+    let mut line = Vec::new();
+    loop {
+        line.clear();
+        let read = tokio::select! {
+            biased;
+            _ = sender.closed() => {
+                let _ = child.kill().await;
+                let _ = child.wait().await;
+                return Ok(None);
+            }
+            read = read_limited_line(&mut reader, &mut line, output_limit - written + 1) => read?,
+        };
+        if read == 0 {
+            break;
+        }
+        if line.len() > output_limit - written {
+            let _ = child.kill().await;
+            // Go drains stdout after killing to allow the process to finish cleanly.
+            let mut discard = [0_u8; 16 << 10];
+            while reader.read(&mut discard).await? != 0 {}
+            let _ = child.wait().await;
+            send_command_error(sender, "command output exceeded 32 MiB").await?;
+            return Ok(None);
+        }
+        written += line.len();
+        if sender
+            .send(Ok(Bytes::copy_from_slice(&line)))
+            .await
+            .is_err()
+        {
+            let _ = child.kill().await;
+            let _ = child.wait().await;
+            return Ok(None);
+        }
+    }
+    child.wait().await.map(Some)
+}
+
+async fn read_limited_line<R: AsyncBufRead + Unpin>(
+    reader: &mut R,
+    line: &mut Vec<u8>,
+    limit: usize,
+) -> io::Result<usize> {
+    loop {
+        let available = reader.fill_buf().await?;
+        if available.is_empty() {
+            return Ok(line.len());
+        }
+        let newline = available.iter().position(|byte| *byte == b'\n');
+        let count = newline.map_or(available.len(), |index| index + 1);
+        let keep = count.min(limit.saturating_sub(line.len()));
+        line.extend_from_slice(&available[..keep]);
+        reader.consume(count);
+        if keep < count || newline.is_some() {
+            return Ok(line.len());
+        }
+    }
+}
+
+async fn send_command_error(
+    sender: &mpsc::Sender<Result<Bytes, io::Error>>,
+    message: &str,
+) -> Result<(), io::Error> {
+    let mut event = serde_json::to_vec(&json!({"type": "error", "message": message}))
+        .map_err(io::Error::other)?;
+    event.push(b'\n');
+    sender
+        .send(Ok(Bytes::from(event)))
+        .await
+        .map_err(|_| io::Error::new(io::ErrorKind::BrokenPipe, "client disconnected"))
 }
 
 enum CommandBodyError {
@@ -3542,6 +3724,93 @@ async fn shutdown_signal() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn command_stream_is_line_buffered_and_emits_terminal_failure_event() {
+        let mut child = TokioCommand::new("sh")
+            .args([
+                "-c",
+                "printf 'first\\npartial'; printf 'failure' >&2; exit 7",
+            ])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .kill_on_drop(true)
+            .spawn()
+            .unwrap();
+        let stdout = child.stdout.take().unwrap();
+        let stderr = child.stderr.take().unwrap();
+        let stderr_task = tokio::spawn(read_command_pipe(stderr, MAX_COMMAND_STDERR_BYTES));
+        let (sender, mut receiver) = mpsc::channel(1);
+        let relay = relay_command_ndjson(stdout, &sender, &mut child, 128);
+        tokio::pin!(relay);
+        let mut events = Vec::new();
+        let status = loop {
+            tokio::select! {
+                result = &mut relay => break result,
+                event = receiver.recv() => events.push(event.unwrap().unwrap()),
+            }
+        };
+        while let Ok(event) = receiver.try_recv() {
+            events.push(event.unwrap());
+        }
+
+        assert_eq!(events[0], Bytes::from_static(b"first\n"));
+        assert_eq!(events[1], Bytes::from_static(b"partial"));
+        let status = status.unwrap().unwrap();
+        assert_eq!(status.code(), Some(7));
+        send_command_error(&sender, "failure").await.unwrap();
+        let event: serde_json::Value =
+            serde_json::from_slice(&receiver.recv().await.unwrap().unwrap()).unwrap();
+        assert_eq!(event["type"], "error");
+        assert_eq!(event["message"], "failure");
+        let stderr = stderr_task.await.unwrap().unwrap().0;
+        assert_eq!(stderr, b"failure");
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn command_stream_bounds_lines_and_kills_child_when_client_disconnects() {
+        let mut child = TokioCommand::new("sh")
+            .args(["-c", "printf '123456\\n'; exec sleep 30"])
+            .stdout(Stdio::piped())
+            .kill_on_drop(true)
+            .spawn()
+            .unwrap();
+        let stdout = child.stdout.take().unwrap();
+        let (sender, mut receiver) = mpsc::channel(1);
+        let relay = relay_command_ndjson(stdout, &sender, &mut child, 5);
+        let (result, event) = tokio::join!(relay, receiver.recv());
+
+        assert!(result.unwrap().is_none());
+        let event: serde_json::Value = serde_json::from_slice(&event.unwrap().unwrap()).unwrap();
+        assert_eq!(event["type"], "error");
+        assert_eq!(event["message"], "command output exceeded 32 MiB");
+
+        let mut child = TokioCommand::new("sh")
+            .args(["-c", "printf 'ready\\n'; exec sleep 30"])
+            .stdout(Stdio::piped())
+            .kill_on_drop(true)
+            .spawn()
+            .unwrap();
+        let stdout = child.stdout.take().unwrap();
+        let (sender, mut receiver) = mpsc::channel(1);
+        let relay = relay_command_ndjson(stdout, &sender, &mut child, MAX_COMMAND_OUTPUT_BYTES);
+        tokio::pin!(relay);
+        let first = tokio::select! {
+            event = receiver.recv() => event.unwrap().unwrap(),
+            result = &mut relay => panic!("relay ended before emitting first line: {result:?}"),
+        };
+        assert_eq!(first, Bytes::from_static(b"ready\n"));
+        drop(receiver);
+        assert!(
+            tokio::time::timeout(Duration::from_secs(2), &mut relay)
+                .await
+                .unwrap()
+                .unwrap()
+                .is_none()
+        );
+    }
 
     #[tokio::test]
     async fn command_capture_truncates_without_growing_past_the_limit() {

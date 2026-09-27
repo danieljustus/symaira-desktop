@@ -1939,6 +1939,7 @@ fn path_relative_to_root(root: &Path, path: &str) -> Option<PathBuf> {
         .strip_prefix(root)
         .ok()
         .map(Path::to_path_buf)
+        .and_then(safe_vault_relative_path)
         .or_else(|| {
             let normalized_root = strip_windows_verbatim_prefix(root);
             let normalized_path = strip_windows_verbatim_prefix(Path::new(path));
@@ -1946,7 +1947,16 @@ fn path_relative_to_root(root: &Path, path: &str) -> Option<PathBuf> {
                 .strip_prefix(normalized_root)
                 .ok()
                 .map(Path::to_path_buf)
+                .and_then(safe_vault_relative_path)
         })
+}
+
+fn safe_vault_relative_path(path: PathBuf) -> Option<PathBuf> {
+    (!path.as_os_str().is_empty()
+        && path
+            .components()
+            .all(|component| matches!(component, Component::Normal(_))))
+    .then_some(path)
 }
 
 fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
@@ -5330,6 +5340,7 @@ mod tests {
             path_relative_to_root(root, r"C:\vault\internal.md"),
             Some(PathBuf::from("internal.md"))
         );
+        assert_eq!(path_relative_to_root(root, r"C:\vault\..\outside.md"), None);
     }
 
     #[test]

@@ -25,6 +25,7 @@ import (
 	"sync"
 	"time"
 
+	"gopkg.in/yaml.v3"
 	_ "modernc.org/sqlite"
 )
 
@@ -315,6 +316,30 @@ func run() (runErr error) {
 			}
 			if !bytes.Equal(leftJob, rightJob) {
 				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
+			}
+		}
+		if tc.ID == "worker-complete-valid" {
+			leftJob, err := completedWorkerJob(leftVault, leftResult.Body)
+			if err != nil {
+				fatal("%s Go persistence: %v", tc.ID, err)
+			}
+			rightJob, err := completedWorkerJob(rightVault, rightResult.Body)
+			if err != nil {
+				fatal("%s Rust persistence: %v", tc.ID, err)
+			}
+			if !bytes.Equal(leftJob, rightJob) {
+				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
+			}
+			leftNote, err := completedNote(leftVault, leftResult.Body)
+			if err != nil {
+				fatal("%s Go note: %v", tc.ID, err)
+			}
+			rightNote, err := completedNote(rightVault, rightResult.Body)
+			if err != nil {
+				fatal("%s Rust note: %v", tc.ID, err)
+			}
+			if !bytes.Equal(leftNote, rightNote) {
+				fatal("%s note semantics differ: Go=%q Rust=%q", tc.ID, leftNote, rightNote)
 			}
 		}
 		if tc.ID == "ingest-valid" {
@@ -719,6 +744,107 @@ func leasedWorkerJob(vault string, response []byte, jobID string) ([]byte, error
 	return persisted, nil
 }
 
+func completedWorkerJob(vault string, response []byte) ([]byte, error) {
+	path := filepath.Join(vault, ".symdesk", "server", "jobs", "00000000000000000000000000000004.json")
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
+		return nil, fmt.Errorf("job mode = %o, want 600", info.Mode().Perm())
+	}
+	persisted, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var responseJob, persistedJob map[string]any
+	if err := json.Unmarshal(response, &responseJob); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(persisted, &persistedJob); err != nil {
+		return nil, err
+	}
+	for _, job := range []map[string]any{responseJob, persistedJob} {
+		if job["id"] != "00000000000000000000000000000004" || job["status"] != "completed" || job["worker_id"] != "worker-1" || job["engine"] != "ollama" || job["model"] != "gemma3" || job["note_path"] != "inbox/c-00000000.md" || job["lease_until"] != nil || job["error"] != nil {
+			return nil, fmt.Errorf("wrong worker completion state: %q", response)
+		}
+		updatedText, ok := job["updated_at"].(string)
+		if !ok {
+			return nil, fmt.Errorf("updated_at is not a string: %v", job["updated_at"])
+		}
+		updated, err := time.Parse(time.RFC3339Nano, updatedText)
+		if err != nil || time.Since(updated) > time.Minute || time.Until(updated) > time.Minute {
+			return nil, fmt.Errorf("updated_at is not current RFC3339: %q", updatedText)
+		}
+	}
+	if !reflect.DeepEqual(responseJob, persistedJob) {
+		return nil, fmt.Errorf("response and persisted worker job differ")
+	}
+	return normalizeJobUpdatedAt(persisted)
+}
+
+func completedNote(vault string, response []byte) ([]byte, error) {
+	var job struct {
+		NotePath string `json:"note_path"`
+	}
+	if err := json.Unmarshal(response, &job); err != nil {
+		return nil, err
+	}
+	if job.NotePath != "inbox/c-00000000.md" {
+		return nil, fmt.Errorf("note_path = %q", job.NotePath)
+	}
+	path := filepath.Join(vault, filepath.FromSlash(job.NotePath))
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o644 {
+		return nil, fmt.Errorf("note mode = %o, want 644", info.Mode().Perm())
+	}
+	note, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	parts := bytes.SplitN(note, []byte("\n---\n"), 2)
+	if len(parts) != 2 || !bytes.HasPrefix(parts[0], []byte("---\n")) {
+		return nil, fmt.Errorf("note has invalid frontmatter: %q", note)
+	}
+	frontmatter := make(map[string]any)
+	if err := yaml.Unmarshal(bytes.TrimPrefix(parts[0], []byte("---\n")), &frontmatter); err != nil {
+		return nil, err
+	}
+	created := frontmatter["created"]
+	var createdAt time.Time
+	switch value := created.(type) {
+	case time.Time:
+		createdAt = value
+	case string:
+		createdAt, err = time.Parse(time.RFC3339, value)
+	default:
+		return nil, fmt.Errorf("created has unexpected YAML type %T", created)
+	}
+	if err != nil || time.Since(createdAt) > 5*time.Minute || time.Until(createdAt) > 5*time.Minute {
+		return nil, fmt.Errorf("created is not a current timestamp: %v", created)
+	}
+	if frontmatter["title"] != "c" || frontmatter["archive_path"] != "inbox/c.png" || frontmatter["confidence"] != 0 || frontmatter["ocr_engine"] != "ollama" || frontmatter["ocr_model"] != "gemma3" || frontmatter["status"] != "needs_review" {
+		return nil, fmt.Errorf("unexpected note frontmatter: %v", frontmatter)
+	}
+	frontmatter["created"] = "<dynamic>"
+	body := parts[1]
+	wantBody := []byte("\n![[inbox/c.png]]\n\n## OCR text\n\nInvoice total: 42 EUR\n")
+	if !bytes.Equal(body, wantBody) {
+		return nil, fmt.Errorf("unexpected note body: %q", body)
+	}
+	if err := assertIndexedWrite(vault, job.NotePath, string(note)); err != nil {
+		return nil, err
+	}
+	metadata, err := json.Marshal(frontmatter)
+	if err != nil {
+		return nil, err
+	}
+	return append(metadata, body...), nil
+}
+
 func normalizeIngestJob(body []byte) ([]byte, error) {
 	var job map[string]any
 	if err := json.Unmarshal(body, &job); err != nil {
@@ -965,12 +1091,12 @@ func (s *runningServer) ready() error {
 }
 
 func (s *runningServer) request(tc httpCase, previousETag string) (transcript, string, error) {
-	if tc.BodyRepeat < 0 || tc.BodyRepeat > (8<<20)+1 {
+	if tc.BodyRepeat < 0 || tc.BodyRepeat > (24<<20)+1 {
 		return transcript{}, previousETag, fmt.Errorf("fixture body_repeat exceeds 8 MiB + 1 bound")
 	}
 	requestBody := tc.Body
 	if tc.BodyRepeat > 0 {
-		requestBody = strings.Repeat("a", tc.BodyRepeat)
+		requestBody = tc.Body + strings.Repeat("a", tc.BodyRepeat)
 	}
 	var requestReader io.Reader = strings.NewReader(requestBody)
 	if tc.MultipartFile != "" {
@@ -1140,6 +1266,30 @@ func compare(id string, left, right transcript) error {
 		right.Body, err = normalizeJobLeaseTimes(right.Body)
 		if err != nil {
 			return fmt.Errorf("Rust worker lease response: %w", err)
+		}
+		left.Headers = cloneWithout(left.Headers, "content-length")
+		right.Headers = cloneWithout(right.Headers, "content-length")
+	}
+	if id == "worker-complete-invalid-json" {
+		for name, response := range map[string]transcript{"Go": left, "Rust": right} {
+			var body map[string]string
+			if response.Status != http.StatusBadRequest || json.Unmarshal(response.Body, &body) != nil || !strings.HasPrefix(body["error"], "invalid JSON:") {
+				return fmt.Errorf("%s invalid completion JSON response mismatch: status=%d body=%q", name, response.Status, response.Body)
+			}
+		}
+		left.Headers = cloneWithout(left.Headers, "content-length")
+		right.Headers = cloneWithout(right.Headers, "content-length")
+		return compareHeaders(left.Headers, right.Headers)
+	}
+	if id == "worker-complete-valid" {
+		var err error
+		left.Body, err = normalizeJobUpdatedAt(left.Body)
+		if err != nil {
+			return fmt.Errorf("Go worker completion response: %w", err)
+		}
+		right.Body, err = normalizeJobUpdatedAt(right.Body)
+		if err != nil {
+			return fmt.Errorf("Rust worker completion response: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")

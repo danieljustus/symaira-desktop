@@ -19,6 +19,7 @@ use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 use std::{
     fmt::Write as _,
     fs,
+    future::poll_fn,
     io::{self, Read, Seek, SeekFrom, Write},
     net::SocketAddr,
     path::{Component, Path, PathBuf},
@@ -41,6 +42,7 @@ use axum::{
     routing::{get, post},
 };
 use flate2::{Compression, write::GzEncoder};
+use futures_core::Stream;
 use httpdate::{fmt_http_date, parse_http_date};
 use hyper::server::conn::http1::Builder as ConnectionBuilder;
 use hyper_util::{
@@ -60,6 +62,7 @@ const MAX_NOTEBOOK_FILE_BYTES: u64 = 64 << 20;
 const MAX_SHARE_STORE_BYTES: u64 = 16 << 20;
 const MAX_WORKER_LEASE_BODY_BYTES: usize = 64 << 10;
 const MAX_WORKER_FAIL_BODY_BYTES: usize = 256 << 10;
+const MAX_WORKER_COMPLETE_BODY_BYTES: usize = 24 << 20;
 const MAX_UPLOAD_BYTES: u64 = 100 << 20;
 const MAX_MULTIPART_REQUEST_BYTES: usize = (100 << 20) + (1 << 20);
 const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
@@ -148,6 +151,20 @@ struct WorkerFailRequest {
 struct WorkerLeaseRequest {
     worker_id: Option<String>,
     capabilities: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct WorkerCompleteRequest {
+    #[serde(default, deserialize_with = "deserialize_null_string")]
+    job_id: String,
+    #[serde(default, deserialize_with = "deserialize_null_string")]
+    worker_id: String,
+    #[serde(default, deserialize_with = "deserialize_null_string")]
+    text: String,
+    #[serde(default, deserialize_with = "deserialize_null_string")]
+    engine: String,
+    #[serde(default, deserialize_with = "deserialize_null_string")]
+    model: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -325,6 +342,10 @@ fn router(state: Arc<AppState>) -> Router {
         .route(
             "/api/v1/worker/lease",
             axum::routing::post(handle_worker_lease),
+        )
+        .route(
+            "/api/v1/worker/complete",
+            axum::routing::post(handle_worker_complete),
         )
         .route(
             "/api/v1/ingest",
@@ -1171,13 +1192,13 @@ async fn handle_worker_lease(
     State(state): State<Arc<AppState>>,
     request: Request<Body>,
 ) -> Response {
-    let body = match to_bytes(
+    let body = match read_capped_body(
         request.into_body(),
         MAX_WORKER_LEASE_BODY_BYTES.saturating_add(1),
     )
     .await
     {
-        Ok(body) if body.len() <= MAX_WORKER_LEASE_BODY_BYTES => body,
+        Ok(body) => body,
         _ => {
             return json_error(
                 StatusCode::BAD_REQUEST,
@@ -1185,7 +1206,10 @@ async fn handle_worker_lease(
             );
         }
     };
-    let request: WorkerLeaseRequest = match serde_json::from_slice(&body) {
+    let parse_body = &body[..body
+        .len()
+        .min(MAX_WORKER_LEASE_BODY_BYTES.saturating_add(1))];
+    let request: WorkerLeaseRequest = match decode_first_json_value(parse_body) {
         Ok(request) => request,
         Err(_) => {
             return json_error(
@@ -1271,6 +1295,226 @@ async fn handle_worker_lease(
         return json_response(StatusCode::OK, job);
     }
     bytes_response(StatusCode::NO_CONTENT, Vec::new(), Vec::new())
+}
+
+async fn handle_worker_complete(
+    State(state): State<Arc<AppState>>,
+    request: Request<Body>,
+) -> Response {
+    let body = match read_capped_body(
+        request.into_body(),
+        MAX_WORKER_COMPLETE_BODY_BYTES.saturating_add(1),
+    )
+    .await
+    {
+        Ok(body) => body,
+        Err(error) => {
+            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+        }
+    };
+    let parse_body = &body[..body
+        .len()
+        .min(MAX_WORKER_COMPLETE_BODY_BYTES.saturating_add(1))];
+    let request: WorkerCompleteRequest = match decode_first_json_value(parse_body) {
+        Ok(request) => request,
+        Err(error) => {
+            let message = if error.is_eof() {
+                "unexpected EOF".to_owned()
+            } else {
+                error.to_string()
+            };
+            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {message}"));
+        }
+    };
+    if !valid_job_id(&request.job_id) {
+        return json_error(StatusCode::NOT_FOUND, "job not found");
+    }
+    let _guard = match state.job_retry.lock() {
+        Ok(guard) => guard,
+        Err(_) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "job retry lock failed"),
+    };
+    let root = match open_current_root(&state) {
+        Ok(root) => root,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "job not found"),
+    };
+    let mut job = match read_job_record(&root, &request.job_id) {
+        Ok(job) => job,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "job not found"),
+    };
+    if job.status != "processing" || job.worker_id != request.worker_id {
+        return json_error(StatusCode::CONFLICT, "job is not leased by this worker");
+    }
+    let note_path = match write_completed_note(&state, &root, &job, &request) {
+        Ok(path) => path,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+    };
+    let now = OffsetDateTime::now_utc();
+    job.status = "completed".to_owned();
+    job.engine = request.engine;
+    job.model = request.model;
+    job.note_path = note_path;
+    job.lease_until = None;
+    job.error.clear();
+    job.updated_at = now.format(&Rfc3339).unwrap_or_else(|_| go_zero_time());
+    let directory = match root.open_dir(".symdesk/server/jobs") {
+        Ok(directory) => directory,
+        Err(error) => return json_error(StatusCode::CONFLICT, &error.to_string()),
+    };
+    let path = PathBuf::from(format!("{}.json", job.id));
+    let data = match serde_json::to_vec_pretty(&job) {
+        Ok(data) => data,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    if let Err(error) = write_atomic_root(&directory, &path, &data, 0o600) {
+        return json_error(StatusCode::CONFLICT, &error.to_string());
+    }
+    json_response(StatusCode::OK, job)
+}
+
+fn write_completed_note(
+    state: &AppState,
+    root: &cap_std::fs::Dir,
+    job: &JobRecord,
+    request: &WorkerCompleteRequest,
+) -> Result<String, String> {
+    let extension = Path::new(&job.original_name)
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .map(|extension| format!(".{extension}"))
+        .unwrap_or_default();
+    let base = job
+        .original_name
+        .strip_suffix(&extension)
+        .unwrap_or(&job.original_name)
+        .chars()
+        .map(|character| {
+            if character == '/' || character == '\\' || character < '\u{20}' {
+                '-'
+            } else {
+                character
+            }
+        })
+        .collect::<String>();
+    let base = base.trim_matches([' ', '.']);
+    let base = if base.is_empty() { "Document" } else { base };
+    let relative = confined_path(state, &format!("inbox/{base}-{}.md", &job.id[..8]))
+        .map_err(|_| "a vault-relative path is required".to_owned())?;
+    if let Some(parent) = relative
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        create_parent_directories(root, parent).map_err(|error| error.to_string())?;
+    }
+    let created = OffsetDateTime::now_utc()
+        .replace_nanosecond(0)
+        .unwrap_or_else(|_| OffsetDateTime::now_utc())
+        .format(&Rfc3339)
+        .map_err(|error| error.to_string())?;
+    let frontmatter = format!(
+        "archive_path: {}\nconfidence: 0\ncreated: \"{}\"\nocr_engine: {}\nocr_model: {}\nstatus: needs_review\ntitle: {}\n",
+        yaml_scalar(&job.source_path),
+        created,
+        yaml_scalar(&request.engine),
+        yaml_scalar(&request.model),
+        yaml_scalar(base),
+    );
+    let source_path = job.source_path.replace('\\', "/");
+    let content = format!(
+        "---\n{frontmatter}---\n\n![[{source_path}]]\n\n## OCR text\n\n{}\n",
+        request.text.trim()
+    );
+    if let Err(error) = write_atomic_root(root, &relative, content.as_bytes(), 0o644) {
+        return Err(error.to_string());
+    }
+    let file_path = state.vault_root.join(&relative);
+    let Some(file_key) = file_path.to_str() else {
+        return Err("document path is not valid UTF-8".to_owned());
+    };
+    let document = parse_bytes(file_key, content.as_bytes()).map_err(|error| error.to_string())?;
+    let indexed =
+        IndexedDocument::from_vault(&document, None).map_err(|error| error.to_string())?;
+    let sidecar_path = state
+        .vault_root
+        .join(".symdesk")
+        .join("server")
+        .join("sidecar.db");
+    let mut sidecar = Sidecar::open(&sidecar_path).map_err(|error| error.to_string())?;
+    sidecar
+        .index_document(&indexed)
+        .map_err(|error| error.to_string())?;
+    Ok(relative.to_string_lossy().replace('\\', "/"))
+}
+
+fn yaml_scalar(value: &str) -> String {
+    let plain = !value.is_empty()
+        && !value.trim().is_empty()
+        && value.trim() == value
+        && !value.chars().any(|character| {
+            character.is_control()
+                || matches!(
+                    character,
+                    ':' | '#'
+                        | '['
+                        | ']'
+                        | '{'
+                        | '}'
+                        | ','
+                        | '&'
+                        | '*'
+                        | '!'
+                        | '|'
+                        | '>'
+                        | '\''
+                        | '"'
+                        | '%'
+                        | '@'
+                        | '`'
+                )
+        })
+        && !matches!(
+            value,
+            "null" | "Null" | "NULL" | "~" | "true" | "True" | "TRUE" | "false" | "False" | "FALSE"
+        )
+        && !value
+            .chars()
+            .all(|character| character.is_ascii_digit() || character == '.' || character == '-');
+    if plain {
+        value.to_owned()
+    } else {
+        serde_json::to_string(value).unwrap_or_else(|_| "\"\"".to_owned())
+    }
+}
+
+fn decode_first_json_value<T>(bytes: &[u8]) -> Result<T, serde_json::Error>
+where
+    T: for<'de> Deserialize<'de>,
+{
+    let mut deserializer = serde_json::Deserializer::from_slice(bytes);
+    T::deserialize(&mut deserializer)
+}
+
+fn deserialize_null_string<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Ok(Option::<String>::deserialize(deserializer)?.unwrap_or_default())
+}
+
+async fn read_capped_body(body: Body, limit: usize) -> Result<Vec<u8>, String> {
+    let mut stream = Box::pin(body.into_data_stream());
+    let mut bytes = Vec::with_capacity(limit.min(8 << 10));
+    while bytes.len() < limit {
+        let next = poll_fn(|context| stream.as_mut().poll_next(context)).await;
+        match next {
+            Some(Ok(chunk)) => {
+                let remaining = limit - bytes.len();
+                bytes.extend_from_slice(&chunk[..chunk.len().min(remaining)]);
+            }
+            Some(Err(error)) => return Err(error.to_string()),
+            None => break,
+        }
+    }
+    Ok(bytes)
 }
 
 async fn handle_ingest(

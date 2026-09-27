@@ -384,6 +384,14 @@
       "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}"
     },
     {
+      "id": "worker-lease-valid-prefix-over-limit-trailing",
+      "method": "POST",
+      "path": "/api/v1/worker/lease",
+      "auth": "valid",
+      "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}",
+      "body_repeat": 65486
+    },
+    {
       "id": "jobs-empty",
       "method": "GET",
       "path": "/api/v1/jobs",
@@ -521,6 +529,64 @@
       "auth": "valid",
       "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}",
       "populate_expired_job": true
+    },
+    {
+      "id": "worker-complete-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"ocr\",\"engine\":\"tesseract\"}"
+    },
+    {
+      "id": "worker-complete-missing-job",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000099\",\"worker_id\":\"worker-1\",\"text\":\"ocr\",\"engine\":\"tesseract\"}"
+    },
+    {
+      "id": "worker-complete-null-strings",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":null,\"worker_id\":null,\"text\":null,\"engine\":null,\"model\":null}"
+    },
+    {
+      "id": "worker-complete-trailing-json",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000099\"}{\"ignored\":true}"
+    },
+    {
+      "id": "worker-complete-not-leased",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-other\",\"text\":\"ignored\",\"engine\":\"tesseract\"}",
+      "populate_worker_job": true
+    },
+    {
+      "id": "worker-complete-invalid-json",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{"
+    },
+    {
+      "id": "worker-complete-oversized",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"",
+      "body_repeat": 25165749
+    },
+    {
+      "id": "worker-complete-valid",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"  Invoice total: 42 EUR  \",\"engine\":\"ollama\",\"model\":\"gemma3\"}",
+      "populate_worker_job": true
     },
     {
       "id": "worker-fail-missing-auth",

@@ -412,6 +412,9 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/files", get(handle_file).put(handle_put_file))
         .route("/api/v1/jobs", get(handle_jobs))
         .route("/api/v1/jobs/retry", axum::routing::post(handle_retry_job))
+        // Register the protected route so the auth layer applies Go's
+        // admin-role check before the command handler is ported.
+        .route("/api/v1/command", post(handle_not_found))
         .route("/api/v1/worker/input", get(handle_worker_input))
         .route(
             "/api/v1/worker/fail",
@@ -575,6 +578,7 @@ fn route_requires_admin(method: &Method, path: &str) -> bool {
     (path == "/api/v1/jobs" && (method == Method::GET || method == Method::HEAD))
         || (path == "/api/v1/jobs/retry" && method == Method::POST)
         || (path == "/api/v1/ingest" && method == Method::POST)
+        || (path == "/api/v1/command" && method == Method::POST)
 }
 
 // Apply Go's per-user document ACLs to authenticated non-admin principals,
@@ -3388,6 +3392,7 @@ mod tests {
             (Method::HEAD, "/api/v1/jobs", true),
             (Method::POST, "/api/v1/jobs/retry", true),
             (Method::POST, "/api/v1/ingest", true),
+            (Method::POST, "/api/v1/command", true),
             (Method::GET, "/api/v1/status", false),
             (Method::PUT, "/api/v1/files", false),
             (Method::POST, "/api/v1/worker/lease", false),

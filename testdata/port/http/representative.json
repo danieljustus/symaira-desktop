@@ -245,6 +245,35 @@
       "populate_named_user": true
     },
     {
+      "id": "command-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "body": "{"
+    },
+    {
+      "id": "command-worker-forbidden",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "worker",
+      "body": "{"
+    },
+    {
+      "id": "command-named-user-forbidden",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "named",
+      "body": "{",
+      "populate_named_user": true
+    },
+    {
+      "id": "command-named-worker-forbidden",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "named-worker",
+      "body": "{",
+      "populate_named_user": true
+    },
+    {
       "id": "file-put-worker-group",
       "method": "PUT",
       "path": "/api/v1/files?path=nested/Note.md",

@@ -1550,6 +1550,21 @@ func compare(id string, left, right transcript) error {
 	if left.Status != right.Status {
 		return fmt.Errorf("status mismatch: Go=%d Rust=%d", left.Status, right.Status)
 	}
+	if id == "file-put-read-created" || id == "file-put-read-updated" {
+		// Go and Rust write the same fixture on separate servers. A wall-clock
+		// second boundary can make their Last-Modified headers differ even
+		// though both files contain the exact requested bytes.
+		for _, item := range []struct {
+			name     string
+			response transcript
+		}{{"Go", left}, {"Rust", right}} {
+			if _, err := http.ParseTime(item.response.Headers["last-modified"]); err != nil {
+				return fmt.Errorf("%s file readback has invalid Last-Modified: %w", item.name, err)
+			}
+		}
+		left.Headers = cloneWithout(left.Headers, "last-modified")
+		right.Headers = cloneWithout(right.Headers, "last-modified")
+	}
 	if id == "file-put-symlink-parent" {
 		if left.Status != http.StatusInternalServerError {
 			return fmt.Errorf("symlink parent was not rejected: status=%d", left.Status)

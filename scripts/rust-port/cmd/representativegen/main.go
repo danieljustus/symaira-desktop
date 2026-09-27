@@ -75,6 +75,7 @@ type httpCase struct {
 	ProviderOllama       bool              `json:"provider_ollama,omitempty"`
 	ProviderDisconnect   bool              `json:"provider_disconnect,omitempty"`
 	ProviderFailure      bool              `json:"provider_failure,omitempty"`
+	ProviderOversized    bool              `json:"provider_oversized,omitempty"`
 }
 
 func main() {

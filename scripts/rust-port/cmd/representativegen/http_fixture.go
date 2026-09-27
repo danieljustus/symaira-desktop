@@ -68,6 +68,7 @@ func generatedHTTP() httpSuite {
 		{ID: "ai-transform-no-provider", Method: "POST", Path: "/api/v1/ai/transform", Auth: "valid", Body: `{"text":"short input"}`},
 		{ID: "ai-transform-local-ollama-stream", Method: "POST", Path: "/api/v1/ai/transform", Auth: "valid", Body: `{"text":"short provider input"}`, ProviderOllama: true},
 		{ID: "ai-transform-local-ollama-error", Method: "POST", Path: "/api/v1/ai/transform", Auth: "valid", Body: `{"text":"provider error input"}`, ProviderFailure: true},
+		{ID: "ai-transform-local-ollama-oversized-line", Method: "POST", Path: "/api/v1/ai/transform", Auth: "valid", Body: `{"text":"oversized provider input"}`, ProviderOversized: true},
 		{ID: "ai-transform-local-ollama-disconnect", Method: "POST", Path: "/api/v1/ai/transform", Auth: "valid", Body: `{"text":"disconnect provider input"}`, ProviderDisconnect: true},
 		{ID: "ai-transform-trailing-json", Method: "POST", Path: "/api/v1/ai/transform", Auth: "valid", Body: `{"text":"short input"}{"ignored":true}`},
 		{ID: "ai-transform-named-user-no-provider", Method: "POST", Path: "/api/v1/ai/transform", Auth: "named", Body: `{"text":"short input","intent":"rewrite"}`, PopulateNamedUser: true},

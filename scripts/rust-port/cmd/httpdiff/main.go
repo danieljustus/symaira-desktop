@@ -64,6 +64,7 @@ type httpCase struct {
 	ProviderOllama       bool              `json:"provider_ollama,omitempty"`
 	ProviderDisconnect   bool              `json:"provider_disconnect,omitempty"`
 	ProviderFailure      bool              `json:"provider_failure,omitempty"`
+	ProviderOversized    bool              `json:"provider_oversized,omitempty"`
 }
 
 type transcript struct {
@@ -200,7 +201,7 @@ func run() (runErr error) {
 	leftETag, rightETag := "", ""
 	providerCasesRemaining := 0
 	for _, testCase := range suite.Cases {
-		if testCase.ProviderOllama || testCase.ProviderDisconnect || testCase.ProviderFailure {
+		if testCase.ProviderOllama || testCase.ProviderDisconnect || testCase.ProviderFailure || testCase.ProviderOversized {
 			providerCasesRemaining++
 		}
 	}
@@ -275,7 +276,7 @@ func run() (runErr error) {
 			}
 		}
 		leftCurrent, rightCurrent := leftServer, rightServer
-		if tc.ProviderOllama || tc.ProviderDisconnect || tc.ProviderFailure {
+		if tc.ProviderOllama || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
 			if leftProviderServer == nil {
 				providerEnv := map[string]string{
 					"SYMDESK_LLM_PROVIDER": "ollama", "SYMDESK_OLLAMA_URL": provider.url,
@@ -318,7 +319,7 @@ func run() (runErr error) {
 				fatal("%s fake-provider request: %v", tc.ID, err)
 			}
 		}
-		if tc.ProviderOllama || tc.ProviderDisconnect || tc.ProviderFailure {
+		if tc.ProviderOllama || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
 			providerCasesRemaining--
 			if providerCasesRemaining == 0 {
 				if err := leftProviderServer.stop(); err != nil {
@@ -332,6 +333,11 @@ func run() (runErr error) {
 		}
 		if tc.ProviderFailure {
 			if err := provider.assertRequests(2, "provider error input"); err != nil {
+				fatal("%s fake-provider request: %v", tc.ID, err)
+			}
+		}
+		if tc.ProviderOversized {
+			if err := provider.assertRequests(2, "oversized provider input"); err != nil {
 				fatal("%s fake-provider request: %v", tc.ID, err)
 			}
 		}
@@ -1523,6 +1529,13 @@ func startFakeOllama() *fakeOllama {
 			flusher.Flush()
 			<-r.Context().Done()
 			fake.cancellations <- struct{}{}
+			return
+		}
+		if strings.Contains(request.Prompt, "oversized provider input") {
+			_, _ = io.WriteString(w, `{"response":"`)
+			_, _ = io.WriteString(w, strings.Repeat("x", 4<<20))
+			_, _ = io.WriteString(w, `"}`+"\n")
+			flusher.Flush()
 			return
 		}
 		_, _ = io.WriteString(w, `{"response":"first","done":false}`+"\n")

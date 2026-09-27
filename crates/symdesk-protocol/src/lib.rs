@@ -802,12 +802,11 @@ fn local_ollama_endpoint(base_url: &str) -> Option<hyper::Uri> {
         return None;
     }
     let host = parsed.host()?;
-    let loopback = host == "127.0.0.1"
-        || host == "[::1]"
-        || host.eq_ignore_ascii_case("localhost")
-        || host
-            .parse::<IpAddr>()
-            .is_ok_and(|address| address.is_loopback());
+    let loopback = host
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .parse::<IpAddr>()
+        .is_ok_and(|address| address.is_loopback());
     if !loopback {
         return None;
     }
@@ -912,51 +911,52 @@ async fn stream_ollama_transform(
         let Ok(data) = frame.into_data() else {
             continue;
         };
-        pending.extend_from_slice(&data);
-        while let Some(newline) = pending.iter().position(|byte| *byte == b'\n') {
-            if newline > AI_PROVIDER_MAX_LINE_BYTES {
-                return Err(
-                    "ollama: llmkit: provider_error: stream line exceeds 4 MiB limit".to_owned(),
-                );
+        let mut remaining = data.as_ref();
+        while let Some(newline) = remaining.iter().position(|byte| *byte == b'\n') {
+            if pending.len().saturating_add(newline) > AI_PROVIDER_MAX_LINE_BYTES {
+                return Err(ollama_line_too_long());
             }
-            let mut line = pending.drain(..=newline).collect::<Vec<_>>();
-            line.pop();
-            if line.last() == Some(&b'\r') {
-                line.pop();
+            pending.extend_from_slice(&remaining[..newline]);
+            if !pending.is_empty() {
+                started = true;
+                if !send_ollama_generate_line(sender, &pending).await? {
+                    return Ok(false);
+                }
+                pending.clear();
             }
-            if line.is_empty() {
-                continue;
-            }
-            started = true;
-            let chunk: OllamaGenerateChunk = serde_json::from_slice(&line).map_err(|error| {
-                format!("ollama: llmkit: provider_error: decode generate chunk: {error}")
-            })?;
-            if !chunk.response.is_empty()
-                && !send_ai_transform_answer(sender, &chunk.response).await
-            {
-                return Ok(false);
-            }
+            remaining = &remaining[newline + 1..];
         }
-        if pending.len() > AI_PROVIDER_MAX_LINE_BYTES {
-            return Err(
-                "ollama: llmkit: provider_error: stream line exceeds 4 MiB limit".to_owned(),
-            );
+        if pending.len().saturating_add(remaining.len()) > AI_PROVIDER_MAX_LINE_BYTES {
+            return Err(ollama_line_too_long());
         }
+        pending.extend_from_slice(remaining);
     }
-    if !pending.is_empty() {
-        if pending.last() == Some(&b'\r') {
-            pending.pop();
-        }
-        started = true;
-        let chunk: OllamaGenerateChunk = serde_json::from_slice(&pending).map_err(|error| {
-            format!("ollama: llmkit: provider_error: decode generate chunk: {error}")
-        })?;
-        if !chunk.response.is_empty() && !send_ai_transform_answer(sender, &chunk.response).await {
-            return Ok(false);
-        }
+    if !pending.is_empty() && !send_ollama_generate_line(sender, &pending).await? {
+        return Ok(false);
     }
-    let _ = started;
     Ok(true)
+}
+
+fn ollama_line_too_long() -> String {
+    "ollama: llmkit: transport_error: bufio.Scanner: token too long".to_owned()
+}
+
+async fn send_ollama_generate_line(
+    sender: &mpsc::Sender<Result<Bytes, io::Error>>,
+    line: &[u8],
+) -> Result<bool, String> {
+    let line = line.strip_suffix(b"\r").unwrap_or(line);
+    if line.is_empty() {
+        return Ok(true);
+    }
+    let chunk: OllamaGenerateChunk = serde_json::from_slice(line).map_err(|error| {
+        format!("ollama: llmkit: provider_error: decode generate chunk: {error}")
+    })?;
+    if chunk.response.is_empty() {
+        Ok(true)
+    } else {
+        Ok(send_ai_transform_answer(sender, &chunk.response).await)
+    }
 }
 
 async fn read_provider_error_body(
@@ -4619,10 +4619,7 @@ mod tests {
                 "http://[::1]:11434",
                 Some("http://[::1]:11434/api/generate"),
             ),
-            (
-                "http://localhost:11434",
-                Some("http://localhost:11434/api/generate"),
-            ),
+            ("http://localhost:11434", None),
             ("https://127.0.0.1:11434", None),
             ("http://192.0.2.10:11434", None),
             ("http://user:secret@127.0.0.1:11434", None),

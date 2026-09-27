@@ -390,6 +390,14 @@
       "provider_failure": true
     },
     {
+      "id": "ai-transform-local-ollama-oversized-line",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"oversized provider input\"}",
+      "provider_oversized": true
+    },
+    {
       "id": "ai-transform-local-ollama-disconnect",
       "method": "POST",
       "path": "/api/v1/ai/transform",

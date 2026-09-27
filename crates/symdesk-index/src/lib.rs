@@ -924,6 +924,10 @@ impl Sidecar {
             if raw_text && source_dir.metadata(&relative)?.len() > MAX_EXTERNAL_TEXT_FILE_SIZE {
                 continue;
             }
+            let markdown = relative.extension().and_then(|value| value.to_str()) == Some("md");
+            if !raw_text && !markdown {
+                continue;
+            }
             found.insert(validate_utf8_path(&key, "external source storage key")?.to_owned());
             if raw_text {
                 self.refresh_path(
@@ -934,10 +938,8 @@ impl Sidecar {
                     true,
                     &mut batch,
                 )?;
-            } else if relative.extension().and_then(|value| value.to_str()) == Some("md") {
-                self.refresh_path(&source_dir, &root, &relative, None, false, &mut batch)?;
             } else {
-                continue;
+                self.refresh_path(&source_dir, &root, &relative, None, false, &mut batch)?;
             }
         }
         self.flush_refresh_batch(&mut batch)?;
@@ -2050,7 +2052,9 @@ mod source_tests {
         time::{Duration, Instant, SystemTime},
     };
 
-    use super::{MAX_EXTERNAL_TEXT_FILE_SIZE, SearchSource, Sidecar, SourceRegistry};
+    use super::{
+        IndexedDocument, MAX_EXTERNAL_TEXT_FILE_SIZE, SearchSource, Sidecar, SourceRegistry,
+    };
 
     fn temp_dir(label: &str) -> PathBuf {
         let stamp = SystemTime::now()
@@ -2212,6 +2216,59 @@ mod source_tests {
         let _ = fs::remove_dir_all(vault);
         let _ = fs::remove_dir_all(registered);
         let _ = fs::remove_dir_all(unregistered);
+    }
+
+    #[test]
+    fn refresh_external_source_prunes_indexed_unsupported_paths() {
+        let vault = temp_dir("unsupported-prune-vault");
+        let source_root = fs::canonicalize(temp_dir("unsupported-prune-source"))
+            .expect("canonicalize source root");
+        let markdown = source_root.join("document.md");
+        let unsupported = source_root.join("document.bin");
+        let marker = "stale-unsupported-index-marker";
+        fs::write(&markdown, marker).expect("write markdown source");
+
+        let mut sidecar = Sidecar::open(&vault.join(".symdesk/test-sidecar.db")).expect("sidecar");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("index markdown source");
+        fs::rename(&markdown, &unsupported).expect("rename markdown to unsupported path");
+
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("refresh unsupported source");
+        assert!(
+            sidecar
+                .search(marker)
+                .expect("search after refresh")
+                .is_empty(),
+            "renamed markdown must be removed when its new extension is unsupported"
+        );
+
+        // Model a pre-existing stale row for this unsupported path. The walk
+        // must not count it as found merely because a file exists at that path.
+        let stale = symdesk_vault::parse_bytes(
+            unsupported.to_str().expect("UTF-8 path"),
+            marker.as_bytes(),
+        )
+        .expect("parse stale indexed document");
+        let stale = IndexedDocument::from_vault(&stale, None).expect("convert stale document");
+        sidecar
+            .index_document(&stale)
+            .expect("seed stale indexed path");
+        sidecar
+            .refresh_external_source(&source_root)
+            .expect("prune stale unsupported path");
+        assert!(
+            sidecar
+                .search(marker)
+                .expect("search after pruning")
+                .is_empty(),
+            "unsupported existing paths must not keep stale index rows"
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(source_root);
     }
 
     #[test]

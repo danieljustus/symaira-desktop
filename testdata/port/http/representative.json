@@ -274,6 +274,41 @@
       "populate_named_user": true
     },
     {
+      "id": "command-admin-empty",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[]}"
+    },
+    {
+      "id": "command-admin-null-arguments",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":null}"
+    },
+    {
+      "id": "command-admin-unavailable",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"not-real\"]}"
+    },
+    {
+      "id": "command-admin-controlled-path",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"ls\",\"--vault=/tmp/other-vault\"]}"
+    },
+    {
+      "id": "command-admin-invalid-subcommand",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"note\",\"not-real\"]}"
+    },
+    {
       "id": "file-put-worker-group",
       "method": "PUT",
       "path": "/api/v1/files?path=nested/Note.md",

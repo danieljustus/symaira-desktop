@@ -412,9 +412,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/files", get(handle_file).put(handle_put_file))
         .route("/api/v1/jobs", get(handle_jobs))
         .route("/api/v1/jobs/retry", axum::routing::post(handle_retry_job))
-        // Register the protected route so the auth layer applies Go's
-        // admin-role check before the command handler is ported.
-        .route("/api/v1/command", post(handle_not_found))
+        .route("/api/v1/command", post(handle_command_validation))
         .route("/api/v1/worker/input", get(handle_worker_input))
         .route(
             "/api/v1/worker/fail",
@@ -579,6 +577,87 @@ fn route_requires_admin(method: &Method, path: &str) -> bool {
         || (path == "/api/v1/jobs/retry" && method == Method::POST)
         || (path == "/api/v1/ingest" && method == Method::POST)
         || (path == "/api/v1/command" && method == Method::POST)
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RemoteCommandRequest {
+    arguments: Option<Vec<String>>,
+    stdin: Option<String>,
+}
+
+async fn handle_command_validation(request: Request<Body>) -> Response {
+    let body = match to_bytes(request.into_body(), 2 << 20).await {
+        Ok(body) => body,
+        Err(_) => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                "invalid JSON: request body too large",
+            );
+        }
+    };
+    let request: RemoteCommandRequest = match serde_json::from_slice(&body) {
+        Ok(request) => request,
+        Err(_) => return json_error(StatusCode::BAD_REQUEST, "invalid JSON: malformed request"),
+    };
+    let arguments = request.arguments.unwrap_or_default();
+    let _stdin = request.stdin.unwrap_or_default();
+    if let Some(message) = validate_remote_command(&arguments) {
+        return json_response(StatusCode::FORBIDDEN, json!({"error": message}));
+    }
+    json_error(
+        StatusCode::NOT_IMPLEMENTED,
+        "remote command execution is not implemented",
+    )
+}
+
+fn validate_remote_command(args: &[String]) -> Option<String> {
+    if args.is_empty() {
+        return Some("command is required".to_owned());
+    }
+    if args.iter().any(|arg| {
+        let lower = arg.to_ascii_lowercase();
+        lower == "--vault"
+            || lower.starts_with("--vault=")
+            || lower == "--output"
+            || lower.starts_with("--output=")
+    }) {
+        return Some("server-controlled path flags are not allowed".to_owned());
+    }
+    let subcommand = args
+        .get(1)
+        .filter(|argument| !argument.starts_with('-'))
+        .map(String::as_str)
+        .unwrap_or("");
+    let available = match args[0].as_str() {
+        "doctor" | "ls" | "search" | "backlinks" | "graph" | "similar" | "duplicates"
+        | "transform" | "ask" | "restore" => subcommand.is_empty(),
+        "note" => matches!(subcommand, "new" | "move" | "delete" | "daily"),
+        "paperless" => subcommand == "import",
+        "props" => matches!(subcommand, "get" | "edit"),
+        "relations" => subcommand == "inverse",
+        "views" => matches!(
+            subcommand,
+            "list" | "get" | "save" | "delete" | "new-entry" | "siblings" | "exec"
+        ),
+        "docs" => matches!(subcommand, "list" | "review"),
+        "doc" => matches!(
+            subcommand,
+            "status" | "due" | "type" | "correspondent" | "tag" | "asn"
+        ),
+        "tags" => matches!(subcommand, "rename" | "merge" | "delete"),
+        "conflict" => subcommand == "resolve",
+        "history" => matches!(subcommand, "" | "prune" | "show"),
+        "trash" => matches!(subcommand, "list" | "restore" | "delete"),
+        _ => return Some(format!("command {:?} is not available remotely", args[0])),
+    };
+    if !available {
+        return Some(format!(
+            "subcommand {:?} is not available remotely",
+            subcommand
+        ));
+    }
+    None
 }
 
 // Apply Go's per-user document ACLs to authenticated non-admin principals,

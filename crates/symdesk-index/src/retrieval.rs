@@ -10,7 +10,9 @@ use std::{
 use rusqlite::{Connection, params};
 use serde::Deserialize;
 
-use crate::SidecarError;
+#[cfg(windows)]
+use crate::strip_verbatim_prefix;
+use crate::{SidecarError, absolute_non_verbatim};
 
 const CHUNK_SIZE: usize = 1000;
 const CHUNK_OVERLAP: usize = 200;
@@ -192,11 +194,12 @@ impl SourceRegistry {
                 "external source must be outside the vault".to_owned(),
             ));
         }
-        let path = source
+        let path = absolute_non_verbatim(&source)?;
+        let path = path
             .to_str()
             .ok_or_else(|| SidecarError::NonUtf8Path {
                 context: "external source",
-                path: source.clone(),
+                path: path.clone(),
             })?
             .to_owned();
         let candidate = SearchSource {
@@ -267,6 +270,14 @@ impl SourceRegistry {
                 state.version
             )));
         }
+        #[cfg(windows)]
+        let state = {
+            let mut state = state;
+            for source in &mut state.sources {
+                source.path = strip_verbatim_prefix(&source.path);
+            }
+            state
+        };
         Ok(state)
     }
 

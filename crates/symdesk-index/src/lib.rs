@@ -2130,6 +2130,8 @@ mod source_tests {
 
         let registry = SourceRegistry::open(&vault).expect("registry");
         let first = registry.add(&source_path).expect("add canonical");
+        #[cfg(windows)]
+        assert!(!first.path.starts_with(r"\\?\"));
         #[cfg(unix)]
         assert_eq!(registry.add(&alias).expect("add alias"), first);
         assert_eq!(registry.list().expect("list"), vec![first.clone()]);
@@ -2146,6 +2148,44 @@ mod source_tests {
         }
         let _ = fs::remove_dir_all(vault);
         let _ = fs::remove_dir_all(parent);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn registry_normalizes_legacy_verbatim_source_paths() {
+        let vault = temp_dir("legacy-source-registry-vault");
+        let source_root = temp_dir("legacy-source-registry-root");
+        let verbatim = fs::canonicalize(&source_root)
+            .expect("canonical source root")
+            .to_string_lossy()
+            .into_owned();
+        let expected = super::strip_verbatim_prefix(&verbatim);
+        let registry_dir = vault.join(".symdesk");
+        fs::create_dir_all(&registry_dir).expect("registry dir");
+        let registry_path = registry_dir.join("search-sources.json");
+        fs::write(
+            &registry_path,
+            serde_json::json!({
+                "Version": 1,
+                "Sources": [{"ID": "legacy-id", "Path": verbatim}]
+            })
+            .to_string(),
+        )
+        .expect("write legacy registry");
+
+        let registry = SourceRegistry::open(&vault).expect("open registry");
+        let listed = registry.list().expect("list legacy registry");
+        assert_eq!(listed[0].path, expected);
+        assert_eq!(
+            registry
+                .remove(&expected)
+                .expect("remove normalized path")
+                .id,
+            "legacy-id"
+        );
+
+        let _ = fs::remove_dir_all(vault);
+        let _ = fs::remove_dir_all(source_root);
     }
 
     #[test]

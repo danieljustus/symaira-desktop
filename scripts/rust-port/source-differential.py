@@ -103,7 +103,8 @@ def watch_exercise(binary: Path, root: Path, source: Path):
         def indexed_hash():
             for database in home.rglob("*.db"):
                 try:
-                    with sqlite3.connect(database, timeout=1) as connection:
+                    connection = sqlite3.connect(database, timeout=1)
+                    try:
                         tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
                         if "documents" in tables:
                             row = connection.execute("SELECT hash FROM documents WHERE path=?", (str(note),)).fetchone()
@@ -113,6 +114,8 @@ def watch_exercise(binary: Path, root: Path, source: Path):
                             continue
                         if row:
                             return row[0]
+                    finally:
+                        connection.close()
                 except sqlite3.OperationalError:
                     continue
             return None

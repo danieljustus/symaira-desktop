@@ -106,6 +106,51 @@
       }
     },
     {
+      "id": "file-get-worker-acl-denied",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "worker",
+      "populate_worker_acl": true
+    },
+    {
+      "id": "file-get-worker-acl-group",
+      "method": "GET",
+      "path": "/api/v1/files?path=nested/Note.md",
+      "auth": "worker"
+    },
+    {
+      "id": "file-get-worker-acl-public",
+      "method": "GET",
+      "path": "/api/v1/files?path=notebooks/archive.md",
+      "auth": "worker"
+    },
+    {
+      "id": "file-put-worker-denied",
+      "method": "PUT",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "worker",
+      "body": "# unauthorized update\n"
+    },
+    {
+      "id": "snapshot-worker-acl-filter",
+      "method": "GET",
+      "path": "/api/v1/snapshot",
+      "auth": "worker"
+    },
+    {
+      "id": "notebook-worker-acl-filter",
+      "method": "GET",
+      "path": "/api/v1/notebooks/research",
+      "auth": "worker"
+    },
+    {
+      "id": "file-put-worker-group",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Note.md",
+      "auth": "worker",
+      "body": "# authorized worker update\n"
+    },
+    {
       "id": "file-exact-bytes",
       "method": "GET",
       "path": "/api/v1/files?path=Hello.md",

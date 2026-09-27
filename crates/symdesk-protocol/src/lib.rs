@@ -97,6 +97,28 @@ enum AuthRole {
     Worker,
 }
 
+#[derive(Debug, Deserialize)]
+struct DocumentRule {
+    path: String,
+    #[serde(default)]
+    owner: String,
+    #[serde(default)]
+    read_users: Vec<String>,
+    #[serde(default)]
+    read_groups: Vec<String>,
+    #[serde(default)]
+    write_users: Vec<String>,
+    #[serde(default)]
+    write_groups: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct PermissionGroup {
+    name: String,
+    #[serde(default)]
+    members: Vec<String>,
+}
+
 #[derive(Debug, Default)]
 struct AuthThrottle {
     entries: std::collections::HashMap<String, AuthFailure>,
@@ -217,17 +239,23 @@ struct JobPage {
     offset: usize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Snapshot {
     generated_at: String,
     notes: Vec<SnapshotNote>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct SnapshotNote {
     path: String,
     content: String,
     modified_at: String,
+}
+
+#[derive(Debug, Serialize)]
+struct WorkerSnapshot {
+    notes: Vec<SnapshotNote>,
+    generated_at: String,
 }
 
 #[derive(Debug)]
@@ -440,6 +468,91 @@ fn route_requires_admin(method: &Method, path: &str) -> bool {
     (path == "/api/v1/jobs" && (method == Method::GET || method == Method::HEAD))
         || (path == "/api/v1/jobs/retry" && method == Method::POST)
         || (path == "/api/v1/ingest" && method == Method::POST)
+}
+
+// The Go server maps its separate legacy worker credential to the synthetic
+// user "worker" and applies the vault's document ACLs to files, snapshots,
+// and notebook sources. Keep the same narrow ACL projection here; absent ACL
+// files mean authenticated documents are public, as in Go.
+fn worker_can_read(state: &AppState, path: &str) -> bool {
+    worker_can_access(state, path, false)
+}
+
+fn worker_can_write(state: &AppState, path: &str) -> bool {
+    worker_can_access(state, path, true)
+}
+
+fn worker_can_read_many(state: &AppState, paths: &[String]) -> std::collections::HashSet<String> {
+    let Ok(root) = open_current_root(state) else {
+        return std::collections::HashSet::new();
+    };
+    let Ok(rules) = read_acl_file::<DocumentRule>(&root, ".symdesk/permissions.json") else {
+        // Go's CanReadMany fails closed when permissions.json cannot be read.
+        return std::collections::HashSet::new();
+    };
+    let groups =
+        read_acl_file::<PermissionGroup>(&root, ".symdesk/groups.json").unwrap_or_default();
+    paths
+        .iter()
+        .filter(|path| acl_allows(&rules, &groups, path, false))
+        .cloned()
+        .collect()
+}
+
+fn worker_can_access(state: &AppState, path: &str, write: bool) -> bool {
+    let Ok(root) = open_current_root(state) else {
+        return false;
+    };
+    let rules = read_acl_file::<DocumentRule>(&root, ".symdesk/permissions.json");
+    let Ok(rules) = rules else {
+        // A present but unreadable or malformed ACL is configured policy and
+        // must fail closed for the worker credential.
+        return false;
+    };
+    let groups =
+        read_acl_file::<PermissionGroup>(&root, ".symdesk/groups.json").unwrap_or_default();
+    acl_allows(&rules, &groups, path, write)
+}
+
+fn read_acl_file<T: for<'de> Deserialize<'de>>(
+    root: &cap_std::fs::Dir,
+    path: &str,
+) -> Result<Vec<T>, ()> {
+    let mut file = match root.open(path) {
+        Ok(file) => file,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(_) => return Err(()),
+    };
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes).map_err(|_| ())?;
+    if bytes.is_empty() {
+        return Ok(Vec::new());
+    }
+    serde_json::from_slice(&bytes).map_err(|_| ())
+}
+
+fn acl_allows(rules: &[DocumentRule], groups: &[PermissionGroup], path: &str, write: bool) -> bool {
+    let rule = rules
+        .iter()
+        .find(|rule| rule.path == path)
+        .or_else(|| rules.iter().find(|rule| rule.path == "*"));
+    let Some(rule) = rule else {
+        return true;
+    };
+    if rule.owner == "worker" {
+        return true;
+    }
+    let (users, group_names) = if write {
+        (&rule.write_users, &rule.write_groups)
+    } else {
+        (&rule.read_users, &rule.read_groups)
+    };
+    users.iter().any(|user| user == "worker")
+        || group_names.iter().any(|name| {
+            groups.iter().any(|group| {
+                group.name == *name && group.members.iter().any(|member| member == "worker")
+            })
+        })
 }
 
 fn validate_tokens(token: &str, worker_token: Option<&str>) -> Result<(), String> {
@@ -2033,6 +2146,7 @@ fn is_false(value: &bool) -> bool {
 
 async fn handle_notebook(
     State(state): State<Arc<AppState>>,
+    Extension(role): Extension<AuthRole>,
     AxumPath(id): AxumPath<String>,
 ) -> Response {
     let reference = id.trim();
@@ -2073,9 +2187,20 @@ async fn handle_notebook(
         Err(_) => return json_error(StatusCode::NOT_FOUND, "notebook not found"),
     };
 
+    let source_paths = notebook.sources.clone();
+    let allowed = if role == AuthRole::Worker {
+        Some(worker_can_read_many(&state, &source_paths))
+    } else {
+        None
+    };
     let sources = notebook
         .sources
         .iter()
+        .filter(|path| {
+            allowed
+                .as_ref()
+                .is_none_or(|allowed| allowed.contains(*path))
+        })
         .map(|path| {
             let source = secure_path(&state.vault_root, path).ok().and_then(|_| {
                 read_root_file(&root_dir, Path::new(path))
@@ -2115,6 +2240,7 @@ async fn handle_notebook(
 
 async fn handle_snapshot(
     State(state): State<Arc<AppState>>,
+    Extension(role): Extension<AuthRole>,
     headers: HeaderMap,
     method: Method,
 ) -> Response {
@@ -2128,11 +2254,20 @@ async fn handle_snapshot(
         }
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
     };
+    let worker_payload = if role == AuthRole::Worker {
+        match worker_snapshot_payload(&state, &payload) {
+            Ok(payload) => Some(payload),
+            Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
+        }
+    } else {
+        None
+    };
+    let payload = worker_payload.as_ref().unwrap_or(payload.as_ref());
     let SnapshotPayload {
         plain,
         compressed,
         etag,
-    } = payload.as_ref();
+    } = payload;
     let quoted = format!("\"{etag}\"");
     let mut common = vec![(header::ETAG, quoted.clone())];
     if headers
@@ -2167,8 +2302,46 @@ async fn handle_snapshot(
     bytes_response(StatusCode::OK, common, plain.clone())
 }
 
+fn worker_snapshot_payload(
+    state: &AppState,
+    payload: &SnapshotPayload,
+) -> Result<SnapshotPayload, String> {
+    let mut snapshot: Snapshot = serde_json::from_slice(&payload.plain)
+        .map_err(|error| format!("invalid cached snapshot: {error}"))?;
+    let paths = snapshot
+        .notes
+        .iter()
+        .map(|note| note.path.clone())
+        .collect::<Vec<_>>();
+    let allowed = worker_can_read_many(state, &paths);
+    snapshot.notes.retain(|note| allowed.contains(&note.path));
+    let mut plain = serde_json::to_vec(&WorkerSnapshot {
+        notes: snapshot.notes,
+        generated_at: snapshot.generated_at,
+    })
+    .map_err(|error| error.to_string())?;
+    plain.push(b'\n');
+    if plain.len() as u64 > MAX_SNAPSHOT_BYTES {
+        return Err(SNAPSHOT_TOO_LARGE.to_owned());
+    }
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    encoder
+        .write_all(&plain)
+        .map_err(|error| error.to_string())?;
+    let compressed = encoder.finish().map_err(|error| error.to_string())?;
+    if compressed.len() as u64 > MAX_SNAPSHOT_BYTES {
+        return Err(SNAPSHOT_TOO_LARGE.to_owned());
+    }
+    Ok(SnapshotPayload {
+        plain: plain.into(),
+        compressed: compressed.into(),
+        etag: format!("{}:worker", payload.etag),
+    })
+}
+
 async fn handle_file(
     State(state): State<Arc<AppState>>,
+    Extension(role): Extension<AuthRole>,
     Query(query): Query<FileQuery>,
     headers: HeaderMap,
     method: Method,
@@ -2186,6 +2359,9 @@ async fn handle_file(
             return json_error(StatusCode::BAD_REQUEST, "a vault-relative path is required");
         }
     };
+    if role == AuthRole::Worker && !worker_can_read(&state, &normalize_snapshot_path(&relative)) {
+        return json_error(StatusCode::FORBIDDEN, "access denied");
+    }
     serve_vault_file(&state, &relative, &headers, method)
 }
 
@@ -2310,6 +2486,7 @@ fn serve_vault_file_as(
 
 async fn handle_put_file(
     State(state): State<Arc<AppState>>,
+    Extension(role): Extension<AuthRole>,
     Query(query): Query<FileQuery>,
     body: Body,
 ) -> Response {
@@ -2323,6 +2500,9 @@ async fn handle_put_file(
             );
         }
     };
+    if role == AuthRole::Worker && !worker_can_write(&state, &normalize_snapshot_path(&relative)) {
+        return json_error(StatusCode::FORBIDDEN, "access denied");
+    }
     let data = match to_bytes(body, MAX_NOTE_BYTES as usize + 1).await {
         Ok(data) if data.len() as u64 <= MAX_NOTE_BYTES => data,
         Ok(_) => {
@@ -2941,6 +3121,33 @@ async fn shutdown_signal() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn worker_acl_defaults_public_but_fails_closed_for_malformed_policy_or_root() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-worker-acl-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir_all(&root).unwrap();
+        let state = test_state(&root, "test token");
+        assert!(worker_can_read(&state, "note.md"));
+        assert!(worker_can_write(&state, "note.md"));
+        assert!(worker_can_read_many(&state, &["note.md".to_owned()]).contains("note.md"));
+
+        fs::create_dir_all(root.join(".symdesk")).unwrap();
+        fs::write(root.join(".symdesk/permissions.json"), b"[{").unwrap();
+        assert!(!worker_can_read(&state, "note.md"));
+        assert!(!worker_can_write(&state, "note.md"));
+        assert!(worker_can_read_many(&state, &["note.md".to_owned()]).is_empty());
+
+        let missing_root = root.join("missing");
+        let unavailable = test_state(&missing_root, "test token");
+        assert!(!worker_can_read(&unavailable, "note.md"));
+        assert!(!worker_can_write(&unavailable, "note.md"));
+        assert!(worker_can_read_many(&unavailable, &["note.md".to_owned()]).is_empty());
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn completion_yaml_scalars_match_go_yaml_v3_style_choices() {

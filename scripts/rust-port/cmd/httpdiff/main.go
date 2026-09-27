@@ -51,6 +51,7 @@ type httpCase struct {
 	PopulateExpiredJob  bool              `json:"populate_expired_job,omitempty"`
 	PopulateShares      bool              `json:"populate_shares,omitempty"`
 	PopulateShareAccess bool              `json:"populate_share_access,omitempty"`
+	PopulateWorkerACL   bool              `json:"populate_worker_acl,omitempty"`
 }
 
 type transcript struct {
@@ -174,6 +175,13 @@ func run() (runErr error) {
 			for _, vault := range []string{leftVault, rightVault} {
 				if err := populateShareAccess(vault); err != nil {
 					fatal("populate share access fixture: %v", err)
+				}
+			}
+		}
+		if tc.PopulateWorkerACL {
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := populateWorkerACL(vault); err != nil {
+					fatal("populate worker ACL fixture: %v", err)
 				}
 			}
 		}
@@ -380,6 +388,22 @@ func run() (runErr error) {
 				}
 			}
 		}
+		if tc.ID == "file-put-worker-denied" {
+			for _, vault := range []string{leftVault, rightVault} {
+				contents, err := os.ReadFile(filepath.Join(vault, "Hello.md"))
+				if err != nil || string(contents) != "---\ntitle: Hello\n---\nBody" {
+					fatal("%s wrote a document denied by the worker ACL: %q (%v)", tc.ID, contents, err)
+				}
+			}
+		}
+		if tc.ID == "file-put-worker-group" {
+			for _, vault := range []string{leftVault, rightVault} {
+				contents, err := os.ReadFile(filepath.Join(vault, "nested", "Note.md"))
+				if err != nil || string(contents) != tc.Body {
+					fatal("%s did not persist the group-authorized update: %q (%v)", tc.ID, contents, err)
+				}
+			}
+		}
 		if tc.ID == "file-put-create" || tc.ID == "file-put-update" {
 			for _, vault := range []string{leftVault, rightVault} {
 				if err := assertIndexedWrite(vault, "nested/Created.md", tc.Body); err != nil {
@@ -392,6 +416,19 @@ func run() (runErr error) {
 	}
 	fmt.Printf("PASS HTTP differential: %d cases; isolated roots, loopback ports, readiness, harness bounds and shutdown verified\n", len(suite.Cases))
 	return nil
+}
+
+func populateWorkerACL(vault string) error {
+	config := filepath.Join(vault, ".symdesk")
+	if err := os.MkdirAll(config, 0o700); err != nil {
+		return err
+	}
+	const permissions = `[{"path":"Hello.md","owner":"admin","read_users":["admin"],"write_users":["admin"]},{"path":"internal.md","owner":"admin","read_users":["admin"],"write_users":["admin"]},{"path":"nested/Note.md","owner":"admin","read_groups":["worker-readers"],"write_groups":["worker-readers"]}]`
+	if err := os.WriteFile(filepath.Join(config, "permissions.json"), []byte(permissions), 0o600); err != nil {
+		return err
+	}
+	const groups = `[{"name":"worker-readers","members":["worker"]}]`
+	return os.WriteFile(filepath.Join(config, "groups.json"), []byte(groups), 0o600)
 }
 
 func createFixtureVault(root string) string {

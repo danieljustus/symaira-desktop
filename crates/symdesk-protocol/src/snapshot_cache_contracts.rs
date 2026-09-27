@@ -185,7 +185,13 @@ async fn snapshot_read_failure_returns_http_500_retains_dirty_cache_and_retries(
     fs::write(state.vault_root.join("note.md"), "updated complete").unwrap();
     state.snapshot_cache.set_dirty(true);
     state.snapshot_cache.inject_read_failure();
-    let response = handle_snapshot(State(Arc::clone(&state)), HeaderMap::new(), Method::GET).await;
+    let response = handle_snapshot(
+        State(Arc::clone(&state)),
+        Extension(AuthRole::Admin),
+        HeaderMap::new(),
+        Method::GET,
+    )
+    .await;
     assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
     assert!(state.snapshot_cache.is_dirty());
     let retained = state.snapshot_cache.payload().unwrap();

@@ -35,7 +35,7 @@ use std::{
 use axum::{
     Router,
     body::{Body, to_bytes},
-    extract::{DefaultBodyLimit, Multipart, Path as AxumPath, Query, State},
+    extract::{DefaultBodyLimit, Extension, Multipart, Path as AxumPath, Query, State},
     http::{HeaderMap, HeaderValue, Method, Request, StatusCode, header},
     middleware::{self, Next},
     response::Response,
@@ -76,17 +76,25 @@ pub struct HttpConfig {
     pub listen_address: String,
     pub vault_root: PathBuf,
     pub token: String,
+    pub worker_token: Option<String>,
     pub version: String,
 }
 
 struct AppState {
     vault_root: PathBuf,
     token: Arc<[u8]>,
+    worker_token: Option<Arc<[u8]>>,
     version: String,
     auth_failures: Mutex<AuthThrottle>,
     snapshot_cache: SnapshotCache,
     job_retry: Mutex<()>,
     share_write: Mutex<()>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum AuthRole {
+    Admin,
+    Worker,
 }
 
 #[derive(Debug, Default)]
@@ -243,9 +251,7 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
     if !root.is_dir() {
         return Err("vault root is not a directory".to_owned());
     }
-    if config.token.len() < 32 {
-        return Err("server token must contain at least 32 characters".to_owned());
-    }
+    validate_tokens(&config.token, config.worker_token.as_deref())?;
     let address: SocketAddr = config
         .listen_address
         .parse()
@@ -259,6 +265,9 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
     let state = Arc::new(AppState {
         vault_root: root.clone(),
         token: Arc::from(config.token.into_bytes()),
+        worker_token: config
+            .worker_token
+            .map(|token| Arc::from(token.into_bytes())),
         version: config.version,
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root),
@@ -376,7 +385,7 @@ fn router(state: Arc<AppState>) -> Router {
 
 async fn authenticate(
     State(state): State<Arc<AppState>>,
-    request: Request<Body>,
+    mut request: Request<Body>,
     next: Next,
 ) -> Response {
     let provided = request
@@ -385,7 +394,15 @@ async fn authenticate(
         .and_then(|value| value.to_str().ok())
         .map(|value| value.trim().strip_prefix("Bearer ").unwrap_or(value).trim())
         .unwrap_or_default();
-    if !constant_time_equal(provided.as_bytes(), &state.token) {
+    let role = if constant_time_equal(provided.as_bytes(), &state.token) {
+        AuthRole::Admin
+    } else if state
+        .worker_token
+        .as_deref()
+        .is_some_and(|token| constant_time_equal(provided.as_bytes(), token))
+    {
+        AuthRole::Worker
+    } else {
         let ip = client_ip(&request);
         let retry_after = state
             .auth_failures
@@ -411,8 +428,33 @@ async fn authenticate(
             .headers_mut()
             .insert(header::WWW_AUTHENTICATE, HeaderValue::from_static("Bearer"));
         return response;
+    };
+    if role == AuthRole::Worker && route_requires_admin(request.method(), request.uri().path()) {
+        return json_error(StatusCode::FORBIDDEN, "admin role required");
     }
+    request.extensions_mut().insert(role);
     next.run(request).await
+}
+
+fn route_requires_admin(method: &Method, path: &str) -> bool {
+    (path == "/api/v1/jobs" && (method == Method::GET || method == Method::HEAD))
+        || (path == "/api/v1/jobs/retry" && method == Method::POST)
+        || (path == "/api/v1/ingest" && method == Method::POST)
+}
+
+fn validate_tokens(token: &str, worker_token: Option<&str>) -> Result<(), String> {
+    if token.len() < 32 {
+        return Err("server token must contain at least 32 characters".to_owned());
+    }
+    if let Some(worker_token) = worker_token {
+        if worker_token.len() < 32 {
+            return Err("worker token must contain at least 32 characters".to_owned());
+        }
+        if constant_time_equal(worker_token.as_bytes(), token.as_bytes()) {
+            return Err("worker token must differ from the server token".to_owned());
+        }
+    }
+    Ok(())
 }
 
 fn client_ip(request: &Request<Body>) -> String {
@@ -632,6 +674,9 @@ async fn handle_create_share(
     State(state): State<Arc<AppState>>,
     request: Request<Body>,
 ) -> Response {
+    if request.extensions().get::<AuthRole>() == Some(&AuthRole::Worker) {
+        return json_error(StatusCode::FORBIDDEN, "access denied");
+    }
     let body = match to_bytes(request.into_body(), MAX_SHARE_STORE_BYTES as usize).await {
         Ok(body) => body,
         Err(_) => return json_error(StatusCode::BAD_REQUEST, "invalid request body"),
@@ -778,7 +823,10 @@ fn lowercase_hex(bytes: &[u8]) -> String {
     hex
 }
 
-async fn handle_shares(State(state): State<Arc<AppState>>) -> Response {
+async fn handle_shares(
+    State(state): State<Arc<AppState>>,
+    Extension(role): Extension<AuthRole>,
+) -> Response {
     let root = match open_current_root(&state) {
         Ok(root) => root,
         Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error),
@@ -787,6 +835,9 @@ async fn handle_shares(State(state): State<Arc<AppState>>) -> Response {
         Ok(links) => links,
         Err(()) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares"),
     };
+    if role == AuthRole::Worker {
+        links.retain(|link| link.created_by == "worker");
+    }
     for link in &mut links {
         link.token_hash.clear();
     }
@@ -907,6 +958,7 @@ fn read_shares(root: &cap_std::fs::Dir) -> Result<Vec<ShareLink>, ()> {
 async fn handle_revoke_share(
     State(state): State<Arc<AppState>>,
     AxumPath(id): AxumPath<String>,
+    Extension(role): Extension<AuthRole>,
 ) -> Response {
     let _guard = match state.share_write.lock() {
         Ok(guard) => guard,
@@ -930,6 +982,16 @@ async fn handle_revoke_share(
             );
         }
     };
+    if role == AuthRole::Worker
+        && !links
+            .iter()
+            .any(|link| link.id == id && link.created_by == "worker")
+    {
+        return json_error(
+            StatusCode::NOT_FOUND,
+            "share link not found or already revoked",
+        );
+    }
     let Some(link) = links.iter_mut().find(|link| link.id == id && !link.expired) else {
         return json_error(
             StatusCode::NOT_FOUND,
@@ -2896,6 +2958,41 @@ mod tests {
         }
     }
 
+    #[test]
+    fn worker_token_validation_matches_go_configuration_contract() {
+        let admin = "0123456789abcdef0123456789abcdef";
+        let worker = "fedcba9876543210fedcba9876543210";
+        assert_eq!(validate_tokens(admin, None), Ok(()));
+        assert_eq!(
+            validate_tokens(admin, Some("short")),
+            Err("worker token must contain at least 32 characters".to_owned())
+        );
+        assert_eq!(
+            validate_tokens(admin, Some(admin)),
+            Err("worker token must differ from the server token".to_owned())
+        );
+        assert_eq!(validate_tokens(admin, Some(worker)), Ok(()));
+    }
+
+    #[test]
+    fn worker_auth_route_policy_matches_admin_boundaries() {
+        for (method, path, expected) in [
+            (Method::GET, "/api/v1/jobs", true),
+            (Method::HEAD, "/api/v1/jobs", true),
+            (Method::POST, "/api/v1/jobs/retry", true),
+            (Method::POST, "/api/v1/ingest", true),
+            (Method::GET, "/api/v1/status", false),
+            (Method::PUT, "/api/v1/files", false),
+            (Method::POST, "/api/v1/worker/lease", false),
+        ] {
+            assert_eq!(
+                route_requires_admin(&method, path),
+                expected,
+                "{method} {path}"
+            );
+        }
+    }
+
     #[tokio::test]
     async fn create_share_matches_admin_contract_and_persists_only_token_hash() {
         let root = std::env::temp_dir().join(format!(
@@ -3746,6 +3843,7 @@ mod tests {
         AppState {
             vault_root: root.to_path_buf(),
             token: Arc::from(token.as_bytes()),
+            worker_token: None,
             version: String::new(),
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
@@ -3812,6 +3910,7 @@ mod tests {
         let state = AppState {
             vault_root: root.clone(),
             token: Arc::from(Vec::<u8>::new()),
+            worker_token: None,
             version: String::new(),
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
@@ -3841,6 +3940,7 @@ mod tests {
         let state = AppState {
             vault_root: root.clone(),
             token: Arc::from(Vec::<u8>::new()),
+            worker_token: None,
             version: String::new(),
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
@@ -3868,6 +3968,7 @@ mod tests {
         let state = AppState {
             vault_root: root.clone(),
             token: Arc::from(Vec::<u8>::new()),
+            worker_token: None,
             version: String::new(),
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),
@@ -3922,6 +4023,7 @@ mod tests {
         AppState {
             vault_root: PathBuf::new(),
             token: Arc::from(Vec::<u8>::new()),
+            worker_token: None,
             version: String::new(),
             auth_failures: Mutex::new(AuthThrottle::default()),
             snapshot_cache: SnapshotCache::uncached(),

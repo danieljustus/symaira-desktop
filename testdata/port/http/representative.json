@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "oracle": {
-    "commit": "745c08e8144971c61133c5d0e5d61c7ce405aad2",
-    "release": "post-v0.12.2-security-880"
+    "commit": "8fc4b67fcd84468f91ede73774ca6adf3e1fec99",
+    "release": "post-v0.12.2-security-880+share-token-8fc4b67f"
   },
   "cases": [
     {
@@ -32,6 +32,12 @@
       "method": "GET",
       "path": "/api/v1/status",
       "auth": "valid"
+    },
+    {
+      "id": "status-worker-token",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "worker"
     },
     {
       "id": "status-wrong-auth-2",
@@ -371,6 +377,18 @@
       "path": "/api/v1/jobs"
     },
     {
+      "id": "jobs-worker-token",
+      "method": "GET",
+      "path": "/api/v1/jobs",
+      "auth": "worker"
+    },
+    {
+      "id": "jobs-worker-head",
+      "method": "HEAD",
+      "path": "/api/v1/jobs",
+      "auth": "worker"
+    },
+    {
       "id": "jobs-wrong-auth",
       "method": "GET",
       "path": "/api/v1/jobs",
@@ -380,7 +398,7 @@
       "id": "worker-lease-no-jobs",
       "method": "POST",
       "path": "/api/v1/worker/lease",
-      "auth": "valid",
+      "auth": "worker",
       "body": "{\"worker_id\":\"worker-lease\",\"capabilities\":[\"ocr\"]}"
     },
     {
@@ -440,6 +458,12 @@
       "path": "/api/v1/jobs/retry?id=00000000000000000000000000000003"
     },
     {
+      "id": "jobs-retry-worker-token",
+      "method": "POST",
+      "path": "/api/v1/jobs/retry?id=00000000000000000000000000000003",
+      "auth": "worker"
+    },
+    {
       "id": "jobs-retry-nonfailed",
       "method": "POST",
       "path": "/api/v1/jobs/retry?id=00000000000000000000000000000001",
@@ -455,6 +479,12 @@
       "id": "worker-input-missing-auth",
       "method": "GET",
       "path": "/api/v1/worker/input?id=00000000000000000000000000000003"
+    },
+    {
+      "id": "worker-input-worker-token",
+      "method": "GET",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
+      "auth": "worker"
     },
     {
       "id": "worker-input-missing-job",
@@ -537,6 +567,14 @@
       "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"text\":\"ocr\",\"engine\":\"tesseract\"}"
     },
     {
+      "id": "worker-complete-worker-token",
+      "method": "POST",
+      "path": "/api/v1/worker/complete",
+      "auth": "worker",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-other\",\"text\":\"ignored\",\"engine\":\"tesseract\"}",
+      "populate_worker_job": true
+    },
+    {
       "id": "worker-complete-missing-job",
       "method": "POST",
       "path": "/api/v1/worker/complete",
@@ -595,6 +633,14 @@
       "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"error\":\"scan failed\"}"
     },
     {
+      "id": "worker-fail-worker-token",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "worker",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-other\",\"error\":\"scan failed\"}",
+      "populate_worker_job": true
+    },
+    {
       "id": "worker-fail-not-leased",
       "method": "POST",
       "path": "/api/v1/worker/fail",
@@ -622,6 +668,14 @@
       "id": "ingest-missing-auth",
       "method": "POST",
       "path": "/api/v1/ingest",
+      "body": "%PDF-1.7\nfixture\n",
+      "multipart_file": "report.pdf"
+    },
+    {
+      "id": "ingest-worker-token",
+      "method": "POST",
+      "path": "/api/v1/ingest",
+      "auth": "worker",
       "body": "%PDF-1.7\nfixture\n",
       "multipart_file": "report.pdf"
     },
@@ -678,6 +732,13 @@
       "populate_shares": true
     },
     {
+      "id": "shares-worker-owned",
+      "method": "GET",
+      "path": "/api/v1/shares",
+      "auth": "worker",
+      "populate_shares": true
+    },
+    {
       "id": "share-revoke-missing-auth",
       "method": "DELETE",
       "path": "/api/v1/share/share-old"
@@ -693,6 +754,20 @@
       "method": "DELETE",
       "path": "/api/v1/share/does-not-exist",
       "auth": "valid"
+    },
+    {
+      "id": "share-revoke-worker-nonowned",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old",
+      "auth": "worker",
+      "populate_shares": true
+    },
+    {
+      "id": "share-revoke-worker-owned",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-worker",
+      "auth": "worker",
+      "populate_shares": true
     },
     {
       "id": "share-revoke-already",
@@ -723,6 +798,13 @@
       "method": "POST",
       "path": "/api/v1/share",
       "auth": "wrong",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-create-worker-token",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "worker",
       "body": "{\"path\":\"Hello.md\",\"expiry\":24}"
     },
     {

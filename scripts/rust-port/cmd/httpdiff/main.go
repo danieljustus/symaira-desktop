@@ -30,6 +30,7 @@ import (
 )
 
 const token = "0123456789abcdef0123456789abcdef"
+const workerToken = "fedcba9876543210fedcba9876543210"
 
 type fixture struct {
 	Cases []httpCase `json:"cases"`
@@ -245,6 +246,26 @@ func run() (runErr error) {
 				fatal("%s persisted share stores differ", tc.ID)
 			}
 		}
+		if tc.ID == "share-revoke-worker-owned" {
+			leftStore, err := assertedWorkerRevokedShare(leftVault)
+			if err != nil {
+				fatal("%s Go persistence: %v", tc.ID, err)
+			}
+			rightStore, err := assertedWorkerRevokedShare(rightVault)
+			if err != nil {
+				fatal("%s Rust persistence: %v", tc.ID, err)
+			}
+			if !reflect.DeepEqual(leftStore, rightStore) {
+				fatal("%s persisted share stores differ", tc.ID)
+			}
+		}
+		if tc.ID == "share-revoke-worker-nonowned" {
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := assertSharesUnchanged(vault); err != nil {
+					fatal("%s persisted share store: %v", tc.ID, err)
+				}
+			}
+		}
 		if tc.ID == "share-create-valid" {
 			leftStore, err := assertedCreatedShare(leftVault, leftResult.Body)
 			if err != nil {
@@ -452,7 +473,7 @@ func populateExpiredJob(vault string) error {
 	return os.WriteFile(filepath.Join(dir, id+".json"), []byte(body), 0o600)
 }
 
-const shareFixture = `[{"id":"share-old","path":"Hello.md","created_by":"alice","created_at":"2026-01-02T03:04:05Z","expires_at":"2099-01-02T03:04:05Z","token_hash":"fixture-hash-old"},{"id":"share-expired","path":"nested/Note.md","created_by":"bob","created_at":"2026-01-03T03:04:05Z","expires_at":"2026-01-04T03:04:05Z","token_hash":"fixture-hash-expired"},{"id":"share-revoked","path":"Hello.md","created_by":"alice","created_at":"2026-01-04T03:04:05Z","expires_at":"2099-01-04T03:04:05Z","token_hash":"fixture-hash-revoked","expired":true,"revoked_at":"2026-01-05T03:04:05Z"}]`
+const shareFixture = `[{"id":"share-old","path":"Hello.md","created_by":"alice","created_at":"2026-01-02T03:04:05Z","expires_at":"2099-01-02T03:04:05Z","token_hash":"fixture-hash-old"},{"id":"share-expired","path":"nested/Note.md","created_by":"bob","created_at":"2026-01-03T03:04:05Z","expires_at":"2026-01-04T03:04:05Z","token_hash":"fixture-hash-expired"},{"id":"share-revoked","path":"Hello.md","created_by":"alice","created_at":"2026-01-04T03:04:05Z","expires_at":"2099-01-04T03:04:05Z","token_hash":"fixture-hash-revoked","expired":true,"revoked_at":"2026-01-05T03:04:05Z"},{"id":"share-worker","path":"Hello.md","created_by":"worker","created_at":"2026-01-06T03:04:05Z","expires_at":"2099-01-06T03:04:05Z","token_hash":"fixture-hash-worker"}]`
 
 func shareFixturePath(vault string) string {
 	return filepath.Join(vault, ".symdesk", "server", "shares.json")
@@ -542,7 +563,7 @@ func assertedRevokedShare(vault string) ([]map[string]any, error) {
 	if err := json.Unmarshal(data, &links); err != nil {
 		return nil, err
 	}
-	if len(links) != 3 || links[0]["id"] != "share-old" || links[0]["expired"] != true || links[0]["token_hash"] != "fixture-hash-old" {
+	if len(links) != 4 || links[0]["id"] != "share-old" || links[0]["expired"] != true || links[0]["token_hash"] != "fixture-hash-old" {
 		return nil, fmt.Errorf("unexpected revoked share state")
 	}
 	revoked, _ := links[0]["revoked_at"].(string)
@@ -551,6 +572,31 @@ func assertedRevokedShare(vault string) ([]map[string]any, error) {
 		return nil, fmt.Errorf("revocation time is not current RFC3339: %q", revoked)
 	}
 	links[0]["revoked_at"] = "<dynamic>"
+	if links[3]["revoked_at"] != nil {
+		links[3]["revoked_at"] = "<dynamic>"
+	}
+	return links, nil
+}
+
+func assertedWorkerRevokedShare(vault string) ([]map[string]any, error) {
+	path := shareFixturePath(vault)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var links []map[string]any
+	if err := json.Unmarshal(data, &links); err != nil {
+		return nil, err
+	}
+	if len(links) != 4 || links[3]["id"] != "share-worker" || links[3]["expired"] != true {
+		return nil, fmt.Errorf("unexpected worker-revoked share state")
+	}
+	revoked, _ := links[3]["revoked_at"].(string)
+	when, err := time.Parse(time.RFC3339Nano, revoked)
+	if err != nil || time.Since(when) > time.Minute || time.Until(when) > time.Minute {
+		return nil, fmt.Errorf("worker revocation time is not current RFC3339: %q", revoked)
+	}
+	links[3]["revoked_at"] = "<dynamic>"
 	return links, nil
 }
 
@@ -620,15 +666,18 @@ func assertedCreatedShare(vault string, response []byte) ([]map[string]any, erro
 	if err := json.Unmarshal(data, &links); err != nil {
 		return nil, err
 	}
-	if len(links) != 4 {
-		return nil, fmt.Errorf("share store count = %d, want 4", len(links))
+	if len(links) != 5 {
+		return nil, fmt.Errorf("share store count = %d, want 5", len(links))
 	}
-	link := links[3]
+	link := links[4]
 	hash := fmt.Sprintf("%x", sha256.Sum256([]byte(share.Token)))
 	if link["id"] != share.ID || link["path"] != share.Path || link["created_by"] != "admin" || link["created_at"] != share.CreatedAt || link["expires_at"] != share.ExpiresAt || link["token_hash"] != hash || link["token"] != nil || link["expired"] != nil {
 		return nil, fmt.Errorf("share store has unexpected created link")
 	}
 	links[0]["revoked_at"] = "<dynamic>"
+	if links[3]["revoked_at"] != nil {
+		links[3]["revoked_at"] = "<dynamic>"
+	}
 	for _, field := range []string{"id", "created_at", "expires_at", "token_hash"} {
 		link[field] = "<dynamic>"
 	}
@@ -1057,7 +1106,7 @@ func startServer(binary, vault string) *runningServer {
 		fatal("isolation root: %v", err)
 	}
 	//nolint:gosec // absoluteBinary is the explicit Go/Rust harness operand
-	cmd := exec.Command(absoluteBinary, "serve", "--listen", address, "--vault", vault, "--token", token)
+	cmd := exec.Command(absoluteBinary, "serve", "--listen", address, "--vault", vault, "--token", token, "--worker-token", workerToken)
 	cmd.Dir = home
 	cmd.Env = isolatedEnv(vault, home)
 	server := &runningServer{cmd: cmd, base: "http://" + address}
@@ -1142,6 +1191,8 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 	switch tc.Auth {
 	case "valid":
 		request.Header.Set("Authorization", "Bearer "+token)
+	case "worker":
+		request.Header.Set("Authorization", "Bearer "+workerToken)
 	case "wrong":
 		request.Header.Set("Authorization", "Bearer 0000000000000000000000000000wrong")
 	case "raw":

@@ -122,6 +122,7 @@ fn main() -> ExitCode {
         Some(("serve", command)) => run_http_server(
             command.get_one::<String>("listen").cloned(),
             command.get_one::<String>("token").cloned(),
+            command.get_one::<String>("worker-token").cloned(),
             matches.get_one::<String>("vault").cloned(),
         ),
         Some(("dataset", command)) => dataset::run(
@@ -228,6 +229,7 @@ fn rewrite_index_output_flag(args: &mut [OsString]) {
 fn run_http_server(
     listen: Option<String>,
     token: Option<String>,
+    worker_token: Option<String>,
     vault: Option<String>,
 ) -> ExitCode {
     let vault = match resolve_vault(vault.as_deref()) {
@@ -238,6 +240,10 @@ fn run_http_server(
         .filter(|value| !value.is_empty())
         .or_else(|| std::env::var("SYMDESK_SERVER_TOKEN").ok())
         .unwrap_or_default();
+    let worker_token = worker_token
+        .filter(|value| !value.is_empty())
+        .or_else(|| std::env::var("SYMDESK_WORKER_TOKEN").ok())
+        .filter(|value| !value.is_empty());
     let config = http::HttpConfig {
         listen_address: listen
             .filter(|value| !value.is_empty())
@@ -245,6 +251,7 @@ fn run_http_server(
             .unwrap_or_else(|| "127.0.0.1:8787".to_owned()),
         vault_root: vault,
         token,
+        worker_token,
         version: VERSION.to_owned(),
     };
     let runtime = match tokio::runtime::Builder::new_multi_thread()
@@ -295,7 +302,8 @@ fn cli() -> Command {
         .subcommand(
             Command::new("serve")
                 .arg(Arg::new("listen").long("listen").num_args(1))
-                .arg(Arg::new("token").long("token").num_args(1)),
+                .arg(Arg::new("token").long("token").num_args(1))
+                .arg(Arg::new("worker-token").long("worker-token").num_args(1)),
         )
 }
 

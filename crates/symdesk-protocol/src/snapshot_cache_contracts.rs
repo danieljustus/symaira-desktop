@@ -51,6 +51,7 @@ fn native_snapshot_cache_reflects_external_vault_lifecycle() {
     let state = AppState {
         vault_root: root_path.clone(),
         token: Arc::from(Vec::<u8>::new()),
+        worker_token: None,
         version: "test".to_owned(),
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root_path),
@@ -108,6 +109,7 @@ fn warm_cache_reopens_replaced_root_and_file_reads_use_new_root() {
     let state = AppState {
         vault_root: root_path.clone(),
         token: Arc::from(Vec::<u8>::new()),
+        worker_token: None,
         version: "test".to_owned(),
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root_path),
@@ -146,6 +148,7 @@ fn snapshot_preserves_legal_unix_backslashes_in_path_and_etag_material() {
     let state = AppState {
         vault_root: root_path.clone(),
         token: Arc::from(Vec::<u8>::new()),
+        worker_token: None,
         version: "test".to_owned(),
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::new(&root_path),
@@ -170,6 +173,7 @@ async fn snapshot_read_failure_returns_http_500_retains_dirty_cache_and_retries(
     let state = Arc::new(AppState {
         vault_root: root_path,
         token: Arc::from(Vec::<u8>::new()),
+        worker_token: None,
         version: "test".to_owned(),
         auth_failures: Mutex::new(AuthThrottle::default()),
         snapshot_cache: SnapshotCache::uncached(),

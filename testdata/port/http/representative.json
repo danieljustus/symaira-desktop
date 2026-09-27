@@ -442,12 +442,24 @@
       "disconnect_after_events": 4
     },
     {
-      "id": "ai-question-local-ollama-notebook-501",
+      "id": "ai-question-local-ollama-notebook-citation-warning",
       "method": "POST",
       "path": "/api/v1/ai/ask",
       "auth": "valid",
-      "body": "{\"query\":\"Body\",\"notebook\":\"research\"}",
-      "provider_ask_notebook_boundary": true
+      "body": "{\"query\":\"notebook citation warning\",\"notebook\":\"research\"}",
+      "provider_ask_ollama": true,
+      "provider_ask_expected_source": true,
+      "provider_ask_notebook": true
+    },
+    {
+      "id": "ai-question-local-ollama-notebook-worker-acl",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"Hello\",\"notebook\":\"research\"}",
+      "populate_worker_acl": true,
+      "provider_ask_ollama": true,
+      "provider_ask_notebook": true
     },
     {
       "id": "ai-transform-openai-provider-falls-back-to-local-ollama",

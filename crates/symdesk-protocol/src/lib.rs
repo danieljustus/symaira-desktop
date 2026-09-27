@@ -666,6 +666,13 @@ struct AiAskRequest {
 }
 
 #[derive(Serialize)]
+struct AiCitationWarning {
+    path: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    line: Option<usize>,
+}
+
+#[derive(Serialize)]
 struct AiAskEvent<'a> {
     #[serde(rename = "type")]
     event_type: &'static str,
@@ -683,6 +690,8 @@ struct AiAskEvent<'a> {
     tool_name: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     status: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    citation_warnings: Option<&'a [AiCitationWarning]>,
     #[serde(skip_serializing_if = "Option::is_none")]
     read_paths: Option<&'a [String]>,
 }
@@ -772,12 +781,14 @@ async fn handle_ai_transform(
             .unwrap_or_else(|| "llama3.2".to_owned());
         let provider_sender = sender.clone();
         tokio::spawn(async move {
+            let mut answer_capture = None;
             match stream_ollama(
                 &endpoint,
                 &model,
                 &prompt,
                 &provider_sender,
                 AI_PROVIDER_TIMEOUT,
+                &mut answer_capture,
                 false,
             )
             .await
@@ -912,6 +923,7 @@ async fn send_ai_ask_answer(sender: &mpsc::Sender<Result<Bytes, io::Error>>, tex
             score: None,
             tool_name: None,
             status: None,
+            citation_warnings: None,
             read_paths: None,
         },
     )
@@ -931,6 +943,7 @@ async fn stream_ollama(
     prompt: &str,
     sender: &mpsc::Sender<Result<Bytes, io::Error>>,
     timeout: Duration,
+    answer_capture: &mut Option<String>,
     ask_events: bool,
 ) -> Result<bool, String> {
     let body = serde_json::to_vec(&json!({"model": model, "prompt": prompt, "stream": true}))
@@ -990,7 +1003,7 @@ async fn stream_ollama(
             pending.extend_from_slice(&remaining[..newline]);
             if !pending.is_empty() {
                 started = true;
-                if !send_ollama_generate_line(sender, &pending, ask_events).await? {
+                if !send_ollama_generate_line(sender, &pending, answer_capture, ask_events).await? {
                     return Ok(false);
                 }
                 pending.clear();
@@ -1002,7 +1015,9 @@ async fn stream_ollama(
         }
         pending.extend_from_slice(remaining);
     }
-    if !pending.is_empty() && !send_ollama_generate_line(sender, &pending, ask_events).await? {
+    if !pending.is_empty()
+        && !send_ollama_generate_line(sender, &pending, answer_capture, ask_events).await?
+    {
         return Ok(false);
     }
     Ok(true)
@@ -1015,6 +1030,7 @@ fn ollama_line_too_long() -> String {
 async fn send_ollama_generate_line(
     sender: &mpsc::Sender<Result<Bytes, io::Error>>,
     line: &[u8],
+    answer_capture: &mut Option<String>,
     ask_events: bool,
 ) -> Result<bool, String> {
     let line = line.strip_suffix(b"\r").unwrap_or(line);
@@ -1027,6 +1043,9 @@ async fn send_ollama_generate_line(
     if chunk.response.is_empty() {
         Ok(true)
     } else if ask_events {
+        if let Some(answer) = answer_capture {
+            answer.push_str(&chunk.response);
+        }
         Ok(send_ai_ask_answer(sender, &chunk.response).await)
     } else {
         Ok(send_ai_transform_answer(sender, &chunk.response).await)
@@ -1119,13 +1138,14 @@ async fn handle_ai_ask(
     };
     input.query = input.query.trim().to_owned();
     input.notebook = input.notebook.trim().to_owned();
+    let notebook_scoped = !input.notebook.is_empty();
     if input.query.is_empty() {
         return json_error(StatusCode::BAD_REQUEST, "query is required");
     }
 
-    // Provider-backed Ask is limited to an unscoped query with no retrieved
-    // documents, so unsupported ranking, ACL context, and citation paths can
-    // never be sent to the model.
+    // Provider-backed Ask stays on the supported local Ollama and sidecar
+    // retrieval path. The empty hybrid-index check below prevents unmatched
+    // ranking behavior; ACL filtering still precedes context and citations.
     let config = ai_transform_config_or_default(load_ai_transform_config());
     let configured_ollama = if ai_ask_provider_is_unconfigured(&config) {
         None
@@ -1148,12 +1168,6 @@ async fn handle_ai_ask(
             }
         }
     };
-    if configured_ollama.is_some() && !input.notebook.is_empty() {
-        return json_error(
-            StatusCode::NOT_IMPLEMENTED,
-            "provider-backed notebook ask streaming is not implemented",
-        );
-    }
     match ai_ask_retrieval_index_is_empty(&state.vault_root) {
         Ok(true) => {}
         Ok(false) => {
@@ -1343,6 +1357,7 @@ async fn handle_ai_ask(
                 score: None,
                 tool_name: Some(tool_name),
                 status: Some(status),
+                citation_warnings: None,
                 read_paths: None,
             },
         ) {
@@ -1361,6 +1376,7 @@ async fn handle_ai_ask(
                 score: (*score != 0.0).then(|| serde_json::Number::from(1)),
                 tool_name: None,
                 status: None,
+                citation_warnings: None,
                 read_paths: None,
             },
         ) {
@@ -1379,6 +1395,7 @@ async fn handle_ai_ask(
                 score: None,
                 tool_name,
                 status,
+                citation_warnings: None,
                 read_paths: None,
             },
         ) {
@@ -1399,6 +1416,7 @@ async fn handle_ai_ask(
                 score: None,
                 tool_name: None,
                 status: None,
+                citation_warnings: None,
                 read_paths: None,
             },
         ) {
@@ -1417,6 +1435,7 @@ async fn handle_ai_ask(
                     score: None,
                     tool_name: None,
                     status: None,
+                    citation_warnings: None,
                     read_paths: None,
                 },
             ) {
@@ -1440,6 +1459,7 @@ async fn handle_ai_ask(
                     score: None,
                     tool_name,
                     status,
+                    citation_warnings: None,
                     read_paths: if is_done {
                         read_paths.as_deref().filter(|paths| !paths.is_empty())
                     } else {
@@ -1469,12 +1489,14 @@ async fn handle_ai_ask(
         let (Some(endpoint), Some(prompt)) = (configured_ollama, ask_prompt) else {
             return;
         };
+        let mut answer_capture = Some(String::new());
         match stream_ollama(
             &endpoint,
             &model,
             &prompt,
             &sender,
             AI_PROVIDER_TIMEOUT,
+            &mut answer_capture,
             true,
         )
         .await
@@ -1483,11 +1505,20 @@ async fn handle_ai_ask(
             Ok(false) => return,
             Err(error) => {
                 let message = format!("⚠️ Request failed: {error}\n");
+                if let Some(answer) = answer_capture.as_mut() {
+                    answer.push_str(&message);
+                }
                 if !send_ai_ask_answer(&sender, &message).await {
                     return;
                 }
             }
         }
+        let answer = answer_capture.unwrap_or_default();
+        let citation_warnings = if notebook_scoped {
+            check_citation_warnings(&answer, read_paths.as_deref().unwrap_or_default())
+        } else {
+            Vec::new()
+        };
         for (event_type, tool_name, status) in
             [("tool", Some("llm"), Some("done")), ("done", None, None)]
         {
@@ -1504,6 +1535,11 @@ async fn handle_ai_ask(
                     score: None,
                     tool_name,
                     status,
+                    citation_warnings: if is_done && !citation_warnings.is_empty() {
+                        Some(&citation_warnings)
+                    } else {
+                        None
+                    },
                     read_paths: if is_done {
                         read_paths.as_deref().filter(|paths| !paths.is_empty())
                     } else {
@@ -1549,6 +1585,303 @@ fn push_ai_ask_event(events: &mut Vec<Bytes>, event: AiAskEvent<'_>) -> Result<(
 
 fn ai_ask_provider_is_unconfigured(config: &symdesk_core::config::Config) -> bool {
     matches!(config.llm_provider.as_str(), "" | "ollama" | "openai") && config.ollama_url.is_empty()
+}
+
+fn check_citation_warnings(content: &str, read_paths: &[String]) -> Vec<AiCitationWarning> {
+    let read = read_paths
+        .iter()
+        .filter_map(|path| ask_citation_path_key(path))
+        .collect::<std::collections::HashSet<_>>();
+    let mut candidates = Vec::new();
+    let body_start = scan_ask_citation_frontmatter(content, &mut candidates);
+    scan_ask_citation_body(content, body_start, &mut candidates);
+
+    let mut seen = std::collections::HashSet::new();
+    candidates
+        .into_iter()
+        .filter_map(|(path, line)| {
+            let key = ask_citation_path_key(&path)?;
+            if read.contains(&key) || !seen.insert(key) {
+                return None;
+            }
+            Some(AiCitationWarning {
+                path,
+                line: Some(line),
+            })
+        })
+        .collect()
+}
+
+fn scan_ask_citation_frontmatter(content: &str, candidates: &mut Vec<(String, usize)>) -> usize {
+    let lines = content.splitn(202, '\n').collect::<Vec<_>>();
+    if lines.first().is_none_or(|line| line.trim() != "---") {
+        return 0;
+    }
+    let mut in_source_block = false;
+    for (index, line) in lines.iter().enumerate().take(201).skip(1) {
+        if line.trim() == "---" {
+            return index + 1;
+        }
+        if let Some((key, value)) = line.trim().split_once(':') {
+            in_source_block = is_ask_citation_source_key(key);
+            if in_source_block {
+                append_ask_citation_candidates(candidates, value, index + 1, false);
+            }
+        } else if in_source_block && line.trim().contains("[[") {
+            append_ask_citation_candidates(candidates, line, index + 1, false);
+        }
+    }
+    0
+}
+
+fn scan_ask_citation_body(
+    content: &str,
+    body_start_line: usize,
+    candidates: &mut Vec<(String, usize)>,
+) {
+    let mut in_source_heading = false;
+    let mut in_table = false;
+    let mut citation_column = None;
+    let mut scanned = 0;
+    for (absolute_line, raw_line) in content.split('\n').enumerate() {
+        if absolute_line < body_start_line {
+            continue;
+        }
+        if scanned >= 4000 {
+            break;
+        }
+        let line = raw_line.strip_suffix('\r').unwrap_or(raw_line);
+        if line.len() > (1 << 20) {
+            break;
+        }
+        scanned += 1;
+        let line_number = absolute_line + 1;
+        if is_ask_markdown_heading(line) {
+            in_source_heading = is_ask_citation_heading(line);
+            in_table = false;
+            citation_column = None;
+            continue;
+        }
+        if in_source_heading {
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+            if trimmed.starts_with('-') || trimmed.starts_with('*') {
+                append_ask_citation_candidates(candidates, line, line_number, true);
+                continue;
+            }
+            in_source_heading = false;
+        }
+
+        if line.contains('|') {
+            let cells = ask_table_cells(line);
+            if !in_table {
+                citation_column = cells.iter().position(|cell| is_ask_citation_column(cell));
+                in_table = citation_column.is_some();
+                continue;
+            }
+            if is_ask_table_separator(line) {
+                continue;
+            }
+            if let Some(column) = citation_column.filter(|column| *column < cells.len()) {
+                append_ask_citation_candidates(candidates, cells[column], line_number, true);
+            }
+        } else {
+            in_table = false;
+            citation_column = None;
+        }
+    }
+}
+
+fn append_ask_citation_candidates(
+    candidates: &mut Vec<(String, usize)>,
+    text: &str,
+    line: usize,
+    documents_only: bool,
+) {
+    let mut remaining = text;
+    while let Some(start) = remaining.find("[[") {
+        let after_open = &remaining[start + 2..];
+        let Some(end) = after_open.find("]]") else {
+            return;
+        };
+        let mut target = after_open[..end].trim();
+        if let Some(pipe) = target.find('|') {
+            target = &target[..pipe];
+        }
+        if let Some(anchor) = target.find(['#', '^']) {
+            target = &target[..anchor];
+        }
+        let target = target.trim();
+        if !target.is_empty() && (!documents_only || looks_like_ask_document_reference(target)) {
+            candidates.push((target.to_owned(), line));
+        }
+        remaining = &after_open[end + 2..];
+    }
+}
+
+fn ask_citation_path_key(path: &str) -> Option<String> {
+    let mut path = clean_ask_citation_path(path)?;
+    let basename_start = path.rfind('/').map_or(0, |index| index + 1);
+    let basename = &path[basename_start..];
+    if let Some(dot) = basename.rfind('.').filter(|dot| *dot > 0) {
+        path.truncate(basename_start + dot);
+    }
+    Some(path.to_lowercase())
+}
+
+fn clean_ask_citation_path(path: &str) -> Option<String> {
+    let path = path.trim().strip_prefix("./").unwrap_or(path.trim());
+    if path.is_empty() || path.contains(['\r', '\n']) || path.contains("://") {
+        return None;
+    }
+    #[cfg(windows)]
+    let path = path.replace('\\', "/");
+    #[cfg(not(windows))]
+    let path = path.to_owned();
+    let absolute = path.starts_with('/');
+    let mut components: Vec<&str> = Vec::new();
+    for component in path.split('/') {
+        match component {
+            "" | "." => {}
+            ".." if components.last().is_some_and(|previous| *previous != "..") => {
+                components.pop();
+            }
+            ".." if !absolute => components.push(component),
+            ".." => return None,
+            value => components.push(value),
+        }
+    }
+    let mut cleaned = components.join("/");
+    if absolute {
+        cleaned.insert(0, '/');
+    }
+    if cleaned.is_empty() {
+        cleaned.push('.');
+    }
+    if cleaned == "." || cleaned == ".." || cleaned.starts_with("../") {
+        return None;
+    }
+    Some(cleaned)
+}
+
+fn looks_like_ask_document_reference(path: &str) -> bool {
+    const EXTENSIONS: &[&str] = &[
+        ".csv",
+        ".doc",
+        ".docx",
+        ".eml",
+        ".md",
+        ".markdown",
+        ".odt",
+        ".pdf",
+        ".ppt",
+        ".pptx",
+        ".rtf",
+        ".txt",
+        ".xls",
+        ".xlsx",
+    ];
+    const WORDS: &[&str] = &[
+        "interview",
+        "notiz",
+        "note",
+        "meeting",
+        "bericht",
+        "report",
+        "use case",
+        "use-case",
+        "protokoll",
+        "document",
+        "dokument",
+        "briefing",
+        "memo",
+        "synthese",
+    ];
+    let basename = path.rsplit('/').next().unwrap_or(path);
+    let has_extension = basename
+        .rfind('.')
+        .filter(|dot| *dot > 0)
+        .is_some_and(|dot| EXTENSIONS.contains(&basename[dot..].to_lowercase().as_str()));
+    has_extension || {
+        let lower = path.to_lowercase();
+        WORDS.iter().any(|word| lower.contains(word))
+    }
+}
+
+fn is_ask_citation_source_key(key: &str) -> bool {
+    matches!(
+        key.trim().to_lowercase().as_str(),
+        "quelle"
+            | "quellen"
+            | "source"
+            | "sources"
+            | "referenz"
+            | "referenzen"
+            | "reference"
+            | "references"
+    )
+}
+
+fn is_ask_markdown_heading(line: &str) -> bool {
+    let trimmed = line.trim_start_matches([' ', '\t']);
+    let level = trimmed.bytes().take_while(|byte| *byte == b'#').count();
+    level > 0 && level < trimmed.len() && matches!(trimmed.as_bytes()[level], b' ' | b'\t')
+}
+
+fn is_ask_citation_heading(line: &str) -> bool {
+    let title = line.trim().trim_start_matches('#').trim().to_lowercase();
+    matches!(
+        title.as_str(),
+        "quelle"
+            | "quellen"
+            | "source"
+            | "sources"
+            | "referenz"
+            | "referenzen"
+            | "reference"
+            | "references"
+    )
+}
+
+fn is_ask_citation_column(cell: &str) -> bool {
+    [
+        "gesprächspartner",
+        "gespraechspartner",
+        "interview",
+        "quelle",
+        "source",
+        "verfasser",
+        "author",
+        "speaker",
+        "sprecher",
+        "befragter",
+        "zitat",
+        "citation",
+    ]
+    .iter()
+    .any(|word| cell.to_lowercase().contains(word))
+}
+
+fn ask_table_cells(line: &str) -> Vec<&str> {
+    let mut parts = line.split('|').collect::<Vec<_>>();
+    if parts.first().is_some_and(|part| part.trim().is_empty()) {
+        parts.remove(0);
+    }
+    if parts.last().is_some_and(|part| part.trim().is_empty()) {
+        parts.pop();
+    }
+    parts.into_iter().map(str::trim).collect()
+}
+
+fn is_ask_table_separator(line: &str) -> bool {
+    let cells = ask_table_cells(line);
+    !cells.is_empty()
+        && cells.iter().all(|cell| {
+            let trimmed = cell.trim_matches(['-', ':']);
+            trimmed.trim().is_empty()
+        })
 }
 
 fn ai_ask_retrieval_index_is_empty(vault_root: &Path) -> Result<bool, String> {
@@ -4821,6 +5154,23 @@ mod tests {
         }
     }
 
+    #[test]
+    fn ask_citation_warnings_match_go_source_context_and_deduplicate_paths() {
+        let answer = "A normal [[ordinary.md]] link.\n## Sources\n- [[Outside.md#part|outside]]\n- [[outside.txt]]\n## Notes\n- [[not-a-source.md]]\n";
+        let warnings = check_citation_warnings(answer, &["inside.md".to_owned()]);
+        assert_eq!(warnings.len(), 1);
+        assert_eq!(warnings[0].path, "Outside.md");
+        assert_eq!(warnings[0].line, Some(3));
+
+        let table = "| Name | Source |\n| --- | --- |\n| Report | [[folder/inside.md]] |\n";
+        assert!(check_citation_warnings(table, &["FOLDER/inside.txt".to_owned()]).is_empty());
+
+        let frontmatter = "---\nsources:\n  - [[outside.md]]\ntitle: note\n---\nBody\n";
+        let warnings = check_citation_warnings(frontmatter, &[]);
+        assert_eq!(warnings.len(), 1);
+        assert_eq!(warnings[0].line, Some(3));
+    }
+
     #[cfg(unix)]
     #[tokio::test]
     async fn command_stream_is_line_buffered_and_emits_terminal_failure_event() {
@@ -6231,6 +6581,7 @@ mod tests {
                 score: None,
                 tool_name: None,
                 status: None,
+                citation_warnings: None,
                 read_paths: None,
             },
         )

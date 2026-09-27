@@ -1245,7 +1245,7 @@ async fn handle_ai_ask(
                 // A stale index row outside the vault must never become context.
                 _ => continue,
             };
-            let Some(path) = relative.to_str().map(str::to_owned) else {
+            let Some(path) = vault_relative_markdown_path(&relative) else {
                 continue;
             };
             documents.push((path, hit.title, hit.snippet, 0.0));
@@ -1334,7 +1334,7 @@ async fn handle_ai_ask(
             let Some(relative) = path_relative_to_root(&state.vault_root, &hit.path) else {
                 continue;
             };
-            let Some(path) = relative.to_str().map(str::to_owned) else {
+            let Some(path) = vault_relative_markdown_path(&relative) else {
                 continue;
             };
             if sources.iter().any(|(source, _, _)| *source == path) {
@@ -1957,6 +1957,19 @@ fn safe_vault_relative_path(path: PathBuf) -> Option<PathBuf> {
             .components()
             .all(|component| matches!(component, Component::Normal(_))))
     .then_some(path)
+}
+
+// Markdown links and the Go vault contract use `/` separators on every host.
+// Keep filesystem paths native until after root containment has been proven.
+fn vault_relative_markdown_path(path: &Path) -> Option<String> {
+    path.components()
+        .map(|component| match component {
+            Component::Normal(part) => part.to_str(),
+            _ => None,
+        })
+        .collect::<Option<Vec<_>>>()
+        .filter(|parts| !parts.is_empty())
+        .map(|parts| parts.join("/"))
 }
 
 fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
@@ -5330,6 +5343,15 @@ mod tests {
             let got = local_ollama_endpoint(input).map(|uri| uri.to_string());
             assert_eq!(got.as_deref(), expected, "endpoint {input}");
         }
+    }
+
+    #[test]
+    fn ask_markdown_links_use_forward_slashes_on_every_platform() {
+        let relative = Path::new("nested").join("Note.md");
+        assert_eq!(
+            vault_relative_markdown_path(&relative).as_deref(),
+            Some("nested/Note.md")
+        );
     }
 
     #[cfg(windows)]

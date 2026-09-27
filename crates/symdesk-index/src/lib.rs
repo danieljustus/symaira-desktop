@@ -2106,6 +2106,7 @@ mod source_tests {
         let parent = temp_dir("parent");
         let source_path = parent.join("source");
         fs::create_dir(&source_path).expect("source dir");
+        #[cfg(unix)]
         let alias = parent.join("alias");
         #[cfg(unix)]
         std::os::unix::fs::symlink(&source_path, &alias).expect("source symlink");

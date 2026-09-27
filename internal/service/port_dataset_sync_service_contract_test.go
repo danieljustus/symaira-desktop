@@ -189,6 +189,32 @@ func TestPortDatasetSyncServiceContractCaseInventory(t *testing.T) {
 	}
 }
 
+func TestPortDatasetSyncServiceWindowsNormalizesHostErrorPaths(t *testing.T) {
+	data, err := os.ReadFile(portDatasetSyncServiceFixturePath(t)) //nolint:gosec // fixed or explicitly supplied fixture path
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture portDatasetSyncServiceFixture
+	if err := json.Unmarshal(data, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	state := &fixture.Cases[5].States[0]
+	if !strings.Contains(state.HandleError, "datasets/validation.md") {
+		t.Fatalf("fixture does not contain the validation file error: %q", state.HandleError)
+	}
+	state.HandleError = strings.ReplaceAll(state.HandleError, "datasets/validation.md", `datasets\validation.md`)
+	windows, err := json.Marshal(fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := portDatasetSyncServiceCompare(data, windows, "windows"); err != nil {
+		t.Fatalf("Windows host path separator changed fixture semantics: %v", err)
+	}
+	if err := portDatasetSyncServiceCompare(data, windows, "linux"); err == nil {
+		t.Fatal("Unix comparison accepted a Windows host path separator")
+	}
+}
+
 func TestPortDatasetSyncServiceContractRejectsBehavioralMutation(t *testing.T) {
 	data, err := os.ReadFile(portDatasetSyncServiceFixturePath(t)) //nolint:gosec // fixed or explicitly supplied fixture path
 	if err != nil {
@@ -941,6 +967,9 @@ func portDatasetSyncServiceComparisonDocument(document []byte, goos string) ([]b
 						}
 						entry[field] = ""
 					}
+				}
+				if message, ok := state["handle_error"].(string); ok {
+					state["handle_error"] = strings.ReplaceAll(message, `\`, "/")
 				}
 			}
 		}

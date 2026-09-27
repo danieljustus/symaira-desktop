@@ -95,6 +95,7 @@ func generatedHTTP() httpSuite {
 		{ID: "file-put-update", Method: "PUT", Path: "/api/v1/files?path=nested/Created.md", Auth: "valid", Body: "# Created\n\nsecond state\n"},
 		{ID: "file-put-read-updated", Method: "GET", Path: "/api/v1/files?path=nested/Created.md", Auth: "valid"},
 		{ID: "file-put-over-limit", Method: "PUT", Path: "/api/v1/files?path=nested/TooBig.md", Auth: "valid", BodyRepeat: (8 << 20) + 1},
+		{ID: "files-method-not-allowed", Method: "POST", Path: "/api/v1/files?path=Hello.md", Auth: "valid"},
 		{ID: "health-method-not-allowed", Method: "POST", Path: "/healthz"},
 		{ID: "unknown-route", Method: "GET", Path: "/not-found"},
 		{ID: "status-head", Method: "HEAD", Path: "/api/v1/status", Auth: "valid"},

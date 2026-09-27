@@ -1288,6 +1288,7 @@ async fn security_headers(request: Request<Body>, next: Next) -> Response {
 }
 
 async fn normalize_method_not_allowed(request: Request<Body>, next: Next) -> Response {
+    let path = request.uri().path().to_owned();
     let mut response = next.run(request).await;
     if response.status() == StatusCode::METHOD_NOT_ALLOWED {
         response.headers_mut().remove(header::CONTENT_TYPE);
@@ -1295,9 +1296,13 @@ async fn normalize_method_not_allowed(request: Request<Body>, next: Next) -> Res
             header::CONTENT_TYPE,
             HeaderValue::from_static("text/plain; charset=utf-8"),
         );
+        let allow = match path.as_str() {
+            "/api/v1/files" => "GET, HEAD, PUT",
+            _ => "GET, HEAD",
+        };
         response
             .headers_mut()
-            .insert(header::ALLOW, HeaderValue::from_static("GET, HEAD"));
+            .insert(header::ALLOW, HeaderValue::from_static(allow));
         *response.body_mut() = Body::from(b"Method Not Allowed\n".to_vec());
     }
     response

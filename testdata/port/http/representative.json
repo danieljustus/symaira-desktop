@@ -580,6 +580,12 @@
       "body_repeat": 8388609
     },
     {
+      "id": "files-method-not-allowed",
+      "method": "POST",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid"
+    },
+    {
       "id": "health-method-not-allowed",
       "method": "POST",
       "path": "/healthz"

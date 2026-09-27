@@ -23,6 +23,12 @@
       "header_padding_bytes": 524288
     },
     {
+      "id": "healthz-many-headers",
+      "method": "GET",
+      "path": "/healthz",
+      "header_repeat_count": 101
+    },
+    {
       "id": "status-missing-auth",
       "method": "GET",
       "path": "/api/v1/status"

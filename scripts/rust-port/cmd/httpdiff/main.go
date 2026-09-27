@@ -49,6 +49,7 @@ type httpCase struct {
 	BodyRepeat           int               `json:"body_repeat,omitempty"`
 	HeaderDelayMS        int               `json:"header_delay_ms,omitempty"`
 	HeaderPaddingBytes   int               `json:"header_padding_bytes,omitempty"`
+	HeaderRepeatCount    int               `json:"header_repeat_count,omitempty"`
 	MultipartFile        string            `json:"multipart_file,omitempty"`
 	EmptyNotebooks       bool              `json:"empty_notebooks,omitempty"`
 	PopulateJobs         bool              `json:"populate_jobs,omitempty"`
@@ -251,7 +252,7 @@ func run() (runErr error) {
 		if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
 		}
-		if tc.ID == "healthz-slow-header" || tc.ID == "healthz-large-header" {
+		if tc.ID == "healthz-slow-header" || tc.ID == "healthz-large-header" || tc.ID == "healthz-many-headers" {
 			for _, item := range []struct {
 				name     string
 				response transcript
@@ -1487,6 +1488,12 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 	}
 	if tc.HeaderPaddingBytes > 0 {
 		request.Header.Set("X-Port-Padding", strings.Repeat("a", tc.HeaderPaddingBytes))
+	}
+	if tc.HeaderRepeatCount < 0 || tc.HeaderRepeatCount > 120 {
+		return transcript{}, previousETag, fmt.Errorf("fixture header_repeat_count exceeds 120-field safety bound")
+	}
+	for index := range tc.HeaderRepeatCount {
+		request.Header.Set(fmt.Sprintf("X-Port-%03d", index), "x")
 	}
 	if tc.MultipartFile != "" {
 		request.Header.Set("Content-Type", "multipart/form-data; boundary=symdesk-http-diff")

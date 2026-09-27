@@ -15,6 +15,7 @@ func generatedHTTP() httpSuite {
 		{ID: "healthz", Method: "GET", Path: "/healthz"},
 		{ID: "healthz-slow-header", Method: "GET", Path: "/healthz", HeaderDelayMS: 6000},
 		{ID: "healthz-large-header", Method: "GET", Path: "/healthz", HeaderPaddingBytes: 512 << 10},
+		{ID: "healthz-many-headers", Method: "GET", Path: "/healthz", HeaderRepeatCount: 101},
 		{ID: "status-missing-auth", Method: "GET", Path: "/api/v1/status"},
 		{ID: "status-wrong-auth", Method: "GET", Path: "/api/v1/status", Auth: "wrong"},
 		{ID: "status-raw-token-without-bearer", Method: "GET", Path: "/api/v1/status", Auth: "raw"},

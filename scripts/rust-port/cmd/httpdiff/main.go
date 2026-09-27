@@ -32,6 +32,7 @@ import (
 const token = "0123456789abcdef0123456789abcdef"
 const workerToken = "fedcba9876543210fedcba9876543210"
 const namedUserToken = "test-named-user-token-for-http-differential"
+const namedWorkerToken = "test-named-worker-token-for-http-differential"
 
 type fixture struct {
 	Cases []httpCase `json:"cases"`
@@ -296,6 +297,19 @@ func run() (runErr error) {
 				fatal("%s persisted share stores differ", tc.ID)
 			}
 		}
+		if tc.ID == "share-revoke-named-owned" {
+			leftStore, err := assertedRevokedShare(leftVault)
+			if err != nil {
+				fatal("%s Go persistence: %v", tc.ID, err)
+			}
+			rightStore, err := assertedRevokedShare(rightVault)
+			if err != nil {
+				fatal("%s Rust persistence: %v", tc.ID, err)
+			}
+			if !reflect.DeepEqual(leftStore, rightStore) {
+				fatal("%s persisted share stores differ", tc.ID)
+			}
+		}
 		if tc.ID == "share-revoke-worker-nonowned" {
 			for _, vault := range []string{leftVault, rightVault} {
 				if err := assertSharesUnchanged(vault); err != nil {
@@ -314,6 +328,38 @@ func run() (runErr error) {
 			}
 			if !reflect.DeepEqual(leftStore, rightStore) {
 				fatal("%s persisted share stores differ", tc.ID)
+			}
+		}
+		if tc.ID == "shares-named-user-owned" {
+			for _, item := range []struct {
+				name string
+				body []byte
+			}{{"Go", leftResult.Body}, {"Rust", rightResult.Body}} {
+				if err := assertNamedShareList(item.body); err != nil {
+					fatal("%s %s security assertion: %v", tc.ID, item.name, err)
+				}
+			}
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := assertSharesUnchanged(vault); err != nil {
+					fatal("%s persisted share store: %v", tc.ID, err)
+				}
+			}
+		}
+		if tc.ID == "share-revoke-named-nonowned" || tc.ID == "share-create-named-user-denied" || tc.ID == "share-create-named-worker-denied" {
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := assertSharesUnchanged(vault); err != nil {
+					fatal("%s persisted share store: %v", tc.ID, err)
+				}
+			}
+		}
+		if tc.ID == "share-create-named-user-valid" {
+			for _, item := range []struct {
+				name, vault string
+				body        []byte
+			}{{"Go", leftVault, leftResult.Body}, {"Rust", rightVault, rightResult.Body}} {
+				if err := assertNamedCreatedShare(item.vault, item.body); err != nil {
+					fatal("%s %s persistence: %v", tc.ID, item.name, err)
+				}
 			}
 		}
 		if tc.ID == "jobs-retry-failed" {
@@ -473,10 +519,15 @@ func populateNamedUser(vault string) error {
 		return err
 	}
 	hash := sha256.Sum256([]byte(namedUserToken))
+	workerHash := sha256.Sum256([]byte(namedWorkerToken))
 	users, err := json.Marshal([]map[string]any{{
 		"name":       "alice",
 		"token_hash": hex.EncodeToString(hash[:]),
 		"roles":      []string{"user"},
+	}, {
+		"name":       "worker-user",
+		"token_hash": hex.EncodeToString(workerHash[:]),
+		"roles":      []string{"worker"},
 	}})
 	if err != nil {
 		return err
@@ -523,6 +574,62 @@ func assertNamedNotebookFiltered(data []byte) error {
 	}
 	if len(notebook.Sources) != 0 {
 		return fmt.Errorf("notebook exposed unreadable sources: %+v", notebook.Sources)
+	}
+	return nil
+}
+
+func assertNamedShareList(data []byte) error {
+	var links []struct {
+		ID        string `json:"id"`
+		CreatedBy string `json:"created_by"`
+		TokenHash string `json:"token_hash"`
+	}
+	if err := json.Unmarshal(data, &links); err != nil {
+		return err
+	}
+	if len(links) != 2 {
+		return fmt.Errorf("listed %d shares, want Alice's two", len(links))
+	}
+	seen := make(map[string]bool, len(links))
+	for _, link := range links {
+		if link.CreatedBy != "alice" || link.TokenHash != "" {
+			return fmt.Errorf("share listing exposed another owner or token hash: %+v", link)
+		}
+		seen[link.ID] = true
+	}
+	if !seen["share-old"] || !seen["share-revoked"] {
+		return fmt.Errorf("listing omitted Alice's shares: %+v", links)
+	}
+	return nil
+}
+
+func assertNamedCreatedShare(vault string, body []byte) error {
+	share, err := parseCreatedShareFor(body, "nested/Named.md")
+	if err != nil {
+		return err
+	}
+	path := shareFixturePath(vault)
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
+		return fmt.Errorf("share store mode = %o, want 600", info.Mode().Perm())
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	var links []map[string]any
+	if err := json.Unmarshal(data, &links); err != nil {
+		return err
+	}
+	if len(links) != 5 {
+		return fmt.Errorf("share store count = %d, want 5", len(links))
+	}
+	link := links[4]
+	if link["id"] != share.ID || link["path"] != share.Path || link["created_by"] != "alice" || link["created_at"] != share.CreatedAt || link["expires_at"] != share.ExpiresAt || link["token_hash"] != fmt.Sprintf("%x", sha256.Sum256([]byte(share.Token))) || link["token"] != nil || link["expired"] != nil {
+		return fmt.Errorf("share store has unexpected named-user link")
 	}
 	return nil
 }
@@ -744,6 +851,10 @@ type createdShare struct {
 }
 
 func parseCreatedShare(body []byte) (createdShare, error) {
+	return parseCreatedShareFor(body, "Hello.md")
+}
+
+func parseCreatedShareFor(body []byte, expectedPath string) (createdShare, error) {
 	var share createdShare
 	if err := json.Unmarshal(body, &share); err != nil {
 		return share, err
@@ -752,7 +863,7 @@ func parseCreatedShare(body []byte) (createdShare, error) {
 	if err := json.Unmarshal(body, &fields); err != nil || len(fields) != 6 {
 		return share, fmt.Errorf("unexpected share response fields")
 	}
-	if len(share.ID) != 24 || len(share.Token) != 64 || share.Path != "Hello.md" || share.URL != "/s/"+share.Token {
+	if len(share.ID) != 24 || len(share.Token) != 64 || share.Path != expectedPath || share.URL != "/s/"+share.Token {
 		return share, fmt.Errorf("invalid share response: %q", body)
 	}
 	if _, err := hex.DecodeString(share.ID); err != nil {
@@ -772,11 +883,11 @@ func parseCreatedShare(body []byte) (createdShare, error) {
 	return share, nil
 }
 
-func normalizeCreatedShare(body []byte) ([]byte, error) {
-	if _, err := parseCreatedShare(body); err != nil {
+func normalizeCreatedShareFor(body []byte, expectedPath string) ([]byte, error) {
+	if _, err := parseCreatedShareFor(body, expectedPath); err != nil {
 		return nil, err
 	}
-	return []byte(`{"id":"<dynamic>","token":"<dynamic>","path":"Hello.md","created_at":"<dynamic>","expires_at":"<dynamic>","url":"/s/<dynamic>"}`), nil
+	return []byte(fmt.Sprintf(`{"id":"<dynamic>","token":"<dynamic>","path":%q,"created_at":"<dynamic>","expires_at":"<dynamic>","url":"/s/<dynamic>"}`, expectedPath)), nil
 }
 
 func assertedCreatedShare(vault string, response []byte) ([]map[string]any, error) {
@@ -1331,6 +1442,8 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 		request.Header.Set("Authorization", "Bearer "+namedUserToken)
 	case "named-wrong":
 		request.Header.Set("Authorization", "Bearer "+namedUserToken+"-wrong")
+	case "named-worker":
+		request.Header.Set("Authorization", "Bearer "+namedWorkerToken)
 	case "wrong":
 		request.Header.Set("Authorization", "Bearer 0000000000000000000000000000wrong")
 	case "raw":
@@ -1508,16 +1621,20 @@ func compare(id string, left, right transcript) error {
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
 	}
-	if id == "share-create-valid" {
+	if id == "share-create-valid" || id == "share-create-named-user-valid" {
+		path := "Hello.md"
+		if id == "share-create-named-user-valid" {
+			path = "nested/Named.md"
+		}
 		if left.Status != http.StatusCreated {
 			return fmt.Errorf("share create status = %d, want 201", left.Status)
 		}
 		var err error
-		left.Body, err = normalizeCreatedShare(left.Body)
+		left.Body, err = normalizeCreatedShareFor(left.Body, path)
 		if err != nil {
 			return fmt.Errorf("Go share create response: %w", err)
 		}
-		right.Body, err = normalizeCreatedShare(right.Body)
+		right.Body, err = normalizeCreatedShareFor(right.Body, path)
 		if err != nil {
 			return fmt.Errorf("Rust share create response: %w", err)
 		}

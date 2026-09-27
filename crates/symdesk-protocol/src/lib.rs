@@ -99,14 +99,20 @@ enum AuthRole {
 }
 
 impl AuthRole {
+    fn has_role(&self, expected: &str) -> bool {
+        match self {
+            Self::Admin => expected == "admin" || expected == "user",
+            Self::Worker => expected == "worker",
+            Self::User { roles, .. } => roles.iter().any(|role| role == expected),
+        }
+    }
+
     fn is_admin(&self) -> bool {
-        matches!(self, Self::Admin)
-            || matches!(self, Self::User { roles, .. } if roles.iter().any(|role| role == "admin"))
+        self.has_role("admin")
     }
 
     fn is_worker(&self) -> bool {
-        matches!(self, Self::Worker)
-            || matches!(self, Self::User { roles, .. } if roles.iter().any(|role| role == "worker"))
+        self.has_role("worker")
     }
 
     fn is_named_user(&self) -> bool {
@@ -549,6 +555,15 @@ fn named_user_route_allowed(role: &AuthRole, method: &Method, path: &str) -> boo
     {
         return true;
     }
+    if (path == "/api/v1/shares" && read_method)
+        || (path == "/api/v1/share" && method == Method::POST)
+        || (method == Method::DELETE
+            && path
+                .strip_prefix("/api/v1/share/")
+                .is_some_and(|id| !id.is_empty() && !id.contains('/')))
+    {
+        return true;
+    }
     role.is_worker()
         && ((path == "/api/v1/worker/lease" && method == Method::POST)
             || (path == "/api/v1/worker/input" && method == Method::GET)
@@ -879,12 +894,13 @@ struct CreateShareResponse {
 
 async fn handle_create_share(
     State(state): State<Arc<AppState>>,
-    request: Request<Body>,
+    Extension(role): Extension<AuthRole>,
+    body: Body,
 ) -> Response {
-    if request.extensions().get::<AuthRole>() == Some(&AuthRole::Worker) {
+    if !role.has_role("user") && !role.is_admin() {
         return json_error(StatusCode::FORBIDDEN, "access denied");
     }
-    let body = match to_bytes(request.into_body(), MAX_SHARE_STORE_BYTES as usize).await {
+    let body = match to_bytes(body, MAX_SHARE_STORE_BYTES as usize).await {
         Ok(body) => body,
         Err(_) => return json_error(StatusCode::BAD_REQUEST, "invalid request body"),
     };
@@ -917,6 +933,14 @@ async fn handle_create_share(
             StatusCode::BAD_REQUEST,
             "expiry must be between 1 and 168 hours",
         );
+    }
+    if !role.is_admin() {
+        let Some(username) = role.name() else {
+            return json_error(StatusCode::FORBIDDEN, "access denied");
+        };
+        if !acl_can_access(&state, username, &normalize_snapshot_path(&relative), false) {
+            return json_error(StatusCode::FORBIDDEN, "access denied");
+        }
     }
 
     let root = match open_current_root(&state) {
@@ -980,7 +1004,7 @@ async fn handle_create_share(
     links.push(ShareLink {
         id: id.clone(),
         path: relative.to_string_lossy().into_owned(),
-        created_by: "admin".to_owned(),
+        created_by: role.name().unwrap_or("admin").to_owned(),
         created_at: created_at.clone(),
         expires_at: expires_at.clone(),
         token_hash: symdesk_vault::sha256_hex(token.as_bytes()),
@@ -1042,8 +1066,9 @@ async fn handle_shares(
         Ok(links) => links,
         Err(()) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "failed to list shares"),
     };
-    if role == AuthRole::Worker {
-        links.retain(|link| link.created_by == "worker");
+    if !role.is_admin() {
+        let username = role.name().unwrap_or_default();
+        links.retain(|link| link.created_by == username);
     }
     for link in &mut links {
         link.token_hash.clear();
@@ -1189,10 +1214,10 @@ async fn handle_revoke_share(
             );
         }
     };
-    if role == AuthRole::Worker
+    if !role.is_admin()
         && !links
             .iter()
-            .any(|link| link.id == id && link.created_by == "worker")
+            .any(|link| Some(link.created_by.as_str()) == role.name() && link.id == id)
     {
         return json_error(
             StatusCode::NOT_FOUND,

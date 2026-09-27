@@ -172,6 +172,12 @@ func generatedHTTP() httpSuite {
 		{ID: "share-access-expired", Method: "GET", Path: "/s/share-expired-token"},
 		{ID: "share-access-revoked-threshold", Method: "GET", Path: "/s/share-revoked-token"},
 		{ID: "share-access-invalid-blocked", Method: "GET", Path: "/s/unknown-share-token"},
+		{ID: "shares-named-user-owned", Method: "GET", Path: "/api/v1/shares", Auth: "named", PopulateNamedUser: true, PopulateShares: true},
+		{ID: "share-revoke-named-nonowned", Method: "DELETE", Path: "/api/v1/share/share-worker", Auth: "named", PopulateNamedUser: true, PopulateShares: true},
+		{ID: "share-revoke-named-owned", Method: "DELETE", Path: "/api/v1/share/share-old", Auth: "named", PopulateNamedUser: true, PopulateShares: true},
+		{ID: "share-create-named-user-denied", Method: "POST", Path: "/api/v1/share", Auth: "named", Body: `{"path":"Hello.md","expiry":24}`, PopulateNamedUser: true, PopulateShares: true},
+		{ID: "share-create-named-worker-denied", Method: "POST", Path: "/api/v1/share", Auth: "named-worker", Body: `{"path":"nested/Named.md","expiry":24}`, PopulateNamedUser: true, PopulateShares: true},
+		{ID: "share-create-named-user-valid", Method: "POST", Path: "/api/v1/share", Auth: "named", Body: `{"path":"nested/Named.md","expiry":24}`, PopulateNamedUser: true, PopulateShares: true},
 	}}
 }
 

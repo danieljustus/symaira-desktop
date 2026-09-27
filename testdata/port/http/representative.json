@@ -1066,6 +1066,57 @@
       "id": "share-access-invalid-blocked",
       "method": "GET",
       "path": "/s/unknown-share-token"
+    },
+    {
+      "id": "shares-named-user-owned",
+      "method": "GET",
+      "path": "/api/v1/shares",
+      "auth": "named",
+      "populate_shares": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "share-revoke-named-nonowned",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-worker",
+      "auth": "named",
+      "populate_shares": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "share-revoke-named-owned",
+      "method": "DELETE",
+      "path": "/api/v1/share/share-old",
+      "auth": "named",
+      "populate_shares": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "share-create-named-user-denied",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "named",
+      "body": "{\"path\":\"Hello.md\",\"expiry\":24}",
+      "populate_shares": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "share-create-named-worker-denied",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "named-worker",
+      "body": "{\"path\":\"nested/Named.md\",\"expiry\":24}",
+      "populate_shares": true,
+      "populate_named_user": true
+    },
+    {
+      "id": "share-create-named-user-valid",
+      "method": "POST",
+      "path": "/api/v1/share",
+      "auth": "named",
+      "body": "{\"path\":\"nested/Named.md\",\"expiry\":24}",
+      "populate_shares": true,
+      "populate_named_user": true
     }
   ]
 }

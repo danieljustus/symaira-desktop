@@ -952,7 +952,9 @@ impl Sidecar {
             rows.collect::<Result<_, _>>()?
         };
         for path in indexed {
-            if Path::new(&path).starts_with(&key_root) && !found.contains(&path) {
+            if (Path::new(&path).starts_with(&key_root) || Path::new(&path).starts_with(&root))
+                && !found.contains(&path)
+            {
                 self.delete_document(&path)?;
             }
         }
@@ -999,7 +1001,9 @@ impl Sidecar {
         };
         let file_count = indexed_paths
             .iter()
-            .filter(|path| Path::new(path).starts_with(&key_root))
+            .filter(|path| {
+                Path::new(path).starts_with(&key_root) || Path::new(path).starts_with(&root)
+            })
             .count();
         eprintln!("Watching {file_count} files in {}", root.display());
 
@@ -1062,7 +1066,9 @@ impl Sidecar {
         };
         let paths = paths
             .into_iter()
-            .filter(|path| Path::new(path).starts_with(&key_root))
+            .filter(|path| {
+                Path::new(path).starts_with(&key_root) || Path::new(path).starts_with(&root)
+            })
             .collect::<Vec<_>>();
         let removed = paths.len();
         for path in paths {
@@ -2166,8 +2172,8 @@ mod source_tests {
         fs::write(
             &registry_path,
             serde_json::json!({
-                "Version": 1,
-                "Sources": [{"ID": "legacy-id", "Path": verbatim}]
+                "version": 1,
+                "sources": [{"id": "legacy-id", "path": verbatim}]
             })
             .to_string(),
         )
@@ -2257,7 +2263,10 @@ mod source_tests {
                     .join("registered.md")
                     .to_string_lossy()
         }));
-        assert!(hits.iter().any(|hit| hit.path.ends_with("/vault.md")));
+        assert!(
+            hits.iter()
+                .any(|hit| hit.path == vault.join("vault.md").to_string_lossy())
+        );
         fs::remove_file(PathBuf::from(&source.path).join("registered.md"))
             .expect("remove registered note");
         sidecar

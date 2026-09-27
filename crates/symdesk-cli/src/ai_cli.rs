@@ -193,8 +193,24 @@ fn display_path(root: &Path, path: &str, sources: &[SearchSource]) -> String {
     {
         path.to_owned()
     } else {
-        super::relative_path(root, path)
+        let display = super::relative_path(root, path);
+        let relative = Path::new(&display);
+        if relative.is_absolute() {
+            return display;
+        }
+        vault_relative_markdown_path(relative).unwrap_or(display)
     }
+}
+
+fn vault_relative_markdown_path(path: &Path) -> Option<String> {
+    path.components()
+        .map(|component| match component {
+            std::path::Component::Normal(part) => part.to_str(),
+            _ => None,
+        })
+        .collect::<Option<Vec<_>>>()
+        .filter(|parts| !parts.is_empty())
+        .map(|parts| parts.join("/"))
 }
 
 fn emit_ask_events(events: &[AskEvent], output_json: bool) -> ExitCode {
@@ -268,5 +284,24 @@ fn emit_chunk(chunk: &str, output_json: bool) -> ExitCode {
         }
     } else {
         super::write_stdout(format!("{{{chunk}}}\n"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::vault_relative_markdown_path;
+    use std::path::Path;
+
+    #[test]
+    fn ask_markdown_links_use_forward_slashes_without_normalizing_other_paths() {
+        let relative = Path::new("nested").join("Note.md");
+        assert_eq!(
+            vault_relative_markdown_path(&relative).as_deref(),
+            Some("nested/Note.md")
+        );
+        assert_eq!(
+            vault_relative_markdown_path(Path::new("nested/../outside.md")),
+            None
+        );
     }
 }

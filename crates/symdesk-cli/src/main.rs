@@ -456,21 +456,15 @@ fn relative_path(root: &Path, path: &str) -> String {
                 .ok()
                 .map(Path::to_path_buf)
         })
-        .and_then(|value| vault_relative_markdown_path(&value));
+        .map(|value| {
+            value
+                .to_string_lossy()
+                .trim_start_matches(['/', '\\'])
+                .to_owned()
+        });
     relative
         .filter(|value| !value.is_empty())
         .unwrap_or_else(|| path.to_string_lossy().into_owned())
-}
-
-fn vault_relative_markdown_path(path: &Path) -> Option<String> {
-    path.components()
-        .map(|component| match component {
-            Component::Normal(part) => part.to_str(),
-            _ => None,
-        })
-        .collect::<Option<Vec<_>>>()
-        .filter(|parts| !parts.is_empty())
-        .map(|parts| parts.join("/"))
 }
 
 fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
@@ -652,15 +646,6 @@ fn write_stderr(value: &str, code: CoreExitCode) -> ExitCode {
 #[cfg(test)]
 mod exit_code_tests {
     use super::CoreExitCode;
-
-    #[test]
-    fn vault_markdown_links_use_forward_slashes_on_every_platform() {
-        let relative = std::path::Path::new("nested").join("Note.md");
-        assert_eq!(
-            super::vault_relative_markdown_path(&relative).as_deref(),
-            Some("nested/Note.md")
-        );
-    }
 
     #[test]
     fn corekit_exit_code_taxonomy_is_pinned() {

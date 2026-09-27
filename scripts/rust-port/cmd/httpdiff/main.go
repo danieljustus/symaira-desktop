@@ -188,7 +188,7 @@ func run() (runErr error) {
 		if leftProviderServer != nil {
 			if err := leftProviderServer.stop(); err != nil {
 				if runErr == nil {
-					runErr = fmt.Errorf("Go provider cleanup failed: %w", err)
+					runErr = fmt.Errorf("go provider cleanup failed: %w", err)
 				} else {
 					runErr = errors.Join(runErr, err)
 				}
@@ -197,7 +197,7 @@ func run() (runErr error) {
 		if rightProviderServer != nil {
 			if err := rightProviderServer.stop(); err != nil {
 				if runErr == nil {
-					runErr = fmt.Errorf("Rust provider cleanup failed: %w", err)
+					runErr = fmt.Errorf("rust provider cleanup failed: %w", err)
 				} else {
 					runErr = errors.Join(runErr, err)
 				}
@@ -394,9 +394,10 @@ func run() (runErr error) {
 		}
 		if tc.ID == "file-get-named-user-not-modified" || tc.ID == "file-get-named-user-denied-not-modified" || tc.ID == "file-get-named-user-range" {
 			wantStatus := http.StatusPartialContent
-			if tc.ID == "file-get-named-user-not-modified" {
+			switch tc.ID {
+			case "file-get-named-user-not-modified":
 				wantStatus = http.StatusNotModified
-			} else if tc.ID == "file-get-named-user-denied-not-modified" {
+			case "file-get-named-user-denied-not-modified":
 				wantStatus = http.StatusForbidden
 			}
 			for _, item := range []struct {
@@ -641,7 +642,7 @@ func run() (runErr error) {
 		}
 		if tc.ID == "file-put-worker-denied" {
 			for _, vault := range []string{leftVault, rightVault} {
-				contents, err := os.ReadFile(filepath.Join(vault, "Hello.md"))
+				contents, err := readVaultFixtureFile(vault, "Hello.md")
 				if err != nil || string(contents) != "---\ntitle: Hello\n---\nBody" {
 					fatal("%s wrote a document denied by the worker ACL: %q (%v)", tc.ID, contents, err)
 				}
@@ -649,7 +650,7 @@ func run() (runErr error) {
 		}
 		if tc.ID == "file-put-worker-group" {
 			for _, vault := range []string{leftVault, rightVault} {
-				contents, err := os.ReadFile(filepath.Join(vault, "nested", "Note.md"))
+				contents, err := readVaultFixtureFile(vault, "nested/Note.md")
 				if err != nil || string(contents) != tc.Body {
 					fatal("%s did not persist the group-authorized update: %q (%v)", tc.ID, contents, err)
 				}
@@ -792,7 +793,7 @@ func assertNamedCreatedShare(vault string, body []byte) error {
 	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		return fmt.Errorf("share store mode = %o, want 600", info.Mode().Perm())
 	}
-	data, err := os.ReadFile(path)
+	data, err := readVaultFixtureFile(vault, ".symdesk/server/shares.json")
 	if err != nil {
 		return err
 	}
@@ -896,6 +897,21 @@ func shareFixturePath(vault string) string {
 	return filepath.Join(vault, ".symdesk", "server", "shares.json")
 }
 
+func readVaultFixtureFile(vault, name string) (contents []byte, retErr error) {
+	root, err := os.OpenRoot(vault)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { retErr = errors.Join(retErr, root.Close()) }()
+
+	file, err := root.Open(filepath.FromSlash(name))
+	if err != nil {
+		return nil, err
+	}
+	defer func() { retErr = errors.Join(retErr, file.Close()) }()
+	return io.ReadAll(file)
+}
+
 func populateShares(vault string) error {
 	path := shareFixturePath(vault)
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
@@ -953,7 +969,7 @@ func populateShareAccess(vault string) error {
 }
 
 func assertSharesUnchanged(vault string) error {
-	actual, err := os.ReadFile(shareFixturePath(vault))
+	actual, err := readVaultFixtureFile(vault, ".symdesk/server/shares.json")
 	if err != nil {
 		return err
 	}
@@ -972,7 +988,7 @@ func assertedRevokedShare(vault string) ([]map[string]any, error) {
 	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		return nil, fmt.Errorf("share store mode = %o, want 600", info.Mode().Perm())
 	}
-	data, err := os.ReadFile(path)
+	data, err := readVaultFixtureFile(vault, ".symdesk/server/shares.json")
 	if err != nil {
 		return nil, err
 	}
@@ -996,8 +1012,7 @@ func assertedRevokedShare(vault string) ([]map[string]any, error) {
 }
 
 func assertedWorkerRevokedShare(vault string) ([]map[string]any, error) {
-	path := shareFixturePath(vault)
-	data, err := os.ReadFile(path)
+	data, err := readVaultFixtureFile(vault, ".symdesk/server/shares.json")
 	if err != nil {
 		return nil, err
 	}
@@ -1079,7 +1094,7 @@ func assertedCreatedShare(vault string, response []byte) ([]map[string]any, erro
 	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		return nil, fmt.Errorf("share store mode = %o, want 600", info.Mode().Perm())
 	}
-	data, err := os.ReadFile(path)
+	data, err := readVaultFixtureFile(vault, ".symdesk/server/shares.json")
 	if err != nil {
 		return nil, err
 	}
@@ -1114,7 +1129,7 @@ func retriedJobFile(vault string) ([]byte, error) {
 	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		return nil, fmt.Errorf("job mode = %o, want 600", info.Mode().Perm())
 	}
-	body, err := os.ReadFile(path)
+	body, err := readVaultFixtureFile(vault, ".symdesk/server/jobs/00000000000000000000000000000003.json")
 	if err != nil {
 		return nil, err
 	}
@@ -1137,7 +1152,7 @@ func failedWorkerJob(vault string, response []byte, retry bool) ([]byte, error) 
 	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		return nil, fmt.Errorf("job mode = %o, want 600", info.Mode().Perm())
 	}
-	persisted, err := os.ReadFile(path)
+	persisted, err := readVaultFixtureFile(vault, ".symdesk/server/jobs/00000000000000000000000000000004.json")
 	if err != nil {
 		return nil, err
 	}
@@ -1173,7 +1188,7 @@ func leasedWorkerJob(vault string, response []byte, jobID string) ([]byte, error
 	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		return nil, fmt.Errorf("job mode = %o, want 600", info.Mode().Perm())
 	}
-	persisted, err := os.ReadFile(path)
+	persisted, err := readVaultFixtureFile(vault, filepath.ToSlash(filepath.Join(".symdesk", "server", "jobs", jobID+".json")))
 	if err != nil {
 		return nil, err
 	}
@@ -1223,7 +1238,7 @@ func completedWorkerJob(vault string, response []byte) ([]byte, error) {
 	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		return nil, fmt.Errorf("job mode = %o, want 600", info.Mode().Perm())
 	}
-	persisted, err := os.ReadFile(path)
+	persisted, err := readVaultFixtureFile(vault, ".symdesk/server/jobs/00000000000000000000000000000004.json")
 	if err != nil {
 		return nil, err
 	}
@@ -1271,7 +1286,7 @@ func completedNote(vault string, response []byte) ([]byte, error) {
 	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o644 {
 		return nil, fmt.Errorf("note mode = %o, want 644", info.Mode().Perm())
 	}
-	note, err := os.ReadFile(path)
+	note, err := readVaultFixtureFile(vault, filepath.ToSlash(job.NotePath))
 	if err != nil {
 		return nil, err
 	}
@@ -1392,7 +1407,7 @@ func assertIngestWrite(vault string, response []byte, body string) error {
 	if runtime.GOOS != "windows" && uploadInfo.Mode().Perm() != 0o640 {
 		return fmt.Errorf("upload mode = %o, want 640", uploadInfo.Mode().Perm())
 	}
-	content, err := os.ReadFile(uploadPath)
+	content, err := readVaultFixtureFile(vault, filepath.ToSlash(job.SourcePath))
 	if err != nil {
 		return err
 	}
@@ -1407,7 +1422,7 @@ func assertIngestWrite(vault string, response []byte, body string) error {
 	if runtime.GOOS != "windows" && jobInfo.Mode().Perm() != 0o600 {
 		return fmt.Errorf("job mode = %o, want 600", jobInfo.Mode().Perm())
 	}
-	persisted, err := os.ReadFile(jobPath)
+	persisted, err := readVaultFixtureFile(vault, filepath.ToSlash(filepath.Join(".symdesk", "server", "jobs", job.ID+".json")))
 	if err != nil {
 		return err
 	}
@@ -1474,7 +1489,7 @@ func assertIndexedWrite(vault, relative, body string) error {
 		return err
 	}
 	path := filepath.Join(canonical, relative)
-	actual, err := os.ReadFile(path)
+	actual, err := readVaultFixtureFile(vault, filepath.ToSlash(relative))
 	if err != nil {
 		return err
 	}
@@ -1981,11 +1996,11 @@ func compare(id string, left, right transcript) error {
 		var err error
 		left.Body, err = normalizeCommandListTimestamps(left.Body)
 		if err != nil {
-			return fmt.Errorf("Go command list timestamps: %w", err)
+			return fmt.Errorf("normalize Go command list timestamps: %w", err)
 		}
 		right.Body, err = normalizeCommandListTimestamps(right.Body)
 		if err != nil {
-			return fmt.Errorf("Rust command list timestamps: %w", err)
+			return fmt.Errorf("normalize Rust command list timestamps: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
@@ -2023,11 +2038,11 @@ func compare(id string, left, right transcript) error {
 		var err error
 		left.Body, err = normalizeJobUpdatedAt(left.Body)
 		if err != nil {
-			return fmt.Errorf("Go retry response: %w", err)
+			return fmt.Errorf("normalize Go retry response: %w", err)
 		}
 		right.Body, err = normalizeJobUpdatedAt(right.Body)
 		if err != nil {
-			return fmt.Errorf("Rust retry response: %w", err)
+			return fmt.Errorf("normalize Rust retry response: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
@@ -2036,11 +2051,11 @@ func compare(id string, left, right transcript) error {
 		var err error
 		left.Body, err = normalizeJobUpdatedAt(left.Body)
 		if err != nil {
-			return fmt.Errorf("Go worker fail response: %w", err)
+			return fmt.Errorf("normalize Go worker fail response: %w", err)
 		}
 		right.Body, err = normalizeJobUpdatedAt(right.Body)
 		if err != nil {
-			return fmt.Errorf("Rust worker fail response: %w", err)
+			return fmt.Errorf("normalize Rust worker fail response: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
@@ -2049,11 +2064,11 @@ func compare(id string, left, right transcript) error {
 		var err error
 		left.Body, err = normalizeJobLeaseTimes(left.Body)
 		if err != nil {
-			return fmt.Errorf("Go worker lease response: %w", err)
+			return fmt.Errorf("normalize Go worker lease response: %w", err)
 		}
 		right.Body, err = normalizeJobLeaseTimes(right.Body)
 		if err != nil {
-			return fmt.Errorf("Rust worker lease response: %w", err)
+			return fmt.Errorf("normalize Rust worker lease response: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
@@ -2073,11 +2088,11 @@ func compare(id string, left, right transcript) error {
 		var err error
 		left.Body, err = normalizeJobUpdatedAt(left.Body)
 		if err != nil {
-			return fmt.Errorf("Go worker completion response: %w", err)
+			return fmt.Errorf("normalize Go worker completion response: %w", err)
 		}
 		right.Body, err = normalizeJobUpdatedAt(right.Body)
 		if err != nil {
-			return fmt.Errorf("Rust worker completion response: %w", err)
+			return fmt.Errorf("normalize Rust worker completion response: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
@@ -2089,11 +2104,11 @@ func compare(id string, left, right transcript) error {
 		var err error
 		left.Body, err = normalizeIngestJob(left.Body)
 		if err != nil {
-			return fmt.Errorf("Go ingest response: %w", err)
+			return fmt.Errorf("normalize Go ingest response: %w", err)
 		}
 		right.Body, err = normalizeIngestJob(right.Body)
 		if err != nil {
-			return fmt.Errorf("Rust ingest response: %w", err)
+			return fmt.Errorf("normalize Rust ingest response: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")
@@ -2109,11 +2124,11 @@ func compare(id string, left, right transcript) error {
 		var err error
 		left.Body, err = normalizeCreatedShareFor(left.Body, path)
 		if err != nil {
-			return fmt.Errorf("Go share create response: %w", err)
+			return fmt.Errorf("go share create response: %w", err)
 		}
 		right.Body, err = normalizeCreatedShareFor(right.Body, path)
 		if err != nil {
-			return fmt.Errorf("Rust share create response: %w", err)
+			return fmt.Errorf("rust share create response: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")

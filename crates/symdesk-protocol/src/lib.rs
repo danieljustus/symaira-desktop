@@ -1343,12 +1343,16 @@ async fn handle_ai_ask(
                 continue;
             };
             if sources.iter().any(|(source, _, _, _)| *source == path) {
-                matched.insert(path.clone());
+                // Go stores filepath.Rel's native spelling in `matched`, then
+                // compares it with notebook paths previously normalized by
+                // filepath.ToSlash. Preserve that Windows behavior: a nested
+                // source can also be emitted through the unmatched fallback.
+                matched.insert(native_path.clone());
                 documents.push((path, native_path, hit.title, hit.snippet, 1.0));
             }
         }
         for (path, native_path, title, body) in sources {
-            if matched.contains(&path) {
+            if notebook_source_was_matched(&path, &matched) {
                 continue;
             }
             let excerpt = if body.len() > 1500 {
@@ -1363,7 +1367,7 @@ async fn handle_ai_ask(
 
     let paths = documents
         .iter()
-        .map(|(path, _, _, _, _)| path.clone())
+        .map(|(_, native_path, _, _, _)| native_path.clone())
         .collect::<Vec<_>>();
     let allowed = if role.is_admin() {
         paths.iter().cloned().collect()
@@ -1374,7 +1378,7 @@ async fn handle_ai_ask(
     };
     // Retain ranked order while filtering. Denied documents cannot appear as
     // citations or fallback links.
-    documents.retain(|(path, _, _, _, _)| allowed.contains(path));
+    documents.retain(|(_, native_path, _, _, _)| allowed.contains(native_path));
     documents.truncate(MAX_AI_CONTEXT_DOCS);
     let read_paths = scoped_paths.map(|paths| {
         paths
@@ -1978,6 +1982,16 @@ fn vault_relative_paths(path: &Path) -> Option<(String, String)> {
         .filter(|parts| !parts.is_empty())?;
     let native = path.to_string_lossy().into_owned();
     (!native.is_empty()).then(|| (parts.join("/"), native))
+}
+
+// Go compares notebook's filepath.ToSlash source path directly against the
+// filepath.Rel key it stored for a search hit. Keep the comparison raw so
+// Windows' native backslash key does not suppress the slash-form fallback.
+fn notebook_source_was_matched(
+    source_path: &str,
+    matched_native_paths: &std::collections::HashSet<String>,
+) -> bool {
+    matched_native_paths.contains(source_path)
 }
 
 fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
@@ -6556,6 +6570,13 @@ mod tests {
                 "{input}"
             );
         }
+    }
+
+    #[test]
+    fn windows_notebook_hit_keeps_go_slash_fallback_semantics() {
+        let matched = std::collections::HashSet::from([String::from(r"nested\Note.md")]);
+        assert!(!notebook_source_was_matched("nested/Note.md", &matched));
+        assert!(notebook_source_was_matched(r"nested\Note.md", &matched));
     }
 
     #[test]

@@ -1298,6 +1298,7 @@ async fn normalize_method_not_allowed(request: Request<Body>, next: Next) -> Res
         );
         let allow = match path.as_str() {
             "/api/v1/files" => "GET, HEAD, PUT",
+            "/api/v1/share" => "POST",
             _ => "GET, HEAD",
         };
         response

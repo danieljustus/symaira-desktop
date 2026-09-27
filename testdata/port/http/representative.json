@@ -1106,6 +1106,12 @@
       "auth": "valid"
     },
     {
+      "id": "share-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/share",
+      "auth": "valid"
+    },
+    {
       "id": "share-create-missing-auth",
       "method": "POST",
       "path": "/api/v1/share",

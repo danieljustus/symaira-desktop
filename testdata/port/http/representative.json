@@ -309,6 +309,13 @@
       "body": "{\"arguments\":[\"ask\",\"--vault=/tmp/other-vault\"]}"
     },
     {
+      "id": "command-admin-stream-transform",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"transform\",\"summarize\",\"--text\",\"short input\"]}"
+    },
+    {
       "id": "command-admin-invalid-subcommand",
       "method": "POST",
       "path": "/api/v1/command",

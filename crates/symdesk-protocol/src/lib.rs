@@ -867,7 +867,8 @@ fn validate_remote_command(args: &[String]) -> Option<String> {
         .unwrap_or("");
     let available = match args[0].as_str() {
         "doctor" | "ls" | "search" | "backlinks" | "graph" | "similar" | "duplicates"
-        | "transform" | "ask" | "restore" => subcommand.is_empty(),
+        | "restore" => subcommand.is_empty(),
+        "transform" | "ask" => true,
         "note" => matches!(subcommand, "new" | "move" | "delete" | "daily"),
         "paperless" => subcommand == "import",
         "props" => matches!(subcommand, "get" | "edit"),

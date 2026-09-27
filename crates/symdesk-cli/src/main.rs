@@ -1,5 +1,6 @@
 #![deny(unsafe_code)]
 
+mod ai_cli;
 mod dataset;
 mod history;
 mod http;
@@ -119,6 +120,7 @@ fn main() -> ExitCode {
             Ok(()) => process_exit(CoreExitCode::Ok),
             Err(error) => write_stderr(&format!("mcp: {error}\n"), CoreExitCode::Generic),
         },
+        Some(("transform", command)) => ai_cli::run_transform(command, output_json),
         Some(("serve", command)) => run_http_server(
             command.get_one::<String>("listen").cloned(),
             command.get_one::<String>("token").cloned(),
@@ -288,6 +290,7 @@ fn cli() -> Command {
         .subcommand(
             Command::new("search").arg(Arg::new("query").num_args(0..).action(ArgAction::Append)),
         )
+        .subcommand(ai_cli::transform_cli())
         .subcommand(Command::new("mcp"))
         .subcommand(
             Command::new("history")

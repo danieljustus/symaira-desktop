@@ -266,6 +266,38 @@
       ]
     },
     {
+      "id": "transform-no-provider-json",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "--json",
+        "transform",
+        "summarize",
+        "--text",
+        "short input"
+      ],
+      "timeout_ms": 30000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": false
+    },
+    {
+      "id": "transform-empty-text-json",
+      "binary": "symdesk",
+      "stage": "representative",
+      "args": [
+        "--json",
+        "transform",
+        "summarize",
+        "--text",
+        "   "
+      ],
+      "timeout_ms": 30000,
+      "stdout_mode": "bytes",
+      "stderr_mode": "bytes",
+      "compare_files": false
+    },
+    {
       "id": "desk-search-too-many-json",
       "binary": "symdesk",
       "stage": "representative",

@@ -3308,7 +3308,7 @@ async fn handle_notebooks(State(state): State<Arc<AppState>>) -> Response {
         let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
             continue;
         };
-        let relative = format!("notebooks/{name}");
+        let relative = format!("notebooks{}{name}", std::path::MAIN_SEPARATOR);
         let Ok(contents) = read_root_file(&root_dir, Path::new(&relative)) else {
             continue;
         };
@@ -4278,11 +4278,15 @@ async fn handle_notebook(
     if !relative.ends_with(".md") {
         relative.push_str(".md");
     }
-    if !relative.starts_with("notebooks/") {
+    if !relative.starts_with(&format!("notebooks{}", std::path::MAIN_SEPARATOR)) {
         let Some(name) = Path::new(&relative).file_name() else {
             return json_error(StatusCode::NOT_FOUND, "notebook not found");
         };
-        relative = format!("notebooks/{}", name.to_string_lossy());
+        relative = format!(
+            "notebooks{}{}",
+            std::path::MAIN_SEPARATOR,
+            name.to_string_lossy()
+        );
     }
     let root_dir = match open_current_root(&state) {
         Ok(root_dir) => root_dir,

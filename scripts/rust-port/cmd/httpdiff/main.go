@@ -41,33 +41,34 @@ type fixture struct {
 }
 
 type httpCase struct {
-	ID                     string            `json:"id"`
-	Method                 string            `json:"method"`
-	Path                   string            `json:"path"`
-	Auth                   string            `json:"auth,omitempty"`
-	Headers                map[string]string `json:"headers,omitempty"`
-	Body                   string            `json:"body,omitempty"`
-	BodyRepeat             int               `json:"body_repeat,omitempty"`
-	HeaderDelayMS          int               `json:"header_delay_ms,omitempty"`
-	HeaderPaddingBytes     int               `json:"header_padding_bytes,omitempty"`
-	HeaderRepeatCount      int               `json:"header_repeat_count,omitempty"`
-	MultipartFile          string            `json:"multipart_file,omitempty"`
-	EmptyNotebooks         bool              `json:"empty_notebooks,omitempty"`
-	PopulateJobs           bool              `json:"populate_jobs,omitempty"`
-	PopulateWorkerJob      bool              `json:"populate_worker_job,omitempty"`
-	PopulateExpiredJob     bool              `json:"populate_expired_job,omitempty"`
-	PopulateShares         bool              `json:"populate_shares,omitempty"`
-	PopulateShareAccess    bool              `json:"populate_share_access,omitempty"`
-	PopulateWorkerACL      bool              `json:"populate_worker_acl,omitempty"`
-	PopulateNamedUser      bool              `json:"populate_named_user,omitempty"`
-	RemoveSymlinkEscapes   bool              `json:"remove_symlink_escapes,omitempty"`
-	ProviderOllama         bool              `json:"provider_ollama,omitempty"`
-	ProviderOpenAIFallback bool              `json:"provider_openai_fallback,omitempty"`
-	ProviderAskOllama      bool              `json:"provider_ask_ollama,omitempty"`
-	ProviderAskWithSources bool              `json:"provider_ask_with_sources,omitempty"`
-	ProviderDisconnect     bool              `json:"provider_disconnect,omitempty"`
-	ProviderFailure        bool              `json:"provider_failure,omitempty"`
-	ProviderOversized      bool              `json:"provider_oversized,omitempty"`
+	ID                          string            `json:"id"`
+	Method                      string            `json:"method"`
+	Path                        string            `json:"path"`
+	Auth                        string            `json:"auth,omitempty"`
+	Headers                     map[string]string `json:"headers,omitempty"`
+	Body                        string            `json:"body,omitempty"`
+	BodyRepeat                  int               `json:"body_repeat,omitempty"`
+	HeaderDelayMS               int               `json:"header_delay_ms,omitempty"`
+	HeaderPaddingBytes          int               `json:"header_padding_bytes,omitempty"`
+	HeaderRepeatCount           int               `json:"header_repeat_count,omitempty"`
+	MultipartFile               string            `json:"multipart_file,omitempty"`
+	EmptyNotebooks              bool              `json:"empty_notebooks,omitempty"`
+	PopulateJobs                bool              `json:"populate_jobs,omitempty"`
+	PopulateWorkerJob           bool              `json:"populate_worker_job,omitempty"`
+	PopulateExpiredJob          bool              `json:"populate_expired_job,omitempty"`
+	PopulateShares              bool              `json:"populate_shares,omitempty"`
+	PopulateShareAccess         bool              `json:"populate_share_access,omitempty"`
+	PopulateWorkerACL           bool              `json:"populate_worker_acl,omitempty"`
+	PopulateNamedUser           bool              `json:"populate_named_user,omitempty"`
+	RemoveSymlinkEscapes        bool              `json:"remove_symlink_escapes,omitempty"`
+	ProviderOllama              bool              `json:"provider_ollama,omitempty"`
+	ProviderOpenAIFallback      bool              `json:"provider_openai_fallback,omitempty"`
+	ProviderAskOllama           bool              `json:"provider_ask_ollama,omitempty"`
+	ProviderAskExpectedSource   bool              `json:"provider_ask_expected_source,omitempty"`
+	ProviderAskNotebookBoundary bool              `json:"provider_ask_notebook_boundary,omitempty"`
+	ProviderDisconnect          bool              `json:"provider_disconnect,omitempty"`
+	ProviderFailure             bool              `json:"provider_failure,omitempty"`
+	ProviderOversized           bool              `json:"provider_oversized,omitempty"`
 }
 
 type transcript struct {
@@ -205,7 +206,7 @@ func run() (runErr error) {
 	leftETag, rightETag := "", ""
 	providerCasesRemaining := 0
 	for _, testCase := range suite.Cases {
-		if testCase.ProviderOllama || testCase.ProviderOpenAIFallback || testCase.ProviderAskOllama || testCase.ProviderAskWithSources || testCase.ProviderDisconnect || testCase.ProviderFailure || testCase.ProviderOversized {
+		if testCase.ProviderOllama || testCase.ProviderOpenAIFallback || testCase.ProviderAskOllama || testCase.ProviderAskNotebookBoundary || testCase.ProviderDisconnect || testCase.ProviderFailure || testCase.ProviderOversized {
 			providerCasesRemaining++
 		}
 	}
@@ -280,7 +281,7 @@ func run() (runErr error) {
 			}
 		}
 		leftCurrent, rightCurrent := leftServer, rightServer
-		if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderAskOllama || tc.ProviderAskWithSources || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
+		if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderAskOllama || tc.ProviderAskNotebookBoundary || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
 			providerMode := "ollama"
 			if tc.ProviderOpenAIFallback {
 				providerMode = "openai"
@@ -316,7 +317,9 @@ func run() (runErr error) {
 		if tc.ProviderDisconnect {
 			leftResult, err = leftCurrent.requestDisconnect(tc)
 		} else {
-			leftResult, nextLeftETag, err = leftCurrent.request(tc, leftETag, provider)
+			leftResult, nextLeftETag, err = leftCurrent.request(
+				tc, leftETag, provider, tc.ProviderAskNotebookBoundary,
+			)
 		}
 		if err != nil {
 			fatal("%s Go request: %v", tc.ID, err)
@@ -324,13 +327,13 @@ func run() (runErr error) {
 		if tc.ProviderDisconnect {
 			rightResult, err = rightCurrent.requestDisconnect(tc)
 		} else {
-			rightResult, nextRightETag, err = rightCurrent.request(tc, rightETag, provider)
+			rightResult, nextRightETag, err = rightCurrent.request(tc, rightETag, provider, false)
 		}
 		if err != nil {
 			fatal("%s Rust request: %v", tc.ID, err)
 		}
-		if tc.ProviderAskWithSources {
-			if err := assertProviderAskSourcesBoundary(leftResult, rightResult); err != nil {
+		if tc.ProviderAskNotebookBoundary {
+			if err := assertProviderAskNotebookBoundary(leftResult, rightResult); err != nil {
 				fatal("%s: %v", tc.ID, err)
 			}
 			if err := provider.assertAskWithSourcesRequests(1, "Body"); err != nil {
@@ -354,11 +357,11 @@ func run() (runErr error) {
 			if err := json.Unmarshal([]byte(tc.Body), &request); err != nil {
 				fatal("%s decode fixture query: %v", tc.ID, err)
 			}
-			if err := provider.assertAskRequests(2, request.Query); err != nil {
+			if err := provider.assertAskRequests(2, request.Query, tc.ProviderAskExpectedSource); err != nil {
 				fatal("%s fake-provider request: %v", tc.ID, err)
 			}
 		}
-		if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderAskOllama || tc.ProviderAskWithSources || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
+		if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderAskOllama || tc.ProviderAskNotebookBoundary || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
 			providerCasesRemaining--
 			if providerCasesRemaining == 0 {
 				if err := leftProviderServer.stop(); err != nil {
@@ -1609,13 +1612,16 @@ func (f *fakeOllama) assertRequests(count int, text string) error {
 	return nil
 }
 
-func (f *fakeOllama) assertAskRequests(count int, query string) error {
+func (f *fakeOllama) assertAskRequests(count int, query string, withSource bool) error {
 	wantPrompt := "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\nQuestion: " + query + "\n"
+	if withSource {
+		wantPrompt = "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\n--- Note [[nested/Note.md]] (Note) ---\nnested Body Body\n\n--- Note [[Hello.md]] (Hello) ---\nBody\n\n--- Note [[internal.md]] (Hello) ---\nBody\n\nQuestion: " + query + "\n"
+	}
 	for index := range count {
 		select {
 		case request := <-f.requests:
 			if request.Model != "fixture-model" || request.Prompt != wantPrompt || !request.Stream {
-				return fmt.Errorf("request %d = %#v, want model fixture-model, exact empty-context Ask prompt, stream=true", index+1, request)
+				return fmt.Errorf("request %d = %#v, want model fixture-model, exact Go Ask prompt, stream=true", index+1, request)
 			}
 		case <-time.After(3 * time.Second):
 			return fmt.Errorf("received %d of %d expected provider requests", index, count)
@@ -1647,7 +1653,7 @@ func (f *fakeOllama) assertNoRequests() error {
 	}
 }
 
-func assertProviderAskSourcesBoundary(goResponse, rustResponse transcript) error {
+func assertProviderAskNotebookBoundary(goResponse, rustResponse transcript) error {
 	if goResponse.Status != http.StatusOK || !bytes.Contains(goResponse.Body, []byte(`"type":"citation"`)) {
 		return fmt.Errorf("Go did not provide the source-bearing Ask oracle: status=%d body=%q", goResponse.Status, goResponse.Body)
 	}
@@ -1660,8 +1666,8 @@ func assertProviderAskSourcesBoundary(goResponse, rustResponse transcript) error
 	if err := json.Unmarshal(rustResponse.Body, &rustBody); err != nil {
 		return fmt.Errorf("decode Rust unsupported-boundary response: %w", err)
 	}
-	if rustBody.Error != "provider-backed ask with retrieved sources is not implemented" || bytes.Contains(rustResponse.Body, []byte(`"type":"citation"`)) {
-		return fmt.Errorf("Rust did not fail closed before emitting source data: %q", rustResponse.Body)
+	if rustBody.Error != "provider-backed notebook ask streaming is not implemented" || bytes.Contains(rustResponse.Body, []byte(`"type":"citation"`)) {
+		return fmt.Errorf("Rust did not fail closed at the notebook provider boundary: %q", rustResponse.Body)
 	}
 	return nil
 }
@@ -1767,7 +1773,7 @@ func (s *runningServer) ready() error {
 	return fmt.Errorf("timed out waiting for %s; stderr=%s", s.base, logs)
 }
 
-func (s *runningServer) request(tc httpCase, previousETag string, provider *fakeOllama) (transcript, string, error) {
+func (s *runningServer) request(tc httpCase, previousETag string, provider *fakeOllama, readProviderStream bool) (transcript, string, error) {
 	if tc.HeaderDelayMS < 0 || tc.HeaderDelayMS > 9000 {
 		return transcript{}, previousETag, fmt.Errorf("fixture header_delay_ms exceeds 9-second safety bound")
 	}
@@ -1848,7 +1854,7 @@ func (s *runningServer) request(tc httpCase, previousETag string, provider *fake
 		return transcript{}, previousETag, err
 	}
 	var body []byte
-	if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderAskOllama || tc.ProviderAskWithSources {
+	if readProviderStream || tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderAskOllama {
 		reader := bufio.NewReader(response.Body)
 		first, readErr := reader.ReadBytes('\n')
 		if readErr != nil {

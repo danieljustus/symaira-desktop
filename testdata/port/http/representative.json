@@ -423,12 +423,21 @@
       "provider_ask_ollama": true
     },
     {
-      "id": "ai-question-local-ollama-with-sources-501",
+      "id": "ai-question-local-ollama-with-citation",
       "method": "POST",
       "path": "/api/v1/ai/ask",
       "auth": "valid",
       "body": "{\"query\":\"Body\"}",
-      "provider_ask_with_sources": true
+      "provider_ask_ollama": true,
+      "provider_ask_expected_source": true
+    },
+    {
+      "id": "ai-question-local-ollama-notebook-501",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\",\"notebook\":\"research\"}",
+      "provider_ask_notebook_boundary": true
     },
     {
       "id": "ai-transform-openai-provider-falls-back-to-local-ollama",

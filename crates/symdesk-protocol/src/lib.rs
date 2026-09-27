@@ -87,6 +87,7 @@ const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
 const COMMAND_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 const AI_PROVIDER_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+const AI_ASK_PROVIDER_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 const AI_PROVIDER_MAX_LINE_BYTES: usize = 4 << 20;
 const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(10);
 const HTTP_MAX_HEADER_BYTES: usize = 1 << 20;
@@ -772,7 +773,16 @@ async fn handle_ai_transform(
             .unwrap_or_else(|| "llama3.2".to_owned());
         let provider_sender = sender.clone();
         tokio::spawn(async move {
-            match stream_ollama(&endpoint, &model, &prompt, &provider_sender, false).await {
+            match stream_ollama(
+                &endpoint,
+                &model,
+                &prompt,
+                &provider_sender,
+                AI_PROVIDER_TIMEOUT,
+                false,
+            )
+            .await
+            {
                 Ok(true) => {}
                 Ok(false) => return,
                 Err(error) => {
@@ -818,7 +828,11 @@ fn local_ollama_endpoint(base_url: &str) -> Option<hyper::Uri> {
     format!("http://{authority}/api/generate").parse().ok()
 }
 
-fn build_ai_ask_prompt(language: &str, query: &str) -> String {
+fn build_ai_ask_prompt(
+    language: &str,
+    query: &str,
+    documents: &[(String, String, String, f64)],
+) -> String {
     let mut prompt = String::from(
         "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]].",
     );
@@ -828,6 +842,14 @@ fn build_ai_ask_prompt(language: &str, query: &str) -> String {
         prompt.push_str(" Answer in ");
         prompt.push_str(language);
         prompt.push_str(".\n\n");
+    }
+    for (path, title, snippet, _) in documents.iter().take(5) {
+        let snippet = if snippet.len() > 1500 {
+            String::from_utf8_lossy(&snippet.as_bytes()[..1500]).into_owned()
+        } else {
+            snippet.clone()
+        };
+        prompt.push_str(&format!("--- Note [[{path}]] ({title}) ---\n{snippet}\n\n"));
     }
     prompt.push_str("Question: ");
     prompt.push_str(query);
@@ -909,6 +931,7 @@ async fn stream_ollama(
     model: &str,
     prompt: &str,
     sender: &mpsc::Sender<Result<Bytes, io::Error>>,
+    timeout: Duration,
     ask_events: bool,
 ) -> Result<bool, String> {
     let body = serde_json::to_vec(&json!({"model": model, "prompt": prompt, "stream": true}))
@@ -924,7 +947,7 @@ async fn stream_ollama(
     connector.enforce_http(true);
     let client: HttpClient<HttpConnector, Body> =
         HttpClient::builder(TokioExecutor::new()).build(connector);
-    let deadline = tokio::time::Instant::now() + AI_PROVIDER_TIMEOUT;
+    let deadline = tokio::time::Instant::now() + timeout;
     let response = tokio::select! {
         _ = sender.closed() => return Ok(false),
         result = tokio::time::timeout_at(deadline, client.request(request)) => match result {
@@ -1301,12 +1324,6 @@ async fn handle_ai_ask(
     // citations or fallback links.
     documents.retain(|(path, _, _, _)| allowed.contains(path));
     documents.truncate(MAX_AI_CONTEXT_DOCS);
-    if configured_ollama.is_some() && !documents.is_empty() {
-        return json_error(
-            StatusCode::NOT_IMPLEMENTED,
-            "provider-backed ask with retrieved sources is not implemented",
-        );
-    }
     let read_paths = scoped_paths.map(|paths| {
         paths
             .into_iter()
@@ -1439,7 +1456,7 @@ async fn handle_ai_ask(
     let (sender, receiver) = mpsc::channel(2);
     let ask_prompt = configured_ollama
         .as_ref()
-        .map(|_| build_ai_ask_prompt(&config.language, &input.query));
+        .map(|_| build_ai_ask_prompt(&config.language, &input.query, &documents));
     let model = std::env::var("SYMDESK_OLLAMA_MODEL")
         .ok()
         .filter(|model| !model.is_empty())
@@ -1453,7 +1470,16 @@ async fn handle_ai_ask(
         let (Some(endpoint), Some(prompt)) = (configured_ollama, ask_prompt) else {
             return;
         };
-        match stream_ollama(&endpoint, &model, &prompt, &sender, true).await {
+        match stream_ollama(
+            &endpoint,
+            &model,
+            &prompt,
+            &sender,
+            AI_ASK_PROVIDER_TIMEOUT,
+            true,
+        )
+        .await
+        {
             Ok(true) => {}
             Ok(false) => return,
             Err(error) => {

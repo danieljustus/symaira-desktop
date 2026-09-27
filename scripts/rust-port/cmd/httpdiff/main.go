@@ -237,6 +237,26 @@ func run() (runErr error) {
 		if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
 		}
+		if tc.ID == "snapshot-named-user-filter" {
+			for _, item := range []struct {
+				name string
+				body []byte
+			}{{"Go", leftResult.Body}, {"Rust", rightResult.Body}} {
+				if err := assertNamedSnapshotFiltered(item.body); err != nil {
+					fatal("%s %s security assertion: %v", tc.ID, item.name, err)
+				}
+			}
+		}
+		if tc.ID == "notebook-get-named-user-filter" {
+			for _, item := range []struct {
+				name string
+				body []byte
+			}{{"Go", leftResult.Body}, {"Rust", rightResult.Body}} {
+				if err := assertNamedNotebookFiltered(item.body); err != nil {
+					fatal("%s %s security assertion: %v", tc.ID, item.name, err)
+				}
+			}
+		}
 		if tc.ID == "shares-populated" {
 			for _, item := range []struct {
 				name, vault string
@@ -464,8 +484,47 @@ func populateNamedUser(vault string) error {
 	if err := os.WriteFile(filepath.Join(config, "users.json"), users, 0o600); err != nil {
 		return err
 	}
-	const permissions = `[{"path":"Hello.md","owner":"admin","read_users":["admin"],"write_users":["admin"]},{"path":"nested/Named.md","owner":"admin","read_users":["alice"],"write_users":["alice"]}]`
+	const permissions = `[{"path":"Hello.md","owner":"admin","read_users":["admin"],"write_users":["admin"]},{"path":"internal.md","owner":"admin","read_users":["admin"],"write_users":["admin"]},{"path":"nested/Named.md","owner":"admin","read_users":["alice"],"write_users":["alice"]}]`
 	return os.WriteFile(filepath.Join(config, "permissions.json"), []byte(permissions), 0o600)
+}
+
+func assertNamedSnapshotFiltered(data []byte) error {
+	var snapshot struct {
+		Notes []struct {
+			Path string `json:"path"`
+		} `json:"notes"`
+	}
+	if err := json.Unmarshal(data, &snapshot); err != nil {
+		return err
+	}
+	seen := make(map[string]bool, len(snapshot.Notes))
+	for _, note := range snapshot.Notes {
+		seen[note.Path] = true
+	}
+	for _, denied := range []string{"Hello.md", "internal.md"} {
+		if seen[denied] {
+			return fmt.Errorf("snapshot exposed denied path %q", denied)
+		}
+	}
+	if !seen["nested/Named.md"] {
+		return fmt.Errorf("snapshot omitted explicitly readable path nested/Named.md")
+	}
+	return nil
+}
+
+func assertNamedNotebookFiltered(data []byte) error {
+	var notebook struct {
+		Sources []struct {
+			Path string `json:"path"`
+		} `json:"sources"`
+	}
+	if err := json.Unmarshal(data, &notebook); err != nil {
+		return err
+	}
+	if len(notebook.Sources) != 0 {
+		return fmt.Errorf("notebook exposed unreadable sources: %+v", notebook.Sources)
+	}
+	return nil
 }
 
 func createFixtureVault(root string) string {

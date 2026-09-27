@@ -144,18 +144,17 @@
       "auth": "worker"
     },
     {
-      "id": "file-put-worker-group",
-      "method": "PUT",
-      "path": "/api/v1/files?path=nested/Note.md",
-      "auth": "worker",
-      "body": "# authorized worker update\n"
-    },
-    {
       "id": "file-get-named-user-denied",
       "method": "GET",
       "path": "/api/v1/files?path=Hello.md",
       "auth": "named",
       "populate_named_user": true
+    },
+    {
+      "id": "status-named-user",
+      "method": "GET",
+      "path": "/api/v1/status",
+      "auth": "named"
     },
     {
       "id": "file-get-named-user-allowed",
@@ -170,6 +169,52 @@
       "auth": "named-wrong"
     },
     {
+      "id": "snapshot-named-user-filter",
+      "method": "GET",
+      "path": "/api/v1/snapshot",
+      "auth": "named"
+    },
+    {
+      "id": "snapshot-named-user-head-gzip",
+      "method": "HEAD",
+      "path": "/api/v1/snapshot",
+      "auth": "named",
+      "headers": {
+        "Accept-Encoding": "gzip"
+      }
+    },
+    {
+      "id": "notebooks-list-named-user",
+      "method": "GET",
+      "path": "/api/v1/notebooks",
+      "auth": "named"
+    },
+    {
+      "id": "notebook-get-named-user-filter",
+      "method": "GET",
+      "path": "/api/v1/notebooks/research",
+      "auth": "named"
+    },
+    {
+      "id": "notebook-head-named-user",
+      "method": "HEAD",
+      "path": "/api/v1/notebooks/research",
+      "auth": "named"
+    },
+    {
+      "id": "jobs-named-user-forbidden",
+      "method": "GET",
+      "path": "/api/v1/jobs",
+      "auth": "named"
+    },
+    {
+      "id": "file-put-worker-group",
+      "method": "PUT",
+      "path": "/api/v1/files?path=nested/Note.md",
+      "auth": "worker",
+      "body": "# authorized worker update\n"
+    },
+    {
       "id": "file-put-named-user",
       "method": "PUT",
       "path": "/api/v1/files?path=nested/Named.md",
@@ -180,12 +225,6 @@
       "id": "file-get-named-user-updated",
       "method": "GET",
       "path": "/api/v1/files?path=nested/Named.md",
-      "auth": "named"
-    },
-    {
-      "id": "jobs-named-user-forbidden",
-      "method": "GET",
-      "path": "/api/v1/jobs",
       "auth": "named"
     },
     {

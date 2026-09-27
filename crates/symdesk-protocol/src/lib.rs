@@ -531,11 +531,21 @@ fn authenticate_named_user(state: &AppState, provided: &str) -> Option<AuthRole>
 }
 
 fn named_user_route_allowed(role: &AuthRole, method: &Method, path: &str) -> bool {
+    let read_method = method == Method::GET || method == Method::HEAD;
     if path == "/api/v1/status" && (method == Method::GET || method == Method::HEAD) {
         return true;
     }
     if path == "/api/v1/files"
         && (method == Method::GET || method == Method::HEAD || method == Method::PUT)
+    {
+        return true;
+    }
+    if read_method
+        && (path == "/api/v1/snapshot"
+            || path == "/api/v1/notebooks"
+            || path
+                .strip_prefix("/api/v1/notebooks/")
+                .is_some_and(|id| !id.is_empty() && !id.contains('/')))
     {
         return true;
     }

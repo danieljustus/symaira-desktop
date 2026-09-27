@@ -45,6 +45,7 @@ type httpCase struct {
 	MultipartFile       string            `json:"multipart_file,omitempty"`
 	EmptyNotebooks      bool              `json:"empty_notebooks,omitempty"`
 	PopulateJobs        bool              `json:"populate_jobs,omitempty"`
+	PopulateWorkerJob   bool              `json:"populate_worker_job,omitempty"`
 	PopulateShares      bool              `json:"populate_shares,omitempty"`
 	PopulateShareAccess bool              `json:"populate_share_access,omitempty"`
 }
@@ -180,6 +181,13 @@ func run() (runErr error) {
 				}
 			}
 		}
+		if tc.PopulateWorkerJob {
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := populateWorkerJob(vault); err != nil {
+					fatal("populate worker job fixture: %v", err)
+				}
+			}
+		}
 		if tc.EmptyNotebooks {
 			for _, vault := range []string{leftVault, rightVault} {
 				notebooks := filepath.Join(vault, "notebooks")
@@ -249,6 +257,28 @@ func run() (runErr error) {
 			rightJob, err := retriedJobFile(rightVault)
 			if err != nil {
 				fatal("%s Rust persistence: %v", tc.ID, err)
+			}
+			if !bytes.Equal(leftJob, rightJob) {
+				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
+			}
+		}
+		if tc.ID == "worker-fail-valid" || tc.ID == "worker-fail-retry" {
+			retry := tc.ID == "worker-fail-retry"
+			leftJob, err := failedWorkerJob(leftVault, leftResult.Body, retry)
+			if err != nil {
+				fatal("%s Go persistence: %v", tc.ID, err)
+			}
+			rightJob, err := failedWorkerJob(rightVault, rightResult.Body, retry)
+			if err != nil {
+				fatal("%s Rust persistence: %v", tc.ID, err)
+			}
+			leftJob, err = normalizeJobUpdatedAt(leftJob)
+			if err != nil {
+				fatal("%s Go timestamp: %v", tc.ID, err)
+			}
+			rightJob, err = normalizeJobUpdatedAt(rightJob)
+			if err != nil {
+				fatal("%s Rust timestamp: %v", tc.ID, err)
 			}
 			if !bytes.Equal(leftJob, rightJob) {
 				fatal("%s persisted job differs: Go=%q Rust=%q", tc.ID, leftJob, rightJob)
@@ -342,6 +372,16 @@ func populateJobs(vault string) error {
 		}
 	}
 	return nil
+}
+
+func populateWorkerJob(vault string) error {
+	dir := filepath.Join(vault, ".symdesk", "server", "jobs")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+	const id = "00000000000000000000000000000004"
+	const body = `{"id":"00000000000000000000000000000004","schema_version":1,"status":"processing","source_path":"inbox/c.png","original_name":"c.png","capability":"ocr","worker_id":"worker-1","lease_until":"2099-01-02T03:04:05Z","created_at":"2026-01-05T03:04:05Z","updated_at":"2026-01-05T03:04:05Z"}`
+	return os.WriteFile(filepath.Join(dir, id+".json"), []byte(body), 0o600)
 }
 
 const shareFixture = `[{"id":"share-old","path":"Hello.md","created_by":"alice","created_at":"2026-01-02T03:04:05Z","expires_at":"2099-01-02T03:04:05Z","token_hash":"fixture-hash-old"},{"id":"share-expired","path":"nested/Note.md","created_by":"bob","created_at":"2026-01-03T03:04:05Z","expires_at":"2026-01-04T03:04:05Z","token_hash":"fixture-hash-expired"},{"id":"share-revoked","path":"Hello.md","created_by":"alice","created_at":"2026-01-04T03:04:05Z","expires_at":"2099-01-04T03:04:05Z","token_hash":"fixture-hash-revoked","expired":true,"revoked_at":"2026-01-05T03:04:05Z"}]`
@@ -547,7 +587,43 @@ func retriedJobFile(vault string) ([]byte, error) {
 	if job["status"] != "pending" || job["worker_id"] != nil || job["lease_until"] != nil || job["error"] != nil {
 		return nil, fmt.Errorf("retry left wrong state: %q", body)
 	}
-	return normalizeJobRetryTime(body)
+	return normalizeJobUpdatedAt(body)
+}
+
+func failedWorkerJob(vault string, response []byte, retry bool) ([]byte, error) {
+	path := filepath.Join(vault, ".symdesk", "server", "jobs", "00000000000000000000000000000004.json")
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
+		return nil, fmt.Errorf("job mode = %o, want 600", info.Mode().Perm())
+	}
+	persisted, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var responseJob, persistedJob map[string]any
+	if err := json.Unmarshal(response, &responseJob); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(persisted, &persistedJob); err != nil {
+		return nil, err
+	}
+	wantStatus, wantError := "failed", "scan failed"
+	wantWorker := any("worker-1")
+	if retry {
+		wantStatus, wantError, wantWorker = "pending", "retry me", nil
+	}
+	for _, job := range []map[string]any{responseJob, persistedJob} {
+		if job["status"] != wantStatus || job["error"] != wantError || job["worker_id"] != wantWorker || job["lease_until"] != nil {
+			return nil, fmt.Errorf("wrong worker failure state: %q", response)
+		}
+	}
+	if !reflect.DeepEqual(responseJob, persistedJob) {
+		return nil, fmt.Errorf("response and persisted worker job differ")
+	}
+	return persisted, nil
 }
 
 func normalizeIngestJob(body []byte) ([]byte, error) {
@@ -650,7 +726,7 @@ func assertIngestWrite(vault string, response []byte, body string) error {
 	return nil
 }
 
-func normalizeJobRetryTime(body []byte) ([]byte, error) {
+func normalizeJobUpdatedAt(body []byte) ([]byte, error) {
 	var job struct {
 		UpdatedAt string `json:"updated_at"`
 	}
@@ -659,11 +735,11 @@ func normalizeJobRetryTime(body []byte) ([]byte, error) {
 	}
 	updated, err := time.Parse(time.RFC3339Nano, job.UpdatedAt)
 	if err != nil || time.Since(updated) > time.Minute || time.Until(updated) > time.Minute {
-		return nil, fmt.Errorf("retry timestamp is not current RFC3339: %q", job.UpdatedAt)
+		return nil, fmt.Errorf("job timestamp is not current RFC3339: %q", job.UpdatedAt)
 	}
 	marker := []byte(`"` + job.UpdatedAt + `"`)
 	if bytes.Count(body, marker) != 1 {
-		return nil, fmt.Errorf("retry timestamp field is not unique")
+		return nil, fmt.Errorf("job timestamp field is not unique")
 	}
 	return bytes.Replace(body, marker, []byte(`"<dynamic>"`), 1), nil
 }
@@ -912,13 +988,26 @@ func compare(id string, left, right transcript) error {
 	}
 	if id == "jobs-retry-failed" {
 		var err error
-		left.Body, err = normalizeJobRetryTime(left.Body)
+		left.Body, err = normalizeJobUpdatedAt(left.Body)
 		if err != nil {
 			return fmt.Errorf("Go retry response: %w", err)
 		}
-		right.Body, err = normalizeJobRetryTime(right.Body)
+		right.Body, err = normalizeJobUpdatedAt(right.Body)
 		if err != nil {
 			return fmt.Errorf("Rust retry response: %w", err)
+		}
+		left.Headers = cloneWithout(left.Headers, "content-length")
+		right.Headers = cloneWithout(right.Headers, "content-length")
+	}
+	if id == "worker-fail-valid" || id == "worker-fail-retry" {
+		var err error
+		left.Body, err = normalizeJobUpdatedAt(left.Body)
+		if err != nil {
+			return fmt.Errorf("Go worker fail response: %w", err)
+		}
+		right.Body, err = normalizeJobUpdatedAt(right.Body)
+		if err != nil {
+			return fmt.Errorf("Rust worker fail response: %w", err)
 		}
 		left.Headers = cloneWithout(left.Headers, "content-length")
 		right.Headers = cloneWithout(right.Headers, "content-length")

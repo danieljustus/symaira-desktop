@@ -58,6 +58,7 @@ const MAX_NOTE_BYTES: u64 = 8 << 20;
 const MAX_SNAPSHOT_BYTES: u64 = 16 << 20;
 const MAX_NOTEBOOK_FILE_BYTES: u64 = 64 << 20;
 const MAX_SHARE_STORE_BYTES: u64 = 16 << 20;
+const MAX_WORKER_FAIL_BODY_BYTES: usize = 256 << 10;
 const MAX_UPLOAD_BYTES: u64 = 100 << 20;
 const MAX_MULTIPART_REQUEST_BYTES: usize = (100 << 20) + (1 << 20);
 const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
@@ -126,6 +127,19 @@ struct JobQuery {
 #[derive(Debug, Deserialize)]
 struct JobRetryQuery {
     id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct WorkerFailRequest {
+    #[serde(default)]
+    job_id: String,
+    #[serde(default)]
+    worker_id: String,
+    #[serde(default)]
+    error: String,
+    #[serde(default)]
+    retry: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -296,6 +310,10 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/jobs", get(handle_jobs))
         .route("/api/v1/jobs/retry", axum::routing::post(handle_retry_job))
         .route("/api/v1/worker/input", get(handle_worker_input))
+        .route(
+            "/api/v1/worker/fail",
+            axum::routing::post(handle_worker_fail),
+        )
         .route(
             "/api/v1/ingest",
             post(handle_ingest).layer(DefaultBodyLimit::max(MAX_MULTIPART_REQUEST_BYTES)),
@@ -1066,6 +1084,75 @@ async fn handle_worker_input(
     };
     let filename = safe_filename_value(&job.original_name);
     serve_vault_file_as(&state, &relative, &headers, method, "attachment", &filename)
+}
+
+async fn handle_worker_fail(
+    State(state): State<Arc<AppState>>,
+    request: Request<Body>,
+) -> Response {
+    let body = match to_bytes(
+        request.into_body(),
+        MAX_WORKER_FAIL_BODY_BYTES.saturating_add(1),
+    )
+    .await
+    {
+        Ok(body) if body.len() <= MAX_WORKER_FAIL_BODY_BYTES => body,
+        _ => {
+            return json_error(
+                StatusCode::BAD_REQUEST,
+                "invalid JSON: request body too large",
+            );
+        }
+    };
+    let request: WorkerFailRequest = match serde_json::from_slice(&body) {
+        Ok(request) => request,
+        Err(error) => {
+            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+        }
+    };
+    if !valid_job_id(&request.job_id) {
+        return json_error(StatusCode::CONFLICT, "invalid job id");
+    }
+    let _guard = match state.job_retry.lock() {
+        Ok(guard) => guard,
+        Err(_) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, "job retry lock failed"),
+    };
+    let root = match open_current_root(&state) {
+        Ok(root) => root,
+        Err(error) => return json_error(StatusCode::CONFLICT, &error.to_string()),
+    };
+    let mut job = match read_job_record(&root, &request.job_id) {
+        Ok(job) => job,
+        Err(error) => return json_error(StatusCode::CONFLICT, &error),
+    };
+    if job.status != "processing" || job.worker_id != request.worker_id {
+        return json_error(
+            StatusCode::CONFLICT,
+            &format!("job is not leased by worker {:?}", request.worker_id),
+        );
+    }
+    job.status = if request.retry { "pending" } else { "failed" }.to_owned();
+    job.error = request.error.trim().to_owned();
+    job.lease_until = None;
+    job.updated_at = OffsetDateTime::now_utc()
+        .format(&Rfc3339)
+        .unwrap_or_else(|_| go_zero_time());
+    if request.retry {
+        job.worker_id.clear();
+    }
+    let directory = match root.open_dir(".symdesk/server/jobs") {
+        Ok(directory) => directory,
+        Err(error) => return json_error(StatusCode::CONFLICT, &error.to_string()),
+    };
+    let path = PathBuf::from(format!("{}.json", request.job_id));
+    let data = match serde_json::to_vec_pretty(&job) {
+        Ok(data) => data,
+        Err(error) => return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string()),
+    };
+    if let Err(error) = write_atomic_root(&directory, &path, &data, 0o600) {
+        return json_error(StatusCode::CONFLICT, &error.to_string());
+    }
+    json_response(StatusCode::OK, job)
 }
 
 async fn handle_ingest(

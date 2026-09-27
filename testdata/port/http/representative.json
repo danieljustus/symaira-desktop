@@ -465,6 +465,36 @@
       "populate_jobs": true
     },
     {
+      "id": "worker-fail-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"error\":\"scan failed\"}"
+    },
+    {
+      "id": "worker-fail-not-leased",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-other\",\"error\":\"scan failed\"}",
+      "populate_worker_job": true
+    },
+    {
+      "id": "worker-fail-valid",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"error\":\"  scan failed \\n\",\"retry\":false}",
+      "populate_worker_job": true
+    },
+    {
+      "id": "worker-fail-retry",
+      "method": "POST",
+      "path": "/api/v1/worker/fail",
+      "auth": "valid",
+      "body": "{\"job_id\":\"00000000000000000000000000000004\",\"worker_id\":\"worker-1\",\"error\":\"  retry me \\n\",\"retry\":true}",
+      "populate_worker_job": true
+    },
+    {
       "id": "ingest-missing-auth",
       "method": "POST",
       "path": "/api/v1/ingest",

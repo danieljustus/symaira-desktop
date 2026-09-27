@@ -62,6 +62,7 @@ type httpCase struct {
 	MultipartFile       string            `json:"multipart_file,omitempty"`
 	EmptyNotebooks      bool              `json:"empty_notebooks,omitempty"`
 	PopulateJobs        bool              `json:"populate_jobs,omitempty"`
+	PopulateWorkerJob   bool              `json:"populate_worker_job,omitempty"`
 	PopulateShares      bool              `json:"populate_shares,omitempty"`
 	PopulateShareAccess bool              `json:"populate_share_access,omitempty"`
 }

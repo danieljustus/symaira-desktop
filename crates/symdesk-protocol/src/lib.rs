@@ -78,7 +78,7 @@ const MAX_MULTIPART_REQUEST_BYTES: usize = (100 << 20) + (1 << 20);
 const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
 const COMMAND_TIMEOUT: Duration = Duration::from_secs(5 * 60);
-const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(5);
+const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(10);
 const SNAPSHOT_TOO_LARGE: &str = "snapshot exceeds 16 MiB limit";
 static PUT_TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 

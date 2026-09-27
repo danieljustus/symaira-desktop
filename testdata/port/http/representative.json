@@ -11,6 +11,12 @@
       "path": "/healthz"
     },
     {
+      "id": "healthz-slow-header",
+      "method": "GET",
+      "path": "/healthz",
+      "header_delay_ms": 6000
+    },
+    {
       "id": "status-missing-auth",
       "method": "GET",
       "path": "/api/v1/status"

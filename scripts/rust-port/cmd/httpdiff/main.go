@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"context"
@@ -46,6 +47,7 @@ type httpCase struct {
 	Headers              map[string]string `json:"headers,omitempty"`
 	Body                 string            `json:"body,omitempty"`
 	BodyRepeat           int               `json:"body_repeat,omitempty"`
+	HeaderDelayMS        int               `json:"header_delay_ms,omitempty"`
 	MultipartFile        string            `json:"multipart_file,omitempty"`
 	EmptyNotebooks       bool              `json:"empty_notebooks,omitempty"`
 	PopulateJobs         bool              `json:"populate_jobs,omitempty"`
@@ -247,6 +249,16 @@ func run() (runErr error) {
 		}
 		if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
+		}
+		if tc.ID == "healthz-slow-header" {
+			for _, item := range []struct {
+				name     string
+				response transcript
+			}{{"Go", leftResult}, {"Rust", rightResult}} {
+				if item.response.Status != http.StatusOK || !bytes.Equal(item.response.Body, []byte(`{"status":"ok"}`)) {
+					fatal("%s %s did not accept the completed header: status=%d body=%q", tc.ID, item.name, item.response.Status, item.response.Body)
+				}
+			}
 		}
 		if tc.ID == "file-get-named-user-not-modified" || tc.ID == "file-get-named-user-denied-not-modified" || tc.ID == "file-get-named-user-range" {
 			wantStatus := http.StatusPartialContent
@@ -1426,6 +1438,13 @@ func (s *runningServer) ready() error {
 }
 
 func (s *runningServer) request(tc httpCase, previousETag string) (transcript, string, error) {
+	if tc.HeaderDelayMS < 0 || tc.HeaderDelayMS > 9000 {
+		return transcript{}, previousETag, fmt.Errorf("fixture header_delay_ms exceeds 9-second safety bound")
+	}
+	if tc.HeaderDelayMS > 0 {
+		response, err := s.requestWithDelayedHeader(tc)
+		return response, previousETag, err
+	}
 	if tc.BodyRepeat < 0 || tc.BodyRepeat > (24<<20)+1 {
 		return transcript{}, previousETag, fmt.Errorf("fixture body_repeat exceeds 8 MiB + 1 bound")
 	}
@@ -1521,6 +1540,44 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 		}
 	}
 	return transcript{Status: response.StatusCode, Headers: headers, Body: normalizeBody(body)}, response.Header.Get("ETag"), nil
+}
+
+// requestWithDelayedHeader sends a partial HTTP request header and completes
+// it after the fixture delay. The real listener's header deadline cannot be
+// exercised through Server.Handler or an in-process router.
+func (s *runningServer) requestWithDelayedHeader(tc httpCase) (transcript, error) {
+	if tc.Method != http.MethodGet || tc.Path != "/healthz" || tc.HeaderDelayMS > 9000 {
+		return transcript{}, fmt.Errorf("unsupported delayed-header case")
+	}
+	address := strings.TrimPrefix(s.base, "http://")
+	conn, err := net.DialTimeout("tcp", address, 3*time.Second)
+	if err != nil {
+		return transcript{}, err
+	}
+	defer func() { _ = conn.Close() }()
+	if err := conn.SetDeadline(time.Now().Add(time.Duration(tc.HeaderDelayMS+10_000) * time.Millisecond)); err != nil {
+		return transcript{}, err
+	}
+	if _, err := io.WriteString(conn, "GET /healthz HTTP/1.1\r\nHost: "); err != nil {
+		return transcript{}, err
+	}
+	time.Sleep(time.Duration(tc.HeaderDelayMS) * time.Millisecond)
+	if _, err := io.WriteString(conn, "127.0.0.1\r\nConnection: close\r\n\r\n"); err != nil {
+		return transcript{}, err
+	}
+	response, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: tc.Method})
+	if err != nil {
+		return transcript{}, err
+	}
+	body, err := io.ReadAll(io.LimitReader(response.Body, 1024))
+	closeErr := response.Body.Close()
+	if err != nil {
+		return transcript{}, err
+	}
+	if closeErr != nil {
+		return transcript{}, closeErr
+	}
+	return transcript{Status: response.StatusCode, Body: normalizeBody(body)}, nil
 }
 
 func normalizeBody(body []byte) []byte {

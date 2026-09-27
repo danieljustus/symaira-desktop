@@ -39,22 +39,23 @@ type fixture struct {
 }
 
 type httpCase struct {
-	ID                  string            `json:"id"`
-	Method              string            `json:"method"`
-	Path                string            `json:"path"`
-	Auth                string            `json:"auth,omitempty"`
-	Headers             map[string]string `json:"headers,omitempty"`
-	Body                string            `json:"body,omitempty"`
-	BodyRepeat          int               `json:"body_repeat,omitempty"`
-	MultipartFile       string            `json:"multipart_file,omitempty"`
-	EmptyNotebooks      bool              `json:"empty_notebooks,omitempty"`
-	PopulateJobs        bool              `json:"populate_jobs,omitempty"`
-	PopulateWorkerJob   bool              `json:"populate_worker_job,omitempty"`
-	PopulateExpiredJob  bool              `json:"populate_expired_job,omitempty"`
-	PopulateShares      bool              `json:"populate_shares,omitempty"`
-	PopulateShareAccess bool              `json:"populate_share_access,omitempty"`
-	PopulateWorkerACL   bool              `json:"populate_worker_acl,omitempty"`
-	PopulateNamedUser   bool              `json:"populate_named_user,omitempty"`
+	ID                   string            `json:"id"`
+	Method               string            `json:"method"`
+	Path                 string            `json:"path"`
+	Auth                 string            `json:"auth,omitempty"`
+	Headers              map[string]string `json:"headers,omitempty"`
+	Body                 string            `json:"body,omitempty"`
+	BodyRepeat           int               `json:"body_repeat,omitempty"`
+	MultipartFile        string            `json:"multipart_file,omitempty"`
+	EmptyNotebooks       bool              `json:"empty_notebooks,omitempty"`
+	PopulateJobs         bool              `json:"populate_jobs,omitempty"`
+	PopulateWorkerJob    bool              `json:"populate_worker_job,omitempty"`
+	PopulateExpiredJob   bool              `json:"populate_expired_job,omitempty"`
+	PopulateShares       bool              `json:"populate_shares,omitempty"`
+	PopulateShareAccess  bool              `json:"populate_share_access,omitempty"`
+	PopulateWorkerACL    bool              `json:"populate_worker_acl,omitempty"`
+	PopulateNamedUser    bool              `json:"populate_named_user,omitempty"`
+	RemoveSymlinkEscapes bool              `json:"remove_symlink_escapes,omitempty"`
 }
 
 type transcript struct {
@@ -167,6 +168,15 @@ func run() (runErr error) {
 	}
 	leftETag, rightETag := "", ""
 	for _, tc := range suite.Cases {
+		if tc.RemoveSymlinkEscapes {
+			for _, vault := range []string{leftVault, rightVault} {
+				for _, name := range []string{"escape.md", "escape-dir"} {
+					if err := os.Remove(filepath.Join(vault, name)); err != nil && !errors.Is(err, os.ErrNotExist) {
+						fatal("remove fixture symlink escape %s: %v", name, err)
+					}
+				}
+			}
+		}
 		if tc.PopulateShares {
 			for _, vault := range []string{leftVault, rightVault} {
 				if err := populateShares(vault); err != nil {
@@ -1548,7 +1558,20 @@ func normalizeBody(body []byte) []byte {
 
 func compare(id string, left, right transcript) error {
 	if left.Status != right.Status {
-		return fmt.Errorf("status mismatch: Go=%d Rust=%d", left.Status, right.Status)
+		return fmt.Errorf("status mismatch: Go=%d Rust=%d; Go body=%q Rust body=%q", left.Status, right.Status, left.Body, right.Body)
+	}
+	if id == "command-admin-exec-ls" {
+		var err error
+		left.Body, err = normalizeCommandListTimestamps(left.Body)
+		if err != nil {
+			return fmt.Errorf("Go command list timestamps: %w", err)
+		}
+		right.Body, err = normalizeCommandListTimestamps(right.Body)
+		if err != nil {
+			return fmt.Errorf("Rust command list timestamps: %w", err)
+		}
+		left.Headers = cloneWithout(left.Headers, "content-length")
+		right.Headers = cloneWithout(right.Headers, "content-length")
 	}
 	if id == "file-put-read-created" || id == "file-put-read-updated" {
 		// Go and Rust write the same fixture on separate servers. A wall-clock
@@ -1697,6 +1720,27 @@ func compare(id string, left, right transcript) error {
 		return fmt.Errorf("body mismatch: Go=%q Rust=%q", left.Body, right.Body)
 	}
 	return nil
+}
+
+func normalizeCommandListTimestamps(body []byte) ([]byte, error) {
+	var entries []struct {
+		Path     string `json:"path"`
+		Title    string `json:"title"`
+		Type     string `json:"type"`
+		Modified string `json:"modified"`
+	}
+	if err := json.Unmarshal(body, &entries); err != nil {
+		return nil, fmt.Errorf("decode command list: %w", err)
+	}
+	for index := range entries {
+		if _, err := time.Parse(time.RFC3339Nano, entries[index].Modified); err != nil {
+			return nil, fmt.Errorf("entry %q has invalid modified time: %w", entries[index].Path, err)
+		}
+		// Each isolated server writes fixture files independently, so the
+		// filesystem clock can differ while the indexed document data matches.
+		entries[index].Modified = ""
+	}
+	return json.Marshal(entries)
 }
 
 func compareHeaders(left, right map[string]string) error {

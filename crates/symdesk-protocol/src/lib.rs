@@ -17,6 +17,7 @@ mod snapshot_cache_contracts;
 use snapshot_cache::{RootIdentity, SnapshotCache, SnapshotPayload};
 
 use std::{
+    ffi::{OsStr, OsString},
     fmt::Write as _,
     fs,
     future::poll_fn,
@@ -24,6 +25,7 @@ use std::{
     net::SocketAddr,
     path::{Component, Path, PathBuf},
     pin::Pin,
+    process::Stdio,
     sync::{
         Arc, Mutex,
         atomic::{AtomicU64, Ordering},
@@ -54,6 +56,10 @@ use serde_json::json;
 use symdesk_index::{IndexedDocument, Sidecar};
 use symdesk_vault::{Notebook, parse_bytes, parse_notebook, secure_path, walk_markdown_with};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
+use tokio::{
+    io::{AsyncRead, AsyncReadExt, AsyncWriteExt},
+    process::Command as TokioCommand,
+};
 use tower::{Service as _, ServiceExt as _};
 
 const MAX_NOTE_BYTES: u64 = 8 << 20;
@@ -63,10 +69,14 @@ const MAX_SHARE_STORE_BYTES: u64 = 16 << 20;
 const MAX_WORKER_LEASE_BODY_BYTES: usize = 64 << 10;
 const MAX_WORKER_FAIL_BODY_BYTES: usize = 256 << 10;
 const MAX_WORKER_COMPLETE_BODY_BYTES: usize = 24 << 20;
+const MAX_COMMAND_BODY_BYTES: usize = (2 << 20) + 1;
+const MAX_COMMAND_OUTPUT_BYTES: usize = 32 << 20;
+const MAX_COMMAND_STDERR_BYTES: usize = 1 << 20;
 const MAX_UPLOAD_BYTES: u64 = 100 << 20;
 const MAX_MULTIPART_REQUEST_BYTES: usize = (100 << 20) + (1 << 20);
 const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
+const COMMAND_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(5);
 const SNAPSHOT_TOO_LARGE: &str = "snapshot exceeds 16 MiB limit";
 static PUT_TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -586,29 +596,73 @@ struct RemoteCommandRequest {
     stdin: Option<String>,
 }
 
-async fn handle_command_validation(request: Request<Body>) -> Response {
-    let body = match to_bytes(request.into_body(), 2 << 20).await {
-        Ok(body) => body,
-        Err(_) => {
-            return json_error(
-                StatusCode::BAD_REQUEST,
-                "invalid JSON: request body too large",
-            );
-        }
-    };
-    let request: RemoteCommandRequest = match serde_json::from_slice(&body) {
-        Ok(request) => request,
-        Err(_) => return json_error(StatusCode::BAD_REQUEST, "invalid JSON: malformed request"),
-    };
+async fn handle_command_validation(
+    State(state): State<Arc<AppState>>,
+    request: Request<Body>,
+) -> Response {
+    let request =
+        match tokio::time::timeout(READ_TIMEOUT, read_command_request(request.into_body())).await {
+            Ok(Ok(request)) => request,
+            Ok(Err(CommandBodyError::TooLarge)) => {
+                return json_error(
+                    StatusCode::BAD_REQUEST,
+                    "invalid JSON: request body too large",
+                );
+            }
+            Ok(Err(CommandBodyError::Malformed | CommandBodyError::Read)) => {
+                return json_error(StatusCode::BAD_REQUEST, "invalid JSON: malformed request");
+            }
+            Err(_) => return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out"),
+        };
     let arguments = request.arguments.unwrap_or_default();
-    let _stdin = request.stdin.unwrap_or_default();
+    let stdin = request.stdin.unwrap_or_default();
     if let Some(message) = validate_remote_command(&arguments) {
         return json_response(StatusCode::FORBIDDEN, json!({"error": message}));
     }
-    json_error(
-        StatusCode::NOT_IMPLEMENTED,
-        "remote command execution is not implemented",
-    )
+    if matches!(
+        arguments.first().map(String::as_str),
+        Some("ask" | "transform")
+    ) {
+        return json_error(
+            StatusCode::NOT_IMPLEMENTED,
+            "streaming command execution is not implemented",
+        );
+    }
+    execute_remote_command(&state, &arguments, &stdin).await
+}
+
+enum CommandBodyError {
+    TooLarge,
+    Malformed,
+    Read,
+}
+
+async fn read_command_request(body: Body) -> Result<RemoteCommandRequest, CommandBodyError> {
+    let mut chunks = body.into_data_stream();
+    let mut bytes = Vec::with_capacity(4096);
+    loop {
+        let next = poll_fn(|context| Pin::new(&mut chunks).poll_next(context)).await;
+        let Some(next) = next else {
+            return parse_command_request(&bytes).map_err(|_| CommandBodyError::Malformed);
+        };
+        let chunk = next.map_err(|_| CommandBodyError::Read)?;
+        let available = MAX_COMMAND_BODY_BYTES.saturating_sub(bytes.len());
+        bytes.extend_from_slice(&chunk[..chunk.len().min(available)]);
+        match parse_command_request(&bytes) {
+            Ok(request) => return Ok(request),
+            Err(error) if error.is_eof() && bytes.len() < MAX_COMMAND_BODY_BYTES => {}
+            Err(error) if error.is_eof() => return Err(CommandBodyError::TooLarge),
+            Err(_) => return Err(CommandBodyError::Malformed),
+        }
+        if chunk.len() > available {
+            return Err(CommandBodyError::TooLarge);
+        }
+    }
+}
+
+fn parse_command_request(body: &[u8]) -> Result<RemoteCommandRequest, serde_json::Error> {
+    let mut decoder = serde_json::Deserializer::from_slice(body);
+    RemoteCommandRequest::deserialize(&mut decoder)
 }
 
 fn validate_remote_command(args: &[String]) -> Option<String> {
@@ -658,6 +712,156 @@ fn validate_remote_command(args: &[String]) -> Option<String> {
         ));
     }
     None
+}
+
+fn filtered_subprocess_env<I>(parent: I, vault_root: &Path) -> Vec<(OsString, OsString)>
+where
+    I: IntoIterator<Item = (OsString, OsString)>,
+{
+    let mut environment: Vec<_> = parent
+        .into_iter()
+        .filter(|(key, _)| {
+            key != OsStr::new("SYMDESK_SERVER_TOKEN") && key != OsStr::new("SYMDESK_WORKER_TOKEN")
+        })
+        .collect();
+    environment.push((
+        OsString::from("SYMDESK_SIDECAR"),
+        vault_root
+            .join(".symdesk/server/sidecar.db")
+            .into_os_string(),
+    ));
+    environment
+}
+
+async fn execute_remote_command(state: &AppState, arguments: &[String], stdin: &str) -> Response {
+    let executable = match std::env::current_exe() {
+        Ok(executable) => executable,
+        Err(error) => {
+            return json_error(StatusCode::UNPROCESSABLE_ENTITY, &error.to_string());
+        }
+    };
+    let mut args = arguments.to_vec();
+    if !args.iter().any(|argument| argument == "--json") {
+        args.push("--json".to_owned());
+    }
+    args.push("--vault".to_owned());
+    args.push(state.vault_root.to_string_lossy().into_owned());
+
+    let mut command = TokioCommand::new(executable);
+    command
+        .args(args)
+        .env_clear()
+        .envs(filtered_subprocess_env(
+            std::env::vars_os(),
+            &state.vault_root,
+        ))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(true);
+    let mut child = match command.spawn() {
+        Ok(child) => child,
+        Err(error) => {
+            return json_error(StatusCode::UNPROCESSABLE_ENTITY, &error.to_string());
+        }
+    };
+    let Some(stdout) = child.stdout.take() else {
+        let _ = child.kill().await;
+        return json_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "failed to capture command output",
+        );
+    };
+    let Some(stderr) = child.stderr.take() else {
+        let _ = child.kill().await;
+        return json_error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "failed to capture command errors",
+        );
+    };
+    let stdin_pipe = child.stdin.take();
+
+    let process = async {
+        let (stdout, stderr, stdin_result, status) = tokio::join!(
+            read_command_pipe(stdout, MAX_COMMAND_OUTPUT_BYTES),
+            read_command_pipe(stderr, MAX_COMMAND_STDERR_BYTES),
+            write_command_stdin(stdin_pipe, stdin.as_bytes()),
+            child.wait(),
+        );
+        let (stdout, stdout_overflow) = stdout?;
+        let (stderr, _) = stderr?;
+        stdin_result?;
+        let status = status?;
+        Ok::<_, io::Error>((stdout, stdout_overflow, stderr, status))
+    };
+    let captured = match tokio::time::timeout(COMMAND_TIMEOUT, process).await {
+        Ok(Ok(captured)) => captured,
+        Ok(Err(error)) => {
+            let _ = child.kill().await;
+            let _ = child.wait().await;
+            return json_error(StatusCode::UNPROCESSABLE_ENTITY, &error.to_string());
+        }
+        Err(_) => {
+            let _ = child.kill().await;
+            let _ = child.wait().await;
+            return json_error(StatusCode::UNPROCESSABLE_ENTITY, "signal: killed");
+        }
+    };
+    let (stdout, stdout_overflow, stderr, status) = captured;
+    if stdout_overflow {
+        return json_error(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "command output exceeded 32 MiB",
+        );
+    }
+    if !status.success() {
+        let message = String::from_utf8_lossy(&stderr).trim().to_owned();
+        if message.is_empty() {
+            let message = status
+                .code()
+                .map(|code| format!("exit status {code}"))
+                .unwrap_or_else(|| "signal: killed".to_owned());
+            return json_error(StatusCode::UNPROCESSABLE_ENTITY, &message);
+        }
+        return json_error(StatusCode::UNPROCESSABLE_ENTITY, &message);
+    }
+    bytes_response(
+        StatusCode::OK,
+        vec![
+            (header::CONTENT_TYPE, "application/json".to_owned()),
+            (header::CONTENT_LENGTH, stdout.len().to_string()),
+        ],
+        stdout,
+    )
+}
+
+async fn read_command_pipe<R: AsyncRead + Unpin>(
+    mut reader: R,
+    limit: usize,
+) -> io::Result<(Vec<u8>, bool)> {
+    let mut output = Vec::with_capacity(limit.min(64 << 10));
+    let mut chunk = [0u8; 16 << 10];
+    let mut overflow = false;
+    loop {
+        let read = reader.read(&mut chunk).await?;
+        if read == 0 {
+            break;
+        }
+        let keep = read.min(limit.saturating_sub(output.len()));
+        output.extend_from_slice(&chunk[..keep]);
+        overflow |= keep < read;
+    }
+    Ok((output, overflow))
+}
+
+async fn write_command_stdin(
+    stdin: Option<tokio::process::ChildStdin>,
+    contents: &[u8],
+) -> io::Result<()> {
+    if let Some(mut stdin) = stdin {
+        stdin.write_all(contents).await?;
+    }
+    Ok(())
 }
 
 // Apply Go's per-user document ACLs to authenticated non-admin principals,
@@ -902,6 +1106,9 @@ async fn normalize_method_not_allowed(request: Request<Body>, next: Next) -> Res
 }
 
 async fn request_timeout(request: Request<Body>, next: Next) -> Response {
+    if request.method() == Method::POST && request.uri().path() == "/api/v1/command" {
+        return next.run(request).await;
+    }
     match tokio::time::timeout(READ_TIMEOUT, next.run(request)).await {
         Ok(response) => response,
         Err(_) => json_error(StatusCode::REQUEST_TIMEOUT, "request timed out"),
@@ -3335,6 +3542,44 @@ async fn shutdown_signal() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn command_capture_truncates_without_growing_past_the_limit() {
+        let input = vec![b'x'; 64 << 10];
+        let (captured, overflow) = read_command_pipe(&input[..], 8).await.unwrap();
+        assert!(overflow);
+        assert_eq!(captured, b"xxxxxxxx");
+    }
+
+    #[test]
+    fn command_environment_scrubs_auth_tokens_and_sets_sidecar() {
+        let root = Path::new("/vault/root");
+        let env = filtered_subprocess_env(
+            [
+                (OsString::from("PATH"), OsString::from("/bin")),
+                (
+                    OsString::from("SYMDESK_SERVER_TOKEN"),
+                    OsString::from("server-secret"),
+                ),
+                (
+                    OsString::from("SYMDESK_WORKER_TOKEN"),
+                    OsString::from("worker-secret"),
+                ),
+            ],
+            root,
+        );
+        assert!(
+            env.iter()
+                .any(|(key, value)| key == "PATH" && value == "/bin")
+        );
+        assert!(
+            !env.iter()
+                .any(|(key, _)| { key == "SYMDESK_SERVER_TOKEN" || key == "SYMDESK_WORKER_TOKEN" })
+        );
+        assert!(env.iter().any(|(key, value)| {
+            key == "SYMDESK_SIDECAR" && value == "/vault/root/.symdesk/server/sidecar.db"
+        }));
+    }
 
     #[test]
     fn worker_acl_defaults_public_but_fails_closed_for_malformed_policy_or_root() {

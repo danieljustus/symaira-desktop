@@ -309,6 +309,21 @@
       "body": "{\"arguments\":[\"note\",\"not-real\"]}"
     },
     {
+      "id": "command-admin-trailing-data",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"not-real\"]}{\"ignored\":true}"
+    },
+    {
+      "id": "command-admin-over-limit-prefix",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"not-real\"]}",
+      "body_repeat": 2097127
+    },
+    {
       "id": "file-put-worker-group",
       "method": "PUT",
       "path": "/api/v1/files?path=nested/Note.md",
@@ -1253,6 +1268,14 @@
       "body": "{\"path\":\"nested/Named.md\",\"expiry\":24}",
       "populate_shares": true,
       "populate_named_user": true
+    },
+    {
+      "id": "command-admin-exec-ls",
+      "method": "POST",
+      "path": "/api/v1/command",
+      "auth": "valid",
+      "body": "{\"arguments\":[\"ls\",\"--dir\",\"nested\"]}",
+      "remove_symlink_escapes": true
     }
   ]
 }

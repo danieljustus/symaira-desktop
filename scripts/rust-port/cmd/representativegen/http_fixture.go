@@ -56,6 +56,8 @@ func generatedHTTP() httpSuite {
 		{ID: "command-admin-unavailable", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["not-real"]}`},
 		{ID: "command-admin-controlled-path", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["ls","--vault=/tmp/other-vault"]}`},
 		{ID: "command-admin-invalid-subcommand", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["note","not-real"]}`},
+		{ID: "command-admin-trailing-data", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["not-real"]}{"ignored":true}`},
+		{ID: "command-admin-over-limit-prefix", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["not-real"]}`, BodyRepeat: (2 << 20) - len(`{"arguments":["not-real"]}`) + 1},
 		{ID: "file-put-worker-group", Method: "PUT", Path: "/api/v1/files?path=nested/Note.md", Auth: "worker", Body: "# authorized worker update\n"},
 		{ID: "file-put-named-user", Method: "PUT", Path: "/api/v1/files?path=nested/Named.md", Auth: "named", Body: "# authorized named user update\n"},
 		{ID: "file-get-named-user-updated", Method: "GET", Path: "/api/v1/files?path=nested/Named.md", Auth: "named"},
@@ -195,6 +197,7 @@ func generatedHTTP() httpSuite {
 		{ID: "share-create-named-user-denied", Method: "POST", Path: "/api/v1/share", Auth: "named", Body: `{"path":"Hello.md","expiry":24}`, PopulateNamedUser: true, PopulateShares: true},
 		{ID: "share-create-named-worker-denied", Method: "POST", Path: "/api/v1/share", Auth: "named-worker", Body: `{"path":"nested/Named.md","expiry":24}`, PopulateNamedUser: true, PopulateShares: true},
 		{ID: "share-create-named-user-valid", Method: "POST", Path: "/api/v1/share", Auth: "named", Body: `{"path":"nested/Named.md","expiry":24}`, PopulateNamedUser: true, PopulateShares: true},
+		{ID: "command-admin-exec-ls", Method: "POST", Path: "/api/v1/command", Auth: "valid", Body: `{"arguments":["ls","--dir","nested"]}`, RemoveSymlinkEscapes: true},
 	}}
 }
 

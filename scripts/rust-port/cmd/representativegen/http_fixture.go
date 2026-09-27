@@ -99,6 +99,19 @@ func generatedHTTP() httpSuite {
 		{ID: "share-create-expiry-high", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: `{"path":"Hello.md","expiry":169}`},
 		{ID: "share-create-missing-document", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: `{"path":"missing.md","expiry":24}`},
 		{ID: "share-create-valid", Method: "POST", Path: "/api/v1/share", Auth: "valid", Body: `{"path":"Hello.md","expiry":24}`},
+		{ID: "share-access-valid", Method: "GET", Path: "/s/share-valid-token", PopulateShareAccess: true},
+		{ID: "share-access-head", Method: "HEAD", Path: "/s/share-valid-token"},
+		{ID: "share-access-range", Method: "GET", Path: "/s/share-valid-token", Headers: map[string]string{"Range": "bytes=0-4"}},
+		{ID: "share-access-not-modified", Method: "GET", Path: "/s/share-valid-token", Headers: map[string]string{"If-Modified-Since": "Fri, 02 Jan 2026 03:04:05 GMT"}},
+		{ID: "share-access-dataset", Method: "GET", Path: "/s/share-dataset-token"},
+		{ID: "share-access-missing-file", Method: "GET", Path: "/s/share-missing-token"},
+		{ID: "share-access-symlink-escape", Method: "GET", Path: "/s/share-escape-token"},
+		{ID: "share-access-large-file", Method: "GET", Path: "/s/share-large-token"},
+		{ID: "share-access-large-range", Method: "GET", Path: "/s/share-large-token", Headers: map[string]string{"Range": "bytes=1-8388609"}},
+		{ID: "share-access-invalid-first", Method: "GET", Path: "/s/unknown-share-token"},
+		{ID: "share-access-expired", Method: "GET", Path: "/s/share-expired-token"},
+		{ID: "share-access-revoked-threshold", Method: "GET", Path: "/s/share-revoked-token"},
+		{ID: "share-access-invalid-blocked", Method: "GET", Path: "/s/unknown-share-token"},
 	}}
 }
 

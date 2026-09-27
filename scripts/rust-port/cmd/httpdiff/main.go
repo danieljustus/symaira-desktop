@@ -35,17 +35,18 @@ type fixture struct {
 }
 
 type httpCase struct {
-	ID             string            `json:"id"`
-	Method         string            `json:"method"`
-	Path           string            `json:"path"`
-	Auth           string            `json:"auth,omitempty"`
-	Headers        map[string]string `json:"headers,omitempty"`
-	Body           string            `json:"body,omitempty"`
-	BodyRepeat     int               `json:"body_repeat,omitempty"`
-	MultipartFile  string            `json:"multipart_file,omitempty"`
-	EmptyNotebooks bool              `json:"empty_notebooks,omitempty"`
-	PopulateJobs   bool              `json:"populate_jobs,omitempty"`
-	PopulateShares bool              `json:"populate_shares,omitempty"`
+	ID                  string            `json:"id"`
+	Method              string            `json:"method"`
+	Path                string            `json:"path"`
+	Auth                string            `json:"auth,omitempty"`
+	Headers             map[string]string `json:"headers,omitempty"`
+	Body                string            `json:"body,omitempty"`
+	BodyRepeat          int               `json:"body_repeat,omitempty"`
+	MultipartFile       string            `json:"multipart_file,omitempty"`
+	EmptyNotebooks      bool              `json:"empty_notebooks,omitempty"`
+	PopulateJobs        bool              `json:"populate_jobs,omitempty"`
+	PopulateShares      bool              `json:"populate_shares,omitempty"`
+	PopulateShareAccess bool              `json:"populate_share_access,omitempty"`
 }
 
 type transcript struct {
@@ -162,6 +163,13 @@ func run() (runErr error) {
 			for _, vault := range []string{leftVault, rightVault} {
 				if err := populateShares(vault); err != nil {
 					fatal("populate share fixture: %v", err)
+				}
+			}
+		}
+		if tc.PopulateShareAccess {
+			for _, vault := range []string{leftVault, rightVault} {
+				if err := populateShareAccess(vault); err != nil {
+					fatal("populate share access fixture: %v", err)
 				}
 			}
 		}
@@ -347,6 +355,54 @@ func populateShares(vault string) error {
 		return err
 	}
 	return os.WriteFile(path, []byte(shareFixture), 0o600)
+}
+
+const (
+	validShareToken   = "share-valid-token"
+	expiredShareToken = "share-expired-token"
+	revokedShareToken = "share-revoked-token"
+	datasetShareToken = "share-dataset-token"
+	missingShareToken = "share-missing-token"
+	escapeShareToken  = "share-escape-token"
+	largeShareToken   = "share-large-token"
+)
+
+func populateShareAccess(vault string) error {
+	tokenHash := func(token string) string {
+		sum := sha256.Sum256([]byte(token))
+		return hex.EncodeToString(sum[:])
+	}
+	links := []map[string]any{
+		{"id": "access-valid", "path": "Hello.md", "created_by": "admin", "created_at": "2026-01-01T00:00:00Z", "expires_at": "2099-01-01T00:00:00Z", "token_hash": tokenHash(validShareToken)},
+		{"id": "access-expired", "path": "Hello.md", "created_by": "admin", "created_at": "2026-01-01T00:00:00Z", "expires_at": "2026-01-02T00:00:00Z", "token_hash": tokenHash(expiredShareToken)},
+		{"id": "access-revoked", "path": "Hello.md", "created_by": "admin", "created_at": "2026-01-01T00:00:00Z", "expires_at": "2099-01-01T00:00:00Z", "token_hash": tokenHash(revokedShareToken), "expired": true, "revoked_at": "2026-01-02T00:00:00Z"},
+		{"id": "access-dataset", "path": "datasets/restricted.md", "created_by": "admin", "created_at": "2026-01-01T00:00:00Z", "expires_at": "2099-01-01T00:00:00Z", "token_hash": tokenHash(datasetShareToken)},
+		{"id": "access-missing", "path": "missing.md", "created_by": "admin", "created_at": "2026-01-01T00:00:00Z", "expires_at": "2099-01-01T00:00:00Z", "token_hash": tokenHash(missingShareToken)},
+		{"id": "access-escape", "path": "escape.md", "created_by": "admin", "created_at": "2026-01-01T00:00:00Z", "expires_at": "2099-01-01T00:00:00Z", "token_hash": tokenHash(escapeShareToken)},
+		{"id": "access-large", "path": "large.bin", "created_by": "admin", "created_at": "2026-01-01T00:00:00Z", "expires_at": "2099-01-01T00:00:00Z", "token_hash": tokenHash(largeShareToken)},
+	}
+	data, err := json.Marshal(links)
+	if err != nil {
+		return err
+	}
+	dir := filepath.Dir(shareFixturePath(vault))
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Join(vault, "datasets"), 0o700); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(vault, "datasets", "restricted.md"), []byte("private dataset"), 0o600); err != nil {
+		return err
+	}
+	largeFile := filepath.Join(vault, "large.bin")
+	if err := os.WriteFile(largeFile, []byte{1}, 0o600); err != nil {
+		return err
+	}
+	if err := os.Truncate(largeFile, (8<<20)+2); err != nil {
+		return err
+	}
+	return os.WriteFile(shareFixturePath(vault), data, 0o600)
 }
 
 func assertSharesUnchanged(vault string) error {

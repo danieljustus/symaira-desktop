@@ -1420,6 +1420,7 @@ dependencies = [
  "axum",
  "cap-std",
  "flate2",
+ "futures-core",
  "getrandom 0.4.3",
  "httpdate",
  "hyper",

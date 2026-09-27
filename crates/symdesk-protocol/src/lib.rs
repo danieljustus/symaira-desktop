@@ -22,10 +22,12 @@ use std::{
     io::{self, Read, Seek, SeekFrom, Write},
     net::SocketAddr,
     path::{Component, Path, PathBuf},
+    pin::Pin,
     sync::{
         Arc, Mutex,
         atomic::{AtomicU64, Ordering},
     },
+    task::{Context, Poll},
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
@@ -89,15 +91,24 @@ struct AuthThrottle {
 
 #[derive(Debug)]
 struct AuthFailure {
+    auth: FailureBucket,
+    share: FailureBucket,
+    last_seen: SystemTime,
+}
+
+#[derive(Debug)]
+struct FailureBucket {
     count: u32,
     window_start: SystemTime,
     blocked_until: SystemTime,
-    last_seen: SystemTime,
 }
 
 const AUTH_WINDOW: Duration = Duration::from_secs(10);
 const AUTH_BLOCK: Duration = Duration::from_secs(30);
 const AUTH_MAX: u32 = 5;
+const SHARE_WINDOW: Duration = Duration::from_secs(30);
+const SHARE_BLOCK: Duration = Duration::from_secs(60);
+const SHARE_MAX: u32 = 3;
 const AUTH_MAX_ENTRIES: usize = 5_000;
 
 #[derive(Debug, Deserialize)]
@@ -301,6 +312,7 @@ fn router(state: Arc<AppState>) -> Router {
         ));
     Router::new()
         .route("/healthz", get(handle_health))
+        .route("/s/{token}", get(handle_access_share))
         .merge(protected)
         .fallback(handle_not_found)
         .layer(middleware::from_fn(normalize_method_not_allowed))
@@ -360,6 +372,14 @@ fn client_ip(request: &Request<Body>) -> String {
 
 impl AuthThrottle {
     fn record(&mut self, ip: &str) -> Option<Duration> {
+        self.record_bucket(ip, false)
+    }
+
+    fn record_share(&mut self, ip: &str) -> Option<Duration> {
+        self.record_bucket(ip, true)
+    }
+
+    fn record_bucket(&mut self, ip: &str, share: bool) -> Option<Duration> {
         let now = SystemTime::now();
         self.entries.retain(|_, failure| {
             now.duration_since(failure.last_seen)
@@ -376,35 +396,64 @@ impl AuthThrottle {
         {
             self.entries.remove(&oldest);
         }
-        let failure = self.entries.entry(ip.to_owned()).or_insert(AuthFailure {
-            count: 0,
-            window_start: now,
-            blocked_until: UNIX_EPOCH,
-            last_seen: now,
-        });
+        let failure = self
+            .entries
+            .entry(ip.to_owned())
+            .or_insert_with(|| AuthFailure {
+                auth: FailureBucket::default(),
+                share: FailureBucket::default(),
+                last_seen: now,
+            });
         failure.last_seen = now;
-        if failure.blocked_until > now {
-            return Some(
-                failure
-                    .blocked_until
-                    .duration_since(now)
-                    .unwrap_or_default(),
-            );
+        let (window, max, block) = if share {
+            (SHARE_WINDOW, SHARE_MAX, SHARE_BLOCK)
+        } else {
+            (AUTH_WINDOW, AUTH_MAX, AUTH_BLOCK)
+        };
+        let bucket = if share {
+            &mut failure.share
+        } else {
+            &mut failure.auth
+        };
+        bucket.record(now, window, max, block)
+    }
+}
+
+impl FailureBucket {
+    fn record(
+        &mut self,
+        now: SystemTime,
+        window: Duration,
+        max: u32,
+        block: Duration,
+    ) -> Option<Duration> {
+        if self.blocked_until > now {
+            return Some(self.blocked_until.duration_since(now).unwrap_or_default());
         }
         if now
-            .duration_since(failure.window_start)
-            .map(|age| age > AUTH_WINDOW)
+            .duration_since(self.window_start)
+            .map(|age| age > window)
             .unwrap_or(true)
         {
-            failure.count = 0;
-            failure.window_start = now;
+            self.count = 0;
+            self.window_start = now;
         }
-        failure.count = failure.count.saturating_add(1);
-        if failure.count >= AUTH_MAX {
-            failure.blocked_until = now + AUTH_BLOCK;
-            return Some(AUTH_BLOCK);
+        self.count = self.count.saturating_add(1);
+        if self.count >= max {
+            self.blocked_until = now + block;
+            return Some(block);
         }
         None
+    }
+}
+
+impl Default for FailureBucket {
+    fn default() -> Self {
+        Self {
+            count: 0,
+            window_start: UNIX_EPOCH,
+            blocked_until: UNIX_EPOCH,
+        }
     }
 }
 
@@ -488,7 +537,7 @@ async fn handle_status(State(state): State<Arc<AppState>>) -> Response {
     )
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 struct ShareLink {
     #[serde(default)]
     id: String,
@@ -690,6 +739,82 @@ async fn handle_shares(State(state): State<Arc<AppState>>) -> Response {
     }
     links.reverse();
     json_response(StatusCode::OK, links)
+}
+
+async fn handle_access_share(
+    State(state): State<Arc<AppState>>,
+    AxumPath(token): AxumPath<String>,
+    headers: HeaderMap,
+    method: Method,
+    request: Request<Body>,
+) -> Response {
+    if token.is_empty() {
+        return json_error(StatusCode::NOT_FOUND, "not found");
+    }
+    let link = open_current_root(&state)
+        .ok()
+        .and_then(|root| read_shares(&root).ok())
+        .and_then(|links| lookup_share(&links, &token).ok().cloned());
+    let Some(link) = link else {
+        return share_lookup_failure(&state, &request);
+    };
+    if is_dataset_share_path(&link.path) {
+        return json_error(StatusCode::NOT_FOUND, "not found");
+    }
+    let relative = match confined_path(&state, &link.path) {
+        Ok(relative) => relative,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
+    };
+    serve_vault_file(&state, &relative, &headers, method)
+}
+
+fn lookup_share<'a>(links: &'a [ShareLink], token: &str) -> Result<&'a ShareLink, ()> {
+    for link in links {
+        OffsetDateTime::parse(&link.created_at, &Rfc3339).map_err(|_| ())?;
+        OffsetDateTime::parse(&link.expires_at, &Rfc3339).map_err(|_| ())?;
+        if let Some(revoked_at) = link.revoked_at.as_deref() {
+            OffsetDateTime::parse(revoked_at, &Rfc3339).map_err(|_| ())?;
+        }
+    }
+    let target = symdesk_vault::sha256_hex(token.as_bytes());
+    let now = OffsetDateTime::now_utc();
+    for link in links {
+        if !constant_time_equal(link.token_hash.as_bytes(), target.as_bytes()) {
+            continue;
+        }
+        let expires_at = OffsetDateTime::parse(&link.expires_at, &Rfc3339).map_err(|_| ())?;
+        if link.expired || now >= expires_at {
+            return Err(());
+        }
+        return Ok(link);
+    }
+    Err(())
+}
+
+fn is_dataset_share_path(path: &str) -> bool {
+    let path = path.trim();
+    path == "datasets" || path.starts_with("datasets/")
+}
+
+fn share_lookup_failure(state: &AppState, request: &Request<Body>) -> Response {
+    let retry_after = state
+        .auth_failures
+        .lock()
+        .ok()
+        .and_then(|mut throttle| throttle.record_share(&client_ip(request)));
+    if let Some(retry_after) = retry_after {
+        let mut response = json_error(
+            StatusCode::TOO_MANY_REQUESTS,
+            "too many share access attempts",
+        );
+        response.headers_mut().insert(
+            header::RETRY_AFTER,
+            HeaderValue::from_str(&retry_after_seconds(retry_after).to_string())
+                .unwrap_or_else(|_| HeaderValue::from_static("1")),
+        );
+        return response;
+    }
+    json_error(StatusCode::NOT_FOUND, "not found")
 }
 
 fn read_shares(root: &cap_std::fs::Dir) -> Result<Vec<ShareLink>, ()> {
@@ -1460,11 +1585,20 @@ async fn handle_file(
             return json_error(StatusCode::BAD_REQUEST, "a vault-relative path is required");
         }
     };
-    let root_dir = match open_current_root(&state) {
+    serve_vault_file(&state, &relative, &headers, method)
+}
+
+fn serve_vault_file(
+    state: &AppState,
+    relative: &Path,
+    headers: &HeaderMap,
+    method: Method,
+) -> Response {
+    let root_dir = match open_current_root(state) {
         Ok(root_dir) => root_dir,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
     };
-    let mut file = match root_dir.open(&relative) {
+    let mut file = match root_dir.open(relative) {
         Ok(file) => file,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
     };
@@ -1481,12 +1615,10 @@ async fn handle_file(
         Ok(sample) => sample,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
     };
+    let disposition = format!("inline; filename=\"{}\"", safe_filename(relative));
     let mut common = vec![
-        (header::CONTENT_TYPE, content_type(&relative, &sample)),
-        (
-            header::CONTENT_DISPOSITION,
-            format!("inline; filename=\"{}\"", safe_filename(&relative)),
-        ),
+        (header::CONTENT_TYPE, content_type(relative, &sample)),
+        (header::CONTENT_DISPOSITION, disposition.clone()),
         (header::ACCEPT_RANGES, "bytes".to_owned()),
         (header::LAST_MODIFIED, fmt_http_date(modified)),
     ];
@@ -1496,7 +1628,14 @@ async fn handle_file(
         .and_then(|value| parse_http_date(value).ok())
         && modified <= value
     {
-        return bytes_response(StatusCode::NOT_MODIFIED, common, Vec::new());
+        return bytes_response(
+            StatusCode::NOT_MODIFIED,
+            vec![
+                (header::CONTENT_DISPOSITION, disposition),
+                (header::LAST_MODIFIED, fmt_http_date(modified)),
+            ],
+            Vec::new(),
+        );
     }
 
     let range = if length == 0 {
@@ -1509,11 +1648,11 @@ async fn handle_file(
         {
             Some(Ok(range)) => Some(range),
             Some(Err(RangeError::Invalid)) => {
-                return range_error_response(&relative, "invalid range", None);
+                return range_error_response(relative, "invalid range", None);
             }
             Some(Err(RangeError::NoOverlap)) => {
                 return range_error_response(
-                    &relative,
+                    relative,
                     "invalid range: failed to overlap",
                     Some(format!("bytes */{length}")),
                 );
@@ -1537,13 +1676,10 @@ async fn handle_file(
     if method == Method::HEAD {
         return bytes_response(status, common, Vec::new());
     }
-    if body_length > MAX_NOTE_BYTES {
-        return json_error(
-            StatusCode::PAYLOAD_TOO_LARGE,
-            "file exceeds the response size limit",
-        );
-    }
     let start = range.map_or(0, |(start, _)| start);
+    if body_length > MAX_NOTE_BYTES {
+        return bytes_response(status, common, stream_file(file, start, body_length));
+    }
     let body = match read_at(&mut file, start, body_length) {
         Ok(body) => body,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
@@ -1715,6 +1851,50 @@ fn read_at(file: &mut cap_std::fs::File, start: u64, length: u64) -> io::Result<
     let mut body = vec![0; length];
     file.read_exact(&mut body)?;
     Ok(body)
+}
+
+fn stream_file(file: cap_std::fs::File, start: u64, length: u64) -> Body {
+    let (sender, receiver) = tokio::sync::mpsc::channel(2);
+    tokio::task::spawn_blocking(move || {
+        let mut file = file;
+        if let Err(error) = file.seek(SeekFrom::Start(start)) {
+            let _ = sender.blocking_send(Err(error));
+            return;
+        }
+        let mut remaining = length;
+        while remaining > 0 {
+            let mut chunk = vec![0; remaining.min(64 * 1024) as usize];
+            match file.read(&mut chunk) {
+                Ok(0) => {
+                    let _ =
+                        sender.blocking_send(Err(io::Error::from(io::ErrorKind::UnexpectedEof)));
+                    return;
+                }
+                Ok(read) => {
+                    remaining -= read as u64;
+                    chunk.truncate(read);
+                    if sender.blocking_send(Ok(chunk)).is_err() {
+                        return;
+                    }
+                }
+                Err(error) => {
+                    let _ = sender.blocking_send(Err(error));
+                    return;
+                }
+            }
+        }
+    });
+    Body::from_stream(BodyReceiver(receiver))
+}
+
+struct BodyReceiver<T>(tokio::sync::mpsc::Receiver<T>);
+
+impl<T> futures_core::Stream for BodyReceiver<T> {
+    type Item = T;
+
+    fn poll_next(self: Pin<&mut Self>, context: &mut Context<'_>) -> Poll<Option<T>> {
+        self.get_mut().0.poll_recv(context)
+    }
 }
 
 async fn handle_not_found() -> Response {
@@ -2321,6 +2501,53 @@ mod tests {
             &br#"{"error":"failed to list shares"}
 "#[..]
         );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn public_share_streams_files_over_the_buffer_limit() {
+        let root = std::env::temp_dir().join(format!(
+            "symdesk-protocol-share-large-{}-{}",
+            std::process::id(),
+            unix_nanos(SystemTime::now())
+        ));
+        fs::create_dir_all(root.join(".symdesk/server")).unwrap();
+        let file = fs::File::create(root.join("large.bin")).unwrap();
+        file.set_len(MAX_NOTE_BYTES + 1).unwrap();
+        fs::write(
+            root.join(".symdesk/server/shares.json"),
+            serde_json::to_vec(&[ShareLink {
+                id: "large".to_owned(),
+                path: "large.bin".to_owned(),
+                created_by: "admin".to_owned(),
+                created_at: "2026-01-01T00:00:00Z".to_owned(),
+                expires_at: "2099-01-01T00:00:00Z".to_owned(),
+                token_hash: symdesk_vault::sha256_hex(b"large-share-token"),
+                expired: false,
+                revoked_at: None,
+            }])
+            .unwrap(),
+        )
+        .unwrap();
+
+        let response = router(Arc::new(test_state(
+            &root,
+            "a sufficiently long test token",
+        )))
+        .oneshot(
+            Request::builder()
+                .uri("/s/large-share-token")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = to_bytes(response.into_body(), (MAX_NOTE_BYTES + 1) as usize)
+            .await
+            .unwrap();
+        assert_eq!(body.len(), (MAX_NOTE_BYTES + 1) as usize);
+        assert!(body.iter().all(|byte| *byte == 0));
         fs::remove_dir_all(root).unwrap();
     }
 
@@ -3086,6 +3313,18 @@ mod tests {
         assert!(throttle.record("127.0.0.2").is_none());
         assert_eq!(retry_after_seconds(Duration::from_millis(1_001)), 2);
         assert_eq!(retry_after_seconds(Duration::from_secs(2)), 2);
+    }
+
+    #[test]
+    fn share_failures_use_an_independent_bucket() {
+        let mut throttle = AuthThrottle::default();
+        for _ in 0..AUTH_MAX {
+            throttle.record("127.0.0.1");
+        }
+        assert!(throttle.record_share("127.0.0.1").is_none());
+        assert!(throttle.record_share("127.0.0.1").is_none());
+        assert_eq!(throttle.record_share("127.0.0.1"), Some(SHARE_BLOCK));
+        assert!(throttle.record("127.0.0.1").is_some());
     }
 
     #[test]

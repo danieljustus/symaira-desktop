@@ -11,6 +11,7 @@ publish = false
 cap-std.workspace = true
 axum.workspace = true
 flate2.workspace = true
+futures-core = "=0.3.34"
 hyper.workspace = true
 hyper-util.workspace = true
 httpdate.workspace = true

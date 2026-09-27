@@ -565,6 +565,81 @@
       "path": "/api/v1/share",
       "auth": "valid",
       "body": "{\"path\":\"Hello.md\",\"expiry\":24}"
+    },
+    {
+      "id": "share-access-valid",
+      "method": "GET",
+      "path": "/s/share-valid-token",
+      "populate_share_access": true
+    },
+    {
+      "id": "share-access-head",
+      "method": "HEAD",
+      "path": "/s/share-valid-token"
+    },
+    {
+      "id": "share-access-range",
+      "method": "GET",
+      "path": "/s/share-valid-token",
+      "headers": {
+        "Range": "bytes=0-4"
+      }
+    },
+    {
+      "id": "share-access-not-modified",
+      "method": "GET",
+      "path": "/s/share-valid-token",
+      "headers": {
+        "If-Modified-Since": "Fri, 02 Jan 2026 03:04:05 GMT"
+      }
+    },
+    {
+      "id": "share-access-dataset",
+      "method": "GET",
+      "path": "/s/share-dataset-token"
+    },
+    {
+      "id": "share-access-missing-file",
+      "method": "GET",
+      "path": "/s/share-missing-token"
+    },
+    {
+      "id": "share-access-symlink-escape",
+      "method": "GET",
+      "path": "/s/share-escape-token"
+    },
+    {
+      "id": "share-access-large-file",
+      "method": "GET",
+      "path": "/s/share-large-token"
+    },
+    {
+      "id": "share-access-large-range",
+      "method": "GET",
+      "path": "/s/share-large-token",
+      "headers": {
+        "Range": "bytes=1-8388609"
+      }
+    },
+    {
+      "id": "share-access-invalid-first",
+      "method": "GET",
+      "path": "/s/unknown-share-token"
+    },
+    {
+      "id": "share-access-expired",
+      "method": "GET",
+      "path": "/s/share-expired-token"
+    },
+    {
+      "id": "share-access-revoked-threshold",
+      "method": "GET",
+      "path": "/s/share-revoked-token"
+    },
+    {
+      "id": "share-access-invalid-blocked",
+      "method": "GET",
+      "path": "/s/unknown-share-token"
     }
   ]
 }

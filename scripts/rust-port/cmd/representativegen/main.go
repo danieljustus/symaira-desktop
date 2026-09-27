@@ -52,17 +52,18 @@ type httpSuite struct {
 }
 
 type httpCase struct {
-	ID             string            `json:"id"`
-	Method         string            `json:"method"`
-	Path           string            `json:"path"`
-	Auth           string            `json:"auth,omitempty"`
-	Headers        map[string]string `json:"headers,omitempty"`
-	Body           string            `json:"body,omitempty"`
-	BodyRepeat     int               `json:"body_repeat,omitempty"`
-	MultipartFile  string            `json:"multipart_file,omitempty"`
-	EmptyNotebooks bool              `json:"empty_notebooks,omitempty"`
-	PopulateJobs   bool              `json:"populate_jobs,omitempty"`
-	PopulateShares bool              `json:"populate_shares,omitempty"`
+	ID                  string            `json:"id"`
+	Method              string            `json:"method"`
+	Path                string            `json:"path"`
+	Auth                string            `json:"auth,omitempty"`
+	Headers             map[string]string `json:"headers,omitempty"`
+	Body                string            `json:"body,omitempty"`
+	BodyRepeat          int               `json:"body_repeat,omitempty"`
+	MultipartFile       string            `json:"multipart_file,omitempty"`
+	EmptyNotebooks      bool              `json:"empty_notebooks,omitempty"`
+	PopulateJobs        bool              `json:"populate_jobs,omitempty"`
+	PopulateShares      bool              `json:"populate_shares,omitempty"`
+	PopulateShareAccess bool              `json:"populate_share_access,omitempty"`
 }
 
 func main() {

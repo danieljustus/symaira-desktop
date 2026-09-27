@@ -2728,22 +2728,81 @@ async fn request_timeout(request: Request<Body>, next: Next) -> Response {
     let Some(timeout) = request_timeout_for(request.method(), request.uri().path()) else {
         return next.run(request).await;
     };
-    match tokio::time::timeout(timeout, next.run(request)).await {
+    let is_ai_stream = is_ai_stream_route(request.method(), request.uri().path());
+    let deadline = tokio::time::Instant::now() + timeout;
+    let response = match tokio::time::timeout_at(deadline, next.run(request)).await {
         Ok(response) => response,
-        Err(_) => json_error(StatusCode::REQUEST_TIMEOUT, "request timed out"),
+        Err(_) => return json_error(StatusCode::REQUEST_TIMEOUT, "request timed out"),
+    };
+    if is_ai_stream {
+        let (parts, body) = response.into_parts();
+        let timed_body = ResponseDeadlineStream::new(body.into_data_stream(), deadline);
+        Response::from_parts(parts, Body::from_stream(timed_body))
+    } else {
+        response
     }
+}
+
+fn is_ai_stream_route(method: &Method, path: &str) -> bool {
+    *method == Method::POST && matches!(path, "/api/v1/ai/ask" | "/api/v1/ai/transform")
 }
 
 fn request_timeout_for(method: &Method, path: &str) -> Option<Duration> {
     if *method == Method::POST && path == "/api/v1/command" {
         return None;
     }
-    if *method == Method::POST && matches!(path, "/api/v1/ai/ask" | "/api/v1/ai/transform") {
+    if is_ai_stream_route(method, path) {
         // Go's HTTP server permits five minutes for the response write. Keep
         // the body read bounded separately by READ_TIMEOUT in each AI handler.
         return Some(HTTP_WRITE_TIMEOUT);
     }
     Some(READ_TIMEOUT)
+}
+
+struct ResponseDeadlineStream {
+    inner: axum::body::BodyDataStream,
+    deadline: Pin<Box<tokio::time::Sleep>>,
+    finished: bool,
+}
+
+impl ResponseDeadlineStream {
+    fn new(inner: axum::body::BodyDataStream, deadline: tokio::time::Instant) -> Self {
+        Self {
+            inner,
+            deadline: Box::pin(tokio::time::sleep_until(deadline)),
+            finished: false,
+        }
+    }
+}
+
+impl Stream for ResponseDeadlineStream {
+    type Item = Result<Bytes, io::Error>;
+
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        let this = self.as_mut().get_mut();
+        if this.finished {
+            return Poll::Ready(None);
+        }
+        if std::future::Future::poll(this.deadline.as_mut(), context).is_ready() {
+            this.finished = true;
+            return Poll::Ready(Some(Err(io::Error::new(
+                io::ErrorKind::TimedOut,
+                "HTTP response write timed out",
+            ))));
+        }
+        match Pin::new(&mut this.inner).poll_next(context) {
+            Poll::Ready(Some(Ok(bytes))) => Poll::Ready(Some(Ok(bytes))),
+            Poll::Ready(Some(Err(error))) => {
+                this.finished = true;
+                Poll::Ready(Some(Err(io::Error::other(error.to_string()))))
+            }
+            Poll::Ready(None) => {
+                this.finished = true;
+                Poll::Ready(None)
+            }
+            Poll::Pending => Poll::Pending,
+        }
+    }
 }
 
 async fn handle_health(method: Method) -> Response {
@@ -5174,6 +5233,16 @@ async fn shutdown_signal() {
 mod tests {
     use super::*;
 
+    struct PendingBody;
+
+    impl Stream for PendingBody {
+        type Item = Result<Bytes, io::Error>;
+
+        fn poll_next(self: Pin<&mut Self>, _context: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+            Poll::Pending
+        }
+    }
+
     #[test]
     fn configured_ollama_endpoint_is_restricted_to_loopback_http() {
         for (input, expected) in [
@@ -6404,23 +6473,25 @@ mod tests {
 
     #[tokio::test]
     async fn ai_request_body_timeout_returns_bounded_408() {
-        struct PendingBody;
-        impl futures_core::Stream for PendingBody {
-            type Item = Result<Bytes, io::Error>;
-
-            fn poll_next(
-                self: std::pin::Pin<&mut Self>,
-                _context: &mut std::task::Context<'_>,
-            ) -> std::task::Poll<Option<Self::Item>> {
-                std::task::Poll::Pending
-            }
-        }
-
         let body = Body::from_stream(PendingBody);
         let error = read_ai_request_body_with_timeout(body, 32, Duration::from_millis(1))
             .await
             .expect_err("pending request body must time out");
         assert!(matches!(error, AiBodyReadError::Timeout));
+    }
+
+    #[tokio::test]
+    async fn ai_response_body_times_out_when_provider_stalls() {
+        let body = Body::from_stream(PendingBody);
+        let deadline = tokio::time::Instant::now() + Duration::from_millis(1);
+        let body = Body::from_stream(ResponseDeadlineStream::new(
+            body.into_data_stream(),
+            deadline,
+        ));
+        let result = tokio::time::timeout(Duration::from_millis(100), to_bytes(body, 32))
+            .await
+            .expect("deadline stream must wake the body reader");
+        assert!(result.is_err(), "timed out body must become a body error");
     }
 
     #[test]

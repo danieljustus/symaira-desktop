@@ -872,7 +872,7 @@ fn local_ollama_endpoint(base_url: &str) -> Option<hyper::Uri> {
 fn build_ai_ask_prompt(
     language: &str,
     query: &str,
-    documents: &[(String, String, String, f64)],
+    documents: &[(String, String, String, String, f64)],
 ) -> String {
     let mut prompt = String::from(
         "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]].",
@@ -884,7 +884,7 @@ fn build_ai_ask_prompt(
         prompt.push_str(language);
         prompt.push_str(".\n\n");
     }
-    for (path, title, snippet, _) in documents.iter().take(5) {
+    for (_, path, title, snippet, _) in documents.iter().take(5) {
         let snippet = if snippet.len() > 1500 {
             String::from_utf8_lossy(&snippet.as_bytes()[..1500]).into_owned()
         } else {
@@ -1227,7 +1227,9 @@ async fn handle_ai_ask(
             );
         }
     };
-    let mut documents: Vec<(String, String, String, f64)> = Vec::new();
+    // Keep the normalized logical path for ACL/notebook comparisons, plus the
+    // native filepath.Rel spelling for Go-compatible citations and prompts.
+    let mut documents: Vec<(String, String, String, String, f64)> = Vec::new();
     let mut scoped_paths: Option<Vec<String>> = None;
     if input.notebook.is_empty() {
         let hits = match sidecar.search(&input.query) {
@@ -1245,10 +1247,10 @@ async fn handle_ai_ask(
                 // A stale index row outside the vault must never become context.
                 _ => continue,
             };
-            let Some(path) = vault_relative_markdown_path(&relative) else {
+            let Some((path, native_path)) = vault_relative_paths(&relative) else {
                 continue;
             };
-            documents.push((path, hit.title, hit.snippet, 0.0));
+            documents.push((path, native_path, hit.title, hit.snippet, 0.0));
         }
     } else {
         let mut notebook_path = input.notebook.clone();
@@ -1314,11 +1316,14 @@ async fn handle_ai_ask(
                 continue;
             };
             absolute_paths.push(absolute_path);
-            sources.push((path, document.title, document.body));
+            let Some((path, native_path)) = vault_relative_paths(Path::new(&path)) else {
+                continue;
+            };
+            sources.push((path, native_path, document.title, document.body));
         }
         let in_scope = sources
             .iter()
-            .map(|(path, _, _)| path.clone())
+            .map(|(path, _, _, _)| path.clone())
             .collect::<Vec<_>>();
         let hits = match sidecar.search_scoped(&input.query, &absolute_paths) {
             Ok(hits) => hits,
@@ -1334,15 +1339,15 @@ async fn handle_ai_ask(
             let Some(relative) = path_relative_to_root(&state.vault_root, &hit.path) else {
                 continue;
             };
-            let Some(path) = vault_relative_markdown_path(&relative) else {
+            let Some((path, native_path)) = vault_relative_paths(&relative) else {
                 continue;
             };
-            if sources.iter().any(|(source, _, _)| *source == path) {
+            if sources.iter().any(|(source, _, _, _)| *source == path) {
                 matched.insert(path.clone());
-                documents.push((path, hit.title, hit.snippet, 1.0));
+                documents.push((path, native_path, hit.title, hit.snippet, 1.0));
             }
         }
-        for (path, title, body) in sources {
+        for (path, native_path, title, body) in sources {
             if matched.contains(&path) {
                 continue;
             }
@@ -1351,14 +1356,14 @@ async fn handle_ai_ask(
             } else {
                 body
             };
-            documents.push((path, title, excerpt, 0.0));
+            documents.push((path, native_path, title, excerpt, 0.0));
         }
         scoped_paths = Some(in_scope);
     }
 
     let paths = documents
         .iter()
-        .map(|(path, _, _, _)| path.clone())
+        .map(|(path, _, _, _, _)| path.clone())
         .collect::<Vec<_>>();
     let allowed = if role.is_admin() {
         paths.iter().cloned().collect()
@@ -1369,7 +1374,7 @@ async fn handle_ai_ask(
     };
     // Retain ranked order while filtering. Denied documents cannot appear as
     // citations or fallback links.
-    documents.retain(|(path, _, _, _)| allowed.contains(path));
+    documents.retain(|(path, _, _, _, _)| allowed.contains(path));
     documents.truncate(MAX_AI_CONTEXT_DOCS);
     let read_paths = scoped_paths.map(|paths| {
         paths
@@ -1398,7 +1403,7 @@ async fn handle_ai_ask(
             return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
         }
     }
-    for (path, title, snippet, score) in &documents {
+    for (_, path, title, snippet, score) in &documents {
         if let Err(error) = push_ai_ask_event(
             &mut events,
             AiAskEvent {
@@ -1456,7 +1461,7 @@ async fn handle_ai_ask(
         ) {
             return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
         }
-        for (path, _, _, _) in documents.iter().take(3) {
+        for (_, path, _, _, _) in documents.iter().take(3) {
             let answer = format!("- [[{path}]]\n");
             if let Err(error) = push_ai_ask_event(
                 &mut events,
@@ -1959,17 +1964,20 @@ fn safe_vault_relative_path(path: PathBuf) -> Option<PathBuf> {
     .then_some(path)
 }
 
-// Markdown links and the Go vault contract use `/` separators on every host.
-// Keep filesystem paths native until after root containment has been proven.
-fn vault_relative_markdown_path(path: &Path) -> Option<String> {
-    path.components()
+// Preserve a normalized logical key for internal scope checks and the native
+// relative spelling Go emits through filepath.Rel for citations and prompts.
+// Callers must first prove that `path` is relative to the vault root.
+fn vault_relative_paths(path: &Path) -> Option<(String, String)> {
+    let parts = path
+        .components()
         .map(|component| match component {
             Component::Normal(part) => part.to_str(),
             _ => None,
         })
         .collect::<Option<Vec<_>>>()
-        .filter(|parts| !parts.is_empty())
-        .map(|parts| parts.join("/"))
+        .filter(|parts| !parts.is_empty())?;
+    let native = path.to_string_lossy().into_owned();
+    (!native.is_empty()).then(|| (parts.join("/"), native))
 }
 
 fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
@@ -5346,11 +5354,18 @@ mod tests {
     }
 
     #[test]
-    fn ask_markdown_links_use_forward_slashes_on_every_platform() {
+    fn ask_paths_keep_logical_and_native_spellings_separate() {
         let relative = Path::new("nested").join("Note.md");
         assert_eq!(
-            vault_relative_markdown_path(&relative).as_deref(),
-            Some("nested/Note.md")
+            vault_relative_paths(&relative),
+            Some((
+                "nested/Note.md".to_owned(),
+                relative.to_string_lossy().into_owned()
+            ))
+        );
+        assert_eq!(
+            vault_relative_paths(Path::new("nested/../outside.md")),
+            None
         );
     }
 

@@ -437,6 +437,34 @@
       "auth": "valid"
     },
     {
+      "id": "worker-input-missing-auth",
+      "method": "GET",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003"
+    },
+    {
+      "id": "worker-input-missing-job",
+      "method": "GET",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
+      "auth": "valid"
+    },
+    {
+      "id": "worker-input-valid",
+      "method": "GET",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
+      "auth": "valid",
+      "populate_jobs": true
+    },
+    {
+      "id": "worker-input-head-range",
+      "method": "HEAD",
+      "path": "/api/v1/worker/input?id=00000000000000000000000000000003",
+      "auth": "valid",
+      "headers": {
+        "Range": "bytes=0-5"
+      },
+      "populate_jobs": true
+    },
+    {
       "id": "ingest-missing-auth",
       "method": "POST",
       "path": "/api/v1/ingest",

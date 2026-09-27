@@ -120,6 +120,7 @@ struct FileQuery {
 struct JobQuery {
     limit: Option<String>,
     offset: Option<String>,
+    id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -294,6 +295,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/files", get(handle_file).put(handle_put_file))
         .route("/api/v1/jobs", get(handle_jobs))
         .route("/api/v1/jobs/retry", axum::routing::post(handle_retry_job))
+        .route("/api/v1/worker/input", get(handle_worker_input))
         .route(
             "/api/v1/ingest",
             post(handle_ingest).layer(DefaultBodyLimit::max(MAX_MULTIPART_REQUEST_BYTES)),
@@ -1038,6 +1040,34 @@ async fn handle_jobs(
     )
 }
 
+async fn handle_worker_input(
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<JobQuery>,
+    headers: HeaderMap,
+    method: Method,
+) -> Response {
+    let id = query.id.as_deref().unwrap_or_default();
+    if !valid_job_id(id) {
+        return json_error(StatusCode::NOT_FOUND, "job not found");
+    }
+    let root = match open_current_root(&state) {
+        Ok(root) => root,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "job not found"),
+    };
+    let job = match read_job_record(&root, id) {
+        Ok(job) => job,
+        Err(_) => return json_error(StatusCode::NOT_FOUND, "job not found"),
+    };
+    let relative = match confined_path(&state, &job.source_path) {
+        Ok(relative) => relative,
+        Err(PathError::Invalid) => {
+            return json_error(StatusCode::BAD_REQUEST, "a vault-relative path is required");
+        }
+    };
+    let filename = safe_filename_value(&job.original_name);
+    serve_vault_file_as(&state, &relative, &headers, method, "attachment", &filename)
+}
+
 async fn handle_ingest(
     State(state): State<Arc<AppState>>,
     multipart: Result<Multipart, axum::extract::multipart::MultipartRejection>,
@@ -1328,6 +1358,38 @@ fn valid_job_id(id: &str) -> bool {
     id.len() == 32 && id.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
+fn read_job_record(root: &cap_std::fs::Dir, id: &str) -> Result<JobRecord, String> {
+    let directory = root
+        .open_dir(".symdesk/server/jobs")
+        .map_err(|error| error.to_string())?;
+    let mut options = cap_std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use cap_std::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NONBLOCK);
+    }
+    let name = format!("{id}.json");
+    let file = directory
+        .open_with(&name, &options)
+        .map_err(|error| error.to_string())?;
+    let metadata = file.metadata().map_err(|error| error.to_string())?;
+    if !metadata.is_file() {
+        return Err("job file is not a regular file".to_owned());
+    }
+    if metadata.len() > 1 << 20 {
+        return Err("job file exceeds 1 MiB".to_owned());
+    }
+    let mut bytes = Vec::with_capacity(metadata.len() as usize);
+    file.take((1 << 20) + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|error| error.to_string())?;
+    if bytes.len() > 1 << 20 {
+        return Err("job file exceeds 1 MiB".to_owned());
+    }
+    serde_json::from_slice(&bytes).map_err(|error| error.to_string())
+}
+
 fn read_jobs(state: &AppState) -> Result<Vec<JobRecord>, String> {
     let root = open_current_root(state).map_err(|error| error.to_string())?;
     let directory = match root.open_dir(".symdesk/server/jobs") {
@@ -1594,6 +1656,18 @@ fn serve_vault_file(
     headers: &HeaderMap,
     method: Method,
 ) -> Response {
+    let filename = safe_filename(relative);
+    serve_vault_file_as(state, relative, headers, method, "inline", &filename)
+}
+
+fn serve_vault_file_as(
+    state: &AppState,
+    relative: &Path,
+    headers: &HeaderMap,
+    method: Method,
+    disposition: &str,
+    filename: &str,
+) -> Response {
     let root_dir = match open_current_root(state) {
         Ok(root_dir) => root_dir,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
@@ -1616,7 +1690,7 @@ fn serve_vault_file(
         Ok(sample) => sample,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
     };
-    let disposition = format!("inline; filename=\"{}\"", safe_filename(relative));
+    let disposition = format!("{disposition}; filename={filename:?}");
     let mut common = vec![
         (header::CONTENT_TYPE, content_type(relative, &sample)),
         (header::CONTENT_DISPOSITION, disposition.clone()),
@@ -2232,12 +2306,17 @@ fn safe_filename(path: &Path) -> String {
     let value = path
         .file_name()
         .and_then(|name| name.to_str())
-        .unwrap_or("document.bin")
-        .trim();
+        .unwrap_or_default();
+    safe_filename_value(value)
+}
+
+fn safe_filename_value(value: &str) -> String {
+    let value = value.replace('\\', "/");
+    let value = value.rsplit('/').next().unwrap_or_default().trim();
     if value.is_empty() || value == "." {
         "document.bin".to_owned()
     } else {
-        value.replace('"', "_")
+        value.to_owned()
     }
 }
 

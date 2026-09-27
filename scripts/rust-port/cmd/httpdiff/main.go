@@ -287,7 +287,7 @@ func run() (runErr error) {
 
 func createFixtureVault(root string) string {
 	vault := filepath.Join(root, "vault")
-	for _, dir := range []string{vault, filepath.Join(vault, "notebooks"), filepath.Join(vault, "nested")} {
+	for _, dir := range []string{vault, filepath.Join(vault, "notebooks"), filepath.Join(vault, "nested"), filepath.Join(vault, "inbox")} {
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			fatal("fixture directory: %v", err)
 		}
@@ -299,6 +299,7 @@ func createFixtureVault(root string) string {
 		"notebooks/ignored.md":  "---\ntype: note\ntitle: Not a notebook\n---\n",
 		"Hello.md":              "---\ntitle: Hello\n---\nBody",
 		"nested/Note.md":        "nested",
+		"inbox/c.png":           "worker input bytes",
 	}
 	modified := time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)
 	for name, body := range files {

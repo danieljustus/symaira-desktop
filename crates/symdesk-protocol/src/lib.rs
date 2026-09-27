@@ -1240,8 +1240,8 @@ async fn handle_ai_ask(
             }
         };
         for hit in hits {
-            let relative = match Path::new(&hit.path).strip_prefix(&state.vault_root) {
-                Ok(relative) if !relative.as_os_str().is_empty() => relative,
+            let relative = match path_relative_to_root(&state.vault_root, &hit.path) {
+                Some(relative) if !relative.as_os_str().is_empty() => relative,
                 // A stale index row outside the vault must never become context.
                 _ => continue,
             };
@@ -1331,7 +1331,7 @@ async fn handle_ai_ask(
         };
         let mut matched = std::collections::HashSet::with_capacity(hits.len());
         for hit in hits {
-            let Ok(relative) = Path::new(&hit.path).strip_prefix(&state.vault_root) else {
+            let Some(relative) = path_relative_to_root(&state.vault_root, &hit.path) else {
                 continue;
             };
             let Some(path) = relative.to_str().map(str::to_owned) else {
@@ -1932,6 +1932,39 @@ fn is_ask_table_separator(line: &str) -> bool {
             let trimmed = cell.trim_matches(['-', ':']);
             trimmed.trim().is_empty()
         })
+}
+
+fn path_relative_to_root(root: &Path, path: &str) -> Option<PathBuf> {
+    Path::new(path)
+        .strip_prefix(root)
+        .ok()
+        .map(Path::to_path_buf)
+        .or_else(|| {
+            let normalized_root = strip_windows_verbatim_prefix(root);
+            let normalized_path = strip_windows_verbatim_prefix(Path::new(path));
+            normalized_path
+                .strip_prefix(normalized_root)
+                .ok()
+                .map(Path::to_path_buf)
+        })
+}
+
+fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
+    let Some(path) = path.to_str() else {
+        return path.to_path_buf();
+    };
+    #[cfg(windows)]
+    {
+        const UNC_PREFIX: &str = r"\\?\UNC\";
+        const VERBATIM_PREFIX: &str = r"\\?\";
+        if let Some(rest) = path.strip_prefix(UNC_PREFIX) {
+            return PathBuf::from(format!(r"\\{rest}"));
+        }
+        if let Some(rest) = path.strip_prefix(VERBATIM_PREFIX) {
+            return PathBuf::from(rest);
+        }
+    }
+    PathBuf::from(path)
 }
 
 fn ai_ask_retrieval_index_is_empty(vault_root: &Path) -> Result<bool, String> {
@@ -5287,6 +5320,16 @@ mod tests {
             let got = local_ollama_endpoint(input).map(|uri| uri.to_string());
             assert_eq!(got.as_deref(), expected, "endpoint {input}");
         }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn ask_path_mapping_keeps_windows_sidecar_symlink_paths() {
+        let root = Path::new(r"\\?\C:\vault");
+        assert_eq!(
+            path_relative_to_root(root, r"C:\vault\internal.md"),
+            Some(PathBuf::from("internal.md"))
+        );
     }
 
     #[test]

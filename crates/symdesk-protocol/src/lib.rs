@@ -88,6 +88,7 @@ const READ_TIMEOUT: Duration = Duration::from_secs(120);
 const COMMAND_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 const AI_PROVIDER_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 const HTTP_WRITE_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+const HTTP_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(15);
 const AI_PROVIDER_MAX_LINE_BYTES: usize = 4 << 20;
 const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(10);
 const HTTP_MAX_HEADER_BYTES: usize = 1 << 20;
@@ -396,7 +397,9 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
         };
         let Some(accepted) = accepted else {
             drop(shutdown_tx);
-            while active.join_next().await.is_some() {}
+            if !drain_active_connections(&mut active, HTTP_SHUTDOWN_TIMEOUT).await {
+                return Err("HTTP server shutdown: deadline exceeded".to_owned());
+            }
             break;
         };
         let (io, remote_addr) = match accepted {
@@ -434,6 +437,24 @@ pub async fn run(config: HttpConfig) -> Result<(), String> {
         });
     }
     Ok(())
+}
+
+async fn drain_active_connections(
+    active: &mut tokio::task::JoinSet<()>,
+    timeout: Duration,
+) -> bool {
+    if tokio::time::timeout(timeout, async {
+        while active.join_next().await.is_some() {}
+    })
+    .await
+    .is_ok()
+    {
+        return true;
+    }
+
+    active.abort_all();
+    while active.join_next().await.is_some() {}
+    false
 }
 
 fn refresh_server_index(vault_root: &Path) -> Result<(), String> {
@@ -6456,6 +6477,7 @@ mod tests {
         assert_eq!(READ_TIMEOUT, Duration::from_secs(120));
         assert_eq!(HTTP_HEADER_READ_TIMEOUT, Duration::from_secs(10));
         assert_eq!(HTTP_WRITE_TIMEOUT, Duration::from_secs(5 * 60));
+        assert_eq!(HTTP_SHUTDOWN_TIMEOUT, Duration::from_secs(15));
         assert_eq!(
             request_timeout_for(&Method::POST, "/api/v1/ai/ask"),
             Some(HTTP_WRITE_TIMEOUT)
@@ -6469,6 +6491,29 @@ mod tests {
             Some(READ_TIMEOUT)
         );
         assert_eq!(request_timeout_for(&Method::POST, "/api/v1/command"), None);
+    }
+
+    #[tokio::test]
+    async fn shutdown_drain_waits_for_completed_connections() {
+        let mut active = tokio::task::JoinSet::new();
+        active.spawn(async {});
+
+        assert!(drain_active_connections(&mut active, Duration::from_secs(1)).await);
+        assert!(active.is_empty());
+    }
+
+    #[tokio::test]
+    async fn shutdown_drain_aborts_stuck_connections_at_deadline() {
+        let mut active = tokio::task::JoinSet::new();
+        let (started_tx, started_rx) = tokio::sync::oneshot::channel();
+        active.spawn(async move {
+            let _ = started_tx.send(());
+            std::future::pending::<()>().await;
+        });
+        started_rx.await.expect("stuck connection task must start");
+
+        assert!(!drain_active_connections(&mut active, Duration::from_millis(1)).await);
+        assert!(active.is_empty());
     }
 
     #[tokio::test]

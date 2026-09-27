@@ -87,7 +87,6 @@ const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
 const COMMAND_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 const AI_PROVIDER_TIMEOUT: Duration = Duration::from_secs(5 * 60);
-const AI_ASK_PROVIDER_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 const AI_PROVIDER_MAX_LINE_BYTES: usize = 4 << 20;
 const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(10);
 const HTTP_MAX_HEADER_BYTES: usize = 1 << 20;
@@ -1475,7 +1474,7 @@ async fn handle_ai_ask(
             &model,
             &prompt,
             &sender,
-            AI_ASK_PROVIDER_TIMEOUT,
+            AI_PROVIDER_TIMEOUT,
             true,
         )
         .await

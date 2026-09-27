@@ -13,7 +13,8 @@ axum.workspace = true
 flate2.workspace = true
 futures-core = "=0.3.34"
 hyper.workspace = true
-hyper-util.workspace = true
+hyper-util = { workspace = true, features = ["client-legacy"] }
+http-body-util.workspace = true
 httpdate.workspace = true
 getrandom = "=0.4.3"
 notify.workspace = true

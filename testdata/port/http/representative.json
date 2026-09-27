@@ -374,6 +374,30 @@
       "body": "{\"text\":\"short input\"}"
     },
     {
+      "id": "ai-transform-local-ollama-stream",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"short provider input\"}",
+      "provider_ollama": true
+    },
+    {
+      "id": "ai-transform-local-ollama-error",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"provider error input\"}",
+      "provider_failure": true
+    },
+    {
+      "id": "ai-transform-local-ollama-disconnect",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"disconnect provider input\"}",
+      "provider_disconnect": true
+    },
+    {
       "id": "ai-transform-trailing-json",
       "method": "POST",
       "path": "/api/v1/ai/transform",

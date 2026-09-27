@@ -72,6 +72,9 @@ type httpCase struct {
 	PopulateWorkerACL    bool              `json:"populate_worker_acl,omitempty"`
 	PopulateNamedUser    bool              `json:"populate_named_user,omitempty"`
 	RemoveSymlinkEscapes bool              `json:"remove_symlink_escapes,omitempty"`
+	ProviderOllama       bool              `json:"provider_ollama,omitempty"`
+	ProviderDisconnect   bool              `json:"provider_disconnect,omitempty"`
+	ProviderFailure      bool              `json:"provider_failure,omitempty"`
 }
 
 func main() {

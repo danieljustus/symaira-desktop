@@ -17,6 +17,7 @@ import (
 	"mime/multipart"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -60,6 +61,9 @@ type httpCase struct {
 	PopulateWorkerACL    bool              `json:"populate_worker_acl,omitempty"`
 	PopulateNamedUser    bool              `json:"populate_named_user,omitempty"`
 	RemoveSymlinkEscapes bool              `json:"remove_symlink_escapes,omitempty"`
+	ProviderOllama       bool              `json:"provider_ollama,omitempty"`
+	ProviderDisconnect   bool              `json:"provider_disconnect,omitempty"`
+	ProviderFailure      bool              `json:"provider_failure,omitempty"`
 }
 
 type transcript struct {
@@ -142,6 +146,8 @@ func run() (runErr error) {
 	defer func() { _ = os.RemoveAll(harnessRoot) }()
 	leftVault := createFixtureVault(filepath.Join(harnessRoot, "go"))
 	rightVault := createFixtureVault(filepath.Join(harnessRoot, "rust"))
+	provider := startFakeOllama()
+	defer provider.server.Close()
 	leftServer := startServer(*left, leftVault)
 	defer func() {
 		if err := leftServer.stop(); err != nil {
@@ -170,7 +176,34 @@ func run() (runErr error) {
 	if err := rightServer.ready(); err != nil {
 		fatal("Rust readiness: %v", err)
 	}
+	var leftProviderServer, rightProviderServer *runningServer
+	defer func() {
+		if leftProviderServer != nil {
+			if err := leftProviderServer.stop(); err != nil {
+				if runErr == nil {
+					runErr = fmt.Errorf("Go provider cleanup failed: %w", err)
+				} else {
+					runErr = errors.Join(runErr, err)
+				}
+			}
+		}
+		if rightProviderServer != nil {
+			if err := rightProviderServer.stop(); err != nil {
+				if runErr == nil {
+					runErr = fmt.Errorf("Rust provider cleanup failed: %w", err)
+				} else {
+					runErr = errors.Join(runErr, err)
+				}
+			}
+		}
+	}()
 	leftETag, rightETag := "", ""
+	providerCasesRemaining := 0
+	for _, testCase := range suite.Cases {
+		if testCase.ProviderOllama || testCase.ProviderDisconnect || testCase.ProviderFailure {
+			providerCasesRemaining++
+		}
+	}
 	for _, tc := range suite.Cases {
 		if tc.RemoveSymlinkEscapes {
 			for _, vault := range []string{leftVault, rightVault} {
@@ -241,16 +274,74 @@ func run() (runErr error) {
 				}
 			}
 		}
-		leftResult, nextLeftETag, err := leftServer.request(tc, leftETag)
+		leftCurrent, rightCurrent := leftServer, rightServer
+		if tc.ProviderOllama || tc.ProviderDisconnect || tc.ProviderFailure {
+			if leftProviderServer == nil {
+				providerEnv := map[string]string{
+					"SYMDESK_LLM_PROVIDER": "ollama", "SYMDESK_OLLAMA_URL": provider.url,
+					"SYMDESK_OLLAMA_MODEL": "fixture-model",
+				}
+				leftProviderServer = startServerWithEnv(*left, leftVault, providerEnv)
+				rightProviderServer = startServerWithEnv(*right, rightVault, providerEnv)
+				if err := leftProviderServer.ready(); err != nil {
+					fatal("Go provider readiness: %v", err)
+				}
+				if err := rightProviderServer.ready(); err != nil {
+					fatal("Rust provider readiness: %v", err)
+				}
+			}
+			leftCurrent, rightCurrent = leftProviderServer, rightProviderServer
+		}
+		var leftResult, rightResult transcript
+		var nextLeftETag, nextRightETag string
+		if tc.ProviderDisconnect {
+			leftResult, err = leftCurrent.requestDisconnect(tc)
+		} else {
+			leftResult, nextLeftETag, err = leftCurrent.request(tc, leftETag, provider)
+		}
 		if err != nil {
 			fatal("%s Go request: %v", tc.ID, err)
 		}
-		rightResult, nextRightETag, err := rightServer.request(tc, rightETag)
+		if tc.ProviderDisconnect {
+			rightResult, err = rightCurrent.requestDisconnect(tc)
+		} else {
+			rightResult, nextRightETag, err = rightCurrent.request(tc, rightETag, provider)
+		}
 		if err != nil {
 			fatal("%s Rust request: %v", tc.ID, err)
 		}
 		if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
+		}
+		if tc.ProviderOllama {
+			if err := provider.assertRequests(2, "short provider input"); err != nil {
+				fatal("%s fake-provider request: %v", tc.ID, err)
+			}
+		}
+		if tc.ProviderOllama || tc.ProviderDisconnect || tc.ProviderFailure {
+			providerCasesRemaining--
+			if providerCasesRemaining == 0 {
+				if err := leftProviderServer.stop(); err != nil {
+					fatal("Go provider cleanup: %v", err)
+				}
+				if err := rightProviderServer.stop(); err != nil {
+					fatal("Rust provider cleanup: %v", err)
+				}
+				leftProviderServer, rightProviderServer = nil, nil
+			}
+		}
+		if tc.ProviderFailure {
+			if err := provider.assertRequests(2, "provider error input"); err != nil {
+				fatal("%s fake-provider request: %v", tc.ID, err)
+			}
+		}
+		if tc.ProviderDisconnect {
+			if err := provider.assertRequests(2, "disconnect provider input"); err != nil {
+				fatal("%s fake-provider request: %v", tc.ID, err)
+			}
+			if err := provider.assertCancellations(2); err != nil {
+				fatal("%s fake-provider cancellation: %v", tc.ID, err)
+			}
 		}
 		if tc.ID == "healthz-slow-header" || tc.ID == "healthz-large-header" || tc.ID == "healthz-many-headers" {
 			for _, item := range []struct {
@@ -1381,7 +1472,135 @@ type runningServer struct {
 	logs boundedBuffer
 }
 
+type fakeOllamaRequest struct {
+	Model  string `json:"model"`
+	Prompt string `json:"prompt"`
+	Stream bool   `json:"stream"`
+}
+
+type fakeOllama struct {
+	server         *httptest.Server
+	url            string
+	requests       chan fakeOllamaRequest
+	cancellations  chan struct{}
+	continueStream chan struct{}
+}
+
+func startFakeOllama() *fakeOllama {
+	fake := &fakeOllama{
+		requests:       make(chan fakeOllamaRequest, 8),
+		cancellations:  make(chan struct{}, 8),
+		continueStream: make(chan struct{}, 2),
+	}
+	fake.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/api/generate" {
+			http.Error(w, "unexpected provider route", http.StatusNotFound)
+			return
+		}
+		var request fakeOllamaRequest
+		if err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&request); err != nil {
+			http.Error(w, "invalid provider request", http.StatusBadRequest)
+			return
+		}
+		if request.Model != "fixture-model" || !request.Stream || !strings.Contains(request.Prompt, "provider") {
+			http.Error(w, "unexpected provider payload", http.StatusBadRequest)
+			return
+		}
+		fake.requests <- request
+		if strings.Contains(request.Prompt, "provider error input") {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = io.WriteString(w, "fixture provider failure")
+			return
+		}
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		w.WriteHeader(http.StatusOK)
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			return
+		}
+		if strings.Contains(request.Prompt, "disconnect provider input") {
+			_, _ = io.WriteString(w, `{"response":"partial","done":false}`+"\n")
+			flusher.Flush()
+			<-r.Context().Done()
+			fake.cancellations <- struct{}{}
+			return
+		}
+		_, _ = io.WriteString(w, `{"response":"first","done":false}`+"\n")
+		flusher.Flush()
+		if strings.Contains(request.Prompt, "short provider input") {
+			<-fake.continueStream
+		}
+		for _, line := range []string{
+			`{"response":" second","done":false}` + "\n",
+			`{"response":"","done":true}` + "\n",
+		} {
+			_, _ = io.WriteString(w, line)
+			flusher.Flush()
+		}
+	}))
+	fake.url = fake.server.URL
+	return fake
+}
+
+func (f *fakeOllama) assertRequests(count int, text string) error {
+	wantPrompt := "Summarize the following text concisely. Return only the summary, without introductory remarks. Answer in the language of the input text as pure Markdown text.\n\n---\n" + text + "\n---\n"
+	for index := range count {
+		select {
+		case request := <-f.requests:
+			if request.Model != "fixture-model" || request.Prompt != wantPrompt || !request.Stream {
+				return fmt.Errorf("request %d = %#v, want model fixture-model, exact transform prompt, stream=true", index+1, request)
+			}
+		case <-time.After(3 * time.Second):
+			return fmt.Errorf("received %d of %d expected provider requests", index, count)
+		}
+	}
+	return nil
+}
+
+func (f *fakeOllama) assertCancellations(count int) error {
+	for index := range count {
+		select {
+		case <-f.cancellations:
+		case <-time.After(3 * time.Second):
+			return fmt.Errorf("observed %d of %d expected provider cancellations", index, count)
+		}
+	}
+	return nil
+}
+
+func (s *runningServer) requestDisconnect(tc httpCase) (transcript, error) {
+	request, err := http.NewRequest(tc.Method, s.base+tc.Path, strings.NewReader(tc.Body))
+	if err != nil {
+		return transcript{}, err
+	}
+	if tc.Auth == "valid" {
+		request.Header.Set("Authorization", "Bearer "+token)
+	}
+	client := &http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{DisableCompression: true}}
+	response, err := client.Do(request)
+	if err != nil {
+		return transcript{}, err
+	}
+	line, err := bufio.NewReader(io.LimitReader(response.Body, 1<<20)).ReadBytes('\n')
+	closeErr := response.Body.Close()
+	if err != nil {
+		return transcript{}, fmt.Errorf("read first stream event: %w", err)
+	}
+	if closeErr != nil {
+		return transcript{}, fmt.Errorf("close disconnected response: %w", closeErr)
+	}
+	headers := make(map[string]string)
+	if value := response.Header.Get("Content-Type"); value != "" {
+		headers["content-type"] = value
+	}
+	return transcript{Status: response.StatusCode, Headers: headers, Body: normalizeBody(line)}, nil
+}
+
 func startServer(binary, vault string) *runningServer {
+	return startServerWithEnv(binary, vault, nil)
+}
+
+func startServerWithEnv(binary, vault string, extra map[string]string) *runningServer {
 	absoluteBinary, err := filepath.Abs(binary)
 	if err != nil {
 		fatal("resolve %s: %v", binary, err)
@@ -1399,7 +1618,7 @@ func startServer(binary, vault string) *runningServer {
 	//nolint:gosec // absoluteBinary is the explicit Go/Rust harness operand
 	cmd := exec.Command(absoluteBinary, "serve", "--listen", address, "--vault", vault, "--token", token, "--worker-token", workerToken)
 	cmd.Dir = home
-	cmd.Env = isolatedEnv(vault, home)
+	cmd.Env = isolatedEnv(vault, home, extra)
 	server := &runningServer{cmd: cmd, base: "http://" + address}
 	cmd.Stdout = io.Discard
 	cmd.Stderr = &server.logs
@@ -1439,7 +1658,7 @@ func (s *runningServer) ready() error {
 	return fmt.Errorf("timed out waiting for %s; stderr=%s", s.base, logs)
 }
 
-func (s *runningServer) request(tc httpCase, previousETag string) (transcript, string, error) {
+func (s *runningServer) request(tc httpCase, previousETag string, provider *fakeOllama) (transcript, string, error) {
 	if tc.HeaderDelayMS < 0 || tc.HeaderDelayMS > 9000 {
 		return transcript{}, previousETag, fmt.Errorf("fixture header_delay_ms exceeds 9-second safety bound")
 	}
@@ -1519,7 +1738,25 @@ func (s *runningServer) request(tc httpCase, previousETag string) (transcript, s
 	if err != nil {
 		return transcript{}, previousETag, err
 	}
-	body, err := io.ReadAll(io.LimitReader(response.Body, (16<<20)+1))
+	var body []byte
+	if tc.ProviderOllama {
+		reader := bufio.NewReader(response.Body)
+		first, readErr := reader.ReadBytes('\n')
+		if readErr != nil {
+			_ = response.Body.Close()
+			return transcript{}, previousETag, fmt.Errorf("read first provider event: %w", readErr)
+		}
+		provider.continueStream <- struct{}{}
+		remaining := int64((16 << 20) + 1 - len(first))
+		tail, readErr := io.ReadAll(io.LimitReader(reader, remaining))
+		if readErr != nil {
+			_ = response.Body.Close()
+			return transcript{}, previousETag, readErr
+		}
+		body = append(first, tail...)
+	} else {
+		body, err = io.ReadAll(io.LimitReader(response.Body, (16<<20)+1))
+	}
 	closeErr := response.Body.Close()
 	if err != nil {
 		return transcript{}, previousETag, err
@@ -1853,7 +2090,7 @@ func cloneWithout(headers map[string]string, omitted string) map[string]string {
 	return clone
 }
 
-func isolatedEnv(vault, home string) []string {
+func isolatedEnv(vault, home string, extra map[string]string) []string {
 	tmp := filepath.Join(home, "tmp")
 	env := []string{
 		"HOME=" + home, "USERPROFILE=" + home,
@@ -1868,6 +2105,9 @@ func isolatedEnv(vault, home string) []string {
 		if value := os.Getenv(key); value != "" {
 			env = append(env, key+"="+value)
 		}
+	}
+	for key, value := range extra {
+		env = append(env, key+"="+value)
 	}
 	return env
 }

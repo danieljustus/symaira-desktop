@@ -23,7 +23,7 @@ use std::{
     fs,
     future::poll_fn,
     io::{self, Read, Seek, SeekFrom, Write},
-    net::SocketAddr,
+    net::{IpAddr, SocketAddr},
     path::{Component, Path, PathBuf},
     pin::Pin,
     process::Stdio,
@@ -46,9 +46,12 @@ use axum::{
 };
 use flate2::{Compression, write::GzEncoder};
 use futures_core::Stream;
+use http_body_util::BodyExt;
 use httpdate::{fmt_http_date, parse_http_date};
 use hyper::server::conn::http1::Builder as ConnectionBuilder;
 use hyper_util::{
+    client::legacy::{Client as HttpClient, connect::HttpConnector},
+    rt::TokioExecutor,
     rt::{TokioIo, TokioTimer},
     service::TowerToHyperService,
 };
@@ -82,6 +85,8 @@ const MAX_MULTIPART_REQUEST_BYTES: usize = (100 << 20) + (1 << 20);
 const SNAPSHOT_NOTE_OVERHEAD_BYTES: u64 = 128;
 const READ_TIMEOUT: Duration = Duration::from_secs(120);
 const COMMAND_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+const AI_PROVIDER_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+const AI_PROVIDER_MAX_LINE_BYTES: usize = 4 << 20;
 const HTTP_HEADER_READ_TIMEOUT: Duration = Duration::from_secs(10);
 const HTTP_MAX_HEADER_BYTES: usize = 1 << 20;
 const HTTP_MAX_HEADER_FIELDS: usize = 128;
@@ -644,6 +649,12 @@ struct AiTransformAnswer<'a> {
     text: &'a str,
 }
 
+#[derive(Deserialize)]
+struct OllamaGenerateChunk {
+    #[serde(default, deserialize_with = "deserialize_null_string")]
+    response: String,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct AiAskRequest {
@@ -712,33 +723,64 @@ async fn handle_ai_transform(
     // fails. Resolve once here, then render the fallback directly so a child
     // process cannot reload a changed provider config after this safety check.
     let config = ai_transform_config_or_default(load_ai_transform_config());
-    let Some(text) = ai_transform_fallback_text(&config) else {
-        return json_error(
-            StatusCode::NOT_IMPLEMENTED,
-            "configured AI provider streaming is not implemented",
-        );
-    };
-    let mut answer = match serde_json::to_vec(&AiTransformAnswer {
-        event_type: "answer",
-        text,
-    }) {
-        Ok(body) => body,
-        Err(error) => {
-            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
+    let fallback = ai_transform_fallback_text(&config);
+    let configured_ollama = if fallback.is_none() {
+        match (&*config.llm_provider, config.ollama_url.as_str()) {
+            ("" | "ollama", url) if !url.is_empty() => match local_ollama_endpoint(url) {
+                Some(endpoint) => Some(endpoint),
+                None => {
+                    return json_error(
+                        StatusCode::NOT_IMPLEMENTED,
+                        "configured AI provider endpoint is outside the supported loopback HTTP subset",
+                    );
+                }
+            },
+            _ => {
+                return json_error(
+                    StatusCode::NOT_IMPLEMENTED,
+                    "configured AI provider streaming is not implemented",
+                );
+            }
         }
+    } else {
+        None
     };
-    answer.push(b'\n');
+
     let (sender, receiver) = mpsc::channel(2);
-    if sender.send(Ok(Bytes::from(answer))).await.is_err()
-        || sender
-            .send(Ok(Bytes::from_static(b"{\"type\":\"done\"}\n")))
-            .await
-            .is_err()
-    {
-        return json_error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "failed to build transform stream",
-        );
+    if let Some(text) = fallback {
+        if !send_ai_transform_answer(&sender, text).await
+            || sender
+                .send(Ok(Bytes::from_static(b"{\"type\":\"done\"}\n")))
+                .await
+                .is_err()
+        {
+            return json_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to build transform stream",
+            );
+        }
+    } else if let Some(endpoint) = configured_ollama {
+        let prompt = build_ai_transform_prompt(&config.language, &input.text, &input.intent);
+        let model = std::env::var("SYMDESK_OLLAMA_MODEL")
+            .ok()
+            .filter(|model| !model.is_empty())
+            .unwrap_or_else(|| "llama3.2".to_owned());
+        let provider_sender = sender.clone();
+        tokio::spawn(async move {
+            match stream_ollama_transform(&endpoint, &model, &prompt, &provider_sender).await {
+                Ok(true) => {}
+                Ok(false) => return,
+                Err(error) => {
+                    let message = format!("⚠️ Request failed: {error}\n");
+                    if !send_ai_transform_answer(&provider_sender, &message).await {
+                        return;
+                    }
+                }
+            }
+            let _ = provider_sender
+                .send(Ok(Bytes::from_static(b"{\"type\":\"done\"}\n")))
+                .await;
+        });
     }
     drop(sender);
     let mut response = Response::new(Body::from_stream(CommandBodyStream(receiver)));
@@ -748,6 +790,231 @@ async fn handle_ai_transform(
         HeaderValue::from_static("application/x-ndjson"),
     );
     response
+}
+
+fn local_ollama_endpoint(base_url: &str) -> Option<hyper::Uri> {
+    let parsed = base_url.parse::<hyper::Uri>().ok()?;
+    if parsed.scheme_str()? != "http" {
+        return None;
+    }
+    let authority = parsed.authority()?;
+    if authority.as_str().contains('@') {
+        return None;
+    }
+    let host = parsed.host()?;
+    let loopback = host == "127.0.0.1"
+        || host == "[::1]"
+        || host.eq_ignore_ascii_case("localhost")
+        || host
+            .parse::<IpAddr>()
+            .is_ok_and(|address| address.is_loopback());
+    if !loopback {
+        return None;
+    }
+    format!("http://{authority}/api/generate").parse().ok()
+}
+
+fn build_ai_transform_prompt(language: &str, text: &str, intent: &str) -> String {
+    let instruction = match intent {
+        "summarize" => {
+            "Summarize the following text concisely. Return only the summary, without introductory remarks."
+        }
+        "continue" => {
+            "Continue the following text in a meaningful way, keeping the same style and tone. Return only the continuation, not the original text."
+        }
+        _ => {
+            "Rewrite the following text more clearly and fluently, without changing its meaning. Return only the revised text."
+        }
+    };
+    let language_instruction = if language.is_empty() {
+        " Answer in the language of the input text as pure Markdown text.\n\n---\n"
+    } else {
+        return format!(
+            "{instruction} Answer in {language} as pure Markdown text.\n\n---\n{text}\n---\n"
+        );
+    };
+    format!("{instruction}{language_instruction}{text}\n---\n")
+}
+
+async fn send_ai_transform_answer(
+    sender: &mpsc::Sender<Result<Bytes, io::Error>>,
+    text: &str,
+) -> bool {
+    let Ok(encoded) = serde_json::to_string(&AiTransformAnswer {
+        event_type: "answer",
+        text,
+    }) else {
+        return false;
+    };
+    let encoded = encoded
+        .replace('&', "\\u0026")
+        .replace('<', "\\u003c")
+        .replace('>', "\\u003e")
+        .replace('\u{2028}', "\\u2028")
+        .replace('\u{2029}', "\\u2029");
+    let mut bytes = encoded.into_bytes();
+    bytes.push(b'\n');
+    sender.send(Ok(Bytes::from(bytes))).await.is_ok()
+}
+
+async fn stream_ollama_transform(
+    endpoint: &hyper::Uri,
+    model: &str,
+    prompt: &str,
+    sender: &mpsc::Sender<Result<Bytes, io::Error>>,
+) -> Result<bool, String> {
+    let body = serde_json::to_vec(&json!({"model": model, "prompt": prompt, "stream": true}))
+        .map_err(|error| format!("ollama: llmkit: provider_error: encode request: {error}"))?;
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri(endpoint.clone())
+        .header(header::ACCEPT, "application/json")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .map_err(|error| format!("ollama: llmkit: provider_error: build request: {error}"))?;
+    let mut connector = HttpConnector::new();
+    connector.enforce_http(true);
+    let client: HttpClient<HttpConnector, Body> =
+        HttpClient::builder(TokioExecutor::new()).build(connector);
+    let deadline = tokio::time::Instant::now() + AI_PROVIDER_TIMEOUT;
+    let response = tokio::select! {
+        _ = sender.closed() => return Ok(false),
+        result = tokio::time::timeout_at(deadline, client.request(request)) => match result {
+            Ok(Ok(response)) => response,
+            Ok(Err(error)) => return Err(format!("ollama: llmkit: transport_error: {error}")),
+            Err(_) => return Err("ollama: llmkit: transport_error: context deadline exceeded".to_owned()),
+        },
+    };
+    if response.status().as_u16() >= 300 {
+        let status = response.status().as_u16();
+        let body = match read_provider_error_body(response.into_body(), sender, deadline).await? {
+            Some(body) => body,
+            None => return Ok(false),
+        };
+        return Err(format_provider_status_error(status, &body));
+    }
+
+    let mut stream = response.into_body();
+    let mut pending = Vec::with_capacity(64 * 1024);
+    let mut started = false;
+    loop {
+        let frame = tokio::select! {
+            _ = sender.closed() => return Ok(false),
+            result = tokio::time::timeout_at(deadline, stream.frame()) => match result {
+                Ok(Some(Ok(frame))) => frame,
+                Ok(None) => break,
+                Ok(Some(Err(error))) if started => return Err(format!("ollama: llmkit: transport_error: stream interrupted: {error}")),
+                Ok(Some(Err(error))) => return Err(format!("ollama: llmkit: transport_error: {error}")),
+                Err(_) if started => return Err("ollama: llmkit: transport_error: stream interrupted: context deadline exceeded".to_owned()),
+                Err(_) => return Err("ollama: llmkit: transport_error: context deadline exceeded".to_owned()),
+            },
+        };
+        let Ok(data) = frame.into_data() else {
+            continue;
+        };
+        pending.extend_from_slice(&data);
+        while let Some(newline) = pending.iter().position(|byte| *byte == b'\n') {
+            if newline > AI_PROVIDER_MAX_LINE_BYTES {
+                return Err(
+                    "ollama: llmkit: provider_error: stream line exceeds 4 MiB limit".to_owned(),
+                );
+            }
+            let mut line = pending.drain(..=newline).collect::<Vec<_>>();
+            line.pop();
+            if line.last() == Some(&b'\r') {
+                line.pop();
+            }
+            if line.is_empty() {
+                continue;
+            }
+            started = true;
+            let chunk: OllamaGenerateChunk = serde_json::from_slice(&line).map_err(|error| {
+                format!("ollama: llmkit: provider_error: decode generate chunk: {error}")
+            })?;
+            if !chunk.response.is_empty()
+                && !send_ai_transform_answer(sender, &chunk.response).await
+            {
+                return Ok(false);
+            }
+        }
+        if pending.len() > AI_PROVIDER_MAX_LINE_BYTES {
+            return Err(
+                "ollama: llmkit: provider_error: stream line exceeds 4 MiB limit".to_owned(),
+            );
+        }
+    }
+    if !pending.is_empty() {
+        if pending.last() == Some(&b'\r') {
+            pending.pop();
+        }
+        started = true;
+        let chunk: OllamaGenerateChunk = serde_json::from_slice(&pending).map_err(|error| {
+            format!("ollama: llmkit: provider_error: decode generate chunk: {error}")
+        })?;
+        if !chunk.response.is_empty() && !send_ai_transform_answer(sender, &chunk.response).await {
+            return Ok(false);
+        }
+    }
+    let _ = started;
+    Ok(true)
+}
+
+async fn read_provider_error_body(
+    mut body: hyper::body::Incoming,
+    sender: &mpsc::Sender<Result<Bytes, io::Error>>,
+    deadline: tokio::time::Instant,
+) -> Result<Option<Vec<u8>>, String> {
+    let mut bytes = Vec::with_capacity(8 << 10);
+    while bytes.len() < 8 << 10 {
+        let frame = tokio::select! {
+            _ = sender.closed() => return Ok(None),
+            result = tokio::time::timeout_at(deadline, body.frame()) => match result {
+                Ok(Some(Ok(frame))) => frame,
+                Ok(None) => break,
+                Ok(Some(Err(error))) => return Err(format!("ollama: llmkit: transport_error: {error}")),
+                Err(_) => return Err("ollama: llmkit: transport_error: context deadline exceeded".to_owned()),
+            },
+        };
+        if let Ok(data) = frame.into_data() {
+            let remaining = (8 << 10) - bytes.len();
+            bytes.extend_from_slice(&data[..data.len().min(remaining)]);
+        }
+    }
+    Ok(Some(bytes))
+}
+
+fn format_provider_status_error(status: u16, body: &[u8]) -> String {
+    let body = String::from_utf8_lossy(body);
+    let body = body.trim();
+    let body = if body.len() > 512 {
+        String::from_utf8_lossy(&body.as_bytes()[..512]).into_owned()
+    } else {
+        body.to_owned()
+    };
+    let code = match status {
+        401 | 403 => "auth_failure",
+        429 => "rate_limited",
+        404 => "model_not_found",
+        400 if [
+            "context_length_exceeded",
+            "maximum context length",
+            "context window",
+            "too many tokens",
+            "input length exceeds",
+        ]
+        .iter()
+        .any(|marker| body.to_ascii_lowercase().contains(marker)) =>
+        {
+            "context_overflow"
+        }
+        _ => "provider_error",
+    };
+    let detail = if body.is_empty() {
+        String::new()
+    } else {
+        format!(": {body}")
+    };
+    format!("ollama: llmkit: {code} (status {status}){detail}")
 }
 
 async fn handle_ai_ask(
@@ -4340,6 +4607,30 @@ async fn shutdown_signal() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn configured_ollama_endpoint_is_restricted_to_loopback_http() {
+        for (input, expected) in [
+            (
+                "http://127.0.0.1:11434/v1",
+                Some("http://127.0.0.1:11434/api/generate"),
+            ),
+            (
+                "http://[::1]:11434",
+                Some("http://[::1]:11434/api/generate"),
+            ),
+            (
+                "http://localhost:11434",
+                Some("http://localhost:11434/api/generate"),
+            ),
+            ("https://127.0.0.1:11434", None),
+            ("http://192.0.2.10:11434", None),
+            ("http://user:secret@127.0.0.1:11434", None),
+        ] {
+            let got = local_ollama_endpoint(input).map(|uri| uri.to_string());
+            assert_eq!(got.as_deref(), expected, "endpoint {input}");
+        }
+    }
 
     #[cfg(unix)]
     #[tokio::test]

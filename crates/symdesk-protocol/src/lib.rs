@@ -75,6 +75,7 @@ const MAX_WORKER_LEASE_BODY_BYTES: usize = 64 << 10;
 const MAX_WORKER_FAIL_BODY_BYTES: usize = 256 << 10;
 const MAX_WORKER_COMPLETE_BODY_BYTES: usize = 24 << 20;
 const MAX_COMMAND_BODY_BYTES: usize = (2 << 20) + 1;
+const MAX_COMMAND_DRAIN_BYTES: usize = 256 << 10;
 const MAX_AI_TRANSFORM_BODY_BYTES: usize = 256 << 10;
 const MAX_AI_ASK_BODY_BYTES: usize = 8 << 10;
 const MAX_AI_CONTEXT_DOCS: usize = 8;
@@ -771,7 +772,7 @@ async fn handle_ai_transform(
             .unwrap_or_else(|| "llama3.2".to_owned());
         let provider_sender = sender.clone();
         tokio::spawn(async move {
-            match stream_ollama_transform(&endpoint, &model, &prompt, &provider_sender).await {
+            match stream_ollama(&endpoint, &model, &prompt, &provider_sender, false).await {
                 Ok(true) => {}
                 Ok(false) => return,
                 Err(error) => {
@@ -817,6 +818,23 @@ fn local_ollama_endpoint(base_url: &str) -> Option<hyper::Uri> {
     format!("http://{authority}/api/generate").parse().ok()
 }
 
+fn build_ai_ask_prompt(language: &str, query: &str) -> String {
+    let mut prompt = String::from(
+        "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]].",
+    );
+    if language.is_empty() {
+        prompt.push_str(" Answer in the language of the query.\n\n");
+    } else {
+        prompt.push_str(" Answer in ");
+        prompt.push_str(language);
+        prompt.push_str(".\n\n");
+    }
+    prompt.push_str("Question: ");
+    prompt.push_str(query);
+    prompt.push('\n');
+    prompt
+}
+
 fn build_ai_transform_prompt(language: &str, text: &str, intent: &str) -> String {
     let instruction = match intent {
         "summarize" => {
@@ -860,11 +878,38 @@ async fn send_ai_transform_answer(
     sender.send(Ok(Bytes::from(bytes))).await.is_ok()
 }
 
-async fn stream_ollama_transform(
+async fn send_ai_ask_answer(sender: &mpsc::Sender<Result<Bytes, io::Error>>, text: &str) -> bool {
+    let mut events = Vec::with_capacity(1);
+    if push_ai_ask_event(
+        &mut events,
+        AiAskEvent {
+            event_type: "answer",
+            text: Some(text),
+            path: None,
+            title: None,
+            snippet: None,
+            score: None,
+            tool_name: None,
+            status: None,
+            read_paths: None,
+        },
+    )
+    .is_err()
+    {
+        return false;
+    }
+    let Some(event) = events.pop() else {
+        return false;
+    };
+    sender.send(Ok(event)).await.is_ok()
+}
+
+async fn stream_ollama(
     endpoint: &hyper::Uri,
     model: &str,
     prompt: &str,
     sender: &mpsc::Sender<Result<Bytes, io::Error>>,
+    ask_events: bool,
 ) -> Result<bool, String> {
     let body = serde_json::to_vec(&json!({"model": model, "prompt": prompt, "stream": true}))
         .map_err(|error| format!("ollama: llmkit: provider_error: encode request: {error}"))?;
@@ -923,7 +968,7 @@ async fn stream_ollama_transform(
             pending.extend_from_slice(&remaining[..newline]);
             if !pending.is_empty() {
                 started = true;
-                if !send_ollama_generate_line(sender, &pending).await? {
+                if !send_ollama_generate_line(sender, &pending, ask_events).await? {
                     return Ok(false);
                 }
                 pending.clear();
@@ -935,7 +980,7 @@ async fn stream_ollama_transform(
         }
         pending.extend_from_slice(remaining);
     }
-    if !pending.is_empty() && !send_ollama_generate_line(sender, &pending).await? {
+    if !pending.is_empty() && !send_ollama_generate_line(sender, &pending, ask_events).await? {
         return Ok(false);
     }
     Ok(true)
@@ -948,6 +993,7 @@ fn ollama_line_too_long() -> String {
 async fn send_ollama_generate_line(
     sender: &mpsc::Sender<Result<Bytes, io::Error>>,
     line: &[u8],
+    ask_events: bool,
 ) -> Result<bool, String> {
     let line = line.strip_suffix(b"\r").unwrap_or(line);
     if line.is_empty() {
@@ -958,6 +1004,8 @@ async fn send_ollama_generate_line(
     })?;
     if chunk.response.is_empty() {
         Ok(true)
+    } else if ask_events {
+        Ok(send_ai_ask_answer(sender, &chunk.response).await)
     } else {
         Ok(send_ai_transform_answer(sender, &chunk.response).await)
     }
@@ -1053,14 +1101,35 @@ async fn handle_ai_ask(
         return json_error(StatusCode::BAD_REQUEST, "query is required");
     }
 
-    // This route implements only Go's sidecar fallback. Keep unsupported
-    // provider and hybrid cases explicit instead of implying the full Ask
-    // contract or emitting incomplete citations/ranking.
+    // Provider-backed Ask is limited to an unscoped query with no retrieved
+    // documents, so unsupported ranking, ACL context, and citation paths can
+    // never be sent to the model.
     let config = ai_transform_config_or_default(load_ai_transform_config());
-    if !ai_ask_provider_is_unconfigured(&config) {
+    let configured_ollama = if ai_ask_provider_is_unconfigured(&config) {
+        None
+    } else {
+        match (config.llm_provider.as_str(), config.ollama_url.as_str()) {
+            ("" | "ollama" | "openai", url) => match local_ollama_endpoint(url) {
+                Some(endpoint) => Some(endpoint),
+                None => {
+                    return json_error(
+                        StatusCode::NOT_IMPLEMENTED,
+                        "configured AI provider endpoint is outside the supported loopback HTTP subset",
+                    );
+                }
+            },
+            _ => {
+                return json_error(
+                    StatusCode::NOT_IMPLEMENTED,
+                    "configured AI provider ask streaming is not implemented",
+                );
+            }
+        }
+    };
+    if configured_ollama.is_some() && !input.notebook.is_empty() {
         return json_error(
             StatusCode::NOT_IMPLEMENTED,
-            "configured AI provider ask streaming is not implemented",
+            "provider-backed notebook ask streaming is not implemented",
         );
     }
     match ai_ask_retrieval_index_is_empty(&state.vault_root) {
@@ -1232,6 +1301,12 @@ async fn handle_ai_ask(
     // citations or fallback links.
     documents.retain(|(path, _, _, _)| allowed.contains(path));
     documents.truncate(MAX_AI_CONTEXT_DOCS);
+    if configured_ollama.is_some() && !documents.is_empty() {
+        return json_error(
+            StatusCode::NOT_IMPLEMENTED,
+            "provider-backed ask with retrieved sources is not implemented",
+        );
+    }
     let read_paths = scoped_paths.map(|paths| {
         paths
             .into_iter()
@@ -1276,17 +1351,7 @@ async fn handle_ai_ask(
             return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
         }
     }
-    for (event_type, text, tool_name, status) in [
-        ("tool", None, Some("llm"), Some("running")),
-        (
-            "answer",
-            Some(
-                "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n",
-            ),
-            None,
-            None,
-        ),
-    ] {
+    for (event_type, text, tool_name, status) in [("tool", None, Some("llm"), Some("running"))] {
         if let Err(error) = push_ai_ask_event(
             &mut events,
             AiAskEvent {
@@ -1304,13 +1369,14 @@ async fn handle_ai_ask(
             return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
         }
     }
-    for (path, _, _, _) in documents.iter().take(3) {
-        let answer = format!("- [[{path}]]\n");
+    if configured_ollama.is_none() {
         if let Err(error) = push_ai_ask_event(
             &mut events,
             AiAskEvent {
                 event_type: "answer",
-                text: Some(&answer),
+                text: Some(
+                    "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n",
+                ),
                 path: None,
                 title: None,
                 snippet: None,
@@ -1322,38 +1388,113 @@ async fn handle_ai_ask(
         ) {
             return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
         }
-    }
-    for (event_type, tool_name, status) in
-        [("tool", Some("llm"), Some("done")), ("done", None, None)]
-    {
-        let is_done = event_type == "done";
-        if let Err(error) = push_ai_ask_event(
-            &mut events,
-            AiAskEvent {
-                event_type,
-                text: None,
-                path: None,
-                title: None,
-                snippet: None,
-                score: None,
-                tool_name,
-                status,
-                read_paths: if is_done {
-                    read_paths.as_deref().filter(|paths| !paths.is_empty())
-                } else {
-                    None
+        for (path, _, _, _) in documents.iter().take(3) {
+            let answer = format!("- [[{path}]]\n");
+            if let Err(error) = push_ai_ask_event(
+                &mut events,
+                AiAskEvent {
+                    event_type: "answer",
+                    text: Some(&answer),
+                    path: None,
+                    title: None,
+                    snippet: None,
+                    score: None,
+                    tool_name: None,
+                    status: None,
+                    read_paths: None,
                 },
-            },
-        ) {
-            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
+            ) {
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
+            }
+        }
+    }
+    if configured_ollama.is_none() {
+        for (event_type, tool_name, status) in
+            [("tool", Some("llm"), Some("done")), ("done", None, None)]
+        {
+            let is_done = event_type == "done";
+            if let Err(error) = push_ai_ask_event(
+                &mut events,
+                AiAskEvent {
+                    event_type,
+                    text: None,
+                    path: None,
+                    title: None,
+                    snippet: None,
+                    score: None,
+                    tool_name,
+                    status,
+                    read_paths: if is_done {
+                        read_paths.as_deref().filter(|paths| !paths.is_empty())
+                    } else {
+                        None
+                    },
+                },
+            ) {
+                return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
+            }
         }
     }
 
     let (sender, receiver) = mpsc::channel(2);
+    let ask_prompt = configured_ollama
+        .as_ref()
+        .map(|_| build_ai_ask_prompt(&config.language, &input.query));
+    let model = std::env::var("SYMDESK_OLLAMA_MODEL")
+        .ok()
+        .filter(|model| !model.is_empty())
+        .unwrap_or_else(|| "llama3.2".to_owned());
     tokio::spawn(async move {
         for event in events {
             if sender.send(Ok(event)).await.is_err() {
                 break;
+            }
+        }
+        let (Some(endpoint), Some(prompt)) = (configured_ollama, ask_prompt) else {
+            return;
+        };
+        match stream_ollama(&endpoint, &model, &prompt, &sender, true).await {
+            Ok(true) => {}
+            Ok(false) => return,
+            Err(error) => {
+                let message = format!("⚠️ Request failed: {error}\n");
+                if !send_ai_ask_answer(&sender, &message).await {
+                    return;
+                }
+            }
+        }
+        for (event_type, tool_name, status) in
+            [("tool", Some("llm"), Some("done")), ("done", None, None)]
+        {
+            let is_done = event_type == "done";
+            let mut terminal = Vec::with_capacity(1);
+            if push_ai_ask_event(
+                &mut terminal,
+                AiAskEvent {
+                    event_type,
+                    text: None,
+                    path: None,
+                    title: None,
+                    snippet: None,
+                    score: None,
+                    tool_name,
+                    status,
+                    read_paths: if is_done {
+                        read_paths.as_deref().filter(|paths| !paths.is_empty())
+                    } else {
+                        None
+                    },
+                },
+            )
+            .is_err()
+            {
+                return;
+            }
+            let Some(event) = terminal.pop() else {
+                return;
+            };
+            if sender.send(Ok(event)).await.is_err() {
+                return;
             }
         }
     });
@@ -1382,7 +1523,7 @@ fn push_ai_ask_event(events: &mut Vec<Bytes>, event: AiAskEvent<'_>) -> Result<(
 }
 
 fn ai_ask_provider_is_unconfigured(config: &symdesk_core::config::Config) -> bool {
-    matches!(config.llm_provider.as_str(), "" | "ollama") && config.ollama_url.is_empty()
+    matches!(config.llm_provider.as_str(), "" | "ollama" | "openai") && config.ollama_url.is_empty()
 }
 
 fn ai_ask_retrieval_index_is_empty(vault_root: &Path) -> Result<bool, String> {
@@ -1673,7 +1814,29 @@ async fn read_command_request(body: Body) -> Result<RemoteCommandRequest, Comman
         let available = MAX_COMMAND_BODY_BYTES.saturating_sub(bytes.len());
         bytes.extend_from_slice(&chunk[..chunk.len().min(available)]);
         match parse_command_request(&bytes) {
-            Ok(request) => return Ok(request),
+            Ok(request) => {
+                // Go's HTTP server drains a bounded amount of unread request
+                // data after the handler returns. Keep the same allowance so
+                // an early response to a valid JSON prefix does not reset an
+                // in-flight client upload immediately.
+                tokio::spawn(async move {
+                    let _ = tokio::time::timeout(READ_TIMEOUT, async move {
+                        let mut drained = 0;
+                        while drained < MAX_COMMAND_DRAIN_BYTES {
+                            let next =
+                                poll_fn(|context| Pin::new(&mut chunks).poll_next(context)).await;
+                            match next {
+                                Some(Ok(chunk)) => {
+                                    drained += chunk.len().min(MAX_COMMAND_DRAIN_BYTES - drained);
+                                }
+                                Some(Err(_)) | None => break,
+                            }
+                        }
+                    })
+                    .await;
+                });
+                return Ok(request);
+            }
             Err(error) if error.is_eof() && bytes.len() < MAX_COMMAND_BODY_BYTES => {}
             Err(error) if error.is_eof() => return Err(CommandBodyError::TooLarge),
             Err(_) => return Err(CommandBodyError::Malformed),
@@ -6009,6 +6172,14 @@ mod tests {
         let mut ollama = default.clone();
         ollama.ollama_url = "http://127.0.0.1:11434".to_owned();
         assert!(!ai_ask_provider_is_unconfigured(&ollama));
+
+        let mut openai_without_ollama = default.clone();
+        openai_without_ollama.llm_provider = "openai".to_owned();
+        assert!(ai_ask_provider_is_unconfigured(&openai_without_ollama));
+
+        let mut openai_with_ollama = openai_without_ollama;
+        openai_with_ollama.ollama_url = "http://127.0.0.1:11434".to_owned();
+        assert!(!ai_ask_provider_is_unconfigured(&openai_with_ollama));
 
         let anthropic = symdesk_core::config::load(
             None,

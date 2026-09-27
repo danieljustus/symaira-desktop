@@ -63,6 +63,8 @@ type httpCase struct {
 	RemoveSymlinkEscapes   bool              `json:"remove_symlink_escapes,omitempty"`
 	ProviderOllama         bool              `json:"provider_ollama,omitempty"`
 	ProviderOpenAIFallback bool              `json:"provider_openai_fallback,omitempty"`
+	ProviderAskOllama      bool              `json:"provider_ask_ollama,omitempty"`
+	ProviderAskWithSources bool              `json:"provider_ask_with_sources,omitempty"`
 	ProviderDisconnect     bool              `json:"provider_disconnect,omitempty"`
 	ProviderFailure        bool              `json:"provider_failure,omitempty"`
 	ProviderOversized      bool              `json:"provider_oversized,omitempty"`
@@ -203,7 +205,7 @@ func run() (runErr error) {
 	leftETag, rightETag := "", ""
 	providerCasesRemaining := 0
 	for _, testCase := range suite.Cases {
-		if testCase.ProviderOllama || testCase.ProviderOpenAIFallback || testCase.ProviderDisconnect || testCase.ProviderFailure || testCase.ProviderOversized {
+		if testCase.ProviderOllama || testCase.ProviderOpenAIFallback || testCase.ProviderAskOllama || testCase.ProviderAskWithSources || testCase.ProviderDisconnect || testCase.ProviderFailure || testCase.ProviderOversized {
 			providerCasesRemaining++
 		}
 	}
@@ -278,7 +280,7 @@ func run() (runErr error) {
 			}
 		}
 		leftCurrent, rightCurrent := leftServer, rightServer
-		if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
+		if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderAskOllama || tc.ProviderAskWithSources || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
 			providerMode := "ollama"
 			if tc.ProviderOpenAIFallback {
 				providerMode = "openai"
@@ -327,7 +329,17 @@ func run() (runErr error) {
 		if err != nil {
 			fatal("%s Rust request: %v", tc.ID, err)
 		}
-		if err := compare(tc.ID, leftResult, rightResult); err != nil {
+		if tc.ProviderAskWithSources {
+			if err := assertProviderAskSourcesBoundary(leftResult, rightResult); err != nil {
+				fatal("%s: %v", tc.ID, err)
+			}
+			if err := provider.assertAskWithSourcesRequests(1, "Body"); err != nil {
+				fatal("%s Go fake-provider request: %v", tc.ID, err)
+			}
+			if err := provider.assertNoRequests(); err != nil {
+				fatal("%s Rust fake-provider boundary: %v", tc.ID, err)
+			}
+		} else if err := compare(tc.ID, leftResult, rightResult); err != nil {
 			fatal("%s: %v", tc.ID, err)
 		}
 		if tc.ProviderOllama || tc.ProviderOpenAIFallback {
@@ -335,7 +347,18 @@ func run() (runErr error) {
 				fatal("%s fake-provider request: %v", tc.ID, err)
 			}
 		}
-		if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
+		if tc.ProviderAskOllama {
+			var request struct {
+				Query string `json:"query"`
+			}
+			if err := json.Unmarshal([]byte(tc.Body), &request); err != nil {
+				fatal("%s decode fixture query: %v", tc.ID, err)
+			}
+			if err := provider.assertAskRequests(2, request.Query); err != nil {
+				fatal("%s fake-provider request: %v", tc.ID, err)
+			}
+		}
+		if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderAskOllama || tc.ProviderAskWithSources || tc.ProviderDisconnect || tc.ProviderFailure || tc.ProviderOversized {
 			providerCasesRemaining--
 			if providerCasesRemaining == 0 {
 				if err := leftProviderServer.stop(); err != nil {
@@ -1524,7 +1547,7 @@ func startFakeOllama() *fakeOllama {
 			http.Error(w, "invalid provider request", http.StatusBadRequest)
 			return
 		}
-		if request.Model != "fixture-model" || !request.Stream || !strings.Contains(request.Prompt, "provider") {
+		if request.Model != "fixture-model" || !request.Stream || (!strings.Contains(request.Prompt, "provider") && !strings.Contains(request.Prompt, "Question: ")) {
 			http.Error(w, "unexpected provider payload", http.StatusBadRequest)
 			return
 		}
@@ -1556,7 +1579,7 @@ func startFakeOllama() *fakeOllama {
 		}
 		_, _ = io.WriteString(w, `{"response":"first","done":false}`+"\n")
 		flusher.Flush()
-		if strings.Contains(request.Prompt, "short provider input") {
+		if strings.Contains(request.Prompt, "short provider input") || strings.Contains(request.Prompt, "Question: ") {
 			<-fake.continueStream
 		}
 		for _, line := range []string{
@@ -1582,6 +1605,63 @@ func (f *fakeOllama) assertRequests(count int, text string) error {
 		case <-time.After(3 * time.Second):
 			return fmt.Errorf("received %d of %d expected provider requests", index, count)
 		}
+	}
+	return nil
+}
+
+func (f *fakeOllama) assertAskRequests(count int, query string) error {
+	wantPrompt := "You are the assistant of a local Markdown vault. Answer the question exclusively based on the following note excerpts. If the excerpts do not contain the answer, say so honestly. Refer to notes as [[path]]. Answer in the language of the query.\n\nQuestion: " + query + "\n"
+	for index := range count {
+		select {
+		case request := <-f.requests:
+			if request.Model != "fixture-model" || request.Prompt != wantPrompt || !request.Stream {
+				return fmt.Errorf("request %d = %#v, want model fixture-model, exact empty-context Ask prompt, stream=true", index+1, request)
+			}
+		case <-time.After(3 * time.Second):
+			return fmt.Errorf("received %d of %d expected provider requests", index, count)
+		}
+	}
+	return nil
+}
+
+func (f *fakeOllama) assertAskWithSourcesRequests(count int, query string) error {
+	for index := range count {
+		select {
+		case request := <-f.requests:
+			if request.Model != "fixture-model" || !request.Stream || !strings.Contains(request.Prompt, "Question: "+query+"\n") || !strings.Contains(request.Prompt, "--- Note [[") {
+				return fmt.Errorf("request %d = %#v, want source-bearing Go Ask prompt, stream=true", index+1, request)
+			}
+		case <-time.After(3 * time.Second):
+			return fmt.Errorf("received %d of %d expected provider requests", index, count)
+		}
+	}
+	return nil
+}
+
+func (f *fakeOllama) assertNoRequests() error {
+	select {
+	case request := <-f.requests:
+		return fmt.Errorf("unexpected provider request: %#v", request)
+	case <-time.After(50 * time.Millisecond):
+		return nil
+	}
+}
+
+func assertProviderAskSourcesBoundary(goResponse, rustResponse transcript) error {
+	if goResponse.Status != http.StatusOK || !bytes.Contains(goResponse.Body, []byte(`"type":"citation"`)) {
+		return fmt.Errorf("Go did not provide the source-bearing Ask oracle: status=%d body=%q", goResponse.Status, goResponse.Body)
+	}
+	if rustResponse.Status != http.StatusNotImplemented {
+		return fmt.Errorf("Rust provider Ask with sources status=%d, want 501 body=%q", rustResponse.Status, rustResponse.Body)
+	}
+	var rustBody struct {
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(rustResponse.Body, &rustBody); err != nil {
+		return fmt.Errorf("decode Rust unsupported-boundary response: %w", err)
+	}
+	if rustBody.Error != "provider-backed ask with retrieved sources is not implemented" || bytes.Contains(rustResponse.Body, []byte(`"type":"citation"`)) {
+		return fmt.Errorf("Rust did not fail closed before emitting source data: %q", rustResponse.Body)
 	}
 	return nil
 }
@@ -1768,7 +1848,7 @@ func (s *runningServer) request(tc httpCase, previousETag string, provider *fake
 		return transcript{}, previousETag, err
 	}
 	var body []byte
-	if tc.ProviderOllama || tc.ProviderOpenAIFallback {
+	if tc.ProviderOllama || tc.ProviderOpenAIFallback || tc.ProviderAskOllama || tc.ProviderAskWithSources {
 		reader := bufio.NewReader(response.Body)
 		first, readErr := reader.ReadBytes('\n')
 		if readErr != nil {

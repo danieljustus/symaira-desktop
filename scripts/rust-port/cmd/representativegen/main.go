@@ -74,6 +74,8 @@ type httpCase struct {
 	RemoveSymlinkEscapes   bool              `json:"remove_symlink_escapes,omitempty"`
 	ProviderOllama         bool              `json:"provider_ollama,omitempty"`
 	ProviderOpenAIFallback bool              `json:"provider_openai_fallback,omitempty"`
+	ProviderAskOllama      bool              `json:"provider_ask_ollama,omitempty"`
+	ProviderAskWithSources bool              `json:"provider_ask_with_sources,omitempty"`
 	ProviderDisconnect     bool              `json:"provider_disconnect,omitempty"`
 	ProviderFailure        bool              `json:"provider_failure,omitempty"`
 	ProviderOversized      bool              `json:"provider_oversized,omitempty"`

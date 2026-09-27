@@ -382,14 +382,6 @@
       "provider_ollama": true
     },
     {
-      "id": "ai-transform-openai-provider-falls-back-to-local-ollama",
-      "method": "POST",
-      "path": "/api/v1/ai/transform",
-      "auth": "valid",
-      "body": "{\"text\":\"short provider input\"}",
-      "provider_openai_fallback": true
-    },
-    {
       "id": "ai-transform-local-ollama-error",
       "method": "POST",
       "path": "/api/v1/ai/transform",
@@ -412,6 +404,39 @@
       "auth": "valid",
       "body": "{\"text\":\"disconnect provider input\"}",
       "provider_disconnect": true
+    },
+    {
+      "id": "ai-question-local-ollama-empty-results",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"provider ask question\"}",
+      "provider_ask_ollama": true
+    },
+    {
+      "id": "ai-question-local-ollama-worker-denied-source-not-forwarded",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"Hello\"}",
+      "populate_worker_acl": true,
+      "provider_ask_ollama": true
+    },
+    {
+      "id": "ai-question-local-ollama-with-sources-501",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\"}",
+      "provider_ask_with_sources": true
+    },
+    {
+      "id": "ai-transform-openai-provider-falls-back-to-local-ollama",
+      "method": "POST",
+      "path": "/api/v1/ai/transform",
+      "auth": "valid",
+      "body": "{\"text\":\"short provider input\"}",
+      "provider_openai_fallback": true
     },
     {
       "id": "ai-transform-trailing-json",

@@ -121,6 +121,46 @@
       }
     },
     {
+      "id": "file-range-if-range-match",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid",
+      "headers": {
+        "If-Range": "Fri, 02 Jan 2026 03:04:05 GMT",
+        "Range": "bytes=0-4"
+      }
+    },
+    {
+      "id": "file-range-if-range-legacy-date",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid",
+      "headers": {
+        "If-Range": "Friday, 02-Jan-26 03:04:05 GMT",
+        "Range": "bytes=0-4"
+      }
+    },
+    {
+      "id": "file-range-if-range-stale",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid",
+      "headers": {
+        "If-Range": "Thu, 01 Jan 2026 03:04:05 GMT",
+        "Range": "bytes=0-4"
+      }
+    },
+    {
+      "id": "file-range-if-range-etag",
+      "method": "GET",
+      "path": "/api/v1/files?path=Hello.md",
+      "auth": "valid",
+      "headers": {
+        "If-Range": "\"unavailable-etag\"",
+        "Range": "bytes=0-4"
+      }
+    },
+    {
       "id": "file-head",
       "method": "HEAD",
       "path": "/api/v1/files?path=Hello.md",

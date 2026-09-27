@@ -1611,6 +1611,7 @@ fn serve_vault_file(
         .modified()
         .map(|value| value.into_std())
         .unwrap_or(UNIX_EPOCH);
+    let last_modified = fmt_http_date(modified);
     let sample = match read_sample(&mut file, length) {
         Ok(sample) => sample,
         Err(_) => return json_error(StatusCode::NOT_FOUND, "file not found"),
@@ -1620,7 +1621,7 @@ fn serve_vault_file(
         (header::CONTENT_TYPE, content_type(relative, &sample)),
         (header::CONTENT_DISPOSITION, disposition.clone()),
         (header::ACCEPT_RANGES, "bytes".to_owned()),
-        (header::LAST_MODIFIED, fmt_http_date(modified)),
+        (header::LAST_MODIFIED, last_modified.clone()),
     ];
     if let Some(value) = headers
         .get(header::IF_MODIFIED_SINCE)
@@ -1632,13 +1633,20 @@ fn serve_vault_file(
             StatusCode::NOT_MODIFIED,
             vec![
                 (header::CONTENT_DISPOSITION, disposition),
-                (header::LAST_MODIFIED, fmt_http_date(modified)),
+                (header::LAST_MODIFIED, last_modified),
             ],
             Vec::new(),
         );
     }
 
-    let range = if length == 0 {
+    let if_range_matches = headers.get(header::IF_RANGE).is_none_or(|value| {
+        value
+            .to_str()
+            .ok()
+            .and_then(|value| parse_http_date(value).ok())
+            .is_some_and(|value| fmt_http_date(value) == last_modified)
+    });
+    let range = if length == 0 || !if_range_matches {
         None
     } else {
         match headers

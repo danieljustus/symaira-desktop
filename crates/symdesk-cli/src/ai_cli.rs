@@ -154,7 +154,9 @@ pub fn run_ask(command: &clap::ArgMatches, vault: Option<&str>, output_json: boo
         "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n",
     ));
     for path in paths.iter().take(3) {
-        events.push(AskEvent::answer(&format!("- [[{path}]]\n")));
+        let markdown_path =
+            vault_relative_markdown_path(Path::new(path)).unwrap_or_else(|| path.clone());
+        events.push(AskEvent::answer(&format!("- [[{markdown_path}]]\n")));
     }
     events.push(AskEvent::tool("done"));
     if let Some(event) = events.last_mut() {
@@ -193,12 +195,7 @@ fn display_path(root: &Path, path: &str, sources: &[SearchSource]) -> String {
     {
         path.to_owned()
     } else {
-        let display = super::relative_path(root, path);
-        let relative = Path::new(&display);
-        if relative.is_absolute() {
-            return display;
-        }
-        vault_relative_markdown_path(relative).unwrap_or(display)
+        super::relative_path(root, path)
     }
 }
 

@@ -436,6 +436,19 @@ fn relative_path(root: &Path, path: &str) -> String {
         .ok()
         .map(Path::to_path_buf)
         .or_else(|| {
+            // Windows canonicalize() uses the verbatim `\\?\` prefix,
+            // while sidecar storage keys intentionally omit it. Compare
+            // those lexical spellings before the canonical fallback below:
+            // canonicalizing the full file path follows an in-vault symlink
+            // and changes its user-visible citation from the alias to target.
+            let normalized_root = strip_windows_verbatim_prefix(root);
+            let normalized_path = strip_windows_verbatim_prefix(path);
+            normalized_path
+                .strip_prefix(&normalized_root)
+                .ok()
+                .map(Path::to_path_buf)
+        })
+        .or_else(|| {
             let canonical_root = std::fs::canonicalize(root).ok()?;
             let canonical_path = std::fs::canonicalize(path).ok()?;
             canonical_path
@@ -452,6 +465,24 @@ fn relative_path(root: &Path, path: &str) -> String {
     relative
         .filter(|value| !value.is_empty())
         .unwrap_or_else(|| path.to_string_lossy().into_owned())
+}
+
+fn strip_windows_verbatim_prefix(path: &Path) -> PathBuf {
+    let Some(path) = path.to_str() else {
+        return path.to_path_buf();
+    };
+    #[cfg(windows)]
+    {
+        const UNC_PREFIX: &str = r"\\?\UNC\";
+        const VERBATIM_PREFIX: &str = r"\\?\";
+        if let Some(rest) = path.strip_prefix(UNC_PREFIX) {
+            return PathBuf::from(format!(r"\\{rest}"));
+        }
+        if let Some(rest) = path.strip_prefix(VERBATIM_PREFIX) {
+            return PathBuf::from(rest);
+        }
+    }
+    PathBuf::from(path)
 }
 
 #[derive(Serialize)]
@@ -633,6 +664,45 @@ mod exit_code_tests {
         ];
         for (code, expected) in codes {
             assert_eq!(code.as_u8(), expected);
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn relative_path_keeps_windows_file_symlink_alias() {
+        use super::{relative_path, strip_windows_verbatim_prefix};
+        use std::{
+            fs,
+            os::windows::fs::symlink_file,
+            time::{SystemTime, UNIX_EPOCH},
+        };
+
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock after epoch")
+            .as_nanos();
+        let lexical_root = std::env::temp_dir().join(format!("symdesk-alias-{suffix}"));
+        fs::create_dir(&lexical_root).expect("create alias test root");
+        let _cleanup = DropPath(lexical_root.clone());
+        fs::write(lexical_root.join("Hello.md"), "Body").expect("write target");
+        symlink_file("Hello.md", lexical_root.join("internal.md")).expect("create symlink");
+
+        let canonical_root = fs::canonicalize(&lexical_root).expect("canonicalize test root");
+        let stored_root = strip_windows_verbatim_prefix(&canonical_root);
+        let stored_alias = stored_root.join("internal.md");
+        assert_eq!(
+            relative_path(&canonical_root, &stored_alias.to_string_lossy()),
+            "internal.md"
+        );
+    }
+
+    #[cfg(windows)]
+    struct DropPath(std::path::PathBuf);
+
+    #[cfg(windows)]
+    impl Drop for DropPath {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
         }
     }
 }

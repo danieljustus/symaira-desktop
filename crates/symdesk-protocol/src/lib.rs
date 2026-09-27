@@ -73,6 +73,8 @@ const MAX_WORKER_FAIL_BODY_BYTES: usize = 256 << 10;
 const MAX_WORKER_COMPLETE_BODY_BYTES: usize = 24 << 20;
 const MAX_COMMAND_BODY_BYTES: usize = (2 << 20) + 1;
 const MAX_AI_TRANSFORM_BODY_BYTES: usize = 256 << 10;
+const MAX_AI_ASK_BODY_BYTES: usize = 8 << 10;
+const MAX_AI_CONTEXT_DOCS: usize = 8;
 const MAX_COMMAND_OUTPUT_BYTES: usize = 32 << 20;
 const MAX_COMMAND_STDERR_BYTES: usize = 1 << 20;
 const MAX_UPLOAD_BYTES: u64 = 100 << 20;
@@ -445,6 +447,7 @@ fn router(state: Arc<AppState>) -> Router {
         .route("/api/v1/jobs", get(handle_jobs))
         .route("/api/v1/jobs/retry", axum::routing::post(handle_retry_job))
         .route("/api/v1/command", post(handle_command_validation))
+        .route("/api/v1/ai/ask", post(handle_ai_ask))
         .route("/api/v1/ai/transform", post(handle_ai_transform))
         .route("/api/v1/worker/input", get(handle_worker_input))
         .route(
@@ -583,6 +586,9 @@ fn named_user_route_allowed(role: &AuthRole, method: &Method, path: &str) -> boo
     if path == "/api/v1/ai/transform" && method == Method::POST {
         return true;
     }
+    if path == "/api/v1/ai/ask" && method == Method::POST {
+        return true;
+    }
     if read_method
         && (path == "/api/v1/snapshot"
             || path == "/api/v1/notebooks"
@@ -629,6 +635,35 @@ struct AiTransformRequest {
     text: String,
     #[serde(default, deserialize_with = "deserialize_null_string")]
     intent: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AiAskRequest {
+    #[serde(default, deserialize_with = "deserialize_null_string")]
+    query: String,
+    #[serde(default, deserialize_with = "deserialize_null_string")]
+    notebook: String,
+}
+
+#[derive(Serialize)]
+struct AiAskEvent<'a> {
+    #[serde(rename = "type")]
+    event_type: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    text: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    path: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    title: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    snippet: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    score: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tool_name: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    status: Option<&'a str>,
 }
 
 async fn handle_ai_transform(
@@ -701,6 +736,278 @@ async fn handle_ai_transform(
         HeaderValue::from_static("application/x-ndjson"),
     );
     response
+}
+
+async fn handle_ai_ask(
+    State(state): State<Arc<AppState>>,
+    Extension(role): Extension<AuthRole>,
+    request: Request<Body>,
+) -> Response {
+    // Go counts an AI request before decoding its body.
+    if let Some(response) = ai_rate_limit_response(&state, &request) {
+        return response;
+    }
+    let body = match read_capped_body(request.into_body(), MAX_AI_ASK_BODY_BYTES).await {
+        Ok(body) => body,
+        Err(error) => {
+            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {error}"));
+        }
+    };
+    let mut input: AiAskRequest = match decode_first_json_value(&body) {
+        Ok(input) => input,
+        Err(error) => {
+            let detail = if error.is_eof() {
+                "unexpected EOF".to_owned()
+            } else {
+                error.to_string()
+            };
+            return json_error(StatusCode::BAD_REQUEST, &format!("invalid JSON: {detail}"));
+        }
+    };
+    input.query = input.query.trim().to_owned();
+    input.notebook = input.notebook.trim().to_owned();
+    if input.query.is_empty() {
+        return json_error(StatusCode::BAD_REQUEST, "query is required");
+    }
+
+    // This route implements only Go's sidecar fallback. Keep unsupported
+    // provider, hybrid, and notebook cases explicit instead of implying the
+    // full Ask contract or emitting incomplete citations/ranking.
+    if !input.notebook.is_empty() {
+        return json_error(
+            StatusCode::NOT_IMPLEMENTED,
+            "notebook-scoped ask is not implemented",
+        );
+    }
+    let config = ai_transform_config_or_default(load_ai_transform_config());
+    if !ai_ask_provider_is_unconfigured(&config) {
+        return json_error(
+            StatusCode::NOT_IMPLEMENTED,
+            "configured AI provider ask streaming is not implemented",
+        );
+    }
+    match ai_ask_retrieval_index_is_empty(&state.vault_root) {
+        Ok(true) => {}
+        Ok(false) => {
+            return json_error(
+                StatusCode::NOT_IMPLEMENTED,
+                "hybrid retrieval ask is not implemented for indexes containing chunks",
+            );
+        }
+        Err(error) => {
+            return json_error(
+                StatusCode::NOT_IMPLEMENTED,
+                &format!("ask retrieval mode could not be verified: {error}"),
+            );
+        }
+    }
+
+    let sidecar = match Sidecar::open(&state.vault_root.join(".symdesk/server/sidecar.db")) {
+        Ok(sidecar) => sidecar,
+        Err(error) => {
+            return json_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                &format!("retrieval unavailable: {error}"),
+            );
+        }
+    };
+    let hits = match sidecar.search(&input.query) {
+        Ok(hits) => hits,
+        Err(error) => {
+            return json_error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                &format!("retrieval failed: {error}"),
+            );
+        }
+    };
+    let mut documents = Vec::with_capacity(MAX_AI_CONTEXT_DOCS);
+    for hit in hits {
+        let relative = match Path::new(&hit.path).strip_prefix(&state.vault_root) {
+            Ok(relative) if !relative.as_os_str().is_empty() => relative,
+            // A stale index row outside the vault must never become context.
+            _ => continue,
+        };
+        let Some(path) = relative.to_str().map(str::to_owned) else {
+            continue;
+        };
+        documents.push((path, hit.title, hit.snippet));
+    }
+
+    let paths = documents
+        .iter()
+        .map(|(path, _, _)| path.clone())
+        .collect::<Vec<_>>();
+    let allowed = if role.is_admin() {
+        paths.iter().cloned().collect()
+    } else if let Some(username) = role.name() {
+        acl_can_read_many(&state, username, &paths)
+    } else {
+        std::collections::HashSet::new()
+    };
+    // Retain ranked order while filtering. Denied documents cannot appear as
+    // citations or fallback links.
+    documents.retain(|(path, _, _)| allowed.contains(path));
+    documents.truncate(MAX_AI_CONTEXT_DOCS);
+
+    let mut events = Vec::with_capacity(12 + documents.len());
+    for (tool_name, status) in [("search", "running"), ("search", "done")] {
+        if let Err(error) = push_ai_ask_event(
+            &mut events,
+            AiAskEvent {
+                event_type: "tool",
+                text: None,
+                path: None,
+                title: None,
+                snippet: None,
+                score: None,
+                tool_name: Some(tool_name),
+                status: Some(status),
+            },
+        ) {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
+        }
+    }
+    for (path, title, snippet) in &documents {
+        if let Err(error) = push_ai_ask_event(
+            &mut events,
+            AiAskEvent {
+                event_type: "citation",
+                text: None,
+                path: Some(path),
+                title: Some(title),
+                snippet: Some(snippet),
+                score: None, // Go's sidecar fallback score is zero and omitted.
+                tool_name: None,
+                status: None,
+            },
+        ) {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
+        }
+    }
+    for (event_type, text, tool_name, status) in [
+        ("tool", None, Some("llm"), Some("running")),
+        (
+            "answer",
+            Some(
+                "⚠️ **AI feature not configured.**\n\nSet your Ollama endpoint in Settings → AI.\n\nHere are the most relevant search results from your vault:\n\n",
+            ),
+            None,
+            None,
+        ),
+    ] {
+        if let Err(error) = push_ai_ask_event(
+            &mut events,
+            AiAskEvent {
+                event_type,
+                text,
+                path: None,
+                title: None,
+                snippet: None,
+                score: None,
+                tool_name,
+                status,
+            },
+        ) {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
+        }
+    }
+    for (path, _, _) in documents.iter().take(3) {
+        let answer = format!("- [[{path}]]\n");
+        if let Err(error) = push_ai_ask_event(
+            &mut events,
+            AiAskEvent {
+                event_type: "answer",
+                text: Some(&answer),
+                path: None,
+                title: None,
+                snippet: None,
+                score: None,
+                tool_name: None,
+                status: None,
+            },
+        ) {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
+        }
+    }
+    for (event_type, tool_name, status) in
+        [("tool", Some("llm"), Some("done")), ("done", None, None)]
+    {
+        if let Err(error) = push_ai_ask_event(
+            &mut events,
+            AiAskEvent {
+                event_type,
+                text: None,
+                path: None,
+                title: None,
+                snippet: None,
+                score: None,
+                tool_name,
+                status,
+            },
+        ) {
+            return json_error(StatusCode::INTERNAL_SERVER_ERROR, &error);
+        }
+    }
+
+    let (sender, receiver) = mpsc::channel(2);
+    tokio::spawn(async move {
+        for event in events {
+            if sender.send(Ok(event)).await.is_err() {
+                break;
+            }
+        }
+    });
+    let mut response = Response::new(Body::from_stream(CommandBodyStream(receiver)));
+    *response.status_mut() = StatusCode::OK;
+    response.headers_mut().insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("application/x-ndjson"),
+    );
+    response
+}
+
+fn push_ai_ask_event(events: &mut Vec<Bytes>, event: AiAskEvent<'_>) -> Result<(), String> {
+    let encoded = serde_json::to_string(&event).map_err(|error| error.to_string())?;
+    // Match encoding/json's default HTML-safe escaping for NDJSON strings.
+    let encoded = encoded
+        .replace('&', "\\u0026")
+        .replace('<', "\\u003c")
+        .replace('>', "\\u003e")
+        .replace('\u{2028}', "\\u2028")
+        .replace('\u{2029}', "\\u2029");
+    let mut bytes = encoded.into_bytes();
+    bytes.push(b'\n');
+    events.push(Bytes::from(bytes));
+    Ok(())
+}
+
+fn ai_ask_provider_is_unconfigured(config: &symdesk_core::config::Config) -> bool {
+    matches!(config.llm_provider.as_str(), "" | "ollama") && config.ollama_url.is_empty()
+}
+
+fn ai_ask_retrieval_index_is_empty(vault_root: &Path) -> Result<bool, String> {
+    let vault = vault_root
+        .to_str()
+        .ok_or_else(|| "vault path is not UTF-8".to_owned())?;
+    let environment = std::env::vars().collect::<BTreeMap<_, _>>();
+    let cwd = std::env::current_dir().map_err(|error| error.to_string())?;
+    let temp_root = std::env::temp_dir();
+    let vault_index =
+        symdesk_index::index_location_for_vault(vault, &environment, &cwd, &temp_root)
+            .map_err(|error| error.to_string())?;
+    let index_to_check = if vault_index.exists() {
+        vault_index
+    } else {
+        // Go seeds a missing per-vault index from this legacy shared store.
+        symdesk_index::index_location_for_vault("", &environment, &cwd, &temp_root)
+            .map_err(|error| error.to_string())?
+    };
+    if !index_to_check.exists() {
+        return Ok(true);
+    }
+    let database =
+        symdesk_index::RetrievalDb::open_at(index_to_check).map_err(|error| error.to_string())?;
+    Ok(database.count_chunks().map_err(|error| error.to_string())? == 0)
 }
 
 fn load_ai_transform_config() -> Result<symdesk_core::config::Config, String> {
@@ -1454,6 +1761,7 @@ async fn normalize_method_not_allowed(request: Request<Body>, next: Next) -> Res
             | "/api/v1/worker/lease"
             | "/api/v1/worker/complete"
             | "/api/v1/worker/fail"
+            | "/api/v1/ai/ask"
             | "/api/v1/ai/transform" => "POST",
             path if path.starts_with("/api/v1/share/") => "DELETE",
             _ => "GET, HEAD",
@@ -5269,6 +5577,51 @@ mod tests {
             ai_transform_fallback_text(&failed_load),
             ai_transform_fallback_text(&default),
             "Go's service constructor uses DefaultConfig when config.Load fails"
+        );
+    }
+
+    #[test]
+    fn ask_fallback_is_limited_to_unconfigured_ollama() {
+        let default = symdesk_core::config::Config::default();
+        assert!(ai_ask_provider_is_unconfigured(&default));
+
+        let mut ollama = default.clone();
+        ollama.ollama_url = "http://127.0.0.1:11434".to_owned();
+        assert!(!ai_ask_provider_is_unconfigured(&ollama));
+
+        let anthropic = symdesk_core::config::load(
+            None,
+            &BTreeMap::from([(
+                String::from("SYMDESK_LLM_PROVIDER"),
+                String::from("anthropic"),
+            )]),
+        )
+        .expect("load unconfigured Anthropic provider");
+        assert!(!ai_ask_provider_is_unconfigured(&anthropic));
+    }
+
+    #[test]
+    fn ask_ndjson_uses_go_html_safe_json_escaping() {
+        let mut events = Vec::new();
+        push_ai_ask_event(
+            &mut events,
+            AiAskEvent {
+                event_type: "citation",
+                text: None,
+                path: Some("<doc&>.md"),
+                title: Some("Title >\u{2028}"),
+                snippet: None,
+                score: None,
+                tool_name: None,
+                status: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            events[0],
+            Bytes::from_static(
+                b"{\"type\":\"citation\",\"path\":\"\\u003cdoc\\u0026\\u003e.md\",\"title\":\"Title \\u003e\\u2028\"}\n"
+            )
         );
     }
 

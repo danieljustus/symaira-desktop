@@ -395,6 +395,77 @@
       "auth": "valid"
     },
     {
+      "id": "ai-ask-missing-auth",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "body": "{\"query\":\"Body\"}"
+    },
+    {
+      "id": "ai-ask-invalid-json",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{"
+    },
+    {
+      "id": "ai-ask-empty-query",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"  \"}"
+    },
+    {
+      "id": "ai-ask-no-provider",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\"}"
+    },
+    {
+      "id": "ai-ask-ranked-citations",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\"}"
+    },
+    {
+      "id": "ai-ask-trailing-json",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid",
+      "body": "{\"query\":\"Body\"}{\"ignored\":true}"
+    },
+    {
+      "id": "ai-ask-named-user-acl-filter",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "named",
+      "body": "{\"query\":\"named\"}",
+      "populate_named_user": true
+    },
+    {
+      "id": "ai-ask-worker-acl-filter",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"nested\"}",
+      "populate_worker_acl": true
+    },
+    {
+      "id": "ai-ask-worker-acl-denied",
+      "method": "POST",
+      "path": "/api/v1/ai/ask",
+      "auth": "worker",
+      "body": "{\"query\":\"Body\"}",
+      "populate_worker_acl": true
+    },
+    {
+      "id": "ai-ask-method-not-allowed",
+      "method": "GET",
+      "path": "/api/v1/ai/ask",
+      "auth": "valid"
+    },
+    {
       "id": "command-admin-invalid-subcommand",
       "method": "POST",
       "path": "/api/v1/command",

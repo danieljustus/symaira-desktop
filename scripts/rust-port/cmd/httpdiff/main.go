@@ -693,7 +693,7 @@ func createFixtureVault(root string) string {
 		"notebooks/mixed.md":    "---\ntype: notebook\ntitle: Mixed\ncreated: 2026-01-04T05:06:07Z\nnotebook_id: mixed\nsources:\n  - Hello.md\n  - missing.md\n  - escape.md\n  - ../outside.md\n---\n",
 		"notebooks/ignored.md":  "---\ntype: note\ntitle: Not a notebook\n---\n",
 		"Hello.md":              "---\ntitle: Hello\n---\nBody",
-		"nested/Note.md":        "nested",
+		"nested/Note.md":        "nested Body Body",
 		"nested/Named.md":       "named user initial",
 		"inbox/c.png":           "worker input bytes",
 	}
@@ -1630,6 +1630,28 @@ func normalizeBody(body []byte) []byte {
 func compare(id string, left, right transcript) error {
 	if left.Status != right.Status {
 		return fmt.Errorf("status mismatch: Go=%d Rust=%d; Go body=%q Rust body=%q", left.Status, right.Status, left.Body, right.Body)
+	}
+	if id == "ai-ask-ranked-citations" {
+		for _, item := range []struct {
+			name     string
+			response transcript
+		}{{"Go", left}, {"Rust", right}} {
+			count := 0
+			for _, line := range bytes.Split(bytes.TrimSpace(item.response.Body), []byte{'\n'}) {
+				var event struct {
+					Type string `json:"type"`
+				}
+				if err := json.Unmarshal(line, &event); err != nil {
+					return fmt.Errorf("%s ask event: %w", item.name, err)
+				}
+				if event.Type == "citation" {
+					count++
+				}
+			}
+			if count < 2 {
+				return fmt.Errorf("%s ranked ask citations = %d, want at least two", item.name, count)
+			}
+		}
 	}
 	if id == "command-admin-exec-ls" {
 		var err error
